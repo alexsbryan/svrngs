@@ -10,7 +10,7 @@
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, json};
-use svrngs_core::{ActId, AppId, Body, Journal, Payload, Speaker, fold};
+use svrngs_core::{ActId, AppId, Audience, Body, Journal, Payload, Speaker, fold};
 use svrngs_engine::{Breach, Engine, EngineError, Limits, QuickJs, Segment};
 use tracing::{debug, error, warn};
 
@@ -299,7 +299,7 @@ fn people(journal: &Journal) -> Value {
 /// `app`'s acts as `reduce` takes them: `{id, ts, by, op}`, unvoided, in the
 /// record's order. A correction's replacement stands where the correction is.
 fn acts_of(app: &AppId, journal: &Journal) -> Vec<Value> {
-    fold(journal)
+    fold(journal, Audience::Group)
         .into_iter()
         .filter(|f| !f.voided)
         .filter_map(|f| {

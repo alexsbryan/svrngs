@@ -186,7 +186,7 @@ fn fold_orders_by_ts_actor_seq_id_and_voids_by_correct() {
         on_behalf_of: None,
     });
     let c = write(&mut j, &person, &fix, NOW + 6);
-    let admit_id = *fold(&j)[0].act.id();
+    let admit_id = *fold(&j, Audience::Group)[0].act.id();
     let other_app = Body::Correct(Correct {
         app: AppId::try_from("tap").unwrap(),
         corrects: *p1.id(),
@@ -202,7 +202,7 @@ fn fold_orders_by_ts_actor_seq_id_and_voids_by_correct() {
     });
     write(&mut j, &person, &membership, NOW + 8);
 
-    let f = fold(&j);
+    let f = fold(&j, Audience::Group);
     let ids: Vec<&ActId> = f.iter().map(|x| x.act.id()).collect();
     assert_eq!(&ids[..4], &[&admit_id, p1.id(), b1.id(), c.id()]);
     let voided: Vec<&ActId> = f.iter().filter(|x| x.voided).map(|x| x.act.id()).collect();
@@ -215,10 +215,37 @@ fn fold_orders_by_ts_actor_seq_id_and_voids_by_correct() {
 }
 
 #[test]
+fn the_chats_fold_holds_only_what_the_chat_wrote() {
+    let (mut j, person, bridge) = group();
+    let b1 = write(&mut j, &bridge, &record(json!({"n": 1}), Some("i1")), NOW);
+    write(&mut j, &person, &record(json!({"n": 2}), Some("i2")), NOW);
+    let undo = |of: &VerifiedAct| {
+        Body::Correct(Correct {
+            app: AppId::try_from("expenses").unwrap(),
+            corrects: *of.id(),
+            replacement: None,
+            on_behalf_of: None,
+        })
+    };
+    write(&mut j, &person, &undo(&b1), NOW + 1);
+    let chat: Vec<(&ActId, bool)> = fold(&j, Audience::Chat)
+        .iter()
+        .map(|f| (f.act.id(), f.voided))
+        .collect();
+    assert_eq!(chat, vec![(b1.id(), false)], "a key's act and a key's undo stay out");
+    let b2 = write(&mut j, &bridge, &undo(&b1), NOW + 2);
+    let chat: Vec<(&ActId, bool)> = fold(&j, Audience::Chat)
+        .iter()
+        .map(|f| (f.act.id(), f.voided))
+        .collect();
+    assert_eq!(chat, vec![(b1.id(), true), (b2.id(), false)], "the chat's own undo voids");
+}
+
+#[test]
 fn a_person_key_cannot_speak_for_the_chat() {
     let (mut j, person, _) = group();
     write(&mut j, &person, &record(json!({}), Some("i9")), NOW);
-    assert!(fold(&j).iter().all(|f| f.speaker.is_none()));
+    assert!(fold(&j, Audience::Group).iter().all(|f| f.speaker.is_none()));
 }
 
 #[test]

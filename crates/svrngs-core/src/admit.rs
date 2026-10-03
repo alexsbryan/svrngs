@@ -1,6 +1,10 @@
 //! Order and void (DESIGN C1, "Admit"): one order for every copy,
 //! `(ts, actor, seq, id)`, and the void set built from every `Correct` at once,
 //! so it is a function of the set and nothing comes back to life.
+//!
+//! A fold is for an [`Audience`]. The chat's is the origin gate (DESIGN C5;
+//! D6, origin by role): only what the chat wrote, so nothing a key wrote —
+//! not even an undo of the chat's own act — reaches a view the bridge posts.
 
 use std::collections::BTreeSet;
 
@@ -18,10 +22,30 @@ pub struct Folded<'a> {
     pub speaker: Option<&'a OnBehalfOf>,
 }
 
-/// Every held act, in order.
-pub fn fold(journal: &Journal) -> Vec<Folded<'_>> {
+/// Whom a fold is for. Closed: each audience is a rule over origins.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Audience {
+    /// Every held act.
+    Group,
+    /// The chat: only acts a Bridge-role key signed, voided only by
+    /// corrections a Bridge-role key signed.
+    Chat,
+}
+
+impl Audience {
+    fn sees(self, journal: &Journal, act: &VerifiedAct) -> bool {
+        match self {
+            Audience::Group => true,
+            Audience::Chat => journal.standing(act.actor()).is_some_and(|s| s.role == Role::Bridge),
+        }
+    }
+}
+
+/// Every held act `audience` sees, in order.
+pub fn fold(journal: &Journal, audience: Audience) -> Vec<Folded<'_>> {
     let voided: BTreeSet<&ActId> = journal
         .acts()
+        .filter(|a| audience.sees(journal, a))
         .filter_map(|a| match a.body() {
             Body::Correct(c) => Some(c),
             _ => None,
@@ -33,7 +57,7 @@ pub fn fold(journal: &Journal) -> Vec<Folded<'_>> {
         })
         .map(|c| &c.corrects)
         .collect();
-    let mut order: Vec<&VerifiedAct> = journal.acts().collect();
+    let mut order: Vec<&VerifiedAct> = journal.acts().filter(|a| audience.sees(journal, a)).collect();
     order.sort_by_key(|a| (a.ts(), *a.actor(), a.seq(), *a.id()));
     order
         .into_iter()

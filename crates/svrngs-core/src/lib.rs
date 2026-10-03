@@ -6,7 +6,7 @@
 //! - [`chain`]: the act on the wire, its id and signature, and
 //!   [`VerifiedAct::parse`], the one way bytes become an act.
 //! - [`ingest`]: [`Journal::decide`] and [`Journal::apply`] — what a copy holds.
-//! - [`admit`]: [`fold`] — order and void.
+//! - [`admit`]: [`fold`] — order and void, for the group or for the chat.
 //! - [`guests`]: the guest book — whom the bridge may act for.
 
 pub mod admit;
@@ -15,7 +15,7 @@ pub mod guests;
 pub mod ingest;
 pub mod payload;
 
-pub use admit::{Folded, fold};
+pub use admit::{Audience, Folded, fold};
 pub use chain::{
     ActId, Actor, Admit, AppId, Body, Correct, Draft, Genesis, GroupId, Guest, GuestEvent, Interaction, Name, Nonce,
     OnBehalfOf, ParseError, Record, Role, Sig, Speaker, VerifiedAct, admit_message,

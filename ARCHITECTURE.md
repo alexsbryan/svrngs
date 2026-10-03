@@ -35,7 +35,9 @@ dependency or `async` in it.
   for. Each entry is keyed by the platform's user id, and only Bridge-role
   acts write it.
 - `admit.rs`: `fold` orders acts by `(ts, actor, seq, id)` and works out what
-  a `correct` voids.
+  a `correct` voids, for an `Audience`: the group sees every held act, and
+  the chat only the acts a Bridge-role key signed, voided only by its own
+  corrections.
 
 **`crates/svrngs-engine`**: the fold engine (DESIGN C4), synchronous and
 with no I/O dependency. `Engine` is the one way the host reaches an app's
