@@ -1,0 +1,20 @@
+[package]
+name = "svrngs-core"
+description = "The record (DESIGN C1), sans-IO: the chain, one writer's ingest, order and void."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+# No I/O dependency, ever (DESIGN D2a; scripts/lean_check.py refuses one): the
+# caller reads the disk and the clock and holds the keys; this crate hashes,
+# verifies and decides.
+[dependencies]
+blake3 = { workspace = true }
+ed25519-dalek = { workspace = true }
+hex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+ed25519-dalek = { workspace = true }
