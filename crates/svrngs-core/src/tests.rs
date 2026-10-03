@@ -27,18 +27,24 @@ fn group() -> (Journal, SigningKey, SigningKey) {
         name: Name::try_from("the house").unwrap(),
     };
     let mut j = Journal::new(genesis);
-    let name = Name::try_from("the chat").unwrap();
-    let msg = admit_message(&actor(&person), &actor(&bridge), Role::Bridge, &name);
-    let cosig = Sig::from_bytes(bridge.sign(&msg).to_bytes());
-    let admit = Body::Admit(Admit {
-        key: actor(&bridge),
-        role: Role::Bridge,
-        name,
-        cosig,
-    });
+    let admit = bridge_admit(&person, &bridge, Role::Bridge);
     let act = sign(&person, j.draft(&actor(&person), &admit, NOW).unwrap());
     hold(&mut j, act);
     (j, person, bridge)
+}
+
+/// `person` admitting `bridge` as the chat's Bridge, its co-signature made over
+/// `cosigned_as` — a role other than Bridge plants a mismatched co-signature.
+fn bridge_admit(person: &SigningKey, bridge: &SigningKey, cosigned_as: Role) -> Body {
+    let name = Name::try_from("the chat").unwrap();
+    let msg = admit_message(&actor(person), &actor(bridge), cosigned_as, &name);
+    let cosig = Sig::from_bytes(bridge.sign(&msg).to_bytes());
+    Body::Admit(Admit {
+        key: actor(bridge),
+        role: Role::Bridge,
+        name,
+        cosig,
+    })
 }
 
 fn hold(j: &mut Journal, act: VerifiedAct) {
@@ -97,16 +103,8 @@ fn an_admit_its_key_did_not_cosign_is_refused() {
         nonce: Nonce::from_bytes([7; 32]),
         name: Name::try_from("g").unwrap(),
     });
-    let name = Name::try_from("the chat").unwrap();
     // Co-signed as a Person, presented as a Bridge.
-    let msg = admit_message(&actor(&person), &actor(&bridge), Role::Person, &name);
-    let cosig = Sig::from_bytes(bridge.sign(&msg).to_bytes());
-    let admit = Body::Admit(Admit {
-        key: actor(&bridge),
-        role: Role::Bridge,
-        name,
-        cosig,
-    });
+    let admit = bridge_admit(&person, &bridge, Role::Person);
     let d = j.draft(&actor(&person), &admit, NOW).unwrap();
     let sig = Sig::from_bytes(person.sign(d.id().as_bytes()).to_bytes());
     assert_eq!(d.seal(sig), Err(ParseError::BadCosignature));
