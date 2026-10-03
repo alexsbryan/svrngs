@@ -238,7 +238,11 @@ fn the_chats_fold_holds_only_what_the_chat_wrote() {
         .iter()
         .map(|f| (f.act.id(), f.voided))
         .collect();
-    assert_eq!(chat, vec![(b1.id(), true), (b2.id(), false)], "the chat's own undo voids");
+    assert_eq!(
+        chat,
+        vec![(b1.id(), true), (b2.id(), false)],
+        "the chat's own undo voids"
+    );
 }
 
 #[test]
