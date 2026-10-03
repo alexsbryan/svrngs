@@ -8,8 +8,8 @@
    `Rc<RefCell<` in a crate (ownership is a tree); no `async` in svrngs-core or
    svrngs-engine (the core is synchronous).
 4. Lines of code — not blank, not a comment, not a test — stay under budget:
-   svrngs-core under 2,500, the whole repository under 12,000 — scripts included,
-   apps/ bundles apart.
+   svrngs-core under 2,500, the whole repository under 12,000 — scripts and the
+   bridge included; apps/ bundles and installed packages (any node_modules/) apart.
 """
 import re
 import sys
@@ -28,7 +28,8 @@ def code_lines(base):
     for f in base.rglob("*"):
         rel = f.relative_to(ROOT).as_posix()
         if (f.suffix not in CODE or not f.is_file() or "/tests/" in f"/{rel}"
-                or rel.startswith(("apps/", "target/", "node_modules/"))
+                or "/node_modules/" in f"/{rel}"
+                or rel.startswith(("apps/", "target/"))
                 or re.search(r"(^|/)tests?\.rs$|_tests?\.rs$|\.test\.m?js$", rel)):
             continue
         for line in f.read_text(errors="replace").splitlines():
