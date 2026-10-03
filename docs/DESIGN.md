@@ -238,7 +238,8 @@ register's recurring holes by structure; the types above remove the
 field-binding and wrong-chain cases.
 
 **Lean, and kept lean.** The repository depends on no commonwealth-ai crate and
-no sovereign crate — a check over `Cargo.lock` refuses either — and
+no sovereign crate — `scripts/lean_check.py` refuses either from `Cargo.lock` —
+and
 `svrngs-core` and `svrngs-engine` take no I/O dependency. Its size budget is set
 before its first line: `svrngs-core` under 2,500 lines of code and the whole
 repository under 12,000 at the end of E1, tests and bundles apart, raised only
@@ -704,8 +705,8 @@ waits in D8 for the signal that earns it.
 
 **Demos keep the cadence.** No more than three units pass without a demo a
 future end user would want to watch: a scene on real phones and a real chat,
-recorded, with a run-of-show in `docs/internal/rings/demo/` as the ring-room
-demo has. Each demo's gate is a bar id, and it is shown when that bar passes.
+recorded, with a run-of-show in `demo/` written before its first run and a record of
+every run in `demo/runs/` (`demo/README.md`). Each demo's gate is a bar id, and it is shown when that bar passes.
 A unit names the demo it moves; one that moves none waits.
 
 *E0 — will a group settle up through the bot, in the chat it already uses?* On
