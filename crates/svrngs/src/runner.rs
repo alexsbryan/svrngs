@@ -7,6 +7,11 @@
 //!
 //! The journal actor owns the runner and calls it with its [`Journal`], so a
 //! fold reads the same acts a write is decided against.
+//!
+//! Everything the runner answers is posted in the chat, so it folds only what
+//! the chat wrote, [`Audience::Chat`]: the origin gate (DESIGN C5; D9
+//! origin-gate, `tests/origin_gate.rs`). An act a key wrote — an expense, or
+//! an undo of the chat's own — never reaches `propose`, `say` or `due`.
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, json};
@@ -218,12 +223,18 @@ impl Runner {
             .ok_or_else(|| RunnerError::NoApp(name.as_str().to_string()))
     }
 
-    /// `app`'s state: its acts, unvoided, in the record's order, folded.
+    /// `app`'s state as the chat may see it: the acts the chat wrote,
+    /// unvoided, in the record's order, folded.
     fn state(&self, app: &App, journal: &Journal) -> Result<Value, RunnerError> {
-        let acts = acts_of(&app.manifest.name, journal);
+        let (acts, withheld) = acts_of(&app.manifest.name, journal);
         match app.engine.fold_segment(None, &acts).map_err(|e| app.engine_error(e))? {
             Segment::Complete(state) => {
-                debug!(app = app.manifest.name.as_str(), acts = acts.len(), "runner:fold");
+                debug!(
+                    app = app.manifest.name.as_str(),
+                    acts = acts.len(),
+                    withheld,
+                    "runner:fold"
+                );
                 Ok(state)
             }
             Segment::Incomplete(breach) => {
@@ -296,10 +307,13 @@ fn people(journal: &Journal) -> Value {
         .into()
 }
 
-/// `app`'s acts as `reduce` takes them: `{id, ts, by, op}`, unvoided, in the
-/// record's order. A correction's replacement stands where the correction is.
-fn acts_of(app: &AppId, journal: &Journal) -> Vec<Value> {
-    fold(journal, Audience::Group)
+/// `app`'s acts the chat wrote, as `reduce` takes them: `{id, ts, by, op}`,
+/// unvoided, in the record's order; and how many held acts of any app the
+/// chat may not see. A correction's replacement stands where the correction is.
+fn acts_of(app: &AppId, journal: &Journal) -> (Vec<Value>, usize) {
+    let folded = fold(journal, Audience::Chat);
+    let withheld = journal.len() - folded.len();
+    let acts = folded
         .into_iter()
         .filter(|f| !f.voided)
         .filter_map(|f| {
@@ -315,5 +329,6 @@ fn acts_of(app: &AppId, journal: &Journal) -> Vec<Value> {
                 "op": op,
             }))
         })
-        .collect()
+        .collect();
+    (acts, withheld)
 }

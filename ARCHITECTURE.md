@@ -62,7 +62,8 @@ allowed `anyhow`.
   sends it messages. Every act it writes is signed with the Bridge key.
 - `runner.rs`: the handler runner. It holds the built-in apps (their manifests
   and modules, from `apps/`, compiled in), folds an app's acts through the
-  engine, and parses what `propose`, `say` and `due` answer into types —
+  engine — only the acts the chat wrote, `Audience::Chat`, because everything
+  it answers is posted in the chat (the origin gate) — and parses what `propose`, `say` and `due` answer into types —
   `Proposal`, `Reply`, `DueItem` — before anything is written or posted.
 - `bridge.rs`: the loopback surface the bridge calls. It binds to loopback
   only and requires the capability token. `POST /append` takes an app's op on
@@ -132,6 +133,7 @@ gets the same view back, with nothing written.
 | Expenses holds the five laws and the sixth. | `apps/expenses/laws.test.mjs` |
 | An app sees no clock, no randomness, no locale and no earlier call. | `QuickJs`; `crates/svrngs-engine/src/tests.rs` |
 | What the bot posts is what the journal folds to; a reminder is posted once. | `crates/svrngs/tests/split_the_pizza.rs` |
+| Nothing a key wrote renders into the chat, `say` views included: not its acts, not its undo of the chat's. | `fold(_, Audience::Chat)` in `runner.rs` `acts_of`; `crates/svrngs/tests/origin_gate.rs` |
 | The core does no I/O; the repository stays under its size budget. | `scripts/lean_check.py` |
 
 ## Not built yet, said so
@@ -152,6 +154,12 @@ gets the same view back, with nothing written.
   `joined` event, which in Discord follows a moderator lifting the ban.
 - **An embedded surface.** It is the fifth item in RING_ENTRY's adapter list;
   Discord has one, and nothing uses it yet.
+- **A key's act going back to the chat as a link.** RING_ENTRY §3 lets an act
+  a key wrote reach the chat only as a link to the group's own page. There is
+  no page in E0, so such an act reaches the chat not at all.
+- **More than one chat.** `Audience::Chat` is every Bridge-role key's acts.
+  With a second adapter, each chat would need its own audience, so that an
+  act from one is never rendered into another (RING_ENTRY §3).
 - **A ban that happens while the bridge is down.** The bridge reads no ban
   list when it connects, so a ban made while it was offline does not reach the
   guest book until that person leaves or is banned again with the bridge

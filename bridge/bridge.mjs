@@ -2,7 +2,8 @@
 // host's loopback surface behind six. It keeps no state of its own and never
 // loads app code (crates/svrngs/tests/bridge_holds_no_app.rs holds it to that):
 // a command or a tap goes to the host's handler runner, and what comes back is
-// posted as it is.
+// posted as it is. The runner folds only what the chat wrote, so nothing a key
+// wrote reaches the chat (crates/svrngs/tests/origin_gate.rs).
 //
 // The adapter's five calls:
 //   connect({joined, left, input})  open the platform; deliver its events
