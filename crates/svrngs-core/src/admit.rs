@@ -11,7 +11,8 @@ use crate::ingest::Journal;
 #[derive(Debug, Clone, Copy)]
 pub struct Folded<'a> {
     pub act: &'a VerifiedAct,
-    /// A `Correct` of the same app names it. Membership acts are never voided.
+    /// A `Correct` of the same app names it. Membership and guest-book acts
+    /// are never voided.
     pub voided: bool,
     /// Whom the act speaks for: only from a Bridge-role key (DESIGN C2).
     pub speaker: Option<&'a OnBehalfOf>,
@@ -51,6 +52,6 @@ fn app_of(body: &Body) -> Option<&crate::chain::AppId> {
     match body {
         Body::Record(r) => Some(&r.app),
         Body::Correct(c) => Some(&c.app),
-        Body::Admit(_) => None,
+        Body::Admit(_) | Body::Guest(_) => None,
     }
 }

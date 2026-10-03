@@ -8,6 +8,7 @@
 use std::collections::BTreeMap;
 
 use crate::chain::{ActId, Actor, Body, Draft, Genesis, GroupId, Interaction, Role, VerifiedAct};
+use crate::guests::GuestBook;
 use crate::payload::PayloadError;
 
 /// How far ahead of this copy's clock an act's `ts` may be, in seconds
@@ -65,6 +66,7 @@ pub struct Journal {
     standing: BTreeMap<Actor, Standing>,
     heads: BTreeMap<Actor, ActId>,
     taken: BTreeMap<Interaction, ActId>,
+    guests: GuestBook,
 }
 
 impl Journal {
@@ -83,6 +85,7 @@ impl Journal {
             standing,
             heads: BTreeMap::new(),
             taken: BTreeMap::new(),
+            guests: GuestBook::default(),
         }
     }
 
@@ -146,6 +149,9 @@ impl Journal {
             let t = self.taken.entry(o.interaction.clone()).or_insert(id);
             *t = (*t).min(id);
         }
+        if let (Body::Guest(g), Some(Role::Bridge)) = (act.body(), signer) {
+            self.guests.hold((act.ts(), *act.actor(), act.seq(), id), g);
+        }
         self.acts.insert(id, act);
     }
 
@@ -162,6 +168,11 @@ impl Journal {
     /// The act a Bridge-role key already wrote for this chat interaction.
     pub fn taken(&self, interaction: &Interaction) -> Option<&ActId> {
         self.taken.get(interaction)
+    }
+
+    /// The chat speakers the bridge acts for, from Bridge-role acts only.
+    pub fn guests(&self) -> &GuestBook {
+        &self.guests
     }
 
     pub fn standing(&self, actor: &Actor) -> Option<Standing> {

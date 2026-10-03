@@ -234,3 +234,62 @@ fn payload_is_canonical_and_whole() {
     ));
     assert_eq!(Payload::new(json!([1])), Err(PayloadError::NotAnObject));
 }
+
+fn guest(speaker: &str, name: &str, event: GuestEvent) -> Guest {
+    Guest {
+        speaker: Speaker::try_from(speaker).unwrap(),
+        name: Name::try_from(name).unwrap(),
+        event,
+    }
+}
+
+#[test]
+fn a_removal_sticks_until_a_join_lifts_it() {
+    let (mut j, _, bridge) = group();
+    let ama = Speaker::try_from("discord:1").unwrap();
+    assert!(
+        j.guests().may_speak(&ama),
+        "someone never seen may act: acting is how they arrive"
+    );
+    let seen = guest("discord:1", "Ama", GuestEvent::Seen);
+    assert_eq!(j.guests().change(&seen), GuestChange::Arrives);
+    write(&mut j, &bridge, &Body::Guest(seen.clone()), NOW);
+    assert_eq!(j.guests().change(&seen), GuestChange::Unchanged);
+
+    let banned = guest("discord:1", "Ama", GuestEvent::Banned);
+    assert_eq!(j.guests().change(&banned), GuestChange::Removes);
+    write(&mut j, &bridge, &Body::Guest(banned.clone()), NOW + 1);
+    assert!(!j.guests().may_speak(&ama));
+    assert_eq!(j.guests().change(&banned), GuestChange::Unchanged);
+    assert_eq!(j.guests().change(&seen), GuestChange::RemovalSticks);
+    // A Seen written anyway — a second bridge racing this one — lifts nothing.
+    write(&mut j, &bridge, &Body::Guest(seen.clone()), NOW + 2);
+    assert!(!j.guests().may_speak(&ama));
+    assert_eq!(j.guests().present().count(), 0);
+
+    let joined = guest("discord:1", "Ama", GuestEvent::Joined);
+    assert_eq!(j.guests().change(&joined), GuestChange::Arrives);
+    write(&mut j, &bridge, &Body::Guest(joined), NOW + 3);
+    assert!(j.guests().may_speak(&ama));
+    assert_eq!(
+        j.guests().change(&guest("discord:1", "Ama B", GuestEvent::Seen)),
+        GuestChange::Renamed
+    );
+}
+
+#[test]
+fn only_a_bridge_key_writes_the_guest_book() {
+    let (mut j, person, _) = group();
+    let ama = Speaker::try_from("discord:1").unwrap();
+    write(
+        &mut j,
+        &person,
+        &Body::Guest(guest("discord:1", "Ama", GuestEvent::Banned)),
+        NOW,
+    );
+    assert!(
+        j.guests().may_speak(&ama),
+        "a Person key's guest act is not the guest book's"
+    );
+    assert_eq!(j.guests().entry(&ama), None);
+}

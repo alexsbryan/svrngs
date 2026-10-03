@@ -231,6 +231,36 @@ pub struct Record {
     pub on_behalf_of: Option<OnBehalfOf>,
 }
 
+/// What the chat platform reported about a speaker (DESIGN C5). Closed: the
+/// guest book's rule over these is [`crate::guests`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum GuestEvent {
+    /// They joined the chat: the one event that lifts an earlier removal,
+    /// because a ban is lifted only by a person in the chat.
+    Joined,
+    /// They acted or were mentioned.
+    Seen,
+    Left,
+    Banned,
+}
+
+impl GuestEvent {
+    pub const fn removes(self) -> bool {
+        matches!(self, GuestEvent::Left | GuestEvent::Banned)
+    }
+}
+
+/// A line of the guest book, keyed by the platform's user id (DESIGN D4).
+/// Honoured only from a Bridge-role key.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Guest {
+    pub speaker: Speaker,
+    pub name: Name,
+    pub event: GuestEvent,
+}
+
 /// An earlier act of the same app was wrong: it is voided, never erased, and
 /// optionally re-stated.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -251,6 +281,7 @@ pub enum Body {
     Admit(Admit),
     Record(Record),
     Correct(Correct),
+    Guest(Guest),
 }
 
 impl Body {
@@ -258,7 +289,7 @@ impl Body {
         match self {
             Body::Record(r) => r.on_behalf_of.as_ref(),
             Body::Correct(c) => c.on_behalf_of.as_ref(),
-            Body::Admit(_) => None,
+            Body::Admit(_) | Body::Guest(_) => None,
         }
     }
 }

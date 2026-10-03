@@ -7,17 +7,20 @@
 //!   [`VerifiedAct::parse`], the one way bytes become an act.
 //! - [`ingest`]: [`Journal::decide`] and [`Journal::apply`] — what a copy holds.
 //! - [`admit`]: [`fold`] — order and void.
+//! - [`guests`]: the guest book — whom the bridge may act for.
 
 pub mod admit;
 pub mod chain;
+pub mod guests;
 pub mod ingest;
 pub mod payload;
 
 pub use admit::{Folded, fold};
 pub use chain::{
-    ActId, Actor, Admit, AppId, Body, Correct, Draft, Genesis, GroupId, Interaction, Name, Nonce, OnBehalfOf,
-    ParseError, Record, Role, Sig, Speaker, VerifiedAct, admit_message,
+    ActId, Actor, Admit, AppId, Body, Correct, Draft, Genesis, GroupId, Guest, GuestEvent, Interaction, Name, Nonce,
+    OnBehalfOf, ParseError, Record, Role, Sig, Speaker, VerifiedAct, admit_message,
 };
+pub use guests::{GuestBook, GuestChange, GuestEntry};
 pub use ingest::{Holdable, Ingest, Journal, MAX_SKEW_SECS, Standing, Why};
 pub use payload::{MAX_PAYLOAD_BYTES, Payload, PayloadError};
 
