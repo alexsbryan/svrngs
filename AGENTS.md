@@ -36,7 +36,9 @@ at a time, each naming the demo it moves.
     state; a trait only at a real boundary; `thiserror` in crates, `anyhow` only
     in the `svrngs` command and the app.
 11. **The inventory outranks the plan.** Check this repository, then
-    commonwealth-ai's code to port by citation. Never link it.
+    commonwealth-ai's code to port by citation. Never link it. A port carries
+    `ported from commonwealth-ai <path>@<commit>`; `scripts/ports.py` lists the
+    pairs (DESIGN D2b, "Toward commonwealth-ai").
 12. **Draw the line by ownership.** DESIGN D2b: app- and provider-specific code
     lives only in `apps/` and `providers/`.
 

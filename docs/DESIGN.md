@@ -271,6 +271,31 @@ the world only at the wire.
 - **The mesh is not a group.** commonwealth-ai's mesh decides which machines
   belong to one owner; a group's membership is its register (D4).
 
+**Toward commonwealth-ai** (operator, 2026-10-03), three rules for three kinds
+of code there:
+
+- **Ring code is lifted, then retired.** The ring routes and sync in cw-rails,
+  `ring_cmd`, ring-doc, ring-runtime and `ring_shim.js`, the phone shell, and
+  the ring campaigns are what svrngs replaces. svrngs ports what it needs by
+  citation, and each original is deleted from commonwealth-ai when the bar
+  proving its svrngs replacement passes — the retirement list in commonwealth-ai's
+  `docs/RING_SPEC.md`. Nothing ports without naming when its source dies.
+- **The mesh stays commonwealth's.** One owner's machines, inference routing,
+  the work plane and its donor loop, and the rail the work plane folds over solve
+  a different problem from a group of people. svrngs does not depend on them, and
+  they may diverge freely.
+- **Shared primitives converge on svrngs.** The iroh door that forwards with a
+  verified identity, signing and canonical form, and keystore handling are the
+  only places a fix could reach one copy and miss the other. `svrngs-node` is
+  their upstream: commonwealth-ai may adopt it as any outside builder would, and
+  the arrow never points from svrngs to commonwealth-ai.
+
+While a port and its original both exist, the pair is findable, not remembered:
+every port carries a line `ported from commonwealth-ai <path>@<commit>`, and
+`scripts/ports.py` lists each pair with whether its original has changed since,
+so a fix on either side shows its twin. The list shrinks to nothing as
+originals retire.
+
 ## D3. Packaging and reach## D3. Packaging and reach
 
 **The node** is `svrngs-node` over `svrngs-core`. It builds for iOS, Android,
