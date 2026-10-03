@@ -3,7 +3,11 @@
 
 1. Cargo.lock names no commonwealth-ai or sovereign crate.
 2. svrngs-core and svrngs-engine declare no I/O dependency.
-3. Lines of code — not blank, not a comment, not a test — stay under budget:
+3. RUST_ARCH, where a program can decide it: `anyhow` only in the `svrngs`
+   command and the app (typed errors everywhere else); no `Arc<Mutex<` or
+   `Rc<RefCell<` in a crate (ownership is a tree); no `async` in svrngs-core or
+   svrngs-engine (the core is synchronous).
+4. Lines of code — not blank, not a comment, not a test — stay under budget:
    svrngs-core under 2,500, the whole repository under 12,000 — scripts included,
    apps/ bundles apart.
 """
@@ -47,6 +51,17 @@ def main():
             for d in deps:
                 if d.split("-")[0] in IO_DEPS or d in IO_DEPS:
                     broken.append(f"{crate} depends on {d}: the core and the engine take no I/O dependency")
+    for manifest in sorted((ROOT / "crates").glob("*/Cargo.toml")):
+        crate = manifest.parent.name
+        if crate != "svrngs" and re.search(r'^anyhow\s*=', manifest.read_text(), re.M):
+            broken.append(f"{crate} depends on anyhow: crates carry typed errors; anyhow is the command's and the app's")
+    for f in sorted((ROOT / "crates").glob("*/src/**/*.rs")):
+        rel = f.relative_to(ROOT).as_posix()
+        text = f.read_text(errors="replace")
+        if re.search(r"Arc<\s*Mutex<|Rc<\s*RefCell<", text):
+            broken.append(f"{rel} shares mutable state: one owner and messages instead (RUST_ARCH §3)")
+        if rel.startswith(("crates/svrngs-core/", "crates/svrngs-engine/")) and re.search(r"\basync\b|\.await\b", text):
+            broken.append(f"{rel} is async: the core and the engine stay synchronous (RUST_ARCH §2, §4)")
     for path, cap in BUDGET.items():
         base = ROOT / path
         n = code_lines(base) if base.exists() else 0

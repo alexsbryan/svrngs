@@ -188,8 +188,9 @@ names the removed key's acts by hash, never by time.
 
 ## D2a. Code architecture
 
-Held to commonwealth-ai's `docs/RUST_ARCH.md`: **types encode the domain,
-ownership encodes the architecture, I/O lives at the edge.**
+Held to `docs/principles/RUST_ARCH.md` and `docs/principles/ARCH_PRINCIPLES.md`,
+pinned from commonwealth-ai and read by every agent here (`AGENTS.md`): **types
+encode the domain, ownership encodes the architecture, I/O lives at the edge.**
 
 **A sans-IO core.** `svrngs-core` is one deep crate with a narrow interface: a
 pure, synchronous state machine over a group's journal, in `quinn-proto`'s
