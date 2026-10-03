@@ -1,3 +1,7 @@
 target/
 node_modules/
 .DS_Store
+ralph/next/*/ctl/
+ralph/next/*/log*
+ralph/.heartbeat
+ralph/log*
