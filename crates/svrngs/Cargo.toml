@@ -1,0 +1,23 @@
+[package]
+name = "svrngs"
+description = "The svrngs command and host process: the group's journal actor and the bridge's loopback append."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+svrngs-core = { workspace = true }
+anyhow = "1"
+axum = "0.8"
+ed25519-dalek = { workspace = true }
+getrandom = "0.2"
+hex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "sync", "signal", "io-util"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dev-dependencies]
+tempfile = "3"
