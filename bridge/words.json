@@ -1,0 +1,6 @@
+{
+  "greeting": "Hi, I'm the bot for {group}. I read this channel so {group} can keep track of what it shares and settle up right here, with nothing to install. What I keep is stored on {owner}'s computer, not on Discord, and I answer while that computer is on.",
+  "welcome": "Welcome, {name}. I'm the bot for {group}: I read this channel, and what I keep is stored on {owner}'s computer, not on Discord.",
+  "removed": "You're no longer part of {group}, so I can't write that down.",
+  "not_written": "I couldn't write that down just now. Please try again in a moment."
+}
