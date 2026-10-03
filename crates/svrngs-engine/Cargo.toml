@@ -1,0 +1,13 @@
+[package]
+name = "svrngs-engine"
+description = "The fold engine (DESIGN C4): the Engine trait, and QuickJS embedded behind it."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+# No I/O dependency, ever (DESIGN D2a; scripts/lean_check.py refuses one): an
+# app's exports take JSON and give JSON, and the engine reaches nothing else.
+[dependencies]
+rquickjs = { version = "0.14", default-features = false }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
