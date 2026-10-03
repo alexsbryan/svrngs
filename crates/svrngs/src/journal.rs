@@ -6,9 +6,11 @@ use std::thread::JoinHandle;
 
 use ed25519_dalek::SigningKey;
 use serde::Deserialize;
-use svrngs_core::{ActId, Actor, AppId, Body, Ingest, Journal, OnBehalfOf, Payload, Record};
+use svrngs_core::{
+    ActId, Actor, AppId, Body, Guest, GuestChange, Ingest, Journal, Name, OnBehalfOf, Payload, Record, Speaker,
+};
 use tokio::sync::{mpsc, oneshot};
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 
 use crate::home::sign;
 use crate::store::GroupDir;
@@ -31,8 +33,26 @@ pub enum Appended {
     Taken(ActId),
 }
 
+/// A guest act's outcome: the change, and the act that wrote it if it wrote.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct GuestWritten {
+    pub change: GuestChange,
+    pub id: Option<ActId>,
+}
+
+/// What the chat sees of the group: its name, how many people it has, and
+/// whether anyone has ever entered it from the chat.
+#[derive(Debug, Clone)]
+pub struct GroupView {
+    pub name: Name,
+    pub people: usize,
+    pub entered: bool,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum AppendError {
+    #[error("{} was removed from the group in the chat, and only rejoining lifts that", .0.as_str())]
+    Removed(Speaker),
     #[error("the group's journal could not be written: {0}")]
     Store(String),
     #[error("the journal refused its own act: {0}")]
@@ -43,6 +63,8 @@ pub enum AppendError {
 
 enum Msg {
     Append(BridgeAppend, oneshot::Sender<Result<Appended, AppendError>>),
+    Guest(Guest, oneshot::Sender<Result<GuestWritten, AppendError>>),
+    Group(oneshot::Sender<GroupView>),
 }
 
 #[derive(Clone)]
@@ -52,12 +74,22 @@ pub struct JournalHandle {
 
 impl JournalHandle {
     pub async fn append(&self, req: BridgeAppend) -> Result<Appended, AppendError> {
+        self.ask(|reply| Msg::Append(req, reply)).await?
+    }
+
+    /// Write what the chat reported about a speaker into the guest book.
+    pub async fn guest(&self, guest: Guest) -> Result<GuestWritten, AppendError> {
+        self.ask(|reply| Msg::Guest(guest, reply)).await?
+    }
+
+    pub async fn group(&self) -> Result<GroupView, AppendError> {
+        self.ask(Msg::Group).await
+    }
+
+    async fn ask<T>(&self, msg: impl FnOnce(oneshot::Sender<T>) -> Msg) -> Result<T, AppendError> {
         let (reply, rx) = oneshot::channel();
-        self.tx
-            .send(Msg::Append(req, reply))
-            .await
-            .map_err(|_| AppendError::Stopped)?;
-        rx.await.map_err(|_| AppendError::Stopped)?
+        self.tx.send(msg(reply)).await.map_err(|_| AppendError::Stopped)?;
+        rx.await.map_err(|_| AppendError::Stopped)
     }
 }
 
@@ -83,8 +115,16 @@ pub fn spawn(
         clock,
     };
     let thread = std::thread::spawn(move || {
-        while let Some(Msg::Append(req, reply)) = rx.blocking_recv() {
-            let _ = reply.send(actor.append(req));
+        while let Some(msg) = rx.blocking_recv() {
+            match msg {
+                Msg::Append(req, reply) => drop(reply.send(actor.append(req))),
+                Msg::Guest(guest, reply) => drop(reply.send(actor.guest(guest))),
+                Msg::Group(reply) => drop(reply.send(GroupView {
+                    name: actor.journal.genesis().name.clone(),
+                    people: actor.journal.guests().present().count(),
+                    entered: !actor.journal.guests().is_empty(),
+                })),
+            }
         }
         info!(dir = %actor.dir.path().display(), "journal:stop");
     });
@@ -93,8 +133,6 @@ pub fn spawn(
 
 impl JournalActor {
     fn append(&mut self, req: BridgeAppend) -> Result<Appended, AppendError> {
-        let now = (self.clock)();
-        let actor = Actor::from_key(&self.bridge.verifying_key());
         let interaction = req.on_behalf_of.interaction.clone();
         // A retried interaction — the adapter resending after a restart, on
         // either side — is answered with the act it already made. `taken` is
@@ -103,11 +141,45 @@ impl JournalActor {
             debug!(?id, interaction = interaction.as_str(), "journal:append_taken");
             return Ok(Appended::Taken(*id));
         }
+        // After the retry check, so a tap taken before a ban still answers
+        // with its act; nothing new is written for a removed speaker.
+        let speaker = &req.on_behalf_of.speaker;
+        if !self.journal.guests().may_speak(speaker) {
+            warn!(speaker = speaker.as_str(), "journal:append_speaker_removed");
+            return Err(AppendError::Removed(speaker.clone()));
+        }
         let body = Body::Record(Record {
             app: req.app,
             op: req.op,
             on_behalf_of: Some(req.on_behalf_of),
         });
+        self.write(body)
+    }
+
+    fn guest(&mut self, guest: Guest) -> Result<GuestWritten, AppendError> {
+        let change = self.journal.guests().change(&guest);
+        let speaker = guest.speaker.as_str().to_string();
+        match change {
+            GuestChange::RemovalSticks => {
+                warn!(speaker, event = ?guest.event, "journal:guest_removal_sticks");
+                Err(AppendError::Removed(guest.speaker))
+            }
+            GuestChange::Unchanged => {
+                debug!(speaker, event = ?guest.event, "journal:guest_unchanged");
+                Ok(GuestWritten { change, id: None })
+            }
+            _ => {
+                let (Appended::New(id) | Appended::Taken(id)) = self.write(Body::Guest(guest))?;
+                info!(speaker, ?change, ?id, "journal:guest_written");
+                Ok(GuestWritten { change, id: Some(id) })
+            }
+        }
+    }
+
+    /// Sign `body` with the Bridge key, hold it, and append its line.
+    fn write(&mut self, body: Body) -> Result<Appended, AppendError> {
+        let now = (self.clock)();
+        let actor = Actor::from_key(&self.bridge.verifying_key());
         let draft = self
             .journal
             .draft(&actor, &body, now)
@@ -124,11 +196,11 @@ impl JournalActor {
                 })?;
                 let id = *h.act().id();
                 self.journal.apply(h);
-                debug!(?id, interaction = interaction.as_str(), "journal:append_new");
+                debug!(?id, "journal:write_new");
                 Ok(Appended::New(id))
             }
             Ingest::AlreadyHeld(id) => {
-                debug!(?id, "journal:append_already_held");
+                debug!(?id, "journal:write_already_held");
                 Ok(Appended::Taken(id))
             }
             Ingest::OfferAgain(why) => {

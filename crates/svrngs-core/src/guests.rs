@@ -99,6 +99,11 @@ impl GuestBook {
         }
     }
 
+    /// Whether anyone has ever been entered, removed or not.
+    pub fn is_empty(&self) -> bool {
+        self.events.is_empty()
+    }
+
     /// Everyone in the book who is not removed, by speaker.
     pub fn present(&self) -> impl Iterator<Item = (&Speaker, GuestEntry)> {
         self.events
