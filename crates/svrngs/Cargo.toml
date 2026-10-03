@@ -7,6 +7,7 @@ license.workspace = true
 
 [dependencies]
 svrngs-core = { workspace = true }
+svrngs-engine = { workspace = true }
 anyhow = "1"
 axum = "0.8"
 ed25519-dalek = { workspace = true }

@@ -1,11 +1,13 @@
 //! The svrngs host: one process that keeps a group's journal on this computer
 //! and lets the chat write to it (DESIGN D7 E0). `home` finds the files,
 //! `store` reads and appends the group's directory, `journal` is its one
-//! writer, and `bridge` is the loopback append the chat adapter calls.
+//! writer, `runner` runs the apps' handlers for it, and `bridge` is the
+//! loopback surface the chat adapter calls.
 
 pub mod bridge;
 pub mod home;
 pub mod journal;
+pub mod runner;
 pub mod store;
 
 use std::net::SocketAddr;
@@ -37,11 +39,13 @@ impl Host {
         let (dir, journal) = store::GroupDir::open(&home.group_dir(&id), now())?;
         let keys = home.keys(&id)?;
         let token = home.token()?;
-        let (handle, actor) = journal::spawn(dir, journal, keys.bridge, now);
+        let runner = runner::Runner::built_in()?;
+        let commands = runner.commands().into_iter().cloned().collect();
+        let (handle, actor) = journal::spawn(dir, journal, keys.bridge, now, runner);
         let listener = bridge::bind(port).await?;
         let addr = listener.local_addr()?;
         let (shutdown, stop) = oneshot::channel::<()>();
-        let app = bridge::router(handle, token);
+        let app = bridge::router(handle, token, commands);
         let server = tokio::spawn(async move {
             axum::serve(listener, app)
                 .with_graceful_shutdown(async {

@@ -9,6 +9,7 @@ license = "AGPL-3.0-or-later"
 
 [workspace.dependencies]
 svrngs-core = { path = "crates/svrngs-core" }
+svrngs-engine = { path = "crates/svrngs-engine" }
 blake3 = "1.8"
 ed25519-dalek = "2"
 hex = "0.4"

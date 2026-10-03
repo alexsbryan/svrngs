@@ -13,6 +13,7 @@ use tokio::sync::{mpsc, oneshot};
 use tracing::{debug, error, info, warn};
 
 use crate::home::sign;
+use crate::runner::{Input, Proposal, Reminder, Reply, Runner, RunnerError};
 use crate::store::GroupDir;
 
 /// What the bridge asks to write (DESIGN C2, the bridge append): an app's op,
@@ -23,6 +24,15 @@ use crate::store::GroupDir;
 pub struct BridgeAppend {
     pub app: AppId,
     pub op: Payload,
+    pub on_behalf_of: OnBehalfOf,
+}
+
+/// A chat input for an app to answer (DESIGN C5): the bridge sends one for
+/// every command or tap, and the handler runner decides what it writes.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Invocation {
+    pub input: Input,
     pub on_behalf_of: OnBehalfOf,
 }
 
@@ -57,12 +67,16 @@ pub enum AppendError {
     Store(String),
     #[error("the journal refused its own act: {0}")]
     Refused(String),
+    #[error("the app could not answer: {0}")]
+    App(#[from] RunnerError),
     #[error("the journal has stopped")]
     Stopped,
 }
 
 enum Msg {
     Append(BridgeAppend, oneshot::Sender<Result<Appended, AppendError>>),
+    Run(Invocation, oneshot::Sender<Result<Reply, AppendError>>),
+    Due(oneshot::Sender<Result<Vec<Reminder>, AppendError>>),
     Guest(Guest, oneshot::Sender<Result<GuestWritten, AppendError>>),
     Group(oneshot::Sender<GroupView>),
 }
@@ -75,6 +89,17 @@ pub struct JournalHandle {
 impl JournalHandle {
     pub async fn append(&self, req: BridgeAppend) -> Result<Appended, AppendError> {
         self.ask(|reply| Msg::Append(req, reply)).await?
+    }
+
+    /// Answer a chat input through its app's handlers.
+    pub async fn run(&self, inv: Invocation) -> Result<Reply, AppendError> {
+        self.ask(|reply| Msg::Run(inv, reply)).await?
+    }
+
+    /// The reminders due now, each fulfilled in the journal before it is
+    /// handed back to be posted.
+    pub async fn due(&self) -> Result<Vec<Reminder>, AppendError> {
+        self.ask(Msg::Due).await?
     }
 
     /// Write what the chat reported about a speaker into the guest book.
@@ -98,6 +123,7 @@ struct JournalActor {
     journal: Journal,
     bridge: SigningKey,
     clock: fn() -> u64,
+    runner: Runner,
 }
 
 /// Start the actor on its own thread; it ends when the last handle drops.
@@ -106,6 +132,7 @@ pub fn spawn(
     journal: Journal,
     bridge: SigningKey,
     clock: fn() -> u64,
+    runner: Runner,
 ) -> (JournalHandle, JoinHandle<()>) {
     let (tx, mut rx) = mpsc::channel(64);
     let mut actor = JournalActor {
@@ -113,11 +140,14 @@ pub fn spawn(
         journal,
         bridge,
         clock,
+        runner,
     };
     let thread = std::thread::spawn(move || {
         while let Some(msg) = rx.blocking_recv() {
             match msg {
                 Msg::Append(req, reply) => drop(reply.send(actor.append(req))),
+                Msg::Run(inv, reply) => drop(reply.send(actor.run(inv))),
+                Msg::Due(reply) => drop(reply.send(actor.due())),
                 Msg::Guest(guest, reply) => drop(reply.send(actor.guest(guest))),
                 Msg::Group(reply) => drop(reply.send(GroupView {
                     name: actor.journal.genesis().name.clone(),
@@ -154,6 +184,73 @@ impl JournalActor {
             on_behalf_of: Some(req.on_behalf_of),
         });
         self.write(body)
+    }
+
+    fn run(&mut self, inv: Invocation) -> Result<Reply, AppendError> {
+        let interaction = inv.on_behalf_of.interaction.clone();
+        // A retried tap is answered with the view of the act it already
+        // made, as `append` answers one, and writes nothing.
+        if let Some(id) = self.journal.taken(&interaction).copied() {
+            let app = self.journal.get(&id).and_then(|a| match a.body() {
+                Body::Record(r) => Some(r.app.clone()),
+                _ => None,
+            });
+            debug!(?id, interaction = interaction.as_str(), "journal:run_taken");
+            let app = app.ok_or_else(|| AppendError::Refused(format!("{id} answers no app's input")))?;
+            return Ok(self.runner.say(&self.journal, &app, Some(&id))?);
+        }
+        let speaker = inv.on_behalf_of.speaker.clone();
+        if !self.journal.guests().may_speak(&speaker) {
+            warn!(speaker = speaker.as_str(), "journal:run_speaker_removed");
+            return Err(AppendError::Removed(speaker));
+        }
+        match self.runner.propose(&self.journal, &inv.input, &speaker)? {
+            (_, Proposal::Answer { text, private }) => {
+                debug!(speaker = speaker.as_str(), private, "journal:run_answered");
+                Ok(Reply {
+                    text,
+                    buttons: Vec::new(),
+                    private,
+                })
+            }
+            (app, Proposal::Write { op }) => {
+                let body = Body::Record(Record {
+                    app: app.clone(),
+                    op,
+                    on_behalf_of: Some(inv.on_behalf_of),
+                });
+                let (Appended::New(id) | Appended::Taken(id)) = self.write(body)?;
+                info!(speaker = speaker.as_str(), app = app.as_str(), ?id, "journal:run_wrote");
+                Ok(self.runner.say(&self.journal, &app, Some(&id))?)
+            }
+        }
+    }
+
+    /// Each due item's fulfilment is written before it is handed out, so a
+    /// reminder is posted at most once; one the chat then fails to post is
+    /// the bridge's to report (`bridge:due_post_failed`).
+    fn due(&mut self) -> Result<Vec<Reminder>, AppendError> {
+        let items = self.runner.due(&self.journal, (self.clock)())?;
+        let mut out = Vec::with_capacity(items.len());
+        for (app, item) in items {
+            let body = Body::Record(Record {
+                app,
+                op: item.fulfil,
+                on_behalf_of: None,
+            });
+            let (Appended::New(id) | Appended::Taken(id)) = self.write(body)?;
+            info!(
+                person = item.person.as_str(),
+                due = item.id,
+                ?id,
+                "journal:due_fulfilled"
+            );
+            out.push(Reminder {
+                person: item.person,
+                text: item.text,
+            });
+        }
+        Ok(out)
     }
 
     fn guest(&mut self, guest: Guest) -> Result<GuestWritten, AppendError> {

@@ -5,6 +5,7 @@
 
 import {
   ActionRowBuilder,
+  ApplicationCommandOptionType,
   ButtonBuilder,
   ButtonStyle,
   Client,
@@ -20,11 +21,27 @@ function person(user, member) {
   return { speaker: `discord:${user.id}`, name: member?.displayName ?? user.globalName ?? user.username };
 }
 
+/** How a command option kind the host declares becomes Discord's. */
+const OPTION = { text: ApplicationCommandOptionType.String, person: ApplicationCommandOptionType.User };
+
+/** A command an app declares, as Discord registers it. */
+function command({ name, description, options }) {
+  return {
+    name,
+    description,
+    options: options.map((o) => {
+      if (!(o.kind in OPTION)) throw new Error(`/${name} ${o.name}: no Discord option for the kind ${o.kind}`);
+      return { name: o.name, description: o.description, required: o.required, type: OPTION[o.kind] };
+    }),
+  };
+}
+
 /** Mentions are suppressed, except the people a message names on purpose (C5). */
 function render({ text, buttons = [], mention = [] }) {
+  const users = mention.map((s) => s.replace(/^discord:/, ''));
   const out = {
-    content: text,
-    allowedMentions: { parse: [], users: mention.map((s) => s.replace(/^discord:/, '')) },
+    content: [...users.map((u) => `<@${u}>`), text].join(' '),
+    allowedMentions: { parse: [], users },
   };
   if (buttons.length) {
     const row = new ActionRowBuilder().addComponents(
@@ -77,14 +94,16 @@ export function discordAdapter({ token, channelId }) {
       client.on(Events.InteractionCreate, (i) => {
         if (i.channelId !== channelId || !(i.isChatInputCommand() || i.isButton())) return;
         hold(i.id, i);
+        const options = i.isChatInputCommand() ? i.options.data : [];
+        const isUser = (o) => o.type === ApplicationCommandOptionType.User;
         on.input({
           kind: i.isButton() ? 'button' : 'command',
           ...person(i.user, i.member),
           interaction: i.id,
           command: i.isChatInputCommand() ? i.commandName : undefined,
-          options: i.isChatInputCommand() ? i.options.data.map((o) => ({ name: o.name, value: o.value })) : undefined,
+          options: Object.fromEntries(options.map((o) => [o.name, isUser(o) ? `discord:${o.value}` : o.value])),
           button: i.isButton() ? i.customId : undefined,
-          mentions: [],
+          mentions: options.filter((o) => isUser(o) && o.user && !o.user.bot).map((o) => person(o.user, o.member)),
         });
       });
       const ready = new Promise((resolve) => client.once(Events.ClientReady, resolve));
@@ -109,7 +128,7 @@ export function discordAdapter({ token, channelId }) {
     },
 
     async commands(schemas) {
-      await channel.guild.commands.set(schemas);
+      await channel.guild.commands.set(schemas.map(command));
     },
 
     async close() {

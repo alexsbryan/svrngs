@@ -7,7 +7,12 @@
 //! - `POST /guest` writes what the chat reported about a speaker,
 //!   `{speaker, name, event}`, into the guest book;
 //! - `GET /group` reads the group's name, how many people it has, and whether
-//!   anyone has ever entered it from the chat.
+//!   anyone has ever entered it from the chat;
+//! - `GET /commands` lists the chat commands the apps declare;
+//! - `POST /run` hands a command or a tap, `{input, on_behalf_of}`, to the
+//!   handler runner and returns what to post, `{text, buttons, private}`;
+//! - `POST /due` returns the reminders due now, `[{person, text}]`, each
+//!   already fulfilled in the journal.
 
 use std::net::Ipv4Addr;
 
@@ -23,13 +28,17 @@ use tracing::{debug, warn};
 
 use svrngs_core::{Guest, GuestChange};
 
-use crate::journal::{AppendError, Appended, BridgeAppend, GuestWritten, JournalHandle};
+use crate::journal::{AppendError, Appended, BridgeAppend, GuestWritten, Invocation, JournalHandle};
+use crate::runner::Command;
 
 /// The port the bridge append listens on unless told otherwise.
 pub const DEFAULT_PORT: u16 = 7570;
 pub const APPEND_PATH: &str = "/append";
 pub const GUEST_PATH: &str = "/guest";
 pub const GROUP_PATH: &str = "/group";
+pub const COMMANDS_PATH: &str = "/commands";
+pub const RUN_PATH: &str = "/run";
+pub const DUE_PATH: &str = "/due";
 
 /// The bridge's capability token: 64 hex characters.
 #[derive(Clone)]
@@ -68,14 +77,22 @@ pub async fn bind(port: u16) -> std::io::Result<TcpListener> {
 struct AppState {
     journal: JournalHandle,
     token: Token,
+    commands: std::sync::Arc<Vec<Command>>,
 }
 
-pub fn router(journal: JournalHandle, token: Token) -> Router {
+pub fn router(journal: JournalHandle, token: Token, commands: Vec<Command>) -> Router {
     Router::new()
         .route(APPEND_PATH, post(append))
         .route(GUEST_PATH, post(guest))
         .route(GROUP_PATH, get(group))
-        .with_state(AppState { journal, token })
+        .route(COMMANDS_PATH, get(commands_list))
+        .route(RUN_PATH, post(run))
+        .route(DUE_PATH, post(due))
+        .with_state(AppState {
+            journal,
+            token,
+            commands: std::sync::Arc::new(commands),
+        })
 }
 
 fn reply(status: StatusCode, body: serde_json::Value) -> Response {
@@ -108,7 +125,11 @@ fn failed(e: AppendError) -> Response {
         AppendError::Removed(_) => StatusCode::FORBIDDEN,
         AppendError::Refused(_) => StatusCode::UNPROCESSABLE_ENTITY,
         AppendError::Store(_) | AppendError::Stopped => StatusCode::SERVICE_UNAVAILABLE,
+        AppendError::App(_) => StatusCode::INTERNAL_SERVER_ERROR,
     };
+    if status.is_server_error() {
+        warn!(error = %e, "bridge:failed");
+    }
     let removed = matches!(e, AppendError::Removed(_));
     reply(status, json!({"error": e.to_string(), "removed": removed}))
 }
@@ -153,6 +174,37 @@ async fn group(State(s): State<AppState>, headers: HeaderMap) -> Response {
     }
     match s.journal.group().await {
         Ok(g) => axum::Json(json!({"name": g.name.as_str(), "people": g.people, "entered": g.entered})).into_response(),
+        Err(e) => failed(e),
+    }
+}
+
+async fn commands_list(State(s): State<AppState>, headers: HeaderMap) -> Response {
+    if let Some(r) = refuse_unless_token(&s, &headers) {
+        return r;
+    }
+    axum::Json(s.commands.as_slice()).into_response()
+}
+
+async fn run(State(s): State<AppState>, headers: HeaderMap, body: Bytes) -> Response {
+    if let Some(r) = refuse_unless_token(&s, &headers) {
+        return r;
+    }
+    let req: Invocation = match serde_json::from_slice(&body) {
+        Ok(r) => r,
+        Err(e) => return bad_request(e),
+    };
+    match s.journal.run(req).await {
+        Ok(reply) => axum::Json(reply).into_response(),
+        Err(e) => failed(e),
+    }
+}
+
+async fn due(State(s): State<AppState>, headers: HeaderMap) -> Response {
+    if let Some(r) = refuse_unless_token(&s, &headers) {
+        return r;
+    }
+    match s.journal.due().await {
+        Ok(reminders) => axum::Json(reminders).into_response(),
         Err(e) => failed(e),
     }
 }

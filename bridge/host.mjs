@@ -1,4 +1,4 @@
-// The host's loopback append (crates/svrngs/src/bridge.rs), as the bridge
+// The host's loopback surface (crates/svrngs/src/bridge.rs), as the bridge
 // calls it: every request carries the capability token. A speaker the guest
 // book removed comes back as `{removed: true}`; every other refusal throws.
 
@@ -18,5 +18,8 @@ export function hostClient({ url, token }) {
     group: () => call('GET', '/group'),
     guest: (g) => call('POST', '/guest', g),
     append: (a) => call('POST', '/append', a),
+    commands: () => call('GET', '/commands'),
+    run: (invocation) => call('POST', '/run', invocation),
+    due: () => call('POST', '/due'),
   };
 }

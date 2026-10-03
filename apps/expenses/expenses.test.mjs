@@ -185,7 +185,8 @@ test('a debt left alone is due a reminder once, until it changes', () => {
   assert.deepEqual(due(state, 1000 + REMIND_AFTER_SECS - 1), []);
   const [item] = due(state, 1000 + REMIND_AFTER_SECS);
   assert.equal(item.person, AMA);
-  state = reduce(state, act(null, { kind: 'reminded', due: item.id }, 1000 + REMIND_AFTER_SECS));
+  assert.deepEqual(item.fulfil, { kind: 'reminded', due: item.id });
+  state = reduce(state, act(null, item.fulfil, 1000 + REMIND_AFTER_SECS));
   assert.deepEqual(due(state, 1000 + 10 * REMIND_AFTER_SECS), []);
   state = reduce(state, settle(AMA, SAM, 1000, 2000 + REMIND_AFTER_SECS));
   assert.equal(due(state, 2000 + 2 * REMIND_AFTER_SECS).length, 1, 'a changed debt is due again');

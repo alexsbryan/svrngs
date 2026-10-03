@@ -246,15 +246,20 @@ export function say(state, view) {
 
 /**
  * What is due at `now`: a reminder for each person whose debt has not changed
- * in `REMIND_AFTER_SECS`. Each item's `id` changes when their debt does, and a
- * `reminded` act naming it is what stops it being due.
+ * in `REMIND_AFTER_SECS`. Each item's `id` changes when their debt does, and
+ * its `fulfil` op, written once the reminder is posted, stops it being due.
  */
 export function due(state, now) {
   const items = [];
   for (const [person, cents] of Object.entries(state.balances)) {
     const id = `remind:${person}:${state.since[person]}`;
     if (cents < 0 && now - state.since[person] >= REMIND_AFTER_SECS && !has(state.reminded, id)) {
-      items.push({ id, person, text: `a reminder: you owe ${money(-cents)}. Type /owe to see whom to pay.` });
+      items.push({
+        id,
+        person,
+        text: `a reminder: you owe ${money(-cents)}. Type /owe to see whom to pay.`,
+        fulfil: { kind: REMINDED, due: id },
+      });
     }
   }
   return items;

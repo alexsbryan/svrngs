@@ -843,6 +843,7 @@ dependencies = [
  "serde",
  "serde_json",
  "svrngs-core",
+ "svrngs-engine",
  "tempfile",
  "thiserror",
  "tokio",
