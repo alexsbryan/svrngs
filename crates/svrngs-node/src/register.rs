@@ -9,8 +9,9 @@
 //! Upstream asked the mesh for the first three and the seed for the last
 //! (DESIGN §8, U1's inventory, "the mesh" row).
 //!
-//! The seed is the group's `roster.json`: until U2's link carries it, the
-//! founder's key alone (DESIGN §6).
+//! The seed is the group's `roster.json`: the founder's key alone, bound to
+//! the founder's name, written by `svrngs new` from the group's seed (DESIGN
+//! §6).
 
 use std::collections::BTreeMap;
 

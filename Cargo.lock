@@ -3261,10 +3261,13 @@ dependencies = [
  "hex",
  "serde",
  "serde_json",
+ "svrngs-core",
  "svrngs-node",
  "tempfile",
  "thiserror 2.0.21",
+ "tokio",
  "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

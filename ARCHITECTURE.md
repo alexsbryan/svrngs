@@ -10,8 +10,9 @@ svrngs owns the group's code, forked from commonwealth-ai's ring slice (DESIGN
 §4). The record and the journal on disk have landed; sync, the routes and the
 member door come next, forked the same way (DESIGN §8, U1-U3); of sync, the
 dialling and serving halves over iroh have landed, and the round and its
-route, and the node that runs them. Nothing runs as a program yet: the node
-is a library type, and the `svrngs` command that starts one is U2's.
+route, and the node that runs them. The `svrngs` command runs a node: it
+makes a group, mints its link and runs for every group the computer holds;
+joining by that link is next (U2).
 
 ## Code map
 
@@ -142,6 +143,30 @@ ring's roster be derived from the mesh, `RingRail::roster` and
 `RosterOrigin`, and `ring_sync::roster_names` — went once the register had
 taken their callers, and a peer's seal is pruned against the group's seed
 file.
+
+**`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
+`identity.rs` is the device key, commonwealth-transport's `identity.rs`
+:1-126 at `e1a43bcd2`, its join proof and dial-info signing left behind, its
+`node_pubkey` answering hex; then changed: a key file that cannot be read,
+and a fresh key that cannot be written, refuse naming the file, where
+upstream fell back to a key nobody keeps, and the file is `identity`, a word
+a person may read. `link.rs` is mesh-join-vocab's https guest link
+(`deep_link.rs:228-300`, with its percent helpers), changed to carry the
+group's seed, the link's secret key and its issuer's dial in the fragment,
+on any http(s) origin, `https://svrnme.sh/ring/` by default; the parser
+never reads left of the `#`. `group.rs` is new: a group's `Seed` — its
+name, the founder's name and key, 16 random bytes — whose BLAKE3 hash is
+the group's id and so its directory; `seed.json` holds it beside the
+record, and `Seed::roster` writes the register's seed, `roster.json`, the
+founder's key bound to the founder's name. `cli.rs` is new, in the shape of
+commonwealth-rails' `cli.rs` and `main.rs`: verbs parsed by hand (`svrngs`,
+`new <name> [--as] [--origin]`, `link <group> [--origin]`); one svrngs per
+data dir (`$SVRNGS_DIR`, else `~/.svrngs`), held by a lock on
+`<dir>/lock`; `new` and `link` append an `Invite` through the group's door
+that lapses in a day and print the link; each verb then runs the node until
+Ctrl-C. Refusals are a closed `Refusal` in a person's words, exit 1 for a
+refusal and 3 for a precondition absent. `tests/new.rs` runs one node in
+process.
 
 **`apps/expenses/`**: the Expenses fold (`expenses.js`) and its tests, from E0,
 the bot at tag `e0-bot`. Its reducer (`init`, `reduce`) is what the localhost

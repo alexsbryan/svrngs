@@ -3,7 +3,7 @@
 //! Node identity keys — the Ed25519 keypair behind
 //! [`commonwealth_core::ids::NodePubkey`].
 //!
-//! The 32-byte seed persisted at `<data_dir>/node_key` is, byte for
+//! The 32-byte seed persisted at `<data_dir>/identity` is, byte for
 //! byte, a valid iroh `SecretKey`: when the dial-by-key transport
 //! lands, THIS file is the node's transport identity — verifying a
 //! peer's key and being able to dial it become the same fact. Until
@@ -28,8 +28,10 @@ use std::path::{Path, PathBuf};
 
 use ed25519_dalek::SigningKey;
 
-/// File name under the daemon data dir, sibling of `node_id`.
-pub const NODE_KEY_FILE: &str = "node_key";
+/// File name under the daemon data dir, sibling of `node_id`. (svrngs: the
+/// file a refusal names, so it is called what a person may read — DESIGN
+/// §1 keeps "node" and "key" from them; upstream's was `node_key`.)
+pub const NODE_KEY_FILE: &str = "identity";
 
 /// The pubkey for a signing key, as lowercase hex.
 pub fn node_pubkey(key: &SigningKey) -> String {
@@ -47,7 +49,7 @@ fn load_key(data_dir: &Path) -> std::io::Result<Option<SigningKey>> {
             let seed: [u8; 32] = bytes.as_slice().try_into().map_err(|_| {
                 std::io::Error::new(
                     std::io::ErrorKind::InvalidData,
-                    format!("it is {} bytes, where a key is 32", bytes.len()),
+                    format!("it is {} bytes long, not 32", bytes.len()),
                 )
             })?;
             Ok(Some(SigningKey::from_bytes(&seed)))
@@ -92,7 +94,7 @@ pub enum KeyError {
     },
 }
 
-/// This computer's key: the one at `<data_dir>/node_key`, or, when there
+/// This computer's key: the one at `<data_dir>/identity`, or, when there
 /// is no file there, a fresh one written there first. A file that cannot
 /// be read, and a fresh key that cannot be written, refuse.
 pub fn load_or_generate_node_key(data_dir: &Path) -> Result<SigningKey, KeyError> {

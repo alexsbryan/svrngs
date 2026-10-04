@@ -162,7 +162,7 @@ piece comes over:
 |---|---|---|
 | `svrngs-core` | the record: acts, admission into one order, membership, the sync digest. Pure — no filesystem, clock or network; time and keys are arguments | none |
 | `svrngs-node` | a group's journal on disk; next, sync, the routes and the member door over iroh | the journals |
-| `svrngs` (to come) | the command and the process: `new`, `join`, `share`, and the loopback record API | a device's keys |
+| `svrngs` | the command and the process: `new` and `link` (landed), `join`, `share`, and the loopback record API | a device's keys; each group's seed |
 
 Held to `docs/principles/RUST_ARCH.md`: types encode the domain, ownership
 encodes the architecture, I/O lives at the edge. Parse, don't validate; closed
@@ -212,8 +212,10 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
 - **The group decides who is in it** (U1). Who may connect and who is synced
   come only from the group's register — the key that seeds it, and its
   `Admit` and `Remove` acts as `membership` folds them — never a mesh or a
-  list a door keeps. Until U2's link carries the seed, it is the founder's key
-  alone, in the journal's `roster.json`.
+  list a door keeps. The seed is the founder's key alone, bound to the
+  founder's name: `svrngs new` writes it into the journal's `roster.json`
+  from the group's `seed.json` (`Seed::roster`, `crates/svrngs/src/group.rs`),
+  and the link carries the seed.
 - **A grow-only set, linked like git.** Each act names its author's previous
   act (U2, inside the id and the signature, so the wire changes once, before
   Demo A writes a journal anyone keeps; landed: `SignedOp::prev`, and
@@ -399,7 +401,7 @@ reusable by design.
 | `commonwealth-rails/src/cli.rs` and `main.rs` | four verbs, parsed by hand, no framework; exit codes 0, 1 and 3; a tokio runtime built by hand | the shape of `crates/svrngs`: `new <name>`, `join <link>`, `link <group>`, and the bare command, which runs the node for every group the computer holds. No parser dependency |
 | `commonwealth/crates/commonwealth-rail/examples/stage_member_act.rs:94-157` | an `Admit` signed by a member, timed strictly after everything held | its signing steps are the redemption's write; its timing rule moves into the door (§6) |
 | `sovereign/crates/sovereign-cli-mesh/src/ring_cmd/mod.rs:356-470`, `ring roster add` | joining a ring: two people copy a hex key by hand | replaced by the link; nothing forked |
-| svrngs's own `valid_namespace` (`crates/svrngs-node/src/lib.rs:43-50`) | a group's id is a name the caller types, so two groups called House on one node collide | a group's id is the hash of its seed — the founder's key, the group's name and random bytes drawn at `new` — so the seed in a link proves the id. The name is what a person reads |
+| svrngs's own `valid_namespace` (`crates/svrngs-node/src/lib.rs:43-50`) | a group's id is a name the caller types, so two groups called House on one node collide | a group's id is the hash of its seed — the founder's key and the name they go by, the group's name and random bytes drawn at `new` — so the seed in a link proves the id. The name is what a person reads (landed: `crates/svrngs/src/group.rs`; the founder's name added, since the register binds every seed key to a person) |
 
 Four facts follow. *Only the issuer redeems:* a link works while its
 issuer's computer is reachable; Sam's always-on computer is, in both demos,

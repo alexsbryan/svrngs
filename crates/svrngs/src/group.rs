@@ -18,7 +18,7 @@ use std::path::{Path, PathBuf};
 
 use ed25519_dalek::VerifyingKey;
 use serde::{Deserialize, Serialize};
-use svrngs_node::{namespaces_in, Person, Roster, SigningKey};
+use svrngs_node::{namespaces_in, Person, Roster};
 
 /// Domain separator for a group id's hash, so an id is never the hash of
 /// anything else svrngs hashes (an act id is `svrngs/act/v1`).
@@ -67,12 +67,12 @@ impl Seed {
     /// A new group's seed: `founder` names the person holding `key`, and
     /// 16 bytes are drawn so that a second group of the same name by the
     /// same person is a second group.
-    pub fn draw(name: Name, founder: Name, key: &SigningKey) -> Self {
+    pub fn draw(name: Name, founder: Name, key: VerifyingKey) -> Self {
         let mut salt = [0u8; 16];
         // As identity.rs: getrandom failing is a host with no entropy, and
         // no group can be made on it.
         getrandom::fill(&mut salt).expect("failed to draw a group's salt");
-        Self::from_parts(name, founder, key.verifying_key(), salt)
+        Self::from_parts(name, founder, key, salt)
     }
 
     pub fn from_parts(name: Name, founder: Name, key: VerifyingKey, salt: [u8; 16]) -> Self {
