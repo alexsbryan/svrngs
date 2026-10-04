@@ -42,3 +42,6 @@ empty_line_after_doc_comments = "allow"
 cloned_ref_to_slice_refs = "allow"
 explicit_auto_deref = "allow"
 useless_vec = "allow"
+# Upstream's workspace allowance (commonwealth-ai Cargo.toml:312 at
+# e1a43bcd2), kept for rail.rs's doors, which refuse with a `Response`.
+result_large_err = "allow"

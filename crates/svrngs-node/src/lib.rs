@@ -224,6 +224,12 @@ pub mod register;
 // second ALPN, and the joiner's call to it.
 pub mod redeem;
 
+// The record over loopback, U3's (docs/DESIGN.md §8, U3's inventory): the
+// rail's append and log doors (`commonwealth-rails`' `rail.rs`), on a
+// listener that refuses any address but loopback (its `api.rs`).
+pub mod api;
+pub mod rail;
+
 // The node, U1's (docs/DESIGN.md §8): the rail, the endpoint, the accept loop
 // serving the sync route and the round, in place of upstream's `RailsDaemon`.
 pub mod node;

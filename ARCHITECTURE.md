@@ -165,6 +165,19 @@ ring's roster be derived from the mesh, `RingRail::roster` and
 taken their callers, and a peer's seal is pruned against the group's seed
 file.
 
+The record over loopback (DESIGN §8, U3's inventory, the rail.rs row) is
+`rail.rs` and `api.rs`, commonwealth-rails' `rail.rs` and `api.rs` at
+`e1a43bcd2`: the append door (`append_act`) and the log (`log_answer`), with
+`RailQuery`, `namespace_of` and `journal_of`, served as an `axum::Router`
+(`api::router`) by `api::serve`, which refuses any address but loopback
+(`check_loopback`). Its edits: the doors read the journals from a `RailApi`
+where upstream's read `RailsDaemon`; the roster they read is the group's
+seed file, since upstream's `RingRail::roster` went in U1, and so the
+not-in-roster sentence is the rail's own, where upstream chose it by the
+roster's origin; `err` is the one `ring_routes.rs` carries. The sync doors,
+`attest` and the live lane stay behind, and with them the other routes
+beside them in upstream's `api.rs`.
+
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`
 :1-126 at `e1a43bcd2`, its join proof and dial-info signing left behind, its
