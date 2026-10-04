@@ -9,6 +9,43 @@
 > in backticks that is not in this repository is in commonwealth-ai: code this
 > design ports from, cites or replaces, never code it links.
 
+## Direction, 2026-10-03 — this section overrides everything below it
+
+The operator, after E0's code was built: "I don't really want integration code
+in our library. The only responsibility should be creating the ring from discord
+(in the most generic way) and something of `exec` level simplicity for running
+whatever is on the ring." And the promise to developers: **"anything you can
+run on localhost you can share on the ring."**
+
+- **An app is a localhost service.** A member shares it with one command,
+  `svrngs share <port>`, and every other member reaches it through the member
+  door over iroh, their identity verified in a header the app can read. The app
+  needs no login, no SDK and no bundle. Jellyfin is an app; Expenses is a small
+  web app on localhost. The door — C3, once one app class among seven — is the
+  platform.
+- **The ring offers its record to apps.** An app that wants shared state that
+  outlives its host's computer appends acts to the ring's journal and reads
+  them back, over a localhost API on its own node; every member's copy holds
+  them. An app may keep its own state instead; the ring does not care. A fold
+  engine on members' devices (`svrngs-engine`, QuickJS) waits in D8 until an app
+  needs its state offline on a device that is not its host.
+- **Joining starts on computers.** `svrngs join <link>` puts a person's computer
+  in the ring, and they open shared apps in their own browser at a localhost
+  address their node serves, tunnelled to the app's host. A browser with nothing
+  installed comes next, through iroh in wasm, as commonwealth-ai's
+  `docs/THE_LINK.md` designs it; its status table lists the dial from a stock
+  browser tab as unverified.
+- **Chats are doors, outside svrngs.** svrngs exposes `svrngs ring new` → a
+  link, and `svrngs join <link>`. A small adapter per chat — Discord, Slack —
+  lives in its own package and does only "make a ring for this channel and post
+  its link". The core never knows a chat exists.
+
+What E0 built that this keeps: the record (`svrngs-core`), the journal actor,
+the group's directory, keys. What it sets aside: the bridge as a runtime (slash
+commands, the handler runner answering in the chat), guest-grade acting without
+a key, the origin gate, and E0's experiments and bars, which are re-derived from
+this section.
+
 ## D0. What it must do well, and nothing else
 
 **The pitch, which every person-facing surface is held to:** *Keep talking
