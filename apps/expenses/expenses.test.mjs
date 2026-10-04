@@ -10,6 +10,7 @@ import { test } from 'node:test';
 
 import {
   EXPENSE,
+  actsOf,
   SETTLE,
   SHARE,
   init,
@@ -144,4 +145,23 @@ test('who owes whom settles every balance in a few payments', () => {
     balances[t.to] -= t.cents;
   }
   assert.deepEqual(Object.values(balances), [0, 0, 0, 0]);
+});
+
+test('the record\'s log: `by` is whom an app wrote for, else the computer\'s person; voided and empty ops are not acts', () => {
+  const op = (id, extra) => ({ id, actor: 'k1', person: 'sam', seq: 0, ts_unix: 7, voided: false, ...extra });
+  const pizza = { kind: EXPENSE, amount_cents: 6000, description: 'pizza' };
+  const log = {
+    ops: [
+      op('o1', {}), // the group's own act: no payload
+      op('o2', { payload: pizza }),
+      op('o3', { payload: { kind: SHARE, expense: 'o2' }, on_behalf_of: 'bo' }),
+      op('o4', { payload: pizza, voided: true }),
+      op('o5', { corrects: 'o4' }), // voids, states nothing
+    ],
+  };
+  assert.deepEqual(actsOf(log), [
+    { id: 'o2', ts: 7, by: 'sam', op: pizza },
+    { id: 'o3', ts: 7, by: 'bo', op: { kind: SHARE, expense: 'o2' } },
+  ]);
+  assert.throws(() => actsOf({ error: 'not held' }), /no list of acts/);
 });

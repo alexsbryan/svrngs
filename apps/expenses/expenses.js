@@ -3,13 +3,16 @@
 // Expenses: who paid for what, who was in on it, and who owes whom. This file
 // is the app; the runtime folds its acts and has never heard of an expense.
 //
-// The runtime hands `reduce` this app's acts, in one order every copy computes,
-// with voided ones gone. Each act is `{id, ts, by, op}`: `by` is the person
-// the act speaks for — in E0 (tag e0-bot) the chat speaker, in the localhost
-// app of DESIGN U3 the verified person — or null when no one did. So a reducer cannot disagree with another copy about which acts it
-// saw or in what order. What it CAN get wrong is the arithmetic, which is why
-// the arithmetic is here, in one file, with tests (`expenses.test.mjs`) and
-// the laws (`laws.test.mjs`).
+// `reduce` folds this app's acts as the record orders them on every copy,
+// with voided ones gone: `actsOf` reads them from the record a member's node
+// serves over loopback (`GET /v1/rail/log`, DESIGN §3). Each act is
+// `{id, ts, by, op}`: `by` is the person the act speaks for — the person an
+// app named when it wrote for someone the door verified, else the person
+// whose computer wrote it (in E0, tag e0-bot, the chat speaker) — or null
+// when no one did. So a reducer cannot disagree with another copy about which
+// acts it saw or in what order. What it CAN get wrong is the arithmetic, which
+// is why the arithmetic is here, in one file, with tests (`expenses.test.mjs`)
+// and the laws (`laws.test.mjs`); `canary.mjs` folds two computers' copies.
 //
 // ── the rules worth reading before you change anything ──
 //
@@ -112,6 +115,21 @@ export function validate(state, act) {
     gaps.push(gap('bad_settle', 'paying back no one, or yourself'));
   }
   return gaps;
+}
+
+/**
+ * The acts `reduce` folds, from the record's answer to `GET /v1/rail/log`: its
+ * ops in the record's order, less every op a correction voided and every op
+ * that carries nothing for an app (the group's own acts, and a correction
+ * that only voids). A correction's replacement is an act of its own, under
+ * the correction's id. `by` is `on_behalf_of` when the op names one, else
+ * its `person`. A log with no list of ops is an error, never an empty book.
+ */
+export function actsOf(log) {
+  if (!Array.isArray(log?.ops)) throw new Error(`the record answered no list of acts: ${JSON.stringify(log)}`);
+  return log.ops
+    .filter((o) => !o.voided && o.payload != null)
+    .map((o) => ({ id: o.id, ts: o.ts_unix, by: o.on_behalf_of ?? o.person, op: o.payload }));
 }
 
 /** The empty book. */
