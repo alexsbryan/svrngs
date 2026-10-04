@@ -6,6 +6,8 @@
       "Read", "Edit", "Write", "MultiEdit", "Glob", "Grep", "TodoWrite",
       "Bash(git status*)", "Bash(git diff*)", "Bash(git log*)", "Bash(git show*)",
       "Bash(git grep*)", "Bash(git rev-parse*)", "Bash(git ls-files*)",
+      "Bash(git -C ~/dev/commonwealth-ai show *)", "Bash(git -C /Users/alexsbryan/dev/commonwealth-ai show *)",
+      "Bash(git -C ~/dev/commonwealth-ai ls-tree *)", "Bash(git -C /Users/alexsbryan/dev/commonwealth-ai ls-tree *)",
       "Bash(git add *)", "Bash(git commit *)", "Bash(git checkout -- *)", "Bash(git restore *)",
       "Bash(scripts/check.sh*)", "Bash(./scripts/check.sh*)",
       "Bash(scripts/ralph-mark.sh *)", "Bash(./scripts/ralph-mark.sh *)",
