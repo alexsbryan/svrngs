@@ -13,7 +13,7 @@ use axum::http::StatusCode;
 
 use crate::{actor_of, Person, RingRail, RingSigner, Roster, SigningKey};
 
-use super::{append_act, drain_answer, journal_of, push_answer, LiveBuffer};
+use super::{append_act, drain_answer, journal_of, push_answer, LiveBuffer, RailApi};
 
 fn key(seed: u8) -> SigningKey {
     SigningKey::from_bytes(&[seed; 32])
@@ -290,33 +290,45 @@ fn the_live_buffer_evicts_the_oldest_and_reports_it() {
 }
 
 /// The live lane's refusals are named, and its success honestly reports
-/// that nothing was fanned out — this daemon carries no fabric.
-#[test]
-fn live_push_reports_the_absence_of_the_fan_out() {
-    let live = LiveBuffer::default();
+/// what was fanned out. (svrngs: upstream's daemon carried no fabric, and
+/// reported `peers: []`; here the push is offered to each key standing in
+/// the group but this node's, and the answer names each and whether it took
+/// it. Bo stands in `ledger` with no address and no lookup to find one, so
+/// Bo is named, not delivered, with the reason; nothing is buffered here,
+/// and a group not held is refused as the append door refuses it.)
+#[tokio::test]
+async fn live_push_reports_each_peer_it_offered_the_payload() {
+    let (_dir, rail) = rail_with(&[("ada", 7), ("bo", 3)]);
+    let endpoint = crate::iroh::tests::hermetic_endpoint(7, Vec::new()).await;
+    let api = RailApi {
+        rail,
+        nudge: Arc::new(tokio::sync::Notify::new()),
+        live: Arc::new(LiveBuffer::default()),
+        transport: Arc::new(crate::iroh::IrohTransport::new(endpoint.clone())),
+    };
     let oversize = vec![b'x'; 4097];
-    let resp = push_answer(&live, "room", oversize.into());
+    let resp = push_answer(&api, "ledger", oversize.into()).await;
     assert_eq!(resp.status(), StatusCode::PAYLOAD_TOO_LARGE);
     let not_text = vec![0xff, 0xfe, 0x00];
-    let resp = push_answer(&live, "room", not_text.into());
+    let resp = push_answer(&api, "ledger", not_text.into()).await;
     assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    let resp = push_answer(&api, "elsewhere", b"a".to_vec().into()).await;
+    assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+    assert_eq!(body_of(resp).await["kind"], "not_held");
     let fits = vec![b'a'; 4096];
-    let resp = push_answer(&live, "room", fits.into());
+    let resp = push_answer(&api, "ledger", fits.into()).await;
     assert_eq!(resp.status(), StatusCode::OK);
-    let rt = tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build()
-        .unwrap();
-    let out = rt.block_on(body_of(resp));
+    let out = body_of(resp).await;
     assert_eq!(out["bytes"], 4096);
-    assert_eq!(out["peers"].as_array().unwrap().len(), 0);
+    let peers = out["peers"].as_array().unwrap();
+    assert_eq!(peers.len(), 1, "this node is not its own peer: {out}");
+    assert_eq!(peers[0]["node"], actor_of(&key(3)));
+    assert_eq!(peers[0]["name"], "bo");
+    assert_eq!(peers[0]["delivered"], false);
+    assert!(peers[0]["error"].as_str().is_some_and(|e| !e.is_empty()));
     assert_eq!(out["delivered"], 0);
-    let resp = drain_answer(&live, "room");
-    let rt = tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build()
-        .unwrap();
-    let out = rt.block_on(body_of(resp));
-    assert_eq!(out["payloads"].as_array().unwrap().len(), 1);
+    let out = body_of(drain_answer(&api.live, "ledger")).await;
+    assert_eq!(out["payloads"].as_array().unwrap().len(), 0);
     assert_eq!(out["dropped"], 0);
+    endpoint.close().await;
 }

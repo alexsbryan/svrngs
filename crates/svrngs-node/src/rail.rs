@@ -31,7 +31,11 @@
 //! its own Cargo description). The buffer, the caps and the answer shape
 //! are the daemon's (`peers: []`, `delivered: 0` — the fan-out's absence is
 //! reported in the body, not papered over); peer delivery arrives with
-//! fp-54's dial.
+//! fp-54's dial. (svrngs: it arrives here: the push door fans each payload
+//! out over iroh to the keys standing in the group but this node's
+//! ([`crate::live::push_ephemeral`]), and the answer names each and whether
+//! it took it. Nothing is buffered on the pushing node; its own apps hear
+//! the others, not themselves, as with the daemon's lane.)
 
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
@@ -43,6 +47,8 @@ use axum::Json;
 use serde::Deserialize;
 
 // rail.rs's refusal body came over with the sync route (u1-3), so there is one.
+use crate::iroh::{actor_key, Contact, IrohTransport};
+use crate::live::{push_ephemeral, LivePeer};
 use crate::register::{standing_in, Standing};
 use crate::ring_routes::err;
 use crate::{
@@ -59,6 +65,8 @@ pub struct RailApi {
     pub rail: Arc<RingRail>,
     pub nudge: Arc<tokio::sync::Notify>,
     pub live: Arc<LiveBuffer>,
+    /// The node's dial-by-key transport, the live lane's fan-out rides it.
+    pub transport: Arc<IrohTransport>,
 }
 
 // ── The doors ────────────────────────────────────────────────
@@ -513,11 +521,14 @@ impl LiveBuffer {
 
 /// POST /v1/rail/live — take one ephemeral payload for the named namespace.
 ///
-/// Nothing is written anywhere, and nothing is fanned out: the peer round
-/// runs over sovereign-mesh's fabric, which this daemon does not carry, so
-/// the answer reports the absence honestly — `peers: []`, `delivered: 0` —
-/// rather than a success that would read as "everyone saw it".
-fn push_answer(live: &LiveBuffer, namespace: &str, body: axum::body::Bytes) -> Response {
+/// Nothing is written anywhere. (svrngs: and it is fanned out, as the
+/// daemon's `live_push` fanned it: offered to every key standing in the
+/// group but this node's, each dialled over the node's [`IrohTransport`],
+/// and the answer names each peer and whether it took the payload —
+/// `delivered` counts them, so a lane half up is never read as "everyone
+/// saw it". A group this computer does not hold, or holds with no seed, is
+/// refused as the append door refuses it ([`standing_of`]), nothing sent.)
+async fn push_answer(api: &RailApi, namespace: &str, body: axum::body::Bytes) -> Response {
     if body.len() > LIVE_PAYLOAD_MAX_BYTES {
         tracing::debug!(
             target: "rails",
@@ -548,19 +559,55 @@ fn push_answer(live: &LiveBuffer, namespace: &str, body: axum::body::Bytes) -> R
             );
         }
     };
-    live.push(namespace, payload.to_string());
+    let standing = match standing_of(&api.rail, namespace) {
+        Ok(people) => people,
+        Err(refusal) => return refusal,
+    };
+    let peers = live_peers(&api.rail.signer().actor(), namespace, &standing);
+    let peers = push_ephemeral(&api.transport, peers, namespace, payload).await;
+    let delivered = peers.iter().filter(|p| p.delivered).count();
     tracing::debug!(
         target: "rails",
         namespace,
         bytes = body.len(),
-        "rail live: buffered one payload (no peer fan-out on this daemon)"
+        peers = peers.len(),
+        delivered,
+        "rail live: fanned out one payload"
     );
     Json(serde_json::json!({
         "bytes": body.len(),
-        "peers": [],
-        "delivered": 0,
+        "peers": peers,
+        "delivered": delivered,
     }))
     .into_response()
+}
+
+/// The peers a live payload in `namespace` is offered to: every key
+/// standing in it but `this` node's, each by its key alone, named by its
+/// person. A standing key that is not an iroh key is not dialled, and the
+/// trace says so. New (u3-3): upstream walked the mesh's Online members.
+fn live_peers(this: &str, namespace: &str, standing: &BTreeMap<String, Person>) -> Vec<LivePeer> {
+    let mut peers = Vec::new();
+    for (actor, person) in standing {
+        if actor == this {
+            continue;
+        }
+        let Some(key) = actor_key(actor) else {
+            tracing::warn!(target: "rails", namespace, actor, "rail live: a standing key is not an iroh key, so it is not offered the payload");
+            continue;
+        };
+        tracing::debug!(target: "rails", namespace, actor, %person, "rail live: a person stands in the group, to offer the payload");
+        peers.push(LivePeer {
+            node: actor.clone(),
+            name: Some(person.to_string()),
+            contact: Contact {
+                key,
+                relay_url: None,
+                iroh_direct_addrs: Vec::new(),
+            },
+        });
+    }
+    peers
 }
 
 /// GET /v1/rail/live — drain the caller's namespace since the last call.
@@ -593,7 +640,7 @@ pub async fn live_push(
         Ok(ns) => ns,
         Err(refusal) => return refusal,
     };
-    push_answer(&api.live, &namespace, body)
+    push_answer(&api, &namespace, body).await
 }
 
 /// GET /v1/rail/live.

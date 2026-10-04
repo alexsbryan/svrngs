@@ -340,6 +340,13 @@ pub fn key_actor(key: &PublicKey) -> String {
     hex::encode(key.as_bytes())
 }
 
+/// The iroh key an actor's lowercase hex spells, or `None` — the inverse of
+/// [`key_actor`], for a key the register names that the node dials.
+pub fn actor_key(actor: &str) -> Option<PublicKey> {
+    let bytes: [u8; 32] = hex::decode(actor).ok()?.try_into().ok()?;
+    PublicKey::from_bytes(&bytes).ok()
+}
+
 /// Server half: accept iroh connections, and serve each bi-stream of an
 /// admitted one with hyper's HTTP/1 server and the caller's router.
 pub struct IrohAcceptor {

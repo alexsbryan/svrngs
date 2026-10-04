@@ -35,8 +35,8 @@ use std::sync::Arc;
 use tokio::sync::Notify;
 
 use crate::iroh::{
-    build_relayed_endpoint, format_dial_string, key_actor, Admit, Alpn, Contact, Endpoint,
-    EndpointAddr, IrohAcceptor, IrohTransport, PublicKey, RelayConfig, SecretKey,
+    actor_key, build_relayed_endpoint, format_dial_string, key_actor, Admit, Alpn, Contact,
+    Endpoint, EndpointAddr, IrohAcceptor, IrohTransport, PublicKey, RelayConfig, SecretKey,
 };
 use crate::rail::{LiveBuffer, RailApi};
 use crate::redeem::SeedText;
@@ -77,7 +77,7 @@ pub struct Node {
 pub struct Host {
     rail: Arc<RingRail>,
     endpoint: Endpoint,
-    transport: IrohTransport,
+    transport: Arc<IrohTransport>,
     actor: String,
 }
 
@@ -112,15 +112,7 @@ impl Node {
         let nudge = Arc::new(Notify::new());
         // One live buffer: the live route fills it, the loopback drain empties it.
         let live = Arc::new(LiveBuffer::default());
-        let api = crate::api::serve(
-            RailApi {
-                rail: rail.clone(),
-                nudge: nudge.clone(),
-                live: live.clone(),
-            },
-            api,
-        )
-        .await?;
+        let api = crate::api::bind(api).await?;
         let endpoint = build_relayed_endpoint(
             secret,
             Alpn::ALL.iter().map(|a| a.bytes().to_vec()).collect(),
@@ -128,6 +120,18 @@ impl Node {
         )
         .await
         .map_err(NodeError::Endpoint)?;
+        // One transport: the round dials through it, and so does the live
+        // lane's fan-out, which the record API runs (u3-3).
+        let transport = Arc::new(IrohTransport::new(endpoint.clone()));
+        let api = crate::api::serve(
+            RailApi {
+                rail: rail.clone(),
+                nudge: nudge.clone(),
+                live: live.clone(),
+                transport: transport.clone(),
+            },
+            api,
+        );
         tracing::info!(
             target: "node",
             actor,
@@ -151,7 +155,7 @@ impl Node {
                 }
             });
         let host = Arc::new(Host {
-            transport: IrohTransport::new(endpoint.clone()),
+            transport,
             rail,
             endpoint,
             actor,
@@ -267,7 +271,7 @@ impl Host {
                 if *actor == self.actor || keys.contains_key(actor) {
                     continue;
                 }
-                let Some(key) = key_of(actor) else {
+                let Some(key) = actor_key(actor) else {
                     tracing::warn!(target: "node", namespace, actor, "node: a standing key is not an iroh key, so it is not dialled");
                     continue;
                 };
@@ -320,10 +324,4 @@ fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn
     }
     tracing::debug!(target: "node", actor, groups = namespaces.len(), "node: refused — the dialer stands in no group held here");
     None
-}
-
-/// The iroh key an actor's lowercase hex spells, or `None`.
-fn key_of(actor: &str) -> Option<PublicKey> {
-    let bytes: [u8; 32] = hex::decode(actor).ok()?.try_into().ok()?;
-    PublicKey::from_bytes(&bytes).ok()
 }

@@ -121,11 +121,13 @@ rewrite.
 What runs is the node (`node.rs`), new code in place of upstream's
 `RailsDaemon` and `RailsNode` wiring, which did not come over. `Node::start`
 takes a data dir, a signing key, a `RelayConfig` and the loopback address
-it serves the record to this computer's apps on (`api::serve`, refusing any
-other; `Node::api_addr` answers the port bound); it binds the endpoint
+it serves the record to this computer's apps on (`api::bind`, refusing any
+other, before the endpoint; `api::serve` once the endpoint's transport,
+which the live lane dials through, exists; `Node::api_addr` answers the port bound); it binds the endpoint
 with that key, so the key that signs a group's acts is the key iroh verifies
 when the node dials (DESIGN §8, "Four facts"), and holds the `RingRail`
-signed by it, an `IrohTransport` over the endpoint, the accept loop serving
+signed by it, an `IrohTransport` over the endpoint, which the round and the
+live lane share, the accept loop serving
 the sync route's router on the members' ALPN and the redemption route on
 the second, and the round, which runs at start, every sixty seconds and at
 once after an app's append (one `Notify`, held by the round and the record
@@ -189,11 +191,14 @@ roster's origin; `err` is the one `ring_routes.rs` carries; `serve`
 answers the address it bound with the task (`Serving`, which stops the
 listener when dropped), where upstream's answered the task alone. The live
 lane came over in U3: `LiveBuffer`, bounded per group, which the live route
-fills and `GET /v1/rail/live` drains, and `POST /v1/rail/live`, which
-buffers locally and answers `peers: []`, as upstream's did; `live.rs` is the
-inference daemon's fan-out (`routes_rail_live.rs`, `push_ephemeral` and
-`offer_peer`), its walk of the mesh's Online members cut, so its caller
-names the peers (`LivePeer`), each dialled at its one `base_url`. The sync
+fills and `GET /v1/rail/live` drains, and `POST /v1/rail/live`; `live.rs`
+is the inference daemon's fan-out (`routes_rail_live.rs`, `push_ephemeral`
+and `offer_peer`), its walk of the mesh's Online members cut, so its caller
+names the peers (`LivePeer`), each dialled at its one `base_url`. Then it
+changed: the push door, which buffered locally and answered `peers: []`,
+offers the payload to every key standing in the group but this node's
+(`live_peers`, from the register), over the node's `IrohTransport`, held
+by `RailApi`, and answers each peer and whether it took it. The sync
 doors and `attest` stay behind, and with them the other routes beside them
 in upstream's `api.rs`. Then it changed: the append door's
 attestation branch went with `attest`. An append's `on_behalf_of` is the

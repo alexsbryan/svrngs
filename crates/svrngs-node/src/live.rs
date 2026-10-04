@@ -23,8 +23,8 @@
 //! :76-196; the daemon's `live_push` and `live_drain` did not, since the
 //! node's own doors are rail.rs's, [`crate::rail`]. The walk of the mesh's
 //! Online members that chose the peers went with the mesh, and the caller
-//! names them, [`LivePeer`]; nothing calls the fan-out yet. DESIGN §8, U3's
-//! inventory.)
+//! names them, [`LivePeer`]: the push door, [`crate::rail`], names the keys
+//! standing in the group but this node's. DESIGN §8, U3's inventory.)
 
 use axum::http::StatusCode;
 
@@ -56,14 +56,14 @@ pub struct LivePeer {
 /// What happened when one peer was offered a payload.
 #[derive(Debug, serde::Serialize)]
 pub struct PeerDelivery {
-    node: String,
-    name: Option<String>,
-    delivered: bool,
+    pub node: String,
+    pub name: Option<String>,
+    pub delivered: bool,
     /// Why not, in the words of whatever refused. Present iff `delivered` is
     /// false — the page shows a live lane that is half up rather than
     /// believing a 200 meant everyone saw it.
     #[serde(skip_serializing_if = "Option::is_none")]
-    error: Option<String>,
+    pub error: Option<String>,
 }
 
 /// POST `bytes` to every online peer's `/internal/ring/live`, concurrently.

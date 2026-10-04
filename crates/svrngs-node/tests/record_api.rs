@@ -1,6 +1,7 @@
-//! The record over loopback (DESIGN §3, §8 U3's inventory, the u3-2 row): an
-//! app on a member's computer appends to its group, reads the log and the
-//! people, on a listener bound to 127.0.0.1, and nothing else reaches it.
+//! The record over loopback (DESIGN §3, §8 U3's inventory, the u3-2 and
+//! u3-3 rows): an app on a member's computer appends to its group, reads the
+//! log and the people, and pushes and drains the live lane, on a listener
+//! bound to 127.0.0.1, and nothing else reaches it.
 //! Nodes in one process, no relay; peers are reached by seeded addresses,
 //! as `group_not_mesh.rs` does.
 
@@ -70,8 +71,13 @@ fn hold(node: &Node, ns: &str, founder: u8) {
 /// The founder admits `joining` as `person` through its door, as a test
 /// admits a member by hand (DESIGN §8, U1).
 fn admit(node: &Node, founder: u8, person: &str, joining: u8) {
+    admit_to(node, NS, founder, person, joining)
+}
+
+/// [`admit`], to the group `ns`.
+fn admit_to(node: &Node, ns: &str, founder: u8, person: &str, joining: u8) {
     node.rail()
-        .journal(NS)
+        .journal(ns)
         .unwrap()
         .append(
             RailAct::Admit {
@@ -247,16 +253,26 @@ async fn the_people_read_lists_a_and_b_with_their_keys() {
 
 /// The record API's router over a rail of its own, with no listener: a
 /// request is handed whatever caller address the test names, as the
-/// listener hands every request its own.
-fn api_alone(dir: &tempfile::TempDir) -> axum::Router {
-    svrngs_node::api::router(svrngs_node::rail::RailApi {
+/// listener hands every request its own. The endpoint is kept for the
+/// transport the live lane dials through.
+async fn api_alone(dir: &tempfile::TempDir) -> (axum::Router, svrngs_node::iroh::Endpoint) {
+    let endpoint = svrngs_node::iroh::build_relayed_endpoint(
+        svrngs_node::iroh::SecretKey::from_bytes(&signing(1).to_bytes()),
+        Vec::new(),
+        &no_relay(),
+    )
+    .await
+    .unwrap();
+    let router = svrngs_node::api::router(svrngs_node::rail::RailApi {
         rail: std::sync::Arc::new(svrngs_node::RingRail::new(
             dir.path(),
             std::sync::Arc::new(signing(1)),
         )),
         nudge: std::sync::Arc::new(tokio::sync::Notify::new()),
         live: Default::default(),
-    })
+        transport: std::sync::Arc::new(svrngs_node::iroh::IrohTransport::new(endpoint.clone())),
+    });
+    (router, endpoint)
 }
 
 /// A request to the people door from `caller`, if any; its status and body.
@@ -287,7 +303,7 @@ async fn ask_as(router: axum::Router, caller: Option<SocketAddr>) -> (u16, serde
 #[tokio::test]
 async fn a_caller_not_on_loopback_is_refused_by_name() {
     let dir = tempfile::tempdir().unwrap();
-    let router = api_alone(&dir);
+    let (router, _endpoint) = api_alone(&dir).await;
     for caller in ["192.168.1.5:50000", "[2001:db8::5]:50000"] {
         let (status, out) = ask_as(router.clone(), Some(caller.parse().unwrap())).await;
         assert_eq!(status, 403, "{caller}: {out}");
@@ -311,5 +327,138 @@ async fn a_caller_not_on_loopback_is_refused_by_name() {
             (404, &serde_json::json!("not_held")),
             "{caller} reaches the door, which holds no group: {out}"
         );
+    }
+}
+
+/// A live push from an app on `node`'s computer to `ns`: its status and body.
+async fn push(node: &Node, ns: &str, payload: Vec<u8>) -> (u16, serde_json::Value) {
+    let answer = app()
+        .post(format!(
+            "http://{}/v1/rail/live?namespace={ns}",
+            node.api_addr()
+        ))
+        .body(payload)
+        .send()
+        .await
+        .unwrap();
+    (answer.status().as_u16(), answer.json().await.unwrap())
+}
+
+/// What an app on `node`'s computer drains from `ns`'s live lane.
+async fn drain(node: &Node, ns: &str) -> serde_json::Value {
+    app()
+        .get(format!(
+            "http://{}/v1/rail/live?namespace={ns}",
+            node.api_addr()
+        ))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap()
+}
+
+/// A founds `ns` and admits B as bo by an act, so B stands by the register
+/// and not by the seed; B holds `ns` too, and A can reach B.
+async fn a_and_b_in(ns: &str, a: &Node, b: &Node) {
+    hold(a, ns, 1);
+    admit_to(a, ns, 1, "bo", 2);
+    hold(b, ns, 1);
+    a.transport()
+        .add_known_peer(key(2), loopback_sockets(b.endpoint()));
+}
+
+/// **A pushes on loopback and B drains the payload** (the u3-3 row): an app
+/// on A's computer pushes to the group; A offers it over iroh to every key
+/// standing in it but its own — B, admitted by an act, not named in the
+/// seed — and says B took it; an app on B's computer drains it, once.
+/// Nothing is buffered on A. The failing input: the fan-out sent to the
+/// seed's keys instead of the register's (B is not offered it).
+#[tokio::test]
+async fn a_pushes_on_loopback_and_b_drains_the_payload() {
+    let (da, db) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (a, b) = (start(1, &da).await, start(2, &db).await);
+    a_and_b_in(NS, &a, &b).await;
+
+    let (status, out) = push(&a, NS, b"AQID".to_vec()).await;
+    assert_eq!(status, 200, "{out}");
+    assert_eq!(out["delivered"], 1, "{out}");
+    assert_eq!(out["peers"][0]["node"], actor_of(&signing(2)), "{out}");
+    assert_eq!(out["peers"][0]["name"], "bo", "{out}");
+
+    let got = drain(&b, NS).await;
+    assert_eq!(got["payloads"], serde_json::json!(["AQID"]), "{got}");
+    assert_eq!(got["dropped"], 0);
+    assert_eq!(
+        drain(&b, NS).await["payloads"],
+        serde_json::json!([]),
+        "a drain empties"
+    );
+    assert_eq!(
+        drain(&a, NS).await["payloads"],
+        serde_json::json!([]),
+        "A does not hear itself"
+    );
+    for n in [&a, &b] {
+        n.endpoint().close().await;
+    }
+}
+
+/// **A payload over 4096 bytes is refused** (the u3-3 row): A's push door
+/// answers 413 naming the cap and sends nothing, so B drains nothing; one
+/// of exactly 4096 bytes goes. The failing input: the push door's cap
+/// skipped (the payload goes out, and B's live route refuses it in turn).
+#[tokio::test]
+async fn a_live_payload_over_4096_bytes_is_refused() {
+    let (da, db) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (a, b) = (start(1, &da).await, start(2, &db).await);
+    a_and_b_in(NS, &a, &b).await;
+
+    let (status, out) = push(&a, NS, vec![b'x'; 4097]).await;
+    assert_eq!(status, 413, "{out}");
+    assert!(out["error"].as_str().unwrap().contains("4096"), "{out}");
+    assert_eq!(drain(&b, NS).await["payloads"], serde_json::json!([]));
+
+    let (status, out) = push(&a, NS, vec![b'x'; 4096]).await;
+    assert_eq!(
+        (status, &out["delivered"]),
+        (200, &serde_json::json!(1)),
+        "{out}"
+    );
+    let got = drain(&b, NS).await;
+    assert_eq!(got["payloads"][0].as_str().unwrap().len(), 4096, "{got}");
+    for n in [&a, &b] {
+        n.endpoint().close().await;
+    }
+}
+
+/// **A drain takes only its own group's payloads** (the u3-3 row): A and B
+/// are both in two groups; A pushes one payload to each; B's drain of one
+/// group answers that group's payload alone, and the other's is still there
+/// for its own drain. The failing input: the live route buffering every
+/// payload under one group whatever its envelope names.
+#[tokio::test]
+async fn a_drain_takes_only_its_own_groups_payloads() {
+    let (da, db) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (a, b) = (start(1, &da).await, start(2, &db).await);
+    a_and_b_in(NS, &a, &b).await;
+    a_and_b_in("yard", &a, &b).await;
+
+    for (ns, payload) in [(NS, "SA"), ("yard", "WQ")] {
+        let (status, out) = push(&a, ns, payload.into()).await;
+        assert_eq!(
+            (status, &out["delivered"]),
+            (200, &serde_json::json!(1)),
+            "{ns}: {out}"
+        );
+    }
+    assert_eq!(
+        drain(&b, "yard").await["payloads"],
+        serde_json::json!(["WQ"])
+    );
+    assert_eq!(drain(&b, NS).await["payloads"], serde_json::json!(["SA"]));
+    for n in [&a, &b] {
+        n.endpoint().close().await;
     }
 }

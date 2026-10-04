@@ -123,8 +123,17 @@ impl Drop for Serving {
     }
 }
 
-/// Bind and serve. Refuses a non-loopback address by name.
-pub async fn serve(api: RailApi, listen: SocketAddr) -> Result<Serving, Refusal> {
+/// A listener bound on loopback, not yet served. (svrngs: upstream's
+/// `serve` bound and served in one call; the node binds before its
+/// endpoint, so a refused address leaves no endpoint open, and serves once
+/// the endpoint's transport exists, which the live lane dials through.)
+pub struct Bound {
+    listener: tokio::net::TcpListener,
+    addr: SocketAddr,
+}
+
+/// Bind. Refuses a non-loopback address by name.
+pub async fn bind(listen: SocketAddr) -> Result<Bound, Refusal> {
     check_loopback(listen)?;
     let listener = tokio::net::TcpListener::bind(listen)
         .await
@@ -132,6 +141,12 @@ pub async fn serve(api: RailApi, listen: SocketAddr) -> Result<Serving, Refusal>
     let addr = listener
         .local_addr()
         .map_err(|e| Refusal::Listen(listen, e))?;
+    Ok(Bound { listener, addr })
+}
+
+/// Serve on what [`bind`] bound.
+pub fn serve(api: RailApi, bound: Bound) -> Serving {
+    let Bound { listener, addr } = bound;
     tracing::info!(target: "rails", %addr, "api: serving the record to this computer's apps");
     let router = router(api);
     let task = tokio::spawn(async move {
@@ -140,5 +155,5 @@ pub async fn serve(api: RailApi, listen: SocketAddr) -> Result<Serving, Refusal>
             tracing::error!(target: "rails", error = %e, "api: listener stopped");
         }
     });
-    Ok(Serving { addr, task })
+    Serving { addr, task }
 }
