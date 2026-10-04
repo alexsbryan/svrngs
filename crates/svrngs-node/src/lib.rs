@@ -369,6 +369,10 @@ pub mod peer_wire;
 pub mod ring_routes;
 pub mod ring_sync;
 
+// The node, U1's (docs/DESIGN.md §8): the rail, the endpoint, the accept loop
+// serving the sync route and the round, in place of upstream's `RailsDaemon`.
+pub mod node;
+
 #[cfg(test)]
 mod tests;
 #[cfg(test)]

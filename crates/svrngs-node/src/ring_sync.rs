@@ -8,7 +8,7 @@
 //! [`RingSyncHost`]) and answers `/internal/ring/sync` with [`answer`]. The
 //! daemon's copy retired with pb-mesh-exit-transport: this is the one round.
 //! (svrngs: forked in U1 without `RailsDaemon`; the node that hosts the round
-//! is U1's to build, DESIGN §8.)
+//! is [`crate::node`], DESIGN §8.)
 //!
 //! # Why this is a digest and not a snapshot
 //!

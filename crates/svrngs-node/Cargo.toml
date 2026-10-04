@@ -4,7 +4,7 @@ version.workspace = true
 # Upstream's edition, so the fork lands unchanged (ARCH 2).
 edition = "2021"
 license.workspace = true
-description = "A group's journal on disk: one append-only JSONL log per group, the single-writer door that signs and the peer-ingest path that does not; and sync's transport over iroh: the dialling bridge, and the accept loop that serves a router on each admitted stream. Forked from commonwealth-ai's commonwealth-rail, with its oplog writer inlined, and its dial-by-key tunnel."
+description = "A group's journal on disk: one append-only JSONL log per group, the single-writer door that signs and the peer-ingest path that does not; and sync's transport over iroh: the dialling bridge, and the accept loop that serves a router on each admitted stream; and the node that runs the round and the sync route. Forked from commonwealth-ai's commonwealth-rail, with its oplog writer inlined, and its dial-by-key tunnel."
 
 [dependencies]
 svrngs-core = { workspace = true }

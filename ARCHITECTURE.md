@@ -10,7 +10,8 @@ svrngs owns the group's code, forked from commonwealth-ai's ring slice (DESIGN
 §4). The record and the journal on disk have landed; sync, the routes and the
 member door come next, forked the same way (DESIGN §8, U1-U3); of sync, the
 dialling and serving halves over iroh have landed, and the round and its
-route. Nothing runs as a program yet.
+route, and the node that runs them. Nothing runs as a program yet: the node
+is a library type, and the `svrngs` command that starts one is U2's.
 
 ## Code map
 
@@ -89,6 +90,21 @@ served only on the iroh stream. Its tests are served there too, through
 installs upstream's `MembershipRosterSource` over a mesh, and
 `ring_routes/tests.rs` kept only its sync test; `round_tests.rs` is U1's to
 rewrite.
+
+What runs is the node (`node.rs`), new code in place of upstream's
+`RailsDaemon` and `RailsNode` wiring, which did not come over. `Node::start`
+takes a data dir, a signing key and a `RelayConfig`; it binds the endpoint
+with that key, so the key that signs a group's acts is the key iroh verifies
+when the node dials (DESIGN §8, "Four facts"), and holds the `RingRail`
+signed by it, an `IrohTransport` over the endpoint, the accept loop serving
+the sync route's router on the one ALPN, and the round, which runs at start
+and every sixty seconds (`Node::round` runs one now). Until the register
+answers (DESIGN §8, U1) the seed — each group's `roster.json` — does: the
+round dials every key the seeds of the groups the node holds name, by key,
+through addresses a caller seeds on the transport or iroh's lookup finds; the
+accept loop admits any dialer; and the sync route refuses (403) a dialer its
+group's seed does not name. `tests/node_sync.rs` runs two nodes and a
+stranger in one process.
 
 **`crates/svrngs-engine`**: the `Engine` trait and QuickJS behind it — a fold
 engine that waits in DESIGN §9 until an app needs its state offline on a device

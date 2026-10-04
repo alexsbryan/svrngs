@@ -108,8 +108,8 @@ pub trait RingSyncHost: Send + Sync {
     /// This round's membership, read once under the host's lock, or `None`
     /// when the host has none to round with. Upstream read it from the mesh,
     /// which svrngs does not fork; until the register answers (U1, DESIGN
-    /// §8) nothing builds a [`RoundMembers`], so every host answers `None`
-    /// and the round dials nobody.
+    /// §8) the node answers the keys its groups' seeds name
+    /// ([`crate::node`]).
     fn members(&self) -> Pin<Box<dyn Future<Output = Option<RoundMembers>> + Send + '_>>;
     /// The transport a member's contact is resolved through.
     fn transport(&self) -> Arc<IrohTransport>;
@@ -118,11 +118,37 @@ pub trait RingSyncHost: Send + Sync {
 /// One round's view of the membership: the Online members it may dial, and
 /// the two name lists its glassbox line prints. Upstream's `RoundMembers::of`
 /// built it from a walk of the mesh, and minted the mesh proof each dial
-/// carried; neither came over, so nothing builds one yet.
+/// carried; neither came over. svrngs builds it from named keys.
 pub struct RoundMembers {
     pub(super) peers: Vec<OnlinePeer>,
     pub(super) exchanged_with: Vec<String>,
     pub(super) skipped_offline: Vec<String>,
+}
+
+impl RoundMembers {
+    /// The members a round dials, each a `(name, key)`, dialled by its key
+    /// alone. With no presence (DESIGN §8, "Four facts") none is skipped as
+    /// offline: an offline member costs its dial.
+    pub fn of(members: Vec<(String, PublicKey)>) -> Self {
+        let exchanged_with = members.iter().map(|(name, _)| name.clone()).collect();
+        let peers = members
+            .into_iter()
+            .map(|(name, key)| OnlinePeer {
+                contact: Contact {
+                    key,
+                    relay_url: None,
+                    iroh_direct_addrs: Vec::new(),
+                },
+                pubkey: Some(key),
+                name,
+            })
+            .collect();
+        Self {
+            peers,
+            exchanged_with,
+            skipped_offline: Vec::new(),
+        }
+    }
 }
 
 /// An Online member of this mesh, as one round sees it.
