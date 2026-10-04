@@ -45,7 +45,7 @@ fn no_seed(_: &std::path::Path) -> Result<Option<String>, String> {
 /// A lender and a member of its group, and the member's bridge to it.
 struct Pair {
     a: Node,
-    _b: Node,
+    b: Node,
     dir: tempfile::TempDir,
     _db: tempfile::TempDir,
     bridge: SocketAddr,
@@ -95,7 +95,7 @@ impl Pair {
         let bridge = base.trim_start_matches("http://").parse().unwrap();
         Pair {
             a,
-            _b: b,
+            b,
             dir,
             _db: db,
             bridge,
@@ -590,6 +590,65 @@ async fn a_member_asks_what_is_lent_and_how_many_use_it_now() {
     assert_eq!(
         lends_of(&pair).await,
         vec![("shelf".to_string(), "k".to_string(), 3, 0)],
+        "a lend withdrawn is gone at the next ask"
+    );
+    pair.close().await;
+}
+
+/// B's own computer asks what the people of its group lend (u3-5;
+/// `Node::lends`): ada's shelf, with the address on B's loopback that
+/// reaches it — through which bo reaches the service as bo — and cy, whose
+/// computer is nowhere, named as not answering rather than lending nothing.
+/// Asked again once ada withdraws the shelf, it is gone.
+#[tokio::test]
+async fn a_member_s_computer_lists_what_is_lent_with_where_to_reach_it() {
+    let (pair, heads) = lending_heads().await;
+    let ghost = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse("cy").unwrap(),
+            key: actor_of(&signing(9)),
+            invite: None,
+        },
+        on_behalf_of: None,
+    };
+    pair.a.rail().commit(NS, &ghost).unwrap().unwrap();
+    let seed = Roster::new(
+        [(Person::parse("ada").unwrap(), vec![actor_of(&signing(1))])]
+            .into_iter()
+            .collect(),
+    );
+    pair.b.rail().set_seed(NS, &seed).unwrap();
+    let a_addrs = loopback_sockets(pair.a.endpoint());
+    let mut addr = svrngs_node::iroh::EndpointAddr::new(pair.a.endpoint().id());
+    for a in &a_addrs {
+        addr = addr.with_ip_addr(*a);
+    }
+    let synced = pair.b.sync_with(NS, &addr).await;
+    assert!(synced.stop.is_none(), "{synced:?}");
+
+    let lends = pair.b.lends().await;
+    assert_eq!(lends.unanswered, vec![Person::parse("cy").unwrap()]);
+    assert_eq!(lends.lent.len(), 1, "{lends:?}");
+    let shelf = &lends.lent[0];
+    assert_eq!(shelf.person, Person::parse("ada").unwrap());
+    assert_eq!(shelf.offered.name.as_str(), "shelf");
+    assert_eq!(shelf.offered.kind.as_str(), "k");
+    assert_eq!(shelf.offered.using, 0);
+    assert_eq!(shelf.address, format!("http://{}/lend/shelf/", pair.bridge));
+
+    let http = reqwest::Client::builder().no_proxy().build().unwrap();
+    let reply = http
+        .get(format!("{}whoami", shelf.address))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(reply.status(), 200);
+    clean(reply.text().await.unwrap().as_bytes());
+    assert_eq!(header_values(&last(&heads), "x-svrngs-person"), vec!["bo"]);
+
+    lend::withdraw(pair.dir.path(), &LendName::parse("shelf").unwrap()).unwrap();
+    assert!(
+        pair.b.lends().await.lent.is_empty(),
         "a lend withdrawn is gone at the next ask"
     );
     pair.close().await;

@@ -277,7 +277,11 @@ members' protocol answers a dialer standing in a group held here what this
 computer lends (`lend::Offered`: name, kind, limit) read from the
 declarations at each ask, and how many people use each now: `door::Using`,
 a task owning the count, told by messages, of the people with a request to
-the lend in flight, the answer's body holding the use until it ends. A refused path covers what is under it
+the lend in flight, the answer's body holding the use until it ends.
+`Node::lends` asks every other key standing in a group held, at once, and
+answers each lend with whose it is and its address on this computer's
+loopback, the dialler's bridge to its lender then `/lend/<name>/`; a
+computer that does not answer is named, and nothing is kept between asks. A refused path covers what is under it
 at a segment boundary, as upstream's `covers`, compared percent-decoded,
 case-blind and with repeated slashes as one. `tests/door/` runs a lender
 and a member through it, with upstream's `picky_origin` and Range origin

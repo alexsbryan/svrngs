@@ -79,7 +79,7 @@ pub const PERSON_HEADER: &str = "x-svrngs-person";
 pub const KEY_HEADER: &str = "x-svrngs-key";
 
 /// Where a request for a lend starts.
-const LEND_ROUTE: &str = "/lend/";
+pub const LEND_ROUTE: &str = "/lend/";
 
 /// Where a member asks what this computer lends.
 pub const LENDS_ROUTE: &str = "/lends";

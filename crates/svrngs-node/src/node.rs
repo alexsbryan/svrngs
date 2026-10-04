@@ -19,6 +19,14 @@
 //! two routes, the ask and the redemption ([`crate::redeem`]), so a key standing nowhere reaches that and
 //! nothing else; [`Alpn::Member`] stays closed to it.
 //!
+//! **What the people of its groups lend is asked, not stored** (DESIGN §8,
+//! U3; u3-5): [`Node::lends`] asks every key standing in a group the node
+//! holds, now, what its computer lends ([`crate::door`]'s `GET /lends`),
+//! and answers each lend with whose it is and the address on this
+//! computer's loopback that reaches it, through the dialler's bridge to its
+//! lender. A computer that does not answer is named, its lends absent
+//! rather than stale.
+//!
 //! **The group decides who is in it** (DESIGN §6, U1): the register —
 //! [`RingRail::standing`], over each group's seed and its acts — answers
 //! all three questions the node asks. The round dials every key standing in
@@ -34,10 +42,12 @@ use std::sync::Arc;
 
 use tokio::sync::Notify;
 
+use crate::door::{LENDS_ROUTE, LEND_ROUTE};
 use crate::iroh::{
     actor_key, build_relayed_endpoint, format_dial_string, key_actor, Admit, Alpn, Contact,
     Endpoint, EndpointAddr, IrohAcceptor, IrohTransport, PublicKey, RelayConfig, SecretKey,
 };
+use crate::lend::Offered;
 use crate::rail::{LiveBuffer, RailApi};
 use crate::redeem::SeedText;
 use crate::register::Standing;
@@ -47,6 +57,26 @@ use crate::ring_sync::{
     RingSyncHandle, RoundMembers, RoundOutcome, DEFAULT_RING_SYNC_INTERVAL,
 };
 use crate::{actor_of, Ed25519Verifier, Person, RingRail, SigningKey};
+
+/// A lend another computer of this one's groups lends, as it answered.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Lent {
+    /// Whose it is: the person the first group naming their key names.
+    pub person: Person,
+    pub offered: Offered,
+    /// Where this computer's browser reaches it: the loopback bridge to its
+    /// lender's computer (`IrohTransport::base_url`), then `/lend/<name>/`.
+    pub address: String,
+}
+
+/// What the people of this computer's groups lend, asked now.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Lends {
+    pub lent: Vec<Lent>,
+    /// The people whose computer did not answer, so what they lend is not
+    /// known: absent, which is not lending nothing.
+    pub unanswered: Vec<Person>,
+}
 
 /// Why a node did not start.
 #[derive(Debug, thiserror::Error)]
@@ -198,6 +228,45 @@ impl Node {
         &self.host.transport
     }
 
+    /// What every other key standing in a group this node holds lends, each
+    /// computer asked now and all at once, and where this computer reaches
+    /// each lend. Nothing is kept between asks.
+    pub async fn lends(&self) -> Lends {
+        let peers = self.host.standing_peers().unwrap_or_default();
+        let mut asks = Vec::with_capacity(peers.len());
+        for (actor, person, key) in peers {
+            let transport = self.host.transport.clone();
+            asks.push(tokio::spawn(async move {
+                let answer = ask_lends(&transport, &actor, key).await;
+                (person, answer)
+            }));
+        }
+        let mut lends = Lends::default();
+        for ask in asks {
+            match ask.await {
+                Ok((person, Some(answered))) => {
+                    lends
+                        .lent
+                        .extend(answered.into_iter().map(|(offered, address)| Lent {
+                            person: person.clone(),
+                            offered,
+                            address,
+                        }))
+                }
+                Ok((person, None)) => lends.unanswered.push(person),
+                Err(e) => {
+                    tracing::warn!(target: "node", error = %e, "node: lends — an ask ended without an answer")
+                }
+            }
+        }
+        lends.lent.sort_by(|a, b| {
+            (a.person.as_str(), &a.offered.name).cmp(&(b.person.as_str(), &b.offered.name))
+        });
+        tracing::debug!(target: "node", lent = lends.lent.len(), unanswered = lends.unanswered.len(),
+            "node: lends — asked every computer of this one's groups");
+        lends
+    }
+
     /// Run one round now, beside the interval's, and say what it moved.
     pub async fn round(&self) -> RoundOutcome {
         run_one_round(self.host.as_ref()).await
@@ -306,6 +375,59 @@ impl Host {
                 .map(|(actor, (person, key))| (actor, person, key))
                 .collect(),
         )
+    }
+}
+
+/// Ask the computer `key` what it lends: each lend with the address that
+/// reaches it from here, or `None` when it did not answer, or answered
+/// with something that is not a list of lends.
+async fn ask_lends(
+    transport: &IrohTransport,
+    actor: &str,
+    key: PublicKey,
+) -> Option<Vec<(Offered, String)>> {
+    #[derive(serde::Deserialize)]
+    struct Answer {
+        lends: Vec<Offered>,
+    }
+    let contact = Contact {
+        key,
+        relay_url: None,
+        iroh_direct_addrs: Vec::new(),
+    };
+    let Some(base) = transport.base_url(&contact).await else {
+        tracing::debug!(target: "node", actor, "node: lends — no dialable path to the computer");
+        return None;
+    };
+    let http = peer_client().ok()?;
+    let answer = match http.get(format!("{base}{LENDS_ROUTE}")).send().await {
+        Ok(r) if r.status().is_success() => r.json::<Answer>().await,
+        Ok(r) => {
+            tracing::debug!(target: "node", actor, status = r.status().as_u16(), "node: lends — the computer refused the ask");
+            return None;
+        }
+        Err(e) => {
+            tracing::debug!(target: "node", actor, error = %e, "node: lends — the computer did not answer");
+            return None;
+        }
+    };
+    match answer {
+        Ok(a) => {
+            tracing::debug!(target: "node", actor, lends = a.lends.len(), "node: lends — the computer answered");
+            Some(
+                a.lends
+                    .into_iter()
+                    .map(|o| {
+                        let address = format!("{base}{LEND_ROUTE}{}/", o.name);
+                        (o, address)
+                    })
+                    .collect(),
+            )
+        }
+        Err(e) => {
+            tracing::debug!(target: "node", actor, error = %e, "node: lends — the answer is not a list of lends");
+            None
+        }
     }
 }
 
