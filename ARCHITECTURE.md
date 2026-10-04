@@ -176,7 +176,8 @@ seed file, since upstream's `RingRail::roster` went in U1, and so the
 not-in-roster sentence is the rail's own, where upstream chose it by the
 roster's origin; `err` is the one `ring_routes.rs` carries. The sync doors,
 `attest` and the live lane stay behind, and with them the other routes
-beside them in upstream's `api.rs`.
+beside them in upstream's `api.rs`. Then it changed: the append door's
+attestation branch went with `attest`, so a bare `on_behalf_of` is dropped.
 
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`

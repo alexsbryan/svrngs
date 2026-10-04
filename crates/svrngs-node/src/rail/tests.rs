@@ -4,15 +4,14 @@
 //! membership was every ring's roster; here a ring's roster is its seed
 //! file, which the register reads, DESIGN §8, U1's inventory. The roster
 //! derivation's tests, the two-keys census, the sync doors' and the live
-//! lane's did not come over with what they test.)
+//! lane's did not come over with what they test, and the two attestation
+//! tests went with the branch they tested.)
 
 use std::sync::Arc;
 
 use axum::http::StatusCode;
 
-use crate::{
-    actor_of, AttestRefusal, GuestAttestation, Person, RingRail, RingSigner, Roster, SigningKey,
-};
+use crate::{actor_of, Person, RingRail, RingSigner, Roster, SigningKey};
 
 use super::{append_act, journal_of};
 
@@ -76,61 +75,7 @@ async fn append_signs_as_the_node_and_assigns_the_fields() {
     );
 }
 
-/// A roster of this node (key 7) and one other member, "halo" (key 3), who
-/// signs the guest door's attestations; key 99 is claimed by nobody.
-fn attested(seed: u8, namespace: &str, expires_at: i64) -> serde_json::Value {
-    let a = GuestAttestation::sign(&key(seed), "guest-ana", namespace, expires_at);
-    serde_json::json!({
-        "op": "record",
-        "payload": { "amount": 4 },
-        "attestation": a,
-    })
-}
-
 const GUESTS: &[(&str, u8)] = &[("alex", 7), ("halo", 3)];
-
-const LATER: i64 = 4_000_000_000;
-
-/// A roster member's attestation lands the act signed by the node and
-/// attributed to the guest.
-#[tokio::test]
-async fn a_valid_attestation_lands_attributed_to_the_guest() {
-    let (_dir, rail) = rail_with(GUESTS);
-    let journal = journal_of(&rail, "ledger").unwrap();
-    let resp = append_act(&rail, &journal, attested(3, "ledger", LATER)).await;
-    assert_eq!(resp.status(), StatusCode::OK);
-    let out = body_of(resp).await;
-    assert_eq!(out["actor"], RingSigner::actor(&key(7)), "the node signs");
-    let (ops, _) = journal.read().unwrap();
-    assert_eq!(ops.len(), 1);
-    assert_eq!(ops[0].kind.on_behalf_of.as_deref(), Some("guest-ana"));
-}
-
-/// Forged, expired and foreign-key attestations are each a 403 naming the
-/// refusal, and the journal is untouched.
-#[tokio::test]
-async fn a_refused_attestation_names_its_refusal_and_writes_nothing() {
-    let (_dir, rail) = rail_with(GUESTS);
-    let journal = journal_of(&rail, "ledger").unwrap();
-    let mut forged = attested(3, "ledger", LATER);
-    forged["attestation"]["name"] = "guest-anb".into();
-    let cases = [
-        (forged, AttestRefusal::Forged),
-        (attested(3, "ledger", 1), AttestRefusal::Expired),
-        (
-            attested(99, "ledger", LATER),
-            AttestRefusal::SignerNotInRoster,
-        ),
-        (attested(3, "lending", LATER), AttestRefusal::WrongNamespace),
-    ];
-    for (body, want) in cases {
-        let resp = append_act(&rail, &journal, body).await;
-        assert_eq!(resp.status(), StatusCode::FORBIDDEN, "{want:?}");
-        assert_eq!(body_of(resp).await["kind"], want.name());
-    }
-    let (ops, _) = journal.read().unwrap();
-    assert!(ops.is_empty(), "a refused attestation writes nothing");
-}
 
 /// An unstamped append is unchanged: signed as the node, no name on it.
 #[tokio::test]

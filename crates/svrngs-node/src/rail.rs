@@ -12,9 +12,7 @@
 //! sentences — so a page written against one daemon behaves the same against
 //! the other (ARCH §10.6). What is deliberately NOT mirrored is the guest
 //! half: there are no grants and no sessions here (loopback IS the auth),
-//! so the namespace is always named explicitly and a caller can stamp an act
-//! on another's behalf only with a roster member's signed
-//! `GuestAttestation` (decision five-programs-34; see `append_act`).
+//! so the namespace is always named explicitly.
 //! (svrngs: append and log came over, DESIGN §8, U3's inventory; the live
 //! lane is the next unit's, and the sync doors and `attest` stay behind —
 //! one process per computer reads its own journals.)
@@ -36,9 +34,7 @@ use serde::Deserialize;
 
 // rail.rs's refusal body came over with the sync route (u1-3), so there is one.
 use crate::ring_routes::err;
-use crate::{
-    admit, Compaction, Ed25519Verifier, GuestAttestation, RailAct, RailError, RingJournal, RingRail,
-};
+use crate::{admit, Compaction, Ed25519Verifier, RailAct, RailError, RingJournal, RingRail};
 
 /// What the doors read: the journals. (Upstream's handlers read them from
 /// `RailsDaemon`, which did not come over, DESIGN §8.)
@@ -113,44 +109,22 @@ fn journal_of(rail: &RingRail, namespace: &str) -> Result<Arc<RingJournal>, Resp
 /// There are no sessions on a rails daemon, so a caller cannot stamp by
 /// saying so: a bare `on_behalf_of` is dropped HERE, before anything is
 /// signed, and warned — the same drop the daemon's `stamp_from` makes for
-/// its session-less callers. A body may instead carry an `attestation` (a
-/// [`GuestAttestation`] the daemon's guest door signed per session,
-/// decision five-programs-34): it is verified against this namespace's
-/// roster and the clock, and on success the act is signed as the node with
-/// `on_behalf_of` = the attested name. A refused attestation is a 403
-/// naming the [`AttestRefusal`](crate::AttestRefusal), and nothing is written.
+/// its session-less callers. (svrngs: upstream honoured instead a signed
+/// `GuestAttestation`, which its `attest` door minted for svrn's guest
+/// door; `attest` stayed behind, DESIGN §8, U3's inventory, so the branch
+/// went with it.)
 pub(crate) async fn append_act(
     rail: &RingRail,
     journal: &Arc<RingJournal>,
     body: serde_json::Value,
 ) -> Response {
-    let attestation = match body.get("attestation") {
-        None => None,
-        Some(v) => match serde_json::from_value::<GuestAttestation>(v.clone()) {
-            Ok(a) => Some(a),
-            Err(e) => {
-                tracing::warn!(
-                    target: "rails",
-                    namespace = journal.namespace(),
-                    error = %e,
-                    "rail: refused an append — the attestation is not one"
-                );
-                return err(
-                    StatusCode::UNPROCESSABLE_ENTITY,
-                    format!("the attestation is malformed: {e}"),
-                );
-            }
-        },
-    };
-    if attestation.is_none() {
-        if let Some(claimed) = body.get("on_behalf_of").and_then(|v| v.as_str()) {
-            tracing::warn!(
-                target: "rails",
-                namespace = journal.namespace(),
-                claimed,
-                "rail: dropped an on_behalf_of — no attestation, so this door signs as the node"
-            );
-        }
+    if let Some(claimed) = body.get("on_behalf_of").and_then(|v| v.as_str()) {
+        tracing::warn!(
+            target: "rails",
+            namespace = journal.namespace(),
+            claimed,
+            "rail: dropped an on_behalf_of — this door signs as the node"
+        );
     }
     // Taken as a `Value` and converted here rather than as `Json<RailAct>`,
     // so a refusal is the rail's own sentence instead of axum's rejection
@@ -166,43 +140,6 @@ pub(crate) async fn append_act(
         Ok(r) => r,
         Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
     };
-    let stamp = match &attestation {
-        None => None,
-        Some(a) => {
-            let now = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .map(|d| d.as_secs() as i64)
-                .unwrap_or(0);
-            match a.verify(&roster, journal.namespace(), now) {
-                Ok(()) => {
-                    tracing::debug!(
-                        target: "rails",
-                        namespace = journal.namespace(),
-                        name = %a.name,
-                        signer = %a.signer,
-                        "rail: attestation honoured — signing as the node on the guest's behalf"
-                    );
-                    Some(a.name.as_str())
-                }
-                Err(refusal) => {
-                    tracing::warn!(
-                        target: "rails",
-                        namespace = journal.namespace(),
-                        name = %a.name,
-                        signer = %a.signer,
-                        refusal = refusal.name(),
-                        "rail: refused an append — the attestation does not hold"
-                    );
-                    let body = serde_json::json!({
-                        "error": refusal.to_string(),
-                        "kind": refusal.name(),
-                        "namespace": journal.namespace(),
-                    });
-                    return (StatusCode::FORBIDDEN, Json(body)).into_response();
-                }
-            }
-        }
-    };
     let sealed = matches!(act, RailAct::Seal);
     let appended = if sealed {
         // A seal takes no stamp: it is delivery, not words.
@@ -211,7 +148,7 @@ pub(crate) async fn append_act(
             .map(|done| (done.op, Some(retire(&done.retired))))
     } else {
         journal
-            .append(act, rail.signer(), &roster, stamp, &Ed25519Verifier)
+            .append(act, rail.signer(), &roster, None, &Ed25519Verifier)
             .map(|op| (op, None))
     };
     match appended {
