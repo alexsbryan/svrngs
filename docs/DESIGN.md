@@ -183,19 +183,23 @@ piece of svrngs is one of four things, and a unit says which it adds before it
 is written. A requirement that fits none is a design question, raised as one.
 
 - An **act** is a signed line on the group's record. The record is the only
-  truth the group shares.
-- A **fold** is a pure function that decides. A fold over the record's acts
-  (`admit`, `membership`, `standing_in`) gives every node the same answer. A
-  fold over one conversation's state (a sync exchange, an accept loop) is a
-  door's protocol as a step function with no I/O (RUST_ARCH §2).
+  truth the group keeps, apps' included.
+- A **fold** is a pure function that decides, and every rule, threshold and
+  policy lives in one. A fold over the record's acts (`admit`, `membership`,
+  `standing_in`) gives every node the same answer. A fold over a door's own
+  state (a sync exchange, the streams open through the member door, an accept
+  loop) is that door's protocol as a step function with no I/O (RUST_ARCH §2).
 - An **effect** carries out a decision. It writes an act, through `append_if`,
   which runs the fold again under the write lock so the decision and the
-  write cannot drift. Or it changes only this computer's copy: compaction, the
-  live buffer, a cache.
+  write cannot drift. Or it touches what the group does not keep: this
+  computer's copy (compaction, a cache) or the live lane, which crosses doors
+  and is never an act. A fold's answer can change as late acts arrive, so a
+  decision whose effect cannot be undone is written as an act first.
 - A **door** is the only I/O, in four steps: parse what arrived, so a refused
   request reads nothing; read what the decision needs; decide, by a fold;
-  write or answer. `redeem.rs` is the worked example: `parse_redeem`,
-  `decide_admit`, then `judge` under `append_if`.
+  write or answer. The clock is read only at a door and reaches a fold as an
+  argument, so a timer is a door too. `redeem.rs` is the worked example:
+  `parse_redeem`, `decide_admit`, then `judge` under `append_if`.
 
 `RingRail::standing` reads and decides at once; its seven callers move to
 `standing_in`'s pure answer as units touch them.
