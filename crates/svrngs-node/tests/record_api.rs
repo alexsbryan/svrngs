@@ -255,6 +255,7 @@ fn api_alone(dir: &tempfile::TempDir) -> axum::Router {
             std::sync::Arc::new(signing(1)),
         )),
         nudge: std::sync::Arc::new(tokio::sync::Notify::new()),
+        live: Default::default(),
     })
 }
 

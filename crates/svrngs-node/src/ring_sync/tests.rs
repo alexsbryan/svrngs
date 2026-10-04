@@ -126,7 +126,10 @@ pub(crate) async fn serve_at(router: axum::Router) -> std::net::SocketAddr {
 
 /// cw-rails' ring routes over `rail`, as the node serves them on the stream.
 pub(super) fn ring_router(rail: Arc<RingRail>) -> axum::Router {
-    router(RingInbound { rail })
+    router(RingInbound {
+        rail,
+        live: Default::default(),
+    })
 }
 
 /// `rail`'s sync route, served on the iroh stream as the node serves it,

@@ -225,9 +225,11 @@ pub mod register;
 pub mod redeem;
 
 // The record over loopback, U3's (docs/DESIGN.md §8, U3's inventory): the
-// rail's append and log doors (`commonwealth-rails`' `rail.rs`), on a
-// listener that refuses any address but loopback (its `api.rs`).
+// rail's append, log and live doors (`commonwealth-rails`' `rail.rs`), on a
+// listener that refuses any address but loopback (its `api.rs`), and the
+// live lane's fan-out (`sovereign-daemon`'s `routes_rail_live.rs`).
 pub mod api;
+pub mod live;
 pub mod rail;
 
 // The node, U1's (docs/DESIGN.md §8): the rail, the endpoint, the accept loop

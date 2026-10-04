@@ -38,7 +38,7 @@ use crate::iroh::{
     build_relayed_endpoint, format_dial_string, key_actor, Admit, Alpn, Contact, Endpoint,
     EndpointAddr, IrohAcceptor, IrohTransport, PublicKey, RelayConfig, SecretKey,
 };
-use crate::rail::RailApi;
+use crate::rail::{LiveBuffer, RailApi};
 use crate::redeem::SeedText;
 use crate::register::Standing;
 use crate::ring_routes::{self, RingInbound};
@@ -110,10 +110,13 @@ impl Node {
         // (`lib.rs:421`) and handed it to the round and the door; until u3-2
         // the node built one for the round alone.
         let nudge = Arc::new(Notify::new());
+        // One live buffer: the live route fills it, the loopback drain empties it.
+        let live = Arc::new(LiveBuffer::default());
         let api = crate::api::serve(
             RailApi {
                 rail: rail.clone(),
                 nudge: nudge.clone(),
+                live: live.clone(),
             },
             api,
         )
@@ -134,7 +137,10 @@ impl Node {
             "node: endpoint bound with the signing key"
         );
         let admitting = rail.clone();
-        let members = ring_routes::router(RingInbound { rail: rail.clone() });
+        let members = ring_routes::router(RingInbound {
+            rail: rail.clone(),
+            live,
+        });
         let redeem = crate::redeem::router(rail.clone(), seeds);
         let acceptor =
             IrohAcceptor::spawn(endpoint.clone(), move |alpn: &[u8], dialer: &PublicKey| {

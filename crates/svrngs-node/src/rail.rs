@@ -14,9 +14,9 @@
 //! the other (ARCH §10.6). What is deliberately NOT mirrored is the guest
 //! half: there are no grants and no sessions here (loopback IS the auth),
 //! so the namespace is always named explicitly.
-//! (svrngs: append and log came over, DESIGN §8, U3's inventory; the live
-//! lane is the next unit's, and the sync doors and `attest` stay behind —
-//! one process per computer reads its own journals.)
+//! (svrngs: append, log and the live lane came over, DESIGN §8, U3's
+//! inventory; the sync doors and `attest` stay behind — one process per
+//! computer reads its own journals.)
 //!
 //! **The journals live under THIS process's data root**, never the daemon's
 //! (§4 rule 1 — one data directory, one owner; a second process never opens
@@ -24,9 +24,17 @@
 //! there is no dual-writer window). The signer is THIS process's node key.
 //! (svrngs: upstream's census of rails' and the daemon's two keys went with
 //! the mesh; a node here has one key, DESIGN §8, "One key signs and dials".)
+//!
+//! **The live lane is the drain half only.** The daemon's `live_push` fans
+//! each payload out to every online peer over sovereign-mesh's fabric,
+//! which this daemon deliberately does not carry (package-closure clean is
+//! its own Cargo description). The buffer, the caps and the answer shape
+//! are the daemon's (`peers: []`, `delivered: 0` — the fan-out's absence is
+//! reported in the body, not papered over); peer delivery arrives with
+//! fp-54's dial.
 
-use std::collections::BTreeMap;
-use std::sync::Arc;
+use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::sync::{Arc, Mutex};
 
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
@@ -41,13 +49,16 @@ use crate::{
     admit, Compaction, Ed25519Verifier, Person, RailAct, RailError, RingJournal, RingRail,
 };
 
-/// What the doors read: the journals, and the nudge that wakes the round
-/// after an append ([`crate::ring_sync::append`]). (Upstream's handlers read
-/// them from `RailsDaemon`, which did not come over, DESIGN §8.)
+/// What the doors read: the journals, the nudge that wakes the round
+/// after an append ([`crate::ring_sync::append`]), and the live lane's
+/// buffer, which the live route fills ([`crate::ring_routes::ring_live`]).
+/// (Upstream's handlers read them from `RailsDaemon`, which did not come
+/// over, DESIGN §8.)
 #[derive(Clone)]
 pub struct RailApi {
     pub rail: Arc<RingRail>,
     pub nudge: Arc<tokio::sync::Notify>,
+    pub live: Arc<LiveBuffer>,
 }
 
 // ── The doors ────────────────────────────────────────────────
@@ -432,6 +443,166 @@ pub async fn log(State(api): State<RailApi>, Query(q): Query<RailQuery>) -> Resp
         Err(refusal) => return refusal,
     };
     log_answer(&api.rail, &journal).await
+}
+
+// ── The live lane ────────────────────────────────────────────
+
+/// How many payloads ONE namespace's buffer holds before the oldest is
+/// evicted — the daemon's cap. Bounded because this is memory an untrusted
+/// local process can fill.
+const LIVE_BUFFER_CAPACITY: usize = 256;
+
+/// The largest live payload, in wire bytes — the daemon's cap, and ONE
+/// number on this daemon too: read by the push door that accepts and by no
+/// one else, so a payload this daemon would accept is exactly the one it
+/// keeps.
+pub(crate) const LIVE_PAYLOAD_MAX_BYTES: usize = 4096;
+
+/// The arrived-payload buffer: bounded, in memory, and the only place a
+/// live payload ever sits. Keyed by namespace, the way append and log are.
+#[derive(Debug, Default)]
+pub struct LiveBuffer {
+    inner: Mutex<HashMap<String, LiveBufferInner>>,
+}
+
+#[derive(Debug, Default)]
+struct LiveBufferInner {
+    payloads: VecDeque<String>,
+    /// Payloads evicted because the buffer was full, since the last drain.
+    /// Eviction is a real loss and it is REPORTED, never silent.
+    dropped: usize,
+}
+
+impl LiveBuffer {
+    /// Take one arrived payload for `namespace`. Evicts that namespace's
+    /// oldest when full.
+    pub fn push(&self, namespace: &str, payload: String) {
+        let mut buffers = self
+            .inner
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let inner = buffers.entry(namespace.to_string()).or_default();
+        if inner.payloads.len() == LIVE_BUFFER_CAPACITY {
+            inner.payloads.pop_front();
+            inner.dropped += 1;
+            tracing::warn!(
+                target: "rails",
+                namespace,
+                capacity = LIVE_BUFFER_CAPACITY,
+                dropped = inner.dropped,
+                "rail live: buffer full, evicted the oldest payload — nobody \
+                 is draining GET /v1/rail/live fast enough"
+            );
+        }
+        inner.payloads.push_back(payload);
+    }
+
+    /// Empty `namespace`'s buffer, returning what was in it and how many
+    /// were lost. Every other namespace's buffer is untouched.
+    pub(crate) fn drain(&self, namespace: &str) -> (Vec<String>, usize) {
+        let mut buffers = self
+            .inner
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        match buffers.remove(namespace) {
+            Some(inner) => (inner.payloads.into(), inner.dropped),
+            None => (Vec::new(), 0),
+        }
+    }
+}
+
+/// POST /v1/rail/live — take one ephemeral payload for the named namespace.
+///
+/// Nothing is written anywhere, and nothing is fanned out: the peer round
+/// runs over sovereign-mesh's fabric, which this daemon does not carry, so
+/// the answer reports the absence honestly — `peers: []`, `delivered: 0` —
+/// rather than a success that would read as "everyone saw it".
+fn push_answer(live: &LiveBuffer, namespace: &str, body: axum::body::Bytes) -> Response {
+    if body.len() > LIVE_PAYLOAD_MAX_BYTES {
+        tracing::debug!(
+            target: "rails",
+            namespace,
+            bytes = body.len(),
+            "rail live: refused an oversize payload"
+        );
+        return err(
+            StatusCode::PAYLOAD_TOO_LARGE,
+            format!(
+                "live payload is {} bytes; the lane carries at most {} — \
+                 send presence, not state",
+                body.len(),
+                LIVE_PAYLOAD_MAX_BYTES
+            ),
+        );
+    }
+    let payload = match std::str::from_utf8(&body) {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::debug!(target: "rails", namespace, error = %e, "rail live: refused a non-UTF-8 payload");
+            return err(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                format!(
+                    "live payload is not UTF-8 ({e}) — the lane carries text \
+                     (base64 your bytes, as a rail act does)"
+                ),
+            );
+        }
+    };
+    live.push(namespace, payload.to_string());
+    tracing::debug!(
+        target: "rails",
+        namespace,
+        bytes = body.len(),
+        "rail live: buffered one payload (no peer fan-out on this daemon)"
+    );
+    Json(serde_json::json!({
+        "bytes": body.len(),
+        "peers": [],
+        "delivered": 0,
+    }))
+    .into_response()
+}
+
+/// GET /v1/rail/live — drain the caller's namespace since the last call.
+fn drain_answer(live: &LiveBuffer, namespace: &str) -> Response {
+    let (payloads, dropped) = live.drain(namespace);
+    if dropped > 0 {
+        tracing::warn!(
+            target: "rails",
+            namespace,
+            dropped,
+            drained = payloads.len(),
+            "rail live: drain reports evicted payloads — the presence map has \
+             a hole in it"
+        );
+    }
+    Json(serde_json::json!({
+        "payloads": payloads,
+        "dropped": dropped,
+    }))
+    .into_response()
+}
+
+/// POST /v1/rail/live.
+pub async fn live_push(
+    State(api): State<RailApi>,
+    Query(q): Query<RailQuery>,
+    body: axum::body::Bytes,
+) -> Response {
+    let namespace = match namespace_of(&q) {
+        Ok(ns) => ns,
+        Err(refusal) => return refusal,
+    };
+    push_answer(&api.live, &namespace, body)
+}
+
+/// GET /v1/rail/live.
+pub async fn live_drain(State(api): State<RailApi>, Query(q): Query<RailQuery>) -> Response {
+    let namespace = match namespace_of(&q) {
+        Ok(ns) => ns,
+        Err(refusal) => return refusal,
+    };
+    drain_answer(&api.live, &namespace)
 }
 
 #[cfg(test)]

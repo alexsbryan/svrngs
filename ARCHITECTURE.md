@@ -102,9 +102,12 @@ carried goes; `RingSyncHost::transport` is the concrete `IrohTransport`, and a
 contact's addresses are its one `base_url`; `peer_client` is `pub`, since its one upstream caller,
 `RailsDaemon`'s `impl RingSyncHost`, did not come over. The append
 wrapper that nudges the round (`ring_sync::append`) came over in U3 with the
-record API, which routes the append door through it. The route's live and checkpoint siblings stay
-behind, and with them `RingInbound`'s live buffer and origin registry; the
-route is an `axum::Router` where upstream's was a `RouteBundle`. Then it
+record API, which routes the append door through it. The live route
+(`ring_live`) came over in U3, with `RingInbound`'s live buffer; it refuses
+an envelope for a group the rail does not hold, where upstream asked the
+origin registry's live registrations, which did not come over. The
+checkpoint route stays behind; the routes are an `axum::Router` where
+upstream's was a `RouteBundle`. Then it
 changed: the route reads the asker from the acceptor's `Dialer` extension,
 where upstream read an `X-Mesh-Pubkey` header, and refuses (403) a request
 with no `Dialer`, where upstream served it as a local process — the route is
@@ -184,9 +187,15 @@ seed file, since upstream's `RingRail::roster` went in U1, and so the
 not-in-roster sentence is the rail's own, where upstream chose it by the
 roster's origin; `err` is the one `ring_routes.rs` carries; `serve`
 answers the address it bound with the task (`Serving`, which stops the
-listener when dropped), where upstream's answered the task alone. The sync doors,
-`attest` and the live lane stay behind, and with them the other routes
-beside them in upstream's `api.rs`. Then it changed: the append door's
+listener when dropped), where upstream's answered the task alone. The live
+lane came over in U3: `LiveBuffer`, bounded per group, which the live route
+fills and `GET /v1/rail/live` drains, and `POST /v1/rail/live`, which
+buffers locally and answers `peers: []`, as upstream's did; `live.rs` is the
+inference daemon's fan-out (`routes_rail_live.rs`, `push_ephemeral` and
+`offer_peer`), its walk of the mesh's Online members cut, so its caller
+names the peers (`LivePeer`), each dialled at its one `base_url`. The sync
+doors and `attest` stay behind, and with them the other routes beside them
+in upstream's `api.rs`. Then it changed: the append door's
 attestation branch went with `attest`. An append's `on_behalf_of` is the
 person an app names when it serves someone else — whom the member door
 verified (DESIGN §8, "Localhost is the trust boundary") — signed by this

@@ -3,9 +3,9 @@
 //! The rail doors' tests. (svrngs: upstream's fixtures built a mesh whose
 //! membership was every ring's roster; here a ring's roster is its seed
 //! file, which the register reads, DESIGN §8, U1's inventory. The roster
-//! derivation's tests, the two-keys census, the sync doors' and the live
-//! lane's did not come over with what they test, and the two attestation
-//! tests went with the branch they tested.)
+//! derivation's tests, the two-keys census and the sync doors' did not come
+//! over with what they test, and the two attestation tests went with the
+//! branch they tested.)
 
 use std::sync::Arc;
 
@@ -13,7 +13,7 @@ use axum::http::StatusCode;
 
 use crate::{actor_of, Person, RingRail, RingSigner, Roster, SigningKey};
 
-use super::{append_act, journal_of};
+use super::{append_act, drain_answer, journal_of, push_answer, LiveBuffer};
 
 fn key(seed: u8) -> SigningKey {
     SigningKey::from_bytes(&[seed; 32])
@@ -264,4 +264,59 @@ async fn the_people_door_answers_the_register_with_keys() {
     assert_eq!(out["people"], serde_json::Value::from(want));
     let refused = super::people_answer(&rail, "elsewhere");
     assert_eq!(refused.status(), StatusCode::NOT_FOUND);
+}
+
+/// The live lane bounds its memory and reports what it drops: 257 pushes
+/// leave 256 payloads and one honest `dropped`.
+#[test]
+fn the_live_buffer_evicts_the_oldest_and_reports_it() {
+    let live = LiveBuffer::default();
+    for i in 0..257 {
+        live.push("room", format!("p{i}"));
+    }
+    let (payloads, dropped) = live.drain("room");
+    assert_eq!(payloads.len(), 256);
+    assert_eq!(dropped, 1);
+    assert_eq!(payloads[0], "p1", "the OLDEST payload is the one evicted");
+    let (again, dropped) = live.drain("room");
+    assert!(
+        again.is_empty() && dropped == 0,
+        "a drain empties the buffer"
+    );
+    // Another namespace's buffer is untouched.
+    live.push("other", "x".into());
+    let (mine, _) = live.drain("room");
+    assert!(mine.is_empty());
+}
+
+/// The live lane's refusals are named, and its success honestly reports
+/// that nothing was fanned out — this daemon carries no fabric.
+#[test]
+fn live_push_reports_the_absence_of_the_fan_out() {
+    let live = LiveBuffer::default();
+    let oversize = vec![b'x'; 4097];
+    let resp = push_answer(&live, "room", oversize.into());
+    assert_eq!(resp.status(), StatusCode::PAYLOAD_TOO_LARGE);
+    let not_text = vec![0xff, 0xfe, 0x00];
+    let resp = push_answer(&live, "room", not_text.into());
+    assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    let fits = vec![b'a'; 4096];
+    let resp = push_answer(&live, "room", fits.into());
+    assert_eq!(resp.status(), StatusCode::OK);
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    let out = rt.block_on(body_of(resp));
+    assert_eq!(out["bytes"], 4096);
+    assert_eq!(out["peers"].as_array().unwrap().len(), 0);
+    assert_eq!(out["delivered"], 0);
+    let resp = drain_answer(&live, "room");
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    let out = rt.block_on(body_of(resp));
+    assert_eq!(out["payloads"].as_array().unwrap().len(), 1);
+    assert_eq!(out["dropped"], 0);
 }

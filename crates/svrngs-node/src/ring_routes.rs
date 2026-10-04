@@ -5,8 +5,8 @@
 //! `POST /internal/ring/sync`, `POST /internal/ring/live` and
 //! `GET /internal/ring/checkpoint/{ns}` — what the daemon's
 //! `routes_internal::{ring_sync, ring_live, ring_checkpoint}` answer today, so
-//! the flip turns nothing off. (svrngs: the sync route alone came over; the
-//! live route is U3's and the checkpoint route waits, DESIGN §8 and §9.)
+//! the flip turns nothing off. (svrngs: the sync route came over in U1 and
+//! the live route in U3; the checkpoint route waits, DESIGN §8 and §9.)
 //!
 //! Upstream mounted them on the internal listener beside gossip and join,
 //! under the standing `/internal/ring` prefix the endpoint registers for
@@ -36,7 +36,10 @@ use axum::routing::post;
 use axum::{Extension, Json};
 
 use crate::iroh::Dialer;
-use crate::peer_wire::{RingSyncRequest, MAX_REQUEST_BODY_BYTES, RING_SYNC_OPS_BUDGET_BYTES};
+use crate::peer_wire::{
+    LiveEnvelope, RingSyncRequest, MAX_REQUEST_BODY_BYTES, RING_SYNC_OPS_BUDGET_BYTES,
+};
+use crate::rail::{LiveBuffer, LIVE_PAYLOAD_MAX_BYTES};
 use crate::register::Standing;
 use crate::ring_sync::answer;
 use crate::{Ed25519Verifier, RingRail};
@@ -46,22 +49,25 @@ pub(crate) fn err(status: StatusCode, msg: impl Into<String>) -> Response {
     (status, Json(serde_json::json!({ "error": msg.into() }))).into_response()
 }
 
-/// What the ring route reads: the journals. (Upstream's also held the live
-/// lane's buffer and the origin registry, which only the live route read.)
+/// What the ring routes read: the journals and the live lane's buffer.
+/// (Upstream's also held the origin registry, whose registrations named the
+/// live namespaces; it did not come over.)
 #[derive(Clone)]
 pub struct RingInbound {
     pub rail: Arc<RingRail>,
+    pub live: Arc<LiveBuffer>,
 }
 
-/// The sync route, as a router (upstream's was a `RouteBundle` for the
-/// internal listener). It takes the peer-wire body limit, because its
-/// exchange budget is half of it.
+/// The sync and live routes, as a router (upstream's was a `RouteBundle`
+/// for the internal listener). The sync route takes the peer-wire body
+/// limit, because its exchange budget is half of it.
 pub fn router(state: RingInbound) -> axum::Router {
     axum::Router::new()
         .route(
             "/internal/ring/sync",
             post(ring_sync).layer(DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES)),
         )
+        .route("/internal/ring/live", post(ring_live))
         .with_state(state)
 }
 
@@ -157,6 +163,58 @@ pub async fn ring_sync(
         bytes,
     )
         .into_response()
+}
+
+/// `POST /internal/ring/live` — buffer one peer's ephemeral payload under the
+/// namespace its envelope names. A namespace no live registration on this
+/// endpoint holds is REFUSED: nobody here could drain it (the daemon's rule,
+/// with a registration where the daemon reads a grant). An oversize payload
+/// is refused against the one cap the push door keeps.
+pub async fn ring_live(State(state): State<RingInbound>, body: axum::body::Bytes) -> Response {
+    let LiveEnvelope { namespace, payload } = match serde_json::from_slice(&body) {
+        Ok(e) => e,
+        Err(e) => {
+            tracing::warn!(target: "rails", error = %e, "ring live: refused a malformed envelope");
+            return err(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                format!("live envelope is not {{\"namespace\", \"payload\"}} JSON ({e})"),
+            );
+        }
+    };
+    if payload.len() > LIVE_PAYLOAD_MAX_BYTES {
+        tracing::warn!(target: "rails", namespace, bytes = payload.len(),
+            max = LIVE_PAYLOAD_MAX_BYTES, "ring live: refused an oversize payload");
+        return err(
+            StatusCode::PAYLOAD_TOO_LARGE,
+            format!(
+                "live payload is {} bytes; this lane carries at most {}",
+                payload.len(),
+                LIVE_PAYLOAD_MAX_BYTES
+            ),
+        );
+    }
+    // svrngs: a namespace the rail holds, where upstream asked the origin
+    // registry's live registrations, which did not come over: any app on
+    // this computer may drain a group the node holds.
+    let held = match state.rail.namespaces() {
+        Ok(names) => names,
+        Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+    };
+    if !held.iter().any(|n| n == &namespace) {
+        tracing::warn!(target: "rails", namespace,
+            "ring live: refused a payload for a namespace no live registration here holds");
+        return err(
+            StatusCode::FORBIDDEN,
+            format!(
+                "no live registration on this endpoint holds namespace '{namespace}' — \
+                 nobody here could drain it, so it is not buffered"
+            ),
+        );
+    }
+    let bytes = payload.len();
+    state.live.push(&namespace, payload);
+    tracing::debug!(target: "rails", namespace, bytes, "ring live: buffered");
+    Json(serde_json::json!({ "buffered": bytes })).into_response()
 }
 
 #[cfg(test)]
