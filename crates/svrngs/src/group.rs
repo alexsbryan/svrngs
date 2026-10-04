@@ -192,23 +192,14 @@ pub fn write_seed(dir: &Path, seed: &Seed) -> Result<(), SeedError> {
         salt: seed.salt_hex(),
     };
     let raw = serde_json::to_string_pretty(&file).expect("a seed serializes");
-    std::fs::create_dir_all(dir)
-        .and_then(|()| std::fs::write(&path, raw))
-        .map_err(|source| SeedError::Write { path, source })
+    keep(dir, path, &raw)
 }
 
 /// Read the seed in `dir`, or `None` when the directory holds none.
 pub fn read_seed(dir: &Path) -> Result<Option<Seed>, SeedError> {
     let path = dir.join(SEED_FILE);
-    let raw = match std::fs::read_to_string(&path) {
-        Ok(raw) => raw,
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-        Err(e) => {
-            return Err(SeedError::Read {
-                path,
-                why: e.to_string(),
-            })
-        }
+    let Some(raw) = kept(&path)? else {
+        return Ok(None);
     };
     let file: SeedFile = serde_json::from_str(&raw).map_err(|e| SeedError::Read {
         path: path.clone(),
@@ -227,26 +218,15 @@ pub fn read_seed(dir: &Path) -> Result<Option<Seed>, SeedError> {
 pub fn write_origin(dir: &Path, origin: &Origin) -> Result<(), SeedError> {
     let path = dir.join(ORIGIN_FILE);
     tracing::debug!(target: "group", path = %path.display(), origin = origin.as_str(), "group: origin kept");
-    std::fs::create_dir_all(dir)
-        .and_then(|()| std::fs::write(&path, origin.as_str()))
-        .map_err(|source| SeedError::Write { path, source })
+    keep(dir, path, origin.as_str())
 }
 
 /// The origin kept in `dir`, or `None` when the directory keeps none.
 pub fn read_origin(dir: &Path) -> Result<Option<Origin>, SeedError> {
     let path = dir.join(ORIGIN_FILE);
-    let raw = match std::fs::read_to_string(&path) {
-        Ok(raw) => raw,
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-            tracing::debug!(target: "group", path = %path.display(), "group: no origin kept");
-            return Ok(None);
-        }
-        Err(e) => {
-            return Err(SeedError::Read {
-                path,
-                why: e.to_string(),
-            })
-        }
+    let Some(raw) = kept(&path)? else {
+        tracing::debug!(target: "group", path = %path.display(), "group: no origin kept");
+        return Ok(None);
     };
     Origin::parse(&raw)
         .map(Some)
@@ -254,6 +234,28 @@ pub fn read_origin(dir: &Path) -> Result<Option<Origin>, SeedError> {
             path,
             why: "not an http(s) address without a '#'".into(),
         })
+}
+
+/// Write `contents` to `path`, a file in `dir`, the group's directory,
+/// making the directory first: how the seed and the origin are kept.
+fn keep(dir: &Path, path: PathBuf, contents: &str) -> Result<(), SeedError> {
+    std::fs::create_dir_all(dir)
+        .and_then(|()| std::fs::write(&path, contents))
+        .map_err(|source| SeedError::Write { path, source })
+}
+
+/// What `path` holds, or `None` when there is no file there: how the seed
+/// and the origin are read back. Any other failure is a [`SeedError::Read`]
+/// naming the file, never an absence (ARCH 6).
+fn kept(path: &Path) -> Result<Option<String>, SeedError> {
+    match std::fs::read_to_string(path) {
+        Ok(raw) => Ok(Some(raw)),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(e) => Err(SeedError::Read {
+            path: path.to_path_buf(),
+            why: e.to_string(),
+        }),
+    }
 }
 
 /// Every group this computer holds a seed for under `root`, the data dir.
