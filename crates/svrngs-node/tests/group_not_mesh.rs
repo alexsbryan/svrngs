@@ -53,9 +53,12 @@ fn no_seed(_: &std::path::Path) -> Result<Option<String>, String> {
 /// A group's seed: its founder's key alone (DESIGN §6).
 fn founded_by(founder: u8) -> Roster {
     Roster::new(
-        [(Person::from("founder"), vec![actor_of(&signing(founder))])]
-            .into_iter()
-            .collect(),
+        [(
+            Person::parse("founder").unwrap(),
+            vec![actor_of(&signing(founder))],
+        )]
+        .into_iter()
+        .collect(),
     )
 }
 
@@ -85,7 +88,7 @@ fn append(node: &Node, ns: &str, founder: u8, act: RailAct) -> Op<SignedOp> {
 
 fn admit(person: &str, joining: u8) -> RailAct {
     RailAct::Admit {
-        person: Person::from(person),
+        person: Person::parse(person).unwrap(),
         key: actor_of(&signing(joining)),
         invite: None,
     }
@@ -180,7 +183,7 @@ async fn a_member_the_founder_admits_syncs_and_writes() {
         .applied()
         .find(|o| o.id == bos.id)
         .expect("A holds and counts B's act");
-    assert_eq!(counted.person, Person::from("bo"));
+    assert_eq!(counted.person, Person::parse("bo").unwrap());
 }
 
 /// C, admitted to nothing, has its connection closed by A's acceptor with no

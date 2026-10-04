@@ -153,18 +153,14 @@ const REDEMPTION_DOMAIN: &[u8] = b"svrngs-redemption-binding:";
 /// `DOMAIN || ns || invite[32] || person || key`, every variable field
 /// length-prefixed. The namespace keeps a consent from being replayed into
 /// another group, the `Invite`'s id from being moved to another link, and
-/// the person from being renamed.
-pub(crate) fn redemption_message(
-    namespace: &str,
-    invite: &OpId,
-    person: &crate::Person,
-    key: &str,
-) -> Vec<u8> {
+/// the person from being renamed. `person` is the name's text, so a test
+/// can sign a consent to one no `Person` holds, as a hand could.
+pub fn redemption_message(namespace: &str, invite: &OpId, person: &str, key: &str) -> Vec<u8> {
     let mut msg = Vec::with_capacity(REDEMPTION_DOMAIN.len() + 160);
     msg.extend_from_slice(REDEMPTION_DOMAIN);
     field(&mut msg, namespace.as_bytes());
     msg.extend_from_slice(invite.as_bytes());
-    field(&mut msg, person.as_str().as_bytes());
+    field(&mut msg, person.as_bytes());
     field(&mut msg, key.as_bytes());
     msg
 }

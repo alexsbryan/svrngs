@@ -382,7 +382,7 @@ fn the_membership_acts_ship_at_a_bumped_line_version() {
         103,
         3,
         RailAct::Admit {
-            person: Person::from("bo"),
+            person: Person::parse("bo").unwrap(),
             key: crate::actor_of(&key(2)),
             invite: None,
         },

@@ -7,7 +7,7 @@ use crate::{actor_of, Ed25519Verifier};
 fn seed_of(seeds: &[(u8, &str)]) -> Roster {
     let mut m = BTreeMap::new();
     for (k, name) in seeds {
-        m.insert(Person::from(*name), vec![actor_of(&key(*k))]);
+        m.insert(Person::parse(*name).unwrap(), vec![actor_of(&key(*k))]);
     }
     Roster::new(m)
 }
@@ -18,7 +18,7 @@ fn admit_act(by: u8, ts: i64, seq: u64, person: &str, joining: u8) -> Op<SignedO
         ts,
         seq,
         RailAct::Admit {
-            person: Person::from(person),
+            person: Person::parse(person).unwrap(),
             key: actor_of(&key(joining)),
             invite: None,
         },

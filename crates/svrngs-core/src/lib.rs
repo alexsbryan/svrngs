@@ -100,8 +100,8 @@ pub use introduce::{trace, trace_op, Introduce, Vouch, VouchStatus};
 pub use membership::{membership, InviteFault, Membership};
 pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
 pub use sig::{
-    act_id, actor_of, derive_id, field, ring_op_message, sign_act, sign_message, sign_ring_op,
-    verify_hex,
+    act_id, actor_of, derive_id, field, redemption_message, ring_op_message, sign_act,
+    sign_message, sign_ring_op, verify_hex,
 };
 pub use sync::{digest, ops_missing_from, ops_missing_from_within, Compaction, Floors, NO_BUDGET};
 pub use view::{Digest, View, DIGEST_V};
@@ -151,37 +151,114 @@ pub fn is_local_only(namespace: &str) -> bool {
 
 // ── People ───────────────────────────────────────────────────
 
+/// A name a person reads: a group's, or a person's. Trimmed, 1..=64 bytes,
+/// no control characters: it is printed in a terminal, carried in a group's
+/// seed and, as a [`Person`], signed into every copy of the record (svrngs,
+/// u2-9; REVIEW_FINDINGS #23). [`Self::parse`] is the one rule, for the
+/// command and the node alike.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Name(String);
+
+/// Why some text is not a [`Name`]. Its words are a person's (DESIGN §1).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
+pub enum NotAName {
+    #[error("a name cannot be empty")]
+    Empty,
+    #[error("a name is at most 64 bytes")]
+    TooLong,
+    #[error("a name cannot carry control characters")]
+    Control,
+    /// Kept text is read as written, never trimmed: trimming it would
+    /// change bytes a signature covers.
+    #[error("a name kept on this computer cannot start or end with a space")]
+    Untrimmed,
+}
+
+impl Name {
+    /// A name from what a person typed, trimmed.
+    pub fn parse(raw: &str) -> Result<Self, NotAName> {
+        let name = raw.trim();
+        let why = if name.is_empty() {
+            NotAName::Empty
+        } else if name.len() > 64 {
+            NotAName::TooLong
+        } else if name.chars().any(char::is_control) {
+            NotAName::Control
+        } else {
+            return Ok(Self(name.to_string()));
+        };
+        tracing::debug!(target: "name", raw, why = ?why, "name: not a name");
+        Err(why)
+    }
+
+    /// A name from text this computer keeps — a record's line, a request
+    /// on the wire — which must already be as [`Self::parse`] makes it.
+    pub fn kept(raw: String) -> Result<Self, NotAName> {
+        let name = Self::parse(&raw)?;
+        if name.0 != raw {
+            tracing::debug!(target: "name", raw, "name: not a name — spaces at its ends");
+            return Err(NotAName::Untrimmed);
+        }
+        Ok(name)
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for Name {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
 /// A member of the ring, by the name the house calls them.
 ///
 /// A display name and not a key: the whole point of a ring app is that "Alex
 /// paid for groceries" renders as *Alex*. The binding from name to signing
 /// key lives in the [`Roster`], which is why the name can be changed without
 /// rewriting history.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Default)]
-#[serde(transparent)]
-pub struct Person(String);
+///
+/// Made only from a [`Name`] (svrngs, u2-9): deserialising one runs
+/// [`Name::kept`], so a line naming an empty person, 10 KB or a terminal's
+/// escape codes is a [`RailGap::MalformedLine`], never an act.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Person(Name);
 
 impl Person {
+    /// A person from what someone typed: [`Name::parse`].
+    pub fn parse(raw: &str) -> Result<Self, NotAName> {
+        Name::parse(raw).map(Self)
+    }
+
     pub fn as_str(&self) -> &str {
-        &self.0
+        self.0.as_str()
     }
 }
 
-impl From<&str> for Person {
-    fn from(s: &str) -> Self {
-        Self(s.to_string())
+impl From<Name> for Person {
+    fn from(name: Name) -> Self {
+        Self(name)
     }
 }
 
-impl From<String> for Person {
-    fn from(s: String) -> Self {
-        Self(s)
+impl Serialize for Person {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        s.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for Person {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let raw = String::deserialize(d)?;
+        Name::kept(raw).map(Self).map_err(serde::de::Error::custom)
     }
 }
 
 impl std::fmt::Display for Person {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0)
+        self.0.fmt(f)
     }
 }
 
@@ -394,7 +471,7 @@ impl Redemption {
     /// `joining` consents to join `namespace` as `person` under the
     /// `Invite` whose id is `invite`.
     pub fn sign(joining: &SigningKey, namespace: &str, invite: &OpId, person: &Person) -> Self {
-        let msg = sig::redemption_message(namespace, invite, person, &actor_of(joining));
+        let msg = sig::redemption_message(namespace, invite, person.as_str(), &actor_of(joining));
         Self {
             id: invite.clone(),
             sig: sig::sign_message(joining, &msg),
@@ -404,7 +481,7 @@ impl Redemption {
     /// Whether `sig` is `key`'s signature over this redemption of `person`
     /// in `namespace`. `false` on anything malformed.
     pub(crate) fn verifies(&self, namespace: &str, person: &Person, key: &str) -> bool {
-        let msg = sig::redemption_message(namespace, &self.id, person, key);
+        let msg = sig::redemption_message(namespace, &self.id, person.as_str(), key);
         sig::verify_hex(key, &msg, &self.sig)
     }
 }

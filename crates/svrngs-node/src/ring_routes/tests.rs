@@ -25,7 +25,7 @@ fn key() -> SigningKey {
 fn rail_with_roster(root: &std::path::Path) -> Arc<RingRail> {
     let rail = Arc::new(RingRail::new(root, Arc::new(key())));
     let mut members = std::collections::BTreeMap::new();
-    members.insert(Person::from("Ada"), vec![crate::actor_of(&key())]);
+    members.insert(Person::parse("Ada").unwrap(), vec![crate::actor_of(&key())]);
     rail.journal(NS)
         .unwrap()
         .set_roster(&Roster::new(members))

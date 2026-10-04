@@ -22,7 +22,7 @@ pub fn key(seed: u8) -> SigningKey {
 }
 
 pub fn p(name: &str) -> Person {
-    Person::from(name)
+    Person::parse(name).unwrap()
 }
 
 /// A ring of three, each signing with one key.

@@ -177,6 +177,80 @@ fn a_payload_with_no_canonical_form_is_a_malformed_line() {
     );
 }
 
+/// A line `k` signs at seq 0 whose `Admit` gives `joining` the name
+/// `person` as written — as a hand or another build could write it, since
+/// no `Person` this build makes can hold a name that does not parse. Its id
+/// and signature are over its bytes, so only the name is wrong with it.
+fn admit_line(k: &SigningKey, joining: &SigningKey, person: &str) -> String {
+    let held = signed(
+        k,
+        1,
+        0,
+        RailAct::Admit {
+            person: p("PLACEHOLDER"),
+            key: actor_of(joining),
+            invite: None,
+        },
+    );
+    let named = serde_json::to_string(person).unwrap();
+    let body = body_json(&held.kind.act, None, None).replace("\"PLACEHOLDER\"", &named);
+    let id = act_id(NS, &held.actor, 0, None, 1, &body);
+    serde_json::to_string(&held)
+        .unwrap()
+        .replace("\"PLACEHOLDER\"", &named)
+        .replace(&held.id.to_string(), &id.to_string())
+        .replace(&held.kind.sig, &sign_ring_op(k, &id))
+}
+
+/// `line` as the whole of `journal`'s file.
+fn write_lines(journal: &RingJournal, line: &str) {
+    std::fs::create_dir_all(journal.dir()).unwrap();
+    std::fs::write(journal.dir().join("ring_oplog.jsonl"), format!("{line}\n")).unwrap();
+}
+
+/// **A person's name parses, or the line is a gap** (svrngs, u2-9;
+/// REVIEW_FINDINGS #23). An `Admit` naming an empty person, 10 KB or a
+/// terminal's escape codes, signed by a member, is a `MalformedLine` on
+/// every copy that holds it, saying why, and gives its key no standing; a
+/// name with a space and an accent is admitted. The line never travels:
+/// a copy's read skips it, so sync never sends it on.
+#[test]
+fn an_admit_naming_no_person_is_a_gap_on_every_copy() {
+    let joining = key(5);
+    let r = ring();
+    for (bad, why) in [
+        ("", "cannot be empty"),
+        (&*"x".repeat(10 * 1024), "at most 64 bytes"),
+        ("\x1b[2J", "control characters"),
+        (" bo", "start or end with a space"),
+    ] {
+        for copy in ["sam", "alex"] {
+            let dir = tempfile::tempdir().unwrap();
+            let journal = open(dir.path());
+            write_lines(&journal, &admit_line(&key(1), &joining, bad));
+            let f = journal.admit(&r, &Ed25519Verifier).unwrap();
+            assert!(
+                f.gaps.iter().any(|g| matches!(g,
+                    RailGap::MalformedLine { line: 1, error } if error.contains(why))),
+                "{copy}'s copy, {bad:?}: {:?}",
+                f.gaps
+            );
+            assert!(
+                !f.membership.unwrap().standing.contains(&actor_of(&joining)),
+                "{copy}'s copy, {bad:?}: the key stands"
+            );
+        }
+    }
+    let dir = tempfile::tempdir().unwrap();
+    let journal = open(dir.path());
+    write_lines(&journal, &admit_line(&key(1), &joining, "Zoë Ann"));
+    let f = journal.admit(&r, &Ed25519Verifier).unwrap();
+    assert!(f.gaps.is_empty(), "{:?}", f.gaps);
+    let m = f.membership.unwrap();
+    assert!(m.standing.contains(&actor_of(&joining)));
+    assert_eq!(m.person_for(&actor_of(&joining)), Some(&p("Zoë Ann")));
+}
+
 /// **Held means the act, not the id a line claims** (svrngs, U2; DESIGN §6).
 /// A line whose `id` field names an act the journal holds, with other
 /// content, is another act and lands; and a line that claims the id of an
@@ -1109,9 +1183,13 @@ fn a_peers_introduction_arrives_readable_and_changes_no_roster_row() {
     // bo — a member I already claim — vouches for a key nobody claims.
     let stranger = actor_of(&key(9));
     let intro = RailAct::Record {
-        payload: Introduce::new(Person::from("dee"), &stranger, "she fixed the boiler")
-            .payload()
-            .unwrap(),
+        payload: Introduce::new(
+            Person::parse("dee").unwrap(),
+            &stranger,
+            "she fixed the boiler",
+        )
+        .payload()
+        .unwrap(),
     };
     let written = b
         .append(intro, &key(2), &r, None, &Ed25519Verifier)
@@ -1137,7 +1215,7 @@ fn a_peers_introduction_arrives_readable_and_changes_no_roster_row() {
     let on_disk = a.roster_file().unwrap();
     assert_eq!(on_disk, r, "and the roster it parses to is the one I wrote");
     assert!(
-        !on_disk.knows(&Person::from("dee")),
+        !on_disk.knows(&Person::parse("dee").unwrap()),
         "dee is introduced, not admitted — that is an operator's decision"
     );
     assert!(on_disk.vouch_for(&stranger).is_none());
@@ -1150,11 +1228,15 @@ fn a_peers_introduction_arrives_readable_and_changes_no_roster_row() {
         .iter()
         .find(|o| o.id == written.id)
         .expect("the introduction is admitted — it was signed by a member");
-    assert_eq!(op.person, Person::from("bo"), "and it says who vouched");
+    assert_eq!(
+        op.person,
+        Person::parse("bo").unwrap(),
+        "and it says who vouched"
+    );
     assert_eq!(
         Introduce::from_payload(op.payload.as_ref().unwrap()),
         Some(Introduce::new(
-            Person::from("dee"),
+            Person::parse("dee").unwrap(),
             &stranger,
             "she fixed the boiler"
         )),

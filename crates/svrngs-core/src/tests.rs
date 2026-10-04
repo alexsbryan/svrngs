@@ -429,7 +429,7 @@ fn a_replacement_key_leaves_every_past_act_admitted() {
         102,
         0,
         RailAct::Admit {
-            person: Person::from("dee"),
+            person: Person::parse("dee").unwrap(),
             key: actor_of(&key(5)),
             invite: None,
         },
@@ -450,8 +450,8 @@ fn a_replacement_key_leaves_every_past_act_admitted() {
     // The seed names dee with the OLD key — the replacement changes the key,
     // not the person.
     let mut members = std::collections::BTreeMap::new();
-    members.insert(Person::from("alex"), vec![actor_of(&key(1))]);
-    members.insert(Person::from("dee"), vec![actor_of(&key(4))]);
+    members.insert(Person::parse("alex").unwrap(), vec![actor_of(&key(1))]);
+    members.insert(Person::parse("dee").unwrap(), vec![actor_of(&key(4))]);
     let seed = Roster::new(members);
 
     let f = admit(
@@ -475,13 +475,13 @@ fn a_replacement_key_leaves_every_past_act_admitted() {
     let kept = f.ops.iter().find(|o| o.id == old.id).unwrap();
     assert_eq!(
         kept.person,
-        Person::from("dee"),
+        Person::parse("dee").unwrap(),
         "under the person it always had"
     );
     assert!(
         f.ops
             .iter()
-            .any(|o| o.id == new_writes.id && o.person == Person::from("dee")),
+            .any(|o| o.id == new_writes.id && o.person == Person::parse("dee").unwrap()),
         "the replacement key counts under the same person"
     );
     assert!(
@@ -883,5 +883,29 @@ fn every_gap_renders_as_a_sentence() {
         // renders them through this same impl.
         let json = serde_json::to_value(gap).unwrap();
         assert_eq!(&serde_json::from_value::<RailGap>(json).unwrap(), gap);
+    }
+}
+
+/// **A person's name has one rule** (svrngs, u2-9; REVIEW_FINDINGS #23):
+/// trimmed, 1..=64 bytes, no control characters. A typed name is trimmed; a
+/// kept one, deserialised, must already be trimmed, since trimming it would
+/// change bytes its signature covers.
+#[test]
+fn a_person_is_made_only_from_a_name() {
+    assert_eq!(Person::parse("  Zoë Ann ").unwrap().as_str(), "Zoë Ann");
+    for (raw, why) in [
+        ("", NotAName::Empty),
+        ("   ", NotAName::Empty),
+        (&*"x".repeat(65), NotAName::TooLong),
+        ("\x1b[2J", NotAName::Control),
+        ("bo\nby", NotAName::Control),
+    ] {
+        assert_eq!(Person::parse(raw), Err(why), "{raw:?}");
+    }
+    assert!(Person::parse(&"é".repeat(32)).is_ok(), "64 bytes is a name");
+    let zoe: Person = serde_json::from_str("\"Zoë Ann\"").unwrap();
+    assert_eq!(serde_json::to_string(&zoe).unwrap(), "\"Zoë Ann\"");
+    for raw in ["\"\"", "\" bo\"", "\"\\u001b[2J\""] {
+        assert!(serde_json::from_str::<Person>(raw).is_err(), "{raw}");
     }
 }

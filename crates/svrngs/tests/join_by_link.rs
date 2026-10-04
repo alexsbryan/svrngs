@@ -23,7 +23,10 @@ use svrngs_node::node::Node;
 use svrngs_node::redeem::{
     ask, redeem, AskRequest, Asked, RedeemError, RedeemRequest, Redeemed, REFUSAL,
 };
-use svrngs_node::{actor_of, derive_id, Ed25519Verifier, OpId, Person, RailAct, SigningKey};
+use svrngs_node::{
+    actor_of, derive_id, redemption_message, sign_message, Ed25519Verifier, OpId, Person, RailAct,
+    SigningKey,
+};
 
 fn no_relay() -> RelayConfig {
     RelayConfig::from_parts(Vec::new(), Some("none")).unwrap()
@@ -147,7 +150,7 @@ async fn present(
         &who.key,
         group,
         invite,
-        &Person::from(person),
+        &Person::parse(person).unwrap(),
     );
     send(who, link, &req).await
 }
@@ -341,7 +344,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
         &gus.key,
         &group,
         &open_invite,
-        &Person::from("Gus"),
+        &Person::parse("Gus").unwrap(),
     );
     req.link = actor_of(&open.token.key());
     let unsigned = send(&gus, &open, &req).await;
@@ -453,6 +456,80 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
         }
     }
     for c in [&sam, &dee, &eve, &fay, &gus].into_iter().chain(&friends) {
+        c.node.endpoint().close().await;
+    }
+}
+
+/// **A person's name is parsed at Sam's computer too** (u2-9;
+/// REVIEW_FINDINGS #23). A redemption naming an empty person, 10 KB or a
+/// terminal's escape codes, its request signed by the link's key and its
+/// consent by the joiner's, as a hand-built client could sign them, is
+/// refused with why the name is not one, naming no group, and Sam's record
+/// is byte for byte what it was. Zoë Ann, a name with a space and an
+/// accent, is let in, and Sam's record names her so.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_name_that_is_not_one_is_refused_and_nothing_is_written() {
+    let sam = computer(1).await;
+    let (seed, printed) = cli::new_group(&sam.node, name("house"), name("Sam"), None, &no_relay())
+        .await
+        .expect("Sam makes house");
+    let group = seed.id();
+    let link = parsed(&printed, &sam.node);
+    let invite = invite_of(&sam.node, &group, &link);
+    let file = sam
+        .node
+        .rail()
+        .journal(&group)
+        .unwrap()
+        .dir()
+        .join("ring_oplog.jsonl");
+    let hal = computer(9).await;
+    knows(&hal, &sam.node);
+    for (bad, why) in [
+        (String::new(), "cannot be empty"),
+        ("x".repeat(10 * 1024), "at most 64 bytes"),
+        ("\x1b[2J".to_string(), "control characters"),
+    ] {
+        let before = std::fs::read_to_string(&file).unwrap();
+        let mut req = RedeemRequest::sign(
+            &link.token.key(),
+            &hal.key,
+            &group,
+            &invite,
+            &Person::parse("Hal").unwrap(),
+        );
+        req.person = bad.clone();
+        req.cosig = sign_message(
+            &hal.key,
+            &redemption_message(&group, &invite, &bad, &actor_of(&hal.key)),
+        );
+        req.sig = sign_message(&link.token.key(), &req.message());
+        let answer = send(&hal, &link, &req).await;
+        assert_eq!(
+            std::fs::read_to_string(&file).unwrap(),
+            before,
+            "{bad:?}: Sam's record is unchanged, answered {answer:?}"
+        );
+        let words = answer.expect_err(&format!("{bad:?} is refused"));
+        assert!(words.contains(why), "{bad:?}: {words}");
+        assert!(
+            !words.contains(&group[..8]) && !words.contains("house"),
+            "{bad:?}'s refusal names the group: {words}"
+        );
+        assert!(!stands(&sam.node, &group, &hal.key));
+    }
+
+    let zoe = computer(10).await;
+    knows(&zoe, &sam.node);
+    cli::join_group(&zoe.node, &zoe.key, &link, &name("Zoë Ann"))
+        .await
+        .expect("Zoë Ann is let in");
+    assert!(stands(&sam.node, &group, &zoe.key));
+    let (ops, _) = sam.node.rail().journal(&group).unwrap().read().unwrap();
+    assert!(ops.iter().any(|op| matches!(&op.kind.act,
+        RailAct::Admit { person, key, .. }
+            if person.as_str() == "Zoë Ann" && *key == actor_of(&zoe.key))));
+    for c in [&sam, &hal, &zoe] {
         c.node.endpoint().close().await;
     }
 }

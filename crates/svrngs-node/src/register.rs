@@ -146,7 +146,7 @@ mod tests {
 
     fn admit_act(person: &str, joining: u8) -> RailAct {
         RailAct::Admit {
-            person: Person::from(person),
+            person: Person::parse(person).unwrap(),
             key: actor_of(&key(joining)),
             invite: None,
         }
@@ -168,7 +168,7 @@ mod tests {
     #[test]
     fn standing_from_the_membership_acts_alone_is_the_journals() {
         let seed = Roster::new(
-            [(Person::from("alex"), vec![actor_of(&key(1))])]
+            [(Person::parse("alex").unwrap(), vec![actor_of(&key(1))])]
                 .into_iter()
                 .collect(),
         );
@@ -204,7 +204,7 @@ mod tests {
                 until: 200,
             },
         );
-        let eve = Person::from("eve");
+        let eve = Person::parse("eve").unwrap();
         let redeem_eve = after(
             &key(1),
             &inv,

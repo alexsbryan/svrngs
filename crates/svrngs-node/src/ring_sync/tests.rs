@@ -92,7 +92,7 @@ pub(super) fn ops_in(ns: &str, key: &SigningKey, n: usize) -> Vec<Op<SignedOp>> 
 
 pub(super) fn solo_roster(key: &SigningKey) -> Roster {
     let mut m = std::collections::BTreeMap::new();
-    m.insert(Person::from("alex"), vec![actor_of(key)]);
+    m.insert(Person::parse("alex").unwrap(), vec![actor_of(key)]);
     Roster::new(m)
 }
 

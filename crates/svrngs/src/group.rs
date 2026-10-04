@@ -25,6 +25,8 @@ use std::path::{Path, PathBuf};
 
 use ed25519_dalek::VerifyingKey;
 use serde::{Deserialize, Serialize};
+/// A group's name and a person's share the core's one rule (u2-9).
+pub use svrngs_node::Name;
 use svrngs_node::{field, namespaces_in, Person, Roster};
 
 use crate::link::Origin;
@@ -38,33 +40,6 @@ const SEED_FILE: &str = "seed.json";
 
 /// The one spelling of the kept origin's file name in a group's directory.
 const ORIGIN_FILE: &str = "origin";
-
-/// A name a person reads: a group's, or a person's. Trimmed, 1..=64 bytes,
-/// no control characters — it is printed in a terminal and carried in a
-/// group's seed.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Name(String);
-
-impl Name {
-    pub fn parse(raw: &str) -> Option<Self> {
-        let name = raw.trim();
-        if name.is_empty() || name.len() > 64 || name.chars().any(char::is_control) {
-            tracing::debug!(target: "group", raw, "group: not a name — empty, over 64 bytes or with a control character");
-            return None;
-        }
-        Some(Self(name.to_string()))
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-}
-
-impl std::fmt::Display for Name {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0)
-    }
-}
 
 /// What a group is founded on. Every field is inside the id's hash.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -131,7 +106,7 @@ impl Seed {
     pub fn roster(&self) -> Roster {
         Roster::new(
             [(
-                Person::from(self.founder.as_str()),
+                Person::from(self.founder.clone()),
                 vec![self.founder_actor()],
             )]
             .into_iter()
@@ -145,8 +120,8 @@ impl Seed {
         let key = VerifyingKey::from_bytes(&key).ok()?;
         let salt: [u8; 16] = hex::decode(salt_hex).ok()?.try_into().ok()?;
         Some(Self::from_parts(
-            Name::parse(name)?,
-            Name::parse(founder)?,
+            Name::kept(name.to_string()).ok()?,
+            Name::kept(founder.to_string()).ok()?,
             key,
             salt,
         ))
@@ -180,8 +155,8 @@ pub enum SeedError {
 pub fn write_seed(dir: &Path, seed: &Seed) -> Result<(), SeedError> {
     let path = dir.join(SEED_FILE);
     let file = SeedFile {
-        name: seed.name.0.clone(),
-        founder: seed.founder.0.clone(),
+        name: seed.name.as_str().to_string(),
+        founder: seed.founder.as_str().to_string(),
         key: seed.founder_actor(),
         salt: seed.salt_hex(),
     };

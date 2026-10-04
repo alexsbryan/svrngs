@@ -20,7 +20,8 @@
 //! routes: the group's id, the `Invite`'s id, the person's name, its new key
 //! and that key's consent ([`Redemption`]), all signed by the link's secret
 //! key. The issuer's node checks that the dialer is the new key, that the
-//! link's key signed, that it holds the group, that the `Invite` is its own
+//! link's key signed, that the name parses ([`Name::kept`], the core's one
+//! rule; u2-9), that it holds the group, that the `Invite` is its own
 //! and names the link's key; then, under the door's write lock, that the
 //! new key does not stand already, and that `membership` over the journal
 //! with the redeeming `Admit` in it counts that `Admit` — the one decider of
@@ -28,7 +29,8 @@
 //! membership.rs). Only then is the `Admit` written, and the answer sent.
 //!
 //! Every refusal is answered in one sentence, [`REFUSAL`], so the answer
-//! never says which groups the node holds or why; the trace at debug says
+//! never says which groups the node holds or why — but a name that does not
+//! parse, answered with why it is not a name, which says nothing of groups; the trace at debug says
 //! which check it was. A key that already stands is answered success and
 //! nothing is written, so a joiner whose answer was lost may open the link
 //! again.
@@ -49,8 +51,8 @@ use crate::register::{membership_in, Standing};
 use crate::ring_routes::err;
 use crate::ring_sync::peer_client;
 use crate::{
-    actor_of, derive_id, field, sign_message, verify_hex, Ed25519Verifier, InviteFault, OpId,
-    Person, RailAct, RailError, Redemption, RingRail, SigningKey,
+    actor_of, derive_id, field, sign_message, verify_hex, Ed25519Verifier, InviteFault, Name,
+    NotAName, OpId, Person, RailAct, RailError, Redemption, RingRail, SigningKey,
 };
 
 /// The redemption's path.
@@ -133,8 +135,9 @@ pub struct RedeemRequest {
     pub group: String,
     /// The id of the issuer's `Invite`, as the link carries it.
     pub invite: OpId,
-    /// The name the joiner goes by in the group.
-    pub person: Person,
+    /// The name the joiner goes by in the group, as sent: the issuer parses
+    /// it ([`Name::kept`]) before anything is written.
+    pub person: String,
     /// The new key, actor hex: the key the joiner dials with.
     pub key: String,
     /// The new key's consent, as a redeeming `Admit` carries it.
@@ -159,7 +162,7 @@ impl RedeemRequest {
         let mut req = Self {
             group: group.to_string(),
             invite: invite.clone(),
-            person: person.clone(),
+            person: person.as_str().to_string(),
             key: actor_of(joining),
             cosig: consent.sig,
             link: actor_of(link),
@@ -169,13 +172,15 @@ impl RedeemRequest {
         req
     }
 
-    /// `DOMAIN || group || invite[32] || person || key || cosig || link`,
-    /// every variable field preceded by its `u32` big-endian length.
-    fn message(&self) -> Vec<u8> {
+    /// The bytes the link's key signs: `DOMAIN || group || invite[32] ||
+    /// person || key || cosig || link`, every variable field preceded by its
+    /// `u32` big-endian length. Public so a test can sign a request naming
+    /// a person no `Person` holds, as a hand-built client could.
+    pub fn message(&self) -> Vec<u8> {
         let mut msg = REQUEST_DOMAIN.to_vec();
         field(&mut msg, self.group.as_bytes());
         field(&mut msg, self.invite.as_bytes());
-        field(&mut msg, self.person.as_str().as_bytes());
+        field(&mut msg, self.person.as_bytes());
         field(&mut msg, self.key.as_bytes());
         field(&mut msg, self.cosig.as_bytes());
         field(&mut msg, self.link.as_bytes());
@@ -209,6 +214,8 @@ enum Refused {
     NotTheDialer,
     /// The link's key did not sign the request.
     LinkUnsigned,
+    /// The person's name does not parse; answered with why.
+    NotAName(NotAName),
     /// This node holds no such group, or holds it with no seed.
     NotHeld,
     /// No `Invite` with that id is held here, or, asked, none of this
@@ -272,6 +279,11 @@ fn answer<T: Serialize>(route: &str, key: &str, decided: Result<T, Refused>) -> 
                 "redeem: could not judge — this node's own journal is unreadable");
             err(StatusCode::SERVICE_UNAVAILABLE, UNJUDGED)
         }
+        Err(Refused::NotAName(why)) => {
+            tracing::debug!(target: "redeem", route, key, why = ?why,
+                "redeem: refused — the name is not one; answered with why, naming no group");
+            err(StatusCode::FORBIDDEN, why.to_string())
+        }
         Err(why) => {
             tracing::debug!(target: "redeem", route, key, why = ?why,
                 "redeem: refused, in the one sentence every refusal shares");
@@ -329,6 +341,9 @@ fn decide(
     if !req.signed_by_link() {
         return Err(Refused::LinkUnsigned);
     }
+    let person = Name::kept(req.person.clone())
+        .map(Person::from)
+        .map_err(Refused::NotAName)?;
     let group = req.group.as_str();
     match rail.standing(group, &Ed25519Verifier) {
         Ok(Standing::Members(_)) => {}
@@ -357,7 +372,7 @@ fn decide(
     tracing::debug!(target: "redeem", group, key = %req.key, invite = %req.invite,
         "redeem: the dialer holds the link and its key, and the Invite is this node's");
     let act = RailAct::Admit {
-        person: req.person.clone(),
+        person,
         key: req.key.clone(),
         invite: Some(Redemption {
             id: req.invite.clone(),

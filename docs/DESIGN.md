@@ -278,13 +278,23 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   (u2-8; `group::answered`). It then
   presents the group's id, the `Invite`'s id, a person's name, its new key
   — the key it dials with — and that key's consent, all signed by the
-  link's secret key; the node checks the `Invite` is its own and names that
-  key, then writes the `Admit` through its door only when the key does not
+  link's secret key; the node checks the name parses, the `Invite` is its
+  own and names that key, then writes the `Admit` through its door only when the key does not
   stand already and `membership` over its journal with the `Admit` in it
   counts it, both under the write lock (`RingJournal::append_if`), so the
   fold stays the one decider of a lapsed, closed or voided link. Every
   refusal is one sentence naming no group; a key that already stands is
   answered success and nothing is written.
+- **A person's name is parsed once, in the core** (u2-9, landed): trimmed,
+  1..=64 bytes, no control characters (`Name::parse`,
+  `crates/svrngs-core/src/lib.rs`). A `Person` is made only from a `Name`,
+  and deserialising one requires the name as parsed, so an `Admit` naming
+  an empty person, 10 KB or a terminal's escape codes is a `MalformedLine`
+  on any copy holding it, and its key gains no standing. The redeem route
+  parses the name it is sent once the dialer and the link's key check out,
+  before any group is looked at, writes nothing on a name that does not
+  parse, and answers why it is not one, which names no group. The command's group and
+  person names are the core's `Name`.
 - **Ids cover everything signed** (U2, landed): the id is the whole hash of
   the namespace, actor, seq, previous act, timestamp and body, and the
   signature is over the id (`act_id` and `ring_op_message`,

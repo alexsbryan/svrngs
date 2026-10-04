@@ -24,7 +24,7 @@ fn invite_for(link: u8, until: i64) -> RailAct {
 
 /// `joining` redeems `inv` as `person`, consenting with `consents`' key.
 fn redeem_as(inv: &Op<SignedOp>, person: &str, joining: u8, consents: u8) -> RailAct {
-    let person = Person::from(person);
+    let person = Person::parse(person).unwrap();
     RailAct::Admit {
         invite: Some(Redemption::sign(&key(consents), NS, &inv.id, &person)),
         person,
@@ -169,7 +169,7 @@ fn the_link_ships_at_its_own_line_version() {
         102,
         0,
         RailAct::Admit {
-            person: Person::from("eve"),
+            person: Person::parse("eve").unwrap(),
             key: actor_of(&key(5)),
             invite: None,
         },

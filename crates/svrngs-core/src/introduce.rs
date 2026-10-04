@@ -110,7 +110,7 @@ impl Introduce {
             return None;
         }
         Some(Self {
-            person: Person::from(v.get("person")?.as_str()?),
+            person: serde_json::from_value(v.get("person")?.clone()).ok()?,
             key: v.get("key")?.as_str()?.to_string(),
             reason: v.get("reason")?.as_str()?.to_string(),
         })

@@ -117,8 +117,10 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Command, String>
         match arg.as_str() {
             "--as" => {
                 let raw = value("--as")?;
-                person =
-                    Some(Name::parse(&raw).ok_or_else(|| format!("--as `{raw}` is not a name"))?);
+                person = Some(
+                    Name::parse(&raw)
+                        .map_err(|why| format!("--as `{raw}` is not a name: {why}"))?,
+                );
             }
             "--origin" => {
                 let raw = value("--origin")?;
@@ -141,7 +143,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Command, String>
     match verb.as_str() {
         "new" => {
             let raw = positional.ok_or("new wants a name: `svrngs new <name>`")?;
-            let name = Name::parse(&raw).ok_or_else(|| format!("`{raw}` is not a name"))?;
+            let name = Name::parse(&raw).map_err(|why| format!("`{raw}` is not a name: {why}"))?;
             Ok(Command::New {
                 name,
                 person,
@@ -449,7 +451,7 @@ pub async fn join_group(
         key,
         &id,
         &asked.invite,
-        &Person::from(person.as_str()),
+        &Person::from(person.clone()),
     );
     let redeemed = redeem(node.endpoint(), issuer.clone(), &request)
         .await
@@ -504,7 +506,7 @@ fn not_let_in(e: RedeemError) -> Refusal {
 fn user_name() -> Option<Name> {
     let raw = std::env::var("USER").ok()?;
     tracing::debug!(target: "cli", user = %raw, "cli: the founder's name from $USER");
-    Name::parse(&raw)
+    Name::parse(&raw).ok()
 }
 
 /// `svrngs new`: a seed drawn for `name`, founded by this computer's key
