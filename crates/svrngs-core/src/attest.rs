@@ -16,10 +16,10 @@
 //!
 //! Pure like the rest of the fold: the clock is the `now` parameter.
 
-use ed25519_dalek::{Signer, SigningKey};
+use ed25519_dalek::SigningKey;
 use serde::{Deserialize, Serialize};
 
-use crate::sig::{actor_of, field, verify_hex};
+use crate::sig::{actor_of, field, sign_message, verify_hex};
 use crate::Roster;
 
 /// Domain separator, distinct from `cwth-ring-op-binding:`, so an
@@ -99,7 +99,7 @@ impl GuestAttestation {
             namespace: namespace.to_string(),
             expires_at,
             signer,
-            sig: hex::encode(key.sign(&msg).to_bytes()),
+            sig: sign_message(key, &msg),
         }
     }
 

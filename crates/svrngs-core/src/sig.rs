@@ -167,7 +167,9 @@ pub(crate) fn redemption_message(
     msg
 }
 
-/// Hex Ed25519 signature over `msg`.
+/// Hex Ed25519 signature over `msg`: the ONE place a signature is made and
+/// spelled, for an act's id, a redemption and a guest attestation alike, as
+/// [`verify_hex`] is the one place one is read.
 pub(crate) fn sign_message(key: &SigningKey, msg: &[u8]) -> String {
     hex::encode(key.sign(msg).to_bytes())
 }
@@ -176,7 +178,7 @@ pub(crate) fn sign_message(key: &SigningKey, msg: &[u8]) -> String {
 /// join proof and the dial-info signature are already carried (serde has no
 /// `[u8; 64]` impl).
 pub fn sign_ring_op(key: &SigningKey, id: &OpId) -> String {
-    hex::encode(key.sign(&ring_op_message(id)).to_bytes())
+    sign_message(key, &ring_op_message(id))
 }
 
 /// Sign one act under `signer`: derive its id, sign the id, and build the
