@@ -398,6 +398,7 @@ async fn mint(
     let link = Link {
         seed: seed.clone(),
         secret,
+        invite: op.id,
         issuer,
     };
     Ok(build_https_link(&link, origin))

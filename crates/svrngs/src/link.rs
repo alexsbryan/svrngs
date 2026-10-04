@@ -3,8 +3,9 @@
 //! A group's link (DESIGN §8, U2's inventory, the deep_link.rs row; §10,
 //! 2026-10-04): upstream's https guest link, everything it carries in its
 //! fragment, and a parser that never reads left of the `#`. Its edits: the
-//! fragment carries the group's seed, the link's secret key and its
-//! issuer's dial, in place of upstream's bearer token, lapse, summary,
+//! fragment carries the group's seed, the link's secret key, the id of the
+//! `Invite` that names its key and its issuer's dial, in place of
+//! upstream's bearer token, lapse, summary,
 //! marks and door route; the base is [`Origin`], by default
 //! [`DEFAULT_ORIGIN`], and a link printed on any origin parses the same,
 //! since everything a computer needs is in the fragment. A computer never
@@ -15,7 +16,7 @@
 //! issuer's node is the one that decides a redemption (DESIGN §6).
 
 use svrngs_node::iroh::{format_dial_string, parse_dial_string, EndpointAddr};
-use svrngs_node::{actor_of, SigningKey};
+use svrngs_node::{actor_of, OpId, SigningKey};
 
 use crate::group::Seed;
 
@@ -95,6 +96,9 @@ pub struct Link {
     /// The link's secret half. Its public half is the key the issuer's
     /// `Invite` names; it is in no record.
     pub secret: SigningKey,
+    /// The id of the issuer's `Invite` that names the link's key: what a
+    /// joiner's consent signs (`Redemption::sign`), so it rides the link.
+    pub invite: OpId,
     /// The issuer's computer: the one that redeems this link.
     pub issuer: Dial,
 }
@@ -107,7 +111,7 @@ impl Link {
 }
 
 /// Build the https form of a link:
-/// `<origin>#name=…&by=…&founder=…&salt=…&secret=…&iroh=…`.
+/// `<origin>#name=…&by=…&founder=…&salt=…&secret=…&invite=…&iroh=…`.
 ///
 /// Every field rides the URL FRAGMENT, never the path or query: a browser
 /// does not send the fragment to the server, so the secret stays out of
@@ -121,6 +125,7 @@ pub fn build_https_link(link: &Link, origin: &Origin) -> String {
         format!("founder={}", seed.founder_actor()),
         format!("salt={}", seed.salt_hex()),
         format!("secret={}", hex::encode(link.secret.to_bytes())),
+        format!("invite={}", link.invite),
         format!("iroh={}", percent_encode(link.issuer.as_str())),
     ];
     format!("{}#{}", origin.as_str(), params.join("&"))
@@ -152,18 +157,20 @@ pub fn parse_https_link(link: &str) -> Option<Link> {
     let secret: Option<[u8; 32]> = hex::decode(field("secret")?)
         .ok()
         .and_then(|b| b.try_into().ok());
+    let invite = OpId::from_hex(field("invite")?);
     let issuer = Dial::parse(field("iroh")?);
-    match (seed, secret, issuer) {
-        (Some(seed), Some(secret), Some(issuer)) => {
+    match (seed, secret, invite, issuer) {
+        (Some(seed), Some(secret), Some(invite), Some(issuer)) => {
             tracing::debug!(target: "link", group = %seed.id(), "link: parsed");
             Some(Link {
                 seed,
                 secret: SigningKey::from_bytes(&secret),
+                invite,
                 issuer,
             })
         }
         _ => {
-            tracing::debug!(target: "link", "link: refused — the seed, the secret or the dial is malformed");
+            tracing::debug!(target: "link", "link: refused — the seed, the secret, the invite or the dial is malformed");
             None
         }
     }
@@ -286,6 +293,7 @@ mod tests {
         Link {
             seed,
             secret: SigningKey::from_bytes(&[7u8; 32]),
+            invite: OpId::from_hex(&"ab".repeat(32)).unwrap(),
             issuer: Dial::of(&addr).unwrap(),
         }
     }
@@ -294,6 +302,7 @@ mod tests {
         assert_eq!(a.seed, b.seed);
         assert_eq!(a.seed.id(), b.seed.id());
         assert_eq!(a.secret.to_bytes(), b.secret.to_bytes());
+        assert_eq!(a.invite, b.invite);
         assert_eq!(a.issuer, b.issuer);
     }
 

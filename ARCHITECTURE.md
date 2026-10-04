@@ -152,7 +152,8 @@ and a fresh key that cannot be written, refuse naming the file, where
 upstream fell back to a key nobody keeps, and the file is `identity`, a word
 a person may read. `link.rs` is mesh-join-vocab's https guest link
 (`deep_link.rs:228-300`, with its percent helpers), changed to carry the
-group's seed, the link's secret key and its issuer's dial in the fragment,
+group's seed, the link's secret key, the id of the `Invite` naming its key
+and its issuer's dial in the fragment,
 on any http(s) origin, `https://svrnme.sh/ring/` by default; the parser
 never reads left of the `#`. `group.rs` is new: a group's `Seed` — its
 name, the founder's name and key, 16 random bytes — whose BLAKE3 hash is

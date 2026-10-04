@@ -9,7 +9,7 @@ use svrngs::link::{parse_https_link, Origin};
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::Node;
 use svrngs_node::register::Standing;
-use svrngs_node::{Ed25519Verifier, RailAct, SigningKey};
+use svrngs_node::{derive_id, Ed25519Verifier, OpId, RailAct, SigningKey};
 
 fn no_relay() -> RelayConfig {
     RelayConfig::from_parts(Vec::new(), Some("none")).unwrap()
@@ -29,12 +29,13 @@ fn name(s: &str) -> Name {
     Name::parse(s).unwrap()
 }
 
-/// The `Invite`s a group's record holds: (link key, until).
-fn invites(node: &Node, id: &str) -> Vec<(String, i64)> {
+/// The `Invite`s a group's record holds: (link key, until, the id its
+/// content derives).
+fn invites(node: &Node, id: &str) -> Vec<(String, i64, OpId)> {
     let (ops, _) = node.rail().journal(id).unwrap().read().unwrap();
     ops.into_iter()
-        .filter_map(|op| match op.kind.act {
-            RailAct::Invite { key, until } => Some((key, until)),
+        .filter_map(|op| match &op.kind.act {
+            RailAct::Invite { key, until } => Some((key.clone(), *until, derive_id(&op, id))),
             _ => None,
         })
         .collect()
@@ -78,6 +79,7 @@ async fn new_twice_with_one_name_makes_two_groups_with_two_ids() {
         let invites = invites(&node, &id);
         assert_eq!(invites.len(), 1, "{invites:?}");
         assert_eq!(invites[0].0, link.key(), "the Invite names the link's key");
+        assert_eq!(invites[0].2, link.invite, "the link names the Invite");
         assert!(
             (invites[0].1 - now - LINK_LIFE_SECS).abs() <= 5,
             "it lapses in a day"
@@ -116,7 +118,7 @@ async fn link_mints_a_new_link_to_the_group_it_names() {
     assert_ne!(first, second, "a new link");
     let keys: Vec<String> = invites(&node, &house.id())
         .into_iter()
-        .map(|(k, _)| k)
+        .map(|(k, _, _)| k)
         .collect();
     assert_eq!(
         keys,
