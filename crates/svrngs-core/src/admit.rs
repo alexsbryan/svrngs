@@ -327,7 +327,7 @@ impl AdmittedOp {
 /// account of what could not be read. Only [`admit`] makes one.
 ///
 /// ```
-/// fn read(a: &svrngs_core::Admission) -> usize { a.ops().len() }
+/// fn read(a: &svrngs_core::Admission) -> usize { a.held() }
 /// ```
 /// ```compile_fail
 /// let a = svrngs_core::Admission { ..unimplemented!() };
@@ -345,7 +345,7 @@ pub struct Admission {
 impl Admission {
     /// Every admitted op in the total order `(ts_unix, actor, seq, id)`,
     /// voided ones included and marked.
-    pub fn ops(&self) -> &[AdmittedOp] {
+    pub(crate) fn ops(&self) -> &[AdmittedOp] {
         &self.ops
     }
 
@@ -360,7 +360,7 @@ impl Admission {
     }
 
     /// Where each actor's history starts, per the seals admission authenticated.
-    pub fn floors(&self) -> &crate::sync::Floors {
+    pub(crate) fn floors(&self) -> &crate::sync::Floors {
         &self.floors
     }
 
@@ -370,13 +370,8 @@ impl Admission {
     }
 
     /// Who is in: the one membership walk admission made.
-    pub fn membership(&self) -> &crate::membership::Membership {
+    pub(crate) fn membership(&self) -> &crate::membership::Membership {
         &self.membership
-    }
-
-    /// Takes the admitted ops, for a caller that owns the answer.
-    pub fn into_ops(self) -> Vec<AdmittedOp> {
-        self.ops
     }
 }
 
@@ -389,12 +384,6 @@ impl Admission {
     /// outcome; a dangling citation is the ask, not a hole).
     pub fn is_complete(&self) -> bool {
         !self.gaps.iter().any(|g| g.class() == GapClass::Absence)
-    }
-
-    /// The ops an app's reducer should apply, in order. The one definition
-    /// (ARCH §10.6) — the JS SDK's `ring.fold` is this same filter.
-    pub fn applied(&self) -> impl Iterator<Item = &AdmittedOp> {
-        self.ops.iter().filter(|o| o.applies())
     }
 }
 

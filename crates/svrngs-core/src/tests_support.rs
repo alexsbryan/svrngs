@@ -181,6 +181,13 @@ pub fn admitted(ops: &[Op<SignedOp>]) -> Admission {
     admit(&crate::ActSet::of(ops), &[], &ring(), NS, &Ed25519Verifier)
 }
 
+/// The admitted acts as an app reads them off the wire: the only way a crate
+/// above this one sees them.
+pub fn wire_ops(a: &Admission) -> Vec<crate::AdmittedOp> {
+    serde_json::from_value(serde_json::to_value(a.wire()).expect("the wire serialises"))
+        .expect("an app reads back what the wire carries")
+}
+
 /// The marks projection of a digest — what most sync bars assert on. The
 /// content commitment is asserted where it is the point (`view`'s tests and
 /// the fork bars); everywhere else the mark is the claim under test.
@@ -193,7 +200,9 @@ pub fn marks(d: &crate::Digest) -> BTreeMap<String, u64> {
 /// The `what` of every act an app's reducer would see, in order — the shape
 /// most of these tests assert on.
 pub fn applied(a: &Admission) -> Vec<String> {
-    a.applied()
+    a.ops()
+        .iter()
+        .filter(|o| o.applies())
         .filter_map(|o| {
             o.payload
                 .as_ref()?

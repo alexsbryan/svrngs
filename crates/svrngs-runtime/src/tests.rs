@@ -68,7 +68,7 @@ fn appending_assigns_contiguous_sequence_numbers_per_actor() {
 
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert!(f.is_complete(), "{:?}", f.gaps());
-    assert_eq!(f.ops().len(), 4);
+    assert_eq!(wire_ops(&f).len(), 4);
 }
 
 /// A journal line is one flat JSON object — the envelope's fields and the
@@ -231,7 +231,7 @@ fn an_admit_naming_no_person_is_a_gap_on_every_copy() {
                 f.gaps()
             );
             assert!(
-                !f.membership().standing.contains(&actor_of(&joining)),
+                !f.project::<Membership>().standing.contains(&actor_of(&joining)),
                 "{copy}'s copy, {bad:?}: the key stands"
             );
         }
@@ -241,7 +241,7 @@ fn an_admit_naming_no_person_is_a_gap_on_every_copy() {
     write_lines(&journal, &admit_line(&key(1), &joining, "Zoë Ann"));
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert!(f.gaps().is_empty(), "{:?}", f.gaps());
-    let m = f.membership();
+    let m = f.project::<Membership>();
     assert!(m.standing.contains(&actor_of(&joining)));
     assert_eq!(m.person_for(&actor_of(&joining)), Some(&p("Zoë Ann")));
 }
@@ -303,7 +303,7 @@ fn ingesting_a_peers_op_preserves_it_and_is_idempotent() {
     assert!(!journal.ingest(&peer).unwrap(), "second delivery is a no-op");
     let (back, _) = journal.read().unwrap();
     assert_eq!(back, vec![peer]);
-    assert_eq!(journal.admit(&ring(), &Ed25519Verifier).unwrap().ops().len(), 1);
+    assert_eq!(wire_ops(&journal.admit(&ring(), &Ed25519Verifier).unwrap()).len(), 1);
 }
 
 #[test]
@@ -522,7 +522,7 @@ fn two_nodes_that_receive_the_cuts_in_opposite_orders_agree() {
         .count();
     assert_eq!(not_member, 1, "exactly bo's counter-cut is unstanding: {:?}", fa.gaps());
     assert!(
-        fa.ops().iter().any(|o| o.id == alex_cut.id),
+        wire_ops(&fa).iter().any(|o| o.id == alex_cut.id),
         "alex's cut counted — it sorted first, so bo was already out when theirs arrived"
     );
 }
@@ -1136,8 +1136,8 @@ fn a_peers_introduction_arrives_readable_and_changes_no_roster_row() {
     // ── and the introduction is there to read ──
     let admission = a.admit(&r, &Ed25519Verifier).unwrap();
     assert!(admission.is_complete(), "{:?}", admission.gaps());
-    let op = admission
-        .ops()
+    let ops = wire_ops(&admission);
+    let op = ops
         .iter()
         .find(|o| o.id == written.id)
         .expect("the introduction is admitted — it was signed by a member");

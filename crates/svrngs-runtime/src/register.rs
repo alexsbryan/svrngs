@@ -82,9 +82,7 @@ pub(crate) fn membership_in(
         .filter(|op| op.kind.act.moves_membership())
         .cloned()
         .collect();
-    Ok(admit(&crate::ActSet::of(&acts), &[], seed, namespace, verifier)
-        .membership()
-        .clone())
+    Ok(admit(&crate::ActSet::of(&acts), &[], seed, namespace, verifier).project::<Membership>())
 }
 
 impl RingRail {
@@ -242,9 +240,7 @@ mod tests {
             },
         );
         let ops = [ops, vec![inv, redeem_eve]].concat();
-        let whole = admit(&crate::ActSet::of(&ops), &[], &seed, NS, &Ed25519Verifier)
-            .membership()
-            .clone();
+        let whole = admit(&crate::ActSet::of(&ops), &[], &seed, NS, &Ed25519Verifier).project::<Membership>();
         let expected: BTreeMap<String, Person> = whole
             .standing
             .iter()

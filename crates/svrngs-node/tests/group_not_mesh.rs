@@ -165,8 +165,10 @@ async fn a_member_the_founder_admits_syncs_and_writes() {
     assert_eq!(pushed.peers_reached, 1, "{pushed:?}");
     let held = a.rail().admission(NS).unwrap();
     assert!(held.is_complete(), "gaps: {:?}", held.gaps());
-    let counted = held
-        .applied()
+    let ops = svrngs_core::tests_support::wire_ops(&held);
+    let counted = ops
+        .iter()
+        .filter(|o| o.applies())
         .find(|o| o.id == bos.id)
         .expect("A holds and counts B's act");
     assert_eq!(counted.person, Person::parse("bo").unwrap());

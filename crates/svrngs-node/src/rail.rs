@@ -55,7 +55,7 @@ use crate::iroh::{actor_key, Contact, IrohTransport};
 use crate::live::{push_ephemeral, LivePeer};
 use crate::register::Standing;
 use crate::ring_routes::err;
-use crate::{Compaction, Ed25519Verifier, Person, RailAct, RailError, RingRail};
+use crate::{Compaction, Ed25519Verifier, Membership, Person, RailAct, RailError, RingRail};
 use svrngs_core::{Append, AppendRefusal, Refused as CommitRefused};
 
 /// What the doors read: the journals, the nudge that wakes the round
@@ -357,20 +357,15 @@ async fn log_answer(rail: &RingRail, namespace: &str) -> Response {
             v
         })
         .collect();
-    let register = admission.membership();
+    let register = admission.project::<Membership>();
     let people: BTreeMap<String, Person> = register
         .standing
         .iter()
         .filter_map(|key| Some((key.clone(), register.bindings.get(key)?.clone())))
         .collect();
-    let ops_json: Vec<serde_json::Value> = admission
-        .ops()
-        .iter()
-        .map(|op| serde_json::to_value(op).unwrap_or_default())
-        .collect();
     Json(serde_json::json!({
         "namespace": namespace,
-        "ops": ops_json,
+        "ops": admission.wire(),
         "gaps": gaps,
         "held": admission.held(),
         "complete": admission.is_complete(),

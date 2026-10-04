@@ -227,7 +227,7 @@ async fn a_journal_past_the_one_exchange_ceiling_converges_onto_a_fresh_peer() {
     let admitted = peer_journal
         .admit(&solo_roster(&key), &Ed25519Verifier)
         .unwrap();
-    assert_eq!(admitted.ops().len(), N);
+    assert_eq!(svrngs_core::tests_support::wire_ops(&admitted).len(), N);
     assert!(admitted.is_complete(), "gaps: {:?}", admitted.gaps());
     assert_eq!(
         peer_journal.digest(&crate::Ed25519Verifier).unwrap(),
@@ -412,7 +412,7 @@ async fn the_pull_direction_is_budgeted_and_converges_by_repeating() {
     let admitted = fresh_journal
         .admit(&solo_roster(&key), &Ed25519Verifier)
         .unwrap();
-    assert_eq!(admitted.ops().len(), N);
+    assert_eq!(svrngs_core::tests_support::wire_ops(&admitted).len(), N);
     assert!(admitted.is_complete(), "gaps: {:?}", admitted.gaps());
     assert_eq!(
         fresh_journal.digest(&crate::Ed25519Verifier).unwrap(),
@@ -487,7 +487,13 @@ async fn a_seal_shortens_the_exchange_only_once_the_retired_lines_are_deleted() 
         .admit(&solo_roster(&key), &Ed25519Verifier)
         .unwrap();
     assert!(admitted.is_complete(), "gaps: {:?}", admitted.gaps());
-    assert_eq!(admitted.applied().count(), KEPT as usize);
+    assert_eq!(
+        svrngs_core::tests_support::wire_ops(&admitted)
+            .iter()
+            .filter(|o| o.applies())
+            .count(),
+        KEPT as usize
+    );
     assert_eq!(
         peer_journal.digest(&crate::Ed25519Verifier).unwrap(),
         journal.digest(&crate::Ed25519Verifier).unwrap()

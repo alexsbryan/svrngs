@@ -91,10 +91,7 @@ fn app() -> reqwest::Client {
 
 /// Whether `node` holds the act `id` in `ns`.
 fn holds(node: &Node, ns: &str, id: &str) -> bool {
-    node.rail()
-        .admission(ns)
-        .unwrap()
-        .ops()
+    svrngs_core::tests_support::wire_ops(&node.rail().admission(ns).unwrap())
         .iter()
         .any(|o| o.id.to_string() == id)
 }
@@ -210,7 +207,7 @@ async fn an_append_naming_a_group_not_held_is_refused() {
     let out: serde_json::Value = answer.json().await.unwrap();
     assert_eq!(out["kind"], "not_held", "{out}");
     assert!(!da.path().join("rings/elsewhere").exists());
-    assert!(a.rail().admission(NS).unwrap().ops().is_empty());
+    assert!(svrngs_core::tests_support::wire_ops(&a.rail().admission(NS).unwrap()).is_empty());
     a.endpoint().close().await;
 }
 

@@ -102,7 +102,7 @@ async fn an_append_names_the_person_an_app_serves() {
         assert_eq!(body_of(resp).await["kind"], kind, "{named}");
     }
     assert!(
-        rail.admission(journal).unwrap().ops().is_empty(),
+        svrngs_core::tests_support::wire_ops(&rail.admission(journal).unwrap()).is_empty(),
         "a refusal writes nothing"
     );
 
@@ -113,7 +113,7 @@ async fn an_append_names_the_person_an_app_serves() {
         RingSigner::actor(&key(7)),
         "this computer signs"
     );
-    let ops = rail.admission(journal).unwrap().into_ops();
+    let ops = svrngs_core::tests_support::wire_ops(&rail.admission(journal).unwrap());
     assert_eq!(ops.len(), 1);
     assert_eq!(ops[0].on_behalf_of.as_deref(), Some("halo"));
 }
@@ -127,7 +127,7 @@ async fn an_unstamped_append_carries_no_name() {
     let body = serde_json::json!({ "op": "record", "payload": { "amount": 4 } });
     let resp = append_act(&rail, journal, body).await;
     assert_eq!(resp.status(), StatusCode::OK);
-    let ops = rail.admission(journal).unwrap().into_ops();
+    let ops = svrngs_core::tests_support::wire_ops(&rail.admission(journal).unwrap());
     assert_eq!(ops[0].on_behalf_of, None);
 }
 

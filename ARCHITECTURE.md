@@ -20,7 +20,10 @@ joining by that link is next (U2).
 **`crates/svrngs-core`**: the group's record — signed acts (`Record`,
 `Correct`, `Seal`, `Admit`, `Remove`, `Invite`), the lines a computer holds as
 a set (`ActSet`, `act_set.rs`), admission of that set into one total order
-(`admit.rs`; only `admit` makes an `Admission`), membership (`membership.rs`), the per-actor sync digest
+(`admit.rs`; only `admit` makes an `Admission`), whose state leaves the core
+only as a projection (`project.rs`: the sealed `Projection`, folded for
+`Membership` and `Invites` and handed out by `Admission::project`) or as
+`Wire`, the acts serialized for an app to fold, membership (`membership.rs`), the per-actor sync digest
 (`sync.rs`, `view.rs`), the write side (`command.rs`: `Command`, `commit`, the
 `Store` port, `Authored` and `Recorded`, which only `commit` makes), effects
 (`process.rs`: the sealed `ProcessManager`, the `Due` only `Admission::react`

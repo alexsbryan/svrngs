@@ -216,17 +216,12 @@ impl RingRail {
             let journal = self.journal(&namespace)?;
             let (ops, _) = journal.read()?;
             let register = ActSet::of(ops.iter().filter(|op| op.kind.act.moves_membership()));
-            let admission = admit(&register, &[], &journal.roster_file()?, &namespace, &Ed25519Verifier);
-            let invites = &admission.membership().invites;
-            let newest = admission
-                .ops()
-                .iter()
-                .rev()
-                .find(|op| invites.get(&op.id).is_some_and(|i| i.issuer == me && i.key == link));
-            if let Some(op) = newest {
-                tracing::debug!(target: "register", namespace, invite = %op.id,
+            let invites =
+                admit(&register, &[], &journal.roster_file()?, &namespace, &Ed25519Verifier).project::<Invites>();
+            if let Some(id) = invites.newest(&me, link) {
+                tracing::debug!(target: "register", namespace, invite = %id,
                     "runtime: this computer's newest Invite naming the link's key");
-                return Ok(Some((namespace, op.id.clone())));
+                return Ok(Some((namespace, id.clone())));
             }
         }
         Ok(None)

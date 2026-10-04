@@ -91,6 +91,7 @@ mod membership;
 mod op;
 mod payload;
 mod process;
+mod project;
 mod record;
 mod register;
 mod sig;
@@ -115,6 +116,7 @@ pub use introduce::{trace, trace_op, Introduce, Vouch, VouchStatus};
 pub use membership::{membership, InviteFault, Invited, Membership};
 pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
 pub use process::{Compact, Due, ProcessManager, Retire, Uncaused};
+pub use project::{Invites, Projection, Wire};
 pub use record::{Append, AppendRefusal, Seal};
 pub use register::{MintInvite, Redeem, RedeemRefusal};
 pub use sig::{
