@@ -31,6 +31,13 @@
 //! **The secret never goes back.** A response header holding the lend's
 //! secret is dropped, named at warn by its header, never its value.
 //!
+//! **What it lends, asked** (u3-5; DESIGN §8, "Lends are asked, not
+//! stored"): `GET /lends` answers a dialer standing in a group this
+//! computer holds every lend declared here now, read from the declarations
+//! at each ask, each with how many people use it now ([`Using`]): the
+//! people with a request through the door to it in flight, its answer
+//! still streaming included.
+//!
 //! **What the door refuses**, by name: a request not on an iroh stream; a
 //! dialer standing in no group this computer holds; a path that can step
 //! out of its lend — a `..` segment, an encoded `.` or `/` — as
@@ -38,6 +45,7 @@
 //! this computer does not declare; and a path the lend refuses
 //! ([`crate::lend::RefusedPath::covers`]).
 
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
@@ -47,12 +55,14 @@ use axum::extract::{Request, State};
 use axum::http::header::{self, HeaderMap, HeaderName, HeaderValue};
 use axum::http::{StatusCode, Version};
 use axum::response::{IntoResponse, Response};
-use axum::routing::any;
-use axum::Extension;
+use axum::routing::{any, get};
+use axum::{Extension, Json};
+use http_body_util::BodyExt;
+use tokio::sync::{mpsc, oneshot};
 
 use crate::declared::read_declared_in;
 use crate::iroh::Dialer;
-use crate::lend::{self, Lend, LendName};
+use crate::lend::{self, Lend, LendName, Offered};
 use crate::ring_routes::err;
 use crate::{Ed25519Verifier, Person, RingRail};
 
@@ -70,6 +80,9 @@ pub const KEY_HEADER: &str = "x-svrngs-key";
 
 /// Where a request for a lend starts.
 const LEND_ROUTE: &str = "/lend/";
+
+/// Where a member asks what this computer lends.
+pub const LENDS_ROUTE: &str = "/lends";
 
 /// How long the door waits for a lend's service to take a connection; once
 /// connected, a body takes as long as it takes, as upstream's
@@ -94,18 +107,156 @@ const HOP_BY_HOP: [&str; 8] = [
     "upgrade",
 ];
 
-/// What the door reads: the register, and where the lends are declared.
+/// What the door reads: the register, where the lends are declared, and
+/// who is using each now.
 #[derive(Clone)]
 pub struct Door {
     pub rail: Arc<RingRail>,
     pub data_dir: PathBuf,
+    pub using: Using,
 }
 
-/// The door's route, every method, for the members' protocol's router.
+/// The door's routes, for the members' protocol's router: a lend, every
+/// method, and the list of what this computer lends.
 pub fn router(door: Door) -> axum::Router {
     axum::Router::new()
         .route("/lend/{*rest}", any(through))
+        .route(LENDS_ROUTE, get(lends))
         .with_state(door)
+}
+
+/// Who is using each lend now: for each, the people with a request
+/// through the door to it in flight. The door's own state, owned by one
+/// task and told by messages (RUST_ARCH 3, 4): a request carried to a
+/// service begins a use, and its answer, dropped once streamed or
+/// abandoned, ends it ([`InFlight`]). Never in the record.
+#[derive(Clone)]
+pub struct Using(mpsc::UnboundedSender<Use>);
+
+enum Use {
+    Began(LendName, String),
+    Ended(LendName, String),
+    People(LendName, oneshot::Sender<u32>),
+}
+
+impl Using {
+    /// The task that keeps the count, ending when the last handle drops.
+    pub fn spawn() -> Self {
+        let (tx, mut rx) = mpsc::unbounded_channel();
+        tokio::spawn(async move {
+            let mut flights: BTreeMap<LendName, BTreeMap<String, usize>> = BTreeMap::new();
+            while let Some(u) = rx.recv().await {
+                match u {
+                    Use::Began(lend, actor) => {
+                        *flights.entry(lend).or_default().entry(actor).or_default() += 1;
+                    }
+                    Use::Ended(lend, actor) => {
+                        let people = flights.entry(lend).or_default();
+                        if let Some(n) = people.get_mut(&actor) {
+                            *n -= 1;
+                            if *n == 0 {
+                                people.remove(&actor);
+                            }
+                        }
+                    }
+                    Use::People(lend, answer) => {
+                        let n = flights.get(&lend).map_or(0, |p| p.len());
+                        let _ = answer.send(u32::try_from(n).unwrap_or(u32::MAX));
+                    }
+                }
+            }
+        });
+        Self(tx)
+    }
+
+    /// `actor` begins a request to `lend`; it ends when the hold drops.
+    fn begin(&self, lend: &LendName, actor: &str) -> InFlight {
+        let _ = self.0.send(Use::Began(lend.clone(), actor.to_string()));
+        InFlight {
+            using: self.0.clone(),
+            lend: lend.clone(),
+            actor: actor.to_string(),
+        }
+    }
+
+    /// How many people use `lend` now; `None` when the count's task is
+    /// gone, which is not a count of none.
+    pub async fn people(&self, lend: &LendName) -> Option<u32> {
+        let (answer, counted) = oneshot::channel();
+        self.0.send(Use::People(lend.clone(), answer)).ok()?;
+        counted.await.ok()
+    }
+}
+
+/// One request's use of a lend, ended when dropped.
+struct InFlight {
+    using: mpsc::UnboundedSender<Use>,
+    lend: LendName,
+    actor: String,
+}
+
+impl Drop for InFlight {
+    fn drop(&mut self) {
+        let _ = self.using.send(Use::Ended(
+            self.lend.clone(),
+            std::mem::take(&mut self.actor),
+        ));
+    }
+}
+
+/// `GET /lends`: what this computer lends, to a dialer standing in a group
+/// it holds, read from the declarations now. A declaration that cannot be
+/// read is left out, named at warn; a lend whose count cannot be had is
+/// left out too, never answered as used by none.
+async fn lends(State(door): State<Door>, dialer: Option<Extension<Dialer>>) -> Response {
+    let Some(Extension(dialer)) = dialer else {
+        tracing::warn!(target: "door", "door: lends refused — no verified dialer, so the request did not come on an iroh stream");
+        return err(
+            StatusCode::FORBIDDEN,
+            "what a computer lends is asked only from another computer of its group",
+        );
+    };
+    let actor = dialer.actor();
+    if door
+        .rail
+        .standing_anywhere(&actor, &Ed25519Verifier)
+        .is_none()
+    {
+        tracing::debug!(target: "door", actor, "door: lends refused — the dialer stands in no group held here");
+        return err(StatusCode::FORBIDDEN, "this computer lends nothing to you");
+    }
+    let declared = match lend::all(&door.data_dir) {
+        Ok(d) => d,
+        Err(e) => {
+            tracing::warn!(target: "door", error = %e, "door: lends — the declarations cannot be read");
+            return err(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "what this computer lends cannot be read on it",
+            );
+        }
+    };
+    let mut offered = Vec::new();
+    for lend in declared {
+        let lend = match lend {
+            Ok(l) => l,
+            Err(e) => {
+                tracing::warn!(target: "door", error = %e, "door: lends — a declaration cannot be read, so it is left out");
+                continue;
+            }
+        };
+        let Some(using) = door.using.people(&lend.name).await else {
+            tracing::warn!(target: "door", lend = %lend.name, "door: lends — no count of who uses it, so it is left out");
+            continue;
+        };
+        offered.push(Offered {
+            name: lend.name,
+            kind: lend.kind,
+            limit: lend.limit,
+            using,
+        });
+    }
+    tracing::debug!(target: "door", actor, lends = offered.len(), "door: lends — answered what this computer lends");
+    Json(serde_json::json!({ "lends": offered })).into_response()
 }
 
 /// A name as upstream's `rewrite_head` compared it (`compare_name`,
@@ -347,6 +498,9 @@ async fn forward(
         }
     };
     *request.headers_mut() = parts.headers;
+    // A use begins as the request leaves for the service, and lasts until
+    // the member has the whole answer or leaves it: the answer's body holds it.
+    let held = door.using.begin(&lend.name, actor);
 
     let unanswered = || {
         err(
@@ -405,6 +559,10 @@ async fn forward(
     }
     tracing::debug!(target: "door", actor, lend = %lend.name, status = parts.status.as_u16(),
         "door: the lend's service answered; streaming it back");
+    let body = body.map_frame(move |frame| {
+        let _ = &held;
+        frame
+    });
     let mut response = Response::new(Body::new(body));
     *response.status_mut() = parts.status;
     *response.headers_mut() = parts.headers;

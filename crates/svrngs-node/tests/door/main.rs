@@ -488,3 +488,109 @@ async fn an_upload_streams_through_the_door() {
     assert!(reply.text.ends_with(&want), "{}", reply.text);
     pair.close().await;
 }
+
+/// An origin that answers a request's head and first chunk, then holds the
+/// rest of its answer until `release` fires.
+async fn held_origin() -> (SocketAddr, tokio::sync::oneshot::Sender<()>) {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    let (release, released) = tokio::sync::oneshot::channel::<()>();
+    tokio::spawn(async move {
+        let (mut sock, _) = listener.accept().await.unwrap();
+        let mut head = Vec::new();
+        while !head.ends_with(b"\r\n\r\n") {
+            let mut byte = [0u8; 1];
+            sock.read_exact(&mut byte).await.unwrap();
+            head.push(byte[0]);
+        }
+        sock.write_all(b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n")
+            .await
+            .unwrap();
+        let _ = released.await;
+        sock.write_all(b"0\r\n\r\n").await.unwrap();
+    });
+    (addr, release)
+}
+
+/// What A lends, as B asks it now: `(name, kind, limit, using)`.
+async fn lends_of(pair: &Pair) -> Vec<(String, String, u64, u64)> {
+    let reply = pair.get("/lends", "").await;
+    assert_eq!(reply.status, 200, "{}", reply.text);
+    let body = reply.text.split("\r\n\r\n").nth(1).unwrap();
+    let doc: serde_json::Value = serde_json::from_str(body).unwrap();
+    doc["lends"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|l| {
+            (
+                l["name"].as_str().unwrap().to_string(),
+                l["kind"].as_str().unwrap().to_string(),
+                l["limit"].as_u64().unwrap(),
+                l["using"].as_u64().unwrap(),
+            )
+        })
+        .collect()
+}
+
+/// A member asks what A lends, and how many use each now (u3-5): read
+/// from the declarations at each ask, so a lend withdrawn is gone at the
+/// next; and a person whose answer is still streaming is using it, until
+/// the answer ends. The secret is in no answer ([`clean`]). Planted: the
+/// declarations read once, when the door starts (the withdrawn lend still
+/// listed); the use ended when the service answers rather than when the
+/// answer ends (none using while it streams).
+#[tokio::test]
+async fn a_member_asks_what_is_lent_and_how_many_use_it_now() {
+    let (pair, _heads) = lending_heads().await;
+    let (origin, release) = held_origin().await;
+    pair.lend("slow", origin.port(), &[]);
+    assert_eq!(
+        lends_of(&pair).await,
+        vec![
+            ("shelf".to_string(), "k".to_string(), 3, 0),
+            ("slow".to_string(), "k".to_string(), 3, 0),
+        ]
+    );
+
+    let mut sock = tokio::net::TcpStream::connect(pair.bridge).await.unwrap();
+    sock.write_all(b"GET /lend/slow/x HTTP/1.1\r\nHost: local\r\nConnection: close\r\n\r\n")
+        .await
+        .unwrap();
+    let mut got = Vec::new();
+    while !got.windows(5).any(|w| w == b"hello") {
+        let mut buf = [0u8; 256];
+        let n = tokio::time::timeout(Duration::from_secs(20), sock.read(&mut buf))
+            .await
+            .expect("the first chunk comes through")
+            .unwrap();
+        assert!(n > 0, "the answer ended early: {got:?}");
+        got.extend_from_slice(&buf[..n]);
+    }
+    let slow = |l: &Vec<(String, String, u64, u64)>| l.iter().find(|x| x.0 == "slow").unwrap().3;
+    assert_eq!(
+        slow(&lends_of(&pair).await),
+        1,
+        "bo is using it while it streams"
+    );
+
+    release.send(()).unwrap();
+    sock.read_to_end(&mut got).await.unwrap();
+    let mut using = 1;
+    for _ in 0..50 {
+        using = slow(&lends_of(&pair).await);
+        if using == 0 {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    assert_eq!(using, 0, "the answer ended, and so did bo's use");
+
+    lend::withdraw(pair.dir.path(), &LendName::parse("slow").unwrap()).unwrap();
+    assert_eq!(
+        lends_of(&pair).await,
+        vec![("shelf".to_string(), "k".to_string(), 3, 0)],
+        "a lend withdrawn is gone at the next ask"
+    );
+    pair.close().await;
+}

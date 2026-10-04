@@ -150,6 +150,7 @@ impl Node {
         .merge(crate::door::router(crate::door::Door {
             rail: rail.clone(),
             data_dir: data_dir.clone(),
+            using: crate::door::Using::spawn(),
         }));
         let redeem = crate::redeem::router(rail.clone(), seeds);
         let acceptor =

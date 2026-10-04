@@ -267,10 +267,17 @@ response header holding the secret is dropped. It refuses, by name, a
 request off the stream, a dialer standing in no group held, a path with a
 `..` segment or an encoded `.` or `/` (`route_by_prefix`'s guard), a lend
 not declared, and a path the lend refuses. A lend is `lend.rs`: its
-declaration, `<data dir>/lends/<lend>.json` (the port and the refused
-paths, unknown fields refused), read per request, so a running node sees a
-lend come and go; its secret is `declared.rs`'s store under
-`<data dir>/secrets/lends/<lend>/`. A refused path covers what is under it
+declaration, `<data dir>/lends/<lend>.json` (the port, an opaque kind, how
+many people may use it at once and the refused paths; unknown fields
+refused, and a kind or limit absent too), read per request, so a running
+node sees a lend come and go; its secret is `declared.rs`'s store under
+`<data dir>/secrets/lends/<lend>/`. `lend::declare` and `lend::withdraw`
+are the one writer of both, which `svrngs share` calls. `GET /lends` on the
+members' protocol answers a dialer standing in a group held here what this
+computer lends (`lend::Offered`: name, kind, limit) read from the
+declarations at each ask, and how many people use each now: `door::Using`,
+a task owning the count, told by messages, of the people with a request to
+the lend in flight, the answer's body holding the use until it ends. A refused path covers what is under it
 at a segment boundary, as upstream's `covers`, compared percent-decoded,
 case-blind and with repeated slashes as one. `tests/door/` runs a lender
 and a member through it, with upstream's `picky_origin` and Range origin

@@ -28,6 +28,9 @@ rand = "0.9"
 axum = "0.8"
 hyper = { version = "1", features = ["server", "client", "http1"] }
 hyper-util = { version = "0.1", features = ["tokio"] }
+# The door holds who is using a lend for as long as the answer streams: the
+# answer's body carries the hold, and drops it with itself (`map_frame`).
+http-body-util = "0.1"
 tower = { version = "0.5", features = ["util"] }
 # The member door (U3) is hyper's HTTP/1 client to a lend's service, one
 # connection per request, so nothing between member and service is pooled,
