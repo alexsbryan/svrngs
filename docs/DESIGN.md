@@ -33,8 +33,10 @@ run on localhost you can share on the ring."**
   in the ring, and they open shared apps in their own browser at a localhost
   address their node serves, tunnelled to the app's host. A browser with nothing
   installed comes next, through iroh in wasm, as commonwealth-ai's
-  `docs/THE_LINK.md` designs it; its status table lists the dial from a stock
-  browser tab as unverified.
+  `docs/THE_LINK.md` designs it — about 99% there by the operator's account,
+  its untested part the dial from a stock browser tab. So the first unit
+  measures that dial; if it holds, the browser join enters the first
+  experiment.
 - **Chats are doors, outside svrngs.** svrngs exposes `svrngs ring new` → a
   link, and `svrngs join <link>`. A small adapter per chat — Discord, Slack —
   lives in its own package and does only "make a ring for this channel and post
