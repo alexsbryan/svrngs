@@ -339,9 +339,10 @@ the mesh daemon and so is rewritten, not forked.
 **Demo A — Sam's films, three homes at once** (after U3). Sam lends Jellyfin
 with one command and sends a link. Alex, Bo and Cy join from three homes and
 each plays a different film from Sam's library in their own browser at the
-same time, seeking freely; none stalls another, and each plays at the best
-quality Sam's upload can share. Sam's password never left Sam's computer;
-nobody made an account.
+same time, seeking freely; none stalls another, and the door tells each its
+share of Sam's upload — turning a share into a picture is Films' (U5), so
+Jellyfin's own player picks the quality here. Sam's password never left Sam's
+computer; nobody made an account.
 
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
