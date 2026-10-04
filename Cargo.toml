@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/svrngs-core", "crates/svrngs-node"]
+members = ["crates/svrngs-core", "crates/svrngs-node", "crates/svrngs"]
 
 [workspace.package]
 version = "0.1.0"
