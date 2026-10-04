@@ -125,14 +125,15 @@ comes after the core (§8). The core never knows a chat exists.
 
 **The fork** (operator, 2026-10-03, over shipping `cw-rails` as a sidecar):
 svrngs owns the group's code, forked from commonwealth-ai's ring slice at
-`e1a43bcd2` — about 6k lines: the record (`commonwealth-rail-core`), the
-journal (`commonwealth-rail` and `oplog`), ring sync, the ring routes and the
-rail routes with the default roster they read
-(`commonwealth/crates/commonwealth-rails/src/ring_sync`, `ring_routes.rs`,
-`rail.rs`), the iroh acceptor they sit behind (`acceptor.rs` there), the member door
-(`commonwealth/crates/commonwealth-transport/src/iroh_identity_forward.rs`)
-and the sync bodies (`sovereign/crates/sovereign-peer-wire`). How a piece
-comes over:
+`e1a43bcd2`: the record (`commonwealth-rail-core`), the journal
+(`commonwealth-rail` and `oplog`), ring sync and its route
+(`commonwealth/crates/commonwealth-rails/src/ring_sync`, `ring_routes.rs`),
+the sync bodies (`sovereign/crates/sovereign-peer-wire`), the dial-by-key
+tunnel and the member door (`commonwealth/crates/commonwealth-transport/src/`
+`iroh.rs` and `iroh_identity_forward.rs`, `mesh-reach/src/guest.rs`), and in
+U3 the rail routes an app writes through (`rail.rs`). What each upstream piece
+becomes — forked, replaced, or left behind — is U1's inventory (§8). How a
+piece comes over:
 
 - **Behaviour kept first, then changed.** A piece lands with only the edits it
   needs to build here — paths rewritten, a small dependency inlined, a test
@@ -209,8 +210,11 @@ a file, or a default, which upstream set to the mesh.
 the fork with the unit named beside it (§8). The full rules as designed are at
 tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
 
-- **The group decides who is in it** (U1). Membership comes only from the
-  group's own register — never a mesh, a roster file or a list a door keeps.
+- **The group decides who is in it** (U1). Who may connect and who is synced
+  come only from the group's register — the key that seeds it, and its
+  `Admit` and `Remove` acts as `membership` folds them — never a mesh or a
+  list a door keeps. Until U2's link carries the seed, it is the founder's key
+  alone, in the journal's `roster.json`.
 - **A grow-only set, linked like git** (U2, before any key from outside the
   operator's own computers). Each act names its author's previous
   act; a copy holds an act only with its parent, so copies converge by union.
@@ -277,15 +281,48 @@ who fixes it:
   can give you the bigger share.
 - *The same room* — one stream to the TV, however many phones hold the remote.
 
-**Starting U1.** List everything `ring_sync`, `ring_routes.rs` and
-`acceptor.rs` use outside themselves at `e1a43bcd2`, tests apart: the crates
-`commonwealth-core`, `commonwealth-transport`, `commonwealth-media`, `host-kit`
-and `sovereign-peer-wire`, and in their own crate `rail.rs` (the rail routes,
-and `MembershipRosterSource`, the default roster that asks the mesh) and
-`RailsDaemon`, which `RingSyncHost` is implemented for (`ring_sync.rs:700-733`).
-Decide per item: fork the piece it needs, or replace it — the mesh with the
-register, the daemon with the node. The list and the decisions are U1's first
-commit. Until U2, a test admits members by writing `Admit` acts directly, as
+**U1's inventory.** What `ring_sync`, `ring_routes.rs` and `acceptor.rs` use
+outside themselves at `e1a43bcd2`, tests apart, and what each becomes. Paths
+are under `commonwealth/crates/commonwealth-rails/src/` unless they name a
+crate.
+
+| Upstream | What it does there | Becomes |
+|---|---|---|
+| `commonwealth-rail` | the journals | forked already: `svrngs-node` |
+| `sovereign-peer-wire` | the sync bodies; the 8 MiB body limit and the 4 MiB exchange budget | forked whole into `svrngs-node` |
+| the mesh: `commonwealth-core::mesh`, read by `RoundMembers::of` (`ring_sync/journal.rs:146`), `member_check` (`acceptor.rs:49`) and `MembershipRosterSource` (`rail.rs:113`, installed at `lib.rs:404`) | who the round dials; who may connect; every ring's default roster | **the register**: a group's members are the keys standing in `membership` over its seed and its `Admit` and `Remove` acts (`crates/svrngs-core/src/membership.rs`), read through `RingJournal::admit`. The round offers a group to its standing keys, the acceptor admits a key standing in any group the node holds, and the sync route asks the group the request names. No default roster is installed |
+| `commonwealth-core::ids` | `NodeId`, the mesh's id for a machine; `NodePubkey`, a verified key | a member is the record's actor, its key's lowercase hex (`actor_of`), read from the key iroh verified; `NodeId` goes with the mesh |
+| `commonwealth-transport::mesh_proof` | proves the mesh secret on a plain-IP hop | left behind: svrngs dials only over iroh, whose handshake proves the dialer's key |
+| `commonwealth-transport::iroh` and `mesh-reach::guest` | dial by key: a loopback bridge per peer for the dialer (`IrohTransport`, `HttpBridge`, `pump`); for the dialled, an accept loop that copies each stream into the node's loopback listener (`IrohAcceptor`); the relayed endpoint and its discovery setting | forked, the dial-by-key tunnel only: one ALPN, no IP transport, no forward by ALPN or path prefix, no bench relay pin |
+| `mesh-reach`'s port: `PeerTransport`, `PeerContact`, `PeerEndpoint`, `TrafficClass` | one seam over IP and iroh; a port per class of traffic | replaced: one transport, so a concrete type (RUST_ARCH: a trait only at a real boundary); a contact is a member's key; one ALPN constant, and an enum when a second protocol comes |
+| `commonwealth-transport::iroh_identity_forward`, with `kernel-types::member`'s header scheme | stamps the dialer's verified key on every request head and strips any the client typed | **forked in U1**: the sync route is the member door's first origin and U3's lent services its second, so there is one identity mechanism, not two |
+| `commonwealth-media::origins` (`OriginRegistry`, `admit_spliced_origin`) and `commonwealth-transport::iroh_routed_forward` | a table of many programs' origins by ALPN and path prefix | replaced: U1's node serves one origin, its sync route, to members; a table waits for a second |
+| `host-kit::shell::RouteBundle` | named route bundles a shell mounts | replaced by an `axum::Router` |
+| `rail.rs`: `err` | the refusal body | forked with the route |
+| `rail.rs`: `append`, `RailQuery`, `LiveBuffer`; the live route (`ring_routes.rs:163`) | the record API an app writes through; the nudge that wakes the round after a write; the live lane | U3, as the loopback record API. Until then nothing nudges, and the round runs on its interval |
+| `rail.rs`: the sync doors (`digest` to `compact`) and `attest` | the inference daemon reading this process's journals over loopback | left behind: one process per computer |
+| `ring_routes.rs`: the checkpoint route (`:208`) | exports one ring as a document | waits (§9). It checks no ring's roster, so any member the acceptor admits can export any ring the node holds |
+| `RailsDaemon` and `RailsNode` (`lib.rs:232-664`): `RingSyncHost`'s implementor (`ring_sync.rs:700-733`) and the wiring in `start` and `run` | the journals, endpoint, membership, nudge, loopback listener, acceptor and round, in one process | replaced by the node: a `svrngs-node` type holding the rail, endpoint, transport, loopback listener, acceptor and round. Gossip, join, the mesh store, the work plane, presence, the endpoint's self-heal and `rails.toml` stay behind |
+| `commonwealth-transport::identity` | the node key on disk | U2, with the `svrngs` command, which owns a device's keys; the node takes its key as an argument |
+
+Four facts follow. *One key signs and dials:* upstream signs a ring's acts
+with the key its endpoint proves (`lib.rs:400-402`), so a member's actor is
+its iroh id and the register names every node the round may dial; when §6's
+signing key per person per group lands, the register carries each device's
+endpoint key beside it. *A bare key is dialled:* upstream dials the relay and
+addresses the mesh gossiped, and refuses a bare key
+(`commonwealth/crates/commonwealth-transport/src/iroh.rs:182-237`); with no
+gossip, iroh's address lookup, upstream's default
+(`mesh-reach/src/guest.rs:79-88`), resolves a member's key, so the fork accepts
+a bare key when lookup is on, and tests seed addresses as upstream's do. *No
+presence:* the round dials every standing member, and one that is offline
+costs a dial timeout each round. *The door still asks the seed:*
+`RingJournal::append` refuses a signer the seed does not name
+(`crates/svrngs-node/src/journal.rs:225`); it asks the register in U2, where a
+member other than the founder first writes. `svrngs-node` gains tokio, axum,
+reqwest and iroh, and iroh 1.0.2 raises the toolchain floor to Rust 1.91.
+
+Until U2, a test admits members by writing `Admit` acts directly, as
 upstream's `commonwealth/crates/commonwealth-rail/examples/stage_member_act.rs`
 does, and runs two nodes in one process with no relay — the shape of upstream's
 `commonwealth/crates/commonwealth-rails/tests/ring_round.rs`, which is built on
@@ -293,9 +330,9 @@ the mesh daemon and so is rewritten, not forked.
 
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
-| U1 a group is not a mesh | ring sync and the ring routes forked into `svrngs-node`; the register decides who may connect and who is synced, where upstream asked the mesh (`commonwealth/crates/commonwealth-rails/src/` at `e1a43bcd2`: `acceptor.rs:47-61`, `ring_sync/journal.rs:153-164`, the default roster at `lib.rs:404`) | a node in the group but no mesh syncs; a node outside the group is refused |
-| U2 join by link | `svrngs new <name>` and `svrngs join <link>` on a computer; redeeming writes the `Admit`; each person's public key in the register; acts linked by their previous act, ids over everything signed (§6) | one redemption admits one person to one group; a reused link is refused |
-| U3 lend a service | the member door forked; `svrngs share <port>` with its lend declaration; streaming and byte ranges through the door; each request's share of the lender's upload; the people-at-once limit; the loopback record API; the list of what members lend | the app sees the verified person; a header the client typed is stripped; the lender's secret appears in no byte a member receives; with three streams, each is told a third of the measured upload, and a fourth person is refused with a reason |
+| U1 a group is not a mesh | ring sync, its route, the dial-by-key tunnel and the member door forked into `svrngs-node`; the register decides who may connect and who is synced, where upstream asked the mesh (`commonwealth/crates/commonwealth-rails/src/` at `e1a43bcd2`: `acceptor.rs:47-61`, `ring_sync/journal.rs:153-164`, the default roster at `lib.rs:404`) | a node in the group but no mesh syncs; a node outside the group is refused |
+| U2 join by link | `svrngs new <name>` and `svrngs join <link>` on a computer; redeeming writes the `Admit`; the link carries the group's seed; each person's public key in the register; acts linked by their previous act, ids over everything signed (§6) | one redemption admits one person to one group; a reused link is refused |
+| U3 lend a service | the member door opened to lent services; `svrngs share <port>` with its lend declaration; streaming and byte ranges through the door; each request's share of the lender's upload; the people-at-once limit; the loopback record API (the rail routes and the live lane, forked); the list of what members lend | the app sees the verified person; a header the client typed is stripped; the lender's secret appears in no byte a member receives; with three streams, each is told a third of the measured upload, and a fourth person is refused with a reason |
 
 **Demo A — Sam's films, three homes at once** (after U3). Sam lends Jellyfin
 with one command and sends a link. Alex, Bo and Cy join from three homes and
@@ -342,6 +379,9 @@ class at a time, each chosen by the north star's tests.
 | files beside the record; the live channel beyond what U3 carries | the reference app that needs each |
 | a second chat adapter, and the trait it earns | a group on another chat asks |
 | compacting the journal | a journal grows past a size measured to matter |
+| exporting a group as one document (upstream's checkpoint route), checking the asker is in that group | a group refounds from a copy, or someone asks to export one |
+| the endpoint's self-heal (upstream's `self_heal.rs`, `iroh_watchdog.rs`) | a node's endpoint wedges in a recorded run |
+| dialling a round's members at once, or skipping the ones known offline | a round's measured time nears its interval |
 | another device for the same person | someone asks |
 | the wire published for a second implementation | someone sets out to write one |
 | local discovery on one WiFi | Apple's multicast entitlement is granted |
