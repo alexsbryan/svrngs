@@ -128,6 +128,37 @@ pub fn run_in(
     out
 }
 
+/// A line that claims to be `claims`'s act but carries `signs`'s signature
+/// over its id — the line a hostile peer pushes, which admission must refuse
+/// as a bad signature. Made by [`sign_act`] like every other fixture, so the
+/// forgery is of the act as the rail defines it, never of a local copy.
+pub fn forged(
+    signs: &SigningKey,
+    claims: &SigningKey,
+    ts: i64,
+    seq: u64,
+    prev: Option<OpId>,
+    act: RailAct,
+) -> Op<SignedOp> {
+    struct Impostor<'a> {
+        signs: &'a SigningKey,
+        claims: String,
+    }
+    impl RingSigner for Impostor<'_> {
+        fn actor(&self) -> String {
+            self.claims.clone()
+        }
+        fn sign(&self, id: &OpId) -> String {
+            self.signs.sign(id)
+        }
+    }
+    let impostor = Impostor {
+        signs,
+        claims: actor_of(claims),
+    };
+    sign_act(&impostor, NS, ts, seq, prev, act, None, None)
+}
+
 /// An id no act here derives: `fill` repeated over 32 bytes.
 pub fn stray_id(fill: u8) -> OpId {
     OpId::from_hex(&format!("{fill:02x}").repeat(32)).unwrap()

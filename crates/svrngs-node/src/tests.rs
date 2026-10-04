@@ -775,25 +775,9 @@ fn a_forged_seal_deletes_nothing_from_disk() {
             .append(record(what), &key(1), &r, None, &Ed25519Verifier)
             .unwrap();
     }
-    let act = RailAct::Seal;
-    let body = body_json(&act, None, None);
     let prev = journal.read().unwrap().0[2].id.clone();
-    let id = act_id(NS, &actor_of(&key(1)), 3, Some(&prev), 103, &body);
     // cy's key, over a line that claims to be alex's.
-    let forged = Op {
-        kind: SignedOp {
-            seq: 3,
-            prev: Some(prev),
-            sig: sign_ring_op(&key(3), &id),
-            act,
-            on_behalf_of: None,
-            view: None,
-        },
-        id,
-        v: 1,
-        ts_unix: 103,
-        actor: actor_of(&key(1)),
-    };
+    let forged = forged(&key(3), &key(1), 103, 3, Some(prev), RailAct::Seal);
     journal.ingest(&forged).unwrap();
 
     let done = journal.compact(&r, &Ed25519Verifier).unwrap();
@@ -1008,24 +992,15 @@ fn compaction_keeps_a_cited_op_whatever_id_its_line_carries() {
 /// Cy's signature over a line that claims to be alex's act at `seq`,
 /// following `prev`: refused by admission, held on disk.
 fn forged_as_alex(seq: u64, prev: &Op<SignedOp>) -> Op<SignedOp> {
-    let act = record("forged");
-    let body = body_json(&act, None, None);
     let ts = 100 + seq as i64;
-    let id = act_id(NS, &actor_of(&key(1)), seq, Some(&prev.id), ts, &body);
-    Op {
-        kind: SignedOp {
-            seq,
-            prev: Some(prev.id.clone()),
-            sig: sign_ring_op(&key(3), &id),
-            act,
-            on_behalf_of: None,
-            view: None,
-        },
-        id,
-        v: 1,
-        ts_unix: ts,
-        actor: actor_of(&key(1)),
-    }
+    forged(
+        &key(3),
+        &key(1),
+        ts,
+        seq,
+        Some(prev.id.clone()),
+        record("forged"),
+    )
 }
 
 /// **The door follows its own act, never a line that claims its key**

@@ -135,31 +135,15 @@ fn a_sealed_prefix_is_retired_rather_than_reported_as_a_hole() {
 /// that received it.
 #[test]
 fn a_seal_the_rail_refused_retires_nothing() {
-    let act = RailAct::Seal;
-    let body = body_json(&act, None, None);
-    let id = act_id(
-        NS,
-        &actor_of(&key(1)),
-        3,
-        Some(&absent_parent()),
+    // cy's key, over a line that claims to be alex's.
+    let forged = forged(
+        &key(3),
+        &key(1),
         103,
-        &body,
+        3,
+        Some(absent_parent()),
+        RailAct::Seal,
     );
-    let forged = Op {
-        // cy's key, over a line that claims to be alex's.
-        kind: SignedOp {
-            seq: 3,
-            prev: Some(absent_parent()),
-            sig: sign_ring_op(&key(3), &id),
-            act,
-            on_behalf_of: None,
-            view: None,
-        },
-        id,
-        v: 1,
-        ts_unix: 103,
-        actor: actor_of(&key(1)),
-    };
     let f = admitted(&[forged, signed(&key(1), 104, 4, record("after"))]);
 
     assert!(
