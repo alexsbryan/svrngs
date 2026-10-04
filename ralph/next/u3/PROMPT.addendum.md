@@ -12,7 +12,7 @@ The plan for every row is DESIGN §8 "U3's inventory" and its four facts, §3
 "What an app gets", and §10. Upstream is commonwealth-ai at `e1a43bcd2`, not
 its HEAD. Read a file there with `git -C ~/dev/commonwealth-ai show
 e1a43bcd2:<path>`; the paths in the rows are upstream paths unless they start
-with `crates/`, `apps/`, `scripts/`, `docs/`, `demo/` or `bridge/`.
+with `crates/`, `apps/`, `scripts/`, `docs/` or `demo/`.
 
 A fork lands in two commits at least: first the files as upstream had them,
 with only the edits the row names, so that a diff against upstream shows

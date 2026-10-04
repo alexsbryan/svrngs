@@ -24,8 +24,5 @@ fi
 tests=$(find apps -name '*.test.mjs' 2>/dev/null)
 if [ -n "$tests" ]; then step "app laws" node --test $tests
 else echo "never-ran  app tests: none yet"; failed=1; fi
-tests=$(find bridge -name '*.test.mjs' -not -path '*/node_modules/*' 2>/dev/null)
-if [ -n "$tests" ]; then step "bridge" node --test $tests
-else echo "never-ran  bridge tests: none yet"; failed=1; fi
 rm -f /tmp/svrngs-check.$$
 exit $failed

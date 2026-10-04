@@ -481,9 +481,8 @@ on the lender's computer can reach a lent port and type the identity header,
 as it can reach any localhost service; upstream's per-process tie waits in
 §9. Jellyfin is GPL-2.0-only, so svrngs talks to it at arm's length, over its
 API (commonwealth-ai `quality/campaigns/ring-apps-shelf.md:187`). And
-`bridge/`, E0's Discord door, calls a host deleted with E0
-(`bridge/bridge.mjs:2-3`): it goes, as the engine did, and the chat doors
-start from tag `e0-bot` when their turn comes.
+E0's Discord door, which called a host deleted with E0, went as the engine
+did (u3-1); the chat doors start from tag `e0-bot` when their turn comes.
 
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|

@@ -207,11 +207,6 @@ are at that tag.
 **`apps/films/`, `apps/tap/`**: so far only each app's `nouns.txt` — the words
 the infra may never use. Films is DESIGN U5; Tap is a canary (DESIGN §8).
 
-**`bridge/`**: the Discord door's first code — `setup.mjs` and `discord.mjs`
-(the bot's application, invite and channels), `words.json` (the plain-words
-list), and `bridge.mjs`, E0's bridge core, kept for its log and tests until the
-door (DESIGN U4) replaces it.
-
 **`demo/`**: how a demo is recorded. **`ralph/`**: the work loop. A queue is a
 directory `ralph/next/<queue>/` holding `queue.toml` (models, timeouts, the
 launch line), `STATE.md` (its rows) and `PROMPT.addendum.md`, which the driver

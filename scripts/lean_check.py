@@ -8,8 +8,8 @@
    `Rc<RefCell<` in a crate (ownership is a tree); no `async` in svrngs-core
    (the core is synchronous).
 4. Lines of code — not blank, not a comment, not a test — stay under budget:
-   svrngs-core under 2,500, the whole repository under 12,000 — scripts and the
-   bridge included; apps/ and installed packages (any node_modules/) apart.
+   svrngs-core under 2,500, the whole repository under 12,000 — scripts
+   included; apps/ and installed packages (any node_modules/) apart.
 """
 import re
 import sys
