@@ -52,8 +52,12 @@ tunnel dials `ALPN`; no bench relay pin (`relay_pin_active`,
 `PeerEndpoint` or `TrafficClass`, so the transport is a concrete type whose
 `base_url` takes a `Contact` (a key with optional dial hints) and its bridges
 are keyed by peer alone; `NodePubkey` becomes iroh's `PublicKey`; the sync
-bodies import the record from `svrngs-core`. The accept loop is not here yet
-(U1's next step), so the bridge tests splice through a stand-in acceptor.
+bodies import the record from `svrngs-core`. `iroh.rs` also holds
+upstream's accept loop (`IrohAcceptor`), without its `Forward` kinds: it splices
+each accepted stream into a loopback listener chosen by ALPN and dialer
+(`spawn`, `spawn_routed`, `spawn_admitting`), and its resolver takes iroh's
+`PublicKey`. The bridge's own tests splice through a test stand-in, since they
+test the bridge, not what the acceptor serves.
 iroh is pinned at `=1.0.2`, and its tree locked at upstream's versions, so the
 fork runs on what upstream tested.
 
