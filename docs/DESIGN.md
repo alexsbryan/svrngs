@@ -316,10 +316,12 @@ gossip, iroh's address lookup, upstream's default
 (`mesh-reach/src/guest.rs:79-88`), resolves a member's key, so the fork accepts
 a bare key when lookup is on, and tests seed addresses as upstream's do. *No
 presence:* the round dials every standing member, and one that is offline
-costs a dial timeout each round. *The door still asks the seed:*
+costs a dial timeout each round. *The door asks the register too:*
 `RingJournal::append` refuses a signer the seed does not name
-(`crates/svrngs-node/src/journal.rs:225`); it asks the register in U2, where a
-member other than the founder first writes. `svrngs-node` gains tokio, axum,
+(`crates/svrngs-node/src/journal.rs:225`), which would leave two answers to
+who is in a group (ARCH 8); in U1 it asks the same standing the round, the
+acceptor and the sync route ask, so a member the founder admits can write.
+`svrngs-node` gains tokio, axum,
 reqwest and iroh, and iroh 1.0.2 raises the toolchain floor to Rust 1.91.
 
 Until U2, a test admits members by writing `Admit` acts directly, as
@@ -415,6 +417,11 @@ By the operator, 2026-10-03:
 4. **Phone browsers forget.** Safari may clear a site's storage, and the
    person's key with it; a web app added to the home screen keeps it, and a
    lost key means joining again by link.
-5. **Two copies of the record's code.** A signing or canonical-form bug fixed on
+5. **Members find each other through iroh's address lookup**, n0's DNS by
+   default, as upstream's (§8, U1's inventory): it maps a key to its relay,
+   never to a person, and a group is unreachable through it while it is down.
+   Upstream's `discovery = "none"` with the group's own relay is the way out,
+   kept by the fork.
+6. **Two copies of the record's code.** A signing or canonical-form bug fixed on
    one side can be missed on the other. `scripts/ports.py` is the guard, and it
    is a listing, not a gate.
