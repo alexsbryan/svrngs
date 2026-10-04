@@ -1,141 +1,172 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai mesh-join-vocab/src/deep_link.rs@e1a43bcd2
-/// A parsed deep link.
+//! A group's link (DESIGN §8, U2's inventory, the deep_link.rs row; §10,
+//! 2026-10-04): upstream's https guest link, everything it carries in its
+//! fragment, and a parser that never reads left of the `#`. Its edits: the
+//! fragment carries the group's seed, the link's secret key and its
+//! issuer's dial, in place of upstream's bearer token, lapse, summary,
+//! marks and door route; the base is [`Origin`], by default
+//! [`DEFAULT_ORIGIN`], and a link printed on any origin parses the same,
+//! since everything a computer needs is in the fragment. A computer never
+//! fetches the origin: it dials the issuer by key. A phone (U4) loads the
+//! page there, which never sees the fragment, so the origin can be anyone's.
+//!
+//! The lapse is not in the link: the issuer's `Invite` says it, and the
+//! issuer's node is the one that decides a redemption (DESIGN §6).
+
+use svrngs_node::iroh::{format_dial_string, parse_dial_string, EndpointAddr};
+use svrngs_node::{actor_of, SigningKey};
+
+use crate::group::Seed;
+
+/// Where a link points when its founder names no origin of their own
+/// (operator, 2026-10-04; upstream pins it at
+/// `sovereign/crates/sovereign-contracts/src/guest_pages.rs:270`).
+pub const DEFAULT_ORIGIN: &str = "https://svrnme.sh/ring/";
+
+/// A link's base: an http(s) address with no fragment of its own.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Origin(String);
+
+impl Origin {
+    pub fn parse(raw: &str) -> Option<Self> {
+        let raw = raw.trim();
+        let ok = (raw.starts_with("https://") || raw.starts_with("http://")) && !raw.contains('#');
+        if !ok {
+            tracing::debug!(target: "link", origin = raw, "link: not an origin — not http(s), or carrying a '#'");
+        }
+        ok.then(|| Self(raw.to_string()))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl Default for Origin {
+    fn default() -> Self {
+        Self(DEFAULT_ORIGIN.to_string())
+    }
+}
+
+/// How the issuer's computer is dialled: an iroh dial string
+/// (`<hex-key>@<relay-or-addr>[,…]`, `svrngs_node::iroh::format_dial_string`)
+/// with at least one target, held parsed.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Dial {
+    addr: EndpointAddr,
+    text: String,
+}
+
+impl Dial {
+    /// An endpoint's dial, or `None` while it has no address yet.
+    pub fn of(addr: &EndpointAddr) -> Option<Self> {
+        let text = format_dial_string(addr)?;
+        Self::parse(&text)
+    }
+
+    pub fn parse(text: &str) -> Option<Self> {
+        match parse_dial_string(text) {
+            Ok(addr) => Some(Self {
+                addr,
+                text: text.trim().to_string(),
+            }),
+            Err(why) => {
+                tracing::debug!(target: "link", dial = text, why, "link: not a dial string");
+                None
+            }
+        }
+    }
+
+    pub fn addr(&self) -> &EndpointAddr {
+        &self.addr
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.text
+    }
+}
+
+/// A parsed link.
 #[derive(Debug, Clone)]
-pub enum DeepLink {
-    /// Use a mesh node's models as a GUEST: `sovereign://guest/<token>?url=…&exp=…&s=…`
-    ///
-    /// Not a join. The holder never becomes a member, never receives
-    /// `mesh_secret`, and never learns an invite key — they present `token` as
-    /// an `Authorization: Bearer` to `url` and get exactly what the issuing
-    /// node's grant says, for as long as it says.
-    Guest {
-        /// The bearer. Opaque here — this crate never interprets it.
-        token: String,
-        /// Base URL of the issuing node's client API, no trailing `/v1`.
-        ///
-        /// Where the bearer goes **when `dial` is absent**. When `dial` is
-        /// present this is provenance and display only — it names the machine
-        /// that lent you something, and is never dialled. See [`Self::Guest`]'s
-        /// `dial` field for why there is exactly one path, not a preference
-        /// order.
-        url: String,
-        /// The lender's iroh dial string (`<hex-id>@<relay>[,<addr>…]`), when
-        /// the plaintext client API is not the way in.
-        ///
-        /// An ENCRYPTED mesh forces its client listener loopback-only, so the
-        /// address in `url` answers nothing — the sole ingress is the iroh
-        /// acceptor. `mesh use` dials this, on `GUEST_ALPN`, and tunnels to
-        /// the lender's bearer-checking guest listener.
-        ///
-        /// **Present means authoritative.** There is no fallback to `url`: a
-        /// tunnel that fails is reported, never quietly downgraded to
-        /// plaintext against a mesh that asked for encryption (§18.3). Old
-        /// builds ignore the unknown param and fail on the unreachable `url`,
-        /// which is the honest outcome for them.
-        ///
-        /// Additive, and the same shape a join link's `dial=` already uses.
-        /// On the https fragment form the same string rides under the param
-        /// name `iroh=` — the join link's dial param.
-        dial: Option<String>,
-        /// The issuing ring's digest marks (`<actor-hex>:<n>` pairs,
-        /// comma-separated), when the link names the state a guest should
-        /// expect. Opaque here, like `token`: this crate never interprets
-        /// the marks, and they are never the payload — the checkpoint
-        /// document is fetched separately. Present only on the https
-        /// fragment form; `None` for the `sovereign://guest` form.
-        at: Option<String>,
-        /// Unix-seconds the grant lapses. Display + a local pre-flight so
-        /// `mesh use` can refuse a dead link without a round-trip; the ISSUING
-        /// NODE is the authority and rejects an expired token regardless.
-        expires_at: u64,
-        /// **Display only.** What the minting node said this buys, so `mesh
-        /// use` can print it without a round-trip.
-        ///
-        /// Deliberately one opaque string rather than structured params: the
-        /// grant's scope lives in the issuer's store, and a second
-        /// machine-readable copy on the wire would be a second answer to "what
-        /// does this link permit" (§10.6) — one that travels through a
-        /// clipboard and can be edited. A link claiming more than the grant
-        /// gives changes nothing; the request is still refused.
-        ///
-        /// This is also why a future scope needs no wire change at all.
-        summary: Option<String>,
-    },
+pub struct Link {
+    /// The group it admits to; the group's id is the seed's hash.
+    pub seed: Seed,
+    /// The link's secret half. Its public half is the key the issuer's
+    /// `Invite` names; it is in no record.
+    pub secret: SigningKey,
+    /// The issuer's computer: the one that redeems this link.
+    pub issuer: Dial,
 }
 
-/// Build the https form of a guest link:
-/// `<base>#token=…&exp=…[&s=…][&at=…&iroh=…]`.
+impl Link {
+    /// The link's public key, as the issuer's `Invite` names it.
+    pub fn key(&self) -> String {
+        actor_of(&self.secret)
+    }
+}
+
+/// Build the https form of a link:
+/// `<origin>#name=…&by=…&founder=…&salt=…&secret=…&iroh=…`.
 ///
-/// What a phone opens. The bearer rides the URL FRAGMENT, never the path or
-/// query: a browser does not send the fragment to the server, so the token
-/// stays out of access logs and `Referer` headers, and only the page's own
-/// script reads it. `base` is kept verbatim — it is the page's address.
-///
-/// The couriers ride the fragment beside the token, on the same grounds:
-/// `at` is the ring's digest marks (`<actor-hex>:<n>` pairs) and `iroh` the
-/// lender's dial string (the join link's `iroh=` param). Both are appended
-/// only when present — a call passing neither produces bytes identical to
-/// the links this minted before the params existed. `path` is the DOOR route
-/// a runtime page whose base is a bare page origin must fetch (the base
-/// cannot spell both the runtime page and the app); appended last, so a call
-/// that does not pass it is also byte-identical to before.
-pub fn build_https_guest_link(
-    token: &str,
-    base: &str,
-    expires_at: u64,
-    summary: Option<&str>,
-    at: Option<&str>,
-    iroh: Option<&str>,
-    path: Option<&str>,
-) -> String {
-    let mut params = vec![
-        format!("token={}", percent_encode(token)),
-        format!("exp={expires_at}"),
+/// Every field rides the URL FRAGMENT, never the path or query: a browser
+/// does not send the fragment to the server, so the secret stays out of
+/// access logs and `Referer` headers, and only the page's own script reads
+/// it. `origin` is kept verbatim — it is the page's address.
+pub fn build_https_link(link: &Link, origin: &Origin) -> String {
+    let seed = &link.seed;
+    let params = [
+        format!("name={}", percent_encode(seed.name().as_str())),
+        format!("by={}", percent_encode(seed.founder().as_str())),
+        format!("founder={}", seed.founder_actor()),
+        format!("salt={}", seed.salt_hex()),
+        format!("secret={}", hex::encode(link.secret.to_bytes())),
+        format!("iroh={}", percent_encode(link.issuer.as_str())),
     ];
-    if let Some(s) = summary {
-        params.push(format!("s={}", percent_encode(s).replace(' ', "+")));
-    }
-    if let Some(a) = at {
-        params.push(format!("at={}", percent_encode(a)));
-    }
-    if let Some(d) = iroh {
-        params.push(format!("iroh={}", percent_encode(d)));
-    }
-    if let Some(p) = path {
-        params.push(format!("path={}", percent_encode(p)));
-    }
-    format!("{base}#{}", params.join("&"))
+    format!("{}#{}", origin.as_str(), params.join("&"))
 }
 
-/// Parse the https form built by [`build_https_guest_link`] into a
-/// [`DeepLink::Guest`] whose `url` is the part before the fragment and whose
-/// `at` and `dial` come from the fragment's `at=` / `iroh=` (or are `None`).
-/// `token` and `exp` are required, as for the `sovereign://guest` form; one
-/// rule covers every protected param — `token`, `at`, `iroh` — anywhere but
-/// the fragment is not read, because the parser never looks left of the `#`.
-pub fn parse_https_guest_link(link: &str) -> Option<DeepLink> {
-    let (base, fragment) = link.split_once('#')?;
-    if !(base.starts_with("https://") || base.starts_with("http://")) {
+/// Parse the https form built by [`build_https_link`], from any origin.
+/// Every field is required; one rule covers them all — anywhere but the
+/// fragment is not read, because the parser never looks left of the `#`.
+pub fn parse_https_link(link: &str) -> Option<Link> {
+    let Some((base, fragment)) = link.trim().split_once('#') else {
+        tracing::debug!(target: "link", "link: refused — no fragment");
         return None;
-    }
+    };
+    Origin::parse(base)?;
     let params = parse_query_params(Some(fragment));
-    let token = params.get("token").filter(|t| !t.is_empty())?.clone();
-    let expires_at = params.get("exp").and_then(|s| s.parse::<u64>().ok())?;
-    Some(DeepLink::Guest {
-        token,
-        url: base.to_string(),
-        dial: params
-            .get("iroh")
-            .map(|d| d.trim().to_string())
-            .filter(|d| !d.is_empty()),
-        at: params
-            .get("at")
-            .map(|a| a.trim().to_string())
-            .filter(|a| !a.is_empty()),
-        expires_at,
-        summary: params.get("s").cloned(),
-    })
+    let field = |name: &str| {
+        let value = params.get(name).map(|v| v.trim()).filter(|v| !v.is_empty());
+        if value.is_none() {
+            tracing::debug!(target: "link", field = name, "link: refused — a field is missing from the fragment");
+        }
+        value
+    };
+    let seed = Seed::parse(
+        field("name")?,
+        field("by")?,
+        field("founder")?,
+        field("salt")?,
+    );
+    let secret: Option<[u8; 32]> = hex::decode(field("secret")?)
+        .ok()
+        .and_then(|b| b.try_into().ok());
+    let issuer = Dial::parse(field("iroh")?);
+    match (seed, secret, issuer) {
+        (Some(seed), Some(secret), Some(issuer)) => {
+            tracing::debug!(target: "link", group = %seed.id(), "link: parsed");
+            Some(Link {
+                seed,
+                secret: SigningKey::from_bytes(&secret),
+                issuer,
+            })
+        }
+        _ => {
+            tracing::debug!(target: "link", "link: refused — the seed, the secret or the dial is malformed");
+            None
+        }
+    }
 }
 
 fn parse_query_params(query: Option<&str>) -> std::collections::HashMap<String, String> {
@@ -218,9 +249,6 @@ fn percent_encode(input: &str) -> String {
 }
 
 #[cfg(test)]
-// svrngs: one variant of `DeepLink` came over, so upstream's `let … else`
-// over it cannot fail.
-#[allow(irrefutable_let_patterns)]
 mod tests {
     use super::*;
 
@@ -242,138 +270,89 @@ mod tests {
         assert_eq!(percent_decode(&percent_encode(dial)), dial);
     }
 
-    #[test]
-    fn https_guest_link_round_trips_with_the_token_only_in_the_fragment() {
-        let base = "http://192.168.1.10:9750/app/ring-doc/";
-        let link = build_https_guest_link(
-            "deadbeef",
-            base,
-            1_787_900_000,
-            Some("rail:wall"),
-            None,
-            None,
-            None,
+    fn a_link(name: &str) -> Link {
+        let founder = SigningKey::from_bytes(&[1u8; 32]);
+        let seed = Seed::from_parts(
+            crate::group::Name::parse(name).unwrap(),
+            crate::group::Name::parse("Sam").unwrap(),
+            founder.verifying_key(),
+            [9u8; 16],
         );
-        let (before, fragment) = link.split_once('#').expect("a fragment");
+        let issuer =
+            svrngs_node::iroh::PublicKey::from_bytes(&founder.verifying_key().to_bytes()).unwrap();
+        let addr = EndpointAddr::new(issuer)
+            .with_ip_addr("127.0.0.1:4242".parse().unwrap())
+            .with_relay_url("https://relay.example./".parse().unwrap());
+        Link {
+            seed,
+            secret: SigningKey::from_bytes(&[7u8; 32]),
+            issuer: Dial::of(&addr).unwrap(),
+        }
+    }
+
+    fn same(a: &Link, b: &Link) {
+        assert_eq!(a.seed, b.seed);
+        assert_eq!(a.seed.id(), b.seed.id());
+        assert_eq!(a.secret.to_bytes(), b.secret.to_bytes());
+        assert_eq!(a.issuer, b.issuer);
+    }
+
+    /// A link round-trips through build and parse: a group name with a
+    /// space, an apostrophe and an ampersand, the seed and its id, the
+    /// secret, and the dial with its relay and address. The secret is only
+    /// in the fragment.
+    #[test]
+    fn a_link_round_trips_through_build_and_parse() {
+        let link = a_link("Sam's house & yard");
+        let url = build_https_link(&link, &Origin::default());
+        let (before, fragment) = url.split_once('#').unwrap();
+        assert_eq!(before, DEFAULT_ORIGIN);
+        let secret = hex::encode(link.secret.to_bytes());
         assert!(
-            !before.contains("deadbeef"),
-            "the token must never reach the path or query: {link}"
+            !before.contains(&secret) && fragment.contains(&secret),
+            "{url}"
         );
-        assert!(fragment.contains("token=deadbeef"), "{link}");
-        let DeepLink::Guest {
-            token,
-            url,
-            dial,
-            at,
-            expires_at,
-            summary,
-        } = parse_https_guest_link(&link).unwrap()
-        else {
-            panic!("expected a guest link")
-        };
-        assert_eq!(token, "deadbeef");
-        assert_eq!(url, base);
-        assert!(dial.is_none());
-        assert!(at.is_none());
-        assert_eq!(expires_at, 1_787_900_000);
-        assert_eq!(summary.as_deref(), Some("rail:wall"));
-        // A token outside the fragment is not a guest link.
-        assert!(parse_https_guest_link("http://h/?token=deadbeef&exp=1").is_none());
+        same(&parse_https_link(&url).expect("the link parses"), &link);
     }
 
-    /// The couriers ride the fragment beside the token and come back
-    /// verbatim: the marks (`at=`) and the dial string (`iroh=`) survive the
-    /// percent-encoder, and the built link is exactly these bytes.
+    /// The parser never reads left of the `#`: the secret moved into the
+    /// query, the part a browser sends to the server, is no link at all;
+    /// and every field moved there, with no fragment, is none either.
     #[test]
-    fn https_guest_link_round_trips_the_couriers_exactly() {
-        let base = "http://192.168.1.10:9750/app/ring-doc/";
-        let at = "aa11:1,bb22:2,cc33:3";
-        let iroh = "3b1f0a@https://relay.example:443/,192.168.1.10:41234";
-        let link = build_https_guest_link(
-            "deadbeef",
-            base,
-            1_787_900_000,
-            None,
-            Some(at),
-            Some(iroh),
-            None,
-        );
-        assert_eq!(
-            link,
-            "http://192.168.1.10:9750/app/ring-doc/#token=deadbeef&exp=1787900000\
-             &at=aa11%3A1%2Cbb22%3A2%2Ccc33%3A3\
-             &iroh=3b1f0a%40https%3A%2F%2Frelay.example%3A443%2F%2C192.168.1.10%3A41234"
-        );
-        let DeepLink::Guest {
-            at: marks, dial, ..
-        } = parse_https_guest_link(&link).unwrap()
-        else {
-            panic!("expected a guest link")
-        };
-        assert_eq!(marks.as_deref(), Some(at));
-        assert_eq!(dial.as_deref(), Some(iroh));
+    fn a_link_whose_secret_sits_left_of_the_hash_parses_as_nothing() {
+        let link = a_link("house");
+        let url = build_https_link(&link, &Origin::default());
+        let (base, fragment) = url.split_once('#').unwrap();
+        let secret = format!("secret={}", hex::encode(link.secret.to_bytes()));
+        let rest: Vec<&str> = fragment.split('&').filter(|p| *p != secret).collect();
+        let moved = format!("{base}?{secret}#{}", rest.join("&"));
+        assert!(parse_https_link(&moved).is_none(), "{moved}");
+        assert!(parse_https_link(&format!("{base}?{fragment}")).is_none());
     }
 
-    /// A call with neither courier produces bytes identical to the link this
-    /// builder minted before the params existed — every existing QR and
-    /// pasted link stays valid.
+    /// A link printed on an origin of the founder's own parses to the same
+    /// link as one on the default.
     #[test]
-    fn https_guest_link_without_the_new_params_is_byte_identical() {
-        assert_eq!(
-            build_https_guest_link(
-                "deadbeef",
-                "http://192.168.1.10:9750/app/ring-doc/",
-                1_787_900_000,
-                Some("rail:wall"),
-                None,
-                None,
-                None,
-            ),
-            "http://192.168.1.10:9750/app/ring-doc/#token=deadbeef&exp=1787900000&s=rail%3Awall"
+    fn a_link_printed_on_another_origin_parses_the_same() {
+        let link = a_link("house");
+        let theirs = Origin::parse("https://links.example.org/our/house/").unwrap();
+        let url = build_https_link(&link, &theirs);
+        assert!(
+            url.starts_with("https://links.example.org/our/house/#"),
+            "{url}"
+        );
+        let parsed = parse_https_link(&url).expect("a link on another origin parses");
+        same(&parsed, &link);
+        same(
+            &parsed,
+            &parse_https_link(&build_https_link(&link, &Origin::default())).unwrap(),
         );
     }
 
-    /// `path=` is the door route a bare runtime page must fetch, and it is
-    /// appended last and percent-encoded like every other courier. A caller
-    /// that does not pass one mints the same bytes as before (asserted
-    /// above), which is what keeps this addition from invalidating old QRs.
     #[test]
-    fn https_guest_link_carries_the_door_route_in_path() {
-        let link = build_https_guest_link(
-            "deadbeef",
-            "https://svrnme.sh/ring/",
-            1_787_900_000,
-            None,
-            None,
-            Some("3b1f0a@https://relay.example./,10.0.0.5:9742"),
-            Some("/ring/ring-doc/"),
-        );
-        assert_eq!(
-            link,
-            "https://svrnme.sh/ring/#token=deadbeef&exp=1787900000\
-             &iroh=3b1f0a%40https%3A%2F%2Frelay.example.%2F%2C10.0.0.5%3A9742\
-             &path=%2Fring%2Fring-doc%2F"
-        );
-    }
-
-    /// The marks are read from the fragment only: an `at=` in the query —
-    /// the part a browser sends to the server — is not the marks.
-    #[test]
-    fn an_at_outside_the_fragment_is_not_read() {
-        let link = "http://h:9750/app/ring-doc/?at=aa11%3A7#token=deadbeef&exp=1";
-        let DeepLink::Guest { at, .. } = parse_https_guest_link(link).unwrap() else {
-            panic!("expected a guest link")
-        };
-        assert!(at.is_none());
-    }
-
-    /// Same rule for the dial string: an `iroh=` in the query is ignored.
-    #[test]
-    fn an_iroh_outside_the_fragment_is_not_read() {
-        let link = "http://h:9750/app/ring-doc/?iroh=zz11%40relay%3A1#token=deadbeef&exp=1";
-        let DeepLink::Guest { dial, .. } = parse_https_guest_link(link).unwrap() else {
-            panic!("expected a guest link")
-        };
-        assert!(dial.is_none());
+    fn an_origin_is_http_with_no_fragment() {
+        assert!(Origin::parse("https://svrnme.sh/ring/").is_some());
+        assert!(Origin::parse("svrnme.sh/ring/").is_none());
+        assert!(Origin::parse("https://h/#x").is_none());
     }
 }
