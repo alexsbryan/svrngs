@@ -700,4 +700,4 @@ pub fn peer_client() -> Result<&'static reqwest::Client, &'static str> {
 }
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;

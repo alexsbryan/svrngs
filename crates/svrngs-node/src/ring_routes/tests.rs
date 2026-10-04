@@ -10,6 +10,7 @@ use std::sync::Arc;
 
 use crate::iroh::tests::serve_on_stream;
 use crate::iroh::SecretKey;
+use crate::ring_sync::tests::serve_at;
 use crate::{Digest, Person, RingRail, Roster, SigningKey};
 
 use super::*;
@@ -35,17 +36,7 @@ fn rail_with_roster(root: &std::path::Path) -> Arc<RingRail> {
 /// The ring route over `rail`, served on a plain loopback port with no
 /// acceptor in front; the address.
 async fn serve(rail: Arc<RingRail>) -> std::net::SocketAddr {
-    let app = router(RingInbound { rail });
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let addr = listener.local_addr().unwrap();
-    tokio::spawn(async move {
-        let _ = axum::serve(
-            listener,
-            app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
-        )
-        .await;
-    });
-    addr
+    serve_at(router(RingInbound { rail })).await
 }
 
 /// One exchange call to `url`, carrying `X-Mesh-Pubkey: <claim>` when given.
