@@ -40,7 +40,6 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::op::Op;
 
-use crate::admit::derived_id;
 use crate::{OpId, Person, RailAct, Roster, SignedOp};
 
 /// What one fold of the membership acts concludes.
@@ -62,9 +61,9 @@ pub struct Membership {
 }
 
 impl Membership {
-    /// Whether this act counts, by derived id.
-    pub fn counts(&self, op: &Op<SignedOp>) -> bool {
-        self.counted.contains(&derived_id(op))
+    /// Whether the act with this derived id counts.
+    pub fn counts(&self, id: &OpId) -> bool {
+        self.counted.contains(id)
     }
 
     /// The person an act's actor resolves to, through the record.
@@ -74,13 +73,15 @@ impl Membership {
 }
 
 /// The one membership function. `ops` must already be authenticated (the
-/// caller's verifier judged the signatures); everything else is decided
-/// here, and decided the same way for every arrival order.
+/// caller's verifier judged the signatures), each beside the id its content
+/// derives ([`crate::derive_id`]; svrngs, U2: the id needs the namespace, so
+/// the caller that has it derives once); everything else is decided here,
+/// and decided the same way for every arrival order.
 pub fn membership<'a>(
-    ops: impl IntoIterator<Item = &'a Op<SignedOp>>,
+    ops: impl IntoIterator<Item = (&'a OpId, &'a Op<SignedOp>)>,
     seed: &Roster,
 ) -> Membership {
-    let ops: Vec<&Op<SignedOp>> = ops.into_iter().collect();
+    let ops: Vec<(&OpId, &Op<SignedOp>)> = ops.into_iter().collect();
 
     // ── layer 1: the void set (commutative; today's rule, carried) ────
     //
@@ -95,15 +96,15 @@ pub fn membership<'a>(
             .flatten()
             .map(String::as_str)
             .collect();
-        for op in &ops {
+        for (id, op) in &ops {
             if let RailAct::Admit { key, .. } = &op.kind.act {
-                if !voided.contains(&derived_id(op)) {
+                if !voided.contains(*id) {
                     bound.insert(key);
                 }
             }
         }
         let mut grew = false;
-        for op in &ops {
+        for (_, op) in &ops {
             if let RailAct::Correct { corrects, .. } = &op.kind.act {
                 if bound.contains(op.actor.as_str()) && voided.insert(corrects.clone()) {
                     grew = true;
@@ -116,12 +117,12 @@ pub fn membership<'a>(
     }
 
     // ── layer 2: one walk in the rail's order over the survivors ──────
-    let mut order: Vec<&Op<SignedOp>> = ops
+    let mut order: Vec<(&OpId, &Op<SignedOp>)> = ops
         .iter()
         .copied()
-        .filter(|op| !voided.contains(&derived_id(op)))
+        .filter(|(id, _)| !voided.contains(*id))
         .collect();
-    order.sort_by_key(|op| (op.ts_unix, op.actor.clone(), op.kind.seq, derived_id(op)));
+    order.sort_by_key(|(id, op)| (op.ts_unix, op.actor.clone(), op.kind.seq, *id));
 
     let mut bindings: BTreeMap<String, Person> = seed
         .members
@@ -134,11 +135,11 @@ pub fn membership<'a>(
         .collect();
     let mut live: BTreeMap<String, Person> = bindings.clone();
     let mut counted: BTreeSet<OpId> = BTreeSet::new();
-    for op in order {
+    for (id, op) in order {
         if !live.contains_key(&op.actor) {
             continue;
         }
-        counted.insert(derived_id(op));
+        counted.insert(id.clone());
         match &op.kind.act {
             RailAct::Admit { person, key } => {
                 tracing::debug!(

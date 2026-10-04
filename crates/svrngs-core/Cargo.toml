@@ -17,6 +17,11 @@ thiserror = { workspace = true }
 # Admission says what it refuses at debug.
 tracing = { workspace = true }
 
+[dev-dependencies]
+# `hazmat` signs one act with a second nonce, so a test can hold one act
+# carrying two valid signatures (sig_tests.rs).
+ed25519-dalek = { workspace = true, features = ["hazmat", "digest"] }
+
 [features]
 # The op fixtures, for a crate that owns a journal and must build the same
 # signed op as this crate's tests.

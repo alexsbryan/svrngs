@@ -27,7 +27,15 @@ fork does not carry. Every source file carries its `ported from` line (the
 JSON fixtures came over unchanged);
 `scripts/ports.py` lists each beside its original. It keeps upstream's edition,
 rustfmt policy and clippy allowances so a diff against upstream shows only
-what svrngs changed.
+what svrngs changed. Then it changed (U2, DESIGN §6 "Ids cover everything
+signed"): an act's id is the whole BLAKE3 hash, 64 hex, of its namespace,
+actor, seq, previous act, timestamp and body (`sig.rs`'s `act_id`), and the
+signature is over the id, where upstream signed the fields and kept 64 bits
+of a hash of the line, signature included; `OpId` holds the whole hash, so a
+line whose id is not 64 hex does not parse. Each act names its author's act
+at seq − 1 (`SignedOp::prev`), and admission names one that does not a
+`WrongPrevious` gap and admits it not. Membership, the view and sync take the
+id admission derived (`derive_id`), never the line's.
 
 **`crates/svrngs-node`**: a group's journal on disk — one append-only JSONL
 log per group under `<root>/rings/<ns>/` (`journal.rs`), the single-writer
@@ -37,7 +45,11 @@ is commonwealth-ai's `commonwealth-rail` and `oplog` at `e1a43bcd2`, forked the
 same way as the core; its one edit is gating `oplog.rs`'s test-only serde
 import. Upstream's shape stays: `RingRail` keeps its open journals in a map
 behind a `Mutex` (`lib.rs`), which an actor per journal replaces when the node
-becomes ours (DESIGN §5).
+becomes ours (DESIGN §5). Then it changed (U2): the write index holds the
+ids each act's content derives, so a line claiming a held act's id is not
+skipped as held; the door names, as the previous act, the line at its newest
+seq whose signature verifies under its own key; and compaction keeps a cited
+act by its derived id.
 
 Beside the journals, `svrngs-node` holds the dialling half of sync over iroh
 (DESIGN §8, U1's inventory), forked at `e1a43bcd2` the same way:

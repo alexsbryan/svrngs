@@ -525,7 +525,9 @@ mod tests {
         let c = Op::new(touch("y"), 100, "human:alex");
         assert_eq!(a.id, b.id, "same act, same second, same actor => same id");
         assert_ne!(a.id, c.id, "a different act must not reuse the id");
-        assert!(a.id.as_str().starts_with("probe-"));
+        // svrngs (U2): the whole hash, 64 hex, where upstream wore the
+        // prefix and kept 64 bits.
+        assert_eq!(a.id.to_string().len(), 64);
     }
 
     /// THE WIRE TEST. `OpId` is content-addressed and **gossiped** — a peer
@@ -536,16 +538,18 @@ mod tests {
     ///
     /// If this fails, you changed the id derivation. That is a mesh-wide
     /// breaking change and it needs a `Journaled::VERSION` bump and a fleet
-    /// rollout, not a new expected value here.
+    /// rollout, not a new expected value here. (svrngs, U2: re-pinned when
+    /// `OpId` became the whole hash, before any journal outside tests
+    /// existed.)
     #[test]
     fn the_id_derivation_is_pinned_to_the_wire() {
         let op = Op::new(touch("x"), 100, "human:alex");
         assert_eq!(
-            op.id.as_str(),
-            "probe-97c56dfd0781629d",
+            op.id.to_string(),
+            "97c56dfd0781629dd3907ff711e43ba356dd2ea3efa1bcd5b308902c85826c9f",
             "the id derivation is <prefix>|<ts>|<actor>|<body-json> hashed with \
-             kernel_types::ContentHash and truncated by .short() — see the note \
-             on this test before touching any of those five"
+             ContentHash, whole — see the note on this test before touching any \
+             of those five"
         );
     }
 
@@ -571,8 +575,7 @@ mod tests {
             "ingest",
         );
         assert_ne!(
-            a.id.as_str()["probe-".len()..],
-            b.id.as_str()["other-".len()..],
+            a.id, b.id,
             "the hashed input must include the prefix, not only the body"
         );
     }

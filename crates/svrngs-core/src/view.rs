@@ -11,17 +11,16 @@
 //! from this implementation and a reimplementation must reproduce them
 //! byte-for-byte.
 //!
-//! The chain is over DERIVED ids (`admit::derived_id` — identity from
-//! essence), ids at one seq sorted and deduped, so a tampered `id` field and
-//! a second line for the same content fold identically. Known limit,
-//! inherited not introduced: `OpId` is 64-bit-truncated BLAKE3 (oplog's
-//! `ContentHash::short`), so the chain is as strong as the ids — the same
-//! limit every correction target already rides.
+//! The chain is over DERIVED ids (`derive_id` — identity from essence), ids
+//! at one seq sorted and deduped, so a tampered `id` field and a second line
+//! for the same content fold identically. The chain is as strong as the ids:
+//! upstream's were 64-bit-truncated BLAKE3, and svrngs's are the whole hash
+//! (U2, DESIGN §6).
 
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::hash::ContentHash;
-use crate::op::Op;
+use crate::op::{Op, OpId};
 use serde::{Deserialize, Serialize};
 
 use crate::SignedOp;
@@ -48,16 +47,19 @@ impl View {
     /// A caller evaluating SOMEONE ELSE's claim may hold more or less in the
     /// window (fork branches, holes) — the fold is a pure function of the set
     /// presented, so equal sets fold equal regardless of who computes it.
+    ///
+    /// Each op comes beside the id its content derives ([`crate::derive_id`]):
+    /// the caller derived it when it verified the signature over it.
     pub fn of<'a>(
         actor: &str,
         from: u64,
         mark: u64,
-        ops: impl IntoIterator<Item = &'a Op<SignedOp>>,
+        ops: impl IntoIterator<Item = (&'a OpId, &'a Op<SignedOp>)>,
     ) -> Self {
         let pairs: Vec<(u64, String)> = ops
             .into_iter()
-            .filter(|op| op.actor == actor && op.kind.seq >= from && op.kind.seq <= mark)
-            .map(|op| (op.kind.seq, crate::admit::derived_id(op).to_string()))
+            .filter(|(_, op)| op.actor == actor && op.kind.seq >= from && op.kind.seq <= mark)
+            .map(|(id, op)| (op.kind.seq, id.to_string()))
             .collect();
         Self::fold_pairs(actor, from, mark, &pairs)
     }

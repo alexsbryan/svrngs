@@ -61,6 +61,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::op::{Op, OpId};
+use crate::sig::derive_id;
 
 use crate::payload::Payload;
 use crate::{Person, RailAct, RingVerifier, Roster, SignedOp};
@@ -128,6 +129,13 @@ pub enum RailGap {
     /// the [`Remove`](crate::RailAct::Remove) admits it back — leg 3 of
     /// `ra-membership-is-order-free`).
     NotAMember { id: OpId, actor: String },
+    /// The act's `prev` is not the id of its author's act at `seq − 1`: it
+    /// names a parent at seq 0, names none above it, or names one other than
+    /// the act this copy holds there (svrngs, U2; DESIGN §6). The act is not
+    /// admitted — it follows a history this copy does not hold, and may be
+    /// real data on another branch. Judged against an act at `seq − 1` only
+    /// when one is held; a parent not yet here is the [`Self::SequenceHole`].
+    WrongPrevious { id: OpId, actor: String, seq: u64 },
 }
 
 /// What a gap means for the fold's answer — the one classification (ARCH
@@ -169,6 +177,7 @@ impl RailGap {
             | Self::BadSignature { .. }
             | Self::UnknownSigner { .. }
             | Self::NotAMember { .. }
+            | Self::WrongPrevious { .. }
             | Self::SequenceFork { .. }
             | Self::SequenceHole { .. } => GapClass::Absence,
             Self::TamperedId { .. } | Self::DanglingCorrection { .. } => GapClass::Contradiction,
@@ -197,7 +206,7 @@ impl std::fmt::Display for RailGap {
             Self::BadSignature { id, .. } => write!(
                 f,
                 "an op whose signature does not verify ({})",
-                crate::short_id(id.as_str())
+                crate::short_id(&id.to_string())
             ),
             Self::NotAMember { actor, .. } => write!(
                 f,
@@ -211,11 +220,16 @@ impl std::fmt::Display for RailGap {
             Self::TamperedId { claimed, .. } => write!(
                 f,
                 "a journal line whose id ({}) does not match its content",
-                crate::short_id(claimed.as_str())
+                crate::short_id(&claimed.to_string())
             ),
             Self::SequenceHole { actor, missing } => write!(
                 f,
                 "an op from {}… has not reached this node yet (#{missing})",
+                crate::actor_prefix(actor)
+            ),
+            Self::WrongPrevious { actor, seq, .. } => write!(
+                f,
+                "an act from {}… does not follow the one before it (#{seq})",
                 crate::actor_prefix(actor)
             ),
             Self::SequenceFork { actor, seq, .. } => write!(
@@ -226,7 +240,7 @@ impl std::fmt::Display for RailGap {
             Self::DanglingCorrection { missing, .. } => write!(
                 f,
                 "a correction of {}, which this node does not hold",
-                crate::short_id(missing.as_str())
+                crate::short_id(&missing.to_string())
             ),
         }
     }
@@ -396,29 +410,19 @@ pub fn admit(
     // ── signature ───────────────────────────────────────────
     let mut authentic: BTreeMap<OpId, &Op<SignedOp>> = BTreeMap::new();
     for op in ops {
-        let derived = derived_id(op);
+        let derived = derive_id(op, namespace);
         if derived != op.id {
             gaps.push(RailGap::TamperedId {
                 claimed: op.id.clone(),
                 derived: derived.clone(),
             });
         }
-        let body = body_json(
-            &op.kind.act,
-            op.kind.on_behalf_of.as_deref(),
-            op.kind.view.as_ref(),
-        );
         // Whatever the verifier cannot vouch for is a gap, never an act. A
         // `false` here is a refusal and is reported as one — there is no
-        // answer that means "could not tell, carry on" (ARCH §18.3).
-        if !verifier.verify(
-            &op.actor,
-            namespace,
-            op.ts_unix,
-            op.kind.seq,
-            &body,
-            &op.kind.sig,
-        ) {
+        // answer that means "could not tell, carry on" (ARCH §18.3). The
+        // signature is over the DERIVED id (svrngs, U2), so it covers every
+        // field the id does.
+        if !verifier.verify(&op.actor, &derived, &op.kind.sig) {
             gaps.push(RailGap::BadSignature {
                 id: derived,
                 actor: op.actor.clone(),
@@ -426,8 +430,56 @@ pub fn admit(
             continue;
         }
         // Dedupe: the same op reaching us twice is the normal case under
-        // gossip, not an anomaly.
+        // gossip, not an anomaly — and so is one act carrying two valid
+        // signatures, which is one id.
         authentic.insert(derived, op);
+    }
+
+    // ── the chain: each act names its author's act at seq − 1 ─────────
+    //
+    // svrngs (U2, DESIGN §6). Judged over every authentic act at once, before
+    // membership, so an act on a history this copy does not hold grants
+    // nothing — and against the parent's DERIVED id, so the verdict is a
+    // function of the set like everything else here. A parent not held is
+    // not judged: its absence is the `SequenceHole` below. Two acts held at
+    // `seq − 1` are a fork, and an act naming either follows a parent this
+    // copy holds (what a fork voids is U7's).
+    let mut at: BTreeMap<(&str, u64), BTreeSet<&OpId>> = BTreeMap::new();
+    for (id, op) in &authentic {
+        at.entry((op.actor.as_str(), op.kind.seq))
+            .or_default()
+            .insert(id);
+    }
+    let mut broken: Vec<OpId> = Vec::new();
+    for (id, op) in &authentic {
+        let seq = op.kind.seq;
+        let follows = match (seq.checked_sub(1), op.kind.prev.as_ref()) {
+            (None, prev) => prev.is_none(),
+            (Some(_), None) => false,
+            (Some(parent), Some(prev)) => at
+                .get(&(op.actor.as_str(), parent))
+                .is_none_or(|held| held.contains(prev)),
+        };
+        if !follows {
+            tracing::debug!(
+                target: "rail:admit",
+                id = %id,
+                actor = %op.actor,
+                seq,
+                prev = ?op.kind.prev,
+                "admit refused — the act does not name its author's act at seq − 1"
+            );
+            gaps.push(RailGap::WrongPrevious {
+                id: id.clone(),
+                actor: op.actor.clone(),
+                seq,
+            });
+            broken.push(id.clone());
+        }
+    }
+    drop(at);
+    for id in &broken {
+        authentic.remove(id);
     }
 
     // ── membership: the seed plus two act kinds, one function ─────────
@@ -436,7 +488,7 @@ pub fn admit(
     // what is in the ring is decided by `membership`, and an act resolves
     // through the bindings its own record carries — so key churn cannot
     // re-flip the past (leg 4 of `ra-membership-is-order-free`).
-    let m = crate::membership::membership(authentic.values().copied(), roster);
+    let m = crate::membership::membership(authentic.iter().map(|(id, op)| (id, *op)), roster);
 
     let mut admitted: BTreeMap<OpId, Candidate<'_>> = BTreeMap::new();
     for (id, op) in authentic {
@@ -523,7 +575,7 @@ pub fn admit(
     // the log itself corrected retires nothing. Suppressing a hole is a claim
     // of completeness, and a claim of completeness may only rest on an act the
     // rail could actually authenticate (ARCH §18.3).
-    let floors = crate::sync::sealed_floors(admitted.values().map(|c| c.op), &voided);
+    let floors = crate::sync::sealed_floors(admitted.values().map(|c| (&c.id, c.op)), &voided);
     for (actor, by_seq) in &seqs {
         let floor = floors.get(*actor).copied().unwrap_or(0);
         let highest = by_seq
@@ -638,16 +690,7 @@ pub fn admit(
     }
 }
 
-/// Re-derive the op's id from its content, ignoring the one on the line.
-///
-/// Identity from essence (ARCH §7.5). A rewritten `id` field therefore cannot
-/// make an op impersonate another op's correction target; it just gets
-/// reported.
-pub(crate) fn derived_id(op: &Op<SignedOp>) -> OpId {
-    Op::new(op.kind.clone(), op.ts_unix, op.actor.clone()).id
-}
-
-/// The exact bytes the signature covers — the act, in declaration order, with
+/// The body the id covers — the act, in declaration order, with
 /// its payload canonical (see [`Payload`](crate::Payload)), followed by
 /// `on_behalf_of` when the writer stated one, followed by `view` when the
 /// writer committed to one.

@@ -147,22 +147,33 @@ fn a_peer_never_re_sends_what_the_seal_retired() {
 
 /// A line whose signature is `signer`'s while its `actor` field claims
 /// somebody else: the shape one hostile journal line takes before anyone
-/// verifies it. `Op::new` is the same builder the honest fixtures use, so
-/// the id is self-consistent and only the signature gives it away.
+/// verifies it. `act_id` is the same derivation the honest fixtures use,
+/// so the id is self-consistent and only the signature gives it away.
 fn spoofed(signer: u8, claimed: u8, seq: u64, ts: i64, act: RailAct) -> Op<SignedOp> {
     let body = crate::body_json(&act, None, None);
-    let sig = crate::sign_ring_op(&key(signer), crate::tests_support::NS, ts, seq, &body);
-    Op::new(
-        SignedOp {
+    let id = crate::act_id(
+        crate::tests_support::NS,
+        &actor(claimed),
+        seq,
+        None,
+        ts,
+        &body,
+    );
+    let sig = crate::sign_ring_op(&key(signer), &id);
+    Op {
+        id,
+        v: 1,
+        ts_unix: ts,
+        actor: actor(claimed),
+        kind: SignedOp {
             seq,
+            prev: None,
             sig,
             act,
             on_behalf_of: None,
             view: None,
         },
-        ts,
-        actor(claimed),
-    )
+    }
 }
 
 /// **A forged seal must not retire a member's past.** The floor is a

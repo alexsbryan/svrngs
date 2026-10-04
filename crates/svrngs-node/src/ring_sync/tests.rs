@@ -20,7 +20,7 @@ use crate::peer_wire::{
     RingSyncRequest, RingSyncResponse, MAX_REQUEST_BODY_BYTES, RING_SYNC_OPS_BUDGET_BYTES,
 };
 use crate::{
-    actor_of, body_json, sign_ring_op, Digest, Ed25519Verifier, Op, Payload, Person, RailAct,
+    actor_of, body_json, sign_act, Digest, Ed25519Verifier, Op, OpId, Payload, Person, RailAct,
     RingJournal, RingRail, Roster, SignedOp, SigningKey,
 };
 use axum::response::IntoResponse;
@@ -31,7 +31,8 @@ use crate::ring_routes::{router, RingInbound};
 pub(super) const NS: &str = "house-expenses";
 
 /// The fixture the ceiling table is quoted against: a 594-byte serialised
-/// body, ~873 B/op on the wire.
+/// body, ~990 B/op on the wire (svrngs, U2: ~873 upstream, before the id
+/// became 64 hex and the line named its previous act).
 const FIXTURE_BODY_BYTES: usize = 594;
 
 pub(super) fn body_of_size(target: usize) -> Payload {
@@ -46,43 +47,47 @@ pub(super) fn body_of_size(target: usize) -> Payload {
     }
 }
 
-/// One op signed for its own `(namespace, ts, seq)`, so its id is distinct.
-/// A signature binds the namespace, so an op signed for one ring is a gap on
-/// any other.
-pub(super) fn signed_in(ns: &str, key: &SigningKey, seq: u64, act: RailAct) -> Op<SignedOp> {
+/// One op signed for its own `(namespace, ts, seq)`, so its id is distinct,
+/// naming `prev` (svrngs, U2). A signature binds the namespace, so an op
+/// signed for one ring is a gap on any other.
+fn signed_after(
+    ns: &str,
+    key: &SigningKey,
+    seq: u64,
+    prev: Option<OpId>,
+    act: RailAct,
+) -> Op<SignedOp> {
     let ts = 1_700_000_000i64 + seq as i64;
-    let sig = sign_ring_op(key, ns, ts, seq, &body_json(&act, None, None));
-    Op::new(
-        SignedOp {
-            seq,
-            sig,
-            act,
-            on_behalf_of: None,
-            view: None,
-        },
-        ts,
-        actor_of(key),
-    )
+    sign_act(key, ns, ts, seq, prev, act, None, None)
 }
 
-fn signed(key: &SigningKey, seq: u64, act: RailAct) -> Op<SignedOp> {
-    signed_in(NS, key, seq, act)
+/// The act `key` signs after `prev`: one seq on, naming it.
+fn after(key: &SigningKey, prev: &Op<SignedOp>, act: RailAct) -> Op<SignedOp> {
+    signed_after(NS, key, prev.kind.seq + 1, Some(prev.id.clone()), act)
+}
+
+/// The act `key` signs next after the newest it has in `journal`.
+fn next_in(journal: &RingJournal, key: &SigningKey, act: RailAct) -> Op<SignedOp> {
+    let held = journal.read().unwrap().0;
+    let newest = held
+        .iter()
+        .filter(|op| op.actor == actor_of(key))
+        .max_by_key(|op| op.kind.seq)
+        .expect("the journal holds an act by this key");
+    after(key, newest, act)
 }
 
 pub(super) fn ops_in(ns: &str, key: &SigningKey, n: usize) -> Vec<Op<SignedOp>> {
     let payload = body_of_size(FIXTURE_BODY_BYTES);
-    (0..n as u64)
-        .map(|seq| {
-            signed_in(
-                ns,
-                key,
-                seq,
-                RailAct::Record {
-                    payload: payload.clone(),
-                },
-            )
-        })
-        .collect()
+    let mut ops: Vec<Op<SignedOp>> = Vec::with_capacity(n);
+    for seq in 0..n as u64 {
+        let act = RailAct::Record {
+            payload: payload.clone(),
+        };
+        let prev = ops.last().map(|op| op.id.clone());
+        ops.push(signed_after(ns, key, seq, prev, act));
+    }
+    ops
 }
 
 pub(super) fn solo_roster(key: &SigningKey) -> Roster {
@@ -193,7 +198,7 @@ async fn a_peers_seal_prunes_this_nodes_disk_in_the_round_it_arrives() {
     let (rail, journal) = node(mine.path(), &key, 3);
     let (peer_rail, peer_journal) = node(theirs.path(), &key, 3);
     peer_journal
-        .ingest(&signed(&key, 3, RailAct::Seal))
+        .ingest(&next_in(&peer_journal, &key, RailAct::Seal))
         .unwrap();
     assert_eq!(journal.read().unwrap().0.len(), 3, "control: we hold three");
 
@@ -223,9 +228,9 @@ async fn an_ordinary_op_arriving_prunes_nothing() {
     let (rail, journal) = node(mine.path(), &key, 3);
     let (peer_rail, peer_journal) = node(theirs.path(), &key, 3);
     peer_journal
-        .ingest(&signed(
+        .ingest(&next_in(
+            &peer_journal,
             &key,
-            3,
             RailAct::Record {
                 payload: body_of_size(FIXTURE_BODY_BYTES),
             },
@@ -269,17 +274,19 @@ async fn ten_thousand_ops_do_not_fit_one_chunk() {
         .unwrap();
     let per_op = serde_json::to_vec(&all).unwrap().len() / all.len();
     assert!(
-        (860..=890).contains(&per_op),
-        "the {FIXTURE_BODY_BYTES}-byte fixture costs {per_op} B/op, not the ~873 the table assumes"
+        (975..=1005).contains(&per_op),
+        "the {FIXTURE_BODY_BYTES}-byte fixture costs {per_op} B/op, not the ~990 the table assumes"
     );
 }
 
-/// The route's own limit: an unbudgeted push of 9,000 ops is served, 10,000
-/// is refused 413, and the budgeted chunk of those 10,000 is served.
+/// The route's own limit: an unbudgeted push of 8,000 ops is served, 10,000
+/// is refused 413, and the budgeted chunk of those 10,000 is served. (The
+/// limit falls near 8,470 ops of ~990 B; upstream's ~873 B ops put it near
+/// 9,599, and the served side was 9,000.)
 #[tokio::test]
 async fn the_budgeted_chunk_is_served_where_the_whole_journal_is_refused() {
     let key = SigningKey::from_bytes(&[1u8; 32]);
-    for (n, want) in [(9_000usize, 200u16), (10_000, 413)] {
+    for (n, want) in [(8_000usize, 200u16), (10_000, 413)] {
         let (s, r) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
         let (_rail, journal) = node(s.path(), &key, n);
         let (peer, _) = node(r.path(), &key, 0);
@@ -376,16 +383,14 @@ async fn a_seal_shortens_the_exchange_only_once_the_retired_lines_are_deleted() 
     let dir = tempfile::tempdir().unwrap();
     let (rail, journal) = node(dir.path(), &key, RETIRED as usize);
     let payload = body_of_size(FIXTURE_BODY_BYTES);
-    let mut tail = vec![signed(&key, RETIRED, RailAct::Seal)];
-    tail.extend((RETIRED + 1..=RETIRED + KEPT).map(|seq| {
-        signed(
-            &key,
-            seq,
-            RailAct::Record {
-                payload: payload.clone(),
-            },
-        )
-    }));
+    let mut tail = vec![next_in(&journal, &key, RailAct::Seal)];
+    for _ in 0..KEPT {
+        let act = RailAct::Record {
+            payload: payload.clone(),
+        };
+        let next = after(&key, tail.last().unwrap(), act);
+        tail.push(next);
+    }
     assert_eq!(journal.ingest_all(&tail).unwrap(), tail.len());
 
     /// Bootstrap a fresh peer from `rail`: what it pushed, the peer's

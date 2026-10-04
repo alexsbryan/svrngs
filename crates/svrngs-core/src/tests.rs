@@ -37,22 +37,22 @@ fn the_admission_is_a_function_of_the_op_set_not_of_arrival_order() {
     let paid_back = signed(&key(3), 102, 0, record("paid-back"));
     // A correction whose timestamp is EARLIER than the op it corrects — a
     // clock-skew case that a positional walk would get wrong.
-    let fix = signed(
+    let fix = after(
         &key(1),
+        &groceries,
         99,
-        1,
         RailAct::Correct {
             corrects: groceries.id.clone(),
             replacement: Some(payload("groceries-corrected")),
         },
     );
     // A correction pointing at an op nobody in this set holds.
-    let dangling = signed(
+    let dangling = after(
         &key(2),
+        &beer,
         103,
-        1,
         RailAct::Correct {
-            corrects: OpId::from_raw("ring-deadbeefdeadbeef"),
+            corrects: stray_id(0xde),
             replacement: None,
         },
     );
@@ -97,11 +97,12 @@ fn permutations(n: usize) -> Vec<Vec<usize>> {
 
 /// Two byte-identical acts in the same second by the same actor must stay two
 /// acts. [`Op::new`] hashes `(prefix, ts, actor, body)` and documents the
-/// collision as by-design; `seq` is in the body, which is what separates them.
+/// collision as by-design; `seq` is in [`act_id`]'s input, which is what
+/// separates them.
 #[test]
 fn two_identical_acts_in_the_same_second_are_two_acts() {
     let a = signed(&key(1), 100, 0, record("coffee"));
-    let b = signed(&key(1), 100, 1, record("coffee"));
+    let b = after(&key(1), &a, 100, record("coffee"));
     assert_ne!(a.id, b.id, "seq must separate them");
     let f = admitted(&[a, b]);
     assert_eq!(applied(&f), vec!["coffee", "coffee"]);
@@ -116,10 +117,10 @@ fn two_identical_acts_in_the_same_second_are_two_acts() {
 #[test]
 fn a_correction_that_arrives_first_still_voids_its_target() {
     let target = signed(&key(1), 100, 0, record("wrong"));
-    let fix = signed(
+    let fix = after(
         &key(1),
+        &target,
         101,
-        1,
         RailAct::Correct {
             corrects: target.id.clone(),
             replacement: Some(payload("right")),
@@ -141,7 +142,7 @@ fn a_correction_pointing_at_an_op_we_do_not_hold_is_reported() {
         100,
         0,
         RailAct::Correct {
-            corrects: OpId::from_raw("ring-deadbeefdeadbeef"),
+            corrects: stray_id(0xde),
             replacement: None,
         },
     );
@@ -150,7 +151,7 @@ fn a_correction_pointing_at_an_op_we_do_not_hold_is_reported() {
         f.gaps,
         vec![RailGap::DanglingCorrection {
             by: orphan.id.clone(),
-            missing: OpId::from_raw("ring-deadbeefdeadbeef"),
+            missing: stray_id(0xde),
         }]
     );
     assert!(applied(&f).is_empty());
@@ -176,9 +177,9 @@ fn a_correction_pointing_at_an_op_we_do_not_hold_is_reported() {
 #[test]
 fn a_correction_stamped_in_the_past_still_corrects() {
     let target = signed(&key(1), 500, 0, record("wrong"));
-    let fix = signed(
+    let fix = after(
         &key(1),
-        1,
+        &target,
         1,
         RailAct::Correct {
             corrects: target.id.clone(),
@@ -203,11 +204,11 @@ fn a_correction_stamped_in_the_past_still_corrects() {
 /// `SequenceFork` already refuses two ops sharing one.
 #[test]
 fn one_actors_acts_inside_one_second_fold_in_seq_order() {
-    let ops: Vec<_> = ["first", "second", "third"]
-        .iter()
-        .enumerate()
-        .map(|(i, what)| signed(&key(1), 700, i as u64, record(what)))
-        .collect();
+    let mut ops = vec![signed(&key(1), 700, 0, record("first"))];
+    for what in ["second", "third"] {
+        let next = after(&key(1), ops.last().unwrap(), 700, record(what));
+        ops.push(next);
+    }
     // The precondition that makes this a gate rather than a coincidence: the
     // ids do NOT already sort in seq order, so the old comparator produced a
     // different answer.
@@ -246,19 +247,19 @@ fn one_actors_acts_inside_one_second_fold_in_seq_order() {
 #[test]
 fn correcting_a_correction_does_not_resurrect_the_original() {
     let original = signed(&key(1), 100, 0, record("original"));
-    let first = signed(
+    let first = after(
         &key(1),
+        &original,
         101,
-        1,
         RailAct::Correct {
             corrects: original.id.clone(),
             replacement: Some(payload("replacement")),
         },
     );
-    let second = signed(
+    let second = after(
         &key(1),
+        &first,
         102,
-        2,
         RailAct::Correct {
             corrects: first.id.clone(),
             replacement: None,
@@ -278,10 +279,10 @@ fn correcting_a_correction_does_not_resurrect_the_original() {
 #[test]
 fn a_voided_op_is_still_visible_but_is_never_applied() {
     let target = signed(&key(1), 100, 0, record("wrong"));
-    let fix = signed(
+    let fix = after(
         &key(1),
+        &target,
         101,
-        1,
         RailAct::Correct {
             corrects: target.id.clone(),
             replacement: Some(payload("right")),
@@ -311,13 +312,14 @@ fn a_voided_op_is_still_visible_but_is_never_applied() {
 /// op arrives; until then the answer is complete and contested.
 #[test]
 fn a_dangling_correction_is_named_beside_a_complete_answer() {
-    let target = OpId::from_raw("nosuchop");
+    let target = stray_id(0x5e);
+    let fine = signed(&key(1), 100, 0, record("fine"));
     let f = admitted(&[
-        signed(&key(1), 100, 0, record("fine")),
-        signed(
+        fine.clone(),
+        after(
             &key(1),
+            &fine,
             101,
-            1,
             RailAct::Correct {
                 corrects: target,
                 replacement: None,
@@ -350,7 +352,7 @@ fn a_dangling_correction_is_named_beside_a_complete_answer() {
 #[test]
 fn every_gap_class_is_classified() {
     let actor = actor_of(&key(1));
-    let id = OpId::from_raw("ring-000000000000");
+    let id = stray_id(0);
     let absences = [
         RailGap::MalformedLine {
             line: 1,
@@ -368,6 +370,11 @@ fn every_gap_class_is_classified() {
         RailGap::NotAMember {
             id: id.clone(),
             actor: actor.clone(),
+        },
+        RailGap::WrongPrevious {
+            id: id.clone(),
+            actor: actor.clone(),
+            seq: 1,
         },
         RailGap::SequenceFork {
             actor: actor.clone(),
@@ -491,7 +498,7 @@ fn a_replacement_key_leaves_every_past_act_admitted() {
 #[test]
 fn a_gap_renders_multi_byte_names_without_panicking() {
     let wide_actor = "日本語のキー";
-    let wide_id = OpId::from_raw("日本語のノード");
+    let wide_id = stray_id(0xaa);
     let gaps = [
         RailGap::BadSignature {
             id: wide_id.clone(),
@@ -504,6 +511,11 @@ fn a_gap_renders_multi_byte_names_without_panicking() {
         RailGap::NotAMember {
             id: wide_id.clone(),
             actor: wide_actor.to_string(),
+        },
+        RailGap::WrongPrevious {
+            id: wide_id.clone(),
+            actor: wide_actor.to_string(),
+            seq: 3,
         },
         RailGap::SequenceHole {
             actor: wide_actor.to_string(),
@@ -598,14 +610,22 @@ fn a_perfectly_signed_op_from_a_stranger_is_refused() {
 }
 
 /// A signed op lifted out of one namespace and replayed into another must
-/// fail. The namespace is bound into the signed message, so this is caught by
-/// the signature rather than by a check somewhere downstream.
+/// fail. The namespace is in the id the signature covers (svrngs, U2), so
+/// here the act derives another id — named beside the refusal — and the
+/// signature over the id its author derived does not verify over it.
 #[test]
 fn an_op_signed_for_another_namespace_cannot_be_replayed_here() {
     let op = signed_in("tool-lending", &key(1), 100, 0, record("x"));
     let f = admitted(&[op]);
     assert!(f.ops.is_empty());
-    assert!(matches!(f.gaps.as_slice(), [RailGap::BadSignature { .. }]));
+    assert!(
+        matches!(
+            f.gaps.as_slice(),
+            [RailGap::BadSignature { .. }, RailGap::TamperedId { .. }]
+        ),
+        "{:?}",
+        f.gaps
+    );
 }
 
 /// The id on the line is advisory; admission uses the one the content
@@ -616,14 +636,72 @@ fn an_op_signed_for_another_namespace_cannot_be_replayed_here() {
 fn a_rewritten_id_changes_no_outcome_and_is_still_reported() {
     let mut op = signed(&key(1), 100, 0, record("x"));
     let real = op.id.clone();
-    op.id = OpId::from_raw("ring-ffffffffffffffff");
+    op.id = stray_id(0xff);
     let f = admitted(&[op]);
     assert_eq!(applied(&f), vec!["x"], "the op still counts");
     assert_eq!(f.ops[0].id, real, "under the id its content derives");
     assert!(f.gaps.contains(&RailGap::TamperedId {
-        claimed: OpId::from_raw("ring-ffffffffffffffff"),
+        claimed: stray_id(0xff),
         derived: real,
     }));
+}
+
+/// **Each act names its author's act at seq − 1** (svrngs, U2; DESIGN §6).
+/// An act whose `prev` is not the id of the act this copy holds there —
+/// another branch's, none above seq 0, any at seq 0 — is a gap and is not
+/// admitted. A parent not held is not judged: its absence is the hole.
+#[test]
+fn an_act_whose_previous_act_is_not_its_authors_at_seq_minus_one_is_a_gap() {
+    let alex = actor_of(&key(1));
+    let a = signed(&key(1), 100, 0, record("a"));
+    let b = after(&key(1), &a, 101, record("b"));
+    let honest = admitted(&[a.clone(), b]);
+    assert!(honest.gaps.is_empty(), "{:?}", honest.gaps);
+    assert_eq!(applied(&honest), vec!["a", "b"]);
+
+    let wrong = |op: &Op<SignedOp>, seq| RailGap::WrongPrevious {
+        id: op.id.clone(),
+        actor: op.actor.clone(),
+        seq,
+    };
+    // Another branch's child: it names an act at seq 0 this copy does not
+    // hold, and this copy holds `a` there.
+    let elsewhere = signed(&key(1), 100, 0, record("a-elsewhere"));
+    let follows_elsewhere = after(&key(1), &elsewhere, 101, record("b"));
+    // None above seq 0.
+    let names_none = sign_act(&key(1), NS, 102, 1, None, record("c"), None, None);
+    // One at seq 0.
+    let names_one_at_zero = sign_act(
+        &key(2),
+        NS,
+        100,
+        0,
+        Some(a.id.clone()),
+        record("x"),
+        None,
+        None,
+    );
+    for (child, gap) in [
+        (&follows_elsewhere, wrong(&follows_elsewhere, 1)),
+        (&names_none, wrong(&names_none, 1)),
+        (&names_one_at_zero, wrong(&names_one_at_zero, 0)),
+    ] {
+        let f = admitted(&[a.clone(), child.clone()]);
+        assert!(f.gaps.contains(&gap), "{:?}", f.gaps);
+        assert_eq!(applied(&f), vec!["a"], "the act is not admitted");
+        assert!(!f.is_complete());
+    }
+
+    // A parent not held is not judged — the hole is the report.
+    let f = admitted(std::slice::from_ref(&follows_elsewhere));
+    assert_eq!(
+        f.gaps,
+        vec![RailGap::SequenceHole {
+            actor: alex,
+            missing: 0
+        }]
+    );
+    assert_eq!(applied(&f), vec!["b"]);
 }
 
 /// **The one thing that distinguishes "nothing happened" from "it never
@@ -751,7 +829,7 @@ fn a_refused_act_comes_back_as_a_sentence_not_a_serde_dump() {
 /// and the append door returned exactly that until it was written.
 #[test]
 fn every_gap_renders_as_a_sentence() {
-    let id = OpId::from_raw("ring-0123456789abcdef");
+    let id = stray_id(0x01);
     let actor = actor_of(&key(1));
     let all = vec![
         RailGap::MalformedLine {
@@ -774,6 +852,11 @@ fn every_gap_renders_as_a_sentence() {
         RailGap::SequenceHole {
             actor: actor.clone(),
             missing: 2,
+        },
+        RailGap::WrongPrevious {
+            id: id.clone(),
+            actor: actor.clone(),
+            seq: 2,
         },
         RailGap::SequenceFork {
             actor,

@@ -111,8 +111,9 @@ pub const DEFAULT_RING_SYNC_INTERVAL: Duration = Duration::from_secs(60);
 /// between a ceiling that is measurable and a sync loop that silently spins.
 ///
 /// Sixteen chunks of the four-megabyte budget is 64 MiB per peer per
-/// namespace per round — about 76,800 ops of the 594-byte fixture the ceiling
-/// was measured against, or twenty years of the ~3,500 ops/year household
+/// namespace per round — about 67,800 ops of the 594-byte fixture the ceiling
+/// was measured against (~990 B/op since svrngs's U2 lengthened the line;
+/// 76,800 at upstream's ~873), or nineteen years of the ~3,500 ops/year household
 /// journal the module docs price, moved in one sixty-second round. Tripping
 /// it costs nothing but time: every op ingested is already on disk, so the
 /// next round resumes where this one stopped.

@@ -30,19 +30,33 @@
 //! makes that cross-namespace replay fail the signature rather than fail a
 //! check somewhere downstream that someone might forget to write.
 //!
-//! # What is deliberately NOT signed
+//! # The id, and why the signature is over it
 //!
-//! The [`OpId`](crate::op::OpId) is not in the message, because it
-//! is derived from the signature (the id hashes the whole line body, `sig`
-//! included). That is not a hole: admission re-derives the id from content
-//! and ignores the one on the line, so a rewritten `id` changes nothing and
-//! is reported as a gap. Signing it would be circular.
+//! svrngs (U2, DESIGN §6 "Ids cover everything signed"): an act's id is the
+//! whole BLAKE3 hash of its namespace, actor, seq, previous act, timestamp
+//! and body ([`act_id`]), and the signature is over that id
+//! ([`ring_op_message`]). Upstream signed the fields and derived the id from
+//! the line, signature included, so one act carrying two valid signatures
+//! had two ids, and the id was not what anyone signed. Now the id is the one
+//! thing signed, and nothing on the line is outside both: a copy that holds
+//! an id holds exactly the act its author signed. Admission still re-derives
+//! the id from content and ignores the one on the line ([`derive_id`]).
 
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 
-/// Domain separator. Distinct from `cwth-dial-info-binding:` and from the
-/// join proof-of-possession, so no signature is valid in two contexts.
-const RING_OP_DOMAIN: &[u8] = b"cwth-ring-op-binding:";
+use crate::hash::ContentHash;
+use crate::op::{Journaled, Op, OpId};
+use crate::SignedOp;
+
+/// Domain separator for the signature. Distinct from `cwth-dial-info-binding:`
+/// and from the join proof-of-possession, so no signature is valid in two
+/// contexts; and from upstream's `cwth-ring-op-binding:`, whose message was
+/// the fields rather than the id.
+const RING_OP_DOMAIN: &[u8] = b"svrngs-act-id-binding:";
+
+/// Domain separator for the id's hash, so an act id is never the hash of
+/// anything else the record hashes (a view head, a payload).
+const ACT_ID_DOMAIN: &[u8] = b"svrngs/act/v1\0";
 
 /// The hex form of a node's public key, which is how a ring op names its
 /// signer. 64 lowercase hex characters.
@@ -59,50 +73,118 @@ pub(crate) fn field(msg: &mut Vec<u8>, bytes: &[u8]) {
     msg.extend_from_slice(bytes);
 }
 
-/// The canonical, length-prefixed bytes signed and verified for one ring op.
+/// An act's id: the whole BLAKE3 hash of what its author signs.
 ///
-/// `DOMAIN || ns || ts[8 BE] || actor || seq[8 BE] || body`, every variable
-/// field preceded by its `u32` big-endian length.
+/// `DOMAIN || ns || actor || seq[8 BE] || prev || ts[8 BE] || body`, every
+/// variable field preceded by its `u32` big-endian length, and `prev` a tag
+/// byte — 0 for none, 1 followed by the 32 bytes of the previous act's id —
+/// so no boundary can bleed into the next. Without the length prefixes
+/// `("ab", "c")` and `("a", "bc")` hash the same, and a payer could be
+/// renamed inside a description.
 ///
-/// `body` is the JSON of the [`RailAct`](crate::RailAct) alone — not the
-/// envelope, not `seq`, not `sig`. serde_json emits struct fields in
-/// declaration order, and a [`Payload`](crate::Payload) is canonical by
-/// construction, so the same act produces the same bytes on every node and
-/// build. That is the property the whole scheme rests on, and the payload
-/// half of it is why `Payload` is a type rather than a `serde_json::Value`.
-pub fn ring_op_message(
+/// The namespace is in it so an act lifted out of one group and replayed
+/// into another derives another id, whose signature fails. `prev` is the id
+/// of the author's act at `seq − 1`, none at seq 0: each act names its
+/// parent, like a git commit (DESIGN §6).
+///
+/// `body` is [`body_json`](crate::body_json): the act, in declaration order,
+/// its payload canonical by construction, so the same act produces the same
+/// bytes on every node and build. That is the property the whole scheme
+/// rests on, and the payload half of it is why `Payload` is a type rather
+/// than a `serde_json::Value`.
+pub fn act_id(
     namespace: &str,
-    ts_unix: i64,
     actor: &str,
     seq: u64,
+    prev: Option<&OpId>,
+    ts_unix: i64,
     body_json: &str,
-) -> Vec<u8> {
-    let mut msg = Vec::with_capacity(RING_OP_DOMAIN.len() + body_json.len() + 96);
-    msg.extend_from_slice(RING_OP_DOMAIN);
-    field(&mut msg, namespace.as_bytes());
-    msg.extend_from_slice(&ts_unix.to_be_bytes());
-    field(&mut msg, actor.as_bytes());
-    msg.extend_from_slice(&seq.to_be_bytes());
-    field(&mut msg, body_json.as_bytes());
-    msg
+) -> OpId {
+    let mut input = Vec::with_capacity(ACT_ID_DOMAIN.len() + body_json.len() + 160);
+    input.extend_from_slice(ACT_ID_DOMAIN);
+    field(&mut input, namespace.as_bytes());
+    field(&mut input, actor.as_bytes());
+    input.extend_from_slice(&seq.to_be_bytes());
+    match prev {
+        None => input.push(0),
+        Some(p) => {
+            input.push(1);
+            input.extend_from_slice(p.as_bytes());
+        }
+    }
+    input.extend_from_slice(&ts_unix.to_be_bytes());
+    field(&mut input, body_json.as_bytes());
+    OpId::from_hash(ContentHash::of(&input))
 }
 
-/// Sign one ring op. Hex-encoded 64-byte Ed25519 signature, matching how the
+/// The id `op`'s content derives in `namespace`, ignoring the `id` its line
+/// carries — identity from essence (ARCH §7.5). The ONE reading of an act's
+/// identity: admission, membership, the view, sync and the journal's held set
+/// all ask this, so a rewritten `id` field cannot make one act pass for
+/// another anywhere.
+pub fn derive_id(op: &Op<SignedOp>, namespace: &str) -> OpId {
+    act_id(
+        namespace,
+        &op.actor,
+        op.kind.seq,
+        op.kind.prev.as_ref(),
+        op.ts_unix,
+        &crate::body_json(
+            &op.kind.act,
+            op.kind.on_behalf_of.as_deref(),
+            op.kind.view.as_ref(),
+        ),
+    )
+}
+
+/// The bytes signed and verified for one act: `DOMAIN || id`.
+pub fn ring_op_message(id: &OpId) -> Vec<u8> {
+    [RING_OP_DOMAIN, id.as_bytes().as_slice()].concat()
+}
+
+/// Sign one act's id. Hex-encoded 64-byte Ed25519 signature, matching how the
 /// join proof and the dial-info signature are already carried (serde has no
 /// `[u8; 64]` impl).
-pub fn sign_ring_op(
-    key: &SigningKey,
+pub fn sign_ring_op(key: &SigningKey, id: &OpId) -> String {
+    hex::encode(key.sign(&ring_op_message(id)).to_bytes())
+}
+
+/// Sign one act under `signer`: derive its id, sign the id, and build the
+/// line. The ONE place an act is made, for the journal's door and the
+/// fixtures alike, so the bytes signed have one definition (ARCH §10.6).
+#[allow(clippy::too_many_arguments)]
+pub fn sign_act(
+    signer: &dyn crate::RingSigner,
     namespace: &str,
     ts_unix: i64,
     seq: u64,
-    body_json: &str,
-) -> String {
-    let actor = actor_of(key);
-    let msg = ring_op_message(namespace, ts_unix, &actor, seq, body_json);
-    hex::encode(key.sign(&msg).to_bytes())
+    prev: Option<OpId>,
+    act: crate::RailAct,
+    on_behalf_of: Option<&str>,
+    view: Option<crate::Digest>,
+) -> Op<SignedOp> {
+    let actor = signer.actor();
+    let body = crate::body_json(&act, on_behalf_of, view.as_ref());
+    let id = act_id(namespace, &actor, seq, prev.as_ref(), ts_unix, &body);
+    let kind = SignedOp {
+        seq,
+        prev,
+        sig: signer.sign(&id),
+        act,
+        on_behalf_of: on_behalf_of.map(str::to_string),
+        view,
+    };
+    Op {
+        v: kind.line_version(),
+        id,
+        ts_unix,
+        actor,
+        kind,
+    }
 }
 
-/// Verify one ring op under the public key its `actor` names.
+/// Verify one act's signature over `id` under the public key its `actor`
+/// names.
 ///
 /// Crate-private since the [`RingVerifier`](crate::RingVerifier) seam landed:
 /// [`Ed25519Verifier`](crate::Ed25519Verifier) is its one caller, and a
@@ -117,16 +199,8 @@ pub fn sign_ring_op(
 /// [`Roster`](crate::Roster) that makes it mean something, by saying which
 /// keys belong to people in this ring. Both checks are required and admission
 /// runs both.
-pub(crate) fn verify_ring_op(
-    actor: &str,
-    namespace: &str,
-    ts_unix: i64,
-    seq: u64,
-    body_json: &str,
-    sig_hex: &str,
-) -> bool {
-    let msg = ring_op_message(namespace, ts_unix, actor, seq, body_json);
-    verify_hex(actor, &msg, sig_hex)
+pub(crate) fn verify_ring_op(actor: &str, id: &OpId, sig_hex: &str) -> bool {
+    verify_hex(actor, &ring_op_message(id), sig_hex)
 }
 
 /// Verify `sig_hex` over `msg` under the hex public key `signer`. The ONE

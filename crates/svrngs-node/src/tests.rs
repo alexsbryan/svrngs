@@ -177,6 +177,52 @@ fn a_payload_with_no_canonical_form_is_a_malformed_line() {
     );
 }
 
+/// **Held means the act, not the id a line claims** (svrngs, U2; DESIGN §6).
+/// A line whose `id` field names an act the journal holds, with other
+/// content, is another act and lands; and a line that claims the id of an
+/// act not yet here does not keep that act out when it arrives. Upstream's
+/// held set was keyed by the line's field, so whoever sent the claim first
+/// decided which of two acts a copy kept. Both doors: one op, and a batch.
+#[test]
+fn a_line_claiming_a_held_id_is_not_held_and_the_act_it_named_still_lands() {
+    let dir = tempfile::tempdir().unwrap();
+    let journal = open(dir.path());
+    let held = signed(&key(1), 100, 0, record("held"));
+    assert!(journal.ingest(&held).unwrap());
+
+    let mut claims_held = signed(&key(2), 101, 0, record("other"));
+    claims_held.id = held.id.clone();
+    assert!(
+        journal.ingest(&claims_held).unwrap(),
+        "another act, though its line names one this journal holds"
+    );
+
+    let named = signed(&key(3), 102, 0, record("named"));
+    let mut claims_named = after(&key(1), &held, 103, record("decoy"));
+    claims_named.id = named.id.clone();
+    assert_eq!(journal.ingest_all(&[claims_named]).unwrap(), 1);
+    assert_eq!(
+        journal.ingest_all(&[named]).unwrap(),
+        1,
+        "the act a line claimed lands when it arrives"
+    );
+
+    let f = journal.admit(&ring(), &Ed25519Verifier).unwrap();
+    let mut whats = applied(&f);
+    whats.sort();
+    assert_eq!(whats, vec!["decoy", "held", "named", "other"]);
+    assert!(f.is_complete(), "{:?}", f.gaps);
+    assert_eq!(
+        f.gaps
+            .iter()
+            .filter(|g| matches!(g, RailGap::TamperedId { .. }))
+            .count(),
+        2,
+        "each claim is named: {:?}",
+        f.gaps
+    );
+}
+
 /// A peer's op is written exactly as signed — not re-signed, not re-numbered —
 /// and arriving twice is not an error.
 #[test]
@@ -275,12 +321,9 @@ fn two_forked_nodes_exchange_until_both_hold_the_fork() {
     let (a, b) = (open(dir_a.path()), open(dir_b.path()));
     let r = ring();
 
-    let prefix = vec![
-        signed(&key(1), 100, 0, record("shared-0")),
-        signed(&key(1), 101, 1, record("shared-1")),
-    ];
-    let left = signed(&key(1), 102, 2, record("left"));
-    let right = signed(&key(1), 102, 2, record("right"));
+    let prefix = run(&key(1), 100, [record("shared-0"), record("shared-1")]);
+    let left = after(&key(1), &prefix[1], 102, record("left"));
+    let right = after(&key(1), &prefix[1], 102, record("right"));
     let mut a_holds = prefix.clone();
     a_holds.push(left);
     let mut b_holds = prefix.clone();
@@ -331,12 +374,10 @@ fn a_forked_window_with_a_tiny_budget_still_converges() {
     let (a, b) = (open(dir_a.path()), open(dir_b.path()));
     let r = ring();
 
-    let mut a_holds: Vec<_> = (0..20)
-        .map(|s| signed(&key(1), 100 + s as i64, s, record("shared")))
-        .collect();
+    let mut a_holds = run(&key(1), 100, (0..20).map(|_| record("shared")));
     let mut b_holds = a_holds.clone();
-    a_holds.push(signed(&key(1), 120, 20, record("left")));
-    b_holds.push(signed(&key(1), 120, 20, record("right")));
+    a_holds.push(after(&key(1), &b_holds[19], 120, record("left")));
+    b_holds.push(after(&key(1), &a_holds[19], 120, record("right")));
     a.ingest_all(&a_holds).unwrap();
     b.ingest_all(&b_holds).unwrap();
 
@@ -736,17 +777,23 @@ fn a_forged_seal_deletes_nothing_from_disk() {
     }
     let act = RailAct::Seal;
     let body = body_json(&act, None, None);
-    let forged = Op::new(
-        SignedOp {
+    let prev = journal.read().unwrap().0[2].id.clone();
+    let id = act_id(NS, &actor_of(&key(1)), 3, Some(&prev), 103, &body);
+    // cy's key, over a line that claims to be alex's.
+    let forged = Op {
+        kind: SignedOp {
             seq: 3,
-            sig: sign_ring_op(&key(3), NS, 103, 3, &body),
+            prev: Some(prev),
+            sig: sign_ring_op(&key(3), &id),
             act,
             on_behalf_of: None,
             view: None,
         },
-        103,
-        actor_of(&key(1)),
-    );
+        id,
+        v: 1,
+        ts_unix: 103,
+        actor: actor_of(&key(1)),
+    };
     journal.ingest(&forged).unwrap();
 
     let done = journal.compact(&r, &Ed25519Verifier).unwrap();
@@ -867,27 +914,67 @@ fn compaction_refuses_a_journal_it_cannot_fully_read() {
     );
 }
 
-/// **The guard: compaction refuses rather than raise a gap.** The `referenced`
-/// clause keeps a corrected op alive by matching the id on the line, and a line
-/// whose id was rewritten does not match — so this is the case that gets past
-/// it. The invariant "a node may delete only what a floor covers" is encoded as
-/// a check on the result rather than trusted to the filter, because a filter is
-/// a rule the next caller has to remember and a refusal is not (ARCH §7).
+/// **The guard: compaction refuses rather than raise a gap.** The invariant
+/// "a node may delete only what a floor covers" is encoded as a check on the
+/// result rather than trusted to the filter, because a filter is a rule the
+/// next caller has to remember and a refusal is not (ARCH §7).
 ///
-/// It fires on a journal that is already compromised, which is the point: the
-/// outcome is a refusal naming the gap, not a destructive best effort.
+/// svrngs (U2): upstream's case was a cited op whose line id was rewritten,
+/// which got past the `referenced` clause because it matched the line's id;
+/// that clause now matches the id content derives, so the case below is the
+/// one that gets past the filter: an `Admit` under its author's floor, whose
+/// deletion would leave the key it admitted signing as nobody.
 #[test]
 fn compaction_refuses_when_it_would_raise_a_gap() {
     let dir = tempfile::tempdir().unwrap();
     let journal = open(dir.path());
     let r = ring();
 
-    // The op a correction will name, ingested with its id rewritten. Admission
-    // still counts it — identity comes from content (ARCH §7.5) — so nothing
-    // dangles yet.
+    let admit_dee = signed(
+        &key(1),
+        100,
+        0,
+        RailAct::Admit {
+            person: p("dee"),
+            key: actor_of(&key(4)),
+        },
+    );
+    journal.ingest(&admit_dee).unwrap();
+    journal
+        .ingest(&signed(&key(4), 101, 0, record("dee-writes")))
+        .unwrap();
+    journal
+        .ingest(&after(&key(1), &admit_dee, 102, RailAct::Seal))
+        .unwrap();
+
+    let before = journal.admit(&r, &Ed25519Verifier).unwrap();
+    assert!(
+        before.gaps.is_empty(),
+        "control: dee stands before compaction: {:?}",
+        before.gaps
+    );
+
+    let refusal = journal.compact(&r, &Ed25519Verifier);
+    assert!(
+        matches!(&refusal, Err(RailError::Rejected(why)) if why.contains("would raise")),
+        "{refusal:?}"
+    );
+    assert_eq!(journal.read().unwrap().0.len(), 3, "nothing was deleted");
+}
+
+/// svrngs (U2): a corrected op whose line carries a rewritten id is kept
+/// under its author's floor, because the correction cites the id its content
+/// derives and compaction keeps what a correction cites by that id. Upstream
+/// matched the line's id, so the op went and the correction dangled.
+#[test]
+fn compaction_keeps_a_cited_op_whatever_id_its_line_carries() {
+    let dir = tempfile::tempdir().unwrap();
+    let journal = open(dir.path());
+    let r = ring();
+
     let real = signed(&key(1), 100, 0, record("one"));
     let mut tampered = real.clone();
-    tampered.id = OpId::from_raw("ring-ffffffffffffffff");
+    tampered.id = stray_id(0xff);
     journal.ingest(&tampered).unwrap();
     journal
         .ingest(&signed(
@@ -901,25 +988,73 @@ fn compaction_refuses_when_it_would_raise_a_gap() {
         ))
         .unwrap();
     journal
-        .ingest(&signed(&key(1), 102, 1, RailAct::Seal))
+        .ingest(&after(&key(1), &real, 102, RailAct::Seal))
         .unwrap();
 
-    let before = journal.admit(&r, &Ed25519Verifier).unwrap();
+    let done = journal.compact(&r, &Ed25519Verifier).unwrap();
+    assert_eq!(done.removed, 0, "the cited op stays: {done:?}");
+    let after_compaction = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert!(
-        !before
+        !after_compaction
             .gaps
             .iter()
             .any(|g| matches!(g, RailGap::DanglingCorrection { .. })),
-        "control: the correction resolves before compaction: {:?}",
-        before.gaps
+        "{:?}",
+        after_compaction.gaps
     );
+}
 
-    let refusal = journal.compact(&r, &Ed25519Verifier);
+/// Cy's signature over a line that claims to be alex's act at `seq`,
+/// following `prev`: refused by admission, held on disk.
+fn forged_as_alex(seq: u64, prev: &Op<SignedOp>) -> Op<SignedOp> {
+    let act = record("forged");
+    let body = body_json(&act, None, None);
+    let ts = 100 + seq as i64;
+    let id = act_id(NS, &actor_of(&key(1)), seq, Some(&prev.id), ts, &body);
+    Op {
+        kind: SignedOp {
+            seq,
+            prev: Some(prev.id.clone()),
+            sig: sign_ring_op(&key(3), &id),
+            act,
+            on_behalf_of: None,
+            view: None,
+        },
+        id,
+        v: 1,
+        ts_unix: ts,
+        actor: actor_of(&key(1)),
+    }
+}
+
+/// **The door follows its own act, never a line that claims its key**
+/// (svrngs, U2). A peer can push a line naming this node's key at its newest
+/// seq; were the door to name it as the next act's previous act, every copy
+/// holding the real one would refuse that act as `WrongPrevious`.
+#[test]
+fn the_door_names_its_own_act_and_not_a_forgery_beside_it() {
+    let dir = tempfile::tempdir().unwrap();
+    let journal = open(dir.path());
+    let r = ring();
+    let one = journal
+        .append(record("one"), &key(1), &r, None, &Ed25519Verifier)
+        .unwrap();
+    let two = journal
+        .append(record("two"), &key(1), &r, None, &Ed25519Verifier)
+        .unwrap();
+    journal.ingest(&forged_as_alex(1, &one)).unwrap();
+    let three = journal
+        .append(record("three"), &key(1), &r, None, &Ed25519Verifier)
+        .unwrap();
+    assert_eq!(three.kind.seq, 2);
+    assert_eq!(three.kind.prev.as_ref(), Some(&two.id), "not the forgery");
+    let f = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert!(
-        matches!(&refusal, Err(RailError::Rejected(why)) if why.contains("would raise")),
-        "{refusal:?}"
+        matches!(f.gaps.as_slice(), [RailGap::BadSignature { .. }]),
+        "{:?}",
+        f.gaps
     );
-    assert_eq!(journal.read().unwrap().0.len(), 3, "nothing was deleted");
+    assert_eq!(applied(&f), vec!["one", "two", "three"]);
 }
 
 /// **A gap may DISAPPEAR, and the count says so.** A line that failed the
@@ -944,20 +1079,8 @@ fn a_refused_line_under_a_real_floor_goes_and_is_counted() {
     }
     // Cy's signature over a line claiming to be alex's: refused by admission,
     // still on the disk, still counted in `held`.
-    let act = record("forged");
-    let body = body_json(&act, None, None);
     journal
-        .ingest(&Op::new(
-            SignedOp {
-                seq: 2,
-                sig: sign_ring_op(&key(3), NS, 102, 2, &body),
-                act,
-                on_behalf_of: None,
-                view: None,
-            },
-            102,
-            actor_of(&key(1)),
-        ))
+        .ingest(&forged_as_alex(2, &journal.read().unwrap().0[1]))
         .unwrap();
     let before = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert!(

@@ -182,10 +182,10 @@ fn a_warrant_naming_an_introduction_of_another_key_does_not_resolve() {
 fn an_introduction_voided_by_a_correction_stops_resolving() {
     let dee = actor_of(&key(4));
     let intro = introduce(&key(1), 200, 0, "dee", &dee, "sold me the drill");
-    let withdrawn = signed(
+    let withdrawn = after(
         &key(1),
+        &intro,
         201,
-        1,
         RailAct::Correct {
             corrects: intro.id.clone(),
             replacement: None,
@@ -541,7 +541,7 @@ fn a_traced_row_renders_as_a_name_an_op_and_a_date() {
         trace(&roster, &a.ops, &p("dee"), &dee).to_string(),
         format!(
             "introduced by alex, op {}, 2026-08-30 00:00 — sold me the drill",
-            short_id(intro.id.as_str())
+            short_id(&intro.id.to_string())
         )
     );
     // And the row nobody vouched for says so in words, not by being absent.

@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai commonwealth/crates/commonwealth-rail-core/src/view.rs@e1a43bcd2
 use super::*;
-use crate::tests_support::{key, record, signed};
+use crate::tests_support::{after, key, record, run, with_ids};
 
-fn ops_of(seed: u8, seqs: std::ops::Range<u64>) -> Vec<Op<SignedOp>> {
-    seqs.map(|s| signed(&key(seed), 100 + s as i64, s, record("x")))
-        .collect()
+/// `n` acts by `seed`'s key from seq 0, each naming the one before.
+fn ops_of(seed: u8, n: usize) -> Vec<Op<SignedOp>> {
+    run(&key(seed), 100, (0..n).map(|_| record("x")))
 }
 
-/// **Golden vectors — frozen 2026-09-23 from this implementation.**
+/// **Golden vectors — frozen 2026-09-23 from this implementation**, and
+/// regenerated 2026-10-03 when an act's id became the whole hash over its
+/// previous act too (svrngs, U2): the fold is unchanged, the ids it folds
+/// are not.
 /// RFC style: generated once, then pinned. Their job is cross-
 /// implementation conformance and refactor-proofing; a reimplementation
 /// of the fold must reproduce these byte-for-byte, which is also what
@@ -29,38 +32,39 @@ fn view_golden_vectors() {
         (
             0,
             0,
-            ops_of(1, 0..1),
-            "21f6b6a08c22f52bee9ea72df92f495d94d7a9ea5574a4ae98dedf365e104a25",
+            ops_of(1, 1),
+            "39c2dfec1ea98e955950c62aa3f7a25edc20d75d1571839dc82ac2e2c72b24c2",
         ),
         // The same op at a different mark is a different window.
         (
             0,
             1,
-            ops_of(1, 0..2),
-            "e73fb18ff7733e615a64e3a8b1140c664c6b60c7d6af61f4f1e0bf6be542f70e",
+            ops_of(1, 2),
+            "3ba4f8041a4c8b7f7664d47bebc1c9c6fe4dc5e78f406093702d74968c84a791",
         ),
         // The same window from a different floor is a different claim.
         (
             1,
             1,
-            ops_of(1, 0..2),
-            "aa860862260bddba139e925f2ea620bf2ba3d4c64f4e32ed480ed808cc51689e",
+            ops_of(1, 2),
+            "1fe28d302b0b042b812a4de8f84c61d81491c4fb5bb06e8f9cb98e72cc467048",
         ),
     ];
     for (from, mark, ops, expected) in cases {
-        let view = View::of(&actor, *from, *mark, ops.iter());
+        let view = View::of(&actor, *from, *mark, with_ids(ops.iter()));
         assert_eq!(
             view.head, *expected,
-            "golden vector (from={from}, mark={mark}) — update ONLY with a domain bump"
+            "golden vector (from={from}, mark={mark}) — update ONLY with a domain bump \
+             or a change to what an id is"
         );
     }
 
     // The chain reacts to content, not to arrival: two different ops at
     // one seq fold differently, and the same set folds identically
     // however it is presented.
-    let left = signed(&key(1), 200, 2, record("left"));
-    let right = signed(&key(1), 200, 2, record("right"));
-    let prefix = ops_of(1, 0..2);
+    let prefix = ops_of(1, 2);
+    let left = after(&key(1), &prefix[1], 200, record("left"));
+    let right = after(&key(1), &prefix[1], 200, record("right"));
     let mut a = prefix.clone();
     a.push(left.clone());
     let mut b = prefix.clone();
@@ -70,13 +74,13 @@ fn view_golden_vectors() {
     let mut both_reordered = vec![right, left];
     both_reordered.extend(prefix.iter().cloned());
     assert_ne!(
-        View::of(&actor, 0, 2, a.iter()).head,
-        View::of(&actor, 0, 2, b.iter()).head,
+        View::of(&actor, 0, 2, with_ids(a.iter())).head,
+        View::of(&actor, 0, 2, with_ids(b.iter())).head,
         "a fork at one seq must not fold equal"
     );
     assert_eq!(
-        View::of(&actor, 0, 2, both.iter()).head,
-        View::of(&actor, 0, 2, both_reordered.iter()).head,
+        View::of(&actor, 0, 2, with_ids(both.iter())).head,
+        View::of(&actor, 0, 2, with_ids(both_reordered.iter())).head,
         "the fold is over the set, not the arrival order"
     );
 }
@@ -153,21 +157,21 @@ fn the_view_fixture_matches_the_reference() {
 #[ignore = "fixture generator — run with --ignored --nocapture"]
 fn emit_view_fixture() {
     let actor = crate::actor_of(&key(1));
-    let one = signed(&key(1), 100, 0, record("x"));
-    let two = signed(&key(1), 101, 1, record("x"));
-    let left = signed(&key(1), 102, 2, record("left"));
-    let right = signed(&key(1), 102, 2, record("right"));
+    let ops = ops_of(1, 2);
+    let (one, two) = (&ops[0], &ops[1]);
+    let left = after(&key(1), two, 102, record("left"));
+    let right = after(&key(1), two, 102, record("right"));
     let mut cases = Vec::new();
     for (name, from, mark, ops) in [
         ("empty window", 0u64, 0u64, vec![]),
-        ("one op", 0, 0, vec![&one]),
-        ("two ops", 0, 1, vec![&one, &two]),
-        ("offset window", 1, 1, vec![&one, &two]),
+        ("one op", 0, 0, vec![one]),
+        ("two ops", 0, 1, vec![one, two]),
+        ("offset window", 1, 1, vec![one, two]),
         (
             "a fork at one seq — ids sorted and deduped",
             0,
             2,
-            vec![&one, &left, &right, &two, &left],
+            vec![one, &left, &right, two, &left],
         ),
     ] {
         let pairs: Vec<(u64, String)> =
@@ -180,7 +184,7 @@ fn emit_view_fixture() {
     }
     let doc = serde_json::json!({
         "domain": "cwth/view/1",
-        "generated": "2026-09-24 from the reference implementation — RFC style: generated once, then pinned",
+        "generated": "2026-09-24 from the reference implementation — RFC style: generated once, then pinned; regenerated 2026-10-03 when an act's id became the whole hash (svrngs U2)",
         "formula": "h0 = BLAKE3(domain || 0x00 || actor); hs = BLAKE3(h{s-1} || 0x00 || be64(s) || 0x00 || id), ids at s sorted then deduped, s in [from, mark]",
         "cases": cases,
     });

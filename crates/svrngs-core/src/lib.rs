@@ -99,7 +99,7 @@ pub use attest::{AttestRefusal, GuestAttestation};
 pub use introduce::{trace, trace_op, Introduce, Vouch, VouchStatus};
 pub use membership::{membership, Membership};
 pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
-pub use sig::{actor_of, ring_op_message, sign_ring_op};
+pub use sig::{act_id, actor_of, derive_id, ring_op_message, sign_act, sign_ring_op};
 pub use sync::{digest, ops_missing_from, ops_missing_from_within, Compaction, Floors, NO_BUDGET};
 pub use view::{Digest, View, DIGEST_V};
 
@@ -410,15 +410,23 @@ impl RailAct {
 /// They also fix a collision the envelope documents as by-design:
 /// [`Op::new`] hashes `(prefix, ts, actor, body)`, so two byte-identical acts
 /// in the same second by the same actor share an id. Harmless for governance;
-/// for a money app it silently merges two real coffees into one. `seq` differs,
-/// so the body differs, so the ids differ.
+/// for a money app it silently merges two real coffees into one. `seq` is in
+/// [`act_id`]'s input, so the ids differ.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SignedOp {
     /// This actor's own counter within this namespace, starting at 0 and
     /// contiguous. A hole means an op has not reached us.
     pub seq: u64,
-    /// Hex Ed25519 signature over [`sig::ring_op_message`]. Not itself signed
-    /// (that would be circular) and not part of what is signed.
+    /// The id of this author's act at `seq − 1`; none at seq 0. Inside the
+    /// id, so inside the signature: an act names its parent the way a git
+    /// commit does, and admission names a gap for one whose parent is not
+    /// its author's act at `seq − 1` (svrngs, U2; DESIGN §6). Skipped when
+    /// absent, so a first act carries no `prev` on its line.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub prev: Option<OpId>,
+    /// Hex Ed25519 signature over [`sig::ring_op_message`] — the act's id.
+    /// Not itself signed (that would be circular) and not in the id, so one
+    /// act carrying two valid signatures is one act.
     pub sig: String,
     #[serde(flatten)]
     pub act: RailAct,
@@ -434,8 +442,8 @@ pub struct SignedOp {
     /// mean is the door's question, decided where the door authenticates.
     ///
     /// Declared LAST and skipped when absent, so every op written before this
-    /// field existed serialises to the same bytes, derives the same
-    /// [`Op::new`] id, and verifies under the same signature — which
+    /// field existed serialises to the same bytes, derives the same id, and
+    /// verifies under the same signature — which
     /// `rail_ops_written_before_on_behalf_of_still_verify` holds to.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub on_behalf_of: Option<String>,
@@ -594,8 +602,9 @@ pub trait RingSigner: Send + Sync {
     /// The hex public key this signer signs as. Becomes the op's `actor`, and
     /// is what the roster is looked up by.
     fn actor(&self) -> String;
-    /// Hex Ed25519 signature over [`sig::ring_op_message`].
-    fn sign(&self, namespace: &str, ts_unix: i64, seq: u64, body_json: &str) -> String;
+    /// Hex Ed25519 signature over [`sig::ring_op_message`] of `id` — the id
+    /// [`act_id`] derived from everything the act says (svrngs, U2).
+    fn sign(&self, id: &OpId) -> String;
 }
 
 /// The direct implementation, for a caller that legitimately holds the key —
@@ -604,8 +613,8 @@ impl RingSigner for SigningKey {
     fn actor(&self) -> String {
         sig::actor_of(self)
     }
-    fn sign(&self, namespace: &str, ts_unix: i64, seq: u64, body_json: &str) -> String {
-        sig::sign_ring_op(self, namespace, ts_unix, seq, body_json)
+    fn sign(&self, id: &OpId) -> String {
+        sig::sign_ring_op(self, id)
     }
 }
 
@@ -632,16 +641,9 @@ pub trait RingVerifier: Send + Sync {
     /// which verifier ran (ARCH §9.1).
     fn name(&self) -> &'static str;
     /// Whether `sig_hex` is `actor`'s signature over [`sig::ring_op_message`]
-    /// of these fields. `false` on anything it cannot judge.
-    fn verify(
-        &self,
-        actor: &str,
-        namespace: &str,
-        ts_unix: i64,
-        seq: u64,
-        body_json: &str,
-        sig_hex: &str,
-    ) -> bool;
+    /// of `id`, the id the caller derived from the act's content
+    /// ([`derive_id`]). `false` on anything it cannot judge.
+    fn verify(&self, actor: &str, id: &OpId, sig_hex: &str) -> bool;
 }
 
 /// The shipped verifier: Ed25519 over the exact bytes [`RingSigner`]'s own
@@ -655,16 +657,8 @@ impl RingVerifier for Ed25519Verifier {
     fn name(&self) -> &'static str {
         "ed25519"
     }
-    fn verify(
-        &self,
-        actor: &str,
-        namespace: &str,
-        ts_unix: i64,
-        seq: u64,
-        body_json: &str,
-        sig_hex: &str,
-    ) -> bool {
-        sig::verify_ring_op(actor, namespace, ts_unix, seq, body_json, sig_hex)
+    fn verify(&self, actor: &str, id: &OpId, sig_hex: &str) -> bool {
+        sig::verify_ring_op(actor, id, sig_hex)
     }
 }
 

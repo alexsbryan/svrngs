@@ -138,12 +138,12 @@ pub struct Compaction {
 /// (ARCH §18.3). That is why being wrong here is not "a round" — the peer
 /// never re-sends below a floor, so the loss does not heal.
 pub(crate) fn sealed_floors<'a>(
-    ops: impl IntoIterator<Item = &'a Op<SignedOp>>,
+    ops: impl IntoIterator<Item = (&'a OpId, &'a Op<SignedOp>)>,
     voided: &BTreeSet<OpId>,
 ) -> Floors {
     let mut floors = Floors::new();
-    for op in ops {
-        if matches!(op.kind.act, RailAct::Seal) && !voided.contains(&crate::admit::derived_id(op)) {
+    for (id, op) in ops {
+        if matches!(op.kind.act, RailAct::Seal) && !voided.contains(id) {
             let floor = floors.entry(op.actor.clone()).or_insert(0);
             *floor = (*floor).max(op.kind.seq);
         }
@@ -157,26 +157,19 @@ pub(crate) fn sealed_floors<'a>(
 /// over the same set: a check that folded everything held would compare a
 /// forged line against a head that never counted it, see a mismatch no
 /// exchange can heal, and resend the actor's whole window every call.
+///
+/// Each beside the id its content derives in `namespace` (svrngs, U2): the
+/// signature is over that id, so verifying derives it, and every reader of
+/// the set — the floors, the view's heads — takes it from here rather than
+/// from the line.
 fn authentic<'a>(
     ops: &'a [Op<SignedOp>],
     namespace: &str,
     verifier: &dyn RingVerifier,
-) -> Vec<&'a Op<SignedOp>> {
+) -> Vec<(OpId, &'a Op<SignedOp>)> {
     ops.iter()
-        .filter(|op| {
-            verifier.verify(
-                &op.actor,
-                namespace,
-                op.ts_unix,
-                op.kind.seq,
-                &crate::body_json(
-                    &op.kind.act,
-                    op.kind.on_behalf_of.as_deref(),
-                    op.kind.view.as_ref(),
-                ),
-                &op.kind.sig,
-            )
-        })
+        .map(|op| (crate::derive_id(op, namespace), op))
+        .filter(|(id, op)| verifier.verify(&op.actor, id, &op.kind.sig))
         .collect()
 }
 
@@ -197,14 +190,14 @@ fn authentic<'a>(
 pub fn digest(ops: &[Op<SignedOp>], namespace: &str, verifier: &dyn RingVerifier) -> Digest {
     let authentic = authentic(ops, namespace, verifier);
     let mut voided: BTreeSet<OpId> = BTreeSet::new();
-    for op in &authentic {
+    for (_, op) in &authentic {
         if let RailAct::Correct { corrects, .. } = &op.kind.act {
             voided.insert(corrects.clone());
         }
     }
-    let floors = sealed_floors(authentic.iter().copied(), &voided);
+    let floors = sealed_floors(authentic.iter().map(|(id, op)| (id, *op)), &voided);
     let mut by_actor: BTreeMap<&str, BTreeSet<u64>> = BTreeMap::new();
-    for op in &authentic {
+    for (_, op) in &authentic {
         by_actor
             .entry(op.actor.as_str())
             .or_default()
@@ -227,7 +220,7 @@ pub fn digest(ops: &[Op<SignedOp>], namespace: &str, verifier: &dyn RingVerifier
             while seqs.contains(&(n + 1)) {
                 n += 1;
             }
-            let view = View::of(actor, from, n, authentic.iter().copied());
+            let view = View::of(actor, from, n, authentic.iter().map(|(id, op)| (id, *op)));
             Some((actor.to_string(), view))
         })
         .collect::<BTreeMap<_, _>>()
@@ -336,13 +329,21 @@ pub fn ops_missing_from_within(
     // payload is deterministic — two nodes with the same holdings produce
     // byte-identical bodies, which makes a diff of two captures mean
     // something (and orders a fork's two branches the same on every node).
-    let mut by_actor: BTreeMap<&str, Vec<&Op<SignedOp>>> = BTreeMap::new();
+    // By the DERIVED id (svrngs, U2), never the one a line carries.
+    let mut by_actor: BTreeMap<&str, Vec<(OpId, &Op<SignedOp>)>> = BTreeMap::new();
     for op in ops {
-        by_actor.entry(op.actor.as_str()).or_default().push(op);
+        by_actor
+            .entry(op.actor.as_str())
+            .or_default()
+            .push((crate::derive_id(op, namespace), op));
     }
     for held in by_actor.values_mut() {
-        held.sort_by_key(|op| (op.kind.seq, op.id.to_string()));
+        held.sort_by(|(a_id, a), (b_id, b)| (a.kind.seq, a_id).cmp(&(b.kind.seq, b_id)));
     }
+    let by_actor: BTreeMap<&str, Vec<&Op<SignedOp>>> = by_actor
+        .into_iter()
+        .map(|(actor, held)| (actor, held.into_iter().map(|(_, op)| op).collect()))
+        .collect();
 
     let mut out: Vec<Op<SignedOp>> = Vec::new();
     let mut spent: usize = 0;
@@ -377,8 +378,14 @@ pub fn ops_missing_from_within(
         // Folded over what is AUTHENTIC in the window, exactly as the peer's
         // head was ([`authentic`]); the unit below still carries everything
         // held — author-blind, store it and gossip it.
-        let mismatch =
-            View::of(actor, view.from, view.mark, trusted.iter().copied()).head != view.head;
+        let mismatch = View::of(
+            actor,
+            view.from,
+            view.mark,
+            trusted.iter().map(|(id, op)| (id, *op)),
+        )
+        .head
+            != view.head;
         if !mismatch {
             for op in over {
                 let cost = cost_of(op, budget_bytes);

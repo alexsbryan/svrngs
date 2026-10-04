@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai commonwealth/crates/commonwealth-rail-core/src/membership.rs@e1a43bcd2
 use super::*;
-use crate::tests_support::{key, record, signed};
+use crate::tests_support::{key, record, signed, with_ids};
 use crate::{actor_of, Ed25519Verifier};
 
 fn seed_of(seeds: &[(u8, &str)]) -> Roster {
@@ -42,7 +42,7 @@ fn void(by: u8, ts: i64, seq: u64, target: &Op<SignedOp>) -> Op<SignedOp> {
         ts,
         seq,
         RailAct::Correct {
-            corrects: derived_id(target),
+            corrects: target.id.clone(),
             replacement: None,
         },
     )
@@ -70,19 +70,19 @@ fn every_permutation_of_a_membership_set_agrees() {
             105,
             3,
             RailAct::Correct {
-                corrects: derived_id(&admit_dee),
+                corrects: admit_dee.id.clone(),
                 replacement: None,
             },
         ),
         signed(&key(2), 106, 1, record("x")),
     ];
-    let base = membership(ops.iter(), &seed);
+    let base = membership(with_ids(ops.iter()), &seed);
     // Every arrival order is the same answer.
     for rotation in 1..ops.len() {
         let mut rotated: Vec<&Op<SignedOp>> = ops.iter().collect();
         rotated.rotate_left(rotation);
         assert_eq!(
-            membership(rotated, &seed),
+            membership(with_ids(rotated), &seed),
             base,
             "rotation {rotation} changed the answer"
         );
@@ -91,11 +91,11 @@ fn every_permutation_of_a_membership_set_agrees() {
     // mutual removal's later cut does not count (its signer had fallen),
     // and the voided Admit never admitted dee.
     assert!(
-        base.counts(&ops[0]),
+        base.counts(&ops[0].id),
         "bo's Admit-of-cy counts first in order"
     );
     assert!(
-        !base.counted.contains(&derived_id(&ops[3])),
+        !base.counted.contains(&ops[3].id),
         "cy's counter-cut does not"
     );
     assert!(
@@ -118,11 +118,11 @@ fn voiding_an_admit_drops_what_it_transitively_admitted() {
         102,
         1,
         RailAct::Correct {
-            corrects: derived_id(&stranger),
+            corrects: stranger.id.clone(),
             replacement: None,
         },
     );
-    let m = membership([&stranger, &stranger_admits_p, &undo], &seed);
+    let m = membership(with_ids([&stranger, &stranger_admits_p, &undo]), &seed);
     assert!(
         !m.bindings.contains_key(&actor_of(&key(4))),
         "the stranger fell with their Admit"
@@ -147,17 +147,17 @@ fn voiding_a_remove_restores_the_member_and_their_in_between_writes() {
         102,
         3,
         RailAct::Correct {
-            corrects: derived_id(&cut),
+            corrects: cut.id.clone(),
             replacement: None,
         },
     );
-    let m = membership([&cut, &while_out, &undo], &seed);
+    let m = membership(with_ids([&cut, &while_out, &undo]), &seed);
     assert!(
         m.standing.contains(&actor_of(&key(2))),
         "voiding the Remove restores the member"
     );
     assert!(
-        m.counts(&while_out),
+        m.counts(&while_out.id),
         "and what they wrote while removed counts"
     );
 }
@@ -172,10 +172,10 @@ fn the_membership_acts_do_something() {
     let write = signed(&key(2), 101, 0, record("bo-writes"));
     let cut = remove_act(1, 102, 1, 2, 0);
     let after_cut = signed(&key(2), 103, 1, record("after-the-cut"));
-    let m = membership([&add, &write, &cut, &after_cut], &seed);
-    assert!(m.counts(&write), "bo counts while admitted");
+    let m = membership(with_ids([&add, &write, &cut, &after_cut]), &seed);
+    assert!(m.counts(&write.id), "bo counts while admitted");
     assert!(
-        !m.counts(&after_cut),
+        !m.counts(&after_cut.id),
         "and not after the cut — position-scoped standing"
     );
     let _ = Ed25519Verifier;
@@ -203,7 +203,7 @@ fn every_interleaving_of_a_membership_set_folds_identically() {
         signed(&key(2), 107, 1, record("bo-writes")),
         remove_act(1, 108, 4, 2, 1),
     ];
-    let base = membership(ops.iter(), &seed);
+    let base = membership(with_ids(ops.iter()), &seed);
     let mut state: u64 = 0x5eed;
     for round in 0..64u64 {
         let mut order: Vec<&Op<SignedOp>> = ops.iter().collect();
@@ -214,7 +214,7 @@ fn every_interleaving_of_a_membership_set_folds_identically() {
             order.swap(i, j);
         }
         assert_eq!(
-            membership(order.iter().copied(), &seed),
+            membership(with_ids(order.iter().copied()), &seed),
             base,
             "interleaving {round} changed the answer — arrival reached the fold"
         );

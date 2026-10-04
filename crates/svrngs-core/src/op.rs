@@ -23,6 +23,8 @@
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
+use crate::hash::ContentHash;
+
 /// What a tenant must declare to get a journal: where its lines live, which
 /// line format the current writer emits, and the prefix its ids wear.
 ///
@@ -62,24 +64,38 @@ pub trait Journaled: Serialize + DeserializeOwned {
 
 /// Stable, content-addressed id for one op.
 ///
-/// Opaque on purpose: the only way to mint one is [`Op::new`], which hashes
-/// the act. `from_raw` exists for reading an id back off a log line or a CLI
-/// argument, and is named so a reader sees no hashing happened here.
+/// svrngs (U2, DESIGN §6 "Ids cover everything signed"): the WHOLE BLAKE3
+/// hash, spelled as 64 hex on the wire, where upstream kept a `ring-` prefix
+/// and 64 bits of it — a prefix `ContentHash::short` itself calls "never an
+/// identity", and two acts one writer grinds to share it (about 2^32 hashes)
+/// were held one or the other by whichever a copy saw first. A string that is
+/// not 64 hex does not parse, so a line carrying one is unreadable rather
+/// than an act with a second spelling of identity.
+///
+/// A ring act's id is minted by [`crate::act_id`]; [`Op::new`] is the
+/// generic envelope's, for the journal's own tests. `from_hex` reads an id
+/// back off a line or an argument, and is named so a reader sees no hashing
+/// happened here.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct OpId(String);
+#[serde(transparent)]
+pub struct OpId(ContentHash);
 
 impl OpId {
-    pub fn from_raw(s: impl Into<String>) -> Self {
-        Self(s.into())
+    pub(crate) fn from_hash(h: ContentHash) -> Self {
+        Self(h)
     }
-    pub fn as_str(&self) -> &str {
-        &self.0
+    /// `None` on anything that is not exactly 64 hex characters.
+    pub fn from_hex(s: &str) -> Option<Self> {
+        ContentHash::from_hex(s).map(Self)
+    }
+    pub fn as_bytes(&self) -> &[u8; 32] {
+        self.0.as_bytes()
     }
 }
 
 impl std::fmt::Display for OpId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0)
+        f.write_str(&self.0.to_hex())
     }
 }
 
@@ -109,10 +125,16 @@ impl<K: Journaled> Op<K> {
     /// Build an op, deriving its content-addressed [`OpId`] from the
     /// (prefix, ts, actor, body) tuple.
     ///
+    /// svrngs: test-only, so no production path can build a ring act whose id
+    /// hashes the line, signature included — a ring act's id is
+    /// [`crate::act_id`]'s (U2). The journal's own tests build envelopes of
+    /// other kinds with it.
+    ///
     /// Two byte-identical acts at the same second by the same actor collide by
     /// design — callers append in real time, so this does not arise in
     /// practice (the same birthday-bound caveat the atom content-hash ids
     /// carry).
+    #[cfg(any(test, feature = "test-support"))]
     pub fn new(kind: K, ts_unix: i64, actor: impl Into<String>) -> Self {
         let actor = actor.into();
         // serde_json writes fields in declaration order, so the body string —
@@ -124,11 +146,7 @@ impl<K: Journaled> Op<K> {
         let input = format!("{}|{ts_unix}|{actor}|{body}", K::ID_PREFIX);
         let v = kind.line_version();
         Self {
-            id: OpId(format!(
-                "{}-{}",
-                K::ID_PREFIX,
-                crate::hash::ContentHash::of_str(&input).short()
-            )),
+            id: OpId(ContentHash::of_str(&input)),
             v,
             ts_unix,
             actor,

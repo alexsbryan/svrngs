@@ -216,8 +216,10 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   alone, in the journal's `roster.json`.
 - **A grow-only set, linked like git.** Each act names its author's previous
   act (U2, inside the id and the signature, so the wire changes once, before
-  Demo A writes a journal anyone keeps); a copy holds an act only with its
-  parent, so copies converge by union. Two acts on one parent are a fork, and
+  Demo A writes a journal anyone keeps; landed: `SignedOp::prev`, and
+  admission names an act whose previous act is not its author's act at
+  seq − 1 a `WrongPrevious` gap, `crates/svrngs-core/src/admit.rs`); a copy
+  holds an act only with its parent, so copies converge by union. Two acts on one parent are a fork, and
   forks void nothing (U7; operator, 2026-10-04, moved from U2). Today two acts
   on one seq exclude both (`crates/svrngs-core/src/admit.rs:467-492`), so
   whoever signed an `Admit` can take it back on every copy by signing a second
@@ -240,17 +242,18 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   closes it, and only the issuer's node redeems it (operator, 2026-10-04), so
   one node decides every use, and the fold counts a redeeming `Admit` only
   under an `Invite` that still counts.
-- **Ids cover everything signed** (U2): the id is the whole hash of the
-  namespace, actor, seq, previous act, timestamp and body, and the signature
-  is over the id. (Corrected 2026-10-04: this said the timestamp is outside
-  the id and the previous act outside the signature. The timestamp is inside
-  both, `crates/svrngs-core/src/op.rs:124` and `sig.rs:83`, and no act names a
-  previous one yet.) What is wrong today: the id hashes the signed line,
-  signature included (`sig.rs:33-39`), and keeps 64 bits of it (`op.rs:130`),
-  a prefix `hash.rs:88` says is "never an identity", yet a peer's act is
-  skipped as already held by that id (`crates/svrngs-node/src/journal.rs:326`).
-  Two acts one member grinds to share a prefix, about 2^32 hashes, are held
-  one or the other by whichever a copy saw first, and copies diverge. A removal names the removed key's acts by hash,
+- **Ids cover everything signed** (U2, landed): the id is the whole hash of
+  the namespace, actor, seq, previous act, timestamp and body, and the
+  signature is over the id (`act_id` and `ring_op_message`,
+  `crates/svrngs-core/src/sig.rs`). Every comparison of acts as identity —
+  admission, membership, the view's heads, sync, and the journal's held set
+  and ingest skip — uses the id the content derives (`derive_id`), never the
+  `id` a line carries. Before, as forked, the id hashed the signed line,
+  signature included, and kept 64 bits of it, a prefix `hash.rs` says is
+  "never an identity", yet a peer's act was skipped as already held by the
+  line's id: two acts one member ground to share a prefix, about 2^32
+  hashes, were held one or the other by whichever a copy saw first, and
+  copies diverged. A removal names the removed key's acts by hash,
   never by position or time (U7): today the fold ignores `through_seq` and
   cuts the key at the `Remove`'s place in the order
   (`crates/svrngs-core/src/membership.rs:153`), so a backdated act slips under

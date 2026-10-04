@@ -134,7 +134,7 @@ impl RingRail {
 mod tests {
     use super::*;
     use crate::{actor_of, Ed25519Verifier, OpId};
-    use svrngs_core::tests_support::{key, record, signed, NS};
+    use svrngs_core::tests_support::{after, key, record, signed, NS};
 
     fn admit_act(person: &str, joining: u8) -> RailAct {
         RailAct::Admit {
@@ -162,25 +162,28 @@ mod tests {
                 .into_iter()
                 .collect(),
         );
+        let admit_bo = signed(&key(1), 100, 0, admit_act("bo", 2));
         let bo_writes = signed(&key(2), 101, 0, record("a"));
-        let admit_dee = signed(&key(1), 103, 1, admit_act("dee", 4));
+        let admit_dee = after(&key(1), &admit_bo, 103, admit_act("dee", 4));
+        let void_dee = after(&key(1), &admit_dee, 104, void(&admit_dee.id));
+        let remove_cy = after(
+            &key(1),
+            &void_dee,
+            106,
+            RailAct::Remove {
+                key: actor_of(&key(3)),
+                through_seq: 0,
+            },
+        );
         let ops = vec![
-            signed(&key(1), 100, 0, admit_act("bo", 2)),
+            admit_bo,
             bo_writes.clone(),
-            signed(&key(2), 102, 1, admit_act("cy", 3)),
+            after(&key(2), &bo_writes, 102, admit_act("cy", 3)),
             admit_dee.clone(),
-            signed(&key(1), 104, 2, void(&admit_dee.id)),
+            void_dee,
             signed(&key(3), 105, 0, record("b")),
-            signed(
-                &key(1),
-                106,
-                3,
-                RailAct::Remove {
-                    key: actor_of(&key(3)),
-                    through_seq: 0,
-                },
-            ),
-            signed(&key(1), 107, 4, void(&bo_writes.id)),
+            remove_cy.clone(),
+            after(&key(1), &remove_cy, 107, void(&bo_writes.id)),
         ];
         let whole = admit(&ops, &[], &seed, NS, &Ed25519Verifier)
             .membership

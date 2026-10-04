@@ -223,45 +223,45 @@ impl std::fmt::Display for VouchStatus {
             } => write!(
                 f,
                 "introduced by {by}, op {}, {} — {reason}",
-                short_id(op.as_str()),
+                short_id(&op.to_string()),
                 short_stamp(*at)
             ),
             Self::NotHeld { op } => write!(
                 f,
                 "warrant unresolved — op {} is not admitted on this node (not held, or refused)",
-                short_id(op.as_str())
+                short_id(&op.to_string())
             ),
             Self::NotAnIntroduction { op } => write!(
                 f,
                 "warrant unresolved — op {} is not an introduction",
-                short_id(op.as_str())
+                short_id(&op.to_string())
             ),
             Self::NamesAnother { op, person, key } => write!(
                 f,
                 "warrant unresolved — op {} introduces {person} ({}), not this row",
-                short_id(op.as_str()),
+                short_id(&op.to_string()),
                 actor_prefix(key)
             ),
             Self::Withdrawn { op } => write!(
                 f,
                 "warrant withdrawn — op {} was voided by a correction",
-                short_id(op.as_str())
+                short_id(&op.to_string())
             ),
             Self::SelfVouch { op } => write!(
                 f,
                 "warrant unresolved — op {} vouches for the key that signed it",
-                short_id(op.as_str())
+                short_id(&op.to_string())
             ),
             Self::IntroducerNotClaimedYet { op, by_actor } => write!(
                 f,
                 "warrant unresolved — {} signed op {} before the ring claimed them",
                 actor_prefix(by_actor),
-                short_id(op.as_str())
+                short_id(&op.to_string())
             ),
             Self::DisagreesWithTheOp { op } => write!(
                 f,
                 "warrant unresolved — this row's signer and date are not what op {} says",
-                short_id(op.as_str())
+                short_id(&op.to_string())
             ),
         }
     }

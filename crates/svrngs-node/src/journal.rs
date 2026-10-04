@@ -29,8 +29,16 @@ struct Writer {
     held: Held,
 }
 
-/// The two facts [`RingJournal::append_all`] and [`RingJournal::ingest_all`]
-/// read off the log: each actor's next seq and the ids already held.
+/// The facts [`RingJournal::append_all`] and [`RingJournal::ingest_all`]
+/// read off the log: each actor's newest seq, with the lines held at it, and
+/// the ids already held.
+///
+/// svrngs (U2): each id is the one the act's content derives ([`derive_id`]),
+/// never the `id` field its line carries. A held set keyed by the line's field
+/// skipped a peer's act as already held when another line merely claimed its
+/// id, so the act never landed (DESIGN §6). The lines at an actor's newest
+/// seq are kept, id and signature, because the door's next act names one of
+/// them as its previous act, and only one that verifies is the signer's own.
 ///
 /// Folded from the file and caught up from its tail before each write
 /// ([`Oplog::read_since`]), so a write costs the lines appended since the last
@@ -42,8 +50,15 @@ struct Writer {
 #[derive(Default)]
 struct Held {
     cursor: crate::oplog::Cursor,
-    next_seq: std::collections::HashMap<String, u64>,
+    newest: std::collections::HashMap<String, Newest>,
     ids: std::collections::HashSet<OpId>,
+}
+
+/// One actor's newest seq on the log, and each line held at it: the id its
+/// content derives and the signature it carries.
+struct Newest {
+    seq: u64,
+    lines: Vec<(OpId, String)>,
 }
 
 impl Held {
@@ -53,13 +68,26 @@ impl Held {
             .read_since(self.cursor)
             .map_err(|e| RailError::Io(e.to_string()))?;
         if tail.restarted {
-            self.next_seq.clear();
+            self.newest.clear();
             self.ids.clear();
         }
         for op in &tail.ops {
-            let next = self.next_seq.entry(op.actor.clone()).or_insert(0);
-            *next = (*next).max(op.kind.seq + 1);
-            self.ids.insert(op.id.clone());
+            let id = derive_id(op, namespace);
+            let line = (id.clone(), op.kind.sig.clone());
+            match self.newest.get_mut(&op.actor) {
+                Some(n) if n.seq > op.kind.seq => {}
+                Some(n) if n.seq == op.kind.seq => n.lines.push(line),
+                _ => {
+                    self.newest.insert(
+                        op.actor.clone(),
+                        Newest {
+                            seq: op.kind.seq,
+                            lines: vec![line],
+                        },
+                    );
+                }
+            }
+            self.ids.insert(id);
         }
         tracing::debug!(
             namespace,
@@ -193,7 +221,8 @@ impl RingJournal {
     ///
     /// [`Self::append`] is this with one act. The next sequence number comes
     /// from the write index ([`Held`]), which reads only the log's tail, and
-    /// the seqs are contiguous from it, which the writer lock makes safe
+    /// so does the previous act it names (svrngs, U2); the seqs are
+    /// contiguous from it, which the writer lock makes safe
     /// exactly as it does for one act. The write is one `write(2)`, so the
     /// batch lands whole or not at all, and one fsync rather than one per act.
     ///
@@ -253,7 +282,34 @@ impl RingJournal {
         if acts.is_empty() {
             return Ok(Vec::new());
         }
-        let first_seq = log.held.next_seq.get(&actor).copied().unwrap_or(0);
+        // The next act follows this signer's newest seq on the log, as
+        // upstream's did, and names the act there (svrngs, U2): of the lines
+        // held at that seq, the one whose signature verifies under the
+        // signer's key. A line that claims our key without our signature is
+        // not ours to follow — naming it would make our act `WrongPrevious`
+        // on every copy that holds our real one. When none verifies (a
+        // forgery above everything we signed), the next act names the first:
+        // no copy holds an authentic act there to judge it against.
+        let (first_seq, mut prev) = match log.held.newest.get(&actor) {
+            Some(n) => {
+                let own = n
+                    .lines
+                    .iter()
+                    .find(|(id, sig)| verifier.verify(&actor, id, sig))
+                    .or(n.lines.first())
+                    .map(|(id, _)| id.clone());
+                (n.seq + 1, own)
+            }
+            None => (0, None),
+        };
+        tracing::debug!(
+            target: "rail:door",
+            ns = %self.namespace,
+            actor = %actor,
+            first_seq,
+            prev = ?prev,
+            "append: follows the signer's newest act"
+        );
 
         let ts_unix = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -283,19 +339,18 @@ impl RingJournal {
                     .unwrap_or(true),
                 "Payload::new admits only objects"
             );
-            let body = body_json(&act, on_behalf_of, Some(&view));
-            let signature = signer.sign(&self.namespace, ts_unix, seq, &body);
-            ops.push(Op::new(
-                SignedOp {
-                    seq,
-                    sig: signature,
-                    act,
-                    on_behalf_of: on_behalf_of.map(str::to_string),
-                    view: Some(view.clone()),
-                },
+            let op = sign_act(
+                signer,
+                &self.namespace,
                 ts_unix,
-                actor.clone(),
-            ));
+                seq,
+                prev.take(),
+                act,
+                on_behalf_of,
+                Some(view.clone()),
+            );
+            prev = Some(op.id.clone());
+            ops.push(op);
         }
         log.oplog
             .append_all(&ops)
@@ -323,10 +378,11 @@ impl RingJournal {
         let mut guard = self.log();
         let log = &mut *guard;
         log.held.catch_up(&log.oplog, &self.namespace)?;
-        if log.held.ids.contains(&op.id) {
+        let id = derive_id(op, &self.namespace);
+        if log.held.ids.contains(&id) {
             tracing::debug!(
                 namespace = %self.namespace,
-                id = %op.id,
+                id = %id,
                 "ring rail: peer op already held, not re-appended"
             );
             return Ok(false);
@@ -416,12 +472,14 @@ impl RingJournal {
         let mut guard = self.log();
         let log = &mut *guard;
         log.held.catch_up(&log.oplog, &self.namespace)?;
-        let mut batch: std::collections::BTreeSet<&OpId> = std::collections::BTreeSet::new();
+        let mut batch: std::collections::BTreeSet<OpId> = std::collections::BTreeSet::new();
         let mut fresh: Vec<Op<SignedOp>> = Vec::new();
         for op in ops {
             // Also dedupes WITHIN the batch: a peer that sends the same op
-            // twice in one body must not get two lines out of it.
-            if !log.held.ids.contains(&op.id) && batch.insert(&op.id) {
+            // twice in one body must not get two lines out of it. By the id
+            // its content derives, never the line's own (svrngs, U2).
+            let id = derive_id(op, &self.namespace);
+            if !log.held.ids.contains(&id) && batch.insert(id) {
                 fresh.push(op.clone());
             }
         }
@@ -604,7 +662,7 @@ impl RingJournal {
             .iter()
             .filter(|op| {
                 let floor = before.floors.get(&op.actor).copied().unwrap_or(0);
-                op.kind.seq >= floor || referenced.contains(&op.id)
+                op.kind.seq >= floor || referenced.contains(&derive_id(op, &self.namespace))
             })
             .cloned()
             .collect();

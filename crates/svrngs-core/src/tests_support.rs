@@ -46,6 +46,11 @@ pub fn record(what: &str) -> RailAct {
 }
 
 /// Build the op a node would have written, without going through the journal.
+///
+/// Its previous act (svrngs, U2) is none at seq 0 and [`absent_parent`]
+/// above it: a parent no test holds, which admission does not judge — a
+/// parent not held is the `SequenceHole`. A test that holds the parent builds
+/// the act with [`after`] or [`run`], or admission names it `WrongPrevious`.
 pub fn signed(k: &SigningKey, ts: i64, seq: u64, act: RailAct) -> Op<SignedOp> {
     signed_in(NS, k, ts, seq, act)
 }
@@ -54,10 +59,10 @@ pub fn signed_in(ns: &str, k: &SigningKey, ts: i64, seq: u64, act: RailAct) -> O
     signed_for(ns, k, ts, seq, act, None)
 }
 
-/// [`signed_in`], stating whose words the act was. `body_json` and not a
-/// local `to_string` because the signed bytes have one definition
-/// (ARCH §10.6) — a fixture that spelled them itself would keep verifying
-/// after the real rule changed.
+/// [`signed_in`], stating whose words the act was. [`sign_act`] and not a
+/// local hash because the signed bytes have one definition (ARCH §10.6) — a
+/// fixture that spelled them itself would keep verifying after the real rule
+/// changed.
 pub fn signed_for(
     ns: &str,
     k: &SigningKey,
@@ -66,19 +71,75 @@ pub fn signed_for(
     act: RailAct,
     on_behalf_of: Option<&str>,
 ) -> Op<SignedOp> {
-    let body = body_json(&act, on_behalf_of, None);
-    let signature = sign_ring_op(k, ns, ts, seq, &body);
-    Op::new(
-        SignedOp {
-            seq,
-            sig: signature,
-            act,
-            on_behalf_of: on_behalf_of.map(str::to_string),
-            view: None,
-        },
+    let prev = (seq > 0).then(absent_parent);
+    sign_act(k, ns, ts, seq, prev, act, on_behalf_of, None)
+}
+
+/// The previous act [`signed`] names above seq 0: an id no act here derives.
+pub fn absent_parent() -> OpId {
+    stray_id(0xab)
+}
+
+/// The act `k` signs next after `prev`: one seq on, naming `prev`'s id.
+pub fn after(k: &SigningKey, prev: &Op<SignedOp>, ts: i64, act: RailAct) -> Op<SignedOp> {
+    after_in(NS, k, prev, ts, act)
+}
+
+pub fn after_in(
+    ns: &str,
+    k: &SigningKey,
+    prev: &Op<SignedOp>,
+    ts: i64,
+    act: RailAct,
+) -> Op<SignedOp> {
+    assert_eq!(prev.actor, actor_of(k), "an act follows its own author's");
+    sign_act(
+        k,
+        ns,
         ts,
-        actor_of(k),
+        prev.kind.seq + 1,
+        Some(prev.id.clone()),
+        act,
+        None,
+        None,
     )
+}
+
+/// `acts` as one author writes them from seq 0, each a second after the
+/// last from `ts`, each naming the one before.
+pub fn run(k: &SigningKey, ts: i64, acts: impl IntoIterator<Item = RailAct>) -> Vec<Op<SignedOp>> {
+    run_in(NS, k, ts, acts)
+}
+
+pub fn run_in(
+    ns: &str,
+    k: &SigningKey,
+    ts: i64,
+    acts: impl IntoIterator<Item = RailAct>,
+) -> Vec<Op<SignedOp>> {
+    let mut out: Vec<Op<SignedOp>> = Vec::new();
+    for (i, act) in acts.into_iter().enumerate() {
+        let op = match out.last() {
+            None => signed_in(ns, k, ts, 0, act),
+            Some(prev) => after_in(ns, k, prev, ts + i as i64, act),
+        };
+        out.push(op);
+    }
+    out
+}
+
+/// An id no act here derives: `fill` repeated over 32 bytes.
+pub fn stray_id(fill: u8) -> OpId {
+    OpId::from_hex(&format!("{fill:02x}").repeat(32)).unwrap()
+}
+
+/// Each op beside its id, for a function that takes ids its caller derived.
+/// A fixture's line carries the id its content derives, so the line's own
+/// serves here.
+pub fn with_ids<'a>(
+    ops: impl IntoIterator<Item = &'a Op<SignedOp>>,
+) -> impl Iterator<Item = (&'a OpId, &'a Op<SignedOp>)> {
+    ops.into_iter().map(|op| (&op.id, op))
 }
 
 pub fn admitted(ops: &[Op<SignedOp>]) -> Admission {

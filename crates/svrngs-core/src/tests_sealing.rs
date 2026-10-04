@@ -20,7 +20,7 @@ impl RingVerifier for Says {
     fn name(&self) -> &'static str {
         "test-fixed-answer"
     }
-    fn verify(&self, _: &str, _: &str, _: i64, _: u64, _: &str, _: &str) -> bool {
+    fn verify(&self, _: &str, _: &OpId, _: &str) -> bool {
         self.0
     }
 }
@@ -93,10 +93,9 @@ fn a_permissive_verifier_still_cannot_admit_a_stranger() {
 /// A `Seal` whose author signed it, at `seq`, plus one act above it. The
 /// holding a node has after it compacts everything the seal retired.
 fn sealed_then(seq: u64, what: &str) -> Vec<Op<SignedOp>> {
-    vec![
-        signed(&key(1), 100 + seq as i64, seq, RailAct::Seal),
-        signed(&key(1), 101 + seq as i64, seq + 1, record(what)),
-    ]
+    let seal = signed(&key(1), 100 + seq as i64, seq, RailAct::Seal);
+    let above = after(&key(1), &seal, 101 + seq as i64, record(what));
+    vec![seal, above]
 }
 
 /// **Compaction must not look like breakage.** Before the floor existed,
@@ -138,18 +137,29 @@ fn a_sealed_prefix_is_retired_rather_than_reported_as_a_hole() {
 fn a_seal_the_rail_refused_retires_nothing() {
     let act = RailAct::Seal;
     let body = body_json(&act, None, None);
-    let forged = Op::new(
-        SignedOp {
+    let id = act_id(
+        NS,
+        &actor_of(&key(1)),
+        3,
+        Some(&absent_parent()),
+        103,
+        &body,
+    );
+    let forged = Op {
+        // cy's key, over a line that claims to be alex's.
+        kind: SignedOp {
             seq: 3,
-            // cy's key, over a line that claims to be alex's.
-            sig: sign_ring_op(&key(3), NS, 103, 3, &body),
+            prev: Some(absent_parent()),
+            sig: sign_ring_op(&key(3), &id),
             act,
             on_behalf_of: None,
             view: None,
         },
-        103,
-        actor_of(&key(1)),
-    );
+        id,
+        v: 1,
+        ts_unix: 103,
+        actor: actor_of(&key(1)),
+    };
     let f = admitted(&[forged, signed(&key(1), 104, 4, record("after"))]);
 
     assert!(
@@ -181,10 +191,10 @@ fn a_seal_the_rail_refused_retires_nothing() {
 #[test]
 fn a_corrected_seal_retires_nothing() {
     let seal = signed(&key(1), 102, 2, RailAct::Seal);
-    let correct = signed(
+    let correct = after(
         &key(1),
+        &seal,
         103,
-        3,
         RailAct::Correct {
             corrects: seal.id.clone(),
             replacement: None,
@@ -310,18 +320,7 @@ fn the_signed_body_golden_vectors() {
 fn a_view_rewritten_after_signing_is_refused() {
     let act = record("milk");
     let view = claimed_view('a');
-    let body = body_json(&act, None, Some(&view));
-    let op = Op::new(
-        SignedOp {
-            seq: 0,
-            sig: sign_ring_op(&key(1), NS, 100, 0, &body),
-            act,
-            on_behalf_of: None,
-            view: Some(view),
-        },
-        100,
-        actor_of(&key(1)),
-    );
+    let op = sign_act(&key(1), NS, 100, 0, None, act, None, Some(view));
     assert!(
         admitted(std::slice::from_ref(&op)).gaps.is_empty(),
         "the honest op verifies"
@@ -348,18 +347,8 @@ fn a_view_rewritten_after_signing_is_refused() {
 fn an_equivocation_carries_two_claimed_views() {
     let (view_a, view_b) = (claimed_view('a'), claimed_view('b'));
     let build = |act: RailAct, view: &crate::Digest| {
-        let body = body_json(&act, None, Some(view));
-        Op::new(
-            SignedOp {
-                seq: 2,
-                sig: sign_ring_op(&key(1), NS, 102, 2, &body),
-                act,
-                on_behalf_of: None,
-                view: Some(view.clone()),
-            },
-            102,
-            actor_of(&key(1)),
-        )
+        let prev = Some(absent_parent());
+        sign_act(&key(1), NS, 102, 2, prev, act, None, Some(view.clone()))
     };
     let left = build(record("left"), &view_a);
     let right = build(record("right"), &view_b);
@@ -450,7 +439,7 @@ fn a_ring_with_no_membership_acts_admits_exactly_as_before() {
     let f = admitted(&ops);
     assert_eq!(
         serde_json::to_string(&(&f.ops, &f.gaps, &f.floors)).unwrap(),
-        r#"[[{"id":"ring-10b53bd03defce30","actor":"8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c","person":"alex","seq":0,"ts_unix":1700000000,"voided":true,"payload":{"kind":"thing","what":"milk"}},{"id":"ring-ced6c95b3f4dac0f","actor":"8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394","person":"bo","seq":0,"ts_unix":1700000001,"corrects":"ring-10b53bd03defce30","voided":false},{"id":"ring-75e6702c797ca7e8","actor":"ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1","person":"cy","seq":0,"ts_unix":1700000002,"voided":false}],[],{"ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1":0}]"#,
+        r#"[[{"id":"6efe8a46f81d82df03b43ed537f3d50b854c24f8810a4b4aac58c61629d2c840","actor":"8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c","person":"alex","seq":0,"ts_unix":1700000000,"voided":true,"payload":{"kind":"thing","what":"milk"}},{"id":"e754694b85150ea490f4c305099f4d26142f95c8a031134e172500abc1983fc4","actor":"8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394","person":"bo","seq":0,"ts_unix":1700000001,"corrects":"6efe8a46f81d82df03b43ed537f3d50b854c24f8810a4b4aac58c61629d2c840","voided":false},{"id":"0ce63175592c0b3b80fb1cff79983bbd42610fede6f73e3bb2610808f171a711","actor":"ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1","person":"cy","seq":0,"ts_unix":1700000002,"voided":false}],[],{"ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1":0}]"#,
         "a ring with no membership act folds byte-identically to the build before"
     );
 }
@@ -460,6 +449,11 @@ fn a_ring_with_no_membership_acts_admits_exactly_as_before() {
 /// if adding the field moved a byte, they would all become `BadSignature`
 /// the day a node upgraded, and no test that constructs its ops with the
 /// NEW code could ever notice.
+///
+/// svrngs (U2): regenerated by [`emit_journal_fixture`] when an act's id
+/// became the whole hash and the signature moved onto it — no journal
+/// outside tests existed, so there was no older form to keep reading. It
+/// still pins what it always did: lines that name nobody verify unchanged.
 #[test]
 fn rail_ops_written_before_on_behalf_of_still_verify() {
     let ops: Vec<Op<SignedOp>> = include_str!("fixtures/rail_ops_before_on_behalf_of.jsonl")
@@ -500,9 +494,9 @@ fn a_name_rewritten_after_signing_is_refused() {
         "admission carries the name through"
     );
 
-    let mut tampered = honest.kind.clone();
-    tampered.on_behalf_of = Some("eve".to_string());
-    let reattributed = Op::new(tampered, honest.ts_unix, honest.actor.clone());
+    let mut reattributed = honest.clone();
+    reattributed.kind.on_behalf_of = Some("eve".to_string());
+    reattributed.id = derive_id(&reattributed, NS);
     let f = admitted(&[reattributed]);
     assert!(
         matches!(f.gaps.as_slice(), [RailGap::BadSignature { .. }]),
@@ -517,16 +511,18 @@ fn a_name_rewritten_after_signing_is_refused() {
 #[test]
 fn a_correction_with_no_replacement_still_names_the_guest() {
     let first = signed_for(NS, &key(1), 100, 0, record("milk"), Some("dee"));
-    let retraction = signed_for(
-        NS,
+    let retraction = sign_act(
         &key(1),
+        NS,
         101,
         1,
+        Some(first.id.clone()),
         RailAct::Correct {
             corrects: first.id.clone(),
             replacement: None,
         },
         Some("dee"),
+        None,
     );
     let f = admitted(&[first, retraction]);
     assert!(f.gaps.is_empty(), "{:?}", f.gaps);
@@ -537,4 +533,26 @@ fn a_correction_with_no_replacement_still_names_the_guest() {
         "a payload-less act names its guest too"
     );
     assert!(applied(&f).is_empty(), "the retraction voided the record");
+}
+
+/// The generator for `fixtures/rail_ops_before_on_behalf_of.jsonl`: alex's
+/// record, bo's correction of it, cy's seal, as the lines a journal holds.
+/// Kept so the regeneration is reproducible.
+#[test]
+#[ignore = "fixture generator — run with --ignored --nocapture"]
+fn emit_journal_fixture() {
+    let milk = signed(&key(1), 1_700_000_000, 0, record("milk"));
+    let void = signed(
+        &key(2),
+        1_700_000_001,
+        0,
+        RailAct::Correct {
+            corrects: milk.id.clone(),
+            replacement: None,
+        },
+    );
+    let seal = signed(&key(3), 1_700_000_002, 0, RailAct::Seal);
+    for op in [milk, void, seal] {
+        println!("{}", serde_json::to_string(&op).unwrap());
+    }
 }
