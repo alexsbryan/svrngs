@@ -418,9 +418,52 @@ async fn serve_stream(
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+    /// What keeps a router served on the stream: the serving endpoint, its
+    /// acceptor, and the dialer's transport, whose bridge the URL names.
+    pub(crate) struct OnStream {
+        _acceptor: IrohAcceptor,
+        _transport: IrohTransport,
+    }
+
+    /// `router` served by an acceptor that admits every dialer, on a
+    /// hermetic endpoint; and the base URL at which a dialer holding
+    /// `dialer` reaches it through the bridge. For a route that decides on
+    /// the [`Dialer`] itself, so the admit decision is not what a test of it
+    /// watches.
+    pub(crate) async fn serve_on_stream(
+        router: axum::Router,
+        dialer: SecretKey,
+    ) -> (String, OnStream) {
+        let served = hermetic_endpoint(0xEE, vec![ALPN.to_vec()]).await;
+        let addrs = loopback_sockets(&served);
+        let acceptor = IrohAcceptor::spawn(served.clone(), |_, _| Admit::Serve, router);
+        let dialling = EndpointBuilder::empty()
+            .crypto_provider(ring_crypto_provider())
+            .secret_key(dialer)
+            .bind()
+            .await
+            .expect("hermetic endpoint bind");
+        let transport = IrohTransport::new(dialling);
+        let base = transport
+            .base_url(&Contact {
+                key: served.id(),
+                relay_url: None,
+                iroh_direct_addrs: addrs,
+            })
+            .await
+            .expect("a contact with an address resolves");
+        (
+            base,
+            OnStream {
+                _acceptor: acceptor,
+                _transport: transport,
+            },
+        )
+    }
 
     /// Bind an empty (no-relay, deterministic) endpoint serving `alpns`.
     async fn hermetic_endpoint(seed: u8, alpns: Vec<Vec<u8>>) -> Endpoint {

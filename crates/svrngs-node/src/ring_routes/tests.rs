@@ -8,6 +8,8 @@
 
 use std::sync::Arc;
 
+use crate::iroh::tests::serve_on_stream;
+use crate::iroh::SecretKey;
 use crate::{Digest, Person, RingRail, Roster, SigningKey};
 
 use super::*;
@@ -30,7 +32,8 @@ fn rail_with_roster(root: &std::path::Path) -> Arc<RingRail> {
     rail
 }
 
-/// The ring route over `rail`, served; the address.
+/// The ring route over `rail`, served on a plain loopback port with no
+/// acceptor in front; the address.
 async fn serve(rail: Arc<RingRail>) -> std::net::SocketAddr {
     let app = router(RingInbound { rail });
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -45,29 +48,58 @@ async fn serve(rail: Arc<RingRail>) -> std::net::SocketAddr {
     addr
 }
 
-/// A caller with no stamped key reached this loopback port without the
-/// acceptor in front — a process on this machine — and is served; a stamp
-/// that is not a key is refused by name. The acceptor's half (a stranger
-/// never reaches `/internal/ring`) is commonwealth-media
-/// `origins::cwth_http_forwards_by_registered_prefix`. Successor of the
-/// daemon's `rail_e2e/roster_refusal` pair, whose per-process mark retired
-/// with the daemon's acceptor.
+/// One exchange call to `url`, carrying `X-Mesh-Pubkey: <claim>` when given.
+async fn ask(url: &str, claim: Option<&str>) -> reqwest::Response {
+    let mut req = reqwest::Client::new()
+        .post(url)
+        .json(&serde_json::json!({ "namespace": NS, "digest": Digest::default(), "ops": [] }));
+    if let Some(c) = claim {
+        req = req.header("x-mesh-pubkey", c);
+    }
+    req.send().await.unwrap()
+}
+
+/// The asker is the dialer iroh verified, and nothing else. A request off
+/// the stream — no acceptor, so no `Dialer` — is refused by name, even when
+/// a header names the rostered key; on the stream the rostered dialer is
+/// served, and a stranger whose header names the rostered key is refused.
+/// Upstream served the first as a local process and read the asker from the
+/// header (its `an_unstamped_local_caller_is_served_and_a_bad_stamp_is_refused`).
+/// The failing inputs: a request with no `Dialer` served, and the asker read
+/// from the header.
 #[tokio::test]
-async fn an_unstamped_local_caller_is_served_and_a_bad_stamp_is_refused() {
+async fn the_asker_is_the_verified_dialer_and_no_header_names_one() {
     let dir = tempfile::tempdir().unwrap();
     let rail = rail_with_roster(dir.path());
-    let addr = serve(rail).await;
-    let ask = |stamp: Option<&str>| {
-        let mut req = reqwest::Client::new()
-            .post(format!("http://{addr}/internal/ring/sync"))
-            .json(&serde_json::json!({ "namespace": NS, "digest": Digest::default(), "ops": [] }));
-        if let Some(s) = stamp {
-            req = req.header(PUBKEY_HEADER, s);
-        }
-        req.send()
-    };
-    assert_eq!(ask(None).await.unwrap().status(), 200);
-    let refused = ask(Some("not-a-key")).await.unwrap();
-    assert_eq!(refused.status(), 403);
-    assert!(refused.text().await.unwrap().contains(NS));
+    let ada = crate::actor_of(&key());
+
+    let addr = serve(rail.clone()).await;
+    let off_stream = ask(&format!("http://{addr}/internal/ring/sync"), Some(&ada)).await;
+    assert_eq!(
+        off_stream.status(),
+        403,
+        "a request off the stream is refused"
+    );
+    assert!(off_stream.text().await.unwrap().contains(NS));
+
+    let (base, _ada) = serve_on_stream(
+        router(RingInbound { rail: rail.clone() }),
+        SecretKey::from_bytes(&key().to_bytes()),
+    )
+    .await;
+    let rostered = ask(&format!("{base}/internal/ring/sync"), None).await;
+    assert_eq!(rostered.status(), 200, "the rostered dialer is served");
+
+    let (base, _stranger) = serve_on_stream(
+        router(RingInbound { rail }),
+        SecretKey::from_bytes(&[12u8; 32]),
+    )
+    .await;
+    let claiming = ask(&format!("{base}/internal/ring/sync"), Some(&ada)).await;
+    assert_eq!(
+        claiming.status(),
+        403,
+        "a header naming Ada makes no stranger Ada"
+    );
+    assert!(claiming.text().await.unwrap().contains(NS));
 }

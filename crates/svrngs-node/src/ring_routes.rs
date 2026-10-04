@@ -13,21 +13,25 @@
 //! MEMBERS (`origins::stand_own`): a dialer the roster does not name never
 //! reached them. In svrngs [`router`] is an `axum::Router` its caller serves.
 //! What a member may then read is each ring's own question —
-//! the sync route asks the ring's roster about the verified key the acceptor
-//! stamped (`X-Mesh-Pubkey`), through [`crate::ring_sync::roster_names`], the
-//! one test the sender also applies. A caller with no stamp reached this
-//! loopback port without the acceptor in front, so it is a process on this
-//! machine, and is served as the daemon serves one.
+//! the sync route asks the ring's roster about the dialer's key, which the
+//! acceptor ([`crate::iroh::IrohAcceptor`]) puts on every request it serves
+//! as a [`Dialer`] extension, through [`crate::ring_sync::roster_names`], the
+//! one test the sender also applies. No header names the asker. A request
+//! with no [`Dialer`] did not come on an iroh stream, and is refused: the
+//! route is served only there. (Upstream read the key from an
+//! `X-Mesh-Pubkey` header its acceptor stamped, and served a request with
+//! none as a process on its machine; svrngs has no loopback listener for
+//! such a process to reach, DESIGN §8, U1's inventory.)
 
 use std::sync::Arc;
 
 use axum::extract::{DefaultBodyLimit, State};
-use axum::http::{HeaderMap, StatusCode};
+use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::routing::post;
-use axum::Json;
+use axum::{Extension, Json};
 
-use crate::iroh::PublicKey;
+use crate::iroh::Dialer;
 use crate::peer_wire::{RingSyncRequest, MAX_REQUEST_BODY_BYTES, RING_SYNC_OPS_BUDGET_BYTES};
 use crate::ring_sync::{answer, roster_names, RingSyncJournal};
 use crate::RingRail;
@@ -36,11 +40,6 @@ use crate::RingRail;
 pub(crate) fn err(status: StatusCode, msg: impl Into<String>) -> Response {
     (status, Json(serde_json::json!({ "error": msg.into() }))).into_response()
 }
-
-/// The header the acceptor stamps with the dialer's verified key
-/// (`kernel_types::member::verified_headers`); a client-typed one is stripped
-/// before the forward.
-const PUBKEY_HEADER: &str = "x-mesh-pubkey";
 
 /// What the ring route reads: the journals. (Upstream's also held the live
 /// lane's buffer and the origin registry, which only the live route read.)
@@ -62,30 +61,23 @@ pub fn router(state: RingInbound) -> axum::Router {
 }
 
 /// Why this asker may not have this namespace, or `None` to serve it.
-async fn roster_refusal(rail: &RingRail, headers: &HeaderMap, namespace: &str) -> Option<String> {
-    let Some(stamped) = headers.get(PUBKEY_HEADER) else {
-        tracing::debug!(
+async fn roster_refusal(
+    rail: &RingRail,
+    dialer: Option<Dialer>,
+    namespace: &str,
+) -> Option<String> {
+    let Some(dialer) = dialer else {
+        tracing::warn!(
             target: "rails",
             namespace,
-            "ring sync: no verified key stamped — a process on this machine, served"
+            "ring sync: refused — no verified dialer on the request, so it did not \
+             come on an iroh stream, and this route is served only there"
         );
-        return None;
+        return Some(format!(
+            "{namespace} is served to its roster over iroh, and this request did not come on an iroh stream"
+        ));
     };
-    let key = match stamped
-        .to_str()
-        .ok()
-        .and_then(|s| hex::decode(s.trim()).ok())
-        .and_then(|b| <[u8; 32]>::try_from(b).ok())
-        .and_then(|bytes| PublicKey::from_bytes(&bytes).ok())
-    {
-        Some(key) => key,
-        None => {
-            tracing::warn!(target: "rails", namespace, "ring sync: refused — the stamped key is not one");
-            return Some(format!(
-                "{namespace} is served to its roster, and the asker's key could not be read"
-            ));
-        }
-    };
+    let key = dialer.key();
     let roster = match RingSyncJournal::roster(rail, namespace).await {
         Ok(r) => r,
         Err(e) => {
@@ -107,7 +99,7 @@ async fn roster_refusal(rail: &RingRail, headers: &HeaderMap, namespace: &str) -
 /// The body is raw bytes so the gauge reads the direction with a limit.
 pub async fn ring_sync(
     State(state): State<RingInbound>,
-    headers: HeaderMap,
+    dialer: Option<Extension<Dialer>>,
     body: axum::body::Bytes,
 ) -> Response {
     let request_bytes = body.len();
@@ -115,7 +107,8 @@ pub async fn ring_sync(
         Ok(r) => r,
         Err(e) => return err(StatusCode::BAD_REQUEST, format!("malformed body: {e}")),
     };
-    if let Some(refusal) = roster_refusal(&state.rail, &headers, &req.namespace).await {
+    let dialer = dialer.map(|Extension(d)| d);
+    if let Some(refusal) = roster_refusal(&state.rail, dialer, &req.namespace).await {
         return err(StatusCode::FORBIDDEN, refusal);
     }
     let (response, more_for_caller) = match answer(state.rail.as_ref(), &req).await {

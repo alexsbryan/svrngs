@@ -9,7 +9,10 @@
 //! daemon: the round and the route are cw-rails' since pb-rails-parity, and
 //! the daemon's copies retired with the flip. `exchange` needs a real socket,
 //! so each responder is cw-rails' own `ring_routes` router on an ephemeral
-//! port; the bodies are the old tests', moved onto `RingRail`.
+//! port; the bodies are the old tests', moved onto `RingRail`. (svrngs: the
+//! route is served only on the iroh stream, so its responders are served by
+//! the acceptor on a hermetic endpoint and dialled through the bridge; the
+//! stand-ins, which are not the route, stay on a plain port.)
 
 use std::sync::Arc;
 
@@ -116,17 +119,22 @@ pub(super) async fn serve_at(router: axum::Router) -> std::net::SocketAddr {
     addr
 }
 
-/// cw-rails' ring routes over `rail`, as the internal listener mounts them.
+/// cw-rails' ring routes over `rail`, as the node serves them on the stream.
 pub(super) fn ring_router(rail: Arc<RingRail>) -> axum::Router {
     router(RingInbound { rail })
 }
 
-/// `rail`'s sync route, served; the URL the round posts to.
-async fn serve(rail: Arc<RingRail>) -> String {
-    format!(
-        "http://{}/internal/ring/sync",
-        serve_at(ring_router(rail)).await
+/// `rail`'s sync route, served on the iroh stream as the node serves it,
+/// to a dialer holding `asker`; the URL the round posts to, and what keeps it
+/// served. The route answers only a dialer its roster names, so `asker` is
+/// the key the test's roster carries.
+async fn serve(rail: Arc<RingRail>, asker: &SigningKey) -> (String, crate::iroh::tests::OnStream) {
+    let (base, on_stream) = crate::iroh::tests::serve_on_stream(
+        ring_router(rail),
+        crate::iroh::SecretKey::from_bytes(&asker.to_bytes()),
     )
+    .await;
+    (format!("{base}/internal/ring/sync"), on_stream)
 }
 
 /// One raw exchange call: the status, and the answer when it is a 200.
@@ -157,7 +165,7 @@ async fn a_journal_past_the_one_exchange_ceiling_converges_onto_a_fresh_peer() {
     let (rail, journal) = node(sender_dir.path(), &key, N);
     let (peer_rail, peer_journal) = node(peer_dir.path(), &key, 0);
 
-    let url = serve(peer_rail).await;
+    let (url, _served) = serve(peer_rail, &key).await;
     let out = exchange(&reqwest::Client::new(), &url, rail.as_ref(), NS).await;
 
     assert!(out.stop.is_none(), "the exchange failed: {:?}", out.stop);
@@ -189,7 +197,7 @@ async fn a_peers_seal_prunes_this_nodes_disk_in_the_round_it_arrives() {
         .unwrap();
     assert_eq!(journal.read().unwrap().0.len(), 3, "control: we hold three");
 
-    let url = serve(peer_rail).await;
+    let (url, _served) = serve(peer_rail, &key).await;
     let out = exchange(&reqwest::Client::new(), &url, rail.as_ref(), NS).await;
 
     assert!(out.stop.is_none(), "the exchange failed: {:?}", out.stop);
@@ -224,7 +232,7 @@ async fn an_ordinary_op_arriving_prunes_nothing() {
         ))
         .unwrap();
 
-    let url = serve(peer_rail).await;
+    let (url, _served) = serve(peer_rail, &key).await;
     let out = exchange(&reqwest::Client::new(), &url, rail.as_ref(), NS).await;
     assert_eq!(out.pulled, 1);
     assert_eq!(journal.read().unwrap().0.len(), 4, "nothing was retired");
@@ -282,7 +290,8 @@ async fn the_budgeted_chunk_is_served_where_the_whole_journal_is_refused() {
                 .ops_missing_from(&crate::Ed25519Verifier, &Digest::new())
                 .unwrap(),
         };
-        let (status, _) = sync_raw(&serve(peer).await, &push).await;
+        let (url, _served) = serve(peer, &key).await;
+        let (status, _) = sync_raw(&url, &push).await;
         assert_eq!(status, want, "{n} unbudgeted ops");
     }
     let (s, r) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
@@ -301,7 +310,8 @@ async fn the_budgeted_chunk_is_served_where_the_whole_journal_is_refused() {
         digest: journal.digest(&crate::Ed25519Verifier).unwrap(),
         ops,
     };
-    let (status, _) = sync_raw(&serve(peer).await, &push).await;
+    let (url, _served) = serve(peer, &key).await;
+    let (status, _) = sync_raw(&url, &push).await;
     assert_eq!(status, 200, "the budgeted chunk is served");
 }
 
@@ -314,7 +324,7 @@ async fn the_pull_direction_is_budgeted_and_converges_by_repeating() {
     let (h, f) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (holder, journal) = node(h.path(), &key, N);
     let (_fresh, fresh_journal) = node(f.path(), &key, 0);
-    let url = serve(holder).await;
+    let (url, _served) = serve(holder, &key).await;
     let mut rounds = 0usize;
     loop {
         let ask = RingSyncRequest {
@@ -386,7 +396,7 @@ async fn a_seal_shortens_the_exchange_only_once_the_retired_lines_are_deleted() 
     ) -> (usize, Arc<RingJournal>, tempfile::TempDir) {
         let p = tempfile::tempdir().unwrap();
         let (peer, peer_journal) = node(p.path(), key, 0);
-        let url = serve(peer).await;
+        let (url, _served) = serve(peer, key).await;
         let out = exchange(&reqwest::Client::new(), &url, rail, NS).await;
         assert!(out.stop.is_none(), "{:?}", out.stop);
         (out.pushed, peer_journal, p)

@@ -79,7 +79,12 @@ contact's addresses are its one `base_url`; `roster_names` reads iroh's
 `RailsDaemon`'s `impl RingSyncHost`, did not come over, nor did the append
 wrapper that nudged the round. The route's live and checkpoint siblings stay
 behind, and with them `RingInbound`'s live buffer and origin registry; the
-route is an `axum::Router` where upstream's was a `RouteBundle`. Of the tests,
+route is an `axum::Router` where upstream's was a `RouteBundle`. Then it
+changed: the route reads the asker from the acceptor's `Dialer` extension,
+where upstream read an `X-Mesh-Pubkey` header, and refuses (403) a request
+with no `Dialer`, where upstream served it as a local process — the route is
+served only on the iroh stream. Its tests are served there too, through
+`iroh::tests::serve_on_stream`. Of the tests,
 `ring_sync/tests.rs` came over but for the derived-roster prune test, which
 installs upstream's `MembershipRosterSource` over a mesh, and
 `ring_routes/tests.rs` kept only its sync test; `round_tests.rs` is U1's to
