@@ -452,6 +452,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
         Said::Running {
             groups: vec![name("house")],
             api,
+            lends: Default::default(),
         }
         .to_string(),
     );
@@ -459,6 +460,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
         Said::Running {
             groups: Vec::new(),
             api,
+            lends: Default::default(),
         }
         .to_string(),
     );

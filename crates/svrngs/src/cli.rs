@@ -10,7 +10,18 @@
 //! svrngs new <name> [--as N] [--origin U]  make a group, print its link, run
 //! svrngs join <link> [--as N]              join a group by its link, run
 //! svrngs link <group> [--origin U]         a new link to a group, print it, run
+//! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]...
+//!                                          lend a service on this computer
+//! svrngs unshare <name>                    stop lending it
 //! ```
+//!
+//! `share` and `unshare` write a lend's declaration and its secret into the
+//! data dir (`svrngs_node::lend`), which the door reads on every request,
+//! so each works whether or not svrngs is running here (u3-5). `share`
+//! then runs, as the other verbs do, unless svrngs already is. The secret
+//! is read from a prompt, never from the command line, where any program on
+//! this computer may read it (`ps`); the bare command prints what the people
+//! of this computer's groups lend, asked of their computers as it starts.
 //!
 //! `new` and `link` always print the client's link, `svrngs://join/<token>`
 //! (u2-8): nothing depends on a hosted page. A group may keep a page
@@ -36,8 +47,11 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use ed25519_dalek::VerifyingKey;
+use std::num::NonZeroU16;
+
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
-use svrngs_node::node::{Node, NodeError};
+use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath};
+use svrngs_node::node::{Lends, Node, NodeError};
 use svrngs_node::redeem::{ask, redeem, AskRequest, RedeemError, RedeemRequest, Redeemed};
 use svrngs_node::{actor_of, Person, SigningKey};
 use svrngs_node::{MintInvite, Refused as CommitRefused};
@@ -45,6 +59,7 @@ use svrngs_node::{MintInvite, Refused as CommitRefused};
 use crate::group::{self, Name, Seed, SeedError};
 use crate::identity::{self, KeyError};
 use crate::link::{self, client_link, https_link, Link, Origin, Token};
+use crate::share::{self, Share, ShareRefusal};
 
 pub const USAGE: &str = "\
 svrngs — keep what your group shares on your own computers.
@@ -69,6 +84,19 @@ svrngs — keep what your group shares on your own computers.
       anyone new in; everyone it let in stays. <group> is its name, or the
       first 8 letters of its id when two groups share a name. --origin
       also prints it on a page address, from now on.
+
+  svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]...
+      Lend what runs on <port> on this computer to everyone in your groups:
+      each reaches it through this computer, as themselves. It asks for the
+      password the service takes on each request, if any; that stays on
+      this computer, and nobody you lend it to receives it. --name is what
+      they see it as; else its kind. --kind says what it is, when svrngs
+      does not know the port. --limit is how many people may use it at
+      once; else 3. --refuse keeps a path of it from them; say it again
+      for more.
+
+  svrngs unshare <name>
+      Stop lending <name>.
 
 Data:    $SVRNGS_DIR, else ~/.svrngs.
 Logging: RUST_LOG, default `error`.";
@@ -106,6 +134,9 @@ pub enum Command {
         /// `None` keeps the group's kept origin, if any.
         origin: Option<Origin>,
     },
+    /// No secret: it is read from a prompt (the module docs).
+    Share(Share),
+    Unshare(LendName),
     Help,
 }
 
@@ -119,6 +150,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Command, String>
     let mut positional: Option<String> = None;
     let mut person = None;
     let mut origin = None;
+    let (mut name, mut kind, mut limit, mut refused) = (None, None, None, Vec::new());
     while let Some(arg) = it.next() {
         let mut value = |flag: &str| it.next().ok_or_else(|| format!("{flag} wants a value"));
         match arg.as_str() {
@@ -135,6 +167,31 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Command, String>
                     format!("--origin `{raw}` is not an http(s) address without a '#'")
                 })?);
             }
+            "--name" => {
+                let raw = value("--name")?;
+                name = Some(LendName::parse(&raw).map_err(|_| {
+                    format!("--name `{raw}` is not a name: letters, digits, - and _ only")
+                })?);
+            }
+            "--kind" => {
+                let raw = value("--kind")?;
+                kind = Some(Kind::parse(&raw).map_err(|_| {
+                    format!("--kind `{raw}` is not a kind: letters, digits, - and _ only")
+                })?);
+            }
+            "--limit" => {
+                let raw = value("--limit")?;
+                limit = Some(raw.parse::<NonZeroU16>().map_err(|_| {
+                    format!("--limit `{raw}` is not a number of people: 1 or more")
+                })?);
+            }
+            "--refuse" => {
+                let raw = value("--refuse")?;
+                refused
+                    .push(RefusedPath::parse(&raw).map_err(|_| {
+                        format!("--refuse `{raw}` is not a path: it starts with /")
+                    })?);
+            }
             "-h" | "--help" => return Ok(Command::Help),
             other if other.starts_with('-') => return Err(format!("unknown argument `{other}`")),
             other if positional.is_none() => positional = Some(other.to_string()),
@@ -146,6 +203,11 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Command, String>
     }
     if origin.is_some() && !matches!(verb.as_str(), "new" | "link") {
         return Err("--origin is a `new` and `link` flag".into());
+    }
+    if (name.is_some() || kind.is_some() || limit.is_some() || !refused.is_empty())
+        && verb != "share"
+    {
+        return Err("--name, --kind, --limit and --refuse are `share` flags".into());
     }
     match verb.as_str() {
         "new" => {
@@ -171,6 +233,22 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Command, String>
             group: positional.ok_or("link wants a group: `svrngs link <group>`")?,
             origin,
         }),
+        "share" => {
+            let raw = positional.ok_or("share wants a port: `svrngs share <port>`")?;
+            Ok(Command::Share(Share {
+                port: share::resolve_target(&raw)?,
+                name,
+                kind,
+                limit,
+                refused,
+            }))
+        }
+        "unshare" => {
+            let raw = positional.ok_or("unshare wants a name: `svrngs unshare <name>`")?;
+            let name = LendName::parse(&raw)
+                .map_err(|_| format!("`{raw}` is not a name: letters, digits, - and _ only"))?;
+            Ok(Command::Unshare(name))
+        }
         "help" | "-h" | "--help" => Ok(Command::Help),
         other => Err(format!("unknown command `{other}`")),
     }
@@ -210,6 +288,23 @@ pub enum Refusal {
     Ambiguous { name: String, ids: Vec<String> },
     #[error("you are not in {0} on this computer, so you cannot send its link")]
     NotIn(Name),
+    #[error(transparent)]
+    Share(#[from] ShareRefusal),
+    #[error("cannot read the password: {0}")]
+    Prompt(std::io::Error),
+    #[error("cannot keep {0} on this computer (RUST_LOG=debug says why)")]
+    KeepLend(LendName),
+    #[error("you lend nothing called {name} from this computer{}", lent_now(.lent))]
+    NotLent { name: LendName, lent: Vec<LendName> },
+}
+
+fn lent_now(lent: &[LendName]) -> String {
+    if lent.is_empty() {
+        String::new()
+    } else {
+        let names: Vec<&str> = lent.iter().map(LendName::as_str).collect();
+        format!("; you lend {}", names.join(", "))
+    }
 }
 
 impl Refusal {
@@ -222,12 +317,16 @@ impl Refusal {
             | Refusal::NoGroup(_)
             | Refusal::Ambiguous { .. }
             | Refusal::NotIn(_)
+            | Refusal::Share(_)
+            | Refusal::NotLent { .. }
             | Refusal::Busy(_) => 1,
             Refusal::NoDataDir
             | Refusal::DataDir(..)
             | Refusal::Key(_)
             | Refusal::Start
             | Refusal::IssuerAway
+            | Refusal::Prompt(_)
+            | Refusal::KeepLend(_)
             | Refusal::Keep(_) => 3,
         }
     }
@@ -266,12 +365,66 @@ pub fn claim(root: &Path) -> Result<File, Refusal> {
 
 /// The whole program, `Help` apart: claim the data dir, load this
 /// computer's key, start the node, do the verb, and run until Ctrl-C.
+/// `share` declares its lend first, and runs only when svrngs is not
+/// running here already; `unshare` only withdraws one.
 pub async fn run(command: Command, root: PathBuf, relay: &RelayConfig) -> Result<(), Refusal> {
-    if command == Command::Help {
-        println!("{USAGE}");
-        return Ok(());
-    }
-    let _claim = claim(&root)?;
+    let command = match command {
+        Command::Help => {
+            println!("{USAGE}");
+            return Ok(());
+        }
+        Command::Unshare(name) => {
+            print!("{}", unshare(&root, &name)?);
+            return Ok(());
+        }
+        Command::Share(asked) => {
+            let lend = share::lend_of(
+                &asked,
+                share::listens(asked.port),
+                share::well_known_kind(asked.port),
+            )?;
+            let secret = prompt_secret(&lend.name)?;
+            share_lend(&root, &lend, secret.as_deref())?;
+            let claimed = match claim(&root) {
+                Err(Refusal::Busy(lock)) => {
+                    tracing::debug!(target: "cli", lock = %lock.display(), "cli: share — svrngs runs here already, and reads the lend from its declaration");
+                    print!(
+                        "{}",
+                        Said::Shared {
+                            lend,
+                            secret: secret.is_some(),
+                            running: true
+                        }
+                    );
+                    return Ok(());
+                }
+                claimed => claimed?,
+            };
+            print!(
+                "{}",
+                Said::Shared {
+                    lend,
+                    secret: secret.is_some(),
+                    running: false
+                }
+            );
+            println!();
+            return start(Command::Run, root, relay, claimed).await;
+        }
+        other => other,
+    };
+    let claimed = claim(&root)?;
+    start(command, root, relay, claimed).await
+}
+
+/// Start the node over the data dir `claimed` holds, do the verb, and run
+/// until Ctrl-C.
+async fn start(
+    command: Command,
+    root: PathBuf,
+    relay: &RelayConfig,
+    _claimed: File,
+) -> Result<(), Refusal> {
     let key = identity::load_or_generate_node_key(&root)?;
     let node = Node::start(root.clone(), key.clone(), relay, group::seed_text, API)
         .await
@@ -327,9 +480,22 @@ pub enum Said {
     Joined { seed: Seed, person: Name },
     /// `join` of a group this computer is in already.
     AlreadyIn(Seed),
-    /// The bare command: the names of the groups it runs for, and where
-    /// this computer's apps reach them.
-    Running { groups: Vec<Name>, api: SocketAddr },
+    /// The bare command: the names of the groups it runs for, where this
+    /// computer's apps reach them, and what the people in them lend.
+    Running {
+        groups: Vec<Name>,
+        api: SocketAddr,
+        lends: Lends,
+    },
+    /// `share`: `lend` declared, with a secret or none; `running` when
+    /// svrngs runs here already, so it is lent now.
+    Shared {
+        lend: Lend,
+        secret: bool,
+        running: bool,
+    },
+    /// `unshare`: no longer lent.
+    Unshared(LendName),
 }
 
 impl std::fmt::Display for Said {
@@ -357,7 +523,7 @@ impl std::fmt::Display for Said {
             Said::AlreadyIn(seed) => {
                 writeln!(f, "You're in {} already, on this computer.", seed.name())
             }
-            Said::Running { groups, api } => {
+            Said::Running { groups, api, lends } => {
                 if groups.is_empty() {
                     writeln!(
                         f,
@@ -370,9 +536,145 @@ impl std::fmt::Display for Said {
                 writeln!(
                     f,
                     "Apps on this computer reach your groups at http://{api}."
-                )
+                )?;
+                for lent in &lends.lent {
+                    let (name, kind) = (&lent.offered.name, &lent.offered.kind);
+                    let what = if name.as_str() == kind.as_str() {
+                        name.to_string()
+                    } else {
+                        format!("{name} ({kind})")
+                    };
+                    writeln!(
+                        f,
+                        "{}'s {what}, in your browser: {}",
+                        lent.person, lent.address
+                    )?;
+                }
+                for person in &lends.unanswered {
+                    writeln!(
+                        f,
+                        "{person}'s computer did not answer, so what they lend is not listed."
+                    )?;
+                }
+                Ok(())
             }
+            Said::Shared {
+                lend,
+                secret,
+                running,
+            } => {
+                writeln!(
+                    f,
+                    "Lent {} (port {}) to everyone in your groups, up to {} {} at once.",
+                    lend.name,
+                    lend.port,
+                    lend.limit,
+                    if lend.limit.get() == 1 {
+                        "person"
+                    } else {
+                        "people"
+                    }
+                )?;
+                for path in &lend.refused {
+                    writeln!(f, "They cannot open {}.", path.as_str())?;
+                }
+                if *secret {
+                    writeln!(
+                        f,
+                        "Its password stays on this computer; nobody you lend it to receives it."
+                    )?;
+                }
+                if *running {
+                    writeln!(
+                        f,
+                        "svrngs is running here already, so they can open it now."
+                    )?;
+                }
+                writeln!(f, "`svrngs unshare {}` stops lending it.", lend.name)
+            }
+            Said::Unshared(name) => writeln!(f, "Stopped lending {name}."),
         }
+    }
+}
+
+/// The header a lend's password is sent in: the one HTTP gives a
+/// credential (RFC 9110 §11.6.2).
+pub const SECRET_HEADER: &str = "authorization";
+
+/// Ask for the lend's password on this terminal, never echoed, and read
+/// one line from standard input: `None` for an empty line or none. The
+/// value is never traced, only whether there is one.
+fn prompt_secret(name: &LendName) -> Result<Option<String>, Refusal> {
+    use std::io::{BufRead, IsTerminal, Write};
+    let stdin = std::io::stdin();
+    let terminal = stdin.is_terminal();
+    eprint!(
+        "If {name} takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): "
+    );
+    let _ = std::io::stderr().flush();
+    let echo = |on: bool| {
+        if terminal {
+            let _ = std::process::Command::new("stty")
+                .arg(if on { "echo" } else { "-echo" })
+                .stdin(std::process::Stdio::inherit())
+                .status();
+        }
+    };
+    echo(false);
+    let mut line = String::new();
+    let read = stdin.lock().read_line(&mut line);
+    echo(true);
+    eprintln!();
+    read.map_err(|e| {
+        tracing::debug!(target: "cli", error = %e, "cli: share — the password cannot be read");
+        Refusal::Prompt(e)
+    })?;
+    let secret = line.trim().to_string();
+    tracing::debug!(target: "cli", lend = %name, given = !secret.is_empty(), terminal, "cli: share — the password asked for");
+    Ok((!secret.is_empty()).then_some(secret))
+}
+
+/// `svrngs share`'s write: `lend` declared in the data dir at `root`, with
+/// `secret` sent as [`SECRET_HEADER`], or none.
+pub fn share_lend(root: &Path, lend: &Lend, secret: Option<&str>) -> Result<(), Refusal> {
+    lend::declare(root, lend, secret.map(|s| (SECRET_HEADER, s))).map_err(|e| {
+        tracing::debug!(target: "cli", lend = %lend.name, error = %e, "cli: share — the lend cannot be kept");
+        Refusal::KeepLend(lend.name.clone())
+    })
+}
+
+/// `svrngs unshare`: withdraw the lend `name` from the data dir at `root`.
+pub fn unshare(root: &Path, name: &LendName) -> Result<Said, Refusal> {
+    let keep = |e: lend::LendError| {
+        tracing::debug!(target: "cli", lend = %name, error = %e, "cli: unshare — the lend cannot be withdrawn");
+        Refusal::KeepLend(name.clone())
+    };
+    if lend::withdraw(root, name).map_err(keep)? {
+        return Ok(Said::Unshared(name.clone()));
+    }
+    let lent = lend::all(root)
+        .map_err(keep)?
+        .into_iter()
+        .filter_map(Result::ok)
+        .map(|l| l.name)
+        .collect();
+    tracing::debug!(target: "cli", lend = %name, "cli: unshare — refused, nothing lent by that name");
+    Err(Refusal::NotLent {
+        name: name.clone(),
+        lent,
+    })
+}
+
+/// What the bare command prints: the groups held, where apps reach them,
+/// and what the people in them lend, asked now.
+pub async fn running(root: &Path, node: &Node) -> Said {
+    Said::Running {
+        groups: group::groups(root)
+            .iter()
+            .map(|s| s.name().clone())
+            .collect(),
+        api: node.api_addr(),
+        lends: node.lends().await,
     }
 }
 
@@ -408,14 +710,10 @@ async fn serve(
             let (seed, link) = new_link(node, &group, origin.as_ref(), relay).await?;
             Said::Linked { seed, link }
         }
-        Command::Run => Said::Running {
-            groups: group::groups(root)
-                .iter()
-                .map(|s| s.name().clone())
-                .collect(),
-            api: node.api_addr(),
-        },
-        Command::Help => unreachable!("answered above"),
+        Command::Run => running(root, node).await,
+        Command::Help | Command::Share(_) | Command::Unshare(_) => {
+            unreachable!("answered in `run`")
+        }
     };
     print!("{said}");
     println!();

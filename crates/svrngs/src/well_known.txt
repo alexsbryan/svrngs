@@ -1,0 +1,9 @@
+# Well-known ports, and the kind of service that listens on each, for
+# `svrngs share <port>` to name a lend it recognises (crates/svrngs/src/share.rs,
+# WELL_KNOWN). One `<port> <kind>` a line.
+#
+# Jellyfin's HTTP port (commonwealth-ai
+# sovereign/crates/sovereign-cli-mesh/src/mesh_media/offer.rs:94-97 at
+# e1a43bcd2). Upstream also tried its HTTPS port, 8920; the door speaks plain
+# HTTP to a lend's port, so that one is not shared by its number alone.
+8096 jellyfin

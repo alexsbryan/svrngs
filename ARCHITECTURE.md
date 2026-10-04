@@ -309,18 +309,31 @@ founder's key bound to the founder's name; `group::answered` believes a
 seed an issuer answers only when it hashes to the group named. `cli.rs` is new, in the shape of
 commonwealth-rails' `cli.rs` and `main.rs`: verbs parsed by hand (`svrngs`,
 `new <name> [--as] [--origin]`, `join <link> [--as]`, `link <group>
-[--origin]`); one svrngs per
+[--origin]`, `share <port> [--name] [--kind] [--limit] [--refuse]...`,
+`unshare <name>`); one svrngs per
 data dir (`$SVRNGS_DIR`, else `~/.svrngs`), held by a lock on
 `<dir>/lock`; `new` and `link` append an `Invite` through the group's door
 that lapses in a day and print the link; `join` asks a link's issuer what
 it is for and redeems it there (`svrngs_node::redeem`), writes the group's
 seed only once let in, and the origin only of an https link, syncs once from the issuer (`Node::sync_with`) and prints "You're in
 <group>"; each verb then runs the node until Ctrl-C, serving the record
-on `127.0.0.1` at a free port (`cli::API`), which the bare command prints. What a verb prints is a
+on `127.0.0.1` at a free port (`cli::API`), which the bare command prints,
+with what the people of its groups lend (`Node::lends`): "Sam's <name>"
+and an address on this computer. `share.rs` is `svrn publish`'s
+`resolve_target` and `svrn mesh media offer`'s `probe_origin` at
+`e1a43bcd2`, then changed (u3-5): `share <port>` takes a port alone,
+probes it, names its kind from `well_known.txt` (data, so the infra holds
+no app's noun) or `--kind`, its name from `--name` or the kind, its limit
+from `--limit` or 3, and decides the lend in `lend_of`, which touches
+nothing; `cli` reads the password from a prompt, never argv, declares the
+lend through `svrngs_node::lend::declare`, and runs the node unless the
+data dir's lock is held, when it says svrngs is running already and
+leaves. `unshare <name>` withdraws one. What a verb prints is a
 closed `Said`, and refusals a closed `Refusal`, both in a person's words,
 exit 1 for a refusal and 3 for a precondition absent. `tests/new.rs` runs
 one node in process; `tests/join_by_link.rs`, U2's bar, runs Sam and six
-others.
+others; `tests/share.rs` runs Sam lending to Alex in process, and the
+program itself for `share` with svrngs running and not.
 
 **`apps/expenses/`**: the Expenses fold (`expenses.js`) and its tests, from E0,
 the bot at tag `e0-bot`. Its reducer (`init`, `reduce`) is what the localhost

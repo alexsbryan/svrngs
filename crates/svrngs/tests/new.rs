@@ -364,11 +364,7 @@ fn refusals_use_only_a_persons_words() {
 async fn the_bare_command_prints_where_apps_reach_the_record() {
     let dir = tempfile::tempdir().unwrap();
     let node = start(&dir).await;
-    let said = cli::Said::Running {
-        groups: Vec::new(),
-        api: node.api_addr(),
-    }
-    .to_string();
+    let said = cli::running(dir.path(), &node).await.to_string();
     let url = said
         .split_whitespace()
         .find_map(|w| w.strip_prefix("http://"))
