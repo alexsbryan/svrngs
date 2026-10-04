@@ -1,7 +1,8 @@
 # Agent instructions — svrngs
 
-Read `docs/DESIGN.md` first: §1 says what svrngs is, §2 how we build and the
-missteps each rule came from, §8 the order of work. svrngs is also held to two
+Read `NORTH_STAR.md` first: three principles every decision answers to. Then
+`docs/DESIGN.md`: §1 says what svrngs is, §2 how we build and the missteps
+each rule came from, §8 the order of work. svrngs is also held to two
 documents pinned verbatim from commonwealth-ai in `docs/principles/` (`SOURCE`
 names the commit each came from):
 

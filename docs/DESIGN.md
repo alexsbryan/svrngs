@@ -1,7 +1,8 @@
 # svrngs — the design
 
 > **Normative, 2026-10-03.** This is what svrngs is building now, and the only
-> design in force. Where code and this file disagree, one of them is wrong; fix
+> design in force. It answers to `NORTH_STAR.md`; where they disagree, this
+> file is rewritten. Where code and this file disagree, one of them is wrong; fix
 > it in the same commit. The design before the fork — the app SDK and its
 > sandbox, the TV path, E0's chat bot, nine red-team rounds on the register —
 > is this file at tag `e0-bot` (it opens with a "Direction" section over a body

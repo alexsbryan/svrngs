@@ -4,7 +4,8 @@ Keep talking where you talk; keep what your group owns — money, plans, files,
 the library — on your own computers, not a platform's. And for developers:
 anything you can run on localhost, you can share with your group.
 
-What it is, how we build it and the order of work: `docs/DESIGN.md`. What
+What we answer to: `NORTH_STAR.md`. What it is, how we build it and the order
+of work: `docs/DESIGN.md`. What
 exists today: `ARCHITECTURE.md`. How agents work here: `AGENTS.md`.
 
 ## Run it
