@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/svrngs-core", "crates/svrngs-engine", "crates/svrngs-node"]
+members = ["crates/svrngs-core", "crates/svrngs-node"]
 
 [workspace.package]
 version = "0.1.0"
@@ -9,7 +9,6 @@ license = "AGPL-3.0-or-later"
 
 [workspace.dependencies]
 svrngs-core = { path = "crates/svrngs-core" }
-svrngs-engine = { path = "crates/svrngs-engine" }
 svrngs-node = { path = "crates/svrngs-node" }
 blake3 = "1.8"
 ed25519-dalek = "2"

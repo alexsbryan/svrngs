@@ -19,8 +19,7 @@ there moves the demo that follows it, and work that moves no demo waits.
 ## What they mean here
 
 1. **Glassbox.** Every decision branch traces at debug, the core's refusals
-   included; the engine, which is pure, returns its decisions for its caller
-   to trace.
+   included.
 2. **Don't whack moles.** Instrument and reproduce before a fix. A move that
    preserves behaviour is its own commit, apart from any change in behaviour —
    a forked piece lands with its behaviour kept, then changes (DESIGN §4).
@@ -56,7 +55,7 @@ there moves the demo that follows it, and work that moves no demo waits.
 ## Done
 
 `scripts/check.sh` exits 0. It runs the principle pins, the lean check
-(standalone, no I/O in the core or engine, the RUST_ARCH rules a program can
+(standalone, no I/O in the core, the RUST_ARCH rules a program can
 decide, the size budget), rustfmt, clippy and the tests. A size-budget raise is
 the operator's, with the reason in the commit.
 

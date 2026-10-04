@@ -2,11 +2,11 @@
 """svrngs stays standalone and lean (docs/DESIGN.md §4, §5). Exit 0 holds, 1 broken.
 
 1. Cargo.lock names no commonwealth-ai or sovereign crate.
-2. svrngs-core and svrngs-engine declare no I/O dependency.
+2. svrngs-core declares no I/O dependency.
 3. RUST_ARCH, where a program can decide it: `anyhow` only in the `svrngs`
    command and the app (typed errors everywhere else); no `Arc<Mutex<` or
-   `Rc<RefCell<` in a crate (ownership is a tree); no `async` in svrngs-core or
-   svrngs-engine (the core is synchronous).
+   `Rc<RefCell<` in a crate (ownership is a tree); no `async` in svrngs-core
+   (the core is synchronous).
 4. Lines of code — not blank, not a comment, not a test — stay under budget:
    svrngs-core under 2,500, the whole repository under 12,000 — scripts and the
    bridge included; apps/ and installed packages (any node_modules/) apart.
@@ -45,13 +45,13 @@ def main():
     if lock.exists():
         for m in FOREIGN.finditer(lock.read_text()):
             broken.append(f"Cargo.lock names {m.group(1)}: svrngs links nothing from commonwealth-ai or sovereign")
-    for crate in ("svrngs-core", "svrngs-engine"):
+    for crate in ("svrngs-core",):
         manifest = ROOT / "crates" / crate / "Cargo.toml"
         if manifest.exists():
             deps = re.findall(r'^([\w-]+)\s*=', manifest.read_text().split("[dependencies]", 1)[-1].split("\n[", 1)[0], re.M)
             for d in deps:
                 if d.split("-")[0] in IO_DEPS or d in IO_DEPS:
-                    broken.append(f"{crate} depends on {d}: the core and the engine take no I/O dependency")
+                    broken.append(f"{crate} depends on {d}: the core takes no I/O dependency")
     for manifest in sorted((ROOT / "crates").glob("*/Cargo.toml")):
         crate = manifest.parent.name
         if crate != "svrngs" and re.search(r'^anyhow\s*=', manifest.read_text(), re.M):
@@ -61,8 +61,8 @@ def main():
         text = f.read_text(errors="replace")
         if re.search(r"Arc<\s*Mutex<|Rc<\s*RefCell<", text):
             broken.append(f"{rel} shares mutable state: one owner and messages instead (RUST_ARCH §3)")
-        if rel.startswith(("crates/svrngs-core/", "crates/svrngs-engine/")) and re.search(r"\basync\b|\.await\b", text):
-            broken.append(f"{rel} is async: the core and the engine stay synchronous (RUST_ARCH §2, §4)")
+        if rel.startswith("crates/svrngs-core/") and re.search(r"\basync\b|\.await\b", text):
+            broken.append(f"{rel} is async: the core stays synchronous (RUST_ARCH §2, §4)")
     for path, cap in BUDGET.items():
         base = ROOT / path
         n = code_lines(base) if base.exists() else 0

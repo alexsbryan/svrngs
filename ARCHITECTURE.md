@@ -126,10 +126,6 @@ ring's roster be derived from the mesh, `RingRail::roster` and
 taken their callers, and a peer's seal is pruned against the group's seed
 file.
 
-**`crates/svrngs-engine`**: the `Engine` trait and QuickJS behind it — a fold
-engine that waits in DESIGN §9 until an app needs its state offline on a device
-that is not its host.
-
 **`apps/expenses/`**: the Expenses fold (`expenses.js`) and its tests, from E0,
 the bot at tag `e0-bot`. Its reducer (`init`, `reduce`) is what the localhost
 Expenses app of DESIGN U3 builds on; `propose`, `say` and `due` answered chat

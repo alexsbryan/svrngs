@@ -4,9 +4,7 @@
 // a check that returns why it broke, or null; the second test plants one
 // broken reducer per law and watches its check catch it.
 //
-// The engine makes some of these structural on the host — no Date, a fresh
-// instance per call (crates/svrngs-engine). These run the app under Node, as
-// its developer does, so a break is found before it reaches the engine.
+// These run the app under Node, as its developer does.
 
 import assert from 'node:assert/strict';
 import { isDeepStrictEqual } from 'node:util';

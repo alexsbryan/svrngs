@@ -163,14 +163,12 @@ piece comes over:
 | `svrngs-core` | the record: acts, admission into one order, membership, the sync digest. Pure — no filesystem, clock or network; time and keys are arguments | none |
 | `svrngs-node` | a group's journal on disk; next, sync, the routes and the member door over iroh | the journals |
 | `svrngs` (to come) | the command and the process: `new`, `join`, `share`, and the loopback record API | a device's keys |
-| `svrngs-engine` | a QuickJS fold engine, waiting in §9 | none |
 
 Held to `docs/principles/RUST_ARCH.md`: types encode the domain, ownership
 encodes the architecture, I/O lives at the edge. Parse, don't validate; closed
 sets are enums; one writer per journal, and no shared mutable state; a trait
 only at a real boundary; `thiserror` in the crates, `anyhow` only in the
-command and the app. Every decision branch traces at debug; the engine, which
-is pure, returns its decisions for its caller to trace. New code is held to
+command and the app. Every decision branch traces at debug. New code is held to
 these from its first line; forked code is held to them as it becomes ours.
 Upstream's shape stays until a unit changes it: the node's map of open
 journals sits behind a `Mutex`, which an actor per journal replaces.
@@ -431,7 +429,7 @@ class at a time, each chosen by the north star's tests.
 
 | Waits | Trigger |
 |---|---|
-| an app SDK, a sandboxed fold engine (`svrngs-engine`), signed manifests and install acts | an app needs its state offline on a device that is not its host, or strangers' code runs on members' devices |
+| an app SDK, a sandboxed fold engine, signed manifests and install acts (QuickJS behind an `Engine` trait was `crates/svrngs-engine`, deleted 2026-10-04 with no user; it is at tag `e0-bot`) | an app needs its state offline on a device that is not its host, or strangers' code runs on members' devices |
 | a native phone app, and groups of phones only | the browser cannot keep what a group needs — its key, or a copy — measured |
 | Windows | a group asks |
 | DLNA, and TVs that take no push | people whose TV takes neither AirPlay nor Cast ask, counted |
