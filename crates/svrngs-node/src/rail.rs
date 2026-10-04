@@ -94,6 +94,14 @@ fn namespace_of(q: &RailQuery) -> Result<String, Response> {
 /// "the roster becomes the register". Upstream opened any namespace that
 /// was a name.)
 fn journal_of(rail: &RingRail, namespace: &str) -> Result<Arc<RingJournal>, Response> {
+    standing_of(rail, namespace)?;
+    rail.journal(namespace)
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+}
+
+/// The people standing in `namespace`, or the refusal [`journal_of`] makes
+/// of a namespace that is not one, a group not held, or one with no seed.
+fn standing_of(rail: &RingRail, namespace: &str) -> Result<BTreeMap<String, Person>, Response> {
     if !crate::valid_namespace(namespace) {
         tracing::debug!(target: "rails", namespace, "rail: refused a namespace that is not one");
         return Err((
@@ -116,30 +124,29 @@ fn journal_of(rail: &RingRail, namespace: &str) -> Result<Arc<RingJournal>, Resp
     match rail.standing(namespace, &Ed25519Verifier) {
         Ok(Standing::Members(people)) => {
             tracing::debug!(target: "rails", namespace, people = people.len(), "rail: the group is held here, and its register read");
+            Ok(people)
         }
         Ok(Standing::NotHeld) => {
             tracing::debug!(target: "rails", namespace, "rail: refused — this computer holds no such group");
-            return Err(refused(
+            Err(refused(
                 StatusCode::NOT_FOUND,
                 "not_held",
                 format!("this computer is in no group {namespace}"),
-            ));
+            ))
         }
         Ok(Standing::NoSeed) => {
             tracing::warn!(target: "rails", namespace, "rail: refused — the group is held with no seed, so nobody can be shown to be in it");
-            return Err(refused(
+            Err(refused(
                 StatusCode::CONFLICT,
                 "no_seed",
                 format!("nobody can be shown to be in {namespace} on this computer"),
-            ));
+            ))
         }
         Err(e) => {
             tracing::warn!(target: "rails", namespace, error = %e, "rail: refused — the group's register is unreadable");
-            return Err(err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()));
+            Err(err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
         }
     }
-    rail.journal(namespace)
-        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
 }
 
 /// The people standing in a group as an app reads them: each person, with
