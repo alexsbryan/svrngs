@@ -256,7 +256,7 @@ async fn ask_route(
     dialer: Option<Extension<Dialer>>,
     Json(req): Json<AskRequest>,
 ) -> Response {
-    let asked = decide_ask(&issuer, dialer.map(|Extension(d)| d), &req);
+    let asked = serve_ask(&issuer, dialer.map(|Extension(d)| d.actor()), &req);
     answer("ask", &req.key, asked)
 }
 
@@ -265,7 +265,7 @@ async fn redeem_route(
     dialer: Option<Extension<Dialer>>,
     Json(req): Json<RedeemRequest>,
 ) -> Response {
-    let redeemed = decide(&issuer.rail, dialer.map(|Extension(d)| d), &req);
+    let redeemed = serve_redeem(&issuer.rail, dialer.map(|Extension(d)| d.actor()), &req);
     answer("redeem", &req.key, redeemed)
 }
 
@@ -292,25 +292,16 @@ fn answer<T: Serialize>(route: &str, key: &str, decided: Result<T, Refused>) -> 
     }
 }
 
-/// The ask: the dialer is the key asking, the link's key signed, and a
-/// group held here holds an `Invite` of this node's naming that key — the
-/// newest, should two. Its group's seed is answered as kept.
-fn decide_ask(issuer: &Issuer, dialer: Option<Dialer>, req: &AskRequest) -> Result<Asked, Refused> {
-    let dialer = dialer.ok_or(Refused::NoDialer)?;
-    if dialer.actor() != req.key {
-        return Err(Refused::NotTheDialer);
-    }
-    if !verify_hex(&req.link, &req.message(), &req.sig) {
-        return Err(Refused::LinkUnsigned);
-    }
+/// The ask, as a door: parse ([`parse_ask`]), then for each group held
+/// here read its acts and decide ([`own_invite`]); the seed is read only for
+/// the group the decision names, and answered as kept.
+fn serve_ask(issuer: &Issuer, dialer: Option<String>, req: &AskRequest) -> Result<Asked, Refused> {
+    parse_ask(dialer.as_deref(), req)?;
     let me = issuer.rail.signer().actor();
     for group in issuer.rail.namespaces().map_err(Refused::Unjudged)? {
         let journal = issuer.rail.journal(&group).map_err(Refused::Unjudged)?;
         let (ops, _) = journal.read().map_err(Refused::Unjudged)?;
-        let Some(invite) = ops.iter().rev().find(|op| {
-            op.actor == me
-                && matches!(&op.kind.act, RailAct::Invite { key, .. } if *key == req.link)
-        }) else {
+        let Some(invite) = own_invite(&ops, &me, &req.link) else {
             continue;
         };
         let invite = derive_id(invite, &group);
@@ -328,22 +319,41 @@ fn decide_ask(issuer: &Issuer, dialer: Option<Dialer>, req: &AskRequest) -> Resu
     Err(Refused::NoInvite)
 }
 
-/// The issuer's checks, in the module docs' order.
-fn decide(
-    rail: &RingRail,
-    dialer: Option<Dialer>,
-    req: &RedeemRequest,
-) -> Result<Redeemed, Refused> {
+/// An ask judged on what arrived alone: the dialer is the key asking, and
+/// the link's key signed. Reads nothing, so a refused ask opens no journal.
+fn parse_ask(dialer: Option<&str>, req: &AskRequest) -> Result<(), Refused> {
     let dialer = dialer.ok_or(Refused::NoDialer)?;
-    if dialer.actor() != req.key {
+    if dialer != req.key {
         return Err(Refused::NotTheDialer);
     }
-    if !req.signed_by_link() {
+    if !verify_hex(&req.link, &req.message(), &req.sig) {
         return Err(Refused::LinkUnsigned);
     }
-    let person = Name::kept(req.person.clone())
-        .map(Person::from)
-        .map_err(Refused::NotAName)?;
+    Ok(())
+}
+
+/// The ask's decision over one group's acts: `me`'s `Invite` naming the
+/// link's key — the newest, should two. Reads nothing.
+fn own_invite<'a>(
+    ops: &'a [crate::Op<crate::SignedOp>],
+    me: &str,
+    link: &str,
+) -> Option<&'a crate::Op<crate::SignedOp>> {
+    ops.iter().rev().find(|op| {
+        op.actor == me && matches!(&op.kind.act, RailAct::Invite { key, .. } if key == link)
+    })
+}
+
+/// The redemption, as a door, in the module docs' order: parse
+/// ([`parse_redeem`]); read the group's standing, seed and acts; decide the
+/// `Admit` ([`decide_admit`]); write it, judged again under the write lock
+/// ([`judge`]).
+fn serve_redeem(
+    rail: &RingRail,
+    dialer: Option<String>,
+    req: &RedeemRequest,
+) -> Result<Redeemed, Refused> {
+    let person = parse_redeem(dialer.as_deref(), req)?;
     let group = req.group.as_str();
     match rail.standing(group, &Ed25519Verifier) {
         Ok(Standing::Members(_)) => {}
@@ -356,29 +366,7 @@ fn decide(
         .map_err(Refused::Unjudged)?
         .ok_or(Refused::NotHeld)?;
     let (ops, _) = journal.read().map_err(Refused::Unjudged)?;
-    let invite = ops
-        .iter()
-        .find(|op| {
-            derive_id(op, group) == req.invite && matches!(op.kind.act, RailAct::Invite { .. })
-        })
-        .ok_or(Refused::NoInvite)?;
-    let me = rail.signer().actor();
-    if invite.actor != me {
-        return Err(Refused::NotOwn);
-    }
-    if !matches!(&invite.kind.act, RailAct::Invite { key, .. } if *key == req.link) {
-        return Err(Refused::OtherLink);
-    }
-    tracing::debug!(target: "redeem", group, key = %req.key, invite = %req.invite,
-        "redeem: the dialer holds the link and its key, and the Invite is this node's");
-    let act = RailAct::Admit {
-        person,
-        key: req.key.clone(),
-        invite: Some(Redemption {
-            id: req.invite.clone(),
-            sig: req.cosig.clone(),
-        }),
-    };
+    let act = decide_admit(&ops, &rail.signer().actor(), req, person)?;
     let kept = journal
         .append_if(
             act,
@@ -406,6 +394,57 @@ fn decide(
         }
         Err(why) => Err(why),
     }
+}
+
+/// A redemption judged on what arrived alone: the dialer is the new key,
+/// the link's key signed, and the name parses. Reads nothing, so a refused
+/// redemption opens no journal.
+fn parse_redeem(dialer: Option<&str>, req: &RedeemRequest) -> Result<Person, Refused> {
+    let dialer = dialer.ok_or(Refused::NoDialer)?;
+    if dialer != req.key {
+        return Err(Refused::NotTheDialer);
+    }
+    if !req.signed_by_link() {
+        return Err(Refused::LinkUnsigned);
+    }
+    Name::kept(req.person.clone())
+        .map(Person::from)
+        .map_err(Refused::NotAName)
+}
+
+/// The redemption's decision over the group's acts: the `Invite` it names
+/// is held, is `me`'s, and names the link's key; the `Admit` to write is the
+/// answer. Reads nothing. Whether that `Invite` still lets anyone in is
+/// [`judge`]'s, under the write lock.
+fn decide_admit(
+    ops: &[crate::Op<crate::SignedOp>],
+    me: &str,
+    req: &RedeemRequest,
+    person: Person,
+) -> Result<RailAct, Refused> {
+    let group = req.group.as_str();
+    let invite = ops
+        .iter()
+        .find(|op| {
+            derive_id(op, group) == req.invite && matches!(op.kind.act, RailAct::Invite { .. })
+        })
+        .ok_or(Refused::NoInvite)?;
+    if invite.actor != me {
+        return Err(Refused::NotOwn);
+    }
+    if !matches!(&invite.kind.act, RailAct::Invite { key, .. } if *key == req.link) {
+        return Err(Refused::OtherLink);
+    }
+    tracing::debug!(target: "redeem", group, key = %req.key, invite = %req.invite,
+        "redeem: the dialer holds the link and its key, and the Invite is this node's");
+    Ok(RailAct::Admit {
+        person,
+        key: req.key.clone(),
+        invite: Some(Redemption {
+            id: req.invite.clone(),
+            sig: req.cosig.clone(),
+        }),
+    })
 }
 
 /// Under the write lock: the key does not stand in `held`, and `membership`
@@ -501,3 +540,6 @@ async fn call<T: DeserializeOwned>(
         other => Err(RedeemError::NoAnswer(format!("HTTP {other}"))),
     }
 }
+
+#[cfg(test)]
+mod tests;

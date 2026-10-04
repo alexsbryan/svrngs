@@ -178,6 +178,28 @@ these from its first line; forked code is held to them as it becomes ours.
 Upstream's shape stays until a unit changes it: the node's map of open
 journals sits behind a `Mutex`, which an actor per journal replaces.
 
+**One pattern: acts, folds, effects, doors** (operator, 2026-10-04). Every
+piece of svrngs is one of four things, and a unit says which it adds before it
+is written. A requirement that fits none is a design question, raised as one.
+
+- An **act** is a signed line on the group's record. The record is the only
+  truth the group shares.
+- A **fold** is a pure function that decides. A fold over the record's acts
+  (`admit`, `membership`, `standing_in`) gives every node the same answer. A
+  fold over one conversation's state (a sync exchange, an accept loop) is a
+  door's protocol as a step function with no I/O (RUST_ARCH §2).
+- An **effect** carries out a decision. It writes an act, through `append_if`,
+  which runs the fold again under the write lock so the decision and the
+  write cannot drift. Or it changes only this computer's copy: compaction, the
+  live buffer, a cache.
+- A **door** is the only I/O, in four steps: parse what arrived, so a refused
+  request reads nothing; read what the decision needs; decide, by a fold;
+  write or answer. `redeem.rs` is the worked example: `parse_redeem`,
+  `decide_admit`, then `judge` under `append_if`.
+
+`RingRail::standing` reads and decides at once; its seven callers move to
+`standing_in`'s pure answer as units touch them.
+
 **Two gates keep the apps out of the infra.** Every app lists its own nouns in
 `apps/<app>/nouns.txt`, and `scripts/vocab_check.py` refuses any of them in
 infra code — comments and tests apart, where an example is fine. So the infra
