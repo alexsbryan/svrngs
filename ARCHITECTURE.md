@@ -11,7 +11,8 @@ svrngs owns the group's code, forked from commonwealth-ai's ring slice (DESIGN
 member door come next, forked the same way (DESIGN §8, U1-U3); of sync, the
 dialling and serving halves over iroh have landed, and the round and its
 route, and the node that runs them. The `svrngs` command runs a node: it
-makes a group, mints its link and runs for every group the computer holds;
+makes a group, mints its link and runs for every group the computer holds,
+serving the record to the computer's apps over loopback (U3, `rail.rs`);
 joining by that link is next (U2).
 
 ## Code map
