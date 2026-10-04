@@ -93,7 +93,7 @@ use tracing::{debug, info, warn};
 
 mod journal;
 use journal::OnlinePeer;
-pub use journal::{roster_names, roster_of, RoundMembers};
+pub use journal::RoundMembers;
 
 use crate::iroh::key_actor;
 use crate::node::Host;
@@ -442,25 +442,29 @@ impl ExchangeOutcome {
 /// **Fails closed, everywhere it can fail.** The floor comes from
 /// `Admission::floors`, so a seal this node cannot authenticate against the
 /// roster it holds retires nothing — a stale or partial roster under-prunes
-/// rather than over-prunes. The roster is the rail's one reader
-/// (`RingRail::roster`), so `mesh-measurements` — whose roster is derived from
-/// membership and whose file is empty — prunes exactly as a hand-rostered ring
-/// does; until it went through that door this path read the file and retired
-/// nothing on the daemon's own namespace. A refusal is logged and the exchange
+/// rather than over-prunes. (svrngs: the roster is the group's seed, its
+/// `roster.json`, from which admission folds the register, so a seal by a
+/// member the founder admitted authorises its prune; upstream read it through
+/// `RingRail::roster`, which could answer a roster derived from the mesh.)
+/// A refusal is logged and the exchange
 /// carries on: the ops are ingested and durable, and a journal that stayed
 /// long is a worse outcome than a stalled round, not a reason to make one.
-async fn prune_what_the_peer_retired(rail: &RingRail, namespace: &str) {
-    let roster = match roster_of(rail, namespace).await {
+fn prune_what_the_peer_retired(rail: &RingRail, namespace: &str) {
+    let journal = match rail.journal(namespace) {
+        Ok(j) => j,
+        Err(e) => {
+            warn!(namespace, error = %e, "ring sync: a seal arrived and the journal will not open, so nothing was pruned");
+            return;
+        }
+    };
+    let roster = match journal.roster_file() {
         Ok(r) => r,
         Err(e) => {
             warn!(namespace, error = %e, "ring sync: a seal arrived and the roster is unreadable, so nothing was pruned");
             return;
         }
     };
-    match rail
-        .journal(namespace)
-        .and_then(|j| j.compact(&roster, &Ed25519Verifier))
-    {
+    match journal.compact(&roster, &Ed25519Verifier) {
         Ok(done) if done.removed > 0 => {
             info!(
                 namespace,
@@ -528,7 +532,7 @@ pub async fn exchange(
                 .iter()
                 .any(|o| matches!(o.kind.act, crate::RailAct::Seal))
         {
-            prune_what_the_peer_retired(rail, namespace).await;
+            prune_what_the_peer_retired(rail, namespace);
         }
 
         // The peer's OWN report of what it holds — the one progress signal

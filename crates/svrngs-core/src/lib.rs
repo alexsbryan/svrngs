@@ -268,24 +268,6 @@ impl Roster {
     }
 }
 
-/// Which reader answered the roster question, so the decision is visible at
-/// `tracing=debug` and a caller that needs to know (the CLI refusing to write
-/// a file nothing reads) can ask without re-deriving it.
-///
-/// Lived in the journal crate until fp-54: the rails daemon reports the
-/// origin beside the roster it answers with, and a consumer that names only
-/// the fold (the daemon after its Cargo swap) still has to say `File` from
-/// `Derived` without naming the journal half. `RosterSource` — the thing a
-/// DERIVED origin answers for — stays journal-side: it is the extension
-/// point the application implements, not vocabulary the fold judges.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum RosterOrigin {
-    /// `<ring>/roster.json`, written by `svrn ring roster add`.
-    File,
-    /// A source installed for this namespace; the file is ignored.
-    Derived,
-}
-
 // ── What a line says ─────────────────────────────────────────
 
 /// What one line of a ring journal asserts.
@@ -532,14 +514,12 @@ pub enum RailError {
     /// (svrngs: the register's standing — the seed and its `Admit` and
     /// `Remove` acts — where upstream asked whether the roster claimed it).
     ///
-    /// Typed rather than one more [`RailError::Rejected`] sentence because
-    /// the FIX depends on where the roster comes from, and only the caller
-    /// holding the rail knows that ([`RingRail::roster_origin`] in
-    /// `commonwealth-rail`). The Display below is the right instruction for a
-    /// ring written by hand from the CLI; a namespace whose roster is DERIVED
-    /// has no such command, and its renderer says so. Recognising this case
-    /// by matching on the prose would be the string `match` §2.1 forbids —
-    /// and the prose is a 422 body, so it is allowed to change.
+    /// Typed rather than one more [`RailError::Rejected`] sentence so a
+    /// renderer recognises it by the variant: matching on the prose would be
+    /// the string `match` §2.1 forbids — and the prose is a 422 body, so it
+    /// is allowed to change. (Upstream's reason was that the fix depended on
+    /// where the roster came from, `RingRail::roster_origin` in
+    /// `commonwealth-rail`; svrngs derives no roster.)
     #[error(
         "this node signs as {}… and that key holds no standing in `{namespace}` — \
          neither its seed nor an `Admit` of it names the key — so every op it \

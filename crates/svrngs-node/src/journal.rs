@@ -228,10 +228,8 @@ impl RingJournal {
         // journal holds, under the write lock — where upstream asked whether
         // the seed named the key, so a member the founder admits can write,
         // DESIGN §8, "Four facts".)
-        // TYPED, not a sentence: the command that fixes this depends on where
-        // this namespace's roster comes from, and the door does not know —
-        // `RingRail::roster_origin` does. A renderer picking the right words
-        // by matching on the prose would be the string `match` §2.1 forbids.
+        // TYPED, not a sentence: a renderer picking the right words by
+        // matching on the prose would be the string `match` §2.1 forbids.
         let standing = crate::register::standing_in(&held_ops, roster, &self.namespace, verifier)?;
         if !standing.contains_key(&actor) {
             tracing::debug!(
@@ -672,11 +670,10 @@ impl RingJournal {
     /// an empty ring admits nothing but gaps, which is the honest answer
     /// before anyone has been added.
     ///
-    /// This is the storage half, and its name says so. A caller deciding
-    /// what a journal admits goes through [`RingRail::roster`], which knows
-    /// whether this namespace's roster is the file at all; the two callers
-    /// left on this are that door and the writer (`svrn ring roster add`),
-    /// which has to read the file it is about to rewrite.
+    /// This is the storage half, and its name says so. (svrngs: the file is
+    /// every group's seed, and who stands in the group is the register's,
+    /// [`RingRail::standing`]; upstream's `RingRail::roster`, which chose
+    /// between this file and a derived roster, went with the derived ones.)
     pub fn roster_file(&self) -> Result<Roster, RailError> {
         Ok(self.seed()?.unwrap_or_default())
     }

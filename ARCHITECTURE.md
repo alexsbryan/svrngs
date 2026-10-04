@@ -31,7 +31,7 @@ what svrngs changed.
 
 **`crates/svrngs-node`**: a group's journal on disk — one append-only JSONL
 log per group under `<root>/rings/<ns>/` (`journal.rs`), the single-writer
-door that signs and the peer-ingest path that does not, roster sources, and
+door that signs and the peer-ingest path that does not, and
 the checkpoint (`ring_checkpoint.rs`). The writer underneath is `oplog.rs`. It
 is commonwealth-ai's `commonwealth-rail` and `oplog` at `e1a43bcd2`, forked the
 same way as the core; its one edit is gating `oplog.rs`'s test-only serde
@@ -78,8 +78,7 @@ Their edits cut the mesh ties: `RoundMembers` loses its walk of the mesh
 (`RoundMembers::of`), and is built from named keys instead, which the node
 reads from the register (DESIGN §8, U1); the mesh proof stamp the exchange
 carried goes; `RingSyncHost::transport` is the concrete `IrohTransport`, and a
-contact's addresses are its one `base_url`; `roster_names` reads iroh's
-`PublicKey`; `peer_client` is `pub`, since its one upstream caller,
+contact's addresses are its one `base_url`; `peer_client` is `pub`, since its one upstream caller,
 `RailsDaemon`'s `impl RingSyncHost`, did not come over, nor did the append
 wrapper that nudged the round. The route's live and checkpoint siblings stay
 behind, and with them `RingInbound`'s live buffer and origin registry; the
@@ -119,8 +118,13 @@ standing in the seed and the acts it holds, under its write lock.
 a member of another group in one process. The round reads the node's `Host` and the
 `RingRail` directly: upstream's round read them through the `RingSyncHost`
 and `RingSyncJournal` traits, and with one implementor of each here the
-traits went (RUST_ARCH 7); `ring_sync::roster_of` is what remains of the
-second.
+traits went (RUST_ARCH 7). Upstream's other answers to who is in a ring —
+`RosterSource`, `RingRail::derive_roster` and `default_roster`, which let a
+ring's roster be derived from the mesh, `RingRail::roster` and
+`roster_origin`, which chose between them and the file, the core's
+`RosterOrigin`, and `ring_sync::roster_names` — went once the register had
+taken their callers, and a peer's seal is pruned against the group's seed
+file.
 
 **`crates/svrngs-engine`**: the `Engine` trait and QuickJS behind it — a fold
 engine that waits in DESIGN §9 until an app needs its state offline on a device
