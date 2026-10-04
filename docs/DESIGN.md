@@ -99,9 +99,14 @@ paths it refuses, how many people may use it at once.
 
 An app that needs anything else is a decision, not a convenience.
 
-**Joining, phones first.** `svrngs new <name>` makes a group and prints its
-link. On a computer, `svrngs join <link>` makes it a member node. On a phone the
-same link opens in the browser and the person is in: the page holds the
+**Joining: the client first, the browser a door a group opens** (operator,
+2026-10-04). `svrngs new <name>` makes a group and prints its link,
+`svrngs://join/<token>`. On a computer the svrngs program redeems it
+(`svrngs join <link>`) and the computer is a member: running the client is the
+way in, and nothing depends on a hosted URL. A group that wants phones
+without an install names a page origin, one it hosts or ours, and its links
+carry the same token as `<origin>#<token>`. On a phone that link opens in the
+browser and the person is in: the page holds the
 person's own key (WebCrypto, never extractable) and reaches the group by
 dialling a member node over iroh in wasm — measured working from a stock Chrome
 tab (commonwealth-ai `ralph/DECISIONS.md`, browser-dial-2, `HTTP/1.1 200 OK`).
@@ -306,7 +311,8 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
 
 ## 7. Packaging and reach
 
-Phones first, through the browser: no install, no store, one link. Computers
+Computers first, running the client; phones through the browser for a group
+that names a page origin: no install, no store, the same token. Computers
 run the node — the `svrngs` process on macOS and Linux — and an always-on one is
 the group's meeting point and the origin a TV fetches from, its port mapped by
 iroh; iroh's relays carry what cannot go direct. A native phone app and
@@ -429,11 +435,46 @@ counts the tests written inside `svrngs-core`'s source files, 798 of its 2,293
 lines, though §5 sets tests apart; U2 moves them beside the files they test
 before its rules land, and a raise stays the operator's.
 
+**U3's inventory.** What upstream at `e1a43bcd2` has for lending a localhost
+service and reaching the record from an app, and what each becomes. Upstream
+has no `share` verb, no limit on how many people use a lend, no per-lend
+refused paths, no busy refusal with a reason, no count of the people using a
+lend, and nothing that measures a computer's upload: every counter in it and
+in iroh 1.0.2 measures use, not capacity, and iroh's default congestion
+controller (Cubic) reports no bandwidth estimate.
+
+| Upstream | What it does there | Becomes |
+|---|---|---|
+| `sovereign/crates/sovereign-cli-mesh/src/publish_cmd.rs` (`svrn publish <name> <port>`) and `mesh_media/offer.rs` (`probe_origin`, Jellyfin's well-known ports) | writes a lend into `config.toml`; probes a port for a known service | the verb's shape and the probe, with edits: `svrngs share <port>` writes a lend declaration into the data dir, and works whether or not svrngs is already running (a running node reads the declarations; one per data dir, `crates/svrngs/src/cli.rs` `claim`) |
+| `commonwealth/crates/commonwealth-media/src/declared.rs:51-77, 169-229` | the lender's secret: a header value in a 0600 file under a 0700 dir, named by its header, never logged, never in anything shared | forked with edits: the lend's secret stays in the data dir and never enters the record. A lend's public part (name, kind, limit) is answered by its lender's node, never stored: the list of what members lend is computed by asking each standing member, as upstream's offers were (`commonwealth-media/src/reach.rs:131-168`), so an offline computer's lends are absent rather than stale |
+| `commonwealth-media/src/identity.rs:118-165` (`admit_spliced_origin`) and `commonwealth-transport/src/iroh_identity_forward.rs:297-328` (`rewrite_head`), with its tests at `:620-702` | refuse a non-member and a member outside the allow list; strip every client identity header and every header about to be declared, compared case-, padding- and control-byte-blind; then set identity, then the declared secret | the rules forked into the door's handler, the code not (§8, U1's inventory): the person and key come from the `Dialer` extension and the register, and one prefix of svrngs's own is stripped whole. The tests come over as tests |
+| `sovereign/crates/sovereign-daemon/src/serve_client.rs:616-655` (`forward_stream`), the strip lists of `sovereign-pods/src/worker_inference_proxy.rs`, and `commonwealth-transport/src/iroh_routed_forward.rs:318` (`route_by_prefix`, its traversal guard) | a GET proxy that streams a response and passes `Range`; hop-by-hop strips; refusing `..`, `%2e`, `%2f` | with edits: every method, a streamed request body, `If-Range`, and the lend's refused paths matched as `route_by_prefix` matches a prefix. Upstream streams no request body anywhere |
+| `commonwealth-transport/examples/media_bridge_bench.rs` (its Range-serving origin) and `commonwealth-rails/tests/two_daemons.rs:208-346` (`picky_origin`, 401 then 200) | prove Range sha-exact through the splice; prove a declared credential arrives | forked as test fixtures |
+| `commonwealth/crates/commonwealth-rails/src/rail.rs`: `append_act` (`:244`), `log_answer`, `LiveBuffer` (`:781`), `err`; `api.rs:167` (`check_loopback`) | the record over loopback: append, log, and a live buffer drained by polling; loopback is the auth | forked with edits as the loopback record API: append, log and live only; the attestation branch goes with attest; the roster becomes the register. An app's act is signed by its member's node, with `on_behalf_of` naming the person the door verified when the app serves someone else |
+| `sovereign/crates/sovereign-daemon/src/routes_rail_live.rs:76-196` (`push_ephemeral`) and `ring_routes.rs:163` (the live route) | fans a live payload out to each online member | with edits: dialled over `IrohTransport` to the register's standing keys; `LiveEnvelope` (`crates/svrngs-node/src/peer_wire.rs:85`) gains its user (ralph/REVIEW_FINDINGS.md #11) |
+| `serving-policy-core/src/fair_sched.rs:163` (`fair_share_cap`) and `try_grant` | divide a budget evenly among the active; granted, queued or shed | the shape of the share and the limit, counted in people, not slots |
+| `commonwealth-transport/src/iroh_path.rs` (`PeerPath`) and iroh's `Connection::paths()`, `Path::is_relay`, `PathStats` | whether a peer's path is direct or relayed; per-path bytes, RTT and congestion window | read for the trace a demo watches; never mistaken for capacity |
+
+Four facts follow. *The upload is declared:* the lender states it, measured by
+hand as Demo A's run-of-show already does, and the share the door tells each
+request says it is a declared figure (ARCH 6); measuring it waits in §9.
+*Lends are asked, not stored.* *The local network is guessed:* iroh says
+nothing about it, so a viewer whose path is a private, link-local or
+unique-local address is taken to be in the lender's home and not counted,
+and the trace says it guessed. *Localhost is the trust boundary:* any process
+on the lender's computer can reach a lent port and type the identity header,
+as it can reach any localhost service; upstream's per-process tie waits in
+§9. Jellyfin is GPL-2.0-only, so svrngs talks to it at arm's length, over its
+API (commonwealth-ai `quality/campaigns/ring-apps-shelf.md:187`). And
+`bridge/`, E0's Discord door, calls a host deleted with E0
+(`bridge/bridge.mjs:2-3`): it goes, as the engine did, and the chat doors
+start from tag `e0-bot` when their turn comes.
+
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
 | U1 a group is not a mesh | ring sync, its route and the dial-by-key tunnel forked into `svrngs-node`, the node's router served on each accepted stream; the register decides who may connect and who is synced, where upstream asked the mesh (`commonwealth/crates/commonwealth-rails/src/` at `e1a43bcd2`: `acceptor.rs:47-61`, `ring_sync/journal.rs:153-164`, the default roster at `lib.rs:404`) | a node in the group but no mesh syncs; a node outside the group is refused |
 | U2 join by link | `svrngs new <name>`, `svrngs join <link>` and `svrngs link <group>` on a computer, and `svrngs` alone running the node; the link carries the group's seed, its key, its `Invite`'s id and its issuer's dial in the fragment; redeeming at the issuer's node writes one `Admit`, co-signed by the new key; ids over everything signed, the previous act among it; the door signing after everything it holds (§6) | three people open one link and each is admitted once; opening it again admits nobody twice; a lapsed or closed link admits no one; a dialer without the link's key is closed with no answer; nothing the command prints uses a word §1 keeps from people |
-| U3 lend a service | the member door: a route that proxies to a lent service, the verified person set from the connection; `svrngs share <port>` with its lend declaration; streaming and byte ranges through the door; each request's share of the lender's upload; the people-at-once limit; the loopback record API (the rail routes and the live lane, forked); the list of what members lend | the app sees the verified person; a header the client typed is stripped; the lender's secret appears in no byte a member receives; with three streams, each is told a third of the measured upload, and a fourth person is refused with a reason |
+| U3 lend a service | the member door: a route that proxies to a lent service, the verified person set from the connection; `svrngs share <port>` with its lend declaration; streaming and byte ranges through the door; each request's share of the lender's upload; the people-at-once limit; the loopback record API (the rail routes and the live lane, forked); the list of what members lend | the app sees the verified person; a header the client typed is stripped; the lender's secret appears in no byte a member receives; with three streams, each is told a third of the declared upload, and a fourth person is refused with a reason |
 
 **Demo A — Sam's films, three homes at once** (after U3). Sam lends Jellyfin
 with one command and sends a link. Alex, Bo and Cy join from three homes and
@@ -445,11 +486,12 @@ computer; nobody made an account.
 
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
-| U4 the browser | a phone opens the link and is in: its own key, a dial to the meeting point, and the runtime that renders a lent app through it — fetch, POST, streaming, byte ranges; the page is static files any origin can serve | a stock phone browser plays a lent film and seeks |
+| U4 the browser | a phone opens a group's https link, on the page origin the group named, and is in: its own key, a dial to the meeting point, and the runtime that renders a lent app through it — fetch, POST, streaming, byte ranges; the page is static files any origin can serve | a stock phone browser plays a lent film and seeks |
 | U5 Films | `apps/films`: one shelf across every member's lent library, "from Sam's", search, play here; a device and play-session id per person and play; progress per person in the record; busy turned into a choice — on the §3 surface alone | a title two members lend shows once, with both; Bo's seek never restarts Cy's play; Films calls nothing outside §3 |
 | U6 the screen handoff | the meeting point serves one stream to a TV on its network at an unguessable address; AirPlay from Safari, Cast from Chrome; the phone is the remote and may lock | a film plays on the TV from a phone browser; the address serves only the device it was handed to |
 
-**Demo B — movie night** (after U6). Five friends at Sam's, phones only. Sam
+**Demo B — movie night** (after U6). Five friends at Sam's, phones only. Sam's
+group names a page origin, so its link opens in a phone's browser. Sam
 texts the link; each opens it, browses one shelf across three members'
 libraries, and a film they pick plays on the TV. Nobody installs or signs up.
 Gate: four of five newcomers get from the link to the film on the TV within
@@ -491,10 +533,15 @@ class at a time, each chosen by the north star's tests.
 | local discovery on one WiFi | Apple's multicast entitlement is granted |
 | any member's node redeeming a link, once its `Invite` has synced | a newcomer's link fails because its issuer's computer was asleep, counted |
 | a link's life set per link, other than a day | a newcomer meets a lapsed link, counted |
+| measuring a lender's upload rather than taking the figure they declare (BBR3's pacing estimate, or a timed saturating pull) | a declared figure is wrong by enough to stall a viewer in a recorded run |
+| a per-process tie between a node and the services it lends (upstream's `mint_tie`) | an app's act is written under a person by a process the lender did not run, or one computer is shared by people who do not trust each other |
 
 ## 10. Decisions
 
 By the operator, 2026-10-04:
+- computers run the client, and that is the way in; the browser is a door a
+  group opens by naming a page origin, its own or ours (over "phones first,
+  through the browser");
 - a link is upstream's https form, everything it carries in its fragment;
   `https://svrnme.sh/ring/` is the default origin, and anyone may serve the
   page from their own;
@@ -550,3 +597,9 @@ By the operator, 2026-10-03:
 6. **Two copies of the record's code.** A signing or canonical-form bug fixed on
    one side can be missed on the other. `scripts/ports.py` is the guard, and it
    is a listing, not a gate.
+7. **Jellyfin's own player asks for a sign-in.** Demo A plays in it before
+   Films exists, and the door injects a credential on requests, not a session
+   in a browser. Either the browser is handed a token it then holds, which
+   breaks "the lender's secret appears in no byte a member receives", or each
+   person signs in to a viewer account. U3's dry run against a real Jellyfin
+   measures which, before Demo A's first run; Films (U5) never needs it.
