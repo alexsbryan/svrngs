@@ -472,22 +472,10 @@ pub async fn join_group(
         .await
         .map_err(not_let_in)?;
     tracing::debug!(target: "cli", group = %id, redeemed = ?redeemed, "cli: join — let in");
-    let journal = node
-        .rail()
-        .journal(&id)
-        .map_err(|e| keep_refused(&seed, &e.to_string()))?;
-    group::write_seed(journal.dir(), &seed)
-        .and_then(|()| match &link.origin {
-            Some(origin) => group::write_origin(journal.dir(), origin),
-            None => {
-                tracing::debug!(target: "cli", group = %id, "cli: join — a client's link, so no origin is kept");
-                Ok(())
-            }
-        })
-        .map_err(|e: SeedError| keep_refused(&seed, &e.to_string()))?;
-    journal
-        .set_roster(&seed.roster())
-        .map_err(|e| keep_refused(&seed, &e.to_string()))?;
+    keep_group(node, &seed, link.origin.as_ref())?;
+    if link.origin.is_none() {
+        tracing::debug!(target: "cli", group = %id, "cli: join — a client's link, so no origin is kept");
+    }
     let synced = node.sync_with(&id, &issuer).await;
     match &synced.stop {
         None => {
@@ -540,19 +528,7 @@ pub async fn new_group(
         .expect("an iroh endpoint id is an Ed25519 key");
     let seed = Seed::draw(name, person, founder);
     let id = seed.id();
-    let journal = node
-        .rail()
-        .journal(&id)
-        .map_err(|e| keep_refused(&seed, &e.to_string()))?;
-    group::write_seed(journal.dir(), &seed)
-        .and_then(|()| match origin {
-            Some(origin) => group::write_origin(journal.dir(), origin),
-            None => Ok(()),
-        })
-        .map_err(|e: SeedError| keep_refused(&seed, &e.to_string()))?;
-    journal
-        .set_roster(&seed.roster())
-        .map_err(|e| keep_refused(&seed, &e.to_string()))?;
+    keep_group(node, &seed, origin)?;
     tracing::debug!(target: "cli", group = %id, name = %seed.name(), origin = ?origin.map(Origin::as_str), "cli: group made");
     let token = mint(node, &seed, relay).await?;
     Ok((seed, Printed::of(&token, origin)))
@@ -674,6 +650,25 @@ pub fn link_relay(relay: &RelayConfig, home: Option<RelayUrl>) -> Option<RelayUr
         }
     }
     carried
+}
+
+/// Keep `seed`'s group on this computer: its journal, the seed beside it,
+/// `origin` when given, and the roster the seed founds. What `new` and
+/// `join` both write, in one order, so a group kept by either is the same.
+fn keep_group(node: &Node, seed: &Seed, origin: Option<&Origin>) -> Result<(), Refusal> {
+    let journal = node
+        .rail()
+        .journal(&seed.id())
+        .map_err(|e| keep_refused(seed, &e.to_string()))?;
+    group::write_seed(journal.dir(), seed)
+        .and_then(|()| match origin {
+            Some(origin) => group::write_origin(journal.dir(), origin),
+            None => Ok(()),
+        })
+        .map_err(|e: SeedError| keep_refused(seed, &e.to_string()))?;
+    journal
+        .set_roster(&seed.roster())
+        .map_err(|e| keep_refused(seed, &e.to_string()))
 }
 
 fn keep_refused(seed: &Seed, why: &str) -> Refusal {
