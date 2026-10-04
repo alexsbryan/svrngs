@@ -103,12 +103,14 @@ pub struct IrohTransport {
     /// relay URL + direct addrs.
     /// Retained so hermetic tests can seed addresses directly; when a
     /// contact carries its own addrs, both are merged.
+    #[expect(clippy::disallowed_types, reason = "the transport's address cache")]
     known_addrs: std::sync::Mutex<HashMap<[u8; 32], Vec<SocketAddr>>>,
     /// One localhost bridge per peer, on the one [`ALPN`]. Each entry
     /// remembers the dial info it was built with (`dial_key`) so a
     /// dial-info change RETARGETS the bridge — a frozen target
     /// kept dialing a restarted peer's dead ephemeral port forever
     /// (the 2026-07-19 dual-restart heal deadlock's transport half).
+    #[expect(clippy::disallowed_types, reason = "the transport's bridge cache")]
     bridges: tokio::sync::Mutex<HashMap<[u8; 32], CachedBridge>>,
 }
 
@@ -131,6 +133,7 @@ fn dial_key_for(peer: &Contact) -> DialKey {
 }
 
 impl IrohTransport {
+    #[expect(clippy::disallowed_types, reason = "the transport's caches")]
     pub fn new(endpoint: iroh::Endpoint) -> Self {
         Self {
             endpoint,

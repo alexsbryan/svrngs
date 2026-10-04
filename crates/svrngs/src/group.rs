@@ -54,6 +54,7 @@ impl Seed {
     /// A new group's seed: `founder` names the person holding `key`, and
     /// 16 bytes are drawn so that a second group of the same name by the
     /// same person is a second group.
+    #[expect(clippy::disallowed_methods, reason = "draws a group's salt")]
     pub fn draw(name: Name, founder: Name, key: VerifyingKey) -> Self {
         let mut salt = [0u8; 16];
         // As identity.rs: getrandom failing is a host with no entropy, and

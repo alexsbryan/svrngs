@@ -34,6 +34,10 @@ pub use svrngs_core::*;
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
+#[expect(
+    clippy::disallowed_types,
+    reason = "the open-journal map; an actor per journal replaces it (DESIGN §5)"
+)]
 use std::sync::{Arc, Mutex};
 
 // The one type the core does NOT re-export: it is the writer, and nothing
@@ -78,10 +82,15 @@ fn ring_dir(root: &Path, namespace: &str) -> PathBuf {
 pub struct RingRail {
     root: PathBuf,
     signer: Arc<dyn RingSigner>,
+    #[expect(
+        clippy::disallowed_types,
+        reason = "the open-journal map; an actor per journal replaces it (DESIGN §5)"
+    )]
     open: Mutex<BTreeMap<String, Arc<RingJournal>>>,
 }
 
 impl RingRail {
+    #[expect(clippy::disallowed_types, reason = "the open-journal map")]
     pub fn new(root: impl Into<PathBuf>, signer: Arc<dyn RingSigner>) -> Self {
         Self {
             root: root.into(),

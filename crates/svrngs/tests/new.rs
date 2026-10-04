@@ -3,6 +3,7 @@
 //! short link printed whose key the `Invite` names (u2-8). One node in one
 //! process, no relay.
 
+#![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 use svrngs::cli::{self, Command, Printed, Refusal, LINK_LIFE_SECS};
 use svrngs::group::{self, Name};
 use svrngs::link::{Link, Origin, CLIENT_PREFIX};

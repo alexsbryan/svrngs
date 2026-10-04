@@ -1,0 +1,15 @@
+# Sans-IO, held by the build: the clock, randomness and locks live at the
+# adapters that hold them today, each marked `#[expect(clippy::…, reason)]`,
+# and nowhere else.
+disallowed-methods = [
+    { path = "std::time::SystemTime::now", reason = "read the clock at an adapter and pass the time in" },
+    { path = "std::time::Instant::now", reason = "read the clock at an adapter and pass the time in" },
+    { path = "rand::random", reason = "draw randomness at an adapter and pass it in" },
+    { path = "getrandom::fill", reason = "draw randomness at an adapter and pass it in" },
+]
+disallowed-types = [
+    { path = "std::sync::Mutex", reason = "one owner and messages (RUST_ARCH §3)" },
+    { path = "std::sync::RwLock", reason = "one owner and messages (RUST_ARCH §3)" },
+    { path = "tokio::sync::Mutex", reason = "one owner and messages (RUST_ARCH §3)" },
+    { path = "tokio::sync::RwLock", reason = "one owner and messages (RUST_ARCH §3)" },
+]

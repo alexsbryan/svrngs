@@ -38,6 +38,10 @@
 //! the others, not themselves, as with the daemon's lane.)
 
 use std::collections::{BTreeMap, HashMap, VecDeque};
+#[expect(
+    clippy::disallowed_types,
+    reason = "the live lane's buffer, this computer's only"
+)]
 use std::sync::{Arc, Mutex};
 
 use axum::extract::{Query, State};
@@ -480,6 +484,10 @@ pub(crate) const LIVE_PAYLOAD_MAX_BYTES: usize = 4096;
 /// live payload ever sits. Keyed by namespace, the way append and log are.
 #[derive(Debug, Default)]
 pub struct LiveBuffer {
+    #[expect(
+        clippy::disallowed_types,
+        reason = "the live lane's buffer, this computer's only"
+    )]
     inner: Mutex<HashMap<String, LiveBufferInner>>,
 }
 

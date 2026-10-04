@@ -11,6 +11,7 @@
 //! being restated here: the sync tests and these must be talking about the
 //! same signed op or neither proves anything (ARCH §10.6).
 
+#![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 use crate::*;
 
 use svrngs_core::tests_support::*;

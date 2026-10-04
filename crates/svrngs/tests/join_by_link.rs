@@ -11,6 +11,7 @@
 //! relay: each joiner is told Sam's loopback addresses, as lookup or a
 //! relay would find them outside one process.
 
+#![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 use std::collections::BTreeSet;
 use std::net::SocketAddr;
 use std::time::{Duration, Instant};

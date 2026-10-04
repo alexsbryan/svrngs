@@ -5,6 +5,7 @@
 //! Nodes in one process, no relay; peers are reached by seeded addresses,
 //! as `group_not_mesh.rs` does.
 
+#![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
 use common::loopback_sockets;
 

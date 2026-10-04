@@ -10,6 +10,7 @@
 //! sends upstream's head, raw, and reads what the service received. Every
 //! byte B receives is scanned for A's secret ([`clean`]).
 
+#![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 #[path = "../common/mod.rs"]
 mod common;
 mod origins;

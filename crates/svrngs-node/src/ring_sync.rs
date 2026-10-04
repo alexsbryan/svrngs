@@ -184,6 +184,10 @@ pub fn spawn_ring_sync_loop(
             "ring sync: loop started"
         );
         loop {
+            #[expect(
+                clippy::disallowed_methods,
+                reason = "times a round for its trace; no decision reads it"
+            )]
             let started = Instant::now();
             let outcome = run_one_round(host.as_ref()).await;
             if outcome.namespaces > 0 {

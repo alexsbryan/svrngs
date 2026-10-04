@@ -72,6 +72,7 @@ impl GuestTunnel {
     ///
     /// Errors name which step failed — an unparseable dial string and an
     /// unbindable endpoint have different repairs and must not read the same.
+    #[expect(clippy::disallowed_methods, reason = "draws a tunnel's secret key")]
     pub async fn open(
         dial: &str,
         relay_urls: Vec<String>,

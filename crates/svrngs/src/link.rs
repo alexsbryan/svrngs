@@ -224,6 +224,7 @@ pub fn https_link(origin: &Origin, token: &Token) -> String {
 /// A fresh token for `issuer`, reached through `relay` when given: its
 /// secret drawn again, up to [`DRAWS`] times, while the token spells a
 /// word DESIGN §1 keeps from people.
+#[expect(clippy::disallowed_methods, reason = "draws a link's secret")]
 pub fn mint(issuer: PublicKey, relay: Option<RelayUrl>) -> Token {
     let mut token = Token {
         issuer,

@@ -591,6 +591,10 @@ pub async fn new_link(
 /// [`LINK_LIFE_SECS`], signed by this computer through the group's door,
 /// and answer the link's token. The issuer's newer `Invite` closes their
 /// last one from its place in the order (u2-4b, `membership`).
+#[expect(
+    clippy::disallowed_methods,
+    reason = "the command's clock: a link's life starts now"
+)]
 async fn mint(node: &Node, seed: &Seed, relay: &RelayConfig) -> Result<Token, Refusal> {
     let token = link::mint(node.endpoint().id(), issuer_relay(node, relay).await);
     let now = std::time::SystemTime::now()

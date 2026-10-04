@@ -282,6 +282,7 @@ pub struct HttpBridge {
     /// Where accepted connections dial, read fresh per connection. The
     /// loopback listener is the bridge's IDENTITY; the peer address it
     /// tunnels to is a mutable attribute — see [`retarget`](Self::retarget).
+    #[expect(clippy::disallowed_types, reason = "the bridge's retarget point")]
     target: Arc<std::sync::Mutex<EndpointAddr>>,
     task: tokio::task::JoinHandle<()>,
 }
@@ -325,6 +326,7 @@ impl HttpBridge {
     /// player or a shim can hold it with no mesh state of its own. When that
     /// port is taken the bind falls back to an ephemeral one and SAYS so —
     /// a substitution named at warn, never a silent different URL (§18.3).
+    #[expect(clippy::disallowed_types, reason = "the bridge's retarget point")]
     pub async fn spawn_preferring(
         endpoint: Endpoint,
         target: EndpointAddr,

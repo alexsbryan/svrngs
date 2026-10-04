@@ -30,6 +30,10 @@ use std::time::{SystemTime, UNIX_EPOCH};
 pub struct RingJournal {
     namespace: String,
     dir: PathBuf,
+    #[expect(
+        clippy::disallowed_types,
+        reason = "the journal's single-writer lock: O_APPEND makes one write atomic, this makes there be one"
+    )]
     log: Mutex<Writer>,
 }
 
@@ -129,6 +133,7 @@ impl Held {
 impl RingJournal {
     /// Open (lazily — nothing is created until the first append) the journal
     /// for `namespace` under `root`.
+    #[expect(clippy::disallowed_types, reason = "the journal's single-writer lock")]
     pub fn open(root: &Path, namespace: &str) -> Result<Self, RailError> {
         if !valid_namespace(namespace) {
             return Err(RailError::BadNamespace(namespace.to_string()));
@@ -649,6 +654,7 @@ impl RingJournal {
 
 /// The wall clock in Unix seconds: the one place the write side reads it.
 /// Unreadable is named, never defaulted (ROOT_CAUSE_FIXES C4).
+#[expect(clippy::disallowed_methods, reason = "the write side's clock adapter")]
 pub(crate) fn now_unix(namespace: &str) -> Result<i64, RailError> {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)

@@ -182,7 +182,7 @@ journals sits behind a `Mutex`, which an actor per journal replaces.
 |---|---|---|
 | Same acts, same state: a group's state is a pure function of its set of acts | svrngs-core is `no_std`, and `lean_check` keeps it so; folds read acts only through `Admission` | `no_std` holds; `membership` still sorts raw ops |
 | No act, no effect: nothing that cannot be undone happens but from an act in the record — the group's state and this computer's; a lent service's own state is its own, and the member door only carries a request to it | a store appends only `Authored` lines, which only `commit` makes after a `Command` decided under the write lock; acting takes a `Recorded` only `commit` returns | every write goes through `commit`; the journal's `append` is a test fixture |
-| Both | the core never depends on the node; the clock, randomness and locks live in one adapter each (clippy `disallowed-methods`, `disallowed-types`) | dependency direction holds; the clippy bans not yet |
+| Both | the core never depends on the node; the clock, randomness and locks live only where an adapter holds one (`clippy.toml` bans them; each site carries `#[expect(…, reason)]`, which fails once the site is gone) | holds |
 
 One property test stands behind every fold: permuting or duplicating
 `admit`'s input changes nothing. A decider's contract is given / when / then

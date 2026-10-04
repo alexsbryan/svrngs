@@ -6,6 +6,7 @@
 //! `commonwealth/crates/commonwealth-rails/tests/ring_round.rs`, rewritten:
 //! upstream's is built on the mesh daemon.
 
+#![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
 use common::loopback_sockets;
 

@@ -93,6 +93,7 @@ pub enum KeyError {
 /// This computer's key: the one at `<data_dir>/identity`, or, when there
 /// is no file there, a fresh one written there first. A file that cannot
 /// be read, and a fresh key that cannot be written, refuse.
+#[expect(clippy::disallowed_methods, reason = "draws a device key")]
 pub fn load_or_generate_node_key(data_dir: &Path) -> Result<SigningKey, KeyError> {
     match load_key(data_dir) {
         Ok(Some(key)) => {
