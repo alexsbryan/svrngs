@@ -19,10 +19,10 @@ the correction would weaken a check, stop and write the package (below).
 
 <!-- section: rule -->
 - Every new check fails first on a planted input: paste the red run, then the
-  green one. The test files the bars read are named in `scripts/e0_demo.py`
-  `TEST_BARS`; use those paths exactly.
-- Code ported from commonwealth-ai carries `ported from commonwealth-ai
-  <path>@<commit>` on its first line. Never add a dependency on a
+  green one.
+- Code forked from commonwealth-ai lands unchanged first, in a commit of its
+  own, with `ported from commonwealth-ai <path>@<commit>` on every file; it
+  changes only in later commits (DESIGN §4). Never add a dependency on a
   commonwealth-ai or sovereign crate.
 - Commit as you go, each commit one step, its body citing what it proves.
   Never push, never `--no-verify`, never amend or rebase, never `git add -A`.

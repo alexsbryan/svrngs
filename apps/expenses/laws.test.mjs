@@ -1,4 +1,4 @@
-// five-laws (DESIGN D9 E0; C12; scripts/e0_demo.py TEST_BARS): Expenses holds
+// five-laws (RING_APP_LIBRARY §4, and DESIGN at tag e0-bot, C12): Expenses holds
 // determinism, environment independence, non-interference, idempotence,
 // totality (RING_APP_LIBRARY §4) and the sixth, no module globals. Each law is
 // a check that returns why it broke, or null; the second test plants one

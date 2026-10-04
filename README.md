@@ -1,15 +1,16 @@
 # svrngs
 
-A group's shared state — money, plans, files, a library, its own AI — kept on the
-devices of the people in it, entered from the chat they already use. The
-design it is built to is `docs/DESIGN.md`.
+Keep talking where you talk; keep what your group owns — money, plans, files,
+the library — on your own computers, not a platform's. And for developers:
+anything you can run on localhost, you can share with your group.
 
+What it is, how we build it and the order of work: `docs/DESIGN.md`. What
+exists today: `ARCHITECTURE.md`. How agents work here: `AGENTS.md`.
 
 ## Run it
 
-Nothing runs yet. svrngs is forking the group's code from commonwealth-ai
-(DESIGN, Direction); the record has landed in `crates/svrngs-core`, and the
-node comes next. E0's Discord bot is at tag `e0-bot`: check it out and follow
-its README to run it.
+Nothing runs yet. The group's record and journal have landed, forked from
+commonwealth-ai; sync, joining by link and sharing an app come next (DESIGN
+§8). E0's Discord bot, which ran before the fork, is at tag `e0-bot`.
 
 To check the tree: `sh scripts/check.sh`.

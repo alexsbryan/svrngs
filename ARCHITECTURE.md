@@ -1,15 +1,15 @@
 # Architecture
 
-The map of svrngs as it is built today. The design it is built toward is
+The map of svrngs as it is built today. What it is built toward is
 `docs/DESIGN.md`. This file says what exists, and it changes in the same commit
 as what it describes.
 
 ## Bird's eye
 
-svrngs owns the group's code, forked from commonwealth-ai's ring slice
-(DESIGN, Direction). The record and the journal on disk have landed; sync, the
-routes and the doors come next, forked the same way. Nothing runs as a program
-yet. E0's Discord bot, which did, is at tag `e0-bot`.
+svrngs owns the group's code, forked from commonwealth-ai's ring slice (DESIGN
+§4). The record and the journal on disk have landed; sync, the routes and the
+member door come next, forked the same way (DESIGN §8, U1-U3). Nothing runs as
+a program yet.
 
 ## Code map
 
@@ -33,14 +33,21 @@ same way as the core; its one edit is gating `oplog.rs`'s test-only serde
 import.
 
 **`crates/svrngs-engine`**: the `Engine` trait and QuickJS behind it — a fold
-engine that waits in DESIGN D8 until an app needs its state offline.
+engine that waits in DESIGN §9 until an app needs its state offline on a device
+that is not its host.
 
-**`apps/expenses/`**: the Expenses fold and its laws test.
+**`apps/expenses/`**: the Expenses fold (`expenses.js`) and its tests, from E0.
+The localhost Expenses app of DESIGN U3 is built on it.
 
 **`bridge/`**: the Discord door's first code — `setup.mjs` and `discord.mjs`
 (the bot's application, invite and channels), `words.json` (the plain-words
 list), and `bridge.mjs`, E0's bridge core, kept for its log and tests until the
-door replaces it.
+door (DESIGN U4) replaces it.
+
+**`demo/`**: how a demo is recorded. **`ralph/`**: the work-loop prompt;
+queues go in `ralph/next/<queue>/`.
 
 **`scripts/`**: `check.sh` is the definition of done; `lean_check.py` keeps the
-repository standalone and within budget; `ports.py` lists the fork's pairs.
+repository standalone and within budget; `ports.py` lists the fork's pairs;
+`principles_check.py` keeps `docs/principles/` pinned; `ralph-mark.sh` marks a
+queue row done.

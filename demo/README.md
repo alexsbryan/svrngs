@@ -1,21 +1,21 @@
 # Demos
 
-Each demo in `docs/DESIGN.md` D7 has a run-of-show here, written before its
-first run, and every run leaves one record in `runs/<demo>/<date>.json`, which
-`scripts/e0_demo.py` reads. A run nobody recorded did not happen.
+Each demo in `docs/DESIGN.md` §8 has a run-of-show here, `<demo>.md`, written
+before its first run, and every run leaves one record in
+`runs/<demo>/<date>.json`. A run nobody recorded did not happen. The script
+that reads the records lands with the first demo.
 
 A record:
 
 ```json
 {
-  "demo": "d1",
+  "demo": "b",
   "date": "2026-10-20",
   "participants": 5,
   "succeeded_in_time": 4,
   "accounts_created": 0,
   "key_prompts": 0,
   "assisted": false,
-  "balances_equal_fold": true,
   "recording": "path or link to the screen recording",
   "commit": "the svrngs commit the run used",
   "notes": "what went wrong for whoever did not finish"

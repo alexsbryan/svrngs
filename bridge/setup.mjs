@@ -1,5 +1,6 @@
-// `node bridge/setup.mjs application|servers`: what `svrngs start` asks the
-// chat platform while it sets the bot up (DESIGN C11). The bot's token comes
+// `node bridge/setup.mjs application|servers`: what setup asks the chat
+// platform while it sets the bot up — E0's `svrngs start` (tag e0-bot, DESIGN
+// C11), and next the Discord door (DESIGN U4). The bot's token comes
 // in SVRNGS_DISCORD_TOKEN, never as an argument, so no process list shows it.
 // Prints one line of JSON: the answer, or `{refused: 'token'}`.
 

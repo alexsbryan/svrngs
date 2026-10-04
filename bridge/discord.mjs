@@ -171,7 +171,7 @@ export function switchesOff(flags) {
 }
 
 /**
- * What `svrngs start` asks Discord with the bot's token (DESIGN C11): the
+ * What setup asks Discord with the bot's token (tag e0-bot, DESIGN C11): the
  * application it belongs to, and the text channels in the servers it is in.
  * A token Discord refuses comes back as `{refused: 'token'}`, not a throw.
  */
