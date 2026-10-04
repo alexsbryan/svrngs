@@ -370,3 +370,147 @@ removed, it gave `(1)`.
 | I5 | 5, 7 | `code dry-report` near tier | Still present. A byte-identical 14-line body under another name scored 0.851–0.863 and gave 0 edges at the default 0.95 and at 0.9, yet the report still says "No duplication found". |
 | I7 | 6 | `code converge noun` owner candidates | `Redemption` and `OpId` are defined in svrngs-core and used by svrngs-node, which depends on it (crates/svrngs-node/Cargo.toml:36). For both the tool printed "none — the users share no dependency. This noun needs a new home crate". The defining crate is not counted as a candidate for its own users, so a noun that already has its right home reads as homeless. |
 | I8 | 6 | `code dry-report` scope | The header says "First-party production code only". Its exclusion is a `tests` path segment, so the `*_tests.rs` siblings u2-1 created (and `tests.rs`, `tests_sealing.rs`) are counted as production: most of the 0.85 clusters above are test functions. |
+
+## REVIEW-audit-u2-auto-2 (2026-10-04, range afbacc4..e3e2f8c)
+
+The previous `REVIEW-audit-` row's hash is afbacc4 (STATE.md, the
+REVIEW-audit-u2-auto-1 row). The range ends at e3e2f8c, the commit that
+added this row. It covers u2-4b, u2-5, u2-6 and u2-7. The operator's
+907a345 (docs), 35de30a, fa99f64, 0b2c9a3, 56b8fd1 and 9f2f5af (rows) touch
+no product code. The range touched crates/svrngs-core, crates/svrngs-node
+and crates/svrngs, which u2-5 created (`git diff --stat afbacc4 e3e2f8c --
+crates bridge apps`).
+
+### (1) Net lines per unit, product code
+
+`git log --reverse --numstat --format='@@%h %s' afbacc4..e3e2f8c`, summed by
+unit. Each commit counts toward the row whose `started` commit comes before
+it. Product code is `crates/`, `bridge/` and `apps/`. Tests are files whose
+path has a `tests/` or `fixtures/` segment or whose name lean_check counts as
+a test (scripts/lean_check.py:33). Cargo.lock is left out. The counts are raw
+diff lines, comments and Cargo.toml included. Inline `#[cfg(test)]` modules
+count as src here, as lean_check counted them (#21).
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| u2-4b-close | 43 | 11 | 32 | 61 | 4 | 57 |
+| u2-5-command | 1685 | 301 | 1384 | 235 | 0 | 235 |
+| u2-6-join | 773 | 111 | 662 | 373 | 8 | 365 |
+| u2-7-origin-kept | 127 | 30 | 97 | 107 | 8 | 99 |
+| total | 2628 | 453 | 2175 | 776 | 20 | 756 |
+
+u2-5's +1384 is the new `svrngs` crate: cli.rs 425, link.rs 379 forked then
+rewritten (+225 −246), group.rs 265, identity.rs 155 forked then +121 −43.
+It includes 151 test code lines inside identity.rs and link.rs (#21). u2-6's
++662 is mostly redeem.rs (+351) and the join verb in cli.rs (+177).
+`python3 scripts/lean_check.py <tree>` (rc 0):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| afbacc4, range start (`git archive` into a temp dir) | 1734 / 2500 | 5317 / 12000 |
+| e3e2f8c, range end | 1750 / 2500 | 6852 / 12000 |
+| b556e0b, after this audit's fixes | 1753 / 2500 | 6680 / 12000 |
+
+The fixes remove 172 repository lines: 149 moved test lines (#21), 17 from
+the u2-6 node side (#18, net of 3 core lines that make the helpers `pub`),
+and 6 from group.rs (#20, #22).
+
+### (2) Clones (`code dry-report`), each tier checked against a plant first
+
+The binary is ~/dev/commonwealth-ai/target/debug/sovereign-cli, built
+2026-10-04 07:11. The SCIP graph came from `sovereign-cli refresh` (rust:
+4443 symbols; TypeScript export failed again, as I4). The corpus came from
+`code index ~/dev/svrngs --corpus-id svrngs --full` (1013 chunks). On the
+range-end code, the unplanted run at the default threshold reported **0
+exact groups and 0 near clusters** for crates/svrngs-core (273 locations),
+crates/svrngs-node (231) and crates/svrngs (62). Then the plants, with both
+refreshed:
+
+- **Plant A** (exact tier): redeem.rs's `judge`, which u2-6 added, copied byte
+  for byte with its doc lines into alpn.rs. Result: **1 group**,
+  `judge — alpn.rs:46` and `judge — redeem.rs:280` (the `fn`s are at :47 and
+  :281, so I1 is still present).
+- **Plant B** (near tier): `judge`'s body as `weigh` in register.rs under
+  another doc line, and group.rs's `groups` as `held_groups` in cli.rs.
+  At 0.95: neither is reported. At 0.9: `held_groups ~ groups` (0.904),
+  but not `weigh`. At 0.85: `weigh` joins the judge cluster (0.863–0.973).
+  So I5 is still present.
+- With the plants removed: 0 and 0 again at 0.95 in all three.
+
+So the default near tier **could not judge**. The near tier was rerun at
+0.85, where both plants showed: svrngs-core gave 35 clusters, svrngs-node
+21, svrngs 2. A side counts as **added** when its `fn` name is not defined
+anywhere in that crate at afbacc4 (`git grep fn afbacc4 -- <crate>`). Every
+0.85 cluster with an added side:
+
+| cluster (dry-report, 0.85) | disposition |
+|---|---|
+| `read_seed` group.rs:197–225 ~ `read_origin` :232–259 (0.867) | **fixed in d652b85** (#20), pinned first by bd53a47 |
+| `standing_in` register.rs:45–65 ~ `membership_in` :64–93 (0.887) | no change (#24): `standing_in` calls `membership_in` and maps its answer |
+| `append` journal.rs:203–219 ~ `append_all` :235–253 ~ `append_if` :256–274 (0.865–0.898) | no change (#24): three doors, each one call into `write` |
+| `write` journal.rs:272–353 ~ `write` :354–440 (0.879) | no change: one function, two chunks of it (I9) |
+| `invite_for` membership_invite_tests.rs:14–25 ~ `redeem_as` :22–35 (0.915) | no change (#24): two neighbouring test builders, each building a different act |
+| `three_redemptions_under_one_invite_…` :67–85 ~ `a_redemption_timed_before_the_newer_link_…` :222–235 (0.888) | no change (#24): two tests, each stating its own case |
+| link.rs's three tests :318–373 (0.901–0.923) | no change (#24): three tests through one builder; now in link_tests.rs (#21) |
+
+**Substitute check, named as a substitute.** This is the same pass as the
+u2-auto-1 audit. It hashes every run of 5 normalized lines over
+crates/svrngs-core, crates/svrngs-node and crates/svrngs `**/*.rs`, test
+files included. A hit is **new** when a line in either span is blamed inside
+the range by `git blame -w -M -C -C`, or is uncommitted. Plant B
+(`held_groups`) gave `NEW cli.rs:615-646 == group.rs:263-294` (red). With the
+plant removed, the output was byte-identical to the unplanted run (`cmp`,
+green). Every new-side hit at e3e2f8c:
+
+| hit | disposition |
+|---|---|
+| group.rs:206-212 == :244-250 (`read_seed`'s and `read_origin`'s file read) | **fixed in d652b85** (#20) |
+| svrngs tests join_by_link.rs:134-139 == new.rs:60-65 (`cli::new_group(&node, name("house"), name("Sam"), …)`) | no change (#24): one call with its arguments |
+
+Reading the range's diff found five repeats that neither clone pass can
+see, because each body is a single line or a closure: #18's three, #19 and
+#22. A count of repeated lines across the new files (`uniq -c`, three or
+more) found only signatures and match arms besides.
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff afbacc4 e3e2f8c -- crates`, added lines matching
+`(pub..)? (struct|enum|trait|type) Name`: **Alpn**, **RedeemRequest**,
+**Redeemed**, **Refused**, **RedeemError** (svrngs-node); **Command**,
+**Refusal**, **Said**, **Name**, **Seed**, **SeedFile**, **SeedError**,
+**KeyError**, **Origin**, **Dial**, **Link** (svrngs); **Computer**
+(join_by_link.rs, a test). No type was removed.
+
+**All sixteen production nouns have exactly one definition**
+(`definitions (1)` each). `Computer` gives `definitions (0)`, because the
+tool skips `tests` paths. The check was tested against a plant:
+`pub struct Seed;` appended to svrngs-node's alpn.rs gave `definitions (2)`
+(group.rs:70, alpn.rs:44). With the plant removed, it gave `(1)`.
+
+The tool matches names. Read for meaning, one pair is the same noun under
+two names, with two rules: svrngs's `Name` (group.rs:41-56) and the core's
+`Person` (crates/svrngs-core/src/lib.rs:159-177). That is #23.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 18 | 8 | crates/svrngs-node/src/redeem.rs:100, :108-111, :123-133 (at e3e2f8c); crates/svrngs-core/src/sig.rs:73 (`field`), :175 (`sign_message`), :243 (`verify_hex`) | 5380ed4, pinned first by 51a9837 | u2-6's redeem request signed, framed and verified its bytes by hand: a fourth spelling of the signature #12 gave one home, and a second hex-key parser beside `verify_hex`. The three helpers are `pub` and redeem.rs calls them; svrngs-node's `ed25519-dalek` dependency goes with it. Nothing tested `signed_by_link`: planted `true`, every svrngs-node and svrngs test passed, because Fay's forged link is refused earlier at the `Invite`-key check. Gus (join_by_link.rs) presents an open link's key, which every copy of the record shows, on a request another key signed. He fails on the plant at :250. |
+| 19 | 8 | crates/svrngs/src/identity.rs:36-39 (`node_pubkey`, at e3e2f8c); crates/svrngs-core/src/sig.rs:67-69 (`actor_of`) | 9712bf9 | The fork made upstream's typed `node_pubkey` answer hex, so it became `actor_of`'s body. Its two traces call `actor_of` now. |
+| 20 | 6, 8 | crates/svrngs/src/group.rs:201-216 (`read_seed`) and :236-250 (`read_origin`); :186-198 and :227-233 (the writers), at e3e2f8c | d652b85, pinned first by bd53a47 | u2-7 copied u2-5's seed file handling for the origin, so "only no file is an absence" was decided twice. `keep`/`kept` (group.rs:235, :244) decide it now. No test held the rule: each reader, planted to read every failure as `None`, passed every test. new.rs's `an_unreadable_seed_or_origin_refuses_naming_its_file` fails on each plant. |
+| 21 | 5 (budget), 10 | crates/svrngs/src/identity.rs:149-235 and crates/svrngs/src/link.rs:265-379, at e3e2f8c; scripts/lean_check.py:33 | caa377b | Forked with their test modules inline, which lean_check counts as product code (151 lines). This is the case DESIGN.md:433-436 had u2-1 move out of the core. They are now `identity_tests.rs` and `link_tests.rs`: 10 tests before and after, and each block equal to its sibling but for whitespace. |
+| 22 | 8 | crates/svrngs/src/group.rs:102-115 (`Seed::id`, at e3e2f8c); crates/svrngs-core/src/sig.rs:73 (`field`) | b556e0b | The group id's length-prefixed framing was a third copy of `field`. The ids are unchanged: a scratch comparison with the old body agrees on 15 seeds and fails when the founder is planted unframed. |
+| 23 | 8, 10 (parse at the edge), 6 | crates/svrngs-node/src/redeem.rs:230 (`person: req.person.clone()` into the `Admit`), crates/svrngs/src/group.rs:41-56 (`Name::parse`: trimmed, 1..=64 bytes, no control characters); crates/svrngs-core/src/lib.rs:159-177 (`Person`, any string) | not fixed | A person's name has one rule, and only the joiner's command applies it (cli.rs:412 makes a `Person` from a parsed `Name`). The issuer's node writes whatever `person` a request carries into a signed `Admit`. An empty name, 10 KB, or terminal escape codes go into every copy of the record, and `svrngs` later prints people's names. Refusing them at the redeem route, or making `Person` parse, changes what is admitted, so it is not this audit's to make. The natural home is the core, where `Person` lives, so the node and the command share one parser. u2-8 rewrites redemption next. |
+| 24 | 8 | the "no change" rows in (2) | no change | Each is a function and its caller, a family of doors over one `write`, neighbouring test builders, tests stating their own cases, or one call written with its arguments. Nothing is decided twice. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code dry-report` exact tier; `code converge noun` | Still present: plant A at alpn.rs:46 / redeem.rs:280 for `fn`s at :47 / :281; `Alpn` at alpn.rs:11 (it is at :12); `Seed` at group.rs:70 (:71). |
+| I4 | 6 | `refresh` | Still present: "typescript: skipped (export failed)". svrngs has no TypeScript for it to export. |
+| I5 | 5, 7 | `code dry-report` near tier | Still present: a renamed byte-identical body is missed at the default 0.95 (`held_groups`, first at 0.9; `weigh`, first at 0.85), while the report says "No duplication found". |
+| I7 | 6 | `code converge noun` owner candidates | Still present, in another form: `Alpn` is defined and used only in svrngs-node, and the tool names svrngs-core, "covers 1/1", as its canonical owner. |
+| I8 | 6 | `code dry-report` scope | Still present: inline test modules and `*_tests.rs` siblings count as "first-party production" (link.rs's three tests above). |
+| I9 | 6, 7 | `code dry-report` near tier | New: one function split into two embedding chunks is reported as a near-clone of itself, `write` journal.rs:272–353 ~ `write` :354–440 (0.879). It is one `fn write` (journal.rs:272). |
+| I10 | 6 | `code dry-report` header | New: "654 function/method symbols" in all three scopes. The count is the corpus's, not the `--scope`'s; the next figure (273, 231, 62 locations) is the scope's. |
