@@ -363,6 +363,12 @@ pub mod guest;
 pub mod iroh;
 pub mod peer_wire;
 
+// Ring sync and its route, forked in U1 (docs/DESIGN.md §8, U1's inventory):
+// the round and the exchange (`commonwealth-rails`' `ring_sync`), and the sync
+// route (`ring_routes.rs`), which a caller serves as an `axum::Router`.
+pub mod ring_routes;
+pub mod ring_sync;
+
 #[cfg(test)]
 mod tests;
 #[cfg(test)]

@@ -9,7 +9,8 @@ as what it describes.
 svrngs owns the group's code, forked from commonwealth-ai's ring slice (DESIGN
 §4). The record and the journal on disk have landed; sync, the routes and the
 member door come next, forked the same way (DESIGN §8, U1-U3); of sync, the
-dialling and serving halves over iroh have landed. Nothing runs as a program yet.
+dialling and serving halves over iroh have landed, and the round and its
+route. Nothing runs as a program yet.
 
 ## Code map
 
@@ -64,6 +65,25 @@ stand-in, since they test the bridge, not what the acceptor serves;
 `tests/accept.rs` tests the acceptor.
 iroh is pinned at `=1.0.2`, and its tree locked at upstream's versions, so the
 fork runs on what upstream tested.
+
+Ring sync came over the same way: `ring_sync.rs` and `ring_sync/journal.rs`
+are `commonwealth-rails`' round, chunked exchange and responder (`answer`),
+and the seam the round reads (`RingSyncHost`, `RingSyncJournal`, implemented
+for `RingRail`); `ring_routes.rs` is its sync route, with `rail.rs`'s `err`.
+Their edits cut the mesh ties: `RoundMembers` loses its walk of the mesh
+(`RoundMembers::of`) and nothing builds one yet, so a round dials nobody until
+the register answers (DESIGN §8, U1); the mesh proof stamp the exchange
+carried goes; `RingSyncHost::transport` is the concrete `IrohTransport`, and a
+contact's addresses are its one `base_url`; `roster_names` reads iroh's
+`PublicKey`; `peer_client` is `pub`, since its one upstream caller,
+`RailsDaemon`'s `impl RingSyncHost`, did not come over, nor did the append
+wrapper that nudged the round. The route's live and checkpoint siblings stay
+behind, and with them `RingInbound`'s live buffer and origin registry; the
+route is an `axum::Router` where upstream's was a `RouteBundle`. Of the tests,
+`ring_sync/tests.rs` came over but for the derived-roster prune test, which
+installs upstream's `MembershipRosterSource` over a mesh, and
+`ring_routes/tests.rs` kept only its sync test; `round_tests.rs` is U1's to
+rewrite.
 
 **`crates/svrngs-engine`**: the `Engine` trait and QuickJS behind it — a fold
 engine that waits in DESIGN §9 until an app needs its state offline on a device
