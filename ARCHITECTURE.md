@@ -99,8 +99,9 @@ Their edits cut the mesh ties: `RoundMembers` loses its walk of the mesh
 reads from the register (DESIGN §8, U1); the mesh proof stamp the exchange
 carried goes; `RingSyncHost::transport` is the concrete `IrohTransport`, and a
 contact's addresses are its one `base_url`; `peer_client` is `pub`, since its one upstream caller,
-`RailsDaemon`'s `impl RingSyncHost`, did not come over, nor did the append
-wrapper that nudged the round. The route's live and checkpoint siblings stay
+`RailsDaemon`'s `impl RingSyncHost`, did not come over. The append
+wrapper that nudges the round (`ring_sync::append`) came over in U3 with the
+record API, which routes the append door through it. The route's live and checkpoint siblings stay
 behind, and with them `RingInbound`'s live buffer and origin registry; the
 route is an `axum::Router` where upstream's was a `RouteBundle`. Then it
 changed: the route reads the asker from the acceptor's `Dialer` extension,
@@ -122,7 +123,9 @@ with that key, so the key that signs a group's acts is the key iroh verifies
 when the node dials (DESIGN §8, "Four facts"), and holds the `RingRail`
 signed by it, an `IrohTransport` over the endpoint, the accept loop serving
 the sync route's router on the members' ALPN and the redemption route on
-the second, and the round, which runs at start and every sixty seconds
+the second, and the round, which runs at start, every sixty seconds and at
+once after an app's append (one `Notify`, held by the round and the record
+API)
 (`Node::round` runs one now; `Node::sync_with` runs one exchange with a
 peer the register may not name yet).
 

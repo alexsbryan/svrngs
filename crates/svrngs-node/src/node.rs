@@ -87,8 +87,8 @@ impl Node {
     /// answering a link's ask with the seed `seeds` reads, and serving the
     /// record to this computer's apps on `api`, which must be loopback
     /// ([`crate::api`]; port `0` takes any free one, [`Node::api_addr`]).
-    /// The round runs once now and then every [`DEFAULT_RING_SYNC_INTERVAL`];
-    /// nothing nudges it yet.
+    /// The round runs once now, then every [`DEFAULT_RING_SYNC_INTERVAL`],
+    /// and at once after an app's append.
     pub async fn start(
         data_dir: PathBuf,
         key: SigningKey,
@@ -105,7 +105,19 @@ impl Node {
         let rail = Arc::new(RingRail::new(&data_dir, Arc::new(key)));
         // Bound before the endpoint, so a refused address leaves no endpoint
         // dropped open.
-        let api = crate::api::serve(RailApi { rail: rail.clone() }, api).await?;
+        // One nudge, the round's, which the append door fires so a write
+        // goes now rather than at the next interval: upstream built one
+        // (`lib.rs:421`) and handed it to the round and the door; until u3-2
+        // the node built one for the round alone.
+        let nudge = Arc::new(Notify::new());
+        let api = crate::api::serve(
+            RailApi {
+                rail: rail.clone(),
+                nudge: nudge.clone(),
+            },
+            api,
+        )
+        .await?;
         let endpoint = build_relayed_endpoint(
             secret,
             Alpn::ALL.iter().map(|a| a.bytes().to_vec()).collect(),
@@ -138,11 +150,7 @@ impl Node {
             endpoint,
             actor,
         });
-        let round = spawn_ring_sync_loop(
-            host.clone(),
-            DEFAULT_RING_SYNC_INTERVAL,
-            Arc::new(Notify::new()),
-        );
+        let round = spawn_ring_sync_loop(host.clone(), DEFAULT_RING_SYNC_INTERVAL, nudge);
         Ok(Self {
             host,
             api,

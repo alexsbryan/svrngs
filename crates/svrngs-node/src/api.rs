@@ -32,7 +32,7 @@ pub fn router(api: RailApi) -> Router {
     Router::new()
         // The ring rail's doors (FIVE_PROGRAMS fp-44): durable append and
         // the log. The bodies mirror the daemon's `routes_rail` doors.
-        .route("/v1/rail/append", post(crate::rail::append))
+        .route("/v1/rail/append", post(crate::ring_sync::append))
         .route("/v1/rail/log", get(crate::rail::log))
         // svrngs: the group's people with their keys, from the register
         // (DESIGN §3), so an app needs no second source.

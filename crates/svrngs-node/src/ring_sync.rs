@@ -31,8 +31,8 @@
 //! affordable for a latency-sensitive writer — `RailsDaemon::ring_nudge`
 //! starts a round when the append door signs onto a journal or a member comes
 //! back Online, so the sixty seconds
-//! is a ceiling on idleness rather than on a write. (svrngs: nothing nudges
-//! until U3's record API; the round runs on its interval, DESIGN §8.)
+//! is a ceiling on idleness rather than on a write. (svrngs: the record
+//! API's append door nudges, [`append`]; nothing else does yet.)
 //!
 //! # The exchange
 //!
@@ -171,8 +171,8 @@ pub struct RoundOutcome {
 /// and the wrong one for "I just wrote something", and the two do not have to
 /// be the same number: the nudge starts a round now, and the round is the same
 /// round. **Nothing about the sender census changes** — the pump does not talk
-/// to a peer, it asks this loop to. (svrngs: none of those writers exists yet,
-/// so nothing fires it until U3's record API.)
+/// to a peer, it asks this loop to. (svrngs: of those writers, the record
+/// API's append door alone exists, [`append`].)
 pub fn spawn_ring_sync_loop(
     host: Arc<Host>,
     interval: Duration,
@@ -702,6 +702,26 @@ pub fn peer_client() -> Result<&'static reqwest::Client, &'static str> {
         })
         .as_ref()
         .map_err(String::as_str)
+}
+
+/// `POST /v1/rail/append`, then wake the round: an act this node just signed
+/// is the one that most needs to go, and sixty seconds is the cadence for
+/// anti-entropy, not for a write (the daemon's `ring_write_nudge`, here).
+/// A refused append wakes nothing. (svrngs: the nudge is the one the node
+/// builds for its round, held by the record API's state, `RailApi`, where
+/// upstream's was `RailsDaemon::ring_nudge`.)
+pub async fn append(
+    axum::extract::State(api): axum::extract::State<crate::rail::RailApi>,
+    query: axum::extract::Query<crate::rail::RailQuery>,
+    body: axum::Json<serde_json::Value>,
+) -> axum::response::Response {
+    let nudge = api.nudge.clone();
+    let answer = crate::rail::append(axum::extract::State(api), query, body).await;
+    if answer.status().is_success() {
+        nudge.notify_one();
+        info!(target: "rails", "ring sync: an append woke the round");
+    }
+    answer
 }
 
 #[cfg(test)]

@@ -41,11 +41,13 @@ use crate::{
     admit, Compaction, Ed25519Verifier, Person, RailAct, RailError, RingJournal, RingRail,
 };
 
-/// What the doors read: the journals. (Upstream's handlers read them from
-/// `RailsDaemon`, which did not come over, DESIGN §8.)
+/// What the doors read: the journals, and the nudge that wakes the round
+/// after an append ([`crate::ring_sync::append`]). (Upstream's handlers read
+/// them from `RailsDaemon`, which did not come over, DESIGN §8.)
 #[derive(Clone)]
 pub struct RailApi {
     pub rail: Arc<RingRail>,
+    pub nudge: Arc<tokio::sync::Notify>,
 }
 
 // ── The doors ────────────────────────────────────────────────
