@@ -1,7 +1,7 @@
 # Demos
 
-Each demo in `docs/DESIGN.md` §8 has a run-of-show here, `<demo>.md`, written
-before its first run, and every run leaves one record in
+Each demo in `docs/DESIGN.md` §8 gets a run-of-show here, `<demo>.md`, written
+before its first run — none is written yet — and every run leaves one record in
 `runs/<demo>/<date>.json`. A run nobody recorded did not happen. The script
 that reads the records lands with the first demo.
 

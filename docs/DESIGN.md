@@ -3,9 +3,10 @@
 > **Normative, 2026-10-03.** This is what svrngs is building now, and the only
 > design in force. Where code and this file disagree, one of them is wrong; fix
 > it in the same commit. The design before the fork — the app SDK and its
-> sandbox, the TV path, the chat bot, nine red-team rounds on the register — is
-> this file at tag `e0-bot`; mine it for the rows of §9, never build from it
-> directly. The record of why — rationale, prior art, history — is
+> sandbox, the TV path, E0's chat bot, nine red-team rounds on the register —
+> is this file at tag `e0-bot` (it opens with a "Direction" section over a body
+> it contradicts, the misstep of §2.4). Build from it only what a §8 unit
+> names. The record of why — rationale, prior art, history — is
 > commonwealth-ai's `docs/RING_APP_LIBRARY.md`, cited as LIB §n. A path in
 > backticks that is not in this repository is in commonwealth-ai.
 
@@ -87,8 +88,8 @@ the group's journal and reads them back over a loopback API on its own node;
 every member's copy holds them. An app may keep its own state instead; the
 group does not care.
 
-**Joining.** `svrngs ring new` makes a group and a link; `svrngs join <link>`
-puts a person's computer in it. A browser with nothing installed comes next: a
+**Joining.** `svrngs new <name>` makes a group and prints its link; `svrngs
+join <link>` puts a person's computer in it. A browser with nothing installed comes next: a
 stock Chrome tab running iroh in wasm has dialled a live node through the relay
 and read the record (commonwealth-ai `ralph/DECISIONS.md`, browser-dial-2,
 `HTTP/1.1 200 OK`); what it lacks is a runtime that renders apps through that
@@ -109,18 +110,24 @@ setup code is in `bridge/`. The core never knows a chat exists.
 | **commonwealth-ai** | the mesh for one owner's machines, and the ring code svrngs forked | nothing at runtime; `scripts/ports.py` pairs each forked file with its original |
 
 **The fork** (operator, 2026-10-03, over shipping `cw-rails` as a sidecar):
-svrngs owns the group's code, forked from commonwealth-ai's ring slice — about
-5k lines: the record (`commonwealth-rail-core`), the journal
-(`commonwealth-rail` and `oplog`), ring sync and the ring routes
-(`commonwealth-rails/src/ring_sync`, `ring_routes`), the member door
-(`commonwealth-transport/src/iroh_identity_forward.rs`) and the sync bodies
-(`sovereign-peer-wire`). How a piece comes over:
+svrngs owns the group's code, forked from commonwealth-ai's ring slice at
+`e1a43bcd2` — about 5k lines: the record (`commonwealth-rail-core`), the
+journal (`commonwealth-rail` and `oplog`), ring sync and the ring routes
+(`commonwealth/crates/commonwealth-rails/src/ring_sync`, `ring_routes.rs`),
+the iroh acceptor they sit behind (`acceptor.rs` there), the member door
+(`commonwealth/crates/commonwealth-transport/src/iroh_identity_forward.rs`)
+and the sync bodies (`sovereign/crates/sovereign-peer-wire`). How a piece
+comes over:
 
-- **Unchanged first, then ours.** A piece lands as upstream had it — its
-  edition, rustfmt policy and clippy allowances kept, its paths rewritten, a
-  line `ported from commonwealth-ai <path>@<commit>` on every file — and only
-  then changes, in commits of its own (ARCH 2). So a diff against upstream
-  always shows only what svrngs changed.
+- **Behaviour kept first, then changed.** A piece lands with only the edits it
+  needs to build here — paths rewritten, a small dependency inlined, a test
+  re-asserted without a crate we do not carry — each named in its commit and in
+  `ARCHITECTURE.md`; its edition, rustfmt policy and clippy allowances stay
+  upstream's, and every file carries `ported from commonwealth-ai
+  <path>@<commit>`. Behaviour changes only in later commits (ARCH 2), so a diff
+  against upstream shows what svrngs changed. Where upstream code is tied to
+  something we do not fork — the mesh — the tie is cut in the unit that
+  replaces it, and that unit's commits say which lines changed meaning.
 - **A fix shows its twin.** commonwealth-ai keeps `rail-core` for its work
   plane and the door for its mesh. The two systems share no wire, so the
   copies are a fork and may diverge; `scripts/ports.py` lists each pair and
@@ -143,14 +150,28 @@ svrngs owns the group's code, forked from commonwealth-ai's ring slice — about
 
 Held to `docs/principles/RUST_ARCH.md`: types encode the domain, ownership
 encodes the architecture, I/O lives at the edge. Parse, don't validate; closed
-sets are enums; one writer per journal, with no shared mutable state; a trait
+sets are enums; one writer per journal, and no shared mutable state; a trait
 only at a real boundary; `thiserror` in the crates, `anyhow` only in the
-command. Every decision branch traces at debug.
+command and the app. Every decision branch traces at debug; the engine, which
+is pure, returns its decisions for its caller to trace. New code is held to
+these from its first line; forked code is held to them as it becomes ours.
+Upstream's shape stays until a unit changes it: the node's map of open
+journals sits behind a `Mutex`, which an actor per journal replaces.
 
 **Lean, and kept lean.** `svrngs-core` stays under 2,500 lines of code and the
-repository under 12,000, tests apart (`scripts/lean_check.py`); a raise is the
-operator's, with the reason in the commit. `ARCHITECTURE.md` maps what exists
-and changes in the commit that changes it.
+repository under 12,000, tests and `apps/` apart (`scripts/lean_check.py`);
+a raise is the operator's, with the reason in the commit. `svrngs-core` stands
+at 2,297, so the rules of §6 will ask for one. `ARCHITECTURE.md` maps what
+exists and changes in the commit that changes it.
+
+**Words.** The *record* is a group's signed acts; its *journal* is the file
+that holds them on one computer; the *register* is the part of the record that
+says who is in the group — its `Admit` and `Remove` acts and their fold.
+Forked code keeps upstream's words until a unit renames them: *ring* and
+*namespace* for a group, *roster* for a seed list of members, and names such as
+`commonwealth-rail` and `MeshStore` in its comments. Upstream comments cite
+ARCH principles by old section number (ARCH §18.1); the table at the end of
+`docs/principles/ARCH_PRINCIPLES.md` maps them.
 
 ## 6. The record
 
@@ -162,26 +183,32 @@ only what is missing. The roster that seeds it comes from a registered source,
 a file, or a default, which upstream set to the mesh.
 
 **Where it is going**, by operator decision, each rule landing as an edit to
-the fork when the unit that needs it starts (§8). The full rules as designed
-are §D5 C1 at tag `e0-bot`.
+the fork with the unit named beside it (§8). The full rules as designed are at
+tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
 
-- **The group decides who is in it.** Membership comes only from the group's
-  own register — never a mesh, a roster file or a list a door keeps.
-- **A grow-only set, linked like git.** Each act names its author's previous
+- **The group decides who is in it** (U1). Membership comes only from the
+  group's own register — never a mesh, a roster file or a list a door keeps.
+- **A grow-only set, linked like git** (U2, before any key from outside the
+  operator's own computers). Each act names its author's previous
   act; a copy holds an act only with its parent, so copies converge by union.
   Two acts on one parent are a fork, and forks void nothing.
-- **Removal has one decider.** Anyone may ask to remove anyone; the group's
+- **Removal has one decider** (U6). Anyone may ask to remove anyone; the group's
   keeper — one person's key, handed on by an act — sequences each request. A
   removed key cannot remove. There is no recovery inside a group.
 - **Leaving is cheap.** A group's whole state is a directory every member's
   computer holds. A group that goes wrong refounds from any copy, within
   hours, without whoever it leaves out (operator: "with dotfile elegance").
-- **An invite admits one person once:** a one-time key in the link; redeeming
-  it writes one `Admit`, co-signed by the new key.
-- **Ids cover everything signed:** the id hashes the actor, seq, previous act,
-  timestamp and body, and the signature is over the id (design finding H5). A
-  removal names the removed key's acts by hash, never by position or time
-  (finding D1).
+- **An invite admits one person once** (U2): a one-time key in the link;
+  redeeming it writes one `Admit`, co-signed by the new key.
+- **Ids cover everything signed** (U2): the id hashes the actor, seq, previous
+  act, timestamp and body, and the signature is over the id. Today the
+  timestamp is outside the id, so one act can be copied with two timestamps and
+  folded in two orders, and the previous act is outside the signature, so a
+  relaying node can rewrite it. A removal names the removed key's acts by hash,
+  never by position or time (U6): today the fold ignores `through_seq` and
+  cuts the key at the `Remove`'s place in the order
+  (`crates/svrngs-core/src/membership.rs:153`), so a backdated act slips under
+  the cut.
 - **A signing key per person per group**, so a cut in one group touches no
   other; an endpoint key per device.
 
@@ -195,13 +222,23 @@ is an optional neighbour for local AI; it holds no group state.
 
 ## 8. Order of work
 
-Each unit names the demo it moves. The first three fork the rest of the ring
-slice; each lands unchanged, then becomes ours.
+U1-U3 move Demo A, U4-U6 move Demo B. The first three fork the rest of the
+ring slice (§4).
+
+**Starting U1.** List every crate `ring_sync`, `ring_routes.rs` and
+`acceptor.rs` import at `e1a43bcd2` — `commonwealth-core`,
+`commonwealth-transport`, `commonwealth-media`, `commonwealth-discovery`,
+`host-kit`, `oicp-types`, `sovereign-peer-wire` — and decide per import: fork the piece it needs, or
+replace it with the register. The list and the decisions are U1's first commit.
+Until U2, a test admits members by writing `Admit` acts directly, as upstream's
+`commonwealth/crates/commonwealth-rail/examples/stage_member_act.rs` does, and
+runs two nodes in one process with no relay, as upstream's
+`commonwealth/crates/commonwealth-rails/tests/ring_round.rs` does.
 
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
-| U1 a group is not a mesh | ring sync and the ring routes forked into `svrngs-node`; then the register decides who may connect and who is synced, where upstream asked the mesh (`commonwealth-rails/src/`: `acceptor.rs:47-61`, `ring_sync/journal.rs:153-164`, the default roster at `lib.rs:404`) | a node in the group but no mesh syncs; a node outside the group is refused |
-| U2 join by link | `svrngs ring new` and `svrngs join <link>`; redeeming writes the `Admit` | one redemption admits one person to one group; a reused link is refused |
+| U1 a group is not a mesh | ring sync and the ring routes forked into `svrngs-node`; the register decides who may connect and who is synced, where upstream asked the mesh (`commonwealth/crates/commonwealth-rails/src/` at `e1a43bcd2`: `acceptor.rs:47-61`, `ring_sync/journal.rs:153-164`, the default roster at `lib.rs:404`) | a node in the group but no mesh syncs; a node outside the group is refused |
+| U2 join by link | `svrngs new <name>` and `svrngs join <link>`; redeeming writes the `Admit`; acts linked by their previous act, ids over everything signed (§6) | one redemption admits one person to one group; a reused link is refused |
 | U3 share an app | the member door forked; `svrngs share <port>`; Expenses as a small localhost web app over the record | the app sees the verified person; a header the client typed is stripped |
 
 **Demo A — two computers, one group** (after U3). Sam makes "the house" and
@@ -211,13 +248,13 @@ pizza, and it shows under Alex's name on both computers.
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
 | U4 the Discord door | the adapter makes a group for a channel and posts its link, from the setup code in `bridge/` | the core imports no adapter |
-| U5 the browser | the guest channel on the member door; a runtime that renders an app through the dial — fetch, POST, streaming | a stock browser tab opens a shared app and writes to the record |
+| U5 the browser | the guest channel — the iroh channel a browser with no key dials, upstream's `cwth/guest/0` — on the member door; a runtime that renders an app through the dial — fetch, POST, streaming | a stock browser tab opens a shared app and writes to the record |
 | U6 removal | the keeper and its requests (§6) | a removed key's later acts count nowhere |
 
 **Demo B — split the pizza** (after U6). Five people in a Discord channel who
 have never heard of svrngs click the link, and four of them settle an expense
-within three minutes, with no account created and no key prompt (the N+1
-test).
+within three minutes, with no account created and no key prompt — the N+1
+test: N strangers and one person who knows the system.
 
 After Demo B the classes come one at a time, each with its reference app:
 lent services (Films, on Jellyfin), group compute (Ask, on members' svrn
@@ -234,7 +271,7 @@ spin-off groups (Event).
 | a TV in the room (AirPlay, Cast, DLNA from the member door) | Films passes its bars |
 | a lent service's credential masked in the door | the first service lent with a credential |
 | group compute: asks leased by members' computers and answered as acts | Ask is next |
-| files beside the record; seals; the live channel | the reference app that needs each |
+| files beside the record; sealed payloads, readable only by named people; the live channel | the reference app that needs each |
 | a second chat adapter, and the trait it earns | a group on another chat asks |
 | compacting the journal | a journal grows past a size measured to matter |
 | another device for the same person | someone asks |
@@ -252,7 +289,7 @@ By the operator, 2026-10-03:
   a cw-rails sidecar, not a rewrite;
 - removal: anyone may ask, a removed key cannot remove, one keeper sequences,
   no recovery inside a group; leaving is cheap, so refounding is the exit;
-- no push; anyone in a group may install an app;
+- no push notifications; anyone in a group may install an app;
 - the name is svrngs, for now; machinery waits until an experiment earns it.
 
 ## 11. Risks

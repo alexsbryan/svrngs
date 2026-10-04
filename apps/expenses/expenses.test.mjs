@@ -1,7 +1,7 @@
 // ported from commonwealth-ai sovereign/apps/ring-doc/expenses.test.mjs@96261aa71
 // The money rules, pinned. Each name says which mistake loses money. What is
 // not tested here is order: every copy folding the same acts in the same order
-// is the record's property (svrngs-core `fold`), not the reducer's. The laws
+// is the record's property (svrngs-core `admit`), not the reducer's. The laws
 // every reducer holds are `laws.test.mjs`.
 
 import assert from 'node:assert/strict';

@@ -3,9 +3,9 @@
 // is the app; the runtime folds its acts and has never heard of an expense.
 //
 // The runtime hands `reduce` this app's acts, in one order every copy computes,
-// with voided ones gone (DESIGN C1, C4). Each act is `{id, ts, by, op}`: `by`
-// is the chat speaker the act speaks for, or null when no one in the chat
-// wrote it. So a reducer cannot disagree with another copy about which acts it
+// with voided ones gone. Each act is `{id, ts, by, op}`: `by` is the person
+// the act speaks for — in E0 (tag e0-bot) the chat speaker, in the localhost
+// app of DESIGN U3 the verified person — or null when no one did. So a reducer cannot disagree with another copy about which acts it
 // saw or in what order. What it CAN get wrong is the arithmetic, which is why
 // the arithmetic is here, in one file, with tests (`expenses.test.mjs`) and
 // the laws (`laws.test.mjs`).

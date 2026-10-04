@@ -1,5 +1,5 @@
 // The Discord adapter: discord.js 14 on the gateway, so it only dials out
-// (DESIGN C5). Everything Discord-specific lives here, behind the five calls
+// (tag e0-bot, DESIGN C5; next, the Discord door, DESIGN U4). Everything Discord-specific lives here, behind the five calls
 // bridge.mjs names. The application needs the Server Members and Message
 // Content intents switched on in Discord's developer portal.
 

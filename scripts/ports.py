@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""List every port from commonwealth-ai beside its original (DESIGN D2b).
+"""List every file forked from commonwealth-ai beside its original (DESIGN §4).
 
 A port carries a line `ported from commonwealth-ai <path>@<commit>`. For each,
 this prints where the port lives, what it came from, and the original's state:

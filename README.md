@@ -11,6 +11,16 @@ exists today: `ARCHITECTURE.md`. How agents work here: `AGENTS.md`.
 
 Nothing runs yet. The group's record and journal have landed, forked from
 commonwealth-ai; sync, joining by link and sharing an app come next (DESIGN
-§8). E0's Discord bot, which ran before the fork, is at tag `e0-bot`.
+§8). E0 — the first experiment, a Discord bot that settled expenses in the
+chat — ran before the fork and is at tag `e0-bot`.
 
-To check the tree: `sh scripts/check.sh`.
+## Set up
+
+- Rust 1.85 or later (edition 2024), with rustfmt and clippy.
+- Node.js 20 or later, and `npm ci` in `bridge/` (its tests need discord.js).
+- A checkout of commonwealth-ai at `~/dev/commonwealth-ai`, or its path in
+  `COMMONWEALTH_AI`: `scripts/principles_check.py` compares the pinned
+  principles with it, and `scripts/ports.py` compares each forked file with
+  its original.
+
+Then `sh scripts/check.sh` — every step passes, or the tree is not done.

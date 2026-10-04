@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""svrngs stays standalone and lean (docs/DESIGN.md D2a, D2b). Exit 0 holds, 1 broken.
+"""svrngs stays standalone and lean (docs/DESIGN.md §4, §5). Exit 0 holds, 1 broken.
 
 1. Cargo.lock names no commonwealth-ai or sovereign crate.
 2. svrngs-core and svrngs-engine declare no I/O dependency.
@@ -9,7 +9,7 @@
    svrngs-engine (the core is synchronous).
 4. Lines of code — not blank, not a comment, not a test — stay under budget:
    svrngs-core under 2,500, the whole repository under 12,000 — scripts and the
-   bridge included; apps/ bundles and installed packages (any node_modules/) apart.
+   bridge included; apps/ and installed packages (any node_modules/) apart.
 """
 import re
 import sys

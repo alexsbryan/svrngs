@@ -1,14 +1,14 @@
-//! svrngs-engine: the fold engine (DESIGN C4). An app is a module of pure
-//! exports — `init`, `reduce`, `propose`, `say`, `due` — and the runtime
-//! reaches them only through [`Engine`], whose contract is the SDK's: JSON in
-//! and out, the five laws and the sixth, and the budgets.
+//! svrngs-engine: the fold engine, waiting (DESIGN §9) until an app needs its
+//! state offline on a device that is not its host. It was built for E0, the
+//! design at tag `e0-bot` (C4), where an app was a module of pure exports —
+//! `init`, `reduce`, `propose`, `say`, `due` — reached only through
+//! [`Engine`]: JSON in and out, the five laws and the sixth, and the budgets.
 //!
 //! [`QuickJs`] is the first implementation: QuickJS embedded in the host,
 //! with what would let two copies disagree removed before any app code runs.
 //! The wasm build under wasmtime, with metering inside its hashed bytes and
-//! fold segments, is the second, and waits for strangers' code (DESIGN D7
-//! E3.3, D8). The engine never logs; it returns outcomes, and the host's
-//! handler runner says what it did with them.
+//! fold segments, is the second, and waits for strangers' code. The engine
+//! never logs: it is pure, and returns outcomes for its caller to trace.
 
 mod quickjs;
 

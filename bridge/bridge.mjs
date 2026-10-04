@@ -1,9 +1,8 @@
-// The bridge's core (DESIGN C5): a chat platform behind five calls, and the
-// host's loopback surface behind six. It keeps no state of its own and never
-// loads app code (crates/svrngs/tests/bridge_holds_no_app.rs holds it to that):
-// a command or a tap goes to the host's handler runner, and what comes back is
-// posted as it is. The runner folds only what the chat wrote, so nothing a key
-// wrote reaches the chat (crates/svrngs/tests/origin_gate.rs).
+// E0's bridge core (tag e0-bot, DESIGN C5): a chat platform behind five calls,
+// and a host's loopback surface behind six. The host it talked to is deleted;
+// this file is kept for the five-call seam and the log that setup.mjs and
+// discord.mjs use, until the Discord door (DESIGN U4) replaces it. It keeps no
+// state of its own and never loads app code.
 //
 // The adapter's five calls:
 //   connect({joined, left, input})  open the platform; deliver its events

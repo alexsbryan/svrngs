@@ -10,16 +10,19 @@ names the commit each came from):
 - `docs/principles/RUST_ARCH.md` — types encode the domain, ownership encodes
   the architecture, I/O lives at the edge.
 
-Where this file and those disagree, they win. Work is the next unit in DESIGN
-§8; a unit names the demo it moves, and one that moves none waits.
+Where this file and those disagree, they win. Forked code cites principles by
+their old section numbers (ARCH §18.1); the table at the end of
+`ARCH_PRINCIPLES.md` maps them. Work is the next unit in DESIGN §8; each unit
+there moves the demo that follows it, and work that moves no demo waits.
 
 ## What they mean here
 
 1. **Glassbox.** Every decision branch traces at debug, the core's refusals
-   included.
+   included; the engine, which is pure, returns its decisions for its caller
+   to trace.
 2. **Don't whack moles.** Instrument and reproduce before a fix. A move that
    preserves behaviour is its own commit, apart from any change in behaviour —
-   a forked piece lands unchanged, then changes.
+   a forked piece lands with its behaviour kept, then changes (DESIGN §4).
 3. **Write for the next reader.** A doc changes in the commit that changes what
    it describes; a comment says why, in a way someone can check. A change of
    direction rewrites `docs/DESIGN.md`; it never adds a section that overrides
@@ -38,12 +41,13 @@ Where this file and those disagree, they win. Work is the next unit in DESIGN
 10. **Structural, not remembered** — and RUST_ARCH: parse, don't validate; the
     core is pure and synchronous; ownership is a tree, no shared mutable state;
     a trait only at a real boundary; `thiserror` in crates, `anyhow` only in the
-    `svrngs` command.
+    `svrngs` command and the app. New code is held to this from its first line,
+    forked code as it becomes ours (DESIGN §5).
 11. **The inventory outranks the plan.** Before writing a type or module, look
     here, then in commonwealth-ai's ring code. What exists there is forked, not
-    rewritten and never linked: it lands unchanged with `ported from
-    commonwealth-ai <path>@<commit>` on every file, and `scripts/ports.py` lists
-    the pairs (DESIGN §4).
+    rewritten and never linked: it lands with `ported from commonwealth-ai
+    <path>@<commit>` on every file, and `scripts/ports.py` lists the pairs
+    (DESIGN §4).
 12. **Draw the line by ownership.** A group is not a mesh; app-specific code
     lives only in `apps/`; a chat adapter lives in its own package.
 
