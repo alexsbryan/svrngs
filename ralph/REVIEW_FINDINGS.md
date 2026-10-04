@@ -706,3 +706,9 @@ two bodies (#26), and the door's `person_of` was the acceptor's question
 Erratum: daa0b71's body says "twenty-six new nouns". The list in (3) has
 twenty-seven: twenty-five production nouns and two test nouns. Of the
 production nouns, twenty-four have one definition and `Refusal` had two.
+
+## u3-8-demo-dry (2026-10-04): a door test that fails under load
+
+| # | principle | site | fixed in | finding |
+|---|---|---|---|---|
+| 33 | 2, 7 | crates/svrngs-node/tests/door/main.rs:574 (`a_member_asks_what_is_lent_and_how_many_use_it_now`), crates/svrngs-node/src/door/limit.rs:54-57 (`guess`), crates/svrngs-node/src/door.rs:503, at 4048cbb | not fixed: u3-8 changes no product code | `scripts/check.sh` failed its tests step in 2 of 3 runs on 2026-10-04 with no product change, each time `bo is using it while it streams`, `left: 0`, `right: 1`. Alone it passed 6 of 6, and the door suite alone 4 of 4. Four door binaries run at once (`for i in 1 2 3 4; do target/debug/deps/door-<hash> -q & done; wait`) failed 1 of 4 the same way. The likely cause is unconfirmed, since the door tests install no tracing subscriber: the in-process endpoints also learn this host's LAN address (192.168.1.4 in the dry run's node log), and when iroh selects that path, `guess` takes the viewer to be home and the door does not count them. The next step is to trace the selected path in the test, and then either pin the test's endpoints to loopback or count a guessed-home person in the people-using figure the list reports. Which one is the operator's call or the next door row's. |
