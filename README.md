@@ -4,6 +4,10 @@ A group's shared state — money, plans, files, a library, its own AI — kept o
 devices of the people in it, entered from the chat they already use. The
 design it is built to is `docs/DESIGN.md`.
 
+The steps below run E0's Discord bot, which the design set aside on 2026-10-03
+for commonwealth's `cw-rails` as a sidecar (DESIGN, Direction). They still work
+and will be replaced when the first demo on the sidecar passes.
+
 ## Run it
 
 You need macOS or Linux, Rust (https://rustup.rs), Node.js 20 or later

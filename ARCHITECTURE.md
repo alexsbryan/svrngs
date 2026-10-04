@@ -4,6 +4,11 @@ The map of svrngs as it is built today. The design it is built toward is
 `docs/DESIGN.md`. This file says what exists, and it changes in the same commit
 as what it describes.
 
+**Set aside, 2026-10-03.** Everything below is E0's bot, which the design's
+Direction sets aside: the group now runs on commonwealth's `cw-rails`, shipped
+as a pinned sidecar binary (DESIGN D3). The code stays, built on by nothing,
+until the first demo on the sidecar passes and deletes it.
+
 ## Bird's eye
 
 A group's state is one journal: a grow-only set of signed acts in the group's
