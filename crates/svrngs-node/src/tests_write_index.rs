@@ -40,8 +40,8 @@ fn a_batch_append_continues_the_counter_contiguously() {
     );
 
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
-    assert!(f.is_complete(), "{:?}", f.gaps);
-    assert_eq!(f.ops.len(), 5);
+    assert!(f.is_complete(), "{:?}", f.gaps());
+    assert_eq!(f.ops().len(), 5);
 }
 
 /// **A write reads what the log gained since the last one, not the whole log**

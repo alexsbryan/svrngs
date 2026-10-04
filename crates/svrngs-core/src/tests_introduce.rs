@@ -58,8 +58,14 @@ fn a_roster_row_resolves_to_the_signed_op_that_introduced_it() {
         }),
     );
 
-    let a = admit(&[intro.clone()], &[], &roster, NS, &Ed25519Verifier);
-    assert!(a.is_complete(), "{:?}", a.gaps);
+    let a = admit(
+        &crate::ActSet::of(&[intro.clone()]),
+        &[],
+        &roster,
+        NS,
+        &Ed25519Verifier,
+    );
+    assert!(a.is_complete(), "{:?}", a.gaps());
 
     let VouchStatus::Traced {
         op,
@@ -67,9 +73,9 @@ fn a_roster_row_resolves_to_the_signed_op_that_introduced_it() {
         by_actor,
         at,
         reason,
-    } = trace(&roster, &a.ops, &p("dee"), &dee)
+    } = trace(&roster, a.ops(), &p("dee"), &dee)
     else {
-        panic!("{}", trace(&roster, &a.ops, &p("dee"), &dee));
+        panic!("{}", trace(&roster, a.ops(), &p("dee"), &dee));
     };
     assert_eq!(op, intro.id);
     assert_eq!(by, p("alex"));
@@ -80,7 +86,7 @@ fn a_roster_row_resolves_to_the_signed_op_that_introduced_it() {
     // And the founder is UNKNOWN rather than traced. A row nobody vouched for
     // is not a failure of this rung; counting it as traced would be.
     assert_eq!(
-        trace(&roster, &a.ops, &p("alex"), &actor_of(&key(1))),
+        trace(&roster, a.ops(), &p("alex"), &actor_of(&key(1))),
         VouchStatus::Unknown
     );
 }
@@ -107,16 +113,22 @@ fn a_warrant_naming_an_op_admission_refused_does_not_resolve() {
         }),
     );
 
-    let a = admit(&[intro.clone()], &[], &roster, NS, &Ed25519Verifier);
+    let a = admit(
+        &crate::ActSet::of(&[intro.clone()]),
+        &[],
+        &roster,
+        NS,
+        &Ed25519Verifier,
+    );
     assert!(
-        a.gaps
+        a.gaps()
             .iter()
             .any(|g| matches!(g, RailGap::UnknownSigner { .. })),
         "the fixture must actually be refused: {:?}",
-        a.gaps
+        a.gaps()
     );
     assert_eq!(
-        trace(&roster, &a.ops, &p("dee"), &dee),
+        trace(&roster, a.ops(), &p("dee"), &dee),
         VouchStatus::NotHeld { op: intro.id }
     );
 }
@@ -138,9 +150,15 @@ fn a_warrant_naming_an_ordinary_act_does_not_resolve() {
             at: 200,
         }),
     );
-    let a = admit(&[op.clone()], &[], &roster, NS, &Ed25519Verifier);
+    let a = admit(
+        &crate::ActSet::of(&[op.clone()]),
+        &[],
+        &roster,
+        NS,
+        &Ed25519Verifier,
+    );
     assert_eq!(
-        trace(&roster, &a.ops, &p("dee"), &dee),
+        trace(&roster, a.ops(), &p("dee"), &dee),
         VouchStatus::NotAnIntroduction { op: op.id }
     );
 }
@@ -163,9 +181,15 @@ fn a_warrant_naming_an_introduction_of_another_key_does_not_resolve() {
             at: 200,
         }),
     );
-    let a = admit(&[intro.clone()], &[], &roster, NS, &Ed25519Verifier);
+    let a = admit(
+        &crate::ActSet::of(&[intro.clone()]),
+        &[],
+        &roster,
+        NS,
+        &Ed25519Verifier,
+    );
     assert_eq!(
-        trace(&roster, &a.ops, &p("dee"), &dee),
+        trace(&roster, a.ops(), &p("dee"), &dee),
         VouchStatus::NamesAnother {
             op: intro.id,
             person: p("eve"),
@@ -202,14 +226,14 @@ fn an_introduction_voided_by_a_correction_stops_resolving() {
         }),
     );
     let a = admit(
-        &[intro.clone(), withdrawn],
+        &crate::ActSet::of(&[intro.clone(), withdrawn]),
         &[],
         &roster,
         NS,
         &Ed25519Verifier,
     );
     assert_eq!(
-        trace(&roster, &a.ops, &p("dee"), &dee),
+        trace(&roster, a.ops(), &p("dee"), &dee),
         VouchStatus::Withdrawn { op: intro.id }
     );
 }
@@ -245,18 +269,18 @@ fn a_key_vouching_for_itself_does_not_resolve() {
         }),
     );
     let a = admit(
-        &[circular.clone(), second_laptop],
+        &crate::ActSet::of(&[circular.clone(), second_laptop]),
         &[],
         &roster,
         NS,
         &Ed25519Verifier,
     );
     assert_eq!(
-        trace(&roster, &a.ops, &p("dee"), &dee),
+        trace(&roster, a.ops(), &p("dee"), &dee),
         VouchStatus::SelfVouch { op: circular.id }
     );
     assert!(
-        trace(&roster, &a.ops, &p("alex"), &alex2).is_traced(),
+        trace(&roster, a.ops(), &p("alex"), &alex2).is_traced(),
         "a second laptop vouched for by the first is not circular"
     );
 }
@@ -291,20 +315,20 @@ fn an_introducer_admitted_after_the_op_they_signed_does_not_resolve() {
         }),
     );
     let a = admit(
-        &[eve_intro.clone(), dee_intro],
+        &crate::ActSet::of(&[eve_intro.clone(), dee_intro]),
         &[],
         &roster,
         NS,
         &Ed25519Verifier,
     );
     assert!(
-        a.ops.iter().any(|o| o.id == eve_intro.id),
+        a.ops().iter().any(|o| o.id == eve_intro.id),
         "the op itself is admitted — the roster claims dee NOW, which is why \
          a present-tense check passes: {:?}",
-        a.gaps
+        a.gaps()
     );
     assert_eq!(
-        trace(&roster, &a.ops, &p("eve"), &eve),
+        trace(&roster, a.ops(), &p("eve"), &eve),
         VouchStatus::IntroducerNotClaimedYet {
             op: eve_intro.id,
             by_actor: dee,
@@ -332,9 +356,15 @@ fn a_row_whose_stored_signer_disagrees_with_the_op_does_not_resolve() {
             at: 200,
         }),
     );
-    let a = admit(&[intro.clone()], &[], &roster, NS, &Ed25519Verifier);
+    let a = admit(
+        &crate::ActSet::of(&[intro.clone()]),
+        &[],
+        &roster,
+        NS,
+        &Ed25519Verifier,
+    );
     assert_eq!(
-        trace(&roster, &a.ops, &p("dee"), &dee),
+        trace(&roster, a.ops(), &p("dee"), &dee),
         VouchStatus::DisagreesWithTheOp { op: intro.id }
     );
 }
@@ -386,9 +416,15 @@ fn a_roster_written_before_this_rung_reads_as_warrant_unknown() {
 fn admission_carries_an_introduction_without_reading_it() {
     let dee = actor_of(&key(4));
     let intro = introduce(&key(1), 200, 0, "dee", &dee, "sold me the drill");
-    let a = admit(&[intro.clone()], &[], &founder(), NS, &Ed25519Verifier);
-    assert!(a.is_complete(), "{:?}", a.gaps);
-    let op = &a.ops[0];
+    let a = admit(
+        &crate::ActSet::of(&[intro.clone()]),
+        &[],
+        &founder(),
+        NS,
+        &Ed25519Verifier,
+    );
+    assert!(a.is_complete(), "{:?}", a.gaps());
+    let op = &a.ops()[0];
     assert!(
         op.applies(),
         "no special case: it is a Record like any other"
@@ -469,15 +505,20 @@ fn every_row_written_through_the_introduction_path_traces_to_its_signer() {
         ops.push(op);
     }
 
-    let a = admit(&ops, &[], &roster, NS, &Ed25519Verifier);
-    assert!(a.is_complete(), "{:?}", a.gaps);
+    let a = admit(&crate::ActSet::of(&ops), &[], &roster, NS, &Ed25519Verifier);
+    assert!(a.is_complete(), "{:?}", a.gaps());
 
     let rows: Vec<(Person, String, VouchStatus)> = roster
         .members
         .iter()
         .flat_map(|(person, ks)| {
-            ks.iter()
-                .map(|k| (person.clone(), k.clone(), trace(&roster, &a.ops, person, k)))
+            ks.iter().map(|k| {
+                (
+                    person.clone(),
+                    k.clone(),
+                    trace(&roster, a.ops(), person, k),
+                )
+            })
         })
         .collect();
     let written_here: Vec<_> = rows
@@ -512,7 +553,7 @@ fn every_row_written_through_the_introduction_path_traces_to_its_signer() {
     // The founder is the denominator's honest exclusion: no warrant, not a
     // failure, and NOT counted as traced.
     assert_eq!(
-        trace(&roster, &a.ops, &p("alex"), &actor_of(&key(1))),
+        trace(&roster, a.ops(), &p("alex"), &actor_of(&key(1))),
         VouchStatus::Unknown
     );
 }
@@ -536,9 +577,15 @@ fn a_traced_row_renders_as_a_name_an_op_and_a_date() {
             at: 1_788_048_000,
         }),
     );
-    let a = admit(&[intro.clone()], &[], &roster, NS, &Ed25519Verifier);
+    let a = admit(
+        &crate::ActSet::of(&[intro.clone()]),
+        &[],
+        &roster,
+        NS,
+        &Ed25519Verifier,
+    );
     assert_eq!(
-        trace(&roster, &a.ops, &p("dee"), &dee).to_string(),
+        trace(&roster, a.ops(), &p("dee"), &dee).to_string(),
         format!(
             "introduced by alex, op {}, 2026-08-30 00:00 — sold me the drill",
             short_id(&intro.id.to_string())
@@ -546,7 +593,7 @@ fn a_traced_row_renders_as_a_name_an_op_and_a_date() {
     );
     // And the row nobody vouched for says so in words, not by being absent.
     assert_eq!(
-        trace(&roster, &a.ops, &p("alex"), &actor_of(&key(1))).to_string(),
+        trace(&roster, a.ops(), &p("alex"), &actor_of(&key(1))).to_string(),
         "warrant unknown — added before anyone had to say why"
     );
 }

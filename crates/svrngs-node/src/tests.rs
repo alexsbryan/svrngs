@@ -69,8 +69,8 @@ fn appending_assigns_contiguous_sequence_numbers_per_actor() {
     assert_eq!(op.kind.seq, 0);
 
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
-    assert!(f.is_complete(), "{:?}", f.gaps);
-    assert_eq!(f.ops.len(), 4);
+    assert!(f.is_complete(), "{:?}", f.gaps());
+    assert_eq!(f.ops().len(), 4);
 }
 
 /// A journal line is one flat JSON object — the envelope's fields and the
@@ -169,11 +169,11 @@ fn a_payload_with_no_canonical_form_is_a_malformed_line() {
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert_eq!(applied(&f), vec!["whole"]);
     assert!(
-        f.gaps
+        f.gaps()
             .iter()
             .any(|g| matches!(g, RailGap::MalformedLine { line: 2, .. })),
         "{:?}",
-        f.gaps
+        f.gaps()
     );
 }
 
@@ -230,13 +230,13 @@ fn an_admit_naming_no_person_is_a_gap_on_every_copy() {
             write_lines(&journal, &admit_line(&key(1), &joining, bad));
             let f = journal.admit(&r, &Ed25519Verifier).unwrap();
             assert!(
-                f.gaps.iter().any(|g| matches!(g,
+                f.gaps().iter().any(|g| matches!(g,
                     RailGap::MalformedLine { line: 1, error } if error.contains(why))),
                 "{copy}'s copy, {bad:?}: {:?}",
-                f.gaps
+                f.gaps()
             );
             assert!(
-                !f.membership.unwrap().standing.contains(&actor_of(&joining)),
+                !f.membership().standing.contains(&actor_of(&joining)),
                 "{copy}'s copy, {bad:?}: the key stands"
             );
         }
@@ -245,8 +245,8 @@ fn an_admit_naming_no_person_is_a_gap_on_every_copy() {
     let journal = open(dir.path());
     write_lines(&journal, &admit_line(&key(1), &joining, "Zoë Ann"));
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
-    assert!(f.gaps.is_empty(), "{:?}", f.gaps);
-    let m = f.membership.unwrap();
+    assert!(f.gaps().is_empty(), "{:?}", f.gaps());
+    let m = f.membership();
     assert!(m.standing.contains(&actor_of(&joining)));
     assert_eq!(m.person_for(&actor_of(&joining)), Some(&p("Zoë Ann")));
 }
@@ -285,15 +285,15 @@ fn a_line_claiming_a_held_id_is_not_held_and_the_act_it_named_still_lands() {
     let mut whats = applied(&f);
     whats.sort();
     assert_eq!(whats, vec!["decoy", "held", "named", "other"]);
-    assert!(f.is_complete(), "{:?}", f.gaps);
+    assert!(f.is_complete(), "{:?}", f.gaps());
     assert_eq!(
-        f.gaps
+        f.gaps()
             .iter()
             .filter(|g| matches!(g, RailGap::TamperedId { .. }))
             .count(),
         2,
         "each claim is named: {:?}",
-        f.gaps
+        f.gaps()
     );
 }
 
@@ -312,7 +312,11 @@ fn ingesting_a_peers_op_preserves_it_and_is_idempotent() {
     let (back, _) = journal.read().unwrap();
     assert_eq!(back, vec![peer]);
     assert_eq!(
-        journal.admit(&ring(), &Ed25519Verifier).unwrap().ops.len(),
+        journal
+            .admit(&ring(), &Ed25519Verifier)
+            .unwrap()
+            .ops()
+            .len(),
         1
     );
 }
@@ -364,7 +368,7 @@ fn two_partitioned_nodes_converge_on_an_identical_admission() {
         b.admit(&r, &Ed25519Verifier).unwrap(),
     );
     assert_eq!(fa, fb, "two nodes, one answer");
-    assert!(fa.is_complete(), "{:?}", fa.gaps);
+    assert!(fa.is_complete(), "{:?}", fa.gaps());
     // Both acts survive, and the ORDER is content-derived rather than the
     // order either node happened to write in: these two land in the same
     // second, so the tie is broken by actor key and neither node's local
@@ -427,11 +431,11 @@ fn two_forked_nodes_exchange_until_both_hold_the_fork() {
         b.admit(&r, &Ed25519Verifier).unwrap(),
     );
     assert!(
-        fa.gaps
+        fa.gaps()
             .iter()
             .any(|g| matches!(g, RailGap::SequenceFork { .. })),
         "the fork is named, not silently merged: {:?}",
-        fa.gaps
+        fa.gaps()
     );
     assert_eq!(fa, fb, "two nodes, one answer");
     assert!(!fa.is_complete());
@@ -486,11 +490,11 @@ fn a_forked_window_with_a_tiny_budget_still_converges() {
     assert_eq!(a.read().unwrap().0.len(), 22, "A holds both branches");
     assert_eq!(b.read().unwrap().0.len(), 22, "B holds both branches");
     assert!(
-        fa.gaps
+        fa.gaps()
             .iter()
             .any(|g| matches!(g, RailGap::SequenceFork { .. })),
         "the fork is named: {:?}",
-        fa.gaps
+        fa.gaps()
     );
     assert_eq!(fa, fb);
 }
@@ -543,17 +547,18 @@ fn two_nodes_that_receive_the_cuts_in_opposite_orders_agree() {
         "the rail's order picks one — the same one on both nodes"
     );
     let not_member = fa
-        .gaps
+        .gaps()
         .iter()
         .filter(|g| matches!(g, RailGap::NotAMember { .. }))
         .count();
     assert_eq!(
-        not_member, 1,
+        not_member,
+        1,
         "exactly bo's counter-cut is unstanding: {:?}",
-        fa.gaps
+        fa.gaps()
     );
     assert!(
-        fa.ops.iter().any(|o| o.id == alex_cut.id),
+        fa.ops().iter().any(|o| o.id == alex_cut.id),
         "alex's cut counted — it sorted first, so bo was already out when theirs arrived"
     );
 }
@@ -629,7 +634,7 @@ fn a_half_delivered_peer_is_a_named_hole_not_a_clean_answer() {
     let fa = a.admit(&r, &Ed25519Verifier).unwrap();
     assert!(!fa.is_complete(), "A must not claim a complete answer");
     assert_eq!(
-        fa.gaps,
+        fa.gaps(),
         vec![RailGap::SequenceHole {
             actor: actor_of(&key(2)),
             missing: 0
@@ -653,7 +658,7 @@ fn a_half_delivered_peer_is_a_named_hole_not_a_clean_answer() {
     );
     a.ingest_all(&repair).unwrap();
     let healed = a.admit(&r, &Ed25519Verifier).unwrap();
-    assert!(healed.is_complete(), "{:?}", healed.gaps);
+    assert!(healed.is_complete(), "{:?}", healed.gaps());
     assert_eq!(healed, b.admit(&r, &Ed25519Verifier).unwrap());
 }
 
@@ -675,11 +680,11 @@ fn a_torn_last_line_is_reported_rather_than_quietly_dropped() {
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert_eq!(applied(&f), vec!["whole"], "the whole line still counts");
     assert!(
-        f.gaps
+        f.gaps()
             .iter()
             .any(|g| matches!(g, RailGap::MalformedLine { line: 2, .. })),
         "{:?}",
-        f.gaps
+        f.gaps()
     );
 }
 
@@ -729,10 +734,10 @@ fn deleting_a_prefix_with_no_seal_behind_it_makes_holes() {
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert!(!f.is_complete());
     assert_eq!(
-        f.gaps.len(),
+        f.gaps().len(),
         3,
         "one hole per deleted op, and they never close: {:?}",
-        f.gaps
+        f.gaps()
     );
 }
 
@@ -784,7 +789,7 @@ fn a_compacted_journal_stays_complete_and_stops_the_prefix_coming_back() {
 
     // 1. A compacted node is not a broken one.
     let fa = a.admit(&r, &Ed25519Verifier).unwrap();
-    assert!(fa.is_complete(), "{:?}", fa.gaps);
+    assert!(fa.is_complete(), "{:?}", fa.gaps());
     assert_eq!(applied(&fa), vec!["after"]);
 
     // 2. It can still say what it needs, from the floor rather than from zero.
@@ -884,7 +889,7 @@ fn compaction_prunes_a_peers_retired_prefix_too() {
     assert_eq!(done.removed, 2, "alex's retired prefix, on bo's disk");
     assert_eq!(done.kept, 2, "alex's seal and bo's own unsealed act");
     let f = b.admit(&r, &Ed25519Verifier).unwrap();
-    assert!(f.is_complete(), "{:?}", f.gaps);
+    assert!(f.is_complete(), "{:?}", f.gaps());
     assert_eq!(applied(&f), vec!["bo-one"]);
 }
 
@@ -935,7 +940,7 @@ fn an_op_a_correction_names_survives_a_seal_above_it() {
     assert!(
         f.is_complete(),
         "no correction was left dangling: {:?}",
-        f.gaps
+        f.gaps()
     );
 }
 
@@ -1008,9 +1013,9 @@ fn compaction_refuses_when_it_would_raise_a_gap() {
 
     let before = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert!(
-        before.gaps.is_empty(),
+        before.gaps().is_empty(),
         "control: dee stands before compaction: {:?}",
-        before.gaps
+        before.gaps()
     );
 
     let refusal = journal.compact(&r, &Ed25519Verifier);
@@ -1055,11 +1060,11 @@ fn compaction_keeps_a_cited_op_whatever_id_its_line_carries() {
     let after_compaction = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert!(
         !after_compaction
-            .gaps
+            .gaps()
             .iter()
             .any(|g| matches!(g, RailGap::DanglingCorrection { .. })),
         "{:?}",
-        after_compaction.gaps
+        after_compaction.gaps()
     );
 }
 
@@ -1100,9 +1105,9 @@ fn the_door_names_its_own_act_and_not_a_forgery_beside_it() {
     assert_eq!(three.kind.prev.as_ref(), Some(&two.id), "not the forgery");
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert!(
-        matches!(f.gaps.as_slice(), [RailGap::BadSignature { .. }]),
+        matches!(f.gaps(), [RailGap::BadSignature { .. }]),
         "{:?}",
-        f.gaps
+        f.gaps()
     );
     assert_eq!(applied(&f), vec!["one", "two", "three"]);
 }
@@ -1134,9 +1139,9 @@ fn a_refused_line_under_a_real_floor_goes_and_is_counted() {
         .unwrap();
     let before = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert!(
-        matches!(before.gaps.as_slice(), [RailGap::BadSignature { .. }]),
+        matches!(before.gaps(), [RailGap::BadSignature { .. }]),
         "{:?}",
-        before.gaps
+        before.gaps()
     );
 
     // Alex seals above all three. The seal is real, so the floor is real.
@@ -1222,9 +1227,9 @@ fn a_peers_introduction_arrives_readable_and_changes_no_roster_row() {
 
     // ── and the introduction is there to read ──
     let admission = a.admit(&r, &Ed25519Verifier).unwrap();
-    assert!(admission.is_complete(), "{:?}", admission.gaps);
+    assert!(admission.is_complete(), "{:?}", admission.gaps());
     let op = admission
-        .ops
+        .ops()
         .iter()
         .find(|o| o.id == written.id)
         .expect("the introduction is admitted — it was signed by a member");

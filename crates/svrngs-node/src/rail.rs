@@ -362,14 +362,14 @@ async fn log_answer(_rail: &RingRail, journal: &Arc<RingJournal>) -> Response {
         Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
     };
     let admission = admit(
-        &ops,
+        &crate::ActSet::of(&ops),
         &skipped,
         &roster,
         journal.namespace(),
         &Ed25519Verifier,
     );
     let gaps: Vec<serde_json::Value> = admission
-        .gaps
+        .gaps()
         .iter()
         .map(|g| {
             let mut v = serde_json::to_value(g).unwrap_or_default();
@@ -384,7 +384,7 @@ async fn log_answer(_rail: &RingRail, journal: &Arc<RingJournal>) -> Response {
         Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
     };
     let ops_json: Vec<serde_json::Value> = admission
-        .ops
+        .ops()
         .iter()
         .map(|op| serde_json::to_value(op).unwrap_or_default())
         .collect();
@@ -392,7 +392,7 @@ async fn log_answer(_rail: &RingRail, journal: &Arc<RingJournal>) -> Response {
         "namespace": journal.namespace(),
         "ops": ops_json,
         "gaps": gaps,
-        "held": admission.held,
+        "held": admission.held(),
         "complete": admission.is_complete(),
         "people": people_json(&people),
     }))

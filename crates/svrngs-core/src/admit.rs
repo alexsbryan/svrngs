@@ -324,41 +324,47 @@ impl AdmittedOp {
 }
 
 /// What admission produced: the acts in their agreed order, and the honest
-/// account of what could not be read.
-///
-/// `Deserialize` because the answer crosses the sync doors as this type: a
-/// caller that dialled `/v1/rail/admit` reads back the same struct the
-/// serving side admitted from, not a second spelling of it (ARCH §10.6).
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+/// account of what could not be read. Only [`admit`] makes one.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Admission {
-    /// Every admitted op in the total order `(ts_unix, actor, seq, id)`, voided
-    /// ones included and marked. An app folds this; it never sorts it.
-    pub ops: Vec<AdmittedOp>,
+    ops: Vec<AdmittedOp>,
+    gaps: Vec<RailGap>,
+    held: usize,
+    floors: crate::sync::Floors,
+    membership: crate::membership::Membership,
+}
+
+impl Admission {
+    /// Every admitted op in the total order `(ts_unix, actor, seq, id)`,
+    /// voided ones included and marked.
+    pub fn ops(&self) -> &[AdmittedOp] {
+        &self.ops
+    }
+
     /// Everything the rail could not account for, sorted and deduplicated.
-    pub gaps: Vec<RailGap>,
-    /// How many journal lines this node holds, including the ones that did
-    /// not survive admission. `held - ops.len()` is what was refused.
-    pub held: usize,
-    /// Where each actor's history starts, per the seals this admission
-    /// AUTHENTICATED. Empty when nothing is sealed, and an actor absent from
-    /// it starts at zero.
-    ///
-    /// Reported rather than kept private because it is the one input that
-    /// stops a gap being raised, so a reader asking why this answer claims
-    /// completeness cannot get there any other way. It is also what
-    /// `commonwealth_rail::RingJournal::compact` deletes by: the floor a prune
-    /// trusts has to be the floor admission trusted, or the destructive path
-    /// gets its own second reading of the seals (ARCH §10.6, §18.3).
-    pub floors: crate::sync::Floors,
-    /// The fold's own conclusion about who is in: the one `membership`
-    /// walk, carried out rather than re-derivable, so a reader asking the
-    /// membership question cannot reach a second answer (ARCH §10.6). The
-    /// seed, the act-admitted bindings and standing all live here.
-    ///
-    /// `None` only where the answer was rebuilt from a wire shape that
-    /// predates the field — absence reported, never a default walk
-    /// (ARCH §18.3).
-    pub membership: Option<crate::membership::Membership>,
+    pub fn gaps(&self) -> &[RailGap] {
+        &self.gaps
+    }
+
+    /// The distinct lines admitted from; `held() - ops().len()` were refused.
+    pub fn held(&self) -> usize {
+        self.held
+    }
+
+    /// Where each actor's history starts, per the seals admission authenticated.
+    pub fn floors(&self) -> &crate::sync::Floors {
+        &self.floors
+    }
+
+    /// Who is in: the one membership walk admission made.
+    pub fn membership(&self) -> &crate::membership::Membership {
+        &self.membership
+    }
+
+    /// Takes the admitted ops, for a caller that owns the answer.
+    pub fn into_ops(self) -> Vec<AdmittedOp> {
+        self.ops
+    }
 }
 
 impl Admission {
@@ -405,7 +411,7 @@ struct Candidate<'a> {
 /// compiled with. [`Ed25519Verifier`](crate::Ed25519Verifier) is the shipped
 /// one.
 pub fn admit(
-    ops: &[Op<SignedOp>],
+    acts: &crate::ActSet,
     skipped: &[crate::op::SkippedLine],
     roster: &Roster,
     namespace: &str,
@@ -428,7 +434,7 @@ pub fn admit(
 
     // ── signature ───────────────────────────────────────────
     let mut authentic: BTreeMap<OpId, &Op<SignedOp>> = BTreeMap::new();
-    for op in ops {
+    for op in acts.iter() {
         let derived = derive_id(op, namespace);
         if derived != op.id {
             gaps.push(RailGap::TamperedId {
@@ -692,7 +698,7 @@ pub fn admit(
     tracing::debug!(
         namespace,
         verifier = verifier.name(),
-        held = ops.len(),
+        held = acts.len(),
         // The one input that stops a gap being REPORTED, so it belongs on the
         // event a reader already looks at when asking why a node claims
         // completeness (ARCH §9.1). `{}` when nothing is sealed.
@@ -718,9 +724,9 @@ pub fn admit(
     Admission {
         ops: out,
         gaps,
-        held: ops.len(),
+        held: acts.len(),
         floors,
-        membership: Some(m),
+        membership: m,
     }
 }
 

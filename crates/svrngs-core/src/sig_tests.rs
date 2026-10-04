@@ -133,7 +133,7 @@ fn one_act_carrying_two_valid_signatures_has_one_id() {
     assert!(verify_ring_op(&one.actor, &one.id, &two.kind.sig));
     assert_eq!(derive_id(&one, NS), derive_id(&two, NS));
     let a = admitted(&[first, one.clone(), two]);
-    assert!(a.gaps.is_empty(), "{:?}", a.gaps);
-    assert_eq!(a.ops.len(), 2);
-    assert_eq!(a.ops[1].id, one.id);
+    assert!(a.gaps().is_empty(), "{:?}", a.gaps());
+    assert_eq!(a.ops().len(), 2);
+    assert_eq!(a.ops()[1].id, one.id);
 }

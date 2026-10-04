@@ -82,12 +82,11 @@ pub(crate) fn membership_in(
         .filter(|op| op.kind.act.moves_membership())
         .cloned()
         .collect();
-    // `membership` is `None` only on an admission rebuilt from an older wire
-    // shape; this one was folded here, so its absence is reported, never
-    // read as nobody standing (ARCH 6).
-    admit(&acts, &[], seed, namespace, verifier)
-        .membership
-        .ok_or_else(|| RailError::Io(format!("{namespace}: admission carried no membership")))
+    Ok(
+        admit(&crate::ActSet::of(&acts), &[], seed, namespace, verifier)
+            .membership()
+            .clone(),
+    )
 }
 
 impl RingRail {
@@ -256,9 +255,9 @@ mod tests {
             },
         );
         let ops = [ops, vec![inv, redeem_eve]].concat();
-        let whole = admit(&ops, &[], &seed, NS, &Ed25519Verifier)
-            .membership
-            .unwrap();
+        let whole = admit(&crate::ActSet::of(&ops), &[], &seed, NS, &Ed25519Verifier)
+            .membership()
+            .clone();
         let expected: BTreeMap<String, Person> = whole
             .standing
             .iter()

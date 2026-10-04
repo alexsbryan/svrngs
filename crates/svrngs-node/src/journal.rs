@@ -181,7 +181,13 @@ impl RingJournal {
         verifier: &dyn RingVerifier,
     ) -> Result<Admission, RailError> {
         let (ops, skipped) = self.read()?;
-        Ok(admit(&ops, &skipped, roster, &self.namespace, verifier))
+        Ok(admit(
+            &crate::ActSet::of(&ops),
+            &skipped,
+            roster,
+            &self.namespace,
+            verifier,
+        ))
     }
 
     /// Sign and append one act under this node's key.
@@ -703,20 +709,26 @@ impl RingJournal {
             )));
         }
 
-        let before = admit(&ops, &skipped, roster, &self.namespace, verifier);
+        let before = admit(
+            &crate::ActSet::of(&ops),
+            &skipped,
+            roster,
+            &self.namespace,
+            verifier,
+        );
         let unchanged = |floors: Floors, kept: usize| Compaction {
             removed: 0,
             kept,
             gaps_cleared: 0,
             floors,
         };
-        if before.floors.is_empty() {
+        if before.floors().is_empty() {
             tracing::debug!(
                 namespace = %self.namespace,
                 held = ops.len(),
                 "ring rail: nothing sealed, nothing to compact"
             );
-            return Ok(unchanged(before.floors, ops.len()));
+            return Ok(unchanged(before.floors().clone(), ops.len()));
         }
 
         // Derived ids, because that is what a correction resolves against —
@@ -724,7 +736,7 @@ impl RingJournal {
         // match here; the guard below is what stops that becoming a deletion
         // the correction would dangle over.
         let referenced: std::collections::BTreeSet<OpId> = before
-            .ops
+            .ops()
             .iter()
             .filter_map(|o| o.corrects.clone())
             .collect();
@@ -732,7 +744,7 @@ impl RingJournal {
         let kept: Vec<Op<SignedOp>> = ops
             .iter()
             .filter(|op| {
-                let floor = before.floors.get(&op.actor).copied().unwrap_or(0);
+                let floor = before.floors().get(&op.actor).copied().unwrap_or(0);
                 op.kind.seq >= floor || referenced.contains(&derive_id(op, &self.namespace))
             })
             .cloned()
@@ -742,17 +754,23 @@ impl RingJournal {
             tracing::debug!(
                 namespace = %self.namespace,
                 held = ops.len(),
-                sealed = ?before.floors,
+                sealed = ?before.floors(),
                 "ring rail: every line held is at or above its floor"
             );
-            return Ok(unchanged(before.floors, kept.len()));
+            return Ok(unchanged(before.floors().clone(), kept.len()));
         }
 
-        let after = admit(&kept, &[], roster, &self.namespace, verifier);
+        let after = admit(
+            &crate::ActSet::of(&kept),
+            &[],
+            roster,
+            &self.namespace,
+            verifier,
+        );
         let raised: Vec<&RailGap> = after
-            .gaps
+            .gaps()
             .iter()
-            .filter(|g| !before.gaps.contains(g))
+            .filter(|g| !before.gaps().contains(g))
             .collect();
         if !raised.is_empty() {
             return Err(RailError::Rejected(format!(
@@ -764,9 +782,9 @@ impl RingJournal {
             )));
         }
         let gaps_cleared = before
-            .gaps
+            .gaps()
             .iter()
-            .filter(|g| !after.gaps.contains(g))
+            .filter(|g| !after.gaps().contains(g))
             .count();
 
         log.oplog
@@ -784,14 +802,14 @@ impl RingJournal {
             removed,
             kept = kept.len(),
             gaps_cleared,
-            sealed = ?before.floors,
+            sealed = ?before.floors(),
             "ring rail: compacted"
         );
         Ok(Compaction {
             removed,
             kept: kept.len(),
             gaps_cleared,
-            floors: before.floors,
+            floors: before.floors().clone(),
         })
     }
 

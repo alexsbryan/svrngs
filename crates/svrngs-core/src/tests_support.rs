@@ -178,7 +178,7 @@ pub fn with_ids<'a>(
 }
 
 pub fn admitted(ops: &[Op<SignedOp>]) -> Admission {
-    admit(ops, &[], &ring(), NS, &Ed25519Verifier)
+    admit(&crate::ActSet::of(ops), &[], &ring(), NS, &Ed25519Verifier)
 }
 
 /// The marks projection of a digest — what most sync bars assert on. The

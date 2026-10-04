@@ -179,7 +179,7 @@ async fn a_member_the_founder_admits_syncs_and_writes() {
         .unwrap()
         .admit(&founded_by(1), &Ed25519Verifier)
         .unwrap();
-    assert!(held.is_complete(), "gaps: {:?}", held.gaps);
+    assert!(held.is_complete(), "gaps: {:?}", held.gaps());
     let counted = held
         .applied()
         .find(|o| o.id == bos.id)

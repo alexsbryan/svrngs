@@ -61,9 +61,9 @@ fn the_admission_is_a_function_of_the_op_set_not_of_arrival_order() {
 
     let ops = vec![groceries, beer, paid_back, fix, dangling, stranger];
     let expected = admitted(&ops);
-    assert!(!expected.ops.is_empty());
+    assert!(!expected.ops().is_empty());
     assert!(
-        !expected.gaps.is_empty(),
+        !expected.gaps().is_empty(),
         "this fixture must exercise gaps too"
     );
 
@@ -106,7 +106,7 @@ fn two_identical_acts_in_the_same_second_are_two_acts() {
     assert_ne!(a.id, b.id, "seq must separate them");
     let f = admitted(&[a, b]);
     assert_eq!(applied(&f), vec!["coffee", "coffee"]);
-    assert!(f.is_complete(), "{:?}", f.gaps);
+    assert!(f.is_complete(), "{:?}", f.gaps());
 }
 
 // ── correction ───────────────────────────────────────────────
@@ -148,7 +148,7 @@ fn a_correction_pointing_at_an_op_we_do_not_hold_is_reported() {
     );
     let f = admitted(&[orphan.clone()]);
     assert_eq!(
-        f.gaps,
+        f.gaps(),
         vec![RailGap::DanglingCorrection {
             by: orphan.id.clone(),
             missing: stray_id(0xde),
@@ -168,7 +168,7 @@ fn a_correction_pointing_at_an_op_we_do_not_hold_is_reported() {
         },
     );
     let healed = admitted(&[fix, target]);
-    assert!(healed.is_complete(), "{:?}", healed.gaps);
+    assert!(healed.is_complete(), "{:?}", healed.gaps());
     assert!(applied(&healed).is_empty(), "the target is voided");
 }
 
@@ -271,7 +271,7 @@ fn correcting_a_correction_does_not_resurrect_the_original() {
         "neither the original nor its replacement comes back: {:?}",
         applied(&f)
     );
-    assert!(f.is_complete(), "{:?}", f.gaps);
+    assert!(f.is_complete(), "{:?}", f.gaps());
 }
 
 /// A voided op stays in the list, marked, so an app can render what changed —
@@ -289,15 +289,15 @@ fn a_voided_op_is_still_visible_but_is_never_applied() {
         },
     );
     let f = admitted(&[target.clone(), fix.clone()]);
-    assert_eq!(f.ops.len(), 2, "history is kept");
-    let voided = f.ops.iter().find(|o| o.id == target.id).unwrap();
+    assert_eq!(f.ops().len(), 2, "history is kept");
+    let voided = f.ops().iter().find(|o| o.id == target.id).unwrap();
     assert!(voided.voided);
     assert!(!voided.applies());
     assert!(
         voided.payload.is_some(),
         "the app can still show what was corrected away"
     );
-    let correction = f.ops.iter().find(|o| o.id == fix.id).unwrap();
+    let correction = f.ops().iter().find(|o| o.id == fix.id).unwrap();
     assert_eq!(correction.corrects.as_ref(), Some(&target.id));
     assert_eq!(applied(&f), vec!["right"]);
 }
@@ -329,14 +329,14 @@ fn a_dangling_correction_is_named_beside_a_complete_answer() {
     assert!(
         f.is_complete(),
         "a citation nobody can resolve hides no data: {:?}",
-        f.gaps
+        f.gaps()
     );
     assert!(
-        f.gaps
+        f.gaps()
             .iter()
             .any(|g| matches!(g, RailGap::DanglingCorrection { .. })),
         "and the contradiction is named: {:?}",
-        f.gaps
+        f.gaps()
     );
 }
 
@@ -455,39 +455,39 @@ fn a_replacement_key_leaves_every_past_act_admitted() {
     let seed = Roster::new(members);
 
     let f = admit(
-        &[
+        &crate::ActSet::of(&[
             old.clone(),
             past,
             admit_new,
             cut_old,
             new_writes.clone(),
             old_after_cut,
-        ],
+        ]),
         &[],
         &seed,
         NS,
         &Ed25519Verifier,
     );
     assert!(
-        f.ops.iter().any(|o| o.id == old.id),
+        f.ops().iter().any(|o| o.id == old.id),
         "every past act of the old key stays admitted"
     );
-    let kept = f.ops.iter().find(|o| o.id == old.id).unwrap();
+    let kept = f.ops().iter().find(|o| o.id == old.id).unwrap();
     assert_eq!(
         kept.person,
         Person::parse("dee").unwrap(),
         "under the person it always had"
     );
     assert!(
-        f.ops
+        f.ops()
             .iter()
             .any(|o| o.id == new_writes.id && o.person == Person::parse("dee").unwrap()),
         "the replacement key counts under the same person"
     );
     assert!(
-        !f.ops.iter().any(|o| o.id == after_cut_id),
+        !f.ops().iter().any(|o| o.id == after_cut_id),
         "and the old key's post-cut write does not count: {:?}",
-        f.gaps
+        f.gaps()
     );
 }
 
@@ -554,17 +554,23 @@ fn a_line_from_a_newer_build_is_a_gap_not_an_invisible_omission() {
             error: "expected value".into(),
         },
     ];
-    let f = admit(&ops, &skipped, &ring(), NS, &Ed25519Verifier);
+    let f = admit(
+        &crate::ActSet::of(&ops),
+        &skipped,
+        &ring(),
+        NS,
+        &Ed25519Verifier,
+    );
     assert_eq!(
         applied(&f),
         vec!["readable"],
         "what it CAN read is still right"
     );
     assert!(f
-        .gaps
+        .gaps()
         .contains(&RailGap::NewerVersionLine { line: 4, v: 2 }));
     assert!(f
-        .gaps
+        .gaps()
         .iter()
         .any(|g| matches!(g, RailGap::MalformedLine { line: 7, .. })));
     assert!(!f.is_complete());
@@ -580,23 +586,23 @@ fn a_tampered_body_fails_its_signature_and_is_not_admitted() {
     let mut op = signed(&key(1), 100, 0, record("small"));
     op.kind.act = record("enormous");
     let f = admitted(&[op]);
-    assert!(f.ops.is_empty(), "nothing admitted");
+    assert!(f.ops().is_empty(), "nothing admitted");
     assert!(
-        f.gaps
+        f.gaps()
             .iter()
             .any(|g| matches!(g, RailGap::BadSignature { .. })),
         "{:?}",
-        f.gaps
+        f.gaps()
     );
     // Rewriting the body also breaks the content-derived id, so both facts
     // are reported. Neither is enough on its own: the id mismatch says the
     // line was edited, the signature says it was not edited by its author.
     assert!(
-        f.gaps
+        f.gaps()
             .iter()
             .any(|g| matches!(g, RailGap::TamperedId { .. })),
         "{:?}",
-        f.gaps
+        f.gaps()
     );
 }
 
@@ -606,8 +612,8 @@ fn a_tampered_body_fails_its_signature_and_is_not_admitted() {
 fn a_perfectly_signed_op_from_a_stranger_is_refused() {
     let op = signed(&key(42), 100, 0, record("x"));
     let f = admitted(&[op]);
-    assert!(f.ops.is_empty());
-    assert!(matches!(f.gaps.as_slice(), [RailGap::UnknownSigner { .. }]));
+    assert!(f.ops().is_empty());
+    assert!(matches!(f.gaps(), [RailGap::UnknownSigner { .. }]));
 }
 
 /// A signed op lifted out of one namespace and replayed into another must
@@ -618,14 +624,14 @@ fn a_perfectly_signed_op_from_a_stranger_is_refused() {
 fn an_op_signed_for_another_namespace_cannot_be_replayed_here() {
     let op = signed_in("tool-lending", &key(1), 100, 0, record("x"));
     let f = admitted(&[op]);
-    assert!(f.ops.is_empty());
+    assert!(f.ops().is_empty());
     assert!(
         matches!(
-            f.gaps.as_slice(),
+            f.gaps(),
             [RailGap::BadSignature { .. }, RailGap::TamperedId { .. }]
         ),
         "{:?}",
-        f.gaps
+        f.gaps()
     );
 }
 
@@ -640,8 +646,8 @@ fn a_rewritten_id_changes_no_outcome_and_is_still_reported() {
     op.id = stray_id(0xff);
     let f = admitted(&[op]);
     assert_eq!(applied(&f), vec!["x"], "the op still counts");
-    assert_eq!(f.ops[0].id, real, "under the id its content derives");
-    assert!(f.gaps.contains(&RailGap::TamperedId {
+    assert_eq!(f.ops()[0].id, real, "under the id its content derives");
+    assert!(f.gaps().contains(&RailGap::TamperedId {
         claimed: stray_id(0xff),
         derived: real,
     }));
@@ -657,7 +663,7 @@ fn an_act_whose_previous_act_is_not_its_authors_at_seq_minus_one_is_a_gap() {
     let a = signed(&key(1), 100, 0, record("a"));
     let b = after(&key(1), &a, 101, record("b"));
     let honest = admitted(&[a.clone(), b]);
-    assert!(honest.gaps.is_empty(), "{:?}", honest.gaps);
+    assert!(honest.gaps().is_empty(), "{:?}", honest.gaps());
     assert_eq!(applied(&honest), vec!["a", "b"]);
 
     let wrong = |op: &Op<SignedOp>, seq| RailGap::WrongPrevious {
@@ -688,7 +694,7 @@ fn an_act_whose_previous_act_is_not_its_authors_at_seq_minus_one_is_a_gap() {
         (&names_one_at_zero, wrong(&names_one_at_zero, 0)),
     ] {
         let f = admitted(&[a.clone(), child.clone()]);
-        assert!(f.gaps.contains(&gap), "{:?}", f.gaps);
+        assert!(f.gaps().contains(&gap), "{:?}", f.gaps());
         assert_eq!(applied(&f), vec!["a"], "the act is not admitted");
         assert!(!f.is_complete());
     }
@@ -696,7 +702,7 @@ fn an_act_whose_previous_act_is_not_its_authors_at_seq_minus_one_is_a_gap() {
     // A parent not held is not judged — the hole is the report.
     let f = admitted(std::slice::from_ref(&follows_elsewhere));
     assert_eq!(
-        f.gaps,
+        f.gaps(),
         vec![RailGap::SequenceHole {
             actor: alex,
             missing: 0
@@ -715,7 +721,7 @@ fn a_hole_in_an_actors_sequence_is_reported() {
     ];
     let f = admitted(&ops);
     assert_eq!(
-        f.gaps,
+        f.gaps(),
         vec![RailGap::SequenceHole {
             actor: actor_of(&key(1)),
             missing: 1
@@ -736,11 +742,11 @@ fn one_sequence_number_used_twice_excludes_both_ops() {
     let a = signed(&key(1), 100, 0, record("a"));
     let b = signed(&key(1), 101, 0, record("b"));
     let f = admitted(&[a.clone(), b.clone()]);
-    assert!(f.ops.is_empty(), "{:?}", f.ops);
+    assert!(f.ops().is_empty(), "{:?}", f.ops());
     let mut ids = vec![a.id, b.id];
     ids.sort();
     assert_eq!(
-        f.gaps,
+        f.gaps(),
         vec![RailGap::SequenceFork {
             actor: actor_of(&key(1)),
             seq: 0,
@@ -756,8 +762,53 @@ fn the_same_op_delivered_three_times_is_admitted_once() {
     let op = signed(&key(1), 100, 0, record("x"));
     let f = admitted(&[op.clone(), op.clone(), op]);
     assert_eq!(applied(&f), vec!["x"]);
-    assert_eq!(f.held, 3, "and it says how many lines it read");
-    assert!(f.is_complete(), "{:?}", f.gaps);
+    assert_eq!(f.held(), 1, "a line delivered three times is held once");
+    assert!(f.is_complete(), "{:?}", f.gaps());
+}
+
+#[test]
+fn admission_is_a_function_of_the_set_of_lines() {
+    let a = signed(&key(1), 100, 0, record("a"));
+    let correction = RailAct::Correct {
+        corrects: a.id.clone(),
+        replacement: Some(payload("a2")),
+    };
+    let lines = vec![
+        a.clone(),
+        after(&key(1), &a, 101, correction),
+        signed(&key(2), 100, 0, record("c")),
+        signed(&key(2), 102, 0, record("d")),
+        forged(&key(3), &key(1), 103, 2, None, record("e")),
+        Op {
+            id: stray_id(9),
+            ..a.clone()
+        },
+    ];
+    let once = admitted(&lines);
+    let mut order: Vec<usize> = (0..lines.len()).collect();
+    let mut seen = 0;
+    permute(&mut order, 0, &mut |order| {
+        let shuffled: Vec<_> = order.iter().map(|&i| lines[i].clone()).collect();
+        assert_eq!(admitted(&shuffled), once, "order {order:?}");
+        seen += 1;
+    });
+    assert_eq!(seen, 720);
+    for (i, line) in lines.iter().enumerate() {
+        let twice = [lines.clone(), vec![line.clone()]].concat();
+        assert_eq!(admitted(&twice), once, "line {i} delivered twice");
+    }
+}
+
+fn permute(v: &mut Vec<usize>, k: usize, f: &mut impl FnMut(&[usize])) {
+    if k == v.len() {
+        f(v);
+        return;
+    }
+    for i in k..v.len() {
+        v.swap(k, i);
+        permute(v, k + 1, f);
+        v.swap(k, i);
+    }
 }
 
 // ── what the rail refuses to know ────────────────────────────
@@ -781,9 +832,9 @@ fn an_act_the_rail_cannot_interpret_is_still_admitted() {
         },
     );
     let f = admitted(&[op]);
-    assert!(f.is_complete(), "{:?}", f.gaps);
-    assert_eq!(f.ops[0].payload.as_ref(), Some(&weird));
-    assert_eq!(f.ops[0].person, p("alex"), "and it says who wrote it");
+    assert!(f.is_complete(), "{:?}", f.gaps());
+    assert_eq!(f.ops()[0].payload.as_ref(), Some(&weird));
+    assert_eq!(f.ops()[0].person, p("alex"), "and it says who wrote it");
 }
 
 /// **The canonical-payload property, end to end.** Two spellings of one act

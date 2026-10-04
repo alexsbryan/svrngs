@@ -81,6 +81,7 @@
 
 extern crate alloc;
 
+mod act_set;
 mod admit;
 mod attest;
 mod hash;
@@ -102,6 +103,7 @@ use alloc::vec::Vec;
 pub use ed25519_dalek::SigningKey;
 use serde::{Deserialize, Serialize};
 
+pub use act_set::ActSet;
 pub use admit::{admit, body_json, Admission, AdmittedOp, GapClass, RailGap};
 pub use attest::{AttestRefusal, GuestAttestation};
 pub use introduce::{trace, trace_op, Introduce, Vouch, VouchStatus};

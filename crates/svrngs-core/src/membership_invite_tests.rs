@@ -37,22 +37,18 @@ fn redeem(inv: &Op<SignedOp>, person: &str, joining: u8) -> RailAct {
 }
 
 fn admitted(ops: &[Op<SignedOp>]) -> Admission {
-    admit(ops, &[], &ring(), NS, &Ed25519Verifier)
+    admit(&crate::ActSet::of(ops), &[], &ring(), NS, &Ed25519Verifier)
 }
 
 fn standing(a: &Admission, k: u8) -> bool {
-    a.membership
-        .as_ref()
-        .unwrap()
-        .standing
-        .contains(&actor_of(&key(k)))
+    a.membership().standing.contains(&actor_of(&key(k)))
 }
 
 /// The one gap `a` names, which must refuse `refused` for `fault`, and the
 /// joining keys that must not stand.
 fn refused_for(a: &Admission, refused: &Op<SignedOp>, fault: InviteFault, keys: &[u8]) {
     assert_eq!(
-        a.gaps,
+        a.gaps(),
         vec![RailGap::RefusedRedemption {
             id: refused.id.clone(),
             actor: refused.actor.clone(),
@@ -75,11 +71,11 @@ fn three_redemptions_under_one_invite_each_give_their_key_standing() {
     let fay = after(&key(1), &eve, 103, redeem(&inv, "fay", 6));
     let dee_writes = signed(&key(4), 104, 0, crate::tests_support::record("hi"));
     let a = admitted(&[inv, dee, eve, fay, dee_writes.clone()]);
-    assert_eq!(a.gaps, vec![], "nothing is refused");
+    assert_eq!(a.gaps(), vec![], "nothing is refused");
     for k in [4, 5, 6] {
         assert!(standing(&a, k), "key {k} stands");
     }
-    assert!(a.membership.as_ref().unwrap().counts(&dee_writes.id));
+    assert!(a.membership().counts(&dee_writes.id));
 }
 
 /// An `Admit` timed at the `Invite`'s `until` is lapsed. Watched failing
@@ -212,7 +208,7 @@ fn a_newer_link_closes_the_older_and_keeps_whom_it_admitted() {
     for k in [4, 5, 6, 8] {
         assert!(standing(&a, k), "key {k} stands");
     }
-    let m = a.membership.as_ref().unwrap();
+    let m = a.membership();
     for w in &writes {
         assert!(m.counts(&w.id), "{} still counts", w.actor);
     }
@@ -229,8 +225,8 @@ fn a_redemption_timed_before_the_newer_link_counts_when_it_arrives_late() {
     let two = after(&key(1), &gus, 105, invite_for(LINK_TWO, 300));
     let early = admitted(&[one.clone(), two.clone()]);
     assert!(!standing(&early, 7), "gus is not yet held");
-    assert!(early.membership.as_ref().unwrap().counts(&two.id));
+    assert!(early.membership().counts(&two.id));
     let late = admitted(&[one, two, gus]);
-    assert_eq!(late.gaps, vec![], "nothing is refused");
+    assert_eq!(late.gaps(), vec![], "nothing is refused");
     assert!(standing(&late, 7), "gus stands");
 }

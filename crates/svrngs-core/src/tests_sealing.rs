@@ -37,19 +37,19 @@ fn admission_asks_the_verifier_it_was_handed_and_not_a_hardcoded_one() {
         signed(&key(2), 101, 0, record("b")),
     ];
     assert_eq!(
-        admitted(&ops).ops.len(),
+        admitted(&ops).ops().len(),
         2,
         "control: both ops are admissible under the shipped verifier"
     );
 
-    let f = admit(&ops, &[], &ring(), NS, &Says(false));
-    assert!(f.ops.is_empty(), "a refused signature is never an act");
+    let f = admit(&crate::ActSet::of(&ops), &[], &ring(), NS, &Says(false));
+    assert!(f.ops().is_empty(), "a refused signature is never an act");
     assert!(
-        f.gaps
+        f.gaps()
             .iter()
             .all(|g| matches!(g, RailGap::BadSignature { .. })),
         "{:?}",
-        f.gaps
+        f.gaps()
     );
 }
 
@@ -60,15 +60,19 @@ fn admission_asks_the_verifier_it_was_handed_and_not_a_hardcoded_one() {
 #[test]
 fn a_signature_the_verifier_refuses_is_a_gap_and_never_a_silent_drop() {
     let f = admit(
-        &[signed(&key(1), 100, 0, record("a"))],
+        &crate::ActSet::of(&[signed(&key(1), 100, 0, record("a"))]),
         &[],
         &ring(),
         NS,
         &Says(false),
     );
     assert!(!f.is_complete(), "an unverifiable op makes this a subset");
-    assert_eq!(f.held, 1, "the op is held and accounted for, not forgotten");
-    assert!(matches!(f.gaps.as_slice(), [RailGap::BadSignature { .. }]));
+    assert_eq!(
+        f.held(),
+        1,
+        "the op is held and accounted for, not forgotten"
+    );
+    assert!(matches!(f.gaps(), [RailGap::BadSignature { .. }]));
 }
 
 /// **A verifier is not a roster.** The seam decides whether a key signed these
@@ -78,14 +82,14 @@ fn a_signature_the_verifier_refuses_is_a_gap_and_never_a_silent_drop() {
 #[test]
 fn a_permissive_verifier_still_cannot_admit_a_stranger() {
     let f = admit(
-        &[signed(&key(42), 100, 0, record("x"))],
+        &crate::ActSet::of(&[signed(&key(42), 100, 0, record("x"))]),
         &[],
         &ring(),
         NS,
         &Says(true),
     );
-    assert!(f.ops.is_empty());
-    assert!(matches!(f.gaps.as_slice(), [RailGap::UnknownSigner { .. }]));
+    assert!(f.ops().is_empty());
+    assert!(matches!(f.gaps(), [RailGap::UnknownSigner { .. }]));
 }
 
 // ── the sealed floor ─────────────────────────────────────────
@@ -110,7 +114,7 @@ fn sealed_then(seq: u64, what: &str) -> Vec<Op<SignedOp>> {
 fn a_sealed_prefix_is_retired_rather_than_reported_as_a_hole() {
     let unsealed = vec![signed(&key(1), 104, 4, record("after"))];
     assert_eq!(
-        admitted(&unsealed).gaps.len(),
+        admitted(&unsealed).gaps().len(),
         4,
         "control: with nothing sealed, seqs 0..=3 are four holes"
     );
@@ -119,7 +123,7 @@ fn a_sealed_prefix_is_retired_rather_than_reported_as_a_hole() {
     assert!(
         f.is_complete(),
         "a compacted node is not a broken one: {:?}",
-        f.gaps
+        f.gaps()
     );
     assert_eq!(applied(&f), vec!["after"]);
 }
@@ -147,20 +151,20 @@ fn a_seal_the_rail_refused_retires_nothing() {
     let f = admitted(&[forged, signed(&key(1), 104, 4, record("after"))]);
 
     assert!(
-        f.gaps.iter().any(
+        f.gaps().iter().any(
             |g| matches!(g, RailGap::BadSignature { actor, .. } if *actor == actor_of(&key(1)))
         ),
         "the forged seal is refused, not silently ignored: {:?}",
-        f.gaps
+        f.gaps()
     );
     for missing in 0..=3 {
         assert!(
-            f.gaps.contains(&RailGap::SequenceHole {
+            f.gaps().contains(&RailGap::SequenceHole {
                 actor: actor_of(&key(1)),
                 missing,
             }),
             "seq {missing} is still missing — a refused seal did not retire it: {:?}",
-            f.gaps
+            f.gaps()
         );
     }
     assert!(!f.is_complete());
@@ -187,17 +191,17 @@ fn a_corrected_seal_retires_nothing() {
     let f = admitted(&[signed(&key(1), 100, 0, record("kept")), seal, correct]);
 
     assert!(
-        !f.floors.contains_key(&actor_of(&key(1))),
+        !f.floors().contains_key(&actor_of(&key(1))),
         "a voided seal raises no floor: {:?}",
-        f.floors
+        f.floors()
     );
     assert!(
-        f.gaps.contains(&RailGap::SequenceHole {
+        f.gaps().contains(&RailGap::SequenceHole {
             actor: actor_of(&key(1)),
             missing: 1,
         }),
         "seq 1 is a hole again — the retirement was itself corrected: {:?}",
-        f.gaps
+        f.gaps()
     );
 }
 
@@ -213,7 +217,7 @@ fn a_seal_retires_only_the_history_of_the_key_that_signed_it() {
     ops.push(signed(&key(2), 110, 2, record("bo-late")));
     let f = admitted(&ops);
     assert_eq!(
-        f.gaps,
+        f.gaps(),
         vec![
             RailGap::SequenceHole {
                 actor: actor_of(&key(2)),
@@ -306,7 +310,7 @@ fn a_view_rewritten_after_signing_is_refused() {
     let view = claimed_view('a');
     let op = sign_act(&key(1), NS, 100, 0, None, act, None, Some(view));
     assert!(
-        admitted(std::slice::from_ref(&op)).gaps.is_empty(),
+        admitted(std::slice::from_ref(&op)).gaps().is_empty(),
         "the honest op verifies"
     );
 
@@ -314,11 +318,11 @@ fn a_view_rewritten_after_signing_is_refused() {
     rewritten.kind.view = Some(claimed_view('b'));
     let f = admitted(std::slice::from_ref(&rewritten));
     assert!(
-        f.gaps
+        f.gaps()
             .iter()
             .any(|g| matches!(g, RailGap::BadSignature { .. })),
         "a rewritten view must break the signature: {:?}",
-        f.gaps
+        f.gaps()
     );
 }
 
@@ -352,11 +356,11 @@ fn an_equivocation_carries_two_claimed_views() {
 
     let f = admitted(&[left, right]);
     assert!(
-        f.gaps
+        f.gaps()
             .iter()
             .any(|g| matches!(g, RailGap::SequenceFork { .. })),
         "both branches are excluded by name: {:?}",
-        f.gaps
+        f.gaps()
     );
 }
 
@@ -423,7 +427,7 @@ fn a_ring_with_no_membership_acts_admits_exactly_as_before() {
         .collect();
     let f = admitted(&ops);
     assert_eq!(
-        serde_json::to_string(&(&f.ops, &f.gaps, &f.floors)).unwrap(),
+        serde_json::to_string(&(&f.ops(), &f.gaps(), &f.floors())).unwrap(),
         r#"[[{"id":"6efe8a46f81d82df03b43ed537f3d50b854c24f8810a4b4aac58c61629d2c840","actor":"8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c","person":"alex","seq":0,"ts_unix":1700000000,"voided":true,"payload":{"kind":"thing","what":"milk"}},{"id":"e754694b85150ea490f4c305099f4d26142f95c8a031134e172500abc1983fc4","actor":"8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394","person":"bo","seq":0,"ts_unix":1700000001,"corrects":"6efe8a46f81d82df03b43ed537f3d50b854c24f8810a4b4aac58c61629d2c840","voided":false},{"id":"0ce63175592c0b3b80fb1cff79983bbd42610fede6f73e3bb2610808f171a711","actor":"ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1","person":"cy","seq":0,"ts_unix":1700000002,"voided":false}],[],{"ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1":0}]"#,
         "a ring with no membership act folds byte-identically to the build before"
     );
@@ -454,12 +458,12 @@ fn rail_ops_written_before_on_behalf_of_still_verify() {
 
     let f = admitted(&ops);
     assert!(
-        f.gaps.is_empty(),
+        f.gaps().is_empty(),
         "an op written before the field must still verify: {:?}",
-        f.gaps
+        f.gaps()
     );
     assert!(
-        f.ops.iter().all(|o| o.on_behalf_of.is_none()),
+        f.ops().iter().all(|o| o.on_behalf_of.is_none()),
         "nothing invents a name"
     );
 }
@@ -472,9 +476,9 @@ fn rail_ops_written_before_on_behalf_of_still_verify() {
 fn a_name_rewritten_after_signing_is_refused() {
     let honest = signed_for(NS, &key(1), 100, 0, record("milk"), Some("dee"));
     let f = admitted(&[honest.clone()]);
-    assert!(f.gaps.is_empty(), "{:?}", f.gaps);
+    assert!(f.gaps().is_empty(), "{:?}", f.gaps());
     assert_eq!(
-        f.ops[0].on_behalf_of.as_deref(),
+        f.ops()[0].on_behalf_of.as_deref(),
         Some("dee"),
         "admission carries the name through"
     );
@@ -484,11 +488,11 @@ fn a_name_rewritten_after_signing_is_refused() {
     reattributed.id = derive_id(&reattributed, NS);
     let f = admitted(&[reattributed]);
     assert!(
-        matches!(f.gaps.as_slice(), [RailGap::BadSignature { .. }]),
+        matches!(f.gaps(), [RailGap::BadSignature { .. }]),
         "rewriting the name must not verify: {:?}",
-        f.gaps
+        f.gaps()
     );
-    assert!(f.ops.is_empty(), "nothing tampered reaches an app");
+    assert!(f.ops().is_empty(), "nothing tampered reaches an app");
 }
 
 /// Every act kind carries it — including a correction that states no
@@ -510,9 +514,9 @@ fn a_correction_with_no_replacement_still_names_the_guest() {
         None,
     );
     let f = admitted(&[first, retraction]);
-    assert!(f.gaps.is_empty(), "{:?}", f.gaps);
+    assert!(f.gaps().is_empty(), "{:?}", f.gaps());
     assert!(
-        f.ops
+        f.ops()
             .iter()
             .all(|o| o.on_behalf_of.as_deref() == Some("dee")),
         "a payload-less act names its guest too"
