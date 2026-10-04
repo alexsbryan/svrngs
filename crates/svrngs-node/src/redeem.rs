@@ -373,7 +373,7 @@ fn serve_redeem(
         roster: &seed,
         namespace: group,
         verifier: &Ed25519Verifier,
-        now: crate::journal::now_unix(group).map_err(Refused::Unjudged)?,
+        now: crate::now_unix(group).map_err(Refused::Unjudged)?,
     };
     match commit(&*journal, &command, &author).map_err(Refused::Unjudged)? {
         Ok(recorded) if recorded.is_empty() => {

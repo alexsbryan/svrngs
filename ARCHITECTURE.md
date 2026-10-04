@@ -48,6 +48,11 @@ in `membership.rs`'s module docs, naming each refusal a `RefusedRedemption`.
 An issuer's newer `Invite` closes their older one from its place in the
 order, so what the older link admitted keeps standing.
 
+**`crates/svrngs-runtime`**: the journal, its write index, the open-journal map
+(`RingRail`) and the register's standing (`register.rs`), split out of
+svrngs-node so the adapters reach a group through the runtime alone. What
+follows about the journal describes this crate.
+
 **`crates/svrngs-node`**: a group's journal on disk — one append-only JSONL
 log per group under `<root>/rings/<ns>/` (`journal.rs`), the single-writer
 door that signs and the peer-ingest path that does not, and

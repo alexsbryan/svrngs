@@ -255,14 +255,19 @@ async fn the_people_door_answers_the_register_with_keys() {
         invite: None,
     };
     let roster = journal.roster_file().unwrap();
-    journal
-        .append(
-            admit_bo,
-            rail.signer(),
-            &roster,
-            None,
-            &crate::Ed25519Verifier,
-        )
+    let author = crate::Author {
+        signer: rail.signer(),
+        roster: &roster,
+        namespace: "ledger",
+        verifier: &crate::Ed25519Verifier,
+        now: 1,
+    };
+    let fixture = svrngs_core::tests_support::Fixture {
+        act: admit_bo,
+        on_behalf_of: None,
+    };
+    crate::commit(&*journal, &fixture, &author)
+        .unwrap()
         .unwrap();
     let out = body_of(super::people_answer(&rail, "ledger")).await;
     // In the order of their keys, as the register holds them.

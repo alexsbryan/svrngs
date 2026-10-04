@@ -233,7 +233,7 @@ pub(crate) async fn append_act(
             .map(|done| (done.op, Some(retire(&done.retired))))
     } else {
         let namespace = journal.namespace();
-        let now = match crate::journal::now_unix(namespace) {
+        let now = match crate::now_unix(namespace) {
             Ok(now) => now,
             Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
         };

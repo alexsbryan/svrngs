@@ -1,0 +1,27 @@
+[package]
+name = "svrngs-runtime"
+version.workspace = true
+# The moved code keeps upstream's edition, as svrngs-core and svrngs-node do (ARCH 2).
+edition = "2021"
+license.workspace = true
+description = "The runtime: the only owner of each group's journal on disk, its projections and its writes. Split out of svrngs-node so adapters reach a group only through its queries and commit."
+
+[dependencies]
+svrngs-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+svrngs-core = { workspace = true, features = ["test-support"] }
+tempfile = "3"
+
+[lints.clippy]
+empty_line_after_doc_comments = "allow"
+cloned_ref_to_slice_refs = "allow"
+explicit_auto_deref = "allow"
+useless_vec = "allow"
+# Upstream's workspace allowance (commonwealth-ai Cargo.toml:312 at
+# e1a43bcd2), kept for rail.rs's doors, which refuse with a `Response`.
+result_large_err = "allow"

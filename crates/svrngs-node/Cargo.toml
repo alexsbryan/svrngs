@@ -8,6 +8,7 @@ description = "A group's journal on disk: one append-only JSONL log per group, t
 
 [dependencies]
 svrngs-core = { workspace = true }
+svrngs-runtime = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }

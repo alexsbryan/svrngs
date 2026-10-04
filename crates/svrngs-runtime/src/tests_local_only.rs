@@ -44,9 +44,5 @@ fn a_local_only_journal_is_held_but_never_offered() {
     let (for_peer, _) = carried
         .ops_missing_from_within(&Ed25519Verifier, &Digest::new(), NO_BUDGET)
         .unwrap();
-    assert_eq!(
-        for_peer.len(),
-        1,
-        "control: the carried namespace is answered"
-    );
+    assert_eq!(for_peer.len(), 1, "control: the carried namespace is answered");
 }

@@ -16,8 +16,8 @@
 use std::collections::BTreeMap;
 
 use crate::{
-    admit, is_local_only, ring_dir, valid_namespace, Membership, Op, Person, RailError, RingRail,
-    RingVerifier, Roster, SignedOp,
+    admit, is_local_only, ring_dir, valid_namespace, Membership, Op, Person, RailError, RingRail, RingVerifier, Roster,
+    SignedOp,
 };
 
 /// Who stands in one group, on this node.
@@ -46,7 +46,7 @@ impl Standing {
 /// over the acts admission authenticates, each with its person. The one
 /// decider: [`RingRail::standing`] answers with it, and the door
 /// ([`crate::RingJournal::append_all`]) asks it under its write lock.
-pub(crate) fn standing_in(
+pub fn standing_in(
     ops: &[Op<SignedOp>],
     seed: &Roster,
     namespace: &str,
@@ -82,11 +82,9 @@ pub(crate) fn membership_in(
         .filter(|op| op.kind.act.moves_membership())
         .cloned()
         .collect();
-    Ok(
-        admit(&crate::ActSet::of(&acts), &[], seed, namespace, verifier)
-            .membership()
-            .clone(),
-    )
+    Ok(admit(&crate::ActSet::of(&acts), &[], seed, namespace, verifier)
+        .membership()
+        .clone())
 }
 
 impl RingRail {
@@ -97,15 +95,8 @@ impl RingRail {
     /// opened, so asking about it leaves no trace in the rail. Every branch
     /// traces at debug; a held group with no seed at warn, since it refuses
     /// everyone.
-    pub fn standing(
-        &self,
-        namespace: &str,
-        verifier: &dyn RingVerifier,
-    ) -> Result<Standing, RailError> {
-        if !valid_namespace(namespace)
-            || is_local_only(namespace)
-            || !ring_dir(&self.root, namespace).is_dir()
-        {
+    pub fn standing(&self, namespace: &str, verifier: &dyn RingVerifier) -> Result<Standing, RailError> {
+        if !valid_namespace(namespace) || is_local_only(namespace) || !ring_dir(&self.root, namespace).is_dir() {
             tracing::debug!(
                 target: "register",
                 namespace,
@@ -142,11 +133,7 @@ impl RingRail {
     /// (`node::admit_dialer`) and the member door (`door::through`) ask. A
     /// group whose register is unreadable vouches for nobody, and groups
     /// that cannot be listed vouch for nobody at all.
-    pub fn standing_anywhere(
-        &self,
-        actor: &str,
-        verifier: &dyn RingVerifier,
-    ) -> Option<(String, Person)> {
+    pub fn standing_anywhere(&self, actor: &str, verifier: &dyn RingVerifier) -> Option<(String, Person)> {
         let namespaces = match self.namespaces() {
             Ok(n) => n,
             Err(e) => {
@@ -272,9 +259,6 @@ mod tests {
             },
             "control: alex, bo and eve stand; cy was removed and dee's Admit voided"
         );
-        assert_eq!(
-            standing_in(&ops, &seed, NS, &Ed25519Verifier).unwrap(),
-            expected
-        );
+        assert_eq!(standing_in(&ops, &seed, NS, &Ed25519Verifier).unwrap(), expected);
     }
 }

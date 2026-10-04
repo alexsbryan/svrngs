@@ -20,11 +20,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 ///
 /// Lines reach it only through [`svrngs_core::commit`]:
 /// ```
-/// fn writes(j: &svrngs_node::RingJournal) -> &impl svrngs_core::Store { j }
+/// fn writes(j: &svrngs_runtime::RingJournal) -> &impl svrngs_core::Store { j }
 /// ```
 /// ```compile_fail
-/// fn writes(j: &svrngs_node::RingJournal, k: &svrngs_node::SigningKey, r: &svrngs_node::Roster) {
-///     j.append(svrngs_node::RailAct::Seal, k, r, None, &svrngs_node::Ed25519Verifier);
+/// fn writes(j: &svrngs_runtime::RingJournal, k: &svrngs_runtime::SigningKey, r: &svrngs_runtime::Roster) {
+///     j.append(svrngs_runtime::RailAct::Seal, k, r, None, &svrngs_runtime::Ed25519Verifier);
 /// }
 /// ```
 pub struct RingJournal {
@@ -190,11 +190,7 @@ impl RingJournal {
     /// opinion about which scheme judged the signatures on it — the caller
     /// that reads an answer is the one that says what it trusted.
     /// [`Ed25519Verifier`] is the shipped one.
-    pub fn admit(
-        &self,
-        roster: &Roster,
-        verifier: &dyn RingVerifier,
-    ) -> Result<Admission, RailError> {
+    pub fn admit(&self, roster: &Roster, verifier: &dyn RingVerifier) -> Result<Admission, RailError> {
         let (ops, skipped) = self.read()?;
         Ok(admit(
             &crate::ActSet::of(&ops),
@@ -254,9 +250,7 @@ impl RingJournal {
             );
             return Ok(false);
         }
-        log.oplog
-            .append(op)
-            .map_err(|e| RailError::Io(e.to_string()))?;
+        log.oplog.append(op).map_err(|e| RailError::Io(e.to_string()))?;
         log.held.after_write(&log.oplog, &self.namespace);
         Ok(true)
     }
@@ -284,12 +278,7 @@ impl RingJournal {
         verifier: &dyn RingVerifier,
         theirs: &Digest,
     ) -> Result<Vec<Op<SignedOp>>, RailError> {
-        Ok(ops_missing_from(
-            &self.read()?.0,
-            &self.namespace,
-            verifier,
-            theirs,
-        ))
+        Ok(ops_missing_from(&self.read()?.0, &self.namespace, verifier, theirs))
     }
 
     /// [`RingJournal::ops_missing_from`], stopped at `budget_bytes` of
@@ -358,9 +347,7 @@ impl RingJournal {
             );
             return Ok(0);
         }
-        log.oplog
-            .append_all(&fresh)
-            .map_err(|e| RailError::Io(e.to_string()))?;
+        log.oplog.append_all(&fresh).map_err(|e| RailError::Io(e.to_string()))?;
         log.held.after_write(&log.oplog, &self.namespace);
         tracing::debug!(
             namespace = %self.namespace,
@@ -405,7 +392,7 @@ impl RingJournal {
                 return Err(RailError::NotInRoster {
                     actor: signer.actor(),
                     namespace: self.namespace.clone(),
-                })
+                });
             }
         };
         let retired = self.compact(roster, verifier);
@@ -490,11 +477,7 @@ impl RingJournal {
     /// The writer lock is held across read, decide and replace, because
     /// `O_APPEND` orders appends against each other and does nothing for an
     /// append racing the rename underneath it.
-    pub fn compact(
-        &self,
-        roster: &Roster,
-        verifier: &dyn RingVerifier,
-    ) -> Result<Compaction, RailError> {
+    pub fn compact(&self, roster: &Roster, verifier: &dyn RingVerifier) -> Result<Compaction, RailError> {
         let mut log = self.log();
         let (ops, skipped) = log
             .oplog
@@ -514,13 +497,7 @@ impl RingJournal {
             )));
         }
 
-        let before = admit(
-            &crate::ActSet::of(&ops),
-            &skipped,
-            roster,
-            &self.namespace,
-            verifier,
-        );
+        let before = admit(&crate::ActSet::of(&ops), &skipped, roster, &self.namespace, verifier);
         let unchanged = |floors: Floors, kept: usize| Compaction {
             removed: 0,
             kept,
@@ -540,11 +517,8 @@ impl RingJournal {
         // see `admit`. An op whose on-disk id was rewritten therefore does not
         // match here; the guard below is what stops that becoming a deletion
         // the correction would dangle over.
-        let referenced: std::collections::BTreeSet<OpId> = before
-            .ops()
-            .iter()
-            .filter_map(|o| o.corrects.clone())
-            .collect();
+        let referenced: std::collections::BTreeSet<OpId> =
+            before.ops().iter().filter_map(|o| o.corrects.clone()).collect();
 
         let kept: Vec<Op<SignedOp>> = ops
             .iter()
@@ -565,18 +539,8 @@ impl RingJournal {
             return Ok(unchanged(before.floors().clone(), kept.len()));
         }
 
-        let after = admit(
-            &crate::ActSet::of(&kept),
-            &[],
-            roster,
-            &self.namespace,
-            verifier,
-        );
-        let raised: Vec<&RailGap> = after
-            .gaps()
-            .iter()
-            .filter(|g| !before.gaps().contains(g))
-            .collect();
+        let after = admit(&crate::ActSet::of(&kept), &[], roster, &self.namespace, verifier);
+        let raised: Vec<&RailGap> = after.gaps().iter().filter(|g| !before.gaps().contains(g)).collect();
         if !raised.is_empty() {
             return Err(RailError::Rejected(format!(
                 "compacting `{}` would raise {} gap(s) the journal does not have, \
@@ -586,15 +550,9 @@ impl RingJournal {
                 raised[0],
             )));
         }
-        let gaps_cleared = before
-            .gaps()
-            .iter()
-            .filter(|g| !after.gaps().contains(g))
-            .count();
+        let gaps_cleared = before.gaps().iter().filter(|g| !after.gaps().contains(g)).count();
 
-        log.oplog
-            .replace_all(&kept)
-            .map_err(|e| RailError::Io(e.to_string()))?;
+        log.oplog.replace_all(&kept).map_err(|e| RailError::Io(e.to_string()))?;
         // The rename already voids the cursor; this says so without relying
         // on the platform having inodes.
         log.held = Held::default();
@@ -655,7 +613,7 @@ impl RingJournal {
 /// The wall clock in Unix seconds: the one place the write side reads it.
 /// Unreadable is named, never defaulted (ROOT_CAUSE_FIXES C4).
 #[expect(clippy::disallowed_methods, reason = "the write side's clock adapter")]
-pub(crate) fn now_unix(namespace: &str) -> Result<i64, RailError> {
+pub fn now_unix(namespace: &str) -> Result<i64, RailError> {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_secs() as i64)

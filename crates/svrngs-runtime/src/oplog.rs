@@ -567,13 +567,7 @@ mod tests {
             const LABEL: &'static str = "other_oplog";
         }
         let a = Op::new(touch("x"), 100, "ingest");
-        let b = Op::new(
-            Other::Touch {
-                what: "x".to_string(),
-            },
-            100,
-            "ingest",
-        );
+        let b = Op::new(Other::Touch { what: "x".to_string() }, 100, "ingest");
         assert_ne!(
             a.id, b.id,
             "the hashed input must include the prefix, not only the body"
@@ -658,10 +652,7 @@ mod tests {
         log.append(&Op::new(touch("y"), 8, "ingest")).unwrap();
         fs::write(
             log.path(),
-            format!(
-                "{}\nnot json at all\n",
-                fs::read_to_string(log.path()).unwrap().trim()
-            ),
+            format!("{}\nnot json at all\n", fs::read_to_string(log.path()).unwrap().trim()),
         )
         .unwrap();
 
@@ -687,11 +678,8 @@ mod tests {
     fn a_logical_line_including_its_newline_is_written_once() {
         let dir = tempfile::tempdir().unwrap();
         let log: Oplog<Probe> = Oplog::new(dir.path());
-        log.append_all(&[
-            Op::new(touch("a"), 1, "ingest"),
-            Op::new(touch("b"), 2, "ingest"),
-        ])
-        .unwrap();
+        log.append_all(&[Op::new(touch("a"), 1, "ingest"), Op::new(touch("b"), 2, "ingest")])
+            .unwrap();
         let raw = fs::read_to_string(log.path()).unwrap();
         assert!(raw.ends_with('\n'), "every line is newline-terminated");
         assert_eq!(raw.lines().count(), 2);
@@ -744,10 +732,7 @@ mod tests {
         log.append(&Op::new(touch("x"), 7, "ingest")).unwrap();
         fs::write(
             log.path(),
-            format!(
-                "{}\nnot json at all\n",
-                fs::read_to_string(log.path()).unwrap().trim()
-            ),
+            format!("{}\nnot json at all\n", fs::read_to_string(log.path()).unwrap().trim()),
         )
         .unwrap();
         assert_eq!(log.read_all().unwrap().len(), 1);
@@ -757,10 +742,7 @@ mod tests {
     fn append_all_writes_every_op_in_order() {
         let dir = tempfile::tempdir().unwrap();
         let log: Oplog<Probe> = Oplog::new(dir.path());
-        let ops = vec![
-            Op::new(touch("a"), 1, "ingest"),
-            Op::new(touch("b"), 2, "ingest"),
-        ];
+        let ops = vec![Op::new(touch("a"), 1, "ingest"), Op::new(touch("b"), 2, "ingest")];
         log.append_all(&ops).unwrap();
         assert_eq!(log.read_all().unwrap(), ops);
         // Empty batch must not create the file.

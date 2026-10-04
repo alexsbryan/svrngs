@@ -166,7 +166,8 @@ piece comes over:
 | Crate | What it is | State |
 |---|---|---|
 | `svrngs-core` | the record: acts, admission into one order, membership, the sync digest. `no_std`, so the compiler refuses filesystem, clock, network and threads; time and keys are arguments | none |
-| `svrngs-node` | a group's journal on disk, sync and its route over iroh, redemption, the loopback record API with its live lane (landed, u3-2 and u3-3), the member door (landed, u3-4) | the journals; each lend's declaration and secret |
+| `svrngs-runtime` | the only owner of each group's journal on disk, its projections and its writes: the journal and its write index, the open-journal map, the register's standing | the journals |
+| `svrngs-node` | the adapters: sync and its route over iroh, redemption, the loopback record API with its live lane (landed, u3-2 and u3-3), the member door (landed, u3-4) | each lend's declaration and secret |
 | `svrngs` | the command and the process: `new`, `join` and `link` (landed), `share`; the bare command prints where the record API listens | a device's keys; each group's seed |
 
 Held to `docs/principles/RUST_ARCH.md`: types encode the domain, ownership

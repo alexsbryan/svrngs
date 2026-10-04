@@ -30,14 +30,9 @@ fn a_batch_append_continues_the_counter_contiguously() {
         verifier: &Ed25519Verifier,
         now: 1,
     };
-    let recorded = svrngs_core::commit(&journal, &Batch(batch), &author)
-        .unwrap()
-        .unwrap();
+    let recorded = svrngs_core::commit(&journal, &Batch(batch), &author).unwrap().unwrap();
     let ops = recorded.lines();
-    assert_eq!(
-        ops.iter().map(|o| o.kind.seq).collect::<Vec<_>>(),
-        [1, 2, 3]
-    );
+    assert_eq!(ops.iter().map(|o| o.kind.seq).collect::<Vec<_>>(), [1, 2, 3]);
     assert_eq!(
         journal
             .append(record("y"), &key(1), &r, None, &Ed25519Verifier)
@@ -89,9 +84,7 @@ fn a_write_reads_only_what_the_log_gained_since_the_last_one() {
 
     // Another handle on the same file appends: this one's next write sees it.
     let other = open(dir.path());
-    let theirs = other
-        .append(record("y"), &key(2), &r, None, &Ed25519Verifier)
-        .unwrap();
+    let theirs = other.append(record("y"), &key(2), &r, None, &Ed25519Verifier).unwrap();
     assert!(!journal.ingest(&theirs).unwrap(), "held from the tail");
     assert_eq!(
         journal
@@ -108,11 +101,9 @@ fn a_write_reads_only_what_the_log_gained_since_the_last_one() {
     let fresh = tempfile::tempdir().unwrap();
     let (a, b) = (open(fresh.path()), open(fresh.path()));
     for _ in 0..3 {
-        a.append(record("x"), &key(1), &r, None, &Ed25519Verifier)
-            .unwrap();
+        a.append(record("x"), &key(1), &r, None, &Ed25519Verifier).unwrap();
     }
-    a.append(RailAct::Seal, &key(1), &r, None, &Ed25519Verifier)
-        .unwrap();
+    a.append(RailAct::Seal, &key(1), &r, None, &Ed25519Verifier).unwrap();
     let dropped = a.read().unwrap().0.remove(0);
     assert_eq!(b.compact(&r, &Ed25519Verifier).unwrap().removed, 3);
     assert!(

@@ -42,10 +42,7 @@ fn a_namespace_cannot_be_a_path() {
         &"x".repeat(65),
     ] {
         assert!(
-            matches!(
-                RingJournal::open(dir.path(), bad),
-                Err(RailError::BadNamespace(_))
-            ),
+            matches!(RingJournal::open(dir.path(), bad), Err(RailError::BadNamespace(_))),
             "{bad:?} was accepted"
         );
     }
@@ -115,10 +112,7 @@ fn the_door_refuses_to_author_under_a_key_the_ring_does_not_know() {
     // (svrngs: the Display names the fix the register has, an `Admit`; the
     // hand-written ring's `svrn ring roster add` did not come over.)
     let why = e.to_string();
-    assert!(
-        why.contains("admit"),
-        "the refusal must name the fix: {why}"
-    );
+    assert!(why.contains("admit"), "the refusal must name the fix: {why}");
     assert_eq!(journal.read().unwrap().0.len(), 0, "nothing was written");
 
     // A member writes fine.
@@ -306,20 +300,10 @@ fn ingesting_a_peers_op_preserves_it_and_is_idempotent() {
     let journal = open(dir.path());
     let peer = signed(&key(2), 100, 0, record("x"));
     assert!(journal.ingest(&peer).unwrap());
-    assert!(
-        !journal.ingest(&peer).unwrap(),
-        "second delivery is a no-op"
-    );
+    assert!(!journal.ingest(&peer).unwrap(), "second delivery is a no-op");
     let (back, _) = journal.read().unwrap();
     assert_eq!(back, vec![peer]);
-    assert_eq!(
-        journal
-            .admit(&ring(), &Ed25519Verifier)
-            .unwrap()
-            .ops()
-            .len(),
-        1
-    );
+    assert_eq!(journal.admit(&ring(), &Ed25519Verifier).unwrap().ops().len(), 1);
 }
 
 #[test]
@@ -346,8 +330,7 @@ fn two_partitioned_nodes_converge_on_an_identical_admission() {
     // Partitioned: neither node can see the other's write.
     a.append(record("groceries"), &key(1), &r, None, &Ed25519Verifier)
         .unwrap();
-    b.append(record("beer"), &key(2), &r, None, &Ed25519Verifier)
-        .unwrap();
+    b.append(record("beer"), &key(2), &r, None, &Ed25519Verifier).unwrap();
     assert_ne!(
         a.admit(&r, &Ed25519Verifier).unwrap(),
         b.admit(&r, &Ed25519Verifier).unwrap(),
@@ -432,9 +415,7 @@ fn two_forked_nodes_exchange_until_both_hold_the_fork() {
         b.admit(&r, &Ed25519Verifier).unwrap(),
     );
     assert!(
-        fa.gaps()
-            .iter()
-            .any(|g| matches!(g, RailGap::SequenceFork { .. })),
+        fa.gaps().iter().any(|g| matches!(g, RailGap::SequenceFork { .. })),
         "the fork is named, not silently merged: {:?}",
         fa.gaps()
     );
@@ -464,18 +445,10 @@ fn a_forked_window_with_a_tiny_budget_still_converges() {
     let budget = 400;
     for round in 0..40 {
         let (for_a, more_a) = b
-            .ops_missing_from_within(
-                &Ed25519Verifier,
-                &a.digest(&Ed25519Verifier).unwrap(),
-                budget,
-            )
+            .ops_missing_from_within(&Ed25519Verifier, &a.digest(&Ed25519Verifier).unwrap(), budget)
             .unwrap();
         let (for_b, more_b) = a
-            .ops_missing_from_within(
-                &Ed25519Verifier,
-                &b.digest(&Ed25519Verifier).unwrap(),
-                budget,
-            )
+            .ops_missing_from_within(&Ed25519Verifier, &b.digest(&Ed25519Verifier).unwrap(), budget)
             .unwrap();
         if for_a.is_empty() && for_b.is_empty() && !more_a && !more_b {
             break;
@@ -491,9 +464,7 @@ fn a_forked_window_with_a_tiny_budget_still_converges() {
     assert_eq!(a.read().unwrap().0.len(), 22, "A holds both branches");
     assert_eq!(b.read().unwrap().0.len(), 22, "B holds both branches");
     assert!(
-        fa.gaps()
-            .iter()
-            .any(|g| matches!(g, RailGap::SequenceFork { .. })),
+        fa.gaps().iter().any(|g| matches!(g, RailGap::SequenceFork { .. })),
         "the fork is named: {:?}",
         fa.gaps()
     );
@@ -543,21 +514,13 @@ fn two_nodes_that_receive_the_cuts_in_opposite_orders_agree() {
         a.admit(&r, &Ed25519Verifier).unwrap(),
         b.admit(&r, &Ed25519Verifier).unwrap(),
     );
-    assert_eq!(
-        fa, fb,
-        "the rail's order picks one — the same one on both nodes"
-    );
+    assert_eq!(fa, fb, "the rail's order picks one — the same one on both nodes");
     let not_member = fa
         .gaps()
         .iter()
         .filter(|g| matches!(g, RailGap::NotAMember { .. }))
         .count();
-    assert_eq!(
-        not_member,
-        1,
-        "exactly bo's counter-cut is unstanding: {:?}",
-        fa.gaps()
-    );
+    assert_eq!(not_member, 1, "exactly bo's counter-cut is unstanding: {:?}", fa.gaps());
     assert!(
         fa.ops().iter().any(|o| o.id == alex_cut.id),
         "alex's cut counted — it sorted first, so bo was already out when theirs arrived"
@@ -580,14 +543,7 @@ fn the_views_cost_is_measured_and_bounded() {
         // Seed without paying the view cost (ingest does not mint views).
         let start = journal.read().unwrap().0.len();
         let ops: Vec<_> = (start..n)
-            .map(|seq| {
-                signed(
-                    &key(1),
-                    1_700_000_000 + seq as i64,
-                    seq as u64,
-                    record("seed"),
-                )
-            })
+            .map(|seq| signed(&key(1), 1_700_000_000 + seq as i64, seq as u64, record("seed")))
             .collect();
         journal.ingest_all(&ops).unwrap();
 
@@ -622,10 +578,8 @@ fn a_half_delivered_peer_is_a_named_hole_not_a_clean_answer() {
     let (dir_a, dir_b) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (a, b) = (open(dir_a.path()), open(dir_b.path()));
     let r = ring();
-    b.append(record("first"), &key(2), &r, None, &Ed25519Verifier)
-        .unwrap();
-    b.append(record("second"), &key(2), &r, None, &Ed25519Verifier)
-        .unwrap();
+    b.append(record("first"), &key(2), &r, None, &Ed25519Verifier).unwrap();
+    b.append(record("second"), &key(2), &r, None, &Ed25519Verifier).unwrap();
 
     // Only the SECOND op lands — the connection dropped after one of them.
     let all = b.read().unwrap().0;
@@ -644,19 +598,13 @@ fn a_half_delivered_peer_is_a_named_hole_not_a_clean_answer() {
 
     // And the digest asks for the hole rather than claiming the high mark.
     assert!(
-        !a.digest(&Ed25519Verifier)
-            .unwrap()
-            .contains_key(&actor_of(&key(2))),
+        !a.digest(&Ed25519Verifier).unwrap().contains_key(&actor_of(&key(2))),
         "A holds nothing contiguous from B, so it must claim nothing"
     );
     let repair = b
         .ops_missing_from(&Ed25519Verifier, &a.digest(&Ed25519Verifier).unwrap())
         .unwrap();
-    assert_eq!(
-        repair.len(),
-        2,
-        "the hole and everything above it come back"
-    );
+    assert_eq!(repair.len(), 2, "the hole and everything above it come back");
     a.ingest_all(&repair).unwrap();
     let healed = a.admit(&r, &Ed25519Verifier).unwrap();
     assert!(healed.is_complete(), "{:?}", healed.gaps());
@@ -763,15 +711,11 @@ fn a_compacted_journal_stays_complete_and_stops_the_prefix_coming_back() {
     // under the ordinary key, taking the next ordinary seq. There is no
     // second authoring path and no setting.
     for what in ["one", "two", "three"] {
-        a.append(record(what), &key(1), &r, None, &Ed25519Verifier)
-            .unwrap();
+        a.append(record(what), &key(1), &r, None, &Ed25519Verifier).unwrap();
     }
-    let seal = a
-        .append(RailAct::Seal, &key(1), &r, None, &Ed25519Verifier)
-        .unwrap();
+    let seal = a.append(RailAct::Seal, &key(1), &r, None, &Ed25519Verifier).unwrap();
     assert_eq!(seal.kind.seq, 3, "a seal is just the actor's next op");
-    a.append(record("after"), &key(1), &r, None, &Ed25519Verifier)
-        .unwrap();
+    a.append(record("after"), &key(1), &r, None, &Ed25519Verifier).unwrap();
 
     // B is a peer that received everything and has NOT compacted.
     b.ingest_all(&a.read().unwrap().0).unwrap();
@@ -876,14 +820,11 @@ fn compaction_prunes_a_peers_retired_prefix_too() {
     let (a, b) = (open(dir_a.path()), open(dir_b.path()));
     let r = ring();
     for what in ["one", "two"] {
-        a.append(record(what), &key(1), &r, None, &Ed25519Verifier)
-            .unwrap();
+        a.append(record(what), &key(1), &r, None, &Ed25519Verifier).unwrap();
     }
-    a.append(RailAct::Seal, &key(1), &r, None, &Ed25519Verifier)
-        .unwrap();
+    a.append(RailAct::Seal, &key(1), &r, None, &Ed25519Verifier).unwrap();
     // Bo has written too, and has NOT sealed — bo's history is untouched.
-    b.append(record("bo-one"), &key(2), &r, None, &Ed25519Verifier)
-        .unwrap();
+    b.append(record("bo-one"), &key(2), &r, None, &Ed25519Verifier).unwrap();
     b.ingest_all(&a.read().unwrap().0).unwrap();
 
     let done = b.compact(&r, &Ed25519Verifier).unwrap();
@@ -928,21 +869,14 @@ fn an_op_a_correction_names_survives_a_seal_above_it() {
         .unwrap();
 
     let done = journal.compact(&r, &Ed25519Verifier).unwrap();
-    assert_eq!(
-        done.removed, 1,
-        "only `two` is both retired and unreferenced"
-    );
+    assert_eq!(done.removed, 1, "only `two` is both retired and unreferenced");
     let held = journal.read().unwrap().0;
     assert!(
         held.iter().any(|o| o.id == first.id),
         "the corrected op is still on disk"
     );
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
-    assert!(
-        f.is_complete(),
-        "no correction was left dangling: {:?}",
-        f.gaps()
-    );
+    assert!(f.is_complete(), "no correction was left dangling: {:?}", f.gaps());
 }
 
 /// **A journal with lines this build cannot read is not rewritten at all.**
@@ -1005,12 +939,8 @@ fn compaction_refuses_when_it_would_raise_a_gap() {
         },
     );
     journal.ingest(&admit_dee).unwrap();
-    journal
-        .ingest(&signed(&key(4), 101, 0, record("dee-writes")))
-        .unwrap();
-    journal
-        .ingest(&after(&key(1), &admit_dee, 102, RailAct::Seal))
-        .unwrap();
+    journal.ingest(&signed(&key(4), 101, 0, record("dee-writes"))).unwrap();
+    journal.ingest(&after(&key(1), &admit_dee, 102, RailAct::Seal)).unwrap();
 
     let before = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert!(
@@ -1052,9 +982,7 @@ fn compaction_keeps_a_cited_op_whatever_id_its_line_carries() {
             },
         ))
         .unwrap();
-    journal
-        .ingest(&after(&key(1), &real, 102, RailAct::Seal))
-        .unwrap();
+    journal.ingest(&after(&key(1), &real, 102, RailAct::Seal)).unwrap();
 
     let done = journal.compact(&r, &Ed25519Verifier).unwrap();
     assert_eq!(done.removed, 0, "the cited op stays: {done:?}");
@@ -1073,14 +1001,7 @@ fn compaction_keeps_a_cited_op_whatever_id_its_line_carries() {
 /// following `prev`: refused by admission, held on disk.
 fn forged_as_alex(seq: u64, prev: &Op<SignedOp>) -> Op<SignedOp> {
     let ts = 100 + seq as i64;
-    forged(
-        &key(3),
-        &key(1),
-        ts,
-        seq,
-        Some(prev.id.clone()),
-        record("forged"),
-    )
+    forged(&key(3), &key(1), ts, seq, Some(prev.id.clone()), record("forged"))
 }
 
 /// **The door follows its own act, never a line that claims its key**
@@ -1105,11 +1026,7 @@ fn the_door_names_its_own_act_and_not_a_forgery_beside_it() {
     assert_eq!(three.kind.seq, 2);
     assert_eq!(three.kind.prev.as_ref(), Some(&two.id), "not the forgery");
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
-    assert!(
-        matches!(f.gaps(), [RailGap::BadSignature { .. }]),
-        "{:?}",
-        f.gaps()
-    );
+    assert!(matches!(f.gaps(), [RailGap::BadSignature { .. }]), "{:?}", f.gaps());
     assert_eq!(applied(&f), vec!["one", "two", "three"]);
 }
 
@@ -1189,27 +1106,17 @@ fn a_peers_introduction_arrives_readable_and_changes_no_roster_row() {
     // bo — a member I already claim — vouches for a key nobody claims.
     let stranger = actor_of(&key(9));
     let intro = RailAct::Record {
-        payload: Introduce::new(
-            Person::parse("dee").unwrap(),
-            &stranger,
-            "she fixed the boiler",
-        )
-        .payload()
-        .unwrap(),
+        payload: Introduce::new(Person::parse("dee").unwrap(), &stranger, "she fixed the boiler")
+            .payload()
+            .unwrap(),
     };
-    let written = b
-        .append(intro, &key(2), &r, None, &Ed25519Verifier)
-        .unwrap();
+    let written = b.append(intro, &key(2), &r, None, &Ed25519Verifier).unwrap();
 
     // Ring-sync, the way a peer delivers: digest out, missing ops back in.
     let for_me = b
         .ops_missing_from(&Ed25519Verifier, &a.digest(&Ed25519Verifier).unwrap())
         .unwrap();
-    assert_eq!(
-        a.ingest_all(&for_me).unwrap(),
-        1,
-        "the op must actually arrive"
-    );
+    assert_eq!(a.ingest_all(&for_me).unwrap(), 1, "the op must actually arrive");
 
     // ── nothing moved ──
     assert_eq!(
@@ -1234,11 +1141,7 @@ fn a_peers_introduction_arrives_readable_and_changes_no_roster_row() {
         .iter()
         .find(|o| o.id == written.id)
         .expect("the introduction is admitted — it was signed by a member");
-    assert_eq!(
-        op.person,
-        Person::parse("bo").unwrap(),
-        "and it says who vouched"
-    );
+    assert_eq!(op.person, Person::parse("bo").unwrap(), "and it says who vouched");
     assert_eq!(
         Introduce::from_payload(op.payload.as_ref().unwrap()),
         Some(Introduce::new(
