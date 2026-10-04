@@ -35,12 +35,55 @@
 //! The permutation contract: the walk sorts, so every permutation of the op
 //! set produces a byte-identical [`Membership`], gaps included.
 //! `ra-membership-is-order-free`'s five legs pin exactly that.
+//!
+//! svrngs (U2, DESIGN §6 "A link admits each person once"): an `Admit` that
+//! redeems an [`RailAct::Invite`] counts only when its signer signed that
+//! `Invite`, the `Invite` is held, no counting `Correct` voids it and it
+//! counted earlier in the walk, the `Admit` is timed before the `Invite`'s
+//! `until`, and the admitted key's co-signature verifies. Otherwise it is
+//! [`Membership::refused`] with its [`InviteFault`], and binds nothing in
+//! either layer — a refused redemption's key lands no voids. An `Admit`
+//! naming no `Invite` keeps the rule above.
 
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::op::Op;
 
-use crate::{OpId, Person, RailAct, Roster, SignedOp};
+use crate::{OpId, Person, RailAct, Redemption, Roster, SignedOp};
+
+/// Why a redeeming `Admit` does not count — one per condition of the rule
+/// in the module docs, checked in this order.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum InviteFault {
+    /// A counting `Correct` voids the `Invite`: its issuer closed the link.
+    Closed,
+    /// No `Invite` with that id is held here.
+    Unheld,
+    /// The `Admit`'s signer is not the `Invite`'s.
+    NotIssuer,
+    /// The `Admit` is timed at or after the `Invite`'s `until`.
+    Lapsed,
+    /// The admitted key's signature over the redemption does not verify.
+    BadCosignature,
+    /// The `Invite` did not count before the `Admit` in the rail's order.
+    Uncounted,
+}
+
+impl std::fmt::Display for InviteFault {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::Closed => "its link was closed",
+            Self::Unheld => "this node does not hold its link",
+            Self::NotIssuer => "its link was made by someone else",
+            Self::Lapsed => "its link had lapsed",
+            Self::BadCosignature => "the joining key did not sign it",
+            Self::Uncounted => "its link did not count before it",
+        })
+    }
+}
 
 /// What one fold of the membership acts concludes.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -58,6 +101,11 @@ pub struct Membership {
     pub counted: BTreeSet<OpId>,
     /// The void set the walk applied — the targets of counting corrections.
     pub voided: BTreeSet<OpId>,
+    /// Redeeming `Admit`s by a standing signer that do not count, each with
+    /// its fault (svrngs, U2). Skipped when empty, so a fold with none
+    /// serialises as before.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub refused: BTreeMap<OpId, InviteFault>,
 }
 
 impl Membership {
@@ -76,12 +124,38 @@ impl Membership {
 /// caller's verifier judged the signatures), each beside the id its content
 /// derives ([`crate::derive_id`]; svrngs, U2: the id needs the namespace, so
 /// the caller that has it derives once); everything else is decided here,
-/// and decided the same way for every arrival order.
+/// and decided the same way for every arrival order. `namespace` is the one
+/// a redemption's co-signature binds.
 pub fn membership<'a>(
     ops: impl IntoIterator<Item = (&'a OpId, &'a Op<SignedOp>)>,
     seed: &Roster,
+    namespace: &str,
 ) -> Membership {
     let ops: Vec<(&OpId, &Op<SignedOp>)> = ops.into_iter().collect();
+
+    // ── the link: each redemption judged once on what it alone says ───
+    //
+    // Issuer, lapse and co-signature turn on the `Admit` and its `Invite`
+    // alone, so they are judged here, before either layer; the void and
+    // whether the `Invite` counted are each layer's own.
+    let invites: BTreeMap<&OpId, (&str, i64)> = ops
+        .iter()
+        .filter_map(|(id, op)| match &op.kind.act {
+            RailAct::Invite { until, .. } => Some((*id, (op.actor.as_str(), *until))),
+            _ => None,
+        })
+        .collect();
+    let redeems: BTreeMap<&OpId, Result<&OpId, InviteFault>> = ops
+        .iter()
+        .filter_map(|(id, op)| match &op.kind.act {
+            RailAct::Admit {
+                person,
+                key,
+                invite: Some(r),
+            } => Some((*id, redemption(op, person, key, r, &invites, namespace))),
+            _ => None,
+        })
+        .collect();
 
     // ── layer 1: the void set (commutative; today's rule, carried) ────
     //
@@ -98,7 +172,12 @@ pub fn membership<'a>(
             .collect();
         for (id, op) in &ops {
             if let RailAct::Admit { key, .. } = &op.kind.act {
-                if !voided.contains(*id) {
+                let redeemed = match redeems.get(*id) {
+                    None => true,
+                    Some(Ok(invite)) => !voided.contains(*invite),
+                    Some(Err(_)) => false,
+                };
+                if redeemed && !voided.contains(*id) {
                     bound.insert(key);
                 }
             }
@@ -135,13 +214,32 @@ pub fn membership<'a>(
         .collect();
     let mut live: BTreeMap<String, Person> = bindings.clone();
     let mut counted: BTreeSet<OpId> = BTreeSet::new();
+    let mut refused: BTreeMap<OpId, InviteFault> = BTreeMap::new();
     for (id, op) in order {
         if !live.contains_key(&op.actor) {
             continue;
         }
+        let fault = match redeems.get(id) {
+            None => None,
+            Some(Err(fault)) => Some(*fault),
+            Some(Ok(invite)) if voided.contains(*invite) => Some(InviteFault::Closed),
+            Some(Ok(invite)) if !counted.contains(*invite) => Some(InviteFault::Uncounted),
+            Some(Ok(_)) => None,
+        };
+        if let Some(fault) = fault {
+            tracing::debug!(
+                target: "rail:membership",
+                id = %id,
+                actor = %op.actor,
+                ?fault,
+                "membership: a redeeming Admit does not count"
+            );
+            refused.insert(id.clone(), fault);
+            continue;
+        }
         counted.insert(id.clone());
         match &op.kind.act {
-            RailAct::Admit { person, key } => {
+            RailAct::Admit { person, key, .. } => {
                 tracing::debug!(
                     target: "rail:membership",
                     key = %key,
@@ -164,9 +262,44 @@ pub fn membership<'a>(
         standing: live.into_keys().collect(),
         counted,
         voided,
+        refused,
     }
+}
+
+/// What a redeeming `Admit` says alone: the `Invite` it names, if that is
+/// held, was signed by the `Admit`'s own signer, had not lapsed when the
+/// `Admit` was timed, and the admitted key consented. The void and whether
+/// the `Invite` counted are the walk's.
+fn redemption<'a>(
+    op: &Op<SignedOp>,
+    person: &Person,
+    key: &str,
+    r: &'a Redemption,
+    invites: &BTreeMap<&OpId, (&str, i64)>,
+    namespace: &str,
+) -> Result<&'a OpId, InviteFault> {
+    let verdict = match invites.get(&r.id) {
+        None => Err(InviteFault::Unheld),
+        Some((issuer, _)) if *issuer != op.actor => Err(InviteFault::NotIssuer),
+        Some((_, until)) if op.ts_unix >= *until => Err(InviteFault::Lapsed),
+        Some(_) if !r.verifies(namespace, person, key) => Err(InviteFault::BadCosignature),
+        Some(_) => Ok(&r.id),
+    };
+    tracing::debug!(
+        target: "rail:membership",
+        invite = %r.id,
+        actor = %op.actor,
+        key,
+        ?verdict,
+        "membership: a redemption judged on what it says"
+    );
+    verdict
 }
 
 #[cfg(test)]
 #[path = "membership_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "membership_invite_tests.rs"]
+mod invite_tests;

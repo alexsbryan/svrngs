@@ -142,6 +142,36 @@ pub fn ring_op_message(id: &OpId) -> Vec<u8> {
     [RING_OP_DOMAIN, id.as_bytes().as_slice()].concat()
 }
 
+/// Domain separator for a redemption's co-signature (svrngs, U2), so the
+/// admitted key's consent is never valid as an act's signature, nor one as
+/// the other.
+const REDEMPTION_DOMAIN: &[u8] = b"svrngs-redemption-binding:";
+
+/// The bytes a redeeming `Admit`'s new key signs:
+/// `DOMAIN || ns || invite[32] || person || key`, every variable field
+/// length-prefixed. The namespace keeps a consent from being replayed into
+/// another group, the `Invite`'s id from being moved to another link, and
+/// the person from being renamed.
+pub(crate) fn redemption_message(
+    namespace: &str,
+    invite: &OpId,
+    person: &crate::Person,
+    key: &str,
+) -> Vec<u8> {
+    let mut msg = Vec::with_capacity(REDEMPTION_DOMAIN.len() + 160);
+    msg.extend_from_slice(REDEMPTION_DOMAIN);
+    field(&mut msg, namespace.as_bytes());
+    msg.extend_from_slice(invite.as_bytes());
+    field(&mut msg, person.as_str().as_bytes());
+    field(&mut msg, key.as_bytes());
+    msg
+}
+
+/// Hex Ed25519 signature over `msg`.
+pub(crate) fn sign_message(key: &SigningKey, msg: &[u8]) -> String {
+    hex::encode(key.sign(msg).to_bytes())
+}
+
 /// Sign one act's id. Hex-encoded 64-byte Ed25519 signature, matching how the
 /// join proof and the dial-info signature are already carried (serde has no
 /// `[u8; 64]` impl).

@@ -16,7 +16,7 @@ is a library type, and the `svrngs` command that starts one is U2's.
 ## Code map
 
 **`crates/svrngs-core`**: the group's record — signed acts (`Record`,
-`Correct`, `Seal`, `Admit`, `Remove`), admission into one total order
+`Correct`, `Seal`, `Admit`, `Remove`, `Invite`), admission into one total order
 (`admit.rs`), membership (`membership.rs`), the per-actor sync digest
 (`sync.rs`, `view.rs`), attestation and introductions. Pure: no filesystem,
 clock or network; time and keys arrive as arguments. It is commonwealth-ai's
@@ -35,7 +35,10 @@ of a hash of the line, signature included; `OpId` holds the whole hash, so a
 line whose id is not 64 hex does not parse. Each act names its author's act
 at seq − 1 (`SignedOp::prev`), and admission names one that does not a
 `WrongPrevious` gap and admits it not. Membership, the view and sync take the
-id admission derived (`derive_id`), never the line's.
+id admission derived (`derive_id`), never the line's. A link is in the record
+(DESIGN §6 "A link admits each person once"): an `Invite` names its key and
+lapse, and `membership` counts an `Admit` redeeming one only under the rule
+in `membership.rs`'s module docs, naming each refusal a `RefusedRedemption`.
 
 **`crates/svrngs-node`**: a group's journal on disk — one append-only JSONL
 log per group under `<root>/rings/<ns>/` (`journal.rs`), the single-writer

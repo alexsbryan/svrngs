@@ -937,6 +937,7 @@ fn compaction_refuses_when_it_would_raise_a_gap() {
         RailAct::Admit {
             person: p("dee"),
             key: actor_of(&key(4)),
+            invite: None,
         },
     );
     journal.ingest(&admit_dee).unwrap();

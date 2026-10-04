@@ -51,10 +51,11 @@ pub(crate) fn standing_in(
     namespace: &str,
     verifier: &dyn RingVerifier,
 ) -> Result<BTreeMap<String, Person>, RailError> {
-    // Standing turns only on the acts that bind, cut or void: `membership`
-    // moves standing on `Admit` and `Remove` alone, and voids by `Correct`
-    // alone (crates/svrngs-core/src/membership.rs:99-108 and :142-157), so
-    // the rest are left out before admission verifies each signature — the
+    // Standing turns only on the acts that bind, cut, void or open a link:
+    // `membership` moves standing on `Admit` and `Remove` alone, voids by
+    // `Correct` alone, and counts a redeeming `Admit` only under an `Invite`
+    // it holds (crates/svrngs-core/src/membership.rs, `membership` and
+    // `redemption`), so the rest are left out before admission verifies each signature — the
     // sync route asks this per request, of journals of tens of thousands of
     // acts (ring_sync's ceiling tests timed out verifying them all).
     let acts: Vec<Op<SignedOp>> = ops
@@ -62,7 +63,10 @@ pub(crate) fn standing_in(
         .filter(|op| {
             matches!(
                 op.kind.act,
-                RailAct::Admit { .. } | RailAct::Remove { .. } | RailAct::Correct { .. }
+                RailAct::Admit { .. }
+                    | RailAct::Remove { .. }
+                    | RailAct::Correct { .. }
+                    | RailAct::Invite { .. }
             )
         })
         .cloned()
@@ -133,13 +137,14 @@ impl RingRail {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{actor_of, Ed25519Verifier, OpId};
+    use crate::{actor_of, Ed25519Verifier, OpId, Redemption};
     use svrngs_core::tests_support::{after, key, record, signed, NS};
 
     fn admit_act(person: &str, joining: u8) -> RailAct {
         RailAct::Admit {
             person: Person::from(person),
             key: actor_of(&key(joining)),
+            invite: None,
         }
     }
 
@@ -150,11 +155,12 @@ mod tests {
         }
     }
 
-    /// Leaving out every act but `Admit`, `Remove` and `Correct` changes
-    /// nobody's standing: records between the membership acts, an `Admit`
-    /// voided, a `Remove`, and a record voided fold to the same standing
-    /// keys and persons from the membership acts alone as from the whole
-    /// journal. The failing input is a filter that leaves out `Correct`.
+    /// Leaving out every act but `Admit`, `Remove`, `Correct` and `Invite`
+    /// changes nobody's standing: records between the membership acts, an
+    /// `Admit` voided, a `Remove`, a record voided, and an `Admit` redeeming
+    /// an `Invite` fold to the same standing keys and persons from those acts
+    /// alone as from the whole journal. The failing inputs are a filter that
+    /// leaves out `Correct`, and one that leaves out `Invite`.
     #[test]
     fn standing_from_the_membership_acts_alone_is_the_journals() {
         let seed = Roster::new(
@@ -185,6 +191,27 @@ mod tests {
             remove_cy.clone(),
             after(&key(1), &remove_cy, 107, void(&bo_writes.id)),
         ];
+        let inv = after(
+            &key(1),
+            ops.last().unwrap(),
+            108,
+            RailAct::Invite {
+                key: actor_of(&key(9)),
+                until: 200,
+            },
+        );
+        let eve = Person::from("eve");
+        let redeem_eve = after(
+            &key(1),
+            &inv,
+            109,
+            RailAct::Admit {
+                invite: Some(Redemption::sign(&key(5), NS, &inv.id, &eve)),
+                person: eve,
+                key: actor_of(&key(5)),
+            },
+        );
+        let ops = [ops, vec![inv, redeem_eve]].concat();
         let whole = admit(&ops, &[], &seed, NS, &Ed25519Verifier)
             .membership
             .unwrap();
@@ -196,11 +223,11 @@ mod tests {
         assert_eq!(
             expected.keys().cloned().collect::<Vec<_>>(),
             {
-                let mut v = vec![actor_of(&key(1)), actor_of(&key(2))];
+                let mut v = vec![actor_of(&key(1)), actor_of(&key(2)), actor_of(&key(5))];
                 v.sort();
                 v
             },
-            "control: alex and bo stand; cy was removed and dee's Admit voided"
+            "control: alex, bo and eve stand; cy was removed and dee's Admit voided"
         );
         assert_eq!(
             standing_in(&ops, &seed, NS, &Ed25519Verifier).unwrap(),

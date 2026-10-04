@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai commonwealth/crates/commonwealth-rail-core/src/membership.rs@e1a43bcd2
 use super::*;
-use crate::tests_support::{key, record, signed, with_ids};
+use crate::tests_support::{key, record, signed, with_ids, NS};
 use crate::{actor_of, Ed25519Verifier};
 
 fn seed_of(seeds: &[(u8, &str)]) -> Roster {
@@ -20,6 +20,7 @@ fn admit_act(by: u8, ts: i64, seq: u64, person: &str, joining: u8) -> Op<SignedO
         RailAct::Admit {
             person: Person::from(person),
             key: actor_of(&key(joining)),
+            invite: None,
         },
     )
 }
@@ -76,13 +77,13 @@ fn every_permutation_of_a_membership_set_agrees() {
         ),
         signed(&key(2), 106, 1, record("x")),
     ];
-    let base = membership(with_ids(ops.iter()), &seed);
+    let base = membership(with_ids(ops.iter()), &seed, NS);
     // Every arrival order is the same answer.
     for rotation in 1..ops.len() {
         let mut rotated: Vec<&Op<SignedOp>> = ops.iter().collect();
         rotated.rotate_left(rotation);
         assert_eq!(
-            membership(with_ids(rotated), &seed),
+            membership(with_ids(rotated), &seed, NS),
             base,
             "rotation {rotation} changed the answer"
         );
@@ -122,7 +123,7 @@ fn voiding_an_admit_drops_what_it_transitively_admitted() {
             replacement: None,
         },
     );
-    let m = membership(with_ids([&stranger, &stranger_admits_p, &undo]), &seed);
+    let m = membership(with_ids([&stranger, &stranger_admits_p, &undo]), &seed, NS);
     assert!(
         !m.bindings.contains_key(&actor_of(&key(4))),
         "the stranger fell with their Admit"
@@ -151,7 +152,7 @@ fn voiding_a_remove_restores_the_member_and_their_in_between_writes() {
             replacement: None,
         },
     );
-    let m = membership(with_ids([&cut, &while_out, &undo]), &seed);
+    let m = membership(with_ids([&cut, &while_out, &undo]), &seed, NS);
     assert!(
         m.standing.contains(&actor_of(&key(2))),
         "voiding the Remove restores the member"
@@ -172,7 +173,7 @@ fn the_membership_acts_do_something() {
     let write = signed(&key(2), 101, 0, record("bo-writes"));
     let cut = remove_act(1, 102, 1, 2, 0);
     let after_cut = signed(&key(2), 103, 1, record("after-the-cut"));
-    let m = membership(with_ids([&add, &write, &cut, &after_cut]), &seed);
+    let m = membership(with_ids([&add, &write, &cut, &after_cut]), &seed, NS);
     assert!(m.counts(&write.id), "bo counts while admitted");
     assert!(
         !m.counts(&after_cut.id),
@@ -203,7 +204,7 @@ fn every_interleaving_of_a_membership_set_folds_identically() {
         signed(&key(2), 107, 1, record("bo-writes")),
         remove_act(1, 108, 4, 2, 1),
     ];
-    let base = membership(with_ids(ops.iter()), &seed);
+    let base = membership(with_ids(ops.iter()), &seed, NS);
     let mut state: u64 = 0x5eed;
     for round in 0..64u64 {
         let mut order: Vec<&Op<SignedOp>> = ops.iter().collect();
@@ -214,7 +215,7 @@ fn every_interleaving_of_a_membership_set_folds_identically() {
             order.swap(i, j);
         }
         assert_eq!(
-            membership(with_ids(order.iter().copied()), &seed),
+            membership(with_ids(order.iter().copied()), &seed, NS),
             base,
             "interleaving {round} changed the answer — arrival reached the fold"
         );

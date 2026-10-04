@@ -431,6 +431,7 @@ fn a_replacement_key_leaves_every_past_act_admitted() {
         RailAct::Admit {
             person: Person::from("dee"),
             key: actor_of(&key(5)),
+            invite: None,
         },
     );
     let cut_old = signed(

@@ -136,6 +136,16 @@ pub enum RailGap {
     /// real data on another branch. Judged against an act at `seq − 1` only
     /// when one is held; a parent not yet here is the [`Self::SequenceHole`].
     WrongPrevious { id: OpId, actor: String, seq: u64 },
+    /// A standing member's [`Admit`](crate::RailAct::Admit) that redeems an
+    /// [`Invite`](crate::RailAct::Invite), refused for the named fault
+    /// (svrngs, U2; DESIGN §6 "A link admits each person once"). It gives
+    /// its key no standing; it may be real data under an `Invite` this copy
+    /// does not yet hold.
+    RefusedRedemption {
+        id: OpId,
+        actor: String,
+        fault: crate::membership::InviteFault,
+    },
 }
 
 /// What a gap means for the fold's answer — the one classification (ARCH
@@ -178,6 +188,7 @@ impl RailGap {
             | Self::UnknownSigner { .. }
             | Self::NotAMember { .. }
             | Self::WrongPrevious { .. }
+            | Self::RefusedRedemption { .. }
             | Self::SequenceFork { .. }
             | Self::SequenceHole { .. } => GapClass::Absence,
             Self::TamperedId { .. } | Self::DanglingCorrection { .. } => GapClass::Contradiction,
@@ -230,6 +241,11 @@ impl std::fmt::Display for RailGap {
             Self::WrongPrevious { actor, seq, .. } => write!(
                 f,
                 "an act from {}… does not follow the one before it (#{seq})",
+                crate::actor_prefix(actor)
+            ),
+            Self::RefusedRedemption { actor, fault, .. } => write!(
+                f,
+                "a joining by link admitted by {}… does not count — {fault}",
                 crate::actor_prefix(actor)
             ),
             Self::SequenceFork { actor, seq, .. } => write!(
@@ -488,7 +504,11 @@ pub fn admit(
     // what is in the ring is decided by `membership`, and an act resolves
     // through the bindings its own record carries — so key churn cannot
     // re-flip the past (leg 4 of `ra-membership-is-order-free`).
-    let m = crate::membership::membership(authentic.iter().map(|(id, op)| (id, *op)), roster);
+    let m = crate::membership::membership(
+        authentic.iter().map(|(id, op)| (id, *op)),
+        roster,
+        namespace,
+    );
 
     let mut admitted: BTreeMap<OpId, Candidate<'_>> = BTreeMap::new();
     for (id, op) in authentic {
@@ -499,6 +519,14 @@ pub fn admit(
             });
             continue;
         };
+        if let Some(fault) = m.refused.get(&id) {
+            gaps.push(RailGap::RefusedRedemption {
+                id,
+                actor: op.actor.clone(),
+                fault: *fault,
+            });
+            continue;
+        }
         if !m.counted.contains(&id) && !m.voided.contains(&id) {
             gaps.push(RailGap::NotAMember {
                 id,
@@ -635,7 +663,10 @@ pub fn admit(
                 // carries nothing, so `applies()` is false and no reducer
                 // sees it. Admit/Remove carry meaning to the MEMBERSHIP
                 // function and never to an app (no-re-division).
-                RailAct::Seal | RailAct::Admit { .. } | RailAct::Remove { .. } => (None, None),
+                RailAct::Seal
+                | RailAct::Admit { .. }
+                | RailAct::Remove { .. }
+                | RailAct::Invite { .. } => (None, None),
             };
             AdmittedOp {
                 id: a.id.clone(),

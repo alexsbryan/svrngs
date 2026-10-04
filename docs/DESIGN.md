@@ -241,7 +241,17 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   new key. A link admits everyone who opens it until it lapses or its issuer
   closes it, and only the issuer's node redeems it (operator, 2026-10-04), so
   one node decides every use, and the fold counts a redeeming `Admit` only
-  under an `Invite` that still counts.
+  under an `Invite` that still counts. Landed in the record:
+  `RailAct::Invite{key, until}`, and an `Admit` whose `invite` names the
+  `Invite`'s id with the new key's signature over the namespace, that id,
+  the person and the key (`Redemption`, `crates/svrngs-core/src/lib.rs`).
+  `membership` counts it only when its signer signed the `Invite`, the
+  `Invite` is held, counted earlier in the order and no counting `Correct`
+  voids it, the `Admit` is timed before `until`, and the co-signature
+  verifies; otherwise admission names a `RefusedRedemption` gap with its
+  `InviteFault`. The void set is order-free, so a `Correct` of an `Invite`
+  unseats every key it admitted, as voiding each `Admit` would. Both kinds
+  ship at line version 3.
 - **Ids cover everything signed** (U2, landed): the id is the whole hash of
   the namespace, actor, seq, previous act, timestamp and body, and the
   signature is over the id (`act_id` and `ring_op_message`,

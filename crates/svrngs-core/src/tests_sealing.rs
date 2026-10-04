@@ -400,6 +400,7 @@ fn the_membership_acts_ship_at_a_bumped_line_version() {
         RailAct::Admit {
             person: Person::from("bo"),
             key: crate::actor_of(&key(2)),
+            invite: None,
         },
     );
     let cut = signed(

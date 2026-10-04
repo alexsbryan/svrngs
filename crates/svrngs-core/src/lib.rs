@@ -334,6 +334,14 @@ pub enum RailAct {
         /// The key being admitted, as actor hex — the same spelling every
         /// signature on the wire already uses.
         key: String,
+        /// The [`Self::Invite`] this `Admit` redeems, with the new key's
+        /// consent (svrngs, U2; DESIGN §6 "A link admits each person once").
+        /// `membership` counts a redeeming `Admit` only under an `Invite`
+        /// its own signer wrote that still counts. Skipped when absent, so
+        /// an `Admit` naming no `Invite` keeps its bytes, its id and its
+        /// meaning.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        invite: Option<Redemption>,
     },
     /// A member says: this key is out. The cut is by the removed key's own
     /// signed seq (`through_seq`) and never by a position in the order —
@@ -352,6 +360,50 @@ pub enum RailAct {
         /// The last seq of the removed key's own chain that this cut covers.
         through_seq: u64,
     },
+    /// A member says: whoever holds this link's key may join, until `until`
+    /// (svrngs, U2; DESIGN §6 "A link admits each person once"). `key` is
+    /// the link's public key as actor hex; the secret half travels in the
+    /// link and never in the record. Each use is an [`Self::Admit`] naming
+    /// this act's id, signed by this act's signer; a [`Self::Correct`]
+    /// closes the link. Carries no [`Payload`] and grants nothing itself.
+    Invite {
+        key: String,
+        /// Unix seconds; a redeeming `Admit` counts only when timed before it.
+        until: i64,
+    },
+}
+
+/// What a redeeming [`RailAct::Admit`] carries: the [`RailAct::Invite`] it
+/// redeems, and the admitted key's signature over the namespace, that
+/// `Invite`'s id, the person and the key ([`sig::redemption_message`]). The
+/// issuer's signature on the `Admit` says the issuer let this key in; this
+/// one says the key asked to join, as this person, through this link — so
+/// no issuer can redeem its own link for a key that never opened it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Redemption {
+    /// The id the `Invite`'s content derives ([`derive_id`]).
+    pub id: OpId,
+    /// Hex Ed25519 signature by the admitted key.
+    pub sig: String,
+}
+
+impl Redemption {
+    /// `joining` consents to join `namespace` as `person` under the
+    /// `Invite` whose id is `invite`.
+    pub fn sign(joining: &SigningKey, namespace: &str, invite: &OpId, person: &Person) -> Self {
+        let msg = sig::redemption_message(namespace, invite, person, &actor_of(joining));
+        Self {
+            id: invite.clone(),
+            sig: sig::sign_message(joining, &msg),
+        }
+    }
+
+    /// Whether `sig` is `key`'s signature over this redemption of `person`
+    /// in `namespace`. `false` on anything malformed.
+    pub(crate) fn verifies(&self, namespace: &str, person: &Person, key: &str) -> bool {
+        let msg = sig::redemption_message(namespace, &self.id, person, key);
+        sig::verify_hex(key, &msg, &self.sig)
+    }
 }
 
 impl RailAct {
@@ -393,7 +445,7 @@ impl RailAct {
         match self {
             Self::Record { payload } => Some(payload),
             Self::Correct { replacement, .. } => replacement.as_ref(),
-            Self::Seal | Self::Admit { .. } | Self::Remove { .. } => None,
+            Self::Seal | Self::Admit { .. } | Self::Remove { .. } | Self::Invite { .. } => None,
         }
     }
 }
@@ -473,13 +525,20 @@ pub struct SignedOp {
 /// `Journaled::VERSION` (1) — see [`SignedOp::line_version`].
 pub const MEMBERSHIP_LINE_VERSION: u32 = 2;
 
+/// The line format version the link ships at (svrngs, U2): an
+/// [`RailAct::Invite`], and an [`RailAct::Admit`] that redeems one. A build
+/// at [`MEMBERSHIP_LINE_VERSION`] would read a redeeming `Admit` as a plain
+/// one, drop the field it does not know, and derive another id; at this
+/// version it names the line `NewerVersionLine` instead.
+pub const LINK_LINE_VERSION: u32 = 3;
+
 impl Journaled for SignedOp {
     const FILE: &'static str = "ring_oplog.jsonl";
     const ID_PREFIX: &'static str = "ring";
     const LABEL: &'static str = "ring_rail";
-    /// This build reads the membership cohort's lines too (see
-    /// [`Self::line_version`]).
-    const UNDERSTANDS: u32 = MEMBERSHIP_LINE_VERSION;
+    /// This build reads the membership cohort's and the link's lines too
+    /// (see [`Self::line_version`]).
+    const UNDERSTANDS: u32 = LINK_LINE_VERSION;
     /// The membership acts — [`RailAct::Admit`] and [`RailAct::Remove`] —
     /// ship at the bumped line version and the original three keep the bytes
     /// they always had, so an un-upgraded node names exactly the acts it
@@ -488,6 +547,10 @@ impl Journaled for SignedOp {
     /// before.
     fn line_version(&self) -> u32 {
         match self.act {
+            RailAct::Invite { .. }
+            | RailAct::Admit {
+                invite: Some(_), ..
+            } => LINK_LINE_VERSION,
             RailAct::Admit { .. } | RailAct::Remove { .. } => MEMBERSHIP_LINE_VERSION,
             _ => Self::VERSION,
         }

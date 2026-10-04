@@ -76,6 +76,7 @@ fn admit(person: &str, joining: u8) -> RailAct {
     RailAct::Admit {
         person: Person::from(person),
         key: actor_of(&signing(joining)),
+        invite: None,
     }
 }
 
