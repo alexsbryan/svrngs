@@ -31,7 +31,6 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::routing::post;
 use axum::{Extension, Json};
-use ed25519_dalek::{Signer, Verifier};
 use serde::{Deserialize, Serialize};
 
 use crate::iroh::{Alpn, Dialer, Endpoint, EndpointAddr, HttpBridge};
@@ -39,8 +38,8 @@ use crate::register::{membership_in, Standing};
 use crate::ring_routes::err;
 use crate::ring_sync::peer_client;
 use crate::{
-    actor_of, derive_id, Ed25519Verifier, InviteFault, OpId, Person, RailAct, RailError,
-    Redemption, RingRail, SigningKey,
+    actor_of, derive_id, field, sign_message, verify_hex, Ed25519Verifier, InviteFault, OpId,
+    Person, RailAct, RailError, Redemption, RingRail, SigningKey,
 };
 
 /// The route's one path.
@@ -97,7 +96,7 @@ impl RedeemRequest {
             link: actor_of(link),
             sig: String::new(),
         };
-        req.sig = hex::encode(link.sign(&req.message()).to_bytes());
+        req.sig = sign_message(link, &req.message());
         req
     }
 
@@ -105,31 +104,19 @@ impl RedeemRequest {
     /// every variable field preceded by its `u32` big-endian length.
     fn message(&self) -> Vec<u8> {
         let mut msg = REQUEST_DOMAIN.to_vec();
-        let mut field = |b: &[u8]| {
-            msg.extend_from_slice(&(b.len() as u32).to_be_bytes());
-            msg.extend_from_slice(b);
-        };
-        field(self.group.as_bytes());
-        field(self.invite.as_bytes());
-        field(self.person.as_str().as_bytes());
-        field(self.key.as_bytes());
-        field(self.cosig.as_bytes());
-        field(self.link.as_bytes());
+        field(&mut msg, self.group.as_bytes());
+        field(&mut msg, self.invite.as_bytes());
+        field(&mut msg, self.person.as_str().as_bytes());
+        field(&mut msg, self.key.as_bytes());
+        field(&mut msg, self.cosig.as_bytes());
+        field(&mut msg, self.link.as_bytes());
         msg
     }
 
     /// Whether the link's key signed this request. `false` on anything
     /// malformed.
     fn signed_by_link(&self) -> bool {
-        let key: Option<[u8; 32]> = hex::decode(&self.link).ok().and_then(|b| b.try_into().ok());
-        let sig: Option<[u8; 64]> = hex::decode(&self.sig).ok().and_then(|b| b.try_into().ok());
-        let (Some(key), Some(sig)) = (key, sig) else {
-            return false;
-        };
-        ed25519_dalek::VerifyingKey::from_bytes(&key).is_ok_and(|k| {
-            k.verify(&self.message(), &ed25519_dalek::Signature::from_bytes(&sig))
-                .is_ok()
-        })
+        verify_hex(&self.link, &self.message(), &self.sig)
     }
 }
 

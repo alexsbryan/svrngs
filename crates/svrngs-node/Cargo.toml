@@ -22,8 +22,6 @@ tokio = { version = "1", features = ["net", "rt", "sync", "time", "io-util", "ma
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 hex = { workspace = true }
 rand = "0.9"
-# Redemption (U2): the link's key signs the joiner's request.
-ed25519-dalek = { workspace = true }
 # The serving half (U1): hyper serves the caller's axum Router on each
 # accepted iroh stream; tower's `oneshot` calls the router per request.
 axum = "0.8"

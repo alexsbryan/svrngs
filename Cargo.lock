@@ -3289,7 +3289,6 @@ name = "svrngs-node"
 version = "0.1.0"
 dependencies = [
  "axum",
- "ed25519-dalek 2.2.0",
  "hex",
  "hyper",
  "hyper-util",

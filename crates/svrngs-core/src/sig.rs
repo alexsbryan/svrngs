@@ -68,7 +68,9 @@ pub fn actor_of(key: &SigningKey) -> String {
     hex::encode(key.verifying_key().to_bytes())
 }
 
-pub(crate) fn field(msg: &mut Vec<u8>, bytes: &[u8]) {
+/// Append `bytes` to `msg` behind its `u32` big-endian length: the ONE
+/// framing every signed message here uses, so no field's end is ambiguous.
+pub fn field(msg: &mut Vec<u8>, bytes: &[u8]) {
     msg.extend_from_slice(&(bytes.len() as u32).to_be_bytes());
     msg.extend_from_slice(bytes);
 }
@@ -170,7 +172,7 @@ pub(crate) fn redemption_message(
 /// Hex Ed25519 signature over `msg`: the ONE place a signature is made and
 /// spelled, for an act's id, a redemption and a guest attestation alike, as
 /// [`verify_hex`] is the one place one is read.
-pub(crate) fn sign_message(key: &SigningKey, msg: &[u8]) -> String {
+pub fn sign_message(key: &SigningKey, msg: &[u8]) -> String {
     hex::encode(key.sign(msg).to_bytes())
 }
 
@@ -238,7 +240,7 @@ pub(crate) fn verify_ring_op(actor: &str, id: &OpId, sig_hex: &str) -> bool {
 /// Verify `sig_hex` over `msg` under the hex public key `signer`. The ONE
 /// place a hex key and a hex signature are parsed, shared by ring ops and
 /// guest attestations; `false` on any malformed input, never a panic.
-pub(crate) fn verify_hex(signer: &str, msg: &[u8], sig_hex: &str) -> bool {
+pub fn verify_hex(signer: &str, msg: &[u8], sig_hex: &str) -> bool {
     let Ok(key_bytes) = hex::decode(signer) else {
         return false;
     };
