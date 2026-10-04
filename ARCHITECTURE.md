@@ -226,6 +226,10 @@ under a 0700 dir, the file named by its header, never logged. Its house
 store (`house_dir_under`, `read_house_in`, `write_viewer_in`) and rails'
 data-dir helpers stay behind with their two tests, and with `dir_under` the
 `PathBuf` import.
+Then it changed: a hardening that fails fails the write, where upstream
+ignored it and reported a secret readable by others as stored; the file is
+created 0600; and that a credential is set is traced at debug, since the door
+reads the store on every request.
 
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`

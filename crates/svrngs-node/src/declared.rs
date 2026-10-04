@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai commonwealth/crates/commonwealth-media/src/declared.rs@e1a43bcd2
-//! Headers this node adds to requests reaching its OWN media origin.
+//! Headers this node adds to requests reaching a service it lends: the
+//! lender's own credential for its own service, which the member door
+//! injects after it has set who is asking, and which never leaves this
+//! computer (DESIGN §3, §8 U3's inventory, its declared.rs row). It is never
+//! logged, and never in the record: the record is copied to every member.
 //!
-//! Layout, mirroring `secrets/mcp/`:
+//! Layout, one directory per lend, under the data dir
+//! (upstream kept one, `~/.svrnmesh/secrets/media/`):
 //!
 //! ```text
-//!   ~/.svrnmesh/secrets/media/authorization    0600   the value
-//!   ~/.svrnmesh/secrets/media/                 0700
+//!   <data dir>/secrets/lends/<lend>/authorization    0600   the value
+//!   <data dir>/secrets/lends/<lend>/                 0700
 //! ```
 //!
 //! For Jellyfin 12 the value is the whole credential the header carries,
@@ -30,7 +35,7 @@ pub fn valid_header_name(name: &str) -> bool {
             .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
 }
 
-/// Every declared header, as [`crate::admit_media`] wants them. Empty when the
+/// Every declared header, as the member door adds them. Empty when the
 /// directory is absent, which is the common case and not an error.
 ///
 /// Order is stable (sorted by name) so a head is byte-reproducible across
@@ -59,8 +64,12 @@ pub fn read_declared_in(dir: &Path) -> Vec<(String, String)> {
             continue;
         }
         // The value is a secret: log THAT one is set, never what it is. Same
-        // discipline as `PUT /v1/mcp/servers/{name}/token`.
-        tracing::info!(
+        // discipline as `PUT /v1/mcp/servers/{name}/token`. (svrngs: at
+        // debug, where upstream's was info: the door reads the store on
+        // every request, so a running node sees a lend declared or
+        // withdrawn without a restart, and an info line per request would
+        // drown the log.)
+        tracing::debug!(
             target: "media",
             header = %name,
             "declared-header: this node will add its own credential to requests reaching its origin"
@@ -90,30 +99,56 @@ pub fn write_declared_in(dir: &Path, name: &str, value: &str) -> std::io::Result
             other => other,
         };
     }
+    // svrngs: a hardening that fails fails the write, where upstream
+    // ignored it (`let _ =`) and left a secret readable by others, reported
+    // as stored (ARCH 6). The file is created owner-only, so the value is
+    // never in a wider file even for a moment; a file already there with
+    // wider modes is narrowed after the write.
     std::fs::create_dir_all(dir)?;
-    harden_dir(dir);
-    std::fs::write(&path, value.trim())?;
-    harden_file(&path);
+    harden_dir(dir)?;
+    write_owner_only(&path, value.trim())?;
+    harden_file(&path)
+}
+
+#[cfg(unix)]
+fn write_owner_only(path: &Path, value: &str) -> std::io::Result<()> {
+    use std::io::Write;
+    use std::os::unix::fs::OpenOptionsExt;
+    std::fs::OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .mode(0o600)
+        .open(path)?
+        .write_all(value.as_bytes())
+}
+
+#[cfg(unix)]
+fn harden_file(path: &Path) -> std::io::Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600))
+}
+
+#[cfg(unix)]
+fn harden_dir(path: &Path) -> std::io::Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o700))
+}
+
+#[cfg(not(unix))]
+fn write_owner_only(path: &Path, value: &str) -> std::io::Result<()> {
+    std::fs::write(path, value)
+}
+
+#[cfg(not(unix))]
+fn harden_file(_path: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
-#[cfg(unix)]
-fn harden_file(path: &Path) {
-    use std::os::unix::fs::PermissionsExt;
-    let _ = std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600));
-}
-
-#[cfg(unix)]
-fn harden_dir(path: &Path) {
-    use std::os::unix::fs::PermissionsExt;
-    let _ = std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o700));
-}
-
 #[cfg(not(unix))]
-fn harden_file(_path: &Path) {}
-
-#[cfg(not(unix))]
-fn harden_dir(_path: &Path) {}
+fn harden_dir(_path: &Path) -> std::io::Result<()> {
+    Ok(())
+}
 
 #[cfg(test)]
 mod tests {
@@ -205,6 +240,26 @@ mod tests {
             .permissions()
             .mode();
         assert_eq!(mode & 0o777, 0o600);
+    }
+
+    /// svrngs: the directory is owner-only too, and so is a file that was
+    /// already there with wider modes. The failing input: a secret written
+    /// over a hand-dropped 0644 file, left 0644.
+    #[cfg(unix)]
+    #[test]
+    fn the_declaration_dir_and_a_rewritten_file_are_owner_only() {
+        use std::os::unix::fs::PermissionsExt;
+        let root = tempfile::tempdir().unwrap();
+        let dir = root.path().join("secrets");
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("authorization");
+        std::fs::write(&file, "old").unwrap();
+        std::fs::set_permissions(&file, std::fs::Permissions::from_mode(0o644)).unwrap();
+        write_declared_in(&dir, "authorization", "new").unwrap();
+        let mode = |p: &Path| std::fs::metadata(p).unwrap().permissions().mode() & 0o777;
+        assert_eq!(mode(&dir), 0o700);
+        assert_eq!(mode(&file), 0o600);
+        assert_eq!(std::fs::read_to_string(&file).unwrap(), "new");
     }
 
     #[test]
