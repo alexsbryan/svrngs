@@ -266,7 +266,8 @@ pub struct Offered {
     pub name: LendName,
     pub kind: Kind,
     pub limit: NonZeroU16,
-    /// The people with a request through the door to it now.
+    /// The people the door counts on it now (`door::limit`): a request in
+    /// flight, or one within its window.
     pub using: u32,
 }
 

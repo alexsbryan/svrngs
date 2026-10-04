@@ -31,24 +31,37 @@
 //! **The secret never goes back.** A response header holding the lend's
 //! secret is dropped, named at warn by its header, never its value.
 //!
+//! **How many at once, and each one's share** (u3-6; DESIGN §8, "Many
+//! people, one library"): before a request is carried, the door asks
+//! [`limit`] whether its person is let in — counted while a request of
+//! theirs is in flight or within [`limit::WINDOW`] of one, a viewer whose
+//! path ends at a private address guessed home and not counted. A newcomer
+//! past the lend's limit is refused, `503`, with the reason and how many
+//! are using it. A person let in is told their share of the upload the lend
+//! declares, the declared upload over the people counted, in
+//! [`SHARE_HEADER`] on the request the service receives and on the answer
+//! the member receives; a lend declaring none tells no share. Each verdict
+//! is traced at info with the path the door observed ([`Via`]) — its bytes,
+//! RTT and whether it is relayed — so a watcher of the lender's log reads
+//! every share without the debug level.
+//!
 //! **What it lends, asked** (u3-5; DESIGN §8, "Lends are asked, not
 //! stored"): `GET /lends` answers a dialer standing in a group this
 //! computer holds every lend declared here now, read from the declarations
 //! at each ask, each with how many people use it now ([`Using`]): the
-//! people with a request through the door to it in flight, its answer
-//! still streaming included.
+//! people [`limit`] counts on it.
 //!
 //! **What the door refuses**, by name: a request not on an iroh stream; a
 //! dialer standing in no group this computer holds; a path that can step
 //! out of its lend — a `..` segment, an encoded `.` or `/` — as
 //! `route_by_prefix` refuses one (`iroh_routed_forward.rs:318-337`); a lend
-//! this computer does not declare; and a path the lend refuses
-//! ([`crate::lend::RefusedPath::covers`]).
+//! this computer does not declare; a path the lend refuses
+//! ([`crate::lend::RefusedPath::covers`]); and a newcomer past the lend's
+//! limit.
 
-use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use axum::body::Body;
 use axum::extract::{Request, State};
@@ -61,10 +74,11 @@ use http_body_util::BodyExt;
 use tokio::sync::{mpsc, oneshot};
 
 use crate::declared::read_declared_in;
-use crate::iroh::Dialer;
+use crate::iroh::{Dialer, Via};
 use crate::lend::{self, Lend, LendName, Offered};
 use crate::ring_routes::err;
 use crate::{Ed25519Verifier, Person, RingRail};
+use limit::{Counts, Verdict, Whereabouts};
 
 pub mod limit;
 
@@ -79,6 +93,11 @@ pub const PERSON_HEADER: &str = "x-svrngs-person";
 /// The key the connection verified, as the record spells an actor: its
 /// lowercase hex.
 pub const KEY_HEADER: &str = "x-svrngs-key";
+
+/// A person's share of the upload a lend declares, in bits a second, on
+/// each request through the door and its answer: a declared figure, as the
+/// name says (DESIGN §8, "The upload is declared"), never a measured one.
+pub const SHARE_HEADER: &str = "x-svrngs-declared-share-bps";
 
 /// Where a request for a lend starts.
 pub const LEND_ROUTE: &str = "/lend/";
@@ -127,43 +146,66 @@ pub fn router(door: Door) -> axum::Router {
         .with_state(door)
 }
 
-/// Who is using each lend now: for each, the people with a request
-/// through the door to it in flight. The door's own state, owned by one
-/// task and told by messages (RUST_ARCH 3, 4): a request carried to a
-/// service begins a use, and its answer, dropped once streamed or
-/// abandoned, ends it ([`InFlight`]). Never in the record.
+/// Who is using each lend now, as [`limit::Counts`] decides it: the
+/// door's own state, owned by one task and told by messages (RUST_ARCH 3,
+/// 4), which reads the clock as each message arrives. A request let in
+/// begins a use, and its answer, dropped once streamed or abandoned, ends
+/// it ([`InFlight`]). Never in the record.
 #[derive(Clone)]
 pub struct Using(mpsc::UnboundedSender<Use>);
 
 enum Use {
-    Began(LendName, String),
+    /// A person, at a guessed whereabouts, asks for a lend; the verdict is
+    /// answered with the hold of a use let in, which ends it when dropped
+    /// — so an asker gone before hearing ends its own.
+    Ask(
+        Box<Lend>,
+        String,
+        Whereabouts,
+        oneshot::Sender<(Verdict, Option<InFlight>)>,
+    ),
     Ended(LendName, String),
     People(LendName, oneshot::Sender<u32>),
+}
+
+#[expect(
+    clippy::disallowed_methods,
+    reason = "the door's clock: when a use of a lend begins and ends"
+)]
+fn now() -> Instant {
+    Instant::now()
 }
 
 impl Using {
     /// The task that keeps the count, ending when the last handle drops.
     pub fn spawn() -> Self {
-        let (tx, mut rx) = mpsc::unbounded_channel();
+        let (tx, mut rx) = mpsc::unbounded_channel::<Use>();
+        let hold = tx.downgrade();
         tokio::spawn(async move {
-            let mut flights: BTreeMap<LendName, BTreeMap<String, usize>> = BTreeMap::new();
+            let mut counts = Counts::default();
             while let Some(u) = rx.recv().await {
+                let now = now();
                 match u {
-                    Use::Began(lend, actor) => {
-                        *flights.entry(lend).or_default().entry(actor).or_default() += 1;
-                    }
-                    Use::Ended(lend, actor) => {
-                        let people = flights.entry(lend).or_default();
-                        if let Some(n) = people.get_mut(&actor) {
-                            *n -= 1;
-                            if *n == 0 {
-                                people.remove(&actor);
+                    Use::Ask(lend, actor, whereabouts, answer) => {
+                        let verdict = counts.ask(&lend, &actor, whereabouts, now);
+                        let held = match (verdict, hold.upgrade()) {
+                            (Verdict::In { .. }, Some(using)) => Some(InFlight {
+                                using,
+                                lend: lend.name.clone(),
+                                actor,
+                            }),
+                            (Verdict::In { .. }, None) => {
+                                counts.end(&lend.name, &actor, now);
+                                continue;
                             }
-                        }
+                            _ => None,
+                        };
+                        // Unheard, the hold drops with the answer and ends the use.
+                        let _ = answer.send((verdict, held));
                     }
+                    Use::Ended(lend, actor) => counts.end(&lend, &actor, now),
                     Use::People(lend, answer) => {
-                        let n = flights.get(&lend).map_or(0, |p| p.len());
-                        let _ = answer.send(u32::try_from(n).unwrap_or(u32::MAX));
+                        let _ = answer.send(counts.people(&lend, now));
                     }
                 }
             }
@@ -171,14 +213,25 @@ impl Using {
         Self(tx)
     }
 
-    /// `actor` begins a request to `lend`; it ends when the hold drops.
-    fn begin(&self, lend: &LendName, actor: &str) -> InFlight {
-        let _ = self.0.send(Use::Began(lend.clone(), actor.to_string()));
-        InFlight {
-            using: self.0.clone(),
-            lend: lend.clone(),
-            actor: actor.to_string(),
-        }
+    /// `actor`, at `whereabouts`, asks for `lend`: the verdict, and the
+    /// hold of a use let in; `None` when the count's task is gone, which is
+    /// no verdict at all.
+    async fn ask(
+        &self,
+        lend: &Lend,
+        actor: &str,
+        whereabouts: Whereabouts,
+    ) -> Option<(Verdict, Option<InFlight>)> {
+        let (answer, told) = oneshot::channel();
+        self.0
+            .send(Use::Ask(
+                Box::new(lend.clone()),
+                actor.to_string(),
+                whereabouts,
+                answer,
+            ))
+            .ok()?;
+        told.await.ok()
     }
 
     /// How many people use `lend` now; `None` when the count's task is
@@ -394,6 +447,7 @@ fn drop_echoed_secret(
 async fn through(
     State(door): State<Door>,
     dialer: Option<Extension<Dialer>>,
+    via: Option<Extension<Via>>,
     req: Request,
 ) -> Response {
     let Some(Extension(dialer)) = dialer else {
@@ -442,9 +496,75 @@ async fn through(
             format!("{} is lent without {}", lend.name, refused.as_str()),
         );
     }
+    let observed = via.and_then(|Extension(v)| v.observe());
+    if observed.is_none() {
+        tracing::debug!(target: "door", actor, lend = %lend.name, "door: no path observed, so the person is taken to be away");
+    }
+    let whereabouts = limit::guess(observed.and_then(|o| o.addr));
+    let Some((verdict, held)) = door.using.ask(&lend, &actor, whereabouts).await else {
+        tracing::warn!(target: "door", lend = %lend.name, "door: refused — no count of who uses the lend, so none can be let in");
+        return err(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "who is using this lend cannot be counted on the computer that lends it",
+        );
+    };
+    let (relayed, rtt_ms, sent, received) = observed.map_or((None, None, None, None), |o| {
+        (
+            Some(o.relayed),
+            Some(o.rtt.as_millis()),
+            Some(o.sent),
+            Some(o.received),
+        )
+    });
+    let share = match verdict {
+        Verdict::Full { using } => {
+            tracing::info!(target: "door", person = person.as_str(), lend = %lend.name, using, limit = lend.limit,
+                "door: refused — as many people as the lend's limit are using it");
+            return busy(&lend, using);
+        }
+        Verdict::Home => {
+            tracing::info!(target: "door", person = person.as_str(), lend = %lend.name, addr = ?observed.and_then(|o| o.addr),
+                "door: guessed in this computer's home — the path ends at a private address — so not counted and told no share");
+            None
+        }
+        Verdict::In { people, share } => {
+            tracing::info!(target: "door", person = person.as_str(), lend = %lend.name, people, share_bps = ?share,
+                declared_bps = ?lend.upload.map(lend::Upload::bps), relayed = ?relayed, rtt_ms = ?rtt_ms,
+                sent = ?sent, received = ?received, "door: let in, and told their share of the declared upload");
+            if share.is_none() {
+                tracing::debug!(target: "door", lend = %lend.name, "door: the lend declares no upload, so no share is told");
+            }
+            share
+        }
+    };
     tracing::debug!(target: "door", actor, person = person.as_str(), group, lend = %lend.name,
         method = %req.method(), path = service_path, "door: carrying a request to the lend's service");
-    forward(&door, &lend, (&actor, &person), service_path, req).await
+    let told = Told { share, held };
+    forward(&door, &lend, (&actor, &person), service_path, req, told).await
+}
+
+/// What the door decided for a request let in: the share it is told, and
+/// the use it holds until its answer is whole or abandoned (none for a
+/// person guessed home, who is not counted).
+struct Told {
+    share: Option<u64>,
+    held: Option<InFlight>,
+}
+
+/// The refusal of a newcomer past `lend`'s limit, `using` people counted:
+/// the reason, in a person's words, and the figures, for an app to turn
+/// into a choice (DESIGN §8, "Too many at once").
+fn busy(lend: &Lend, using: u32) -> Response {
+    let people = |n: u32| if n == 1 { "person" } else { "people" };
+    let limit = lend.limit.get();
+    let reason = format!(
+        "{} is lent to {limit} {} at once, and {using} {} using it now: try again when one stops",
+        lend.name,
+        people(u32::from(limit)),
+        if using == 1 { "is" } else { "are" },
+    );
+    let body = serde_json::json!({ "error": reason, "using": using, "limit": limit });
+    (StatusCode::SERVICE_UNAVAILABLE, Json(body)).into_response()
 }
 
 /// Carry `req` to `lend`'s service as `path` (with its query), the head
@@ -455,6 +575,7 @@ async fn forward(
     (actor, person): (&str, &Person),
     path: String,
     req: Request,
+    Told { share, held }: Told,
 ) -> Response {
     let (mut parts, body) = req.into_parts();
     let target = match parts.uri.query() {
@@ -499,10 +620,15 @@ async fn forward(
             );
         }
     };
+    if let Some(share) = share {
+        parts.headers.insert(
+            HeaderName::from_static(SHARE_HEADER),
+            HeaderValue::from(share),
+        );
+    }
     *request.headers_mut() = parts.headers;
-    // A use begins as the request leaves for the service, and lasts until
-    // the member has the whole answer or leaves it: the answer's body holds it.
-    let held = door.using.begin(&lend.name, actor);
+    // The use began when the person was let in, and lasts until the member
+    // has the whole answer or leaves it: the answer's body holds it.
 
     let unanswered = || {
         err(
@@ -555,6 +681,14 @@ async fn forward(
     let (mut parts, body) = answer.into_parts();
     strip_hop_by_hop(&mut parts.headers);
     let echoed = drop_echoed_secret(&mut parts.headers, &secret);
+    // The share on the answer is the door's: a service's own is displaced.
+    parts.headers.remove(SHARE_HEADER);
+    if let Some(share) = share {
+        parts.headers.insert(
+            HeaderName::from_static(SHARE_HEADER),
+            HeaderValue::from(share),
+        );
+    }
     if !echoed.is_empty() {
         tracing::warn!(target: "door", lend = %lend.name, headers = ?echoed,
             "door: the lend's service answered with its secret in a header — dropped, never sent on");

@@ -266,18 +266,30 @@ dialer's name in the first group held that they stand in — and
 response header holding the secret is dropped. It refuses, by name, a
 request off the stream, a dialer standing in no group held, a path with a
 `..` segment or an encoded `.` or `/` (`route_by_prefix`'s guard), a lend
-not declared, and a path the lend refuses. A lend is `lend.rs`: its
+not declared, a path the lend refuses, and a newcomer past the lend's
+limit. Who is let in is `door/limit.rs` (u3-6), a pure decision with the
+time an argument, in `fair_share_cap`'s shape counted in people: a person is
+counted on a lend while a request of theirs is in flight or within
+`limit::WINDOW` (30 s) of one, a viewer whose path ends at a private,
+link-local or unique-local address is guessed home and not counted, and a
+newcomer past the limit is refused 503 with the reason and `using`. A
+person let in is told the lend's declared upload over the people counted,
+in `x-svrngs-declared-share-bps` on the request and on its answer, none
+when the lend declares no upload; each verdict is traced at info with the
+path iroh reports (`iroh::Via::observe`: the selected path's address,
+whether it is relayed, RTT and bytes). A lend is `lend.rs`: its
 declaration, `<data dir>/lends/<lend>.json` (the port, an opaque kind, how
-many people may use it at once and the refused paths; unknown fields
-refused, and a kind or limit absent too), read per request, so a running
+many people may use it at once, the refused paths and the declared upload,
+`upload_bps`, if any; unknown fields refused, and a kind or limit absent
+too), read per request, so a running
 node sees a lend come and go; its secret is `declared.rs`'s store under
 `<data dir>/secrets/lends/<lend>/`. `lend::declare` and `lend::withdraw`
 are the one writer of both, which `svrngs share` calls. `GET /lends` on the
 members' protocol answers a dialer standing in a group held here what this
 computer lends (`lend::Offered`: name, kind, limit) read from the
 declarations at each ask, and how many people use each now: `door::Using`,
-a task owning the count, told by messages, of the people with a request to
-the lend in flight, the answer's body holding the use until it ends.
+a task owning `limit::Counts` and the clock, told by messages, the answer's
+body holding a use until it ends.
 `Node::lends` asks every other key standing in a group held, at once, and
 answers each lend with whose it is and its address on this computer's
 loopback, the dialler's bridge to its lender then `/lend/<name>/`; a
@@ -309,7 +321,8 @@ founder's key bound to the founder's name; `group::answered` believes a
 seed an issuer answers only when it hashes to the group named. `cli.rs` is new, in the shape of
 commonwealth-rails' `cli.rs` and `main.rs`: verbs parsed by hand (`svrngs`,
 `new <name> [--as] [--origin]`, `join <link> [--as]`, `link <group>
-[--origin]`, `share <port> [--name] [--kind] [--limit] [--refuse]...`,
+[--origin]`, `share <port> [--name] [--kind] [--limit] [--refuse]...
+[--upload]`,
 `unshare <name>`); one svrngs per
 data dir (`$SVRNGS_DIR`, else `~/.svrngs`), held by a lock on
 `<dir>/lock`; `new` and `link` append an `Invite` through the group's door
@@ -324,7 +337,8 @@ and an address on this computer. `share.rs` is `svrn publish`'s
 `e1a43bcd2`, then changed (u3-5): `share <port>` takes a port alone,
 probes it, names its kind from `well_known.txt` (data, so the infra holds
 no app's noun) or `--kind`, its name from `--name` or the kind, its limit
-from `--limit` or 3, and decides the lend in `lend_of`, which touches
+from `--limit` or 3, its upload from `--upload` in Mbit/s or none (u3-6),
+and decides the lend in `lend_of`, which touches
 nothing; `cli` reads the password from a prompt, never argv, declares the
 lend through `svrngs_node::lend::declare`, and runs the node unless the
 data dir's lock is held, when it says svrngs is running already and

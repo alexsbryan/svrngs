@@ -13,6 +13,7 @@
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 #[path = "../common/mod.rs"]
 mod common;
+mod limit;
 mod origins;
 
 use std::net::SocketAddr;
@@ -535,8 +536,10 @@ async fn lends_of(pair: &Pair) -> Vec<(String, String, u64, u64)> {
 
 /// A member asks what A lends, and how many use each now (u3-5): read
 /// from the declarations at each ask, so a lend withdrawn is gone at the
-/// next; and a person whose answer is still streaming is using it, until
-/// the answer ends. The secret is in no answer ([`clean`]). Planted: the
+/// next; and a person whose answer is still streaming is using it, and is
+/// still counted once it ends, until the window passes (u3-6;
+/// `door::limit::WINDOW`, crossed in `limit.rs`). The secret is in no
+/// answer ([`clean`]). Planted: the
 /// declarations read once, when the door starts (the withdrawn lend still
 /// listed); the use ended when the service answers rather than when the
 /// answer ends (none using while it streams).
@@ -576,15 +579,11 @@ async fn a_member_asks_what_is_lent_and_how_many_use_it_now() {
 
     release.send(()).unwrap();
     sock.read_to_end(&mut got).await.unwrap();
-    let mut using = 1;
-    for _ in 0..50 {
-        using = slow(&lends_of(&pair).await);
-        if using == 0 {
-            break;
-        }
-        tokio::time::sleep(Duration::from_millis(100)).await;
-    }
-    assert_eq!(using, 0, "the answer ended, and so did bo's use");
+    assert_eq!(
+        slow(&lends_of(&pair).await),
+        1,
+        "the answer ended, and bo is counted until the window passes"
+    );
 
     lend::withdraw(pair.dir.path(), &LendName::parse("slow").unwrap()).unwrap();
     assert_eq!(

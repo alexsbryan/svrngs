@@ -41,9 +41,10 @@
 //!   which resolves it — DESIGN §8, "Four facts".)
 
 use std::collections::HashMap;
-use std::net::SocketAddr;
+use std::net::{IpAddr, SocketAddr};
 
 use std::sync::Arc;
+use std::time::Duration;
 
 pub use crate::alpn::{Alpn, ALPN};
 // The guest dialer and the one HTTP bridge live in `crate::guest`, as they
@@ -337,6 +338,50 @@ impl Dialer {
     }
 }
 
+/// The connection a request came on, beside its [`Dialer`]: what the door
+/// reads of the path it travels (svrngs, u3-6). Inserted by
+/// [`IrohAcceptor`] as an extension, as the dialer is.
+#[derive(Debug, Clone)]
+pub struct Via(iroh::endpoint::Connection);
+
+/// What a connection's selected path looks like now, as iroh's
+/// `Connection::paths()` and `PathStats` report it: use, never capacity
+/// (DESIGN §8, U3's inventory, its iroh_path row).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Observed {
+    /// The address the path ends at, `None` when it rides a relay.
+    pub addr: Option<IpAddr>,
+    pub relayed: bool,
+    pub rtt: Duration,
+    /// Bytes this computer has sent on the path, and received.
+    pub sent: u64,
+    pub received: u64,
+}
+
+impl Via {
+    /// The selected path — the one iroh sends on — or `None` when none is.
+    /// Upstream classified a peer's addresses instead, and found a direct
+    /// leg and a relay both active read as relayed while bytes went direct
+    /// (`commonwealth-transport/src/iroh_path.rs:56-68`, `Mixed`); the
+    /// selected path is the one carrying them.
+    pub fn observe(&self) -> Option<Observed> {
+        let paths = self.0.paths();
+        let path = paths.iter().find(|p| p.is_selected())?;
+        let stats = path.stats();
+        let addr = match path.remote_addr() {
+            iroh::TransportAddr::Ip(a) => Some(a.ip()),
+            _ => None,
+        };
+        Some(Observed {
+            addr,
+            relayed: path.is_relay(),
+            rtt: stats.rtt,
+            sent: stats.udp_tx.bytes,
+            received: stats.udp_rx.bytes,
+        })
+    }
+}
+
 /// The record's actor for an iroh key: its lowercase hex, as
 /// [`actor_of`](svrngs_core::actor_of) spells a signer.
 pub fn key_actor(key: &PublicKey) -> String {
@@ -422,7 +467,8 @@ impl IrohAcceptor {
                     };
                     // Ends when the connection closes.
                     while let Ok((send, recv)) = conn.accept_bi().await {
-                        tokio::spawn(serve_stream(send, recv, dialer, router.clone()));
+                        let via = Via(conn.clone());
+                        tokio::spawn(serve_stream(send, recv, dialer, via, router.clone()));
                     }
                 });
             }
@@ -432,11 +478,13 @@ impl IrohAcceptor {
 }
 
 /// One bi-stream is one HTTP/1 connection: hyper parses every request on it,
-/// the dialer is inserted as the request's [`Dialer`], and `router` answers.
+/// the dialer is inserted as the request's [`Dialer`], its connection as
+/// its [`Via`], and `router` answers.
 async fn serve_stream(
     send: iroh::endpoint::SendStream,
     recv: iroh::endpoint::RecvStream,
     dialer: Dialer,
+    via: Via,
     router: axum::Router,
 ) {
     use tower::ServiceExt;
@@ -444,6 +492,7 @@ async fn serve_stream(
     let service =
         hyper::service::service_fn(move |mut req: hyper::Request<hyper::body::Incoming>| {
             req.extensions_mut().insert(dialer);
+            req.extensions_mut().insert(via.clone());
             router.clone().oneshot(req)
         });
     if let Err(e) = hyper::server::conn::http1::Builder::new()

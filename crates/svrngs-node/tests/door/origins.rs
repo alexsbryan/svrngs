@@ -295,6 +295,47 @@ pub async fn upload_origin() -> (SocketAddr, tokio::sync::oneshot::Receiver<()>)
     (addr, first_rx)
 }
 
+/// The door's own (u3-6): an origin that keeps every request head, and
+/// answers a path under `/stream` with a chunk every 50 ms for as long as
+/// someone reads it, as a player's stream is fed, and any other path with
+/// 200 `ok` at once.
+pub async fn streaming_origin() -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
+    let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind");
+    let addr = listener.local_addr().unwrap();
+    let heads = Arc::new(Mutex::new(Vec::new()));
+    let kept = heads.clone();
+    tokio::spawn(async move {
+        while let Ok((mut sock, _)) = listener.accept().await {
+            let kept = kept.clone();
+            tokio::spawn(async move {
+                let Some(head) = read_head(&mut sock).await else {
+                    return;
+                };
+                let streams = head
+                    .split_whitespace()
+                    .nth(1)
+                    .unwrap_or("")
+                    .starts_with("/stream");
+                kept.lock().unwrap().push(head);
+                if !streams {
+                    let ok = b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok";
+                    let _ = sock.write_all(ok).await;
+                    let _ = sock.shutdown().await;
+                    return;
+                }
+                let head = b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n";
+                if sock.write_all(head).await.is_err() {
+                    return;
+                }
+                while sock.write_all(b"5\r\nhello\r\n").await.is_ok() {
+                    tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+                }
+            });
+        }
+    });
+    (addr, heads)
+}
+
 /// A request head off `sock`, up to its blank line.
 async fn read_head(sock: &mut TcpStream) -> Option<String> {
     let mut head = Vec::new();
