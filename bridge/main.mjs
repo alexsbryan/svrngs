@@ -1,7 +1,8 @@
 // `node bridge/main.mjs`: the bridge between one Discord channel and this
 // computer's svrngs host. Everything it needs comes from the environment, so
-// the one place each value is decided stays the host's (`svrngs serve` prints
-// the token file; `svrngs start` will set all of these):
+// the one place each value is decided stays the host's: `svrngs serve` sets
+// all of these from what `svrngs start` kept (crates/svrngs/src/main.rs
+// `start_bridge`):
 //   SVRNGS_HOST            the host's loopback address, e.g. http://127.0.0.1:7570
 //   SVRNGS_TOKEN_FILE      the file holding the host's capability token
 //   SVRNGS_DISCORD_TOKEN   the Discord application's bot token
