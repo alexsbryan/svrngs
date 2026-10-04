@@ -30,12 +30,9 @@ pub struct LendName(String);
 
 impl LendName {
     pub fn parse(raw: &str) -> Result<Self, LendError> {
-        let ok = !raw.is_empty()
-            && raw.len() <= 64
-            && raw
-                .bytes()
-                .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_');
-        if ok {
+        // A declared header's rule, the same bytes and bound: both names
+        // become a file name under the data dir and a token on the wire.
+        if crate::declared::valid_header_name(raw) {
             Ok(Self(raw.to_string()))
         } else {
             tracing::debug!(target: "lend", raw, "lend: not a lend's name");
