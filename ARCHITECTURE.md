@@ -177,7 +177,11 @@ not-in-roster sentence is the rail's own, where upstream chose it by the
 roster's origin; `err` is the one `ring_routes.rs` carries. The sync doors,
 `attest` and the live lane stay behind, and with them the other routes
 beside them in upstream's `api.rs`. Then it changed: the append door's
-attestation branch went with `attest`, so a bare `on_behalf_of` is dropped.
+attestation branch went with `attest`. An append's `on_behalf_of` is the
+person an app names when it serves someone else — whom the member door
+verified (DESIGN §8, "Localhost is the trust boundary") — signed by this
+computer, and refused (`not_a_name`, `not_in_group`) unless it parses as a
+person standing in the group; upstream dropped a bare one.
 The register stands where the roster stood: `journal_of` asks
 `RingRail::standing` before a journal is opened, refusing a group this
 computer does not hold (`not_held`, 404) and one held with no seed

@@ -158,26 +158,22 @@ pub(crate) fn people_json(standing: &BTreeMap<String, Person>) -> serde_json::Va
 /// are all this daemon's to assign; an app that could choose its own sequence
 /// number or actor could write as somebody else.
 ///
-/// There are no sessions on a rails daemon, so a caller cannot stamp by
-/// saying so: a bare `on_behalf_of` is dropped HERE, before anything is
-/// signed, and warned — the same drop the daemon's `stamp_from` makes for
-/// its session-less callers. (svrngs: upstream honoured instead a signed
-/// `GuestAttestation`, which its `attest` door minted for svrn's guest
-/// door; `attest` stayed behind, DESIGN §8, U3's inventory, so the branch
-/// went with it.)
+/// (svrngs: upstream dropped a bare `on_behalf_of`, since a caller could
+/// stamp only with a signed `GuestAttestation`, which went with `attest`.
+/// Here an app serving someone else names them, and the act is signed as
+/// this computer with `on_behalf_of` naming that person — whom the member
+/// door verified (DESIGN §3, §8 "Localhost is the trust boundary"). The
+/// name must parse as a person and be a person standing in the group;
+/// anything else is refused and nothing is written, never dropped.)
 pub(crate) async fn append_act(
     rail: &RingRail,
     journal: &Arc<RingJournal>,
     body: serde_json::Value,
 ) -> Response {
-    if let Some(claimed) = body.get("on_behalf_of").and_then(|v| v.as_str()) {
-        tracing::warn!(
-            target: "rails",
-            namespace = journal.namespace(),
-            claimed,
-            "rail: dropped an on_behalf_of — this door signs as the node"
-        );
-    }
+    let stamp = match on_behalf_of(rail, journal.namespace(), &body) {
+        Ok(stamp) => stamp,
+        Err(refusal) => return refusal,
+    };
     // Taken as a `Value` and converted here rather than as `Json<RailAct>`,
     // so a refusal is the rail's own sentence instead of axum's rejection
     // prose (ARCH §10.6).
@@ -195,12 +191,21 @@ pub(crate) async fn append_act(
     let sealed = matches!(act, RailAct::Seal);
     let appended = if sealed {
         // A seal takes no stamp: it is delivery, not words.
+        if let Some(person) = &stamp {
+            tracing::debug!(target: "rails", namespace = journal.namespace(), %person, "rail: a seal is signed as this computer alone, whoever was named");
+        }
         journal
             .seal(rail.signer(), &roster, &Ed25519Verifier)
             .map(|done| (done.op, Some(retire(&done.retired))))
     } else {
         journal
-            .append(act, rail.signer(), &roster, None, &Ed25519Verifier)
+            .append(
+                act,
+                rail.signer(),
+                &roster,
+                stamp.as_ref().map(Person::as_str),
+                &Ed25519Verifier,
+            )
             .map(|op| (op, None))
     };
     match appended {
@@ -250,6 +255,62 @@ pub(crate) async fn append_act(
         }
         Err(RailError::Rejected(why)) => err(StatusCode::UNPROCESSABLE_ENTITY, why),
         Err(e) => err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+    }
+}
+
+/// The person an append is on behalf of: `None` when the body names
+/// nobody, so the act is this computer's own; else the person it names,
+/// parsed ([`Person::parse`]) and standing in `namespace` now, as the
+/// register says ([`RingRail::standing`]). A name that is not one, or names
+/// nobody in the group, is refused with a reason, typed. The register is
+/// read before the door's write lock is taken, so a person removed between
+/// the two is still named; their removal is in the record either way.
+fn on_behalf_of(
+    rail: &RingRail,
+    namespace: &str,
+    body: &serde_json::Value,
+) -> Result<Option<Person>, Response> {
+    let refused = |kind: &str, why: String| {
+        (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(serde_json::json!({ "error": why, "kind": kind, "namespace": namespace })),
+        )
+            .into_response()
+    };
+    let raw = match body.get("on_behalf_of") {
+        None | Some(serde_json::Value::Null) => {
+            tracing::debug!(target: "rails", namespace, "rail: the act is this computer's own — it names nobody");
+            return Ok(None);
+        }
+        Some(serde_json::Value::String(raw)) => raw,
+        Some(other) => {
+            tracing::debug!(target: "rails", namespace, named = %other, "rail: refused — on_behalf_of is not text");
+            return Err(refused(
+                "not_a_name",
+                "on_behalf_of names a person, as text".into(),
+            ));
+        }
+    };
+    let person = Person::parse(raw).map_err(|why| {
+        tracing::debug!(target: "rails", namespace, raw, why = %why, "rail: refused — on_behalf_of is not a name");
+        refused("not_a_name", format!("on_behalf_of is not a name: {why}"))
+    })?;
+    match rail.standing(namespace, &Ed25519Verifier) {
+        Ok(Standing::Members(people)) if people.values().any(|p| *p == person) => {
+            tracing::debug!(target: "rails", namespace, %person, "rail: the act is on behalf of a person in the group");
+            Ok(Some(person))
+        }
+        Ok(_) => {
+            tracing::debug!(target: "rails", namespace, %person, "rail: refused — on_behalf_of names nobody in the group");
+            Err(refused(
+                "not_in_group",
+                format!("{person} is not in {namespace}"),
+            ))
+        }
+        Err(e) => {
+            tracing::warn!(target: "rails", namespace, error = %e, "rail: refused — the group's register is unreadable");
+            Err(err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        }
     }
 }
 

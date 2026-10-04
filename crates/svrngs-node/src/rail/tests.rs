@@ -46,7 +46,9 @@ async fn body_of(resp: axum::response::Response) -> serde_json::Value {
 }
 
 /// One act in, one admitted op out — and every field a client could try to
-/// choose for itself is this door's, not the body's.
+/// choose for itself is this door's, not the body's. (svrngs: upstream's
+/// body named `on_behalf_of` among them, which it dropped; here an app
+/// names the person it serves, tested below.)
 #[tokio::test]
 async fn append_signs_as_the_node_and_assigns_the_fields() {
     let (_dir, rail) = rail_with(&[("alex", 7)]);
@@ -59,7 +61,6 @@ async fn append_signs_as_the_node_and_assigns_the_fields() {
         "seq": 999,
         "id": "forged",
         "ts_unix": 1,
-        "on_behalf_of": "beefy",
     });
     let resp = append_act(&rail, &journal, body).await;
     assert_eq!(resp.status(), StatusCode::OK);
@@ -76,6 +77,44 @@ async fn append_signs_as_the_node_and_assigns_the_fields() {
 }
 
 const GUESTS: &[(&str, u8)] = &[("alex", 7), ("halo", 3)];
+
+/// An app serving someone else names them (svrngs, DESIGN §3): the act is
+/// signed as this computer with `on_behalf_of` naming that person, when
+/// they stand in the group. A name of nobody in it, a name that is not one,
+/// and a name that is not text are each refused by kind, and write nothing.
+/// The failing input: `on_behalf_of` dropped, as upstream's session-less
+/// door dropped it.
+#[tokio::test]
+async fn an_append_names_the_person_an_app_serves() {
+    let (_dir, rail) = rail_with(GUESTS);
+    let journal = journal_of(&rail, "ledger").unwrap();
+    let body = |named: serde_json::Value| serde_json::json!({ "op": "record", "payload": { "amount": 4 }, "on_behalf_of": named });
+    for (named, kind) in [
+        (serde_json::json!("beefy"), "not_in_group"),
+        (serde_json::json!(" "), "not_a_name"),
+        (serde_json::json!("a\u{1b}[2J"), "not_a_name"),
+        (serde_json::json!(7), "not_a_name"),
+    ] {
+        let resp = append_act(&rail, &journal, body(named.clone())).await;
+        assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY, "{named}");
+        assert_eq!(body_of(resp).await["kind"], kind, "{named}");
+    }
+    assert!(
+        journal.read().unwrap().0.is_empty(),
+        "a refusal writes nothing"
+    );
+
+    let resp = append_act(&rail, &journal, body(serde_json::json!("halo"))).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(
+        body_of(resp).await["actor"],
+        RingSigner::actor(&key(7)),
+        "this computer signs"
+    );
+    let (ops, _) = journal.read().unwrap();
+    assert_eq!(ops.len(), 1);
+    assert_eq!(ops[0].kind.on_behalf_of.as_deref(), Some("halo"));
+}
 
 /// An unstamped append is unchanged: signed as the node, no name on it.
 #[tokio::test]
