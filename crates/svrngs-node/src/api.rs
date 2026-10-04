@@ -2,7 +2,7 @@
 // ported from commonwealth-ai commonwealth/crates/commonwealth-rails/src/api.rs@e1a43bcd2
 //! The loopback routes a shim author touches, and nothing else.
 //!
-//! The ring rail's doors, `/v1/rail/{append,log}`, in [`crate::rail`].
+//! The ring rail's doors, `/v1/rail/{append,log,people}`, in [`crate::rail`].
 //! (svrngs: the mesh, media, publish, origin, membership, store and ledger
 //! doors beside them stay behind; DESIGN §8, U3's inventory.)
 //!
@@ -34,6 +34,9 @@ pub fn router(api: RailApi) -> Router {
         // the log. The bodies mirror the daemon's `routes_rail` doors.
         .route("/v1/rail/append", post(crate::rail::append))
         .route("/v1/rail/log", get(crate::rail::log))
+        // svrngs: the group's people with their keys, from the register
+        // (DESIGN §3), so an app needs no second source.
+        .route("/v1/rail/people", get(crate::rail::people))
         .with_state(api)
 }
 

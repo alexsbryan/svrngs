@@ -188,7 +188,9 @@ computer does not hold (`not_held`, 404) and one held with no seed
 (`no_seed`, 409); the door's own fold refuses a computer that does not
 stand (`not_in_roster`, in DESIGN §1's words); and the log answers the
 people standing after its one read (`people_json`: each person and their
-key), where upstream's answered the roster.
+key), where upstream's answered the roster. `GET /v1/rail/people` is new:
+the same people, through the same gate (`standing_of`), so an app needs no
+second source for who is in its group or a key to seal to (DESIGN §3).
 
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`

@@ -239,3 +239,29 @@ async fn a_seal_renders_its_prune() {
     assert_eq!(retired["removed"], 2, "both sealed-over acts retire");
     assert_eq!(retired["kept"], 1, "the seal itself stays");
 }
+
+/// The people door answers who stands in the group from the register — the
+/// seed's founder and everyone an `Admit` let in — each with their key's hex,
+/// and refuses a group this computer does not hold (svrngs, DESIGN §3). The
+/// failing input: the people read from the seed alone, which knows only the
+/// founder.
+#[tokio::test]
+async fn the_people_door_answers_the_register_with_keys() {
+    let (_dir, rail) = rail_with(&[("alex", 7)]);
+    let journal = journal_of(&rail, "ledger").unwrap();
+    let admit_bo = serde_json::json!({
+        "op": "admit", "person": "bo", "key": actor_of(&key(3)),
+    });
+    let resp = append_act(&rail, &journal, admit_bo).await;
+    assert_eq!(resp.status(), StatusCode::OK, "{}", body_of(resp).await);
+    let out = body_of(super::people_answer(&rail, "ledger")).await;
+    // In the order of their keys, as the register holds them.
+    let mut want = vec![
+        serde_json::json!({ "person": "alex", "key": actor_of(&key(7)) }),
+        serde_json::json!({ "person": "bo", "key": actor_of(&key(3)) }),
+    ];
+    want.sort_by_key(|p| p["key"].as_str().unwrap().to_string());
+    assert_eq!(out["people"], serde_json::Value::from(want));
+    let refused = super::people_answer(&rail, "elsewhere");
+    assert_eq!(refused.status(), StatusCode::NOT_FOUND);
+}

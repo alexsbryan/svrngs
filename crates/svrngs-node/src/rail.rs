@@ -3,6 +3,7 @@
 //! The ring rail's doors — the surface a ring app writes its own state to.
 //!
 //! `POST /v1/rail/append`, `GET /v1/rail/log`, `POST+GET /v1/rail/live`,
+//! (svrngs: and `GET /v1/rail/people`, the register's answer)
 //! mounted beside the mesh routes in [`crate::api`], and — since fp-54's
 //! serve half — the sync doors the ring round reads its journals through
 //! (`digest`, `missing`, `ingest`, `roster`, `read`, `admit`, `compact`,
@@ -375,6 +376,30 @@ async fn log_answer(_rail: &RingRail, journal: &Arc<RingJournal>) -> Response {
         "people": people_json(&people),
     }))
     .into_response()
+}
+
+/// GET /v1/rail/people — the people standing in the group, each with the
+/// key they stand by, from the register (svrngs, DESIGN §3: an app needs
+/// no second source for who is in its group, nor for a key to seal to).
+/// New: upstream's apps read the mesh's roster door instead.
+fn people_answer(rail: &RingRail, namespace: &str) -> Response {
+    match standing_of(rail, namespace) {
+        Ok(people) => Json(serde_json::json!({
+            "namespace": namespace,
+            "people": people_json(&people),
+        }))
+        .into_response(),
+        Err(refusal) => refusal,
+    }
+}
+
+/// GET /v1/rail/people.
+pub async fn people(State(api): State<RailApi>, Query(q): Query<RailQuery>) -> Response {
+    let namespace = match namespace_of(&q) {
+        Ok(ns) => ns,
+        Err(refusal) => return refusal,
+    };
+    people_answer(&api.rail, &namespace)
 }
 
 /// POST /v1/rail/append.
