@@ -8,8 +8,8 @@ as what it describes.
 
 svrngs owns the group's code, forked from commonwealth-ai's ring slice (DESIGN
 §4). The record and the journal on disk have landed; sync, the routes and the
-member door come next, forked the same way (DESIGN §8, U1-U3). Nothing runs as
-a program yet.
+member door come next, forked the same way (DESIGN §8, U1-U3); of sync, the
+dialling half over iroh has landed. Nothing runs as a program yet.
 
 ## Code map
 
@@ -36,6 +36,26 @@ same way as the core; its one edit is gating `oplog.rs`'s test-only serde
 import. Upstream's shape stays: `RingRail` keeps its open journals in a map
 behind a `Mutex` (`lib.rs`), which an actor per journal replaces when the node
 becomes ours (DESIGN §5).
+
+Beside the journals, `svrngs-node` holds the dialling half of sync over iroh
+(DESIGN §8, U1's inventory), forked at `e1a43bcd2` the same way:
+`peer_wire.rs` is `sovereign-peer-wire` whole (the sync bodies, the body limit
+and the exchange budget); `alpn.rs` is `mesh-reach`'s `alpn.rs` with its one
+`ALPN`; `guest.rs` and `guest/tunnel.rs` are `mesh-reach`'s guest dialer, the
+relayed endpoint and the one loopback bridge (`HttpBridge`, `pump`); `iroh.rs`
+is `commonwealth-transport`'s client side (`IrohTransport`,
+`format_dial_string`, `preferred_bridge_port`). Its edits: no IP transport;
+one ALPN, so the per-class ALPNs (`RPC_ALPN`, `CLIENT_ALPN`, `GUEST_ALPN`,
+`OFFER_ALPN`, `MEDIA_ALPN`, `APP_ALPN`) and `alpn_for_class` go, and the guest
+tunnel dials `ALPN`; no bench relay pin (`relay_pin_active`,
+`build_relay_only_endpoint`); no `PeerTransport`, `PeerContact`,
+`PeerEndpoint` or `TrafficClass`, so the transport is a concrete type whose
+`base_url` takes a `Contact` (a key with optional dial hints) and its bridges
+are keyed by peer alone; `NodePubkey` becomes iroh's `PublicKey`; the sync
+bodies import the record from `svrngs-core`. The accept loop is not here yet
+(U1's next step), so the bridge tests splice through a stand-in acceptor.
+iroh is pinned at `=1.0.2`, and its tree locked at upstream's versions, so the
+fork runs on what upstream tested.
 
 **`crates/svrngs-engine`**: the `Engine` trait and QuickJS behind it — a fold
 engine that waits in DESIGN §9 until an app needs its state offline on a device

@@ -17,7 +17,7 @@ chat — ran before the fork and is at tag `e0-bot`.
 
 ## Set up
 
-- Rust 1.87 or later (`rquickjs` needs it), with rustfmt and clippy.
+- Rust 1.91 or later (iroh 1.0.2's `rust-version`), with rustfmt and clippy.
 - Node.js 20 or later, and `npm ci` in `bridge/` (its tests need discord.js).
 - A checkout of commonwealth-ai at `~/dev/commonwealth-ai`, or its path in
   `COMMONWEALTH_AI`: `scripts/ports.py` needs it to compare each forked file

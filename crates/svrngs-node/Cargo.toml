@@ -4,7 +4,7 @@ version.workspace = true
 # Upstream's edition, so the fork lands unchanged (ARCH 2).
 edition = "2021"
 license.workspace = true
-description = "A group's journal on disk: one append-only JSONL log per group, the single-writer door that signs and the peer-ingest path that does not. Forked from commonwealth-ai's commonwealth-rail, with its oplog writer inlined."
+description = "A group's journal on disk: one append-only JSONL log per group, the single-writer door that signs and the peer-ingest path that does not; and the dialling half of sync over iroh. Forked from commonwealth-ai's commonwealth-rail, with its oplog writer inlined, and its dial-by-key tunnel."
 
 [dependencies]
 svrngs-core = { workspace = true }
@@ -12,10 +12,23 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
+# The dialling half (U1): upstream's requirements at e1a43bcd2. iroh is pinned
+# where upstream's Cargo.lock held it (a bare "1.0" resolves 1.3.0), and the
+# lock holds iroh's tree, rustls 0.23.42, tokio 1.52.3 and rand 0.9.4 at
+# upstream's versions too, so the fork runs on what upstream tested. Moving
+# them is a commit that says so.
+iroh = "=1.0.2"
+tokio = { version = "1", features = ["net", "rt", "sync", "time", "io-util", "macros"] }
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
+hex = { workspace = true }
+rand = "0.9"
 
 [dev-dependencies]
 svrngs-core = { workspace = true, features = ["test-support"] }
 tempfile = "3"
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12", default-features = false }
+axum = "0.8"
 
 [lints.clippy]
 empty_line_after_doc_comments = "allow"

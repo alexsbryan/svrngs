@@ -354,6 +354,15 @@ pub use journal::RingJournal;
 // phase-b pb-rails-parity).
 pub mod ring_checkpoint;
 
+// The dialling half of sync, forked in U1 (docs/DESIGN.md §8, U1's
+// inventory): the sync bodies (`sovereign-peer-wire`), the one ALPN, the
+// relayed endpoint and the loopback bridge (`mesh-reach::guest`), and the
+// client side of the dial-by-key transport (`commonwealth-transport::iroh`).
+pub mod alpn;
+pub mod guest;
+pub mod iroh;
+pub mod peer_wire;
+
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
