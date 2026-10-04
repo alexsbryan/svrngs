@@ -39,6 +39,7 @@ async fn start(seed: u8, dir: &tempfile::TempDir) -> Node {
         signing(seed),
         &no_relay(),
         no_seed,
+        "127.0.0.1:0".parse().unwrap(),
     )
     .await
     .expect("a node starts")

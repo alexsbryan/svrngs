@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! The node (DESIGN §8, U1): one group member's computer — its journals, the
 //! iroh endpoint it dials and is dialled on, the accept loop serving the sync
-//! route, and the round. It replaces upstream's `RailsDaemon` and `RailsNode`
+//! route, the round, and (U3) the loopback listener serving the record to
+//! this computer's apps ([`crate::api`]). It replaces upstream's `RailsDaemon` and `RailsNode`
 //! wiring (`commonwealth/crates/commonwealth-rails/src/lib.rs:387-485` and
 //! `574-632` at `e1a43bcd2`), which is not forked: gossip, join, the mesh
-//! store, the work plane, presence, the self-heal, the loopback listener and
+//! store, the work plane, presence, the self-heal and
 //! `rails.toml` stay behind (the inventory's `RailsDaemon` row).
 //!
 //! **One key signs and dials** (DESIGN §8, "Four facts"): the endpoint is
@@ -27,6 +28,7 @@
 //! request names.
 
 use std::collections::BTreeMap;
+use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -36,6 +38,7 @@ use crate::iroh::{
     build_relayed_endpoint, format_dial_string, key_actor, Admit, Alpn, Contact, Endpoint,
     EndpointAddr, IrohAcceptor, IrohTransport, PublicKey, RelayConfig, SecretKey,
 };
+use crate::rail::RailApi;
 use crate::redeem::SeedText;
 use crate::register::Standing;
 use crate::ring_routes::{self, RingInbound};
@@ -55,11 +58,14 @@ pub enum NodeError {
     },
     #[error("{0}")]
     Endpoint(String),
+    #[error(transparent)]
+    Api(#[from] crate::api::Refusal),
 }
 
 /// A running node. Dropping it stops its round and its accept loop.
 pub struct Node {
     host: Arc<Host>,
+    api: crate::api::Serving,
     _acceptor: IrohAcceptor,
     _round: RingSyncHandle,
 }
@@ -77,36 +83,44 @@ pub struct Host {
 
 impl Node {
     /// Start a node over `data_dir` (its journals under `rings/`), signing and
-    /// dialling with `key`, reaching the network as `relay` says, and
-    /// answering a link's ask with the seed `seeds` reads. The round
-    /// runs once now and then every [`DEFAULT_RING_SYNC_INTERVAL`]; nothing
-    /// nudges it until U3's record API.
+    /// dialling with `key`, reaching the network as `relay` says,
+    /// answering a link's ask with the seed `seeds` reads, and serving the
+    /// record to this computer's apps on `api`, which must be loopback
+    /// ([`crate::api`]; port `0` takes any free one, [`Node::api_addr`]).
+    /// The round runs once now and then every [`DEFAULT_RING_SYNC_INTERVAL`];
+    /// nothing nudges it yet.
     pub async fn start(
         data_dir: PathBuf,
         key: SigningKey,
         relay: &RelayConfig,
         seeds: SeedText,
+        api: SocketAddr,
     ) -> Result<Self, NodeError> {
         std::fs::create_dir_all(&data_dir).map_err(|source| NodeError::DataDir {
             path: data_dir.clone(),
             source,
         })?;
+        let actor = actor_of(&key);
+        let secret = SecretKey::from_bytes(&key.to_bytes());
+        let rail = Arc::new(RingRail::new(&data_dir, Arc::new(key)));
+        // Bound before the endpoint, so a refused address leaves no endpoint
+        // dropped open.
+        let api = crate::api::serve(RailApi { rail: rail.clone() }, api).await?;
         let endpoint = build_relayed_endpoint(
-            SecretKey::from_bytes(&key.to_bytes()),
+            secret,
             Alpn::ALL.iter().map(|a| a.bytes().to_vec()).collect(),
             relay,
         )
         .await
         .map_err(NodeError::Endpoint)?;
-        let actor = actor_of(&key);
         tracing::info!(
             target: "node",
             actor,
             data_dir = %data_dir.display(),
             dial = ?format_dial_string(&endpoint.addr()),
+            api = %api.addr(),
             "node: endpoint bound with the signing key"
         );
-        let rail = Arc::new(RingRail::new(&data_dir, Arc::new(key)));
         let admitting = rail.clone();
         let members = ring_routes::router(RingInbound { rail: rail.clone() });
         let redeem = crate::redeem::router(rail.clone(), seeds);
@@ -131,6 +145,7 @@ impl Node {
         );
         Ok(Self {
             host,
+            api,
             _acceptor: acceptor,
             _round: round,
         })
@@ -139,6 +154,12 @@ impl Node {
     /// This node's journals, signed with its key.
     pub fn rail(&self) -> &Arc<RingRail> {
         &self.host.rail
+    }
+
+    /// Where an app on this computer reaches the record: a loopback
+    /// address ([`crate::api`]).
+    pub fn api_addr(&self) -> SocketAddr {
+        self.api.addr()
     }
 
     /// The endpoint this node dials and is dialled on.

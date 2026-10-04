@@ -21,6 +21,7 @@ async fn start(dir: &tempfile::TempDir) -> Node {
         SigningKey::from_bytes(&[1; 32]),
         &no_relay(),
         group::seed_text,
+        "127.0.0.1:0".parse().unwrap(),
     )
     .await
     .expect("a node starts")
@@ -342,4 +343,37 @@ fn refusals_use_only_a_persons_words() {
             assert!(!said.contains(word), "{said:?} says {word}");
         }
     }
+}
+
+/// **The bare command prints where apps reach the record** (u3-2): a
+/// loopback address, `http://127.0.0.1:<port>`, and that address answers
+/// the record's doors — here a group this computer does not hold, refused
+/// by kind.
+#[tokio::test]
+async fn the_bare_command_prints_where_apps_reach_the_record() {
+    let dir = tempfile::tempdir().unwrap();
+    let node = start(&dir).await;
+    let said = cli::Said::Running {
+        groups: Vec::new(),
+        api: node.api_addr(),
+    }
+    .to_string();
+    let url = said
+        .split_whitespace()
+        .find_map(|w| w.strip_prefix("http://"))
+        .map(|w| w.trim_end_matches('.'))
+        .unwrap_or_else(|| panic!("no address printed: {said:?}"));
+    assert!(url.starts_with("127.0.0.1:"), "{url}");
+    let answer = reqwest::Client::builder()
+        .no_proxy()
+        .build()
+        .unwrap()
+        .get(format!("http://{url}/v1/rail/people?namespace=elsewhere"))
+        .send()
+        .await
+        .expect("the printed address answers");
+    assert_eq!(answer.status(), reqwest::StatusCode::NOT_FOUND);
+    let body: serde_json::Value = serde_json::from_str(&answer.text().await.unwrap()).unwrap();
+    assert_eq!(body["kind"], "not_held");
+    node.endpoint().close().await;
 }

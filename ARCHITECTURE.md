@@ -115,7 +115,9 @@ rewrite.
 
 What runs is the node (`node.rs`), new code in place of upstream's
 `RailsDaemon` and `RailsNode` wiring, which did not come over. `Node::start`
-takes a data dir, a signing key and a `RelayConfig`; it binds the endpoint
+takes a data dir, a signing key, a `RelayConfig` and the loopback address
+it serves the record to this computer's apps on (`api::serve`, refusing any
+other; `Node::api_addr` answers the port bound); it binds the endpoint
 with that key, so the key that signs a group's acts is the key iroh verifies
 when the node dials (DESIGN §8, "Four facts"), and holds the `RingRail`
 signed by it, an `IrohTransport` over the endpoint, the accept loop serving
@@ -174,7 +176,9 @@ The record over loopback (DESIGN §8, U3's inventory, the rail.rs row) is
 where upstream's read `RailsDaemon`; the roster they read is the group's
 seed file, since upstream's `RingRail::roster` went in U1, and so the
 not-in-roster sentence is the rail's own, where upstream chose it by the
-roster's origin; `err` is the one `ring_routes.rs` carries. The sync doors,
+roster's origin; `err` is the one `ring_routes.rs` carries; `serve`
+answers the address it bound with the task (`Serving`, which stops the
+listener when dropped), where upstream's answered the task alone. The sync doors,
 `attest` and the live lane stay behind, and with them the other routes
 beside them in upstream's `api.rs`. Then it changed: the append door's
 attestation branch went with `attest`. An append's `on_behalf_of` is the
@@ -220,7 +224,8 @@ data dir (`$SVRNGS_DIR`, else `~/.svrngs`), held by a lock on
 that lapses in a day and print the link; `join` asks a link's issuer what
 it is for and redeems it there (`svrngs_node::redeem`), writes the group's
 seed only once let in, and the origin only of an https link, syncs once from the issuer (`Node::sync_with`) and prints "You're in
-<group>"; each verb then runs the node until Ctrl-C. What a verb prints is a
+<group>"; each verb then runs the node until Ctrl-C, serving the record
+on `127.0.0.1` at a free port (`cli::API`), which the bare command prints. What a verb prints is a
 closed `Said`, and refusals a closed `Refusal`, both in a person's words,
 exit 1 for a refusal and 3 for a precondition absent. `tests/new.rs` runs
 one node in process; `tests/join_by_link.rs`, U2's bar, runs Sam and six

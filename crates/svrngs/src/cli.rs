@@ -31,6 +31,7 @@
 //! attempted and nothing is claimed (ARCH 5).
 
 use std::fs::File;
+use std::net::{Ipv4Addr, SocketAddr};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -75,6 +76,11 @@ Logging: RUST_LOG, default `error`.";
 /// (`commonwealth-discovery/src/membership.rs:53` at `e1a43bcd2`, a day;
 /// DESIGN §8, U2's inventory).
 pub const LINK_LIFE_SECS: i64 = 24 * 60 * 60;
+
+/// Where the record is served to this computer's apps: loopback, any free
+/// port, which the bare command prints (DESIGN §3; the u3-2 row). A port
+/// an app finds without being told waits for an app that needs one.
+pub const API: SocketAddr = SocketAddr::new(std::net::IpAddr::V4(Ipv4Addr::LOCALHOST), 0);
 
 /// How long `new` and `link` wait for this computer's address before
 /// printing a link, when it has a relay to reach.
@@ -266,7 +272,7 @@ pub async fn run(command: Command, root: PathBuf, relay: &RelayConfig) -> Result
     }
     let _claim = claim(&root)?;
     let key = identity::load_or_generate_node_key(&root)?;
-    let node = Node::start(root.clone(), key.clone(), relay, group::seed_text)
+    let node = Node::start(root.clone(), key.clone(), relay, group::seed_text, API)
         .await
         .map_err(|e: NodeError| {
             tracing::debug!(target: "cli", error = %e, "cli: refused — the node did not start");
@@ -320,8 +326,9 @@ pub enum Said {
     Joined { seed: Seed, person: Name },
     /// `join` of a group this computer is in already.
     AlreadyIn(Seed),
-    /// The bare command: the names of the groups it runs for.
-    Running(Vec<Name>),
+    /// The bare command: the names of the groups it runs for, and where
+    /// this computer's apps reach them.
+    Running { groups: Vec<Name>, api: SocketAddr },
 }
 
 impl std::fmt::Display for Said {
@@ -349,13 +356,20 @@ impl std::fmt::Display for Said {
             Said::AlreadyIn(seed) => {
                 writeln!(f, "You're in {} already, on this computer.", seed.name())
             }
-            Said::Running(names) if names.is_empty() => writeln!(
-                f,
-                "This computer is in no group yet: make one with `svrngs new <name>`."
-            ),
-            Said::Running(names) => {
-                let names: Vec<&str> = names.iter().map(Name::as_str).collect();
-                writeln!(f, "Running for {}.", names.join(", "))
+            Said::Running { groups, api } => {
+                if groups.is_empty() {
+                    writeln!(
+                        f,
+                        "This computer is in no group yet: make one with `svrngs new <name>`."
+                    )?;
+                } else {
+                    let names: Vec<&str> = groups.iter().map(Name::as_str).collect();
+                    writeln!(f, "Running for {}.", names.join(", "))?;
+                }
+                writeln!(
+                    f,
+                    "Apps on this computer reach your groups at http://{api}."
+                )
             }
         }
     }
@@ -393,12 +407,13 @@ async fn serve(
             let (seed, link) = new_link(node, &group, origin.as_ref(), relay).await?;
             Said::Linked { seed, link }
         }
-        Command::Run => Said::Running(
-            group::groups(root)
+        Command::Run => Said::Running {
+            groups: group::groups(root)
                 .iter()
                 .map(|s| s.name().clone())
                 .collect(),
-        ),
+            api: node.api_addr(),
+        },
         Command::Help => unreachable!("answered above"),
     };
     print!("{said}");

@@ -51,19 +51,43 @@ pub fn check_loopback(listen: SocketAddr) -> Result<(), Refusal> {
     }
 }
 
+/// The API being served, on the address it is bound to. Dropping it stops
+/// the listener. (svrngs: upstream's `serve` answered the task alone, for a
+/// port its config named; the node binds whatever port the command asks,
+/// `0` among them, so the address bound is answered too.)
+pub struct Serving {
+    addr: SocketAddr,
+    task: tokio::task::JoinHandle<()>,
+}
+
+impl Serving {
+    /// Where an app on this computer reaches the API.
+    pub fn addr(&self) -> SocketAddr {
+        self.addr
+    }
+}
+
+impl Drop for Serving {
+    fn drop(&mut self) {
+        self.task.abort();
+    }
+}
+
 /// Bind and serve. Refuses a non-loopback address by name.
-pub async fn serve(
-    api: RailApi,
-    listen: SocketAddr,
-) -> Result<tokio::task::JoinHandle<()>, Refusal> {
+pub async fn serve(api: RailApi, listen: SocketAddr) -> Result<Serving, Refusal> {
     check_loopback(listen)?;
     let listener = tokio::net::TcpListener::bind(listen)
         .await
         .map_err(|e| Refusal::Listen(listen, e))?;
+    let addr = listener
+        .local_addr()
+        .map_err(|e| Refusal::Listen(listen, e))?;
+    tracing::info!(target: "rails", %addr, "api: serving the record to this computer's apps");
     let router = router(api);
-    Ok(tokio::spawn(async move {
+    let task = tokio::spawn(async move {
         if let Err(e) = axum::serve(listener, router).await {
             tracing::error!(target: "rails", error = %e, "api: listener stopped");
         }
-    }))
+    });
+    Ok(Serving { addr, task })
 }

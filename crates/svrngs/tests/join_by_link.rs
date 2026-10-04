@@ -55,6 +55,7 @@ async fn computer_on(seed: u8, relay: &RelayConfig) -> Computer {
         key.clone(),
         relay,
         group::seed_text,
+        "127.0.0.1:0".parse().unwrap(),
     )
     .await
     .expect("a node starts");
@@ -440,8 +441,21 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     );
 
     // ── Nothing printed says a word kept from people, the links included.
-    said.push(Said::Running(vec![name("house")]).to_string());
-    said.push(Said::Running(Vec::new()).to_string());
+    let api = sam.node.api_addr();
+    said.push(
+        Said::Running {
+            groups: vec![name("house")],
+            api,
+        }
+        .to_string(),
+    );
+    said.push(
+        Said::Running {
+            groups: Vec::new(),
+            api,
+        }
+        .to_string(),
+    );
     for r in [
         Refusal::NoNameToJoin,
         Refusal::LinkRefused,
