@@ -22,7 +22,10 @@ joining by that link is next (U2).
 a set (`ActSet`, `act_set.rs`), admission of that set into one total order
 (`admit.rs`; only `admit` makes an `Admission`), membership (`membership.rs`), the per-actor sync digest
 (`sync.rs`, `view.rs`), the write side (`command.rs`: `Command`, `commit`, the
-`Store` port, `Authored` and `Recorded`, which only `commit` makes), the register's commands (`register.rs`: `MintInvite`, `Redeem`), the
+`Store` port, `Authored` and `Recorded`, which only `commit` makes), effects
+(`process.rs`: the sealed `ProcessManager`, the `Due` only `Admission::react`
+makes and only when every act it names as a cause stands, and `Compact`, a
+seal's retirement), the register's commands (`register.rs`: `MintInvite`, `Redeem`), the
 record's (`record.rs`: `Append`, `Seal`), attestation and introductions. `no_std`, so the
 compiler refuses filesystem, clock, network, threads and `HashMap`; time and
 keys arrive as arguments. It is commonwealth-ai's
@@ -171,7 +174,10 @@ ask over each group's acts.
 Every write is a command through `commit`: an app's act is svrngs-core's
 `Append` (records and corrections only, and the person it speaks for must
 stand, decided under the lock), a seal is `Seal` followed by compaction, and
-`svrngs link` mints with `MintInvite`. The journal's own `append` exists only
+`svrngs link` mints with `MintInvite`. Compaction is an effect: svrngs-core's
+`Compact` decides from the seals in the record which lines retire, and the
+journal deletes only from the `Due<Retire>` that `react` hands back, after
+this computer's seal and a peer's alike. The journal's own `append` exists only
 in tests, as a fixture that also goes through `commit`.
 Every refusal answers `REFUSAL`, one sentence naming no group; a key that
 already stands is answered `AlreadyIn`, nothing written.

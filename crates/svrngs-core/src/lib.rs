@@ -90,6 +90,7 @@ mod introduce;
 mod membership;
 mod op;
 mod payload;
+mod process;
 mod record;
 mod register;
 mod sig;
@@ -113,6 +114,7 @@ pub use command::{commit, Author, Authored, Command, Reads, Recorded, Refused, S
 pub use introduce::{trace, trace_op, Introduce, Vouch, VouchStatus};
 pub use membership::{membership, InviteFault, Invited, Membership};
 pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
+pub use process::{Compact, Due, ProcessManager, Retire, Uncaused};
 pub use record::{Append, AppendRefusal, Seal};
 pub use register::{MintInvite, Redeem, RedeemRefusal};
 pub use sig::{

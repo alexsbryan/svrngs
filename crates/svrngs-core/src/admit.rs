@@ -338,6 +338,7 @@ pub struct Admission {
     gaps: Vec<RailGap>,
     held: usize,
     floors: crate::sync::Floors,
+    seals: Vec<OpId>,
     membership: crate::membership::Membership,
 }
 
@@ -361,6 +362,11 @@ impl Admission {
     /// Where each actor's history starts, per the seals admission authenticated.
     pub fn floors(&self) -> &crate::sync::Floors {
         &self.floors
+    }
+
+    /// The seals that set a floor: the acts a compaction is due from.
+    pub(crate) fn seals(&self) -> &[OpId] {
+        &self.seals
     }
 
     /// Who is in: the one membership walk admission made.
@@ -620,6 +626,15 @@ pub fn admit(
     // of completeness, and a claim of completeness may only rest on an act the
     // rail could actually authenticate (ARCH §18.3).
     let floors = crate::sync::sealed_floors(admitted.values().map(|c| (&c.id, c.op)), &voided);
+    let seals: Vec<OpId> = admitted
+        .values()
+        .filter(|c| {
+            matches!(c.op.kind.act, RailAct::Seal)
+                && !voided.contains(&c.id)
+                && floors.get(&c.op.actor) == Some(&c.op.kind.seq)
+        })
+        .map(|c| c.id.clone())
+        .collect();
     for (actor, by_seq) in &seqs {
         let floor = floors.get(*actor).copied().unwrap_or(0);
         let highest = by_seq
@@ -733,6 +748,7 @@ pub fn admit(
         gaps,
         held: acts.len(),
         floors,
+        seals,
         membership: m,
     }
 }

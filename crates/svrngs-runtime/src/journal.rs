@@ -492,28 +492,31 @@ impl RingJournal {
             gaps_cleared: 0,
             floors,
         };
-        if before.floors().is_empty() {
-            tracing::debug!(
-                namespace = %self.namespace,
-                held = ops.len(),
-                "ring rail: nothing sealed, nothing to compact"
-            );
-            return Ok(unchanged(before.floors().clone(), ops.len()));
-        }
-
-        // Derived ids, because that is what a correction resolves against —
-        // see `admit`. An op whose on-disk id was rewritten therefore does not
-        // match here; the guard below is what stops that becoming a deletion
-        // the correction would dangle over.
-        let referenced: std::collections::BTreeSet<OpId> =
-            before.ops().iter().filter_map(|o| o.corrects.clone()).collect();
-
+        // The decision is the core's: `Compact` reads the seals in the record
+        // and only `react` hands back the `Due` this deletion runs from.
+        let due = match before.react(&svrngs_core::Compact) {
+            Ok(Some(due)) => due,
+            Ok(None) => {
+                tracing::debug!(
+                    namespace = %self.namespace,
+                    held = ops.len(),
+                    "ring rail: nothing sealed, nothing to compact"
+                );
+                return Ok(unchanged(Floors::new(), ops.len()));
+            }
+            Err(uncaused) => {
+                return Err(RailError::Rejected(format!(
+                    "compacting `{}` was decided from {} act(s) that do not stand in its record, \
+                     so nothing was deleted",
+                    self.namespace,
+                    uncaused.0.len(),
+                )));
+            }
+        };
+        let retire = due.effect();
         let kept: Vec<Op<SignedOp>> = ops
             .iter()
-            .filter(|op| {
-                let floor = before.floors().get(&op.actor).copied().unwrap_or(0);
-                op.kind.seq >= floor || referenced.contains(&derive_id(op, &self.namespace))
-            })
+            .filter(|op| retire.keeps(op, &self.namespace))
             .cloned()
             .collect();
         let removed = ops.len() - kept.len();
@@ -521,14 +524,14 @@ impl RingJournal {
             tracing::debug!(
                 namespace = %self.namespace,
                 held = ops.len(),
-                sealed = ?before.floors(),
+                sealed = ?retire.floors(),
                 "ring rail: every line held is at or above its floor"
             );
-            return Ok(unchanged(before.floors().clone(), kept.len()));
+            return Ok(unchanged(retire.floors().clone(), kept.len()));
         }
 
         let after = admit(&crate::ActSet::of(&kept), &[], roster, &self.namespace, verifier);
-        let raised: Vec<&RailGap> = after.gaps().iter().filter(|g| !before.gaps().contains(g)).collect();
+        let raised = retire.raises(&after);
         if !raised.is_empty() {
             return Err(RailError::Rejected(format!(
                 "compacting `{}` would raise {} gap(s) the journal does not have, \
@@ -538,7 +541,7 @@ impl RingJournal {
                 raised[0],
             )));
         }
-        let gaps_cleared = before.gaps().iter().filter(|g| !after.gaps().contains(g)).count();
+        let gaps_cleared = retire.clears(&after);
 
         log.oplog.replace_all(&kept).map_err(|e| RailError::Io(e.to_string()))?;
         // The rename already voids the cursor; this says so without relying
@@ -553,14 +556,15 @@ impl RingJournal {
             removed,
             kept = kept.len(),
             gaps_cleared,
-            sealed = ?before.floors(),
+            sealed = ?retire.floors(),
+            causes = ?due.causes(),
             "ring rail: compacted"
         );
         Ok(Compaction {
             removed,
             kept: kept.len(),
             gaps_cleared,
-            floors: before.floors().clone(),
+            floors: retire.floors().clone(),
         })
     }
 
