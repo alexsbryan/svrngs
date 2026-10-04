@@ -174,10 +174,11 @@ pub async fn ring_sync(
 }
 
 /// `POST /internal/ring/live` — buffer one peer's ephemeral payload under the
-/// namespace its envelope names. A namespace no live registration on this
-/// endpoint holds is REFUSED: nobody here could drain it (the daemon's rule,
-/// with a registration where the daemon reads a grant). An oversize payload
-/// is refused against the one cap the push door keeps.
+/// namespace its envelope names. An oversize payload is refused against the
+/// one cap the push door keeps; then a dialer not standing in that group,
+/// or a group this node does not hold, is REFUSED as the sync route
+/// refuses one (svrngs, u3-3; upstream refused a namespace no live
+/// registration held, the daemon's rule).
 pub async fn ring_live(
     State(state): State<RingInbound>,
     dialer: Option<Extension<Dialer>>,
