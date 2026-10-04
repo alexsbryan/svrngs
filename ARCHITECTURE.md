@@ -201,8 +201,8 @@ others.
 
 **`apps/expenses/`**: the Expenses fold (`expenses.js`) and its tests, from E0,
 the bot at tag `e0-bot`. Its reducer (`init`, `reduce`) is what the localhost
-Expenses app of DESIGN U3 builds on; `propose`, `say` and `due` answered chat
-commands and go with the bot.
+Expenses app of DESIGN U3 builds on. Its chat handlers went with the bot and
+are at that tag.
 
 **`apps/films/`, `apps/tap/`**: so far only each app's `nouns.txt` — the words
 the infra may never use. Films is DESIGN U5; Tap is a canary (DESIGN §8).

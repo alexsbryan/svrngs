@@ -10,23 +10,18 @@ import { test } from 'node:test';
 
 import {
   EXPENSE,
-  REMIND_AFTER_SECS,
   SETTLE,
   SHARE,
-  due,
   init,
   money,
   parseCents,
-  propose,
   reduce,
-  say,
   splitShares,
   transfers,
   validate,
 } from './expenses.js';
 
 const [SAM, AMA, BO, CY] = ['discord:1', 'discord:2', 'discord:3', 'discord:4'];
-const PEOPLE = { [SAM]: 'Sam', [AMA]: 'Ama', [BO]: 'Bo', [CY]: 'Cy' };
 const DAY = 86400;
 
 let n = 0;
@@ -149,46 +144,4 @@ test('who owes whom settles every balance in a few payments', () => {
     balances[t.to] -= t.cents;
   }
   assert.deepEqual(Object.values(balances), [0, 0, 0, 0]);
-});
-
-test('propose writes only what reduce would apply', () => {
-  const state = fold([]);
-  const p = propose(state, { command: 'paid', options: { amount: '60', what: 'pizza' }, by: SAM });
-  assert.deepEqual(p, { op: { kind: EXPENSE, amount_cents: 6000, description: 'pizza' } });
-  assert.equal(propose(state, { command: 'paid', options: { amount: 'lots', what: 'pizza' }, by: SAM }).private, true);
-  assert.equal(propose(state, { button: 'confirm:act-nowhere', by: AMA }).private, true);
-  assert.equal(propose(state, { command: 'settle', options: { amount: '5', to: SAM }, by: SAM }).private, true);
-  assert.equal(propose(state, { command: 'what' }).private, true);
-});
-
-test('the pizza, as the chat sees it', () => {
-  let state = init();
-  const write = (by, input) => {
-    const { op } = propose(state, { ...input, by });
-    const a = act(by, op);
-    state = reduce(state, a);
-    return say(state, { people: PEOPLE, act: a.id });
-  };
-  const posted = write(SAM, { command: 'paid', options: { amount: '60', what: 'pizza' } });
-  assert.equal(posted.text, "Sam paid $60.00 for pizza. If you had some, tap Confirm and I'll split it.");
-  const [button] = posted.buttons;
-  assert.equal(button.label, 'Confirm');
-  write(AMA, { button: button.id });
-  write(BO, { button: button.id });
-  assert.equal(write(CY, { button: button.id }).text, 'Who owes whom:\nAma owes Sam $15.00\nBo owes Sam $15.00\nCy owes Sam $15.00');
-  assert.equal(propose(state, { button: button.id, by: CY }).text, "You're already in on pizza.");
-  assert.equal(propose(state, { command: 'owe', by: AMA, people: PEOPLE }).private, false);
-});
-
-test('a debt left alone is due a reminder once, until it changes', () => {
-  const pizza = paid(SAM, 6000, 'pizza', 1000);
-  let state = fold([pizza, share(AMA, pizza.id, 1000)]);
-  assert.deepEqual(due(state, 1000 + REMIND_AFTER_SECS - 1), []);
-  const [item] = due(state, 1000 + REMIND_AFTER_SECS);
-  assert.equal(item.person, AMA);
-  assert.deepEqual(item.fulfil, { kind: 'reminded', due: item.id });
-  state = reduce(state, act(null, item.fulfil, 1000 + REMIND_AFTER_SECS));
-  assert.deepEqual(due(state, 1000 + 10 * REMIND_AFTER_SECS), []);
-  state = reduce(state, settle(AMA, SAM, 1000, 2000 + REMIND_AFTER_SECS));
-  assert.equal(due(state, 2000 + 2 * REMIND_AFTER_SECS).length, 1, 'a changed debt is due again');
 });

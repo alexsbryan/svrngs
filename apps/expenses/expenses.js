@@ -14,8 +14,8 @@
 // ── the rules worth reading before you change anything ──
 //
 // **The person is the act's speaker, never a name in the payload.** Whoever
-// typed /paid paid; whoever tapped Confirm was in on it. No one can write an
-// expense in someone else's name, because the op has nowhere to put one.
+// wrote the expense paid; whoever wrote a share of it was in on it. No one can
+// write an expense in someone else's name, because the op has nowhere to put one.
 //
 // **The remainder goes to whoever sorts first.** $10.00 three ways is
 // 334/333/333, never 333/333/333 with a penny evaporating. The rule is
@@ -32,9 +32,6 @@ export const EXPENSE = 'expense';
 export const SHARE = 'share';
 export const SETTLE = 'settle';
 export const REMINDED = 'reminded';
-/** A debt left unchanged this long is due a reminder. */
-export const REMIND_AFTER_SECS = 3 * 24 * 60 * 60;
-const CONFIRM = 'confirm:';
 const MAX_CENTS = 100_000_000;
 const MAX_WORDS = 100;
 
@@ -79,9 +76,9 @@ const isKey = (k) => typeof k === 'string' && k.length > 0 && k.length <= 200 &&
 const has = (map, k) => typeof k === 'string' && Object.prototype.hasOwnProperty.call(map, k);
 
 /**
- * Everything wrong with one act, as gaps. **The one validator**, called by
- * `propose` before anything is written and by `reduce` on what was: two copies
- * would be two answers to "is this act writable". A fatal gap means the act
+ * Everything wrong with one act, as gaps. **The one validator**, for a writer
+ * before anything is written and for `reduce` on what was: two copies would be
+ * two answers to "is this act writable". A fatal gap means the act
  * is not applied at all — half an expense is not a cautious reading of it, it
  * is a wrong number.
  */
@@ -185,83 +182,4 @@ export function transfers(balances) {
     if (owed[j][1] === 0) j++;
   }
   return out;
-}
-
-const nameOf = (people, p) => (isObject(people) && has(people, p) && typeof people[p] === 'string' ? people[p] : 'someone who left');
-
-function standing(state, people) {
-  const lines = transfers(state.balances).map(
-    (t) => `${nameOf(people, t.from)} owes ${nameOf(people, t.to)} ${money(t.cents)}`,
-  );
-  return lines.length ? `Who owes whom:\n${lines.join('\n')}` : "Everyone's even.";
-}
-
-/**
- * A chat input as the act to write, `{op}`, or an answer that writes nothing,
- * `{text, private}`. `input` is `{command, options, button, by}`.
- */
-export function propose(state, input) {
-  const answer = (text, priv = true) => ({ text, private: priv });
-  if (!isObject(input)) return answer("I didn't understand that.");
-  const options = isObject(input.options) ? input.options : {};
-  const by = input.by;
-  let op;
-  if (input.command === 'paid') {
-    op = { kind: EXPENSE, amount_cents: parseCents(options.amount), description: String(options.what ?? '').trim() };
-  } else if (input.command === 'settle') {
-    op = { kind: SETTLE, amount_cents: parseCents(options.amount), to: options.to };
-  } else if (input.command === 'owe') {
-    return answer(standing(state, input.people), false);
-  } else if (typeof input.button === 'string' && input.button.startsWith(CONFIRM)) {
-    const expense = input.button.slice(CONFIRM.length);
-    const e = has(state.expenses, expense) ? state.expenses[expense] : null;
-    if (e && e.participants.includes(by)) return answer(`You're already in on ${e.description}.`);
-    op = { kind: SHARE, expense };
-  } else {
-    return answer("I don't know that one.");
-  }
-  const gaps = validate(state, { id: 'proposed', ts: 0, by, op });
-  if (!gaps.length) return { op };
-  if (gaps.some((g) => g.code === 'bad_amount')) return answer('How much? Try a number like 60 or 12.50.');
-  if (gaps.some((g) => g.code === 'bad_settle')) return answer('Who did you pay back? Pick someone other than yourself.');
-  if (gaps.some((g) => g.code === 'no_expense')) return answer("That expense isn't in the book any more.");
-  return answer(`I can't write that down: ${gaps.map((g) => g.message).join('; ')}.`);
-}
-
-/**
- * A text view, `{text, buttons}`. `view` is `{people, act}`: `people` names
- * each speaker, and `act`, when given, is the id of the act just written.
- */
-export function say(state, view) {
-  const v = isObject(view) ? view : {};
-  const people = v.people;
-  const e = has(state.expenses, v.act) ? state.expenses[v.act] : null;
-  if (e) {
-    return {
-      text: `${nameOf(people, e.payer)} paid ${money(e.amount_cents)} for ${e.description}. If you had some, tap Confirm and I'll split it.`,
-      buttons: [{ id: `${CONFIRM}${v.act}`, label: 'Confirm' }],
-    };
-  }
-  return { text: standing(state, people), buttons: [] };
-}
-
-/**
- * What is due at `now`: a reminder for each person whose debt has not changed
- * in `REMIND_AFTER_SECS`. Each item's `id` changes when their debt does, and
- * its `fulfil` op, written once the reminder is posted, stops it being due.
- */
-export function due(state, now) {
-  const items = [];
-  for (const [person, cents] of Object.entries(state.balances)) {
-    const id = `remind:${person}:${state.since[person]}`;
-    if (cents < 0 && now - state.since[person] >= REMIND_AFTER_SECS && !has(state.reminded, id)) {
-      items.push({
-        id,
-        person,
-        text: `a reminder: you owe ${money(-cents)}. Type /owe to see whom to pay.`,
-        fulfil: { kind: REMINDED, due: id },
-      });
-    }
-  }
-  return items;
 }

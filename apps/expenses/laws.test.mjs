@@ -13,7 +13,6 @@ import { test } from 'node:test';
 import * as expenses from './expenses.js';
 
 const [SAM, AMA, BO, CY, DI] = ['discord:1', 'discord:2', 'discord:3', 'discord:4', 'discord:5'];
-const PEOPLE = { [SAM]: 'Sam', [AMA]: 'Ama', [BO]: 'Bo', [CY]: 'Cy', [DI]: 'Di' };
 const DAY = 86400;
 
 const act = (id, ts, by, op) => ({ id, ts, by, op });
@@ -32,28 +31,14 @@ const JOURNAL = [
   act('a11', 3020, SAM, { kind: 'expense', amount_cents: -5, description: 'nothing' }),
   act('a12', 9 * DAY, null, { kind: 'reminded', due: `remind:${BO}:1050` }),
 ];
-const INPUTS = [
-  { command: 'paid', options: { amount: '60', what: 'pizza' }, by: SAM },
-  { command: 'paid', options: { amount: 'lots' }, by: SAM },
-  { command: 'settle', options: { amount: '12', to: SAM }, by: AMA },
-  { command: 'owe', by: BO, people: PEOPLE },
-  { button: 'confirm:a1', by: AMA },
-  { button: 'confirm:a9', by: BO },
-];
 /** Acts a duplicate of which must change nothing: the kinds Expenses keys. */
 const KEYED = new Set(['share', 'settle', 'reminded']);
 
 const clone = (v) => structuredClone(v);
 const fold = (app, acts) => acts.reduce((s, a) => app.reduce(s, clone(a)), app.init());
-/** Everything the app answers: the fold, and every handler over it. */
+/** Everything the app answers: the fold, copied, so a later fold that shares its object cannot change it. */
 function answers(app, acts = JOURNAL) {
-  const state = fold(app, acts);
-  return {
-    state,
-    proposals: INPUTS.map((i) => app.propose(clone(state), clone(i))),
-    views: [undefined, ...acts.map((a) => a.id)].map((id) => app.say(clone(state), { people: PEOPLE, act: id })),
-    due: [0, 5 * DAY, 30 * DAY].map((now) => app.due(clone(state), now)),
-  };
+  return { state: clone(fold(app, acts)) };
 }
 const differ = (a, b, what) => (isDeepStrictEqual(a, b) ? null : `${what} differ`);
 
@@ -112,7 +97,7 @@ export const LAWS = {
     }
     return null;
   },
-  /** No act and no input makes an export throw, and the state stays exactly JSON. */
+  /** No act makes `reduce` throw, and the state stays exactly JSON. */
   totality(app) {
     const ops = [null, 1, 'x', [], {}, { kind: 'expense' }, { kind: 'toString' }, { kind: '__proto__' },
       { kind: 'expense', amount_cents: 1.5, description: 'x' }, { kind: 'expense', amount_cents: 1e300, description: 'x' },
@@ -125,12 +110,6 @@ export const LAWS = {
     let state = fold(app, JOURNAL);
     try {
       for (const a of acts) state = app.reduce(state, a);
-      for (const input of [null, 'paid', {}, { command: 'paid', options: null }, { command: 'settle', options: { to: {} } },
-        { button: 'confirm:__proto__', by: SAM }, { button: 7 }, ...INPUTS.map((i) => ({ ...i, by: '__proto__' }))]) {
-        app.propose(clone(state), input);
-      }
-      for (const view of [null, 'x', {}, { people: null, act: '__proto__' }, { people: [], act: 'a1' }]) app.say(clone(state), view);
-      for (const now of [null, -1, Number.MAX_SAFE_INTEGER]) app.due(clone(state), now);
     } catch (e) {
       return `it threw: ${e?.message ?? e}`;
     }
