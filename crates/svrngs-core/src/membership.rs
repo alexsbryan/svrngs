@@ -266,6 +266,24 @@ pub fn membership<'a>(
     }
 }
 
+impl RailAct {
+    /// Whether [`membership`] reads this act: it binds (`Admit`), cuts
+    /// (`Remove`), voids (`Correct`) or opens a link (`Invite`). A caller that
+    /// folds standing from fewer acts than the journal holds (svrngs-node's
+    /// `register::standing_in`) keeps these and only these, so the list has
+    /// one home beside the fold that reads it, and the match has no wildcard:
+    /// a new kind of act does not compile until it is placed here.
+    pub const fn moves_membership(&self) -> bool {
+        match self {
+            RailAct::Admit { .. }
+            | RailAct::Remove { .. }
+            | RailAct::Correct { .. }
+            | RailAct::Invite { .. } => true,
+            RailAct::Record { .. } | RailAct::Seal => false,
+        }
+    }
+}
+
 /// What a redeeming `Admit` says alone: the `Invite` it names, if that is
 /// held, was signed by the `Admit`'s own signer, had not lapsed when the
 /// `Admit` was timed, and the admitted key consented. The void and whether

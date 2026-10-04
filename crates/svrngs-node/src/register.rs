@@ -15,8 +15,8 @@
 use std::collections::BTreeMap;
 
 use crate::{
-    admit, is_local_only, ring_dir, valid_namespace, Op, Person, RailAct, RailError, RingRail,
-    RingVerifier, Roster, SignedOp,
+    admit, is_local_only, ring_dir, valid_namespace, Op, Person, RailError, RingRail, RingVerifier,
+    Roster, SignedOp,
 };
 
 /// Who stands in one group, on this node.
@@ -51,24 +51,15 @@ pub(crate) fn standing_in(
     namespace: &str,
     verifier: &dyn RingVerifier,
 ) -> Result<BTreeMap<String, Person>, RailError> {
-    // Standing turns only on the acts that bind, cut, void or open a link:
-    // `membership` moves standing on `Admit` and `Remove` alone, voids by
-    // `Correct` alone, and counts a redeeming `Admit` only under an `Invite`
-    // it holds (crates/svrngs-core/src/membership.rs, `membership` and
-    // `redemption`), so the rest are left out before admission verifies each signature — the
-    // sync route asks this per request, of journals of tens of thousands of
-    // acts (ring_sync's ceiling tests timed out verifying them all).
+    // Standing turns only on the acts `membership` reads
+    // (`RailAct::moves_membership`, beside it in svrngs-core's
+    // membership.rs), so the rest are left out before admission verifies
+    // each signature — the sync route asks this per request, of journals of
+    // tens of thousands of acts (ring_sync's ceiling tests timed out
+    // verifying them all).
     let acts: Vec<Op<SignedOp>> = ops
         .iter()
-        .filter(|op| {
-            matches!(
-                op.kind.act,
-                RailAct::Admit { .. }
-                    | RailAct::Remove { .. }
-                    | RailAct::Correct { .. }
-                    | RailAct::Invite { .. }
-            )
-        })
+        .filter(|op| op.kind.act.moves_membership())
         .cloned()
         .collect();
     // `membership` is `None` only on an admission rebuilt from an older wire
@@ -137,7 +128,7 @@ impl RingRail {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{actor_of, Ed25519Verifier, OpId, Redemption};
+    use crate::{actor_of, Ed25519Verifier, OpId, RailAct, Redemption};
     use svrngs_core::tests_support::{after, key, record, signed, NS};
 
     fn admit_act(person: &str, joining: u8) -> RailAct {
