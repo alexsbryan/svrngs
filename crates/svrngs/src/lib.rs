@@ -11,6 +11,7 @@ pub mod runner;
 pub mod store;
 
 use std::net::SocketAddr;
+use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::Context;
@@ -22,6 +23,13 @@ pub use home::Home;
 /// This computer's clock, in Unix seconds: the one read of it.
 pub fn now() -> u64 {
     SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_secs())
+}
+
+/// The bridge's sources, in the checkout this command was built from: E0
+/// installs svrngs from a checkout (demo/d2-your-own-group.md), so they stay
+/// beside it.
+pub fn bridge_dir() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../bridge")
 }
 
 /// A running host: the journal actor and the bridge append in front of it.

@@ -1,7 +1,8 @@
 //! The host's home directory, and the one accessor for each path in it
-//! (ARCH_PRINCIPLES 8). Groups live in `groups/<id>/`; their keys and the
-//! bridge's capability token sit beside them, never inside a group's
-//! directory (DESIGN D4: it holds no key).
+//! (ARCH_PRINCIPLES 8). Groups live in `groups/<id>/`; their keys, the
+//! bridge's capability token and the chat's token sit beside them, never
+//! inside a group's directory (DESIGN D4: it holds no key). `chat.json` says
+//! which channel the bot reads, once `svrngs start` has asked.
 
 use std::fs::{self, OpenOptions};
 use std::io::Write;
@@ -37,6 +38,15 @@ pub struct Home {
     root: PathBuf,
 }
 
+/// The chat the bot speaks in: the channel `svrngs start` picked, and whose
+/// computer this is, as the greeting says it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Chat {
+    pub channel: String,
+    pub owner: String,
+}
+
 impl Home {
     pub fn new(root: impl Into<PathBuf>) -> Self {
         Self { root: root.into() }
@@ -63,8 +73,66 @@ impl Home {
         self.root.join("keys").join(format!("{id}.json"))
     }
 
+    pub fn root(&self) -> &Path {
+        &self.root
+    }
+
     pub fn token_file(&self) -> PathBuf {
         self.root.join("secrets").join("bridge-token")
+    }
+
+    /// The Discord bot's token, which the person pasted into `svrngs start`.
+    pub fn discord_token_file(&self) -> PathBuf {
+        self.root.join("secrets").join("discord-token")
+    }
+
+    fn chat_file(&self) -> PathBuf {
+        self.root.join("chat.json")
+    }
+
+    /// Where the service writes what `svrngs serve` and the bridge log.
+    pub fn log_dir(&self) -> PathBuf {
+        self.root.join("logs")
+    }
+
+    /// The chat, once one is set up; `None` before.
+    pub fn chat(&self) -> anyhow::Result<Option<Chat>> {
+        let path = self.chat_file();
+        match fs::read(&path) {
+            Ok(bytes) => Ok(Some(
+                serde_json::from_slice(&bytes).with_context(|| format!("{}", path.display()))?,
+            )),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(e) => Err(e).with_context(|| format!("{}", path.display())),
+        }
+    }
+
+    pub fn set_chat(&self, chat: &Chat) -> anyhow::Result<()> {
+        fs::create_dir_all(&self.root)?;
+        fs::write(self.chat_file(), serde_json::to_vec_pretty(chat)?)?;
+        info!(channel = %chat.channel, "home:set_chat");
+        Ok(())
+    }
+
+    /// The Discord bot's token, if one was pasted.
+    pub fn discord_token(&self) -> anyhow::Result<Option<String>> {
+        let path = self.discord_token_file();
+        match fs::read_to_string(&path) {
+            Ok(t) => Ok(Some(t.trim().to_string())),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(e) => Err(e).with_context(|| format!("{}", path.display())),
+        }
+    }
+
+    /// Keep the Discord bot's token, replacing one kept before.
+    pub fn set_discord_token(&self, token: &str) -> anyhow::Result<()> {
+        let path = self.discord_token_file();
+        if path.exists() {
+            fs::remove_file(&path)?;
+        }
+        write_secret(&path, token.trim().as_bytes())?;
+        info!("home:set_discord_token");
+        Ok(())
     }
 
     /// E0 keeps one group per host (DESIGN D7 E0); a second is refused by name.
