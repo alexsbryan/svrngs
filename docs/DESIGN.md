@@ -498,6 +498,9 @@ By the operator, 2026-10-04:
 - a link is upstream's https form, everything it carries in its fragment;
   `https://svrnme.sh/ring/` is the default origin, and anyone may serve the
   page from their own;
+- a link is short and opaque, for the ergonomics of sharing: one token
+  after the `#` carrying only what the joiner cannot ask the issuer for,
+  and no word §1 keeps from people anywhere in it (u2-8);
 - one link admits everyone who opens it, each once, until it lapses or is
   closed — not one person per link;
 - only the issuer's node redeems a link;
