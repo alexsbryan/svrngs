@@ -4,27 +4,29 @@
 //! key, hole-punching, optional relays). Upstream feature-gated it behind
 //! `iroh`; in svrngs it is the only transport, so nothing gates it.
 //!
-//! ## Shape: localhost byte-tunnels, not a new HTTP stack
+//! ## Shape: a localhost byte-tunnel to dial, hyper on the stream to serve
 //!
 //! [`IrohTransport::base_url`] resolves a base URL, and every call
-//! site keeps its existing `reqwest` client — so this transport
+//! site keeps its existing `reqwest` client — so the dialling half
 //! terminates iroh QUIC locally and hands HTTP a plain TCP socket:
 //!
 //! - Client side ([`IrohTransport`]): per-peer localhost
 //!   `TcpListener`; each accepted TCP connection opens one iroh
 //!   bi-stream to the peer (dialed by its Ed25519 key — the
 //!   [`Contact`]'s `key`) and copies bytes both ways.
-//! - Server side ([`IrohAcceptor`]): accepts iroh bi-streams and
-//!   copies each into a fresh TCP connection to the daemon's
-//!   existing localhost listener — unmodified axum router,
-//!   unmodified middleware.
+//! - Server side ([`IrohAcceptor`]): admits or closes each iroh
+//!   connection on its ALPN and the dialer's verified key, and serves
+//!   every bi-stream of an admitted one with hyper's HTTP/1 server and
+//!   the caller's axum router — no loopback listener, and the dialer
+//!   reaches handlers as a [`Dialer`] request extension, never a header.
 //!
 //! Known upgrade path (deliberately NOT in the spike): serve hyper
 //! directly on iroh streams (drop the double-copy), carry the
 //! traffic class in the ALPN or a stream header so one acceptor can
 //! route to both daemon ports, and a tunnel-proxy sidecar for the
 //! raw-TCP `rpc-server` tensor traffic that this transport
-//! intentionally does not cover.
+//! intentionally does not cover. (Upstream's words. The server side
+//! has taken the first; svrngs has one ALPN and no tensor traffic.)
 //!
 //! Upstream's `PeerTransport` port, `PeerContact`, `PeerEndpoint` and
 //! `TrafficClass` did not come over: there is one transport, so it is a
@@ -45,13 +47,11 @@ use std::sync::Arc;
 pub use crate::alpn::ALPN;
 // The guest dialer and the one HTTP bridge live in `crate::guest`, as they
 // lived in `mesh_reach::guest` upstream (pb-reach-guest, phase-b-35);
-// re-exported so callers spell them `svrngs_node::iroh::`. The acceptor below
-// splices through the same `pump`.
+// re-exported so callers spell them `svrngs_node::iroh::`.
 pub use crate::guest::{
     build_relayed_endpoint, configured_proxy_redacted, parse_dial_string, ring_crypto_provider,
     HttpBridge, RelayConfig,
 };
-use crate::guest::{pump, PumpSide};
 
 // Re-exported so callers build endpoints without declaring their own iroh
 // dependency — keeps the version pin in exactly one place.
@@ -281,8 +281,38 @@ pub fn preferred_bridge_port(pubkey: &PublicKey, alpn: &[u8]) -> u16 {
     20_000 + (h % 12_768) as u16
 }
 
-/// Server half: accept iroh bi-streams and forward each to the
-/// daemon's existing localhost HTTP listener.
+/// The acceptor's answer to a connection, decided once per connection on its
+/// negotiated ALPN and the key its handshake verified.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Admit {
+    /// Serve every bi-stream on the connection.
+    Serve,
+    /// Close the connection before any stream is read: no HTTP answer.
+    Refuse,
+}
+
+/// The key iroh's handshake verified for the connection a request came on.
+/// [`IrohAcceptor`] inserts it as an extension into every request it serves,
+/// and nothing outside this crate can build one, so a handler that extracts
+/// `Extension<Dialer>` reads the connection — never a header a client typed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Dialer(PublicKey);
+
+impl Dialer {
+    /// The verified key.
+    pub fn key(&self) -> PublicKey {
+        self.0
+    }
+
+    /// The record's actor: the key's lowercase hex, as
+    /// [`actor_of`](svrngs_core::actor_of) spells a signer.
+    pub fn actor(&self) -> String {
+        hex::encode(self.0.as_bytes())
+    }
+}
+
+/// Server half: accept iroh connections, and serve each bi-stream of an
+/// admitted one with hyper's HTTP/1 server and the caller's router.
 pub struct IrohAcceptor {
     task: tokio::task::JoinHandle<()>,
 }
@@ -294,79 +324,25 @@ impl Drop for IrohAcceptor {
 }
 
 impl IrohAcceptor {
-    /// Spawn the accept loop forwarding EVERY accepted bi-stream to a
-    /// single local listener, regardless of negotiated ALPN. Right for
-    /// a single-ALPN endpoint (Track M: `sovereign-server` binds only
-    /// `cwth/client/0` → its HTTP listener).
+    /// Spawn the accept loop. `admit` sees each connection's negotiated ALPN
+    /// and the dialer's key, verified by the QUIC handshake, once per
+    /// connection; [`Admit::Refuse`] closes the connection. Every bi-stream
+    /// of an admitted connection is one HTTP/1 connection served by `router`,
+    /// each request carrying the dialer as a [`Dialer`] extension.
     ///
-    /// Admits any dialer. Correct where the local listener authenticates
-    /// for itself (`sovereign-server` requires a bearer of every caller);
-    /// NOT correct where it trusts loopback — see
-    /// [`spawn_admitting`](Self::spawn_admitting).
-    pub fn spawn(endpoint: iroh::Endpoint, forward_to: SocketAddr) -> Self {
-        Self::run(
-            endpoint,
-            move |_alpn, _dialer| async move { Some(forward_to) },
-        )
-    }
-
-    /// Spawn the accept loop routing each connection to a local
-    /// listener chosen by its **negotiated ALPN** — the W1 capability
-    /// that lets one daemon endpoint serve both the internal router
-    /// (`cwth/http/0`) and the client router (`cwth/client/0`) without
-    /// a port (the class chose the ALPN). A connection whose ALPN is
-    /// not in `routes` is closed with a loud log, never misrouted.
-    pub fn spawn_routed(endpoint: iroh::Endpoint, routes: HashMap<Vec<u8>, SocketAddr>) -> Self {
-        Self::run(endpoint, move |alpn, _dialer| {
-            let target = routes.get(&alpn).copied();
-            async move { target }
-        })
-    }
-
-    /// Spawn the accept loop routing each connection by its negotiated ALPN
-    /// **and by who dialed it**.
-    ///
-    /// # Why the dialer has to be part of the routing decision
-    ///
-    /// An iroh endpoint accepts anyone. The dial string that reaches it is
-    /// public by design — it rides in every mesh invite's `dial=` and is
-    /// gossiped as `MemberRecord.node_pubkey` — so "holds the dial string"
-    /// is not a credential and must never be treated as one. But the
-    /// acceptor forwards by `TcpStream::connect`ing a loopback listener,
-    /// and a listener that trusts loopback (correctly, for the local user)
-    /// cannot tell that hop from a real local caller. Route on ALPN alone
-    /// and every dial-string holder inherits whatever that listener grants
-    /// its own machine.
-    ///
-    /// What the connection DOES carry is the dialer's Ed25519 public key,
-    /// verified by the QUIC handshake — the same key a mesh gossips as
-    /// `node_pubkey`. `resolve` receives it, so a caller can send members
-    /// and strangers to different listeners (or send a stranger nowhere)
-    /// on evidence rather than on transport.
-    ///
-    /// `resolve` returning `None` closes the connection. It is async so the
-    /// decision can consult live state — membership changes between dials.
-    pub fn spawn_admitting<F, Fut>(endpoint: iroh::Endpoint, resolve: F) -> Self
+    /// The dial string that reaches an endpoint is public, so holding it is
+    /// not a credential; the verified key is the evidence `admit` decides
+    /// on. It is called again for every connection, so a decision that
+    /// consults live state sees membership change between dials.
+    pub fn spawn<F>(endpoint: iroh::Endpoint, admit: F, router: axum::Router) -> Self
     where
-        F: Fn(Vec<u8>, PublicKey) -> Fut + Send + Sync + 'static,
-        Fut: std::future::Future<Output = Option<SocketAddr>> + Send + 'static,
+        F: Fn(&[u8], &PublicKey) -> Admit + Send + Sync + 'static,
     {
-        Self::run(endpoint, resolve)
-    }
-
-    /// Shared accept loop. `resolve` maps a connection's negotiated ALPN
-    /// and its verified dialer key to the local TCP target its bi-streams
-    /// forward to; `None` closes the connection. Both are read once per
-    /// connection, then every bi-stream on it is pumped to that target.
-    fn run<F, Fut>(endpoint: iroh::Endpoint, resolve: F) -> Self
-    where
-        F: Fn(Vec<u8>, PublicKey) -> Fut + Send + Sync + 'static,
-        Fut: std::future::Future<Output = Option<SocketAddr>> + Send + 'static,
-    {
-        let resolve = Arc::new(resolve);
+        let admit = Arc::new(admit);
         let task = tokio::spawn(async move {
             while let Some(incoming) = endpoint.accept().await {
-                let resolve = resolve.clone();
+                let admit = admit.clone();
+                let router = router.clone();
                 tokio::spawn(async move {
                     let conn = match incoming.await {
                         Ok(c) => c,
@@ -381,53 +357,63 @@ impl IrohAcceptor {
                     };
                     // A fully-accepted connection has a negotiated ALPN and
                     // a verified dialer key (from the peer's TLS
-                    // certificate). Route this connection's streams by both.
+                    // certificate). Admit this connection's streams by both.
                     let alpn = conn.alpn().to_vec();
-                    let dialer = conn.remote_id();
-                    let Some(forward_to) = resolve(alpn.clone(), dialer).await else {
-                        tracing::warn!(
+                    let dialer = Dialer(conn.remote_id());
+                    match admit(&alpn, &dialer.0) {
+                        Admit::Refuse => {
+                            tracing::warn!(
+                                target: "transport",
+                                alpn = %String::from_utf8_lossy(&alpn),
+                                dialer = %dialer.actor(),
+                                "iroh acceptor: dialer not admitted — closing connection"
+                            );
+                            conn.close(0u32.into(), b"not admitted");
+                            return;
+                        }
+                        Admit::Serve => tracing::debug!(
                             target: "transport",
                             alpn = %String::from_utf8_lossy(&alpn),
-                            dialer = %hex::encode(dialer.as_bytes()),
-                            "iroh acceptor: no local forward for this (ALPN, dialer) — closing connection"
-                        );
-                        return;
-                    };
+                            dialer = %dialer.actor(),
+                            "iroh acceptor: dialer admitted — serving its streams"
+                        ),
+                    }
                     // Ends when the connection closes.
                     while let Ok((send, recv)) = conn.accept_bi().await {
-                        // The pump's zero-answer warn names the ALPN;
-                        // clone it so the next accepted stream still
-                        // has it.
-                        let alpn = alpn.clone();
-                        tokio::spawn(async move {
-                            match tokio::net::TcpStream::connect(forward_to).await {
-                                Ok(tcp) => {
-                                    // Same Nagle × delayed-ACK stall as the
-                                    // bridge side — see HttpBridge::spawn.
-                                    tcp.set_nodelay(true).ok();
-                                    pump(
-                                        tcp,
-                                        send,
-                                        recv,
-                                        PumpSide::Acceptor,
-                                        hex::encode(dialer.as_bytes()),
-                                        &alpn,
-                                    )
-                                    .await
-                                }
-                                Err(e) => tracing::warn!(
-                                    target: "transport",
-                                    error = %e,
-                                    forward_to = %forward_to,
-                                    "iroh acceptor: local forward connect failed"
-                                ),
-                            }
-                        });
+                        tokio::spawn(serve_stream(send, recv, dialer, router.clone()));
                     }
                 });
             }
         });
         Self { task }
+    }
+}
+
+/// One bi-stream is one HTTP/1 connection: hyper parses every request on it,
+/// the dialer is inserted as the request's [`Dialer`], and `router` answers.
+async fn serve_stream(
+    send: iroh::endpoint::SendStream,
+    recv: iroh::endpoint::RecvStream,
+    dialer: Dialer,
+    router: axum::Router,
+) {
+    use tower::ServiceExt;
+    let io = hyper_util::rt::TokioIo::new(tokio::io::join(recv, send));
+    let service =
+        hyper::service::service_fn(move |mut req: hyper::Request<hyper::body::Incoming>| {
+            req.extensions_mut().insert(dialer);
+            router.clone().oneshot(req)
+        });
+    if let Err(e) = hyper::server::conn::http1::Builder::new()
+        .serve_connection(io, service)
+        .await
+    {
+        tracing::debug!(
+            target: "transport",
+            dialer = %dialer.actor(),
+            error = %e,
+            "iroh acceptor: a stream's HTTP connection ended in error"
+        );
     }
 }
 
@@ -534,6 +520,7 @@ mod tests {
     /// splice shaped as `guest/tests.rs`'s `spawn_lender` stands in, whatever
     /// the acceptor serves.
     fn spawn_splicing_acceptor(endpoint: Endpoint, forward_to: SocketAddr) {
+        use crate::guest::{pump, PumpSide};
         tokio::spawn(async move {
             while let Some(incoming) = endpoint.accept().await {
                 tokio::spawn(async move {
@@ -742,17 +729,6 @@ mod tests {
         assert_ne!(
             super::dial_key_for(&mk(vec![a, b])),
             super::dial_key_for(&mk(vec![a, b2]))
-        );
-    }
-
-    /// The acceptor splices through the leaf's one `pump` (pb-reach-guest):
-    /// the name it calls resolves to `crate::guest::pump`, so a local
-    /// copy of the pump in this file turns this red.
-    #[test]
-    fn the_acceptor_pumps_through_the_leafs_one_pump() {
-        assert_eq!(
-            std::any::type_name_of_val(&pump),
-            "svrngs_node::guest::pump"
         );
     }
 }

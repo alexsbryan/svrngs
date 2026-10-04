@@ -3305,6 +3305,8 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "hex",
+ "hyper",
+ "hyper-util",
  "iroh",
  "rand 0.9.4",
  "reqwest 0.12.28",
@@ -3315,6 +3317,7 @@ dependencies = [
  "tempfile",
  "thiserror 2.0.21",
  "tokio",
+ "tower",
  "tracing",
 ]
 

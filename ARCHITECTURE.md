@@ -9,7 +9,7 @@ as what it describes.
 svrngs owns the group's code, forked from commonwealth-ai's ring slice (DESIGN
 §4). The record and the journal on disk have landed; sync, the routes and the
 member door come next, forked the same way (DESIGN §8, U1-U3); of sync, the
-dialling half over iroh has landed. Nothing runs as a program yet.
+dialling and serving halves over iroh have landed. Nothing runs as a program yet.
 
 ## Code map
 
@@ -52,12 +52,16 @@ tunnel dials `ALPN`; no bench relay pin (`relay_pin_active`,
 `PeerEndpoint` or `TrafficClass`, so the transport is a concrete type whose
 `base_url` takes a `Contact` (a key with optional dial hints) and its bridges
 are keyed by peer alone; `NodePubkey` becomes iroh's `PublicKey`; the sync
-bodies import the record from `svrngs-core`. `iroh.rs` also holds
-upstream's accept loop (`IrohAcceptor`), without its `Forward` kinds: it splices
-each accepted stream into a loopback listener chosen by ALPN and dialer
-(`spawn`, `spawn_routed`, `spawn_admitting`), and its resolver takes iroh's
-`PublicKey`. The bridge's own tests splice through a test stand-in, since they
-test the bridge, not what the acceptor serves.
+bodies import the record from `svrngs-core`. `iroh.rs` also holds the
+serving half, upstream's accept loop (`IrohAcceptor`) forked without its
+`Forward` kinds and then changed: `IrohAcceptor::spawn` takes an admit decision
+on each connection's ALPN and verified key (`Admit`), closing a refused
+connection, and an `axum::Router` that hyper's HTTP/1 server serves on every
+bi-stream of an admitted one, each request carrying the verified key as a
+`Dialer` extension. There is no loopback listener on the serving side and no
+request head parsed but by hyper. The bridge's own tests splice through a test
+stand-in, since they test the bridge, not what the acceptor serves;
+`tests/accept.rs` tests the acceptor.
 iroh is pinned at `=1.0.2`, and its tree locked at upstream's versions, so the
 fork runs on what upstream tested.
 
