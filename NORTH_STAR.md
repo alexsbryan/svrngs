@@ -15,7 +15,7 @@ seconds; no new words. The commons is what their selfish acts leave behind.
 ## 2. If you can run it on localhost, you can share it with your friends
 
 An app needs no login, no SDK, no bundle: it gets the person asking, verified;
-a record that outlives its host; reach to the whole group. svrngs stays small
+a record that outlives its host; reach to the group. svrngs stays small
 enough to read in an afternoon, and as pleasant to build on as iroh: few
 concepts, plain names, nothing clever. We build the platform; the community
 builds the apps.
@@ -25,8 +25,8 @@ builds the apps.
 ## 3. Concentric rings, and no centre but you
 
 You stand at the centre of your own rings: the house, friends, the party, the
-town. Reach travels outward only through someone in two rings who says yes,
-never through a profile, directory, feed or ranking. Each ring keeps its record
+town. Reach travels outward through someone in two rings who says yes, never
+a profile, directory, feed or ranking. Each ring keeps its record
 on its members' computers and can leave together, intact.
 
 *Test: does this build a centre, or rank a person?*
