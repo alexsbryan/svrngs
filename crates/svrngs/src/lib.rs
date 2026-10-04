@@ -2,12 +2,15 @@
 //! and lets the chat write to it (DESIGN D7 E0). `home` finds the files,
 //! `store` reads and appends the group's directory, `journal` is its one
 //! writer, `runner` runs the apps' handlers for it, and `bridge` is the
-//! loopback surface the chat adapter calls.
+//! loopback surface the chat adapter calls. `start` sets a computer up for a
+//! chat, and `service` keeps `svrngs serve` running on it.
 
 pub mod bridge;
 pub mod home;
 pub mod journal;
 pub mod runner;
+pub mod service;
+pub mod start;
 pub mod store;
 
 use std::net::SocketAddr;

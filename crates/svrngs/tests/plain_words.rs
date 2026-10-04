@@ -5,11 +5,14 @@
 //!
 //! What a person reads, today: the bot's words (`bridge/words.json`), the
 //! commands Expenses declares (`apps/expenses/manifest.json`, which Discord
-//! lists), and what Expenses answers in the chat, driven through the runner.
-//! The app's shell and the iOS permission strings do not exist yet.
+//! lists), what Expenses answers in the chat, driven through the runner, and
+//! what `svrngs start` prints (`crates/svrngs/src/start.json`, the only
+//! words `start.rs` prints). The app's shell and the iOS permission strings
+//! do not exist yet.
 //!
-//! A `{placeholder}` is filled with a person's or group's own words, so it is
-//! not read here; neither are the names and amounts this test types.
+//! A `{placeholder}` is filled with a person's or group's own words, or with
+//! Discord's own label for one of its switches, so it is not read here;
+//! neither are the names and amounts this test types, nor web addresses.
 
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -25,23 +28,38 @@ const INTERNAL: &[&str] = &["ring", "member", "guest", "key", "sync", "journal",
 /// Every word a person may read. Add a word only once it reads plainly to
 /// someone who has never heard of svrngs.
 const ALLOWED: &str = "
-a again already amount an and answer any back book bot can can't channel
-computer confirm couldn't did discord down even everyone's expense for group
-had here hi how i i'll i'm if in install is isn't it just keep like longer
-moment more much no not nothing now number of on or other owe owes paid part
-particular pay pick please read reminder right see settle shares so some
-someone something split stored tap than that the this to track try type up was
-welcome what while who whom with write you you're yourself
+a above after again already amount an and answer any application authorize
+awake back before book bot by call can can't change changes channel computer
+confirm copy couldn't did didn't discord does done down enter even everyone's
+expense finished first five for found from get getting goes group had here hi
+how i i'll i'm if in install installing is isn't it it's its itself join js
+just keep keeps later leave left let let's letters like link logged longer make
+minute minutes moment more much name needs never new no node not nothing now
+number numbers of off on once one only open or other owe owes paid part
+particular parts paste pay people pick please press pressed put reach read
+reads reminder reset right run running runs save see serve server set settings
+settle setup shares should shows sleep sleeps so some someone something speak
+split start starts step steps stopped stops stored stores svrngs system take
+takes talk tap tell tells text than that the them then there things this time
+to token track try turn turned type up uses using waiting was welcome went what
+when whenever where whether which while who whom whose will with write wrong
+yet you you're you've your yourself
 ";
 
 fn root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 
-/// `text` with each `{placeholder}`, and a possessive `'s` after one, removed.
+/// `text` with each web address, each `{placeholder}`, and a possessive `'s`
+/// after one, removed.
 fn unfilled(text: &str) -> String {
+    let text = &text
+        .split(' ')
+        .filter(|w| !w.starts_with("https://"))
+        .collect::<Vec<_>>()
+        .join(" ");
     let mut out = String::new();
-    let mut rest = text;
+    let mut rest: &str = text;
     while let Some(open) = rest.find('{') {
         out.push_str(&rest[..open]);
         let close = rest[open..].find('}').map_or(rest.len(), |c| open + c + 1);
@@ -167,4 +185,38 @@ async fn expenses_answers_plainly() {
     assert!(said.iter().any(|t| t.contains("a reminder")), "{said:#?}");
     let bad = unplain("what Expenses answers", &said, &["sam", "ama", "pizza"]);
     assert!(bad.is_empty(), "{}\n\nall it said: {said:#?}", bad.join("\n"));
+}
+
+#[test]
+fn setup_speaks_plainly() {
+    let path = root().join("crates/svrngs/src/start.json");
+    let words: serde_json::Map<String, Value> = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+    let texts: Vec<String> = words
+        .values()
+        .map(|v| v.as_str().expect("every setup word is a string").to_string())
+        .collect();
+    assert!(texts.len() >= 20, "{} has setup's words", path.display());
+    let bad = unplain("crates/svrngs/src/start.json", &texts, &[]);
+    assert!(bad.is_empty(), "{}", bad.join("\n"));
+}
+
+/// `start.rs` prints only `start.json`'s words: no format string in a
+/// macro that prints or fails holds a letter outside its `{}`.
+#[test]
+fn setup_prints_only_its_words() {
+    let path = root().join("crates/svrngs/src/start.rs");
+    let code = std::fs::read_to_string(&path).unwrap();
+    let mut found = Vec::new();
+    for mac in ["println!(\"", "print!(\"", "eprintln!(\"", "bail!(\""] {
+        for (at, _) in code.match_indices(mac) {
+            let literal = code[at + mac.len()..].split('"').next().unwrap_or_default();
+            if unfilled(literal).chars().any(char::is_alphabetic) {
+                found.push(format!("{mac}{literal}\""));
+            }
+        }
+    }
+    assert!(
+        found.is_empty(),
+        "start.rs prints words that are not in start.json: {found:?}"
+    );
 }

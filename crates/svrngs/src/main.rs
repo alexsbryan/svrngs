@@ -1,3 +1,6 @@
+//! `svrngs start [--home DIR]`: set this computer up for a group's chat, in
+//! DESIGN C11's five steps (`start.rs`).
+//!
 //! `svrngs serve [--home DIR] [--name NAME] [--port N]`: keep this computer's
 //! group, starting one named NAME if there is none, and listen for the chat.
 //! Once `svrngs start` has set up a chat, `serve` runs the bridge too, and
@@ -12,18 +15,35 @@ use tokio::process::{Child, Command};
 use tracing::{info, warn};
 use tracing_subscriber::EnvFilter;
 
-const USAGE: &str = "usage: svrngs serve [--home DIR] [--name NAME] [--port N]";
+const USAGE: &str = "usage: svrngs start [--home DIR] | svrngs serve [--home DIR] [--name NAME] [--port N]";
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")))
-        .init();
     let args: Vec<String> = std::env::args().skip(1).collect();
+    // `start` talks to a person, so its log stays quiet unless RUST_LOG asks.
+    let quiet = if args.first().is_some_and(|c| c == "start") {
+        "warn"
+    } else {
+        "info"
+    };
+    tracing_subscriber::fmt()
+        .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(quiet)))
+        .with_writer(std::io::stderr)
+        .init();
     match args.split_first() {
         Some((cmd, rest)) if cmd == "serve" => serve(rest).await,
+        Some((cmd, rest)) if cmd == "start" => start(rest),
         _ => bail!(USAGE),
     }
+}
+
+fn start(args: &[String]) -> anyhow::Result<()> {
+    let home = match args {
+        [] => Home::from_env()?,
+        [flag, dir] if flag == "--home" => Home::new(dir),
+        _ => bail!(USAGE),
+    };
+    svrngs::start::run(&home)
 }
 
 async fn serve(args: &[String]) -> anyhow::Result<()> {
