@@ -3,10 +3,12 @@
 //! §8, U1). Until u1-5 the seed — the group's `roster.json` — says who is in
 //! the group.
 
-use std::net::SocketAddr;
+mod common;
+use common::loopback_sockets;
+
 use std::time::Duration;
 
-use svrngs_node::iroh::{Contact, Endpoint, PublicKey, RelayConfig};
+use svrngs_node::iroh::{Contact, PublicKey, RelayConfig};
 use svrngs_node::node::Node;
 use svrngs_node::{
     actor_of, Digest, Ed25519Verifier, Payload, Person, RailAct, Roster, SigningKey,
@@ -41,22 +43,6 @@ fn seed_of(seeds: &[u8]) -> Roster {
             .map(|s| (Person::from(format!("p{s}")), vec![actor_of(&signing(*s))]))
             .collect(),
     )
-}
-
-/// iroh binds the wildcard; rewrite to loopback so the address is dialable
-/// in-process.
-fn loopback_sockets(endpoint: &Endpoint) -> Vec<SocketAddr> {
-    endpoint
-        .bound_sockets()
-        .into_iter()
-        .map(|mut a| {
-            if a.ip().is_unspecified() {
-                let ip = if a.is_ipv4() { "127.0.0.1" } else { "::1" };
-                a.set_ip(ip.parse().unwrap());
-            }
-            a
-        })
-        .collect()
 }
 
 fn digest(node: &Node) -> Digest {

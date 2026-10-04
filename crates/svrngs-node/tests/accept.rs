@@ -3,7 +3,9 @@
 //! hermetic endpoints in one process, no relay, B dialling A through the
 //! loopback bridge with reqwest.
 
-use std::net::SocketAddr;
+mod common;
+use common::loopback_sockets;
+
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
@@ -24,22 +26,6 @@ async fn hermetic_endpoint(seed: u8, alpns: Vec<Vec<u8>>) -> Endpoint {
         .bind()
         .await
         .expect("hermetic endpoint bind")
-}
-
-/// iroh binds the wildcard; rewrite to loopback so the address is dialable
-/// in-process.
-fn loopback_sockets(endpoint: &Endpoint) -> Vec<SocketAddr> {
-    endpoint
-        .bound_sockets()
-        .into_iter()
-        .map(|mut a| {
-            if a.ip().is_unspecified() {
-                let ip = if a.is_ipv4() { "127.0.0.1" } else { "::1" };
-                a.set_ip(ip.parse().unwrap());
-            }
-            a
-        })
-        .collect()
 }
 
 fn key(seed: u8) -> PublicKey {
