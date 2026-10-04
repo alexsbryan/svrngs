@@ -33,7 +33,7 @@ use axum::{Extension, Json};
 
 use crate::iroh::Dialer;
 use crate::peer_wire::{RingSyncRequest, MAX_REQUEST_BODY_BYTES, RING_SYNC_OPS_BUDGET_BYTES};
-use crate::ring_sync::{answer, roster_names, RingSyncJournal};
+use crate::ring_sync::{answer, roster_names, roster_of};
 use crate::RingRail;
 
 // rail.rs's refusal body, forked with the route (DESIGN §8, U1's inventory).
@@ -78,7 +78,7 @@ async fn roster_refusal(
         ));
     };
     let key = dialer.key();
-    let roster = match RingSyncJournal::roster(rail, namespace).await {
+    let roster = match roster_of(rail, namespace).await {
         Ok(r) => r,
         Err(e) => {
             tracing::warn!(target: "rails", namespace, error = %e,
@@ -111,7 +111,7 @@ pub async fn ring_sync(
     if let Some(refusal) = roster_refusal(&state.rail, dialer, &req.namespace).await {
         return err(StatusCode::FORBIDDEN, refusal);
     }
-    let (response, more_for_caller) = match answer(state.rail.as_ref(), &req).await {
+    let (response, more_for_caller) = match answer(state.rail.as_ref(), &req) {
         Ok(pair) => pair,
         Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
     };

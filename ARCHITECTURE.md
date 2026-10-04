@@ -104,9 +104,11 @@ round dials every key the seeds of the groups the node holds name, by key,
 through addresses a caller seeds on the transport or iroh's lookup finds; the
 accept loop admits any dialer; and the sync route refuses (403) a dialer its
 group's seed does not name. `tests/node_sync.rs` runs two nodes and a
-stranger in one process. The round reads the node's `Host` directly:
-upstream's round read its daemon through the `RingSyncHost` trait, and with
-one host here the trait went (RUST_ARCH 7).
+stranger in one process. The round reads the node's `Host` and the
+`RingRail` directly: upstream's round read them through the `RingSyncHost`
+and `RingSyncJournal` traits, and with one implementor of each here the
+traits went (RUST_ARCH 7); `ring_sync::roster_of` is what remains of the
+second.
 
 **`crates/svrngs-engine`**: the `Engine` trait and QuickJS behind it — a fold
 engine that waits in DESIGN §9 until an app needs its state offline on a device

@@ -29,8 +29,8 @@ use crate::iroh::{
 };
 use crate::ring_routes::{self, RingInbound};
 use crate::ring_sync::{
-    peer_client, run_one_round, spawn_ring_sync_loop, RingSyncHandle, RingSyncJournal,
-    RoundMembers, RoundOutcome, DEFAULT_RING_SYNC_INTERVAL,
+    peer_client, roster_of, run_one_round, spawn_ring_sync_loop, RingSyncHandle, RoundMembers,
+    RoundOutcome, DEFAULT_RING_SYNC_INTERVAL,
 };
 use crate::{actor_of, RingRail, SigningKey};
 
@@ -162,7 +162,7 @@ impl Host {
     /// the round's members until the register answers (u1-5). A group whose
     /// seed is unreadable adds nobody, as the round offers it to nobody.
     pub(crate) async fn members(&self) -> Option<RoundMembers> {
-        let namespaces = match RingRail::namespaces(&self.rail) {
+        let namespaces = match self.rail.namespaces() {
             Ok(n) => n,
             Err(e) => {
                 tracing::warn!(target: "node", error = %e, "node: cannot list the groups held, so the round has no members");
@@ -171,7 +171,7 @@ impl Host {
         };
         let mut keys: BTreeMap<String, (String, PublicKey)> = BTreeMap::new();
         for namespace in &namespaces {
-            let seed = match RingSyncJournal::roster(self.rail.as_ref(), namespace).await {
+            let seed = match roster_of(&self.rail, namespace).await {
                 Ok(r) => r,
                 Err(e) => {
                     tracing::warn!(target: "node", namespace, error = %e, "node: a group's seed is unreadable, so it adds no member");

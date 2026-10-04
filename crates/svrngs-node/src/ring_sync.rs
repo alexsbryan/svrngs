@@ -87,13 +87,13 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use crate::peer_wire::{RingSyncRequest, RingSyncResponse, RING_SYNC_OPS_BUDGET_BYTES};
-use crate::RailError;
+use crate::{Ed25519Verifier, RailError, RingRail};
 use tokio::sync::Notify;
 use tracing::{debug, info, warn};
 
 mod journal;
 use journal::OnlinePeer;
-pub use journal::{roster_names, JournalFut, RingSyncJournal, RoundMembers};
+pub use journal::{roster_names, roster_of, RoundMembers};
 
 use crate::node::Host;
 
@@ -214,8 +214,8 @@ pub fn spawn_ring_sync_loop(
 /// online peer **its roster names**.
 pub async fn run_one_round(host: &Host) -> RoundOutcome {
     let mut outcome = RoundOutcome::default();
-    let rail: &dyn RingSyncJournal = host.rail();
-    let namespaces = match rail.namespaces().await {
+    let rail = host.rail();
+    let namespaces = match rail.namespaces() {
         Ok(n) => n,
         Err(e) => {
             warn!(error = %e, "ring sync: cannot enumerate namespaces");
@@ -272,7 +272,7 @@ pub async fn run_one_round(host: &Host) -> RoundOutcome {
         // An UNREADABLE roster offers nothing for this namespace. Under-share,
         // never over-share — the same posture `prune_what_the_peer_retired`
         // takes when it cannot read one.
-        let roster = match rail.roster(namespace).await {
+        let roster = match roster_of(rail, namespace).await {
             Ok(r) => r,
             Err(e) => {
                 warn!(
@@ -449,15 +449,18 @@ impl ExchangeOutcome {
 /// nothing on the daemon's own namespace. A refusal is logged and the exchange
 /// carries on: the ops are ingested and durable, and a journal that stayed
 /// long is a worse outcome than a stalled round, not a reason to make one.
-async fn prune_what_the_peer_retired(rail: &dyn RingSyncJournal, namespace: &str) {
-    let roster = match rail.roster(namespace).await {
+async fn prune_what_the_peer_retired(rail: &RingRail, namespace: &str) {
+    let roster = match roster_of(rail, namespace).await {
         Ok(r) => r,
         Err(e) => {
             warn!(namespace, error = %e, "ring sync: a seal arrived and the roster is unreadable, so nothing was pruned");
             return;
         }
     };
-    match rail.journal_compact(namespace, &roster).await {
+    match rail
+        .journal(namespace)
+        .and_then(|j| j.compact(&roster, &Ed25519Verifier))
+    {
         Ok(done) if done.removed > 0 => {
             info!(
                 namespace,
@@ -484,15 +487,19 @@ async fn prune_what_the_peer_retired(rail: &dyn RingSyncJournal, namespace: &str
 pub async fn exchange(
     http: &reqwest::Client,
     url: &str,
-    rail: &dyn RingSyncJournal,
+    rail: &RingRail,
     namespace: &str,
 ) -> ExchangeOutcome {
     let mut out = ExchangeOutcome::default();
     let mut last_peer_digest: Option<crate::Digest> = None;
+    let journal = match rail.journal(namespace) {
+        Ok(j) => j,
+        Err(e) => return out.stopped(ExchangeStop::Failed(format!("local journal: {e}"))),
+    };
 
     for chunk in 1..=MAX_CHUNKS_PER_EXCHANGE {
         // ── Call 1 — learn what they have, take one chunk of what we lack.
-        let mine = match rail.journal_digest(namespace).await {
+        let mine = match journal.digest(&Ed25519Verifier) {
             Ok(d) => d,
             Err(e) => return out.stopped(ExchangeStop::Failed(format!("local journal: {e}"))),
         };
@@ -510,7 +517,7 @@ pub async fn exchange(
             Ok(r) => r,
             Err(stop) => return out.stopped(stop),
         };
-        let pulled = match rail.journal_ingest_all(namespace, &first.ops).await {
+        let pulled = match journal.ingest_all(&first.ops) {
             Ok(n) => n,
             Err(e) => return out.stopped(ExchangeStop::Failed(format!("local journal: {e}"))),
         };
@@ -531,10 +538,11 @@ pub async fn exchange(
 
         // ── Call 2 — give them one chunk of what they lack, out of
         // everything we now hold.
-        let (for_peer, more_for_peer) = match rail
-            .journal_ops_missing_from_within(namespace, &first.digest, RING_SYNC_OPS_BUDGET_BYTES)
-            .await
-        {
+        let (for_peer, more_for_peer) = match journal.ops_missing_from_within(
+            &Ed25519Verifier,
+            &first.digest,
+            RING_SYNC_OPS_BUDGET_BYTES,
+        ) {
             Ok(v) => v,
             Err(e) => return out.stopped(ExchangeStop::Failed(format!("local journal: {e}"))),
         };
@@ -542,7 +550,7 @@ pub async fn exchange(
         let pushed = if for_peer.is_empty() {
             0
         } else {
-            let refreshed = match rail.journal_digest(namespace).await {
+            let refreshed = match journal.digest(&Ed25519Verifier) {
                 Ok(d) => d,
                 Err(e) => return out.stopped(ExchangeStop::Failed(format!("local journal: {e}"))),
             };
@@ -649,15 +657,18 @@ async fn post(
 /// call. Called after the asker's roster check, never before: a refusal that
 /// ran after the ingest would have taken the asker's ops onto this disk on its
 /// way to saying no.
-pub async fn answer(
-    rail: &dyn RingSyncJournal,
+pub fn answer(
+    rail: &RingRail,
     req: &RingSyncRequest,
 ) -> Result<(RingSyncResponse, bool), RailError> {
-    let ingested = rail.journal_ingest_all(&req.namespace, &req.ops).await?;
-    let (ops, more_for_caller) = rail
-        .journal_ops_missing_from_within(&req.namespace, &req.digest, RING_SYNC_OPS_BUDGET_BYTES)
-        .await?;
-    let digest = rail.journal_digest(&req.namespace).await?;
+    let journal = rail.journal(&req.namespace)?;
+    let ingested = journal.ingest_all(&req.ops)?;
+    let (ops, more_for_caller) = journal.ops_missing_from_within(
+        &Ed25519Verifier,
+        &req.digest,
+        RING_SYNC_OPS_BUDGET_BYTES,
+    )?;
+    let digest = journal.digest(&Ed25519Verifier)?;
     Ok((
         RingSyncResponse {
             namespace: req.namespace.clone(),

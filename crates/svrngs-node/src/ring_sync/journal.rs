@@ -1,98 +1,25 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai commonwealth/crates/commonwealth-rails/src/ring_sync/journal.rs@e1a43bcd2
-//! The round's seam: the journal half it exchanges over (a
-//! [`RingSyncJournal`]), one round's membership, and the one roster test both
-//! directions of ring sync decide on. (Upstream's seam also held
-//! `RingSyncHost`, what the round reads from the node that runs it; svrngs
-//! has one such node, so the round reads [`crate::node::Host`] directly.) A sibling of `ring_sync.rs` so that file
-//! stays under the 800-line approach band (ARCH §3.1); re-exported there.
-
-use std::future::Future;
-use std::pin::Pin;
+//! The round's seam: the roster a ring is offered and served by, one
+//! round's membership, and the one roster test both directions of ring sync
+//! decide on. A sibling of `ring_sync.rs` so that file stays under the
+//! 800-line approach band (ARCH §3.1); re-exported there.
+//!
+//! Upstream's seam also held two traits: `RingSyncHost`, what the round reads
+//! from the node that runs it, and `RingSyncJournal`, the half of a rail one
+//! round reads and writes. svrngs has one of each — the node's
+//! [`crate::node::Host`] and [`RingRail`] — so the round and the route call
+//! them directly (RUST_ARCH 7), and [`roster_of`] is what remains of the
+//! second.
 
 use crate::iroh::{Contact, PublicKey};
-use crate::{Compaction, Digest, Op, RailError, RingRail, Roster, SignedOp};
+use crate::{RailError, RingRail, Roster};
 
-/// A journal call, boxed so [`RingSyncJournal`] stays object-safe. The same
-/// shape as the daemon's rail port future, so a port forwards without a wrap.
-pub type JournalFut<'a, T> = Pin<Box<dyn Future<Output = Result<T, RailError>> + Send + 'a>>;
-
-/// The half of a ring rail one round reads and writes: which rings this node
-/// holds, each ring's roster, and the digest exchange over its journal.
-///
-/// Implemented here for the local [`RingRail`] (cw-rails' own journals). The
-/// daemon's rail-port implementation retired with pb-mesh-exit-transport, when
-/// cw-rails became the one host of the round.
-pub trait RingSyncJournal: Send + Sync {
-    /// Every namespace this node holds a journal for.
-    fn namespaces(&self) -> JournalFut<'_, Vec<String>>;
-    /// The namespace's roster, through the rail's one reader.
-    fn roster(&self, namespace: &str) -> JournalFut<'_, Roster>;
-    /// The per-actor contiguous high-water marks of this node's journal.
-    fn journal_digest(&self, namespace: &str) -> JournalFut<'_, Digest>;
-    /// Ingest a peer's ops, keyed on their content-addressed ids.
-    fn journal_ingest_all(&self, namespace: &str, ops: &[Op<SignedOp>]) -> JournalFut<'_, usize>;
-    /// One budget of what `theirs` says the peer lacks, and whether more
-    /// remains.
-    fn journal_ops_missing_from_within(
-        &self,
-        namespace: &str,
-        theirs: &Digest,
-        budget_bytes: usize,
-    ) -> JournalFut<'_, (Vec<Op<SignedOp>>, bool)>;
-    /// Retire what a seal below the floor authorises.
-    fn journal_compact(&self, namespace: &str, roster: &Roster) -> JournalFut<'_, Compaction>;
-}
-
-impl RingSyncJournal for RingRail {
-    fn namespaces(&self) -> JournalFut<'_, Vec<String>> {
-        Box::pin(async move { RingRail::namespaces(self) })
-    }
-
-    fn roster(&self, namespace: &str) -> JournalFut<'_, Roster> {
-        let namespace = namespace.to_string();
-        Box::pin(async move {
-            let journal = self.journal(&namespace)?;
-            RingRail::roster(self, &journal).await
-        })
-    }
-
-    fn journal_digest(&self, namespace: &str) -> JournalFut<'_, Digest> {
-        let namespace = namespace.to_string();
-        Box::pin(async move { self.journal(&namespace)?.digest(&crate::Ed25519Verifier) })
-    }
-
-    fn journal_ingest_all(&self, namespace: &str, ops: &[Op<SignedOp>]) -> JournalFut<'_, usize> {
-        let namespace = namespace.to_string();
-        let ops = ops.to_vec();
-        Box::pin(async move { self.journal(&namespace)?.ingest_all(&ops) })
-    }
-
-    fn journal_ops_missing_from_within(
-        &self,
-        namespace: &str,
-        theirs: &Digest,
-        budget_bytes: usize,
-    ) -> JournalFut<'_, (Vec<Op<SignedOp>>, bool)> {
-        let namespace = namespace.to_string();
-        let theirs = theirs.clone();
-        Box::pin(async move {
-            self.journal(&namespace)?.ops_missing_from_within(
-                &crate::Ed25519Verifier,
-                &theirs,
-                budget_bytes,
-            )
-        })
-    }
-
-    fn journal_compact(&self, namespace: &str, roster: &Roster) -> JournalFut<'_, Compaction> {
-        let namespace = namespace.to_string();
-        let roster = roster.clone();
-        Box::pin(async move {
-            self.journal(&namespace)?
-                .compact(&roster, &crate::Ed25519Verifier)
-        })
-    }
+/// The namespace's roster, through the rail's one reader
+/// ([`RingRail::roster`]).
+pub async fn roster_of(rail: &RingRail, namespace: &str) -> Result<Roster, RailError> {
+    let journal = rail.journal(namespace)?;
+    rail.roster(&journal).await
 }
 
 /// One round's view of the membership: the Online members it may dial, and
