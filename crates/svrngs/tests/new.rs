@@ -12,6 +12,21 @@ use svrngs_node::node::Node;
 use svrngs_node::register::Standing;
 use svrngs_node::{actor_of, derive_id, Ed25519Verifier, OpId, RailAct, SigningKey};
 
+/// The lines a group's journal holds on disk, as written.
+fn lines(node: &Node, group: &str) -> Vec<svrngs_node::Op<svrngs_node::SignedOp>> {
+    let file = node
+        .rail()
+        .group_dir(group)
+        .unwrap()
+        .join("ring_oplog.jsonl");
+    std::fs::read_to_string(file)
+        .unwrap_or_default()
+        .lines()
+        .filter(|l| !l.trim().is_empty())
+        .map(|l| serde_json::from_str(l).unwrap())
+        .collect()
+}
+
 fn no_relay() -> RelayConfig {
     RelayConfig::from_parts(Vec::new(), Some("none")).unwrap()
 }
@@ -41,7 +56,7 @@ fn name(s: &str) -> Name {
 /// The `Invite`s a group's record holds: (link key, until, the id its
 /// content derives).
 fn invites(node: &Node, id: &str) -> Vec<(String, i64, OpId)> {
-    let (ops, _) = node.rail().journal(id).unwrap().read().unwrap();
+    let ops = lines(node, id);
     ops.into_iter()
         .filter_map(|op| match &op.kind.act {
             RailAct::Invite { key, until } => Some((key.clone(), *until, derive_id(&op, id))),
@@ -197,12 +212,7 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
     assert_eq!(https(&again), "", "{again}");
 
     // A group whose kept origin is gone prints the client's link alone.
-    let kept = node
-        .rail()
-        .journal(&house.id())
-        .unwrap()
-        .dir()
-        .join("origin");
+    let kept = node.rail().group_dir(&house.id()).unwrap().join("origin");
     std::fs::remove_file(&kept).unwrap();
     let (_, gone) = cli::new_link(&node, "house", None, &no_relay())
         .await

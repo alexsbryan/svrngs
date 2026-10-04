@@ -31,10 +31,7 @@ fn rail_with_roster(root: &std::path::Path) -> Arc<RingRail> {
     let rail = Arc::new(RingRail::new(root, Arc::new(key())));
     let mut members = std::collections::BTreeMap::new();
     members.insert(Person::parse("Ada").unwrap(), vec![crate::actor_of(&key())]);
-    rail.journal(NS)
-        .unwrap()
-        .set_roster(&Roster::new(members))
-        .unwrap();
+    rail.set_seed(NS, &Roster::new(members)).unwrap();
     rail
 }
 
@@ -57,9 +54,10 @@ async fn serve(
 
 fn fresh(dir: &tempfile::TempDir) -> (Arc<RingRail>, Arc<LiveBuffer>) {
     let rail = rail_with_roster(dir.path());
+    let mut members = std::collections::BTreeMap::new();
+    members.insert(Person::parse("Ada").unwrap(), vec![crate::actor_of(&key())]);
     for ns in [LIVE_NS, OTHER_LIVE_NS] {
-        let roster = rail.journal(NS).unwrap().roster_file().unwrap();
-        rail.journal(ns).unwrap().set_roster(&roster).unwrap();
+        rail.set_seed(ns, &Roster::new(members.clone())).unwrap();
     }
     (rail, Arc::new(LiveBuffer::default()))
 }
@@ -257,10 +255,7 @@ async fn a_dialer_not_standing_in_the_group_named_is_refused() {
     let bo = SigningKey::from_bytes(&[12u8; 32]);
     let mut members = std::collections::BTreeMap::new();
     members.insert(Person::parse("Bo").unwrap(), vec![crate::actor_of(&bo)]);
-    rail.journal("bo-only")
-        .unwrap()
-        .set_roster(&Roster::new(members))
-        .unwrap();
+    rail.set_seed("bo-only", &Roster::new(members)).unwrap();
     let (base, _bo) = serve_on_stream(
         router(RingInbound {
             rail: rail.clone(),

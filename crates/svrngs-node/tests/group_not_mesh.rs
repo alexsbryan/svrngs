@@ -14,9 +14,7 @@ use std::time::Duration;
 
 use svrngs_node::iroh::{Contact, PublicKey, RelayConfig};
 use svrngs_node::node::Node;
-use svrngs_node::{
-    actor_of, Digest, Ed25519Verifier, Op, Payload, Person, RailAct, Roster, SignedOp, SigningKey,
-};
+use svrngs_node::{actor_of, Digest, Op, Payload, Person, RailAct, Roster, SignedOp, SigningKey};
 
 const NS: &str = "house";
 const OTHER: &str = "work";
@@ -66,32 +64,17 @@ fn founded_by(founder: u8) -> Roster {
 
 /// `node` holds `ns`, seeded with `founder`'s key.
 fn hold(node: &Node, ns: &str, founder: u8) {
-    node.rail()
-        .journal(ns)
-        .unwrap()
-        .set_roster(&founded_by(founder))
-        .unwrap();
+    node.rail().set_seed(ns, &founded_by(founder)).unwrap();
 }
 
 /// Sign `act` onto `ns` through `node`'s door, against the group's seed.
-fn append(node: &Node, ns: &str, founder: u8, act: RailAct) -> Op<SignedOp> {
-    let journal = node.rail().journal(ns).unwrap();
-    let roster = founded_by(founder);
-    let author = svrngs_node::Author {
-        signer: node.rail().signer(),
-        roster: &roster,
-        namespace: ns,
-        verifier: &Ed25519Verifier,
-        now: std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as i64,
-    };
+fn append(node: &Node, ns: &str, act: RailAct) -> Op<SignedOp> {
     let fixture = svrngs_core::tests_support::Fixture {
         act,
         on_behalf_of: None,
     };
-    svrngs_node::commit(&*journal, &fixture, &author)
+    node.rail()
+        .commit(ns, &fixture)
         .unwrap()
         .unwrap_or_else(|e| panic!("the door refused: {e:?}"))
         .lines()[0]
@@ -113,11 +96,7 @@ fn record(n: u32) -> RailAct {
 }
 
 fn digest(node: &Node, ns: &str) -> Digest {
-    node.rail()
-        .journal(ns)
-        .unwrap()
-        .digest(&Ed25519Verifier)
-        .unwrap()
+    node.rail().digest(ns).unwrap()
 }
 
 /// `dialer`'s base URL for `served`, through its bridge.
@@ -151,8 +130,8 @@ async fn a_member_the_founder_admits_syncs_and_writes() {
     let (da, db) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (a, b) = (start(1, &da).await, start(2, &db).await);
     hold(&a, NS, 1);
-    append(&a, NS, 1, admit("bo", 2));
-    append(&a, NS, 1, record(0));
+    append(&a, NS, admit("bo", 2));
+    append(&a, NS, record(0));
     hold(&b, NS, 1);
     assert_ne!(
         digest(&a, NS),
@@ -179,17 +158,12 @@ async fn a_member_the_founder_admits_syncs_and_writes() {
         actor_of(&signing(2)) < actor_of(&signing(1)),
         "control: the new key sorts first"
     );
-    let bos = append(&b, NS, 1, record(1));
+    let bos = append(&b, NS, record(1));
     let pushed = round(&b).await;
     // Which round moved the act is not asserted: the round each node runs at
     // start may race this one. That A now holds and counts it is.
     assert_eq!(pushed.peers_reached, 1, "{pushed:?}");
-    let held = a
-        .rail()
-        .journal(NS)
-        .unwrap()
-        .admit(&founded_by(1), &Ed25519Verifier)
-        .unwrap();
+    let held = a.rail().admission(NS).unwrap();
     assert!(held.is_complete(), "gaps: {:?}", held.gaps());
     let counted = held
         .applied()
@@ -213,7 +187,7 @@ async fn a_stranger_is_closed_and_a_member_of_another_group_is_refused() {
     let d = start(4, &dirs[2]).await;
     hold(&a, NS, 1);
     hold(&a, OTHER, 1);
-    append(&a, OTHER, 1, admit("dee", 4));
+    append(&a, OTHER, admit("dee", 4));
     let http = reqwest::Client::builder().no_proxy().build().unwrap();
     let sync = |base: &str, ns: &str, claim: Option<String>| {
         let mut req = http

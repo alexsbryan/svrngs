@@ -53,12 +53,10 @@ use serde::Deserialize;
 // rail.rs's refusal body came over with the sync route (u1-3), so there is one.
 use crate::iroh::{actor_key, Contact, IrohTransport};
 use crate::live::{push_ephemeral, LivePeer};
-use crate::register::{standing_in, Standing};
+use crate::register::Standing;
 use crate::ring_routes::err;
-use crate::{
-    admit, Compaction, Ed25519Verifier, Person, RailAct, RailError, RingJournal, RingRail,
-};
-use svrngs_core::{commit, Append, AppendRefusal, Author, Refused as CommitRefused};
+use crate::{Compaction, Ed25519Verifier, Person, RailAct, RailError, RingRail};
+use svrngs_core::{Append, AppendRefusal, Refused as CommitRefused};
 
 /// What the doors read: the journals, the nudge that wakes the round
 /// after an append ([`crate::ring_sync::append`]), and the live lane's
@@ -120,13 +118,11 @@ fn namespace_of(q: &RailQuery) -> Result<String, Response> {
 /// since nobody can be shown to stand in it — DESIGN §8, U3's inventory,
 /// "the roster becomes the register". Upstream opened any namespace that
 /// was a name.)
-fn journal_of(rail: &RingRail, namespace: &str) -> Result<Arc<RingJournal>, Response> {
-    standing_of(rail, namespace)?;
-    rail.journal(namespace)
-        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+fn group_of(rail: &RingRail, namespace: &str) -> Result<(), Response> {
+    standing_of(rail, namespace).map(|_| ())
 }
 
-/// The people standing in `namespace`, or the refusal [`journal_of`] makes
+/// The people standing in `namespace`, or the refusal [`group_of`] makes
 /// of a namespace that is not one, a group not held, or one with no seed.
 fn standing_of(rail: &RingRail, namespace: &str) -> Result<BTreeMap<String, Person>, Response> {
     if !crate::valid_namespace(namespace) {
@@ -201,10 +197,10 @@ pub(crate) fn people_json(standing: &BTreeMap<String, Person>) -> serde_json::Va
 /// anything else is refused and nothing is written, never dropped.)
 pub(crate) async fn append_act(
     rail: &RingRail,
-    journal: &Arc<RingJournal>,
+    namespace: &str,
     body: serde_json::Value,
 ) -> Response {
-    let stamp = match stamp(journal.namespace(), &body) {
+    let stamp = match stamp(namespace, &body) {
         Ok(stamp) => stamp,
         Err(refusal) => return refusal,
     };
@@ -215,40 +211,20 @@ pub(crate) async fn append_act(
         Ok(act) => act,
         Err(e) => return err(StatusCode::UNPROCESSABLE_ENTITY, e.to_string()),
     };
-    // Through the rail's ONE roster reader — never the file directly.
-    // (svrngs: upstream's `RingRail::roster` went in U1 with the derived
-    // rosters; the file it read is the group's seed.)
-    let roster = match journal.roster_file() {
-        Ok(r) => r,
-        Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-    };
     let sealed = matches!(act, RailAct::Seal);
     let appended = if sealed {
         // A seal takes no stamp: it is delivery, not words.
         if let Some(person) = &stamp {
-            tracing::debug!(target: "rails", namespace = journal.namespace(), %person, "rail: a seal is signed as this computer alone, whoever was named");
+            tracing::debug!(target: "rails", namespace, %person, "rail: a seal is signed as this computer alone, whoever was named");
         }
-        journal
-            .seal(rail.signer(), &roster, &Ed25519Verifier)
+        rail.seal(namespace)
             .map(|done| (done.op, Some(retire(&done.retired))))
     } else {
-        let namespace = journal.namespace();
-        let now = match crate::now_unix(namespace) {
-            Ok(now) => now,
-            Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-        };
-        let author = Author {
-            signer: rail.signer(),
-            roster: &roster,
-            namespace,
-            verifier: &Ed25519Verifier,
-            now,
-        };
         let append = Append {
             act,
             on_behalf_of: stamp,
         };
-        match commit(&**journal, &append, &author) {
+        match rail.commit(namespace, &append) {
             Ok(Ok(recorded)) => Ok((recorded.lines()[0].clone(), None)),
             Ok(Err(CommitRefused::NoStanding)) => Err(RailError::NotInRoster {
                 actor: rail.signer().actor(),
@@ -286,7 +262,7 @@ pub(crate) async fn append_act(
                 "seq": op.kind.seq,
                 "actor": op.actor,
                 "ts_unix": op.ts_unix,
-                "namespace": journal.namespace(),
+                "namespace": namespace,
                 "op": op,
             });
             if let Some(retired) = retired {
@@ -363,25 +339,13 @@ fn refused(namespace: &str, kind: &str, why: String) -> Response {
 /// the roster the ops were admitted against. (svrngs: the people standing
 /// after those ops, from the register over the same read, in place of the
 /// seed they were admitted from.)
-async fn log_answer(_rail: &RingRail, journal: &Arc<RingJournal>) -> Response {
-    let roster = match journal.roster_file() {
-        Ok(r) => r,
+async fn log_answer(rail: &RingRail, namespace: &str) -> Response {
+    // ONE read, admitted once: the ops, the gaps and the people all come from
+    // the same admission, so no write can land between them.
+    let admission = match rail.admission(namespace) {
+        Ok(a) => a,
         Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
     };
-    // ONE read, admitted from those exact bytes — reading the journal twice
-    // would let a write land between and ship an answer that does not match
-    // the ops beside it.
-    let (ops, skipped) = match journal.read() {
-        Ok(pair) => pair,
-        Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-    };
-    let admission = admit(
-        &crate::ActSet::of(&ops),
-        &skipped,
-        &roster,
-        journal.namespace(),
-        &Ed25519Verifier,
-    );
     let gaps: Vec<serde_json::Value> = admission
         .gaps()
         .iter()
@@ -393,17 +357,19 @@ async fn log_answer(_rail: &RingRail, journal: &Arc<RingJournal>) -> Response {
             v
         })
         .collect();
-    let people = match standing_in(&ops, &roster, journal.namespace(), &Ed25519Verifier) {
-        Ok(p) => p,
-        Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-    };
+    let register = admission.membership();
+    let people: BTreeMap<String, Person> = register
+        .standing
+        .iter()
+        .filter_map(|key| Some((key.clone(), register.bindings.get(key)?.clone())))
+        .collect();
     let ops_json: Vec<serde_json::Value> = admission
         .ops()
         .iter()
         .map(|op| serde_json::to_value(op).unwrap_or_default())
         .collect();
     Json(serde_json::json!({
-        "namespace": journal.namespace(),
+        "namespace": namespace,
         "ops": ops_json,
         "gaps": gaps,
         "held": admission.held(),
@@ -447,11 +413,10 @@ pub async fn append(
         Ok(ns) => ns,
         Err(refusal) => return refusal,
     };
-    let journal = match journal_of(&api.rail, &namespace) {
-        Ok(j) => j,
-        Err(refusal) => return refusal,
-    };
-    append_act(&api.rail, &journal, body).await
+    if let Err(refusal) = group_of(&api.rail, &namespace) {
+        return refusal;
+    }
+    append_act(&api.rail, &namespace, body).await
 }
 
 /// GET /v1/rail/log.
@@ -460,11 +425,10 @@ pub async fn log(State(api): State<RailApi>, Query(q): Query<RailQuery>) -> Resp
         Ok(ns) => ns,
         Err(refusal) => return refusal,
     };
-    let journal = match journal_of(&api.rail, &namespace) {
-        Ok(j) => j,
-        Err(refusal) => return refusal,
-    };
-    log_answer(&api.rail, &journal).await
+    if let Err(refusal) = group_of(&api.rail, &namespace) {
+        return refusal;
+    }
+    log_answer(&api.rail, &namespace).await
 }
 
 // ── The live lane ────────────────────────────────────────────

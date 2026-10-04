@@ -29,6 +29,21 @@ use svrngs_node::{
     SigningKey,
 };
 
+/// The lines a group's journal holds on disk, as written.
+fn lines(node: &Node, group: &str) -> Vec<svrngs_node::Op<svrngs_node::SignedOp>> {
+    let file = node
+        .rail()
+        .group_dir(group)
+        .unwrap()
+        .join("ring_oplog.jsonl");
+    std::fs::read_to_string(file)
+        .unwrap_or_default()
+        .lines()
+        .filter(|l| !l.trim().is_empty())
+        .map(|l| serde_json::from_str(l).unwrap())
+        .collect()
+}
+
 fn no_relay() -> RelayConfig {
     RelayConfig::from_parts(Vec::new(), Some("none")).unwrap()
 }
@@ -107,7 +122,7 @@ fn parsed(printed: &Printed, sam: &Node) -> Link {
 /// The id of the `Invite` in Sam's record naming `link`'s key.
 fn invite_of(node: &Node, group: &str, link: &Link) -> OpId {
     let key = actor_of(&link.token.key());
-    let (ops, _) = node.rail().journal(group).unwrap().read().unwrap();
+    let ops = lines(node, group);
     ops.iter()
         .find(|op| matches!(&op.kind.act, RailAct::Invite { key: k, .. } if *k == key))
         .map(|op| derive_id(op, group))
@@ -116,13 +131,13 @@ fn invite_of(node: &Node, group: &str, link: &Link) -> OpId {
 
 /// The ids Sam's record holds, each as its content derives it.
 fn held(node: &Node, group: &str) -> BTreeSet<OpId> {
-    let (ops, _) = node.rail().journal(group).unwrap().read().unwrap();
+    let ops = lines(node, group);
     ops.iter().map(|op| derive_id(op, group)).collect()
 }
 
 /// The keys Sam's record names in an `Admit`, one entry per `Admit`.
 fn admitted(node: &Node, group: &str) -> Vec<String> {
-    let (ops, _) = node.rail().journal(group).unwrap().read().unwrap();
+    let ops = lines(node, group);
     ops.into_iter()
         .filter_map(|op| match op.kind.act {
             RailAct::Admit { key, .. } => Some(key),
@@ -258,13 +273,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
             stands(&friend.node, &group, &friend.key),
             "{who}'s own copy of the register lets {who} in"
         );
-        let dir = friend
-            .node
-            .rail()
-            .journal(&group)
-            .unwrap()
-            .dir()
-            .to_path_buf();
+        let dir = friend.node.rail().group_dir(&group).unwrap();
         let kept = group::read_origin(&dir).unwrap();
         assert_eq!(
             kept, opened.origin,
@@ -364,20 +373,14 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
         },
         origin: None,
     };
-    let roster = seed.roster();
-    let author = svrngs_node::Author {
-        signer: sam.node.rail().signer(),
-        roster: &roster,
-        namespace: &group,
-        verifier: &Ed25519Verifier,
-        now: now(),
-    };
     let mint = svrngs_node::MintInvite {
         key: actor_of(&lapsed_link.token.key()),
         until: now() - 1,
     };
-    let journal = sam.node.rail().journal(&group).unwrap();
-    let lapsed = svrngs_node::commit(&*journal, &mint, &author)
+    let lapsed = sam
+        .node
+        .rail()
+        .commit(&group, &mint)
         .unwrap()
         .unwrap()
         .lines()[0]
@@ -496,9 +499,8 @@ async fn a_name_that_is_not_one_is_refused_and_nothing_is_written() {
     let file = sam
         .node
         .rail()
-        .journal(&group)
+        .group_dir(&group)
         .unwrap()
-        .dir()
         .join("ring_oplog.jsonl");
     let hal = computer(9).await;
     knows(&hal, &sam.node);
@@ -542,7 +544,7 @@ async fn a_name_that_is_not_one_is_refused_and_nothing_is_written() {
         .await
         .expect("Zoë Ann is let in");
     assert!(stands(&sam.node, &group, &zoe.key));
-    let (ops, _) = sam.node.rail().journal(&group).unwrap().read().unwrap();
+    let ops = lines(&sam.node, &group);
     assert!(ops.iter().any(|op| matches!(&op.kind.act,
         RailAct::Admit { person, key, .. }
             if person.as_str() == "Zoë Ann" && *key == actor_of(&zoe.key))));

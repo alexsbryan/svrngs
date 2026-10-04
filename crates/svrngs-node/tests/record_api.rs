@@ -15,7 +15,7 @@ use std::time::{Duration, Instant};
 use svrngs_node::iroh::{PublicKey, RelayConfig};
 use svrngs_node::node::{Node, NodeError};
 use svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
-use svrngs_node::{actor_of, Ed25519Verifier, Person, RailAct, Roster, SigningKey};
+use svrngs_node::{actor_of, Person, RailAct, Roster, SigningKey};
 
 const NS: &str = "house";
 
@@ -62,33 +62,17 @@ fn founded_by(founder: u8) -> Roster {
 
 /// `node` holds `ns`, seeded with `founder`'s key.
 fn hold(node: &Node, ns: &str, founder: u8) {
-    node.rail()
-        .journal(ns)
-        .unwrap()
-        .set_roster(&founded_by(founder))
-        .unwrap();
+    node.rail().set_seed(ns, &founded_by(founder)).unwrap();
 }
 
 /// The founder admits `joining` as `person` through its door, as a test
 /// admits a member by hand (DESIGN §8, U1).
-fn admit(node: &Node, founder: u8, person: &str, joining: u8) {
-    admit_to(node, NS, founder, person, joining)
+fn admit(node: &Node, person: &str, joining: u8) {
+    admit_to(node, NS, person, joining)
 }
 
 /// [`admit`], to the group `ns`.
-fn admit_to(node: &Node, ns: &str, founder: u8, person: &str, joining: u8) {
-    let journal = node.rail().journal(ns).unwrap();
-    let roster = founded_by(founder);
-    let author = svrngs_node::Author {
-        signer: node.rail().signer(),
-        roster: &roster,
-        namespace: ns,
-        verifier: &Ed25519Verifier,
-        now: std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as i64,
-    };
+fn admit_to(node: &Node, ns: &str, person: &str, joining: u8) {
     let fixture = svrngs_core::tests_support::Fixture {
         act: RailAct::Admit {
             person: Person::parse(person).unwrap(),
@@ -97,9 +81,7 @@ fn admit_to(node: &Node, ns: &str, founder: u8, person: &str, joining: u8) {
         },
         on_behalf_of: None,
     };
-    svrngs_node::commit(&*journal, &fixture, &author)
-        .unwrap()
-        .unwrap();
+    node.rail().commit(ns, &fixture).unwrap().unwrap();
 }
 
 /// An app's HTTP client: loopback, never a proxy.
@@ -109,8 +91,12 @@ fn app() -> reqwest::Client {
 
 /// Whether `node` holds the act `id` in `ns`.
 fn holds(node: &Node, ns: &str, id: &str) -> bool {
-    let (ops, _) = node.rail().journal(ns).unwrap().read().unwrap();
-    ops.iter().any(|o| o.id.to_string() == id)
+    node.rail()
+        .admission(ns)
+        .unwrap()
+        .ops()
+        .iter()
+        .any(|o| o.id.to_string() == id)
 }
 
 async fn start_on(seed: u8, dir: &tempfile::TempDir, api: SocketAddr) -> Result<Node, NodeError> {
@@ -167,7 +153,7 @@ async fn an_app_appends_on_loopback_and_the_woken_round_carries_it_to_b() {
     // its loop then waits on the interval or the nudge.
     tokio::task::yield_now().await;
     hold(&a, NS, 1);
-    admit(&a, 1, "bo", 2);
+    admit(&a, "bo", 2);
     hold(&b, NS, 1);
     a.transport()
         .add_known_peer(key(2), loopback_sockets(b.endpoint()));
@@ -224,7 +210,7 @@ async fn an_append_naming_a_group_not_held_is_refused() {
     let out: serde_json::Value = answer.json().await.unwrap();
     assert_eq!(out["kind"], "not_held", "{out}");
     assert!(!da.path().join("rings/elsewhere").exists());
-    assert!(a.rail().journal(NS).unwrap().read().unwrap().0.is_empty());
+    assert!(a.rail().admission(NS).unwrap().ops().is_empty());
     a.endpoint().close().await;
 }
 
@@ -239,7 +225,7 @@ async fn the_people_read_lists_a_and_b_with_their_keys() {
     let da = tempfile::tempdir().unwrap();
     let a = start(1, &da).await;
     hold(&a, NS, 1);
-    admit(&a, 1, "bo", 2);
+    admit(&a, "bo", 2);
     let out: serde_json::Value = app()
         .get(format!(
             "http://{}/v1/rail/people?namespace={NS}",
@@ -372,7 +358,7 @@ async fn drain(node: &Node, ns: &str) -> serde_json::Value {
 /// and not by the seed; B holds `ns` too, and A can reach B.
 async fn a_and_b_in(ns: &str, a: &Node, b: &Node) {
     hold(a, ns, 1);
-    admit_to(a, ns, 1, "bo", 2);
+    admit_to(a, ns, "bo", 2);
     hold(b, ns, 1);
     a.transport()
         .add_known_peer(key(2), loopback_sockets(b.endpoint()));
@@ -482,11 +468,7 @@ fn hold_as(node: &Node, ns: &str, founder: u8, name: &str) {
         .into_iter()
         .collect(),
     );
-    node.rail()
-        .journal(ns)
-        .unwrap()
-        .set_roster(&roster)
-        .unwrap();
+    node.rail().set_seed(ns, &roster).unwrap();
 }
 
 /// **A dialer standing in another group A holds is refused** (the u3-3
@@ -503,9 +485,9 @@ async fn a_dialer_standing_in_another_group_a_holds_is_refused() {
     let (a, c) = (start(1, &da).await, start(3, &dc).await);
     hold(&a, NS, 1);
     hold(&a, "yard", 1);
-    admit_to(&a, "yard", 1, "cy", 3);
+    admit_to(&a, "yard", "cy", 3);
     hold_as(&c, NS, 3, "cy");
-    admit_to(&c, NS, 3, "ada", 1);
+    admit_to(&c, NS, "ada", 1);
     hold(&c, "yard", 1);
     c.transport()
         .add_known_peer(key(1), loopback_sockets(a.endpoint()));

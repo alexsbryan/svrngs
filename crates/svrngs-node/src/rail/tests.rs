@@ -13,7 +13,7 @@ use axum::http::StatusCode;
 
 use crate::{actor_of, Person, RingRail, RingSigner, Roster, SigningKey};
 
-use super::{append_act, drain_answer, journal_of, push_answer, LiveBuffer, RailApi};
+use super::{append_act, drain_answer, group_of, push_answer, LiveBuffer, RailApi};
 
 fn key(seed: u8) -> SigningKey {
     SigningKey::from_bytes(&[seed; 32])
@@ -33,7 +33,7 @@ fn rail_with(members: &[(&str, u8)]) -> (tempfile::TempDir, Arc<RingRail>) {
                 .map(|(name, seed)| (Person::parse(name).unwrap(), vec![actor_of(&key(*seed))]))
                 .collect(),
         );
-        rail.journal("ledger").unwrap().set_roster(&roster).unwrap();
+        rail.set_seed("ledger", &roster).unwrap();
     }
     (dir, rail)
 }
@@ -52,7 +52,8 @@ async fn body_of(resp: axum::response::Response) -> serde_json::Value {
 #[tokio::test]
 async fn append_signs_as_the_node_and_assigns_the_fields() {
     let (_dir, rail) = rail_with(&[("alex", 7)]);
-    let journal = journal_of(&rail, "ledger").unwrap();
+    group_of(&rail, "ledger").unwrap();
+    let journal = "ledger";
     let body = serde_json::json!({
         "op": "record",
         "payload": { "amount": 4 },
@@ -62,7 +63,7 @@ async fn append_signs_as_the_node_and_assigns_the_fields() {
         "id": "forged",
         "ts_unix": 1,
     });
-    let resp = append_act(&rail, &journal, body).await;
+    let resp = append_act(&rail, journal, body).await;
     assert_eq!(resp.status(), StatusCode::OK);
     let out = body_of(resp).await;
     assert_eq!(out["seq"], 0, "the door assigns the sequence, not the body");
@@ -87,7 +88,8 @@ const GUESTS: &[(&str, u8)] = &[("alex", 7), ("halo", 3)];
 #[tokio::test]
 async fn an_append_names_the_person_an_app_serves() {
     let (_dir, rail) = rail_with(GUESTS);
-    let journal = journal_of(&rail, "ledger").unwrap();
+    group_of(&rail, "ledger").unwrap();
+    let journal = "ledger";
     let body = |named: serde_json::Value| serde_json::json!({ "op": "record", "payload": { "amount": 4 }, "on_behalf_of": named });
     for (named, kind) in [
         (serde_json::json!("beefy"), "not_in_group"),
@@ -95,37 +97,38 @@ async fn an_append_names_the_person_an_app_serves() {
         (serde_json::json!("a\u{1b}[2J"), "not_a_name"),
         (serde_json::json!(7), "not_a_name"),
     ] {
-        let resp = append_act(&rail, &journal, body(named.clone())).await;
+        let resp = append_act(&rail, journal, body(named.clone())).await;
         assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY, "{named}");
         assert_eq!(body_of(resp).await["kind"], kind, "{named}");
     }
     assert!(
-        journal.read().unwrap().0.is_empty(),
+        rail.admission(journal).unwrap().ops().is_empty(),
         "a refusal writes nothing"
     );
 
-    let resp = append_act(&rail, &journal, body(serde_json::json!("halo"))).await;
+    let resp = append_act(&rail, journal, body(serde_json::json!("halo"))).await;
     assert_eq!(resp.status(), StatusCode::OK);
     assert_eq!(
         body_of(resp).await["actor"],
         RingSigner::actor(&key(7)),
         "this computer signs"
     );
-    let (ops, _) = journal.read().unwrap();
+    let ops = rail.admission(journal).unwrap().into_ops();
     assert_eq!(ops.len(), 1);
-    assert_eq!(ops[0].kind.on_behalf_of.as_deref(), Some("halo"));
+    assert_eq!(ops[0].on_behalf_of.as_deref(), Some("halo"));
 }
 
 /// An unstamped append is unchanged: signed as the node, no name on it.
 #[tokio::test]
 async fn an_unstamped_append_carries_no_name() {
     let (_dir, rail) = rail_with(GUESTS);
-    let journal = journal_of(&rail, "ledger").unwrap();
+    group_of(&rail, "ledger").unwrap();
+    let journal = "ledger";
     let body = serde_json::json!({ "op": "record", "payload": { "amount": 4 } });
-    let resp = append_act(&rail, &journal, body).await;
+    let resp = append_act(&rail, journal, body).await;
     assert_eq!(resp.status(), StatusCode::OK);
-    let (ops, _) = journal.read().unwrap();
-    assert_eq!(ops[0].kind.on_behalf_of, None);
+    let ops = rail.admission(journal).unwrap().into_ops();
+    assert_eq!(ops[0].on_behalf_of, None);
 }
 
 /// Nobody in the roster → every op this node writes would be unreadable to
@@ -136,9 +139,9 @@ async fn an_unstamped_append_carries_no_name() {
 #[tokio::test]
 async fn append_outside_the_mesh_refuses_naming_the_join_verb() {
     let (_dir, rail) = rail_with(&[("halo", 3)]);
-    let journal = rail.journal("ledger").unwrap();
+    let journal = "ledger";
     let body = serde_json::json!({ "op": "record", "payload": { "amount": 4 } });
-    let resp = append_act(&rail, &journal, body).await;
+    let resp = append_act(&rail, journal, body).await;
     assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
     let out = body_of(resp).await;
     assert_eq!(out["kind"], "not_in_roster", "{out}");
@@ -152,7 +155,7 @@ async fn append_outside_the_mesh_refuses_naming_the_join_verb() {
 #[tokio::test]
 async fn a_group_not_held_or_without_a_seed_is_refused_before_it_is_opened() {
     let (dir, rail) = rail_with(&[("alex", 7)]);
-    let refused = journal_of(&rail, "elsewhere").err().unwrap();
+    let refused = group_of(&rail, "elsewhere").err().unwrap();
     assert_eq!(refused.status(), StatusCode::NOT_FOUND);
     assert_eq!(body_of(refused).await["kind"], "not_held");
     assert!(
@@ -161,12 +164,12 @@ async fn a_group_not_held_or_without_a_seed_is_refused_before_it_is_opened() {
     );
 
     std::fs::create_dir_all(dir.path().join("rings/unseeded")).unwrap();
-    let refused = journal_of(&rail, "unseeded").err().unwrap();
+    let refused = group_of(&rail, "unseeded").err().unwrap();
     assert_eq!(refused.status(), StatusCode::CONFLICT);
     assert_eq!(body_of(refused).await["kind"], "no_seed");
 
     assert!(
-        journal_of(&rail, "ledger").is_ok(),
+        group_of(&rail, "ledger").is_ok(),
         "control: a held, seeded group opens"
     );
 }
@@ -179,7 +182,7 @@ async fn the_namespace_must_be_a_name_the_journal_can_open() {
     let q = super::RailQuery { namespace: None };
     let err = super::namespace_of(&q).unwrap_err();
     assert_eq!(err.status(), StatusCode::BAD_REQUEST);
-    let refused = journal_of(&rail, "Not A Namespace");
+    let refused = group_of(&rail, "Not A Namespace");
     assert!(
         refused.is_err(),
         "an unopenable namespace is refused, not sanitized"
@@ -192,11 +195,12 @@ async fn the_namespace_must_be_a_name_the_journal_can_open() {
 #[tokio::test]
 async fn log_ships_admitted_ops_gaps_and_the_roster() {
     let (_dir, rail) = rail_with(&[("alex", 7)]);
-    let journal = journal_of(&rail, "ledger").unwrap();
+    group_of(&rail, "ledger").unwrap();
+    let journal = "ledger";
     let body = serde_json::json!({ "op": "record", "payload": { "amount": 4 } });
-    let resp = append_act(&rail, &journal, body).await;
+    let resp = append_act(&rail, journal, body).await;
     assert_eq!(resp.status(), StatusCode::OK);
-    let resp = super::log_answer(&rail, &journal).await;
+    let resp = super::log_answer(&rail, journal).await;
     assert_eq!(resp.status(), StatusCode::OK);
     let out = body_of(resp).await;
     assert_eq!(out["complete"], true);
@@ -220,15 +224,16 @@ async fn log_ships_admitted_ops_gaps_and_the_roster() {
 #[tokio::test]
 async fn a_seal_renders_its_prune() {
     let (_dir, rail) = rail_with(&[("alex", 7)]);
-    let journal = journal_of(&rail, "ledger").unwrap();
+    group_of(&rail, "ledger").unwrap();
+    let journal = "ledger";
     for _ in 0..2 {
         let body = serde_json::json!({ "op": "record", "payload": { "amount": 1 } });
         assert_eq!(
-            append_act(&rail, &journal, body).await.status(),
+            append_act(&rail, journal, body).await.status(),
             StatusCode::OK
         );
     }
-    let resp = append_act(&rail, &journal, serde_json::json!({ "op": "seal" })).await;
+    let resp = append_act(&rail, journal, serde_json::json!({ "op": "seal" })).await;
     assert_eq!(resp.status(), StatusCode::OK);
     let out = body_of(resp).await;
     let retired = &out["retired"];
@@ -248,27 +253,18 @@ async fn a_seal_renders_its_prune() {
 #[tokio::test]
 async fn the_people_door_answers_the_register_with_keys() {
     let (_dir, rail) = rail_with(&[("alex", 7)]);
-    let journal = journal_of(&rail, "ledger").unwrap();
+    group_of(&rail, "ledger").unwrap();
+    let journal = "ledger";
     let admit_bo = crate::RailAct::Admit {
         person: Person::parse("bo").unwrap(),
         key: actor_of(&key(3)),
         invite: None,
     };
-    let roster = journal.roster_file().unwrap();
-    let author = crate::Author {
-        signer: rail.signer(),
-        roster: &roster,
-        namespace: "ledger",
-        verifier: &crate::Ed25519Verifier,
-        now: 1,
-    };
     let fixture = svrngs_core::tests_support::Fixture {
         act: admit_bo,
         on_behalf_of: None,
     };
-    crate::commit(&*journal, &fixture, &author)
-        .unwrap()
-        .unwrap();
+    rail.commit(journal, &fixture).unwrap().unwrap();
     let out = body_of(super::people_answer(&rail, "ledger")).await;
     // In the order of their keys, as the register holds them.
     let mut want = vec![

@@ -90,14 +90,14 @@
 use std::fs::{self, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
 use std::marker::PhantomData;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 // Only the tests derive with these; upstream carries the unused import as a
 // warning its lint ratchet counts, and svrngs denies warnings.
 #[cfg(test)]
 use serde::{Deserialize, Serialize};
 
-pub use svrngs_core::{Journaled, Op, OpId, SkippedLine};
+pub use svrngs_core::{Journaled, Op, SkippedLine};
 
 /// What can go wrong writing or reading a journal.
 ///
@@ -147,10 +147,12 @@ impl<K: Journaled> Oplog<K> {
         }
     }
 
-    pub fn path(&self) -> &Path {
+    #[cfg(test)]
+    pub fn path(&self) -> &std::path::Path {
         &self.path
     }
 
+    #[cfg(test)]
     /// Append one op. Creates the parent directory on first write.
     pub fn append(&self, op: &Op<K>) -> Result<()> {
         if let Some(parent) = self.path.parent() {
@@ -307,6 +309,7 @@ impl<K: Journaled> Oplog<K> {
         Ok(())
     }
 
+    #[cfg(test)]
     /// Every op in append order. A missing file is an empty log, not an error.
     ///
     /// Drops the skip list from [`Self::read_all_with_skips`]. That is the
@@ -476,6 +479,10 @@ pub struct Tail<K> {
     /// The ops past the cursor, in append order.
     pub ops: Vec<Op<K>>,
     /// Lines past the cursor this build could not use (already warned).
+    #[cfg_attr(
+        not(test),
+        expect(dead_code, reason = "the cursor tests read it; the write index needs only the ops")
+    )]
     pub skipped: usize,
     /// Where the next read starts.
     pub cursor: Cursor,

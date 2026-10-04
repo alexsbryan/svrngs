@@ -6,7 +6,7 @@
 //! door over iroh.
 
 use super::*;
-use crate::{sign_act, Op, SignedOp};
+use crate::{derive_id, sign_act, Op, RailAct, SignedOp};
 
 const GROUP: &str = "house";
 
@@ -69,19 +69,8 @@ fn a_redemption_is_parsed_before_anything_is_read() {
 }
 
 #[test]
-fn an_ask_finds_this_nodes_newest_invite_naming_the_link() {
-    let (issuer, link) = (key(1), key(2));
-    let me = actor_of(&issuer);
-    let ops = [
-        invite(&issuer, 0, &link),
-        invite(&key(4), 0, &link),
-        invite(&issuer, 1, &link),
-        invite(&issuer, 2, &key(5)),
-    ];
-    let found = own_invite(&ops, &me, &actor_of(&link)).unwrap();
-    assert_eq!(found.id, ops[2].id);
-    assert!(own_invite(&ops, &me, &actor_of(&key(6))).is_none());
-
+fn an_ask_is_parsed_before_anything_is_read() {
+    let link = key(2);
     let joining = key(3);
     let ask = AskRequest::sign(&link, &joining);
     assert!(parse_ask(Some(&actor_of(&joining)), &ask).is_ok());

@@ -50,8 +50,11 @@ order, so what the older link admitted keeps standing.
 
 **`crates/svrngs-runtime`**: the journal, its write index, the open-journal map
 (`RingRail`) and the register's standing (`register.rs`), split out of
-svrngs-node so the adapters reach a group through the runtime alone. What
-follows about the journal describes this crate.
+svrngs-node. The journal is crate-private: an adapter reaches a group only
+through `RingRail`'s queries (`admission`, `standing`, `invite_for`,
+`group_dir`), its `commit` and `seal`, `set_seed`, and the replication port
+(`digest`, `ops_missing_from_within`, `ingest_all`, `compact`). What follows
+about the journal describes this crate.
 
 **`crates/svrngs-node`**: a group's journal on disk — one append-only JSONL
 log per group under `<root>/rings/<ns>/` (`journal.rs`), the single-writer

@@ -46,7 +46,7 @@ impl Standing {
 /// over the acts admission authenticates, each with its person. The one
 /// decider: [`RingRail::standing`] answers with it, and the door
 /// ([`crate::RingJournal::append_all`]) asks it under its write lock.
-pub fn standing_in(
+pub(crate) fn standing_in(
     ops: &[Op<SignedOp>],
     seed: &Roster,
     namespace: &str,

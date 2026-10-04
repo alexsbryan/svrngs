@@ -51,10 +51,10 @@ use crate::register::Standing;
 use crate::ring_routes::err;
 use crate::ring_sync::peer_client;
 use crate::{
-    actor_of, derive_id, field, sign_message, verify_hex, Ed25519Verifier, Name, NotAName, OpId,
-    Person, RailAct, RailError, Redemption, RingRail, SigningKey,
+    actor_of, field, sign_message, verify_hex, Ed25519Verifier, Name, NotAName, OpId, Person,
+    RailError, Redemption, RingRail, SigningKey,
 };
-use svrngs_core::{commit, Author, RedeemRefusal, Refused as CommitRefused};
+use svrngs_core::{RedeemRefusal, Refused as CommitRefused};
 
 /// The redemption's path.
 const ROUTE: &str = "/redeem";
@@ -288,31 +288,27 @@ fn answer<T: Serialize>(route: &str, key: &str, decided: Result<T, Refused>) -> 
     }
 }
 
-/// The ask, as a door: parse ([`parse_ask`]), then for each group held
-/// here read its acts and decide ([`own_invite`]); the seed is read only for
-/// the group the decision names, and answered as kept.
+/// The ask, as an adapter: parse ([`parse_ask`]), ask the runtime for this
+/// node's newest `Invite` naming the link's key, and answer that group's seed
+/// as the command keeps it.
 fn serve_ask(issuer: &Issuer, dialer: Option<String>, req: &AskRequest) -> Result<Asked, Refused> {
     parse_ask(dialer.as_deref(), req)?;
-    let me = issuer.rail.signer().actor();
-    for group in issuer.rail.namespaces().map_err(Refused::Unjudged)? {
-        let journal = issuer.rail.journal(&group).map_err(Refused::Unjudged)?;
-        let (ops, _) = journal.read().map_err(Refused::Unjudged)?;
-        let Some(invite) = own_invite(&ops, &me, &req.link) else {
-            continue;
-        };
-        let invite = derive_id(invite, &group);
-        let seed = (issuer.seeds)(journal.dir())
-            .map_err(|e| Refused::Unjudged(RailError::Io(e)))?
-            .ok_or(Refused::NotHeld)?;
-        tracing::debug!(target: "redeem", group, key = %req.key, invite = %invite,
-            "redeem: asked — the link's key is named by this node's Invite; answering its group's seed");
-        return Ok(Asked {
-            group,
-            seed,
-            invite,
-        });
-    }
-    Err(Refused::NoInvite)
+    let (group, invite) = issuer
+        .rail
+        .invite_for(&req.link)
+        .map_err(Refused::Unjudged)?
+        .ok_or(Refused::NoInvite)?;
+    let dir = issuer.rail.group_dir(&group).map_err(Refused::Unjudged)?;
+    let seed = (issuer.seeds)(&dir)
+        .map_err(|e| Refused::Unjudged(RailError::Io(e)))?
+        .ok_or(Refused::NotHeld)?;
+    tracing::debug!(target: "redeem", group, key = %req.key, invite = %invite,
+        "redeem: asked — the link's key is named by this node's Invite; answering its group's seed");
+    Ok(Asked {
+        group,
+        seed,
+        invite,
+    })
 }
 
 /// An ask judged on what arrived alone: the dialer is the key asking, and
@@ -328,21 +324,9 @@ fn parse_ask(dialer: Option<&str>, req: &AskRequest) -> Result<(), Refused> {
     Ok(())
 }
 
-/// The ask's decision over one group's acts: `me`'s `Invite` naming the
-/// link's key — the newest, should two. Reads nothing.
-fn own_invite<'a>(
-    ops: &'a [crate::Op<crate::SignedOp>],
-    me: &str,
-    link: &str,
-) -> Option<&'a crate::Op<crate::SignedOp>> {
-    ops.iter().rev().find(|op| {
-        op.actor == me && matches!(&op.kind.act, RailAct::Invite { key, .. } if key == link)
-    })
-}
-
 /// The redemption, as an adapter: parse ([`parse_redeem`]); check this node
-/// holds the group; hand [`svrngs_core::Redeem`] to [`commit`], which decides
-/// it under the journal's write lock.
+/// holds the group; hand [`svrngs_core::Redeem`] to the runtime's `commit`,
+/// which decides it under the journal's write lock.
 fn serve_redeem(
     rail: &RingRail,
     dialer: Option<String>,
@@ -355,11 +339,6 @@ fn serve_redeem(
         Ok(_) => return Err(Refused::NotHeld),
         Err(e) => return Err(Refused::Unjudged(e)),
     }
-    let journal = rail.journal(group).map_err(Refused::Unjudged)?;
-    let seed = journal
-        .seed()
-        .map_err(Refused::Unjudged)?
-        .ok_or(Refused::NotHeld)?;
     let command = svrngs_core::Redeem {
         invite: req.invite.clone(),
         person,
@@ -368,14 +347,7 @@ fn serve_redeem(
         link: req.link.clone(),
         issuer: rail.signer().actor(),
     };
-    let author = Author {
-        signer: rail.signer(),
-        roster: &seed,
-        namespace: group,
-        verifier: &Ed25519Verifier,
-        now: crate::now_unix(group).map_err(Refused::Unjudged)?,
-    };
-    match commit(&*journal, &command, &author).map_err(Refused::Unjudged)? {
+    match rail.commit(group, &command).map_err(Refused::Unjudged)? {
         Ok(recorded) if recorded.is_empty() => {
             tracing::debug!(target: "redeem", group, key = %req.key,
                 "redeem: the key stands already — answered success, nothing written");

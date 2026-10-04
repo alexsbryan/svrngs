@@ -136,7 +136,7 @@ pub fn namespaces_in(root: &Path) -> Result<Vec<String>, RailError> {
 
 impl RingRail {
     /// The journal for one namespace, opening it if this is the first touch.
-    pub fn journal(&self, namespace: &str) -> Result<Arc<RingJournal>, RailError> {
+    pub(crate) fn journal(&self, namespace: &str) -> Result<Arc<RingJournal>, RailError> {
         let mut open = self.open.lock().unwrap_or_else(|e| e.into_inner());
         if let Some(existing) = open.get(namespace) {
             return Ok(existing.clone());
@@ -163,6 +163,116 @@ impl RingRail {
 /// `Ok` carrying a `Result`: the caller has to look at `retired` to say what
 /// happened, and cannot mistake "nothing was retired" for "the prune was
 /// refused" (ARCH §18.3).
+/// The runtime's whole surface for adapters: queries, `commit`, the seal, and
+/// the replication port. No adapter holds a journal.
+///
+/// ```
+/// fn reads(r: &svrngs_runtime::RingRail) -> Result<svrngs_runtime::Admission, svrngs_runtime::RailError> {
+///     r.admission("g")
+/// }
+/// ```
+/// ```compile_fail
+/// fn reads(r: &svrngs_runtime::RingRail) {
+///     let _ = r.journal("g");
+/// }
+/// ```
+impl RingRail {
+    /// The group's admitted acts, from one read of its journal.
+    pub fn admission(&self, namespace: &str) -> Result<Admission, RailError> {
+        let journal = self.journal(namespace)?;
+        journal.admit(&journal.roster_file()?, &Ed25519Verifier)
+    }
+
+    /// Decides `command` under the group's write lock and writes what it asks
+    /// for, signed by this computer at the clock's time.
+    pub fn commit<C: Command>(
+        &self,
+        namespace: &str,
+        command: &C,
+    ) -> Result<Result<Recorded, Refused<C::Refusal>>, RailError> {
+        let journal = self.journal(namespace)?;
+        let roster = journal.roster_file()?;
+        let author = Author {
+            signer: self.signer(),
+            roster: &roster,
+            namespace,
+            verifier: &Ed25519Verifier,
+            now: now_unix(namespace)?,
+        };
+        svrngs_core::commit(&*journal, command, &author)
+    }
+
+    /// The seal, then the prune it authorises.
+    pub fn seal(&self, namespace: &str) -> Result<Sealed, RailError> {
+        let journal = self.journal(namespace)?;
+        journal.seal(self.signer(), &journal.roster_file()?, &Ed25519Verifier)
+    }
+
+    /// This computer's newest `Invite` naming the link's key `link`, and the
+    /// group it is in.
+    pub fn invite_for(&self, link: &str) -> Result<Option<(String, OpId)>, RailError> {
+        let me = self.signer().actor();
+        for namespace in self.namespaces()? {
+            let journal = self.journal(&namespace)?;
+            let (ops, _) = journal.read()?;
+            let register = ActSet::of(ops.iter().filter(|op| op.kind.act.moves_membership()));
+            let admission = admit(&register, &[], &journal.roster_file()?, &namespace, &Ed25519Verifier);
+            let invites = &admission.membership().invites;
+            let newest = admission
+                .ops()
+                .iter()
+                .rev()
+                .find(|op| invites.get(&op.id).is_some_and(|i| i.issuer == me && i.key == link));
+            if let Some(op) = newest {
+                tracing::debug!(target: "register", namespace, invite = %op.id,
+                    "runtime: this computer's newest Invite naming the link's key");
+                return Ok(Some((namespace, op.id.clone())));
+            }
+        }
+        Ok(None)
+    }
+
+    /// The group's directory, where the command keeps its own files.
+    pub fn group_dir(&self, namespace: &str) -> Result<PathBuf, RailError> {
+        Ok(self.journal(namespace)?.dir().to_path_buf())
+    }
+
+    /// Keeps `roster` as the group's seed: founding or joining a group.
+    pub fn set_seed(&self, namespace: &str, roster: &Roster) -> Result<(), RailError> {
+        self.journal(namespace)?.set_roster(roster)
+    }
+
+    pub fn digest(&self, namespace: &str) -> Result<Digest, RailError> {
+        self.journal(namespace)?.digest(&Ed25519Verifier)
+    }
+
+    pub fn ops_missing_from_within(
+        &self,
+        namespace: &str,
+        theirs: &Digest,
+        budget_bytes: usize,
+    ) -> Result<(Vec<Op<SignedOp>>, bool), RailError> {
+        self.journal(namespace)?
+            .ops_missing_from_within(&Ed25519Verifier, theirs, budget_bytes)
+    }
+
+    pub fn ingest_all(&self, namespace: &str, ops: &[Op<SignedOp>]) -> Result<usize, RailError> {
+        self.journal(namespace)?.ingest_all(ops)
+    }
+
+    /// Deletes what the group's admitted seals retire.
+    pub fn compact(&self, namespace: &str) -> Result<Compaction, RailError> {
+        let journal = self.journal(namespace)?;
+        journal.compact(&journal.roster_file()?, &Ed25519Verifier)
+    }
+}
+
+/// A group's directory under `root`, without a runtime: the command lists the
+/// groups a computer keeps before it starts one.
+pub fn group_dir_in(root: &Path, namespace: &str) -> Result<PathBuf, RailError> {
+    Ok(RingJournal::open(root, namespace)?.dir().to_path_buf())
+}
+
 #[derive(Debug)]
 pub struct Sealed {
     pub op: Op<SignedOp>,
@@ -176,13 +286,15 @@ pub struct Sealed {
 // the 800-1200 approach band (ARCH §3.1). Re-exported, so the public path
 // `commonwealth_rail::RingJournal` is unchanged.
 mod journal;
-pub mod oplog;
-pub use journal::{now_unix, RingJournal};
+pub(crate) mod oplog;
+pub(crate) use journal::{now_unix, RingJournal};
 pub mod register;
 
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
 mod tests_local_only;
+#[cfg(test)]
+mod tests_queries;
 #[cfg(test)]
 mod tests_write_index;

@@ -267,8 +267,8 @@ pub fn groups(root: &Path) -> Vec<Seed> {
     for ns in namespaces {
         // `namespaces_in` lists only names a journal opens, and opening
         // creates nothing: this is the rail's spelling of the directory.
-        let dir = match svrngs_node::RingJournal::open(root, &ns) {
-            Ok(journal) => journal.dir().to_path_buf(),
+        let dir = match svrngs_node::group_dir_in(root, &ns) {
+            Ok(dir) => dir,
             Err(e) => {
                 tracing::warn!(target: "group", namespace = %ns, error = %e, "group: a directory the rail will not open, left out");
                 continue;

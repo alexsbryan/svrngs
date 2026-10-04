@@ -17,17 +17,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// makes one `write(2)` atomic, and this makes sure there is one. It is also
 /// what makes the next sequence number safe to compute — fold the log, take
 /// the highest, add one — with no window for two appends to pick the same one.
-///
-/// Lines reach it only through [`svrngs_core::commit`]:
-/// ```
-/// fn writes(j: &svrngs_runtime::RingJournal) -> &impl svrngs_core::Store { j }
-/// ```
-/// ```compile_fail
-/// fn writes(j: &svrngs_runtime::RingJournal, k: &svrngs_runtime::SigningKey, r: &svrngs_runtime::Roster) {
-///     j.append(svrngs_runtime::RailAct::Seal, k, r, None, &svrngs_runtime::Ed25519Verifier);
-/// }
-/// ```
-pub struct RingJournal {
+pub(crate) struct RingJournal {
     namespace: String,
     dir: PathBuf,
     #[expect(
@@ -149,10 +139,6 @@ impl RingJournal {
         })
     }
 
-    pub fn namespace(&self) -> &str {
-        &self.namespace
-    }
-
     pub fn dir(&self) -> &Path {
         &self.dir
     }
@@ -232,6 +218,7 @@ impl RingJournal {
         }
     }
 
+    #[cfg(test)]
     /// Append an op that arrived from a peer, exactly as it was signed.
     ///
     /// No validation and no re-signing: the signature covers the op, and
@@ -263,6 +250,7 @@ impl RingJournal {
         Ok(digest(&self.read()?.0, &self.namespace, verifier))
     }
 
+    #[cfg(test)]
     /// Every op this node holds that `theirs` says the peer is missing.
     /// Author-blind: a node republishes what it HOLDS, so a housemate who
     /// leaves the ring does not take their half of the journal with them.
@@ -613,7 +601,7 @@ impl RingJournal {
 /// The wall clock in Unix seconds: the one place the write side reads it.
 /// Unreadable is named, never defaulted (ROOT_CAUSE_FIXES C4).
 #[expect(clippy::disallowed_methods, reason = "the write side's clock adapter")]
-pub fn now_unix(namespace: &str) -> Result<i64, RailError> {
+pub(crate) fn now_unix(namespace: &str) -> Result<i64, RailError> {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_secs() as i64)

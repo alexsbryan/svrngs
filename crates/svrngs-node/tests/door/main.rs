@@ -25,7 +25,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use svrngs_node::iroh::{Contact, RelayConfig};
 use svrngs_node::lend::{self, LendName};
 use svrngs_node::node::Node;
-use svrngs_node::{actor_of, declared, Ed25519Verifier, Person, RailAct, Roster, SigningKey};
+use svrngs_node::{actor_of, declared, Person, RailAct, Roster, SigningKey};
 
 const NS: &str = "house";
 
@@ -73,18 +73,7 @@ impl Pair {
                 .into_iter()
                 .collect(),
         );
-        let journal = a.rail().journal(NS).unwrap();
-        journal.set_roster(&seed).unwrap();
-        let author = svrngs_node::Author {
-            signer: a.rail().signer(),
-            roster: &seed,
-            namespace: NS,
-            verifier: &Ed25519Verifier,
-            now: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_secs() as i64,
-        };
+        a.rail().set_seed(NS, &seed).unwrap();
         let fixture = svrngs_core::tests_support::Fixture {
             act: RailAct::Admit {
                 person: Person::parse("bo").unwrap(),
@@ -93,9 +82,7 @@ impl Pair {
             },
             on_behalf_of: None,
         };
-        svrngs_node::commit(&*journal, &fixture, &author)
-            .unwrap()
-            .unwrap();
+        a.rail().commit(NS, &fixture).unwrap().unwrap();
         let base = b
             .transport()
             .base_url(&Contact {

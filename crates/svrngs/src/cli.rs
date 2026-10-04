@@ -39,8 +39,8 @@ use ed25519_dalek::VerifyingKey;
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::node::{Node, NodeError};
 use svrngs_node::redeem::{ask, redeem, AskRequest, RedeemError, RedeemRequest, Redeemed};
-use svrngs_node::{actor_of, Ed25519Verifier, Person, SigningKey};
-use svrngs_node::{commit, Author, MintInvite, Refused as CommitRefused};
+use svrngs_node::{actor_of, Person, SigningKey};
+use svrngs_node::{MintInvite, Refused as CommitRefused};
 
 use crate::group::{self, Name, Seed, SeedError};
 use crate::identity::{self, KeyError};
@@ -562,10 +562,8 @@ pub async fn new_link(
     };
     let dir = node
         .rail()
-        .journal(&seed.id())
-        .map_err(|e| keep_refused(&seed, &e.to_string()))?
-        .dir()
-        .to_path_buf();
+        .group_dir(&seed.id())
+        .map_err(|e| keep_refused(&seed, &e.to_string()))?;
     let origin = match origin {
         Some(given) => {
             group::write_origin(&dir, given).map_err(|e| keep_refused(&seed, &e.to_string()))?;
@@ -605,20 +603,8 @@ async fn mint(node: &Node, seed: &Seed, relay: &RelayConfig) -> Result<Token, Re
         key: actor_of(&token.key()),
         until: now + LINK_LIFE_SECS,
     };
-    let journal = node
-        .rail()
-        .journal(&seed.id())
-        .map_err(|e| keep_refused(seed, &e.to_string()))?;
-    let roster = seed.roster();
     let group = seed.id();
-    let author = Author {
-        signer: node.rail().signer(),
-        roster: &roster,
-        namespace: &group,
-        verifier: &Ed25519Verifier,
-        now,
-    };
-    let recorded = match commit(&*journal, &mint, &author) {
+    let recorded = match node.rail().commit(&group, &mint) {
         Ok(Ok(recorded)) => recorded,
         Ok(Err(CommitRefused::NoStanding)) => {
             tracing::debug!(target: "cli", group = %group, "cli: refused — this computer does not stand in the group");
@@ -670,18 +656,17 @@ pub fn link_relay(relay: &RelayConfig, home: Option<RelayUrl>) -> Option<RelayUr
 /// `origin` when given, and the roster the seed founds. What `new` and
 /// `join` both write, in one order, so a group kept by either is the same.
 fn keep_group(node: &Node, seed: &Seed, origin: Option<&Origin>) -> Result<(), Refusal> {
-    let journal = node
-        .rail()
-        .journal(&seed.id())
+    let rail = node.rail();
+    let dir = rail
+        .group_dir(&seed.id())
         .map_err(|e| keep_refused(seed, &e.to_string()))?;
-    group::write_seed(journal.dir(), seed)
+    group::write_seed(&dir, seed)
         .and_then(|()| match origin {
-            Some(origin) => group::write_origin(journal.dir(), origin),
+            Some(origin) => group::write_origin(&dir, origin),
             None => Ok(()),
         })
         .map_err(|e: SeedError| keep_refused(seed, &e.to_string()))?;
-    journal
-        .set_roster(&seed.roster())
+    rail.set_seed(&seed.id(), &seed.roster())
         .map_err(|e| keep_refused(seed, &e.to_string()))
 }
 

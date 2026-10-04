@@ -20,8 +20,8 @@ use crate::peer_wire::{
     RingSyncRequest, RingSyncResponse, MAX_REQUEST_BODY_BYTES, RING_SYNC_OPS_BUDGET_BYTES,
 };
 use crate::{
-    actor_of, body_json, sign_act, Digest, Ed25519Verifier, Op, OpId, Payload, Person, RailAct,
-    RingJournal, RingRail, Roster, SignedOp, SigningKey,
+    actor_of, body_json, sign_act, Admission, Digest, Ed25519Verifier, Op, OpId, Payload, Person,
+    RailAct, RailError, RingRail, RingVerifier, Roster, SignedOp, SigningKey, NO_BUDGET,
 };
 use axum::response::IntoResponse;
 
@@ -66,8 +66,53 @@ fn after(key: &SigningKey, prev: &Op<SignedOp>, act: RailAct) -> Op<SignedOp> {
     signed_after(NS, key, prev.kind.seq + 1, Some(prev.id.clone()), act)
 }
 
+/// Group [`NS`] as the runtime offers it to an adapter, spelled as the journal
+/// these tests were written against: every call is the runtime's public port,
+/// and `read` is the journal file itself.
+struct Journal(Arc<RingRail>);
+
+impl Journal {
+    fn read(&self) -> Result<(Vec<Op<SignedOp>>, ()), RailError> {
+        let file = self.0.group_dir(NS)?.join("ring_oplog.jsonl");
+        let lines = std::fs::read_to_string(file)
+            .unwrap_or_default()
+            .lines()
+            .filter(|l| !l.trim().is_empty())
+            .map(|l| serde_json::from_str(l).unwrap())
+            .collect();
+        Ok((lines, ()))
+    }
+    fn digest(&self, _: &dyn RingVerifier) -> Result<Digest, RailError> {
+        self.0.digest(NS)
+    }
+    fn admit(&self, _: &Roster, _: &dyn RingVerifier) -> Result<Admission, RailError> {
+        self.0.admission(NS)
+    }
+    fn ingest(&self, op: &Op<SignedOp>) -> Result<bool, RailError> {
+        Ok(self.0.ingest_all(NS, std::slice::from_ref(op))? == 1)
+    }
+    fn ingest_all(&self, ops: &[Op<SignedOp>]) -> Result<usize, RailError> {
+        self.0.ingest_all(NS, ops)
+    }
+    fn ops_missing_from_within(
+        &self,
+        _: &dyn RingVerifier,
+        theirs: &Digest,
+        budget: usize,
+    ) -> Result<(Vec<Op<SignedOp>>, bool), RailError> {
+        self.0.ops_missing_from_within(NS, theirs, budget)
+    }
+    fn ops_missing_from(
+        &self,
+        _: &dyn RingVerifier,
+        theirs: &Digest,
+    ) -> Result<Vec<Op<SignedOp>>, RailError> {
+        Ok(self.0.ops_missing_from_within(NS, theirs, NO_BUDGET)?.0)
+    }
+}
+
 /// The act `key` signs next after the newest it has in `journal`.
-fn next_in(journal: &RingJournal, key: &SigningKey, act: RailAct) -> Op<SignedOp> {
+fn next_in(journal: &Journal, key: &SigningKey, act: RailAct) -> Op<SignedOp> {
     let held = journal.read().unwrap().0;
     let newest = held
         .iter()
@@ -99,10 +144,10 @@ pub(super) fn solo_roster(key: &SigningKey) -> Roster {
 /// A rail signing as `key` holding `n` signed ops on [`NS`], rostered to
 /// `key`. `n = 0` is a node that has never seen this ring's ops — the
 /// bootstrap case, which can only ever be TOLD.
-fn node(dir: &std::path::Path, key: &SigningKey, n: usize) -> (Arc<RingRail>, Arc<RingJournal>) {
+fn node(dir: &std::path::Path, key: &SigningKey, n: usize) -> (Arc<RingRail>, Journal) {
     let rail = Arc::new(RingRail::new(dir, Arc::new(key.clone())));
-    let journal = rail.journal(NS).unwrap();
-    journal.set_roster(&solo_roster(key)).unwrap();
+    rail.set_seed(NS, &solo_roster(key)).unwrap();
+    let journal = Journal(rail.clone());
     if n > 0 {
         assert_eq!(journal.ingest_all(&ops_in(NS, key, n)).unwrap(), n);
     }
@@ -398,10 +443,7 @@ async fn a_seal_shortens_the_exchange_only_once_the_retired_lines_are_deleted() 
 
     /// Bootstrap a fresh peer from `rail`: what it pushed, the peer's
     /// journal, and the dir that holds it.
-    async fn bootstrap(
-        rail: &RingRail,
-        key: &SigningKey,
-    ) -> (usize, Arc<RingJournal>, tempfile::TempDir) {
+    async fn bootstrap(rail: &RingRail, key: &SigningKey) -> (usize, Journal, tempfile::TempDir) {
         let p = tempfile::tempdir().unwrap();
         let (peer, peer_journal) = node(p.path(), key, 0);
         let (url, _served) = serve(peer, key).await;
@@ -416,7 +458,7 @@ async fn a_seal_shortens_the_exchange_only_once_the_retired_lines_are_deleted() 
         "a seal is an op, not a delete: everything still goes out"
     );
 
-    let path = journal.dir().join("ring_oplog.jsonl");
+    let path = journal.0.group_dir(NS).unwrap().join("ring_oplog.jsonl");
     let kept: String = std::fs::read_to_string(&path)
         .unwrap()
         .lines()

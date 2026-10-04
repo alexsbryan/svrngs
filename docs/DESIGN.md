@@ -181,7 +181,7 @@ journals sits behind a `Mutex`, which an actor per journal replaces.
 
 | Invariant | Held by | State |
 |---|---|---|
-| Same acts, same state: a group's state is a pure function of its set of acts | svrngs-core is `no_std`, and `lean_check` keeps it so; folds read acts only through `Admission` | `no_std` holds; `membership` still sorts raw ops |
+| Same acts, same state: a group's state is a pure function of its set of acts | svrngs-core is `no_std`, and `lean_check` keeps it so; an adapter reads a group only through the runtime's queries (`admission`, `standing`, `invite_for`), since the journal is crate-private to svrngs-runtime | holds for every adapter; inside the core, `membership` still sorts the acts admission hands it |
 | No act, no effect: nothing that cannot be undone happens but from an act in the record — the group's state and this computer's; a lent service's own state is its own, and the member door only carries a request to it | a store appends only `Authored` lines, which only `commit` makes after a `Command` decided under the write lock; acting takes a `Recorded` only `commit` returns | every write goes through `commit`; the journal's `append` is a test fixture |
 | Both | the core never depends on the node; the clock, randomness and locks live only where an adapter holds one (`clippy.toml` bans them; each site carries `#[expect(…, reason)]`, which fails once the site is gone) | holds |
 
