@@ -16,6 +16,20 @@ the session as a HAR file, and every screen is recorded. Before anyone starts:
 Sam's upload measured once and written down, and Jellyfin's list of users
 exported.
 
+**The steps as the design has them now** (DESIGN §3, "Joining"; §8, U3's
+inventory), which nobody is told; the dry run of 2026-10-04 took them on one
+computer (`runs/a/dry-2026-10-04/`). Sam: `svrngs new <group>`, which prints
+the group's link, `svrngs://join/<token>`, and keeps running; then, beside it,
+`svrngs share 8096 --upload <the upload written down>`, which asks for what
+Jellyfin takes on each request and keeps it on Sam's computer. Sam sends the
+link. Each of the others: `svrngs join <link>` on their computer; then
+`svrngs` alone, which prints "Sam's jellyfin, in your browser:" and a local
+address, `http://127.0.0.1:<port>/lend/jellyfin/`, opened in their browser
+(`join` prints no lends; the bare command asks for them as it starts). The
+step Jellyfin's own web player needs past its sign-in page is the operator's
+to choose before the first run (DESIGN §11, risk 7; the dry run's
+`README.md`).
+
 **What Sam is told, and nothing else:** "Share your Jellyfin with the group,
 and send the link to Alex, Bo and Cy."
 
