@@ -462,3 +462,64 @@ async fn a_drain_takes_only_its_own_groups_payloads() {
         n.endpoint().close().await;
     }
 }
+
+/// `node` holds `ns`, seeded with `founder`'s key, under the founder's name.
+fn hold_as(node: &Node, ns: &str, founder: u8, name: &str) {
+    let roster = Roster::new(
+        [(
+            Person::parse(name).unwrap(),
+            vec![actor_of(&signing(founder))],
+        )]
+        .into_iter()
+        .collect(),
+    );
+    node.rail()
+        .journal(ns)
+        .unwrap()
+        .set_roster(&roster)
+        .unwrap();
+}
+
+/// **A dialer standing in another group A holds is refused** (the u3-3
+/// row): A holds `house` and `yard`; C stands in `yard` alone, so A's
+/// acceptor admits C. C's own copy of `house`, which C founded, names A, so
+/// C's app pushes to `house` and C offers it to A: A's live route refuses
+/// it 403 as the sync route would, C's answer says A did not take it and
+/// why, and A's app drains nothing from `house`. C's push to `yard` reaches
+/// A. The failing input: the live route's standing check skipped (A
+/// buffers C's payload in a group C is not in).
+#[tokio::test]
+async fn a_dialer_standing_in_another_group_a_holds_is_refused() {
+    let (da, dc) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (a, c) = (start(1, &da).await, start(3, &dc).await);
+    hold(&a, NS, 1);
+    hold(&a, "yard", 1);
+    admit_to(&a, "yard", 1, "cy", 3);
+    hold_as(&c, NS, 3, "cy");
+    admit_to(&c, NS, 3, "ada", 1);
+    hold(&c, "yard", 1);
+    c.transport()
+        .add_known_peer(key(1), loopback_sockets(a.endpoint()));
+
+    let (status, out) = push(&c, NS, b"AQID".to_vec()).await;
+    assert_eq!(status, 200, "{out}");
+    assert_eq!(out["delivered"], 0, "{out}");
+    assert_eq!(out["peers"][0]["node"], actor_of(&signing(1)), "{out}");
+    let why = out["peers"][0]["error"].as_str().unwrap();
+    assert!(why.contains("403"), "A refused it: {why}");
+    assert_eq!(drain(&a, NS).await["payloads"], serde_json::json!([]));
+
+    let (status, out) = push(&c, "yard", b"BAUG".to_vec()).await;
+    assert_eq!(
+        (status, &out["delivered"]),
+        (200, &serde_json::json!(1)),
+        "control: {out}"
+    );
+    assert_eq!(
+        drain(&a, "yard").await["payloads"],
+        serde_json::json!(["BAUG"])
+    );
+    for n in [&a, &c] {
+        n.endpoint().close().await;
+    }
+}

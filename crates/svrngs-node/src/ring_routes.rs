@@ -13,8 +13,8 @@
 //! MEMBERS (`origins::stand_own`): a dialer the roster does not name never
 //! reached them. In svrngs [`router`] is an `axum::Router` its caller serves.
 //! What a member may then read is each ring's own question —
-//! the sync route asks the ring's register whether the dialer's key stands
-//! in it ([`RingRail::standing`], the one answer the sender also asks), the
+//! the sync route (and, svrngs u3-3, the live route) asks the ring's
+//! register whether the dialer's key stands in it ([`RingRail::standing`], the one answer the sender also asks), the
 //! key the acceptor ([`crate::iroh::IrohAcceptor`]) puts on every request it
 //! serves as a [`Dialer`] extension. No header names the asker. (svrngs:
 //! upstream asked whether the ring's seed named the key,
@@ -71,13 +71,21 @@ pub fn router(state: RingInbound) -> axum::Router {
         .with_state(state)
 }
 
-/// Why this asker may not have this namespace, or `None` to serve it.
-fn standing_refusal(rail: &RingRail, dialer: Option<Dialer>, namespace: &str) -> Option<String> {
+/// Why this asker may not have this namespace, or `None` to serve it. Asked
+/// by the sync route and (svrngs, u3-3) the live route, named by `route` in
+/// the trace.
+fn standing_refusal(
+    rail: &RingRail,
+    dialer: Option<Dialer>,
+    route: &'static str,
+    namespace: &str,
+) -> Option<String> {
     let Some(dialer) = dialer else {
         tracing::warn!(
             target: "rails",
+            route,
             namespace,
-            "ring sync: refused — no verified dialer on the request, so it did not \
+            "ring: refused — no verified dialer on the request, so it did not \
              come on an iroh stream, and this route is served only there"
         );
         return Some(format!(
@@ -90,22 +98,22 @@ fn standing_refusal(rail: &RingRail, dialer: Option<Dialer>, namespace: &str) ->
     let refusal = format!("{namespace} is not served to {asker} here");
     match rail.standing(namespace, &Ed25519Verifier) {
         Ok(standing) if standing.names(&asker) => {
-            tracing::debug!(target: "rails", namespace, asker, "ring sync: the asker stands in the ring");
+            tracing::debug!(target: "rails", route, namespace, asker, "ring: the asker stands in the ring");
             None
         }
         Ok(Standing::NotHeld) => {
-            tracing::debug!(target: "rails", namespace, asker,
-                "ring sync: refused — this node holds no such ring, answered as a stranger is");
+            tracing::debug!(target: "rails", route, namespace, asker,
+                "ring: refused — this node holds no such ring, answered as a stranger is");
             Some(refusal)
         }
         Ok(_) => {
-            tracing::debug!(target: "rails", namespace, asker,
-                "ring sync: refused — the asker holds no standing in this ring");
+            tracing::debug!(target: "rails", route, namespace, asker,
+                "ring: refused — the asker holds no standing in this ring");
             Some(refusal)
         }
         Err(e) => {
-            tracing::warn!(target: "rails", namespace, asker, error = %e,
-                "ring sync: refused — this ring's register is unreadable, so nobody can be shown to stand in it");
+            tracing::warn!(target: "rails", route, namespace, asker, error = %e,
+                "ring: refused — this ring's register is unreadable, so nobody can be shown to stand in it");
             Some(refusal)
         }
     }
@@ -124,7 +132,7 @@ pub async fn ring_sync(
         Err(e) => return err(StatusCode::BAD_REQUEST, format!("malformed body: {e}")),
     };
     let dialer = dialer.map(|Extension(d)| d);
-    if let Some(refusal) = standing_refusal(&state.rail, dialer, &req.namespace) {
+    if let Some(refusal) = standing_refusal(&state.rail, dialer, "sync", &req.namespace) {
         return err(StatusCode::FORBIDDEN, refusal);
     }
     let (response, more_for_caller) = match answer(state.rail.as_ref(), &req) {
@@ -170,7 +178,11 @@ pub async fn ring_sync(
 /// endpoint holds is REFUSED: nobody here could drain it (the daemon's rule,
 /// with a registration where the daemon reads a grant). An oversize payload
 /// is refused against the one cap the push door keeps.
-pub async fn ring_live(State(state): State<RingInbound>, body: axum::body::Bytes) -> Response {
+pub async fn ring_live(
+    State(state): State<RingInbound>,
+    dialer: Option<Extension<Dialer>>,
+    body: axum::body::Bytes,
+) -> Response {
     let LiveEnvelope { namespace, payload } = match serde_json::from_slice(&body) {
         Ok(e) => e,
         Err(e) => {
@@ -193,23 +205,14 @@ pub async fn ring_live(State(state): State<RingInbound>, body: axum::body::Bytes
             ),
         );
     }
-    // svrngs: a namespace the rail holds, where upstream asked the origin
-    // registry's live registrations, which did not come over: any app on
-    // this computer may drain a group the node holds.
-    let held = match state.rail.namespaces() {
-        Ok(names) => names,
-        Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-    };
-    if !held.iter().any(|n| n == &namespace) {
-        tracing::warn!(target: "rails", namespace,
-            "ring live: refused a payload for a namespace no live registration here holds");
-        return err(
-            StatusCode::FORBIDDEN,
-            format!(
-                "no live registration on this endpoint holds namespace '{namespace}' — \
-                 nobody here could drain it, so it is not buffered"
-            ),
-        );
+    // svrngs: the dialer must stand in the group its envelope names, the
+    // sync route's one question (`standing_refusal`), where upstream asked
+    // whether a live registration held the namespace and let any member
+    // its acceptor admitted fill any ring's buffer. A group this node does
+    // not hold is refused in the same words.
+    let dialer = dialer.map(|Extension(d)| d);
+    if let Some(refusal) = standing_refusal(&state.rail, dialer, "live", &namespace) {
+        return err(StatusCode::FORBIDDEN, refusal);
     }
     let bytes = payload.len();
     state.live.push(&namespace, payload);

@@ -103,9 +103,12 @@ contact's addresses are its one `base_url`; `peer_client` is `pub`, since its on
 `RailsDaemon`'s `impl RingSyncHost`, did not come over. The append
 wrapper that nudges the round (`ring_sync::append`) came over in U3 with the
 record API, which routes the append door through it. The live route
-(`ring_live`) came over in U3, with `RingInbound`'s live buffer; it refuses
+(`ring_live`) came over in U3, with `RingInbound`'s live buffer; it refused
 an envelope for a group the rail does not hold, where upstream asked the
-origin registry's live registrations, which did not come over. The
+origin registry's live registrations, which did not come over. Then it
+changed: it asks the sync route's question (`standing_refusal`), so a dialer
+not standing in the group its envelope names — one the acceptor admitted
+for another group — is refused 403, as is a request off the stream. The
 checkpoint route stays behind; the routes are an `axum::Router` where
 upstream's was a `RouteBundle`. Then it
 changed: the route reads the asker from the acceptor's `Dialer` extension,

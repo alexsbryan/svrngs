@@ -85,7 +85,8 @@ pub struct RingSyncResponse {
 /// What one peer posts to another's `/internal/ring/live`: the payload and
 /// the namespace the SENDER's grant resolved it under. Built by
 /// `push_ephemeral`, read by `routes_internal::ring_live` and by cw-rails'
-/// `ring_routes::ring_live`.
+/// `ring_routes::ring_live`. (svrngs, u3-3: built by
+/// [`crate::live::push_ephemeral`], read by [`crate::ring_routes::ring_live`].)
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct LiveEnvelope {
     pub namespace: String,

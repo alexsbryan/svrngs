@@ -38,12 +38,21 @@ fn rail_with_roster(root: &std::path::Path) -> Arc<RingRail> {
     rail
 }
 
-/// The ring routes over `rail` and `live`, served on a plain loopback port
-/// with no acceptor in front; the address. (svrngs: upstream registered
-/// the two live namespaces here; [`fresh`] holds them, before anything is
-/// read from disk.)
-async fn serve(rail: Arc<RingRail>, live: Arc<LiveBuffer>) -> std::net::SocketAddr {
-    serve_at(router(RingInbound { rail, live })).await
+/// The ring routes over `rail` and `live`, served on the iroh stream to a
+/// dialer holding [`key`], whom the roster names; the base URL, and what
+/// keeps it served. (svrngs: upstream served them on a plain loopback port
+/// and registered the two live namespaces here; [`fresh`] holds them,
+/// before anything is read from disk, and the live route answers only a
+/// dialer standing in the group, so its tests dial.)
+async fn serve(
+    rail: Arc<RingRail>,
+    live: Arc<LiveBuffer>,
+) -> (String, crate::iroh::tests::OnStream) {
+    serve_on_stream(
+        router(RingInbound { rail, live }),
+        SecretKey::from_bytes(&key().to_bytes()),
+    )
+    .await
 }
 
 fn fresh(dir: &tempfile::TempDir) -> (Arc<RingRail>, Arc<LiveBuffer>) {
@@ -80,7 +89,11 @@ async fn the_asker_is_the_verified_dialer_and_no_header_names_one() {
     let rail = rail_with_roster(dir.path());
     let ada = crate::actor_of(&key());
 
-    let addr = serve(rail.clone(), Arc::new(LiveBuffer::default())).await;
+    let addr = serve_at(router(RingInbound {
+        rail: rail.clone(),
+        live: Arc::new(LiveBuffer::default()),
+    }))
+    .await;
     let off_stream = ask(&format!("http://{addr}/internal/ring/sync"), Some(&ada)).await;
     assert_eq!(
         off_stream.status(),
@@ -121,9 +134,9 @@ fn envelope(namespace: &str, payload: &str) -> String {
     serde_json::json!({ "namespace": namespace, "payload": payload }).to_string()
 }
 
-async fn push(addr: std::net::SocketAddr, namespace: &str, payload: &str) -> reqwest::Response {
+async fn push(base: &str, namespace: &str, payload: &str) -> reqwest::Response {
     reqwest::Client::new()
-        .post(format!("http://{addr}/internal/ring/live"))
+        .post(format!("{base}/internal/ring/live"))
         .body(envelope(namespace, payload))
         .send()
         .await
@@ -162,10 +175,10 @@ async fn a_live_payload_touches_nothing_on_disk() {
     let (rail, live) = fresh(&dir);
     let before = snapshot(dir.path());
     assert!(!before.is_empty(), "control: the roster file is on disk");
-    let addr = serve(rail, live.clone()).await;
+    let (addr, _served) = serve(rail, live.clone()).await;
     let payloads = ["AQID", "BAUG", "BwgJ"];
     for p in payloads {
-        let sent = push(addr, LIVE_NS, p).await;
+        let sent = push(&addr, LIVE_NS, p).await;
         assert_eq!(sent.status(), 200, "{}", sent.text().await.unwrap());
     }
     assert_eq!(
@@ -181,10 +194,10 @@ async fn a_live_payload_touches_nothing_on_disk() {
 async fn a_restart_empties_the_buffer() {
     let dir = tempfile::tempdir().unwrap();
     let (rail, live) = fresh(&dir);
-    let addr = serve(rail, live.clone()).await;
-    assert_eq!(push(addr, LIVE_NS, "AQID").await.status(), 200);
+    let (addr, _served) = serve(rail, live.clone()).await;
+    assert_eq!(push(&addr, LIVE_NS, "AQID").await.status(), 200);
     let restarted = Arc::new(LiveBuffer::default());
-    let _ = serve(rail_with_roster(dir.path()), restarted.clone()).await;
+    let _restarted = serve(rail_with_roster(dir.path()), restarted.clone()).await;
     assert_eq!(restarted.drain(LIVE_NS), (Vec::new(), 0));
     assert_eq!(
         live.drain(LIVE_NS),
@@ -200,9 +213,9 @@ async fn a_restart_empties_the_buffer() {
 async fn a_drain_takes_only_its_own_namespace() {
     let dir = tempfile::tempdir().unwrap();
     let (rail, live) = fresh(&dir);
-    let addr = serve(rail, live.clone()).await;
+    let (addr, _served) = serve(rail, live.clone()).await;
     for p in ["AQID", "BAUG"] {
-        assert_eq!(push(addr, LIVE_NS, p).await.status(), 200);
+        assert_eq!(push(&addr, LIVE_NS, p).await.status(), 200);
     }
     assert_eq!(live.drain(OTHER_LIVE_NS), (Vec::new(), 0));
     assert_eq!(
@@ -218,9 +231,9 @@ async fn a_drain_takes_only_its_own_namespace() {
 async fn an_envelope_for_an_unknown_namespace_is_refused() {
     let dir = tempfile::tempdir().unwrap();
     let (rail, live) = fresh(&dir);
-    let addr = serve(rail, live.clone()).await;
+    let (addr, _served) = serve(rail, live.clone()).await;
     let unknown = "nobody-registered-this";
-    let resp = push(addr, unknown, "AQID").await;
+    let resp = push(&addr, unknown, "AQID").await;
     assert_eq!(resp.status(), 403);
     let body = resp.text().await.unwrap();
     assert!(
@@ -228,5 +241,54 @@ async fn an_envelope_for_an_unknown_namespace_is_refused() {
         "the refusal names the namespace: {body}"
     );
     assert_eq!(live.drain(unknown), (Vec::new(), 0));
+    assert_eq!(live.drain(LIVE_NS), (Vec::new(), 0));
+}
+
+/// The live route asks the sync route's question (svrngs, u3-3): a dialer
+/// standing in another group this node holds, but not in the one its
+/// envelope names, is refused 403 naming the group, and nothing is
+/// buffered; a request off the stream is refused too. Upstream buffered
+/// for any member its acceptor admitted, into any registered namespace.
+/// The failing input: the standing check skipped.
+#[tokio::test]
+async fn a_dialer_not_standing_in_the_group_named_is_refused() {
+    let dir = tempfile::tempdir().unwrap();
+    let (rail, live) = fresh(&dir);
+    let bo = SigningKey::from_bytes(&[12u8; 32]);
+    let mut members = std::collections::BTreeMap::new();
+    members.insert(Person::parse("Bo").unwrap(), vec![crate::actor_of(&bo)]);
+    rail.journal("bo-only")
+        .unwrap()
+        .set_roster(&Roster::new(members))
+        .unwrap();
+    let (base, _bo) = serve_on_stream(
+        router(RingInbound {
+            rail: rail.clone(),
+            live: live.clone(),
+        }),
+        SecretKey::from_bytes(&bo.to_bytes()),
+    )
+    .await;
+    let refused = push(&base, LIVE_NS, "AQID").await;
+    assert_eq!(refused.status(), 403);
+    assert!(refused.text().await.unwrap().contains(LIVE_NS));
+    assert_eq!(live.drain(LIVE_NS), (Vec::new(), 0));
+    assert_eq!(
+        push(&base, "bo-only", "BAUG").await.status(),
+        200,
+        "control: Bo's own group"
+    );
+
+    let addr = serve_at(router(RingInbound {
+        rail,
+        live: live.clone(),
+    }))
+    .await;
+    let off_stream = push(&format!("http://{addr}"), LIVE_NS, "AQID").await;
+    assert_eq!(
+        off_stream.status(),
+        403,
+        "a request off the stream is refused"
+    );
     assert_eq!(live.drain(LIVE_NS), (Vec::new(), 0));
 }
