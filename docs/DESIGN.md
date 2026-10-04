@@ -363,7 +363,7 @@ reusable by design.
 
 | Upstream | What it does there | Becomes |
 |---|---|---|
-| `mesh-join-vocab/src/deep_link.rs`: `build_https_guest_link` and `parse_https_guest_link` (`:244-300`), with `percent_encode` and `parse_query_params` | the-link's https form: every secret in the fragment, a parser that never reads left of the `#`, the dial as `iroh=` | forked with edits: the fragment carries the group's seed, the link's key and its issuer's dial in place of a bearer token. The base is `https://svrnme.sh/ring/` (operator, 2026-10-04; upstream pins it at `sovereign/crates/sovereign-contracts/src/guest_pages.rs:270`), and it never sees the fragment. The `sovereign://` forms and the https form with its key in the path (`:396-413`) stay behind: a chat does not make a custom scheme tappable, and a host reads a path |
+| `mesh-join-vocab/src/deep_link.rs`: `build_https_guest_link` and `parse_https_guest_link` (`:244-300`), with `percent_encode` and `parse_query_params` | the-link's https form: every secret in the fragment, a parser that never reads left of the `#`, the dial as `iroh=` | forked with edits: the fragment carries the group's seed, the link's key and its issuer's dial in place of a bearer token. The base is a default, `https://svrnme.sh/ring/` (operator, 2026-10-04; upstream pins it at `sovereign/crates/sovereign-contracts/src/guest_pages.rs:270`): a founder may print links on an origin of their own, and `svrngs join` reads a link from any origin, since everything it needs is in the fragment. A computer never fetches the origin; it dials the issuer by key over iroh. A phone (U4) loads the page there, which dials over iroh in turn, so the origin is trusted with that page's code and never sees the fragment, which is why it can be anyone's. The `sovereign://` forms and the https form with its key in the path (`:396-413`) stay behind: a chat does not make a custom scheme tappable, and a host reads a path |
 | `commonwealth/crates/commonwealth-rails/src/found.rs:46-114`, `join.rs:116-229`, `internal.rs:222-295`; `commonwealth-discovery/src/membership.rs:12-75` | the mesh invite: a 48-bit key, reusable until a 24-hour lapse (`membership.rs:53`), only its hash kept, in `mesh.json` outside any record. The joiner dials the founder by key and posts `/internal/join` with a proof that signs neither the key nor the mesh (`commonwealth-transport/src/identity.rs:130-141`); the founder checks and persists before answering | the handshake's shape forked: the joiner dials the issuer by key and proves it holds both the link's key and its own, over the group and the request; the issuer persists before answering. What it writes is an `Admit`, and every use of a link is in the record: the `Invite`, its lapse, its closing. The lapse stays upstream's day. The mesh snapshot, `MemberRecord` and `node_id` stay behind |
 | the acceptor U1 built (`crates/svrngs-node/src/node.rs`, `admit_dialer`) | closes every dialer standing in no group the node holds | kept for members. Redemption is served on a second ALPN, the one a key in no register may speak, with one route; `alpn.rs` becomes the enum it promised |
 | `sovereign-grants`' guest grant (`guest_grant.rs`, `guest_session.rs`) | one QR code serves a room; its state is a map in memory | not forked: its state is lost on a restart. Its shape, one link for a room, is what U2 keeps, in the record |
@@ -401,7 +401,7 @@ computer; nobody made an account.
 
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
-| U4 the browser | a phone opens the link and is in: its own key, a dial to the meeting point, and the runtime that renders a lent app through it — fetch, POST, streaming, byte ranges | a stock phone browser plays a lent film and seeks |
+| U4 the browser | a phone opens the link and is in: its own key, a dial to the meeting point, and the runtime that renders a lent app through it — fetch, POST, streaming, byte ranges; the page is static files any origin can serve | a stock phone browser plays a lent film and seeks |
 | U5 Films | `apps/films`: one shelf across every member's lent library, "from Sam's", search, play here; a device and play-session id per person and play; progress per person in the record; busy turned into a choice — on the §3 surface alone | a title two members lend shows once, with both; Bo's seek never restarts Cy's play; Films calls nothing outside §3 |
 | U6 the screen handoff | the meeting point serves one stream to a TV on its network at an unguessable address; AirPlay from Safari, Cast from Chrome; the phone is the remote and may lock | a film plays on the TV from a phone browser; the address serves only the device it was handed to |
 
@@ -451,8 +451,9 @@ class at a time, each chosen by the north star's tests.
 ## 10. Decisions
 
 By the operator, 2026-10-04:
-- a link is upstream's https form at `https://svrnme.sh/ring/`, everything a
-  link carries in its fragment;
+- a link is upstream's https form, everything it carries in its fragment;
+  `https://svrnme.sh/ring/` is the default origin, and anyone may serve the
+  page from their own;
 - one link admits everyone who opens it, each once, until it lapses or is
   closed — not one person per link;
 - only the issuer's node redeems a link;
@@ -490,7 +491,10 @@ By the operator, 2026-10-03:
    default, as upstream's (§8, U1's inventory): it maps a key to its relay,
    never to a person, and a group is unreachable through it while it is down.
    Upstream's `discovery = "none"` with the group's own relay is the way out,
-   kept by the fork.
+   kept by the fork. The page a phone loads from a link's origin is the same
+   kind of default (U4): whoever serves it serves the code that holds the
+   person's key, so a group that does not trust svrnme.sh serves the page from
+   its own origin and prints its links there.
 6. **Two copies of the record's code.** A signing or canonical-form bug fixed on
    one side can be missed on the other. `scripts/ports.py` is the guard, and it
    is a listing, not a gate.
