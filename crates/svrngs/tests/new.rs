@@ -216,6 +216,26 @@ fn a_second_svrngs_on_one_data_dir_is_refused() {
     cli::claim(dir.path()).expect("free again");
 }
 
+/// A group's seed or origin that cannot be read is named, never read as
+/// none kept (ARCH 6): none kept is only no file there. Each is planted as
+/// a directory, which no read opens.
+#[test]
+fn an_unreadable_seed_or_origin_refuses_naming_its_file() {
+    let dir = tempfile::tempdir().unwrap();
+    assert!(matches!(group::read_seed(dir.path()), Ok(None)));
+    assert!(matches!(group::read_origin(dir.path()), Ok(None)));
+    for file in ["seed.json", "origin"] {
+        std::fs::create_dir(dir.path().join(file)).unwrap();
+    }
+    for (file, read) in [
+        ("seed.json", group::read_seed(dir.path()).map(|_| ())),
+        ("origin", group::read_origin(dir.path()).map(|_| ())),
+    ] {
+        let refused = read.expect_err(file).to_string();
+        assert!(refused.contains(file), "{refused}");
+    }
+}
+
 fn argv(s: &str) -> Vec<String> {
     std::iter::once("svrngs".to_string())
         .chain(s.split_whitespace().map(str::to_string))
