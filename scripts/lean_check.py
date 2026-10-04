@@ -30,7 +30,7 @@ def code_lines(base):
         if (f.suffix not in CODE or not f.is_file() or "/tests/" in f"/{rel}"
                 or "/node_modules/" in f"/{rel}"
                 or rel.startswith(("apps/", "target/"))
-                or re.search(r"(^|/)tests?\.rs$|_tests?\.rs$|\.test\.m?js$", rel)):
+                or re.search(r"(^|/)tests?(_\w+)?\.rs$|_tests?\.rs$|\.test\.m?js$", rel)):
             continue
         for line in f.read_text(errors="replace").splitlines():
             s = line.strip()

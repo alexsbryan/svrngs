@@ -1,324 +1,803 @@
-use ed25519_dalek::{Signer, SigningKey};
-use serde_json::json;
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// ported from commonwealth-ai commonwealth/crates/commonwealth-rail-core/src/tests.rs@e1a43bcd2
+//! Convergence correctness, settled offline.
+//!
+//! Each of these is one of the failure modes the design was reviewed against.
+//! The names say which interleaving loses an act, because a test called
+//! `test_admit_2` teaches the next reader nothing about why the rule exists.
+//!
+//! **Nothing here knows what an expense is.** These tests used to be about
+//! money, and half of them were really about delivery wearing a money
+//! costume. The money half now lives in the reference app, in JS, where an
+//! app author can read it. What is left is the part every ring app on this
+//! rail inherits whether it wants to or not.
 
 use crate::*;
 
-const NOW: u64 = 1_790_000_000;
+use crate::tests_support::*;
 
-fn key(n: u8) -> SigningKey {
-    SigningKey::from_bytes(&[n; 32])
-}
+// ── the property the whole design exists to have ─────────────
 
-fn actor(k: &SigningKey) -> Actor {
-    Actor::from_key(&k.verifying_key())
-}
-
-fn sign(k: &SigningKey, d: Draft) -> VerifiedAct {
-    let sig = Sig::from_bytes(k.sign(d.id().as_bytes()).to_bytes());
-    d.seal(sig).unwrap()
-}
-
-/// A group whose starter (key 1) admitted a Bridge key (key 2).
-fn group() -> (Journal, SigningKey, SigningKey) {
-    let (person, bridge) = (key(1), key(2));
-    let genesis = Genesis {
-        key: actor(&person),
-        nonce: Nonce::from_bytes([7; 32]),
-        name: Name::try_from("the house").unwrap(),
-    };
-    let mut j = Journal::new(genesis);
-    let admit = bridge_admit(&person, &bridge, Role::Bridge);
-    let act = sign(&person, j.draft(&actor(&person), &admit, NOW).unwrap());
-    hold(&mut j, act);
-    (j, person, bridge)
-}
-
-/// `person` admitting `bridge` as the chat's Bridge, its co-signature made over
-/// `cosigned_as` — a role other than Bridge plants a mismatched co-signature.
-fn bridge_admit(person: &SigningKey, bridge: &SigningKey, cosigned_as: Role) -> Body {
-    let name = Name::try_from("the chat").unwrap();
-    let msg = admit_message(&actor(person), &actor(bridge), cosigned_as, &name);
-    let cosig = Sig::from_bytes(bridge.sign(&msg).to_bytes());
-    Body::Admit(Admit {
-        key: actor(bridge),
-        role: Role::Bridge,
-        name,
-        cosig,
-    })
-}
-
-fn hold(j: &mut Journal, act: VerifiedAct) {
-    match j.decide(act, NOW) {
-        Ingest::Held(h) => j.apply(h),
-        other => panic!("not held: {other:?}"),
-    }
-}
-
-fn record(op: serde_json::Value, interaction: Option<&str>) -> Body {
-    Body::Record(Record {
-        app: AppId::try_from("expenses").unwrap(),
-        op: Payload::new(op).unwrap(),
-        on_behalf_of: interaction.map(|i| OnBehalfOf {
-            speaker: Speaker::try_from("discord:1").unwrap(),
-            interaction: Interaction::try_from(i).unwrap(),
-        }),
-    })
-}
-
-fn write(j: &mut Journal, k: &SigningKey, body: &Body, now: u64) -> VerifiedAct {
-    let act = sign(k, j.draft(&actor(k), body, now).unwrap());
-    hold(j, act.clone());
-    act
-}
-
+/// Every permutation of the same ops must produce the identical admission —
+/// the act order AND the gap report. Nineteen laptops gossip in nineteen
+/// orders; if this fails, two housemates read different answers off the same
+/// journal and the plan says ship nothing.
+///
+/// Exhaustive over 6 ops (720 orderings) rather than randomised, so a failure
+/// is reproducible and the coverage is a fact rather than a sample.
+///
+/// This used to be asserted over balances, which made the strongest property
+/// in the system contingent on one tenant's arithmetic. Asserting it over the
+/// admission is both stronger and true for every app that will ever sit on
+/// this rail.
 #[test]
-fn a_line_round_trips_and_its_id_derives_from_it() {
-    let (mut j, _, bridge) = group();
-    let act = write(&mut j, &bridge, &record(json!({"b": 1, "a": 2}), Some("i1")), NOW);
-    assert_eq!(VerifiedAct::parse(&act.to_line()).unwrap(), act);
-}
-
-#[test]
-fn a_tampered_line_is_refused() {
-    let (mut j, _, bridge) = group();
-    let line = write(&mut j, &bridge, &record(json!({"cents": 100}), Some("i1")), NOW).to_line();
-    let changed = line.replace("\"cents\":100", "\"cents\":900");
-    assert!(matches!(
-        VerifiedAct::parse(&changed),
-        Err(ParseError::IdMismatch { .. })
-    ));
-    let mut v: serde_json::Value = serde_json::from_str(&line).unwrap();
-    let sig = v["sig"].as_str().unwrap().replacen('0', "1", 1).replacen('a', "b", 1);
-    v["sig"] = json!(sig);
-    assert_eq!(VerifiedAct::parse(&v.to_string()), Err(ParseError::BadSignature));
-    let unknown = line.replacen("{", "{\"extra\":1,", 1);
-    assert!(matches!(VerifiedAct::parse(&unknown), Err(ParseError::Malformed(_))));
-}
-
-#[test]
-fn an_admit_its_key_did_not_cosign_is_refused() {
-    let (person, bridge) = (key(1), key(2));
-    let j = Journal::new(Genesis {
-        key: actor(&person),
-        nonce: Nonce::from_bytes([7; 32]),
-        name: Name::try_from("g").unwrap(),
-    });
-    // Co-signed as a Person, presented as a Bridge.
-    let admit = bridge_admit(&person, &bridge, Role::Person);
-    let d = j.draft(&actor(&person), &admit, NOW).unwrap();
-    let sig = Sig::from_bytes(person.sign(d.id().as_bytes()).to_bytes());
-    assert_eq!(d.seal(sig), Err(ParseError::BadCosignature));
-}
-
-#[test]
-fn ingest_offers_again_what_it_cannot_hold_yet() {
-    let (mut j, _, bridge) = group();
-    let stranger = key(9);
-    let act = sign(
-        &stranger,
-        j.draft(&actor(&stranger), &record(json!({}), None), NOW).unwrap(),
+fn the_admission_is_a_function_of_the_op_set_not_of_arrival_order() {
+    let groceries = signed(&key(1), 100, 0, record("groceries"));
+    let beer = signed(&key(2), 101, 0, record("beer"));
+    let paid_back = signed(&key(3), 102, 0, record("paid-back"));
+    // A correction whose timestamp is EARLIER than the op it corrects — a
+    // clock-skew case that a positional walk would get wrong.
+    let fix = signed(
+        &key(1),
+        99,
+        1,
+        RailAct::Correct {
+            corrects: groceries.id.clone(),
+            replacement: Some(payload("groceries-corrected")),
+        },
     );
-    assert!(matches!(j.decide(act, NOW), Ingest::OfferAgain(Why::Unbound(_))));
-
-    let first = sign(
-        &bridge,
-        j.draft(&actor(&bridge), &record(json!({"n": 1}), None), NOW).unwrap(),
-    );
-    let mut ahead = j.clone();
-    hold(&mut ahead, first.clone());
-    let second = sign(
-        &bridge,
-        ahead
-            .draft(&actor(&bridge), &record(json!({"n": 2}), None), NOW)
-            .unwrap(),
-    );
-    assert!(matches!(
-        j.decide(second.clone(), NOW),
-        Ingest::OfferAgain(Why::PrevNotHeld(_))
-    ));
-    hold(&mut j, first);
-    hold(&mut j, second.clone());
-    assert!(matches!(j.decide(second, NOW), Ingest::AlreadyHeld(_)));
-
-    let late = sign(
-        &bridge,
-        j.draft(&actor(&bridge), &record(json!({}), None), NOW + MAX_SKEW_SECS + 1)
-            .unwrap(),
-    );
-    assert!(matches!(
-        j.decide(late, NOW),
-        Ingest::OfferAgain(Why::FromTheFuture { .. })
-    ));
-}
-
-#[test]
-fn a_key_never_stamps_before_its_admission() {
-    let (j, _, bridge) = group();
-    let d = j.draft(&actor(&bridge), &record(json!({}), None), NOW - 1000).unwrap();
-    let act = sign(&bridge, d);
-    assert_eq!(act.ts(), NOW);
-    assert!(matches!(j.decide(act, NOW), Ingest::Held(_)));
-}
-
-#[test]
-fn the_interaction_a_bridge_act_answers_is_taken() {
-    let (mut j, person, bridge) = group();
-    let interaction = Interaction::try_from("i1").unwrap();
-    assert_eq!(j.taken(&interaction), None);
-    // A Person key speaking "for" someone takes nothing: on_behalf_of is the Bridge's.
-    write(&mut j, &person, &record(json!({}), Some("i1")), NOW);
-    assert_eq!(j.taken(&interaction), None);
-    let act = write(&mut j, &bridge, &record(json!({}), Some("i1")), NOW);
-    assert_eq!(j.taken(&interaction), Some(act.id()));
-}
-
-#[test]
-fn fold_orders_by_ts_actor_seq_id_and_voids_by_correct() {
-    let (mut j, person, bridge) = group();
-    let b1 = write(&mut j, &bridge, &record(json!({"n": 1}), Some("i1")), NOW + 5);
-    let p1 = write(&mut j, &person, &record(json!({"n": 2}), None), NOW + 1);
-    let fix = Body::Correct(Correct {
-        app: AppId::try_from("expenses").unwrap(),
-        corrects: *b1.id(),
-        replacement: None,
-        on_behalf_of: None,
-    });
-    let c = write(&mut j, &person, &fix, NOW + 6);
-    let admit_id = *fold(&j, Audience::Group)[0].act.id();
-    let other_app = Body::Correct(Correct {
-        app: AppId::try_from("tap").unwrap(),
-        corrects: *p1.id(),
-        replacement: None,
-        on_behalf_of: None,
-    });
-    write(&mut j, &person, &other_app, NOW + 7);
-    let membership = Body::Correct(Correct {
-        app: AppId::try_from("expenses").unwrap(),
-        corrects: admit_id,
-        replacement: None,
-        on_behalf_of: None,
-    });
-    write(&mut j, &person, &membership, NOW + 8);
-
-    let f = fold(&j, Audience::Group);
-    let ids: Vec<&ActId> = f.iter().map(|x| x.act.id()).collect();
-    assert_eq!(&ids[..4], &[&admit_id, p1.id(), b1.id(), c.id()]);
-    let voided: Vec<&ActId> = f.iter().filter(|x| x.voided).map(|x| x.act.id()).collect();
-    assert_eq!(
-        voided,
-        vec![b1.id()],
-        "only a Correct of the same app voids, and never a membership act"
-    );
-    assert!(f[2].speaker.is_some() && f[1].speaker.is_none());
-}
-
-#[test]
-fn the_chats_fold_holds_only_what_the_chat_wrote() {
-    let (mut j, person, bridge) = group();
-    let b1 = write(&mut j, &bridge, &record(json!({"n": 1}), Some("i1")), NOW);
-    write(&mut j, &person, &record(json!({"n": 2}), Some("i2")), NOW);
-    let undo = |of: &VerifiedAct| {
-        Body::Correct(Correct {
-            app: AppId::try_from("expenses").unwrap(),
-            corrects: *of.id(),
+    // A correction pointing at an op nobody in this set holds.
+    let dangling = signed(
+        &key(2),
+        103,
+        1,
+        RailAct::Correct {
+            corrects: OpId::from_raw("ring-deadbeefdeadbeef"),
             replacement: None,
-            on_behalf_of: None,
-        })
+        },
+    );
+    // An op from a key the roster does not know.
+    let stranger = signed(&key(9), 104, 0, record("stranger"));
+
+    let ops = vec![groceries, beer, paid_back, fix, dangling, stranger];
+    let expected = admitted(&ops);
+    assert!(!expected.ops.is_empty());
+    assert!(
+        !expected.gaps.is_empty(),
+        "this fixture must exercise gaps too"
+    );
+
+    let mut seen = 0usize;
+    for order in permutations(ops.len()) {
+        let shuffled: Vec<_> = order.iter().map(|i| ops[*i].clone()).collect();
+        assert_eq!(admitted(&shuffled), expected, "order {order:?} disagreed");
+        seen += 1;
+    }
+    assert_eq!(seen, 720, "6! orderings");
+}
+
+fn permutations(n: usize) -> Vec<Vec<usize>> {
+    fn go(current: &mut Vec<usize>, rest: &mut Vec<usize>, out: &mut Vec<Vec<usize>>) {
+        if rest.is_empty() {
+            out.push(current.clone());
+            return;
+        }
+        for i in 0..rest.len() {
+            let taken = rest.remove(i);
+            current.push(taken);
+            go(current, rest, out);
+            current.pop();
+            rest.insert(i, taken);
+        }
+    }
+    let mut out = Vec::new();
+    go(&mut Vec::new(), &mut (0..n).collect(), &mut out);
+    out
+}
+
+/// Two byte-identical acts in the same second by the same actor must stay two
+/// acts. [`Op::new`] hashes `(prefix, ts, actor, body)` and documents the
+/// collision as by-design; `seq` is in the body, which is what separates them.
+#[test]
+fn two_identical_acts_in_the_same_second_are_two_acts() {
+    let a = signed(&key(1), 100, 0, record("coffee"));
+    let b = signed(&key(1), 100, 1, record("coffee"));
+    assert_ne!(a.id, b.id, "seq must separate them");
+    let f = admitted(&[a, b]);
+    assert_eq!(applied(&f), vec!["coffee", "coffee"]);
+    assert!(f.is_complete(), "{:?}", f.gaps);
+}
+
+// ── correction ───────────────────────────────────────────────
+
+/// **The reason the void set is built from every correction at once.** A
+/// correction that arrives before its target must still void it, or two nodes
+/// disagree purely on delivery order.
+#[test]
+fn a_correction_that_arrives_first_still_voids_its_target() {
+    let target = signed(&key(1), 100, 0, record("wrong"));
+    let fix = signed(
+        &key(1),
+        101,
+        1,
+        RailAct::Correct {
+            corrects: target.id.clone(),
+            replacement: Some(payload("right")),
+        },
+    );
+    let fix_first = admitted(&[fix.clone(), target.clone()]);
+    let target_first = admitted(&[target, fix]);
+    assert_eq!(fix_first, target_first);
+    assert_eq!(applied(&fix_first), vec!["right"]);
+}
+
+/// A correction naming an op this node does not hold is not fatal — the void
+/// is recorded and applies the moment the target arrives — but it means we
+/// are missing an op, and that gets said.
+#[test]
+fn a_correction_pointing_at_an_op_we_do_not_hold_is_reported() {
+    let orphan = signed(
+        &key(1),
+        100,
+        0,
+        RailAct::Correct {
+            corrects: OpId::from_raw("ring-deadbeefdeadbeef"),
+            replacement: None,
+        },
+    );
+    let f = admitted(&[orphan.clone()]);
+    assert_eq!(
+        f.gaps,
+        vec![RailGap::DanglingCorrection {
+            by: orphan.id.clone(),
+            missing: OpId::from_raw("ring-deadbeefdeadbeef"),
+        }]
+    );
+    assert!(applied(&f).is_empty());
+
+    // And when the target does arrive, the void applies with no repair step.
+    let target = signed(&key(2), 99, 0, record("wrong"));
+    let fix = signed(
+        &key(1),
+        100,
+        0,
+        RailAct::Correct {
+            corrects: target.id.clone(),
+            replacement: None,
+        },
+    );
+    let healed = admitted(&[fix, target]);
+    assert!(healed.is_complete(), "{:?}", healed.gaps);
+    assert!(applied(&healed).is_empty(), "the target is voided");
+}
+
+/// The total order is `(ts_unix, actor, seq, id)`, but the void set does not
+/// consult it at all — so a correction stamped in the past still corrects.
+#[test]
+fn a_correction_stamped_in_the_past_still_corrects() {
+    let target = signed(&key(1), 500, 0, record("wrong"));
+    let fix = signed(
+        &key(1),
+        1,
+        1,
+        RailAct::Correct {
+            corrects: target.id.clone(),
+            replacement: Some(payload("right")),
+        },
+    );
+    let f = admitted(&[target, fix]);
+    assert_eq!(applied(&f), vec!["right"]);
+}
+
+/// **One actor's own acts inside one second fold in the order it wrote them.**
+///
+/// `ts_unix` is second resolution, so a burst from one node is one timestamp;
+/// before the `seq` term the tie fell to the content-derived id, which is
+/// arbitrary with respect to causality. Failing input: three acts at one
+/// timestamp whose ids do not sort in seq order — which is what happened on
+/// the work plane on 2026-09-09 (`Submit`, `Lease`, `Complete` in one second,
+/// folded lease-first, both later acts reported unreadable, and the unit ran
+/// twice).
+///
+/// Ordering by seq costs nothing in determinism: it is on the wire, and
+/// `SequenceFork` already refuses two ops sharing one.
+#[test]
+fn one_actors_acts_inside_one_second_fold_in_seq_order() {
+    let ops: Vec<_> = ["first", "second", "third"]
+        .iter()
+        .enumerate()
+        .map(|(i, what)| signed(&key(1), 700, i as u64, record(what)))
+        .collect();
+    // The precondition that makes this a gate rather than a coincidence: the
+    // ids do NOT already sort in seq order, so the old comparator produced a
+    // different answer.
+    let by_id: Vec<&str> = {
+        let mut v: Vec<_> = ops.iter().collect();
+        v.sort_by(|a, b| a.id.cmp(&b.id));
+        v.iter()
+            .map(|o| match &o.kind.act {
+                RailAct::Record { payload } => payload
+                    .as_value()
+                    .get("what")
+                    .and_then(|w| w.as_str())
+                    .expect("what"),
+                _ => unreachable!(),
+            })
+            .collect()
     };
-    write(&mut j, &person, &undo(&b1), NOW + 1);
-    let chat: Vec<(&ActId, bool)> = fold(&j, Audience::Chat)
-        .iter()
-        .map(|f| (f.act.id(), f.voided))
-        .collect();
-    assert_eq!(chat, vec![(b1.id(), false)], "a key's act and a key's undo stay out");
-    let b2 = write(&mut j, &bridge, &undo(&b1), NOW + 2);
-    let chat: Vec<(&ActId, bool)> = fold(&j, Audience::Chat)
-        .iter()
-        .map(|f| (f.act.id(), f.voided))
-        .collect();
+    assert_ne!(
+        by_id,
+        vec!["first", "second", "third"],
+        "these three payloads sort the same by id as by seq, so this test \
+         cannot tell the two comparators apart — pick different ones"
+    );
+
     assert_eq!(
-        chat,
-        vec![(b1.id(), true), (b2.id(), false)],
-        "the chat's own undo voids"
+        applied(&admitted(&ops)),
+        vec!["first", "second", "third"],
+        "one actor's acts must fold in the order it wrote them"
     );
 }
 
+/// **A correction never resurrects.** Correcting a correction cancels ITS
+/// replacement and leaves the original voided; to bring an act back, write it
+/// again. That is what keeps the void set one commutative scan instead of a
+/// liveness walk whose answer depends on arrival order.
 #[test]
-fn a_person_key_cannot_speak_for_the_chat() {
-    let (mut j, person, _) = group();
-    write(&mut j, &person, &record(json!({}), Some("i9")), NOW);
-    assert!(fold(&j, Audience::Group).iter().all(|f| f.speaker.is_none()));
-}
-
-#[test]
-fn payload_is_canonical_and_whole() {
-    let a = Payload::new(json!({"b": {"y": 1, "x": 2}, "a": [3, 1]})).unwrap();
-    assert_eq!(
-        String::from_utf8(a.to_bytes()).unwrap(),
-        r#"{"a":[3,1],"b":{"x":2,"y":1}}"#
+fn correcting_a_correction_does_not_resurrect_the_original() {
+    let original = signed(&key(1), 100, 0, record("original"));
+    let first = signed(
+        &key(1),
+        101,
+        1,
+        RailAct::Correct {
+            corrects: original.id.clone(),
+            replacement: Some(payload("replacement")),
+        },
     );
-    assert!(matches!(
-        Payload::new(json!({"a": [1, 2.5]})),
-        Err(PayloadError::Fractional(_))
-    ));
-    assert_eq!(Payload::new(json!([1])), Err(PayloadError::NotAnObject));
+    let second = signed(
+        &key(1),
+        102,
+        2,
+        RailAct::Correct {
+            corrects: first.id.clone(),
+            replacement: None,
+        },
+    );
+    let f = admitted(&[original, first, second]);
+    assert!(
+        applied(&f).is_empty(),
+        "neither the original nor its replacement comes back: {:?}",
+        applied(&f)
+    );
+    assert!(f.is_complete(), "{:?}", f.gaps);
 }
 
-fn guest(speaker: &str, name: &str, event: GuestEvent) -> Guest {
-    Guest {
-        speaker: Speaker::try_from(speaker).unwrap(),
-        name: Name::try_from(name).unwrap(),
-        event,
+/// A voided op stays in the list, marked, so an app can render what changed —
+/// and `applied()` is the one definition of which ops a reducer sees.
+#[test]
+fn a_voided_op_is_still_visible_but_is_never_applied() {
+    let target = signed(&key(1), 100, 0, record("wrong"));
+    let fix = signed(
+        &key(1),
+        101,
+        1,
+        RailAct::Correct {
+            corrects: target.id.clone(),
+            replacement: Some(payload("right")),
+        },
+    );
+    let f = admitted(&[target.clone(), fix.clone()]);
+    assert_eq!(f.ops.len(), 2, "history is kept");
+    let voided = f.ops.iter().find(|o| o.id == target.id).unwrap();
+    assert!(voided.voided);
+    assert!(!voided.applies());
+    assert!(
+        voided.payload.is_some(),
+        "the app can still show what was corrected away"
+    );
+    let correction = f.ops.iter().find(|o| o.id == fix.id).unwrap();
+    assert_eq!(correction.corrects.as_ref(), Some(&target.id));
+    assert_eq!(applied(&f), vec!["right"]);
+}
+
+// ── lines this build cannot read ─────────────────────────────
+
+/// **A dangling correction is named beside a complete answer.** One typo'd
+/// `Correct` citing an op nobody holds must not flip every node's
+/// completeness bit forever (ROOT_CAUSE_FIXES A2): nothing is hidden from
+/// the fold — the record cites what nobody here can resolve, and that is a
+/// contradiction to name, not an absence to carry. It heals when the cited
+/// op arrives; until then the answer is complete and contested.
+#[test]
+fn a_dangling_correction_is_named_beside_a_complete_answer() {
+    let target = OpId::from_raw("nosuchop");
+    let f = admitted(&[
+        signed(&key(1), 100, 0, record("fine")),
+        signed(
+            &key(1),
+            101,
+            1,
+            RailAct::Correct {
+                corrects: target,
+                replacement: None,
+            },
+        ),
+    ]);
+    assert!(
+        f.is_complete(),
+        "a citation nobody can resolve hides no data: {:?}",
+        f.gaps
+    );
+    assert!(
+        f.gaps
+            .iter()
+            .any(|g| matches!(g, RailGap::DanglingCorrection { .. })),
+        "and the contradiction is named: {:?}",
+        f.gaps
+    );
+}
+
+/// **Every gap kind has a named verdict.** One classification table (ARCH
+/// §10.6), split by coverage: can this gap hide acts that belong in the
+/// fold? A refused or forked act CAN — it may be real data the fold turned
+/// away (the pinned "an unverifiable op makes this a subset"). A tampered id
+/// cannot ("this changes no outcome" — the act folds under its derived id),
+/// and a dangling citation cannot (it is the ask, not a hole). The A2
+/// pre-registration's parenthetical grouped fork and tamper with dangling;
+/// fork stays Absence here because dropping both branches loses the seq's
+/// real content — the coverage question is the one `is_complete` answers.
+#[test]
+fn every_gap_class_is_classified() {
+    let actor = actor_of(&key(1));
+    let id = OpId::from_raw("ring-000000000000");
+    let absences = [
+        RailGap::MalformedLine {
+            line: 1,
+            error: "torn".into(),
+        },
+        RailGap::NewerVersionLine { line: 2, v: 2 },
+        RailGap::BadSignature {
+            id: id.clone(),
+            actor: actor.clone(),
+        },
+        RailGap::UnknownSigner {
+            id: id.clone(),
+            actor: actor.clone(),
+        },
+        RailGap::NotAMember {
+            id: id.clone(),
+            actor: actor.clone(),
+        },
+        RailGap::SequenceFork {
+            actor: actor.clone(),
+            seq: 3,
+            ids: vec![id.clone()],
+        },
+        RailGap::SequenceHole {
+            actor: actor.clone(),
+            missing: 4,
+        },
+    ];
+    for gap in &absences {
+        assert_eq!(
+            gap.class(),
+            GapClass::Absence,
+            "{gap:?} can hide acts that belong in the fold"
+        );
+    }
+    let contradictions = [
+        RailGap::TamperedId {
+            claimed: id.clone(),
+            derived: id.clone(),
+        },
+        RailGap::DanglingCorrection {
+            by: id.clone(),
+            missing: id.clone(),
+        },
+    ];
+    for gap in &contradictions {
+        assert_eq!(
+            gap.class(),
+            GapClass::Contradiction,
+            "{gap:?} hides nothing — a claim the record makes"
+        );
     }
 }
 
+/// **Leg 4 — the lost laptop.** A replacement key admitted under the same
+/// person, with the old key removed through its last seq, leaves every past
+/// act admitted — the red-team's retroactivity hole answered by record-bound
+/// resolution: the binding an act resolves through is IN the record, so key
+/// churn cannot re-flip the past. The companion teeth keep it off the
+/// vacuous pass: the new key counts under the old person's name, and the old
+/// key's post-cut write does not count. Watched red first against the fold
+/// where Admit/Remove are inert (re-resolution then falls back to the file).
 #[test]
-fn a_removal_sticks_until_a_join_lifts_it() {
-    let (mut j, _, bridge) = group();
-    let ama = Speaker::try_from("discord:1").unwrap();
-    assert!(
-        j.guests().may_speak(&ama),
-        "someone never seen may act: acting is how they arrive"
+fn a_replacement_key_leaves_every_past_act_admitted() {
+    let old = signed(&key(4), 100, 0, record("old-key-writes"));
+    let past = signed(&key(4), 101, 1, record("more-past"));
+    let admit_new = signed(
+        &key(1),
+        102,
+        0,
+        RailAct::Admit {
+            person: Person::from("dee"),
+            key: actor_of(&key(5)),
+        },
     );
-    let seen = guest("discord:1", "Ama", GuestEvent::Seen);
-    assert_eq!(j.guests().change(&seen), GuestChange::Arrives);
-    write(&mut j, &bridge, &Body::Guest(seen.clone()), NOW);
-    assert_eq!(j.guests().change(&seen), GuestChange::Unchanged);
+    let cut_old = signed(
+        &key(1),
+        103,
+        1,
+        RailAct::Remove {
+            key: actor_of(&key(4)),
+            through_seq: 1,
+        },
+    );
+    let new_writes = signed(&key(5), 104, 0, record("new-key-writes"));
+    let old_after_cut = signed(&key(4), 105, 2, record("after-the-cut"));
+    let after_cut_id = old_after_cut.id.clone();
 
-    let banned = guest("discord:1", "Ama", GuestEvent::Banned);
-    assert_eq!(j.guests().change(&banned), GuestChange::Removes);
-    write(&mut j, &bridge, &Body::Guest(banned.clone()), NOW + 1);
-    assert!(!j.guests().may_speak(&ama));
-    assert_eq!(j.guests().change(&banned), GuestChange::Unchanged);
-    assert_eq!(j.guests().change(&seen), GuestChange::RemovalSticks);
-    // A Seen written anyway — a second bridge racing this one — lifts nothing.
-    write(&mut j, &bridge, &Body::Guest(seen.clone()), NOW + 2);
-    assert!(!j.guests().may_speak(&ama));
-    assert_eq!(j.guests().present().count(), 0);
+    // The seed names dee with the OLD key — the replacement changes the key,
+    // not the person.
+    let mut members = std::collections::BTreeMap::new();
+    members.insert(Person::from("alex"), vec![actor_of(&key(1))]);
+    members.insert(Person::from("dee"), vec![actor_of(&key(4))]);
+    let seed = Roster::new(members);
 
-    let joined = guest("discord:1", "Ama", GuestEvent::Joined);
-    assert_eq!(j.guests().change(&joined), GuestChange::Arrives);
-    write(&mut j, &bridge, &Body::Guest(joined), NOW + 3);
-    assert!(j.guests().may_speak(&ama));
+    let f = admit(
+        &[
+            old.clone(),
+            past,
+            admit_new,
+            cut_old,
+            new_writes.clone(),
+            old_after_cut,
+        ],
+        &[],
+        &seed,
+        NS,
+        &Ed25519Verifier,
+    );
+    assert!(
+        f.ops.iter().any(|o| o.id == old.id),
+        "every past act of the old key stays admitted"
+    );
+    let kept = f.ops.iter().find(|o| o.id == old.id).unwrap();
     assert_eq!(
-        j.guests().change(&guest("discord:1", "Ama B", GuestEvent::Seen)),
-        GuestChange::Renamed
+        kept.person,
+        Person::from("dee"),
+        "under the person it always had"
+    );
+    assert!(
+        f.ops
+            .iter()
+            .any(|o| o.id == new_writes.id && o.person == Person::from("dee")),
+        "the replacement key counts under the same person"
+    );
+    assert!(
+        !f.ops.iter().any(|o| o.id == after_cut_id),
+        "and the old key's post-cut write does not count: {:?}",
+        f.gaps
     );
 }
 
+/// **One renderer, and it must survive a name.** Gap sentences shorten ids
+/// and actors for humans; a byte slice panics on a char boundary and takes
+/// the log route down with it (ROOT_CAUSE_FIXES B1). The char-safe renderers
+/// in `lib.rs` are the only spelling (ARCH §10.6) — multi-byte input is the
+/// bar because ASCII passes either way.
 #[test]
-fn only_a_bridge_key_writes_the_guest_book() {
-    let (mut j, person, _) = group();
-    let ama = Speaker::try_from("discord:1").unwrap();
-    write(
-        &mut j,
-        &person,
-        &Body::Guest(guest("discord:1", "Ama", GuestEvent::Banned)),
-        NOW,
+fn a_gap_renders_multi_byte_names_without_panicking() {
+    let wide_actor = "日本語のキー";
+    let wide_id = OpId::from_raw("日本語のノード");
+    let gaps = [
+        RailGap::BadSignature {
+            id: wide_id.clone(),
+            actor: wide_actor.to_string(),
+        },
+        RailGap::UnknownSigner {
+            id: wide_id.clone(),
+            actor: wide_actor.to_string(),
+        },
+        RailGap::NotAMember {
+            id: wide_id.clone(),
+            actor: wide_actor.to_string(),
+        },
+        RailGap::SequenceHole {
+            actor: wide_actor.to_string(),
+            missing: 4,
+        },
+        RailGap::SequenceFork {
+            actor: wide_actor.to_string(),
+            seq: 5,
+            ids: vec![wide_id.clone()],
+        },
+        RailGap::TamperedId {
+            claimed: wide_id.clone(),
+            derived: wide_id.clone(),
+        },
+        RailGap::DanglingCorrection {
+            by: wide_id.clone(),
+            missing: wide_id,
+        },
+    ];
+    for gap in &gaps {
+        assert!(!gap.to_string().is_empty(), "{gap:?} renders");
+    }
+}
+
+/// **An un-upgraded node must say its answer covers a subset.** A
+/// newer-format line it cannot read becomes a gap; admitting the rest and
+/// reporting it bare is the §18.3 failure.
+#[test]
+fn a_line_from_a_newer_build_is_a_gap_not_an_invisible_omission() {
+    let ops = vec![signed(&key(1), 100, 0, record("readable"))];
+    let skipped = vec![
+        SkippedLine::NewerVersion { line: 4, v: 2 },
+        SkippedLine::Malformed {
+            line: 7,
+            error: "expected value".into(),
+        },
+    ];
+    let f = admit(&ops, &skipped, &ring(), NS, &Ed25519Verifier);
+    assert_eq!(
+        applied(&f),
+        vec!["readable"],
+        "what it CAN read is still right"
     );
+    assert!(f
+        .gaps
+        .contains(&RailGap::NewerVersionLine { line: 4, v: 2 }));
+    assert!(f
+        .gaps
+        .iter()
+        .any(|g| matches!(g, RailGap::MalformedLine { line: 7, .. })));
+    assert!(!f.is_complete());
+}
+
+// ── admission ────────────────────────────────────────────────
+
+/// The op admission checks is the one nobody else could have written. Flip a
+/// byte of the body after signing and the signature is what catches it — not
+/// `actor`, which the writer supplies.
+#[test]
+fn a_tampered_body_fails_its_signature_and_is_not_admitted() {
+    let mut op = signed(&key(1), 100, 0, record("small"));
+    op.kind.act = record("enormous");
+    let f = admitted(&[op]);
+    assert!(f.ops.is_empty(), "nothing admitted");
     assert!(
-        j.guests().may_speak(&ama),
-        "a Person key's guest act is not the guest book's"
+        f.gaps
+            .iter()
+            .any(|g| matches!(g, RailGap::BadSignature { .. })),
+        "{:?}",
+        f.gaps
     );
-    assert_eq!(j.guests().entry(&ama), None);
+    // Rewriting the body also breaks the content-derived id, so both facts
+    // are reported. Neither is enough on its own: the id mismatch says the
+    // line was edited, the signature says it was not edited by its author.
+    assert!(
+        f.gaps
+            .iter()
+            .any(|g| matches!(g, RailGap::TamperedId { .. })),
+        "{:?}",
+        f.gaps
+    );
+}
+
+/// Signing under your own fresh key proves only that you hold it. The roster
+/// is what makes a signature mean membership.
+#[test]
+fn a_perfectly_signed_op_from_a_stranger_is_refused() {
+    let op = signed(&key(42), 100, 0, record("x"));
+    let f = admitted(&[op]);
+    assert!(f.ops.is_empty());
+    assert!(matches!(f.gaps.as_slice(), [RailGap::UnknownSigner { .. }]));
+}
+
+/// A signed op lifted out of one namespace and replayed into another must
+/// fail. The namespace is bound into the signed message, so this is caught by
+/// the signature rather than by a check somewhere downstream.
+#[test]
+fn an_op_signed_for_another_namespace_cannot_be_replayed_here() {
+    let op = signed_in("tool-lending", &key(1), 100, 0, record("x"));
+    let f = admitted(&[op]);
+    assert!(f.ops.is_empty());
+    assert!(matches!(f.gaps.as_slice(), [RailGap::BadSignature { .. }]));
+}
+
+/// The id on the line is advisory; admission uses the one the content
+/// derives. A rewritten id therefore cannot make an op impersonate another
+/// op's correction target — and it is still reported, because a peer doing it
+/// is worth seeing.
+#[test]
+fn a_rewritten_id_changes_no_outcome_and_is_still_reported() {
+    let mut op = signed(&key(1), 100, 0, record("x"));
+    let real = op.id.clone();
+    op.id = OpId::from_raw("ring-ffffffffffffffff");
+    let f = admitted(&[op]);
+    assert_eq!(applied(&f), vec!["x"], "the op still counts");
+    assert_eq!(f.ops[0].id, real, "under the id its content derives");
+    assert!(f.gaps.contains(&RailGap::TamperedId {
+        claimed: OpId::from_raw("ring-ffffffffffffffff"),
+        derived: real,
+    }));
+}
+
+/// **The one thing that distinguishes "nothing happened" from "it never
+/// reached me."** Alex wrote three ops and we hold two.
+#[test]
+fn a_hole_in_an_actors_sequence_is_reported() {
+    let ops = vec![
+        signed(&key(1), 100, 0, record("a")),
+        signed(&key(1), 102, 2, record("c")),
+    ];
+    let f = admitted(&ops);
+    assert_eq!(
+        f.gaps,
+        vec![RailGap::SequenceHole {
+            actor: actor_of(&key(1)),
+            missing: 1
+        }]
+    );
+    assert_eq!(
+        applied(&f),
+        vec!["a", "c"],
+        "what we hold is still admitted"
+    );
+}
+
+/// One actor, one sequence number, two different ops: either equivocation or
+/// a counter lost across a restart. Both are excluded — choosing one would be
+/// inventing an answer.
+#[test]
+fn one_sequence_number_used_twice_excludes_both_ops() {
+    let a = signed(&key(1), 100, 0, record("a"));
+    let b = signed(&key(1), 101, 0, record("b"));
+    let f = admitted(&[a.clone(), b.clone()]);
+    assert!(f.ops.is_empty(), "{:?}", f.ops);
+    let mut ids = vec![a.id, b.id];
+    ids.sort();
+    assert_eq!(
+        f.gaps,
+        vec![RailGap::SequenceFork {
+            actor: actor_of(&key(1)),
+            seq: 0,
+            ids
+        }]
+    );
+}
+
+/// Gossip delivers the same op many times. That is the normal case, not an
+/// anomaly, and it must not double-count.
+#[test]
+fn the_same_op_delivered_three_times_is_admitted_once() {
+    let op = signed(&key(1), 100, 0, record("x"));
+    let f = admitted(&[op.clone(), op.clone(), op]);
+    assert_eq!(applied(&f), vec!["x"]);
+    assert_eq!(f.held, 3, "and it says how many lines it read");
+    assert!(f.is_complete(), "{:?}", f.gaps);
+}
+
+// ── what the rail refuses to know ────────────────────────────
+
+/// The rail carries an act it cannot read. An app payload that is nonsense to
+/// its own app is not the rail's business — the whole point of the cut is
+/// that this file has no opinion about it.
+#[test]
+fn an_act_the_rail_cannot_interpret_is_still_admitted() {
+    let weird = Payload::new(serde_json::json!({
+        "kind": "something-this-build-has-never-heard-of",
+        "nested": { "z": 1, "a": [1, 2, 3] },
+    }))
+    .unwrap();
+    let op = signed(
+        &key(1),
+        100,
+        0,
+        RailAct::Record {
+            payload: weird.clone(),
+        },
+    );
+    let f = admitted(&[op]);
+    assert!(f.is_complete(), "{:?}", f.gaps);
+    assert_eq!(f.ops[0].payload.as_ref(), Some(&weird));
+    assert_eq!(f.ops[0].person, p("alex"), "and it says who wrote it");
+}
+
+/// **The canonical-payload property, end to end.** Two spellings of one act
+/// sign the same bytes and derive the same id, so a client library that
+/// serialises its keys in a different order does not fork the ring.
+#[test]
+fn payload_key_order_does_not_change_the_id_or_the_signature() {
+    let one: Payload = serde_json::from_str(r#"{"b":1,"a":2}"#).unwrap();
+    let other: Payload = serde_json::from_str(r#"{"a":2,"b":1}"#).unwrap();
+    let a = signed(&key(1), 100, 0, RailAct::Record { payload: one });
+    let b = signed(&key(1), 100, 0, RailAct::Record { payload: other });
+    assert_eq!(a.id, b.id);
+    assert_eq!(a.kind.sig, b.kind.sig);
+    assert!(admitted(&[a]).is_complete());
+}
+
+/// **A refusal reaching a housemate must be a sentence.** The append door
+/// returned a raw serde dump at a person before the gap renderer existed, and
+/// making the payload opaque puts a second serializer between the app and the
+/// refusal — so the property gets a test rather than a promise.
+#[test]
+fn a_refused_act_comes_back_as_a_sentence_not_a_serde_dump() {
+    let float = serde_json::json!({ "op": "record", "payload": { "amount": 3.5 } });
+    let Err(RailError::Rejected(why)) = RailAct::from_json(float) else {
+        panic!("a fractional payload was accepted");
+    };
+    assert!(why.contains("whole number"), "{why}");
+    assert!(!why.contains('{'), "rendered as a dump: {why}");
+    assert!(!why.contains("line 0"), "carries a phantom position: {why}");
+
+    let scalar = serde_json::json!({ "op": "record", "payload": 42 });
+    let Err(RailError::Rejected(why)) = RailAct::from_json(scalar) else {
+        panic!("a bare scalar payload was accepted");
+    };
+    assert!(why.contains("JSON object"), "{why}");
+
+    // And a well-formed act reads back through the same door.
+    let good = serde_json::json!({ "op": "record", "payload": { "kind": "thing" } });
+    assert!(RailAct::from_json(good).is_ok());
+}
+
+/// Every gap the rail can emit renders as a sentence. An unhandled variant
+/// reaching a housemate as a serde dump is what this renderer exists to stop —
+/// and the append door returned exactly that until it was written.
+#[test]
+fn every_gap_renders_as_a_sentence() {
+    let id = OpId::from_raw("ring-0123456789abcdef");
+    let actor = actor_of(&key(1));
+    let all = vec![
+        RailGap::MalformedLine {
+            line: 3,
+            error: "x".into(),
+        },
+        RailGap::NewerVersionLine { line: 4, v: 2 },
+        RailGap::BadSignature {
+            id: id.clone(),
+            actor: actor.clone(),
+        },
+        RailGap::UnknownSigner {
+            id: id.clone(),
+            actor: actor.clone(),
+        },
+        RailGap::TamperedId {
+            claimed: id.clone(),
+            derived: id.clone(),
+        },
+        RailGap::SequenceHole {
+            actor: actor.clone(),
+            missing: 2,
+        },
+        RailGap::SequenceFork {
+            actor,
+            seq: 1,
+            ids: vec![id.clone()],
+        },
+        RailGap::DanglingCorrection {
+            by: id.clone(),
+            missing: id,
+        },
+    ];
+    for gap in &all {
+        let sentence = gap.to_string();
+        assert!(
+            !sentence.contains('{'),
+            "{gap:?} rendered as a dump: {sentence}"
+        );
+        assert!(
+            sentence.len() > 15,
+            "{gap:?} rendered as a fragment: {sentence}"
+        );
+        // Round-trips, because the CLI reads these back off the wire and
+        // renders them through this same impl.
+        let json = serde_json::to_value(gap).unwrap();
+        assert_eq!(&serde_json::from_value::<RailGap>(json).unwrap(), gap);
+    }
 }

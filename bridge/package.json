@@ -1,11 +1,14 @@
 {
   "name": "svrngs-bridge",
   "private": true,
-  "description": "The chat bridge (DESIGN C5): a chat platform behind five calls, writing through the host's loopback append. It never loads app code.",
+  "description": "The Discord door's first code: bot setup (setup.mjs, discord.mjs), the plain-words list, and the set-aside bridge core it logs through.",
   "type": "module",
-  "main": "main.mjs",
-  "engines": { "node": ">=20" },
-  "scripts": { "test": "node --test tests/" },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test tests/"
+  },
   "dependencies": {
     "discord.js": "^14.16.3"
   }

@@ -1,28 +1,711 @@
-//! svrngs-core: a group's record (DESIGN C1), as a pure, synchronous state
-//! machine. It never touches a socket, a disk, a clock or a key: the caller
-//! hands it bytes, the time and signatures, and it hands back acts, outcomes
-//! and the fold.
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// ported from commonwealth-ai commonwealth/crates/commonwealth-rail-core/src/lib.rs@e1a43bcd2
+//! The ring rail — a shared append-only log that converges without a server.
 //!
-//! - [`chain`]: the act on the wire, its id and signature, and
-//!   [`VerifiedAct::parse`], the one way bytes become an act.
-//! - [`ingest`]: [`Journal::decide`] and [`Journal::apply`] — what a copy holds.
-//! - [`admit`]: [`fold`] — order and void, for the group or for the chat.
-//! - [`guests`]: the guest book — whom the bridge may act for.
+//! # What this is for
+//!
+//! A house of twenty people already keeps its shared state somewhere:
+//! Splitwise for the expenses, a spreadsheet for the chores, a running Signal
+//! thread for who has the drill. Every one of those is a private database
+//! somewhere else. This is the same book, kept as an append-only journal on
+//! each housemate's own machine, gossiped between them, and handed back in an
+//! order every node agrees on.
+//!
+//! # The rail carries an opaque payload, and that is the whole design
+//!
+//! This started as an expense ledger, and the ledger's types were the rail's
+//! types: the journal line's body was an `ExpenseOp`, and the reader's
+//! failure enum had thirteen variants of which five were about money. It
+//! worked, and it was one layer pretending to be one thing.
+//!
+//! The cut is now explicit. **The rail knows about delivery, authenticity and
+//! convergence. It does not know what an act means.**
+//!
+//! ```text
+//!   Payload          the app's act, canonical bytes, opaque here
+//!   RailAct          Record{payload} | Correct{corrects, replacement?}
+//!   SignedOp         + seq + signature — the journal line's body
+//!   Op<SignedOp>     corpus-engine's envelope: id, v, ts, actor
+//!   RingJournal      the log on disk, one writer
+//!   admit()          ops -> (acts in ONE order, gaps)
+//!   <the app>        acts -> whatever the app is about
+//! ```
+//!
+//! What the app gets back from [`admit`] is already deduplicated, signature-
+//! checked, roster-admitted, sequence-audited, void-filtered and **totally
+//! ordered**. Its reducer runs over that list and cannot reintroduce a
+//! divergence, because there is no ordering decision left to make.
+//!
+//! # Two things live in the rail that look like they belong to an app
+//!
+//! **Correction.** "This earlier act was wrong, and it never comes back" is
+//! not an expense rule — a tool-lending board needs it the first time someone
+//! writes *I returned the drill* and then *no I didn't*. It is also the rule
+//! most easily got wrong: the void set has to be built from every correction
+//! at once, never by walking for liveness, or it stops being commutative.
+//! One implementation, in [`admit`], and no app re-derives it.
+//!
+//! **The roster.** Who is in this ring and which keys they sign with is
+//! membership, not meaning. An op signed by a key nobody claims is a gap
+//! before any app sees it.
+//!
+//! # Three decisions worth knowing before reading the code
+//!
+//! **The node key signs, the roster binds.** An op's `actor` is the hex
+//! public key that signed it, because that is the only field in the whole
+//! line the writer cannot forge for someone else (ARCH §18.1). The [`Roster`]
+//! then says which keys belong to which person. One person with two laptops
+//! is two entries in one roster row — accepted, not solved.
+//!
+//! **A correction is a compensating entry, and it is visible.** Nothing is
+//! ever rewritten or deleted. A [`RailAct::Correct`] voids an earlier op and
+//! may re-state it; the void is permanent, so a correction never resurrects
+//! what an earlier correction voided. To put something back, write it again.
+//!
+//! **The rail refuses to fake completeness.** [`admit`] returns
+//! [`RailGap`]s alongside the acts. A log that cannot say "I may be missing
+//! something" lets an app state a wrong total with complete confidence, which
+//! is worse than refusing to answer (ARCH §18.3).
+//!
+//! # Where the journal is
+//!
+//! This crate is the FOLD and nothing else: vocabulary, signing, admission,
+//! the sync digest. It performs no I/O and opens no file. The append-only
+//! journal on disk — `RingRail`, `RingJournal`, and the door that refuses
+//! what the rail can judge — is `commonwealth-rail`, which depends on this
+//! crate. The split is what lets a second application (canon) reuse the fold
+//! without inheriting a file layout, and it is why `admit` takes ops rather
+//! than a path.
 
-pub mod admit;
-pub mod chain;
-pub mod guests;
-pub mod ingest;
-pub mod payload;
+mod admit;
+mod attest;
+mod hash;
+mod introduce;
+mod membership;
+mod op;
+mod payload;
+mod sig;
+mod sync;
+mod view;
 
-pub use admit::{Audience, Folded, fold};
-pub use chain::{
-    ActId, Actor, Admit, AppId, Body, Correct, Draft, Genesis, GroupId, Guest, GuestEvent, Interaction, Name, Nonce,
-    OnBehalfOf, ParseError, Record, Role, Sig, Speaker, VerifiedAct, admit_message,
-};
-pub use guests::{GuestBook, GuestChange, GuestEntry};
-pub use ingest::{Holdable, Ingest, Journal, MAX_SKEW_SECS, Standing, Why};
-pub use payload::{MAX_PAYLOAD_BYTES, Payload, PayloadError};
+use std::collections::BTreeMap;
+
+/// The signing key the shipped [`RingSigner`] implementation is written for.
+pub use ed25519_dalek::SigningKey;
+use serde::{Deserialize, Serialize};
+
+pub use admit::{admit, body_json, Admission, AdmittedOp, GapClass, RailGap};
+pub use attest::{AttestRefusal, GuestAttestation};
+pub use introduce::{trace, trace_op, Introduce, Vouch, VouchStatus};
+pub use membership::{membership, Membership};
+pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
+pub use sig::{actor_of, ring_op_message, sign_ring_op};
+pub use sync::{digest, ops_missing_from, ops_missing_from_within, Compaction, Floors, NO_BUDGET};
+pub use view::{Digest, View, DIGEST_V};
+
+/// The journal envelope, re-exported so a consumer of the rail names ONE
+/// crate. `Op<SignedOp>` is what crosses the ring-sync wire
+/// (`commonwealth-api/src/routes_internal/ring_sync.rs`,
+/// `sovereign-mesh/src/ring_sync.rs`), and a caller that had to name `oplog`
+/// separately would be free to reach a different version of it.
+pub use hash::ContentHash;
+pub use op::{Journaled, Op, OpId, SkippedLine};
+
+// A consumer cannot use this crate without both of these, and until 2026-09-04
+// neither was exported — so the only shipped `RingSigner` impl was for a type
+// the crate refused to hand you, and the only `Payload` constructor took a type
+// it never named. Both forced the caller to add the dependency themselves and
+// match our version by hand; a mismatch makes `impl RingSigner for SigningKey`
+// silently not apply to their key, which is a trait-resolution error a long way
+// from its cause. Found by physically lifting the package (cw-lift), not by a
+// gate — nothing in the repo can see an export that is missing.
+/// The JSON value [`Payload::new`] takes.
+pub use serde_json::Value;
+
+// ── Local-only namespaces ────────────────────────────────────
+
+/// Namespaces a node may journal but never OFFERS to a peer: the list a
+/// returning node advertises and every ring-sync answer skip them
+/// (`commonwealth-rail`'s `RingRail::namespaces` and
+/// `RingJournal::ops_missing_from_within`). The why per entry is
+/// `commonwealth_state::peer_preferences::GOSSIP_EXCLUDED_APP_IDS`, which is
+/// this list plus the namespaces that left the KV gossip FOR the ring
+/// (five-programs-37).
+pub const LOCAL_ONLY_NAMESPACES: &[&str] = &[
+    "peer_preferences",
+    "work-atlas-private",
+    "notes-private",
+    "activity-private",
+    "portfolio-private",
+    "wikipedia-newsworthy-status",
+    "wikipedia-newsworthy-portal",
+];
+
+/// The one predicate over [`LOCAL_ONLY_NAMESPACES`].
+pub fn is_local_only(namespace: &str) -> bool {
+    LOCAL_ONLY_NAMESPACES.contains(&namespace)
+}
+
+// ── People ───────────────────────────────────────────────────
+
+/// A member of the ring, by the name the house calls them.
+///
+/// A display name and not a key: the whole point of a ring app is that "Alex
+/// paid for groceries" renders as *Alex*. The binding from name to signing
+/// key lives in the [`Roster`], which is why the name can be changed without
+/// rewriting history.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Default)]
+#[serde(transparent)]
+pub struct Person(String);
+
+impl Person {
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl From<&str> for Person {
+    fn from(s: &str) -> Self {
+        Self(s.to_string())
+    }
+}
+
+impl From<String> for Person {
+    fn from(s: String) -> Self {
+        Self(s)
+    }
+}
+
+impl std::fmt::Display for Person {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+/// Who is in this ring, and which keys they sign with.
+///
+/// A parameter of [`admit`], never part of the admitted state. It decides
+/// *membership* — an op signed by a key nobody claims is a gap, not an act —
+/// and it is never handed to an app as anything but the `person` on an
+/// already-admitted op. That separation is what lets an app's arithmetic stay
+/// a function of the op set as people join and leave: an app that reads the
+/// roster to decide who shares a cost re-divides every past expense the day a
+/// housemate moves in, and the reference app has a test pinning that it does
+/// not.
+///
+/// A row may also carry WHY it is here — the introduction the key was
+/// admitted on. That is provenance and not derivation: see [`Vouch`] and
+/// [`Introduce`] for the distinction, which is the same one this paragraph is
+/// about.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Roster {
+    /// Person → the hex node public keys that person signs with. Two laptops
+    /// is two keys in one row.
+    pub members: BTreeMap<Person, Vec<String>>,
+    /// Key → the introduction it was admitted on, for the keys that have one.
+    ///
+    /// Keyed by KEY and not by person because that is the grain of the
+    /// question: two laptops can join a ring on two different evenings, on
+    /// two different people's word.
+    ///
+    /// **`default` and `skip_serializing_if` are both load-bearing.** Every
+    /// `roster.json` on every deployed ring was written without this field,
+    /// and a shape that turned those into a parse error would be an outage
+    /// rather than a migration — they read as [`VouchStatus::Unknown`]. And a
+    /// roster with no vouches serializes to exactly the bytes it did before,
+    /// so adding the field moves no file that has nothing to say.
+    ///
+    /// A vouch here is a claim, never a conclusion: resolve it with
+    /// [`trace`] against an [`Admission`], which is the only thing that knows
+    /// whether the op exists and verifies.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub vouches: BTreeMap<String, Vouch>,
+}
+
+impl Roster {
+    pub fn new(members: BTreeMap<Person, Vec<String>>) -> Self {
+        Self {
+            members,
+            vouches: BTreeMap::new(),
+        }
+    }
+
+    /// Bind a key to a person, with the introduction it was admitted on.
+    ///
+    /// The ONE writer of both maps, so a vouch naming a key no row carries is
+    /// unrepresentable rather than checked (ARCH §7.1). `false` when the
+    /// person already signs with that key, and nothing is touched — a caller
+    /// re-running an add must not silently rewrite the warrant on a key that
+    /// is already in the ring.
+    pub fn bind_key(&mut self, person: Person, key: String, vouch: Option<Vouch>) -> bool {
+        let keys = self.members.entry(person).or_default();
+        if keys.iter().any(|k| k == &key) {
+            return false;
+        }
+        keys.push(key.clone());
+        if let Some(v) = vouch {
+            self.vouches.insert(key, v);
+        }
+        true
+    }
+
+    /// The introduction this key was admitted on, if the row carries one.
+    pub fn vouch_for(&self, key: &str) -> Option<&Vouch> {
+        self.vouches.get(key)
+    }
+
+    /// Who signed with this key, if anyone in the ring did.
+    pub fn person_for(&self, actor: &str) -> Option<&Person> {
+        self.members
+            .iter()
+            .find(|(_, keys)| keys.iter().any(|k| k == actor))
+            .map(|(p, _)| p)
+    }
+
+    /// Whether this name is one the ring knows.
+    pub fn knows(&self, person: &Person) -> bool {
+        self.members.contains_key(person)
+    }
+}
+
+/// Which reader answered the roster question, so the decision is visible at
+/// `tracing=debug` and a caller that needs to know (the CLI refusing to write
+/// a file nothing reads) can ask without re-deriving it.
+///
+/// Lived in the journal crate until fp-54: the rails daemon reports the
+/// origin beside the roster it answers with, and a consumer that names only
+/// the fold (the daemon after its Cargo swap) still has to say `File` from
+/// `Derived` without naming the journal half. `RosterSource` — the thing a
+/// DERIVED origin answers for — stays journal-side: it is the extension
+/// point the application implements, not vocabulary the fold judges.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RosterOrigin {
+    /// `<ring>/roster.json`, written by `svrn ring roster add`.
+    File,
+    /// A source installed for this namespace; the file is ignored.
+    Derived,
+}
+
+// ── What a line says ─────────────────────────────────────────
+
+/// What one line of a ring journal asserts.
+///
+/// Two cases, and the rail understands neither payload. `Correct` is here
+/// rather than in an app because voiding-without-resurrection is the rule
+/// that makes the whole thing commutative, and it is generic — see the module
+/// docs.
+///
+/// A correction's `replacement` is a [`Payload`] and never another
+/// `RailAct`, so a correction of a correction is *unrepresentable* rather
+/// than checked (ARCH §7.1). There is no nested-correction branch in
+/// [`admit`] because there is no way to write one.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "op", rename_all = "snake_case")]
+pub enum RailAct {
+    /// The app said something.
+    Record { payload: Payload },
+    /// An earlier op was wrong. It is voided — permanently, and visibly — and
+    /// optionally re-stated by `replacement`.
+    ///
+    /// A correction of a correction cancels that correction's replacement and
+    /// leaves the original op voided. Nothing ever comes back to life; to
+    /// restore an act, write it again.
+    Correct {
+        corrects: OpId,
+        replacement: Option<Payload>,
+    },
+    /// Everything this key wrote **before this op** is retired. The rail stops
+    /// asking for it, stops sending it, and stops calling its absence a hole.
+    ///
+    /// A seal carries no `actor` and no range, and both omissions are the
+    /// design (ARCH §7.1 — unrepresentable rather than checked):
+    ///
+    /// - **No actor**, so sealing someone else's history cannot be written.
+    ///   The floor a seal raises is the floor of whoever signed it, and the
+    ///   signature is the only field on the line a writer cannot forge for
+    ///   somebody else (ARCH §18.1).
+    /// - **No range**, so the floor is the seal's own `seq`. A seal cannot
+    ///   claim past what its author has actually reached, and a node that
+    ///   holds the seal necessarily holds the floor — which is what keeps the
+    ///   contiguous run in [`digest`] non-empty for a compacted actor.
+    ///
+    /// It carries no payload, so an app's reducer never sees it
+    /// ([`AdmittedOp::applies`] is false); it is delivery, not meaning.
+    Seal,
+    /// A member says: this person and this key are in the ring. One of the
+    /// two membership acts (`RING_APPLICATIONS.md` "Amendment 2026-09-18");
+    /// membership is computed from the seed plus these and [`Self::Remove`],
+    /// and nothing else on the journal changes it.
+    ///
+    /// The binding rides IN the record — the reason a `roster.json` edit
+    /// cannot retroactively flip a member's past: acts admitted through an
+    /// `Admit` resolve through the record, not through the file. Undo is the
+    /// [`Self::Correct`] that exists: voiding an `Admit` drops that key and
+    /// every key it transitively admitted, because their admissions were
+    /// signed by a key that no longer holds.
+    ///
+    /// Carries no [`Payload`] and never reaches an app reducer — an app that
+    /// read membership would re-divide every past expense the day someone
+    /// joins (the no-re-division property).
+    Admit {
+        person: Person,
+        /// The key being admitted, as actor hex — the same spelling every
+        /// signature on the wire already uses.
+        key: String,
+    },
+    /// A member says: this key is out. The cut is by the removed key's own
+    /// signed seq (`through_seq`) and never by a position in the order —
+    /// `(ts_unix, actor, seq, id)` starts with the author's own timestamp, so
+    /// a positional cutoff could be dodged by backdating, while a seq cutoff
+    /// cannot (admit already refuses a fork on seq). Two cuts compose by
+    /// minimum with no shared order (the OpenSSH KRL shape).
+    ///
+    /// The cut is PROSPECTIVE at its position in the rail's order: past acts
+    /// by the key stay admitted. PKISN's rule falls out of that position
+    /// scoping — a removed key's later `Remove`s do not count, so a cut party
+    /// cannot cut back. Undo is [`Self::Correct`]: voiding the `Remove`
+    /// restores the member and admits what they wrote while removed.
+    Remove {
+        key: String,
+        /// The last seq of the removed key's own chain that this cut covers.
+        through_seq: u64,
+    },
+}
+
+impl RailAct {
+    /// Read an act from an app's request body, with refusals a person can
+    /// act on.
+    ///
+    /// The rail's own refusals ([`PayloadError`]) are already sentences
+    /// naming the fix, but they reach here wrapped by serde, which renders a
+    /// `Deserialize` failure with its own prose and a trailing position that
+    /// means nothing for a value that never came from a file. This unwraps
+    /// that: the route returns what the type said, not what serde said about
+    /// what the type said.
+    ///
+    /// One entry point for the same reason the gap renderer is one function
+    /// (ARCH §10.6) — the 422 body an app shows a housemate must be the same
+    /// words the terminal shows.
+    pub fn from_json(value: serde_json::Value) -> Result<Self, RailError> {
+        serde_json::from_value(value).map_err(|e| {
+            let raw = e.to_string();
+            // serde appends " at line 0 column 0" to a `from_value` failure,
+            // which is a position in a document that does not exist.
+            let cleaned = raw
+                .split(" at line ")
+                .next()
+                .unwrap_or(&raw)
+                .trim()
+                .to_string();
+            RailError::Rejected(if cleaned.is_empty() { raw } else { cleaned })
+        })
+    }
+
+    /// Every payload this act carries — one, or none.
+    ///
+    /// Public since the split (2026-09-04): the append door in
+    /// `commonwealth-rail` asserts on it, and a second walk of the two
+    /// variants there would be a second answer to "what does this act carry"
+    /// (ARCH §10.6).
+    pub fn payloads(&self) -> Option<&Payload> {
+        match self {
+            Self::Record { payload } => Some(payload),
+            Self::Correct { replacement, .. } => replacement.as_ref(),
+            Self::Seal | Self::Admit { .. } | Self::Remove { .. } => None,
+        }
+    }
+}
+
+/// The journal line's body: the act, plus the two fields that make it
+/// attributable and countable.
+///
+/// `seq` is the keystone of the whole design. Per-actor sequence numbers are
+/// the only thing here that can tell "nothing happened" apart from "it never
+/// reached me", and they give a sync digest of `{actor → max_seq}` — about
+/// 600 bytes regardless of how long the log is — instead of shipping the
+/// whole namespace to every peer.
+///
+/// They also fix a collision the envelope documents as by-design:
+/// [`Op::new`] hashes `(prefix, ts, actor, body)`, so two byte-identical acts
+/// in the same second by the same actor share an id. Harmless for governance;
+/// for a money app it silently merges two real coffees into one. `seq` differs,
+/// so the body differs, so the ids differ.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SignedOp {
+    /// This actor's own counter within this namespace, starting at 0 and
+    /// contiguous. A hole means an op has not reached us.
+    pub seq: u64,
+    /// Hex Ed25519 signature over [`sig::ring_op_message`]. Not itself signed
+    /// (that would be circular) and not part of what is signed.
+    pub sig: String,
+    #[serde(flatten)]
+    pub act: RailAct,
+    /// Whose words this act was, when the key that signed it is not theirs —
+    /// a door that authenticated somebody the ring holds no key for. A name
+    /// and nothing else: not a key, not a role, not a scope.
+    ///
+    /// **A member's signature over somebody else's name means "this door says
+    /// so", and no more.** The rail never looks the name up in the
+    /// [`Roster`], never refuses on it and never lets it stand in for
+    /// authorship — `actor` is still the only field a writer cannot forge for
+    /// someone else. Carrying is not interpreting; what a name is allowed to
+    /// mean is the door's question, decided where the door authenticates.
+    ///
+    /// Declared LAST and skipped when absent, so every op written before this
+    /// field existed serialises to the same bytes, derives the same
+    /// [`Op::new`] id, and verifies under the same signature — which
+    /// `rail_ops_written_before_on_behalf_of_still_verify` holds to.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub on_behalf_of: Option<String>,
+    /// The author's view of the ring at the moment of writing: every actor's
+    /// [`View`] over what this writer held (the sync digest's entries). It is
+    /// the act citing its context — the DAG heads of
+    /// `RING_APP_LIBRARY.md` §19 step 0 — so an equivocation carries two
+    /// claimed histories in its own two lines, and a future cut
+    /// (`Remove{key, through_seq}`) is weighable against what its remover
+    /// claimed to have seen.
+    ///
+    /// **Self-asserted and unforgable-by-others, like the name above it:** a
+    /// writer claims their own view; nobody can rewrite it in flight because
+    /// it is inside the signature. The journal stamps it at the signing door
+    /// — a caller-supplied `view` is as meaningless as a caller-supplied
+    /// `on_behalf_of`. Absent today for every hand-built fixture and every
+    /// op written before the field existed, and they verify unchanged.
+    ///
+    /// LAST and skipped when absent, for the byte-compatibility reason this
+    /// struct now owes twice (the `on_behalf_of` comment above).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub view: Option<crate::Digest>,
+}
+
+/// The line format version the membership act cohort ships at
+/// (`RailAct::Admit` / [`RailAct::Remove`]). The original three kinds stay at
+/// `Journaled::VERSION` (1) — see [`SignedOp::line_version`].
+pub const MEMBERSHIP_LINE_VERSION: u32 = 2;
+
+impl Journaled for SignedOp {
+    const FILE: &'static str = "ring_oplog.jsonl";
+    const ID_PREFIX: &'static str = "ring";
+    const LABEL: &'static str = "ring_rail";
+    /// This build reads the membership cohort's lines too (see
+    /// [`Self::line_version`]).
+    const UNDERSTANDS: u32 = MEMBERSHIP_LINE_VERSION;
+    /// The membership acts — [`RailAct::Admit`] and [`RailAct::Remove`] —
+    /// ship at the bumped line version and the original three keep the bytes
+    /// they always had, so an un-upgraded node names exactly the acts it
+    /// cannot read `NewerVersionLine` (leg 5 of `ra-membership-is-order-free`)
+    /// and a ring with no membership act folds byte-identically to the build
+    /// before.
+    fn line_version(&self) -> u32 {
+        match self.act {
+            RailAct::Admit { .. } | RailAct::Remove { .. } => MEMBERSHIP_LINE_VERSION,
+            _ => Self::VERSION,
+        }
+    }
+}
+
+// ── Errors ───────────────────────────────────────────────────
+
+/// Named `RailError` and not `LedgerError` because `sovereign-pipeline`
+/// already owns that name for a cost ledger — a different concept that
+/// shared a word — and because this layer stopped being a ledger when the
+/// payload became opaque.
+#[derive(Debug, thiserror::Error)]
+pub enum RailError {
+    /// A namespace is a directory name. Anything that is not plainly one is
+    /// refused here rather than sanitised downstream, so no caller can reach
+    /// outside its own namespace by naming a path (ARCH §7.1).
+    #[error("'{0}' is not a ring namespace — use 1..=64 characters from a-z, 0-9, '-' and '_'")]
+    BadNamespace(String),
+    /// The wall clock is unreadable. Refusing to sign is the only honest
+    /// answer: the previous `unwrap_or(0)` quietly signed lines stamped 0,
+    /// on the signature path itself (ROOT_CAUSE_FIXES C4).
+    #[error("the wall clock is unreadable — refusing to sign a line stamped 0")]
+    Clock,
+    #[error("ring rail io: {0}")]
+    Io(String),
+    /// The door refused to author this act. The string is a sentence, because
+    /// it is the 422 body an app shows a person.
+    #[error("refused: {0}")]
+    Rejected(String),
+    /// Authoring under a key this namespace's roster does not claim.
+    ///
+    /// Typed rather than one more [`RailError::Rejected`] sentence because
+    /// the FIX depends on where the roster comes from, and only the caller
+    /// holding the rail knows that ([`RingRail::roster_origin`] in
+    /// `commonwealth-rail`). The Display below is the right instruction for a
+    /// ring written by hand from the CLI; a namespace whose roster is DERIVED
+    /// has no such command, and its renderer says so. Recognising this case
+    /// by matching on the prose would be the string `match` §2.1 forbids —
+    /// and the prose is a 422 body, so it is allowed to change.
+    #[error(
+        "this node signs as {}… and nobody in the `{namespace}` roster claims that \
+         key, so every op it writes would be unreadable to the ring — add \
+         yourself first with `svrn ring roster add <you> --self --ring {namespace}`",
+        actor_prefix(.actor)
+    )]
+    NotInRoster { actor: String, namespace: String },
+    /// A guest attestation the journal's writer would not honour. Typed so
+    /// the refusal's name crosses a dial intact (`AttestRefusal::name`) and
+    /// the door can hand it to the caller verbatim.
+    #[error("the guest attestation was refused: {0}")]
+    AttestRefused(AttestRefusal),
+}
+
+/// Enough of an actor key to recognise, short enough to read in a sentence.
+fn actor_prefix(actor: &str) -> String {
+    actor.chars().take(12).collect()
+}
+
+// ── Rendering the two fields every reader shortens ───────────
+//
+// An op id is 40-odd characters and a timestamp is an integer, and every
+// surface that shows either to a person cuts them the same way. These were
+// `short_id` and `short_stamp` in `svrn ring`'s own module until the roster
+// warrant needed the same two — and a sentence the rail composes must not
+// spell a date differently from the log line printed above it (ARCH §10.6).
+
+/// Enough of an op id to recognise, short enough to read in a sentence.
+pub fn short_id(id: &str) -> String {
+    if id.chars().count() > 12 {
+        format!("{}…", id.chars().take(12).collect::<String>())
+    } else {
+        id.to_string()
+    }
+}
+
+/// `YYYY-MM-DD HH:MM` in UTC. Enough to order a conversation about the
+/// journal, without a date library.
+pub fn short_stamp(ts: i64) -> String {
+    let days = ts.div_euclid(86_400);
+    let secs = ts.rem_euclid(86_400);
+    // Civil-from-days (Howard Hinnant's algorithm), shifted to the 0000-03-01
+    // era so leap years fall at the end of the cycle.
+    let z = days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z.rem_euclid(146_097);
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let y = yoe + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y = if m <= 2 { y + 1 } else { y };
+    format!(
+        "{y:04}-{m:02}-{d:02} {:02}:{:02}",
+        secs / 3600,
+        (secs % 3600) / 60
+    )
+}
+
+// ── Signing without holding key material ─────────────────────
+
+/// How the rail gets a signature, without ever seeing a private key.
+///
+/// The daemon owns the node's `SigningKey`; `AppState` installs one of these
+/// and so never holds raw key material, and `commonwealth-api` needs no
+/// crypto dependency. That is not a new seam — it is exactly the shape
+/// `AppState::self_dial_signer` already uses for the gossip self-stamp, and
+/// reusing it means there is one answer to "who may sign as this node"
+/// (ARCH §10.6) rather than two.
+pub trait RingSigner: Send + Sync {
+    /// The hex public key this signer signs as. Becomes the op's `actor`, and
+    /// is what the roster is looked up by.
+    fn actor(&self) -> String;
+    /// Hex Ed25519 signature over [`sig::ring_op_message`].
+    fn sign(&self, namespace: &str, ts_unix: i64, seq: u64, body_json: &str) -> String;
+}
+
+/// The direct implementation, for a caller that legitimately holds the key —
+/// the daemon at startup, and the tests.
+impl RingSigner for SigningKey {
+    fn actor(&self) -> String {
+        sig::actor_of(self)
+    }
+    fn sign(&self, namespace: &str, ts_unix: i64, seq: u64, body_json: &str) -> String {
+        sig::sign_ring_op(self, namespace, ts_unix, seq, body_json)
+    }
+}
+
+/// The other half of [`RingSigner`], and it was missing.
+///
+/// Signing was a trait and verifying was a call to a free function. Both
+/// halves worked, which is exactly why the asymmetry was invisible: they are
+/// one scheme, and only one of them could be replaced. A node that installs a
+/// different `RingSigner` writes ops that admission — wired to ed25519 and
+/// nothing else — reports as `BadSignature` forever, and nothing in the type
+/// system says so. One question, one seam (ARCH §10.6).
+///
+/// **Refusal is the only safe answer.** An implementation that cannot judge a
+/// signature returns `false`; [`admit`] turns that into a
+/// [`RailGap::BadSignature`] and never into an admitted op. There is no
+/// "cannot tell" that means yes (ARCH §18.3).
+///
+/// **A verifier is not a roster.** It answers "did this key sign these bytes",
+/// and nothing else. Membership stays [`Roster`]'s, so installing a permissive
+/// verifier still cannot put a stranger's act into the ring.
+pub trait RingVerifier: Send + Sync {
+    /// Which scheme this is, named in the admission trace. A verifier that
+    /// admits everything is a catastrophe no log can show unless the log says
+    /// which verifier ran (ARCH §9.1).
+    fn name(&self) -> &'static str;
+    /// Whether `sig_hex` is `actor`'s signature over [`sig::ring_op_message`]
+    /// of these fields. `false` on anything it cannot judge.
+    fn verify(
+        &self,
+        actor: &str,
+        namespace: &str,
+        ts_unix: i64,
+        seq: u64,
+        body_json: &str,
+        sig_hex: &str,
+    ) -> bool;
+}
+
+/// The shipped verifier: Ed25519 over the exact bytes [`RingSigner`]'s own
+/// implementation signs. The one production answer, and the reason
+/// `sig::verify_ring_op` is no longer reachable from outside this crate —
+/// leaving it public would leave the hardcode next to the seam, which is how
+/// the asymmetry comes back (ARCH §7).
+pub struct Ed25519Verifier;
+
+impl RingVerifier for Ed25519Verifier {
+    fn name(&self) -> &'static str {
+        "ed25519"
+    }
+    fn verify(
+        &self,
+        actor: &str,
+        namespace: &str,
+        ts_unix: i64,
+        seq: u64,
+        body_json: &str,
+        sig_hex: &str,
+    ) -> bool {
+        sig::verify_ring_op(actor, namespace, ts_unix, seq, body_json, sig_hex)
+    }
+}
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod tests_sealing;
+// The roster-provenance half, split out when the two together passed the
+// 1200-line ceiling (ARCH §3.2). Named for its subject, not numbered.
+#[cfg(test)]
+mod tests_introduce;
+
+/// The rail's ONE set of op fixtures.
+///
+/// Public behind `test-support` because the journal tests live in
+/// `commonwealth-rail` and the fold tests live here, and both have to be
+/// talking about the same signed op or neither proves anything. Two copies of
+/// "what does a signed op look like" would be two answers to the question the
+/// signature exists to settle (ARCH §10.6).
+#[cfg(any(test, feature = "test-support"))]
+// Fixture code, and it compiles as LIB code under the feature rather than
+// under `cfg(test)` — so clippy's allow-unwrap-in-tests exemption does not
+// reach it and the panic ratchet would read a builder as production risk.
+#[allow(clippy::unwrap_used, clippy::expect_used)]
+pub mod tests_support;

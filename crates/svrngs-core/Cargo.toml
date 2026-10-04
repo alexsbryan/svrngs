@@ -1,13 +1,12 @@
 [package]
 name = "svrngs-core"
-description = "The record (DESIGN C1), sans-IO: the chain, one writer's ingest, order and void."
 version.workspace = true
-edition.workspace = true
+# The fork keeps upstream's edition: moving editions is a second change, and a
+# fork lands as one (ARCH 2).
+edition = "2021"
 license.workspace = true
+description = "A group's record: signed acts, admission into one total order, membership and sync. Pure: no filesystem, no clock, no network. Forked from commonwealth-ai's commonwealth-rail-core, with oplog-types and kernel-types' ContentHash inlined as modules."
 
-# No I/O dependency, ever (DESIGN D2a; scripts/lean_check.py refuses one): the
-# caller reads the disk and the clock and holds the keys; this crate hashes,
-# verifies and decides.
 [dependencies]
 blake3 = { workspace = true }
 ed25519-dalek = { workspace = true }
@@ -15,6 +14,19 @@ hex = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
+# Admission says what it refuses at debug.
+tracing = { workspace = true }
 
-[dev-dependencies]
-ed25519-dalek = { workspace = true }
+[features]
+# The op fixtures, for a crate that owns a journal and must build the same
+# signed op as this crate's tests.
+test-support = []
+
+# Upstream's posture, so the fork lands unchanged: commonwealth-ai allows the
+# first workspace-wide and keeps the other three as warnings under a count
+# ratchet. Burn them down here as edits of our own, never inside the fork.
+[lints.clippy]
+empty_line_after_doc_comments = "allow"
+cloned_ref_to_slice_refs = "allow"
+explicit_auto_deref = "allow"
+useless_vec = "allow"

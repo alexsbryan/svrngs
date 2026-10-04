@@ -3,12 +3,11 @@
 > **Normative for building, 2026-10-03.** svrngs is its own repository, standing
 > apart from commonwealth-ai by operator direction of 2026-10-03, and this is the
 > design it is built to. It moved here from commonwealth-ai's
-> `docs/RING_SPEC.md` Part I, where the rest remains as the inventory of the ring
-> code svrngs runs and the units that close its gaps. The design record —
-> rationale, prior art and history — stays in commonwealth-ai's
-> `docs/RING_APP_LIBRARY.md`, cited as LIB §n. A path in backticks that is not
-> in this repository is in commonwealth-ai: code this design cites, or runs as
-> the released `cw-rails` binary (D3), never code it links.
+> `docs/RING_SPEC.md` Part I, where the rest remains as the inventory of the
+> ring code svrngs forks and replaces. The design record — rationale, prior art
+> and history — stays in commonwealth-ai's `docs/RING_APP_LIBRARY.md`, cited as
+> LIB §n. A path in backticks that is not in this repository is in
+> commonwealth-ai: code this design forks or cites, never code it links.
 
 ## Direction, 2026-10-03 — this section overrides everything below it
 
@@ -16,61 +15,55 @@ The operator, after E0's code was built: "I don't really want integration code
 in our library. The only responsibility should be creating the ring from discord
 (in the most generic way) and something of `exec` level simplicity for running
 whatever is on the ring." And the promise to developers: **"anything you can
-run on localhost you can share on the ring."** Then the route, the same day:
-svrngs does not grow a record of its own. **The group runs on commonwealth's
-`cw-rails`, shipped inside svrngs as a sidecar binary** — taken from
-commonwealth-ai's releases, pinned by tag and checksum, never linked as a crate
-(D3). Most of the flow already runs in commonwealth-ai for the machines of one
-mesh, and the record svrngs began that morning duplicated its rail.
+run on localhost you can share on the ring."** Then, the same day, where the
+group's code comes from: **svrngs owns it, forked from commonwealth-ai**
+(operator, over shipping commonwealth's `cw-rails` as a sidecar: "why jump
+through hoops for a 5k line package?"). `cw-rails` is the mesh's daemon — about
+30k lines over nine crates — and a group needs its ring slice, about 5k: the
+record, the ring journal and sync, the ring routes and the identity door.
 
-- **svrngs is the product; cw-rails is the group.** svrngs is what a person
-  installs and reads: the app, the `svrngs` command, plain words, the chat
-  doors, the reference apps and the demos. cw-rails holds everything the group
-  is — its record, who is in it, invites and removal, sync, the member door and
-  the guest door — and svrngs drives it over loopback, holding no group state
-  of its own (D2b).
 - **An app is a localhost service.** A member shares it with one command, and
   every other member reaches it through the member door over iroh, their
-  identity verified in a header the app can read
-  (`commonwealth/crates/commonwealth-transport/src/iroh_identity_forward.rs`).
-  The app needs no login, no SDK and no bundle. Jellyfin is an app; Expenses is
-  a small web app on localhost.
+  identity verified in a header the app can read. The app needs no login, no
+  SDK and no bundle. Jellyfin is an app; Expenses is a small web app on
+  localhost.
 - **The group offers its record to apps.** An app that wants shared state that
   outlives its host's computer appends acts to the group's journal and reads
-  them back over cw-rails's loopback rail API (`/v1/rail/append`, `/log`,
-  `/live`); every member's copy holds them. An app may keep its own state
-  instead; the group does not care.
+  them back over a loopback API on its own node; every member's copy holds
+  them. An app may keep its own state instead. A fold engine on members'
+  devices (`svrngs-engine`) waits in D8 until an app needs its state offline on
+  a device that is not its host.
 - **Joining starts on computers; the browser is a runtime away.** `svrngs join
   <link>` puts a person's computer in the group, and they open shared apps in
   their own browser at a localhost address their node serves. The browser's
-  dial is measured, not assumed: a stock Chrome tab running iroh in wasm dialled
-  a live node's guest channel through the relay and read `/v1/rail/log` with a
-  guest bearer, `HTTP/1.1 200 OK` (commonwealth-ai `ralph/DECISIONS.md`,
-  browser-dial-2, 2026-09-22). What the browser lacks is a runtime that renders
-  apps through that dial — fetch, POST and streaming.
+  dial is measured: a stock Chrome tab running iroh in wasm dialled a live
+  node's guest channel through the relay and read `/v1/rail/log` with a guest
+  bearer, `HTTP/1.1 200 OK` (commonwealth-ai `ralph/DECISIONS.md`,
+  browser-dial-2). What it lacks is a runtime that renders apps through that
+  dial — fetch, POST and streaming.
 - **Chats are doors, outside svrngs' core.** svrngs exposes `svrngs ring new` →
-  a link, and `svrngs join <link>`. A small adapter per chat — Discord, Slack —
-  lives in its own package and does only "make a group for this channel and
-  post its link". The core never knows a chat exists.
-- **The gaps are commonwealth-ai's to close.** The flow runs today for mesh
-  members only. commonwealth-ai's `docs/RING_SPEC.md` names the units that
-  close it, in order: the ring-facing pieces outside cw-rails consolidated into
-  it; a group distinct from the mesh; an invite that admits to a group;
-  removal; the guest door with identity, streaming and apps; the browser
-  runtime; a person's own writes; a list of the apps a computer shares. svrngs
-  takes each by bumping its pin, and its experiments are those units' demos.
+  a link, and `svrngs join <link>`. A small adapter per chat lives in its own
+  package and does only "make a group for this channel and post its link".
+- **The fork, piece by piece.** `crates/svrngs-core` is commonwealth-ai's
+  `commonwealth-rail-core` at `e1a43bcd2`, with `oplog-types` and
+  `ContentHash` inlined as modules. Next, into `svrngs-node`:
+  `commonwealth-rail` (the journal per group), `ring_sync` with its journal,
+  `ring_routes`, `iroh_identity_forward.rs`, and the `/internal/ring/sync`
+  bodies from `sovereign-peer-wire`. Each lands unchanged, then changes as
+  svrngs' own: a group is not a mesh, so the mesh lookups go — admission
+  (`commonwealth-rails/src/acceptor.rs:47-61`), sync's peers
+  (`ring_sync/journal.rs:153-164`), the default roster (`lib.rs:404`) — and the
+  register decides. Then invite, removal, the guest channel on the identity
+  door, the browser runtime and a person's own writes. The design rounds'
+  findings in the record — the id preimage without `ts` (H5), membership
+  ignoring `through_seq` (D1) — are edits to `svrngs-core`.
 
-**Set aside:** `crates/svrngs-core`, the journal actor and store in
-`crates/svrngs`, `crates/svrngs-engine`, `bridge/` as a runtime (slash commands,
-the handler runner, guest-grade acting without a key, the origin gate) and
-`scripts/ports.py`. They stay in the tree, built on by nothing, until the first
-demo on the sidecar passes; that demo's commit deletes them and names its bar.
-What carries over from them is requirements, not code: C1's rules — membership
-only from the register, a sequenced cut, the id over the whole preimage — become
-bars on the commonwealth-ai unit that needs each, when it starts. **Kept:** the
-Discord setup in `bridge/setup.mjs` and `bridge/discord.mjs`, as the Discord
-door's first code; the plain-words allowlist; `apps/expenses/`. E0's
-experiments and bars in D7 and D9 are superseded by those units' demos.
+**Deleted:** E0's bot — the rewritten core, the host process with its journal
+actor and handler runner, and the bridge's test harness. Tag `e0-bot` holds it.
+**Kept:** `svrngs-engine`; `bridge/setup.mjs`, `bridge/discord.mjs` and the
+plain-words list `bridge/words.json`, as the Discord door's first code;
+`apps/expenses/`. E0's experiments and bars in D7 and D9 are superseded by the
+fork's units and their demos.
 
 ## D0. What it must do well, and nothing else
 
@@ -313,91 +306,74 @@ each owns are written down in `ARCHITECTURE.md`, rust-analyzer style.
 
 ## D2b. Domains
 
-svrngs is the product people install. It shares no source with commonwealth-ai
-and meets the rest of the world at the wire and at one released binary.
+svrngs is the product people install and the platform developers build on, in
+its own repository. It links no code from commonwealth-ai — the group's code
+is a fork it owns — and meets the rest of the world only at the wire.
 
-| Domain | What it owns | Meets svrngs by |
+| Domain | What it is | Meets svrngs by |
 |---|---|---|
-| **svrngs** | what a person installs and reads: the app and the process it supervises, the `svrngs` command, plain words, the reference apps, the demos | — |
-| **commonwealth (`cw-rails`)** | the group: its record and register, sync, invites and removal, the member door that forwards with a verified identity, the guest door, the list of apps a computer shares | the released `cw-rails` binary (D3) and its loopback API |
-| **chat doors** | one package per chat, Discord first: make a group for this channel and post its link | the `svrngs` command; nothing in svrngs imports one |
-| **apps** | anything served on localhost; app-specific code lives only in the app | HTTP through the member door, the person's identity in a header; the rail API if it wants a shared record |
-| **sovereign (svrn)** | local AI on a member's computer | its OpenAI-compatible endpoint on loopback; its web UI is an app like any other |
+| **svrngs** | the record and its rules, the node and its door, the runtime, the SDK, the app, the bridge, the reference apps | — |
+| **apps** | `apps/<app>/` bundles and `providers/<provider>/` declarations; the only place app- or provider-specific code lives | the SDK |
+| **sovereign (svrn)** | local AI on a member's computer | its OpenAI-compatible endpoint, called on loopback by that member's own node (C3a) |
+| **lent services** | anything a member runs — Jellyfin, a svrn daemon's web UI | HTTP through the member door |
+| **commonwealth-ai** | the mesh for one owner's machines, and the ring code svrngs forked | nothing; `scripts/ports.py` lists each forked file beside its original |
 
-- **App-specific code has one home.** Expenses is in `apps/expenses/`, never in
-  cw-rails or the command. Jellyfin's viewer account, secret and refused paths
-  are its provider declaration, never strings in the door. Discord is its
-  door's package. A model belongs to the svrn daemon.
+- **App-specific code has one home.** Expenses' fold is in `apps/expenses/`,
+  never in `svrngs-core`. Jellyfin's viewer account, secret and refused paths
+  are its provider declaration, never strings in the door. Discord is an adapter
+  module, never in the bridge's core. A model belongs to the svrn daemon.
 - **"svrngs" names the product.** A person reads svrngs, their group's name and
   apps' names; the code says group, act, register and keeper.
-- **The mesh is not a group.** commonwealth's mesh decides which machines belong
-  to one owner; a group's membership is its own register. Today cw-rails's ring
-  routes ask the mesh, and svrngs ships no cw-rails that does.
+- **The mesh is not a group.** commonwealth-ai's mesh decides which machines
+  belong to one owner; a group's membership is its register (D4).
 
-**Toward commonwealth-ai** (operator, 2026-10-03; this replaces the morning's
-"lift, then retire"):
+**Toward commonwealth-ai** (operator, 2026-10-03):
 
-- **cw-rails is the engine, and stays commonwealth's.** The ring routes and
-  sync, the member door and the guest door are not retired. The ring-facing
-  pieces that live outside cw-rails move into it, because cw-rails is what
-  svrngs ships and it may not depend on a sovereign crate
-  (`quality/ARCH_LAYERS.toml:704-707`, enforced by layer-gate and proven by
-  `scripts/cw-rails-lift.sh`, which builds and runs cw-rails outside the
-  monorepo).
-- **A fix goes upstream.** A defect svrngs finds in how the group behaves is
-  fixed in commonwealth-ai and arrives by bumping the pin. svrngs never patches
-  around the sidecar and never carries a second copy of its logic.
-- **The loopback API is the contract.** The routes and flags svrngs calls are
-  listed in commonwealth-ai's `docs/RING_SPEC.md` §10 and covered by a test
-  there, so a release that breaks one fails in commonwealth-ai, not in svrngs.
-- **The mesh stays commonwealth's.** One owner's machines, inference routing,
-  the work plane and its donor loop solve a different problem from a group of
-  people. svrngs does not use them.
+- **Ring code is forked, then retired there.** The ring slice — `rail-core`, the
+  ring journal, sync and routes, the identity door — is forked into svrngs, and
+  commonwealth-ai's ring-facing code (`ring_cmd`, ring-doc, ring-runtime,
+  `ring_shim.js`, the phone's ring shell, the ring campaigns) retires as svrngs
+  replaces each piece, per the retirement list in its `docs/RING_SPEC.md`.
+- **The mesh stays commonwealth's, and so does its copy of the rail.** The work
+  plane folds over `rail-core` (`commonwealth-work` links both rail crates), so
+  commonwealth-ai keeps its copy. The two serve two systems with no wire
+  between them, so they are a fork, not two deciders, and may diverge freely.
+- **A fix shows its twin.** Every forked file carries `ported from
+  commonwealth-ai <path>@<commit>`, and `scripts/ports.py` lists each pair with
+  whether its original changed since, so a signing fix on one side is seen on
+  the other. The arrow never points from svrngs to commonwealth-ai:
+  `scripts/lean_check.py` refuses its crates from `Cargo.lock`.
 
 ## D3. Packaging and reach
 
-**Released artifacts only.** svrngs links no crate from commonwealth-ai or
-sovereign — `scripts/lean_check.py` refuses either from `Cargo.lock` — and
-takes commonwealth's code only as a released binary.
+**The node** is `svrngs-node` over `svrngs-core`. It builds for iOS, Android,
+macOS and Linux (D9 same-core), and it is published as a library: the iroh
+client a builder uses for a group of people rather than a pair of keys.
 
-- **Where it comes from.** commonwealth-ai's CLI release: tag `cli-v<version>`
-  on `alexsbryan/commonwealth-ai`, one tarball each for `aarch64-apple-darwin`,
-  `x86_64-apple-darwin` and `x86_64-unknown-linux-gnu`, and `SHA256SUMS`
-  (commonwealth-ai `scripts/release-all.sh:83,93`; its publish gate refuses
-  fewer than four assets, `:325`). `cw-rails` is in every tarball
-  (`scripts/release-cli-local.sh:60`).
-- **The pin.** One file, `sidecar.toml`, names the tag and each tarball's
-  SHA-256. It is the one decider of which cw-rails svrngs ships; bumping it is a
-  commit of its own that names the commonwealth-ai range it brings in.
-- **The fetch.** At build, a script downloads the target's tarball, checks it
-  against the pin — the pin is the trust root, not the release's own
-  `SHA256SUMS` — and extracts `cw-rails` to `binaries/cw-rails-<target-triple>`,
-  where Tauri 2's `externalBin` takes it. A mismatch or a missing asset fails
-  the build; nothing falls back to a local build or to `PATH`.
-- **What it costs.** No Windows and no phones for now: the CLI release has no
-  Windows tarball, and iOS cannot run a sidecar process. Phones wait behind
-  their trigger in D8, and the library form waits with them.
-- **Later, each on its trigger.** A `cw-rails`-only asset per release, when the
-  whole CLI tarball's download is what a person waits on. A crate dependency
-  only when phones or an outside builder need the library: a git tag pin first,
-  since crates.io would need the whole closure of commonwealth crates published
-  and the `workspace-hack` crate gone (commonwealth-ai `Cargo.toml:284`).
+- **On a computer:** the `svrngs` host process is the node plus the services the
+  computer qualifies for — the bridge among them. A svrn daemon on the same
+  computer is an optional neighbour for inference; it holds no group state and
+  mounts no group route.
+- **The app** is the node plus a shell (Tauri 2) plus the runtime, on iOS,
+  Android and desktop alike.
 
-**On a computer.** The svrngs app starts `cw-rails run --data-dir <its own>
---listen <its own port>` on launch, waits for it to answer, and stops it on
-quit (the flags are cw-rails's today, `commonwealth-rails/src/cli.rs:30-56`). The
-app supervises the process and holds nothing else: everything about the group
-lives in that data directory, so restarting either loses nothing (D2's rule),
-and a commonwealth mesh node on the same computer, in its own directory, is
-never touched. A svrn daemon on the same computer is an optional neighbour for
-inference, reached at its endpoint; it holds no group state.
+**Keys and reach.** A person signs in each group with a key of that group's own
+(RING_SPEC U26), so a cut in one group never touches another and the house
+cannot link the party by signing key; someone in both groups can recognise the
+same device by its endpoint, and no one else can see either register. Each device has one iroh endpoint key, carried
+on every `Admit` as `endpoint` and co-signed, so the register is also the
+address book: nodes dial a person's devices by endpoint. The endpoint key lives
+in the keychain this-device-only without a biometric gate (iroh needs it in
+process at launch); signing keys may ask for one. The invite carries the group
+id, the starter's endpoint, the meeting point's direct address if there is one,
+the project's relay, and an `Invite`'s id with the private half of its one-time
+key.
 
-**Keys, the link and the relay are cw-rails's** — the node's key, the grant in
-the link's fragment, the relay the link names (commonwealth-ai
-`docs/THE_LINK.md`). svrngs reads none of them. What it requires of them is
-stated as a bar on the commonwealth-ai unit that owns each: a person's writes
-signed as that person, a cut that holds, a link that admits to the group and
-nothing else.
+The always-on box is the meeting point, with its port mapped by iroh. The
+project's relay is the only relay: a small server running iroh's relay, seeing
+only ciphertext, swappable by changing the invite, and proven non-essential for
+direct paths by being turned off. Two phones on one WiFi meet through it; local
+discovery would need Apple's multicast entitlement (D8).
 
 ## D4. State
 
@@ -1115,10 +1091,9 @@ By this design, open to the operator's veto:
 - no compaction in v1;
 - a signing key per person per group, and an endpoint key per device;
 - svrngs is its own repository, linking no commonwealth-ai or sovereign crate;
-  the group runs on commonwealth's `cw-rails`, shipped as a released sidecar
-  binary pinned by tag and checksum, and svrngs meets sovereign at the svrn
-  daemon's endpoint and lent services through the door (operator, 2026-10-03,
-  choosing the sidecar over a crate dependency; Direction, D2b, D3);
+  it owns the group's code, forked from commonwealth-ai's ring slice, and meets
+  sovereign at the svrn daemon's endpoint and lent services through the door
+  (operator, 2026-10-03, choosing the fork over a cw-rails sidecar; D2b);
 - the LAN guest door is cut;
 - `commands`, `propose`, `say` and `due` are provisional.
 
