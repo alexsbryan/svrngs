@@ -6,6 +6,7 @@
 
 use super::*;
 use crate::alpn::ALPN;
+use crate::iroh::tests::{hermetic_endpoint, loopback_sockets};
 
 #[test]
 fn parse_relay_mode_empty_is_default() {
@@ -93,24 +94,11 @@ async fn spawn_lender() -> String {
     );
     tokio::spawn(async move { axum::serve(origin, app).await });
 
-    let endpoint = EndpointBuilder::empty()
-        .crypto_provider(ring_crypto_provider())
-        .secret_key(SecretKey::from_bytes(&[41; 32]))
-        .alpns(vec![ALPN.to_vec()])
-        .bind()
-        .await
-        .expect("lender endpoint binds");
+    let endpoint = hermetic_endpoint(41, vec![ALPN.to_vec()]).await;
     // iroh binds the wildcard; loopback is what dials in-process.
-    let targets: Vec<String> = endpoint
-        .bound_sockets()
-        .into_iter()
-        .map(|mut a| {
-            if a.ip().is_unspecified() {
-                let ip = if a.is_ipv4() { "127.0.0.1" } else { "::1" };
-                a.set_ip(ip.parse().unwrap());
-            }
-            a.to_string()
-        })
+    let targets: Vec<String> = loopback_sockets(&endpoint)
+        .iter()
+        .map(ToString::to_string)
         .collect();
     let dial = format!(
         "{}@{}",

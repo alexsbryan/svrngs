@@ -466,7 +466,7 @@ pub(crate) mod tests {
     }
 
     /// Bind an empty (no-relay, deterministic) endpoint serving `alpns`.
-    async fn hermetic_endpoint(seed: u8, alpns: Vec<Vec<u8>>) -> Endpoint {
+    pub(crate) async fn hermetic_endpoint(seed: u8, alpns: Vec<Vec<u8>>) -> Endpoint {
         EndpointBuilder::empty()
             .crypto_provider(ring_crypto_provider())
             .secret_key(SecretKey::from_bytes(&[seed; 32]))
@@ -478,7 +478,7 @@ pub(crate) mod tests {
 
     /// iroh binds the wildcard; rewrite to loopback so the address is
     /// dialable in-process (mirrors the spike e2e's `dialable_sockets`).
-    fn loopback_sockets(endpoint: &Endpoint) -> Vec<SocketAddr> {
+    pub(crate) fn loopback_sockets(endpoint: &Endpoint) -> Vec<SocketAddr> {
         endpoint
             .bound_sockets()
             .into_iter()
