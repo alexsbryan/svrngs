@@ -47,12 +47,12 @@ async fn spawn_a(admitted: PublicKey) -> (Endpoint, IrohAcceptor, Arc<AtomicUsiz
     );
     let admit = move |alpn: &[u8], dialer: &PublicKey| {
         if alpn == ALPN && *dialer == admitted {
-            Admit::Serve
+            Admit::Serve(router.clone())
         } else {
             Admit::Refuse
         }
     };
-    let acceptor = IrohAcceptor::spawn(a.clone(), admit, router);
+    let acceptor = IrohAcceptor::spawn(a.clone(), admit);
     (a, acceptor, served)
 }
 

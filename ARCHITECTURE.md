@@ -61,7 +61,7 @@ Beside the journals, `svrngs-node` holds the dialling half of sync over iroh
 (DESIGN §8, U1's inventory), forked at `e1a43bcd2` the same way:
 `peer_wire.rs` is `sovereign-peer-wire` whole (the sync bodies, the body limit
 and the exchange budget); `alpn.rs` is `mesh-reach`'s `alpn.rs` with its one
-`ALPN`; `guest.rs` and `guest/tunnel.rs` are `mesh-reach`'s guest dialer, the
+`ALPN`, then the enum it promised (`Alpn`, U2); `guest.rs` and `guest/tunnel.rs` are `mesh-reach`'s guest dialer, the
 relayed endpoint and the one loopback bridge (`HttpBridge`, `pump`); `iroh.rs`
 is `commonwealth-transport`'s client side (`IrohTransport`,
 `format_dial_string`, `preferred_bridge_port`). Its edits: no IP transport;
@@ -79,8 +79,8 @@ refused it (DESIGN §8, "Four facts"). `iroh.rs` also holds the
 serving half, upstream's accept loop (`IrohAcceptor`) forked without its
 `Forward` kinds and then changed: `IrohAcceptor::spawn` takes an admit decision
 on each connection's ALPN and verified key (`Admit`), closing a refused
-connection, and an `axum::Router` that hyper's HTTP/1 server serves on every
-bi-stream of an admitted one, each request carrying the verified key as a
+connection and naming, for an admitted one, the `axum::Router` that hyper's
+HTTP/1 server serves on its every bi-stream, each request carrying the verified key as a
 `Dialer` extension. There is no loopback listener on the serving side and no
 request head parsed but by hyper. The bridge's own tests splice through a test
 stand-in, since they test the bridge, not what the acceptor serves;

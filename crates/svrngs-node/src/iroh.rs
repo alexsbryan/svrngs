@@ -17,7 +17,7 @@
 //! - Server side ([`IrohAcceptor`]): admits or closes each iroh
 //!   connection on its ALPN and the dialer's verified key, and serves
 //!   every bi-stream of an admitted one with hyper's HTTP/1 server and
-//!   the caller's axum router — no loopback listener, and the dialer
+//!   the axum router its admit decision names — no loopback listener, and the dialer
 //!   reaches handlers as a [`Dialer`] request extension, never a header.
 //!
 //! Known upgrade path (deliberately NOT in the spike): serve hyper
@@ -45,7 +45,7 @@ use std::net::SocketAddr;
 
 use std::sync::Arc;
 
-pub use crate::alpn::ALPN;
+pub use crate::alpn::{Alpn, ALPN};
 // The guest dialer and the one HTTP bridge live in `crate::guest`, as they
 // lived in `mesh_reach::guest` upstream (pb-reach-guest, phase-b-35);
 // re-exported so callers spell them `svrngs_node::iroh::`.
@@ -302,10 +302,11 @@ pub fn preferred_bridge_port(pubkey: &PublicKey, alpn: &[u8]) -> u16 {
 
 /// The acceptor's answer to a connection, decided once per connection on its
 /// negotiated ALPN and the key its handshake verified.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum Admit {
-    /// Serve every bi-stream on the connection.
-    Serve,
+    /// Serve every bi-stream on the connection with this router: the
+    /// routes its protocol reaches, and no others.
+    Serve(axum::Router),
     /// Close the connection before any stream is read: no HTTP answer.
     Refuse,
 }
@@ -352,14 +353,15 @@ impl IrohAcceptor {
     /// Spawn the accept loop. `admit` sees each connection's negotiated ALPN
     /// and the dialer's key, verified by the QUIC handshake, once per
     /// connection; [`Admit::Refuse`] closes the connection. Every bi-stream
-    /// of an admitted connection is one HTTP/1 connection served by `router`,
-    /// each request carrying the dialer as a [`Dialer`] extension.
+    /// of an admitted connection is one HTTP/1 connection served by the
+    /// router [`Admit::Serve`] names, each request carrying the dialer as a
+    /// [`Dialer`] extension.
     ///
     /// The dial string that reaches an endpoint is public, so holding it is
     /// not a credential; the verified key is the evidence `admit` decides
     /// on. It is called again for every connection, so a decision that
     /// consults live state sees membership change between dials.
-    pub fn spawn<F>(endpoint: iroh::Endpoint, admit: F, router: axum::Router) -> Self
+    pub fn spawn<F>(endpoint: iroh::Endpoint, admit: F) -> Self
     where
         F: Fn(&[u8], &PublicKey) -> Admit + Send + Sync + 'static,
     {
@@ -367,7 +369,6 @@ impl IrohAcceptor {
         let task = tokio::spawn(async move {
             while let Some(incoming) = endpoint.accept().await {
                 let admit = admit.clone();
-                let router = router.clone();
                 tokio::spawn(async move {
                     let conn = match incoming.await {
                         Ok(c) => c,
@@ -385,7 +386,7 @@ impl IrohAcceptor {
                     // certificate). Admit this connection's streams by both.
                     let alpn = conn.alpn().to_vec();
                     let dialer = Dialer(conn.remote_id());
-                    match admit(&alpn, &dialer.0) {
+                    let router = match admit(&alpn, &dialer.0) {
                         Admit::Refuse => {
                             tracing::warn!(
                                 target: "transport",
@@ -396,13 +397,16 @@ impl IrohAcceptor {
                             conn.close(0u32.into(), b"not admitted");
                             return;
                         }
-                        Admit::Serve => tracing::debug!(
-                            target: "transport",
-                            alpn = %String::from_utf8_lossy(&alpn),
-                            dialer = %dialer.actor(),
-                            "iroh acceptor: dialer admitted — serving its streams"
-                        ),
-                    }
+                        Admit::Serve(router) => {
+                            tracing::debug!(
+                                target: "transport",
+                                alpn = %String::from_utf8_lossy(&alpn),
+                                dialer = %dialer.actor(),
+                                "iroh acceptor: dialer admitted — serving its streams"
+                            );
+                            router
+                        }
+                    };
                     // Ends when the connection closes.
                     while let Ok((send, recv)) = conn.accept_bi().await {
                         tokio::spawn(serve_stream(send, recv, dialer, router.clone()));
@@ -465,7 +469,8 @@ pub(crate) mod tests {
     ) -> (String, OnStream) {
         let served = hermetic_endpoint(0xEE, vec![ALPN.to_vec()]).await;
         let addrs = loopback_sockets(&served);
-        let acceptor = IrohAcceptor::spawn(served.clone(), |_, _| Admit::Serve, router);
+        let acceptor =
+            IrohAcceptor::spawn(served.clone(), move |_, _| Admit::Serve(router.clone()));
         let dialling = EndpointBuilder::empty()
             .crypto_provider(ring_crypto_provider())
             .secret_key(dialer)

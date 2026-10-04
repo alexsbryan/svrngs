@@ -100,11 +100,15 @@ impl Node {
         );
         let rail = Arc::new(RingRail::new(&data_dir, Arc::new(key)));
         let admitting = rail.clone();
-        let acceptor = IrohAcceptor::spawn(
-            endpoint.clone(),
-            move |alpn: &[u8], dialer: &PublicKey| admit_dialer(&admitting, alpn, dialer),
-            ring_routes::router(RingInbound { rail: rail.clone() }),
-        );
+        let members = ring_routes::router(RingInbound { rail: rail.clone() });
+        let acceptor =
+            IrohAcceptor::spawn(endpoint.clone(), move |alpn: &[u8], dialer: &PublicKey| {
+                if admit_dialer(&admitting, alpn, dialer) {
+                    Admit::Serve(members.clone())
+                } else {
+                    Admit::Refuse
+                }
+            });
         let host = Arc::new(Host {
             transport: IrohTransport::new(endpoint.clone()),
             rail,
@@ -200,29 +204,29 @@ impl Host {
     }
 }
 
-/// The accept loop's decision: serve a dialer on the one ALPN that stands in
-/// any group this node holds, and close the rest (DESIGN §8, U1's inventory,
+/// The accept loop's decision: serve the sync route to a dialer on the one
+/// ALPN that stands in any group this node holds, and close the rest (DESIGN §8, U1's inventory,
 /// "the mesh" row — upstream asked the mesh, `acceptor.rs:47-61`). Asked
 /// once per connection, so a member admitted or removed since the last dial
 /// is answered as it stands now.
-fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Admit {
+fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> bool {
     let actor = key_actor(dialer);
     if alpn != ALPN {
         tracing::debug!(target: "node", actor, alpn = %String::from_utf8_lossy(alpn), "node: refused — not the sync ALPN");
-        return Admit::Refuse;
+        return false;
     }
     let namespaces = match rail.namespaces() {
         Ok(n) => n,
         Err(e) => {
             tracing::warn!(target: "node", actor, error = %e, "node: refused — cannot list the groups held, so nobody can be shown to stand in one");
-            return Admit::Refuse;
+            return false;
         }
     };
     for namespace in &namespaces {
         match rail.standing(namespace, &Ed25519Verifier) {
             Ok(standing) if standing.names(&actor) => {
                 tracing::debug!(target: "node", actor, namespace, "node: admitted — the dialer stands in a group held here");
-                return Admit::Serve;
+                return true;
             }
             Ok(_) => {}
             Err(e) => {
@@ -231,7 +235,7 @@ fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Admit {
         }
     }
     tracing::debug!(target: "node", actor, groups = namespaces.len(), "node: refused — the dialer stands in no group held here");
-    Admit::Refuse
+    false
 }
 
 /// The iroh key an actor's lowercase hex spells, or `None`.
