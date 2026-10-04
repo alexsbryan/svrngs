@@ -3299,6 +3299,7 @@ dependencies = [
  "rustls",
  "serde",
  "serde_json",
+ "sha2 0.10.9",
  "svrngs-core",
  "tempfile",
  "thiserror 2.0.21",

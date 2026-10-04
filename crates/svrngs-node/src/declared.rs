@@ -7,7 +7,7 @@
 //! logged, and never in the record: the record is copied to every member.
 //!
 //! Layout, one directory per lend, under the data dir
-//! (upstream kept one, `~/.svrnmesh/secrets/media/`):
+//! (`crate::lend::secret_dir`; upstream kept one, `~/.svrnmesh/secrets/media/`):
 //!
 //! ```text
 //!   <data dir>/secrets/lends/<lend>/authorization    0600   the value

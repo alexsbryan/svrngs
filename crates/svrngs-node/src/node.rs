@@ -141,10 +141,16 @@ impl Node {
             "node: endpoint bound with the signing key"
         );
         let admitting = rail.clone();
+        // The members' protocol serves sync and the live lane, and the
+        // door to what this computer lends (u3-4).
         let members = ring_routes::router(RingInbound {
             rail: rail.clone(),
             live,
-        });
+        })
+        .merge(crate::door::router(crate::door::Door {
+            rail: rail.clone(),
+            data_dir: data_dir.clone(),
+        }));
         let redeem = crate::redeem::router(rail.clone(), seeds);
         let acceptor =
             IrohAcceptor::spawn(endpoint.clone(), move |alpn: &[u8], dialer: &PublicKey| {

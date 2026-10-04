@@ -25,9 +25,12 @@ rand = "0.9"
 # The serving half (U1): hyper serves the caller's axum Router on each
 # accepted iroh stream; tower's `oneshot` calls the router per request.
 axum = "0.8"
-hyper = { version = "1", features = ["server", "http1"] }
+hyper = { version = "1", features = ["server", "client", "http1"] }
 hyper-util = { version = "0.1", features = ["tokio"] }
 tower = { version = "0.5", features = ["util"] }
+# The member door (U3) is hyper's HTTP/1 client to a lend's service, one
+# connection per request, so nothing between member and service is pooled,
+# retried or rewritten but what the door names ("client").
 # Ring sync (U1): the round posts each exchange with reqwest through the
 # loopback bridge; "json" reads the answer, as upstream's workspace enabled it.
 reqwest = { version = "0.12", default-features = false, features = ["json"] }
@@ -36,6 +39,8 @@ reqwest = { version = "0.12", default-features = false, features = ["json"] }
 svrngs-core = { workspace = true, features = ["test-support"] }
 tempfile = "3"
 tokio = { version = "1", features = ["full"] }
+# The door's tests check a file's bytes through it sha-exact.
+sha2 = "0.10"
 
 [lints.clippy]
 empty_line_after_doc_comments = "allow"

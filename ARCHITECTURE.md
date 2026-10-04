@@ -231,6 +231,30 @@ ignored it and reported a secret readable by others as stored; the file is
 created 0600; and that a credential is set is traced at debug, since the door
 reads the store on every request.
 
+The door is `door.rs`, new code holding upstream's rules (DESIGN §8, U3's
+inventory, its identity and forward_stream rows), merged into the members'
+protocol's router beside sync and live. `/lend/<lend>/<path>` reaches the
+lend's port on 127.0.0.1 as `/<path>`, one hyper HTTP/1 connection per
+request, both bodies streamed and neither buffered. It strips the hop-by-hop
+headers both ways, every client header under `x-svrngs-` and every one the
+lend's secret names (compared as `rewrite_head` compared,
+`iroh_identity_forward.rs:297-328`), then sets `x-svrngs-person` — the
+dialer's name in the first group held that they stand in — and
+`x-svrngs-key` from the `Dialer`, then the secret; every other header,
+`Range`, `If-Range` and `Content-Range` among them, passes untouched. A
+response header holding the secret is dropped. It refuses, by name, a
+request off the stream, a dialer standing in no group held, a path with a
+`..` segment or an encoded `.` or `/` (`route_by_prefix`'s guard), a lend
+not declared, and a path the lend refuses. A lend is `lend.rs`: its
+declaration, `<data dir>/lends/<lend>.json` (the port and the refused
+paths, unknown fields refused), read per request, so a running node sees a
+lend come and go; its secret is `declared.rs`'s store under
+`<data dir>/secrets/lends/<lend>/`. A refused path covers what is under it
+at a segment boundary, as upstream's `covers`, compared percent-decoded,
+case-blind and with repeated slashes as one. `tests/door/` runs a lender
+and a member through it, with upstream's `picky_origin` and Range origin
+forked as fixtures.
+
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`
 :1-126 at `e1a43bcd2`, its join proof and dial-info signing left behind, its

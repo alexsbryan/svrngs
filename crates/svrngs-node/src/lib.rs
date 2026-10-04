@@ -232,10 +232,13 @@ pub mod api;
 pub mod live;
 pub mod rail;
 
-// The member door, U3's (docs/DESIGN.md §8, U3's inventory): a lender's
-// secret for its own service, kept on its own computer (`commonwealth-media`'s
-// `declared.rs`).
+// The member door, U3's (docs/DESIGN.md §8, U3's inventory): the route that
+// carries a member's request to a lend's service, the lend's declaration,
+// and the lender's secret for its own service, kept on its own computer
+// (`commonwealth-media`'s `declared.rs`).
 pub mod declared;
+pub mod door;
+pub mod lend;
 
 // The node, U1's (docs/DESIGN.md §8): the rail, the endpoint, the accept loop
 // serving the sync route and the round, in place of upstream's `RailsDaemon`.
