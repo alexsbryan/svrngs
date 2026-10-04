@@ -1,11 +1,8 @@
 # North star
 
-Every decision answers to these three. Work that serves none waits; a design
-that breaks one is wrong. Where `docs/DESIGN.md` disagrees, this wins.
-
 ## 1. People join for themselves
 
-People join because the party's address, the person they want to see again,
+People join because they want the party's address, the person they want to see again, a movie they want to watch, an album they want to listen to,
 the money they're owed and the room before it's listed are in there, cheaper
 and less awkward than anywhere else. A link in a chat they already use; ten
 seconds; no new words. The commons is what their selfish acts leave behind.
