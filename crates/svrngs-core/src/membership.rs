@@ -121,6 +121,17 @@ pub struct Membership {
     /// serialises as before.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub refused: BTreeMap<OpId, InviteFault>,
+    /// Every `Invite` held, by derived id.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub invites: BTreeMap<OpId, Invited>,
+}
+
+/// An `Invite` as the register holds it.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct Invited {
+    pub issuer: String,
+    pub key: String,
+    pub until: i64,
 }
 
 impl Membership {
@@ -291,12 +302,27 @@ pub fn membership<'a>(
         }
     }
 
+    let invites = ops
+        .iter()
+        .filter_map(|(id, op)| match &op.kind.act {
+            RailAct::Invite { key, until } => Some((
+                (*id).clone(),
+                Invited {
+                    issuer: op.actor.clone(),
+                    key: key.clone(),
+                    until: *until,
+                },
+            )),
+            _ => None,
+        })
+        .collect();
     Membership {
         bindings,
         standing: live.into_keys().collect(),
         counted,
         voided,
         refused,
+        invites,
     }
 }
 

@@ -256,27 +256,6 @@ impl RingJournal {
         Ok(kept.unwrap_or_else(|never| match never {}))
     }
 
-    /// Sign one act as [`Self::append`] does, and write it only when `keep`,
-    /// shown what the journal holds and the signed act, says so — both
-    /// under the writer lock, so nothing lands between its judgement and the
-    /// write (svrngs, U2: a link's redemption, `crate::redeem`, writes its
-    /// `Admit` only when the fold over both counts it). The outer `Err` is
-    /// the door's own refusal; the inner one is `keep`'s, and nothing was
-    /// written.
-    pub fn append_if<E>(
-        &self,
-        act: RailAct,
-        signer: &dyn RingSigner,
-        roster: &Roster,
-        verifier: &dyn RingVerifier,
-        keep: impl FnOnce(&[Op<SignedOp>], &Op<SignedOp>) -> Result<(), E>,
-    ) -> Result<Result<Op<SignedOp>, E>, RailError> {
-        let kept = self.write(vec![act], signer, roster, None, verifier, |held, ops| {
-            keep(held, &ops[0])
-        })?;
-        Ok(kept.map(|mut ops| ops.remove(0)))
-    }
-
     /// [`Self::append_all`], with `keep` asked of the signed batch before it
     /// is written.
     fn write<E>(
@@ -359,20 +338,7 @@ impl RingJournal {
             "append: follows the signer's newest act"
         );
 
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|d| d.as_secs() as i64)
-            .map_err(|why| {
-                // Named, never defaulted (ROOT_CAUSE_FIXES C4): the old
-                // `unwrap_or(0)` signed lines stamped 0 on the signature path.
-                tracing::warn!(
-                    target: "rail:door",
-                    ns = %self.namespace,
-                    %why,
-                    "append refused — the wall clock is unreadable"
-                );
-                RailError::Clock
-            })?;
+        let now = now_unix(&self.namespace)?;
         // Strictly after everything held, as upstream measured
         // (commonwealth/crates/commonwealth-rail/examples/stage_member_act.rs:123-135
         // at e1a43bcd2): the rail orders acts by (ts_unix, actor, seq, id), so
@@ -844,5 +810,48 @@ impl RingJournal {
         std::fs::create_dir_all(&self.dir).map_err(|e| RailError::Io(e.to_string()))?;
         let raw = serde_json::to_string_pretty(roster).map_err(|e| RailError::Io(e.to_string()))?;
         std::fs::write(self.roster_path(), raw).map_err(|e| RailError::Io(e.to_string()))
+    }
+}
+
+/// The wall clock in Unix seconds: the one place the write side reads it.
+/// Unreadable is named, never defaulted (ROOT_CAUSE_FIXES C4).
+pub(crate) fn now_unix(namespace: &str) -> Result<i64, RailError> {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .map_err(|why| {
+            tracing::warn!(target: "rail:door", ns = %namespace, %why,
+                "append refused — the wall clock is unreadable");
+            RailError::Clock
+        })
+}
+
+impl svrngs_core::Store for RingJournal {
+    type Error = RailError;
+
+    fn append_with<R>(
+        &self,
+        f: impl FnOnce(&ActSet) -> (Option<svrngs_core::Authored>, R),
+    ) -> Result<R, RailError> {
+        let mut guard = self.log();
+        let log = &mut *guard;
+        log.held.catch_up(&log.oplog, &self.namespace)?;
+        let (held_ops, _) = log
+            .oplog
+            .read_all_with_skips()
+            .map_err(|e| RailError::Io(e.to_string()))?;
+        let (authored, answer) = f(&ActSet::of(&held_ops));
+        let Some(authored) = authored.filter(|a| !a.lines().is_empty()) else {
+            return Ok(answer);
+        };
+        log.oplog
+            .append_all(authored.lines())
+            .map_err(|e| RailError::Io(e.to_string()))?;
+        log.held.after_write(&log.oplog, &self.namespace);
+        for op in authored.lines() {
+            tracing::debug!(namespace = %self.namespace, id = %op.id, actor = %op.actor,
+                seq = op.kind.seq, "ring rail: appended by commit");
+        }
+        Ok(answer)
     }
 }

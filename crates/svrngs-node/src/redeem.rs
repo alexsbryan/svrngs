@@ -47,13 +47,14 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use crate::iroh::{Alpn, Dialer, Endpoint, EndpointAddr, HttpBridge};
-use crate::register::{membership_in, Standing};
+use crate::register::Standing;
 use crate::ring_routes::err;
 use crate::ring_sync::peer_client;
 use crate::{
-    actor_of, derive_id, field, sign_message, verify_hex, Ed25519Verifier, InviteFault, Name,
-    NotAName, OpId, Person, RailAct, RailError, Redemption, RingRail, SigningKey,
+    actor_of, derive_id, field, sign_message, verify_hex, Ed25519Verifier, Name, NotAName, OpId,
+    Person, RailAct, RailError, Redemption, RingRail, SigningKey,
 };
+use svrngs_core::{commit, Author, RedeemRefusal, Refused as CommitRefused};
 
 /// The redemption's path.
 const ROUTE: &str = "/redeem";
@@ -218,20 +219,10 @@ enum Refused {
     NotAName(NotAName),
     /// This node holds no such group, or holds it with no seed.
     NotHeld,
-    /// No `Invite` with that id is held here, or, asked, none of this
-    /// node's naming the link's key.
+    /// Asked, no group held here holds this node's `Invite` naming the link's key.
     NoInvite,
-    /// The `Invite` is someone else's: only its issuer's node redeems it.
-    NotOwn,
-    /// The `Invite` names another key than the link's.
-    OtherLink,
-    /// `membership` refused the `Admit`: a lapsed, closed or voided link,
-    /// or a consent that does not verify.
-    Fault(InviteFault),
-    /// `membership` did not count the `Admit`, nor say why.
-    Uncounted,
-    /// The key stood already, seen under the write lock.
-    Stands,
+    /// The redemption's decider refused it ([`svrngs_core::Redeem`]).
+    Decided(RedeemRefusal),
     /// This node could not read its own journal.
     Unjudged(RailError),
 }
@@ -283,6 +274,11 @@ fn answer<T: Serialize>(route: &str, key: &str, decided: Result<T, Refused>) -> 
             tracing::debug!(target: "redeem", route, key, why = ?why,
                 "redeem: refused — the name is not one; answered with why, naming no group");
             err(StatusCode::FORBIDDEN, why.to_string())
+        }
+        Err(Refused::Decided(why)) => {
+            tracing::debug!(target: "redeem", route, key, why = ?why,
+                "redeem: the decider refused, answered in the one sentence every refusal shares");
+            err(StatusCode::FORBIDDEN, REFUSAL)
         }
         Err(why) => {
             tracing::debug!(target: "redeem", route, key, why = ?why,
@@ -344,10 +340,9 @@ fn own_invite<'a>(
     })
 }
 
-/// The redemption, as a door, in the module docs' order: parse
-/// ([`parse_redeem`]); read the group's standing, seed and acts; decide the
-/// `Admit` ([`decide_admit`]); write it, judged again under the write lock
-/// ([`judge`]).
+/// The redemption, as an adapter: parse ([`parse_redeem`]); check this node
+/// holds the group; hand [`svrngs_core::Redeem`] to [`commit`], which decides
+/// it under the journal's write lock.
 fn serve_redeem(
     rail: &RingRail,
     dialer: Option<String>,
@@ -365,34 +360,39 @@ fn serve_redeem(
         .seed()
         .map_err(Refused::Unjudged)?
         .ok_or(Refused::NotHeld)?;
-    let (ops, _) = journal.read().map_err(Refused::Unjudged)?;
-    let act = decide_admit(&ops, &rail.signer().actor(), req, person)?;
-    let kept = journal
-        .append_if(
-            act,
-            rail.signer(),
-            &seed,
-            &Ed25519Verifier,
-            |held, admit| judge(held, admit, &seed, group, &req.key),
-        )
-        .map_err(Refused::Unjudged)?;
-    match kept {
-        Ok(op) => {
-            tracing::debug!(target: "redeem", group, key = %req.key, admit = %op.id,
-                "redeem: admitted — the Admit is written");
-            Ok(Redeemed::Admitted(op.id))
-        }
-        Err(Refused::Fault(fault)) => {
-            tracing::debug!(target: "redeem", group, key = %req.key, fault = %fault,
-                "redeem: membership would not count the Admit, so it is not written");
-            Err(Refused::Fault(fault))
-        }
-        Err(Refused::Stands) => {
+    let command = svrngs_core::Redeem {
+        invite: req.invite.clone(),
+        person,
+        key: req.key.clone(),
+        cosig: req.cosig.clone(),
+        link: req.link.clone(),
+        issuer: rail.signer().actor(),
+    };
+    let author = Author {
+        signer: rail.signer(),
+        roster: &seed,
+        namespace: group,
+        verifier: &Ed25519Verifier,
+        now: crate::journal::now_unix(group).map_err(Refused::Unjudged)?,
+        on_behalf_of: None,
+    };
+    match commit(&*journal, &command, &author).map_err(Refused::Unjudged)? {
+        Ok(recorded) if recorded.is_empty() => {
             tracing::debug!(target: "redeem", group, key = %req.key,
                 "redeem: the key stands already — answered success, nothing written");
             Ok(Redeemed::AlreadyIn)
         }
-        Err(why) => Err(why),
+        Ok(recorded) => {
+            let admit = recorded.lines()[0].id.clone();
+            tracing::debug!(target: "redeem", group, key = %req.key, admit = %admit,
+                "redeem: admitted — the Admit is written");
+            Ok(Redeemed::Admitted(admit))
+        }
+        Err(CommitRefused::NoStanding) => Err(Refused::Unjudged(RailError::NotInRoster {
+            actor: rail.signer().actor(),
+            namespace: group.to_string(),
+        })),
+        Err(CommitRefused::Command(why)) => Err(Refused::Decided(why)),
     }
 }
 
@@ -410,66 +410,6 @@ fn parse_redeem(dialer: Option<&str>, req: &RedeemRequest) -> Result<Person, Ref
     Name::kept(req.person.clone())
         .map(Person::from)
         .map_err(Refused::NotAName)
-}
-
-/// The redemption's decision over the group's acts: the `Invite` it names
-/// is held, is `me`'s, and names the link's key; the `Admit` to write is the
-/// answer. Reads nothing. Whether that `Invite` still lets anyone in is
-/// [`judge`]'s, under the write lock.
-fn decide_admit(
-    ops: &[crate::Op<crate::SignedOp>],
-    me: &str,
-    req: &RedeemRequest,
-    person: Person,
-) -> Result<RailAct, Refused> {
-    let group = req.group.as_str();
-    let invite = ops
-        .iter()
-        .find(|op| {
-            derive_id(op, group) == req.invite && matches!(op.kind.act, RailAct::Invite { .. })
-        })
-        .ok_or(Refused::NoInvite)?;
-    if invite.actor != me {
-        return Err(Refused::NotOwn);
-    }
-    if !matches!(&invite.kind.act, RailAct::Invite { key, .. } if *key == req.link) {
-        return Err(Refused::OtherLink);
-    }
-    tracing::debug!(target: "redeem", group, key = %req.key, invite = %req.invite,
-        "redeem: the dialer holds the link and its key, and the Invite is this node's");
-    Ok(RailAct::Admit {
-        person,
-        key: req.key.clone(),
-        invite: Some(Redemption {
-            id: req.invite.clone(),
-            sig: req.cosig.clone(),
-        }),
-    })
-}
-
-/// Under the write lock: the key does not stand in `held`, and `membership`
-/// over `held` with `admit` in it counts `admit` and gives the key standing.
-fn judge(
-    held: &[crate::Op<crate::SignedOp>],
-    admit: &crate::Op<crate::SignedOp>,
-    seed: &crate::Roster,
-    group: &str,
-    key: &str,
-) -> Result<(), Refused> {
-    let before = membership_in(held, seed, group, &Ed25519Verifier).map_err(Refused::Unjudged)?;
-    if before.standing.contains(key) {
-        return Err(Refused::Stands);
-    }
-    let with: Vec<_> = held.iter().chain([admit]).cloned().collect();
-    let after = membership_in(&with, seed, group, &Ed25519Verifier).map_err(Refused::Unjudged)?;
-    let id = derive_id(admit, group);
-    if let Some(fault) = after.refused.get(&id) {
-        return Err(Refused::Fault(fault.clone()));
-    }
-    if !after.counts(&id) || !after.standing.contains(key) {
-        return Err(Refused::Uncounted);
-    }
-    Ok(())
 }
 
 /// Why a joiner was not let in.

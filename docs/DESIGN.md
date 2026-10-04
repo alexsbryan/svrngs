@@ -181,7 +181,7 @@ journals sits behind a `Mutex`, which an actor per journal replaces.
 | Invariant | Held by | State |
 |---|---|---|
 | Same acts, same state: a group's state is a pure function of its set of acts | svrngs-core is `no_std`, and `lean_check` keeps it so; folds read acts only through `Admission` | `no_std` holds; `membership` still sorts raw ops |
-| No act, no effect: nothing that cannot be undone happens but from an act in the record — the group's state and this computer's; a lent service's own state is its own, and the member door only carries a request to it | writing takes a `Decided<E>` only a core decider makes; acting takes a `Recorded<E>` only the journal yields | not yet |
+| No act, no effect: nothing that cannot be undone happens but from an act in the record — the group's state and this computer's; a lent service's own state is its own, and the member door only carries a request to it | a store appends only `Authored` lines, which only `commit` makes after a `Command` decided under the write lock; acting takes a `Recorded` only `commit` returns | redeem goes through `commit`; minting an invite, an app's acts and a seal still use `append_all` |
 | Both | the core never depends on the node; the clock, randomness and locks live in one adapter each (clippy `disallowed-methods`, `disallowed-types`) | dependency direction holds; the clippy bans not yet |
 
 One property test stands behind every fold: permuting or duplicating
@@ -291,7 +291,7 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   link's secret key; the node checks the name parses, the `Invite` is its
   own and names that key, then writes the `Admit` through its door only when the key does not
   stand already and `membership` over its journal with the `Admit` in it
-  counts it, both under the write lock (`RingJournal::append_if`), so the
+  counts it, both under the write lock (`commit` with svrngs-core's `Redeem`), so the
   fold stays the one decider of a lapsed, closed or voided link. Every
   refusal is one sentence naming no group; a key that already stands is
   answered success and nothing is written.

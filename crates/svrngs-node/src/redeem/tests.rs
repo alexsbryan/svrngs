@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! The redemption's decisions, judged on values alone: no journal, no
-//! endpoint, no directory. `three_people_open_one_link_and_each_is_let_in_once`
+//! The redemption's parsing and the ask's decision, judged on values alone:
+//! no journal, no endpoint, no directory. The redemption's decider is
+//! svrngs-core's `Redeem`, tested there. `three_people_open_one_link_and_each_is_let_in_once`
 //! (`crates/svrngs/tests/join_by_link.rs`) drives the same checks through the
 //! door over iroh.
 
@@ -65,44 +66,6 @@ fn a_redemption_is_parsed_before_anything_is_read() {
         Err(Refused::NotAName(_))
     ));
     assert_eq!(parse_redeem(Some(&me), &req).unwrap(), hal());
-}
-
-#[test]
-fn the_admit_is_decided_from_the_groups_acts_alone() {
-    let (issuer, link, joining) = (key(1), key(2), key(3));
-    let me = actor_of(&issuer);
-    let held = invite(&issuer, 0, &link);
-    let req = request(&link, &joining, &held);
-
-    let act = decide_admit(std::slice::from_ref(&held), &me, &req, hal()).unwrap();
-    assert_eq!(
-        act,
-        RailAct::Admit {
-            person: hal(),
-            key: actor_of(&joining),
-            invite: Some(Redemption {
-                id: req.invite.clone(),
-                sig: req.cosig.clone(),
-            }),
-        }
-    );
-
-    assert!(matches!(
-        decide_admit(&[], &me, &req, hal()),
-        Err(Refused::NoInvite)
-    ));
-    let theirs = invite(&key(4), 0, &link);
-    let req_theirs = request(&link, &joining, &theirs);
-    assert!(matches!(
-        decide_admit(&[theirs], &me, &req_theirs, hal()),
-        Err(Refused::NotOwn)
-    ));
-    let elsewhere = invite(&issuer, 0, &key(5));
-    let req_elsewhere = request(&link, &joining, &elsewhere);
-    assert!(matches!(
-        decide_admit(&[elsewhere], &me, &req_elsewhere, hal()),
-        Err(Refused::OtherLink)
-    ));
 }
 
 #[test]

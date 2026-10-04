@@ -21,7 +21,9 @@ joining by that link is next (U2).
 `Correct`, `Seal`, `Admit`, `Remove`, `Invite`), the lines a computer holds as
 a set (`ActSet`, `act_set.rs`), admission of that set into one total order
 (`admit.rs`; only `admit` makes an `Admission`), membership (`membership.rs`), the per-actor sync digest
-(`sync.rs`, `view.rs`), attestation and introductions. `no_std`, so the
+(`sync.rs`, `view.rs`), the write side (`command.rs`: `Command`, `commit`, the
+`Store` port, `Authored` and `Recorded`, which only `commit` makes), the
+redemption command (`redeem.rs`), attestation and introductions. `no_std`, so the
 compiler refuses filesystem, clock, network, threads and `HashMap`; time and
 keys arrive as arguments. It is commonwealth-ai's
 `commonwealth-rail-core` at `e1a43bcd2`, with `oplog-types` (`op.rs`) and
@@ -58,9 +60,9 @@ becomes ours (DESIGN §5). Then it changed (U2): the write index holds the
 ids each act's content derives, so a line claiming a held act's id is not
 skipped as held; the door names, as the previous act, the line at its newest
 seq whose signature verifies under its own key; compaction keeps a cited
-act by its derived id; and `RingJournal::append_if` signs one act and writes
-it only when a caller's judgement of the journal with the act in it keeps
-it, both under the write lock.
+act by its derived id; and the journal is the `Store` adapter `commit`
+appends through: under the write lock it hands over the lines held and
+appends only the `Authored` lines `commit` returns.
 
 Beside the journals, `svrngs-node` holds the dialling half of sync over iroh
 (DESIGN §8, U1's inventory), forked at `e1a43bcd2` the same way:
@@ -150,13 +152,13 @@ seed is the command's) and the `Invite`'s id. Then `RedeemRequest` — the group
 `Invite`'s id, a person's name, the new key, its consent and the link's
 key, signed by the link's secret — posted on `Alpn::Redeem`, which the
 accept loop serves to any dialer with these two routes. Each route is an
-adapter around pure deciders: `parse_redeem` and `parse_ask` on what arrived
-(the dialer is the new key and the link's key signed), so a refused request
-reads nothing; `decide_admit` and `own_invite` on the group's acts (the
-`Invite` is held, is this node's and names the link's key). `append_if`
-writes the redeeming `Admit` only when `judge`, run again under the write
-lock, finds the key not standing already and `membership`
-(`register::membership_in`) counting the `Admit`.
+adapter: `parse_redeem` and `parse_ask` judge what arrived (the dialer is the
+new key and the link's key signed), so a refused request reads nothing; the
+redemption is then svrngs-core's `Redeem` command, which `commit` decides
+under the journal's write lock (the `Invite` is held, is this node's and names
+the link's key; the key not standing already) and writes only when the
+register, folded with the `Admit` in it, counts it. `own_invite` decides the
+ask over each group's acts.
 Every refusal answers `REFUSAL`, one sentence naming no group; a key that
 already stands is answered `AlreadyIn`, nothing written.
 

@@ -325,6 +325,13 @@ impl AdmittedOp {
 
 /// What admission produced: the acts in their agreed order, and the honest
 /// account of what could not be read. Only [`admit`] makes one.
+///
+/// ```
+/// fn read(a: &svrngs_core::Admission) -> usize { a.ops().len() }
+/// ```
+/// ```compile_fail
+/// let a = svrngs_core::Admission { ..unimplemented!() };
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Admission {
     ops: Vec<AdmittedOp>,
