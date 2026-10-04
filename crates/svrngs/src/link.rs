@@ -89,7 +89,7 @@ impl Dial {
 }
 
 /// A parsed link.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Link {
     /// The group it admits to; the group's id is the seed's hash.
     pub seed: Seed,

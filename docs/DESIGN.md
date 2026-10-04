@@ -162,7 +162,7 @@ piece comes over:
 |---|---|---|
 | `svrngs-core` | the record: acts, admission into one order, membership, the sync digest. Pure — no filesystem, clock or network; time and keys are arguments | none |
 | `svrngs-node` | a group's journal on disk; next, sync, the routes and the member door over iroh | the journals |
-| `svrngs` | the command and the process: `new` and `link` (landed), `join`, `share`, and the loopback record API | a device's keys; each group's seed |
+| `svrngs` | the command and the process: `new`, `join` and `link` (landed), `share`, and the loopback record API | a device's keys; each group's seed |
 
 Held to `docs/principles/RUST_ARCH.md`: types encode the domain, ownership
 encodes the architecture, I/O lives at the edge. Parse, don't validate; closed

@@ -8,6 +8,7 @@
 //! ```text
 //! svrngs                                   run for every group this computer holds
 //! svrngs new <name> [--as N] [--origin U]  make a group, print its link, run
+//! svrngs join <link> [--as N]              join a group by its link, run
 //! svrngs link <group> [--origin U]         a new link to a group, print it, run
 //! ```
 //!
@@ -29,11 +30,12 @@ use std::time::Duration;
 use ed25519_dalek::VerifyingKey;
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::{Node, NodeError};
-use svrngs_node::{actor_of, Ed25519Verifier, RailAct, RailError, SigningKey};
+use svrngs_node::redeem::{redeem, RedeemError, RedeemRequest, Redeemed};
+use svrngs_node::{actor_of, Ed25519Verifier, Person, RailAct, RailError, SigningKey};
 
 use crate::group::{self, Name, Seed, SeedError};
 use crate::identity::{self, KeyError};
-use crate::link::{build_https_link, Dial, Link, Origin};
+use crate::link::{build_https_link, parse_https_link, Dial, Link, Origin};
 
 pub const USAGE: &str = "\
 svrngs — keep what your group shares on your own computers.
@@ -46,6 +48,11 @@ svrngs — keep what your group shares on your own computers.
       you want in it. It works for a day, while this computer is on.
       --as is the name the group knows you by; else this computer's user name.
       --origin prints the link on a page address of your own.
+
+  svrngs join <link> [--as <your name>]
+      Join the group a link you were sent is for. The computer that sent it
+      must be on. --as is the name the group knows you by; else this
+      computer's user name.
 
   svrngs link <group> [--origin <url>]
       Print a new link to <group>. Any link you sent before stops letting
@@ -72,6 +79,10 @@ pub enum Command {
         name: Name,
         person: Option<Name>,
         origin: Origin,
+    },
+    Join {
+        link: Box<Link>,
+        person: Option<Name>,
     },
     Link {
         group: String,
@@ -110,8 +121,8 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Command, String>
             other => return Err(format!("unexpected argument `{other}`")),
         }
     }
-    if person.is_some() && verb != "new" {
-        return Err("--as is a `new` flag".into());
+    if person.is_some() && !matches!(verb.as_str(), "new" | "join") {
+        return Err("--as is a `new` and `join` flag".into());
     }
     if origin.is_some() && !matches!(verb.as_str(), "new" | "link") {
         return Err("--origin is a `new` and `link` flag".into());
@@ -125,6 +136,16 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Command, String>
                 name,
                 person,
                 origin,
+            })
+        }
+        "join" => {
+            let raw = positional.ok_or("join wants a link: `svrngs join <link>`")?;
+            let link = parse_https_link(&raw).ok_or_else(|| {
+                format!("`{raw}` is not a whole link; copy all of it, from https to the end")
+            })?;
+            Ok(Command::Join {
+                link: Box::new(link),
+                person,
             })
         }
         "link" => Ok(Command::Link {
@@ -158,6 +179,12 @@ pub enum Refusal {
     Unreachable,
     #[error("who are you in {0}? say `svrngs new {0} --as <your name>`")]
     NoName(Name),
+    #[error("who are you in {0}? open the link again with `svrngs join <link> --as <your name>`")]
+    NoNameToJoin(Name),
+    #[error("the link to {0} lets nobody new in: ask whoever sent it for a new one")]
+    LinkRefused(Name),
+    #[error("the computer that sent the link to {0} cannot be reached; it may be off, so try again later")]
+    IssuerAway(Name),
     #[error("cannot keep {0} on this computer (RUST_LOG=debug says why)")]
     Keep(Name),
     #[error("this computer is in no group called {0}")]
@@ -173,6 +200,8 @@ impl Refusal {
     pub fn exit_code(&self) -> u8 {
         match self {
             Refusal::NoName(_)
+            | Refusal::NoNameToJoin(_)
+            | Refusal::LinkRefused(_)
             | Refusal::NoGroup(_)
             | Refusal::Ambiguous { .. }
             | Refusal::NotIn(_)
@@ -182,6 +211,7 @@ impl Refusal {
             | Refusal::Key(_)
             | Refusal::Start
             | Refusal::Unreachable
+            | Refusal::IssuerAway(_)
             | Refusal::Keep(_) => 3,
         }
     }
@@ -227,17 +257,69 @@ pub async fn run(command: Command, root: PathBuf, relay: &RelayConfig) -> Result
     }
     let _claim = claim(&root)?;
     let key = identity::load_or_generate_node_key(&root)?;
-    let node = Node::start(root.clone(), key, relay)
+    let node = Node::start(root.clone(), key.clone(), relay)
         .await
         .map_err(|e: NodeError| {
             tracing::debug!(target: "cli", error = %e, "cli: refused — the node did not start");
             Refusal::Start
         })?;
-    let ran = serve(command, &root, &node, relay).await;
+    let ran = serve(command, &root, &node, &key, relay).await;
     // iroh says at error when an endpoint is dropped open, so it is closed
     // first, on a refusal as on Ctrl-C.
     node.endpoint().close().await;
     ran
+}
+
+/// What a verb tells the person, in DESIGN §1's words alone.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Said {
+    /// `new`: the group made, and its first link.
+    Made { seed: Seed, url: String },
+    /// `link`: a new link to a group.
+    Linked { seed: Seed, url: String },
+    /// `join`: let in by the link's issuer, as `person`.
+    Joined { seed: Seed, person: Name },
+    /// `join` of a group this computer is in already.
+    AlreadyIn(Seed),
+    /// The bare command: the names of the groups it runs for.
+    Running(Vec<Name>),
+}
+
+impl std::fmt::Display for Said {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Said::Made { seed, url } => {
+                writeln!(f, "Made {}, with you as {}.", seed.name(), seed.founder())?;
+                writeln!(f, "Send this link to the people you want in it. It works for a day, while this computer is on:")?;
+                writeln!(f)?;
+                writeln!(f, "  {url}")
+            }
+            Said::Linked { seed, url } => {
+                writeln!(
+                    f,
+                    "A new link to {}. Any link you sent before stops letting anyone new in; everyone it let in stays.",
+                    seed.name()
+                )?;
+                writeln!(f, "It works for a day, while this computer is on:")?;
+                writeln!(f)?;
+                writeln!(f, "  {url}")
+            }
+            Said::Joined { seed, person } => {
+                writeln!(f, "You're in {}, as {person}.", seed.name())
+            }
+            Said::AlreadyIn(seed) => {
+                writeln!(f, "You're in {} already, on this computer.", seed.name())
+            }
+            Said::Running(names) if names.is_empty() => writeln!(
+                f,
+                "This computer is in no group yet: make one with `svrngs new <name>`."
+            ),
+            Said::Running(names) => {
+                let names: Vec<&str> = names.iter().map(Name::as_str).collect();
+                writeln!(f, "Running for {}.", names.join(", "))
+            }
+        }
+    }
 }
 
 /// A verb on a started node, then the wait for Ctrl-C.
@@ -245,9 +327,10 @@ async fn serve(
     command: Command,
     root: &Path,
     node: &Node,
+    key: &SigningKey,
     relay: &RelayConfig,
 ) -> Result<(), Refusal> {
-    match command {
+    let said = match command {
         Command::New {
             name,
             person,
@@ -258,34 +341,30 @@ async fn serve(
                 None => user_name().ok_or_else(|| Refusal::NoName(name.clone()))?,
             };
             let (seed, url) = new_group(node, name, person, &origin, relay).await?;
-            println!("Made {}, with you as {}.", seed.name(), seed.founder());
-            println!("Send this link to the people you want in it. It works for a day, while this computer is on:");
-            println!();
-            println!("  {url}");
+            Said::Made { seed, url }
+        }
+        Command::Join { link, person } => {
+            let person = match person {
+                Some(p) => p,
+                None => {
+                    user_name().ok_or_else(|| Refusal::NoNameToJoin(link.seed.name().clone()))?
+                }
+            };
+            join_group(node, key, &link, &person).await?
         }
         Command::Link { group, origin } => {
             let (seed, url) = new_link(node, &group, &origin, relay).await?;
-            println!(
-                "A new link to {}. Any link you sent before stops letting anyone new in; everyone it let in stays.",
-                seed.name()
-            );
-            println!("It works for a day, while this computer is on:");
-            println!();
-            println!("  {url}");
+            Said::Linked { seed, url }
         }
-        Command::Run => {
-            let names: Vec<String> = group::groups(root)
+        Command::Run => Said::Running(
+            group::groups(root)
                 .iter()
-                .map(|s| s.name().to_string())
-                .collect();
-            if names.is_empty() {
-                println!("This computer is in no group yet: make one with `svrngs new <name>`.");
-            } else {
-                println!("Running for {}.", names.join(", "));
-            }
-        }
+                .map(|s| s.name().clone())
+                .collect(),
+        ),
         Command::Help => unreachable!("answered above"),
-    }
+    };
+    print!("{said}");
     println!();
     println!("Leave this running; Ctrl-C stops it.");
     if let Err(e) = tokio::signal::ctrl_c().await {
@@ -295,8 +374,75 @@ async fn serve(
     Ok(())
 }
 
-/// This computer's user name, as the name a group knows its founder by
-/// when `--as` names none. `new` prints it, so it is never silent.
+/// `svrngs join`: redeem `link` at its issuer's computer as `person`,
+/// signing with `key`, this computer's; keep the group's seed once let in;
+/// sync once from the issuer, whom this computer's copy of the register may
+/// not know yet (DESIGN §8, U2). The seed is written only once the issuer
+/// has let this computer in, so a refused link leaves nothing behind.
+pub async fn join_group(
+    node: &Node,
+    key: &SigningKey,
+    link: &Link,
+    person: &Name,
+) -> Result<Said, Refusal> {
+    let seed = &link.seed;
+    let id = seed.id();
+    if group::groups(node.rail().root())
+        .iter()
+        .any(|s| s.id() == id)
+    {
+        tracing::debug!(target: "cli", group = %id, "cli: join — this computer holds the group already, so nothing is redeemed");
+        return Ok(Said::AlreadyIn(seed.clone()));
+    }
+    let request = RedeemRequest::sign(
+        &link.secret,
+        key,
+        &id,
+        &link.invite,
+        &Person::from(person.as_str()),
+    );
+    let redeemed = redeem(node.endpoint(), link.issuer.addr().clone(), &request)
+        .await
+        .map_err(|e| {
+            tracing::debug!(target: "cli", group = %id, error = %e, "cli: join — not let in");
+            match e {
+                RedeemError::Refused(_) => Refusal::LinkRefused(seed.name().clone()),
+                RedeemError::Unjudged | RedeemError::NoAnswer(_) => {
+                    Refusal::IssuerAway(seed.name().clone())
+                }
+            }
+        })?;
+    tracing::debug!(target: "cli", group = %id, redeemed = ?redeemed, "cli: join — let in");
+    let journal = node
+        .rail()
+        .journal(&id)
+        .map_err(|e| keep_refused(seed, &e.to_string()))?;
+    group::write_seed(journal.dir(), seed)
+        .map_err(|e: SeedError| keep_refused(seed, &e.to_string()))?;
+    journal
+        .set_roster(&seed.roster())
+        .map_err(|e| keep_refused(seed, &e.to_string()))?;
+    let synced = node.sync_with(&id, link.issuer.addr()).await;
+    match &synced.stop {
+        None => {
+            tracing::debug!(target: "cli", group = %id, pulled = synced.pulled, "cli: join — synced once from the issuer")
+        }
+        Some(stop) => {
+            tracing::warn!(target: "cli", group = %id, stop = ?stop, pulled = synced.pulled, "cli: join — let in, and the first sync stopped; the round carries on")
+        }
+    }
+    if matches!(redeemed, Redeemed::AlreadyIn) {
+        tracing::debug!(target: "cli", group = %id, "cli: join — the issuer says this key stood already; this computer now keeps its copy");
+    }
+    Ok(Said::Joined {
+        seed: seed.clone(),
+        person: person.clone(),
+    })
+}
+
+/// This computer's user name, as the name a group knows its founder or a
+/// joiner by when `--as` names none. `new` and `join` print it, so it is
+/// never silent.
 fn user_name() -> Option<Name> {
     let raw = std::env::var("USER").ok()?;
     tracing::debug!(target: "cli", user = %raw, "cli: the founder's name from $USER");

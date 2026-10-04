@@ -177,13 +177,18 @@ the group's id and so its directory; `seed.json` holds it beside the
 record, and `Seed::roster` writes the register's seed, `roster.json`, the
 founder's key bound to the founder's name. `cli.rs` is new, in the shape of
 commonwealth-rails' `cli.rs` and `main.rs`: verbs parsed by hand (`svrngs`,
-`new <name> [--as] [--origin]`, `link <group> [--origin]`); one svrngs per
+`new <name> [--as] [--origin]`, `join <link> [--as]`, `link <group>
+[--origin]`); one svrngs per
 data dir (`$SVRNGS_DIR`, else `~/.svrngs`), held by a lock on
 `<dir>/lock`; `new` and `link` append an `Invite` through the group's door
-that lapses in a day and print the link; each verb then runs the node until
-Ctrl-C. Refusals are a closed `Refusal` in a person's words, exit 1 for a
-refusal and 3 for a precondition absent. `tests/new.rs` runs one node in
-process.
+that lapses in a day and print the link; `join` redeems a link at its
+issuer's computer (`svrngs_node::redeem`), writes the group's seed only once
+let in, syncs once from the issuer (`Node::sync_with`) and prints "You're in
+<group>"; each verb then runs the node until Ctrl-C. What a verb prints is a
+closed `Said`, and refusals a closed `Refusal`, both in a person's words,
+exit 1 for a refusal and 3 for a precondition absent. `tests/new.rs` runs
+one node in process; `tests/join_by_link.rs`, U2's bar, runs Sam and six
+others.
 
 **`apps/expenses/`**: the Expenses fold (`expenses.js`) and its tests, from E0,
 the bot at tag `e0-bot`. Its reducer (`init`, `reduce`) is what the localhost
