@@ -306,7 +306,10 @@ computer that does not answer is named, and nothing is kept between asks. A refu
 at a segment boundary, as upstream's `covers`, compared percent-decoded,
 case-blind and with repeated slashes as one. `tests/door/` runs a lender
 and a member through it, with upstream's `picky_origin` and Range origin
-forked as fixtures.
+forked as fixtures. `tests/canaries.rs` stands up Sam's computer and Alex's
+in one group, in one process with no relay, and runs each canary of DESIGN
+§8 under Node against their loopback record APIs; `scripts/check.sh` runs it
+as its own step, and a canary that cannot start fails.
 
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`
@@ -359,9 +362,12 @@ others; `tests/share.rs` runs Sam lending to Alex in process, and the
 program itself for `share` with svrngs running and not.
 
 **`apps/expenses/`**: the Expenses fold (`expenses.js`) and its tests, from E0,
-the bot at tag `e0-bot`. Its reducer (`init`, `reduce`) is what the localhost
-Expenses app of DESIGN U3 builds on. Its chat handlers went with the bot and
-are at that tag.
+the bot at tag `e0-bot`. Its reducer (`init`, `reduce`) folds the acts
+`actsOf` reads from the record's log, `by` the person an app wrote for, else
+the person whose computer wrote it. `canary.mjs` is the Expenses canary of
+DESIGN §8: apps on two computers write, a correction voids, and both copies
+fold to the same balances, the ones the acts say, or it names both and what
+each says. Its chat handlers went with the bot and are at that tag.
 
 **`apps/films/`, `apps/tap/`**: so far only each app's `nouns.txt` — the words
 the infra may never use. Films is DESIGN U5; Tap is a canary (DESIGN §8).

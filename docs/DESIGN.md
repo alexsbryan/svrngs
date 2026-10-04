@@ -526,6 +526,10 @@ three minutes, unassisted.
 exists, each a small app in `apps/` using only §3:
 - **Expenses** (after U3) — no server, all state in the record: two nodes,
   everyone writes, a correction voids, and both fold to the same balances.
+  Landed (u3-7): `apps/expenses/canary.mjs`, folding with `init` and
+  `reduce` over Sam's and Alex's loopback record APIs, writes for Bo and Cy
+  naming them in `on_behalf_of`, run by `crates/svrngs-node/tests/canaries.rs`,
+  nodes in one process, no relay; a step of its own in `scripts/check.sh`.
 - **Tap** (after U3) — private inputs and a ring born from a ring: two groups
   on one node; an app starts a group of two from inside a group; it seals its
   own payloads to members' public keys, which the register gains with it. (It

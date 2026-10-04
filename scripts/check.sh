@@ -18,6 +18,8 @@ if [ -f Cargo.toml ]; then
   step "rustfmt"  cargo fmt --all --check
   step "clippy"   cargo clippy --quiet --all-targets -- -D warnings
   step "tests"    cargo test --quiet
+  # The canaries (DESIGN §8) again, by name: the apps that keep the infra general.
+  step "canaries" cargo test --quiet -p svrngs-node --test canaries
 else
   echo "never-ran  rustfmt, clippy, tests: no Cargo workspace yet"; failed=1
 fi
