@@ -84,14 +84,16 @@ tunnelled over iroh to the lender's node, which strips any identity header the
 client sent and adds the verified one. A lent service — Jellyfin, a svrn
 daemon's web UI — is an app like any other; what the group may do with it is a
 lend declaration, kept as data: a secret the door injects and never lets out, the
-paths it refuses, how many streams at once.
+paths it refuses, how many people may use it at once.
 
 **What an app gets — the whole surface, for our apps and a stranger's alike:**
 - the person asking, verified, in a header the door sets;
 - the people in the group, each with a public key the app may seal to;
 - the record, over a loopback API on the member's own node: append, read, live;
 - the services the group's members lend, each by name and an opaque kind the
-  app interprets (`jellyfin`);
+  app interprets (`jellyfin`), and how many people are using each now;
+- on each request through the door, the share of the lender's upload it may
+  use right now;
 - the screen handoff: a node on a TV's network serves one stream at an
   unguessable local address the TV fetches, while a phone is the remote.
 
@@ -251,6 +253,30 @@ or on the TV; the lender's password never leaves their computer. Nothing else
 is built until Demo B passes, except the two canaries, which keep Films from
 bending the infra into a media platform.
 
+**Many people, one library — first class, not an edge case.** Three friends in
+three homes on Sam's library at once is the normal evening. What breaks, and
+who fixes it:
+- *Sam's upload is shared* — infra. The door measures Sam's upload and each
+  viewer's path, divides the upload evenly among the people watching, and tells
+  each request its share; shares change as people start and stop. Sam's own
+  home, on the local network, is never counted against it.
+- *Sam's computer has one processor* — Films. It asks Jellyfin for no more
+  than the share (`MaxStreamingBitrate`), plays the file as it is whenever the
+  share and the phone allow — which costs Sam nothing — and transcodes only
+  when it must.
+- *Everyone comes through one viewer account* — Films. Jellyfin kills running
+  transcodes by device id and play session (`DynamicHlsController.cs:1504` in
+  the source read), so each person's device and each play carry their own, and
+  Bo seeking never stops Cy. Progress and "watched" live in the group's record
+  under each person's name, so Continue Watching is theirs and follows them
+  across every member's library. The lend's limit sits below the account's own
+  session cap (`MaxActiveSessions`), so the door, not Jellyfin, says no.
+- *Too many at once* — the door refuses past the lend's limit with a reason;
+  Films turns it into a choice: "Sam's library has three watching — Dee has
+  Arrival too", or "you're next". A title two members lend plays from whoever
+  can give you the bigger share.
+- *The same room* — one stream to the TV, however many phones hold the remote.
+
 **Starting U1.** List everything `ring_sync`, `ring_routes.rs` and
 `acceptor.rs` use outside themselves at `e1a43bcd2`, tests apart: the crates
 `commonwealth-core`, `commonwealth-transport`, `commonwealth-media`, `host-kit`
@@ -269,17 +295,19 @@ the mesh daemon and so is rewritten, not forked.
 |---|---|---|
 | U1 a group is not a mesh | ring sync and the ring routes forked into `svrngs-node`; the register decides who may connect and who is synced, where upstream asked the mesh (`commonwealth/crates/commonwealth-rails/src/` at `e1a43bcd2`: `acceptor.rs:47-61`, `ring_sync/journal.rs:153-164`, the default roster at `lib.rs:404`) | a node in the group but no mesh syncs; a node outside the group is refused |
 | U2 join by link | `svrngs new <name>` and `svrngs join <link>` on a computer; redeeming writes the `Admit`; each person's public key in the register; acts linked by their previous act, ids over everything signed (§6) | one redemption admits one person to one group; a reused link is refused |
-| U3 lend a service | the member door forked; `svrngs share <port>` with its lend declaration; streaming and byte ranges through the door; the loopback record API; the list of what members lend | the app sees the verified person; a header the client typed is stripped; the lender's secret appears in no byte a member receives |
+| U3 lend a service | the member door forked; `svrngs share <port>` with its lend declaration; streaming and byte ranges through the door; each request's share of the lender's upload; the people-at-once limit; the loopback record API; the list of what members lend | the app sees the verified person; a header the client typed is stripped; the lender's secret appears in no byte a member receives; with three streams, each is told a third of the measured upload, and a fourth person is refused with a reason |
 
-**Demo A — Sam's films on Alex's computer** (after U3). Sam lends Jellyfin
-with one command and sends Alex a link. Alex's computer joins, and Alex plays a
-film from Sam's library in their own browser, seeking freely. Sam's password
-never left Sam's computer; nobody made an account.
+**Demo A — Sam's films, three homes at once** (after U3). Sam lends Jellyfin
+with one command and sends a link. Alex, Bo and Cy join from three homes and
+each plays a different film from Sam's library in their own browser at the
+same time, seeking freely; none stalls another, and each plays at the best
+quality Sam's upload can share. Sam's password never left Sam's computer;
+nobody made an account.
 
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
 | U4 the browser | a phone opens the link and is in: its own key, a dial to the meeting point, and the runtime that renders a lent app through it — fetch, POST, streaming, byte ranges | a stock phone browser plays a lent film and seeks |
-| U5 Films | `apps/films`: one shelf across every member's lent library, "from Sam's", search, play here — on the §3 surface alone | a title two members lend shows once, with both; Films calls nothing outside §3 |
+| U5 Films | `apps/films`: one shelf across every member's lent library, "from Sam's", search, play here; a device and play-session id per person and play; progress per person in the record; busy turned into a choice — on the §3 surface alone | a title two members lend shows once, with both; Bo's seek never restarts Cy's play; Films calls nothing outside §3 |
 | U6 the screen handoff | the meeting point serves one stream to a TV on its network at an unguessable address; AirPlay from Safari, Cast from Chrome; the phone is the remote and may lock | a film plays on the TV from a phone browser; the address serves only the device it was handed to |
 
 **Demo B — movie night** (after U6). Five friends at Sam's, phones only. Sam
@@ -308,6 +336,7 @@ class at a time, each chosen by the north star's tests.
 | a native phone app, and groups of phones only | the browser cannot keep what a group needs — its key, or a copy — measured |
 | Windows | a group asks |
 | DLNA, and TVs that take no push | people whose TV takes neither AirPlay nor Cast ask, counted |
+| watching together from different homes: one transcode, shared, in step | a group asks to watch the same film apart at the same time |
 | sealing in the infra | two apps need the same seal |
 | group compute: asks leased by members' computers and answered as acts | Ask is next |
 | files beside the record; the live channel beyond what U3 carries | the reference app that needs each |
