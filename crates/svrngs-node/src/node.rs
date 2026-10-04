@@ -309,25 +309,10 @@ fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn
             return None;
         }
     }
-    let namespaces = match rail.namespaces() {
-        Ok(n) => n,
-        Err(e) => {
-            tracing::warn!(target: "node", actor, error = %e, "node: refused — cannot list the groups held, so nobody can be shown to stand in one");
-            return None;
-        }
-    };
-    for namespace in &namespaces {
-        match rail.standing(namespace, &Ed25519Verifier) {
-            Ok(standing) if standing.names(&actor) => {
-                tracing::debug!(target: "node", actor, namespace, "node: admitted — the dialer stands in a group held here");
-                return Some(Alpn::Member);
-            }
-            Ok(_) => {}
-            Err(e) => {
-                tracing::warn!(target: "node", actor, namespace, error = %e, "node: a group's register is unreadable, so it admits nobody");
-            }
-        }
+    if let Some((namespace, _)) = rail.standing_anywhere(&actor, &Ed25519Verifier) {
+        tracing::debug!(target: "node", actor, namespace, "node: admitted — the dialer stands in a group held here");
+        return Some(Alpn::Member);
     }
-    tracing::debug!(target: "node", actor, groups = namespaces.len(), "node: refused — the dialer stands in no group held here");
+    tracing::debug!(target: "node", actor, "node: refused — the dialer stands in no group held here");
     None
 }

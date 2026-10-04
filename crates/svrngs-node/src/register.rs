@@ -136,6 +136,46 @@ impl RingRail {
         );
         Ok(Standing::Members(members))
     }
+
+    /// The first group this node holds, in [`RingRail::namespaces`]' order,
+    /// that `actor` stands in, and the person they stand as there; `None`
+    /// when they stand in none. The one answer the acceptor
+    /// (`node::admit_dialer`) and the member door (`door::through`) ask. A
+    /// group whose register is unreadable vouches for nobody, and groups
+    /// that cannot be listed vouch for nobody at all.
+    pub fn standing_anywhere(
+        &self,
+        actor: &str,
+        verifier: &dyn RingVerifier,
+    ) -> Option<(String, Person)> {
+        let namespaces = match self.namespaces() {
+            Ok(n) => n,
+            Err(e) => {
+                tracing::warn!(target: "register", actor, error = %e,
+                    "register: cannot list the groups held, so nobody can be shown to stand in one");
+                return None;
+            }
+        };
+        for namespace in &namespaces {
+            match self.standing(namespace, verifier) {
+                Ok(Standing::Members(m)) => {
+                    if let Some(person) = m.get(actor) {
+                        tracing::debug!(target: "register", actor, namespace, %person,
+                            "register: the key stands in a group held here");
+                        return Some((namespace.clone(), person.clone()));
+                    }
+                }
+                Ok(_) => {}
+                Err(e) => {
+                    tracing::warn!(target: "register", actor, namespace, error = %e,
+                        "register: a group's register is unreadable, so it vouches for nobody");
+                }
+            }
+        }
+        tracing::debug!(target: "register", actor, groups = namespaces.len(),
+            "register: the key stands in no group held here");
+        None
+    }
 }
 
 #[cfg(test)]

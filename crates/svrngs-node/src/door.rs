@@ -53,7 +53,6 @@ use axum::Extension;
 use crate::declared::read_declared_in;
 use crate::iroh::Dialer;
 use crate::lend::{self, Lend, LendName};
-use crate::register::Standing;
 use crate::ring_routes::err;
 use crate::{Ed25519Verifier, Person, RingRail};
 
@@ -124,34 +123,6 @@ fn compare_name(name: &str) -> String {
 fn can_step_out(path: &str) -> bool {
     let lower = path.to_ascii_lowercase();
     path.split('/').any(|seg| seg == "..") || lower.contains("%2e") || lower.contains("%2f")
-}
-
-/// The person `actor` is in the first group this computer holds that they
-/// stand in, and that group; `None` when they stand in none.
-fn person_of(rail: &RingRail, actor: &str) -> Option<(String, Person)> {
-    let namespaces = match rail.namespaces() {
-        Ok(n) => n,
-        Err(e) => {
-            tracing::warn!(target: "door", actor, error = %e,
-                "door: cannot list the groups held, so nobody can be shown to stand in one");
-            return None;
-        }
-    };
-    for namespace in namespaces {
-        match rail.standing(&namespace, &Ed25519Verifier) {
-            Ok(Standing::Members(m)) => {
-                if let Some(person) = m.get(actor) {
-                    return Some((namespace, person.clone()));
-                }
-            }
-            Ok(_) => {}
-            Err(e) => {
-                tracing::warn!(target: "door", actor, namespace, error = %e,
-                    "door: a group's register is unreadable, so it vouches for nobody");
-            }
-        }
-    }
-    None
 }
 
 /// The lend a request's path names, and the path its service is asked for.
@@ -292,7 +263,7 @@ async fn through(
         tracing::debug!(target: "door", actor, path, "door: refused — no lend named in the path");
         return err(StatusCode::NOT_FOUND, "nothing is lent here by that name");
     };
-    let Some((group, person)) = person_of(&door.rail, &actor) else {
+    let Some((group, person)) = door.rail.standing_anywhere(&actor, &Ed25519Verifier) else {
         tracing::debug!(target: "door", actor, "door: refused — the dialer stands in no group held here");
         return err(StatusCode::FORBIDDEN, "this computer lends nothing to you");
     };
