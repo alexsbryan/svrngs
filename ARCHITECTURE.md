@@ -148,14 +148,14 @@ its own, signed by the link's key, answered (`Asked`) with the group whose
 seed is the command's) and the `Invite`'s id. Then `RedeemRequest` — the group's id, the
 `Invite`'s id, a person's name, the new key, its consent and the link's
 key, signed by the link's secret — posted on `Alpn::Redeem`, which the
-accept loop serves to any dialer with these two routes. Each route is a door
-in DESIGN §5's four steps. Parse (`parse_redeem`, `parse_ask`): the dialer is
-the new key and the link's key signed, so a refused request reads nothing.
-Read the group's standing, seed and acts. Decide (`decide_admit`,
-`own_invite`, pure): the `Invite` is held, is this node's and names the
-link's key. Write: `append_if` writes the redeeming `Admit` only when `judge`,
-run again under the write lock, finds the key not standing already and
-`membership` (`register::membership_in`) counting the `Admit`.
+accept loop serves to any dialer with these two routes. Each route is an
+adapter around pure deciders: `parse_redeem` and `parse_ask` on what arrived
+(the dialer is the new key and the link's key signed), so a refused request
+reads nothing; `decide_admit` and `own_invite` on the group's acts (the
+`Invite` is held, is this node's and names the link's key). `append_if`
+writes the redeeming `Admit` only when `judge`, run again under the write
+lock, finds the key not standing already and `membership`
+(`register::membership_in`) counting the `Admit`.
 Every refusal answers `REFUSAL`, one sentence naming no group; a key that
 already stands is answered `AlreadyIn`, nothing written.
 

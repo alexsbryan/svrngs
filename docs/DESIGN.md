@@ -178,31 +178,24 @@ these from its first line; forked code is held to them as it becomes ours.
 Upstream's shape stays until a unit changes it: the node's map of open
 journals sits behind a `Mutex`, which an actor per journal replaces.
 
-**One pattern: acts, folds, effects, doors** (operator, 2026-10-04). Every
-piece of svrngs is one of four things, and a unit says which it adds before it
-is written. A requirement that fits none is a design question, raised as one.
+**The architecture** (operator, 2026-10-04). svrngs is local-first event
+sourcing: each group's record is an append-only log of signed events (acts),
+replicated as a grow-only CRDT, and every piece of state is a projection
+folded from it. Each node is a functional core of deciders and process
+managers behind ports and adapters, sans-IO, and the log is written ahead of
+any effect that cannot be undone. That rigidity binds the library, the source
+of primitives; above it, apps and communities do what they want with them —
+mechanism, not policy, and the infra holds no app's noun (`vocab_check.py`).
 
-- An **act** is a signed line on the group's record. The record is the only
-  truth the group keeps, apps' included.
-- A **fold** is a pure function that decides, and every rule, threshold and
-  policy lives in one. A fold over the record's acts (`admit`, `membership`,
-  `standing_in`) gives every node the same answer. A fold over a door's own
-  state (a sync exchange, the streams open through the member door, an accept
-  loop) is that door's protocol as a step function with no I/O (RUST_ARCH §2).
-- An **effect** carries out a decision. It writes an act, through `append_if`,
-  which runs the fold again under the write lock so the decision and the
-  write cannot drift. Or it touches what the group does not keep: this
-  computer's copy (compaction, a cache) or the live lane, which crosses doors
-  and is never an act. A fold's answer can change as late acts arrive, so a
-  decision whose effect cannot be undone is written as an act first.
-- A **door** is the only I/O, in four steps: parse what arrived, so a refused
-  request reads nothing; read what the decision needs; decide, by a fold;
-  write or answer. The clock is read only at a door and reaches a fold as an
-  argument, so a timer is a door too. `redeem.rs` is the worked example:
-  `parse_redeem`, `decide_admit`, then `judge` under `append_if`.
+| Invariant | Held by | State |
+|---|---|---|
+| Same acts, same state: a group's state is a pure function of its set of acts | svrngs-core is `no_std`, and `lean_check` keeps it so; folds read acts only through `Admission` | `no_std` holds; `membership` still sorts raw ops |
+| No act, no effect: nothing that cannot be undone happens but from an act in the record — the group's state and this computer's; a lent service's own state is its own, and the member door only carries a request to it | writing takes a `Decided<E>` only a core decider makes; acting takes a `Recorded<E>` only the journal yields | not yet |
+| Both | the core never depends on the node; the clock, randomness and locks live in one adapter each (clippy `disallowed-methods`, `disallowed-types`) | dependency direction holds; the clippy bans not yet |
 
-`RingRail::standing` reads and decides at once; its seven callers move to
-`standing_in`'s pure answer as units touch them.
+One property test stands behind every fold: permuting or duplicating
+`admit`'s input changes nothing. A decider's contract is given / when / then
+rows.
 
 **Two gates keep the apps out of the infra.** Every app lists its own nouns in
 `apps/<app>/nouns.txt`, and `scripts/vocab_check.py` refuses any of them in
