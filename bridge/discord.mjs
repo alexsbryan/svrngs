@@ -6,12 +6,18 @@
 import {
   ActionRowBuilder,
   ApplicationCommandOptionType,
+  ApplicationFlags,
   ButtonBuilder,
   ButtonStyle,
+  ChannelType,
   Client,
+  DiscordAPIError,
   Events,
   GatewayIntentBits,
   MessageFlags,
+  PermissionFlagsBits,
+  REST,
+  Routes,
 } from 'discord.js';
 
 import { log } from './bridge.mjs';
@@ -134,5 +140,78 @@ export function discordAdapter({ token, channelId }) {
     async close() {
       await client.destroy();
     },
+  };
+}
+
+/** What the bot asks for in a server: to see the channel, read and post in it, and take commands. */
+const PERMISSIONS =
+  PermissionFlagsBits.ViewChannel |
+  PermissionFlagsBits.SendMessages |
+  PermissionFlagsBits.ReadMessageHistory |
+  PermissionFlagsBits.UseApplicationCommands;
+
+/**
+ * The privileged intents `discordAdapter` asks for, each by the label of its
+ * switch in the developer portal. An unverified application gets the
+ * `Limited` flag when its switch is on.
+ */
+const SWITCHES = [
+  { label: 'Server Members Intent', flags: ['GatewayGuildMembers', 'GatewayGuildMembersLimited'] },
+  { label: 'Message Content Intent', flags: ['GatewayMessageContent', 'GatewayMessageContentLimited'] },
+];
+
+/** The link that adds application `id` to a server, with the commands and the permissions above. */
+export function inviteLink(id) {
+  return `https://discord.com/oauth2/authorize?client_id=${id}&scope=bot+applications.commands&permissions=${PERMISSIONS}`;
+}
+
+/** The switches still off, by label, in an application's `flags`. */
+export function switchesOff(flags) {
+  return SWITCHES.filter((s) => !s.flags.some((f) => flags & ApplicationFlags[f])).map((s) => s.label);
+}
+
+/**
+ * What `svrngs start` asks Discord with the bot's token (DESIGN C11): the
+ * application it belongs to, and the text channels in the servers it is in.
+ * A token Discord refuses comes back as `{refused: 'token'}`, not a throw.
+ */
+export function discordSetup({ token }) {
+  const rest = new REST({ version: '10' }).setToken(token);
+  const ask = async (fn) => {
+    try {
+      return await fn();
+    } catch (err) {
+      if (err instanceof DiscordAPIError && err.status === 401) {
+        log('bridge:setup_token_refused', {});
+        return { refused: 'token' };
+      }
+      throw err;
+    }
+  };
+  return {
+    application: () =>
+      ask(async () => {
+        const app = await rest.get(Routes.currentApplication());
+        return {
+          id: app.id,
+          name: app.name,
+          owner: app.owner?.global_name ?? app.owner?.username ?? null,
+          switches_off: switchesOff(app.flags ?? 0),
+          settings: `https://discord.com/developers/applications/${app.id}/bot`,
+          invite: inviteLink(app.id),
+        };
+      }),
+    servers: () =>
+      ask(async () => {
+        const servers = [];
+        for (const g of await rest.get(Routes.userGuilds())) {
+          const channels = (await rest.get(Routes.guildChannels(g.id)))
+            .filter((c) => c.type === ChannelType.GuildText)
+            .sort((a, b) => a.position - b.position)
+            .map((c) => ({ id: c.id, name: c.name }));
+          servers.push({ id: g.id, name: g.name, channels });
+        }
+        return { servers };
+      }),
   };
 }
