@@ -24,6 +24,7 @@
 //! (svrngs: upstream's census of rails' and the daemon's two keys went with
 //! the mesh; a node here has one key, DESIGN §8, "One key signs and dials".)
 
+use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use axum::extract::{Query, State};
@@ -33,8 +34,11 @@ use axum::Json;
 use serde::Deserialize;
 
 // rail.rs's refusal body came over with the sync route (u1-3), so there is one.
+use crate::register::{standing_in, Standing};
 use crate::ring_routes::err;
-use crate::{admit, Compaction, Ed25519Verifier, RailAct, RailError, RingJournal, RingRail};
+use crate::{
+    admit, Compaction, Ed25519Verifier, Person, RailAct, RailError, RingJournal, RingRail,
+};
 
 /// What the doors read: the journals. (Upstream's handlers read them from
 /// `RailsDaemon`, which did not come over, DESIGN §8.)
@@ -82,22 +86,70 @@ fn namespace_of(q: &RailQuery) -> Result<String, Response> {
 /// beside the sentence, so a dialing client hands its caller the same typed
 /// refusal a local rail would (`RailError::BadNamespace`), never prose to
 /// match (ARCH principle 9).
+///
+/// (svrngs: then the register is asked, before the journal is opened, so a
+/// group this computer does not hold leaves no trace: it is refused
+/// `kind: "not_held"`, and a group held with no seed `kind: "no_seed"`,
+/// since nobody can be shown to stand in it — DESIGN §8, U3's inventory,
+/// "the roster becomes the register". Upstream opened any namespace that
+/// was a name.)
 fn journal_of(rail: &RingRail, namespace: &str) -> Result<Arc<RingJournal>, Response> {
-    rail.journal(namespace).map_err(|e| match e {
-        RailError::BadNamespace(ns) => {
-            tracing::debug!(target: "rails", namespace = %ns, "rail: refused a namespace that is not one");
-            (
-                StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "error": RailError::BadNamespace(ns.clone()).to_string(),
-                    "kind": "bad_namespace",
-                    "namespace": ns,
-                })),
-            )
-                .into_response()
+    if !crate::valid_namespace(namespace) {
+        tracing::debug!(target: "rails", namespace, "rail: refused a namespace that is not one");
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({
+                "error": RailError::BadNamespace(namespace.to_string()).to_string(),
+                "kind": "bad_namespace",
+                "namespace": namespace,
+            })),
+        )
+            .into_response());
+    }
+    let refused = |status: StatusCode, kind: &str, why: String| {
+        (
+            status,
+            Json(serde_json::json!({ "error": why, "kind": kind, "namespace": namespace })),
+        )
+            .into_response()
+    };
+    match rail.standing(namespace, &Ed25519Verifier) {
+        Ok(Standing::Members(people)) => {
+            tracing::debug!(target: "rails", namespace, people = people.len(), "rail: the group is held here, and its register read");
         }
-        e => err(StatusCode::BAD_REQUEST, e.to_string()),
-    })
+        Ok(Standing::NotHeld) => {
+            tracing::debug!(target: "rails", namespace, "rail: refused — this computer holds no such group");
+            return Err(refused(
+                StatusCode::NOT_FOUND,
+                "not_held",
+                format!("this computer is in no group {namespace}"),
+            ));
+        }
+        Ok(Standing::NoSeed) => {
+            tracing::warn!(target: "rails", namespace, "rail: refused — the group is held with no seed, so nobody can be shown to be in it");
+            return Err(refused(
+                StatusCode::CONFLICT,
+                "no_seed",
+                format!("nobody can be shown to be in {namespace} on this computer"),
+            ));
+        }
+        Err(e) => {
+            tracing::warn!(target: "rails", namespace, error = %e, "rail: refused — the group's register is unreadable");
+            return Err(err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()));
+        }
+    }
+    rail.journal(namespace)
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+}
+
+/// The people standing in a group as an app reads them: each person, with
+/// the key they stand by, its lowercase hex — a key an app may seal to
+/// (DESIGN §3). The one shape every door that names the people answers.
+pub(crate) fn people_json(standing: &BTreeMap<String, Person>) -> serde_json::Value {
+    standing
+        .iter()
+        .map(|(key, person)| serde_json::json!({ "person": person, "key": key }))
+        .collect()
 }
 
 /// POST /v1/rail/append — sign and append one act to the named namespace.
@@ -178,14 +230,18 @@ pub(crate) async fn append_act(
             // survive the dial, and a client matching on the sentence would
             // be prose matching (ARCH principle 9). `actor` names whose key
             // was refused. (svrngs: upstream chose the sentence by the
-            // roster's origin; with the derived origin gone, the file's
-            // sentence, the rail's own, is the one.)
+            // roster's origin; here the register decides, and the sentence
+            // an app may show a person says so in DESIGN §1's words.)
             let (actor, namespace) = match &e {
                 RailError::NotInRoster { actor, namespace } => (actor.clone(), namespace.clone()),
                 _ => (String::new(), String::new()),
             };
+            tracing::debug!(target: "rails", namespace = %namespace, actor = %actor, "rail: refused — this computer's key does not stand in the group");
             let refusal = serde_json::json!({
-                "error": e.to_string(),
+                "error": format!(
+                    "this computer is not in {namespace}, so nothing it writes would count; \
+                     someone in it must let it in"
+                ),
                 "kind": "not_in_roster",
                 "actor": actor,
                 "namespace": namespace,
@@ -200,7 +256,9 @@ pub(crate) async fn append_act(
 /// GET /v1/rail/log — the namespace's acts, in one order, and its gaps:
 /// admitted ops, each gap's own sentence (the rail's `Display`, so the page
 /// and the terminal say the same words), the held count, completeness, and
-/// the roster the ops were admitted against.
+/// the roster the ops were admitted against. (svrngs: the people standing
+/// after those ops, from the register over the same read, in place of the
+/// seed they were admitted from.)
 async fn log_answer(_rail: &RingRail, journal: &Arc<RingJournal>) -> Response {
     let roster = match journal.roster_file() {
         Ok(r) => r,
@@ -231,6 +289,10 @@ async fn log_answer(_rail: &RingRail, journal: &Arc<RingJournal>) -> Response {
             v
         })
         .collect();
+    let people = match standing_in(&ops, &roster, journal.namespace(), &Ed25519Verifier) {
+        Ok(p) => p,
+        Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+    };
     let ops_json: Vec<serde_json::Value> = admission
         .ops
         .iter()
@@ -242,7 +304,7 @@ async fn log_answer(_rail: &RingRail, journal: &Arc<RingJournal>) -> Response {
         "gaps": gaps,
         "held": admission.held,
         "complete": admission.is_complete(),
-        "roster": roster,
+        "people": people_json(&people),
     }))
     .into_response()
 }

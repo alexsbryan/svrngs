@@ -91,17 +91,45 @@ async fn an_unstamped_append_carries_no_name() {
 
 /// Nobody in the roster → every op this node writes would be unreadable to
 /// every peer, and the refusal is typed. (svrngs: upstream's sentence named
-/// its join verb, chosen for a derived roster; with no seed the rail's own
-/// sentence is the one, and the test asserts the type.)
+/// its join verb, chosen for a derived roster; here a seed that names
+/// another key is a group this computer is held in but does not stand in,
+/// and the test asserts the type.)
 #[tokio::test]
 async fn append_outside_the_mesh_refuses_naming_the_join_verb() {
-    let (_dir, rail) = rail_with(&[]);
-    let journal = journal_of(&rail, "ledger").unwrap();
+    let (_dir, rail) = rail_with(&[("halo", 3)]);
+    let journal = rail.journal("ledger").unwrap();
     let body = serde_json::json!({ "op": "record", "payload": { "amount": 4 } });
     let resp = append_act(&rail, &journal, body).await;
     assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
     let out = body_of(resp).await;
     assert_eq!(out["kind"], "not_in_roster", "{out}");
+}
+
+/// The register is asked before a journal is opened (svrngs, DESIGN §8,
+/// U3's inventory): a group this computer does not hold is refused
+/// `not_held` and leaves nothing on disk, and one held with no seed is
+/// refused `no_seed`. The failing input: `journal_of` opening any
+/// namespace that is a name, as upstream's did.
+#[tokio::test]
+async fn a_group_not_held_or_without_a_seed_is_refused_before_it_is_opened() {
+    let (dir, rail) = rail_with(&[("alex", 7)]);
+    let refused = journal_of(&rail, "elsewhere").err().unwrap();
+    assert_eq!(refused.status(), StatusCode::NOT_FOUND);
+    assert_eq!(body_of(refused).await["kind"], "not_held");
+    assert!(
+        !dir.path().join("rings/elsewhere").exists(),
+        "nothing is opened on disk"
+    );
+
+    std::fs::create_dir_all(dir.path().join("rings/unseeded")).unwrap();
+    let refused = journal_of(&rail, "unseeded").err().unwrap();
+    assert_eq!(refused.status(), StatusCode::CONFLICT);
+    assert_eq!(body_of(refused).await["kind"], "no_seed");
+
+    assert!(
+        journal_of(&rail, "ledger").is_ok(),
+        "control: a held, seeded group opens"
+    );
 }
 
 /// The namespace is never guessed: absent is a 400 that names the fix, and
@@ -139,9 +167,11 @@ async fn log_ships_admitted_ops_gaps_and_the_roster() {
     assert_eq!(out["ops"].as_array().unwrap().len(), 1);
     assert_eq!(out["ops"][0]["person"], "alex");
     assert_eq!(out["gaps"].as_array().unwrap().len(), 0);
-    assert!(
-        out["roster"]["members"]["alex"].is_array(),
-        "the answer carries the roster the ops were admitted against"
+    assert_eq!(
+        out["people"],
+        serde_json::json!([{ "person": "alex", "key": actor_of(&key(7)) }]),
+        "the answer carries the people standing after the ops (svrngs: \
+         upstream's carried the roster they were admitted against)"
     );
 }
 

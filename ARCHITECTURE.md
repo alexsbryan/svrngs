@@ -178,6 +178,13 @@ roster's origin; `err` is the one `ring_routes.rs` carries. The sync doors,
 `attest` and the live lane stay behind, and with them the other routes
 beside them in upstream's `api.rs`. Then it changed: the append door's
 attestation branch went with `attest`, so a bare `on_behalf_of` is dropped.
+The register stands where the roster stood: `journal_of` asks
+`RingRail::standing` before a journal is opened, refusing a group this
+computer does not hold (`not_held`, 404) and one held with no seed
+(`no_seed`, 409); the door's own fold refuses a computer that does not
+stand (`not_in_roster`, in DESIGN §1's words); and the log answers the
+people standing after its one read (`people_json`: each person and their
+key), where upstream's answered the roster.
 
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`
