@@ -1,34 +1,32 @@
-# svrngs — north star
+# North star
 
-Every decision answers to these three. Work that serves none of them waits. A
-design that breaks one is wrong, however clever. Where `docs/DESIGN.md`
-disagrees, this wins and the design is rewritten.
+Every decision answers to these three. Work that serves none waits; a design
+that breaks one is wrong. Where `docs/DESIGN.md` disagrees, this wins.
 
 ## 1. People join for themselves
 
-Nobody joins for the commons. They join because the party's address, the
-person they want to see again, the money they are owed and the room before
-it is listed are in there — cheaper, and with less embarrassment, than
-anywhere else. A link in a chat they already use, ten seconds, no new words.
-The commons is what their selfish acts leave behind.
+People join because the party's address, the person they want to see again,
+the money they're owed and the room before it's listed are in there, cheaper
+and less awkward than anywhere else. A link in a chat they already use; ten
+seconds; no new words. The commons is what their selfish acts leave behind.
 
-*Test: what does a lazy person get in ten seconds, without learning anything?*
+*Test: what does a lazy person get in ten seconds?*
 
 ## 2. If you can run it on localhost, you can share it with your friends
 
-An app needs no login, no SDK and no bundle. It gets the person asking,
-verified; a record that outlives its host; and reach to everyone in the group.
-We build that platform and one small example of each kind of app. The
-community builds the apps.
+An app needs no login, no SDK, no bundle: it gets the person asking, verified;
+a record that outlives its host; reach to the whole group. svrngs stays small
+enough to read in an afternoon, and as pleasant to build on as iroh: few
+concepts, plain names, nothing clever. We build the platform; the community
+builds the apps.
 
-*Test: did a developer have to learn anything of ours?*
+*Test: could a developer read all of it, and did they have to?*
 
 ## 3. Concentric rings, and no centre but you
 
-Each person stands at the centre of their own rings: the house, their friends,
-the party, the town. Reach travels outward only through someone who belongs to
-two rings and says yes — never through a profile, a directory, a feed or a
-ranking. Each ring keeps its record on its members' computers, and can leave
-together, intact.
+You stand at the centre of your own rings: the house, friends, the party, the
+town. Reach travels outward only through someone in two rings who says yes,
+never through a profile, directory, feed or ranking. Each ring keeps its record
+on its members' computers and can leave together, intact.
 
 *Test: does this build a centre, or rank a person?*
