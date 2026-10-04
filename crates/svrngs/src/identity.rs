@@ -27,16 +27,12 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use ed25519_dalek::SigningKey;
+use svrngs_node::actor_of;
 
 /// File name under the daemon data dir, sibling of `node_id`. (svrngs: the
 /// file a refusal names, so it is called what a person may read — DESIGN
 /// §1 keeps "node" and "key" from them; upstream's was `node_key`.)
 pub const NODE_KEY_FILE: &str = "identity";
-
-/// The pubkey for a signing key, as lowercase hex.
-pub fn node_pubkey(key: &SigningKey) -> String {
-    hex::encode(key.verifying_key().to_bytes())
-}
 
 fn key_path(data_dir: &Path) -> std::path::PathBuf {
     data_dir.join(NODE_KEY_FILE)
@@ -102,7 +98,7 @@ pub fn load_or_generate_node_key(data_dir: &Path) -> Result<SigningKey, KeyError
         Ok(Some(key)) => {
             tracing::debug!(
                 target: "identity",
-                node_pubkey = %node_pubkey(&key),
+                node_pubkey = %actor_of(&key),
                 "node_key: loaded the persisted key"
             );
             Ok(key)
@@ -127,7 +123,7 @@ pub fn load_or_generate_node_key(data_dir: &Path) -> Result<SigningKey, KeyError
                 }
             })?;
             tracing::info!(
-                node_pubkey = %node_pubkey(&fresh),
+                node_pubkey = %actor_of(&fresh),
                 "node_key: generated + persisted identity key (first boot)"
             );
             Ok(fresh)

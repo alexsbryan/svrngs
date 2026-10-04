@@ -163,7 +163,8 @@ file.
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`
 :1-126 at `e1a43bcd2`, its join proof and dial-info signing left behind, its
-`node_pubkey` answering hex; then changed: a key file that cannot be read,
+`node_pubkey` answering hex until svrngs-core's `actor_of`, the one hex
+spelling of a key, took its callers; then changed: a key file that cannot be read,
 and a fresh key that cannot be written, refuse naming the file, where
 upstream fell back to a key nobody keeps, and the file is `identity`, a word
 a person may read. `link.rs` is mesh-join-vocab's https guest link
