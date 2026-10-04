@@ -219,6 +219,14 @@ key), where upstream's answered the roster. `GET /v1/rail/people` is new:
 the same people, through the same gate (`standing_of`), so an app needs no
 second source for who is in its group or a key to seal to (DESIGN §3).
 
+The member door (DESIGN §8, U3's inventory) starts from `declared.rs`,
+commonwealth-media's `declared.rs` at `e1a43bcd2` (:51-77, 164-247): a
+lender's credential for its own service, a header value in a 0600 file
+under a 0700 dir, the file named by its header, never logged. Its house
+store (`house_dir_under`, `read_house_in`, `write_viewer_in`) and rails'
+data-dir helpers stay behind with their two tests, and with `dir_under` the
+`PathBuf` import.
+
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`
 :1-126 at `e1a43bcd2`, its join proof and dial-info signing left behind, its
