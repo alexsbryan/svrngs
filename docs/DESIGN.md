@@ -226,7 +226,14 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   act at its seq: a removal nobody sequenced. Until U7 that grants nothing a
   member lacks, since any standing key's `Remove` counts
   (`membership.rs:153-156`), so it lands with the removal it protects, and
-  with the sync that carries both branches of a fork.
+  with the sync that carries both branches of a fork. U7 also closes two holes of the
+  same family that only a member can open, each leaving a copy that never
+  reads as complete while the acts themselves still apply: a forged line
+  above a member's newest act moves their door's next seq past it
+  (`crates/svrngs-node/src/journal.rs`, `Held::catch_up`; ralph/REVIEW_FINDINGS.md
+  #16), and an act refused inside its author's chain is reported as a hole,
+  since admission's seq audit counts admitted acts only (`admit.rs`, the
+  per-actor sequence audit; 40b9466's body).
 - **Removal has one decider** (U7). Anyone may ask to remove anyone; the group's
   keeper — one person's key, handed on by an act — sequences each request. A
   removed key cannot remove. There is no recovery inside a group.
