@@ -37,7 +37,8 @@
 //!
 //! - Peer iroh socket addresses come from the [`Contact`] or an explicitly
 //!   seeded map ([`IrohTransport::add_known_peer`]); a bare key with neither
-//!   is not dialled.
+//!   is not dialled. (svrngs: unless the endpoint has an address lookup,
+//!   which resolves it — DESIGN §8, "Four facts".)
 
 use std::collections::HashMap;
 use std::net::SocketAddr;
@@ -145,8 +146,12 @@ impl IrohTransport {
 
     /// Build the dial target from the contact's iroh info (relay
     /// URL + direct addrs), merging any test-seeded `known_addrs`.
-    /// `None` when there's no usable path (no relay AND no address) — a
-    /// bare key isn't dialable without one.
+    /// `None` when there's no usable path (no relay AND no address) and the
+    /// endpoint has no address lookup to resolve the key. (svrngs: upstream
+    /// refused every bare key, since its mesh gossiped addresses; with no
+    /// gossip a member is dialled by key, and the endpoint's own lookup —
+    /// n0's DNS under `RelayConfig::n0_services` — finds it, DESIGN §8,
+    /// "Four facts".)
     fn endpoint_addr_for(&self, peer: &Contact) -> Option<iroh::EndpointAddr> {
         let mut ea = iroh::EndpointAddr::new(peer.key);
         let mut has_path = false;
@@ -178,7 +183,21 @@ impl IrohTransport {
                 has_path = true;
             }
         }
-        has_path.then_some(ea)
+        if has_path {
+            return Some(ea);
+        }
+        let lookup = self
+            .endpoint
+            .address_lookup()
+            .is_ok_and(|services| !services.is_empty());
+        tracing::debug!(
+            target: "transport",
+            transport = "iroh",
+            peer = %&peer.key.to_string()[..8],
+            lookup,
+            "iroh: a bare key — dialled through the endpoint's address lookup when it has one"
+        );
+        lookup.then_some(ea)
     }
 
     /// Get or create the localhost TCP bridge for the peer,
@@ -249,7 +268,7 @@ impl IrohTransport {
                 transport = "iroh",
                 peer = %label,
                 "iroh: no dialable path in contact (no relay_url / iroh_direct_addrs) \
-                 — not dialable"
+                 and no address lookup — not dialable"
             );
             return None;
         };
@@ -750,6 +769,50 @@ pub(crate) mod tests {
         let b = transport.base_url(&contact).await;
         assert!(a.is_some(), "a contact with an address resolves");
         assert_eq!(a, b, "cached bridge must be reused");
+    }
+
+    /// A bare key — no relay and no address, in the contact or seeded — is
+    /// dialled when the endpoint has an address lookup, and the lookup's
+    /// answer is where the tunnel lands; with no lookup it is not dialled
+    /// (DESIGN §8, "Four facts"). A memory lookup stands in for n0's DNS.
+    #[tokio::test]
+    async fn a_bare_key_is_dialled_through_the_endpoints_address_lookup() {
+        let worker_addr = spawn_marker_listener(b"WORKER").await;
+        let server_ep = hermetic_endpoint(35, vec![ALPN.to_vec()]).await;
+        spawn_splicing_acceptor(server_ep.clone(), worker_addr);
+        let bare = contact_for(&server_ep, Vec::new());
+
+        let without = IrohTransport::new(hermetic_endpoint(36, vec![]).await);
+        assert_eq!(
+            without.base_url(&bare).await,
+            None,
+            "with no lookup a bare key is not dialled"
+        );
+
+        let lookup = iroh::address_lookup::MemoryLookup::new();
+        let mut found = iroh::EndpointAddr::new(server_ep.id());
+        for a in loopback_sockets(&server_ep) {
+            found = found.with_ip_addr(a);
+        }
+        lookup.add_endpoint_info(found);
+        let dialling = EndpointBuilder::empty()
+            .crypto_provider(ring_crypto_provider())
+            .secret_key(SecretKey::from_bytes(&[37; 32]))
+            .address_lookup(lookup)
+            .bind()
+            .await
+            .expect("hermetic endpoint bind");
+        let with = IrohTransport::new(dialling);
+        let base = with
+            .base_url(&bare)
+            .await
+            .expect("with a lookup a bare key is dialled");
+        let port: SocketAddr = base.strip_prefix("http://").unwrap().parse().unwrap();
+        assert_eq!(
+            read_marker_from_port(port).await,
+            b"WORKER",
+            "the tunnel lands where the lookup said"
+        );
     }
 
     #[test]
