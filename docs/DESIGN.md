@@ -499,8 +499,13 @@ By the operator, 2026-10-04:
   `https://svrnme.sh/ring/` is the default origin, and anyone may serve the
   page from their own;
 - a link is short and opaque, for the ergonomics of sharing: one token
-  after the `#` carrying only what the joiner cannot ask the issuer for,
-  and no word §1 keeps from people anywhere in it (u2-8);
+  carrying only what the joiner cannot ask the issuer for, and no word §1
+  keeps from people anywhere in it (u2-8);
+- nothing depends on a hosted URL by default: svrngs prints the client's
+  link, `svrngs://join/<token>`, and an https link only for a group that
+  names a page origin of its own choosing, svrnme.sh being one choice, not
+  the default ("I don't want people to HAVE to depend on our hosted url").
+  This supersedes the svrnme.sh default above;
 - one link admits everyone who opens it, each once, until it lapses or is
   closed — not one person per link;
 - only the issuer's node redeems a link;
