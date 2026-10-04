@@ -52,9 +52,20 @@ exports — `fold_segment`, `propose`, `say`, `due` — JSON in and out.
 
 **`crates/svrngs`**: the command and the host process. It is the only crate
 allowed `anyhow`.
+- `main.rs`: `svrngs start` and `svrngs serve`. Once a chat is set up,
+  `serve` runs the bridge (`node bridge/main.mjs`) beside the host and exits
+  non-zero when the bridge stops, so the service restarts both.
+- `start.rs`: `svrngs start`, DESIGN C11's five steps. It asks Discord
+  through `bridge/setup.mjs`, and prints only the words in `start.json`.
+- `service.rs`: keeps `svrngs serve` running, as a launchd agent
+  (`~/Library/LaunchAgents/org.svrngs.serve.plist`) or a systemd user unit
+  (`~/.config/systemd/user/svrngs.service`), and reads whether the computer
+  sleeps (`pmset -g`).
 - `home.rs`: the one accessor for each path under `~/.svrngs`: `groups/<id>/`,
-  `keys/<id>.json` and `secrets/bridge-token`. It also starts a group: the
-  genesis names the Person key, and that key's first act admits the Bridge key.
+  `keys/<id>.json`, `secrets/bridge-token`, `secrets/discord-token`,
+  `chat.json` (the channel and whose computer this is) and `logs/`. It also
+  starts a group: the genesis names the Person key, and that key's first act
+  admits the Bridge key.
 - `store.rs`: the group's directory, `genesis.json` and `journal.jsonl`.
   Opening it re-ingests every line.
 - `journal.rs`: the journal actor. One thread owns the directory, the
@@ -93,7 +104,10 @@ allowed `anyhow`.
 - `host.mjs`: the client for `bridge.rs`.
 - `words.json`: everything the bot says, in plain words (DESIGN D0).
 - `main.mjs`: reads its five settings from the environment and has no
-  defaults, so each value keeps one home.
+  defaults, so each value keeps one home. `svrngs serve` sets them.
+- `setup.mjs`: what `svrngs start` asks Discord — the application, its
+  switches and invite link, and the servers' text channels — through
+  `discordSetup` in `discord.mjs`.
 - `tests/`: the fake adapter (`fake.mjs`), the core's tests, and `harness.mjs`,
   which the host's Rust tests use to drive the bridge.
 
@@ -131,6 +145,7 @@ gets the same view back, with nothing written.
 | A speaker banned or gone from the chat has nothing written for them. | `GuestBook::may_speak` in `JournalActor::append`; `crates/svrngs/tests/removal_latency.rs` |
 | The bridge never loads app code. | `crates/svrngs/tests/bridge_holds_no_app.rs` |
 | Expenses holds the five laws and the sixth. | `apps/expenses/laws.test.mjs` |
+| Every word a person reads is on one allowlist, which holds none of D0's internal words; `svrngs start` prints only `start.json`. | `crates/svrngs/tests/plain_words.rs` |
 | An app sees no clock, no randomness, no locale and no earlier call. | `QuickJs`; `crates/svrngs-engine/src/tests.rs` |
 | What the bot posts is what the journal folds to; a reminder is posted once. | `crates/svrngs/tests/split_the_pizza.rs` |
 | Nothing a key wrote renders into the chat, `say` views included: not its acts, not its undo of the chat's. | `fold(_, Audience::Chat)` in `runner.rs` `acts_of`; `crates/svrngs/tests/origin_gate.rs` |
@@ -138,6 +153,15 @@ gets the same view back, with nothing written.
 
 ## Not built yet, said so
 
+- **Installing without a toolchain.** E0 installs with `cargo install` from a
+  checkout, and the command finds the bridge in that checkout
+  (`lib.rs` `bridge_dir`), so the checkout must stay
+  (demo/d2-your-own-group.md).
+- **A service on Windows**, and Linux lingering: on Linux the unit starts at
+  login and stops at logout. Whether a Linux computer sleeps is not asked;
+  setup says it cannot tell.
+- **Hiding the token as it is pasted.** `svrngs start` reads it as a line,
+  and the terminal shows it.
 - **Installing an app.** Expenses is built into the host (`runner.rs`
   `BUILT_IN`); install acts and signed manifests are E3.1.
 - **The wasm engine**, with metering inside its hashed bytes, fold segments
