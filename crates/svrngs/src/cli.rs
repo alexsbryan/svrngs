@@ -12,6 +12,11 @@
 //! svrngs link <group> [--origin U]         a new link to a group, print it, run
 //! ```
 //!
+//! A link's origin is the group's setting on this computer
+//! (`group::write_origin`), not a flag each call reads: `new` keeps the one
+//! it is given or the default, `join` the one its link was printed on, and
+//! `link` prints on the kept one unless `--origin` changes it.
+//!
 //! What a person reads uses DESIGN §1's words alone: the group's name,
 //! people's names, *link*, *computer*. The detail behind a refusal is
 //! traced at debug, where any word may be used.
@@ -47,7 +52,7 @@ svrngs — keep what your group shares on your own computers.
       Make a group called <name> and print its link: send it to the people
       you want in it. It works for a day, while this computer is on.
       --as is the name the group knows you by; else this computer's user name.
-      --origin prints the link on a page address of your own.
+      --origin prints its links on a page address of your own, from now on.
 
   svrngs join <link> [--as <your name>]
       Join the group a link you were sent is for. The computer that sent it
@@ -57,7 +62,8 @@ svrngs — keep what your group shares on your own computers.
   svrngs link <group> [--origin <url>]
       Print a new link to <group>. Any link you sent before stops letting
       anyone new in; everyone it let in stays. <group> is its name, or the
-      first 8 letters of its id when two groups share a name.
+      first 8 letters of its id when two groups share a name. The link is
+      on the group's page address; --origin changes it, from now on.
 
 Data:    $SVRNGS_DIR, else ~/.svrngs.
 Logging: RUST_LOG, default `error`.";
@@ -86,7 +92,8 @@ pub enum Command {
     },
     Link {
         group: String,
-        origin: Origin,
+        /// `None` prints on the group's kept origin.
+        origin: Option<Origin>,
     },
     Help,
 }
@@ -127,7 +134,6 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Command, String>
     if origin.is_some() && !matches!(verb.as_str(), "new" | "link") {
         return Err("--origin is a `new` and `link` flag".into());
     }
-    let origin = origin.unwrap_or_default();
     match verb.as_str() {
         "new" => {
             let raw = positional.ok_or("new wants a name: `svrngs new <name>`")?;
@@ -135,7 +141,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Command, String>
             Ok(Command::New {
                 name,
                 person,
-                origin,
+                origin: origin.unwrap_or_default(),
             })
         }
         "join" => {
@@ -193,6 +199,8 @@ pub enum Refusal {
     Ambiguous { name: String, ids: Vec<String> },
     #[error("you are not in {0} on this computer, so you cannot send its link")]
     NotIn(Name),
+    #[error("this computer keeps no page address for links to {0}; say one with `svrngs link {0} --origin <url>`")]
+    NoOrigin(Name),
 }
 
 impl Refusal {
@@ -205,6 +213,7 @@ impl Refusal {
             | Refusal::NoGroup(_)
             | Refusal::Ambiguous { .. }
             | Refusal::NotIn(_)
+            | Refusal::NoOrigin(_)
             | Refusal::Busy(_) => 1,
             Refusal::NoDataDir
             | Refusal::DataDir(..)
@@ -353,7 +362,7 @@ async fn serve(
             join_group(node, key, &link, &person).await?
         }
         Command::Link { group, origin } => {
-            let (seed, url) = new_link(node, &group, &origin, relay).await?;
+            let (seed, url) = new_link(node, &group, origin.as_ref(), relay).await?;
             Said::Linked { seed, url }
         }
         Command::Run => Said::Running(
@@ -377,8 +386,9 @@ async fn serve(
 /// `svrngs join`: redeem `link` at its issuer's computer as `person`,
 /// signing with `key`, this computer's; keep the group's seed once let in;
 /// sync once from the issuer, whom this computer's copy of the register may
-/// not know yet (DESIGN §8, U2). The seed is written only once the issuer
-/// has let this computer in, so a refused link leaves nothing behind.
+/// not know yet (DESIGN §8, U2). The seed, and the origin the link was
+/// printed on, are written only once the issuer has let this computer in,
+/// so a refused link leaves nothing behind.
 pub async fn join_group(
     node: &Node,
     key: &SigningKey,
@@ -418,6 +428,7 @@ pub async fn join_group(
         .journal(&id)
         .map_err(|e| keep_refused(seed, &e.to_string()))?;
     group::write_seed(journal.dir(), seed)
+        .and_then(|()| group::write_origin(journal.dir(), &link.origin))
         .map_err(|e: SeedError| keep_refused(seed, &e.to_string()))?;
     journal
         .set_roster(&seed.roster())
@@ -450,7 +461,8 @@ fn user_name() -> Option<Name> {
 }
 
 /// `svrngs new`: a seed drawn for `name`, founded by this computer's key
-/// as `person`, written beside the group's record, and its first link.
+/// as `person`, written beside the group's record with `origin` kept as
+/// its links' page, and its first link.
 pub async fn new_group(
     node: &Node,
     name: Name,
@@ -469,6 +481,7 @@ pub async fn new_group(
         .journal(&id)
         .map_err(|e| keep_refused(&seed, &e.to_string()))?;
     group::write_seed(journal.dir(), &seed)
+        .and_then(|()| group::write_origin(journal.dir(), origin))
         .map_err(|e: SeedError| keep_refused(&seed, &e.to_string()))?;
     journal
         .set_roster(&seed.roster())
@@ -478,11 +491,13 @@ pub async fn new_group(
     Ok((seed, url))
 }
 
-/// `svrngs link`: a new link to the group `reference` names.
+/// `svrngs link`: a new link to the group `reference` names, on the
+/// group's kept origin, or on `origin`, kept from now on, when given. A
+/// group that keeps none is refused, never printed on the default (ARCH 6).
 pub async fn new_link(
     node: &Node,
     reference: &str,
-    origin: &Origin,
+    origin: Option<&Origin>,
     relay: &RelayConfig,
 ) -> Result<(Seed, String), Refusal> {
     let held = group::groups(node.rail().root());
@@ -501,7 +516,30 @@ pub async fn new_link(
             });
         }
     };
-    let url = mint(node, &seed, origin, relay).await?;
+    let dir = node
+        .rail()
+        .journal(&seed.id())
+        .map_err(|e| keep_refused(&seed, &e.to_string()))?
+        .dir()
+        .to_path_buf();
+    let origin = match origin {
+        Some(given) => {
+            group::write_origin(&dir, given).map_err(|e| keep_refused(&seed, &e.to_string()))?;
+            tracing::debug!(target: "cli", group = %seed.id(), origin = given.as_str(), "cli: link — the group's origin changed");
+            given.clone()
+        }
+        None => match group::read_origin(&dir).map_err(|e| keep_refused(&seed, &e.to_string()))? {
+            Some(kept) => {
+                tracing::debug!(target: "cli", group = %seed.id(), origin = kept.as_str(), "cli: link — on the group's kept origin");
+                kept
+            }
+            None => {
+                tracing::debug!(target: "cli", group = %seed.id(), "cli: refused — the group keeps no origin, and none was given");
+                return Err(Refusal::NoOrigin(seed.name().clone()));
+            }
+        },
+    };
+    let url = mint(node, &seed, &origin, relay).await?;
     Ok((seed, url))
 }
 
@@ -546,8 +584,9 @@ async fn mint(
         secret,
         invite: op.id,
         issuer,
+        origin: origin.clone(),
     };
-    Ok(build_https_link(&link, origin))
+    Ok(build_https_link(&link))
 }
 
 /// This computer's dial, waiting up to [`ONLINE_WAIT`] for a relay when it

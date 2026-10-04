@@ -8,7 +8,9 @@
 //! upstream's bearer token, lapse, summary,
 //! marks and door route; the base is [`Origin`], by default
 //! [`DEFAULT_ORIGIN`], and a link printed on any origin parses the same,
-//! since everything a computer needs is in the fragment. A computer never
+//! since everything a computer needs is in the fragment. The parsed link
+//! keeps its base, so a joiner's group prints its own links on the page the
+//! founder's opened (u2-7; `group::write_origin`). A computer never
 //! fetches the origin: it dials the issuer by key. A phone (U4) loads the
 //! page there, which never sees the fragment, so the origin can be anyone's.
 //!
@@ -101,6 +103,9 @@ pub struct Link {
     pub invite: OpId,
     /// The issuer's computer: the one that redeems this link.
     pub issuer: Dial,
+    /// The page it opens on: the part left of the `#`, read for nothing
+    /// but this.
+    pub origin: Origin,
 }
 
 impl Link {
@@ -116,8 +121,8 @@ impl Link {
 /// Every field rides the URL FRAGMENT, never the path or query: a browser
 /// does not send the fragment to the server, so the secret stays out of
 /// access logs and `Referer` headers, and only the page's own script reads
-/// it. `origin` is kept verbatim — it is the page's address.
-pub fn build_https_link(link: &Link, origin: &Origin) -> String {
+/// it. The origin is kept verbatim — it is the page's address.
+pub fn build_https_link(link: &Link) -> String {
     let seed = &link.seed;
     let params = [
         format!("name={}", percent_encode(seed.name().as_str())),
@@ -128,18 +133,19 @@ pub fn build_https_link(link: &Link, origin: &Origin) -> String {
         format!("invite={}", link.invite),
         format!("iroh={}", percent_encode(link.issuer.as_str())),
     ];
-    format!("{}#{}", origin.as_str(), params.join("&"))
+    format!("{}#{}", link.origin.as_str(), params.join("&"))
 }
 
 /// Parse the https form built by [`build_https_link`], from any origin.
 /// Every field is required; one rule covers them all — anywhere but the
-/// fragment is not read, because the parser never looks left of the `#`.
+/// fragment is not read, because the parser never looks for a field left
+/// of the `#`. What is left of it is kept whole as the link's origin.
 pub fn parse_https_link(link: &str) -> Option<Link> {
     let Some((base, fragment)) = link.trim().split_once('#') else {
         tracing::debug!(target: "link", "link: refused — no fragment");
         return None;
     };
-    Origin::parse(base)?;
+    let origin = Origin::parse(base)?;
     let params = parse_query_params(Some(fragment));
     let field = |name: &str| {
         let value = params.get(name).map(|v| v.trim()).filter(|v| !v.is_empty());
@@ -167,6 +173,7 @@ pub fn parse_https_link(link: &str) -> Option<Link> {
                 secret: SigningKey::from_bytes(&secret),
                 invite,
                 issuer,
+                origin,
             })
         }
         _ => {
@@ -277,7 +284,7 @@ mod tests {
         assert_eq!(percent_decode(&percent_encode(dial)), dial);
     }
 
-    fn a_link(name: &str) -> Link {
+    fn a_link(name: &str, origin: Origin) -> Link {
         let founder = SigningKey::from_bytes(&[1u8; 32]);
         let seed = Seed::from_parts(
             crate::group::Name::parse(name).unwrap(),
@@ -295,6 +302,7 @@ mod tests {
             secret: SigningKey::from_bytes(&[7u8; 32]),
             invite: OpId::from_hex(&"ab".repeat(32)).unwrap(),
             issuer: Dial::of(&addr).unwrap(),
+            origin,
         }
     }
 
@@ -312,8 +320,8 @@ mod tests {
     /// in the fragment.
     #[test]
     fn a_link_round_trips_through_build_and_parse() {
-        let link = a_link("Sam's house & yard");
-        let url = build_https_link(&link, &Origin::default());
+        let link = a_link("Sam's house & yard", Origin::default());
+        let url = build_https_link(&link);
         let (before, fragment) = url.split_once('#').unwrap();
         assert_eq!(before, DEFAULT_ORIGIN);
         let secret = hex::encode(link.secret.to_bytes());
@@ -321,7 +329,9 @@ mod tests {
             !before.contains(&secret) && fragment.contains(&secret),
             "{url}"
         );
-        same(&parse_https_link(&url).expect("the link parses"), &link);
+        let parsed = parse_https_link(&url).expect("the link parses");
+        same(&parsed, &link);
+        assert_eq!(parsed.origin, link.origin);
     }
 
     /// The parser never reads left of the `#`: the secret moved into the
@@ -329,8 +339,8 @@ mod tests {
     /// and every field moved there, with no fragment, is none either.
     #[test]
     fn a_link_whose_secret_sits_left_of_the_hash_parses_as_nothing() {
-        let link = a_link("house");
-        let url = build_https_link(&link, &Origin::default());
+        let link = a_link("house", Origin::default());
+        let url = build_https_link(&link);
         let (base, fragment) = url.split_once('#').unwrap();
         let secret = format!("secret={}", hex::encode(link.secret.to_bytes()));
         let rest: Vec<&str> = fragment.split('&').filter(|p| *p != secret).collect();
@@ -340,21 +350,23 @@ mod tests {
     }
 
     /// A link printed on an origin of the founder's own parses to the same
-    /// link as one on the default.
+    /// link as one on the default, and keeps the origin it was printed on.
     #[test]
     fn a_link_printed_on_another_origin_parses_the_same() {
-        let link = a_link("house");
         let theirs = Origin::parse("https://links.example.org/our/house/").unwrap();
-        let url = build_https_link(&link, &theirs);
+        let link = a_link("house", theirs.clone());
+        let url = build_https_link(&link);
         assert!(
             url.starts_with("https://links.example.org/our/house/#"),
             "{url}"
         );
         let parsed = parse_https_link(&url).expect("a link on another origin parses");
         same(&parsed, &link);
+        assert_eq!(parsed.origin, theirs);
+        let on_default = a_link("house", Origin::default());
         same(
             &parsed,
-            &parse_https_link(&build_https_link(&link, &Origin::default())).unwrap(),
+            &parse_https_link(&build_https_link(&on_default)).unwrap(),
         );
     }
 

@@ -13,6 +13,13 @@
 //! alone: the founder's key bound to the founder's name (DESIGN §6). The
 //! register reads `roster.json` as it did in U1; this module reads
 //! `seed.json` to find a group by its name.
+//!
+//! Beside them, `origin` keeps the page this computer prints the group's
+//! links on (u2-7): `new` writes the one it was given or the default,
+//! `join` the one its link was printed on, and `link --origin` changes it.
+//! It is this computer's setting, outside the seed and its id, so a group
+//! that serves its page privately never gets a link on the default because
+//! one `link` named none (ARCH 6).
 
 use std::path::{Path, PathBuf};
 
@@ -20,12 +27,17 @@ use ed25519_dalek::VerifyingKey;
 use serde::{Deserialize, Serialize};
 use svrngs_node::{namespaces_in, Person, Roster};
 
+use crate::link::Origin;
+
 /// Domain separator for a group id's hash, so an id is never the hash of
 /// anything else svrngs hashes (an act id is `svrngs/act/v1`).
 const GROUP_ID_DOMAIN: &[u8] = b"svrngs/group/v1\0";
 
 /// The one spelling of the seed's file name in a group's directory.
 const SEED_FILE: &str = "seed.json";
+
+/// The one spelling of the kept origin's file name in a group's directory.
+const ORIGIN_FILE: &str = "origin";
 
 /// A name a person reads: a group's, or a person's. Trimmed, 1..=64 bytes,
 /// no control characters — it is printed in a terminal and carried in a
@@ -157,7 +169,7 @@ struct SeedFile {
     salt: String,
 }
 
-/// Why a group's seed could not be written or read.
+/// Why a group's seed or origin could not be written or read.
 #[derive(Debug, thiserror::Error)]
 pub enum SeedError {
     #[error("cannot write {path}: {source}")]
@@ -207,6 +219,40 @@ pub fn read_seed(dir: &Path) -> Result<Option<Seed>, SeedError> {
         .ok_or_else(|| SeedError::Read {
             path,
             why: "a field is not what a seed holds".into(),
+        })
+}
+
+/// Keep `origin` in `dir`, the group's directory, as the page its links
+/// print on from here.
+pub fn write_origin(dir: &Path, origin: &Origin) -> Result<(), SeedError> {
+    let path = dir.join(ORIGIN_FILE);
+    tracing::debug!(target: "group", path = %path.display(), origin = origin.as_str(), "group: origin kept");
+    std::fs::create_dir_all(dir)
+        .and_then(|()| std::fs::write(&path, origin.as_str()))
+        .map_err(|source| SeedError::Write { path, source })
+}
+
+/// The origin kept in `dir`, or `None` when the directory keeps none.
+pub fn read_origin(dir: &Path) -> Result<Option<Origin>, SeedError> {
+    let path = dir.join(ORIGIN_FILE);
+    let raw = match std::fs::read_to_string(&path) {
+        Ok(raw) => raw,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            tracing::debug!(target: "group", path = %path.display(), "group: no origin kept");
+            return Ok(None);
+        }
+        Err(e) => {
+            return Err(SeedError::Read {
+                path,
+                why: e.to_string(),
+            })
+        }
+    };
+    Origin::parse(&raw)
+        .map(Some)
+        .ok_or_else(|| SeedError::Read {
+            path,
+            why: "not an http(s) address without a '#'".into(),
         })
 }
 

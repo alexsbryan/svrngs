@@ -193,7 +193,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     assert_eq!(admitted(&sam.node, &group), three, "no second Admit");
 
     // ── Sam sends a new link: Dee, with the old one, is refused.
-    let (linked, url2) = cli::new_link(&sam.node, "house", &Origin::default(), &no_relay())
+    let (linked, url2) = cli::new_link(&sam.node, "house", None, &no_relay())
         .await
         .unwrap();
     said.push(
@@ -252,6 +252,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
         secret: lapsed_secret,
         invite: lapsed.id,
         issuer: link.issuer.clone(),
+        origin: Origin::default(),
     };
     let eve = computer(6).await;
     let past = present(&eve, &lapsed_link, "Eve").await;
@@ -326,6 +327,34 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     }
 }
 
+/// A member's later link opens the page the founder's did (u2-7): Sam
+/// makes house on x.example; Alex, let in by that link, keeps its origin,
+/// and the link Alex prints with no `--origin` is on x.example too.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_member_prints_links_on_the_page_the_founders_opened() {
+    let sam = computer(1).await;
+    let x = Origin::parse("https://x.example/").unwrap();
+    let (_, url) = cli::new_group(&sam.node, name("house"), name("Sam"), &x, &no_relay())
+        .await
+        .expect("Sam makes house on x.example");
+    let alex = computer(2).await;
+    cli::join_group(
+        &alex.node,
+        &alex.key,
+        &link_at(&url, &sam.node),
+        &name("Alex"),
+    )
+    .await
+    .expect("Alex is let in");
+    let (_, theirs) = cli::new_link(&alex.node, "house", None, &no_relay())
+        .await
+        .expect("Alex, in house, prints a link");
+    assert!(theirs.starts_with("https://x.example/#"), "{theirs}");
+    for c in [&sam, &alex] {
+        c.node.endpoint().close().await;
+    }
+}
+
 /// `join` parses a link and `--as`; a link cut short is refused before
 /// anything is dialled.
 #[test]
@@ -341,8 +370,9 @@ fn join_parses_its_link() {
         secret: SigningKey::from_bytes(&[7; 32]),
         invite: OpId::from_hex(&"cd".repeat(32)).unwrap(),
         issuer: Dial::of(&addr).unwrap(),
+        origin: Origin::default(),
     };
-    let url = svrngs::link::build_https_link(&link, &Origin::default());
+    let url = svrngs::link::build_https_link(&link);
     let argv = |rest: &[&str]| {
         std::iter::once("svrngs")
             .chain(rest.iter().copied())

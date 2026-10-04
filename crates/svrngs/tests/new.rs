@@ -5,7 +5,7 @@
 
 use svrngs::cli::{self, Command, Refusal, LINK_LIFE_SECS};
 use svrngs::group::{self, Name};
-use svrngs::link::{parse_https_link, Origin};
+use svrngs::link::{parse_https_link, Origin, DEFAULT_ORIGIN};
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::Node;
 use svrngs_node::register::Standing;
@@ -111,7 +111,7 @@ async fn link_mints_a_new_link_to_the_group_it_names() {
     let (house, first) = cli::new_group(&node, name("House"), name("Sam"), &origin, &no_relay())
         .await
         .unwrap();
-    let (again, second) = cli::new_link(&node, "house", &origin, &no_relay())
+    let (again, second) = cli::new_link(&node, "house", None, &no_relay())
         .await
         .unwrap();
     assert_eq!(again, house);
@@ -129,20 +129,80 @@ async fn link_mints_a_new_link_to_the_group_it_names() {
     );
 
     assert!(matches!(
-        cli::new_link(&node, "work", &origin, &no_relay()).await,
+        cli::new_link(&node, "work", None, &no_relay()).await,
         Err(Refusal::NoGroup(_))
     ));
     let (other, _) = cli::new_group(&node, name("house"), name("Sam"), &origin, &no_relay())
         .await
         .unwrap();
     assert!(matches!(
-        cli::new_link(&node, "house", &origin, &no_relay()).await,
+        cli::new_link(&node, "house", None, &no_relay()).await,
         Err(Refusal::Ambiguous { .. })
     ));
-    let (picked, _) = cli::new_link(&node, &other.id()[..8], &origin, &no_relay())
+    let (picked, _) = cli::new_link(&node, &other.id()[..8], None, &no_relay())
         .await
         .unwrap();
     assert_eq!(picked, other);
+}
+
+/// The page a link opens on is the group's (u2-7): `new --origin` keeps
+/// it, so `link` with no flag prints there; `link --origin` changes it from
+/// then on; a group made with no `--origin` prints on the default; and a
+/// group that keeps none is refused, never printed on the default.
+#[tokio::test]
+async fn a_group_keeps_the_origin_its_links_print_on() {
+    let dir = tempfile::tempdir().unwrap();
+    let node = start(&dir).await;
+    let x = Origin::parse("https://x.example/").unwrap();
+    let (house, first) = cli::new_group(&node, name("house"), name("Sam"), &x, &no_relay())
+        .await
+        .unwrap();
+    assert!(first.starts_with("https://x.example/#"), "{first}");
+    let (_, later) = cli::new_link(&node, "house", None, &no_relay())
+        .await
+        .unwrap();
+    assert!(later.starts_with("https://x.example/#"), "{later}");
+
+    let y = Origin::parse("https://y.example/ours/").unwrap();
+    let (_, moved) = cli::new_link(&node, "house", Some(&y), &no_relay())
+        .await
+        .unwrap();
+    assert!(moved.starts_with("https://y.example/ours/#"), "{moved}");
+    let (_, after) = cli::new_link(&node, "house", None, &no_relay())
+        .await
+        .unwrap();
+    assert!(after.starts_with("https://y.example/ours/#"), "{after}");
+
+    let (work, plain) = cli::new_group(
+        &node,
+        name("work"),
+        name("Sam"),
+        &Origin::default(),
+        &no_relay(),
+    )
+    .await
+    .unwrap();
+    assert!(plain.starts_with(DEFAULT_ORIGIN), "{plain}");
+    let (_, again) = cli::new_link(&node, "work", None, &no_relay())
+        .await
+        .unwrap();
+    assert!(again.starts_with(DEFAULT_ORIGIN), "{again}");
+
+    // A group whose kept origin is gone: refused, nothing appended.
+    let kept = node
+        .rail()
+        .journal(&house.id())
+        .unwrap()
+        .dir()
+        .join("origin");
+    std::fs::remove_file(&kept).unwrap();
+    let before = invites(&node, &house.id()).len();
+    assert!(matches!(
+        cli::new_link(&node, "house", None, &no_relay()).await,
+        Err(Refusal::NoOrigin(_))
+    ));
+    assert_eq!(invites(&node, &house.id()).len(), before);
+    assert_eq!(invites(&node, &work.id()).len(), 2);
 }
 
 /// One svrngs per data dir: a second claim is refused while the first is
@@ -177,8 +237,16 @@ fn the_verbs_parse() {
         cli::parse(argv("link house --origin https://links.example.org/")).unwrap(),
         Command::Link {
             group: "house".into(),
-            origin: Origin::parse("https://links.example.org/").unwrap(),
+            origin: Some(Origin::parse("https://links.example.org/").unwrap()),
         }
+    );
+    assert_eq!(
+        cli::parse(argv("link house")).unwrap(),
+        Command::Link {
+            group: "house".into(),
+            origin: None,
+        },
+        "no --origin is the group's own, not the default"
     );
     assert_eq!(cli::parse(argv("--help")).unwrap(), Command::Help);
 }
@@ -218,6 +286,7 @@ fn refusals_use_only_a_persons_words() {
             ids: vec!["3f2a91c0".into()],
         },
         Refusal::NotIn(name("house")),
+        Refusal::NoOrigin(name("house")),
     ];
     // This computer's key, too short to read, refused with its file named;
     // the temporary directory's own name is not the command's to choose.
