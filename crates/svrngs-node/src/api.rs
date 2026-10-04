@@ -12,8 +12,12 @@
 
 use std::net::SocketAddr;
 
+use axum::extract::{ConnectInfo, Request};
+use axum::http::StatusCode;
+use axum::middleware::Next;
+use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
-use axum::Router;
+use axum::{Json, Router};
 
 use crate::rail::RailApi;
 
@@ -38,13 +42,54 @@ pub fn router(api: RailApi) -> Router {
         // (DESIGN §3), so an app needs no second source.
         .route("/v1/rail/people", get(crate::rail::people))
         .with_state(api)
+        // svrngs: every request's caller is asked too, so a listener that
+        // ever served beyond loopback would still answer no one else.
+        .layer(axum::middleware::from_fn(from_this_computer))
+}
+
+/// Serve a request only from a caller on this computer: the bind guard's
+/// one decision ([`check_loopback`]) asked of the caller's address, which
+/// [`serve`] hands every request. A caller elsewhere, or one whose address
+/// is unknown, is refused 403 naming why, before any door runs. (svrngs:
+/// upstream relied on the bind alone; DESIGN §8, "Localhost is the trust
+/// boundary".)
+async fn from_this_computer(request: Request, next: Next) -> Response {
+    let caller = request
+        .extensions()
+        .get::<ConnectInfo<SocketAddr>>()
+        .map(|c| c.0);
+    let refused = |why: String| {
+        (
+            StatusCode::FORBIDDEN,
+            Json(serde_json::json!({ "error": why, "kind": "not_loopback" })),
+        )
+            .into_response()
+    };
+    match caller {
+        Some(addr) => match check_loopback(addr) {
+            Ok(()) => {
+                tracing::debug!(target: "rails", caller = %addr, path = %request.uri().path(), "api: a caller on this computer");
+                next.run(request).await
+            }
+            Err(refusal) => {
+                tracing::warn!(target: "rails", caller = %addr, path = %request.uri().path(), "api: refused — the caller is not on this computer");
+                refused(refusal.to_string())
+            }
+        },
+        None => {
+            tracing::warn!(target: "rails", path = %request.uri().path(), "api: refused — the caller's address is unknown, so it cannot be shown to be on this computer");
+            refused("the caller's address is unknown; the record is served to this computer's apps alone".into())
+        }
+    }
 }
 
 /// The bind guard, as a function so it has a failing input that can be
 /// named without standing an iroh endpoint up. This API has no auth because
 /// loopback IS the auth; anywhere else is publishing it.
 pub fn check_loopback(listen: SocketAddr) -> Result<(), Refusal> {
-    if listen.ip().is_loopback() {
+    // svrngs: canonical first, so `::ffff:127.0.0.1` reads as the loopback
+    // it is, where `Ipv6Addr::is_loopback` alone says no.
+    if listen.ip().to_canonical().is_loopback() {
         Ok(())
     } else {
         Err(Refusal::NotLoopback(listen))
@@ -85,7 +130,8 @@ pub async fn serve(api: RailApi, listen: SocketAddr) -> Result<Serving, Refusal>
     tracing::info!(target: "rails", %addr, "api: serving the record to this computer's apps");
     let router = router(api);
     let task = tokio::spawn(async move {
-        if let Err(e) = axum::serve(listener, router).await {
+        let served = router.into_make_service_with_connect_info::<SocketAddr>();
+        if let Err(e) = axum::serve(listener, served).await {
             tracing::error!(target: "rails", error = %e, "api: listener stopped");
         }
     });

@@ -244,3 +244,71 @@ async fn the_people_read_lists_a_and_b_with_their_keys() {
     assert_eq!(out["people"], serde_json::Value::from(want), "{out}");
     a.endpoint().close().await;
 }
+
+/// The record API's router over a rail of its own, with no listener: a
+/// request is handed whatever caller address the test names, as the
+/// listener hands every request its own.
+fn api_alone(dir: &tempfile::TempDir) -> axum::Router {
+    svrngs_node::api::router(svrngs_node::rail::RailApi {
+        rail: std::sync::Arc::new(svrngs_node::RingRail::new(
+            dir.path(),
+            std::sync::Arc::new(signing(1)),
+        )),
+        nudge: std::sync::Arc::new(tokio::sync::Notify::new()),
+    })
+}
+
+/// A request to the people door from `caller`, if any; its status and body.
+async fn ask_as(router: axum::Router, caller: Option<SocketAddr>) -> (u16, serde_json::Value) {
+    use tower::ServiceExt;
+    let mut request = axum::http::Request::get(format!("/v1/rail/people?namespace={NS}"))
+        .body(axum::body::Body::empty())
+        .unwrap();
+    if let Some(addr) = caller {
+        request
+            .extensions_mut()
+            .insert(axum::extract::ConnectInfo(addr));
+    }
+    let answer = router.oneshot(request).await.unwrap();
+    let status = answer.status().as_u16();
+    let body = axum::body::to_bytes(answer.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    (status, serde_json::from_slice(&body).unwrap())
+}
+
+/// **A caller not on loopback is refused by name** (the u3-2 row): each
+/// request's caller is asked what the bind is asked (`check_loopback`), so a
+/// caller at a network address is refused 403 `not_loopback`, the refusal
+/// naming its address, and a caller whose address is unknown is refused
+/// too; a caller at 127.0.0.1, or at `::ffff:127.0.0.1`, reaches the door.
+/// The failing input: the loopback check skipped, every caller served.
+#[tokio::test]
+async fn a_caller_not_on_loopback_is_refused_by_name() {
+    let dir = tempfile::tempdir().unwrap();
+    let router = api_alone(&dir);
+    for caller in ["192.168.1.5:50000", "[2001:db8::5]:50000"] {
+        let (status, out) = ask_as(router.clone(), Some(caller.parse().unwrap())).await;
+        assert_eq!(status, 403, "{caller}: {out}");
+        assert_eq!(out["kind"], "not_loopback", "{caller}");
+        let named = out["error"].as_str().unwrap();
+        assert!(
+            named.contains(caller),
+            "the refusal names {caller}: {named}"
+        );
+    }
+    let (status, out) = ask_as(router.clone(), None).await;
+    assert_eq!(
+        (status, &out["kind"]),
+        (403, &serde_json::json!("not_loopback")),
+        "{out}"
+    );
+    for caller in ["127.0.0.1:50000", "[::ffff:127.0.0.1]:50000", "[::1]:50000"] {
+        let (status, out) = ask_as(router.clone(), Some(caller.parse().unwrap())).await;
+        assert_eq!(
+            (status, &out["kind"]),
+            (404, &serde_json::json!("not_held")),
+            "{caller} reaches the door, which holds no group: {out}"
+        );
+    }
+}

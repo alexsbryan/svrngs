@@ -175,7 +175,9 @@ The record over loopback (DESIGN §8, U3's inventory, the rail.rs row) is
 `e1a43bcd2`: the append door (`append_act`) and the log (`log_answer`), with
 `RailQuery`, `namespace_of` and `journal_of`, served as an `axum::Router`
 (`api::router`) by `api::serve`, which refuses any address but loopback
-(`check_loopback`). Its edits: the doors read the journals from a `RailApi`
+(`check_loopback`). Then it changed: every request's caller is asked the
+same (`from_this_computer`), so a caller elsewhere, or one whose address is
+unknown, is refused 403 `not_loopback`, naming it. Its edits: the doors read the journals from a `RailApi`
 where upstream's read `RailsDaemon`; the roster they read is the group's
 seed file, since upstream's `RingRail::roster` went in U1, and so the
 not-in-roster sentence is the rail's own, where upstream chose it by the
