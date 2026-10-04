@@ -46,7 +46,7 @@ use crate::ring_sync::{
     exchange, peer_client, run_one_round, spawn_ring_sync_loop, ExchangeOutcome, ExchangeStop,
     RingSyncHandle, RoundMembers, RoundOutcome, DEFAULT_RING_SYNC_INTERVAL,
 };
-use crate::{actor_of, Ed25519Verifier, RingRail, SigningKey};
+use crate::{actor_of, Ed25519Verifier, Person, RingRail, SigningKey};
 
 /// Why a node did not start.
 #[derive(Debug, thiserror::Error)]
@@ -257,6 +257,20 @@ impl Host {
     /// node's. A group whose register is unreadable adds nobody, as the
     /// round offers it to nobody.
     pub(crate) async fn members(&self) -> Option<RoundMembers> {
+        let peers = self.standing_peers()?;
+        Some(RoundMembers::of(
+            peers
+                .into_iter()
+                .map(|(actor, person, key)| (format!("{person}/{}", &actor[..8]), key))
+                .collect(),
+        ))
+    }
+
+    /// Every key standing in a group this node holds, but this node's, once
+    /// each, by its actor, with the person the first group naming it names;
+    /// or `None` when the groups held cannot be listed. A group whose
+    /// register is unreadable adds nobody.
+    fn standing_peers(&self) -> Option<Vec<(String, Person, PublicKey)>> {
         let namespaces = match self.rail.namespaces() {
             Ok(n) => n,
             Err(e) => {
@@ -264,7 +278,7 @@ impl Host {
                 return None;
             }
         };
-        let mut keys: BTreeMap<String, (String, PublicKey)> = BTreeMap::new();
+        let mut keys: BTreeMap<String, (Person, PublicKey)> = BTreeMap::new();
         for namespace in &namespaces {
             let standing = match self.rail.standing(namespace, &Ed25519Verifier) {
                 Ok(Standing::Members(m)) => m,
@@ -284,10 +298,14 @@ impl Host {
                 };
                 let name = format!("{person}/{}", &actor[..8]);
                 tracing::debug!(target: "node", namespace, member = %name, "node: a member stands in the group, to dial");
-                keys.insert(actor.clone(), (name, key));
+                keys.insert(actor.clone(), (person.clone(), key));
             }
         }
-        Some(RoundMembers::of(keys.into_values().collect()))
+        Some(
+            keys.into_iter()
+                .map(|(actor, (person, key))| (actor, person, key))
+                .collect(),
+        )
     }
 }
 
