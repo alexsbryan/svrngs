@@ -59,6 +59,9 @@ pub use crate::guest::{
 pub use iroh::endpoint::presets;
 pub use iroh::endpoint::Builder as EndpointBuilder;
 pub use iroh::{Endpoint, EndpointAddr, PublicKey, RelayUrl, SecretKey};
+// svrngs: iroh's address book in memory, so a test tells a joiner the
+// loopback addresses a link's bare key resolves to (u2-8).
+pub use iroh::address_lookup::MemoryLookup;
 
 /// Render an endpoint's current dial info as a pairing string
 /// ([`parse_dial_string`]'s inverse). Relay URLs first (stable),

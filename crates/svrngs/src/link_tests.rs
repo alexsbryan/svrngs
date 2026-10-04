@@ -2,108 +2,105 @@
 // ported from commonwealth-ai mesh-join-vocab/src/deep_link.rs@e1a43bcd2
 use super::*;
 
-#[test]
-fn percent_decode_passes_through_invalid_escapes() {
-    // A lone `%` with no two hex digits shouldn't panic or drop
-    // characters — we'd rather hand back a partial value than
-    // reject the whole link. Guard for accidental truncation.
-    assert_eq!(percent_decode("abc%"), "abc%");
-    assert_eq!(percent_decode("abc%ZZ"), "abc%ZZ");
+fn issuer() -> PublicKey {
+    let key = SigningKey::from_bytes(&[1u8; 32]);
+    PublicKey::from_bytes(&key.verifying_key().to_bytes()).unwrap()
 }
 
-#[test]
-fn percent_encode_round_trips_dial_string() {
-    // The dial string carries every reserved char that breaks a
-    // naive query value: `@ : / , .`. Encode → decode must be
-    // identity, or the joiner dials a corrupt founder address.
-    let dial = "aabbccddeeff00112233@https://relay.example./,10.0.0.5:9742,[fd7a::1]:9742";
-    assert_eq!(percent_decode(&percent_encode(dial)), dial);
-}
-
-fn a_link(name: &str, origin: Origin) -> Link {
-    let founder = SigningKey::from_bytes(&[1u8; 32]);
-    let seed = Seed::from_parts(
-        crate::group::Name::parse(name).unwrap(),
-        crate::group::Name::parse("Sam").unwrap(),
-        founder.verifying_key(),
-        [9u8; 16],
-    );
-    let issuer =
-        svrngs_node::iroh::PublicKey::from_bytes(&founder.verifying_key().to_bytes()).unwrap();
-    let addr = EndpointAddr::new(issuer)
-        .with_ip_addr("127.0.0.1:4242".parse().unwrap())
-        .with_relay_url("https://relay.example./".parse().unwrap());
-    Link {
-        seed,
-        secret: SigningKey::from_bytes(&[7u8; 32]),
-        invite: OpId::from_hex(&"ab".repeat(32)).unwrap(),
-        issuer: Dial::of(&addr).unwrap(),
-        origin,
+fn a_token(relay: Option<&str>) -> Token {
+    Token {
+        issuer: issuer(),
+        secret: [7u8; SECRET_LEN],
+        relay: relay.map(|r| r.parse().unwrap()),
     }
 }
 
-fn same(a: &Link, b: &Link) {
-    assert_eq!(a.seed, b.seed);
-    assert_eq!(a.seed.id(), b.seed.id());
-    assert_eq!(a.secret.to_bytes(), b.secret.to_bytes());
-    assert_eq!(a.invite, b.invite);
-    assert_eq!(a.issuer, b.issuer);
-}
-
-/// A link round-trips through build and parse: a group name with a
-/// space, an apostrophe and an ampersand, the seed and its id, the
-/// secret, and the dial with its relay and address. The secret is only
-/// in the fragment.
+/// A token round-trips through each of its three forms, with and without
+/// a relay, and the https form keeps its origin.
 #[test]
-fn a_link_round_trips_through_build_and_parse() {
-    let link = a_link("Sam's house & yard", Origin::default());
-    let url = build_https_link(&link);
-    let (before, fragment) = url.split_once('#').unwrap();
-    assert_eq!(before, DEFAULT_ORIGIN);
-    let secret = hex::encode(link.secret.to_bytes());
-    assert!(
-        !before.contains(&secret) && fragment.contains(&secret),
-        "{url}"
-    );
-    let parsed = parse_https_link(&url).expect("the link parses");
-    same(&parsed, &link);
-    assert_eq!(parsed.origin, link.origin);
-}
-
-/// The parser never reads left of the `#`: the secret moved into the
-/// query, the part a browser sends to the server, is no link at all;
-/// and every field moved there, with no fragment, is none either.
-#[test]
-fn a_link_whose_secret_sits_left_of_the_hash_parses_as_nothing() {
-    let link = a_link("house", Origin::default());
-    let url = build_https_link(&link);
-    let (base, fragment) = url.split_once('#').unwrap();
-    let secret = format!("secret={}", hex::encode(link.secret.to_bytes()));
-    let rest: Vec<&str> = fragment.split('&').filter(|p| *p != secret).collect();
-    let moved = format!("{base}?{secret}#{}", rest.join("&"));
-    assert!(parse_https_link(&moved).is_none(), "{moved}");
-    assert!(parse_https_link(&format!("{base}?{fragment}")).is_none());
-}
-
-/// A link printed on an origin of the founder's own parses to the same
-/// link as one on the default, and keeps the origin it was printed on.
-#[test]
-fn a_link_printed_on_another_origin_parses_the_same() {
+fn a_link_round_trips_in_every_form() {
     let theirs = Origin::parse("https://links.example.org/our/house/").unwrap();
-    let link = a_link("house", theirs.clone());
-    let url = build_https_link(&link);
+    for token in [a_token(None), a_token(Some("https://relay.example./"))] {
+        let client = client_link(&token);
+        assert!(client.starts_with(CLIENT_PREFIX), "{client}");
+        let https = https_link(&theirs, &token);
+        assert!(
+            https.starts_with("https://links.example.org/our/house/#"),
+            "{https}"
+        );
+        for (raw, origin) in [
+            (client.as_str(), None),
+            (https.as_str(), Some(theirs.clone())),
+            (&token.encode(), None),
+        ] {
+            let link = Link::parse(raw).unwrap_or_else(|| panic!("{raw} parses"));
+            assert_eq!(link.token, token, "{raw}");
+            assert_eq!(link.origin, origin, "{raw}");
+        }
+    }
+}
+
+/// The link's signing key is derived from the secret alone, by a named
+/// context: one secret, one key; another secret, another.
+#[test]
+fn the_links_key_is_derived_from_its_secret() {
+    let a = a_token(None);
+    assert_eq!(a.key().to_bytes(), a_token(None).key().to_bytes());
+    let b = Token {
+        secret: [8u8; SECRET_LEN],
+        ..a_token(None)
+    };
+    assert_ne!(a.key().to_bytes(), b.key().to_bytes());
+    assert_ne!(a.key().to_bytes()[..SECRET_LEN], a.secret);
+}
+
+/// A token with an unknown format byte, or cut short, or with a byte too
+/// many, or a relayed one with no relay, parses as nothing.
+#[test]
+fn a_token_with_an_unknown_format_or_cut_short_parses_as_nothing() {
+    let bytes = |t: &Token| URL_SAFE_NO_PAD.decode(t.encode()).unwrap();
+    let text = |b: &[u8]| URL_SAFE_NO_PAD.encode(b);
+    let bare = bytes(&a_token(None));
+    let relayed = bytes(&a_token(Some("https://relay.example./")));
+    assert!(Token::decode(&text(&bare)).is_some());
+    for format in [0u8, 3, 0xFF] {
+        let mut b = bare.clone();
+        b[0] = format;
+        assert!(Token::decode(&text(&b)).is_none(), "format byte {format}");
+    }
+    for cut in [0, 1, 33, bare.len() - 1] {
+        assert!(Token::decode(&text(&bare[..cut])).is_none(), "cut at {cut}");
+    }
+    assert!(Token::decode(&text(&[bare.as_slice(), &[0]].concat())).is_none());
+    assert!(Token::decode(&text(&relayed[..bare.len()])).is_none());
+    let mut r = relayed.clone();
+    r[0] = Format::Bare.byte();
     assert!(
-        url.starts_with("https://links.example.org/our/house/#"),
-        "{url}"
+        Token::decode(&text(&r)).is_none(),
+        "a bare token with a tail"
     );
-    let parsed = parse_https_link(&url).expect("a link on another origin parses");
-    same(&parsed, &link);
-    assert_eq!(parsed.origin, theirs);
-    let on_default = a_link("house", Origin::default());
-    same(
-        &parsed,
-        &parse_https_link(&build_https_link(&on_default)).unwrap(),
-    );
+    let client = client_link(&a_token(None));
+    assert!(Link::parse(&client[..client.len() - 4]).is_none());
+    assert!(Link::parse("svrngs://join/").is_none());
+    assert!(Link::parse("not a link").is_none());
+}
+
+/// A client's link with no relay is short: at most 90 characters.
+#[test]
+fn a_clients_link_with_no_relay_is_at_most_90_characters() {
+    let link = client_link(&mint(issuer(), None));
+    eprintln!("a client's link, {} characters: {link}", link.len());
+    assert!(link.len() <= 90, "{} characters: {link}", link.len());
+}
+
+/// A minted token spells no word DESIGN §1 keeps from people, in any case,
+/// draw after draw.
+#[test]
+fn a_minted_token_spells_no_kept_word() {
+    for _ in 0..10_000 {
+        let token = mint(issuer(), None);
+        assert!(!token.spells_a_kept_word(), "{}", token.encode());
+    }
 }
 
 #[test]

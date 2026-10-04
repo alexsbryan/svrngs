@@ -6,9 +6,18 @@
 //! dials the issuer by key and proves it holds both the link's key and its
 //! own; the issuer checks, persists, then answers.
 //!
-//! The joiner presents a [`RedeemRequest`] on [`Alpn::Redeem`], the one
-//! protocol a key standing in no group may speak, serving [`router`]'s one
-//! route: the group's id, the `Invite`'s id, the person's name, its new key
+//! A link carries only the issuer's key and the link's secret (u2-8), so
+//! the joiner first asks what it cannot know: an [`AskRequest`], the link's
+//! key and the joiner's, signed by the link's key, which the issuer answers
+//! ([`Asked`]) with the group its own `Invite` naming that key is in, the
+//! group's seed as the command keeps it ([`SeedText`]: the seed is the
+//! command's, DESIGN §5, so the node answers it as read and never parses
+//! it), and the `Invite`'s id. Whether that `Invite` still lets anyone in
+//! is not asked here: the redemption's fold decides it, once.
+//!
+//! The joiner then presents a [`RedeemRequest`] on [`Alpn::Redeem`], the one
+//! protocol a key standing in no group may speak, serving [`router`]'s two
+//! routes: the group's id, the `Invite`'s id, the person's name, its new key
 //! and that key's consent ([`Redemption`]), all signed by the link's secret
 //! key. The issuer's node checks that the dialer is the new key, that the
 //! link's key signed, that it holds the group, that the `Invite` is its own
@@ -24,6 +33,7 @@
 //! nothing is written, so a joiner whose answer was lost may open the link
 //! again.
 
+use std::path::Path;
 use std::sync::Arc;
 
 use axum::extract::State;
@@ -31,6 +41,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::routing::post;
 use axum::{Extension, Json};
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use crate::iroh::{Alpn, Dialer, Endpoint, EndpointAddr, HttpBridge};
@@ -42,12 +53,70 @@ use crate::{
     Person, RailAct, RailError, Redemption, RingRail, SigningKey,
 };
 
-/// The route's one path.
+/// The redemption's path.
 const ROUTE: &str = "/redeem";
+
+/// The ask's path.
+const ASK_ROUTE: &str = "/ask";
 
 /// Domain separator for the link key's signature over a request, so it is
 /// never valid as an act's signature or a consent, nor either as it.
 const REQUEST_DOMAIN: &[u8] = b"svrngs-redeem-request:";
+
+/// Domain separator for the link key's signature over an ask.
+const ASK_DOMAIN: &[u8] = b"svrngs-redeem-ask:";
+
+/// How the issuer's node reads a group's seed, in the group's directory,
+/// to answer an ask: `Ok(None)` when it keeps none there. The command's
+/// (`svrngs::group::seed_text`), handed to [`crate::node::Node::start`].
+pub type SeedText = fn(&Path) -> Result<Option<String>, String>;
+
+/// What a joiner holding only a link asks its issuer: the link's public
+/// key and the joiner's, actor hex, signed by the link's secret key.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AskRequest {
+    /// The link's public key.
+    pub link: String,
+    /// The key the joiner dials with.
+    pub key: String,
+    /// The link's secret key's signature over the two.
+    pub sig: String,
+}
+
+impl AskRequest {
+    /// `joining` asks about the link whose secret key is `link`.
+    pub fn sign(link: &SigningKey, joining: &SigningKey) -> Self {
+        let mut req = Self {
+            link: actor_of(link),
+            key: actor_of(joining),
+            sig: String::new(),
+        };
+        req.sig = sign_message(link, &req.message());
+        req
+    }
+
+    /// `DOMAIN || link || key`, each preceded by its `u32` big-endian length.
+    fn message(&self) -> Vec<u8> {
+        let mut msg = ASK_DOMAIN.to_vec();
+        field(&mut msg, self.link.as_bytes());
+        field(&mut msg, self.key.as_bytes());
+        msg
+    }
+}
+
+/// The issuer's answer to an ask. The joiner believes `seed` only if it
+/// hashes to `group`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Asked {
+    /// The id of the group the `Invite` is in.
+    pub group: String,
+    /// That group's seed, as [`SeedText`] read it.
+    pub seed: String,
+    /// The id of the issuer's `Invite` naming the link's key.
+    pub invite: OpId,
+}
 
 /// The one answer to every refusal: it names no group and no reason.
 pub const REFUSAL: &str = "this link lets nobody in";
@@ -142,7 +211,8 @@ enum Refused {
     LinkUnsigned,
     /// This node holds no such group, or holds it with no seed.
     NotHeld,
-    /// No `Invite` with that id is held here.
+    /// No `Invite` with that id is held here, or, asked, none of this
+    /// node's naming the link's key.
     NoInvite,
     /// The `Invite` is someone else's: only its issuer's node redeems it.
     NotOwn,
@@ -159,31 +229,91 @@ enum Refused {
     Unjudged(RailError),
 }
 
-/// The redemption route, served on [`Alpn::Redeem`] to any dialer.
-pub fn router(rail: Arc<RingRail>) -> axum::Router {
+/// What the routes read: this node's journals, and how it reads a seed.
+#[derive(Clone)]
+struct Issuer {
+    rail: Arc<RingRail>,
+    seeds: SeedText,
+}
+
+/// The ask and redemption routes, served on [`Alpn::Redeem`] to any dialer.
+pub fn router(rail: Arc<RingRail>, seeds: SeedText) -> axum::Router {
     axum::Router::new()
+        .route(ASK_ROUTE, post(ask_route))
         .route(ROUTE, post(redeem_route))
-        .with_state(rail)
+        .with_state(Issuer { rail, seeds })
+}
+
+async fn ask_route(
+    State(issuer): State<Issuer>,
+    dialer: Option<Extension<Dialer>>,
+    Json(req): Json<AskRequest>,
+) -> Response {
+    let asked = decide_ask(&issuer, dialer.map(|Extension(d)| d), &req);
+    answer("ask", &req.key, asked)
 }
 
 async fn redeem_route(
-    State(rail): State<Arc<RingRail>>,
+    State(issuer): State<Issuer>,
     dialer: Option<Extension<Dialer>>,
     Json(req): Json<RedeemRequest>,
 ) -> Response {
-    match decide(&rail, dialer.map(|Extension(d)| d), &req) {
-        Ok(redeemed) => (StatusCode::OK, Json(redeemed)).into_response(),
+    let redeemed = decide(&issuer.rail, dialer.map(|Extension(d)| d), &req);
+    answer("redeem", &req.key, redeemed)
+}
+
+/// A decision as the wire carries it: what was done, [`UNJUDGED`], or the
+/// one [`REFUSAL`].
+fn answer<T: Serialize>(route: &str, key: &str, decided: Result<T, Refused>) -> Response {
+    match decided {
+        Ok(done) => (StatusCode::OK, Json(done)).into_response(),
         Err(Refused::Unjudged(e)) => {
-            tracing::warn!(target: "redeem", group = %req.group, error = %e,
+            tracing::warn!(target: "redeem", route, error = %e,
                 "redeem: could not judge — this node's own journal is unreadable");
             err(StatusCode::SERVICE_UNAVAILABLE, UNJUDGED)
         }
         Err(why) => {
-            tracing::debug!(target: "redeem", group = %req.group, key = %req.key, why = ?why,
+            tracing::debug!(target: "redeem", route, key, why = ?why,
                 "redeem: refused, in the one sentence every refusal shares");
             err(StatusCode::FORBIDDEN, REFUSAL)
         }
     }
+}
+
+/// The ask: the dialer is the key asking, the link's key signed, and a
+/// group held here holds an `Invite` of this node's naming that key — the
+/// newest, should two. Its group's seed is answered as kept.
+fn decide_ask(issuer: &Issuer, dialer: Option<Dialer>, req: &AskRequest) -> Result<Asked, Refused> {
+    let dialer = dialer.ok_or(Refused::NoDialer)?;
+    if dialer.actor() != req.key {
+        return Err(Refused::NotTheDialer);
+    }
+    if !verify_hex(&req.link, &req.message(), &req.sig) {
+        return Err(Refused::LinkUnsigned);
+    }
+    let me = issuer.rail.signer().actor();
+    for group in issuer.rail.namespaces().map_err(Refused::Unjudged)? {
+        let journal = issuer.rail.journal(&group).map_err(Refused::Unjudged)?;
+        let (ops, _) = journal.read().map_err(Refused::Unjudged)?;
+        let Some(invite) = ops.iter().rev().find(|op| {
+            op.actor == me
+                && matches!(&op.kind.act, RailAct::Invite { key, .. } if *key == req.link)
+        }) else {
+            continue;
+        };
+        let invite = derive_id(invite, &group);
+        let seed = (issuer.seeds)(journal.dir())
+            .map_err(|e| Refused::Unjudged(RailError::Io(e)))?
+            .ok_or(Refused::NotHeld)?;
+        tracing::debug!(target: "redeem", group, key = %req.key, invite = %invite,
+            "redeem: asked — the link's key is named by this node's Invite; answering its group's seed");
+        return Ok(Asked {
+            group,
+            seed,
+            invite,
+        });
+    }
+    Err(Refused::NoInvite)
 }
 
 /// The issuer's checks, in the module docs' order.
@@ -303,6 +433,16 @@ pub enum RedeemError {
     NoAnswer(String),
 }
 
+/// Ask the issuer's node at `issuer` what `req`'s link is for, dialling
+/// from `endpoint` on [`Alpn::Redeem`].
+pub async fn ask(
+    endpoint: &Endpoint,
+    issuer: EndpointAddr,
+    req: &AskRequest,
+) -> Result<Asked, RedeemError> {
+    call(endpoint, issuer, ASK_ROUTE, req).await
+}
+
 /// Present `req` to the issuer's node at `issuer`, dialling from `endpoint`
 /// on [`Alpn::Redeem`].
 pub async fn redeem(
@@ -310,20 +450,30 @@ pub async fn redeem(
     issuer: EndpointAddr,
     req: &RedeemRequest,
 ) -> Result<Redeemed, RedeemError> {
+    call(endpoint, issuer, ROUTE, req).await
+}
+
+/// Post `body` to `route` on the issuer's node, and read its answer.
+async fn call<T: DeserializeOwned>(
+    endpoint: &Endpoint,
+    issuer: EndpointAddr,
+    route: &str,
+    body: &impl Serialize,
+) -> Result<T, RedeemError> {
     let bridge = HttpBridge::spawn(endpoint.clone(), issuer, Alpn::Redeem.bytes())
         .await
         .map_err(|e| RedeemError::NoAnswer(format!("no bridge: {e}")))?;
     let http = peer_client().map_err(|e| RedeemError::NoAnswer(e.to_string()))?;
-    let url = format!("http://{}{ROUTE}", bridge.local_addr());
-    tracing::debug!(target: "redeem", group = %req.group, url, "redeem: dialling the issuer by key");
+    let url = format!("http://{}{route}", bridge.local_addr());
+    tracing::debug!(target: "redeem", url, "redeem: dialling the issuer by key");
     let response = http
         .post(&url)
-        .json(req)
+        .json(body)
         .send()
         .await
         .map_err(|e| RedeemError::NoAnswer(e.to_string()))?;
     let status = response.status();
-    tracing::debug!(target: "redeem", group = %req.group, status = status.as_u16(), "redeem: the issuer answered");
+    tracing::debug!(target: "redeem", route, status = status.as_u16(), "redeem: the issuer answered");
     match status {
         StatusCode::OK => response
             .json()

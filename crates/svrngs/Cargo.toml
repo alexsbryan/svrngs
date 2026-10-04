@@ -5,10 +5,11 @@ version.workspace = true
 # (ARCH 2).
 edition = "2021"
 license.workspace = true
-description = "The svrngs command: a computer's device key, a group's link, and the verbs that make a group, mint its link and run the node. The device key is forked from commonwealth-ai's commonwealth-transport identity.rs, the link from mesh-join-vocab's deep_link.rs."
+description = "The svrngs command: a computer's device key, a group's link, and the verbs that make a group, mint its link and run the node. The device key is forked from commonwealth-ai's commonwealth-transport identity.rs, the link from mesh-join-vocab's deep_link.rs, now one short token."
 
 [dependencies]
 svrngs-node = { workspace = true }
+base64 = "0.22"
 blake3 = { workspace = true }
 ed25519-dalek = { workspace = true }
 getrandom = "0.3"

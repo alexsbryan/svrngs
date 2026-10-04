@@ -4,8 +4,8 @@
 //! groups called House on one computer were one directory. Now the id is
 //! the hash of the seed — the founder's key, the name the founder goes by,
 //! the group's name and 16 random bytes drawn at `new` — so two groups
-//! called House are two ids, and a seed carried in a link proves the id it
-//! names. The group's name is what a person reads; the id is the directory
+//! called House are two ids, and a seed a link's issuer answers proves
+//! the id it names ([`answered`]). The group's name is what a person reads; the id is the directory
 //! its record lives in on every computer that holds it.
 //!
 //! The seed is written beside the group's record as `seed.json`, and the
@@ -15,11 +15,11 @@
 //! `seed.json` to find a group by its name.
 //!
 //! Beside them, `origin` keeps the page this computer prints the group's
-//! links on (u2-7): `new` writes the one it was given or the default,
-//! `join` the one its link was printed on, and `link --origin` changes it.
-//! It is this computer's setting, outside the seed and its id, so a group
-//! that serves its page privately never gets a link on the default because
-//! one `link` named none (ARCH 6).
+//! https links on (u2-7): `new --origin` writes it, `join` the one its
+//! https link was printed on, and `link --origin` changes it. It is this
+//! computer's setting, outside the seed and its id; a group that keeps
+//! none prints the client's link alone (u2-8), so nothing depends on a
+//! hosted page unless the group names one.
 
 use std::path::{Path, PathBuf};
 
@@ -41,7 +41,7 @@ const ORIGIN_FILE: &str = "origin";
 
 /// A name a person reads: a group's, or a person's. Trimmed, 1..=64 bytes,
 /// no control characters — it is printed in a terminal and carried in a
-/// link.
+/// group's seed.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Name(String);
 
@@ -139,7 +139,7 @@ impl Seed {
         )
     }
 
-    /// The seed from its four fields as text — a link's or `seed.json`'s.
+    /// The seed from its four fields as text, as `seed.json` holds them.
     pub fn parse(name: &str, founder: &str, key_hex: &str, salt_hex: &str) -> Option<Self> {
         let key: [u8; 32] = hex::decode(key_hex).ok()?.try_into().ok()?;
         let key = VerifyingKey::from_bytes(&key).ok()?;
@@ -195,16 +195,40 @@ pub fn read_seed(dir: &Path) -> Result<Option<Seed>, SeedError> {
     let Some(raw) = kept(&path)? else {
         return Ok(None);
     };
-    let file: SeedFile = serde_json::from_str(&raw).map_err(|e| SeedError::Read {
-        path: path.clone(),
-        why: e.to_string(),
-    })?;
-    Seed::parse(&file.name, &file.founder, &file.key, &file.salt)
+    from_text(&raw)
         .map(Some)
-        .ok_or_else(|| SeedError::Read {
-            path,
-            why: "a field is not what a seed holds".into(),
-        })
+        .map_err(|why| SeedError::Read { path, why })
+}
+
+/// The seed in `dir` as written, or `None` when the directory holds none:
+/// what the issuer's node answers a link's ask with
+/// (`svrngs_node::redeem::SeedText`).
+pub fn seed_text(dir: &Path) -> Result<Option<String>, String> {
+    kept(&dir.join(SEED_FILE)).map_err(|e| e.to_string())
+}
+
+/// The seed an issuer answered for `group`, believed only when it hashes
+/// to `group`: an issuer answering another group's seed is not believed.
+pub fn answered(group: &str, text: &str) -> Option<Seed> {
+    let seed = match from_text(text) {
+        Ok(seed) => seed,
+        Err(why) => {
+            tracing::debug!(target: "group", group, why, "group: refused — the seed answered is not a seed");
+            return None;
+        }
+    };
+    if seed.id() != group {
+        tracing::debug!(target: "group", group, hashes_to = %seed.id(), "group: refused — the seed answered is another group's");
+        return None;
+    }
+    Some(seed)
+}
+
+/// A seed from `seed.json`'s text.
+fn from_text(raw: &str) -> Result<Seed, String> {
+    let file: SeedFile = serde_json::from_str(raw).map_err(|e| e.to_string())?;
+    Seed::parse(&file.name, &file.founder, &file.key, &file.salt)
+        .ok_or_else(|| "a field is not what a seed holds".into())
 }
 
 /// Keep `origin` in `dir`, the group's directory, as the page its links

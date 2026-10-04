@@ -220,7 +220,7 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   list a door keeps. The seed is the founder's key alone, bound to the
   founder's name: `svrngs new` writes it into the journal's `roster.json`
   from the group's `seed.json` (`Seed::roster`, `crates/svrngs/src/group.rs`),
-  and the link carries the seed.
+  and the issuer answers the seed to whoever proves a link's key (u2-8).
 - **A grow-only set, linked like git.** Each act names its author's previous
   act (U2, inside the id and the signature, so the wire changes once, before
   Demo A writes a journal anyone keeps; landed: `SignedOp::prev`, and
@@ -249,8 +249,9 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   hours, without whoever it leaves out (operator: "with dotfile elegance").
 - **A link admits each person once** (U2; operator, 2026-10-04, over one
   person per link, which neither demo nor a chat door could use: Sam sends one
-  link to three friends, a door posts one per channel). A link carries a key
-  that its issuer's `Invite` act names, with the time it lapses. Redeeming it
+  link to three friends, a door posts one per channel). A link carries a
+  secret, and the key derived from it is the key its issuer's `Invite` act
+  names, with the time it lapses. Redeeming it
   writes one `Admit` for one new key, signed by the issuer and co-signed by the
   new key. A link admits everyone who opens it until it lapses or its issuer
   closes it, and only the issuer's node redeems it (operator, 2026-10-04), so
@@ -270,7 +271,11 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   is not how a link closes: the void set is order-free, so it unseats every
   key the `Invite` admitted, as voiding each `Admit` would (`Voided`). Both
   kinds ship at line version 3. Redeemed at the issuer's node (landed:
-  `crates/svrngs-node/src/redeem.rs`): on the second protocol, the joiner
+  `crates/svrngs-node/src/redeem.rs`): on the second protocol, the joiner,
+  holding only the link, first asks, proving the link's key, and the issuer
+  answers from its own `Invite` naming that key: the group's id, its seed
+  and the `Invite`'s id, the seed believed only when it hashes to the id
+  (u2-8; `group::answered`). It then
   presents the group's id, the `Invite`'s id, a person's name, its new key
   — the key it dials with — and that key's consent, all signed by the
   link's secret key; the node checks the `Invite` is its own and names that
@@ -409,7 +414,7 @@ reusable by design.
 
 | Upstream | What it does there | Becomes |
 |---|---|---|
-| `mesh-join-vocab/src/deep_link.rs`: `build_https_guest_link` and `parse_https_guest_link` (`:244-300`), with `percent_encode` and `parse_query_params` | the-link's https form: every secret in the fragment, a parser that never reads left of the `#`, the dial as `iroh=` | forked with edits: the fragment carries the group's seed, the link's key, the id of the `Invite` naming that key (what the joiner's consent signs) and its issuer's dial in place of a bearer token. The base is a default, `https://svrnme.sh/ring/` (operator, 2026-10-04; upstream pins it at `sovereign/crates/sovereign-contracts/src/guest_pages.rs:270`): a founder may print links on an origin of their own, and `svrngs join` reads a link from any origin, since everything it needs is in the fragment. The origin is the group's setting on each computer, not a flag each call reads: `new` keeps the one it is given or the default, `join` keeps the one its link was printed on, and `link` prints on the kept one unless `--origin` changes it, so a member's later link opens the page the founder's did, and a group with none kept is refused rather than printed on the default. A computer never fetches the origin; it dials the issuer by key over iroh. A phone (U4) loads the page there, which dials over iroh in turn, so the origin is trusted with that page's code and never sees the fragment, which is why it can be anyone's. The `sovereign://` forms and the https form with its key in the path (`:396-413`) stay behind: a chat does not make a custom scheme tappable, and a host reads a path |
+| `mesh-join-vocab/src/deep_link.rs`: `build_https_guest_link` and `parse_https_guest_link` (`:244-300`), with `percent_encode` and `parse_query_params`; `build_join_link` (`:421-436`) | the-link's https form: every secret in the fragment, a parser that never reads left of the `#`, the dial as `iroh=`; and the client's form, `sovereign://join/<key>` | forked, then made short and opaque (u2-8; operator, 2026-10-04, §10): one base64url token carrying only what the joiner cannot ask the issuer for — a format byte (`Format`, a closed set), the issuer's key, which it dials, and 16 secret bytes the link's signing key is derived from (BLAKE3 `derive_key`, a named context), and the issuer's relay only when it runs without address lookup (§11, risk 5). A client's link with no relay is 80 characters, where the seven-field https link was 412, with the issuer's network addresses in it. The issuer answers the group's seed and its `Invite`'s id to the link's key (§6). Two wrappers carry the one token: the client's link, `svrngs://join/<token>`, upstream's `sovereign://` shape, which `new` and `link` always print; and `<origin>#<token>`, printed beside it only for a group that keeps a page origin, so nothing depends on a hosted page unless a group names one. `svrngs join` takes either, or the bare token. The origin is the group's setting on each computer, not a flag each call reads: `new --origin` keeps one, `join` keeps the one its https link was printed on and none from a client's link, and `link --origin` changes it. A computer never fetches the origin; it dials the issuer by key over iroh. A phone (U4) loads the page there, which dials over iroh in turn, so the origin is trusted with that page's code and never sees the fragment, which is why it can be anyone's. The https form with the key in its path (`:396-413`) stays behind: a host reads a path. A token whose random part spells a word §1 keeps from people is drawn again |
 | `commonwealth/crates/commonwealth-rails/src/found.rs:46-114`, `join.rs:116-229`, `internal.rs:222-295`; `commonwealth-discovery/src/membership.rs:12-75` | the mesh invite: a 48-bit key, reusable until a 24-hour lapse (`membership.rs:53`), only its hash kept, in `mesh.json` outside any record. The joiner dials the founder by key and posts `/internal/join` with a proof that signs neither the key nor the mesh (`commonwealth-transport/src/identity.rs:130-141`); the founder checks and persists before answering | the handshake's shape forked: the joiner dials the issuer by key and proves it holds both the link's key and its own, over the group and the request; the issuer persists before answering. What it writes is an `Admit`, and every use of a link is in the record: the `Invite`, its lapse, its closing. The lapse stays upstream's day. The mesh snapshot, `MemberRecord` and `node_id` stay behind. Landed: `crates/svrngs-node/src/redeem.rs` |
 | the acceptor U1 built (`crates/svrngs-node/src/node.rs`, `admit_dialer`) | closes every dialer standing in no group the node holds | kept for members. Redemption is served on a second ALPN, the one a key in no register may speak, with one route; `alpn.rs` becomes the enum it promised (landed: `Alpn`, and `Admit::Serve` names the router each protocol reaches) |
 | `sovereign-grants`' guest grant (`guest_grant.rs`, `guest_session.rs`) | one QR code serves a room; its state is a map in memory | not forked: its state is lost on a restart. Its shape, one link for a room, is what U2 keeps, in the record |
@@ -417,7 +422,7 @@ reusable by design.
 | `commonwealth-rails/src/cli.rs` and `main.rs` | four verbs, parsed by hand, no framework; exit codes 0, 1 and 3; a tokio runtime built by hand | the shape of `crates/svrngs`: `new <name>`, `join <link>`, `link <group>`, and the bare command, which runs the node for every group the computer holds. No parser dependency |
 | `commonwealth/crates/commonwealth-rail/examples/stage_member_act.rs:94-157` | an `Admit` signed by a member, timed strictly after everything held | its signing steps are the redemption's write; its timing rule moves into the door (§6) |
 | `sovereign/crates/sovereign-cli-mesh/src/ring_cmd/mod.rs:356-470`, `ring roster add` | joining a ring: two people copy a hex key by hand | replaced by the link; nothing forked |
-| svrngs's own `valid_namespace` (`crates/svrngs-node/src/lib.rs:43-50`) | a group's id is a name the caller types, so two groups called House on one node collide | a group's id is the hash of its seed — the founder's key and the name they go by, the group's name and random bytes drawn at `new` — so the seed in a link proves the id. The name is what a person reads (landed: `crates/svrngs/src/group.rs`; the founder's name added, since the register binds every seed key to a person) |
+| svrngs's own `valid_namespace` (`crates/svrngs-node/src/lib.rs:43-50`) | a group's id is a name the caller types, so two groups called House on one node collide | a group's id is the hash of its seed — the founder's key and the name they go by, the group's name and random bytes drawn at `new` — so a seed the issuer answers for a link proves the id. The name is what a person reads (landed: `crates/svrngs/src/group.rs`; the founder's name added, since the register binds every seed key to a person) |
 
 Four facts follow. *Only the issuer redeems:* a link works while its
 issuer's computer is reachable; Sam's always-on computer is, in both demos,
@@ -473,7 +478,7 @@ start from tag `e0-bot` when their turn comes.
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
 | U1 a group is not a mesh | ring sync, its route and the dial-by-key tunnel forked into `svrngs-node`, the node's router served on each accepted stream; the register decides who may connect and who is synced, where upstream asked the mesh (`commonwealth/crates/commonwealth-rails/src/` at `e1a43bcd2`: `acceptor.rs:47-61`, `ring_sync/journal.rs:153-164`, the default roster at `lib.rs:404`) | a node in the group but no mesh syncs; a node outside the group is refused |
-| U2 join by link | `svrngs new <name>`, `svrngs join <link>` and `svrngs link <group>` on a computer, and `svrngs` alone running the node; the link carries the group's seed, its key, its `Invite`'s id and its issuer's dial in the fragment; redeeming at the issuer's node writes one `Admit`, co-signed by the new key; ids over everything signed, the previous act among it; the door signing after everything it holds (§6) | three people open one link and each is admitted once; opening it again admits nobody twice; a lapsed or closed link admits no one; a dialer without the link's key is closed with no answer; nothing the command prints uses a word §1 keeps from people |
+| U2 join by link | `svrngs new <name>`, `svrngs join <link>` and `svrngs link <group>` on a computer, and `svrngs` alone running the node; the link is one short token — the issuer's key and the link's secret, and the issuer's relay only when it runs without lookup — and the issuer answers the group's seed and its `Invite`'s id to the link's key; redeeming at the issuer's node writes one `Admit`, co-signed by the new key; ids over everything signed, the previous act among it; the door signing after everything it holds (§6) | three people open one link and each is admitted once; opening it again admits nobody twice; a lapsed or closed link admits no one; a dialer without the link's key is closed with no answer; nothing the command prints uses a word §1 keeps from people |
 | U3 lend a service | the member door: a route that proxies to a lent service, the verified person set from the connection; `svrngs share <port>` with its lend declaration; streaming and byte ranges through the door; each request's share of the lender's upload; the people-at-once limit; the loopback record API (the rail routes and the live lane, forked); the list of what members lend | the app sees the verified person; a header the client typed is stripped; the lender's secret appears in no byte a member receives; with three streams, each is told a third of the declared upload, and a fourth person is refused with a reason |
 
 **Demo A — Sam's films, three homes at once** (after U3). Sam lends Jellyfin
@@ -544,7 +549,7 @@ By the operator, 2026-10-04:
   through the browser");
 - a link is upstream's https form, everything it carries in its fragment;
   `https://svrnme.sh/ring/` is the default origin, and anyone may serve the
-  page from their own;
+  page from their own (superseded by the next two, landed in u2-8);
 - a link is short and opaque, for the ergonomics of sharing: one token
   carrying only what the joiner cannot ask the issuer for, and no word §1
   keeps from people anywhere in it (u2-8);

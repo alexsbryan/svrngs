@@ -4,19 +4,25 @@
 //! link, a lapsed one, a forged one and an open one's key on a request its
 //! secret did not sign are refused in one sentence that names no group; a
 //! stranger on the members' protocol is closed with no answer; nothing the
-//! command prints uses a word DESIGN §1 keeps from people. Nodes in one
-//! process, no relay: each link dials Sam's loopback address.
+//! command prints, its links included, uses a word DESIGN §1 keeps from
+//! people. The link is one short token (u2-8): the joiner asks Sam's
+//! computer for the group's seed and the `Invite`'s id, and believes the
+//! seed only when it hashes to the group named. Nodes in one process, no
+//! relay: each joiner is told Sam's loopback addresses, as lookup or a
+//! relay would find them outside one process.
 
 use std::collections::BTreeSet;
 use std::net::SocketAddr;
 use std::time::{Duration, Instant};
 
-use svrngs::cli::{self, Refusal, Said};
-use svrngs::group::{Name, Seed};
-use svrngs::link::{parse_https_link, Dial, Link, Origin};
-use svrngs_node::iroh::{Contact, EndpointAddr, RelayConfig};
+use svrngs::cli::{self, Command, Printed, Refusal, Said};
+use svrngs::group::{self, Name, Seed};
+use svrngs::link::{client_link, https_link, Link, Origin, Token, KEPT_WORDS};
+use svrngs_node::iroh::{Contact, EndpointAddr, MemoryLookup, RelayConfig, RelayUrl};
 use svrngs_node::node::Node;
-use svrngs_node::redeem::{redeem, RedeemError, RedeemRequest, Redeemed, REFUSAL};
+use svrngs_node::redeem::{
+    ask, redeem, AskRequest, Asked, RedeemError, RedeemRequest, Redeemed, REFUSAL,
+};
 use svrngs_node::{actor_of, derive_id, Ed25519Verifier, OpId, Person, RailAct, SigningKey};
 
 fn no_relay() -> RelayConfig {
@@ -35,11 +41,20 @@ struct Computer {
 }
 
 async fn computer(seed: u8) -> Computer {
+    computer_on(seed, &no_relay()).await
+}
+
+async fn computer_on(seed: u8, relay: &RelayConfig) -> Computer {
     let dir = tempfile::tempdir().unwrap();
     let key = SigningKey::from_bytes(&[seed; 32]);
-    let node = Node::start(dir.path().to_path_buf(), key.clone(), &no_relay())
-        .await
-        .expect("a node starts");
+    let node = Node::start(
+        dir.path().to_path_buf(),
+        key.clone(),
+        relay,
+        group::seed_text,
+    )
+    .await
+    .expect("a node starts");
     Computer {
         node,
         key,
@@ -65,17 +80,33 @@ fn loopback(node: &Node) -> Vec<SocketAddr> {
         .collect()
 }
 
-/// `url` parsed, its dial pointed at Sam's loopback sockets, as the
-/// relay's address would be outside one process.
-fn link_at(url: &str, sam: &Node) -> Link {
-    let mut link = parse_https_link(url).expect("the printed link parses");
-    assert_eq!(link.issuer.addr().id, sam.endpoint().id());
+/// Tell `who` the loopback addresses Sam's key resolves to, as address
+/// lookup or a relay would outside one process.
+fn knows(who: &Computer, sam: &Node) {
     let mut addr = EndpointAddr::new(sam.endpoint().id());
     for a in loopback(sam) {
         addr = addr.with_ip_addr(a);
     }
-    link.issuer = Dial::of(&addr).unwrap();
+    let book = MemoryLookup::new();
+    book.add_endpoint_info(addr);
+    who.node.endpoint().address_lookup().unwrap().add(book);
+}
+
+/// A printed client's link, parsed, after checking it dials Sam.
+fn parsed(printed: &Printed, sam: &Node) -> Link {
+    let link = Link::parse(&printed.client).expect("the printed link parses");
+    assert_eq!(link.token.issuer, sam.endpoint().id());
     link
+}
+
+/// The id of the `Invite` in Sam's record naming `link`'s key.
+fn invite_of(node: &Node, group: &str, link: &Link) -> OpId {
+    let key = actor_of(&link.token.key());
+    let (ops, _) = node.rail().journal(group).unwrap().read().unwrap();
+    ops.iter()
+        .find(|op| matches!(&op.kind.act, RailAct::Invite { key: k, .. } if *k == key))
+        .map(|op| derive_id(op, group))
+        .expect("Sam's record names the link's key")
 }
 
 /// The ids Sam's record holds, each as its content derives it.
@@ -102,14 +133,20 @@ fn stands(node: &Node, group: &str, key: &SigningKey) -> bool {
         .names(&actor_of(key))
 }
 
-/// The issuer's answer to `link` presented by `who` on the wire: its
-/// refusal's words, or what it did.
-async fn present(who: &Computer, link: &Link, person: &str) -> Result<Redeemed, String> {
+/// The issuer's answer to `link` presented by `who` on the wire, under
+/// the `Invite` `invite` of `group`: its refusal's words, or what it did.
+async fn present(
+    who: &Computer,
+    link: &Link,
+    group: &str,
+    invite: &OpId,
+    person: &str,
+) -> Result<Redeemed, String> {
     let req = RedeemRequest::sign(
-        &link.secret,
+        &link.token.key(),
         &who.key,
-        &link.seed.id(),
-        &link.invite,
+        group,
+        invite,
         &Person::from(person),
     );
     send(who, link, &req).await
@@ -117,10 +154,36 @@ async fn present(who: &Computer, link: &Link, person: &str) -> Result<Redeemed, 
 
 /// The issuer's answer to `req`, sent by `who` to `link`'s issuer.
 async fn send(who: &Computer, link: &Link, req: &RedeemRequest) -> Result<Redeemed, String> {
-    match redeem(who.node.endpoint(), link.issuer.addr().clone(), req).await {
+    words(redeem(who.node.endpoint(), link.token.issuer_addr(), req).await)
+}
+
+/// The issuer's answer to `who` asking what `link` is for.
+async fn asks(who: &Computer, link: &Link) -> Result<Asked, String> {
+    let req = AskRequest::sign(&link.token.key(), &who.key);
+    words(ask(who.node.endpoint(), link.token.issuer_addr(), &req).await)
+}
+
+/// An answer, or a refusal's words; never no answer.
+fn words<T>(answer: Result<T, RedeemError>) -> Result<T, String> {
+    match answer {
         Ok(r) => Ok(r),
         Err(RedeemError::Refused(words)) => Err(words),
         Err(other) => panic!("an answer, not {other}"),
+    }
+}
+
+fn argv(rest: &[&str]) -> Vec<String> {
+    std::iter::once("svrngs")
+        .chain(rest.iter().copied())
+        .map(String::from)
+        .collect()
+}
+
+/// `svrngs join <raw>` parsed: the link the command would redeem.
+fn typed(raw: &str) -> Link {
+    match cli::parse(argv(&["join", raw])).expect("join parses") {
+        Command::Join { link, .. } => *link,
+        other => panic!("{other:?}"),
     }
 }
 
@@ -134,34 +197,42 @@ fn now() -> i64 {
 #[tokio::test(flavor = "multi_thread")]
 async fn three_people_open_one_link_and_each_is_let_in_once() {
     let sam = computer(1).await;
-    let (seed, url) = cli::new_group(
-        &sam.node,
-        name("house"),
-        name("Sam"),
-        &Origin::default(),
-        &no_relay(),
-    )
-    .await
-    .expect("Sam makes house");
+    let (seed, printed) = cli::new_group(&sam.node, name("house"), name("Sam"), None, &no_relay())
+        .await
+        .expect("Sam makes house");
     let group = seed.id();
     let mut said = vec![Said::Made {
         seed: seed.clone(),
-        url: url.clone(),
+        link: printed.clone(),
     }
-    .to_string()
-    .replace(&url, "<link>")];
-    let link = link_at(&url, &sam.node);
+    .to_string()];
+    let link = parsed(&printed, &sam.node);
+    let invite = invite_of(&sam.node, &group, &link);
 
-    // ── Alex, Bo and Cy open Sam's one link.
+    // ── Alex, Bo and Cy open Sam's one link: Alex as the client's link,
+    // Bo on a page of the group's, Cy as the bare token.
+    let token = link.token.encode();
+    let page = Origin::parse("https://x.example/").unwrap();
+    let forms = [
+        (2u8, "Alex", printed.client.clone()),
+        (3, "Bo", https_link(&page, &link.token)),
+        (4, "Cy", token.clone()),
+    ];
     let mut friends = Vec::new();
-    for (n, who) in [(2u8, "Alex"), (3, "Bo"), (4, "Cy")] {
+    for (n, who, raw) in forms {
         let friend = computer(n).await;
+        knows(&friend, &sam.node);
+        let opened = typed(&raw);
+        assert_eq!(
+            opened.token, link.token,
+            "{who}'s form carries the one token"
+        );
         let started = Instant::now();
-        let joined = cli::join_group(&friend.node, &friend.key, &link, &name(who))
+        let joined = cli::join_group(&friend.node, &friend.key, &opened, &name(who))
             .await
             .unwrap_or_else(|e| panic!("{who} is let in: {e}"));
         let took = started.elapsed();
-        eprintln!("join: {who} let in and synced once in {took:?} on loopback");
+        eprintln!("join: {who} let in and synced once in {took:?} on loopback, from {raw}");
         assert_eq!(
             joined,
             Said::Joined {
@@ -182,6 +253,18 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
             stands(&friend.node, &group, &friend.key),
             "{who}'s own copy of the register lets {who} in"
         );
+        let dir = friend
+            .node
+            .rail()
+            .journal(&group)
+            .unwrap()
+            .dir()
+            .to_path_buf();
+        let kept = group::read_origin(&dir).unwrap();
+        assert_eq!(
+            kept, opened.origin,
+            "{who} keeps the origin of an https link, and none from another"
+        );
         friends.push(friend);
     }
     let three: Vec<String> = friends.iter().map(|f| actor_of(&f.key)).collect();
@@ -189,7 +272,10 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
 
     // ── Alex opens it again: nothing new is written.
     let alex = &friends[0];
-    assert_eq!(present(alex, &link, "Alex").await, Ok(Redeemed::AlreadyIn));
+    assert_eq!(
+        present(alex, &link, &group, &invite, "Alex").await,
+        Ok(Redeemed::AlreadyIn)
+    );
     let again = cli::join_group(&alex.node, &alex.key, &link, &name("Alex"))
         .await
         .unwrap();
@@ -198,22 +284,22 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     assert_eq!(admitted(&sam.node, &group), three, "no second Admit");
 
     // ── Sam sends a new link: Dee, with the old one, is refused.
-    let (linked, url2) = cli::new_link(&sam.node, "house", None, &no_relay())
+    let (linked, printed2) = cli::new_link(&sam.node, "house", None, &no_relay())
         .await
         .unwrap();
     said.push(
         Said::Linked {
             seed: linked,
-            url: url2.clone(),
+            link: printed2.clone(),
         }
-        .to_string()
-        .replace(&url2, "<link>"),
+        .to_string(),
     );
     let dee = computer(5).await;
-    let closed = present(&dee, &link, "Dee").await;
+    knows(&dee, &sam.node);
+    let closed = present(&dee, &link, &group, &invite, "Dee").await;
     let refused = cli::join_group(&dee.node, &dee.key, &link, &name("Dee")).await;
     assert!(
-        matches!(refused, Err(Refusal::LinkRefused(_))),
+        matches!(refused, Err(Refusal::LinkRefused)),
         "Dee with the old link: {}",
         refused.map_or_else(|e| e.to_string(), |s| s.to_string())
     );
@@ -225,32 +311,54 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
         );
     }
 
-    // ── A link key Sam never issued, presented with Sam's open Invite.
+    // ── A link Sam never issued: asked about, and presented with Sam's
+    // open Invite, Fay is refused.
+    let open = parsed(&printed2, &sam.node);
+    let open_invite = invite_of(&sam.node, &group, &open);
     let forged = Link {
-        secret: SigningKey::from_bytes(&[0xF0; 32]),
-        ..link_at(&url2, &sam.node)
+        token: Token {
+            secret: [0xF0; 16],
+            ..open.token.clone()
+        },
+        origin: None,
     };
     let fay = computer(7).await;
-    let never = present(&fay, &forged, "Fay").await;
+    knows(&fay, &sam.node);
+    let unasked = asks(&fay, &forged).await.map(|_| ());
+    let never = present(&fay, &forged, &group, &open_invite, "Fay").await;
+    assert!(matches!(
+        cli::join_group(&fay.node, &fay.key, &forged, &name("Fay")).await,
+        Err(Refusal::LinkRefused)
+    ));
     assert!(!stands(&sam.node, &group, &fay.key));
 
     // ── Sam's open link key, which every copy of the record shows in its
     // `Invite`, on a request another key signed: Gus is refused.
-    let open = link_at(&url2, &sam.node);
     let gus = computer(8).await;
+    knows(&gus, &sam.node);
     let mut req = RedeemRequest::sign(
-        &forged.secret,
+        &forged.token.key(),
         &gus.key,
         &group,
-        &open.invite,
+        &open_invite,
         &Person::from("Gus"),
     );
-    req.link = actor_of(&open.secret);
+    req.link = actor_of(&open.token.key());
     let unsigned = send(&gus, &open, &req).await;
+    let mut asked = AskRequest::sign(&forged.token.key(), &gus.key);
+    asked.link = actor_of(&open.token.key());
+    let unsigned_ask =
+        words(ask(gus.node.endpoint(), open.token.issuer_addr(), &asked).await).map(|_| ());
     assert!(!stands(&sam.node, &group, &gus.key));
 
-    // ── Sam's open link, past its lapse: Eve is refused.
-    let lapsed_secret = SigningKey::from_bytes(&[0xE0; 32]);
+    // ── Sam's link, past its lapse: Eve is refused.
+    let lapsed_link = Link {
+        token: Token {
+            secret: [0xE0; 16],
+            ..open.token.clone()
+        },
+        origin: None,
+    };
     let lapsed = sam
         .node
         .rail()
@@ -258,7 +366,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
         .unwrap()
         .append(
             RailAct::Invite {
-                key: actor_of(&lapsed_secret),
+                key: actor_of(&lapsed_link.token.key()),
                 until: now() - 1,
             },
             sam.node.rail().signer(),
@@ -267,28 +375,26 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
             &Ed25519Verifier,
         )
         .unwrap();
-    let lapsed_link = Link {
-        seed: seed.clone(),
-        secret: lapsed_secret,
-        invite: lapsed.id,
-        issuer: link.issuer.clone(),
-        origin: Origin::default(),
-    };
     let eve = computer(6).await;
-    let past = present(&eve, &lapsed_link, "Eve").await;
+    knows(&eve, &sam.node);
+    let past = present(&eve, &lapsed_link, &group, &lapsed.id, "Eve").await;
+    assert!(matches!(
+        cli::join_group(&eve.node, &eve.key, &lapsed_link, &name("Eve")).await,
+        Err(Refusal::LinkRefused)
+    ));
     assert!(!stands(&sam.node, &group, &eve.key));
 
     // ── One refusal, naming nothing.
+    let unit = |a: &Result<Redeemed, String>| a.clone().map(|_| ());
     for (who, answer) in [
-        ("Dee", &closed),
-        ("Eve", &past),
-        ("Fay", &never),
-        ("Gus", &unsigned),
+        ("Dee", unit(&closed)),
+        ("Eve", unit(&past)),
+        ("Fay", unit(&never)),
+        ("Fay, asking", unasked),
+        ("Gus", unit(&unsigned)),
+        ("Gus, asking", unsigned_ask),
     ] {
-        let words = answer
-            .as_ref()
-            .expect_err(&format!("{who} is refused"))
-            .clone();
+        let words = answer.expect_err(&format!("{who} is refused"));
         assert_eq!(
             words,
             closed.clone().unwrap_err(),
@@ -330,20 +436,19 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
         answer.map(|r| r.status())
     );
 
-    // ── Nothing printed says a word kept from people. The links are left
-    // out: their origin, svrnme.sh/ring/, is the operator's (DESIGN §10).
+    // ── Nothing printed says a word kept from people, the links included.
     said.push(Said::Running(vec![name("house")]).to_string());
     said.push(Said::Running(Vec::new()).to_string());
     for r in [
-        Refusal::NoNameToJoin(name("house")),
-        Refusal::LinkRefused(name("house")),
-        Refusal::IssuerAway(name("house")),
+        Refusal::NoNameToJoin,
+        Refusal::LinkRefused,
+        Refusal::IssuerAway,
     ] {
         said.push(r.to_string());
     }
     for line in &said {
         let lower = line.to_lowercase();
-        for word in ["ring", "member", "key", "sync", "journal", "node", "relay"] {
+        for word in KEPT_WORDS {
             assert!(!lower.contains(word), "{line:?} says {word}");
         }
     }
@@ -353,66 +458,124 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
 }
 
 /// A member's later link opens the page the founder's did (u2-7): Sam
-/// makes house on x.example; Alex, let in by that link, keeps its origin,
-/// and the link Alex prints with no `--origin` is on x.example too.
+/// makes house on x.example; Alex, let in by its https link, keeps that
+/// origin, and the link Alex prints with no `--origin` is on x.example
+/// too. Cy, let in by the client's link to the same group, keeps none, and
+/// prints the client's link alone.
 #[tokio::test(flavor = "multi_thread")]
 async fn a_member_prints_links_on_the_page_the_founders_opened() {
     let sam = computer(1).await;
     let x = Origin::parse("https://x.example/").unwrap();
-    let (_, url) = cli::new_group(&sam.node, name("house"), name("Sam"), &x, &no_relay())
+    let (_, printed) = cli::new_group(&sam.node, name("house"), name("Sam"), Some(&x), &no_relay())
         .await
         .expect("Sam makes house on x.example");
+    let https = printed.https.clone().expect("an https link on x.example");
     let alex = computer(2).await;
-    cli::join_group(
-        &alex.node,
-        &alex.key,
-        &link_at(&url, &sam.node),
-        &name("Alex"),
-    )
-    .await
-    .expect("Alex is let in");
+    let cy = computer(4).await;
+    for (who, n, raw) in [(&alex, "Alex", &https), (&cy, "Cy", &printed.client)] {
+        knows(who, &sam.node);
+        cli::join_group(&who.node, &who.key, &typed(raw), &name(n))
+            .await
+            .unwrap_or_else(|e| panic!("{n} is let in: {e}"));
+    }
     let (_, theirs) = cli::new_link(&alex.node, "house", None, &no_relay())
         .await
         .expect("Alex, in house, prints a link");
-    assert!(theirs.starts_with("https://x.example/#"), "{theirs}");
+    let on = theirs.https.unwrap_or_default();
+    assert!(on.starts_with("https://x.example/#"), "{on}");
+    let (_, cys) = cli::new_link(&cy.node, "house", None, &no_relay())
+        .await
+        .expect("Cy, in house, prints a link");
+    assert_eq!(cys.https, None, "{cys}");
+    for c in [&sam, &alex, &cy] {
+        c.node.endpoint().close().await;
+    }
+}
+
+/// A computer run without address lookup puts its relay in its link, and
+/// a joiner with lookup off is let in by it. The relay named is not run in
+/// one process, so the joiner is told Sam's loopback addresses beside it.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_link_from_a_computer_without_lookup_carries_its_relay() {
+    let relay: RelayUrl = "https://relay.example./".parse().unwrap();
+    let ours = RelayConfig::from_parts(vec![relay.to_string()], Some("none")).unwrap();
+    assert!(!ours.n0_services, "lookup off");
+    let sam = computer_on(1, &ours).await;
+    let (seed, printed) = cli::new_group(&sam.node, name("house"), name("Sam"), None, &ours)
+        .await
+        .expect("Sam makes house");
+    eprintln!(
+        "a relayed client's link, {} characters: {}",
+        printed.client.len(),
+        printed.client
+    );
+    let link = parsed(&printed, &sam.node);
+    assert_eq!(link.token.relay, Some(relay), "the link carries the relay");
+    let alex = computer(2).await;
+    knows(&alex, &sam.node);
+    let joined = cli::join_group(&alex.node, &alex.key, &link, &name("Alex"))
+        .await
+        .expect("Alex is let in, with lookup off");
+    assert_eq!(
+        joined,
+        Said::Joined {
+            seed: seed.clone(),
+            person: name("Alex")
+        }
+    );
+    assert!(stands(&sam.node, &seed.id(), &alex.key));
     for c in [&sam, &alex] {
         c.node.endpoint().close().await;
     }
 }
 
-/// `join` parses a link and `--as`; a link cut short is refused before
-/// anything is dialled.
+/// The issuer's answer is believed only when its seed hashes to the group
+/// it names: an issuer answering another group's seed is not believed.
+#[test]
+fn an_issuer_answering_another_groups_seed_is_not_believed() {
+    let dir = tempfile::tempdir().unwrap();
+    let founder = SigningKey::from_bytes(&[1; 32]).verifying_key();
+    let house = Seed::from_parts(name("house"), name("Sam"), founder, [9; 16]);
+    let work = Seed::from_parts(name("work"), name("Sam"), founder, [9; 16]);
+    group::write_seed(dir.path(), &house).unwrap();
+    let text = group::seed_text(dir.path()).unwrap().expect("a seed kept");
+    assert_eq!(group::answered(&house.id(), &text), Some(house.clone()));
+    assert_eq!(group::answered(&work.id(), &text), None);
+    assert_eq!(group::answered(&house.id(), "{}"), None);
+}
+
+/// `join` parses a link in each of its forms and `--as`; a link cut short
+/// is refused before anything is dialled.
 #[test]
 fn join_parses_its_link() {
     let founder = SigningKey::from_bytes(&[1; 32]);
-    let seed = Seed::from_parts(name("house"), name("Sam"), founder.verifying_key(), [9; 16]);
-    let addr = EndpointAddr::new(
-        svrngs_node::iroh::PublicKey::from_bytes(&founder.verifying_key().to_bytes()).unwrap(),
-    )
-    .with_ip_addr("127.0.0.1:4242".parse().unwrap());
-    let link = Link {
-        seed,
-        secret: SigningKey::from_bytes(&[7; 32]),
-        invite: OpId::from_hex(&"cd".repeat(32)).unwrap(),
-        issuer: Dial::of(&addr).unwrap(),
-        origin: Origin::default(),
+    let token = Token {
+        issuer: svrngs_node::iroh::PublicKey::from_bytes(&founder.verifying_key().to_bytes())
+            .unwrap(),
+        secret: [7; 16],
+        relay: None,
     };
-    let url = svrngs::link::build_https_link(&link);
-    let argv = |rest: &[&str]| {
-        std::iter::once("svrngs")
-            .chain(rest.iter().copied())
-            .map(String::from)
-            .collect::<Vec<_>>()
-    };
-    assert_eq!(
-        cli::parse(argv(&["join", &url, "--as", "Alex"])).unwrap(),
-        cli::Command::Join {
-            link: Box::new(link),
-            person: Some(name("Alex")),
-        }
-    );
-    let cut = &url[..url.len() - 20];
-    assert!(cli::parse(argv(&["join", cut])).is_err());
+    let page = Origin::parse("https://x.example/").unwrap();
+    for (raw, origin) in [
+        (client_link(&token), None),
+        (https_link(&page, &token), Some(page.clone())),
+        (token.encode(), None),
+    ] {
+        assert_eq!(
+            cli::parse(argv(&["join", &raw, "--as", "Alex"])).unwrap(),
+            Command::Join {
+                link: Box::new(Link {
+                    token: token.clone(),
+                    origin,
+                }),
+                person: Some(name("Alex")),
+            },
+            "{raw}"
+        );
+        let cut = &raw[..raw.len() - 4];
+        assert!(cli::parse(argv(&["join", cut])).is_err(), "{cut}");
+    }
+    let url = client_link(&token);
     assert!(cli::parse(argv(&["join"])).is_err());
     assert!(cli::parse(argv(&["join", &url, "--origin", "https://x.example/"])).is_err());
 }

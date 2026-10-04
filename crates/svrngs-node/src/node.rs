@@ -14,8 +14,8 @@
 //! dial.
 //!
 //! **A link is redeemed on a second protocol** (DESIGN §8, U2's inventory,
-//! the acceptor row): [`Alpn::Redeem`] is served to any dialer, with one
-//! route ([`crate::redeem`]), so a key standing nowhere reaches that and
+//! the acceptor row): [`Alpn::Redeem`] is served to any dialer, with its
+//! two routes, the ask and the redemption ([`crate::redeem`]), so a key standing nowhere reaches that and
 //! nothing else; [`Alpn::Member`] stays closed to it.
 //!
 //! **The group decides who is in it** (DESIGN §6, U1): the register —
@@ -36,6 +36,7 @@ use crate::iroh::{
     build_relayed_endpoint, format_dial_string, key_actor, Admit, Alpn, Contact, Endpoint,
     EndpointAddr, IrohAcceptor, IrohTransport, PublicKey, RelayConfig, SecretKey,
 };
+use crate::redeem::SeedText;
 use crate::register::Standing;
 use crate::ring_routes::{self, RingInbound};
 use crate::ring_sync::{
@@ -76,13 +77,15 @@ pub struct Host {
 
 impl Node {
     /// Start a node over `data_dir` (its journals under `rings/`), signing and
-    /// dialling with `key`, reaching the network as `relay` says. The round
+    /// dialling with `key`, reaching the network as `relay` says, and
+    /// answering a link's ask with the seed `seeds` reads. The round
     /// runs once now and then every [`DEFAULT_RING_SYNC_INTERVAL`]; nothing
     /// nudges it until U3's record API.
     pub async fn start(
         data_dir: PathBuf,
         key: SigningKey,
         relay: &RelayConfig,
+        seeds: SeedText,
     ) -> Result<Self, NodeError> {
         std::fs::create_dir_all(&data_dir).map_err(|source| NodeError::DataDir {
             path: data_dir.clone(),
@@ -106,7 +109,7 @@ impl Node {
         let rail = Arc::new(RingRail::new(&data_dir, Arc::new(key)));
         let admitting = rail.clone();
         let members = ring_routes::router(RingInbound { rail: rail.clone() });
-        let redeem = crate::redeem::router(rail.clone());
+        let redeem = crate::redeem::router(rail.clone(), seeds);
         let acceptor =
             IrohAcceptor::spawn(endpoint.clone(), move |alpn: &[u8], dialer: &PublicKey| {
                 match admit_dialer(&admitting, alpn, dialer) {

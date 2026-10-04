@@ -34,9 +34,20 @@ fn no_relay() -> RelayConfig {
 }
 
 async fn start(seed: u8, dir: &tempfile::TempDir) -> Node {
-    Node::start(dir.path().to_path_buf(), signing(seed), &no_relay())
-        .await
-        .expect("a node starts")
+    Node::start(
+        dir.path().to_path_buf(),
+        signing(seed),
+        &no_relay(),
+        no_seed,
+    )
+    .await
+    .expect("a node starts")
+}
+
+/// No link is asked about here: groups are seeded by hand, with no seed
+/// the command would keep.
+fn no_seed(_: &std::path::Path) -> Result<Option<String>, String> {
+    Ok(None)
 }
 
 /// A group's seed: its founder's key alone (DESIGN §6).

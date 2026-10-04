@@ -1,31 +1,169 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai mesh-join-vocab/src/deep_link.rs@e1a43bcd2
 //! A group's link (DESIGN §8, U2's inventory, the deep_link.rs row; §10,
-//! 2026-10-04): upstream's https guest link, everything it carries in its
-//! fragment, and a parser that never reads left of the `#`. Its edits: the
-//! fragment carries the group's seed, the link's secret key, the id of the
-//! `Invite` that names its key and its issuer's dial, in place of
-//! upstream's bearer token, lapse, summary,
-//! marks and door route; the base is [`Origin`], by default
-//! [`DEFAULT_ORIGIN`], and a link printed on any origin parses the same,
-//! since everything a computer needs is in the fragment. The parsed link
-//! keeps its base, so a joiner's group prints its own links on the page the
-//! founder's opened (u2-7; `group::write_origin`). A computer never
-//! fetches the origin: it dials the issuer by key. A phone (U4) loads the
-//! page there, which never sees the fragment, so the origin can be anyone's.
+//! 2026-10-04): short and opaque (u2-8). It carries only what the joiner
+//! cannot ask the issuer for, as one base64url [`Token`]: a [`Format`]
+//! byte, the issuer's key — the computer that redeems the link, dialled by
+//! key — and 16 secret bytes the link's signing key is derived from
+//! ([`Token::key`]); and, from a computer run without address lookup, the
+//! issuer's relay (DESIGN §11, risk 5), since a bare key is dialled through
+//! lookup otherwise (§8, "A bare key is dialled"). The group's seed and the
+//! `Invite`'s id are the issuer's answer to the link's key
+//! (`svrngs_node::redeem::ask`).
 //!
-//! The lapse is not in the link: the issuer's `Invite` says it, and the
-//! issuer's node is the one that decides a redemption (DESIGN §6).
+//! Two wrappers carry the one token, and neither depends on a hosted URL:
+//! the client's link, `svrngs://join/<token>`, upstream's
+//! `sovereign://join/<key>` shape (`build_join_link`, `:421-436`), which
+//! `new` and `link` always print; and `<origin>#<token>`, upstream's https
+//! form with the token in its fragment, printed beside it only for a group
+//! that keeps a page origin (u2-7, `group::write_origin`). A browser does
+//! not send the fragment to the server, so the origin's page sees the
+//! token only through its own script, and a computer never fetches the
+//! origin. `svrngs join` takes either, or the bare token. Upstream's
+//! fields, percent helpers and lapse are gone: the lapse is the issuer's
+//! `Invite`'s, and the issuer's node decides a redemption (DESIGN §6).
 
-use svrngs_node::iroh::{format_dial_string, parse_dial_string, EndpointAddr};
-use svrngs_node::{actor_of, OpId, SigningKey};
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use base64::Engine as _;
+use svrngs_node::iroh::{EndpointAddr, PublicKey, RelayUrl};
+use svrngs_node::SigningKey;
 
-use crate::group::Seed;
+/// The client's link's prefix, before the token.
+pub const CLIENT_PREFIX: &str = "svrngs://join/";
 
-/// Where a link points when its founder names no origin of their own
-/// (operator, 2026-10-04; upstream pins it at
-/// `sovereign/crates/sovereign-contracts/src/guest_pages.rs:270`).
-pub const DEFAULT_ORIGIN: &str = "https://svrnme.sh/ring/";
+/// The words DESIGN §1 keeps from people. [`mint`] draws a link's secret
+/// again while its token spells one, in any case.
+pub const KEPT_WORDS: [&str; 7] = ["ring", "member", "key", "sync", "journal", "node", "relay"];
+
+/// BLAKE3 `derive_key` context for a link's signing key from its secret.
+const LINK_KEY_CONTEXT: &str = "svrngs 2026-10-04 link signing key from its secret";
+
+/// A link's secret: 128 bits.
+pub const SECRET_LEN: usize = 16;
+
+/// How many secrets [`mint`] draws before printing one whose token spells
+/// a kept word: the issuer's key is fixed, so its part may spell one that
+/// no secret changes.
+const DRAWS: usize = 256;
+
+/// What a token's bytes after its format byte hold: a closed set.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Format {
+    /// The issuer's key and the secret: the issuer is found by lookup.
+    Bare,
+    /// The issuer's key, the secret and its relay's URL, for an issuer run
+    /// without address lookup.
+    Relayed,
+}
+
+impl Format {
+    const fn byte(self) -> u8 {
+        match self {
+            Format::Bare => 1,
+            Format::Relayed => 2,
+        }
+    }
+
+    fn of(byte: u8) -> Option<Self> {
+        [Format::Bare, Format::Relayed]
+            .into_iter()
+            .find(|f| f.byte() == byte)
+    }
+}
+
+/// A link's one token.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Token {
+    /// The issuer's computer: the one that redeems this link.
+    pub issuer: PublicKey,
+    /// The secret the link's signing key is derived from.
+    pub secret: [u8; SECRET_LEN],
+    /// The issuer's relay, carried only from a computer without lookup.
+    pub relay: Option<RelayUrl>,
+}
+
+impl Token {
+    /// The link's signing key. Its public half is the key the issuer's
+    /// `Invite` names; it is in no record.
+    pub fn key(&self) -> SigningKey {
+        SigningKey::from_bytes(&blake3::derive_key(LINK_KEY_CONTEXT, &self.secret))
+    }
+
+    /// How the issuer's computer is dialled: its key, and its relay when
+    /// the token carries one.
+    pub fn issuer_addr(&self) -> EndpointAddr {
+        let addr = EndpointAddr::new(self.issuer);
+        match &self.relay {
+            Some(relay) => addr.with_relay_url(relay.clone()),
+            None => addr,
+        }
+    }
+
+    /// `format || issuer[32] || secret[16] || relay?`, base64url unpadded.
+    pub fn encode(&self) -> String {
+        let format = match self.relay {
+            Some(_) => Format::Relayed,
+            None => Format::Bare,
+        };
+        let mut bytes = vec![format.byte()];
+        bytes.extend_from_slice(self.issuer.as_bytes());
+        bytes.extend_from_slice(&self.secret);
+        if let Some(relay) = &self.relay {
+            bytes.extend_from_slice(relay.to_string().as_bytes());
+        }
+        URL_SAFE_NO_PAD.encode(bytes)
+    }
+
+    /// The token [`Self::encode`] wrote, or `None`: not base64url, an
+    /// unknown format byte, cut short, a key that is no key, or a relay
+    /// that is no URL.
+    pub fn decode(text: &str) -> Option<Self> {
+        let Ok(bytes) = URL_SAFE_NO_PAD.decode(text.trim()) else {
+            tracing::debug!(target: "link", "link: refused — the token is not base64url");
+            return None;
+        };
+        let Some(format) = bytes.first().copied().and_then(Format::of) else {
+            tracing::debug!(target: "link", first = ?bytes.first(), "link: refused — no format byte this build reads");
+            return None;
+        };
+        const FIXED: usize = 1 + 32 + SECRET_LEN;
+        let rest = bytes.get(FIXED..);
+        let relay = match (format, rest) {
+            (Format::Bare, Some([])) => None,
+            (Format::Relayed, Some(rest)) if !rest.is_empty() => {
+                let parsed = std::str::from_utf8(rest)
+                    .ok()
+                    .and_then(|s| s.parse::<RelayUrl>().ok());
+                if parsed.is_none() {
+                    tracing::debug!(target: "link", "link: refused — the relay is not a URL");
+                    return None;
+                }
+                parsed
+            }
+            _ => {
+                tracing::debug!(target: "link", ?format, len = bytes.len(), "link: refused — the token is not its format's length");
+                return None;
+            }
+        };
+        let issuer: [u8; 32] = bytes[1..33].try_into().expect("checked above");
+        let Ok(issuer) = PublicKey::from_bytes(&issuer) else {
+            tracing::debug!(target: "link", "link: refused — the issuer's key is no key");
+            return None;
+        };
+        let secret = bytes[33..FIXED].try_into().expect("checked above");
+        Some(Self {
+            issuer,
+            secret,
+            relay,
+        })
+    }
+
+    /// Whether the token spells a word DESIGN §1 keeps from people.
+    pub fn spells_a_kept_word(&self) -> bool {
+        let lower = self.encode().to_lowercase();
+        KEPT_WORDS.iter().any(|w| lower.contains(w))
+    }
+}
 
 /// A link's base: an http(s) address with no fragment of its own.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -46,220 +184,62 @@ impl Origin {
     }
 }
 
-impl Default for Origin {
-    fn default() -> Self {
-        Self(DEFAULT_ORIGIN.to_string())
-    }
-}
-
-/// How the issuer's computer is dialled: an iroh dial string
-/// (`<hex-key>@<relay-or-addr>[,…]`, `svrngs_node::iroh::format_dial_string`)
-/// with at least one target, held parsed.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Dial {
-    addr: EndpointAddr,
-    text: String,
-}
-
-impl Dial {
-    /// An endpoint's dial, or `None` while it has no address yet.
-    pub fn of(addr: &EndpointAddr) -> Option<Self> {
-        let text = format_dial_string(addr)?;
-        Self::parse(&text)
-    }
-
-    pub fn parse(text: &str) -> Option<Self> {
-        match parse_dial_string(text) {
-            Ok(addr) => Some(Self {
-                addr,
-                text: text.trim().to_string(),
-            }),
-            Err(why) => {
-                tracing::debug!(target: "link", dial = text, why, "link: not a dial string");
-                None
-            }
-        }
-    }
-
-    pub fn addr(&self) -> &EndpointAddr {
-        &self.addr
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.text
-    }
-}
-
-/// A parsed link.
+/// A parsed link: its token, and the origin it was printed on when it was
+/// given in the https form.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Link {
-    /// The group it admits to; the group's id is the seed's hash.
-    pub seed: Seed,
-    /// The link's secret half. Its public half is the key the issuer's
-    /// `Invite` names; it is in no record.
-    pub secret: SigningKey,
-    /// The id of the issuer's `Invite` that names the link's key: what a
-    /// joiner's consent signs (`Redemption::sign`), so it rides the link.
-    pub invite: OpId,
-    /// The issuer's computer: the one that redeems this link.
-    pub issuer: Dial,
-    /// The page it opens on: the part left of the `#`, read for nothing
-    /// but this.
-    pub origin: Origin,
+    pub token: Token,
+    pub origin: Option<Origin>,
 }
 
 impl Link {
-    /// The link's public key, as the issuer's `Invite` names it.
-    pub fn key(&self) -> String {
-        actor_of(&self.secret)
+    /// A link in any of its three forms: `svrngs://join/<token>`,
+    /// `<origin>#<token>` — the part left of the `#` read for nothing but
+    /// the origin — or the bare token.
+    pub fn parse(raw: &str) -> Option<Self> {
+        let raw = raw.trim();
+        let (origin, token) = if let Some(token) = raw.strip_prefix(CLIENT_PREFIX) {
+            (None, token)
+        } else if let Some((base, token)) = raw.split_once('#') {
+            (Some(Origin::parse(base)?), token)
+        } else {
+            (None, raw)
+        };
+        let token = Token::decode(token)?;
+        tracing::debug!(target: "link", https = origin.is_some(), "link: parsed");
+        Some(Self { token, origin })
     }
 }
 
-/// Build the https form of a link:
-/// `<origin>#name=…&by=…&founder=…&salt=…&secret=…&invite=…&iroh=…`.
-///
-/// Every field rides the URL FRAGMENT, never the path or query: a browser
-/// does not send the fragment to the server, so the secret stays out of
-/// access logs and `Referer` headers, and only the page's own script reads
-/// it. The origin is kept verbatim — it is the page's address.
-pub fn build_https_link(link: &Link) -> String {
-    let seed = &link.seed;
-    let params = [
-        format!("name={}", percent_encode(seed.name().as_str())),
-        format!("by={}", percent_encode(seed.founder().as_str())),
-        format!("founder={}", seed.founder_actor()),
-        format!("salt={}", seed.salt_hex()),
-        format!("secret={}", hex::encode(link.secret.to_bytes())),
-        format!("invite={}", link.invite),
-        format!("iroh={}", percent_encode(link.issuer.as_str())),
-    ];
-    format!("{}#{}", link.origin.as_str(), params.join("&"))
+/// The client's link to `token`.
+pub fn client_link(token: &Token) -> String {
+    format!("{CLIENT_PREFIX}{}", token.encode())
 }
 
-/// Parse the https form built by [`build_https_link`], from any origin.
-/// Every field is required; one rule covers them all — anywhere but the
-/// fragment is not read, because the parser never looks for a field left
-/// of the `#`. What is left of it is kept whole as the link's origin.
-pub fn parse_https_link(link: &str) -> Option<Link> {
-    let Some((base, fragment)) = link.trim().split_once('#') else {
-        tracing::debug!(target: "link", "link: refused — no fragment");
-        return None;
+/// The https link to `token` on `origin`: the token in the fragment.
+pub fn https_link(origin: &Origin, token: &Token) -> String {
+    format!("{}#{}", origin.as_str(), token.encode())
+}
+
+/// A fresh token for `issuer`, reached through `relay` when given: its
+/// secret drawn again, up to [`DRAWS`] times, while the token spells a
+/// word DESIGN §1 keeps from people.
+pub fn mint(issuer: PublicKey, relay: Option<RelayUrl>) -> Token {
+    let mut token = Token {
+        issuer,
+        secret: [0; SECRET_LEN],
+        relay,
     };
-    let origin = Origin::parse(base)?;
-    let params = parse_query_params(Some(fragment));
-    let field = |name: &str| {
-        let value = params.get(name).map(|v| v.trim()).filter(|v| !v.is_empty());
-        if value.is_none() {
-            tracing::debug!(target: "link", field = name, "link: refused — a field is missing from the fragment");
-        }
-        value
-    };
-    let seed = Seed::parse(
-        field("name")?,
-        field("by")?,
-        field("founder")?,
-        field("salt")?,
-    );
-    let secret: Option<[u8; 32]> = hex::decode(field("secret")?)
-        .ok()
-        .and_then(|b| b.try_into().ok());
-    let invite = OpId::from_hex(field("invite")?);
-    let issuer = Dial::parse(field("iroh")?);
-    match (seed, secret, invite, issuer) {
-        (Some(seed), Some(secret), Some(invite), Some(issuer)) => {
-            tracing::debug!(target: "link", group = %seed.id(), "link: parsed");
-            Some(Link {
-                seed,
-                secret: SigningKey::from_bytes(&secret),
-                invite,
-                issuer,
-                origin,
-            })
-        }
-        _ => {
-            tracing::debug!(target: "link", "link: refused — the seed, the secret, the invite or the dial is malformed");
-            None
+    for draw in 1..=DRAWS {
+        // As identity.rs: getrandom failing is a host with no entropy.
+        getrandom::fill(&mut token.secret).expect("failed to draw a link's secret");
+        if !token.spells_a_kept_word() {
+            tracing::debug!(target: "link", draw, "link: a token spelling no kept word");
+            return token;
         }
     }
-}
-
-fn parse_query_params(query: Option<&str>) -> std::collections::HashMap<String, String> {
-    let mut map = std::collections::HashMap::new();
-    if let Some(q) = query {
-        for pair in q.split('&') {
-            if let Some((key, value)) = pair.split_once('=') {
-                map.insert(percent_decode(key), percent_decode(value));
-            }
-        }
-    }
-    map
-}
-
-/// Best-effort percent-decoder for query values.
-///
-/// Browsers and most clipboard-capable chat clients round-trip URLs
-/// through `URL`/`encodeURIComponent`, which percent-escapes reserved
-/// characters the builder didn't bother to encode — most importantly
-/// the `:` in `relay=100.64.0.2:9742` (becomes `%3A`) and `'` in
-/// mesh names (becomes `%27`). Without this decode the parser treats
-/// `100.64.0.2%3A9742` as a DNS hostname, the join handshake
-/// fails, and the user sees a "no peer at that address" error that
-/// looks like a networking problem but is actually an encoding one.
-///
-/// Scope: handles `%XX` sequences and translates `+` to space (the
-/// traditional HTML form-encoding convention — existing code already
-/// does this for the `name` param). Invalid escapes pass through as
-/// literals rather than erroring, because our input is user-pasted
-/// and a partial-success link is better than a hard reject.
-fn percent_decode(input: &str) -> String {
-    let bytes = input.as_bytes();
-    let mut out: Vec<u8> = Vec::with_capacity(bytes.len());
-    let mut i = 0;
-    while i < bytes.len() {
-        match bytes[i] {
-            b'%' if i + 2 < bytes.len() => {
-                let hi = (bytes[i + 1] as char).to_digit(16);
-                let lo = (bytes[i + 2] as char).to_digit(16);
-                if let (Some(h), Some(l)) = (hi, lo) {
-                    out.push(((h << 4) | l) as u8);
-                    i += 3;
-                    continue;
-                }
-                out.push(b'%');
-                i += 1;
-            }
-            b'+' => {
-                out.push(b' ');
-                i += 1;
-            }
-            b => {
-                out.push(b);
-                i += 1;
-            }
-        }
-    }
-    // Decoded bytes are only valid UTF-8 if the original encoder
-    // produced valid UTF-8 — true for anything `encodeURIComponent`
-    // emits. On malformed input, fall back to lossy conversion so we
-    // still return something the caller can pattern-match.
-    String::from_utf8(out).unwrap_or_else(|e| String::from_utf8_lossy(e.as_bytes()).into_owned())
-}
-
-/// Percent-encode a query value — the inverse of [`percent_decode`].
-/// Encodes everything outside the unreserved set (`ALPHA DIGIT - . _ ~`),
-/// so the iroh dial string's `@ , : /` are escaped on the way out and
-/// `parse_query_params` decodes them back verbatim.
-fn percent_encode(input: &str) -> String {
-    let mut out = String::with_capacity(input.len());
-    for &b in input.as_bytes() {
-        match b {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' => {
-                out.push(b as char)
-            }
-            _ => out.push_str(&format!("%{b:02X}")),
-        }
-    }
-    out
+    tracing::debug!(target: "link", draws = DRAWS, "link: every draw spelled a kept word — the issuer's key or relay spells it; printed anyway");
+    token
 }
 
 #[cfg(test)]

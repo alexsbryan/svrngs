@@ -125,10 +125,15 @@ the second, and the round, which runs at start and every sixty seconds
 peer the register may not name yet).
 
 Redemption is `redeem.rs` (DESIGN §6, U2), new code in the shape of
-commonwealth-rails' mesh join: `RedeemRequest` — the group's id, the
+commonwealth-rails' mesh join. A link carries only the issuer's key and the
+link's secret, so the joiner first asks: `AskRequest`, the link's key and
+its own, signed by the link's key, answered (`Asked`) with the group whose
+`Invite` of this node's names that key, its seed as the command keeps it
+(read through the `SeedText` function `Node::start` is handed, since the
+seed is the command's) and the `Invite`'s id. Then `RedeemRequest` — the group's id, the
 `Invite`'s id, a person's name, the new key, its consent and the link's
 key, signed by the link's secret — posted on `Alpn::Redeem`, which the
-accept loop serves to any dialer with this one route. The issuer's node
+accept loop serves to any dialer with these two routes. The issuer's node
 refuses unless the dialer is the new key, the link's key signed, it holds
 the group, and the `Invite` is its own and names the link's key; then
 `append_if` writes the redeeming `Admit` only when the key does not stand
@@ -168,23 +173,26 @@ spelling of a key, took its callers; then changed: a key file that cannot be rea
 and a fresh key that cannot be written, refuse naming the file, where
 upstream fell back to a key nobody keeps, and the file is `identity`, a word
 a person may read. `link.rs` is mesh-join-vocab's https guest link
-(`deep_link.rs:228-300`, with its percent helpers), changed to carry the
-group's seed, the link's secret key, the id of the `Invite` naming its key
-and its issuer's dial in the fragment,
-on any http(s) origin, `https://svrnme.sh/ring/` by default; the parser
-never reads left of the `#`. `group.rs` is new: a group's `Seed` — its
+(`deep_link.rs:228-300`) and its `sovereign://join/` form (`:421-436`),
+made one short base64url `Token` (u2-8): a `Format` byte, the issuer's key,
+16 secret bytes the link's signing key is derived from, and the issuer's
+relay only from a computer without address lookup. It is printed as the
+client's link, `svrngs://join/<token>`, and as `<origin>#<token>` beside
+it for a group that keeps a page origin; `Link::parse` reads either or the
+bare token. `group.rs` is new: a group's `Seed` — its
 name, the founder's name and key, 16 random bytes — whose BLAKE3 hash is
 the group's id and so its directory; `seed.json` holds it beside the
 record, and `Seed::roster` writes the register's seed, `roster.json`, the
-founder's key bound to the founder's name. `cli.rs` is new, in the shape of
+founder's key bound to the founder's name; `group::answered` believes a
+seed an issuer answers only when it hashes to the group named. `cli.rs` is new, in the shape of
 commonwealth-rails' `cli.rs` and `main.rs`: verbs parsed by hand (`svrngs`,
 `new <name> [--as] [--origin]`, `join <link> [--as]`, `link <group>
 [--origin]`); one svrngs per
 data dir (`$SVRNGS_DIR`, else `~/.svrngs`), held by a lock on
 `<dir>/lock`; `new` and `link` append an `Invite` through the group's door
-that lapses in a day and print the link; `join` redeems a link at its
-issuer's computer (`svrngs_node::redeem`), writes the group's seed only once
-let in, syncs once from the issuer (`Node::sync_with`) and prints "You're in
+that lapses in a day and print the link; `join` asks a link's issuer what
+it is for and redeems it there (`svrngs_node::redeem`), writes the group's
+seed only once let in, and the origin only of an https link, syncs once from the issuer (`Node::sync_with`) and prints "You're in
 <group>"; each verb then runs the node until Ctrl-C. What a verb prints is a
 closed `Said`, and refusals a closed `Refusal`, both in a person's words,
 exit 1 for a refusal and 3 for a precondition absent. `tests/new.rs` runs
