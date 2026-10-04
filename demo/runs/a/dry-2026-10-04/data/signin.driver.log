@@ -1,0 +1,35 @@
+2026-10-04T20:50:40.353Z open http://127.0.0.1:22710/lend/jellyfin/
+2026-10-04T20:50:41.197Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:42.272Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:43.816Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:46.138Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:47.145Z after open: {"hash":"#/login?serverid=d79b98cf938f4720bd52bfc64501422f&url=%2Fhome","login":true,"password":true,"cards":0,"text":"Please sign in User Password Remember Me Sign In Use Quick Connect Forgot Password"}
+2026-10-04T20:50:47.182Z screenshot signin-1-open.png
+2026-10-04T20:50:47.466Z http 401 POST http://127.0.0.1:22710/lend/jellyfin/Sessions/Capabilities/Full
+2026-10-04T20:50:47.466Z console.error Failed to load resource: the server responded with a status of 401 (Unauthorized)
+2026-10-04T20:50:47.467Z http 401 GET http://127.0.0.1:22710/lend/jellyfin/DisplayPreferences/usersettings?userId=3734f3e0bdb243d887b71f988a7aeac0&client=emby
+2026-10-04T20:50:47.467Z console.error Failed to load resource: the server responded with a status of 401 (Unauthorized)
+2026-10-04T20:50:47.468Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket?ApiKey=<browser_token_1>' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:52.549Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket?ApiKey=<browser_token_1>' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:53.276Z after sign-in: {"hash":"#/login?serverid=d79b98cf938f4720bd52bfc64501422f&url=%2Fhome","login":true,"password":true,"cards":0,"text":"Please sign in User Password Remember Me Sign In Use Quick Connect Forgot Password"}
+2026-10-04T20:50:53.308Z screenshot signin-2-signed-in.png
+2026-10-04T20:50:53.309Z localStorage jellyfin_credentials present: true
+2026-10-04T20:50:53.349Z http 401 GET http://127.0.0.1:22710/lend/jellyfin/Users/3734f3e0bdb243d887b71f988a7aeac0
+2026-10-04T20:50:53.349Z console.error Failed to load resource: the server responded with a status of 401 (Unauthorized)
+2026-10-04T20:50:53.349Z console.error failed to get item or current user:  Response
+2026-10-04T20:50:53.349Z http 401 GET http://127.0.0.1:22710/lend/jellyfin/Users/3734f3e0bdb243d887b71f988a7aeac0/Items/8b7c80779b71cff3673bf1b88cdf594f
+2026-10-04T20:50:53.349Z console.error Failed to load resource: the server responded with a status of 401 (Unauthorized)
+2026-10-04T20:50:53.353Z http 401 GET http://127.0.0.1:22710/lend/jellyfin/Items/8b7c80779b71cff3673bf1b88cdf594f?userId=3734f3e0bdb243d887b71f988a7aeac0
+2026-10-04T20:50:53.353Z console.error Failed to load resource: the server responded with a status of 401 (Unauthorized)
+2026-10-04T20:50:53.355Z console.error [ThemeMediaPlayer] failed to load theme media AxiosError: Request failed with status code 401
+    at Pt (http://127.0.0.1:22710/lend/jellyfin/web/node_modules.axios.bundle.js?92243be6e1b950a9de11:2:36
+2026-10-04T20:50:53.355Z http 401 GET http://127.0.0.1:22710/lend/jellyfin/Users/3734f3e0bdb243d887b71f988a7aeac0
+2026-10-04T20:50:53.355Z console.error Failed to load resource: the server responded with a status of 401 (Unauthorized)
+2026-10-04T20:50:53.355Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket?ApiKey=<browser_token_1>' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:53.449Z http 401 GET http://127.0.0.1:22710/lend/jellyfin/System/Endpoint
+2026-10-04T20:50:53.449Z console.error Failed to load resource: the server responded with a status of 401 (Unauthorized)
+2026-10-04T20:50:53.452Z http 401 GET http://127.0.0.1:22710/lend/jellyfin/Playback/BitrateTest?Size=500000
+2026-10-04T20:50:53.452Z console.error Failed to load resource: the server responded with a status of 401 (Unauthorized)
+2026-10-04T20:50:58.333Z details: {"hash":"#/details?id=8b7c80779b71cff3673bf1b88cdf594f&serverId=d79b98cf938f4720bd52bfc64501422f","login":true,"password":true,"cards":0,"text":""}
+2026-10-04T20:50:58.358Z screenshot signin-3-details.png
+2026-10-04T20:50:58.359Z play buttons: 0

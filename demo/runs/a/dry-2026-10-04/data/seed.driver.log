@@ -1,0 +1,27 @@
+2026-10-04T20:50:09.217Z open http://127.0.0.1:22710/lend/jellyfin/
+2026-10-04T20:50:09.697Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket?ApiKey=door' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:09.800Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket?ApiKey=door' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:09.860Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket?ApiKey=door' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:09.977Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket?ApiKey=door' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:10.727Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket?ApiKey=door' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:11.372Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket?ApiKey=door' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:12.209Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket?ApiKey=door' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:13.572Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket?ApiKey=door' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:15.676Z after open: {"hash":"#/home","login":false,"password":false,"cards":4,"text":"Alexs-MacBook-Pro-2 Favorites Movies My Media Movies Recently Added in Movies Test Pattern Three 2026 Test Pattern Two 2026 Test Pattern One 2026"}
+2026-10-04T20:50:15.712Z screenshot seed-1-open.png
+2026-10-04T20:50:15.716Z localStorage jellyfin_credentials present: true
+2026-10-04T20:50:15.779Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket?ApiKey=door' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:15.895Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket?ApiKey=door' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:19.272Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket?ApiKey=door' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:20.739Z details: {"hash":"#/details?id=8b7c80779b71cff3673bf1b88cdf594f&serverId=d79b98cf938f4720bd52bfc64501422f","login":false,"password":false,"cards":2,"text":"Alexs-MacBook-Pro-2 Favorites Movies Test Pattern One 2026 2m Ends at 1:51 PM Video 720p H264 SDR Audio AAC - Mono - Default"}
+2026-10-04T20:50:20.764Z screenshot seed-3-details.png
+2026-10-04T20:50:20.778Z play buttons: 1
+2026-10-04T20:50:21.809Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket?ApiKey=door' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:21.924Z playing: true after 1137 ms
+2026-10-04T20:50:24.277Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket?ApiKey=door' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:29.990Z seek to 60s: playing again true after 65 ms
+2026-10-04T20:50:31.723Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket?ApiKey=door' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:33.115Z seek to 20s: playing again true after 123 ms
+2026-10-04T20:50:36.123Z seek to 75s: playing again true after 7 ms
+2026-10-04T20:50:39.127Z video: {"src":"http://127.0.0.1:22710/lend/jellyfin/Videos/8b7c80779b71cff3673bf1b88cdf594f/stream.mp4?Static=true&mediaSourceId=8b7c80779b71cff3673bf1b88cdf594f&deviceId=TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFj","t":77.975881,"paused":false,"w":1280,"h":720,"rs":4}
+2026-10-04T20:50:39.169Z screenshot seed-4-playing.png

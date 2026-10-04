@@ -1,0 +1,17 @@
+{
+ "door_users_me": {
+  "before_signin": "200",
+  "after_signin": "401",
+  "after_sam_declares_again": "200"
+ },
+ "api_key_lend": {
+  "users_me": "400",
+  "auth_keys_bodies_holding_the_key": 1,
+  "member_made_a_user": true
+ },
+ "websocket_upgrade": {
+  "through_the_door": "404",
+  "direct_with_the_lend_secret": "101"
+ },
+ "users_unchanged": true
+}

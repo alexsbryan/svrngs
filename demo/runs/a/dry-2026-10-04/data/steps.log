@@ -1,0 +1,9 @@
+20:49:48 jellyfin up: {"LocalAddress":"http://127.0.0.1:8096","ServerName":"Alexs-MacBook-Pro-2","Version":"12.0.0","ProductName":"Jellyfin Server","OperatingSystem":"","Id":"d79b98cf938f4720bd52bfc64501422f","StartupWizardCompleted":false}
+20:49:53 films: 3; users: ["sam", "viewer"]
+20:49:56 sam: Made House, with you as Sam.
+20:49:57 alex: You're in House, as Alex.
+20:49:57 sam shared 8096: 1 lend line(s)
+20:50:01 alex's local address: http://127.0.0.1:22710/lend/jellyfin/
+20:50:58 door /Users/Me: before sign-in 200, after 401, after Sam declares again 200
+20:50:58 api key lend: /Users/Me 400; /Auth/Keys bodies holding the key 1; a member made a user: yes
+20:51:01 websocket upgrade: through the door 404, on Sam's computer directly 101

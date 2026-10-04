@@ -1,0 +1,144 @@
+method	status	body_bytes	range	authorization_sent	path
+GET	302	0			/lend/jellyfin/
+GET	200	5441			/lend/jellyfin/web/
+GET	200	47658			/lend/jellyfin/web/runtime.bundle.js?92243be6e1b950a9de11
+GET	200	676337			/lend/jellyfin/web/node_modules.%40jellyfin.sdk.bundle.js?92243be6e1b950a9de11
+GET	200	741590			/lend/jellyfin/web/node_modules.%40mui.material.bundle.js?92243be6e1b950a9de11
+GET	200	31244			/lend/jellyfin/web/node_modules.%40mui.icons-material.bundle.js?92243be6e1b950a9de11
+GET	200	89776			/lend/jellyfin/web/node_modules.%40mui.system.bundle.js?92243be6e1b950a9de11
+GET	200	22107			/lend/jellyfin/web/node_modules.%40mui.utils.bundle.js?92243be6e1b950a9de11
+GET	200	24594			/lend/jellyfin/web/node_modules.lodash-es.bundle.js?92243be6e1b950a9de11
+GET	200	104654			/lend/jellyfin/web/node_modules.%40tanstack.query-core.bundle.js?92243be6e1b950a9de11
+GET	200	7631			/lend/jellyfin/web/node_modules.%40tanstack.react-query.bundle.js?92243be6e1b950a9de11
+GET	200	79177			/lend/jellyfin/web/node_modules.date-fns.esm.bundle.js?92243be6e1b950a9de11
+GET	200	9107			/lend/jellyfin/web/node_modules.react-transition-group.bundle.js?92243be6e1b950a9de11
+GET	200	220397			/lend/jellyfin/web/node_modules.core-js.bundle.js?92243be6e1b950a9de11
+GET	200	19490			/lend/jellyfin/web/node_modules.%40popperjs.core.bundle.js?92243be6e1b950a9de11
+GET	200	86598			/lend/jellyfin/web/node_modules.axios.bundle.js?92243be6e1b950a9de11
+GET	200	128970			/lend/jellyfin/web/node_modules.react-dom.bundle.js?92243be6e1b950a9de11
+GET	200	87294			/lend/jellyfin/web/node_modules.jquery.bundle.js?92243be6e1b950a9de11
+GET	200	39702			/lend/jellyfin/web/node_modules.webcomponents.js.bundle.js?92243be6e1b950a9de11
+GET	200	7677			/lend/jellyfin/web/node_modules.resize-observer-polyfill.bundle.js?92243be6e1b950a9de11
+GET	200	6732			/lend/jellyfin/web/node_modules.regenerator-runtime.bundle.js?92243be6e1b950a9de11
+GET	200	88025			/lend/jellyfin/web/node_modules.jellyfin-apiclient.bundle.js?92243be6e1b950a9de11
+GET	200	9046			/lend/jellyfin/web/node_modules.intersection-observer.bundle.js?92243be6e1b950a9de11
+GET	200	205			/lend/jellyfin/web/node_modules.history.bundle.js?92243be6e1b950a9de11
+GET	200	22154			/lend/jellyfin/web/node_modules.dompurify.bundle.js?92243be6e1b950a9de11
+GET	200	14787			/lend/jellyfin/web/node_modules.react-router.bundle.js?92243be6e1b950a9de11
+GET	200	16497			/lend/jellyfin/web/node_modules.react-router-dom.bundle.js?92243be6e1b950a9de11
+GET	200	67081			/lend/jellyfin/web/node_modules.%40remix-run.router.bundle.js?92243be6e1b950a9de11
+GET	200	8176			/lend/jellyfin/web/node_modules.abortcontroller-polyfill.bundle.js?92243be6e1b950a9de11
+GET	200	75442			/lend/jellyfin/web/1133.bundle.js?92243be6e1b950a9de11
+GET	200	519397			/lend/jellyfin/web/main.jellyfin.bundle.js?92243be6e1b950a9de11
+GET	200	762			/lend/jellyfin/web/serviceworker.js?92243be6e1b950a9de11
+GET	200	105273			/lend/jellyfin/web/1133.03edf3bb7ee048ee10be.css?92243be6e1b950a9de11
+GET	200	73012			/lend/jellyfin/web/main.jellyfin.62ea10d695d4592fccae.css?92243be6e1b950a9de11
+GET	200	83704			/lend/jellyfin/web/banner-light.b113d4d1c6c07fcb73f0.png
+GET	200	9335			/lend/jellyfin/web/59258.69a271cacc58351d3b48.chunk.js
+GET	200	1089			/lend/jellyfin/web/config.json
+GET	200	5867			/lend/jellyfin/web/node_modules.usehooks-ts.23c13898b44dada8d387.chunk.js
+GET	200	42543			/lend/jellyfin/web/8463.5024adce4ba13b0c6c59.chunk.js
+GET	200	534			/lend/jellyfin/web/78701.1521101b7f45094b7ce3.css
+GET	200	78546			/lend/jellyfin/web/78701.d06a72f873e03eaaa404.chunk.js
+GET	200	1089			/lend/jellyfin/web/config.json
+GET	200	1089			/lend/jellyfin/web/config.json
+GET	200	217			/lend/jellyfin/System/Info/Public
+GET	200	114031			/lend/jellyfin/web/en-us-json.45f09214281c189457b1.chunk.js
+GET	200	518			/lend/jellyfin/web/25348.10043daf2671fc8859af.css
+GET	200	103			/lend/jellyfin/web/25348.a5fe264650ffc6a300ef.chunk.js
+GET	200	1020073			/lend/jellyfin/web/73560.49e7c92878ed0bb4fad6.css
+GET	200	103			/lend/jellyfin/web/73560.06bbc42902b173550f1b.chunk.js
+GET	200	1659			/lend/jellyfin/web/playAccessValidation-plugin.4bb58f8d0bccba4cc775.chunk.js
+GET	200	2098			/lend/jellyfin/web/experimentalWarnings-plugin.6570756915b50aa277bc.chunk.js
+GET	200	11301			/lend/jellyfin/web/htmlAudioPlayer-plugin.561e4ddec4927f9c3017.chunk.js
+GET	200	46290			/lend/jellyfin/web/htmlVideoPlayer-plugin.75e5631714895cbf4ff3.chunk.js
+GET	200	1778			/lend/jellyfin/web/photoPlayer-plugin.6ab734fd7db4c18bddd6.chunk.js
+GET	200	1403			/lend/jellyfin/web/comicsPlayer-plugin.376225a6806c59455f1c.css
+GET	200	35225			/lend/jellyfin/web/comicsPlayer-plugin.c358c35860fc41e92b05.chunk.js
+GET	200	1961			/lend/jellyfin/web/bookPlayer-plugin.5bd6d63bbfdacc895e23.css
+GET	200	23033			/lend/jellyfin/web/bookPlayer-plugin.c83d5c43401890557a8f.chunk.js
+GET	200	6277			/lend/jellyfin/web/youtubePlayer-plugin.fa67b1ec7d5bcf80338c.chunk.js
+GET	200	1928			/lend/jellyfin/web/backdropScreensaver-plugin.30324a9a65cdda6a4623.chunk.js
+GET	200	1207			/lend/jellyfin/web/pdfPlayer-plugin.812f879bb0acfa8ae50f.css
+GET	200	14953			/lend/jellyfin/web/pdfPlayer-plugin.0e5794750bc919e9fcd7.chunk.js
+GET	200	4056			/lend/jellyfin/web/logoScreensaver-plugin.897823f6a7747f6cf262.chunk.js
+GET	200	13877			/lend/jellyfin/web/sessionPlayer-plugin.785a05db0609955aefb8.chunk.js
+GET	200	19633			/lend/jellyfin/web/chromecastPlayer-plugin.22f3e0fb29fa08af7bd7.chunk.js
+GET	200	3840			/lend/jellyfin/web/stillWatching-plugin.460e0919aaaffdf99811.chunk.js
+GET	200	17219			/lend/jellyfin/web/syncPlay-core-PlaybackCore.696ea54abe46142ab186.chunk.js
+GET	200	9526			/lend/jellyfin/web/19907.48d4af89f0a3b0cee021.chunk.js
+GET	200	22188			/lend/jellyfin/web/syncPlay-core-Manager.b0d0a1522cc038dfa8b2.chunk.js
+GET	200	16737			/lend/jellyfin/web/syncPlay-ui-players-NoActivePlayer.03a6368ee2ea0e2c68da.chunk.js
+GET	200	8160			/lend/jellyfin/web/syncPlay-plugin.3080c44da0c3f4cb9f9c.chunk.js
+GET	200	4272			https://www.gstatic.com/cv/js/sender/v1/cast_sender.js
+GET	200	19967			/lend/jellyfin/web/12011.59d68def33f006b4d5b5.chunk.js
+GET	200	15594			/lend/jellyfin/web/55802.52fbf988646b0db27075.chunk.js
+GET	200	9140			/lend/jellyfin/web/57949.890260722af4eefd0e71.chunk.js
+GET	200	10662			/lend/jellyfin/web/14245.f517756c675c2040ffba.css
+GET	200	21459			/lend/jellyfin/web/14245.d5294b1bf572bcb9edd7.chunk.js
+GET	200	730			/lend/jellyfin/web/28567.6db9992959ca2eff26e4.chunk.js
+GET	200	533			/lend/jellyfin/web/91737.46d2c499ae1164063e43.css
+GET	200	1592			/lend/jellyfin/web/91737.a37aaa8ddbabd2fe49c4.chunk.js
+GET	200	913			/lend/jellyfin/web/22424.f9d25ef5836602c49805.chunk.js
+GET	200	5247			/lend/jellyfin/web/44184.df7109074c49b4219abf.chunk.js
+GET	200	762			/lend/jellyfin/web/serviceworker.js
+GET	200	13919			/lend/jellyfin/web/themes/dark/theme.css
+GET	200	13120			/lend/jellyfin/web/noto-sans-latin-400-normal.a368ce60930bda733d39.woff2
+GET	200	15413			/lend/jellyfin/web/45568.f61f61377609c9922e8a.chunk.js
+GET	200	29212			/lend/jellyfin/web/73233.98e0cdb3f30f44fc6339.chunk.js
+GET	200	4511			/lend/jellyfin/web/32721.bfde69083a6ae513ba97.css
+GET	200	7127			/lend/jellyfin/web/32721.fad93419ec89a0acfbfd.chunk.js
+GET	200	4511			/lend/jellyfin/web/68603.bfde69083a6ae513ba97.css
+GET	200	2958			/lend/jellyfin/web/68603.6c4daa3c063b03183af4.chunk.js
+GET	200	8822			/lend/jellyfin/web/4113.d72f956477d42e4f9e3f.chunk.js
+GET	200	27086			/lend/jellyfin/web/11851.ed201579e96d780f36b3.chunk.js
+GET	200	5686			/lend/jellyfin/web/home.193c6fa7a64e52078d35.css
+GET	200	5281			/lend/jellyfin/web/home.6f5c86d430f38b204798.chunk.js
+GET	200	1089			/lend/jellyfin/web/config.json
+GET	200	23534			/lend/jellyfin/web/icon-transparent.baba78f2a106d9baee83.png
+GET	200	73340			/lend/jellyfin/web/blurhash.worker.bundle.js
+GET	200	217		MediaBrowser Client="Jellyfin%20Web", Device="Chrome", DeviceId="TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTUxLjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc5MTE0NzA0MDY5Ng11", Version="12.0.0"	/lend/jellyfin/System/Info/Public
+GET	200	1434			/lend/jellyfin/web/69881.85d5c8ac3936b68e702e.css
+GET	200	7917			/lend/jellyfin/web/69881.b4b69df4c7e59204a533.chunk.js
+GET	200	417			/lend/jellyfin/web/76542.033e6959b8ca2bb863d3.css
+GET	200	6588			/lend/jellyfin/web/76542.4486f56001630eca65e3.chunk.js
+GET	200	47163			http://www.gstatic.com/eureka/clank/151/cast_sender.js
+GET	200	6830			/lend/jellyfin/web/favicon.bc8d51405ec040305a87.ico
+GET	200	217			/lend/jellyfin/System/Info/Public
+GET	200	217			/lend/jellyfin/System/Info/Public
+GET	200	49818			/lend/jellyfin/web/node_modules.markdown-it.577ee674061f4f85a169.chunk.js
+GET	200	34058			/lend/jellyfin/web/node_modules.entities.de723355ea92068aa757.chunk.js
+GET	200	10028			/lend/jellyfin/web/node_modules.linkify-it.266387235d0d805c1962.chunk.js
+GET	200	14288			/lend/jellyfin/web/70712.9c36c0bc25d212f7dfd1.chunk.js
+GET	200	4909			/lend/jellyfin/web/session-login.872eaba65c6e2216aba6.css
+GET	200	18708			/lend/jellyfin/web/session-login.cb3c7c6a0f3396901580.chunk.js
+GET	200	2145			/lend/jellyfin/web/session-login-index-html.748f2ea433c30fd200a8.chunk.js
+GET	200	6830			/lend/jellyfin/web/favicon.bc8d51405ec040305a87.ico
+GET	200	13464			/lend/jellyfin/web/noto-sans-latin-700-normal.0ff35ccfee89234e6883.woff2
+GET	200	590			/lend/jellyfin/web/47472.ead193e1e4096120377c.css
+GET	200	6318			/lend/jellyfin/web/47472.73de9f0f9c4dd7c901a4.chunk.js
+GET	200	4		MediaBrowser Client="Jellyfin%20Web", Device="Chrome", DeviceId="TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTUxLjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc5MTE0NzA0MDY5Ng11", Version="12.0.0"	/lend/jellyfin/QuickConnect/Enabled
+GET	200	2			/lend/jellyfin/users/public
+GET	200	29		MediaBrowser Client="Jellyfin%20Web", Device="Chrome", DeviceId="TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTUxLjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc5MTE0NzA0MDY5Ng11", Version="12.0.0"	/lend/jellyfin/Branding/Configuration
+GET	200	29		MediaBrowser Client="Jellyfin%20Web", Device="Chrome", DeviceId="TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTUxLjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc5MTE0NzA0MDY5Ng11", Version="12.0.0", Token="null"	/lend/jellyfin/Branding/Configuration
+GET	200	125116			/lend/jellyfin/web/MaterialIcons-Regular.2d8017489da689caedc1.woff2
+POST	200	3898		MediaBrowser Client="Jellyfin%20Web", Device="Chrome", DeviceId="TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTUxLjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc5MTE0NzA0MDY5Ng11", Version="12.0.0"	/lend/jellyfin/Users/authenticatebyname
+POST	401	0		MediaBrowser Client="Jellyfin%20Web", Device="Chrome", DeviceId="TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTUxLjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc5MTE0NzA0MDY5Ng11", Version="12.0.0", Token="<browser_token_1>"	/lend/jellyfin/Sessions/Capabilities/Full
+GET	401	0		MediaBrowser Client="Jellyfin%20Web", Device="Chrome", DeviceId="TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTUxLjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc5MTE0NzA0MDY5Ng11", Version="12.0.0", Token="<browser_token_1>"	/lend/jellyfin/DisplayPreferences/usersettings?userId=3734f3e0bdb243d887b71f988a7aeac0&client=emby
+GET	200	36617			/lend/jellyfin/web/node_modules.sortablejs.da8670ce4017345f437e.chunk.js
+GET	200	38703			/lend/jellyfin/web/24468.66747b7d9d4daeea7960.chunk.js
+GET	200	25141			/lend/jellyfin/web/6940.f9e479afc2ca4df4354f.chunk.js
+GET	200	8777			/lend/jellyfin/web/itemDetails.c8609767f06ba1b9d6a9.css
+GET	200	59421			/lend/jellyfin/web/itemDetails.247c5672436c37e44fe6.chunk.js
+GET	200	11518			/lend/jellyfin/web/itemDetails-index-html.fc20dbd21fff214b6611.chunk.js
+GET	200	6830			/lend/jellyfin/web/favicon.bc8d51405ec040305a87.ico
+GET	200	899			/lend/jellyfin/web/35308.9bf57cfbd84387e3793e.css
+GET	200	8398			/lend/jellyfin/web/35308.0b1567d9abe0bdae4331.chunk.js
+GET	200	413			/lend/jellyfin/web/49275.667e823ce6c9b896cd5b.css
+GET	200	3841			/lend/jellyfin/web/49275.fcf2b77489e84c80e220.chunk.js
+GET	401	0		MediaBrowser Client="Jellyfin%20Web", Device="Chrome", DeviceId="TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTUxLjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc5MTE0NzA0MDY5Ng11", Version="12.0.0", Token="<browser_token_1>"	/lend/jellyfin/Users/3734f3e0bdb243d887b71f988a7aeac0/Items/8b7c80779b71cff3673bf1b88cdf594f
+GET	401	0		MediaBrowser Client="Jellyfin%20Web", Device="Chrome", DeviceId="TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTUxLjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc5MTE0NzA0MDY5Ng11", Version="12.0.0", Token="<browser_token_1>"	/lend/jellyfin/Users/3734f3e0bdb243d887b71f988a7aeac0
+GET	401	0		MediaBrowser Client="Jellyfin%20Web", Device="Chrome", DeviceId="TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTUxLjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc5MTE0NzA0MDY5Ng11", Version="12.0.0", Token="<browser_token_1>"	/lend/jellyfin/Users/3734f3e0bdb243d887b71f988a7aeac0
+GET	401	0		MediaBrowser Client="Jellyfin%20Web", Device="Chrome", DeviceId="TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTUxLjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc5MTE0NzA0MDY5Ng11", Version="12.0.0", Token="<browser_token_1>"	/lend/jellyfin/Items/8b7c80779b71cff3673bf1b88cdf594f?userId=3734f3e0bdb243d887b71f988a7aeac0
+GET	401	0		MediaBrowser Client="Jellyfin%20Web", Device="Chrome", DeviceId="TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTUxLjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc5MTE0NzA0MDY5Ng11", Version="12.0.0", Token="<browser_token_1>"	/lend/jellyfin/System/Endpoint
+GET	401	0		MediaBrowser Client="Jellyfin%20Web", Device="Chrome", DeviceId="TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTUxLjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc5MTE0NzA0MDY5Ng11", Version="12.0.0", Token="<browser_token_1>"	/lend/jellyfin/Playback/BitrateTest?Size=500000

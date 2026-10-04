@@ -1,0 +1,8 @@
+2026-10-04T20:50:02.270Z open http://127.0.0.1:22710/lend/jellyfin/
+2026-10-04T20:50:02.771Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:03.861Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:05.433Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:07.761Z console.error WebSocket connection to 'ws://127.0.0.1:22710/lend/jellyfin/socket' failed: Error during WebSocket handshake: Unexpected response code: 404
+2026-10-04T20:50:08.502Z after open: {"hash":"#/login?serverid=d79b98cf938f4720bd52bfc64501422f&url=%2Fhome","login":true,"password":true,"cards":0,"text":"Please sign in User Password Remember Me Sign In Use Quick Connect Forgot Password"}
+2026-10-04T20:50:08.543Z screenshot none-1-open.png
+2026-10-04T20:50:08.544Z localStorage jellyfin_credentials present: true

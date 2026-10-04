@@ -1,0 +1,75 @@
+{
+ "secrets_searched": [
+  "api_key_revoked",
+  "browser_token_1",
+  "lend_token_1",
+  "lend_token_2",
+  "sam_admin_token",
+  "sam_password",
+  "viewer_password"
+ ],
+ "modes": {
+  "none": {
+   "requests": 124,
+   "body_bytes_received": 5749869,
+   "received": {
+    "response_headers": {},
+    "response_bodies": {}
+   },
+   "sent": {
+    "request_headers": {},
+    "request_bodies": {}
+   },
+   "jellyfin_tokens_handed_to_the_browser": 0
+  },
+  "seed": {
+   "requests": 187,
+   "body_bytes_received": 14927115,
+   "received": {
+    "response_headers": {},
+    "response_bodies": {}
+   },
+   "sent": {
+    "request_headers": {},
+    "request_bodies": {}
+   },
+   "jellyfin_tokens_handed_to_the_browser": 0
+  },
+  "signin": {
+   "requests": 143,
+   "body_bytes_received": 5947495,
+   "received": {
+    "response_headers": {},
+    "response_bodies": {
+     "browser_token_1": 1
+    }
+   },
+   "sent": {
+    "request_headers": {
+     "browser_token_1": 8
+    },
+    "request_bodies": {
+     "viewer_password": 1
+    }
+   },
+   "jellyfin_tokens_handed_to_the_browser": 1
+  }
+ },
+ "logs": {
+  "alex/join.log": {},
+  "alex/join.out": {},
+  "alex/run.log": {},
+  "alex/run.out": {},
+  "sam/new.out": {},
+  "sam/run.log": {},
+  "sam/share.out": {}
+ },
+ "jellyfin_log_on_sams_computer": {
+  "lend_token_1": 1,
+  "browser_token_1": 1
+ },
+ "jellyfin_logged_out_in_order": [
+  "lend_token_1",
+  "browser_token_1"
+ ]
+}

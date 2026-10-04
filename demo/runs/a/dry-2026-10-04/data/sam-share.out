@@ -1,0 +1,12 @@
+If jellyfin takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): 
+Lent jellyfin (port 8096) to everyone in your groups, up to 3 people at once.
+Each is told their share of the 20 Mbit/s upload you stated.
+Its password stays on this computer; nobody you lend it to receives it.
+svrngs is running here already, so they can open it now.
+`svrngs unshare jellyfin` stops lending it.
+If jellyfin takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): 
+Lent jellyfin (port 8096) to everyone in your groups, up to 3 people at once.
+Each is told their share of the 20 Mbit/s upload you stated.
+Its password stays on this computer; nobody you lend it to receives it.
+svrngs is running here already, so they can open it now.
+`svrngs unshare jellyfin` stops lending it.
