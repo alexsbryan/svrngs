@@ -185,7 +185,8 @@ serves Films and breaks one fails the build.
 **Lean, and kept lean.** `svrngs-core` stays under 2,500 lines of code and the
 repository under 12,000, tests and `apps/` apart (`scripts/lean_check.py`);
 a raise is the operator's, with the reason in the commit. `svrngs-core` stands
-at 2,297, so the rules of §6 will ask for one. `ARCHITECTURE.md` maps what
+at 2,293, 798 of them tests written inside its source files, which U2 moves
+out (U2's inventory); whether the rules of §6 then ask for a raise is measured, not assumed. `ARCHITECTURE.md` maps what
 exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file
@@ -215,23 +216,43 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   `Admit` and `Remove` acts as `membership` folds them — never a mesh or a
   list a door keeps. Until U2's link carries the seed, it is the founder's key
   alone, in the journal's `roster.json`.
-- **A grow-only set, linked like git** (U2, before any key from outside the
-  operator's own computers). Each act names its author's previous
-  act; a copy holds an act only with its parent, so copies converge by union.
-  Two acts on one parent are a fork, and forks void nothing.
+- **A grow-only set, linked like git.** Each act names its author's previous
+  act (U2, inside the id and the signature, so the wire changes once, before
+  Demo A writes a journal anyone keeps); a copy holds an act only with its
+  parent, so copies converge by union. Two acts on one parent are a fork, and
+  forks void nothing (U7; operator, 2026-10-04, moved from U2). Today two acts
+  on one seq exclude both (`crates/svrngs-core/src/admit.rs:467-492`), so
+  whoever signed an `Admit` can take it back on every copy by signing a second
+  act at its seq: a removal nobody sequenced. Until U7 that grants nothing a
+  member lacks, since any standing key's `Remove` counts
+  (`membership.rs:153-156`), so it lands with the removal it protects, and
+  with the sync that carries both branches of a fork.
 - **Removal has one decider** (U7). Anyone may ask to remove anyone; the group's
   keeper — one person's key, handed on by an act — sequences each request. A
   removed key cannot remove. There is no recovery inside a group.
 - **Leaving is cheap.** A group's whole state is a directory every member's
   computer holds. A group that goes wrong refounds from any copy, within
   hours, without whoever it leaves out (operator: "with dotfile elegance").
-- **An invite admits one person once** (U2): a one-time key in the link;
-  redeeming it writes one `Admit`, co-signed by the new key.
-- **Ids cover everything signed** (U2): the id hashes the actor, seq, previous
-  act, timestamp and body, and the signature is over the id. Today the
-  timestamp is outside the id, so one act can be copied with two timestamps and
-  folded in two orders, and the previous act is outside the signature, so a
-  relaying node can rewrite it. A removal names the removed key's acts by hash,
+- **A link admits each person once** (U2; operator, 2026-10-04, over one
+  person per link, which neither demo nor a chat door could use: Sam sends one
+  link to three friends, a door posts one per channel). A link carries a key
+  that its issuer's `Invite` act names, with the time it lapses. Redeeming it
+  writes one `Admit` for one new key, signed by the issuer and co-signed by the
+  new key. A link admits everyone who opens it until it lapses or its issuer
+  closes it, and only the issuer's node redeems it (operator, 2026-10-04), so
+  one node decides every use, and the fold counts a redeeming `Admit` only
+  under an `Invite` that still counts.
+- **Ids cover everything signed** (U2): the id is the whole hash of the
+  namespace, actor, seq, previous act, timestamp and body, and the signature
+  is over the id. (Corrected 2026-10-04: this said the timestamp is outside
+  the id and the previous act outside the signature. The timestamp is inside
+  both, `crates/svrngs-core/src/op.rs:124` and `sig.rs:83`, and no act names a
+  previous one yet.) What is wrong today: the id hashes the signed line,
+  signature included (`sig.rs:33-39`), and keeps 64 bits of it (`op.rs:130`),
+  a prefix `hash.rs:88` says is "never an identity", yet a peer's act is
+  skipped as already held by that id (`crates/svrngs-node/src/journal.rs:326`).
+  Two acts one member grinds to share a prefix, about 2^32 hashes, are held
+  one or the other by whichever a copy saw first, and copies diverge. A removal names the removed key's acts by hash,
   never by position or time (U7): today the fold ignores `through_seq` and
   cuts the key at the `Remove`'s place in the order
   (`crates/svrngs-core/src/membership.rs:153`), so a backdated act slips under
@@ -239,6 +260,9 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   gave its author standing before that `Admit` when the author's key sorts
   first (`membership.rs:124`), so the act does not count; U1's test of a new
   member's write waits out the second (`crates/svrngs-node/tests/group_not_mesh.rs`).
+  U2 takes upstream's measured fix: the door signs strictly after everything
+  its journal holds (`commonwealth/crates/commonwealth-rail/examples/stage_member_act.rs:123-135`
+  at `e1a43bcd2`), where it signs at the wall clock (`journal.rs:258`).
 - **A signing key per person per group**, so a cut in one group touches no
   other; an endpoint key per device.
 
@@ -333,10 +357,40 @@ does, and runs two nodes in one process with no relay — the shape of upstream'
 `commonwealth/crates/commonwealth-rails/tests/ring_round.rs`, which is built on
 the mesh daemon and so is rewritten, not forked.
 
+**U2's inventory.** What upstream at `e1a43bcd2` has for making a group and
+joining one, and what each becomes. Upstream has no ring invite: nothing mints
+a link for a ring, counts its uses or writes an `Admit` when someone joins.
+What it has is a mesh invite, reusable until it lapses, and a guest grant,
+reusable by design.
+
+| Upstream | What it does there | Becomes |
+|---|---|---|
+| `mesh-join-vocab/src/deep_link.rs`: `build_https_guest_link` and `parse_https_guest_link` (`:244-300`), with `percent_encode` and `parse_query_params` | the-link's https form: every secret in the fragment, a parser that never reads left of the `#`, the dial as `iroh=` | forked with edits: the fragment carries the group's seed, the link's key and its issuer's dial in place of a bearer token. The base is `https://svrnme.sh/ring/` (operator, 2026-10-04; upstream pins it at `sovereign/crates/sovereign-contracts/src/guest_pages.rs:270`), and it never sees the fragment. The `sovereign://` forms and the https form with its key in the path (`:396-413`) stay behind: a chat does not make a custom scheme tappable, and a host reads a path |
+| `commonwealth/crates/commonwealth-rails/src/found.rs:46-114`, `join.rs:116-229`, `internal.rs:222-295`; `commonwealth-discovery/src/membership.rs:12-75` | the mesh invite: a 48-bit key, reusable until a 24-hour lapse (`membership.rs:53`), only its hash kept, in `mesh.json` outside any record. The joiner dials the founder by key and posts `/internal/join` with a proof that signs neither the key nor the mesh (`commonwealth-transport/src/identity.rs:130-141`); the founder checks and persists before answering | the handshake's shape forked: the joiner dials the issuer by key and proves it holds both the link's key and its own, over the group and the request; the issuer persists before answering. What it writes is an `Admit`, and every use of a link is in the record: the `Invite`, its lapse, its closing. The lapse stays upstream's day. The mesh snapshot, `MemberRecord` and `node_id` stay behind |
+| the acceptor U1 built (`crates/svrngs-node/src/node.rs`, `admit_dialer`) | closes every dialer standing in no group the node holds | kept for members. Redemption is served on a second ALPN, the one a key in no register may speak, with one route; `alpn.rs` becomes the enum it promised |
+| `sovereign-grants`' guest grant (`guest_grant.rs`, `guest_session.rs`) | one QR code serves a room; its state is a map in memory | not forked: its state is lost on a restart. Its shape, one link for a room, is what U2 keeps, in the record |
+| `commonwealth-transport/src/identity.rs:26-126` | the node key: a 32-byte seed at `<data_dir>/node_key`, written through a temporary file and a rename, mode 0600; an I/O error falls back to a key nobody keeps | forked with edits as the command's device key. An unreadable key refuses: a computer never silently becomes someone new (ARCH 6). The mesh proof and dial-info signing (`:128-184`) stay behind |
+| `commonwealth-rails/src/cli.rs` and `main.rs` | four verbs, parsed by hand, no framework; exit codes 0, 1 and 3; a tokio runtime built by hand | the shape of `crates/svrngs`: `new <name>`, `join <link>`, `link <group>`, and the bare command, which runs the node for every group the computer holds. No parser dependency |
+| `commonwealth/crates/commonwealth-rail/examples/stage_member_act.rs:94-157` | an `Admit` signed by a member, timed strictly after everything held | its signing steps are the redemption's write; its timing rule moves into the door (§6) |
+| `sovereign/crates/sovereign-cli-mesh/src/ring_cmd/mod.rs:356-470`, `ring roster add` | joining a ring: two people copy a hex key by hand | replaced by the link; nothing forked |
+| svrngs's own `valid_namespace` (`crates/svrngs-node/src/lib.rs:43-50`) | a group's id is a name the caller types, so two groups called House on one node collide | a group's id is the hash of its seed — the founder's key, the group's name and random bytes drawn at `new` — so the seed in a link proves the id. The name is what a person reads |
+
+Four facts follow. *Only the issuer redeems:* a link works while its
+issuer's computer is reachable; Sam's always-on computer is, in both demos,
+and any member redeeming waits in §9. *A new link closes the old one:* an
+issuer has one open link per group, and minting another voids the last with a
+`Correct`, so a leaked link is closed by sending a new one, with no verb of its
+own. *No person's key seals yet:* `Admit.key` signs and dials, and
+`svrngs-core` carries no encryption at all, so the key the Tap canary seals to
+arrives with Tap, after U3. *A move is not a raise:* `scripts/lean_check.py`
+counts the tests written inside `svrngs-core`'s source files, 798 of its 2,293
+lines, though §5 sets tests apart; U2 moves them beside the files they test
+before its rules land, and a raise stays the operator's.
+
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
 | U1 a group is not a mesh | ring sync, its route and the dial-by-key tunnel forked into `svrngs-node`, the node's router served on each accepted stream; the register decides who may connect and who is synced, where upstream asked the mesh (`commonwealth/crates/commonwealth-rails/src/` at `e1a43bcd2`: `acceptor.rs:47-61`, `ring_sync/journal.rs:153-164`, the default roster at `lib.rs:404`) | a node in the group but no mesh syncs; a node outside the group is refused |
-| U2 join by link | `svrngs new <name>` and `svrngs join <link>` on a computer; redeeming writes the `Admit`; the link carries the group's seed; each person's public key in the register; acts linked by their previous act, ids over everything signed (§6) | one redemption admits one person to one group; a reused link is refused |
+| U2 join by link | `svrngs new <name>`, `svrngs join <link>` and `svrngs link <group>` on a computer, and `svrngs` alone running the node; the link carries the group's seed, its key and its issuer's dial in the fragment; redeeming at the issuer's node writes one `Admit`, co-signed by the new key; ids over everything signed, the previous act among it; the door signing after everything it holds (§6) | three people open one link and each is admitted once; opening it again admits nobody twice; a lapsed or closed link admits no one; a dialer without the link's key is closed with no answer; nothing the command prints uses a word §1 keeps from people |
 | U3 lend a service | the member door: a route that proxies to a lent service, the verified person set from the connection; `svrngs share <port>` with its lend declaration; streaming and byte ranges through the door; each request's share of the lender's upload; the people-at-once limit; the loopback record API (the rail routes and the live lane, forked); the list of what members lend | the app sees the verified person; a header the client typed is stripped; the lender's secret appears in no byte a member receives; with three streams, each is told a third of the measured upload, and a fourth person is refused with a reason |
 
 **Demo A — Sam's films, three homes at once** (after U3). Sam lends Jellyfin
@@ -363,11 +417,13 @@ three minutes, unassisted.
 exists, each a small app in `apps/` using only §3:
 - **Expenses** (after U3) — no server, all state in the record: two nodes,
   everyone writes, a correction voids, and both fold to the same balances.
-- **Tap** (after U2) — private inputs and a ring born from a ring: two groups
+- **Tap** (after U3) — private inputs and a ring born from a ring: two groups
   on one node; an app starts a group of two from inside a group; it seals its
-  own payloads to members' public keys.
+  own payloads to members' public keys, which the register gains with it. (It
+  said "after U2" until 2026-10-04; an app reaches the record through U3's
+  loopback API, and no key in the register can seal, U2's inventory.)
 
-**Then:** removal (U7, the keeper of §6), before any group of strangers; then
+**Then:** removal (U7, the keeper of §6, with forks that void nothing), before any group of strangers; then
 the chat doors, Discord first — onboarding, last. After that the core grows one
 class at a time, each chosen by the north star's tests.
 
@@ -391,8 +447,19 @@ class at a time, each chosen by the north star's tests.
 | another device for the same person | someone asks |
 | the wire published for a second implementation | someone sets out to write one |
 | local discovery on one WiFi | Apple's multicast entitlement is granted |
+| any member's node redeeming a link, once its `Invite` has synced | a newcomer's link fails because its issuer's computer was asleep, counted |
+| a link's life set per link, other than a day | a newcomer meets a lapsed link, counted |
 
 ## 10. Decisions
+
+By the operator, 2026-10-04:
+- a link is upstream's https form at `https://svrnme.sh/ring/`, everything a
+  link carries in its fragment;
+- one link admits everyone who opens it, each once, until it lapses or is
+  closed — not one person per link;
+- only the issuer's node redeems a link;
+- forks void nothing in U7, with removal, not in U2; U2 puts the previous act
+  in the id.
 
 By the operator, 2026-10-03:
 - the product is the platform; the community builds the apps; we build one
