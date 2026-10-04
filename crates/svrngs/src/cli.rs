@@ -10,7 +10,7 @@
 //! svrngs new <name> [--as N] [--origin U]  make a group, print its link, run
 //! svrngs join <link> [--as N]              join a group by its link, run
 //! svrngs link <group> [--origin U]         a new link to a group, print it, run
-//! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]...
+//! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M]
 //!                                          lend a service on this computer
 //! svrngs unshare <name>                    stop lending it
 //! ```
@@ -47,10 +47,10 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use ed25519_dalek::VerifyingKey;
-use std::num::NonZeroU16;
+use std::num::{NonZeroU16, NonZeroU32};
 
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
-use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath};
+use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath, Upload};
 use svrngs_node::node::{Lends, Node, NodeError};
 use svrngs_node::redeem::{ask, redeem, AskRequest, RedeemError, RedeemRequest, Redeemed};
 use svrngs_node::{actor_of, Person, SigningKey};
@@ -85,7 +85,7 @@ svrngs — keep what your group shares on your own computers.
       first 8 letters of its id when two groups share a name. --origin
       also prints it on a page address, from now on.
 
-  svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]...
+  svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>]
       Lend what runs on <port> on this computer to everyone in your groups:
       each reaches it through this computer, as themselves. It asks for the
       password the service takes on each request, if any; that stays on
@@ -93,7 +93,8 @@ svrngs — keep what your group shares on your own computers.
       they see it as; else its kind. --kind says what it is, when svrngs
       does not know the port. --limit is how many people may use it at
       once; else 3. --refuse keeps a path of it from them; say it again
-      for more.
+      for more. --upload is this computer's upload, in Mbit/s, as a speed
+      test states it: each person using it is told their share of it.
 
   svrngs unshare <name>
       Stop lending <name>.
@@ -151,6 +152,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Command, String>
     let mut person = None;
     let mut origin = None;
     let (mut name, mut kind, mut limit, mut refused) = (None, None, None, Vec::new());
+    let mut upload = None;
     while let Some(arg) = it.next() {
         let mut value = |flag: &str| it.next().ok_or_else(|| format!("{flag} wants a value"));
         match arg.as_str() {
@@ -192,6 +194,12 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Command, String>
                         format!("--refuse `{raw}` is not a path: it starts with /")
                     })?);
             }
+            "--upload" => {
+                let raw = value("--upload")?;
+                upload = Some(Upload::from_mbit(raw.parse::<NonZeroU32>().map_err(|_| {
+                    format!("--upload `{raw}` is not an upload: a whole number of Mbit/s, 1 or more")
+                })?));
+            }
             "-h" | "--help" => return Ok(Command::Help),
             other if other.starts_with('-') => return Err(format!("unknown argument `{other}`")),
             other if positional.is_none() => positional = Some(other.to_string()),
@@ -204,10 +212,14 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Command, String>
     if origin.is_some() && !matches!(verb.as_str(), "new" | "link") {
         return Err("--origin is a `new` and `link` flag".into());
     }
-    if (name.is_some() || kind.is_some() || limit.is_some() || !refused.is_empty())
+    if (name.is_some()
+        || kind.is_some()
+        || limit.is_some()
+        || !refused.is_empty()
+        || upload.is_some())
         && verb != "share"
     {
-        return Err("--name, --kind, --limit and --refuse are `share` flags".into());
+        return Err("--name, --kind, --limit, --refuse and --upload are `share` flags".into());
     }
     match verb.as_str() {
         "new" => {
@@ -241,6 +253,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Command, String>
                 kind,
                 limit,
                 refused,
+                upload,
             }))
         }
         "unshare" => {
@@ -577,6 +590,12 @@ impl std::fmt::Display for Said {
                 )?;
                 for path in &lend.refused {
                     writeln!(f, "They cannot open {}.", path.as_str())?;
+                }
+                if let Some(upload) = lend.upload {
+                    writeln!(
+                        f,
+                        "Each is told their share of the {upload} upload you stated."
+                    )?;
                 }
                 if *secret {
                     writeln!(

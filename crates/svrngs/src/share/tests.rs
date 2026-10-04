@@ -44,6 +44,7 @@ fn share(p: u16) -> Share {
         kind: None,
         limit: None,
         refused: Vec::new(),
+        upload: None,
     }
 }
 

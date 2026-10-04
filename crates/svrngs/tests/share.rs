@@ -159,6 +159,7 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
         kind: Some(Kind::parse("pad").unwrap()),
         limit: None,
         refused: Vec::new(),
+        upload: None,
     };
     let lend = share::lend_of(
         &asked,
@@ -267,7 +268,19 @@ fn share_takes_no_password_on_the_command_line() {
     assert_eq!(asked.name, Some(LendName::parse("box").unwrap()));
     assert_eq!(asked.limit.map(|l| l.get()), Some(2));
     assert_eq!(asked.refused.len(), 1);
+    assert_eq!(asked.upload, None, "no upload stated, none declared");
     assert!(cli::parse(argv(&["new", "x", "--limit", "2"])).is_err());
+    let Ok(Command::Share(asked)) = cli::parse(argv(&["share", "8096", "--upload", "30"])) else {
+        panic!("share parses an upload");
+    };
+    assert_eq!(asked.upload.map(|u| u.bps()), Some(30_000_000));
+    for bad in ["0", "-3", "fast", "2.5"] {
+        assert!(
+            cli::parse(argv(&["share", "8096", "--upload", bad])).is_err(),
+            "--upload {bad} is not an upload"
+        );
+    }
+    assert!(cli::parse(argv(&["link", "x", "--upload", "30"])).is_err());
 }
 
 /// The program, its output read line by line as it comes.

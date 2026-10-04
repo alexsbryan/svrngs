@@ -93,6 +93,7 @@ fn lend(name: &str, port: u16) -> Lend {
         kind: Kind::parse("k").unwrap(),
         limit: NonZeroU16::new(3).unwrap(),
         refused: vec![refused("/admin")],
+        upload: None,
     }
 }
 
@@ -101,7 +102,8 @@ fn lend(name: &str, port: u16) -> Lend {
 #[test]
 fn a_lend_declared_is_read_back_and_withdrawn_whole() {
     let root = tempfile::tempdir().unwrap();
-    let shelf = lend("shelf", 8096);
+    let mut shelf = lend("shelf", 8096);
+    shelf.upload = Some(Upload::from_mbit(NonZeroU32::new(30).unwrap()));
     declare(root.path(), &shelf, Some(("authorization", "s3cret"))).unwrap();
     declare(root.path(), &lend("pad", 9000), None).unwrap();
     assert_eq!(read(root.path(), &shelf.name).unwrap(), Some(shelf.clone()));
@@ -128,5 +130,36 @@ fn a_lend_declared_is_read_back_and_withdrawn_whole() {
     assert!(
         !withdraw(root.path(), &shelf.name).unwrap(),
         "nothing left to take"
+    );
+}
+
+/// A lend's upload is its lender's to state: absent is none declared, never
+/// a default; zero is no upload, refused; one stated reads back in bits a
+/// second, and prints as a speed test states it.
+#[test]
+fn an_upload_is_declared_or_absent_never_defaulted() {
+    let root = tempfile::tempdir().unwrap();
+    let name = LendName::parse("shelf").unwrap();
+    std::fs::create_dir_all(lends_dir(root.path())).unwrap();
+    let file = lends_dir(root.path()).join("shelf.json");
+    std::fs::write(&file, r#"{"port": 8096, "kind": "k", "limit": 3}"#).unwrap();
+    assert_eq!(read(root.path(), &name).unwrap().unwrap().upload, None);
+    std::fs::write(
+        &file,
+        r#"{"port": 8096, "kind": "k", "limit": 3, "upload_bps": 0}"#,
+    )
+    .unwrap();
+    assert!(read(root.path(), &name).is_err(), "no upload is not one");
+    std::fs::write(
+        &file,
+        r#"{"port": 8096, "kind": "k", "limit": 3, "upload_bps": 30000000}"#,
+    )
+    .unwrap();
+    let upload = read(root.path(), &name).unwrap().unwrap().upload.unwrap();
+    assert_eq!(upload.bps(), 30_000_000);
+    assert_eq!(upload.to_string(), "30 Mbit/s");
+    assert_eq!(
+        Upload::new(NonZeroU64::new(1_500_000).unwrap()).to_string(),
+        "1500000 bit/s"
     );
 }

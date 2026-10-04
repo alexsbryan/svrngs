@@ -12,13 +12,14 @@
 //! ```
 //!
 //! The declaration holds the port, the kind, how many people may use it at
-//! once and the paths the door refuses; the secret is apart, in
+//! once, the paths the door refuses and, when its lender states one, the
+//! upload it may use (u3-6); the secret is apart, in
 //! [`crate::declared`]'s store, so the file a person may show someone
 //! carries none of it. Neither enters the record: what a computer lends is
 //! asked of it, never stored (DESIGN §8, "Lends are asked, not stored"), and
 //! [`Offered`] is its answer.
 
-use std::num::NonZeroU16;
+use std::num::{NonZeroU16, NonZeroU32, NonZeroU64};
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
@@ -181,9 +182,40 @@ fn comparable(path: &str) -> String {
     out
 }
 
+/// The upload a lend's lender says it may use, in bits a second: stated,
+/// never measured (DESIGN §8, "The upload is declared"), so the share the
+/// door tells each request is a declared figure and says so.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct Upload(NonZeroU64);
+
+impl Upload {
+    pub fn new(bps: NonZeroU64) -> Self {
+        Self(bps)
+    }
+
+    /// `mbit` megabits a second, as a speed test states an upload.
+    pub fn from_mbit(mbit: NonZeroU32) -> Self {
+        Self(NonZeroU64::from(mbit).saturating_mul(NonZeroU64::new(1_000_000).expect("not 0")))
+    }
+
+    pub fn bps(self) -> u64 {
+        self.0.get()
+    }
+}
+
+impl std::fmt::Display for Upload {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.bps() % 1_000_000 {
+            0 => write!(f, "{} Mbit/s", self.bps() / 1_000_000),
+            _ => write!(f, "{} bit/s", self.bps()),
+        }
+    }
+}
+
 /// A lend as its declaration says: where the service listens on this
-/// computer, what it is, how many people may use it at once, and what the
-/// door refuses of it.
+/// computer, what it is, how many people may use it at once, what the
+/// door refuses of it, and the upload its lender declares, if any.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Lend {
     pub name: LendName,
@@ -193,6 +225,9 @@ pub struct Lend {
     /// How many people may use it at once (DESIGN §8, "Too many at once").
     pub limit: NonZeroU16,
     pub refused: Vec<RefusedPath>,
+    /// None when its lender declares none: then no request through the
+    /// door is told a share, rather than one of a figure nobody stated.
+    pub upload: Option<Upload>,
 }
 
 impl Lend {
@@ -205,7 +240,7 @@ impl Lend {
 /// The declaration's form on disk. A field it does not know is refused, not
 /// ignored: a misspelt `refused` read as no refusals would open what the
 /// lender closed (ARCH 6). A kind or limit absent is refused too, never
-/// taken as a default nobody declared.
+/// taken as a default nobody declared. An upload absent is none declared.
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct LendFile {
@@ -214,6 +249,12 @@ struct LendFile {
     limit: NonZeroU16,
     #[serde(default)]
     refused: Vec<String>,
+    #[serde(
+        default,
+        rename = "upload_bps",
+        skip_serializing_if = "Option::is_none"
+    )]
+    upload: Option<Upload>,
 }
 
 /// A lend as its lender's computer answers a member who asks what it
@@ -291,6 +332,7 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         kind: file.kind,
         limit: file.limit,
         refused,
+        upload: file.upload,
     }))
 }
 
@@ -350,6 +392,7 @@ pub fn declare(
         kind: lend.kind.clone(),
         limit: lend.limit,
         refused: lend.refused.iter().map(|r| r.0.clone()).collect(),
+        upload: lend.upload,
     };
     let text = serde_json::to_string_pretty(&file).expect("a declaration always serializes");
     let path = dir.join(format!("{}.json", lend.name));
@@ -357,7 +400,8 @@ pub fn declare(
     std::fs::write(&partial, text).map_err(unwritable(&partial))?;
     std::fs::rename(&partial, &path).map_err(unwritable(&path))?;
     tracing::debug!(target: "lend", lend = %lend.name, port = lend.port, kind = %lend.kind,
-        limit = lend.limit, refused = lend.refused.len(), secret = secret.is_some(),
+        limit = lend.limit, refused = lend.refused.len(), upload = ?lend.upload.map(Upload::bps),
+        secret = secret.is_some(),
         "lend: declared");
     Ok(())
 }

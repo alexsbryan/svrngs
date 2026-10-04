@@ -20,7 +20,7 @@
 use std::num::NonZeroU16;
 use std::time::Duration;
 
-use svrngs_node::lend::{Kind, Lend, LendName, RefusedPath};
+use svrngs_node::lend::{Kind, Lend, LendName, RefusedPath, Upload};
 
 /// How many people may use a lend at once when its lender names no limit:
 /// Demo A's three homes on Sam's one library (DESIGN §8). `share` prints
@@ -40,6 +40,9 @@ pub struct Share {
     pub kind: Option<Kind>,
     pub limit: Option<NonZeroU16>,
     pub refused: Vec<RefusedPath>,
+    /// This computer's upload, as its lender states it; none stated, none
+    /// declared (u3-6).
+    pub upload: Option<Upload>,
 }
 
 /// Why a lend could not be decided, in a person's words.
@@ -119,6 +122,7 @@ pub fn lend_of(
         kind,
         limit,
         refused: share.refused.clone(),
+        upload: share.upload,
     })
 }
 
