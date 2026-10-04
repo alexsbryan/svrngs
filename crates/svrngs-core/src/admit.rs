@@ -58,7 +58,10 @@
 //! that cannot say "I may be missing something" lets an app state a wrong
 //! total with complete confidence, which is the failure ARCH §18.3 names.
 
-use std::collections::{BTreeMap, BTreeSet};
+use alloc::collections::{BTreeMap, BTreeSet};
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 
 use crate::op::{Op, OpId};
 use crate::sig::derive_id;
@@ -204,8 +207,8 @@ impl RailGap {
 /// saying different things about the same condition. Before this existed the
 /// door returned a serde dump (`{"gap":"bad_signature",…}`) straight at a
 /// housemate.
-impl std::fmt::Display for RailGap {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for RailGap {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::MalformedLine { line, .. } => {
                 write!(f, "journal line {line} could not be read")

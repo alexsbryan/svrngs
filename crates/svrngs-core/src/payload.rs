@@ -50,6 +50,9 @@
 //! not in the house — is the app's to judge, in the app's vocabulary. The
 //! rail has no opinion and cannot have one; see [`crate::admit`].
 
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{Map, Value};
 

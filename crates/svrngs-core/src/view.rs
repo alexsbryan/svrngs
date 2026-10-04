@@ -17,7 +17,11 @@
 //! upstream's were 64-bit-truncated BLAKE3, and svrngs's are the whole hash
 //! (U2, DESIGN §6).
 
-use std::collections::{BTreeMap, BTreeSet};
+use alloc::collections::{BTreeMap, BTreeSet};
+use alloc::format;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 
 use crate::hash::ContentHash;
 use crate::op::{Op, OpId};

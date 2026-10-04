@@ -55,7 +55,9 @@
 //! voids. Only the issuer signs a redemption, so one exists only if the
 //! issuer's own node redeemed a link it had closed.
 
-use std::collections::{BTreeMap, BTreeSet};
+use alloc::collections::{BTreeMap, BTreeSet};
+use alloc::string::String;
+use alloc::vec::Vec;
 
 use crate::op::Op;
 
@@ -84,8 +86,8 @@ pub enum InviteFault {
     Closed { by: OpId },
 }
 
-impl std::fmt::Display for InviteFault {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for InviteFault {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.write_str(match self {
             Self::Voided => "its link was taken back",
             Self::Unheld => "this node does not hold its link",

@@ -48,6 +48,8 @@
 //! verification here would be a second answer to the question the signature
 //! exists to settle (ARCH §10.6).
 
+use alloc::string::String;
+use alloc::string::ToString;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -212,10 +214,10 @@ impl VouchStatus {
     }
 }
 
-impl std::fmt::Display for VouchStatus {
+impl core::fmt::Display for VouchStatus {
     /// A sentence a person can act on, because this is what a terminal prints
     /// under a roster row.
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::Unknown => write!(f, "warrant unknown — added before anyone had to say why"),
             Self::Traced {

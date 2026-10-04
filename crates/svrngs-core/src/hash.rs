@@ -25,8 +25,10 @@
 //! elsewhere in the tree is a different value space and must not be converted
 //! into this type — rehash the content instead.
 
+use alloc::format;
+use alloc::string::String;
+use core::fmt;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::fmt;
 
 /// The BLAKE3-256 digest of some content — its identity, derived from what it
 /// IS rather than from where it sits or when it arrived (ARCH §7.5: identity

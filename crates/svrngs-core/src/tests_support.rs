@@ -11,7 +11,11 @@
 //! what an expense is, and a fixture that quietly assumed one would let a
 //! money rule creep back into this layer without anyone noticing.
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
+use alloc::format;
+use alloc::string::String;
+use alloc::vec;
+use alloc::vec::Vec;
 
 use crate::*;
 

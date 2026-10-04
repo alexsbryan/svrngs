@@ -63,7 +63,10 @@
 //! a trap for anyone syncing through it — this path has no origin field at
 //! all, because the op carries its author in a signature.
 
-use std::collections::{BTreeMap, BTreeSet};
+use alloc::collections::{BTreeMap, BTreeSet};
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 
 use crate::op::{Op, OpId};
 

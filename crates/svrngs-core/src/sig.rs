@@ -42,6 +42,8 @@
 //! an id holds exactly the act its author signed. Admission still re-derives
 //! the id from content and ignores the one on the line ([`derive_id`]).
 
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 
 use crate::hash::ContentHash;

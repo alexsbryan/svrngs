@@ -20,8 +20,9 @@ joining by that link is next (U2).
 **`crates/svrngs-core`**: the group's record — signed acts (`Record`,
 `Correct`, `Seal`, `Admit`, `Remove`, `Invite`), admission into one total order
 (`admit.rs`), membership (`membership.rs`), the per-actor sync digest
-(`sync.rs`, `view.rs`), attestation and introductions. Pure: no filesystem,
-clock or network; time and keys arrive as arguments. It is commonwealth-ai's
+(`sync.rs`, `view.rs`), attestation and introductions. `no_std`, so the
+compiler refuses filesystem, clock, network, threads and `HashMap`; time and
+keys arrive as arguments. It is commonwealth-ai's
 `commonwealth-rail-core` at `e1a43bcd2`, with `oplog-types` (`op.rs`) and
 `ContentHash` (`hash.rs`) inlined, and `hash.rs`'s wire test asserting the
 JSON form directly rather than through kernel-types' `wire` module, which the

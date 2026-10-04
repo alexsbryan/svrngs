@@ -20,6 +20,7 @@
 //! split day; its history and the three-tenant story are `oplog`'s module
 //! docs.
 
+use alloc::string::String;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
@@ -93,8 +94,8 @@ impl OpId {
     }
 }
 
-impl std::fmt::Display for OpId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for OpId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.write_str(&self.0.to_hex())
     }
 }
@@ -143,7 +144,7 @@ impl<K: Journaled> Op<K> {
         // an id over empty bytes (ROOT_CAUSE_FIXES C4).
         let body = serde_json::to_string(&kind)
             .expect("a kind serialises — an id over empty bytes is the named catastrophe");
-        let input = format!("{}|{ts_unix}|{actor}|{body}", K::ID_PREFIX);
+        let input = alloc::format!("{}|{ts_unix}|{actor}|{body}", K::ID_PREFIX);
         let v = kind.line_version();
         Self {
             id: OpId(ContentHash::of_str(&input)),

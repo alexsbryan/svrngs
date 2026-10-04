@@ -16,6 +16,9 @@
 //!
 //! Pure like the rest of the fold: the clock is the `now` parameter.
 
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 use ed25519_dalek::SigningKey;
 use serde::{Deserialize, Serialize};
 

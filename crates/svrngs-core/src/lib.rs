@@ -77,6 +77,10 @@
 //! without inheriting a file layout, and it is why `admit` takes ops rather
 //! than a path.
 
+#![cfg_attr(not(test), no_std)]
+
+extern crate alloc;
+
 mod admit;
 mod attest;
 mod hash;
@@ -88,7 +92,11 @@ mod sig;
 mod sync;
 mod view;
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
+use alloc::format;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 
 /// The signing key the shipped [`RingSigner`] implementation is written for.
 pub use ed25519_dalek::SigningKey;
@@ -207,8 +215,8 @@ impl Name {
     }
 }
 
-impl std::fmt::Display for Name {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for Name {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.write_str(&self.0)
     }
 }
@@ -256,8 +264,8 @@ impl<'de> Deserialize<'de> for Person {
     }
 }
 
-impl std::fmt::Display for Person {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for Person {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         self.0.fmt(f)
     }
 }

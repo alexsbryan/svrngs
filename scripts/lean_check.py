@@ -2,7 +2,9 @@
 """svrngs stays standalone and lean (docs/DESIGN.md §4, §5). Exit 0 holds, 1 broken.
 
 1. Cargo.lock names no commonwealth-ai or sovereign crate.
-2. svrngs-core declares no I/O dependency.
+2. svrngs-core declares no I/O dependency, and is no_std: the compiler refuses
+   files, sockets, clocks, threads and HashMap there; no core source outside
+   its tests links std back in.
 3. RUST_ARCH, where a program can decide it: `anyhow` only in the `svrngs`
    command and the app (typed errors everywhere else); no `Arc<Mutex<` or
    `Rc<RefCell<` in a crate (ownership is a tree); no `async` in svrngs-core
@@ -15,6 +17,7 @@ import re
 import sys
 from pathlib import Path
 
+TEST_FILE = re.compile(r"(^|/)tests?(_\w+)?\.rs$|_tests?\.rs$")
 ROOT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().parent.parent
 FOREIGN = re.compile(r'^name = "(commonwealth-[\w-]+|sovereign-[\w-]+|oicp-[\w-]+|kernel-types|oplog(-types)?|corpus-engine|host-kit|mesh-[\w-]+)"$', re.M)
 IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "tower",
@@ -61,8 +64,14 @@ def main():
         text = f.read_text(errors="replace")
         if re.search(r"Arc<\s*Mutex<|Rc<\s*RefCell<", text):
             broken.append(f"{rel} shares mutable state: one owner and messages instead (RUST_ARCH §3)")
+        if (rel.startswith("crates/svrngs-core/") and not TEST_FILE.search(rel)
+                and re.search(r"^\s*extern\s+crate\s+std\b", text, re.M)):
+            broken.append(f"{rel} links std: the core is no_std, so I/O, clocks and threads stay outside it")
         if rel.startswith("crates/svrngs-core/") and re.search(r"\basync\b|\.await\b", text):
             broken.append(f"{rel} is async: the core stays synchronous (RUST_ARCH §2, §4)")
+    core_lib = ROOT / "crates" / "svrngs-core" / "src" / "lib.rs"
+    if core_lib.exists() and "#![cfg_attr(not(test), no_std)]" not in core_lib.read_text():
+        broken.append("crates/svrngs-core/src/lib.rs lost #![cfg_attr(not(test), no_std)]: the core is no_std")
     for path, cap in BUDGET.items():
         base = ROOT / path
         n = code_lines(base) if base.exists() else 0
