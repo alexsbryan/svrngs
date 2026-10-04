@@ -220,6 +220,10 @@ pub mod ring_sync;
 // answer the round, the acceptor, the sync route and the door ask.
 pub mod register;
 
+// Redeeming a link, U2's (docs/DESIGN.md §6): the route served on the
+// second ALPN, and the joiner's call to it.
+pub mod redeem;
+
 // The node, U1's (docs/DESIGN.md §8): the rail, the endpoint, the accept loop
 // serving the sync route and the round, in place of upstream's `RailsDaemon`.
 pub mod node;

@@ -13,6 +13,11 @@
 //! dials, and a key standing in a group's register is a key the round can
 //! dial.
 //!
+//! **A link is redeemed on a second protocol** (DESIGN §8, U2's inventory,
+//! the acceptor row): [`Alpn::Redeem`] is served to any dialer, with one
+//! route ([`crate::redeem`]), so a key standing nowhere reaches that and
+//! nothing else; [`Alpn::Member`] stays closed to it.
+//!
 //! **The group decides who is in it** (DESIGN §6, U1): the register —
 //! [`RingRail::standing`], over each group's seed and its acts — answers
 //! all three questions the node asks. The round dials every key standing in
@@ -28,14 +33,14 @@ use std::sync::Arc;
 use tokio::sync::Notify;
 
 use crate::iroh::{
-    build_relayed_endpoint, format_dial_string, key_actor, Admit, Endpoint, IrohAcceptor,
-    IrohTransport, PublicKey, RelayConfig, SecretKey, ALPN,
+    build_relayed_endpoint, format_dial_string, key_actor, Admit, Alpn, Contact, Endpoint,
+    EndpointAddr, IrohAcceptor, IrohTransport, PublicKey, RelayConfig, SecretKey,
 };
 use crate::register::Standing;
 use crate::ring_routes::{self, RingInbound};
 use crate::ring_sync::{
-    peer_client, run_one_round, spawn_ring_sync_loop, RingSyncHandle, RoundMembers, RoundOutcome,
-    DEFAULT_RING_SYNC_INTERVAL,
+    exchange, peer_client, run_one_round, spawn_ring_sync_loop, ExchangeOutcome, ExchangeStop,
+    RingSyncHandle, RoundMembers, RoundOutcome, DEFAULT_RING_SYNC_INTERVAL,
 };
 use crate::{actor_of, Ed25519Verifier, RingRail, SigningKey};
 
@@ -85,7 +90,7 @@ impl Node {
         })?;
         let endpoint = build_relayed_endpoint(
             SecretKey::from_bytes(&key.to_bytes()),
-            vec![ALPN.to_vec()],
+            Alpn::ALL.iter().map(|a| a.bytes().to_vec()).collect(),
             relay,
         )
         .await
@@ -101,12 +106,13 @@ impl Node {
         let rail = Arc::new(RingRail::new(&data_dir, Arc::new(key)));
         let admitting = rail.clone();
         let members = ring_routes::router(RingInbound { rail: rail.clone() });
+        let redeem = crate::redeem::router(rail.clone());
         let acceptor =
             IrohAcceptor::spawn(endpoint.clone(), move |alpn: &[u8], dialer: &PublicKey| {
-                if admit_dialer(&admitting, alpn, dialer) {
-                    Admit::Serve(members.clone())
-                } else {
-                    Admit::Refuse
+                match admit_dialer(&admitting, alpn, dialer) {
+                    Some(Alpn::Member) => Admit::Serve(members.clone()),
+                    Some(Alpn::Redeem) => Admit::Serve(redeem.clone()),
+                    None => Admit::Refuse,
                 }
             });
         let host = Arc::new(Host {
@@ -146,6 +152,38 @@ impl Node {
     /// Run one round now, beside the interval's, and say what it moved.
     pub async fn round(&self) -> RoundOutcome {
         run_one_round(self.host.as_ref()).await
+    }
+
+    /// One exchange of `namespace` with the node at `peer`, whatever this
+    /// node's register says of it: a joiner syncs once from the issuer that
+    /// admitted it, whom its own register may not know yet (DESIGN §8,
+    /// U2). The peer's addresses are seeded on the transport, so the round
+    /// reaches it too once the register names it.
+    pub async fn sync_with(&self, namespace: &str, peer: &EndpointAddr) -> ExchangeOutcome {
+        let addrs: Vec<_> = peer.ip_addrs().copied().collect();
+        self.host.transport.add_known_peer(peer.id, addrs.clone());
+        let contact = Contact {
+            key: peer.id,
+            relay_url: peer.relay_urls().next().map(|r| r.to_string()),
+            iroh_direct_addrs: addrs,
+        };
+        let stopped = |why: String| ExchangeOutcome {
+            stop: Some(ExchangeStop::Failed(why)),
+            ..Default::default()
+        };
+        let Some(base) = self.host.transport.base_url(&contact).await else {
+            tracing::debug!(target: "node", namespace, "node: sync_with — the peer has no dialable path");
+            return stopped("no dialable path".into());
+        };
+        let http = match peer_client() {
+            Ok(h) => h,
+            Err(e) => return stopped(e.to_string()),
+        };
+        let url = format!("{base}/internal/ring/sync");
+        let out = exchange(http, &url, &self.host.rail, namespace).await;
+        tracing::debug!(target: "node", namespace, pulled = out.pulled, pushed = out.pushed, stop = ?out.stop,
+            "node: sync_with — one exchange with the peer");
+        out
     }
 }
 
@@ -204,29 +242,37 @@ impl Host {
     }
 }
 
-/// The accept loop's decision: serve the sync route to a dialer on the one
-/// ALPN that stands in any group this node holds, and close the rest (DESIGN §8, U1's inventory,
-/// "the mesh" row — upstream asked the mesh, `acceptor.rs:47-61`). Asked
-/// once per connection, so a member admitted or removed since the last dial
-/// is answered as it stands now.
-fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> bool {
+/// The accept loop's decision: the protocol whose routes a dialer is
+/// served, or `None` to close it. Any dialer may redeem a link; the member
+/// protocol serves a dialer standing in any group this node holds and closes
+/// the rest (DESIGN §8, U1's inventory, "the mesh" row — upstream asked the
+/// mesh, `acceptor.rs:47-61`). Asked once per connection, so a member
+/// admitted or removed since the last dial is answered as it stands now.
+fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn> {
     let actor = key_actor(dialer);
-    if alpn != ALPN {
-        tracing::debug!(target: "node", actor, alpn = %String::from_utf8_lossy(alpn), "node: refused — not the sync ALPN");
-        return false;
+    match Alpn::of(alpn) {
+        Some(Alpn::Member) => {}
+        Some(Alpn::Redeem) => {
+            tracing::debug!(target: "node", actor, "node: admitted to redeem a link — any dialer may");
+            return Some(Alpn::Redeem);
+        }
+        None => {
+            tracing::debug!(target: "node", actor, alpn = %String::from_utf8_lossy(alpn), "node: refused — a protocol this node does not speak");
+            return None;
+        }
     }
     let namespaces = match rail.namespaces() {
         Ok(n) => n,
         Err(e) => {
             tracing::warn!(target: "node", actor, error = %e, "node: refused — cannot list the groups held, so nobody can be shown to stand in one");
-            return false;
+            return None;
         }
     };
     for namespace in &namespaces {
         match rail.standing(namespace, &Ed25519Verifier) {
             Ok(standing) if standing.names(&actor) => {
                 tracing::debug!(target: "node", actor, namespace, "node: admitted — the dialer stands in a group held here");
-                return true;
+                return Some(Alpn::Member);
             }
             Ok(_) => {}
             Err(e) => {
@@ -235,7 +281,7 @@ fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> bool {
         }
     }
     tracing::debug!(target: "node", actor, groups = namespaces.len(), "node: refused — the dialer stands in no group held here");
-    false
+    None
 }
 
 /// The iroh key an actor's lowercase hex spells, or `None`.

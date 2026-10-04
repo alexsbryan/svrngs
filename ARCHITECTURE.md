@@ -54,8 +54,10 @@ behind a `Mutex` (`lib.rs`), which an actor per journal replaces when the node
 becomes ours (DESIGN §5). Then it changed (U2): the write index holds the
 ids each act's content derives, so a line claiming a held act's id is not
 skipped as held; the door names, as the previous act, the line at its newest
-seq whose signature verifies under its own key; and compaction keeps a cited
-act by its derived id.
+seq whose signature verifies under its own key; compaction keeps a cited
+act by its derived id; and `RingJournal::append_if` signs one act and writes
+it only when a caller's judgement of the journal with the act in it keeps
+it, both under the write lock.
 
 Beside the journals, `svrngs-node` holds the dialling half of sync over iroh
 (DESIGN §8, U1's inventory), forked at `e1a43bcd2` the same way:
@@ -117,8 +119,22 @@ takes a data dir, a signing key and a `RelayConfig`; it binds the endpoint
 with that key, so the key that signs a group's acts is the key iroh verifies
 when the node dials (DESIGN §8, "Four facts"), and holds the `RingRail`
 signed by it, an `IrohTransport` over the endpoint, the accept loop serving
-the sync route's router on the one ALPN, and the round, which runs at start
-and every sixty seconds (`Node::round` runs one now).
+the sync route's router on the members' ALPN and the redemption route on
+the second, and the round, which runs at start and every sixty seconds
+(`Node::round` runs one now; `Node::sync_with` runs one exchange with a
+peer the register may not name yet).
+
+Redemption is `redeem.rs` (DESIGN §6, U2), new code in the shape of
+commonwealth-rails' mesh join: `RedeemRequest` — the group's id, the
+`Invite`'s id, a person's name, the new key, its consent and the link's
+key, signed by the link's secret — posted on `Alpn::Redeem`, which the
+accept loop serves to any dialer with this one route. The issuer's node
+refuses unless the dialer is the new key, the link's key signed, it holds
+the group, and the `Invite` is its own and names the link's key; then
+`append_if` writes the redeeming `Admit` only when the key does not stand
+already and `membership` (`register::membership_in`) counts the `Admit`.
+Every refusal answers `REFUSAL`, one sentence naming no group; a key that
+already stands is answered `AlreadyIn`, nothing written.
 
 Who is in a group is the register's (`register.rs`, DESIGN §6, U1):
 `RingRail::standing` answers a group's standing keys from `membership` over

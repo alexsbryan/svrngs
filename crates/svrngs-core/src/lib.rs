@@ -97,7 +97,7 @@ use serde::{Deserialize, Serialize};
 pub use admit::{admit, body_json, Admission, AdmittedOp, GapClass, RailGap};
 pub use attest::{AttestRefusal, GuestAttestation};
 pub use introduce::{trace, trace_op, Introduce, Vouch, VouchStatus};
-pub use membership::{membership, Membership};
+pub use membership::{membership, InviteFault, Membership};
 pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
 pub use sig::{act_id, actor_of, derive_id, ring_op_message, sign_act, sign_ring_op};
 pub use sync::{digest, ops_missing_from, ops_missing_from_within, Compaction, Floors, NO_BUDGET};

@@ -16,8 +16,8 @@
 use std::collections::BTreeMap;
 
 use crate::{
-    admit, is_local_only, ring_dir, valid_namespace, Op, Person, RailError, RingRail, RingVerifier,
-    Roster, SignedOp,
+    admit, is_local_only, ring_dir, valid_namespace, Membership, Op, Person, RailError, RingRail,
+    RingVerifier, Roster, SignedOp,
 };
 
 /// Who stands in one group, on this node.
@@ -52,6 +52,25 @@ pub(crate) fn standing_in(
     namespace: &str,
     verifier: &dyn RingVerifier,
 ) -> Result<BTreeMap<String, Person>, RailError> {
+    let m = membership_in(ops, seed, namespace, verifier)?;
+    Ok(m.standing
+        .into_iter()
+        .filter_map(|key| {
+            let person = m.bindings.get(&key)?.clone();
+            Some((key, person))
+        })
+        .collect())
+}
+
+/// `membership` over the acts admission authenticates among `ops`, from
+/// `seed`: what [`standing_in`] reads, and what a redemption asks of the
+/// journal with its `Admit` in it (`crate::redeem`).
+pub(crate) fn membership_in(
+    ops: &[Op<SignedOp>],
+    seed: &Roster,
+    namespace: &str,
+    verifier: &dyn RingVerifier,
+) -> Result<Membership, RailError> {
     // Standing turns only on the acts `membership` reads
     // (`RailAct::moves_membership`, beside it in svrngs-core's
     // membership.rs), so the rest are left out before admission verifies
@@ -66,16 +85,9 @@ pub(crate) fn standing_in(
     // `membership` is `None` only on an admission rebuilt from an older wire
     // shape; this one was folded here, so its absence is reported, never
     // read as nobody standing (ARCH 6).
-    let m = admit(&acts, &[], seed, namespace, verifier)
+    admit(&acts, &[], seed, namespace, verifier)
         .membership
-        .ok_or_else(|| RailError::Io(format!("{namespace}: admission carried no membership")))?;
-    Ok(m.standing
-        .into_iter()
-        .filter_map(|key| {
-            let person = m.bindings.get(&key)?.clone();
-            Some((key, person))
-        })
-        .collect())
+        .ok_or_else(|| RailError::Io(format!("{namespace}: admission carried no membership")))
 }
 
 impl RingRail {

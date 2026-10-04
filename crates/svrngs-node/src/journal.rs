@@ -244,6 +244,44 @@ impl RingJournal {
         on_behalf_of: Option<&str>,
         verifier: &dyn RingVerifier,
     ) -> Result<Vec<Op<SignedOp>>, RailError> {
+        let kept = self.write(acts, signer, roster, on_behalf_of, verifier, |_, _| {
+            Ok::<(), std::convert::Infallible>(())
+        })?;
+        Ok(kept.unwrap_or_else(|never| match never {}))
+    }
+
+    /// Sign one act as [`Self::append`] does, and write it only when `keep`,
+    /// shown what the journal holds and the signed act, says so — both
+    /// under the writer lock, so nothing lands between its judgement and the
+    /// write (svrngs, U2: a link's redemption, `crate::redeem`, writes its
+    /// `Admit` only when the fold over both counts it). The outer `Err` is
+    /// the door's own refusal; the inner one is `keep`'s, and nothing was
+    /// written.
+    pub fn append_if<E>(
+        &self,
+        act: RailAct,
+        signer: &dyn RingSigner,
+        roster: &Roster,
+        verifier: &dyn RingVerifier,
+        keep: impl FnOnce(&[Op<SignedOp>], &Op<SignedOp>) -> Result<(), E>,
+    ) -> Result<Result<Op<SignedOp>, E>, RailError> {
+        let kept = self.write(vec![act], signer, roster, None, verifier, |held, ops| {
+            keep(held, &ops[0])
+        })?;
+        Ok(kept.map(|mut ops| ops.remove(0)))
+    }
+
+    /// [`Self::append_all`], with `keep` asked of the signed batch before it
+    /// is written.
+    fn write<E>(
+        &self,
+        acts: Vec<RailAct>,
+        signer: &dyn RingSigner,
+        roster: &Roster,
+        on_behalf_of: Option<&str>,
+        verifier: &dyn RingVerifier,
+        keep: impl FnOnce(&[Op<SignedOp>], &[Op<SignedOp>]) -> Result<(), E>,
+    ) -> Result<Result<Vec<Op<SignedOp>>, E>, RailError> {
         let actor = signer.actor();
         let mut guard = self.log();
         let log = &mut *guard;
@@ -284,7 +322,7 @@ impl RingJournal {
             "append: the signer stands in the ring"
         );
         if acts.is_empty() {
-            return Ok(Vec::new());
+            return Ok(Ok(Vec::new()));
         }
         // The next act follows this signer's newest seq on the log, as
         // upstream's did, and names the act there (svrngs, U2): of the lines
@@ -350,7 +388,6 @@ impl RingJournal {
             "append: signs at the later of the wall clock and one second past the newest act held"
         );
         let view = digest(&held_ops, &self.namespace, verifier);
-        drop(held_ops);
         let mut ops = Vec::with_capacity(acts.len());
         for (seq, act) in (first_seq..).zip(acts) {
             // A payload is canonical by construction, so by the time one is a
@@ -376,6 +413,16 @@ impl RingJournal {
             prev = Some(op.id.clone());
             ops.push(op);
         }
+        if let Err(refused) = keep(&held_ops, &ops) {
+            tracing::debug!(
+                target: "rail:door",
+                ns = %self.namespace,
+                actor = %actor,
+                "append: signed, and not written — the caller's judgement of the fold refused it"
+            );
+            return Ok(Err(refused));
+        }
+        drop(held_ops);
         log.oplog
             .append_all(&ops)
             .map_err(|e| RailError::Io(e.to_string()))?;
@@ -390,7 +437,7 @@ impl RingJournal {
                 "ring rail: appended"
             );
         }
-        Ok(ops)
+        Ok(Ok(ops))
     }
 
     /// Append an op that arrived from a peer, exactly as it was signed.
