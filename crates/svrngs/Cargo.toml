@@ -11,6 +11,7 @@ description = "The svrngs command: a computer's device key, a group's link, and 
 ed25519-dalek = { workspace = true }
 getrandom = "0.3"
 hex = { workspace = true }
+thiserror = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]

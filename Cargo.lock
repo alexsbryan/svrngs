@@ -3259,6 +3259,7 @@ dependencies = [
  "getrandom 0.3.4",
  "hex",
  "tempfile",
+ "thiserror 2.0.21",
  "tracing",
 ]
 

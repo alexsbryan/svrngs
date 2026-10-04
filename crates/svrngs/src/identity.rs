@@ -12,13 +12,19 @@
 //!
 //! Persistence mirrors `sovereign-mesh::persist::
 //! load_or_generate_self_node_id` exactly: tmp-then-rename, 0600 on
-//! Unix, graceful fallback to an ephemeral key on I/O errors (the
-//! daemon stays usable; identity stability degrades until the file
-//! can be written).
+//! Unix.
+//!
+//! svrngs (DESIGN §8, U2's inventory, the identity.rs row): this is the
+//! command's device key, and the key every group on this computer knows it
+//! by (`svrngs_node::node`, "One key signs and dials"). Upstream fell back
+//! to a fresh key nobody keeps when the file could not be read or the
+//! fresh one could not be written; here both refuse, naming the file
+//! ([`KeyError`]), so a computer never silently becomes someone new
+//! (ARCH 6). Only an absent file mints a key.
 
 use std::fs;
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use ed25519_dalek::SigningKey;
 
@@ -41,11 +47,7 @@ fn load_key(data_dir: &Path) -> std::io::Result<Option<SigningKey>> {
             let seed: [u8; 32] = bytes.as_slice().try_into().map_err(|_| {
                 std::io::Error::new(
                     std::io::ErrorKind::InvalidData,
-                    format!(
-                        "node_key at {} is {} bytes, expected 32",
-                        path.display(),
-                        bytes.len()
-                    ),
+                    format!("it is {} bytes, where a key is 32", bytes.len()),
                 )
             })?;
             Ok(Some(SigningKey::from_bytes(&seed)))
@@ -75,14 +77,34 @@ fn save_key(data_dir: &Path, key: &SigningKey) -> std::io::Result<()> {
     Ok(())
 }
 
-/// Load-or-generate wrapper with graceful fallback. First boot
-/// writes the seed; subsequent boots return the persisted key. On
-/// I/O error writing the generated key, returns the fresh key
-/// anyway and logs — the daemon is still usable, the node just
-/// presents a different pubkey next session.
-pub fn load_or_generate_node_key(data_dir: &Path) -> SigningKey {
+/// Why this computer has no key to run as.
+#[derive(Debug, thiserror::Error)]
+pub enum KeyError {
+    #[error("cannot read {path}, which says who this computer is in its groups: {source}")]
+    Unreadable {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+    #[error("cannot save {path}, which says who this computer is in its groups: {source}")]
+    Unsaved {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+}
+
+/// This computer's key: the one at `<data_dir>/node_key`, or, when there
+/// is no file there, a fresh one written there first. A file that cannot
+/// be read, and a fresh key that cannot be written, refuse.
+pub fn load_or_generate_node_key(data_dir: &Path) -> Result<SigningKey, KeyError> {
     match load_key(data_dir) {
-        Ok(Some(key)) => key,
+        Ok(Some(key)) => {
+            tracing::debug!(
+                target: "identity",
+                node_pubkey = %node_pubkey(&key),
+                "node_key: loaded the persisted key"
+            );
+            Ok(key)
+        }
         Ok(None) => {
             let mut seed = [0u8; 32];
             if let Err(e) = getrandom::fill(&mut seed) {
@@ -91,29 +113,33 @@ pub fn load_or_generate_node_key(data_dir: &Path) -> SigningKey {
                 panic!("failed to generate node key entropy: {e}");
             }
             let fresh = SigningKey::from_bytes(&seed);
-            if let Err(e) = save_key(data_dir, &fresh) {
-                tracing::warn!(
-                    error = %e,
-                    data_dir = %data_dir.display(),
-                    "node_key persistence failed — daemon will present a \
-                     fresh identity key this session"
+            save_key(data_dir, &fresh).map_err(|source| {
+                tracing::debug!(
+                    target: "identity",
+                    error = %source,
+                    "node_key: refused — a fresh key that cannot be kept is not this computer's"
                 );
-            } else {
-                tracing::info!(
-                    node_pubkey = %node_pubkey(&fresh),
-                    "node_key: generated + persisted identity key (first boot)"
-                );
-            }
-            fresh
-        }
-        Err(e) => {
-            tracing::warn!(
-                error = %e,
-                "node_key: failed to load persisted key — using fresh this session"
+                KeyError::Unsaved {
+                    path: key_path(data_dir),
+                    source,
+                }
+            })?;
+            tracing::info!(
+                node_pubkey = %node_pubkey(&fresh),
+                "node_key: generated + persisted identity key (first boot)"
             );
-            let mut seed = [0u8; 32];
-            getrandom::fill(&mut seed).expect("failed to generate node key entropy");
-            SigningKey::from_bytes(&seed)
+            Ok(fresh)
+        }
+        Err(source) => {
+            tracing::debug!(
+                target: "identity",
+                error = %source,
+                "node_key: refused — the persisted key cannot be read, and no new one is made"
+            );
+            Err(KeyError::Unreadable {
+                path: key_path(data_dir),
+                source,
+            })
         }
     }
 }
@@ -126,10 +152,30 @@ mod tests {
     #[test]
     fn load_or_generate_round_trips() {
         let dir = tempfile::tempdir().unwrap();
-        let first = load_or_generate_node_key(dir.path());
-        let second = load_or_generate_node_key(dir.path());
+        let first = load_or_generate_node_key(dir.path()).unwrap();
+        let second = load_or_generate_node_key(dir.path()).unwrap();
         assert_eq!(first.to_bytes(), second.to_bytes(), "same key across boots");
         assert!(dir.path().join(NODE_KEY_FILE).exists());
+    }
+
+    /// **The failing input** (ARCH 6): upstream kept a fresh key it could
+    /// not write and ran as it, so the next run was someone else. A data
+    /// dir this process may not write to cannot hold the key, so it refuses.
+    #[cfg(unix)]
+    #[test]
+    fn a_key_that_cannot_be_saved_refuses() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o500)).unwrap();
+        let refused = load_or_generate_node_key(dir.path());
+        std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
+        let err = refused.expect_err("an unkept key refuses");
+        assert!(matches!(err, KeyError::Unsaved { .. }), "{err}");
+        assert!(
+            err.to_string()
+                .contains(&dir.path().join(NODE_KEY_FILE).display().to_string()),
+            "{err}"
+        );
     }
 
     #[cfg(unix)]
@@ -137,7 +183,7 @@ mod tests {
     fn key_file_is_owner_only() {
         use std::os::unix::fs::PermissionsExt;
         let dir = tempfile::tempdir().unwrap();
-        let _ = load_or_generate_node_key(dir.path());
+        let _ = load_or_generate_node_key(dir.path()).unwrap();
         let mode = std::fs::metadata(dir.path().join(NODE_KEY_FILE))
             .unwrap()
             .permissions()
@@ -145,11 +191,43 @@ mod tests {
         assert_eq!(mode & 0o777, 0o600);
     }
 
+    /// **The failing input** (ARCH 6): upstream's fallback answered an
+    /// unreadable key with a fresh one, so the computer silently became
+    /// someone new. A key file too short to be a key, and one this process
+    /// may not read, each refuse, naming the file, and leave it as it was.
     #[test]
-    fn corrupt_key_file_falls_back_to_fresh() {
+    fn an_unreadable_key_refuses_naming_its_file_and_writes_no_new_key() {
         let dir = tempfile::tempdir().unwrap();
-        std::fs::write(dir.path().join(NODE_KEY_FILE), b"way too short").unwrap();
-        // Must not panic; returns a usable (ephemeral) key.
-        let _ = load_or_generate_node_key(dir.path());
+        let path = dir.path().join(NODE_KEY_FILE);
+        std::fs::write(&path, b"way too short").unwrap();
+        let err =
+            load_or_generate_node_key(dir.path()).expect_err("a key too short to be a key refuses");
+        assert!(
+            err.to_string().contains(&path.display().to_string()),
+            "{err}"
+        );
+        assert_eq!(std::fs::read(&path).unwrap(), b"way too short");
+        assert_eq!(
+            std::fs::read_dir(dir.path()).unwrap().count(),
+            1,
+            "no other file written"
+        );
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let locked = tempfile::tempdir().unwrap();
+            let path = locked.path().join(NODE_KEY_FILE);
+            std::fs::write(&path, [7u8; 32]).unwrap();
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o000)).unwrap();
+            let refused = load_or_generate_node_key(locked.path());
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+            let err = refused.expect_err("a key this process may not read refuses");
+            assert!(
+                err.to_string().contains(&path.display().to_string()),
+                "{err}"
+            );
+            assert_eq!(std::fs::read(&path).unwrap(), [7u8; 32]);
+        }
     }
 }
