@@ -528,7 +528,9 @@ pub enum RailError {
     /// it is the 422 body an app shows a person.
     #[error("refused: {0}")]
     Rejected(String),
-    /// Authoring under a key this namespace's roster does not claim.
+    /// Authoring under a key that holds no standing in this namespace
+    /// (svrngs: the register's standing — the seed and its `Admit` and
+    /// `Remove` acts — where upstream asked whether the roster claimed it).
     ///
     /// Typed rather than one more [`RailError::Rejected`] sentence because
     /// the FIX depends on where the roster comes from, and only the caller
@@ -539,9 +541,9 @@ pub enum RailError {
     /// by matching on the prose would be the string `match` §2.1 forbids —
     /// and the prose is a 422 body, so it is allowed to change.
     #[error(
-        "this node signs as {}… and nobody in the `{namespace}` roster claims that \
-         key, so every op it writes would be unreadable to the ring — add \
-         yourself first with `svrn ring roster add <you> --self --ring {namespace}`",
+        "this node signs as {}… and that key holds no standing in `{namespace}` — \
+         neither its seed nor an `Admit` of it names the key — so every op it \
+         writes would be unreadable to the ring; a member must admit it first",
         actor_prefix(.actor)
     )]
     NotInRoster { actor: String, namespace: String },

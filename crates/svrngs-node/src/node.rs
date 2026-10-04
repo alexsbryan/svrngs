@@ -10,12 +10,16 @@
 //! **One key signs and dials** (DESIGN §8, "Four facts"): the endpoint is
 //! bound with the key the rail signs with, as upstream's was
 //! (`lib.rs:400-402`), so a member's actor is the key iroh verifies when it
-//! dials, and a key the seed names is a key the round can dial.
+//! dials, and a key standing in a group's register is a key the round can
+//! dial.
 //!
-//! Until U1's register lands (u1-5) the seed — each group's `roster.json` —
-//! answers who is in a group: the round dials the keys the seeds name, the
-//! sync route serves the keys its group's seed names, and the accept loop
-//! admits any dialer, leaving the refusal to the route.
+//! **The group decides who is in it** (DESIGN §6, U1): the register —
+//! [`RingRail::standing`], over each group's seed and its acts — answers
+//! all three questions the node asks. The round dials every key standing in
+//! a group the node holds and offers each group to its own; the accept loop
+//! admits a dialer standing in any group the node holds and closes the
+//! rest; and the sync route serves a dialer standing in the group its
+//! request names.
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;
@@ -24,15 +28,16 @@ use std::sync::Arc;
 use tokio::sync::Notify;
 
 use crate::iroh::{
-    build_relayed_endpoint, format_dial_string, Admit, Endpoint, IrohAcceptor, IrohTransport,
-    PublicKey, RelayConfig, SecretKey, ALPN,
+    build_relayed_endpoint, format_dial_string, key_actor, Admit, Endpoint, IrohAcceptor,
+    IrohTransport, PublicKey, RelayConfig, SecretKey, ALPN,
 };
+use crate::register::Standing;
 use crate::ring_routes::{self, RingInbound};
 use crate::ring_sync::{
-    peer_client, roster_of, run_one_round, spawn_ring_sync_loop, RingSyncHandle, RoundMembers,
-    RoundOutcome, DEFAULT_RING_SYNC_INTERVAL,
+    peer_client, run_one_round, spawn_ring_sync_loop, RingSyncHandle, RoundMembers, RoundOutcome,
+    DEFAULT_RING_SYNC_INTERVAL,
 };
-use crate::{actor_of, RingRail, SigningKey};
+use crate::{actor_of, Ed25519Verifier, RingRail, SigningKey};
 
 /// Why a node did not start.
 #[derive(Debug, thiserror::Error)]
@@ -94,11 +99,10 @@ impl Node {
             "node: endpoint bound with the signing key"
         );
         let rail = Arc::new(RingRail::new(&data_dir, Arc::new(key)));
-        // Until u1-5 any dialer is admitted, and the sync route refuses (403)
-        // one its group's seed does not name.
+        let admitting = rail.clone();
         let acceptor = IrohAcceptor::spawn(
             endpoint.clone(),
-            |_: &[u8], _: &PublicKey| Admit::Serve,
+            move |alpn: &[u8], dialer: &PublicKey| admit_dialer(&admitting, alpn, dialer),
             ring_routes::router(RingInbound { rail: rail.clone() }),
         );
         let host = Arc::new(Host {
@@ -158,9 +162,9 @@ impl Host {
     }
 
     /// This round's members, or `None` when the node has none to round
-    /// with: every key a seed of a group this node holds names, but this node's —
-    /// the round's members until the register answers (u1-5). A group whose
-    /// seed is unreadable adds nobody, as the round offers it to nobody.
+    /// with: every key standing in a group this node holds, but this
+    /// node's. A group whose register is unreadable adds nobody, as the
+    /// round offers it to nobody.
     pub(crate) async fn members(&self) -> Option<RoundMembers> {
         let namespaces = match self.rail.namespaces() {
             Ok(n) => n,
@@ -171,30 +175,63 @@ impl Host {
         };
         let mut keys: BTreeMap<String, (String, PublicKey)> = BTreeMap::new();
         for namespace in &namespaces {
-            let seed = match roster_of(&self.rail, namespace).await {
-                Ok(r) => r,
+            let standing = match self.rail.standing(namespace, &Ed25519Verifier) {
+                Ok(Standing::Members(m)) => m,
+                Ok(_) => continue,
                 Err(e) => {
-                    tracing::warn!(target: "node", namespace, error = %e, "node: a group's seed is unreadable, so it adds no member");
+                    tracing::warn!(target: "node", namespace, error = %e, "node: a group's register is unreadable, so it adds no member");
                     continue;
                 }
             };
-            for (person, actors) in &seed.members {
-                for actor in actors {
-                    if *actor == self.actor || keys.contains_key(actor) {
-                        continue;
-                    }
-                    let Some(key) = key_of(actor) else {
-                        tracing::warn!(target: "node", namespace, actor, "node: a seed names a key that is not one, so it is not dialled");
-                        continue;
-                    };
-                    let name = format!("{person}/{}", &actor[..8]);
-                    tracing::debug!(target: "node", namespace, member = %name, "node: the seed names a member to dial");
-                    keys.insert(actor.clone(), (name, key));
+            for (actor, person) in &standing {
+                if *actor == self.actor || keys.contains_key(actor) {
+                    continue;
                 }
+                let Some(key) = key_of(actor) else {
+                    tracing::warn!(target: "node", namespace, actor, "node: a standing key is not an iroh key, so it is not dialled");
+                    continue;
+                };
+                let name = format!("{person}/{}", &actor[..8]);
+                tracing::debug!(target: "node", namespace, member = %name, "node: a member stands in the group, to dial");
+                keys.insert(actor.clone(), (name, key));
             }
         }
         Some(RoundMembers::of(keys.into_values().collect()))
     }
+}
+
+/// The accept loop's decision: serve a dialer on the one ALPN that stands in
+/// any group this node holds, and close the rest (DESIGN §8, U1's inventory,
+/// "the mesh" row — upstream asked the mesh, `acceptor.rs:47-61`). Asked
+/// once per connection, so a member admitted or removed since the last dial
+/// is answered as it stands now.
+fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Admit {
+    let actor = key_actor(dialer);
+    if alpn != ALPN {
+        tracing::debug!(target: "node", actor, alpn = %String::from_utf8_lossy(alpn), "node: refused — not the sync ALPN");
+        return Admit::Refuse;
+    }
+    let namespaces = match rail.namespaces() {
+        Ok(n) => n,
+        Err(e) => {
+            tracing::warn!(target: "node", actor, error = %e, "node: refused — cannot list the groups held, so nobody can be shown to stand in one");
+            return Admit::Refuse;
+        }
+    };
+    for namespace in &namespaces {
+        match rail.standing(namespace, &Ed25519Verifier) {
+            Ok(standing) if standing.names(&actor) => {
+                tracing::debug!(target: "node", actor, namespace, "node: admitted — the dialer stands in a group held here");
+                return Admit::Serve;
+            }
+            Ok(_) => {}
+            Err(e) => {
+                tracing::warn!(target: "node", actor, namespace, error = %e, "node: a group's register is unreadable, so it admits nobody");
+            }
+        }
+    }
+    tracing::debug!(target: "node", actor, groups = namespaces.len(), "node: refused — the dialer stands in no group held here");
+    Admit::Refuse
 }
 
 /// The iroh key an actor's lowercase hex spells, or `None`.

@@ -95,6 +95,7 @@ mod journal;
 use journal::OnlinePeer;
 pub use journal::{roster_names, roster_of, RoundMembers};
 
+use crate::iroh::key_actor;
 use crate::node::Host;
 
 /// Money does not need ten-second convergence, and the bandwidth argument in
@@ -211,7 +212,7 @@ pub fn spawn_ring_sync_loop(
 }
 
 /// One anti-entropy pass over every namespace this node holds, against every
-/// online peer **its roster names**.
+/// online peer **standing in its register** (svrngs: upstream, its roster).
 pub async fn run_one_round(host: &Host) -> RoundOutcome {
     let mut outcome = RoundOutcome::default();
     let rail = host.rail();
@@ -259,36 +260,35 @@ pub async fn run_one_round(host: &Host) -> RoundOutcome {
 
     for namespace in &namespaces {
         outcome.namespaces += 1;
-        // ── A ring is OFFERED to its roster, and to nobody else.
+        // ── A ring is OFFERED to its register, and to nobody else.
         //
         // Per NAMESPACE and not per round: one peer may be on one ring and not
-        // another, so a round-level peer set cannot answer this. The roster is
-        // read through the rail's ONE reader — so a namespace whose roster is
-        // DERIVED from membership (every ring with no
-        // `roster.json`, and the seven `REGISTERED_NAMESPACES`) still names
-        // every member and this filter passes everyone, while the work plane,
-        // which is file-rostered on purpose, narrows.
+        // another, so a round-level peer set cannot answer this. Standing is
+        // read through the rail's ONE accessor (`RingRail::standing`), the
+        // answer the serving route asks too: the keys standing in the ring's
+        // seed and its `Admit` and `Remove` acts. (svrngs: upstream read the
+        // roster — its seed, or one derived from the mesh — DESIGN §8, U1.)
         //
-        // An UNREADABLE roster offers nothing for this namespace. Under-share,
-        // never over-share — the same posture `prune_what_the_peer_retired`
-        // takes when it cannot read one.
-        let roster = match roster_of(rail, namespace).await {
-            Ok(r) => r,
+        // A ring with no seed, or an UNREADABLE register, offers nothing for
+        // this namespace. Under-share, never over-share — the same posture
+        // `prune_what_the_peer_retired` takes when it cannot read a roster.
+        let standing = match rail.standing(namespace, &Ed25519Verifier) {
+            Ok(s) => s,
             Err(e) => {
                 warn!(
                     namespace,
                     error = %e,
-                    "ring sync: this namespace's roster is unreadable, so it is \
+                    "ring sync: this namespace's register is unreadable, so it is \
                      offered to nobody this round"
                 );
                 continue;
             }
         };
-        let (offered_to, skipped_not_on_roster): (Vec<&OnlinePeer>, Vec<&str>) = {
+        let (offered_to, skipped_not_standing): (Vec<&OnlinePeer>, Vec<&str>) = {
             let mut on = Vec::new();
             let mut off = Vec::new();
             for p in &peers {
-                if roster_names(&roster, p.pubkey) {
+                if p.pubkey.is_some_and(|k| standing.names(&key_actor(&k))) {
                     on.push(p);
                 } else {
                     off.push(p.name.as_str());
@@ -297,13 +297,13 @@ pub async fn run_one_round(host: &Host) -> RoundOutcome {
             (on, off)
         };
         // GLASSBOX: the third list beside exchanged and offline. A namespace
-        // that reaches nobody because its roster names nobody looks exactly
+        // that reaches nobody because nobody stands in it looks exactly
         // like a namespace with nothing to send.
         debug!(
             namespace,
             offered_to = ?offered_to.iter().map(|p| p.name.as_str()).collect::<Vec<_>>(),
-            skipped_not_on_roster = ?skipped_not_on_roster,
-            "ring sync: namespace roster"
+            skipped_not_standing = ?skipped_not_standing,
+            "ring sync: namespace register"
         );
 
         for OnlinePeer { contact, .. } in offered_to {
@@ -338,8 +338,8 @@ pub async fn run_one_round(host: &Host) -> RoundOutcome {
                             "ring sync: peer REFUSED — it answered, so this is \
                              not an unreachable peer. 413: its body limit is \
                              below this build's exchange budget. 403: it does \
-                             not serve this ring to us — the ring's roster does \
-                             not name us"
+                             not serve this ring to us — we hold no standing \
+                             in its register there, or it holds no such ring"
                         );
                     }
                     Some(ExchangeStop::Failed(detail)) => {

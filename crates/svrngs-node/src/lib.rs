@@ -12,8 +12,10 @@
 //! # The door is strict about what the rail knows, and silent about the rest
 //!
 //! [`RingJournal::append`] refuses what the rail can judge: a payload with no
-//! canonical form (see [`Payload`]), and an attempt to author under a key the
-//! ring's own roster does not carry. It says nothing about whether an amount
+//! canonical form (see [`Payload`]), and an attempt to author under a key
+//! that holds no standing in the ring (svrngs: the register's — the seed and
+//! its `Admit` and `Remove` acts, [`register`] — where upstream asked whether
+//! the ring's roster carried the key). It says nothing about whether an amount
 //! is positive or a borrower exists, because it cannot — those are the app's,
 //! and the app owns one validator that its own door and its own reducer both
 //! call, exactly as this module used to.
@@ -368,6 +370,10 @@ pub mod peer_wire;
 // route (`ring_routes.rs`), which a caller serves as an `axum::Router`.
 pub mod ring_routes;
 pub mod ring_sync;
+
+// The register, U1's (docs/DESIGN.md §6): who stands in a group, the one
+// answer the round, the acceptor, the sync route and the door ask.
+pub mod register;
 
 // The node, U1's (docs/DESIGN.md §8): the rail, the endpoint, the accept loop
 // serving the sync route and the round, in place of upstream's `RailsDaemon`.

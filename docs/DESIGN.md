@@ -235,7 +235,10 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   never by position or time (U7): today the fold ignores `through_seq` and
   cuts the key at the `Remove`'s place in the order
   (`crates/svrngs-core/src/membership.rs:153`), so a backdated act slips under
-  the cut.
+  the cut. The same order puts an act signed in the second of the `Admit` that
+  gave its author standing before that `Admit` when the author's key sorts
+  first (`membership.rs:124`), so the act does not count; U1's test of a new
+  member's write waits out the second (`crates/svrngs-node/tests/group_not_mesh.rs`).
 - **A signing key per person per group**, so a cut in one group touches no
   other; an endpoint key per device.
 

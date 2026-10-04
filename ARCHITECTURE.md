@@ -76,7 +76,7 @@ and the seam the round reads (`RingSyncHost`, `RingSyncJournal`, implemented
 for `RingRail`); `ring_routes.rs` is its sync route, with `rail.rs`'s `err`.
 Their edits cut the mesh ties: `RoundMembers` loses its walk of the mesh
 (`RoundMembers::of`), and is built from named keys instead, which the node
-reads from the seeds until the register answers (DESIGN §8, U1); the mesh proof stamp the exchange
+reads from the register (DESIGN §8, U1); the mesh proof stamp the exchange
 carried goes; `RingSyncHost::transport` is the concrete `IrohTransport`, and a
 contact's addresses are its one `base_url`; `roster_names` reads iroh's
 `PublicKey`; `peer_client` is `pub`, since its one upstream caller,
@@ -101,13 +101,22 @@ with that key, so the key that signs a group's acts is the key iroh verifies
 when the node dials (DESIGN §8, "Four facts"), and holds the `RingRail`
 signed by it, an `IrohTransport` over the endpoint, the accept loop serving
 the sync route's router on the one ALPN, and the round, which runs at start
-and every sixty seconds (`Node::round` runs one now). Until the register
-answers (DESIGN §8, U1) the seed — each group's `roster.json` — does: the
-round dials every key the seeds of the groups the node holds name, by key,
-through addresses a caller seeds on the transport or iroh's lookup finds; the
-accept loop admits any dialer; and the sync route refuses (403) a dialer its
-group's seed does not name. `tests/node_sync.rs` runs two nodes and a
-stranger in one process. The round reads the node's `Host` and the
+and every sixty seconds (`Node::round` runs one now).
+
+Who is in a group is the register's (`register.rs`, DESIGN §6, U1):
+`RingRail::standing` answers a group's standing keys from `membership` over
+its seed — the group's `roster.json`, the founder's key alone — and the acts
+admission authenticates; a group the node does not hold answers `NotHeld`,
+and one with no seed `NoSeed`, which refuses everyone. Its four callers: the
+round dials every key standing in a group the node holds, by key, through
+addresses a caller seeds on the transport or iroh's lookup finds, and offers
+each group to its own; the accept loop admits a dialer standing in any group
+the node holds and closes the rest; the sync route refuses (403) a dialer not
+standing in the group its request names, and a group the node does not hold
+in the same words; and the door (`RingJournal::append`) signs only for a key
+standing in the seed and the acts it holds, under its write lock.
+`tests/group_not_mesh.rs` runs a founder, a member it admits, a stranger and
+a member of another group in one process. The round reads the node's `Host` and the
 `RingRail` directly: upstream's round read them through the `RingSyncHost`
 and `RingSyncJournal` traits, and with one implementor of each here the
 traits went (RUST_ARCH 7); `ring_sync::roster_of` is what remains of the

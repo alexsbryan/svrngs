@@ -13,10 +13,14 @@
 //! MEMBERS (`origins::stand_own`): a dialer the roster does not name never
 //! reached them. In svrngs [`router`] is an `axum::Router` its caller serves.
 //! What a member may then read is each ring's own question —
-//! the sync route asks the ring's roster about the dialer's key, which the
-//! acceptor ([`crate::iroh::IrohAcceptor`]) puts on every request it serves
-//! as a [`Dialer`] extension, through [`crate::ring_sync::roster_names`], the
-//! one test the sender also applies. No header names the asker. A request
+//! the sync route asks the ring's register whether the dialer's key stands
+//! in it ([`RingRail::standing`], the one answer the sender also asks), the
+//! key the acceptor ([`crate::iroh::IrohAcceptor`]) puts on every request it
+//! serves as a [`Dialer`] extension. No header names the asker. (svrngs:
+//! upstream asked whether the ring's seed named the key,
+//! `ring_sync::roster_names`; a ring this node does not hold is refused in
+//! the same words, before anything is opened, so the answer never says which
+//! rings a node holds — DESIGN §8, U1.) A request
 //! with no [`Dialer`] did not come on an iroh stream, and is refused: the
 //! route is served only there. (Upstream read the key from an
 //! `X-Mesh-Pubkey` header its acceptor stamped, and served a request with
@@ -33,8 +37,9 @@ use axum::{Extension, Json};
 
 use crate::iroh::Dialer;
 use crate::peer_wire::{RingSyncRequest, MAX_REQUEST_BODY_BYTES, RING_SYNC_OPS_BUDGET_BYTES};
-use crate::ring_sync::{answer, roster_names, roster_of};
-use crate::RingRail;
+use crate::register::Standing;
+use crate::ring_sync::answer;
+use crate::{Ed25519Verifier, RingRail};
 
 // rail.rs's refusal body, forked with the route (DESIGN §8, U1's inventory).
 pub(crate) fn err(status: StatusCode, msg: impl Into<String>) -> Response {
@@ -61,11 +66,7 @@ pub fn router(state: RingInbound) -> axum::Router {
 }
 
 /// Why this asker may not have this namespace, or `None` to serve it.
-async fn roster_refusal(
-    rail: &RingRail,
-    dialer: Option<Dialer>,
-    namespace: &str,
-) -> Option<String> {
+fn standing_refusal(rail: &RingRail, dialer: Option<Dialer>, namespace: &str) -> Option<String> {
     let Some(dialer) = dialer else {
         tracing::warn!(
             target: "rails",
@@ -77,22 +78,31 @@ async fn roster_refusal(
             "{namespace} is served to its roster over iroh, and this request did not come on an iroh stream"
         ));
     };
-    let key = dialer.key();
-    let roster = match roster_of(rail, namespace).await {
-        Ok(r) => r,
-        Err(e) => {
-            tracing::warn!(target: "rails", namespace, error = %e,
-                "ring sync: refused — this namespace's roster is unreadable, so nobody can be shown to be on it");
-            return Some(format!("{namespace}'s roster is unreadable on this node"));
+    let asker = dialer.actor();
+    // One sentence for every refusal below, so the answer never says whether
+    // this node holds the ring; the log says which it was.
+    let refusal = format!("{namespace} is not served to {asker} here");
+    match rail.standing(namespace, &Ed25519Verifier) {
+        Ok(standing) if standing.names(&asker) => {
+            tracing::debug!(target: "rails", namespace, asker, "ring sync: the asker stands in the ring");
+            None
         }
-    };
-    if roster_names(&roster, Some(key)) {
-        tracing::debug!(target: "rails", namespace, asker = %key, "ring sync: the roster names the asker");
-        return None;
+        Ok(Standing::NotHeld) => {
+            tracing::debug!(target: "rails", namespace, asker,
+                "ring sync: refused — this node holds no such ring, answered as a stranger is");
+            Some(refusal)
+        }
+        Ok(_) => {
+            tracing::debug!(target: "rails", namespace, asker,
+                "ring sync: refused — the asker holds no standing in this ring");
+            Some(refusal)
+        }
+        Err(e) => {
+            tracing::warn!(target: "rails", namespace, asker, error = %e,
+                "ring sync: refused — this ring's register is unreadable, so nobody can be shown to stand in it");
+            Some(refusal)
+        }
     }
-    tracing::warn!(target: "rails", namespace, asker = %key,
-        "ring sync: refused — this ring's roster does not name the asker");
-    Some(format!("{key} is not on {namespace}'s roster"))
 }
 
 /// `POST /internal/ring/sync` — one anti-entropy exchange for one namespace.
@@ -108,7 +118,7 @@ pub async fn ring_sync(
         Err(e) => return err(StatusCode::BAD_REQUEST, format!("malformed body: {e}")),
     };
     let dialer = dialer.map(|Extension(d)| d);
-    if let Some(refusal) = roster_refusal(&state.rail, dialer, &req.namespace).await {
+    if let Some(refusal) = standing_refusal(&state.rail, dialer, &req.namespace) {
         return err(StatusCode::FORBIDDEN, refusal);
     }
     let (response, more_for_caller) = match answer(state.rail.as_ref(), &req) {

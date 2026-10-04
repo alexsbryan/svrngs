@@ -111,10 +111,11 @@ fn the_door_refuses_to_author_under_a_key_the_ring_does_not_know() {
     };
     // TYPED, so the renderer that knows where this namespace's roster comes
     // from can say something else (`routes_rail::not_in_roster_refusal`).
-    // The Display is still the hand-written ring's instruction.
+    // (svrngs: the Display names the fix the register has, an `Admit`; the
+    // hand-written ring's `svrn ring roster add` did not come over.)
     let why = e.to_string();
     assert!(
-        why.contains("roster add"),
+        why.contains("admit"),
         "the refusal must name the fix: {why}"
     );
     assert_eq!(journal.read().unwrap().0.len(), 0, "nothing was written");

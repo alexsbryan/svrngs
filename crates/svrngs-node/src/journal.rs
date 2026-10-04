@@ -212,29 +212,49 @@ impl RingJournal {
         verifier: &dyn RingVerifier,
     ) -> Result<Vec<Op<SignedOp>>, RailError> {
         let actor = signer.actor();
-        // Authoring under a key the ring does not carry produces an op that
-        // every node — including this one — reports as `UnknownSigner`
-        // forever. Refusing at the door turns a permanent silent gap into one
-        // sentence naming the command that fixes it. Checked against OUR
-        // roster and OUR key, never against a field the caller supplied
-        // (ARCH §18.1).
+        let mut guard = self.log();
+        let log = &mut *guard;
+        log.held.catch_up(&log.oplog, &self.namespace)?;
+        let (held_ops, _) = log
+            .oplog
+            .read_all_with_skips()
+            .map_err(|e| RailError::Io(e.to_string()))?;
+        // Authoring under a key that holds no standing in the ring produces
+        // an op that every node — including this one — never counts.
+        // Refusing at the door turns a permanent silent gap into one
+        // sentence. Checked against OUR key's standing, never against a
+        // field the caller supplied (ARCH §18.1). (svrngs: standing is the
+        // register's — `roster` is the seed, folded with the acts this
+        // journal holds, under the write lock — where upstream asked whether
+        // the seed named the key, so a member the founder admits can write,
+        // DESIGN §8, "Four facts".)
         // TYPED, not a sentence: the command that fixes this depends on where
         // this namespace's roster comes from, and the door does not know —
         // `RingRail::roster_origin` does. A renderer picking the right words
         // by matching on the prose would be the string `match` §2.1 forbids.
-        if roster.person_for(&actor).is_none() {
+        let standing = crate::register::standing_in(&held_ops, roster, &self.namespace, verifier)?;
+        if !standing.contains_key(&actor) {
+            tracing::debug!(
+                target: "rail:door",
+                ns = %self.namespace,
+                actor = %actor,
+                standing = standing.len(),
+                "append refused — the signer holds no standing in the ring"
+            );
             return Err(RailError::NotInRoster {
                 actor: actor.clone(),
                 namespace: self.namespace.clone(),
             });
         }
+        tracing::debug!(
+            target: "rail:door",
+            ns = %self.namespace,
+            actor = %actor,
+            "append: the signer stands in the ring"
+        );
         if acts.is_empty() {
             return Ok(Vec::new());
         }
-
-        let mut guard = self.log();
-        let log = &mut *guard;
-        log.held.catch_up(&log.oplog, &self.namespace)?;
         let first_seq = log.held.next_seq.get(&actor).copied().unwrap_or(0);
 
         let ts_unix = SystemTime::now()
@@ -251,10 +271,6 @@ impl RingJournal {
                 );
                 RailError::Clock
             })?;
-        let (held_ops, _) = log
-            .oplog
-            .read_all_with_skips()
-            .map_err(|e| RailError::Io(e.to_string()))?;
         let view = digest(&held_ops, &self.namespace, verifier);
         drop(held_ops);
         let mut ops = Vec::with_capacity(acts.len());
@@ -662,11 +678,20 @@ impl RingJournal {
     /// left on this are that door and the writer (`svrn ring roster add`),
     /// which has to read the file it is about to rewrite.
     pub fn roster_file(&self) -> Result<Roster, RailError> {
+        Ok(self.seed()?.unwrap_or_default())
+    }
+
+    /// The roster file as the register reads it, the group's seed: `None`
+    /// when there is no file, so the register can say "no seed" rather than
+    /// read an empty roster as its answer (ARCH 6). [`Self::roster_file`] is
+    /// this with an absent file read as empty.
+    pub fn seed(&self) -> Result<Option<Roster>, RailError> {
         let path = self.roster_path();
         match std::fs::read_to_string(&path) {
             Ok(raw) => serde_json::from_str(&raw)
+                .map(Some)
                 .map_err(|e| RailError::Io(format!("{}: {e}", path.display()))),
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Roster::default()),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
             Err(e) => Err(RailError::Io(format!("{}: {e}", path.display()))),
         }
     }

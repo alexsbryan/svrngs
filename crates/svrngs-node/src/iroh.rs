@@ -326,8 +326,14 @@ impl Dialer {
     /// The record's actor: the key's lowercase hex, as
     /// [`actor_of`](svrngs_core::actor_of) spells a signer.
     pub fn actor(&self) -> String {
-        hex::encode(self.0.as_bytes())
+        key_actor(&self.0)
     }
+}
+
+/// The record's actor for an iroh key: its lowercase hex, as
+/// [`actor_of`](svrngs_core::actor_of) spells a signer.
+pub fn key_actor(key: &PublicKey) -> String {
+    hex::encode(key.as_bytes())
 }
 
 /// Server half: accept iroh connections, and serve each bi-stream of an
