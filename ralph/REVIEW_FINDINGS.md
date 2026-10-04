@@ -514,3 +514,191 @@ two names, with two rules: svrngs's `Name` (group.rs:41-56) and the core's
 | I8 | 6 | `code dry-report` scope | Still present: inline test modules and `*_tests.rs` siblings count as "first-party production" (link.rs's three tests above). |
 | I9 | 6, 7 | `code dry-report` near tier | New: one function split into two embedding chunks is reported as a near-clone of itself, `write` journal.rs:272–353 ~ `write` :354–440 (0.879). It is one `fn write` (journal.rs:272). |
 | I10 | 6 | `code dry-report` header | New: "654 function/method symbols" in all three scopes. The count is the corpus's, not the `--scope`'s; the next figure (273, 231, 62 locations) is the scope's. |
+
+## REVIEW-audit-u3-auto-1 (2026-10-04, range 7278e08..e2ef4ab)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-u2-auto-2, hash 7278e08
+(ralph/next/u2/STATE.md:13), made after this queue's first commit 371d63d;
+so the range starts there (the row's correction, c3e24be) and ends at
+e2ef4ab, the commit that added this row. It covers u2-8 and u2-9 (the u2
+queue's last two rows, which no audit covered), u3-1 to u3-4, and the
+operator's 4a5fb20 (redeem.rs's routes as doors). c05fca5, 707c1b8 and the
+`ralph:` commits touch no product code. The range touched crates/svrngs-core,
+crates/svrngs-node, crates/svrngs, apps/expenses and the deleted bridge/
+(`git diff --stat 7278e08 e2ef4ab -- crates bridge apps`, 52 files).
+
+### (1) Net lines per unit, product code
+
+`git log --reverse --numstat --format='@@%h %s' 7278e08..e2ef4ab`, summed by
+unit. A commit counts toward the row whose `started` commit comes before
+it; the operator's 4a5fb20, made inside u3-4's window, has its own line.
+Product code is `crates/`, `bridge/` and `apps/`; Cargo.lock is left out.
+Tests are files with a `tests/` or `fixtures/` segment or a name lean_check
+counts as a test (scripts/lean_check.py:33). Raw diff lines, comments
+included; inline `#[cfg(test)]` modules count as src, as lean_check counts
+them (#29).
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| u2-8-link-short | 597 | 382 | 215 | 463 | 273 | 190 |
+| u2-9-person-parsed | 141 | 76 | 65 | 213 | 27 | 186 |
+| u3-1-carve | 5 | 785 | −780 | 3 | 257 | −254 |
+| u3-2-api | 817 | 167 | 650 | 701 | 71 | 630 |
+| u3-3-live | 604 | 94 | 510 | 541 | 62 | 479 |
+| u3-4-door | 1042 | 23 | 1019 | 931 | 0 | 931 |
+| operator 4a5fb20 | 93 | 51 | 42 | 132 | 0 | 132 |
+| total | 3299 | 1578 | 1721 | 2984 | 690 | 2294 |
+
+u2-8's +215 is mostly redeem.rs's ask (+150) and cli.rs (+54). u3-1's −780
+includes 352 lines of bridge/ JSON (package-lock.json 312, package.json 15,
+words.json 6, and setup's) that lean_check never counted. u3-2's +650 is
+rail.rs (+438) and api.rs (+139); u3-3's +510 is rail.rs (+218), live.rs
+(+197) and ring_routes.rs (+61); u3-4's +1019 is door.rs (+444), lend.rs
+(+280) and declared.rs (+276), the last two with 193 lines of inline tests
+(#29). `python3 scripts/lean_check.py <tree>` (rc 0), trees from `git
+archive`:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 7278e08, range start | 1753 / 2500 | 6680 / 12000 |
+| e2ef4ab, range end | 1796 / 2500 | 8087 / 12000 |
+| 85eb5c0 (#25) | 1796 | 8079 |
+| ad5a006 (#26) | 1796 | 8074 |
+| 4606b07 (#27) | 1796 | 8074 |
+| f6037ed (#28) | 1796 | 8065 |
+| 3375e11 (#29) | 1796 | 7923 |
+| 4726651 (#30), after this audit's fixes | 1796 / 2500 | 7923 / 12000 |
+
+The fixes remove 164 repository lines: 142 moved test lines (#29), 9 from
+#28, 8 from #25, 5 from #26. The bodies of 85eb5c0 and ad5a006 give 8083
+and 8076, figures written before measuring; this table, measured at each
+commit, replaces them.
+
+### (2) Clones (`code dry-report`), each tier checked against a plant first
+
+The binary is ~/dev/commonwealth-ai/target/debug/sovereign-cli, built
+2026-10-04 08:02. The corpus came from `code index ~/dev/svrngs
+--corpus-id svrngs --full` (1266 chunks); the SCIP graph from `refresh`
+(rust: 5952 symbols; TypeScript export failed again, I4). On the
+range-end code, unplanted, at the default 0.95: crates/svrngs-core 0 exact
+and 0 near (280 locations); crates/svrngs-node 0 exact and 1 near (361);
+crates/svrngs/ 0 and 0 (67); apps/expenses 0 and 0 (19). The one cluster:
+
+- `harden_file` declared.rs:123–132 ~ `harden_file` :140–148 (0.966), both
+  sides added in the range (4fb6c70). No change (#32): the `cfg(unix)` and
+  `cfg(not(unix))` bodies of one function, and each 10-line chunk spans its
+  neighbour too (I9).
+
+Then the plants, re-indexed `--full` with `refresh`:
+
+- **Plant A** (exact tier): door.rs's `person_of`, which u3-4 added, copied
+  byte for byte with its doc lines to the end of live.rs. Result: **1
+  group**, `person_of — door.rs:130` and `live.rs:200` (the `fn` is at
+  :131, so I1 is still present).
+- **Plant B1** (near tier): lend.rs's `comparable` as `normalized` at the
+  end of api.rs under another doc line. **Never reported**, at any
+  threshold, scoped or not (I13).
+- **Plant B2** (near tier, across crates): `person_of`'s body as
+  `who_stands` at the end of crates/svrngs/src/cli.rs. No per-crate run
+  reports it at any threshold (I12). Unscoped: missed at 0.95, first at
+  0.9, `person_of ~ who_stands` (0.919) (I5).
+- With the plants removed and `--full` again: the unplanted counts above,
+  exactly.
+
+So the default near tier **could not judge**, and the scoped runs could not
+judge a copy across crates. The near tier was rerun unscoped at 0.85,
+where B2 showed (B1 never did): 75 clusters. A side counts as **added**
+when its `fn` name is not defined in its crate at 7278e08 (`git grep -hoE
+'fn [A-Za-z0-9_]+' 7278e08 -- <crate>`). Every 0.85 cluster with an added
+side (expenses.js's `settleKey ~ splitShares` came up as added only because
+the regex reads `fn`, not `function`; both exist at 7278e08):
+
+| cluster (dry-report, 0.85, unscoped) | disposition |
+|---|---|
+| `ring_sync` ring_routes.rs:120–176 ~ added `ring_live` :177–223 (0.867) | no change (#32): both already ask one `standing_refusal`; **its doc was stale, fixed in 4726651** (#30) |
+| added `standing_of` rail.rs:122–174 ~ `standing` register.rs:97–140 (0.875) | no change (#32): `standing_of` asks `standing` and maps each answer to a response |
+| added `drain_answer` rail.rs:610–633 ~ `live_push` :630–646 ~ `live_drain` :643–655 (0.884–0.891) | no change (#32): a door and its two routes, overlapping chunks (I9) |
+| `answer` redeem.rs:270–295 ~ added `serve_ask` :294–322 (0.857) | no change (#32): the wire's answer and one decision it answers |
+| `router` redeem.rs:243–254 ~ added `ask_route` :250–263 (0.918) | no change (#32): neighbouring chunks (I9) |
+| `harden_file`, `harden_dir`, `write_owner_only` declared.rs:123–153, five chunks (0.868–0.966) | no change (#32), as above |
+| added `bind` api.rs:132–147 ~ `serve` :144–158 (0.876) | no change (#32): neighbours (I9) |
+| added `issuer_addr` link.rs:90–102 ~ `encode` :99–117 (0.875) | no change (#32): neighbours (I9) |
+| added `lends_dir` lend.rs:172–180 ~ `secret_dir` :178–186 (0.887) | no change (#32): two paths, one line each |
+| added `parse` svrngs-core lib.rs:227–235 ~ `as_str` :231–239 (0.874) | no change (#32): neighbours (I9) |
+| tests: `a_seal_renders_its_prune` rail/tests.rs:217–243 ~ two in tests.rs (0.858–0.862); ring_routes/tests.rs :169–209, :209–247 (0.871, 0.873); declared.rs's two owner-only tests :230–265 (0.870); door/tests.rs `map ~ identity` :3–31 (0.866); link_tests.rs `issuer ~ a_token` :1–18 (0.869); redeem/tests.rs `hal ~ request` :30–42 (0.857) | no change (#32): tests stating their own cases, or neighbouring builders; inline ones counted as production (I8) |
+
+**Substitute check, named as a substitute.** The same pass as the u2
+audits: every run of 5 normalized lines over crates/**/*.rs, test files
+included, hashed; a hit is **new** when a line of either span is blamed
+inside the range by `git blame -w -M -C -C`, or is uncommitted. Planted (A,
+B1, B2 above): `NEW api.rs:163-168 == lend.rs:96-101`, `NEW api.rs:185-192
+== lend.rs:118-125`, `NEW door.rs:129-154 == live.rs:199-224`, `NEW
+door.rs:132-154 == cli.rs:685-707`, `NEW live.rs:202-224 == cli.rs:685-707`
+(red: all three plants, B1 included). Unplanted, the output equals the
+planted output less those five lines (green). Every new-side hit at
+e2ef4ab:
+
+| hit | disposition |
+|---|---|
+| svrngs cli.rs:486-490 == :551-555, read out to join_group :475-490 and new_group :543-555 (keep a group: journal, seed, origin, roster) | **fixed in f6037ed** (#28). Its body cites :476-491 and :545-557; these lines, from `git show e2ef4ab:…`, are the sites |
+| rail.rs:431-439 == :638-642 (`append`'s and `live_push`'s `namespace_of` match) | no change (#32): each door's parse step, one call |
+| svrngs-node tests group_not_mesh.rs:37-41 == record_api.rs:108-112; :59-72 == :55-68 | **recorded, #31** |
+| record_api.rs:169-173 == :208-212, :238-243 == :353-358; ring_routes/tests.rs:98-102 == :288-292; join_by_link.rs:203-207 == :486-490, :261-265 == :494-498 | no change (#32): a request or an assertion written with its arguments in each test |
+
+Reading the range's diff found two repeats neither pass shows, because one
+is a loop with different traces and the other a one-expression predicate:
+#25 and #26.
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff 7278e08 e2ef4ab -- crates apps`, added lines matching
+`(struct|enum|trait|type) Name`: **Format**, **Token** (link.rs);
+**NotAName**, **Name**, **Person** (svrngs-core lib.rs; `Name` moved there
+from svrngs group.rs and `Person` rewritten, u2-9); **AskRequest**,
+**Asked**, **Issuer**, **SeedText** (redeem.rs); **Refusal**, **Bound**,
+**Serving** (api.rs); **RailApi**, **RailQuery**, **LiveBuffer**,
+**LiveBufferInner** (rail.rs); **LivePeer**, **PeerDelivery** (live.rs);
+**Door** (door.rs); **Lend**, **LendFile**, **LendName**, **RefusedPath**,
+**LendError** (lend.rs); **Printed** (cli.rs); **Pair**, **Reply**
+(tests/door/main.rs). Removed: `Dial` (link.rs, u2-8).
+
+Twenty-four production nouns have exactly one definition each. `Pair`
+and `Reply` give `definitions (0)`, since the tool skips `tests` paths.
+**`Refusal` gives `definitions (2)`**: crates/svrngs/src/cli.rs:180 and
+crates/svrngs-node/src/api.rs:26 (the `enum`s are at :181 and :27, I1).
+That real hit is the check's red; after #27 and a `refresh`, `Refusal`
+gives `(1)`, cli.rs:180, and `ApiError` `(1)`, api.rs:27 (green). 4606b07's
+body claims the second before it was run: the tool then answered `(0)`,
+because the graph had not been refreshed. The run above is the evidence.
+
+Read for meaning, `LendName` and a declared header's name were one rule in
+two bodies (#26), and the door's `person_of` was the acceptor's question
+(#25). The rest name one thing each.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 25 | 8 | crates/svrngs-node/src/node.rs:312-333 (`admit_dialer`'s loop) and crates/svrngs-node/src/door.rs:129-157 (`person_of`), at e2ef4ab | 85eb5c0 | Two deciders of "the first group held that this key stands in": same order, same rule for an unreadable register, different traces. A change to one, such as how a seedless group counts, would admit a member at the protocol and refuse them at the door, or the reverse. `RingRail::standing_anywhere` (register.rs) answers both. Both callers' tests hold it: planted `None`, door/main.rs fails 9 of 9, group_not_mesh.rs 2 of 2 and record_api.rs 5 of 9. |
+| 26 | 8 | crates/svrngs-node/src/lend.rs:32-37 (`LendName::parse`) and crates/svrngs-node/src/declared.rs:30-35 (`valid_header_name`), at e2ef4ab | ad5a006 | One predicate (1..=64 bytes, ASCII letters, digits, `-`, `_`) in two bodies, for two names that each become a file under the data dir and a wire token. `LendName::parse` asks `valid_header_name`. u3-5 writes both. |
+| 27 | 8 ("one name") | crates/svrngs-node/src/api.rs:27 and crates/svrngs/src/cli.rs:181, at e2ef4ab | 4606b07 | `converge noun Refusal`: two `Refusal` types, the command's and the API bind guard's. The node crate's is `ApiError` now, in line with NodeError, LendError, RedeemError and OplogError. |
+| 28 | 8 ("collapse the drive") | crates/svrngs/src/cli.rs:475-490 (`join_group`) and :543-555 (`new_group`), at e2ef4ab | f6037ed | The same group-keeping sequence was written twice: open the journal, write the seed, write the origin when there is one, set the roster. It is now `keep_group`. When planted to keep no origin, join_by_link.rs fails 2 of 6 and new.rs fails 1 of 10. |
+| 29 | 5 (budget), 10 | crates/svrngs-node/src/declared.rs:153-276 and crates/svrngs-node/src/lend.rs:212-280, at e2ef4ab; scripts/lean_check.py:33 | 3375e11 | #21's case again. u3-4 landed both files with their test modules inline, so 142 lean_check lines of tests counted as product code. They now live in declared/tests.rs and lend/tests.rs, as door/, rail/ and redeem/ keep theirs. The blocks are equal but for whitespace, with 9 and 4 tests before and after. This is the second time. The structural fix is a lean_check rule that counts a `mod tests {` body as test, or refuses one. That is a gate change, so it belongs to the operator. |
+| 30 | 3 | crates/svrngs-node/src/ring_routes.rs:176-180 (`ring_live`'s doc), at e2ef4ab | 4726651 | The doc said a namespace with no live registration was refused. bfb6300 replaced that check with `standing_refusal`, and the route reads no registration. |
+| 31 | 8 (tolerable code, not deciding) | crates/svrngs-node/tests/group_not_mesh.rs:23-72 and crates/svrngs-node/tests/record_api.rs:26-68, :108-112; crates/svrngs-node/tests/door/main.rs:35-42; crates/svrngs-node/tests/accept.rs:31-33; crates/svrngs-node/tests/common/mod.rs | not fixed | u3-2 to u3-4 copied the test fixtures `signing` (3 copies), `no_seed` (3), `no_relay` (2), `key` (3: accept.rs's builds it through iroh's `SecretKey`, which gives the same key), `start` (2), `hold` (2) and `founded_by` (2, with the founder named "founder" in one and "ada" in the other) across the node's test binaries. tests/common/mod.rs exists for this case (REVIEW-audit-u1-auto-1). Not moved here: the unshared ones would trip `dead_code` under `-D warnings` in each binary that does not use them, which needs an allow or a split of common/. Moving them is a test-only change and decides nothing. It is the next one to make when another binary needs a node. |
+| 32 | 8 | the "no change" rows in (2) | no change | Each is one of: a door and the decision it asks; a `cfg` pair; neighbouring chunks of one file; a parse step written as one call; tests stating their own cases. Nothing is decided twice. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code dry-report` exact tier; `code converge noun` | Still present. Plant A was reported at door.rs:130 / live.rs:200 for `fn`s at :131 / :201. `Refusal` was reported at cli.rs:180 / api.rs:26 (:181 / :27). `ApiError` was reported at api.rs:27 (:28). |
+| I4 | 6 | `refresh` | Still present: "typescript: skipped (export failed)". |
+| I5 | 5, 7 | `code dry-report` near tier | Still present. A renamed byte-identical body (`who_stands`) is missed at the default 0.95 and first appears at 0.9 (0.919), while the report says "No duplication found". |
+| I8 | 6 | `code dry-report` scope | Still present. declared.rs's inline tests appear as "first-party production". |
+| I9 | 6, 7 | `code dry-report` near tier | Still present. Chunks overlap their neighbours (`harden_file` 123–132 covers `harden_dir` 129–132), so neighbours are reported as near clones: `bind ~ serve`, `router ~ ask_route`, `drain_answer ~ live_push`. |
+| I10 | 6 | `code dry-report` header | Still present. Every scope's header says "764 function/method symbols". |
+| I11 | 6 | `code dry-report --scope` | New. The scope is a string prefix. `--scope crates/svrngs` considered 708 locations (280 svrngs-core + 361 svrngs-node + 67 svrngs) and reported declared.rs's cluster as the svrngs crate's. Only `--scope crates/svrngs/` scopes the crate. |
+| I12 | 5, 6 | `code dry-report --scope` | New. A scoped run compares only within its scope, so a copy in another crate is never seen. Plant B2 (svrngs `who_stands`, a renamed copy of svrngs-node's `person_of`) is in no per-crate report at any threshold, and the report still says "No duplication found". The row's per-crate-dir runs therefore cannot judge a clone across crates. |
+| I13 | 6, 7 | `code dry-report` symbol set | New. Plant B1 was `normalized`, appended at api.rs:162: 31 lines, a renamed copy of lend.rs's `comparable`. It is absent from the report even at `--threshold 0.0 --min-lines 1` (every symbol the tool considers is listed there), after `code index --full` (1268 chunks) and `refresh`. `comparable` itself is present. The report gives no sign that a function was left out. The cause was not found. |
+| I14 | 6 | `code index` incremental | New. A plant was edited after an earlier incremental run. The next run printed "3 changed file(s) since commit 32afc065" and then "0 file(s) changed — 0 chunk(s) embedded", so the edit was not embedded. Only `--full` picked it up. Every count in this section comes from a `--full` index. |
