@@ -178,15 +178,6 @@ these from its first line; forked code is held to them as it becomes ours.
 Upstream's shape stays until a unit changes it: the node's map of open
 journals sits behind a `Mutex`, which an actor per journal replaces.
 
-**The architecture** (operator, 2026-10-04). svrngs is local-first event
-sourcing: each group's record is an append-only log of signed events (acts),
-replicated as a grow-only CRDT, and every piece of state is a projection
-folded from it. Each node is a functional core of deciders and process
-managers behind ports and adapters, sans-IO, and the log is written ahead of
-any effect that cannot be undone. That rigidity binds the library, the source
-of primitives; above it, apps and communities do what they want with them —
-mechanism, not policy, and the infra holds no app's noun (`vocab_check.py`).
-
 | Invariant | Held by | State |
 |---|---|---|
 | Same acts, same state: a group's state is a pure function of its set of acts | svrngs-core is `no_std`, and `lean_check` keeps it so; folds read acts only through `Admission` | `no_std` holds; `membership` still sorts raw ops |
