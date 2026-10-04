@@ -39,6 +39,8 @@ id admission derived (`derive_id`), never the line's. A link is in the record
 (DESIGN §6 "A link admits each person once"): an `Invite` names its key and
 lapse, and `membership` counts an `Admit` redeeming one only under the rule
 in `membership.rs`'s module docs, naming each refusal a `RefusedRedemption`.
+An issuer's newer `Invite` closes their older one from its place in the
+order, so what the older link admitted keeps standing.
 
 **`crates/svrngs-node`**: a group's journal on disk — one append-only JSONL
 log per group under `<root>/rings/<ns>/` (`journal.rs`), the single-writer

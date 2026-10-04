@@ -247,12 +247,15 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   the person and the key (`Redemption`, `crates/svrngs-core/src/lib.rs`).
   `membership` counts it only when its signer signed the `Invite`, the
   `Invite` is held, counted earlier in the order and no counting `Correct`
-  voids it, the `Admit` is timed before `until`, and the co-signature
-  verifies; otherwise admission names a `RefusedRedemption` gap with its
-  `InviteFault`. The void set is order-free, so a `Correct` of an `Invite`
-  unseats every key it admitted, as voiding each `Admit` would; that is why a
-  link closes by its issuer's next `Invite`, never by a `Correct` (u2-4b).
-  Both kinds ship at line version 3.
+  voids it, no newer `Invite` of the issuer's counted before the `Admit`, the
+  `Admit` is timed before `until`, and the co-signature verifies; otherwise
+  admission names a `RefusedRedemption` gap with its `InviteFault`. A link
+  closes by its issuer's next `Invite`, from that `Invite`'s place in the
+  order (u2-4b, landed: `InviteFault::Closed` names the newer `Invite`), so
+  everyone the old link admitted keeps standing. A `Correct` of an `Invite`
+  is not how a link closes: the void set is order-free, so it unseats every
+  key the `Invite` admitted, as voiding each `Admit` would (`Voided`). Both
+  kinds ship at line version 3.
 - **Ids cover everything signed** (U2, landed): the id is the whole hash of
   the namespace, actor, seq, previous act, timestamp and body, and the
   signature is over the id (`act_id` and `ring_op_message`,
@@ -396,7 +399,8 @@ issuer's computer is reachable; Sam's always-on computer is, in both demos,
 and any member redeeming waits in §9. *A new link closes the old one:* an
 issuer has one open link per group, and minting another closes the last from
 its place in the order: a redemption under the old link after the new one is
-refused, and nobody the old link admitted loses standing (u2-4b). So a leaked
+refused, and nobody the old link admitted loses standing (u2-4b, landed in
+`membership`, `crates/svrngs-core/src/membership.rs`). So a leaked
 link is closed by sending a new one, with no verb of its own. (Until
 2026-10-04 this said the new link voids the old with a `Correct`; voids are
 order-free, so that would have unseated everyone the old link admitted.) *No person's key seals yet:* `Admit.key` signs and dials, and

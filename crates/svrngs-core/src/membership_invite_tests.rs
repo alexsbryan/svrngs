@@ -8,10 +8,16 @@ use crate::{actor_of, admit, Admission, Ed25519Verifier, RailGap};
 
 /// The link's key: the `Invite` names its public half.
 const LINK: u8 = 9;
+/// The key of the issuer's second link.
+const LINK_TWO: u8 = 10;
 
 fn invite(until: i64) -> RailAct {
+    invite_for(LINK, until)
+}
+
+fn invite_for(link: u8, until: i64) -> RailAct {
     RailAct::Invite {
-        key: actor_of(&key(LINK)),
+        key: actor_of(&key(link)),
         until,
     }
 }
@@ -86,8 +92,8 @@ fn a_redemption_under_a_lapsed_invite_is_refused() {
     refused_for(&a, &dee, InviteFault::Lapsed, &[4]);
 }
 
-/// A `Correct` of the `Invite` closes the link. Watched failing with the
-/// void ignored.
+/// A `Correct` of the `Invite` voids the link, and is not how it closes
+/// (u2-4b). Watched failing with the void ignored.
 #[test]
 fn a_redemption_under_a_voided_invite_is_refused() {
     let inv = signed(&key(1), 100, 0, invite(200));
@@ -102,7 +108,7 @@ fn a_redemption_under_a_voided_invite_is_refused() {
     );
     let dee = after(&key(1), &close, 102, redeem(&inv, "dee", 4));
     let a = admitted(&[inv, close, dee.clone()]);
-    refused_for(&a, &dee, InviteFault::Closed, &[4]);
+    refused_for(&a, &dee, InviteFault::Voided, &[4]);
 }
 
 /// Only the `Invite`'s signer redeems it: bo stands, but alex made the
@@ -176,4 +182,55 @@ fn the_link_ships_at_its_own_line_version() {
             crate::MEMBERSHIP_LINE_VERSION
         )
     );
+}
+
+/// A new link closes the old one from its place in the order (u2-4b, DESIGN
+/// §8): dee, eve and fay redeem link one; alex appends link two; gus, under
+/// link one after it, is refused `Closed` by link two, while the three keep
+/// standing and their own acts count, and hal under link two stands.
+/// Watched failing with the older `Invite` voided (the three lose standing)
+/// and with closing ignored (gus stands).
+#[test]
+fn a_newer_link_closes_the_older_and_keeps_whom_it_admitted() {
+    let one = signed(&key(1), 100, 0, invite(300));
+    let dee = after(&key(1), &one, 101, redeem(&one, "dee", 4));
+    let eve = after(&key(1), &dee, 102, redeem(&one, "eve", 5));
+    let fay = after(&key(1), &eve, 103, redeem(&one, "fay", 6));
+    let two = after(&key(1), &fay, 105, invite_for(LINK_TWO, 300));
+    let hal = after(&key(1), &two, 106, redeem(&two, "hal", 8));
+    // gus last in alex's chain: a refused act is not admitted, so one
+    // mid-chain is also a `SequenceHole` (admit's audit), not this test's.
+    let gus = after(&key(1), &hal, 107, redeem(&one, "gus", 7));
+    let mut writes = Vec::new();
+    for k in [4, 5, 6] {
+        writes.push(signed(&key(k), 108, 0, crate::tests_support::record("hi")));
+    }
+    let mut ops = vec![one, dee, eve, fay, two.clone(), gus.clone(), hal];
+    ops.extend(writes.iter().cloned());
+    let a = admitted(&ops);
+    refused_for(&a, &gus, InviteFault::Closed { by: two.id }, &[7]);
+    for k in [4, 5, 6, 8] {
+        assert!(standing(&a, k), "key {k} stands");
+    }
+    let m = a.membership.as_ref().unwrap();
+    for w in &writes {
+        assert!(m.counts(&w.id), "{} still counts", w.actor);
+    }
+}
+
+/// A redemption under link one timed before link two counts wherever it
+/// arrives: a copy that holds link two first does not count gus, and once
+/// gus's `Admit` arrives, last, gus stands. Watched failing with the older
+/// `Invite` voided.
+#[test]
+fn a_redemption_timed_before_the_newer_link_counts_when_it_arrives_late() {
+    let one = signed(&key(1), 100, 0, invite(300));
+    let gus = after(&key(1), &one, 104, redeem(&one, "gus", 7));
+    let two = after(&key(1), &gus, 105, invite_for(LINK_TWO, 300));
+    let early = admitted(&[one.clone(), two.clone()]);
+    assert!(!standing(&early, 7), "gus is not yet held");
+    assert!(early.membership.as_ref().unwrap().counts(&two.id));
+    let late = admitted(&[one, two, gus]);
+    assert_eq!(late.gaps, vec![], "nothing is refused");
+    assert!(standing(&late, 7), "gus stands");
 }

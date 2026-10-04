@@ -523,7 +523,7 @@ pub fn admit(
             gaps.push(RailGap::RefusedRedemption {
                 id,
                 actor: op.actor.clone(),
-                fault: *fault,
+                fault: fault.clone(),
             });
             continue;
         }

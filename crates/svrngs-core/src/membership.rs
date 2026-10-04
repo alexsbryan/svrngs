@@ -44,6 +44,16 @@
 //! [`Membership::refused`] with its [`InviteFault`], and binds nothing in
 //! either layer — a refused redemption's key lands no voids. An `Admit`
 //! naming no `Invite` keeps the rule above.
+//!
+//! An issuer has one open link (u2-4b, DESIGN §8 "A new link closes the old
+//! one"): their newest counting `Invite` at a place in the walk. A
+//! redemption under an older one of theirs, after the newer, is refused
+//! [`InviteFault::Closed`]; what the older link admitted before keeps its
+//! standing, since closing is a place in the order and voids are not.
+//! Known limit, as for a `Remove` above: the void layer cannot see an
+//! order, so a closed redemption's key still binds there and can land
+//! voids. Only the issuer signs a redemption, so one exists only if the
+//! issuer's own node redeemed a link it had closed.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -52,14 +62,13 @@ use crate::op::Op;
 use crate::{OpId, Person, RailAct, Redemption, Roster, SignedOp};
 
 /// Why a redeeming `Admit` does not count — one per condition of the rule
-/// in the module docs, checked in this order.
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
-)]
+/// in the module docs.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum InviteFault {
-    /// A counting `Correct` voids the `Invite`: its issuer closed the link.
-    Closed,
+    /// A counting `Correct` voids the `Invite`, and with it everything it
+    /// admitted: voids are order-free, so this is not how a link closes.
+    Voided,
     /// No `Invite` with that id is held here.
     Unheld,
     /// The `Admit`'s signer is not the `Invite`'s.
@@ -70,17 +79,21 @@ pub enum InviteFault {
     BadCosignature,
     /// The `Invite` did not count before the `Admit` in the rail's order.
     Uncounted,
+    /// The issuer's newer `Invite`, `by`, counted before the `Admit` in the
+    /// rail's order and closed this one (u2-4b).
+    Closed { by: OpId },
 }
 
 impl std::fmt::Display for InviteFault {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
-            Self::Closed => "its link was closed",
+            Self::Voided => "its link was taken back",
             Self::Unheld => "this node does not hold its link",
             Self::NotIssuer => "its link was made by someone else",
             Self::Lapsed => "its link had lapsed",
             Self::BadCosignature => "the joining key did not sign it",
             Self::Uncounted => "its link did not count before it",
+            Self::Closed { .. } => "its link was closed by a newer one",
         })
     }
 }
@@ -215,16 +228,25 @@ pub fn membership<'a>(
     let mut live: BTreeMap<String, Person> = bindings.clone();
     let mut counted: BTreeSet<OpId> = BTreeSet::new();
     let mut refused: BTreeMap<OpId, InviteFault> = BTreeMap::new();
+    // Each issuer's newest counting `Invite` so far: their one open link.
+    let mut open: BTreeMap<&str, &OpId> = BTreeMap::new();
     for (id, op) in order {
         if !live.contains_key(&op.actor) {
             continue;
         }
         let fault = match redeems.get(id) {
             None => None,
-            Some(Err(fault)) => Some(*fault),
-            Some(Ok(invite)) if voided.contains(*invite) => Some(InviteFault::Closed),
+            Some(Err(fault)) => Some(fault.clone()),
+            Some(Ok(invite)) if voided.contains(*invite) => Some(InviteFault::Voided),
             Some(Ok(invite)) if !counted.contains(*invite) => Some(InviteFault::Uncounted),
-            Some(Ok(_)) => None,
+            // Counted, so it opened: the issuer (the signer, past NotIssuer)
+            // has an open link, and it is this one or a newer one.
+            Some(Ok(invite)) => open
+                .get(op.actor.as_str())
+                .filter(|newest| **newest != *invite)
+                .map(|newest| InviteFault::Closed {
+                    by: (*newest).clone(),
+                }),
         };
         if let Some(fault) = fault {
             tracing::debug!(
@@ -252,6 +274,16 @@ pub fn membership<'a>(
             RailAct::Remove { key, .. } => {
                 tracing::debug!(target: "rail:membership", key = %key, "membership: standing lost");
                 live.remove(key);
+            }
+            RailAct::Invite { .. } => {
+                let older = open.insert(op.actor.as_str(), id);
+                tracing::debug!(
+                    target: "rail:membership",
+                    id = %id,
+                    actor = %op.actor,
+                    closes = ?older,
+                    "membership: a link opens, closing its issuer's older one"
+                );
             }
             _ => {}
         }
