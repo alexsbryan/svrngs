@@ -17,6 +17,16 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// makes one `write(2)` atomic, and this makes sure there is one. It is also
 /// what makes the next sequence number safe to compute — fold the log, take
 /// the highest, add one — with no window for two appends to pick the same one.
+///
+/// Lines reach it only through [`svrngs_core::commit`]:
+/// ```
+/// fn writes(j: &svrngs_node::RingJournal) -> &impl svrngs_core::Store { j }
+/// ```
+/// ```compile_fail
+/// fn writes(j: &svrngs_node::RingJournal, k: &svrngs_node::SigningKey, r: &svrngs_node::Roster) {
+///     j.append(svrngs_node::RailAct::Seal, k, r, None, &svrngs_node::Ed25519Verifier);
+/// }
+/// ```
 pub struct RingJournal {
     namespace: String,
     dir: PathBuf,
@@ -190,26 +200,9 @@ impl RingJournal {
         ))
     }
 
-    /// Sign and append one act under this node's key.
-    ///
-    /// Refuses only what the rail can judge — see the module docs on the
-    /// door. The whole operation holds the writer lock, so `seq` cannot be
-    /// handed out twice.
-    ///
-    /// `on_behalf_of` states whose words the act was when the key signing it
-    /// is not theirs — see [`SignedOp::on_behalf_of`]. A parameter rather
-    /// than a second `append_*` door: the name is inside the signature, so a
-    /// caller that could sign without deciding about it would be a second
-    /// answer to what these bytes are (ARCH §10.6). `None` is every caller
-    /// that writes its own acts.
-    ///
-    /// The act's `view` is stamped HERE, never caller-supplied: this
-    /// journal's [`digest`] over everything authentic it holds, the writer's
-    /// claimed view of the ring at the moment of writing (the DAG heads of
-    /// `RING_APP_LIBRARY.md` §19 step 0). It needs the verifier for the same
-    /// reason `digest` does — an unauthenticated line is not part of anyone's
-    /// honest view — so the scheme that judged the holdings is named at the
-    /// door like every other answer of this shape.
+    /// A test's fixture, written through [`commit`](svrngs_core::commit) like
+    /// every other act: never compiled outside tests.
+    #[cfg(test)]
     pub fn append(
         &self,
         act: RailAct,
@@ -218,198 +211,24 @@ impl RingJournal {
         on_behalf_of: Option<&str>,
         verifier: &dyn RingVerifier,
     ) -> Result<Op<SignedOp>, RailError> {
-        let mut ops = self.append_all(vec![act], signer, roster, on_behalf_of, verifier)?;
-        Ok(ops.remove(0))
-    }
-
-    /// Sign and append several acts under this node's key, in order, with
-    /// ONE write.
-    ///
-    /// [`Self::append`] is this with one act. The next sequence number comes
-    /// from the write index ([`Held`]), which reads only the log's tail, and
-    /// so does the previous act it names (svrngs, U2); the seqs are
-    /// contiguous from it, which the writer lock makes safe
-    /// exactly as it does for one act. The write is one `write(2)`, so the
-    /// batch lands whole or not at all, and one fsync rather than one per act.
-    ///
-    /// Every act in the batch carries the SAME `view`: the journal's
-    /// [`digest`] over what it held before this write. The batch is one
-    /// atomic write, so "the moment of writing" is one moment. The view is
-    /// the one thing here the write index cannot answer from the tail — it
-    /// folds and verifies the whole log — so it costs one read per batch,
-    /// never one per act.
-    ///
-    /// They carry the same `ts_unix` too: the later of the wall clock and
-    /// one second past the newest act the journal holds, so an act sorts
-    /// after every act its signer has seen (DESIGN §6).
-    pub fn append_all(
-        &self,
-        acts: Vec<RailAct>,
-        signer: &dyn RingSigner,
-        roster: &Roster,
-        on_behalf_of: Option<&str>,
-        verifier: &dyn RingVerifier,
-    ) -> Result<Vec<Op<SignedOp>>, RailError> {
-        let kept = self.write(acts, signer, roster, on_behalf_of, verifier, |_, _| {
-            Ok::<(), std::convert::Infallible>(())
-        })?;
-        Ok(kept.unwrap_or_else(|never| match never {}))
-    }
-
-    /// [`Self::append_all`], with `keep` asked of the signed batch before it
-    /// is written.
-    fn write<E>(
-        &self,
-        acts: Vec<RailAct>,
-        signer: &dyn RingSigner,
-        roster: &Roster,
-        on_behalf_of: Option<&str>,
-        verifier: &dyn RingVerifier,
-        keep: impl FnOnce(&[Op<SignedOp>], &[Op<SignedOp>]) -> Result<(), E>,
-    ) -> Result<Result<Vec<Op<SignedOp>>, E>, RailError> {
-        let actor = signer.actor();
-        let mut guard = self.log();
-        let log = &mut *guard;
-        log.held.catch_up(&log.oplog, &self.namespace)?;
-        let (held_ops, _) = log
-            .oplog
-            .read_all_with_skips()
-            .map_err(|e| RailError::Io(e.to_string()))?;
-        // Authoring under a key that holds no standing in the ring produces
-        // an op that every node — including this one — never counts.
-        // Refusing at the door turns a permanent silent gap into one
-        // sentence. Checked against OUR key's standing, never against a
-        // field the caller supplied (ARCH §18.1). (svrngs: standing is the
-        // register's — `roster` is the seed, folded with the acts this
-        // journal holds, under the write lock — where upstream asked whether
-        // the seed named the key, so a member the founder admits can write,
-        // DESIGN §8, "Four facts".)
-        // TYPED, not a sentence: a renderer picking the right words by
-        // matching on the prose would be the string `match` §2.1 forbids.
-        let standing = crate::register::standing_in(&held_ops, roster, &self.namespace, verifier)?;
-        if !standing.contains_key(&actor) {
-            tracing::debug!(
-                target: "rail:door",
-                ns = %self.namespace,
-                actor = %actor,
-                standing = standing.len(),
-                "append refused — the signer holds no standing in the ring"
-            );
-            return Err(RailError::NotInRoster {
-                actor: actor.clone(),
-                namespace: self.namespace.clone(),
-            });
-        }
-        tracing::debug!(
-            target: "rail:door",
-            ns = %self.namespace,
-            actor = %actor,
-            "append: the signer stands in the ring"
-        );
-        if acts.is_empty() {
-            return Ok(Ok(Vec::new()));
-        }
-        // The next act follows this signer's newest seq on the log, as
-        // upstream's did, and names the act there (svrngs, U2): of the lines
-        // held at that seq, the one whose signature verifies under the
-        // signer's key. A line that claims our key without our signature is
-        // not ours to follow — naming it would make our act `WrongPrevious`
-        // on every copy that holds our real one. When none verifies (a
-        // forgery above everything we signed), the next act names the first:
-        // no copy holds an authentic act there to judge it against.
-        let (first_seq, mut prev) = match log.held.newest.get(&actor) {
-            Some(n) => {
-                let own = n
-                    .lines
-                    .iter()
-                    .find(|(id, sig)| verifier.verify(&actor, id, sig))
-                    .or(n.lines.first())
-                    .map(|(id, _)| id.clone());
-                (n.seq + 1, own)
-            }
-            None => (0, None),
+        let fixture = svrngs_core::tests_support::Fixture {
+            act,
+            on_behalf_of: on_behalf_of.map(str::to_string),
         };
-        tracing::debug!(
-            target: "rail:door",
-            ns = %self.namespace,
-            actor = %actor,
-            first_seq,
-            prev = ?prev,
-            "append: follows the signer's newest act"
-        );
-
-        let now = now_unix(&self.namespace)?;
-        // Strictly after everything held, as upstream measured
-        // (commonwealth/crates/commonwealth-rail/examples/stage_member_act.rs:123-135
-        // at e1a43bcd2): the rail orders acts by (ts_unix, actor, seq, id), so
-        // an act signed in the second of the `Admit` that gave its signer
-        // standing sorts before that `Admit` when the signer's key sorts
-        // first, and never counts (DESIGN §6; svrngs-core membership.rs).
-        let after = held_ops
-            .iter()
-            .map(|o| o.ts_unix.saturating_add(1))
-            .max()
-            .unwrap_or(i64::MIN);
-        let ts_unix = now.max(after);
-        tracing::debug!(
-            target: "rail:door",
-            ns = %self.namespace,
-            now,
-            after,
-            ts_unix,
-            "append: signs at the later of the wall clock and one second past the newest act held"
-        );
-        let view = digest(&held_ops, &self.namespace, verifier);
-        let mut ops = Vec::with_capacity(acts.len());
-        for (seq, act) in (first_seq..).zip(acts) {
-            // A payload is canonical by construction, so by the time one is a
-            // `Payload` there is nothing left for the door to check. This assert
-            // is the reader's reminder that the check happened at the type
-            // boundary, not that it was skipped.
-            debug_assert!(
-                act.payloads()
-                    .map(|p| p.as_value().is_object())
-                    .unwrap_or(true),
-                "Payload::new admits only objects"
-            );
-            let op = sign_act(
-                signer,
-                &self.namespace,
-                ts_unix,
-                seq,
-                prev.take(),
-                act,
-                on_behalf_of,
-                Some(view.clone()),
-            );
-            prev = Some(op.id.clone());
-            ops.push(op);
+        let author = svrngs_core::Author {
+            signer,
+            roster,
+            namespace: &self.namespace,
+            verifier,
+            now: now_unix(&self.namespace)?,
+        };
+        match svrngs_core::commit(self, &fixture, &author)? {
+            Ok(recorded) => Ok(recorded.lines()[0].clone()),
+            Err(_) => Err(RailError::NotInRoster {
+                actor: signer.actor(),
+                namespace: self.namespace.clone(),
+            }),
         }
-        if let Err(refused) = keep(&held_ops, &ops) {
-            tracing::debug!(
-                target: "rail:door",
-                ns = %self.namespace,
-                actor = %actor,
-                "append: signed, and not written — the caller's judgement of the fold refused it"
-            );
-            return Ok(Err(refused));
-        }
-        drop(held_ops);
-        log.oplog
-            .append_all(&ops)
-            .map_err(|e| RailError::Io(e.to_string()))?;
-        log.held.after_write(&log.oplog, &self.namespace);
-        for op in &ops {
-            tracing::debug!(
-                namespace = %self.namespace,
-                id = %op.id,
-                actor = %actor,
-                seq = op.kind.seq,
-                on_behalf_of = ?on_behalf_of,
-                "ring rail: appended"
-            );
-        }
-        Ok(Ok(ops))
     }
 
     /// Append an op that arrived from a peer, exactly as it was signed.
@@ -568,7 +387,22 @@ impl RingJournal {
         roster: &Roster,
         verifier: &dyn RingVerifier,
     ) -> Result<Sealed, RailError> {
-        let op = self.append(RailAct::Seal, signer, roster, None, verifier)?;
+        let author = svrngs_core::Author {
+            signer,
+            roster,
+            namespace: &self.namespace,
+            verifier,
+            now: now_unix(&self.namespace)?,
+        };
+        let op = match svrngs_core::commit(self, &svrngs_core::Seal, &author)? {
+            Ok(recorded) => recorded.lines()[0].clone(),
+            Err(_) => {
+                return Err(RailError::NotInRoster {
+                    actor: signer.actor(),
+                    namespace: self.namespace.clone(),
+                })
+            }
+        };
         let retired = self.compact(roster, verifier);
         if let Err(e) = &retired {
             tracing::warn!(
@@ -831,7 +665,8 @@ impl svrngs_core::Store for RingJournal {
 
     fn append_with<R>(
         &self,
-        f: impl FnOnce(&ActSet) -> (Option<svrngs_core::Authored>, R),
+        actor: &str,
+        f: impl FnOnce(&ActSet, Option<svrngs_core::Tip>) -> (Option<svrngs_core::Authored>, R),
     ) -> Result<R, RailError> {
         let mut guard = self.log();
         let log = &mut *guard;
@@ -840,7 +675,11 @@ impl svrngs_core::Store for RingJournal {
             .oplog
             .read_all_with_skips()
             .map_err(|e| RailError::Io(e.to_string()))?;
-        let (authored, answer) = f(&ActSet::of(&held_ops));
+        let tip = log.held.newest.get(actor).map(|n| svrngs_core::Tip {
+            seq: n.seq,
+            lines: n.lines.clone(),
+        });
+        let (authored, answer) = f(&ActSet::of(&held_ops), tip);
         let Some(authored) = authored.filter(|a| !a.lines().is_empty()) else {
             return Ok(answer);
         };

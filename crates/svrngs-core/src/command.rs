@@ -3,6 +3,7 @@
 //! the store's write lock, and [`commit`] is the one way lines reach a store:
 //! a [`Store`] appends only [`Authored`] lines, which only `commit` makes.
 
+use alloc::string::String;
 use alloc::vec::Vec;
 
 use crate::{admit, digest, sign_act, ActSet, Admission, Op, OpId, RailAct, SignedOp};
@@ -45,6 +46,11 @@ pub trait Command {
     fn confirm(&self, _after: &Admission, _written: &[OpId]) -> Result<(), Self::Refusal> {
         Ok(())
     }
+
+    /// The person the acts are written on behalf of, stamped on each line.
+    fn on_behalf_of(&self) -> Option<&str> {
+        None
+    }
 }
 
 /// The adapter's facts: who signs, against which seed, in which group, when.
@@ -54,7 +60,6 @@ pub struct Author<'a> {
     pub namespace: &'a str,
     pub verifier: &'a dyn RingVerifier,
     pub now: i64,
-    pub on_behalf_of: Option<&'a str>,
 }
 
 /// Why a commit wrote nothing.
@@ -103,15 +108,25 @@ impl Recorded {
     }
 }
 
+/// A signer's newest seq in a store, and each line held at it: where its
+/// next line continues its chain. The store is the authority on its own lines.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Tip {
+    pub seq: u64,
+    pub lines: Vec<(OpId, String)>,
+}
+
 /// The port the write side appends through.
 pub trait Store {
     type Error;
 
-    /// Under the write lock: hands `f` the lines held, appends what it
-    /// authored, and returns its answer only once the append succeeded.
+    /// Under the write lock: hands `f` the lines held and `actor`'s [`Tip`],
+    /// appends what it authored, and returns its answer only once the append
+    /// succeeded.
     fn append_with<R>(
         &self,
-        f: impl FnOnce(&ActSet) -> (Option<Authored>, R),
+        actor: &str,
+        f: impl FnOnce(&ActSet, Option<Tip>) -> (Option<Authored>, R),
     ) -> Result<R, Self::Error>;
 }
 
@@ -122,17 +137,21 @@ pub fn commit<C: Command, S: Store>(
     command: &C,
     author: &Author<'_>,
 ) -> Result<Result<Recorded, Refused<C::Refusal>>, S::Error> {
-    store.append_with(|held| match authored(held, command, author) {
-        Ok(lines) => {
-            let recorded = Recorded(lines.clone());
-            (Some(Authored(lines)), Ok(recorded))
+    let actor = author.signer.actor();
+    store.append_with(&actor, |held, tip| {
+        match authored(held, tip, command, author) {
+            Ok(lines) => {
+                let recorded = Recorded(lines.clone());
+                (Some(Authored(lines)), Ok(recorded))
+            }
+            Err(why) => (None, Err(why)),
         }
-        Err(why) => (None, Err(why)),
     })
 }
 
 fn authored<C: Command>(
     held: &ActSet,
+    tip: Option<Tip>,
     command: &C,
     a: &Author<'_>,
 ) -> Result<Vec<Op<SignedOp>>, Refused<C::Refusal>> {
@@ -149,7 +168,7 @@ fn authored<C: Command>(
             "commit: the decision asks for nothing, so nothing is written");
         return Ok(Vec::new());
     }
-    let lines = sign_lines(held, acts, a);
+    let lines = sign_lines(held, tip, acts, command.on_behalf_of(), a);
     let mut with = held.clone();
     for line in &lines {
         with.insert(line.clone());
@@ -170,24 +189,22 @@ fn read<C: Command>(held: &ActSet) -> ActSet {
 /// Signs `acts` as the signer's next lines: after its newest seq, naming the
 /// line there its signature verifies, and timed strictly after every line
 /// held, since the rail orders by `(ts_unix, actor, seq, id)`.
-fn sign_lines(held: &ActSet, acts: Vec<RailAct>, a: &Author<'_>) -> Vec<Op<SignedOp>> {
+fn sign_lines(
+    held: &ActSet,
+    tip: Option<Tip>,
+    acts: Vec<RailAct>,
+    on_behalf_of: Option<&str>,
+    a: &Author<'_>,
+) -> Vec<Op<SignedOp>> {
     let actor = a.signer.actor();
-    let newest = held
-        .iter()
-        .filter(|op| op.actor == actor)
-        .map(|op| op.kind.seq)
-        .max();
-    let mut prev = newest.and_then(|seq| {
-        let at: Vec<&Op<SignedOp>> = held
+    let first_seq = tip.as_ref().map_or(0, |t| t.seq + 1);
+    let mut prev = tip.and_then(|t| {
+        t.lines
             .iter()
-            .filter(|op| op.actor == actor && op.kind.seq == seq)
-            .collect();
-        at.iter()
-            .find(|op| a.verifier.verify(&actor, &op.id, &op.kind.sig))
-            .or(at.first())
-            .map(|op| op.id.clone())
+            .find(|(id, sig)| a.verifier.verify(&actor, id, sig))
+            .or(t.lines.first())
+            .map(|(id, _)| id.clone())
     });
-    let first_seq = newest.map_or(0, |seq| seq + 1);
     let after = held
         .iter()
         .map(|op| op.ts_unix.saturating_add(1))
@@ -208,7 +225,7 @@ fn sign_lines(held: &ActSet, acts: Vec<RailAct>, a: &Author<'_>) -> Vec<Op<Signe
             seq,
             prev.take(),
             act,
-            a.on_behalf_of,
+            on_behalf_of,
             Some(view.clone()),
         );
         prev = Some(op.id.clone());

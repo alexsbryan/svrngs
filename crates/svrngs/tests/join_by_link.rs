@@ -363,22 +363,24 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
         },
         origin: None,
     };
-    let lapsed = sam
-        .node
-        .rail()
-        .journal(&group)
+    let roster = seed.roster();
+    let author = svrngs_node::Author {
+        signer: sam.node.rail().signer(),
+        roster: &roster,
+        namespace: &group,
+        verifier: &Ed25519Verifier,
+        now: now(),
+    };
+    let mint = svrngs_node::MintInvite {
+        key: actor_of(&lapsed_link.token.key()),
+        until: now() - 1,
+    };
+    let journal = sam.node.rail().journal(&group).unwrap();
+    let lapsed = svrngs_node::commit(&*journal, &mint, &author)
         .unwrap()
-        .append(
-            RailAct::Invite {
-                key: actor_of(&lapsed_link.token.key()),
-                until: now() - 1,
-            },
-            sam.node.rail().signer(),
-            &seed.roster(),
-            None,
-            &Ed25519Verifier,
-        )
-        .unwrap();
+        .unwrap()
+        .lines()[0]
+        .clone();
     let eve = computer(6).await;
     knows(&eve, &sam.node);
     let past = present(&eve, &lapsed_link, &group, &lapsed.id, "Eve").await;

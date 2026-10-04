@@ -54,6 +54,7 @@ use crate::ring_routes::err;
 use crate::{
     admit, Compaction, Ed25519Verifier, Person, RailAct, RailError, RingJournal, RingRail,
 };
+use svrngs_core::{commit, Append, AppendRefusal, Author, Refused as CommitRefused};
 
 /// What the doors read: the journals, the nudge that wakes the round
 /// after an append ([`crate::ring_sync::append`]), and the live lane's
@@ -199,7 +200,7 @@ pub(crate) async fn append_act(
     journal: &Arc<RingJournal>,
     body: serde_json::Value,
 ) -> Response {
-    let stamp = match on_behalf_of(rail, journal.namespace(), &body) {
+    let stamp = match stamp(journal.namespace(), &body) {
         Ok(stamp) => stamp,
         Err(refusal) => return refusal,
     };
@@ -227,15 +228,46 @@ pub(crate) async fn append_act(
             .seal(rail.signer(), &roster, &Ed25519Verifier)
             .map(|done| (done.op, Some(retire(&done.retired))))
     } else {
-        journal
-            .append(
-                act,
-                rail.signer(),
-                &roster,
-                stamp.as_ref().map(Person::as_str),
-                &Ed25519Verifier,
-            )
-            .map(|op| (op, None))
+        let namespace = journal.namespace();
+        let now = match crate::journal::now_unix(namespace) {
+            Ok(now) => now,
+            Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+        };
+        let author = Author {
+            signer: rail.signer(),
+            roster: &roster,
+            namespace,
+            verifier: &Ed25519Verifier,
+            now,
+        };
+        let append = Append {
+            act,
+            on_behalf_of: stamp,
+        };
+        match commit(&**journal, &append, &author) {
+            Ok(Ok(recorded)) => Ok((recorded.lines()[0].clone(), None)),
+            Ok(Err(CommitRefused::NoStanding)) => Err(RailError::NotInRoster {
+                actor: rail.signer().actor(),
+                namespace: namespace.to_string(),
+            }),
+            Ok(Err(CommitRefused::Command(AppendRefusal::NotInGroup(person)))) => {
+                tracing::debug!(target: "rails", namespace, %person, "rail: refused — on_behalf_of names nobody in the group");
+                return refused(
+                    namespace,
+                    "not_in_group",
+                    format!("{person} is not in {namespace}"),
+                );
+            }
+            Ok(Err(CommitRefused::Command(AppendRefusal::NotAnAppAct))) => {
+                tracing::debug!(target: "rails", namespace, "rail: refused — the register's acts and the seal are not an app's to write");
+                return refused(
+                    namespace,
+                    "not_an_app_act",
+                    "an app writes records and corrections; admitting, removing and inviting are the group's own".into(),
+                );
+            }
+            Err(e) => Err(e),
+        }
     };
     match appended {
         Ok((op, retired)) => {
@@ -287,25 +319,10 @@ pub(crate) async fn append_act(
     }
 }
 
-/// The person an append is on behalf of: `None` when the body names
-/// nobody, so the act is this computer's own; else the person it names,
-/// parsed ([`Person::parse`]) and standing in `namespace` now, as the
-/// register says ([`RingRail::standing`]). A name that is not one, or names
-/// nobody in the group, is refused with a reason, typed. The register is
-/// read before the door's write lock is taken, so a person removed between
-/// the two is still named; their removal is in the record either way.
-fn on_behalf_of(
-    rail: &RingRail,
-    namespace: &str,
-    body: &serde_json::Value,
-) -> Result<Option<Person>, Response> {
-    let refused = |kind: &str, why: String| {
-        (
-            StatusCode::UNPROCESSABLE_ENTITY,
-            Json(serde_json::json!({ "error": why, "kind": kind, "namespace": namespace })),
-        )
-            .into_response()
-    };
+/// The person an append is on behalf of, parsed: `None` when the body names
+/// nobody. Whether that person stands is `Append`'s to decide, under the
+/// write lock.
+fn stamp(namespace: &str, body: &serde_json::Value) -> Result<Option<Person>, Response> {
     let raw = match body.get("on_behalf_of") {
         None | Some(serde_json::Value::Null) => {
             tracing::debug!(target: "rails", namespace, "rail: the act is this computer's own — it names nobody");
@@ -315,32 +332,25 @@ fn on_behalf_of(
         Some(other) => {
             tracing::debug!(target: "rails", namespace, named = %other, "rail: refused — on_behalf_of is not text");
             return Err(refused(
+                namespace,
                 "not_a_name",
                 "on_behalf_of names a person, as text".into(),
             ));
         }
     };
-    let person = Person::parse(raw).map_err(|why| {
+    Person::parse(raw).map(Some).map_err(|why| {
         tracing::debug!(target: "rails", namespace, raw, why = %why, "rail: refused — on_behalf_of is not a name");
-        refused("not_a_name", format!("on_behalf_of is not a name: {why}"))
-    })?;
-    match rail.standing(namespace, &Ed25519Verifier) {
-        Ok(Standing::Members(people)) if people.values().any(|p| *p == person) => {
-            tracing::debug!(target: "rails", namespace, %person, "rail: the act is on behalf of a person in the group");
-            Ok(Some(person))
-        }
-        Ok(_) => {
-            tracing::debug!(target: "rails", namespace, %person, "rail: refused — on_behalf_of names nobody in the group");
-            Err(refused(
-                "not_in_group",
-                format!("{person} is not in {namespace}"),
-            ))
-        }
-        Err(e) => {
-            tracing::warn!(target: "rails", namespace, error = %e, "rail: refused — the group's register is unreadable");
-            Err(err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
-        }
-    }
+        refused(namespace, "not_a_name", format!("on_behalf_of is not a name: {why}"))
+    })
+}
+
+/// A typed refusal: the sentence, its `kind`, and the group.
+fn refused(namespace: &str, kind: &str, why: String) -> Response {
+    (
+        StatusCode::UNPROCESSABLE_ENTITY,
+        Json(serde_json::json!({ "error": why, "kind": kind, "namespace": namespace })),
+    )
+        .into_response()
 }
 
 /// GET /v1/rail/log — the namespace's acts, in one order, and its gaps:

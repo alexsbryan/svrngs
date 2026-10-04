@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! Redeeming a link: the issuer's node admits the key that opened it.
+//! The register's commands: minting an invite, and redeeming one.
 
 use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
 
 use crate::command::{Command, Reads};
+use core::convert::Infallible;
+
 use crate::{Admission, InviteFault, OpId, Person, RailAct, Redemption};
 
 /// The issuer's node asked to admit `key` as `person` through its `Invite`.
@@ -77,6 +79,25 @@ impl Command for Redeem {
     }
 }
 
+/// A member mints a link: an `Invite` naming the link's key until `until`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MintInvite {
+    pub key: String,
+    pub until: i64,
+}
+
+impl Command for MintInvite {
+    type Refusal = Infallible;
+    const READS: Reads = Reads::Membership;
+
+    fn decide(&self, _before: &Admission) -> Result<Vec<RailAct>, Infallible> {
+        Ok(vec![RailAct::Invite {
+            key: self.key.clone(),
+            until: self.until,
+        }])
+    }
+}
+
 #[cfg(test)]
-#[path = "redeem_tests.rs"]
+#[path = "register_tests.rs"]
 mod tests;

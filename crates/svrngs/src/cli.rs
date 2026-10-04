@@ -39,7 +39,8 @@ use ed25519_dalek::VerifyingKey;
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::node::{Node, NodeError};
 use svrngs_node::redeem::{ask, redeem, AskRequest, RedeemError, RedeemRequest, Redeemed};
-use svrngs_node::{actor_of, Ed25519Verifier, Person, RailAct, RailError, SigningKey};
+use svrngs_node::{actor_of, Ed25519Verifier, Person, SigningKey};
+use svrngs_node::{commit, Author, MintInvite, Refused as CommitRefused};
 
 use crate::group::{self, Name, Seed, SeedError};
 use crate::identity::{self, KeyError};
@@ -596,7 +597,7 @@ async fn mint(node: &Node, seed: &Seed, relay: &RelayConfig) -> Result<Token, Re
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_secs() as i64)
         .map_err(|_| keep_refused(seed, "the wall clock is before 1970"))?;
-    let invite = RailAct::Invite {
+    let mint = MintInvite {
         key: actor_of(&token.key()),
         until: now + LINK_LIFE_SECS,
     };
@@ -604,16 +605,25 @@ async fn mint(node: &Node, seed: &Seed, relay: &RelayConfig) -> Result<Token, Re
         .rail()
         .journal(&seed.id())
         .map_err(|e| keep_refused(seed, &e.to_string()))?;
-    let op = journal
-        .append(invite, node.rail().signer(), &seed.roster(), None, &Ed25519Verifier)
-        .map_err(|e| match e {
-            RailError::NotInRoster { .. } => {
-                tracing::debug!(target: "cli", group = %seed.id(), error = %e, "cli: refused — this computer does not stand in the group");
-                Refusal::NotIn(seed.name().clone())
-            }
-            other => keep_refused(seed, &other.to_string()),
-        })?;
-    tracing::debug!(target: "cli", group = %seed.id(), invite = %op.id, until = now + LINK_LIFE_SECS, "cli: link minted");
+    let roster = seed.roster();
+    let group = seed.id();
+    let author = Author {
+        signer: node.rail().signer(),
+        roster: &roster,
+        namespace: &group,
+        verifier: &Ed25519Verifier,
+        now,
+    };
+    let recorded = match commit(&*journal, &mint, &author) {
+        Ok(Ok(recorded)) => recorded,
+        Ok(Err(CommitRefused::NoStanding)) => {
+            tracing::debug!(target: "cli", group = %group, "cli: refused — this computer does not stand in the group");
+            return Err(Refusal::NotIn(seed.name().clone()));
+        }
+        Ok(Err(CommitRefused::Command(never))) => match never {},
+        Err(e) => return Err(keep_refused(seed, &e.to_string())),
+    };
+    tracing::debug!(target: "cli", group = %group, invite = %recorded.lines()[0].id, until = mint.until, "cli: link minted");
     Ok(token)
 }
 

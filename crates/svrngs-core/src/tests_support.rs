@@ -204,3 +204,73 @@ pub fn applied(a: &Admission) -> Vec<String> {
         })
         .collect()
 }
+
+/// A store held in memory, for driving [`commit`](crate::commit) without a disk.
+pub struct Memory(pub core::cell::RefCell<crate::ActSet>);
+
+impl Memory {
+    pub fn holding(lines: &[Op<SignedOp>]) -> Self {
+        Self(core::cell::RefCell::new(crate::ActSet::of(lines)))
+    }
+}
+
+impl crate::Store for Memory {
+    type Error = core::convert::Infallible;
+
+    fn append_with<R>(
+        &self,
+        actor: &str,
+        f: impl FnOnce(&crate::ActSet, Option<crate::Tip>) -> (Option<crate::Authored>, R),
+    ) -> Result<R, Self::Error> {
+        let held = self.0.borrow().clone();
+        let tip = held
+            .iter()
+            .filter(|op| op.actor == actor)
+            .map(|op| op.kind.seq)
+            .max()
+            .map(|seq| crate::Tip {
+                seq,
+                lines: held
+                    .iter()
+                    .filter(|op| op.actor == actor && op.kind.seq == seq)
+                    .map(|op| (op.id.clone(), op.kind.sig.clone()))
+                    .collect(),
+            });
+        let (authored, answer) = f(&held, tip);
+        for line in authored.iter().flat_map(|a| a.lines()) {
+            self.0.borrow_mut().insert(line.clone());
+        }
+        Ok(answer)
+    }
+}
+
+/// Any act, written as a test's fixture through [`commit`](crate::commit).
+pub struct Fixture {
+    pub act: RailAct,
+    pub on_behalf_of: Option<String>,
+}
+
+impl crate::Command for Fixture {
+    type Refusal = core::convert::Infallible;
+    const READS: crate::Reads = crate::Reads::Membership;
+
+    fn decide(&self, _before: &Admission) -> Result<Vec<RailAct>, Self::Refusal> {
+        Ok(vec![self.act.clone()])
+    }
+
+    fn on_behalf_of(&self) -> Option<&str> {
+        self.on_behalf_of.as_deref()
+    }
+}
+
+/// Several acts, written as one batch through [`commit`](crate::commit).
+pub struct Batch(pub Vec<RailAct>);
+
+impl crate::Command for Batch {
+    type Refusal = core::convert::Infallible;
+    const READS: crate::Reads = crate::Reads::Membership;
+
+    fn decide(&self, _before: &Admission) -> Result<Vec<RailAct>, Self::Refusal> {
+        Ok(self.0.clone())
+    }
+}

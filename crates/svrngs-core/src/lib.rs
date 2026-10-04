@@ -90,7 +90,8 @@ mod introduce;
 mod membership;
 mod op;
 mod payload;
-mod redeem;
+mod record;
+mod register;
 mod sig;
 mod sync;
 mod view;
@@ -108,11 +109,12 @@ use serde::{Deserialize, Serialize};
 pub use act_set::ActSet;
 pub use admit::{admit, body_json, Admission, AdmittedOp, GapClass, RailGap};
 pub use attest::{AttestRefusal, GuestAttestation};
-pub use command::{commit, Author, Authored, Command, Reads, Recorded, Refused, Store};
+pub use command::{commit, Author, Authored, Command, Reads, Recorded, Refused, Store, Tip};
 pub use introduce::{trace, trace_op, Introduce, Vouch, VouchStatus};
 pub use membership::{membership, InviteFault, Invited, Membership};
 pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
-pub use redeem::{Redeem, RedeemRefusal};
+pub use record::{Append, AppendRefusal, Seal};
+pub use register::{MintInvite, Redeem, RedeemRefusal};
 pub use sig::{
     act_id, actor_of, derive_id, field, redemption_message, ring_op_message, sign_act,
     sign_message, sign_ring_op, verify_hex,

@@ -2,29 +2,8 @@
 //! Redeeming a link, given / when / then on the decider, and end to end
 //! through `commit` against a store held in memory.
 
-use core::cell::RefCell;
-use core::convert::Infallible;
-
 use crate::tests_support::*;
 use crate::*;
-
-struct Memory(RefCell<ActSet>);
-
-impl Store for Memory {
-    type Error = Infallible;
-
-    fn append_with<R>(
-        &self,
-        f: impl FnOnce(&ActSet) -> (Option<Authored>, R),
-    ) -> Result<R, Infallible> {
-        let held = self.0.borrow().clone();
-        let (authored, answer) = f(&held);
-        for line in authored.iter().flat_map(|a| a.lines()) {
-            self.0.borrow_mut().insert(line.clone());
-        }
-        Ok(answer)
-    }
-}
 
 fn issuer() -> SigningKey {
     key(1)
@@ -60,10 +39,6 @@ fn redeem(invite: &Op<SignedOp>) -> Redeem {
     }
 }
 
-fn holding(lines: &[Op<SignedOp>]) -> Memory {
-    Memory(RefCell::new(ActSet::of(lines)))
-}
-
 fn author<'a>(signer: &'a SigningKey, roster: &'a Roster, now: i64) -> Author<'a> {
     Author {
         signer,
@@ -71,7 +46,6 @@ fn author<'a>(signer: &'a SigningKey, roster: &'a Roster, now: i64) -> Author<'a
         namespace: NS,
         verifier: &Ed25519Verifier,
         now,
-        on_behalf_of: None,
     }
 }
 
@@ -86,7 +60,7 @@ fn stands(store: &Memory, k: &SigningKey) -> bool {
 #[test]
 fn given_an_invite_a_redemption_writes_one_admit_and_the_key_stands() {
     let invite = invite_by(&issuer(), &link(), 10_000);
-    let store = holding(&[invite.clone()]);
+    let store = Memory::holding(&[invite.clone()]);
     let roster = ring();
     let recorded = commit(&store, &redeem(&invite), &author(&issuer(), &roster, 1_000))
         .unwrap()
@@ -98,7 +72,7 @@ fn given_an_invite_a_redemption_writes_one_admit_and_the_key_stands() {
 #[test]
 fn redeeming_again_writes_nothing() {
     let invite = invite_by(&issuer(), &link(), 10_000);
-    let store = holding(&[invite.clone()]);
+    let store = Memory::holding(&[invite.clone()]);
     let roster = ring();
     let signer = issuer();
     let a = author(&signer, &roster, 1_000);
@@ -132,7 +106,7 @@ fn the_decider_refuses_what_the_invite_does_not_allow() {
 #[test]
 fn a_lapsed_invite_is_refused_by_the_register_and_nothing_is_written() {
     let invite = invite_by(&issuer(), &link(), 500);
-    let store = holding(&[invite.clone()]);
+    let store = Memory::holding(&[invite.clone()]);
     let roster = ring();
     let refused = commit(&store, &redeem(&invite), &author(&issuer(), &roster, 1_000)).unwrap();
     assert_eq!(
@@ -146,7 +120,7 @@ fn a_lapsed_invite_is_refused_by_the_register_and_nothing_is_written() {
 #[test]
 fn a_signer_without_standing_writes_nothing() {
     let invite = invite_by(&issuer(), &link(), 10_000);
-    let store = holding(&[invite.clone()]);
+    let store = Memory::holding(&[invite.clone()]);
     let roster = ring();
     let stranger = key(8);
     let refused = commit(&store, &redeem(&invite), &author(&stranger, &roster, 1_000)).unwrap();

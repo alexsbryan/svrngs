@@ -74,17 +74,27 @@ fn hold(node: &Node, ns: &str, founder: u8) {
 
 /// Sign `act` onto `ns` through `node`'s door, against the group's seed.
 fn append(node: &Node, ns: &str, founder: u8, act: RailAct) -> Op<SignedOp> {
-    node.rail()
-        .journal(ns)
+    let journal = node.rail().journal(ns).unwrap();
+    let roster = founded_by(founder);
+    let author = svrngs_node::Author {
+        signer: node.rail().signer(),
+        roster: &roster,
+        namespace: ns,
+        verifier: &Ed25519Verifier,
+        now: std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
+    };
+    let fixture = svrngs_core::tests_support::Fixture {
+        act,
+        on_behalf_of: None,
+    };
+    svrngs_node::commit(&*journal, &fixture, &author)
         .unwrap()
-        .append(
-            act,
-            node.rail().signer(),
-            &founded_by(founder),
-            None,
-            &Ed25519Verifier,
-        )
-        .unwrap_or_else(|e| panic!("the door refused: {e}"))
+        .unwrap_or_else(|e| panic!("the door refused: {e:?}"))
+        .lines()[0]
+        .clone()
 }
 
 fn admit(person: &str, joining: u8) -> RailAct {

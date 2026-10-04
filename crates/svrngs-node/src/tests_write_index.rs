@@ -23,9 +23,17 @@ fn a_batch_append_continues_the_counter_contiguously() {
         .append(record("x"), &key(1), &r, None, &Ed25519Verifier)
         .unwrap();
     let batch = vec![record("a"), record("b"), record("c")];
-    let ops = journal
-        .append_all(batch, &key(1), &r, None, &Ed25519Verifier)
+    let author = svrngs_core::Author {
+        signer: &key(1),
+        roster: &r,
+        namespace: NS,
+        verifier: &Ed25519Verifier,
+        now: 1,
+    };
+    let recorded = svrngs_core::commit(&journal, &Batch(batch), &author)
+        .unwrap()
         .unwrap();
+    let ops = recorded.lines();
     assert_eq!(
         ops.iter().map(|o| o.kind.seq).collect::<Vec<_>>(),
         [1, 2, 3]

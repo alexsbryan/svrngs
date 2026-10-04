@@ -249,11 +249,21 @@ async fn a_seal_renders_its_prune() {
 async fn the_people_door_answers_the_register_with_keys() {
     let (_dir, rail) = rail_with(&[("alex", 7)]);
     let journal = journal_of(&rail, "ledger").unwrap();
-    let admit_bo = serde_json::json!({
-        "op": "admit", "person": "bo", "key": actor_of(&key(3)),
-    });
-    let resp = append_act(&rail, &journal, admit_bo).await;
-    assert_eq!(resp.status(), StatusCode::OK, "{}", body_of(resp).await);
+    let admit_bo = crate::RailAct::Admit {
+        person: Person::parse("bo").unwrap(),
+        key: actor_of(&key(3)),
+        invite: None,
+    };
+    let roster = journal.roster_file().unwrap();
+    journal
+        .append(
+            admit_bo,
+            rail.signer(),
+            &roster,
+            None,
+            &crate::Ed25519Verifier,
+        )
+        .unwrap();
     let out = body_of(super::people_answer(&rail, "ledger")).await;
     // In the order of their keys, as the register holds them.
     let mut want = vec![

@@ -181,7 +181,7 @@ journals sits behind a `Mutex`, which an actor per journal replaces.
 | Invariant | Held by | State |
 |---|---|---|
 | Same acts, same state: a group's state is a pure function of its set of acts | svrngs-core is `no_std`, and `lean_check` keeps it so; folds read acts only through `Admission` | `no_std` holds; `membership` still sorts raw ops |
-| No act, no effect: nothing that cannot be undone happens but from an act in the record — the group's state and this computer's; a lent service's own state is its own, and the member door only carries a request to it | a store appends only `Authored` lines, which only `commit` makes after a `Command` decided under the write lock; acting takes a `Recorded` only `commit` returns | redeem goes through `commit`; minting an invite, an app's acts and a seal still use `append_all` |
+| No act, no effect: nothing that cannot be undone happens but from an act in the record — the group's state and this computer's; a lent service's own state is its own, and the member door only carries a request to it | a store appends only `Authored` lines, which only `commit` makes after a `Command` decided under the write lock; acting takes a `Recorded` only `commit` returns | every write goes through `commit`; the journal's `append` is a test fixture |
 | Both | the core never depends on the node; the clock, randomness and locks live in one adapter each (clippy `disallowed-methods`, `disallowed-types`) | dependency direction holds; the clippy bans not yet |
 
 One property test stands behind every fold: permuting or duplicating
@@ -324,7 +324,7 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   `Admit` that gave its author standing before that `Admit` when the author's
   key sorts first (`membership.rs:124`), so the act would not count. The door
   signs at the later of now and one second past the newest act its journal
-  holds (U2, landed: `RingJournal::append_all`, `crates/svrngs-node/src/journal.rs`),
+  holds (U2, landed; now `commit`'s, `crates/svrngs-core/src/command.rs`),
   upstream's measured fix (`commonwealth/crates/commonwealth-rail/examples/stage_member_act.rs:123-135`
   at `e1a43bcd2`), so a member's first act sorts after the `Admit` it has
   seen; `crates/svrngs-node/tests/group_not_mesh.rs` writes at once, under a
@@ -413,8 +413,8 @@ gossip, iroh's address lookup, upstream's default
 a bare key when lookup is on, and tests seed addresses as upstream's do. *No
 presence:* the round dials every standing member, and one that is offline
 costs a dial timeout each round. *The door asks the register too:*
-`RingJournal::append` refuses a signer the seed does not name
-(`crates/svrngs-node/src/journal.rs:225`), which would leave two answers to
+`RingJournal::append` refused a signer the seed did not name
+(now `commit`'s standing check, `crates/svrngs-core/src/command.rs`), which would leave two answers to
 who is in a group (ARCH 8); in U1 it asks the same standing the round, the
 acceptor and the sync route ask, so a member the founder admits can write.
 `svrngs-node` gains tokio, axum,

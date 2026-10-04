@@ -76,20 +76,28 @@ fn admit(node: &Node, founder: u8, person: &str, joining: u8) {
 
 /// [`admit`], to the group `ns`.
 fn admit_to(node: &Node, ns: &str, founder: u8, person: &str, joining: u8) {
-    node.rail()
-        .journal(ns)
+    let journal = node.rail().journal(ns).unwrap();
+    let roster = founded_by(founder);
+    let author = svrngs_node::Author {
+        signer: node.rail().signer(),
+        roster: &roster,
+        namespace: ns,
+        verifier: &Ed25519Verifier,
+        now: std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
+    };
+    let fixture = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse(person).unwrap(),
+            key: actor_of(&signing(joining)),
+            invite: None,
+        },
+        on_behalf_of: None,
+    };
+    svrngs_node::commit(&*journal, &fixture, &author)
         .unwrap()
-        .append(
-            RailAct::Admit {
-                person: Person::parse(person).unwrap(),
-                key: actor_of(&signing(joining)),
-                invite: None,
-            },
-            node.rail().signer(),
-            &founded_by(founder),
-            None,
-            &Ed25519Verifier,
-        )
         .unwrap();
 }
 

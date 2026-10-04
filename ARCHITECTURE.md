@@ -22,8 +22,8 @@ joining by that link is next (U2).
 a set (`ActSet`, `act_set.rs`), admission of that set into one total order
 (`admit.rs`; only `admit` makes an `Admission`), membership (`membership.rs`), the per-actor sync digest
 (`sync.rs`, `view.rs`), the write side (`command.rs`: `Command`, `commit`, the
-`Store` port, `Authored` and `Recorded`, which only `commit` makes), the
-redemption command (`redeem.rs`), attestation and introductions. `no_std`, so the
+`Store` port, `Authored` and `Recorded`, which only `commit` makes), the register's commands (`register.rs`: `MintInvite`, `Redeem`), the
+record's (`record.rs`: `Append`, `Seal`), attestation and introductions. `no_std`, so the
 compiler refuses filesystem, clock, network, threads and `HashMap`; time and
 keys arrive as arguments. It is commonwealth-ai's
 `commonwealth-rail-core` at `e1a43bcd2`, with `oplog-types` (`op.rs`) and
@@ -159,6 +159,12 @@ under the journal's write lock (the `Invite` is held, is this node's and names
 the link's key; the key not standing already) and writes only when the
 register, folded with the `Admit` in it, counts it. `own_invite` decides the
 ask over each group's acts.
+
+Every write is a command through `commit`: an app's act is svrngs-core's
+`Append` (records and corrections only, and the person it speaks for must
+stand, decided under the lock), a seal is `Seal` followed by compaction, and
+`svrngs link` mints with `MintInvite`. The journal's own `append` exists only
+in tests, as a fixture that also goes through `commit`.
 Every refusal answers `REFUSAL`, one sentence naming no group; a key that
 already stands is answered `AlreadyIn`, nothing written.
 
@@ -172,8 +178,8 @@ addresses a caller seeds on the transport or iroh's lookup finds, and offers
 each group to its own; the accept loop admits a dialer standing in any group
 the node holds and closes the rest; the sync route refuses (403) a dialer not
 standing in the group its request names, and a group the node does not hold
-in the same words; and the door (`RingJournal::append`) signs only for a key
-standing in the seed and the acts it holds, under its write lock.
+in the same words; and `commit` signs only for a key standing in the seed
+and the acts the journal holds, under its write lock.
 `tests/group_not_mesh.rs` runs a founder, a member it admits, a stranger and
 a member of another group in one process. The round reads the node's `Host` and the
 `RingRail` directly: upstream's round read them through the `RingSyncHost`
