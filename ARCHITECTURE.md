@@ -46,6 +46,9 @@ the bot at tag `e0-bot`. Its reducer (`init`, `reduce`) is what the localhost
 Expenses app of DESIGN U3 builds on; `propose`, `say` and `due` answered chat
 commands and go with the bot.
 
+**`apps/films/`, `apps/tap/`**: so far only each app's `nouns.txt` — the words
+the infra may never use. Films is DESIGN U5; Tap is a canary (DESIGN §8).
+
 **`bridge/`**: the Discord door's first code — `setup.mjs` and `discord.mjs`
 (the bot's application, invite and channels), `words.json` (the plain-words
 list), and `bridge.mjs`, E0's bridge core, kept for its log and tests until the
@@ -62,6 +65,7 @@ links; `scripts/ralph-mark.sh` expects to run under it. There is no queue yet;
 U1's is next.
 
 **`scripts/`**: `check.sh` is the definition of done; `lean_check.py` keeps the
-repository standalone and within budget; `ports.py` lists the fork's pairs;
+repository standalone and within budget; `vocab_check.py` keeps every app's
+nouns (`apps/<app>/nouns.txt`) out of infra code; `ports.py` lists the fork's pairs;
 `principles_check.py` keeps `docs/principles/` pinned; `ralph-mark.sh` marks a
 queue row done.

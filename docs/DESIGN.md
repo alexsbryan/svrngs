@@ -72,33 +72,44 @@ choice gets made here.
 
 ## 3. The shape
 
-**A group** is a record and the computers of the people in it. Each member's
-computer runs a node that holds a full copy of the group's journal and syncs it
-with the other members' nodes over iroh. There is no server; a member's
+**A group** is a record and the computers and phones of the people in it. Each
+member's computer runs a node that holds a full copy of the group's journal and
+syncs it with the other nodes over iroh. There is no server; a member's
 always-on computer, when there is one, keeps the group reachable while the rest
-sleep.
+sleep, and is the meeting point a phone dials.
 
-**An app is a localhost service.** A member shares one with `svrngs share
-<port>`. Every other member opens it at a localhost address their own node
-serves, tunnelled over iroh to the sharer's node through the **member door**,
-which strips any identity header the client sent and adds the verified one. A
-lent service — Jellyfin, a svrn daemon's web UI — is an app like any other.
+**An app is a localhost service** — an *rngapp*. A member lends one with
+`svrngs share <port>`. Every other member opens it through the **member door**,
+tunnelled over iroh to the lender's node, which strips any identity header the
+client sent and adds the verified one. A lent service — Jellyfin, a svrn
+daemon's web UI — is an app like any other; what the group may do with it is a
+lend declaration, kept as data: a secret the door injects and never lets out, the
+paths it refuses, how many streams at once.
 
-**The record, offered to apps.** An app that wants shared state appends acts to
-the group's journal and reads them back over a loopback API on its own node;
-every member's copy holds them. An app may keep its own state instead; the
-group does not care.
+**What an app gets — the whole surface, for our apps and a stranger's alike:**
+- the person asking, verified, in a header the door sets;
+- the people in the group, each with a public key the app may seal to;
+- the record, over a loopback API on the member's own node: append, read, live;
+- the services the group's members lend, each by name and an opaque kind the
+  app interprets (`jellyfin`);
+- the screen handoff: a node on a TV's network serves one stream at an
+  unguessable local address the TV fetches, while a phone is the remote.
 
-**Joining.** `svrngs new <name>` makes a group and prints its link; `svrngs
-join <link>` puts a person's computer in it. A browser with nothing installed comes next: a
-stock Chrome tab running iroh in wasm has dialled a live node through the relay
-and read the record (commonwealth-ai `ralph/DECISIONS.md`, browser-dial-2,
-`HTTP/1.1 200 OK`); what it lacks is a runtime that renders apps through that
-dial — fetch, POST and streaming.
+An app that needs anything else is a decision, not a convenience.
 
-**Chats are doors.** A small adapter per chat, in its own package, does one
-thing: make a group for this channel and post its link. Discord is first; its
-setup code is in `bridge/`. The core never knows a chat exists.
+**Joining, phones first.** `svrngs new <name>` makes a group and prints its
+link. On a computer, `svrngs join <link>` makes it a member node. On a phone the
+same link opens in the browser and the person is in: the page holds the
+person's own key (WebCrypto, never extractable) and reaches the group by
+dialling a member node over iroh in wasm — measured working from a stock Chrome
+tab (commonwealth-ai `ralph/DECISIONS.md`, browser-dial-2, `HTTP/1.1 200 OK`).
+A phone holds no copy of the record; it reads and writes through the node it
+dials. What the browser still lacks is the runtime that renders a lent app
+through that dial: fetch, POST, streaming and byte ranges.
+
+**Chats are doors, and the last thing we build.** A small adapter per chat, in
+its own package, makes a group for a channel and posts its link. Onboarding
+comes after the core (§8). The core never knows a chat exists.
 
 ## 4. Domains, and the fork
 
@@ -106,7 +117,7 @@ setup code is in `bridge/`. The core never knows a chat exists.
 |---|---|---|
 | **svrngs** | the record, the node, the doors, the command, plain words, reference apps, demos | — |
 | **chat doors** | one package per chat: make a group for a channel, post its link | the `svrngs` command |
-| **apps** | anything served on localhost; app-specific code lives only in the app | HTTP through the member door; the record API if it wants one |
+| **apps (rngapps)** | anything served on localhost; app-specific code lives only in `apps/<app>/` | the surface in §3, and nothing else |
 | **sovereign (svrn)** | local AI on a member's computer | its OpenAI-compatible endpoint on loopback |
 | **commonwealth-ai** | the mesh for one owner's machines, and the ring code svrngs forked | nothing at runtime; `scripts/ports.py` pairs each forked file with its original |
 
@@ -161,6 +172,13 @@ these from its first line; forked code is held to them as it becomes ours.
 Upstream's shape stays until a unit changes it: the node's map of open
 journals sits behind a `Mutex`, which an actor per journal replaces.
 
+**Two gates keep the apps out of the infra.** Every app lists its own nouns in
+`apps/<app>/nouns.txt`, and `scripts/vocab_check.py` refuses any of them in
+infra code — comments and tests apart, where an example is fine. So the infra
+never learns what a film, an expense or a crush is. And the canaries of §8,
+Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
+serves Films and breaks one fails the build.
+
 **Lean, and kept lean.** `svrngs-core` stays under 2,500 lines of code and the
 repository under 12,000, tests and `apps/` apart (`scripts/lean_check.py`);
 a raise is the operator's, with the reason in the commit. `svrngs-core` stands
@@ -195,7 +213,7 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   operator's own computers). Each act names its author's previous
   act; a copy holds an act only with its parent, so copies converge by union.
   Two acts on one parent are a fork, and forks void nothing.
-- **Removal has one decider** (U6). Anyone may ask to remove anyone; the group's
+- **Removal has one decider** (U7). Anyone may ask to remove anyone; the group's
   keeper — one person's key, handed on by an act — sequences each request. A
   removed key cannot remove. There is no recovery inside a group.
 - **Leaving is cheap.** A group's whole state is a directory every member's
@@ -208,7 +226,7 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   timestamp is outside the id, so one act can be copied with two timestamps and
   folded in two orders, and the previous act is outside the signature, so a
   relaying node can rewrite it. A removal names the removed key's acts by hash,
-  never by position or time (U6): today the fold ignores `through_seq` and
+  never by position or time (U7): today the fold ignores `through_seq` and
   cuts the key at the `Remove`'s place in the order
   (`crates/svrngs-core/src/membership.rs:153`), so a backdated act slips under
   the cut.
@@ -217,16 +235,21 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
 
 ## 7. Packaging and reach
 
-Computers first: the node is the `svrngs` process on macOS and Linux. An
-always-on member computer is the group's meeting point, its port mapped by
-iroh; iroh's relays carry what cannot go direct. A phone app (Tauri 2, the same
-node as a library) and Windows wait in §9. A svrn daemon on the same computer
-is an optional neighbour for local AI; it holds no group state.
+Phones first, through the browser: no install, no store, one link. Computers
+run the node — the `svrngs` process on macOS and Linux — and an always-on one is
+the group's meeting point and the origin a TV fetches from, its port mapped by
+iroh; iroh's relays carry what cannot go direct. A native phone app and
+Windows wait in §9. A svrn daemon on the same computer is an optional neighbour
+for local AI; it holds no group state.
 
 ## 8. Order of work
 
-U1-U3 move Demo A, U4-U6 move Demo B. The first three fork the rest of the
-ring slice (§4).
+**One experience, done delightfully: Films — the group's films, one shelf,
+on any phone and the TV in the room.** Everyone's lent library on one shelf,
+each title marked "from Sam's"; no accounts, no port forwarding; play it here
+or on the TV; the lender's password never leaves their computer. Nothing else
+is built until Demo B passes, except the two canaries, which keep Films from
+bending the infra into a media platform.
 
 **Starting U1.** List everything `ring_sync`, `ring_routes.rs` and
 `acceptor.rs` use outside themselves at `e1a43bcd2`, tests apart: the crates
@@ -245,40 +268,49 @@ the mesh daemon and so is rewritten, not forked.
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
 | U1 a group is not a mesh | ring sync and the ring routes forked into `svrngs-node`; the register decides who may connect and who is synced, where upstream asked the mesh (`commonwealth/crates/commonwealth-rails/src/` at `e1a43bcd2`: `acceptor.rs:47-61`, `ring_sync/journal.rs:153-164`, the default roster at `lib.rs:404`) | a node in the group but no mesh syncs; a node outside the group is refused |
-| U2 join by link | `svrngs new <name>` and `svrngs join <link>`; redeeming writes the `Admit`; acts linked by their previous act, ids over everything signed (§6) | one redemption admits one person to one group; a reused link is refused |
-| U3 share an app | the member door forked; `svrngs share <port>`; Expenses as a small localhost web app over the record | the app sees the verified person; a header the client typed is stripped |
+| U2 join by link | `svrngs new <name>` and `svrngs join <link>` on a computer; redeeming writes the `Admit`; each person's public key in the register; acts linked by their previous act, ids over everything signed (§6) | one redemption admits one person to one group; a reused link is refused |
+| U3 lend a service | the member door forked; `svrngs share <port>` with its lend declaration; streaming and byte ranges through the door; the loopback record API; the list of what members lend | the app sees the verified person; a header the client typed is stripped; the lender's secret appears in no byte a member receives |
 
-**Demo A — two computers, one group** (after U3). Sam makes "the house" and
-sends Alex a link. Alex's computer joins. Alex opens Sam's Expenses, adds the
-pizza, and it shows under Alex's name on both computers.
+**Demo A — Sam's films on Alex's computer** (after U3). Sam lends Jellyfin
+with one command and sends Alex a link. Alex's computer joins, and Alex plays a
+film from Sam's library in their own browser, seeking freely. Sam's password
+never left Sam's computer; nobody made an account.
 
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
-| U4 the Discord door | the adapter makes a group for a channel and posts its link, from the setup code in `bridge/` | the core imports no adapter |
-| U5 the browser | the guest channel — the iroh channel a browser with no key dials, upstream's `cwth/guest/0` — on the member door; a runtime that renders an app through the dial — fetch, POST, streaming | a stock browser tab opens a shared app and writes to the record |
-| U6 removal | the keeper and its requests (§6) | a removed key's later acts count nowhere |
+| U4 the browser | a phone opens the link and is in: its own key, a dial to the meeting point, and the runtime that renders a lent app through it — fetch, POST, streaming, byte ranges | a stock phone browser plays a lent film and seeks |
+| U5 Films | `apps/films`: one shelf across every member's lent library, "from Sam's", search, play here — on the §3 surface alone | a title two members lend shows once, with both; Films calls nothing outside §3 |
+| U6 the screen handoff | the meeting point serves one stream to a TV on its network at an unguessable address; AirPlay from Safari, Cast from Chrome; the phone is the remote and may lock | a film plays on the TV from a phone browser; the address serves only the device it was handed to |
 
-**Demo B — split the pizza** (after U6). Five people in a Discord channel who
-have never heard of svrngs click the link, and four of them settle an expense
-within three minutes, with no account created and no key prompt — the N+1
-test: N strangers and one person who knows the system.
+**Demo B — movie night** (after U6). Five friends at Sam's, phones only. Sam
+texts the link; each opens it, browses one shelf across three members'
+libraries, and a film they pick plays on the TV. Nobody installs or signs up.
+Gate: four of five newcomers get from the link to the film on the TV within
+three minutes, unassisted.
 
-After Demo B the classes come one at a time, each with its reference app:
-lent services (Films, on Jellyfin), group compute (Ask, on members' svrn
-daemons), files (Album), live collaboration (Doc), private coordination (Tap),
-spin-off groups (Event).
+**The canaries** run in `scripts/check.sh` from the moment their surface
+exists, each a small app in `apps/` using only §3:
+- **Expenses** (after U3) — no server, all state in the record: two nodes,
+  everyone writes, a correction voids, and both fold to the same balances.
+- **Tap** (after U2) — private inputs and a ring born from a ring: two groups
+  on one node; an app starts a group of two from inside a group; it seals its
+  own payloads to members' public keys.
+
+**Then:** removal (U7, the keeper of §6), before any group of strangers; then
+the chat doors, Discord first — onboarding, last. After that the core grows one
+class at a time, each chosen by the north star's tests.
 
 ## 9. Later, each with the trigger that brings it back
 
 | Waits | Trigger |
 |---|---|
 | an app SDK, a sandboxed fold engine (`svrngs-engine`), signed manifests and install acts | an app needs its state offline on a device that is not its host, or strangers' code runs on members' devices |
-| phones and phones-only groups | a group with no computer asks, counted |
+| a native phone app, and groups of phones only | the browser cannot keep what a group needs — its key, or a copy — measured |
 | Windows | a group asks |
-| a TV in the room (AirPlay, Cast, DLNA from the member door) | Films passes its bars |
-| a lent service's credential masked in the door | the first service lent with a credential |
+| DLNA, and TVs that take no push | people whose TV takes neither AirPlay nor Cast ask, counted |
+| sealing in the infra | two apps need the same seal |
 | group compute: asks leased by members' computers and answered as acts | Ask is next |
-| files beside the record; sealed payloads, readable only by named people; the live channel | the reference app that needs each |
+| files beside the record; the live channel beyond what U3 carries | the reference app that needs each |
 | a second chat adapter, and the trait it earns | a group on another chat asks |
 | compacting the journal | a journal grows past a size measured to matter |
 | another device for the same person | someone asks |
@@ -297,7 +329,10 @@ By the operator, 2026-10-03:
 - removal: anyone may ask, a removed key cannot remove, one keeper sequences,
   no recovery inside a group; leaving is cheap, so refounding is the exit;
 - no push notifications; anyone in a group may install an app;
-- the name is svrngs, for now; machinery waits until an experiment earns it.
+- the name is svrngs, for now; machinery waits until an experiment earns it;
+- one experience done delightfully first — Films — with Expenses and Tap kept
+  as canaries so the infra stays general; the screen handoff is infra; phones
+  first, through the browser; chat doors are onboarding, built last.
 
 ## 11. Risks
 
@@ -305,8 +340,12 @@ By the operator, 2026-10-03:
    no other member is online, the group is unreachable.
 2. **The keeper is trusted to sequence removals** and can delay or refuse one;
    the exit is refounding.
-3. **The chat platform** reads the channel and can revoke the adapter. It is
-   only the door, so a group survives losing it; its newcomers do not.
-4. **Two copies of the record's code.** A signing or canonical-form bug fixed on
+3. **A media flagship pulls the infra toward media.** The nouns gate and the
+   canaries are the guard. Members lend their own servers to their own group;
+   svrngs hosts nothing, and its relays carry only ciphertext.
+4. **Phone browsers forget.** Safari may clear a site's storage, and the
+   person's key with it; a web app added to the home screen keeps it, and a
+   lost key means joining again by link.
+5. **Two copies of the record's code.** A signing or canonical-form bug fixed on
    one side can be missed on the other. `scripts/ports.py` is the guard, and it
    is a listing, not a gate.

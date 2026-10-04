@@ -1,0 +1,5 @@
+# Tap' nouns. The infra may not use them (scripts/vocab_check.py).
+crush
+crushes
+tap
+taps

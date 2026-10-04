@@ -1,0 +1,10 @@
+# Expenses' nouns. The infra may not use them (scripts/vocab_check.py).
+expense
+expenses
+settle
+settles
+settlement
+owe
+owes
+owed
+debt

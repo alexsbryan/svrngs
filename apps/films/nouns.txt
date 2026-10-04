@@ -1,0 +1,16 @@
+# Films' nouns. The infra may not use them (scripts/vocab_check.py).
+jellyfin
+plex
+emby
+film
+films
+movie
+movies
+transcode
+transcodes
+transcoding
+subtitle
+subtitles
+trickplay
+episode
+episodes
