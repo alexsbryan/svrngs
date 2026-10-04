@@ -19,7 +19,10 @@ a program yet.
 (`sync.rs`, `view.rs`), attestation and introductions. Pure: no filesystem,
 clock or network; time and keys arrive as arguments. It is commonwealth-ai's
 `commonwealth-rail-core` at `e1a43bcd2`, with `oplog-types` (`op.rs`) and
-`ContentHash` (`hash.rs`) inlined. Every file carries its `ported from` line;
+`ContentHash` (`hash.rs`) inlined, and `hash.rs`'s wire test asserting the
+JSON form directly rather than through kernel-types' `wire` module, which the
+fork does not carry. Every source file carries its `ported from` line (the
+JSON fixtures came over unchanged);
 `scripts/ports.py` lists each beside its original. It keeps upstream's edition,
 rustfmt policy and clippy allowances so a diff against upstream shows only
 what svrngs changed.
@@ -48,11 +51,15 @@ commands and go with the bot.
 list), and `bridge.mjs`, E0's bridge core, kept for its log and tests until the
 door (DESIGN U4) replaces it.
 
-**`demo/`**: how a demo is recorded. **`ralph/`**: the work-loop prompt; a
-queue goes in `ralph/next/<queue>/` and runs under commonwealth-ai's driver,
-`python3 ~/dev/commonwealth-ai/scripts/ralph.py run --workdir ~/dev/svrngs
---queue <queue>` — process tooling, not code svrngs links. There is no queue
-yet; U1's is next.
+**`demo/`**: how a demo is recorded. **`ralph/`**: the work loop. A queue is a
+directory `ralph/next/<queue>/` holding `queue.toml` (models, timeouts, the
+launch line), `STATE.md` (its rows) and `PROMPT.addendum.md`, which the driver
+renders over `ralph/PROMPT.base.md`; E0's queue at tag `e0-bot`
+(`ralph/next/e0/`) is a working example. The driver is commonwealth-ai's
+`scripts/ralph.py`, run as `python3 ~/dev/commonwealth-ai/scripts/ralph.py run
+--workdir ~/dev/svrngs --queue <queue>` — process tooling, not code svrngs
+links; `scripts/ralph-mark.sh` expects to run under it. There is no queue yet;
+U1's is next.
 
 **`scripts/`**: `check.sh` is the definition of done; `lean_check.py` keeps the
 repository standalone and within budget; `ports.py` lists the fork's pairs;

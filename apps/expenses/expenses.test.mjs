@@ -1,4 +1,5 @@
-// ported from commonwealth-ai sovereign/apps/ring-doc/expenses.test.mjs@96261aa71
+// rewritten in E0 from commonwealth-ai sovereign/apps/ring-doc/expenses.test.mjs@96261aa71;
+// not a fork, so scripts/ports.py does not pair it.
 // The money rules, pinned. Each name says which mistake loses money. What is
 // not tested here is order: every copy folding the same acts in the same order
 // is the record's property (svrngs-core `admit`), not the reducer's. The laws

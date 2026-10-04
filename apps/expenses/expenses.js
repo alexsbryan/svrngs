@@ -1,4 +1,5 @@
-// ported from commonwealth-ai sovereign/apps/ring-doc/expenses.js@96261aa71
+// rewritten in E0 from commonwealth-ai sovereign/apps/ring-doc/expenses.js@96261aa71;
+// not a fork, so scripts/ports.py does not pair it.
 // Expenses: who paid for what, who was in on it, and who owes whom. This file
 // is the app; the runtime folds its acts and has never heard of an expense.
 //
@@ -24,7 +25,7 @@
 // The moment a split reads "everyone here", the same acts divide differently
 // once someone joins, and a newcomer silently re-divides every old expense.
 //
-// **The state is JSON and nothing else** (DESIGN C4): no Set, no Map, no
+// **The state is JSON and nothing else** (tag e0-bot, DESIGN C4): no Set, no Map, no
 // Date, and nothing kept between calls in a module variable.
 
 export const EXPENSE = 'expense';

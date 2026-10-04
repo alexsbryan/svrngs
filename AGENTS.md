@@ -32,7 +32,8 @@ there moves the demo that follows it, and work that moves no demo waits.
 5. **Watch every gate fail.** Every check here failed on a planted input before
    it passed; a new check lands with its plant named in the commit.
 6. **Never silently substitute.** Four verdicts: passed, failed, could-not-judge,
-   never-ran. An absence is reported, never defaulted.
+   never-ran. An absence is reported, never defaulted. `scripts/check.sh` uses
+   three of them, and fails on never-ran.
 7. **Validate the instrument.** A people bar is a recorded run (`demo/`); one
    run is not a rate.
 8. **One decider.** Each threshold, key and schema has one home. A forked file
@@ -46,7 +47,7 @@ there moves the demo that follows it, and work that moves no demo waits.
 11. **The inventory outranks the plan.** Before writing a type or module, look
     here, then in commonwealth-ai's ring code. What exists there is forked, not
     rewritten and never linked: it lands with `ported from commonwealth-ai
-    <path>@<commit>` on every file, and `scripts/ports.py` lists the pairs
+    <path>@<commit>` on every source file, and `scripts/ports.py` lists the pairs
     (DESIGN §4).
 12. **Draw the line by ownership.** A group is not a mesh; app-specific code
     lives only in `apps/`; a chat adapter lives in its own package.

@@ -111,10 +111,11 @@ setup code is in `bridge/`. The core never knows a chat exists.
 
 **The fork** (operator, 2026-10-03, over shipping `cw-rails` as a sidecar):
 svrngs owns the group's code, forked from commonwealth-ai's ring slice at
-`e1a43bcd2` — about 5k lines: the record (`commonwealth-rail-core`), the
-journal (`commonwealth-rail` and `oplog`), ring sync and the ring routes
-(`commonwealth/crates/commonwealth-rails/src/ring_sync`, `ring_routes.rs`),
-the iroh acceptor they sit behind (`acceptor.rs` there), the member door
+`e1a43bcd2` — about 6k lines: the record (`commonwealth-rail-core`), the
+journal (`commonwealth-rail` and `oplog`), ring sync, the ring routes and the
+rail routes with the default roster they read
+(`commonwealth/crates/commonwealth-rails/src/ring_sync`, `ring_routes.rs`,
+`rail.rs`), the iroh acceptor they sit behind (`acceptor.rs` there), the member door
 (`commonwealth/crates/commonwealth-transport/src/iroh_identity_forward.rs`)
 and the sync bodies (`sovereign/crates/sovereign-peer-wire`). How a piece
 comes over:
@@ -124,15 +125,16 @@ comes over:
   re-asserted without a crate we do not carry — each named in its commit and in
   `ARCHITECTURE.md`; its edition, rustfmt policy and clippy allowances stay
   upstream's, and every file carries `ported from commonwealth-ai
-  <path>@<commit>`. Behaviour changes only in later commits (ARCH 2), so a diff
-  against upstream shows what svrngs changed. Where upstream code is tied to
+  <path>@<commit>` on every source file. Behaviour changes only in later
+  commits (ARCH 2), so a diff against upstream shows what svrngs changed. Where upstream code is tied to
   something we do not fork — the mesh — the tie is cut in the unit that
   replaces it, and that unit's commits say which lines changed meaning.
 - **A fix shows its twin.** commonwealth-ai keeps `rail-core` for its work
   plane and the door for its mesh. The two systems share no wire, so the
   copies are a fork and may diverge; `scripts/ports.py` lists each pair and
-  whether the original changed since, so a signing fix on one side is seen on
-  the other.
+  whether the original changed since — "unchanged" means upstream has not
+  moved, not that the fork still matches it — so a signing fix on one side is
+  seen on the other.
 - **The arrow points one way.** svrngs links no commonwealth-ai or sovereign
   crate (`scripts/lean_check.py` refuses them from `Cargo.lock`).
   commonwealth-ai's ring-facing code — `ring_cmd`, ring-doc, ring-runtime,
@@ -145,7 +147,7 @@ comes over:
 |---|---|---|
 | `svrngs-core` | the record: acts, admission into one order, membership, the sync digest. Pure — no filesystem, clock or network; time and keys are arguments | none |
 | `svrngs-node` | a group's journal on disk; next, sync, the routes and the member door over iroh | the journals |
-| `svrngs` (to come) | the command and the process: `ring new`, `join`, `share`, and the loopback record API | a device's keys |
+| `svrngs` (to come) | the command and the process: `new`, `join`, `share`, and the loopback record API | a device's keys |
 | `svrngs-engine` | a QuickJS fold engine, waiting in §9 | none |
 
 Held to `docs/principles/RUST_ARCH.md`: types encode the domain, ownership
@@ -225,15 +227,19 @@ is an optional neighbour for local AI; it holds no group state.
 U1-U3 move Demo A, U4-U6 move Demo B. The first three fork the rest of the
 ring slice (§4).
 
-**Starting U1.** List every crate `ring_sync`, `ring_routes.rs` and
-`acceptor.rs` import at `e1a43bcd2` — `commonwealth-core`,
-`commonwealth-transport`, `commonwealth-media`, `commonwealth-discovery`,
-`host-kit`, `oicp-types`, `sovereign-peer-wire` — and decide per import: fork the piece it needs, or
-replace it with the register. The list and the decisions are U1's first commit.
-Until U2, a test admits members by writing `Admit` acts directly, as upstream's
-`commonwealth/crates/commonwealth-rail/examples/stage_member_act.rs` does, and
-runs two nodes in one process with no relay, as upstream's
-`commonwealth/crates/commonwealth-rails/tests/ring_round.rs` does.
+**Starting U1.** List everything `ring_sync`, `ring_routes.rs` and
+`acceptor.rs` use outside themselves at `e1a43bcd2`, tests apart: the crates
+`commonwealth-core`, `commonwealth-transport`, `commonwealth-media`, `host-kit`
+and `sovereign-peer-wire`, and in their own crate `rail.rs` (the rail routes,
+and `MembershipRosterSource`, the default roster that asks the mesh) and
+`RailsDaemon`, which `RingSyncHost` is implemented for (`ring_sync.rs:700-733`).
+Decide per item: fork the piece it needs, or replace it — the mesh with the
+register, the daemon with the node. The list and the decisions are U1's first
+commit. Until U2, a test admits members by writing `Admit` acts directly, as
+upstream's `commonwealth/crates/commonwealth-rail/examples/stage_member_act.rs`
+does, and runs two nodes in one process with no relay — the shape of upstream's
+`commonwealth/crates/commonwealth-rails/tests/ring_round.rs`, which is built on
+the mesh daemon and so is rewritten, not forked.
 
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
