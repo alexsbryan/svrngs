@@ -72,8 +72,8 @@ are `commonwealth-rails`' round, chunked exchange and responder (`answer`),
 and the seam the round reads (`RingSyncHost`, `RingSyncJournal`, implemented
 for `RingRail`); `ring_routes.rs` is its sync route, with `rail.rs`'s `err`.
 Their edits cut the mesh ties: `RoundMembers` loses its walk of the mesh
-(`RoundMembers::of`) and nothing builds one yet, so a round dials nobody until
-the register answers (DESIGN §8, U1); the mesh proof stamp the exchange
+(`RoundMembers::of`), and is built from named keys instead, which the node
+reads from the seeds until the register answers (DESIGN §8, U1); the mesh proof stamp the exchange
 carried goes; `RingSyncHost::transport` is the concrete `IrohTransport`, and a
 contact's addresses are its one `base_url`; `roster_names` reads iroh's
 `PublicKey`; `peer_client` is `pub`, since its one upstream caller,
@@ -104,7 +104,9 @@ round dials every key the seeds of the groups the node holds name, by key,
 through addresses a caller seeds on the transport or iroh's lookup finds; the
 accept loop admits any dialer; and the sync route refuses (403) a dialer its
 group's seed does not name. `tests/node_sync.rs` runs two nodes and a
-stranger in one process.
+stranger in one process. The round reads the node's `Host` directly:
+upstream's round read its daemon through the `RingSyncHost` trait, and with
+one host here the trait went (RUST_ARCH 7).
 
 **`crates/svrngs-engine`**: the `Engine` trait and QuickJS behind it — a fold
 engine that waits in DESIGN §9 until an app needs its state offline on a device

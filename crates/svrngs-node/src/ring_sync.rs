@@ -5,10 +5,11 @@
 //!
 //! Moved here from sovereign-mesh (phase-b pb-rails-parity). cw-rails runs
 //! the round over its own journals (upstream's `RailsDaemon` is a
-//! [`RingSyncHost`]) and answers `/internal/ring/sync` with [`answer`]. The
+//! `RingSyncHost`) and answers `/internal/ring/sync` with [`answer`]. The
 //! daemon's copy retired with pb-mesh-exit-transport: this is the one round.
-//! (svrngs: forked in U1 without `RailsDaemon`; the node that hosts the round
-//! is [`crate::node`], DESIGN §8.)
+//! (svrngs: forked in U1 without `RailsDaemon`; the round runs in the node,
+//! [`crate::node`], and reads its [`Host`] directly — with one host, the
+//! `RingSyncHost` seam went, DESIGN §8.)
 //!
 //! # Why this is a digest and not a snapshot
 //!
@@ -92,7 +93,9 @@ use tracing::{debug, info, warn};
 
 mod journal;
 use journal::OnlinePeer;
-pub use journal::{roster_names, JournalFut, RingSyncHost, RingSyncJournal, RoundMembers};
+pub use journal::{roster_names, JournalFut, RingSyncJournal, RoundMembers};
+
+use crate::node::Host;
 
 /// Money does not need ten-second convergence, and the bandwidth argument in
 /// the module docs says it must not have it.
@@ -169,7 +172,7 @@ pub struct RoundOutcome {
 /// to a peer, it asks this loop to. (svrngs: none of those writers exists yet,
 /// so nothing fires it until U3's record API.)
 pub fn spawn_ring_sync_loop(
-    host: Arc<dyn RingSyncHost>,
+    host: Arc<Host>,
     interval: Duration,
     nudge: Arc<Notify>,
 ) -> RingSyncHandle {
@@ -209,11 +212,9 @@ pub fn spawn_ring_sync_loop(
 
 /// One anti-entropy pass over every namespace this node holds, against every
 /// online peer **its roster names**.
-pub async fn run_one_round(host: &dyn RingSyncHost) -> RoundOutcome {
+pub async fn run_one_round(host: &Host) -> RoundOutcome {
     let mut outcome = RoundOutcome::default();
-    let Some(rail) = host.journal() else {
-        return outcome;
-    };
+    let rail: &dyn RingSyncJournal = host.rail();
     let namespaces = match rail.namespaces().await {
         Ok(n) => n,
         Err(e) => {
@@ -313,7 +314,7 @@ pub async fn run_one_round(host: &dyn RingSyncHost) -> RoundOutcome {
             let mut refused = false;
             for base_url in &endpoints {
                 let url = format!("{base_url}/internal/ring/sync");
-                let ex = exchange(http, &url, rail.as_ref(), namespace).await;
+                let ex = exchange(http, &url, rail, namespace).await;
                 // Counted BEFORE the verdict is read. `ingest_all` has already
                 // written these lines to disk, so they are progress whether or
                 // not a later call in the same exchange failed — the old shape

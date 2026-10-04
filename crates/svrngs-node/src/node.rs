@@ -18,9 +18,7 @@
 //! admits any dialer, leaving the refusal to the route.
 
 use std::collections::BTreeMap;
-use std::future::Future;
 use std::path::PathBuf;
-use std::pin::Pin;
 use std::sync::Arc;
 
 use tokio::sync::Notify;
@@ -31,8 +29,8 @@ use crate::iroh::{
 };
 use crate::ring_routes::{self, RingInbound};
 use crate::ring_sync::{
-    peer_client, run_one_round, spawn_ring_sync_loop, RingSyncHandle, RingSyncHost,
-    RingSyncJournal, RoundMembers, RoundOutcome, DEFAULT_RING_SYNC_INTERVAL,
+    peer_client, run_one_round, spawn_ring_sync_loop, RingSyncHandle, RingSyncJournal,
+    RoundMembers, RoundOutcome, DEFAULT_RING_SYNC_INTERVAL,
 };
 use crate::{actor_of, RingRail, SigningKey};
 
@@ -56,11 +54,13 @@ pub struct Node {
 }
 
 /// What the round reads: the journals, the endpoint's transport, and the key
-/// this node signs and dials with.
+/// this node signs and dials with. Upstream's round read these through its
+/// `RingSyncHost` trait, which `RailsDaemon` implemented; with one host the
+/// trait went, and the round calls this (RUST_ARCH 7).
 pub struct Host {
     rail: Arc<RingRail>,
     endpoint: Endpoint,
-    transport: Arc<IrohTransport>,
+    transport: IrohTransport,
     actor: String,
 }
 
@@ -102,7 +102,7 @@ impl Node {
             ring_routes::router(RingInbound { rail: rail.clone() }),
         );
         let host = Arc::new(Host {
-            transport: Arc::new(IrohTransport::new(endpoint.clone())),
+            transport: IrohTransport::new(endpoint.clone()),
             rail,
             endpoint,
             actor,
@@ -142,10 +142,26 @@ impl Node {
 }
 
 impl Host {
-    /// Every key a seed of a group this node holds names, but this node's —
+    /// This node's journals.
+    pub(crate) fn rail(&self) -> &RingRail {
+        &self.rail
+    }
+
+    /// The one client every peer call rides — one pool, one timeout policy.
+    pub(crate) fn http(&self) -> Result<&'static reqwest::Client, &'static str> {
+        peer_client()
+    }
+
+    /// The transport a member's contact is resolved through.
+    pub(crate) fn transport(&self) -> &IrohTransport {
+        &self.transport
+    }
+
+    /// This round's members, or `None` when the node has none to round
+    /// with: every key a seed of a group this node holds names, but this node's —
     /// the round's members until the register answers (u1-5). A group whose
     /// seed is unreadable adds nobody, as the round offers it to nobody.
-    async fn seeded_members(&self) -> Option<RoundMembers> {
+    pub(crate) async fn members(&self) -> Option<RoundMembers> {
         let namespaces = match RingRail::namespaces(&self.rail) {
             Ok(n) => n,
             Err(e) => {
@@ -185,22 +201,4 @@ impl Host {
 fn key_of(actor: &str) -> Option<PublicKey> {
     let bytes: [u8; 32] = hex::decode(actor).ok()?.try_into().ok()?;
     PublicKey::from_bytes(&bytes).ok()
-}
-
-impl RingSyncHost for Host {
-    fn journal(&self) -> Option<Arc<dyn RingSyncJournal>> {
-        Some(self.rail.clone())
-    }
-
-    fn http(&self) -> Result<&reqwest::Client, &str> {
-        peer_client()
-    }
-
-    fn members(&self) -> Pin<Box<dyn Future<Output = Option<RoundMembers>> + Send + '_>> {
-        Box::pin(self.seeded_members())
-    }
-
-    fn transport(&self) -> Arc<IrohTransport> {
-        self.transport.clone()
-    }
 }

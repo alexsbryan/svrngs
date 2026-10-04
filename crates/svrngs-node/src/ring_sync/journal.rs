@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai commonwealth/crates/commonwealth-rails/src/ring_sync/journal.rs@e1a43bcd2
-//! The round's seam: what it reads from the node that runs it (a
-//! [`RingSyncHost`]), the journal half it exchanges over (a
+//! The round's seam: the journal half it exchanges over (a
 //! [`RingSyncJournal`]), one round's membership, and the one roster test both
-//! directions of ring sync decide on. A sibling of `ring_sync.rs` so that file
+//! directions of ring sync decide on. (Upstream's seam also held
+//! `RingSyncHost`, what the round reads from the node that runs it; svrngs
+//! has one such node, so the round reads [`crate::node::Host`] directly.) A sibling of `ring_sync.rs` so that file
 //! stays under the 800-line approach band (ARCH §3.1); re-exported there.
 
 use std::future::Future;
 use std::pin::Pin;
-use std::sync::Arc;
 
-use crate::iroh::{Contact, IrohTransport, PublicKey};
+use crate::iroh::{Contact, PublicKey};
 use crate::{Compaction, Digest, Op, RailError, RingRail, Roster, SignedOp};
 
 /// A journal call, boxed so [`RingSyncJournal`] stays object-safe. The same
@@ -93,26 +93,6 @@ impl RingSyncJournal for RingRail {
                 .compact(&roster, &crate::Ed25519Verifier)
         })
     }
-}
-
-/// What a round reads from the node that runs it: its journals, its peer
-/// HTTP client, this round's membership and the transport that turns a
-/// member's contact into addresses. Upstream's `RailsDaemon` was one host,
-/// and since pb-mesh-exit-transport the only production one; in svrngs the
-/// node is (U1, DESIGN §8).
-pub trait RingSyncHost: Send + Sync {
-    /// This node's journals, or `None` on a node with no ring storage.
-    fn journal(&self) -> Option<Arc<dyn RingSyncJournal>>;
-    /// The one client every peer call rides — one pool, one timeout policy.
-    fn http(&self) -> Result<&reqwest::Client, &str>;
-    /// This round's membership, read once under the host's lock, or `None`
-    /// when the host has none to round with. Upstream read it from the mesh,
-    /// which svrngs does not fork; until the register answers (U1, DESIGN
-    /// §8) the node answers the keys its groups' seeds name
-    /// ([`crate::node`]).
-    fn members(&self) -> Pin<Box<dyn Future<Output = Option<RoundMembers>> + Send + '_>>;
-    /// The transport a member's contact is resolved through.
-    fn transport(&self) -> Arc<IrohTransport>;
 }
 
 /// One round's view of the membership: the Online members it may dial, and
