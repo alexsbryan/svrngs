@@ -66,6 +66,8 @@ use crate::lend::{self, Lend, LendName, Offered};
 use crate::ring_routes::err;
 use crate::{Ed25519Verifier, Person, RingRail};
 
+pub mod limit;
+
 /// svrngs's own header prefix: every header under it on a request through
 /// the door is the door's. A client's is stripped whole.
 pub const IDENTITY_PREFIX: &str = "x-svrngs-";
