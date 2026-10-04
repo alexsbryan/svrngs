@@ -50,18 +50,83 @@ fn a_declaration_is_read_strictly() {
     assert!(read(root.path(), &name).unwrap().is_none());
     std::fs::create_dir_all(lends_dir(root.path())).unwrap();
     let file = lends_dir(root.path()).join("shelf.json");
-    std::fs::write(&file, r#"{"port": 8096, "refusd": ["/admin"]}"#).unwrap();
+    std::fs::write(
+        &file,
+        r#"{"port": 8096, "kind": "k", "limit": 3, "refusd": ["/admin"]}"#,
+    )
+    .unwrap();
     assert!(matches!(
         read(root.path(), &name),
         Err(LendError::Malformed { .. })
     ));
-    std::fs::write(&file, r#"{"port": 0}"#).unwrap();
+    std::fs::write(&file, r#"{"port": 0, "kind": "k", "limit": 3}"#).unwrap();
     assert!(read(root.path(), &name).is_err(), "port 0 is no port");
-    std::fs::write(&file, r#"{"port": 8096, "refused": ["/admin"]}"#).unwrap();
+    for unsaid in [
+        r#"{"port": 8096, "limit": 3}"#,
+        r#"{"port": 8096, "kind": "k"}"#,
+        r#"{"port": 8096, "kind": "k", "limit": 0}"#,
+        r#"{"port": 8096, "kind": "a/b", "limit": 3}"#,
+    ] {
+        std::fs::write(&file, unsaid).unwrap();
+        assert!(
+            read(root.path(), &name).is_err(),
+            "a kind or limit absent or not one is refused, never defaulted: {unsaid}"
+        );
+    }
+    std::fs::write(
+        &file,
+        r#"{"port": 8096, "kind": "k", "limit": 3, "refused": ["/admin"]}"#,
+    )
+    .unwrap();
     let lend = read(root.path(), &name).unwrap().unwrap();
     assert_eq!(lend.port.get(), 8096);
     assert_eq!(
         lend.refusing("/Admin/x").map(RefusedPath::as_str),
         Some("/admin")
+    );
+}
+
+fn lend(name: &str, port: u16) -> Lend {
+    Lend {
+        name: LendName::parse(name).unwrap(),
+        port: NonZeroU16::new(port).unwrap(),
+        kind: Kind::parse("k").unwrap(),
+        limit: NonZeroU16::new(3).unwrap(),
+        refused: vec![refused("/admin")],
+    }
+}
+
+/// What `declare` writes, `read` and `all` read back; `withdraw` takes it
+/// back, its secret with it, and says when there was nothing to take.
+#[test]
+fn a_lend_declared_is_read_back_and_withdrawn_whole() {
+    let root = tempfile::tempdir().unwrap();
+    let shelf = lend("shelf", 8096);
+    declare(root.path(), &shelf, Some(("authorization", "s3cret"))).unwrap();
+    declare(root.path(), &lend("pad", 9000), None).unwrap();
+    assert_eq!(read(root.path(), &shelf.name).unwrap(), Some(shelf.clone()));
+    let names: Vec<String> = all(root.path())
+        .unwrap()
+        .into_iter()
+        .map(|l| l.unwrap().name.to_string())
+        .collect();
+    assert_eq!(names, ["pad", "shelf"], "every lend, by name, nothing else");
+    let secrets = secret_dir(root.path(), &shelf.name);
+    assert_eq!(
+        crate::declared::read_declared_in(&secrets),
+        vec![("authorization".to_string(), "s3cret".to_string())]
+    );
+
+    declare(root.path(), &shelf, None).unwrap();
+    assert!(
+        crate::declared::read_declared_in(&secrets).is_empty(),
+        "declared again with no secret, it keeps none"
+    );
+    assert!(withdraw(root.path(), &shelf.name).unwrap());
+    assert!(read(root.path(), &shelf.name).unwrap().is_none());
+    assert!(!secrets.exists());
+    assert!(
+        !withdraw(root.path(), &shelf.name).unwrap(),
+        "nothing left to take"
     );
 }

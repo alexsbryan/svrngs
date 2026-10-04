@@ -3,21 +3,25 @@
 //! its person lends to every group the computer holds, kept as data — a
 //! declaration file the member door reads on every request, so a running
 //! node sees a lend declared or withdrawn with no restart. `svrngs share`
-//! writes it (u3-5); here it is read.
+//! writes it through [`declare`], and `svrngs unshare` takes it back
+//! through [`withdraw`], whether or not svrngs is running (u3-5).
 //!
 //! ```text
 //!   <data dir>/lends/<lend>.json                       what the door may do
 //!   <data dir>/secrets/lends/<lend>/<header>   0600    the lender's secret
 //! ```
 //!
-//! The declaration holds the port and the paths the door refuses; the
-//! secret is apart, in [`crate::declared`]'s store, so the file a person may
-//! show someone carries none of it. Neither enters the record.
+//! The declaration holds the port, the kind, how many people may use it at
+//! once and the paths the door refuses; the secret is apart, in
+//! [`crate::declared`]'s store, so the file a person may show someone
+//! carries none of it. Neither enters the record: what a computer lends is
+//! asked of it, never stored (DESIGN §8, "Lends are asked, not stored"), and
+//! [`Offered`] is its answer.
 
 use std::num::NonZeroU16;
 use std::path::{Path, PathBuf};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// A lend's name: the file its declaration is kept in, and the path segment
 /// a member's request names it by (`/lend/<name>/…`). ASCII letters, digits,
@@ -25,8 +29,22 @@ use serde::Deserialize;
 /// (`commonwealth-transport/src/iroh_identity_forward.rs:153`,
 /// `valid_app_name`), so a name cannot express a path, an encoded slash or a
 /// stray byte, and one that could is refused, never repaired.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(try_from = "String", into = "String")]
 pub struct LendName(String);
+
+impl TryFrom<String> for LendName {
+    type Error = LendError;
+    fn try_from(raw: String) -> Result<Self, LendError> {
+        Self::parse(&raw)
+    }
+}
+
+impl From<LendName> for String {
+    fn from(name: LendName) -> String {
+        name.0
+    }
+}
 
 impl LendName {
     pub fn parse(raw: &str) -> Result<Self, LendError> {
@@ -46,6 +64,47 @@ impl LendName {
 }
 
 impl std::fmt::Display for LendName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+/// What a lend is, for the apps that read the list of what members lend
+/// (DESIGN §3, "an opaque kind the app interprets"): a name of the same
+/// rule as [`LendName`]'s, which svrngs carries and never reads.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "String", into = "String")]
+pub struct Kind(String);
+
+impl Kind {
+    pub fn parse(raw: &str) -> Result<Self, LendError> {
+        if crate::declared::valid_header_name(raw) {
+            Ok(Self(raw.to_string()))
+        } else {
+            tracing::debug!(target: "lend", raw, "lend: not a kind");
+            Err(LendError::NotAKind(raw.to_string()))
+        }
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl TryFrom<String> for Kind {
+    type Error = LendError;
+    fn try_from(raw: String) -> Result<Self, LendError> {
+        Self::parse(&raw)
+    }
+}
+
+impl From<Kind> for String {
+    fn from(kind: Kind) -> String {
+        kind.0
+    }
+}
+
+impl std::fmt::Display for Kind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.0)
     }
@@ -123,12 +182,16 @@ fn comparable(path: &str) -> String {
 }
 
 /// A lend as its declaration says: where the service listens on this
-/// computer, and what the door refuses of it.
+/// computer, what it is, how many people may use it at once, and what the
+/// door refuses of it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Lend {
     pub name: LendName,
     /// The service's port on 127.0.0.1.
     pub port: NonZeroU16,
+    pub kind: Kind,
+    /// How many people may use it at once (DESIGN §8, "Too many at once").
+    pub limit: NonZeroU16,
     pub refused: Vec<RefusedPath>,
 }
 
@@ -141,13 +204,29 @@ impl Lend {
 
 /// The declaration's form on disk. A field it does not know is refused, not
 /// ignored: a misspelt `refused` read as no refusals would open what the
-/// lender closed (ARCH 6).
-#[derive(Deserialize)]
+/// lender closed (ARCH 6). A kind or limit absent is refused too, never
+/// taken as a default nobody declared.
+#[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct LendFile {
     port: NonZeroU16,
+    kind: Kind,
+    limit: NonZeroU16,
     #[serde(default)]
     refused: Vec<String>,
+}
+
+/// A lend as its lender's computer answers a member who asks what it
+/// lends: its public part, and how many people use it now (DESIGN §3, "the
+/// services the group's members lend"). Parsed on the asker's side, so a
+/// name that is not one never becomes an address.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Offered {
+    pub name: LendName,
+    pub kind: Kind,
+    pub limit: NonZeroU16,
+    /// The people with a request through the door to it now.
+    pub using: u32,
 }
 
 /// Why a lend could not be read.
@@ -155,6 +234,8 @@ struct LendFile {
 pub enum LendError {
     #[error("{0:?} is not a lend's name (letters, digits, - and _ only)")]
     NotAName(String),
+    #[error("{0:?} is not a kind (letters, digits, - and _ only)")]
+    NotAKind(String),
     #[error("{0:?} is not a path: a refused path starts with / and holds no control character")]
     NotAPath(String),
     #[error("{path} cannot be read: {source}")]
@@ -166,6 +247,11 @@ pub enum LendError {
     Malformed {
         path: PathBuf,
         source: serde_json::Error,
+    },
+    #[error("{path} cannot be written: {source}")]
+    Unwritable {
+        path: PathBuf,
+        source: std::io::Error,
     },
 }
 
@@ -202,8 +288,102 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
     Ok(Some(Lend {
         name: name.clone(),
         port: file.port,
+        kind: file.kind,
+        limit: file.limit,
         refused,
     }))
+}
+
+/// Every lend this computer declares, by name: each declaration read as
+/// [`read`] reads one. A file under `lends/` whose name is not a lend's is
+/// not one, and is passed over at debug.
+pub fn all(data_dir: &Path) -> Result<Vec<Result<Lend, LendError>>, LendError> {
+    let dir = lends_dir(data_dir);
+    let entries = match std::fs::read_dir(&dir) {
+        Ok(e) => e,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(source) => return Err(LendError::Unreadable { path: dir, source }),
+    };
+    let mut names: Vec<LendName> = Vec::new();
+    for entry in entries.flatten() {
+        let file = entry.file_name().to_string_lossy().into_owned();
+        match file.strip_suffix(".json").map(LendName::parse) {
+            Some(Ok(name)) => names.push(name),
+            _ => tracing::debug!(target: "lend", file, "lend: not a declaration, passed over"),
+        }
+    }
+    names.sort();
+    Ok(names
+        .iter()
+        .filter_map(|name| read(data_dir, name).transpose())
+        .collect())
+}
+
+/// Declare `lend` on this computer, with `secret` — a header and its value
+/// — as what the door adds to each request it carries to the service, or
+/// none. The secret is written first, into [`crate::declared`]'s store,
+/// then the declaration, through a file renamed into place, so the door
+/// never reads half of one, nor a new one before its secret. A lend
+/// declared again replaces the last, its secret too: none given removes
+/// the one kept.
+pub fn declare(
+    data_dir: &Path,
+    lend: &Lend,
+    secret: Option<(&str, &str)>,
+) -> Result<(), LendError> {
+    let secrets = secret_dir(data_dir, &lend.name);
+    let unwritable = |path: &Path| {
+        let path = path.to_path_buf();
+        move |source| LendError::Unwritable { path, source }
+    };
+    if secrets.exists() {
+        std::fs::remove_dir_all(&secrets).map_err(unwritable(&secrets))?;
+    }
+    if let Some((header, value)) = secret {
+        crate::declared::write_declared_in(&secrets, header, value)
+            .map_err(unwritable(&secrets))?;
+    }
+    let dir = lends_dir(data_dir);
+    std::fs::create_dir_all(&dir).map_err(unwritable(&dir))?;
+    let file = LendFile {
+        port: lend.port,
+        kind: lend.kind.clone(),
+        limit: lend.limit,
+        refused: lend.refused.iter().map(|r| r.0.clone()).collect(),
+    };
+    let text = serde_json::to_string_pretty(&file).expect("a declaration always serializes");
+    let path = dir.join(format!("{}.json", lend.name));
+    let partial = dir.join(format!(".{}.json.partial", lend.name));
+    std::fs::write(&partial, text).map_err(unwritable(&partial))?;
+    std::fs::rename(&partial, &path).map_err(unwritable(&path))?;
+    tracing::debug!(target: "lend", lend = %lend.name, port = lend.port, kind = %lend.kind,
+        limit = lend.limit, refused = lend.refused.len(), secret = secret.is_some(),
+        "lend: declared");
+    Ok(())
+}
+
+/// Take back the lend `name`: its declaration, then its secret. `false`
+/// when this computer lends nothing by that name.
+pub fn withdraw(data_dir: &Path, name: &LendName) -> Result<bool, LendError> {
+    let path = lends_dir(data_dir).join(format!("{name}.json"));
+    let declared = match std::fs::remove_file(&path) {
+        Ok(()) => true,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => false,
+        Err(source) => return Err(LendError::Unwritable { path, source }),
+    };
+    let secrets = secret_dir(data_dir, name);
+    match std::fs::remove_dir_all(&secrets) {
+        Ok(()) => {}
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(source) => {
+            return Err(LendError::Unwritable {
+                path: secrets,
+                source,
+            })
+        }
+    }
+    tracing::debug!(target: "lend", lend = %name, declared, "lend: withdrawn");
+    Ok(declared)
 }
 
 #[cfg(test)]

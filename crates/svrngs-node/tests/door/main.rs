@@ -106,7 +106,7 @@ impl Pair {
     fn lend(&self, name: &str, port: u16, refused: &[&str]) {
         let dir = lend::lends_dir(self.dir.path());
         std::fs::create_dir_all(&dir).unwrap();
-        let body = serde_json::json!({ "port": port, "refused": refused });
+        let body = serde_json::json!({ "port": port, "kind": "k", "limit": 3, "refused": refused });
         std::fs::write(dir.join(format!("{name}.json")), body.to_string()).unwrap();
     }
 
