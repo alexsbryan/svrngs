@@ -25,7 +25,7 @@ use std::path::{Path, PathBuf};
 
 use ed25519_dalek::VerifyingKey;
 use serde::{Deserialize, Serialize};
-use svrngs_node::{namespaces_in, Person, Roster};
+use svrngs_node::{field, namespaces_in, Person, Roster};
 
 use crate::link::Origin;
 
@@ -101,18 +101,12 @@ impl Seed {
     /// preceded by its `u32` big-endian length. It names the group's
     /// directory, as a namespace (`svrngs_node`'s `valid_namespace`).
     pub fn id(&self) -> String {
-        let mut h = blake3::Hasher::new();
-        h.update(GROUP_ID_DOMAIN);
-        for field in [
-            self.name.as_str().as_bytes(),
-            self.founder.as_str().as_bytes(),
-        ] {
-            h.update(&(field.len() as u32).to_be_bytes());
-            h.update(field);
-        }
-        h.update(self.key.as_bytes());
-        h.update(&self.salt);
-        h.finalize().to_hex().to_string()
+        let mut input = GROUP_ID_DOMAIN.to_vec();
+        field(&mut input, self.name.as_str().as_bytes());
+        field(&mut input, self.founder.as_str().as_bytes());
+        input.extend_from_slice(self.key.as_bytes());
+        input.extend_from_slice(&self.salt);
+        blake3::hash(&input).to_hex().to_string()
     }
 
     pub fn name(&self) -> &Name {
