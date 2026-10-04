@@ -46,10 +46,11 @@ record, the ring journal and sync, the ring routes and the identity door.
   package and does only "make a group for this channel and post its link".
 - **The fork, piece by piece.** `crates/svrngs-core` is commonwealth-ai's
   `commonwealth-rail-core` at `e1a43bcd2`, with `oplog-types` and
-  `ContentHash` inlined as modules. Next, into `svrngs-node`:
-  `commonwealth-rail` (the journal per group), `ring_sync` with its journal,
-  `ring_routes`, `iroh_identity_forward.rs`, and the `/internal/ring/sync`
-  bodies from `sovereign-peer-wire`. Each lands unchanged, then changes as
+  `ContentHash` inlined as modules; `crates/svrngs-node` begins as
+  `commonwealth-rail` (the journal per group) with its `oplog` writer. Next,
+  into `svrngs-node`: `ring_sync` with its journal, `ring_routes`,
+  `iroh_identity_forward.rs`, and the `/internal/ring/sync` bodies from
+  `sovereign-peer-wire`. Each lands unchanged, then changes as
   svrngs' own: a group is not a mesh, so the mesh lookups go — admission
   (`commonwealth-rails/src/acceptor.rs:47-61`), sync's peers
   (`ring_sync/journal.rs:153-164`), the default roster (`lib.rs:404`) — and the

@@ -7,9 +7,9 @@ as what it describes.
 ## Bird's eye
 
 svrngs owns the group's code, forked from commonwealth-ai's ring slice
-(DESIGN, Direction). The record has landed; the node that holds a group's
-journal, syncs it and serves its doors comes next, forked the same way. Nothing
-runs as a program yet. E0's Discord bot, which did, is at tag `e0-bot`.
+(DESIGN, Direction). The record and the journal on disk have landed; sync, the
+routes and the doors come next, forked the same way. Nothing runs as a program
+yet. E0's Discord bot, which did, is at tag `e0-bot`.
 
 ## Code map
 
@@ -23,6 +23,14 @@ clock or network; time and keys arrive as arguments. It is commonwealth-ai's
 `scripts/ports.py` lists each beside its original. It keeps upstream's edition,
 rustfmt policy and clippy allowances so a diff against upstream shows only
 what svrngs changed.
+
+**`crates/svrngs-node`**: a group's journal on disk — one append-only JSONL
+log per group under `<root>/rings/<ns>/` (`journal.rs`), the single-writer
+door that signs and the peer-ingest path that does not, roster sources, and
+the checkpoint (`ring_checkpoint.rs`). The writer underneath is `oplog.rs`. It
+is commonwealth-ai's `commonwealth-rail` and `oplog` at `e1a43bcd2`, forked the
+same way as the core; its one edit is gating `oplog.rs`'s test-only serde
+import.
 
 **`crates/svrngs-engine`**: the `Engine` trait and QuickJS behind it — a fold
 engine that waits in DESIGN D8 until an app needs its state offline.

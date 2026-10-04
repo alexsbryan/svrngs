@@ -1,0 +1,4 @@
+# Upstream's rustfmt policy (commonwealth-ai rustfmt.toml: stock defaults), so the
+# fork stays formatted as it was forked and a diff against upstream shows only
+# what changed.
+edition = "2021"

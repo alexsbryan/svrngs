@@ -1,0 +1,24 @@
+[package]
+name = "svrngs-node"
+version.workspace = true
+# Upstream's edition, so the fork lands unchanged (ARCH 2).
+edition = "2021"
+license.workspace = true
+description = "A group's journal on disk: one append-only JSONL log per group, the single-writer door that signs and the peer-ingest path that does not. Forked from commonwealth-ai's commonwealth-rail, with its oplog writer inlined."
+
+[dependencies]
+svrngs-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+svrngs-core = { workspace = true, features = ["test-support"] }
+tempfile = "3"
+
+[lints.clippy]
+empty_line_after_doc_comments = "allow"
+cloned_ref_to_slice_refs = "allow"
+explicit_auto_deref = "allow"
+useless_vec = "allow"
