@@ -1,11 +1,11 @@
 //! Join by link, U2's bar (DESIGN §8): Sam makes a group and sends one
 //! link; Alex, Bo and Cy each open it with `svrngs join` and are let in
 //! once, by Sam's computer, and each copy syncs Sam's record. A closed
-//! link, a lapsed one and a forged one are refused in one sentence that
-//! names no group; a stranger on the members' protocol is closed with no
-//! answer; nothing the command prints uses a word DESIGN §1 keeps from
-//! people. Nodes in one process, no relay: each link dials Sam's loopback
-//! address.
+//! link, a lapsed one, a forged one and an open one's key on a request its
+//! secret did not sign are refused in one sentence that names no group; a
+//! stranger on the members' protocol is closed with no answer; nothing the
+//! command prints uses a word DESIGN §1 keeps from people. Nodes in one
+//! process, no relay: each link dials Sam's loopback address.
 
 use std::collections::BTreeSet;
 use std::net::SocketAddr;
@@ -112,7 +112,12 @@ async fn present(who: &Computer, link: &Link, person: &str) -> Result<Redeemed, 
         &link.invite,
         &Person::from(person),
     );
-    match redeem(who.node.endpoint(), link.issuer.addr().clone(), &req).await {
+    send(who, link, &req).await
+}
+
+/// The issuer's answer to `req`, sent by `who` to `link`'s issuer.
+async fn send(who: &Computer, link: &Link, req: &RedeemRequest) -> Result<Redeemed, String> {
+    match redeem(who.node.endpoint(), link.issuer.addr().clone(), req).await {
         Ok(r) => Ok(r),
         Err(RedeemError::Refused(words)) => Err(words),
         Err(other) => panic!("an answer, not {other}"),
@@ -229,6 +234,21 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     let never = present(&fay, &forged, "Fay").await;
     assert!(!stands(&sam.node, &group, &fay.key));
 
+    // ── Sam's open link key, which every copy of the record shows in its
+    // `Invite`, on a request another key signed: Gus is refused.
+    let open = link_at(&url2, &sam.node);
+    let gus = computer(8).await;
+    let mut req = RedeemRequest::sign(
+        &forged.secret,
+        &gus.key,
+        &group,
+        &open.invite,
+        &Person::from("Gus"),
+    );
+    req.link = actor_of(&open.secret);
+    let unsigned = send(&gus, &open, &req).await;
+    assert!(!stands(&sam.node, &group, &gus.key));
+
     // ── Sam's open link, past its lapse: Eve is refused.
     let lapsed_secret = SigningKey::from_bytes(&[0xE0; 32]);
     let lapsed = sam
@@ -259,7 +279,12 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     assert!(!stands(&sam.node, &group, &eve.key));
 
     // ── One refusal, naming nothing.
-    for (who, answer) in [("Dee", &closed), ("Eve", &past), ("Fay", &never)] {
+    for (who, answer) in [
+        ("Dee", &closed),
+        ("Eve", &past),
+        ("Fay", &never),
+        ("Gus", &unsigned),
+    ] {
         let words = answer
             .as_ref()
             .expect_err(&format!("{who} is refused"))
@@ -322,7 +347,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
             assert!(!lower.contains(word), "{line:?} says {word}");
         }
     }
-    for c in [&sam, &dee, &eve, &fay].into_iter().chain(&friends) {
+    for c in [&sam, &dee, &eve, &fay, &gus].into_iter().chain(&friends) {
         c.node.endpoint().close().await;
     }
 }
