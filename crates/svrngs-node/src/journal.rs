@@ -232,6 +232,10 @@ impl RingJournal {
     /// the one thing here the write index cannot answer from the tail — it
     /// folds and verifies the whole log — so it costs one read per batch,
     /// never one per act.
+    ///
+    /// They carry the same `ts_unix` too: the later of the wall clock and
+    /// one second past the newest act the journal holds, so an act sorts
+    /// after every act its signer has seen (DESIGN §6).
     pub fn append_all(
         &self,
         acts: Vec<RailAct>,
@@ -311,7 +315,7 @@ impl RingJournal {
             "append: follows the signer's newest act"
         );
 
-        let ts_unix = SystemTime::now()
+        let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_secs() as i64)
             .map_err(|why| {
@@ -325,6 +329,26 @@ impl RingJournal {
                 );
                 RailError::Clock
             })?;
+        // Strictly after everything held, as upstream measured
+        // (commonwealth/crates/commonwealth-rail/examples/stage_member_act.rs:123-135
+        // at e1a43bcd2): the rail orders acts by (ts_unix, actor, seq, id), so
+        // an act signed in the second of the `Admit` that gave its signer
+        // standing sorts before that `Admit` when the signer's key sorts
+        // first, and never counts (DESIGN §6; svrngs-core membership.rs).
+        let after = held_ops
+            .iter()
+            .map(|o| o.ts_unix.saturating_add(1))
+            .max()
+            .unwrap_or(i64::MIN);
+        let ts_unix = now.max(after);
+        tracing::debug!(
+            target: "rail:door",
+            ns = %self.namespace,
+            now,
+            after,
+            ts_unix,
+            "append: signs at the later of the wall clock and one second past the newest act held"
+        );
         let view = digest(&held_ops, &self.namespace, verifier);
         drop(held_ops);
         let mut ops = Vec::with_capacity(acts.len());

@@ -257,13 +257,17 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   never by position or time (U7): today the fold ignores `through_seq` and
   cuts the key at the `Remove`'s place in the order
   (`crates/svrngs-core/src/membership.rs:153`), so a backdated act slips under
-  the cut. The same order puts an act signed in the second of the `Admit` that
-  gave its author standing before that `Admit` when the author's key sorts
-  first (`membership.rs:124`), so the act does not count; U1's test of a new
-  member's write waits out the second (`crates/svrngs-node/tests/group_not_mesh.rs`).
-  U2 takes upstream's measured fix: the door signs strictly after everything
-  its journal holds (`commonwealth/crates/commonwealth-rail/examples/stage_member_act.rs:123-135`
-  at `e1a43bcd2`), where it signs at the wall clock (`journal.rs:258`).
+  the cut. The same order would put an act signed in the second of the
+  `Admit` that gave its author standing before that `Admit` when the author's
+  key sorts first (`membership.rs:124`), so the act would not count. The door
+  signs at the later of now and one second past the newest act its journal
+  holds (U2, landed: `RingJournal::append_all`, `crates/svrngs-node/src/journal.rs`),
+  upstream's measured fix (`commonwealth/crates/commonwealth-rail/examples/stage_member_act.rs:123-135`
+  at `e1a43bcd2`), so a member's first act sorts after the `Admit` it has
+  seen; `crates/svrngs-node/tests/group_not_mesh.rs` writes at once, under a
+  new key that sorts first. Before, at the wall clock, that test failed 8
+  runs in 10 without the wait it then carried. Writes faster than one a
+  second run the stamps ahead of the clock, one second per write.
 - **A signing key per person per group**, so a cut in one group touches no
   other; an endpoint key per device.
 

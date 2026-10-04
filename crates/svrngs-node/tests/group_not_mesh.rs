@@ -106,13 +106,6 @@ async fn base_url(dialer: &Node, served: &Node) -> String {
         .expect("a contact with an address resolves")
 }
 
-fn unix_now() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_secs() as i64
-}
-
 async fn round(node: &Node) -> svrngs_node::ring_sync::RoundOutcome {
     tokio::time::timeout(Duration::from_secs(30), node.round())
         .await
@@ -131,7 +124,7 @@ async fn a_member_the_founder_admits_syncs_and_writes() {
     let (da, db) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (a, b) = (start(1, &da).await, start(2, &db).await);
     hold(&a, NS, 1);
-    let admitted = append(&a, NS, 1, admit("bo", 2));
+    append(&a, NS, 1, admit("bo", 2));
     append(&a, NS, 1, record(0));
     hold(&b, NS, 1);
     assert_ne!(
@@ -150,14 +143,15 @@ async fn a_member_the_founder_admits_syncs_and_writes() {
     );
     assert_eq!(digest(&a, NS), digest(&b, NS), "B converged onto A");
 
-    // B writes in a later second than its `Admit`, as a member who learnt of
-    // it by sync does: the rail orders acts by (ts_unix, actor, seq, id), so
-    // an act stamped in its `Admit`'s second sorts before it when B's key
-    // sorts before A's, and does not count (DESIGN §6, "Ids cover everything
-    // signed"). Without this wait it failed whenever B wrote in that second.
-    while unix_now() <= admitted.ts_unix {
-        tokio::time::sleep(Duration::from_millis(50)).await;
-    }
+    // No wait: B writes at once, and its key sorts before A's, so in the
+    // rail's order, (ts_unix, actor, seq, id), an act stamped in its
+    // `Admit`'s second would sort before that `Admit` and not count (DESIGN
+    // §6). B's door signs one second past the newest act it holds, so it
+    // never is. At the wall clock this failed whenever B wrote in that second.
+    assert!(
+        actor_of(&signing(2)) < actor_of(&signing(1)),
+        "control: the new key sorts first"
+    );
     let bos = append(&b, NS, 1, record(1));
     let pushed = round(&b).await;
     // Which round moved the act is not asserted: the round each node runs at
