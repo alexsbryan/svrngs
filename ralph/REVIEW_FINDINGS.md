@@ -411,9 +411,9 @@ It includes 151 test code lines inside identity.rs and link.rs (#21). u2-6's
 | e3e2f8c, range end | 1750 / 2500 | 6852 / 12000 |
 | b556e0b, after this audit's fixes | 1753 / 2500 | 6680 / 12000 |
 
-The fixes remove 172 repository lines: 149 moved test lines (#21), 17 from
-the u2-6 node side (#18, net of 3 core lines that make the helpers `pub`),
-and 6 from group.rs (#20, #22).
+The fixes remove 172 repository lines (lean_check at each fix commit): 149
+moved test lines (#21); 10 from #18 (svrngs-node −13, svrngs-core +3 that
+make the helpers `pub`); 2 from #19; 5 from #20; 6 from #22.
 
 ### (2) Clones (`code dry-report`), each tier checked against a plant first
 
