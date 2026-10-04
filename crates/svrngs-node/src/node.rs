@@ -59,7 +59,7 @@ pub enum NodeError {
     #[error("{0}")]
     Endpoint(String),
     #[error(transparent)]
-    Api(#[from] crate::api::Refusal),
+    Api(#[from] crate::api::ApiError),
 }
 
 /// A running node. Dropping it stops its round and its accept loop.

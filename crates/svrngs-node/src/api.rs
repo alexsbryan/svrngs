@@ -22,9 +22,10 @@ use axum::{Json, Router};
 use crate::rail::RailApi;
 
 /// Why the API did not start. (Upstream's were two variants of the daemon's
-/// `Refusal`, `lib.rs:122-123`, which did not come over.)
+/// `Refusal`, `lib.rs:122-123`, which did not come over; named here as the
+/// crate names its errors, since `Refusal` is the command's, cli.rs.)
 #[derive(Debug, thiserror::Error)]
-pub enum Refusal {
+pub enum ApiError {
     #[error("{0} is not a loopback address; this API has no auth because loopback is the auth")]
     NotLoopback(SocketAddr),
     #[error("cannot listen on {0}: {1}")]
@@ -91,13 +92,13 @@ async fn from_this_computer(request: Request, next: Next) -> Response {
 /// The bind guard, as a function so it has a failing input that can be
 /// named without standing an iroh endpoint up. This API has no auth because
 /// loopback IS the auth; anywhere else is publishing it.
-pub fn check_loopback(listen: SocketAddr) -> Result<(), Refusal> {
+pub fn check_loopback(listen: SocketAddr) -> Result<(), ApiError> {
     // svrngs: canonical first, so `::ffff:127.0.0.1` reads as the loopback
     // it is, where `Ipv6Addr::is_loopback` alone says no.
     if listen.ip().to_canonical().is_loopback() {
         Ok(())
     } else {
-        Err(Refusal::NotLoopback(listen))
+        Err(ApiError::NotLoopback(listen))
     }
 }
 
@@ -133,14 +134,14 @@ pub struct Bound {
 }
 
 /// Bind. Refuses a non-loopback address by name.
-pub async fn bind(listen: SocketAddr) -> Result<Bound, Refusal> {
+pub async fn bind(listen: SocketAddr) -> Result<Bound, ApiError> {
     check_loopback(listen)?;
     let listener = tokio::net::TcpListener::bind(listen)
         .await
-        .map_err(|e| Refusal::Listen(listen, e))?;
+        .map_err(|e| ApiError::Listen(listen, e))?;
     let addr = listener
         .local_addr()
-        .map_err(|e| Refusal::Listen(listen, e))?;
+        .map_err(|e| ApiError::Listen(listen, e))?;
     Ok(Bound { listener, addr })
 }
 
