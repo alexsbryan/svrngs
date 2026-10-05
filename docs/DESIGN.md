@@ -208,7 +208,7 @@ piece comes over:
 | `svrngs-core` | the record: acts, admission into one order, membership, the sync digest; and what a browser's page spells as the command and the node do (u4-2): a link's token, the ask and the redemption a joiner signs with it, the issuer's answer and the seed it is believed by (u4-5), the protocols' names, and a relay's URL without the DNS root's trailing dot, which WebKit refuses (u4-9). `no_std`, so the compiler refuses filesystem, clock, network and threads; time and keys are arguments | none |
 | `svrngs-runtime` | the only owner of each group's journal on disk, its projections and its writes: the journal and its write index, the open-journal map, the register's standing | the journals |
 | `svrngs-node` | the adapters: sync and its route over iroh, redemption, the loopback record API with its live lane (landed, u3-2 and u3-3), the member door (landed, u3-4), the list of what members lend, asked of each (landed, u3-5), and answered to a member by the computer it dials, each with its lender's key (landed, u4-5), and the door's limit and shares, a pure decision the door's task owns (landed, u3-6); every relay URL it makes or reads dotless where it enters — n0's relays, a relay it is told, a lookup's answers — in `relay.rs`, which the page compiles too (landed, u4-9) | each lend's declaration and secret; who is using each lend now |
-| `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell and a workspace of its own: a browser's endpoint, bound with the person's key, dialling a group's computer by key over a relay on the members' protocol (landed, u4-3); HTTP over the dial (landed, u4-4); joining — the ask and the redemption by svrngs-core's bodies, the key sealed in the page's store, and the list of what the group's people lend (landed, u4-5); the runtime, a service worker serving every request at a lend's address under its scope from the lender's door, one endpoint for every lender (landed, u4-6), an open-ended range asked of the door in parts of 2 MiB (landed, u4-9); an adapter | none: the page's store holds the key, sealed |
+| `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell and a workspace of its own: a browser's endpoint, bound with the person's key, dialling a group's computer by key over a relay on the members' protocol (landed, u4-3); HTTP over the dial (landed, u4-4); joining — the ask and the redemption by svrngs-core's bodies, the key sealed in the page's store, and the list of what the group's people lend (landed, u4-5); the runtime, a service worker serving every request at a lend's address under its scope from the lender's door, one endpoint for every lender (landed, u4-6), a range that runs on — open-ended, or a `<video>`'s longer than a part — asked of the door in parts of 2 MiB (landed, u4-9); an adapter | none: the page's store holds the key, sealed |
 | `svrngs` | the command and the process: `new`, `join`, `link`, `share` and `unshare` (landed); the bare command prints where the record API listens, and what the people of its groups lend | a device's keys; each group's seed |
 
 Held to `docs/principles/RUST_ARCH.md`: types encode the domain, ownership
@@ -739,11 +739,13 @@ By the operator, 2026-10-03:
    its first seek far ahead, asked a second after play, waited while the
    range it had open was read through, up to 29 s for a 45 MB film where
    Chromium's seeks all played within 2 s (`ralph/REVIEW_FINDINGS.md` #53).
-   Since u4-9 the worker asks the door for an open range, `bytes=N-`, as a
-   part of 2 MiB (`web/sw.js` `PART`), so a seek waits at most for the part
-   being read. Whether WebKit held its seek back or the worker's stream
-   ignored WebKit's cancel is still not shown: Playwright reaches no WebKit
-   worker.
+   That range was closed, to the film's end (`bytes=66394-45245597`):
+   WebKit probes `bytes=0-1` and then asks on to the end, where Chromium
+   asks `bytes=N-` and cuts it. Since u4-9 the worker asks the door for
+   either as a part of 2 MiB (`web/sw.js` `PART`), so a seek waits at most
+   for the part being read. Whether WebKit held its seek back or the
+   worker's stream ignored WebKit's cancel is still not shown: Playwright
+   reaches no WebKit worker.
 5. **Members find each other through iroh's address lookup**, n0's DNS by
    default, as upstream's (§8, U1's inventory): it maps a key to its relay,
    never to a person, and a group is unreachable through it while it is down.

@@ -405,6 +405,25 @@ fn keys(heads: &std::sync::Mutex<Vec<String>>) -> Vec<String> {
         .collect()
 }
 
+/// The byte range each request head asked, `bytes=a-b` as `(a, Some(b))`
+/// and `bytes=a-` as `(a, None)`; a head with no range, none.
+fn ranges(heads: &std::sync::Mutex<Vec<String>>) -> Vec<(u64, Option<u64>)> {
+    heads
+        .lock()
+        .unwrap()
+        .iter()
+        .filter_map(|head| {
+            let line = head.lines().find_map(|l| {
+                l.to_ascii_lowercase()
+                    .strip_prefix("range: bytes=")
+                    .map(str::to_string)
+            })?;
+            let (from, to) = line.trim().split_once('-')?;
+            Some((from.parse().ok()?, to.parse().ok()))
+        })
+        .collect()
+}
+
 /// Chromium's report of its worker: stopped through DevTools, then running
 /// again, its endpoint opened when it started and again after the stop.
 fn stopped_and_ran_again(seen: &Value, shown: &Value) {
@@ -458,11 +477,15 @@ in_both_engines!(
     /// 206 and sha-exact, and cy's door names bo's key, not ada's: no computer
     /// carries another's lend. An open-ended range of cy's file, `bytes=N-`,
     /// comes back a bounded part, a 206 naming it and the whole, sha-exact
-    /// (u4-9, web/sw.js `PART`): WebKit read an open range through before it
-    /// asked for a seek's bytes (ralph/REVIEW_FINDINGS.md #53). Planted: a
+    /// (u4-9, web/sw.js `PART`), and every range the film's `<video>` asks
+    /// reaches ada's door as a part of at most 2 MiB: Chromium asks
+    /// `bytes=N-`, WebKit `bytes=N-<the end>`, and WebKit read such a range
+    /// through before it asked for a seek's bytes (ralph/REVIEW_FINDINGS.md
+    /// #53). Planted: a
     /// range answered 200 with the whole body (the worker dropping `Range`);
     /// the worker's endpoint never reopened (opened once, when it activates);
-    /// the open range answered whole (u4-8's worker).
+    /// the open range answered whole (u4-8's worker); a `<video>`'s closed
+    /// range to the end answered whole (b6ea0ab's).
     a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself
 );
 async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself(
@@ -556,6 +579,18 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
     assert!(
         film_keys.iter().all(|k| *k == bo_key),
         "ada's door must name bo's key: {film_keys:?}"
+    );
+    // Each of the film's ranges as the door was asked it: a part, closed
+    // and at most web/sw.js's PART, never a range that runs on to the end.
+    let asked = ranges(&film_heads);
+    let long: Vec<&(u64, Option<u64>)> = asked
+        .iter()
+        .filter(|(from, to)| to.is_none_or(|to| to + 1 - from > 2 * MIB))
+        .collect();
+    assert!(
+        long.is_empty(),
+        "the film's ranges must reach its door as parts of at most 2 MiB, of {size} bytes; \
+         these ran on (from, to): {long:?}\nall: {asked:?}"
     );
 
     let other = &seen["other"];

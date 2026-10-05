@@ -109,22 +109,32 @@ function dialFor(group, lender) {
   return held(dials, `${group.id} ${lender}`, async () => (await endpointFor(group)).dial(lender));
 }
 
-// An open-ended range, `bytes=N-`, is asked of the lender's door as a
-// part of PART bytes from N (u4-9): the door's 206 names the part and the
-// whole, and a `<video>` asks again for what it needs next. In u4-8's dry
-// run WebKit read its first open range through before it asked for a
-// seek's bytes, 45 MB in 26 s, and that seek waited (ralph/REVIEW_FINDINGS.md
-// #53); a part bounds the wait at PART bytes. 2 MiB is 5.6 s of a 3 Mb/s
-// film, and took — through the relay, the worker and the wasm — the times
-// demo/runs/u4/2026-10-05-reach/ records.
+// A range that runs on is asked of the lender's door as a part of PART
+// bytes from where it starts (u4-9): an open-ended `bytes=N-`, which
+// Chromium's `<video>` asks, and a `<video>`'s closed range longer than a
+// part — WebKit's asks `bytes=0-1`, then on to the end, `bytes=N-<end>`.
+// The door's 206 names the part and the whole, and the `<video>` asks
+// again for what it needs next. In u4-8's dry run WebKit read its first
+// range to the end, 45 MB in 26 s, before it asked for a seek's bytes, and
+// that seek waited (ralph/REVIEW_FINDINGS.md #53); a part bounds the wait
+// at PART bytes. A page's own fetch of a closed range gets what it asked.
+// 2 MiB is 5.6 s of a 3 Mb/s film; what a part took through the relay,
+// the worker and the wasm is in demo/runs/u4/2026-10-05-reach/.
 const PART = 2 * 1024 * 1024;
 
-function bounded(headers) {
+function bounded(headers, destination) {
   return headers.map(([name, value]) => {
-    const open = name.toLowerCase() === 'range' && /^bytes=(\d+)-$/.exec(value.trim());
-    if (!open) return [name, value];
-    const part = `bytes=${open[1]}-${Number(open[1]) + PART - 1}`;
-    trace(`RUNTIME: ${value} asked as ${part}`);
+    const range = name.toLowerCase() === 'range' && /^bytes=(\d+)-(\d*)$/.exec(value.trim());
+    if (!range) return [name, value];
+    const from = Number(range[1]);
+    const media = destination === 'video' || destination === 'audio';
+    const runsOn = range[2] === '' || (media && Number(range[2]) - from + 1 > PART);
+    if (!runsOn) {
+      trace(`RUNTIME: ${value} for ${destination || 'a fetch'}, asked as it came`);
+      return [name, value];
+    }
+    const part = `bytes=${from}-${from + PART - 1}`;
+    trace(`RUNTIME: ${value} for ${destination || 'a fetch'} runs on: asked as ${part}`);
     return [name, part];
   });
 }
@@ -144,7 +154,7 @@ async function lent(request, url) {
   const group = await groupFor(lender);
   if (!group) return say(403, 'Open your group’s link on this phone first.');
   const path = `/lend/${lend}${rest}${url.search}`;
-  const headers = bounded([...request.headers]);
+  const headers = bounded([...request.headers], request.destination);
   const body = ['GET', 'HEAD'].includes(request.method) ? null : (request.body ?? (await request.blob()).stream());
   // A dial gone stale since it was opened — the lender's computer
   // restarted, the relay dropped it — is opened again once, for a request
