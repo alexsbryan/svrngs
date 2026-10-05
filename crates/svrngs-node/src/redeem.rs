@@ -216,11 +216,22 @@ fn serve_ask(
 /// An ask judged on what arrived alone: the dialer is the key asking, and
 /// the link's key signed. Reads nothing, so a refused ask opens no journal.
 fn parse_ask(dialer: Option<&str>, req: &AskRequest) -> Result<(), NotAdmitted> {
+    presented(dialer, &req.key, || req.signed_by_link())
+}
+
+/// What both routes require of a request before reading it: a dialer, the
+/// request's key that dialer's, and the link's key its signer — checked in
+/// that order, so `signed` runs only for the key that dialled.
+fn presented(
+    dialer: Option<&str>,
+    key: &str,
+    signed: impl FnOnce() -> bool,
+) -> Result<(), NotAdmitted> {
     let dialer = dialer.ok_or(NotAdmitted::NoDialer)?;
-    if dialer != req.key {
+    if dialer != key {
         return Err(NotAdmitted::NotTheDialer);
     }
-    if !req.signed_by_link() {
+    if !signed() {
         return Err(NotAdmitted::LinkUnsigned);
     }
     Ok(())
@@ -277,13 +288,7 @@ fn serve_redeem(
 /// the link's key signed, and the name parses. Reads nothing, so a refused
 /// redemption opens no journal.
 fn parse_redeem(dialer: Option<&str>, req: &RedeemRequest) -> Result<Person, NotAdmitted> {
-    let dialer = dialer.ok_or(NotAdmitted::NoDialer)?;
-    if dialer != req.key {
-        return Err(NotAdmitted::NotTheDialer);
-    }
-    if !req.signed_by_link() {
-        return Err(NotAdmitted::LinkUnsigned);
-    }
+    presented(dialer, &req.key, || req.signed_by_link())?;
     Name::kept(req.person.clone())
         .map(Person::from)
         .map_err(NotAdmitted::NotAName)
