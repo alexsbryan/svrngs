@@ -67,7 +67,10 @@ pub async fn dial(key: Vec<u8>, token: String, path: String) -> String {
     let secret = match <[u8; 32]>::try_from(key.as_slice()) {
         Ok(bytes) => iroh::SecretKey::from_bytes(&bytes),
         Err(_) => {
-            t!("LAYER key: REFUSED — the page holds {} bytes, not a key's 32", key.len());
+            t!(
+                "LAYER key: REFUSED — the page holds {} bytes, not a key's 32",
+                key.len()
+            );
             return trace;
         }
     };
@@ -100,7 +103,10 @@ pub async fn dial(key: Vec<u8>, token: String, path: String) -> String {
             t!("LAYER parse: ok — node id {node_id}, a bare key: found by n0's address lookup");
             let lookup = iroh::address_lookup::PkarrResolver::n0_dns();
             let addr = iroh::EndpointAddr::from_parts(node_id, []);
-            (builder.relay_mode(iroh::RelayMode::Default).address_lookup(lookup), addr)
+            (
+                builder.relay_mode(iroh::RelayMode::Default).address_lookup(lookup),
+                addr,
+            )
         }
     };
 
@@ -146,9 +152,7 @@ pub async fn dial(key: Vec<u8>, token: String, path: String) -> String {
             return trace;
         }
     };
-    let req = format!(
-        "GET {path} HTTP/1.1\r\nHost: svrngs\r\nAccept: application/json\r\nConnection: close\r\n\r\n"
-    );
+    let req = format!("GET {path} HTTP/1.1\r\nHost: svrngs\r\nAccept: application/json\r\nConnection: close\r\n\r\n");
     if let Err(e) = send.write_all(req.as_bytes()).await {
         t!("LAYER request-write: REFUSED — {e}");
         return trace;
@@ -169,15 +173,8 @@ pub async fn dial(key: Vec<u8>, token: String, path: String) -> String {
     // send stream only after the local TCP side is finished, never before.
     let _ = send.finish();
     let text = String::from_utf8_lossy(&body).to_string();
-    let status = text
-        .lines()
-        .next()
-        .unwrap_or("<no status line>")
-        .to_string();
-    t!(
-        "LAYER member-admission: response received, {} bytes",
-        body.len()
-    );
+    let status = text.lines().next().unwrap_or("<no status line>").to_string();
+    t!("LAYER member-admission: response received, {} bytes", body.len());
     t!("RESPONSE-STATUS: {status}");
     t!("RESPONSE-BODY: {text}");
 
