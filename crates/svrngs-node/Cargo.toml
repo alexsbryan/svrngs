@@ -19,6 +19,9 @@ tracing = { workspace = true }
 # upstream's versions too, so the fork runs on what upstream tested. Moving
 # them is a commit that says so.
 iroh = "=1.0.2"
+# The stream an address lookup answers with, as iroh names it (src/relay.rs):
+# iroh's own, at the version the lock already holds.
+n0-future = "0.3"
 tokio = { version = "1", features = ["net", "rt", "sync", "time", "io-util", "macros"] }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 hex = { workspace = true }

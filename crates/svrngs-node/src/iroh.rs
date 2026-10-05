@@ -163,7 +163,7 @@ impl IrohTransport {
         let mut ea = iroh::EndpointAddr::new(peer.key);
         let mut has_path = false;
         if let Some(relay) = peer.relay_url.as_deref() {
-            match relay.parse::<RelayUrl>() {
+            match crate::relay::parse(relay) {
                 Ok(url) => {
                     ea = ea.with_relay_url(url);
                     has_path = true;

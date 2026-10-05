@@ -20,7 +20,7 @@ fn a_token(relay: Option<&str>) -> Token {
 #[test]
 fn a_link_round_trips_in_every_form() {
     let theirs = Origin::parse("https://links.example.org/our/house/").unwrap();
-    for token in [a_token(None), a_token(Some("https://relay.example./"))] {
+    for token in [a_token(None), a_token(Some("https://relay.example/"))] {
         let client = client_link(&token);
         assert!(client.starts_with(CLIENT_PREFIX), "{client}");
         let https = https_link(&theirs, &token);
@@ -52,6 +52,45 @@ fn the_links_key_is_derived_from_its_secret() {
     };
     assert_ne!(a.key().to_bytes(), b.key().to_bytes());
     assert_ne!(a.key().to_bytes()[..SECRET_LEN], a.secret);
+}
+
+/// A token's relay as it is read, given / when / then (u4-9; crate::relay):
+/// given a token written with its relay dotted or not, when it is decoded,
+/// then its relay is the one WebKit reaches, so a link minted by a computer
+/// of an earlier build, its relay n0's as iroh spells it, opens on an
+/// iPhone. Watched failing with the decode keeping the dot.
+#[test]
+fn a_tokens_relay_is_read_without_the_roots_dot() {
+    let rows = [
+        (
+            "n0's relay, as iroh spells it",
+            "https://use1-1.relay.n0.iroh.link./",
+            "https://use1-1.relay.n0.iroh.link/",
+        ),
+        (
+            "n0's relay, dotless",
+            "https://use1-1.relay.n0.iroh.link/",
+            "https://use1-1.relay.n0.iroh.link/",
+        ),
+        (
+            "a relay of one's own, dotted",
+            "https://relay.example./",
+            "https://relay.example/",
+        ),
+        (
+            "a loopback relay",
+            "http://127.0.0.1:3340/",
+            "http://127.0.0.1:3340/",
+        ),
+    ];
+    for (row, given, then) in rows {
+        let when = Token::decode(&a_token(Some(given)).encode()).expect(row);
+        assert_eq!(
+            when.relay.map(|r| r.to_string()).as_deref(),
+            Some(then),
+            "{row}"
+        );
+    }
 }
 
 /// A token with an unknown format byte, or cut short, or with a byte too

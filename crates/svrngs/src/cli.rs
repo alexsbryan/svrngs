@@ -958,7 +958,12 @@ pub fn link_relay(relay: &RelayConfig, home: Option<RelayUrl>) -> Option<RelayUr
         tracing::debug!(target: "cli", "cli: the link carries the key alone — lookup finds this computer");
         return None;
     }
-    let configured = || relay.relay_urls.first().and_then(|r| r.parse().ok());
+    let configured = || {
+        relay
+            .relay_urls
+            .first()
+            .and_then(|r| svrngs_node::relay::parse(r).ok())
+    };
     let carried = home.or_else(configured);
     match &carried {
         Some(url) => {

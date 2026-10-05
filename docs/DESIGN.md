@@ -205,9 +205,9 @@ piece comes over:
 
 | Crate | What it is | State |
 |---|---|---|
-| `svrngs-core` | the record: acts, admission into one order, membership, the sync digest; and what a browser's page spells as the command and the node do (u4-2): a link's token, the ask and the redemption a joiner signs with it, the issuer's answer and the seed it is believed by (u4-5), and the protocols' names. `no_std`, so the compiler refuses filesystem, clock, network and threads; time and keys are arguments | none |
+| `svrngs-core` | the record: acts, admission into one order, membership, the sync digest; and what a browser's page spells as the command and the node do (u4-2): a link's token, the ask and the redemption a joiner signs with it, the issuer's answer and the seed it is believed by (u4-5), the protocols' names, and a relay's URL without the DNS root's trailing dot, which WebKit refuses (u4-9). `no_std`, so the compiler refuses filesystem, clock, network and threads; time and keys are arguments | none |
 | `svrngs-runtime` | the only owner of each group's journal on disk, its projections and its writes: the journal and its write index, the open-journal map, the register's standing | the journals |
-| `svrngs-node` | the adapters: sync and its route over iroh, redemption, the loopback record API with its live lane (landed, u3-2 and u3-3), the member door (landed, u3-4), the list of what members lend, asked of each (landed, u3-5), and answered to a member by the computer it dials, each with its lender's key (landed, u4-5), and the door's limit and shares, a pure decision the door's task owns (landed, u3-6) | each lend's declaration and secret; who is using each lend now |
+| `svrngs-node` | the adapters: sync and its route over iroh, redemption, the loopback record API with its live lane (landed, u3-2 and u3-3), the member door (landed, u3-4), the list of what members lend, asked of each (landed, u3-5), and answered to a member by the computer it dials, each with its lender's key (landed, u4-5), and the door's limit and shares, a pure decision the door's task owns (landed, u3-6); every relay URL it makes or reads dotless where it enters — n0's relays, a relay it is told, a lookup's answers — in `relay.rs`, which the page compiles too (landed, u4-9) | each lend's declaration and secret; who is using each lend now |
 | `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell and a workspace of its own: a browser's endpoint, bound with the person's key, dialling a group's computer by key over a relay on the members' protocol (landed, u4-3); HTTP over the dial (landed, u4-4); joining — the ask and the redemption by svrngs-core's bodies, the key sealed in the page's store, and the list of what the group's people lend (landed, u4-5); the runtime, a service worker serving every request at a lend's address under its scope from the lender's door, one endpoint for every lender (landed, u4-6); an adapter | none: the page's store holds the key, sealed |
 | `svrngs` | the command and the process: `new`, `join`, `link`, `share` and `unshare` (landed); the bare command prints where the record API listens, and what the people of its groups lend | a device's keys; each group's seed |
 
@@ -748,9 +748,13 @@ By the operator, 2026-10-03:
    (`iroh-1.0.2/src/defaults.rs:27-33`), WebKit refuses TLS to any host so
    written, and every iOS browser is WebKit. In u4-8's dry run no WebKit run
    through n0 got past opening the link (`ralph/REVIEW_FINDINGS.md` #52).
-   The command takes no relay but n0's (`crates/svrngs/src/main.rs`), so
-   until one of the two changes an iPhone cannot join a group the command
-   runs. The page a phone loads from a link's origin is the same
+   Since u4-9 the command and the page write and read every relay without
+   the dot (`svrngs_core::relay`, `crates/svrngs-node/src/relay.rs`): n0's
+   relays, a link's, a relay a computer is told, and a lookup's answers, so
+   a computer advertises its relay dotless and a phone reads an earlier
+   build's dotless too. If iroh spells a relay some other way WebKit
+   refuses, an iPhone fails again, and only a run through n0 in WebKit
+   shows it. The page a phone loads from a link's origin is the same
    kind of default (U4): whoever serves it serves the code that holds the
    person's key, its bytes unsealed while the page runs, so a group that does not trust svrnme.sh serves the page from
    its own origin and prints its links there. And every lent service's

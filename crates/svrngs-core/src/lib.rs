@@ -97,6 +97,7 @@ mod process;
 mod project;
 mod record;
 mod register;
+pub mod relay;
 pub mod seed;
 mod sig;
 mod sync;

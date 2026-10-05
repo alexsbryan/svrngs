@@ -87,7 +87,8 @@ pub struct Token {
     pub issuer: PublicKey,
     /// The secret the link's signing key is derived from.
     pub secret: [u8; SECRET_LEN],
-    /// The issuer's relay, carried only from a computer without lookup.
+    /// The issuer's relay, carried only from a computer without lookup;
+    /// as decoded, without its host's trailing dot ([`crate::relay`]).
     pub relay: Option<RelayUrl>,
 }
 
@@ -130,9 +131,13 @@ impl Token {
         let relay = match (format, rest) {
             (Format::Bare, Some([])) => None,
             (Format::Relayed, Some(rest)) if !rest.is_empty() => {
+                // Read without the root's dot, as WebKit reaches it
+                // (crate::relay): a computer of an earlier build carried
+                // n0's relay as iroh spells it.
                 let parsed = core::str::from_utf8(rest)
                     .ok()
-                    .and_then(|s| s.parse::<RelayUrl>().ok());
+                    .and_then(|s| s.parse::<RelayUrl>().ok())
+                    .map(crate::relay::dotless);
                 if parsed.is_none() {
                     tracing::debug!(target: "link", "link: refused — the relay is not a URL");
                     return None;

@@ -18,6 +18,8 @@ use iroh::endpoint::presets;
 use iroh::endpoint::Builder as EndpointBuilder;
 use iroh::{Endpoint, EndpointAddr, PublicKey, RelayUrl, SecretKey};
 
+use crate::relay::{self, DotlessLookup};
+
 mod tunnel;
 pub use tunnel::GuestTunnel;
 
@@ -171,7 +173,15 @@ fn relayed_endpoint_builder(
     cfg: &RelayConfig,
 ) -> Result<EndpointBuilder, String> {
     let preset_builder = if cfg.n0_services {
+        // svrngs: the preset's two lookups, the resolver's answers read
+        // dotless (crate::relay, u4-9); `presets::N0` adds these two
+        // (iroh-1.0.2/src/endpoint/presets.rs:116-136).
         EndpointBuilder::new(presets::N0)
+            .clear_address_lookup()
+            .address_lookup(iroh::address_lookup::PkarrPublisher::n0_dns())
+            .address_lookup(DotlessLookup(
+                iroh::address_lookup::DnsAddressLookup::n0_dns(),
+            ))
     } else {
         // Minimal = crypto only: no n0 relay, no n0 DNS. Nothing this
         // endpoint does will contact n0 infrastructure.
@@ -197,7 +207,10 @@ fn relayed_endpoint_builder(
             // explicit so intent is unmistakable.
             builder = builder.relay_mode(iroh::RelayMode::Disabled);
         }
-        None => {} // n0_services + no custom relays → n0's default relays.
+        // n0_services + no custom relays → n0's default relays; svrngs:
+        // dotless, so the relay this computer advertises is one WebKit
+        // reaches (crate::relay, u4-9).
+        None => builder = builder.relay_mode(iroh::RelayMode::Custom(relay::n0_relays())),
     }
     if cfg.loopback_only {
         builder = builder
@@ -272,7 +285,7 @@ fn parse_relay_mode(relay_urls: &[String]) -> Option<iroh::RelayMode> {
     }
     let parsed: Vec<RelayUrl> = relay_urls
         .iter()
-        .filter_map(|u| match u.parse::<RelayUrl>() {
+        .filter_map(|u| match relay::parse(u) {
             Ok(url) => Some(url),
             Err(e) => {
                 tracing::warn!(
@@ -536,7 +549,7 @@ pub fn parse_dial_string(s: &str) -> Result<EndpointAddr, String> {
         if let Ok(sock) = t.parse::<SocketAddr>() {
             ea = ea.with_ip_addr(sock);
         } else {
-            let relay: RelayUrl = t.parse().map_err(|e| {
+            let relay: RelayUrl = relay::parse(t).map_err(|e| {
                 format!("target '{t}' is neither a socket address nor a relay URL: {e}")
             })?;
             ea = ea.with_relay_url(relay);

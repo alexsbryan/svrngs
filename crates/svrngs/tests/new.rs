@@ -228,7 +228,8 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
 
 /// A link carries a relay only from a computer without address lookup,
 /// which finds a bare key otherwise: its home relay, or the first one
-/// configured while it reports none; with neither, the key alone.
+/// configured while it reports none, read without the root's dot (u4-9,
+/// svrngs_node::relay); with neither, the key alone.
 #[test]
 fn a_link_carries_the_relay_only_without_lookup() {
     let ours: RelayUrl = "https://relay.example./".parse().unwrap();
@@ -238,7 +239,9 @@ fn a_link_carries_the_relay_only_without_lookup() {
     assert_eq!(cli::link_relay(&RelayConfig::default(), None), None);
     let without = RelayConfig::from_parts(vec![ours.to_string()], Some("none")).unwrap();
     assert_eq!(cli::link_relay(&without, Some(home.clone())), Some(home));
-    assert_eq!(cli::link_relay(&without, None), Some(ours));
+    let dotless: RelayUrl = "https://relay.example/".parse().unwrap();
+    assert_ne!(ours, dotless, "control: the operator wrote the dot");
+    assert_eq!(cli::link_relay(&without, None), Some(dotless));
     assert_eq!(cli::link_relay(&no_relay(), None), None);
 }
 

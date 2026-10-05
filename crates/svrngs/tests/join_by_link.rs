@@ -666,8 +666,9 @@ async fn a_member_prints_links_on_the_page_the_founders_opened() {
     }
 }
 
-/// A computer run without address lookup puts its relay in its link, and
-/// a joiner with lookup off is let in by it. The relay named is not run in
+/// A computer run without address lookup puts its relay in its link,
+/// without the root's dot the operator wrote (u4-9), and a joiner with
+/// lookup off is let in by it. The relay named is not run in
 /// one process, so the joiner is told Sam's loopback addresses beside it.
 #[tokio::test(flavor = "multi_thread")]
 async fn a_link_from_a_computer_without_lookup_carries_its_relay() {
@@ -686,8 +687,8 @@ async fn a_link_from_a_computer_without_lookup_carries_its_relay() {
     let link = parsed(&printed, &sam.node);
     assert_eq!(
         link.token.relay,
-        Some(relay.into()),
-        "the link carries the relay"
+        Some("https://relay.example/".parse().unwrap()),
+        "the link carries the relay, dotless"
     );
     let alex = computer(2).await;
     knows(&alex, &sam.node);

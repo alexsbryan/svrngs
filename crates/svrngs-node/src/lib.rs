@@ -46,6 +46,8 @@ pub use svrngs_core::alpn;
 pub mod guest;
 pub mod iroh;
 pub mod peer_wire;
+// Every relay URL without the DNS root's dot, so WebKit reaches it (u4-9).
+pub mod relay;
 
 // Ring sync and its route, forked in U1 (docs/DESIGN.md §8, U1's inventory):
 // the round and the exchange (`commonwealth-rails`' `ring_sync`), and the sync

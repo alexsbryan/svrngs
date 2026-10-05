@@ -22,6 +22,16 @@
 
 mod http;
 mod join;
+// The node's relay adapter, compiled here too: every relay URL the page
+// makes or reads without the DNS root's dot, which WebKit refuses (u4-9).
+// Formatted by its own crate's rustfmt.toml, not by this one's.
+#[path = "../../crates/svrngs-node/src/relay.rs"]
+#[rustfmt::skip]
+#[expect(
+    dead_code,
+    reason = "relay::parse reads a relay a computer is told; the page is told only a token's, which svrngs-core reads"
+)]
+mod relay;
 
 use svrngs_core::alpn::Alpn;
 use svrngs_core::link::Token;
@@ -161,6 +171,8 @@ async fn bind(key: Vec<u8>, token: &str) -> Result<Bound, JsError> {
     // browser (iroh-1.0.2/src/endpoint/presets.rs:122-128), with n0's
     // relays. Upstream refused a dial string with no relay
     // (ring-runtime/src/lib.rs:91-99); a bare key is a link's usual form.
+    // Every relay here is dotless, as WebKit reaches it: the token's as
+    // svrngs-core decodes it, n0's and the lookup's answers by `relay`.
     let builder = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal).secret_key(secret);
     let (builder, relay) = match link.relay {
         Some(relay) => {
@@ -172,10 +184,13 @@ async fn bind(key: Vec<u8>, token: &str) -> Result<Bound, JsError> {
             )
         }
         None => {
-            t!("LAYER parse: ok — issuer {issuer}, a bare key: found by n0's address lookup");
-            let lookup = iroh::address_lookup::PkarrResolver::n0_dns();
+            let relays = relay::n0_relays();
+            t!("LAYER parse: ok — issuer {issuer}, a bare key: found by n0's address lookup; n0's relays {relays}");
+            let lookup = relay::DotlessLookup(iroh::address_lookup::PkarrResolver::n0_dns());
             (
-                builder.relay_mode(iroh::RelayMode::Default).address_lookup(lookup),
+                builder
+                    .relay_mode(iroh::RelayMode::Custom(relays))
+                    .address_lookup(lookup),
                 None,
             )
         }
