@@ -48,6 +48,7 @@ use std::collections::BTreeMap;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Duration;
 
 use tokio::sync::Notify;
 
@@ -144,6 +145,21 @@ impl Node {
         seeds: SeedText,
         api: SocketAddr,
     ) -> Result<Self, NodeError> {
+        Self::start_every(data_dir, key, relay, seeds, api, DEFAULT_RING_SYNC_INTERVAL).await
+    }
+
+    /// [`Node::start`], with the round every `every` rather than every
+    /// [`DEFAULT_RING_SYNC_INTERVAL`]. The scale instrument
+    /// (`tests/scale.rs`) passes a day, so that no node's own round runs
+    /// inside one it is timing.
+    pub async fn start_every(
+        data_dir: PathBuf,
+        key: SigningKey,
+        relay: &RelayConfig,
+        seeds: SeedText,
+        api: SocketAddr,
+        every: Duration,
+    ) -> Result<Self, NodeError> {
         std::fs::create_dir_all(&data_dir).map_err(|source| NodeError::DataDir {
             path: data_dir.clone(),
             source,
@@ -221,7 +237,7 @@ impl Node {
                     None => Admit::Refuse,
                 }
             });
-        let round = spawn_ring_sync_loop(host.clone(), DEFAULT_RING_SYNC_INTERVAL, nudge);
+        let round = spawn_ring_sync_loop(host.clone(), every, nudge);
         Ok(Self {
             host,
             api,
