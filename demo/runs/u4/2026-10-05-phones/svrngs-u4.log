@@ -64,3 +64,153 @@
 2026-10-05T20:45:46.812997Z  INFO door: door: let in, and told their share of the declared upload person="Alex" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(1104) sent=Some(70843484) received=Some(923473)
 2026-10-05T20:45:48.909815Z  INFO door: door: let in, and told their share of the declared upload person="Alex" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(1104) sent=Some(72991534) received=Some(951648)
 2026-10-05T20:45:51.001237Z  INFO door: door: let in, and told their share of the declared upload person="Alex" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(1096) sent=Some(75139586) received=Some(979868)
+2026-10-05T20:45:53.276077Z  INFO door: door: let in, and told their share of the declared upload person="Alex" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(1190) sent=Some(77287751) received=Some(1008073)
+2026-10-05T20:46:38.490255Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T20:47:38.495168Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T20:48:10.282379Z  INFO door: door: let in, and told their share of the declared upload person="Alex" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(82) sent=Some(4017) received=Some(3874)
+2026-10-05T20:48:10.525743Z  INFO door: door: let in, and told their share of the declared upload person="Alex" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(93) sent=Some(7413) received=Some(7164)
+2026-10-05T20:48:10.641265Z  INFO door: door: let in, and told their share of the declared upload person="Alex" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(97) sent=Some(9132) received=Some(8918)
+2026-10-05T20:48:12.750714Z  INFO door: door: let in, and told their share of the declared upload person="Alex" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(129) sent=Some(151379) received=Some(10966)
+2026-10-05T20:48:13.500766Z  INFO door: door: let in, and told their share of the declared upload person="Alex" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(152) sent=Some(2297621) received=Some(38117)
+2026-10-05T20:48:14.096687Z  INFO door: door: let in, and told their share of the declared upload person="Alex" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(283) sent=Some(4444057) received=Some(65501)
+2026-10-05T20:48:38.499609Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T20:49:38.503196Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T20:50:38.506193Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T20:51:38.509032Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T20:52:38.513380Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T20:53:38.516003Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T20:54:38.520207Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T20:55:38.522397Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T20:56:38.526547Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T20:57:38.500178Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T20:58:38.494070Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T20:59:29.091142Z  INFO door: door: let in, and told their share of the declared upload person="Alex" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(109) sent=Some(2883) received=Some(3874)
+2026-10-05T20:59:29.301845Z  INFO door: door: let in, and told their share of the declared upload person="Alex" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(102) sent=Some(7355) received=Some(7108)
+2026-10-05T20:59:29.367531Z  INFO door: door: let in, and told their share of the declared upload person="Alex" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(98) sent=Some(9137) received=Some(8829)
+2026-10-05T20:59:38.496562Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T20:59:53.221448Z  INFO door: door: let in, and told their share of the declared upload person="Ducky" lend=film people=2 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(99) sent=Some(2884) received=Some(3874)
+2026-10-05T20:59:53.446983Z  INFO door: door: let in, and told their share of the declared upload person="Ducky" lend=film people=2 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(98) sent=Some(7332) received=Some(7108)
+2026-10-05T20:59:53.517847Z  INFO door: door: let in, and told their share of the declared upload person="Ducky" lend=film people=2 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(95) sent=Some(9114) received=Some(8829)
+2026-10-05T20:59:53.739851Z  INFO door: door: let in, and told their share of the declared upload person="Ducky" lend=film people=2 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(94) sent=Some(45190) received=Some(9445)
+2026-10-05T20:59:55.009444Z  INFO door: door: let in, and told their share of the declared upload person="Ducky" lend=film people=2 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(74) sent=Some(190429) received=Some(11573)
+2026-10-05T20:59:55.839192Z  INFO door: door: let in, and told their share of the declared upload person="Ducky" lend=film people=2 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(178) sent=Some(2336700) received=Some(38498)
+2026-10-05T20:59:56.469604Z  INFO door: door: let in, and told their share of the declared upload person="Ducky" lend=film people=2 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(103) sent=Some(4515114) received=Some(66555)
+2026-10-05T20:59:58.457958Z  INFO door: door: let in, and told their share of the declared upload person="Ducky" lend=film people=2 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(589) sent=Some(6831546) received=Some(95984)
+2026-10-05T21:00:09.333856Z  INFO door: door: let in, and told their share of the declared upload person="Ducky" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(1309) sent=Some(8803237) received=Some(120402)
+2026-10-05T21:00:10.018959Z  INFO door: door: let in, and told their share of the declared upload person="Ducky" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(143) sent=Some(10949556) received=Some(146820)
+2026-10-05T21:00:10.747336Z  INFO door: door: let in, and told their share of the declared upload person="Ducky" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(388) sent=Some(13096053) received=Some(174355)
+2026-10-05T21:00:38.499121Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:01:38.502530Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:02:38.507205Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:03:38.510671Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:04:38.514370Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:05:38.518142Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:06:38.521694Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:07:38.526593Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:08:38.530323Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:09:38.532715Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:10:38.536874Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:11:38.539444Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:12:38.542265Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:13:38.545292Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:14:38.547708Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:15:38.551819Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:16:38.557123Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:17:38.559847Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:18:38.564235Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:19:38.570687Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:20:38.573263Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:21:38.575439Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:22:38.577500Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:23:38.580591Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:24:38.582601Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:25:38.586912Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:26:38.591423Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:27:38.594659Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:28:38.596805Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:29:38.601156Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:30:38.640687Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:31:38.650137Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:32:38.656040Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:33:38.661966Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:34:38.668689Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:35:38.674073Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:36:38.676707Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:37:38.680466Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:38:38.685422Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:39:38.690930Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:40:38.694942Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:41:38.704464Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:42:38.708201Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:43:38.712197Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:44:38.719399Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:45:38.726817Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:46:38.732117Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:47:38.737883Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:48:38.742829Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:49:38.746728Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:50:38.751271Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:51:38.756632Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:52:38.761438Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:53:38.765268Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:54:38.769606Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:55:38.775434Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:56:38.780861Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:57:38.785026Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:58:38.790036Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T21:59:38.794902Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:00:38.800479Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:01:38.802032Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:02:38.803743Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:03:38.807985Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:04:38.813403Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:05:38.821102Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:06:38.828954Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:07:38.837748Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:08:38.846111Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:09:38.853865Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:10:38.861596Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:11:38.867494Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:12:38.872554Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:13:38.880091Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:14:38.886451Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:15:38.890438Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:16:38.898118Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:17:38.906346Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:18:38.912759Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:19:38.920077Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:20:38.927868Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:21:38.934926Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:22:38.943394Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:23:38.950190Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:24:38.955272Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:25:38.959425Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:26:38.966648Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:27:38.973112Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:28:38.979308Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:29:38.983469Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:30:34.144567Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(76) sent=Some(3985) received=Some(3871)
+2026-10-05T22:30:34.355360Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(88) sent=Some(7384) received=Some(7131)
+2026-10-05T22:30:34.427149Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(85) sent=Some(9172) received=Some(8852)
+2026-10-05T22:30:34.625380Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(69) sent=Some(59935) received=Some(9503)
+2026-10-05T22:30:36.277022Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(132) sent=Some(197974) received=Some(11747)
+2026-10-05T22:30:38.252997Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(223) sent=Some(2765792) received=Some(42003)
+2026-10-05T22:30:38.988924Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-10-05T22:30:39.328976Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(123) sent=Some(5012449) received=Some(71039)
+2026-10-05T22:30:40.267679Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(260) sent=Some(7158888) received=Some(97519)
+2026-10-05T22:30:42.082117Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(640) sent=Some(9305274) received=Some(124045)
+2026-10-05T22:30:44.193688Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(671) sent=Some(11451610) received=Some(150589)
+2026-10-05T22:30:46.289812Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(696) sent=Some(13598001) received=Some(177279)
+2026-10-05T22:30:48.482143Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(627) sent=Some(15744422) received=Some(204506)
+2026-10-05T22:30:50.483397Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(701) sent=Some(17890821) received=Some(231093)
+2026-10-05T22:30:52.580702Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(760) sent=Some(20037177) received=Some(257639)
+2026-10-05T22:30:54.774838Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(960) sent=Some(22183620) received=Some(284166)
+2026-10-05T22:30:56.868827Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(1103) sent=Some(24330090) received=Some(311233)
+2026-10-05T22:30:58.967660Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(1088) sent=Some(26476547) received=Some(339459)
+2026-10-05T22:31:01.075864Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(1167) sent=Some(28624552) received=Some(367735)
+2026-10-05T22:31:03.172444Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(1163) sent=Some(30772619) received=Some(395928)
+2026-10-05T22:31:05.273499Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(1175) sent=Some(32920685) received=Some(424331)
+2026-10-05T22:31:07.383705Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(1173) sent=Some(35068704) received=Some(452660)
+2026-10-05T22:31:09.487697Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(1177) sent=Some(37216822) received=Some(480968)
+2026-10-05T22:31:11.594285Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(1180) sent=Some(39364921) received=Some(509287)
+2026-10-05T22:31:13.686392Z  INFO door: door: let in, and told their share of the declared upload person="Allle" lend=film people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(1173) sent=Some(41513062) received=Some(537556)

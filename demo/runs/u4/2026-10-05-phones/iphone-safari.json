@@ -1,0 +1,31 @@
+{
+  "bar": "u4: a stock phone browser plays a lent film and seeks",
+  "date": "2026-10-05",
+  "phone": "iPhone, iOS 18.7, Safari 26.6.1 (the user agent its worker traced)",
+  "network": "not reported for this run",
+  "origin": "https://www.svrnme.sh/g/",
+  "commit": "e7ba903 (page version c891fade9e7f; the command at eb759a1)",
+  "joined": true,
+  "asked_name_once": null,
+  "link_to_list_s": null,
+  "lend_to_first_frame_s": null,
+  "seeks": null,
+  "reopened_without_asking": null,
+  "after_lock": null,
+  "words_kept_from_people_seen": null,
+  "recording": null,
+  "operator_report": "works on safari now",
+  "node_log": {
+    "file": "svrngs-u4.log",
+    "person": "Allle",
+    "door_requests": 24,
+    "first": "2026-10-05T22:30:34.144567Z",
+    "last": "2026-10-05T22:31:13.686392Z",
+    "relayed": true,
+    "rtt_ms": {"min": 69, "median": 701, "max": 1180},
+    "sent_mb": 41.5,
+    "largest_gap_s": 2.19
+  },
+  "before": "Safari failed twice before u4-10: joined as Jimmer and listed the film, then its worker read no sealing key, made its own over the page's and could not unseal (its trace, svrngs 387563b). Jimmer and Ducky in the journal are those tries.",
+  "notes": "Played after u4-10 with svrnme.sh's website data cleared, as the operator reported; no times were taken, so every timed field is null, not passed. No gap of a minute in the door's log, so the locked-phone step has no evidence here. Android Chrome was not run."
+}
