@@ -564,7 +564,7 @@ sizes are lines of code, as the survey counted them.
 | `ring-runtime/web/sw.js:1-34` (25) | a cache-first shell cache named by content hash (`:5-11`); same-origin GETs only (`:28-34`): "The dial itself is not HTTP to this origin — it is iroh — so requests to it never reach here" (`:26-27`) | forked (u4-3), the shell cache kept; then the runtime (u4-6, call 3): it opens the endpoint from the sealed key when it starts and again after the browser stops it, and serves every request under its scope through u4-4's client to the lender's door, `/lend/<name>/<path>`. Landed (u4-6): `web/sw.js`, a module, with `endpoint(key, token)` and its `dial(lender)` in `web/src/lib.rs` — one endpoint per key, since a relay sets an older endpoint with the same key aside when another binds (`iroh-relay-1.0.2/src/server/clients.rs:80-92`) |
 | `scripts/build-ring-runtime.sh:1-119` (75) | checks for the wasm target (`:31-35`) and a `wasm-bindgen` CLI of exactly 0.2.128 (`:36-49`); on macOS uses Homebrew LLVM's clang and llvm-ar, since Apple's clang has no wasm32 backend (`:52-76`); `RUSTFLAGS='--cfg getrandom_backend="wasm_js"' cargo build --release --target wasm32-unknown-unknown` (`:81`), the cfg for `kernel-types`' getrandom 0.3 (`:77-80`); `wasm-bindgen --target web` (`:85-86`); `wasm-opt -Oz` when installed (`:91-97`); a 12-hex content hash stamped into the three shell files (`:103-107`) | forked as `scripts/build-web.sh` (u4-3). Whether the getrandom cfg stays once `kernel-types` is gone is a change of meaning, its own commit |
 | `landing/scripts/build-ring-runtime.sh:1-24`, `landing/scripts/verify-ring-deployed.sh:1-92`, `landing/vercel.json:1-73`, `landing/package.json:13` | build into `landing/ring/` and deploy one origin: "The trailing slash is LOAD-BEARING" (`build-ring-runtime.sh:7`), after "a phone hung on the wall link" (`:11-12`); a redirect `/ring` → `/ring/` (`vercel.json:4-10`); `sw.js` uncached and the wasm immutable (`:64-71`); a deploy checked by fetching the page's script as a browser resolves it | not forked: which origin serves the page, and how, is a group's. Their facts go into u4-8's package for the operator: a page served at a path needs its trailing slash, `sw.js` uncached, the wasm immutable |
-| `landing/ring/` (generated, committed) | the built site; `wasm/ring_runtime_bg.wasm` is 4,295,444 bytes (`git ls-tree -l`); its glue reaches the relay with `new WebSocket` | not forked. Upstream's one figure for a page's weight. Ours, measured (u4-8, `demo/runs/u4/2026-10-05/`): the page fetches 5,103,571 bytes, 1,209,407 brotli, its wasm 5,027,239 without `wasm-opt`; a cold join took 15.35 MB from an origin sending no cache headers, the wasm fetched by the page, the worker's install and the worker's start (`ralph/REVIEW_FINDINGS.md` #51) |
+| `landing/ring/` (generated, committed) | the built site; `wasm/ring_runtime_bg.wasm` is 4,295,444 bytes (`git ls-tree -l`); its glue reaches the relay with `new WebSocket` | not forked. Upstream's one figure for a page's weight. Ours, measured (u4-8, `demo/runs/u4/2026-10-05/`): the page fetches 5,103,571 bytes, 1,209,407 brotli, its wasm 5,027,239 without `wasm-opt`; a cold join took 15.35 MB from an origin sending no cache headers, the wasm fetched by the page, the worker's install and the worker's start (`ralph/REVIEW_FINDINGS.md` #51); since u4-9 the wasm is fetched once, by one URL the page and the worker share, and a cold join took 5.34 MB (`demo/runs/u4/2026-10-05-reach/`) |
 | `kernel-types/src/alpn.rs:26` | `GUEST_ALPN = b"cwth/guest/0"`, the one spelling both ends import | not forked: svrngs's protocols are its `Alpn` (`crates/svrngs-node/src/alpn.rs:29-30`), spelled in svrngs-core from u4-2, so the page and the node spell each name once |
 | `mesh-join-vocab/src/deep_link.rs:228-300` | the https link's build and parse, never reading left of the `#` | forked already (U2): `crates/svrngs/src/link.rs`; u4-2 moved the token's parse, now `crates/svrngs-core/src/link.rs`, and the signing of the ask and the redemption into svrngs-core (call 5), leaving the command `issuer.rs`: a fresh token's secret, and the issuer as iroh dials it |
 | `sovereign/crates/sovereign-contracts/src/guest_pages/ring_shim.js:1-171` (105), with `shim.rs` and `guest_pages.rs` | `window.ring` over plain `fetch` to a LAN door: the bearer from `location.hash` (`:5`); a name claimed by `window.prompt` and `POST /v1/guest/session`, its handle kept in `localStorage` (`:30-61`) | not forked: a guest on a LAN door, which never dials iroh and for whom the host signs. svrngs's phone is a person with a key in the register. Both retire on svrngs's bar (`docs/RING_SPEC.md:26`) |
@@ -743,7 +743,10 @@ By the operator, 2026-10-03:
    WebKit probes `bytes=0-1` and then asks on to the end, where Chromium
    asks `bytes=N-` and cuts it. Since u4-9 the worker asks the door for
    either as a part of 2 MiB (`web/sw.js` `PART`), so a seek waits at most
-   for the part being read. Whether WebKit held its seek back or the
+   for the part being read: in the dry run again
+   (`demo/runs/u4/2026-10-05-reach/`), every WebKit seek played on within
+   3.4 s through n0 and 0.8 s locally, the first asked within 0.9 s of
+   play. Whether WebKit held its seek back or the
    worker's stream ignored WebKit's cancel is still not shown: Playwright
    reaches no WebKit worker.
 5. **Members find each other through iroh's address lookup**, n0's DNS by
@@ -759,9 +762,11 @@ By the operator, 2026-10-03:
    the dot (`svrngs_core::relay`, `crates/svrngs-node/src/relay.rs`): n0's
    relays, a link's, a relay a computer is told, and a lookup's answers, so
    a computer advertises its relay dotless and a phone reads an earlier
-   build's dotless too. If iroh spells a relay some other way WebKit
-   refuses, an iPhone fails again, and only a run through n0 in WebKit
-   shows it. The page a phone loads from a link's origin is the same
+   build's dotless too. In the dry run again
+   (`demo/runs/u4/2026-10-05-reach/`), WebKit joined through n0 in all
+   three runs. If iroh spells a relay some other way WebKit refuses, an
+   iPhone fails again, and only a run through n0 in WebKit shows it. The
+   page a phone loads from a link's origin is the same
    kind of default (U4): whoever serves it serves the code that holds the
    person's key, its bytes unsealed while the page runs, so a group that does not trust svrnme.sh serves the page from
    its own origin and prints its links there. And every lent service's
