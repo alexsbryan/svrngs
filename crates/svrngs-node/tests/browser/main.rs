@@ -15,12 +15,15 @@
 #[allow(dead_code)]
 #[path = "../door/origins.rs"]
 mod origins;
+// The page built, and a relay on 127.0.0.1: shared with the command's
+// joining test (crates/svrngs/tests/join_page.rs).
+mod harness;
 
-use std::path::{Path, PathBuf};
-use std::sync::OnceLock;
+use std::path::Path;
 use std::time::Duration;
 
-use iroh_relay::server::{RelayConfig as RelayServer, Server, ServerConfig};
+use harness::{relay, relay_url, repo, site};
+use iroh_relay::server::Server;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use svrngs_core::link::Token;
@@ -38,46 +41,6 @@ fn signing(seed: u8) -> SigningKey {
 /// No link is asked about here.
 fn no_seed(_: &Path) -> Result<Option<String>, String> {
     Ok(None)
-}
-
-fn repo() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
-}
-
-/// The page, built by `scripts/build-web.sh` once per run of this binary.
-fn site() -> &'static Path {
-    static SITE: OnceLock<PathBuf> = OnceLock::new();
-    SITE.get_or_init(|| {
-        let out = repo().join("target/web/site");
-        let built = std::process::Command::new(repo().join("scripts/build-web.sh"))
-            .arg("--out")
-            .arg(&out)
-            .output()
-            .expect("scripts/build-web.sh runs");
-        assert!(
-            built.status.success(),
-            "scripts/build-web.sh failed, so the page cannot be tested:\n{}",
-            String::from_utf8_lossy(&built.stderr)
-        );
-        out
-    })
-}
-
-/// The relay's address, `http://127.0.0.1:<port>/`.
-fn relay_url(relay: &Server) -> String {
-    format!(
-        "http://{}/",
-        relay.http_addr().expect("the relay serves HTTP")
-    )
-}
-
-/// iroh's relay server on 127.0.0.1, plain HTTP: no TLS, no QUIC.
-async fn relay() -> Server {
-    let mut config = ServerConfig::default();
-    config.relay = Some(RelayServer::new(([127, 0, 0, 1], 0)));
-    Server::spawn(config)
-        .await
-        .expect("a relay starts on 127.0.0.1")
 }
 
 /// A node whose one relay is `relay`, listening on 127.0.0.1 alone, its
