@@ -12,9 +12,14 @@
 // path relative to its own (`../../<lender>/<lend>/…`), under this
 // person's key: the phone dials each lender itself, so every lender's door
 // counts the person watching and no computer carries another's lend (call
-// 4). The worker opens its endpoint from the sealed key when it starts —
-// the first request that needs it — and so again after the browser stops
-// it, since a stopped worker keeps nothing.
+// 4). The worker opens its endpoint when it starts — the first request
+// that needs it — and so again after the browser stops it, since a stopped
+// worker keeps nothing: with the key the page handed it, else the key it
+// unseals itself (u4-10). Safari's worker on an iPhone could not unseal:
+// it read no sealing key where its page had kept one (2026-10-05). A
+// worker with neither answers a lend's address with the hand-over page
+// (hand.js), which unseals in the page, hands the key over and opens the
+// address again.
 //
 // The app-shell cache. Cache-first, one version: __VERSION__ is the runtime's
 // content hash, stamped at build time, so a rebuild replaces the cache rather
@@ -28,7 +33,13 @@ const CACHE = store.CACHE;
 // the directory's trailing slash is what makes `./` the page. The wasm is
 // not here: the page keeps it in this cache when it first fetches it, and
 // the worker reads it there (store.js `runtime`, u4-9).
-const SHELL = ['./', './app.js?v=__VERSION__', './store.js?v=__VERSION__', './wasm/svrngs_web.js?v=__VERSION__'];
+const SHELL = [
+  './',
+  './app.js?v=__VERSION__',
+  './store.js?v=__VERSION__',
+  './hand.js?v=__VERSION__',
+  './wasm/svrngs_web.js?v=__VERSION__',
+];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -95,10 +106,44 @@ async function traceView() {
 }
 
 // What this run of the worker holds, all of it lost when the browser stops
-// it: the wasm module, an endpoint per group, a dial per group and lender.
+// it: the keys the page handed it by group, the wasm module, an endpoint
+// per group, a dial per group and lender.
+const handed = new Map();
 let loaded = null;
 const endpoints = new Map();
 const dials = new Map();
+
+// The page hands over the person's key in a group when it opens the group
+// (store.js `handOver`): in memory, never storage. Only this origin's pages
+// can message this worker.
+self.addEventListener('message', (e) => {
+  const { group, key } = e.data ?? {};
+  if (typeof group !== 'string' || !(key instanceof Uint8Array) || key.length !== 32) {
+    trace(`RUNTIME: a message that hands over no key, refused: ${Object.keys(e.data ?? {})}`);
+    return;
+  }
+  handed.set(group, key);
+  trace(`RUNTIME: the page handed over the key for ${group}`);
+  e.ports[0]?.postMessage('held');
+});
+
+// No key for a group: none handed over, and none unsealed here.
+class Keyless extends Error {}
+
+// The person's key in `group`: the one the page handed over, else unsealed.
+async function keyFor(group) {
+  const key = handed.get(group.id);
+  if (key) {
+    trace(`RUNTIME: the key for ${group.id} is the one the page handed over`);
+    return key;
+  }
+  trace(`RUNTIME: no key for ${group.id} handed over: unsealing it here`);
+  try {
+    return await store.unseal(group);
+  } catch (e) {
+    throw new Keyless(`no key for ${group.id}: none handed over, and unsealing failed: ${e}`);
+  }
+}
 
 // Remember `opening` under `key` in `held` until it fails, so the next
 // request opens again rather than inheriting the failure.
@@ -118,8 +163,9 @@ function endpointFor(group) {
       throw e;
     });
     await loaded;
-    trace(`RUNTIME: opening the endpoint for ${group.id} from the sealed key`);
-    return endpoint(await store.unseal(group), group.token);
+    const key = await keyFor(group);
+    trace(`RUNTIME: opening the endpoint for ${group.id}`);
+    return endpoint(key, group.token);
   });
 }
 
@@ -162,6 +208,23 @@ function say(status, words) {
   return new Response(words, { status, headers: { 'content-type': 'text/plain; charset=utf-8' } });
 }
 
+// The hand-over page (hand.js), for a lend's address reached with no key:
+// the page unseals, hands the key over and opens the address again.
+function handOverPage() {
+  const script = new URL('./hand.js?v=__VERSION__', self.location).href;
+  const html = `<!doctype html><html lang="en"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Opening…</title>
+<p id="said">Opening…</p><script type="module" src="${script}"></script></html>`;
+  return new Response(html, {
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'no-store',
+      'referrer-policy': 'no-referrer',
+      'content-security-policy': "default-src 'none'; script-src 'self'; base-uri 'none'; form-action 'none'",
+    },
+  });
+}
+
 // Serve `request`, at `url` under a lend's address, from its lender's door.
 async function lent(request, url) {
   const m = /^([0-9a-f]{64})\/([^/]+)(\/.*)?$/.exec(url.pathname.slice(LENDS.length));
@@ -188,6 +251,14 @@ async function lent(request, url) {
       }
     } catch (e) {
       trace(`RUNTIME: ${request.method} ${path} at ${lender} failed (try ${tries + 1}): ${e}`);
+      if (e instanceof Keyless) {
+        await keepTrace();
+        if (request.mode === 'navigate') {
+          trace(`RUNTIME: ${path} answered with the hand-over page`);
+          return handOverPage();
+        }
+        return say(503, 'Open this again from your group’s page.');
+      }
       if (body || tries) {
         await keepTrace();
         return say(502, 'The computer lending this did not answer. Try again later.');

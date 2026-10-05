@@ -136,6 +136,10 @@ function what(l) {
   return `${l.person}’s ${l.name === l.kind ? l.name : `${l.name} (${l.kind})`}`;
 }
 
+// The worker told the key of the group the page opened (store.js
+// `handOver`, u4-10): a lend opens once it holds it, or said nothing.
+let handing = null;
+
 // Open a lend: go to its address under the service worker's scope,
 // `l/<lender>/<lend>/`, which the worker serves from its lender's computer,
 // dialled by its key, never through the computer that listed it (DESIGN
@@ -147,6 +151,7 @@ async function open(l) {
   }
   said.textContent = `Opening ${what(l)}…`;
   await navigator.serviceWorker.ready;
+  await handing;
   location.assign(`l/${l.key}/${encodeURIComponent(l.name)}/`);
 }
 
@@ -155,6 +160,12 @@ async function enter(group) {
   group = await store.opened(group);
   document.title = group.name;
   const key = await store.unseal(group);
+  if ('serviceWorker' in navigator) {
+    handing = store
+      .handOver(group, key)
+      .then((held) => trace(`PAGE: the worker ${held ? 'holds' : 'did not say it holds'} the key for ${group.id}`))
+      .catch((e) => trace(`PAGE: the key was not handed over: ${e}`));
+  }
   heading.textContent = `Reaching ${group.name}…`;
   const d = await reach(connect(key, group.token), `Your group’s computer did not answer. Try again later.`);
   const res = await d.fetch('GET', PEOPLE_LENDS, [['accept', 'application/json']], null);

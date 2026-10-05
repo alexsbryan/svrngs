@@ -128,6 +128,22 @@ export async function unseal(group) {
   }
 }
 
+// Hand the person's key in `group` to the worker that serves this page's
+// lends, in memory: a message, never storage (u4-10). Safari's worker on an
+// iPhone read no sealing key where its page had kept one (2026-10-05), so
+// the page, which reads it, unseals and hands the key over. Answers whether
+// the worker said it holds the key within `wait` ms.
+export async function handOver(group, key, wait = 5_000) {
+  const worker = (await navigator.serviceWorker.ready).active;
+  const { port1, port2 } = new MessageChannel();
+  const held = new Promise((done) => {
+    port1.onmessage = () => done(true);
+    setTimeout(() => done(false), wait);
+  });
+  worker.postMessage({ group: group.id, key }, [port2]);
+  return held;
+}
+
 // ── the runtime's module ────────────────────────────────────────────────
 //
 // The wasm, fetched once a version (u4-9; ralph/REVIEW_FINDINGS.md #51). A
