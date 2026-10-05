@@ -1,0 +1,29 @@
+{
+  "bar": "u4: a stock phone browser plays a lent film and seeks",
+  "date": "2026-10-05",
+  "phone": "iPhone, iOS version not reported, Firefox (WebKit, as every iOS browser; not the stock browser the run-of-show names)",
+  "network": "cellular (operator's report)",
+  "origin": "https://www.svrnme.sh/g/",
+  "commit": "eb759a1",
+  "joined": true,
+  "asked_name_once": null,
+  "link_to_list_s": null,
+  "lend_to_first_frame_s": null,
+  "seeks": null,
+  "reopened_without_asking": null,
+  "after_lock": null,
+  "words_kept_from_people_seen": null,
+  "recording": null,
+  "operator_report": "Video playing smoothly on cellular network on firefox on my iOS device",
+  "node_log": {
+    "file": "svrngs-u4.log",
+    "person": "Alex",
+    "door_requests": 43,
+    "first": "2026-10-05T20:44:38.301621Z",
+    "last": "2026-10-05T20:45:51.001237Z",
+    "relayed": true,
+    "rtt_ms": {"min": 82, "median": 1067, "max": 1200},
+    "sent_mb": 75.1
+  },
+  "notes": "Played and sought, as the operator reported; no times were taken, so every timed field is null, not passed. The node let Alex in 43 times over 73 s, every request relayed (n0), at a median RTT of 1.07 s on cellular. First real WebKit phone through n0 after u4-9's dotless relays. U4's bar still owes Safari on an iPhone and Chrome on Android, each with times."
+}
