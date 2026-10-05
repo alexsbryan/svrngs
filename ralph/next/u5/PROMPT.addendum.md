@@ -16,13 +16,15 @@ GPL-2.0-only: Films talks to it over its API, and copies none of its code.
 
 **The seat's calls** (2026-10-05, from the survey; u5-0 writes them into DESIGN):
 1. *Every lend at an origin of its own, on a computer as on a phone.* A
-   computer serves `<lend>.<lender>.localhost:<api port>`, the page
-   `<lend>.<lender>.<page host>`, this computer's own lends included; an
+   computer serves `<id>.localhost:<api port>`, the page `<id>.<page host>`,
+   `<id>` one DNS label, this computer's own lends included; an
    app's page reaches another lend at the origin `/v1/lends` answers, and the
    same page works on both. (Revised by the operator, 2026-10-05: one shared
    origin let any lent page unseal the viewer's key — u4-6, DESIGN §11 risk 5
    — and broke every self-hosted app that wants its origin's root, which is
-   most of DESIGN §1's list.)
+   most of DESIGN §1's list.) It raises no one's bar: a person joins by
+   a link and opens a lend from the list as before, and a group that names
+   ours (svrnme.sh), which serves the wildcard, types nothing more.
 2. *The page does the work, under the viewer's key.* Films' page reads each
    lender's catalogue and streams from each lender's door from the viewer's
    own device, so each door counts and shares by the person watching. Films'
