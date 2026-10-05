@@ -49,8 +49,16 @@ async function run(store, mode, act) {
   });
 }
 
+// What a sealing key read back is, for the trace: Safari's worker on an
+// iPhone failed to unseal with `OperationError` while its page and Firefox's
+// worker did not (2026-10-05), and a key read back unusable and a key made
+// anew over the page's fail the same way.
+const described = (k) =>
+  `${k?.constructor?.name} ${k?.algorithm?.name}/${k?.algorithm?.length} extractable=${k?.extractable} usages=${k?.usages}`;
+
 async function sealingKey() {
   const held = await run('seal', 'readonly', (s) => s.get('key'));
+  globalThis.__trace?.(`STORE: the sealing key ${held ? `read back: ${described(held)}` : 'absent: making one'}`);
   if (held) return held;
   const made = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
   await run('seal', 'readwrite', (s) => s.put(made, 'key'));
@@ -88,8 +96,15 @@ export async function listed(group, lenders) {
 
 // The person's key in `group`, unsealed: 32 bytes, held only in memory.
 export async function unseal(group) {
-  const key = await crypto.subtle.decrypt(bound(group.id, group.iv), await sealingKey(), group.sealed);
-  return new Uint8Array(key);
+  const seal = await sealingKey();
+  try {
+    return new Uint8Array(await crypto.subtle.decrypt(bound(group.id, group.iv), seal, group.sealed));
+  } catch (e) {
+    globalThis.__trace?.(
+      `STORE: unsealing failed: ${e?.name}: ${e?.message}; sealed ${group.sealed?.byteLength} bytes (${group.sealed?.constructor?.name}), iv ${group.iv?.byteLength} bytes (${group.iv?.constructor?.name})`,
+    );
+    throw e;
+  }
 }
 
 // ── the runtime's module ────────────────────────────────────────────────
