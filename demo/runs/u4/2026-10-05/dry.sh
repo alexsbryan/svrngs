@@ -16,7 +16,8 @@
 #      asked → list, the link again, the lend opened, its first frame and
 #      each seek. Every run's line goes to runs-<pass>.jsonl, and every
 #      answer the lent service gave during the pass to lend-<pass>.log;
-#      summary.py reads every pass's runs in <out dir>.
+#      summary.py reads every pass's runs in <out dir>, and each pass's
+#      lend log beside them (u4-9: the worker's 2 MiB parts, web/sw.js).
 #
 # Each cold run is a new person, and a lend lets 3 people at once by
 # default, counting each for 30 s after their last request
@@ -90,7 +91,8 @@ runs() {  # runs <pass> <link>
       # What the page's origin sent during the run: its lines past `served`.
       python3 -c 'import json,sys
 d = json.loads(sys.argv[1]); sent = [l.split() for l in open(sys.argv[4]).read().splitlines()[int(sys.argv[5]):]]
-d.update({"pass": sys.argv[2], "run": int(sys.argv[3]), "origin_requests": len(sent), "origin_bytes": sum(int(l[2]) for l in sent)})
+d.update({"pass": sys.argv[2], "run": int(sys.argv[3]), "origin_requests": len(sent), "origin_bytes": sum(int(l[2]) for l in sent),
+          "origin_wasm": sum(1 for l in sent if l[1].split("?")[0].endswith(".wasm"))})
 print(json.dumps(d))' "$line" "$1" "$i" "$R/site.out" "$served" >>"$OUT/runs-$1.jsonl"
       say "$1 $engine $i: $(tail -1 "$OUT/runs-$1.jsonl" | python3 "$HERE/summary.py" --line)"
     done

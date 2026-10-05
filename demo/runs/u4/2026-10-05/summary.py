@@ -13,6 +13,7 @@ import sys
 
 STEPS = [
     ("origin's bytes, the run", lambda r: [r.get("origin_bytes")]),
+    ("the wasm, fetches a run", lambda r: [r.get("origin_wasm")]),
     ("link opened → name asked", lambda r: [r.get("open_to_name_ms")]),
     ("link → list, untyped", lambda r: [sum_ms(r.get("open_to_name_ms"), r.get("name_to_list_ms"))]),
     ("name typed → list", lambda r: [r.get("name_to_list_ms")]),
@@ -21,10 +22,35 @@ STEPS = [
     ("play → first frame", lambda r: [(r.get("first") or {}).get("frame_ms")]),
     ("lend opened → first frame", lambda r: [sum_ms(r.get("open_lend_ms"), (r.get("first") or {}).get("frame_ms"))]),
     ("play → plays on", lambda r: [(r.get("first") or {}).get("plays_ms")]),
+    ("play → first seek asked", lambda r: [first_seek(r)]),
     ("seek → seeked", lambda r: [s.get("seeked_ms") for s in r.get("seeks") or []]),
     ("seek → its frame", lambda r: [s.get("frame_ms") for s in r.get("seeks") or []]),
     ("seek → plays on", lambda r: [s.get("plays_ms") for s in r.get("seeks") or []]),
 ]
+
+
+def first_seek(r):
+    """How long after play the first seek was asked: u4-9's early seek."""
+    first, seeks = r.get("first") or {}, r.get("seeks") or []
+    return seeks[0]["t"] - first["t"] if seeks and "t" in seeks[0] and "t" in first else None
+
+
+def parts(log):
+    """What the lent service answered in a pass (lend.mjs's lines): each
+    range the worker asked as a 2 MiB part (u4-9, web/sw.js PART), the ones
+    sent whole and their milliseconds, and the longest any answer ran."""
+    whole, longest = [], 0
+    for l in open(log):
+        f = l.split()
+        if len(f) != 7 or not f[6].endswith("ms"):
+            continue
+        took = int(f[6][:-2])
+        longest = max(longest, took)
+        a, _, b = f[3].removeprefix("bytes=").partition("-")
+        sent, of = f[5].split("/")
+        if a and b and int(b) - int(a) + 1 == 2 * 1024 * 1024 and sent == of:
+            whole.append(took)
+    return whole, longest
 
 
 def sum_ms(*vs):
@@ -54,6 +80,17 @@ def main():
     print(f"The page, what it fetches: {t['raw']:,} bytes raw, {t['gzip']:,} gzip -9, {t['brotli']:,} brotli 11")
     for f in sizes["files"]:
         print(f"  {f['file']:<28} {f['raw']:>10,} {f['gzip']:>10,} {f['brotli']:>10,}")
+    for f in sys.argv[2:]:
+        log = f.replace("runs-", "lend-").replace(".jsonl", ".log")
+        try:
+            whole, longest = parts(log)
+        except FileNotFoundError:
+            continue
+        if whole:
+            print(f"{log.rsplit('/', 1)[-1]}: {len(whole)} parts of 2 MiB sent whole, median {statistics.median(whole):,.0f} ms"
+                  f"  range {min(whole):,}-{max(whole):,}; the longest answer {longest:,} ms")
+        else:
+            print(f"{log.rsplit('/', 1)[-1]}: no part of 2 MiB; the longest answer {longest:,} ms")
     groups = {}
     for r in runs:
         groups.setdefault((r.get("pass"), r.get("engine")), []).append(r)
@@ -70,7 +107,7 @@ def main():
             if not done:
                 print(f"  {name:<26} n 0/{len(vals)}")
                 continue
-            unit = "bytes" if "bytes" in name else "ms"
+            unit = "bytes" if "bytes" in name else "" if "fetches" in name else "ms"
             print(f"  {name:<26} n {len(done)}/{len(vals)}  median {statistics.median(done):>9,.0f} {unit}"
                   f"  range {min(done):,}-{max(done):,}")
         late = sum(1 for r in rs for s in r.get("seeks") or [] if ms(s.get("plays_ms")) is None or s["plays_ms"] > 5000)
