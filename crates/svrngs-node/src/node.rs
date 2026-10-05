@@ -115,6 +115,9 @@ pub enum NodeError {
 pub struct Node {
     host: Arc<Host>,
     api: crate::api::Serving,
+    /// What [`Self::api`] serves, kept so a test can ask it as a caller
+    /// no socket can be (one off this computer, [`Node::api_routes`]).
+    routes: axum::Router,
     _acceptor: IrohAcceptor,
     _round: RingSyncHandle,
 }
@@ -187,15 +190,37 @@ impl Node {
         // One transport: the round dials through it, and so does the live
         // lane's fan-out, which the record API runs (u3-3).
         let transport = Arc::new(IrohTransport::new(endpoint.clone()));
-        let api = crate::api::serve(
+        let admitting = rail.clone();
+        let host = Arc::new(Host {
+            transport: transport.clone(),
+            rail: rail.clone(),
+            endpoint: endpoint.clone(),
+            actor: actor.clone(),
+        });
+        let door = crate::door::Door {
+            rail: rail.clone(),
+            data_dir: data_dir.clone(),
+            using: crate::door::Using::spawn(),
+        };
+        let asking = Asking {
+            host: host.clone(),
+            door,
+        };
+        // The record, and beside it what an app asks of this computer (u5-1).
+        let routes = crate::api::router(
             RailApi {
                 rail: rail.clone(),
                 nudge: nudge.clone(),
                 live: live.clone(),
-                transport: transport.clone(),
+                transport,
             },
-            api,
+            crate::surface::router(asking.clone(), seeds),
         );
+        let api = crate::api::serve(routes.clone(), api);
+        if let Err(e) = crate::api::write_address(&data_dir, api.addr()) {
+            endpoint.close().await;
+            return Err(e.into());
+        }
         tracing::info!(
             target: "node",
             actor,
@@ -204,18 +229,6 @@ impl Node {
             api = %api.addr(),
             "node: endpoint bound with the signing key"
         );
-        let admitting = rail.clone();
-        let host = Arc::new(Host {
-            transport,
-            rail: rail.clone(),
-            endpoint: endpoint.clone(),
-            actor,
-        });
-        let door = crate::door::Door {
-            rail: rail.clone(),
-            data_dir: data_dir.clone(),
-            using: crate::door::Using::spawn(),
-        };
         // The members' protocol serves sync and the live lane, the door to
         // what this computer lends (u3-4), and what the people of a
         // member's groups lend (u4-5).
@@ -223,11 +236,8 @@ impl Node {
             rail: rail.clone(),
             live,
         })
-        .merge(crate::door::router(door.clone()))
-        .merge(people_router(Asking {
-            host: host.clone(),
-            door,
-        }));
+        .merge(crate::door::router(asking.door.clone()))
+        .merge(people_router(asking));
         let redeem = crate::redeem::router(rail, seeds);
         let acceptor =
             IrohAcceptor::spawn(endpoint.clone(), move |alpn: &[u8], dialer: &PublicKey| {
@@ -241,6 +251,7 @@ impl Node {
         Ok(Self {
             host,
             api,
+            routes,
             _acceptor: acceptor,
             _round: round,
         })
@@ -255,6 +266,12 @@ impl Node {
     /// address ([`crate::api`]).
     pub fn api_addr(&self) -> SocketAddr {
         self.api.addr()
+    }
+
+    /// The routes served at [`Node::api_addr`], behind their loopback
+    /// check: what a test hands a request whose caller it names.
+    pub fn api_routes(&self) -> axum::Router {
+        self.routes.clone()
     }
 
     /// The endpoint this node dials and is dialled on.
@@ -323,6 +340,11 @@ impl Host {
     /// The one client every peer call rides — one pool, one timeout policy.
     pub(crate) fn http(&self) -> Result<&'static reqwest::Client, &'static str> {
         peer_client()
+    }
+
+    /// The key this node signs and dials with, as the record spells an actor.
+    pub(crate) fn actor(&self) -> &str {
+        &self.actor
     }
 
     /// The transport a member's contact is resolved through.
@@ -537,8 +559,8 @@ pub struct Lending {
 /// What the people route reads: the node's groups and transport, and its
 /// own door.
 #[derive(Clone)]
-struct Asking {
-    host: Arc<Host>,
+pub(crate) struct Asking {
+    pub(crate) host: Arc<Host>,
     door: crate::door::Door,
 }
 
@@ -589,7 +611,7 @@ impl Asking {
     /// person then name; and whose computer did not answer. The refusal is
     /// [`crate::door::offered`]'s, when this computer's declarations cannot
     /// be read.
-    async fn lent(
+    pub(crate) async fn lent(
         &self,
         groups: &[(String, BTreeMap<String, Member>)],
         own: &Person,

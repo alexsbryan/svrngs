@@ -313,7 +313,7 @@ node sees a lend come and go; its secret is `declared.rs`'s store under
 `<data dir>/secrets/lends/<lend>/`. `lend::declare` and `lend::withdraw`
 are the one writer of both, which `svrngs share` calls. `GET /lends` on the
 members' protocol answers a dialer standing in a group held here what this
-computer lends (`lend::Offered`: name, kind, limit) read from the
+computer lends (`lend::Offered`: name, kind, limit, upload) read from the
 declarations at each ask, and how many people use each now: `door::Using`,
 a task owning `limit::Counts` and the clock, told by messages, the answer's
 body holding a use until it ends.
@@ -324,7 +324,17 @@ computer that does not answer is named, and nothing is kept between asks.
 `GET /people/lends` (`node::PEOPLE_LENDS_ROUTE`, u4-5) answers a member the
 same of the groups it stands in, this computer's own lends (`door::offered`)
 among them and the asker's computer not asked, each lend with its lender's
-key (`node::Lending`), so a phone dials each lender itself (DESIGN §3, call 4). A refused path covers what is under it
+key (`node::Lending`), so a phone dials each lender itself (DESIGN §3, call 4).
+An app on this computer asks the same of one group on the record API,
+`GET /v1/lends?namespace=` (`surface.rs`, u5-1, new code), through the one
+body (`node::Asking::lent`), with no asker left out; beside it `GET
+/v1/groups` answers each group held, its name from the seed the command
+keeps (the `SeedText` the redeem routes read) and this computer's person
+from the register. Both are merged into `api::router` before its loopback
+check, and the node writes the address it serves on to `<data dir>/api`
+(`api::API_FILE`) at each start. Each lend carries the upload its lender
+declares (`lend::Offered`'s `upload_bps`, required on read, `null` when
+none). A refused path covers what is under it
 at a segment boundary, as upstream's `covers`, compared percent-decoded,
 case-blind and with repeated slashes as one. `tests/door/` runs a lender
 and a member through it, with upstream's `picky_origin` and Range origin

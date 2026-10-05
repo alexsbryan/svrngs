@@ -109,8 +109,9 @@ Logging: RUST_LOG, default `error`.";
 pub const LINK_LIFE_SECS: i64 = 24 * 60 * 60;
 
 /// Where the record is served to this computer's apps: loopback, any free
-/// port, which the bare command prints (DESIGN §3; the u3-2 row). A port
-/// an app finds without being told waits for an app that needs one.
+/// port, which the bare command prints (DESIGN §3; the u3-2 row) and the
+/// node writes to `<data dir>/api` (`svrngs_node::api::API_FILE`, u5-1),
+/// where an app svrngs did not start finds it.
 pub const API: SocketAddr = SocketAddr::new(std::net::IpAddr::V4(Ipv4Addr::LOCALHOST), 0);
 
 /// How long `new` and `link` wait for this computer's address before

@@ -255,15 +255,18 @@ async fn api_alone(dir: &tempfile::TempDir) -> (axum::Router, svrngs_node::iroh:
     )
     .await
     .unwrap();
-    let router = svrngs_node::api::router(svrngs_node::rail::RailApi {
-        rail: std::sync::Arc::new(svrngs_node::RingRail::new(
-            dir.path(),
-            std::sync::Arc::new(signing(1)),
-        )),
-        nudge: std::sync::Arc::new(tokio::sync::Notify::new()),
-        live: Default::default(),
-        transport: std::sync::Arc::new(svrngs_node::iroh::IrohTransport::new(endpoint.clone())),
-    });
+    let router = svrngs_node::api::router(
+        svrngs_node::rail::RailApi {
+            rail: std::sync::Arc::new(svrngs_node::RingRail::new(
+                dir.path(),
+                std::sync::Arc::new(signing(1)),
+            )),
+            nudge: std::sync::Arc::new(tokio::sync::Notify::new()),
+            live: Default::default(),
+            transport: std::sync::Arc::new(svrngs_node::iroh::IrohTransport::new(endpoint.clone())),
+        },
+        axum::Router::new(),
+    );
     (router, endpoint)
 }
 

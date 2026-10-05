@@ -269,6 +269,12 @@ pub struct Offered {
     /// The people the door counts on it now (`door::limit`): a request in
     /// flight, or one within its window.
     pub using: u32,
+    /// The upload its lender declares (u5-1), so an app knows a lend's
+    /// share before the door counts anyone on it. On the wire as
+    /// `upload_bps`, `null` when none is declared, and required on read:
+    /// an answer that leaves it out is not one, never read as none.
+    #[serde(rename = "upload_bps", deserialize_with = "Option::deserialize")]
+    pub upload: Option<Upload>,
 }
 
 /// Why a lend could not be read.

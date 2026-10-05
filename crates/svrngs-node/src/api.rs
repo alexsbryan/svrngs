@@ -2,7 +2,10 @@
 // ported from commonwealth-ai commonwealth/crates/commonwealth-rails/src/api.rs@e1a43bcd2
 //! The loopback routes a shim author touches, and nothing else.
 //!
-//! The ring rail's doors, `/v1/rail/{append,log,live,people}`, in [`crate::rail`].
+//! The ring rail's doors, `/v1/rail/{append,log,live,people}`, in [`crate::rail`];
+//! beside them (svrngs, u5-1) the groups this computer holds and what their
+//! people lend, `/v1/{groups,lends}`, in [`crate::surface`]. The address it
+//! is served on is written to [`API_FILE`] in the data dir.
 //! (svrngs: the mesh, media, publish, origin, membership, store and ledger
 //! doors beside them stay behind; DESIGN §8, U3's inventory.)
 //!
@@ -30,10 +33,33 @@ pub enum ApiError {
     NotLoopback(SocketAddr),
     #[error("cannot listen on {0}: {1}")]
     Listen(SocketAddr, std::io::Error),
+    #[error("cannot write where the API listens to {0}: {1}")]
+    AddressFile(std::path::PathBuf, std::io::Error),
 }
 
-/// The routes this API serves.
-pub fn router(api: RailApi) -> Router {
+/// The file in the data dir naming where the API listens, as a URL and a
+/// newline (`http://127.0.0.1:<port>`), so an app the node did not start
+/// finds it (u5-1; the API binds any free port, `svrngs::cli::API`).
+/// Written at each start; a node that has stopped leaves it naming a port
+/// that refuses, which is what an app asking it then hears.
+pub const API_FILE: &str = "api";
+
+/// Write `addr` to [`API_FILE`] in `data_dir`, through a file renamed into
+/// place, so an app never reads half an address.
+pub fn write_address(data_dir: &std::path::Path, addr: SocketAddr) -> Result<(), ApiError> {
+    let path = data_dir.join(API_FILE);
+    let partial = data_dir.join(format!(".{API_FILE}.partial"));
+    std::fs::write(&partial, format!("http://{addr}\n"))
+        .and_then(|()| std::fs::rename(&partial, &path))
+        .map_err(|e| ApiError::AddressFile(path.clone(), e))?;
+    tracing::debug!(target: "rails", path = %path.display(), %addr, "api: wrote where it listens, for apps it did not start");
+    Ok(())
+}
+
+/// The routes this API serves: the rail's, and `apps` — the routes an app
+/// asks beside the record ([`crate::surface::router`]) — all behind the
+/// one loopback check.
+pub fn router(api: RailApi, apps: Router) -> Router {
     Router::new()
         // The ring rail's doors (FIVE_PROGRAMS fp-44): durable append and
         // the log, and the live lane's local buffer half. The bodies mirror
@@ -48,6 +74,7 @@ pub fn router(api: RailApi) -> Router {
         // (DESIGN §3), so an app needs no second source.
         .route("/v1/rail/people", get(crate::rail::people))
         .with_state(api)
+        .merge(apps)
         // svrngs: every request's caller is asked too, so a listener that
         // ever served beyond loopback would still answer no one else.
         .layer(axum::middleware::from_fn(from_this_computer))
@@ -145,11 +172,10 @@ pub async fn bind(listen: SocketAddr) -> Result<Bound, ApiError> {
     Ok(Bound { listener, addr })
 }
 
-/// Serve on what [`bind`] bound.
-pub fn serve(api: RailApi, bound: Bound) -> Serving {
+/// Serve `router` ([`router`]'s) on what [`bind`] bound.
+pub fn serve(router: Router, bound: Bound) -> Serving {
     let Bound { listener, addr } = bound;
     tracing::info!(target: "rails", %addr, "api: serving the record to this computer's apps");
-    let router = router(api);
     let task = tokio::spawn(async move {
         let served = router.into_make_service_with_connect_info::<SocketAddr>();
         if let Err(e) = axum::serve(listener, served).await {

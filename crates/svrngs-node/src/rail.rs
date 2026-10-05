@@ -99,7 +99,7 @@ fn retire(retired: &Result<Compaction, RailError>) -> serde_json::Value {
     }
 }
 
-fn namespace_of(q: &RailQuery) -> Result<String, Response> {
+pub(crate) fn namespace_of(q: &RailQuery) -> Result<String, Response> {
     q.namespace.clone().ok_or_else(|| {
         err(
             StatusCode::BAD_REQUEST,
@@ -125,7 +125,10 @@ fn group_of(rail: &RingRail, namespace: &str) -> Result<(), Response> {
 
 /// The people standing in `namespace`, or the refusal [`group_of`] makes
 /// of a namespace that is not one, a group not held, or one with no seed.
-fn standing_of(rail: &RingRail, namespace: &str) -> Result<BTreeMap<String, Member>, Response> {
+pub(crate) fn standing_of(
+    rail: &RingRail,
+    namespace: &str,
+) -> Result<BTreeMap<String, Member>, Response> {
     if !crate::valid_namespace(namespace) {
         tracing::debug!(target: "rails", namespace, "rail: refused a namespace that is not one");
         return Err((

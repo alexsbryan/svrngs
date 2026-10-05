@@ -1,0 +1,269 @@
+//! What an app asks beside the record (DESIGN §3; the u5-1 row): the groups
+//! this computer holds, and what a group's people lend, on the record's
+//! loopback listener, whose address the node writes to its data dir.
+//! Alex founds a group and lets Sam in; both lend. Two nodes in one
+//! process, no relay, each listening on 127.0.0.1 alone (#33's fix:
+//! ralph/REVIEW_FINDINGS.md), Sam reached by seeded addresses.
+
+#![allow(clippy::disallowed_methods, clippy::disallowed_types)]
+mod common;
+use common::loopback_sockets;
+
+use std::net::SocketAddr;
+use std::time::Duration;
+
+use svrngs_node::iroh::RelayConfig;
+use svrngs_node::lend;
+use svrngs_node::node::Node;
+use svrngs_node::seed::Seed;
+use svrngs_node::{actor_of, Name, Person, RailAct, SigningKey};
+
+fn signing(seed: u8) -> SigningKey {
+    SigningKey::from_bytes(&[seed; 32])
+}
+
+/// The seed a group's directory keeps, as the command keeps it
+/// (`svrngs::group::seed_text`): `seed.json`.
+fn seed_file(dir: &std::path::Path) -> Result<Option<String>, String> {
+    match std::fs::read_to_string(dir.join("seed.json")) {
+        Ok(t) => Ok(Some(t)),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+async fn start(seed: u8, dir: &std::path::Path) -> Node {
+    Node::start(
+        dir.to_path_buf(),
+        signing(seed),
+        &RelayConfig::from_parts(Vec::new(), Some("none"))
+            .unwrap()
+            .on_loopback_only(),
+        seed_file,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("a node starts")
+}
+
+/// `dir`'s computer lends `name` on `port`, declaring `upload_bps` or none.
+fn lends(dir: &std::path::Path, name: &str, port: u16, upload_bps: Option<u64>) {
+    let at = lend::lends_dir(dir);
+    std::fs::create_dir_all(&at).unwrap();
+    let mut body = serde_json::json!({ "port": port, "kind": "media", "limit": 3 });
+    if let Some(bps) = upload_bps {
+        body["upload_bps"] = bps.into();
+    }
+    std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+}
+
+/// Alex's group "house" and Sam in it, each computer holding its seed, and
+/// Alex knowing where Sam listens.
+struct House {
+    alex: Node,
+    sam: Option<Node>,
+    id: String,
+    alex_dir: tempfile::TempDir,
+    sam_dir: tempfile::TempDir,
+}
+
+impl House {
+    async fn new() -> Self {
+        let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+        let alex = start(1, alex_dir.path()).await;
+        let sam = start(2, sam_dir.path()).await;
+        let seed = Seed::from_parts(
+            Name::parse("house").unwrap(),
+            Name::parse("alex").unwrap(),
+            signing(1).verifying_key(),
+            [7; 16],
+        );
+        let id = seed.id();
+        for node in [&alex, &sam] {
+            node.rail().set_seed(&id, &seed.roster()).unwrap();
+            let dir = node.rail().group_dir(&id).unwrap();
+            std::fs::write(dir.join("seed.json"), seed.to_text()).unwrap();
+        }
+        let admit = svrngs_core::tests_support::Fixture {
+            act: RailAct::Admit {
+                person: Person::parse("sam").unwrap(),
+                key: actor_of(&signing(2)),
+                invite: None,
+            },
+            on_behalf_of: None,
+        };
+        alex.rail().commit(&id, &admit).unwrap().unwrap();
+        alex.transport()
+            .add_known_peer(sam.endpoint().id(), loopback_sockets(sam.endpoint()));
+        House {
+            alex,
+            sam: Some(sam),
+            id,
+            alex_dir,
+            sam_dir,
+        }
+    }
+
+    /// An app on Alex's computer asks `path`: its status and body.
+    async fn ask(&self, path: &str) -> (u16, serde_json::Value) {
+        let http = reqwest::Client::builder().no_proxy().build().unwrap();
+        let answer = tokio::time::timeout(
+            Duration::from_secs(30),
+            http.get(format!("http://{}{path}", self.alex.api_addr()))
+                .send(),
+        )
+        .await
+        .expect("the ask finishes")
+        .unwrap();
+        (answer.status().as_u16(), answer.json().await.unwrap())
+    }
+
+    async fn lends(&self) -> serde_json::Value {
+        let (status, body) = self.ask(&format!("/v1/lends?namespace={}", self.id)).await;
+        assert_eq!(status, 200, "{body:#}");
+        body
+    }
+
+    async fn close(self) {
+        if let Some(sam) = self.sam {
+            sam.endpoint().close().await;
+        }
+        self.alex.endpoint().close().await;
+    }
+}
+
+/// A lend as listed: `(person, key, name, kind, limit, using, upload_bps)`.
+type Listed = (String, String, String, String, u64, u64, Option<u64>);
+
+/// Each lend listed, as [`Listed`].
+fn listed(body: &serde_json::Value) -> Vec<Listed> {
+    body["lent"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|l| {
+            (
+                l["person"].as_str().unwrap().to_string(),
+                l["key"].as_str().unwrap().to_string(),
+                l["name"].as_str().unwrap().to_string(),
+                l["kind"].as_str().unwrap().to_string(),
+                l["limit"].as_u64().unwrap(),
+                l["using"].as_u64().unwrap(),
+                l["upload_bps"].as_u64(),
+            )
+        })
+        .collect()
+}
+
+/// **An app asks what the group's people lend** (the u5-1 row): Alex's
+/// `/v1/lends` lists Sam's lend with Sam's person and key and the upload
+/// Sam declares, and Alex's own, its upload `null` since Alex declares
+/// none; then, Sam's computer gone, Sam is named as not answering and
+/// Sam's lend is not listed. Planted: this computer's own lend left out
+/// (Alex's missing); the last answer kept for a computer that does not
+/// answer (Sam's lend listed stale).
+#[tokio::test]
+async fn an_app_asks_what_the_group_s_people_lend_its_own_included_and_none_stale() {
+    let house = House::new().await;
+    lends(house.alex_dir.path(), "telly", 8096, None);
+    lends(house.sam_dir.path(), "films", 8097, Some(30_000_000));
+    let (alex, sam) = (actor_of(&signing(1)), actor_of(&signing(2)));
+    let entry = |person: &str, key: &str, name: &str, upload| {
+        (
+            person.to_string(),
+            key.to_string(),
+            name.to_string(),
+            "media".to_string(),
+            3,
+            0,
+            upload,
+        )
+    };
+
+    let body = house.lends().await;
+    assert_eq!(
+        listed(&body),
+        vec![
+            entry("alex", &alex, "telly", None),
+            entry("sam", &sam, "films", Some(30_000_000)),
+        ],
+        "{body:#}"
+    );
+    assert!(
+        body["lent"][0]
+            .as_object()
+            .unwrap()
+            .contains_key("upload_bps"),
+        "an upload none declared is said, null, not left out: {body:#}"
+    );
+    assert_eq!(body["unanswered"], serde_json::json!([]), "{body:#}");
+
+    let mut house = house;
+    let gone = house.sam.take().unwrap();
+    gone.endpoint().close().await;
+    drop(gone);
+    let body = house.lends().await;
+    assert_eq!(
+        listed(&body),
+        vec![entry("alex", &alex, "telly", None)],
+        "Sam's lend is not listed once Sam's computer is gone: {body:#}"
+    );
+    assert_eq!(body["unanswered"], serde_json::json!(["sam"]), "{body:#}");
+    house.close().await;
+}
+
+/// **An app asks which groups this computer holds, and finds the API by
+/// itself** (the u5-1 row): `/v1/groups` answers the group's id, its name
+/// and Alex as this computer's person; the data dir's `api` file names the
+/// address the app asked at. Planted: the file not written.
+#[tokio::test]
+async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
+    let house = House::new().await;
+    let written = std::fs::read_to_string(house.alex_dir.path().join(svrngs_node::api::API_FILE))
+        .expect("the node writes where its API listens");
+    assert_eq!(written, format!("http://{}\n", house.alex.api_addr()));
+
+    let (status, body) = house.ask(svrngs_node::surface::GROUPS_ROUTE).await;
+    assert_eq!(status, 200, "{body:#}");
+    assert_eq!(
+        body,
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "person": "alex" }] }),
+    );
+    house.close().await;
+}
+
+/// **A caller off loopback is refused on both** (the u5-1 row): the new
+/// routes stand behind the record API's one check, asked of the routes the
+/// node serves, so a caller at a network address is refused 403
+/// `not_loopback` and one on loopback is answered. Planted: the routes
+/// merged after the check, so it does not cover them.
+#[tokio::test]
+async fn a_caller_off_loopback_is_refused_the_groups_and_the_lends() {
+    use tower::ServiceExt;
+    let house = House::new().await;
+    for path in [
+        svrngs_node::surface::GROUPS_ROUTE.to_string(),
+        format!("/v1/lends?namespace={}", house.id),
+    ] {
+        for (caller, want) in [("192.168.1.5:50000", 403), ("127.0.0.1:50000", 200)] {
+            let mut request = axum::http::Request::get(&path)
+                .body(axum::body::Body::empty())
+                .unwrap();
+            let caller: SocketAddr = caller.parse().unwrap();
+            request
+                .extensions_mut()
+                .insert(axum::extract::ConnectInfo(caller));
+            let answer = house.alex.api_routes().oneshot(request).await.unwrap();
+            let status = answer.status().as_u16();
+            let body = axum::body::to_bytes(answer.into_body(), usize::MAX)
+                .await
+                .unwrap();
+            let body: serde_json::Value = serde_json::from_slice(&body).unwrap();
+            assert_eq!(status, want, "{path} from {caller}: {body}");
+            if want == 403 {
+                assert_eq!(body["kind"], "not_loopback", "{path}");
+            }
+        }
+    }
+    house.close().await;
+}

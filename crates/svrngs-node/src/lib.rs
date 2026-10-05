@@ -69,6 +69,10 @@ pub mod redeem;
 pub mod api;
 pub mod live;
 pub mod rail;
+// What an app asks beside the record, u5-1's (docs/DESIGN.md §3): the
+// groups this computer holds, and what their people lend, on the same
+// loopback listener.
+pub mod surface;
 
 // The member door, U3's (docs/DESIGN.md §8, U3's inventory): the route that
 // carries a member's request to a lend's service, the lend's declaration,

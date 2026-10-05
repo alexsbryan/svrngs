@@ -110,34 +110,32 @@ paths it refuses, how many people may use it at once.
 
 An app that needs anything else is a decision, not a convenience.
 
+**What an app asks of its own computer** (u5-1), on the loopback API whose
+address the node writes to `<data dir>/api` at each start
+(`crates/svrngs-node/src/api.rs`, `API_FILE`), so an app it did not start
+finds it: `GET /v1/groups` answers each group this computer holds — its id,
+the `namespace` every route names, its name, and this computer's person in
+it, `null` when its seed or its standing cannot be shown — and `GET
+/v1/lends?namespace=<id>` what that group's people lend now, this
+computer's own among them, each with its lender's person and key, its name,
+kind, limit, how many use it and the upload its lender declares
+(`upload_bps`, `null` when none), and the people whose computer did not
+answer, named, their lends absent rather than stale
+(`crates/svrngs-node/src/surface.rs`). Both are asked now, nothing kept;
+where to open a lend is u5-2's, which adds each lend's origin.
+
 **What an app cannot yet ask**, each with the U5 row that adds it (the
 seat's survey, `ralph/next/u5/UPSTREAM.md` §(c), every line read again at
 u5-0):
-- *Which groups this computer holds, and its person in each* (u5-1, `GET
-  /v1/groups`, and the record API's address written to a file in the data
-  dir). The API binds any free port, which only the bare command prints
-  (`crates/svrngs/src/cli.rs:111-114`); every route asks `?namespace=`
-  (`crates/svrngs-node/src/rail.rs:102-109`), no route lists the groups, the
-  bare command prints their names, not their ids (`cli.rs:547-548`), and
-  `/v1/rail/people` marks no one as this computer's (`rail.rs:384-393`).
-- *What the group's people lend* (u5-1, `GET /v1/lends`). The bullet above
-  promises it, but the record API serves append, log, live and people alone
-  (`crates/svrngs-node/src/api.rs:36-54`); `Node::lends`
-  (`crates/svrngs-node/src/node.rs:274-277`) is asked once, when the bare
-  command starts, and printed (`cli.rs:554-571`, `:697`). A lend's entry
-  carries no declared upload (`crates/svrngs-node/src/lend.rs:265-272`), so
-  a share is learned only from the door's answer, after it has counted the
-  asker for 30 s (`door/limit.rs:38`); and this computer's own lends are
-  left out (`node.rs:453-455`).
-- *The lender's own lend* (u5-1 lists it; u5-2 serves it through this
-  computer's door's rules, its secret injected and its limit counted, one
-  body with the door). It is skipped as above, and its secret lives only in
-  the door's store.
+- *The lender's own lend, opened* (u5-1 lists it; u5-2 serves it through
+  this computer's door's rules, its secret injected and its limit counted,
+  one body with the door). Its secret lives only in the door's store, and
+  nothing on loopback carries it to the lend.
 - *A lend at an origin apart from the person's key* (u5-2, calls 1 and 6
   below). On a phone every lend is under the page's scope
   (`web/sw.js:73-74`), the origin that holds the key (§11, risk 5); on a
   computer a lender's lends share the loopback port of the bridge to that
-  lender (`node.rs:510`; `crates/svrngs-node/src/iroh.rs:212-265`).
+  lender (`node.rs:532`; `crates/svrngs-node/src/iroh.rs:212-265`).
 - *A live socket* (u5-2). The door strips `Upgrade` as hop-by-hop
   (`crates/svrngs-node/src/door.rs:120-129`), so Jellyfin's `/socket`
   answered 404 through it and 101 on the lender's computer
@@ -149,12 +147,12 @@ u5-0):
   each lend at an origin of its own, a lent page reads both from its own.
 - *A secret kept out of response bodies* (u5-3 (c) measures; under sign in
   once, call 4, the lend carries none). The door drops a response header
-  holding the lend's secret (`door.rs:437-458`) and reads no body; e0-bot's
+  holding the lend's secret (`door.rs:438-459`) and reads no body; e0-bot's
   design held that Jellyfin writes its token into playback info and HLS
   playlists (`e0-bot:docs/DESIGN.md:583-586`), and only direct play was
   scanned (`demo/runs/a/dry-2026-10-04/README.md:81-88`).
 - *A device per person* (u5-3 (a) and (d)). A lend's secret displaces the
-  client's whole `authorization` (`door.rs:113-119`, `:385-411`), and with
+  client's whole `authorization` (`door.rs:113-119`, `:386-412`), and with
   it the client's device: Jellyfin 12 reads its credential from that header
   alone (commonwealth-ai `.canon/sources/notes/invariant/35104a7e.md:3`),
   so through a lend with a secret every person is the lend's one device. A
@@ -162,7 +160,7 @@ u5-0):
 
 Three more the survey found were Films', and no U5 row adds them: a queue
 for "you're next" (nothing queues, §8, U3's inventory); a live payload's
-sender, which a drain does not name (`rail.rs:589-602`; §9); and a phone's
+sender, which a drain does not name (`rail.rs:592-605`; §9); and a phone's
 own writes, which reach the record through an app naming the person in
 `on_behalf_of` (§8, U3's inventory).
 
@@ -544,7 +542,7 @@ who fixes it:
   neither repository), so whether Bo seeking leaves Cy's play alone is
   u5-3's to measure, never assumed.
 - *Too many at once* — the door refuses past the lend's limit with its
-  reason in a person's words and the figures (`door.rs:570-584`); nothing
+  reason in a person's words and the figures (`door.rs:571-585`); nothing
   turns it into a choice of another lender.
 - *The same room* — one stream to the TV, however many phones hold the remote.
 
@@ -700,7 +698,7 @@ handshake with a synchronous call (`iroh-1.0.2/src/tls/resolver.rs:92-95`),
 where `crypto.subtle.sign` is asynchronous. The issuer refuses a redeemer whose
 dialling key is not the new key (`crates/svrngs-node/src/redeem.rs:383-387`,
 `NotTheDialer`), and the member protocol admits only standing keys
-(`crates/svrngs-node/src/node.rs:440-459`), so the endpoint key is the
+(`crates/svrngs-node/src/node.rs:648-667`), so the endpoint key is the
 person's key and exists as bytes in the page. Sealed, storage holds only
 ciphertext; code running on the page can still use the key, which is why a
 group trusts its origin with that code (§11, risk 5). This is read from
@@ -749,9 +747,9 @@ stock web app measured through one; what an app cannot yet ask of svrngs is
 | `mesh_media/viewer.rs:304-463` (`provision`, 323 lines without its tests), with `:143-196` and `:216-296` | finds or makes one Jellyfin user, sets its password, writes its policy over the origin's own — `POST /Users/{id}/Policy` replaces rather than patches, and needs `AuthenticationProviderId` and `PasswordResetProviderId` (`:21-27`, `:143-175`) — reads the policy back (`:177-196`), signs in by `AuthenticateByName` (`:443`) and keeps `MediaBrowser Token="…"` (`:461`); a token already held is proved by one `GET /Users/Me` (`:216-296`). An `/Auth/Keys` key is admin-equivalent (`:6-12`); a non-admin sets no password (403, `:205-208`) | zero sign-in's shape (§3, call 4): a Jellyfin user per person, made by the lender's computer with a key the lender gives once. If u5-3 decides zero sign-in, forked into `apps/jellyfin/`, behaviour kept first, then a user per person in place of one viewer; never into the infra (call 3). Else it stays behind |
 | `docs/RING_APP_LIBRARY.md:802-816` | three ways a lent service keeps its users, cheapest first: the app reads the member header; the lender's credential injected, one shared viewer; an account per member, made on `Admit` and disabled on `Remove`. Mapping the member header onto an app's trusted proxy header is "From memory — verify per app" (`:810-811`) | the first is §1's "an app that takes the signed-in person from a request header", which u5-catalogue-dry's census checks per app against each app's own docs; the second is what U3's dry run broke on; the third is zero sign-in |
 | tag `e0-bot`, `docs/DESIGN.md:580-587` and `:878` | the door masked the secret in response bodies because "Jellyfin writes its token into playback info and into the HLS playlists' subtitle, trickplay and variant URLs"; a lend refused `/Sessions/Logout`, "which would sign the whole group out"; `Remote-User` and per-person accounts waited for "a named service that needs them" | not forked. The body claim was never measured: u5-3 (c) asks whether any byte a person receives carries a secret the lend holds, the transcode included. Jellyfin is now the named service |
-| `.canon/sources/notes/invariant/35104a7e.md:3-9`; `scripts/cw-media-demo.sh:31-40`, `:54-56` | Jellyfin 12.0.0 takes its credential only from `Authorization: MediaBrowser … Token="…"`: `X-Emby-Token`, `X-MediaBrowser-Token` and `?api_key=` each answer 401, and the inner space and quotes are load-bearing | a fact `apps/jellyfin/` and u5-3 build on: a lend's secret displaces the client's whole `authorization` (`crates/svrngs-node/src/door.rs:113-119`, `:385-411`), the client's device with it. Nothing forked |
+| `.canon/sources/notes/invariant/35104a7e.md:3-9`; `scripts/cw-media-demo.sh:31-40`, `:54-56` | Jellyfin 12.0.0 takes its credential only from `Authorization: MediaBrowser … Token="…"`: `X-Emby-Token`, `X-MediaBrowser-Token` and `?api_key=` each answer 401, and the inner space and quotes are load-bearing | a fact `apps/jellyfin/` and u5-3 build on: a lend's secret displaces the client's whole `authorization` (`crates/svrngs-node/src/door.rs:113-119`, `:386-412`), the client's device with it. Nothing forked |
 | `mesh_media/offer.rs:94-97` (`WELL_KNOWN_ORIGINS`) | 8096, then 8920 | forked already (U3): `crates/svrngs/src/well_known.txt`, 8096 alone, so `svrngs share 8096` names Jellyfin |
-| `commonwealth/crates/commonwealth-media/src/reach.rs:94-95` | refuses a member's own node: "its {} is already local" | left behind: u5-1 lists this computer's own lends, where `Node::lends` skips them (`crates/svrngs-node/src/node.rs:453-455`), and u5-2 serves them through this computer's door's rules |
+| `commonwealth/crates/commonwealth-media/src/reach.rs:94-95` | refuses a member's own node: "its {} is already local" | left behind: u5-1 lists this computer's own lends, where `Node::lends` skips them (`crates/svrngs-node/src/node.rs:475-477`), and u5-2 serves them through this computer's door's rules |
 | `quality/campaigns/ring-apps-shelf.md:187` | Jellyfin is GPL-2.0-only: "API interop at arm's length only" | held: svrngs talks to Jellyfin over HTTP and its API and copies none of its code |
 | svrngs `demo/runs/a/dry-2026-10-04/` (`dry.sh`, `drive.mjs`, `README.md`) | Jellyfin 12.0.0 through the door on one computer, the macOS app's server with data dirs of its own: the wizard over the API (`dry.sh:60-76`) and the lend's secret minted (`:88-95`); opened with nothing typed, a sign-in (`README.md:35-37`); a member's sign-in logs the lend's token out for everyone, the door's header carrying the lend's one `DeviceId` (`:39-50`); with a placeholder sign-in written into the page's local storage (`drive.mjs:41-47`), it plays in 1,137 ms and each seek plays again within 123 ms (`README.md:52-61`); an API key ruled out (`:63-67`); `/socket` 404 through the door, 101 direct (`:69-73`); no secret in a received byte but the token Jellyfin handed the browser signing in (`:81-88`); three at once and a transcode not measured (`:90-93`) | u5-3's base: its scratch Jellyfin is `dry.sh`'s, and what the run found is what u5-3 measures and u5-4 solves (call 2). The placeholder sign-in stays a driver's trick: no person can write it |
 | svrn-docs `rings/runs/strm-2026-10-05/` (its commit `457f120`) | the group-folder experiment's first run: Jellyfin 12.1.0 over two `.strm` stubs; every browser played the holder's MP4 from the stub's URL; WebKit, alone and as an iPhone, remuxed the MKV through Jellyfin's own HLS, reading the whole file unpaced; FAIL on its pre-registered byte-share bar (93.0% and 85.8%) | §9's group folders, after U5; no U5 row builds on it |
