@@ -364,19 +364,10 @@ impl Host {
                     continue;
                 }
             };
-            for (actor, Member { person, device }) in &standing {
-                if *actor == self.actor || keys.contains_key(actor) {
+            for (actor, person, key) in dialled(&self.actor, namespace, &standing) {
+                if keys.contains_key(actor) {
                     continue;
                 }
-                if !device.dialled() {
-                    tracing::debug!(target: "node", namespace, actor, ?device,
-                        "node: a member stands in the group from a browser, which dials and is never dialled");
-                    continue;
-                }
-                let Some(key) = actor_key(actor) else {
-                    tracing::warn!(target: "node", namespace, actor, "node: a standing key is not an iroh key, so it is not dialled");
-                    continue;
-                };
                 let name = format!("{person}/{}", &actor[..8]);
                 tracing::debug!(target: "node", namespace, member = %name, "node: a member stands in the group, to dial");
                 keys.insert(actor.clone(), (person.clone(), key));
@@ -388,6 +379,35 @@ impl Host {
                 .collect(),
         )
     }
+}
+
+/// The keys standing in `namespace` that this node, `this`, dials: each a
+/// computer's ([`crate::Device::dialled`], u4-1) and an iroh key, with its
+/// person. The one decider the round, [`Node::lends`] and the live fan-out
+/// (`rail.rs`'s `live_peers`) ask, so a browser's key is skipped by all
+/// three or by none.
+pub(crate) fn dialled<'a>(
+    this: &str,
+    namespace: &str,
+    standing: &'a BTreeMap<String, Member>,
+) -> Vec<(&'a String, &'a Person, PublicKey)> {
+    let mut out = Vec::new();
+    for (actor, Member { person, device }) in standing {
+        if actor == this {
+            continue;
+        }
+        if !device.dialled() {
+            tracing::debug!(target: "node", namespace, actor, ?device,
+                "node: a member stands in the group from a browser, which dials and is never dialled");
+            continue;
+        }
+        let Some(key) = actor_key(actor) else {
+            tracing::warn!(target: "node", namespace, actor, "node: a standing key is not an iroh key, so it is not dialled");
+            continue;
+        };
+        out.push((actor, person, key));
+    }
+    out
 }
 
 /// Ask the computer `key` what it lends: each lend with the address that

@@ -51,8 +51,9 @@ use axum::Json;
 use serde::Deserialize;
 
 // rail.rs's refusal body came over with the sync route (u1-3), so there is one.
-use crate::iroh::{actor_key, Contact, IrohTransport};
+use crate::iroh::{Contact, IrohTransport};
 use crate::live::{push_ephemeral, LivePeer};
+use crate::node::dialled;
 use crate::register::{Member, Standing};
 use crate::ring_routes::err;
 use crate::{Compaction, Ed25519Verifier, Membership, Person, RailAct, RailError, RingRail};
@@ -563,23 +564,12 @@ async fn push_answer(api: &RailApi, namespace: &str, body: axum::body::Bytes) ->
 
 /// The peers a live payload in `namespace` is offered to: every key
 /// standing in it but `this` node's, each by its key alone, named by its
-/// person. A standing key that is not an iroh key is not dialled, nor a
-/// browser's (u4-1, [`crate::Device::dialled`]), and the trace says so.
+/// person: the keys the round dials ([`crate::node::dialled`]), so neither
+/// a browser's key (u4-1) nor one that is not an iroh key is offered it.
 /// New (u3-3): upstream walked the mesh's Online members.
 fn live_peers(this: &str, namespace: &str, standing: &BTreeMap<String, Member>) -> Vec<LivePeer> {
     let mut peers = Vec::new();
-    for (actor, Member { person, device }) in standing {
-        if actor == this {
-            continue;
-        }
-        if !device.dialled() {
-            tracing::debug!(target: "rails", namespace, actor, ?device, "rail live: a person stands in the group from a browser, which is never dialled, so it is not offered the payload");
-            continue;
-        }
-        let Some(key) = actor_key(actor) else {
-            tracing::warn!(target: "rails", namespace, actor, "rail live: a standing key is not an iroh key, so it is not offered the payload");
-            continue;
-        };
+    for (actor, person, key) in dialled(this, namespace, standing) {
         tracing::debug!(target: "rails", namespace, actor, %person, "rail live: a person stands in the group, to offer the payload");
         peers.push(LivePeer {
             node: actor.clone(),
