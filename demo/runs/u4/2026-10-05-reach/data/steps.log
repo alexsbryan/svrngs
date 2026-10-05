@@ -1,0 +1,24 @@
+20:10:53 dry.sh: passes local, engines chromium webkit, 3 runs each
+20:11:11 the page: version eb2cb14954ee; 5135581 bytes raw, 1739914 gzip, 1213551 brotli
+20:11:48 the film: 45259124 bytes, 120 s, 1280x720
+20:11:49 lent on 127.0.0.1:60993; the page at http://127.0.0.1:60994/
+20:11:54 local: Sam's computer up, through the relay on 127.0.0.1
+20:11:59 local chromium 1: origin 5335290 bytes, name 570 ms, list 838 ms, again 386 ms, lend 360 ms, frame 6 ms, seeks [416, 360, 338, 324, 322]
+20:12:05 local chromium 2: origin 5335290 bytes, name 577 ms, list 833 ms, again 387 ms, lend 319 ms, frame 5 ms, seeks [429, 373, 342, 332, 375]
+20:12:10 local chromium 3: origin 5335290 bytes, name 582 ms, list 837 ms, again 388 ms, lend 426 ms, frame 23 ms, seeks [432, 406, 356, 390, 368]
+20:12:16 local webkit 1: origin 5335290 bytes, name 344 ms, list 857 ms, again 477 ms, lend 451 ms, frame 84 ms, seeks [310, 269, 327, 263, 289]
+20:12:22 local webkit 2: origin 5335290 bytes, name 325 ms, list 837 ms, again 461 ms, lend 435 ms, frame 92 ms, seeks [350, 260, 696, 277, 258]
+20:12:29 local webkit 3: origin 5335290 bytes, name 333 ms, list 850 ms, again 463 ms, lend 426 ms, frame 88 ms, seeks [806, 261, 705, 316, 364]
+20:12:29 done: demo/runs/u4/2026-10-05-reach/data
+20:12:34 dry.sh: passes public, engines chromium webkit, 3 runs each
+20:12:51 the page: version eb2cb14954ee; 5135581 bytes raw, 1739914 gzip, 1213551 brotli
+20:13:25 the film: 45240324 bytes, 120 s, 1280x720
+20:13:25 lent on 127.0.0.1:61435; the page at http://127.0.0.1:61436/
+20:13:27 public: If film takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): 
+20:13:44 public chromium 1: origin 5403119 bytes, name 2528 ms, list 2347 ms, again 1394 ms, lend 2066 ms, frame 32 ms, seeks [462, 821, 1816, 1985, 1672]
+20:14:00 public chromium 2: origin 5403119 bytes, name 2260 ms, list 2332 ms, again 1384 ms, lend 2315 ms, frame 53 ms, seeks [549, 883, 1806, 1997, 1700]
+20:14:16 public chromium 3: origin 5403119 bytes, name 2332 ms, list 2855 ms, again 1384 ms, lend 1605 ms, frame 25 ms, seeks [604, 615, 1582, 1987, 1697]
+20:14:34 public webkit 1: origin 5403119 bytes, name 2412 ms, list 2864 ms, again 1454 ms, lend 2102 ms, frame 133 ms, seeks [543, 1876, 1923, 264, 2430]
+20:14:54 public webkit 2: origin 5403119 bytes, name 2735 ms, list 2863 ms, again 1458 ms, lend 1976 ms, frame 125 ms, seeks [1255, 3358, 2244, 274, 2213]
+20:15:11 public webkit 3: origin 5403119 bytes, name 2314 ms, list 3378 ms, again 1430 ms, lend 2044 ms, frame 120 ms, seeks [741, 1468, 1897, 282, 2124]
+20:15:11 done: demo/runs/u4/2026-10-05-reach/data

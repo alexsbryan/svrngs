@@ -35,11 +35,17 @@ def first_seek(r):
     return seeks[0]["t"] - first["t"] if seeks and "t" in seeks[0] and "t" in first else None
 
 
+PART = 2 * 1024 * 1024  # web/sw.js PART, read here, decided there
+
+
 def parts(log):
     """What the lent service answered in a pass (lend.mjs's lines): each
-    range the worker asked as a 2 MiB part (u4-9, web/sw.js PART), the ones
-    sent whole and their milliseconds, and the longest any answer ran."""
-    whole, longest = [], 0
+    range the worker asked as a 2 MiB part (u4-9), the ones sent whole and
+    their milliseconds, the longest any answer ran, and — since the service
+    hands a part to the door in milliseconds, whatever the relay — what a
+    part cost end to end: from its asking to the asking of the part that
+    starts where it ends, among the next three answers."""
+    rows, whole, longest = [], [], 0
     for l in open(log):
         f = l.split()
         if len(f) != 7 or not f[6].endswith("ms"):
@@ -48,9 +54,16 @@ def parts(log):
         longest = max(longest, took)
         a, _, b = f[3].removeprefix("bytes=").partition("-")
         sent, of = f[5].split("/")
-        if a and b and int(b) - int(a) + 1 == 2 * 1024 * 1024 and sent == of:
+        if a and b and int(b) - int(a) + 1 == PART and sent == of:
             whole.append(took)
-    return whole, longest
+            rows.append((int(f[0]), int(a), int(b)))
+        elif a and b:
+            rows.append((int(f[0]), int(a), None))
+    nexts = []
+    for i, (t, _, b) in enumerate(rows):
+        after = [t2 - t for t2, a2, _ in rows[i + 1 : i + 4] if b is not None and a2 == b + 1]
+        nexts += after[:1]
+    return whole, longest, nexts
 
 
 def sum_ms(*vs):
@@ -83,14 +96,18 @@ def main():
     for f in sys.argv[2:]:
         log = f.replace("runs-", "lend-").replace(".jsonl", ".log")
         try:
-            whole, longest = parts(log)
+            whole, longest, nexts = parts(log)
         except FileNotFoundError:
             continue
-        if whole:
-            print(f"{log.rsplit('/', 1)[-1]}: {len(whole)} parts of 2 MiB sent whole, median {statistics.median(whole):,.0f} ms"
-                  f"  range {min(whole):,}-{max(whole):,}; the longest answer {longest:,} ms")
-        else:
-            print(f"{log.rsplit('/', 1)[-1]}: no part of 2 MiB; the longest answer {longest:,} ms")
+        name = log.rsplit("/", 1)[-1]
+        if not whole:
+            print(f"{name}: no part of 2 MiB; the longest answer {longest:,} ms")
+            continue
+        print(f"{name}: {len(whole)} parts of 2 MiB sent whole, median {statistics.median(whole):,.0f} ms"
+              f"  range {min(whole):,}-{max(whole):,}; the longest answer {longest:,} ms")
+        if nexts:
+            print(f"  a part asked → the next part asked: n {len(nexts)}  median {statistics.median(nexts):,.0f} ms"
+                  f"  range {min(nexts):,}-{max(nexts):,}")
     groups = {}
     for r in runs:
         groups.setdefault((r.get("pass"), r.get("engine")), []).append(r)

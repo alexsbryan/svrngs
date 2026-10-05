@@ -1,0 +1,81 @@
+The page, what it fetches: 5,135,581 bytes raw, 1,739,914 gzip -9, 1,213,551 brotli 11
+  app.js                            9,141      3,762      3,207
+  index.html                        2,951      1,606      1,235
+  store.js                          5,711      2,355      2,058
+  sw.js                             7,935      3,384      2,925
+  wasm/svrngs_web.d.ts              9,073      2,443      2,138
+  wasm/svrngs_web.js               54,183     10,147      8,715
+  wasm/svrngs_web_bg.wasm       5,055,660  1,718,660  1,195,411
+  wasm/svrngs_web_bg.wasm.d.ts      3,765        674        610
+lend-local.log: 80 parts of 2 MiB sent whole, median 9 ms  range 3-125; the longest answer 125 ms
+  a part asked → the next part asked: n 48  median 132 ms  range 106-300
+lend-public.log: 44 parts of 2 MiB sent whole, median 4 ms  range 1-11; the longest answer 11 ms
+  a part asked → the next part asked: n 3  median 633 ms  range 585-645
+
+local relay, chromium 147.0.7727.15: 3 cold runs
+  origin's bytes, the run    n 3/3  median 5,335,290 bytes  range 5,335,290-5,335,290
+  the wasm, fetches a run    n 3/3  median         1   range 1-1
+  link opened → name asked   n 3/3  median       577 ms  range 570-582
+  link → list, untyped       n 3/3  median     1,410 ms  range 1,408-1,419
+  name typed → list          n 3/3  median       837 ms  range 833-838
+  link again → list          n 3/3  median       387 ms  range 386-388
+  lend opened → <video>      n 3/3  median       360 ms  range 319-426
+  play → first frame         n 3/3  median         6 ms  range 5-23
+  lend opened → first frame  n 3/3  median       366 ms  range 324-449
+  play → plays on            n 3/3  median       266 ms  range 262-269
+  play → first seek asked    n 3/3  median       268 ms  range 264-271
+  seek → seeked              n 15/15  median        84 ms  range 53-163
+  seek → its frame           n 15/15  median        69 ms  range 57-169
+  seek → plays on            n 15/15  median       368 ms  range 322-432
+  seeks not playing on within 5 s: 0
+
+local relay, webkit 26.4: 3 cold runs
+  origin's bytes, the run    n 3/3  median 5,335,290 bytes  range 5,335,290-5,335,290
+  the wasm, fetches a run    n 3/3  median         1   range 1-1
+  link opened → name asked   n 3/3  median       333 ms  range 325-344
+  link → list, untyped       n 3/3  median     1,183 ms  range 1,162-1,201
+  name typed → list          n 3/3  median       850 ms  range 837-857
+  link again → list          n 3/3  median       463 ms  range 461-477
+  lend opened → <video>      n 3/3  median       435 ms  range 426-451
+  play → first frame         n 3/3  median        88 ms  range 84-92
+  lend opened → first frame  n 3/3  median       527 ms  range 514-535
+  play → plays on            n 3/3  median       843 ms  range 835-847
+  play → first seek asked    n 3/3  median       871 ms  range 852-875
+  seek → seeked              n 15/15  median        29 ms  range 8-107
+  seek → its frame           n 15/15  median        44 ms  range 15-156
+  seek → plays on            n 15/15  median       310 ms  range 258-806
+  seeks not playing on within 5 s: 0
+
+public relay, chromium 147.0.7727.15: 3 cold runs
+  origin's bytes, the run    n 3/3  median 5,403,119 bytes  range 5,403,119-5,403,119
+  the wasm, fetches a run    n 3/3  median         1   range 1-1
+  link opened → name asked   n 3/3  median     2,332 ms  range 2,260-2,528
+  link → list, untyped       n 3/3  median     4,875 ms  range 4,592-5,187
+  name typed → list          n 3/3  median     2,347 ms  range 2,332-2,855
+  link again → list          n 3/3  median     1,384 ms  range 1,384-1,394
+  lend opened → <video>      n 3/3  median     2,066 ms  range 1,605-2,315
+  play → first frame         n 3/3  median        32 ms  range 25-53
+  lend opened → first frame  n 3/3  median     2,098 ms  range 1,630-2,368
+  play → plays on            n 3/3  median       348 ms  range 311-371
+  play → first seek asked    n 3/3  median       349 ms  range 313-373
+  seek → seeked              n 15/15  median     1,410 ms  range 209-1,722
+  seek → its frame           n 15/15  median     1,404 ms  range 213-1,705
+  seek → plays on            n 15/15  median     1,672 ms  range 462-1,997
+  seeks not playing on within 5 s: 0
+
+public relay, webkit 26.4: 3 cold runs
+  origin's bytes, the run    n 3/3  median 5,403,119 bytes  range 5,403,119-5,403,119
+  the wasm, fetches a run    n 3/3  median         1   range 1-1
+  link opened → name asked   n 3/3  median     2,412 ms  range 2,314-2,735
+  link → list, untyped       n 3/3  median     5,598 ms  range 5,276-5,692
+  name typed → list          n 3/3  median     2,864 ms  range 2,863-3,378
+  link again → list          n 3/3  median     1,454 ms  range 1,430-1,458
+  lend opened → <video>      n 3/3  median     2,044 ms  range 1,976-2,102
+  play → first frame         n 3/3  median       125 ms  range 120-133
+  lend opened → first frame  n 3/3  median     2,164 ms  range 2,101-2,235
+  play → plays on            n 3/3  median       846 ms  range 838-857
+  play → first seek asked    n 3/3  median       848 ms  range 839-858
+  seek → seeked              n 15/15  median     1,354 ms  range 15-2,539
+  seek → its frame           n 15/15  median     1,371 ms  range 18-2,545
+  seek → plays on            n 15/15  median     1,876 ms  range 264-3,358
+  seeks not playing on within 5 s: 0

@@ -1,0 +1,5 @@
+svrngs 0cb236c
+ProductName:		macOS ProductVersion:		26.5.2 BuildVersion:		25F84 
+Apple M2 Max
+v20.20.2
+playwright 1.59.1
