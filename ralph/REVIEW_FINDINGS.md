@@ -928,15 +928,14 @@ which svrngs does not build. The binary used here is
 ~/dev/commonwealth-ai/target/debug/sovereign-cli (built 2026-10-04 23:34),
 as in every earlier audit.
 
-**Every tool run below was against the working tree, which held five
-planted copies on top of 7dc91ac.** The plants are listed under (2). Two
-attempts to remove them were refused by this session's permission layer:
-`git checkout` of the five files, and then writing their diff to a file
-before reverse-applying it. So the clean re-index that earlier audits ran
-after their plants did not run here. The unplanted results under (2) and
-(3) are therefore *derived*: they are the planted report less the clusters
-whose sides are plants. They were not measured on a clean tree. See
-ralph/next/u4/ctl/NEEDS_HUMAN.md.
+The planted runs under (2) were against a working tree holding five
+planted copies on top of 7dc91ac. This session's permission layer refused
+to remove them, so the unplanted results were first *derived*: the planted
+report less the clusters whose sides are plants. On 2026-10-05 the seat
+stashed the five paths (`stash@{0}`, never to be applied). The clean
+re-index, `refresh`, the unscoped 0.9 report and the noun runs were then
+measured at 0127f6e with `git status --short` empty, and they confirm the
+derived results; the one correction is in the table under (2).
 
 ### (1) Net lines per unit, product code
 
@@ -1025,17 +1024,25 @@ Scoped runs at the default 0.95, each scope with a trailing slash (I11):
   present.
 
 The near tier was then run unscoped at 0.9, as REVIEW-audit-u3-auto-2 ran
-it (12 exact groups and 18 near clusters, with plant A in both). A side
+it (12 exact groups and 18 near clusters, with plant A in both). Plants
+removed, re-indexed `--full` (1654 chunks) and refreshed (rust: 7441
+symbols): **11 exact groups and 17 near clusters**, the planted report less
+A's two, over 950 function/method symbols (954 planted). A side
 counts as **added** when `git blame -w -M -C -C HEAD` puts any of its lines
-in 3e6100c..HEAD. Every cluster except A's was blamed. Two have an added
-side:
+in 3e6100c..HEAD. Every cluster except A's was blamed, and the 28 clean ones again at
+0127f6e. Two have an added side:
 
 | cluster (dry-report, 0.9, unscoped) | added | disposition |
 |---|---|---|
 | exact `signed_by_link` joining.rs:61 == :135 | 5 and 3 lines, u4-2 | no change (#43): one line on each of the two request types, `verify_hex(&self.link, &self.message(), &self.sig)`, each asking its own `message` |
-| near register_tests.rs:104–120 ~ :117–141, :138–155 ~ :152–163 (0.901, 0.927) | 2 lines, u4-1's `Device` in the fixtures | no change (#43): tests stating their own cases |
+| near register_tests.rs:104–120 ~ :117–141 (0.901) | 2 lines, :104–105, the closing brace and blank line of u4-1's test above it (3314033) | no change (#43): tests stating their own cases |
 
-The other 26 clusters are blamed wholly before the range. Among them are
+Correction from the clean run: the derived table also listed
+register_tests.rs:138–155 ~ :152–163 (0.927) as added, by u4-1's `Device`
+in the fixtures. `git blame -w -M -C -C -L 104,163 HEAD` gives 55 lines
+6a56575, 3 lines 6af5ae8 and 2 lines 3314033 (:104–105), and no line of
+:104–163 names `Device`. So that cluster is wholly before the range. The
+other 26 clusters are blamed wholly before the range. Among them are
 the trivial `as_str`, `len`, `is_empty`, `try_from` and `fmt` groups, and
 the declared.rs `harden_*` group, which REVIEW-audit-u3-auto-1 (2)
 disposed of. The u4-2 move kept its blame (`-C -C` traces joining.rs and
@@ -1059,6 +1066,9 @@ uncommitted. On the planted tree it gives 93 hits, 4 of them new:
 
 B, with its names changed, is seen by neither this pass nor the near tier.
 The substitute is the only instrument here that sees a copy in web/.
+This pass was not rerun on the clean tree: /tmp/u4audit/ was gone by
+2026-10-05, so its one unplanted new hit (browser/main.rs ~ door/main.rs)
+rests on the planted run.
 
 Reading the range for decisions that neither pass would show:
 
@@ -1090,9 +1100,9 @@ web/src/lib.rs declares none. Results:
 - Eight have one definition each: AskRequest (joining.rs:29), RedeemRequest
   (:68), Device (lib.rs:512), Member (svrngs-runtime register.rs:40, with
   kin `Membership`), Alpn, Format, Token and Link.
-- `Origin` has 2 only because of plant N, which is listed under (2). Its
-  other definition is link.rs:169, which u4-2 moved, so at 7dc91ac it has
-  one (derived; not re-measured, see above).
+- `Origin` has 2 only because of plant N, which is listed under (2). On
+  the clean tree `converge noun Origin` gives definitions (1), link.rs:168
+  (the struct is at :169, I1), as do the other eight again.
 
 No noun added in the range has more than one definition.
 
@@ -1112,12 +1122,12 @@ No noun added in the range has more than one definition.
 | I1 | 7 | `code converge noun` | Still present: `Origin` at link.rs:168 for :169, `AskRequest` at joining.rs:29 for :30. |
 | I4 | 6 | `refresh` | Still present: "typescript: skipped (export failed)". |
 | I5 | 5, 7 | `code dry-report` near tier | Still present and worse. A free-fn copy of a method with two names changed (plant B) is missed down to 0.7. |
-| I10 | 6 | `code dry-report` header | Still present: "954 function/method symbols" in every scope. |
+| I10 | 6 | `code dry-report` header | Still present: "954 function/method symbols" in every scope (950 on the clean tree). |
 | I11 | 6 | `code dry-report --scope` | Still present; every scoped run here used a trailing slash. |
 | I14 | 6, 7 | `code dry-report --scope web/` near tier | New. web/ is a separate cargo workspace with JS beside it, so it has no SCIP symbols. The exact tier says could-not-judge, as it should. The near tier says "0 near-clone clusters" at 0.95 with two identical 134-line Rust bodies (plant C, cosine 0.402) and two identical JS bodies (plant D, ≤0.856) in scope. Its spans are misaligned (`dial` 50–186 overlaps `dial_again` 183–316). A 0 from a tier that cannot see what it scores is a silent pass. For web/, only the substitute pass judges. |
 
-The row's check (LINT, scripts/check.sh) **never ran** for this audit. The
-tree holds the five plants. A run on it would judge the plants, not 7dc91ac,
-and they could not be removed (above). 3c06b23 and 7dc91ac each name the
-tests their plants failed, and those tests passed once the plants were
-restored.
+The row's check (LINT): `scripts/check.sh` at 0127f6e on the clean tree,
+exit 0 in 4:32, every step `passed` (principles pinned, lean and RUST_ARCH,
+app nouns gate, app nouns, rustfmt, clippy, tests, canaries, web rustfmt
+and clippy, browser, app laws). 3c06b23 and 7dc91ac each name the tests
+their plants failed.
