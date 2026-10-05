@@ -393,25 +393,40 @@ workspace of its own with upstream's measured pins (iroh =1.0.2,
 wasm-bindgen =0.2.128, wasm-bindgen-futures =0.4.78, js-sys =0.3.105) and
 lock, and the static shell beside it — `index.html`, `app.js`, `sw.js`.
 Forked from commonwealth-ai's `sovereign/apps/ring-runtime` at `e1a43bcd2`
-with `kernel-types` replaced by svrngs-core, then changed (u4-3):
-`src/lib.rs`'s one export, `dial(key, token, path)`, binds a browser
-endpoint with the person's key, the 32 bytes the page's store holds
-(IndexedDB `svrngs`, store `person`, entry `key`; making and sealing it is
-u4-5's), parses the token with svrngs-core's `Token::decode`, and dials the
-issuer by key on the members' protocol — through the relay the token
-carries, else by the resolver iroh's N0 preset adds in a browser — and
-sends one `GET`, its send half open until the response is read, every layer
-traced to the page's `__trace` as it happens. `app.js` reads the fragment as
-the token, asks `/lends`, keeps the layers on the console at debug and says
-only DESIGN §1's words; the shell's paths are relative, and the CSP admits
-a relay on 127.0.0.1. `scripts/build-web.sh` (upstream's
+with `kernel-types` replaced by svrngs-core, then changed (u4-3, u4-4,
+u4-5). `src/lib.rs` binds a browser endpoint with the person's key, 32
+bytes, parses the token with svrngs-core's `Token::decode`, and dials by
+key — through the relay the token carries, else by the resolver iroh's N0
+preset adds in a browser — every layer traced to the page's `__trace` as it
+happens: `connect` dials the link's issuer on the members' protocol,
+`connect_to` a lender by its key (DESIGN §3, call 4), `connect_to_join` the
+issuer on the redeem protocol. The dialled computer's `fetch` is HTTP over
+one bi-stream per request by hyper's HTTP/1 client (`src/http.rs`, u4-4), its
+body a `ReadableStream` either way. `src/join.rs` (u4-5) signs and believes
+with svrngs-core's bodies, as `svrngs join` does: `ask`, `believe` (the seed
+hashing to the group, `seed::answered`) and `redemption`, naming a browser.
+`store.js` (u4-5) is the page's store: IndexedDB `svrngs` v2, a
+non-extractable AES-GCM key under `seal`, and under `groups` each group
+joined — its name, the person's, the link's token, and the person's key
+sealed with the group's id as additional data (call 1). `app.js` reads the
+fragment as the token: a link joined by, or the page alone, is in; a new
+link is asked of its issuer, and a group kept already is in; else it asks the
+person's name once, redeems, keeps the group, and lists `GET /people/lends`
+as the bare command prints it ("Sam's shelf"), a lend opening by its
+lender's key; it keeps the layers on the console at debug and says only
+DESIGN §1's words. The shell's paths are relative, and the CSP admits a
+relay on 127.0.0.1. `scripts/build-web.sh` (upstream's
 `build-ring-runtime.sh`) builds it into `target/web/site` with Homebrew's
 LLVM on a Mac, and `--lint` holds it to rustfmt and clippy for wasm32.
 `crates/svrngs-node/tests/browser/` is its test: iroh's relay server and a
-node on 127.0.0.1, an `Admit` written directly, and `web/tests/drive.mjs`
-serving the built page and driving Playwright 1.59.1's headless Chromium
-(`web/package.json`); without Playwright or its browsers it fails naming
-the install command.
+node on 127.0.0.1 (`harness.rs`), an `Admit` written directly and a joined
+group held in the page's store, and `web/tests/drive.mjs` serving the built
+page and driving Playwright 1.59.1's headless Chromium (`web/package.json`,
+`web/tests/page.mjs`); without Playwright or its browsers it fails naming
+the install command. `crates/svrngs/tests/join_page.rs`, with
+`web/tests/join.mjs`, is joining's: a link `svrngs new --origin` printed,
+opened, a name typed, Sam's journal read for the one `Admit`, and every
+storage the page writes scanned for the key's bytes.
 
 **`apps/expenses/`**: the Expenses fold (`expenses.js`) and its tests, from E0,
 the bot at tag `e0-bot`. Its reducer (`init`, `reduce`) folds the acts

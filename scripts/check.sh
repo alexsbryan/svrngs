@@ -27,6 +27,8 @@ if [ -f Cargo.toml ]; then
   # Playwright or its browsers it fails naming the install command; it never
   # skips.
   step "browser" cargo test --quiet -p svrngs-node --test browser
+  # A phone joining by the link `svrngs new --origin` prints (u4-5).
+  step "joining in a browser" cargo test --quiet -p svrngs --test join_page
 else
   echo "never-ran  rustfmt, clippy, tests: no Cargo workspace yet"; failed=1
 fi
