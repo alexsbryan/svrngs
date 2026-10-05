@@ -4,11 +4,13 @@
 // than serving a stale runtime (the failure this exists to avoid is a guest
 // stuck on last week's wasm). The version is also on every shell URL.
 const CACHE = 'svrngs-web-__VERSION__';
+// Relative to this file, so the page works wherever an origin serves it;
+// the directory's trailing slash is what makes `./` the page.
 const SHELL = [
-  '/ring',
-  '/ring/app.js?v=__VERSION__',
-  '/ring/wasm/svrngs_web.js?v=__VERSION__',
-  '/ring/wasm/svrngs_web_bg.wasm?v=__VERSION__',
+  './',
+  './app.js?v=__VERSION__',
+  './wasm/svrngs_web.js?v=__VERSION__',
+  './wasm/svrngs_web_bg.wasm?v=__VERSION__',
 ];
 
 self.addEventListener('install', (e) => {
