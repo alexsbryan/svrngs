@@ -676,7 +676,11 @@ async fn a_worker_that_reads_no_seal_dials_with_the_key_the_page_hands_it(engine
     lend(dir.path(), "film", film_origin.port());
     let html = "<!doctype html><title>a page</title>\
                 <video src=\"../film/title.mp4\" playsinline preload=\"auto\"></video>";
-    lend(dir.path(), "page", page_origin(html.to_string()).await.port());
+    lend(
+        dir.path(),
+        "page",
+        page_origin(html.to_string()).await.port(),
+    );
 
     let seen = drive(
         engine,
