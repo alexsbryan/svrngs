@@ -92,6 +92,7 @@ pub mod joining;
 pub mod link;
 mod membership;
 mod op;
+pub mod pass;
 mod payload;
 mod process;
 mod project;
