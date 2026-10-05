@@ -144,8 +144,13 @@ the evidence is U4's inventory, §8):
    worker relays its requests to it. (Landed, u4-6: every lend has one
    address under the scope, `<scope>l/<lender>/<lend>/<path>`, the lender's
    key in full, so a page under it reaches any lend by a relative path; the
-   worker holds one endpoint per group, opened from the sealed key on the
-   first request after it starts, and dials each lender from it.)
+   worker holds one endpoint per group, opened on the first request after it
+   starts, and dials each lender from it. Its key is the one the page handed
+   it in memory when it opened the group, else one it unseals itself; only
+   the page makes the sealing key. A lend's address reached by a worker with
+   neither is answered by a hand-over page, which unseals in the page, hands
+   the key over and opens the address again (u4-10: Safari's worker on an
+   iPhone read no sealing key where its page had kept one).)
 4. *The phone dials whoever lends a service*, directly by key, since it
    stands in the group. The issuer, the node the link names, only redeems and
    answers what the group's people lend, each with its lender's key. No node
@@ -208,7 +213,7 @@ piece comes over:
 | `svrngs-core` | the record: acts, admission into one order, membership, the sync digest; and what a browser's page spells as the command and the node do (u4-2): a link's token, the ask and the redemption a joiner signs with it, the issuer's answer and the seed it is believed by (u4-5), the protocols' names, and a relay's URL without the DNS root's trailing dot, which WebKit refuses (u4-9). `no_std`, so the compiler refuses filesystem, clock, network and threads; time and keys are arguments | none |
 | `svrngs-runtime` | the only owner of each group's journal on disk, its projections and its writes: the journal and its write index, the open-journal map, the register's standing | the journals |
 | `svrngs-node` | the adapters: sync and its route over iroh, redemption, the loopback record API with its live lane (landed, u3-2 and u3-3), the member door (landed, u3-4), the list of what members lend, asked of each (landed, u3-5), and answered to a member by the computer it dials, each with its lender's key (landed, u4-5), and the door's limit and shares, a pure decision the door's task owns (landed, u3-6); every relay URL it makes or reads dotless where it enters — n0's relays, a relay it is told, a lookup's answers — in `relay.rs`, which the page compiles too (landed, u4-9) | each lend's declaration and secret; who is using each lend now |
-| `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell and a workspace of its own: a browser's endpoint, bound with the person's key, dialling a group's computer by key over a relay on the members' protocol (landed, u4-3); HTTP over the dial (landed, u4-4); joining — the ask and the redemption by svrngs-core's bodies, the key sealed in the page's store, and the list of what the group's people lend (landed, u4-5); the runtime, a service worker serving every request at a lend's address under its scope from the lender's door, one endpoint for every lender (landed, u4-6), a range that runs on — open-ended, or a `<video>`'s longer than a part — asked of the door in parts of 2 MiB (landed, u4-9); an adapter | none: the page's store holds the key, sealed |
+| `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell and a workspace of its own: a browser's endpoint, bound with the person's key, dialling a group's computer by key over a relay on the members' protocol (landed, u4-3); HTTP over the dial (landed, u4-4); joining — the ask and the redemption by svrngs-core's bodies, the key sealed in the page's store, and the list of what the group's people lend (landed, u4-5); the runtime, a service worker serving every request at a lend's address under its scope from the lender's door, one endpoint for every lender (landed, u4-6), a range that runs on — open-ended, or a `<video>`'s longer than a part — asked of the door in parts of 2 MiB (landed, u4-9), the person's key handed from the page to its worker in memory, and the hand-over page for a worker that holds none (landed, u4-10); an adapter | none: the page's store holds the key, sealed |
 | `svrngs` | the command and the process: `new`, `join`, `link`, `share` and `unshare` (landed); the bare command prints where the record API listens, and what the people of its groups lend | a device's keys; each group's seed |
 
 Held to `docs/principles/RUST_ARCH.md`: types encode the domain, ownership
