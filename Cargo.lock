@@ -3678,6 +3678,7 @@ dependencies = [
  "hyper-util",
  "iroh",
  "iroh-relay",
+ "libc",
  "n0-future",
  "rand 0.9.4",
  "reqwest 0.12.28",
