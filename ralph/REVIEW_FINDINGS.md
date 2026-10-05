@@ -1389,4 +1389,10 @@ symbol. Each name was run, and then `git grep -nwE '(struct|enum|trait|type)
 | I14 | 6, 7 | `code dry-report --scope web/` near tier | Still present, and partly better. Two identical 46-line Rust bodies (C) score 0.934, so they are missed at the default 0.95 and found at 0.9. Two identical JS bodies (D) are never paired above 0.7. The exact tier still says could-not-judge, which is right. |
 | I15 | 6, 7 | `code converge noun` over web/ | New. web/ is a separate cargo workspace, so its types have no SCIP symbols. converge reports "definitions (0) … none — check the spelling" for a type that exists (`Dialled`, web/src/lib.rs:246). For a name both sides define, it counts only the main workspace's side: `Bound` (1) and `Refused` (1), each with a second definition in web/, and plant N2's `Asking` (1). That is a silent pass, not a could-not-judge. For web/, only `git grep` judges. |
 
-The row's check (LINT): see the commit that marks this row.
+The row's check (LINT): `scripts/check.sh` at b9e2bf3 on a clean tree
+exited 0 in 9:35. Every step `passed`: principles pinned, lean and
+RUST_ARCH, app nouns gate, app nouns, rustfmt, clippy, tests, canaries,
+web rustfmt and clippy, browser, joining in a browser, app laws. That is
+up from 4:32 at the last audit, because every browser test now runs in
+WebKit too (977e589). It is within 25 s of a ten-minute session's
+foreground limit.
