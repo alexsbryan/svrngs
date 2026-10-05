@@ -15,16 +15,19 @@ with `git -C ~/dev/commonwealth-ai show e1a43bcd2:<path>`. Jellyfin is
 GPL-2.0-only: Films talks to it over its API, and copies none of its code.
 
 **The seat's calls** (2026-10-05, from the survey; u5-0 writes them into DESIGN):
-1. *Every lend at an origin of its own, on a computer as on a phone.* A
-   computer serves `<id>.localhost:<api port>`, the page `<id>.<page host>`,
-   `<id>` one DNS label, this computer's own lends included; an
-   app's page reaches another lend at the origin `/v1/lends` answers, and the
-   same page works on both. (Revised by the operator, 2026-10-05: one shared
-   origin let any lent page unseal the viewer's key — u4-6, DESIGN §11 risk 5
-   — and broke every self-hosted app that wants its origin's root, which is
-   most of DESIGN §1's list.) It raises no one's bar: a person joins by
-   a link and opens a lend from the list as before, and a group that names
-   ours (svrnme.sh), which serves the wildcard, types nothing more.
+1. *Lends off the key's origin, on any host a group trusts.* A computer
+   serves every lend at an origin of its own on loopback (`<id>.localhost`,
+   or a port per lend). A phone has two modes: the floor, any static host
+   serving two hostnames — the page's, holding the key, and one for every
+   lend under `/l/<id>/`; and, when the page's host answers a wildcard (ours
+   does), each lend at `<id>.<page host>`, its origin's root and storage its
+   own, at the price that the host and DNS see which lend is opened. `svrngs
+   new` says which the group got; an app's page reaches another lend at the
+   origin `/v1/lends` answers. (Operator, 2026-10-05: one shared origin let
+   any lent page unseal the viewer's key — u4-6, DESIGN §11 risk 5; no step
+   may be added for a person joining or a group starting; and a group that
+   does not trust ours, or wants a stricter privacy policy, runs on any
+   static host.)
 2. *The page does the work, under the viewer's key.* Films' page reads each
    lender's catalogue and streams from each lender's door from the viewer's
    own device, so each door counts and shares by the person watching. Films'
@@ -42,9 +45,11 @@ GPL-2.0-only: Films talks to it over its API, and copies none of its code.
    token, are measured (u5-3) before Films relies on either.
 6. *The person's key never enters a lend's origin.* The page signs a pass —
    a fresh key may act as this person toward these lends until this time —
-   for the lend it opens and the lends its lender declared it reads, and the
-   lend's origin dials with that. A lent page can act as the person toward
-   those lends while the pass lasts, and nothing else (u5-2).
+   for the lend it opens and the lends its lender declared it reads; the
+   lend's origin dials with that, and the runtime keeps each lend's cookies
+   apart. On the floor lends share one origin, so a lent page can use another
+   lend's pass while it lasts; with the wildcard, only its own. Never the key
+   (u5-2).
 
 Tests that need Jellyfin run a scratch Jellyfin on this host as u3-8's dry run
 did (`demo/runs/a/dry-2026-10-04/dry.sh`: the macOS app's server with its own
