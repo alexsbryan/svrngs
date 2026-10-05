@@ -78,6 +78,10 @@ const LENDS = new URL('./l/', self.location).pathname;
 // (the operator's iPhone, 2026-10-05: Safari's worker failed to reach the
 // lender while Firefox's did, and only Safari's console held why).
 const TRACE = new URL('./trace', self.location).pathname;
+
+// The type of every answer the worker makes in plain text: its trace, kept
+// and shown, and its words to a person (`say`).
+const PLAIN = { 'content-type': 'text/plain; charset=utf-8' };
 const traced = [];
 self.__trace = (l) => {
   console.debug(l);
@@ -92,13 +96,13 @@ function keepTrace() {
   const body = traced.join('\n');
   return caches
     .open(CACHE)
-    .then((c) => c.put(TRACE, new Response(body, { headers: { 'content-type': 'text/plain; charset=utf-8' } })))
+    .then((c) => c.put(TRACE, new Response(body, { headers: PLAIN })))
     .catch((e) => console.debug(`RUNTIME: the trace was not kept: ${e}`));
 }
 
 async function traceView() {
   const head = `svrngs worker __VERSION__, ${self.navigator.userAgent}\n`;
-  const text = { headers: { 'content-type': 'text/plain; charset=utf-8' } };
+  const text = { headers: PLAIN };
   if (traced.length) return new Response(`${head}this run of the worker:\n${traced.join('\n')}`, text);
   const kept = await caches.match(TRACE);
   const body = kept ? `kept from a run the browser has since stopped:\n${await kept.text()}` : 'nothing traced yet';
@@ -205,7 +209,7 @@ function bounded(headers, destination) {
 
 // Words for a person, as a page: why a lend did not open.
 function say(status, words) {
-  return new Response(words, { status, headers: { 'content-type': 'text/plain; charset=utf-8' } });
+  return new Response(words, { status, headers: PLAIN });
 }
 
 // The hand-over page (hand.js), for a lend's address reached with no key:
