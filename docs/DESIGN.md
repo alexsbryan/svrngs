@@ -110,6 +110,62 @@ paths it refuses, how many people may use it at once.
 
 An app that needs anything else is a decision, not a convenience.
 
+**What an app cannot yet ask**, each with the U5 row that adds it (the
+seat's survey, `ralph/next/u5/UPSTREAM.md` §(c), every line read again at
+u5-0):
+- *Which groups this computer holds, and its person in each* (u5-1, `GET
+  /v1/groups`, and the record API's address written to a file in the data
+  dir). The API binds any free port, which only the bare command prints
+  (`crates/svrngs/src/cli.rs:111-114`); every route asks `?namespace=`
+  (`crates/svrngs-node/src/rail.rs:102-109`), no route lists the groups, the
+  bare command prints their names, not their ids (`cli.rs:547-548`), and
+  `/v1/rail/people` marks no one as this computer's (`rail.rs:384-393`).
+- *What the group's people lend* (u5-1, `GET /v1/lends`). The bullet above
+  promises it, but the record API serves append, log, live and people alone
+  (`crates/svrngs-node/src/api.rs:36-54`); `Node::lends`
+  (`crates/svrngs-node/src/node.rs:274-277`) is asked once, when the bare
+  command starts, and printed (`cli.rs:554-571`, `:697`). A lend's entry
+  carries no declared upload (`crates/svrngs-node/src/lend.rs:265-272`), so
+  a share is learned only from the door's answer, after it has counted the
+  asker for 30 s (`door/limit.rs:38`); and this computer's own lends are
+  left out (`node.rs:453-455`).
+- *The lender's own lend* (u5-1 lists it; u5-2 serves it through this
+  computer's door's rules, its secret injected and its limit counted, one
+  body with the door). It is skipped as above, and its secret lives only in
+  the door's store.
+- *A lend at an origin apart from the person's key* (u5-2, calls 1 and 6
+  below). On a phone every lend is under the page's scope
+  (`web/sw.js:73-74`), the origin that holds the key (§11, risk 5); on a
+  computer a lender's lends share the loopback port of the bridge to that
+  lender (`node.rs:510`; `crates/svrngs-node/src/iroh.rs:212-265`).
+- *A live socket* (u5-2). The door strips `Upgrade` as hop-by-hop
+  (`crates/svrngs-node/src/door.rs:120-129`), so Jellyfin's `/socket`
+  answered 404 through it and 101 on the lender's computer
+  (`demo/runs/a/dry-2026-10-04/README.md:69-73`), and a service worker sees
+  no WebSocket at all.
+- *A read from another origin* (none: u5-2 makes it unneeded). The door
+  sets no `access-control-*` header (`door.rs` has none), so a page on
+  another origin can read neither a lend's JSON nor its share header; with
+  each lend at an origin of its own, a lent page reads both from its own.
+- *A secret kept out of response bodies* (u5-3 (c) measures; under sign in
+  once, call 4, the lend carries none). The door drops a response header
+  holding the lend's secret (`door.rs:437-458`) and reads no body; e0-bot's
+  design held that Jellyfin writes its token into playback info and HLS
+  playlists (`e0-bot:docs/DESIGN.md:583-586`), and only direct play was
+  scanned (`demo/runs/a/dry-2026-10-04/README.md:81-88`).
+- *A device per person* (u5-3 (a) and (d)). A lend's secret displaces the
+  client's whole `authorization` (`door.rs:113-119`, `:385-411`), and with
+  it the client's device: Jellyfin 12 reads its credential from that header
+  alone (commonwealth-ai `.canon/sources/notes/invariant/35104a7e.md:3`),
+  so through a lend with a secret every person is the lend's one device. A
+  lend with no secret leaves each browser's own header.
+
+Three more the survey found were Films', and no U5 row adds them: a queue
+for "you're next" (nothing queues, §8, U3's inventory); a live payload's
+sender, which a drain does not name (`rail.rs:589-602`; §9); and a phone's
+own writes, which reach the record through an app naming the person in
+`on_behalf_of` (§8, U3's inventory).
+
 **Joining: the client first, the browser a door a group opens** (operator,
 2026-10-04). `svrngs new <name>` makes a group and prints its link,
 `svrngs://join/<token>`. On a computer the svrngs program redeems it
@@ -150,7 +206,9 @@ the evidence is U4's inventory, §8):
    the page makes the sealing key. A lend's address reached by a worker with
    neither is answered by a hand-over page, which unseals in the page, hands
    the key over and opens the address again (u4-10: Safari's worker on an
-   iPhone read no sealing key where its page had kept one).)
+   iPhone read no sealing key where its page had kept one). u5-2 moves
+   every lend off the page's origin, by the first and sixth of the calls
+   below; the page keeps the key.)
 4. *The phone dials whoever lends a service*, directly by key, since it
    stands in the group. The issuer, the node the link names, only redeems and
    answers what the group's people lend, each with its lender's key. No node
@@ -158,6 +216,58 @@ the evidence is U4's inventory, §8):
 5. *One body for the link.* The command and the page parse a token and sign
    the ask and the redemption with the same code, in svrngs-core: bytes and
    keys in, bytes out.
+
+**Lent apps, as they come** (operator, 2026-10-05). North star 2 holds for
+the apps people already self-host: `svrngs share 8096` lends Jellyfin as it
+comes, and someone who never used it opens it from the list, plays and
+seeks, on a computer or a phone. U5 builds that by seven calls; the evidence
+is U5's inventory (§8).
+1. *Lends off the key's origin, on any host a group trusts.* A computer
+   serves every lend at an origin of its own on loopback, `<id>.localhost`,
+   or a port per lend where a browser does not resolve `*.localhost`. A
+   phone has two modes, and `svrngs new` says which the group got: the
+   floor, any static host serving two hostnames — the page's, holding the
+   key, and one for every lend, each under `/l/<id>/`; and, when the page's
+   host answers a wildcard (svrnme.sh does), each lend at
+   `<id>.<page host>`, its origin's root and storage its own, at the price
+   that the host and the phone's DNS see which lend is opened. One shared
+   origin let any lent page unseal the key of whoever opened it (u4-6, §11
+   risk 5); no step is added for a person joining or a group starting; and
+   a group that does not trust ours, or wants a stricter privacy policy,
+   runs on any static host (u5-2).
+2. *Jellyfin as it comes.* A lend serves stock jellyfin-web from the
+   lender's Jellyfin; nothing in svrngs renders a library of its own. What
+   U3's dry run found — a sign-in asked of everyone, and a member's sign-in
+   logging out the lend's token (`demo/runs/a/dry-2026-10-04/README.md:35-50`)
+   — is what u5-3 measures and u5-4 solves.
+3. *The infra learns no Jellyfin.* Anything that knows Jellyfin's API lives
+   in `apps/jellyfin/`, whose nouns `scripts/vocab_check.py` keeps out of
+   the infra (§5), and what the door gains for it is general: any app.
+4. *Zero sign-in if it is small, else sign in once.* Zero sign-in: the
+   lender's computer gives each person their own Jellyfin user and the door
+   signs them in. Sign in once: the lend carries no secret, and each person
+   signs in with an account the lender made. u5-3 measures both and decides
+   by a rule it commits before its data — zero sign-in if it fits in at most
+   two rows and adds no Jellyfin noun outside `apps/jellyfin/`, else sign in
+   once — and the other goes to §9 with its trigger. Demo A's bar keeps
+   Jellyfin's list of users the same after the run as before (`demo/a.md`):
+   accounts the lender makes before the run keep it; users made per person
+   during the run do not, so a decision for zero sign-in brings that clause
+   to the operator before u5-9 runs (a bar is the operator's).
+5. *Measured before built.* What stock jellyfin-web does through the door —
+   its sign-in, its live socket, two people's plays through one lend, and
+   whether any byte carries a secret the lend holds — is measured (u5-3)
+   before u5-4 builds on it.
+6. *The person's key never enters a lend's origin.* The page signs a pass
+   — a fresh key may act as this person toward these lends until this time
+   — for the lend it opens and the lends its lender declared it reads
+   (`svrngs share --reads <kind>`); the lend's origin dials with the pass's
+   key, and the runtime keeps each lend's cookies apart, since a service
+   worker sees no `Cookie`. On the floor the lends share one origin, so a
+   lent page can use another lend's pass while it lasts; with the wildcard,
+   only its own. Never the key (u5-2).
+7. *Group folders, an experiment after U5*, beside lends and opt-in; its
+   design and first measurement wait in §9, and no U5 row builds it.
 
 **Chats are doors, and the last thing we build.** A small adapter per chat, in
 its own package, makes a group for a channel and posts its link. Onboarding
@@ -240,7 +350,7 @@ rows.
 infra code — comments and tests apart, where an example is fine. So the infra
 never learns what a film, an expense or a crush is. And the canaries of §8,
 Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
-serves Films and breaks one fails the build.
+serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,000 lines of code and the
 repository under 14,000, tests and `apps/` apart (`scripts/lean_check.py`);
@@ -401,12 +511,15 @@ for local AI; it holds no group state.
 
 ## 8. Order of work
 
-**One experience, done delightfully: Films — the group's films, one shelf,
-on any phone and the TV in the room.** Everyone's lent library on one shelf,
-each title marked "from Sam's"; no accounts, no port forwarding; play it here
-or on the TV; the lender's password never leaves their computer. Nothing else
-is built until Demo B passes, except the two canaries, which keep Films from
-bending the infra into a media platform.
+**One experience, done delightfully: the group's films, in the Jellyfin a
+member already runs, on any phone and the TV in the room.** Sam lends
+Jellyfin as it comes; everyone in the group opens it from the list and
+plays it here or on the TV; no port forwarding; the lender's password never
+leaves their computer. Nothing else is built until Demo B passes, except the
+two canaries and U5's catalogue run, which keep Jellyfin from bending the
+infra into a media platform. (Until 2026-10-05 this was Films, an app of
+our own with one shelf across every member's library; the operator dropped
+it for Jellyfin as it comes, §3 "Lent apps, as they come", §10.)
 
 **Many people, one library — first class, not an edge case.** Three friends in
 three homes on Sam's library at once is the normal evening. What breaks, and
@@ -415,21 +528,24 @@ who fixes it:
   viewer's path, divides the upload evenly among the people watching, and tells
   each request its share; shares change as people start and stop. Sam's own
   home, on the local network, is never counted against it.
-- *Sam's computer has one processor* — Films. It asks Jellyfin for no more
-  than the share (`MaxStreamingBitrate`), plays the file as it is whenever the
-  share and the phone allow — which costs Sam nothing — and transcodes only
-  when it must.
-- *Everyone comes through one viewer account* — Films. Jellyfin kills running
-  transcodes by device id and play session (`DynamicHlsController.cs:1504` in
-  the source read), so each person's device and each play carry their own, and
-  Bo seeking never stops Cy. Progress and "watched" live in the group's record
-  under each person's name, so Continue Watching is theirs and follows them
-  across every member's library. The lend's limit sits below the account's own
-  session cap (`MaxActiveSessions`), so the door, not Jellyfin, says no.
-- *Too many at once* — the door refuses past the lend's limit with a reason;
-  Films turns it into a choice: "Sam's library has three watching — Dee has
-  Arrival too", or "you're next". A title two members lend plays from whoever
-  can give you the bigger share.
+- *Sam's computer has one processor* — Jellyfin's own. Its player plays the
+  file as it is when the browser can, which costs Sam nothing
+  (`stream.mp4?Static=true`, `demo/runs/a/dry-2026-10-04/README.md:52-61`),
+  and transcodes when it cannot: WebKit remuxed an MKV through Jellyfin
+  (svrn-docs `rings/runs/strm-2026-10-05/README.md`). Nothing in svrngs asks
+  it for less; the share the door tells each request is in Sam's log.
+- *Each person is their own to Jellyfin* — u5-3 and u5-4. Through a lend
+  with a secret every request carries the lend's one device, so one
+  person's sign-in logged the lend out for everyone (U3's dry run); a lend
+  with no secret leaves each browser its own sign-in and device, and zero
+  sign-in gives each person a Jellyfin user (§3, call 4). Jellyfin kills
+  running transcodes by device id and play session
+  (`DynamicHlsController.cs:1504`, in a source read once and held in
+  neither repository), so whether Bo seeking leaves Cy's play alone is
+  u5-3's to measure, never assumed.
+- *Too many at once* — the door refuses past the lend's limit with its
+  reason in a person's words and the figures (`door.rs:570-584`); nothing
+  turns it into a choice of another lender.
 - *The same room* — one stream to the TV, however many phones hold the remote.
 
 **U1's inventory.** What `ring_sync`, `ring_routes.rs` and `acceptor.rs` use
@@ -618,6 +734,44 @@ page origin has its phones join again by link. Which codecs a phone plays is
 the lent service's and its app's: Chrome plays no MKV and HEVC only on a GPU
 (`quality/campaigns/ring-apps-shelf.md:193-194`).
 
+**U5's inventory.** What upstream at `e1a43bcd2`, and svrngs's own runs,
+have for lending an app as it comes, Jellyfin first, and what each becomes;
+written from the seat's survey (`ralph/next/u5/UPSTREAM.md`, made for Films
+and kept here only where a U5 row uses it), each path:line read again at
+u5-0, upstream's at `e1a43bcd2` and svrngs's at that commit. Upstream has no
+lend at an origin of its own, no pass, no WebSocket across a door, and no
+stock web app measured through one; what an app cannot yet ask of svrngs is
+§3's list. Paths under `mesh_media/` are
+`sovereign/crates/sovereign-cli-mesh/src/mesh_media/`.
+
+| Upstream | What it does there | Becomes |
+|---|---|---|
+| `mesh_media/viewer.rs:304-463` (`provision`, 323 lines without its tests), with `:143-196` and `:216-296` | finds or makes one Jellyfin user, sets its password, writes its policy over the origin's own — `POST /Users/{id}/Policy` replaces rather than patches, and needs `AuthenticationProviderId` and `PasswordResetProviderId` (`:21-27`, `:143-175`) — reads the policy back (`:177-196`), signs in by `AuthenticateByName` (`:443`) and keeps `MediaBrowser Token="…"` (`:461`); a token already held is proved by one `GET /Users/Me` (`:216-296`). An `/Auth/Keys` key is admin-equivalent (`:6-12`); a non-admin sets no password (403, `:205-208`) | zero sign-in's shape (§3, call 4): a Jellyfin user per person, made by the lender's computer with a key the lender gives once. If u5-3 decides zero sign-in, forked into `apps/jellyfin/`, behaviour kept first, then a user per person in place of one viewer; never into the infra (call 3). Else it stays behind |
+| `docs/RING_APP_LIBRARY.md:802-816` | three ways a lent service keeps its users, cheapest first: the app reads the member header; the lender's credential injected, one shared viewer; an account per member, made on `Admit` and disabled on `Remove`. Mapping the member header onto an app's trusted proxy header is "From memory — verify per app" (`:810-811`) | the first is §1's "an app that takes the signed-in person from a request header", which u5-catalogue-dry's census checks per app against each app's own docs; the second is what U3's dry run broke on; the third is zero sign-in |
+| tag `e0-bot`, `docs/DESIGN.md:580-587` and `:878` | the door masked the secret in response bodies because "Jellyfin writes its token into playback info and into the HLS playlists' subtitle, trickplay and variant URLs"; a lend refused `/Sessions/Logout`, "which would sign the whole group out"; `Remote-User` and per-person accounts waited for "a named service that needs them" | not forked. The body claim was never measured: u5-3 (c) asks whether any byte a person receives carries a secret the lend holds, the transcode included. Jellyfin is now the named service |
+| `.canon/sources/notes/invariant/35104a7e.md:3-9`; `scripts/cw-media-demo.sh:31-40`, `:54-56` | Jellyfin 12.0.0 takes its credential only from `Authorization: MediaBrowser … Token="…"`: `X-Emby-Token`, `X-MediaBrowser-Token` and `?api_key=` each answer 401, and the inner space and quotes are load-bearing | a fact `apps/jellyfin/` and u5-3 build on: a lend's secret displaces the client's whole `authorization` (`crates/svrngs-node/src/door.rs:113-119`, `:385-411`), the client's device with it. Nothing forked |
+| `mesh_media/offer.rs:94-97` (`WELL_KNOWN_ORIGINS`) | 8096, then 8920 | forked already (U3): `crates/svrngs/src/well_known.txt`, 8096 alone, so `svrngs share 8096` names Jellyfin |
+| `commonwealth/crates/commonwealth-media/src/reach.rs:94-95` | refuses a member's own node: "its {} is already local" | left behind: u5-1 lists this computer's own lends, where `Node::lends` skips them (`crates/svrngs-node/src/node.rs:453-455`), and u5-2 serves them through this computer's door's rules |
+| `quality/campaigns/ring-apps-shelf.md:187` | Jellyfin is GPL-2.0-only: "API interop at arm's length only" | held: svrngs talks to Jellyfin over HTTP and its API and copies none of its code |
+| svrngs `demo/runs/a/dry-2026-10-04/` (`dry.sh`, `drive.mjs`, `README.md`) | Jellyfin 12.0.0 through the door on one computer, the macOS app's server with data dirs of its own: the wizard over the API (`dry.sh:60-76`) and the lend's secret minted (`:88-95`); opened with nothing typed, a sign-in (`README.md:35-37`); a member's sign-in logs the lend's token out for everyone, the door's header carrying the lend's one `DeviceId` (`:39-50`); with a placeholder sign-in written into the page's local storage (`drive.mjs:41-47`), it plays in 1,137 ms and each seek plays again within 123 ms (`README.md:52-61`); an API key ruled out (`:63-67`); `/socket` 404 through the door, 101 direct (`:69-73`); no secret in a received byte but the token Jellyfin handed the browser signing in (`:81-88`); three at once and a transcode not measured (`:90-93`) | u5-3's base: its scratch Jellyfin is `dry.sh`'s, and what the run found is what u5-3 measures and u5-4 solves (call 2). The placeholder sign-in stays a driver's trick: no person can write it |
+| svrn-docs `rings/runs/strm-2026-10-05/` (its commit `457f120`) | the group-folder experiment's first run: Jellyfin 12.1.0 over two `.strm` stubs; every browser played the holder's MP4 from the stub's URL; WebKit, alone and as an iPhone, remuxed the MKV through Jellyfin's own HLS, reading the whole file unpaced; FAIL on its pre-registered byte-share bar (93.0% and 85.8%) | §9's group folders, after U5; no U5 row builds on it |
+
+Four facts follow. *Lends share the key's origin today:* on a phone every
+lend is under the page's scope (`web/sw.js:73-74`), where u4-6's test had a
+lent page's script unseal the person's key (§11, risk 5), and on a computer
+a lender's lends share the bridge to that lender, made when first asked
+(`crates/svrngs-node/src/iroh.rs:212-265`), its loopback port beside the
+record API's. *Two nodes on one host dial on loopback only:* iroh moves a
+connection dialled on loopback onto this computer's private address, which
+the door guesses home and tells no share (`ralph/REVIEW_FINDINGS.md` #33),
+so U5's two-node tests build every node with `RelayConfig::on_loopback_only`,
+as the door's do (`crates/svrngs-node/tests/door/main.rs:56`). *A sign-in is
+the app's:* the door sets the person on every request, and an app that
+reads no such header asks its own sign-in; Jellyfin is one (U3's dry run),
+and which of §1's apps read one is the census's to find. *Jellyfin's own
+cross-origin rules were never measured* in either repository; with each lend
+at an origin of its own (call 1), stock jellyfin-web asks none.
+
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
 | U1 a group is not a mesh | ring sync, its route and the dial-by-key tunnel forked into `svrngs-node`, the node's router served on each accepted stream; the register decides who may connect and who is synced, where upstream asked the mesh (`commonwealth/crates/commonwealth-rails/src/` at `e1a43bcd2`: `acceptor.rs:47-61`, `ring_sync/journal.rs:153-164`, the default roster at `lib.rs:404`) | a node in the group but no mesh syncs; a node outside the group is refused |
@@ -704,10 +858,19 @@ class at a time, each chosen by the north star's tests.
 | a link's life set per link, other than a day | a newcomer meets a lapsed link, counted |
 | measuring a lender's upload rather than taking the figure they declare (BBR3's pacing estimate, or a timed saturating pull) | a declared figure is wrong by enough to stall a viewer in a recorded run |
 | a per-process tie between a node and the services it lends (upstream's `mint_tie`) | an app's act is written under a person by a process the lender did not run, or one computer is shared by people who do not trust each other |
+| group folders (§3, call 7 of "Lent apps"): a member shares a folder at one level from a closed set; its file list in the record, its bytes content-addressed and fetched by verified range from whoever holds them (iroh-blobs 0.103, which takes iroh ^1.0.0); the meeting point runs one Jellyfin over everyone's shared films as `.strm` stubs; opt-in, beside lends. Its first run (svrn-docs `rings/runs/strm-2026-10-05/`, `457f120`): browsers played the holder's MP4 straight from the stub's URL, and WebKit remuxed an MKV through Jellyfin, the double hop; it failed its pre-registered byte-share bar on Jellyfin's per-play probe of a 47 MB file | U5 lands, and the operator runs it with a group in the wild and settles it (operator, 2026-10-05) |
+| a live payload naming its sender | an app needs to know who offered a live payload, and cannot take it from the payload |
 
 ## 10. Decisions
 
 By the operator, 2026-10-05:
+- north star 2 holds for the apps people already self-host: `svrngs share
+  8096` lends Jellyfin as it comes, and someone who never used it opens it
+  from the list, plays and seeks, on a computer or a phone. Films is dropped,
+  and Demo A plays in stock Jellyfin; group folders are an experiment after
+  U5, settled in the wild. The seven calls that build it are §3's "Lent
+  apps, as they come" (over "Demo A plays in Films", 2026-10-04, §11
+  risk 7);
 - the ceiling's fixes 1–3 — the digest, signatures checked once, the
   register, each kept by a tail fold — after Films (read here as after
   Demo B, §8's rule); dialling at once stays a §9 row;
@@ -753,7 +916,9 @@ By the operator, 2026-10-03:
 - the name is svrngs, for now; machinery waits until an experiment earns it;
 - one experience done delightfully first — Films — with Expenses and Tap kept
   as canaries so the infra stays general; the screen handoff is infra; phones
-  first, through the browser; chat doors are onboarding, built last.
+  first, through the browser; chat doors are onboarding, built last. (The
+  experience is the group's films in stock Jellyfin since 2026-10-05,
+  above; Films is dropped.)
 
 ## 11. Risks
 
@@ -809,11 +974,12 @@ By the operator, 2026-10-03:
    on `/l/<ada>/page/` imported `store.js` and read bo's 32 bytes. So
    whoever lends a service, or a service compromised, can act as each
    person in the group who opens it. Putting the lends on an origin apart
-   from the page's store is the way out, unbuilt.
+   from the page's store is the way out: u5-2 builds it (§3, "Lent apps",
+   calls 1 and 6), and keeps u4-6's measurement as a test.
 6. **Two copies of the record's code.** A signing or canonical-form bug fixed on
    one side can be missed on the other. `scripts/ports.py` is the guard, and it
    is a listing, not a gate.
-7. **Jellyfin's own player asks for a sign-in** — settled. The door injects a
+7. **Jellyfin's own player asks for a sign-in** — reopened 2026-10-05. The door injects a
    credential on requests, not a session in a browser, so either the browser
    is handed a token it then holds, which breaks "the lender's secret appears
    in no byte a member receives", or each person signs in to a viewer
@@ -821,5 +987,9 @@ By the operator, 2026-10-03:
    (`demo/runs/a/dry-2026-10-04/`) found the second worse than feared: a
    member's sign-in through the door logs the lend's token out for everyone,
    and only a placeholder sign-in that no member can write gets past the
-   page. The operator, 2026-10-04: Demo A plays in Films, after U5, which
-   never needs that page; no unit builds a way into Jellyfin's own player.
+   page. The operator, 2026-10-04, put Demo A in Films, after U5, which
+   never needed that page; on 2026-10-05 dropped Films for Jellyfin's own
+   player through the lend (§3, "Lent apps, as they come"). The way past the
+   sign-in is u5-3's to measure and decide — zero sign-in, or a sign-in
+   once per person with an account the lender made — and u5-4's to build;
+   until then this risk stands.
