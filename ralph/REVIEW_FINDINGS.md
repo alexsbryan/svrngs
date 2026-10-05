@@ -712,3 +712,197 @@ production nouns, twenty-four have one definition and `Refusal` had two.
 | # | principle | site | fixed in | finding |
 |---|---|---|---|---|
 | 33 | 2, 7 | crates/svrngs-node/tests/door/main.rs:574 (`a_member_asks_what_is_lent_and_how_many_use_it_now`), crates/svrngs-node/src/door/limit.rs:54-57 (`guess`), crates/svrngs-node/src/door.rs:503, at 4048cbb | not fixed: u3-8 changes no product code | `scripts/check.sh` failed its tests step in 2 of 3 runs on 2026-10-04 with no product change, each time `bo is using it while it streams`, `left: 0`, `right: 1`. Alone it passed 6 of 6, and the door suite alone 4 of 4. Four door binaries run at once (`for i in 1 2 3 4; do target/debug/deps/door-<hash> -q & done; wait`) failed 1 of 4 the same way. The likely cause is unconfirmed, since the door tests install no tracing subscriber: the in-process endpoints also learn this host's LAN address (192.168.1.4 in the dry run's node log), and when iroh selects that path, `guess` takes the viewer to be home and the door does not count them. The next step is to trace the selected path in the test, and then either pin the test's endpoints to loopback or count a guessed-home person in the people-using figure the list reports. Which one is the operator's call or the next door row's. |
+
+## REVIEW-audit-u3-auto-2 (2026-10-04, range 2049cb1..7a18c02)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-u3-auto-1, hash 2049cb1
+(ralph/next/u3/STATE.md:8). The range ends at 7a18c02, the commit that
+gave this row its final words. It covers u3-5 to u3-8 and the operator's
+commits no unit audited: 17a829b (core is no_std), commonwealth-ai-7f's
+df42e63, 6a56575, 6af5ae8, dfde31b, af4a997 and de4e636 (the write side, the
+lint bans and the svrngs-runtime crate), 0c2952e (process managers) and
+75cbf14 (Projection). 07b541d, 364b83a, ac37105 and u3-8's commits touch no
+product code. The range touched crates/svrngs-core, crates/svrngs-node,
+crates/svrngs-runtime (new), crates/svrngs and apps/expenses (`git diff
+--stat 2049cb1 7a18c02 -- crates apps`).
+
+### (1) Net lines per unit, product code
+
+`git log --reverse --numstat --format='@@%h %s' 2049cb1..7a18c02`, summed
+the way REVIEW-audit-u3-auto-1 summed it: a commit counts toward the row
+whose `started` commit comes before it, the operator's commits each have
+their own line, product code is `crates/` and `apps/` less Cargo.lock,
+tests are files with a `tests/` or `fixtures/` segment or a name
+lean_check counts as a test (scripts/lean_check.py:33), raw diff lines,
+renames followed. Cargo.toml lines count as src.
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| operator 17a829b | 52 | 19 | 33 | 5 | 1 | 4 |
+| operator df42e63 | 151 | 66 | 85 | 287 | 184 | 103 |
+| operator 6a56575 | 426 | 140 | 286 | 158 | 40 | 118 |
+| operator 6af5ae8 | 272 | 306 | −34 | 263 | 87 | 176 |
+| operator dfde31b | 40 | 0 | 40 | 6 | 0 | 6 |
+| operator af4a997 | 252 | 294 | −42 | 54 | 159 | −105 |
+| operator de4e636 | 210 | 204 | 6 | 210 | 193 | 17 |
+| u3-5-share | 988 | 72 | 916 | 820 | 26 | 794 |
+| u3-6-limit | 478 | 57 | 421 | 471 | 12 | 459 |
+| operator 0c2952e | 225 | 26 | 199 | 92 | 0 | 92 |
+| operator 75cbf14 | 130 | 39 | 91 | 58 | 22 | 36 |
+| u3-7-expenses | 142 | 7 | 135 | 161 | 0 | 161 |
+| total | 3366 | 1230 | 2136 | 2585 | 724 | 1861 |
+
+u3-5's +916 is cli.rs (+298), lend.rs (+180), door.rs (+158), node.rs
+(+141) and share.rs (+126); u3-6's +421 is door/limit.rs (+168), door.rs
+(+136), iroh.rs (+49) and lend.rs (+45); u3-7's +135 is canary.mjs (+117)
+and expenses.js (+18). Of the operator's, 6a56575's +286 is core's
+command.rs (+218) and redeem.rs (+82) less node's redeem.rs (−60); 0c2952e's
++199 is process.rs (+177); 75cbf14's +91 is project.rs (+114); af4a997 and
+de4e636 move the journal into svrngs-runtime (lib.rs +188 and +112, node's
+lib.rs −182). `python3 scripts/lean_check.py <tree>` (rc 0), trees from
+`git archive`:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 2049cb1, range start | 1796 / 2500 | 7923 / 12000 |
+| 7a18c02, range end | 2359 / 2500 | 9596 / 12000 |
+| 683719f (#33, the knob) | 2359 | 9613 |
+| ea7363c, a16aeb8 (#33, #37: tests) | 2359 | 9613 |
+| a18e52e (#34) | 2359 | 9591 |
+| c0e063f (#35) | 2359 | 9601 |
+| 5188193 (#36), after this audit's fixes | 2359 / 2500 | 9601 / 12000 |
+
+c0e063f's +10 is rustfmt wrapping lines the longer name lengthened
+(redeem.rs 456 → 466 lines; `git diff --word-diff` shows the rename alone).
+svrngs-core went from 72% to 94% of its budget in the range (#38).
+
+### (2) Clones (`code dry-report`), each tier checked against a plant first
+
+The binary is ~/dev/commonwealth-ai/target/debug/sovereign-cli, built
+2026-10-04 08:02. The corpus came from `code index ~/dev/svrngs
+--corpus-id svrngs --full` (1605 chunks) and the SCIP graph from `refresh`
+(rust: 7233 symbols; TypeScript export failed, I4), on the range-end code
+plus 683719f..a16aeb8 (the knob and the door tests). At the default 0.95,
+scoped with a trailing slash (I11): crates/svrngs-core/ 0 exact and 0 near
+(350 locations); crates/svrngs-node/ 1 exact and 1 near (304);
+crates/svrngs-runtime/ 0 and 0 (116); crates/svrngs/ 0 and 0 (84);
+apps/expenses/ 0 and 0 (25). The two:
+
+- exact: `try_from` lend.rs:38 == :96, 3 lines, both added in u3-5 (#39).
+- near: `harden_file` declared.rs:123–132 ~ :140–148 (0.966), neither side
+  added in the range; REVIEW-audit-u3-auto-1 (2) gave its disposition.
+
+Then the plants, re-indexed `--full` (1607 chunks) with `refresh`:
+
+- **Plant A** (exact tier): door/limit.rs's `guess` (u3-6) copied byte for
+  byte with its doc lines to the end of door.rs. Result: **1 group**,
+  `guess — door.rs:713` and `door/limit.rs:53` (the `fn`s are at :714 and
+  :54, so I1 is still present).
+- **Plant B** (near tier): process.rs's `Compact::react` (0c2952e) as a free
+  `retire_of` in the same file, its locals renamed. Missed at 0.95; first at
+  **0.9**, `react ~ retire_of` (0.920) (I5).
+- Plants removed, re-indexed `--full` and refreshed: the unscoped 0.9
+  report equals the planted one less those three clusters and the two
+  symbols (`diff`: 929 → 927 symbols, 2 → 1 exact groups, 21 → 19 near).
+
+So the near tier was run unscoped at 0.9, where B shows; unscoped also
+compares across crates (I12). A side counts as **added** when `git blame -w
+-M -C -C` puts any of its lines in 2049cb1..HEAD. Every 0.9 cluster with an
+added side:
+
+| cluster (dry-report, 0.9, unscoped) | disposition |
+|---|---|
+| `try_from` lend.rs:38 == :96 (exact) | no change (#39) |
+| `append` svrngs-runtime oplog.rs:153–189 ~ `append_all` :187–224 (0.913) | **fixed in a18e52e** (#34) |
+| `decide` record.rs:57–65 ~ register.rs:89–100 ~ tests_support.rs:262–270 (0.938–0.944) | no change (#39) |
+| `len` act_set.rs:39–47 ~ `is_empty` view.rs:136–144 (0.906) | no change (#39) |
+| tests: tests_introduce.rs :96–136 ~ :136–166 (0.913); register_tests.rs :69–85 ~ :82–106 (0.901), :103–120 ~ :117–128 (0.927); ring_sync/tests.rs `admit ~ ingest` :84–95 (0.934) | no change (#39) |
+
+**Substitute check, named as a substitute.** The u3-auto-1 pass again
+(windows of 5 normalized lines over crates/**/*.rs and apps/**/*.{js,mjs},
+blank and comment lines dropped, hashed; a hit is **new** when a line of
+either span is blamed inside the range or is uncommitted). With plants A
+and B in: one more line than without, `NEW door.rs:713-722 ==
+door/limit.rs:54-63` (A). B, its locals renamed, is not seen by this pass;
+the near tier sees it. 40 new hits unplanted:
+
+| hit | disposition |
+|---|---|
+| door/limit.rs:43-51 == door/main.rs:65-73 (a node started for the door tests, twice in one binary, after ea7363c) | **fixed in a16aeb8** (#37) |
+| svrngs-runtime journal.rs:205-210 == :370-375 (an `Author` literal in the test-only `append` and in `seal`; lib.rs:195 is a third) | no change (#39) |
+| svrngs-core admit.rs:61-66 == sync.rs:66-71 (imports); svrngs-node rail.rs:407-412 == :419-424 (`append`'s and `log`'s parse step, as #32 found for :431/:638); svrngs cli.rs:404-408 == :416-420 (`Said::Shared` printed, running or not) | no change (#39) |
+| 26 in tests_introduce.rs, record_tests.rs:8-12 == register_tests.rs:43-47, rail/tests.rs:125-129 == :198-202, ring_sync/tests.rs:228-232 == :413-417, door/limit.rs:182-186 == :208-212 and :58-63 == door/main.rs:77-82, runtime tests.rs:166-171 == :631-636 | no change (#39) |
+| canaries.rs:64-70 == record_api.rs:76-82; group_not_mesh.rs:58-67 == record_api.rs:56-65; svrngs join_by_link.rs:33-48 == new.rs:16-31, :47-58 == share.rs:33-43 | #31's case: fixtures copied across test binaries; not moved, for #31's reason |
+
+Reading the range for decisions neither pass would show: the lend list's
+"using" (`Counts::people`, door/limit.rs:158) and the door's limit
+(`Counts::ask`, :115) both ask `Viewer::counted` (:93); the command writes,
+withdraws and lists lends only through `svrngs_node::lend` (cli.rs:659,
+:671, :674). Nothing found.
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff 2049cb1 7a18c02 -- crates apps`, added lines matching
+`(struct|enum|trait|type) Name`, less associated types (`type Error`,
+`Refusal`, `Effect`) and the three moved by af4a997 (`RingJournal`,
+`RingRail`, `struct Sealed`, also run: one definition each): ActSet,
+Answer, Append, AppendRefusal, Author, Authored, Batch, Command, Compact,
+Counts, Due, Fixture, Invited, Invites, Kind, Lends, Lent, Memory, Mine,
+MintInvite, NotACommand, Observed, Offered, ProcessManager, Projection,
+Reads, Recorded, Redeem, RedeemRefusal, Refused, Retire, Seal, Sealed
+(trait), Share, ShareRefusal, Store, Tip, Uncaused, Upload, Using, Verdict,
+Via, Whereabouts, Wire. Forty have one definition; `Mine` and
+`NotACommand` give `(0)`, being test nouns. More than one:
+
+- **`Command` (2)**: crates/svrngs/src/cli.rs:120 (`enum`, what was typed,
+  at 2049cb1 too) and crates/svrngs-core/src/command.rs:37 (`trait`, the
+  decider, 6a56575). **Fixed in 5188193** (#36); after `refresh`,
+  `Command` (1) command.rs:37 and `Verb` (1) cli.rs:120.
+- **`Refused` (2)**: crates/svrngs-core/src/command.rs:66 and
+  crates/svrngs-node/src/redeem.rs:210 (the `enum` at :211, I1). **Fixed in
+  c0e063f** (#35); after `refresh`, `Refused` (1) and `NotAdmitted` (1).
+- **`Sealed` (3)**: crates/svrngs-core/src/process.rs:16 and
+  project.rs:15, the private sealed-trait modules of `ProcessManager` and
+  `Projection`, and crates/svrngs-runtime/src/lib.rs:271, the seal's
+  result. No change (#39).
+
+### #33, reproduced and settled
+
+At 7a18c02, with a tracing subscriber added for the run and not
+committed (tracing-subscriber as a dev-dependency, `door=info`), six door
+binaries ran at once, three rounds: **9 of 18 failed**. limit.rs:205 failed
+six times, limit.rs:179 three times and main.rs:574 (the finding's test)
+once. So a second test had the same cause. The door logged "door: guessed in this computer's
+home" 39 times, each `addr=Some(192.168.1.4)`. Both nodes bind iroh's
+wildcard, and iroh moves the connection dialled on loopback onto this
+computer's private address, which `guess` (door/limit.rs:54) takes to be
+home, as DESIGN §8 "The local network is guessed" says it should. The fault
+was in the tests' world, not in the door. The fix: `RelayConfig::on_loopback_only`
+(683719f; planted, its test sees `[0.0.0.0:…, [::]:…]`), used by every
+node of the door binary (ea7363c, a16aeb8). Same load and instrument
+after: **18 of 18 passed**, with no "guessed in" line.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 33 | 2, 7 | crates/svrngs-node/tests/door/main.rs:574 and door/limit.rs:179, :205, at 7a18c02; crates/svrngs-node/src/guest.rs `relayed_endpoint_builder` | 683719f, ea7363c | Reproduced above. Cause: iroh carried the tests' members on this computer's private address, so the door guessed them home. The door tests now listen on 127.0.0.1 alone. |
+| 34 | 8 ("collapse the drive") | crates/svrngs-runtime/src/oplog.rs:153-189 (`append`) and :187-224 (`append_all`), at 7a18c02 | a18e52e | de4e636 made `append` test-only, so production writes only through `append_all`, while tests wrote through a second body of the single-write-then-fsync rule. `append` now calls `append_all` with one op. Planted, with `append_all` writing no newline: 20+ tests fail, `a_logical_line_including_its_newline_is_written_once` among them. |
+| 35 | 8 ("one name") | crates/svrngs-core/src/command.rs:66 and crates/svrngs-node/src/redeem.rs:211, at 7a18c02 | c0e063f | Two `Refused` types, and redeem.rs imported core's as `CommitRefused` to tell them apart (:57). The node's private one is `NotAdmitted` now. |
+| 36 | 8 ("one name") | crates/svrngs/src/cli.rs:121 and crates/svrngs-core/src/command.rs:37, at 7a18c02 | 5188193 | The command's `enum Command` and core's `trait Command`. The command's is `Verb`, the word its doc already used. |
+| 37 | 8 | crates/svrngs-node/tests/door/limit.rs:43-51 and door/main.rs:65-73, at ea7363c | a16aeb8 | Two node starters in one test binary, each spelling the RelayConfig #33 depends on. Now there is one, `start` in door/main.rs. |
+| 38 | 5 (budget) | scripts/lean_check.py:25 (`crates/svrngs-core: 2500`); crates/svrngs-core/src/command.rs, process.rs, project.rs | not fixed: a raise is the operator's | svrngs-core grew from 1796 to 2359 of 2500 lines in this range. 563 lines are the operator's commits (6a56575 command.rs +218, 0c2952e process.rs +177, 75cbf14 project.rs +114). 141 lines are left, so the next decider or projection added to the core may hit the ceiling. Recorded so that is not a surprise. Nothing is duplicated there: the core is 0 exact and 0 near at 0.95. |
+| 39 | 8 | the "no change" rows in (2) and (3) | no change | Each is one of: serde glue that asks one `parse` (`try_from`); one `Command` impl's one-line decision each (`decide`); a struct literal around the one clock read (`Author`, `now_unix`, journal.rs:608); a door's parse step; imports; trivial accessors; a sealed-trait module per sealed trait, each with its own compiler diagnostic; tests stating their own cases. Nothing is decided twice. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code dry-report` exact tier; `code converge noun` | Still present: `guess` at door.rs:713 for the `fn` at :714; `NotAdmitted` at redeem.rs:210 for :211; `Command` at cli.rs:120 for :121. |
+| I4 | 6 | `refresh` | Still present: "typescript: skipped (export failed)". |
+| I5 | 5, 7 | `code dry-report` near tier | Still present. A renamed copy (`retire_of`, 0.920) is missed at the default 0.95 while the report says "No duplication found". |
+| I10 | 6 | `code dry-report` header | Still present: "927 function/method symbols" in every scope. |
+| I11 | 6 | `code dry-report --scope` | Still present; every scoped run here used a trailing slash. |
+
+Erratum: a18e52e's body says "oplog.rs: -34 +11 lines". `git show --stat
+a18e52e` gives 11 insertions and 33 deletions.
