@@ -104,13 +104,16 @@ else
   echo "wasm-opt: not on PATH (binaryen) — shipping the unoptimized module"
 fi
 
-# The version is the module's content hash, stamped into every shell URL and
-# the service-worker cache name, so a rebuild invalidates a guest's cache
-# instead of serving a stale runtime (web/sw.js).
+# The version is the content hash of the module and of the page's own files,
+# stamped into every shell URL and the service-worker cache name, so a rebuild
+# invalidates a guest's cache instead of serving a stale runtime (web/sw.js).
+# The page's files are in it since u4-10, which changed only them: hashing the
+# module alone gave that build u4-9's version, which a host may have cached
+# for good (demo/u4.md).
 # sha256sum is GNU coreutils; stock macOS has only shasum. Either works.
 if command -v sha256sum >/dev/null; then SHA_CMD="sha256sum"; else SHA_CMD="shasum -a 256"; fi
-VERSION="$(cat "$OUT/wasm/svrngs_web_bg.wasm" "$OUT/wasm/svrngs_web.js" | $SHA_CMD | cut -c1-12)"
 PAGE=(index.html app.js store.js hand.js sw.js)
+VERSION="$(cat "$OUT/wasm/svrngs_web_bg.wasm" "$OUT/wasm/svrngs_web.js" "${PAGE[@]/#/$APP/}" | $SHA_CMD | cut -c1-12)"
 for f in "${PAGE[@]}"; do
   cp "$APP/$f" "$OUT/"
   sed -i.bak "s/__VERSION__/${VERSION}/g" "$OUT/$f"
