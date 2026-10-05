@@ -111,8 +111,8 @@ fi
 if command -v sha256sum >/dev/null; then SHA_CMD="sha256sum"; else SHA_CMD="shasum -a 256"; fi
 VERSION="$(cat "$OUT/wasm/svrngs_web_bg.wasm" "$OUT/wasm/svrngs_web.js" | $SHA_CMD | cut -c1-12)"
 cp "$APP/index.html" "$APP/app.js" "$APP/store.js" "$APP/sw.js" "$OUT/"
-sed -i.bak "s/__VERSION__/${VERSION}/g" "$OUT/index.html" "$OUT/app.js" "$OUT/sw.js"
-rm -f "$OUT/index.html.bak" "$OUT/app.js.bak" "$OUT/sw.js.bak"
+sed -i.bak "s/__VERSION__/${VERSION}/g" "$OUT/index.html" "$OUT/app.js" "$OUT/store.js" "$OUT/sw.js"
+rm -f "$OUT/index.html.bak" "$OUT/app.js.bak" "$OUT/store.js.bak" "$OUT/sw.js.bak"
 
 echo
 echo "built: $OUT  (version ${VERSION})"

@@ -211,7 +211,9 @@ if ('serviceWorker' in navigator) {
 // reached the origin (u4-7; ralph/REVIEW_FINDINGS.md has the runs).
 async function opening(token) {
   try {
-    await init();
+    // The wasm by its one URL, from the cache the worker reads it from
+    // too (store.js `runtime`, u4-9).
+    await init({ module_or_path: store.runtime() });
     const kept = await store.groups();
     let group = token ? kept.find((g) => g.token === token) : kept[0];
     if (token && !group) group = await join(token, kept);

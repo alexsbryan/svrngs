@@ -91,3 +91,34 @@ export async function unseal(group) {
   const key = await crypto.subtle.decrypt(bound(group.id, group.iv), await sealingKey(), group.sealed);
   return new Uint8Array(key);
 }
+
+// ── the runtime's module ────────────────────────────────────────────────
+//
+// The wasm, fetched once a version (u4-9; ralph/REVIEW_FINDINGS.md #51). A
+// cold join took it three times in u4-8's dry run: the page fetched it as
+// wasm-bindgen's glue names it, without the version; the worker's install
+// cached it with `?v=`; and the worker's `init()` fetched it again, since
+// a worker's own fetches never pass through its cache. Now it has one URL,
+// with the version, and one entry in the version's cache, which whoever
+// asks first fills — the page, on a cold join — and the worker reads.
+// __VERSION__ is stamped at build time, as in sw.js.
+export const CACHE = 'svrngs-web-__VERSION__';
+const RUNTIME = new URL('./wasm/svrngs_web_bg.wasm?v=__VERSION__', import.meta.url);
+
+// The module's `Response`, for wasm-bindgen's `init({ module_or_path })`:
+// from the version's cache, else fetched and kept there. A page a worker
+// serves asks the worker, which answers from its cache: an older worker,
+// before it is replaced, answers with its own version's module, which must
+// not be kept under this version's URL. Where the browser gives no cache
+// (an origin that is not https), fetched each time.
+export async function runtime() {
+  if (self.navigator?.serviceWorker?.controller) return fetch(RUNTIME);
+  const cache = await self.caches?.open(CACHE).catch(() => null);
+  const hit = await cache?.match(RUNTIME);
+  if (hit) return hit;
+  const res = await fetch(RUNTIME);
+  if (cache && res.ok) {
+    cache.put(RUNTIME, res.clone()).catch((e) => console.debug(`STORE: the runtime's module was not kept: ${e}`));
+  }
+  return res;
+}
