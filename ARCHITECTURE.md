@@ -327,14 +327,19 @@ as its own step, and a canary that cannot start fails.
 spelling of a key, took its callers; then changed: a key file that cannot be read,
 and a fresh key that cannot be written, refuse naming the file, where
 upstream fell back to a key nobody keeps, and the file is `identity`, a word
-a person may read. `link.rs` is mesh-join-vocab's https guest link
+a person may read. `link.rs`, now svrngs-core's, is mesh-join-vocab's https guest link
 (`deep_link.rs:228-300`) and its `sovereign://join/` form (`:421-436`),
 made one short base64url `Token` (u2-8): a `Format` byte, the issuer's key,
 16 secret bytes the link's signing key is derived from, and the issuer's
 relay only from a computer without address lookup. It is printed as the
 client's link, `svrngs://join/<token>`, and as `<origin>#<token>` beside
 it for a group that keeps a page origin; `Link::parse` reads either or the
-bare token. `group.rs` is new: a group's `Seed` — its
+bare token. u4-2 moved it whole, with its tests, into svrngs-core
+(`svrngs_core::link`), so a browser's page parses a link with the command's
+body: there the issuer's key is the ed25519 key iroh's `PublicKey` checks and
+its relay the `Url` iroh's `RelayUrl` parses. What the core cannot do stays
+here in `issuer.rs`: `mint` draws a fresh token's secret, and `key` and `addr`
+name the issuer as iroh dials it. `group.rs` is new: a group's `Seed` — its
 name, the founder's name and key, 16 random bytes — whose BLAKE3 hash is
 the group's id and so its directory; `seed.json` holds it beside the
 record, and `Seed::roster` writes the register's seed, `roster.json`, the

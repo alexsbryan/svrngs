@@ -85,24 +85,6 @@ fn a_token_with_an_unknown_format_or_cut_short_parses_as_nothing() {
     assert!(Link::parse("not a link").is_none());
 }
 
-/// A client's link with no relay is short: at most 90 characters.
-#[test]
-fn a_clients_link_with_no_relay_is_at_most_90_characters() {
-    let link = client_link(&mint(issuer(), None));
-    eprintln!("a client's link, {} characters: {link}", link.len());
-    assert!(link.len() <= 90, "{} characters: {link}", link.len());
-}
-
-/// A minted token spells no word DESIGN §1 keeps from people, in any case,
-/// draw after draw.
-#[test]
-fn a_minted_token_spells_no_kept_word() {
-    for _ in 0..10_000 {
-        let token = mint(issuer(), None);
-        assert!(!token.spells_a_kept_word(), "{}", token.encode());
-    }
-}
-
 #[test]
 fn an_origin_is_http_with_no_fragment() {
     assert!(Origin::parse("https://svrnme.sh/ring/").is_some());

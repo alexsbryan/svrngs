@@ -18,8 +18,9 @@ use std::time::{Duration, Instant};
 
 use svrngs::cli::{self, Printed, Refusal, Said, Verb};
 use svrngs::group::{self, Name, Seed};
-use svrngs::link::{client_link, https_link, Link, Origin, Token, KEPT_WORDS};
+use svrngs::issuer;
 use svrngs_node::iroh::{Contact, EndpointAddr, MemoryLookup, RelayConfig, RelayUrl};
+use svrngs_node::link::{client_link, https_link, Link, Origin, Token, KEPT_WORDS};
 use svrngs_node::node::Node;
 use svrngs_node::redeem::{
     ask, redeem, AskRequest, Asked, RedeemError, RedeemRequest, Redeemed, REFUSAL,
@@ -115,7 +116,7 @@ fn knows(who: &Computer, sam: &Node) {
 /// A printed client's link, parsed, after checking it dials Sam.
 fn parsed(printed: &Printed, sam: &Node) -> Link {
     let link = Link::parse(&printed.client).expect("the printed link parses");
-    assert_eq!(link.token.issuer, sam.endpoint().id());
+    assert_eq!(issuer::key(&link.token), sam.endpoint().id());
     link
 }
 
@@ -187,13 +188,13 @@ async fn present_from(
 
 /// The issuer's answer to `req`, sent by `who` to `link`'s issuer.
 async fn send(who: &Computer, link: &Link, req: &RedeemRequest) -> Result<Redeemed, String> {
-    words(redeem(who.node.endpoint(), link.token.issuer_addr(), req).await)
+    words(redeem(who.node.endpoint(), issuer::addr(&link.token), req).await)
 }
 
 /// The issuer's answer to `who` asking what `link` is for.
 async fn asks(who: &Computer, link: &Link) -> Result<Asked, String> {
     let req = AskRequest::sign(&link.token.key(), &who.key);
-    words(ask(who.node.endpoint(), link.token.issuer_addr(), &req).await)
+    words(ask(who.node.endpoint(), issuer::addr(&link.token), &req).await)
 }
 
 /// An answer, or a refusal's words; never no answer.
@@ -376,7 +377,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     let mut asked = AskRequest::sign(&forged.token.key(), &gus.key);
     asked.link = actor_of(&open.token.key());
     let unsigned_ask =
-        words(ask(gus.node.endpoint(), open.token.issuer_addr(), &asked).await).map(|_| ());
+        words(ask(gus.node.endpoint(), issuer::addr(&open.token), &asked).await).map(|_| ());
     assert!(!stands(&sam.node, &group, &gus.key));
 
     // ── Sam's link, past its lapse: Eve is refused.
@@ -683,7 +684,11 @@ async fn a_link_from_a_computer_without_lookup_carries_its_relay() {
         printed.client
     );
     let link = parsed(&printed, &sam.node);
-    assert_eq!(link.token.relay, Some(relay), "the link carries the relay");
+    assert_eq!(
+        link.token.relay,
+        Some(relay.into()),
+        "the link carries the relay"
+    );
     let alex = computer(2).await;
     knows(&alex, &sam.node);
     let joined = cli::join_group(&alex.node, &alex.key, &link, &name("Alex"))
@@ -723,8 +728,7 @@ fn an_issuer_answering_another_groups_seed_is_not_believed() {
 fn join_parses_its_link() {
     let founder = SigningKey::from_bytes(&[1; 32]);
     let token = Token {
-        issuer: svrngs_node::iroh::PublicKey::from_bytes(&founder.verifying_key().to_bytes())
-            .unwrap(),
+        issuer: founder.verifying_key(),
         secret: [7; 16],
         relay: None,
     };

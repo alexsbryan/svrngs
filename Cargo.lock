@@ -3276,6 +3276,7 @@ dependencies = [
 name = "svrngs-core"
 version = "0.1.0"
 dependencies = [
+ "base64",
  "blake3",
  "ed25519-dalek 2.2.0",
  "hex",
@@ -3283,6 +3284,7 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.21",
  "tracing",
+ "url",
 ]
 
 [[package]]

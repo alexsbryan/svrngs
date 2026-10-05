@@ -5,7 +5,7 @@ version.workspace = true
 # (ARCH 2).
 edition = "2021"
 license.workspace = true
-description = "The svrngs command: a computer's device key, a group's link, and the verbs that make a group, mint its link and run the node. The device key is forked from commonwealth-ai's commonwealth-transport identity.rs, the link from mesh-join-vocab's deep_link.rs, now one short token."
+description = "The svrngs command: a computer's device key, a group's link, and the verbs that make a group, mint its link and run the node. The device key is forked from commonwealth-ai's commonwealth-transport identity.rs; the link's token is svrngs-core's, and the command draws its secret."
 
 [dependencies]
 svrngs-node = { workspace = true }

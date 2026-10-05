@@ -58,8 +58,9 @@ use svrngs_node::{MintInvite, Refused as CommitRefused};
 
 use crate::group::{self, Name, Seed, SeedError};
 use crate::identity::{self, KeyError};
-use crate::link::{self, client_link, https_link, Link, Origin, Token};
+use crate::issuer;
 use crate::share::{self, Share, ShareRefusal};
+use svrngs_node::link::{client_link, https_link, Link, Origin, Token};
 
 pub const USAGE: &str = "\
 svrngs — keep what your group shares on your own computers.
@@ -758,7 +759,7 @@ pub async fn join_group(
     link: &Link,
     person: &Name,
 ) -> Result<Said, Refusal> {
-    let issuer = link.token.issuer_addr();
+    let issuer = issuer::addr(&link.token);
     let link_key = link.token.key();
     let asked = ask(
         node.endpoint(),
@@ -912,7 +913,7 @@ pub async fn new_link(
     reason = "the command's clock: a link's life starts now"
 )]
 async fn mint(node: &Node, seed: &Seed, relay: &RelayConfig) -> Result<Token, Refusal> {
-    let token = link::mint(node.endpoint().id(), issuer_relay(node, relay).await);
+    let token = issuer::mint(node.endpoint().id(), issuer_relay(node, relay).await);
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_secs() as i64)

@@ -6,8 +6,9 @@
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 use svrngs::cli::{self, Printed, Refusal, Verb, LINK_LIFE_SECS};
 use svrngs::group::{self, Name};
-use svrngs::link::{Link, Origin, CLIENT_PREFIX};
+use svrngs::issuer;
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
+use svrngs_node::link::{Link, Origin, CLIENT_PREFIX};
 use svrngs_node::node::Node;
 use svrngs_node::register::Standing;
 use svrngs_node::{actor_of, derive_id, Ed25519Verifier, OpId, RailAct, SigningKey};
@@ -93,7 +94,7 @@ async fn new_twice_with_one_name_makes_two_groups_with_two_ids() {
         assert_eq!(printed.https, None, "no origin, so no https link");
         let link = Link::parse(&printed.client).expect("the printed link parses");
         assert_eq!(
-            link.token.issuer,
+            issuer::key(&link.token),
             node.endpoint().id(),
             "the link dials this computer"
         );

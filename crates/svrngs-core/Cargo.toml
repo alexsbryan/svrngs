@@ -5,9 +5,11 @@ version.workspace = true
 # fork lands as one (ARCH 2).
 edition = "2021"
 license.workspace = true
-description = "A group's record: signed acts, admission into one total order, membership and sync. Pure: no filesystem, no clock, no network. Forked from commonwealth-ai's commonwealth-rail-core, with oplog-types and kernel-types' ContentHash inlined as modules."
+description = "A group's record: signed acts, admission into one total order, membership and sync. Pure: no filesystem, no clock, no network. A link's token and the protocols' names, so a browser's page spells them as the node does. Forked from commonwealth-ai's commonwealth-rail-core, with oplog-types and kernel-types' ContentHash inlined as modules, and mesh-join-vocab's deep_link.rs as the link."
 
 [dependencies]
+# A link's token is base64url (link.rs); `alloc` alone, as the core is no_std.
+base64 = { version = "0.22", default-features = false, features = ["alloc"] }
 blake3 = { workspace = true }
 ed25519-dalek = { workspace = true }
 hex = { workspace = true }
@@ -16,6 +18,9 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 # Admission says what it refuses at debug.
 tracing = { workspace = true }
+# A link's relay is parsed as iroh parses a `RelayUrl` (link.rs); without
+# `std`, as the core is no_std.
+url = { version = "2.5", default-features = false }
 
 [dev-dependencies]
 # `hazmat` signs one act with a second nonce, so a test can hold one act

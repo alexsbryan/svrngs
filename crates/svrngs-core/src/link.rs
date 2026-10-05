@@ -22,17 +22,31 @@
 //! origin. `svrngs join` takes either, or the bare token. Upstream's
 //! fields, percent helpers and lapse are gone: the lapse is the issuer's
 //! `Invite`'s, and the issuer's node decides a redemption (DESIGN §6).
+//!
+//! In svrngs-core since u4-2 (DESIGN §10, call 5), so the command and a
+//! browser's page parse a link with one body. The core has no iroh, so the
+//! two types it named are the ones iroh's wrap, imported under iroh's
+//! names: the issuer's key is the ed25519 key iroh's `PublicKey::from_bytes`
+//! checks (`iroh-base-1.0.2/src/key.rs:122-127`), and its relay the `Url`
+//! iroh's `RelayUrl::from_str` parses (`relay_url.rs:38-45`), so a token
+//! parses here as it did through iroh. Drawing a secret and dialling the issuer
+//! stay the command's (`svrngs::issuer`): the core draws nothing and dials
+//! nothing.
+
+use alloc::format;
+use alloc::string::{String, ToString};
+use alloc::vec;
 
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine as _;
-use svrngs_node::iroh::{EndpointAddr, PublicKey, RelayUrl};
-use svrngs_node::SigningKey;
+use ed25519_dalek::{SigningKey, VerifyingKey as PublicKey};
+use url::Url as RelayUrl;
 
 /// The client's link's prefix, before the token.
 pub const CLIENT_PREFIX: &str = "svrngs://join/";
 
-/// The words DESIGN §1 keeps from people. [`mint`] draws a link's secret
-/// again while its token spells one, in any case.
+/// The words DESIGN §1 keeps from people. The command's `mint` draws a
+/// link's secret again while its token spells one, in any case.
 pub const KEPT_WORDS: [&str; 7] = ["ring", "member", "key", "sync", "journal", "node", "relay"];
 
 /// BLAKE3 `derive_key` context for a link's signing key from its secret.
@@ -40,11 +54,6 @@ const LINK_KEY_CONTEXT: &str = "svrngs 2026-10-04 link signing key from its secr
 
 /// A link's secret: 128 bits.
 pub const SECRET_LEN: usize = 16;
-
-/// How many secrets [`mint`] draws before printing one whose token spells
-/// a kept word: the issuer's key is fixed, so its part may spell one that
-/// no secret changes.
-const DRAWS: usize = 256;
 
 /// What a token's bytes after its format byte hold: a closed set.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -89,16 +98,6 @@ impl Token {
         SigningKey::from_bytes(&blake3::derive_key(LINK_KEY_CONTEXT, &self.secret))
     }
 
-    /// How the issuer's computer is dialled: its key, and its relay when
-    /// the token carries one.
-    pub fn issuer_addr(&self) -> EndpointAddr {
-        let addr = EndpointAddr::new(self.issuer);
-        match &self.relay {
-            Some(relay) => addr.with_relay_url(relay.clone()),
-            None => addr,
-        }
-    }
-
     /// `format || issuer[32] || secret[16] || relay?`, base64url unpadded.
     pub fn encode(&self) -> String {
         let format = match self.relay {
@@ -131,7 +130,7 @@ impl Token {
         let relay = match (format, rest) {
             (Format::Bare, Some([])) => None,
             (Format::Relayed, Some(rest)) if !rest.is_empty() => {
-                let parsed = std::str::from_utf8(rest)
+                let parsed = core::str::from_utf8(rest)
                     .ok()
                     .and_then(|s| s.parse::<RelayUrl>().ok());
                 if parsed.is_none() {
@@ -219,28 +218,6 @@ pub fn client_link(token: &Token) -> String {
 /// The https link to `token` on `origin`: the token in the fragment.
 pub fn https_link(origin: &Origin, token: &Token) -> String {
     format!("{}#{}", origin.as_str(), token.encode())
-}
-
-/// A fresh token for `issuer`, reached through `relay` when given: its
-/// secret drawn again, up to [`DRAWS`] times, while the token spells a
-/// word DESIGN §1 keeps from people.
-#[expect(clippy::disallowed_methods, reason = "draws a link's secret")]
-pub fn mint(issuer: PublicKey, relay: Option<RelayUrl>) -> Token {
-    let mut token = Token {
-        issuer,
-        secret: [0; SECRET_LEN],
-        relay,
-    };
-    for draw in 1..=DRAWS {
-        // As identity.rs: getrandom failing is a host with no entropy.
-        getrandom::fill(&mut token.secret).expect("failed to draw a link's secret");
-        if !token.spells_a_kept_word() {
-            tracing::debug!(target: "link", draw, "link: a token spelling no kept word");
-            return token;
-        }
-    }
-    tracing::debug!(target: "link", draws = DRAWS, "link: every draw spelled a kept word — the issuer's key or relay spells it; printed anyway");
-    token
 }
 
 #[cfg(test)]

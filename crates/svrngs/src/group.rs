@@ -29,7 +29,7 @@ use serde::{Deserialize, Serialize};
 pub use svrngs_node::Name;
 use svrngs_node::{field, namespaces_in, Person, Roster};
 
-use crate::link::Origin;
+use svrngs_node::link::Origin;
 
 /// Domain separator for a group id's hash, so an id is never the hash of
 /// anything else svrngs hashes (an act id is `svrngs/act/v1`).

@@ -20,10 +20,10 @@ use std::time::Duration;
 
 use svrngs::cli::{self, Refusal, Said, Verb};
 use svrngs::group::{self, Name};
-use svrngs::link::{Link, KEPT_WORDS};
 use svrngs::share::{self, Share};
 use svrngs_node::iroh::{EndpointAddr, MemoryLookup, RelayConfig};
 use svrngs_node::lend::{Kind, LendName};
+use svrngs_node::link::{Link, KEPT_WORDS};
 use svrngs_node::node::Node;
 use svrngs_node::SigningKey;
 
