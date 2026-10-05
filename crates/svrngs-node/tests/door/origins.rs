@@ -368,3 +368,39 @@ async fn read_head(sock: &mut TcpStream) -> Option<String> {
     }
     Some(String::from_utf8_lossy(&head).into_owned())
 }
+
+/// The door's own (u5-2): an origin that switches a request asking
+/// `Upgrade: websocket` to the raw connection and echoes every byte it
+/// reads after, as a WebSocket echo does below its frames; any other
+/// request is answered 426 naming the upgrade it wants. It keeps each
+/// request head.
+pub async fn upgrade_origin() -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
+    let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind");
+    let addr = listener.local_addr().unwrap();
+    let heads = Arc::new(Mutex::new(Vec::new()));
+    let kept = heads.clone();
+    tokio::spawn(async move {
+        while let Ok((mut sock, _)) = listener.accept().await {
+            let kept = kept.clone();
+            tokio::spawn(async move {
+                let Some(head) = read_head(&mut sock).await else {
+                    return;
+                };
+                let asks = head.to_ascii_lowercase().contains("\r\nupgrade: websocket");
+                kept.lock().unwrap().push(head);
+                if !asks {
+                    let no = b"HTTP/1.1 426 Upgrade Required\r\nContent-Length: 7\r\nConnection: close\r\n\r\nupgrade";
+                    let _ = sock.write_all(no).await;
+                    return;
+                }
+                let yes = b"HTTP/1.1 101 Switching Protocols\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n\r\n";
+                if sock.write_all(yes).await.is_err() {
+                    return;
+                }
+                let (mut r, mut w) = sock.split();
+                let _ = tokio::io::copy(&mut r, &mut w).await;
+            });
+        }
+    });
+    (addr, heads)
+}

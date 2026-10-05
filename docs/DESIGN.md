@@ -136,11 +136,12 @@ u5-0):
   (`web/sw.js:73-74`), the origin that holds the key (§11, risk 5); on a
   computer a lender's lends share the loopback port of the bridge to that
   lender (`node.rs:532`; `crates/svrngs-node/src/iroh.rs:212-265`).
-- *A live socket* (u5-2). The door strips `Upgrade` as hop-by-hop
-  (`crates/svrngs-node/src/door.rs:120-129`), so Jellyfin's `/socket`
-  answered 404 through it and 101 on the lender's computer
-  (`demo/runs/a/dry-2026-10-04/README.md:69-73`), and a service worker sees
-  no WebSocket at all.
+- *A live socket* (u5-2). The door stripped `Upgrade` as hop-by-hop, so
+  Jellyfin's `/socket` answered 404 through it and 101 on the lender's
+  computer (`demo/runs/a/dry-2026-10-04/README.md:69-73`); since u5-2 it
+  asks the service again and splices the two once it answers 101
+  (`door.rs`, `upgrade_of` and `splice`). A service worker still sees no
+  WebSocket at all.
 - *A read from another origin* (none: u5-2 makes it unneeded). The door
   sets no `access-control-*` header (`door.rs` has none), so a page on
   another origin can read neither a lend's JSON nor its share header; with

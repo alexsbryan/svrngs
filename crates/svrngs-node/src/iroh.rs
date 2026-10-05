@@ -495,8 +495,10 @@ async fn serve_stream(
             req.extensions_mut().insert(via.clone());
             router.clone().oneshot(req)
         });
+    // svrngs (u5-2): with upgrades, so the door carries a WebSocket.
     if let Err(e) = hyper::server::conn::http1::Builder::new()
         .serve_connection(io, service)
+        .with_upgrades()
         .await
     {
         tracing::debug!(

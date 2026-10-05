@@ -28,6 +28,11 @@
 //! (`serve_client.rs:616-655`, `forward_stream`); it streamed no request body
 //! anywhere.
 //!
+//! **A live socket** (u5-2): a request asking to switch protocols — a
+//! WebSocket's `Upgrade` — is asked again of the service, and once it
+//! answers 101 the two connections are spliced, byte for byte, the person
+//! counted on the lend while it is open.
+//!
 //! **The secret never goes back.** A response header holding the lend's
 //! secret is dropped, named at warn by its header, never its value.
 //!
@@ -117,6 +122,8 @@ const CONNECT_WITHIN: Duration = Duration::from_secs(10);
 /// browser used) and `authorization` (a lend's secret displaces a client's,
 /// and a lend declaring none leaves the client's alone) and
 /// `content-length` (kept, so a `HEAD` and a `206` keep their length).
+/// A message asking to switch protocols asks again on the far side
+/// ([`upgrade_of`], u5-2), so a WebSocket crosses the door.
 const HOP_BY_HOP: [&str; 8] = [
     "connection",
     "keep-alive",
@@ -379,6 +386,59 @@ fn strip_hop_by_hop(headers: &mut HeaderMap) -> usize {
     n
 }
 
+/// The protocol a message asks to switch to: its `Upgrade`, when its
+/// `Connection` names `upgrade` (RFC 9110 §7.8). Read before the hop-by-hop
+/// headers go, so the door carries a WebSocket's upgrade (u5-2), where it
+/// stripped `Upgrade` with the rest.
+fn upgrade_of(headers: &HeaderMap) -> Option<HeaderValue> {
+    let named = headers
+        .get_all(header::CONNECTION)
+        .iter()
+        .filter_map(|v| v.to_str().ok())
+        .flat_map(|v| v.split(','))
+        .any(|t| compare_name(t) == "upgrade");
+    named.then(|| headers.get(header::UPGRADE).cloned())?
+}
+
+/// Ask for `protocol` again on a head whose hop-by-hop headers went.
+fn keep_upgrade(headers: &mut HeaderMap, protocol: HeaderValue) {
+    headers.insert(header::CONNECTION, HeaderValue::from_static("upgrade"));
+    headers.insert(header::UPGRADE, protocol);
+}
+
+/// Once both sides have switched, copy the bytes each writes to the other
+/// until either ends: a WebSocket, across the door. `held` lasts as long,
+/// so a person counts on the lend while their socket is open.
+pub(crate) fn splice<H: Send + 'static>(
+    asker: hyper::upgrade::OnUpgrade,
+    service: hyper::upgrade::OnUpgrade,
+    held: H,
+    lend: String,
+) {
+    tokio::spawn(async move {
+        let _held = held;
+        let (asker, service) = match tokio::try_join!(asker, service) {
+            Ok(both) => both,
+            Err(e) => {
+                tracing::debug!(target: "door", lend, error = %e, "door: an upgrade did not complete on both sides");
+                return;
+            }
+        };
+        let (mut a, mut s) = (
+            hyper_util::rt::TokioIo::new(asker),
+            hyper_util::rt::TokioIo::new(service),
+        );
+        match tokio::io::copy_bidirectional(&mut a, &mut s).await {
+            Ok((up, down)) => {
+                tracing::debug!(target: "door", lend, up, down, "door: an upgraded connection ended")
+            }
+            Err(e) => {
+                tracing::debug!(target: "door", lend, error = %e, "door: an upgraded connection ended in error")
+            }
+        }
+    });
+}
+
 /// The request's head as the service is to see it: the client's headers
 /// but the hop-by-hop ones, those under [`IDENTITY_PREFIX`] and those a
 /// secret fills; then who is asking; then the secret. Answers how many the
@@ -605,6 +665,9 @@ async fn forward(
     req: Request,
     Told { share, held }: Told,
 ) -> Response {
+    let mut req = req;
+    let upgrade = upgrade_of(req.headers());
+    let asker_side = upgrade.as_ref().map(|_| hyper::upgrade::on(&mut req));
     let (mut parts, body) = req.into_parts();
     let target = match parts.uri.query() {
         Some(q) => format!("{path}?{q}"),
@@ -632,6 +695,10 @@ async fn forward(
     if displaced > 0 {
         tracing::info!(target: "door", actor, lend = %lend.name, displaced,
             "door: dropped headers the client typed in the door's or the secret's name before setting them");
+    }
+    if let Some(protocol) = upgrade.clone() {
+        tracing::debug!(target: "door", actor, lend = %lend.name, ?protocol, "door: the request asks to switch protocols, carried");
+        keep_upgrade(&mut parts.headers, protocol);
     }
     let mut request = match axum::http::Request::builder()
         .method(parts.method)
@@ -695,7 +762,7 @@ async fn forward(
     // Drives the connection until the response body is read to its end.
     let name = lend.name.clone();
     tokio::spawn(async move {
-        if let Err(e) = conn.await {
+        if let Err(e) = conn.with_upgrades().await {
             tracing::debug!(target: "door", lend = %name, error = %e, "door: the connection to the lend's service ended in error");
         }
     });
@@ -706,8 +773,21 @@ async fn forward(
             return unanswered();
         }
     };
+    let mut answer = answer;
+    let switched =
+        upgrade_of(answer.headers()).filter(|_| answer.status() == StatusCode::SWITCHING_PROTOCOLS);
+    let service_side = switched.as_ref().map(|_| hyper::upgrade::on(&mut answer));
     let (mut parts, body) = answer.into_parts();
     strip_hop_by_hop(&mut parts.headers);
+    let held = match (asker_side, service_side, switched) {
+        (Some(asker), Some(service), Some(protocol)) => {
+            tracing::debug!(target: "door", actor, lend = %lend.name, ?protocol, "door: the service switched protocols; splicing the two");
+            keep_upgrade(&mut parts.headers, protocol);
+            splice(asker, service, held, lend.name.to_string());
+            None
+        }
+        _ => held,
+    };
     let echoed = drop_echoed_secret(&mut parts.headers, &secret);
     // The share on the answer is the door's: a service's own is displaced.
     parts.headers.remove(SHARE_HEADER);

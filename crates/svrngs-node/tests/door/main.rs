@@ -773,3 +773,59 @@ async fn declarations_that_cannot_be_read_are_refused_on_both_routes_never_lent_
     }
     pair.close().await;
 }
+
+/// A WebSocket's upgrade is carried both ways (u5-2; DESIGN §3, "What an
+/// app cannot yet ask", a live socket): B asks A's lend to switch to
+/// `websocket`, the service answers 101, and the bytes B writes after come
+/// back echoed through the door, the person set on the head as on any
+/// request. Planted: the door stripping `Upgrade` as hop-by-hop
+/// (door.rs:128 before u5-2), which the service answers 426.
+#[tokio::test]
+async fn a_websocket_upgrade_is_carried_both_ways() {
+    let pair = Pair::new().await;
+    let (origin, heads) = origins::upgrade_origin().await;
+    pair.lend("live", origin.port(), &[]);
+    let mut sock = tokio::net::TcpStream::connect(pair.bridge).await.unwrap();
+    sock.write_all(
+        b"GET /lend/live/socket HTTP/1.1\r\nHost: local\r\nConnection: Upgrade\r\n\
+          Upgrade: websocket\r\nSec-WebSocket-Version: 13\r\n\r\n",
+    )
+    .await
+    .unwrap();
+    let mut head = Vec::new();
+    let mut byte = [0u8; 1];
+    while !head.ends_with(b"\r\n\r\n") {
+        let n = tokio::time::timeout(Duration::from_secs(20), sock.read(&mut byte))
+            .await
+            .expect("the door answers the upgrade")
+            .unwrap();
+        assert!(
+            n == 1,
+            "the door closed before its answer ended: {:?}",
+            String::from_utf8_lossy(&head)
+        );
+        head.push(byte[0]);
+    }
+    let head = String::from_utf8_lossy(&head).into_owned();
+    assert!(
+        head.starts_with("HTTP/1.1 101"),
+        "the upgrade must be answered 101: {head}"
+    );
+    assert_eq!(header_values(&head, "upgrade"), vec!["websocket"], "{head}");
+    for word in ["ping", "and again"] {
+        sock.write_all(word.as_bytes()).await.unwrap();
+        let mut echo = vec![0u8; word.len()];
+        tokio::time::timeout(Duration::from_secs(20), sock.read_exact(&mut echo))
+            .await
+            .expect("the service's echo comes back")
+            .unwrap();
+        assert_eq!(echo, word.as_bytes());
+    }
+    let asked = last(&heads);
+    assert_eq!(
+        header_values(&asked, "x-svrngs-person"),
+        vec!["bo"],
+        "{asked}"
+    );
+    pair.close().await;
+}
