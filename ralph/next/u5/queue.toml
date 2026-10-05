@@ -1,4 +1,4 @@
-# svrngs U5 — Films (docs/DESIGN.md §8). Launch, from anywhere:
+# svrngs U5 — any app on a port, stock Jellyfin out of the box (docs/DESIGN.md §8). Launch, from anywhere:
 #
 #   python3 ~/dev/commonwealth-ai/scripts/ralph.py supervise --workdir ~/dev/svrngs \
 #     --queue u5 --install-launchd -- python3 ~/dev/commonwealth-ai/scripts/ralph.py \
