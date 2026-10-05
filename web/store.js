@@ -3,7 +3,8 @@
 // each group it joined, in IndexedDB `svrngs`.
 //
 //   seal     `key`: the page's sealing key, AES-GCM 256, made once with
-//            `extractable: false`, so no script can read its bytes out.
+//            `extractable: false`, so no script can read its bytes out,
+//            by the page when it first keeps a group, never by its worker.
 //   groups   by `id`: the group's name, the person's name in it, the link's
 //            token it was joined by, when it was last opened, the keys
 //            of the people its list last named as lending, and the
@@ -56,10 +57,23 @@ async function run(store, mode, act) {
 const described = (k) =>
   `${k?.constructor?.name} ${k?.algorithm?.name}/${k?.algorithm?.length} extractable=${k?.extractable} usages=${k?.usages}`;
 
-async function sealingKey() {
+// The sealing key, made when none is kept only if `make`: only `keep`
+// makes one, and only the page keeps a group. Safari's worker on the
+// operator's iPhone read none where its page had kept one (2026-10-05,
+// u4-10; `STORE: the sealing key absent: making one` in its trace, in
+// demo/runs/u4/2026-10-05-phones/), made its own and put it over the
+// page's, and so left every key the page had sealed unopenable.
+async function sealingKey(make) {
   const held = await run('seal', 'readonly', (s) => s.get('key'));
-  globalThis.__trace?.(`STORE: the sealing key ${held ? `read back: ${described(held)}` : 'absent: making one'}`);
-  if (held) return held;
+  if (held) {
+    globalThis.__trace?.(`STORE: the sealing key read back: ${described(held)}`);
+    return held;
+  }
+  if (!make) {
+    globalThis.__trace?.('STORE: the sealing key absent, and only the page makes one: nothing is unsealed here');
+    throw new Error('no sealing key is kept');
+  }
+  globalThis.__trace?.('STORE: the sealing key absent: making one');
   const made = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
   await run('seal', 'readwrite', (s) => s.put(made, 'key'));
   return made;
@@ -70,7 +84,7 @@ const bound = (id, iv) => ({ name: 'AES-GCM', iv, additionalData: new TextEncode
 // Keep a group joined: `key` is the person's 32 bytes, kept sealed alone.
 export async function keep({ id, name, person, token, key }) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const sealed = new Uint8Array(await crypto.subtle.encrypt(bound(id, iv), await sealingKey(), key));
+  const sealed = new Uint8Array(await crypto.subtle.encrypt(bound(id, iv), await sealingKey(true), key));
   await run('groups', 'readwrite', (s) => s.put({ id, name, person, token, iv, sealed, opened: Date.now() }));
 }
 
@@ -96,7 +110,7 @@ export async function listed(group, lenders) {
 
 // The person's key in `group`, unsealed: 32 bytes, held only in memory.
 export async function unseal(group) {
-  const seal = await sealingKey();
+  const seal = await sealingKey(false);
   try {
     return new Uint8Array(await crypto.subtle.decrypt(bound(group.id, group.iv), seal, group.sealed));
   } catch (e) {
