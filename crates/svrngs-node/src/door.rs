@@ -456,8 +456,15 @@ fn drop_echoed_secret(
     echoed.iter().map(|n| n.to_string()).collect()
 }
 
-/// One request through the door: refused by name, or carried to the lend's
-/// service and its answer streamed back.
+/// Who asks for a lend through the door: a closed set (AGENTS 9), each
+/// shown to be a person in a group held here its own way.
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum Who {
+    /// A dialer on the members' protocol, whose key is the person's.
+    Member(Dialer),
+}
+
+/// One request through the door on the members' protocol.
 async fn through(
     State(door): State<Door>,
     dialer: Option<Extension<Dialer>>,
@@ -471,6 +478,13 @@ async fn through(
             "a lend is reached only from another computer of its group",
         );
     };
+    lend_for(&door, Who::Member(dialer), via.map(|Extension(v)| v), req).await
+}
+
+/// One request for a lend, from `who`: refused by name, or carried to the
+/// lend's service and its answer streamed back.
+pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Request) -> Response {
+    let Who::Member(dialer) = who;
     let actor = dialer.actor();
     let path = req.uri().path().to_string();
     if can_step_out(&path) {
@@ -510,7 +524,7 @@ async fn through(
             format!("{} is lent without {}", lend.name, refused.as_str()),
         );
     }
-    let observed = via.and_then(|Extension(v)| v.observe());
+    let observed = via.and_then(|v| v.observe());
     if observed.is_none() {
         tracing::debug!(target: "door", actor, lend = %lend.name, "door: no path observed, so the person is taken to be away");
     }
@@ -554,7 +568,7 @@ async fn through(
     tracing::debug!(target: "door", actor, person = person.as_str(), group, lend = %lend.name,
         method = %req.method(), path = service_path, "door: carrying a request to the lend's service");
     let told = Told { share, held };
-    forward(&door, &lend, (&actor, &person), service_path, req, told).await
+    forward(door, &lend, (&actor, &person), service_path, req, told).await
 }
 
 /// What the door decided for a request let in: the share it is told, and
