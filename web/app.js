@@ -1,5 +1,5 @@
 // ported from commonwealth-ai sovereign/apps/ring-runtime/web/app.js@e1a43bcd2
-// The guest page's logic. External (not inline) so a strict CSP can run here
+// The page's logic. External (not inline) so a strict CSP can run here
 // — see index.html's `script-src 'self' 'wasm-unsafe-eval'`: the wasm module
 // needs `wasm-unsafe-eval`, and nothing else needs an allowance.
 //
@@ -10,13 +10,14 @@ import init, { dial } from './wasm/svrngs_web.js?v=__VERSION__';
 
 const status = document.getElementById('status');
 const response = document.getElementById('response');
-const traceEl = document.getElementById('trace');
-const labelEl = document.getElementById('label');
-
+// The dial's layers go to the console at debug, never onto the page, whose
+// words are DESIGN §1's; the lines are kept on `window.__lines` for a test
+// to read. Upstream printed them in a "Layers" panel (index.html:42).
 const lines = [];
+window.__lines = lines;
 window.__trace = (l) => {
   lines.push(l);
-  traceEl.textContent = lines.join('\n');
+  console.debug(l);
 };
 
 // The link's fragment is its token, `<origin>#<token>`, which the dial
@@ -42,37 +43,44 @@ function heldKey() {
   });
 }
 
+// No key held: joining makes one (u4-5).
+class NotJoined extends Error {}
+
 function fail(msg) {
   status.textContent = msg;
   status.className = 'bad';
 }
 
 if (!token) {
-  fail('Open this page from a guest link — its fragment carries token= and iroh=.');
+  fail('Open this page from your group’s link.');
 } else {
   try {
     await init();
     const key = await heldKey();
-    status.textContent = 'Dialing the wall over the relay…';
-    const pending = dial(key || new Uint8Array(), token, path);
+    if (!key) throw new NotJoined();
+    status.textContent = 'Reaching your group…';
+    const pending = dial(key, token, path);
     const timeout = new Promise((r) => setTimeout(() => r('__TIMEOUT__'), 120000));
     const res = await Promise.race([pending, timeout]);
     if (res === '__TIMEOUT__') {
-      fail('Timed out — the last layer below is where it hung.');
+      fail('Your group’s computer did not answer. Try again later.');
     } else {
       const body = (res.split('RESPONSE-BODY: ')[1] || '').trim();
       const st = (res.match(/RESPONSE-STATUS: (.*)/) || [])[1] || '';
-      status.textContent = st.startsWith('HTTP/1.1 2') ? 'Connected' : 'Refused';
+      status.textContent = st.startsWith('HTTP/1.1 2') ? 'You’re in' : 'Your group’s computer said no.';
       status.className = st.startsWith('HTTP/1.1 2') ? 'good' : 'bad';
-      response.textContent = body || res;
+      // The trace stays in the console: only the answer is the page's.
+      if (st.startsWith('HTTP/1.1 2')) response.textContent = body;
     }
   } catch (e) {
-    fail('Could not run the runtime: ' + (e && e.stack ? e.stack : String(e)));
+    console.error(e);
+    fail(e instanceof NotJoined ? 'This phone has not joined your group yet.' : 'This browser could not open the page.');
   }
 }
 
 // Cache the app shell after first load, so a repeat visit needs no origin
-// traffic at all (docs/RING_APP_LIBRARY.md: "no traffic after first load").
+// traffic at all (upstream's docs/RING_APP_LIBRARY.md: "no traffic after
+// first load").
 // Registered last and best-effort: the page works without it, and a failed
 // registration must never break the dial.
 if ('serviceWorker' in navigator) {
