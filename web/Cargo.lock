@@ -3030,11 +3030,19 @@ dependencies = [
 name = "svrngs-web"
 version = "0.1.0"
 dependencies = [
+ "bytes",
+ "futures-util",
+ "http-body-util",
+ "hyper",
  "iroh",
  "js-sys",
  "svrngs-core",
+ "thiserror 2.0.20",
+ "tokio",
  "wasm-bindgen",
  "wasm-bindgen-futures",
+ "wasm-streams",
+ "web-sys",
 ]
 
 [[package]]

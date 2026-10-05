@@ -6,7 +6,7 @@
 // The version query on the wasm import is stamped at build time (the content
 // hash of the module), so a service worker or CDN cache cannot serve a stale
 // runtime after a rebuild.
-import init, { dial } from './wasm/svrngs_web.js?v=__VERSION__';
+import init, { connect } from './wasm/svrngs_web.js?v=__VERSION__';
 
 const status = document.getElementById('status');
 const response = document.getElementById('response');
@@ -59,18 +59,19 @@ if (!token) {
     const key = await heldKey();
     if (!key) throw new NotJoined();
     status.textContent = 'Reaching your group…';
-    const pending = dial(key, token, path);
-    const timeout = new Promise((r) => setTimeout(() => r('__TIMEOUT__'), 120000));
-    const res = await Promise.race([pending, timeout]);
-    if (res === '__TIMEOUT__') {
+    const timeout = new Promise((r) => setTimeout(() => r('unanswered'), 120000));
+    const dialled = await Promise.race([connect(key, token).catch(() => 'unanswered'), timeout]);
+    if (dialled === 'unanswered') {
       fail('Your group’s computer did not answer. Try again later.');
     } else {
-      const body = (res.split('RESPONSE-BODY: ')[1] || '').trim();
-      const st = (res.match(/RESPONSE-STATUS: (.*)/) || [])[1] || '';
-      status.textContent = st.startsWith('HTTP/1.1 2') ? 'You’re in' : 'Your group’s computer said no.';
-      status.className = st.startsWith('HTTP/1.1 2') ? 'good' : 'bad';
+      // HTTP over the dial (web/src/http.rs): the answer is a Response.
+      const res = await dialled.fetch('GET', path, [['accept', 'application/json']], null);
+      const body = await res.text();
+      status.textContent = res.ok ? 'You’re in' : 'Your group’s computer said no.';
+      status.className = res.ok ? 'good' : 'bad';
       // The trace stays in the console: only the answer is the page's.
-      if (st.startsWith('HTTP/1.1 2')) response.textContent = body;
+      if (res.ok) response.textContent = body;
+      await dialled.close();
     }
   } catch (e) {
     console.error(e);

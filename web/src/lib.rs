@@ -7,7 +7,8 @@
 //! module IS an iroh endpoint compiled to wasm (relay-only): the page dials a
 //! computer in the group by its key, through a relay, on the members'
 //! protocol the node already accepts, as the person whose key stands in the
-//! group, and speaks one HTTP/1.1 request over the resulting bi-stream. The
+//! group, and speaks HTTP/1.1 over the connection, one bi-stream per
+//! request, by hyper's client (`http.rs`, u4-4). The
 //! relay forwards ciphertext and nothing proxies HTTP — there is no TLS to
 //! terminate and no door to expose (DESIGN §8, U4's inventory).
 //!
@@ -18,6 +19,8 @@
 //! Every layer is emitted to the page's `__trace` hook as it happens, never
 //! only returned at the end — a layer that hangs must still be named, which is
 //! the whole reason the trace exists (ARCH §1, glassbox).
+
+mod http;
 
 use svrngs_core::link::Token;
 use wasm_bindgen::prelude::*;
@@ -38,26 +41,29 @@ fn emit(line: &str) {
 }
 
 /// Dial the computer that issued `token`, by its key, as the person whose
-/// key is `key`; send `GET <path>` over one iroh bi-stream on the members'
-/// protocol, and return the full trace (every layer, plus the response
-/// verbatim).
+/// key is `key`, on the members' protocol: the dialled computer, which
+/// answers HTTP on a bi-stream per request ([`Dialled::fetch`]), or the
+/// layer that refused, every layer emitted as it happens.
 ///
 /// `key` is the person's key, the 32 bytes the page's store holds (DESIGN
 /// §3, call 1): iroh signs its handshake with it synchronously, so it is
 /// bytes here, never a WebCrypto key. `token` is the group's link's token,
 /// the fragment of `<origin>#<token>`, parsed by svrngs-core as the command
-/// parses it (call 5). `path` is the member route asked (`/lends`). No
-/// bearer rides the request: the node knows the person by the key that
-/// dialled.
+/// parses it (call 5). No bearer rides a request: the node knows the person
+/// by the key that dialled.
 #[wasm_bindgen]
-pub async fn dial(key: Vec<u8>, token: String, path: String) -> String {
-    let mut trace = String::new();
+pub async fn connect(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
     macro_rules! t {
+        ($($a:tt)*) => {
+            emit(&format!($($a)*))
+        };
+    }
+    // A refusal's line is emitted, and is the error.
+    macro_rules! refuse {
         ($($a:tt)*) => {{
             let line = format!($($a)*);
             emit(&line);
-            trace.push_str(&line);
-            trace.push('\n');
+            return Err(JsError::new(&line));
         }};
     }
 
@@ -67,23 +73,20 @@ pub async fn dial(key: Vec<u8>, token: String, path: String) -> String {
     let secret = match <[u8; 32]>::try_from(key.as_slice()) {
         Ok(bytes) => iroh::SecretKey::from_bytes(&bytes),
         Err(_) => {
-            t!(
+            refuse!(
                 "LAYER key: REFUSED — the page holds {} bytes, not a key's 32",
                 key.len()
-            );
-            return trace;
+            )
         }
     };
     t!("LAYER key: ok — the person's key {}", secret.public());
     let Some(link) = Token::decode(&token) else {
-        t!("LAYER parse: REFUSED — the fragment is not a link's token: {token}");
-        return trace;
+        refuse!("LAYER parse: REFUSED — the fragment is not a link's token: {token}")
     };
     let node_id = match iroh::PublicKey::from_bytes(link.issuer.as_bytes()) {
         Ok(p) => p,
         Err(e) => {
-            t!("LAYER parse: REFUSED — node id is not a valid public key: {e}");
-            return trace;
+            refuse!("LAYER parse: REFUSED — node id is not a valid public key: {e}")
         }
     };
     // The relay the token carries, from an issuer run without address
@@ -116,8 +119,7 @@ pub async fn dial(key: Vec<u8>, token: String, path: String) -> String {
     let ep = match builder.bind().await {
         Ok(e) => e,
         Err(e) => {
-            t!("LAYER wasm-bindgen/iroh-endpoint: REFUSED — endpoint bind failed: {e}");
-            return trace;
+            refuse!("LAYER wasm-bindgen/iroh-endpoint: REFUSED — endpoint bind failed: {e}")
         }
     };
     t!(
@@ -134,50 +136,57 @@ pub async fn dial(key: Vec<u8>, token: String, path: String) -> String {
     let conn = match ep.connect(addr, MEMBER_ALPN).await {
         Ok(c) => c,
         Err(e) => {
-            t!("LAYER tls/alpn+relay-hop: REFUSED — connect() failed: {e}");
-            return trace;
+            refuse!("LAYER tls/alpn+relay-hop: REFUSED — connect() failed: {e}")
         }
     };
     t!("LAYER tls/alpn+relay-hop: ok — QUIC connection established to {node_id} on the member protocol");
 
-    // ── LAYER 4: the HTTP request over one bi-stream ───────────────────────
     t!(
         "LAYER tls/alpn: negotiated ALPN = {:?}",
         String::from_utf8_lossy(conn.alpn())
     );
-    let (mut send, mut recv) = match conn.open_bi().await {
-        Ok(s) => s,
-        Err(e) => {
-            t!("LAYER open-bi: REFUSED — {e}");
-            return trace;
-        }
-    };
-    let req = format!("GET {path} HTTP/1.1\r\nHost: svrngs\r\nAccept: application/json\r\nConnection: close\r\n\r\n");
-    if let Err(e) = send.write_all(req.as_bytes()).await {
-        t!("LAYER request-write: REFUSED — {e}");
-        return trace;
+    // The HTTP rides a bi-stream per request, opened by `Dialled::fetch`.
+    Ok(Dialled { ep, conn })
+}
+
+/// A computer the page has dialled: each request to it is one bi-stream of
+/// the connection, spoken by hyper's HTTP/1 client ([`http`]).
+#[wasm_bindgen]
+pub struct Dialled {
+    ep: iroh::Endpoint,
+    conn: iroh::endpoint::Connection,
+}
+
+#[wasm_bindgen]
+impl Dialled {
+    /// Ask the computer `method path` with `headers`, an array of `[name,
+    /// value]` sent as named, and `body`, a `ReadableStream` of bytes or
+    /// null: a promise of the page's `Response`, its body streamed.
+    pub fn fetch(
+        &self,
+        method: String,
+        path: String,
+        headers: js_sys::Array,
+        body: Option<web_sys::ReadableStream>,
+    ) -> js_sys::Promise {
+        let conn = self.conn.clone();
+        wasm_bindgen_futures::future_to_promise(async move {
+            match http::fetch(conn, method.clone(), path.clone(), headers, body).await {
+                Ok(response) => Ok(response.into()),
+                Err(e) => {
+                    emit(&format!("HTTP: {method} {path} — REFUSED — {e}"));
+                    Err(js_sys::Error::new(&e.to_string()).into())
+                }
+            }
+        })
     }
-    t!(
-        "LAYER request-write: ok — {} bytes of HTTP/1.1 sent on the bi-stream (send half kept open until the response, as the native bridge does)",
-        req.len()
-    );
 
-    let body = match recv.read_to_end(512 * 1024).await {
-        Ok(b) => b,
-        Err(e) => {
-            t!("LAYER response-read: REFUSED — {e}");
-            return trace;
-        }
-    };
-    // Close our half now the exchange is done — the native bridge finishes the
-    // send stream only after the local TCP side is finished, never before.
-    let _ = send.finish();
-    let text = String::from_utf8_lossy(&body).to_string();
-    let status = text.lines().next().unwrap_or("<no status line>").to_string();
-    t!("LAYER member-admission: response received, {} bytes", body.len());
-    t!("RESPONSE-STATUS: {status}");
-    t!("RESPONSE-BODY: {text}");
-
-    ep.close().await;
-    trace
+    /// Close the endpoint, and every stream with it.
+    pub fn close(&self) -> js_sys::Promise {
+        let ep = self.ep.clone();
+        wasm_bindgen_futures::future_to_promise(async move {
+            ep.close().await;
+            Ok(JsValue::UNDEFINED)
+        })
+    }
 }

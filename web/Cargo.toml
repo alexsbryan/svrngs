@@ -29,6 +29,17 @@ js-sys = "=0.3.105"
 # inventory): the one window this standalone workspace opens back into the
 # tree, and it opens downward. svrngs-core is no_std, with no I/O.
 svrngs-core = { path = "../crates/svrngs-core" }
+# HTTP over the dial (u4-4): hyper's HTTP/1 client, runtime-agnostic, as the
+# node's door is hyper's server; the page's streams as Rust streams, and
+# back. Each at the version this crate's lock already held through iroh.
+hyper = { version = "1.11", default-features = false, features = ["client", "http1"] }
+http-body-util = "0.1.5"
+bytes = "1"
+futures-util = { version = "0.3", default-features = false }
+tokio = { version = "1", default-features = false }
+wasm-streams = "0.5"
+web-sys = { version = "=0.3.105", features = ["Headers", "ReadableStream", "Response", "ResponseInit"] }
+thiserror = "2"
 
 # Its own workspace root: without this, cargo walks up to the repo's
 # [workspace] and refuses the crate as a non-member.
