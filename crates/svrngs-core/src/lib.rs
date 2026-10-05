@@ -83,6 +83,7 @@ extern crate alloc;
 
 mod act_set;
 mod admit;
+pub mod alpn;
 mod attest;
 mod command;
 mod hash;

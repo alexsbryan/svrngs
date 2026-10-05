@@ -5,7 +5,9 @@
 //! beside this one); svrngs carries two, the enum this file promised when a
 //! second protocol came (docs/DESIGN.md §8, U2's inventory, the acceptor
 //! row): the members' protocol, and the one a key standing in no group may
-//! speak, to redeem a link.
+//! speak, to redeem a link. It lives in svrngs-core since u4-2, so a page
+//! dialling from a browser spells each name as the node does (DESIGN §8,
+//! U4's inventory, the `kernel-types/src/alpn.rs` row).
 
 /// A protocol the node speaks, by the ALPN its connection negotiated.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

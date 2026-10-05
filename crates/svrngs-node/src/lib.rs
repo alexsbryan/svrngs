@@ -40,7 +40,9 @@ pub mod ring_checkpoint;
 // inventory): the sync bodies (`sovereign-peer-wire`), the one ALPN, the
 // relayed endpoint and the loopback bridge (`mesh-reach::guest`), and the
 // client side of the dial-by-key transport (`commonwealth-transport::iroh`).
-pub mod alpn;
+// The ALPNs are svrngs-core's since u4-2, so a browser's page spells each as
+// the node does; re-exported, so `crate::alpn` reads as before.
+pub use svrngs_core::alpn;
 pub mod guest;
 pub mod iroh;
 pub mod peer_wire;

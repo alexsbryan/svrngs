@@ -85,7 +85,9 @@ Beside the journals, `svrngs-node` holds the dialling half of sync over iroh
 (DESIGN §8, U1's inventory), forked at `e1a43bcd2` the same way:
 `peer_wire.rs` is `sovereign-peer-wire` whole (the sync bodies, the body limit
 and the exchange budget); `alpn.rs` is `mesh-reach`'s `alpn.rs` with its one
-`ALPN`, then the enum it promised (`Alpn`, U2); `guest.rs` and `guest/tunnel.rs` are `mesh-reach`'s guest dialer, the
+`ALPN`, then the enum it promised (`Alpn`, U2), moved whole into svrngs-core
+(u4-2) so a browser's page spells each protocol as the node does, and
+re-exported as `svrngs_node::alpn`; `guest.rs` and `guest/tunnel.rs` are `mesh-reach`'s guest dialer, the
 relayed endpoint and the one loopback bridge (`HttpBridge`, `pump`); `iroh.rs`
 is `commonwealth-transport`'s client side (`IrohTransport`,
 `format_dial_string`, `preferred_bridge_port`). Its edits: no IP transport;
