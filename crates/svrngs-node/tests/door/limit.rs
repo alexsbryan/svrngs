@@ -1,7 +1,8 @@
 //! The people-at-once limit and each one's share, through the door (u3-6;
 //! DESIGN §8, "Many people, one library"). A lends a streaming service to
 //! three people at once, 30 Mbit/s declared; bo, cy, dee and eve, each on
-//! their own computer standing in A's group, dial A by key. The window is
+//! their own computer standing in A's group, dial A by key over loopback
+//! alone, as `super`'s pair does (#33). The window is
 //! waited out once, for real: the use a stream holds ends only when its
 //! answer is dropped, and nothing else here can see that it did. Its edge
 //! is crossed on values in `src/door/limit/tests.rs`.
@@ -40,7 +41,9 @@ async fn start(seed: u8, dir: &std::path::Path) -> Node {
     Node::start(
         dir.to_path_buf(),
         signing(seed),
-        &RelayConfig::from_parts(Vec::new(), Some("none")).unwrap(),
+        &RelayConfig::from_parts(Vec::new(), Some("none"))
+            .unwrap()
+            .on_loopback_only(),
         no_seed,
         "127.0.0.1:0".parse().unwrap(),
     )

@@ -3,7 +3,10 @@
 //! The member door, through it (DESIGN §3; §8 U3's inventory; the u3-4
 //! row). A lends a service on its loopback; B, standing in A's group, dials
 //! A by key and asks through B's own loopback bridge, as a member's browser
-//! will. Nodes in one process, no relay.
+//! will. Nodes in one process, no relay, each listening on 127.0.0.1 alone:
+//! on a wildcard, iroh may carry B's requests on this computer's private
+//! address, and the door guesses a viewer there is home and counts no one
+//! (ralph/REVIEW_FINDINGS.md #33).
 //!
 //! The identity tests are upstream's `rewrite_head` tests
 //! (iroh_identity_forward.rs:584-702), re-asserted through the door: each
@@ -60,7 +63,9 @@ impl Pair {
             Node::start(
                 d,
                 signing(seed),
-                &RelayConfig::from_parts(Vec::new(), Some("none")).unwrap(),
+                &RelayConfig::from_parts(Vec::new(), Some("none"))
+                    .unwrap()
+                    .on_loopback_only(),
                 no_seed,
                 "127.0.0.1:0".parse().unwrap(),
             )
