@@ -52,6 +52,9 @@ sha2 = "0.10"
 # a page in a headless browser reaches a node with nothing from the
 # internet: iroh's own relay server, at the version iroh =1.0.2 resolves.
 iroh-relay = { version = "=1.0.2", features = ["server"] }
+# The scale instrument (tests/scale.rs) reads its own processor time with
+# `getrusage`, which std does not offer; libc is already in the lock.
+libc = "0.2"
 
 [lints.clippy]
 empty_line_after_doc_comments = "allow"

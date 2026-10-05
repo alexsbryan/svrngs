@@ -655,6 +655,22 @@ exists, each a small app in `apps/` using only §3:
   said "after U2" until 2026-10-04; an app reaches the record through U3's
   loopback API, and no key in the register can seal, U2's inventory.)
 
+**The ceiling** (after Demo B; operator, 2026-10-05). The scale instrument
+(`crates/svrngs-node/tests/scale.rs`) found where a group outgrows its round:
+an idle round passes its sixty seconds at about 7,900 acts for twenty-five
+members and about 860 for a hundred, because the digest, every signature and
+the register are rebuilt from the whole journal on every exchange and every
+connection, and an asleep member costs a ten-second timeout each round. Each
+fix is the tail fold `Held` already keeps for writes
+(`crates/svrngs-runtime/src/journal.rs:36-58`); prototyped behind switches,
+they took that round from 73 s to 10 ms (svrn-docs
+`rings/current/THE_CEILING.md`, its runs under `rings/runs/`). Dialling at once
+stays §9's row; the view each act carries goes with U7.
+
+| What lands | Bar, watched failing first |
+|---|---|
+| first the round's own account of what it cost — members dialled, reached and asleep, acts moved, processor and wall time, each fold kept or rebuilt — then the digest folded from the journal's tail, with an equal digest answered unread; each act's signature checked once, as it enters; the register folded from the tail | at 25 members and 10,000 acts an idle round costs under 0.1 s of processor in the instrument (73 s at `15a9de7`, where it was measured), held by a canary in `scripts/check.sh` whose plant is today's code; the cost line predicts a point it was not fitted on |
+
 **Then:** removal (U7, the keeper of §6, with forks that void nothing), before any group of strangers; then
 the chat doors, Discord first — onboarding, last. After that the core grows one
 class at a time, each chosen by the north star's tests.
@@ -685,6 +701,18 @@ class at a time, each chosen by the north star's tests.
 | a per-process tie between a node and the services it lends (upstream's `mint_tie`) | an app's act is written under a person by a process the lender did not run, or one computer is shared by people who do not trust each other |
 
 ## 10. Decisions
+
+By the operator, 2026-10-05:
+- the ceiling's fixes 1–3 — the digest, signatures checked once, the
+  register, each kept by a tail fold — after Films (read here as after
+  Demo B, §8's rule); dialling at once stays a §9 row;
+- the scale instrument is promoted as an ignored test
+  (`crates/svrngs-node/tests/scale.rs`);
+- scale is settled from first principles and the instrument on one
+  computer, with no other machines;
+- production gets logging and telemetry enough to see whether a group
+  degrades as feared (a shape is proposed in svrn-docs
+  `rings/current/THE_CEILING.md`, "Seeing it in production").
 
 By the operator, 2026-10-04:
 - computers run the client, and that is the way in; the browser is a door a

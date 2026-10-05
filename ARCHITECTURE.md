@@ -211,7 +211,12 @@ standing in the group its request names, and a group the node does not hold
 in the same words; and `commit` signs only for a key standing in the seed
 and the acts the journal holds, under its write lock.
 `tests/group_not_mesh.rs` runs a founder, a member it admits, a stranger and
-a member of another group in one process. The round reads the node's `Host` and the
+a member of another group in one process. `tests/scale.rs` is an instrument,
+not a check: ignored, and run by hand in release, it stands up one group of
+any size in one process and prints what an idle round, a write's round, an
+asleep member, an append and an act on disk cost (its module docs say how to
+read them); `Node::start_every` gives each of its nodes a round once a day, so
+no node's own round runs inside one it times. The round reads the node's `Host` and the
 `RingRail` directly: upstream's round read them through the `RingSyncHost`
 and `RingSyncJournal` traits, and with one implementor of each here the
 traits went (RUST_ARCH 7). Upstream's other answers to who is in a ring —
