@@ -1,0 +1,56 @@
+{
+  "what": "U6 first reads: what puts a lent film on a TV in the room, before any U6 row is written",
+  "date": "2026-10-05",
+  "host": "this Mac, 192.168.1.4, one home WiFi",
+  "screen": "LG OLED55C2PUA (2022), webOS 22; on the WiFi at 192.168.1.11; advertises _airplay._tcp; no Cast receiver for video on this network (the one _googlecast._tcp device is a KEF LSX II speaker)",
+  "phone": "iPhone at 192.168.1.3, Safari 26.6.1 (user agent iPhone OS 18_7, redirect.log)",
+  "clocks": "redirect.log, jellyfin.log and jellyfin-conns.log are PDT (-07:00); airplay-page.node.log is UTC",
+  "short_address": "http://192.168.1.4:8088/ answered 302 to the long address each read used, so nothing long was typed on a TV",
+  "reads": [
+    {
+      "id": "airplay-page",
+      "at": "16:25:31 PDT",
+      "path": "Safari on the iPhone opened the U4 House link on https://www.svrnme.sh/g/ (page at e7ba903), opened Sam's `film` lend (a plain <video controls> page, demo/runs/u4/2026-10-05/lend.mjs), AirPlay to the LG",
+      "predicted_before": "fails: the video's address is on the page's origin, which only the phone's service worker answers",
+      "outcome": "fail: the TV entered AirPlay and showed no video; the operator reported it looked audio only",
+      "evidence": "airplay-page.lend.log and airplay-page.node.log: the phone's worker read 49.4 MB through the relay, more than the 45.3 MB file (its first ranges overlap), mostly in 2 MiB ranges, 23:25:36Z-23:26:25Z (8.1 Mbit/s), then from the start again at 23:26:33Z; nothing reached the TV"
+    },
+    {
+      "id": "lg-browser-page",
+      "at": "16:29:22 PDT",
+      "path": "the LG's own web browser opened the same House link",
+      "predicted_before": null,
+      "outcome": "fail: the page said 'This browser could not open the page.' (web/app.js:235, the catch around init, the store and the join)",
+      "evidence": "redirect.log: user agent 'Chrome/87.0.3945.79 ... SmartTV/10.0'; the module parsed (it uses ??, Chrome 80+)",
+      "cause": "not reproduced here; by the published support tables, each of three stops it: the page's CSP admits wasm by 'wasm-unsafe-eval' (Chrome 97+, web/index.html:31); the wasm uses reference types (two tables, externref; Chrome 96+); the worker is a module (web/app.js:209, Chrome 91+)",
+      "decision": "operator, 2026-10-05: old TV browsers are not supported"
+    },
+    {
+      "id": "airplay-jellyfin-web",
+      "at": "16:38:58-16:41:00 PDT",
+      "path": "a scratch Jellyfin 12.0.0 (the macOS app's server, scratch dirs) on 192.168.1.4:8197, the test film in its library; jellyfin-web in Safari on the iPhone played it five times; AirPlay to the LG",
+      "predicted_before": "the TV plays, fetching the film from 192.168.1.4 itself",
+      "outcome": "fail: Cast reported unsupported (no Cast sender on iOS); AirPlay offered audio only; the LG never connected to :8197",
+      "evidence": "jellyfin.log (five starts, all 'Jellyfin Web' from 192.168.1.3); jellyfin-conns.log (only 192.168.1.3 until 16:46:38)",
+      "cause": "jellyfin-web 12.0.0 bundles hls.js, which prefers ManagedMediaSource and sets the video's disableRemotePlayback whenever it plays through it ('r.disableRemotePlayback=r.disableRemotePlayback||o&&a instanceof o' in the app's bundle); Safari then offers only the audio route"
+    },
+    {
+      "id": "airplay-plain-file",
+      "at": "16:43:34 PDT",
+      "path": "Safari on the iPhone opened the film's own address on the scratch Jellyfin (/Videos/<id>/stream.mp4?Static=true, 206 video/mp4), no page, no worker, no MSE; AirPlay to the LG",
+      "predicted_before": "the TV plays, fetching the address itself",
+      "outcome": "fail: AirPlay said connected to the device; no video; the LG never connected to :8197",
+      "evidence": "jellyfin-conns.log; jellyfin.log",
+      "cause": "not determined: either iOS did not hand the TV the address or the TV did not fetch it; no control receiver was run"
+    },
+    {
+      "id": "jellyfin-webos-app",
+      "at": "16:46:38-16:47:38 PDT",
+      "path": "'Jellyfin for WebOS' 1.2.2 from the LG Content Store, server address 192.168.1.4:8197 typed once, signed in as the scratch user, played the test film",
+      "predicted_before": "the TV app plays from 192.168.1.4, and the phone's jellyfin-web lists the TV as somewhere to play",
+      "outcome": "pass for the first half: connected 16:46:38, signed in 16:46:55, playback 16:47:02-16:47:38 (29.9 s), DirectPlay; the operator: 'Yup that works'. The phone as remote was not exercised: no command to the TV's session is in the log",
+      "evidence": "jellyfin.log; jellyfin-conns.log (192.168.1.11 at 16:46:38); jellyfin-sessions.txt (the LG's session: SupportsRemoteControl true, SupportsMediaControl true, PlayMethod DirectPlay)"
+    }
+  ],
+  "decision": "operator, 2026-10-05: the screen is the app's own client; svrngs gives devices in the room reach to a lend across town through a member's computer on that network, and takes media on TVs and end-user devices out of its scope ('we're adding value, but we're not taking media on tvs and end user devices into our scope')"
+}

@@ -1,0 +1,2 @@
+u6-read 1 192.168.1.4 remote-control: False media-control: False playing: None paused: False method: None
+Jellyfin for WebOS 1.2.2 192.168.1.11 remote-control: True media-control: True playing: Test Film paused: False method: DirectPlay
