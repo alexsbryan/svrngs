@@ -197,11 +197,13 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Films and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,000 lines of code and the
-repository under 12,000, tests and `apps/` apart (`scripts/lean_check.py`);
+repository under 14,000, tests and `apps/` apart (`scripts/lean_check.py`);
 a raise is the operator's, with the reason in the commit. `svrngs-core` stands
 at 2,359: the operator raised its ceiling from 2,500 on 2026-10-05, for what U4
 to U7 still add to the core, since REVIEW-audit-u3-auto-2 found no duplication
-in it (ralph/REVIEW_FINDINGS.md #38). `ARCHITECTURE.md` maps what
+in it (ralph/REVIEW_FINDINGS.md #38), and the repository's from 12,000, at
+9,601, for U4's page and its wasm and U6's handoff, about 2,100 lines between
+them by the seat's estimate. `ARCHITECTURE.md` maps what
 exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file
