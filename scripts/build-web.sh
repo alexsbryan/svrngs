@@ -19,10 +19,14 @@ cd "$(dirname "$0")/.."
 # (landing/scripts/build-ring-runtime.sh → landing/ring/) can place it where
 # its host serves it; default is this repo's target/.
 OUT="target/web/site"
+# --lint holds the crate to rustfmt and clippy instead of building it: it is
+# its own workspace, which scripts/check.sh's workspace steps never reach.
+LINT=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --out) OUT="${2:?--out needs a directory}"; shift 2 ;;
-    *) echo "build-web: unknown argument $1 (only --out <dir>)" >&2; exit 2 ;;
+    --lint) LINT=1; shift ;;
+    *) echo "build-web: unknown argument $1 (only --out <dir>, --lint)" >&2; exit 2 ;;
   esac
 done
 
@@ -49,7 +53,7 @@ if [ "$cli" != "$WASM_BINDGEN_MIN" ]; then
   exit 3
 fi
 
-echo "building $APP for wasm32-unknown-unknown (release)…"
+if [ -n "$LINT" ]; then echo "linting $APP for wasm32-unknown-unknown…"; else echo "building $APP for wasm32-unknown-unknown (release)…"; fi
 # The dependency tree compiles C for the wasm target through cc-rs, and
 # Apple's clang has no wasm32 backend: without this the build dies inside
 # ring's build script with "No available targets are compatible with triple
@@ -78,6 +82,10 @@ fi
 # Upstream passed `--cfg getrandom_backend="wasm_js"` here for kernel-types'
 # getrandom 0.3; svrngs-core pulls no getrandom, and iroh's 0.4 takes its
 # browser backend from the `wasm_js` feature its manifest sets.
+if [ -n "$LINT" ]; then
+  ( cd "$APP" && cargo fmt --check && cargo clippy --quiet --release --target wasm32-unknown-unknown -- -D warnings )
+  exit 0
+fi
 ( cd "$APP" && cargo build --release --target wasm32-unknown-unknown )
 
 rm -rf "$OUT"

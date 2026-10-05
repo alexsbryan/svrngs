@@ -20,6 +20,13 @@ if [ -f Cargo.toml ]; then
   step "tests"    cargo test --quiet
   # The canaries (DESIGN §8) again, by name: the apps that keep the infra general.
   step "canaries" cargo test --quiet -p svrngs-node --test canaries
+  # The page (DESIGN §8, U4): its crate is a workspace of its own, for wasm.
+  step "web rustfmt and clippy" scripts/build-web.sh --lint
+  # The page in a browser, again by name: it builds the page, runs a relay
+  # and a node on 127.0.0.1 and drives Playwright's Chromium. Without
+  # Playwright or its browsers it fails naming the install command; it never
+  # skips.
+  step "browser" cargo test --quiet -p svrngs-node --test browser
 else
   echo "never-ran  rustfmt, clippy, tests: no Cargo workspace yet"; failed=1
 fi

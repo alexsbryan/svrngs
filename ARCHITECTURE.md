@@ -378,6 +378,32 @@ one node in process; `tests/join_by_link.rs`, U2's bar, runs Sam and six
 others; `tests/share.rs` runs Sam lending to Alex in process, and the
 program itself for `share` with svrngs running and not.
 
+**`web/`**: the page a group's link opens on a phone, `<origin>#<token>`
+(DESIGN §3, "Joining"; U4): the crate `svrngs-web`, wasm only, in a
+workspace of its own with upstream's measured pins (iroh =1.0.2,
+wasm-bindgen =0.2.128, wasm-bindgen-futures =0.4.78, js-sys =0.3.105) and
+lock, and the static shell beside it — `index.html`, `app.js`, `sw.js`.
+Forked from commonwealth-ai's `sovereign/apps/ring-runtime` at `e1a43bcd2`
+with `kernel-types` replaced by svrngs-core, then changed (u4-3):
+`src/lib.rs`'s one export, `dial(key, token, path)`, binds a browser
+endpoint with the person's key, the 32 bytes the page's store holds
+(IndexedDB `svrngs`, store `person`, entry `key`; making and sealing it is
+u4-5's), parses the token with svrngs-core's `Token::decode`, and dials the
+issuer by key on the members' protocol — through the relay the token
+carries, else by the resolver iroh's N0 preset adds in a browser — and
+sends one `GET`, its send half open until the response is read, every layer
+traced to the page's `__trace` as it happens. `app.js` reads the fragment as
+the token, asks `/lends`, keeps the layers on the console at debug and says
+only DESIGN §1's words; the shell's paths are relative, and the CSP admits
+a relay on 127.0.0.1. `scripts/build-web.sh` (upstream's
+`build-ring-runtime.sh`) builds it into `target/web/site` with Homebrew's
+LLVM on a Mac, and `--lint` holds it to rustfmt and clippy for wasm32.
+`crates/svrngs-node/tests/browser/` is its test: iroh's relay server and a
+node on 127.0.0.1, an `Admit` written directly, and `web/tests/drive.mjs`
+serving the built page and driving Playwright 1.59.1's headless Chromium
+(`web/package.json`); without Playwright or its browsers it fails naming
+the install command.
+
 **`apps/expenses/`**: the Expenses fold (`expenses.js`) and its tests, from E0,
 the bot at tag `e0-bot`. Its reducer (`init`, `reduce`) folds the acts
 `actsOf` reads from the record's log, `by` the person an app wrote for, else
@@ -403,4 +429,4 @@ links; `scripts/ralph-mark.sh` expects to run under it. U1's queue is
 repository standalone and within budget; `vocab_check.py` keeps every app's
 nouns (`apps/<app>/nouns.txt`) out of infra code; `ports.py` lists the fork's pairs;
 `principles_check.py` keeps `docs/principles/` pinned; `ralph-mark.sh` marks a
-queue row done.
+queue row done; `build-web.sh` builds and lints the page (`web/`).
