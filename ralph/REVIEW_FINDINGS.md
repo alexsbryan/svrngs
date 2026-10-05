@@ -1591,3 +1591,9 @@ No noun has more than one definition.
 | I11 | 6 | `code dry-report --scope` | Still present; every scoped run here used a trailing slash. |
 | I14 | 6, 7 | `code dry-report --scope web/` near tier | Still present. The range's one real duplicate, in JS, scored 0.917: missed at the default 0.95 (web/ says "0 near-clone clusters" there), found at 0.9, its spans each three lines off into the other function. |
 | I15 | 6, 7 | `code converge noun` over web/ | Still present: `Keyless` gives definitions (0), "check the spelling", for a class that exists. |
+
+The row's check (LINT): `scripts/check.sh` at b225d09 on a clean tree
+exited 0 in 6:34 (zsh `time`). Every step `passed`: principles pinned,
+lean and RUST_ARCH, app nouns gate, app nouns, rustfmt, clippy, tests,
+canaries, web rustfmt and clippy, browser, joining in a browser, app laws
+(log /tmp/u4audit3/check.log).
