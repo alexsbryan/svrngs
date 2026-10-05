@@ -46,24 +46,27 @@ fn a_redemption_is_parsed_before_anything_is_read() {
     let req = request(&link, &joining, &invite(&key(1), 0, &link));
     let me = actor_of(&joining);
 
-    assert!(matches!(parse_redeem(None, &req), Err(Refused::NoDialer)));
+    assert!(matches!(
+        parse_redeem(None, &req),
+        Err(NotAdmitted::NoDialer)
+    ));
     let other = actor_of(&key(9));
     assert!(matches!(
         parse_redeem(Some(&other), &req),
-        Err(Refused::NotTheDialer)
+        Err(NotAdmitted::NotTheDialer)
     ));
     let mut forged = req.clone();
     forged.sig = req.cosig.clone();
     assert!(matches!(
         parse_redeem(Some(&me), &forged),
-        Err(Refused::LinkUnsigned)
+        Err(NotAdmitted::LinkUnsigned)
     ));
     let mut unnamed = RedeemRequest::sign(&link, &joining, GROUP, &req.invite, &hal());
     unnamed.person = String::new();
     unnamed.sig = sign_message(&link, &unnamed.message());
     assert!(matches!(
         parse_redeem(Some(&me), &unnamed),
-        Err(Refused::NotAName(_))
+        Err(NotAdmitted::NotAName(_))
     ));
     assert_eq!(parse_redeem(Some(&me), &req).unwrap(), hal());
 }
@@ -74,11 +77,11 @@ fn an_ask_is_parsed_before_anything_is_read() {
     let joining = key(3);
     let ask = AskRequest::sign(&link, &joining);
     assert!(parse_ask(Some(&actor_of(&joining)), &ask).is_ok());
-    assert!(matches!(parse_ask(None, &ask), Err(Refused::NoDialer)));
+    assert!(matches!(parse_ask(None, &ask), Err(NotAdmitted::NoDialer)));
     let mut forged = ask.clone();
     forged.link = actor_of(&key(7));
     assert!(matches!(
         parse_ask(Some(&actor_of(&joining)), &forged),
-        Err(Refused::LinkUnsigned)
+        Err(NotAdmitted::LinkUnsigned)
     ));
 }

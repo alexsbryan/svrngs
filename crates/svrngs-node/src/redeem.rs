@@ -206,9 +206,9 @@ pub enum Redeemed {
 }
 
 /// Why the issuer's node did not admit the joiner — one per check, each
-/// traced, and answered as [`REFUSAL`] but for [`Refused::Unjudged`].
+/// traced, and answered as [`REFUSAL`] but for [`NotAdmitted::Unjudged`].
 #[derive(Debug)]
-enum Refused {
+enum NotAdmitted {
     /// The request did not come on an iroh stream.
     NoDialer,
     /// The key presented is not the key that dialled.
@@ -262,20 +262,20 @@ async fn redeem_route(
 
 /// A decision as the wire carries it: what was done, [`UNJUDGED`], or the
 /// one [`REFUSAL`].
-fn answer<T: Serialize>(route: &str, key: &str, decided: Result<T, Refused>) -> Response {
+fn answer<T: Serialize>(route: &str, key: &str, decided: Result<T, NotAdmitted>) -> Response {
     match decided {
         Ok(done) => (StatusCode::OK, Json(done)).into_response(),
-        Err(Refused::Unjudged(e)) => {
+        Err(NotAdmitted::Unjudged(e)) => {
             tracing::warn!(target: "redeem", route, error = %e,
                 "redeem: could not judge — this node's own journal is unreadable");
             err(StatusCode::SERVICE_UNAVAILABLE, UNJUDGED)
         }
-        Err(Refused::NotAName(why)) => {
+        Err(NotAdmitted::NotAName(why)) => {
             tracing::debug!(target: "redeem", route, key, why = ?why,
                 "redeem: refused — the name is not one; answered with why, naming no group");
             err(StatusCode::FORBIDDEN, why.to_string())
         }
-        Err(Refused::Decided(why)) => {
+        Err(NotAdmitted::Decided(why)) => {
             tracing::debug!(target: "redeem", route, key, why = ?why,
                 "redeem: the decider refused, answered in the one sentence every refusal shares");
             err(StatusCode::FORBIDDEN, REFUSAL)
@@ -291,17 +291,24 @@ fn answer<T: Serialize>(route: &str, key: &str, decided: Result<T, Refused>) -> 
 /// The ask, as an adapter: parse ([`parse_ask`]), ask the runtime for this
 /// node's newest `Invite` naming the link's key, and answer that group's seed
 /// as the command keeps it.
-fn serve_ask(issuer: &Issuer, dialer: Option<String>, req: &AskRequest) -> Result<Asked, Refused> {
+fn serve_ask(
+    issuer: &Issuer,
+    dialer: Option<String>,
+    req: &AskRequest,
+) -> Result<Asked, NotAdmitted> {
     parse_ask(dialer.as_deref(), req)?;
     let (group, invite) = issuer
         .rail
         .invite_for(&req.link)
-        .map_err(Refused::Unjudged)?
-        .ok_or(Refused::NoInvite)?;
-    let dir = issuer.rail.group_dir(&group).map_err(Refused::Unjudged)?;
+        .map_err(NotAdmitted::Unjudged)?
+        .ok_or(NotAdmitted::NoInvite)?;
+    let dir = issuer
+        .rail
+        .group_dir(&group)
+        .map_err(NotAdmitted::Unjudged)?;
     let seed = (issuer.seeds)(&dir)
-        .map_err(|e| Refused::Unjudged(RailError::Io(e)))?
-        .ok_or(Refused::NotHeld)?;
+        .map_err(|e| NotAdmitted::Unjudged(RailError::Io(e)))?
+        .ok_or(NotAdmitted::NotHeld)?;
     tracing::debug!(target: "redeem", group, key = %req.key, invite = %invite,
         "redeem: asked — the link's key is named by this node's Invite; answering its group's seed");
     Ok(Asked {
@@ -313,13 +320,13 @@ fn serve_ask(issuer: &Issuer, dialer: Option<String>, req: &AskRequest) -> Resul
 
 /// An ask judged on what arrived alone: the dialer is the key asking, and
 /// the link's key signed. Reads nothing, so a refused ask opens no journal.
-fn parse_ask(dialer: Option<&str>, req: &AskRequest) -> Result<(), Refused> {
-    let dialer = dialer.ok_or(Refused::NoDialer)?;
+fn parse_ask(dialer: Option<&str>, req: &AskRequest) -> Result<(), NotAdmitted> {
+    let dialer = dialer.ok_or(NotAdmitted::NoDialer)?;
     if dialer != req.key {
-        return Err(Refused::NotTheDialer);
+        return Err(NotAdmitted::NotTheDialer);
     }
     if !verify_hex(&req.link, &req.message(), &req.sig) {
-        return Err(Refused::LinkUnsigned);
+        return Err(NotAdmitted::LinkUnsigned);
     }
     Ok(())
 }
@@ -331,13 +338,13 @@ fn serve_redeem(
     rail: &RingRail,
     dialer: Option<String>,
     req: &RedeemRequest,
-) -> Result<Redeemed, Refused> {
+) -> Result<Redeemed, NotAdmitted> {
     let person = parse_redeem(dialer.as_deref(), req)?;
     let group = req.group.as_str();
     match rail.standing(group, &Ed25519Verifier) {
         Ok(Standing::Members(_)) => {}
-        Ok(_) => return Err(Refused::NotHeld),
-        Err(e) => return Err(Refused::Unjudged(e)),
+        Ok(_) => return Err(NotAdmitted::NotHeld),
+        Err(e) => return Err(NotAdmitted::Unjudged(e)),
     }
     let command = svrngs_core::Redeem {
         invite: req.invite.clone(),
@@ -347,7 +354,10 @@ fn serve_redeem(
         link: req.link.clone(),
         issuer: rail.signer().actor(),
     };
-    match rail.commit(group, &command).map_err(Refused::Unjudged)? {
+    match rail
+        .commit(group, &command)
+        .map_err(NotAdmitted::Unjudged)?
+    {
         Ok(recorded) if recorded.is_empty() => {
             tracing::debug!(target: "redeem", group, key = %req.key,
                 "redeem: the key stands already — answered success, nothing written");
@@ -359,28 +369,28 @@ fn serve_redeem(
                 "redeem: admitted — the Admit is written");
             Ok(Redeemed::Admitted(admit))
         }
-        Err(CommitRefused::NoStanding) => Err(Refused::Unjudged(RailError::NotInRoster {
+        Err(CommitRefused::NoStanding) => Err(NotAdmitted::Unjudged(RailError::NotInRoster {
             actor: rail.signer().actor(),
             namespace: group.to_string(),
         })),
-        Err(CommitRefused::Command(why)) => Err(Refused::Decided(why)),
+        Err(CommitRefused::Command(why)) => Err(NotAdmitted::Decided(why)),
     }
 }
 
 /// A redemption judged on what arrived alone: the dialer is the new key,
 /// the link's key signed, and the name parses. Reads nothing, so a refused
 /// redemption opens no journal.
-fn parse_redeem(dialer: Option<&str>, req: &RedeemRequest) -> Result<Person, Refused> {
-    let dialer = dialer.ok_or(Refused::NoDialer)?;
+fn parse_redeem(dialer: Option<&str>, req: &RedeemRequest) -> Result<Person, NotAdmitted> {
+    let dialer = dialer.ok_or(NotAdmitted::NoDialer)?;
     if dialer != req.key {
-        return Err(Refused::NotTheDialer);
+        return Err(NotAdmitted::NotTheDialer);
     }
     if !req.signed_by_link() {
-        return Err(Refused::LinkUnsigned);
+        return Err(NotAdmitted::LinkUnsigned);
     }
     Name::kept(req.person.clone())
         .map(Person::from)
-        .map_err(Refused::NotAName)
+        .map_err(NotAdmitted::NotAName)
 }
 
 /// Why a joiner was not let in.
