@@ -456,9 +456,13 @@ in_both_engines!(
     /// reopens at the lend's address (web/tests/runtime.mjs). A
     /// range of cy's file, asked by a path relative to ada's page, comes back
     /// 206 and sha-exact, and cy's door names bo's key, not ada's: no computer
-    /// carries another's lend. Planted: a range answered 200 with the whole
-    /// body (the worker dropping `Range`); the worker's endpoint never reopened
-    /// (opened once, when it activates).
+    /// carries another's lend. An open-ended range of cy's file, `bytes=N-`,
+    /// comes back a bounded part, a 206 naming it and the whole, sha-exact
+    /// (u4-9, web/sw.js `PART`): WebKit read an open range through before it
+    /// asked for a seek's bytes (ralph/REVIEW_FINDINGS.md #53). Planted: a
+    /// range answered 200 with the whole body (the worker dropping `Range`);
+    /// the worker's endpoint never reopened (opened once, when it activates);
+    /// the open range answered whole (u4-8's worker).
     a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself
 );
 async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself(
@@ -500,6 +504,7 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
             "open": "page",
             "seeks": [40.0, 20.0, 52.0],
             "other": { "path": format!("../../{cy_key}/shelf/title.bin"), "range": format!("bytes={from}-{to}") },
+            "openEnded": { "path": format!("../../{cy_key}/shelf/title.bin"), "range": format!("bytes={from}-") },
         }),
         None,
     )
@@ -567,6 +572,26 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
     assert_eq!(
         other["sha"],
         sha((from..to + 1).map(origins::byte_at)),
+        "{shown:#}"
+    );
+    // The open range: a part from `from`, named by its 206, never the
+    // rest of the file.
+    let part = &seen["openEnded"];
+    let got = part["bytes"].as_u64().unwrap_or(0);
+    assert_eq!(part["status"], 206, "the open range must come back 206:\n{shown:#}");
+    assert!(
+        got > 0 && got < OTHER - from,
+        "the open range must come back a part, not the {} bytes to the end:\n{shown:#}",
+        OTHER - from
+    );
+    assert_eq!(
+        part["contentRange"],
+        format!("bytes {from}-{}/{OTHER}", from + got - 1),
+        "{shown:#}"
+    );
+    assert_eq!(
+        part["sha"],
+        sha((from..from + got).map(origins::byte_at)),
         "{shown:#}"
     );
     let shelf_keys = keys(&shelf_heads);

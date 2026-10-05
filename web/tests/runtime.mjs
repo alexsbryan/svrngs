@@ -8,13 +8,15 @@
 // `args.seeks[0..2]`, has the browser stop the worker — Chromium through
 // its DevTools protocol, WebKit by closing and opening the browser again —
 // seeks at the last, and loads a range of a second computer's lend by a
-// path relative to the page (`args.other`). It prints what it saw as one
-// JSON line.
+// path relative to the page (`args.other`), and, when `args.open` names
+// one, an open-ended range of it too (`args.openEnded`, `bytes=N-`). It
+// prints what it saw as one JSON line.
 //
 //   node web/tests/runtime.mjs '{"engine": "chromium"|"webkit", "site": ...,
 //     "key": ..., "token": ...,
 //     "open": "<the lend's name>", "seeks": [s, s, s],
-//     "other": {"path": "../../<key>/<lend>/<file>", "range": "bytes=a-b"}}'
+//     "other": {"path": "../../<key>/<lend>/<file>", "range": "bytes=a-b"},
+//     "openEnded": {"path": ..., "range": "bytes=a-"}}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
@@ -127,7 +129,10 @@ try {
   const runsAtStop = [...runs];
   seeks.push(await page.evaluate(play, { at: args.seeks.at(-1), within: 15_000 }));
   const other = await page.evaluate(range, args.other);
-  console.log(JSON.stringify({ listed, opened, reopened, replayed, first, seeks, runsAtStop, runs, other, logs }));
+  const openEnded = args.openEnded ? await page.evaluate(range, args.openEnded) : null;
+  console.log(
+    JSON.stringify({ listed, opened, reopened, replayed, first, seeks, runsAtStop, runs, other, openEnded, logs }),
+  );
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;

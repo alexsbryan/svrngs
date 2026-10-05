@@ -109,6 +109,26 @@ function dialFor(group, lender) {
   return held(dials, `${group.id} ${lender}`, async () => (await endpointFor(group)).dial(lender));
 }
 
+// An open-ended range, `bytes=N-`, is asked of the lender's door as a
+// part of PART bytes from N (u4-9): the door's 206 names the part and the
+// whole, and a `<video>` asks again for what it needs next. In u4-8's dry
+// run WebKit read its first open range through before it asked for a
+// seek's bytes, 45 MB in 26 s, and that seek waited (ralph/REVIEW_FINDINGS.md
+// #53); a part bounds the wait at PART bytes. 2 MiB is 5.6 s of a 3 Mb/s
+// film, and took — through the relay, the worker and the wasm — the times
+// demo/runs/u4/2026-10-05-reach/ records.
+const PART = 2 * 1024 * 1024;
+
+function bounded(headers) {
+  return headers.map(([name, value]) => {
+    const open = name.toLowerCase() === 'range' && /^bytes=(\d+)-$/.exec(value.trim());
+    if (!open) return [name, value];
+    const part = `bytes=${open[1]}-${Number(open[1]) + PART - 1}`;
+    trace(`RUNTIME: ${value} asked as ${part}`);
+    return [name, part];
+  });
+}
+
 // Words for a person, as a page: why a lend did not open.
 function say(status, words) {
   return new Response(words, { status, headers: { 'content-type': 'text/plain; charset=utf-8' } });
@@ -124,7 +144,7 @@ async function lent(request, url) {
   const group = await groupFor(lender);
   if (!group) return say(403, 'Open your group’s link on this phone first.');
   const path = `/lend/${lend}${rest}${url.search}`;
-  const headers = [...request.headers];
+  const headers = bounded([...request.headers]);
   const body = ['GET', 'HEAD'].includes(request.method) ? null : (request.body ?? (await request.blob()).stream());
   // A dial gone stale since it was opened — the lender's computer
   // restarted, the relay dropped it — is opened again once, for a request
