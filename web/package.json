@@ -1,0 +1,8 @@
+{
+  "name": "svrngs-web-tests",
+  "private": true,
+  "description": "The page's browser tests: Playwright drives Chromium (u4-3) and WebKit (u4-7).",
+  "devDependencies": {
+    "playwright": "1.59.1"
+  }
+}

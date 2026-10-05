@@ -45,6 +45,10 @@ tempfile = "3"
 tokio = { version = "1", features = ["full"] }
 # The door's tests check a file's bytes through it sha-exact.
 sha2 = "0.10"
+# The browser tests (tests/browser) run a relay on 127.0.0.1, plain HTTP, so
+# a page in a headless browser reaches a node with nothing from the
+# internet: iroh's own relay server, at the version iroh =1.0.2 resolves.
+iroh-relay = { version = "=1.0.2", features = ["server"] }
 
 [lints.clippy]
 empty_line_after_doc_comments = "allow"
