@@ -3,8 +3,10 @@
 //! stands in its group. Everything runs on this computer: iroh's relay
 //! server on 127.0.0.1, plain HTTP, and a node whose only relay it is;
 //! the page is served on 127.0.0.1 and its link carries that relay. The
-//! browser half is `web/tests/drive.mjs`, which fails naming the install
-//! command when Playwright or its Chromium is absent — it never skips.
+//! browser halves are `web/tests/drive.mjs` and, for the runtime (u4-6),
+//! `web/tests/runtime.mjs`, which fail naming the install command when
+//! Playwright or its Chromium is absent — they never skip; the runtime's
+//! film is made by ffmpeg, whose absence fails naming its install too.
 //!
 //! Each test builds the page first with `scripts/build-web.sh`, once per
 //! run, so no test reads a stale build.
@@ -48,9 +50,20 @@ fn no_seed(_: &Path) -> Result<Option<String>, String> {
 /// written directly as U1's tests write an `Admit`. Returned once it is
 /// online at the relay.
 async fn node(dir: &Path, relay: &Server, admitted: &SigningKey) -> Node {
+    computer(dir, relay, admitted, 1, "ada").await
+}
+
+/// [`node`], its key `signing(me)` and its founder `founder`.
+async fn computer(
+    dir: &Path,
+    relay: &Server,
+    admitted: &SigningKey,
+    me: u8,
+    founder: &str,
+) -> Node {
     let node = Node::start(
         dir.to_path_buf(),
-        signing(1),
+        signing(me),
         &RelayConfig::from_parts(vec![relay_url(relay)], Some("none"))
             .unwrap()
             .on_loopback_only(),
@@ -60,9 +73,12 @@ async fn node(dir: &Path, relay: &Server, admitted: &SigningKey) -> Node {
     .await
     .expect("a node starts");
     let seed = Roster::new(
-        [(Person::parse("ada").unwrap(), vec![actor_of(&signing(1))])]
-            .into_iter()
-            .collect(),
+        [(
+            Person::parse(founder).unwrap(),
+            vec![actor_of(&signing(me))],
+        )]
+        .into_iter()
+        .collect(),
     );
     node.rail().set_seed(NS, &seed).unwrap();
     let fixture = svrngs_core::tests_support::Fixture {
@@ -92,11 +108,16 @@ fn token(issuer: &SigningKey, relay: &Server) -> String {
     .encode()
 }
 
-/// Run the browser half on `args`, and read the JSON line it printed. When
-/// `release` fires, the browser half is told `go` (its upload's tail, u4-4).
-async fn drive(args: Value, release: Option<tokio::sync::oneshot::Receiver<()>>) -> Value {
+/// Run the browser half `web/tests/<script>` on `args`, and read the JSON
+/// line it printed. When `release` fires, the browser half is told `go`
+/// (its upload's tail, u4-4).
+async fn drive(
+    script: &str,
+    args: Value,
+    release: Option<tokio::sync::oneshot::Receiver<()>>,
+) -> Value {
     let mut child = tokio::process::Command::new("node")
-        .arg(repo().join("web/tests/drive.mjs"))
+        .arg(repo().join("web/tests").join(script))
         .arg(args.to_string())
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
@@ -147,6 +168,7 @@ async fn a_page_holding_a_standing_key_dials_the_node_and_gets_its_lends() {
     let node = node(dir.path(), &relay, &bo).await;
 
     let seen = drive(
+        "drive.mjs",
         json!({
             "site": site,
             "key": hex::encode(bo.to_bytes()),
@@ -241,6 +263,7 @@ async fn a_page_speaks_http_through_the_door_streaming_both_ways() {
 
     let (from, to) = (1_000, 9_000_000 - 1);
     let seen = drive(
+        "drive.mjs",
         json!({
             "site": site,
             "key": hex::encode(bo.to_bytes()),
@@ -308,4 +331,211 @@ async fn a_page_speaks_http_through_the_door_streaming_both_ways() {
         "{http:#}"
     );
     drop(node);
+}
+
+/// A film for `<video>`: 60 s of H.264 at about 4 Mb/s, 29 MB — noise keeps
+/// the encoder from shrinking it, so a seek needs bytes not yet fetched —
+/// with a keyframe each second and its index first. Made by ffmpeg, which
+/// this test needs.
+fn film(path: &Path) -> u64 {
+    let made = std::process::Command::new("ffmpeg")
+        .args(["-v", "error", "-y", "-f", "lavfi"])
+        .args(["-i", "testsrc2=duration=60:size=640x360:rate=24"])
+        .args(["-vf", "noise=alls=12:allf=t", "-c:v", "libx264"])
+        .args(["-preset", "ultrafast", "-crf", "27", "-pix_fmt", "yuv420p"])
+        .args(["-g", "24", "-movflags", "+faststart"])
+        .arg(path)
+        .output()
+        .unwrap_or_else(|e| panic!("ffmpeg makes the test's film — run: brew install ffmpeg\n{e}"));
+    assert!(
+        made.status.success(),
+        "ffmpeg with libx264 makes the test's film — run: brew install ffmpeg\n{}",
+        String::from_utf8_lossy(&made.stderr)
+    );
+    std::fs::metadata(path).unwrap().len()
+}
+
+/// A lent page: `html` for every request.
+async fn page_origin(html: String) -> std::net::SocketAddr {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        while let Ok((mut sock, _)) = listener.accept().await {
+            let html = html.clone();
+            tokio::spawn(async move {
+                let mut head = [0u8; 8192];
+                let _ = tokio::io::AsyncReadExt::read(&mut sock, &mut head).await;
+                let answer = format!(
+                    "HTTP/1.1 200 OK\r\ncontent-type: text/html; charset=utf-8\r\n\
+                     content-length: {}\r\nconnection: close\r\n\r\n{html}",
+                    html.len()
+                );
+                let _ = sock.write_all(answer.as_bytes()).await;
+            });
+        }
+    });
+    addr
+}
+
+/// The `x-svrngs-key` each request head names, as the door set it.
+fn keys(heads: &std::sync::Mutex<Vec<String>>) -> Vec<String> {
+    heads
+        .lock()
+        .unwrap()
+        .iter()
+        .map(|head| {
+            head.lines()
+                .find_map(|l| {
+                    l.to_ascii_lowercase()
+                        .strip_prefix("x-svrngs-key:")
+                        .map(|k| k.trim().to_string())
+                })
+                .unwrap_or_default()
+        })
+        .collect()
+}
+
+/// The runtime (u4-6; DESIGN §3, "Joining", calls 3 and 4): ada's computer
+/// lends a page and a film, an H.264 mp4 from upstream's Range origin, and
+/// cy's, another computer holding bo's key, lends a file. The phone, holding
+/// bo's key, opens ada's page from its list: the page's address is under
+/// the service worker's scope, and the worker serves it, its `<video>` and
+/// every byte range from ada's door. The film plays and seeks three times,
+/// each playing again within five seconds (Demo A's seek bar); the browser
+/// stops the worker before the third, and the next ranges still answer. A
+/// range of cy's file, asked by a path relative to ada's page, comes back
+/// 206 and sha-exact, and cy's door names bo's key, not ada's: no computer
+/// carries another's lend. Planted: a range answered 200 with the whole
+/// body (the worker dropping `Range`); the worker's endpoint never reopened
+/// (opened once, when it activates).
+#[tokio::test(flavor = "multi_thread")]
+async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself() {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let (ada_dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ada = node(ada_dir.path(), &relay, &bo).await;
+    let cy = computer(cy_dir.path(), &relay, &bo, 2, "cy").await;
+    let (ada_key, cy_key, bo_key) = (actor_of(&signing(1)), actor_of(&signing(2)), actor_of(&bo));
+
+    let mp4 = ada_dir.path().join("title.mp4");
+    let size = film(&mp4);
+    let (film_origin, film_heads) = origins::kept_range_origin(mp4, size).await;
+    lend(ada_dir.path(), "film", film_origin.port());
+    let html = "<!doctype html><title>a page</title>\
+                <video src=\"../film/title.mp4\" playsinline preload=\"auto\"></video>";
+    lend(
+        ada_dir.path(),
+        "page",
+        page_origin(html.to_string()).await.port(),
+    );
+    const OTHER: u64 = 16 * MIB;
+    let file = cy_dir.path().join("title.bin");
+    std::fs::write(&file, (0..OTHER).map(origins::byte_at).collect::<Vec<u8>>()).unwrap();
+    let (shelf, shelf_heads) = origins::kept_range_origin(file, OTHER).await;
+    lend(cy_dir.path(), "shelf", shelf.port());
+
+    let (from, to) = (1_000_000, 1_000_000 + 4 * MIB - 1);
+    let seen = drive(
+        "runtime.mjs",
+        json!({
+            "site": site,
+            "key": hex::encode(bo.to_bytes()),
+            "token": token(&signing(1), &relay),
+            "open": "page",
+            "seeks": [40.0, 20.0, 52.0],
+            "other": { "path": format!("../../{cy_key}/shelf/title.bin"), "range": format!("bytes={from}-{to}") },
+        }),
+        None,
+    )
+    .await;
+    let mut shown = seen.clone();
+    shown["logs"] = json!(format!(
+        "{} lines",
+        seen["logs"].as_array().map_or(0, Vec::len)
+    ));
+    eprintln!("the runtime's run: {shown}");
+
+    assert_eq!(seen["opened"], format!("/l/{ada_key}/page/"), "{seen:#}");
+    assert!(
+        seen["first"]["ms"].is_u64(),
+        "the film must play:\n{seen:#}"
+    );
+    let seeks = seen["seeks"].as_array().unwrap();
+    assert_eq!(seeks.len(), 3, "{shown:#}");
+    for seek in seeks {
+        assert!(
+            seek["ms"].as_u64().is_some_and(|ms| ms <= 5_000),
+            "each seek must play again within five seconds:\n{seen:#}"
+        );
+    }
+    assert!(
+        seen["runsAtStop"]
+            .as_array()
+            .unwrap()
+            .contains(&json!("stopped")),
+        "the browser must have stopped the worker:\n{shown:#}"
+    );
+    let opened = seen["logs"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|l| {
+            l.as_str()
+                .is_some_and(|l| l.contains("RUNTIME: opening the endpoint"))
+        })
+        .count();
+    assert_eq!(
+        opened, 2,
+        "the worker opens its endpoint when it starts, and again after it was stopped:\n{seen:#}"
+    );
+    let runs: Vec<&str> = seen["runs"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(Value::as_str)
+        .collect();
+    let stop = runs.iter().position(|r| *r == "stopped").unwrap();
+    assert!(
+        runs[stop..].contains(&"running"),
+        "the worker must run again after it was stopped:\n{shown:#}"
+    );
+
+    let film_keys = keys(&film_heads);
+    assert!(
+        film_heads
+            .lock()
+            .unwrap()
+            .iter()
+            .any(|h| h.to_ascii_lowercase().contains("\r\nrange: bytes=")),
+        "the film's ranges must reach its service:\n{:#?}",
+        film_heads.lock().unwrap()
+    );
+    assert!(
+        film_keys.iter().all(|k| *k == bo_key),
+        "ada's door must name bo's key: {film_keys:?}"
+    );
+
+    let other = &seen["other"];
+    assert_eq!(
+        other["status"], 206,
+        "the range must come back 206:\n{shown:#}"
+    );
+    assert_eq!(
+        other["contentRange"],
+        format!("bytes {from}-{to}/{OTHER}"),
+        "{shown:#}"
+    );
+    assert_eq!(other["bytes"], to - from + 1, "{shown:#}");
+    assert_eq!(
+        other["sha"],
+        sha((from..to + 1).map(origins::byte_at)),
+        "{shown:#}"
+    );
+    let shelf_keys = keys(&shelf_heads);
+    assert!(
+        !shelf_keys.is_empty() && shelf_keys.iter().all(|k| *k == bo_key),
+        "cy's door must name bo's key, the viewer's, never ada's ({ada_key}): {shelf_keys:?}"
+    );
+    drop((ada, cy));
 }

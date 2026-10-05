@@ -9,7 +9,8 @@
 //! (media_bridge_bench.rs:93-100, 211-325) loses its pacing (`Pacing`, the
 //! stall and the rate), its 256 KiB `CHUNK` kept, and serves one file from a
 //! listener on 127.0.0.1:0 this file binds (`range_origin`), where upstream's
-//! `origin` read its port and file from flags.
+//! `origin` read its port and file from flags, and keeps each request head
+//! it reads (`kept_range_origin`, u4-6).
 
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
@@ -85,21 +86,33 @@ pub async fn picky_origin(header: &'static str, token: &'static str) -> std::net
 /// Upstream's Range origin over one file of `total` bytes at `file`, on a
 /// port of its own.
 pub async fn range_origin(file: std::path::PathBuf, total: u64) -> SocketAddr {
+    kept_range_origin(file, total).await.0
+}
+
+/// [`range_origin`], keeping every request head it is sent for the test to
+/// read: the browser's runtime test (u4-6) reads which key each door named.
+pub async fn kept_range_origin(
+    file: std::path::PathBuf,
+    total: u64,
+) -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
     let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind");
     let addr = listener.local_addr().unwrap();
     let file = Arc::new(file);
+    let heads = Arc::new(Mutex::new(Vec::new()));
+    let kept = heads.clone();
     tokio::spawn(async move {
         loop {
             let Ok((sock, _peer)) = listener.accept().await else {
                 break;
             };
             let file = Arc::clone(&file);
+            let kept = kept.clone();
             tokio::spawn(async move {
-                let _ = serve_http(sock, file.to_str().unwrap(), total).await;
+                let _ = serve_http(sock, file.to_str().unwrap(), total, &kept).await;
             });
         }
     });
-    addr
+    (addr, heads)
 }
 
 /// Parse `Range: bytes=a-b` / `bytes=a-` / `bytes=-n` into an inclusive
@@ -134,7 +147,12 @@ fn parse_range(h: &str, total: u64) -> Option<Result<(u64, u64), ()>> {
     Some(Ok((start, end)))
 }
 
-async fn serve_http(mut sock: TcpStream, file: &str, total: u64) -> std::io::Result<()> {
+async fn serve_http(
+    mut sock: TcpStream,
+    file: &str,
+    total: u64,
+    kept: &Mutex<Vec<String>>,
+) -> std::io::Result<()> {
     sock.set_nodelay(true).ok();
     // Read request head.
     let mut head = Vec::with_capacity(2048);
@@ -153,6 +171,7 @@ async fn serve_http(mut sock: TcpStream, file: &str, total: u64) -> std::io::Res
         }
     }
     let text = String::from_utf8_lossy(&head).to_string();
+    kept.lock().unwrap().push(text.clone());
     let range_hdr = text
         .lines()
         .find(|l| l.to_ascii_lowercase().starts_with("range:"))
