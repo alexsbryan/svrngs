@@ -906,3 +906,9 @@ after: **18 of 18 passed**, with no "guessed in" line.
 
 Erratum: a18e52e's body says "oplog.rs: -34 +11 lines". `git show --stat
 a18e52e` gives 11 insertions and 33 deletions.
+
+The row's check: `scripts/check.sh` at 374ed25, three runs in a row, each
+exit 0 with every step `passed` (principles pinned, lean and RUST_ARCH, app
+nouns gate, app nouns, rustfmt, clippy, tests, canaries, app laws), the
+first in 2:35. On 2026-10-04, before this audit, it had failed 2 runs of 3
+(#33).
