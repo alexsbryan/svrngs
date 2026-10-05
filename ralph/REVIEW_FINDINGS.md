@@ -1408,3 +1408,186 @@ runs of each through a relay on this computer and through n0's.
 | 51 | 7 | web/sw.js:28-34 (`SHELL`, the wasm with `?v=`), wasm-bindgen's glue fetching `svrngs_web_bg.wasm` without it | 0cb236c (u4-9): one URL with the version, one cache entry the page fills and the worker reads (web/store.js `runtime`); a cold join fetched it once, 5,335,290 bytes from the origin (`demo/runs/u4/2026-10-05-reach/`) | A cold join took 15,350,659 bytes from the origin, when the page is 5,103,571: the wasm (5,027,239) fetched by the page, by the worker's install as `…wasm?v=<version>`, and by the worker's `init()`, which no cache answers (`data/runs-*.jsonl` `origin_bytes`; the origin's log, three wasm lines a Chromium run, two a WebKit run whose worker never opened a lend). The test origin sends no cache headers; an origin marking the wasm immutable should save the third copy, unmeasured. The module is not `wasm-opt`ed on this host (no binaryen); upstream's was 4,295,444 bytes. |
 | 52 | 6, 7 | iroh-1.0.2/src/defaults.rs:27-33, :48 (n0's relays spelled `use1-1.relay.n0.iroh.link.`), reached from web/src/lib.rs's endpoint | ea651e0 (u4-9; the operator chose to fix first): every relay URL dotless where it enters (svrngs_core::relay, crates/svrngs-node/src/relay.rs, which the page compiles); WebKit joined through n0 in 3 of 3 runs (`demo/runs/u4/2026-10-05-reach/`) | WebKit refuses TLS to a host with a trailing dot, and every n0 relay is spelled with one. All three WebKit runs through n0 ended "The computer that sent this link did not answer" after 60 s, the page's log holding `https://<each of n0's four relays>./ping: The server did not accept the certificate.` Probed in both engines from an https page: `https://use1-1.relay.n0.iroh.link/ping` loads and `…link./ping` fails in WebKit, both load in Chromium; `https://example.com./` fails in WebKit too ("A TLS error caused the secure connection to fail."). So an iPhone, whose every browser is WebKit, should not reach a group on n0's relays. The browser tests never could show it: they run a relay on 127.0.0.1, dotless. |
 | 53 | 7 | web/sw.js `lent` (each answer's body streamed as the door gives it), a `<video>`'s open-ended range | b6ea0ab, 3c4873b (u4-9): a range that runs on, open or a `<video>`'s longer than 2 MiB, asked of the door as a 2 MiB part (web/sw.js `PART`); every WebKit seek played on within 3.4 s through n0 (`demo/runs/u4/2026-10-05-reach/`). Corrected by u4-9: WebKit's first range was closed, `bytes=66394-45245597` (data/lend-local.log:25), not open as written in this row | In WebKit an early seek far ahead waited for the open range to be read: the first range, `bytes=66394-`, ran to the film's end (45,179,204 bytes in 26.2 s and 23.3 s, runs 1 and 3, `data/lend-local.log`), and the seek to 60 s asked 1.1 s after play played on only after it: past 30 s, and 29.0 s; in run 2 the range was cut at 23.9 MB after 3.9 s and the seek played on in 3.4 s. Chromium cut every open range within 0.9 s and asked anew; all its 30 seeks played on within 2.0 s. Whether WebKit holds the next range back or the worker's stream ignores WebKit's cancel is not shown: Playwright reaches no WebKit worker (#46). On a film of gigabytes such a seek waits for the bytes between. |
+
+## REVIEW-audit-u4-auto-3 (2026-10-05, range 584406f..b56d42b)
+
+The range starts at 584406f, the hash REVIEW-audit-u4-auto-2's row carries
+(ralph/next/u4/STATE.md). It ends at b56d42b, the commit that made this
+row. It covers u4-8, u4-9 and u4-10, and the scale-harness branch merged
+at 8923106 (cd751ab, 384e007, c1e07ac, 6493a8c; a clean merge, `git show
+--cc 8923106` shows no hunk of its own). The range touched
+crates/svrngs-core, crates/svrngs-node, crates/svrngs and web/ (`git diff
+--stat 584406f b56d42b -- crates apps web scripts`). This audit's fix is
+ac3ade0 (#54). The row cites `docs/ARCH_PRINCIPLES.md`, which is at
+docs/principles/ARCH_PRINCIPLES.md, and names `target/debug/sovereign-cli`,
+which svrngs does not build: the binary is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, built 2026-10-05 07:09,
+the one REVIEW-audit-u4-auto-2 planted against (sha256 6501033e…b92ae).
+
+**Not planted again.** The binary is the one whose tiers the last audit
+measured on plants A-D, N and N2. Those results (A exact; B and C only at
+0.9; D never; N by converge; N2 missed, I15) are this run's limits too,
+so each clean run below is read with them, and web/ is judged by the
+window pass and `git grep` as well.
+
+Every run is on this tree at dd92406 (b56d42b plus this row's `started`
+line), `git status --short` empty.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' 584406f..b56d42b`,
+summed by /tmp/u4audit3/ledger.py with the last audit's rules (a commit
+counts toward the row whose `started` commit comes before it; product
+code is `crates/`, `apps/`, `web/` less Cargo.lock; tests are a `tests/`
+or `fixtures/` segment, a lean_check test name, or `*.test.mjs`). One
+rule is new: a commit off the first-parent line counts toward the branch
+its merge names, so scale-harness's commits, which `git log` lists inside
+u4-9, are a row of their own. scripts/build-web.sh (+13 −7) is a script,
+not counted.
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| u4-8-phone-dry | 0 | 0 | 0 | 91 | 0 | 91 |
+| u4-9-webkit-reach | 351 | 41 | 310 | 341 | 18 | 323 |
+| scale-harness (merged 8923106) | 20 | 1 | 19 | 342 | 0 | 342 |
+| u4-10-safari-worker-key | 170 | 21 | 149 | 254 | 33 | 221 |
+| total | 541 | 63 | 478 | 1028 | 51 | 977 |
+
+- u4-8's code is its test, crates/svrngs/tests/phone_dry.rs (+91); its
+  dry run is demo/, not counted.
+- u4-9's +310: crates/svrngs-node/src/relay.rs +109 and svrngs-core
+  relay.rs +46 (#52's dotless relay, one body: the node's file wraps
+  core's `dotless`, and web/src/lib.rs compiles the node's file by
+  `#[path]`), web/sw.js +58 (#53's `PART`), web/store.js +46 (#51's
+  `runtime`), web/src/lib.rs +15, guest.rs +13, link.rs +5, cli.rs +5,
+  web/Cargo.toml +5.
+- scale-harness's +19 is node.rs +16 (`Node::start_every`) and
+  svrngs-node Cargo.toml +3; its test is tests/scale.rs +342.
+- u4-10's +149: web/sw.js +64 (the trace, the handed key, the hand-over
+  page), web/store.js +37, web/hand.js +37 (new), web/app.js +11. Its
+  tests: web/tests/handover.mjs +119, browser/main.rs +98, and
+  ecd5f72's move of `play` from runtime.mjs (−29) into page.mjs (+33).
+
+`python3 scripts/lean_check.py <tree>` (rc 0), trees from `git archive`
+in /tmp/u4audit3:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 584406f, range start | 2766 / 3000 | 10623 / 14000 |
+| b56d42b, range end | 2789 / 3000 | 11296 / 14000 |
+
+svrngs-core rose 23 lines, to 93% of its ceiling: relay.rs and link.rs's
+dotless read (u4-9). The repository rose 673, to 81%.
+
+### (2) Clones (`code dry-report`)
+
+`code index ~/dev/svrngs --corpus-id svrngs --full`: 1852 chunks in 155 s.
+`refresh`: rust 7943 symbols, python 157, "typescript: skipped (export
+failed)" (I4). Scoped runs at the default 0.95, each with a trailing
+slash (I11), then /tmp/u4audit3/blame.py blaming every side of every
+cluster (`git blame -w -M -C -C HEAD`) for lines in 584406f..b56d42b:
+
+| scope | locations | exact | near | a side added in the range |
+|---|---:|---:|---:|---|
+| crates/svrngs-core/ | 401 | 5 | 0 | none |
+| crates/svrngs-node/ | 319 | 4 | 1 | none |
+| crates/svrngs/ | 59 | 0 | 0 | — |
+| web/ | 59 | **could-not-judge** | 0 | — (I14) |
+
+Unscoped at 0.9, as the last three audits ran it: 11 exact groups and 18
+near clusters over 1046 function/method symbols (1003 at the last audit;
+11 and 17 then). The one new cluster is the only one with a side added in
+the range, and web/ at 0.9 finds it too:
+
+```
+- **2 symbols** · ~14 lines · cosine 0.917–0.917
+  - `keepTrace` — web/sw.js:88–100 (13 lines)      added=12/13 ['0549de8']
+  - `traceView` — web/sw.js:96–109 (14 lines)      added=13/14 ['0549de8', 'b24759b']
+```
+
+The spans are misaligned again (I14): keepTrace was :91-97 and traceView
+:99-106 at b56d42b, so each span takes in three lines of the other. What
+the two share is the plain-text content type, spelled at both and a third
+time in `say` (:208). **#54, fixed in ac3ade0**: one const, `PLAIN`.
+
+**Substitute check, named as a substitute.** /tmp/u4audit3/windows.py
+(the last audit's windows of 5 normalized lines over Rust and JS, a hit
+new when either span has a line blamed in the range): 187 hits, 5 new,
+all in tests:
+
+- crates/svrngs-core/src/link_tests.rs:72-85 against
+  crates/svrngs-core/src/relay_tests.rs:36-58 and
+  crates/svrngs-node/src/relay_tests.rs:103-111: given/then rows of the
+  dotless relay ("a relay of one's own, dotted", "a loopback relay"), one
+  table at each place a relay enters: core's `dotless`, a token's
+  `decode`, the node's `parse`. Each tests its own entry point. No change
+  (#55).
+- web/tests/handover.mjs:21-26 == web/tests/runtime.mjs:23-28: two
+  drivers' imports and their `args` line. No change (#55).
+
+Reading the range for what neither pass would show:
+
+- **#49, still open, and grown.** u4-10 parses a lend's address a third
+  time: web/hand.js:21 (`/^l\/([0-9a-f]{64})\//`, the lender), beside
+  the page's build at web/app.js:155 and the worker's parse at
+  web/sw.js:74 (`LENDS`) and :234. hand.js is a new shell file
+  (sw.js `SHELL`, build-web.sh's `PAGE`) and imports store.js, as the
+  page and the worker do; one home for the address is still a module all
+  three import. Recorded.
+- **#42, still open.** A token becomes the address a dial uses at
+  crates/svrngs/src/issuer.rs:41-54 (`key`, `addr`) and web/src/lib.rs
+  `bind` :146 and `reach` :223. u4-9 touched `bind` (n0's relays and the
+  lookup, dotless) and did not take it up. It did show a shape short of a
+  new crate: web/src/lib.rs compiles crates/svrngs-node/src/relay.rs by
+  `#[path]`, so the page and the node share one body that names iroh,
+  each workspace with its own pins. #42 could land the same way.
+- One relay normaliser, three entries: svrngs-core relay.rs `dotless`
+  decides; the node's relay.rs `dotless`/`parse`/`n0_relays`/
+  `DotlessLookup` wrap it for iroh's types; link.rs:140 calls core's for
+  a token. Nothing decided twice.
+- The page's sealing key: only `keep` makes one (store.js `sealingKey(true)`
+  at :87; `unseal` passes `false` at :120). One decider for "who makes the seal".
+- `Node::start` now forwards to `Node::start_every` with
+  `DEFAULT_RING_SYNC_INTERVAL` (node.rs:148): one body.
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff 584406f b56d42b -- crates apps web`, added lines matching
+`(struct|enum|trait|type|class) Name`: `DotlessLookup`, `Dotless`
+(crates/svrngs-node/src/relay.rs:57, :70) and the JS `class Keyless`
+(web/sw.js:131). Each was run, then `git grep -nwE
+'(struct|enum|trait|type|class) <Name>' -- crates apps web`:
+
+- `DotlessLookup`: definitions (1), crates/svrngs-node/src/relay.rs:56
+  (a line early, I1). git grep: one.
+- `Dotless`: definitions (1), relay.rs:69; morphological kin
+  `DotlessLookup`. The two are iroh's builder/built pair
+  (`AddressLookupBuilder` and `AddressLookup`), each wrapping its own
+  side. Kin, not one noun twice. No change (#55).
+- `Keyless`: definitions (0), "none — check the spelling" (I15; JS has no
+  SCIP symbol). git grep: one, web/sw.js:131.
+
+The relay.rs that web/src/lib.rs compiles by `#[path]` is one file, so
+its two nouns have one definition in both workspaces.
+
+No noun has more than one definition.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 54 | 8 | web/sw.js:95, :101, :208, at b56d42b | ac3ade0 | The worker spelled its plain-text content type three times: keepTrace and traceView (both 0549de8) and `say`. dry-report paired the first two at 0.917. One const, `PLAIN`; the browser tests read the trace through it. |
+| 49 | 8 ("one accessor per path") | web/hand.js:21, web/app.js:155, web/sw.js:74 and :234, at ac3ade0 | not fixed | As recorded at REVIEW-audit-u4-auto-2, and grown: u4-10's hand-over page parses the lend's address too, so three files hand-derive it. One home is a module all three import, a shell file in sw.js `SHELL` and build-web.sh's `PAGE`. |
+| 42 | 8 | crates/svrngs/src/issuer.rs:41-54 and web/src/lib.rs:146-256, at ac3ade0 | not fixed | As recorded. u4-9's `#[path]` share of crates/svrngs-node/src/relay.rs is a shape that would give it one body without a new crate. |
+| 48 | 8 | web/src/join.rs:29-37 and web/src/lib.rs `bind`, at ac3ade0 | not fixed | As recorded; the range did not touch join.rs. |
+| 55 | 8 | the "no change" items in (2) and (3) | no change | Given/then rows of the dotless relay at each place it enters (core, a token, the node); two drivers' imports; `Dotless`/`DotlessLookup`, iroh's builder and built pair. Nothing is decided twice. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I4 | 6 | `refresh` | Still present: "typescript: skipped (export failed)". |
+| I10 | 6 | `code dry-report` header | Still present: "1046 function/method symbols" in every scope. |
+| I11 | 6 | `code dry-report --scope` | Still present; every scoped run here used a trailing slash. |
+| I14 | 6, 7 | `code dry-report --scope web/` near tier | Still present. The range's one real duplicate, in JS, scored 0.917: missed at the default 0.95 (web/ says "0 near-clone clusters" there), found at 0.9, its spans each three lines off into the other function. |
+| I15 | 6, 7 | `code converge noun` over web/ | Still present: `Keyless` gives definitions (0), "check the spelling", for a class that exists. |
