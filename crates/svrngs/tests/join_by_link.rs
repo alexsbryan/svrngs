@@ -16,7 +16,7 @@ use std::collections::BTreeSet;
 use std::net::SocketAddr;
 use std::time::{Duration, Instant};
 
-use svrngs::cli::{self, Command, Printed, Refusal, Said};
+use svrngs::cli::{self, Printed, Refusal, Said, Verb};
 use svrngs::group::{self, Name, Seed};
 use svrngs::link::{client_link, https_link, Link, Origin, Token, KEPT_WORDS};
 use svrngs_node::iroh::{Contact, EndpointAddr, MemoryLookup, RelayConfig, RelayUrl};
@@ -202,7 +202,7 @@ fn argv(rest: &[&str]) -> Vec<String> {
 /// `svrngs join <raw>` parsed: the link the command would redeem.
 fn typed(raw: &str) -> Link {
     match cli::parse(argv(&["join", raw])).expect("join parses") {
-        Command::Join { link, .. } => *link,
+        Verb::Join { link, .. } => *link,
         other => panic!("{other:?}"),
     }
 }
@@ -661,7 +661,7 @@ fn join_parses_its_link() {
     ] {
         assert_eq!(
             cli::parse(argv(&["join", &raw, "--as", "Alex"])).unwrap(),
-            Command::Join {
+            Verb::Join {
                 link: Box::new(Link {
                     token: token.clone(),
                     origin,

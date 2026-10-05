@@ -18,7 +18,7 @@ use std::process::{Child, Command as Process, Stdio};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use svrngs::cli::{self, Command, Refusal, Said};
+use svrngs::cli::{self, Refusal, Said, Verb};
 use svrngs::group::{self, Name};
 use svrngs::link::{Link, KEPT_WORDS};
 use svrngs::share::{self, Share};
@@ -260,7 +260,7 @@ fn share_takes_no_password_on_the_command_line() {
             "{flag} is taken"
         );
     }
-    let Ok(Command::Share(asked)) = cli::parse(argv(&[
+    let Ok(Verb::Share(asked)) = cli::parse(argv(&[
         "share", "8096", "--name", "box", "--limit", "2", "--refuse", "/admin",
     ])) else {
         panic!("share parses");
@@ -270,7 +270,7 @@ fn share_takes_no_password_on_the_command_line() {
     assert_eq!(asked.refused.len(), 1);
     assert_eq!(asked.upload, None, "no upload stated, none declared");
     assert!(cli::parse(argv(&["new", "x", "--limit", "2"])).is_err());
-    let Ok(Command::Share(asked)) = cli::parse(argv(&["share", "8096", "--upload", "30"])) else {
+    let Ok(Verb::Share(asked)) = cli::parse(argv(&["share", "8096", "--upload", "30"])) else {
         panic!("share parses an upload");
     };
     assert_eq!(asked.upload.map(|u| u.bps()), Some(30_000_000));

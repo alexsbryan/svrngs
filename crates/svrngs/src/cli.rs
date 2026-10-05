@@ -118,7 +118,7 @@ const ONLINE_WAIT: Duration = Duration::from_secs(10);
 
 /// What was typed.
 #[derive(Debug, PartialEq, Eq)]
-pub enum Command {
+pub enum Verb {
     Run,
     New {
         name: Name,
@@ -143,10 +143,10 @@ pub enum Command {
 
 /// Parse `std::env::args()`. A wrong argument is an error string the caller
 /// prints, never a guess at what was meant.
-pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Command, String> {
+pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let mut it = args.into_iter().skip(1);
     let Some(verb) = it.next() else {
-        return Ok(Command::Run);
+        return Ok(Verb::Run);
     };
     let mut positional: Option<String> = None;
     let mut person = None;
@@ -200,7 +200,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Command, String>
                     format!("--upload `{raw}` is not an upload: a whole number of Mbit/s, 1 or more")
                 })?));
             }
-            "-h" | "--help" => return Ok(Command::Help),
+            "-h" | "--help" => return Ok(Verb::Help),
             other if other.starts_with('-') => return Err(format!("unknown argument `{other}`")),
             other if positional.is_none() => positional = Some(other.to_string()),
             other => return Err(format!("unexpected argument `{other}`")),
@@ -225,7 +225,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Command, String>
         "new" => {
             let raw = positional.ok_or("new wants a name: `svrngs new <name>`")?;
             let name = Name::parse(&raw).map_err(|why| format!("`{raw}` is not a name: {why}"))?;
-            Ok(Command::New {
+            Ok(Verb::New {
                 name,
                 person,
                 origin,
@@ -236,18 +236,18 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Command, String>
             let link = Link::parse(&raw).ok_or_else(|| {
                 format!("`{raw}` is not a whole link; copy all of it, to the end")
             })?;
-            Ok(Command::Join {
+            Ok(Verb::Join {
                 link: Box::new(link),
                 person,
             })
         }
-        "link" => Ok(Command::Link {
+        "link" => Ok(Verb::Link {
             group: positional.ok_or("link wants a group: `svrngs link <group>`")?,
             origin,
         }),
         "share" => {
             let raw = positional.ok_or("share wants a port: `svrngs share <port>`")?;
-            Ok(Command::Share(Share {
+            Ok(Verb::Share(Share {
                 port: share::resolve_target(&raw)?,
                 name,
                 kind,
@@ -260,9 +260,9 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Command, String>
             let raw = positional.ok_or("unshare wants a name: `svrngs unshare <name>`")?;
             let name = LendName::parse(&raw)
                 .map_err(|_| format!("`{raw}` is not a name: letters, digits, - and _ only"))?;
-            Ok(Command::Unshare(name))
+            Ok(Verb::Unshare(name))
         }
-        "help" | "-h" | "--help" => Ok(Command::Help),
+        "help" | "-h" | "--help" => Ok(Verb::Help),
         other => Err(format!("unknown command `{other}`")),
     }
 }
@@ -380,17 +380,17 @@ pub fn claim(root: &Path) -> Result<File, Refusal> {
 /// computer's key, start the node, do the verb, and run until Ctrl-C.
 /// `share` declares its lend first, and runs only when svrngs is not
 /// running here already; `unshare` only withdraws one.
-pub async fn run(command: Command, root: PathBuf, relay: &RelayConfig) -> Result<(), Refusal> {
+pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<(), Refusal> {
     let command = match command {
-        Command::Help => {
+        Verb::Help => {
             println!("{USAGE}");
             return Ok(());
         }
-        Command::Unshare(name) => {
+        Verb::Unshare(name) => {
             print!("{}", unshare(&root, &name)?);
             return Ok(());
         }
-        Command::Share(asked) => {
+        Verb::Share(asked) => {
             let lend = share::lend_of(
                 &asked,
                 share::listens(asked.port),
@@ -422,7 +422,7 @@ pub async fn run(command: Command, root: PathBuf, relay: &RelayConfig) -> Result
                 }
             );
             println!();
-            return start(Command::Run, root, relay, claimed).await;
+            return start(Verb::Run, root, relay, claimed).await;
         }
         other => other,
     };
@@ -433,7 +433,7 @@ pub async fn run(command: Command, root: PathBuf, relay: &RelayConfig) -> Result
 /// Start the node over the data dir `claimed` holds, do the verb, and run
 /// until Ctrl-C.
 async fn start(
-    command: Command,
+    command: Verb,
     root: PathBuf,
     relay: &RelayConfig,
     _claimed: File,
@@ -699,14 +699,14 @@ pub async fn running(root: &Path, node: &Node) -> Said {
 
 /// A verb on a started node, then the wait for Ctrl-C.
 async fn serve(
-    command: Command,
+    command: Verb,
     root: &Path,
     node: &Node,
     key: &SigningKey,
     relay: &RelayConfig,
 ) -> Result<(), Refusal> {
     let said = match command {
-        Command::New {
+        Verb::New {
             name,
             person,
             origin,
@@ -718,19 +718,19 @@ async fn serve(
             let (seed, link) = new_group(node, name, person, origin.as_ref(), relay).await?;
             Said::Made { seed, link }
         }
-        Command::Join { link, person } => {
+        Verb::Join { link, person } => {
             let person = match person {
                 Some(p) => p,
                 None => user_name().ok_or(Refusal::NoNameToJoin)?,
             };
             join_group(node, key, &link, &person).await?
         }
-        Command::Link { group, origin } => {
+        Verb::Link { group, origin } => {
             let (seed, link) = new_link(node, &group, origin.as_ref(), relay).await?;
             Said::Linked { seed, link }
         }
-        Command::Run => running(root, node).await,
-        Command::Help | Command::Share(_) | Command::Unshare(_) => {
+        Verb::Run => running(root, node).await,
+        Verb::Help | Verb::Share(_) | Verb::Unshare(_) => {
             unreachable!("answered in `run`")
         }
     };

@@ -4,7 +4,7 @@
 //! process, no relay.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
-use svrngs::cli::{self, Command, Printed, Refusal, LINK_LIFE_SECS};
+use svrngs::cli::{self, Printed, Refusal, Verb, LINK_LIFE_SECS};
 use svrngs::group::{self, Name};
 use svrngs::link::{Link, Origin, CLIENT_PREFIX};
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
@@ -277,10 +277,10 @@ fn argv(s: &str) -> Vec<String> {
 
 #[test]
 fn the_verbs_parse() {
-    assert_eq!(cli::parse(argv("")).unwrap(), Command::Run);
+    assert_eq!(cli::parse(argv("")).unwrap(), Verb::Run);
     assert_eq!(
         cli::parse(argv("new house --as Sam")).unwrap(),
-        Command::New {
+        Verb::New {
             name: name("house"),
             person: Some(name("Sam")),
             origin: None,
@@ -288,20 +288,20 @@ fn the_verbs_parse() {
     );
     assert_eq!(
         cli::parse(argv("link house --origin https://links.example.org/")).unwrap(),
-        Command::Link {
+        Verb::Link {
             group: "house".into(),
             origin: Some(Origin::parse("https://links.example.org/").unwrap()),
         }
     );
     assert_eq!(
         cli::parse(argv("link house")).unwrap(),
-        Command::Link {
+        Verb::Link {
             group: "house".into(),
             origin: None,
         },
         "no --origin is the group's own, not the default"
     );
-    assert_eq!(cli::parse(argv("--help")).unwrap(), Command::Help);
+    assert_eq!(cli::parse(argv("--help")).unwrap(), Verb::Help);
 }
 
 /// Every one of these is a guess some hand-rolled parser has made: a
