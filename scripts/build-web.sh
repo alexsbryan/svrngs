@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # ported from commonwealth-ai scripts/build-ring-runtime.sh@e1a43bcd2
-# build-ring-runtime.sh — build the guest page into a deployable static site.
+# build-web.sh — build the page into a deployable static site.
 #
 # The output is ONE directory to upload to the guest runtime's static origin
 # (today svrnme.sh): index.html + the wasm module and its glue. No server, no
-# certificate, no data; see sovereign/apps/ring-runtime/README.md.
+# certificate, no data.
 #
-#   target/ring-runtime/site/   <- upload this
+#   target/web/site/   <- upload this
 #
 # Needs the wasm-bindgen CLI matching the crate's wasm-bindgen pin (0.2.128)
 # and the wasm32-unknown-unknown target. Both are checked, not assumed. On
@@ -18,11 +18,11 @@ cd "$(dirname "$0")/.."
 # The output directory is the deployable static site. Overridable so a consumer
 # (landing/scripts/build-ring-runtime.sh → landing/ring/) can place it where
 # its host serves it; default is this repo's target/.
-OUT="target/ring-runtime/site"
+OUT="target/web/site"
 while [ $# -gt 0 ]; do
   case "$1" in
     --out) OUT="${2:?--out needs a directory}"; shift 2 ;;
-    *) echo "build-ring-runtime: unknown argument $1 (only --out <dir>)" >&2; exit 2 ;;
+    *) echo "build-web: unknown argument $1 (only --out <dir>)" >&2; exit 2 ;;
   esac
 done
 
@@ -30,12 +30,12 @@ APP="web"
 WASM_BINDGEN_MIN="0.2.128"
 
 if ! rustup target list --installed 2>/dev/null | grep -q '^wasm32-unknown-unknown$'; then
-  echo "build-ring-runtime: the wasm target is not installed — run:" >&2
+  echo "build-web: the wasm target is not installed — run:" >&2
   echo "  rustup target add wasm32-unknown-unknown" >&2
   exit 3
 fi
 if ! command -v wasm-bindgen >/dev/null; then
-  echo "build-ring-runtime: wasm-bindgen is not on PATH — run:" >&2
+  echo "build-web: wasm-bindgen is not on PATH — run:" >&2
   echo "  cargo install wasm-bindgen-cli --version ${WASM_BINDGEN_MIN}" >&2
   exit 3
 fi
@@ -43,7 +43,7 @@ fi
 # confusing failure at run time; say it here where it is cheap to fix.
 cli="$(wasm-bindgen --version | awk '{print $2}')"
 if [ "$cli" != "$WASM_BINDGEN_MIN" ]; then
-  echo "build-ring-runtime: wasm-bindgen CLI is ${cli}, the crate pins \
+  echo "build-web: wasm-bindgen CLI is ${cli}, the crate pins \
 =${WASM_BINDGEN_MIN} — install the matching CLI:" >&2
   echo "  cargo install wasm-bindgen-cli --version ${WASM_BINDGEN_MIN} --force" >&2
   exit 3
@@ -69,7 +69,7 @@ if [ "$(uname -s)" = "Darwin" ] && [ -z "${CC_wasm32_unknown_unknown:-}" ]; then
     fi
   done
   if [ -z "$found" ]; then
-    echo "build-ring-runtime: on macOS the wasm build needs an LLVM clang with a" >&2
+    echo "build-web: on macOS the wasm build needs an LLVM clang with a" >&2
     echo "  wasm32 backend (brew install llvm), or pass one explicitly:" >&2
     echo "  CC_wasm32_unknown_unknown=<path-to-clang> $(basename "$0")" >&2
     exit 3
@@ -84,14 +84,14 @@ fi
 rm -rf "$OUT"
 mkdir -p "$OUT/wasm"
 wasm-bindgen --target web --out-dir "$OUT/wasm" \
-  "$APP/target/wasm32-unknown-unknown/release/ring_runtime.wasm"
+  "$APP/target/wasm32-unknown-unknown/release/svrngs_web.wasm"
 
 # Shrink the module when binaryen is present. Optional, not required: the page
 # works without it, and a missing optimizer must not fail a build. The size
 # matters because the guest downloads it — a CDN will gzip it again on top.
 if command -v wasm-opt >/dev/null; then
-  wasm-opt -Oz -o "$OUT/wasm/ring_runtime_bg.wasm.opt" "$OUT/wasm/ring_runtime_bg.wasm" \
-    && mv "$OUT/wasm/ring_runtime_bg.wasm.opt" "$OUT/wasm/ring_runtime_bg.wasm"
+  wasm-opt -Oz -o "$OUT/wasm/svrngs_web_bg.wasm.opt" "$OUT/wasm/svrngs_web_bg.wasm" \
+    && mv "$OUT/wasm/svrngs_web_bg.wasm.opt" "$OUT/wasm/svrngs_web_bg.wasm"
   echo "wasm-opt: -Oz applied"
 else
   echo "wasm-opt: not on PATH (binaryen) — shipping the unoptimized module"
@@ -99,17 +99,17 @@ fi
 
 # The version is the module's content hash, stamped into every shell URL and
 # the service-worker cache name, so a rebuild invalidates a guest's cache
-# instead of serving a stale runtime (sovereign/apps/ring-runtime/web/sw.js).
+# instead of serving a stale runtime (web/sw.js).
 # sha256sum is GNU coreutils; stock macOS has only shasum. Either works.
 if command -v sha256sum >/dev/null; then SHA_CMD="sha256sum"; else SHA_CMD="shasum -a 256"; fi
-VERSION="$(cat "$OUT/wasm/ring_runtime_bg.wasm" "$OUT/wasm/ring_runtime.js" | $SHA_CMD | cut -c1-12)"
+VERSION="$(cat "$OUT/wasm/svrngs_web_bg.wasm" "$OUT/wasm/svrngs_web.js" | $SHA_CMD | cut -c1-12)"
 cp "$APP/index.html" "$APP/app.js" "$APP/sw.js" "$OUT/"
 sed -i.bak "s/__VERSION__/${VERSION}/g" "$OUT/index.html" "$OUT/app.js" "$OUT/sw.js"
 rm -f "$OUT/index.html.bak" "$OUT/app.js.bak" "$OUT/sw.js.bak"
 
 echo
 echo "built: $OUT  (version ${VERSION})"
-echo "  size: $(du -h "$OUT/wasm/ring_runtime_bg.wasm" | cut -f1) wasm"
+echo "  size: $(du -h "$OUT/wasm/svrngs_web_bg.wasm" | cut -f1) wasm"
 echo "  1. upload that directory to the guest runtime's static origin"
 echo "     (today svrnme.sh, beside the landing page and installers)"
 echo "  2. point a grant at it:"

@@ -8,9 +8,9 @@
 #
 # Standalone on purpose: `[workspace]` below keeps it out of the repo's
 # workspace, which builds for the host. This crate only builds for
-# wasm32-unknown-unknown, via scripts/build-ring-runtime.sh.
+# wasm32-unknown-unknown, via scripts/build-web.sh.
 [package]
-name = "ring-runtime"
+name = "svrngs-web"
 version = "0.1.0"
 edition = "2021"
 publish = false

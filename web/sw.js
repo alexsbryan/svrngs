@@ -3,12 +3,12 @@
 // content hash, stamped at build time, so a rebuild replaces the cache rather
 // than serving a stale runtime (the failure this exists to avoid is a guest
 // stuck on last week's wasm). The version is also on every shell URL.
-const CACHE = 'ring-runtime-__VERSION__';
+const CACHE = 'svrngs-web-__VERSION__';
 const SHELL = [
   '/ring',
   '/ring/app.js?v=__VERSION__',
-  '/ring/wasm/ring_runtime.js?v=__VERSION__',
-  '/ring/wasm/ring_runtime_bg.wasm?v=__VERSION__',
+  '/ring/wasm/svrngs_web.js?v=__VERSION__',
+  '/ring/wasm/svrngs_web_bg.wasm?v=__VERSION__',
 ];
 
 self.addEventListener('install', (e) => {

@@ -2585,17 +2585,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ring-runtime"
-version = "0.1.0"
-dependencies = [
- "iroh",
- "js-sys",
- "svrngs-core",
- "wasm-bindgen",
- "wasm-bindgen-futures",
-]
-
-[[package]]
 name = "rustc-hash"
 version = "2.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3035,6 +3024,17 @@ dependencies = [
  "thiserror 2.0.20",
  "tracing",
  "url",
+]
+
+[[package]]
+name = "svrngs-web"
+version = "0.1.0"
+dependencies = [
+ "iroh",
+ "js-sys",
+ "svrngs-core",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
 ]
 
 [[package]]
