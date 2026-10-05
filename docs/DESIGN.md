@@ -106,13 +106,36 @@ An app that needs anything else is a decision, not a convenience.
 way in, and nothing depends on a hosted URL. A group that wants phones
 without an install names a page origin, one it hosts or ours, and its links
 carry the same token as `<origin>#<token>`. On a phone that link opens in the
-browser and the person is in: the page holds the
-person's own key (WebCrypto, never extractable) and reaches the group by
-dialling a member node over iroh in wasm — measured working from a stock Chrome
-tab (commonwealth-ai `ralph/DECISIONS.md`, browser-dial-2, `HTTP/1.1 200 OK`).
-A phone holds no copy of the record; it reads and writes through the node it
-dials. What the browser still lacks is the runtime that renders a lent app
-through that dial: fetch, POST, streaming and byte ranges.
+browser and the person is in: the page makes the person's own key and reaches
+the group by dialling over iroh in wasm, relay-only. A dial from a page was
+measured once, in headless Chrome for Testing 147 on Linux driven by
+Playwright, through n0's relay (commonwealth-ai `ralph/DECISIONS.md:9909-10013`,
+browser-dial-2, `HTTP/1.1 200 OK`); no phone has dialled. A phone holds no
+copy of the record; it reads and writes through the nodes it dials. U4 builds
+the rest, by five calls (the seat, 2026-10-05, from its survey of upstream;
+the evidence is U4's inventory, §8):
+1. *The page holds the key's bytes, sealed.* The person's key is 32 bytes,
+   sealed by a non-extractable WebCrypto AES-GCM key, both kept in IndexedDB.
+   It cannot be a non-extractable WebCrypto signing key: iroh signs its
+   handshake synchronously, and the issuer redeems only for the key that
+   dials it.
+2. *A browser's key dials and is never dialled.* The redemption names whether
+   its new key is a computer's or a browser's, and the register answers it for
+   each standing key; the round, the live fan-out and the list of what members
+   lend skip a browser's key. A phone's endpoint lives only while its page
+   runs, so without this every round would wait out a dial per phone.
+3. *The service worker holds the endpoint* and serves every request under its
+   scope — a lent service's page, its fetches, a `<video>`'s byte ranges —
+   through the dial; the page joins and lists. If a recorded run shows the
+   worker stopped under playback, the endpoint moves to the page and the
+   worker relays its requests to it.
+4. *The phone dials whoever lends a service*, directly by key, since it
+   stands in the group. The issuer, the node the link names, only redeems and
+   answers what the group's people lend, each with its lender's key. No node
+   proxies another's lend.
+5. *One body for the link.* The command and the page parse a token and sign
+   the ask and the redemption with the same code, in svrngs-core: bytes and
+   keys in, bytes out.
 
 **Chats are doors, and the last thing we build.** A small adapter per chat, in
 its own package, makes a group for a channel and posts its link. Onboarding
@@ -498,6 +521,74 @@ API (commonwealth-ai `quality/campaigns/ring-apps-shelf.md:187`). And
 E0's Discord door, which called a host deleted with E0, went as the engine
 did (u3-1); the chat doors start from tag `e0-bot` when their turn comes.
 
+**U4's inventory.** What upstream at `e1a43bcd2` has for a phone's browser,
+and what each becomes; written from the seat's survey
+(`ralph/next/u4/UPSTREAM.md`), each path:line read again at `e1a43bcd2`. Upstream
+has a wasm iroh dialler with a static page around it and the scripts that
+build and deploy it, and nothing else U4 needs: no HTTP client in the browser
+beyond one buffered GET, no fetch interception, no byte ranges, no request
+bodies, no key kept in a browser, no redemption from one, and no measurement on
+a phone. Paths under `ring-runtime/` are `sovereign/apps/ring-runtime/`;
+sizes are lines of code, as the survey counted them.
+
+| Upstream | What it does there | Becomes |
+|---|---|---|
+| `ring-runtime/src/lib.rs:1-203` (153) | one export, `dial_guest(dial, token, path)` (`:62-63`): parses `<hex>@<targets>` and refuses one with no http(s) relay URL (`:91-99`); binds an endpoint, `presets::Minimal`, a fresh `SecretKey::generate()` on every dial, `RelayMode::Default`, `GUEST_ALPN` (`:119-123`); waits for `online()` (`:139`), connects to the relay address (`:142-145`) and opens one bi-stream (`:159`); writes a hand-built `GET … Connection: close` (`:166-168`), reads `read_to_end(512 * 1024)` (`:178`) and finishes the send half only after it (`:185-187`); every layer pushed to `window.__trace` as it happens (`:27-35`) | forked into `web/` as svrngs-web (u4-3), upstream's file first with only `kernel-types` replaced by svrngs-core; then the person's key from the page's sealed store in place of `generate()` (call 1), the member ALPN, and a dial by key: the token's relay, else iroh's address lookup, which the N0 preset does in a browser over HTTPS (`PkarrResolver::n0_dns()`, `iroh-1.0.2/src/endpoint/presets.rs:122-128`), never refusing a bare key. The trace stays. The hand-built request and the buffered read go in u4-4: hyper's HTTP/1 client over each stream, any method, a streamed request body, the response body a `ReadableStream`, the send half open until the response ends, no cap |
+| `ring-runtime/Cargo.toml:1-34` (14) | a cdylib in its own `[workspace]` (`:32-34`), so the host workspace never builds it; "The LOCKED pin … measured WORKED at exactly these versions" (`:21-26`): iroh =1.0.2, wasm-bindgen =0.2.128, wasm-bindgen-futures =0.4.78, js-sys =0.3.105; `kernel-types` by path (`:30`) | forked with its pins and its own workspace (u4-3), svrngs-core in place of `kernel-types`. iroh 1.0.2 has no wasm feature: its build script turns the browser on by target (`iroh-1.0.2/build.rs:7`) |
+| `ring-runtime/web/index.html:1-45` (27) | the static page: a CSP of `default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' wss: https:; img-src 'none'; …; base-uri 'none'` (`:25`); `referrer` `no-referrer` (`:24`), so the fragment never leaves in a Referer; the script by absolute path, `/ring/app.js?v=__VERSION__` (`:43`) | forked (u4-3); its words become §1's; `no-referrer` and the strict CSP kept; the shell's `/ring/` paths follow wherever a group's origin serves the page |
+| `ring-runtime/web/app.js:1-68` (47) | reads the fragment's `token`, `iroh`, `path` and `s` (`:25-29`); `init()`, then races `dial_guest` against 120 s (`:41-45`); pulls status and body out of the trace text (`:49-53`); registers the service worker after load, best effort (`:64-68`) | forked (u4-3), then the joining page (u4-5): the fragment is svrngs's token, parsed by svrngs-core (call 5); it asks the person's name once, makes and seals the key (call 1), asks and redeems at the issuer naming itself a browser (call 2), keeps the key and the group's name, and lists what the group's people lend |
+| `ring-runtime/web/sw.js:1-34` (25) | a cache-first shell cache named by content hash (`:5-11`); same-origin GETs only (`:28-34`): "The dial itself is not HTTP to this origin — it is iroh — so requests to it never reach here" (`:26-27`) | forked (u4-3), the shell cache kept; then the runtime (u4-6, call 3): it opens the endpoint from the sealed key when it starts and again after the browser stops it, and serves every request under its scope through u4-4's client to the lender's door, `/lend/<name>/<path>` |
+| `scripts/build-ring-runtime.sh:1-119` (75) | checks for the wasm target (`:31-35`) and a `wasm-bindgen` CLI of exactly 0.2.128 (`:36-49`); on macOS uses Homebrew LLVM's clang and llvm-ar, since Apple's clang has no wasm32 backend (`:52-76`); `RUSTFLAGS='--cfg getrandom_backend="wasm_js"' cargo build --release --target wasm32-unknown-unknown` (`:81`), the cfg for `kernel-types`' getrandom 0.3 (`:77-80`); `wasm-bindgen --target web` (`:85-86`); `wasm-opt -Oz` when installed (`:91-97`); a 12-hex content hash stamped into the three shell files (`:103-107`) | forked as `scripts/build-web.sh` (u4-3). Whether the getrandom cfg stays once `kernel-types` is gone is a change of meaning, its own commit |
+| `landing/scripts/build-ring-runtime.sh:1-24`, `landing/scripts/verify-ring-deployed.sh:1-92`, `landing/vercel.json:1-73`, `landing/package.json:13` | build into `landing/ring/` and deploy one origin: "The trailing slash is LOAD-BEARING" (`build-ring-runtime.sh:7`), after "a phone hung on the wall link" (`:11-12`); a redirect `/ring` → `/ring/` (`vercel.json:4-10`); `sw.js` uncached and the wasm immutable (`:64-71`); a deploy checked by fetching the page's script as a browser resolves it | not forked: which origin serves the page, and how, is a group's. Their facts go into u4-8's package for the operator: a page served at a path needs its trailing slash, `sw.js` uncached, the wasm immutable |
+| `landing/ring/` (generated, committed) | the built site; `wasm/ring_runtime_bg.wasm` is 4,295,444 bytes (`git ls-tree -l`); its glue reaches the relay with `new WebSocket` | not forked. Upstream's one figure for a page's weight; u4-8 measures ours |
+| `kernel-types/src/alpn.rs:26` | `GUEST_ALPN = b"cwth/guest/0"`, the one spelling both ends import | not forked: svrngs's protocols are its `Alpn` (`crates/svrngs-node/src/alpn.rs:29-30`), spelled in svrngs-core from u4-2, so the page and the node spell each name once |
+| `mesh-join-vocab/src/deep_link.rs:228-300` | the https link's build and parse, never reading left of the `#` | forked already (U2): `crates/svrngs/src/link.rs`; u4-2 moves the token's parse and the signing of the ask and the redemption into svrngs-core (call 5) |
+| `sovereign/crates/sovereign-contracts/src/guest_pages/ring_shim.js:1-171` (105), with `shim.rs` and `guest_pages.rs` | `window.ring` over plain `fetch` to a LAN door: the bearer from `location.hash` (`:5`); a name claimed by `window.prompt` and `POST /v1/guest/session`, its handle kept in `localStorage` (`:30-61`) | not forked: a guest on a LAN door, which never dials iroh and for whom the host signs. svrngs's phone is a person with a key in the register. Both retire on svrngs's bar (`docs/RING_SPEC.md:26`) |
+| `sovereign/crates/sovereign-daemon/src/guest_door.rs:617-729` (104) | the LAN door's proxy: the request body buffered to 16 MiB (`:619`, `:646`); headers forwarded but `host`, `connection`, `content-length` and `accept-encoding` (`:659-667`); the response buffered whole (`:689`) and only its status, `content-type` and body returned (`:681-696`) | not forked: it drops `Content-Range` and streams nothing. The other end of a phone's streams is U3's door (`crates/svrngs-node/src/door.rs`) |
+| `sovereign-mobile/src-tauri/src/iroh_bridge.rs:14-17`; `scripts/ring-room-phone/phone.mjs` | a native Tauri app's iroh, its key "ephemeral (fresh key per app run)"; a Node stand-in for a phone browser, with a fake `location`, `localStorage` and `fetch` | not forked: a native phone app waits (§9). The browser tests drive real engines with Playwright, Chromium and WebKit with iPhone emulation (u4-7) |
+| nothing | an HTTP client over iroh in wasm; fetch interception; byte ranges in a browser; request bodies; a key a browser keeps; redemption from a browser; a dial by bare key from wasm; any measurement on a phone (the survey searched every `.js`, `.ts`, `.html` and `.rs` file for each) | built new: the client (u4-4), the key and joining (u4-5), the runtime (u4-6), the measurement and the operator's package (u4-8) |
+
+Seven facts follow. *The page holds the key's bytes* (call 1): iroh's
+`SecretKey` is an ed25519-dalek key made only from 32 bytes or by `generate()`
+(`iroh-base-1.2.0/src/key.rs:261`, `:318`, `:337`), and iroh signs its TLS
+handshake with a synchronous call (`iroh-1.0.2/src/tls/resolver.rs:92-95`),
+where `crypto.subtle.sign` is asynchronous. The issuer refuses a redeemer whose
+dialling key is not the new key (`crates/svrngs-node/src/redeem.rs:383-387`,
+`NotTheDialer`), and the member protocol admits only standing keys
+(`crates/svrngs-node/src/node.rs:440-459`), so the endpoint key is the
+person's key and exists as bytes in the page. Sealed, storage holds only
+ciphertext; code running on the page can still use the key, which is why a
+group trusts its origin with that code (§11, risk 5). This is read from
+source: upstream never held a key in a browser. *A browser's key is never
+dialled* (call 2): U1's "No presence" fact makes every round dial every
+standing key, and a phone's page is closed most of the time. *The phone dials
+the lender* (call 4), so a lent service's bytes cross no third computer;
+upstream refused "the plaintext-terminating proxy" either way
+(`docs/THE_LINK.md:241-242`), and a browser is relay-only for good
+(`quality/campaigns/ring-apps-shelf.md:19-28`). *Measured once, never on a
+phone:* browser-dial-2 ran Chrome for Testing 147.0.7727.15, headless, on
+Linux x86_64, driven by `playwright-core` 1.59.1 (`ralph/DECISIONS.md:360`,
+`:9948-9960`), and its one path fact is the send half: calling `finish()`
+right after the write read `Ok(0 bytes)`, and holding it open until the
+response read the 200 (`:9977-9983`). It recorded no dial time, first byte or
+seek for any browser. The one contact with a real phone is a failure, the
+trailing slash (`landing/scripts/build-ring-runtime.sh:11-12`). What a relay
+gives natively bounds it: a 182 ms floor and 3.7 MB/s bulk through n0's relay
+(`research/engram/LAB-RECORD.md:241`); a cold connection's setup, paid per
+seek, p50 189 ms and p90 1,327 ms on a LAN (`sovereign/deploy/mesh/WORK_PLANE.md:577-579`).
+*The build needs Homebrew's LLVM on a Mac:* browser-dial-1 failed there in
+ring's build script, "No available targets are compatible with triple
+"wasm32-unknown-unknown"" (`ralph/DECISIONS.md:9860`), and built on Linux with
+clang 21. *Upstream kept browsers out of anyone else's group* — "A browser
+holds no key in anyone else's ring" (`docs/RING_SPEC.md:205-209`;
+`docs/RING_APP_LIBRARY.md:315`). §10's browser door, a group opening its own,
+sets that aside: a phone's key stands in the register under a person's name
+as a computer's does. *An origin is a place, not a copy:* browser storage is
+per origin (`docs/RING_APP_LIBRARY.md:565-571`), so a group that changes its
+page origin has its phones join again by link. Which codecs a phone plays is
+the lent service's and its app's: Chrome plays no MKV and HEVC only on a GPU
+(`quality/campaigns/ring-apps-shelf.md:193-194`).
+
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
 | U1 a group is not a mesh | ring sync, its route and the dial-by-key tunnel forked into `svrngs-node`, the node's router served on each accepted stream; the register decides who may connect and who is synced, where upstream asked the mesh (`commonwealth/crates/commonwealth-rails/src/` at `e1a43bcd2`: `acceptor.rs:47-61`, `ring_sync/journal.rs:153-164`, the default roster at `lib.rs:404`) | a node in the group but no mesh syncs; a node outside the group is refused |
@@ -515,7 +606,7 @@ computer; nobody made an account.
 
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
-| U4 the browser | a phone opens a group's https link, on the page origin the group named, and is in: its own key, a dial to the meeting point, and the runtime that renders a lent app through it — fetch, POST, streaming, byte ranges; the page is static files any origin can serve | a stock phone browser plays a lent film and seeks |
+| U4 the browser | a phone opens a group's https link, on the page origin the group named, and is in: its own key, a dial by key to the issuer to join and to each lender for what they lend (§3, "Joining"), and the runtime that renders a lent app through it — fetch, POST, streaming, byte ranges; the page is static files any origin can serve | a stock phone browser plays a lent film and seeks |
 | U5 Films | `apps/films`: one shelf across every member's lent library, "from Sam's", search, play here; a device and play-session id per person and play; progress per person in the record; busy turned into a choice; the lend's credential made from the viewer's password, which the lender types once on their own computer (U3's dry run: today it is a whole request header the lender cannot make from what they are told) — on the §3 surface alone | a title two members lend shows once, with both; Bo's seek never restarts Cy's play; Films calls nothing outside §3 |
 | U6 the screen handoff | the meeting point serves one stream to a TV on its network at an unguessable address; AirPlay from Safari, Cast from Chrome; the phone is the remote and may lock | a film plays on the TV from a phone browser; the address serves only the device it was handed to |
 
@@ -617,7 +708,8 @@ By the operator, 2026-10-03:
    canaries are the guard. Members lend their own servers to their own group;
    svrngs hosts nothing, and its relays carry only ciphertext.
 4. **Phone browsers forget.** Safari may clear a site's storage, and the
-   person's key with it; a web app added to the home screen keeps it, and a
+   person's key with it, since its sealed bytes and the key that seals them
+   are both in IndexedDB (§3, "Joining", call 1); a web app added to the home screen keeps it, and a
    lost key means joining again by link.
 5. **Members find each other through iroh's address lookup**, n0's DNS by
    default, as upstream's (§8, U1's inventory): it maps a key to its relay,
@@ -625,7 +717,7 @@ By the operator, 2026-10-03:
    Upstream's `discovery = "none"` with the group's own relay is the way out,
    kept by the fork. The page a phone loads from a link's origin is the same
    kind of default (U4): whoever serves it serves the code that holds the
-   person's key, so a group that does not trust svrnme.sh serves the page from
+   person's key, its bytes unsealed while the page runs, so a group that does not trust svrnme.sh serves the page from
    its own origin and prints its links there.
 6. **Two copies of the record's code.** A signing or canonical-form bug fixed on
    one side can be missed on the other. `scripts/ports.py` is the guard, and it
