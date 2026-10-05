@@ -751,3 +751,23 @@ async fn a_member_asks_what_the_group_s_people_lend_each_with_its_lender_s_key()
     }
     pair.close().await;
 }
+
+/// A computer whose declarations cannot be read says so to a member who
+/// asks what it lends, on either route (`GET /lends`, u3-5; the people's
+/// lends, u4-5), with one refusal: a 500 in words, never an empty list.
+/// Planted: the unreadable declarations answered as lending nothing.
+#[tokio::test]
+async fn declarations_that_cannot_be_read_are_refused_on_both_routes_never_lent_as_none() {
+    let pair = Pair::new().await;
+    std::fs::write(lend::lends_dir(pair.dir.path()), "not a directory").unwrap();
+    for route in ["/lends", svrngs_node::node::PEOPLE_LENDS_ROUTE] {
+        let reply = pair.get(route, "").await;
+        assert_eq!(reply.status, 500, "{route}: {}", reply.text);
+        assert!(
+            reply.text.contains("what this computer lends cannot be read on it"),
+            "{route}: {}",
+            reply.text
+        );
+    }
+    pair.close().await;
+}
