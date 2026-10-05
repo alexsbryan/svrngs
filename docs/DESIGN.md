@@ -24,6 +24,17 @@ else: the person asking, verified, in a request header; a shared record that
 outlives the computer it runs on; and reach to every member's computer. No
 login, no SDK, no bundle.
 
+**And the apps already exist.** Everything people self-host is a web app on a
+port: Jellyfin and Navidrome for the library, Immich for photos,
+Audiobookshelf and Calibre-Web for books, Nextcloud and Paperless-ngx for
+files, Actual and Firefly III for money, Mealie, Vikunja and Grocy for plans,
+Forgejo, BookStack, Home Assistant. Run one in a container on any member's
+computer, `svrngs share <port> --kind <name>`, and everyone in the group can
+open it — no port opened, no tunnel, nothing for them to install. An app that
+takes the signed-in person from a request header lets each of them straight
+in; one that keeps its own accounts asks them once. Jellyfin has run through
+the door (`demo/runs/a/dry-2026-10-04/`).
+
 **What we build:** the platform, and one small reference app per class of app,
 for the next developer to copy and bend. Never the finished apps — the
 community builds those (operator, 2026-10-03). "The iOS of groups" is an
