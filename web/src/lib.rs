@@ -63,7 +63,40 @@ pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsE
     dial(key, token, None, Alpn::Redeem).await
 }
 
-/// Dial `to`, else the computer that issued `token`, on `alpn`.
+/// Dial `to`, else the computer that issued `token`, on `alpn`, from an
+/// endpoint of its own: the dial's [`Dialled::close`] closes it.
+async fn dial(key: Vec<u8>, token: String, to: Option<String>, alpn: Alpn) -> Result<Dialled, JsError> {
+    let bound = bind(key, &token).await?;
+    let conn = reach(&bound, to, alpn).await?;
+    Ok(Dialled { ep: bound.ep, conn })
+}
+
+/// A refusal's line is emitted, and is the error.
+macro_rules! refuse {
+    ($($a:tt)*) => {{
+        let line = format!($($a)*);
+        emit(&line);
+        return Err(JsError::new(&line));
+    }};
+}
+
+macro_rules! t {
+    ($($a:tt)*) => {
+        emit(&format!($($a)*))
+    };
+}
+
+/// A browser endpoint bound with the person's key, online at the relay
+/// the link's token names, and the token's issuer, whom it dials when no
+/// other computer is named.
+struct Bound {
+    ep: iroh::Endpoint,
+    issuer: iroh::PublicKey,
+    relay: Option<iroh::RelayUrl>,
+}
+
+/// Bind an endpoint as the person whose key is `key`, for the group whose
+/// link's token is `token`, and wait until it is online.
 ///
 /// `key` is the person's key, the 32 bytes the page's store holds (DESIGN
 /// §3, call 1): iroh signs its handshake with it synchronously, so it is
@@ -71,21 +104,7 @@ pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsE
 /// the fragment of `<origin>#<token>`, parsed by svrngs-core as the command
 /// parses it (call 5). No bearer rides a request: the node knows the person
 /// by the key that dialled.
-async fn dial(key: Vec<u8>, token: String, to: Option<String>, alpn: Alpn) -> Result<Dialled, JsError> {
-    macro_rules! t {
-        ($($a:tt)*) => {
-            emit(&format!($($a)*))
-        };
-    }
-    // A refusal's line is emitted, and is the error.
-    macro_rules! refuse {
-        ($($a:tt)*) => {{
-            let line = format!($($a)*);
-            emit(&line);
-            return Err(JsError::new(&line));
-        }};
-    }
-
+async fn bind(key: Vec<u8>, token: &str) -> Result<Bound, JsError> {
     t!("LAYER page: wasm module loaded and dial entered (iroh =1.0.2)");
 
     // ── LAYER 1: the person's key, then the link's token ───────────────────
@@ -99,17 +118,10 @@ async fn dial(key: Vec<u8>, token: String, to: Option<String>, alpn: Alpn) -> Re
         }
     };
     t!("LAYER key: ok — the person's key {}", secret.public());
-    let Some(link) = Token::decode(&token) else {
+    let Some(link) = Token::decode(token) else {
         refuse!("LAYER parse: REFUSED — the fragment is not a link's token: {token}")
     };
-    let node_id = match to {
-        None => iroh::PublicKey::from_bytes(link.issuer.as_bytes()),
-        Some(to) => match <[u8; 32]>::try_from(hex::decode(&to).unwrap_or_default().as_slice()) {
-            Ok(bytes) => iroh::PublicKey::from_bytes(&bytes),
-            Err(_) => refuse!("LAYER parse: REFUSED — {to:?} is not a computer's key"),
-        },
-    };
-    let node_id = match node_id {
+    let issuer = match iroh::PublicKey::from_bytes(link.issuer.as_bytes()) {
         Ok(p) => p,
         Err(e) => {
             refuse!("LAYER parse: REFUSED — node id is not a valid public key: {e}")
@@ -121,20 +133,21 @@ async fn dial(key: Vec<u8>, token: String, to: Option<String>, alpn: Alpn) -> Re
     // relays. Upstream refused a dial string with no relay
     // (ring-runtime/src/lib.rs:91-99); a bare key is a link's usual form.
     let builder = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal).secret_key(secret);
-    let (builder, addr) = match link.relay {
+    let (builder, relay) = match link.relay {
         Some(relay) => {
             let relay = iroh::RelayUrl::from(relay);
-            t!("LAYER parse: ok — node id {node_id}, relay {relay} from the token");
-            let addr = iroh::EndpointAddr::from_parts(node_id, [iroh::TransportAddr::Relay(relay.clone())]);
-            (builder.relay_mode(iroh::RelayMode::Custom(relay.into())), addr)
+            t!("LAYER parse: ok — issuer {issuer}, relay {relay} from the token");
+            (
+                builder.relay_mode(iroh::RelayMode::Custom(relay.clone().into())),
+                Some(relay),
+            )
         }
         None => {
-            t!("LAYER parse: ok — node id {node_id}, a bare key: found by n0's address lookup");
+            t!("LAYER parse: ok — issuer {issuer}, a bare key: found by n0's address lookup");
             let lookup = iroh::address_lookup::PkarrResolver::n0_dns();
-            let addr = iroh::EndpointAddr::from_parts(node_id, []);
             (
                 builder.relay_mode(iroh::RelayMode::Default).address_lookup(lookup),
-                addr,
+                None,
             )
         }
     };
@@ -157,9 +170,32 @@ async fn dial(key: Vec<u8>, token: String, to: Option<String>, alpn: Alpn) -> Re
     t!("LAYER relay-connect: waiting for the relay handshake (endpoint.online())…");
     ep.online().await;
     t!("LAYER relay-connect: ok — endpoint reports online (relay handshake done)");
+    Ok(Bound { ep, issuer, relay })
+}
+
+/// Dial `to`, a computer's key in 64 hex, else the token's issuer, from
+/// `bound` on `alpn`: through the relay the token carries, else wherever
+/// iroh's lookup finds it.
+async fn reach(bound: &Bound, to: Option<String>, alpn: Alpn) -> Result<iroh::endpoint::Connection, JsError> {
+    let node_id = match to {
+        None => bound.issuer,
+        Some(to) => match <[u8; 32]>::try_from(hex::decode(&to).unwrap_or_default().as_slice()) {
+            Ok(bytes) => match iroh::PublicKey::from_bytes(&bytes) {
+                Ok(p) => p,
+                Err(e) => {
+                    refuse!("LAYER parse: REFUSED — node id is not a valid public key: {e}")
+                }
+            },
+            Err(_) => refuse!("LAYER parse: REFUSED — {to:?} is not a computer's key"),
+        },
+    };
+    let addr = match &bound.relay {
+        Some(relay) => iroh::EndpointAddr::from_parts(node_id, [iroh::TransportAddr::Relay(relay.clone())]),
+        None => iroh::EndpointAddr::from_parts(node_id, []),
+    };
 
     t!("LAYER tls/alpn+relay-hop: dialing {node_id} on the {alpn:?} protocol through a relay…");
-    let conn = match ep.connect(addr, alpn.bytes()).await {
+    let conn = match bound.ep.connect(addr, alpn.bytes()).await {
         Ok(c) => c,
         Err(e) => {
             refuse!("LAYER tls/alpn+relay-hop: REFUSED — connect() failed: {e}")
@@ -172,7 +208,7 @@ async fn dial(key: Vec<u8>, token: String, to: Option<String>, alpn: Alpn) -> Re
         String::from_utf8_lossy(conn.alpn())
     );
     // The HTTP rides a bi-stream per request, opened by `Dialled::fetch`.
-    Ok(Dialled { ep, conn })
+    Ok(conn)
 }
 
 /// A computer the page has dialled: each request to it is one bi-stream of
