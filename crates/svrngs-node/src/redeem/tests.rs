@@ -6,7 +6,7 @@
 //! door over iroh.
 
 use super::*;
-use crate::{derive_id, sign_act, Op, RailAct, SignedOp};
+use crate::{derive_id, sign_act, Device, Op, RailAct, SignedOp};
 
 const GROUP: &str = "house";
 
@@ -37,7 +37,14 @@ fn hal() -> Person {
 }
 
 fn request(link: &SigningKey, joining: &SigningKey, invite: &Op<SignedOp>) -> RedeemRequest {
-    RedeemRequest::sign(link, joining, GROUP, &derive_id(invite, GROUP), &hal())
+    RedeemRequest::sign(
+        link,
+        joining,
+        GROUP,
+        &derive_id(invite, GROUP),
+        &hal(),
+        Device::Computer,
+    )
 }
 
 #[test]
@@ -61,7 +68,14 @@ fn a_redemption_is_parsed_before_anything_is_read() {
         parse_redeem(Some(&me), &forged),
         Err(NotAdmitted::LinkUnsigned)
     ));
-    let mut unnamed = RedeemRequest::sign(&link, &joining, GROUP, &req.invite, &hal());
+    let mut unnamed = RedeemRequest::sign(
+        &link,
+        &joining,
+        GROUP,
+        &req.invite,
+        &hal(),
+        Device::Computer,
+    );
     unnamed.person = String::new();
     unnamed.sig = sign_message(&link, &unnamed.message());
     assert!(matches!(

@@ -799,7 +799,7 @@ fn admission_is_a_function_of_the_set_of_lines() {
     }
 }
 
-fn permute(v: &mut Vec<usize>, k: usize, f: &mut impl FnMut(&[usize])) {
+pub(crate) fn permute(v: &mut Vec<usize>, k: usize, f: &mut impl FnMut(&[usize])) {
     if k == v.len() {
         f(v);
         return;

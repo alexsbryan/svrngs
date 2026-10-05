@@ -8,7 +8,7 @@ use alloc::vec::Vec;
 use crate::command::{Command, Reads};
 use core::convert::Infallible;
 
-use crate::{Admission, InviteFault, OpId, Person, RailAct, Redemption};
+use crate::{Admission, Device, InviteFault, OpId, Person, RailAct, Redemption};
 
 /// The issuer's node asked to admit `key` as `person` through its `Invite`.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -18,6 +18,8 @@ pub struct Redeem {
     pub key: String,
     /// The new key's consent, as the redeeming `Admit` carries it.
     pub cosig: String,
+    /// What holds the new key, as the request named it (u4-1).
+    pub device: Device,
     /// The link's public key, which the `Invite` must name.
     pub link: String,
     /// This node's key: only an `Invite`'s issuer redeems it.
@@ -62,6 +64,7 @@ impl Command for Redeem {
             invite: Some(Redemption {
                 id: self.invite.clone(),
                 sig: self.cosig.clone(),
+                device: self.device,
             }),
         }])
     }

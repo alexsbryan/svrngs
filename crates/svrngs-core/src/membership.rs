@@ -54,6 +54,12 @@
 //! order, so a closed redemption's key still binds there and can land
 //! voids. Only the issuer signs a redemption, so one exists only if the
 //! issuer's own node redeemed a link it had closed.
+//!
+//! svrngs (u4-1, DESIGN §3 "Joining", call 2): each standing key is held by
+//! a [`Device`] — a browser's when the counting `Admit` that last bound it
+//! redeemed a link naming a browser, a computer's otherwise: a seed key, an
+//! `Admit` naming no `Invite`, and every redemption before line version 4.
+//! [`Membership::device`] answers it.
 
 use alloc::collections::{BTreeMap, BTreeSet};
 use alloc::string::String;
@@ -61,7 +67,7 @@ use alloc::vec::Vec;
 
 use crate::op::Op;
 
-use crate::{OpId, Person, RailAct, Redemption, Roster, SignedOp};
+use crate::{Device, OpId, Person, RailAct, Redemption, Roster, SignedOp};
 
 /// Why a redeeming `Admit` does not count — one per condition of the rule
 /// in the module docs.
@@ -124,6 +130,12 @@ pub struct Membership {
     /// Every `Invite` held, by derived id.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub invites: BTreeMap<OpId, Invited>,
+    /// The keys whose counting `Admit` that last bound them names a
+    /// browser (u4-1). Cumulative as [`Self::bindings`] is; ask
+    /// [`Self::device`], which answers only for a standing key. Skipped
+    /// when empty, so a fold with none serialises as before.
+    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
+    pub browsers: BTreeSet<String>,
 }
 
 /// An `Invite` as the register holds it.
@@ -143,6 +155,17 @@ impl Membership {
     /// The person an act's actor resolves to, through the record.
     pub fn person_for(&self, actor: &str) -> Option<&Person> {
         self.bindings.get(actor)
+    }
+
+    /// What holds `key`, if it stands now; `None` if it does not.
+    pub fn device(&self, key: &str) -> Option<Device> {
+        self.standing.contains(key).then(|| {
+            if self.browsers.contains(key) {
+                Device::Browser
+            } else {
+                Device::Computer
+            }
+        })
     }
 }
 
@@ -241,6 +264,7 @@ pub fn membership<'a>(
     let mut live: BTreeMap<String, Person> = bindings.clone();
     let mut counted: BTreeSet<OpId> = BTreeSet::new();
     let mut refused: BTreeMap<OpId, InviteFault> = BTreeMap::new();
+    let mut browsers: BTreeSet<String> = BTreeSet::new();
     // Each issuer's newest counting `Invite` so far: their one open link.
     let mut open: BTreeMap<&str, &OpId> = BTreeMap::new();
     for (id, op) in order {
@@ -274,13 +298,25 @@ pub fn membership<'a>(
         }
         counted.insert(id.clone());
         match &op.kind.act {
-            RailAct::Admit { person, key, .. } => {
+            RailAct::Admit {
+                person,
+                key,
+                invite,
+            } => {
+                // An `Admit` naming no `Invite` admits a computer: before a
+                // redemption could name a browser, only a computer joined.
+                let device = invite.as_ref().map_or(Device::Computer, |r| r.device);
                 tracing::debug!(
                     target: "rail:membership",
                     key = %key,
                     person = %person,
+                    ?device,
                     "membership: standing gained"
                 );
+                match device {
+                    Device::Browser => browsers.insert(key.clone()),
+                    Device::Computer => browsers.remove(key),
+                };
                 bindings.insert(key.clone(), person.clone());
                 live.insert(key.clone(), person.clone());
             }
@@ -323,6 +359,7 @@ pub fn membership<'a>(
         voided,
         refused,
         invites,
+        browsers,
     }
 }
 

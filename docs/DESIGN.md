@@ -307,14 +307,19 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   everyone the old link admitted keeps standing. A `Correct` of an `Invite`
   is not how a link closes: the void set is order-free, so it unseats every
   key the `Invite` admitted, as voiding each `Admit` would (`Voided`). Both
-  kinds ship at line version 3. Redeemed at the issuer's node (landed:
+  kinds ship at line version 3. A redemption also names what holds the
+  new key, a computer or a browser (u4-1, landed: `Device` in the
+  `Redemption`, `crates/svrngs-core/src/lib.rs`); a browser's `Admit` ships
+  at line version 4, a computer's keeps version 3's bytes, and one naming
+  none, as every earlier line, is a computer's. Redeemed at the issuer's node (landed:
   `crates/svrngs-node/src/redeem.rs`): on the second protocol, the joiner,
   holding only the link, first asks, proving the link's key, and the issuer
   answers from its own `Invite` naming that key: the group's id, its seed
   and the `Invite`'s id, the seed believed only when it hashes to the id
   (u2-8; `group::answered`). It then
   presents the group's id, the `Invite`'s id, a person's name, its new key
-  — the key it dials with — and that key's consent, all signed by the
+  — the key it dials with — that key's consent and whether a computer or
+  a browser holds it, all signed by the
   link's secret key; the node checks the name parses, the `Invite` is its
   own and names that key, then writes the `Admit` through its door only when the key does not
   stand already and `membership` over its journal with the `Admit` in it

@@ -53,7 +53,7 @@ use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath, Upload};
 use svrngs_node::node::{Lends, Node, NodeError};
 use svrngs_node::redeem::{ask, redeem, AskRequest, RedeemError, RedeemRequest, Redeemed};
-use svrngs_node::{actor_of, Person, SigningKey};
+use svrngs_node::{actor_of, Device, Person, SigningKey};
 use svrngs_node::{MintInvite, Refused as CommitRefused};
 
 use crate::group::{self, Name, Seed, SeedError};
@@ -785,6 +785,7 @@ pub async fn join_group(
         &id,
         &asked.invite,
         &Person::from(person.clone()),
+        Device::Computer,
     );
     let redeemed = redeem(node.endpoint(), issuer.clone(), &request)
         .await

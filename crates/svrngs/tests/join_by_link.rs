@@ -25,8 +25,8 @@ use svrngs_node::redeem::{
     ask, redeem, AskRequest, Asked, RedeemError, RedeemRequest, Redeemed, REFUSAL,
 };
 use svrngs_node::{
-    actor_of, derive_id, redemption_message, sign_message, Ed25519Verifier, OpId, Person, RailAct,
-    SigningKey,
+    actor_of, derive_id, redemption_message, sign_message, Device, Ed25519Verifier, Membership,
+    OpId, Person, RailAct, SigningKey, BROWSER_LINE_VERSION, LINK_LINE_VERSION,
 };
 
 /// The lines a group's journal holds on disk, as written.
@@ -162,12 +162,25 @@ async fn present(
     invite: &OpId,
     person: &str,
 ) -> Result<Redeemed, String> {
+    present_from(who, link, group, invite, person, Device::Computer).await
+}
+
+/// [`present`], the request naming `device` as what holds `who`'s key.
+async fn present_from(
+    who: &Computer,
+    link: &Link,
+    group: &str,
+    invite: &OpId,
+    person: &str,
+    device: Device,
+) -> Result<Redeemed, String> {
     let req = RedeemRequest::sign(
         &link.token.key(),
         &who.key,
         group,
         invite,
         &Person::parse(person).unwrap(),
+        device,
     );
     send(who, link, &req).await
 }
@@ -356,6 +369,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
         &group,
         &open_invite,
         &Person::parse("Gus").unwrap(),
+        Device::Computer,
     );
     req.link = actor_of(&open.token.key());
     let unsigned = send(&gus, &open, &req).await;
@@ -518,6 +532,7 @@ async fn a_name_that_is_not_one_is_refused_and_nothing_is_written() {
             &group,
             &invite,
             &Person::parse("Hal").unwrap(),
+            Device::Computer,
         );
         req.person = bad.clone();
         req.cosig = sign_message(
@@ -553,6 +568,66 @@ async fn a_name_that_is_not_one_is_refused_and_nothing_is_written() {
     for c in [&sam, &hal, &zoe] {
         c.node.endpoint().close().await;
     }
+}
+
+/// The redeem route writes what the request names (u4-1; DESIGN §3
+/// "Joining", call 2): Pia's request names a browser, and Sam's record holds
+/// one `Admit` of Pia's key naming a browser, at line version 4, and Sam's
+/// register answers that the key stands as a browser's; Quin's names a
+/// computer, and the `Admit` of Quin's key names a computer at version 3.
+/// Watched failing with the route writing a computer whatever the request
+/// named.
+#[tokio::test(flavor = "multi_thread")]
+async fn the_redeem_route_writes_the_device_the_request_names() {
+    let sam = computer(1).await;
+    let (seed, printed) = cli::new_group(&sam.node, name("house"), name("Sam"), None, &no_relay())
+        .await
+        .expect("Sam makes house");
+    let group = seed.id();
+    let link = parsed(&printed, &sam.node);
+    let invite = invite_of(&sam.node, &group, &link);
+    for (n, who, device, version) in [
+        (11u8, "Pia", Device::Browser, BROWSER_LINE_VERSION),
+        (12, "Quin", Device::Computer, LINK_LINE_VERSION),
+    ] {
+        let joiner = computer(n).await;
+        knows(&joiner, &sam.node);
+        let answer = present_from(&joiner, &link, &group, &invite, who, device).await;
+        assert!(
+            matches!(answer, Ok(Redeemed::Admitted(_))),
+            "{who}: {answer:?}"
+        );
+        let admits: Vec<_> = lines(&sam.node, &group)
+            .into_iter()
+            .filter(|op| matches!(&op.kind.act, RailAct::Admit { key, .. } if *key == actor_of(&joiner.key)))
+            .collect();
+        assert_eq!(admits.len(), 1, "{who}: one Admit");
+        let RailAct::Admit {
+            invite: Some(redeemed),
+            ..
+        } = &admits[0].kind.act
+        else {
+            panic!("{who}: an Admit redeeming the link, not {:?}", admits[0])
+        };
+        assert_eq!(
+            (redeemed.device, admits[0].v),
+            (device, version),
+            "{who}: the Admit names what the request named"
+        );
+        let register = sam
+            .node
+            .rail()
+            .admission(&group)
+            .unwrap()
+            .project::<Membership>();
+        assert_eq!(
+            register.device(&actor_of(&joiner.key)),
+            Some(device),
+            "{who}"
+        );
+        joiner.node.endpoint().close().await;
+    }
+    sam.node.endpoint().close().await;
 }
 
 /// A member's later link opens the page the founder's did (u2-7): Sam

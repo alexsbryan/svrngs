@@ -165,7 +165,7 @@ impl RingRail {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{actor_of, Ed25519Verifier, OpId, RailAct, Redemption};
+    use crate::{actor_of, Device, Ed25519Verifier, OpId, RailAct, Redemption};
     use svrngs_core::tests_support::{after, key, record, signed, NS};
 
     fn admit_act(person: &str, joining: u8) -> RailAct {
@@ -234,7 +234,7 @@ mod tests {
             &inv,
             109,
             RailAct::Admit {
-                invite: Some(Redemption::sign(&key(5), NS, &inv.id, &eve)),
+                invite: Some(Redemption::sign(&key(5), NS, &inv.id, &eve, Device::Computer)),
                 person: eve,
                 key: actor_of(&key(5)),
             },

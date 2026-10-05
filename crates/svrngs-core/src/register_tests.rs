@@ -28,12 +28,17 @@ fn invite_by(by: &SigningKey, names: &SigningKey, until: i64) -> Op<SignedOp> {
 }
 
 fn redeem(invite: &Op<SignedOp>) -> Redeem {
+    redeem_from(invite, Device::Computer)
+}
+
+fn redeem_from(invite: &Op<SignedOp>, device: Device) -> Redeem {
     let id = derive_id(invite, NS);
     Redeem {
         invite: id.clone(),
         person: p("hal"),
         key: actor_of(&joining()),
-        cosig: Redemption::sign(&joining(), NS, &id, &p("hal")).sig,
+        cosig: Redemption::sign(&joining(), NS, &id, &p("hal"), device).sig,
+        device,
         link: actor_of(&link()),
         issuer: actor_of(&issuer()),
     }
@@ -67,6 +72,35 @@ fn given_an_invite_a_redemption_writes_one_admit_and_the_key_stands() {
         .unwrap();
     assert_eq!(recorded.lines().len(), 1);
     assert!(stands(&store, &joining()));
+}
+
+/// Given an `Invite`, when the issuer is asked to redeem it for a key a
+/// browser holds, then the `Admit` names a browser, and the register answers
+/// that the key stands as a browser's (u4-1). And the same for a computer.
+#[test]
+fn a_redemption_writes_the_device_it_names() {
+    for device in [Device::Browser, Device::Computer] {
+        let invite = invite_by(&issuer(), &link(), 10_000);
+        let store = Memory::holding(&[invite.clone()]);
+        let roster = ring();
+        let recorded = commit(
+            &store,
+            &redeem_from(&invite, device),
+            &author(&issuer(), &roster, 1_000),
+        )
+        .unwrap()
+        .unwrap();
+        let written = match &recorded.lines()[0].kind.act {
+            RailAct::Admit {
+                invite: Some(r), ..
+            } => r.device,
+            other => panic!("an Admit redeeming the Invite, not {other:?}"),
+        };
+        assert_eq!(written, device, "the Admit names what the request named");
+        let held = store.0.borrow();
+        let register = admit(&held, &[], &ring(), NS, &Ed25519Verifier).project::<Membership>();
+        assert_eq!(register.device(&actor_of(&joining())), Some(device));
+    }
 }
 
 #[test]

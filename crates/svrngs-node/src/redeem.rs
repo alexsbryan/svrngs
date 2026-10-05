@@ -17,9 +17,9 @@
 //!
 //! The joiner then presents a [`RedeemRequest`] on [`Alpn::Redeem`], the one
 //! protocol a key standing in no group may speak, serving [`router`]'s two
-//! routes: the group's id, the `Invite`'s id, the person's name, its new key
-//! and that key's consent ([`Redemption`]), all signed by the link's secret
-//! key. The issuer's node checks that the dialer is the new key, that the
+//! routes: the group's id, the `Invite`'s id, the person's name, its new key,
+//! that key's consent ([`Redemption`]) and what holds the key, a computer
+//! or a browser ([`Device`], u4-1), all signed by the link's secret key. The issuer's node checks that the dialer is the new key, that the
 //! link's key signed, that the name parses ([`Name::kept`], the core's one
 //! rule; u2-9), that it holds the group, that the `Invite` is its own
 //! and names the link's key; then, under the door's write lock, that the
@@ -51,8 +51,8 @@ use crate::register::Standing;
 use crate::ring_routes::err;
 use crate::ring_sync::peer_client;
 use crate::{
-    actor_of, field, sign_message, verify_hex, Ed25519Verifier, Name, NotAName, OpId, Person,
-    RailError, Redemption, RingRail, SigningKey,
+    actor_of, field, sign_message, verify_hex, Device, Ed25519Verifier, Name, NotAName, OpId,
+    Person, RailError, Redemption, RingRail, SigningKey,
 };
 use svrngs_core::{RedeemRefusal, Refused as CommitRefused};
 
@@ -143,6 +143,8 @@ pub struct RedeemRequest {
     pub key: String,
     /// The new key's consent, as a redeeming `Admit` carries it.
     pub cosig: String,
+    /// What holds the new key: the `Admit` names it as sent.
+    pub device: Device,
     /// The link's public key, actor hex.
     pub link: String,
     /// The link's secret key's signature over everything above.
@@ -150,22 +152,25 @@ pub struct RedeemRequest {
 }
 
 impl RedeemRequest {
-    /// `joining` asks to join `group` as `person`, through the link whose
-    /// secret is `link` and whose `Invite` is `invite`.
+    /// `joining`, held by `device`, asks to join `group` as `person`,
+    /// through the link whose secret is `link` and whose `Invite` is
+    /// `invite`.
     pub fn sign(
         link: &SigningKey,
         joining: &SigningKey,
         group: &str,
         invite: &OpId,
         person: &Person,
+        device: Device,
     ) -> Self {
-        let consent = Redemption::sign(joining, group, invite, person);
+        let consent = Redemption::sign(joining, group, invite, person, device);
         let mut req = Self {
             group: group.to_string(),
             invite: invite.clone(),
             person: person.as_str().to_string(),
             key: actor_of(joining),
             cosig: consent.sig,
+            device,
             link: actor_of(link),
             sig: String::new(),
         };
@@ -174,9 +179,10 @@ impl RedeemRequest {
     }
 
     /// The bytes the link's key signs: `DOMAIN || group || invite[32] ||
-    /// person || key || cosig || link`, every variable field preceded by its
-    /// `u32` big-endian length. Public so a test can sign a request naming
-    /// a person no `Person` holds, as a hand-built client could.
+    /// person || key || cosig || device || link`, every variable field
+    /// preceded by its `u32` big-endian length. Public so a test can sign a
+    /// request naming a person no `Person` holds, as a hand-built client
+    /// could.
     pub fn message(&self) -> Vec<u8> {
         let mut msg = REQUEST_DOMAIN.to_vec();
         field(&mut msg, self.group.as_bytes());
@@ -184,6 +190,7 @@ impl RedeemRequest {
         field(&mut msg, self.person.as_bytes());
         field(&mut msg, self.key.as_bytes());
         field(&mut msg, self.cosig.as_bytes());
+        field(&mut msg, self.device.as_str().as_bytes());
         field(&mut msg, self.link.as_bytes());
         msg
     }
@@ -351,6 +358,7 @@ fn serve_redeem(
         person,
         key: req.key.clone(),
         cosig: req.cosig.clone(),
+        device: req.device,
         link: req.link.clone(),
         issuer: rail.signer().actor(),
     };
@@ -365,8 +373,8 @@ fn serve_redeem(
         }
         Ok(recorded) => {
             let admit = recorded.lines()[0].id.clone();
-            tracing::debug!(target: "redeem", group, key = %req.key, admit = %admit,
-                "redeem: admitted — the Admit is written");
+            tracing::debug!(target: "redeem", group, key = %req.key, admit = %admit, device = ?req.device,
+                "redeem: admitted — the Admit is written, naming the device the request named");
             Ok(Redeemed::Admitted(admit))
         }
         Err(CommitRefused::NoStanding) => Err(NotAdmitted::Unjudged(RailError::NotInRoster {

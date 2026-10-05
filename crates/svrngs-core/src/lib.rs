@@ -479,22 +479,87 @@ pub enum RailAct {
 /// issuer's signature on the `Admit` says the issuer let this key in; this
 /// one says the key asked to join, as this person, through this link — so
 /// no issuer can redeem its own link for a key that never opened it.
+///
+/// It also says what holds the new key ([`Device`]; u4-1). The co-signature
+/// does not cover that: the issuer's node writes the device the request
+/// names only when the request's dialler is the new key, and the issuer's
+/// signature on the `Admit` covers it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Redemption {
     /// The id the `Invite`'s content derives ([`derive_id`]).
     pub id: OpId,
     /// Hex Ed25519 signature by the admitted key.
     pub sig: String,
+    /// What holds the new key. Absent on every line before
+    /// [`BROWSER_LINE_VERSION`], which admitted only computers, so absent
+    /// reads as [`Device::Computer`]; and skipped for a computer, so a
+    /// computer's redemption keeps the bytes, id and signature version 3
+    /// gave it (`fixtures/redemption_before_browsers.jsonl`).
+    #[serde(
+        default = "Device::before_browsers",
+        skip_serializing_if = "Device::is_computer"
+    )]
+    pub device: Device,
+}
+
+/// What holds a standing key (u4-1; DESIGN §3 "Joining", call 2): the
+/// register answers it for each standing key ([`Membership::device`]), and
+/// whether the key is dialled is [`Device::dialled`]'s alone.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Device {
+    /// A computer: it holds a copy of the record and is dialled.
+    Computer,
+    /// A browser: it dials and is never dialled. Its endpoint lives only
+    /// while its page runs, so a round dialling it would wait out a dial
+    /// timeout each time.
+    Browser,
+}
+
+impl Device {
+    /// Whether the round, the live fan-out and the list of what members
+    /// lend dial a key this device holds.
+    pub const fn dialled(self) -> bool {
+        match self {
+            Device::Computer => true,
+            Device::Browser => false,
+        }
+    }
+
+    /// The device of a key admitted before a redemption could name one:
+    /// a computer, the only device that could join.
+    const fn before_browsers() -> Self {
+        Device::Computer
+    }
+
+    const fn is_computer(&self) -> bool {
+        matches!(self, Device::Computer)
+    }
+
+    /// The word a request signs (`svrngs_node::redeem`): serde's spelling.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Device::Computer => "computer",
+            Device::Browser => "browser",
+        }
+    }
 }
 
 impl Redemption {
-    /// `joining` consents to join `namespace` as `person` under the
-    /// `Invite` whose id is `invite`.
-    pub fn sign(joining: &SigningKey, namespace: &str, invite: &OpId, person: &Person) -> Self {
+    /// `joining`, held by `device`, consents to join `namespace` as
+    /// `person` under the `Invite` whose id is `invite`.
+    pub fn sign(
+        joining: &SigningKey,
+        namespace: &str,
+        invite: &OpId,
+        person: &Person,
+        device: Device,
+    ) -> Self {
         let msg = sig::redemption_message(namespace, invite, person.as_str(), &actor_of(joining));
         Self {
             id: invite.clone(),
             sig: sig::sign_message(joining, &msg),
+            device,
         }
     }
 
@@ -632,13 +697,20 @@ pub const MEMBERSHIP_LINE_VERSION: u32 = 2;
 /// version it names the line `NewerVersionLine` instead.
 pub const LINK_LINE_VERSION: u32 = 3;
 
+/// The line format version a browser's redemption ships at (u4-1): an
+/// [`RailAct::Admit`] whose [`Redemption`] names [`Device::Browser`]. A
+/// build at [`LINK_LINE_VERSION`] would drop the field, read the key as a
+/// computer's and derive another id; at this version it names the line
+/// `NewerVersionLine` instead.
+pub const BROWSER_LINE_VERSION: u32 = 4;
+
 impl Journaled for SignedOp {
     const FILE: &'static str = "ring_oplog.jsonl";
     const ID_PREFIX: &'static str = "ring";
     const LABEL: &'static str = "ring_rail";
-    /// This build reads the membership cohort's and the link's lines too
-    /// (see [`Self::line_version`]).
-    const UNDERSTANDS: u32 = LINK_LINE_VERSION;
+    /// This build reads the membership cohort's, the link's and a
+    /// browser's redemption's lines too (see [`Self::line_version`]).
+    const UNDERSTANDS: u32 = BROWSER_LINE_VERSION;
     /// The membership acts — [`RailAct::Admit`] and [`RailAct::Remove`] —
     /// ship at the bumped line version and the original three keep the bytes
     /// they always had, so an un-upgraded node names exactly the acts it
@@ -647,6 +719,14 @@ impl Journaled for SignedOp {
     /// before.
     fn line_version(&self) -> u32 {
         match self.act {
+            RailAct::Admit {
+                invite:
+                    Some(Redemption {
+                        device: Device::Browser,
+                        ..
+                    }),
+                ..
+            } => BROWSER_LINE_VERSION,
             RailAct::Invite { .. }
             | RailAct::Admit {
                 invite: Some(_), ..

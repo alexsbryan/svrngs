@@ -52,7 +52,10 @@ id admission derived (`derive_id`), never the line's. A link is in the record
 lapse, and `membership` counts an `Admit` redeeming one only under the rule
 in `membership.rs`'s module docs, naming each refusal a `RefusedRedemption`.
 An issuer's newer `Invite` closes their older one from its place in the
-order, so what the older link admitted keeps standing.
+order, so what the older link admitted keeps standing. A redemption names
+what holds the new key (`Device`, u4-1): a browser's ships at line version
+4, and `Membership::device` answers each standing key, a computer's unless
+the counting `Admit` that last bound it named a browser.
 
 **`crates/svrngs-runtime`**: the journal, its write index, the open-journal map
 (`RingRail`) and the register's standing (`register.rs`), split out of
@@ -165,8 +168,8 @@ its own, signed by the link's key, answered (`Asked`) with the group whose
 `Invite` of this node's names that key, its seed as the command keeps it
 (read through the `SeedText` function `Node::start` is handed, since the
 seed is the command's) and the `Invite`'s id. Then `RedeemRequest` — the group's id, the
-`Invite`'s id, a person's name, the new key, its consent and the link's
-key, signed by the link's secret — posted on `Alpn::Redeem`, which the
+`Invite`'s id, a person's name, the new key, its consent, what holds it
+(`Device`) and the link's key, signed by the link's secret — posted on `Alpn::Redeem`, which the
 accept loop serves to any dialer with these two routes. Each route is an
 adapter: `parse_redeem` and `parse_ask` judge what arrived (the dialer is the
 new key and the link's key signed), so a refused request reads nothing; the
