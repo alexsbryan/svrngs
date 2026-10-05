@@ -669,7 +669,7 @@ stays §9's row; the view each act carries goes with U7.
 
 | What lands | Bar, watched failing first |
 |---|---|
-| first the round's own account of what it cost — members dialled, reached and asleep, acts moved, processor and wall time, each fold kept or rebuilt — then the digest folded from the journal's tail, with an equal digest answered unread; each act's signature checked once, as it enters; the register folded from the tail | at 25 members and 10,000 acts an idle round costs under 0.1 s of processor in the instrument (73 s at `4f43dc6`), held by a canary in `scripts/check.sh` whose plant is today's code; the cost line predicts a point it was not fitted on |
+| first the round's own account of what it cost — members dialled, reached and asleep, acts moved, processor and wall time, each fold kept or rebuilt — then the digest folded from the journal's tail, with an equal digest answered unread; each act's signature checked once, as it enters; the register folded from the tail | at 25 members and 10,000 acts an idle round costs under 0.1 s of processor in the instrument (73 s at `15a9de7`, where it was measured), held by a canary in `scripts/check.sh` whose plant is today's code; the cost line predicts a point it was not fitted on |
 
 **Then:** removal (U7, the keeper of §6, with forks that void nothing), before any group of strangers; then
 the chat doors, Discord first — onboarding, last. After that the core grows one
