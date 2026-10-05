@@ -2,7 +2,7 @@
 //! DESIGN §8, "Many people, one library"). A lends a streaming service to
 //! three people at once, 30 Mbit/s declared; bo, cy, dee and eve, each on
 //! their own computer standing in A's group, dial A by key over loopback
-//! alone, as `super`'s pair does (#33). The window is
+//! alone, started by `super::start` (#33). The window is
 //! waited out once, for real: the use a stream holds ends only when its
 //! answer is dropped, and nothing else here can see that it did. Its edge
 //! is crossed on values in `src/door/limit/tests.rs`.
@@ -15,10 +15,10 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 
 use super::common::loopback_sockets;
-use super::{clean, header_values, no_seed, origins, signing, Reply, NS};
+use super::{clean, header_values, origins, signing, start, Reply, NS};
 use svrngs_node::door::limit::WINDOW;
 use svrngs_node::door::SHARE_HEADER;
-use svrngs_node::iroh::{Contact, RelayConfig};
+use svrngs_node::iroh::Contact;
 use svrngs_node::lend;
 use svrngs_node::node::Node;
 use svrngs_node::{actor_of, Person, RailAct, Roster};
@@ -36,20 +36,6 @@ struct Crowd {
 }
 
 const PEOPLE: [&str; 4] = ["bo", "cy", "dee", "eve"];
-
-async fn start(seed: u8, dir: &std::path::Path) -> Node {
-    Node::start(
-        dir.to_path_buf(),
-        signing(seed),
-        &RelayConfig::from_parts(Vec::new(), Some("none"))
-            .unwrap()
-            .on_loopback_only(),
-        no_seed,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .expect("a node starts")
-}
 
 impl Crowd {
     async fn new() -> Self {

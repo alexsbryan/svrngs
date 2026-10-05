@@ -46,6 +46,21 @@ fn no_seed(_: &std::path::Path) -> Result<Option<String>, String> {
     Ok(None)
 }
 
+/// A node of this binary: no relay, listening on 127.0.0.1 alone (#33).
+async fn start(seed: u8, dir: &std::path::Path) -> Node {
+    Node::start(
+        dir.to_path_buf(),
+        signing(seed),
+        &RelayConfig::from_parts(Vec::new(), Some("none"))
+            .unwrap()
+            .on_loopback_only(),
+        no_seed,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("a node starts")
+}
+
 /// A lender and a member of its group, and the member's bridge to it.
 struct Pair {
     a: Node,
@@ -59,21 +74,8 @@ impl Pair {
     /// A founds the group as ada and admits bo, B's key.
     async fn new() -> Self {
         let (dir, db) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-        let start = |seed: u8, d: std::path::PathBuf| async move {
-            Node::start(
-                d,
-                signing(seed),
-                &RelayConfig::from_parts(Vec::new(), Some("none"))
-                    .unwrap()
-                    .on_loopback_only(),
-                no_seed,
-                "127.0.0.1:0".parse().unwrap(),
-            )
-            .await
-            .expect("a node starts")
-        };
-        let a = start(1, dir.path().to_path_buf()).await;
-        let b = start(2, db.path().to_path_buf()).await;
+        let a = start(1, dir.path()).await;
+        let b = start(2, db.path()).await;
         let seed = Roster::new(
             [(Person::parse("ada").unwrap(), vec![actor_of(&signing(1))])]
                 .into_iter()
