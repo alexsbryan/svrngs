@@ -88,6 +88,7 @@ mod attest;
 mod command;
 mod hash;
 mod introduce;
+pub mod joining;
 pub mod link;
 mod membership;
 mod op;

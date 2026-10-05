@@ -18,8 +18,8 @@
 //! The joiner then presents a [`RedeemRequest`] on [`Alpn::Redeem`], the one
 //! protocol a key standing in no group may speak, serving [`router`]'s two
 //! routes: the group's id, the `Invite`'s id, the person's name, its new key,
-//! that key's consent ([`Redemption`]) and what holds the key, a computer
-//! or a browser ([`Device`], u4-1), all signed by the link's secret key. The issuer's node checks that the dialer is the new key, that the
+//! that key's consent ([`crate::Redemption`]) and what holds the key, a computer
+//! or a browser ([`crate::Device`], u4-1), all signed by the link's secret key. The issuer's node checks that the dialer is the new key, that the
 //! link's key signed, that the name parses ([`Name::kept`], the core's one
 //! rule; u2-9), that it holds the group, that the `Invite` is its own
 //! and names the link's key; then, under the door's write lock, that the
@@ -34,6 +34,10 @@
 //! which check it was. A key that already stands is answered success and
 //! nothing is written, so a joiner whose answer was lost may open the link
 //! again.
+//!
+//! The two requests, their signing and the check of the link's signature
+//! are svrngs-core's (`svrngs_core::joining`, u4-2), so a browser's page
+//! signs them with the command's body; they are re-exported here.
 
 use std::path::Path;
 use std::sync::Arc;
@@ -50,11 +54,10 @@ use crate::iroh::{Alpn, Dialer, Endpoint, EndpointAddr, HttpBridge};
 use crate::register::Standing;
 use crate::ring_routes::err;
 use crate::ring_sync::peer_client;
-use crate::{
-    actor_of, field, sign_message, verify_hex, Device, Ed25519Verifier, Name, NotAName, OpId,
-    Person, RailError, Redemption, RingRail, SigningKey,
-};
+use crate::{Ed25519Verifier, Name, NotAName, OpId, Person, RailError, RingRail};
 use svrngs_core::{RedeemRefusal, Refused as CommitRefused};
+
+pub use svrngs_core::joining::{AskRequest, RedeemRequest};
 
 /// The redemption's path.
 const ROUTE: &str = "/redeem";
@@ -62,51 +65,10 @@ const ROUTE: &str = "/redeem";
 /// The ask's path.
 const ASK_ROUTE: &str = "/ask";
 
-/// Domain separator for the link key's signature over a request, so it is
-/// never valid as an act's signature or a consent, nor either as it.
-const REQUEST_DOMAIN: &[u8] = b"svrngs-redeem-request:";
-
-/// Domain separator for the link key's signature over an ask.
-const ASK_DOMAIN: &[u8] = b"svrngs-redeem-ask:";
-
 /// How the issuer's node reads a group's seed, in the group's directory,
 /// to answer an ask: `Ok(None)` when it keeps none there. The command's
 /// (`svrngs::group::seed_text`), handed to [`crate::node::Node::start`].
 pub type SeedText = fn(&Path) -> Result<Option<String>, String>;
-
-/// What a joiner holding only a link asks its issuer: the link's public
-/// key and the joiner's, actor hex, signed by the link's secret key.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct AskRequest {
-    /// The link's public key.
-    pub link: String,
-    /// The key the joiner dials with.
-    pub key: String,
-    /// The link's secret key's signature over the two.
-    pub sig: String,
-}
-
-impl AskRequest {
-    /// `joining` asks about the link whose secret key is `link`.
-    pub fn sign(link: &SigningKey, joining: &SigningKey) -> Self {
-        let mut req = Self {
-            link: actor_of(link),
-            key: actor_of(joining),
-            sig: String::new(),
-        };
-        req.sig = sign_message(link, &req.message());
-        req
-    }
-
-    /// `DOMAIN || link || key`, each preceded by its `u32` big-endian length.
-    fn message(&self) -> Vec<u8> {
-        let mut msg = ASK_DOMAIN.to_vec();
-        field(&mut msg, self.link.as_bytes());
-        field(&mut msg, self.key.as_bytes());
-        msg
-    }
-}
 
 /// The issuer's answer to an ask. The joiner believes `seed` only if it
 /// hashes to `group`.
@@ -127,80 +89,6 @@ pub const REFUSAL: &str = "this link lets nobody in";
 /// The answer when the issuer's node could not judge — its own journal
 /// unreadable — which is not the link's fault and is not a refusal.
 pub const UNJUDGED: &str = "the computer that sent this link cannot let anyone in just now";
-
-/// What a joiner presents.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct RedeemRequest {
-    /// The group's id, as the seed hashes it.
-    pub group: String,
-    /// The id of the issuer's `Invite`, as the link carries it.
-    pub invite: OpId,
-    /// The name the joiner goes by in the group, as sent: the issuer parses
-    /// it ([`Name::kept`]) before anything is written.
-    pub person: String,
-    /// The new key, actor hex: the key the joiner dials with.
-    pub key: String,
-    /// The new key's consent, as a redeeming `Admit` carries it.
-    pub cosig: String,
-    /// What holds the new key: the `Admit` names it as sent.
-    pub device: Device,
-    /// The link's public key, actor hex.
-    pub link: String,
-    /// The link's secret key's signature over everything above.
-    pub sig: String,
-}
-
-impl RedeemRequest {
-    /// `joining`, held by `device`, asks to join `group` as `person`,
-    /// through the link whose secret is `link` and whose `Invite` is
-    /// `invite`.
-    pub fn sign(
-        link: &SigningKey,
-        joining: &SigningKey,
-        group: &str,
-        invite: &OpId,
-        person: &Person,
-        device: Device,
-    ) -> Self {
-        let consent = Redemption::sign(joining, group, invite, person, device);
-        let mut req = Self {
-            group: group.to_string(),
-            invite: invite.clone(),
-            person: person.as_str().to_string(),
-            key: actor_of(joining),
-            cosig: consent.sig,
-            device,
-            link: actor_of(link),
-            sig: String::new(),
-        };
-        req.sig = sign_message(link, &req.message());
-        req
-    }
-
-    /// The bytes the link's key signs: `DOMAIN || group || invite[32] ||
-    /// person || key || cosig || device || link`, every variable field
-    /// preceded by its `u32` big-endian length. Public so a test can sign a
-    /// request naming a person no `Person` holds, as a hand-built client
-    /// could.
-    pub fn message(&self) -> Vec<u8> {
-        let mut msg = REQUEST_DOMAIN.to_vec();
-        field(&mut msg, self.group.as_bytes());
-        field(&mut msg, self.invite.as_bytes());
-        field(&mut msg, self.person.as_bytes());
-        field(&mut msg, self.key.as_bytes());
-        field(&mut msg, self.cosig.as_bytes());
-        field(&mut msg, self.device.as_str().as_bytes());
-        field(&mut msg, self.link.as_bytes());
-        msg
-    }
-
-    /// Whether the link's key signed this request. `false` on anything
-    /// malformed.
-    fn signed_by_link(&self) -> bool {
-        verify_hex(&self.link, &self.message(), &self.sig)
-    }
-}
 
 /// What a redemption did.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -332,7 +220,7 @@ fn parse_ask(dialer: Option<&str>, req: &AskRequest) -> Result<(), NotAdmitted> 
     if dialer != req.key {
         return Err(NotAdmitted::NotTheDialer);
     }
-    if !verify_hex(&req.link, &req.message(), &req.sig) {
+    if !req.signed_by_link() {
         return Err(NotAdmitted::LinkUnsigned);
     }
     Ok(())

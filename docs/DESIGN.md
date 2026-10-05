@@ -190,7 +190,7 @@ piece comes over:
 
 | Crate | What it is | State |
 |---|---|---|
-| `svrngs-core` | the record: acts, admission into one order, membership, the sync digest; and what a browser's page spells as the command and the node do (u4-2): a link's token and the protocols' names. `no_std`, so the compiler refuses filesystem, clock, network and threads; time and keys are arguments | none |
+| `svrngs-core` | the record: acts, admission into one order, membership, the sync digest; and what a browser's page spells as the command and the node do (u4-2): a link's token, the ask and the redemption a joiner signs with it, and the protocols' names. `no_std`, so the compiler refuses filesystem, clock, network and threads; time and keys are arguments | none |
 | `svrngs-runtime` | the only owner of each group's journal on disk, its projections and its writes: the journal and its write index, the open-journal map, the register's standing | the journals |
 | `svrngs-node` | the adapters: sync and its route over iroh, redemption, the loopback record API with its live lane (landed, u3-2 and u3-3), the member door (landed, u3-4), the list of what members lend, asked of each (landed, u3-5), and the door's limit and shares, a pure decision the door's task owns (landed, u3-6) | each lend's declaration and secret; who is using each lend now |
 | `svrngs` | the command and the process: `new`, `join`, `link`, `share` and `unshare` (landed); the bare command prints where the record API listens, and what the people of its groups lend | a device's keys; each group's seed |

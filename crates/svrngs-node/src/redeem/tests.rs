@@ -6,7 +6,9 @@
 //! door over iroh.
 
 use super::*;
-use crate::{derive_id, sign_act, Device, Op, RailAct, SignedOp};
+use crate::{
+    actor_of, derive_id, sign_act, sign_message, Device, Op, RailAct, SignedOp, SigningKey,
+};
 
 const GROUP: &str = "house";
 
