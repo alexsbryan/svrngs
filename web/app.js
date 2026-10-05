@@ -204,15 +204,22 @@ if ('serviceWorker' in navigator) {
 // parses as the command does (DESIGN §3, call 5). The fragment is never
 // sent to this page's origin, which is why the link rides there and not in
 // the query.
-const token = location.hash.slice(1);
-try {
-  await init();
-  const kept = await store.groups();
-  let group = token ? kept.find((g) => g.token === token) : kept[0];
-  if (token && !group) group = await join(token, kept);
-  if (!group) throw new Said('Open this page from your group’s link.');
-  await enter(group);
-} catch (e) {
-  console.error(e);
-  show(e instanceof Said ? e.message : 'This browser could not open the page.', false);
+//
+// Opened from a function the module does not await: WebKit wedged the tab
+// for good when a person left the page while its module still awaited the
+// wasm's fetch at its top, then opened it again — the next navigation never
+// reached the origin (u4-7; ralph/REVIEW_FINDINGS.md has the runs).
+async function opening(token) {
+  try {
+    await init();
+    const kept = await store.groups();
+    let group = token ? kept.find((g) => g.token === token) : kept[0];
+    if (token && !group) group = await join(token, kept);
+    if (!group) throw new Said('Open this page from your group’s link.');
+    await enter(group);
+  } catch (e) {
+    console.error(e);
+    show(e instanceof Said ? e.message : 'This browser could not open the page.', false);
+  }
 }
+opening(location.hash.slice(1));

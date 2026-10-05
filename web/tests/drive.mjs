@@ -7,6 +7,8 @@
 //   node web/tests/drive.mjs '{"engine": "chromium"|"webkit", "site": "<dir>",
 //     "key": "<64 hex>", "token": "<token>"}'
 //
+// First it leaves the page while it loads, and opens it again.
+//
 // With `"http": {...}` in the args, once the page is in it also speaks HTTP
 // over the dial to the lends named there ([`httpChecks`], u4-4), and holds
 // its upload's tail until a line `go` arrives on stdin: the Rust half sends
@@ -123,7 +125,18 @@ try {
   const page = await context.newPage();
   page.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
-  await page.goto(origin);
+  // A phone's back and reopen (u4-7): the page left while it loads, three
+  // times, then opened again. WebKit wedged the tab when app.js awaited
+  // the wasm at its module's top (ralph/REVIEW_FINDINGS.md).
+  try {
+    for (let i = 0; i < 3; i++) {
+      await page.goto(origin, { timeout: 15_000 });
+      await page.goto('about:blank', { timeout: 15_000 });
+    }
+    await page.goto(origin, { timeout: 15_000 });
+  } catch (e) {
+    throw new Error(`the page, left while it loaded, did not open again: ${e}`);
+  }
   await page.evaluate(hold, { hex: args.key, token: args.token });
   await page.goto('about:blank');
   await page.goto(`${origin}#${args.token}`);
