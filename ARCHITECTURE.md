@@ -175,7 +175,8 @@ seed is the command's) and the `Invite`'s id. Then `RedeemRequest` — the group
 accept loop serves to any dialer with these two routes. The two requests,
 their signing and the check of the link's signature are svrngs-core's
 (`joining.rs`, moved from here in u4-2 so a browser's page signs with the
-command's body), re-exported from `redeem`. Each route is an
+command's body; `Asked` followed in u4-5, so the page reads the answer as the
+command does), re-exported from `redeem`. Each route is an
 adapter: `parse_redeem` and `parse_ask` judge what arrived (the dialer is the
 new key and the link's key signed), so a refused request reads nothing; the
 redemption is then svrngs-core's `Redeem` command, which `commit` decides
@@ -346,8 +347,12 @@ name the issuer as iroh dials it. `group.rs` is new: a group's `Seed` — its
 name, the founder's name and key, 16 random bytes — whose BLAKE3 hash is
 the group's id and so its directory; `seed.json` holds it beside the
 record, and `Seed::roster` writes the register's seed, `roster.json`, the
-founder's key bound to the founder's name; `group::answered` believes a
-seed an issuer answers only when it hashes to the group named. `cli.rs` is new, in the shape of
+founder's key bound to the founder's name; `answered` believes a
+seed an issuer answers only when it hashes to the group named. u4-5 moved
+the `Seed`, its id, its text and `answered` into svrngs-core
+(`svrngs_core::seed`), so a browser's page believes an issuer's answer with
+the command's body; `group.rs` keeps drawing a seed's salt (`group::draw`)
+and keeping it on disk, and re-exports the rest. `cli.rs` is new, in the shape of
 commonwealth-rails' `cli.rs` and `main.rs`: verbs parsed by hand (`svrngs`,
 `new <name> [--as] [--origin]`, `join <link> [--as]`, `link <group>
 [--origin]`, `share <port> [--name] [--kind] [--limit] [--refuse]...

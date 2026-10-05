@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! What a joiner signs with a link's key (DESIGN §6, "A link admits each
 //! person once"): the [`AskRequest`] that asks the issuer what the link is
-//! for, and the [`RedeemRequest`] that presents the redemption. Moved from
+//! for, the issuer's answer to it ([`Asked`], here since u4-5, so a page
+//! reads it as the command does), and the [`RedeemRequest`] that presents
+//! the redemption. Moved from
 //! `svrngs-node`'s `redeem.rs` (u4-2; DESIGN §10, call 5), so the command
 //! and a browser's page sign them, and the issuer's node checks them, with
 //! one body: keys and text in, bytes and hex out. The routes that answer
@@ -61,6 +63,19 @@ impl AskRequest {
     pub fn signed_by_link(&self) -> bool {
         verify_hex(&self.link, &self.message(), &self.sig)
     }
+}
+
+/// The issuer's answer to an ask. The joiner believes `seed` only if it
+/// hashes to `group` ([`crate::seed::answered`]).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Asked {
+    /// The id of the group the `Invite` is in.
+    pub group: String,
+    /// That group's seed, as the issuer keeps it.
+    pub seed: String,
+    /// The id of the issuer's `Invite` naming the link's key.
+    pub invite: OpId,
 }
 
 /// What a joiner presents.

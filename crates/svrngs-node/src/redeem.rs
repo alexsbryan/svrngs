@@ -57,7 +57,7 @@ use crate::ring_sync::peer_client;
 use crate::{Ed25519Verifier, Name, NotAName, OpId, Person, RailError, RingRail};
 use svrngs_core::{RedeemRefusal, Refused as CommitRefused};
 
-pub use svrngs_core::joining::{AskRequest, RedeemRequest};
+pub use svrngs_core::joining::{AskRequest, Asked, RedeemRequest};
 
 /// The redemption's path.
 const ROUTE: &str = "/redeem";
@@ -69,19 +69,6 @@ const ASK_ROUTE: &str = "/ask";
 /// to answer an ask: `Ok(None)` when it keeps none there. The command's
 /// (`svrngs::group::seed_text`), handed to [`crate::node::Node::start`].
 pub type SeedText = fn(&Path) -> Result<Option<String>, String>;
-
-/// The issuer's answer to an ask. The joiner believes `seed` only if it
-/// hashes to `group`.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Asked {
-    /// The id of the group the `Invite` is in.
-    pub group: String,
-    /// That group's seed, as [`SeedText`] read it.
-    pub seed: String,
-    /// The id of the issuer's `Invite` naming the link's key.
-    pub invite: OpId,
-}
 
 /// The one answer to every refusal: it names no group and no reason.
 pub const REFUSAL: &str = "this link lets nobody in";

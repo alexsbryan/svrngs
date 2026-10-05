@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! A group's seed and its id (DESIGN §8, U2's inventory, the
-//! `valid_namespace` row). A group's id was a name the caller typed, so two
-//! groups called House on one computer were one directory. Now the id is
-//! the hash of the seed — the founder's key, the name the founder goes by,
-//! the group's name and 16 random bytes drawn at `new` — so two groups
-//! called House are two ids, and a seed a link's issuer answers proves
-//! the id it names ([`answered`]). The group's name is what a person reads; the id is the directory
-//! its record lives in on every computer that holds it.
+//! A group's seed kept on this computer (DESIGN §8, U2's inventory, the
+//! `valid_namespace` row). The seed, its id — the hash that names the
+//! group's directory — and the belief in a seed an issuer answers are
+//! svrngs-core's since u4-5 (`svrngs_core::seed`), so a browser's page
+//! reads a seed with the command's body; drawing a seed's salt and keeping
+//! it on disk are this module's.
 //!
 //! The seed is written beside the group's record as `seed.json`, and the
 //! register's seed, `roster.json`, is written from it by [`Seed::roster`]
@@ -24,16 +22,14 @@
 use std::path::{Path, PathBuf};
 
 use ed25519_dalek::VerifyingKey;
-use serde::{Deserialize, Serialize};
+use svrngs_node::namespaces_in;
+/// The seed, its id and the belief in an issuer's answer are svrngs-core's
+/// since u4-5, so a browser's page reads a seed with this body.
+pub use svrngs_node::seed::{answered, Seed};
 /// A group's name and a person's share the core's one rule (u2-9).
 pub use svrngs_node::Name;
-use svrngs_node::{field, namespaces_in, Person, Roster};
 
 use svrngs_node::link::Origin;
-
-/// Domain separator for a group id's hash, so an id is never the hash of
-/// anything else svrngs hashes (an act id is `svrngs/act/v1`).
-const GROUP_ID_DOMAIN: &[u8] = b"svrngs/group/v1\0";
 
 /// The one spelling of the seed's file name in a group's directory.
 const SEED_FILE: &str = "seed.json";
@@ -41,102 +37,16 @@ const SEED_FILE: &str = "seed.json";
 /// The one spelling of the kept origin's file name in a group's directory.
 const ORIGIN_FILE: &str = "origin";
 
-/// What a group is founded on. Every field is inside the id's hash.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Seed {
-    name: Name,
-    founder: Name,
-    key: VerifyingKey,
-    salt: [u8; 16],
-}
-
-impl Seed {
-    /// A new group's seed: `founder` names the person holding `key`, and
-    /// 16 bytes are drawn so that a second group of the same name by the
-    /// same person is a second group.
-    #[expect(clippy::disallowed_methods, reason = "draws a group's salt")]
-    pub fn draw(name: Name, founder: Name, key: VerifyingKey) -> Self {
-        let mut salt = [0u8; 16];
-        // As identity.rs: getrandom failing is a host with no entropy, and
-        // no group can be made on it.
-        getrandom::fill(&mut salt).expect("failed to draw a group's salt");
-        Self::from_parts(name, founder, key, salt)
-    }
-
-    pub fn from_parts(name: Name, founder: Name, key: VerifyingKey, salt: [u8; 16]) -> Self {
-        Self {
-            name,
-            founder,
-            key,
-            salt,
-        }
-    }
-
-    /// The group's id: the whole BLAKE3 hash, 64 lowercase hex, of
-    /// `DOMAIN || name || founder || key || salt`, every variable field
-    /// preceded by its `u32` big-endian length. It names the group's
-    /// directory, as a namespace (`svrngs_node`'s `valid_namespace`).
-    pub fn id(&self) -> String {
-        let mut input = GROUP_ID_DOMAIN.to_vec();
-        field(&mut input, self.name.as_str().as_bytes());
-        field(&mut input, self.founder.as_str().as_bytes());
-        input.extend_from_slice(self.key.as_bytes());
-        input.extend_from_slice(&self.salt);
-        blake3::hash(&input).to_hex().to_string()
-    }
-
-    pub fn name(&self) -> &Name {
-        &self.name
-    }
-
-    pub fn founder(&self) -> &Name {
-        &self.founder
-    }
-
-    /// The founder's key, as the record spells an actor.
-    pub fn founder_actor(&self) -> String {
-        hex::encode(self.key.as_bytes())
-    }
-
-    pub fn salt_hex(&self) -> String {
-        hex::encode(self.salt)
-    }
-
-    /// The register's seed: the founder's key, bound to the founder's name
-    /// (DESIGN §6). The one writer of a group's `roster.json`.
-    pub fn roster(&self) -> Roster {
-        Roster::new(
-            [(
-                Person::from(self.founder.clone()),
-                vec![self.founder_actor()],
-            )]
-            .into_iter()
-            .collect(),
-        )
-    }
-
-    /// The seed from its four fields as text, as `seed.json` holds them.
-    pub fn parse(name: &str, founder: &str, key_hex: &str, salt_hex: &str) -> Option<Self> {
-        let key: [u8; 32] = hex::decode(key_hex).ok()?.try_into().ok()?;
-        let key = VerifyingKey::from_bytes(&key).ok()?;
-        let salt: [u8; 16] = hex::decode(salt_hex).ok()?.try_into().ok()?;
-        Some(Self::from_parts(
-            Name::kept(name.to_string()).ok()?,
-            Name::kept(founder.to_string()).ok()?,
-            key,
-            salt,
-        ))
-    }
-}
-
-/// `seed.json`'s shape.
-#[derive(Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct SeedFile {
-    name: String,
-    founder: String,
-    key: String,
-    salt: String,
+/// A new group's seed: `founder` names the person holding `key`, and 16
+/// bytes are drawn so that a second group of the same name by the same
+/// person is a second group.
+#[expect(clippy::disallowed_methods, reason = "draws a group's salt")]
+pub fn draw(name: Name, founder: Name, key: VerifyingKey) -> Seed {
+    let mut salt = [0u8; 16];
+    // As identity.rs: getrandom failing is a host with no entropy, and
+    // no group can be made on it.
+    getrandom::fill(&mut salt).expect("failed to draw a group's salt");
+    Seed::from_parts(name, founder, key, salt)
 }
 
 /// Why a group's seed or origin could not be written or read.
@@ -154,15 +64,7 @@ pub enum SeedError {
 /// Write `seed` into `dir`, the group's directory, with the register's
 /// seed beside it.
 pub fn write_seed(dir: &Path, seed: &Seed) -> Result<(), SeedError> {
-    let path = dir.join(SEED_FILE);
-    let file = SeedFile {
-        name: seed.name.as_str().to_string(),
-        founder: seed.founder.as_str().to_string(),
-        key: seed.founder_actor(),
-        salt: seed.salt_hex(),
-    };
-    let raw = serde_json::to_string_pretty(&file).expect("a seed serializes");
-    keep(dir, path, &raw)
+    keep(dir, dir.join(SEED_FILE), &seed.to_text())
 }
 
 /// Read the seed in `dir`, or `None` when the directory holds none.
@@ -171,7 +73,7 @@ pub fn read_seed(dir: &Path) -> Result<Option<Seed>, SeedError> {
     let Some(raw) = kept(&path)? else {
         return Ok(None);
     };
-    from_text(&raw)
+    Seed::from_text(&raw)
         .map(Some)
         .map_err(|why| SeedError::Read { path, why })
 }
@@ -181,30 +83,6 @@ pub fn read_seed(dir: &Path) -> Result<Option<Seed>, SeedError> {
 /// (`svrngs_node::redeem::SeedText`).
 pub fn seed_text(dir: &Path) -> Result<Option<String>, String> {
     kept(&dir.join(SEED_FILE)).map_err(|e| e.to_string())
-}
-
-/// The seed an issuer answered for `group`, believed only when it hashes
-/// to `group`: an issuer answering another group's seed is not believed.
-pub fn answered(group: &str, text: &str) -> Option<Seed> {
-    let seed = match from_text(text) {
-        Ok(seed) => seed,
-        Err(why) => {
-            tracing::debug!(target: "group", group, why, "group: refused — the seed answered is not a seed");
-            return None;
-        }
-    };
-    if seed.id() != group {
-        tracing::debug!(target: "group", group, hashes_to = %seed.id(), "group: refused — the seed answered is another group's");
-        return None;
-    }
-    Some(seed)
-}
-
-/// A seed from `seed.json`'s text.
-fn from_text(raw: &str) -> Result<Seed, String> {
-    let file: SeedFile = serde_json::from_str(raw).map_err(|e| e.to_string())?;
-    Seed::parse(&file.name, &file.founder, &file.key, &file.salt)
-        .ok_or_else(|| "a field is not what a seed holds".into())
 }
 
 /// Keep `origin` in `dir`, the group's directory, as the page its links
@@ -300,7 +178,7 @@ pub fn named<'a>(groups: &'a [Seed], reference: &str) -> Vec<&'a Seed> {
         .iter()
         .filter(|s| {
             !needle.is_empty()
-                && (s.name.as_str().to_lowercase() == needle
+                && (s.name().as_str().to_lowercase() == needle
                     || (needle.len() >= 8 && s.id().starts_with(&needle)))
         })
         .collect()

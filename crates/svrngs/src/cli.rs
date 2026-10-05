@@ -846,7 +846,7 @@ pub async fn new_group(
     // §8, "One key signs and dials").
     let founder = VerifyingKey::from_bytes(node.endpoint().id().as_bytes())
         .expect("an iroh endpoint id is an Ed25519 key");
-    let seed = Seed::draw(name, person, founder);
+    let seed = group::draw(name, person, founder);
     let id = seed.id();
     keep_group(node, &seed, origin)?;
     tracing::debug!(target: "cli", group = %id, name = %seed.name(), origin = ?origin.map(Origin::as_str), "cli: group made");
