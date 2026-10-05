@@ -573,30 +573,48 @@ async fn people_lends(State(at): State<Asking>, dialer: Option<Extension<Dialer>
         tracing::debug!(target: "node", asker, "node: people's lends refused — the dialer stands in no group this computer stands in");
         return err(StatusCode::FORBIDDEN, "this computer lends nothing to you");
     };
-    let offered = match crate::door::offered(&at.door).await {
-        Ok(o) => o,
+    let (lent, unanswered) = match at.lent(&groups, &own, Some(&asker)).await {
+        Ok(answer) => answer,
         Err(refused) => return refused,
     };
-    let others = at.host.lends_in(&groups, Some(&asker)).await;
-    let mut lent: Vec<Lending> = offered
-        .into_iter()
-        .map(|offered| Lending {
-            person: own.clone(),
-            key: at.host.actor.clone(),
-            offered,
-        })
-        .chain(others.lent.into_iter().map(|l| Lending {
-            person: l.person,
-            key: l.key,
-            offered: l.offered,
-        }))
-        .collect();
-    lent.sort_by(|a, b| {
-        (a.person.as_str(), &a.offered.name).cmp(&(b.person.as_str(), &b.offered.name))
-    });
-    tracing::debug!(target: "node", asker, groups = groups.len(), lent = lent.len(), unanswered = others.unanswered.len(),
+    tracing::debug!(target: "node", asker, groups = groups.len(), lent = lent.len(), unanswered = unanswered.len(),
         "node: people's lends — answered what the people of the asker's groups lend, each with its lender's key");
-    Json(serde_json::json!({ "lent": lent, "unanswered": others.unanswered })).into_response()
+    Json(serde_json::json!({ "lent": lent, "unanswered": unanswered })).into_response()
+}
+
+impl Asking {
+    /// What the people of `groups` lend: this computer's own lends under
+    /// `own`, its person, and each other computer's but `asker`'s, asked now
+    /// as [`Node::lends`] asks, each with its lender's key, sorted by
+    /// person then name; and whose computer did not answer. The refusal is
+    /// [`crate::door::offered`]'s, when this computer's declarations cannot
+    /// be read.
+    async fn lent(
+        &self,
+        groups: &[(String, BTreeMap<String, Member>)],
+        own: &Person,
+        asker: Option<&str>,
+    ) -> Result<(Vec<Lending>, Vec<Person>), Response> {
+        let offered = crate::door::offered(&self.door).await?;
+        let others = self.host.lends_in(groups, asker).await;
+        let mut lent: Vec<Lending> = offered
+            .into_iter()
+            .map(|offered| Lending {
+                person: own.clone(),
+                key: self.host.actor.clone(),
+                offered,
+            })
+            .chain(others.lent.into_iter().map(|l| Lending {
+                person: l.person,
+                key: l.key,
+                offered: l.offered,
+            }))
+            .collect();
+        lent.sort_by(|a, b| {
+            (a.person.as_str(), &a.offered.name).cmp(&(b.person.as_str(), &b.offered.name))
+        });
+        Ok((lent, others.unanswered))
+    }
 }
 
 /// The accept loop's decision: the protocol whose routes a dialer is
