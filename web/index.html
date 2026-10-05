@@ -15,8 +15,11 @@
   The CSP is deliberately strict: no inline script (app.js is external), no
   remote code. `wasm-unsafe-eval` is required to instantiate WebAssembly;
   `connect-src` must allow the relay's WebSocket (wss://*.relay.n0.iroh.link
-  by default, plus any self-hosted relay a link carries). Nothing here is
-  allowed to phone a third party. Every word a person reads here is DESIGN
+  by default, plus any self-hosted relay a link carries), and iroh's latency
+  probe, an HTTP GET of the relay's `/ping`. A relay on this computer, plain
+  HTTP on 127.0.0.1, is allowed too: the browser tests run one, so they
+  reach nothing on the internet, and loopback is no third party. Nothing
+  here is allowed to phone a third party. Every word a person reads here is DESIGN
   §1's: the group, people's names, computer, phone.
 -->
 <html lang="en">
@@ -24,7 +27,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' wss: https:; img-src 'none'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' wss: https: ws://127.0.0.1:* http://127.0.0.1:*; img-src 'none'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'">
 <title>Your group</title>
 <style>
   :root { color-scheme: light dark; }
