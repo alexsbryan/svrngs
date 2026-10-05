@@ -391,7 +391,8 @@ program itself for `share` with svrngs running and not.
 (DESIGN §3, "Joining"; U4): the crate `svrngs-web`, wasm only, in a
 workspace of its own with upstream's measured pins (iroh =1.0.2,
 wasm-bindgen =0.2.128, wasm-bindgen-futures =0.4.78, js-sys =0.3.105) and
-lock, and the static shell beside it — `index.html`, `app.js`, `sw.js`.
+lock, and the static shell beside it — `index.html`, `app.js`,
+`store.js`, `sw.js`.
 Forked from commonwealth-ai's `sovereign/apps/ring-runtime` at `e1a43bcd2`
 with `kernel-types` replaced by svrngs-core, then changed (u4-3, u4-4,
 u4-5). `src/lib.rs` binds a browser endpoint with the person's key, 32
@@ -399,8 +400,8 @@ bytes, parses the token with svrngs-core's `Token::decode`, and dials by
 key — through the relay the token carries, else by the resolver iroh's N0
 preset adds in a browser — every layer traced to the page's `__trace` as it
 happens: `connect` dials the link's issuer on the members' protocol,
-`connect_to` a lender by its key (DESIGN §3, call 4), `connect_to_join` the
-issuer on the redeem protocol. The dialled computer's `fetch` is HTTP over
+`connect_to_join` the issuer on the redeem protocol, and `endpoint`'s
+`dial` a lender by its key (DESIGN §3, call 4). The dialled computer's `fetch` is HTTP over
 one bi-stream per request by hyper's HTTP/1 client (`src/http.rs`, u4-4), its
 body a `ReadableStream` either way. `src/join.rs` (u4-5) signs and believes
 with svrngs-core's bodies, as `svrngs join` does: `ask`, `believe` (the seed
@@ -412,9 +413,15 @@ sealed with the group's id as additional data (call 1). `app.js` reads the
 fragment as the token: a link joined by, or the page alone, is in; a new
 link is asked of its issuer, and a group kept already is in; else it asks the
 person's name once, redeems, keeps the group, and lists `GET /people/lends`
-as the bare command prints it ("Sam's shelf"), a lend opening by its
-lender's key; it keeps the layers on the console at debug and says only
-DESIGN §1's words. The shell's paths are relative, and the CSP admits a
+as the bare command prints it ("Sam's shelf"), keeping the keys it names
+(`store.js` `listed`); it keeps the layers on the console at debug and says
+only DESIGN §1's words. A lend opens at its address under the service
+worker's scope, `l/<lender>/<lend>/`, and `sw.js` (u4-6), a module, is the
+runtime: it serves every request at such an address — pages, subresources,
+fetch, a `<video>`'s ranges — by `fetch` over a dial to the lender's door,
+`/lend/<lend>/<path>`, from one endpoint per group (`endpoint(key, token)`
+and its `dial(lender)`), opened from the sealed key on the first request
+after the worker starts; and it caches the shell. The shell's paths are relative, and the CSP admits a
 relay on 127.0.0.1. `scripts/build-web.sh` (upstream's
 `build-ring-runtime.sh`) builds it into `target/web/site` with Homebrew's
 LLVM on a Mac, and `--lint` holds it to rustfmt and clippy for wasm32.
@@ -425,8 +432,12 @@ page and driving Playwright 1.59.1's headless Chromium (`web/package.json`,
 `web/tests/page.mjs`); without Playwright or its browsers it fails naming
 the install command. `crates/svrngs/tests/join_page.rs`, with
 `web/tests/join.mjs`, is joining's: a link `svrngs new --origin` printed,
-opened, a name typed, Sam's journal read for the one `Admit`, and every
-storage the page writes scanned for the key's bytes.
+opened, a name typed, Sam's journal read for the one `Admit`, every
+storage the page writes scanned for the key's bytes, and the first lend
+opened through the worker. The runtime's test, `web/tests/runtime.mjs` in
+the browser binary, plays and seeks an H.264 film ffmpeg makes, stops the
+worker through Chromium's DevTools protocol, and reads a second computer's
+lend by a relative path.
 
 **`apps/expenses/`**: the Expenses fold (`expenses.js`) and its tests, from E0,
 the bot at tag `e0-bot`. Its reducer (`init`, `reduce`) folds the acts
