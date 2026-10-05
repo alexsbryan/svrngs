@@ -30,6 +30,22 @@ const path = params.get('path') || '/v1/rail/log';
 const label = params.get('s') || '';
 if (label) labelEl.textContent = label;
 
+// The person's key, as this page's store holds it: 32 bytes under `key` in
+// IndexedDB `svrngs`, object store `person`, or null when it holds none.
+// Making the key and sealing it is joining's (u4-5; DESIGN §3, call 1).
+function heldKey() {
+  return new Promise((resolve, reject) => {
+    const open = indexedDB.open('svrngs', 1);
+    open.onupgradeneeded = () => open.result.createObjectStore('person');
+    open.onerror = () => reject(open.error);
+    open.onsuccess = () => {
+      const get = open.result.transaction('person').objectStore('person').get('key');
+      get.onerror = () => reject(get.error);
+      get.onsuccess = () => resolve(get.result ? new Uint8Array(get.result) : null);
+    };
+  });
+}
+
 function fail(msg) {
   status.textContent = msg;
   status.className = 'bad';
@@ -40,8 +56,9 @@ if (!token || !dial) {
 } else {
   try {
     await init();
+    const key = await heldKey();
     status.textContent = 'Dialing the wall over the relay…';
-    const pending = dial_guest(dial, token, path);
+    const pending = dial_guest(key || new Uint8Array(), dial, token, path);
     const timeout = new Promise((r) => setTimeout(() => r('__TIMEOUT__'), 120000));
     const res = await Promise.race([pending, timeout]);
     if (res === '__TIMEOUT__') {

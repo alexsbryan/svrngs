@@ -53,16 +53,18 @@ fn decode_hex_n32(s: &str) -> Result<[u8; 32], String> {
     Ok(out)
 }
 
-/// Dial the node named in `dial`, send `GET <path>` with
-/// `Authorization: Bearer <token>` over one iroh bi-stream on the members'
-/// protocol,
-/// and return the full trace (every layer, plus the response verbatim).
+/// Dial the node named in `dial` as the person whose key is `key`, send
+/// `GET <path>` with `Authorization: Bearer <token>` over one iroh
+/// bi-stream on the members' protocol, and return the full trace (every
+/// layer, plus the response verbatim).
 ///
-/// `dial` is the `<hex-pubkey>@<relay-or-addr>[,…]` string a guest link's
+/// `key` is the person's key, the 32 bytes the page's store holds (DESIGN
+/// §3, call 1): iroh signs its handshake with it synchronously, so it is
+/// bytes here, never a WebCrypto key. `dial` is the `<hex-pubkey>@<relay-or-addr>[,…]` string a guest link's
 /// `iroh=` fragment param carries; `token` is the grant bearer; `path` is the
 /// grant-scoped route (e.g. `/v1/rail/log`).
 #[wasm_bindgen]
-pub async fn dial_guest(dial: String, token: String, path: String) -> String {
+pub async fn dial_guest(key: Vec<u8>, dial: String, token: String, path: String) -> String {
     let mut trace = String::new();
     macro_rules! t {
         ($($a:tt)*) => {{
@@ -75,7 +77,15 @@ pub async fn dial_guest(dial: String, token: String, path: String) -> String {
 
     t!("LAYER page: wasm module loaded and dial_guest entered (iroh =1.0.2)");
 
-    // ── LAYER 1: parse the dial string the link carries ────────────────────
+    // ── LAYER 1: the person's key, then the dial string the link carries ──
+    let secret = match <[u8; 32]>::try_from(key.as_slice()) {
+        Ok(bytes) => iroh::SecretKey::from_bytes(&bytes),
+        Err(_) => {
+            t!("LAYER key: REFUSED — the page holds {} bytes, not a key's 32", key.len());
+            return trace;
+        }
+    };
+    t!("LAYER key: ok — the person's key {}", secret.public());
     let (id_hex, targets) = match dial.split_once('@') {
         Some(x) => x,
         None => {
@@ -119,7 +129,7 @@ pub async fn dial_guest(dial: String, token: String, path: String) -> String {
     // ── LAYER 2: wasm bindgen / iroh endpoint construction ─────────────────
     t!("LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only)…");
     let ep = match iroh::Endpoint::builder(iroh::endpoint::presets::Minimal)
-        .secret_key(iroh::SecretKey::generate())
+        .secret_key(secret)
         .relay_mode(iroh::RelayMode::Default)
         .alpns(vec![MEMBER_ALPN.to_vec()])
         .bind()
