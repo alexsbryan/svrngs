@@ -79,3 +79,32 @@ export async function hold({ hex, token }) {
   const key = Uint8Array.from(hex.match(/../g), (h) => parseInt(h, 16));
   await store.keep({ id: 'held', name: 'house', person: 'bo', token, key });
 }
+
+// In the lend's page: play its `<video>`, or seek it to `at`, and answer
+// how long until it plays on from there — `ms`, or `null` past `within` —
+// with where it stood then, or what the page says when it holds no video.
+export async function play({ at, within }) {
+  const v = document.querySelector('video');
+  if (!v) return { ms: null, error: `no <video> on the page, which says: ${document.body.innerText.slice(0, 200)}` };
+  const started = performance.now();
+  if (at === null) {
+    v.muted = true;
+    v.play().catch(() => {});
+  } else {
+    v.currentTime = at;
+  }
+  const from = at ?? 0;
+  return new Promise((done) => {
+    const check = () => {
+      const t = performance.now() - started;
+      if (!v.seeking && !v.paused && v.currentTime > from + 0.25) {
+        done({ ms: Math.round(t), at: v.currentTime });
+      } else if (t > within) {
+        done({ ms: null, at: v.currentTime, seeking: v.seeking, paused: v.paused, error: v.error?.message ?? null });
+      } else {
+        setTimeout(check, 20);
+      }
+    };
+    check();
+  });
+}
