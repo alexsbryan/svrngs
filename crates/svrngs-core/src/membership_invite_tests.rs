@@ -230,3 +230,17 @@ fn a_redemption_timed_before_the_newer_link_counts_when_it_arrives_late() {
     assert_eq!(late.gaps(), vec![], "nothing is refused");
     assert!(standing(&late, 7), "gus stands");
 }
+
+/// The generator for `fixtures/redemption_before_browsers.jsonl`: alex's
+/// `Invite`, and dee's `Admit` redeeming it, as a journal held them at line
+/// version 3, before a redemption named a browser (u4-1). Kept so the
+/// fixture is reproducible.
+#[test]
+#[ignore = "fixture generator — run with --ignored --nocapture"]
+fn emit_redemption_fixture() {
+    let inv = signed(&key(1), 1_700_000_000, 0, invite(1_800_000_000));
+    let dee = after(&key(1), &inv, 1_700_000_001, redeem(&inv, "dee", 4));
+    for op in [inv, dee] {
+        println!("{}", serde_json::to_string(&op).unwrap());
+    }
+}
