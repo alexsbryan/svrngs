@@ -501,18 +501,19 @@ did (u3-1); the chat doors start from tag `e0-bot` when their turn comes.
 | U2 join by link | `svrngs new <name>`, `svrngs join <link>` and `svrngs link <group>` on a computer, and `svrngs` alone running the node; the link is one short token — the issuer's key and the link's secret, and the issuer's relay only when it runs without lookup — and the issuer answers the group's seed and its `Invite`'s id to the link's key; redeeming at the issuer's node writes one `Admit`, co-signed by the new key; ids over everything signed, the previous act among it; the door signing after everything it holds (§6) | three people open one link and each is admitted once; opening it again admits nobody twice; a lapsed or closed link admits no one; a dialer without the link's key is closed with no answer; nothing the command prints uses a word §1 keeps from people |
 | U3 lend a service | the member door: a route that proxies to a lent service, the verified person set from the connection; `svrngs share <port>` with its lend declaration; streaming and byte ranges through the door; each request's share of the lender's upload; the people-at-once limit; the loopback record API (the rail routes and the live lane, forked); the list of what members lend | the app sees the verified person; a header the client typed is stripped; the lender's secret appears in no byte a member receives; with three streams, each is told a third of the declared upload, and a fourth person is refused with a reason |
 
-**Demo A — Sam's films, three homes at once** (after U3). Sam lends Jellyfin
-with one command and sends a link. Alex, Bo and Cy join from three homes and
-each plays a different film from Sam's library in their own browser at the
-same time, seeking freely; none stalls another, and the door tells each its
-share of Sam's upload — turning a share into a picture is Films' (U5), so
-Jellyfin's own player picks the quality here. Sam's password never left Sam's
+**Demo A — Sam's films, three homes at once** (after U5; operator,
+2026-10-04, once U3's dry run found no way into Jellyfin's own player that
+keeps the bars — §11, risk 7). Sam lends Jellyfin with one command and sends a
+link. Alex, Bo and Cy join from three homes and each plays a different film
+from Sam's library in Films, in their own browser, at the same time, seeking
+freely; none stalls another, and the door tells each its share of Sam's
+upload, which Films turns into a picture. Sam's password never left Sam's
 computer; nobody made an account.
 
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
 | U4 the browser | a phone opens a group's https link, on the page origin the group named, and is in: its own key, a dial to the meeting point, and the runtime that renders a lent app through it — fetch, POST, streaming, byte ranges; the page is static files any origin can serve | a stock phone browser plays a lent film and seeks |
-| U5 Films | `apps/films`: one shelf across every member's lent library, "from Sam's", search, play here; a device and play-session id per person and play; progress per person in the record; busy turned into a choice — on the §3 surface alone | a title two members lend shows once, with both; Bo's seek never restarts Cy's play; Films calls nothing outside §3 |
+| U5 Films | `apps/films`: one shelf across every member's lent library, "from Sam's", search, play here; a device and play-session id per person and play; progress per person in the record; busy turned into a choice; the lend's credential made from the viewer's password, which the lender types once on their own computer (U3's dry run: today it is a whole request header the lender cannot make from what they are told) — on the §3 surface alone | a title two members lend shows once, with both; Bo's seek never restarts Cy's play; Films calls nothing outside §3 |
 | U6 the screen handoff | the meeting point serves one stream to a TV on its network at an unguessable address; AirPlay from Safari, Cast from Chrome; the phone is the remote and may lock | a film plays on the TV from a phone browser; the address serves only the device it was handed to |
 
 **Demo B — movie night** (after U6). Five friends at Sam's, phones only. Sam's
@@ -626,9 +627,13 @@ By the operator, 2026-10-03:
 6. **Two copies of the record's code.** A signing or canonical-form bug fixed on
    one side can be missed on the other. `scripts/ports.py` is the guard, and it
    is a listing, not a gate.
-7. **Jellyfin's own player asks for a sign-in.** Demo A plays in it before
-   Films exists, and the door injects a credential on requests, not a session
-   in a browser. Either the browser is handed a token it then holds, which
-   breaks "the lender's secret appears in no byte a member receives", or each
-   person signs in to a viewer account. U3's dry run against a real Jellyfin
-   measures which, before Demo A's first run; Films (U5) never needs it.
+7. **Jellyfin's own player asks for a sign-in** — settled. The door injects a
+   credential on requests, not a session in a browser, so either the browser
+   is handed a token it then holds, which breaks "the lender's secret appears
+   in no byte a member receives", or each person signs in to a viewer
+   account. U3's dry run against Jellyfin 12.0.0
+   (`demo/runs/a/dry-2026-10-04/`) found the second worse than feared: a
+   member's sign-in through the door logs the lend's token out for everyone,
+   and only a placeholder sign-in that no member can write gets past the
+   page. The operator, 2026-10-04: Demo A plays in Films, after U5, which
+   never needs that page; no unit builds a way into Jellyfin's own player.

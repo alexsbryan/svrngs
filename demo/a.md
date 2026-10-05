@@ -5,7 +5,7 @@ different film from Sam's lent library at the same time for ten minutes, each
 seeking at least three times, and every seek plays again within five seconds,
 whoever else is seeking; Sam's Jellyfin password is in nothing any of them
 received, and Jellyfin's list of users is the same after the run as before.
-Shown after U3 (DESIGN §8).
+Shown after U5, in Films (DESIGN §8).
 
 **Before the run.** Sam: a computer at home running Jellyfin with at least
 three films and one viewer account whose password only Sam's computer holds,
@@ -25,10 +25,11 @@ Jellyfin takes on each request and keeps it on Sam's computer. Sam sends the
 link. Each of the others: `svrngs join <link>` on their computer; then
 `svrngs` alone, which prints "Sam's jellyfin, in your browser:" and a local
 address, `http://127.0.0.1:<port>/lend/jellyfin/`, opened in their browser
-(`join` prints no lends; the bare command asks for them as it starts). The
-step Jellyfin's own web player needs past its sign-in page is the operator's
-to choose before the first run (DESIGN §11, risk 7; the dry run's
-`README.md`).
+(`join` prints no lends; the bare command asks for them as it starts). Jellyfin's
+own web player stops at its sign-in page, and the dry run found no way past it
+that keeps the bars (its `README.md`), so Demo A plays in Films, after U5, and
+its steps from the local address on are Films' to write when U5 lands
+(operator, 2026-10-04; DESIGN §11, risk 7).
 
 **What Sam is told, and nothing else:** "Share your Jellyfin with the group,
 and send the link to Alex, Bo and Cy."
