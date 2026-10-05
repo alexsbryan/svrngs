@@ -108,6 +108,13 @@ export async function listed(group, lenders) {
   await run('groups', 'readwrite', (s) => s.put({ ...group, lenders }));
 }
 
+// The group whose key reaches `lender`: the one whose list last named
+// them, else the one opened last.
+export async function groupFor(lender) {
+  const kept = await groups();
+  return kept.find((g) => g.lenders?.includes(lender)) ?? kept[0];
+}
+
 // The person's key in `group`, unsealed: 32 bytes, held only in memory.
 export async function unseal(group) {
   const seal = await sealingKey(false);

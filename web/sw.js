@@ -111,13 +111,6 @@ function held(map, key, opening) {
   return map.get(key);
 }
 
-// The group whose key reaches `lender`: the one whose list last named
-// them, else the one opened last.
-async function groupFor(lender) {
-  const kept = await store.groups();
-  return kept.find((g) => g.lenders?.includes(lender)) ?? kept[0];
-}
-
 function endpointFor(group) {
   return held(endpoints, group.id, async () => {
     loaded ??= init({ module_or_path: store.runtime() }).catch((e) => {
@@ -176,7 +169,7 @@ async function lent(request, url) {
   const [, lender, lend, rest] = m;
   // A lend's front page ends in a slash, so its own relative paths stay in it.
   if (rest === undefined) return Response.redirect(`${url.origin}${url.pathname}/${url.search}`, 301);
-  const group = await groupFor(lender);
+  const group = await store.groupFor(lender);
   if (!group) return say(403, 'Open your group’s link on this phone first.');
   const path = `/lend/${lend}${rest}${url.search}`;
   const headers = bounded([...request.headers], request.destination);
