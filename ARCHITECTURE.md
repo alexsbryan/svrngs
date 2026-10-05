@@ -452,8 +452,9 @@ DESIGN §8: apps on two computers write, a correction voids, and both copies
 fold to the same balances, the ones the acts say, or it names both and what
 each says. Its chat handlers went with the bot and are at that tag.
 
-**`apps/films/`, `apps/tap/`**: so far only each app's `nouns.txt` — the words
-the infra may never use. Films is DESIGN U5; Tap is a canary (DESIGN §8).
+**`apps/jellyfin/`, `apps/tap/`**: so far only each app's `nouns.txt` — the
+words the infra may never use. `apps/jellyfin/` holds whatever knows
+Jellyfin's API (DESIGN §3, U5's call 3); Tap is a canary (DESIGN §8).
 
 **`demo/`**: how a demo is recorded. **`ralph/`**: the work loop. A queue is a
 directory `ralph/next/<queue>/` holding `queue.toml` (models, timeouts, the
