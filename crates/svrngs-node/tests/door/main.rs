@@ -764,7 +764,9 @@ async fn declarations_that_cannot_be_read_are_refused_on_both_routes_never_lent_
         let reply = pair.get(route, "").await;
         assert_eq!(reply.status, 500, "{route}: {}", reply.text);
         assert!(
-            reply.text.contains("what this computer lends cannot be read on it"),
+            reply
+                .text
+                .contains("what this computer lends cannot be read on it"),
             "{route}: {}",
             reply.text
         );
