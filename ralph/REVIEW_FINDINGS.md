@@ -1396,3 +1396,15 @@ web rustfmt and clippy, browser, joining in a browser, app laws. That is
 up from 4:32 at the last audit, because every browser test now runs in
 WebKit too (977e589). It is within 25 s of a ten-minute session's
 foreground limit.
+
+## u4-8-phone-dry (2026-10-05): what a phone will pay
+
+U4's dry run (`demo/runs/u4/2026-10-05/`, its README has the table):
+Playwright 1.59.1's Chromium 147 and WebKit 26.4 as an iPhone 15, three cold
+runs of each through a relay on this computer and through n0's.
+
+| # | principle | site | fixed in | finding |
+|---|---|---|---|---|
+| 51 | 7 | web/sw.js:28-34 (`SHELL`, the wasm with `?v=`), wasm-bindgen's glue fetching `svrngs_web_bg.wasm` without it | not fixed: a change of the page's, the director's to order | A cold join took 15,350,659 bytes from the origin, when the page is 5,103,571: the wasm (5,027,239) fetched by the page, by the worker's install as `…wasm?v=<version>`, and by the worker's `init()`, which no cache answers (`data/runs-*.jsonl` `origin_bytes`; the origin's log, three wasm lines a Chromium run, two a WebKit run whose worker never opened a lend). The test origin sends no cache headers; an origin marking the wasm immutable should save the third copy, unmeasured. The module is not `wasm-opt`ed on this host (no binaryen); upstream's was 4,295,444 bytes. |
+| 52 | 6, 7 | iroh-1.0.2/src/defaults.rs:27-33, :48 (n0's relays spelled `use1-1.relay.n0.iroh.link.`), reached from web/src/lib.rs's endpoint | not fixed: needs a decision (NEEDS_HUMAN.md) | WebKit refuses TLS to a host with a trailing dot, and every n0 relay is spelled with one. All three WebKit runs through n0 ended "The computer that sent this link did not answer" after 60 s, the page's log holding `https://<each of n0's four relays>./ping: The server did not accept the certificate.` Probed in both engines from an https page: `https://use1-1.relay.n0.iroh.link/ping` loads and `…link./ping` fails in WebKit, both load in Chromium; `https://example.com./` fails in WebKit too ("A TLS error caused the secure connection to fail."). So an iPhone, whose every browser is WebKit, should not reach a group on n0's relays. The browser tests never could show it: they run a relay on 127.0.0.1, dotless. |
+| 53 | 7 | web/sw.js `lent` (each answer's body streamed as the door gives it), a `<video>`'s open-ended range | not fixed: a finding with its data | In WebKit an early seek far ahead waited for the open range to be read: the first range, `bytes=66394-`, ran to the film's end (45,179,204 bytes in 26.2 s and 23.3 s, runs 1 and 3, `data/lend-local.log`), and the seek to 60 s asked 1.1 s after play played on only after it: past 30 s, and 29.0 s; in run 2 the range was cut at 23.9 MB after 3.9 s and the seek played on in 3.4 s. Chromium cut every open range within 0.9 s and asked anew; all its 30 seeks played on within 2.0 s. Whether WebKit holds the next range back or the worker's stream ignores WebKit's cancel is not shown: Playwright reaches no WebKit worker (#46). On a film of gigabytes such a seek waits for the bytes between. |

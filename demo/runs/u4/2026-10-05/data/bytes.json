@@ -1,0 +1,57 @@
+{
+ "files": [
+  {
+   "file": "app.js",
+   "raw": 8995,
+   "gzip": 3693,
+   "brotli": 3149
+  },
+  {
+   "file": "index.html",
+   "raw": 2951,
+   "gzip": 1607,
+   "brotli": 1235
+  },
+  {
+   "file": "store.js",
+   "raw": 3956,
+   "gzip": 1637,
+   "brotli": 1436
+  },
+  {
+   "file": "sw.js",
+   "raw": 6247,
+   "gzip": 2668,
+   "brotli": 2312
+  },
+  {
+   "file": "wasm/svrngs_web.d.ts",
+   "raw": 9073,
+   "gzip": 2443,
+   "brotli": 2138
+  },
+  {
+   "file": "wasm/svrngs_web.js",
+   "raw": 54183,
+   "gzip": 10147,
+   "brotli": 8713
+  },
+  {
+   "file": "wasm/svrngs_web_bg.wasm",
+   "raw": 5027239,
+   "gzip": 1712644,
+   "brotli": 1192562
+  },
+  {
+   "file": "wasm/svrngs_web_bg.wasm.d.ts",
+   "raw": 3765,
+   "gzip": 674,
+   "brotli": 610
+  }
+ ],
+ "total": {
+  "raw": 5103571,
+  "gzip": 1732396,
+  "brotli": 1209407
+ }
+}

@@ -1,0 +1,24 @@
+17:40:19 dry.sh: passes local, engines chromium webkit, 3 runs each
+17:40:49 the page: version 950d2937f1c4; 5103571 bytes raw, 1732396 gzip, 1209407 brotli
+17:42:10 the film: 45245598 bytes, 120 s, 1280x720
+17:42:11 lent on 127.0.0.1:64871; the page at http://127.0.0.1:64876/
+17:42:19 local: Sam's computer up, through the relay on 127.0.0.1
+17:42:25 local chromium 1: origin 15350659 bytes, name 479 ms, list 869 ms, again 355 ms, lend 518 ms, frame 32 ms, seeks [484, 584, 676, 454, 354]
+17:42:31 local chromium 2: origin 15350659 bytes, name 544 ms, list 824 ms, again 374 ms, lend 363 ms, frame 41 ms, seeks [533, 406, 334, 304, 826]
+17:42:37 local chromium 3: origin 15350659 bytes, name 454 ms, list 878 ms, again 365 ms, lend 370 ms, frame 16 ms, seeks [401, 489, 348, 433, 355]
+17:43:16 local webkit 1: origin 15350659 bytes, name 323 ms, list 846 ms, again 410 ms, lend 416 ms, frame 89 ms, seeks [None, 290, 2187, 279, 347]
+17:43:26 local webkit 2: origin 15350659 bytes, name 383 ms, list 832 ms, again 419 ms, lend 419 ms, frame 97 ms, seeks [3365, 287, 1151, 276, 263]
+17:44:05 local webkit 3: origin 15350659 bytes, name 326 ms, list 845 ms, again 426 ms, lend 407 ms, frame 93 ms, seeks [29032, 436, 3179, 355, 262]
+17:44:05 done: demo/runs/u4/2026-10-05/data
+17:44:44 dry.sh: passes public, engines chromium webkit, 3 runs each
+17:45:00 the page: version 950d2937f1c4; 5103571 bytes raw, 1732396 gzip, 1209407 brotli
+17:45:48 the film: 45244555 bytes, 120 s, 1280x720
+17:45:49 lent on 127.0.0.1:49682; the page at http://127.0.0.1:49683/
+17:45:50 public: If film takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): 
+17:46:08 public chromium 1: origin 15415045 bytes, name 2764 ms, list 2859 ms, again 1374 ms, lend 2268 ms, frame 108 ms, seeks [606, 1305, 1647, 1999, 1721]
+17:46:24 public chromium 2: origin 15415045 bytes, name 2556 ms, list 2830 ms, again 1349 ms, lend 2024 ms, frame 68 ms, seeks [423, 507, 1808, 1987, 1522]
+17:46:41 public chromium 3: origin 15415045 bytes, name 2431 ms, list 2830 ms, again 1348 ms, lend 2017 ms, frame 69 ms, seeks [682, 1246, 1778, 1885, 1631]
+17:47:42 public webkit 1: origin 10259034 bytes, name None ms, list None ms, again None ms, lend None ms, frame None ms, seeks []; stopped: the name asked: the page did not ask a name; the page says: The computer that sent this link did not answer. Try again later.
+17:48:43 public webkit 2: origin 10259034 bytes, name None ms, list None ms, again None ms, lend None ms, frame None ms, seeks []; stopped: the name asked: the page did not ask a name; the page says: The computer that sent this link did not answer. Try again later.
+17:49:44 public webkit 3: origin 10259034 bytes, name None ms, list None ms, again None ms, lend None ms, frame None ms, seeks []; stopped: the name asked: the page did not ask a name; the page says: The computer that sent this link did not answer. Try again later.
+17:49:44 done: demo/runs/u4/2026-10-05/data

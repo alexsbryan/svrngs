@@ -1,0 +1,72 @@
+The page, what it fetches: 5,103,571 bytes raw, 1,732,396 gzip -9, 1,209,407 brotli 11
+  app.js                            8,995      3,693      3,149
+  index.html                        2,951      1,607      1,235
+  store.js                          3,956      1,637      1,436
+  sw.js                             6,247      2,668      2,312
+  wasm/svrngs_web.d.ts              9,073      2,443      2,138
+  wasm/svrngs_web.js               54,183     10,147      8,713
+  wasm/svrngs_web_bg.wasm       5,027,239  1,712,644  1,192,562
+  wasm/svrngs_web_bg.wasm.d.ts      3,765        674        610
+
+local relay, chromium 147.0.7727.15: 3 cold runs
+  origin's bytes, the run    n 3/3  median 15,350,659 bytes  range 15,350,659-15,350,659
+  link opened → name asked   n 3/3  median       479 ms  range 454-544
+  link → list, untyped       n 3/3  median     1,348 ms  range 1,332-1,368
+  name typed → list          n 3/3  median       869 ms  range 824-878
+  link again → list          n 3/3  median       365 ms  range 355-374
+  lend opened → <video>      n 3/3  median       370 ms  range 363-518
+  play → first frame         n 3/3  median        32 ms  range 16-41
+  lend opened → first frame  n 3/3  median       404 ms  range 386-550
+  play → plays on            n 3/3  median       265 ms  range 258-275
+  seek → seeked              n 15/15  median       166 ms  range 44-556
+  seek → its frame           n 15/15  median       153 ms  range 42-544
+  seek → plays on            n 15/15  median       433 ms  range 304-826
+  seeks not playing on within 5 s: 0
+
+local relay, webkit 26.4: 3 cold runs
+  origin's bytes, the run    n 3/3  median 15,350,659 bytes  range 15,350,659-15,350,659
+  link opened → name asked   n 3/3  median       326 ms  range 323-383
+  link → list, untyped       n 3/3  median     1,171 ms  range 1,169-1,215
+  name typed → list          n 3/3  median       845 ms  range 832-846
+  link again → list          n 3/3  median       419 ms  range 410-426
+  lend opened → <video>      n 3/3  median       416 ms  range 407-419
+  play → first frame         n 3/3  median        93 ms  range 89-97
+  lend opened → first frame  n 3/3  median       505 ms  range 500-516
+  play → plays on            n 3/3  median       984 ms  range 982-1,039
+  seek → seeked              n 14/15  median       178 ms  range 6-28,762
+  seek → its frame           n 13/15  median       104 ms  range 6-3,180
+  seek → plays on            n 14/15  median       351 ms  range 262-29,032
+  seeks not playing on within 5 s: 2
+
+public relay, chromium 147.0.7727.15: 3 cold runs
+  origin's bytes, the run    n 3/3  median 15,415,045 bytes  range 15,415,045-15,415,045
+  link opened → name asked   n 3/3  median     2,556 ms  range 2,431-2,764
+  link → list, untyped       n 3/3  median     5,386 ms  range 5,261-5,623
+  name typed → list          n 3/3  median     2,830 ms  range 2,830-2,859
+  link again → list          n 3/3  median     1,349 ms  range 1,348-1,374
+  lend opened → <video>      n 3/3  median     2,024 ms  range 2,017-2,268
+  play → first frame         n 3/3  median        69 ms  range 68-108
+  lend opened → first frame  n 3/3  median     2,092 ms  range 2,086-2,376
+  play → plays on            n 3/3  median       397 ms  range 396-437
+  seek → seeked              n 15/15  median     1,341 ms  range 172-1,736
+  seek → its frame           n 15/15  median     1,314 ms  range 168-1,640
+  seek → plays on            n 15/15  median     1,631 ms  range 423-1,999
+  seeks not playing on within 5 s: 0
+
+public relay, webkit 26.4: 3 cold runs
+  origin's bytes, the run    n 3/3  median 10,259,034 bytes  range 10,259,034-10,259,034
+  link opened → name asked   n 0/3
+  link → list, untyped       n 0/3
+  name typed → list          n 0/3
+  link again → list          n 0/3
+  lend opened → <video>      n 0/3
+  play → first frame         n 0/3
+  lend opened → first frame  n 0/3
+  play → plays on            n 0/3
+  seek → seeked              never reached
+  seek → its frame           never reached
+  seek → plays on            never reached
+  seeks not playing on within 5 s: 0
+  run 1 stopped: the name asked: the page did not ask a name; the page says: The computer that sent this link did not answer. Try again later.
+  run 2 stopped: the name asked: the page did not ask a name; the page says: The computer that sent this link did not answer. Try again later.
+  run 3 stopped: the name asked: the page did not ask a name; the page says: The computer that sent this link did not answer. Try again later.
