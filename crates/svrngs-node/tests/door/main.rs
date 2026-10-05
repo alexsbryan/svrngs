@@ -659,3 +659,95 @@ async fn a_member_s_computer_lists_what_is_lent_with_where_to_reach_it() {
     );
     pair.close().await;
 }
+
+/// A, its computer lending `name` on `port`, as [`Pair::lend`] declares one.
+fn lends_on(dir: &std::path::Path, name: &str, port: u16) {
+    let lends = lend::lends_dir(dir);
+    std::fs::create_dir_all(&lends).unwrap();
+    let body = serde_json::json!({ "port": port, "kind": "k", "limit": 3, "refused": [] });
+    std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
+}
+
+/// `node` stands in `ns`, founded by ada, and A knows where it listens.
+async fn beside(pair: &Pair, ns: &str, seed: u8, person: &str) -> (Node, tempfile::TempDir) {
+    let dir = tempfile::tempdir().unwrap();
+    let node = start(seed, dir.path()).await;
+    let roster = Roster::new(
+        [(Person::parse("ada").unwrap(), vec![actor_of(&signing(1))])]
+            .into_iter()
+            .collect(),
+    );
+    node.rail().set_seed(ns, &roster).unwrap();
+    if ns != NS {
+        pair.a.rail().set_seed(ns, &roster).unwrap();
+    }
+    let admit = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse(person).unwrap(),
+            key: actor_of(&signing(seed)),
+            invite: None,
+        },
+        on_behalf_of: None,
+    };
+    pair.a.rail().commit(ns, &admit).unwrap().unwrap();
+    pair.a
+        .transport()
+        .add_known_peer(node.endpoint().id(), loopback_sockets(node.endpoint()));
+    (node, dir)
+}
+
+/// A member asks the computer it dials what the people of its groups lend
+/// (u4-5; DESIGN §3, call 4): A answers its own shelf as ada's, with A's
+/// key, and cy's pad, asked of cy's computer now, with cy's key — so the
+/// asker dials each lender itself — and dan, whose computer is nowhere, as
+/// not answering. Eve stands with ada in another group bo is not in, and
+/// what eve lends is not bo's to see. Planted: A's own lends left out; the
+/// groups the asker does not stand in asked too.
+#[tokio::test]
+async fn a_member_asks_what_the_group_s_people_lend_each_with_its_lender_s_key() {
+    let (pair, _heads) = lending_heads().await;
+    let (cy, cy_dir) = beside(&pair, NS, 3, "cy").await;
+    lends_on(cy_dir.path(), "pad", 1);
+    let (eve, eve_dir) = beside(&pair, "work", 4, "eve").await;
+    lends_on(eve_dir.path(), "desk", 1);
+    let ghost = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse("dan").unwrap(),
+            key: actor_of(&signing(9)),
+            invite: None,
+        },
+        on_behalf_of: None,
+    };
+    pair.a.rail().commit(NS, &ghost).unwrap().unwrap();
+
+    let reply = pair.get(svrngs_node::node::PEOPLE_LENDS_ROUTE, "").await;
+    assert_eq!(reply.status, 200, "{}", reply.text);
+    let body = reply.text.split("\r\n\r\n").nth(1).unwrap();
+    let doc: serde_json::Value = serde_json::from_str(body).unwrap();
+    let lent: Vec<(&str, &str, &str)> = doc["lent"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|l| {
+            (
+                l["person"].as_str().unwrap(),
+                l["key"].as_str().unwrap(),
+                l["name"].as_str().unwrap(),
+            )
+        })
+        .collect();
+    let (ada, cy_key) = (actor_of(&signing(1)), actor_of(&signing(3)));
+    assert_eq!(
+        lent,
+        vec![
+            ("ada", ada.as_str(), "shelf"),
+            ("cy", cy_key.as_str(), "pad")
+        ],
+        "{doc:#}"
+    );
+    assert_eq!(doc["unanswered"], serde_json::json!(["dan"]), "{doc:#}");
+    for node in [cy, eve] {
+        node.endpoint().close().await;
+    }
+    pair.close().await;
+}

@@ -315,7 +315,11 @@ body holding a use until it ends.
 `Node::lends` asks every other computer's key standing in a group held, at once, and
 answers each lend with whose it is and its address on this computer's
 loopback, the dialler's bridge to its lender then `/lend/<name>/`; a
-computer that does not answer is named, and nothing is kept between asks. A refused path covers what is under it
+computer that does not answer is named, and nothing is kept between asks.
+`GET /people/lends` (`node::PEOPLE_LENDS_ROUTE`, u4-5) answers a member the
+same of the groups it stands in, this computer's own lends (`door::offered`)
+among them and the asker's computer not asked, each lend with its lender's
+key (`node::Lending`), so a phone dials each lender itself (DESIGN §3, call 4). A refused path covers what is under it
 at a segment boundary, as upstream's `covers`, compared percent-decoded,
 case-blind and with repeated slashes as one. `tests/door/` runs a lender
 and a member through it, with upstream's `picky_origin` and Range origin
