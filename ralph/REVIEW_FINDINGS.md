@@ -1154,3 +1154,239 @@ idle 3 of 3 times (7 transitions in all, every one the same run), not
 (a classic and a module worker, 2 passes each, 5 idle waits of 12 s a
 pass); the page's own worker restarted at every idle wait of 12 s or more
 too, until a run wedged (#44).
+
+## REVIEW-audit-u4-auto-2 (2026-10-05, range a7497f9..61d44e4)
+
+The range starts at a7497f9, the hash REVIEW-audit-u4-auto-1's row carries
+(ralph/next/u4/STATE.md). It ends at 61d44e4, the commit that made this
+row. It covers u4-4, u4-5, u4-6 and u4-7. 8ff154c and 1397c39 change only
+docs. d4c390b and the later 401d185 change only ralph/next/u5/, from the
+other loop. The range touched crates/svrngs-core, crates/svrngs-node,
+crates/svrngs and web/ (`git diff --stat a7497f9 61d44e4 -- crates apps
+web scripts`). It did not touch crates/svrngs-runtime. This audit's fix
+is 9b8fe7d (#47), with its test in a4e1326 and 689de62. The row cites
+`docs/ARCH_PRINCIPLES.md`, which is at docs/principles/ARCH_PRINCIPLES.md.
+It names `target/debug/sovereign-cli`, which svrngs does not build. The
+binary used is ~/dev/commonwealth-ai/target/debug/sovereign-cli (built
+2026-10-05 07:09).
+
+This time the plants never touched this tree. They went into a clone,
+/tmp/u4audit2/svrngs-plant (`git clone` of 7a3a499 plus one commit holding
+the plants), indexed as its own corpus, `svrngs-plant`. The clean runs are
+on this tree at 7a3a499 with `git status --short` empty, corpus `svrngs`.
+7a3a499's code is 61d44e4's.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' a7497f9..61d44e4`,
+summed by /tmp/u4audit2/ledger.py with REVIEW-audit-u4-auto-1's rules. A
+commit counts toward the row whose `started` commit comes before it.
+Product code is `crates/`, `apps/` and `web/`, less Cargo.lock. Tests are
+files with a `tests/` or `fixtures/` segment, or a lean_check test name,
+or `*.test.mjs`. So web/tests/*.mjs and crates/svrngs/tests/join_page.rs
+count as tests. scripts/check.sh (+6 −3) and scripts/build-web.sh (+1 −1)
+are scripts, so they are not counted.
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| u4-4-web-http | 319 | 66 | 253 | 281 | 16 | 265 |
+| u4-5-join-page | 825 | 301 | 524 | 580 | 107 | 473 |
+| u4-6-runtime | 267 | 75 | 192 | 401 | 48 | 353 |
+| u4-7-webkit | 18 | 11 | 7 | 272 | 128 | 144 |
+| total | 1429 | 453 | 976 | 1534 | 299 | 1235 |
+
+- u4-4's +253 is web/src/http.rs (+232, hyper's HTTP/1 client over a
+  bi-stream), with web/Cargo.toml +11 and lib.rs +9.
+- u4-5's +524: svrngs-core seed.rs +147 is a move (d79391a) that pairs
+  with svrngs group.rs −122. The rest is web/app.js +125, node.rs +122
+  (the people route), web/src/join.rs +107, web/store.js +83, lib.rs +26,
+  joining.rs +15, door.rs +11 (9e4b368's `offered`) and redeem.rs −13.
+- u4-6's +192 is web/sw.js +108 (the runtime), lib.rs +72 (d675630's
+  endpoint and dial split) and store.js +10.
+- u4-7's +7 is web/app.js (e0d44d1). Its tests are WebKit runs of every
+  browser test (977e589).
+
+`python3 scripts/lean_check.py <tree>` (rc 0), trees from `git archive`:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| a7497f9, range start | 2663 / 3000 | 10011 / 14000 |
+| 61d44e4, range end | 2766 / 3000 | 10624 / 14000 |
+| 9b8fe7d, after #47 | 2766 / 3000 | 10623 / 14000 |
+
+svrngs-core rose by 103 lines, to 92% of its ceiling. All of it is u4-5's
+move of the seed and the issuer's answer out of the `svrngs` command
+(d79391a).
+
+### (2) Clones (`code dry-report`), each tier checked against a plant first
+
+**Clean corpus.** `code index ~/dev/svrngs --corpus-id svrngs --full`:
+1772 chunks in 152 s. `refresh`: rust 7689 symbols and python 109;
+"typescript: skipped (export failed)" (I4).
+
+**Planted corpus.** The same at /tmp/u4audit2/svrngs-plant, `--corpus-id
+svrngs-plant`: 1780 chunks, rust 7733 symbols. The plants are each a copy
+of a symbol the range added:
+
+- **A** (exact tier): node.rs `people_lends` (u4-5, :541-586), copied
+  whole into a `pub mod plant` at the end of node.rs.
+- **B** (near tier): node.rs `Host::lends_in` (:382-422, 18 of its 41
+  lines blamed to u4-5's ecbdbf6), as
+  a free fn `gather_lends` in lend.rs. `self` became `host`, `peers`
+  became `others`, and `asks` became `pending`.
+- **C** (web/, Rust): web/src/http.rs `request` (u4-4, :125-167), copied
+  into web/src/join.rs as `request_again`, its body identical.
+- **D** (web/, JS): web/sw.js `endpointFor` (u4-6, :96-106), copied into
+  web/app.js as `endpointOf`, its body identical.
+- **N** (noun, main workspace): `pub struct Lending` at the end of
+  svrngs-runtime register.rs. node.rs:514 has the original.
+- **N2** (noun, web/): `struct Asking` at the end of web/src/join.rs.
+  node.rs:524 has the original.
+
+Scoped runs at the default 0.95, each scope with a trailing slash (I11):
+
+| scope | clean: locations / exact / near | planted: exact / near | plants seen |
+|---|---|---|---|
+| crates/svrngs-core/ | 398 / 5 / 0 | 5 / 0 | — |
+| crates/svrngs-node/ | 305 / 4 / 1 | 5 / 1 | **A: exact `people_lends` node.rs:541 == :617**; B missed at 0.95 |
+| crates/svrngs-runtime/ | (not in range) | 1 / 0 | — |
+| crates/svrngs/ | 59 / 0 / 0 | 0 / 0 | — |
+| web/ | 49 / **could-not-judge** / 0 | could-not-judge / 0 | C and D missed at 0.95 (I14) |
+
+- **B** is found at 0.9: `gather_lends` lend.rs:434–477 ~ `lends_in`
+  node.rs:379–425, cosine 0.937. It is missed at 0.95. At 0.8 it joins
+  `ask_lends` and both `people_lends`. Listing at `--threshold 0.0
+  --min-lines 1` shows `gather_lends` in the symbol set. I5 is better than
+  REVIEW-audit-u4-auto-1's miss down to 0.7, and still misses at the
+  default.
+- **C** is found at 0.9: `request` http.rs:122–167 ~ `request_again`
+  join.rs:106–151, cosine 0.934 for two identical 46-line bodies. It is
+  missed at the default 0.95.
+- **D** is never paired. At 0.8 `endpointOf` clusters at 0.826 with
+  something else. At 0.7 it shares a 12-symbol cluster with `endpointFor`.
+  The web/ near tier still cannot see an identical JS body (I14).
+- **N**: `converge noun Lending` gives **definitions (2)**, node.rs:513
+  and register.rs:277. **N2** is missed: `converge noun Asking` gives
+  definitions (1), node.rs:523. The noun tier has no sight of web/ (I15).
+
+The near tier on the clean corpus, unscoped at 0.9 as the last two
+audits ran it: **11 exact groups and 17 near clusters** over 1003
+function/method symbols (950 at the last audit). /tmp/u4audit2/blame.py
+blames every side of every cluster with `git blame -w -M -C -C HEAD` and
+counts the lines in a7497f9..61d44e4. **No side of any cluster has a line
+added in the range.** The counts are the ones REVIEW-audit-u4-auto-1
+measured on its clean tree, and both clusters its table disposed of are
+here. `signed_by_link` is joining.rs:63 == :150 now, for :61 == :135,
+because u4-5's joining.rs edits (+16 −1) sit between and above them.
+
+**Substitute check, named as a substitute.** /tmp/u4audit2/windows.py
+redoes the earlier audits' pass: windows of 5 normalized lines over
+`git ls-files crates web apps` matching `*.rs`, `*.js` or `*.mjs`. Blank
+lines, comment lines, attributes and lone closers are dropped, and each
+window is hashed. A hit is **new** when either span has a line blamed in
+the range.
+
+- On the planted clone (range a7497f9..HEAD there): 178 hits, 10 new. A
+  (node.rs:541-585 == :617-661), B (lend.rs:455-466 == node.rs:400-411
+  and :471-476 == :416-421), C (http.rs:126-163 == join.rs:110-147) and
+  D (app.js:228-235 == sw.js:97-104) are each found. The other five new
+  hits are the clean ones below.
+- On this tree at 7a3a499: 173 hits, 5 new, all of them in tests:
+  - crates/svrngs-node/tests/browser/main.rs:176-182 == :274-280: two
+    tests' `drive(engine, "drive.mjs", json!({ site, key, token, …`.
+  - web/tests/drive.mjs:122-127 == join.mjs:87-92, and drive.mjs:158-163
+    == join.mjs:135-140 == runtime.mjs:131-136: each Playwright driver's
+    `launch`, its console and pageerror listeners, and its
+    `catch`/`finally` that prints the logs and closes. page.mjs already
+    shares the launch, the serve and the store (3aa92be, ee8b306). What
+    is left is each driver's own frame, and runtime.mjs's `finally` also
+    removes its profile. No change (#50).
+
+Reading the range for decisions that neither pass would show:
+
+- **#47**: the 500 for unreadable declarations was built by both routes
+  that list lends: door.rs `lends` :283-288 and node.rs `people_lends`
+  :560-565 at 7a3a499. No test reached either. Fixed in 9b8fe7d, after
+  a4e1326's test of both routes, which went red on a plant at each site.
+- **#42, still open, and grown**: a token becomes the address a dial
+  uses at crates/svrngs/src/issuer.rs:40-54 and web/src/lib.rs:136-241
+  (`bind` and `reach`, after d675630's split). u4-5 added a second copy
+  *inside* svrngs-web (#48).
+- **#48**: svrngs-web decides "these bytes are the person's key" and
+  "this fragment is a link's token" twice, with the same words. join.rs
+  `person` :29-33 and `link` :35-37 do it, and so does lib.rs `bind`
+  :140-152. They refuse with different trace prefixes (`JOIN: REFUSED —`
+  and `LAYER key/parse: REFUSED —`), and the key comes out as a different
+  type (svrngs-core's `SigningKey` or iroh's `SecretKey`). Giving it one
+  home changes the trace lines, so it is not a pure move. Recorded.
+- **#49**: a lend's address under the worker's scope, `l/<lender>/<lend>/`,
+  is built by the page at web/app.js:150 (`open`) and parsed by the worker
+  at web/sw.js:66 (`LENDS`) and :119 (the regex). That is two processes
+  hand-deriving one path (principle 8, "one accessor per path"). The
+  browser tests catch a divergence end to end, because the runtime and
+  joining tests navigate by the list. One home is a module both import.
+  store.js is the key's store, not this, and a new module is a shell
+  file in four places: sw.js `SHELL`, build-web.sh:113-115 (`cp` and the
+  version stamp), and the two imports. Recorded for the next unit that
+  touches the runtime.
+- The page's `PEOPLE_LENDS` (app.js) spells node.rs `PEOPLE_LENDS_ROUTE`,
+  and sw.js's `/lend/<lend>` spells door.rs `LEND_ROUTE`. Each is a
+  protocol constant across the Rust/JS line, cited at the JS site and
+  exercised by the browser tests. No change.
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff a7497f9 61d44e4 -- crates apps web`, added lines matching
+`(struct|enum|trait|type) Name`. New: `Lending`, `Asking` (node.rs),
+`Engine` (tests/browser/harness.rs), `Refused`, `BodyError`, `Duplex`,
+`RequestBody`, `PageBody` (web/src/http.rs), `Group` (web/src/join.rs),
+`Endpoint`, `Bound`, `Dialled` (web/src/lib.rs). Moved by d79391a:
+`Asked`, `Seed`, `SeedFile`. The JS `class Said` (app.js) has no SCIP
+symbol. Each name was run, and then `git grep -nwE '(struct|enum|trait|type)
+<Name>' -- crates apps web` as the substitute for web/ (I15):
+
+- One definition by both: Asked (joining.rs:72), Seed (seed.rs:30, with
+  kin SeedError, SeedFile, SeedText), SeedFile (:125), Lending
+  (node.rs:514), Asking (:524). converge cites each a line early (I1).
+- `Engine` is test-only, and converge excludes tests: definitions (0).
+- web/'s nouns: converge gives definitions (0), "none — check the
+  spelling", for BodyError, Duplex, RequestBody, PageBody, Group,
+  Endpoint and Dialled. git grep finds one definition each.
+- **Two definitions, by git grep only.** converge saw one side of each:
+  - `Refused`: svrngs-core command.rs:67, `Refused<R>` (why a commit
+    wrote nothing), and web/src/http.rs:41 (why a request got no
+    response).
+  - `Bound`: svrngs-node api.rs:131 (a loopback listener bound, not yet
+    served) and web/src/lib.rs:121 (a browser endpoint bound with the
+    person's key).
+
+  Each pair is two concepts that share a short name, in two cargo
+  workspaces, and neither decides what the other does. No change (#50).
+- `Lending` (node.rs:514: person, key, offered) and `Lent` (:79: the
+  same plus `address`) are the people route's wire answer and
+  `Node::lends`'s answer. A browser has no loopback bridge, so it gets no
+  address. Kin, not one noun twice. No change (#50).
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 47 | 8 | crates/svrngs-node/src/door.rs:283-288 and node.rs:560-565, at 7a3a499 | 9b8fe7d | Both routes that list lends built the 500 for unreadable declarations from `offered`'s `None`. `offered` returns the refusal now. a4e1326's test reaches both routes. Each site's plant failed it, and so did the plant at the one home. |
+| 48 | 8 | web/src/join.rs:29-37 and web/src/lib.rs:140-152, at 61d44e4 | not fixed | svrngs-web reads the person's 32 bytes and the link's token twice, with the same refusal words under different trace prefixes, into different key types. One home changes the trace lines. Revisit with #42. |
+| 42 | 8 | crates/svrngs/src/issuer.rs:40-54 and web/src/lib.rs:136-241, at 61d44e4 | not fixed | As recorded at REVIEW-audit-u4-auto-1. u4-4 to u4-7 touched the page's dial (d675630 split `bind` and `reach`) and did not take it up. It is still a change of shape: a crate both workspaces can link that names iroh. |
+| 49 | 8 ("one accessor per path") | web/app.js:150 and web/sw.js:66, :119, at 61d44e4 | not fixed | The page builds a lend's address under the worker's scope and the worker parses it, each by hand. The browser tests would go red on a divergence. One home is a shared module, which is a shell file in sw.js `SHELL` and build-web.sh:113-115 too. Recorded for the next runtime unit. |
+| 50 | 8 | the "no change" items in (2) and (3) | no change | Each is one of: a Playwright driver's own frame (launch, listeners, catch/finally) beside page.mjs's shared parts; two tests' `drive` calls; one short name for two concepts in two workspaces (`Refused`, `Bound`); kin types (`Lending`/`Lent`); a protocol constant across the Rust/JS line, exercised end to end. Nothing is decided twice. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still present: Asked at joining.rs:71 for :72, Seed at seed.rs:29 for :30, Lending at node.rs:513 for :514, Bound at api.rs:130 for :131. |
+| I4 | 6 | `refresh` | Still present: "typescript: skipped (export failed)". |
+| I5 | 5, 7 | `code dry-report` near tier | Still present, and better. Plant B, a method made a free fn with four names changed, scores 0.937. It is found at 0.9 and missed at the default 0.95. |
+| I10 | 6 | `code dry-report` header | Still present: "1003 function/method symbols" in every scope (1007 planted). |
+| I11 | 6 | `code dry-report --scope` | Still present; every scoped run here used a trailing slash. |
+| I14 | 6, 7 | `code dry-report --scope web/` near tier | Still present, and partly better. Two identical 46-line Rust bodies (C) score 0.934, so they are missed at the default 0.95 and found at 0.9. Two identical JS bodies (D) are never paired above 0.7. The exact tier still says could-not-judge, which is right. |
+| I15 | 6, 7 | `code converge noun` over web/ | New. web/ is a separate cargo workspace, so its types have no SCIP symbols. converge reports "definitions (0) … none — check the spelling" for a type that exists (`Dialled`, web/src/lib.rs:246). For a name both sides define, it counts only the main workspace's side: `Bound` (1) and `Refused` (1), each with a second definition in web/, and plant N2's `Asking` (1). That is a silent pass, not a could-not-judge. For web/, only `git grep` judges. |
+
+The row's check (LINT): see the commit that marks this row.
