@@ -114,7 +114,10 @@ async fn new_twice_with_one_name_makes_two_groups_with_two_ids() {
             panic!("the group is held and seeded")
         };
         assert_eq!(
-            standing.values().map(|p| p.as_str()).collect::<Vec<_>>(),
+            standing
+                .values()
+                .map(|m| m.person.as_str())
+                .collect::<Vec<_>>(),
             ["Sam"]
         );
         ids.push(id);

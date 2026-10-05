@@ -20,8 +20,8 @@
 //! nothing else; [`Alpn::Member`] stays closed to it.
 //!
 //! **What the people of its groups lend is asked, not stored** (DESIGN §8,
-//! U3; u3-5): [`Node::lends`] asks every key standing in a group the node
-//! holds, now, what its computer lends ([`crate::door`]'s `GET /lends`),
+//! U3; u3-5): [`Node::lends`] asks every computer's key standing in a
+//! group the node holds, now, what its computer lends ([`crate::door`]'s `GET /lends`),
 //! and answers each lend with whose it is and the address on this
 //! computer's loopback that reaches it, through the dialler's bridge to its
 //! lender. A computer that does not answer is named, its lends absent
@@ -29,11 +29,17 @@
 //!
 //! **The group decides who is in it** (DESIGN §6, U1): the register —
 //! [`RingRail::standing`], over each group's seed and its acts — answers
-//! all three questions the node asks. The round dials every key standing in
-//! a group the node holds and offers each group to its own; the accept loop
-//! admits a dialer standing in any group the node holds and closes the
-//! rest; and the sync route serves a dialer standing in the group its
-//! request names.
+//! all three questions the node asks. The round dials every computer's key
+//! standing in a group the node holds and offers each group to its own; the
+//! accept loop admits a dialer standing in any group the node holds, a
+//! browser's key as a computer's, and closes the rest; and the sync route
+//! serves a dialer standing in the group its request names.
+//!
+//! **A browser's key dials and is never dialled** (DESIGN §3 "Joining",
+//! call 2; u4-1): the round and [`Node::lends`] dial only the keys the
+//! register says a computer holds ([`crate::Device::dialled`]), since a
+//! browser's endpoint lives only while its page runs and every dial of it
+//! would wait out a timeout.
 
 use std::collections::BTreeMap;
 use std::net::SocketAddr;
@@ -50,7 +56,7 @@ use crate::iroh::{
 use crate::lend::Offered;
 use crate::rail::{LiveBuffer, RailApi};
 use crate::redeem::SeedText;
-use crate::register::Standing;
+use crate::register::{Member, Standing};
 use crate::ring_routes::{self, RingInbound};
 use crate::ring_sync::{
     exchange, peer_client, run_one_round, spawn_ring_sync_loop, ExchangeOutcome, ExchangeStop,
@@ -228,8 +234,8 @@ impl Node {
         &self.host.transport
     }
 
-    /// What every other key standing in a group this node holds lends, each
-    /// computer asked now and all at once, and where this computer reaches
+    /// What every other computer's key standing in a group this node holds
+    /// lends, each computer asked now and all at once, and where this computer reaches
     /// each lend. Nothing is kept between asks.
     pub async fn lends(&self) -> Lends {
         let peers = self.host.standing_peers().unwrap_or_default();
@@ -322,8 +328,8 @@ impl Host {
     }
 
     /// This round's members, or `None` when the node has none to round
-    /// with: every key standing in a group this node holds, but this
-    /// node's. A group whose register is unreadable adds nobody, as the
+    /// with: every computer's key standing in a group this node holds, but
+    /// this node's. A group whose register is unreadable adds nobody, as the
     /// round offers it to nobody.
     pub(crate) async fn members(&self) -> Option<RoundMembers> {
         let peers = self.standing_peers()?;
@@ -335,10 +341,11 @@ impl Host {
         ))
     }
 
-    /// Every key standing in a group this node holds, but this node's, once
-    /// each, by its actor, with the person the first group naming it names;
-    /// or `None` when the groups held cannot be listed. A group whose
-    /// register is unreadable adds nobody.
+    /// Every key standing in a group this node holds that is dialled — a
+    /// computer's, never a browser's (u4-1) — but this node's, once each, by
+    /// its actor, with the person the first group naming it names; or
+    /// `None` when the groups held cannot be listed. A group whose register
+    /// is unreadable adds nobody.
     fn standing_peers(&self) -> Option<Vec<(String, Person, PublicKey)>> {
         let namespaces = match self.rail.namespaces() {
             Ok(n) => n,
@@ -357,8 +364,13 @@ impl Host {
                     continue;
                 }
             };
-            for (actor, person) in &standing {
+            for (actor, Member { person, device }) in &standing {
                 if *actor == self.actor || keys.contains_key(actor) {
+                    continue;
+                }
+                if !device.dialled() {
+                    tracing::debug!(target: "node", namespace, actor, ?device,
+                        "node: a member stands in the group from a browser, which dials and is never dialled");
                     continue;
                 }
                 let Some(key) = actor_key(actor) else {

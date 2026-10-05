@@ -124,6 +124,8 @@ the evidence is U4's inventory, §8):
    each standing key; the round, the live fan-out and the list of what members
    lend skip a browser's key. A phone's endpoint lives only while its page
    runs, so without this every round would wait out a dial per phone.
+   (Landed, u4-1: `Device`, `Membership::device`, and `Device::dialled`
+   asked by the node's `standing_peers` and the record API's `live_peers`.)
 3. *The service worker holds the endpoint* and serves every request under its
    scope — a lent service's page, its fetches, a `<video>`'s byte ranges —
    through the dial; the page joins and lists. If a recorded run shows the
@@ -443,8 +445,9 @@ addresses the mesh gossiped, and refuses a bare key
 gossip, iroh's address lookup, upstream's default
 (`mesh-reach/src/guest.rs:79-88`), resolves a member's key, so the fork accepts
 a bare key when lookup is on, and tests seed addresses as upstream's do. *No
-presence:* the round dials every standing member, and one that is offline
-costs a dial timeout each round. *The door asks the register too:*
+presence:* the round dials every standing member's computer, and one that
+is offline costs a dial timeout each round; a browser's key is never
+dialled (u4-1, §3 call 2). *The door asks the register too:*
 `RingJournal::append` refused a signer the seed did not name
 (now `commit`'s standing check, `crates/svrngs-core/src/command.rs`), which would leave two answers to
 who is in a group (ARCH 8); in U1 it asks the same standing the round, the

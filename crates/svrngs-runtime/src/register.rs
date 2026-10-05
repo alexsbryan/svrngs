@@ -16,8 +16,8 @@
 use std::collections::BTreeMap;
 
 use crate::{
-    admit, is_local_only, ring_dir, valid_namespace, Membership, Op, Person, RailError, RingRail, RingVerifier, Roster,
-    SignedOp,
+    admit, is_local_only, ring_dir, valid_namespace, Device, Membership, Op, Person, RailError, RingRail, RingVerifier,
+    Roster, SignedOp,
 };
 
 /// Who stands in one group, on this node.
@@ -30,8 +30,17 @@ pub enum Standing {
     /// be shown to stand, so everyone is refused — never an empty roster
     /// read as an answer (ARCH 6).
     NoSeed,
-    /// The keys standing now, each with the person it is bound to.
-    Members(BTreeMap<String, Person>),
+    /// The keys standing now, each with the person it is bound to and
+    /// what holds it.
+    Members(BTreeMap<String, Member>),
+}
+
+/// One key standing in a group: the person it is bound to, and what holds
+/// it ([`Device`], u4-1), as `membership` answers both.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Member {
+    pub person: Person,
+    pub device: Device,
 }
 
 impl Standing {
@@ -43,7 +52,7 @@ impl Standing {
 }
 
 /// The keys standing in `namespace` after `ops`, from `seed`: membership
-/// over the acts admission authenticates, each with its person. The one
+/// over the acts admission authenticates, each with its person and device. The one
 /// decider: [`RingRail::standing`] answers with it, and the door
 /// ([`crate::RingJournal::append_all`]) asks it under its write lock.
 pub(crate) fn standing_in(
@@ -51,13 +60,14 @@ pub(crate) fn standing_in(
     seed: &Roster,
     namespace: &str,
     verifier: &dyn RingVerifier,
-) -> Result<BTreeMap<String, Person>, RailError> {
+) -> Result<BTreeMap<String, Member>, RailError> {
     let m = membership_in(ops, seed, namespace, verifier)?;
     Ok(m.standing
-        .into_iter()
+        .iter()
         .filter_map(|key| {
-            let person = m.bindings.get(&key)?.clone();
-            Some((key, person))
+            let person = m.bindings.get(key)?.clone();
+            let device = m.device(key)?;
+            Some((key.clone(), Member { person, device }))
         })
         .collect())
 }
@@ -143,8 +153,8 @@ impl RingRail {
         for namespace in &namespaces {
             match self.standing(namespace, verifier) {
                 Ok(Standing::Members(m)) => {
-                    if let Some(person) = m.get(actor) {
-                        tracing::debug!(target: "register", actor, namespace, %person,
+                    if let Some(Member { person, device }) = m.get(actor) {
+                        tracing::debug!(target: "register", actor, namespace, %person, ?device,
                             "register: the key stands in a group held here");
                         return Some((namespace.clone(), person.clone()));
                     }
@@ -241,10 +251,16 @@ mod tests {
         );
         let ops = [ops, vec![inv, redeem_eve]].concat();
         let whole = admit(&crate::ActSet::of(&ops), &[], &seed, NS, &Ed25519Verifier).project::<Membership>();
-        let expected: BTreeMap<String, Person> = whole
+        let expected: BTreeMap<String, Member> = whole
             .standing
             .iter()
-            .map(|k| (k.clone(), whole.bindings[k].clone()))
+            .map(|k| {
+                let member = Member {
+                    person: whole.bindings[k].clone(),
+                    device: Device::Computer,
+                };
+                (k.clone(), member)
+            })
             .collect();
         assert_eq!(
             expected.keys().cloned().collect::<Vec<_>>(),

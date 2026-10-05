@@ -14,7 +14,11 @@ use std::time::Duration;
 
 use svrngs_node::iroh::{Contact, PublicKey, RelayConfig};
 use svrngs_node::node::Node;
-use svrngs_node::{actor_of, Digest, Op, Payload, Person, RailAct, Roster, SignedOp, SigningKey};
+use svrngs_node::register::Standing;
+use svrngs_node::{
+    actor_of, Device, Digest, Ed25519Verifier, Op, Payload, Person, RailAct, Redemption, Roster,
+    SignedOp, SigningKey,
+};
 
 const NS: &str = "house";
 const OTHER: &str = "work";
@@ -172,6 +176,87 @@ async fn a_member_the_founder_admits_syncs_and_writes() {
         .find(|o| o.id == bos.id)
         .expect("A holds and counts B's act");
     assert_eq!(counted.person, Person::parse("bo").unwrap());
+}
+
+/// A browser's key dials and is never dialled (u4-1; DESIGN §3 "Joining",
+/// call 2). A founds the group, admits B's computer, and admits P's key by
+/// a redemption naming a browser; B and P hold the group's seed. A's round
+/// dials B alone, and A's list of what the group's people lend asks B alone,
+/// naming nobody whose computer did not answer. P — a node standing in for
+/// a page — dials A, and A's acceptor and sync route serve it, as they
+/// would a computer. The failing input: the round dialling every standing
+/// key, which leaves P unreachable and named unanswered.
+#[tokio::test]
+async fn a_round_dials_a_computer_and_never_a_browser() {
+    let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
+    let (a, b, p) = (
+        start(1, &dirs[0]).await,
+        start(2, &dirs[1]).await,
+        start(3, &dirs[2]).await,
+    );
+    for node in [&a, &b, &p] {
+        hold(node, NS, 1);
+    }
+    append(&a, NS, admit("bo", 2));
+    let link = signing(9);
+    let invite = append(
+        &a,
+        NS,
+        RailAct::Invite {
+            key: actor_of(&link),
+            until: i64::MAX,
+        },
+    );
+    let pia = Person::parse("pia").unwrap();
+    append(
+        &a,
+        NS,
+        RailAct::Admit {
+            invite: Some(Redemption::sign(
+                &signing(3),
+                NS,
+                &invite.id,
+                &pia,
+                Device::Browser,
+            )),
+            person: pia,
+            key: actor_of(&signing(3)),
+        },
+    );
+    let Standing::Members(standing) = a.rail().standing(NS, &Ed25519Verifier).unwrap() else {
+        panic!("A holds the group, seeded")
+    };
+    let devices: Vec<_> = [2, 3]
+        .map(|k| standing.get(&actor_of(&signing(k))).map(|m| m.device))
+        .into();
+    assert_eq!(
+        devices,
+        [Some(Device::Computer), Some(Device::Browser)],
+        "control: B stands from a computer and P from a browser"
+    );
+    a.transport()
+        .add_known_peer(key(2), loopback_sockets(b.endpoint()));
+
+    let round_a = round(&a).await;
+    assert_eq!(
+        (round_a.peers_reached, round_a.peers_unreachable),
+        (1, 0),
+        "A dials B and not P: {round_a:?}"
+    );
+    let lends = tokio::time::timeout(Duration::from_secs(30), a.lends())
+        .await
+        .expect("the ask finishes");
+    assert_eq!(lends.unanswered, Vec::<Person>::new(), "A asks B alone");
+
+    p.transport()
+        .add_known_peer(key(1), loopback_sockets(a.endpoint()));
+    let round_p = round(&p).await;
+    assert_eq!(
+        (round_p.peers_reached, round_p.peers_refused),
+        (1, 0),
+        "A's acceptor and sync route serve P: {round_p:?}"
+    );
+    assert_eq!(digest(&a, NS), digest(&p, NS), "P converged onto A");
 }
 
 /// C, admitted to nothing, has its connection closed by A's acceptor with no

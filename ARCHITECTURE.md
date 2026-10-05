@@ -194,11 +194,13 @@ Who is in a group is the register's (`register.rs`, DESIGN §6, U1):
 `RingRail::standing` answers a group's standing keys from `membership` over
 its seed — the group's `roster.json`, the founder's key alone — and the acts
 admission authenticates; a group the node does not hold answers `NotHeld`,
-and one with no seed `NoSeed`, which refuses everyone. Its four callers: the
-round dials every key standing in a group the node holds, by key, through
+and one with no seed `NoSeed`, which refuses everyone. Each standing key
+comes with its person and what holds it (`Member`, u4-1). Its four callers: the
+round dials every computer's key standing in a group the node holds — never
+a browser's, by `Device::dialled` — by key, through
 addresses a caller seeds on the transport or iroh's lookup finds, and offers
 each group to its own; the accept loop admits a dialer standing in any group
-the node holds and closes the rest; the sync route refuses (403) a dialer not
+the node holds, a browser's key as a computer's, and closes the rest; the sync route refuses (403) a dialer not
 standing in the group its request names, and a group the node does not hold
 in the same words; and `commit` signs only for a key standing in the seed
 and the acts the journal holds, under its write lock.
@@ -234,8 +236,8 @@ is the inference daemon's fan-out (`routes_rail_live.rs`, `push_ephemeral`
 and `offer_peer`), its walk of the mesh's Online members cut, so its caller
 names the peers (`LivePeer`), each dialled at its one `base_url`. Then it
 changed: the push door, which buffered locally and answered `peers: []`,
-offers the payload to every key standing in the group but this node's
-(`live_peers`, from the register), over the node's `IrohTransport`, held
+offers the payload to every computer's key standing in the group but this
+node's (`live_peers`, from the register; u4-1 skips a browser's), over the node's `IrohTransport`, held
 by `RailApi`, and answers each peer and whether it took it. The sync
 doors and `attest` stay behind, and with them the other routes beside them
 in upstream's `api.rs`. Then it changed: the append door's
@@ -304,7 +306,7 @@ computer lends (`lend::Offered`: name, kind, limit) read from the
 declarations at each ask, and how many people use each now: `door::Using`,
 a task owning `limit::Counts` and the clock, told by messages, the answer's
 body holding a use until it ends.
-`Node::lends` asks every other key standing in a group held, at once, and
+`Node::lends` asks every other computer's key standing in a group held, at once, and
 answers each lend with whose it is and its address on this computer's
 loopback, the dialler's bridge to its lender then `/lend/<name>/`; a
 computer that does not answer is named, and nothing is kept between asks. A refused path covers what is under it

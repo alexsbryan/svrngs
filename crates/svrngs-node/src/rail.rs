@@ -53,7 +53,7 @@ use serde::Deserialize;
 // rail.rs's refusal body came over with the sync route (u1-3), so there is one.
 use crate::iroh::{actor_key, Contact, IrohTransport};
 use crate::live::{push_ephemeral, LivePeer};
-use crate::register::Standing;
+use crate::register::{Member, Standing};
 use crate::ring_routes::err;
 use crate::{Compaction, Ed25519Verifier, Membership, Person, RailAct, RailError, RingRail};
 use svrngs_core::{Append, AppendRefusal, Refused as CommitRefused};
@@ -124,7 +124,7 @@ fn group_of(rail: &RingRail, namespace: &str) -> Result<(), Response> {
 
 /// The people standing in `namespace`, or the refusal [`group_of`] makes
 /// of a namespace that is not one, a group not held, or one with no seed.
-fn standing_of(rail: &RingRail, namespace: &str) -> Result<BTreeMap<String, Person>, Response> {
+fn standing_of(rail: &RingRail, namespace: &str) -> Result<BTreeMap<String, Member>, Response> {
     if !crate::valid_namespace(namespace) {
         tracing::debug!(target: "rails", namespace, "rail: refused a namespace that is not one");
         return Err((
@@ -175,9 +175,11 @@ fn standing_of(rail: &RingRail, namespace: &str) -> Result<BTreeMap<String, Pers
 /// The people standing in a group as an app reads them: each person, with
 /// the key they stand by, its lowercase hex — a key an app may seal to
 /// (DESIGN §3). The one shape every door that names the people answers.
-pub(crate) fn people_json(standing: &BTreeMap<String, Person>) -> serde_json::Value {
+pub(crate) fn people_json<'a>(
+    standing: impl IntoIterator<Item = (&'a String, &'a Person)>,
+) -> serde_json::Value {
     standing
-        .iter()
+        .into_iter()
         .map(|(key, person)| serde_json::json!({ "person": person, "key": key }))
         .collect()
 }
@@ -382,7 +384,7 @@ fn people_answer(rail: &RingRail, namespace: &str) -> Response {
     match standing_of(rail, namespace) {
         Ok(people) => Json(serde_json::json!({
             "namespace": namespace,
-            "people": people_json(&people),
+            "people": people_json(people.iter().map(|(key, m)| (key, &m.person))),
         }))
         .into_response(),
         Err(refusal) => refusal,
@@ -561,12 +563,17 @@ async fn push_answer(api: &RailApi, namespace: &str, body: axum::body::Bytes) ->
 
 /// The peers a live payload in `namespace` is offered to: every key
 /// standing in it but `this` node's, each by its key alone, named by its
-/// person. A standing key that is not an iroh key is not dialled, and the
-/// trace says so. New (u3-3): upstream walked the mesh's Online members.
-fn live_peers(this: &str, namespace: &str, standing: &BTreeMap<String, Person>) -> Vec<LivePeer> {
+/// person. A standing key that is not an iroh key is not dialled, nor a
+/// browser's (u4-1, [`crate::Device::dialled`]), and the trace says so.
+/// New (u3-3): upstream walked the mesh's Online members.
+fn live_peers(this: &str, namespace: &str, standing: &BTreeMap<String, Member>) -> Vec<LivePeer> {
     let mut peers = Vec::new();
-    for (actor, person) in standing {
+    for (actor, Member { person, device }) in standing {
         if actor == this {
+            continue;
+        }
+        if !device.dialled() {
+            tracing::debug!(target: "rails", namespace, actor, ?device, "rail live: a person stands in the group from a browser, which is never dialled, so it is not offered the payload");
             continue;
         }
         let Some(key) = actor_key(actor) else {

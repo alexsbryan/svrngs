@@ -343,3 +343,28 @@ async fn live_push_reports_each_peer_it_offered_the_payload() {
     assert_eq!(out["dropped"], 0);
     endpoint.close().await;
 }
+
+/// The live fan-out offers a payload to computers' keys and never to a
+/// browser's (u4-1; DESIGN §3 "Joining", call 2): of ada (this node), bo
+/// from a computer and cy from a browser, only bo is a peer. The failing
+/// input: a fan-out that offers every standing key.
+#[test]
+fn the_live_fan_out_never_offers_a_browser() {
+    use crate::register::Member;
+    use crate::Device;
+    let member = |name: &str, device| Member {
+        person: Person::parse(name).unwrap(),
+        device,
+    };
+    let standing = [
+        (7, member("ada", Device::Computer)),
+        (3, member("bo", Device::Computer)),
+        (4, member("cy", Device::Browser)),
+    ]
+    .into_iter()
+    .map(|(k, m)| (actor_of(&key(k)), m))
+    .collect();
+    let peers = super::live_peers(&actor_of(&key(7)), "ledger", &standing);
+    let named: Vec<_> = peers.iter().map(|p| p.name.as_deref()).collect();
+    assert_eq!(named, [Some("bo")]);
+}
