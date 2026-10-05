@@ -49,6 +49,7 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (url.origin !== self.location.origin) return;
+  if (url.pathname === TRACE) return e.respondWith(traceView());
   if (url.pathname.startsWith(LENDS)) return e.respondWith(lent(e.request, url));
   if (e.request.method !== 'GET') return;
   e.respondWith(
@@ -61,9 +62,37 @@ self.addEventListener('fetch', (e) => {
 // Where every lend's address starts: `l/` under the scope.
 const LENDS = new URL('./l/', self.location).pathname;
 
-// The dial's layers, and the worker's own steps, to the console at debug.
-self.__trace = (l) => console.debug(l);
+// The dial's layers, and the worker's own steps, to the console at debug,
+// and the last of them to `<scope>trace`: a phone has no console to read
+// (the operator's iPhone, 2026-10-05: Safari's worker failed to reach the
+// lender while Firefox's did, and only Safari's console held why).
+const TRACE = new URL('./trace', self.location).pathname;
+const traced = [];
+self.__trace = (l) => {
+  console.debug(l);
+  traced.push(`${new Date().toISOString()} ${l}`);
+  if (traced.length > 300) traced.shift();
+};
 const trace = self.__trace;
+
+// The trace kept in the shell's cache, so it outlives the browser stopping
+// this worker between a failure and someone opening `<scope>trace`.
+function keepTrace() {
+  const body = traced.join('\n');
+  return caches
+    .open(CACHE)
+    .then((c) => c.put(TRACE, new Response(body, { headers: { 'content-type': 'text/plain; charset=utf-8' } })))
+    .catch((e) => console.debug(`RUNTIME: the trace was not kept: ${e}`));
+}
+
+async function traceView() {
+  const head = `svrngs worker __VERSION__, ${self.navigator.userAgent}\n`;
+  const text = { headers: { 'content-type': 'text/plain; charset=utf-8' } };
+  if (traced.length) return new Response(`${head}this run of the worker:\n${traced.join('\n')}`, text);
+  const kept = await caches.match(TRACE);
+  const body = kept ? `kept from a run the browser has since stopped:\n${await kept.text()}` : 'nothing traced yet';
+  return new Response(`${head}${body}`, text);
+}
 
 // What this run of the worker holds, all of it lost when the browser stops
 // it: the wasm module, an endpoint per group, a dial per group and lender.
@@ -166,7 +195,10 @@ async function lent(request, url) {
       }
     } catch (e) {
       trace(`RUNTIME: ${request.method} ${path} at ${lender} failed (try ${tries + 1}): ${e}`);
-      if (body || tries) return say(502, 'The computer lending this did not answer. Try again later.');
+      if (body || tries) {
+        await keepTrace();
+        return say(502, 'The computer lending this did not answer. Try again later.');
+      }
     }
   }
 }
