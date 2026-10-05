@@ -1131,3 +1131,19 @@ exit 0 in 4:32, every step `passed` (principles pinned, lean and RUST_ARCH,
 app nouns gate, app nouns, rustfmt, clippy, tests, canaries, web rustfmt
 and clippy, browser, app laws). 3c06b23 and 7dc91ac each name the tests
 their plants failed.
+
+## u4-7-webkit (2026-10-05): what WebKit needs
+
+Every browser test now runs in Playwright 1.59.1's WebKit 26.4 as an
+iPhone 15, as well as in Chromium (977e589). What the row named passed in
+WebKit with no change to the page: a service worker's streamed 206 to
+`<video>` (the H.264 film's first frame in 262 ms, seeks 262/261/283 ms,
+a second computer's range 206 and sha-exact); IndexedDB in the worker (it
+unseals the key from the store when it starts again); WebCrypto's AES-GCM
+(the joining test's seal non-extractable, the key's bytes in no storage).
+
+| # | principle | site | fixed in | finding |
+|---|---|---|---|---|
+| 44 | 2, 7 | web/app.js:203-218 at 977e589 (the opening at the module's top) | e0d44d1 | WebKit wedged the tab for good when a person left the page while its module awaited the wasm's fetch at its top, then opened it again: the next navigation never reached the origin. Bisected on copies of the page (e0d44d1's body has the runs): a module awaiting any `fetch` body at its top wedges within 2-4 transitions; the same from a function it does not await, 0 of 48. Fixed small in the page. Unverified on a phone: whether iOS Safari wedges the same way is for u4-8's package to record (leave the page while it first loads, then reopen the link in the same tab). |
+| 45 | 6, 7 | web/store.js:56-62 (`sealingKey`, the seal put in IndexedDB) | not fixed: not the page's | On this host's first WebKit run, two tests at once failed `DataCloneError: The object can not be cloned.` WebKit wraps a CryptoKey it stores with a master key from the macOS keychain ("Playwright WebCrypto Master Key", account `com.apple.WebKit.WebCrypto.master+org.webkit.Playwright`, made 2026-10-05 15:46:52Z during that run). Reproduced: with that item deleted, three WebKits storing a key at once, 1 of 3 failed `DataCloneError`; with it kept, 0 of 3. So `scripts/check.sh` can fail once on a host whose user never ran Playwright's WebKit. A phone's Safari makes its master key once, so two first stores racing is unlikely there, and if one fails the page says "This browser could not open the page." and the next opening works. |
+| 46 | 6, 7 | web/tests/runtime.mjs (the worker stopped mid-play), crates/svrngs-node/tests/browser/main.rs (`stopped_and_ran_again`) | not fixed: Playwright's limit | Playwright reaches no WebKit service worker: no DevTools (`CDP session is only available in Chromium`) and no worker console (the WebKit run's log lines are all the page's). So WebKit's runtime run closes the browser mid-play and opens it again on its profile, and the film playing again at the lend's address is the evidence the worker reopened its endpoint. Chromium alone shows the worker stopped while its page plays, and counts the endpoint opened twice. Measured for call 3: with no page open, WebKit stopped an idle worker within 12-20 s, a new run each time (a probe worker answering an id made when it starts, 20 of 20); Chromium kept its worker across 20 s idle (7 of 7). Whether iOS stops a worker while its page plays is for u4-8's phone. |
