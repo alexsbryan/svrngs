@@ -20,12 +20,10 @@
 
 use wasm_bindgen::prelude::*;
 
-/// The ALPN the daemon routes to its guest-checking listener.
-/// The guest ALPN — upstream imported it from `kernel-types`
-/// (`kernel-types/src/alpn.rs:26`), which svrngs does not carry; svrngs-core
-/// spells no guest protocol, so the fork inlines upstream's literal until the
-/// dial speaks svrngs's own (DESIGN §8, U4's inventory, the alpn.rs row).
-pub const GUEST_ALPN: &[u8] = b"cwth/guest/0";
+/// The members' protocol, spelled where the node spells it (svrngs-core's
+/// `Alpn`, since u4-2): a person's page dials as a member, by the key that
+/// stands in the group, where upstream's dialled as a guest with a bearer.
+const MEMBER_ALPN: &[u8] = svrngs_core::alpn::Alpn::Member.bytes();
 
 /// Push one layer line to the page's `__trace` collector, if the page defined
 /// one. Best-effort: a missing collector must not break the dial.
@@ -56,7 +54,8 @@ fn decode_hex_n32(s: &str) -> Result<[u8; 32], String> {
 }
 
 /// Dial the node named in `dial`, send `GET <path>` with
-/// `Authorization: Bearer <token>` over one iroh bi-stream on `GUEST_ALPN`,
+/// `Authorization: Bearer <token>` over one iroh bi-stream on the members'
+/// protocol,
 /// and return the full trace (every layer, plus the response verbatim).
 ///
 /// `dial` is the `<hex-pubkey>@<relay-or-addr>[,…]` string a guest link's
@@ -122,7 +121,7 @@ pub async fn dial_guest(dial: String, token: String, path: String) -> String {
     let ep = match iroh::Endpoint::builder(iroh::endpoint::presets::Minimal)
         .secret_key(iroh::SecretKey::generate())
         .relay_mode(iroh::RelayMode::Default)
-        .alpns(vec![GUEST_ALPN.to_vec()])
+        .alpns(vec![MEMBER_ALPN.to_vec()])
         .bind()
         .await
     {
@@ -144,15 +143,15 @@ pub async fn dial_guest(dial: String, token: String, path: String) -> String {
 
     let addr =
         iroh::EndpointAddr::from_parts(node_id, [iroh::TransportAddr::Relay(relay_url.clone())]);
-    t!("LAYER tls/alpn+relay-hop: dialing {node_id} on GUEST_ALPN through the relay…");
-    let conn = match ep.connect(addr, GUEST_ALPN).await {
+    t!("LAYER tls/alpn+relay-hop: dialing {node_id} on the member protocol through the relay…");
+    let conn = match ep.connect(addr, MEMBER_ALPN).await {
         Ok(c) => c,
         Err(e) => {
             t!("LAYER tls/alpn+relay-hop: REFUSED — connect() failed: {e}");
             return trace;
         }
     };
-    t!("LAYER tls/alpn+relay-hop: ok — QUIC connection established to {node_id} on GUEST_ALPN");
+    t!("LAYER tls/alpn+relay-hop: ok — QUIC connection established to {node_id} on the member protocol");
 
     // ── LAYER 4: the HTTP request over one bi-stream ───────────────────────
     t!(
