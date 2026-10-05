@@ -52,6 +52,13 @@ pub struct RelayConfig {
     /// sovereignty- or air-gap-focused netops team requires — setting
     /// `relay_urls` alone does NOT stop the n0 DNS lookup.
     pub n0_services: bool,
+    /// Listen on 127.0.0.1 alone (svrngs): no other computer can reach the
+    /// endpoint, and it learns no other address of this computer to offer
+    /// a peer. Nodes sharing one computer in a test use it, so iroh cannot
+    /// move their connection onto the computer's private address, which the
+    /// door guesses is home (ralph/REVIEW_FINDINGS.md #33). `false` listens
+    /// on every interface, as iroh does.
+    pub loopback_only: bool,
 }
 
 impl Default for RelayConfig {
@@ -61,6 +68,7 @@ impl Default for RelayConfig {
         Self {
             relay_urls: Vec::new(),
             n0_services: true,
+            loopback_only: false,
         }
     }
 }
@@ -114,7 +122,17 @@ impl RelayConfig {
         Ok(Self {
             relay_urls,
             n0_services: discovery == Discovery::N0,
+            loopback_only: false,
         })
+    }
+
+    /// The same posture, listening on 127.0.0.1 alone
+    /// ([`RelayConfig::loopback_only`]).
+    pub fn on_loopback_only(self) -> Self {
+        Self {
+            loopback_only: true,
+            ..self
+        }
     }
 }
 
@@ -139,7 +157,7 @@ pub async fn build_relayed_endpoint(
     alpns: Vec<Vec<u8>>,
     cfg: &RelayConfig,
 ) -> Result<Endpoint, String> {
-    relayed_endpoint_builder(secret_key, alpns, cfg)
+    relayed_endpoint_builder(secret_key, alpns, cfg)?
         .bind()
         .await
         .map_err(|e| format!("iroh endpoint bind failed: {e}"))
@@ -151,7 +169,7 @@ fn relayed_endpoint_builder(
     secret_key: SecretKey,
     alpns: Vec<Vec<u8>>,
     cfg: &RelayConfig,
-) -> EndpointBuilder {
+) -> Result<EndpointBuilder, String> {
     let preset_builder = if cfg.n0_services {
         EndpointBuilder::new(presets::N0)
     } else {
@@ -181,7 +199,13 @@ fn relayed_endpoint_builder(
         }
         None => {} // n0_services + no custom relays → n0's default relays.
     }
-    builder
+    if cfg.loopback_only {
+        builder = builder
+            .clear_ip_transports()
+            .bind_addr(SocketAddr::from(([127, 0, 0, 1], 0)))
+            .map_err(|e| format!("iroh loopback address refused: {e}"))?;
+    }
+    Ok(builder)
 }
 
 /// Read the HTTP(S) proxy from the environment iroh's `proxy_from_env`
@@ -228,6 +252,7 @@ fn log_egress_posture(cfg: &RelayConfig) {
     tracing::info!(
         target: "transport",
         n0_services = cfg.n0_services,
+        loopback_only = cfg.loopback_only,
         relays = %relays,
         proxy = configured_proxy_redacted().as_deref().unwrap_or("none"),
         "iroh egress posture (n0_services=false severs all n0 contact; \

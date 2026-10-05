@@ -745,6 +745,7 @@ pub(crate) mod tests {
             &RelayConfig {
                 relay_urls: vec![],
                 n0_services: false,
+                loopback_only: false,
             },
         )
         .await

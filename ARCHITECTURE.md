@@ -96,7 +96,9 @@ are keyed by peer alone; `NodePubkey` becomes iroh's `PublicKey`; the sync
 bodies import the record from `svrngs-core`. Then it changed: a bare key, with
 no address in its contact or seeded, is dialled when the endpoint has an
 address lookup (n0's DNS under `RelayConfig::n0_services`), where upstream
-refused it (DESIGN §8, "Four facts"). `iroh.rs` also holds the
+refused it (DESIGN §8, "Four facts"); and `RelayConfig::on_loopback_only`
+binds the endpoint to 127.0.0.1 alone, for nodes that share one computer in
+a test (ralph/REVIEW_FINDINGS.md #33). `iroh.rs` also holds the
 serving half, upstream's accept loop (`IrohAcceptor`) forked without its
 `Forward` kinds and then changed: `IrohAcceptor::spawn` takes an admit decision
 on each connection's ALPN and verified key (`Admit`), closing a refused

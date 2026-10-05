@@ -73,6 +73,7 @@ async fn build_relayed_endpoint_with_custom_relay_binds() {
         &RelayConfig {
             relay_urls: vec!["https://relay.corp.example:443".to_string()],
             n0_services: true,
+            loopback_only: false,
         },
     )
     .await
@@ -80,6 +81,28 @@ async fn build_relayed_endpoint_with_custom_relay_binds() {
     assert!(
         !ep.bound_sockets().is_empty(),
         "endpoint must bind a socket"
+    );
+}
+
+/// A loopback-only endpoint binds 127.0.0.1 and nothing else, so it has
+/// no other address of this computer to offer a peer (#33). Planted: the
+/// posture ignored, and the endpoint binds the wildcard.
+#[tokio::test]
+async fn a_loopback_only_endpoint_binds_loopback_alone() {
+    let ep = build_relayed_endpoint(
+        SecretKey::from_bytes(&[79u8; 32]),
+        vec![ALPN.to_vec()],
+        &RelayConfig::from_parts(Vec::new(), Some("none"))
+            .unwrap()
+            .on_loopback_only(),
+    )
+    .await
+    .expect("a loopback-only endpoint binds");
+    let bound = ep.bound_sockets();
+    assert!(!bound.is_empty(), "endpoint must bind a socket");
+    assert!(
+        bound.iter().all(|a| a.ip().is_loopback()),
+        "bound beyond loopback: {bound:?}"
     );
 }
 
