@@ -1,23 +1,25 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai sovereign/apps/ring-runtime/src/lib.rs@e1a43bcd2
-//! The guest runtime — the wasm half of the page an iroh guest link opens.
+//! The page's dial — the wasm half of the page a group's link,
+//! `<origin>#<token>`, opens on a phone (DESIGN §3, "Joining").
 //!
 //! A browser cannot open a UDP socket, so it cannot speak iroh natively. This
-//! module IS an iroh endpoint compiled to wasm (relay-only): the page dials the
-//! wall's node by public key through a relay, on the `GUEST_ALPN` the daemon
-//! already accepts, and speaks one HTTP/1.1 request over the resulting
-//! bi-stream. The relay forwards ciphertext and nothing proxies HTTP — there is
-//! no TLS to terminate and no door to expose (docs/RING_APP_LIBRARY.md, "The
-//! page is an iroh endpoint"; docs/THE_LINK.md).
+//! module IS an iroh endpoint compiled to wasm (relay-only): the page dials a
+//! computer in the group by its key, through a relay, on the members'
+//! protocol the node already accepts, as the person whose key stands in the
+//! group, and speaks one HTTP/1.1 request over the resulting bi-stream. The
+//! relay forwards ciphertext and nothing proxies HTTP — there is no TLS to
+//! terminate and no door to expose (DESIGN §8, U4's inventory).
 //!
-//! Proven at these pins: `browser-dial` bd-1 measured every layer below
-//! answering against a live node (`ralph/DECISIONS.md`, browser-dial-2):
-//! `HTTP/1.1 200 OK` carrying a real rail row.
+//! Proven upstream at these pins: `browser-dial` bd-1 measured every layer
+//! below answering against a live node (commonwealth-ai `ralph/DECISIONS.md`,
+//! browser-dial-2): `HTTP/1.1 200 OK` carrying a real rail row.
 //!
 //! Every layer is emitted to the page's `__trace` hook as it happens, never
 //! only returned at the end — a layer that hangs must still be named, which is
 //! the whole reason the trace exists (ARCH §1, glassbox).
 
+use svrngs_core::link::Token;
 use wasm_bindgen::prelude::*;
 
 /// The members' protocol, spelled where the node spells it (svrngs-core's
@@ -35,36 +37,20 @@ fn emit(line: &str) {
     }
 }
 
-fn decode_hex_n32(s: &str) -> Result<[u8; 32], String> {
-    let s = s.trim();
-    if s.len() != 64 {
-        return Err(format!("endpoint id is {} hex chars, expected 64", s.len()));
-    }
-    let mut out = [0u8; 32];
-    for (i, chunk) in s.as_bytes().chunks(2).enumerate() {
-        let hi = (chunk[0] as char)
-            .to_digit(16)
-            .ok_or_else(|| format!("endpoint id is not hex at byte {i}"))?;
-        let lo = (chunk[1] as char)
-            .to_digit(16)
-            .ok_or_else(|| format!("endpoint id is not hex at byte {i}"))?;
-        out[i] = ((hi << 4) | lo) as u8;
-    }
-    Ok(out)
-}
-
-/// Dial the node named in `dial` as the person whose key is `key`, send
-/// `GET <path>` with `Authorization: Bearer <token>` over one iroh
-/// bi-stream on the members' protocol, and return the full trace (every
-/// layer, plus the response verbatim).
+/// Dial the computer that issued `token`, by its key, as the person whose
+/// key is `key`; send `GET <path>` over one iroh bi-stream on the members'
+/// protocol, and return the full trace (every layer, plus the response
+/// verbatim).
 ///
 /// `key` is the person's key, the 32 bytes the page's store holds (DESIGN
 /// §3, call 1): iroh signs its handshake with it synchronously, so it is
-/// bytes here, never a WebCrypto key. `dial` is the `<hex-pubkey>@<relay-or-addr>[,…]` string a guest link's
-/// `iroh=` fragment param carries; `token` is the grant bearer; `path` is the
-/// grant-scoped route (e.g. `/v1/rail/log`).
+/// bytes here, never a WebCrypto key. `token` is the group's link's token,
+/// the fragment of `<origin>#<token>`, parsed by svrngs-core as the command
+/// parses it (call 5). `path` is the member route asked (`/lends`). No
+/// bearer rides the request: the node knows the person by the key that
+/// dialled.
 #[wasm_bindgen]
-pub async fn dial_guest(key: Vec<u8>, dial: String, token: String, path: String) -> String {
+pub async fn dial(key: Vec<u8>, token: String, path: String) -> String {
     let mut trace = String::new();
     macro_rules! t {
         ($($a:tt)*) => {{
@@ -75,9 +61,9 @@ pub async fn dial_guest(key: Vec<u8>, dial: String, token: String, path: String)
         }};
     }
 
-    t!("LAYER page: wasm module loaded and dial_guest entered (iroh =1.0.2)");
+    t!("LAYER page: wasm module loaded and dial entered (iroh =1.0.2)");
 
-    // ── LAYER 1: the person's key, then the dial string the link carries ──
+    // ── LAYER 1: the person's key, then the link's token ───────────────────
     let secret = match <[u8; 32]>::try_from(key.as_slice()) {
         Ok(bytes) => iroh::SecretKey::from_bytes(&bytes),
         Err(_) => {
@@ -86,55 +72,42 @@ pub async fn dial_guest(key: Vec<u8>, dial: String, token: String, path: String)
         }
     };
     t!("LAYER key: ok — the person's key {}", secret.public());
-    let (id_hex, targets) = match dial.split_once('@') {
-        Some(x) => x,
-        None => {
-            t!("LAYER parse: REFUSED — dial string has no '@': {dial}");
-            return trace;
-        }
-    };
-    let id = match decode_hex_n32(id_hex) {
-        Ok(b) => b,
-        Err(e) => {
-            t!("LAYER parse: REFUSED — {e}");
-            return trace;
-        }
-    };
-    let Some(relay) = targets
-        .split(',')
-        .map(str::trim)
-        .find(|s| s.starts_with("https://") || s.starts_with("http://"))
-        .map(str::to_string)
-    else {
-        t!("LAYER parse: REFUSED — dial string carries no relay URL: {targets}");
+    let Some(link) = Token::decode(&token) else {
+        t!("LAYER parse: REFUSED — the fragment is not a link's token: {token}");
         return trace;
     };
-    t!("LAYER parse: ok — node id {id_hex}, relay {relay}");
-
-    let node_id = match iroh::PublicKey::from_bytes(&id) {
+    let node_id = match iroh::PublicKey::from_bytes(link.issuer.as_bytes()) {
         Ok(p) => p,
         Err(e) => {
             t!("LAYER parse: REFUSED — node id is not a valid public key: {e}");
             return trace;
         }
     };
-    let relay_url: iroh::RelayUrl = match relay.parse() {
-        Ok(u) => u,
-        Err(e) => {
-            t!("LAYER parse: REFUSED — relay URL did not parse: {e}");
-            return trace;
+    // The relay the token carries, from an issuer run without address
+    // lookup; else iroh's lookup, the resolver the N0 preset adds in a
+    // browser (iroh-1.0.2/src/endpoint/presets.rs:122-128), with n0's
+    // relays. Upstream refused a dial string with no relay
+    // (ring-runtime/src/lib.rs:91-99); a bare key is a link's usual form.
+    let builder = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal).secret_key(secret);
+    let (builder, addr) = match link.relay {
+        Some(relay) => {
+            let relay = iroh::RelayUrl::from(relay);
+            t!("LAYER parse: ok — node id {node_id}, relay {relay} from the token");
+            let addr = iroh::EndpointAddr::from_parts(node_id, [iroh::TransportAddr::Relay(relay.clone())]);
+            (builder.relay_mode(iroh::RelayMode::Custom(relay.into())), addr)
+        }
+        None => {
+            t!("LAYER parse: ok — node id {node_id}, a bare key: found by n0's address lookup");
+            let lookup = iroh::address_lookup::PkarrResolver::n0_dns();
+            let addr = iroh::EndpointAddr::from_parts(node_id, []);
+            (builder.relay_mode(iroh::RelayMode::Default).address_lookup(lookup), addr)
         }
     };
 
     // ── LAYER 2: wasm bindgen / iroh endpoint construction ─────────────────
     t!("LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only)…");
-    let ep = match iroh::Endpoint::builder(iroh::endpoint::presets::Minimal)
-        .secret_key(secret)
-        .relay_mode(iroh::RelayMode::Default)
-        .alpns(vec![MEMBER_ALPN.to_vec()])
-        .bind()
-        .await
-    {
+    // It offers no protocol: a browser is never dialled (DESIGN §3, call 2).
+    let ep = match builder.bind().await {
         Ok(e) => e,
         Err(e) => {
             t!("LAYER wasm-bindgen/iroh-endpoint: REFUSED — endpoint bind failed: {e}");
@@ -142,7 +115,7 @@ pub async fn dial_guest(key: Vec<u8>, dial: String, token: String, path: String)
         }
     };
     t!(
-        "LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint {} bound, relay mode default",
+        "LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint {} bound",
         ep.id()
     );
 
@@ -151,9 +124,7 @@ pub async fn dial_guest(key: Vec<u8>, dial: String, token: String, path: String)
     ep.online().await;
     t!("LAYER relay-connect: ok — endpoint reports online (relay handshake done)");
 
-    let addr =
-        iroh::EndpointAddr::from_parts(node_id, [iroh::TransportAddr::Relay(relay_url.clone())]);
-    t!("LAYER tls/alpn+relay-hop: dialing {node_id} on the member protocol through the relay…");
+    t!("LAYER tls/alpn+relay-hop: dialing {node_id} on the member protocol through a relay…");
     let conn = match ep.connect(addr, MEMBER_ALPN).await {
         Ok(c) => c,
         Err(e) => {
@@ -176,7 +147,7 @@ pub async fn dial_guest(key: Vec<u8>, dial: String, token: String, path: String)
         }
     };
     let req = format!(
-        "GET {path} HTTP/1.1\r\nHost: sovereign-guest\r\nAuthorization: Bearer {token}\r\nAccept: application/json\r\nConnection: close\r\n\r\n"
+        "GET {path} HTTP/1.1\r\nHost: svrngs\r\nAccept: application/json\r\nConnection: close\r\n\r\n"
     );
     if let Err(e) = send.write_all(req.as_bytes()).await {
         t!("LAYER request-write: REFUSED — {e}");
@@ -204,7 +175,7 @@ pub async fn dial_guest(key: Vec<u8>, dial: String, token: String, path: String)
         .unwrap_or("<no status line>")
         .to_string();
     t!(
-        "LAYER daemon-guest-admission: response received, {} bytes",
+        "LAYER member-admission: response received, {} bytes",
         body.len()
     );
     t!("RESPONSE-STATUS: {status}");

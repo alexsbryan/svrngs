@@ -6,7 +6,7 @@
 // The version query on the wasm import is stamped at build time (the content
 // hash of the module), so a service worker or CDN cache cannot serve a stale
 // runtime after a rebuild.
-import init, { dial_guest } from './wasm/svrngs_web.js?v=__VERSION__';
+import init, { dial } from './wasm/svrngs_web.js?v=__VERSION__';
 
 const status = document.getElementById('status');
 const response = document.getElementById('response');
@@ -19,16 +19,12 @@ window.__trace = (l) => {
   traceEl.textContent = lines.join('\n');
 };
 
-// The link's fragment: token, exp, iroh (the dial string), s (the label),
-// path (optional — the grant-scoped route; default is the rail read). The
-// fragment is never sent to this page's origin, which is why the credential
-// rides there and not in the query.
-const params = new URLSearchParams(location.hash.slice(1));
-const token = params.get('token') || '';
-const dial = params.get('iroh') || '';
-const path = params.get('path') || '/v1/rail/log';
-const label = params.get('s') || '';
-if (label) labelEl.textContent = label;
+// The link's fragment is its token, `<origin>#<token>`, which the dial
+// parses with svrngs-core (DESIGN §3, call 5). The fragment is never sent to
+// this page's origin, which is why the link rides there and not in the
+// query. The page asks the issuer what the group's people lend.
+const token = location.hash.slice(1);
+const path = '/lends';
 
 // The person's key, as this page's store holds it: 32 bytes under `key` in
 // IndexedDB `svrngs`, object store `person`, or null when it holds none.
@@ -51,14 +47,14 @@ function fail(msg) {
   status.className = 'bad';
 }
 
-if (!token || !dial) {
+if (!token) {
   fail('Open this page from a guest link — its fragment carries token= and iroh=.');
 } else {
   try {
     await init();
     const key = await heldKey();
     status.textContent = 'Dialing the wall over the relay…';
-    const pending = dial_guest(key || new Uint8Array(), dial, token, path);
+    const pending = dial(key || new Uint8Array(), token, path);
     const timeout = new Promise((r) => setTimeout(() => r('__TIMEOUT__'), 120000));
     const res = await Promise.race([pending, timeout]);
     if (res === '__TIMEOUT__') {
