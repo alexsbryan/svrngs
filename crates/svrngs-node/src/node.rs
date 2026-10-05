@@ -557,11 +557,9 @@ async fn people_lends(State(at): State<Asking>, dialer: Option<Extension<Dialer>
         tracing::debug!(target: "node", asker, "node: people's lends refused — the dialer stands in no group this computer stands in");
         return err(StatusCode::FORBIDDEN, "this computer lends nothing to you");
     };
-    let Some(offered) = crate::door::offered(&at.door).await else {
-        return err(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "what this computer lends cannot be read on it",
-        );
+    let offered = match crate::door::offered(&at.door).await {
+        Ok(o) => o,
+        Err(refused) => return refused,
     };
     let others = at.host.lends_in(&groups, Some(&asker)).await;
     let mut lent: Vec<Lending> = offered

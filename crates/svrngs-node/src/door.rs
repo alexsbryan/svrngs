@@ -280,26 +280,28 @@ async fn lends(State(door): State<Door>, dialer: Option<Extension<Dialer>>) -> R
         tracing::debug!(target: "door", actor, "door: lends refused — the dialer stands in no group held here");
         return err(StatusCode::FORBIDDEN, "this computer lends nothing to you");
     }
-    let Some(offered) = offered(&door).await else {
-        return err(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "what this computer lends cannot be read on it",
-        );
+    let offered = match offered(&door).await {
+        Ok(o) => o,
+        Err(refused) => return refused,
     };
     tracing::debug!(target: "door", actor, lends = offered.len(), "door: lends — answered what this computer lends");
     Json(serde_json::json!({ "lends": offered })).into_response()
 }
 
 /// Every lend this computer declares now, each with how many people use
-/// it ([`Using`]), or `None` when the declarations cannot be read. A
-/// declaration that cannot be read is left out, named at warn; a lend whose
-/// count cannot be had is left out too, never answered as used by none.
-pub(crate) async fn offered(door: &Door) -> Option<Vec<Offered>> {
+/// it ([`Using`]); or, when the declarations cannot be read, the refusal
+/// every route listing lends answers, a 500 in words. A declaration that
+/// cannot be read is left out, named at warn; a lend whose count cannot be
+/// had is left out too, never answered as used by none.
+pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
     let declared = match lend::all(&door.data_dir) {
         Ok(d) => d,
         Err(e) => {
             tracing::warn!(target: "door", error = %e, "door: lends — the declarations cannot be read");
-            return None;
+            return Err(err(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "what this computer lends cannot be read on it",
+            ));
         }
     };
     let mut offered = Vec::new();
@@ -322,7 +324,7 @@ pub(crate) async fn offered(door: &Door) -> Option<Vec<Offered>> {
             using,
         });
     }
-    Some(offered)
+    Ok(offered)
 }
 
 /// A name as upstream's `rewrite_head` compared it (`compare_name`,
