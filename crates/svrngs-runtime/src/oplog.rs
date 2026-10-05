@@ -153,41 +153,14 @@ impl<K: Journaled> Oplog<K> {
     }
 
     #[cfg(test)]
-    /// Append one op. Creates the parent directory on first write.
+    /// Append one op: [`Self::append_all`] of one, so a test writes a line
+    /// as the journal does.
     pub fn append(&self, op: &Op<K>) -> Result<()> {
-        if let Some(parent) = self.path.parent() {
-            fs::create_dir_all(parent).map_err(OplogError::Io)?;
-        }
-        let mut line = serde_json::to_string(op).map_err(|e| OplogError::Serialise {
-            log: K::LABEL,
-            source: e,
-        })?;
-        line.push('\n');
-        let mut f = OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&self.path)
-            .map_err(OplogError::Io)?;
-        // ONE write for the whole logical line, so `O_APPEND`'s atomicity
-        // covers it. Two calls (the body, then the newline) left a window in
-        // which a second writer could interleave and split a line in half.
-        f.write_all(line.as_bytes()).map_err(OplogError::Io)?;
-        // Durability is the point of a journal. Without this a lid-slam or a
-        // power cut loses the last ops that the caller was already told
-        // succeeded — silently, which is the §18.3 shape.
-        f.sync_data().map_err(OplogError::Io)?;
-        tracing::debug!(
-            log = K::LABEL,
-            id = %op.id,
-            actor = %op.actor,
-            path = %self.path.display(),
-            "oplog: append"
-        );
-        Ok(())
+        self.append_all(std::slice::from_ref(op))
     }
 
-    /// Append several ops in one open. Same semantics as calling
-    /// [`Self::append`] per op; the file is opened once.
+    /// Append several ops in one open. Creates the parent directory on
+    /// first write.
     pub fn append_all(&self, ops: &[Op<K>]) -> Result<()> {
         if ops.is_empty() {
             return Ok(());
@@ -209,8 +182,13 @@ impl<K: Journaled> Oplog<K> {
             buf.push_str(&line);
             buf.push('\n');
         }
-        // Same single-write, then-fsync rule as `append`.
+        // ONE write for the whole batch, so `O_APPEND`'s atomicity covers it.
+        // Two calls (the body, then the newline) left a window in which a
+        // second writer could interleave and split a line in half.
         f.write_all(buf.as_bytes()).map_err(OplogError::Io)?;
+        // Durability is the point of a journal. Without this a lid-slam or a
+        // power cut loses the last ops that the caller was already told
+        // succeeded — silently, which is the §18.3 shape.
         f.sync_data().map_err(OplogError::Io)?;
         tracing::debug!(
             log = K::LABEL,
