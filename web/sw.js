@@ -9,6 +9,7 @@ const CACHE = 'svrngs-web-__VERSION__';
 const SHELL = [
   './',
   './app.js?v=__VERSION__',
+  './store.js?v=__VERSION__',
   './wasm/svrngs_web.js?v=__VERSION__',
   './wasm/svrngs_web_bg.wasm?v=__VERSION__',
 ];

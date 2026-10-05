@@ -53,20 +53,14 @@ function serve(dir) {
   return new Promise((done) => server.listen(0, '127.0.0.1', () => done(server)));
 }
 
-// The key into the page's store as app.js reads it (IndexedDB `svrngs`,
-// object store `person`, entry `key`): the page holds the person's key.
-function hold(hex) {
-  return new Promise((done, fail) => {
-    const open = indexedDB.open('svrngs', 1);
-    open.onupgradeneeded = () => open.result.createObjectStore('person');
-    open.onerror = () => fail(open.error);
-    open.onsuccess = () => {
-      const tx = open.result.transaction('person', 'readwrite');
-      tx.objectStore('person').put(Uint8Array.from(hex.match(/../g), (h) => parseInt(h, 16)), 'key');
-      tx.oncomplete = () => done();
-      tx.onerror = () => fail(tx.error);
-    };
-  });
+// The page's store holding a group joined by `token`, as joining keeps one
+// (web/store.js, u4-5): the person's key sealed, the group's name, and the
+// person's — a phone that joined. Imported as app.js imports it.
+async function hold({ hex, token }) {
+  const app = document.querySelector('script[type=module]').src;
+  const store = await import(new URL(`./store.js${new URL(app).search}`, app).href);
+  const key = Uint8Array.from(hex.match(/../g), (h) => parseInt(h, 16));
+  await store.keep({ id: 'held', name: 'house', person: 'bo', token, key });
 }
 
 // In the page: HTTP over the dial through the node's door, by the page's own
@@ -180,13 +174,14 @@ try {
   page.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
   await page.goto(origin);
-  await page.evaluate(hold, args.key);
+  await page.evaluate(hold, { hex: args.key, token: args.token });
   await page.goto('about:blank');
   await page.goto(`${origin}#${args.token}`);
   await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
   const result = await page.evaluate(() => ({
     status: document.getElementById('status').textContent,
     answer: document.getElementById('response').textContent,
+    lent: [...document.querySelectorAll('#lent button')].map((b) => b.textContent),
     lines: window.__lines,
   }));
   if (args.http) {

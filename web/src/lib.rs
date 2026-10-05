@@ -21,14 +21,11 @@
 //! the whole reason the trace exists (ARCH §1, glassbox).
 
 mod http;
+mod join;
 
+use svrngs_core::alpn::Alpn;
 use svrngs_core::link::Token;
 use wasm_bindgen::prelude::*;
-
-/// The members' protocol, spelled where the node spells it (svrngs-core's
-/// `Alpn`, since u4-2): a person's page dials as a member, by the key that
-/// stands in the group, where upstream's dialled as a guest with a bearer.
-const MEMBER_ALPN: &[u8] = svrngs_core::alpn::Alpn::Member.bytes();
 
 /// Push one layer line to the page's `__trace` collector, if the page defined
 /// one. Best-effort: a missing collector must not break the dial.
@@ -44,6 +41,29 @@ fn emit(line: &str) {
 /// key is `key`, on the members' protocol: the dialled computer, which
 /// answers HTTP on a bi-stream per request ([`Dialled::fetch`]), or the
 /// layer that refused, every layer emitted as it happens.
+#[wasm_bindgen]
+pub async fn connect(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
+    dial(key, token, None, Alpn::Member).await
+}
+
+/// Dial the computer whose key is `lender`, 64 hex, as [`connect`] dials
+/// the issuer, through the way to it the token names: a phone dials whoever
+/// lends a service itself (DESIGN §3, call 4), and no computer proxies
+/// another's lend.
+#[wasm_bindgen]
+pub async fn connect_to(key: Vec<u8>, token: String, lender: String) -> Result<Dialled, JsError> {
+    dial(key, token, Some(lender), Alpn::Member).await
+}
+
+/// Dial the computer that issued `token` on the redeem protocol, the one a
+/// key standing in no group may speak, to ask what the link is for and
+/// redeem it ([`join`]'s bodies).
+#[wasm_bindgen]
+pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
+    dial(key, token, None, Alpn::Redeem).await
+}
+
+/// Dial `to`, else the computer that issued `token`, on `alpn`.
 ///
 /// `key` is the person's key, the 32 bytes the page's store holds (DESIGN
 /// §3, call 1): iroh signs its handshake with it synchronously, so it is
@@ -51,8 +71,7 @@ fn emit(line: &str) {
 /// the fragment of `<origin>#<token>`, parsed by svrngs-core as the command
 /// parses it (call 5). No bearer rides a request: the node knows the person
 /// by the key that dialled.
-#[wasm_bindgen]
-pub async fn connect(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
+async fn dial(key: Vec<u8>, token: String, to: Option<String>, alpn: Alpn) -> Result<Dialled, JsError> {
     macro_rules! t {
         ($($a:tt)*) => {
             emit(&format!($($a)*))
@@ -83,7 +102,14 @@ pub async fn connect(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
     let Some(link) = Token::decode(&token) else {
         refuse!("LAYER parse: REFUSED — the fragment is not a link's token: {token}")
     };
-    let node_id = match iroh::PublicKey::from_bytes(link.issuer.as_bytes()) {
+    let node_id = match to {
+        None => iroh::PublicKey::from_bytes(link.issuer.as_bytes()),
+        Some(to) => match <[u8; 32]>::try_from(hex::decode(&to).unwrap_or_default().as_slice()) {
+            Ok(bytes) => iroh::PublicKey::from_bytes(&bytes),
+            Err(_) => refuse!("LAYER parse: REFUSED — {to:?} is not a computer's key"),
+        },
+    };
+    let node_id = match node_id {
         Ok(p) => p,
         Err(e) => {
             refuse!("LAYER parse: REFUSED — node id is not a valid public key: {e}")
@@ -132,14 +158,14 @@ pub async fn connect(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
     ep.online().await;
     t!("LAYER relay-connect: ok — endpoint reports online (relay handshake done)");
 
-    t!("LAYER tls/alpn+relay-hop: dialing {node_id} on the member protocol through a relay…");
-    let conn = match ep.connect(addr, MEMBER_ALPN).await {
+    t!("LAYER tls/alpn+relay-hop: dialing {node_id} on the {alpn:?} protocol through a relay…");
+    let conn = match ep.connect(addr, alpn.bytes()).await {
         Ok(c) => c,
         Err(e) => {
             refuse!("LAYER tls/alpn+relay-hop: REFUSED — connect() failed: {e}")
         }
     };
-    t!("LAYER tls/alpn+relay-hop: ok — QUIC connection established to {node_id} on the member protocol");
+    t!("LAYER tls/alpn+relay-hop: ok — QUIC connection established to {node_id} on the {alpn:?} protocol");
 
     t!(
         "LAYER tls/alpn: negotiated ALPN = {:?}",

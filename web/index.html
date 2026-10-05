@@ -2,7 +2,8 @@
 <!-- ported from commonwealth-ai sovereign/apps/ring-runtime/web/index.html@e1a43bcd2 -->
 <!--
   The page a group's link opens on a phone: `<origin>#<token>` (DESIGN §3,
-  "Joining"). Static files any origin can serve — no server, no certificate,
+  "Joining"). It asks a newcomer's name once, then lists what the group's
+  people lend (app.js). Static files any origin can serve — no server, no certificate,
   no data. The FRAGMENT carries the link's token, and a browser never sends
   the fragment to the origin, so the page loads from public static hosting
   while the link stays on the phone; `no-referrer` keeps it out of every
@@ -36,11 +37,22 @@
   #status { font-weight: 600; }
   pre { background: #8881; padding: .75rem; border-radius: .5rem; overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
   .bad { color: #c22; }
+  form { display: grid; gap: .5rem; }
+  input, button { font: inherit; padding: .5rem .75rem; }
+  #lent { list-style: none; padding: 0; display: grid; gap: .5rem; }
+  #lent button { width: 100%; text-align: left; }
   .good { color: #2a2; }
 </style>
 </head>
 <body>
 <h1 id="status">Opening…</h1>
+<form id="join" hidden>
+  <label for="name">What’s your name? Everyone in <span id="group"></span> sees it.</label>
+  <input id="name" name="name" autocomplete="name" maxlength="64" required>
+  <p id="why" class="bad"></p>
+  <button>Join</button>
+</form>
+<ul id="lent"></ul>
 <pre id="response"></pre>
 <script type="module" src="./app.js?v=__VERSION__"></script>
 </body>

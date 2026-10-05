@@ -40,6 +40,11 @@ tokio = { version = "1", default-features = false }
 wasm-streams = "0.5"
 web-sys = { version = "=0.3.105", features = ["Headers", "ReadableStream", "Response", "ResponseInit"] }
 thiserror = "2"
+# Joining (u4-5): the ask's and the redemption's bodies as the node reads
+# them, and a lender's key as the record spells it. The versions
+# svrngs-core's lock already holds.
+serde_json = "1"
+hex = "0.4"
 
 # Its own workspace root: without this, cargo walks up to the repo's
 # [workspace] and refuses the crate as a non-member.

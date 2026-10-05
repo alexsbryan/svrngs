@@ -3032,10 +3032,12 @@ version = "0.1.0"
 dependencies = [
  "bytes",
  "futures-util",
+ "hex",
  "http-body-util",
  "hyper",
  "iroh",
  "js-sys",
+ "serde_json",
  "svrngs-core",
  "thiserror 2.0.20",
  "tokio",

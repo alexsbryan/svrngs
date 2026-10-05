@@ -110,7 +110,7 @@ fi
 # sha256sum is GNU coreutils; stock macOS has only shasum. Either works.
 if command -v sha256sum >/dev/null; then SHA_CMD="sha256sum"; else SHA_CMD="shasum -a 256"; fi
 VERSION="$(cat "$OUT/wasm/svrngs_web_bg.wasm" "$OUT/wasm/svrngs_web.js" | $SHA_CMD | cut -c1-12)"
-cp "$APP/index.html" "$APP/app.js" "$APP/sw.js" "$OUT/"
+cp "$APP/index.html" "$APP/app.js" "$APP/store.js" "$APP/sw.js" "$OUT/"
 sed -i.bak "s/__VERSION__/${VERSION}/g" "$OUT/index.html" "$OUT/app.js" "$OUT/sw.js"
 rm -f "$OUT/index.html.bak" "$OUT/app.js.bak" "$OUT/sw.js.bak"
 

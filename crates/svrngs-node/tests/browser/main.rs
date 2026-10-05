@@ -171,7 +171,8 @@ async fn drive(args: Value, release: Option<tokio::sync::oneshot::Receiver<()>>)
 
 /// The page holds bo's key, opens the link, and dials the node by key
 /// through the relay the token carries; the node admits bo on the members'
-/// protocol and its door answers `GET /lends` 200. The failing input is
+/// protocol and answers `GET /people/lends` 200 (u4-5; `GET /lends` until
+/// then). The failing input is
 /// upstream's one path fact (commonwealth-ai `ralph/DECISIONS.md:9977-9983`):
 /// the send half finished before the response.
 #[tokio::test(flavor = "multi_thread")]
@@ -207,12 +208,17 @@ async fn a_page_holding_a_standing_key_dials_the_node_and_gets_its_lends() {
         "the page's endpoint must be bo's key, the one its store holds:\n{seen:#}"
     );
     assert!(
-        lines.contains(&"HTTP: GET /lends answered 200"),
+        lines.contains(&"HTTP: GET /people/lends answered 200"),
         "the node must answer the page 200; the page saw:\n{seen:#}"
     );
-    assert_eq!(seen["status"], "You’re in", "{seen:#}");
-    // The page shows the answer's body, parsed by hyper (web/src/http.rs).
-    assert_eq!(seen["answer"], r#"{"lends":[]}"#, "{seen:#}");
+    assert_eq!(seen["status"], "You’re in house, as bo", "{seen:#}");
+    // The page shows the answer, parsed by hyper (web/src/http.rs): ada
+    // lends nothing.
+    assert_eq!(seen["lent"], json!([]), "{seen:#}");
+    assert_eq!(
+        seen["answer"], "Nobody in house lends anything yet.",
+        "{seen:#}"
+    );
     drop(node);
 }
 
