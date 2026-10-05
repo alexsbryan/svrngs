@@ -196,11 +196,12 @@ never learns what a film, an expense or a crush is. And the canaries of §8,
 Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Films and breaks one fails the build.
 
-**Lean, and kept lean.** `svrngs-core` stays under 2,500 lines of code and the
+**Lean, and kept lean.** `svrngs-core` stays under 3,000 lines of code and the
 repository under 12,000, tests and `apps/` apart (`scripts/lean_check.py`);
 a raise is the operator's, with the reason in the commit. `svrngs-core` stands
-at 2,293, 798 of them tests written inside its source files, which U2 moves
-out (U2's inventory); whether the rules of §6 then ask for a raise is measured, not assumed. `ARCHITECTURE.md` maps what
+at 2,359: the operator raised its ceiling from 2,500 on 2026-10-05, for what U4
+to U7 still add to the core, since REVIEW-audit-u3-auto-2 found no duplication
+in it (ralph/REVIEW_FINDINGS.md #38). `ARCHITECTURE.md` maps what
 exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file
