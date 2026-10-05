@@ -613,7 +613,10 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
     // rest of the file.
     let part = &seen["openEnded"];
     let got = part["bytes"].as_u64().unwrap_or(0);
-    assert_eq!(part["status"], 206, "the open range must come back 206:\n{shown:#}");
+    assert_eq!(
+        part["status"], 206,
+        "the open range must come back 206:\n{shown:#}"
+    );
     assert!(
         got > 0 && got < OTHER - from,
         "the open range must come back a part, not the {} bytes to the end:\n{shown:#}",
