@@ -3,15 +3,15 @@
 // page on 127.0.0.1 and prints its origin as one JSON line; the Rust half
 // prints a link on that origin with `svrngs new --origin` and answers with
 // one JSON line on stdin, `{"link": ..., "name": ...}`. Then, in headless
-// Chromium, it opens the link and types the name whenever the page asks for
+// `engine` (page.mjs), it opens the link and types the name whenever the page asks for
 // one; reads every storage the page can write for the person's key; opens
 // the link again, then the page alone; opens the first lend listed, which
 // the service worker serves; and prints what it saw as one JSON line.
 //
-//   node web/tests/join.mjs '{"site": "<dir>"}'
+//   node web/tests/join.mjs '{"engine": "chromium"|"webkit", "site": "<dir>"}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
-// or its Chromium is absent; 1 on anything else.
+// or its browser is absent; 1 on anything else.
 import { createInterface } from 'node:readline';
 import { launch, serve } from './page.mjs';
 
@@ -84,10 +84,10 @@ async function scan() {
   return { key: hex, found, extractable, dbs };
 }
 
-const browser = await launch();
+const { context, close } = await launch(args.engine);
 const logs = [];
 try {
-  const page = await browser.newPage();
+  const page = await context.newPage();
   page.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
 
@@ -136,6 +136,6 @@ try {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;
 } finally {
-  await browser.close();
+  await close();
   server.close();
 }

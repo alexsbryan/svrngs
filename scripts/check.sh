@@ -23,11 +23,12 @@ if [ -f Cargo.toml ]; then
   # The page (DESIGN §8, U4): its crate is a workspace of its own, for wasm.
   step "web rustfmt and clippy" scripts/build-web.sh --lint
   # The page in a browser, again by name: it builds the page, runs a relay
-  # and a node on 127.0.0.1 and drives Playwright's Chromium. Without
-  # Playwright or its browsers it fails naming the install command; it never
-  # skips.
+  # and a node on 127.0.0.1 and drives Playwright's Chromium, and its
+  # WebKit as an iPhone, each test in both (u4-7). Without Playwright or its
+  # browsers it fails naming the install command; it never skips.
   step "browser" cargo test --quiet -p svrngs-node --test browser
-  # A phone joining by the link `svrngs new --origin` prints (u4-5).
+  # A phone joining by the link `svrngs new --origin` prints (u4-5), in
+  # both engines.
   step "joining in a browser" cargo test --quiet -p svrngs --test join_page
 else
   echo "never-ran  rustfmt, clippy, tests: no Cargo workspace yet"; failed=1

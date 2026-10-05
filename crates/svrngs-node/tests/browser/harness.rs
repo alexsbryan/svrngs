@@ -7,6 +7,44 @@ use std::sync::OnceLock;
 
 use iroh_relay::server::{RelayConfig as RelayServer, Server, ServerConfig};
 
+/// The browsers every test drives (u4-7): Chromium as a desktop opens the
+/// page, and WebKit as an iPhone does, the engine of iOS Safari
+/// (web/tests/page.mjs).
+#[derive(Clone, Copy, Debug)]
+pub enum Engine {
+    Chromium,
+    Webkit,
+}
+
+/// `in_both_engines!(test)`: the async fn `test(engine)` run as two tests,
+/// `test::chromium` and `test::webkit`, so a failure names its engine; the
+/// doc comments before it are the pair's.
+macro_rules! in_both_engines {
+    ($(#[$doc:meta])* $test:ident) => {
+        $(#[$doc])*
+        mod $test {
+            #[tokio::test(flavor = "multi_thread")]
+            async fn chromium() {
+                super::$test($crate::harness::Engine::Chromium).await
+            }
+            #[tokio::test(flavor = "multi_thread")]
+            async fn webkit() {
+                super::$test($crate::harness::Engine::Webkit).await
+            }
+        }
+    };
+}
+
+impl Engine {
+    /// The name the browser halves take in their args' `engine`.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Engine::Chromium => "chromium",
+            Engine::Webkit => "webkit",
+        }
+    }
+}
+
 pub fn repo() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
 }

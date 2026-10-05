@@ -1,9 +1,11 @@
 // The browser half of crates/svrngs-node/tests/browser (DESIGN §8, U4): it
 // serves the built page on 127.0.0.1, opens it in Playwright's headless
-// Chromium, and prints what the page did as one JSON line. The Rust half
-// owns the relay and the node, so every byte stays on this computer.
+// `engine` (page.mjs), and prints what the page did as one JSON line. The
+// Rust half owns the relay and the node, so every byte stays on this
+// computer.
 //
-//   node web/tests/drive.mjs '{"site": "<dir>", "key": "<64 hex>", "token": "<token>"}'
+//   node web/tests/drive.mjs '{"engine": "chromium"|"webkit", "site": "<dir>",
+//     "key": "<64 hex>", "token": "<token>"}'
 //
 // With `"http": {...}` in the args, once the page is in it also speaks HTTP
 // over the dial to the lends named there ([`httpChecks`], u4-4), and holds
@@ -11,7 +13,7 @@
 // it when the service has the upload's first byte.
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
-// or its Chromium is absent — the browser step fails then, never skips; 1 on
+// or its browser is absent — the browser step fails then, never skips; 1 on
 // anything else.
 import { hold, launch, serve } from './page.mjs';
 
@@ -115,10 +117,10 @@ async function httpChecks(a) {
 
 const server = await serve(args.site);
 const origin = `http://127.0.0.1:${server.address().port}/`;
-const browser = await launch();
+const { context, close } = await launch(args.engine);
 const logs = [];
 try {
-  const page = await browser.newPage();
+  const page = await context.newPage();
   page.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
   await page.goto(origin);
@@ -144,7 +146,7 @@ try {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;
 } finally {
-  await browser.close();
+  await close();
   server.close();
   // stdin, read while the Rust half holds it open, would keep this process
   // alive; exiting instead could cut the JSON line short, as a pipe's

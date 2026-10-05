@@ -1,11 +1,12 @@
 //! The page in a browser (DESIGN §3, "Joining"; §8, U4): the built page,
-//! in Playwright's headless Chromium, dials a node by key as a person who
-//! stands in its group. Everything runs on this computer: iroh's relay
+//! in Playwright's headless Chromium and in its WebKit as an iPhone (u4-7),
+//! each test once in each, dials a node by key as a person who stands in
+//! its group. Everything runs on this computer: iroh's relay
 //! server on 127.0.0.1, plain HTTP, and a node whose only relay it is;
 //! the page is served on 127.0.0.1 and its link carries that relay. The
 //! browser halves are `web/tests/drive.mjs` and, for the runtime (u4-6),
 //! `web/tests/runtime.mjs`, which fail naming the install command when
-//! Playwright or its Chromium is absent — they never skip; the runtime's
+//! Playwright or its browsers are absent — they never skip; the runtime's
 //! film is made by ffmpeg, whose absence fails naming its install too.
 //!
 //! Each test builds the page first with `scripts/build-web.sh`, once per
@@ -19,12 +20,13 @@
 mod origins;
 // The page built, and a relay on 127.0.0.1: shared with the command's
 // joining test (crates/svrngs/tests/join_page.rs).
+#[macro_use]
 mod harness;
 
 use std::path::Path;
 use std::time::Duration;
 
-use harness::{relay, relay_url, repo, site};
+use harness::{relay, relay_url, repo, site, Engine};
 use iroh_relay::server::Server;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -108,14 +110,16 @@ fn token(issuer: &SigningKey, relay: &Server) -> String {
     .encode()
 }
 
-/// Run the browser half `web/tests/<script>` on `args`, and read the JSON
-/// line it printed. When `release` fires, the browser half is told `go`
+/// Run the browser half `web/tests/<script>` in `engine` on `args`, and
+/// read the JSON line it printed. When `release` fires, the browser half is told `go`
 /// (its upload's tail, u4-4).
 async fn drive(
+    engine: Engine,
     script: &str,
-    args: Value,
+    mut args: Value,
     release: Option<tokio::sync::oneshot::Receiver<()>>,
 ) -> Value {
+    args["engine"] = json!(engine.as_str());
     let mut child = tokio::process::Command::new("node")
         .arg(repo().join("web/tests").join(script))
         .arg(args.to_string())
@@ -153,14 +157,16 @@ async fn drive(
     serde_json::from_str(line).expect("the browser half printed JSON")
 }
 
-/// The page holds bo's key, opens the link, and dials the node by key
-/// through the relay the token carries; the node admits bo on the members'
-/// protocol and answers `GET /people/lends` 200 (u4-5; `GET /lends` until
-/// then). The failing input is
-/// upstream's one path fact (commonwealth-ai `ralph/DECISIONS.md:9977-9983`):
-/// the send half finished before the response.
-#[tokio::test(flavor = "multi_thread")]
-async fn a_page_holding_a_standing_key_dials_the_node_and_gets_its_lends() {
+in_both_engines!(
+    /// The page holds bo's key, opens the link, and dials the node by key
+    /// through the relay the token carries; the node admits bo on the members'
+    /// protocol and answers `GET /people/lends` 200 (u4-5; `GET /lends` until
+    /// then). The failing input is
+    /// upstream's one path fact (commonwealth-ai `ralph/DECISIONS.md:9977-9983`):
+    /// the send half finished before the response.
+    a_page_holding_a_standing_key_dials_the_node_and_gets_its_lends
+);
+async fn a_page_holding_a_standing_key_dials_the_node_and_gets_its_lends(engine: Engine) {
     let site = site();
     let dir = tempfile::tempdir().unwrap();
     let relay = relay().await;
@@ -168,6 +174,7 @@ async fn a_page_holding_a_standing_key_dials_the_node_and_gets_its_lends() {
     let node = node(dir.path(), &relay, &bo).await;
 
     let seen = drive(
+        engine,
         "drive.mjs",
         json!({
             "site": site,
@@ -230,16 +237,18 @@ fn lend(dir: &Path, name: &str, port: u16) {
     std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
 }
 
-/// HTTP over the dial (u4-4): the page, holding bo's key, speaks hyper's
-/// HTTP/1 through the node's door to the door's tests' services
-/// (tests/door/origins.rs). A range of a 64 MiB file arrives sha-exact and
-/// in chunks, never whole; a 206 and a 416 come back whole, status and
-/// `Content-Range`; a chunked answer that never ends is decoded as it
-/// streams; and an 8 MiB upload reaches the service while the page holds at
-/// most 1 MiB of it, then arrives sha-exact. Planted: the response
-/// buffered whole; `Range` dropped.
-#[tokio::test(flavor = "multi_thread")]
-async fn a_page_speaks_http_through_the_door_streaming_both_ways() {
+in_both_engines!(
+    /// HTTP over the dial (u4-4): the page, holding bo's key, speaks hyper's
+    /// HTTP/1 through the node's door to the door's tests' services
+    /// (tests/door/origins.rs). A range of a 64 MiB file arrives sha-exact and
+    /// in chunks, never whole; a 206 and a 416 come back whole, status and
+    /// `Content-Range`; a chunked answer that never ends is decoded as it
+    /// streams; and an 8 MiB upload reaches the service while the page holds at
+    /// most 1 MiB of it, then arrives sha-exact. Planted: the response
+    /// buffered whole; `Range` dropped.
+    a_page_speaks_http_through_the_door_streaming_both_ways
+);
+async fn a_page_speaks_http_through_the_door_streaming_both_ways(engine: Engine) {
     let site = site();
     let dir = tempfile::tempdir().unwrap();
     let relay = relay().await;
@@ -263,6 +272,7 @@ async fn a_page_speaks_http_through_the_door_streaming_both_ways() {
 
     let (from, to) = (1_000, 9_000_000 - 1);
     let seen = drive(
+        engine,
         "drive.mjs",
         json!({
             "site": site,
@@ -395,21 +405,65 @@ fn keys(heads: &std::sync::Mutex<Vec<String>>) -> Vec<String> {
         .collect()
 }
 
-/// The runtime (u4-6; DESIGN §3, "Joining", calls 3 and 4): ada's computer
-/// lends a page and a film, an H.264 mp4 from upstream's Range origin, and
-/// cy's, another computer holding bo's key, lends a file. The phone, holding
-/// bo's key, opens ada's page from its list: the page's address is under
-/// the service worker's scope, and the worker serves it, its `<video>` and
-/// every byte range from ada's door. The film plays and seeks three times,
-/// each playing again within five seconds (Demo A's seek bar); the browser
-/// stops the worker before the third, and the next ranges still answer. A
-/// range of cy's file, asked by a path relative to ada's page, comes back
-/// 206 and sha-exact, and cy's door names bo's key, not ada's: no computer
-/// carries another's lend. Planted: a range answered 200 with the whole
-/// body (the worker dropping `Range`); the worker's endpoint never reopened
-/// (opened once, when it activates).
-#[tokio::test(flavor = "multi_thread")]
-async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself() {
+/// Chromium's report of its worker: stopped through DevTools, then running
+/// again, its endpoint opened when it started and again after the stop.
+fn stopped_and_ran_again(seen: &Value, shown: &Value) {
+    assert!(
+        seen["runsAtStop"]
+            .as_array()
+            .unwrap()
+            .contains(&json!("stopped")),
+        "the browser must have stopped the worker:\n{shown:#}"
+    );
+    let opened = seen["logs"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|l| {
+            l.as_str()
+                .is_some_and(|l| l.contains("RUNTIME: opening the endpoint"))
+        })
+        .count();
+    assert_eq!(
+        opened, 2,
+        "the worker opens its endpoint when it starts, and again after it was stopped:\n{seen:#}"
+    );
+    let runs: Vec<&str> = seen["runs"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(Value::as_str)
+        .collect();
+    let stop = runs.iter().position(|r| *r == "stopped").unwrap();
+    assert!(
+        runs[stop..].contains(&"running"),
+        "the worker must run again after it was stopped:\n{shown:#}"
+    );
+}
+
+in_both_engines!(
+    /// The runtime (u4-6; DESIGN §3, "Joining", calls 3 and 4): ada's computer
+    /// lends a page and a film, an H.264 mp4 from upstream's Range origin, and
+    /// cy's, another computer holding bo's key, lends a file. The phone, holding
+    /// bo's key, opens ada's page from its list: the page's address is under
+    /// the service worker's scope, and the worker serves it, its `<video>` and
+    /// every byte range from ada's door. The film plays and seeks three times,
+    /// each playing again within five seconds (Demo A's seek bar); the browser
+    /// stops the worker before the third, and the next ranges still answer:
+    /// Chromium stops it through DevTools, the page left playing, and WebKit,
+    /// whose worker Playwright cannot reach, is closed and opened again on its
+    /// profile, as a phone ends a browser left in the background, and the page
+    /// reopens at the lend's address (web/tests/runtime.mjs). A
+    /// range of cy's file, asked by a path relative to ada's page, comes back
+    /// 206 and sha-exact, and cy's door names bo's key, not ada's: no computer
+    /// carries another's lend. Planted: a range answered 200 with the whole
+    /// body (the worker dropping `Range`); the worker's endpoint never reopened
+    /// (opened once, when it activates).
+    a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself
+);
+async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself(
+    engine: Engine,
+) {
     let site = site();
     let relay = relay().await;
     let bo = signing(7);
@@ -437,6 +491,7 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
 
     let (from, to) = (1_000_000, 1_000_000 + 4 * MIB - 1);
     let seen = drive(
+        engine,
         "runtime.mjs",
         json!({
             "site": site,
@@ -469,37 +524,19 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
             "each seek must play again within five seconds:\n{seen:#}"
         );
     }
-    assert!(
-        seen["runsAtStop"]
-            .as_array()
-            .unwrap()
-            .contains(&json!("stopped")),
-        "the browser must have stopped the worker:\n{shown:#}"
-    );
-    let opened = seen["logs"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .filter(|l| {
-            l.as_str()
-                .is_some_and(|l| l.contains("RUNTIME: opening the endpoint"))
-        })
-        .count();
-    assert_eq!(
-        opened, 2,
-        "the worker opens its endpoint when it starts, and again after it was stopped:\n{seen:#}"
-    );
-    let runs: Vec<&str> = seen["runs"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .filter_map(Value::as_str)
-        .collect();
-    let stop = runs.iter().position(|r| *r == "stopped").unwrap();
-    assert!(
-        runs[stop..].contains(&"running"),
-        "the worker must run again after it was stopped:\n{shown:#}"
-    );
+    match engine {
+        Engine::Chromium => stopped_and_ran_again(&seen, &shown),
+        Engine::Webkit => {
+            // No worker outlives its browser; WebKit's worker, which Playwright
+            // gives no console, shows its new endpoint by the film playing
+            // again at the lend's address, which only the worker serves.
+            assert_eq!(seen["reopened"], seen["opened"], "{shown:#}");
+            assert!(
+                seen["replayed"]["ms"].is_u64(),
+                "the film must play again once the browser is opened again:\n{shown:#}"
+            );
+        }
+    }
 
     let film_keys = keys(&film_heads);
     assert!(

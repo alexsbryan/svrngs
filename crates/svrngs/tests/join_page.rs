@@ -1,7 +1,7 @@
 //! Joining from a phone (DESIGN §3, "Joining"; §8, U4; u4-5): Sam makes a
 //! group whose links open a page on an origin, `svrngs new --origin`, and
 //! lends a service. A phone opens the https link printed, in Playwright's
-//! headless Chromium: the page asks the person's name once, makes their
+//! headless Chromium and in its WebKit as an iPhone (u4-7): the page asks the person's name once, makes their
 //! key, redeems the link at Sam's computer naming itself a browser, keeps
 //! the key sealed, and lists what the group's people lend as the bare
 //! command prints it. Opening the link again, or the page alone, is in
@@ -10,10 +10,11 @@
 //! runs on this computer: a relay on 127.0.0.1, plain HTTP, Sam's computer
 //! reached only through it, and the page served on 127.0.0.1. The browser
 //! half is `web/tests/join.mjs`, which fails naming the install command
-//! when Playwright or its Chromium is absent — it never skips.
+//! when Playwright or its browsers are absent — it never skips.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 #[path = "../../svrngs-node/tests/browser/harness.rs"]
+#[macro_use]
 mod harness;
 
 use std::num::NonZeroU16;
@@ -74,11 +75,15 @@ fn admits(sam: &Node, group: &str) -> Vec<(String, String, Option<Device>)> {
         .collect()
 }
 
-/// Planted: the key stored unsealed beside its seal (store.js `keep`
-/// writing `raw: key`); a second `Admit` on reopening (app.js joining
-/// anew, with a fresh key, on every opening of a link).
-#[tokio::test(flavor = "multi_thread")]
-async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking() {
+in_both_engines!(
+    /// Planted: the key stored unsealed beside its seal (store.js `keep`
+    /// writing `raw: key`); a second `Admit` on reopening (app.js joining
+    /// anew, with a fresh key, on every opening of a link).
+    a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking
+);
+async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
+    engine: harness::Engine,
+) {
     let site = harness::site();
     let relay = harness::relay().await;
     let dir = tempfile::tempdir().unwrap();
@@ -109,7 +114,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking() 
 
     let mut phone = tokio::process::Command::new("node")
         .arg(harness::repo().join("web/tests/join.mjs"))
-        .arg(json!({ "site": site }).to_string())
+        .arg(json!({ "engine": engine.as_str(), "site": site }).to_string())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
