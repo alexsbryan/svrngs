@@ -5,7 +5,8 @@
 //! key, redeems the link at Sam's computer naming itself a browser, keeps
 //! the key sealed, and lists what the group's people lend as the bare
 //! command prints it. Opening the link again, or the page alone, is in
-//! without asking; a lend opens by dialling its lender's key. Everything
+//! without asking; a lend opens at its address under the page's service
+//! worker, which dials its lender's key. Everything
 //! runs on this computer: a relay on 127.0.0.1, plain HTTP, Sam's computer
 //! reached only through it, and the page served on 127.0.0.1. The browser
 //! half is `web/tests/join.mjs`, which fails naming the install command
@@ -202,16 +203,11 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking() 
         assert_eq!(o["lent"], json!(["Sam’s shelf"]), "{again}:\n{seen:#}");
     }
 
-    // A lend opens by its lender's key: the page dials Sam's computer itself.
-    assert_eq!(seen["opened"], "Sam’s shelf answered.", "{seen:#}");
-    let lines: Vec<&str> = seen["lines"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .filter_map(Value::as_str)
-        .collect();
-    assert!(
-        lines.contains(&"HTTP: GET /lend/shelf/ answered 200"),
+    // A lend opens at its address under the service worker's scope, which
+    // serves it from Sam's computer, dialled by Sam's key (u4-6).
+    assert_eq!(
+        seen["opened"],
+        json!({ "path": format!("/l/{founder}/shelf/"), "text": "hi" }),
         "{seen:#}"
     );
     sam.endpoint().close().await;

@@ -46,15 +46,6 @@ pub async fn connect(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
     dial(key, token, None, Alpn::Member).await
 }
 
-/// Dial the computer whose key is `lender`, 64 hex, as [`connect`] dials
-/// the issuer, through the way to it the token names: a phone dials whoever
-/// lends a service itself (DESIGN §3, call 4), and no computer proxies
-/// another's lend.
-#[wasm_bindgen]
-pub async fn connect_to(key: Vec<u8>, token: String, lender: String) -> Result<Dialled, JsError> {
-    dial(key, token, Some(lender), Alpn::Member).await
-}
-
 /// Dial the computer that issued `token` on the redeem protocol, the one a
 /// key standing in no group may speak, to ask what the link is for and
 /// redeem it ([`join`]'s bodies).
@@ -68,7 +59,45 @@ pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsE
 async fn dial(key: Vec<u8>, token: String, to: Option<String>, alpn: Alpn) -> Result<Dialled, JsError> {
     let bound = bind(key, &token).await?;
     let conn = reach(&bound, to, alpn).await?;
-    Ok(Dialled { ep: bound.ep, conn })
+    Ok(Dialled {
+        ep: Some(bound.ep),
+        conn,
+    })
+}
+
+/// Bind one endpoint as the person whose key is `key`, in the group whose
+/// link's token is `token`, to dial each lender from ([`Endpoint::dial`]):
+/// the service worker's (DESIGN §3, call 3). A relay keeps one endpoint
+/// per key and sets the older aside when another binds
+/// (iroh-relay-1.0.2/src/server/clients.rs:80-92), so the worker holds one
+/// for every lender it reaches, never one per dial.
+#[wasm_bindgen]
+pub async fn endpoint(key: Vec<u8>, token: String) -> Result<Endpoint, JsError> {
+    Ok(Endpoint {
+        bound: bind(key, &token).await?,
+    })
+}
+
+/// A browser endpoint bound with the person's key, online at a relay.
+#[wasm_bindgen]
+pub struct Endpoint {
+    bound: Bound,
+}
+
+#[wasm_bindgen]
+impl Endpoint {
+    /// Dial the computer whose key is `lender`, 64 hex, on the members'
+    /// protocol: a phone dials whoever lends a service itself (DESIGN §3,
+    /// call 4). The dial's [`Dialled::close`] closes only its connection.
+    pub async fn dial(&self, lender: String) -> Result<Dialled, JsError> {
+        let conn = reach(&self.bound, Some(lender), Alpn::Member).await?;
+        Ok(Dialled { ep: None, conn })
+    }
+
+    /// Close the endpoint, and every dial from it.
+    pub async fn close(&self) {
+        self.bound.ep.close().await;
+    }
 }
 
 /// A refusal's line is emitted, and is the error.
@@ -215,7 +244,9 @@ async fn reach(bound: &Bound, to: Option<String>, alpn: Alpn) -> Result<iroh::en
 /// the connection, spoken by hyper's HTTP/1 client ([`http`]).
 #[wasm_bindgen]
 pub struct Dialled {
-    ep: iroh::Endpoint,
+    /// The endpoint the dial bound for itself, closed with it; none when
+    /// it was dialled from an [`Endpoint`], which outlives it.
+    ep: Option<iroh::Endpoint>,
     conn: iroh::endpoint::Connection,
 }
 
@@ -243,11 +274,16 @@ impl Dialled {
         })
     }
 
-    /// Close the endpoint, and every stream with it.
+    /// Close the dial, and every stream with it: its endpoint when it
+    /// bound one for itself, else its connection.
     pub fn close(&self) -> js_sys::Promise {
         let ep = self.ep.clone();
+        let conn = self.conn.clone();
         wasm_bindgen_futures::future_to_promise(async move {
-            ep.close().await;
+            match ep {
+                Some(ep) => ep.close().await,
+                None => conn.close(0u32.into(), b"done"),
+            }
             Ok(JsValue::UNDEFINED)
         })
     }

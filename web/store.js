@@ -5,7 +5,8 @@
 //   seal     `key`: the page's sealing key, AES-GCM 256, made once with
 //            `extractable: false`, so no script can read its bytes out.
 //   groups   by `id`: the group's name, the person's name in it, the link's
-//            token it was joined by, when it was last opened, and the
+//            token it was joined by, when it was last opened, the keys
+//            of the people its list last named as lending, and the
 //            person's key — 32 bytes — sealed: `iv` and `sealed`, with the
 //            group's id as the seal's additional data, so a sealed key
 //            opens only as the key of the group it was kept for.
@@ -72,8 +73,17 @@ export async function groups() {
 }
 
 // The group was opened now: it is the one the page opens without a link.
+// Answers the group as kept.
 export async function opened(group) {
-  await run('groups', 'readwrite', (s) => s.put({ ...group, opened: Date.now() }));
+  const now = { ...group, opened: Date.now() };
+  await run('groups', 'readwrite', (s) => s.put(now));
+  return now;
+}
+
+// The keys of the people `group`'s list last named as lending: the
+// runtime dials each of them with this group's key (sw.js).
+export async function listed(group, lenders) {
+  await run('groups', 'readwrite', (s) => s.put({ ...group, lenders }));
 }
 
 // The person's key in `group`, unsealed: 32 bytes, held only in memory.

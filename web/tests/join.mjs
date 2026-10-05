@@ -5,8 +5,8 @@
 // one JSON line on stdin, `{"link": ..., "name": ...}`. Then, in headless
 // Chromium, it opens the link and types the name whenever the page asks for
 // one; reads every storage the page can write for the person's key; opens
-// the link again, then the page alone; opens the first lend listed; and
-// prints what it saw as one JSON line.
+// the link again, then the page alone; opens the first lend listed, which
+// the service worker serves; and prints what it saw as one JSON line.
 //
 //   node web/tests/join.mjs '{"site": "<dir>"}'
 //
@@ -122,18 +122,15 @@ try {
   const stored = await page.evaluate(scan);
   const again = await opening(link);
   const alone = await opening(origin);
-  // Open the first lend listed: the page dials its lender by key.
+  const lines = await page.evaluate(() => window.__lines);
+  // Open the first lend listed: the page goes to its address, which the
+  // service worker serves from its lender's computer, dialled by key.
   let opened = null;
   if (alone.lent.length) {
-    await page.click('#lent button');
-    await page.waitForFunction(
-      () => /answered\.$|did not open\.$|did not answer\.$/.test(document.getElementById('response').textContent),
-      null,
-      { timeout: 90_000 },
-    );
-    opened = await page.evaluate(() => document.getElementById('response').textContent);
+    await Promise.all([page.waitForURL(/\/l\//, { timeout: 90_000 }), page.click('#lent button')]);
+    await page.waitForLoadState('load');
+    opened = { path: new URL(page.url()).pathname, text: await page.evaluate(() => document.body.innerText) };
   }
-  const lines = await page.evaluate(() => window.__lines);
   console.log(JSON.stringify({ first, stored, again, alone, opened, lines, logs }));
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);

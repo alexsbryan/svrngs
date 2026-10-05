@@ -15,7 +15,7 @@
 // person's name once, makes the person's key, redeems the link at its
 // issuer as a browser, and keeps the key sealed and the group's name
 // (store.js). Every word a person reads here is DESIGN §1's.
-import init, { ask, believe, connect, connect_to, connect_to_join, redemption } from './wasm/svrngs_web.js?v=__VERSION__';
+import init, { ask, believe, connect, connect_to_join, redemption } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
 
 const heading = document.getElementById('status');
@@ -136,25 +136,23 @@ function what(l) {
   return `${l.person}’s ${l.name === l.kind ? l.name : `${l.name} (${l.kind})`}`;
 }
 
-// Open a lend: dial its lender's computer by its key, never through the
-// computer that listed it (DESIGN §3, call 4), and ask for its front page.
-// Rendering it is the runtime's (u4-6).
-async function open(group, key, l) {
-  said.textContent = `Opening ${what(l)}…`;
-  try {
-    const d = await reach(connect_to(key, group.token, l.key), `${l.person}’s computer did not answer.`);
-    const res = await d.fetch('GET', `/lend/${l.name}/`, [], null);
-    await res.body?.cancel();
-    await d.close();
-    said.textContent = res.ok ? `${what(l)} answered.` : `${what(l)} did not open.`;
-  } catch (e) {
-    said.textContent = e instanceof Said ? e.message : `${what(l)} did not open.`;
+// Open a lend: go to its address under the service worker's scope,
+// `l/<lender>/<lend>/`, which the worker serves from its lender's computer,
+// dialled by its key, never through the computer that listed it (DESIGN
+// §3, calls 3 and 4; sw.js).
+async function open(l) {
+  if (!('serviceWorker' in navigator)) {
+    said.textContent = `This browser cannot open ${what(l)}.`;
+    return;
   }
+  said.textContent = `Opening ${what(l)}…`;
+  await navigator.serviceWorker.ready;
+  location.assign(`l/${l.key}/${encodeURIComponent(l.name)}/`);
 }
 
 // In `group`: list what its people lend.
 async function enter(group) {
-  await store.opened(group);
+  group = await store.opened(group);
   document.title = group.name;
   const key = await store.unseal(group);
   heading.textContent = `Reaching ${group.name}…`;
@@ -167,13 +165,14 @@ async function enter(group) {
   }
   const { lent, unanswered } = await res.json();
   await d.close();
+  await store.listed(group, lent.map((l) => l.key));
   show(`You’re in ${group.name}, as ${group.person}`, true);
   list.replaceChildren(
     ...lent.map((l) => {
       const item = document.createElement('li');
       const button = document.createElement('button');
       button.textContent = what(l);
-      button.onclick = () => open(group, key, l);
+      button.onclick = () => open(l);
       item.append(button);
       return item;
     }),
@@ -186,15 +185,18 @@ async function enter(group) {
     .join('\n');
 }
 
-// Cache the app shell after first load, so a repeat visit needs no origin
-// traffic at all (upstream's docs/RING_APP_LIBRARY.md: "no traffic after
-// first load").
-// Registered after load and best-effort: the page works without it, and a
-// failed registration must never break the dial. Asked for before joining
-// awaits anyone, so a person typing their name does not miss the load.
+// The service worker: the runtime that serves what the group's people lend
+// (u4-6, sw.js), and the app shell's cache after first load, so a repeat
+// visit needs no origin traffic at all (upstream's
+// docs/RING_APP_LIBRARY.md: "no traffic after first load"). A module, as
+// it imports the dial. Registered after load: joining and the list work
+// without it. Asked for before joining awaits anyone, so a person typing
+// their name does not miss the load.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    navigator.serviceWorker
+      .register('./sw.js', { type: 'module' })
+      .catch((e) => trace(`PAGE: the service worker did not register: ${e}`));
   });
 }
 
