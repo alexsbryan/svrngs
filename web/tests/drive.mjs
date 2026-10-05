@@ -13,19 +13,9 @@
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its Chromium is absent — the browser step fails then, never skips; 1 on
 // anything else.
-import { launch, serve } from './page.mjs';
+import { hold, launch, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
-
-// The page's store holding a group joined by `token`, as joining keeps one
-// (web/store.js, u4-5): the person's key sealed, the group's name, and the
-// person's — a phone that joined. Imported as app.js imports it.
-async function hold({ hex, token }) {
-  const app = document.querySelector('script[type=module]').src;
-  const store = await import(new URL(`./store.js${new URL(app).search}`, app).href);
-  const key = Uint8Array.from(hex.match(/../g), (h) => parseInt(h, 16));
-  await store.keep({ id: 'held', name: 'house', person: 'bo', token, key });
-}
 
 // In the page: HTTP over the dial through the node's door, by the page's own
 // `connect` and `fetch` (web/src/lib.rs), imported as app.js imports them.

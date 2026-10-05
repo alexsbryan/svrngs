@@ -1,5 +1,6 @@
 // What the browser halves share (drive.mjs, join.mjs): the built page
-// served as an origin serves it, and Playwright's headless Chromium. Each
+// served as an origin serves it, Playwright's headless Chromium, and a
+// joined group held in the page's store. Each
 // exits 3 naming the install command when Playwright or its Chromium is
 // absent — the browser step fails then, never skips.
 import http from 'node:http';
@@ -46,4 +47,15 @@ export async function launch() {
     console.error(`Playwright's Chromium cannot start — run: ${INSTALL}\n${e}`);
     process.exit(3);
   }
+}
+
+// In the page: its store holding a group joined by `token`, as joining
+// keeps one (web/store.js, u4-5): the person's key sealed, the group's
+// name, and the person's — a phone that joined. Imported as app.js
+// imports it.
+export async function hold({ hex, token }) {
+  const app = document.querySelector('script[type=module]').src;
+  const store = await import(new URL(`./store.js${new URL(app).search}`, app).href);
+  const key = Uint8Array.from(hex.match(/../g), (h) => parseInt(h, 16));
+  await store.keep({ id: 'held', name: 'house', person: 'bo', token, key });
 }
