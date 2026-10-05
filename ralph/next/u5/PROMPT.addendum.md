@@ -15,11 +15,14 @@ with `git -C ~/dev/commonwealth-ai show e1a43bcd2:<path>`. Jellyfin is
 GPL-2.0-only: Films talks to it over its API, and copies none of its code.
 
 **The seat's calls** (2026-10-05, from the survey; u5-0 writes them into DESIGN):
-1. *One address for every lend, on a computer as on a phone.* U4's page
-   serves `<scope>/l/<lender>/<lend>/<path>`; a computer's node serves the
-   same scheme on its loopback, this computer's own lends included. So an
-   app's page addresses any lend by a relative path and the same page works
-   on both.
+1. *Every lend at an origin of its own, on a computer as on a phone.* A
+   computer serves `<lend>.<lender>.localhost:<api port>`, the page
+   `<lend>.<lender>.<page host>`, this computer's own lends included; an
+   app's page reaches another lend at the origin `/v1/lends` answers, and the
+   same page works on both. (Revised by the operator, 2026-10-05: one shared
+   origin let any lent page unseal the viewer's key — u4-6, DESIGN §11 risk 5
+   — and broke every self-hosted app that wants its origin's root, which is
+   most of DESIGN §1's list.)
 2. *The page does the work, under the viewer's key.* Films' page reads each
    lender's catalogue and streams from each lender's door from the viewer's
    own device, so each door counts and shares by the person watching. Films'
@@ -35,6 +38,11 @@ GPL-2.0-only: Films talks to it over its API, and copies none of its code.
    and per play keep one viewer's seek from restarting another's transcode
    through one lend, and whether any byte a transcode sends carries the lend's
    token, are measured (u5-3) before Films relies on either.
+6. *The person's key never enters a lend's origin.* The page signs a pass —
+   a fresh key may act as this person toward these lends until this time —
+   for the lend it opens and the lends its lender declared it reads, and the
+   lend's origin dials with that. A lent page can act as the person toward
+   those lends while the pass lasts, and nothing else (u5-2).
 
 Tests that need Jellyfin run a scratch Jellyfin on this host as u3-8's dry run
 did (`demo/runs/a/dry-2026-10-04/dry.sh`: the macOS app's server with its own
