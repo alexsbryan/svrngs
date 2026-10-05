@@ -75,11 +75,10 @@ if [ "$(uname -s)" = "Darwin" ] && [ -z "${CC_wasm32_unknown_unknown:-}" ]; then
     exit 3
   fi
 fi
-# getrandom 0.3 selects its wasm backend by explicit cfg — the `wasm_js`
-# feature alone is insufficient (docs.rs/getrandom/0.3/#webassembly-support)
-# — and kernel-types routes ID minting through it. This also clears the
-# blocker RING_APP_LIBRARY.md names against kernel-types on wasm.
-( cd "$APP" && RUSTFLAGS='--cfg getrandom_backend="wasm_js"' cargo build --release --target wasm32-unknown-unknown )
+# Upstream passed `--cfg getrandom_backend="wasm_js"` here for kernel-types'
+# getrandom 0.3; svrngs-core pulls no getrandom, and iroh's 0.4 takes its
+# browser backend from the `wasm_js` feature its manifest sets.
+( cd "$APP" && cargo build --release --target wasm32-unknown-unknown )
 
 rm -rf "$OUT"
 mkdir -p "$OUT/wasm"
