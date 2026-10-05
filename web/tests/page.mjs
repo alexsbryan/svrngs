@@ -11,19 +11,23 @@ export const INSTALL = 'npm ci --prefix web && npx --prefix web playwright insta
 
 // The page as an origin serves it: its directory at the root, with the
 // trailing slash, and the wasm by its type so the browser streams it.
+// With `worker`, script run in the service worker before its own: the
+// browser alone fetches sw.js, as it registers and updates the worker, so
+// the page and what it imports never see it (u4-10's plant).
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.wasm': 'application/wasm',
 };
-export function serve(dir) {
+export function serve(dir, { worker } = {}) {
   const root = resolve(dir);
   const server = http.createServer(async (req, res) => {
     const path = new URL(req.url, 'http://page').pathname;
     const file = join(root, normalize(path.endsWith('/') ? `${path}index.html` : path));
     if (!file.startsWith(root)) return res.writeHead(403).end();
     try {
-      const body = await readFile(file);
+      let body = await readFile(file);
+      if (worker && path === '/sw.js') body = `${worker}\n${body}`;
       res.writeHead(200, { 'content-type': TYPES[extname(file)] ?? 'application/octet-stream' });
       res.end(body);
     } catch {

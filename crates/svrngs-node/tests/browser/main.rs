@@ -639,3 +639,97 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
     );
     drop((ada, cy));
 }
+
+/// What the worker traced, read at `/trace` by the browser half.
+fn trace_of<'a>(seen: &'a Value, key: &str) -> &'a str {
+    seen[key].as_str().unwrap_or_default()
+}
+
+in_both_engines!(
+    /// Safari's worker (u4-10; the operator's iPhone, 2026-10-05, in
+    /// demo/runs/u4/2026-10-05-phones/): it read no sealing key where its
+    /// page had kept one, made its own over the page's, and never dialled.
+    /// Here the worker is planted to read the seal empty, the page not
+    /// (web/tests/handover.mjs). The page opens ada's lent page from its
+    /// list, handing the worker bo's key as it opens the group, and the
+    /// worker dials with it: the film plays. The browser stops the worker
+    /// and the lend's address is opened again: the worker holds no key and
+    /// unseals none, so the hand-over page answers, hands bo's key over in
+    /// the page and opens the address again, and the film plays. The page's
+    /// own unseal still opens bo's key after: no worker put a sealing key
+    /// over the page's. Planted: the worker making a sealing key when it
+    /// reads none (`unseal` as it was before 1f60d0a); the handed key
+    /// ignored (sw.js `keyFor` reading only the seal).
+    a_worker_that_reads_no_seal_dials_with_the_key_the_page_hands_it
+);
+async fn a_worker_that_reads_no_seal_dials_with_the_key_the_page_hands_it(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &bo).await;
+    let ada_key = actor_of(&signing(1));
+
+    let mp4 = dir.path().join("title.mp4");
+    let size = film(&mp4);
+    let (film_origin, film_heads) = origins::kept_range_origin(mp4, size).await;
+    lend(dir.path(), "film", film_origin.port());
+    let html = "<!doctype html><title>a page</title>\
+                <video src=\"../film/title.mp4\" playsinline preload=\"auto\"></video>";
+    lend(dir.path(), "page", page_origin(html.to_string()).await.port());
+
+    let seen = drive(
+        engine,
+        "handover.mjs",
+        json!({
+            "site": site,
+            "key": hex::encode(bo.to_bytes()),
+            "token": token(&signing(1), &relay),
+            "open": "page",
+        }),
+        None,
+    )
+    .await;
+    let mut shown = seen.clone();
+    shown["logs"] = json!(format!(
+        "{} lines",
+        seen["logs"].as_array().map_or(0, Vec::len)
+    ));
+    eprintln!("the hand-over's run: {seen:#}");
+
+    assert_eq!(
+        seen["unsealedAfter"],
+        hex::encode(bo.to_bytes()),
+        "the page's own unseal must still open bo's key: no worker puts a sealing key over the page's:\n{shown:#}"
+    );
+    assert_eq!(seen["opened"], format!("/l/{ada_key}/page/"), "{shown:#}");
+    assert!(
+        trace_of(&seen, "handedTrace").contains("is the one the page handed over"),
+        "the worker must dial with the key the page handed it:\n{shown:#}"
+    );
+    assert!(
+        seen["first"]["ms"].is_u64(),
+        "the film must play with the handed key:\n{shown:#}"
+    );
+    let stopped = trace_of(&seen, "stoppedTrace");
+    assert!(
+        stopped.contains("the sealing key absent, and only the page makes one")
+            && !stopped.contains("making one"),
+        "the restarted worker must read no seal (the plant) and make none:\n{shown:#}"
+    );
+    assert!(
+        stopped.contains("answered with the hand-over page")
+            && stopped.contains("the page handed over the key"),
+        "the lend's address must go through the hand-over page:\n{shown:#}"
+    );
+    assert_eq!(seen["reopened"], seen["opened"], "{shown:#}");
+    assert!(
+        seen["replayed"]["ms"].is_u64(),
+        "the film must play after the hand-over page:\n{shown:#}"
+    );
+    assert!(
+        keys(&film_heads).iter().all(|k| *k == actor_of(&bo)),
+        "ada's door must name bo's key"
+    );
+    drop(ada);
+}
