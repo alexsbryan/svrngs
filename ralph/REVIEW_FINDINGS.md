@@ -912,3 +912,212 @@ exit 0 with every step `passed` (principles pinned, lean and RUST_ARCH, app
 nouns gate, app nouns, rustfmt, clippy, tests, canaries, app laws), the
 first in 2:35. On 2026-10-04, before this audit, it had failed 2 runs of 3
 (#33).
+
+## REVIEW-audit-u4-auto-1 (2026-10-05, range 3e6100c..2b6d626)
+
+There is no earlier `REVIEW-audit-` row in this queue, so the range starts
+at 3e6100c, the commit that wrote ralph/next/u4/STATE.md. It ends at
+2b6d626, the commit that made this row. It covers u4-1, u4-2 and u4-3.
+319dac0 and 357d07c (the operator's raises of the size budget) come before
+it. 0c9ffa7, 02a3ef6 and f2250ac change only ralph/. The range touched
+crates/svrngs-core, crates/svrngs-node, crates/svrngs-runtime,
+crates/svrngs and web/, a new crate with its own workspace (`git diff
+--stat 3e6100c 2b6d626 -- crates apps web scripts`). This audit's fixes are
+3c06b23 (#40) and 7dc91ac (#41). The row names `target/debug/sovereign-cli`,
+which svrngs does not build. The binary used here is
+~/dev/commonwealth-ai/target/debug/sovereign-cli (built 2026-10-04 23:34),
+as in every earlier audit.
+
+**Every tool run below was against the working tree, which held five
+planted copies on top of 7dc91ac.** The plants are listed under (2). Two
+attempts to remove them were refused by this session's permission layer:
+`git checkout` of the five files, and then writing their diff to a file
+before reverse-applying it. So the clean re-index that earlier audits ran
+after their plants did not run here. The unplanted results under (2) and
+(3) are therefore *derived*: they are the planted report less the clusters
+whose sides are plants. They were not measured on a clean tree. See
+ralph/next/u4/ctl/NEEDS_HUMAN.md.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' 3e6100c..2b6d626`,
+summed as REVIEW-audit-u3-auto-2 summed it: a commit counts toward the row
+whose `started` commit comes before it. Product code is `crates/`, `apps/`
+and `web/`, less Cargo.lock and package-lock.json. Tests are files with a
+`tests/` or `fixtures/` segment, or a name lean_check counts as a test
+(scripts/lean_check.py:22), or `*.test.mjs`. The counts are raw diff lines,
+with renames followed. Cargo.toml and package.json count as src.
+scripts/build-web.sh (+127) and scripts/check.sh (+7) are scripts, so they
+are not counted here.
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| u4-1-browser-key | 228 | 64 | 164 | 419 | 11 | 408 |
+| u4-2-link-core | 250 | 175 | 75 | 46 | 30 | 16 |
+| u4-3-web-dial | 577 | 171 | 406 | 287 | 0 | 287 |
+| total | 1055 | 410 | 645 | 752 | 41 | 711 |
+
+- u4-1's +164 is mostly svrngs-core lib.rs (+80, `Device` and the
+  redemption's field) and membership.rs (+37), plus svrngs-runtime
+  register.rs (+16) and node.rs (+12).
+- u4-2's +75 is a move: svrngs-core joining.rs +138 and svrngs issuer.rs
+  +58, against svrngs-node redeem.rs −112 and the renamed link.rs −23.
+- u4-3's +406 is web/src/lib.rs (+183), app.js (+90), index.html (+47),
+  sw.js (+37) and Cargo.toml (+35). Its 171 removed lines are the edits
+  made to the ported files after the port commit 811b137.
+
+`python3 scripts/lean_check.py <tree>` (rc 0), trees from `git archive`:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 3e6100c, range start | 2359 / 3000 | 9601 / 14000 |
+| 2b6d626, range end | 2663 / 3000 | 10006 / 14000 |
+| 7dc91ac, after #40 and #41 | 2663 / 3000 | 10011 / 14000 |
+
+svrngs-core rose by 304 lines, to 89% of its ceiling. u4-1 added 117 of
+them and u4-2's move added the rest. Lines leaving svrngs-node for the core
+count against the core's ceiling, though not against the repository's
+(+5 there).
+
+### (2) Clones (`code dry-report`), each tier checked against a plant first
+
+The corpus came from `code index ~/dev/svrngs --corpus-id svrngs --full`
+(1661 chunks, 2m1s). The SCIP graph came from `refresh` (rust: 7450
+symbols, python: 109; "typescript: skipped (export failed)", I4). Both were
+run on the planted tree. The plants are the uncommitted diff the previous
+session of this row left, and they are still in the tree:
+
+- **A** (exact tier): crates/svrngs/src/issuer.rs's `addr` (u4-2), copied
+  byte for byte into a `pub mod plant` at the end of the file.
+- **B** (near tier): `request_bytes`, a free fn at the end of
+  crates/svrngs-core/src/joining.rs. It is `RedeemRequest::message`
+  (u4-2) with `self` renamed to `r` and `msg` renamed to `bytes`.
+- **C** (web/, Rust): web/src/lib.rs's `dial` (u4-3), copied as
+  `dial_again`, with an identical body.
+- **D** (web/, JS): web/app.js's `heldKey`, copied into web/sw.js as
+  `keyHeld`, with an identical body.
+- **N** (noun): `pub struct Origin(pub String)` at the end of
+  crates/svrngs-node/src/lend.rs. svrngs-core's link.rs:169 has the
+  original.
+
+Scoped runs at the default 0.95, each scope with a trailing slash (I11):
+
+| scope | locations | exact | near | plants seen |
+|---|---:|---:|---:|---|
+| crates/svrngs-core/ | 389 | 5 | 0 | B missed |
+| crates/svrngs-node/ | 300 | 4 | 1 | — |
+| crates/svrngs-runtime/ | 116 | 1 | 0 | — |
+| crates/svrngs/ | 70 | 1 | 1 | **A: exact `addr` issuer.rs:48 == :65, and near 0.968** |
+| web/ | 6 | **could-not-judge** | 0 | **C and D missed** (I14) |
+
+- B is missed at 0.95, 0.9, 0.8 and 0.7. At 0.7 it clusters with
+  `deserialize` (view.rs:167) and `parse` (lib.rs:199), never with
+  `message`. B is still in the symbol set: it is listed at `--threshold 0.0
+  --min-lines 1`, joining.rs:138–151, so this is not I13. This is I5 again,
+  and worse than the 0.920 of REVIEW-audit-u3-auto-2.
+- In web/, the exact tier says could-not-judge ("no SCIP function symbols
+  in scope"). The near tier says 0 at 0.95. At `--threshold 0.0
+  --min-lines 1` it scores C, two identical 134-line bodies, at 0.402, with
+  the spans `dial` 50–186 and `dial_again` 183–316, which overlap. It
+  scores D at no more than 0.856.
+- N: `converge noun Origin` gives **definitions (2)**, link.rs:168 and
+  lend.rs:437. The definitions are at :169 and :438, so I1 is still
+  present.
+
+The near tier was then run unscoped at 0.9, as REVIEW-audit-u3-auto-2 ran
+it (12 exact groups and 18 near clusters, with plant A in both). A side
+counts as **added** when `git blame -w -M -C -C HEAD` puts any of its lines
+in 3e6100c..HEAD. Every cluster except A's was blamed. Two have an added
+side:
+
+| cluster (dry-report, 0.9, unscoped) | added | disposition |
+|---|---|---|
+| exact `signed_by_link` joining.rs:61 == :135 | 5 and 3 lines, u4-2 | no change (#43): one line on each of the two request types, `verify_hex(&self.link, &self.message(), &self.sig)`, each asking its own `message` |
+| near register_tests.rs:104–120 ~ :117–141, :138–155 ~ :152–163 (0.901, 0.927) | 2 lines, u4-1's `Device` in the fixtures | no change (#43): tests stating their own cases |
+
+The other 26 clusters are blamed wholly before the range. Among them are
+the trivial `as_str`, `len`, `is_empty`, `try_from` and `fmt` groups, and
+the declared.rs `harden_*` group, which REVIEW-audit-u3-auto-1 (2)
+disposed of. The u4-2 move kept its blame (`-C -C` traces joining.rs and
+the core's link.rs back to redeem.rs and the command's link.rs).
+
+**Substitute check, named as a substitute.** This is the earlier audits'
+pass, here at /tmp/u4audit/windows.py and extended to web/. It takes
+windows of 5 normalized lines over crates/**/*.rs, web/src/*.rs, web/*.js,
+web/tests/*.mjs and apps/**/*.{js,mjs}. Blank lines, comment lines,
+attribute lines and lone closers are dropped. The windows are hashed. A
+hit is **new** when a line of either span is blamed in 3e6100c..HEAD or is
+uncommitted. On the planted tree it gives 93 hits, 4 of them new:
+
+- `NEW crates/svrngs/src/issuer.rs:48-52 == :65-69` (A)
+- `NEW web/src/lib.rs:54-182 == :187-315` (C)
+- `NEW web/app.js:34-41 == web/sw.js:40-47` (D)
+- `NEW crates/svrngs-node/tests/browser/main.rs:85-90 == tests/door/main.rs:55-60`:
+  a node started on 127.0.0.1 with `on_loopback_only`, in two test
+  binaries. This is #31's case: fixtures copied across test binaries, not
+  moved, for #31's reason.
+
+B, with its names changed, is seen by neither this pass nor the near tier.
+The substitute is the only instrument here that sees a copy in web/.
+
+Reading the range for decisions that neither pass would show:
+
+- **#40**: a group's dialled keys were decided in node.rs and in rail.rs.
+  Fixed in 3c06b23.
+- **#41**: the ask's and the redemption's three refusals were spelled in
+  both of redeem.rs's parse steps. Fixed in 7dc91ac. Both commits name
+  their plants.
+- **#42**: how a token becomes the address a dial uses is decided twice.
+  The command's `key` and `addr` are at crates/svrngs/src/issuer.rs:42-55.
+  The page's is at web/src/lib.rs:83-110: its own key conversion, with a
+  refusal where issuer.rs `expect`s, and the relay-or-lookup choice.
+  Recorded, not fixed. The page cannot link the `svrngs` command (tokio
+  and svrngs-node, in a separate wasm workspace), and the core has no
+  iroh. So one home is a change of shape, not a small move.
+
+The page's protocol name asks svrngs-core (web/src/lib.rs:28), and its
+token is parsed by svrngs-core's `Token::decode` (:76). Both are one
+decider.
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff 3e6100c 7dc91ac -- crates apps web`, added lines matching
+`(struct|enum|trait|type) Name`, less associated types, gives
+`AskRequest`, `RedeemRequest`, `Device` and `Member`. The types u4-2 moved
+by rename were also run: `Alpn`, `Format`, `Token`, `Link`, `Origin`.
+web/src/lib.rs declares none. Results:
+
+- Eight have one definition each: AskRequest (joining.rs:29), RedeemRequest
+  (:68), Device (lib.rs:512), Member (svrngs-runtime register.rs:40, with
+  kin `Membership`), Alpn, Format, Token and Link.
+- `Origin` has 2 only because of plant N, which is listed under (2). Its
+  other definition is link.rs:169, which u4-2 moved, so at 7dc91ac it has
+  one (derived; not re-measured, see above).
+
+No noun added in the range has more than one definition.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 40 | 8 ("collapse the drive") | crates/svrngs-node/src/node.rs:367-379 and rail.rs:571-582, at 2b6d626 | 3c06b23 | The round and the live fan-out each decided which standing keys this node dials. u4-1 added the browser test to both. `node::dialled` decides it now. Planted: one disabled branch failed both callers' tests. |
+| 41 | 8 | crates/svrngs-node/src/redeem.rs:218-227 and :279-286, at 2b6d626 | 7dc91ac | `parse_ask` and `parse_redeem` each spelled the same three refusals. `presented` decides them now. Planted: the signature check disabled failed both routes' tests. |
+| 42 | 8 | crates/svrngs/src/issuer.rs:42-55 and web/src/lib.rs:83-110, at 7dc91ac | not fixed | A token's key and relay become a dial address twice, the command's and the page's. They differ in kind: the page refuses where the command `expect`s, and the page falls back to iroh's lookup. One home needs a crate both workspaces can link that names iroh. That is a change of shape for a unit, not an audit's small move. Revisit when u4-4 or u4-5 touches the page's dial. |
+| 43 | 8 | the "no change" rows in (2) and (3) | no change | Each is one of: a one-line verify on each of two request types; tests stating their own cases; a node starter copied across test binaries (#31); a same-family name (`Member` and `Membership`). Nothing is decided twice. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still present: `Origin` at link.rs:168 for :169, `AskRequest` at joining.rs:29 for :30. |
+| I4 | 6 | `refresh` | Still present: "typescript: skipped (export failed)". |
+| I5 | 5, 7 | `code dry-report` near tier | Still present and worse. A free-fn copy of a method with two names changed (plant B) is missed down to 0.7. |
+| I10 | 6 | `code dry-report` header | Still present: "954 function/method symbols" in every scope. |
+| I11 | 6 | `code dry-report --scope` | Still present; every scoped run here used a trailing slash. |
+| I14 | 6, 7 | `code dry-report --scope web/` near tier | New. web/ is a separate cargo workspace with JS beside it, so it has no SCIP symbols. The exact tier says could-not-judge, as it should. The near tier says "0 near-clone clusters" at 0.95 with two identical 134-line Rust bodies (plant C, cosine 0.402) and two identical JS bodies (plant D, ≤0.856) in scope. Its spans are misaligned (`dial` 50–186 overlaps `dial_again` 183–316). A 0 from a tier that cannot see what it scores is a silent pass. For web/, only the substitute pass judges. |
+
+The row's check (LINT, scripts/check.sh) **never ran** for this audit. The
+tree holds the five plants. A run on it would judge the plants, not 7dc91ac,
+and they could not be removed (above). 3c06b23 and 7dc91ac each name the
+tests their plants failed, and those tests passed once the plants were
+restored.
