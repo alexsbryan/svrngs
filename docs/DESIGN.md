@@ -779,24 +779,26 @@ at an origin of its own (call 1), stock jellyfin-web asks none.
 | U3 lend a service | the member door: a route that proxies to a lent service, the verified person set from the connection; `svrngs share <port>` with its lend declaration; streaming and byte ranges through the door; each request's share of the lender's upload; the people-at-once limit; the loopback record API (the rail routes and the live lane, forked); the list of what members lend | the app sees the verified person; a header the client typed is stripped; the lender's secret appears in no byte a member receives; with three streams, each is told a third of the declared upload, and a fourth person is refused with a reason |
 
 **Demo A — Sam's films, three homes at once** (after U5; operator,
-2026-10-04, once U3's dry run found no way into Jellyfin's own player that
-keeps the bars — §11, risk 7). Sam lends Jellyfin with one command and sends a
-link. Alex, Bo and Cy join from three homes and each plays a different film
-from Sam's library in Films, in their own browser, at the same time, seeking
-freely; none stalls another, and the door tells each its share of Sam's
-upload, which Films turns into a picture. Sam's password never left Sam's
-computer; nobody made an account.
+2026-10-05, in Jellyfin as it comes, where on 2026-10-04 it was put in an
+app of our own once U3's dry run found no way into Jellyfin's own player
+that kept the bars — §11, risk 7). Sam lends Jellyfin with one command and
+sends a link. Alex, Bo and Cy join from three homes and each plays a
+different film from Sam's library in Jellyfin's own player through the
+lend, in their own browser, at the same time, seeking freely; none stalls
+another, and the door tells each its share of Sam's upload, in Sam's log.
+Sam's password never left Sam's computer; nobody made an account (§3, "Lent
+apps", call 4, on how that clause meets zero sign-in).
 
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
 | U4 the browser | a phone opens a group's https link, on the page origin the group named, and is in: its own key, a dial by key to the issuer to join and to each lender for what they lend (§3, "Joining"), and the runtime that renders a lent app through it — fetch, POST, streaming, byte ranges; the page is static files any origin can serve | a stock phone browser plays a lent film and seeks |
-| U5 Films | `apps/films`: one shelf across every member's lent library, "from Sam's", search, play here; a device and play-session id per person and play; progress per person in the record; busy turned into a choice; the lend's credential made from the viewer's password, which the lender types once on their own computer (U3's dry run: today it is a whole request header the lender cannot make from what they are told) — on the §3 surface alone | a title two members lend shows once, with both; Bo's seek never restarts Cy's play; Films calls nothing outside §3 |
+| U5 any app on a port, Jellyfin as it comes | what an app cannot yet ask (§3): the groups this computer holds and what their people lend, on the record API (u5-1); every lend at an origin of its own, a pass in place of the person's key, the web carried whole, its live socket included (u5-2); stock Jellyfin measured through a lend and the way past its sign-in decided (u5-3), then built (u5-4); §1's list of apps measured on five of them (u5-catalogue-dry); Demo A's dry run (u5-9) — on the §3 surface alone, and nothing that knows Jellyfin outside `apps/jellyfin/` | after `svrngs share 8096`, someone who never used Jellyfin opens it from the list, from a computer and from a phone, in Chromium and WebKit, plays, and seeks three times, each playing again within five seconds; two people at once, one seeking five times, never restart the other's play; no byte a person receives holds a secret the lend keeps; the conformance canary's routes all pass on a computer and with the wildcard, and on the floor all but the two it cannot give, each named; §1 names only apps the census supports |
 | U6 the screen handoff | the meeting point serves one stream to a TV on its network at an unguessable address; AirPlay from Safari, Cast from Chrome; the phone is the remote and may lock | a film plays on the TV from a phone browser; the address serves only the device it was handed to |
 
 **Demo B — movie night** (after U6). Five friends at Sam's, phones only. Sam's
 group names a page origin, so its link opens in a phone's browser. Sam
-texts the link; each opens it, browses one shelf across three members'
-libraries, and a film they pick plays on the TV. Nobody installs or signs up.
+texts the link; each opens it, opens a library one of three members lends,
+and a film they pick plays on the TV. Nobody installs or signs up.
 Gate: four of five newcomers get from the link to the film on the TV within
 three minutes, unassisted.
 

@@ -5,11 +5,11 @@ different film from Sam's lent library at the same time for ten minutes, each
 seeking at least three times, and every seek plays again within five seconds,
 whoever else is seeking; Sam's Jellyfin password is in nothing any of them
 received, and Jellyfin's list of users is the same after the run as before.
-Shown after U5, in Films (DESIGN §8).
+Shown after U5, in Jellyfin's own player through the lend (DESIGN §8).
 
 **Before the run.** Sam: a computer at home running Jellyfin with at least
-three films and one viewer account whose password only Sam's computer holds,
-and svrngs. Alex, Bo and Cy: a computer each, in three homes on three
+three films, set up as `svrngs share` tells Sam (DESIGN §3, "Lent apps",
+call 4, as u5-3 decides it), and svrngs. Alex, Bo and Cy: a computer each, in three homes on three
 networks, with svrngs put there by the operator beforehand — installing is not
 what this demo shows, and Demo B has none. Each of the three browsers records
 the session as a HAR file, and every screen is recorded. Before anyone starts:
@@ -26,10 +26,12 @@ link. Each of the others: `svrngs join <link>` on their computer; then
 `svrngs` alone, which prints "Sam's jellyfin, in your browser:" and a local
 address, `http://127.0.0.1:<port>/lend/jellyfin/`, opened in their browser
 (`join` prints no lends; the bare command asks for them as it starts). Jellyfin's
-own web player stops at its sign-in page, and the dry run found no way past it
-that keeps the bars (its `README.md`), so Demo A plays in Films, after U5, and
-its steps from the local address on are Films' to write when U5 lands
-(operator, 2026-10-04; DESIGN §11, risk 7).
+own web player stopped at its sign-in page, and a member's sign-in logged the
+lend out for everyone (its `README.md`); Demo A plays in it as it comes all
+the same (operator, 2026-10-05; DESIGN §3, "Lent apps, as they come"). u5-3
+and u5-4 take the way past that sign-in, u5-2 moves the local address to one
+of the lend's own, and u5-9 writes the steps from the local address on
+(DESIGN §8, U5; §11, risk 7).
 
 **What Sam is told, and nothing else:** "Share your Jellyfin with the group,
 and send the link to Alex, Bo and Cy."
