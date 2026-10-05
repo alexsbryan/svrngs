@@ -1068,15 +1068,15 @@ Reading the range for decisions that neither pass would show:
   both of redeem.rs's parse steps. Fixed in 7dc91ac. Both commits name
   their plants.
 - **#42**: how a token becomes the address a dial uses is decided twice.
-  The command's `key` and `addr` are at crates/svrngs/src/issuer.rs:42-55.
-  The page's is at web/src/lib.rs:83-110: its own key conversion, with a
+  The command's `key` and `addr` are at crates/svrngs/src/issuer.rs:40-54.
+  The page's is at web/src/lib.rs:82-110: its own key conversion, with a
   refusal where issuer.rs `expect`s, and the relay-or-lookup choice.
   Recorded, not fixed. The page cannot link the `svrngs` command (tokio
   and svrngs-node, in a separate wasm workspace), and the core has no
   iroh. So one home is a change of shape, not a small move.
 
 The page's protocol name asks svrngs-core (web/src/lib.rs:28), and its
-token is parsed by svrngs-core's `Token::decode` (:76). Both are one
+token is parsed by svrngs-core's `Token::decode` (:78). Both are one
 decider.
 
 ### (3) Duplicate type names (`code converge noun`)
@@ -1102,7 +1102,7 @@ No noun added in the range has more than one definition.
 |---|---|---|---|---|
 | 40 | 8 ("collapse the drive") | crates/svrngs-node/src/node.rs:367-379 and rail.rs:571-582, at 2b6d626 | 3c06b23 | The round and the live fan-out each decided which standing keys this node dials. u4-1 added the browser test to both. `node::dialled` decides it now. Planted: one disabled branch failed both callers' tests. |
 | 41 | 8 | crates/svrngs-node/src/redeem.rs:218-227 and :279-286, at 2b6d626 | 7dc91ac | `parse_ask` and `parse_redeem` each spelled the same three refusals. `presented` decides them now. Planted: the signature check disabled failed both routes' tests. |
-| 42 | 8 | crates/svrngs/src/issuer.rs:42-55 and web/src/lib.rs:83-110, at 7dc91ac | not fixed | A token's key and relay become a dial address twice, the command's and the page's. They differ in kind: the page refuses where the command `expect`s, and the page falls back to iroh's lookup. One home needs a crate both workspaces can link that names iroh. That is a change of shape for a unit, not an audit's small move. Revisit when u4-4 or u4-5 touches the page's dial. |
+| 42 | 8 | crates/svrngs/src/issuer.rs:40-54 and web/src/lib.rs:82-110, at 7dc91ac | not fixed | A token's key and relay become a dial address twice, the command's and the page's. They differ in kind: the page refuses where the command `expect`s, and the page falls back to iroh's lookup. One home needs a crate both workspaces can link that names iroh. That is a change of shape for a unit, not an audit's small move. Revisit when u4-4 or u4-5 touches the page's dial. |
 | 43 | 8 | the "no change" rows in (2) and (3) | no change | Each is one of: a one-line verify on each of two request types; tests stating their own cases; a node starter copied across test binaries (#31); a same-family name (`Member` and `Membership`). Nothing is decided twice. |
 
 ### Problems in the commonwealth-ai instrument (reported, not fixed here)
