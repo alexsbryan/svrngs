@@ -12,7 +12,8 @@
 #   run.sh act   <scratch> <out> <app> <way> <engine>
 #                                                 Bo does <app>'s act (act.mjs); way wildcard|floor, engine
 #                                                 chromium|webkit; writes <out>/<app>-<way>-<engine>.json
-#   run.sh down  <scratch>                        svrngs stopped, the five removed
+#   run.sh down  <scratch>                        svrngs and the page stopped; the five keep running
+#   run.sh apps-down <scratch>                    the five removed
 #
 # <scratch> must be under $HOME: podman's machine shares only that with
 # its containers. Each step stays inside ten minutes on this host. svrngs
@@ -118,6 +119,9 @@ act() {
 down() {
   for p in "$R"/*.pid; do [ -f "$p" ] && kill "$(cat "$p")" 2>/dev/null || true; done
   rm -f "$R"/*.pid
+}
+
+apps_down() {
   podman rm -f cat-ha cat-nc cat-actual >/dev/null 2>&1 || true
   podman pod rm -f cat-immich cat-paperless >/dev/null 2>&1 || true
 }
@@ -128,5 +132,6 @@ case "$STEP" in
   floor) floor ;;
   act) act "$4" "$5" "$6" ;;
   down) down ;;
+  apps-down) apps_down ;;
   *) echo "usage: run.sh apps|up|floor|act|down <scratch> [<out>] [app way engine]" >&2; exit 2 ;;
 esac

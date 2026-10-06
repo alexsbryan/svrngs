@@ -111,9 +111,19 @@ const acts = {
       await fill('input[type="email"]', 'bo@house.test');
       await fill('input[type="password"]', boPw);
       await page.keyboard.press('Enter');
-      await page.waitForURL((u) => u.pathname.startsWith('/photos'), { timeout: 90_000 });
+      await page.waitForURL((u) => !u.pathname.startsWith('/auth/login'), { timeout: 90_000 });
     });
-    const name = `catalogue-${a.way}-${a.engine}.mp4`;
+    // Immich's own welcome for a person new to it, page by page, as they would.
+    await step('welcome', async () => {
+      for (let i = 0; i < 12 && !new URL(page.url()).pathname.startsWith('/photos'); i++) {
+        // Each page's way on is its last button, named for the page after it.
+        const next = page.locator('button:visible').last();
+        await next.click({ timeout: 15_000 }).catch(() => {});
+        await page.waitForTimeout(800);
+      }
+      await page.waitForURL((u) => u.pathname.startsWith('/photos'), { timeout: 30_000 });
+    });
+    const name = `catalogue-${a.way}-${a.engine}-${Date.now()}.mp4`;
     const copy = `${SECRETS}/../${name}`;
     fs.copyFileSync(video, copy);
     // A byte of its own, so Immich's duplicate check takes each run's file.
@@ -123,18 +133,23 @@ const acts = {
       const chooser = page.waitForEvent('filechooser', { timeout: 30_000 });
       await page.getByRole('button', { name: /upload/i }).first().click();
       await (await chooser).setFiles(copy);
-      const { token } = lender();
-      for (let i = 0; i < 300; i++) {
+      // Bo's assets are Bo's alone: asked as Bo, on the lender's port.
+      const { accessToken: token } = await (await fetch('http://127.0.0.1:2283/api/auth/login', {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'bo@house.test', password: boPw }),
+      })).json();
+      for (let i = 0; i < 240; i++) {
         const r = await fetch('http://127.0.0.1:2283/api/search/metadata', {
-          method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body: JSON.stringify({ originalFileName: name, withDeleted: false }),
+          method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body: JSON.stringify({ originalFileName: name, withExif: true }),
         });
         const hit = (await r.json()).assets?.items?.[0];
-        if (hit) return hit.id;
+        if (hit) {
+          out.uploaded = { bytes: size, kept: hit.exifInfo?.fileSizeInByte ?? null };
+          return hit.id;
+        }
         await new Promise((r) => setTimeout(r, 1000));
       }
       throw new Error('the lender never saw the asset');
     });
-    out.uploaded = { bytes: size };
     await step('play', async () => {
       await page.goto(new URL(`/photos/${id}`, page.url()).href);
       await page.waitForSelector('video', { timeout: 60_000 });
@@ -161,7 +176,7 @@ const acts = {
       await page.keyboard.press('Enter');
       await page.waitForURL((u) => !u.pathname.includes('/login'), { timeout: 90_000 });
     });
-    const name = `catalogue-${a.way}-${a.engine}.bin`;
+    const name = `catalogue-${a.way}-${a.engine}-${Date.now()}.bin`;
     const file = `${SECRETS}/../${name}`;
     fs.writeFileSync(file, Buffer.concat([Buffer.alloc(5 * 1024 * 1024, 7), Buffer.from(`${tag} ${Date.now()}`)]));
     const want = fs.readFileSync(file);
@@ -188,6 +203,9 @@ const acts = {
   // which the lender's server then holds.
   async actual() {
     await step('sign-in', async () => {
+      // A browser new to it is welcomed first.
+      const start = page.getByRole('button', { name: /start budgeting|get started/i }).first();
+      await start.waitFor({ timeout: 30_000 }).then(() => start.click(), () => {});
       await fill('input[type="password"]', boPw);
       await page.keyboard.press('Enter');
       await page.getByText(/create new file|start fresh|import file|files/i).first().waitFor({ timeout: 90_000 });
