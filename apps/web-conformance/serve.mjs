@@ -25,7 +25,7 @@
 //                     `localhost:<port>`; else an absolute redirect there
 //   GET  /landed      where that lands
 //   POST /signin      sets `canary-<who>`, and an HttpOnly `canary-<who>-hidden`
-//   POST /guarded     refused when an `Origin` is not its own address, as
+//   POST /guarded     refused unless its `Origin` is its own address, as
 //                     an app checking a post's origin against its Host does
 //   GET  /me          the cookies it was sent
 //   GET  /seen        every request it took: path, cookies, person and key
@@ -87,9 +87,10 @@ const server = http.createServer((req, res) => {
   }
   if (req.method === 'POST' && path === '/guarded') {
     const origin = req.headers.origin;
-    if (origin && !own.some((h) => origin === `http://${h}`)) return sends(res, 403, 'text/plain', `origin ${origin} is not ${own[0]}`, { 'cross-origin-embedder-policy': 'require-corp' });
+    // Refused with no Origin too, as Nextcloud's sign-in is (u5-catalogue-dry).
+    if (!origin || !own.some((h) => origin === `http://${h}`)) return sends(res, 403, 'text/plain', `origin ${origin} is not ${own[0]}`, { 'cross-origin-embedder-policy': 'require-corp' });
     // Its answer may be a frame's page in the canary's, which COEP holds to its own.
-    return sends(res, 200, 'text/plain', `taken from ${origin ?? 'no origin'}`, { 'cross-origin-embedder-policy': 'require-corp' });
+    return sends(res, 200, 'text/plain', `taken from ${origin}`, { 'cross-origin-embedder-policy': 'require-corp' });
   }
   if (req.method === 'POST' && path === '/signin') {
     const token = randomBytes(6).toString('hex');

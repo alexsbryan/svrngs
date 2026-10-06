@@ -879,7 +879,7 @@ exists, each a small app in `apps/` using only §3:
   local storage; and, from u5-catalogue-dry's misses, its page under a
   script policy by nonce, its socket's state read against the socket's own
   constants, its sign-in's cookie read by the page before any reload, a
-  post it takes only from its own address, by fetch and by a form, and
+  post it takes only from its own address, named, by fetch and by a form, and
   the upload told its length. Landed (u5-2): `apps/web-conformance`, lent by Sam's and
   Bo's computers at once and opened by Alex from a computer and from a phone
   both ways of §7, in Chromium and in WebKit as an iPhone, by
