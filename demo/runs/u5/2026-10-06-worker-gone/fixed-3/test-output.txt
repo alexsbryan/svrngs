@@ -1,0 +1,15 @@
+14:14  up 1 day,  7:25, 11 users, load averages: 3.62 17.32 23.99
+
+running 2 tests
+test upload_after_seeks::on_the_floor has been running for over 60 seconds
+test upload_after_seeks::with_the_wildcard has been running for over 60 seconds
+test upload_after_seeks::on_the_floor ... ok
+test upload_after_seeks::with_the_wildcard ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 570.27s
+
+real 570.28
+user 118.33
+sys 173.19
+rc=0
+14:23  up 1 day,  7:35, 11 users, load averages: 4.33 6.47 14.45
