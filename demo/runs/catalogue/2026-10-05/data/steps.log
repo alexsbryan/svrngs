@@ -1,0 +1,6 @@
+03:38:06 sam: On a phone, each app opens at an address of its own under localhost:60283, which can see which app is opened.
+03:38:06 sam: Lent home-assistant (port 8123) to everyone in your groups, up to 8 people at once.
+03:38:06 sam: Lent immich (port 2283) to everyone in your groups, up to 8 people at once.
+03:38:06 sam: Lent nextcloud (port 8080) to everyone in your groups, up to 8 people at once.
+03:38:06 sam: Lent actual (port 5006) to everyone in your groups, up to 8 people at once.
+03:38:06 sam: Lent paperless (port 8000) to everyone in your groups, up to 8 people at once.
