@@ -202,32 +202,26 @@ const acts = {
   // The server's password, typed once; then a new budget, which opens, and
   // which the lender's server then holds.
   async actual() {
+    const { token } = lender();
+    const files = async () => ((await (await fetch('http://127.0.0.1:5006/sync/list-user-files', { headers: { 'x-actual-token': token } })).json()).data ?? []).length;
+    out.files_before = await files();
     await step('sign-in', async () => {
-      // A browser new to it is welcomed first.
-      const start = page.getByRole('button', { name: /start budgeting|get started/i }).first();
-      await start.waitFor({ timeout: 30_000 }).then(() => start.click(), () => {});
       await fill('input[type="password"]', boPw);
       await page.keyboard.press('Enter');
-      await page.getByText(/create new file|start fresh|import file|files/i).first().waitFor({ timeout: 90_000 });
+      await page.getByRole('button', { name: /start budgeting|create new file/i }).first().waitFor({ timeout: 90_000 });
     });
-    out.after_sign_in = await shown();
+    // With no budget of its own, its welcome's first button makes one and opens it.
     await step('budget', async () => {
-      const fresh = page.getByRole('button', { name: /create new file|start fresh/i }).first();
-      await fresh.click({ timeout: 30_000 });
-      const start = page.getByRole('button', { name: /start fresh/i }).first();
-      if (await start.isVisible().catch(() => false)) await start.click();
-      await page.getByText(/budget/i).first().waitFor({ timeout: 90_000 });
-      const { token } = lender();
+      await page.getByRole('button', { name: /start budgeting|create new file/i }).first().click();
+      await page.getByText(/to budget/i).first().waitFor({ timeout: 90_000 });
       for (let i = 0; i < 60; i++) {
-        const r = await fetch('http://127.0.0.1:5006/sync/list-user-files', { headers: { 'x-actual-token': token } });
-        const files = (await r.json()).data ?? [];
-        out.files = files.length;
-        if (files.length > (out.files_before ?? 0)) return;
+        out.files = await files();
+        if (out.files > out.files_before) return;
         await new Promise((r) => setTimeout(r, 1000));
       }
-      throw new Error('the lender\'s server holds no budget of Bo\'s');
+      throw new Error("the lender's server holds no new budget");
     });
-    out.saw = await shown();
+    out.saw = `a budget open on Bo's page; the lender's server holds ${out.files} budget(s), ${out.files_before} before`;
     return true;
   },
 
