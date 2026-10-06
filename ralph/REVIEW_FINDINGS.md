@@ -2128,3 +2128,9 @@ joining in a browser, conformance canary (every route passed on a
 computer and with the wildcard; on the floor `/`-absolute paths, local
 storage and a post's Origin `needs the wildcard`, the rest passed), app
 laws (log /tmp/u5audit2/check.log).
+
+## u5-11: WebKit's worker gone during the canary's upload, 2026-10-06
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 65 | 2, 6 | apps/web-conformance/checks.js `upload`; web/sw.js, at b41941c | not fixed | In WebKit as an iPhone, through a lend, the 64 MiB upload that follows the seeks is sometimes answered `404 ` by the page's static server: the request never reached the lend's worker. Seen 1 of 12 runs in u5-11's tries at a load of 3.4-3.9 (`demo/runs/u5/2026-10-06-seek-stall/tried-closed-whole/verdicts.txt`, wildcard Sam, before b41941c), then 2 of 4 WebKit phone tests in the `tests` step of the second scripts/check.sh at b41941c, floor Bo and wildcard Bo, at a load of 5.3 at its start and 13.5 at its end on 12 cores (`upload-404/check-2.txt.gz`); the same run's `conformance canary` step passed every route. In both of those the worker's trace starts over (the pass read again from the origin's store) 28 s after the seeks ended, and holds no `POST .../upload`: the worker was gone when the upload was sent, and WebKit sent it to the network. Not reproduced on purpose and not explained: what ended the worker (the 64 MiB body, memory, the load) is not shown, since the trace lives in the worker and starts again with it. The next step is a trace that outlives the worker. |
