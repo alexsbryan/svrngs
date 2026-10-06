@@ -1597,3 +1597,274 @@ exited 0 in 6:34 (zsh `time`). Every step `passed`: principles pinned,
 lean and RUST_ARCH, app nouns gate, app nouns, rustfmt, clippy, tests,
 canaries, web rustfmt and clippy, browser, joining in a browser, app laws
 (log /tmp/u4audit3/check.log).
+
+## REVIEW-audit-u5-auto-1 (2026-10-05, range 7ed7b3e..ade62aa)
+
+No earlier `REVIEW-audit-` row exists in ralph/next/u5/STATE.md. The queue
+started at 02a3ef6, but every product commit from there to 7ed7b3e is
+u4's, and REVIEW-audit-u4-auto-1 to -3 audited it. So the range starts at
+7ed7b3e, the hash REVIEW-audit-u4-auto-3's row carries
+(ralph/next/u4/STATE.md:16). It ends at ade62aa, the commit that made this
+row. It covers u5-0, u5-1, u5-2 and u5-3. 8e830a5 and 28f736d, from the u6
+loop, touch only ralph/next/u6/ and demo/runs/u6/. u5-3's instrument
+(4b23bb4) and data (f42f25f) are under demo/, so they are not counted. The
+range touched crates/svrngs-core, crates/svrngs-node, crates/svrngs, web/
+and apps/ (`git diff --stat 7ed7b3e ade62aa -- crates apps web scripts`).
+This audit's fix is 30652ed (#56).
+
+The row cites `docs/ARCH_PRINCIPLES.md`, which is at
+docs/principles/ARCH_PRINCIPLES.md. It names `target/debug/sovereign-cli`,
+which svrngs does not build. The binary used is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, built 2026-10-05 16:42,
+sha256 2a1d2c43…e79372. That is **not** the binary the last two audits
+planted against (6501033e…b92ae), so its tiers were planted again.
+
+The clean runs are on this tree at 4ecebe2 (ade62aa plus this row's
+`started` line), `git status --short` empty, corpus `svrngs`. The plants
+went into a clone of 4ecebe2, /tmp/u5audit1/svrngs-plant, with one commit
+holding them (fad0907 there), indexed as corpus `svrngs-plant`.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' 7ed7b3e..ade62aa`,
+summed by /tmp/u5audit1/ledger.py with the last audit's rules. A commit
+counts toward the row whose `started` commit comes before it. Product
+code is `crates/`, `apps/` and `web/`, less Cargo.lock. Tests are a
+`tests/` or `fixtures/` segment, a lean_check test name, or `*.test.mjs`.
+scripts/check.sh (+7) and scripts/build-web.sh (+1 −1) are scripts, not
+counted.
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| u5-0-inventory | 16 | 16 | 0 | 0 | 0 | 0 |
+| u5-1-app-surface | 304 | 54 | 250 | 281 | 9 | 272 |
+| u5-2-lend-address | 2443 | 575 | 1868 | 1756 | 141 | 1615 |
+| u5-3-jellyfin-measure | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 2763 | 645 | 2118 | 2037 | 150 | 1887 |
+
+- u5-0's 0 is 330fb6f: apps/films/nouns.txt became apps/jellyfin/nouns.txt.
+- u5-1's +250: surface.rs +169 (new: `/v1/groups`, `/v1/lends`), node.rs
+  +40 (461d26c's move of the people's lends into `Asking::lent`), api.rs
+  +26, lend.rs +6, lib.rs +4, rail.rs +3, door.rs +1, cli.rs +1.
+- u5-2's +1868: web/lend.js +392 (new; the runtime moved out of sw.js,
+  −227, and web/hand.js, −37), door.rs +307, svrngs-core pass.rs +229
+  (new), cli.rs +195, origin.rs +158 (new), apps/web-conformance
+  serve.mjs +152 and checks.js +99, web/src/http.rs +114, web/shim.js
+  +100 (new), lib.rs +83, open.js +62 and open.html +16 (new), api.rs +50,
+  app.js +50, group.rs +35, link.rs +27, the rest under +20 each.
+- u5-3 wrote no product code: its instrument is demo/runs/u5/.
+
+`python3 scripts/lean_check.py <tree>` (rc 0), trees from `git archive`
+in /tmp/u5audit1:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 7ed7b3e, range start | 2789 / 3000 | 11297 / 14000 |
+| ade62aa, range end | 2951 / 3000 | 13240 / 14000 |
+
+svrngs-core rose 162 lines, to **98%** of its ceiling: pass.rs and
+link.rs's lends origin (u5-2). The repository rose 1943, to **95%**. 760
+lines are left for u5-4, u5-catalogue-dry and u5-9, and 49 in
+svrngs-core. A raise is the operator's; this audit names it and does not
+make it.
+
+### (2) Clones (`code dry-report`), each tier checked against a plant first
+
+**Clean corpus.** `code index ~/dev/svrngs --corpus-id svrngs --full`:
+2093 chunks in 301 s. `refresh`: rust 8882 symbols, python 243,
+"typescript: skipped (export failed)" (I4).
+
+**Planted corpus**, each plant a copy of a symbol the range added:
+
+- **A** (exact): surface.rs `name_of` (u5-1), verbatim, in a `mod plant`
+  at the end of surface.rs.
+- **B** (near): surface.rs `lends` (u5-1, u5-2) as `lends_again`, with
+  `q`, `standing`, `own`, `lent` and `unanswered` renamed.
+- **D** (JS): web/lend.js `setCookie` (u5-2) as `keepCookie` at the end
+  of web/open.js, its body identical.
+- **N** (noun): `pub struct Label(String)` in the same `mod plant`.
+  svrngs-core pass.rs:85 has the original.
+
+| scope | clean: locations / exact / near | plants seen |
+|---|---|---|
+| crates/svrngs-core/ | 421 / 7 / 0 | — |
+| crates/svrngs-node/ | 350 / 5 / 1 | **A exact** at 0.95, 0.9 and 0.8: `name_of` surface.rs:108 == :189. B missed at 0.95; at 0.9, `lends` :134 ~ `lends_again` :215, cosine 0.942 |
+| crates/svrngs/ | 67 / 0 / 0 | — |
+| web/ | 79 / **could-not-judge** / 0 | D missed at 0.95; at 0.9, `setCookie` lend.js:118–139 ~ `keepCookie` open.js:62–82, cosine 0.938 |
+| apps/ | 31 / **could-not-judge** / 0 | (not planted; JS, as web/) |
+
+N: `converge noun Label` on the plant gives **definitions (2)**, pass.rs:84
+and surface.rs:263 (each a line early, I1). The window pass (below) finds
+A, B and D on the plant: 239 hits, 17 new, the four new ones beyond the
+clean tree's 13 being surface.rs:108-131 == :189-212, :147-159 == :228-240,
+:168-175 == :249-256, and lend.js:122-138 == open.js:66-82.
+
+So the exact tier sees an identical Rust body; the near tier sees a
+renamed Rust copy and an identical JS copy only at 0.9; and converge sees
+a second Rust definition. D at 0.938 is better than the last plant's
+"never paired above 0.7" (I14).
+
+**Clean runs.** Scoped at 0.95 (table above), each scope with a trailing
+slash (I11), and unscoped at 0.9 as the last audits ran it: **13 exact
+groups and 20 near clusters** over 1165 function/method symbols (11 and 18
+over 1046 at the last audit). /tmp/u5audit1/blame.py blames every side of
+every cluster (`git blame -w -M -C -C HEAD`) for lines in
+7ed7b3e..ade62aa. Every cluster with a side added in the range:
+
+```
+ADDED - **6 copies × 3 lines** (`a588a00c526a`)
+      as_str crates/svrngs-core/src/pass.rs:113-115 added=3/3 ['becc0c7']
+      (beside lib.rs:231, link.rs:189, lend.rs:62, :90, :129, none added)
+ADDED - **2 symbols** · ~47 lines · cosine 0.900–0.900
+      people_lends crates/svrngs-node/src/node.rs:591-623 added=8/33 ['461d26c']
+      lends crates/svrngs-node/src/surface.rs:134-180 added=43/47 ['1c61b37', 'bf6276d']
+ADDED - **2 symbols** · ~9 lines · cosine 0.910–0.910
+      write_lends crates/svrngs/src/group.rs:104-112 added=9/9 ['c1f3ae7']
+      read_lends crates/svrngs/src/group.rs:109-117 added=9/9 ['c1f3ae7']
+ADDED - **2 symbols** · ~9 lines · cosine 0.900–0.900
+      cookieFor web/lend.js:135-142 added=8/8 ['e502de9']
+      keepJar web/lend.js:138-146 added=9/9 ['e502de9']
+```
+
+The unscoped exact tier also groups pass.rs:132 `fmt` with lib.rs:237
+(2 × 3 lines, blamed outside the range by -C).
+
+- `as_str` and `fmt`: a newtype's `&self.0` and a `Display` that writes
+  it. Each is its own type's accessor. No change (#59).
+- `people_lends` ~ `lends`: the two routes that list lends already share
+  their body, `Asking::lent` (node.rs, 461d26c). What is left is each
+  route's own asker and refusal: an iroh dialer and 403 against a
+  loopback query and 409. No change (#59). One thing the pair shows is
+  #57.
+- `write_lends`/`read_lends` and `cookieFor`/`keepJar`: the spans are
+  misaligned (I14), each taking in lines of the function after it. Each
+  pair already calls one body: group.rs `write_in`/`read_in`, and
+  lend.js `jarOf`. No change (#59).
+
+**Substitute check, named as a substitute.** /tmp/u5audit1/windows.py
+(windows of 5 normalized lines over Rust and JS; a hit is new when either
+span has a line blamed in the range): 235 hits, 13 new, all in tests:
+
+- crates/svrngs-node/tests/conformance.rs, lend_origin.rs, record_api.rs,
+  surface.rs, door/main.rs: their imports, the admit-Sam
+  `tests_support::Fixture` (lend_origin.rs:150-156 == surface.rs:87-93),
+  and a `reqwest` GET read as JSON (conformance.rs:115-119 ==
+  lend_origin.rs:176-180 == record_api.rs:231-235). Each is its own
+  test binary's setup. tests/common holds what they already share. No
+  change (#59).
+- tests/browser/main.rs:598-613 == :768-781: two tests' `drive` calls.
+- web/tests/handover.mjs:69-79 == runtime.mjs:59-69: two drivers'
+  join-and-open steps. page.mjs holds the shared parts. No change (#59).
+
+Reading the range for what neither pass would show:
+
+- **#56, fixed in 30652ed.** web/src/http.rs `request` (u4-4) and
+  `socket` (e502de9) each read the page's `[name, value]` pairs, refused
+  with the same `Refused` variants, and asked `Host: svrngs` when none
+  was named, at ade62aa :152 and :275. 30652ed's body says :150 and :266;
+  those are wrong, and these are right. One `headers_of`, one
+  `UNNAMED_HOST`. Each request's bytes are unchanged: `socket` still
+  writes each header as named and in order.
+- **#57.** Absences read as nothing, with no trace (principles 1, 6):
+  - crates/svrngs-node/src/surface.rs:169-171: `/v1/lends` drops a lend
+    whose key does not give an origin (`Host::origin`, node.rs:367, `None`
+    on a key that is not 64 hex), or that does not serialize, by
+    `filter_map`'s `?`. The app is answered a list without that lend, and
+    nothing says why.
+  - web/lend.js:112 `jarOf` and :259: a lend's cookies, and the app's
+    worker, that fail to read from this origin's store become none
+    (`.catch(() => null)`). keepJar at :142 traces its failure.
+  - web/src/http.rs:244: the `Set-Cookie` values become `""` if they do
+    not serialize (`unwrap_or_default`).
+
+  Each fix adds a trace line or a refusal, so none is behaviour-preserving
+  and none is fixed here. Recorded for the unit that next touches each
+  file.
+- **#58.** A lender's 64-hex key becomes the 32 bytes `Label::of` takes in
+  two workspaces: node.rs:368 `Host::origin` (`None`) and
+  web/src/lib.rs:337 `label` (`not a computer's key`). lib.rs:171 `reach`
+  reads the same hex for a dial. `Label::of` is the one formula, so the
+  label is not decided twice; the hex read is. A home is svrngs-core
+  beside `Label` (pass.rs), which both workspaces link, and svrngs-core
+  has 49 lines left. Recorded.
+- **#49, still open, and moved.** u5-2 removed web/hand.js and gave each
+  lend an origin of its own, so the address the page builds and the lend's
+  origin parses is now `l/<label>/` under the lends origin, or
+  `<label>.<host>`. It is hand-derived in three files: web/app.js:169 and
+  :171 (`lendAt`), web/open.js:44 (the check that a pass opened at its
+  own lend), and web/lend.js:38-39 (`UNDER`, `OWN`) and :67-68
+  (`baseOf`). store.js is imported by all three and is the key's store,
+  not this. The Rust side has one home: origin.rs:44 and :49 parse and
+  build `<label>.localhost`.
+- **#48, still open, and grown.** svrngs-web reads "these 32 bytes are a
+  key" a third time: web/src/lib.rs:347-351, `pass`'s `key` closure
+  ("a key is 32 bytes"), beside join.rs:29 `person` and lib.rs:102
+  `bind`. Each uses its own words and key type, and `pass`'s refusal
+  emits no trace.
+- **#42, still open.** crates/svrngs/src/issuer.rs is untouched in the
+  range. web/src/lib.rs `bind` (:98) and `reach` (:165) are where they
+  were.
+- One decider each, checked: a pass is signed only by
+  svrngs-core `Pass::sign` (called from web/src/lib.rs:357) and checked
+  only by `Pass::check` (pass.rs:196; door.rs `holder_of`); a label is
+  made only by `Label::of` (door.rs:631, :678; node.rs:369;
+  web/src/lib.rs:339) and read only by `Label::parse` (door.rs:627,
+  origin.rs:44, lib.rs:354). The canary's route names are in
+  apps/web-conformance/checks.js, web/tests/conformance.mjs:78 and
+  crates/svrngs-node/tests/conformance.rs:208. A name missing from the
+  driver reads as `failed` in `verdicts` (conformance.rs:229), not as a
+  pass. No change (#59).
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff 7ed7b3e ade62aa -- crates apps web`, added lines matching
+`(struct|enum|trait|type|class) Name`: `Apps`, `Pages` (crates/svrngs
+cli.rs), `PassFault`, `Pass`, `Label` (svrngs-core pass.rs), `Pending`,
+`Who`, `Asker` (door.rs), `Held`, `Surface` (surface.rs), the JS
+`class Socket` (web/shim.js), and test types `Way`, `Canary`, `Group`
+(tests/conformance.rs), `House`, `Listed` (tests/surface.rs). `Asking`,
+`Endpoint` and the `type Error` (an associated type) moved and are
+not new. Each name was run (/tmp/u5audit1/nouns.txt), then `git grep -nwE
+'(struct|enum|trait|type|class) <Name>' -- crates apps web`:
+
+- One definition by both: Apps (cli.rs:512), Pages (:523), PassFault
+  (pass.rs:156), Label (:85), Pass (:141, kin PassFault), Pending
+  (door.rs:602), Who (:581), Asker (:594), Surface (surface.rs:46).
+- `Socket`: definitions (0), "check the spelling" (I15; JS). git grep: one,
+  web/shim.js:47.
+- Test types: converge leaves tests out, definitions (0). git grep: one
+  each for Way, Canary, House and Listed.
+- **`Held`, definitions (2)**: crates/svrngs-node/src/surface.rs:61, a
+  group as `GET /v1/groups` answers it, and crates/svrngs-runtime/src/
+  journal.rs:55, the folded state of a journal's tail. Both are private
+  to their modules, and neither decides what the other does. One short
+  name, two concepts. No change (#59).
+- **`Group`, by git grep only**: tests/conformance.rs:126 (a test's
+  group of nodes) and web/src/join.rs:50 (the group a link joins). One is
+  a test type, and the two are in two workspaces. No change (#59).
+
+No production noun the range added is defined twice for one concept.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 56 | 8 | web/src/http.rs:131-153 (`request`) and :261-276 (`socket`), at ade62aa | 30652ed | A request and a socket each read the page's headers and asked the default `Host: svrngs`, spelled at :152 and :275. One `headers_of` and one `UNNAMED_HOST` now; the bytes sent are unchanged. The conformance canary passed every route in every way on the rebuilt wasm. 30652ed's body cites :150 and :266; this row's lines are right. |
+| 57 | 1, 6 | crates/svrngs-node/src/surface.rs:169-171; web/lend.js:112 and :259; web/src/http.rs:244, at 30652ed | not fixed | Absences become nothing, with no trace: `/v1/lends` drops a lend with no origin or one that will not serialize; a lend's cookies, or the app's worker, that cannot be read from the store become none; `Set-Cookie` values that do not serialize become `""`. Each fix adds a trace or a refusal, so it is a change of behaviour. Recorded for the next unit in each file. |
+| 58 | 8 | crates/svrngs-node/src/node.rs:368 and web/src/lib.rs:337 (and :171), at 30652ed | not fixed | A lender's 64-hex key is read into `Label::of`'s 32 bytes in both workspaces. The label has one formula; the hex read does not. A home beside `Label` in svrngs-core would serve both, and svrngs-core has 49 lines left. |
+| 49 | 8 ("one accessor per path") | web/app.js:169, :171; web/open.js:44; web/lend.js:38-39, :67-68, at 30652ed | not fixed | As recorded, and moved by u5-2: the lend's address on a phone, `l/<label>/` or `<label>.<host>`, is built by the page, checked by open.js and parsed by the lend's worker, each by hand. |
+| 48 | 8 | web/src/join.rs:29, web/src/lib.rs:102 and :347-351, at 30652ed | not fixed | As recorded, and grown: `pass` reads the 32 bytes a third time, in words of its own and with no trace. |
+| 42 | 8 | crates/svrngs/src/issuer.rs:41-54 and web/src/lib.rs:98-190, at 30652ed | not fixed | As recorded; the range did not take it up. |
+| 59 | 8 | the "no change" items in (2) and (3) | no change | A newtype's `as_str` and `Display`; the two lend routes, already one body in `Asking::lent`; misaligned spans over functions that already call one body; each test binary's own setup; two drivers' steps; `Held` and `Group`, one short name for two concepts; the canary's route names, a missing one failing. Nothing is decided twice. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still present: Label at pass.rs:84 for :85, the plant at surface.rs:263 for :264. |
+| I4 | 6 | `refresh` | Still present: "typescript: skipped (export failed)", so the exact tier is could-not-judge for web/ and apps/. |
+| I5 | 5, 7 | `code dry-report` near tier | Still present on the new binary. Plant B, a 50-line copy with five names changed, scores 0.942: found at 0.9, missed at the default 0.95. |
+| I10 | 6 | `code dry-report` header | Still present: "1165 function/method symbols" in every scope. |
+| I11 | 6 | `code dry-report --scope` | Still present; every scoped run here used a trailing slash. |
+| I14 | 6, 7 | `code dry-report --scope web/` near tier | Still present, and better. Plant D, an identical 18-line JS body, scores 0.938: found at 0.9, missed at 0.95, where the last binary never paired one above 0.7. Its spans are still off by three lines (setCookie :118–139 for :121–138). |
+| I15 | 6, 7 | `code converge noun` over web/ | Still present: `Socket` gives definitions (0), "check the spelling", for a class that exists. |
