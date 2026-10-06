@@ -294,6 +294,14 @@ is U5's inventory (§8).
    alone, no secret in a byte either received
    (`demo/runs/u5/2026-10-05-jellyfin-in/`). One seek of a computer run
    under a load of 33 on 12 cores missed, 6,389 ms, and stays a miss.)
+   (Judged on this host, u5-9: three at once for ten minutes, Alex on a
+   computer, Bo and Cy on phones over n0's relay, in two paced runs. Of the
+   phones' 88 seeks, 1 missed, 19,293 ms, its first part held about 18 s
+   on the way to the door; the computer's 20 all played again. In a run
+   before them, with seeks back to back, a WebKit phone stopped asking for
+   its converted film after a seek, 21 of 22 seeks: not reproduced, not
+   explained (`demo/runs/a/2026-10-05/`). The rate on real phones in three
+   homes is the operator's run.)
 5. *Measured before built.* What stock jellyfin-web does through the door —
    its sign-in, its live socket, two people's plays through one lend, and
    whether any byte carries a secret the lend holds — is measured (u5-3)
