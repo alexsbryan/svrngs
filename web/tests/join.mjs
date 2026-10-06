@@ -1,12 +1,14 @@
 // The browser half of crates/svrngs/tests/join_page.rs (DESIGN §3,
 // "Joining"; u4-5): a phone opening a group's link. It serves the built
-// page on 127.0.0.1 and prints its origin as one JSON line; the Rust half
+// page on 127.0.0.1, as `localhost`, whose every name this computer
+// answers, as svrnme.sh's are (u5-2), and prints its origin as one JSON line; the Rust half
 // prints a link on that origin with `svrngs new --origin` and answers with
 // one JSON line on stdin, `{"link": ..., "name": ...}`. Then, in headless
 // `engine` (page.mjs), it opens the link and types the name whenever the page asks for
 // one; reads every storage the page can write for the person's key; opens
-// the link again, then the page alone; opens the first lend listed, which
-// the service worker serves; and prints what it saw as one JSON line.
+// the link again, then the page alone; opens the first lend listed, at its
+// own origin, `<label>.localhost`, which its worker serves (u5-2); and
+// prints what it saw as one JSON line.
 //
 //   node web/tests/join.mjs '{"engine": "chromium"|"webkit", "site": "<dir>"}'
 //
@@ -17,7 +19,7 @@ import { launch, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const server = await serve(args.site);
-const origin = `http://127.0.0.1:${server.address().port}/`;
+const origin = `http://localhost:${server.address().port}/`;
 console.log(JSON.stringify({ origin }));
 const input = createInterface({ input: process.stdin });
 const told = await new Promise((done) => input.once('line', done));
@@ -123,13 +125,14 @@ try {
   const again = await opening(link);
   const alone = await opening(origin);
   const lines = await page.evaluate(() => window.__lines);
-  // Open the first lend listed: the page goes to its address, which the
-  // service worker serves from its lender's computer, dialled by key.
+  // Open the first lend listed: the page goes to its own origin, whose
+  // worker serves it from its lender's computer, dialled by key with a pass.
   let opened = null;
   if (alone.lent.length) {
-    await Promise.all([page.waitForURL(/\/l\//, { timeout: 90_000 }), page.click('#lent button')]);
-    await page.waitForLoadState('load');
-    opened = { path: new URL(page.url()).pathname, text: await page.evaluate(() => document.body.innerText) };
+    const away = (url) => url.hostname.endsWith('.localhost') && url.pathname === '/';
+    await Promise.all([page.waitForURL(away, { timeout: 90_000 }), page.click('#lent button')]);
+    await page.waitForFunction(() => document.body?.innerText.includes('hi'), null, { timeout: 60_000 }).catch(() => {});
+    opened = { origin: new URL(page.url()).origin, text: await page.evaluate(() => document.body.innerText) };
   }
   console.log(JSON.stringify({ first, stored, again, alone, opened, lines, logs }));
 } catch (e) {

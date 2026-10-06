@@ -1,45 +1,27 @@
 // ported from commonwealth-ai sovereign/apps/ring-runtime/web/sw.js@e1a43bcd2
-// The page's service worker, a module: the runtime, and the app-shell cache.
+// The page's service worker: the app-shell cache.
 //
-// The runtime (u4-6; DESIGN §3, "Joining", call 3): every lend has one
-// address under this worker's scope, `<scope>l/<lender>/<lend>/<path>`,
-// the lender's key in full, and the worker serves every request there —
-// a lent service's pages, their subresources, fetch and XHR, a `<video>`'s
-// byte ranges — by HTTP over a dial to the lender's computer, at its door's
-// `/lend/<lend>/<path>` (web/src/http.rs). Each answer goes back as the
-// door gave it, status and headers, a 206 and its `Content-Range` with
-// them, its body streamed. A page under the scope reaches any lend by a
-// path relative to its own (`../../<lender>/<lend>/…`), under this
-// person's key: the phone dials each lender itself, so every lender's door
-// counts the person watching and no computer carries another's lend (call
-// 4). The worker opens its endpoint when it starts — the first request
-// that needs it — and so again after the browser stops it, since a stopped
-// worker keeps nothing: with the key the page handed it, else the key it
-// unseals itself (u4-10). Safari's worker on an iPhone could not unseal:
-// it read no sealing key where its page had kept one (2026-10-05). A
-// worker with neither answers a lend's address with the hand-over page
-// (hand.js), which unseals in the page, hands the key over and opens the
-// address again.
+// It serves no lend (u5-2; DESIGN §3, "Lent apps", calls 1 and 6). This is
+// the origin that holds each person's key, sealed in its store, so no lent
+// app's page may run here: until u5-2 every lend had an address under this
+// worker's scope, `<scope>l/<lender>/<lend>/`, and a script in a lent page
+// unsealed the key of whoever opened it (DESIGN §11, risk 5). Each lend now
+// opens at an origin of its own, whose worker (lend.js) dials with a pass
+// the page signs for it, never the key; the runtime, its trace with it,
+// moved there.
 //
 // The app-shell cache. Cache-first, one version: __VERSION__ is the runtime's
 // content hash, stamped at build time, so a rebuild replaces the cache rather
 // than serving a stale runtime (the failure this exists to avoid is a guest
 // stuck on last week's wasm). The version is also on every shell URL.
-import init, { endpoint } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
 
 const CACHE = store.CACHE;
 // Relative to this file, so the page works wherever an origin serves it;
 // the directory's trailing slash is what makes `./` the page. The wasm is
-// not here: the page keeps it in this cache when it first fetches it, and
-// the worker reads it there (store.js `runtime`, u4-9).
-const SHELL = [
-  './',
-  './app.js?v=__VERSION__',
-  './store.js?v=__VERSION__',
-  './hand.js?v=__VERSION__',
-  './wasm/svrngs_web.js?v=__VERSION__',
-];
+// not here: the page keeps it in this cache when it first fetches it
+// (store.js `runtime`, u4-9).
+const SHELL = ['./', './app.js?v=__VERSION__', './store.js?v=__VERSION__', './wasm/svrngs_web.js?v=__VERSION__'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -54,219 +36,10 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// A lend's address, or the shell. Only the shell is cached. The dial itself
-// is not HTTP to this origin — it is iroh — so requests to it never reach
-// here.
+// The shell, from its cache. The dial is not HTTP to this origin — it is
+// iroh — so requests to it never reach here.
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
-  if (url.origin !== self.location.origin) return;
-  if (url.pathname === TRACE) return e.respondWith(traceView());
-  if (url.pathname.startsWith(LENDS)) return e.respondWith(lent(e.request, url));
-  if (e.request.method !== 'GET') return;
-  e.respondWith(
-    caches.match(e.request, { ignoreSearch: true }).then((hit) => hit || fetch(e.request)),
-  );
+  if (url.origin !== self.location.origin || e.request.method !== 'GET') return;
+  e.respondWith(caches.match(e.request, { ignoreSearch: true }).then((hit) => hit || fetch(e.request)));
 });
-
-// ── the runtime ─────────────────────────────────────────────────────────
-
-// Where every lend's address starts: `l/` under the scope.
-const LENDS = new URL('./l/', self.location).pathname;
-
-// The dial's layers, and the worker's own steps, to the console at debug,
-// and the last of them to `<scope>trace`: a phone has no console to read
-// (the operator's iPhone, 2026-10-05: Safari's worker failed to reach the
-// lender while Firefox's did, and only Safari's console held why).
-const TRACE = new URL('./trace', self.location).pathname;
-
-// The type of every answer the worker makes in plain text: its trace, kept
-// and shown, and its words to a person (`say`).
-const PLAIN = { 'content-type': 'text/plain; charset=utf-8' };
-const traced = [];
-self.__trace = (l) => {
-  console.debug(l);
-  traced.push(`${new Date().toISOString()} ${l}`);
-  if (traced.length > 300) traced.shift();
-};
-const trace = self.__trace;
-
-// The trace kept in the shell's cache, so it outlives the browser stopping
-// this worker between a failure and someone opening `<scope>trace`.
-function keepTrace() {
-  const body = traced.join('\n');
-  return caches
-    .open(CACHE)
-    .then((c) => c.put(TRACE, new Response(body, { headers: PLAIN })))
-    .catch((e) => console.debug(`RUNTIME: the trace was not kept: ${e}`));
-}
-
-async function traceView() {
-  const head = `svrngs worker __VERSION__, ${self.navigator.userAgent}\n`;
-  const text = { headers: PLAIN };
-  if (traced.length) return new Response(`${head}this run of the worker:\n${traced.join('\n')}`, text);
-  const kept = await caches.match(TRACE);
-  const body = kept ? `kept from a run the browser has since stopped:\n${await kept.text()}` : 'nothing traced yet';
-  return new Response(`${head}${body}`, text);
-}
-
-// What this run of the worker holds, all of it lost when the browser stops
-// it: the keys the page handed it by group, the wasm module, an endpoint
-// per group, a dial per group and lender.
-const handed = new Map();
-let loaded = null;
-const endpoints = new Map();
-const dials = new Map();
-
-// The page hands over the person's key in a group when it opens the group
-// (store.js `handOver`): in memory, never storage. Only this origin's pages
-// can message this worker.
-self.addEventListener('message', (e) => {
-  const { group, key } = e.data ?? {};
-  if (typeof group !== 'string' || !(key instanceof Uint8Array) || key.length !== 32) {
-    trace(`RUNTIME: a message that hands over no key, refused: ${Object.keys(e.data ?? {})}`);
-    return;
-  }
-  handed.set(group, key);
-  trace(`RUNTIME: the page handed over the key for ${group}`);
-  e.ports[0]?.postMessage('held');
-});
-
-// No key for a group: none handed over, and none unsealed here.
-class Keyless extends Error {}
-
-// The person's key in `group`: the one the page handed over, else unsealed.
-async function keyFor(group) {
-  const key = handed.get(group.id);
-  if (key) {
-    trace(`RUNTIME: the key for ${group.id} is the one the page handed over`);
-    return key;
-  }
-  trace(`RUNTIME: no key for ${group.id} handed over: unsealing it here`);
-  try {
-    return await store.unseal(group);
-  } catch (e) {
-    throw new Keyless(`no key for ${group.id}: none handed over, and unsealing failed: ${e}`);
-  }
-}
-
-// Remember `opening` under `key` in `held` until it fails, so the next
-// request opens again rather than inheriting the failure.
-function held(map, key, opening) {
-  if (!map.has(key)) {
-    const p = opening();
-    map.set(key, p);
-    p.catch(() => map.delete(key));
-  }
-  return map.get(key);
-}
-
-function endpointFor(group) {
-  return held(endpoints, group.id, async () => {
-    loaded ??= init({ module_or_path: store.runtime() }).catch((e) => {
-      loaded = null;
-      throw e;
-    });
-    await loaded;
-    const key = await keyFor(group);
-    trace(`RUNTIME: opening the endpoint for ${group.id}`);
-    return endpoint(key, group.token);
-  });
-}
-
-function dialFor(group, lender) {
-  return held(dials, `${group.id} ${lender}`, async () => (await endpointFor(group)).dial(lender));
-}
-
-// A range that runs on is asked of the lender's door as a part of PART
-// bytes from where it starts (u4-9): an open-ended `bytes=N-`, which
-// Chromium's `<video>` asks, and a `<video>`'s closed range longer than a
-// part — WebKit's asks `bytes=0-1`, then on to the end, `bytes=N-<end>`.
-// The door's 206 names the part and the whole, and the `<video>` asks
-// again for what it needs next. In u4-8's dry run WebKit read its first
-// range to the end, 45 MB in 26 s, before it asked for a seek's bytes, and
-// that seek waited (ralph/REVIEW_FINDINGS.md #53); a part bounds the wait
-// at PART bytes. A page's own fetch of a closed range gets what it asked.
-// 2 MiB is 5.6 s of a 3 Mb/s film; what a part took through the relay,
-// the worker and the wasm is in demo/runs/u4/2026-10-05-reach/.
-const PART = 2 * 1024 * 1024;
-
-function bounded(headers, destination) {
-  return headers.map(([name, value]) => {
-    const range = name.toLowerCase() === 'range' && /^bytes=(\d+)-(\d*)$/.exec(value.trim());
-    if (!range) return [name, value];
-    const from = Number(range[1]);
-    const media = destination === 'video' || destination === 'audio';
-    const runsOn = range[2] === '' || (media && Number(range[2]) - from + 1 > PART);
-    if (!runsOn) {
-      trace(`RUNTIME: ${value} for ${destination || 'a fetch'}, asked as it came`);
-      return [name, value];
-    }
-    const part = `bytes=${from}-${from + PART - 1}`;
-    trace(`RUNTIME: ${value} for ${destination || 'a fetch'} runs on: asked as ${part}`);
-    return [name, part];
-  });
-}
-
-// Words for a person, as a page: why a lend did not open.
-function say(status, words) {
-  return new Response(words, { status, headers: PLAIN });
-}
-
-// The hand-over page (hand.js), for a lend's address reached with no key:
-// the page unseals, hands the key over and opens the address again.
-function handOverPage() {
-  const script = new URL('./hand.js?v=__VERSION__', self.location).href;
-  const html = `<!doctype html><html lang="en"><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1"><title>Opening…</title>
-<p id="said">Opening…</p><script type="module" src="${script}"></script></html>`;
-  return new Response(html, {
-    headers: {
-      'content-type': 'text/html; charset=utf-8',
-      'cache-control': 'no-store',
-      'referrer-policy': 'no-referrer',
-      'content-security-policy': "default-src 'none'; script-src 'self'; base-uri 'none'; form-action 'none'",
-    },
-  });
-}
-
-// Serve `request`, at `url` under a lend's address, from its lender's door.
-async function lent(request, url) {
-  const m = /^([0-9a-f]{64})\/([^/]+)(\/.*)?$/.exec(url.pathname.slice(LENDS.length));
-  if (!m) return say(404, 'Nothing is lent at this address.');
-  const [, lender, lend, rest] = m;
-  // A lend's front page ends in a slash, so its own relative paths stay in it.
-  if (rest === undefined) return Response.redirect(`${url.origin}${url.pathname}/${url.search}`, 301);
-  const group = await store.groupFor(lender);
-  if (!group) return say(403, 'Open your group’s link on this phone first.');
-  const path = `/lend/${lend}${rest}${url.search}`;
-  const headers = bounded([...request.headers], request.destination);
-  const body = ['GET', 'HEAD'].includes(request.method) ? null : (request.body ?? (await request.blob()).stream());
-  // A dial gone stale since it was opened — the lender's computer
-  // restarted, the relay dropped it — is opened again once, for a request
-  // with no body to send again.
-  for (let tries = 0; ; tries++) {
-    try {
-      const dialled = await dialFor(group, lender);
-      try {
-        return await dialled.fetch(request.method, path, headers, body);
-      } catch (e) {
-        dials.delete(`${group.id} ${lender}`);
-        throw e;
-      }
-    } catch (e) {
-      trace(`RUNTIME: ${request.method} ${path} at ${lender} failed (try ${tries + 1}): ${e}`);
-      if (e instanceof Keyless) {
-        await keepTrace();
-        if (request.mode === 'navigate') {
-          trace(`RUNTIME: ${path} answered with the hand-over page`);
-          return handOverPage();
-        }
-        return say(503, 'Open this again from your group’s page.');
-      }
-      if (body || tries) {
-        await keepTrace();
-        return say(502, 'The computer lending this did not answer. Try again later.');
-      }
-    }
-  }
-}

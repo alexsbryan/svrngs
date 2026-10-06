@@ -1,0 +1,62 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// A lend's origin's start (u5-2; DESIGN §3, "Lent apps", calls 1 and 6;
+// §7). The group's page opens `open.html#<what it hands>` here: the pass a
+// fresh key holds for this lend and the lends it reads, that key, the
+// lends, the relay and the page to ask for another pass — never the
+// person's key, which no lend's origin holds. Kept in this origin's store
+// (store.js `lendKeep`), handed to the lend's worker in memory (u4-10:
+// Safari's worker on an iPhone read nothing its page had kept), and the
+// lend opened, which the worker serves.
+//
+// The pass is for this origin's lend alone: at an address of its own the
+// host's first name is its label; under one address for every app its
+// path is `l/<label>/`. Anything else is refused, so a lent page cannot
+// open another lend's origin with a pass of its own.
+//
+// Opened with no fragment, by the worker that holds no pass — the browser
+// stopped it, and it could not read this origin's store — it reads the pass
+// here and hands it over again (`for`, then `back`); or, its pass lapsed
+// (`again`), it opens the group's page to sign another.
+import * as store from './store.js?v=__VERSION__';
+
+const say = (words) => (document.getElementById('said').textContent = words);
+
+function decode(fragment) {
+  const bytes = Uint8Array.from(atob(fragment.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+// The worker `reg` runs, once it runs.
+function running(reg) {
+  const worker = reg.installing ?? reg.waiting ?? reg.active;
+  return new Promise((done) => {
+    if (worker.state === 'activated') return done(worker);
+    worker.addEventListener('statechange', () => worker.state === 'activated' && done(worker));
+  });
+}
+
+async function start() {
+  const asked = new URLSearchParams(location.search);
+  let handed;
+  if (location.hash.length > 1) {
+    handed = decode(location.hash.slice(1));
+    history.replaceState(null, '', `${location.pathname}${location.search}`);
+    const own = location.hostname.startsWith(`${handed.label}.`) ? '/' : new URL(`l/${handed.label}/`, location.href).pathname;
+    if (handed.base !== own) throw new Error(`a pass for ${handed.label} opened at ${location.origin}${handed.base}`);
+    await store.lendKeep(`pass ${handed.label}`, handed);
+  } else {
+    handed = asked.get('for') && (await store.lendKept(`pass ${asked.get('for')}`));
+    if (!handed) return say('Open this from your group’s page.');
+    if (asked.has('again')) return location.replace(`${handed.page}#open=${handed.label}`);
+  }
+  if (!('serviceWorker' in navigator)) return say('This browser cannot open it.');
+  const script = new URL('./lend.js?v=__VERSION__', import.meta.url).pathname;
+  const worker = await running(await navigator.serviceWorker.register(script, { scope: handed.base, type: 'module' }));
+  if (!(await store.handOver(worker, { handed }))) throw new Error('the lend’s worker did not say it holds the pass');
+  location.replace(asked.get('back') ?? handed.base);
+}
+
+start().catch((e) => {
+  console.error(`OPEN: ${e}`);
+  say('This could not be opened. Open it again from your group’s page.');
+});

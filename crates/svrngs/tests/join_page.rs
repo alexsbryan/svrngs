@@ -5,10 +5,13 @@
 //! key, redeems the link at Sam's computer naming itself a browser, keeps
 //! the key sealed, and lists what the group's people lend as the bare
 //! command prints it. Opening the link again, or the page alone, is in
-//! without asking; a lend opens at its address under the page's service
-//! worker, which dials its lender's key. Everything
-//! runs on this computer: a relay on 127.0.0.1, plain HTTP, Sam's computer
-//! reached only through it, and the page served on 127.0.0.1. The browser
+//! without asking; a lend opens at an origin of its own, `<label>.<the
+//! page's host>`, whose worker dials its lender's key with a pass (u5-2).
+//! The page's origin is `localhost`, whose every name this computer
+//! answers, as svrnme.sh's are, so `svrngs new` decides that itself, and
+//! nothing more is typed: the bar u5-2 keeps. Everything runs on this
+//! computer: a relay on 127.0.0.1, plain HTTP, Sam's computer reached only
+//! through it, and the page served on 127.0.0.1. The browser
 //! half is `web/tests/join.mjs`, which fails naming the install command
 //! when Playwright or its browsers are absent — it never skips.
 
@@ -132,14 +135,15 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     let origin: Value = serde_json::from_str(&first).unwrap();
     let origin = Origin::parse(origin["origin"].as_str().unwrap()).unwrap();
 
+    let pages = cli::pages(origin.clone(), None)
+        .await
+        .expect("localhost answers every name under it, so no other step");
+    assert_eq!(pages.apps, cli::Apps::OwnAddress);
     let (seed, printed) = cli::new_group(
         &sam,
         Name::parse("house").unwrap(),
         Name::parse("Sam").unwrap(),
-        Some(&svrngs::cli::Pages {
-            page: origin.clone(),
-            apps: svrngs::cli::Apps::OwnAddress,
-        }),
+        Some(&pages),
         &ours,
     )
     .await
@@ -212,11 +216,21 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         assert_eq!(o["lent"], json!(["Sam’s shelf"]), "{again}:\n{seen:#}");
     }
 
-    // A lend opens at its address under the service worker's scope, which
-    // serves it from Sam's computer, dialled by Sam's key (u4-6).
+    // A lend opens at an origin of its own, `<label>.localhost`, whose
+    // worker serves it from Sam's computer, dialled by Sam's key (u5-2).
+    let shelf = svrngs_core::pass::Label::of(
+        SigningKey::from_bytes(&[1; 32]).verifying_key().as_bytes(),
+        "shelf",
+    );
+    let port = origin
+        .as_str()
+        .trim_end_matches('/')
+        .rsplit(':')
+        .next()
+        .unwrap();
     assert_eq!(
         seen["opened"],
-        json!({ "path": format!("/l/{founder}/shelf/"), "text": "hi" }),
+        json!({ "origin": format!("http://{shelf}.localhost:{port}"), "text": "hi" }),
         "{seen:#}"
     );
     sam.endpoint().close().await;

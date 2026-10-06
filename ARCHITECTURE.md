@@ -407,7 +407,8 @@ program itself for `share` with svrngs running and not.
 workspace of its own with upstream's measured pins (iroh =1.0.2,
 wasm-bindgen =0.2.128, wasm-bindgen-futures =0.4.78, js-sys =0.3.105) and
 lock, and the static shell beside it — `index.html`, `app.js`,
-`store.js`, `sw.js`.
+`store.js`, `sw.js`, and for a lend's own origin `open.html`, `open.js`,
+`lend.js`, `shim.js`.
 Forked from commonwealth-ai's `sovereign/apps/ring-runtime` at `e1a43bcd2`
 with `kernel-types` replaced by svrngs-core, then changed (u4-3, u4-4,
 u4-5). `src/lib.rs` binds a browser endpoint with the person's key, 32
@@ -428,16 +429,30 @@ sealed with the group's id as additional data (call 1). `app.js` reads the
 fragment as the token: a link joined by, or the page alone, is in; a new
 link is asked of its issuer, and a group kept already is in; else it asks the
 person's name once, redeems, keeps the group, and lists `GET /people/lends`
-as the bare command prints it ("Sam's shelf"), keeping the keys it names
-(`store.js` `listed`); it keeps the layers on the console at debug and says
-only DESIGN §1's words. A lend opens at its address under the service
-worker's scope, `l/<lender>/<lend>/`, and `sw.js` (u4-6), a module, is the
-runtime: it serves every request at such an address — pages, subresources,
-fetch, a `<video>`'s ranges — by `fetch` over a dial to the lender's door,
-`/lend/<lend>/<path>`, from one endpoint per group (`endpoint(key, token)`
-and its `dial(lender)`), opened from the sealed key on the first request
-after the worker starts; and it caches the shell. The shell's paths are relative, and the CSP admits a
-relay on 127.0.0.1. `scripts/build-web.sh` (upstream's
+as the bare command prints it ("Sam's shelf"); it keeps the layers on the
+console at debug and says only DESIGN §1's words. `sw.js` caches the shell
+and serves no lend: this origin holds the key. A lend opens at an origin of
+its own (u5-2; DESIGN §7): `<label>.<the page's host>`, or `l/<label>/`
+under the address the group's link names for its apps. The page signs a
+pass (`pass`, svrngs-core's `Pass`) to a fresh key for that lend and the
+lends it reads, and opens the lend's `open.html` with the pass, the key,
+the lends, the relay (`relay_of`, never the token) and itself in the
+fragment; `open.js` keeps them in that origin's store (`store.js`
+`lendKeep`), registers `lend.js` over the lend's address and hands it the
+pass in memory. `lend.js`, a module, is the runtime: it serves every
+request at the lend's address, and at the address of a lend the pass also
+names, by `fetch` over a dial to the lender's door, `/lend/<label>/<path>`,
+on the pass holders' protocol (`holder_endpoint`, `dial_lend`), the pass
+on every request; keeps each lend's cookies in a jar of its own (the
+dial's `fetch` hands `Set-Cookie` over as `x-svrngs-set-cookies`, since a
+page's `Response` drops it); reads a redirect to a path under the lend;
+asks for another pass through the page when the door refuses one; and puts
+`shim.js` in each lent page, which gives the page its lend's cookies,
+carries `WebSocket` to the worker (`socket`, the door switching a raw
+stream) and hands an app's own worker to it. With no pass in memory and
+none it can read, it sends a navigation to `open.html?for=<label>`, which
+reads the pass and hands it over again. The shell's paths are relative, and
+the CSP admits a relay on 127.0.0.1. `scripts/build-web.sh` (upstream's
 `build-ring-runtime.sh`) builds it into `target/web/site` with Homebrew's
 LLVM on a Mac, and `--lint` holds it to rustfmt and clippy for wasm32.
 `crates/svrngs-node/tests/browser/` is its test: iroh's relay server and a
@@ -449,10 +464,11 @@ the install command. `crates/svrngs/tests/join_page.rs`, with
 `web/tests/join.mjs`, is joining's: a link `svrngs new --origin` printed,
 opened, a name typed, Sam's journal read for the one `Admit`, every
 storage the page writes scanned for the key's bytes, and the first lend
-opened through the worker. The runtime's test, `web/tests/runtime.mjs` in
-the browser binary, plays and seeks an H.264 film ffmpeg makes, stops the
-worker through Chromium's DevTools protocol, and reads a second computer's
-lend by a relative path.
+opened at its own origin, `svrngs new` deciding that itself for a page on
+`localhost` (u5-2). The runtime's test, `web/tests/runtime.mjs` in the
+browser binary, plays and seeks an H.264 film ffmpeg makes at its lend's
+origin, stops the worker through Chromium's DevTools protocol, and reads a
+second computer's lend, which the first reads, at its origin.
 
 **`apps/expenses/`**: the Expenses fold (`expenses.js`) and its tests, from E0,
 the bot at tag `e0-bot`. Its reducer (`init`, `reduce`) folds the acts

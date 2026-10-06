@@ -15,7 +15,26 @@
 // person's name once, makes the person's key, redeems the link at its
 // issuer as a browser, and keeps the key sealed and the group's name
 // (store.js). Every word a person reads here is DESIGN §1's.
-import init, { ask, believe, connect, connect_to_join, redemption } from './wasm/svrngs_web.js?v=__VERSION__';
+//
+// Opening a lend (u5-2; DESIGN §3, "Lent apps", calls 1 and 6; §7): the
+// page signs a pass — a fresh key may act as this person toward this lend,
+// and the lends its lender declared it reads, until PASS_LIFE from now —
+// and opens the lend's own origin, handing it the pass, the fresh key, the
+// lends and the relay in the fragment: never the person's key, nor the
+// link's token, which would let it join. Its origin is
+// `<label>.<this page's host>`, or `l/<label>/` under the address the
+// group's link named for its apps. A lend's origin whose pass has lapsed,
+// or is gone, opens this page at `#open=<label>`, and the page signs again.
+import init, {
+  ask,
+  believe,
+  connect,
+  connect_to_join,
+  label,
+  pass,
+  redemption,
+  relay_of,
+} from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
 
 const heading = document.getElementById('status');
@@ -39,6 +58,10 @@ const PATIENCE = 60_000;
 // The people's lends, asked of the computer the page dials (u4-5;
 // crates/svrngs-node/src/node.rs, PEOPLE_LENDS_ROUTE).
 const PEOPLE_LENDS = '/people/lends';
+
+// How long a pass opens a lend, in seconds: its origin asks for another
+// after, which the page signs without a word to the person.
+const PASS_LIFE = 12 * 60 * 60;
 
 // Why the page stopped, in a person's words.
 class Said extends Error {}
@@ -96,7 +119,7 @@ function askName(group, why) {
 
 // Join by `token`, a link no group kept was joined by: the group joined,
 // kept, or one kept already, which the link lets into.
-async function join(token, kept) {
+async function join(token, lends, kept) {
   const away = 'The computer that sent this link did not answer. Try again later.';
   const key = crypto.getRandomValues(new Uint8Array(32));
   heading.textContent = 'Opening your link…';
@@ -124,7 +147,7 @@ async function join(token, kept) {
     await post(issuer, '/redeem', body);
     await issuer.close();
     const person = JSON.parse(body).person;
-    await store.keep({ id: group.id, name: group.name, person, token, key });
+    await store.keep({ id: group.id, name: group.name, person, token, lends, key });
     trace(`PAGE: joined ${group.id} as ${person}; the key is kept sealed`);
     return (await store.groups()).find((g) => g.id === group.id);
   }
@@ -136,36 +159,55 @@ function what(l) {
   return `${l.person}’s ${l.name === l.kind ? l.name : `${l.name} (${l.kind})`}`;
 }
 
-// The worker told the key of the group the page opened (store.js
-// `handOver`, u4-10): a lend opens once it holds it, or said nothing.
-let handing = null;
+// Where `group`'s apps open on this phone (DESIGN §7): `l/<label>/` under
+// the address its link named for them, whose `open.html` the lend's page
+// starts at; else an address of its own under this page's host, the page's
+// files at its root.
+function lendAt(group, at) {
+  if (group.lends) {
+    const lends = new URL(group.lends);
+    return { start: new URL(`open.html?v=__VERSION__`, lends).href, base: new URL(`l/${at}/`, lends).pathname };
+  }
+  return { start: `${location.protocol}//${at}.${location.host}/open.html?v=__VERSION__`, base: '/' };
+}
 
-// Open a lend: go to its address under the service worker's scope,
-// `l/<lender>/<lend>/`, which the worker serves from its lender's computer,
-// dialled by its key, never through the computer that listed it (DESIGN
-// §3, calls 3 and 4; sw.js).
-async function open(l) {
+const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+
+// Open `l`, one of `lent`, as the person whose key is `key` in `group`: a
+// pass to a fresh key for it and the lends of each kind it reads, handed
+// to its origin in the fragment, which no origin is sent (the module docs).
+function open(group, key, lent, l) {
   if (!('serviceWorker' in navigator)) {
     said.textContent = `This browser cannot open ${what(l)}.`;
     return;
   }
   said.textContent = `Opening ${what(l)}…`;
-  await navigator.serviceWorker.ready;
-  await handing;
-  location.assign(`l/${l.key}/${encodeURIComponent(l.name)}/`);
+  const reads = lent.filter((o) => o !== l && (l.reads ?? []).includes(o.kind));
+  const lends = [l, ...reads].map((o) => ({ label: label(o.key, o.name), key: o.key, name: o.name }));
+  const holder = crypto.getRandomValues(new Uint8Array(32));
+  const until = Math.floor(Date.now() / 1000) + PASS_LIFE;
+  const { start, base } = lendAt(group, lends[0].label);
+  const handoff = {
+    label: lends[0].label,
+    base,
+    lends,
+    pass: pass(key, holder, lends.map((o) => o.label), until),
+    holder: hex(holder),
+    relay: relay_of(group.token) ?? null,
+    page: `${location.origin}${location.pathname}`,
+  };
+  trace(`PAGE: opening ${handoff.label} at ${start}, a pass to ${lends.length} lend(s) until ${until}`);
+  const json = new TextEncoder().encode(JSON.stringify(handoff));
+  const fragment = btoa(String.fromCharCode(...json)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  location.assign(`${start}#${fragment}`);
 }
 
-// In `group`: list what its people lend.
-async function enter(group) {
+// In `group`: list what its people lend, and open the one labelled
+// `again` at once, when a lend's origin asked for another pass.
+async function enter(group, again) {
   group = await store.opened(group);
   document.title = group.name;
   const key = await store.unseal(group);
-  if ('serviceWorker' in navigator) {
-    handing = store
-      .handOver(group, key)
-      .then((held) => trace(`PAGE: the worker ${held ? 'holds' : 'did not say it holds'} the key for ${group.id}`))
-      .catch((e) => trace(`PAGE: the key was not handed over: ${e}`));
-  }
   heading.textContent = `Reaching ${group.name}…`;
   const d = await reach(connect(key, group.token), `Your group’s computer did not answer. Try again later.`);
   const res = await d.fetch('GET', PEOPLE_LENDS, [['accept', 'application/json']], null);
@@ -176,18 +218,19 @@ async function enter(group) {
   }
   const { lent, unanswered } = await res.json();
   await d.close();
-  await store.listed(group, lent.map((l) => l.key));
   show(`You’re in ${group.name}, as ${group.person}`, true);
   list.replaceChildren(
     ...lent.map((l) => {
       const item = document.createElement('li');
       const button = document.createElement('button');
       button.textContent = what(l);
-      button.onclick = () => open(l);
+      button.onclick = () => open(group, key, lent, l);
       item.append(button);
       return item;
     }),
   );
+  const asked = again && lent.find((l) => label(l.key, l.name) === again);
+  if (asked) open(group, key, lent, asked);
   said.textContent = [
     lent.length ? '' : `Nobody in ${group.name} lends anything yet.`,
     ...unanswered.map((p) => `${p}’s computer did not answer, so what they lend is not listed.`),
@@ -220,16 +263,23 @@ if ('serviceWorker' in navigator) {
 // for good when a person left the page while its module still awaited the
 // wasm's fetch at its top, then opened it again — the next navigation never
 // reached the origin (u4-7; ralph/REVIEW_FINDINGS.md has the runs).
-async function opening(token) {
+//
+// A link's fragment may carry the address its apps open under after the
+// token, `<token>~<address>`, its `https://` left off (DESIGN §7); and a
+// lend's origin asking for another pass opens `#open=<label>`.
+async function opening(fragment) {
   try {
     // The wasm by its one URL, from the cache the worker reads it from
     // too (store.js `runtime`, u4-9).
     await init({ module_or_path: store.runtime() });
+    const again = fragment.startsWith('open=') ? fragment.slice(5) : null;
+    const [token, apps] = again ? [''] : fragment.split('~');
+    const lends = apps && (apps.startsWith('http://') ? apps : `https://${apps}`);
     const kept = await store.groups();
     let group = token ? kept.find((g) => g.token === token) : kept[0];
-    if (token && !group) group = await join(token, kept);
+    if (token && !group) group = await join(token, lends, kept);
     if (!group) throw new Said('Open this page from your group’s link.');
-    await enter(group);
+    await enter(group, again);
   } catch (e) {
     console.error(e);
     show(e instanceof Said ? e.message : 'This browser could not open the page.', false);

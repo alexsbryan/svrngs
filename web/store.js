@@ -6,11 +6,15 @@
 //            `extractable: false`, so no script can read its bytes out,
 //            by the page when it first keeps a group, never by its worker.
 //   groups   by `id`: the group's name, the person's name in it, the link's
-//            token it was joined by, when it was last opened, the keys
-//            of the people its list last named as lending, and the
-//            person's key — 32 bytes — sealed: `iv` and `sealed`, with the
-//            group's id as the seal's additional data, so a sealed key
-//            opens only as the key of the group it was kept for.
+//            token it was joined by, the address its apps open under when
+//            its link names one (`lends`, u5-2), when it was last opened,
+//            and the person's key — 32 bytes — sealed: `iv` and `sealed`,
+//            with the group's id as the seal's additional data, so a sealed
+//            key opens only as the key of the group it was kept for.
+//
+// A lend's origin keeps a store of its own, `svrngs-lend` (below): what its
+// worker dials with, never the person's key, which no lend's origin holds
+// (u5-2; DESIGN §3, "Lent apps", call 6).
 //
 // The key is bytes, never a WebCrypto signing key: iroh signs its handshake
 // synchronously (iroh-1.0.2/src/tls/resolver.rs:92-95), and the issuer lets
@@ -36,9 +40,9 @@ function open() {
   });
 }
 
-// One request in one transaction, answered once the transaction commits.
-async function run(store, mode, act) {
-  const db = await open();
+// One request in one transaction of `db`, answered once it commits.
+async function run(store, mode, act, db = open) {
+  db = await db();
   return new Promise((done, fail) => {
     const tx = db.transaction(store, mode);
     const req = act(tx.objectStore(store));
@@ -82,10 +86,10 @@ async function sealingKey(make) {
 const bound = (id, iv) => ({ name: 'AES-GCM', iv, additionalData: new TextEncoder().encode(id) });
 
 // Keep a group joined: `key` is the person's 32 bytes, kept sealed alone.
-export async function keep({ id, name, person, token, key }) {
+export async function keep({ id, name, person, token, lends, key }) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const sealed = new Uint8Array(await crypto.subtle.encrypt(bound(id, iv), await sealingKey(true), key));
-  await run('groups', 'readwrite', (s) => s.put({ id, name, person, token, iv, sealed, opened: Date.now() }));
+  await run('groups', 'readwrite', (s) => s.put({ id, name, person, token, lends, iv, sealed, opened: Date.now() }));
 }
 
 // Every group kept, the last opened first. Their keys stay sealed.
@@ -102,19 +106,6 @@ export async function opened(group) {
   return now;
 }
 
-// The keys of the people `group`'s list last named as lending: the
-// runtime dials each of them with this group's key (sw.js).
-export async function listed(group, lenders) {
-  await run('groups', 'readwrite', (s) => s.put({ ...group, lenders }));
-}
-
-// The group whose key reaches `lender`: the one whose list last named
-// them, else the one opened last.
-export async function groupFor(lender) {
-  const kept = await groups();
-  return kept.find((g) => g.lenders?.includes(lender)) ?? kept[0];
-}
-
 // The person's key in `group`, unsealed: 32 bytes, held only in memory.
 export async function unseal(group) {
   const seal = await sealingKey(false);
@@ -128,21 +119,37 @@ export async function unseal(group) {
   }
 }
 
-// Hand the person's key in `group` to the worker that serves this page's
-// lends, in memory: a message, never storage (u4-10). Safari's worker on an
-// iPhone read no sealing key where its page had kept one (2026-10-05), so
-// the page, which reads it, unseals and hands the key over. Answers whether
-// the worker said it holds the key within `wait` ms.
-export async function handOver(group, key, wait = 5_000) {
-  const worker = (await navigator.serviceWorker.ready).active;
+// Hand `message` to `worker` in memory, never storage (u4-10: Safari's
+// worker on an iPhone read nothing its page had kept); answers whether it
+// said it holds it within `wait` ms.
+export function handOver(worker, message, wait = 5_000) {
   const { port1, port2 } = new MessageChannel();
   const held = new Promise((done) => {
     port1.onmessage = () => done(true);
     setTimeout(() => done(false), wait);
   });
-  worker.postMessage({ group: group.id, key }, [port2]);
+  worker.postMessage(message, [port2]);
   return held;
 }
+
+// ── a lend's origin (u5-2) ─────────────────────────────────────────────
+//
+// What a lend's origin keeps, by name, in IndexedDB `svrngs-lend`: what
+// the page handed it (`pass <label>`: the pass, its holder's key, the
+// lends it opens, the relay and the page to ask for another), the
+// cookies its worker keeps for each lend (`cookies <label>`), and an
+// app's own worker (`worker <label>`). Never the person's key.
+function lendDb() {
+  return new Promise((done, fail) => {
+    const req = indexedDB.open('svrngs-lend', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('kept');
+    req.onsuccess = () => done(req.result);
+    req.onerror = () => fail(req.error);
+  });
+}
+
+export const lendKept = (name) => run('kept', 'readonly', (s) => s.get(name), lendDb);
+export const lendKeep = (name, value) => run('kept', 'readwrite', (s) => s.put(value, name), lendDb);
 
 // ── the runtime's module ────────────────────────────────────────────────
 //

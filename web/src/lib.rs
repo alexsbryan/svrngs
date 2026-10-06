@@ -27,14 +27,11 @@ mod join;
 // Formatted by its own crate's rustfmt.toml, not by this one's.
 #[path = "../../crates/svrngs-node/src/relay.rs"]
 #[rustfmt::skip]
-#[expect(
-    dead_code,
-    reason = "relay::parse reads a relay a computer is told; the page is told only a token's, which svrngs-core reads"
-)]
 mod relay;
 
 use svrngs_core::alpn::Alpn;
 use svrngs_core::link::Token;
+use svrngs_core::pass::{Label, Pass};
 use wasm_bindgen::prelude::*;
 
 /// Push one layer line to the page's `__trace` collector, if the page defined
@@ -44,69 +41,6 @@ fn emit(line: &str) {
         if let Ok(f) = f.dyn_into::<js_sys::Function>() {
             let _ = f.call1(&JsValue::UNDEFINED, &JsValue::from_str(line));
         }
-    }
-}
-
-/// Dial the computer that issued `token`, by its key, as the person whose
-/// key is `key`, on the members' protocol: the dialled computer, which
-/// answers HTTP on a bi-stream per request ([`Dialled::fetch`]), or the
-/// layer that refused, every layer emitted as it happens.
-#[wasm_bindgen]
-pub async fn connect(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
-    dial(key, token, None, Alpn::Member).await
-}
-
-/// Dial the computer that issued `token` on the redeem protocol, the one a
-/// key standing in no group may speak, to ask what the link is for and
-/// redeem it ([`join`]'s bodies).
-#[wasm_bindgen]
-pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
-    dial(key, token, None, Alpn::Redeem).await
-}
-
-/// Dial `to`, else the computer that issued `token`, on `alpn`, from an
-/// endpoint of its own: the dial's [`Dialled::close`] closes it.
-async fn dial(key: Vec<u8>, token: String, to: Option<String>, alpn: Alpn) -> Result<Dialled, JsError> {
-    let bound = bind(key, &token).await?;
-    let conn = reach(&bound, to, alpn).await?;
-    Ok(Dialled {
-        ep: Some(bound.ep),
-        conn,
-    })
-}
-
-/// Bind one endpoint as the person whose key is `key`, in the group whose
-/// link's token is `token`, to dial each lender from ([`Endpoint::dial`]):
-/// the service worker's (DESIGN §3, call 3). A relay keeps one endpoint
-/// per key and sets the older aside when another binds
-/// (iroh-relay-1.0.2/src/server/clients.rs:80-92), so the worker holds one
-/// for every lender it reaches, never one per dial.
-#[wasm_bindgen]
-pub async fn endpoint(key: Vec<u8>, token: String) -> Result<Endpoint, JsError> {
-    Ok(Endpoint {
-        bound: bind(key, &token).await?,
-    })
-}
-
-/// A browser endpoint bound with the person's key, online at a relay.
-#[wasm_bindgen]
-pub struct Endpoint {
-    bound: Bound,
-}
-
-#[wasm_bindgen]
-impl Endpoint {
-    /// Dial the computer whose key is `lender`, 64 hex, on the members'
-    /// protocol: a phone dials whoever lends a service itself (DESIGN §3,
-    /// call 4). The dial's [`Dialled::close`] closes only its connection.
-    pub async fn dial(&self, lender: String) -> Result<Dialled, JsError> {
-        let conn = reach(&self.bound, Some(lender), Alpn::Member).await?;
-        Ok(Dialled { ep: None, conn })
-    }
-
-    /// Close the endpoint, and every dial from it.
-    pub async fn close(&self) {
-        self.bound.ep.close().await;
     }
 }
 
@@ -130,20 +64,38 @@ macro_rules! t {
 /// other computer is named.
 struct Bound {
     ep: iroh::Endpoint,
-    issuer: iroh::PublicKey,
+    issuer: Option<iroh::PublicKey>,
     relay: Option<iroh::RelayUrl>,
 }
 
-/// Bind an endpoint as the person whose key is `key`, for the group whose
-/// link's token is `token`, and wait until it is online.
+/// [`bind`] for the group whose link's token is `token`: its issuer, and
+/// its relay when it carries one.
+async fn bind_for(key: Vec<u8>, token: &str) -> Result<Bound, JsError> {
+    let Some(link) = Token::decode(token) else {
+        refuse!("LAYER parse: REFUSED — the fragment is not a link's token: {token}")
+    };
+    let issuer = match iroh::PublicKey::from_bytes(link.issuer.as_bytes()) {
+        Ok(p) => p,
+        Err(e) => {
+            refuse!("LAYER parse: REFUSED — node id is not a valid public key: {e}")
+        }
+    };
+    t!("LAYER parse: ok — issuer {issuer}");
+    bind(key, Some(issuer), link.relay.map(iroh::RelayUrl::from)).await
+}
+
+/// Bind an endpoint as the person whose key is `key` — or a pass's holder —
+/// reaching the network through `relay`, else n0's lookup and relays, and
+/// wait until it is online. `issuer` is whom it dials when no other
+/// computer is named.
 ///
 /// `key` is the person's key, the 32 bytes the page's store holds (DESIGN
 /// §3, call 1): iroh signs its handshake with it synchronously, so it is
-/// bytes here, never a WebCrypto key. `token` is the group's link's token,
-/// the fragment of `<origin>#<token>`, parsed by svrngs-core as the command
-/// parses it (call 5). No bearer rides a request: the node knows the person
-/// by the key that dialled.
-async fn bind(key: Vec<u8>, token: &str) -> Result<Bound, JsError> {
+/// bytes here, never a WebCrypto key. The relay is the group's link's
+/// token's, the fragment of `<origin>#<token>`, parsed by svrngs-core as
+/// the command parses it (call 5). No bearer rides a request: the node
+/// knows the person by the key that dialled, or the pass its holder shows.
+async fn bind(key: Vec<u8>, issuer: Option<iroh::PublicKey>, relay: Option<iroh::RelayUrl>) -> Result<Bound, JsError> {
     t!("LAYER page: wasm module loaded and dial entered (iroh =1.0.2)");
 
     // ── LAYER 1: the person's key, then the link's token ───────────────────
@@ -156,16 +108,7 @@ async fn bind(key: Vec<u8>, token: &str) -> Result<Bound, JsError> {
             )
         }
     };
-    t!("LAYER key: ok — the person's key {}", secret.public());
-    let Some(link) = Token::decode(token) else {
-        refuse!("LAYER parse: REFUSED — the fragment is not a link's token: {token}")
-    };
-    let issuer = match iroh::PublicKey::from_bytes(link.issuer.as_bytes()) {
-        Ok(p) => p,
-        Err(e) => {
-            refuse!("LAYER parse: REFUSED — node id is not a valid public key: {e}")
-        }
-    };
+    t!("LAYER key: ok — the key {}", secret.public());
     // The relay the token carries, from an issuer run without address
     // lookup; else iroh's lookup, the resolver the N0 preset adds in a
     // browser (iroh-1.0.2/src/endpoint/presets.rs:122-128), with n0's
@@ -174,10 +117,9 @@ async fn bind(key: Vec<u8>, token: &str) -> Result<Bound, JsError> {
     // Every relay here is dotless, as WebKit reaches it: the token's as
     // svrngs-core decodes it, n0's and the lookup's answers by `relay`.
     let builder = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal).secret_key(secret);
-    let (builder, relay) = match link.relay {
+    let (builder, relay) = match relay {
         Some(relay) => {
-            let relay = iroh::RelayUrl::from(relay);
-            t!("LAYER parse: ok — issuer {issuer}, relay {relay} from the token");
+            t!("LAYER parse: ok — relay {relay}");
             (
                 builder.relay_mode(iroh::RelayMode::Custom(relay.clone().into())),
                 Some(relay),
@@ -185,7 +127,7 @@ async fn bind(key: Vec<u8>, token: &str) -> Result<Bound, JsError> {
         }
         None => {
             let relays = relay::n0_relays();
-            t!("LAYER parse: ok — issuer {issuer}, a bare key: found by n0's address lookup; n0's relays {relays}");
+            t!("LAYER parse: ok — a bare key: found by n0's address lookup; n0's relays {relays}");
             let lookup = relay::DotlessLookup(iroh::address_lookup::PkarrResolver::n0_dns());
             (
                 builder
@@ -222,7 +164,10 @@ async fn bind(key: Vec<u8>, token: &str) -> Result<Bound, JsError> {
 /// iroh's lookup finds it.
 async fn reach(bound: &Bound, to: Option<String>, alpn: Alpn) -> Result<iroh::endpoint::Connection, JsError> {
     let node_id = match to {
-        None => bound.issuer,
+        None => match bound.issuer {
+            Some(issuer) => issuer,
+            None => refuse!("LAYER parse: REFUSED — no computer named to dial"),
+        },
         Some(to) => match <[u8; 32]>::try_from(hex::decode(&to).unwrap_or_default().as_slice()) {
             Ok(bytes) => match iroh::PublicKey::from_bytes(&bytes) {
                 Ok(p) => p,
@@ -289,6 +234,22 @@ impl Dialled {
         })
     }
 
+    /// Ask the computer to switch `path` to another protocol, `headers` an
+    /// array of `[name, value]` naming it (a WebSocket's `Upgrade`, u5-2): a
+    /// promise of `{status, headers, readable, writable}`, the raw bytes of
+    /// the switched stream on the last two once `status` is 101. A service
+    /// worker sees no WebSocket, so the lend's worker speaks its frames over
+    /// these.
+    pub fn socket(&self, path: String, headers: js_sys::Array) -> js_sys::Promise {
+        let conn = self.conn.clone();
+        wasm_bindgen_futures::future_to_promise(async move {
+            http::socket(conn, &path, &headers).await.map_err(|e| {
+                emit(&format!("HTTP: a socket at {path} — REFUSED — {e}"));
+                js_sys::Error::new(&e.to_string()).into()
+            })
+        })
+    }
+
     /// Close the dial, and every stream with it: its endpoint when it
     /// bound one for itself, else its connection.
     pub fn close(&self) -> js_sys::Promise {
@@ -301,5 +262,127 @@ impl Dialled {
             }
             Ok(JsValue::UNDEFINED)
         })
+    }
+}
+
+/// Dial the computer that issued `token`, by its key, as the person whose
+/// key is `key`, on the members' protocol: the dialled computer, which
+/// answers HTTP on a bi-stream per request ([`Dialled::fetch`]), or the
+/// layer that refused, every layer emitted as it happens.
+#[wasm_bindgen]
+pub async fn connect(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
+    dial(key, token, None, Alpn::Member).await
+}
+
+/// Dial the computer that issued `token` on the redeem protocol, the one a
+/// key standing in no group may speak, to ask what the link is for and
+/// redeem it ([`join`]'s bodies).
+#[wasm_bindgen]
+pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
+    dial(key, token, None, Alpn::Redeem).await
+}
+
+/// Dial `to`, else the computer that issued `token`, on `alpn`, from an
+/// endpoint of its own: the dial's [`Dialled::close`] closes it.
+async fn dial(key: Vec<u8>, token: String, to: Option<String>, alpn: Alpn) -> Result<Dialled, JsError> {
+    let bound = bind_for(key, &token).await?;
+    let conn = reach(&bound, to, alpn).await?;
+    Ok(Dialled {
+        ep: Some(bound.ep),
+        conn,
+    })
+}
+
+/// Bind one endpoint as the person whose key is `key`, in the group whose
+/// link's token is `token`, to dial each lender from ([`Endpoint::dial`]):
+/// the service worker's (DESIGN §3, call 3). A relay keeps one endpoint
+/// per key and sets the older aside when another binds
+/// (iroh-relay-1.0.2/src/server/clients.rs:80-92), so the worker holds one
+/// for every lender it reaches, never one per dial.
+#[wasm_bindgen]
+pub async fn endpoint(key: Vec<u8>, token: String) -> Result<Endpoint, JsError> {
+    Ok(Endpoint {
+        bound: bind_for(key, &token).await?,
+    })
+}
+
+/// Bind one endpoint as a pass's holder, whose key is `key`, reaching the
+/// group through `relay` — the one the group's link carries — else n0's
+/// lookup: a lend's origin's worker (u5-2; DESIGN §3, "Lent apps", call 6).
+/// It is handed no link's token, which would let it join the group.
+#[wasm_bindgen]
+pub async fn holder_endpoint(key: Vec<u8>, relay: Option<String>) -> Result<Endpoint, JsError> {
+    let relay = match relay.as_deref().map(relay::parse) {
+        None => None,
+        Some(Ok(url)) => Some(url),
+        Some(Err(e)) => refuse!("LAYER parse: REFUSED — {relay:?} is not a relay: {e}"),
+    };
+    Ok(Endpoint {
+        bound: bind(key, None, relay).await?,
+    })
+}
+
+/// The relay a link's `token` carries, dotless, or none: what a pass's
+/// holder is handed in place of the token (u5-2).
+#[wasm_bindgen]
+pub fn relay_of(token: String) -> Result<Option<String>, JsError> {
+    let link = Token::decode(&token).ok_or_else(|| JsError::new("not a link's token"))?;
+    Ok(link.relay.map(|r| iroh::RelayUrl::from(r).to_string()))
+}
+
+/// The label of the lend `name` lent by the computer whose key is
+/// `lender`, 64 hex: one DNS label, its origin's name (u5-2).
+#[wasm_bindgen]
+pub fn label(lender: String, name: String) -> Result<String, JsError> {
+    let key = <[u8; 32]>::try_from(hex::decode(&lender).unwrap_or_default().as_slice())
+        .map_err(|_| JsError::new("not a computer's key"))?;
+    Ok(Label::of(&key, &name).to_string())
+}
+
+/// The person whose key is `person` lets the key `holder` act as them
+/// toward the lends `labels` until `until`, seconds since 1970: the pass,
+/// as the door reads it from a request (u5-2; svrngs-core's `Pass`).
+#[wasm_bindgen]
+pub fn pass(person: Vec<u8>, holder: Vec<u8>, labels: Vec<String>, until: f64) -> Result<String, JsError> {
+    let key = |bytes: Vec<u8>| {
+        <[u8; 32]>::try_from(bytes.as_slice())
+            .map(|b| svrngs_core::SigningKey::from_bytes(&b))
+            .map_err(|_| JsError::new("a key is 32 bytes"))
+    };
+    let lends = labels
+        .iter()
+        .map(|l| Label::parse(l).ok_or_else(|| JsError::new(&format!("{l} is not a lend's label"))))
+        .collect::<Result<Vec<_>, _>>()?;
+    let holder = svrngs_core::actor_of(&key(holder)?);
+    Ok(Pass::sign(&key(person)?, &holder, lends, until as i64).encode())
+}
+
+/// A browser endpoint bound with the person's key, online at a relay.
+#[wasm_bindgen]
+pub struct Endpoint {
+    bound: Bound,
+}
+
+#[wasm_bindgen]
+impl Endpoint {
+    /// Dial the computer whose key is `lender`, 64 hex, on the members'
+    /// protocol: a phone dials whoever lends a service itself (DESIGN §3,
+    /// call 4). The dial's [`Dialled::close`] closes only its connection.
+    pub async fn dial(&self, lender: String) -> Result<Dialled, JsError> {
+        let conn = reach(&self.bound, Some(lender), Alpn::Member).await?;
+        Ok(Dialled { ep: None, conn })
+    }
+
+    /// Dial the computer whose key is `lender` on the pass holders'
+    /// protocol, as a pass's holder: every request presents the pass
+    /// (u5-2).
+    pub async fn dial_lend(&self, lender: String) -> Result<Dialled, JsError> {
+        let conn = reach(&self.bound, Some(lender), Alpn::Lend).await?;
+        Ok(Dialled { ep: None, conn })
+    }
+
+    /// Close the endpoint, and every dial from it.
+    pub async fn close(&self) {
+        self.bound.ep.close().await;
     }
 }

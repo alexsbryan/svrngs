@@ -1,21 +1,22 @@
 // The browser half of the runtime's test (u4-6; crates/svrngs-node/tests/
-// browser): a lent film played and sought under the service worker's
-// scope. It serves the built page on 127.0.0.1 and, in Playwright's
-// headless `engine` (page.mjs), holds a joined group in the page's store,
-// opens the page and then the lend `args.open` from its list, so the page
-// goes to the lend's address, which the worker serves from its lender's
+// browser): a lent film played and sought at its lend's own origin (u5-2).
+// It serves the built page on 127.0.0.1 as `localhost`, whose every name
+// this computer answers, and, in Playwright's headless `engine`
+// (page.mjs), holds a joined group in the page's store, opens the page and
+// then the lend `args.open` from its list, so the page goes to the lend's
+// origin, `<label>.localhost`, whose worker serves it from its lender's
 // computer. There it plays the page's `<video>`, seeks it at
 // `args.seeks[0..2]`, has the browser stop the worker — Chromium through
 // its DevTools protocol, WebKit by closing and opening the browser again —
-// seeks at the last, and loads a range of a second computer's lend by a
-// path relative to the page (`args.other`), and, when `args.open` names
-// one, an open-ended range of it too (`args.openEnded`, `bytes=N-`). It
-// prints what it saw as one JSON line.
+// seeks at the last, and loads a range of a second computer's lend, which
+// the first reads, at its origin (`args.other`), and an open-ended range of
+// it too (`args.openEnded`, `bytes=N-`). It prints what it saw as one JSON
+// line.
 //
 //   node web/tests/runtime.mjs '{"engine": "chromium"|"webkit", "site": ...,
 //     "key": ..., "token": ...,
 //     "open": "<the lend's name>", "seeks": [s, s, s],
-//     "other": {"path": "../../<key>/<lend>/<file>", "range": "bytes=a-b"},
+//     "other": {"lend": "<label>", "path": "<file>", "range": "bytes=a-b"},
 //     "openEnded": {"path": ..., "range": "bytes=a-"}}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
@@ -27,10 +28,12 @@ import { hold, launch, play, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 
-// In the lend's page: a range of `path`, relative to the page, read whole.
-async function range({ path, range }) {
+// In the lend's page: a range of `path` at the lend `lend`'s origin, read
+// whole.
+async function range({ lend, path, range }) {
   try {
-    const res = await fetch(path, { headers: { range } });
+    const at = `${location.protocol}//${lend}${location.host.slice(location.hostname.split('.')[0].length)}/${path}`;
+    const res = await fetch(at, { headers: { range } });
     const bytes = new Uint8Array(await res.arrayBuffer());
     const sha = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))]
       .map((x) => x.toString(16).padStart(2, '0'))
@@ -42,7 +45,7 @@ async function range({ path, range }) {
 }
 
 const server = await serve(args.site);
-const origin = `http://127.0.0.1:${server.address().port}/`;
+const origin = `http://localhost:${server.address().port}/`;
 // WebKit's context keeps a profile, so the browser can be closed and
 // opened again on it; Chromium's is stopped through DevTools.
 const profile = args.engine === 'webkit' ? mkdtempSync(join(tmpdir(), 'svrngs-webkit-')) : undefined;
@@ -60,9 +63,10 @@ try {
   await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
   const listed = await page.evaluate(() => [...document.querySelectorAll('#lent button')].map((b) => b.textContent));
   const button = page.locator('#lent button', { hasText: args.open });
-  await Promise.all([page.waitForURL(/\/l\//, { timeout: 90_000 }), button.click()]);
-  await page.waitForLoadState('load');
-  const opened = new URL(page.url()).pathname;
+  const away = (url) => url.hostname.endsWith('.localhost');
+  await Promise.all([page.waitForURL(away, { timeout: 90_000 }), button.click()]);
+  await page.waitForSelector('video', { timeout: 60_000 });
+  const opened = page.url();
 
   // The worker's runs, as Chromium reports them; WebKit reports none.
   const cdp = profile ? null : await context.newCDPSession(page);
@@ -93,8 +97,9 @@ try {
     watch(context);
     page = context.pages()[0] ?? (await context.newPage());
     page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
-    await page.goto(new URL(opened, origin).href);
-    reopened = new URL(page.url()).pathname;
+    await page.goto(opened);
+    await page.waitForSelector('video', { timeout: 60_000 });
+    reopened = page.url();
     replayed = await page.evaluate(play, { at: null, within: 15_000 });
   }
   const runsAtStop = [...runs];

@@ -11,9 +11,10 @@ export const INSTALL = 'npm ci --prefix web && npx --prefix web playwright insta
 
 // The page as an origin serves it: its directory at the root, with the
 // trailing slash, and the wasm by its type so the browser streams it.
-// With `worker`, script run in the service worker before its own: the
-// browser alone fetches sw.js, as it registers and updates the worker, so
-// the page and what it imports never see it (u4-10's plant).
+// With `worker`, script run in a lend's worker before its own: the
+// browser alone fetches lend.js, as it registers and updates the worker,
+// so the pages and what they import never see it (u4-10's plant, u5-2's
+// worker).
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -27,7 +28,7 @@ export function serve(dir, { worker } = {}) {
     if (!file.startsWith(root)) return res.writeHead(403).end();
     try {
       let body = await readFile(file);
-      if (worker && path === '/sw.js') body = `${worker}\n${body}`;
+      if (worker && path === '/lend.js') body = `${worker}\n${body}`;
       res.writeHead(200, { 'content-type': TYPES[extname(file)] ?? 'application/octet-stream' });
       res.end(body);
     } catch {
@@ -77,11 +78,12 @@ export async function launch(engine, { profile } = {}) {
 // keeps one (web/store.js, u4-5): the person's key sealed, the group's
 // name, and the person's — a phone that joined. Imported as app.js
 // imports it.
-export async function hold({ hex, token }) {
+// With `lends`, the address its apps open under (u5-2, the floor).
+export async function hold({ hex, token, lends, person = 'bo' }) {
   const app = document.querySelector('script[type=module]').src;
   const store = await import(new URL(`./store.js${new URL(app).search}`, app).href);
   const key = Uint8Array.from(hex.match(/../g), (h) => parseInt(h, 16));
-  await store.keep({ id: 'held', name: 'house', person: 'bo', token, key });
+  await store.keep({ id: 'held', name: 'house', person, token, lends, key });
 }
 
 // In the lend's page: play its `<video>`, or seek it to `at`, and answer

@@ -112,7 +112,7 @@ fi
 # for good (demo/u4.md).
 # sha256sum is GNU coreutils; stock macOS has only shasum. Either works.
 if command -v sha256sum >/dev/null; then SHA_CMD="sha256sum"; else SHA_CMD="shasum -a 256"; fi
-PAGE=(index.html app.js store.js hand.js sw.js)
+PAGE=(index.html app.js store.js sw.js open.html open.js lend.js shim.js)
 VERSION="$(cat "$OUT/wasm/svrngs_web_bg.wasm" "$OUT/wasm/svrngs_web.js" "${PAGE[@]/#/$APP/}" | $SHA_CMD | cut -c1-12)"
 for f in "${PAGE[@]}"; do
   cp "$APP/$f" "$OUT/"

@@ -1,17 +1,19 @@
 // The browser half of u4-10's test (crates/svrngs-node/tests/browser):
-// Safari's worker on an iPhone, which read no sealing key where its page
-// had kept one (2026-10-05). The worker here is planted so (page.mjs
-// `serve`'s `worker`, PLANT): its every read of the `seal` store comes back
-// empty, while the page's reads it. The page holds a joined group, opens
-// the link and then the lend `args.open` from its list: the worker serves
-// it with the key the page handed it, and its `<video>` plays. Then the
-// browser stops the worker — Chromium through its DevTools protocol, WebKit
-// by closing the browser and opening it again — and the lend's address is
-// opened directly: the worker holds no key and cannot unseal, so it
-// answers with the hand-over page, which hands the key over and opens the
-// address again, and the `<video>` plays. Last, the page's own unseal must
-// still open the person's key. The worker's trace is read at `/trace`
-// (sw.js), as a phone's is. Prints what it saw as one JSON line.
+// Safari's worker on an iPhone, which read nothing its page had kept
+// (2026-10-05). Since u5-2 the worker that dials is a lend's, at the lend's
+// own origin (lend.js), and what it reads is its origin's store; here it is
+// planted so (page.mjs `serve`'s `worker`, PLANT): its every read of that
+// store comes back empty, while its pages read it. The page holds a joined
+// group, opens the link and then the lend `args.open` from its list: the
+// lend's start page (open.js) hands its worker the pass in memory, and the
+// `<video>` plays. Then the browser stops the worker — Chromium through its
+// DevTools protocol, WebKit by closing the browser and opening it again —
+// and the lend's address is opened directly: the worker holds no pass and
+// reads none, so it sends the page to its start page, which reads the
+// pass, hands it over and opens the address again, and the `<video>`
+// plays. Last, the group's page's own unseal must still open the person's
+// key. The worker's trace is read at `/svrngs-trace` (lend.js), as a
+// phone's is. Prints what it saw as one JSON line.
 //
 //   node web/tests/handover.mjs '{"engine": "chromium"|"webkit", "site": ...,
 //     "key": ..., "token": ..., "open": "<the lend's name>"}'
@@ -25,11 +27,11 @@ import { hold, launch, play, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 
-// Safari's worker: a read of the `seal` store asks for a key never put.
+// Safari's worker: a read of its origin's store asks for a name never put.
 const PLANT = `{
   const get = IDBObjectStore.prototype.get;
   IDBObjectStore.prototype.get = function (k) {
-    return get.call(this, this.name === 'seal' ? 'planted: Safari reads no sealing key here' : k);
+    return get.call(this, this.name === 'kept' ? 'planted: Safari reads nothing here' : k);
   };
 }`;
 
@@ -46,14 +48,13 @@ async function unsealed() {
   }
 }
 
-// In a page the worker controls: what the worker traced (sw.js `TRACE`).
-// The hand-over page's policy lets it fetch nothing, so when it is the one
-// still showing, that is said instead.
+// In a page the lend's worker controls: what the worker traced (lend.js
+// `TRACE`).
 const traced = (page) =>
-  page.evaluate(() => fetch('/trace').then((r) => r.text())).catch((e) => `the trace was not read: ${e}`);
+  page.evaluate(() => fetch('/svrngs-trace').then((r) => r.text())).catch((e) => `the trace was not read: ${e}`);
 
 const server = await serve(args.site, { worker: PLANT });
-const origin = `http://127.0.0.1:${server.address().port}/`;
+const origin = `http://localhost:${server.address().port}/`;
 const profile = args.engine === 'webkit' ? mkdtempSync(join(tmpdir(), 'svrngs-webkit-')) : undefined;
 let { context, close } = await launch(args.engine, { profile });
 const logs = [];
@@ -72,9 +73,10 @@ try {
   await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
   const listed = await page.evaluate(() => [...document.querySelectorAll('#lent button')].map((b) => b.textContent));
   const button = page.locator('#lent button', { hasText: args.open });
-  await Promise.all([page.waitForURL(/\/l\//, { timeout: 90_000 }), button.click()]);
-  await page.waitForLoadState('load');
-  const opened = new URL(page.url()).pathname;
+  const away = (url) => url.hostname.endsWith('.localhost');
+  await Promise.all([page.waitForURL(away, { timeout: 90_000 }), button.click()]);
+  await page.waitForSelector('video', { timeout: 60_000 });
+  const opened = page.url();
   const first = await page.evaluate(play, { at: null, within: 15_000 });
   const handedTrace = await traced(page);
 
@@ -96,10 +98,10 @@ try {
     while (!runs.includes('stopped') && Date.now() - stopped < 10_000) await new Promise((r) => setTimeout(r, 50));
     if (!runs.includes('stopped')) throw new Error(`the worker did not stop: ${runs}`);
   }
-  await page.goto(new URL(opened, origin).href);
+  await page.goto(opened);
   await page.waitForSelector('video', { timeout: 60_000 }).catch(() => {});
   await page.waitForLoadState('load');
-  const reopened = new URL(page.url()).pathname;
+  const reopened = page.url();
   const replayed = await page.evaluate(play, { at: null, within: 15_000 });
   const stoppedTrace = await traced(page);
 

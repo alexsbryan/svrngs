@@ -36,6 +36,12 @@ use crate::emit;
 /// chunk the page is handed of a response's body.
 const READ_CHUNK: usize = 64 * 1024;
 
+/// Where a response's `Set-Cookie` values are handed to the page (u5-2).
+const COOKIES: &str = "x-svrngs-set-cookies";
+
+/// The most a socket's answer's head may be before its blank line.
+const HEAD_MOST: usize = 64 * 1024;
+
 /// Why a request got no response.
 #[derive(Debug, thiserror::Error)]
 pub enum Refused {
@@ -203,6 +209,21 @@ pub async fn fetch(
     let status = parts.status.as_u16();
     emit(&format!("HTTP: {method} {path} answered {status}"));
     let headers = web_sys::Headers::new().map_err(|e| Refused::Page(format!("{e:?}")))?;
+    // A page's `Response` drops `Set-Cookie`, so the lend's worker, which
+    // keeps each lend's cookies (u5-2), is handed them under a name of its
+    // own: a JSON array of each value.
+    let cookies: Vec<&str> = parts
+        .headers
+        .get_all(hyper::header::SET_COOKIE)
+        .iter()
+        .filter_map(|v| v.to_str().ok())
+        .collect();
+    if !cookies.is_empty() {
+        let json = serde_json::to_string(&cookies).unwrap_or_default();
+        headers
+            .append(COOKIES, &json)
+            .map_err(|e| Refused::Page(format!("{e:?}")))?;
+    }
     for (name, value) in &parts.headers {
         match value.to_str() {
             Ok(value) => headers
@@ -229,4 +250,97 @@ pub async fn fetch(
     });
     web_sys::Response::new_with_opt_readable_stream_and_init(body.as_ref(), &init)
         .map_err(|e| Refused::Page(format!("{e:?}")))
+}
+
+/// Ask on a new bi-stream of `conn` to switch `path` to another protocol,
+/// `headers` naming it, and answer `{status, headers, readable, writable}`:
+/// the status and head of the answer, then the stream's raw bytes both
+/// ways (u5-2). Written by hand, as the head is all there is to HTTP here;
+/// the door's hyper reads it, and splices the stream once its service
+/// switches.
+pub async fn socket(conn: Connection, path: &str, headers: &js_sys::Array) -> Result<JsValue, Refused> {
+    let mut head = format!("GET {path} HTTP/1.1\r\n");
+    let mut host = false;
+    for pair in headers.iter() {
+        let pair = pair.dyn_into::<js_sys::Array>().map_err(|_| Refused::Headers)?;
+        let (Some(name), Some(value)) = (pair.get(0).as_string(), pair.get(1).as_string()) else {
+            return Err(Refused::Headers);
+        };
+        hyper::header::HeaderName::from_bytes(name.as_bytes()).map_err(|_| Refused::Header(name.clone()))?;
+        hyper::header::HeaderValue::from_str(&value).map_err(|_| Refused::Header(name.clone()))?;
+        host |= name.eq_ignore_ascii_case("host");
+        head.push_str(&format!("{name}: {value}\r\n"));
+    }
+    if !host {
+        head.push_str("Host: svrngs\r\n");
+    }
+    head.push_str("\r\n");
+    let (mut send, mut recv) = conn.open_bi().await.map_err(|e| Refused::Stream(e.to_string()))?;
+    send.write_all(head.as_bytes())
+        .await
+        .map_err(|e| Refused::Stream(e.to_string()))?;
+    let mut got = Vec::new();
+    let end = loop {
+        if let Some(at) = got.windows(4).position(|w| w == b"\r\n\r\n") {
+            break at + 4;
+        }
+        if got.len() > HEAD_MOST {
+            return Err(Refused::Stream("the answer's head never ended".into()));
+        }
+        match recv
+            .read_chunk(READ_CHUNK)
+            .await
+            .map_err(|e| Refused::Stream(e.to_string()))?
+        {
+            Some(chunk) => got.extend_from_slice(&chunk),
+            None => return Err(Refused::Stream("the stream ended before its answer did".into())),
+        }
+    };
+    let text = String::from_utf8_lossy(&got[..end]).into_owned();
+    let mut lines = text.split("\r\n");
+    let status: u16 = lines
+        .next()
+        .and_then(|l| l.split_whitespace().nth(1))
+        .and_then(|s| s.parse().ok())
+        .ok_or_else(|| Refused::Stream(format!("not an HTTP answer: {text}")))?;
+    emit(&format!("HTTP: a socket at {path} answered {status}"));
+    let named = js_sys::Array::new();
+    for (name, value) in lines.filter_map(|l| l.split_once(':')) {
+        named.push(&js_sys::Array::of2(&name.trim().into(), &value.trim().into()));
+    }
+    let first = Bytes::copy_from_slice(&got[end..]);
+    let read = futures_util::stream::unfold((Some(first), recv), |(first, mut recv)| async move {
+        if let Some(first) = first.filter(|f| !f.is_empty()) {
+            return Some((Ok(JsValue::from(js_sys::Uint8Array::from(&first[..]))), (None, recv)));
+        }
+        match recv.read_chunk(READ_CHUNK).await {
+            Ok(Some(chunk)) => Some((Ok(JsValue::from(js_sys::Uint8Array::from(&chunk[..]))), (None, recv))),
+            Ok(None) => None,
+            Err(e) => Some((Err(JsValue::from(js_sys::Error::new(&e.to_string()))), (None, recv))),
+        }
+    });
+    let write = futures_util::sink::unfold(send, |mut send, chunk: JsValue| async move {
+        let bytes = chunk
+            .dyn_into::<js_sys::Uint8Array>()
+            .map_err(|_| JsValue::from(js_sys::Error::new("a socket writes bytes")))?
+            .to_vec();
+        send.write_all(&bytes)
+            .await
+            .map_err(|e| JsValue::from(js_sys::Error::new(&e.to_string())))?;
+        Ok::<_, JsValue>(send)
+    });
+    let answer = js_sys::Object::new();
+    let set = |k: &str, v: &JsValue| js_sys::Reflect::set(&answer, &k.into(), v).map(|_| ());
+    set("status", &status.into())
+        .and(set("headers", &named))
+        .and(set(
+            "readable",
+            &wasm_streams::ReadableStream::from_stream(read).into_raw(),
+        ))
+        .and(set(
+            "writable",
+            &wasm_streams::WritableStream::from_sink(write).into_raw(),
+        ))
+        .map_err(|e| Refused::Page(format!("{e:?}")))?;
+    Ok(answer.into())
 }

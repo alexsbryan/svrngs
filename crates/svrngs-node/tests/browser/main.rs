@@ -98,6 +98,51 @@ async fn computer(
     node
 }
 
+/// A computer of ada's group: its key `signing(me)` admitted as `person`
+/// by `ada`, and ada's record synced to it once, so each lists and lets in
+/// the other's people (u5-2: the page lists cy's lends, and a pass names
+/// them, only when cy is in the group the phone opened).
+async fn joined(dir: &Path, relay: &Server, ada: &Node, me: u8, person: &str) -> Node {
+    let fixture = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse(person).unwrap(),
+            key: actor_of(&signing(me)),
+            invite: None,
+        },
+        on_behalf_of: None,
+    };
+    ada.rail().commit(NS, &fixture).unwrap().unwrap();
+    let node = Node::start(
+        dir.to_path_buf(),
+        signing(me),
+        &RelayConfig::from_parts(vec![relay_url(relay)], Some("none"))
+            .unwrap()
+            .on_loopback_only(),
+        no_seed,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("a node starts");
+    let seed = Roster::new(
+        [(Person::parse("ada").unwrap(), vec![actor_of(&signing(1))])]
+            .into_iter()
+            .collect(),
+    );
+    node.rail().set_seed(NS, &seed).unwrap();
+    tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
+        .await
+        .expect("the node reaches the relay on 127.0.0.1");
+    let synced = node.sync_with(NS, &ada.endpoint().addr()).await;
+    assert!(
+        synced.stop.is_none(),
+        "{person} syncs ada's record: {synced:?}"
+    );
+    // No address lookup here: ada is told where the new computer listens.
+    let addrs = node.endpoint().addr().ip_addrs().copied().collect();
+    ada.transport().add_known_peer(node.endpoint().id(), addrs);
+    node
+}
+
 /// A link's token naming `issuer`, reached through `relay`. Its secret
 /// redeems nothing here: a member's dial needs only the issuer and the way
 /// to it.
@@ -231,10 +276,28 @@ fn sha(bytes: impl Iterator<Item = u8>) -> String {
 
 /// `node` lends `name` on `port`, as the door's tests declare a lend.
 fn lend(dir: &Path, name: &str, port: u16) {
+    lend_reading(dir, name, port, &[]);
+}
+
+/// [`lend`], its pages reading the group's lends of each kind in `reads`
+/// (u5-2, `svrngs share --reads`).
+fn lend_reading(dir: &Path, name: &str, port: u16, reads: &[&str]) {
     let lends = svrngs_node::lend::lends_dir(dir);
     std::fs::create_dir_all(&lends).unwrap();
-    let body = json!({ "port": port, "kind": "k", "limit": 3, "refused": [] });
+    let body = json!({ "port": port, "kind": "k", "limit": 3, "refused": [], "reads": reads });
     std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
+}
+
+/// Where the phone opens `name`, lent by the computer whose key is `seed`'s:
+/// an origin of its own, `http://<label>.localhost:<port>/` (u5-2).
+fn label(seed: u8, name: &str) -> String {
+    svrngs_core::pass::Label::of(signing(seed).verifying_key().as_bytes(), name).to_string()
+}
+
+/// Whether `url` is the lend `label`'s own origin on this computer.
+fn at_origin(url: &Value, label: &str) -> bool {
+    url.as_str()
+        .is_some_and(|u| u.starts_with(&format!("http://{label}.localhost:")))
 }
 
 in_both_engines!(
@@ -387,6 +450,47 @@ async fn page_origin(html: String) -> std::net::SocketAddr {
     addr
 }
 
+/// A lent page and its film at one origin (u5-2: each lend an origin of
+/// its own, as a lent app serves its pages and its media): `/` answered by
+/// `page`, every other path by `film`, a request head read to choose and
+/// the rest spliced.
+async fn one_origin(
+    page: std::net::SocketAddr,
+    film: std::net::SocketAddr,
+) -> std::net::SocketAddr {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        while let Ok((mut sock, _)) = listener.accept().await {
+            tokio::spawn(async move {
+                let mut head = Vec::new();
+                let mut byte = [0u8; 1];
+                while !head.ends_with(b"\r\n") {
+                    if tokio::io::AsyncReadExt::read(&mut sock, &mut byte)
+                        .await
+                        .unwrap_or(0)
+                        == 0
+                    {
+                        return;
+                    }
+                    head.push(byte[0]);
+                }
+                let to = if head.starts_with(b"GET / ") {
+                    page
+                } else {
+                    film
+                };
+                let Ok(mut there) = tokio::net::TcpStream::connect(to).await else {
+                    return;
+                };
+                let _ = there.write_all(&head).await;
+                let _ = tokio::io::copy_bidirectional(&mut sock, &mut there).await;
+            });
+        }
+    });
+    addr
+}
+
 /// The `x-svrngs-key` each request head names, as the door set it.
 fn keys(heads: &std::sync::Mutex<Vec<String>>) -> Vec<String> {
     heads
@@ -464,18 +568,20 @@ in_both_engines!(
     /// The runtime (u4-6; DESIGN §3, "Joining", calls 3 and 4): ada's computer
     /// lends a page and a film, an H.264 mp4 from upstream's Range origin, and
     /// cy's, another computer holding bo's key, lends a file. The phone, holding
-    /// bo's key, opens ada's page from its list: the page's address is under
-    /// the service worker's scope, and the worker serves it, its `<video>` and
-    /// every byte range from ada's door. The film plays and seeks three times,
+    /// bo's key, opens ada's page from its list: since u5-2 it opens at an
+    /// origin of its own, `<label>.localhost`, apart from the page that
+    /// holds bo's key, and that origin's worker serves it, its `<video>` and
+    /// every byte range from ada's door, with the pass the page signed. The film plays and seeks three times,
     /// each playing again within five seconds (Demo A's seek bar); the browser
     /// stops the worker before the third, and the next ranges still answer:
     /// Chromium stops it through DevTools, the page left playing, and WebKit,
     /// whose worker Playwright cannot reach, is closed and opened again on its
     /// profile, as a phone ends a browser left in the background, and the page
     /// reopens at the lend's address (web/tests/runtime.mjs). A
-    /// range of cy's file, asked by a path relative to ada's page, comes back
-    /// 206 and sha-exact, and cy's door names bo's key, not ada's: no computer
-    /// carries another's lend. An open-ended range of cy's file, `bytes=N-`,
+    /// range of cy's file, asked at its own origin by ada's page, which reads
+    /// lends of its kind (`--reads`, so the pass names cy's file too), comes
+    /// back 206 and sha-exact, and cy's door names bo's key, not ada's: no
+    /// computer carries another's lend. An open-ended range of cy's file, `bytes=N-`,
     /// comes back a bounded part, a 206 naming it and the whole, sha-exact
     /// (u4-9, web/sw.js `PART`), and every range the film's `<video>` asks
     /// reaches ada's door as a part of at most 2 MiB: Chromium asks
@@ -496,20 +602,16 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
     let bo = signing(7);
     let (ada_dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let ada = node(ada_dir.path(), &relay, &bo).await;
-    let cy = computer(cy_dir.path(), &relay, &bo, 2, "cy").await;
-    let (ada_key, cy_key, bo_key) = (actor_of(&signing(1)), actor_of(&signing(2)), actor_of(&bo));
+    let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
+    let (ada_key, bo_key) = (actor_of(&signing(1)), actor_of(&bo));
 
     let mp4 = ada_dir.path().join("title.mp4");
     let size = film(&mp4);
     let (film_origin, film_heads) = origins::kept_range_origin(mp4, size).await;
-    lend(ada_dir.path(), "film", film_origin.port());
     let html = "<!doctype html><title>a page</title>\
-                <video src=\"../film/title.mp4\" playsinline preload=\"auto\"></video>";
-    lend(
-        ada_dir.path(),
-        "page",
-        page_origin(html.to_string()).await.port(),
-    );
+                <video src=\"title.mp4\" playsinline preload=\"auto\"></video>";
+    let page = one_origin(page_origin(html.to_string()).await, film_origin).await;
+    lend_reading(ada_dir.path(), "page", page.port(), &["k"]);
     const OTHER: u64 = 16 * MIB;
     let file = cy_dir.path().join("title.bin");
     std::fs::write(&file, (0..OTHER).map(origins::byte_at).collect::<Vec<u8>>()).unwrap();
@@ -526,8 +628,8 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
             "token": token(&signing(1), &relay),
             "open": "page",
             "seeks": [40.0, 20.0, 52.0],
-            "other": { "path": format!("../../{cy_key}/shelf/title.bin"), "range": format!("bytes={from}-{to}") },
-            "openEnded": { "path": format!("../../{cy_key}/shelf/title.bin"), "range": format!("bytes={from}-") },
+            "other": { "lend": label(2, "shelf"), "path": "title.bin", "range": format!("bytes={from}-{to}") },
+            "openEnded": { "lend": label(2, "shelf"), "path": "title.bin", "range": format!("bytes={from}-") },
         }),
         None,
     )
@@ -539,7 +641,7 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
     ));
     eprintln!("the runtime's run: {shown}");
 
-    assert_eq!(seen["opened"], format!("/l/{ada_key}/page/"), "{seen:#}");
+    assert!(at_origin(&seen["opened"], &label(1, "page")), "{seen:#}");
     assert!(
         seen["first"]["ms"].is_u64(),
         "the film must play:\n{seen:#}"
@@ -647,40 +749,37 @@ fn trace_of<'a>(seen: &'a Value, key: &str) -> &'a str {
 
 in_both_engines!(
     /// Safari's worker (u4-10; the operator's iPhone, 2026-10-05, in
-    /// demo/runs/u4/2026-10-05-phones/): it read no sealing key where its
-    /// page had kept one, made its own over the page's, and never dialled.
-    /// Here the worker is planted to read the seal empty, the page not
+    /// demo/runs/u4/2026-10-05-phones/): it read nothing its page had kept,
+    /// and never dialled. Since u5-2 the worker that dials is the lend's, at
+    /// the lend's own origin, and it reads its origin's store; here it is
+    /// planted to read that store empty, its pages not
     /// (web/tests/handover.mjs). The page opens ada's lent page from its
-    /// list, handing the worker bo's key as it opens the group, and the
-    /// worker dials with it: the film plays. The browser stops the worker
-    /// and the lend's address is opened again: the worker holds no key and
-    /// unseals none, so the hand-over page answers, hands bo's key over in
-    /// the page and opens the address again, and the film plays. The page's
-    /// own unseal still opens bo's key after: no worker put a sealing key
-    /// over the page's. Planted: the worker making a sealing key when it
-    /// reads none (`unseal` as it was before 1f60d0a); the handed key
-    /// ignored (sw.js `keyFor` reading only the seal).
-    a_worker_that_reads_no_seal_dials_with_the_key_the_page_hands_it
+    /// list; the lend's start page hands its worker the pass in memory, and
+    /// the worker dials with it: the film plays. The browser stops the
+    /// worker and the lend's address is opened again: the worker holds no
+    /// pass and reads none, so it sends the page to its start page, which
+    /// reads the pass, hands it over and opens the address again, and the
+    /// film plays. The group's page's own unseal still opens bo's key
+    /// after. Planted: the handed pass ignored (lend.js reading only its
+    /// store).
+    a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it
 );
-async fn a_worker_that_reads_no_seal_dials_with_the_key_the_page_hands_it(engine: Engine) {
+async fn a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it(
+    engine: Engine,
+) {
     let site = site();
     let relay = relay().await;
     let bo = signing(7);
     let dir = tempfile::tempdir().unwrap();
     let ada = node(dir.path(), &relay, &bo).await;
-    let ada_key = actor_of(&signing(1));
 
     let mp4 = dir.path().join("title.mp4");
     let size = film(&mp4);
     let (film_origin, film_heads) = origins::kept_range_origin(mp4, size).await;
-    lend(dir.path(), "film", film_origin.port());
     let html = "<!doctype html><title>a page</title>\
-                <video src=\"../film/title.mp4\" playsinline preload=\"auto\"></video>";
-    lend(
-        dir.path(),
-        "page",
-        page_origin(html.to_string()).await.port(),
-    );
+                <video src=\"title.mp4\" playsinline preload=\"auto\"></video>";
+    let page = one_origin(page_origin(html.to_string()).await, film_origin).await;
+    lend(dir.path(), "page", page.port());
 
     let seen = drive(
         engine,
@@ -706,25 +805,24 @@ async fn a_worker_that_reads_no_seal_dials_with_the_key_the_page_hands_it(engine
         hex::encode(bo.to_bytes()),
         "the page's own unseal must still open bo's key: no worker puts a sealing key over the page's:\n{shown:#}"
     );
-    assert_eq!(seen["opened"], format!("/l/{ada_key}/page/"), "{shown:#}");
+    assert!(at_origin(&seen["opened"], &label(1, "page")), "{shown:#}");
     assert!(
-        trace_of(&seen, "handedTrace").contains("is the one the page handed over"),
-        "the worker must dial with the key the page handed it:\n{shown:#}"
+        trace_of(&seen, "handedTrace").contains("the page handed over the pass"),
+        "the lend's worker must dial with the pass its start page handed it:\n{shown:#}"
     );
     assert!(
         seen["first"]["ms"].is_u64(),
-        "the film must play with the handed key:\n{shown:#}"
+        "the film must play with the handed pass:\n{shown:#}"
     );
     let stopped = trace_of(&seen, "stoppedTrace");
     assert!(
-        stopped.contains("the sealing key absent, and only the page makes one")
-            && !stopped.contains("making one"),
-        "the restarted worker must read no seal (the plant) and make none:\n{shown:#}"
+        stopped.contains("is not kept here"),
+        "the restarted worker must read nothing of its origin's store (the plant):\n{shown:#}"
     );
     assert!(
-        stopped.contains("answered with the hand-over page")
-            && stopped.contains("the page handed over the key"),
-        "the lend's address must go through the hand-over page:\n{shown:#}"
+        stopped.contains("its start page reads it again")
+            && stopped.contains("the page handed over the pass"),
+        "the lend's address must go through its start page, which hands the pass over:\n{shown:#}"
     );
     assert_eq!(seen["reopened"], seen["opened"], "{shown:#}");
     assert!(

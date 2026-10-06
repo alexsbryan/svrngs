@@ -1,0 +1,16 @@
+<!doctype html>
+<!--
+  Where a lend's origin starts (u5-2; DESIGN §3, "Lent apps", calls 1 and
+  6): the group's page opens it with a pass in the fragment, which no
+  origin is sent, and open.js hands it to the lend's worker (lend.js) and
+  opens the lend. Every word a person reads here is DESIGN §1's.
+-->
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; base-uri 'none'; form-action 'none'">
+<title>Opening…</title>
+<p id="said">Opening…</p>
+<script type="module" src="./open.js?v=__VERSION__"></script>
+</html>

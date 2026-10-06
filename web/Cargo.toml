@@ -35,10 +35,10 @@ svrngs-core = { path = "../crates/svrngs-core" }
 hyper = { version = "1.11", default-features = false, features = ["client", "http1"] }
 http-body-util = "0.1.5"
 bytes = "1"
-futures-util = { version = "0.3", default-features = false }
+futures-util = { version = "0.3", default-features = false, features = ["sink"] }
 tokio = { version = "1", default-features = false }
 wasm-streams = "0.5"
-web-sys = { version = "=0.3.105", features = ["Headers", "ReadableStream", "Response", "ResponseInit"] }
+web-sys = { version = "=0.3.105", features = ["Headers", "ReadableStream", "Response", "ResponseInit", "WritableStream"] }
 thiserror = "2"
 # Joining (u4-5): the ask's and the redemption's bodies as the node reads
 # them, and a lender's key as the record spells it. The versions

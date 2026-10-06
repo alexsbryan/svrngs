@@ -132,10 +132,13 @@ u5-0):
   one body with the door). Its secret lives only in the door's store, and
   nothing on loopback carries it to the lend.
 - *A lend at an origin apart from the person's key* (u5-2, calls 1 and 6
-  below). On a phone every lend is under the page's scope
-  (`web/sw.js:73-74`), the origin that holds the key (§11, risk 5); on a
-  computer a lender's lends share the loopback port of the bridge to that
-  lender (`node.rs:532`; `crates/svrngs-node/src/iroh.rs:212-265`).
+  below). On a phone every lend was under the page's scope, the origin
+  that holds the key (§11, risk 5), and on a computer a lender's lends
+  shared the loopback port of the bridge to that lender. Since u5-2 each
+  lend opens at an origin of its own: on a computer
+  `http://<label>.localhost:<port>/` (`crates/svrngs-node/src/origin.rs`),
+  which `/v1/lends` answers as each lend's `origin`; on a phone as §7 says,
+  its worker (`web/lend.js`) dialling with a pass, never the key.
 - *A live socket* (u5-2). The door stripped `Upgrade` as hop-by-hop, so
   Jellyfin's `/socket` answered 404 through it and 101 on the lender's
   computer (`demo/runs/a/dry-2026-10-04/README.md:69-73`); since u5-2 it
@@ -205,9 +208,13 @@ the evidence is U4's inventory, §8):
    the page makes the sealing key. A lend's address reached by a worker with
    neither is answered by a hand-over page, which unseals in the page, hands
    the key over and opens the address again (u4-10: Safari's worker on an
-   iPhone read no sealing key where its page had kept one). u5-2 moves
+   iPhone read no sealing key where its page had kept one). u5-2 moved
    every lend off the page's origin, by the first and sixth of the calls
-   below; the page keeps the key.)
+   below: the page keeps the key and its worker only the shell (`web/sw.js`);
+   the endpoint is the lend's worker's, at the lend's own origin
+   (`web/lend.js`), bound with the fresh key a pass names, and what was the
+   hand-over page is the lend's start page (`web/open.js`), which reads the
+   pass its worker cannot and hands it over.)
 4. *The phone dials whoever lends a service*, directly by key, since it
    stands in the group. The issuer, the node the link names, only redeems and
    answers what the group's people lend, each with its lender's key. No node
@@ -322,7 +329,7 @@ piece comes over:
 | `svrngs-core` | the record: acts, admission into one order, membership, the sync digest; and what a browser's page spells as the command and the node do (u4-2): a link's token, the ask and the redemption a joiner signs with it, the issuer's answer and the seed it is believed by (u4-5), the protocols' names, and a relay's URL without the DNS root's trailing dot, which WebKit refuses (u4-9); a lend's label, one DNS label naming its lender's key and its name, and the pass a person signs for another key toward named lends until a time, with its check (u5-2). `no_std`, so the compiler refuses filesystem, clock, network and threads; time and keys are arguments | none |
 | `svrngs-runtime` | the only owner of each group's journal on disk, its projections and its writes: the journal and its write index, the open-journal map, the register's standing | the journals |
 | `svrngs-node` | the adapters: sync and its route over iroh, redemption, the loopback record API with its live lane (landed, u3-2 and u3-3), the member door (landed, u3-4), the list of what members lend, asked of each (landed, u3-5), and answered to a member by the computer it dials, each with its lender's key (landed, u4-5), and the door's limit and shares, a pure decision the door's task owns (landed, u3-6); a WebSocket's upgrade carried, and the pass holders' protocol, which any key may speak, where a request presenting a person's pass for the lend it names, by name or label, is that person's (landed, u5-2); every relay URL it makes or reads dotless where it enters — n0's relays, a relay it is told, a lookup's answers — in `relay.rs`, which the page compiles too (landed, u4-9) | each lend's declaration and secret; who is using each lend now |
-| `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell and a workspace of its own: a browser's endpoint, bound with the person's key, dialling a group's computer by key over a relay on the members' protocol (landed, u4-3); HTTP over the dial (landed, u4-4); joining — the ask and the redemption by svrngs-core's bodies, the key sealed in the page's store, and the list of what the group's people lend (landed, u4-5); the runtime, a service worker serving every request at a lend's address under its scope from the lender's door, one endpoint for every lender (landed, u4-6), a range that runs on — open-ended, or a `<video>`'s longer than a part — asked of the door in parts of 2 MiB (landed, u4-9), the person's key handed from the page to its worker in memory, and the hand-over page for a worker that holds none (landed, u4-10); an adapter | none: the page's store holds the key, sealed |
+| `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell and a workspace of its own: a browser's endpoint, bound with the person's key, dialling a group's computer by key over a relay on the members' protocol (landed, u4-3); HTTP over the dial (landed, u4-4); joining — the ask and the redemption by svrngs-core's bodies, the key sealed in the page's store, and the list of what the group's people lend (landed, u4-5); the runtime, a service worker serving every request at a lend's address from the lender's door (landed, u4-6), a range that runs on — open-ended, or a `<video>`'s longer than a part — asked of the door in parts of 2 MiB (landed, u4-9), handed what it dials with in memory, and a page for a worker that holds nothing (landed, u4-10); since u5-2 at each lend's own origin, not the page's (`lend.js`, its start page `open.js`): the page signs a pass to a fresh key for the lend it opens and the lends it reads, the worker dials on the pass holders' protocol, keeps each lend's cookies, reads a redirect to a path under the lend, and with a shim in each lent page (`shim.js`) carries `WebSocket` and an app's own worker; an adapter | none: the page's store holds the key, sealed; a lend's origin's store holds its pass and its cookies |
 | `svrngs` | the command and the process: `new`, `join`, `link`, `share` and `unshare` (landed); the bare command prints where the record API listens, and what the people of its groups lend | a device's keys; each group's seed |
 
 Held to `docs/principles/RUST_ARCH.md`: types encode the domain, ownership
@@ -1003,10 +1010,15 @@ By the operator, 2026-10-03:
    the worker's scope), so a script in a lent page can open the page's
    store and unseal the key of whoever opens it: in u4-6's test, a script
    on `/l/<ada>/page/` imported `store.js` and read bo's 32 bytes. So
-   whoever lends a service, or a service compromised, can act as each
-   person in the group who opens it. Putting the lends on an origin apart
-   from the page's store is the way out: u5-2 builds it (§3, "Lent apps",
-   calls 1 and 6), and keeps u4-6's measurement as a test.
+   whoever lent a service, or a service compromised, could act as each
+   person in the group who opened it. Since u5-2 each lend opens at an
+   origin apart from the page's store, with a pass for that lend and the
+   lends it reads, never the key (§3, "Lent apps", calls 1 and 6; §7), and
+   u4-6's measurement is kept as a test of the conformance canary
+   (`crates/svrngs-node/tests/conformance.rs`). What is left: under one
+   address for every app (§7, the floor) a lent page can use another
+   lend's pass while it lasts; and the page's host still serves the code
+   that holds the key.
 6. **Two copies of the record's code.** A signing or canonical-form bug fixed on
    one side can be missed on the other. `scripts/ports.py` is the guard, and it
    is a listing, not a gate.
