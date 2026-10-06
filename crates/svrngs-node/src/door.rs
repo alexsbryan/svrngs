@@ -839,6 +839,53 @@ fn busy(lend: &Lend, using: u32) -> Response {
     (StatusCode::SERVICE_UNAVAILABLE, Json(body)).into_response()
 }
 
+/// Send `request` on a new HTTP/1 connection to `to`, driven with
+/// upgrades, and answer the response; `None`, named at warn by `lend`,
+/// when nothing there takes the connection in [`CONNECT_WITHIN`] or
+/// answers.
+pub(crate) async fn send_to(
+    to: std::net::SocketAddr,
+    request: axum::http::Request<Body>,
+    lend: &str,
+) -> Option<axum::http::Response<hyper::body::Incoming>> {
+    let tcp = match tokio::time::timeout(CONNECT_WITHIN, tokio::net::TcpStream::connect(to)).await {
+        Ok(Ok(tcp)) => tcp,
+        Ok(Err(e)) => {
+            tracing::warn!(target: "door", lend, %to, error = %e, "door: the lend's service refused a connection");
+            return None;
+        }
+        Err(_) => {
+            tracing::warn!(target: "door", lend, %to, within = ?CONNECT_WITHIN, "door: the lend's service took no connection in time");
+            return None;
+        }
+    };
+    let (mut sender, conn) = match hyper::client::conn::http1::handshake(
+        hyper_util::rt::TokioIo::new(tcp),
+    )
+    .await
+    {
+        Ok(pair) => pair,
+        Err(e) => {
+            tracing::warn!(target: "door", lend, error = %e, "door: no HTTP/1 connection to the lend's service");
+            return None;
+        }
+    };
+    // Drives the connection until the response body is read to its end.
+    let name = lend.to_string();
+    tokio::spawn(async move {
+        if let Err(e) = conn.with_upgrades().await {
+            tracing::debug!(target: "door", lend = %name, error = %e, "door: the connection to the lend's service ended in error");
+        }
+    });
+    match sender.send_request(request).await {
+        Ok(a) => Some(a),
+        Err(e) => {
+            tracing::warn!(target: "door", lend, error = %e, "door: the lend's service did not answer");
+            None
+        }
+    }
+}
+
 /// Carry `req` to `lend`'s service as `path` (with its query), the head
 /// rewritten, and stream the answer back.
 async fn forward(
@@ -920,43 +967,8 @@ async fn forward(
         )
     };
     let origin = std::net::SocketAddr::from(([127, 0, 0, 1], lend.port.get()));
-    let tcp = match tokio::time::timeout(CONNECT_WITHIN, tokio::net::TcpStream::connect(origin))
-        .await
-    {
-        Ok(Ok(tcp)) => tcp,
-        Ok(Err(e)) => {
-            tracing::warn!(target: "door", lend = %lend.name, %origin, error = %e, "door: the lend's service refused a connection");
-            return unanswered();
-        }
-        Err(_) => {
-            tracing::warn!(target: "door", lend = %lend.name, %origin, within = ?CONNECT_WITHIN, "door: the lend's service took no connection in time");
-            return unanswered();
-        }
-    };
-    let (mut sender, conn) = match hyper::client::conn::http1::handshake(
-        hyper_util::rt::TokioIo::new(tcp),
-    )
-    .await
-    {
-        Ok(pair) => pair,
-        Err(e) => {
-            tracing::warn!(target: "door", lend = %lend.name, error = %e, "door: no HTTP/1 connection to the lend's service");
-            return unanswered();
-        }
-    };
-    // Drives the connection until the response body is read to its end.
-    let name = lend.name.clone();
-    tokio::spawn(async move {
-        if let Err(e) = conn.with_upgrades().await {
-            tracing::debug!(target: "door", lend = %name, error = %e, "door: the connection to the lend's service ended in error");
-        }
-    });
-    let answer = match sender.send_request(request).await {
-        Ok(a) => a,
-        Err(e) => {
-            tracing::warn!(target: "door", lend = %lend.name, error = %e, "door: the lend's service did not answer");
-            return unanswered();
-        }
+    let Some(answer) = send_to(origin, request, lend.name.as_str()).await else {
+        return unanswered();
     };
     let mut answer = answer;
     let switched =
