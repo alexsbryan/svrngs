@@ -4,9 +4,9 @@ Keep talking where you talk; keep what your group owns — money, plans, files,
 the library — on your own computers, not a platform's. And for developers:
 anything you can run on localhost, you can share with your group.
 
-That includes the whole self-hosted catalogue — Jellyfin, Navidrome, Immich,
-Audiobookshelf, Nextcloud, Paperless-ngx, Actual, Mealie, Forgejo, Home
-Assistant. Run it in a container on one computer, `svrngs share <port> --kind
+That includes the apps people already self-host — Jellyfin, Navidrome, Immich,
+Audiobookshelf, Calibre-Web, Nextcloud, Paperless-ngx, Actual, Mealie, Grocy,
+Home Assistant. Run it in a container on one computer, `svrngs share <port> --kind
 <name>`, and everyone in the group has it (DESIGN §1).
 
 What we answer to: `NORTH_STAR.md`. What it is, how we build it and the order

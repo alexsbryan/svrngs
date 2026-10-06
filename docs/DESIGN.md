@@ -27,15 +27,24 @@ login, no SDK, no bundle.
 **And the apps already exist.** Everything people self-host is a web app on a
 port: Jellyfin and Navidrome for the library, Immich for photos,
 Audiobookshelf and Calibre-Web for books, Nextcloud and Paperless-ngx for
-files, Actual and Firefly III for money, Mealie, Vikunja and Grocy for plans,
-Forgejo, BookStack, Home Assistant. Run one in a container on any member's
-computer, `svrngs share <port> --kind <name>`, and everyone in the group can
-open it — no port opened, no tunnel, nothing for them to install. An app that
-takes the signed-in person from a request header lets each of them straight
-in; one that keeps its own accounts asks them once. Stock Jellyfin plays and
-seeks through the door for two people at once, from a computer and from a
-phone, each signing in once with an account its lender made
-(`demo/runs/u5/2026-10-05-jellyfin-in/`).
+files, Actual for money, Mealie and Grocy for plans, Home Assistant. Run one
+in a container on any member's computer, `svrngs share <port> --kind <name>`,
+and everyone in the group can open it — no port opened, no tunnel, nothing
+for them to install. An app that takes the signed-in person from a request
+header lets each of them straight in once its lender names ours,
+`X-Svrngs-Person`, in its settings (Navidrome's `ND_EXTAUTH_USERHEADER` and
+`ND_EXTAUTH_TRUSTEDSOURCES`, Calibre-Web's "Allow Reverse Proxy
+Authentication"); one that keeps its own accounts asks them once; Actual
+asks for the one password its lender set. Each serves its pages from its
+own root, so on a phone it needs a page host that gives every app an
+address of its own (ours does); where every app shares one, none of them
+opens. Stock Jellyfin plays and seeks through the door for two people at
+once, from a computer and from a phone, each signing in once with an
+account its lender made (`demo/runs/u5/2026-10-05-jellyfin-in/`); Home
+Assistant, Immich, Nextcloud, Actual and Paperless-ngx each do their first
+real act from a phone, the rest by a census of their own docs
+(`demo/runs/catalogue/2026-10-05/`, which says why Firefly III, BookStack,
+Vikunja and Forgejo are not yet named).
 
 **What we build:** the platform, and one small reference app per class of app,
 for the next developer to copy and bend. Never the finished apps — the
