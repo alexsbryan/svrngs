@@ -264,6 +264,15 @@ is U5's inventory (§8).
    accounts the lender makes before the run keep it; users made per person
    during the run do not, so a decision for zero sign-in brings that clause
    to the operator before u5-9 runs (a bar is the operator's).
+   **Decided: sign in once** (u5-3, `demo/runs/u5/2026-10-05-jellyfin/`;
+   the operator, 2026-10-05). Zero sign-in took four rows, and Jellyfin
+   writes the person's token into the playback answers it sends, 43 times
+   in each engine. Through a lend with no secret, stock jellyfin-web signed
+   each person in with an account the lender made, played, and left the
+   other alone in every pair; its socket was carried; no byte a person
+   received held another's secret. One seek of 56 played again in 7,871 ms
+   against Demo A's 5 s (WebKit as an iPhone over n0's relay): it stays a
+   miss, and the seek bar is judged on the carriage, as a rate, in u5-9.
 5. *Measured before built.* What stock jellyfin-web does through the door —
    its sign-in, its live socket, two people's plays through one lend, and
    whether any byte carries a secret the lend holds — is measured (u5-3)
@@ -917,6 +926,7 @@ class at a time, each chosen by the north star's tests.
 | a per-process tie between a node and the services it lends (upstream's `mint_tie`) | an app's act is written under a person by a process the lender did not run, or one computer is shared by people who do not trust each other |
 | group folders (§3, call 7 of "Lent apps"): a member shares a folder at one level from a closed set; its file list in the record, its bytes content-addressed and fetched by verified range from whoever holds them (iroh-blobs 0.103, which takes iroh ^1.0.0); the meeting point runs one Jellyfin over everyone's shared films as `.strm` stubs; opt-in, beside lends. Its first run (svrn-docs `rings/runs/strm-2026-10-05/`, `457f120`): browsers played the holder's MP4 straight from the stub's URL, and WebKit remuxed an MKV through Jellyfin, the double hop; it failed its pre-registered byte-share bar on Jellyfin's per-play probe of a 47 MB file | U5 lands, and the operator runs it with a group in the wild and settles it (operator, 2026-10-05) |
 | a live payload naming its sender | an app needs to know who offered a live payload, and cannot take it from the payload |
+| zero sign-in for Jellyfin: a user per person made with a key the lender gives once (`apps/jellyfin/`), the door carrying a secret per person, an app's script at its lend's origin writing jellyfin-web's stored sign-in, and the door keeping the person's token out of the answers Jellyfin writes it into (u5-3, finding 4: four rows) | an app people lend that keeps its own accounts and asks a sign-in no one can give, or the operator asking Demo A for no sign-in at all |
 
 ## 10. Decisions
 
@@ -1051,7 +1061,7 @@ By the operator, 2026-10-03:
    and only a placeholder sign-in that no member can write gets past the
    page. The operator, 2026-10-04, put Demo A in Films, after U5, which
    never needed that page; on 2026-10-05 dropped Films for Jellyfin's own
-   player through the lend (§3, "Lent apps, as they come"). The way past the
-   sign-in is u5-3's to measure and decide — zero sign-in, or a sign-in
-   once per person with an account the lender made — and u5-4's to build;
-   until then this risk stands.
+   player through the lend (§3, "Lent apps, as they come"). u5-3 decided
+   sign in once (§3, "Lent apps", call 4): a person signs in once with an
+   account the lender made, and nothing the lend holds reaches them. u5-4
+   builds it, and its landing closes this risk.
