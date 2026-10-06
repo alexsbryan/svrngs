@@ -1876,3 +1876,255 @@ canaries, web rustfmt and clippy, browser, joining in a browser,
 conformance canary (every route passed on a computer and in the wildcard
 mode; on the floor the root and local storage `needs the wildcard`, the
 rest passed), app laws (log /tmp/u5audit1/check.log).
+
+## REVIEW-audit-u5-auto-2 (2026-10-06, range e2cb20b..5212420)
+
+The range starts at e2cb20b, the hash REVIEW-audit-u5-auto-1's row
+carries (ralph/next/u5/STATE.md:6), and ends at 5212420, the commit that
+made this row. It covers u5-4, u5-catalogue-dry, u5-9 and u5-10, and three
+commits between rows (65794de, 4060a38, 180443e: the page's deploy, its
+name in the help, two new rows). The range touched crates/svrngs-node,
+crates/svrngs, web/ and apps/; not svrngs-core (`git diff --stat e2cb20b
+5212420 -- crates apps web scripts`). This audit's fixes are 51bfacb,
+83d156e and 983547e (#60).
+
+The row cites `docs/ARCH_PRINCIPLES.md`, which is at
+docs/principles/ARCH_PRINCIPLES.md, and `target/debug/sovereign-cli`,
+which svrngs does not build. The binary used is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, built 2026-10-05 22:09,
+sha256 f37d4d53…0625. That is **not** the binary the last audit planted
+against (2a1d2c43…e79372), so its tiers were planted again.
+
+The clean runs are on this tree at fed9963 (5212420 plus this row's
+`started` line), `git status --short` empty, corpus `svrngs` (2157
+chunks; `refresh`: rust 8964 symbols, python 352, "typescript: skipped
+(export failed)"). The plants went into a clone of fed9963,
+/tmp/u5audit2/svrngs-plant, one commit holding them (ea76c36 there),
+corpus `svrngs-plant`.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' e2cb20b..5212420`,
+summed by /tmp/u5audit2/ledger.py with the last audit's rules and two
+more: a commit after a row's `done` and before the next `started` counts
+as "between rows", not toward the row before; and a `check/` segment is
+a test, since apps/<app>/check/ is that app's instrument (9cb64e4's body),
+not code that serves a person. Product code is `crates/`, `apps/` and
+`web/`, less Cargo.lock. scripts/ (deploy-page.sh +26, build-web.sh
++1 −1, check.sh) is not counted.
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| u5-4-jellyfin-in | 75 | 17 | 58 | 995 | 57 | 938 |
+| u5-catalogue-dry | 148 | 24 | 124 | 9 | 7 | 2 |
+| u5-9-demo-a-dry | 0 | 0 | 0 | 647 | 286 | 361 |
+| (between rows) | 22 | 1 | 21 | 0 | 0 | 0 |
+| u5-10-page-host | 61 | 30 | 31 | 91 | 10 | 81 |
+| total | 306 | 72 | 234 | 1742 | 360 | 1382 |
+
+- u5-4's +58: share.rs +29 (`rows`, `accounts_of`), cli.rs +23 (what
+  `share` says of accounts), well_known.txt +6. Its +938 of tests is
+  apps/jellyfin/check/: u5-3's instrument copied from demo/runs/u5/
+  (9cb64e4, +633), then judge.py +87, lender.mjs +81, check.sh; and
+  crates/svrngs/tests/share.rs +60, share/tests.rs +17.
+- u5-catalogue-dry's +124: web/lend.js +30, door.rs +29 (`own_origin`),
+  apps/web-conformance checks.js +25 and serve.mjs +16 (four routes),
+  web/shim.js +24.
+- u5-9 wrote only apps/jellyfin/check/: person.mjs moved out of
+  drive.mjs (024ed19: +279, −265), trio.mjs +172, trio.py +116.
+- Between rows: web/vercel.json +21 (65794de), cli.rs's help +1 −1.
+- u5-10's +31: cli.rs +26 (`pages` asks for the page, not DNS),
+  Cargo.toml +5 (reqwest 0.13, rustls, the platform verifier, which
+  iroh's tree already builds).
+
+`python3 scripts/lean_check.py <tree>` (rc 0), trees from `git archive`
+in /tmp/u5audit2:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| e2cb20b, range start | 2951 / 3000 | 13247 / 14000 |
+| 5212420, range end | 2951 / 3000 | 13823 / 14000 |
+| 983547e, this audit's fixes | 2951 / 3000 | 13818 / 14000 |
+
+The repository rose 576 lines, to **98.7%** of its ceiling. 182 lines
+are left for u5-11 and whatever follows; svrngs-core has 49. A raise is
+the operator's; this audit names it and does not make it.
+
+### (2) Clones (`code dry-report`), each tier checked against a plant first
+
+**Plants**, each a copy of a symbol the range added:
+
+- **A** (exact): door.rs `own_origin` (u5-catalogue-dry), verbatim, in a
+  `mod plant` at the end of door.rs.
+- **B** (near): share.rs `rows` (u5-4) as `rows_again`, its eight locals
+  renamed.
+- **D** (JS, exact body): apps/jellyfin/check/person.mjs `judge` (u5-9's
+  move) as `judgeAgain` at the end of trio.mjs.
+- **N** (noun): `pub enum Apps` in the same `mod plant`; cli.rs:525 has
+  the original.
+
+| scope | clean: locations / exact / near | plants seen |
+|---|---|---|
+| crates/svrngs-node/ | 351 / 5 / 1 | **A exact** at 0.95: `own_origin` door.rs:544 == :1063 |
+| crates/svrngs/ | 70 / 0 / 0 | **B missed** at 0.95, 0.9 and 0.8. At `--scope crates/svrngs/src/share.rs --min-lines 4 --threshold 0.7`, `rows` :40–57 ~ `rows_again` :161–175 at cosine **0.786**, below an unrelated pair, `resolve_target` ~ `well_known_kind`, at 0.791 |
+| web/ | 81 / **could-not-judge** / 0 | (not planted; the exact tier cannot judge JS, I4) |
+| apps/ | 53 / **0** / 0 | **D missed** by the exact tier, which said 0 (I16). Near: missed at 0.95 and 0.9; at 0.8, `judge` person.mjs:41–64 ~ `judgeAgain` trio.mjs:171–191 at 0.823–0.827, in a cluster with trio.mjs `over` |
+
+N: `converge noun Apps` on the plant gives **definitions (2)**, cli.rs:524
+and door.rs:1078 (each a line early, I1).
+
+So the exact tier sees an identical Rust body; it does not see an
+identical JS body, and says 0 where it should say it could not judge; the
+near tier does not see a renamed 12-line Rust copy above 0.786, nor an
+identical 18-line JS body above 0.827; converge sees a second Rust
+definition. The near tier is weaker on this binary than on the last (B
+was 0.942, D 0.938).
+
+**Clean runs.** Scoped at 0.95 (table above), each scope with a trailing
+slash (I11), and unscoped at 0.9: **14 exact groups and 29 near
+clusters** over 1223 function/method symbols (13 and 20 over 1165 at the
+last audit). /tmp/u5audit2/blame.py blames every side of every cluster
+(`git blame -w -M -C -C HEAD`) for lines in e2cb20b..5212420, and now
+also counts a side whose file did not exist at e2cb20b as added (blame's
+-C gives a copied file's lines to the commit it was copied from). Scoped:
+no cluster has a side added in the range. Unscoped at 0.9, every one:
+
+```
+ADDED - **2 copies × 25 lines** (`125054c9cd24`)
+      line [file new in range] apps/jellyfin/check/summary.py:11-35 added=25/25 []
+      line demo/runs/u5/2026-10-05-jellyfin/summary.py:11-35 added=0/25 []
+ADDED - **2 symbols** · ~38 lines · cosine 0.977–0.977
+      record [file new in range] apps/jellyfin/check/person.mjs:103-140 added=38/38 ['024ed19']
+      record demo/runs/u5/2026-10-05-jellyfin/drive.mjs:122-159 added=0/38 []
+ADDED - **2 symbols** · ~32 lines · cosine 0.990–0.990
+      seek [file new in range] apps/jellyfin/check/person.mjs:62-93 added=32/32 ['024ed19']
+      seek demo/runs/u5/2026-10-05-jellyfin/drive.mjs:81-112 added=0/32 []
+ADDED - **2 symbols** · ~26 lines · cosine 0.997–0.997
+      watch [file new in range] apps/jellyfin/check/person.mjs:18-43 added=26/26 ['024ed19']
+      watch demo/runs/u5/2026-10-05-jellyfin/drive.mjs:37-62 added=0/26 []
+ADDED - **2 symbols** · ~24 lines · cosine 0.998–0.998
+      judge [file new in range] apps/jellyfin/check/person.mjs:41-64 added=24/24 ['024ed19']
+      judge demo/runs/u5/2026-10-05-jellyfin/drive.mjs:60-83 added=0/24 []
+ADDED - **2 symbols** · ~18 lines · cosine 0.981–0.981
+      socket [file new in range] apps/jellyfin/check/person.mjs:265-279 added=15/15 ['024ed19', '509ca15']
+      socket demo/runs/u5/2026-10-05-jellyfin/drive.mjs:301-318 added=0/18 []
+ADDED - **2 symbols** · ~16 lines · cosine 0.992–0.992
+      timed [file new in range] apps/jellyfin/check/person.mjs:90-105 added=16/16 ['024ed19']
+      timed demo/runs/u5/2026-10-05-jellyfin/drive.mjs:109-124 added=0/16 []
+ADDED - **2 symbols** · ~16 lines · cosine 0.903–0.903
+      phase [file new in range] apps/jellyfin/check/drive.mjs:39-54 added=16/16 ['9cb64e4']
+      phase demo/runs/u5/2026-10-05-jellyfin/drive.mjs:280-295 added=0/16 []
+ADDED - **2 symbols** · ~13 lines · cosine 0.996–0.996
+      bind [file new in range] apps/jellyfin/check/person.mjs:20-32 added=13/13 ['024ed19']
+      bind demo/runs/u5/2026-10-05-jellyfin/drive.mjs:39-51 added=0/13 []
+ADDED - **2 symbols** · ~13 lines · cosine 0.965–0.965
+      lender [file new in range] apps/jellyfin/check/person.mjs:258-270 added=13/13 ['024ed19', '509ca15', '9cb64e4']
+      jf demo/runs/u5/2026-10-05-jellyfin/drive.mjs:294-306 added=0/13 []
+```
+
+Every one pairs apps/jellyfin/check/ with demo/runs/u5/2026-10-05-jellyfin/,
+the scripts of u5-3's run, which 9cb64e4 copied into apps/ and left in
+demo/ as "the record of u5-3's run". A run's record is what ran, kept so
+its data can be read against it (principle 7); it decides nothing now, and
+nothing runs it but someone rerunning that run. No change (#61). The
+near-tier pairs among the clusters above with no side in the range
+(declared.rs `harden_file` ×2 and the like) were there at the last audit.
+
+**Substitute check, named as a substitute.** /tmp/u5audit2/windows.py
+(windows of 5 normalized lines; a hit is new when either span has a line
+blamed in the range), widened to .py and .sh: 236 hits, 2 new:
+
+- crates/svrngs/src/cli.rs:468-473 == :481-486: `share` printed
+  `Said::Shared` twice, differing only in `running`, and u5-4 added
+  `accounts` to both. **Fixed, 83d156e** (#60).
+- crates/svrngs/tests/new.rs:471-475 == :508-512: two tests read the
+  page's refusal by the same six lines (u5-10). **Fixed, 83d156e** (#60).
+
+Reading the range for what neither pass would show:
+
+- **#60, fixed.** 51bfacb: door.rs `own_origin` (20868ee) spelled the
+  service's own address, `http://localhost:{port}`, at :554, beside
+  `own_address`'s `localhost:{port}` at :532; it now builds on
+  `own_address`. 983547e: web/shim.js parsed a cookie line at :25-30 and
+  again in `takeIn` (c950d87), and spelled `x-svrngs-page-cookies` at
+  its fetch and its XMLHttpRequest; one `pairs`, one `PAGE_COOKIES`. And
+  web/lend.js `lent` asked whether a request posts twice; once now.
+- **#62.** Demo A's seek bar, 5 s, has three homes in apps/jellyfin/check:
+  drive.mjs:49 (`within_5s`, `<= 5000`), judge.py:50 (`> 5000`) and
+  trio.py:20 (`BAR_MS`); and "never still 5 s", two: person.mjs:59
+  (`still < 5000`) and trio.mjs:44 (`run >= 5000`). drive.mjs and
+  judge.py judge one run (u5-4's check) and agree, `<= 5000` passing in
+  both. Each is an instrument's copy of demo/a.md's bar across two
+  languages; one home would be a value each script reads, which changes
+  how each runs. Recorded.
+- **#63.** `x-svrngs-page-cookies` is named in web/lend.js:166 and
+  web/shim.js:53. The worker sets it and the page's shim reads it, and the
+  two share no module. The worker already names the shim's lend and
+  cookies on its address (lend.js `shim`, `l=` and `c=`); the header's
+  name could ride the same way, which changes the shim's address.
+  Recorded.
+- **#64.** crates/svrngs/src/share.rs:43 `rows` gives a row's kind as a
+  `&str`, and the two readers decide it two ways: `well_known_kind`
+  (:99) parses it (`Kind::parse`), `accounts_of` (:111) compares the raw
+  text with `kind.as_str()` (principle 10, parse, don't validate). They
+  agree for every row well_known.txt holds today. `rows` giving a `Kind`
+  would drop a row whose kind does not parse from `accounts_of` too,
+  which is a change of behaviour. Recorded.
+- **#49, still open, and grown.** u5-catalogue-dry's door.rs `own_origin`
+  reads the lend's own address, `<label>.<host>`, from a request's
+  `Origin` by its first DNS label (door.rs:548-550). The address is now
+  read in Rust as well as hand-derived in web/app.js, web/open.js and
+  web/lend.js; origin.rs:39 `label_of` reads only `<label>.localhost`.
+- **#57, still open.** surface.rs:169, web/lend.js:112 and :289 (was
+  :259; u5-catalogue-dry moved it), web/src/http.rs:244: as recorded.
+- **#58, #48, #42, still open.** node.rs, web/src/lib.rs, web/src/join.rs
+  and crates/svrngs/src/issuer.rs are untouched in the range.
+- One decider each, checked: what `share` tells a lender of accounts has
+  one home, well_known.txt's third column, read only through share.rs
+  `accounts_of` (cli.rs:456); whether a page's host gives each app an
+  address of its own is decided only by cli.rs `pages`; the canary's new
+  routes are named in apps/web-conformance/checks.js and listed once by
+  crates/svrngs-node/tests/conformance.rs:207-218. No change (#61).
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff e2cb20b 5212420 -- crates apps web`, added lines matching
+`(struct|enum|trait|type|class) Name`: one, `enum Elsewhere`
+(crates/svrngs/tests/new.rs:445, a test's stand-in host). `converge noun
+Elsewhere`: definitions (0), "defined only in test code". `git grep -nwE
+'(struct|enum|trait|type|class) Elsewhere' -- crates apps web`: one,
+new.rs:445. The range added no production noun; no noun is defined twice.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 60 | 8 | crates/svrngs-node/src/door.rs:532 and :554; crates/svrngs/src/cli.rs:465-490; crates/svrngs/tests/new.rs:471-475 and :508-512; web/shim.js:25-30 and takeIn, :59 and :63; web/lend.js:203 and :214, at 5212420 | 51bfacb, 83d156e, 983547e | The service's own address spelled in `own_origin` beside `own_address`; `share`'s `Said::Shared` printed twice; one refusal read by six lines in two tests; a cookie line parsed twice and one header named twice in the shim; whether a request posts asked twice. One home each now. scripts/check.sh at 983547e passed every step, the canary's routes as the last audit left them. |
+| 61 | 8 | the "no change" items in (2) and (3) | no change | apps/jellyfin/check/ beside demo/runs/u5/2026-10-05-jellyfin/, the record of the run it was copied from; `Elsewhere`, a test's type; `accounts_of` and `pages`, each the one decider of its question. |
+| 62 | 8 | apps/jellyfin/check/drive.mjs:49, judge.py:50, trio.py:20 (5 s to play again); person.mjs:59, trio.mjs:44 (5 s still), at 983547e | not fixed | Demo A's bars are spelled in each instrument that judges them, in two languages. They agree today. One home would be a value every script reads. |
+| 63 | 8 | web/lend.js:166 and web/shim.js:53, at 983547e | not fixed | The header that carries the cookies a lend's pages may read is named by the worker and by the shim, which share no module. It could ride on the shim's address as `l=` and `c=` do. |
+| 64 | 10 | crates/svrngs/src/share.rs:99 and :111, at 983547e | not fixed | well_known.txt's kind is parsed by `well_known_kind` and compared as text by `accounts_of`. They agree on every row today; `rows` giving a `Kind` would make one reading. |
+| 49 | 8 | as recorded, and crates/svrngs-node/src/door.rs:548-550, at 983547e | not fixed | Grown: the door reads `<label>.<host>` from an `Origin` by its first label, a fourth hand reading of the lend's address, the first in Rust. |
+| 57 | 1, 6 | surface.rs:169; web/lend.js:112 and :289; web/src/http.rs:244, at 983547e | not fixed | As recorded. |
+| 58, 48, 42 | 8 | as recorded | not fixed | Untouched in the range. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still present: the plant's Apps at cli.rs:524 for :525 and door.rs:1078 for :1079. |
+| I4 | 6 | `refresh` | Still present: "typescript: skipped (export failed)", so web/'s exact tier is could-not-judge. |
+| I5 | 5, 7 | `code dry-report` near tier | Worse. Plant B, a 12-line Rust copy with eight locals renamed, scores 0.786, below an unrelated pair in the same file (0.791): missed at 0.8. The last binary found a 50-line copy at 0.942. |
+| I10 | 6 | `code dry-report` header | Still present: "1223 function/method symbols" in every scope. |
+| I11 | 6 | `code dry-report --scope` | Still present; every scoped run here used a trailing slash. |
+| I14 | 6, 7 | `code dry-report` near tier over JS | Worse. Plant D, an identical 18-line JS body, scores 0.823–0.827, missed at 0.9; its spans are off by three lines (judge :41–64 for :44–61, judgeAgain :171–191 for :174–192). Whole files copied (apps/jellyfin/check/ beside demo/) pair at 0.97–0.998, so neighbours in the span, not the body, decide the score. |
+| I16 | 6 | `code dry-report --scope apps/` exact tier | New. The scope holds Python, which exported, and JS, which did not; the tier said "**0** exact-clone groups", a judged result, with Plant D, an identical JS body, in scope. It judged the Python and said nothing of the JS. web/, all JS, says could-not-judge. |
+
+The row's check (LINT): `scripts/check.sh` at 983547e on a clean tree
+exited 0 in 6:09 (zsh `time`; load 2.29 at its start, 12 cores). Every
+step `passed`: principles pinned, lean and RUST_ARCH, app nouns gate, app
+nouns, rustfmt, clippy, tests, canaries, web rustfmt and clippy, browser,
+joining in a browser, conformance canary (every route passed on a
+computer and with the wildcard; on the floor `/`-absolute paths, local
+storage and a post's Origin `needs the wildcard`, the rest passed), app
+laws (log /tmp/u5audit2/check.log).
