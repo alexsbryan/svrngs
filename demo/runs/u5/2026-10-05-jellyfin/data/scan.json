@@ -1,0 +1,517 @@
+{
+ "secrets_searched": [
+  "admin_token",
+  "ana_pw",
+  "ben_pw",
+  "probe_api_key",
+  "sam_pw",
+  "zed_lend_token"
+ ],
+ "pairs": {
+  "computer-chromium": {
+   "ana": {
+    "scanned": {
+     "responses": 202,
+     "bodies": 183,
+     "bytes": 17659001,
+     "frames": 4
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 219,
+     "bodies": 210,
+     "bytes": 20207785,
+     "frames": 4
+    },
+    "own_token": 44,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/Items/0f348b24ffe0d45236b733c54eda937f/PlaybackInfo",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/master.m3u8",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/main.m3u8"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "computer-webkit": {
+   "ana": {
+    "scanned": {
+     "responses": 210,
+     "bodies": 197,
+     "bytes": 56622437,
+     "frames": 4
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 237,
+     "bodies": 230,
+     "bytes": 21399556,
+     "frames": 4
+    },
+    "own_token": 44,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/Items/0f348b24ffe0d45236b733c54eda937f/PlaybackInfo",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/master.m3u8",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/main.m3u8"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "keyed-chromium-as-it-comes": {
+   "zed": {
+    "scanned": {
+     "responses": 120,
+     "bodies": 119,
+     "bytes": 5690905,
+     "frames": 2
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "keyed-chromium-placeholder": {
+   "zed": {
+    "scanned": {
+     "responses": 198,
+     "bodies": 191,
+     "bytes": 19323403,
+     "frames": 3
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {
+     "zed_lend_token": 43
+    },
+    "others_secrets_in": {
+     "zed_lend_token": [
+      "/Items/0f348b24ffe0d45236b733c54eda937f/PlaybackInfo",
+      "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/master.m3u8",
+      "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/main.m3u8"
+     ]
+    },
+    "holds_none_of_anothers": false
+   }
+  },
+  "keyed-webkit-as-it-comes": {
+   "zed": {
+    "scanned": {
+     "responses": 116,
+     "bodies": 115,
+     "bytes": 5575766,
+     "frames": 2
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "keyed-webkit-placeholder": {
+   "zed": {
+    "scanned": {
+     "responses": 251,
+     "bodies": 245,
+     "bytes": 23727451,
+     "frames": 3
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {
+     "zed_lend_token": 43
+    },
+    "others_secrets_in": {
+     "zed_lend_token": [
+      "/Items/0f348b24ffe0d45236b733c54eda937f/PlaybackInfo",
+      "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/master.m3u8",
+      "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/main.m3u8"
+     ]
+    },
+    "holds_none_of_anothers": false
+   }
+  },
+  "phone-chromium": {
+   "ana": {
+    "scanned": {
+     "responses": 279,
+     "bodies": 260,
+     "bytes": 63776612,
+     "frames": 104
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 270,
+     "bodies": 260,
+     "bytes": 21240389,
+     "frames": 152
+    },
+    "own_token": 44,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/Items/0f348b24ffe0d45236b733c54eda937f/PlaybackInfo",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/master.m3u8",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/main.m3u8"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "phone-webkit-1": {
+   "ana": {
+    "scanned": {
+     "responses": 255,
+     "bodies": 224,
+     "bytes": 65695135,
+     "frames": 111
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 254,
+     "bodies": 228,
+     "bytes": 16606711,
+     "frames": 157
+    },
+    "own_token": 44,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/Items/0f348b24ffe0d45236b733c54eda937f/PlaybackInfo",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/master.m3u8",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/main.m3u8"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "phone-webkit-2": {
+   "ana": {
+    "scanned": {
+     "responses": 253,
+     "bodies": 223,
+     "bytes": 65686810,
+     "frames": 111
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 253,
+     "bodies": 228,
+     "bytes": 16606708,
+     "frames": 116
+    },
+    "own_token": 44,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/Items/0f348b24ffe0d45236b733c54eda937f/PlaybackInfo",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/master.m3u8",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/main.m3u8"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "phone-webkit-3": {
+   "ana": {
+    "scanned": {
+     "responses": 260,
+     "bodies": 222,
+     "bytes": 65685280,
+     "frames": 107
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 237,
+     "bodies": 209,
+     "bytes": 14813093,
+     "frames": 149
+    },
+    "own_token": 44,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/Items/0f348b24ffe0d45236b733c54eda937f/PlaybackInfo",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/master.m3u8",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/main.m3u8"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "phone-webkit-4": {
+   "ana": {
+    "scanned": {
+     "responses": 252,
+     "bodies": 218,
+     "bytes": 65685835,
+     "frames": 102
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 254,
+     "bodies": 228,
+     "bytes": 16606711,
+     "frames": 145
+    },
+    "own_token": 44,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/Items/0f348b24ffe0d45236b733c54eda937f/PlaybackInfo",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/master.m3u8",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/main.m3u8"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "phone-webkit-5": {
+   "ana": {
+    "scanned": {
+     "responses": 276,
+     "bodies": 233,
+     "bytes": 75235425,
+     "frames": 122
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 261,
+     "bodies": 232,
+     "bytes": 16689240,
+     "frames": 137
+    },
+    "own_token": 44,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/Items/0f348b24ffe0d45236b733c54eda937f/PlaybackInfo",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/master.m3u8",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/main.m3u8"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "phone-webkit-6": {
+   "ana": {
+    "scanned": {
+     "responses": 265,
+     "bodies": 227,
+     "bytes": 69328240,
+     "frames": 108
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 263,
+     "bodies": 232,
+     "bytes": 16689240,
+     "frames": 132
+    },
+    "own_token": 44,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/Items/0f348b24ffe0d45236b733c54eda937f/PlaybackInfo",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/master.m3u8",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/main.m3u8"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "phone-webkit-7": {
+   "ana": {
+    "scanned": {
+     "responses": 268,
+     "bodies": 228,
+     "bytes": 74950009,
+     "frames": 109
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 265,
+     "bodies": 237,
+     "bytes": 16690237,
+     "frames": 166
+    },
+    "own_token": 44,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/Items/0f348b24ffe0d45236b733c54eda937f/PlaybackInfo",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/master.m3u8",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/main.m3u8"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "phone-webkit-8": {
+   "ana": {
+    "scanned": {
+     "responses": 268,
+     "bodies": 230,
+     "bytes": 76279660,
+     "frames": 109
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 260,
+     "bodies": 232,
+     "bytes": 16689233,
+     "frames": 134
+    },
+    "own_token": 44,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/Items/0f348b24ffe0d45236b733c54eda937f/PlaybackInfo",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/master.m3u8",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/main.m3u8"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "phone-webkit-9": {
+   "ana": {
+    "scanned": {
+     "responses": 259,
+     "bodies": 224,
+     "bytes": 65686513,
+     "frames": 116
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 255,
+     "bodies": 228,
+     "bytes": 16606714,
+     "frames": 137
+    },
+    "own_token": 44,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/Items/0f348b24ffe0d45236b733c54eda937f/PlaybackInfo",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/master.m3u8",
+     "/videos/0f348b24-ffe0-d452-36b7-33c54eda937f/main.m3u8"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  }
+ },
+ "logs": {
+  "alex/join.log": {},
+  "alex/join.out": {},
+  "alex/run.log": {},
+  "alex/run.out": {},
+  "sam/new.out": {},
+  "sam/run.log": {},
+  "sam/share.out": {}
+ }
+}

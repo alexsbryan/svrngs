@@ -1,0 +1,4 @@
+If jellyfin takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): 
+Lent jellyfin (port 8096) to everyone in your groups, up to 8 people at once.
+svrngs is running here already, so they can open it now.
+`svrngs unshare jellyfin` stops lending it.

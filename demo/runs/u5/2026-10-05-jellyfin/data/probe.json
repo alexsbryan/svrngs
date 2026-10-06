@@ -1,0 +1,42 @@
+{
+ "users_before": [
+  "ana",
+  "ben",
+  "sam"
+ ],
+ "made_with_the_lenders_token": {
+  "status": 200,
+  "is_admin": false
+ },
+ "made_with_an_api_key": {
+  "status": 200,
+  "is_admin": false
+ },
+ "users_during": [
+  "ana",
+  "ben",
+  "sam",
+  "yan",
+  "zed"
+ ],
+ "shared_keyed": [
+  "Lent keyed (port 8096) to everyone in your groups, up to 8 people at once."
+ ],
+ "keyed_opens_on_alexs_computer": true,
+ "keyed_users_me": {
+  "status": 200,
+  "name": "zed"
+ },
+ "keyed_runs": {
+  "chromium as-it-comes": "zed stopped: a sign-in asked of someone who typed nothing; the page says: Please sign in User Password Remember Me Sign In Use Quick Connect Forgot Password; devices apart: True",
+  "chromium placeholder": "zed: open 551 ms, signed in 0 ms, plays 2267 ms, socket message None ms, signed in after: zed; zed seeks [1370, 453] ms (2/2 within 5 s); devices apart: True",
+  "webkit as-it-comes": "zed stopped: a sign-in asked of someone who typed nothing; the page says:  Please sign in User Password Remember Me Sign In Use Quick Connect Forgot Password ; devices apart: True",
+  "webkit placeholder": "zed: open 576 ms, signed in 0 ms, plays 2011 ms, socket message None ms, signed in after: zed; zed seeks [2376, 482] ms (2/2 within 5 s); devices apart: True"
+ },
+ "zed_token_alive_after": 200,
+ "users_after": [
+  "ana",
+  "ben",
+  "sam"
+ ]
+}
