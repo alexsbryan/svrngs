@@ -172,8 +172,8 @@ async fn link_mints_a_new_link_to_the_group_it_names() {
 /// prints the client's link and the https one there; `link --origin`
 /// changes it from then on; a group made with no `--origin` prints the
 /// client's link alone, and so does a group whose kept origin is gone.
-/// A page origin whose host answers every name under it, as svrnme.sh
-/// does: each app at an address of its own (u5-2).
+/// A page origin whose host serves the page at every name under it, as
+/// group.svrnme.sh does: each app at an address of its own (u5-2).
 fn on(page: Origin) -> cli::Pages {
     cli::Pages {
         page,
@@ -404,22 +404,102 @@ async fn the_bare_command_prints_where_apps_reach_the_record() {
     node.endpoint().close().await;
 }
 
+/// A stand-in for a page's host on 127.0.0.1, at `localhost`, whose every
+/// name this computer answers: at `localhost` itself it serves the page;
+/// at every other name, what `elsewhere` says.
+async fn page_host(elsewhere: Elsewhere) -> Origin {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    const PAGE: &str = "<!doctype html><title>the group's page</title>";
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let port = listener.local_addr().unwrap().port();
+    tokio::spawn(async move {
+        while let Ok((mut conn, _)) = listener.accept().await {
+            tokio::spawn(async move {
+                let (mut head, mut buf) = (Vec::new(), [0u8; 1024]);
+                while !head.windows(4).any(|w| w == b"\r\n\r\n") {
+                    match conn.read(&mut buf).await {
+                        Ok(0) | Err(_) => return,
+                        Ok(n) => head.extend_from_slice(&buf[..n]),
+                    }
+                }
+                let head = String::from_utf8_lossy(&head).to_ascii_lowercase();
+                let at_page = head.contains(&format!("\r\nhost: localhost:{port}\r\n"));
+                let (status, body) = match (at_page, elsewhere) {
+                    (true, _) | (false, Elsewhere::Page) => ("200 OK", PAGE),
+                    (false, Elsewhere::Other) => ("200 OK", "<!doctype html>another site"),
+                    (false, Elsewhere::Nothing) => ("404 Not Found", ""),
+                };
+                let answer = format!(
+                    "HTTP/1.1 {status}\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                    body.len()
+                );
+                let _ = conn.write_all(answer.as_bytes()).await;
+            });
+        }
+    });
+    Origin::parse(&format!("http://localhost:{port}/")).unwrap()
+}
+
+/// What a stand-in page host serves at a name other than its own.
+#[derive(Debug, Clone, Copy)]
+enum Elsewhere {
+    Page,
+    Other,
+    Nothing,
+}
+
+/// **Each app at an address of its own only where the page opens there**
+/// (the u5-10 row; DESIGN §7): a host whose every name serves the page
+/// opens each app at an address of its own; one whose every name resolves
+/// but serves something else, or nothing, is refused, the reason naming
+/// both ways on — as `www.svrnme.sh/g/` was not, its every name resolving
+/// while none but its own served the page. Planted: today's check, which
+/// asked only whether a name nobody made resolves.
+#[tokio::test]
+async fn each_app_opens_at_its_own_address_only_where_the_page_opens_there() {
+    let every = cli::pages(page_host(Elsewhere::Page).await, None)
+        .await
+        .unwrap();
+    assert_eq!(every.apps, cli::Apps::OwnAddress);
+    for elsewhere in [Elsewhere::Other, Elsewhere::Nothing] {
+        let refused = cli::pages(page_host(elsewhere).await, None)
+            .await
+            .map(|p| p.apps);
+        let Err(refused) = refused else {
+            panic!("a host serving {elsewhere:?} at other names is refused: {refused:?}")
+        };
+        assert!(matches!(refused, Refusal::NoAppAddress(_)), "{refused}");
+        assert_eq!(refused.exit_code(), 1);
+        let said = refused.to_string();
+        for way in ["--lends-origin <url>", "every name under it"] {
+            assert!(said.contains(way), "the refusal names both ways on: {said}");
+        }
+    }
+}
+
 /// **Where a group's apps open on a phone** (the u5-2 row; DESIGN §7): a
-/// page origin whose host answers every name under it — `localhost`, whose
-/// every name this computer answers, as svrnme.sh's are — opens each app
+/// page origin whose host serves the page at every name under it — a
+/// stand-in at `localhost`, whose every name this computer answers, as
+/// group.svrnme.sh's are — opens each app
 /// at an address of its own, and the link carries nothing more; an origin
 /// at an address no name falls under, with no `--lends-origin`, is refused,
 /// the reason naming both ways on; with one, every app opens under it, and
 /// the link carries it; the page's own address as the apps' is refused; a
-/// host that does not answer at all is not judged (exit 3). `new` prints
+/// page address that does not give the page is not judged (exit 3). `new` prints
 /// which way the group got. Planted: the check for a name nobody made
 /// skipped, so every host is taken to answer one.
 #[tokio::test]
 async fn a_page_origin_says_where_its_apps_open_or_is_refused_naming_both_ways() {
     let page = |raw: &str| Origin::parse(raw).unwrap();
-    let ours = cli::pages(page("http://localhost:8123/"), None)
+    let ours = cli::pages(page_host(Elsewhere::Page).await, None)
         .await
         .unwrap();
+    let at = ours
+        .page
+        .as_str()
+        .trim_start_matches("http://")
+        .trim_end_matches('/')
+        .to_string();
     assert_eq!(ours.apps, cli::Apps::OwnAddress);
 
     let refused = cli::pages(page("http://127.0.0.1:8123/"), None)
@@ -428,7 +508,7 @@ async fn a_page_origin_says_where_its_apps_open_or_is_refused_naming_both_ways()
     assert!(matches!(refused, Refusal::NoAppAddress(_)), "{refused}");
     assert_eq!(refused.exit_code(), 1);
     let said = refused.to_string();
-    for way in ["--lends-origin <url>", "answers every name under it"] {
+    for way in ["--lends-origin <url>", "every name under it"] {
         assert!(said.contains(way), "the refusal names both ways on: {said}");
     }
 
@@ -463,8 +543,9 @@ async fn a_page_origin_says_where_its_apps_open_or_is_refused_naming_both_ways()
         "the link carries nothing more: {https}"
     );
     assert!(
-        own.to_string()
-            .contains("each app opens at an address of its own under localhost:8123"),
+        own.to_string().contains(&format!(
+            "each app opens at an address of its own under {at}"
+        )),
         "{own}"
     );
     let (_, shared) = cli::new_group(&node, name("work"), name("Sam"), Some(&floor), &no_relay())

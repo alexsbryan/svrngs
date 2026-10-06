@@ -564,8 +564,10 @@ whoever opened it (§11, risk 5). `svrngs new --origin <page>` decides where
 the group's apps open on a phone, prints which, and keeps it for `link`
 (`crates/svrngs/src/cli.rs`, `pages` and `Apps`):
 - *Each at an address of its own*, `https://<label>.<page host>/`, when the
-  page's host answers every name under it, which the command checks by
-  asking for a name nobody made; group.svrnme.sh does (the Vercel project svrngs-page, deployed by `scripts/deploy-page.sh`), so a group that names ours
+  page's host serves the page at every name under it, which the command
+  checks by asking a name nobody made, over https, for the page at its root
+  and comparing it with the page's own (u5-10: www.svrnme.sh/g/ resolved
+  every name and served the page at none but its own); group.svrnme.sh does (the Vercel project svrngs-page, deployed by `scripts/deploy-page.sh`), so a group that names ours
   types nothing more. Each app's root and storage are its own, and its pages
   hold a pass for it and the lends it reads, no other. The cost: the page's
   host and the phone's name lookups see which app is opened, since its label
@@ -579,10 +581,11 @@ the group's apps open on a phone, prints which, and keeps it for `link`
   page can read what another keeps and use another's pass while it lasts;
   and an app that asks for its own root — a `/`-absolute path — finds the
   host's, which the conformance canary reports as needing the first way.
-A page at an address no name falls under — an IP address, or a host that
-answers no name nobody made — with no `--lends-origin` is refused, the
-reason naming both ways on; the page's own address as the apps' is refused;
-a host that does not answer at all is not judged (exit 3). On a computer
+A page at an address no name falls under — an IP address, or a host whose
+name nobody made does not serve the page — with no `--lends-origin` is
+refused, the reason naming both ways on; the page's own address as the
+apps' is refused; a page address that does not give the page — its host
+unreachable, or no page there — is not judged (exit 3). On a computer
 each app opens at `http://<label>.localhost:<port>/` on its own loopback
 (`crates/svrngs-node/src/origin.rs`), which every browser measured resolves
 (`demo/runs/u5/2026-10-05-localhost/`).

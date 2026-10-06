@@ -137,7 +137,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
 
     let pages = cli::pages(origin.clone(), None)
         .await
-        .expect("localhost answers every name under it, so no other step");
+        .expect("the page's server serves it at every name under localhost, so no other step");
     assert_eq!(pages.apps, cli::Apps::OwnAddress);
     let (seed, printed) = cli::new_group(
         &sam,

@@ -37,10 +37,10 @@
 //! A group with a page origin opens its apps on a phone at addresses apart
 //! from the page's, which holds each person's key (u5-2; DESIGN §7), and
 //! `new` and `link` say which way ([`Apps`]): each app at an address of its
-//! own under the page's host, when that host answers every name under it,
-//! which the command checks by asking for a name nobody made; or every app
-//! under the one address `--lends-origin` names. A page's host that answers
-//! no such name, with no `--lends-origin`, is refused, naming both ways on.
+//! own under the page's host, when that host serves the page at every name
+//! under it, which the command checks by asking a name nobody made for it;
+//! or every app under the one address `--lends-origin` names. A page's host
+//! that does not, with no `--lends-origin`, is refused, naming both ways on.
 //!
 //! What a person reads uses DESIGN §1's words alone: the group's name,
 //! people's names, *link*, *computer*. The detail behind a refusal is
@@ -86,8 +86,8 @@ svrngs — keep what your group shares on your own computers.
       --as is the name the group knows you by; else this computer's user name.
       --origin also prints its links on a page address, from now on, for
       people who open them in a browser. On a phone each app then opens at
-      an address of its own under that page's host, if it answers every
-      name under it (group.svrnme.sh does); else name a second address the apps
+      an address of its own under that page's host, if it serves the page at
+      every name under it (group.svrnme.sh does); else name a second address the apps
       open under with --lends-origin.
 
   svrngs join <link> [--as <your name>]
@@ -357,9 +357,9 @@ pub enum Refusal {
     KeepLend(LendName),
     #[error("you lend nothing called {name} from this computer{}", lent_now(.lent))]
     NotLent { name: LendName, lent: Vec<LendName> },
-    #[error("{0} gives each app no address of its own, so on a phone every app would open where your group's page keeps who each person is. Either name a second address for the apps, on any host: `--lends-origin <url>`; or use a host that answers every name under it, as svrnme.sh does")]
+    #[error("{0} gives each app no address of its own, so on a phone every app would open where your group's page keeps who each person is. Either name a second address for the apps, on any host: `--lends-origin <url>`; or use a host that serves your page at every name under it, as group.svrnme.sh does")]
     NoAppAddress(String),
-    #[error("cannot tell from here whether {0} gives each app an address of its own: it does not answer (RUST_LOG=debug says why); try again, or name a second address for the apps with `--lends-origin <url>`")]
+    #[error("cannot tell from here whether {0} gives each app an address of its own: the page does not open there (RUST_LOG=debug says why); try again, or name a second address for the apps with `--lends-origin <url>`")]
     CannotCheck(String),
     #[error("{0} is the page's own address; the apps open under one apart from it, so none can reach what the page keeps")]
     AppsOnPage(String),
@@ -524,7 +524,7 @@ async fn start(
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Apps {
     /// Each at an address of its own, `<label>.<the page's host>`: the
-    /// page's host answers every name under it.
+    /// page's host serves the page at every name under it.
     OwnAddress,
     /// Every app under this one address, each at `l/<label>/` under it:
     /// the floor, any host.
@@ -558,12 +558,14 @@ fn place(origin: &Origin) -> Option<(&str, &str)> {
 
 /// The page `page`, and where the group's apps open on a phone: under
 /// `lends` when given — refused when it is the page's own address — else
-/// each at an address of its own under the page's host, when that host
-/// answers a name nobody made under it; refused when it does not, and not
-/// judged when the host itself does not answer (u5-2).
+/// each at an address of its own under the page's host, when a name nobody
+/// made under it serves the page at its root as the page's own address
+/// does (u5-10: www.svrnme.sh/g/ resolved every name and served the page at
+/// none but its own); refused when it does not, and not judged when the
+/// page's own address does not give the page (u5-2).
 #[expect(
     clippy::disallowed_methods,
-    reason = "draws a name nobody made, to ask whether the page's host answers it"
+    reason = "draws a name nobody made, to ask the page's host for the page there"
 )]
 pub async fn pages(page: Origin, lends: Option<Origin>) -> Result<Pages, Refusal> {
     if let Some(lends) = lends {
@@ -580,32 +582,56 @@ pub async fn pages(page: Origin, lends: Option<Origin>) -> Result<Pages, Refusal
         });
     }
     // An address in brackets is IPv6's, a literal no name falls under.
-    let host = place(&page)
-        .filter(|(_, a)| !a.starts_with('['))
-        .and_then(|(_, a)| a.split(':').next());
+    let named = place(&page).filter(|(_, a)| {
+        let host = a.split(':').next().unwrap_or_default();
+        !a.starts_with('[') && !host.is_empty() && host.parse::<std::net::IpAddr>().is_err()
+    });
     let no = || Refusal::NoAppAddress(page.as_str().into());
-    let Some(host) = host.filter(|h| !h.is_empty() && h.parse::<std::net::IpAddr>().is_err())
-    else {
+    let Some((scheme, authority)) = named else {
         tracing::debug!(target: "cli", page = page.as_str(), "cli: refused — the page is at an address no name falls under");
         return Err(no());
     };
-    let answers = |name: String| async move {
-        let found = tokio::net::lookup_host((name.as_str(), 443))
-            .await
-            .map(|mut a| a.next().is_some());
-        tracing::debug!(target: "cli", name, found = ?found.as_ref().map_err(ToString::to_string), "cli: asked whether a name answers");
-        matches!(found, Ok(true))
+    let unjudged = || Refusal::CannotCheck(page.as_str().into());
+    let client = rustls::ClientConfig::builder_with_provider(std::sync::Arc::new(
+        rustls::crypto::ring::default_provider(),
+    ))
+    .with_safe_default_protocol_versions()
+    .and_then(rustls_platform_verifier::BuilderVerifierExt::with_platform_verifier)
+    .map_err(|e| e.to_string())
+    .and_then(|tls| {
+        reqwest13::Client::builder()
+            .tls_backend_preconfigured(tls.with_no_client_auth())
+            .timeout(std::time::Duration::from_secs(10))
+            .build()
+            .map_err(|e| e.to_string())
+    })
+    .map_err(|error| {
+        tracing::debug!(target: "cli", error, "cli: not judged — no client to ask the page's host with");
+        unjudged()
+    })?;
+    let get = |url: String| {
+        let client = &client;
+        async move {
+            let got = match client.get(&url).send().await {
+                Ok(r) if r.status().is_success() => r.bytes().await.map_err(|e| format!("{e:?}")),
+                Ok(r) => Err(r.status().to_string()),
+                Err(e) => Err(format!("{e:?}")),
+            };
+            tracing::debug!(target: "cli", url, got = ?got.as_ref().map(|b| b.len()), "cli: asked for the page");
+            got.ok()
+        }
     };
-    if !answers(host.to_string()).await {
-        return Err(Refusal::CannotCheck(page.as_str().into()));
-    }
+    let Some(ours) = get(page.as_str().to_string()).await else {
+        return Err(unjudged());
+    };
     let mut nobodys = [0u8; 16];
     getrandom::fill(&mut nobodys).expect("failed to draw a name nobody made");
-    if !answers(format!("{}.{host}", hex::encode(nobodys))).await {
-        tracing::debug!(target: "cli", page = page.as_str(), host, "cli: refused — the page's host answers no name nobody made under it");
+    let theirs = get(format!("{scheme}://{}.{authority}/", hex::encode(nobodys))).await;
+    if theirs.as_ref() != Some(&ours) {
+        tracing::debug!(target: "cli", page = page.as_str(), served = ?theirs.map(|b| b.len()), "cli: refused — a name nobody made under the page's host does not serve the page");
         return Err(no());
     }
-    tracing::debug!(target: "cli", page = page.as_str(), host, "cli: the page's host answers every name under it, so each app opens at an address of its own");
+    tracing::debug!(target: "cli", page = page.as_str(), authority, "cli: a name nobody made under the page's host serves the page, so each app opens at an address of its own");
     Ok(Pages {
         page,
         apps: Apps::OwnAddress,
