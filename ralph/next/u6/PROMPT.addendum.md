@@ -74,6 +74,25 @@ its code.
    TV; nobody installs or signs up. The gate stands byte-identical: four of
    five newcomers get from the link to the film on the TV within three
    minutes, unassisted.
+6. *Middleware, a spike after Demo B* (operator, 2026-10-06; u6-0 writes it
+   into §9 with the trigger "Demo B passes", and no U6 row builds it). A
+   middleware is a lent app that forwards to another: an ordinary program
+   on the lender's computer that listens on a port, takes the door's
+   verified request and passes it to the service behind it, so
+   `svrngs share <its port>` lends the pair; svrngs ships no runtime, SDK or
+   plugin format. Invariants: only the lender runs one, on their own
+   computer; the door's guarantees stay outside it (identity set, limit and
+   refused paths checked, an echoed secret stripped from what it returns);
+   its contract is HTTP, the door's `x-svrngs-*` headers and the loopback
+   record API; an app's nouns live in middleware, never the infra; svrngs
+   never starts or supervises one. The spike: Jellyfin's zero sign-in (§9,
+   four rows at u5-3) as a middleware, with no diff under `crates/` or
+   `web/`; a newcomer plays from the list with no sign-in in both engines
+   on a computer and a phone; no byte a person receives holds the lender's
+   key; two people's plays stay apart. Killed if it needs a svrngs change
+   beyond headers the door already sets. Open with it: Demo A's unchanged
+   list of users, and the per-process tie (§9, `mint_tie`) that "verified"
+   leans on.
 
 The size ceiling set aside about 2,100 lines for U4's page and U6's handoff
 (DESIGN §5); U6 is now a door and a measurement, and should land well under
