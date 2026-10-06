@@ -143,3 +143,24 @@ WebKit, in Jellyfin's converted film (HLS), through n0's relay. The
 canary's file, played as sound, never stalled like that here: its worst
 was 24,190 ms, under a change not kept. Whether the converted film's
 stall is this one is not shown.
+
+## WebKit's seeks a rate, Chromium's a gate (b41941c)
+
+The operator's call (2026-10-06): through a lend, WebKit's seeks back to
+back are a rate, kept each run beside the same seeks straight at a canary
+over the same link (`web/tests/control.mjs`), and counted by
+`scripts/check.sh`. `rate/seeks-webkit.log` is every run's on this host
+from the four scripts/check.sh runs at b41941c, each line a way, a lend,
+the ms through the lend and its verdict, the ms straight and its verdict,
+and `date` and `uptime` at the test's start and end; each check.sh runs
+the canary twice (`tests`, then by name), three ways and two lends each:
+48 lines, less the four of the two WebKit tests the second run's `tests`
+step failed before their seeks were kept: 44 (16 computer, 14 floor, 14
+wildcard).
+`rate/check-<n>.txt` is each green run's summary; the second run failed
+in a route that is not the seeks' (`upload-404/`, ralph/REVIEW_FINDINGS.md
+#65), and its six rate lines are in the log too.
+
+Of 44: through a lend 9 missed 5 s, straight at the canary 2; 22 ended
+at a load above the host's 12 cores, which the control's own browsers
+raise. Every computer try played again in under 0.6 s.

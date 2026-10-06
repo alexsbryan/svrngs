@@ -1,0 +1,24 @@
+10:19  up 1 day,  3:30, 11 users, load averages: 7.72 8.36 10.14
+passed     principles pinned
+passed     lean and RUST_ARCH
+passed     app nouns gate
+passed     app nouns
+passed     rustfmt
+passed     clippy
+passed     tests
+passed     canaries
+passed     web rustfmt and clippy
+passed     browser
+passed     joining in a browser
+passed     conformance canary
+rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict
+           computer	sam	385	passed	3553	passed
+           computer	bo	361	passed	4057	passed
+           floor	sam	3672	passed	3840	passed
+           floor	bo	3528	passed	3024	passed
+           wildcard	sam	4800	failed	1920	passed
+           wildcard	bo	3455	passed	4103	passed
+           of 44 here since 2026-10-06T16:42:30Z: 9 missed 5 s through a lend, 2 straight; 22 ended at a load above 12 cores
+passed     app laws
+exit=0
+10:30  up 1 day,  3:41, 11 users, load averages: 5.63 13.79 14.54
