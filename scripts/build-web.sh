@@ -3,7 +3,7 @@
 # build-web.sh — build the page into a deployable static site.
 #
 # The output is ONE directory to upload to the guest runtime's static origin
-# (today svrnme.sh): index.html + the wasm module and its glue. No server, no
+# (today group.svrnme.sh, by scripts/deploy-page.sh): index.html + the wasm module and its glue. No server, no
 # certificate, no data.
 #
 #   target/web/site/   <- upload this
