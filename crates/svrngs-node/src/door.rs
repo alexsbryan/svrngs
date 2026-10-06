@@ -551,7 +551,7 @@ fn own_origin(headers: &mut HeaderMap, label: &Label, lend: &Lend) {
         tracing::debug!(target: "door", lend = %lend.name, origin, "door: the request's origin is not the lend's own; left as it is");
         return;
     }
-    let own = HeaderValue::from_str(&format!("http://localhost:{}", lend.port))
+    let own = HeaderValue::from_bytes(&[b"http://", own_address(lend).as_bytes()].concat())
         .expect("a host and a port are a header");
     tracing::debug!(target: "door", lend = %lend.name, "door: the request's origin is the lend's own; told to the service as its own address");
     headers.insert(header::ORIGIN, own);
