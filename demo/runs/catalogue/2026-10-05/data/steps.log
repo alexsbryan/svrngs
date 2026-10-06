@@ -1,6 +1,36 @@
-03:38:06 sam: On a phone, each app opens at an address of its own under localhost:60283, which can see which app is opened.
-03:38:06 sam: Lent home-assistant (port 8123) to everyone in your groups, up to 8 people at once.
-03:38:06 sam: Lent immich (port 2283) to everyone in your groups, up to 8 people at once.
-03:38:06 sam: Lent nextcloud (port 8080) to everyone in your groups, up to 8 people at once.
-03:38:06 sam: Lent actual (port 5006) to everyone in your groups, up to 8 people at once.
-03:38:06 sam: Lent paperless (port 8000) to everyone in your groups, up to 8 people at once.
+04:29:44 sam: On a phone, each app opens at an address of its own under localhost:65213, which can see which app is opened.
+04:29:44 sam: Lent home-assistant (port 8123) to everyone in your groups, up to 8 people at once.
+04:29:44 sam: Lent immich (port 2283) to everyone in your groups, up to 8 people at once.
+04:29:44 sam: Lent nextcloud (port 8080) to everyone in your groups, up to 8 people at once.
+04:29:44 sam: Lent actual (port 5006) to everyone in your groups, up to 8 people at once.
+04:29:44 sam: Lent paperless (port 8000) to everyone in your groups, up to 8 people at once.
+04:34:48 act home-assistant-wildcard-chromium: load at start load averages: 1.76 2.82 3.53
+04:34:58 act home-assistant-wildcard-chromium: did — the lamp on, then off on Bo's page
+04:34:58 act home-assistant-wildcard-chromium: load at end load averages: 1.49 2.73 3.49
+04:34:58 act immich-wildcard-chromium: load at start load averages: 1.49 2.73 3.49
+04:36:57 act immich-wildcard-chromium: did — uploaded 99135178 bytes; played in 1466 ms; seeks 2039, 633, 1995 ms
+04:36:57 act immich-wildcard-chromium: load at end load averages: 3.26 2.93 3.46
+04:36:57 act nextcloud-wildcard-chromium: load at start load averages: 3.26 2.93 3.46
+04:37:34 act nextcloud-wildcard-chromium: did — 5242921 bytes taken, read back whole by the lender
+04:37:34 act nextcloud-wildcard-chromium: load at end load averages: 2.94 2.88 3.42
+04:37:34 act actual-wildcard-chromium: load at start load averages: 2.94 2.88 3.42
+04:37:55 act actual-wildcard-chromium: did — a budget open on Bo's page; the lender's server holds 2 budget(s), 1 before
+04:37:55 act actual-wildcard-chromium: load at end load averages: 2.58 2.80 3.38
+04:37:55 act paperless-wildcard-chromium: load at start load averages: 2.58 2.80 3.38
+04:38:07 act paperless-wildcard-chromium: did — consumed as document 3
+04:38:07 act paperless-wildcard-chromium: load at end load averages: 2.31 2.73 3.34
+04:38:07 act home-assistant-wildcard-webkit: load at start load averages: 2.31 2.73 3.34
+04:38:22 act home-assistant-wildcard-webkit: did — the lamp off, then on on Bo's page
+04:38:22 act home-assistant-wildcard-webkit: load at end load averages: 2.10 2.66 3.31
+04:38:22 act immich-wildcard-webkit: load at start load averages: 2.10 2.66 3.31
+04:40:28 act immich-wildcard-webkit: did — uploaded 99135176 bytes; played in 2893 ms; seeks 690, 1788, 7408 ms
+04:40:28 act immich-wildcard-webkit: load at end load averages: 2.28 2.58 3.18
+04:40:28 act nextcloud-wildcard-webkit: load at start load averages: 2.28 2.58 3.18
+04:42:12 act nextcloud-wildcard-webkit: did not — sign-in: page.waitForURL: Timeout 90000ms exceeded.
+04:42:13 act nextcloud-wildcard-webkit: load at end load averages: 1.38 2.22 2.97
+04:42:13 act actual-wildcard-webkit: load at start load averages: 1.38 2.22 2.97
+04:42:34 act actual-wildcard-webkit: did — a budget open on Bo's page; the lender's server holds 3 budget(s), 2 before
+04:42:34 act actual-wildcard-webkit: load at end load averages: 1.41 2.17 2.94
+04:42:34 act paperless-wildcard-webkit: load at start load averages: 1.41 2.17 2.94
+04:42:48 act paperless-wildcard-webkit: did — consumed as document 4
+04:42:48 act paperless-wildcard-webkit: load at end load averages: 1.56 2.16 2.92

@@ -5,8 +5,8 @@ Send this link to the people you want in it. It works for a day, while this comp
 
 or, to open it in a browser:
 
-  http://localhost:60283/#<the link>
+  http://localhost:65213/#<the link>
 
-On a phone, each app opens at an address of its own under localhost:60283, which can see which app is opened.
+On a phone, each app opens at an address of its own under localhost:65213, which can see which app is opened.
 
 Leave this running; Ctrl-C stops it.
