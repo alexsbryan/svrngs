@@ -6,6 +6,7 @@
 // read (`c`) on this script's address.
 // - `document.cookie` reads the lend's cookies the worker keeps, which no
 //   worker can set in the browser, and writing one hands it to the worker.
+//   An answer that set cookies names those pages may read, taken in at once.
 // - `WebSocket`, which a worker never sees, is carried to the worker over
 //   a message port, and the worker speaks it to the lend's computer.
 // - An app's own worker, which would put itself over the lend's, is
@@ -43,6 +44,25 @@
       worker()?.postMessage({ cookie: String(line) });
     },
   });
+
+  // An answer that set cookies names, in `x-svrngs-page-cookies`, those
+  // the lend's pages may read now (lend.js); taken in before the page
+  // reads the answer, by fetch or by XMLHttpRequest, as a browser's
+  // cookies are (Immich reads its sign-in's unreloaded).
+  const takeIn = (line) => {
+    if (line === null) return;
+    jar.clear();
+    for (const c of line.split('; ').filter((c) => c.includes('='))) jar.set(c.slice(0, c.indexOf('=')), c.slice(c.indexOf('=') + 1));
+  };
+  const fetched = window.fetch;
+  window.fetch = function (...a) {
+    return fetched.apply(this, a).then((r) => (takeIn(r.headers.get('x-svrngs-page-cookies')), r));
+  };
+  const opened = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function (...a) {
+    this.addEventListener('readystatechange', () => this.readyState === 2 && takeIn(this.getResponseHeader('x-svrngs-page-cookies')));
+    return opened.apply(this, a);
+  };
 
   class Socket extends EventTarget {
     constructor(url, protocols) {

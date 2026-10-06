@@ -162,6 +162,9 @@ function bounded(headers, destination) {
   });
 }
 
+// The header an answer that set cookies carries to the shim (shim.js).
+const PAGE_COOKIES = 'x-svrngs-page-cookies';
+
 const say = (status, words) => new Response(words, { status, headers: PLAIN });
 
 // The shim (shim.js) for a lend's page, with the cookies its pages read,
@@ -223,6 +226,9 @@ async function lent(request, url, where) {
   }
   const headed = new Headers(res.headers);
   headed.delete('x-svrngs-set-cookies');
+  // What its pages may read now, for the shim to take in before the page
+  // reads the answer: Immich reads its sign-in's cookie unreloaded.
+  if (set) headed.set(PAGE_COOKIES, cookieFor(jar, '/', true));
   const html = request.method === 'GET' && (res.headers.get('content-type') ?? '').includes('text/html');
   if (!html) return new Response(res.body, { status: res.status, statusText: res.statusText, headers: headed });
   headed.delete('content-length');
