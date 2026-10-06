@@ -505,6 +505,23 @@ async fn conformance(way: Way, engine: Engine) {
         "{} lines",
         ran["logs"].as_array().map_or(0, Vec::len)
     ));
+    // Of each lend's requests, those its worker did not answer; its
+    // memory's samples are in the kept JSON.
+    for who in ["sam", "bo"] {
+        let lend = &mut shown["lends"][who];
+        let missed: Vec<Value> = lend["requests"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter(|r| r.as_str().unwrap_or("").ends_with("not by the worker"))
+            .cloned()
+            .collect();
+        lend["requests"] = json!(missed);
+        lend["memory"] = json!(format!(
+            "{} samples",
+            lend["memory"].as_array().map_or(0, Vec::len)
+        ));
+    }
 
     // Each route's verdict, printed and kept for scripts/check.sh.
     let mut table = String::new();
@@ -641,4 +658,119 @@ in_both_engines!(
 );
 async fn on_a_phone_on_the_floor(engine: Engine) {
     conformance(Way::Floor, engine).await
+}
+
+/// #65 (u5-12; `ralph/REVIEW_FINDINGS.md`): WebKit as an iPhone, the
+/// canary's 64 MiB upload after its seeks, through each lend in turn,
+/// `TRIES` times in all (10 if unset), on the floor and with the wildcard.
+/// Each try's verdict, what the page's own host was asked meanwhile that is
+/// not its files — a request no lend's worker answered — and the host's
+/// load at its start and end are printed and added to
+/// `target/upload-after-seeks.log`; the run's whole JSON, each try's
+/// requests and worker trace in it, is kept in `target/upload-after-seeks/`
+/// beside WebKit's own log of the run (macOS `log stream`, its subsystem's
+/// lines), which names what WebKit did with its workers. It fails if the
+/// page's host answered any try's upload. `ROUTES` (`seeks,upload` if
+/// unset) names the canary's checks each try runs. Not in scripts/check.sh:
+/// run by name, `cargo test -p svrngs-node --test conformance
+/// upload_after_seeks -- --ignored`.
+mod upload_after_seeks {
+    use super::*;
+
+    #[tokio::test(flavor = "multi_thread")]
+    #[ignore = "u5-12's runs, by name"]
+    async fn on_the_floor() {
+        tries(Way::Floor).await
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    #[ignore = "u5-12's runs, by name"]
+    async fn with_the_wildcard() {
+        tries(Way::Wildcard).await
+    }
+}
+
+async fn tries(way: Way) {
+    let kept = repo().join("target/upload-after-seeks");
+    std::fs::create_dir_all(&kept).unwrap();
+    let webkit_log =
+        std::fs::File::create(kept.join(format!("webkit-{}.log", way.as_str()))).unwrap();
+    let _webkit = tokio::process::Command::new("/usr/bin/log")
+        .args([
+            "stream",
+            "--style",
+            "compact",
+            "--predicate",
+            "subsystem == \"com.apple.WebKit\"",
+        ])
+        .stdout(webkit_log)
+        .kill_on_drop(true)
+        .spawn()
+        .ok();
+    let n: usize = std::env::var("TRIES").map_or(10, |t| t.parse().expect("TRIES is a number"));
+    let routes: Vec<String> = std::env::var("ROUTES")
+        .unwrap_or("seeks,upload".into())
+        .split(',')
+        .map(String::from)
+        .collect();
+    let relay = relay().await;
+    let g = group(&relay).await;
+    let mut args = browser_args(way, Engine::Webkit, &g, &relay).await;
+    let lends = args["lends"].as_array().unwrap().clone();
+    args["lends"] = (0..n)
+        .map(|i| {
+            let mut lend = lends[i % 2].clone();
+            lend["who"] = json!(format!("{} {}", lend["who"].as_str().unwrap(), i + 1));
+            lend
+        })
+        .collect();
+    args["routes"] = json!(routes);
+    let ran = browse(&args).await;
+    std::fs::write(
+        kept.join(format!("{}.json", way.as_str())),
+        format!("{ran:#}"),
+    )
+    .unwrap();
+    let mut lines = String::new();
+    let mut lost = Vec::new();
+    for i in 0..n {
+        let who = args["lends"][i]["who"].as_str().unwrap();
+        let seen = &ran["lends"][who];
+        let host: Vec<&str> = seen["host"]
+            .as_array()
+            .map(|h| h.iter().filter_map(Value::as_str).collect())
+            .unwrap_or_default();
+        let checks: Vec<String> = routes
+            .iter()
+            .map(|r| format!("{r} {} {}", seen[r]["ok"], seen[r]["saw"]))
+            .collect();
+        let line = format!(
+            "{}\t{who}\t{}\tthe page's host was asked {:?}\t{}\t{}\n",
+            way.as_str(),
+            checks.join("\t"),
+            host,
+            seen["load"][0].as_str().unwrap_or("?"),
+            seen["load"][1].as_str().unwrap_or("?"),
+        );
+        if host.iter().any(|l| l.contains(" POST ")) {
+            lost.push(line.clone());
+        }
+        lines.push_str(&line);
+    }
+    print!("{lines}");
+    use std::io::Write;
+    std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(repo().join("target/upload-after-seeks.log"))
+        .and_then(|mut f| f.write_all(lines.as_bytes()))
+        .unwrap();
+    assert!(
+        lost.is_empty(),
+        "the page's host answered an upload:\n{}",
+        lost.join("")
+    );
+    for n in [g.sam, g.bo, g.alex] {
+        n.endpoint().close().await;
+    }
 }

@@ -20,10 +20,16 @@ const TYPES = {
   '.js': 'text/javascript; charset=utf-8',
   '.wasm': 'application/wasm',
 };
+//
+// What it was asked is in `server.asked`, each `<time> <method> <host><path>
+// <status>`: a lend's request that reaches the page's host is one the
+// lend's worker did not answer (u5-12).
 export function serve(dir, { worker } = {}) {
   const root = resolve(dir);
+  const asked = [];
   const server = http.createServer(async (req, res) => {
     const path = new URL(req.url, 'http://page').pathname;
+    res.on('finish', () => asked.push(`${new Date().toISOString()} ${req.method} ${req.headers.host}${req.url} ${res.statusCode}`));
     const file = join(root, normalize(path.endsWith('/') ? `${path}index.html` : path));
     if (!file.startsWith(root)) return res.writeHead(403).end();
     try {
@@ -35,6 +41,7 @@ export function serve(dir, { worker } = {}) {
       res.writeHead(404).end();
     }
   });
+  server.asked = asked;
   return new Promise((done) => server.listen(0, '127.0.0.1', () => done(server)));
 }
 

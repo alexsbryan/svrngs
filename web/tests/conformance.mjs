@@ -3,7 +3,9 @@
 // Playwright's headless `engine` (page.mjs) it opens each lend in
 // `args.lends` — Sam's and Bo's canary — the way `args.mode` says, runs each
 // of the canary's checks in its page, and prints what it saw as one JSON
-// line:
+// line, with each request the page sent under a lend's address and whether
+// the lend's worker answered it, what of those the page's own host was
+// asked, and what WebKit's processes held meanwhile (u5-12):
 // - `computer`: Alex's computer's browser opens each lend's origin on
 //   Alex's loopback (`args.origins`), as the bare command prints it.
 // - `wildcard`, `floor`: a phone, holding `args.key` in a group joined by
@@ -17,10 +19,15 @@
 //   node web/tests/conformance.mjs '{"engine": ..., "mode": ..., "site": ...,
 //     "lends": [{"who": "sam", "button": "sam’s app", "label": ..., "origin": ...}, ...],
 //     "key": ..., "token": ..., "under": ..., "api": ..., "append": ...,
-//     "secrets": [...]}'
+//     "secrets": [...], "routes": [...]}'
+//
+// `routes`, when given, runs only those checks in each lend, in order, and
+// none after: u5-12's runs of the upload after the seeks, which list a lend
+// once for each try.
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
+import { execSync } from 'node:child_process';
 import { hold, launch, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
@@ -41,10 +48,32 @@ async function unsealable() {
   return { groups: (await store.groups()).length, names };
 }
 
+const ROUTES = ['root', 'isolated', 'host', 'range', 'seeks', 'upload', 'websocket', 'signin', 'guarded', 'worker'];
+const routes = args.routes ?? ROUTES;
+// The clock and this host's load (the u5 queue's rule for a run that times
+// seeks).
+const load = () => execSync('echo $(date -u +%FT%TZ) $(uptime)').toString().trim();
+
 const { context, close } = await launch(args.engine);
 const logs = [];
 const leaked = [];
+// Each request under the lend being opened, `<time> <method> <url> <status>
+// <who answered>`: the lend's worker, or not.
+let sent = [];
+const answered = (r, by) => sent.push(`${new Date().toISOString()} ${r.method()} ${r.url()} ${by}`);
+context.on('response', (r) => answered(r.request(), `${r.status()} ${r.fromServiceWorker() ? 'by the worker' : 'not by the worker'}`));
+context.on('requestfailed', (r) => answered(r, `failed: ${r.failure()?.errorText}`));
 context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
+// What each of the browser's content processes holds, a second apart, as
+// `<time> <pid>:<MB> …`, while a lend's checks run (u5-12): a worker's
+// process that grows, then is gone. WebKit's only, on this host.
+let memory = [];
+const sampler = setInterval(() => {
+  if (args.engine !== 'webkit') return;
+  const ps = execSync('ps -axo pid=,rss=,command=').toString().split('\n');
+  const held = ps.filter((l) => l.includes('ms-playwright/webkit') && l.includes('WebContent')).map((l) => l.trim().split(/\s+/));
+  memory.push(`${new Date().toISOString()} ${held.map(([pid, rss]) => `${pid}:${Math.round(rss / 1024)}`).join(' ')}`);
+}, 1000);
 context.on('response', async (r) => {
   try {
     const text = `${JSON.stringify(await r.allHeaders())}${await r.text()}`;
@@ -74,12 +103,24 @@ try {
       await page.goto(lend.origin);
     }
     await ready();
-    const seen = { at: page.url() };
-    for (const route of ['root', 'isolated', 'host', 'range', 'seeks', 'upload', 'websocket', 'signin', 'guarded', 'worker']) {
+    const seen = { at: page.url(), load: [load()] };
+    const hostAt = server?.asked.length;
+    [sent, memory] = [[], []];
+    for (const route of routes) {
       seen[route] = await run(route);
     }
+    seen.load.push(load());
+    seen.requests = sent.filter((l) => l.includes(lend.label));
+    seen.memory = memory;
+    // What the page's host was asked meanwhile that is not the page's own
+    // files: a lend's request no worker answered.
+    if (phone) seen.host = server.asked.slice(hostAt).filter((l) => !/^\S+ GET \S+ 200$/.test(l));
     // The lend's worker's trace, each range in it (u5-11): a phone's only.
     if (phone) seen.trace = await page.evaluate(() => fetch('svrngs-trace').then((r) => r.text())).catch((e) => String(e));
+    if (args.routes) {
+      out[lend.who] = seen;
+      continue;
+    }
     seen.stored = await run('stored', lend.who);
     await page.reload();
     await ready();
@@ -102,6 +143,7 @@ try {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;
 } finally {
+  clearInterval(sampler);
   await close();
   server?.close();
 }
