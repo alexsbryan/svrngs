@@ -1,0 +1,132 @@
+computer  chromium sam  /-absolute paths                   passed
+computer  chromium sam  WebSocket echo, OPEN read          passed
+computer  chromium sam  64 MiB read by Range               passed
+computer  chromium sam  seeks back to back                 passed
+computer  chromium sam  64 MiB uploaded, its length told   passed
+computer  chromium sam  its own service worker             passed
+computer  chromium sam  SharedArrayBuffer under COOP/COEP  passed
+computer  chromium sam  Host check, absolute redirect      passed
+computer  chromium sam  cookie sign-in, read unreloaded    passed
+computer  chromium sam  post, Origin checked               passed
+computer  chromium sam  local storage                      passed
+computer  chromium bo   /-absolute paths                   passed
+computer  chromium bo   WebSocket echo, OPEN read          passed
+computer  chromium bo   64 MiB read by Range               passed
+computer  chromium bo   seeks back to back                 passed
+computer  chromium bo   64 MiB uploaded, its length told   passed
+computer  chromium bo   its own service worker             passed
+computer  chromium bo   SharedArrayBuffer under COOP/COEP  passed
+computer  chromium bo   Host check, absolute redirect      passed
+computer  chromium bo   cookie sign-in, read unreloaded    passed
+computer  chromium bo   post, Origin checked               passed
+computer  chromium bo   local storage                      passed
+computer  webkit   sam  /-absolute paths                   passed
+computer  webkit   sam  WebSocket echo, OPEN read          passed
+computer  webkit   sam  64 MiB read by Range               passed
+computer  webkit   sam  seeks back to back                 passed
+computer  webkit   sam  64 MiB uploaded, its length told   passed
+computer  webkit   sam  its own service worker             passed
+computer  webkit   sam  SharedArrayBuffer under COOP/COEP  passed
+computer  webkit   sam  Host check, absolute redirect      passed
+computer  webkit   sam  cookie sign-in, read unreloaded    passed
+computer  webkit   sam  post, Origin checked               passed
+computer  webkit   sam  local storage                      passed
+computer  webkit   bo   /-absolute paths                   passed
+computer  webkit   bo   WebSocket echo, OPEN read          passed
+computer  webkit   bo   64 MiB read by Range               passed
+computer  webkit   bo   seeks back to back                 passed
+computer  webkit   bo   64 MiB uploaded, its length told   passed
+computer  webkit   bo   its own service worker             passed
+computer  webkit   bo   SharedArrayBuffer under COOP/COEP  passed
+computer  webkit   bo   Host check, absolute redirect      passed
+computer  webkit   bo   cookie sign-in, read unreloaded    passed
+computer  webkit   bo   post, Origin checked               passed
+computer  webkit   bo   local storage                      passed
+floor     chromium sam  /-absolute paths                   needs the wildcard
+floor     chromium sam  WebSocket echo, OPEN read          passed
+floor     chromium sam  64 MiB read by Range               passed
+floor     chromium sam  seeks back to back                 passed
+floor     chromium sam  64 MiB uploaded, its length told   passed
+floor     chromium sam  its own service worker             passed
+floor     chromium sam  SharedArrayBuffer under COOP/COEP  passed
+floor     chromium sam  Host check, absolute redirect      passed
+floor     chromium sam  cookie sign-in, read unreloaded    passed
+floor     chromium sam  post, Origin checked               needs the wildcard
+floor     chromium sam  local storage                      needs the wildcard
+floor     chromium bo   /-absolute paths                   needs the wildcard
+floor     chromium bo   WebSocket echo, OPEN read          passed
+floor     chromium bo   64 MiB read by Range               passed
+floor     chromium bo   seeks back to back                 failed
+floor     chromium bo   64 MiB uploaded, its length told   passed
+floor     chromium bo   its own service worker             passed
+floor     chromium bo   SharedArrayBuffer under COOP/COEP  passed
+floor     chromium bo   Host check, absolute redirect      passed
+floor     chromium bo   cookie sign-in, read unreloaded    passed
+floor     chromium bo   post, Origin checked               needs the wildcard
+floor     chromium bo   local storage                      needs the wildcard
+floor     webkit   sam  /-absolute paths                   needs the wildcard
+floor     webkit   sam  WebSocket echo, OPEN read          passed
+floor     webkit   sam  64 MiB read by Range               passed
+floor     webkit   sam  seeks back to back                 failed
+floor     webkit   sam  64 MiB uploaded, its length told   passed
+floor     webkit   sam  its own service worker             passed
+floor     webkit   sam  SharedArrayBuffer under COOP/COEP  passed
+floor     webkit   sam  Host check, absolute redirect      passed
+floor     webkit   sam  cookie sign-in, read unreloaded    passed
+floor     webkit   sam  post, Origin checked               needs the wildcard
+floor     webkit   sam  local storage                      needs the wildcard
+floor     webkit   bo   /-absolute paths                   needs the wildcard
+floor     webkit   bo   WebSocket echo, OPEN read          passed
+floor     webkit   bo   64 MiB read by Range               passed
+floor     webkit   bo   seeks back to back                 passed
+floor     webkit   bo   64 MiB uploaded, its length told   passed
+floor     webkit   bo   its own service worker             passed
+floor     webkit   bo   SharedArrayBuffer under COOP/COEP  passed
+floor     webkit   bo   Host check, absolute redirect      passed
+floor     webkit   bo   cookie sign-in, read unreloaded    passed
+floor     webkit   bo   post, Origin checked               needs the wildcard
+floor     webkit   bo   local storage                      needs the wildcard
+wildcard  chromium sam  /-absolute paths                   passed
+wildcard  chromium sam  WebSocket echo, OPEN read          passed
+wildcard  chromium sam  64 MiB read by Range               passed
+wildcard  chromium sam  seeks back to back                 passed
+wildcard  chromium sam  64 MiB uploaded, its length told   passed
+wildcard  chromium sam  its own service worker             passed
+wildcard  chromium sam  SharedArrayBuffer under COOP/COEP  passed
+wildcard  chromium sam  Host check, absolute redirect      passed
+wildcard  chromium sam  cookie sign-in, read unreloaded    passed
+wildcard  chromium sam  post, Origin checked               passed
+wildcard  chromium sam  local storage                      passed
+wildcard  chromium bo   /-absolute paths                   passed
+wildcard  chromium bo   WebSocket echo, OPEN read          passed
+wildcard  chromium bo   64 MiB read by Range               passed
+wildcard  chromium bo   seeks back to back                 passed
+wildcard  chromium bo   64 MiB uploaded, its length told   passed
+wildcard  chromium bo   its own service worker             passed
+wildcard  chromium bo   SharedArrayBuffer under COOP/COEP  passed
+wildcard  chromium bo   Host check, absolute redirect      passed
+wildcard  chromium bo   cookie sign-in, read unreloaded    passed
+wildcard  chromium bo   post, Origin checked               passed
+wildcard  chromium bo   local storage                      passed
+wildcard  webkit   sam  /-absolute paths                   passed
+wildcard  webkit   sam  WebSocket echo, OPEN read          passed
+wildcard  webkit   sam  64 MiB read by Range               passed
+wildcard  webkit   sam  seeks back to back                 failed
+wildcard  webkit   sam  64 MiB uploaded, its length told   passed
+wildcard  webkit   sam  its own service worker             passed
+wildcard  webkit   sam  SharedArrayBuffer under COOP/COEP  passed
+wildcard  webkit   sam  Host check, absolute redirect      passed
+wildcard  webkit   sam  cookie sign-in, read unreloaded    passed
+wildcard  webkit   sam  post, Origin checked               passed
+wildcard  webkit   sam  local storage                      passed
+wildcard  webkit   bo   /-absolute paths                   passed
+wildcard  webkit   bo   WebSocket echo, OPEN read          passed
+wildcard  webkit   bo   64 MiB read by Range               passed
+wildcard  webkit   bo   seeks back to back                 passed
+wildcard  webkit   bo   64 MiB uploaded, its length told   passed
+wildcard  webkit   bo   its own service worker             passed
+wildcard  webkit   bo   SharedArrayBuffer under COOP/COEP  passed
+wildcard  webkit   bo   Host check, absolute redirect      passed
+wildcard  webkit   bo   cookie sign-in, read unreloaded    passed
+wildcard  webkit   bo   post, Origin checked               passed
+wildcard  webkit   bo   local storage                      passed

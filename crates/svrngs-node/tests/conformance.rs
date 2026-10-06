@@ -205,10 +205,11 @@ impl Way {
 }
 
 /// The canary's routes, as the row names them, each with its check.
-const ROUTES: [(&str, &str); 10] = [
+const ROUTES: [(&str, &str); 11] = [
     ("/-absolute paths", "root"),
     ("WebSocket echo, OPEN read", "websocket"),
     ("64 MiB read by Range", "range"),
+    ("seeks back to back", "seeks"),
     ("64 MiB uploaded, its length told", "upload"),
     ("its own service worker", "worker"),
     ("SharedArrayBuffer under COOP/COEP", "isolated"),
@@ -257,6 +258,74 @@ fn verdicts(way: Way, lend: &Value, other: &Value) -> Vec<(&'static str, String,
         .collect()
 }
 
+/// The relay as a phone away from home reaches it (u5-11): every byte each
+/// way held `DELAY`, and what the lender sends the phone, which crosses the
+/// lender's home uplink, paced to `RATE` bytes a second with at most
+/// `QUEUE` bytes, a second's, held at once, as a home router's buffer
+/// holds them: this host's uplink answered in 959 ms under load
+/// (demo/runs/a/2026-10-05/data/upload.txt). Demo
+/// A's phones met a 50 Mbit/s uplink shared by three streams, each told a
+/// third, 16,666,666 bit/s, and a relayed round trip of 166 ms to 2 s
+/// (demo/runs/a/2026-10-05/README.md, "Each stream's share"); here one
+/// phone gets that third, with a 300 ms round trip. Answers the address to
+/// give the phone.
+const RATE: u64 = 16_666_666 / 8;
+const DELAY: Duration = Duration::from_millis(150);
+const QUEUE: u32 = RATE as u32;
+
+async fn uplink(relay: &str) -> String {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    let to: std::net::SocketAddr = relay
+        .trim_start_matches("http://")
+        .trim_end_matches('/')
+        .parse()
+        .unwrap();
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let at = listener.local_addr().unwrap();
+    // One direction: each read held DELAY, then written at `rate`.
+    async fn paced(
+        mut from: tokio::net::tcp::OwnedReadHalf,
+        mut to: tokio::net::tcp::OwnedWriteHalf,
+        rate: u64,
+    ) {
+        let held = std::sync::Arc::new(tokio::sync::Semaphore::new(QUEUE as usize));
+        let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+        tokio::spawn(async move {
+            let mut buf = vec![0; 16 * 1024];
+            while let Ok(n) = from.read(&mut buf).await {
+                let Ok(room) = held.clone().acquire_many_owned(n as u32).await else {
+                    break;
+                };
+                let due = tokio::time::Instant::now() + DELAY;
+                if n == 0 || tx.send((due, buf[..n].to_vec(), room)).is_err() {
+                    break;
+                }
+            }
+        });
+        while let Some((due, bytes, room)) = rx.recv().await {
+            tokio::time::sleep_until(due).await;
+            if to.write_all(&bytes).await.is_err() {
+                break;
+            }
+            tokio::time::sleep(Duration::from_micros(bytes.len() as u64 * 1_000_000 / rate)).await;
+            drop(room);
+        }
+        let _ = to.shutdown().await;
+    }
+    tokio::spawn(async move {
+        while let Ok((phone, _)) = listener.accept().await {
+            let Ok(relay) = tokio::net::TcpStream::connect(to).await else {
+                continue;
+            };
+            let ((pr, pw), (rr, rw)) = (phone.into_split(), relay.into_split());
+            // The phone's sending crosses the lender's downlink, unpaced here.
+            tokio::spawn(paced(pr, rw, u64::MAX / 1_000_000));
+            tokio::spawn(paced(rr, pw, RATE));
+        }
+    });
+    format!("http://{at}/")
+}
+
 /// Every door's `carriage` lines (u5-11), kept in
 /// `target/conformance/carriage.log` for every test this binary runs: each
 /// range asked, answered, sent whole or cut off, beside the worker's trace.
@@ -290,7 +359,7 @@ async fn conformance(way: Way, engine: Engine) {
     let token = Token {
         issuer: signing(SAM).verifying_key(),
         secret: [0; 16],
-        relay: Some(relay_url(&relay).parse().unwrap()),
+        relay: Some(uplink(&relay_url(&relay)).await.parse().unwrap()),
     }
     .encode();
     let append = json!({ "op": "record", "payload": { "mark": MARK } }).to_string();

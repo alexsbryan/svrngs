@@ -18,6 +18,9 @@
 //   GET  /checks.js   the checks
 //   GET  /ws          a WebSocket echo
 //   GET  /big.bin     64 MiB, by Range; byte i is (i * 7 + (i >> 10)) & 255
+//   GET  /big.wav     the same 64 MiB under a WAV head, its first 44 bytes:
+//                     sound a media element plays and seeks by Range, sent
+//                     as it is read
 //   POST /upload      read as it streams; answers `<bytes> <sha-256> <its Content-Length>`
 //   GET  /app-sw.js   its own service worker, answering `sw-probe`
 //   GET  /sw-probe    `from the server`, when no worker of its own answers
@@ -32,6 +35,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import http from 'node:http';
+import { Readable } from 'node:stream';
 
 const who = process.argv[2] ?? 'canary';
 const SIZE = 64 * 1024 * 1024;
@@ -55,6 +59,44 @@ function bytes(from, to) {
   const out = Buffer.alloc(to - from + 1);
   for (let i = from; i <= to; i++) out[i - from] = byte(i);
   return out;
+}
+
+// A WAV head for the 64 MiB: 16-bit stereo at 96 kHz, 384,000 bytes a
+// second, the order of a film's (Demo A's converted one, 466,319), so
+// the file plays for 174 s.
+const RATE = 96_000;
+const head = Buffer.alloc(44);
+head.write('RIFF', 0);
+head.writeUInt32LE(SIZE - 8, 4);
+head.write('WAVEfmt ', 8);
+head.writeUInt32LE(16, 16);
+head.writeUInt16LE(1, 20);
+head.writeUInt16LE(2, 22);
+head.writeUInt32LE(RATE, 24);
+head.writeUInt32LE(RATE * 4, 28);
+head.writeUInt16LE(4, 32);
+head.writeUInt16LE(16, 34);
+head.write('data', 36);
+head.writeUInt32LE(SIZE - 44, 40);
+
+// The WAV, whole or by Range, a MiB at a time as the asker reads it, so a
+// seek's abandoned answer costs the canary nothing it has not sent.
+function played(req, res) {
+  const m = /^bytes=(\d+)-(\d*)$/.exec(req.headers.range ?? '');
+  const from = m ? Number(m[1]) : 0;
+  const to = m ? Math.min(m[2] === '' ? SIZE - 1 : Number(m[2]), SIZE - 1) : SIZE - 1;
+  if (from >= SIZE || to < from) return sends(res, 416, 'text/plain', '', { 'content-range': `bytes */${SIZE}` });
+  const ranged = m ? { 'content-range': `bytes ${from}-${to}/${SIZE}` } : {};
+  res.writeHead(m ? 206 : 200, { ...SAME, 'content-type': 'audio/wav', 'accept-ranges': 'bytes', 'content-length': to - from + 1, ...ranged });
+  Readable.from(
+    (function* () {
+      for (let at = from; at <= to; at += 1 << 20) {
+        const part = bytes(at, Math.min(at + (1 << 20) - 1, to));
+        if (at < head.length) head.copy(part, 0, at);
+        yield part;
+      }
+    })(),
+  ).pipe(res);
 }
 
 function big(req, res) {
@@ -113,6 +155,8 @@ const server = http.createServer((req, res) => {
       return sends(res, 200, 'text/javascript', checks);
     case '/big.bin':
       return big(req, res);
+    case '/big.wav':
+      return played(req, res);
     case '/app-sw.js':
       return sends(res, 200, 'text/javascript', worker);
     case '/sw-probe':

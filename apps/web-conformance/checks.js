@@ -42,6 +42,43 @@
       const ok = res.status === 206 && res.headers.get('content-range') === `bytes ${from}-${to}/${SIZE}` && (await sha(got)) === (await sha(made(from, to)));
       return { ok, saw: `${res.status} ${res.headers.get('content-range')} ${got.length} bytes` };
     }),
+    // Seeks back to back, as a person scrubbing does (u5-11): the 64 MiB
+    // file played as sound, twenty seeks 250 ms apart, forward and back in
+    // turn, then the last must play again — its time advancing past where
+    // it was sent — within 5 s. Each seek's time is kept, and how long the
+    // last took, waited for up to 30 s, so a miss is measured, not cut off.
+    seeks: judged(async () => {
+      const a = Object.assign(document.createElement('audio'), { muted: true, preload: 'auto', src: 'big.wav' });
+      document.body.append(a);
+      const until = (f, ms) =>
+        new Promise((done) => {
+          const t0 = performance.now();
+          const look = () => (f() ? done(Math.round(performance.now() - t0)) : performance.now() - t0 > ms ? done(null) : setTimeout(look, 20));
+          look();
+        });
+      try {
+        await a.play();
+        const began = await until(() => a.currentTime > 0.5, 20_000);
+        if (began === null) return { ok: false, saw: `it never began to play: readyState ${a.readyState}, error ${a.error?.code}` };
+        const at = [];
+        for (let k = 0; k < 20; k++) {
+          const to = (k % 2 ? 0.85 - k * 0.03 : 0.1 + k * 0.03) * a.duration;
+          at.push(Math.round(to));
+          a.currentTime = to;
+          await new Promise((r) => setTimeout(r, 250));
+        }
+        const sent = new Date().toISOString();
+        const last = at[at.length - 1];
+        const again = await until(() => !a.seeking && !a.paused && a.currentTime > last + 0.25, 30_000);
+        const saw = `began in ${began} ms; twenty seeks to ${at.join(', ')} s; the last played again ${again === null ? 'not within 30,000' : `in ${again}`} ms after the twentieth was sent, ${sent} less 250 ms: readyState ${a.readyState}, at ${a.currentTime.toFixed(2)} s`;
+        return { ok: again !== null && again + 250 <= 5_000, saw, again };
+      } finally {
+        a.pause();
+        a.removeAttribute('src');
+        a.load();
+        a.remove();
+      }
+    }),
     // The whole 64 MiB uploaded, which the canary reads as it streams.
     upload: judged(async () => {
       const body = made(0, SIZE - 1);

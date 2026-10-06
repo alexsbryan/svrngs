@@ -75,7 +75,7 @@ try {
     }
     await ready();
     const seen = { at: page.url() };
-    for (const route of ['root', 'isolated', 'host', 'range', 'upload', 'websocket', 'signin', 'guarded', 'worker']) {
+    for (const route of ['root', 'isolated', 'host', 'range', 'seeks', 'upload', 'websocket', 'signin', 'guarded', 'worker']) {
       seen[route] = await run(route);
     }
     // The lend's worker's trace, each range in it (u5-11): a phone's only.
