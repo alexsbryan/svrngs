@@ -1868,3 +1868,11 @@ No production noun the range added is defined twice for one concept.
 | I11 | 6 | `code dry-report --scope` | Still present; every scoped run here used a trailing slash. |
 | I14 | 6, 7 | `code dry-report --scope web/` near tier | Still present, and better. Plant D, an identical 18-line JS body, scores 0.938: found at 0.9, missed at 0.95, where the last binary never paired one above 0.7. Its spans are still off by three lines (setCookie :118–139 for :121–138). |
 | I15 | 6, 7 | `code converge noun` over web/ | Still present: `Socket` gives definitions (0), "check the spelling", for a class that exists. |
+
+The row's check (LINT): `scripts/check.sh` at e4fcd11 on a clean tree
+exited 0 in 7:33 (zsh `time`). Every step `passed`: principles pinned,
+lean and RUST_ARCH, app nouns gate, app nouns, rustfmt, clippy, tests,
+canaries, web rustfmt and clippy, browser, joining in a browser,
+conformance canary (every route passed on a computer and in the wildcard
+mode; on the floor the root and local storage `needs the wildcard`, the
+rest passed), app laws (log /tmp/u5audit1/check.log).
