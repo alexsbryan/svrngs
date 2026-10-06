@@ -749,7 +749,7 @@ async fn tries(way: Way) {
     for i in 0..n {
         let who = args["lends"][i]["who"].as_str().unwrap();
         let seen = &ran["lends"][who];
-        let host: Vec<&str> = seen["host"]
+        let host: Vec<&str> = seen["asked"]
             .as_array()
             .map(|h| h.iter().filter_map(Value::as_str).collect())
             .unwrap_or_default();

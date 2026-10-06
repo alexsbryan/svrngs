@@ -75,7 +75,7 @@ const ours = new Set();
 const ps = () => execSync('ps -axo pid=,ppid=,rss=,command=').toString().trim().split('\n').map((l) => l.trim().split(/\s+/));
 const shell = ps().find(([, ppid, , cmd, run]) => ppid === String(process.pid) && `${cmd} ${run}`.includes('pw_run.sh'))?.[0];
 const ui = args.engine === 'webkit' && ps().find(([, ppid, , cmd]) => ppid === shell && cmd.endsWith('/Playwright'))?.[0];
-const started = ui && spawn('/usr/bin/log', ['stream', '--style', 'compact', '--predicate', `processID == ${ui}`]);
+const started = ui ? spawn('/usr/bin/log', ['stream', '--style', 'compact', '--predicate', `processID == ${ui}`]) : null;
 started?.stdout.on('data', (d) => {
   for (const [, pid] of String(d).matchAll(/\[PID=(\d+)\] WebProcessProxy::didFinishLaunching/g)) ours.add(pid);
 });
@@ -123,8 +123,9 @@ try {
     seen.requests = sent.filter((l) => l.includes(lend.label));
     seen.memory = memory;
     // What the page's host was asked meanwhile that is not the page's own
-    // files: a lend's request no worker answered.
-    if (phone) seen.host = server.asked.slice(hostAt).filter((l) => !/^\S+ GET \S+ 200$/.test(l));
+    // files: a lend's request no worker answered. Not `host`, the name of
+    // the canary's Host check, whose verdict it would take the place of.
+    if (phone) seen.asked = server.asked.slice(hostAt).filter((l) => !/^\S+ GET \S+ 200$/.test(l));
     // The lend's worker's trace, each range in it (u5-11): a phone's only.
     if (phone) seen.trace = await page.evaluate(() => fetch('svrngs-trace').then((r) => r.text())).catch((e) => String(e));
     if (args.routes) {
