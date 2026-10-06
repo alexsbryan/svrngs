@@ -164,9 +164,14 @@ function bounded(headers, destination) {
 
 const say = (status, words) => new Response(words, { status, headers: PLAIN });
 
-// The shim (shim.js) for a lend's page, with the cookies its pages read.
-const shim = (label, jar) =>
-  `<script src="${SITE}shim.js?v=__VERSION__&l=${label}&c=${encodeURIComponent(cookieFor(jar, '/', true))}"></script>`;
+// The shim (shim.js) for a lend's page, with the cookies its pages read,
+// and the nonce of the page's script policy when it names one: under
+// `script-src 'nonce-…' 'strict-dynamic'` (Nextcloud's) a script without
+// it does not run (u5-catalogue-dry).
+const shim = (label, jar, policy) => {
+  const nonce = /'nonce-([^']+)'/.exec(policy ?? '')?.[1];
+  return `<script${nonce ? ` nonce="${nonce}"` : ''} src="${SITE}shim.js?v=__VERSION__&l=${label}&c=${encodeURIComponent(cookieFor(jar, '/', true))}"></script>`;
+};
 
 // Serve `request`, at `url`, from the lend `where` names.
 async function lent(request, url, where) {
@@ -224,7 +229,7 @@ async function lent(request, url, where) {
   const text = await res.text();
   const head = /<head[^>]*>/i.exec(text) ?? /<html[^>]*>/i.exec(text) ?? /<!doctype[^>]*>/i.exec(text);
   const at = head ? head.index + head[0].length : 0;
-  const page = `${text.slice(0, at)}${shim(where.label, jar)}${text.slice(at)}`;
+  const page = `${text.slice(0, at)}${shim(where.label, jar, res.headers.get('content-security-policy'))}${text.slice(at)}`;
   return new Response(page, { status: res.status, statusText: res.statusText, headers: headed });
 }
 
