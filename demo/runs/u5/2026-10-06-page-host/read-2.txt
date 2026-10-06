@@ -1,0 +1,39 @@
+# 2026-10-06T13:08:52Z 23d5f1c
+$ dscacheutil -q host -a name group.svrnme.sh  (the system resolver svrngs uses)
+name: group.svrnme.sh
+ip_address: 64.29.17.1
+ip_address: 216.198.79.65
+
+
+$ SVRNGS_DIR=$(mktemp -d) RUST_LOG=cli=debug svrngs new house --as Sam --origin https://group.svrnme.sh/
+2026-10-06T13:08:53.536464Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.gxd5LEfnvP"
+2026-10-06T13:08:53.538164Z DEBUG cli: cli: data dir claimed lock=/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.gxd5LEfnvP/lock
+2026-10-06T13:08:53.696506Z DEBUG cli: cli: asked for the page url="https://group.svrnme.sh/" got=Ok(2951)
+2026-10-06T13:08:53.837256Z DEBUG cli: cli: asked for the page url="https://ab0dae021b1a63690917d7e04d05bf2b.group.svrnme.sh/" got=Ok(2951)
+2026-10-06T13:08:53.837310Z DEBUG cli: cli: a name nobody made under the page's host serves the page, so each app opens at an address of its own page="https://group.svrnme.sh/" authority="group.svrnme.sh"
+2026-10-06T13:08:53.841635Z DEBUG cli: cli: group made group=092f4a8fedd1cd9964d30375149c8afd705d4bbb44f8e427e9852b1e3eac3317 name=house pages=Some(Pages { page: Origin("https://group.svrnme.sh/"), apps: OwnAddress })
+2026-10-06T13:08:54.156385Z DEBUG cli: cli: waited for a relay before printing the link online=true
+2026-10-06T13:08:54.156560Z DEBUG cli: cli: the link carries the key alone — lookup finds this computer
+2026-10-06T13:08:54.165583Z DEBUG cli: cli: link minted group=092f4a8fedd1cd9964d30375149c8afd705d4bbb44f8e427e9852b1e3eac3317 invite=fed6a302213514a7cbed414591e3407ba60a8e026b82fdc68e567aae4390208e until=1791378534
+Made house, with you as Sam.
+Send this link to the people you want in it. It works for a day, while this computer is on:
+
+  svrngs://join/Ad9D68M5dYIjGQRt6hIc00p0Mbd3BfTjiW-bZFY8-M4WqVt4hPa879-zDE9VWqTORw
+
+or, to open it in a browser:
+
+  https://group.svrnme.sh/#Ad9D68M5dYIjGQRt6hIc00p0Mbd3BfTjiW-bZFY8-M4WqVt4hPa879-zDE9VWqTORw
+
+On a phone, each app opens at an address of its own under group.svrnme.sh, which can see which app is opened.
+
+Leave this running; Ctrl-C stops it.
+exit 124
+
+$ SVRNGS_DIR=$(mktemp -d) RUST_LOG=cli=debug svrngs new house --as Sam --origin https://www.svrnme.sh/g/
+2026-10-06T13:10:52.970613Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.OXzPoZotOB"
+2026-10-06T13:10:52.971333Z DEBUG cli: cli: data dir claimed lock=/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.OXzPoZotOB/lock
+2026-10-06T13:10:53.175859Z DEBUG cli: cli: asked for the page url="https://www.svrnme.sh/g/" got=Ok(2951)
+2026-10-06T13:10:53.786225Z DEBUG cli: cli: asked for the page url="https://9f9d39424c4b1654bae166cb780dff88.www.svrnme.sh/" got=Err("reqwest::Error { kind: Request, url: \"https://9f9d39424c4b1654bae166cb780dff88.www.svrnme.sh/\", source: hyper_util::client::legacy::Error(Connect, Custom { kind: Other, error: Custom { kind: UnexpectedEof, error: \"tls handshake eof\" } }) }")
+2026-10-06T13:10:53.786327Z DEBUG cli: cli: refused — a name nobody made under the page's host does not serve the page page="https://www.svrnme.sh/g/" served=None
+svrngs: https://www.svrnme.sh/g/ gives each app no address of its own, so on a phone every app would open where your group's page keeps who each person is. Either name a second address for the apps, on any host: `--lends-origin <url>`; or use a host that serves your page at every name under it, as group.svrnme.sh does
+exit 1

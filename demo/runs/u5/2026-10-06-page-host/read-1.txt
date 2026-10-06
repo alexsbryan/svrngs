@@ -1,0 +1,21 @@
+# 2026-10-06T13:02:09Z 74e5175+worktree
+$ dig +short group.svrnme.sh
+216.198.79.65
+64.29.17.1
+$ dscacheutil -q host -a name group.svrnme.sh  (the system resolver svrngs uses)
+
+$ SVRNGS_DIR=$(mktemp -d) RUST_LOG=cli=debug svrngs new house --as Sam --origin https://group.svrnme.sh/
+2026-10-06T13:02:09.602694Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.3IUEyeGTKJ"
+2026-10-06T13:02:09.603189Z DEBUG cli: cli: data dir claimed lock=/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.3IUEyeGTKJ/lock
+2026-10-06T13:02:09.668415Z DEBUG cli: cli: asked for the page url="https://group.svrnme.sh/" got=Err("reqwest::Error { kind: Request, url: \"https://group.svrnme.sh/\", source: hyper_util::client::legacy::Error(Connect, ConnectError(\"dns error\", Custom { kind: Uncategorized, error: \"failed to lookup address information: nodename nor servname provided, or not known\" })) }")
+svrngs: cannot tell from here whether https://group.svrnme.sh/ gives each app an address of its own: the page does not open there (RUST_LOG=debug says why); try again, or name a second address for the apps with `--lends-origin <url>`
+exit 3
+
+$ SVRNGS_DIR=$(mktemp -d) RUST_LOG=cli=debug svrngs new house --as Sam --origin https://www.svrnme.sh/g/
+2026-10-06T13:02:09.681770Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.ny80fHwz0G"
+2026-10-06T13:02:09.682054Z DEBUG cli: cli: data dir claimed lock=/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.ny80fHwz0G/lock
+2026-10-06T13:02:09.856803Z DEBUG cli: cli: asked for the page url="https://www.svrnme.sh/g/" got=Ok(2951)
+2026-10-06T13:02:10.477385Z DEBUG cli: cli: asked for the page url="https://8063fbceb1887e2326c9c4f5628f42a4.www.svrnme.sh/" got=Err("reqwest::Error { kind: Request, url: \"https://8063fbceb1887e2326c9c4f5628f42a4.www.svrnme.sh/\", source: hyper_util::client::legacy::Error(Connect, Custom { kind: Other, error: Custom { kind: UnexpectedEof, error: \"tls handshake eof\" } }) }")
+2026-10-06T13:02:10.477452Z DEBUG cli: cli: refused — a name nobody made under the page's host does not serve the page page="https://www.svrnme.sh/g/" served=None
+svrngs: https://www.svrnme.sh/g/ gives each app no address of its own, so on a phone every app would open where your group's page keeps who each person is. Either name a second address for the apps, on any host: `--lends-origin <url>`; or use a host that serves your page at every name under it, as group.svrnme.sh does
+exit 1
