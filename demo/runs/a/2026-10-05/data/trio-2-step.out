@@ -1,0 +1,13 @@
+06:35:01 trio trio-2: load at the start: 23:35  up 16:46, 11 users, load averages: 9.77 9.34 11.50
+06:45:36 trio trio-2: load at the end: 23:45  up 16:57, 11 users, load averages: 2.55 5.05 8.31
+{"trio": {"alex": true, "bo": true, "cy": true}, "trio-2": {"alex": true, "bo": true, "cy": true}}
+passed           alex plays through the window: played 598.9 s of 600; stills of 5 s or more outside their own seeks []; events outside their own seeks {'emptied': 0, 'loadstart': 0, 'element': 0, 'waiting': 0, 'stalled': 0, 'error': 0, 'ended': 0}; signed in after as alex
+passed           alex seeks: 10 seeks, 0 missed 5000 ms: [592, 512, 410, 470, 412, 375, 418, 468, 423, 386]
+failed           bo plays through the window: played 544.2 s of 600; stills of 5 s or more outside their own seeks [{'from_s': 0.2, 'ms': 6104}]; events outside their own seeks {'emptied': 0, 'loadstart': 0, 'element': 0, 'waiting': 0, 'stalled': 0, 'error': 0, 'ended': 0}; signed in after as bo
+passed           bo seeks: 22 seeks, 0 missed 5000 ms: [4921, 1632, 2589, 2407, 2251, 2639, 2640, 2475, 2159, 2586, 2492, 2398, 2349, 2615, 2734, 2881, 2661, 2419, 2587, 3333, 2614, 3599]
+passed           cy plays through the window: played 581.7 s of 600; stills of 5 s or more outside their own seeks []; events outside their own seeks {'emptied': 0, 'loadstart': 0, 'element': 0, 'waiting': 0, 'stalled': 0, 'error': 0, 'ended': 0}; signed in after as cy
+passed           cy seeks: 22 seeks, 0 missed 5000 ms: [2059, 890, 817, 941, 879, 2153, 1295, 1036, 812, 1111, 992, 887, 935, 1072, 1777, 1743, 1080, 1037, 1152, 1134, 2346, 1542]
+seeks: 54, 0 missed 5000 ms; {'n': 54, 'min': 375, 'median': 1587.0, 'max': 4921}
+door, Alex: {'let_in': 176, 'people': {'n': 176, 'min': 1, 'median': 1.0, 'max': 1}, 'share_bps': {'n': 176, 'min': 50000000, 'median': 50000000.0, 'max': 50000000}, 'declared_bps': 50000000, 'relayed': {'None': 176}, 'rtt_ms': None, 'home': 373}
+door, Cy: {'let_in': 990, 'people': {'n': 990, 'min': 1, 'median': 2.0, 'max': 3}, 'share_bps': {'n': 990, 'min': 16666666, 'median': 25000000.0, 'max': 50000000}, 'declared_bps': 50000000, 'relayed': {'Some(true)': 990}, 'rtt_ms': {'n': 990, 'min': 65, 'median': 884.0, 'max': 2034}}
+door, Bo: {'let_in': 3171, 'people': {'n': 3171, 'min': 2, 'median': 3, 'max': 3}, 'share_bps': {'n': 3171, 'min': 16666666, 'median': 16666666, 'max': 25000000}, 'declared_bps': 50000000, 'relayed': {'Some(true)': 3171}, 'rtt_ms': {'n': 3171, 'min': 65, 'median': 169, 'max': 2104}}

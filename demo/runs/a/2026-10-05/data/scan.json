@@ -1,0 +1,124 @@
+{
+ "secrets_searched": [
+  "admin_token",
+  "alex_pw",
+  "bo_pw",
+  "cy_pw",
+  "sam_pw"
+ ],
+ "lend_kept": [],
+ "pairs": {
+  "trio": {
+   "alex": {
+    "scanned": {
+     "responses": 278,
+     "bodies": 193,
+     "bytes": 17659706,
+     "frames": 29
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "bo": {
+    "scanned": {
+     "responses": 1630,
+     "bodies": 1533,
+     "bytes": 143087331,
+     "frames": 120
+    },
+    "own_token": 617,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/Items/a15deeeeb693bf2e879cea1f0fd9aece/PlaybackInfo",
+     "/videos/a15deeee-b693-bf2e-879c-ea1f0fd9aece/master.m3u8",
+     "/videos/a15deeee-b693-bf2e-879c-ea1f0fd9aece/main.m3u8"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "cy": {
+    "scanned": {
+     "responses": 658,
+     "bodies": 563,
+     "bytes": 441377047,
+     "frames": 118
+    },
+    "own_token": 140,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/svrngs-trace"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "trio-2": {
+   "alex": {
+    "scanned": {
+     "responses": 281,
+     "bodies": 197,
+     "bytes": 17680964,
+     "frames": 29
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "bo": {
+    "scanned": {
+     "responses": 1590,
+     "bodies": 1492,
+     "bytes": 135687902,
+     "frames": 128
+    },
+    "own_token": 617,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/Items/a15deeeeb693bf2e879cea1f0fd9aece/PlaybackInfo",
+     "/videos/a15deeee-b693-bf2e-879c-ea1f0fd9aece/master.m3u8",
+     "/videos/a15deeee-b693-bf2e-879c-ea1f0fd9aece/main.m3u8"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "cy": {
+    "scanned": {
+     "responses": 684,
+     "bodies": 586,
+     "bytes": 456058541,
+     "frames": 118
+    },
+    "own_token": 141,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/svrngs-trace"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  }
+ },
+ "logs": {
+  "alex/join.log": {},
+  "alex/join.out": {},
+  "alex/run.log": {},
+  "alex/run.out": {},
+  "sam/new.out": {},
+  "sam/run.log": {},
+  "sam/share.log": {},
+  "sam/share.out": {}
+ }
+}

@@ -1,0 +1,33 @@
+2026-10-06T06:23:14.796937Z  INFO transport: iroh egress posture (n0_services=false severs all n0 contact; proxy honored for relay TCP:443, Basic auth only) n0_services=true loopback_only=false relays=n0-default proxy="none"
+2026-10-06T06:23:14.807219Z  INFO rails: api: serving the record to this computer's apps addr=127.0.0.1:55825
+2026-10-06T06:23:14.807567Z  INFO node: node: endpoint bound with the signing key actor="b8cb7342d47085c128d8884ed5f321274c9b07c610cabcf7f285e803c34470e0" data_dir=/tmp/u5-9-run/alex dial=Some("b8cb7342d47085c128d8884ed5f321274c9b07c610cabcf7f285e803c34470e0@192.168.1.4:49713") api=127.0.0.1:55825
+2026-10-06T06:23:14.807708Z  INFO svrngs_node::ring_sync: ring sync: loop started interval_secs=60
+2026-10-06T06:23:14.808418Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:23:15.295762Z  INFO endpoint{id=b8cb7342d4}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was None
+2026-10-06T06:24:15.397046Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:25:15.410680Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:26:15.443503Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:27:15.454392Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:28:15.464029Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:29:15.474394Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:30:15.487981Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:30:43.184605Z  WARN endpoint{id=b8cb7342d4}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}: iroh::socket::transports::relay::actor: Lost connection to relay server: Ping timeout
+2026-10-06T06:30:44.685725Z  WARN endpoint{id=b8cb7342d4}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}: iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: deadline has elapsed
+2026-10-06T06:30:44.922999Z  INFO endpoint{id=b8cb7342d4}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://use1-1.relay.n0.iroh.link/, was Some(RelayUrl("https://usw1-1.relay.n0.iroh.link/"))
+2026-10-06T06:31:06.292564Z  INFO endpoint{id=b8cb7342d4}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was Some(RelayUrl("https://use1-1.relay.n0.iroh.link/"))
+2026-10-06T06:31:15.502020Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:32:15.513786Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:33:15.528187Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:34:15.540027Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:35:15.554965Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:36:15.577127Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:37:15.590508Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:38:15.620668Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:39:15.632529Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:40:15.648775Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:41:15.662650Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:42:15.676338Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:43:15.690433Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:44:15.702962Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:45:15.715014Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]
+2026-10-06T06:46:15.734857Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/12934e17"] skipped_offline=[]

@@ -1,0 +1,847 @@
+{
+ "verdicts": [
+  {
+   "bar": "alex plays through the window",
+   "verdict": "passed",
+   "why": "played 598.9 s of 600; stills of 5 s or more outside their own seeks []; events outside their own seeks {'emptied': 0, 'loadstart': 0, 'element': 0, 'waiting': 0, 'stalled': 0, 'error': 0, 'ended': 0}; signed in after as alex"
+  },
+  {
+   "bar": "alex seeks",
+   "verdict": "passed",
+   "why": "10 seeks, 0 missed 5000 ms: [405, 441, 500, 552, 402, 406, 418, 389, 559, 405]"
+  },
+  {
+   "bar": "bo plays through the window",
+   "verdict": "passed",
+   "why": "played 552.4 s of 600; stills of 5 s or more outside their own seeks []; events outside their own seeks {'emptied': 0, 'loadstart': 0, 'element': 0, 'waiting': 0, 'stalled': 0, 'error': 0, 'ended': 0}; signed in after as bo"
+  },
+  {
+   "bar": "bo seeks",
+   "verdict": "passed",
+   "why": "22 seeks, 0 missed 5000 ms: [430, 3833, 1796, 2903, 2373, 2616, 2469, 2589, 1822, 2708, 2946, 4004, 3910, 1895, 1056, 4440, 3238, 2617, 2394, 2327, 2188, 2373]"
+  },
+  {
+   "bar": "cy plays through the window",
+   "verdict": "passed",
+   "why": "played 566.8 s of 600; stills of 5 s or more outside their own seeks []; events outside their own seeks {'emptied': 0, 'loadstart': 0, 'element': 0, 'waiting': 0, 'stalled': 0, 'error': 0, 'ended': 0}; signed in after as cy"
+  },
+  {
+   "bar": "cy seeks",
+   "verdict": "failed",
+   "why": "22 seeks, 1 missed 5000 ms: [1035, 3311, 850, 990, 1077, 1300, 1028, 964, 853, 966, 1055, 953, 699, 841, 19293, 2708, 1776, 883, 806, 826, 715, 1023]"
+  }
+ ],
+ "seeks": {
+  "every": [
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 5,
+    "ms": 405,
+    "at": 60.32,
+    "target": 60,
+    "at_s": 55,
+    "load1": 13.4
+   },
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 42,
+    "ms": 441,
+    "at": 504.37,
+    "target": 504,
+    "at_s": 109,
+    "load1": 11.32
+   },
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 79,
+    "ms": 500,
+    "at": 948.43,
+    "target": 948,
+    "at_s": 164,
+    "load1": 7.21
+   },
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 35,
+    "ms": 552,
+    "at": 420.43,
+    "target": 420,
+    "at_s": 218,
+    "load1": 6.7
+   },
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 72,
+    "ms": 402,
+    "at": 864.35,
+    "target": 864,
+    "at_s": 273,
+    "load1": 6.01
+   },
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 28,
+    "ms": 406,
+    "at": 336.35,
+    "target": 336,
+    "at_s": 327,
+    "load1": 4.87
+   },
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 65,
+    "ms": 418,
+    "at": 780.33,
+    "target": 780,
+    "at_s": 382,
+    "load1": 5.97
+   },
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 21,
+    "ms": 389,
+    "at": 252.32,
+    "target": 252,
+    "at_s": 436,
+    "load1": 13.53
+   },
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 58,
+    "ms": 559,
+    "at": 696.36,
+    "target": 696,
+    "at_s": 491,
+    "load1": 10.65
+   },
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 14,
+    "ms": 405,
+    "at": 168.33,
+    "target": 168,
+    "at_s": 545,
+    "load1": 7.92
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 18,
+    "ms": 430,
+    "at": 216.33,
+    "target": 216,
+    "at_s": 26,
+    "load1": 9.62
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 55,
+    "ms": 3833,
+    "at": 660.3,
+    "target": 660,
+    "at_s": 52,
+    "load1": 13.4
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 11,
+    "ms": 1796,
+    "at": 132.32,
+    "target": 132,
+    "at_s": 78,
+    "load1": 12
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 48,
+    "ms": 2903,
+    "at": 576.32,
+    "target": 576,
+    "at_s": 104,
+    "load1": 11.26
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 85,
+    "ms": 2373,
+    "at": 1020.31,
+    "target": 1020,
+    "at_s": 130,
+    "load1": 8.94
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 41,
+    "ms": 2616,
+    "at": 492.3,
+    "target": 492,
+    "at_s": 157,
+    "load1": 6.97
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 78,
+    "ms": 2469,
+    "at": 936.31,
+    "target": 936,
+    "at_s": 183,
+    "load1": 6.8
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 34,
+    "ms": 2589,
+    "at": 408.32,
+    "target": 408,
+    "at_s": 209,
+    "load1": 6.66
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 71,
+    "ms": 1822,
+    "at": 852.3,
+    "target": 852,
+    "at_s": 235,
+    "load1": 5.79
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 27,
+    "ms": 2708,
+    "at": 324.31,
+    "target": 324,
+    "at_s": 261,
+    "load1": 6.27
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 64,
+    "ms": 2946,
+    "at": 768.32,
+    "target": 768,
+    "at_s": 287,
+    "load1": 5.04
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 20,
+    "ms": 4004,
+    "at": 240.3,
+    "target": 240,
+    "at_s": 313,
+    "load1": 4.84
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 57,
+    "ms": 3910,
+    "at": 684.31,
+    "target": 684,
+    "at_s": 339,
+    "load1": 4.43
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 13,
+    "ms": 1895,
+    "at": 156.31,
+    "target": 156,
+    "at_s": 365,
+    "load1": 4.17
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 50,
+    "ms": 1056,
+    "at": 600.3,
+    "target": 600,
+    "at_s": 391,
+    "load1": 7.92
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 6,
+    "ms": 4440,
+    "at": 72.32,
+    "target": 72,
+    "at_s": 417,
+    "load1": 13.33
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 43,
+    "ms": 3238,
+    "at": 516.3,
+    "target": 516,
+    "at_s": 443,
+    "load1": 12.93
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 80,
+    "ms": 2617,
+    "at": 960.3,
+    "target": 960,
+    "at_s": 470,
+    "load1": 11.99
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 36,
+    "ms": 2394,
+    "at": 432.31,
+    "target": 432,
+    "at_s": 496,
+    "load1": 10.04
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 73,
+    "ms": 2327,
+    "at": 876.3,
+    "target": 876,
+    "at_s": 522,
+    "load1": 9.45
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 29,
+    "ms": 2188,
+    "at": 348.3,
+    "target": 348,
+    "at_s": 548,
+    "load1": 7.92
+   },
+   {
+    "user": "bo",
+    "way": "phone",
+    "engine": "webkit",
+    "pct": 66,
+    "ms": 2373,
+    "at": 792.31,
+    "target": 792,
+    "at_s": 574,
+    "load1": 10.85
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 31,
+    "ms": 1035,
+    "at": 372.36,
+    "target": 372.01,
+    "at_s": 26,
+    "load1": 9.62
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 68,
+    "ms": 3311,
+    "at": 816.32,
+    "target": 816.01,
+    "at_s": 52,
+    "load1": 13.4
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 24,
+    "ms": 850,
+    "at": 288.34,
+    "target": 288.01,
+    "at_s": 78,
+    "load1": 12
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 61,
+    "ms": 990,
+    "at": 732.37,
+    "target": 732.01,
+    "at_s": 104,
+    "load1": 11.26
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 17,
+    "ms": 1077,
+    "at": 204.34,
+    "target": 204,
+    "at_s": 130,
+    "load1": 8.94
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 54,
+    "ms": 1300,
+    "at": 648.33,
+    "target": 648.01,
+    "at_s": 157,
+    "load1": 6.97
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 10,
+    "ms": 1028,
+    "at": 120.36,
+    "target": 120,
+    "at_s": 183,
+    "load1": 6.8
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 47,
+    "ms": 964,
+    "at": 564.37,
+    "target": 564.01,
+    "at_s": 209,
+    "load1": 6.66
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 84,
+    "ms": 853,
+    "at": 1008.37,
+    "target": 1008.02,
+    "at_s": 235,
+    "load1": 5.79
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 40,
+    "ms": 966,
+    "at": 480.36,
+    "target": 480.01,
+    "at_s": 261,
+    "load1": 6.27
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 77,
+    "ms": 1055,
+    "at": 924.35,
+    "target": 924.02,
+    "at_s": 287,
+    "load1": 5.04
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 33,
+    "ms": 953,
+    "at": 396.43,
+    "target": 396.01,
+    "at_s": 313,
+    "load1": 4.84
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 70,
+    "ms": 699,
+    "at": 840.33,
+    "target": 840.01,
+    "at_s": 339,
+    "load1": 4.43
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 26,
+    "ms": 841,
+    "at": 312.33,
+    "target": 312.01,
+    "at_s": 365,
+    "load1": 4.17
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 63,
+    "ms": 19293,
+    "at": 756.36,
+    "target": 756.01,
+    "at_s": 391,
+    "load1": 7.92
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 19,
+    "ms": 2708,
+    "at": 228.32,
+    "target": 228,
+    "at_s": 417,
+    "load1": 13.33
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 56,
+    "ms": 1776,
+    "at": 672.37,
+    "target": 672.01,
+    "at_s": 443,
+    "load1": 12.93
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 12,
+    "ms": 883,
+    "at": 144.38,
+    "target": 144,
+    "at_s": 470,
+    "load1": 11.99
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 49,
+    "ms": 806,
+    "at": 588.38,
+    "target": 588.01,
+    "at_s": 496,
+    "load1": 10.04
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 5,
+    "ms": 826,
+    "at": 60.34,
+    "target": 60,
+    "at_s": 522,
+    "load1": 9.45
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 42,
+    "ms": 715,
+    "at": 504.32,
+    "target": 504.01,
+    "at_s": 548,
+    "load1": 7.92
+   },
+   {
+    "user": "cy",
+    "way": "phone",
+    "engine": "chromium",
+    "pct": 79,
+    "ms": 1023,
+    "at": 948.33,
+    "target": 948.02,
+    "at_s": 574,
+    "load1": 10.85
+   }
+  ],
+  "count": 54,
+  "missed_5s": 1,
+  "spread_ms": {
+   "n": 54,
+   "min": 389,
+   "median": 1055.5,
+   "max": 19293
+  }
+ },
+ "per_person": {
+  "alex": {
+   "way": "computer",
+   "engine": "chromium",
+   "seeks": 10,
+   "missed_5s": 0,
+   "spread_ms": {
+    "n": 10,
+    "min": 389,
+    "median": 412.0,
+    "max": 559
+   }
+  },
+  "bo": {
+   "way": "phone",
+   "engine": "webkit",
+   "seeks": 22,
+   "missed_5s": 0,
+   "spread_ms": {
+    "n": 22,
+    "min": 430,
+    "median": 2529.0,
+    "max": 4440
+   }
+  },
+  "cy": {
+   "way": "phone",
+   "engine": "chromium",
+   "seeks": 22,
+   "missed_5s": 1,
+   "spread_ms": {
+    "n": 22,
+    "min": 699,
+    "median": 978.0,
+    "max": 19293
+   }
+  }
+ },
+ "door": {
+  "Alex": {
+   "let_in": 176,
+   "people": {
+    "n": 176,
+    "min": 1,
+    "median": 1.0,
+    "max": 1
+   },
+   "share_bps": {
+    "n": 176,
+    "min": 50000000,
+    "median": 50000000.0,
+    "max": 50000000
+   },
+   "declared_bps": 50000000,
+   "relayed": {
+    "None": 176
+   },
+   "rtt_ms": null,
+   "home": 96
+  },
+  "Cy": {
+   "let_in": 489,
+   "people": {
+    "n": 489,
+    "min": 2,
+    "median": 3,
+    "max": 3
+   },
+   "share_bps": {
+    "n": 489,
+    "min": 16666666,
+    "median": 16666666,
+    "max": 25000000
+   },
+   "declared_bps": 50000000,
+   "relayed": {
+    "Some(true)": 489
+   },
+   "rtt_ms": {
+    "n": 489,
+    "min": 65,
+    "median": 994,
+    "max": 2034
+   }
+  },
+  "Bo": {
+   "let_in": 1605,
+   "people": {
+    "n": 1605,
+    "min": 3,
+    "median": 3,
+    "max": 3
+   },
+   "share_bps": {
+    "n": 1605,
+    "min": 16666666,
+    "median": 16666666,
+    "max": 16666666
+   },
+   "declared_bps": 50000000,
+   "relayed": {
+    "Some(true)": 1605
+   },
+   "rtt_ms": {
+    "n": 1605,
+    "min": 67,
+    "median": 166,
+    "max": 2088
+   }
+  }
+ },
+ "streams_mid": [
+  {
+   "user": "cy",
+   "device": "TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTQ3LjAuNzcyNy4xNSBTYWZhcmkvNTM3LjM2fDE3OTEyNjc4MTYwODE1",
+   "item": "Test Pattern Three",
+   "method": "DirectPlay",
+   "bitrate": null,
+   "video": null,
+   "direct": null,
+   "reasons": null,
+   "paused": false
+  },
+  {
+   "user": "bo",
+   "device": "TW96aWxsYS81LjAgKGlQaG9uZTsgQ1BVIGlQaG9uZSBPUyAxN181IGxpa2UgTWFjIE9TIFgpIEFwcGxlV2ViS2l0LzYwNS4xLjE1IChLSFRNTCwgbGlrZSBHZWNrbykgVmVyc2lvbi8yNi40IE1vYmlsZS8xNUUxNDggU2FmYXJpLzYwNC4xfDE3OTEyNjc4MTYwNzc1",
+   "item": "Test Pattern Two",
+   "method": "Transcode",
+   "bitrate": 3730555,
+   "video": "h264",
+   "direct": {
+    "video": false,
+    "audio": false
+   },
+   "reasons": [
+    "ContainerNotSupported",
+    "VideoCodecNotSupported",
+    "AudioCodecNotSupported"
+   ],
+   "paused": false
+  },
+  {
+   "user": "alex",
+   "device": "TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTQ3LjAuNzcyNy4xNSBTYWZhcmkvNTM3LjM2fDE3OTEyNjc4MDE3NzQ1",
+   "item": "Test Pattern One",
+   "method": "DirectPlay",
+   "bitrate": null,
+   "video": null,
+   "direct": null,
+   "reasons": null,
+   "paused": false
+  }
+ ],
+ "streams_end": [
+  {
+   "user": "alex",
+   "device": "TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTQ3LjAuNzcyNy4xNSBTYWZhcmkvNTM3LjM2fDE3OTEyNjc4MDE3NzQ1",
+   "item": "Test Pattern One",
+   "method": "DirectPlay",
+   "bitrate": null,
+   "video": null,
+   "direct": null,
+   "reasons": null,
+   "paused": false
+  },
+  {
+   "user": "cy",
+   "device": "TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTQ3LjAuNzcyNy4xNSBTYWZhcmkvNTM3LjM2fDE3OTEyNjc4MTYwODE1",
+   "item": "Test Pattern Three",
+   "method": "DirectPlay",
+   "bitrate": null,
+   "video": null,
+   "direct": null,
+   "reasons": null,
+   "paused": false
+  },
+  {
+   "user": "bo",
+   "device": "TW96aWxsYS81LjAgKGlQaG9uZTsgQ1BVIGlQaG9uZSBPUyAxN181IGxpa2UgTWFjIE9TIFgpIEFwcGxlV2ViS2l0LzYwNS4xLjE1IChLSFRNTCwgbGlrZSBHZWNrbykgVmVyc2lvbi8yNi40IE1vYmlsZS8xNUUxNDggU2FmYXJpLzYwNC4xfDE3OTEyNjc4MTYwNzc1",
+   "item": "Test Pattern Two",
+   "method": "Transcode",
+   "bitrate": 3730555,
+   "video": "h264",
+   "direct": {
+    "video": false,
+    "audio": false
+   },
+   "reasons": [
+    "ContainerNotSupported",
+    "VideoCodecNotSupported",
+    "AudioCodecNotSupported"
+   ],
+   "paused": false
+  }
+ ],
+ "load": {
+  "start": 8.44,
+  "end": 8.54,
+  "at_seeks": {
+   "n": 54,
+   "min": 4.17,
+   "median": 7.92,
+   "max": 13.53
+  }
+ },
+ "door_lines_from": "2026-10-06T06:23:21",
+ "door_lines_until": "2026-10-06T06:33:58"
+}
