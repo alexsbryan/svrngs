@@ -5,3 +5,4 @@ ralph/next/*/ctl/
 ralph/next/*/log*
 ralph/.heartbeat
 ralph/log*
+__pycache__/
