@@ -32,8 +32,10 @@ Forgejo, BookStack, Home Assistant. Run one in a container on any member's
 computer, `svrngs share <port> --kind <name>`, and everyone in the group can
 open it — no port opened, no tunnel, nothing for them to install. An app that
 takes the signed-in person from a request header lets each of them straight
-in; one that keeps its own accounts asks them once. Jellyfin has run through
-the door (`demo/runs/a/dry-2026-10-04/`).
+in; one that keeps its own accounts asks them once. Stock Jellyfin plays and
+seeks through the door for two people at once, from a computer and from a
+phone, each signing in once with an account its lender made
+(`demo/runs/u5/2026-10-05-jellyfin-in/`).
 
 **What we build:** the platform, and one small reference app per class of app,
 for the next developer to copy and bend. Never the finished apps — the
@@ -273,6 +275,16 @@ is U5's inventory (§8).
    received held another's secret. One seek of 56 played again in 7,871 ms
    against Demo A's 5 s (WebKit as an iPhone over n0's relay): it stays a
    miss, and the seek bar is judged on the carriage, as a rate, in u5-9.
+   (Landed, u5-4: `svrngs share` asks no password for a kind its
+   well-known table says keeps its own accounts, keeps none though one is
+   typed, and prints how to make each person one, the table's words for
+   it (`crates/svrngs/src/well_known.txt`, `share::accounts_of`). Its
+   check, `apps/jellyfin/check/`, has the lender make the accounts in
+   Jellyfin's own pages by those words; then two people at once, from a
+   computer and a phone in both engines, sign in, play and seek, each left
+   alone, no secret in a byte either received
+   (`demo/runs/u5/2026-10-05-jellyfin-in/`). One seek of a computer run
+   under a load of 33 on 12 cores missed, 6,389 ms, and stays a miss.)
 5. *Measured before built.* What stock jellyfin-web does through the door —
    its sign-in, its live socket, two people's plays through one lend, and
    whether any byte carries a secret the lend holds — is measured (u5-3)
@@ -586,8 +598,9 @@ who fixes it:
 - *Each person is their own to Jellyfin* — u5-3 and u5-4. Through a lend
   with a secret every request carries the lend's one device, so one
   person's sign-in logged the lend out for everyone (U3's dry run); a lend
-  with no secret leaves each browser its own sign-in and device, and zero
-  sign-in gives each person a Jellyfin user (§3, call 4). Jellyfin kills
+  with no secret leaves each browser its own sign-in and device, which is
+  how `svrngs share 8096` lends it since u5-4, each person with an account
+  the lender made (§3, call 4). Jellyfin kills
   running transcodes by device id and play session
   (`DynamicHlsController.cs:1504`, in a source read once and held in
   neither repository), so whether Bo seeking leaves Cy's play alone is
@@ -1064,4 +1077,6 @@ By the operator, 2026-10-03:
    player through the lend (§3, "Lent apps, as they come"). u5-3 decided
    sign in once (§3, "Lent apps", call 4): a person signs in once with an
    account the lender made, and nothing the lend holds reaches them. u5-4
-   builds it, and its landing closes this risk.
+   built it, which closes this risk: the lend keeps no secret, and with
+   one planted each way the check failed, then passed in both engines
+   (`demo/runs/u5/2026-10-05-jellyfin-in/`).
