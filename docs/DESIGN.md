@@ -508,6 +508,36 @@ iroh; iroh's relays carry what cannot go direct. A native phone app and
 Windows wait in §9. A svrn daemon on the same computer is an optional neighbour
 for local AI; it holds no group state.
 
+**A phone's apps open apart from its page** (u5-2; §3, "Lent apps", calls
+1 and 6). The page a group's link opens holds each person's key, so no lent
+app's page runs at its origin: a lent page there could unseal the key of
+whoever opened it (§11, risk 5). `svrngs new --origin <page>` decides where
+the group's apps open on a phone, prints which, and keeps it for `link`
+(`crates/svrngs/src/cli.rs`, `pages` and `Apps`):
+- *Each at an address of its own*, `https://<label>.<page host>/`, when the
+  page's host answers every name under it, which the command checks by
+  asking for a name nobody made; svrnme.sh does, so a group that names ours
+  types nothing more. Each app's root and storage are its own, and its pages
+  hold a pass for it and the lends it reads, no other. The cost: the page's
+  host and the phone's name lookups see which app is opened, since its label
+  names its lender's key and the app. The host serves the page's files at
+  the root of every name under it.
+- *Every app under one address apart from the page's*, `--lends-origin
+  <url>`: the floor, any static host serving the page's files on a second
+  name, each app at `<it>/l/<label>/`, the link carrying the address after
+  its token (`#<token>~<it>`, `https://` left off). The host sees only that
+  some app is opened. The cost: the apps share one origin, so one app's
+  page can read what another keeps and use another's pass while it lasts;
+  and an app that asks for its own root — a `/`-absolute path — finds the
+  host's, which the conformance canary reports as needing the first way.
+A page at an address no name falls under — an IP address, or a host that
+answers no name nobody made — with no `--lends-origin` is refused, the
+reason naming both ways on; the page's own address as the apps' is refused;
+a host that does not answer at all is not judged (exit 3). On a computer
+each app opens at `http://<label>.localhost:<port>/` on its own loopback
+(`crates/svrngs-node/src/origin.rs`), which every browser measured resolves
+(`demo/runs/u5/2026-10-05-localhost/`).
+
 ## 8. Order of work
 
 **One experience, done delightfully: the group's films, in the Jellyfin a

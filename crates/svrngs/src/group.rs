@@ -17,7 +17,10 @@
 //! https link was printed on, and `link --origin` changes it. It is this
 //! computer's setting, outside the seed and its id; a group that keeps
 //! none prints the client's link alone (u2-8), so nothing depends on a
-//! hosted page unless the group names one.
+//! hosted page unless the group names one. Beside it, `lends-origin`
+//! keeps the address its apps open under on a phone, apart from the
+//! page's, when the group names one (u5-2, the floor): `new
+//! --lends-origin` writes it, `join` the one its link carries.
 
 use std::path::{Path, PathBuf};
 
@@ -36,6 +39,9 @@ const SEED_FILE: &str = "seed.json";
 
 /// The one spelling of the kept origin's file name in a group's directory.
 const ORIGIN_FILE: &str = "origin";
+
+/// The one spelling of the kept lends origin's file name (u5-2).
+const LENDS_FILE: &str = "lends-origin";
 
 /// A new group's seed: `founder` names the person holding `key`, and 16
 /// bytes are drawn so that a second group of the same name by the same
@@ -88,14 +94,43 @@ pub fn seed_text(dir: &Path) -> Result<Option<String>, String> {
 /// Keep `origin` in `dir`, the group's directory, as the page its links
 /// print on from here.
 pub fn write_origin(dir: &Path, origin: &Origin) -> Result<(), SeedError> {
-    let path = dir.join(ORIGIN_FILE);
-    tracing::debug!(target: "group", path = %path.display(), origin = origin.as_str(), "group: origin kept");
-    keep(dir, path, origin.as_str())
+    write_in(dir, ORIGIN_FILE, Some(origin))
 }
 
 /// The origin kept in `dir`, or `None` when the directory keeps none.
 pub fn read_origin(dir: &Path) -> Result<Option<Origin>, SeedError> {
-    let path = dir.join(ORIGIN_FILE);
+    read_in(dir, ORIGIN_FILE)
+}
+
+/// Keep `lends` in `dir` as the address the group's apps open under on a
+/// phone, or none, when they open each at an address of its own (u5-2).
+pub fn write_lends(dir: &Path, lends: Option<&Origin>) -> Result<(), SeedError> {
+    write_in(dir, LENDS_FILE, lends)
+}
+
+/// The lends origin kept in `dir`, or `None` when the directory keeps none.
+pub fn read_lends(dir: &Path) -> Result<Option<Origin>, SeedError> {
+    read_in(dir, LENDS_FILE)
+}
+
+/// Keep `origin` in `dir` as `file`; none removes the one kept.
+fn write_in(dir: &Path, file: &str, origin: Option<&Origin>) -> Result<(), SeedError> {
+    let path = dir.join(file);
+    tracing::debug!(target: "group", path = %path.display(), origin = ?origin.map(Origin::as_str), "group: an origin kept");
+    match origin {
+        Some(origin) => keep(dir, path, origin.as_str()),
+        None => match std::fs::remove_file(&path) {
+            Err(e) if e.kind() != std::io::ErrorKind::NotFound => {
+                Err(SeedError::Write { path, source: e })
+            }
+            _ => Ok(()),
+        },
+    }
+}
+
+/// The origin kept in `dir` as `file`, or `None`.
+fn read_in(dir: &Path, file: &str) -> Result<Option<Origin>, SeedError> {
+    let path = dir.join(file);
     let Some(raw) = kept(&path)? else {
         tracing::debug!(target: "group", path = %path.display(), "group: no origin kept");
         return Ok(None);

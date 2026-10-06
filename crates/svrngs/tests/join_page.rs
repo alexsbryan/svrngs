@@ -136,7 +136,10 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         &sam,
         Name::parse("house").unwrap(),
         Name::parse("Sam").unwrap(),
-        Some(&origin),
+        Some(&svrngs::cli::Pages {
+            page: origin.clone(),
+            apps: svrngs::cli::Apps::OwnAddress,
+        }),
         &ours,
     )
     .await

@@ -19,7 +19,10 @@
 //! that keeps a page origin (u2-7, `group::write_origin`). A browser does
 //! not send the fragment to the server, so the origin's page sees the
 //! token only through its own script, and a computer never fetches the
-//! origin. `svrngs join` takes either, or the bare token. Upstream's
+//! origin. A group whose apps open on a phone under an address of their
+//! own, apart from the page's (u5-2, the floor: DESIGN §7), carries it
+//! after the token, `<origin>#<token>~<apps>`, `https://` left off it. `svrngs
+//! join` takes any, or the bare token. Upstream's
 //! fields, percent helpers and lapse are gone: the lapse is the issuer's
 //! `Invite`'s, and the issuer's node decides a redemption (DESIGN §6).
 //!
@@ -188,13 +191,18 @@ impl Origin {
     }
 }
 
-/// A parsed link: its token, and the origin it was printed on when it was
-/// given in the https form.
+/// A parsed link: its token, the origin it was printed on when it was
+/// given in the https form, and the address its apps open under on a
+/// phone when the link names one (u5-2).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Link {
     pub token: Token,
     pub origin: Option<Origin>,
+    pub lends: Option<Origin>,
 }
+
+/// What separates a link's token from the address its apps open under.
+const LENDS_MARK: char = '~';
 
 impl Link {
     /// A link in any of its three forms: `svrngs://join/<token>`,
@@ -209,9 +217,23 @@ impl Link {
         } else {
             (None, raw)
         };
+        let (token, lends) = match token.split_once(LENDS_MARK) {
+            Some((token, lends)) if origin.is_some() => {
+                let lends = match lends.starts_with("http://") {
+                    true => Origin::parse(lends)?,
+                    false => Origin::parse(&format!("https://{lends}"))?,
+                };
+                (token, Some(lends))
+            }
+            _ => (token, None),
+        };
         let token = Token::decode(token)?;
-        tracing::debug!(target: "link", https = origin.is_some(), "link: parsed");
-        Some(Self { token, origin })
+        tracing::debug!(target: "link", https = origin.is_some(), lends = lends.is_some(), "link: parsed");
+        Some(Self {
+            token,
+            origin,
+            lends,
+        })
     }
 }
 
@@ -220,9 +242,14 @@ pub fn client_link(token: &Token) -> String {
     format!("{CLIENT_PREFIX}{}", token.encode())
 }
 
-/// The https link to `token` on `origin`: the token in the fragment.
-pub fn https_link(origin: &Origin, token: &Token) -> String {
-    format!("{}#{}", origin.as_str(), token.encode())
+/// The https link to `token` on `origin`: the token in the fragment, then
+/// `lends`, when the group's apps open under it, its `https://` left off.
+pub fn https_link(origin: &Origin, lends: Option<&Origin>, token: &Token) -> String {
+    let lends = lends.map_or(String::new(), |l| {
+        let short = l.as_str().strip_prefix("https://").unwrap_or(l.as_str());
+        format!("{LENDS_MARK}{short}")
+    });
+    format!("{}#{}{lends}", origin.as_str(), token.encode())
 }
 
 #[cfg(test)]

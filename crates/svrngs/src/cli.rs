@@ -7,9 +7,11 @@
 //!
 //! ```text
 //! svrngs                                   run for every group this computer holds
-//! svrngs new <name> [--as N] [--origin U]  make a group, print its link, run
+//! svrngs new <name> [--as N] [--origin U [--lends-origin A]]
+//!                                          make a group, print its link, run
 //! svrngs join <link> [--as N]              join a group by its link, run
-//! svrngs link <group> [--origin U]         a new link to a group, print it, run
+//! svrngs link <group> [--origin U [--lends-origin A]]
+//!                                          a new link to a group, print it, run
 //! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]...
 //!                                          lend a service on this computer
 //! svrngs unshare <name>                    stop lending it
@@ -29,6 +31,14 @@
 //! its https link is printed beside it: `new --origin` keeps one, `join`
 //! keeps the one its https link was printed on and none from a client's
 //! link, and `link --origin` changes it.
+//!
+//! A group with a page origin opens its apps on a phone at addresses apart
+//! from the page's, which holds each person's key (u5-2; DESIGN §7), and
+//! `new` and `link` say which way ([`Apps`]): each app at an address of its
+//! own under the page's host, when that host answers every name under it,
+//! which the command checks by asking for a name nobody made; or every app
+//! under the one address `--lends-origin` names. A page's host that answers
+//! no such name, with no `--lends-origin`, is refused, naming both ways on.
 //!
 //! What a person reads uses DESIGN §1's words alone: the group's name,
 //! people's names, *link*, *computer*. The detail behind a refusal is
@@ -68,23 +78,26 @@ svrngs — keep what your group shares on your own computers.
   svrngs
       Run for every group this computer is in. Leave it running.
 
-  svrngs new <name> [--as <your name>] [--origin <url>]
+  svrngs new <name> [--as <your name>] [--origin <url> [--lends-origin <url>]]
       Make a group called <name> and print its link: send it to the people
       you want in it. It works for a day, while this computer is on.
       --as is the name the group knows you by; else this computer's user name.
       --origin also prints its links on a page address, from now on, for
-      people who open them in a browser.
+      people who open them in a browser. On a phone each app then opens at
+      an address of its own under that page's host, if it answers every
+      name under it (svrnme.sh does); else name a second address the apps
+      open under with --lends-origin.
 
   svrngs join <link> [--as <your name>]
       Join the group a link you were sent is for. The computer that sent it
       must be on. --as is the name the group knows you by; else this
       computer's user name.
 
-  svrngs link <group> [--origin <url>]
+  svrngs link <group> [--origin <url> [--lends-origin <url>]]
       Print a new link to <group>. Any link you sent before stops letting
       anyone new in; everyone it let in stays. <group> is its name, or the
       first 8 letters of its id when two groups share a name. --origin
-      also prints it on a page address, from now on.
+      also prints it on a page address, from now on, as `new` does.
 
   svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]...
       Lend what runs on <port> on this computer to everyone in your groups:
@@ -129,6 +142,8 @@ pub enum Verb {
         person: Option<Name>,
         /// `None` prints the client's link alone.
         origin: Option<Origin>,
+        /// Where its apps open on a phone, apart from the page (u5-2).
+        lends: Option<Origin>,
     },
     Join {
         link: Box<Link>,
@@ -138,6 +153,8 @@ pub enum Verb {
         group: String,
         /// `None` keeps the group's kept origin, if any.
         origin: Option<Origin>,
+        /// With `origin`, where its apps open on a phone (u5-2).
+        lends: Option<Origin>,
     },
     /// No secret: it is read from a prompt (the module docs).
     Share(Share),
@@ -155,6 +172,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let mut positional: Option<String> = None;
     let mut person = None;
     let mut origin = None;
+    let mut lends = None;
     let (mut name, mut kind, mut limit, mut refused) = (None, None, None, Vec::new());
     let mut upload = None;
     let mut reads = Vec::new();
@@ -172,6 +190,12 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 let raw = value("--origin")?;
                 origin = Some(Origin::parse(&raw).ok_or_else(|| {
                     format!("--origin `{raw}` is not an http(s) address without a '#'")
+                })?);
+            }
+            "--lends-origin" => {
+                let raw = value("--lends-origin")?;
+                lends = Some(Origin::parse(&raw).ok_or_else(|| {
+                    format!("--lends-origin `{raw}` is not an http(s) address without a '#'")
                 })?);
             }
             "--name" => {
@@ -223,6 +247,9 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     if origin.is_some() && !matches!(verb.as_str(), "new" | "link") {
         return Err("--origin is a `new` and `link` flag".into());
     }
+    if lends.is_some() && origin.is_none() {
+        return Err("--lends-origin goes with --origin, on `new` or `link`".into());
+    }
     if (name.is_some()
         || kind.is_some()
         || limit.is_some()
@@ -243,6 +270,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 name,
                 person,
                 origin,
+                lends,
             })
         }
         "join" => {
@@ -258,6 +286,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         "link" => Ok(Verb::Link {
             group: positional.ok_or("link wants a group: `svrngs link <group>`")?,
             origin,
+            lends,
         }),
         "share" => {
             let raw = positional.ok_or("share wants a port: `svrngs share <port>`")?;
@@ -324,6 +353,12 @@ pub enum Refusal {
     KeepLend(LendName),
     #[error("you lend nothing called {name} from this computer{}", lent_now(.lent))]
     NotLent { name: LendName, lent: Vec<LendName> },
+    #[error("{0} gives each app no address of its own, so on a phone every app would open where your group's page keeps who each person is. Either name a second address for the apps, on any host: `--lends-origin <url>`; or use a host that answers every name under it, as svrnme.sh does")]
+    NoAppAddress(String),
+    #[error("cannot tell from here whether {0} gives each app an address of its own: it does not answer (RUST_LOG=debug says why); try again, or name a second address for the apps with `--lends-origin <url>`")]
+    CannotCheck(String),
+    #[error("{0} is the page's own address; the apps open under one apart from it, so none can reach what the page keeps")]
+    AppsOnPage(String),
 }
 
 fn lent_now(lent: &[LendName]) -> String {
@@ -347,6 +382,8 @@ impl Refusal {
             | Refusal::NotIn(_)
             | Refusal::Share(_)
             | Refusal::NotLent { .. }
+            | Refusal::NoAppAddress(_)
+            | Refusal::AppsOnPage(_)
             | Refusal::Busy(_) => 1,
             Refusal::NoDataDir
             | Refusal::DataDir(..)
@@ -355,6 +392,7 @@ impl Refusal {
             | Refusal::IssuerAway
             | Refusal::Prompt(_)
             | Refusal::KeepLend(_)
+            | Refusal::CannotCheck(_)
             | Refusal::Keep(_) => 3,
         }
     }
@@ -467,19 +505,115 @@ async fn start(
     ran
 }
 
+/// Where a group's apps open on a phone, apart from its page, which holds
+/// each person's key (u5-2; DESIGN §3, "Lent apps", call 1; §7): a closed
+/// set, decided by [`pages`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Apps {
+    /// Each at an address of its own, `<label>.<the page's host>`: the
+    /// page's host answers every name under it.
+    OwnAddress,
+    /// Every app under this one address, each at `l/<label>/` under it:
+    /// the floor, any host.
+    Under(Origin),
+}
+
+/// A group's page, and where its apps open on a phone.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Pages {
+    pub page: Origin,
+    pub apps: Apps,
+}
+
+impl Pages {
+    fn lends(&self) -> Option<&Origin> {
+        match &self.apps {
+            Apps::OwnAddress => None,
+            Apps::Under(lends) => Some(lends),
+        }
+    }
+}
+
+/// `origin`'s scheme and host, with its port: where a browser keeps what
+/// a page there stores. `None` for what is not an http(s) address.
+fn place(origin: &Origin) -> Option<(&str, &str)> {
+    let (scheme, rest) = origin.as_str().split_once("://")?;
+    let authority = rest.split(['/', '?']).next()?;
+    let authority = authority.rsplit_once('@').map_or(authority, |(_, a)| a);
+    Some((scheme, authority))
+}
+
+/// The page `page`, and where the group's apps open on a phone: under
+/// `lends` when given — refused when it is the page's own address — else
+/// each at an address of its own under the page's host, when that host
+/// answers a name nobody made under it; refused when it does not, and not
+/// judged when the host itself does not answer (u5-2).
+#[expect(
+    clippy::disallowed_methods,
+    reason = "draws a name nobody made, to ask whether the page's host answers it"
+)]
+pub async fn pages(page: Origin, lends: Option<Origin>) -> Result<Pages, Refusal> {
+    if let Some(lends) = lends {
+        if place(&lends).map(|(s, a)| (s, a.to_ascii_lowercase()))
+            == place(&page).map(|(s, a)| (s, a.to_ascii_lowercase()))
+        {
+            tracing::debug!(target: "cli", page = page.as_str(), "cli: refused — the apps' address is the page's");
+            return Err(Refusal::AppsOnPage(lends.as_str().into()));
+        }
+        tracing::debug!(target: "cli", page = page.as_str(), lends = lends.as_str(), "cli: the apps open under the address given");
+        return Ok(Pages {
+            page,
+            apps: Apps::Under(lends),
+        });
+    }
+    // An address in brackets is IPv6's, a literal no name falls under.
+    let host = place(&page)
+        .filter(|(_, a)| !a.starts_with('['))
+        .and_then(|(_, a)| a.split(':').next());
+    let no = || Refusal::NoAppAddress(page.as_str().into());
+    let Some(host) = host.filter(|h| !h.is_empty() && h.parse::<std::net::IpAddr>().is_err())
+    else {
+        tracing::debug!(target: "cli", page = page.as_str(), "cli: refused — the page is at an address no name falls under");
+        return Err(no());
+    };
+    let answers = |name: String| async move {
+        let found = tokio::net::lookup_host((name.as_str(), 443))
+            .await
+            .map(|mut a| a.next().is_some());
+        tracing::debug!(target: "cli", name, found = ?found.as_ref().map_err(ToString::to_string), "cli: asked whether a name answers");
+        matches!(found, Ok(true))
+    };
+    if !answers(host.to_string()).await {
+        return Err(Refusal::CannotCheck(page.as_str().into()));
+    }
+    let mut nobodys = [0u8; 16];
+    getrandom::fill(&mut nobodys).expect("failed to draw a name nobody made");
+    if !answers(format!("{}.{host}", hex::encode(nobodys))).await {
+        tracing::debug!(target: "cli", page = page.as_str(), host, "cli: refused — the page's host answers no name nobody made under it");
+        return Err(no());
+    }
+    tracing::debug!(target: "cli", page = page.as_str(), host, "cli: the page's host answers every name under it, so each app opens at an address of its own");
+    Ok(Pages {
+        page,
+        apps: Apps::OwnAddress,
+    })
+}
+
 /// A link as printed: the client's, and the https one for a group that
-/// keeps a page origin.
+/// keeps a page origin, with where its apps open on a phone.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Printed {
     pub client: String,
     pub https: Option<String>,
+    pub apps: Option<Pages>,
 }
 
 impl Printed {
-    fn of(token: &Token, origin: Option<&Origin>) -> Self {
+    fn of(token: &Token, pages: Option<&Pages>) -> Self {
         Self {
             client: client_link(token),
-            https: origin.map(|o| https_link(o, token)),
+            https: pages.map(|p| https_link(&p.page, p.lends(), token)),
+            apps: pages.cloned(),
         }
     }
 }
@@ -492,6 +626,17 @@ impl std::fmt::Display for Printed {
             writeln!(f, "or, to open it in a browser:")?;
             writeln!(f)?;
             writeln!(f, "  {https}")?;
+        }
+        match self.apps.as_ref().map(|p| (&p.apps, place(&p.page))) {
+            Some((Apps::OwnAddress, Some((_, host)))) => {
+                writeln!(f)?;
+                writeln!(f, "On a phone, each app opens at an address of its own under {host}, which can see which app is opened.")?;
+            }
+            Some((Apps::Under(lends), _)) => {
+                writeln!(f)?;
+                writeln!(f, "On a phone, every app opens under {}: they share it, so an app there can see what another keeps there.", lends.as_str())?;
+            }
+            _ => {}
         }
         Ok(())
     }
@@ -731,12 +876,17 @@ async fn serve(
             name,
             person,
             origin,
+            lends,
         } => {
             let person = match person {
                 Some(p) => p,
                 None => user_name().ok_or_else(|| Refusal::NoName(name.clone()))?,
             };
-            let (seed, link) = new_group(node, name, person, origin.as_ref(), relay).await?;
+            let pages = match origin {
+                Some(page) => Some(pages(page, lends).await?),
+                None => None,
+            };
+            let (seed, link) = new_group(node, name, person, pages.as_ref(), relay).await?;
             Said::Made { seed, link }
         }
         Verb::Join { link, person } => {
@@ -746,8 +896,16 @@ async fn serve(
             };
             join_group(node, key, &link, &person).await?
         }
-        Verb::Link { group, origin } => {
-            let (seed, link) = new_link(node, &group, origin.as_ref(), relay).await?;
+        Verb::Link {
+            group,
+            origin,
+            lends,
+        } => {
+            let pages = match origin {
+                Some(page) => Some(pages(page, lends).await?),
+                None => None,
+            };
+            let (seed, link) = new_link(node, &group, pages.as_ref(), relay).await?;
             Said::Linked { seed, link }
         }
         Verb::Run => running(root, node).await,
@@ -812,7 +970,11 @@ pub async fn join_group(
         .await
         .map_err(not_let_in)?;
     tracing::debug!(target: "cli", group = %id, redeemed = ?redeemed, "cli: join — let in");
-    keep_group(node, &seed, link.origin.as_ref())?;
+    let pages = link.origin.clone().map(|page| Pages {
+        page,
+        apps: link.lends.clone().map_or(Apps::OwnAddress, Apps::Under),
+    });
+    keep_group(node, &seed, pages.as_ref())?;
     if link.origin.is_none() {
         tracing::debug!(target: "cli", group = %id, "cli: join — a client's link, so no origin is kept");
     }
@@ -853,13 +1015,14 @@ fn user_name() -> Option<Name> {
 }
 
 /// `svrngs new`: a seed drawn for `name`, founded by this computer's key
-/// as `person`, written beside the group's record with `origin`, when
-/// given, kept as its https links' page, and its first link.
+/// as `person`, written beside the group's record with `pages`, when
+/// given, kept as its https links' page and where its apps open, and its
+/// first link.
 pub async fn new_group(
     node: &Node,
     name: Name,
     person: Name,
-    origin: Option<&Origin>,
+    pages: Option<&Pages>,
     relay: &RelayConfig,
 ) -> Result<(Seed, Printed), Refusal> {
     // The founder is the key this computer signs and dials with (DESIGN
@@ -868,19 +1031,20 @@ pub async fn new_group(
         .expect("an iroh endpoint id is an Ed25519 key");
     let seed = group::draw(name, person, founder);
     let id = seed.id();
-    keep_group(node, &seed, origin)?;
-    tracing::debug!(target: "cli", group = %id, name = %seed.name(), origin = ?origin.map(Origin::as_str), "cli: group made");
+    keep_group(node, &seed, pages)?;
+    tracing::debug!(target: "cli", group = %id, name = %seed.name(), pages = ?pages, "cli: group made");
     let token = mint(node, &seed, relay).await?;
-    Ok((seed, Printed::of(&token, origin)))
+    Ok((seed, Printed::of(&token, pages)))
 }
 
 /// `svrngs link`: a new link to the group `reference` names: the client's
-/// link, and the https one on `origin`, kept from now on, when given, else
-/// on the group's kept origin, if it keeps one.
+/// link, and the https one on `pages`, kept from now on, when given, else
+/// on the group's kept origin, if it keeps one, its apps where it keeps
+/// them.
 pub async fn new_link(
     node: &Node,
     reference: &str,
-    origin: Option<&Origin>,
+    pages: Option<&Pages>,
     relay: &RelayConfig,
 ) -> Result<(Seed, Printed), Refusal> {
     let held = group::groups(node.rail().root());
@@ -903,16 +1067,21 @@ pub async fn new_link(
         .rail()
         .group_dir(&seed.id())
         .map_err(|e| keep_refused(&seed, &e.to_string()))?;
-    let origin = match origin {
+    let refused = |e: group::SeedError| keep_refused(&seed, &e.to_string());
+    let pages = match pages {
         Some(given) => {
-            group::write_origin(&dir, given).map_err(|e| keep_refused(&seed, &e.to_string()))?;
-            tracing::debug!(target: "cli", group = %seed.id(), origin = given.as_str(), "cli: link — the group's origin changed");
+            keep_pages(&dir, given).map_err(refused)?;
+            tracing::debug!(target: "cli", group = %seed.id(), pages = ?given, "cli: link — the group's origin changed");
             Some(given.clone())
         }
-        None => match group::read_origin(&dir).map_err(|e| keep_refused(&seed, &e.to_string()))? {
-            Some(kept) => {
-                tracing::debug!(target: "cli", group = %seed.id(), origin = kept.as_str(), "cli: link — on the group's kept origin too");
-                Some(kept)
+        None => match group::read_origin(&dir).map_err(refused)? {
+            Some(page) => {
+                let apps = group::read_lends(&dir).map_err(refused)?;
+                tracing::debug!(target: "cli", group = %seed.id(), origin = page.as_str(), lends = ?apps.as_ref().map(Origin::as_str), "cli: link — on the group's kept origin too");
+                Some(Pages {
+                    page,
+                    apps: apps.map_or(Apps::OwnAddress, Apps::Under),
+                })
             }
             None => {
                 tracing::debug!(target: "cli", group = %seed.id(), "cli: link — the group keeps no origin, so the client's link alone");
@@ -921,7 +1090,7 @@ pub async fn new_link(
         },
     };
     let token = mint(node, &seed, relay).await?;
-    Ok((seed, Printed::of(&token, origin.as_ref())))
+    Ok((seed, Printed::of(&token, pages.as_ref())))
 }
 
 /// Append an `Invite` for a fresh link's key that lapses in
@@ -999,19 +1168,26 @@ pub fn link_relay(relay: &RelayConfig, home: Option<RelayUrl>) -> Option<RelayUr
 /// Keep `seed`'s group on this computer: its journal, the seed beside it,
 /// `origin` when given, and the roster the seed founds. What `new` and
 /// `join` both write, in one order, so a group kept by either is the same.
-fn keep_group(node: &Node, seed: &Seed, origin: Option<&Origin>) -> Result<(), Refusal> {
+fn keep_group(node: &Node, seed: &Seed, pages: Option<&Pages>) -> Result<(), Refusal> {
     let rail = node.rail();
     let dir = rail
         .group_dir(&seed.id())
         .map_err(|e| keep_refused(seed, &e.to_string()))?;
     group::write_seed(&dir, seed)
-        .and_then(|()| match origin {
-            Some(origin) => group::write_origin(&dir, origin),
+        .and_then(|()| match pages {
+            Some(pages) => keep_pages(&dir, pages),
             None => Ok(()),
         })
         .map_err(|e: SeedError| keep_refused(seed, &e.to_string()))?;
     rail.set_seed(&seed.id(), &seed.roster())
         .map_err(|e| keep_refused(seed, &e.to_string()))
+}
+
+/// Keep `pages` in the group's directory `dir`: its page origin, and its
+/// lends origin or none.
+fn keep_pages(dir: &Path, pages: &Pages) -> Result<(), group::SeedError> {
+    group::write_origin(dir, &pages.page)?;
+    group::write_lends(dir, pages.lends())
 }
 
 fn keep_refused(seed: &Seed, why: &str) -> Refusal {

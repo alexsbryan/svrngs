@@ -172,6 +172,15 @@ async fn link_mints_a_new_link_to_the_group_it_names() {
 /// prints the client's link and the https one there; `link --origin`
 /// changes it from then on; a group made with no `--origin` prints the
 /// client's link alone, and so does a group whose kept origin is gone.
+/// A page origin whose host answers every name under it, as svrnme.sh
+/// does: each app at an address of its own (u5-2).
+fn on(page: Origin) -> cli::Pages {
+    cli::Pages {
+        page,
+        apps: cli::Apps::OwnAddress,
+    }
+}
+
 #[tokio::test]
 async fn a_group_keeps_the_origin_its_links_print_on() {
     let dir = tempfile::tempdir().unwrap();
@@ -180,7 +189,7 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
         assert!(p.client.starts_with(CLIENT_PREFIX), "{p}");
         p.https.clone().unwrap_or_default()
     };
-    let x = Origin::parse("https://x.example/").unwrap();
+    let x = on(Origin::parse("https://x.example/").unwrap());
     let (house, first) = cli::new_group(&node, name("house"), name("Sam"), Some(&x), &no_relay())
         .await
         .unwrap();
@@ -190,7 +199,7 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
         .unwrap();
     assert!(https(&later).starts_with("https://x.example/#"), "{later}");
 
-    let y = Origin::parse("https://y.example/ours/").unwrap();
+    let y = on(Origin::parse("https://y.example/ours/").unwrap());
     let (_, moved) = cli::new_link(&node, "house", Some(&y), &no_relay())
         .await
         .unwrap();
@@ -291,6 +300,7 @@ fn the_verbs_parse() {
             name: name("house"),
             person: Some(name("Sam")),
             origin: None,
+            lends: None,
         }
     );
     assert_eq!(
@@ -298,6 +308,7 @@ fn the_verbs_parse() {
         Verb::Link {
             group: "house".into(),
             origin: Some(Origin::parse("https://links.example.org/").unwrap()),
+            lends: None,
         }
     );
     assert_eq!(
@@ -305,6 +316,7 @@ fn the_verbs_parse() {
         Verb::Link {
             group: "house".into(),
             origin: None,
+            lends: None,
         },
         "no --origin is the group's own, not the default"
     );
@@ -389,5 +401,108 @@ async fn the_bare_command_prints_where_apps_reach_the_record() {
     assert_eq!(answer.status(), reqwest::StatusCode::NOT_FOUND);
     let body: serde_json::Value = serde_json::from_str(&answer.text().await.unwrap()).unwrap();
     assert_eq!(body["kind"], "not_held");
+    node.endpoint().close().await;
+}
+
+/// **Where a group's apps open on a phone** (the u5-2 row; DESIGN §7): a
+/// page origin whose host answers every name under it — `localhost`, whose
+/// every name this computer answers, as svrnme.sh's are — opens each app
+/// at an address of its own, and the link carries nothing more; an origin
+/// at an address no name falls under, with no `--lends-origin`, is refused,
+/// the reason naming both ways on; with one, every app opens under it, and
+/// the link carries it; the page's own address as the apps' is refused; a
+/// host that does not answer at all is not judged (exit 3). `new` prints
+/// which way the group got. Planted: the check for a name nobody made
+/// skipped, so every host is taken to answer one.
+#[tokio::test]
+async fn a_page_origin_says_where_its_apps_open_or_is_refused_naming_both_ways() {
+    let page = |raw: &str| Origin::parse(raw).unwrap();
+    let ours = cli::pages(page("http://localhost:8123/"), None)
+        .await
+        .unwrap();
+    assert_eq!(ours.apps, cli::Apps::OwnAddress);
+
+    let refused = cli::pages(page("http://127.0.0.1:8123/"), None)
+        .await
+        .unwrap_err();
+    assert!(matches!(refused, Refusal::NoAppAddress(_)), "{refused}");
+    assert_eq!(refused.exit_code(), 1);
+    let said = refused.to_string();
+    for way in ["--lends-origin <url>", "answers every name under it"] {
+        assert!(said.contains(way), "the refusal names both ways on: {said}");
+    }
+
+    let floor = cli::pages(
+        page("http://127.0.0.1:8123/"),
+        Some(page("http://localhost:9000/")),
+    )
+    .await
+    .unwrap();
+    assert_eq!(floor.apps, cli::Apps::Under(page("http://localhost:9000/")));
+    let same = cli::pages(
+        page("http://localhost:8123/x/"),
+        Some(page("http://LOCALHOST:8123/")),
+    )
+    .await
+    .unwrap_err();
+    assert!(matches!(same, Refusal::AppsOnPage(_)), "{same}");
+    let away = cli::pages(page("https://nowhere.invalid/"), None)
+        .await
+        .unwrap_err();
+    assert!(matches!(away, Refusal::CannotCheck(_)), "{away}");
+    assert_eq!(away.exit_code(), 3);
+
+    let dir = tempfile::tempdir().unwrap();
+    let node = start(&dir).await;
+    let (_, own) = cli::new_group(&node, name("house"), name("Sam"), Some(&ours), &no_relay())
+        .await
+        .unwrap();
+    let https = own.https.clone().unwrap();
+    assert!(
+        !https.contains('~'),
+        "the link carries nothing more: {https}"
+    );
+    assert!(
+        own.to_string()
+            .contains("each app opens at an address of its own under localhost:8123"),
+        "{own}"
+    );
+    let (_, shared) = cli::new_group(&node, name("work"), name("Sam"), Some(&floor), &no_relay())
+        .await
+        .unwrap();
+    assert!(
+        shared
+            .https
+            .clone()
+            .unwrap()
+            .ends_with("~http://localhost:9000/"),
+        "{shared}"
+    );
+    assert!(
+        shared
+            .to_string()
+            .contains("every app opens under http://localhost:9000/"),
+        "{shared}"
+    );
+    let parsed = Link::parse(&shared.https.clone().unwrap()).unwrap();
+    assert_eq!(parsed.lends, Some(page("http://localhost:9000/")));
+    let (_, again) = cli::new_link(&node, "work", None, &no_relay())
+        .await
+        .unwrap();
+    assert!(
+        again.https.unwrap().ends_with("~http://localhost:9000/"),
+        "kept for the next link"
+    );
+    for said in [
+        own.to_string(),
+        shared.to_string(),
+        refused.to_string(),
+        away.to_string(),
+        same.to_string(),
+    ] {
+        for word in svrngs_node::link::KEPT_WORDS {
+            assert!(!said.to_lowercase().contains(word), "{said:?} says {word}");
+        }
+    }
     node.endpoint().close().await;
 }
