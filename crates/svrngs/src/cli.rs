@@ -22,7 +22,9 @@
 //! so each works whether or not svrngs is running here (u3-5). `share`
 //! then runs, as the other verbs do, unless svrngs already is. The secret
 //! is read from a prompt, never from the command line, where any program on
-//! this computer may read it (`ps`); the bare command prints what the people
+//! this computer may read it (`ps`); a service that keeps its own accounts
+//! is lent with none, and its lender told how to make each person one
+//! (u5-4, [`share::accounts_of`]). The bare command prints what the people
 //! of this computer's groups lend, asked of their computers as it starts.
 //!
 //! `new` and `link` always print the client's link, `svrngs://join/<token>`
@@ -103,7 +105,9 @@ svrngs — keep what your group shares on your own computers.
       Lend what runs on <port> on this computer to everyone in your groups:
       each reaches it through this computer, as themselves. It asks for the
       password the service takes on each request, if any; that stays on
-      this computer, and nobody you lend it to receives it. --name is what
+      this computer, and nobody you lend it to receives it. For a service
+      it knows keeps its own accounts it asks none, and says how to make
+      each person an account there: each signs in once. --name is what
       they see it as; else its kind. --kind says what it is, when svrngs
       does not know the port. --limit is how many people may use it at
       once; else 3. --refuse keeps a path of it from them; say it again
@@ -449,7 +453,14 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
                 share::listens(asked.port),
                 share::well_known_kind(asked.port),
             )?;
-            let secret = prompt_secret(&lend.name)?;
+            let accounts = share::accounts_of(&lend.kind);
+            let secret = match accounts {
+                Some(_) => {
+                    tracing::debug!(target: "cli", lend = %lend.name, "cli: share — no password asked: its people sign in to it once, with accounts its lender makes");
+                    None
+                }
+                None => prompt_secret(&lend.name)?,
+            };
             share_lend(&root, &lend, secret.as_deref())?;
             let claimed = match claim(&root) {
                 Err(Refusal::Busy(lock)) => {
@@ -459,6 +470,7 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
                         Said::Shared {
                             lend,
                             secret: secret.is_some(),
+                            accounts,
                             running: true
                         }
                     );
@@ -471,6 +483,7 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
                 Said::Shared {
                     lend,
                     secret: secret.is_some(),
+                    accounts,
                     running: false
                 }
             );
@@ -660,11 +673,13 @@ pub enum Said {
         api: SocketAddr,
         lends: Lends,
     },
-    /// `share`: `lend` declared, with a secret or none; `running` when
-    /// svrngs runs here already, so it is lent now.
+    /// `share`: `lend` declared, with a secret or none; `accounts`, how its
+    /// lender makes each person an account in it, when it keeps its own;
+    /// `running` when svrngs runs here already, so it is lent now.
     Shared {
         lend: Lend,
         secret: bool,
+        accounts: Option<&'static str>,
         running: bool,
     },
     /// `unshare`: no longer lent.
@@ -734,6 +749,7 @@ impl std::fmt::Display for Said {
             Said::Shared {
                 lend,
                 secret,
+                accounts,
                 running,
             } => {
                 writeln!(
@@ -748,6 +764,13 @@ impl std::fmt::Display for Said {
                         "people"
                     }
                 )?;
+                if let Some(how) = accounts {
+                    writeln!(
+                        f,
+                        "{} asks each person to sign in once, with an account you make them. In {}: {how}. Then tell each person theirs.",
+                        lend.name, lend.kind
+                    )?;
+                }
                 for path in &lend.refused {
                     writeln!(f, "They cannot open {}.", path.as_str())?;
                 }

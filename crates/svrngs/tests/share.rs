@@ -172,6 +172,7 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
     let mut said = vec![Said::Shared {
         lend: lend.clone(),
         secret: true,
+        accounts: None,
         running: true,
     }
     .to_string()];
@@ -494,4 +495,63 @@ fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
     );
     plain(&seen);
     drop((first, second));
+}
+
+/// A service that keeps its own accounts, on a port of a stand-in (u5-4;
+/// DESIGN §3, "Lent apps", call 4): `share` asks no password, keeps none
+/// though one is typed, and tells its lender how to make each person an
+/// account there, in DESIGN §1's words.
+#[cfg(unix)]
+#[test]
+fn a_service_with_its_own_accounts_is_lent_with_no_password() {
+    let dir = tempfile::tempdir().unwrap();
+    let logs = tempfile::tempdir().unwrap();
+    let stand_in = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = stand_in.local_addr().unwrap().port().to_string();
+    let log = logs.path().join("share");
+    let mut running = Program::start(
+        dir.path(),
+        &log,
+        &["share", port.as_str(), "--kind", "jellyfin"],
+        &format!("{SECRET}\n"),
+    );
+    running.until("Leave this running");
+    let _ = running.child.kill();
+    let (_, seen) = running.ends();
+
+    let how = seen
+        .iter()
+        .find(|l| l.starts_with("jellyfin asks each person to sign in once, with an account you make them. In jellyfin: "))
+        .unwrap_or_else(|| panic!("the lender is not told how to make accounts: {seen:?}"));
+    assert!(
+        how.contains("Dashboard, Users and +") && how.ends_with("Then tell each person theirs."),
+        "{how}"
+    );
+    assert!(
+        !seen.iter().any(|l| l.contains("Its password stays")),
+        "{seen:?}"
+    );
+    assert!(
+        dir.path().join("lends/jellyfin.json").exists(),
+        "jellyfin is declared"
+    );
+    assert!(
+        !dir.path().join("secrets/lends/jellyfin").exists(),
+        "a password was kept for jellyfin"
+    );
+    assert_eq!(
+        holding(dir.path(), b"sams-own", Path::new("")),
+        Vec::<String>::new()
+    );
+    let log = std::fs::read_to_string(&log).unwrap();
+    assert!(
+        !log.contains("takes a password"),
+        "a password was asked: {log}"
+    );
+    assert!(
+        log.contains("cli: share — no password asked"),
+        "the branch is traced"
+    );
+    plain(&seen);
+    drop(stand_in);
 }

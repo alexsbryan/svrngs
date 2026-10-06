@@ -16,6 +16,10 @@
 //! ([`WELL_KNOWN`]), so a lend of a service svrngs recognises needs no
 //! more than its port. [`lend_of`] decides the lend from what was typed and
 //! what the probe saw, and touches nothing.
+//!
+//! u5-4: a kind the table says keeps its own accounts ([`accounts_of`]) is
+//! lent with no password, and its lender told how to make each person an
+//! account in it (DESIGN §3, "Lent apps", call 4: sign in once).
 
 use std::num::NonZeroU16;
 use std::time::Duration;
@@ -28,9 +32,26 @@ use svrngs_node::lend::{Kind, Lend, LendName, RefusedPath, Upload};
 pub const DEFAULT_LIMIT: NonZeroU16 = NonZeroU16::new(3).expect("3 is not 0");
 
 /// The well-known ports and the kind of service that listens on each, one
-/// `<port> <kind>` a line, `#` for a comment: data, not code, since a kind
-/// is an app's word the infra does not hold (DESIGN §5, the nouns gate).
+/// `<port> <kind>` a line, then how its lender makes a person an account
+/// in it if it keeps its own, `#` for a comment: data, not code, since a
+/// kind is an app's word the infra does not hold (DESIGN §5, the nouns
+/// gate).
 pub const WELL_KNOWN: &str = include_str!("well_known.txt");
+
+/// [`WELL_KNOWN`]'s rows: the port as written, the kind, and the rest of
+/// the line, empty when there is none.
+fn rows() -> impl Iterator<Item = (&'static str, &'static str, &'static str)> {
+    WELL_KNOWN
+        .lines()
+        .map(|l| l.split('#').next().unwrap_or("").trim())
+        .filter(|l| !l.is_empty())
+        .filter_map(|l| {
+            let (port, rest) = l.split_once(char::is_whitespace)?;
+            let rest = rest.trim_start();
+            let (kind, how) = rest.split_once(char::is_whitespace).unwrap_or((rest, ""));
+            Some((port, kind, how.trim()))
+        })
+}
 
 /// What `svrngs share` was told.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -74,14 +95,22 @@ pub fn resolve_target(port: &str) -> Result<NonZeroU16, String> {
 
 /// The kind [`WELL_KNOWN`] names for `port`, if any.
 pub fn well_known_kind(port: NonZeroU16) -> Option<Kind> {
-    WELL_KNOWN
-        .lines()
-        .map(|l| l.split('#').next().unwrap_or("").trim())
-        .filter(|l| !l.is_empty())
-        .find_map(|l| {
-            let (p, kind) = l.split_once(char::is_whitespace)?;
-            (p.parse::<u16>().ok()? == port.get()).then(|| Kind::parse(kind.trim()).ok())?
-        })
+    rows().find_map(|(p, kind, _)| {
+        (p.parse::<u16>().ok()? == port.get()).then(|| Kind::parse(kind).ok())?
+    })
+}
+
+/// How a lender makes a person an account in a service of `kind`, if
+/// [`WELL_KNOWN`] says it keeps its own. Such a service asks each person
+/// to sign in once, with an account its lender made, and is lent with no
+/// password: one sent on each request makes everyone one person to it, so
+/// one person's sign-in ended everyone's, and its token reached their
+/// browsers (`demo/runs/a/dry-2026-10-04/README.md:39-50`;
+/// `demo/runs/u5/2026-10-05-jellyfin/README.md`, finding 3).
+pub fn accounts_of(kind: &Kind) -> Option<&'static str> {
+    let how = rows().find_map(|(_, k, how)| (k == kind.as_str() && !how.is_empty()).then_some(how));
+    tracing::debug!(target: "share", kind = %kind, own_accounts = how.is_some(), "share: whether the kind keeps its own accounts");
+    how
 }
 
 /// Whether something on this computer accepts a TCP connection on `port`.

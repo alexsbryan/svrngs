@@ -102,3 +102,20 @@ fn a_lend_is_decided_from_what_was_typed_and_what_listens() {
         Err(ShareRefusal::NothingListens(port(8096)))
     );
 }
+
+/// The table's third column, the kinds that keep their own accounts: one
+/// for jellyfin, in DESIGN §1's words, and none for a kind without it or
+/// with no row.
+#[test]
+fn a_kind_keeps_its_own_accounts_only_if_the_table_says_how() {
+    let how = accounts_of(&Kind::parse("jellyfin").unwrap()).expect("jellyfin keeps its own");
+    assert!(
+        how.starts_with("your picture at the top right, then Dashboard"),
+        "{how}"
+    );
+    for word in svrngs_node::link::KEPT_WORDS {
+        assert!(!how.to_lowercase().contains(word), "{how} says {word}");
+    }
+    assert_eq!(accounts_of(&Kind::parse("pad").unwrap()), None);
+    assert_eq!(well_known_kind(port(8096)).unwrap().as_str(), "jellyfin");
+}
