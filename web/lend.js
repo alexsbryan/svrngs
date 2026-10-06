@@ -188,13 +188,20 @@ async function lent(request, url, where) {
   if (!lend) return say(403, 'This is not open to this page.');
   const jar = await jarOf(where.label);
   const headers = bounded(
-    [...request.headers].filter(([n]) => n.toLowerCase() !== 'cookie'),
+    [...request.headers].filter(([n]) => !['cookie', 'content-length'].includes(n.toLowerCase())),
     request.destination,
   );
   const cookie = cookieFor(jar, where.path, false);
   if (cookie) headers.push(['cookie', cookie]);
   headers.push(['x-svrngs-pass', h.pass]);
-  const body = ['GET', 'HEAD'].includes(request.method) ? null : (request.body ?? (await request.blob()).stream());
+  // A body is read whole, as a Blob, which the browser keeps on disk when
+  // it is large, so it goes with its length: a worker never sees the
+  // page's Content-Length, and a parser that reads by it — Django's
+  // multipart, Paperless-ngx's upload (u5-catalogue-dry) — reads nothing
+  // from a stream sent without one.
+  const blob = ['GET', 'HEAD'].includes(request.method) ? null : await request.blob();
+  if (blob) headers.push(['content-length', String(blob.size)]);
+  const body = blob?.stream() ?? null;
   const path = `/lend/${where.label}${where.path}`;
   let res;
   for (let tries = 0; !res; tries++) {
