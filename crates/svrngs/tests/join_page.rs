@@ -109,6 +109,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         limit: NonZeroU16::new(3).unwrap(),
         refused: Vec::new(),
         upload: None,
+        reads: Vec::new(),
     };
     lend::declare(dir.path(), &shelf, None).unwrap();
 

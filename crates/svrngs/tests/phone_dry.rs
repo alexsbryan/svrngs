@@ -70,6 +70,7 @@ async fn sam_through_a_relay_on_this_computer() {
         limit,
         refused: Vec::new(),
         upload: None,
+        reads: Vec::new(),
     };
     lend::declare(&sam_dir, &film, None).unwrap();
     let (_, printed) = cli::new_group(

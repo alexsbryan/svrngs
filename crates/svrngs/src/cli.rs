@@ -10,7 +10,7 @@
 //! svrngs new <name> [--as N] [--origin U]  make a group, print its link, run
 //! svrngs join <link> [--as N]              join a group by its link, run
 //! svrngs link <group> [--origin U]         a new link to a group, print it, run
-//! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M]
+//! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]...
 //!                                          lend a service on this computer
 //! svrngs unshare <name>                    stop lending it
 //! ```
@@ -86,7 +86,7 @@ svrngs — keep what your group shares on your own computers.
       first 8 letters of its id when two groups share a name. --origin
       also prints it on a page address, from now on.
 
-  svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>]
+  svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]...
       Lend what runs on <port> on this computer to everyone in your groups:
       each reaches it through this computer, as themselves. It asks for the
       password the service takes on each request, if any; that stays on
@@ -96,6 +96,8 @@ svrngs — keep what your group shares on your own computers.
       once; else 3. --refuse keeps a path of it from them; say it again
       for more. --upload is this computer's upload, in Mbit/s, as a speed
       test states it: each person using it is told their share of it.
+      --reads lets it open, as whoever opens it, what your groups lend of
+      <kind>; say it again for more.
 
   svrngs unshare <name>
       Stop lending <name>.
@@ -155,6 +157,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let mut origin = None;
     let (mut name, mut kind, mut limit, mut refused) = (None, None, None, Vec::new());
     let mut upload = None;
+    let mut reads = Vec::new();
     while let Some(arg) = it.next() {
         let mut value = |flag: &str| it.next().ok_or_else(|| format!("{flag} wants a value"));
         match arg.as_str() {
@@ -202,6 +205,12 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                     format!("--upload `{raw}` is not an upload: a whole number of Mbit/s, 1 or more")
                 })?));
             }
+            "--reads" => {
+                let raw = value("--reads")?;
+                reads.push(Kind::parse(&raw).map_err(|_| {
+                    format!("--reads `{raw}` is not a kind: letters, digits, - and _ only")
+                })?);
+            }
             "-h" | "--help" => return Ok(Verb::Help),
             other if other.starts_with('-') => return Err(format!("unknown argument `{other}`")),
             other if positional.is_none() => positional = Some(other.to_string()),
@@ -218,10 +227,13 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         || kind.is_some()
         || limit.is_some()
         || !refused.is_empty()
-        || upload.is_some())
+        || upload.is_some()
+        || !reads.is_empty())
         && verb != "share"
     {
-        return Err("--name, --kind, --limit, --refuse and --upload are `share` flags".into());
+        return Err(
+            "--name, --kind, --limit, --refuse, --upload and --reads are `share` flags".into(),
+        );
     }
     match verb.as_str() {
         "new" => {
@@ -256,6 +268,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 limit,
                 refused,
                 upload,
+                reads,
             }))
         }
         "unshare" => {
@@ -592,6 +605,12 @@ impl std::fmt::Display for Said {
                 )?;
                 for path in &lend.refused {
                     writeln!(f, "They cannot open {}.", path.as_str())?;
+                }
+                for kind in &lend.reads {
+                    writeln!(
+                        f,
+                        "It can open the {kind} your groups lend, as whoever opens it."
+                    )?;
                 }
                 if let Some(upload) = lend.upload {
                     writeln!(

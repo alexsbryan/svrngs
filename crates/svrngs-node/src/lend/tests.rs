@@ -94,6 +94,7 @@ fn lend(name: &str, port: u16) -> Lend {
         limit: NonZeroU16::new(3).unwrap(),
         refused: vec![refused("/admin")],
         upload: None,
+        reads: Vec::new(),
     }
 }
 
@@ -104,6 +105,8 @@ fn a_lend_declared_is_read_back_and_withdrawn_whole() {
     let root = tempfile::tempdir().unwrap();
     let mut shelf = lend("shelf", 8096);
     shelf.upload = Some(Upload::from_mbit(NonZeroU32::new(30).unwrap()));
+    // The kinds it reads (u5-2) come back too; planted: not written.
+    shelf.reads = vec![Kind::parse("films").unwrap(), Kind::parse("music").unwrap()];
     declare(root.path(), &shelf, Some(("authorization", "s3cret"))).unwrap();
     declare(root.path(), &lend("pad", 9000), None).unwrap();
     assert_eq!(read(root.path(), &shelf.name).unwrap(), Some(shelf.clone()));

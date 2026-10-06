@@ -43,6 +43,8 @@ pub struct Share {
     /// This computer's upload, as its lender states it; none stated, none
     /// declared (u3-6).
     pub upload: Option<Upload>,
+    /// The kinds of lend its pages read (u5-2).
+    pub reads: Vec<Kind>,
 }
 
 /// Why a lend could not be decided, in a person's words.
@@ -123,6 +125,7 @@ pub fn lend_of(
         limit,
         refused: share.refused.clone(),
         upload: share.upload,
+        reads: share.reads.clone(),
     })
 }
 

@@ -228,6 +228,10 @@ pub struct Lend {
     /// None when its lender declares none: then no request through the
     /// door is told a share, rather than one of a figure nobody stated.
     pub upload: Option<Upload>,
+    /// The kinds of lend its pages read (u5-2, `svrngs share --reads`):
+    /// a phone's page passes whoever opens it to the group's lends of each
+    /// kind too, as that person (DESIGN §3, "Lent apps", call 6).
+    pub reads: Vec<Kind>,
 }
 
 impl Lend {
@@ -255,6 +259,8 @@ struct LendFile {
         skip_serializing_if = "Option::is_none"
     )]
     upload: Option<Upload>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    reads: Vec<Kind>,
 }
 
 /// A lend as its lender's computer answers a member who asks what it
@@ -275,6 +281,9 @@ pub struct Offered {
     /// an answer that leaves it out is not one, never read as none.
     #[serde(rename = "upload_bps", deserialize_with = "Option::deserialize")]
     pub upload: Option<Upload>,
+    /// The kinds of lend it reads (u5-2): none from a computer before u5-2.
+    #[serde(default)]
+    pub reads: Vec<Kind>,
 }
 
 /// Why a lend could not be read.
@@ -340,6 +349,7 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         limit: file.limit,
         refused,
         upload: file.upload,
+        reads: file.reads,
     }))
 }
 
@@ -400,6 +410,7 @@ pub fn declare(
         limit: lend.limit,
         refused: lend.refused.iter().map(|r| r.0.clone()).collect(),
         upload: lend.upload,
+        reads: lend.reads.clone(),
     };
     let text = serde_json::to_string_pretty(&file).expect("a declaration always serializes");
     let path = dir.join(format!("{}.json", lend.name));

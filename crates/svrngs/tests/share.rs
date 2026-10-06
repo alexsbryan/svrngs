@@ -160,6 +160,7 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
         limit: None,
         refused: Vec::new(),
         upload: None,
+        reads: Vec::new(),
     };
     let lend = share::lend_of(
         &asked,
@@ -290,6 +291,16 @@ fn share_takes_no_password_on_the_command_line() {
         );
     }
     assert!(cli::parse(argv(&["link", "x", "--upload", "30"])).is_err());
+    // The kinds a lend reads (u5-2), each said again for more.
+    let Ok(Verb::Share(asked)) = cli::parse(argv(&[
+        "share", "8096", "--reads", "films", "--reads", "music",
+    ])) else {
+        panic!("share parses what it reads");
+    };
+    let reads: Vec<&str> = asked.reads.iter().map(|k| k.as_str()).collect();
+    assert_eq!(reads, ["films", "music"]);
+    assert!(cli::parse(argv(&["share", "8096", "--reads", "a/b"])).is_err());
+    assert!(cli::parse(argv(&["new", "x", "--reads", "films"])).is_err());
 }
 
 /// The program, its output read line by line as it comes.

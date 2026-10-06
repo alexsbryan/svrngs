@@ -22,6 +22,7 @@ fn shelf(upload: Option<u64>) -> Lend {
         limit: NonZeroU16::new(3).unwrap(),
         refused: Vec::new(),
         upload: upload.map(|b| Upload::new(NonZeroU64::new(b).unwrap())),
+        reads: Vec::new(),
     }
 }
 
