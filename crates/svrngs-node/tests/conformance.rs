@@ -660,6 +660,16 @@ async fn on_a_phone_on_the_floor(engine: Engine) {
     conformance(Way::Floor, engine).await
 }
 
+/// The most, in MB, a WebKit content process may hold through the tries
+/// (u5-12): the line WebKit ends a worker's process past. The process that
+/// held both floor lends' workers exited at a footprint of 1,065 MB and
+/// 1,393 MB resident ('Memory usage policy changed: Unrestricted ->
+/// Conservative', 'Suspended WebProcess is exiting due to memory
+/// pressure'); the same tries left it at 1,332 MB in runs WebKit did not end
+/// it, and at 511 MB (fixed-1) and 670 MB (fixed-2) once a body went a
+/// slice at a time (demo/runs/u5/2026-10-06-worker-gone/).
+const HELD: u64 = 1024;
+
 /// #65 (u5-12; `ralph/REVIEW_FINDINGS.md`): WebKit as an iPhone, the
 /// canary's 64 MiB upload after its seeks, through each lend in turn,
 /// `TRIES` times in all (10 if unset), on the floor and with the wildcard.
@@ -676,16 +686,6 @@ async fn on_a_phone_on_the_floor(engine: Engine) {
 /// unset) names the canary's checks each try runs. Not in scripts/check.sh:
 /// run by name, `cargo test -p svrngs-node --test conformance
 /// upload_after_seeks -- --ignored`.
-/// The most, in MB, a WebKit content process may hold through the tries
-/// (u5-12): the line WebKit ends a worker's process past. The process that
-/// held both floor lends' workers exited at a footprint of 1,065 MB and
-/// 1,393 MB resident ('Memory usage policy changed: Unrestricted ->
-/// Conservative', 'Suspended WebProcess is exiting due to memory
-/// pressure'); the same tries left it at 1,332 MB in runs WebKit did not end
-/// it, and at 511 MB (fixed-1) and 670 MB (fixed-2) once a body went a
-/// slice at a time (demo/runs/u5/2026-10-06-worker-gone/).
-const HELD: u64 = 1024;
-
 mod upload_after_seeks {
     use super::*;
 
