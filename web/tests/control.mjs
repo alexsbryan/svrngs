@@ -4,12 +4,12 @@
 // queued, shared by every connection the browser opens. Each Range asked
 // and each connection closed is logged with the run.
 //
-//   cd web && node ../demo/runs/u5/2026-10-06-seek-stall/control.mjs <engines,> <runs each> >out
+//   node web/tests/control.mjs <engines,> <runs each> >out
 import { spawn } from 'node:child_process';
 import net from 'node:net';
-import { launch } from '../../../../web/tests/page.mjs';
+import { launch } from './page.mjs';
 const RATE = 16_666_666 / 8, DELAY = 150, QUEUE = RATE;
-const child = spawn('node', [new URL('../../../../apps/web-conformance/serve.mjs', import.meta.url).pathname, 'control']);
+const child = spawn('node', [new URL('../../apps/web-conformance/serve.mjs', import.meta.url).pathname, 'control']);
 const port = await new Promise((r) => child.stdout.once('data', (d) => r(JSON.parse(d).port)));
 // One shared downstream link.
 let conns = 0; const log = [];

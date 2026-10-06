@@ -122,7 +122,7 @@ socket behind every newer download.
 
 ## The control: straight at the canary, the same link
 
-`control.mjs` (`control.json`): the canary's page opened by Playwright
+`control.mjs` (`control.json`; the script is `web/tests/control.mjs` since u5-11 made it run beside each conformance run): the canary's page opened by Playwright
 straight at the canary, no svrngs, through a proxy giving the browser the
 same link — 150 ms each way, what the canary sends paced to
 16,666,666 bit/s, a second's bytes queued, shared by every connection.
