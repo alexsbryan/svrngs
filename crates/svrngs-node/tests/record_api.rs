@@ -266,6 +266,7 @@ async fn api_alone(dir: &tempfile::TempDir) -> (axum::Router, svrngs_node::iroh:
             transport: std::sync::Arc::new(svrngs_node::iroh::IrohTransport::new(endpoint.clone())),
         },
         axum::Router::new(),
+        axum::Router::new(),
     );
     (router, endpoint)
 }

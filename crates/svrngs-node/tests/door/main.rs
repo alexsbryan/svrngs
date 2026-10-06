@@ -603,7 +603,7 @@ async fn a_member_asks_what_is_lent_and_how_many_use_it_now() {
 
 /// B's own computer asks what the people of its group lend (u3-5;
 /// `Node::lends`): ada's shelf, with the address on B's loopback that
-/// reaches it — through which bo reaches the service as bo — and cy, whose
+/// reaches it, its origin there (u5-2) — through which bo reaches the service as bo — and cy, whose
 /// computer is nowhere, named as not answering rather than lending nothing.
 /// Asked again once ada withdraws the shelf, it is gone.
 #[tokio::test]
@@ -640,9 +640,19 @@ async fn a_member_s_computer_lists_what_is_lent_with_where_to_reach_it() {
     assert_eq!(shelf.offered.name.as_str(), "shelf");
     assert_eq!(shelf.offered.kind.as_str(), "k");
     assert_eq!(shelf.offered.using, 0);
-    assert_eq!(shelf.address, format!("http://{}/lend/shelf/", pair.bridge));
+    // Its origin on B's loopback (u5-2), which B's record API serves.
+    let label = svrngs_core::pass::Label::of(pair.a.endpoint().id().as_bytes(), "shelf");
+    let host = format!("{label}.localhost");
+    assert_eq!(
+        shelf.address,
+        format!("http://{host}:{}/", pair.b.api_addr().port())
+    );
 
-    let http = reqwest::Client::builder().no_proxy().build().unwrap();
+    let http = reqwest::Client::builder()
+        .no_proxy()
+        .resolve(&host, pair.b.api_addr())
+        .build()
+        .unwrap();
     let reply = http
         .get(format!("{}whoami", shelf.address))
         .send()

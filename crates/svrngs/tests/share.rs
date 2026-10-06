@@ -183,10 +183,19 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
         .find(|l| l.starts_with("Sam's pad"))
         .unwrap_or_else(|| panic!("Alex is not told of Sam's pad: {running:?}"));
     let address = address_in(line).expect("an address to open");
-    assert!(address.starts_with("http://127.0.0.1:"), "{address}");
-    assert!(address.ends_with("/lend/pad/"), "{address}");
+    // The lend's origin on Alex's computer (u5-2): `<label>.localhost`, on
+    // the port Alex's apps reach the groups at.
+    let host = address
+        .strip_prefix("http://")
+        .and_then(|a| a.strip_suffix(&format!(":{}/", alex.node.api_addr().port())))
+        .unwrap_or_else(|| panic!("an origin on Alex's computer: {address}"));
+    assert!(host.ends_with(".localhost"), "{address}");
 
-    let http = reqwest::Client::builder().no_proxy().build().unwrap();
+    let http = reqwest::Client::builder()
+        .no_proxy()
+        .resolve(host, alex.node.api_addr())
+        .build()
+        .unwrap();
     let answer = http
         .get(format!("{address}notes?x=1"))
         .header("x-svrngs-person", "Sam")

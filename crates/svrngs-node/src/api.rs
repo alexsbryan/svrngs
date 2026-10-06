@@ -15,7 +15,7 @@
 
 use std::net::SocketAddr;
 
-use axum::extract::{ConnectInfo, Request};
+use axum::extract::{ConnectInfo, Request, State};
 use axum::http::StatusCode;
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
@@ -57,9 +57,11 @@ pub fn write_address(data_dir: &std::path::Path, addr: SocketAddr) -> Result<(),
 }
 
 /// The routes this API serves: the rail's, and `apps` — the routes an app
-/// asks beside the record ([`crate::surface::router`]) — all behind the
-/// one loopback check.
-pub fn router(api: RailApi, apps: Router) -> Router {
+/// asks beside the record ([`crate::surface::router`]) — refused to a page
+/// in a browser ([`not_from_a_page`]); and, for a request whose `Host`
+/// names a lend, `lends`, the lend's origin ([`crate::origin`], u5-2), which
+/// answers no route of the record's. All behind the one loopback check.
+pub fn router(api: RailApi, apps: Router, lends: Router) -> Router {
     Router::new()
         // The ring rail's doors (FIVE_PROGRAMS fp-44): durable append and
         // the log, and the live lane's local buffer half. The bodies mirror
@@ -75,9 +77,50 @@ pub fn router(api: RailApi, apps: Router) -> Router {
         .route("/v1/rail/people", get(crate::rail::people))
         .with_state(api)
         .merge(apps)
+        .layer(axum::middleware::from_fn(not_from_a_page))
+        .layer(axum::middleware::from_fn_with_state(lends, to_a_lend))
         // svrngs: every request's caller is asked too, so a listener that
         // ever served beyond loopback would still answer no one else.
         .layer(axum::middleware::from_fn(from_this_computer))
+}
+
+/// A request whose `Host` is a lend's, `<label>.localhost`, goes to the
+/// lend's origin and never to the record (u5-2).
+async fn to_a_lend(State(lends): State<Router>, request: Request, next: Next) -> Response {
+    use tower::ServiceExt;
+    if crate::origin::label_of(request.headers().get(axum::http::header::HOST)).is_none() {
+        return next.run(request).await;
+    }
+    match lends.oneshot(request).await {
+        Ok(answer) => answer,
+        Err(never) => match never {},
+    }
+}
+
+/// The record is served to this computer's apps, never to a page in a
+/// browser (u5-2): a request carrying `Origin` or `Sec-Fetch-Site`, which
+/// a browser sends and an app's own HTTP client does not, is refused 403
+/// before any door runs. So a lent page, at its origin on this same
+/// listener, cannot write the record, nor can any site this computer's
+/// browser opens: loopback alone let both in, since a browser on this
+/// computer is a caller on loopback.
+async fn not_from_a_page(request: Request, next: Next) -> Response {
+    let headers = request.headers();
+    let Some(page) = headers
+        .get(axum::http::header::ORIGIN)
+        .or_else(|| headers.get("sec-fetch-site"))
+    else {
+        return next.run(request).await;
+    };
+    tracing::warn!(target: "rails", page = ?page, path = %request.uri().path(), "api: refused — a page in a browser asked the record");
+    (
+        StatusCode::FORBIDDEN,
+        Json(serde_json::json!({
+            "error": "the record is served to this computer's apps, not to a page in a browser",
+            "kind": "from_a_page",
+        })),
+    )
+        .into_response()
 }
 
 /// Serve a request only from a caller on this computer: the bind guard's
@@ -158,6 +201,13 @@ impl Drop for Serving {
 pub struct Bound {
     listener: tokio::net::TcpListener,
     addr: SocketAddr,
+}
+
+impl Bound {
+    /// Where it listens.
+    pub fn addr(&self) -> SocketAddr {
+        self.addr
+    }
 }
 
 /// Bind. Refuses a non-loopback address by name.

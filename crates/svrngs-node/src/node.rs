@@ -59,7 +59,7 @@ use axum::routing::get;
 use axum::{Extension, Json};
 use serde::{Deserialize, Serialize};
 
-use crate::door::{LENDS_ROUTE, LEND_ROUTE};
+use crate::door::LENDS_ROUTE;
 use crate::iroh::{
     actor_key, build_relayed_endpoint, format_dial_string, key_actor, Admit, Alpn, Contact, Dialer,
     Endpoint, EndpointAddr, IrohAcceptor, IrohTransport, PublicKey, RelayConfig, SecretKey,
@@ -83,8 +83,10 @@ pub struct Lent {
     /// The key their computer is dialled by, as the record spells an actor.
     pub key: String,
     pub offered: Offered,
-    /// Where this computer's browser reaches it: the loopback bridge to its
-    /// lender's computer (`IrohTransport::base_url`), then `/lend/<name>/`.
+    /// Where this computer's browser opens it: its origin on this
+    /// computer's loopback, `http://<label>.localhost:<api port>/`
+    /// ([`crate::origin`], u5-2), where until u5-2 it was the bridge to its
+    /// lender's computer, then `/lend/<name>/`.
     pub address: String,
 }
 
@@ -131,6 +133,8 @@ pub struct Host {
     endpoint: Endpoint,
     transport: Arc<IrohTransport>,
     actor: String,
+    /// The record API's port, where each lend has its origin (u5-2).
+    api_port: u16,
 }
 
 impl Node {
@@ -196,6 +200,7 @@ impl Node {
             rail: rail.clone(),
             endpoint: endpoint.clone(),
             actor: actor.clone(),
+            api_port: api.addr().port(),
         });
         let door = crate::door::Door {
             rail: rail.clone(),
@@ -216,6 +221,7 @@ impl Node {
                 transport,
             },
             crate::surface::router(asking.clone(), seeds),
+            crate::origin::router(asking.clone()),
         );
         let api = crate::api::serve(routes.clone(), api);
         if let Err(e) = crate::api::write_address(&data_dir, api.addr()) {
@@ -355,6 +361,15 @@ impl Host {
         &self.transport
     }
 
+    /// Where this computer's browser opens the lend `name` of the computer
+    /// whose key is `lender`, actor hex: the lend's origin, or `None` for a
+    /// key that is not one.
+    pub(crate) fn origin(&self, lender: &str, name: &str) -> Option<String> {
+        let key: [u8; 32] = hex::decode(lender).ok()?.try_into().ok()?;
+        let label = svrngs_core::pass::Label::of(&key, name);
+        Some(crate::origin::origin(&label, self.api_port))
+    }
+
     /// This round's members, or `None` when the node has none to round
     /// with: every computer's key standing in a group this node holds, but
     /// this node's. A group whose register is unreadable adds nobody, as the
@@ -439,14 +454,17 @@ impl Host {
         for ask in asks {
             match ask.await {
                 Ok((person, key, Some(answered))) => {
-                    lends
-                        .lent
-                        .extend(answered.into_iter().map(|(offered, address)| Lent {
+                    for offered in answered {
+                        let Some(address) = self.origin(&key, offered.name.as_str()) else {
+                            continue;
+                        };
+                        lends.lent.push(Lent {
                             person: person.clone(),
                             key: key.clone(),
                             offered,
                             address,
-                        }))
+                        });
+                    }
                 }
                 Ok((person, _, None)) => lends.unanswered.push(person),
                 Err(e) => {
@@ -492,14 +510,9 @@ pub(crate) fn dialled<'a>(
     out
 }
 
-/// Ask the computer `key` what it lends: each lend with the address that
-/// reaches it from here, or `None` when it did not answer, or answered
-/// with something that is not a list of lends.
-async fn ask_lends(
-    transport: &IrohTransport,
-    actor: &str,
-    key: PublicKey,
-) -> Option<Vec<(Offered, String)>> {
+/// Ask the computer `key` what it lends, or `None` when it did not
+/// answer, or answered with something that is not a list of lends.
+async fn ask_lends(transport: &IrohTransport, actor: &str, key: PublicKey) -> Option<Vec<Offered>> {
     #[derive(serde::Deserialize)]
     struct Answer {
         lends: Vec<Offered>,
@@ -528,15 +541,7 @@ async fn ask_lends(
     match answer {
         Ok(a) => {
             tracing::debug!(target: "node", actor, lends = a.lends.len(), "node: lends — the computer answered");
-            Some(
-                a.lends
-                    .into_iter()
-                    .map(|o| {
-                        let address = format!("{base}{LEND_ROUTE}{}/", o.name);
-                        (o, address)
-                    })
-                    .collect(),
-            )
+            Some(a.lends)
         }
         Err(e) => {
             tracing::debug!(target: "node", actor, error = %e, "node: lends — the answer is not a list of lends");
@@ -565,6 +570,13 @@ pub struct Lending {
 pub(crate) struct Asking {
     pub(crate) host: Arc<Host>,
     door: crate::door::Door,
+}
+
+impl Asking {
+    /// This computer's door.
+    pub(crate) fn door(&self) -> &crate::door::Door {
+        &self.door
+    }
 }
 
 fn people_router(asking: Asking) -> axum::Router {

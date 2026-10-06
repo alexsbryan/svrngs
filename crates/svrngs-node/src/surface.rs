@@ -13,9 +13,10 @@
 //! - `GET /v1/lends?namespace=<id>` — what the group's people lend now,
 //!   this computer's own lends among them, each with its lender's person
 //!   and key, its name, kind, limit, how many use it and its declared
-//!   upload (`upload_bps`, `null` when its lender states none); and the
-//!   people whose computer did not answer, named, their lends absent
-//!   rather than stale. The body [`crate::node`]'s `GET /people/lends`
+//!   upload (`upload_bps`, `null` when its lender states none), and where
+//!   this computer's browser opens it, its `origin` (u5-2,
+//!   [`crate::origin`]); and the people whose computer did not answer,
+//!   named, their lends absent rather than stale. The body [`crate::node`]'s `GET /people/lends`
 //!   answers a member, for one group.
 
 use axum::extract::{Query, State};
@@ -162,8 +163,18 @@ async fn lends(State(at): State<Surface>, Query(q): Query<RailQuery>) -> Respons
         Ok(answer) => answer,
         Err(refused) => return refused,
     };
+    let host = &at.asking.host;
+    let lent: Vec<serde_json::Value> = lent
+        .into_iter()
+        .filter_map(|l| {
+            let origin = host.origin(&l.key, l.offered.name.as_str())?;
+            let mut l = serde_json::to_value(l).ok()?;
+            l["origin"] = origin.into();
+            Some(l)
+        })
+        .collect();
     tracing::debug!(target: "surface", namespace, lent = lent.len(), unanswered = unanswered.len(),
-        "surface: lends — answered what the group's people lend, this computer's own among them");
+        "surface: lends — answered what the group's people lend, this computer's own among them, each at its origin");
     Json(serde_json::json!({ "namespace": namespace, "lent": lent, "unanswered": unanswered }))
         .into_response()
 }

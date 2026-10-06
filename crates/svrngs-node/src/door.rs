@@ -387,7 +387,7 @@ fn split_lend(path: &str) -> Option<(&str, String)> {
 
 /// Remove the hop-by-hop headers from `headers`, and any its `Connection`
 /// names; answer how many went.
-fn strip_hop_by_hop(headers: &mut HeaderMap) -> usize {
+pub(crate) fn strip_hop_by_hop(headers: &mut HeaderMap) -> usize {
     let named: Vec<String> = headers
         .get_all(header::CONNECTION)
         .iter()
@@ -415,7 +415,7 @@ fn strip_hop_by_hop(headers: &mut HeaderMap) -> usize {
 /// `Connection` names `upgrade` (RFC 9110 §7.8). Read before the hop-by-hop
 /// headers go, so the door carries a WebSocket's upgrade (u5-2), where it
 /// stripped `Upgrade` with the rest.
-fn upgrade_of(headers: &HeaderMap) -> Option<HeaderValue> {
+pub(crate) fn upgrade_of(headers: &HeaderMap) -> Option<HeaderValue> {
     let named = headers
         .get_all(header::CONNECTION)
         .iter()
@@ -426,7 +426,7 @@ fn upgrade_of(headers: &HeaderMap) -> Option<HeaderValue> {
 }
 
 /// Ask for `protocol` again on a head whose hop-by-hop headers went.
-fn keep_upgrade(headers: &mut HeaderMap, protocol: HeaderValue) {
+pub(crate) fn keep_upgrade(headers: &mut HeaderMap, protocol: HeaderValue) {
     headers.insert(header::CONNECTION, HeaderValue::from_static("upgrade"));
     headers.insert(header::UPGRADE, protocol);
 }
@@ -583,6 +583,10 @@ pub(crate) enum Who {
     /// A dialer on the pass holders' protocol, whose key holds the pass it
     /// presents, signed by the person (u5-2).
     Holder(Dialer),
+    /// This computer, opening its own lend at the lend's origin on its
+    /// loopback ([`crate::origin`], u5-2): the person this computer's key
+    /// is, counted as any other.
+    Own,
 }
 
 /// The person a request for a lend is carried as.
@@ -706,8 +710,10 @@ async fn through(
 /// One request for a lend, from `who`: refused by name, or carried to the
 /// lend's service and its answer streamed back.
 pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Request) -> Response {
-    let (Who::Member(dialer) | Who::Holder(dialer)) = who;
-    let actor = dialer.actor();
+    let actor = match who {
+        Who::Member(dialer) | Who::Holder(dialer) => dialer.actor(),
+        Who::Own => hex::encode(door.key),
+    };
     let path = req.uri().path().to_string();
     if can_step_out(&path) {
         tracing::debug!(target: "door", actor, path, "door: refused — a path that can step out of its lend");
@@ -721,7 +727,7 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
         return err(StatusCode::NOT_FOUND, "nothing is lent here by that name");
     };
     let pending = match who {
-        Who::Member(_) => {
+        Who::Member(_) | Who::Own => {
             let Some((group, person)) = door.rail.standing_anywhere(&actor, &Ed25519Verifier)
             else {
                 tracing::debug!(target: "door", actor, "door: refused — the dialer stands in no group held here");
