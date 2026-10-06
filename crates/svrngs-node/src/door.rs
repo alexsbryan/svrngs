@@ -533,6 +533,30 @@ fn own_address(lend: &Lend) -> HeaderValue {
         .expect("a host and a port are a header")
 }
 
+/// An `Origin` that is the lend's own — its first name the lend's label, as
+/// on a computer and with the wildcard (DESIGN §7) — told to the service
+/// as its own address, as the Host is ([`own_address`]), so an app that
+/// takes a post only from its own address, as Django's origin check does
+/// (Paperless-ngx; u5-catalogue-dry), takes the lend's own pages' posts.
+/// Any other origin is left as it is, so the service still refuses a post
+/// from a page that is not the lend's; on the floor the lends share one
+/// origin, which names no lend, and is left too.
+fn own_origin(headers: &mut HeaderMap, label: &Label, lend: &Lend) {
+    let Some(origin) = headers.get(header::ORIGIN).and_then(|o| o.to_str().ok()) else {
+        return;
+    };
+    let host = origin.split_once("://").map_or("", |(_, rest)| rest);
+    let first = host.split(['.', ':']).next().unwrap_or_default();
+    if !first.eq_ignore_ascii_case(&label.to_string()) {
+        tracing::debug!(target: "door", lend = %lend.name, origin, "door: the request's origin is not the lend's own; left as it is");
+        return;
+    }
+    let own = HeaderValue::from_str(&format!("http://localhost:{}", lend.port))
+        .expect("a host and a port are a header");
+    tracing::debug!(target: "door", lend = %lend.name, "door: the request's origin is the lend's own; told to the service as its own address");
+    headers.insert(header::ORIGIN, own);
+}
+
 /// `location` with the service's own address taken off, so `http://localhost:<port>/x`
 /// is `/x`, read on whatever origin the asker reached the lend at; `None`
 /// when it points anywhere else, which is left as it is.
@@ -935,6 +959,11 @@ async fn forward(
             "door: dropped headers the client typed in the door's or the secret's name before setting them");
     }
     parts.headers.insert(header::HOST, own_address(lend));
+    own_origin(
+        &mut parts.headers,
+        &Label::of(&door.key, lend.name.as_str()),
+        lend,
+    );
     if let Some(protocol) = upgrade.clone() {
         tracing::debug!(target: "door", actor, lend = %lend.name, ?protocol, "door: the request asks to switch protocols, carried");
         keep_upgrade(&mut parts.headers, protocol);
