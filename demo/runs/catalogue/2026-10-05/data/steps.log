@@ -5,3 +5,33 @@
 04:55:43 sam: Lent actual (port 5006) to everyone in your groups, up to 8 people at once.
 04:55:43 sam: Lent paperless (port 8000) to everyone in your groups, up to 8 people at once.
 04:55:46 act nextcloud-wildcard-webkit: load at start load averages: 4.87 3.22 2.88
+04:57:20 act nextcloud-wildcard-webkit: load at start load averages: 3.73 3.21 2.90
+04:58:00 act nextcloud-wildcard-webkit: did — 5242919 bytes taken, read back whole by the lender
+04:58:00 act nextcloud-wildcard-webkit: load at end load averages: 4.41 3.49 3.02
+04:58:05 act home-assistant-wildcard-chromium: load at start load averages: 4.30 3.48 3.02
+04:58:15 act home-assistant-wildcard-chromium: did — the lamp on, then off on Bo's page
+04:58:15 act home-assistant-wildcard-chromium: load at end load averages: 4.18 3.48 3.02
+04:58:15 act actual-wildcard-chromium: load at start load averages: 4.18 3.48 3.02
+04:58:35 act actual-wildcard-chromium: did — a budget open on Bo's page; the lender's server holds 4 budget(s), 3 before
+04:58:35 act actual-wildcard-chromium: load at end load averages: 4.54 3.61 3.08
+04:58:35 act paperless-wildcard-chromium: load at start load averages: 4.54 3.61 3.08
+04:58:51 act paperless-wildcard-chromium: did — consumed as document 5
+04:58:51 act paperless-wildcard-chromium: load at end load averages: 5.20 3.79 3.15
+04:58:51 act home-assistant-wildcard-webkit: load at start load averages: 5.20 3.79 3.15
+04:59:06 act home-assistant-wildcard-webkit: did — the lamp off, then on on Bo's page
+04:59:06 act home-assistant-wildcard-webkit: load at end load averages: 5.29 3.88 3.20
+04:59:06 act actual-wildcard-webkit: load at start load averages: 5.29 3.88 3.20
+04:59:28 act actual-wildcard-webkit: did — a budget open on Bo's page; the lender's server holds 5 budget(s), 4 before
+04:59:28 act actual-wildcard-webkit: load at end load averages: 6.75 4.32 3.37
+04:59:28 act paperless-wildcard-webkit: load at start load averages: 6.69 4.35 3.38
+04:59:44 act paperless-wildcard-webkit: did — consumed as document 6
+04:59:44 act paperless-wildcard-webkit: load at end load averages: 7.13 4.56 3.48
+04:59:48 act immich-wildcard-chromium: load at start load averages: 7.13 4.56 3.48
+05:01:47 act immich-wildcard-chromium: did — uploaded 99135178 bytes; played in 1784 ms; seeks 1062, 906, 2589 ms
+05:01:47 act immich-wildcard-chromium: load at end load averages: 5.47 4.62 3.63
+05:01:47 act immich-wildcard-webkit: load at start load averages: 5.47 4.62 3.63
+05:04:05 act immich-wildcard-webkit: did — uploaded 99135176 bytes; played in 2272 ms; seeks 1046, 3855, 15007 ms
+05:04:05 act immich-wildcard-webkit: load at end load averages: 7.73 6.08 4.38
+05:04:05 act nextcloud-wildcard-chromium: load at start load averages: 7.73 6.08 4.38
+05:04:45 act nextcloud-wildcard-chromium: did — 5242921 bytes taken, read back whole by the lender
+05:04:45 act nextcloud-wildcard-chromium: load at end load averages: 10.93 7.08 4.82
