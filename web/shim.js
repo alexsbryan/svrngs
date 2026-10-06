@@ -22,12 +22,13 @@
       else done({ error: 'no worker serves this page' });
     });
 
-  const jar = new Map(
-    (me.searchParams.get('c') ?? '')
+  // A `name=value; …` line of cookies, as `[name, value]` pairs.
+  const pairs = (line) =>
+    line
       .split('; ')
       .filter((c) => c.includes('='))
-      .map((c) => [c.slice(0, c.indexOf('=')), c.slice(c.indexOf('=') + 1)]),
-  );
+      .map((c) => [c.slice(0, c.indexOf('=')), c.slice(c.indexOf('=') + 1)]);
+  const jar = new Map(pairs(me.searchParams.get('c') ?? ''));
   Object.defineProperty(Document.prototype, 'cookie', {
     configurable: true,
     get: () => [...jar].map(([n, v]) => `${n}=${v}`).join('; '),
@@ -49,18 +50,19 @@
   // the lend's pages may read now (lend.js); taken in before the page
   // reads the answer, by fetch or by XMLHttpRequest, as a browser's
   // cookies are (Immich reads its sign-in's unreloaded).
+  const PAGE_COOKIES = 'x-svrngs-page-cookies';
   const takeIn = (line) => {
     if (line === null) return;
     jar.clear();
-    for (const c of line.split('; ').filter((c) => c.includes('='))) jar.set(c.slice(0, c.indexOf('=')), c.slice(c.indexOf('=') + 1));
+    for (const [n, v] of pairs(line)) jar.set(n, v);
   };
   const fetched = window.fetch;
   window.fetch = function (...a) {
-    return fetched.apply(this, a).then((r) => (takeIn(r.headers.get('x-svrngs-page-cookies')), r));
+    return fetched.apply(this, a).then((r) => (takeIn(r.headers.get(PAGE_COOKIES)), r));
   };
   const opened = XMLHttpRequest.prototype.open;
   XMLHttpRequest.prototype.open = function (...a) {
-    this.addEventListener('readystatechange', () => this.readyState === 2 && takeIn(this.getResponseHeader('x-svrngs-page-cookies')));
+    this.addEventListener('readystatechange', () => this.readyState === 2 && takeIn(this.getResponseHeader(PAGE_COOKIES)));
     return opened.apply(this, a);
   };
 

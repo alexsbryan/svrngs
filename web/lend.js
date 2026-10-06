@@ -211,7 +211,7 @@ async function lent(request, url, where) {
   // page's Content-Length, and a parser that reads by it — Django's
   // multipart, Paperless-ngx's upload (u5-catalogue-dry) — reads nothing
   // from a stream sent without one.
-  const blob = ['GET', 'HEAD'].includes(request.method) ? null : await request.blob();
+  const blob = posted ? await request.blob() : null;
   if (blob) headers.push(['content-length', String(blob.size)]);
   const body = blob?.stream() ?? null;
   const path = `/lend/${where.label}${where.path}`;
