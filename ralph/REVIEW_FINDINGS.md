@@ -2335,3 +2335,222 @@ session did not start. Through a lend 360, 479, 2280, **7393 failed**,
 straight; 34 ended at a load above 12 cores". Both runs kept; in both,
 Bo's lend missed on the floor and with the wildcard. This audit judges no
 rate: that is u5-12's and the operator's (u5-9 judges Demo A's).
+
+## REVIEW-audit-u5-auto-4 (2026-10-06, range d67a455..7dd8e65)
+
+The range starts at d67a455, the hash REVIEW-audit-u5-auto-3's row
+carries (ralph/next/u5/STATE.md:15), and ends at 7dd8e65, the commit that
+made this row. It covers u5-12 and bf9d8f0 (the last audit's second
+check.sh run, ralph/ only). The range touched web/ (lend.js, store.js,
+tests/conformance.mjs, tests/page.mjs), apps/web-conformance/checks.js
+and crates/svrngs-node/tests/conformance.rs; no `src/` of any crate
+(`git diff --stat d67a455 7dd8e65 -- crates apps web scripts`). This
+audit's fix is 153ca1e (#69).
+
+The row cites `docs/ARCH_PRINCIPLES.md`, which is at
+docs/principles/ARCH_PRINCIPLES.md, and `target/debug/sovereign-cli`,
+which svrngs does not build. The binary used is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, built 2026-10-06 12:30,
+sha256 68f2d27b…50f4. That is **not** the binary the last audit planted
+against (f37d4d53…0625), so its tiers were planted again.
+
+The clean runs are on this tree at c54f1e8 (7dd8e65 plus this row's
+`started` line), `git status --short` empty, corpus `svrngs` (`code
+index --full`: 2198 chunks in 415 s; `refresh`: rust 9096 symbols, python
+352, "typescript: skipped (export failed)"). The plants went into a clone
+of c54f1e8, /tmp/u5audit4/svrngs-plant, one commit holding them (e5f37f4
+there), corpus `svrngs-plant` (2207 chunks; rust 9113 symbols).
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' d67a455..7dd8e65`,
+summed by /tmp/u5audit4/ledger.py, the last audit's script and rules
+unchanged (a `check/` or `tests/` segment is a test; scripts/ is not
+counted, and the range changed none of it).
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| u5-12-worker-gone | 62 | 18 | 44 | 266 | 31 | 235 |
+| total | 62 | 18 | 44 | 266 | 31 | 235 |
+
+- src: web/lend.js +35 (`sent`, an upload's body handed to the dial a
+  256 KiB slice at a time, 861fd5a; the trace kept in the origin's store
+  across the worker's runs, 1300972), apps/web-conformance/checks.js +8
+  (`idle`, a fetch after 28 s quiet), web/store.js +1 (its comment names
+  `trace <label>`).
+- tests: crates/svrngs-node/tests/conformance.rs +174 (`browser_args` and
+  `browse`, moved out of `conformance` by ffb9bed; the requests no worker
+  answered, shown; `HELD`, `upload_after_seeks`, `tries`),
+  web/tests/conformance.mjs +54 (`routes`, each request and who answered
+  it, the host's load, WebKit's content processes sampled), web/tests/
+  page.mjs +7 (`server.asked`).
+
+`python3 scripts/lean_check.py <tree>` (rc 0), trees from `git archive`
+in /tmp/u5audit4:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| d67a455, range start | 2951 / 3000 | 13911 / 14000 |
+| 7dd8e65, range end | 2951 / 3000 | 13932 / 14000 |
+| 153ca1e, this audit's fix | 2951 / 3000 | 13932 / 14000 |
+
+lean_check counts no apps/ and no tests/: of the ledger's +44 it counts
+lend.js and store.js less comments. The repository rose 21 lines, to
+**99.5%** of its ceiling: 68 are left; svrngs-core has 49. A raise is the
+operator's; this audit names it and does not make it.
+
+### (2) Clones (`code dry-report`), each tier checked against a plant first
+
+Every symbol the range added in product code is JS (lend.js `sent`,
+checks.js `idle`); its Rust is all under tests/, which the tool excludes.
+**Plants:**
+
+- **A** (exact, Rust): door.rs `Carriage` and its `impl Drop`, verbatim,
+  in a `pub mod plant` at the end of door.rs. Not a symbol of this range
+  (u5-11's): it shows the Rust exact tier still works on the new binary.
+- **B** (near, JS): web/lend.js `sent` (u5-12) as `slices` at the end of
+  web/open.js, its five locals and parameters renamed.
+- **D** (JS, exact body): web/lend.js `sent` as `sentAgain` at the end of
+  web/store.js, verbatim.
+- **N** (noun): the plant's `pub struct Carriage`.
+
+`idle` is 6 lines, under the tool's 8-line floor ("distinct locations
+considered (≥8 lines)"), so it was not planted; the substitute pass
+below judges it.
+
+| scope | clean at 0.95: locations / exact / near | plants seen |
+|---|---|---|
+| crates/svrngs-node/ | 353 / 5 / 1 | **A exact** at 0.95, 0.9 and 0.8: `drop` door.rs:934 == :1123. At 0.9 also near, door.rs:931–951 ~ :1120–1139 |
+| web/ | 87 / **could-not-judge** / 0 | **D half seen**: at 0.95 and 0.9 only the inner `pull`s, lend.js:239–248 ~ store.js:189–197 at 0.996; `sentAgain` itself joins only at 0.8. **B missed** at 0.95 and 0.9; at 0.8 `slices` (open.js:62–75) and its `pull` join a cluster of six at 0.804–0.996 |
+| apps/ | 56 / 0 / 0 | not planted this time (I16 below is the last audit's) |
+
+N: `converge noun Carriage` on the plant gives **definitions (2)**,
+door.rs:924 and :1113, each a line early (I1: they are at :925 and
+:1114).
+
+The spans are off again (I14): `sent` is lend.js:237–247, its `pull`
+:242–245; the tool says :239–248. `slices` starts at open.js:65 and
+`sentAgain` at store.js:187; it says :62 and :184.
+
+**Clean runs.** Scoped at 0.95 (table above), each with a trailing slash
+(I11), and unscoped at 0.9: **14 exact groups and 29 near clusters** over
+1238 function/method symbols (14 and 29 over 1234 at the last audit).
+/tmp/u5audit4/blame.py blamed every side of every cluster (`git blame -w
+-M -C -C HEAD`) for lines in d67a455..7dd8e65: **no cluster in any run has
+a side added in the range** (`grep -c ^ADDED` on each `.blame`: 0, over
+43 clusters unscoped and 6 in crates/svrngs-node/).
+
+**Substitute check, named as a substitute.** /tmp/u5audit4/windows.py
+(windows of 5 normalized lines over .rs .js .mjs .py .sh, tests/
+included; a hit is new when either span has a line blamed in the range),
+on this tree at c54f1e8: 230 hits, **0 new**. On the plant clone: 232
+hits, 1 new, D (lend.js:238-244 == store.js:188-194). A is not new
+because blame follows its copy back to u5-11, before the range; B,
+renamed, it cannot see.
+
+Reading the range for what neither pass would show:
+
+- **#69, fixed.** 153ca1e: conformance.rs's paragraph naming #65's run
+  (:663-678 at 7dd8e65) ran straight into `HELD`'s own (:679-686), so
+  both were `const HELD`'s doc and `mod upload_after_seeks` had none.
+  Swapped, a blank line between; the file's sorted lines compared equal
+  before and after, and it builds.
+- **#70.** The host's load line, `echo $(date -u +%FT%TZ) $(uptime)`, the
+  u5 queue's rule for a run that times seeks, has two homes:
+  crates/svrngs-node/tests/conformance.rs:371-378 (`load`, at each
+  conformance run's start) and web/tests/conformance.mjs:55 (`load`, at
+  each lend's checks' start and end). `tries` reads the second's lines
+  back (`seen["load"]`, conformance.rs:776-777 at 153ca1e) and
+  scripts/check.sh's awk splits the first's on "averages?: ". They agree
+  today. Recorded.
+- **#71.** The browser half and the Rust half of the conformance run
+  agree on words, not fields: conformance.mjs:64 writes each request's
+  `by the worker` / `not by the worker` and conformance.rs:516 finds the
+  missed ones by `ends_with("not by the worker")`; page.mjs:32 writes the
+  page's host's lines, conformance.mjs:128 drops its files by
+  `^\S+ GET \S+ 200$` and conformance.rs:779 judges an upload lost by
+  `contains(" POST ")`. And a request that failed outright
+  (`requestfailed`, conformance.mjs:65, `failed: <error>`) is in the kept
+  JSON but not among the requests the run prints as unanswered by the
+  worker (conformance.rs:512-518), though no worker answered it either.
+  A field (who answered: the worker, the network, nobody) set once in
+  conformance.mjs would give one reading. Not fixed: it changes the kept
+  JSON's shape, which demo/runs/u5/2026-10-06-worker-gone/ holds.
+- **#57, grown.** web/lend.js:52: the trace a worker's earlier runs kept,
+  when the store cannot read it, becomes none (`() => []`), with no line;
+  beside the cookies and the app's worker (:128, :376), which #57 names.
+- **No change (#72).** checks.js `idle` (:93-98) and `upload` (:83-90)
+  end alike, a fetch, its text, `{ ok: res.ok && text === want, saw }`:
+  three lines, each check's own route and answer, and the canary's checks
+  are a stand-in's, outside lean_check's count. lend.js `sent` and
+  `counted` (:214-227) are both a `ReadableStream` with a `pull`: one
+  reads a Blob by slices, the other wraps a stream to trace it; a failure
+  inside `sent` reaches the dial's fetch, which traces it (lend.js:310).
+  The trace's 2,000 lines are `LINES` (lend.js:48) and a comment in
+  apps/jellyfin/check/trio.mjs:109, which is still true.
+- **#68, #62, #63, #64, #58, #49, #48, #42, still open.** The range
+  changed none of their lines (`git diff -U0 d67a455 7dd8e65 --
+  web/lend.js`: hunks at :28, :46, :50, :58, :65, :229, :295, :302,
+  :396); lend.js's below :229 moved down by up to 35.
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff d67a455 7dd8e65 -- crates apps web`, added lines matching
+`(struct|enum|trait|type|class) Name`: **none** (grep exit 1). The range
+added functions, a `const` and a `mod`, no noun, so `converge noun` has
+nothing of the range to look up; it was run on the plant (N above). No
+noun is defined twice.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 69 | 3 | crates/svrngs-node/tests/conformance.rs:663-687, at 7dd8e65 | 153ca1e | #65's run's doc ran into `HELD`'s, so the constant carried both and the module none. Moved, lines unchanged. |
+| 70 | 8 | crates/svrngs-node/tests/conformance.rs:371-378 and web/tests/conformance.mjs:55, at 153ca1e | not fixed | The host's load line written by two programs, read back by `tries` and by check.sh's awk. They agree today; one could hand the other its line. |
+| 71 | 8, 1 | web/tests/conformance.mjs:64, :65, :128; web/tests/page.mjs:32; crates/svrngs-node/tests/conformance.rs:512-518, :779, at 153ca1e | not fixed | Who answered a request is a phrase both halves spell, and the page's host's lines are parsed by a regex and by `contains`; a request that failed outright is kept but not shown among those no worker answered. One field set in conformance.mjs would be one reading; it changes the kept JSON. |
+| 57 | 1, 6 | as recorded, and web/lend.js:52, at 153ca1e | not fixed | Grown: earlier runs' trace that the store cannot read becomes none, with no line. |
+| 72 | 8 | the "no change" items in (2) | no change | `idle` and `upload`'s three-line ending; `sent` and `counted`, two streams that do different things; the trace's line count. |
+| 68, 62, 63, 64, 58, 49, 48, 42 | as recorded | as recorded | not fixed | Untouched in the range. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still present on the new binary: Carriage at door.rs:924 for :925, the plant's at :1113 for :1114. |
+| I4 | 6 | `refresh` | Still present: "typescript: skipped (export failed)", so web/'s exact tier is could-not-judge, and the range's only product symbols are JS. |
+| I10 | 6 | `code dry-report` header | Still present: "1238 function/method symbols" in every scope. |
+| I11 | 6 | `code dry-report --scope` | Not retested; every scoped run here used a trailing slash. |
+| I14 | 6, 7 | `code dry-report` near tier over JS | Still present: Plant D, a verbatim 11-line JS function, is seen at 0.95 only through its inner `pull`, and itself at 0.8; Plant B, renamed, only at 0.8; spans off by up to three lines. |
+| I16 | 6 | `code dry-report --scope apps/` exact tier | Not retested on this binary: nothing was planted in apps/. |
+
+The row's check (LINT): `scripts/check.sh` at 153ca1e on a clean tree,
+**run a part at a time, not as one process**: one run took 13:47-16:50
+at the last audit, longer than this session's foreground limit of ten
+minutes, and it may run nothing in the background. /tmp/u5audit4/part.sh
+holds check.sh's `step` and every step's command, copied (a `diff` of the
+two scripts' `step` lines differs only in `tests`), with check.sh's
+`cargo test --quiet` split by target: the workspace less svrngs-node;
+svrngs-node's lib and its short targets; its doc tests; `browser`;
+`conformance`. Every part exited 0, every step `passed`, 2026-10-06
+22:56:49Z-23:12:47Z (logs /tmp/u5audit4/check-*.log): principles pinned,
+lean and RUST_ARCH, app nouns gate, app nouns, rustfmt, clippy, the five
+parts of tests, canaries, web rustfmt and clippy, browser, joining in a
+browser, conformance canary (every route passed on a computer and with
+the wildcard; on the floor `/`-absolute paths, local storage and a post's
+Origin `needs the wildcard`), app laws. What this does not show is the
+one exit of check.sh itself; that is owed to whoever next has a
+foreground long enough, or runs it by hand.
+
+WebKit's seeks back to back, the rate (not a gate), ran twice, once in
+`tests` and once in the canary's own step. The host's 1-minute load was
+above its 12 cores through both, from work this session did not start
+(45.14 when the parts began; 12.85-30.46 across the first seeks, 18.43-
+36.17 across the second). First, through a lend: computer 397, 389;
+floor 2375, 4296; wildcard **6119 failed**, 3337 ms (Sam, Bo); straight
+at the canary 1872-4032, all passed. Second: computer 413, 392; floor
+**22896 failed**, 4704; wildcard 3119, 2569; straight 1896-3912, all
+passed. check.sh's count: "of 126 here since 2026-10-06T16:42:30Z: 29
+missed 5 s through a lend, 5 straight; 86 ended at a load above 12
+cores". Both kept, misses included; the host was not quiet again before
+this was written (31.80 at 23:13Z). This audit judges no rate: u5-9 and
+the operator judge Demo A's.
