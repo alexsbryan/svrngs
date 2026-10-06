@@ -226,19 +226,23 @@ function counted(body, said) {
   });
 }
 
-// `blob`'s bytes, as a stream, traced when the dial takes them all (u5-12):
-// whether a body got that far, if the worker ends while it goes.
+// `blob`'s bytes, a SLICE at a time as the dial takes them, traced when it
+// has taken them all (u5-12). WebKit's `blob.stream()` gives a 64 MiB body
+// as one chunk, which the runtime copies into its wasm memory, and wasm
+// memory never shrinks: each upload left the worker's process 135-320 MB
+// larger, and past 1 GB WebKit ended it ('Suspended WebProcess is exiting
+// due to memory pressure'), sending the request it held to the network
+// (demo/runs/u5/2026-10-06-worker-gone/).
+const SLICE = 256 * 1024;
 function sent(blob, what) {
-  const reader = blob.stream().getReader();
   const t0 = Date.now();
+  let at = 0;
   trace(`RUNTIME: ${what} sends a body of ${blob.size} bytes`);
   return new ReadableStream({
     async pull(c) {
-      const { value, done } = await reader.read();
-      if (done) return trace(`RUNTIME: ${what} handed its body to the dial whole, ${Date.now() - t0} ms`), c.close();
-      c.enqueue(value);
+      if (at >= blob.size) return trace(`RUNTIME: ${what} handed its body to the dial whole, ${Date.now() - t0} ms`), c.close();
+      c.enqueue(new Uint8Array(await blob.slice(at, (at += SLICE)).arrayBuffer()));
     },
-    cancel: (why) => reader.cancel(why),
   });
 }
 
@@ -288,10 +292,10 @@ async function lent(request, url, where) {
     headers.push(['origin', self.location.origin]);
   }
   // A body is read whole, as a Blob, which the browser keeps on disk when
-  // it is large, so it goes with its length: a worker never sees the
-  // page's Content-Length, and a parser that reads by it — Django's
-  // multipart, Paperless-ngx's upload (u5-catalogue-dry) — reads nothing
-  // from a stream sent without one.
+  // it is large, so it goes with its length, a slice at a time (`sent`): a
+  // worker never sees the page's Content-Length, and a parser that reads by
+  // it — Django's multipart, Paperless-ngx's upload (u5-catalogue-dry) —
+  // reads nothing from a stream sent without one.
   const path = `/lend/${where.label}${where.path}`;
   const blob = posted ? await request.blob() : null;
   if (blob) headers.push(['content-length', String(blob.size)]);
