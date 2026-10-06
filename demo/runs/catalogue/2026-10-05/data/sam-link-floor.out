@@ -1,0 +1,12 @@
+A new link to House. Any link you sent before stops letting anyone new in; everyone it let in stays.
+It works for a day, while this computer is on:
+
+  svrngs://join/<the link>
+
+or, to open it in a browser:
+
+  http://127.0.0.1:57231/#<the link>
+
+On a phone, every app opens under http://localhost:57231/: they share it, so an app there can see what another keeps there.
+
+Leave this running; Ctrl-C stops it.
