@@ -79,15 +79,21 @@ head.writeUInt16LE(16, 34);
 head.write('data', 36);
 head.writeUInt32LE(SIZE - 44, 40);
 
+// The bytes a request's Range asks of the 64 MiB, `[from, to]`, its end
+// held to the file's; null when it asks no range.
+function span(req) {
+  const m = /^bytes=(\d+)-(\d*)$/.exec(req.headers.range ?? '');
+  return m && [Number(m[1]), Math.min(m[2] === '' ? SIZE - 1 : Number(m[2]), SIZE - 1)];
+}
+
 // The WAV, whole or by Range, a MiB at a time as the asker reads it, so a
 // seek's abandoned answer costs the canary nothing it has not sent.
 function played(req, res) {
-  const m = /^bytes=(\d+)-(\d*)$/.exec(req.headers.range ?? '');
-  const from = m ? Number(m[1]) : 0;
-  const to = m ? Math.min(m[2] === '' ? SIZE - 1 : Number(m[2]), SIZE - 1) : SIZE - 1;
+  const asked = span(req);
+  const [from, to] = asked ?? [0, SIZE - 1];
   if (from >= SIZE || to < from) return sends(res, 416, 'text/plain', '', { 'content-range': `bytes */${SIZE}` });
-  const ranged = m ? { 'content-range': `bytes ${from}-${to}/${SIZE}` } : {};
-  res.writeHead(m ? 206 : 200, { ...SAME, 'content-type': 'audio/wav', 'accept-ranges': 'bytes', 'content-length': to - from + 1, ...ranged });
+  const ranged = asked ? { 'content-range': `bytes ${from}-${to}/${SIZE}` } : {};
+  res.writeHead(asked ? 206 : 200, { ...SAME, 'content-type': 'audio/wav', 'accept-ranges': 'bytes', 'content-length': to - from + 1, ...ranged });
   Readable.from(
     (function* () {
       for (let at = from; at <= to; at += 1 << 20) {
@@ -100,10 +106,9 @@ function played(req, res) {
 }
 
 function big(req, res) {
-  const m = /^bytes=(\d+)-(\d*)$/.exec(req.headers.range ?? '');
-  if (!m) return sends(res, 200, 'application/octet-stream', bytes(0, 1023), { 'content-length': 1024 });
-  const from = Number(m[1]);
-  const to = Math.min(m[2] === '' ? SIZE - 1 : Number(m[2]), SIZE - 1);
+  const asked = span(req);
+  if (!asked) return sends(res, 200, 'application/octet-stream', bytes(0, 1023), { 'content-length': 1024 });
+  const [from, to] = asked;
   if (from >= SIZE || to < from) return sends(res, 416, 'text/plain', '', { 'content-range': `bytes */${SIZE}` });
   res.writeHead(206, { ...SAME, 'content-type': 'application/octet-stream', 'content-length': to - from + 1, 'content-range': `bytes ${from}-${to}/${SIZE}` });
   for (let at = from; at <= to; at += 1 << 20) res.write(bytes(at, Math.min(at + (1 << 20) - 1, to)));
