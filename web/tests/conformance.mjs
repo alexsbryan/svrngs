@@ -75,7 +75,7 @@ try {
     }
     await ready();
     const seen = { at: page.url() };
-    for (const route of ['root', 'isolated', 'host', 'range', 'upload', 'websocket', 'signin', 'worker']) {
+    for (const route of ['root', 'isolated', 'host', 'range', 'upload', 'websocket', 'signin', 'guarded', 'worker']) {
       seen[route] = await run(route);
     }
     seen.stored = await run('stored', lend.who);

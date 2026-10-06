@@ -50,7 +50,8 @@
       const text = await res.text();
       return { ok: res.ok && text === want, saw: `${res.status} ${text}` };
     }),
-    // A WebSocket echo.
+    // A WebSocket echo, its state read as a page reads it: against the
+    // socket's own constants, as Home Assistant's library does.
     websocket: judged(
       () =>
         new Promise((done) => {
@@ -60,7 +61,8 @@
           const said = `ping ${Math.random()}`;
           ws.onopen = () => ws.send(said);
           ws.onmessage = (e) => {
-            done({ ok: e.data === said, saw: `echoed ${e.data}` });
+            const open = ws.OPEN === 1 && ws.readyState === ws.OPEN;
+            done({ ok: e.data === said && open, saw: `echoed ${e.data}; readyState ${ws.readyState}, OPEN ${ws.OPEN}` });
             ws.close();
           };
           ws.onerror = () => done({ ok: false, saw: 'the socket failed' });
@@ -76,11 +78,33 @@
       const text = await (await fetch('sw-probe')).text();
       return { ok: text === "from the app's worker", saw: text };
     }),
-    // A cookie sign-in: the cookie set, then sent.
+    // A cookie sign-in: the cookie set, then sent, and read by the page
+    // before any reload, as Immich reads its sign-in's.
     signin: judged(async () => {
       const { who } = await (await fetch('signin', { method: 'POST' })).json();
+      const now = document.cookie;
       const me = await (await fetch('me')).json();
-      return { ok: me.cookie.includes(`canary-${who}=`) && me.cookie.includes(`canary-${who}-hidden=1`), saw: me.cookie, who };
+      const ok = me.cookie.includes(`canary-${who}=`) && me.cookie.includes(`canary-${who}-hidden=1`) && now.includes(`canary-${who}=`) && !now.includes('hidden');
+      return { ok, saw: `sent ${me.cookie}; the page read ${now}`, who };
+    }),
+    // A post an app takes only from its own address, as Django's origin
+    // check does (Paperless-ngx).
+    // Asked twice: by fetch, and by a form, whose post a browser sends as
+    // it navigates (Paperless's sign-in), into a frame.
+    guarded: judged(async () => {
+      const res = await fetch('guarded', { method: 'POST', body: 'x' });
+      const fetched = `${res.status} ${await res.text()}`;
+      const frame = Object.assign(document.createElement('iframe'), { name: 'guarded' });
+      document.body.append(frame);
+      const form = Object.assign(document.createElement('form'), { method: 'POST', action: 'guarded', target: 'guarded' });
+      document.body.append(form);
+      const landed = new Promise((r) => frame.addEventListener('load', r, { once: true }));
+      form.submit();
+      await landed;
+      const posted = frame.contentDocument?.body?.innerText ?? 'the frame is not readable';
+      frame.remove();
+      form.remove();
+      return { ok: res.ok && posted.startsWith('taken'), saw: `fetch: ${fetched}; form: ${posted}` };
     }),
     // After a reload: the page reads its cookie, and not the HttpOnly one.
     cookie: judged(async (who) => {

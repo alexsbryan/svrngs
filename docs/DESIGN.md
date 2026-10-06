@@ -876,13 +876,17 @@ exists, each a small app in `apps/` using only §3:
   `/`-absolute paths, a WebSocket echo, a 64 MiB file read by Range and
   uploaded streaming, its own service worker, `SharedArrayBuffer` under
   COOP/COEP, a Host check with an absolute redirect, a cookie sign-in,
-  local storage. Landed (u5-2): `apps/web-conformance`, lent by Sam's and
+  local storage; and, from u5-catalogue-dry's misses, its page under a
+  script policy by nonce, its socket's state read against the socket's own
+  constants, its sign-in's cookie read by the page before any reload, and a
+  post it takes only from its own address, by fetch and by a form. Landed (u5-2): `apps/web-conformance`, lent by Sam's and
   Bo's computers at once and opened by Alex from a computer and from a phone
   both ways of §7, in Chromium and in WebKit as an iPhone, by
   `crates/svrngs-node/tests/conformance.rs`; a step of its own in
   `scripts/check.sh`, printing each route's verdict per way. Every route
   passes on a computer and with the wildcard; on the floor every route but
-  the root and storage apart, each reported as needing the wildcard.
+  the root, storage apart and a post from an address of its own, each
+  reported as needing the wildcard.
   Neither lend's cookie reaches the other's requests, Bo's door names
   Alex's key, no byte Alex receives holds either secret, a lent page finds
   no group whose key it could unseal, and a lent page's post to the record

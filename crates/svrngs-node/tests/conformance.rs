@@ -205,20 +205,22 @@ impl Way {
 }
 
 /// The canary's routes, as the row names them, each with its check.
-const ROUTES: [(&str, &str); 9] = [
+const ROUTES: [(&str, &str); 10] = [
     ("/-absolute paths", "root"),
-    ("WebSocket echo", "websocket"),
+    ("WebSocket echo, OPEN read", "websocket"),
     ("64 MiB read by Range", "range"),
     ("64 MiB uploaded streaming", "upload"),
     ("its own service worker", "worker"),
     ("SharedArrayBuffer under COOP/COEP", "isolated"),
     ("Host check, absolute redirect", "host"),
-    ("cookie sign-in", "signin"),
+    ("cookie sign-in, read unreloaded", "signin"),
+    ("post, Origin checked", "guarded"),
     ("local storage", "storage"),
 ];
 
-/// What the floor cannot give, by check: the root, and storage apart.
-const NEEDS_THE_WILDCARD: [&str; 2] = ["root", "storage"];
+/// What the floor cannot give, by check: the root, storage apart, and an
+/// origin of its own to post from.
+const NEEDS_THE_WILDCARD: [&str; 3] = ["root", "storage", "guarded"];
 
 /// Each route's verdict for one lend in one way: `passed`, `failed`, or,
 /// on the floor, `needs the wildcard` for what it cannot give.

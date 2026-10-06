@@ -11,8 +11,9 @@
 // Listens on 127.0.0.1, any port, and prints `{"port": N}`. No dependency.
 //
 // Routes:
-//   GET  /            its page, under COOP and COEP, asking `/abs.js` by a
-//                     path from the root and `checks.js` by one from itself
+//   GET  /            its page, under COOP and COEP and a script policy by
+//                     nonce, asking `/abs.js` by a path from the root and
+//                     `checks.js` by one from itself, each with the nonce
 //   GET  /abs.js      a script found only at the root of its own address
 //   GET  /checks.js   the checks
 //   GET  /ws          a WebSocket echo
@@ -24,6 +25,8 @@
 //                     `localhost:<port>`; else an absolute redirect there
 //   GET  /landed      where that lands
 //   POST /signin      sets `canary-<who>`, and an HttpOnly `canary-<who>-hidden`
+//   POST /guarded     refused when an `Origin` is not its own address, as
+//                     an app checking a post's origin against its Host does
 //   GET  /me          the cookies it was sent
 //   GET  /seen        every request it took: path, cookies, person and key
 import { createHash, randomBytes } from 'node:crypto';
@@ -36,9 +39,11 @@ const byte = (i) => (i * 7 + (i >> 10)) & 255;
 const seen = [];
 const SAME = { 'cross-origin-resource-policy': 'same-origin', 'cache-control': 'no-store' };
 const checks = readFileSync(new URL('./checks.js', import.meta.url));
-const page = `<!doctype html><html><head><meta charset="utf-8"><title>conformance</title>
-<script src="/abs.js"></script>
-<script src="checks.js"></script>
+// Under `script-src 'nonce-…' 'strict-dynamic'`, as Nextcloud's pages are:
+// a script the page did not name with its nonce does not run.
+const page = (nonce) => `<!doctype html><html><head><meta charset="utf-8"><title>conformance</title>
+<script nonce="${nonce}" src="/abs.js"></script>
+<script nonce="${nonce}" src="checks.js"></script>
 </head><body>the conformance canary, ${who}'s</body></html>`;
 
 const sends = (res, status, type, body, more = {}) => {
@@ -79,6 +84,12 @@ const server = http.createServer((req, res) => {
     req.on('data', (d) => ((n += d.length), sha.update(d)));
     return req.on('end', () => sends(res, 200, 'text/plain', `${n} ${sha.digest('hex')}`));
   }
+  if (req.method === 'POST' && path === '/guarded') {
+    const origin = req.headers.origin;
+    if (origin && !own.some((h) => origin === `http://${h}`)) return sends(res, 403, 'text/plain', `origin ${origin} is not ${own[0]}`, { 'cross-origin-embedder-policy': 'require-corp' });
+    // Its answer may be a frame's page in the canary's, which COEP holds to its own.
+    return sends(res, 200, 'text/plain', `taken from ${origin ?? 'no origin'}`, { 'cross-origin-embedder-policy': 'require-corp' });
+  }
   if (req.method === 'POST' && path === '/signin') {
     const token = randomBytes(6).toString('hex');
     return sends(res, 200, 'application/json', JSON.stringify({ who }), {
@@ -86,11 +97,14 @@ const server = http.createServer((req, res) => {
     });
   }
   switch (path) {
-    case '/':
-      return sends(res, 200, 'text/html; charset=utf-8', page, {
+    case '/': {
+      const nonce = randomBytes(12).toString('base64');
+      return sends(res, 200, 'text/html; charset=utf-8', page(nonce), {
         'cross-origin-opener-policy': 'same-origin',
         'cross-origin-embedder-policy': 'require-corp',
+        'content-security-policy': `script-src 'nonce-${nonce}' 'strict-dynamic'; worker-src 'self'`,
       });
+    }
     case '/abs.js':
       return sends(res, 200, 'text/javascript', "window.__abs = 'ran';");
     case '/checks.js':
