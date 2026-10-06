@@ -829,3 +829,148 @@ async fn a_websocket_upgrade_is_carried_both_ways() {
     );
     pair.close().await;
 }
+
+/// One raw request to `addr`; the whole reply, scanned.
+async fn raw_to(addr: SocketAddr, request: String) -> Reply {
+    let mut sock = tokio::net::TcpStream::connect(addr).await.unwrap();
+    sock.write_all(request.as_bytes()).await.unwrap();
+    let mut reply = Vec::new();
+    tokio::time::timeout(Duration::from_secs(30), sock.read_to_end(&mut reply))
+        .await
+        .expect("the door answers")
+        .unwrap();
+    Reply::of(reply)
+}
+
+#[allow(clippy::disallowed_methods)]
+fn unix_now() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64
+}
+
+/// A pass's holder (u5-2; DESIGN §3, "Lent apps", call 6): a fresh key
+/// standing nowhere dials A on the pass holders' protocol. With bo's pass
+/// for `shelf`, named by its label, it is let in as bo — the service is
+/// told bo and bo's key, never the holder's, and never the pass — and its
+/// secret is injected as for any member. The same pass at `other`, by label
+/// or by name, opens nothing; nor does no pass, a lapsed one, one signed by
+/// a key standing nowhere, or one held by another key. Planted: the door
+/// taking a pass for any lend (`PassFault::NotNamed` ignored).
+#[tokio::test]
+async fn a_pass_opens_only_the_lend_it_names_to_the_key_holding_it() {
+    use svrngs_core::alpn::Alpn;
+    use svrngs_core::pass::{Label, Pass};
+    use svrngs_node::iroh::{
+        ring_crypto_provider, EndpointAddr, EndpointBuilder, HttpBridge, SecretKey,
+    };
+
+    let (pair, heads) = lending_heads().await;
+    let (other, other_heads) = origins::head_origin().await;
+    pair.lend("other", other.port(), &[]);
+    let a = *pair.a.endpoint().id().as_bytes();
+    let (shelf, elsewhere) = (Label::of(&a, "shelf"), Label::of(&a, "other"));
+    let holder = signing(9);
+    let dialling = EndpointBuilder::empty()
+        .crypto_provider(ring_crypto_provider())
+        .secret_key(SecretKey::from_bytes(&holder.to_bytes()))
+        .bind()
+        .await
+        .unwrap();
+    let mut target = EndpointAddr::new(pair.a.endpoint().id());
+    for sock in loopback_sockets(pair.a.endpoint()) {
+        target = target.with_ip_addr(sock);
+    }
+    let bridge = HttpBridge::spawn_preferring(dialling, target, Alpn::Lend.bytes(), None)
+        .await
+        .unwrap();
+    let ask = |path: String, pass: Option<&Pass>| {
+        let pass = pass.map_or(String::new(), |p| {
+            format!("x-svrngs-pass: {}\r\n", p.encode())
+        });
+        raw_to(
+            bridge.local_addr(),
+            format!("GET {path} HTTP/1.1\r\nHost: local\r\n{pass}Connection: close\r\n\r\n"),
+        )
+    };
+    let until = unix_now() + 3600;
+    let bos = Pass::sign(&signing(2), &actor_of(&holder), vec![shelf.clone()], until);
+
+    let opened = ask(format!("/lend/{shelf}/whoami"), Some(&bos)).await;
+    assert_eq!(opened.status, 200, "{}", opened.text);
+    let head = last(&heads);
+    assert!(head.starts_with("GET /whoami HTTP/1.1\r\n"), "{head}");
+    assert_eq!(
+        header_values(&head, "x-svrngs-person"),
+        vec!["bo"],
+        "{head}"
+    );
+    assert_eq!(
+        header_values(&head, "x-svrngs-key"),
+        vec![actor_of(&signing(2))],
+        "{head}"
+    );
+    assert!(header_values(&head, "x-svrngs-pass").is_empty(), "{head}");
+    assert_eq!(
+        header_values(&head, "authorization"),
+        vec![SECRET],
+        "{head}"
+    );
+
+    let lapsed = Pass::sign(
+        &signing(2),
+        &actor_of(&holder),
+        vec![shelf.clone()],
+        unix_now() - 1,
+    );
+    let nobodys = Pass::sign(&signing(5), &actor_of(&holder), vec![shelf.clone()], until);
+    let anothers = Pass::sign(
+        &signing(2),
+        &actor_of(&signing(8)),
+        vec![shelf.clone()],
+        until,
+    );
+    for (why, path, pass) in [
+        (
+            "another lend, by its label",
+            format!("/lend/{elsewhere}/x"),
+            Some(&bos),
+        ),
+        (
+            "another lend, by its name",
+            "/lend/other/x".to_string(),
+            Some(&bos),
+        ),
+        ("no pass", format!("/lend/{shelf}/x"), None),
+        ("a lapsed pass", format!("/lend/{shelf}/x"), Some(&lapsed)),
+        (
+            "a pass signed by a key standing nowhere",
+            format!("/lend/{shelf}/x"),
+            Some(&nobodys),
+        ),
+        (
+            "a pass held by another key",
+            format!("/lend/{shelf}/x"),
+            Some(&anothers),
+        ),
+    ] {
+        let refused = ask(path, pass).await;
+        assert_eq!(refused.status, 403, "{why}: {}", refused.text);
+        assert!(
+            refused.text.contains(r#""kind":"pass""#),
+            "{why}: {}",
+            refused.text
+        );
+    }
+    assert_eq!(
+        heads.lock().unwrap().len(),
+        1,
+        "only the opened request reached shelf"
+    );
+    assert!(
+        other_heads.lock().unwrap().is_empty(),
+        "nothing reached other"
+    );
+    pair.close().await;
+}

@@ -199,6 +199,7 @@ impl Node {
         });
         let door = crate::door::Door {
             rail: rail.clone(),
+            key: endpoint.id().as_bytes().to_owned(),
             data_dir: data_dir.clone(),
             using: crate::door::Using::spawn(),
         };
@@ -232,6 +233,7 @@ impl Node {
         // The members' protocol serves sync and the live lane, the door to
         // what this computer lends (u3-4), and what the people of a
         // member's groups lend (u4-5).
+        let holders = crate::door::holders_router(asking.door.clone());
         let members = ring_routes::router(RingInbound {
             rail: rail.clone(),
             live,
@@ -244,6 +246,7 @@ impl Node {
                 match admit_dialer(&admitting, alpn, dialer) {
                     Some(Alpn::Member) => Admit::Serve(members.clone()),
                     Some(Alpn::Redeem) => Admit::Serve(redeem.clone()),
+                    Some(Alpn::Lend) => Admit::Serve(holders.clone()),
                     None => Admit::Refuse,
                 }
             });
@@ -652,6 +655,10 @@ fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn
         Some(Alpn::Redeem) => {
             tracing::debug!(target: "node", actor, "node: admitted to redeem a link — any dialer may");
             return Some(Alpn::Redeem);
+        }
+        Some(Alpn::Lend) => {
+            tracing::debug!(target: "node", actor, "node: admitted to present a pass for a lend — any dialer may, and the door asks the pass");
+            return Some(Alpn::Lend);
         }
         None => {
             tracing::debug!(target: "node", actor, alpn = %String::from_utf8_lossy(alpn), "node: refused — a protocol this node does not speak");

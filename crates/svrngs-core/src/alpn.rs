@@ -17,11 +17,14 @@ pub enum Alpn {
     Member,
     /// Redeeming a link: the one route a key standing nowhere may reach.
     Redeem,
+    /// A lend, to a key holding a pass from a person standing in a group
+    /// held there (u5-2): the door's one route, a pass on every request.
+    Lend,
 }
 
 impl Alpn {
     /// Every protocol, as the endpoint advertises them.
-    pub const ALL: [Alpn; 2] = [Alpn::Member, Alpn::Redeem];
+    pub const ALL: [Alpn; 3] = [Alpn::Member, Alpn::Redeem, Alpn::Lend];
 
     /// The bytes negotiated on the wire.
     pub const fn bytes(self) -> &'static [u8] {
@@ -30,6 +33,7 @@ impl Alpn {
             // protocol can coexist during migration.
             Alpn::Member => b"cwth/http/0",
             Alpn::Redeem => b"svrngs/redeem/0",
+            Alpn::Lend => b"svrngs/lend/0",
         }
     }
 
