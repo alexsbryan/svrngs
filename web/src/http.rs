@@ -125,6 +125,33 @@ fn frame(chunk: Result<JsValue, JsValue>) -> Result<Frame<Bytes>, BodyError> {
     Ok(Frame::data(Bytes::from(bytes.to_vec())))
 }
 
+/// The `Host` a request is asked with when the page names none: HTTP/1.1
+/// asks for one, and the door passes it to the service as is.
+const UNNAMED_HOST: &str = "svrngs";
+
+/// Hand `each` every `[name, value]` pair of `headers`, as named and in
+/// order, with the header hyper reads it as; refused at the first that is
+/// not one. Answers whether one is `Host`. [`request`] and [`socket`] ask
+/// it, so both send the same headers (REVIEW-audit-u5-auto-1 #56).
+fn headers_of(
+    headers: &js_sys::Array,
+    mut each: impl FnMut(&str, &str, hyper::header::HeaderName, hyper::header::HeaderValue),
+) -> Result<bool, Refused> {
+    let mut host = false;
+    for pair in headers.iter() {
+        let pair = pair.dyn_into::<js_sys::Array>().map_err(|_| Refused::Headers)?;
+        let (Some(name), Some(value)) = (pair.get(0).as_string(), pair.get(1).as_string()) else {
+            return Err(Refused::Headers);
+        };
+        let header =
+            hyper::header::HeaderName::from_bytes(name.as_bytes()).map_err(|_| Refused::Header(name.clone()))?;
+        let parsed = hyper::header::HeaderValue::from_str(&value).map_err(|_| Refused::Header(name.clone()))?;
+        host |= header == hyper::header::HOST;
+        each(&name, &value, header, parsed);
+    }
+    Ok(host)
+}
+
 /// The request hyper sends: `method` and `path`, every header in `headers`
 /// (an array of `[name, value]`) as named and in order, a `Host` only when
 /// none is named, and `body` read as it is sent.
@@ -137,19 +164,14 @@ fn request(
     let method = hyper::Method::from_bytes(method.as_bytes()).map_err(|_| Refused::Method(method.to_string()))?;
     let uri: hyper::Uri = path.parse().map_err(|_| Refused::Path(path.to_string()))?;
     let mut named = hyper::HeaderMap::new();
-    for pair in headers.iter() {
-        let pair = pair.dyn_into::<js_sys::Array>().map_err(|_| Refused::Headers)?;
-        let (Some(name), Some(value)) = (pair.get(0).as_string(), pair.get(1).as_string()) else {
-            return Err(Refused::Headers);
-        };
-        let header =
-            hyper::header::HeaderName::from_bytes(name.as_bytes()).map_err(|_| Refused::Header(name.clone()))?;
-        let value = hyper::header::HeaderValue::from_str(&value).map_err(|_| Refused::Header(name))?;
+    let host = headers_of(headers, |_, _, header, value| {
         named.append(header, value);
-    }
-    if !named.contains_key(hyper::header::HOST) {
-        // HTTP/1.1 asks for one; the door passes it to the service as is.
-        named.insert(hyper::header::HOST, hyper::header::HeaderValue::from_static("svrngs"));
+    })?;
+    if !host {
+        named.insert(
+            hyper::header::HOST,
+            hyper::header::HeaderValue::from_static(UNNAMED_HOST),
+        );
     }
     let body = match body {
         None => Either::Left(Empty::new()),
@@ -260,19 +282,11 @@ pub async fn fetch(
 /// switches.
 pub async fn socket(conn: Connection, path: &str, headers: &js_sys::Array) -> Result<JsValue, Refused> {
     let mut head = format!("GET {path} HTTP/1.1\r\n");
-    let mut host = false;
-    for pair in headers.iter() {
-        let pair = pair.dyn_into::<js_sys::Array>().map_err(|_| Refused::Headers)?;
-        let (Some(name), Some(value)) = (pair.get(0).as_string(), pair.get(1).as_string()) else {
-            return Err(Refused::Headers);
-        };
-        hyper::header::HeaderName::from_bytes(name.as_bytes()).map_err(|_| Refused::Header(name.clone()))?;
-        hyper::header::HeaderValue::from_str(&value).map_err(|_| Refused::Header(name.clone()))?;
-        host |= name.eq_ignore_ascii_case("host");
-        head.push_str(&format!("{name}: {value}\r\n"));
-    }
+    let host = headers_of(headers, |name, value, _, _| {
+        head.push_str(&format!("{name}: {value}\r\n"))
+    })?;
     if !host {
-        head.push_str("Host: svrngs\r\n");
+        head.push_str(&format!("Host: {UNNAMED_HOST}\r\n"));
     }
     head.push_str("\r\n");
     let (mut send, mut recv) = conn.open_bi().await.map_err(|e| Refused::Stream(e.to_string()))?;
