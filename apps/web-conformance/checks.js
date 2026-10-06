@@ -88,6 +88,14 @@
       const text = await res.text();
       return { ok: res.ok && text === want, saw: `${res.status} ${text}` };
     }),
+    // A plain fetch after a quiet as long as the one before #65's lost
+    // upload (u5-12): 28 s with nothing asked, then a page.
+    idle: judged(async () => {
+      await new Promise((r) => setTimeout(r, 28_000));
+      const res = await fetch('landed');
+      const text = await res.text();
+      return { ok: res.ok && text === 'landed', saw: `${res.status} ${text}` };
+    }),
     // A WebSocket echo, its state read as a page reads it: against the
     // socket's own constants, as Home Assistant's library does.
     websocket: judged(
