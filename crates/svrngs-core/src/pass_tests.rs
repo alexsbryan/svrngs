@@ -19,7 +19,7 @@ fn a_label_is_one_dns_label_that_names_its_lender_and_lend() {
     assert!(label
         .as_str()
         .bytes()
-        .all(|c| c.is_ascii_lowercase() || (b'2'..=b'7').contains(&c)));
+        .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit()));
     assert_eq!(label.lender(), lender(1));
     assert_eq!(Label::parse(label.as_str()), Some(label.clone()));
     assert_ne!(Label::of(&lender(1), "films"), label);
@@ -37,8 +37,21 @@ fn a_label_is_one_dns_label_that_names_its_lender_and_lend() {
     }
     // The 52nd letter holds the key's last bits: a set pad bit is not a key.
     let mut padded = label.as_str().as_bytes().to_vec();
-    padded[51] = b'7';
+    padded[51] = b'9';
     assert_eq!(Label::parse(core::str::from_utf8(&padded).unwrap()), None);
+}
+
+/// No label can spell a word DESIGN §1 keeps from people: each holds a
+/// letter the label's alphabet leaves out. The failing input is RFC 4648's
+/// alphabet, which holds every letter.
+#[test]
+fn no_label_spells_a_word_people_are_not_shown() {
+    for word in crate::link::KEPT_WORDS {
+        assert!(
+            word.bytes().any(|c| !BASE32.contains(&c)),
+            "{word} can be spelt in a label"
+        );
+    }
 }
 
 /// A pass opens what it names, to the key it names, until it lapses, and

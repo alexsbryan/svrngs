@@ -9,7 +9,7 @@
 //! certificate, which covers one label. A label holds at most 63 bytes, and
 //! a lend's name may be 64, so the label is the lender's key in full, which
 //! is dialled, then ten letters of the name's hash, which only its lender's
-//! door reads back, from what it declares: base32, lowercase, 62 letters.
+//! door reads back, from what it declares: 62 letters of [`BASE32`].
 //!
 //! **A pass**: a person's key signs that a fresh key, the holder, may act
 //! as them toward the lends it names until a time. The page signs one for
@@ -33,8 +33,13 @@ const LABEL_DOMAIN: &[u8] = b"svrngs-lend-label:";
 /// valid as an act's, a link's or a consent.
 const PASS_DOMAIN: &[u8] = b"svrngs-pass:";
 
-/// RFC 4648's base32 alphabet, lowercased: every letter a DNS label takes.
-const BASE32: &[u8; 32] = b"abcdefghijklmnopqrstuvwxyz234567";
+/// Base32's alphabet for a label: 22 lowercase letters and the ten digits,
+/// each a letter a DNS label takes. Not RFC 4648's: `e`, `i`, `o` and `y`
+/// are left out, and every word DESIGN §1 keeps from people
+/// ([`crate::link::KEPT_WORDS`]) holds one, so no label — printed to a
+/// person as a lend's address, and fixed by its lender's key, so never
+/// drawn again as a link's token is — spells one.
+const BASE32: &[u8; 32] = b"abcdfghjklmnpqrstuvwxz0123456789";
 
 /// The lender's 32 bytes in base32, and the name's part.
 const KEY_LETTERS: usize = 52;
