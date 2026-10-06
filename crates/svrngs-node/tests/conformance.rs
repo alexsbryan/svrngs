@@ -682,8 +682,8 @@ async fn on_a_phone_on_the_floor(engine: Engine) {
 /// 1,393 MB resident ('Memory usage policy changed: Unrestricted ->
 /// Conservative', 'Suspended WebProcess is exiting due to memory
 /// pressure'); the same tries left it at 1,332 MB in runs WebKit did not end
-/// it, and at 511 MB once a body went a slice at a time
-/// (demo/runs/u5/2026-10-06-worker-gone/).
+/// it, and at 511 MB (fixed-1) and 670 MB (fixed-2) once a body went a
+/// slice at a time (demo/runs/u5/2026-10-06-worker-gone/).
 const HELD: u64 = 1024;
 
 mod upload_after_seeks {
