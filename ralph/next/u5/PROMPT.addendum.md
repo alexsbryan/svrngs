@@ -70,3 +70,11 @@ data dirs, short H.264 files made with ffmpeg); scripts/check.sh stays free of
 Jellyfin, so what runs there uses a small stand-in origin, and the Jellyfin
 runs are their own script beside it. Anything a person reads uses only DESIGN
 §1's words.
+
+Containers run with podman, never docker or OrbStack (operator, 2026-10-05:
+"Never docker. Only podman and open software."): `podman machine start`,
+then `podman run`, `podman pod` or `podman kube play`; the settings allow
+those and refuse docker. u5-catalogue-dry's row names "OrbStack's
+`docker`": that premise is false, so correct the row as the rules say,
+citing this paragraph. A tool the run needs that is not open software, or
+that this host does not have, is the operator's to give.

@@ -20,7 +20,8 @@ or a bar, Demo B's pre-registered gate in `demo/` and §8 included; changing a
 decision in DESIGN §10 or in §8 "U6's inventory"; anything that would put a
 screen, player, AirPlay, Cast or media word or protocol into svrngs (operator,
 2026-10-05: out of scope); a door behaviour that only one app needs; raising
-the size budget; a dependency on a commonwealth-ai or sovereign crate;
+the size budget; docker, OrbStack or any tool that is not open software (operator,
+2026-10-05: podman and open software only); a dependency on a commonwealth-ai or sovereign crate;
 anything that needs a service this host cannot run (say what, and the command
 that would run it); pushing, history rewrites, `--no-verify`; anything whose
 evidence you could not reproduce.

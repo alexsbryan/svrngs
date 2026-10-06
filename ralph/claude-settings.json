@@ -18,14 +18,20 @@
       "Bash(ls *)", "Bash(cat *)", "Bash(head *)", "Bash(tail *)", "Bash(wc *)", "Bash(grep *)",
       "Bash(rg *)", "Bash(sed *)", "Bash(awk *)", "Bash(sort *)", "Bash(uniq *)", "Bash(diff *)",
       "Bash(find *)", "Bash(echo *)", "Bash(printf *)", "Bash(test *)", "Bash(which *)",
-      "Bash(jq *)", "Bash(mkdir -p *)", "Bash(cd *)", "Bash(date*)", "Bash(true)"
+      "Bash(jq *)", "Bash(mkdir -p *)", "Bash(cd *)", "Bash(date*)", "Bash(true)",
+      "Bash(podman machine start*)", "Bash(podman machine list*)", "Bash(podman pull *)",
+      "Bash(podman run *)", "Bash(podman ps*)", "Bash(podman logs *)", "Bash(podman inspect *)",
+      "Bash(podman exec *)", "Bash(podman stop *)", "Bash(podman rm *)", "Bash(podman pod *)",
+      "Bash(podman kube *)", "Bash(podman volume *)", "Bash(podman network *)", "Bash(podman port *)",
+      "Bash(podman compose *)"
     ],
     "deny": [
       "Agent", "WebFetch", "WebSearch",
       "Bash(git push*)", "Bash(git reset --hard*)", "Bash(git rebase*)", "Bash(git commit --amend*)",
       "Bash(git filter-*)", "Bash(* --no-verify*)", "Bash(sudo *)", "Bash(rm -rf /*)", "Bash(rm -rf ~*)",
       "Bash(git add -A*)", "Bash(git add --all*)", "Bash(git add -u*)", "Bash(git add .)",
-      "Bash(git add . *)", "Bash(git add :/*)", "Bash(git commit -a*)", "Bash(git commit --all*)"
+      "Bash(git add . *)", "Bash(git add :/*)", "Bash(git commit -a*)", "Bash(git commit --all*)",
+      "Bash(docker*)", "Bash(* docker *)", "Bash(orb*)"
     ]
   }
 }
