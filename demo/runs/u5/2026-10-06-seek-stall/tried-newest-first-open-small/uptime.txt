@@ -1,0 +1,2 @@
+ 7:37  up 1 day, 48 mins, 11 users, load averages: 1.83 2.84 3.15
+ 7:39  up 1 day, 50 mins, 11 users, load averages: 4.00 3.54 3.40

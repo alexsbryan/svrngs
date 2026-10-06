@@ -74,3 +74,72 @@ In `before-1` and `before-2`:
   link's queue; the last two took 3,655 and 3,832 ms. In WebKit the seeks are
   taken one at a time, with a 64 KiB probe a round trip at each, and its
   2 MiB parts for each place it looked queue ahead of the next probe.
+
+## The fix, and what was tried
+
+`web/lend.js` `bounded`: an open-ended range — Chromium's every seek —
+is asked of the door as a part of 256 KiB where no part of the file ended
+just there, and twice the last each time the reading runs on from where
+the last ended, up to 2 MiB. A seek let go of costs the link at most
+256 KiB. A closed range, WebKit's `bytes=N-<end>`, stays a part of 2 MiB.
+
+`again`, ms after the twentieth seek + 250 ms, the four phone lends of
+each engine (floor and wildcard, Sam's and Bo's), sorted; every run all
+six tests at once, the host's 1-minute load 1.7–4.6 throughout (12
+cores):
+
+| run | what the worker and door did | Chromium | WebKit as an iPhone |
+|---|---|---|---|
+| before-1 | as at the row's start | 4,049, 4,322, 4,706, **5,010** | 2,282, 3,190, **5,015**, **5,713** |
+| before-2 | as at the row's start | 4,171, 4,357, 4,641, 4,707 | 3,984, 4,658, **5,737**, **6,173** |
+| tried-all-small | every range's part starts at 256 KiB | 670, 722, 727, 758 | 2,183, 2,975, **6,480**, **7,008** |
+| tried-newest-first | each stream's answer sent before any older's (the door's QUIC stream priority, `iroh.rs`'s acceptor) | 2,577, 2,927, 3,559, 3,665 | 1,344, 2,592, 3,528, 4,536 |
+| tried-newest-first-all-small | both | 607, 651, 683, 716 | 3,839, 4,178, 4,727, **24,190** |
+| tried-newest-first-open-small | newest first, and the fix | 550, 644, 716, 794 | 1,776, 3,335, **5,161**, **7,631** |
+| tried-closed-whole | the fix, and a closed range asked whole | 721, 733, 744, 751 | 2,783, 3,553, 3,623, **13,706** |
+| after-1 | the fix | 744, 747, 759, 803 | 2,448, 2,615, 4,607, **6,026** |
+| after-2 | the fix | 721, 743, 744, 828 | 240, 3,263, 3,671, 3,984 |
+
+Computers played again in 360–1,018 ms in every run. Bold: missed 5 s
+with the 250 ms. Nothing tried is kept but the fix: newest-first moved no
+WebKit seek that the runs can tell from noise, and leaves a long-lived
+socket behind every newer download.
+
+- **Chromium: fixed.** 1 of 8 missed before, 4,049–5,010; none of 8
+  after, 721–828 — faster than Chromium straight at the canary over the
+  same link (below), 1,224–1,414, since a part the lend asks is smaller
+  than what Chromium asks of a server.
+- **WebKit: 4 of 8 missed before, 1 of 8 after; not fixed.** Its seeks
+  are its own. Through a lend, a closed range answered in parts makes
+  WebKit fetch at its seek in serial 64 KiB reads, a round trip each, and
+  fill the gaps behind it from the file's start (`tried-newest-first-
+  all-small`, floor Sam: 14 reads of 64 KiB or less at 28.4–29.3 MB,
+  asked over 8.1 s). Parts
+  starting smaller make it slower (`tried-all-small`); a closed range
+  answered whole, it reads through, 18–40 MB at a time for 36–65 s, as
+  in u4-8 (`tried-closed-whole`, wildcard Sam; ralph/REVIEW_FINDINGS.md
+  #53).
+
+## The control: straight at the canary, the same link
+
+`control.mjs` (`control.json`): the canary's page opened by Playwright
+straight at the canary, no svrngs, through a proxy giving the browser the
+same link — 150 ms each way, what the canary sends paced to
+16,666,666 bit/s, a second's bytes queued, shared by every connection.
+Eight tries each, load 1.7–3.3:
+
+- WebKit as an iPhone: 1,944, 2,159, 2,184, 3,792, 3,841, 3,983, 4,151,
+  4,224 — none missed.
+- Chromium: 1,224–1,414 — none missed.
+
+Straight at the canary WebKit asks one closed range at each place it
+seeks, streams it, and closes the connection when it moves on (each run's
+`log`): three or four places for twenty seeks, in the two read here.
+
+## Not reproduced here
+
+u5-9's stall was 21 of 22 seeks never playing again within 30 s, in
+WebKit, in Jellyfin's converted film (HLS), through n0's relay. The
+canary's file, played as sound, never stalled like that here: its worst
+was 24,190 ms, under a change not kept. Whether the converted film's
+stall is this one is not shown.

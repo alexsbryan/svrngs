@@ -145,21 +145,38 @@ async function keepJar(label) {
 
 // ── a request, through the door ─────────────────────────────────────────
 
-// A range that runs on is asked of the door as a part of PART bytes (u4-9;
+// A range that runs on is asked of the door as a part of at most PART (u4-9;
 // moved from sw.js): an open-ended `bytes=N-`, and a `<video>`'s closed
 // range longer than a part, WebKit's `bytes=N-<end>`. A page's own fetch
 // of a closed range gets what it asked.
+//
+// An open-ended range's part is FIRST where no part of the file ended just
+// there — a seek, or a first look — and twice the last each time the
+// reading runs on from where the last ended, up to PART (u5-11). Chromium
+// lets a seek's request go without telling the worker (neither engine
+// aborts its fetch event), and the door sent each one's 2 MiB into a
+// phone's link ahead of the last seek's bytes; each now costs it at most
+// FIRST. A closed range stays a part of PART: WebKit, which asks those,
+// took longer to play again when its parts started smaller, and read them
+// through when they were whole (demo/runs/u5/2026-10-06-seek-stall/).
 const PART = 2 * 1024 * 1024;
+const FIRST = 256 * 1024;
+// Where a part of a file ends, `<path> <offset>`, and that part's size.
+const ends = new Map();
 
-function bounded(headers, destination) {
+function bounded(headers, destination, path) {
   return headers.map(([name, value]) => {
     const range = name.toLowerCase() === 'range' && /^bytes=(\d+)-(\d*)$/.exec(value.trim());
     if (!range) return [name, value];
     const from = Number(range[1]);
     const media = destination === 'video' || destination === 'audio';
-    if (range[2] !== '' && !(media && Number(range[2]) - from + 1 > PART)) return [name, value];
-    trace(`RUNTIME: ${value} for ${destination || 'a fetch'} runs on: asked as a part`);
-    return [name, `bytes=${from}-${from + PART - 1}`];
+    const size = range[2] !== '' ? PART : Math.min(PART, 2 * (ends.get(`${path} ${from}`) ?? FIRST / 2));
+    if (range[2] !== '' && !(media && Number(range[2]) - from + 1 > size)) return [name, value];
+    ends.delete(`${path} ${from}`);
+    ends.set(`${path} ${from + size}`, size);
+    if (ends.size > 64) ends.delete(ends.keys().next().value);
+    trace(`RUNTIME: ${value} for ${destination || 'a fetch'} runs on: asked as a part of ${size} bytes`);
+    return [name, `bytes=${from}-${from + size - 1}`];
   });
 }
 
@@ -222,6 +239,7 @@ async function lent(request, url, where) {
   const headers = bounded(
     [...request.headers].filter(([n]) => !['cookie', 'content-length'].includes(n.toLowerCase())),
     request.destination,
+    where.path,
   );
   const cookie = cookieFor(jar, where.path, false);
   if (cookie) headers.push(['cookie', cookie]);
