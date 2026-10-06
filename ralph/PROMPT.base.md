@@ -29,10 +29,10 @@ the correction would weaken a check, stop and write the package (below).
 
 <!-- section: done -->
 Done is `scripts/check.sh` exiting 0 with your row's check proven, every
-commit made. Then end with `{{result}} done`.
+commit made. Then run `{{result}} done` in the shell, as its own command.
 
 <!-- section: blocked -->
 If you cannot finish without a decision the row and the design do not make,
 commit your work so far, write the question, what you tried, and the
-evidence to a file, and end with
+evidence to a file, and run, in the shell,
 `{{result}} needs-human --package <that file> <the question in one line>`.
