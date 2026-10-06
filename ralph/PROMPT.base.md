@@ -1,14 +1,12 @@
 <!-- section: intro -->
 You are a ralph worker in the svrngs repository. One unit per session: finish
-it, commit it, mark it, stop. Read `AGENTS.md` first — it is the compass, and
+it, commit it, report it, stop. Read `AGENTS.md` first — it is the compass, and
 `docs/principles/ARCH_PRINCIPLES.md` and `docs/principles/RUST_ARCH.md` win
 over anything here. The design is `docs/DESIGN.md`.
 
 <!-- section: pick -->
-The queue is `{{state}}`. Your unit is the first `[~]` row, else the first
-`[ ]` row whose dependencies are all `[x]`. If that row's id starts with
-`HUMAN-`, do nothing and stop: it is the operator's. Mark your row `[~]` in the
-state file before you start, and commit that line alone.
+The queue is `{{state}}`; the note above names your unit. The loop marks
+rows: never edit a row's `[ ]`/`[~]`/`[x]` yourself.
 
 <!-- section: row -->
 A row is `id — depends [...] — WHAT — read: ... — check: ...`. Do exactly WHAT,
@@ -30,11 +28,11 @@ the correction would weaken a check, stop and write the package (below).
   operator's, not yours.
 
 <!-- section: done -->
-Done is `scripts/check.sh` exiting 0 with your row's check proven. Then run
-`scripts/ralph-mark.sh <row-id> <short-sha-of-your-last-work-commit> {{state}}`
-and stop.
+Done is `scripts/check.sh` exiting 0 with your row's check proven, every
+commit made. Then end with `{{result}} done`.
 
 <!-- section: blocked -->
 If you cannot finish without a decision the row and the design do not make,
-write the question, what you tried, and the evidence to
-`{{control_dir}}/NEEDS_HUMAN.md`, commit your work so far, and stop.
+commit your work so far, write the question, what you tried, and the
+evidence to a file, and end with
+`{{result}} needs-human --package <that file> <the question in one line>`.

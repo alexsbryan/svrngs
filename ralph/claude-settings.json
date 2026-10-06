@@ -10,6 +10,7 @@
       "Bash(git -C ~/dev/commonwealth-ai ls-tree *)", "Bash(git -C /Users/alexsbryan/dev/commonwealth-ai ls-tree *)",
       "Bash(git add *)", "Bash(git commit *)", "Bash(git checkout -- *)", "Bash(git restore *)",
       "Bash(scripts/check.sh*)", "Bash(./scripts/check.sh*)",
+      "Bash(ralph-result *)",
       "Bash(scripts/ralph-mark.sh *)", "Bash(./scripts/ralph-mark.sh *)",
       "Bash(python3 scripts/*)", "Bash(python3 -c *)",
       "Bash(cargo build*)", "Bash(cargo check*)", "Bash(cargo test*)", "Bash(cargo fmt*)",
