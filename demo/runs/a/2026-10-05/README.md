@@ -238,7 +238,7 @@ its own. On a Mac with podman (scratch under `$HOME`):
 R=~/u5-catalogue-phone
 demo/runs/catalogue/2026-10-05/run.sh apps $R          # the five in podman, Bo's accounts made
 export SVRNGS_DIR=~/.svrngs-catalogue
-RUST_LOG=info target/release/svrngs new House --as Sam --origin https://www.svrnme.sh/g/ 2>sam-run.log
+RUST_LOG=info target/release/svrngs new House --as Sam --origin https://group.svrnme.sh/ 2>sam-run.log
 # beside it, once each, pressing Enter at any password question:
 for ap in home-assistant:8123 immich:2283 nextcloud:8080 actual:5006 paperless:8000; do
   target/release/svrngs share "${ap##*:}" --kind "${ap%%:*}" --name "${ap%%:*}" </dev/null
@@ -246,7 +246,7 @@ done
 ```
 
 Bo's password is in `$R/secrets/bo_pw`; it is also Actual's server
-password, and Bo signs in to Immich as `bo@house.test`. Open the `https://www.svrnme.sh/g/#…`
+password, and Bo signs in to Immich as `bo@house.test`. Open the `https://group.svrnme.sh/#…`
 link on the phone, give a name, and do each act from the group's list:
 
 | App | The act | Checked by Sam, on the Mac |
@@ -259,5 +259,5 @@ link on the phone, give a name, and do each act from the group's list:
 
 Record the screen; for each act, record did or did not, and where it
 stopped; each Immich seek's time; the phone, its OS and browser. If one
-stops, also save the app's `https://<label>.svrnme.sh/svrngs-trace` from
+stops, also save the app's `https://<label>.group.svrnme.sh/svrngs-trace` from
 the same browser. `run.sh apps-down $R` removes the five.

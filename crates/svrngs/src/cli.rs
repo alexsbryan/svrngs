@@ -87,7 +87,7 @@ svrngs — keep what your group shares on your own computers.
       --origin also prints its links on a page address, from now on, for
       people who open them in a browser. On a phone each app then opens at
       an address of its own under that page's host, if it answers every
-      name under it (svrnme.sh does); else name a second address the apps
+      name under it (group.svrnme.sh does); else name a second address the apps
       open under with --lends-origin.
 
   svrngs join <link> [--as <your name>]

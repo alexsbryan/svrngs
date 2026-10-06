@@ -249,7 +249,7 @@ is U5's inventory (§8).
    phone has two modes, and `svrngs new` says which the group got: the
    floor, any static host serving two hostnames — the page's, holding the
    key, and one for every lend, each under `/l/<id>/`; and, when the page's
-   host answers a wildcard (svrnme.sh does), each lend at
+   host answers a wildcard (group.svrnme.sh does), each lend at
    `<id>.<page host>`, its origin's root and storage its own, at the price
    that the host and the phone's DNS see which lend is opened. One shared
    origin let any lent page unseal the key of whoever opened it (u4-6, §11
@@ -565,7 +565,7 @@ the group's apps open on a phone, prints which, and keeps it for `link`
 (`crates/svrngs/src/cli.rs`, `pages` and `Apps`):
 - *Each at an address of its own*, `https://<label>.<page host>/`, when the
   page's host answers every name under it, which the command checks by
-  asking for a name nobody made; svrnme.sh does, so a group that names ours
+  asking for a name nobody made; group.svrnme.sh does (the Vercel project svrngs-page, deployed by `scripts/deploy-page.sh`), so a group that names ours
   types nothing more. Each app's root and storage are its own, and its pages
   hold a pass for it and the lends it reads, no other. The cost: the page's
   host and the phone's name lookups see which app is opened, since its label
