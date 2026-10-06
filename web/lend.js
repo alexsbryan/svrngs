@@ -25,6 +25,9 @@
 //   answer before the lend's (`appWorker`).
 //
 // Its trace is at `<scope>svrngs-trace`: a phone has no console to read.
+// It is kept in this origin's store as it is written, so it outlives the
+// run of the worker that wrote it: each run starts its own lines, after
+// the last runs' (u5-12: a worker WebKit ended took its trace with it).
 import init, { holder_endpoint } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
 
@@ -40,14 +43,26 @@ const OWN = UNDER ?? SCOPE.hostname.split('.')[0];
 const PLAIN = { 'content-type': 'text/plain; charset=utf-8' };
 const TRACE = `${SCOPE.pathname}svrngs-trace`;
 
+// Enough for a film's seeks, each range's lines with them (u5-11), over
+// this run and the last.
+const LINES = 2000;
 const traced = [];
+// The last runs' lines, read once; this run's are kept after them, a
+// second at most after each is written.
+const before = store.lendKept(`trace ${OWN}`).then((l) => l ?? [], () => []);
+let keeping = null;
+const kept = async () => [...(await before), ...traced].slice(-LINES);
 self.__trace = (l) => {
   console.debug(l);
   traced.push(`${new Date().toISOString()} ${l}`);
-  // Enough for a film's seeks, each range's lines with them (u5-11).
-  if (traced.length > 2000) traced.shift();
+  if (traced.length > LINES) traced.shift();
+  keeping ??= setTimeout(async () => {
+    keeping = null;
+    await store.lendKeep(`trace ${OWN}`, await kept()).catch((e) => console.debug(`RUNTIME: the trace was not kept: ${e}`));
+  }, 1000);
 };
 const trace = self.__trace;
+trace(`RUNTIME: this run of the worker begins`);
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
@@ -211,6 +226,22 @@ function counted(body, said) {
   });
 }
 
+// `blob`'s bytes, as a stream, traced when the dial takes them all (u5-12):
+// whether a body got that far, if the worker ends while it goes.
+function sent(blob, what) {
+  const reader = blob.stream().getReader();
+  const t0 = Date.now();
+  trace(`RUNTIME: ${what} sends a body of ${blob.size} bytes`);
+  return new ReadableStream({
+    async pull(c) {
+      const { value, done } = await reader.read();
+      if (done) return trace(`RUNTIME: ${what} handed its body to the dial whole, ${Date.now() - t0} ms`), c.close();
+      c.enqueue(value);
+    },
+    cancel: (why) => reader.cancel(why),
+  });
+}
+
 // The header an answer that set cookies carries to the shim (shim.js).
 const PAGE_COOKIES = 'x-svrngs-page-cookies';
 
@@ -261,10 +292,10 @@ async function lent(request, url, where) {
   // page's Content-Length, and a parser that reads by it — Django's
   // multipart, Paperless-ngx's upload (u5-catalogue-dry) — reads nothing
   // from a stream sent without one.
+  const path = `/lend/${where.label}${where.path}`;
   const blob = posted ? await request.blob() : null;
   if (blob) headers.push(['content-length', String(blob.size)]);
-  const body = blob?.stream() ?? null;
-  const path = `/lend/${where.label}${where.path}`;
+  const body = blob ? sent(blob, `${request.method} ${path}`) : null;
   const said = ranged(request, path);
   let res;
   for (let tries = 0; !res; tries++) {
@@ -358,7 +389,7 @@ async function answered(e, url, where) {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (url.origin === self.location.origin && url.pathname === TRACE) {
-    return e.respondWith(new Response(`svrngs lend worker __VERSION__ for ${OWN}\n${traced.join('\n')}`, { headers: PLAIN }));
+    return e.respondWith(kept().then((lines) => new Response(`svrngs lend worker __VERSION__ for ${OWN}\n${lines.join('\n')}`, { headers: PLAIN })));
   }
   const shell = url.origin === self.location.origin && url.searchParams.has('v') && url.pathname.startsWith(SITE);
   if (shell && SHELL.test(url.pathname.slice(SITE.length))) return;
