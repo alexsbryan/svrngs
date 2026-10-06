@@ -2324,3 +2324,14 @@ failed** ms (computer, floor, wildcard; Sam, Bo); straight at the canary
 15-minute 21.76 and 36.04) and ended at 6.92-10.80. "of 56 here since
 2026-10-06T16:42:30Z: 14 missed 5 s through a lend, 2 straight; 26 ended
 at a load above 12 cores".
+
+Its load was above 12 cores, so it was run again at d67a455 when the
+host read 6.25: rc 0 in 13:47, every step `passed` as above (log
+/tmp/u5audit3/check-2.log). The host did not stay quiet: the seeks began
+at 16.62 and ended at 14.65-28.05, 40.63 by the run's end, from work this
+session did not start. Through a lend 360, 479, 2280, **7393 failed**,
+4368, **17496 failed** ms; straight at the canary 2207-4105, all passed;
+"of 68 here since 2026-10-06T16:42:30Z: 17 missed 5 s through a lend, 3
+straight; 34 ended at a load above 12 cores". Both runs kept; in both,
+Bo's lend missed on the floor and with the wildcard. This audit judges no
+rate: that is u5-12's and the operator's (u5-9 judges Demo A's).
