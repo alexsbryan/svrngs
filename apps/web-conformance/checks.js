@@ -45,7 +45,8 @@
     // The whole 64 MiB uploaded, which the canary reads as it streams.
     upload: judged(async () => {
       const body = made(0, SIZE - 1);
-      const want = `${SIZE} ${await sha(body)}`;
+      // Told its length, as Paperless's parser needs (u5-catalogue-dry).
+      const want = `${SIZE} ${await sha(body)} ${SIZE}`;
       const res = await fetch('upload', { method: 'POST', body: new Blob([body]) });
       const text = await res.text();
       return { ok: res.ok && text === want, saw: `${res.status} ${text}` };

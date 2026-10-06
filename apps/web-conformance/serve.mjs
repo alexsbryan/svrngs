@@ -18,7 +18,7 @@
 //   GET  /checks.js   the checks
 //   GET  /ws          a WebSocket echo
 //   GET  /big.bin     64 MiB, by Range; byte i is (i * 7 + (i >> 10)) & 255
-//   POST /upload      read as it streams; answers `<bytes> <sha-256>`
+//   POST /upload      read as it streams; answers `<bytes> <sha-256> <its Content-Length>`
 //   GET  /app-sw.js   its own service worker, answering `sw-probe`
 //   GET  /sw-probe    `from the server`, when no worker of its own answers
 //   GET  /redirect    refused unless asked on its own address,
@@ -82,7 +82,8 @@ const server = http.createServer((req, res) => {
     const sha = createHash('sha256');
     let n = 0;
     req.on('data', (d) => ((n += d.length), sha.update(d)));
-    return req.on('end', () => sends(res, 200, 'text/plain', `${n} ${sha.digest('hex')}`));
+    // With the length it was told, as a parser that needs it reads (Django's multipart).
+    return req.on('end', () => sends(res, 200, 'text/plain', `${n} ${sha.digest('hex')} ${req.headers['content-length'] ?? 'no length'}`));
   }
   if (req.method === 'POST' && path === '/guarded') {
     const origin = req.headers.origin;

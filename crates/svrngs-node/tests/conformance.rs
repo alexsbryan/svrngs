@@ -209,7 +209,7 @@ const ROUTES: [(&str, &str); 10] = [
     ("/-absolute paths", "root"),
     ("WebSocket echo, OPEN read", "websocket"),
     ("64 MiB read by Range", "range"),
-    ("64 MiB uploaded streaming", "upload"),
+    ("64 MiB uploaded, its length told", "upload"),
     ("its own service worker", "worker"),
     ("SharedArrayBuffer under COOP/COEP", "isolated"),
     ("Host check, absolute redirect", "host"),
