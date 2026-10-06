@@ -404,3 +404,38 @@ pub async fn upgrade_origin() -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
     });
     (addr, heads)
 }
+
+/// The door's own (u5-2): an origin that answers only a request whose
+/// `Host` is its own, `localhost:<its port>`, as an app guarding against
+/// DNS rebinding does, and answers it with an absolute redirect built
+/// from that `Host`; any other `Host` is refused 403 naming it.
+pub async fn host_origin() -> SocketAddr {
+    let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind");
+    let addr = listener.local_addr().unwrap();
+    let own = format!("localhost:{}", addr.port());
+    tokio::spawn(async move {
+        while let Ok((mut sock, _)) = listener.accept().await {
+            let own = own.clone();
+            tokio::spawn(async move {
+                let Some(head) = read_head(&mut sock).await else {
+                    return;
+                };
+                let host = head
+                    .lines()
+                    .find_map(|l| {
+                        let (n, v) = l.split_once(':')?;
+                        n.eq_ignore_ascii_case("host").then(|| v.trim().to_string())
+                    })
+                    .unwrap_or_default();
+                let answer = if host == own {
+                    format!("HTTP/1.1 302 Found\r\nLocation: http://{host}/landed?x=1\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+                } else {
+                    let why = format!("host {host} is not allowed");
+                    format!("HTTP/1.1 403 Forbidden\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{why}", why.len())
+                };
+                let _ = sock.write_all(answer.as_bytes()).await;
+            });
+        }
+    });
+    addr
+}

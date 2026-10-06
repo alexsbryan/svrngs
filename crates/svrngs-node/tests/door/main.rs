@@ -974,3 +974,24 @@ async fn a_pass_opens_only_the_lend_it_names_to_the_key_holding_it() {
     );
     pair.close().await;
 }
+
+/// The service is asked as on its own computer (u5-2): the door names it
+/// `localhost:<its port>` in `Host`, whatever address the member's browser
+/// used, so an app that refuses a host it does not know answers; and a
+/// redirect to that address comes back as a path, which the browser reads
+/// on the lend's own origin. Planted: `Host` passed as the client sent it
+/// (the door before u5-2), which the service refuses 403.
+#[tokio::test]
+async fn the_service_is_asked_on_its_own_address_and_its_redirect_comes_back_a_path() {
+    let pair = Pair::new().await;
+    pair.lend("guarded", origins::host_origin().await.port(), &[]);
+    let reply = pair.get("/lend/guarded/go", "").await;
+    assert_eq!(reply.status, 302, "{}", reply.text);
+    assert_eq!(
+        header_values(&reply.text, "location"),
+        vec!["/landed?x=1"],
+        "{}",
+        reply.text
+    );
+    pair.close().await;
+}

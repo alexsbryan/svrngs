@@ -134,8 +134,7 @@ const CONNECT_WITHIN: Duration = Duration::from_secs(10);
 /// Hop-by-hop headers (RFC 9110 §7.6.1), never carried across the door in
 /// either direction, beside any a message's `Connection` names: the strip
 /// lists of `sovereign-pods/src/worker_inference_proxy.rs:74-93`, less
-/// `host` (the service builds its links for the address the member's
-/// browser used) and `authorization` (a lend's secret displaces a client's,
+/// `host` (replaced, [`own_address`]) and `authorization` (a lend's secret displaces a client's,
 /// and a lend declaring none leaves the client's alone) and
 /// `content-length` (kept, so a `HEAD` and a `206` keep their length).
 /// A message asking to switch protocols asks again on the far side
@@ -519,6 +518,39 @@ fn secret_headers(door: &Door, lend: &LendName) -> Vec<(HeaderName, HeaderValue)
         .collect()
 }
 
+/// The address a service is asked on, as on its own computer:
+/// `localhost:<its port>` (u5-2). Every lend has an origin of its own, which
+/// the service cannot know, so an app that refuses a `Host` it does not
+/// know — as one guarding against DNS rebinding does — answers as it would
+/// its lender on that computer; and [`as_path`] turns a redirect to this
+/// address back into a path the browser reads on the lend's origin. Until
+/// u5-2 the door passed the browser's `Host`, so the service built its
+/// links for the address the browser used, one `<lender's bridge>/lend/<name>/`
+/// for every lend.
+fn own_address(lend: &Lend) -> HeaderValue {
+    HeaderValue::from_str(&format!("localhost:{}", lend.port))
+        .expect("a host and a port are a header")
+}
+
+/// `location` with the service's own address taken off, so `http://localhost:<port>/x`
+/// is `/x`, read on whatever origin the asker reached the lend at; `None`
+/// when it points anywhere else, which is left as it is.
+fn as_path(location: &str, lend: &Lend) -> Option<String> {
+    let rest = ["localhost", "127.0.0.1", "[::1]"]
+        .iter()
+        .find_map(|host| {
+            let own = format!("http://{host}:{}", lend.port);
+            let head = location.get(..own.len())?;
+            head.eq_ignore_ascii_case(&own)
+                .then(|| &location[own.len()..])
+        })?;
+    match rest.chars().next() {
+        None => Some("/".into()),
+        Some('/' | '?' | '#') => Some(rest.into()),
+        Some(_) => None,
+    }
+}
+
 /// Drop every response header holding one of `secret`'s values; answer the
 /// names dropped.
 fn drop_echoed_secret(
@@ -848,6 +880,7 @@ async fn forward(
         tracing::info!(target: "door", actor, lend = %lend.name, displaced,
             "door: dropped headers the client typed in the door's or the secret's name before setting them");
     }
+    parts.headers.insert(header::HOST, own_address(lend));
     if let Some(protocol) = upgrade.clone() {
         tracing::debug!(target: "door", actor, lend = %lend.name, ?protocol, "door: the request asks to switch protocols, carried");
         keep_upgrade(&mut parts.headers, protocol);
@@ -941,6 +974,15 @@ async fn forward(
         _ => held,
     };
     let echoed = drop_echoed_secret(&mut parts.headers, &secret);
+    let own = parts
+        .headers
+        .get(header::LOCATION)
+        .and_then(|l| l.to_str().ok())
+        .and_then(|l| as_path(l, lend));
+    if let Some(path) = own.and_then(|p| HeaderValue::from_str(&p).ok()) {
+        tracing::debug!(target: "door", lend = %lend.name, ?path, "door: a redirect to the service's own address, answered as a path");
+        parts.headers.insert(header::LOCATION, path);
+    }
     // The share on the answer is the door's: a service's own is displaced.
     parts.headers.remove(SHARE_HEADER);
     if let Some(share) = share {
