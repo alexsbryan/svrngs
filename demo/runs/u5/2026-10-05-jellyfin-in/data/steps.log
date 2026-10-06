@@ -1,0 +1,80 @@
+03:00:06 jellyfin up: {"LocalAddress":"http://127.0.0.1:8096","ServerName":"Alexs-MacBook-Pro-2","Version":"12.0.0","ProductName":"Jellyfin Server","OperatingSystem":"","Id":"cf133a2d4b7f445c81fbfe993062c23e","StartupWizardCompleted":false}
+03:00:11 films: 2; users: ["sam"]
+03:00:13 sam: On a phone, each app opens at an address of its own under localhost:51210, which can see which app is opened.
+03:00:14 alex: You're in House, as Alex.
+03:00:14 sam: Lent jellyfin (port 8096) to everyone in your groups, up to 8 people at once.
+03:00:14 sam is told: jellyfin asks each person to sign in once, with an account you make them. In jellyfin: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save. Then tell each person theirs.
+03:00:19 sam made: ["ana", "ben", "sam"]
+03:00:22 alex's computer opens it at http://13lamkfs770c2xm99gkuuamnkgsl0rkt31x67jf02fg2cuuhbaftbbq3n1prdr.localhost:51404/
+03:01:05 pair computer-chromium: ana: open 902 ms, signed in 837 ms, plays 2232 ms, socket message 22 ms, signed in after: ana; ben: open 196 ms, signed in 325 ms, plays 2201 ms, socket message 15 ms, signed in after: ben; ana seeks [485, 465, 377, 413, 428] ms (5/5 within 5 s); ben left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); ben seeks [502, 441, 535] ms (3/3 within 5 s); ana left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); devices apart: True
+03:01:08 plant token: the lend keeps zed's token, on device svrngs-lend-token
+03:02:16 pair computer-chromium-plant-token: ana stopped: signed in: page.waitForSelector: Timeout 30000ms exceeded.; the page says: Please sign in User Password Remember Me Sign In Use Quick Connect Forgot Password; ben stopped: signed in: page.waitForSelector: Timeout 30000ms exceeded.; the page says: Please sign in User Password Remember Me Sign In Use Quick Connect Forgot Password; devices apart: False
+03:02:16 plant token: taken back; the lend keeps 0 secrets
+passed           computer-chromium · list to playing: ana open 902 + sign in 837 + play 2232 ms, ben open 196 + sign in 325 + play 2201 ms
+passed           computer-chromium · seeks: {'ana': [485, 465, 377, 413, 428], 'ben': [502, 441, 535]} ms
+passed           computer-chromium · left alone: signed in after: {'ana': 'ana', 'ben': 'ben'}; left alone while the other seeked: {'ben': True, 'ana': True}
+passed           computer-chromium · no secret: none of ['admin_token', 'ana_pw', 'ben_pw', 'plant_token_lend_token', 'sam_pw'], nor the other's token, in 37881742 bytes
+failed           computer-chromium-plant-token · list to playing: ana: signed in: page.waitForSelector: Timeout 30000ms exceeded.; the page says: Please sign in User Password Remember Me Sign In Use Quick Connect Forgot Password; ben: signed in: page.waitForSelector: Timeout 30000ms exceeded.; the page says: Please sign in User Password Remember Me Sign In Use Qui
+could-not-judge  computer-chromium-plant-token · seeks: the two did not both play, so nobody seeked
+failed           computer-chromium-plant-token · left alone: signed in after: {'ana': None, 'ben': None}; left alone while the other seeked: {}
+passed           computer-chromium-plant-token · no secret: none of ['admin_token', 'ana_pw', 'ben_pw', 'plant_token_lend_token', 'sam_pw'], nor the other's token, in 22923388 bytes
+not all passed
+03:04:21 plant token: the lend keeps zed's token, on device svrngs-lend-token
+03:04:37 plant token: the lend keeps zed's token, on device svrngs-lend-token
+03:05:26 pair computer-chromium-plant-token: ana: open 4684 ms, signed in 0 ms, plays 2867 ms, socket message None ms, signed in after: zed; ben: open 436 ms, signed in 0 ms, plays 2912 ms, socket message None ms, signed in after: zed; ana seeks [526, 433, 393, 412, 408] ms (5/5 within 5 s); ben left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); ben seeks [430, 452, 423] ms (3/3 within 5 s); ana left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); devices apart: True
+03:05:26 plant token: taken back; the lend keeps 0 secrets
+failed           computer-chromium-plant-token · list to playing: ana: no play; ben: no play
+passed           computer-chromium-plant-token · seeks: {'ana': [526, 433, 393, 412, 408], 'ben': [430, 452, 423]} ms
+passed           computer-chromium-plant-token · left alone: signed in after: {'ana': 'zed', 'ben': 'zed'}; left alone while the other seeked: {'ben': True, 'ana': True}
+failed           computer-chromium-plant-token · no secret: held: {"ben": {"plant_token_lend_token": ["/Items/7b6c88ac97e53568b391133bfe8a3ad8/PlaybackInfo", "/videos/7b6c88ac-97e5-3568-b391-133bfe8a3ad8/master.m3u8", "/videos/7b6c88ac-97e5-3568-b391-133bfe8a3ad8/main.m3u8"]}}
+not all passed
+03:05:39 plant one-device: the lend keeps ana's token, on device svrngs-lend-one-device
+03:06:17 pair computer-chromium-plant-one-device: ana: open 502 ms, signed in 0 ms, plays 1456 ms, socket message None ms, signed in after: refused: 401; ben stopped: signed in: page.waitForSelector: Timeout 30000ms exceeded.; the page says: Please sign in User Password Remember Me Sign In Use Quick Connect Forgot Password; devices apart: True
+03:06:17 plant one-device: taken back; the lend keeps 0 secrets
+failed           computer-chromium-plant-one-device · list to playing: ana: never asked to sign in: a stored sign-in, not one typed; ben: signed in: page.waitForSelector: Timeout 30000ms exceeded.; the page says: Please sign in User Password Remember Me Sign In Use Quick Connect Forgot Password
+could-not-judge  computer-chromium-plant-one-device · seeks: the two did not both play, so nobody seeked
+failed           computer-chromium-plant-one-device · left alone: signed in after: {'ana': 'refused: 401', 'ben': None}; left alone while the other seeked: {}
+passed           computer-chromium-plant-one-device · no secret: none of ['admin_token', 'ana_pw', 'ben_pw', 'plant_one-device_lend_token', 'plant_token_lend_token', 'sam_pw'], nor the other's token, in 23324165 bytes
+not all passed
+03:06:25 plant token: the lend keeps zed's token, on device svrngs-lend-token
+03:07:05 pair computer-webkit-plant-token: ana: open 798 ms, signed in 0 ms, plays 2179 ms, socket message None ms, signed in after: zed; ben: open 622 ms, signed in 0 ms, plays 2279 ms, socket message None ms, signed in after: zed; ana seeks [404, 522, 475, 572, 403] ms (5/5 within 5 s); ben left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); ben seeks [405, 404, 405] ms (3/3 within 5 s); ana left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); devices apart: True
+03:07:05 plant token: taken back; the lend keeps 0 secrets
+03:07:05 plant one-device: the lend keeps ana's token, on device svrngs-lend-one-device
+03:07:44 pair computer-webkit-plant-one-device: ana: open 674 ms, signed in 0 ms, plays 1438 ms, socket message None ms, signed in after: refused: 401; ben stopped: signed in: page.waitForSelector: Timeout 30000ms exceeded.; the page says:  Please sign in User Password Remember Me Sign In Use Quick Connect Forgot Password ; devices apart: True
+03:07:44 plant one-device: taken back; the lend keeps 0 secrets
+failed           computer-webkit-plant-token · list to playing: ana: never asked to sign in: a stored sign-in, not one typed; ben: never asked to sign in: a stored sign-in, not one typed
+passed           computer-webkit-plant-token · seeks: {'ana': [404, 522, 475, 572, 403], 'ben': [405, 404, 405]} ms
+passed           computer-webkit-plant-token · left alone: signed in after: {'ana': 'zed', 'ben': 'zed'}; left alone while the other seeked: {'ben': True, 'ana': True}
+failed           computer-webkit-plant-token · no secret: held: {"ben": {"plant_token_lend_token": ["/Items/7b6c88ac97e53568b391133bfe8a3ad8/PlaybackInfo", "/videos/7b6c88ac-97e5-3568-b391-133bfe8a3ad8/master.m3u8", "/videos/7b6c88ac-97e5-3568-b391-133bfe8a3ad8/main.m3u8"]}}
+failed           computer-webkit-plant-one-device · list to playing: ana: never asked to sign in: a stored sign-in, not one typed; ben: signed in: page.waitForSelector: Timeout 30000ms exceeded.; the page says:  Please sign in User Password Remember Me Sign In Use Quick Connect Forgot Password 
+could-not-judge  computer-webkit-plant-one-device · seeks: the two did not both play, so nobody seeked
+failed           computer-webkit-plant-one-device · left alone: signed in after: {'ana': 'refused: 401', 'ben': None}; left alone while the other seeked: {}
+passed           computer-webkit-plant-one-device · no secret: none of ['admin_token', 'ana_pw', 'ben_pw', 'plant_one-device_lend_token', 'plant_token_lend_token', 'sam_pw'], nor the other's token, in 23177318 bytes
+not all passed
+03:08:52 pair computer-chromium: ana: open 440 ms, signed in 364 ms, plays 1468 ms, socket message 185 ms, signed in after: ana; ben: open 456 ms, signed in 944 ms, plays 11197 ms, socket message 30 ms, signed in after: ben; ana seeks [996, 752, 834, 644, 588] ms (5/5 within 5 s); ben left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); ben seeks [6389, 506, 2210] ms (2/3 within 5 s); ana left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); devices apart: True
+03:09:51 pair computer-webkit: ana: open 1945 ms, signed in 980 ms, plays 2082 ms, socket message 44 ms, signed in after: ana; ben: open 2707 ms, signed in 877 ms, plays 6041 ms, socket message 15 ms, signed in after: ben; ana seeks [406, 497, 402, 642, 403] ms (5/5 within 5 s); ben left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); ben seeks [1869, 811, 404] ms (3/3 within 5 s); ana left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); devices apart: True
+03:11:46 pair phone-chromium: ana: open 4280 ms, signed in 1596 ms, plays 5730 ms, socket message 74 ms, signed in after: ana; ben: open 9617 ms, signed in 817 ms, plays 13737 ms, socket message 58 ms, signed in after: ben; ana seeks [1171, 1792, 1323, 608, 1296] ms (5/5 within 5 s); ben left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); ben seeks [1332, 427, 499] ms (3/3 within 5 s); ana left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); devices apart: True
+03:13:34 pair phone-webkit: ana: open 4489 ms, signed in 861 ms, plays 6910 ms, socket message 54 ms, signed in after: ana; ben: open 15612 ms, signed in 2863 ms, plays 16195 ms, socket message 48 ms, signed in after: ben; ana seeks [402, 823, 412, 1318, 403] ms (5/5 within 5 s); ben left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); ben seeks [410, 411, 431] ms (3/3 within 5 s); ana left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); devices apart: True
+03:14:20 pair computer-chromium-2: ana: open 432 ms, signed in 357 ms, plays 1374 ms, socket message 26 ms, signed in after: ana; ben: open 533 ms, signed in 493 ms, plays 4135 ms, socket message 17 ms, signed in after: ben; ana seeks [640, 429, 452, 404, 421] ms (5/5 within 5 s); ben left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); ben seeks [427, 445, 405] ms (3/3 within 5 s); ana left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); devices apart: True
+passed           computer-chromium-2 · list to playing: ana open 432 + sign in 357 + play 1374 ms, ben open 533 + sign in 493 + play 4135 ms
+passed           computer-chromium-2 · seeks: {'ana': [640, 429, 452, 404, 421], 'ben': [427, 445, 405]} ms
+passed           computer-chromium-2 · left alone: signed in after: {'ana': 'ana', 'ben': 'ben'}; left alone while the other seeked: {'ben': True, 'ana': True}
+passed           computer-chromium-2 · no secret: none of ['admin_token', 'ana_pw', 'ben_pw', 'plant_one-device_lend_token', 'plant_token_lend_token', 'sam_pw'], nor the other's token, in 37865998 bytes
+passed           computer-webkit · list to playing: ana open 1945 + sign in 980 + play 2082 ms, ben open 2707 + sign in 877 + play 6041 ms
+passed           computer-webkit · seeks: {'ana': [406, 497, 402, 642, 403], 'ben': [1869, 811, 404]} ms
+passed           computer-webkit · left alone: signed in after: {'ana': 'ana', 'ben': 'ben'}; left alone while the other seeked: {'ben': True, 'ana': True}
+passed           computer-webkit · no secret: none of ['admin_token', 'ana_pw', 'ben_pw', 'plant_one-device_lend_token', 'plant_token_lend_token', 'sam_pw'], nor the other's token, in 75839278 bytes
+passed           phone-chromium · list to playing: ana open 4280 + sign in 1596 + play 5730 ms, ben open 9617 + sign in 817 + play 13737 ms
+passed           phone-chromium · seeks: {'ana': [1171, 1792, 1323, 608, 1296], 'ben': [1332, 427, 499]} ms
+passed           phone-chromium · left alone: signed in after: {'ana': 'ana', 'ben': 'ben'}; left alone while the other seeked: {'ben': True, 'ana': True}
+passed           phone-chromium · no secret: none of ['admin_token', 'ana_pw', 'ben_pw', 'plant_one-device_lend_token', 'plant_token_lend_token', 'sam_pw'], nor the other's token, in 84377036 bytes
+passed           phone-webkit · list to playing: ana open 4489 + sign in 861 + play 6910 ms, ben open 15612 + sign in 2863 + play 16195 ms
+passed           phone-webkit · seeks: {'ana': [402, 823, 412, 1318, 403], 'ben': [410, 411, 431]} ms
+passed           phone-webkit · left alone: signed in after: {'ana': 'ana', 'ben': 'ben'}; left alone while the other seeked: {'ben': True, 'ana': True}
+passed           phone-webkit · no secret: none of ['admin_token', 'ana_pw', 'ben_pw', 'plant_one-device_lend_token', 'plant_token_lend_token', 'sam_pw'], nor the other's token, in 90764886 bytes
+all passed
+passed           computer-chromium · list to playing: ana open 440 + sign in 364 + play 1468 ms, ben open 456 + sign in 944 + play 11197 ms
+failed           computer-chromium · seeks: {'ana': [996, 752, 834, 644, 588], 'ben': [6389, 506, 2210]} ms
+passed           computer-chromium · left alone: signed in after: {'ana': 'ana', 'ben': 'ben'}; left alone while the other seeked: {'ben': True, 'ana': True}
+passed           computer-chromium · no secret: none of ['admin_token', 'ana_pw', 'ben_pw', 'plant_one-device_lend_token', 'plant_token_lend_token', 'sam_pw'], nor the other's token, in 37873392 bytes
+not all passed

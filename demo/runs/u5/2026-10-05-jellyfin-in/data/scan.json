@@ -1,0 +1,318 @@
+{
+ "secrets_searched": [
+  "admin_token",
+  "ana_pw",
+  "ben_pw",
+  "plant_one-device_lend_token",
+  "plant_token_lend_token",
+  "sam_pw"
+ ],
+ "lend_kept": [],
+ "pairs": {
+  "computer-chromium": {
+   "ana": {
+    "scanned": {
+     "responses": 204,
+     "bodies": 185,
+     "bytes": 17665255,
+     "frames": 6
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 220,
+     "bodies": 210,
+     "bytes": 20208137,
+     "frames": 4
+    },
+    "own_token": 44,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/Items/7b6c88ac97e53568b391133bfe8a3ad8/PlaybackInfo",
+     "/videos/7b6c88ac-97e5-3568-b391-133bfe8a3ad8/master.m3u8",
+     "/videos/7b6c88ac-97e5-3568-b391-133bfe8a3ad8/main.m3u8"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "computer-chromium-2": {
+   "ana": {
+    "scanned": {
+     "responses": 202,
+     "bodies": 185,
+     "bytes": 17665252,
+     "frames": 4
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 212,
+     "bodies": 203,
+     "bytes": 20200746,
+     "frames": 4
+    },
+    "own_token": 44,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/Items/7b6c88ac97e53568b391133bfe8a3ad8/PlaybackInfo",
+     "/videos/7b6c88ac-97e5-3568-b391-133bfe8a3ad8/master.m3u8",
+     "/videos/7b6c88ac-97e5-3568-b391-133bfe8a3ad8/main.m3u8"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "computer-chromium-plant-one-device": {
+   "ana": {
+    "scanned": {
+     "responses": 182,
+     "bodies": 173,
+     "bytes": 17629292,
+     "frames": 3
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 125,
+     "bodies": 123,
+     "bytes": 5694873,
+     "frames": 2
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "computer-chromium-plant-token": {
+   "ana": {
+    "scanned": {
+     "responses": 192,
+     "bodies": 175,
+     "bytes": 17635698,
+     "frames": 3
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 209,
+     "bodies": 200,
+     "bytes": 20170588,
+     "frames": 3
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "computer-webkit": {
+   "ana": {
+    "scanned": {
+     "responses": 212,
+     "bodies": 195,
+     "bytes": 51975408,
+     "frames": 6
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 266,
+     "bodies": 256,
+     "bytes": 23863870,
+     "frames": 4
+    },
+    "own_token": 44,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/Items/7b6c88ac97e53568b391133bfe8a3ad8/PlaybackInfo",
+     "/videos/7b6c88ac-97e5-3568-b391-133bfe8a3ad8/master.m3u8",
+     "/videos/7b6c88ac-97e5-3568-b391-133bfe8a3ad8/main.m3u8"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "computer-webkit-plant-one-device": {
+   "ana": {
+    "scanned": {
+     "responses": 191,
+     "bodies": 177,
+     "bytes": 17597584,
+     "frames": 3
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 121,
+     "bodies": 116,
+     "bytes": 5579734,
+     "frames": 2
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "computer-webkit-plant-token": {
+   "ana": {
+    "scanned": {
+     "responses": 195,
+     "bodies": 184,
+     "bytes": 58748178,
+     "frames": 3
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 229,
+     "bodies": 221,
+     "bytes": 21381138,
+     "frames": 3
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {
+     "plant_token_lend_token": 43
+    },
+    "others_secrets_in": {
+     "plant_token_lend_token": [
+      "/Items/7b6c88ac97e53568b391133bfe8a3ad8/PlaybackInfo",
+      "/videos/7b6c88ac-97e5-3568-b391-133bfe8a3ad8/master.m3u8",
+      "/videos/7b6c88ac-97e5-3568-b391-133bfe8a3ad8/main.m3u8"
+     ]
+    },
+    "holds_none_of_anothers": false
+   }
+  },
+  "phone-chromium": {
+   "ana": {
+    "scanned": {
+     "responses": 284,
+     "bodies": 264,
+     "bytes": 63771191,
+     "frames": 102
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 270,
+     "bodies": 258,
+     "bytes": 20605845,
+     "frames": 136
+    },
+    "own_token": 44,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/Items/7b6c88ac97e53568b391133bfe8a3ad8/PlaybackInfo",
+     "/videos/7b6c88ac-97e5-3568-b391-133bfe8a3ad8/master.m3u8",
+     "/videos/7b6c88ac-97e5-3568-b391-133bfe8a3ad8/main.m3u8"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "phone-webkit": {
+   "ana": {
+    "scanned": {
+     "responses": 266,
+     "bodies": 228,
+     "bytes": 74075231,
+     "frames": 129
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 262,
+     "bodies": 232,
+     "bytes": 16689655,
+     "frames": 130
+    },
+    "own_token": 44,
+    "own_token_in": [
+     "/Users/authenticatebyname",
+     "/Items/7b6c88ac97e53568b391133bfe8a3ad8/PlaybackInfo",
+     "/videos/7b6c88ac-97e5-3568-b391-133bfe8a3ad8/master.m3u8",
+     "/videos/7b6c88ac-97e5-3568-b391-133bfe8a3ad8/main.m3u8"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  }
+ },
+ "logs": {
+  "alex/join.log": {},
+  "alex/join.out": {},
+  "alex/run.log": {},
+  "alex/run.out": {},
+  "sam/new.out": {},
+  "sam/run.log": {},
+  "sam/share.log": {},
+  "sam/share.out": {}
+ }
+}
