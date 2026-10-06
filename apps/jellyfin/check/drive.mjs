@@ -1,5 +1,6 @@
-// u5-3's two people through one lend (measure.sh `pair`; README.md's bars
-// (a)-(c)). Each person is a browser of their own, Playwright's headless
+// Two people through one lend (check.sh `pair`; forked from u5-3's, at
+// demo/runs/u5/2026-10-05-jellyfin/drive.mjs, its bars (a)-(c), u5-4's
+// row's check). Each person is a browser of their own, Playwright's headless
 // Chromium or its WebKit as an iPhone (web/tests/page.mjs): on `computer`
 // they open the lend's origin on Alex's loopback, as the bare command
 // prints it; on `phone` they open the group's link, give a name, and open
@@ -13,16 +14,17 @@
 //   node drive.mjs '{"way": "computer"|"phone", "engine": "chromium"|"webkit",
 //     "at": "<the lend's origin, or the group's link>", "server": "<Jellyfin's id>",
 //     "people": [{"name", "user", "film", "seeks": [percent, ...]}, {...}]}'
-//   A person with `"typed": false` types nothing (probe.py, zero sign-in on
-//   a lend carrying their token): if a sign-in is asked, they stop there.
-//   With `"seed": "<their Jellyfin user id>"` too, the web client's stored
-//   sign-in names them with the placeholder token `door` before the page
-//   loads, as U3's dry run's driver wrote it (demo/runs/a/dry-2026-10-04/
-//   drive.mjs:41-47): what no person can write, and what zero sign-in
-//   would have to.
 //   env: SECRETS (the passwords), JF (the lender's Jellyfin, for its
 //   message to each session), ADMIN (the lender's token, for that alone),
 //   DUMP (where every response each browser receives is written, for scan.py)
+//   A person may sign in with an `"account"` not their own (`user`, by
+//   which they are keyed): check.sh's one-device plant, one account for
+//   everyone, as U3's dry run's lend had. With `"seed": "<a Jellyfin user
+//   id>"`, the web client's stored sign-in names that user with the
+//   placeholder token `door` before the page loads, as U3's dry run's
+//   driver wrote it (demo/runs/a/dry-2026-10-04/drive.mjs:41-47): what no
+//   person can write, and what a lend keeping a token needs to play at all
+//   (u5-3's probe); the plants alone use it.
 //
 // Prints one JSON line. A step that did not happen within its time is
 // null with what the page showed: never a number guessed.
@@ -156,7 +158,7 @@ function record(context, page, user) {
 }
 
 async function enter(p) {
-  const person = { user: p.user, name: p.name };
+  const person = { user: p.user, name: p.name, account: p.account ?? p.user };
   const { context, close } = await launch(args.engine);
   person.close = close;
   person.page = await context.newPage();
@@ -217,16 +219,11 @@ async function enter(p) {
   await page.waitForTimeout(1500);
   person.asked = await page.locator('#txtManualName:visible, .manualLoginForm:visible, .btnManual:visible').count() > 0;
   person.shown = await shown(page);
-  if (person.asked && p.typed === false) {
-    person.stopped = `a sign-in asked of someone who typed nothing; the page says: ${person.shown}`;
-    await page.screenshot({ path: `${DUMP}/${p.user}/asked.png` });
-    return person;
-  }
   person.signed_in_ms = person.asked ? await timed(person, 'signed in', async () => {
-    const pw = fs.readFileSync(`${SECRETS}/${p.user}_pw`, 'utf8').trim();
+    const pw = fs.readFileSync(`${SECRETS}/${person.account}_pw`, 'utf8').trim();
     const manual = page.locator('.btnManual:visible');
     if (await manual.count()) await manual.first().click();
-    await page.fill('#txtManualName', p.user);
+    await page.fill('#txtManualName', person.account);
     await page.fill('#txtManualPassword', pw);
     await page.locator('.manualLoginForm button[type=submit]').click();
     await page.waitForSelector('.card', { timeout: 30_000 });
@@ -297,7 +294,7 @@ async function phase(seeker, watched, seeks) {
 const jf = async (method, path, body) => {
   const r = await fetch(`${JF}${path}`, {
     method, body: body && JSON.stringify(body),
-    headers: { 'content-type': 'application/json', authorization: `MediaBrowser Client="u5-3 measure", Device="Sam computer", DeviceId="u5-3-setup", Version="1", Token="${ADMIN}"` },
+    headers: { 'content-type': 'application/json', authorization: `MediaBrowser Client="u5-4 check", Device="Sam computer", DeviceId="u5-4-setup", Version="1", Token="${ADMIN}"` },
   });
   return r.status === 204 ? null : r.json();
 };
@@ -306,7 +303,7 @@ async function socket(person) {
   const sessions = all.filter((s) => s.DeviceId === person.device);
   // None of this browser's own: Jellyfin sees the device whoever signed in
   // with, as on a lend carrying a token.
-  if (!sessions.length) return { session: false, theirs_by_device: all.filter((s) => s.UserName === person.user).map((s) => s.DeviceId) };
+  if (!sessions.length) return { session: false, theirs_by_device: all.filter((s) => s.UserName === person.account).map((s) => s.DeviceId) };
   const text = `a message for ${person.user} ${Math.random().toString(36).slice(2, 8)}`;
   const t0 = Date.now();
   await jf('POST', `/Sessions/${sessions[0].Id}/Message`, { Header: 'Sam', Text: text, TimeoutMs: 15000 });

@@ -1,24 +1,35 @@
 #!/usr/bin/env bash
-# u5-3 (README.md, the rule and bars stated before the data): stock
-# Jellyfin through a lend, on one host. A scratch Jellyfin on
-# 127.0.0.1:8096 — U3's dry run's (demo/runs/a/dry-2026-10-04/dry.sh), the
-# macOS app's 12.0.0 server with its own data dirs — with two films, the
-# lender's admin account and two accounts the lender made; Sam's computer
-# and Alex's as two data dirs running the `svrngs` command through iroh's
-# public relays; the page built and served on localhost, where every name
-# answers, so a phone's apps each open at an address of their own (u5-2).
+# u5-4's check (ralph/next/u5/STATE.md, its row; DESIGN §3, "Lent apps",
+# call 4, sign in once): stock Jellyfin as `svrngs share 8096` lends it,
+# against a scratch Jellyfin on this host, in Chromium and WebKit. Forked
+# from u5-3's measure.sh (demo/runs/u5/2026-10-05-jellyfin/, at 4b23bb4).
 #
-#   measure.sh up    <scratch> <out>                 Jellyfin, the page, Sam lends 8096 with no secret, Alex joins
-#   measure.sh pair  <scratch> <out> <way> <engine>  (a)-(c): two people through the lend, way computer|phone,
-#                                                    engine chromium|webkit; writes <out>/pair-<way>-<engine>.json,
-#                                                    or with RUN=<n> pair-<way>-<engine>-<n>.json, a run again kept apart
-#   measure.sh probe <scratch> <out>                 (c) on a lend holding a token, and (d): writes <out>/probe.json
-#   measure.sh down  <scratch> <out>                 stops everything; the scratch dir stays for the secrets
-#   measure.sh all   <scratch> <out>                 every step above, in order
+# A scratch Jellyfin on 127.0.0.1:8096 — U3's dry run's
+# (demo/runs/a/dry-2026-10-04/dry.sh), the macOS app's 12.0.0 server with
+# its own data dirs — with two films and the lender's own account; Sam's
+# computer and Alex's as two data dirs running the `svrngs` command through
+# iroh's public relays; the page built and served on localhost, where
+# every name answers, so a phone's apps each open at an address of their
+# own (u5-2). Sam lends 8096 as it comes, and makes Ana and Ben accounts
+# in Jellyfin's own pages by the line `share` printed (lender.mjs).
 #
-# Each step stays inside ten minutes on this host; `all` does not. svrngs
-# built first: cargo build -p svrngs. Nothing of Jellyfin outlives `down`
-# but what is under <out>; the secrets stay in <scratch>/secrets.
+#   check.sh up    <scratch> <out>                 all of the above
+#   check.sh pair  <scratch> <out> <way> <engine>  two people new to it through the lend, way computer|phone,
+#                                                  engine chromium|webkit: from the list to a playing film,
+#                                                  seeks, the other watched; writes <out>/pair-<way>-<engine>.json
+#   check.sh plant <scratch> <out> <plant> <engine> the lend made to keep a token, then a computer pair, then
+#                                                  the token taken back: plant `token`, a token of its own (the
+#                                                  lend's token reaching a browser); `one-device`, Ben's, on the
+#                                                  lend's one device (one person's sign-in ending another's);
+#                                                  writes <out>/pair-computer-<engine>-plant-<plant>.json
+#   check.sh judge <scratch> <out> <run>...        scan.py, then judge.py over the runs named (pair-*.json stems):
+#                                                  exit 0 only if every bar of every one passed
+#   check.sh down  <scratch> <out>                 stops everything; the scratch dir stays for the secrets
+#
+# Each step stays inside ten minutes on this host. svrngs built first:
+# cargo build -p svrngs. Nothing of Jellyfin outlives `down` but what is
+# under <out>; the secrets stay in <scratch>/secrets. scripts/check.sh runs
+# none of this: it needs Jellyfin (DESIGN §8, U5).
 set -euo pipefail
 STEP="$1"; R="$2"; OUT="$3"
 HERE="$(cd "$(dirname "$0")" && pwd)"; REPO="$(cd "$HERE/../../.." && pwd)"
@@ -29,7 +40,7 @@ SECRETS="$R/secrets"; mkdir -p "$OUT"
 say() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*" | tee -a "$OUT/steps.log" >&2; }
 field() { python3 -c "import json,sys;print(json.load(sys.stdin)$1)"; }
 port_of() { for _ in $(seq 1 100); do grep -m1 -o 'port [0-9]*' "$1" 2>/dev/null | cut -d' ' -f2 && return; sleep 0.1; done; return 1; }
-CLI='MediaBrowser Client="u5-3 measure", Device="Sam computer", DeviceId="u5-3-setup", Version="1"'
+CLI='MediaBrowser Client="u5-4 check", Device="Sam computer", DeviceId="u5-4-setup", Version="1"'
 api() { curl -sS -f -X "$1" "$O$2" -H "Content-Type: application/json" -H "Authorization: $CLI${TOKEN:+, Token=\"$TOKEN\"}" ${3:+-d "$3"}; }
 users() { api GET /Users | python3 -c 'import json,sys;print(json.dumps(sorted(u["Name"] for u in json.load(sys.stdin))))'; }
 secret() { (umask 077; printf '%s' "$2" >"$SECRETS/$1"); }
@@ -91,10 +102,6 @@ EOF
   sleep 3
   TOKEN="$(api POST /Users/AuthenticateByName "{\"Username\":\"sam\",\"Pw\":\"$(cat "$SECRETS/sam_pw")\"}" | field '["AccessToken"]')"
   secret admin_token "$TOKEN"
-  # The two accounts the lender makes, as sign in once asks of the lender.
-  for who in ana ben; do
-    api POST /Users/New "{\"Name\":\"$who\",\"Password\":\"$(cat "$SECRETS/${who}_pw")\"}" >/dev/null
-  done
   api POST /Library/Refresh >/dev/null
   local n=0
   for _ in $(seq 1 60); do
@@ -121,9 +128,17 @@ EOF
   echo $! >"$R/alex.pid"
   for _ in $(seq 1 60); do grep -q "You're in" "$R/alex/join.out" 2>/dev/null && break; sleep 1; done
   say "alex: $(head -1 "$R/alex/join.out")"
-  # No secret: sign in once's lend. Eight at once, for the phones.
-  SVRNGS_DIR="$R/sam" NO_COLOR=1 "$B" share 8096 --limit 8 </dev/null >"$R/sam/share.out" 2>&1
+  # Sam lends it as it comes, eight at once for the phones; a password
+  # typed is not asked for, and not kept.
+  printf 'MediaBrowser Token="%s"\n' "$TOKEN" | SVRNGS_DIR="$R/sam" NO_COLOR=1 RUST_LOG=debug "$B" share 8096 --limit 8 >"$R/sam/share.out" 2>"$R/sam/share.log"
   say "sam: $(grep -m1 Lent "$R/sam/share.out")"
+  local how; how="$(grep -m1 'asks each person to sign in once' "$R/sam/share.out")" || { say "share told Sam nothing of accounts"; exit 1; }
+  say "sam is told: $how"
+  [ ! -e "$R/sam/secrets/lends/jellyfin" ] || { say "the lend keeps a secret"; exit 1; }
+  # Sam makes Ana and Ben accounts, as that line says, in Jellyfin's pages.
+  SECRETS="$SECRETS" node "$HERE/lender.mjs" "$how" "$O" sam ana ben >"$OUT/lender.json" || { say "lender: $(cat "$OUT/lender.json")"; exit 1; }
+  users >"$OUT/users-made.json"
+  say "sam made: $(cat "$OUT/users-made.json")"
   # The bare command prints the lends as it starts: Alex runs it now.
   kill "$(cat "$R/alex.pid")"; sleep 2
   SVRNGS_DIR="$R/alex" RUST_LOG=info NO_COLOR=1 nohup "$B" >"$R/alex/run.out" 2>"$R/alex/run.log" &
@@ -157,21 +172,63 @@ pair() {
   rm -rf "$R/dump/$tag"
   SECRETS="$SECRETS" JF="$O" ADMIN="$(cat "$SECRETS/admin_token")" DUMP="$R/dump/$tag" \
     node "$HERE/drive.mjs" "{\"way\":\"$way\",\"engine\":\"$engine\",\"at\":\"$at\",\"server\":\"$SERVER\",
-      \"people\":[{\"name\":\"$a\",\"user\":\"ana\",\"film\":\"$ONE\",\"seeks\":[50,15,80,30,65]},
-                  {\"name\":\"$b\",\"user\":\"ben\",\"film\":\"$TWO\",\"seeks\":[60,20,75]}]}" \
+      \"people\":[{\"name\":\"$a\",\"user\":\"ana\",\"film\":\"$ONE\",\"seeks\":[50,15,80,30,65]${A_EXTRA:-}},
+                  {\"name\":\"$b\",\"user\":\"ben\",\"film\":\"$TWO\",\"seeks\":[60,20,75]${B_EXTRA:-}}]}" \
     >"$OUT/pair-$tag.json" 2>"$R/pair-$tag.err" || true
   say "pair $tag: $(python3 "$HERE/summary.py" --line "$OUT/pair-$tag.json")"
+}
+
+# The lend made to keep a token, as a lender who pasted one would have
+# before u5-4 (crates/svrngs/src/cli.rs, prompt_secret): written where
+# `share` keeps one (svrngs_node::lend::declare), which the door reads on
+# every request, so every request carries the lend's one device. With it,
+# nobody signing in as themselves gets past their sign-in (the first
+# token plant, 2026-10-05: 403 on each person's own settings), so each
+# plant also gives the browsers what the failure it plants was seen with:
+#   token       a user of the lend's own, `zed`, and both browsers holding a
+#               stored sign-in as zed (drive.mjs `seed`), as u5-3's probe
+#               ran (demo/runs/u5/2026-10-05-jellyfin/README.md, finding 3);
+#   one-device  Ana's own token on the lend's device, Ana's browser holding
+#               a stored sign-in as her, and Ben signing in with Ana's
+#               account, the one account for everyone, as U3's dry run's
+#               member signed in as its viewer (demo/runs/a/dry-2026-10-04/
+#               README.md:39-50). Jellyfin 12 ends a sign-in only when the
+#               same account signs in again on the same device (this host,
+#               2026-10-05: one device, two accounts, 200 and 200; one
+#               account twice, 401 then 200).
+plant() {
+  . "$R/env"
+  local what="$1" engine="$2" user pw dev="svrngs-lend-$1"
+  TOKEN="$(cat "$SECRETS/admin_token")"
+  id_of() { api GET /Users | python3 -c "import json,sys;print(next(u['Id'] for u in json.load(sys.stdin) if u['Name']=='$1'))"; }
+  case "$what" in
+    token) user=zed; pw=""
+      # One left by a run stopped before its end goes first.
+      if id="$(id_of zed 2>/dev/null)"; then api DELETE "/Users/$id" >/dev/null; fi
+      api POST /Users/New '{"Name":"zed"}' >/dev/null
+      A_EXTRA=",\"seed\":\"$(id_of zed)\",\"account\":\"zed\""; B_EXTRA="$A_EXTRA" ;;
+    one-device) user=ana; pw="$(cat "$SECRETS/ana_pw")"
+      A_EXTRA=",\"seed\":\"$(id_of ana)\""; B_EXTRA=',"account":"ana"' ;;
+    *) echo "plant: token|one-device" >&2; exit 2 ;;
+  esac
+  local lend='MediaBrowser Client="svrngs lend", Device="Sam computer", DeviceId="'"$dev"'", Version="1"'
+  local t; t="$(curl -sS -f -X POST "$O/Users/AuthenticateByName" -H "Content-Type: application/json" -H "Authorization: $lend" \
+    -d "{\"Username\":\"$user\",\"Pw\":\"$pw\"}" | field '["AccessToken"]')"
+  secret "plant_${what}_lend_token" "$t"
+  local kept="$R/sam/secrets/lends/jellyfin"
+  (umask 077; mkdir -p "$kept"; printf '%s, Token="%s"' "$lend" "$t" >"$kept/authorization")
+  say "plant $what: the lend keeps $user's token, on device $dev"
+  A_EXTRA="$A_EXTRA" B_EXTRA="$B_EXTRA" RUN="plant-$what" pair computer "$engine"
+  rm -rf "$kept"
+  [ "$what" = token ] && api DELETE "/Users/$(id_of zed)" >/dev/null
+  say "plant $what: taken back; the lend keeps $(find "$R/sam/secrets/lends" -type f 2>/dev/null | wc -l | tr -d ' ') secrets"
 }
 
 case "$STEP" in
   up) up ;;
   pair) pair "$4" "$5" ;;
-  probe) . "$R/env"; SECRETS="$SECRETS" JF="$O" B="$B" R="$R" OUT="$OUT" python3 "$HERE/probe.py" ;;
+  plant) plant "$4" "$5" ;;
+  judge) shift 3; python3 "$HERE/scan.py" "$R" "$OUT" >/dev/null; python3 "$HERE/judge.py" "$OUT" "$@" | tee -a "$OUT/steps.log" ;;
   down) TOKEN="$(cat "$SECRETS/admin_token")"; users >"$OUT/users-after.json" 2>/dev/null || true; down ;;
-  all)
-    up
-    for way in computer phone; do for engine in chromium webkit; do pair "$way" "$engine"; done; done
-    . "$R/env"; SECRETS="$SECRETS" JF="$O" B="$B" R="$R" OUT="$OUT" python3 "$HERE/probe.py"
-    TOKEN="$(cat "$SECRETS/admin_token")"; users >"$OUT/users-after.json"; down ;;
-  *) echo "usage: measure.sh up|pair|probe|down|all <scratch> <out> [way engine]" >&2; exit 2 ;;
+  *) echo "usage: check.sh up|pair|plant|judge|down <scratch> <out> [way engine | plant engine | run...]" >&2; exit 2 ;;
 esac
