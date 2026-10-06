@@ -30,6 +30,13 @@ if [ -f Cargo.toml ]; then
   # A phone joining by the link `svrngs new --origin` prints (u4-5), in
   # both engines.
   step "joining in a browser" cargo test --quiet -p svrngs --test join_page
+  # The conformance canary (DESIGN §8; u5-2): apps/web-conformance, lent by
+  # two computers, opened from a computer and from a phone both ways a group
+  # opens its apps (DESIGN §7), in both engines. Each route's verdict per
+  # way is printed, once for every engine and lender that agree.
+  rm -rf target/conformance
+  step "conformance canary" cargo test --quiet -p svrngs-node --test conformance
+  cat target/conformance/*.txt 2>/dev/null | cut -c1-10,25- | sort -u | sed 's/^/           /'
 else
   echo "never-ran  rustfmt, clippy, tests: no Cargo workspace yet"; failed=1
 fi

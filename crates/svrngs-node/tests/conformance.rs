@@ -1,0 +1,438 @@
+//! The conformance canary (DESIGN §8, "The canaries"; the u5-2 row): the
+//! web carried whole to whoever opens a lend, every way a group opens one.
+//! Sam's computer founds the group, and Bo's and Alex's are in it; Sam and
+//! Bo each lend the canary (`apps/web-conformance`), each with a secret of
+//! its own. Alex opens both: from Alex's computer, each at its origin on
+//! Alex's loopback; and from a phone holding Alex's key in the group, each
+//! at an address of its own under the page's host (the wildcard) and each
+//! under one address for every app (the floor) — Chromium, and WebKit as an
+//! iPhone (`web/tests/conformance.mjs`). Each route's verdict is printed
+//! per way and kept in `target/conformance/` for `scripts/check.sh`: on a
+//! computer and with the wildcard every route passes; on the floor every
+//! route passes but the two it cannot give, the root and storage apart,
+//! each reported as needing the wildcard. Neither lend's cookie reaches the
+//! other's requests; Bo's door names Alex's key; no byte Alex receives
+//! holds either secret; a lent page finds no group whose key it could
+//! unseal; and on a computer a lent page's post to the record API writes
+//! nothing. Everything runs on this computer: iroh's relay on 127.0.0.1,
+//! three nodes on it, two canaries and the page.
+
+#![allow(clippy::disallowed_methods, clippy::disallowed_types)]
+#[path = "browser/harness.rs"]
+#[macro_use]
+mod harness;
+
+use std::path::Path;
+use std::process::Stdio;
+use std::time::Duration;
+
+use harness::{relay, relay_url, repo, site, Engine};
+use iroh_relay::server::Server;
+use serde_json::{json, Value};
+use svrngs_core::link::Token;
+use svrngs_core::pass::Label;
+use svrngs_node::iroh::RelayConfig;
+use svrngs_node::lend::{self, LendName};
+use svrngs_node::node::Node;
+use svrngs_node::{actor_of, declared, Person, RailAct, Roster, SigningKey};
+use tokio::io::AsyncBufReadExt;
+
+const NS: &str = "house";
+const SAMS: &str = "Bearer sams-secret-41";
+const BOS: &str = "Bearer bos-secret-42";
+/// The keys: Sam's, Bo's and Alex's computers, and Alex's phone.
+const SAM: u8 = 1;
+const BO: u8 = 2;
+const ALEX: u8 = 3;
+const PHONE: u8 = 7;
+const MARK: &str = "written-from-a-lent-page";
+
+fn signing(seed: u8) -> SigningKey {
+    SigningKey::from_bytes(&[seed; 32])
+}
+
+fn no_seed(_: &Path) -> Result<Option<String>, String> {
+    Ok(None)
+}
+
+async fn start(dir: &Path, relay: &Server, me: u8) -> Node {
+    let node = Node::start(
+        dir.to_path_buf(),
+        signing(me),
+        &RelayConfig::from_parts(vec![relay_url(relay)], Some("none"))
+            .unwrap()
+            .on_loopback_only(),
+        no_seed,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("a node starts");
+    let seed = Roster::new(
+        [(Person::parse("sam").unwrap(), vec![actor_of(&signing(SAM))])]
+            .into_iter()
+            .collect(),
+    );
+    node.rail().set_seed(NS, &seed).unwrap();
+    tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
+        .await
+        .expect("the node reaches the relay on 127.0.0.1");
+    node
+}
+
+/// A canary on this computer, as `who`, and the port it listens on.
+struct Canary {
+    _child: tokio::process::Child,
+    port: u16,
+}
+
+async fn canary(who: &str) -> Canary {
+    let mut child = tokio::process::Command::new("node")
+        .arg(repo().join("apps/web-conformance/serve.mjs"))
+        .arg(who)
+        .stdout(Stdio::piped())
+        .kill_on_drop(true)
+        .spawn()
+        .expect("node runs the canary: Node 18 or later");
+    let mut lines = tokio::io::BufReader::new(child.stdout.take().unwrap()).lines();
+    let first = lines
+        .next_line()
+        .await
+        .unwrap()
+        .expect("the canary prints its port");
+    let port = serde_json::from_str::<Value>(&first).unwrap()["port"]
+        .as_u64()
+        .unwrap() as u16;
+    Canary {
+        _child: child,
+        port,
+    }
+}
+
+/// What a canary was asked, read from it directly.
+async fn seen(c: &Canary) -> Vec<Value> {
+    let http = reqwest::Client::builder().no_proxy().build().unwrap();
+    http.get(format!("http://127.0.0.1:{}/seen", c.port))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap()
+}
+
+/// Sam's group: Bo's and Alex's computers and Alex's phone let in; each
+/// computer holding Sam's record and knowing where the others listen; Sam
+/// and Bo each lending the canary as `app`, each with its secret.
+struct Group {
+    sam: Node,
+    bo: Node,
+    alex: Node,
+    canaries: (Canary, Canary),
+    _dirs: Vec<tempfile::TempDir>,
+}
+
+async fn group(relay: &Server) -> Group {
+    let dirs: Vec<_> = (0..3).map(|_| tempfile::tempdir().unwrap()).collect();
+    let sam = start(dirs[0].path(), relay, SAM).await;
+    for (person, key) in [("bo", BO), ("alex", ALEX), ("alex", PHONE)] {
+        let admit = svrngs_core::tests_support::Fixture {
+            act: RailAct::Admit {
+                person: Person::parse(person).unwrap(),
+                key: actor_of(&signing(key)),
+                invite: None,
+            },
+            on_behalf_of: None,
+        };
+        sam.rail().commit(NS, &admit).unwrap().unwrap();
+    }
+    let bo = start(dirs[1].path(), relay, BO).await;
+    let alex = start(dirs[2].path(), relay, ALEX).await;
+    let addrs = |n: &Node| n.endpoint().addr().ip_addrs().copied().collect::<Vec<_>>();
+    for (node, name) in [(&bo, "bo"), (&alex, "alex")] {
+        let synced = node.sync_with(NS, &sam.endpoint().addr()).await;
+        assert!(
+            synced.stop.is_none(),
+            "{name} syncs Sam's record: {synced:?}"
+        );
+    }
+    for (a, b) in [
+        (&sam, &bo),
+        (&sam, &alex),
+        (&alex, &bo),
+        (&bo, &alex),
+        (&alex, &sam),
+        (&bo, &sam),
+    ] {
+        a.transport().add_known_peer(b.endpoint().id(), addrs(b));
+    }
+    let canaries = (canary("sam").await, canary("bo").await);
+    for (dir, port, secret) in [
+        (&dirs[0], canaries.0.port, SAMS),
+        (&dirs[1], canaries.1.port, BOS),
+    ] {
+        let at = lend::lends_dir(dir.path());
+        std::fs::create_dir_all(&at).unwrap();
+        let body = json!({ "port": port, "kind": "app", "limit": 3 });
+        std::fs::write(at.join("app.json"), body.to_string()).unwrap();
+        let secrets = lend::secret_dir(dir.path(), &LendName::parse("app").unwrap());
+        declared::write_declared_in(&secrets, "authorization", secret).unwrap();
+    }
+    Group {
+        sam,
+        bo,
+        alex,
+        canaries,
+        _dirs: dirs,
+    }
+}
+
+/// How a group opens its lends (DESIGN §7).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Way {
+    Computer,
+    Wildcard,
+    Floor,
+}
+
+impl Way {
+    fn as_str(self) -> &'static str {
+        match self {
+            Way::Computer => "computer",
+            Way::Wildcard => "wildcard",
+            Way::Floor => "floor",
+        }
+    }
+}
+
+/// The canary's routes, as the row names them, each with its check.
+const ROUTES: [(&str, &str); 9] = [
+    ("/-absolute paths", "root"),
+    ("WebSocket echo", "websocket"),
+    ("64 MiB read by Range", "range"),
+    ("64 MiB uploaded streaming", "upload"),
+    ("its own service worker", "worker"),
+    ("SharedArrayBuffer under COOP/COEP", "isolated"),
+    ("Host check, absolute redirect", "host"),
+    ("cookie sign-in", "signin"),
+    ("local storage", "storage"),
+];
+
+/// What the floor cannot give, by check: the root, and storage apart.
+const NEEDS_THE_WILDCARD: [&str; 2] = ["root", "storage"];
+
+/// Each route's verdict for one lend in one way: `passed`, `failed`, or,
+/// on the floor, `needs the wildcard` for what it cannot give.
+fn verdicts(way: Way, lend: &Value, other: &Value) -> Vec<(&'static str, String, String)> {
+    ROUTES
+        .iter()
+        .map(|(route, check)| {
+            let mut ok = lend[check]["ok"].as_bool() == Some(true);
+            let mut saw = lend[check]["saw"].to_string();
+            match *check {
+                // The cookie sign-in: set and sent, then read by the page.
+                "signin" => {
+                    ok &= lend["cookie"]["ok"].as_bool() == Some(true);
+                    saw = format!("{saw}; the page reads {}", lend["cookie"]["saw"]);
+                }
+                // Local storage reads back, and holds nothing of another lend's.
+                "storage" => {
+                    let before = lend["stored"]["saw"].as_str().unwrap_or("");
+                    let theirs = other["stored"]["saw"].as_str().unwrap_or("");
+                    ok &= before.is_empty() && theirs.is_empty();
+                    saw = format!(
+                        "{saw}; before it wrote, {before:?}; before the other wrote, {theirs:?}"
+                    );
+                }
+                _ => {}
+            }
+            let verdict = match (ok, way == Way::Floor && NEEDS_THE_WILDCARD.contains(check)) {
+                (_, true) => "needs the wildcard",
+                (true, false) => "passed",
+                (false, false) => "failed",
+            };
+            (*route, verdict.to_string(), saw)
+        })
+        .collect()
+}
+
+async fn conformance(way: Way, engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let g = group(&relay).await;
+    let label = |n: &Node| Label::of(n.endpoint().id().as_bytes(), "app").to_string();
+    let api = g.alex.api_addr();
+    let lends = json!([
+        { "who": "sam", "button": "sam’s app", "label": label(&g.sam),
+          "origin": format!("http://{}.localhost:{}/", label(&g.sam), api.port()) },
+        { "who": "bo", "button": "bo’s app", "label": label(&g.bo),
+          "origin": format!("http://{}.localhost:{}/", label(&g.bo), api.port()) },
+    ]);
+    let token = Token {
+        issuer: signing(SAM).verifying_key(),
+        secret: [0; 16],
+        relay: Some(relay_url(&relay).parse().unwrap()),
+    }
+    .encode();
+    let append = json!({ "op": "record", "payload": { "mark": MARK } }).to_string();
+    let mut args = json!({
+        "engine": engine.as_str(), "mode": way.as_str(), "site": site, "lends": lends,
+        "key": hex::encode(signing(PHONE).to_bytes()), "token": token, "secrets": [SAMS, BOS],
+    });
+    if way == Way::Computer {
+        args["api"] = json!(format!("http://{api}"));
+        args["append"] = json!(append);
+    }
+    let out = tokio::process::Command::new("node")
+        .arg(repo().join("web/tests/conformance.mjs"))
+        .arg(args.to_string())
+        .output()
+        .await
+        .expect("node runs: the browser tests need Node 18 or later");
+    assert!(
+        out.status.success(),
+        "the browser half failed ({}):\n{}",
+        out.status,
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let ran: Value = serde_json::from_str(stdout.lines().last().expect("it printed")).unwrap();
+    let mut shown = ran.clone();
+    shown["logs"] = json!(format!(
+        "{} lines",
+        ran["logs"].as_array().map_or(0, Vec::len)
+    ));
+
+    // Each route's verdict, printed and kept for scripts/check.sh.
+    let mut table = String::new();
+    let mut failed = Vec::new();
+    for (who, other) in [("sam", "bo"), ("bo", "sam")] {
+        for (route, verdict, saw) in verdicts(way, &ran["lends"][who], &ran["lends"][other]) {
+            let line = format!(
+                "{:<9} {:<8} {who:<4} {route:<34} {verdict}",
+                way.as_str(),
+                engine.as_str()
+            );
+            table.push_str(&format!("{line}\n"));
+            if verdict == "failed" {
+                failed.push(format!("{line}: {saw}"));
+            }
+        }
+    }
+    print!("{table}");
+    let kept = repo().join("target/conformance");
+    std::fs::create_dir_all(&kept).unwrap();
+    std::fs::write(
+        kept.join(format!("{}-{}.txt", way.as_str(), engine.as_str())),
+        &table,
+    )
+    .unwrap();
+    assert!(
+        failed.is_empty(),
+        "routes failed:\n{}\n{shown:#}",
+        failed.join("\n")
+    );
+
+    // Neither lend's cookie reaches the other's requests; Bo's door names
+    // Alex's key, the computer's or the phone's; the secret is the
+    // service's and only its own.
+    let alex = actor_of(&signing(if way == Way::Computer { ALEX } else { PHONE }));
+    for (c, own, theirs) in [(&g.canaries.0, "sam", "bo"), (&g.canaries.1, "bo", "sam")] {
+        let mut asked = seen(c).await;
+        // The last is this test's own read of what it saw, not through any door.
+        asked.retain(|s| s["path"] != "/seen");
+        let cookies: Vec<&str> = asked
+            .iter()
+            .filter_map(|s| s["cookie"].as_str())
+            .filter(|c| !c.is_empty())
+            .collect();
+        assert!(
+            cookies
+                .iter()
+                .any(|c| c.contains(&format!("canary-{own}="))),
+            "{own}'s canary saw its own cookie: {cookies:?}"
+        );
+        assert!(
+            !cookies
+                .iter()
+                .any(|c| c.contains(&format!("canary-{theirs}"))),
+            "{own}'s canary saw {theirs}'s cookie: {cookies:?}"
+        );
+        assert!(
+            asked.iter().all(|s| s["key"] == json!(alex)),
+            "{own}'s door names Alex's key {alex}: {asked:?}"
+        );
+        assert!(
+            asked.iter().all(|s| s["secret"] == json!(true)),
+            "{own}'s secret reached its service"
+        );
+    }
+    assert_eq!(
+        ran["leaked"],
+        json!([]),
+        "no byte Alex receives holds either secret:\n{shown:#}"
+    );
+    for (who, n) in [("sam", &g.sam), ("bo", &g.bo)] {
+        let lend = &ran["lends"][who];
+        let at = lend["at"].as_str().unwrap_or_default();
+        let own = match way {
+            Way::Computer => format!("http://{}.localhost:{}/", label(n), api.port()),
+            Way::Wildcard => format!("http://{}.localhost:", label(n)),
+            Way::Floor => "http://localhost:".to_string(),
+        };
+        if way != Way::Computer {
+            assert_eq!(
+                lend["unsealable"]["groups"],
+                json!(0),
+                "a lent page finds a group to unseal:\n{shown:#}"
+            );
+        } else {
+            assert!(lend["recordPost"].is_string(), "{shown:#}");
+        }
+        assert!(
+            at.starts_with(&own),
+            "{who}'s lend opened at {at}, not its own address {own}…:\n{shown:#}"
+        );
+    }
+    if way == Way::Computer {
+        let http = reqwest::Client::builder().no_proxy().build().unwrap();
+        let log = http
+            .get(format!("http://{api}/v1/rail/log?namespace={NS}"))
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
+        assert!(
+            !log.contains(MARK),
+            "a lent page's post reached the record: {log}"
+        );
+    }
+    for n in [g.sam, g.bo, g.alex] {
+        n.endpoint().close().await;
+    }
+}
+
+in_both_engines!(
+    /// From Alex's computer: each lend at its origin on Alex's loopback.
+    on_a_computer
+);
+async fn on_a_computer(engine: Engine) {
+    conformance(Way::Computer, engine).await
+}
+
+in_both_engines!(
+    /// From a phone, each lend at an address of its own under the page's host.
+    on_a_phone_with_the_wildcard
+);
+async fn on_a_phone_with_the_wildcard(engine: Engine) {
+    conformance(Way::Wildcard, engine).await
+}
+
+in_both_engines!(
+    /// From a phone, every lend under one address apart from the page's.
+    on_a_phone_on_the_floor
+);
+async fn on_a_phone_on_the_floor(engine: Engine) {
+    conformance(Way::Floor, engine).await
+}

@@ -846,6 +846,22 @@ exists, each a small app in `apps/` using only §3:
   `reduce` over Sam's and Alex's loopback record APIs, writes for Bo and Cy
   naming them in `on_behalf_of`, run by `crates/svrngs-node/tests/canaries.rs`,
   nodes in one process, no relay; a step of its own in `scripts/check.sh`.
+- **Conformance** (u5-2) — the web carried whole: a localhost service with
+  one route per thing a self-hosted app leans on — a page asking for
+  `/`-absolute paths, a WebSocket echo, a 64 MiB file read by Range and
+  uploaded streaming, its own service worker, `SharedArrayBuffer` under
+  COOP/COEP, a Host check with an absolute redirect, a cookie sign-in,
+  local storage. Landed (u5-2): `apps/web-conformance`, lent by Sam's and
+  Bo's computers at once and opened by Alex from a computer and from a phone
+  both ways of §7, in Chromium and in WebKit as an iPhone, by
+  `crates/svrngs-node/tests/conformance.rs`; a step of its own in
+  `scripts/check.sh`, printing each route's verdict per way. Every route
+  passes on a computer and with the wildcard; on the floor every route but
+  the root and storage apart, each reported as needing the wildcard.
+  Neither lend's cookie reaches the other's requests, Bo's door names
+  Alex's key, no byte Alex receives holds either secret, a lent page finds
+  no group whose key it could unseal, and a lent page's post to the record
+  API writes nothing.
 - **Tap** (after U3) — private inputs and a ring born from a ring: two groups
   on one node; an app starts a group of two from inside a group; it seals its
   own payloads to members' public keys, which the register gains with it. (It

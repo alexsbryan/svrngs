@@ -478,6 +478,14 @@ DESIGN §8: apps on two computers write, a correction voids, and both copies
 fold to the same balances, the ones the acts say, or it names both and what
 each says. Its chat handlers went with the bot and are at that tag.
 
+**`apps/web-conformance/`**: the conformance canary (DESIGN §8; u5-2), a
+Node service with no dependency (`serve.mjs`), one route per thing a
+self-hosted app leans on, and the checks its page runs (`checks.js`).
+`crates/svrngs-node/tests/conformance.rs` lends two of it and opens both
+from a computer and from a phone both ways of DESIGN §7, through
+`web/tests/conformance.mjs`, and keeps each route's verdict in
+`target/conformance/`, which `scripts/check.sh` prints.
+
 **`apps/jellyfin/`, `apps/tap/`**: so far only each app's `nouns.txt` — the
 words the infra may never use. `apps/jellyfin/` holds whatever knows
 Jellyfin's API (DESIGN §3, U5's call 3); Tap is a canary (DESIGN §8).

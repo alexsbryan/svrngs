@@ -1,0 +1,2 @@
+# The conformance canary's nouns. The infra may not use them (scripts/vocab_check.py).
+conformance
