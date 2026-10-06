@@ -1044,8 +1044,9 @@ async fn forward(
     };
     let origin = std::net::SocketAddr::from(([127, 0, 0, 1], lend.port.get()));
     let Some(answer) = send_to(origin, request, lend.name.as_str()).await else {
-        carriage.answered = Some((StatusCode::BAD_GATEWAY.as_u16(), None));
-        return unanswered();
+        let unanswered = unanswered();
+        carriage.answered = Some((unanswered.status().as_u16(), None));
+        return unanswered;
     };
     let mut answer = answer;
     let switched =
