@@ -6,14 +6,17 @@
 #
 # A scratch Jellyfin on 127.0.0.1:8096 — U3's dry run's
 # (demo/runs/a/dry-2026-10-04/dry.sh), the macOS app's 12.0.0 server with
-# its own data dirs — with two films and the lender's own account; Sam's
+# its own data dirs — with three films and the lender's own account; Sam's
 # computer and Alex's as two data dirs running the `svrngs` command through
 # iroh's public relays; the page built and served on localhost, where
 # every name answers, so a phone's apps each open at an address of their
 # own (u5-2). Sam lends 8096 as it comes, and makes Ana and Ben accounts
 # in Jellyfin's own pages by the line `share` printed (lender.mjs).
 #
-#   check.sh up    <scratch> <out>                 all of the above
+#   check.sh films <dir> <seconds>                 Sam's three films, that long, made in <dir> unless there
+#   check.sh up    <scratch> <out>                 all of the above; with MEDIA=<dir>, Sam's library is <dir>'s
+#                                                  films; PEOPLE names who the lender makes accounts for (else
+#                                                  ana ben); SHARE_FLAGS is what share is given (else --limit 8)
 #   check.sh pair  <scratch> <out> <way> <engine>  two people new to it through the lend, way computer|phone,
 #                                                  engine chromium|webkit: from the list to a playing film,
 #                                                  seeks, the other watched; writes <out>/pair-<way>-<engine>.json
@@ -22,11 +25,16 @@
 #                                                  lend's token reaching a browser); `one-device`, Ben's, on the
 #                                                  lend's one device (one person's sign-in ending another's);
 #                                                  writes <out>/pair-computer-<engine>-plant-<plant>.json
+#   check.sh trio  <scratch> <out>                 Demo A's three (trio.mjs), after up with PEOPLE="alex bo cy":
+#                                                  Alex on the computer plays One, Bo on a WebKit phone Two, Cy on
+#                                                  a Chromium phone Three, WINDOW s at once (else 600), seeking
+#                                                  10, 22 and 22 times; writes <out>/trio[-$RUN].json, its
+#                                                  summary (trio.py) and scan.json; takes over ten minutes
 #   check.sh judge <scratch> <out> <run>...        scan.py, then judge.py over the runs named (pair-*.json stems):
 #                                                  exit 0 only if every bar of every one passed
 #   check.sh down  <scratch> <out>                 stops everything; the scratch dir stays for the secrets
 #
-# Each step stays inside ten minutes on this host. svrngs built first:
+# Each step but `trio` stays inside ten minutes on this host. svrngs built first:
 # cargo build -p svrngs. Nothing of Jellyfin outlives `down` but what is
 # under <out>; the secrets stay in <scratch>/secrets. scripts/check.sh runs
 # none of this: it needs Jellyfin (DESIGN §8, U5).
@@ -36,7 +44,10 @@ HERE="$(cd "$(dirname "$0")" && pwd)"; REPO="$(cd "$HERE/../../.." && pwd)"
 B="$REPO/target/debug/svrngs"
 JF_APP="${JF_APP:-/Applications/Jellyfin.app/Contents}"
 O=http://127.0.0.1:8096
-SECRETS="$R/secrets"; mkdir -p "$OUT"
+SECRETS="$R/secrets"; [ "$STEP" = films ] || mkdir -p "$OUT"
+# Who the lender makes accounts for, and what share is told: u5-4's pair
+# unless a run says otherwise (Demo A's, `trio`).
+PEOPLE="${PEOPLE:-ana ben}"; SHARE_FLAGS="${SHARE_FLAGS---limit 8}"
 say() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*" | tee -a "$OUT/steps.log" >&2; }
 field() { python3 -c "import json,sys;print(json.load(sys.stdin)$1)"; }
 port_of() { for _ in $(seq 1 100); do grep -m1 -o 'port [0-9]*' "$1" 2>/dev/null | cut -d' ' -f2 && return; sleep 0.1; done; return 1; }
@@ -51,20 +62,40 @@ down() {
   rm -f "$R"/*.pid
 }
 
+# Sam's films, each LENGTH s at 720p, a keyframe each 2 s, made in <dir>
+# unless there already: One, H.264 in MP4, which both engines play as it
+# is; Two, MPEG-2 in Matroska, which neither plays, so Jellyfin converts
+# it for both; Three, H.264 in Matroska, which Jellyfin repackages for
+# the engines that cannot open Matroska. A 1,200 s one took 5.5 min at a
+# load of 65 here (2026-10-05), so Demo A's are made once, by `films`.
+films() {
+  local dir="$1" len="$2" ff="$JF_APP/MacOS/ffmpeg"
+  mkdir -p "$dir"
+  # Each written aside and moved in whole, so a film cut short is made again.
+  make() {
+    local to="$dir/$1"; shift
+    [ -s "$to" ] || { "$ff" -v error -y "$@" "$dir/.part-$1" && mv "$dir/.part-$1" "$to"; }
+  }
+  make "Test Pattern One (2026).mp4" -f lavfi -i "testsrc2=size=1280x720:rate=24" -f lavfi -i "sine=frequency=440:sample_rate=48000" \
+    -t "$len" -c:v libx264 -preset veryfast -b:v 3M -g 48 -pix_fmt yuv420p -c:a aac -b:a 128k -movflags +faststart -f mp4 &
+  make "Test Pattern Two (2026).mkv" -f lavfi -i "testsrc=size=1280x720:rate=24" -f lavfi -i "sine=frequency=660:sample_rate=48000" \
+    -t "$len" -c:v mpeg2video -b:v 4M -g 48 -c:a mp2 -b:a 192k -f matroska &
+  make "Test Pattern Three (2026).mkv" -f lavfi -i "testsrc2=size=1280x720:rate=24" -f lavfi -i "sine=frequency=550:sample_rate=48000" \
+    -t "$len" -vf hue=h=120 -c:v libx264 -preset veryfast -b:v 3M -g 48 -pix_fmt yuv420p -c:a aac -b:a 128k -f matroska &
+  wait
+  for f in "One (2026).mp4" "Two (2026).mkv" "Three (2026).mkv"; do
+    [ -s "$dir/Test Pattern $f" ] || { echo "the film Test Pattern $f was not made" >&2; exit 3; }
+  done
+}
+
 up() {
   down; rm -rf "$R"; mkdir -p "$R"/jf/{data,config,cache,log,media} "$R"/sam "$R"/alex "$OUT"
   (umask 077; mkdir -p "$SECRETS")
   : >"$OUT/steps.log"
 
-  # --- Sam's Jellyfin: one film it plays as it is, one it must convert -----
-  # 120 s each at 720p, a keyframe each 2 s. Two is MPEG-2 in Matroska,
-  # which neither engine plays, so Jellyfin converts it for both.
-  local ff="$JF_APP/MacOS/ffmpeg"
-  "$ff" -v error -y -f lavfi -i "testsrc2=size=1280x720:rate=24" -f lavfi -i "sine=frequency=440:sample_rate=48000" \
-    -t 120 -c:v libx264 -preset veryfast -b:v 3M -g 48 -pix_fmt yuv420p -c:a aac -b:a 128k -movflags +faststart \
-    "$R/jf/media/Test Pattern One (2026).mp4"
-  "$ff" -v error -y -f lavfi -i "testsrc=size=1280x720:rate=24" -f lavfi -i "sine=frequency=660:sample_rate=48000" \
-    -t 120 -c:v mpeg2video -b:v 4M -g 48 -c:a mp2 -b:a 192k "$R/jf/media/Test Pattern Two (2026).mkv"
+  # --- Sam's Jellyfin, its films made here, or MEDIA's (`films`) ----------
+  local ff="$JF_APP/MacOS/ffmpeg" lib="${MEDIA:-$R/jf/media}"
+  [ -n "${MEDIA:-}" ] || films "$lib" 120
   cat >"$R/jf/config/network.xml" <<'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <NetworkConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
@@ -90,13 +121,13 @@ EOF
   SERVER="$(printf '%s' "$info" | field '["Id"]')"
   say "jellyfin up: $info"
 
-  secret sam_pw "$(pw)"; secret ana_pw "$(pw)"; secret ben_pw "$(pw)"
+  secret sam_pw "$(pw)"; for who in $PEOPLE; do secret "${who}_pw" "$(pw)"; done
   TOKEN=""
   api POST /Startup/Configuration '{"UICulture":"en-US","MetadataCountryCode":"US","PreferredMetadataLanguage":"en"}' >/dev/null
   api GET /Startup/User >/dev/null
   api POST /Startup/User "{\"Name\":\"sam\",\"Password\":\"$(cat "$SECRETS/sam_pw")\"}" >/dev/null
   api POST "/Library/VirtualFolders?name=Movies&collectionType=movies&refreshLibrary=true" \
-    "{\"LibraryOptions\":{\"PathInfos\":[{\"Path\":\"$R/jf/media\"}],\"EnableRealtimeMonitor\":false}}" >/dev/null
+    "{\"LibraryOptions\":{\"PathInfos\":[{\"Path\":\"$lib\"}],\"EnableRealtimeMonitor\":false}}" >/dev/null
   api POST /Startup/RemoteAccess '{"EnableRemoteAccess":false,"EnableAutomaticPortMapping":false}' >/dev/null
   api POST /Startup/Complete >/dev/null
   sleep 3
@@ -105,10 +136,11 @@ EOF
   api POST /Library/Refresh >/dev/null
   local n=0
   for _ in $(seq 1 60); do
-    n="$(api GET "/Items?Recursive=true&IncludeItemTypes=Movie" | field '["TotalRecordCount"]')"; [ "$n" -ge 2 ] && break; sleep 1
+    n="$(api GET "/Items?Recursive=true&IncludeItemTypes=Movie" | field '["TotalRecordCount"]')"; [ "$n" -ge 3 ] && break; sleep 1
   done
   ONE="$(api GET "/Items?Recursive=true&IncludeItemTypes=Movie&SearchTerm=One" | field '["Items"][0]["Id"]')"
   TWO="$(api GET "/Items?Recursive=true&IncludeItemTypes=Movie&SearchTerm=Two" | field '["Items"][0]["Id"]')"
+  THREE="$(api GET "/Items?Recursive=true&IncludeItemTypes=Movie&SearchTerm=Three" | field '["Items"][0]["Id"]')"
   users >"$OUT/users-before.json"
   say "films: $n; users: $(cat "$OUT/users-before.json")"
 
@@ -128,15 +160,16 @@ EOF
   echo $! >"$R/alex.pid"
   for _ in $(seq 1 60); do grep -q "You're in" "$R/alex/join.out" 2>/dev/null && break; sleep 1; done
   say "alex: $(head -1 "$R/alex/join.out")"
-  # Sam lends it as it comes, eight at once for the phones; a password
-  # typed is not asked for, and not kept.
-  printf 'MediaBrowser Token="%s"\n' "$TOKEN" | SVRNGS_DIR="$R/sam" NO_COLOR=1 RUST_LOG=debug "$B" share 8096 --limit 8 >"$R/sam/share.out" 2>"$R/sam/share.log"
+  # Sam lends it as it comes, eight at once for the phones unless a run
+  # says otherwise (SHARE_FLAGS); a password typed is not asked for, and
+  # not kept.
+  printf 'MediaBrowser Token="%s"\n' "$TOKEN" | SVRNGS_DIR="$R/sam" NO_COLOR=1 RUST_LOG=debug "$B" share 8096 $SHARE_FLAGS >"$R/sam/share.out" 2>"$R/sam/share.log"
   say "sam: $(grep -m1 Lent "$R/sam/share.out")"
   local how; how="$(grep -m1 'asks each person to sign in once' "$R/sam/share.out")" || { say "share told Sam nothing of accounts"; exit 1; }
   say "sam is told: $how"
   [ ! -e "$R/sam/secrets/lends/jellyfin" ] || { say "the lend keeps a secret"; exit 1; }
   # Sam makes Ana and Ben accounts, as that line says, in Jellyfin's pages.
-  SECRETS="$SECRETS" node "$HERE/lender.mjs" "$how" "$O" sam ana ben >"$OUT/lender.json" || { say "lender: $(cat "$OUT/lender.json")"; exit 1; }
+  SECRETS="$SECRETS" node "$HERE/lender.mjs" "$how" "$O" sam $PEOPLE >"$OUT/lender.json" || { say "lender: $(cat "$OUT/lender.json")"; exit 1; }
   users >"$OUT/users-made.json"
   say "sam made: $(cat "$OUT/users-made.json")"
   # The bare command prints the lends as it starts: Alex runs it now.
@@ -152,6 +185,7 @@ EOF
 SERVER=$SERVER
 ONE=$ONE
 TWO=$TWO
+THREE=$THREE
 PAGE=$PAGE
 LINK=$LINK
 ORIGIN=$ORIGIN
@@ -224,11 +258,32 @@ plant() {
   say "plant $what: taken back; the lend keeps $(find "$R/sam/secrets/lends" -type f 2>/dev/null | wc -l | tr -d ' ') secrets"
 }
 
+# Demo A's three on this host (u5-9's row; demo/a.md): the host's load
+# at the start and the end in steps.log beside the seeks, which carry
+# their own (ralph/next/u5/PROMPT.addendum.md).
+trio() {
+  . "$R/env"
+  local tag="trio${RUN:+-$RUN}"
+  say "trio $tag: load at the start: $(uptime)"
+  rm -rf "$R/dump/$tag"
+  SECRETS="$SECRETS" JF="$O" ADMIN="$(cat "$SECRETS/admin_token")" DUMP="$R/dump/$tag" \
+    node "$HERE/trio.mjs" "{\"server\":\"$SERVER\",\"window_s\":${WINDOW:-600},\"people\":[
+      {\"name\":\"Alex\",\"user\":\"alex\",\"way\":\"computer\",\"engine\":\"chromium\",\"at\":\"$ORIGIN\",\"film\":\"$ONE\",\"seeks\":10},
+      {\"name\":\"Bo\",\"user\":\"bo\",\"way\":\"phone\",\"engine\":\"webkit\",\"at\":\"$LINK\",\"film\":\"$TWO\",\"seeks\":22},
+      {\"name\":\"Cy\",\"user\":\"cy\",\"way\":\"phone\",\"engine\":\"chromium\",\"at\":\"$LINK\",\"film\":\"$THREE\",\"seeks\":22}]}" \
+    >"$OUT/$tag.json" 2>"$R/$tag.err" || true
+  say "trio $tag: load at the end: $(uptime)"
+  python3 "$HERE/scan.py" "$R" "$OUT" | tee -a "$OUT/steps.log"
+  python3 "$HERE/trio.py" "$OUT/$tag.json" "$R/sam/run.log" | tee -a "$OUT/steps.log"
+}
+
 case "$STEP" in
+  films) films "$R" "$OUT" ;;
   up) up ;;
   pair) pair "$4" "$5" ;;
+  trio) trio ;;
   plant) plant "$4" "$5" ;;
   judge) shift 3; python3 "$HERE/scan.py" "$R" "$OUT" >/dev/null; python3 "$HERE/judge.py" "$OUT" "$@" | tee -a "$OUT/steps.log" ;;
   down) TOKEN="$(cat "$SECRETS/admin_token")"; users >"$OUT/users-after.json" 2>/dev/null || true; down ;;
-  *) echo "usage: check.sh up|pair|plant|judge|down <scratch> <out> [way engine | plant engine | run...]" >&2; exit 2 ;;
+  *) echo "usage: check.sh films|up|pair|trio|plant|judge|down <scratch> <out> [way engine | plant engine | run...]" >&2; exit 2 ;;
 esac
