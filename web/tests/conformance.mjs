@@ -27,7 +27,7 @@
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
-import { execSync } from 'node:child_process';
+import { execSync, spawn } from 'node:child_process';
 import { hold, launch, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
@@ -64,15 +64,25 @@ const answered = (r, by) => sent.push(`${new Date().toISOString()} ${r.method()}
 context.on('response', (r) => answered(r.request(), `${r.status()} ${r.fromServiceWorker() ? 'by the worker' : 'not by the worker'}`));
 context.on('requestfailed', (r) => answered(r, `failed: ${r.failure()?.errorText}`));
 context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
-// What each of the browser's content processes holds, a second apart, as
+// What each of this browser's content processes holds, a second apart, as
 // `<time> <pid>:<MB> …`, while a lend's checks run (u5-12): a worker's
-// process that grows, then is gone. WebKit's only, on this host.
+// process that grows, then is gone. WebKit's only, on macOS. Every WebKit
+// browser's content processes are launchd's, so this one's are told apart
+// by its own log line as each starts; its own process is the child of
+// Playwright's `pw_run.sh`, this process's child.
 let memory = [];
+const ours = new Set();
+const ps = () => execSync('ps -axo pid=,ppid=,rss=,command=').toString().trim().split('\n').map((l) => l.trim().split(/\s+/));
+const shell = ps().find(([, ppid, , cmd, run]) => ppid === String(process.pid) && `${cmd} ${run}`.includes('pw_run.sh'))?.[0];
+const ui = args.engine === 'webkit' && ps().find(([, ppid, , cmd]) => ppid === shell && cmd.endsWith('/Playwright'))?.[0];
+const started = ui && spawn('/usr/bin/log', ['stream', '--style', 'compact', '--predicate', `processID == ${ui}`]);
+started?.stdout.on('data', (d) => {
+  for (const [, pid] of String(d).matchAll(/\[PID=(\d+)\] WebProcessProxy::didFinishLaunching/g)) ours.add(pid);
+});
+if (started) await new Promise((r) => setTimeout(r, 2000));
 const sampler = setInterval(() => {
-  if (args.engine !== 'webkit') return;
-  const ps = execSync('ps -axo pid=,rss=,command=').toString().split('\n');
-  const held = ps.filter((l) => l.includes('ms-playwright/webkit') && l.includes('WebContent')).map((l) => l.trim().split(/\s+/));
-  memory.push(`${new Date().toISOString()} ${held.map(([pid, rss]) => `${pid}:${Math.round(rss / 1024)}`).join(' ')}`);
+  const held = ps().filter(([pid]) => ours.has(pid));
+  if (held.length) memory.push(`${new Date().toISOString()} ${held.map(([pid, , rss]) => `${pid}:${Math.round(rss / 1024)}`).join(' ')}`);
 }, 1000);
 context.on('response', async (r) => {
   try {
@@ -144,6 +154,7 @@ try {
   process.exitCode = 1;
 } finally {
   clearInterval(sampler);
+  started?.kill();
   await close();
   server?.close();
 }

@@ -670,10 +670,22 @@ async fn on_a_phone_on_the_floor(engine: Engine) {
 /// requests and worker trace in it, is kept in `target/upload-after-seeks/`
 /// beside WebKit's own log of the run (macOS `log stream`, its subsystem's
 /// lines), which names what WebKit did with its workers. It fails if the
-/// page's host answered any try's upload. `ROUTES` (`seeks,upload` if
+/// page's host answered any try's upload, or if any of the browser's
+/// content processes, sampled each second, held `HELD` or more — or none
+/// was sampled, which judges nothing. `ROUTES` (`seeks,upload` if
 /// unset) names the canary's checks each try runs. Not in scripts/check.sh:
 /// run by name, `cargo test -p svrngs-node --test conformance
 /// upload_after_seeks -- --ignored`.
+/// The most, in MB, a WebKit content process may hold through the tries
+/// (u5-12): the line WebKit ends a worker's process past. The process that
+/// held both floor lends' workers exited at a footprint of 1,065 MB and
+/// 1,393 MB resident ('Memory usage policy changed: Unrestricted ->
+/// Conservative', 'Suspended WebProcess is exiting due to memory
+/// pressure'); the same tries left it at 1,332 MB in runs WebKit did not end
+/// it, and at 511 MB once a body went a slice at a time
+/// (demo/runs/u5/2026-10-06-worker-gone/).
+const HELD: u64 = 1024;
+
 mod upload_after_seeks {
     use super::*;
 
@@ -733,6 +745,7 @@ async fn tries(way: Way) {
     .unwrap();
     let mut lines = String::new();
     let mut lost = Vec::new();
+    let mut most = None;
     for i in 0..n {
         let who = args["lends"][i]["who"].as_str().unwrap();
         let seen = &ran["lends"][who];
@@ -744,15 +757,26 @@ async fn tries(way: Way) {
             .iter()
             .map(|r| format!("{r} {} {}", seen[r]["ok"], seen[r]["saw"]))
             .collect();
+        // `<time> <pid>:<MB> …` each second: the most any process held.
+        let held = seen["memory"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(Value::as_str)
+            .flat_map(|l| l.split(' ').skip(1))
+            .filter_map(|p| p.split_once(':')?.1.parse::<u64>().ok())
+            .max();
+        most = most.max(held);
         let line = format!(
-            "{}\t{who}\t{}\tthe page's host was asked {:?}\t{}\t{}\n",
+            "{}\t{who}\t{}\tthe page's host was asked {:?}\tthe most a content process held {} MB\t{}\t{}\n",
             way.as_str(),
             checks.join("\t"),
             host,
+            held.map_or("never sampled".into(), |m| m.to_string()),
             seen["load"][0].as_str().unwrap_or("?"),
             seen["load"][1].as_str().unwrap_or("?"),
         );
-        if host.iter().any(|l| l.contains(" POST ")) {
+        if host.iter().any(|l| l.contains(" POST ")) || held.is_some_and(|m| m >= HELD) {
             lost.push(line.clone());
         }
         lines.push_str(&line);
@@ -767,8 +791,12 @@ async fn tries(way: Way) {
         .unwrap();
     assert!(
         lost.is_empty(),
-        "the page's host answered an upload:\n{}",
+        "the page's host answered an upload, or a process held {HELD} MB or more:\n{}",
         lost.join("")
+    );
+    assert!(
+        most.is_some(),
+        "no content process was sampled, so what they held is not judged"
     );
     for n in [g.sam, g.bo, g.alex] {
         n.endpoint().close().await;
