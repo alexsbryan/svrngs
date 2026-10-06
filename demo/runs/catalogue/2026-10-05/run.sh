@@ -98,11 +98,19 @@ up() {
 
 floor() {
   local p; p="$(cat "$R/site.port")"
-  SVRNGS_DIR="$R/sam" NO_COLOR=1 "$B" link House --origin "http://127.0.0.1:$p/" --lends-origin "http://localhost:$p/" \
-    >"$R/sam/link-floor.out" 2>"$R/sam/link-floor.log"
-  grep -o "http://127.0.0.1:$p/#[A-Za-z0-9_~.:-]*" "$R/sam/link-floor.out" | head -1 >"$R/link-floor"
-  say "sam, the floor: $(sed -E 's/#[^ ]+/#<the link>/' "$R/sam/link-floor.out" | tr '\n' ' ')"
-  sed -E 's/#[^ ]+/#<the link>/' "$R/sam/link-floor.out" >"$OUT/sam-link-floor.out"
+  # `link` will not run beside the running svrngs (its lock), and it runs
+  # the group itself once it has printed the link, as `new` does; so Sam
+  # stops `new` and leaves `link` running in its place. The lends are kept
+  # on disk (<dir>/lends).
+  kill "$(cat "$R/sam.pid")" 2>/dev/null || true
+  while kill -0 "$(cat "$R/sam.pid")" 2>/dev/null; do sleep 0.2; done
+  SVRNGS_DIR="$R/sam" RUST_LOG=info NO_COLOR=1 nohup "$B" link House --origin "http://127.0.0.1:$p/" \
+    --lends-origin "http://localhost:$p/" >"$R/sam/link-floor.out" 2>"$R/sam/link-floor.log" &
+  echo $! >"$R/sam.pid"
+  for _ in $(seq 1 60); do grep -q "127.0.0.1:$p/#" "$R/sam/link-floor.out" 2>/dev/null && break; sleep 1; done
+  grep -o "http://127.0.0.1:$p/#[A-Za-z0-9_~.:/-]*" "$R/sam/link-floor.out" | head -1 >"$R/link-floor"
+  say "sam, the floor: $(grep -i 'phone' "$R/sam/link-floor.out")"
+  sed -E 's#(svrngs://join/|\#)[^ ]+#\1<the link>#' "$R/sam/link-floor.out" >"$OUT/sam-link-floor.out"
 }
 
 act() {

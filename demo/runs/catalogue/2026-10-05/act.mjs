@@ -33,10 +33,12 @@ const tag = `${a.app}-${a.way}-${a.engine}`;
 const { context, close } = await launch(a.engine);
 const page = await context.newPage();
 const failed = [];
+// A lend's label, at the front of its host or after /l/ on the floor, is not kept.
+const unlabel = (u) => u.replace(/^(https?:\/\/)[a-z0-9]{20,}\./, '$1<label>.').replace(/\/l\/[a-z0-9]{20,}\//, '/l/<label>/');
 page.on('response', (r) => {
-  if (r.status() >= 400 && failed.length < 40) failed.push(`${r.status()} ${r.request().method()} ${r.url().replace(/^https?:\/\/[a-z0-9]{20,}\./, '<label>.')}`);
+  if (r.status() >= 400 && failed.length < 40) failed.push(`${r.status()} ${r.request().method()} ${unlabel(r.url())}`);
 });
-page.on('requestfailed', (r) => failed.length < 40 && failed.push(`failed ${r.method()} ${r.url().replace(/^https?:\/\/[a-z0-9]{20,}\./, '<label>.')}: ${r.failure()?.errorText}`));
+page.on('requestfailed', (r) => failed.length < 40 && failed.push(`failed ${r.method()} ${unlabel(r.url())}: ${r.failure()?.errorText}`));
 const said = [];
 page.on('console', (m) => ['error', 'warning'].includes(m.type()) && said.length < 30 && said.push(`${m.type()}: ${m.text().slice(0, 300)}`));
 page.on('pageerror', (e) => said.length < 30 && said.push(`pageerror: ${String(e.message).slice(0, 300)}`));
@@ -70,7 +72,7 @@ async function open() {
     await page.waitForURL((u) => u.href !== list && !u.pathname.includes('open.html'), { timeout: 90_000 });
     await page.waitForLoadState('load', { timeout: 60_000 });
   });
-  out.at = page.url().replace(/^(https?:\/\/)[a-z0-9]{20,}\./, '$1<label>.').replace(/\/l\/[a-z0-9]{20,}\//, '/l/<label>/');
+  out.at = unlabel(page.url());
 }
 
 // ── each app's act ──────────────────────────────────────────────────────
