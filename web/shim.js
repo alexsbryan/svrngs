@@ -87,7 +87,11 @@
       this.port.postMessage({ close: code });
     }
   }
-  Object.assign(Socket, { CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3 });
+  // On the class and on each socket, as a browser's are: Home Assistant's
+  // library reads `socket.OPEN` (u5-catalogue-dry).
+  const states = { CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3 };
+  Object.assign(Socket, states);
+  Object.assign(Socket.prototype, states);
   window.WebSocket = Socket;
 
   if (navigator.serviceWorker) {
