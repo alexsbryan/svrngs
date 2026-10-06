@@ -78,3 +78,10 @@ those and refuse docker. u5-catalogue-dry's row names "OrbStack's
 `docker`": that premise is false, so correct the row as the rules say,
 citing this paragraph. A tool the run needs that is not open software, or
 that this host does not have, is the operator's to give.
+
+Seek timings measure this host as well as the carriage: u5-4's one miss
+(6,389 ms, `5c323f8`) came at a load average of 33.6 on 12 cores. Every run
+that times seeks records the host's load average beside them (`uptime` at
+its start and end); a run whose load exceeds the host's cores is run again
+when it is quiet, and both are kept and reported, a miss never dropped
+(u5-9 judges Demo A's seek bar as a rate; operator, 2026-10-05).
