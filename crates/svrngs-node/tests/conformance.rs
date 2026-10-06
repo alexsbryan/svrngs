@@ -257,7 +257,25 @@ fn verdicts(way: Way, lend: &Value, other: &Value) -> Vec<(&'static str, String,
         .collect()
 }
 
+/// Every door's `carriage` lines (u5-11), kept in
+/// `target/conformance/carriage.log` for every test this binary runs: each
+/// range asked, answered, sent whole or cut off, beside the worker's trace.
+fn carriage() {
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(|| {
+        let kept = repo().join("target/conformance");
+        std::fs::create_dir_all(&kept).unwrap();
+        let log = std::fs::File::create(kept.join("carriage.log")).unwrap();
+        tracing_subscriber::fmt()
+            .with_env_filter(tracing_subscriber::EnvFilter::new("carriage=debug"))
+            .with_writer(std::sync::Mutex::new(log))
+            .with_ansi(false)
+            .init();
+    });
+}
+
 async fn conformance(way: Way, engine: Engine) {
+    carriage();
     let site = site();
     let relay = relay().await;
     let g = group(&relay).await;
@@ -298,6 +316,13 @@ async fn conformance(way: Way, engine: Engine) {
     );
     let stdout = String::from_utf8_lossy(&out.stdout);
     let ran: Value = serde_json::from_str(stdout.lines().last().expect("it printed")).unwrap();
+    let kept = repo().join("target/conformance");
+    std::fs::create_dir_all(&kept).unwrap();
+    std::fs::write(
+        kept.join(format!("{}-{}.json", way.as_str(), engine.as_str())),
+        format!("{ran:#}"),
+    )
+    .unwrap();
     let mut shown = ran.clone();
     shown["logs"] = json!(format!(
         "{} lines",
@@ -321,8 +346,6 @@ async fn conformance(way: Way, engine: Engine) {
         }
     }
     print!("{table}");
-    let kept = repo().join("target/conformance");
-    std::fs::create_dir_all(&kept).unwrap();
     std::fs::write(
         kept.join(format!("{}-{}.txt", way.as_str(), engine.as_str())),
         &table,

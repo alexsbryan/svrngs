@@ -150,7 +150,7 @@ EOF
   PAGE="http://localhost:$(port_of "$R/site.out")/"
 
   # --- Sam makes House, its links on the page; Alex joins by the client's --
-  SVRNGS_DIR="$R/sam" RUST_LOG=info NO_COLOR=1 nohup "$B" new House --as Sam --origin "$PAGE" >"$R/sam/new.out" 2>"$R/sam/run.log" &
+  SVRNGS_DIR="$R/sam" RUST_LOG=info,carriage=debug NO_COLOR=1 nohup "$B" new House --as Sam --origin "$PAGE" >"$R/sam/new.out" 2>"$R/sam/run.log" &
   echo $! >"$R/sam.pid"
   for _ in $(seq 1 60); do grep -q "$PAGE#" "$R/sam/new.out" 2>/dev/null && break; sleep 1; done
   LINK="$(grep -o "$PAGE#[A-Za-z0-9_-]*" "$R/sam/new.out")"

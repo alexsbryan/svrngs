@@ -106,11 +106,12 @@ function media(person) {
   });
 }
 
-// A phone's lend worker keeps its last 300 lines at <scope>svrngs-trace
-// (web/lend.js): what it did with each request it could not carry.
+// A phone's lend worker keeps its last 2,000 lines at <scope>svrngs-trace
+// (web/lend.js): what it did with each request it could not carry, and
+// each range from asked to its end (u5-11), kept whole.
 const workerTrace = (person) => person.page.evaluate(async () => {
   const r = await fetch('/svrngs-trace');
-  return r.ok ? (await r.text()).split('\n').slice(-120) : `${r.status}`;
+  return r.ok ? (await r.text()).split('\n') : `${r.status}`;
 }).catch((e) => `could not read: ${e}`);
 
 // What the lender's Jellyfin says each person's play is: how it plays

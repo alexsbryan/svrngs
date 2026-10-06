@@ -917,6 +917,37 @@ pub(crate) async fn send_to(
     }
 }
 
+/// One request's carriage, traced at debug under `carriage` from asked to
+/// its end (u5-11): its `Range`, the answer's status, and whether the
+/// answer went whole, was cut off when the asker stopped reading it, or
+/// the asker left before the service answered — what a seek in a lent
+/// player decides, which no other line shows.
+struct Carriage {
+    lend: String,
+    range: Option<String>,
+    began: Instant,
+    answered: Option<(u16, Option<u64>)>,
+    sent: u64,
+}
+
+impl Drop for Carriage {
+    fn drop(&mut self) {
+        let (lend, range, sent) = (&self.lend, &self.range, self.sent);
+        let ms = self.began.elapsed().as_millis();
+        match self.answered {
+            None => tracing::debug!(target: "carriage", lend, ?range, ms,
+                "door: no answer carried — the asker left before the service answered, or a line above says why"),
+            Some((status, Some(length))) if sent < length => {
+                tracing::debug!(target: "carriage", lend, ?range, status, sent, length, ms,
+                "door: the answer cut off — the asker stopped reading it")
+            }
+            Some((status, length)) => {
+                tracing::debug!(target: "carriage", lend, ?range, status, sent, ?length, ms, "door: the answer sent to its end")
+            }
+        }
+    }
+}
+
 /// Carry `req` to `lend`'s service as `path` (with its query), the head
 /// rewritten, and stream the answer back.
 async fn forward(
@@ -928,6 +959,15 @@ async fn forward(
     Told { share, held }: Told,
 ) -> Response {
     let mut req = req;
+    let range = req.headers().get(header::RANGE);
+    let mut carriage = Carriage {
+        lend: lend.name.to_string(),
+        range: range.and_then(|r| r.to_str().ok()).map(str::to_string),
+        began: now(),
+        answered: None,
+        sent: 0,
+    };
+    tracing::debug!(target: "carriage", actor, lend = %lend.name, range = ?carriage.range, "door: asked");
     let upgrade = upgrade_of(req.headers());
     let asker_side = upgrade.as_ref().map(|_| hyper::upgrade::on(&mut req));
     let (mut parts, body) = req.into_parts();
@@ -1004,6 +1044,7 @@ async fn forward(
     };
     let origin = std::net::SocketAddr::from(([127, 0, 0, 1], lend.port.get()));
     let Some(answer) = send_to(origin, request, lend.name.as_str()).await else {
+        carriage.answered = Some((StatusCode::BAD_GATEWAY.as_u16(), None));
         return unanswered();
     };
     let mut answer = answer;
@@ -1045,8 +1086,17 @@ async fn forward(
     }
     tracing::debug!(target: "door", actor, lend = %lend.name, status = parts.status.as_u16(),
         "door: the lend's service answered; streaming it back");
+    let length = parts
+        .headers
+        .get(header::CONTENT_LENGTH)
+        .and_then(|l| l.to_str().ok()?.parse().ok());
+    carriage.answered = Some((parts.status.as_u16(), length));
+    tracing::debug!(target: "carriage", lend = %lend.name, range = ?carriage.range, status = parts.status.as_u16(),
+        content_range = ?parts.headers.get(header::CONTENT_RANGE), ms = carriage.began.elapsed().as_millis(), "door: answered");
     let body = body.map_frame(move |frame| {
         let _ = &held;
+        let carried = &mut carriage;
+        carried.sent += frame.data_ref().map_or(0, |d| d.len() as u64);
         frame
     });
     let mut response = Response::new(Body::new(body));

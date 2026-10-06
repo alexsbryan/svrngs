@@ -44,7 +44,8 @@ const traced = [];
 self.__trace = (l) => {
   console.debug(l);
   traced.push(`${new Date().toISOString()} ${l}`);
-  if (traced.length > 300) traced.shift();
+  // Enough for a film's seeks, each range's lines with them (u5-11).
+  if (traced.length > 2000) traced.shift();
 };
 const trace = self.__trace;
 
@@ -162,6 +163,37 @@ function bounded(headers, destination) {
   });
 }
 
+// A range, or a media element's ask, traced from asked to its end
+// (u5-11): answered, read whole, cancelled by the browser after so many
+// bytes, or let go of by the browser before its answer came — what a seek
+// decides, which the dial's own lines do not show. None for any other
+// request.
+let asks = 0;
+function ranged(request, path) {
+  if (!request.headers.has('range') && !['video', 'audio'].includes(request.destination)) return null;
+  const [n, t0] = [++asks, Date.now()];
+  const said = (what) => trace(`RANGE ${n}: ${what}, ${Date.now() - t0} ms`);
+  said(`asked ${path} ${request.headers.get('range') ?? 'whole'} for ${request.destination || 'a fetch'}`);
+  request.signal?.addEventListener('abort', () => said('the browser let go of it'));
+  return said;
+}
+
+// `body`, its reading traced by `said`.
+function counted(body, said) {
+  const reader = body.getReader();
+  let [bytes, cancelled] = [0, false];
+  return new ReadableStream({
+    async pull(c) {
+      const { value, done } = await reader.read().catch((e) => (said(`the body failed after ${bytes} bytes: ${e}`), Promise.reject(e)));
+      if (done && !cancelled) said(`read whole, ${bytes} bytes`), c.close();
+      if (done) return;
+      bytes += value.byteLength;
+      c.enqueue(value);
+    },
+    cancel: (why) => ((cancelled = true), said(`cancelled by the browser after ${bytes} bytes: ${why}`), reader.cancel(why)),
+  });
+}
+
 // The header an answer that set cookies carries to the shim (shim.js).
 const PAGE_COOKIES = 'x-svrngs-page-cookies';
 
@@ -215,6 +247,7 @@ async function lent(request, url, where) {
   if (blob) headers.push(['content-length', String(blob.size)]);
   const body = blob?.stream() ?? null;
   const path = `/lend/${where.label}${where.path}`;
+  const said = ranged(request, path);
   let res;
   for (let tries = 0; !res; tries++) {
     try {
@@ -225,6 +258,7 @@ async function lent(request, url, where) {
       if (body || tries) return say(502, 'The computer lending this did not answer. Try again later.');
     }
   }
+  said?.(`answered ${res.status} ${res.headers.get('content-range') ?? ''}${request.signal?.aborted ? ', after the browser let go of it' : ''}`);
   const set = res.headers.get('x-svrngs-set-cookies');
   if (set) {
     for (const line of JSON.parse(set)) setCookie(jar, line);
@@ -249,7 +283,7 @@ async function lent(request, url, where) {
   // reads the answer: Immich reads its sign-in's cookie unreloaded.
   if (set) headed.set(PAGE_COOKIES, cookieFor(jar, '/', true));
   const html = request.method === 'GET' && (res.headers.get('content-type') ?? '').includes('text/html');
-  if (!html) return new Response(res.body, { status: res.status, statusText: res.statusText, headers: headed });
+  if (!html) return new Response(said && res.body ? counted(res.body, said) : res.body, { status: res.status, statusText: res.statusText, headers: headed });
   headed.delete('content-length');
   const text = await res.text();
   const head = /<head[^>]*>/i.exec(text) ?? /<html[^>]*>/i.exec(text) ?? /<!doctype[^>]*>/i.exec(text);

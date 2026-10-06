@@ -78,6 +78,8 @@ try {
     for (const route of ['root', 'isolated', 'host', 'range', 'upload', 'websocket', 'signin', 'guarded', 'worker']) {
       seen[route] = await run(route);
     }
+    // The lend's worker's trace, each range in it (u5-11): a phone's only.
+    if (phone) seen.trace = await page.evaluate(() => fetch('svrngs-trace').then((r) => r.text())).catch((e) => String(e));
     seen.stored = await run('stored', lend.who);
     await page.reload();
     await ready();
