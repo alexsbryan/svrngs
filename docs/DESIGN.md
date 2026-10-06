@@ -121,16 +121,18 @@ computer's own among them, each with its lender's person and key, its name,
 kind, limit, how many use it and the upload its lender declares
 (`upload_bps`, `null` when none), and the people whose computer did not
 answer, named, their lends absent rather than stale
-(`crates/svrngs-node/src/surface.rs`). Both are asked now, nothing kept;
-where to open a lend is u5-2's, which adds each lend's origin.
+(`crates/svrngs-node/src/surface.rs`), and where this computer's browser
+opens each, its `origin` (u5-2, `crates/svrngs-node/src/origin.rs`). Both
+are asked now, nothing kept.
 
 **What an app cannot yet ask**, each with the U5 row that adds it (the
 seat's survey, `ralph/next/u5/UPSTREAM.md` §(c), every line read again at
 u5-0):
-- *The lender's own lend, opened* (u5-1 lists it; u5-2 serves it through
-  this computer's door's rules, its secret injected and its limit counted,
-  one body with the door). Its secret lives only in the door's store, and
-  nothing on loopback carries it to the lend.
+- *The lender's own lend, opened* (u5-1 lists it; since u5-2 it opens at
+  its origin on this computer through this computer's door's rules, its
+  secret injected and its limit counted, one body with the door,
+  `door::Who::Own`). Its secret lives only in the door's store, and nothing
+  on loopback carries it to the lend.
 - *A lend at an origin apart from the person's key* (u5-2, calls 1 and 6
   below). On a phone every lend was under the page's scope, the origin
   that holds the key (§11, risk 5), and on a computer a lender's lends
@@ -143,8 +145,10 @@ u5-0):
   Jellyfin's `/socket` answered 404 through it and 101 on the lender's
   computer (`demo/runs/a/dry-2026-10-04/README.md:69-73`); since u5-2 it
   asks the service again and splices the two once it answers 101
-  (`door.rs`, `upgrade_of` and `splice`). A service worker still sees no
-  WebSocket at all.
+  (`door.rs`, `upgrade_of` and `splice`). A service worker sees no
+  WebSocket at all, so on a phone a shim in the lend's pages carries it to
+  the lend's worker, which speaks its frames over a stream the door
+  switches (`web/shim.js`, `web/lend.js`).
 - *A read from another origin* (none: u5-2 makes it unneeded). The door
   sets no `access-control-*` header (`door.rs` has none), so a page on
   another origin can read neither a lend's JSON nor its share header; with
@@ -792,12 +796,11 @@ stock web app measured through one; what an app cannot yet ask of svrngs is
 | svrngs `demo/runs/a/dry-2026-10-04/` (`dry.sh`, `drive.mjs`, `README.md`) | Jellyfin 12.0.0 through the door on one computer, the macOS app's server with data dirs of its own: the wizard over the API (`dry.sh:60-76`) and the lend's secret minted (`:88-95`); opened with nothing typed, a sign-in (`README.md:35-37`); a member's sign-in logs the lend's token out for everyone, the door's header carrying the lend's one `DeviceId` (`:39-50`); with a placeholder sign-in written into the page's local storage (`drive.mjs:41-47`), it plays in 1,137 ms and each seek plays again within 123 ms (`README.md:52-61`); an API key ruled out (`:63-67`); `/socket` 404 through the door, 101 direct (`:69-73`); no secret in a received byte but the token Jellyfin handed the browser signing in (`:81-88`); three at once and a transcode not measured (`:90-93`) | u5-3's base: its scratch Jellyfin is `dry.sh`'s, and what the run found is what u5-3 measures and u5-4 solves (call 2). The placeholder sign-in stays a driver's trick: no person can write it |
 | svrn-docs `rings/runs/strm-2026-10-05/` (its commit `457f120`) | the group-folder experiment's first run: Jellyfin 12.1.0 over two `.strm` stubs; every browser played the holder's MP4 from the stub's URL; WebKit, alone and as an iPhone, remuxed the MKV through Jellyfin's own HLS, reading the whole file unpaced; FAIL on its pre-registered byte-share bar (93.0% and 85.8%) | §9's group folders, after U5; no U5 row builds on it |
 
-Four facts follow. *Lends share the key's origin today:* on a phone every
-lend is under the page's scope (`web/sw.js:73-74`), where u4-6's test had a
-lent page's script unseal the person's key (§11, risk 5), and on a computer
-a lender's lends share the bridge to that lender, made when first asked
-(`crates/svrngs-node/src/iroh.rs:212-265`), its loopback port beside the
-record API's. *Two nodes on one host dial on loopback only:* iroh moves a
+Four facts follow. *Lends shared the key's origin until u5-2:* on a phone
+every lend was under the page's scope, where u4-6's test had a lent page's
+script unseal the person's key (§11, risk 5), and on a computer a lender's
+lends shared the bridge to that lender, its loopback port beside the record
+API's; since u5-2 each opens at an origin of its own (§7). *Two nodes on one host dial on loopback only:* iroh moves a
 connection dialled on loopback onto this computer's private address, which
 the door guesses home and tells no share (`ralph/REVIEW_FINDINGS.md` #33),
 so U5's two-node tests build every node with `RelayConfig::on_loopback_only`,
