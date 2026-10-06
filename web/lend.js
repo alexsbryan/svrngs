@@ -194,6 +194,18 @@ async function lent(request, url, where) {
   const cookie = cookieFor(jar, where.path, false);
   if (cookie) headers.push(['cookie', cookie]);
   headers.push(['x-svrngs-pass', h.pass]);
+  // A browser names the origin a post comes from; a worker is not shown
+  // it (WebKit's never, Chromium's but for a form's), and Nextcloud
+  // refuses a sign-in posted without one (u5-catalogue-dry). Named here
+  // for a post from this lend's own pages: a fetch, which only they can
+  // make through this worker, or a page's form whose referrer is here; a
+  // post another site sends here is left without, for the app to refuse.
+  const posted = !['GET', 'HEAD'].includes(request.method);
+  const named = headers.some(([n]) => n.toLowerCase() === 'origin');
+  const from = request.referrer ? new URL(request.referrer).origin : null;
+  if (posted && !named && (request.mode !== 'navigate' || from === self.location.origin)) {
+    headers.push(['origin', self.location.origin]);
+  }
   // A body is read whole, as a Blob, which the browser keeps on disk when
   // it is large, so it goes with its length: a worker never sees the
   // page's Content-Length, and a parser that reads by it — Django's
