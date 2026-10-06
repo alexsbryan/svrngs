@@ -436,13 +436,13 @@ async fn rate(way: Way, ran: &Value, began: &str) {
         .unwrap();
 }
 
-async fn conformance(way: Way, engine: Engine) {
-    carriage();
-    let began = load().await;
-    let site = site();
-    let relay = relay().await;
-    let g = group(&relay).await;
-    let label = |n: &Node| Label::of(n.endpoint().id().as_bytes(), "app").to_string();
+fn label(n: &Node) -> String {
+    Label::of(n.endpoint().id().as_bytes(), "app").to_string()
+}
+
+/// What the browser half (`web/tests/conformance.mjs`) takes to open `g`'s
+/// lends `way` in `engine`, the phone's link through `relay`.
+async fn browser_args(way: Way, engine: Engine, g: &Group, relay: &Server) -> Value {
     let api = g.alex.api_addr();
     let lends = json!([
         { "who": "sam", "button": "sam’s app", "label": label(&g.sam),
@@ -453,18 +453,23 @@ async fn conformance(way: Way, engine: Engine) {
     let token = Token {
         issuer: signing(SAM).verifying_key(),
         secret: [0; 16],
-        relay: Some(uplink(&relay_url(&relay)).await.parse().unwrap()),
+        relay: Some(uplink(&relay_url(relay)).await.parse().unwrap()),
     }
     .encode();
     let append = json!({ "op": "record", "payload": { "mark": MARK } }).to_string();
     let mut args = json!({
-        "engine": engine.as_str(), "mode": way.as_str(), "site": site, "lends": lends,
+        "engine": engine.as_str(), "mode": way.as_str(), "site": site(), "lends": lends,
         "key": hex::encode(signing(PHONE).to_bytes()), "token": token, "secrets": [SAMS, BOS],
     });
     if way == Way::Computer {
         args["api"] = json!(format!("http://{api}"));
         args["append"] = json!(append);
     }
+    args
+}
+
+/// The browser half run with `args`: what it saw, its one JSON line.
+async fn browse(args: &Value) -> Value {
     let out = tokio::process::Command::new("node")
         .arg(repo().join("web/tests/conformance.mjs"))
         .arg(args.to_string())
@@ -478,7 +483,16 @@ async fn conformance(way: Way, engine: Engine) {
         String::from_utf8_lossy(&out.stderr)
     );
     let stdout = String::from_utf8_lossy(&out.stdout);
-    let ran: Value = serde_json::from_str(stdout.lines().last().expect("it printed")).unwrap();
+    serde_json::from_str(stdout.lines().last().expect("it printed")).unwrap()
+}
+
+async fn conformance(way: Way, engine: Engine) {
+    carriage();
+    let began = load().await;
+    let relay = relay().await;
+    let g = group(&relay).await;
+    let api = g.alex.api_addr();
+    let ran = browse(&browser_args(way, engine, &g, &relay).await).await;
     let kept = repo().join("target/conformance");
     std::fs::create_dir_all(&kept).unwrap();
     std::fs::write(
