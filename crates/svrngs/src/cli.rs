@@ -465,18 +465,9 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             let claimed = match claim(&root) {
                 Err(Refusal::Busy(lock)) => {
                     tracing::debug!(target: "cli", lock = %lock.display(), "cli: share — svrngs runs here already, and reads the lend from its declaration");
-                    print!(
-                        "{}",
-                        Said::Shared {
-                            lend,
-                            secret: secret.is_some(),
-                            accounts,
-                            running: true
-                        }
-                    );
-                    return Ok(());
+                    None
                 }
-                claimed => claimed?,
+                claimed => Some(claimed?),
             };
             print!(
                 "{}",
@@ -484,9 +475,12 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
                     lend,
                     secret: secret.is_some(),
                     accounts,
-                    running: false
+                    running: claimed.is_none()
                 }
             );
+            let Some(claimed) = claimed else {
+                return Ok(());
+            };
             println!();
             return start(Verb::Run, root, relay, claimed).await;
         }

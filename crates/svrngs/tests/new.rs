@@ -440,6 +440,18 @@ async fn page_host(elsewhere: Elsewhere) -> Origin {
     Origin::parse(&format!("http://localhost:{port}/")).unwrap()
 }
 
+/// A page refused for giving no app an address of its own, the reason
+/// naming both ways on.
+#[track_caller]
+fn no_app_address(refused: &Refusal) {
+    assert!(matches!(refused, Refusal::NoAppAddress(_)), "{refused}");
+    assert_eq!(refused.exit_code(), 1);
+    let said = refused.to_string();
+    for way in ["--lends-origin <url>", "every name under it"] {
+        assert!(said.contains(way), "the refusal names both ways on: {said}");
+    }
+}
+
 /// What a stand-in page host serves at a name other than its own.
 #[derive(Debug, Clone, Copy)]
 enum Elsewhere {
@@ -468,12 +480,7 @@ async fn each_app_opens_at_its_own_address_only_where_the_page_opens_there() {
         let Err(refused) = refused else {
             panic!("a host serving {elsewhere:?} at other names is refused: {refused:?}")
         };
-        assert!(matches!(refused, Refusal::NoAppAddress(_)), "{refused}");
-        assert_eq!(refused.exit_code(), 1);
-        let said = refused.to_string();
-        for way in ["--lends-origin <url>", "every name under it"] {
-            assert!(said.contains(way), "the refusal names both ways on: {said}");
-        }
+        no_app_address(&refused);
     }
 }
 
@@ -505,12 +512,7 @@ async fn a_page_origin_says_where_its_apps_open_or_is_refused_naming_both_ways()
     let refused = cli::pages(page("http://127.0.0.1:8123/"), None)
         .await
         .unwrap_err();
-    assert!(matches!(refused, Refusal::NoAppAddress(_)), "{refused}");
-    assert_eq!(refused.exit_code(), 1);
-    let said = refused.to_string();
-    for way in ["--lends-origin <url>", "every name under it"] {
-        assert!(said.contains(way), "the refusal names both ways on: {said}");
-    }
+    no_app_address(&refused);
 
     let floor = cli::pages(
         page("http://127.0.0.1:8123/"),
