@@ -8,17 +8,16 @@
 // asked, and what WebKit's processes held meanwhile (u5-12):
 // - `computer`: Alex's computer's browser opens each lend's origin on
 //   Alex's loopback (`args.origins`), as the bare command prints it.
-// - `wildcard`, `floor`: a phone, holding `args.key` in a group joined by
-//   `args.token`, opens the group's page — on `localhost`, whose every name
-//   answers, or on 127.0.0.1 with the apps under `localhost` (`args.under`)
-//   — and each lend from its list (DESIGN §7).
+// - `wildcard`: a phone, holding `args.key` in a group joined by
+//   `args.token`, opens the group's page on `localhost`, whose every name
+//   answers, and each lend from its list (DESIGN §7).
 // In each lent page it also looks for anything that unseals the person's
 // key, and on a computer posts to the record API (`args.api`); and every
 // byte the browser receives is scanned for `args.secrets`.
 //
 //   node web/tests/conformance.mjs '{"engine": ..., "mode": ..., "site": ...,
 //     "lends": [{"who": "sam", "button": "sam’s app", "label": ..., "origin": ...}, ...],
-//     "key": ..., "token": ..., "under": ..., "api": ..., "append": ...,
+//     "key": ..., "token": ..., "api": ..., "append": ...,
 //     "secrets": [...], "routes": [...]}'
 //
 // `routes`, when given, runs only those checks in each lend, in order, and
@@ -34,8 +33,7 @@ const args = JSON.parse(process.argv[2]);
 const phone = args.mode !== 'computer';
 const server = phone ? await serve(args.site) : null;
 const port = server?.address().port;
-const pageOrigin = args.mode === 'floor' ? `http://127.0.0.1:${port}/` : `http://localhost:${port}/`;
-const under = args.mode === 'floor' ? `http://localhost:${port}/` : undefined;
+const pageOrigin = `http://localhost:${port}/`;
 
 // In a lent page: the groups a `svrngs` store at this origin holds, which
 // a lent page would unseal the person's key from (DESIGN §11, risk 5).
@@ -95,7 +93,7 @@ try {
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
   if (phone) {
     await page.goto(pageOrigin);
-    await page.evaluate(hold, { hex: args.key, token: args.token, lends: under, person: 'alex' });
+    await page.evaluate(hold, { hex: args.key, token: args.token, person: 'alex' });
   }
   const run = (name, ...a) => page.evaluate(([n, a]) => window.conformance[n](...a), [name, a]);
   const ready = () => page.waitForFunction(() => window.conformance, null, { timeout: 60_000 });

@@ -534,13 +534,12 @@ fn own_address(lend: &Lend) -> HeaderValue {
 }
 
 /// An `Origin` that is the lend's own — its first name the lend's label, as
-/// on a computer and with the wildcard (DESIGN §7) — told to the service
+/// every lend's is (DESIGN §7) — told to the service
 /// as its own address, as the Host is ([`own_address`]), so an app that
 /// takes a post only from its own address, as Django's origin check does
 /// (Paperless-ngx; u5-catalogue-dry), takes the lend's own pages' posts.
 /// Any other origin is left as it is, so the service still refuses a post
-/// from a page that is not the lend's; on the floor the lends share one
-/// origin, which names no lend, and is left too.
+/// from a page that is not the lend's.
 fn own_origin(headers: &mut HeaderMap, label: &Label, lend: &Lend) {
     let Some(origin) = headers.get(header::ORIGIN).and_then(|o| o.to_str().ok()) else {
         return;

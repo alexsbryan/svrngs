@@ -22,8 +22,7 @@
 // and opens the lend's own origin, handing it the pass, the fresh key, the
 // lends and the relay in the fragment: never the person's key, nor the
 // link's token, which would let it join. Its origin is
-// `<label>.<this page's host>`, or `l/<label>/` under the address the
-// group's link named for its apps. A lend's origin whose pass has lapsed,
+// `<label>.<this page's host>`. A lend's origin whose pass has lapsed,
 // or is gone, opens this page at `#open=<label>`, and the page signs again.
 import init, {
   ask,
@@ -119,7 +118,7 @@ function askName(group, why) {
 
 // Join by `token`, a link no group kept was joined by: the group joined,
 // kept, or one kept already, which the link lets into.
-async function join(token, lends, kept) {
+async function join(token, kept) {
   const away = 'The computer that sent this link did not answer. Try again later.';
   const key = crypto.getRandomValues(new Uint8Array(32));
   heading.textContent = 'Opening your link…';
@@ -147,7 +146,7 @@ async function join(token, lends, kept) {
     await post(issuer, '/redeem', body);
     await issuer.close();
     const person = JSON.parse(body).person;
-    await store.keep({ id: group.id, name: group.name, person, token, lends, key });
+    await store.keep({ id: group.id, name: group.name, person, token, key });
     trace(`PAGE: joined ${group.id} as ${person}; the key is kept sealed`);
     return (await store.groups()).find((g) => g.id === group.id);
   }
@@ -157,18 +156,6 @@ async function join(token, lends, kept) {
 // <name>", and "<name> (<kind>)" when the two differ.
 function what(l) {
   return `${l.person}’s ${l.name === l.kind ? l.name : `${l.name} (${l.kind})`}`;
-}
-
-// Where `group`'s apps open on this phone (DESIGN §7): `l/<label>/` under
-// the address its link named for them, whose `open.html` the lend's page
-// starts at; else an address of its own under this page's host, the page's
-// files at its root.
-function lendAt(group, at) {
-  if (group.lends) {
-    const lends = new URL(group.lends);
-    return { start: new URL(`open.html?v=__VERSION__`, lends).href, base: new URL(`l/${at}/`, lends).pathname };
-  }
-  return { start: `${location.protocol}//${at}.${location.host}/open.html?v=__VERSION__`, base: '/' };
 }
 
 const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -186,10 +173,11 @@ function open(group, key, lent, l) {
   const lends = [l, ...reads].map((o) => ({ label: label(o.key, o.name), key: o.key, name: o.name }));
   const holder = crypto.getRandomValues(new Uint8Array(32));
   const until = Math.floor(Date.now() / 1000) + PASS_LIFE;
-  const { start, base } = lendAt(group, lends[0].label);
+  // Each app at an address of its own under this page's host (DESIGN §7),
+  // the page's files at its root.
+  const start = `${location.protocol}//${lends[0].label}.${location.host}/open.html?v=__VERSION__`;
   const handoff = {
     label: lends[0].label,
-    base,
     lends,
     pass: pass(key, holder, lends.map((o) => o.label), until),
     holder: hex(holder),
@@ -264,20 +252,17 @@ if ('serviceWorker' in navigator) {
 // wasm's fetch at its top, then opened it again — the next navigation never
 // reached the origin (u4-7; ralph/REVIEW_FINDINGS.md has the runs).
 //
-// A link's fragment may carry the address its apps open under after the
-// token, `<token>~<address>`, its `https://` left off (DESIGN §7); and a
-// lend's origin asking for another pass opens `#open=<label>`.
+// A lend's origin asking for another pass opens `#open=<label>`.
 async function opening(fragment) {
   try {
     // The wasm by its one URL, from the cache the worker reads it from
     // too (store.js `runtime`, u4-9).
     await init({ module_or_path: store.runtime() });
     const again = fragment.startsWith('open=') ? fragment.slice(5) : null;
-    const [token, apps] = again ? [''] : fragment.split('~');
-    const lends = apps && (apps.startsWith('http://') ? apps : `https://${apps}`);
+    const token = again ? '' : fragment;
     const kept = await store.groups();
     let group = token ? kept.find((g) => g.token === token) : kept[0];
-    if (token && !group) group = await join(token, lends, kept);
+    if (token && !group) group = await join(token, kept);
     if (!group) throw new Said('Open this page from your group’s link.');
     await enter(group, again);
   } catch (e) {

@@ -135,15 +135,14 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     let origin: Value = serde_json::from_str(&first).unwrap();
     let origin = Origin::parse(origin["origin"].as_str().unwrap()).unwrap();
 
-    let pages = cli::pages(origin.clone(), None)
+    let page = cli::checked_page(origin.clone())
         .await
         .expect("the page's server serves it at every name under localhost, so no other step");
-    assert_eq!(pages.apps, cli::Apps::OwnAddress);
     let (seed, printed) = cli::new_group(
         &sam,
         Name::parse("house").unwrap(),
         Name::parse("Sam").unwrap(),
-        Some(&pages),
+        Some(&page),
         &ours,
     )
     .await

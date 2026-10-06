@@ -77,10 +77,7 @@ async fn sam_through_a_relay_on_this_computer() {
         &sam,
         Name::parse("House").unwrap(),
         Name::parse("Sam").unwrap(),
-        Some(&svrngs::cli::Pages {
-            page: origin.clone(),
-            apps: svrngs::cli::Apps::OwnAddress,
-        }),
+        Some(&origin),
         &ours,
     )
     .await

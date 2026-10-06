@@ -243,19 +243,21 @@ the apps people already self-host: `svrngs share 8096` lends Jellyfin as it
 comes, and someone who never used it opens it from the list, plays and
 seeks, on a computer or a phone. U5 builds that by seven calls; the evidence
 is U5's inventory (§8).
-1. *Lends off the key's origin, on any host a group trusts.* A computer
+1. *Lends off the key's origin, each at an origin of its own.* A computer
    serves every lend at an origin of its own on loopback, `<id>.localhost`,
-   or a port per lend where a browser does not resolve `*.localhost`. A
-   phone has two modes, and `svrngs new` says which the group got: the
-   floor, any static host serving two hostnames — the page's, holding the
-   key, and one for every lend, each under `/l/<id>/`; and, when the page's
-   host answers a wildcard (group.svrnme.sh does), each lend at
-   `<id>.<page host>`, its origin's root and storage its own, at the price
-   that the host and the phone's DNS see which lend is opened. One shared
-   origin let any lent page unseal the key of whoever opened it (u4-6, §11
-   risk 5); no step is added for a person joining or a group starting; and
-   a group that does not trust ours, or wants a stricter privacy policy,
-   runs on any static host (u5-2).
+   or a port per lend where a browser does not resolve `*.localhost`. On a
+   phone each lend opens at `<id>.<page host>`, its origin's root and
+   storage its own, at the price that the host and the phone's DNS see
+   which lend is opened; `svrngs new` refuses a page whose host does not
+   serve the page at every name under it (group.svrnme.sh does). One
+   shared origin let any lent page unseal the key of whoever opened it
+   (u4-6, §11 risk 5); no step is added for a person joining or a group
+   starting; and a group that does not trust ours, or wants a stricter
+   privacy policy, runs on any static host that answers every name under
+   it (u5-2). A second way, every lend under `/l/<id>/` of one address
+   apart from the page's (the floor), landed with u5-2 and was dropped
+   (operator, 2026-10-06; §9, §10): it carried none of the five
+   self-hosted apps the catalogue run lent, each asking for its own root.
 2. *Jellyfin as it comes.* A lend serves stock jellyfin-web from the
    lender's Jellyfin; nothing in svrngs renders a library of its own. What
    U3's dry run found — a sign-in asked of everyone, and a member's sign-in
@@ -311,9 +313,8 @@ is U5's inventory (§8).
    — for the lend it opens and the lends its lender declared it reads
    (`svrngs share --reads <kind>`); the lend's origin dials with the pass's
    key, and the runtime keeps each lend's cookies apart, since a service
-   worker sees no `Cookie`. On the floor the lends share one origin, so a
-   lent page can use another lend's pass while it lasts; with the wildcard,
-   only its own. Never the key (u5-2).
+   worker sees no `Cookie`. A lent page can use only its own pass. Never
+   the key (u5-2).
 7. *Group folders, an experiment after U5*, beside lends and opt-in; its
    design and first measurement wait in §9, and no U5 row builds it.
 
@@ -560,33 +561,24 @@ for local AI; it holds no group state.
 **A phone's apps open apart from its page** (u5-2; §3, "Lent apps", calls
 1 and 6). The page a group's link opens holds each person's key, so no lent
 app's page runs at its origin: a lent page there could unseal the key of
-whoever opened it (§11, risk 5). `svrngs new --origin <page>` decides where
-the group's apps open on a phone, prints which, and keeps it for `link`
-(`crates/svrngs/src/cli.rs`, `pages` and `Apps`):
-- *Each at an address of its own*, `https://<label>.<page host>/`, when the
-  page's host serves the page at every name under it, which the command
-  checks by asking a name nobody made, over https, for the page at its root
-  and comparing it with the page's own (u5-10: www.svrnme.sh/g/ resolved
-  every name and served the page at none but its own); group.svrnme.sh does (the Vercel project svrngs-page, deployed by `scripts/deploy-page.sh`), so a group that names ours
-  types nothing more. Each app's root and storage are its own, and its pages
-  hold a pass for it and the lends it reads, no other. The cost: the page's
-  host and the phone's name lookups see which app is opened, since its label
-  names its lender's key and the app. The host serves the page's files at
-  the root of every name under it.
-- *Every app under one address apart from the page's*, `--lends-origin
-  <url>`: the floor, any static host serving the page's files on a second
-  name, each app at `<it>/l/<label>/`, the link carrying the address after
-  its token (`#<token>~<it>`, `https://` left off). The host sees only that
-  some app is opened. The cost: the apps share one origin, so one app's
-  page can read what another keeps and use another's pass while it lasts;
-  and an app that asks for its own root — a `/`-absolute path — finds the
-  host's, which the conformance canary reports as needing the first way.
-A page at an address no name falls under — an IP address, or a host whose
-name nobody made does not serve the page — with no `--lends-origin` is
-refused, the reason naming both ways on; the page's own address as the
-apps' is refused; a page address that does not give the page — its host
-unreachable, or no page there — is not judged (exit 3). On a computer
-each app opens at `http://<label>.localhost:<port>/` on its own loopback
+whoever opened it (§11, risk 5). On a phone each app opens at an address of
+its own, `https://<label>.<page host>/`, so the page's host must serve the
+page at every name under it. `svrngs new --origin <page>` and `svrngs link
+--origin <page>` check that by asking a name nobody made, over https, for
+the page at its root and comparing it with the page's own (u5-10:
+www.svrnme.sh/g/ resolved every name and served the page at none but its
+own), then print where the apps open (`crates/svrngs/src/cli.rs`,
+`checked_page`). group.svrnme.sh does (the Vercel project svrngs-page,
+deployed by `scripts/deploy-page.sh`), so a group that names ours types
+nothing more. Each app's root and storage are its own, and its pages hold a
+pass for it and the lends it reads, no other. The cost: the page's host and
+the phone's name lookups see which app is opened, since its label names its
+lender's key and the app. A page at an address no name falls under — an IP
+address — or on a host whose name nobody made does not serve the page is
+refused, the reason saying what such a host must do; a page address that
+does not give the page — its host unreachable, or no page there — is not
+judged (exit 3). On a computer each app opens at
+`http://<label>.localhost:<port>/` on its own loopback
 (`crates/svrngs-node/src/origin.rs`), which every browser measured resolves
 (`demo/runs/u5/2026-10-05-localhost/`).
 
@@ -873,7 +865,7 @@ apps", call 4, on how that clause meets zero sign-in).
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
 | U4 the browser | a phone opens a group's https link, on the page origin the group named, and is in: its own key, a dial by key to the issuer to join and to each lender for what they lend (§3, "Joining"), and the runtime that renders a lent app through it — fetch, POST, streaming, byte ranges; the page is static files any origin can serve | a stock phone browser plays a lent film and seeks |
-| U5 any app on a port, Jellyfin as it comes | what an app cannot yet ask (§3): the groups this computer holds and what their people lend, on the record API (u5-1); every lend at an origin of its own, a pass in place of the person's key, the web carried whole, its live socket included (u5-2); stock Jellyfin measured through a lend and the way past its sign-in decided (u5-3), then built (u5-4); §1's list of apps measured on five of them (u5-catalogue-dry); Demo A's dry run (u5-9) — on the §3 surface alone, and nothing that knows Jellyfin outside `apps/jellyfin/` | after `svrngs share 8096`, someone who never used Jellyfin opens it from the list, from a computer and from a phone, in Chromium and WebKit, plays, and seeks three times, each playing again within five seconds; two people at once, one seeking five times, never restart the other's play; no byte a person receives holds a secret the lend keeps; the conformance canary's routes all pass on a computer and with the wildcard, and on the floor all but the two it cannot give, each named; §1 names only apps the census supports |
+| U5 any app on a port, Jellyfin as it comes | what an app cannot yet ask (§3): the groups this computer holds and what their people lend, on the record API (u5-1); every lend at an origin of its own, a pass in place of the person's key, the web carried whole, its live socket included (u5-2); stock Jellyfin measured through a lend and the way past its sign-in decided (u5-3), then built (u5-4); §1's list of apps measured on five of them (u5-catalogue-dry); Demo A's dry run (u5-9) — on the §3 surface alone, and nothing that knows Jellyfin outside `apps/jellyfin/` | after `svrngs share 8096`, someone who never used Jellyfin opens it from the list, from a computer and from a phone, in Chromium and WebKit, plays, and seeks three times, each playing again within five seconds; two people at once, one seeking five times, never restart the other's play; no byte a person receives holds a secret the lend keeps; the conformance canary's routes all pass on a computer and with the wildcard, and on the floor (dropped since, u6-00) all but the two it cannot give, each named; §1 names only apps the census supports |
 | U6 the screen handoff | the meeting point serves one stream to a TV on its network at an unguessable address; AirPlay from Safari, Cast from Chrome; the phone is the remote and may lock | a film plays on the TV from a phone browser; the address serves only the device it was handed to |
 
 **Demo B — movie night** (after U6). Five friends at Sam's, phones only. Sam's
@@ -903,17 +895,16 @@ exists, each a small app in `apps/` using only §3:
   the upload told its length; and, from u5-9's stall, the file played as
   sound and sought twenty times 250 ms apart, the last playing again within
   5 s, over a phone's link from a home (u5-11). Landed (u5-2): `apps/web-conformance`, lent by Sam's and
-  Bo's computers at once and opened by Alex from a computer and from a phone
-  both ways of §7, in Chromium and in WebKit as an iPhone, by
-  `crates/svrngs-node/tests/conformance.rs`; a step of its own in
+  Bo's computers at once and opened by Alex from a computer and from a phone,
+  each app at an address of its own (§7), in Chromium and in WebKit as an
+  iPhone, by `crates/svrngs-node/tests/conformance.rs`; a step of its own in
   `scripts/check.sh`, printing each route's verdict per way. Every route
-  passes on a computer and with the wildcard; on the floor every route but
-  the root, storage apart and a post from an address of its own, each
-  reported as needing the wildcard. WebKit's seeks back to back are a rate,
+  passes on a computer and with the wildcard; the floor's mode went with
+  the floor (u6-00). WebKit's seeks back to back are a rate,
   not a gate (operator, 2026-10-06): each run prints and keeps their verdict
   beside the same seeks straight at a canary over the same link
   (`web/tests/control.mjs`) and the host's load, and `scripts/check.sh`
-  counts every run's misses on this host, both ways (§9 has the trigger).
+  counts every run's misses on this host (§9 has the trigger).
   Neither lend's cookie reaches the other's requests, Bo's door names
   Alex's key, no byte Alex receives holds either secret, a lent page finds
   no group whose key it could unseal, and a lent page's post to the record
@@ -973,8 +964,19 @@ class at a time, each chosen by the north star's tests.
 | WebKit's closed-range seeking through a lend: its seeks back to back, taken in serial 64 KiB reads of each short part, a round trip each, missed 5 s in 1 of 8 tries after u5-11, where straight at the canary over the same link they missed in none (`demo/runs/u5/2026-10-06-seek-stall/`; §11 risk 4); a rate in `scripts/check.sh`, not a gate | Demo A's real-phone sessions miss the seek bar in Safari more often than WebKit straight at the server on the same link |
 | our own relay as the default: `iroh-relay` (Let's Encrypt built in) on a small VPS, the operator inclined to DigitalOcean, US West, at `relay.svrnme.sh` (TCP 80 and 443, UDP 7842), carried in every link's token so a phone never needs n0's; `svrngs new --relay <url>` for a group that runs its own; n0's terms for production use read first. Open then: whether ours also drops n0's address lookup, computers learning each other's relay from the group's record. Until then n0's public relays and lookup, `RelayConfig::default()` (`crates/svrngs-node/src/guest.rs:66-76`), nothing paid for (operator, 2026-10-05). Every byte a phone sends crosses a relay (a browser is relay-only), so a host's bandwidth price decides it | svrngs goes to production, or a group beyond the operator's uses it |
 | zero sign-in for Jellyfin: a user per person made with a key the lender gives once (`apps/jellyfin/`), the door carrying a secret per person, an app's script at its lend's origin writing jellyfin-web's stored sign-in, and the door keeping the person's token out of the answers Jellyfin writes it into (u5-3, finding 4: four rows) | an app people lend that keeps its own accounts and asks a sign-in no one can give, or the operator asking Demo A for no sign-in at all |
+| the floor: every app under `/l/<label>/` of one address apart from the page's, on any static host, the link carrying that address after its token (a second address given to `svrngs new`, u5-2; dropped by u6-00). Its cost was one origin for every app, so a lent page could read what another kept and use another's pass while it lasted, and its every app lost its root: the catalogue run lent five self-hosted apps on it in Chromium and WebKit and none got past its sign-in, each asking for `/`-absolute paths the floor's host answered 404, and Paperless's post refused by its own origin check (`demo/runs/catalogue/2026-10-05/RESULTS.md`, "The floor"; `003e0d5`) | a group whose host answers no name nobody made asks for an app that keeps to relative paths, counted |
 
 ## 10. Decisions
+
+By the operator, 2026-10-06:
+- a phone opens each app at an address of its own under the page's host,
+  and only so: the floor, every app under one address apart from the
+  page's, is dropped (u6-00), since the catalogue run found it carried none
+  of five self-hosted apps, each asking for its own root
+  (`demo/runs/catalogue/2026-10-05/`), and the repository stood at 13,952
+  of 14,000 lines with the room door to come. `svrngs new` refuses a page
+  whose host does not serve the page at a name nobody made, saying what
+  such a host must do (§3, "Lent apps", call 1; §7; §9 has the trigger).
 
 By the operator, 2026-10-05:
 - north star 2 holds for the apps people already self-host: `svrngs share
@@ -1099,10 +1101,8 @@ By the operator, 2026-10-03:
    origin apart from the page's store, with a pass for that lend and the
    lends it reads, never the key (§3, "Lent apps", calls 1 and 6; §7), and
    u4-6's measurement is kept as a test of the conformance canary
-   (`crates/svrngs-node/tests/conformance.rs`). What is left: under one
-   address for every app (§7, the floor) a lent page can use another
-   lend's pass while it lasts; and the page's host still serves the code
-   that holds the key.
+   (`crates/svrngs-node/tests/conformance.rs`). What is left: the page's
+   host still serves the code that holds the key.
 6. **Two copies of the record's code.** A signing or canonical-form bug fixed on
    one side can be missed on the other. `scripts/ports.py` is the guard, and it
    is a listing, not a gate.

@@ -6,9 +6,8 @@
 //            `extractable: false`, so no script can read its bytes out,
 //            by the page when it first keeps a group, never by its worker.
 //   groups   by `id`: the group's name, the person's name in it, the link's
-//            token it was joined by, the address its apps open under when
-//            its link names one (`lends`, u5-2), when it was last opened,
-//            and the person's key — 32 bytes — sealed: `iv` and `sealed`,
+//            token it was joined by, when it was last opened, and the
+//            person's key — 32 bytes — sealed: `iv` and `sealed`,
 //            with the group's id as the seal's additional data, so a sealed
 //            key opens only as the key of the group it was kept for.
 //
@@ -86,10 +85,10 @@ async function sealingKey(make) {
 const bound = (id, iv) => ({ name: 'AES-GCM', iv, additionalData: new TextEncoder().encode(id) });
 
 // Keep a group joined: `key` is the person's 32 bytes, kept sealed alone.
-export async function keep({ id, name, person, token, lends, key }) {
+export async function keep({ id, name, person, token, key }) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const sealed = new Uint8Array(await crypto.subtle.encrypt(bound(id, iv), await sealingKey(true), key));
-  await run('groups', 'readwrite', (s) => s.put({ id, name, person, token, lends, iv, sealed, opened: Date.now() }));
+  await run('groups', 'readwrite', (s) => s.put({ id, name, person, token, iv, sealed, opened: Date.now() }));
 }
 
 // Every group kept, the last opened first. Their keys stay sealed.

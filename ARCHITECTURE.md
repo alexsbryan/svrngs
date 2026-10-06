@@ -432,8 +432,7 @@ person's name once, redeems, keeps the group, and lists `GET /people/lends`
 as the bare command prints it ("Sam's shelf"); it keeps the layers on the
 console at debug and says only DESIGN §1's words. `sw.js` caches the shell
 and serves no lend: this origin holds the key. A lend opens at an origin of
-its own (u5-2; DESIGN §7): `<label>.<the page's host>`, or `l/<label>/`
-under the address the group's link names for its apps. The page signs a
+its own (u5-2; DESIGN §7): `<label>.<the page's host>`. The page signs a
 pass (`pass`, svrngs-core's `Pass`) to a fresh key for that lend and the
 lends it reads, and opens the lend's `open.html` with the pass, the key,
 the lends, the relay (`relay_of`, never the token) and itself in the
@@ -482,8 +481,8 @@ each says. Its chat handlers went with the bot and are at that tag.
 Node service with no dependency (`serve.mjs`), one route per thing a
 self-hosted app leans on, and the checks its page runs (`checks.js`).
 `crates/svrngs-node/tests/conformance.rs` lends two of it and opens both
-from a computer and from a phone both ways of DESIGN §7, through
-`web/tests/conformance.mjs`, and keeps each route's verdict in
+from a computer and from a phone, each at an address of its own (DESIGN
+§7), through `web/tests/conformance.mjs`, and keeps each route's verdict in
 `target/conformance/`, which `scripts/check.sh` prints.
 
 **`apps/jellyfin/`, `apps/tap/`**: so far only each app's `nouns.txt` — the

@@ -36,10 +36,8 @@ const SCOPE = new URL(self.registration.scope);
 // to the network: any version of them, so a newer page starts here too.
 const SITE = new URL('./', self.location).pathname;
 const SHELL = /^(open\.html|open\.js|lend\.js|shim\.js|store\.js|wasm\/svrngs_web(_bg\.wasm|\.js))$/;
-// This worker's lend: `l/<label>/` under one address for every app, else
-// the first name of an address of its own.
-const UNDER = /\/l\/([a-z0-9]{62})\/$/.exec(SCOPE.pathname)?.[1];
-const OWN = UNDER ?? SCOPE.hostname.split('.')[0];
+// This worker's lend: the first name of its address.
+const OWN = SCOPE.hostname.split('.')[0];
 const PLAIN = { 'content-type': 'text/plain; charset=utf-8' };
 const TRACE = `${SCOPE.pathname}svrngs-trace`;
 
@@ -77,11 +75,9 @@ const dials = new Map();
 const jars = new Map();
 let app;
 
-// Where `label`'s pages are: this worker's lend under its scope; another,
-// under one address for every app, at `l/<label>/` beside it, else at an
-// address of its own beside this one.
-const baseOf = (label) =>
-  label === OWN ? SCOPE.href : UNDER ? new URL(`../${label}/`, SCOPE).href : `${SCOPE.protocol}//${label}${SCOPE.host.slice(OWN.length)}/`;
+// Where `label`'s pages are: this worker's lend under its scope; another
+// at an address of its own beside this one.
+const baseOf = (label) => (label === OWN ? SCOPE.href : `${SCOPE.protocol}//${label}${SCOPE.host.slice(OWN.length)}/`);
 
 // The lend `url` is at, and its path there; or none.
 function at(url) {

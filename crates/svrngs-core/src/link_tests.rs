@@ -23,33 +23,19 @@ fn a_link_round_trips_in_every_form() {
     for token in [a_token(None), a_token(Some("https://relay.example/"))] {
         let client = client_link(&token);
         assert!(client.starts_with(CLIENT_PREFIX), "{client}");
-        let https = https_link(&theirs, None, &token);
+        let https = https_link(&theirs, &token);
         assert!(
             https.starts_with("https://links.example.org/our/house/#"),
             "{https}"
         );
-        // The floor's form (u5-2): the apps' address after the token,
-        // `https://` left off it, an `http://` one kept whole.
-        let apps = Origin::parse("https://apps.example.org/").unwrap();
-        let floor = https_link(&theirs, Some(&apps), &token);
-        assert!(
-            floor.ends_with(&format!("{}~apps.example.org/", token.encode())),
-            "{floor}"
-        );
-        let local = Origin::parse("http://localhost:8080/").unwrap();
-        let tried = https_link(&theirs, Some(&local), &token);
-        assert!(tried.ends_with("~http://localhost:8080/"), "{tried}");
-        for (raw, origin, lends) in [
-            (client.as_str(), None, None),
-            (https.as_str(), Some(theirs.clone()), None),
-            (floor.as_str(), Some(theirs.clone()), Some(apps.clone())),
-            (tried.as_str(), Some(theirs.clone()), Some(local.clone())),
-            (&token.encode(), None, None),
+        for (raw, origin) in [
+            (client.as_str(), None),
+            (https.as_str(), Some(theirs.clone())),
+            (&token.encode(), None),
         ] {
             let link = Link::parse(raw).unwrap_or_else(|| panic!("{raw} parses"));
             assert_eq!(link.token, token, "{raw}");
             assert_eq!(link.origin, origin, "{raw}");
-            assert_eq!(link.lends, lends, "{raw}");
         }
     }
 }

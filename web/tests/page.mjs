@@ -85,12 +85,11 @@ export async function launch(engine, { profile } = {}) {
 // keeps one (web/store.js, u4-5): the person's key sealed, the group's
 // name, and the person's — a phone that joined. Imported as app.js
 // imports it.
-// With `lends`, the address its apps open under (u5-2, the floor).
-export async function hold({ hex, token, lends, person = 'bo' }) {
+export async function hold({ hex, token, person = 'bo' }) {
   const app = document.querySelector('script[type=module]').src;
   const store = await import(new URL(`./store.js${new URL(app).search}`, app).href);
   const key = Uint8Array.from(hex.match(/../g), (h) => parseInt(h, 16));
-  await store.keep({ id: 'held', name: 'house', person, token, lends, key });
+  await store.keep({ id: 'held', name: 'house', person, token, key });
 }
 
 // In the lend's page: play its `<video>`, or seek it to `at`, and answer

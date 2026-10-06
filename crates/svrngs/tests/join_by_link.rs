@@ -249,7 +249,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     let page = Origin::parse("https://x.example/").unwrap();
     let forms = [
         (2u8, "Alex", printed.client.clone()),
-        (3, "Bo", https_link(&page, None, &link.token)),
+        (3, "Bo", https_link(&page, &link.token)),
         (4, "Cy", token.clone()),
     ];
     let mut friends = Vec::new();
@@ -349,7 +349,6 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
             ..open.token.clone()
         },
         origin: None,
-        lends: None,
     };
     let fay = computer(7).await;
     knows(&fay, &sam.node);
@@ -388,7 +387,6 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
             ..open.token.clone()
         },
         origin: None,
-        lends: None,
     };
     let mint = svrngs_node::MintInvite {
         key: actor_of(&lapsed_link.token.key()),
@@ -641,10 +639,7 @@ async fn the_redeem_route_writes_the_device_the_request_names() {
 #[tokio::test(flavor = "multi_thread")]
 async fn a_member_prints_links_on_the_page_the_founders_opened() {
     let sam = computer(1).await;
-    let x = cli::Pages {
-        page: Origin::parse("https://x.example/").unwrap(),
-        apps: cli::Apps::OwnAddress,
-    };
+    let x = Origin::parse("https://x.example/").unwrap();
     let (_, printed) = cli::new_group(&sam.node, name("house"), name("Sam"), Some(&x), &no_relay())
         .await
         .expect("Sam makes house on x.example");
@@ -741,7 +736,7 @@ fn join_parses_its_link() {
     let page = Origin::parse("https://x.example/").unwrap();
     for (raw, origin) in [
         (client_link(&token), None),
-        (https_link(&page, None, &token), Some(page.clone())),
+        (https_link(&page, &token), Some(page.clone())),
         (token.encode(), None),
     ] {
         assert_eq!(
@@ -750,7 +745,6 @@ fn join_parses_its_link() {
                 link: Box::new(Link {
                     token: token.clone(),
                     origin,
-                    lends: None,
                 }),
                 person: Some(name("Alex")),
             },

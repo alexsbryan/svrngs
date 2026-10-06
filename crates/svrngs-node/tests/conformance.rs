@@ -4,13 +4,10 @@
 //! Bo each lend the canary (`apps/web-conformance`), each with a secret of
 //! its own. Alex opens both: from Alex's computer, each at its origin on
 //! Alex's loopback; and from a phone holding Alex's key in the group, each
-//! at an address of its own under the page's host (the wildcard) and each
-//! under one address for every app (the floor) — Chromium, and WebKit as an
-//! iPhone (`web/tests/conformance.mjs`). Each route's verdict is printed
-//! per way and kept in `target/conformance/` for `scripts/check.sh`: on a
-//! computer and with the wildcard every route passes; on the floor every
-//! route passes but the two it cannot give, the root and storage apart,
-//! each reported as needing the wildcard. WebKit's seeks back to back are
+//! at an address of its own under the page's host (the wildcard) —
+//! Chromium, and WebKit as an iPhone (`web/tests/conformance.mjs`). Each
+//! route's verdict is printed per way and kept in `target/conformance/` for
+//! `scripts/check.sh`, and every route passes. WebKit's seeks back to back are
 //! a rate, not a gate (`a_rate`): kept beside the same seeks straight at a
 //! canary, and counted by scripts/check.sh. Neither lend's cookie reaches the
 //! other's requests; Bo's door names Alex's key; no byte Alex receives
@@ -193,7 +190,6 @@ async fn group(relay: &Server) -> Group {
 enum Way {
     Computer,
     Wildcard,
-    Floor,
 }
 
 impl Way {
@@ -201,7 +197,6 @@ impl Way {
         match self {
             Way::Computer => "computer",
             Way::Wildcard => "wildcard",
-            Way::Floor => "floor",
         }
     }
 }
@@ -221,10 +216,6 @@ const ROUTES: [(&str, &str); 11] = [
     ("local storage", "storage"),
 ];
 
-/// What the floor cannot give, by check: the root, storage apart, and an
-/// origin of its own to post from.
-const NEEDS_THE_WILDCARD: [&str; 3] = ["root", "storage", "guarded"];
-
 /// WebKit's seeks back to back are a rate, not a gate (u5-11; operator,
 /// 2026-10-06): through a lend it takes a closed range's parts in serial
 /// 64 KiB reads, a round trip each, and its last seek missed 5 s in 1 of 8
@@ -235,15 +226,9 @@ fn a_rate(engine: Engine, check: &str) -> bool {
     matches!(engine, Engine::Webkit) && check == "seeks"
 }
 
-/// Each route's verdict for one lend in one way: `passed`, `failed`, or,
-/// on the floor, `needs the wildcard` for what it cannot give; a rate's
-/// with `, a rate` after it.
-fn verdicts(
-    way: Way,
-    engine: Engine,
-    lend: &Value,
-    other: &Value,
-) -> Vec<(&'static str, String, String)> {
+/// Each route's verdict for one lend: `passed` or `failed`; a rate's with
+/// `, a rate` after it.
+fn verdicts(engine: Engine, lend: &Value, other: &Value) -> Vec<(&'static str, String, String)> {
     ROUTES
         .iter()
         .map(|(route, check)| {
@@ -266,11 +251,7 @@ fn verdicts(
                 }
                 _ => {}
             }
-            let verdict = match (ok, way == Way::Floor && NEEDS_THE_WILDCARD.contains(check)) {
-                (_, true) => "needs the wildcard",
-                (true, false) => "passed",
-                (false, false) => "failed",
-            };
+            let verdict = if ok { "passed" } else { "failed" };
             let verdict = match a_rate(engine, check) {
                 true => format!("{verdict}, a rate"),
                 false => verdict.to_string(),
@@ -527,8 +508,7 @@ async fn conformance(way: Way, engine: Engine) {
     let mut table = String::new();
     let mut failed = Vec::new();
     for (who, other) in [("sam", "bo"), ("bo", "sam")] {
-        for (route, verdict, saw) in verdicts(way, engine, &ran["lends"][who], &ran["lends"][other])
-        {
+        for (route, verdict, saw) in verdicts(engine, &ran["lends"][who], &ran["lends"][other]) {
             let line = format!(
                 "{:<9} {:<8} {who:<4} {route:<34} {verdict}",
                 way.as_str(),
@@ -600,7 +580,6 @@ async fn conformance(way: Way, engine: Engine) {
         let own = match way {
             Way::Computer => format!("http://{}.localhost:{}/", label(n), api.port()),
             Way::Wildcard => format!("http://{}.localhost:", label(n)),
-            Way::Floor => "http://localhost:".to_string(),
         };
         if way != Way::Computer {
             assert_eq!(
@@ -652,14 +631,6 @@ async fn on_a_phone_with_the_wildcard(engine: Engine) {
     conformance(Way::Wildcard, engine).await
 }
 
-in_both_engines!(
-    /// From a phone, every lend under one address apart from the page's.
-    on_a_phone_on_the_floor
-);
-async fn on_a_phone_on_the_floor(engine: Engine) {
-    conformance(Way::Floor, engine).await
-}
-
 /// The most, in MB, a WebKit content process may hold through the tries
 /// (u5-12): the line WebKit ends a worker's process past. The process that
 /// held both floor lends' workers exited at a footprint of 1,065 MB and
@@ -672,7 +643,8 @@ const HELD: u64 = 1024;
 
 /// #65 (u5-12; `ralph/REVIEW_FINDINGS.md`): WebKit as an iPhone, the
 /// canary's 64 MiB upload after its seeks, through each lend in turn,
-/// `TRIES` times in all (10 if unset), on the floor and with the wildcard.
+/// `TRIES` times in all (10 if unset), with the wildcard (the floor's
+/// runs went with it, u6-00).
 /// Each try's verdict, what the page's own host was asked meanwhile that is
 /// not its files — a request no lend's worker answered — and the host's
 /// load at its start and end are printed and added to
@@ -688,12 +660,6 @@ const HELD: u64 = 1024;
 /// upload_after_seeks -- --ignored`.
 mod upload_after_seeks {
     use super::*;
-
-    #[tokio::test(flavor = "multi_thread")]
-    #[ignore = "u5-12's runs, by name"]
-    async fn on_the_floor() {
-        tries(Way::Floor).await
-    }
 
     #[tokio::test(flavor = "multi_thread")]
     #[ignore = "u5-12's runs, by name"]

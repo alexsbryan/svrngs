@@ -8,10 +8,9 @@
 // Safari's worker on an iPhone read nothing its page had kept), and the
 // lend opened, which the worker serves.
 //
-// The pass is for this origin's lend alone: at an address of its own the
-// host's first name is its label; under one address for every app its
-// path is `l/<label>/`. Anything else is refused, so a lent page cannot
-// open another lend's origin with a pass of its own.
+// The pass is for this origin's lend alone, whose host's first name is its
+// label. Anything else is refused, so a lent page cannot open another
+// lend's origin with a pass of its own.
 //
 // Opened with no fragment, by the worker that holds no pass — the browser
 // stopped it, and it could not read this origin's store — it reads the pass
@@ -41,8 +40,7 @@ async function start() {
   if (location.hash.length > 1) {
     handed = decode(location.hash.slice(1));
     history.replaceState(null, '', `${location.pathname}${location.search}`);
-    const own = location.hostname.startsWith(`${handed.label}.`) ? '/' : new URL(`l/${handed.label}/`, location.href).pathname;
-    if (handed.base !== own) throw new Error(`a pass for ${handed.label} opened at ${location.origin}${handed.base}`);
+    if (!location.hostname.startsWith(`${handed.label}.`)) throw new Error(`a pass for ${handed.label} opened at ${location.origin}`);
     await store.lendKeep(`pass ${handed.label}`, handed);
   } else {
     handed = asked.get('for') && (await store.lendKept(`pass ${asked.get('for')}`));
@@ -51,9 +49,9 @@ async function start() {
   }
   if (!('serviceWorker' in navigator)) return say('This browser cannot open it.');
   const script = new URL('./lend.js?v=__VERSION__', import.meta.url).pathname;
-  const worker = await running(await navigator.serviceWorker.register(script, { scope: handed.base, type: 'module' }));
+  const worker = await running(await navigator.serviceWorker.register(script, { scope: '/', type: 'module' }));
   if (!(await store.handOver(worker, { handed }))) throw new Error('the lend’s worker did not say it holds the pass');
-  location.replace(asked.get('back') ?? handed.base);
+  location.replace(asked.get('back') ?? '/');
 }
 
 start().catch((e) => {
