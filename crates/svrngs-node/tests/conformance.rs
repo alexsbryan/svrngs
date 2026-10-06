@@ -10,7 +10,9 @@
 //! per way and kept in `target/conformance/` for `scripts/check.sh`: on a
 //! computer and with the wildcard every route passes; on the floor every
 //! route passes but the two it cannot give, the root and storage apart,
-//! each reported as needing the wildcard. Neither lend's cookie reaches the
+//! each reported as needing the wildcard. WebKit's seeks back to back are
+//! a rate, not a gate (`a_rate`): kept beside the same seeks straight at a
+//! canary, and counted by scripts/check.sh. Neither lend's cookie reaches the
 //! other's requests; Bo's door names Alex's key; no byte Alex receives
 //! holds either secret; a lent page finds no group whose key it could
 //! unseal; and on a computer a lent page's post to the record API writes
@@ -223,9 +225,25 @@ const ROUTES: [(&str, &str); 11] = [
 /// origin of its own to post from.
 const NEEDS_THE_WILDCARD: [&str; 3] = ["root", "storage", "guarded"];
 
+/// WebKit's seeks back to back are a rate, not a gate (u5-11; operator,
+/// 2026-10-06): through a lend it takes a closed range's parts in serial
+/// 64 KiB reads, a round trip each, and its last seek missed 5 s in 1 of 8
+/// tries, where straight at the canary over the same link it missed in
+/// none (demo/runs/u5/2026-10-06-seek-stall/README.md). Its verdict is
+/// printed `, a rate` and never fails the test; `rate` keeps it.
+fn a_rate(engine: Engine, check: &str) -> bool {
+    matches!(engine, Engine::Webkit) && check == "seeks"
+}
+
 /// Each route's verdict for one lend in one way: `passed`, `failed`, or,
-/// on the floor, `needs the wildcard` for what it cannot give.
-fn verdicts(way: Way, lend: &Value, other: &Value) -> Vec<(&'static str, String, String)> {
+/// on the floor, `needs the wildcard` for what it cannot give; a rate's
+/// with `, a rate` after it.
+fn verdicts(
+    way: Way,
+    engine: Engine,
+    lend: &Value,
+    other: &Value,
+) -> Vec<(&'static str, String, String)> {
     ROUTES
         .iter()
         .map(|(route, check)| {
@@ -253,7 +271,11 @@ fn verdicts(way: Way, lend: &Value, other: &Value) -> Vec<(&'static str, String,
                 (true, false) => "passed",
                 (false, false) => "failed",
             };
-            (*route, verdict.to_string(), saw)
+            let verdict = match a_rate(engine, check) {
+                true => format!("{verdict}, a rate"),
+                false => verdict.to_string(),
+            };
+            (*route, verdict, saw)
         })
         .collect()
 }
@@ -343,8 +365,80 @@ fn carriage() {
     });
 }
 
+/// The clock and this host's load, `uptime`'s line after the UTC time:
+/// every run that times seeks records it at its start and end (the u5
+/// queue's rule; u5-4's one miss came at a load of 33.6 on 12 cores).
+async fn load() -> String {
+    let out = tokio::process::Command::new("sh")
+        .args(["-c", "echo $(date -u +%FT%TZ) $(uptime)"])
+        .output()
+        .await
+        .expect("sh runs date and uptime");
+    String::from_utf8_lossy(&out.stdout).trim().to_string()
+}
+
+/// WebKit's seeks back to back (`a_rate`), beside the same seeks straight
+/// at a canary over the same link (`web/tests/control.mjs`), a try for
+/// each lend, with the host's load from `began` to now: printed, kept in
+/// `target/conformance/seeks-<way>.tsv` for this run and added to
+/// `target/seeks-webkit.log`, every run's on this host, which
+/// scripts/check.sh counts. The control must run; its seeks, and the
+/// lend's, never fail the test.
+async fn rate(way: Way, ran: &Value, began: &str) {
+    let out = tokio::process::Command::new("node")
+        .arg(repo().join("web/tests/control.mjs"))
+        .args(["webkit", "2"])
+        .output()
+        .await
+        .expect("node runs the control");
+    assert!(
+        out.status.success(),
+        "the seeks straight at the canary did not run ({}):\n{}",
+        out.status,
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let straight: Value = serde_json::from_str(stdout.lines().last().expect("it printed")).unwrap();
+    let judged = |s: &Value| {
+        let again = s["again"]
+            .as_u64()
+            .map_or("none".to_string(), |ms| ms.to_string());
+        let ok = if s["ok"] == json!(true) {
+            "passed"
+        } else {
+            "failed"
+        };
+        format!("{again}\t{ok}")
+    };
+    let ended = load().await;
+    let mut lines = String::new();
+    for (i, who) in ["sam", "bo"].into_iter().enumerate() {
+        lines.push_str(&format!(
+            "{}\t{who}\tthrough its lend\t{}\tstraight at the canary\t{}\t{began}\t{ended}\n",
+            way.as_str(),
+            judged(&ran["lends"][who]["seeks"]),
+            judged(&straight[i]),
+        ));
+    }
+    print!("{lines}");
+    let kept = repo().join("target");
+    std::fs::write(
+        kept.join(format!("conformance/seeks-{}.tsv", way.as_str())),
+        &lines,
+    )
+    .unwrap();
+    use std::io::Write;
+    std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(kept.join("seeks-webkit.log"))
+        .and_then(|mut f| f.write_all(lines.as_bytes()))
+        .unwrap();
+}
+
 async fn conformance(way: Way, engine: Engine) {
     carriage();
+    let began = load().await;
     let site = site();
     let relay = relay().await;
     let g = group(&relay).await;
@@ -402,7 +496,8 @@ async fn conformance(way: Way, engine: Engine) {
     let mut table = String::new();
     let mut failed = Vec::new();
     for (who, other) in [("sam", "bo"), ("bo", "sam")] {
-        for (route, verdict, saw) in verdicts(way, &ran["lends"][who], &ran["lends"][other]) {
+        for (route, verdict, saw) in verdicts(way, engine, &ran["lends"][who], &ran["lends"][other])
+        {
             let line = format!(
                 "{:<9} {:<8} {who:<4} {route:<34} {verdict}",
                 way.as_str(),
@@ -425,6 +520,9 @@ async fn conformance(way: Way, engine: Engine) {
         "routes failed:\n{}\n{shown:#}",
         failed.join("\n")
     );
+    if matches!(engine, Engine::Webkit) {
+        rate(way, &ran, &began).await;
+    }
 
     // Neither lend's cookie reaches the other's requests; Bo's door names
     // Alex's key, the computer's or the phone's; the secret is the

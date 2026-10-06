@@ -900,14 +900,20 @@ exists, each a small app in `apps/` using only §3:
   script policy by nonce, its socket's state read against the socket's own
   constants, its sign-in's cookie read by the page before any reload, a
   post it takes only from its own address, named, by fetch and by a form, and
-  the upload told its length. Landed (u5-2): `apps/web-conformance`, lent by Sam's and
+  the upload told its length; and, from u5-9's stall, the file played as
+  sound and sought twenty times 250 ms apart, the last playing again within
+  5 s, over a phone's link from a home (u5-11). Landed (u5-2): `apps/web-conformance`, lent by Sam's and
   Bo's computers at once and opened by Alex from a computer and from a phone
   both ways of §7, in Chromium and in WebKit as an iPhone, by
   `crates/svrngs-node/tests/conformance.rs`; a step of its own in
   `scripts/check.sh`, printing each route's verdict per way. Every route
   passes on a computer and with the wildcard; on the floor every route but
   the root, storage apart and a post from an address of its own, each
-  reported as needing the wildcard.
+  reported as needing the wildcard. WebKit's seeks back to back are a rate,
+  not a gate (operator, 2026-10-06): each run prints and keeps their verdict
+  beside the same seeks straight at a canary over the same link
+  (`web/tests/control.mjs`) and the host's load, and `scripts/check.sh`
+  counts every run's misses on this host, both ways (§9 has the trigger).
   Neither lend's cookie reaches the other's requests, Bo's door names
   Alex's key, no byte Alex receives holds either secret, a lent page finds
   no group whose key it could unseal, and a lent page's post to the record
@@ -964,6 +970,7 @@ class at a time, each chosen by the north star's tests.
 | a per-process tie between a node and the services it lends (upstream's `mint_tie`) | an app's act is written under a person by a process the lender did not run, or one computer is shared by people who do not trust each other |
 | group folders (§3, call 7 of "Lent apps"): a member shares a folder at one level from a closed set; its file list in the record, its bytes content-addressed and fetched by verified range from whoever holds them (iroh-blobs 0.103, which takes iroh ^1.0.0); the meeting point runs one Jellyfin over everyone's shared films as `.strm` stubs; opt-in, beside lends. Its first run (svrn-docs `rings/runs/strm-2026-10-05/`, `457f120`): browsers played the holder's MP4 straight from the stub's URL, and WebKit remuxed an MKV through Jellyfin, the double hop; it failed its pre-registered byte-share bar on Jellyfin's per-play probe of a 47 MB file | U5 lands, and the operator runs it with a group in the wild and settles it (operator, 2026-10-05) |
 | a live payload naming its sender | an app needs to know who offered a live payload, and cannot take it from the payload |
+| WebKit's closed-range seeking through a lend: its seeks back to back, taken in serial 64 KiB reads of each short part, a round trip each, missed 5 s in 1 of 8 tries after u5-11, where straight at the canary over the same link they missed in none (`demo/runs/u5/2026-10-06-seek-stall/`; §11 risk 4); a rate in `scripts/check.sh`, not a gate | Demo A's real-phone sessions miss the seek bar in Safari more often than WebKit straight at the server on the same link |
 | zero sign-in for Jellyfin: a user per person made with a key the lender gives once (`apps/jellyfin/`), the door carrying a secret per person, an app's script at its lend's origin writing jellyfin-web's stored sign-in, and the door keeping the person's token out of the answers Jellyfin writes it into (u5-3, finding 4: four rows) | an app people lend that keeps its own accounts and asks a sign-in no one can give, or the operator asking Demo A for no sign-in at all |
 
 ## 10. Decisions
@@ -1058,7 +1065,9 @@ By the operator, 2026-10-03:
    8 tries after u5-11 (4 of 8 before), and straight at the same canary
    over the same link in none of 8 (1.9–4.2 s): through a lend WebKit
    answers each short part with serial 64 KiB reads, one round trip each.
-   Chromium's played again there in 0.7–0.8 s (4.0–5.0 s before).
+   Chromium's played again there in 0.7–0.8 s (4.0–5.0 s before), a gate
+   in `scripts/check.sh`; WebKit's is a rate there, beside the same seeks
+   straight at the canary each run, and waits in §9.
 5. **Members find each other through iroh's address lookup**, n0's DNS by
    default, as upstream's (§8, U1's inventory): it maps a key to its relay,
    never to a person, and a group is unreachable through it while it is down.

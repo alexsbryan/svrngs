@@ -37,6 +37,13 @@ if [ -f Cargo.toml ]; then
   rm -rf target/conformance
   step "conformance canary" cargo test --quiet -p svrngs-node --test conformance
   cat target/conformance/*.txt 2>/dev/null | cut -c1-10,25- | sort -u | sed 's/^/           /'
+  # WebKit's seeks back to back, a rate and not a gate (u5-11): this run's,
+  # beside the same seeks straight at the canary, then every run's here.
+  if [ -s target/seeks-webkit.log ] && ls target/conformance/seeks-*.tsv >/dev/null 2>&1; then
+    echo "rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict"
+    cut -f1,2,4,5,7,8 target/conformance/seeks-*.tsv | sed 's/^/           /'
+    awk -F'\t' -v cores="$(getconf _NPROCESSORS_ONLN)" '{n++; l+=$5=="failed"; s+=$8=="failed"; split($10, a, "averages?: "); hot+=a[2]+0>cores} END {printf "           of %d here since %s: %d missed 5 s through a lend, %d straight; %d ended at a load above %d cores\n", n, f, l, s, hot, cores} NR==1 {f=substr($9,1,20)}' target/seeks-webkit.log
+  else echo "never-ran  WebKit's seeks back to back, a rate: nothing kept"; failed=1; fi
 else
   echo "never-ran  rustfmt, clippy, tests: no Cargo workspace yet"; failed=1
 fi
