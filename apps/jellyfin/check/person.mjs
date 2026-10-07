@@ -214,6 +214,8 @@ export async function enter(p, run) {
   person.device = await page.evaluate(() => localStorage.getItem('_deviceId2'));
   // A token Jellyfin handed this browser is theirs; the placeholder is none.
   if (person.token && person.token !== 'door') fs.writeFileSync(`${DUMP}/${p.user}/token`, person.token);
+  // Signed in, with no film to play: a phone used as a remote (u6-2).
+  if (!p.film) return person;
 
   await page.evaluate(([id, s]) => { location.hash = `#/details?id=${id}&serverId=${s}`; }, [p.film, args.server]);
   person.play_from = Date.now() - T0;
