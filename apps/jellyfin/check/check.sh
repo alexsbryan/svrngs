@@ -144,10 +144,15 @@ EOF
   users >"$OUT/users-before.json"
   say "films: $n; users: $(cat "$OUT/users-before.json")"
 
-  # --- the page, served on localhost: every name under it answers ----------
-  "$REPO/scripts/build-web.sh" --out "$R/site" >"$R/build.log"
-  node "$REPO/demo/runs/u4/2026-10-05/drive.mjs" serve "$R/site" >"$R/site.out" 2>&1 & echo $! >"$R/site.pid"
-  PAGE="http://localhost:$(port_of "$R/site.out")/"
+  # --- the page: a hosted one when PAGE names it, as for real phones (the
+  # operator's Demo B, https://group.svrnme.sh/); else web/ served on
+  # localhost, where every name under it answers ---------------------------
+  if [ -z "${PAGE:-}" ]; then
+    "$REPO/scripts/build-web.sh" --out "$R/site" >"$R/build.log"
+    node "$REPO/demo/runs/u4/2026-10-05/drive.mjs" serve "$R/site" >"$R/site.out" 2>&1 & echo $! >"$R/site.pid"
+    PAGE="http://localhost:$(port_of "$R/site.out")/"
+  fi
+  say "the page: $PAGE"
 
   # --- Sam makes House, its links on the page; Alex joins by the client's --
   SVRNGS_DIR="$R/sam" RUST_LOG=info,carriage=debug NO_COLOR=1 nohup "$B" new House --as Sam --origin "$PAGE" >"$R/sam/new.out" 2>"$R/sam/run.log" &
