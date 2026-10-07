@@ -1,0 +1,461 @@
+[2026-10-06 19:44:53.672 -07:00] [INF] [1] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/tmp/u6-2r/jf/cache"
+[2026-10-06 19:44:53.989 -07:00] [INF] [4] Jellyfin.Server.ServerSetupApp.SetupServer: Kestrel is listening on "127.0.0.1"
+[2026-10-06 19:44:54.021 -07:00] [INF] [4] Main: Jellyfin version: "12.0.0"
+[2026-10-06 19:44:54.024 -07:00] [INF] [4] Main: Environment Variables: ["[JELLYFIN_LOG_DIR, /tmp/u6-2r/jf/log]"]
+[2026-10-06 19:44:54.026 -07:00] [INF] [4] Main: Arguments: ["/Applications/Jellyfin.app/Contents/MacOS/jellyfin.dll", "-d", "/tmp/u6-2r/jf/data", "-c", "/tmp/u6-2r/jf/config", "-C", "/tmp/u6-2r/jf/cache", "-l", "/tmp/u6-2r/jf/log", "-w", "/Applications/Jellyfin.app/Contents/Resources/jellyfin-web", "--ffmpeg", "/Applications/Jellyfin.app/Contents/MacOS/ffmpeg", "--nonetchange"]
+[2026-10-06 19:44:54.026 -07:00] [INF] [4] Main: Operating system: "macOS 26.5.2"
+[2026-10-06 19:44:54.026 -07:00] [INF] [4] Main: Architecture: Arm64
+[2026-10-06 19:44:54.027 -07:00] [INF] [4] Main: 64-Bit Process: True
+[2026-10-06 19:44:54.027 -07:00] [INF] [4] Main: User Interactive: True
+[2026-10-06 19:44:54.027 -07:00] [INF] [4] Main: Processor count: 12
+[2026-10-06 19:44:54.027 -07:00] [INF] [4] Main: Program data path: "/tmp/u6-2r/jf/data"
+[2026-10-06 19:44:54.027 -07:00] [INF] [4] Main: Log directory path: "/tmp/u6-2r/jf/log"
+[2026-10-06 19:44:54.027 -07:00] [INF] [4] Main: Config directory path: "/tmp/u6-2r/jf/config"
+[2026-10-06 19:44:54.027 -07:00] [INF] [4] Main: Cache path: "/tmp/u6-2r/jf/cache"
+[2026-10-06 19:44:54.027 -07:00] [INF] [4] Main: Temp directory path: "/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/jellyfin"
+[2026-10-06 19:44:54.028 -07:00] [INF] [4] Main: Web resources path: "/Applications/Jellyfin.app/Contents/Resources/jellyfin-web"
+[2026-10-06 19:44:54.028 -07:00] [INF] [4] Main: Application directory: "/Applications/Jellyfin.app/Contents/MacOS/"
+[2026-10-06 19:44:54.032 -07:00] [INF] [4] Jellyfin.Server.Startup: Storage path `"/tmp/u6-2r/jf/data/data"` (Fixed) successfully checked with "11.7GiB" free which is over the minimum of "2GiB".
+[2026-10-06 19:44:54.032 -07:00] [INF] [4] Jellyfin.Server.Startup: Storage path `"/tmp/u6-2r/jf/cache"` (Fixed) successfully checked with "11.7GiB" free which is over the minimum of "2GiB".
+[2026-10-06 19:44:54.032 -07:00] [INF] [4] Jellyfin.Server.Startup: Storage path `"/tmp/u6-2r/jf/data"` (Fixed) successfully checked with "11.7GiB" free which is over the minimum of "2GiB".
+[2026-10-06 19:44:54.077 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/tmp/u6-2r/jf/cache"
+[2026-10-06 19:44:54.147 -07:00] [INF] [4] Jellyfin.Database.Providers.Sqlite.SqliteDatabaseProvider: SQLite connection string: "Data Source=/tmp/u6-2r/jf/data/data/jellyfin.db;Cache=Private;Default Timeout=60;Pooling=True"
+[2026-10-06 19:44:54.151 -07:00] [INF] [4] Jellyfin.Database.Providers.Sqlite.SqliteDatabaseProvider: SQLITE connection pragma command set to: 
+"PRAGMA locking_mode=NORMAL;
+PRAGMA journal_size_limit=134217728;
+PRAGMA synchronous=1;
+PRAGMA temp_store=2;
+"
+[2026-10-06 19:44:54.151 -07:00] [INF] [4] Jellyfin.Database.Implementations.Locking.NoLockBehavior: The database locking mode has been set to: NoLock.
+[2026-10-06 19:44:54.182 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Initialise Migration service.
+[2026-10-06 19:44:54.183 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: System initialization detected. Seed data. Startup mode is: MediaServer
+[2026-10-06 19:44:55.629 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration 4124c2cd-e939-4ffb-9be9-9b311c413638-"DisableTranscodingThrottling".
+[2026-10-06 19:44:55.636 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration ef103419-8451-40d8-9f34-d1a8e93a1679-"CreateUserLoggingConfigFile".
+[2026-10-06 19:44:55.636 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration 3793eb59-bc8c-456c-8b9f-bd5a62a42978-"MigrateActivityLogDb".
+[2026-10-06 19:44:55.636 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration acbe17b7-8435-4a83-8b64-6fcf162cb9bd-"RemoveDuplicateExtras".
+[2026-10-06 19:44:55.637 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration 5c4b82a2-f053-4009-bd05-b6fcad82f14c-"MigrateUserDb".
+[2026-10-06 19:44:55.637 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration 06387815-c3cc-421f-a888-fb5f9992bea8-"MigrateDisplayPreferencesDb".
+[2026-10-06 19:44:55.637 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration a81f75e0-8f43-416f-a5e8-516ccab4d8cc-"RemoveDownloadImagesInAdvance".
+[2026-10-06 19:44:55.637 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration 5bd72f41-e6f3-4f60-90aa-09869abe0e22-"MigrateAuthenticationDb".
+[2026-10-06 19:44:55.637 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration 615dfa9e-2497-4dbb-a472-61938b752c5b-"FixPlaylistOwner".
+[2026-10-06 19:44:55.637 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration cf6fabc2-9fbe-4933-84a5-ffe52ef22a58-"FixAudioData".
+[2026-10-06 19:44:55.638 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"MigrateLibraryDbCompatibilityCheck".
+[2026-10-06 19:44:55.638 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"MigrateLibraryDb".
+[2026-10-06 19:44:55.638 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"MoveExtractedFiles".
+[2026-10-06 19:44:55.638 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"RefreshInternalDateModified".
+[2026-10-06 19:44:55.640 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"MigrateKeyframeData".
+[2026-10-06 19:44:55.641 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"MigrateLibraryUserData".
+[2026-10-06 19:44:55.641 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"FixDates".
+[2026-10-06 19:44:55.641 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"ReseedFolderFlag".
+[2026-10-06 19:44:55.642 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"CleanMusicArtist".
+[2026-10-06 19:44:55.642 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"MigrateLinkedChildren".
+[2026-10-06 19:44:55.642 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"CleanupOrphanedExtras".
+[2026-10-06 19:44:55.642 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"FixIncorrectOwnerIdRelationships".
+[2026-10-06 19:44:55.642 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"FixLibrarySubtitleDownloadLanguages".
+[2026-10-06 19:44:55.642 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"MigrateRatingLevels".
+[2026-10-06 19:44:55.642 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"MergeDuplicateMusicArtists".
+[2026-10-06 19:44:55.643 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"MergeDuplicatePeople".
+[2026-10-06 19:44:55.651 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"CleanupOrphanedExternalData".
+[2026-10-06 19:44:55.651 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"RefreshCleanNamesAndValues".
+[2026-10-06 19:44:55.651 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"RefreshForcedSortNames".
+[2026-10-06 19:44:55.651 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"RestorePlaylistChildrenFromMetadata".
+[2026-10-06 19:44:55.651 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"RecomputeSeriesPresentationKey".
+[2026-10-06 19:44:55.652 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"ConsolidateLocalizedUserViews".
+[2026-10-06 19:44:55.652 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"EnableLocalSimilarityProviders".
+[2026-10-06 19:44:55.652 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"UpdateNormalizedUsername".
+[2026-10-06 19:44:55.652 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"DisableLegacyAuthorization".
+[2026-10-06 19:44:55.652 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration 9b354818-94d5-4b68-ac49-e35cb85f9d84-"CreateNetworkConfiguration".
+[2026-10-06 19:44:55.652 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration a8e61960-7726-4450-8f3d-82c12daabbcb-"MigrateEncodingOptions".
+[2026-10-06 19:44:55.653 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration a6dcacf4-c057-4ef9-80d3-61cef9ddb4f0-"MigrateMusicBrainzTimeout".
+[2026-10-06 19:44:55.653 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration 4fb5c950-1991-11ee-9b4b-0800200c9a66-"MigrateNetworkConfiguration".
+[2026-10-06 19:44:55.653 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration e73b777d-cd5c-4e71-957a-b86b3660b7cf-"RenameEnableGroupingIntoCollections".
+[2026-10-06 19:44:55.668 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Migration system initialisation completed.
+[2026-10-06 19:44:55.694 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/tmp/u6-2r/jf/cache"
+[2026-10-06 19:44:55.773 -07:00] [INF] [4] Emby.Server.Implementations.ApplicationHost: Loading assemblies
+[2026-10-06 19:44:55.838 -07:00] [INF] [4] Jellyfin.Networking.Manager.NetworkManager: Defined LAN subnets: ["127.0.0.0/8", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+[2026-10-06 19:44:55.839 -07:00] [INF] [4] Jellyfin.Networking.Manager.NetworkManager: Defined LAN exclusions: []
+[2026-10-06 19:44:55.840 -07:00] [INF] [4] Jellyfin.Networking.Manager.NetworkManager: Used LAN subnets: ["127.0.0.0/8", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+[2026-10-06 19:44:55.842 -07:00] [INF] [4] Jellyfin.Networking.Manager.NetworkManager: Filtered interface addresses: ["127.0.0.1"]
+[2026-10-06 19:44:55.842 -07:00] [INF] [4] Jellyfin.Networking.Manager.NetworkManager: Bind Addresses ["127.0.0.1"]
+[2026-10-06 19:44:55.842 -07:00] [INF] [4] Jellyfin.Networking.Manager.NetworkManager: Remote IP filter is "Allowlist"
+[2026-10-06 19:44:55.842 -07:00] [INF] [4] Jellyfin.Networking.Manager.NetworkManager: Filtered subnets: []
+[2026-10-06 19:44:56.062 -07:00] [INF] [4] Jellyfin.Database.Providers.Sqlite.SqliteDatabaseProvider: SQLite connection string: "Data Source=/tmp/u6-2r/jf/data/data/jellyfin.db;Cache=Private;Default Timeout=60;Pooling=True"
+[2026-10-06 19:44:56.062 -07:00] [INF] [4] Jellyfin.Database.Providers.Sqlite.SqliteDatabaseProvider: SQLITE connection pragma command set to: 
+"PRAGMA locking_mode=NORMAL;
+PRAGMA journal_size_limit=134217728;
+PRAGMA synchronous=1;
+PRAGMA temp_store=2;
+"
+[2026-10-06 19:44:56.063 -07:00] [INF] [4] Jellyfin.Database.Implementations.Locking.NoLockBehavior: The database locking mode has been set to: NoLock.
+[2026-10-06 19:44:56.111 -07:00] [INF] [4] Main: Prepare system for possible migrations
+[2026-10-06 19:44:56.155 -07:00] [INF] [4] Main: A migration will attempt to modify the jellyfin.db, will attempt to backup the file now.
+[2026-10-06 19:44:56.156 -07:00] [INF] [4] Main: Jellyfin database has been backed up as "20261007024456"
+[2026-10-06 19:44:56.161 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: There are 55 migrations for stage CoreInitialisation.
+[2026-10-06 19:44:56.162 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20200514181226_AddActivityLog"
+[2026-10-06 19:44:56.193 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20200514181226_AddActivityLog" was successfully applied
+[2026-10-06 19:44:56.193 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20200613202153_AddUsers"
+[2026-10-06 19:44:56.206 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20200613202153_AddUsers" was successfully applied
+[2026-10-06 19:44:56.206 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20200728005145_AddDisplayPreferences"
+[2026-10-06 19:44:56.215 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20200728005145_AddDisplayPreferences" was successfully applied
+[2026-10-06 19:44:56.216 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20200905220533_FixDisplayPreferencesIndex"
+[2026-10-06 19:44:56.220 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20200905220533_FixDisplayPreferencesIndex" was successfully applied
+[2026-10-06 19:44:56.220 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20201004171403_AddMaxActiveSessions"
+[2026-10-06 19:44:56.229 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20201004171403_AddMaxActiveSessions" was successfully applied
+[2026-10-06 19:44:56.230 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20201204223655_AddCustomDisplayPreferences"
+[2026-10-06 19:44:56.253 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20201204223655_AddCustomDisplayPreferences" was successfully applied
+[2026-10-06 19:44:56.254 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20210320181425_AddIndexesAndCollations"
+[2026-10-06 19:44:56.283 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"SqlOperation"' will be attempted while a rebuild of table '"ImageInfos"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 19:44:56.284 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"SqlOperation"' will be attempted while a rebuild of table '"ImageInfos"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 19:44:56.286 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"SqlOperation"' will be attempted while a rebuild of table '"Permissions"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 19:44:56.286 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"SqlOperation"' will be attempted while a rebuild of table '"Permissions"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 19:44:56.286 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"SqlOperation"' will be attempted while a rebuild of table '"Preferences"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 19:44:56.286 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"SqlOperation"' will be attempted while a rebuild of table '"Preferences"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 19:44:56.287 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"SqlOperation"' will be attempted while a rebuild of table '"Users"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 19:44:56.287 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"SqlOperation"' will be attempted while a rebuild of table '"Users"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 19:44:56.297 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20210320181425_AddIndexesAndCollations" was successfully applied
+[2026-10-06 19:44:56.298 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20210407110544_NullableCustomPrefValue"
+[2026-10-06 19:44:56.318 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20210407110544_NullableCustomPrefValue" was successfully applied
+[2026-10-06 19:44:56.320 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20210814002109_AddDevices"
+[2026-10-06 19:44:56.339 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20210814002109_AddDevices" was successfully applied
+[2026-10-06 19:44:56.340 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20221022080052_AddIndexActivityLogsDateCreated"
+[2026-10-06 19:44:56.356 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20221022080052_AddIndexActivityLogsDateCreated" was successfully applied
+[2026-10-06 19:44:56.357 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20230526173516_RemoveEasyPassword"
+[2026-10-06 19:44:56.398 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20230526173516_RemoveEasyPassword" was successfully applied
+[2026-10-06 19:44:56.400 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20230626233818_AddTrickplayInfos"
+[2026-10-06 19:44:56.421 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20230626233818_AddTrickplayInfos" was successfully applied
+[2026-10-06 19:44:56.422 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20230923170422_UserCastReceiver"
+[2026-10-06 19:44:56.430 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20230923170422_UserCastReceiver" was successfully applied
+[2026-10-06 19:44:56.431 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20240729140605_AddMediaSegments"
+[2026-10-06 19:44:56.436 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20240729140605_AddMediaSegments" was successfully applied
+[2026-10-06 19:44:56.437 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20240928082930_MarkSegmentProviderIdNonNullable"
+[2026-10-06 19:44:56.445 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20240928082930_MarkSegmentProviderIdNonNullable" was successfully applied
+[2026-10-06 19:44:56.446 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20241020103111_LibraryDbMigration"
+[2026-10-06 19:44:56.468 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20241020103111_LibraryDbMigration" was successfully applied
+[2026-10-06 19:44:56.469 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20241111131257_AddedCustomDataKey"
+[2026-10-06 19:44:56.501 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20241111131257_AddedCustomDataKey" was successfully applied
+[2026-10-06 19:44:56.504 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20241111135439_AddedCustomDataKeyKey"
+[2026-10-06 19:44:56.645 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20241111135439_AddedCustomDataKeyKey" was successfully applied
+[2026-10-06 19:44:56.647 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20241112152323_FixAncestorIdConfig"
+[2026-10-06 19:44:56.723 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20241112152323_FixAncestorIdConfig" was successfully applied
+[2026-10-06 19:44:56.723 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20241112232041_FixMediaStreams"
+[2026-10-06 19:44:56.749 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20241112232041_FixMediaStreams" was successfully applied
+[2026-10-06 19:44:56.750 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20241112234144_FixMediaStreams2"
+[2026-10-06 19:44:56.776 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20241112234144_FixMediaStreams2" was successfully applied
+[2026-10-06 19:44:56.778 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20241113133548_EnforceUniqueItemValue"
+[2026-10-06 19:44:56.814 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20241113133548_EnforceUniqueItemValue" was successfully applied
+[2026-10-06 19:44:56.816 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250202021306_FixedCollation"
+[2026-10-06 19:44:56.899 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250202021306_FixedCollation" was successfully applied
+[2026-10-06 19:44:56.902 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250204092455_MakeStartEndDateNullable"
+[2026-10-06 19:44:56.967 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250204092455_MakeStartEndDateNullable" was successfully applied
+[2026-10-06 19:44:56.968 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250214031148_ChannelIdGuid"
+[2026-10-06 19:44:56.980 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250214031148_ChannelIdGuid" was successfully applied
+[2026-10-06 19:44:56.981 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250326065026_AddInheritedParentalRatingSubValue"
+[2026-10-06 19:44:56.997 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250326065026_AddInheritedParentalRatingSubValue" was successfully applied
+[2026-10-06 19:44:56.997 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250327101120_AddKeyframeData"
+[2026-10-06 19:44:57.009 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250327101120_AddKeyframeData" was successfully applied
+[2026-10-06 19:44:57.010 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250327171413_AddHdr10PlusFlag"
+[2026-10-06 19:44:57.052 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250327171413_AddHdr10PlusFlag" was successfully applied
+[2026-10-06 19:44:57.054 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250331182844_FixAttachmentMigration"
+[2026-10-06 19:44:57.117 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250331182844_FixAttachmentMigration" was successfully applied
+[2026-10-06 19:44:57.119 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250401142247_FixAncestors"
+[2026-10-06 19:44:57.154 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250401142247_FixAncestors" was successfully applied
+[2026-10-06 19:44:57.156 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250405075612_FixItemValuesIndices"
+[2026-10-06 19:44:57.202 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250405075612_FixItemValuesIndices" was successfully applied
+[2026-10-06 19:44:57.203 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250609115616_DetachUserDataInsteadOfDelete"
+[2026-10-06 19:44:57.231 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250609115616_DetachUserDataInsteadOfDelete" was successfully applied
+[2026-10-06 19:44:57.232 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250622170802_BaseItemImageInfoDateModifiedNullable"
+[2026-10-06 19:44:57.270 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250622170802_BaseItemImageInfoDateModifiedNullable" was successfully applied
+[2026-10-06 19:44:57.274 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250714044826_ResetJournalMode"
+[2026-10-06 19:44:57.323 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250714044826_ResetJournalMode" was successfully applied
+[2026-10-06 19:44:57.326 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250913211637_AddProperParentChildRelationBaseItemWithCascade"
+[2026-10-06 19:44:57.400 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250913211637_AddProperParentChildRelationBaseItemWithCascade" was successfully applied
+[2026-10-06 19:44:57.401 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250925203415_ExtendPeopleMapKey"
+[2026-10-06 19:44:57.424 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250925203415_ExtendPeopleMapKey" was successfully applied
+[2026-10-06 19:44:57.425 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260113102337_AddLinkedChildrenTable"
+[2026-10-06 19:44:57.437 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260113102337_AddLinkedChildrenTable" was successfully applied
+[2026-10-06 19:44:57.438 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260113203012_ChangeOwnerIdToGuid"
+[2026-10-06 19:44:57.511 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260113203012_ChangeOwnerIdToGuid" was successfully applied
+[2026-10-06 19:44:57.514 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260113233000_AddForeignKeyToOwnerId"
+[2026-10-06 19:44:57.591 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"SqlOperation"' will be attempted while a rebuild of table '"BaseItems"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 19:44:57.591 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"UpdateDataOperation"' will be attempted while a rebuild of table '"BaseItems"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 19:44:57.598 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260113233000_AddForeignKeyToOwnerId" was successfully applied
+[2026-10-06 19:44:57.599 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260113233500_DropExtraIdsColumn"
+[2026-10-06 19:44:57.633 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260113233500_DropExtraIdsColumn" was successfully applied
+[2026-10-06 19:44:57.634 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260116114245_AddLatestItemsDateCreatedIndexes"
+[2026-10-06 19:44:57.666 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260116114245_AddLatestItemsDateCreatedIndexes" was successfully applied
+[2026-10-06 19:44:57.668 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260118182305_AddIndicesToImageInfo"
+[2026-10-06 19:44:57.709 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260118182305_AddIndicesToImageInfo" was successfully applied
+[2026-10-06 19:44:57.711 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260130232147_AddBaseItemNameIndex"
+[2026-10-06 19:44:57.740 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260130232147_AddBaseItemNameIndex" was successfully applied
+[2026-10-06 19:44:57.741 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260206224832_IndexOptimizations"
+[2026-10-06 19:44:57.760 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260206224832_IndexOptimizations" was successfully applied
+[2026-10-06 19:44:57.761 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260215201634_ChangePrimaryVersionIdToGuid"
+[2026-10-06 19:44:57.773 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260215201634_ChangePrimaryVersionIdToGuid" was successfully applied
+[2026-10-06 19:44:57.774 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260308123920_AddTypeCleanNameIndex"
+[2026-10-06 19:44:57.787 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260308123920_AddTypeCleanNameIndex" was successfully applied
+[2026-10-06 19:44:57.789 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260504075755_AddPartialIndexForItemCounts"
+[2026-10-06 19:44:57.830 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260504075755_AddPartialIndexForItemCounts" was successfully applied
+[2026-10-06 19:44:57.838 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260522092303_AddNormalizedUsername"
+[2026-10-06 19:44:57.887 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260522092303_AddNormalizedUsername" was successfully applied
+[2026-10-06 19:44:57.888 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260524120336_AddUniqueNormalizedUsernameIndex"
+[2026-10-06 19:44:57.901 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260524120336_AddUniqueNormalizedUsernameIndex" was successfully applied
+[2026-10-06 19:44:57.902 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260723111547_AllowDuplicatePlaylistChildren"
+[2026-10-06 19:44:57.923 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260723111547_AllowDuplicatePlaylistChildren" was successfully applied
+[2026-10-06 19:44:57.924 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260724185102_AddPrimaryVersionIdIndex"
+[2026-10-06 19:44:57.955 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260724185102_AddPrimaryVersionIdIndex" was successfully applied
+[2026-10-06 19:44:57.958 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260728170000_AddPeopleNameLowerIndex"
+[2026-10-06 19:44:58.001 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260728170000_AddPeopleNameLowerIndex" was successfully applied
+[2026-10-06 19:44:58.005 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260728182152_AddPeopleItemMapCoveringIndex"
+[2026-10-06 19:44:58.038 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260728182152_AddPeopleItemMapCoveringIndex" was successfully applied
+[2026-10-06 19:44:58.039 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260812050902_AddMediaStreamFilterIndex"
+[2026-10-06 19:44:58.052 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260812050902_AddMediaStreamFilterIndex" was successfully applied
+[2026-10-06 19:44:58.053 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260815063607_RemoveOrphanedUserPermissionsAndPreferences"
+[2026-10-06 19:44:58.111 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260815063607_RemoveOrphanedUserPermissionsAndPreferences" was successfully applied
+[2026-10-06 19:44:58.249 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Saving system configuration
+[2026-10-06 19:44:58.250 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/tmp/u6-2r/jf/cache"
+[2026-10-06 19:44:58.260 -07:00] [INF] [4] Emby.Server.Implementations.Plugins.PluginManager: Loaded plugin: "TMDb" "12.0.0.0"
+[2026-10-06 19:44:58.260 -07:00] [INF] [4] Emby.Server.Implementations.Plugins.PluginManager: Loaded plugin: "Studio Images" "12.0.0.0"
+[2026-10-06 19:44:58.261 -07:00] [INF] [4] Emby.Server.Implementations.Plugins.PluginManager: Loaded plugin: "OMDb" "12.0.0.0"
+[2026-10-06 19:44:58.289 -07:00] [INF] [4] Emby.Server.Implementations.Plugins.PluginManager: Loaded plugin: "MusicBrainz" "12.0.0.0"
+[2026-10-06 19:44:58.290 -07:00] [INF] [4] Emby.Server.Implementations.Plugins.PluginManager: Loaded plugin: "ListenBrainz Similarity Provider" "12.0.0.0"
+[2026-10-06 19:44:58.290 -07:00] [INF] [4] Emby.Server.Implementations.Plugins.PluginManager: Loaded plugin: "AudioDB" "12.0.0.0"
+[2026-10-06 19:44:58.334 -07:00] [INF] [4] Emby.Server.Implementations.Library.Search.SearchManager: Registered 0 external search providers: "". Fallback providers: "Database (priority 100)"
+[2026-10-06 19:44:58.335 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: There are 5 migrations for stage AppInitialisation.
+[2026-10-06 19:44:58.335 -07:00] [INF] [4] InternalCodeMigration: Perform migration "20250420090000_AddDefaultPluginRepository"
+[2026-10-06 19:44:58.336 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Saving system configuration
+[2026-10-06 19:44:58.336 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/tmp/u6-2r/jf/cache"
+[2026-10-06 19:44:58.337 -07:00] [INF] [4] InternalCodeMigration: Migration "20250420090000_AddDefaultPluginRepository" was successfully applied
+[2026-10-06 19:44:58.338 -07:00] [INF] [4] InternalCodeMigration: Perform migration "20250420110000_ReaddDefaultPluginRepository"
+[2026-10-06 19:44:58.338 -07:00] [INF] [4] InternalCodeMigration: Migration "20250420110000_ReaddDefaultPluginRepository" was successfully applied
+[2026-10-06 19:44:58.339 -07:00] [INF] [4] InternalCodeMigration: Perform migration "20250420160000_AddDefaultCastReceivers"
+[2026-10-06 19:44:58.339 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Saving system configuration
+[2026-10-06 19:44:58.339 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/tmp/u6-2r/jf/cache"
+[2026-10-06 19:44:58.340 -07:00] [INF] [4] InternalCodeMigration: Migration "20250420160000_AddDefaultCastReceivers" was successfully applied
+[2026-10-06 19:44:58.341 -07:00] [INF] [4] InternalCodeMigration: Perform migration "20250420170000_UpdateDefaultPluginRepository"
+[2026-10-06 19:44:58.341 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Saving system configuration
+[2026-10-06 19:44:58.341 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/tmp/u6-2r/jf/cache"
+[2026-10-06 19:44:58.341 -07:00] [INF] [4] InternalCodeMigration: Migration "20250420170000_UpdateDefaultPluginRepository" was successfully applied
+[2026-10-06 19:44:58.342 -07:00] [INF] [4] InternalCodeMigration: Perform migration "20250420230000_MoveTrickplayFiles"
+[2026-10-06 19:44:58.913 -07:00] [INF] [4] Jellyfin.Server.Migrations.Routines.MoveTrickplayFiles: Checked: 5000 - Moved: 0 - Time: 00:00:00.5690394
+[2026-10-06 19:44:58.913 -07:00] [INF] [4] Jellyfin.Server.Migrations.Routines.MoveTrickplayFiles: Moved 0 items in 00:00:00.5696087
+[2026-10-06 19:44:58.916 -07:00] [INF] [4] InternalCodeMigration: Migration "20250420230000_MoveTrickplayFiles" was successfully applied
+[2026-10-06 19:44:58.923 -07:00] [INF] [4] Main: Attempt to cleanup JellyfinDb backup.
+[2026-10-06 19:44:58.924 -07:00] [INF] [4] Main: Migrations have been applied, optimizing the database... This might take a while
+[2026-10-06 19:44:58.970 -07:00] [INF] [4] Jellyfin.Database.Providers.Sqlite.SqliteDatabaseProvider: jellyfin.db optimized successfully!
+[2026-10-06 19:44:59.117 -07:00] [INF] [5] Main: Kestrel is listening on "127.0.0.1"
+[2026-10-06 19:44:59.820 -07:00] [WRN] [5] Microsoft.AspNetCore.StaticFiles.StaticFileMiddleware: The WebRootPath was not found: "/Users/alexsbryan/dev/svrngs/wwwroot". Static files may be unavailable.
+[2026-10-06 19:45:00.355 -07:00] [INF] [5] Emby.Server.Implementations.ApplicationHost: Running startup tasks
+[2026-10-06 19:45:00.443 -07:00] [INF] [5] Emby.Server.Implementations.ScheduledTasks.TaskManager: Daily trigger for "Generate Trickplay Images" set to fire at 2026-10-07 03:00:00.000 -07:00, which is 07:14:59.5562820 from now.
+[2026-10-06 19:45:00.445 -07:00] [INF] [5] Emby.Server.Implementations.ScheduledTasks.TaskManager: Daily trigger for "Extract Chapter Images" set to fire at 2026-10-07 02:00:00.000 -07:00, which is 06:14:59.5546240 from now.
+[2026-10-06 19:45:00.600 -07:00] [INF] [5] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Found ffmpeg version "8.1.2"
+[2026-10-06 19:45:00.709 -07:00] [INF] [5] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Available "decoders": ["libdav1d", "av1", "h264", "hevc", "mpeg2video", "mpeg4", "msmpeg4", "vp8", "libvpx", "vp9", "libvpx-vp9", "aac", "ac3", "ac4", "dca", "flac", "mp3", "truehd"]
+[2026-10-06 19:45:00.783 -07:00] [INF] [5] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Available "encoders": ["libsvtav1", "libx264", "h264_videotoolbox", "libx265", "hevc_videotoolbox", "mjpeg_videotoolbox", "aac", "aac_at", "ac3", "alac", "dca", "flac", "libmp3lame", "libopus", "truehd", "libvorbis", "srt"]
+[2026-10-06 19:45:00.868 -07:00] [INF] [5] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Available filters: ["bwdif_opencl", "bwdif_videotoolbox", "overlay_opencl", "overlay_videotoolbox", "scale_opencl", "scale_vt", "tonemapx", "tonemap_opencl", "tonemap_videotoolbox", "transpose_opencl", "transpose_vt", "yadif_opencl", "yadif_videotoolbox", "zscale", "alphasrc"]
+[2026-10-06 19:45:00.932 -07:00] [WRN] [5] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Filter: "scale_cuda" with option "format" is not available
+[2026-10-06 19:45:01.006 -07:00] [WRN] [5] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Filter: "tonemap_cuda" with option "GPU accelerated HDR to SDR tonemapping" is not available
+[2026-10-06 19:45:01.198 -07:00] [WRN] [5] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Filter: "overlay_vaapi" with option "Action to take when encountering EOF from secondary input" is not available
+[2026-10-06 19:45:01.245 -07:00] [WRN] [5] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Filter: "overlay_vulkan" with option "Action to take when encountering EOF from secondary input" is not available
+[2026-10-06 19:45:01.393 -07:00] [WRN] [5] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Filter: "overlay_cuda" with option "alpha_format" is not available
+[2026-10-06 19:45:01.743 -07:00] [INF] [5] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Available hwaccel types: ["videotoolbox", "opencl"]
+[2026-10-06 19:45:03.594 -07:00] [INF] [10] Emby.Server.Implementations.ScheduledTasks.TaskManager: "Clean Transcode Directory" Completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:04.374 -07:00] [INF] [19] Emby.Server.Implementations.ScheduledTasks.TaskManager: "Update Plugins" Completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:05.721 -07:00] [INF] [5] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: FFmpeg: "/Applications/Jellyfin.app/Contents/MacOS/ffmpeg"
+[2026-10-06 19:45:05.721 -07:00] [INF] [5] Emby.Server.Implementations.ApplicationHost: ServerId: "86f83cb296c04ce0af10c3872aa73396"
+[2026-10-06 19:45:05.721 -07:00] [INF] [5] Emby.Server.Implementations.ApplicationHost: Core startup complete
+[2026-10-06 19:45:05.721 -07:00] [INF] [5] Main: Startup complete 0:00:13.0397931
+[2026-10-06 19:45:08.053 -07:00] [INF] [19] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Saving system configuration
+[2026-10-06 19:45:08.054 -07:00] [INF] [19] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/tmp/u6-2r/jf/cache"
+[2026-10-06 19:45:08.096 -07:00] [WRN] [21] Jellyfin.Server.Implementations.Users.UserManager: No users, creating one with username "alexsbryan"
+[2026-10-06 19:45:08.252 -07:00] [WRN] [21] Microsoft.EntityFrameworkCore.Query: The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+[2026-10-06 19:45:08.931 -07:00] [WRN] [10] MediaBrowser.Controller.Entities.BaseItem: Library folder "/tmp/u6-2r/jf/data/data/playlists" is inaccessible or empty, skipping
+[2026-10-06 19:45:09.075 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Validating media library
+[2026-10-06 19:45:09.103 -07:00] [WRN] [21] MediaBrowser.Controller.Entities.BaseItem: Library folder "/tmp/u6-2r/jf/data/data/playlists" is inaccessible or empty, skipping
+[2026-10-06 19:45:09.148 -07:00] [WRN] [21] MediaBrowser.Controller.Entities.BaseItem: Library folder "/tmp/u6-2r/jf/data/data/playlists" is inaccessible or empty, skipping
+[2026-10-06 19:45:09.209 -07:00] [INF] [5] Jellyfin.Networking.Manager.NetworkManager: Defined LAN subnets: ["127.0.0.0/8", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+[2026-10-06 19:45:09.210 -07:00] [INF] [5] Jellyfin.Networking.Manager.NetworkManager: Defined LAN exclusions: []
+[2026-10-06 19:45:09.210 -07:00] [INF] [5] Jellyfin.Networking.Manager.NetworkManager: Used LAN subnets: ["127.0.0.0/8", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+[2026-10-06 19:45:09.210 -07:00] [INF] [5] Jellyfin.Networking.Manager.NetworkManager: Filtered interface addresses: ["127.0.0.1"]
+[2026-10-06 19:45:09.210 -07:00] [INF] [5] Jellyfin.Networking.Manager.NetworkManager: Bind Addresses ["127.0.0.1"]
+[2026-10-06 19:45:09.210 -07:00] [INF] [5] Jellyfin.Networking.Manager.NetworkManager: Remote IP filter is "Allowlist"
+[2026-10-06 19:45:09.210 -07:00] [INF] [5] Jellyfin.Networking.Manager.NetworkManager: Filtered subnets: []
+[2026-10-06 19:45:09.233 -07:00] [INF] [14] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Saving system configuration
+[2026-10-06 19:45:09.234 -07:00] [INF] [14] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/tmp/u6-2r/jf/cache"
+[2026-10-06 19:45:09.235 -07:00] [INF] [14] Emby.Server.Implementations.ScheduledTasks.TaskManager: Attempting to cancel Scheduled Task "Scan Media Library"
+[2026-10-06 19:45:09.355 -07:00] [ERR] [21] MediaBrowser.Controller.LibraryTaskScheduler.LimitedConcurrencyLibraryScheduler: Error while performing a library operation
+System.OperationCanceledException: The operation was canceled.
+   at System.Threading.CancellationToken.ThrowOperationCanceledException()
+   at System.Threading.CancellationToken.ThrowIfCancellationRequested()
+   at MediaBrowser.Controller.Entities.Folder.ValidateChildrenInternal2(IProgress`1 progress, Boolean recursive, Boolean refreshChildMetadata, Boolean allowRemoveRoot, MetadataRefreshOptions refreshOptions, IDirectoryService directoryService, CancellationToken <masked>)
+   at MediaBrowser.Controller.Entities.Folder.ValidateChildrenInternal(IProgress`1 progress, Boolean recursive, Boolean refreshChildMetadata, Boolean allowRemoveRoot, MetadataRefreshOptions refreshOptions, IDirectoryService directoryService, CancellationToken <masked>)
+   at MediaBrowser.Controller.LibraryTaskScheduler.LimitedConcurrencyLibraryScheduler.ProcessItem(TaskQueueItem item)
+[2026-10-06 19:45:09.367 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running 8 post-scan task(s)
+[2026-10-06 19:45:09.368 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 1/8: "SplashscreenPostScanTask"
+[2026-10-06 19:45:09.425 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "SplashscreenPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:09.425 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 2/8: "ArtistsPostScanTask"
+[2026-10-06 19:45:09.530 -07:00] [INF] [21] Emby.Server.Implementations.Library.Validators.ArtistsValidator: Refreshed metadata for 0 new artists out of 0 total
+[2026-10-06 19:45:09.586 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "ArtistsPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:09.586 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 3/8: "CollectionPosterVerifyPostScanTask"
+[2026-10-06 19:45:09.587 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "CollectionPosterVerifyPostScanTask" cancelled after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:09.587 -07:00] [INF] [21] Emby.Server.Implementations.ScheduledTasks.TaskManager: "Scan Media Library" Cancelled after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:09.613 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: Validating media library
+[2026-10-06 19:45:09.630 -07:00] [WRN] [14] MediaBrowser.Controller.Entities.BaseItem: Library folder "/tmp/u6-2r/jf/data/data/playlists" is inaccessible or empty, skipping
+[2026-10-06 19:45:09.658 -07:00] [WRN] [14] MediaBrowser.Controller.Entities.BaseItem: Library folder "/tmp/u6-2r/jf/data/data/playlists" is inaccessible or empty, skipping
+[2026-10-06 19:45:12.137 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running 8 post-scan task(s)
+[2026-10-06 19:45:12.137 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 1/8: "SplashscreenPostScanTask"
+[2026-10-06 19:45:12.209 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "SplashscreenPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:12.210 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 2/8: "ArtistsPostScanTask"
+[2026-10-06 19:45:12.211 -07:00] [INF] [21] Emby.Server.Implementations.Library.Validators.ArtistsValidator: Refreshed metadata for 0 new artists out of 0 total
+[2026-10-06 19:45:12.211 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "ArtistsPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:12.211 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 3/8: "CollectionPosterVerifyPostScanTask"
+[2026-10-06 19:45:12.354 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "CollectionPosterVerifyPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:12.354 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 4/8: "CollectionPostScanTask"
+[2026-10-06 19:45:12.358 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "CollectionPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:12.359 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 5/8: "GenresPostScanTask"
+[2026-10-06 19:45:12.474 -07:00] [INF] [21] Emby.Server.Implementations.Library.Validators.GenresValidator: Refreshed metadata for 0 new genres out of 0 total
+[2026-10-06 19:45:12.637 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "GenresPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:12.639 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 6/8: "MusicGenresPostScanTask"
+[2026-10-06 19:45:12.657 -07:00] [INF] [21] Emby.Server.Implementations.Library.Validators.MusicGenresValidator: Refreshed metadata for 0 new music genres out of 0 total
+[2026-10-06 19:45:12.663 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "MusicGenresPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:12.668 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 7/8: "StudiosPostScanTask"
+[2026-10-06 19:45:12.679 -07:00] [INF] [21] Emby.Server.Implementations.Library.Validators.StudiosValidator: Refreshed metadata for 0 new studios out of 0 total
+[2026-10-06 19:45:12.710 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "StudiosPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:12.710 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 8/8: "CleanDatabaseScheduledTask"
+[2026-10-06 19:45:12.790 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "CleanDatabaseScheduledTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:12.792 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: All post-scan tasks completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:12.809 -07:00] [INF] [21] Emby.Server.Implementations.ScheduledTasks.TaskManager: "Scan Media Library" Completed after 0 minute(s) and 3 seconds
+[2026-10-06 19:45:13.044 -07:00] [INF] [14] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for "sam" has succeeded.
+[2026-10-06 19:45:13.044 -07:00] [INF] [14] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "sam": 0/0
+[2026-10-06 19:45:13.047 -07:00] [INF] [14] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user 33021647-dd48-413d-a080-512b32579857
+[2026-10-06 19:45:13.399 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: Validating media library
+[2026-10-06 19:45:13.417 -07:00] [WRN] [21] MediaBrowser.Controller.Entities.BaseItem: Library folder "/tmp/u6-2r/jf/data/data/playlists" is inaccessible or empty, skipping
+[2026-10-06 19:45:13.488 -07:00] [WRN] [21] MediaBrowser.Controller.Entities.BaseItem: Library folder "/tmp/u6-2r/jf/data/data/playlists" is inaccessible or empty, skipping
+[2026-10-06 19:45:13.527 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running 8 post-scan task(s)
+[2026-10-06 19:45:13.527 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 1/8: "SplashscreenPostScanTask"
+[2026-10-06 19:45:13.536 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "SplashscreenPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:13.536 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 2/8: "ArtistsPostScanTask"
+[2026-10-06 19:45:13.539 -07:00] [INF] [21] Emby.Server.Implementations.Library.Validators.ArtistsValidator: Refreshed metadata for 0 new artists out of 0 total
+[2026-10-06 19:45:13.540 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "ArtistsPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:13.540 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 3/8: "CollectionPosterVerifyPostScanTask"
+[2026-10-06 19:45:13.540 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "CollectionPosterVerifyPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:13.540 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 4/8: "CollectionPostScanTask"
+[2026-10-06 19:45:13.541 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "CollectionPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:13.541 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 5/8: "GenresPostScanTask"
+[2026-10-06 19:45:13.543 -07:00] [INF] [21] Emby.Server.Implementations.Library.Validators.GenresValidator: Refreshed metadata for 0 new genres out of 0 total
+[2026-10-06 19:45:13.545 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "GenresPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:13.545 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 6/8: "MusicGenresPostScanTask"
+[2026-10-06 19:45:13.547 -07:00] [INF] [21] Emby.Server.Implementations.Library.Validators.MusicGenresValidator: Refreshed metadata for 0 new music genres out of 0 total
+[2026-10-06 19:45:13.547 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "MusicGenresPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:13.547 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 7/8: "StudiosPostScanTask"
+[2026-10-06 19:45:13.550 -07:00] [INF] [21] Emby.Server.Implementations.Library.Validators.StudiosValidator: Refreshed metadata for 0 new studios out of 0 total
+[2026-10-06 19:45:13.551 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "StudiosPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:13.551 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 8/8: "CleanDatabaseScheduledTask"
+[2026-10-06 19:45:13.553 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "CleanDatabaseScheduledTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:13.553 -07:00] [INF] [21] Emby.Server.Implementations.Library.LibraryManager: All post-scan tasks completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:13.554 -07:00] [INF] [21] Emby.Server.Implementations.ScheduledTasks.TaskManager: "Scan Media Library" Completed after 0 minute(s) and 0 seconds
+[2026-10-06 19:45:20.685 -07:00] [ERR] [23] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:45:20.746 -07:00] [INF] [14] Jellyfin.Api.Auth.CustomAuthenticationHandler: "CustomAuthentication" was not authenticated. Failure message: "Invalid token."
+[2026-10-06 19:45:21.065 -07:00] [INF] [19] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for "sam" has succeeded.
+[2026-10-06 19:45:21.066 -07:00] [INF] [19] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "sam": 1/0
+[2026-10-06 19:45:21.066 -07:00] [INF] [19] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user 33021647-dd48-413d-a080-512b32579857
+[2026-10-06 19:45:21.086 -07:00] [INF] [27] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 19:45:24.382 -07:00] [INF] [23] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed
+[2026-10-06 19:45:40.314 -07:00] [ERR] [21] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:45:40.557 -07:00] [INF] [21] Jellyfin.Api.Auth.CustomAuthenticationHandler: "CustomAuthentication" was not authenticated. Failure message: "Invalid token."
+[2026-10-06 19:45:41.485 -07:00] [ERR] [23] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:45:42.611 -07:00] [INF] [4] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for "dee" has succeeded.
+[2026-10-06 19:45:42.611 -07:00] [INF] [4] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "dee": 0/0
+[2026-10-06 19:45:42.611 -07:00] [INF] [4] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user 3e3baa49-36eb-4917-aca7-1e27e60f133d
+[2026-10-06 19:45:42.657 -07:00] [INF] [19] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 19:45:45.524 -07:00] [INF] [23] Jellyfin.Api.Helpers.MediaInfoHelper: User policy for "dee". EnablePlaybackRemuxing: True EnableVideoPlaybackTranscoding: True EnableAudioPlaybackTranscoding: True
+[2026-10-06 19:45:46.430 -07:00] [INF] [4] Emby.Server.Implementations.Session.SessionManager: User "dee" started playback of '"Test Pattern One"' ("Jellyfin Web" "12.0.0")
+[2026-10-06 19:45:57.407 -07:00] [INF] [26] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed
+[2026-10-06 19:46:00.370 -07:00] [ERR] [14] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:46:00.458 -07:00] [INF] [14] Jellyfin.Api.Auth.CustomAuthenticationHandler: "CustomAuthentication" was not authenticated. Failure message: "Invalid token."
+[2026-10-06 19:46:01.477 -07:00] [ERR] [27] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:46:03.038 -07:00] [ERR] [27] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:46:05.330 -07:00] [ERR] [5] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:46:08.879 -07:00] [ERR] [27] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:46:13.975 -07:00] [ERR] [23] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:46:16.052 -07:00] [ERR] [23] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:46:16.326 -07:00] [INF] [20] Jellyfin.Api.Auth.CustomAuthenticationHandler: "CustomAuthentication" was not authenticated. Failure message: "Invalid token."
+[2026-10-06 19:46:17.118 -07:00] [ERR] [4] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:46:18.320 -07:00] [INF] [14] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for "dee" has succeeded.
+[2026-10-06 19:46:18.320 -07:00] [INF] [14] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "dee": 0/0
+[2026-10-06 19:46:18.320 -07:00] [INF] [14] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user 3e3baa49-36eb-4917-aca7-1e27e60f133d
+[2026-10-06 19:46:18.397 -07:00] [INF] [19] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 19:46:19.300 -07:00] [INF] [29] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "dee": 1/0
+[2026-10-06 19:46:19.300 -07:00] [INF] [29] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user 3e3baa49-36eb-4917-aca7-1e27e60f133d
+[2026-10-06 19:46:21.681 -07:00] [ERR] [26] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:46:22.656 -07:00] [INF] [5] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 19:46:23.359 -07:00] [INF] [5] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed
+[2026-10-06 19:46:26.153 -07:00] [INF] [26] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 19:46:40.724 -07:00] [ERR] [14] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:46:40.952 -07:00] [INF] [4] Jellyfin.Api.Auth.CustomAuthenticationHandler: "CustomAuthentication" was not authenticated. Failure message: "Invalid token."
+[2026-10-06 19:46:41.800 -07:00] [ERR] [4] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:46:43.069 -07:00] [INF] [20] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for "ana" has succeeded.
+[2026-10-06 19:46:43.069 -07:00] [INF] [20] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "ana": 0/0
+[2026-10-06 19:46:43.070 -07:00] [INF] [20] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user 4fe157b2-52e3-46a2-9ba9-5fe0fbb9e2b7
+[2026-10-06 19:46:43.170 -07:00] [INF] [4] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 19:46:45.810 -07:00] [INF] [27] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed
+[2026-10-06 19:46:52.715 -07:00] [ERR] [27] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:46:52.902 -07:00] [INF] [14] Jellyfin.Api.Auth.CustomAuthenticationHandler: "CustomAuthentication" was not authenticated. Failure message: "Invalid token."
+[2026-10-06 19:46:53.482 -07:00] [INF] [21] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for "sam" has succeeded.
+[2026-10-06 19:46:53.483 -07:00] [INF] [21] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "sam": 1/0
+[2026-10-06 19:46:53.483 -07:00] [INF] [21] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user 33021647-dd48-413d-a080-512b32579857
+[2026-10-06 19:46:53.674 -07:00] [INF] [14] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 19:46:54.503 -07:00] [WRN] [28] Emby.Server.Implementations.HttpServer.WebSocketConnection: WS "127.0.0.1" error receiving data: "The remote party closed the WebSocket connection without completing the close handshake."
+[2026-10-06 19:46:54.504 -07:00] [INF] [28] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed
+[2026-10-06 19:47:00.201 -07:00] [INF] [5] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed
+[2026-10-06 19:47:03.224 -07:00] [INF] [14] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 19:47:17.417 -07:00] [ERR] [5] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:47:17.632 -07:00] [INF] [5] Jellyfin.Api.Auth.CustomAuthenticationHandler: "CustomAuthentication" was not authenticated. Failure message: "Invalid token."
+[2026-10-06 19:47:18.499 -07:00] [ERR] [20] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:47:19.782 -07:00] [INF] [4] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for "ana" has succeeded.
+[2026-10-06 19:47:19.783 -07:00] [INF] [4] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "ana": 1/0
+[2026-10-06 19:47:19.783 -07:00] [INF] [4] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user 4fe157b2-52e3-46a2-9ba9-5fe0fbb9e2b7
+[2026-10-06 19:47:19.908 -07:00] [WRN] [20] Emby.Server.Implementations.HttpServer.WebSocketConnection: WS "127.0.0.1" error receiving data: "The remote party closed the WebSocket connection without completing the close handshake."
+[2026-10-06 19:47:19.909 -07:00] [INF] [20] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed
+[2026-10-06 19:47:19.945 -07:00] [INF] [4] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 19:47:26.614 -07:00] [INF] [31] Jellyfin.Api.Helpers.MediaInfoHelper: User policy for "dee". EnablePlaybackRemuxing: True EnableVideoPlaybackTranscoding: True EnableAudioPlaybackTranscoding: True
+[2026-10-06 19:47:27.103 -07:00] [INF] [32] Emby.Server.Implementations.Session.SessionManager: User "dee" started playback of '"Test Pattern One"' ("Jellyfin Web" "12.0.0")
+[2026-10-06 19:47:32.647 -07:00] [INF] [5] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed
+[2026-10-06 19:47:35.273 -07:00] [INF] [21] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 19:47:48.022 -07:00] [ERR] [26] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:47:48.338 -07:00] [INF] [20] Jellyfin.Api.Auth.CustomAuthenticationHandler: "CustomAuthentication" was not authenticated. Failure message: "Invalid token."
+[2026-10-06 19:47:49.092 -07:00] [ERR] [20] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:47:50.421 -07:00] [INF] [32] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for "dee" has succeeded.
+[2026-10-06 19:47:50.421 -07:00] [INF] [32] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "dee": 1/0
+[2026-10-06 19:47:50.421 -07:00] [INF] [32] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user 3e3baa49-36eb-4917-aca7-1e27e60f133d
+[2026-10-06 19:47:50.520 -07:00] [INF] [14] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 19:47:58.348 -07:00] [INF] [4] Jellyfin.Api.Helpers.MediaInfoHelper: User policy for "dee". EnablePlaybackRemuxing: True EnableVideoPlaybackTranscoding: True EnableAudioPlaybackTranscoding: True
+[2026-10-06 19:47:59.313 -07:00] [INF] [4] Emby.Server.Implementations.Session.SessionManager: User "dee" started playback of '"Test Pattern One"' ("Jellyfin Web" "12.0.0")
+[2026-10-06 19:48:05.832 -07:00] [WRN] [32] Emby.Server.Implementations.HttpServer.WebSocketConnection: WS "127.0.0.1" error receiving data: "The remote party closed the WebSocket connection without completing the close handshake."
+[2026-10-06 19:48:05.832 -07:00] [INF] [32] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed
+[2026-10-06 19:48:06.514 -07:00] [INF] [20] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed
+[2026-10-06 19:48:13.591 -07:00] [INF] [26] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 19:48:41.717 -07:00] [WRN] [4] Emby.Server.Implementations.HttpServer.WebSocketConnection: WS "127.0.0.1" error receiving data: "The remote party closed the WebSocket connection without completing the close handshake."
+[2026-10-06 19:48:41.764 -07:00] [INF] [4] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed
+[2026-10-06 19:48:45.671 -07:00] [INF] [4] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed
+[2026-10-06 19:48:49.327 -07:00] [INF] [22] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 19:49:18.561 -07:00] [INF] [32] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 19:49:35.652 -07:00] [WRN] [16] Emby.Server.Implementations.HttpServer.WebSocketConnection: WS "127.0.0.1" error receiving data: "The remote party closed the WebSocket connection without completing the close handshake."
+[2026-10-06 19:49:35.653 -07:00] [INF] [16] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed
+[2026-10-06 19:49:47.507 -07:00] [INF] [22] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed
+[2026-10-06 19:49:49.537 -07:00] [ERR] [33] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:49:49.631 -07:00] [INF] [22] Jellyfin.Api.Auth.CustomAuthenticationHandler: "CustomAuthentication" was not authenticated. Failure message: "Invalid token."
+[2026-10-06 19:49:50.693 -07:00] [ERR] [33] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:49:51.948 -07:00] [INF] [33] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for "dee" has succeeded.
+[2026-10-06 19:49:51.948 -07:00] [INF] [33] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "dee": 0/0
+[2026-10-06 19:49:51.948 -07:00] [INF] [33] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user 3e3baa49-36eb-4917-aca7-1e27e60f133d
+[2026-10-06 19:49:51.971 -07:00] [INF] [16] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 19:49:54.339 -07:00] [ERR] [33] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:49:54.433 -07:00] [INF] [36] Jellyfin.Api.Auth.CustomAuthenticationHandler: "CustomAuthentication" was not authenticated. Failure message: "Invalid token."
+[2026-10-06 19:49:55.414 -07:00] [ERR] [35] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 19:49:56.318 -07:00] [INF] [34] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for "ana" has succeeded.
+[2026-10-06 19:49:56.318 -07:00] [INF] [34] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "ana": 0/0
+[2026-10-06 19:49:56.318 -07:00] [INF] [34] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user 4fe157b2-52e3-46a2-9ba9-5fe0fbb9e2b7
+[2026-10-06 19:49:56.335 -07:00] [INF] [35] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 19:50:02.887 -07:00] [INF] [16] Jellyfin.Api.Helpers.MediaInfoHelper: User policy for "dee". EnablePlaybackRemuxing: True EnableVideoPlaybackTranscoding: True EnableAudioPlaybackTranscoding: True
+[2026-10-06 19:50:03.452 -07:00] [INF] [24] Emby.Server.Implementations.Session.SessionManager: User "dee" started playback of '"Test Pattern One"' ("Jellyfin Web" "12.0.0")
+[2026-10-06 19:50:09.063 -07:00] [INF] [36] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed
+[2026-10-06 19:50:09.182 -07:00] [INF] [33] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed

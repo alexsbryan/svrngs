@@ -1,0 +1,180 @@
+{
+ "a": {
+  "at_room": 201,
+  "to_sam_another_way": [],
+  "elsewhere_not_sam": [
+   "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"
+  ],
+  "typed_once": {
+   "verdict": "passed",
+   "why": "signed in 881 ms, playing 3398 ms, seeks [392, 392, 482] ms, bar 5,000 each"
+  },
+  "every_request_at_room": {
+   "verdict": "failed",
+   "why": "0 to Sam's Jellyfin another way, 1 elsewhere"
+  },
+  "play_method": "DirectPlay"
+ },
+ "b": {
+  "at_room": 158,
+  "to_sam_another_way": [],
+  "elsewhere_not_sam": [
+   "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"
+  ],
+  "quick_connect": {
+   "verdict": "passed",
+   "why": "offered True (enabled as it came: True), approved on the phone in 348 ms, the screen signed in 3925 ms after, as dee, nothing typed on it"
+  }
+ },
+ "c": {
+  "at_room": 169,
+  "to_sam_another_way": [],
+  "elsewhere_not_sam": [
+   "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"
+  ],
+  "phone_as": "ana",
+  "direct": false,
+  "listed": {
+   "verdict": "passed",
+   "why": "Play on lists ['Google Cast Unsupported', 'Chrome - Jellyfin Web dee']"
+  },
+  "started": {
+   "verdict": "passed",
+   "why": "1253 ms from the tap, bar 10000"
+  },
+  "paused": {
+   "verdict": "failed",
+   "why": "the button then reads '(icon)', its menu ['Google Cast Unsupported', 'Chrome - Jellyfin Web dee']"
+  },
+  "sought": {
+   "verdict": "failed",
+   "why": "the button then reads '(icon)', its menu ['Google Cast Unsupported', 'Chrome - Jellyfin Web dee']"
+  },
+  "played_on": {
+   "verdict": "failed",
+   "why": "the button then reads '(icon)', its menu ['Google Cast Unsupported', 'Chrome - Jellyfin Web dee']"
+  }
+ },
+ "c-as-it-comes": {
+  "at_room": 128,
+  "to_sam_another_way": [],
+  "elsewhere_not_sam": [
+   "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"
+  ],
+  "phone_as": "ana",
+  "direct": false,
+  "listed": {
+   "verdict": "failed",
+   "why": "Play on lists ['Google Cast Unsupported']"
+  }
+ },
+ "c-direct": {
+  "at_room": 190,
+  "to_sam_another_way": [],
+  "elsewhere_not_sam": [
+   "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"
+  ],
+  "phone_as": "ana",
+  "direct": true,
+  "listed": {
+   "verdict": "passed",
+   "why": "Play on lists ['Chrome - Jellyfin Web dee']"
+  },
+  "started": {
+   "verdict": "passed",
+   "why": "1760 ms from the tap, bar 10000"
+  },
+  "paused": {
+   "verdict": "failed",
+   "why": "the button then reads '(icon)', its menu ['Chrome - Jellyfin Web dee']"
+  },
+  "sought": {
+   "verdict": "failed",
+   "why": "the button then reads '(icon)', its menu ['Chrome - Jellyfin Web dee']"
+  },
+  "played_on": {
+   "verdict": "failed",
+   "why": "the button then reads '(icon)', its menu ['Chrome - Jellyfin Web dee']"
+  }
+ },
+ "c-same": {
+  "at_room": 178,
+  "to_sam_another_way": [],
+  "elsewhere_not_sam": [
+   "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"
+  ],
+  "phone_as": "dee",
+  "direct": false,
+  "listed": {
+   "verdict": "passed",
+   "why": "Play on lists ['Google Cast Unsupported', 'Chrome - Jellyfin Web dee']"
+  },
+  "started": {
+   "verdict": "passed",
+   "why": "3380 ms from the tap, bar 10000"
+  },
+  "paused": {
+   "verdict": "passed",
+   "why": "161 ms, bar 10000"
+  },
+  "sought": {
+   "verdict": "passed",
+   "why": "119 ms, bar 10000"
+  },
+  "played_on": {
+   "verdict": "passed",
+   "why": "104 ms, bar 10000"
+  }
+ },
+ "control": {
+  "at_room": null,
+  "to_sam_another_way": [],
+  "elsewhere_not_sam": [],
+  "set": {
+   "verdict": "passed",
+   "why": "'Allow remote control of other users': False then True"
+  }
+ },
+ "d": {
+  "at_room": 141,
+  "to_sam_another_way": [],
+  "elsewhere_not_sam": [
+   "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"
+  ],
+  "kept_to_room": {
+   "verdict": "passed",
+   "why": "kept http://192.168.1.4:48719 as typed and http://127.0.0.1:8096 as Jellyfin's own; asks the room at http://192.168.1.4:48719; 0 to Sam's Jellyfin another way"
+  }
+ },
+ "d-bounce": {
+  "at_room": 129,
+  "to_sam_another_way": [],
+  "elsewhere_not_sam": [
+   "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"
+  ],
+  "kept_to_room": {
+   "verdict": "passed",
+   "why": "kept http://192.168.1.4:48719 as typed and http://127.0.0.1:8096 as Jellyfin's own; asks the room at http://192.168.1.4:48719; 0 to Sam's Jellyfin another way"
+  },
+  "after_the_door_stopped": {
+   "verdict": "passed",
+   "why": "the door back 16371 ms after it stopped; 1 socket opened again, signed in as dee"
+  }
+ },
+ "logs": {
+  "room_door": {
+   "taken": 1121,
+   "refused": 0,
+   "callers": [
+    "192.168.1.4"
+   ]
+  },
+  "sams_door_jellyfin_by_person": {
+   "\"Dee\"": 1272,
+   "\"Ana\"": 498
+  },
+  "sessions_remote_end": [
+   "sam:Sam computer:127.0.0.1"
+  ]
+ }
+}
