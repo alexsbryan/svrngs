@@ -2683,7 +2683,7 @@ Reading the range for what neither pass would show:
 - **#73, fixed.** a7afc9e: u6-1 copied `unshare`'s refusal of a lend's
   name into `room` (crates/svrngs/src/cli.rs:308 and :315 at 4bfe1b8), and
   `--name` (:210) spelled it a third time with its flag first. Now
-  `lend_name` (cli.rs:370 at a7afc9e). `svrngs` built before and after on
+  `lend_name` (cli.rs:373 at a7afc9e). `svrngs` built before and after on
   seven arguments, among them `unshare a.b`, `room ok a.b` and `share 8080
   --name a.b`: the outputs compared equal.
 - **#74.** scripts/lean_check.py:33-35 leaves out `target/` only at the
