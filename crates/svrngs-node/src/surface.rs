@@ -15,7 +15,8 @@
 //!   and key, its name, kind, limit, how many use it and its declared
 //!   upload (`upload_bps`, `null` when its lender states none), and where
 //!   this computer's browser opens it, its `origin` (u5-2,
-//!   [`crate::origin`]); and the people whose computer did not answer,
+//!   [`crate::origin`]), and its `room` address while the room door serves
+//!   it (u6-1, [`crate::room`]); and the people whose computer did not answer,
 //!   named, their lends absent rather than stale. The body [`crate::node`]'s `GET /people/lends`
 //!   answers a member, for one group.
 
@@ -168,8 +169,12 @@ async fn lends(State(at): State<Surface>, Query(q): Query<RailQuery>) -> Respons
         .into_iter()
         .filter_map(|l| {
             let origin = host.origin(&l.key, l.offered.name.as_str())?;
+            let room = host.room_address(&l.key, l.offered.name.as_str());
             let mut l = serde_json::to_value(l).ok()?;
             l["origin"] = origin.into();
+            if let Some(room) = room {
+                l["room"] = room.into();
+            }
             Some(l)
         })
         .collect();

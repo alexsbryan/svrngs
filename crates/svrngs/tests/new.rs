@@ -534,3 +534,50 @@ async fn a_page_origin_says_where_its_apps_open_or_is_refused() {
     }
     node.endpoint().close().await;
 }
+
+/// **`room` names lends, and says who can open them in a person's words**
+/// (u6-1): one name or more, each a lend's; with none, or one that is not
+/// a name, an error. What it prints and its refusals use no word DESIGN §1
+/// keeps from people.
+#[test]
+fn room_names_lends_and_says_who_can_open_them() {
+    let lend = |n: &str| svrngs_node::lend::LendName::parse(n).unwrap();
+    assert_eq!(
+        cli::parse(argv("room jellyfin music")).unwrap(),
+        Verb::Room(vec![lend("jellyfin"), lend("music")])
+    );
+    for wrong in [
+        "room",
+        "room jelly/fin",
+        "room jellyfin --as Sam",
+        "share 8096 extra",
+    ] {
+        assert!(cli::parse(argv(wrong)).is_err(), "{wrong}");
+    }
+    let offered = serde_json::from_value(serde_json::json!({
+        "name": "jellyfin", "kind": "jellyfin", "limit": 3, "using": 0, "upload_bps": null
+    }))
+    .unwrap();
+    let lent = svrngs_node::node::Lent {
+        person: svrngs_node::Person::parse("sam").unwrap(),
+        key: "ab".repeat(32),
+        offered,
+        address: "http://x.localhost:1/".into(),
+    };
+    let said = cli::Said::Room(vec![(lent, "192.168.1.4:45053".parse().unwrap())]).to_string();
+    assert!(
+        said.contains("sam's jellyfin: http://192.168.1.4:45053/"),
+        "{said}"
+    );
+    println!("{said}");
+    let refusals = [
+        Refusal::NoRoomAddress,
+        Refusal::Room(svrngs_node::room::RoomError::NotLent(lend("jellyfin"))),
+    ];
+    for line in refusals.iter().map(ToString::to_string).chain([said]) {
+        let lower = line.to_lowercase();
+        for word in ["ring", "member", "key", "sync", "journal", "node", "relay"] {
+            assert!(!lower.contains(word), "{line:?} says {word}");
+        }
+    }
+}

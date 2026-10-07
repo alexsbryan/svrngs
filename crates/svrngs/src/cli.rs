@@ -15,6 +15,7 @@
 //! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]...
 //!                                          lend a service on this computer
 //! svrngs unshare <name>                    stop lending it
+//! svrngs room <name>...                    serve lends to this computer's network, run
 //! ```
 //!
 //! `share` and `unshare` write a lend's declaration and its secret into the
@@ -26,6 +27,12 @@
 //! is lent with none, and its lender told how to make each person one
 //! (u5-4, [`share::accounts_of`]). The bare command prints what the people
 //! of this computer's groups lend, asked of their computers as it starts.
+//!
+//! `room` serves the lends it names to this computer's own network while
+//! it runs, as this computer's person (u6-1, `svrngs_node::room`), so a
+//! device in the room reaches each with the lend's own app: it says who
+//! can open them, and
+//! refuses when this computer has no private address to serve them on.
 //!
 //! `new` and `link` always print the client's link, `svrngs://join/<token>`
 //! (u2-8): nothing depends on a hosted page. A group may keep a page
@@ -62,8 +69,9 @@ use std::num::{NonZeroU16, NonZeroU32};
 
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath, Upload};
-use svrngs_node::node::{Lends, Node, NodeError};
+use svrngs_node::node::{Lends, Lent, Node, NodeError};
 use svrngs_node::redeem::{ask, redeem, AskRequest, RedeemError, RedeemRequest, Redeemed};
+use svrngs_node::room;
 use svrngs_node::{actor_of, Device, Person, SigningKey};
 use svrngs_node::{MintInvite, Refused as CommitRefused};
 
@@ -117,6 +125,10 @@ svrngs — keep what your group shares on your own computers.
   svrngs unshare <name>
       Stop lending <name>.
 
+  svrngs room <name>...
+      Let anyone on this computer's network (its WiFi) open what your groups
+      lend as <name>, as you, while this runs.
+
 Data:    $SVRNGS_DIR, else ~/.svrngs.
 Logging: RUST_LOG, default `error`.";
 
@@ -157,6 +169,8 @@ pub enum Verb {
     /// No secret: it is read from a prompt (the module docs).
     Share(Share),
     Unshare(LendName),
+    /// The lends named, served to this computer's network.
+    Room(Vec<LendName>),
     Help,
 }
 
@@ -173,6 +187,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let (mut name, mut kind, mut limit, mut refused) = (None, None, None, Vec::new());
     let mut upload = None;
     let mut reads = Vec::new();
+    let mut more = Vec::new();
     while let Some(arg) = it.next() {
         let mut value = |flag: &str| it.next().ok_or_else(|| format!("{flag} wants a value"));
         match arg.as_str() {
@@ -229,6 +244,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "-h" | "--help" => return Ok(Verb::Help),
             other if other.starts_with('-') => return Err(format!("unknown argument `{other}`")),
             other if positional.is_none() => positional = Some(other.to_string()),
+            other if verb == "room" => more.push(other.to_string()),
             other => return Err(format!("unexpected argument `{other}`")),
         }
     }
@@ -292,6 +308,14 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 .map_err(|_| format!("`{raw}` is not a name: letters, digits, - and _ only"))?;
             Ok(Verb::Unshare(name))
         }
+        "room" => {
+            let first = positional.ok_or("room wants what to serve: `svrngs room <name>...`")?;
+            let names = std::iter::once(first).chain(more).map(|raw| {
+                LendName::parse(&raw)
+                    .map_err(|_| format!("`{raw}` is not a name: letters, digits, - and _ only"))
+            });
+            Ok(Verb::Room(names.collect::<Result<_, _>>()?))
+        }
         "help" | "-h" | "--help" => Ok(Verb::Help),
         other => Err(format!("unknown command `{other}`")),
     }
@@ -341,6 +365,10 @@ pub enum Refusal {
     NotLent { name: LendName, lent: Vec<LendName> },
     #[error("{0} gives each app no address of its own, so on a phone every app would open where your group's page keeps who each person is. Use a host that serves your page at every name under it, as group.svrnme.sh does")]
     NoAppAddress(String),
+    #[error("this computer has no address on a home network, so nothing near it can reach it: join its WiFi or plug it in, then run this again")]
+    NoRoomAddress,
+    #[error(transparent)]
+    Room(#[from] svrngs_node::room::RoomError),
     #[error("cannot tell from here whether {0} gives each app an address of its own: the page does not open there (RUST_LOG=debug says why); try again")]
     CannotCheck(String),
 }
@@ -367,6 +395,7 @@ impl Refusal {
             | Refusal::Share(_)
             | Refusal::NotLent { .. }
             | Refusal::NoAppAddress(_)
+            | Refusal::Room(_)
             | Refusal::Busy(_) => 1,
             Refusal::NoDataDir
             | Refusal::DataDir(..)
@@ -376,6 +405,7 @@ impl Refusal {
             | Refusal::Prompt(_)
             | Refusal::KeepLend(_)
             | Refusal::CannotCheck(_)
+            | Refusal::NoRoomAddress
             | Refusal::Keep(_) => 3,
         }
     }
@@ -630,6 +660,8 @@ pub enum Said {
     },
     /// `unshare`: no longer lent.
     Unshared(LendName),
+    /// `room`: each lend served to this computer's network, and where.
+    Room(Vec<(Lent, SocketAddr)>),
 }
 
 impl std::fmt::Display for Said {
@@ -747,6 +779,13 @@ impl std::fmt::Display for Said {
                 writeln!(f, "`svrngs unshare {}` stops lending it.", lend.name)
             }
             Said::Unshared(name) => writeln!(f, "Stopped lending {name}."),
+            Said::Room(served) => {
+                writeln!(f, "Anyone on this computer's network (its WiFi) can open these, as you, while this runs; nobody off it can:")?;
+                for (lent, at) in served {
+                    writeln!(f, "{}'s {}: http://{at}/", lent.person, lent.offered.name)?;
+                }
+                Ok(())
+            }
         }
     }
 }
@@ -840,6 +879,7 @@ async fn serve(
     key: &SigningKey,
     relay: &RelayConfig,
 ) -> Result<(), Refusal> {
+    let _room;
     let said = match command {
         Verb::New {
             name,
@@ -873,6 +913,12 @@ async fn serve(
             Said::Linked { seed, link }
         }
         Verb::Run => running(root, node).await,
+        Verb::Room(names) => {
+            let listed: Vec<_> = node.endpoint().addr().ip_addrs().map(|a| a.ip()).collect();
+            let at = room::pick(&listed, room::route()).ok_or(Refusal::NoRoomAddress)?;
+            _room = room::open(node, at, &names).await?;
+            Said::Room(_room.served.clone())
+        }
         Verb::Help | Verb::Share(_) | Verb::Unshare(_) => {
             unreachable!("answered in `run`")
         }

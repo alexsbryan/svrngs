@@ -342,6 +342,23 @@ forked as fixtures. `tests/canaries.rs` stands up Sam's computer and Alex's
 in one group, in one process with no relay, and runs each canary of DESIGN
 §8 under Node against their loopback record APIs; `scripts/check.sh` runs it
 as its own step, and a canary that cannot start fails.
+The room door (`room.rs`, u6-1, new code in the shape of upstream's LAN
+door and `advertised_base`, DESIGN §8, U6's inventory) serves the lends a
+person names to this computer's network while the command runs:
+`room::open` asks `Node::lends`, refuses a name nobody lends, and binds
+each named lend alone at `<private address>:<room::port_of(label)>`, a
+port the label decides so it is the same every run, its router the
+origin's body (`origin::reach`, as this computer's person) behind
+`from_this_network`, whose predicate is the door's `limit::guess`. The
+address is `room::pick`'s, over the endpoint's listed addresses and the
+outward route's (`room::route`, a UDP socket connected, nothing sent):
+the route's when private and listed, else the one private one, else
+none. Each served lend's address sits in `Host`'s `room`, a `watch` the
+room alone writes, which `/v1/lends` answers as `room`; dropping the
+`Room` aborts its listeners and clears it. `src/room_tests.rs` plants
+the picker's interface lists and a caller off the network;
+`tests/room.rs` runs Sam's canary through Alex's room door from this
+host's private address.
 
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`
@@ -376,7 +393,7 @@ commonwealth-rails' `cli.rs` and `main.rs`: verbs parsed by hand (`svrngs`,
 `new <name> [--as] [--origin]`, `join <link> [--as]`, `link <group>
 [--origin]`, `share <port> [--name] [--kind] [--limit] [--refuse]...
 [--upload]`,
-`unshare <name>`); one svrngs per
+`unshare <name>`, `room <name>...`); one svrngs per
 data dir (`$SVRNGS_DIR`, else `~/.svrngs`), held by a lock on
 `<dir>/lock`; `new` and `link` append an `Invite` through the group's door
 that lapses in a day and print the link; `join` asks a link's issuer what
@@ -395,7 +412,10 @@ and decides the lend in `lend_of`, which touches
 nothing; `cli` reads the password from a prompt, never argv, declares the
 lend through `svrngs_node::lend::declare`, and runs the node unless the
 data dir's lock is held, when it says svrngs is running already and
-leaves. `unshare <name>` withdraws one. What a verb prints is a
+leaves. `unshare <name>` withdraws one. `room <name>...` picks this
+computer's private address (`svrngs_node::room::pick`), refusing with
+none (exit 3), opens the room door for the lends named, says who can
+open them and where, and holds it until Ctrl-C. What a verb prints is a
 closed `Said`, and refusals a closed `Refusal`, both in a person's words,
 exit 1 for a refusal and 3 for a precondition absent. `tests/new.rs` runs
 one node in process; `tests/join_by_link.rs`, U2's bar, runs Sam and six

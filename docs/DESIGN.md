@@ -436,9 +436,9 @@ piece comes over:
 |---|---|---|
 | `svrngs-core` | the record: acts, admission into one order, membership, the sync digest; and what a browser's page spells as the command and the node do (u4-2): a link's token, the ask and the redemption a joiner signs with it, the issuer's answer and the seed it is believed by (u4-5), the protocols' names, and a relay's URL without the DNS root's trailing dot, which WebKit refuses (u4-9); a lend's label, one DNS label naming its lender's key and its name, and the pass a person signs for another key toward named lends until a time, with its check (u5-2). `no_std`, so the compiler refuses filesystem, clock, network and threads; time and keys are arguments | none |
 | `svrngs-runtime` | the only owner of each group's journal on disk, its projections and its writes: the journal and its write index, the open-journal map, the register's standing | the journals |
-| `svrngs-node` | the adapters: sync and its route over iroh, redemption, the loopback record API with its live lane (landed, u3-2 and u3-3), the member door (landed, u3-4), the list of what members lend, asked of each (landed, u3-5), and answered to a member by the computer it dials, each with its lender's key (landed, u4-5), and the door's limit and shares, a pure decision the door's task owns (landed, u3-6); a WebSocket's upgrade carried, and the pass holders' protocol, which any key may speak, where a request presenting a person's pass for the lend it names, by name or label, is that person's (landed, u5-2); every relay URL it makes or reads dotless where it enters — n0's relays, a relay it is told, a lookup's answers — in `relay.rs`, which the page compiles too (landed, u4-9) | each lend's declaration and secret; who is using each lend now |
+| `svrngs-node` | the adapters: sync and its route over iroh, redemption, the loopback record API with its live lane (landed, u3-2 and u3-3), the member door (landed, u3-4), the list of what members lend, asked of each (landed, u3-5), and answered to a member by the computer it dials, each with its lender's key (landed, u4-5), and the door's limit and shares, a pure decision the door's task owns (landed, u3-6); a WebSocket's upgrade carried, and the pass holders' protocol, which any key may speak, where a request presenting a person's pass for the lend it names, by name or label, is that person's (landed, u5-2); every relay URL it makes or reads dotless where it enters — n0's relays, a relay it is told, a lookup's answers — in `relay.rs`, which the page compiles too (landed, u4-9); the room door, the lends a person names served to this computer's network at its private address while the command runs, one body with the origins (landed, u6-1) | each lend's declaration and secret; who is using each lend now |
 | `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell and a workspace of its own: a browser's endpoint, bound with the person's key, dialling a group's computer by key over a relay on the members' protocol (landed, u4-3); HTTP over the dial (landed, u4-4); joining — the ask and the redemption by svrngs-core's bodies, the key sealed in the page's store, and the list of what the group's people lend (landed, u4-5); the runtime, a service worker serving every request at a lend's address from the lender's door (landed, u4-6), a range that runs on — open-ended, or a `<video>`'s longer than a part — asked of the door in parts of 2 MiB (landed, u4-9), an open-ended one's first part at a new place 256 KiB and doubling as the reading runs on (u5-11), handed what it dials with in memory, and a page for a worker that holds nothing (landed, u4-10); since u5-2 at each lend's own origin, not the page's (`lend.js`, its start page `open.js`): the page signs a pass to a fresh key for the lend it opens and the lends it reads, the worker dials on the pass holders' protocol, keeps each lend's cookies, reads a redirect to a path under the lend, and with a shim in each lent page (`shim.js`) carries `WebSocket` and an app's own worker; an adapter | none: the page's store holds the key, sealed; a lend's origin's store holds its pass and its cookies |
-| `svrngs` | the command and the process: `new`, `join`, `link`, `share` and `unshare` (landed); the bare command prints where the record API listens, and what the people of its groups lend | a device's keys; each group's seed |
+| `svrngs` | the command and the process: `new`, `join`, `link`, `share`, `unshare` and `room` (landed); the bare command prints where the record API listens, and what the people of its groups lend | a device's keys; each group's seed |
 
 Held to `docs/principles/RUST_ARCH.md`: types encode the domain, ownership
 encodes the architecture, I/O lives at the edge. Parse, don't validate; closed
@@ -649,13 +649,17 @@ judged (exit 3). On a computer each app opens at
 (`demo/runs/u5/2026-10-05-localhost/`).
 
 **A room's devices reach a lend through a member's computer there** (u6-1
-adds it; §3, "The room", calls 2 and 3). A TV takes no link and runs no
+landed it; §3, "The room", calls 2 and 3). A TV takes no link and runs no
 page: the app's own client for it is typed an address on its network
-once. So a member's computer serves the lends its person names at
-`http://<private address>:<port>/` while the command runs, a port of its
-own per lend, as that person, and `/v1/lends` answers a served lend's room
-address beside its `origin`. Its hop to the lender is computer to computer
-over iroh, never through a page.
+once. So `svrngs room <name>...` on a member's computer serves the lends
+its person names at `http://<private address>:<port>/` while it runs, a
+port of its own per lend that its label decides, the same every run, as
+that person, and `/v1/lends` answers a served lend's room address beside
+its `origin`, as `room` (`crates/svrngs-node/src/room.rs`). The address is
+the private one the outward route leaves from, else the one private
+address listed, else none, said so; a caller whose address the door
+would not guess home is refused. Its hop to the lender is computer to
+computer over iroh, never through a page.
 
 ## 8. Order of work
 

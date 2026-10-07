@@ -58,6 +58,7 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Extension, Json};
 use serde::{Deserialize, Serialize};
+use svrngs_core::pass::Label;
 
 use crate::door::LENDS_ROUTE;
 use crate::iroh::{
@@ -116,6 +117,8 @@ pub enum NodeError {
 /// A running node. Dropping it stops its round and its accept loop.
 pub struct Node {
     host: Arc<Host>,
+    /// What the room door reaches its lends through ([`crate::room::open`]).
+    pub(crate) asking: Asking,
     api: crate::api::Serving,
     /// What [`Self::api`] serves, kept so a test can ask it as a caller
     /// no socket can be (one off this computer, [`Node::api_routes`]).
@@ -135,6 +138,9 @@ pub struct Host {
     actor: String,
     /// The record API's port, where each lend has its origin (u5-2).
     api_port: u16,
+    /// Each lend the room door serves, and where (u6-1, [`crate::room`]):
+    /// written by the room alone, read by `/v1/lends`.
+    pub(crate) room: tokio::sync::watch::Sender<BTreeMap<Label, SocketAddr>>,
 }
 
 impl Node {
@@ -201,6 +207,7 @@ impl Node {
             endpoint: endpoint.clone(),
             actor: actor.clone(),
             api_port: api.addr().port(),
+            room: tokio::sync::watch::Sender::new(BTreeMap::new()),
         });
         let door = crate::door::Door {
             rail: rail.clone(),
@@ -240,6 +247,7 @@ impl Node {
         // what this computer lends (u3-4), and what the people of a
         // member's groups lend (u4-5).
         let holders = crate::door::holders_router(asking.door.clone());
+        let room = asking.clone();
         let members = ring_routes::router(RingInbound {
             rail: rail.clone(),
             live,
@@ -259,6 +267,7 @@ impl Node {
         let round = spawn_ring_sync_loop(host.clone(), every, nudge);
         Ok(Self {
             host,
+            asking: room,
             api,
             routes,
             _acceptor: acceptor,
@@ -365,9 +374,14 @@ impl Host {
     /// whose key is `lender`, actor hex: the lend's origin, or `None` for a
     /// key that is not one.
     pub(crate) fn origin(&self, lender: &str, name: &str) -> Option<String> {
-        let key: [u8; 32] = hex::decode(lender).ok()?.try_into().ok()?;
-        let label = svrngs_core::pass::Label::of(&key, name);
-        Some(crate::origin::origin(&label, self.api_port))
+        Some(crate::origin::origin(&label(lender, name)?, self.api_port))
+    }
+
+    /// Where the room reaches the lend `name` of `lender`, while the room
+    /// door serves it (u6-1).
+    pub(crate) fn room_address(&self, lender: &str, name: &str) -> Option<String> {
+        let at = *self.room.borrow().get(&label(lender, name)?)?;
+        Some(format!("http://{at}/"))
     }
 
     /// This round's members, or `None` when the node has none to round
@@ -479,6 +493,13 @@ impl Host {
             "node: lends — asked every computer of the groups");
         lends
     }
+}
+
+/// The label of the lend `name` of the computer whose key is `lender`,
+/// actor hex, or `None` for a key that is not one.
+pub(crate) fn label(lender: &str, name: &str) -> Option<Label> {
+    let key: [u8; 32] = hex::decode(lender).ok()?.try_into().ok()?;
+    Some(Label::of(&key, name))
 }
 
 /// The keys standing in `namespace` that this node, `this`, dials: each a
