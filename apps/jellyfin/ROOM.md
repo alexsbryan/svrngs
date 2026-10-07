@@ -19,7 +19,19 @@ as you. Jellyfin comes with Quick Connect on; if the TV does not offer
 it, in Jellyfin: your picture at the top right, then Dashboard, General,
 "Enable Quick Connect on this server", and Save.
 
-**A film on the TV from someone else's phone.** Whoever lends Jellyfin,
+**The simplest way: one account for the room.** Whoever lends Jellyfin
+makes one account for the room, in Jellyfin: your picture at the top
+right, then Dashboard, Users and the plus; a name such as `room`, a
+password, every library ticked, and Save. The TV signs in with it by
+Quick Connect (above, from a phone signed in as `room`), and that name
+and password go to everyone in the room. Every phone signed in as `room`
+finds the TV under the button at the top that casts, and starts, pauses
+and seeks it, with nothing ticked (u6-2's run, `c-same`: a phone signed
+in as the TV's own account, which had no permission ticked). What it
+costs: the room shares one account, so a film one person plays shows as
+played for all.
+
+**Or an account for each person: a film on the TV from someone else's phone.** Whoever lends Jellyfin,
 for each person who will: in Jellyfin, your picture at the top right,
 then Dashboard, Users and their picture; tick "Allow remote control of
 other users", and Save. Without it, the TV is not in their list. Then on
@@ -27,7 +39,7 @@ their phone, in Jellyfin: the button at the top that casts ("Cast to
 Device"), the TV by its name and the name it is signed in as, and play
 the film.
 
-**Pause and seek from the TV's own remote.** Once their film starts, a
+**Pause and seek, with an account for each person, from the TV's own remote.** Once their film starts, a
 phone signed in as someone other than the TV loses the TV: the TV keeps
 playing, but that phone cannot pause or seek it. Jellyfin does this
 on its own, with svrngs nowhere between them. The phone of whoever the
