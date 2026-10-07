@@ -106,6 +106,16 @@ the lender's page for a person opens from their picture, not their name.
 The film maker `check.sh films` wrote its three films into one part file
 (`1976fa6`).
 
+**The judge, failing first.** The screen's guard keeps what it refuses:
+it kept Google's `cast_sender.js` in every part, so a request off the
+room address is seen. That `screen.py` fails one to Sam's Jellyfin was
+watched on a copy of `data/` with one planted in each of `a.json`
+(`http://127.0.0.1:8096/System/Info/Public`) and `d.json`
+(`ws://127.0.0.1:8096/socket`): `every_request_at_room` failed with "1 to
+Sam's Jellyfin another way, 1 elsewhere", and `kept_to_room` failed; on
+`data/` itself, "0 to Sam's Jellyfin another way" and passed. The parts
+fail on their own too: (c) as Jellyfin comes, and its pause and seek.
+
 ## What it found
 
 1. **(a) The address typed once: it signs in, plays and seeks, every
