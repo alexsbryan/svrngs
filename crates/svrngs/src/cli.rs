@@ -206,9 +206,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             }
             "--name" => {
                 let raw = value("--name")?;
-                name = Some(LendName::parse(&raw).map_err(|_| {
-                    format!("--name `{raw}` is not a name: letters, digits, - and _ only")
-                })?);
+                name = Some(lend_name(&raw).map_err(|why| format!("--name {why}"))?);
             }
             "--kind" => {
                 let raw = value("--kind")?;
@@ -304,16 +302,13 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         }
         "unshare" => {
             let raw = positional.ok_or("unshare wants a name: `svrngs unshare <name>`")?;
-            let name = LendName::parse(&raw)
-                .map_err(|_| format!("`{raw}` is not a name: letters, digits, - and _ only"))?;
-            Ok(Verb::Unshare(name))
+            Ok(Verb::Unshare(lend_name(&raw)?))
         }
         "room" => {
             let first = positional.ok_or("room wants what to serve: `svrngs room <name>...`")?;
-            let names = std::iter::once(first).chain(more).map(|raw| {
-                LendName::parse(&raw)
-                    .map_err(|_| format!("`{raw}` is not a name: letters, digits, - and _ only"))
-            });
+            let names = std::iter::once(first)
+                .chain(more)
+                .map(|raw| lend_name(&raw));
             Ok(Verb::Room(names.collect::<Result<_, _>>()?))
         }
         "help" | "-h" | "--help" => Ok(Verb::Help),
@@ -371,6 +366,13 @@ pub enum Refusal {
     Room(#[from] svrngs_node::room::RoomError),
     #[error("cannot tell from here whether {0} gives each app an address of its own: the page does not open there (RUST_LOG=debug says why); try again")]
     CannotCheck(String),
+}
+
+/// `raw` as a lend's name, or the one refusal every verb that takes one
+/// gives (`--name`, `unshare`, `room`).
+fn lend_name(raw: &str) -> Result<LendName, String> {
+    LendName::parse(raw)
+        .map_err(|_| format!("`{raw}` is not a name: letters, digits, - and _ only"))
 }
 
 fn lent_now(lent: &[LendName]) -> String {
