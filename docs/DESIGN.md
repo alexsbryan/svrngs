@@ -116,8 +116,10 @@ paths it refuses, how many people may use it at once.
   app interprets (`jellyfin`), and how many people are using each now;
 - on each request through the door, the share of the lender's upload it may
   use right now;
-- the screen handoff: a node on a TV's network serves one stream at an
-  unguessable local address the TV fetches, while a phone is the remote.
+- reach for the devices in a room: a member's computer serves the lends its
+  person names to the network it is on while the command runs, so a device
+  there — a TV, through the app's own client for it — opens a lend at an
+  address on its own network (below, "The room").
 
 An app that needs anything else is a decision, not a convenience.
 
@@ -317,6 +319,69 @@ is U5's inventory (§8).
    the key (u5-2).
 7. *Group folders, an experiment after U5*, beside lends and opt-in; its
    design and first measurement wait in §9, and no U5 row builds it.
+
+**The room: the screen is the app's own client** (operator, 2026-10-05,
+after five reads on a real TV, `demo/runs/u6/2026-10-05-screen/reads.json`:
+"we're adding value, but we're not taking media on tvs and end user
+devices into our scope"). A film from a library across town plays on the
+TV in the room, and svrngs gives the room reach and nothing more. U6 builds
+that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
+1. *The screen is the app's own client; svrngs gives it reach.* A TV plays
+   a lend through the app's own client for it — "Jellyfin for WebOS" 1.2.2
+   signed in and played by DirectPlay from a LAN address (the reads,
+   `jellyfin-webos-app`) — pointed at an address on the TV's network; a
+   phone as the remote is the app's own (Jellyfin's "Play on"). Nothing in
+   svrngs knows AirPlay, Cast, DLNA, a TV, a player or what a lend serves.
+   AirPlay from a phone's browser showed no video three ways — the page's
+   worker-served address; jellyfin-web, whose hls.js sets
+   `disableRemotePlayback`; a plain LAN file the TV never fetched — and old
+   TV browsers are not supported: the LG's Chrome 87 could not open the
+   page (operator: "a losing cause"). AirPlay and Cast from a page wait in
+   §9.
+2. *A computer in the room.* The address comes from a member's computer on
+   the screen's network (operator, 2026-10-05): not from a phone, since a
+   browser cannot listen, and not from a public address per lend (§9). Its
+   hop to the library is computer to computer over iroh, which can go
+   direct, where a browser's is relay-only (8.1 Mbit/s through n0's relay
+   in the reads, `airplay-page`).
+3. *The room door.* A member's computer serves the lends its person names
+   to its own network while the command runs: each at a port of its own on
+   this computer's private address, the lend's root its own as each lend's
+   origin on loopback is (§7), in one body with those origins, not a
+   second; reached as this computer's person — dialled under this
+   computer's key, the way this computer's own browser reaches the lend.
+   Call 4 of "Joining" holds: the screen is this person's own device, not
+   another person's dial, and no node proxies a lend for anyone else. It
+   carries what the origins carry: Range, both bodies streaming, a
+   WebSocket — the app's remote rides its socket. The address is picked as
+   upstream's `advertised_base` picks one: the private LAN before
+   tailscale, never loopback, a wildcard or a public address, and absent,
+   said so, when there is none. Anyone on that network reaches the named
+   lends as this person while it runs, which the command says when it
+   starts, in §1's words; a request from off this network is refused. The
+   lender's door counts the room as one person and guesses its path as it
+   does now.
+4. *Measured, then told.* What Jellyfin's own client for a screen needs
+   through the room door is measured (u6-2) before any of it is written:
+   the server address typed once; sign-in without typing on a remote
+   (Jellyfin's Quick Connect: the TV shows a code a signed-in phone
+   approves); a newcomer's phone, signed in as another Jellyfin user,
+   playing on the TV's session (a permission the lender sets); and whether
+   the client keeps to the room address or moves to the address the
+   lender's Jellyfin reports for itself (`/System/Info/Public`
+   `LocalAddress`, which is across town). What the lender sets is written
+   in `apps/jellyfin/`, never in the infra; anything the door would need is
+   general — any app — or it is a finding for the operator.
+5. *Demo B as it now runs* (operator, 2026-10-05: the library is across
+   town; the people in the room are on the TV's WiFi): five friends at
+   Dee's, Sam's library across town, Dee's computer running the room door
+   and Dee's TV Jellyfin's own app, each set up once by Dee before the
+   evening (§8). The gate stands as it was.
+6. *Middleware, a spike after Demo B* (operator, 2026-10-06): a lent app
+   that forwards to another, an ordinary program on the lender's computer,
+   so `svrngs share <its port>` lends the pair; svrngs ships no runtime,
+   SDK or plugin format. Its invariants and the spike wait in §9, and no
+   U6 row builds it.
 
 **Chats are doors, and the last thing we build.** A small adapter per chat, in
 its own package, makes a group for a channel and posts its link. Onboarding
@@ -553,8 +618,9 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
 Computers first, running the client; phones through the browser for a group
 that names a page origin: no install, no store, the same token. Computers
 run the node — the `svrngs` process on macOS and Linux — and an always-on one is
-the group's meeting point and the origin a TV fetches from, its port mapped by
-iroh; iroh's relays carry what cannot go direct. A native phone app and
+the group's meeting point, its port mapped by iroh; iroh's relays carry what
+cannot go direct. A TV is reached through a member's computer on its
+network, never by a page (below). A native phone app and
 Windows wait in §9. A svrn daemon on the same computer is an optional neighbour
 for local AI; it holds no group state.
 
@@ -581,6 +647,15 @@ judged (exit 3). On a computer each app opens at
 `http://<label>.localhost:<port>/` on its own loopback
 (`crates/svrngs-node/src/origin.rs`), which every browser measured resolves
 (`demo/runs/u5/2026-10-05-localhost/`).
+
+**A room's devices reach a lend through a member's computer there** (u6-1
+adds it; §3, "The room", calls 2 and 3). A TV takes no link and runs no
+page: the app's own client for it is typed an address on its network
+once. So a member's computer serves the lends its person names at
+`http://<private address>:<port>/` while the command runs, a port of its
+own per lend, as that person, and `/v1/lends` answers a served lend's room
+address beside its `origin`. Its hop to the lender is computer to computer
+over iroh, never through a page.
 
 ## 8. Order of work
 
@@ -620,7 +695,10 @@ who fixes it:
 - *Too many at once* — the door refuses past the lend's limit with its
   reason in a person's words and the figures (`door.rs:571-585`); nothing
   turns it into a choice of another lender.
-- *The same room* — one stream to the TV, however many phones hold the remote.
+- *The same room* — the TV plays through the app's own client, which
+  reaches the lend through a member's computer in the room (§3, "The
+  room"); the remote is the app's own, and the lender's door counts the
+  room as one person, whoever holds the remote.
 
 **U1's inventory.** What `ring_sync`, `ring_routes.rs` and `acceptor.rs` use
 outside themselves at `e1a43bcd2`, tests apart, and what each becomes. Paths
@@ -942,7 +1020,8 @@ class at a time, each chosen by the north star's tests.
 | an app SDK, a sandboxed fold engine, signed manifests and install acts (QuickJS behind an `Engine` trait was `crates/svrngs-engine`, deleted 2026-10-04 with no user; it is at tag `e0-bot`) | an app needs its state offline on a device that is not its host, or strangers' code runs on members' devices |
 | a native phone app, and groups of phones only | the browser cannot keep what a group needs — its key, or a copy — measured |
 | Windows | a group asks |
-| DLNA, and TVs that take no push | people whose TV takes neither AirPlay nor Cast ask, counted |
+| AirPlay and Cast from a page, and DLNA: a screen handed a lend's address by a phone, for an app with no client of its own on it. In the reads (`demo/runs/u6/2026-10-05-screen/reads.json`) AirPlay from Safari on an iPhone showed the LG no video three ways — the page's address, which only the phone's worker answers; jellyfin-web, whose hls.js sets `disableRemotePlayback`; a plain LAN file, which the TV never fetched — and iOS has no Cast sender. Until 2026-10-05 this was U6 (§3, "The room", call 1) | an app with no client of its own for a screen is asked for on one, counted |
+| a public address per lend, for a room with no member's computer in it: a relay that forwards bytes it cannot read to the lender, who holds a certificate per lend — a new service, and Let's Encrypt's per-domain limit (§3, "The room", call 2) | a group with no computer in the room asks, counted |
 | watching together from different homes: one transcode, shared, in step | a group asks to watch the same film apart at the same time |
 | sealing in the infra | two apps need the same seal |
 | group compute: asks leased by members' computers and answered as acts | Ask is next |
@@ -965,6 +1044,7 @@ class at a time, each chosen by the north star's tests.
 | our own relay as the default: `iroh-relay` (Let's Encrypt built in) on a small VPS, the operator inclined to DigitalOcean, US West, at `relay.svrnme.sh` (TCP 80 and 443, UDP 7842), carried in every link's token so a phone never needs n0's; `svrngs new --relay <url>` for a group that runs its own; n0's terms for production use read first. Open then: whether ours also drops n0's address lookup, computers learning each other's relay from the group's record. Until then n0's public relays and lookup, `RelayConfig::default()` (`crates/svrngs-node/src/guest.rs:66-76`), nothing paid for (operator, 2026-10-05). Every byte a phone sends crosses a relay (a browser is relay-only), so a host's bandwidth price decides it | svrngs goes to production, or a group beyond the operator's uses it |
 | zero sign-in for Jellyfin: a user per person made with a key the lender gives once (`apps/jellyfin/`), the door carrying a secret per person, an app's script at its lend's origin writing jellyfin-web's stored sign-in, and the door keeping the person's token out of the answers Jellyfin writes it into (u5-3, finding 4: four rows) | an app people lend that keeps its own accounts and asks a sign-in no one can give, or the operator asking Demo A for no sign-in at all |
 | the floor: every app under `/l/<label>/` of one address apart from the page's, on any static host, the link carrying that address after its token (a second address given to `svrngs new`, u5-2; dropped by u6-00). Its cost was one origin for every app, so a lent page could read what another kept and use another's pass while it lasted, and its every app lost its root: the catalogue run lent five self-hosted apps on it in Chromium and WebKit and none got past its sign-in, each asking for `/`-absolute paths the floor's host answered 404, and Paperless's post refused by its own origin check (`demo/runs/catalogue/2026-10-05/RESULTS.md`, "The floor"; `003e0d5`) | a group whose host answers no name nobody made asks for an app that keeps to relative paths, counted |
+| middleware (§3, "The room", call 6; operator, 2026-10-06): a lent app that forwards to another — an ordinary program on the lender's computer that listens on a port, takes the door's verified request and passes it to the service behind it, so `svrngs share <its port>` lends the pair; svrngs ships no runtime, SDK or plugin format. Only the lender runs one, on their own computer; the door's guarantees stay outside it (identity set, limit and refused paths checked, an echoed secret stripped from what it returns); its contract is HTTP, the door's `x-svrngs-*` headers and the loopback record API; an app's nouns live in middleware, never the infra; svrngs never starts or supervises one. The spike: Jellyfin's zero sign-in (its row above, four rows at u5-3) as a middleware, with no diff under `crates/` or `web/`; a newcomer plays from the list with no sign-in in both engines on a computer and a phone; no byte a person receives holds the lender's key; two people's plays stay apart. Killed if it needs a svrngs change beyond headers the door already sets. Open with it: Demo A's unchanged list of users, and the per-process tie (`mint_tie`, above) that "verified" leans on | Demo B passes |
 
 ## 10. Decisions
 
@@ -976,7 +1056,27 @@ By the operator, 2026-10-06:
   (`demo/runs/catalogue/2026-10-05/`), and the repository stood at 13,952
   of 14,000 lines with the room door to come. `svrngs new` refuses a page
   whose host does not serve the page at a name nobody made, saying what
-  such a host must do (§3, "Lent apps", call 1; §7; §9 has the trigger).
+  such a host must do (§3, "Lent apps", call 1; §7; §9 has the trigger);
+- middleware is a spike after Demo B, and no U6 row builds it: a lent app
+  that forwards to another, run only by its lender, with svrngs shipping no
+  runtime, SDK or plugin format for it (§3, "The room", call 6; §9 has its
+  invariants, the spike and the trigger).
+
+By the operator, 2026-10-05, after five reads on a real TV
+(`demo/runs/u6/2026-10-05-screen/reads.json`):
+- the screen is the app's own client, and svrngs gives the devices in a
+  room reach to a lend through a member's computer on that network ("we're
+  adding value, but we're not taking media on tvs and end user devices
+  into our scope"); nothing in svrngs knows AirPlay, Cast, DLNA, a TV or a
+  player, and AirPlay and Cast from a page wait in §9 (§3, "The room",
+  calls 1 to 4). This replaces the screen handoff of 2026-10-03, below;
+- old TV browsers are not supported: the LG's Chrome 87 could not open the
+  page ("a losing cause");
+- the room's address comes from a member's computer on the screen's
+  network, not from a phone and not from a public address per lend (§9);
+- Demo B: five friends at Dee's, Sam's library across town, the people in
+  the room on the TV's WiFi; its gate unchanged (§3, "The room", call 5;
+  §8).
 
 By the operator, 2026-10-05:
 - north star 2 holds for the apps people already self-host: `svrngs share
@@ -1033,7 +1133,8 @@ By the operator, 2026-10-03:
   as canaries so the infra stays general; the screen handoff is infra; phones
   first, through the browser; chat doors are onboarding, built last. (The
   experience is the group's films in stock Jellyfin since 2026-10-05,
-  above; Films is dropped.)
+  above; Films is dropped. The screen handoff is reach for a room's
+  devices since 2026-10-05, above.)
 
 ## 11. Risks
 
