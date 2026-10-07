@@ -11,7 +11,7 @@ Shown after U5, in Jellyfin's own player through the lend (DESIGN §8).
 three films, set up as `svrngs share` tells Sam (DESIGN §3, "Lent apps",
 call 4, as u5-3 decides it), and svrngs. Alex, Bo and Cy: a computer each, in three homes on three
 networks, with svrngs put there by the operator beforehand — installing is not
-what this demo shows, and Demo B has none. Each of the three browsers records
+what this demo shows, and Demo B's newcomers do none. Each of the three browsers records
 the session as a HAR file, and every screen is recorded. Before anyone starts:
 Sam's upload measured once and written down, and Jellyfin's list of users
 exported.
