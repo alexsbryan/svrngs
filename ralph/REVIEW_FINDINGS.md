@@ -2767,3 +2767,15 @@ wildcard 4080, 3359, all passed; straight at the canary 2111-2929, all
 passed. check.sh's count: "of 36 here since 2026-10-07T01:30:06Z: 8 missed
 5 s through a lend, 5 straight; 28 ended at a load above 12 cores". This
 audit judges no rate.
+
+## #77: a join that cannot reach the issuer says why to nobody (the seat, 2026-10-07)
+
+Setting up the operator's Demo B on this host (`apps/jellyfin/check/screen.sh
+up`, PAGE=https://group.svrnme.sh/), Dee's `svrngs join <svrngs:// link>`
+printed "the computer that sent this link cannot be reached; it may be off,
+so try again later" and exited within 60 s, while Sam's node was up and Alex
+had joined by the same kind of link six seconds before. Sam's log shows no
+attempt; Dee's `join.log` is empty at the default level, so which hop failed
+(address lookup, relay, the dial) is unrecorded. Retried by hand at once with
+`RUST_LOG=info,svrngs=debug,svrngs_node=debug`, it joined in 2 s. Principle
+1: the refusal's branch carries no event a default run keeps. Not fixed.
