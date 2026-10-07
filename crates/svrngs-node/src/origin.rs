@@ -61,6 +61,14 @@ async fn lent(State(at): State<Asking>, req: Request) -> Response {
         tracing::debug!(target: "origin", host = ?req.headers().get(header::HOST), "origin: refused — no lend's host");
         return err(StatusCode::NOT_FOUND, "nothing is lent here");
     };
+    reach(&at, label, req).await
+}
+
+/// `req` carried to the lend `label`, as this computer's person: by the
+/// `Host` at its origin on loopback, or by the port at the room door
+/// (u6-1), one body for both (DESIGN §3, "The room",
+/// call 3).
+pub(crate) async fn reach(at: &Asking, label: Label, req: Request) -> Response {
     let tail = req.uri().path_and_query().map_or("/", |p| p.as_str());
     let target = format!("{LEND_ROUTE}{label}{tail}");
     let lender = label.lender();
