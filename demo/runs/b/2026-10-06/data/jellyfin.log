@@ -1,0 +1,1015 @@
+{"Protocol":0,"Id":"a15deeeeb693bf2e879cea1f0fd9aece","Path":"/tmp/u5-9-films/Test Pattern Two (2026).mkv","EncoderPath":null,"EncoderProtocol":null,"Type":0,"Container":"mkv","Size":115261393,"Name":"Test Pattern Two (2026)","IsRemote":false,"ETag":"35c53360e37fc18a02725b350bdc4693","RunTimeTicks":12000000000,"ReadAtNativeFramerate":false,"IgnoreDts":false,"IgnoreIndex":false,"GenPtsInput":false,"SupportsTranscoding":true,"SupportsDirectStream":true,"SupportsDirectPlay":true,"IsInfiniteStream":false,"UseMostCompatibleTranscodingProfile":false,"RequiresOpening":false,"OpenToken":null,"RequiresClosing":false,"LiveStreamId":null,"BufferMs":null,"RequiresLooping":false,"SupportsProbing":true,"VideoType":0,"IsoType":null,"Video3DFormat":null,"MediaStreams":[{"Codec":"mpeg2video","CodecTag":null,"Language":null,"ColorRange":null,"ColorSpace":null,"ColorTransfer":null,"ColorPrimaries":null,"DvVersionMajor":null,"DvVersionMinor":null,"DvProfile":null,"DvLevel":null,"RpuPresentFlag":null,"ElPresentFlag":null,"BlPresentFlag":null,"DvBlSignalCompatibilityId":null,"Rotation":null,"Comment":null,"TimeBase":"1/1000","CodecTimeBase":null,"Title":null,"Hdr10PlusPresentFlag":null,"VideoRange":1,"VideoRangeType":1,"VideoDoViTitle":null,"AudioSpatialFormat":0,"LocalizedUndefined":null,"LocalizedDefault":null,"LocalizedForced":null,"LocalizedExternal":null,"LocalizedHearingImpaired":null,"LocalizedLanguage":null,"LocalizedOriginal":null,"DisplayTitle":"720p MPEG2VIDEO SDR","NalLengthSize":null,"IsInterlaced":false,"IsAVC":null,"ChannelLayout":null,"BitRate":576409,"BitDepth":8,"RefFrames":1,"PacketLength":null,"Channels":null,"SampleRate":null,"IsDefault":false,"IsForced":false,"IsHearingImpaired":false,"IsOriginal":false,"Height":720,"Width":1280,"AverageFrameRate":24,"RealFrameRate":24,"ReferenceFrameRate":24,"Profile":"Main","Type":1,"AspectRatio":"16:9","Index":0,"Score":null,"IsExternal":false,"DeliveryMethod":null,"DeliveryUrl":null,"IsExternalUrl":null,"IsTextSubtitleStream":false,"SupportsExternalStream":false,"Path":null,"PixelFormat":"yuv420p","Level":6,"IsAnamorphic":false},{"Codec":"mp2","CodecTag":null,"Language":null,"ColorRange":null,"ColorSpace":null,"ColorTransfer":null,"ColorPrimaries":null,"DvVersionMajor":null,"DvVersionMinor":null,"DvProfile":null,"DvLevel":null,"RpuPresentFlag":null,"ElPresentFlag":null,"BlPresentFlag":null,"DvBlSignalCompatibilityId":null,"Rotation":null,"Comment":null,"TimeBase":"1/1000","CodecTimeBase":null,"Title":null,"Hdr10PlusPresentFlag":null,"VideoRange":0,"VideoRangeType":0,"VideoDoViTitle":null,"AudioSpatialFormat":0,"LocalizedUndefined":null,"LocalizedDefault":"Default","LocalizedForced":null,"LocalizedExternal":"External","LocalizedHearingImpaired":null,"LocalizedLanguage":null,"LocalizedOriginal":"Original","DisplayTitle":"MP2 - Mono","NalLengthSize":null,"IsInterlaced":false,"IsAVC":null,"ChannelLayout":"mono","BitRate":192000,"BitDepth":null,"RefFrames":null,"PacketLength":null,"Channels":1,"SampleRate":48000,"IsDefault":false,"IsForced":false,"IsHearingImpaired":false,"IsOriginal":false,"Height":null,"Width":null,"AverageFrameRate":null,"RealFrameRate":null,"ReferenceFrameRate":null,"Profile":null,"Type":0,"AspectRatio":null,"Index":1,"Score":null,"IsExternal":false,"DeliveryMethod":null,"DeliveryUrl":null,"IsExternalUrl":null,"IsTextSubtitleStream":false,"SupportsExternalStream":false,"Path":null,"PixelFormat":null,"Level":null,"IsAnamorphic":null}],"MediaAttachments":[],"Formats":[],"Bitrate":768409,"FallbackMaxStreamingBitrate":null,"Timestamp":null,"RequiredHttpHeaders":{},"TranscodingUrl":null,"TranscodingSubProtocol":0,"TranscodingContainer":null,"AnalyzeDurationMs":null,"DefaultAudioStreamIndex":null,"DefaultSubtitleStreamIndex":null,"HasSegments":false}
+
+/Applications/Jellyfin.app/Contents/MacOS/ffmpeg -analyzeduration 200M -probesize 1G  -i file:"/tmp/u5-9-films/Test Pattern Two (2026).mkv" -map_metadata -1 -map_chapters -1 -threads 0 -map 0:0 -map 0:1 -map -0:s -codec:v:0 libx264 -preset veryfast -crf 23 -maxrate 3602555 -bufsize 7205110 -profile:v:0 high -level 51 -x264opts:0 subme=0:me_range=16:rc_lookahead=10:me=hex:open_gop=0 -force_key_frames:0 "expr:gte(t,n_forced*3)" -sc_threshold:v:0 0 -vf "setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709,scale=trunc(min(max(iw\,ih*a)\,min(1280\,720*a))/2)*2:trunc(min(max(iw/a\,ih)\,min(1280/a\,720))/2)*2,format=yuv420p" -codec:a:0 aac_at -ac 1 -ab 128000 -copyts -avoid_negative_ts disabled -max_muxing_queue_size 2048 -f hls -max_delay 5000000 -hls_time 3 -hls_segment_type fmp4 -hls_fmp4_init_filename "c3c68bbf7e9febd6a30bdf885094e0e4-1.mp4" -start_number 0 -hls_segment_filename "/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4%d.mp4" -hls_playlist_type vod -hls_list_size 0 -hls_segment_options movflags=+frag_discont+skip_sidx -y "/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4.m3u8"
+
+
+ffmpeg version 8.1.2-Jellyfin Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 21.0.0 (clang-2100.1.1.101)
+  configuration: --prefix=/ffbuild/prefix --disable-shared --enable-static --pkg-config-flags=--static --enable-pthreads --cc=clang --host-cflags='-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/opt/ffbuild/prefix/include' --host-ldflags='-L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib -L/opt/ffbuild/prefix/lib' --extra-version=Jellyfin --extra-cflags=-I/opt/ffbuild/prefix/include --extra-cxxflags= --extra-ldflags=-L/opt/ffbuild/prefix/lib --extra-ldexeflags= --extra-libs= --enable-gpl --enable-version3 --disable-unstable --disable-ffplay --disable-debug --disable-doc --disable-sdl2 --enable-lto=thin --disable-unstable --disable-libjack --disable-indev=jack --disable-libxcb --disable-xlib --enable-neon --enable-runtime-cpudetect --enable-audiotoolbox --enable-videotoolbox --enable-iconv --enable-zlib --enable-libfreetype --enable-libfribidi --enable-gmp --enable-libxml2 --enable-openssl --enable-lzma --enable-fontconfig --enable-libharfbuzz --enable-libvorbis --enable-opencl --enable-chromaprint --enable-libdav1d --disable-libfdk-aac --enable-libass --enable-libbluray --enable-libmp3lame --enable-libopus --disable-libplacebo --enable-libtheora --enable-libvpx --enable-libwebp --enable-libopenmpt --enable-libsrt --enable-libsvtav1 --enable-libx264 --enable-libx265 --enable-libzimg --enable-libzvbi
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, matroska,webm, from 'file:/tmp/u5-9-films/Test Pattern Two (2026).mkv':
+  Metadata:
+    ENCODER         : Lavf62.12.102
+  Duration: 00:20:00.00, start: 0.000000, bitrate: 768 kb/s
+  Stream #0:0: Video: mpeg2video (Main), yuv420p(tv, progressive), 1280x720 [SAR 1:1 DAR 16:9], 24 fps, 24 tbr, 1k tbn
+    Metadata:
+      ENCODER         : Lavc62.28.102 mpeg2video
+      DURATION        : 00:20:00.000000000
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 1130496 vbv_delay: N/A
+  Stream #0:1: Audio: mp2, 48000 Hz, mono, s16p, 192 kb/s
+    Metadata:
+      ENCODER         : Lavc62.28.102 mp2
+      DURATION        : 00:20:00.000000000
+Stream mapping:
+  Stream #0:0 -> #0:0 (mpeg2video (native) -> h264 (libx264))
+  Stream #0:1 -> #0:1 (mp2 (native) -> aac (aac_at))
+Press [q] to stop, [?] for help
+[libx264 @ 0xca6404380] using SAR=1/1
+[libx264 @ 0xca6404380] using cpu capabilities: ARMv8 NEON DotProd I8MM
+[libx264 @ 0xca6404380] profile High, level 5.1, 4:2:0, 8-bit
+[libx264 @ 0xca6404380] 264 - core 165 - H.264/MPEG-4 AVC codec - Copyleft 2003-2025 - http://www.videolan.org/x264.html - options: cabac=1 ref=1 deblock=1:0:0 analyse=0x3:0x113 me=hex subme=0 psy=1 psy_rd=1.00:0.00 mixed_ref=0 me_range=16 chroma_me=1 trellis=0 8x8dct=1 cqm=0 deadzone=21,11 fast_pskip=1 chroma_qp_offset=0 threads=18 lookahead_threads=3 sliced_threads=0 nr=0 decimate=1 interlaced=0 bluray_compat=0 constrained_intra=0 bframes=3 b_pyramid=2 b_adapt=1 b_bias=0 direct=1 weightb=1 open_gop=0 weightp=1 keyint=250 keyint_min=24 scenecut=0 intra_refresh=0 rc_lookahead=10 rc=crf mbtree=1 crf=23.0 qcomp=0.60 qpmin=0 qpmax=69 qpstep=4 vbv_maxrate=3602 vbv_bufsize=7205 crf_max=0.0 nal_hrd=none filler=0 ip_ratio=1.40 aq=1:1.00
+[hls @ 0xca6c1c280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4-1.mp4' for writing
+Output #0, hls, to '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4.m3u8':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: h264, yuv420p(tv, bt709, progressive), 1280x720 [SAR 1:1 DAR 16:9], q=2-31, 24 fps, 12288 tbn
+    Metadata:
+      encoder         : Lavc62.28.102 libx264
+    Side data:
+      CPB properties: bitrate max/min/avg: 3602000/0/0 buffer size: 7205000 vbv_delay: N/A
+  Stream #0:1: Audio: aac, 48000 Hz, mono, s16, 128 kb/s
+    Metadata:
+      encoder         : Lavc62.28.102 aac_at
+frame=   32 fps=0.0 q=28.0 size=N/A time=00:00:00.00 bitrate=N/A speed=   0x elapsed=0:00:00.64    
+[hls @ 0xca6c1c280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e40.mp4' for writing
+frame=   83 fps= 64 q=28.0 size=N/A time=00:00:02.16 bitrate=N/A speed=1.66x elapsed=0:00:01.30    
+frame=  124 fps= 63 q=28.0 size=N/A time=00:00:03.83 bitrate=N/A speed=1.96x elapsed=0:00:01.95    
+[hls @ 0xca6c1c280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e41.mp4' for writing
+frame=  152 fps= 61 q=28.0 size=N/A time=00:00:05.00 bitrate=N/A speed=   2x elapsed=0:00:02.49    
+frame=  171 fps= 54 q=28.0 size=N/A time=00:00:05.79 bitrate=N/A speed=1.83x elapsed=0:00:03.17    
+frame=  188 fps= 50 q=28.0 size=N/A time=00:00:06.50 bitrate=N/A speed=1.72x elapsed=0:00:03.78    
+frame=  216 fps= 49 q=28.0 size=N/A time=00:00:07.66 bitrate=N/A speed=1.73x elapsed=0:00:04.43    
+[hls @ 0xca6c1c280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e42.mp4' for writing
+frame=  228 fps= 45 q=28.0 size=N/A time=00:00:08.16 bitrate=N/A speed= 1.6x elapsed=0:00:05.09    
+frame=  240 fps= 42 q=28.0 size=N/A time=00:00:08.66 bitrate=N/A speed= 1.5x elapsed=0:00:05.76    
+frame=  264 fps= 41 q=28.0 size=N/A time=00:00:09.66 bitrate=N/A speed=1.51x elapsed=0:00:06.41    
+frame=  283 fps= 40 q=28.0 size=N/A time=00:00:10.45 bitrate=N/A speed=1.49x elapsed=0:00:07.01    
+[hls @ 0xca6c1c280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e43.mp4' for writing
+frame=  308 fps= 40 q=28.0 size=N/A time=00:00:11.50 bitrate=N/A speed= 1.5x elapsed=0:00:07.68    
+[hls @ 0xca6c1c280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e44.mp4' for writing
+frame=  384 fps= 46 q=28.0 size=N/A time=00:00:14.66 bitrate=N/A speed=1.74x elapsed=0:00:08.41    
+[hls @ 0xca6c1c280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e45.mp4' for writing
+frame=  472 fps= 52 q=28.0 size=N/A time=00:00:18.33 bitrate=N/A speed=2.02x elapsed=0:00:09.06    
+[hls @ 0xca6c1c280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e46.mp4' for writing
+[hls @ 0xca6c1c280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e47.mp4' for writing
+frame=  608 fps= 63 q=28.0 size=N/A time=00:00:24.00 bitrate=N/A speed=2.48x elapsed=0:00:09.66    
+[hls @ 0xca6c1c280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e48.mp4' for writing
+frame=  649 fps= 64 q=28.0 size=N/A time=00:00:25.83 bitrate=N/A speed=2.53x elapsed=0:00:10.19    
+[hls @ 0xca6c1c280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e49.mp4' for writing
+frame=  752 fps= 69 q=28.0 size=N/A time=00:00:30.00 bitrate=N/A speed=2.76x elapsed=0:00:10.85    
+[hls @ 0xca6c1c280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e410.mp4' for writing
+[hls @ 0xca6c1c280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e411.mp4' for writing
+frame=  900 fps= 78 q=28.0 size=N/A time=00:00:36.16 bitrate=N/A speed=3.14x elapsed=0:00:11.51    
+[hls @ 0xca6c1c280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e412.mp4' for writing
+frame= 1000 fps= 82 q=28.0 size=N/A time=00:00:40.33 bitrate=N/A speed=3.32x elapsed=0:00:12.16    
+[hls @ 0xca6c1c280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e413.mp4' for writing
+frame= 1040 fps= 82 q=28.0 size=N/A time=00:00:42.12 bitrate=N/A speed=3.31x elapsed=0:00:12.71    
+[hls @ 0xca6c1c280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e414.mp4' for writing
+frame= 1148 fps= 86 q=28.0 size=N/A time=00:00:46.50 bitrate=N/A speed=3.48x elapsed=0:00:13.36    
+[hls @ 0xca6c1c280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e415.mp4' for writing
+[hls @ 0xca6c1c280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e416.mp4' for writing
+
+
+[q] command received. Exiting.
+
+[hls @ 0xca6c1c280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e417.mp4' for writing
+[out#0/hls @ 0xca6c0cb40] video:779KiB audio:830KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: unknown
+frame= 1274 fps= 90 q=-1.0 Lsize=N/A time=00:00:51.75 bitrate=N/A speed=3.67x elapsed=0:00:14.08    
+[libx264 @ 0xca6404380] frame I:18    Avg QP: 8.77  size:  9616
+[libx264 @ 0xca6404380] frame P:319   Avg QP:13.71  size:  1147
+[libx264 @ 0xca6404380] frame B:937   Avg QP:15.59  size:   276
+[libx264 @ 0xca6404380] consecutive B-frames:  1.5%  0.0%  4.0% 94.5%
+[libx264 @ 0xca6404380] mb I  I16..4: 90.9%  3.6%  5.4%
+[libx264 @ 0xca6404380] mb P  I16..4:  5.1%  0.4%  0.3%  P16..4:  3.4%  0.9%  0.1%  0.0%  0.0%    skip:89.9%
+[libx264 @ 0xca6404380] mb B  I16..4:  0.9%  0.0%  0.0%  B16..8:  1.3%  0.1%  0.0%  direct: 1.4%  skip:96.3%  L0:52.2% L1:47.5% BI: 0.3%
+[libx264 @ 0xca6404380] 8x8 transform intra:4.4% inter:42.5%
+[libx264 @ 0xca6404380] coded y,uvDC,uvAC intra: 3.8% 27.2% 12.5% inter: 0.0% 2.0% 0.1%
+[libx264 @ 0xca6404380] i16 v,h,dc,p: 85% 10%  1%  4%
+[libx264 @ 0xca6404380] i8 v,h,dc,ddl,ddr,vr,hd,vl,hu: 43% 14% 26%  3%  1%  3%  1%  5%  6%
+[libx264 @ 0xca6404380] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu: 25% 42% 28%  1%  1%  1%  0%  1%  1%
+[libx264 @ 0xca6404380] i8c dc,h,v,p: 30% 15% 44% 11%
+[libx264 @ 0xca6404380] Weighted P-Frames: Y:0.0% UV:0.0%
+[libx264 @ 0xca6404380] kb/s:120.16{"Protocol":0,"Id":"a15deeeeb693bf2e879cea1f0fd9aece","Path":"/tmp/u5-9-films/Test Pattern Two (2026).mkv","EncoderPath":null,"EncoderProtocol":null,"Type":0,"Container":"mkv","Size":115261393,"Name":"Test Pattern Two (2026)","IsRemote":false,"ETag":"35c53360e37fc18a02725b350bdc4693","RunTimeTicks":12000000000,"ReadAtNativeFramerate":false,"IgnoreDts":false,"IgnoreIndex":false,"GenPtsInput":false,"SupportsTranscoding":true,"SupportsDirectStream":true,"SupportsDirectPlay":true,"IsInfiniteStream":false,"UseMostCompatibleTranscodingProfile":false,"RequiresOpening":false,"OpenToken":null,"RequiresClosing":false,"LiveStreamId":null,"BufferMs":null,"RequiresLooping":false,"SupportsProbing":true,"VideoType":0,"IsoType":null,"Video3DFormat":null,"MediaStreams":[{"Codec":"mpeg2video","CodecTag":null,"Language":null,"ColorRange":null,"ColorSpace":null,"ColorTransfer":null,"ColorPrimaries":null,"DvVersionMajor":null,"DvVersionMinor":null,"DvProfile":null,"DvLevel":null,"RpuPresentFlag":null,"ElPresentFlag":null,"BlPresentFlag":null,"DvBlSignalCompatibilityId":null,"Rotation":null,"Comment":null,"TimeBase":"1/1000","CodecTimeBase":null,"Title":null,"Hdr10PlusPresentFlag":null,"VideoRange":1,"VideoRangeType":1,"VideoDoViTitle":null,"AudioSpatialFormat":0,"LocalizedUndefined":null,"LocalizedDefault":null,"LocalizedForced":null,"LocalizedExternal":null,"LocalizedHearingImpaired":null,"LocalizedLanguage":null,"LocalizedOriginal":null,"DisplayTitle":"720p MPEG2VIDEO SDR","NalLengthSize":null,"IsInterlaced":false,"IsAVC":null,"ChannelLayout":null,"BitRate":576409,"BitDepth":8,"RefFrames":1,"PacketLength":null,"Channels":null,"SampleRate":null,"IsDefault":false,"IsForced":false,"IsHearingImpaired":false,"IsOriginal":false,"Height":720,"Width":1280,"AverageFrameRate":24,"RealFrameRate":24,"ReferenceFrameRate":24,"Profile":"Main","Type":1,"AspectRatio":"16:9","Index":0,"Score":null,"IsExternal":false,"DeliveryMethod":null,"DeliveryUrl":null,"IsExternalUrl":null,"IsTextSubtitleStream":false,"SupportsExternalStream":false,"Path":null,"PixelFormat":"yuv420p","Level":6,"IsAnamorphic":false},{"Codec":"mp2","CodecTag":null,"Language":null,"ColorRange":null,"ColorSpace":null,"ColorTransfer":null,"ColorPrimaries":null,"DvVersionMajor":null,"DvVersionMinor":null,"DvProfile":null,"DvLevel":null,"RpuPresentFlag":null,"ElPresentFlag":null,"BlPresentFlag":null,"DvBlSignalCompatibilityId":null,"Rotation":null,"Comment":null,"TimeBase":"1/1000","CodecTimeBase":null,"Title":null,"Hdr10PlusPresentFlag":null,"VideoRange":0,"VideoRangeType":0,"VideoDoViTitle":null,"AudioSpatialFormat":0,"LocalizedUndefined":null,"LocalizedDefault":"Default","LocalizedForced":null,"LocalizedExternal":"External","LocalizedHearingImpaired":null,"LocalizedLanguage":null,"LocalizedOriginal":"Original","DisplayTitle":"MP2 - Mono","NalLengthSize":null,"IsInterlaced":false,"IsAVC":null,"ChannelLayout":"mono","BitRate":192000,"BitDepth":null,"RefFrames":null,"PacketLength":null,"Channels":1,"SampleRate":48000,"IsDefault":false,"IsForced":false,"IsHearingImpaired":false,"IsOriginal":false,"Height":null,"Width":null,"AverageFrameRate":null,"RealFrameRate":null,"ReferenceFrameRate":null,"Profile":null,"Type":0,"AspectRatio":null,"Index":1,"Score":null,"IsExternal":false,"DeliveryMethod":null,"DeliveryUrl":null,"IsExternalUrl":null,"IsTextSubtitleStream":false,"SupportsExternalStream":false,"Path":null,"PixelFormat":null,"Level":null,"IsAnamorphic":null}],"MediaAttachments":[],"Formats":[],"Bitrate":768409,"FallbackMaxStreamingBitrate":null,"Timestamp":null,"RequiredHttpHeaders":{},"TranscodingUrl":null,"TranscodingSubProtocol":0,"TranscodingContainer":null,"AnalyzeDurationMs":null,"DefaultAudioStreamIndex":null,"DefaultSubtitleStreamIndex":null,"HasSegments":false}
+
+/Applications/Jellyfin.app/Contents/MacOS/ffmpeg -analyzeduration 200M -probesize 1G -ss 00:10:00.000  -i file:"/tmp/u5-9-films/Test Pattern Two (2026).mkv" -map_metadata -1 -map_chapters -1 -threads 0 -map 0:0 -map 0:1 -map -0:s -codec:v:0 libx264 -preset veryfast -crf 23 -maxrate 3602555 -bufsize 7205110 -profile:v:0 high -level 51 -x264opts:0 subme=0:me_range=16:rc_lookahead=10:me=hex:open_gop=0 -force_key_frames:0 "expr:gte(t,n_forced*3)" -sc_threshold:v:0 0 -vf "setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709,scale=trunc(min(max(iw\,ih*a)\,min(1280\,720*a))/2)*2:trunc(min(max(iw/a\,ih)\,min(1280/a\,720))/2)*2,format=yuv420p" -codec:a:0 aac_at -ac 1 -ab 128000 -copyts -avoid_negative_ts disabled -max_muxing_queue_size 2048 -f hls -max_delay 5000000 -hls_time 3 -hls_segment_type fmp4 -hls_fmp4_init_filename "c3c68bbf7e9febd6a30bdf885094e0e4-1.mp4" -start_number 200 -hls_segment_filename "/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4%d.mp4" -hls_playlist_type vod -hls_list_size 0 -hls_segment_options movflags=+frag_discont+skip_sidx -y "/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4.m3u8"
+
+
+ffmpeg version 8.1.2-Jellyfin Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 21.0.0 (clang-2100.1.1.101)
+  configuration: --prefix=/ffbuild/prefix --disable-shared --enable-static --pkg-config-flags=--static --enable-pthreads --cc=clang --host-cflags='-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/opt/ffbuild/prefix/include' --host-ldflags='-L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib -L/opt/ffbuild/prefix/lib' --extra-version=Jellyfin --extra-cflags=-I/opt/ffbuild/prefix/include --extra-cxxflags= --extra-ldflags=-L/opt/ffbuild/prefix/lib --extra-ldexeflags= --extra-libs= --enable-gpl --enable-version3 --disable-unstable --disable-ffplay --disable-debug --disable-doc --disable-sdl2 --enable-lto=thin --disable-unstable --disable-libjack --disable-indev=jack --disable-libxcb --disable-xlib --enable-neon --enable-runtime-cpudetect --enable-audiotoolbox --enable-videotoolbox --enable-iconv --enable-zlib --enable-libfreetype --enable-libfribidi --enable-gmp --enable-libxml2 --enable-openssl --enable-lzma --enable-fontconfig --enable-libharfbuzz --enable-libvorbis --enable-opencl --enable-chromaprint --enable-libdav1d --disable-libfdk-aac --enable-libass --enable-libbluray --enable-libmp3lame --enable-libopus --disable-libplacebo --enable-libtheora --enable-libvpx --enable-libwebp --enable-libopenmpt --enable-libsrt --enable-libsvtav1 --enable-libx264 --enable-libx265 --enable-libzimg --enable-libzvbi
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, matroska,webm, from 'file:/tmp/u5-9-films/Test Pattern Two (2026).mkv':
+  Metadata:
+    ENCODER         : Lavf62.12.102
+  Duration: 00:20:00.00, start: 0.000000, bitrate: 768 kb/s
+  Stream #0:0: Video: mpeg2video (Main), yuv420p(tv, progressive), 1280x720 [SAR 1:1 DAR 16:9], 24 fps, 24 tbr, 1k tbn
+    Metadata:
+      ENCODER         : Lavc62.28.102 mpeg2video
+      DURATION        : 00:20:00.000000000
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 1130496 vbv_delay: N/A
+  Stream #0:1: Audio: mp2, 48000 Hz, mono, s16p, 192 kb/s
+    Metadata:
+      ENCODER         : Lavc62.28.102 mp2
+      DURATION        : 00:20:00.000000000
+Stream mapping:
+  Stream #0:0 -> #0:0 (mpeg2video (native) -> h264 (libx264))
+  Stream #0:1 -> #0:1 (mp2 (native) -> aac (aac_at))
+Press [q] to stop, [?] for help
+[libx264 @ 0x91382c380] using SAR=1/1
+[libx264 @ 0x91382c380] using cpu capabilities: ARMv8 NEON DotProd I8MM
+[libx264 @ 0x91382c380] profile High, level 5.1, 4:2:0, 8-bit
+[libx264 @ 0x91382c380] 264 - core 165 - H.264/MPEG-4 AVC codec - Copyleft 2003-2025 - http://www.videolan.org/x264.html - options: cabac=1 ref=1 deblock=1:0:0 analyse=0x3:0x113 me=hex subme=0 psy=1 psy_rd=1.00:0.00 mixed_ref=0 me_range=16 chroma_me=1 trellis=0 8x8dct=1 cqm=0 deadzone=21,11 fast_pskip=1 chroma_qp_offset=0 threads=18 lookahead_threads=3 sliced_threads=0 nr=0 decimate=1 interlaced=0 bluray_compat=0 constrained_intra=0 bframes=3 b_pyramid=2 b_adapt=1 b_bias=0 direct=1 weightb=1 open_gop=0 weightp=1 keyint=250 keyint_min=24 scenecut=0 intra_refresh=0 rc_lookahead=10 rc=crf mbtree=1 crf=23.0 qcomp=0.60 qpmin=0 qpmax=69 qpstep=4 vbv_maxrate=3602 vbv_bufsize=7205 crf_max=0.0 nal_hrd=none filler=0 ip_ratio=1.40 aq=1:1.00
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4-1.mp4' for writing
+Output #0, hls, to '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4.m3u8':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: h264, yuv420p(tv, bt709, progressive), 1280x720 [SAR 1:1 DAR 16:9], q=2-31, 24 fps, 12288 tbn
+    Metadata:
+      encoder         : Lavc62.28.102 libx264
+    Side data:
+      CPB properties: bitrate max/min/avg: 3602000/0/0 buffer size: 7205000 vbv_delay: N/A
+  Stream #0:1: Audio: aac, 48000 Hz, mono, s16, 128 kb/s
+    Metadata:
+      encoder         : Lavc62.28.102 aac_at
+frame=   68 fps=0.0 q=28.0 size=N/A time=00:00:00.00 bitrate=N/A speed=   0x elapsed=0:00:00.65    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4200.mp4' for writing
+frame=  124 fps=105 q=28.0 size=N/A time=00:00:02.33 bitrate=N/A speed=1.98x elapsed=0:00:01.18    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4201.mp4' for writing
+frame=  180 fps= 99 q=28.0 size=N/A time=00:00:04.66 bitrate=N/A speed=2.58x elapsed=0:00:01.81    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4202.mp4' for writing
+frame=  236 fps= 96 q=28.0 size=N/A time=00:00:07.00 bitrate=N/A speed=2.85x elapsed=0:00:02.45    
+frame=  272 fps= 89 q=25.0 size=N/A time=00:00:08.50 bitrate=N/A speed=2.79x elapsed=0:00:03.04    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4203.mp4' for writing
+frame=  304 fps= 83 q=28.0 size=N/A time=00:00:09.83 bitrate=N/A speed=2.69x elapsed=0:00:03.64    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4204.mp4' for writing
+frame=  361 fps= 84 q=28.0 size=N/A time=00:00:12.29 bitrate=N/A speed=2.86x elapsed=0:00:04.29    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4205.mp4' for writing
+frame=  487 fps= 98 q=28.0 size=N/A time=00:00:17.45 bitrate=N/A speed=3.52x elapsed=0:00:04.95    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4206.mp4' for writing
+frame=  528 fps= 94 q=28.0 size=N/A time=00:00:19.16 bitrate=N/A speed=3.42x elapsed=0:00:05.60    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4207.mp4' for writing
+frame=  595 fps= 95 q=28.0 size=N/A time=00:00:22.00 bitrate=N/A speed=3.52x elapsed=0:00:06.24    
+frame=  616 fps= 90 q=28.0 size=N/A time=00:00:22.83 bitrate=N/A speed=3.33x elapsed=0:00:06.85    
+frame=  647 fps= 88 q=28.0 size=N/A time=00:00:24.12 bitrate=N/A speed=3.28x elapsed=0:00:07.36    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4208.mp4' for writing
+frame=  688 fps= 86 q=28.0 size=N/A time=00:00:25.83 bitrate=N/A speed=3.24x elapsed=0:00:07.97    
+frame=  716 fps= 83 q=28.0 size=N/A time=00:00:27.00 bitrate=N/A speed=3.13x elapsed=0:00:08.63    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4209.mp4' for writing
+frame=  744 fps= 80 q=28.0 size=N/A time=00:00:28.16 bitrate=N/A speed=3.04x elapsed=0:00:09.26    
+frame=  788 fps= 80 q=28.0 size=N/A time=00:00:30.00 bitrate=N/A speed=3.03x elapsed=0:00:09.91    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4210.mp4' for writing
+frame=  828 fps= 79 q=28.0 size=N/A time=00:00:31.79 bitrate=N/A speed=3.02x elapsed=0:00:10.54    
+frame=  856 fps= 77 q=28.0 size=N/A time=00:00:32.83 bitrate=N/A speed=2.97x elapsed=0:00:11.06    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4211.mp4' for writing
+frame=  904 fps= 77 q=28.0 size=N/A time=00:00:34.83 bitrate=N/A speed=2.98x elapsed=0:00:11.70    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4212.mp4' for writing
+frame=  956 fps= 78 q=28.0 size=N/A time=00:00:37.00 bitrate=N/A speed=3.02x elapsed=0:00:12.26    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4213.mp4' for writing
+frame= 1036 fps= 80 q=28.0 size=N/A time=00:00:40.33 bitrate=N/A speed=3.13x elapsed=0:00:12.88    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4214.mp4' for writing
+frame= 1144 fps= 84 q=28.0 size=N/A time=00:00:44.83 bitrate=N/A speed=3.31x elapsed=0:00:13.54    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4215.mp4' for writing
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4216.mp4' for writing
+frame= 1240 fps= 88 q=28.0 size=N/A time=00:00:48.83 bitrate=N/A speed=3.45x elapsed=0:00:14.14    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4217.mp4' for writing
+frame= 1312 fps= 89 q=28.0 size=N/A time=00:00:51.83 bitrate=N/A speed= 3.5x elapsed=0:00:14.82    
+frame= 1368 fps= 89 q=28.0 size=N/A time=00:00:54.20 bitrate=N/A speed=3.53x elapsed=0:00:15.36    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4218.mp4' for writing
+frame= 1432 fps= 90 q=28.0 size=N/A time=00:00:56.83 bitrate=N/A speed=3.57x elapsed=0:00:15.91    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4219.mp4' for writing
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4220.mp4' for writing
+frame= 1528 fps= 92 q=28.0 size=N/A time=00:01:00.83 bitrate=N/A speed=3.67x elapsed=0:00:16.55    
+frame= 1571 fps= 91 q=28.0 size=N/A time=00:01:02.62 bitrate=N/A speed=3.64x elapsed=0:00:17.22    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4221.mp4' for writing
+frame= 1608 fps= 90 q=28.0 size=N/A time=00:01:04.16 bitrate=N/A speed=3.59x elapsed=0:00:17.86    
+frame= 1644 fps= 89 q=28.0 size=N/A time=00:01:05.66 bitrate=N/A speed=3.54x elapsed=0:00:18.55    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4222.mp4' for writing
+frame= 1679 fps= 87 q=28.0 size=N/A time=00:01:07.12 bitrate=N/A speed= 3.5x elapsed=0:00:19.20    
+frame= 1708 fps= 87 q=28.0 size=N/A time=00:01:08.33 bitrate=N/A speed=3.46x elapsed=0:00:19.73    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4223.mp4' for writing
+frame= 1732 fps= 86 q=28.0 size=N/A time=00:01:09.45 bitrate=N/A speed=3.43x elapsed=0:00:20.24    
+frame= 1748 fps= 84 q=28.0 size=N/A time=00:01:10.00 bitrate=N/A speed=3.36x elapsed=0:00:20.82    
+frame= 1788 fps= 83 q=28.0 size=N/A time=00:01:11.66 bitrate=N/A speed=3.34x elapsed=0:00:21.47    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4224.mp4' for writing
+frame= 1804 fps= 82 q=28.0 size=N/A time=00:01:12.33 bitrate=N/A speed=3.28x elapsed=0:00:22.03    
+frame= 1832 fps= 81 q=28.0 size=N/A time=00:01:13.50 bitrate=N/A speed=3.25x elapsed=0:00:22.59    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4225.mp4' for writing
+frame= 1876 fps= 81 q=28.0 size=N/A time=00:01:15.33 bitrate=N/A speed=3.24x elapsed=0:00:23.24    
+frame= 1900 fps= 80 q=28.0 size=N/A time=00:01:16.33 bitrate=N/A speed= 3.2x elapsed=0:00:23.87    
+frame= 1935 fps= 79 q=28.0 size=N/A time=00:01:17.83 bitrate=N/A speed=3.18x elapsed=0:00:24.47    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4226.mp4' for writing
+frame= 1996 fps= 79 q=28.0 size=N/A time=00:01:20.33 bitrate=N/A speed= 3.2x elapsed=0:00:25.11    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4227.mp4' for writing
+frame= 2077 fps= 81 q=28.0 size=N/A time=00:01:23.70 bitrate=N/A speed=3.25x elapsed=0:00:25.76    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4228.mp4' for writing
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4229.mp4' for writing
+frame= 2211 fps= 84 q=28.0 size=N/A time=00:01:29.29 bitrate=N/A speed=3.39x elapsed=0:00:26.36    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4230.mp4' for writing
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4231.mp4' for writing
+frame= 2372 fps= 88 q=28.0 size=N/A time=00:01:36.00 bitrate=N/A speed=3.56x elapsed=0:00:26.99    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4232.mp4' for writing
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4233.mp4' for writing
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4234.mp4' for writing
+frame= 2544 fps= 92 q=28.0 size=N/A time=00:01:43.16 bitrate=N/A speed=3.73x elapsed=0:00:27.64    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4235.mp4' for writing
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4236.mp4' for writing
+frame= 2683 fps= 95 q=28.0 size=N/A time=00:01:48.95 bitrate=N/A speed=3.85x elapsed=0:00:28.27    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4237.mp4' for writing
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4238.mp4' for writing
+frame= 2816 fps= 97 q=28.0 size=N/A time=00:01:54.50 bitrate=N/A speed=3.96x elapsed=0:00:28.91    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4239.mp4' for writing
+frame= 2932 fps= 99 q=28.0 size=N/A time=00:01:59.33 bitrate=N/A speed=4.04x elapsed=0:00:29.52    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4240.mp4' for writing
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4241.mp4' for writing
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4242.mp4' for writing
+frame= 3108 fps=103 q=28.0 size=N/A time=00:02:06.66 bitrate=N/A speed= 4.2x elapsed=0:00:30.17    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4243.mp4' for writing
+frame= 3228 fps=105 q=28.0 size=N/A time=00:02:11.66 bitrate=N/A speed=4.27x elapsed=0:00:30.80    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4244.mp4' for writing
+frame= 3308 fps=105 q=28.0 size=N/A time=00:02:15.00 bitrate=N/A speed= 4.3x elapsed=0:00:31.41    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4245.mp4' for writing
+frame= 3356 fps=105 q=28.0 size=N/A time=00:02:17.00 bitrate=N/A speed=4.27x elapsed=0:00:32.11    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4246.mp4' for writing
+frame= 3404 fps=104 q=28.0 size=N/A time=00:02:19.00 bitrate=N/A speed=4.26x elapsed=0:00:32.65    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4247.mp4' for writing
+frame= 3480 fps=105 q=28.0 size=N/A time=00:02:22.16 bitrate=N/A speed=4.27x elapsed=0:00:33.25    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4248.mp4' for writing
+frame= 3540 fps=105 q=28.0 size=N/A time=00:02:24.66 bitrate=N/A speed=4.27x elapsed=0:00:33.85    
+frame= 3587 fps=104 q=28.0 size=N/A time=00:02:26.62 bitrate=N/A speed=4.25x elapsed=0:00:34.50    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4249.mp4' for writing
+frame= 3644 fps=104 q=28.0 size=N/A time=00:02:29.00 bitrate=N/A speed=4.24x elapsed=0:00:35.15    
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4250.mp4' for writing
+
+
+[q] command received. Exiting.
+
+[hls @ 0x912810280] Opening '/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4251.mp4' for writing
+[out#0/hls @ 0x9128e0000] video:2290KiB audio:2436KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: unknown
+frame= 3741 fps=104 q=-1.0 Lsize=N/A time=00:02:33.04 bitrate=N/A speed=4.25x elapsed=0:00:35.99    
+[libx264 @ 0x91382c380] frame I:52    Avg QP: 8.78  size:  9870
+[libx264 @ 0x91382c380] frame P:935   Avg QP:13.56  size:  1145
+[libx264 @ 0x91382c380] frame B:2754  Avg QP:15.76  size:   276
+[libx264 @ 0x91382c380] consecutive B-frames:  1.4%  0.0%  4.1% 94.5%
+[libx264 @ 0x91382c380] mb I  I16..4: 90.6%  3.6%  5.8%
+[libx264 @ 0x91382c380] mb P  I16..4:  5.1%  0.4%  0.3%  P16..4:  3.5%  0.8%  0.1%  0.0%  0.0%    skip:89.8%
+[libx264 @ 0x91382c380] mb B  I16..4:  0.9%  0.0%  0.0%  B16..8:  1.3%  0.1%  0.0%  direct: 1.4%  skip:96.2%  L0:52.6% L1:47.0% BI: 0.4%
+[libx264 @ 0x91382c380] 8x8 transform intra:4.4% inter:42.7%
+[libx264 @ 0x91382c380] coded y,uvDC,uvAC intra: 3.9% 27.5% 12.5% inter: 0.0% 2.0% 0.1%
+[libx264 @ 0x91382c380] i16 v,h,dc,p: 85% 10%  1%  4%
+[libx264 @ 0x91382c380] i8 v,h,dc,ddl,ddr,vr,hd,vl,hu: 42% 14% 26%  3%  1%  3%  1%  5%  6%
+[libx264 @ 0x91382c380] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu: 26% 42% 27%  1%  1%  1%  0%  1%  1%
+[libx264 @ 0x91382c380] i8c dc,h,v,p: 29% 15% 44% 11%
+[libx264 @ 0x91382c380] Weighted P-Frames: Y:0.0% UV:0.0%
+[libx264 @ 0x91382c380] kb/s:120.33{"Protocol":0,"Id":"a15deeeeb693bf2e879cea1f0fd9aece","Path":"/tmp/u5-9-films/Test Pattern Two (2026).mkv","EncoderPath":null,"EncoderProtocol":null,"Type":0,"Container":"mkv","Size":115261393,"Name":"Test Pattern Two (2026)","IsRemote":false,"ETag":"35c53360e37fc18a02725b350bdc4693","RunTimeTicks":12000000000,"ReadAtNativeFramerate":false,"IgnoreDts":false,"IgnoreIndex":false,"GenPtsInput":false,"SupportsTranscoding":true,"SupportsDirectStream":true,"SupportsDirectPlay":true,"IsInfiniteStream":false,"UseMostCompatibleTranscodingProfile":false,"RequiresOpening":false,"OpenToken":null,"RequiresClosing":false,"LiveStreamId":null,"BufferMs":null,"RequiresLooping":false,"SupportsProbing":true,"VideoType":0,"IsoType":null,"Video3DFormat":null,"MediaStreams":[{"Codec":"mpeg2video","CodecTag":null,"Language":null,"ColorRange":null,"ColorSpace":null,"ColorTransfer":null,"ColorPrimaries":null,"DvVersionMajor":null,"DvVersionMinor":null,"DvProfile":null,"DvLevel":null,"RpuPresentFlag":null,"ElPresentFlag":null,"BlPresentFlag":null,"DvBlSignalCompatibilityId":null,"Rotation":null,"Comment":null,"TimeBase":"1/1000","CodecTimeBase":null,"Title":null,"Hdr10PlusPresentFlag":null,"VideoRange":1,"VideoRangeType":1,"VideoDoViTitle":null,"AudioSpatialFormat":0,"LocalizedUndefined":null,"LocalizedDefault":null,"LocalizedForced":null,"LocalizedExternal":null,"LocalizedHearingImpaired":null,"LocalizedLanguage":null,"LocalizedOriginal":null,"DisplayTitle":"720p MPEG2VIDEO SDR","NalLengthSize":null,"IsInterlaced":false,"IsAVC":null,"ChannelLayout":null,"BitRate":576409,"BitDepth":8,"RefFrames":1,"PacketLength":null,"Channels":null,"SampleRate":null,"IsDefault":false,"IsForced":false,"IsHearingImpaired":false,"IsOriginal":false,"Height":720,"Width":1280,"AverageFrameRate":24,"RealFrameRate":24,"ReferenceFrameRate":24,"Profile":"Main","Type":1,"AspectRatio":"16:9","Index":0,"Score":null,"IsExternal":false,"DeliveryMethod":null,"DeliveryUrl":null,"IsExternalUrl":null,"IsTextSubtitleStream":false,"SupportsExternalStream":false,"Path":null,"PixelFormat":"yuv420p","Level":6,"IsAnamorphic":false},{"Codec":"mp2","CodecTag":null,"Language":null,"ColorRange":null,"ColorSpace":null,"ColorTransfer":null,"ColorPrimaries":null,"DvVersionMajor":null,"DvVersionMinor":null,"DvProfile":null,"DvLevel":null,"RpuPresentFlag":null,"ElPresentFlag":null,"BlPresentFlag":null,"DvBlSignalCompatibilityId":null,"Rotation":null,"Comment":null,"TimeBase":"1/1000","CodecTimeBase":null,"Title":null,"Hdr10PlusPresentFlag":null,"VideoRange":0,"VideoRangeType":0,"VideoDoViTitle":null,"AudioSpatialFormat":0,"LocalizedUndefined":null,"LocalizedDefault":"Default","LocalizedForced":null,"LocalizedExternal":"External","LocalizedHearingImpaired":null,"LocalizedLanguage":null,"LocalizedOriginal":"Original","DisplayTitle":"MP2 - Mono","NalLengthSize":null,"IsInterlaced":false,"IsAVC":null,"ChannelLayout":"mono","BitRate":192000,"BitDepth":null,"RefFrames":null,"PacketLength":null,"Channels":1,"SampleRate":48000,"IsDefault":false,"IsForced":false,"IsHearingImpaired":false,"IsOriginal":false,"Height":null,"Width":null,"AverageFrameRate":null,"RealFrameRate":null,"ReferenceFrameRate":null,"Profile":null,"Type":0,"AspectRatio":null,"Index":1,"Score":null,"IsExternal":false,"DeliveryMethod":null,"DeliveryUrl":null,"IsExternalUrl":null,"IsTextSubtitleStream":false,"SupportsExternalStream":false,"Path":null,"PixelFormat":null,"Level":null,"IsAnamorphic":null}],"MediaAttachments":[],"Formats":[],"Bitrate":768409,"FallbackMaxStreamingBitrate":null,"Timestamp":null,"RequiredHttpHeaders":{},"TranscodingUrl":null,"TranscodingSubProtocol":0,"TranscodingContainer":null,"AnalyzeDurationMs":null,"DefaultAudioStreamIndex":null,"DefaultSubtitleStreamIndex":null,"HasSegments":false}
+
+/Applications/Jellyfin.app/Contents/MacOS/ffmpeg -analyzeduration 200M -probesize 1G  -i file:"/tmp/u5-9-films/Test Pattern Two (2026).mkv" -map_metadata -1 -map_chapters -1 -threads 0 -map 0:0 -map 0:1 -map -0:s -codec:v:0 libx264 -preset veryfast -crf 23 -maxrate 3602555 -bufsize 7205110 -profile:v:0 high -level 51 -x264opts:0 subme=0:me_range=16:rc_lookahead=10:me=hex:open_gop=0 -force_key_frames:0 "expr:gte(t,n_forced*3)" -sc_threshold:v:0 0 -vf "setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709,scale=trunc(min(max(iw\,ih*a)\,min(1280\,720*a))/2)*2:trunc(min(max(iw/a\,ih)\,min(1280/a\,720))/2)*2,format=yuv420p" -codec:a:0 aac_at -ac 1 -ab 128000 -copyts -avoid_negative_ts disabled -max_muxing_queue_size 2048 -f hls -max_delay 5000000 -hls_time 3 -hls_segment_type fmp4 -hls_fmp4_init_filename "9348a68d6f8960f95d655c0b7a4567c8-1.mp4" -start_number 0 -hls_segment_filename "/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8%d.mp4" -hls_playlist_type vod -hls_list_size 0 -hls_segment_options movflags=+frag_discont+skip_sidx -y "/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8.m3u8"
+
+
+ffmpeg version 8.1.2-Jellyfin Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 21.0.0 (clang-2100.1.1.101)
+  configuration: --prefix=/ffbuild/prefix --disable-shared --enable-static --pkg-config-flags=--static --enable-pthreads --cc=clang --host-cflags='-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/opt/ffbuild/prefix/include' --host-ldflags='-L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib -L/opt/ffbuild/prefix/lib' --extra-version=Jellyfin --extra-cflags=-I/opt/ffbuild/prefix/include --extra-cxxflags= --extra-ldflags=-L/opt/ffbuild/prefix/lib --extra-ldexeflags= --extra-libs= --enable-gpl --enable-version3 --disable-unstable --disable-ffplay --disable-debug --disable-doc --disable-sdl2 --enable-lto=thin --disable-unstable --disable-libjack --disable-indev=jack --disable-libxcb --disable-xlib --enable-neon --enable-runtime-cpudetect --enable-audiotoolbox --enable-videotoolbox --enable-iconv --enable-zlib --enable-libfreetype --enable-libfribidi --enable-gmp --enable-libxml2 --enable-openssl --enable-lzma --enable-fontconfig --enable-libharfbuzz --enable-libvorbis --enable-opencl --enable-chromaprint --enable-libdav1d --disable-libfdk-aac --enable-libass --enable-libbluray --enable-libmp3lame --enable-libopus --disable-libplacebo --enable-libtheora --enable-libvpx --enable-libwebp --enable-libopenmpt --enable-libsrt --enable-libsvtav1 --enable-libx264 --enable-libx265 --enable-libzimg --enable-libzvbi
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, matroska,webm, from 'file:/tmp/u5-9-films/Test Pattern Two (2026).mkv':
+  Metadata:
+    ENCODER         : Lavf62.12.102
+  Duration: 00:20:00.00, start: 0.000000, bitrate: 768 kb/s
+  Stream #0:0: Video: mpeg2video (Main), yuv420p(tv, progressive), 1280x720 [SAR 1:1 DAR 16:9], 24 fps, 24 tbr, 1k tbn
+    Metadata:
+      ENCODER         : Lavc62.28.102 mpeg2video
+      DURATION        : 00:20:00.000000000
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 1130496 vbv_delay: N/A
+  Stream #0:1: Audio: mp2, 48000 Hz, mono, s16p, 192 kb/s
+    Metadata:
+      ENCODER         : Lavc62.28.102 mp2
+      DURATION        : 00:20:00.000000000
+Stream mapping:
+  Stream #0:0 -> #0:0 (mpeg2video (native) -> h264 (libx264))
+  Stream #0:1 -> #0:1 (mp2 (native) -> aac (aac_at))
+Press [q] to stop, [?] for help
+[libx264 @ 0xb5a840380] using SAR=1/1
+[libx264 @ 0xb5a840380] using cpu capabilities: ARMv8 NEON DotProd I8MM
+[libx264 @ 0xb5a840380] profile High, level 5.1, 4:2:0, 8-bit
+[libx264 @ 0xb5a840380] 264 - core 165 - H.264/MPEG-4 AVC codec - Copyleft 2003-2025 - http://www.videolan.org/x264.html - options: cabac=1 ref=1 deblock=1:0:0 analyse=0x3:0x113 me=hex subme=0 psy=1 psy_rd=1.00:0.00 mixed_ref=0 me_range=16 chroma_me=1 trellis=0 8x8dct=1 cqm=0 deadzone=21,11 fast_pskip=1 chroma_qp_offset=0 threads=18 lookahead_threads=3 sliced_threads=0 nr=0 decimate=1 interlaced=0 bluray_compat=0 constrained_intra=0 bframes=3 b_pyramid=2 b_adapt=1 b_bias=0 direct=1 weightb=1 open_gop=0 weightp=1 keyint=250 keyint_min=24 scenecut=0 intra_refresh=0 rc_lookahead=10 rc=crf mbtree=1 crf=23.0 qcomp=0.60 qpmin=0 qpmax=69 qpstep=4 vbv_maxrate=3602 vbv_bufsize=7205 crf_max=0.0 nal_hrd=none filler=0 ip_ratio=1.40 aq=1:1.00
+[hls @ 0xb5a80c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8-1.mp4' for writing
+Output #0, hls, to '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8.m3u8':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: h264, yuv420p(tv, bt709, progressive), 1280x720 [SAR 1:1 DAR 16:9], q=2-31, 24 fps, 12288 tbn
+    Metadata:
+      encoder         : Lavc62.28.102 libx264
+    Side data:
+      CPB properties: bitrate max/min/avg: 3602000/0/0 buffer size: 7205000 vbv_delay: N/A
+  Stream #0:1: Audio: aac, 48000 Hz, mono, s16, 128 kb/s
+    Metadata:
+      encoder         : Lavc62.28.102 aac_at
+[hls @ 0xb5a80c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c80.mp4' for writing
+frame=   80 fps=0.0 q=28.0 size=N/A time=00:00:00.00 bitrate=N/A speed=   0x elapsed=0:00:00.59    
+[hls @ 0xb5a80c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c81.mp4' for writing
+frame=  163 fps=131 q=28.0 size=N/A time=00:00:03.50 bitrate=N/A speed=2.82x elapsed=0:00:01.24    
+[hls @ 0xb5a80c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c82.mp4' for writing
+
+
+[q] command received. Exiting.
+
+[hls @ 0xb5a80c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c83.mp4' for writing
+[out#0/hls @ 0xb5b454300] video:174KiB audio:184KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: unknown
+frame=  283 fps=143 q=-1.0 Lsize=N/A time=00:00:08.45 bitrate=N/A speed=4.26x elapsed=0:00:01.98    
+[libx264 @ 0xb5a840380] frame I:4     Avg QP: 9.29  size:  9339
+[libx264 @ 0xb5a840380] frame P:71    Avg QP:14.55  size:  1168
+[libx264 @ 0xb5a840380] frame B:208   Avg QP:15.51  size:   276
+[libx264 @ 0xb5a840380] consecutive B-frames:  1.4%  0.7%  3.2% 94.7%
+[libx264 @ 0xb5a840380] mb I  I16..4: 91.2%  3.6%  5.1%
+[libx264 @ 0xb5a840380] mb P  I16..4:  5.1%  0.4%  0.3%  P16..4:  3.4%  0.9%  0.1%  0.0%  0.0%    skip:89.9%
+[libx264 @ 0xb5a840380] mb B  I16..4:  0.9%  0.0%  0.0%  B16..8:  1.3%  0.1%  0.0%  direct: 1.4%  skip:96.3%  L0:52.7% L1:46.9% BI: 0.4%
+[libx264 @ 0xb5a840380] 8x8 transform intra:4.4% inter:39.7%
+[libx264 @ 0xb5a840380] coded y,uvDC,uvAC intra: 3.8% 27.3% 12.5% inter: 0.0% 2.0% 0.1%
+[libx264 @ 0xb5a840380] i16 v,h,dc,p: 85% 10%  1%  4%
+[libx264 @ 0xb5a840380] i8 v,h,dc,ddl,ddr,vr,hd,vl,hu: 43% 14% 25%  3%  1%  3%  1%  5%  5%
+[libx264 @ 0xb5a840380] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu: 25% 43% 27%  1%  1%  1%  0%  1%  1%
+[libx264 @ 0xb5a840380] i8c dc,h,v,p: 31% 15% 43% 11%
+[libx264 @ 0xb5a840380] Weighted P-Frames: Y:0.0% UV:0.0%
+[libx264 @ 0xb5a840380] kb/s:120.48{"Protocol":0,"Id":"a15deeeeb693bf2e879cea1f0fd9aece","Path":"/tmp/u5-9-films/Test Pattern Two (2026).mkv","EncoderPath":null,"EncoderProtocol":null,"Type":0,"Container":"mkv","Size":115261393,"Name":"Test Pattern Two (2026)","IsRemote":false,"ETag":"35c53360e37fc18a02725b350bdc4693","RunTimeTicks":12000000000,"ReadAtNativeFramerate":false,"IgnoreDts":false,"IgnoreIndex":false,"GenPtsInput":false,"SupportsTranscoding":true,"SupportsDirectStream":true,"SupportsDirectPlay":true,"IsInfiniteStream":false,"UseMostCompatibleTranscodingProfile":false,"RequiresOpening":false,"OpenToken":null,"RequiresClosing":false,"LiveStreamId":null,"BufferMs":null,"RequiresLooping":false,"SupportsProbing":true,"VideoType":0,"IsoType":null,"Video3DFormat":null,"MediaStreams":[{"Codec":"mpeg2video","CodecTag":null,"Language":null,"ColorRange":null,"ColorSpace":null,"ColorTransfer":null,"ColorPrimaries":null,"DvVersionMajor":null,"DvVersionMinor":null,"DvProfile":null,"DvLevel":null,"RpuPresentFlag":null,"ElPresentFlag":null,"BlPresentFlag":null,"DvBlSignalCompatibilityId":null,"Rotation":null,"Comment":null,"TimeBase":"1/1000","CodecTimeBase":null,"Title":null,"Hdr10PlusPresentFlag":null,"VideoRange":1,"VideoRangeType":1,"VideoDoViTitle":null,"AudioSpatialFormat":0,"LocalizedUndefined":null,"LocalizedDefault":null,"LocalizedForced":null,"LocalizedExternal":null,"LocalizedHearingImpaired":null,"LocalizedLanguage":null,"LocalizedOriginal":null,"DisplayTitle":"720p MPEG2VIDEO SDR","NalLengthSize":null,"IsInterlaced":false,"IsAVC":null,"ChannelLayout":null,"BitRate":576409,"BitDepth":8,"RefFrames":1,"PacketLength":null,"Channels":null,"SampleRate":null,"IsDefault":false,"IsForced":false,"IsHearingImpaired":false,"IsOriginal":false,"Height":720,"Width":1280,"AverageFrameRate":24,"RealFrameRate":24,"ReferenceFrameRate":24,"Profile":"Main","Type":1,"AspectRatio":"16:9","Index":0,"Score":null,"IsExternal":false,"DeliveryMethod":null,"DeliveryUrl":null,"IsExternalUrl":null,"IsTextSubtitleStream":false,"SupportsExternalStream":false,"Path":null,"PixelFormat":"yuv420p","Level":6,"IsAnamorphic":false},{"Codec":"mp2","CodecTag":null,"Language":null,"ColorRange":null,"ColorSpace":null,"ColorTransfer":null,"ColorPrimaries":null,"DvVersionMajor":null,"DvVersionMinor":null,"DvProfile":null,"DvLevel":null,"RpuPresentFlag":null,"ElPresentFlag":null,"BlPresentFlag":null,"DvBlSignalCompatibilityId":null,"Rotation":null,"Comment":null,"TimeBase":"1/1000","CodecTimeBase":null,"Title":null,"Hdr10PlusPresentFlag":null,"VideoRange":0,"VideoRangeType":0,"VideoDoViTitle":null,"AudioSpatialFormat":0,"LocalizedUndefined":null,"LocalizedDefault":"Default","LocalizedForced":null,"LocalizedExternal":"External","LocalizedHearingImpaired":null,"LocalizedLanguage":null,"LocalizedOriginal":"Original","DisplayTitle":"MP2 - Mono","NalLengthSize":null,"IsInterlaced":false,"IsAVC":null,"ChannelLayout":"mono","BitRate":192000,"BitDepth":null,"RefFrames":null,"PacketLength":null,"Channels":1,"SampleRate":48000,"IsDefault":false,"IsForced":false,"IsHearingImpaired":false,"IsOriginal":false,"Height":null,"Width":null,"AverageFrameRate":null,"RealFrameRate":null,"ReferenceFrameRate":null,"Profile":null,"Type":0,"AspectRatio":null,"Index":1,"Score":null,"IsExternal":false,"DeliveryMethod":null,"DeliveryUrl":null,"IsExternalUrl":null,"IsTextSubtitleStream":false,"SupportsExternalStream":false,"Path":null,"PixelFormat":null,"Level":null,"IsAnamorphic":null}],"MediaAttachments":[],"Formats":[],"Bitrate":768409,"FallbackMaxStreamingBitrate":null,"Timestamp":null,"RequiredHttpHeaders":{},"TranscodingUrl":null,"TranscodingSubProtocol":0,"TranscodingContainer":null,"AnalyzeDurationMs":null,"DefaultAudioStreamIndex":null,"DefaultSubtitleStreamIndex":null,"HasSegments":false}
+
+/Applications/Jellyfin.app/Contents/MacOS/ffmpeg -analyzeduration 200M -probesize 1G -ss 00:10:33.000  -i file:"/tmp/u5-9-films/Test Pattern Two (2026).mkv" -map_metadata -1 -map_chapters -1 -threads 0 -map 0:0 -map 0:1 -map -0:s -codec:v:0 libx264 -preset veryfast -crf 23 -maxrate 3602555 -bufsize 7205110 -profile:v:0 high -level 51 -x264opts:0 subme=0:me_range=16:rc_lookahead=10:me=hex:open_gop=0 -force_key_frames:0 "expr:gte(t,n_forced*3)" -sc_threshold:v:0 0 -vf "setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709,scale=trunc(min(max(iw\,ih*a)\,min(1280\,720*a))/2)*2:trunc(min(max(iw/a\,ih)\,min(1280/a\,720))/2)*2,format=yuv420p" -codec:a:0 aac_at -ac 1 -ab 128000 -copyts -avoid_negative_ts disabled -max_muxing_queue_size 2048 -f hls -max_delay 5000000 -hls_time 3 -hls_segment_type fmp4 -hls_fmp4_init_filename "9348a68d6f8960f95d655c0b7a4567c8-1.mp4" -start_number 211 -hls_segment_filename "/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8%d.mp4" -hls_playlist_type vod -hls_list_size 0 -hls_segment_options movflags=+frag_discont+skip_sidx -y "/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8.m3u8"
+
+
+ffmpeg version 8.1.2-Jellyfin Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 21.0.0 (clang-2100.1.1.101)
+  configuration: --prefix=/ffbuild/prefix --disable-shared --enable-static --pkg-config-flags=--static --enable-pthreads --cc=clang --host-cflags='-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/opt/ffbuild/prefix/include' --host-ldflags='-L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib -L/opt/ffbuild/prefix/lib' --extra-version=Jellyfin --extra-cflags=-I/opt/ffbuild/prefix/include --extra-cxxflags= --extra-ldflags=-L/opt/ffbuild/prefix/lib --extra-ldexeflags= --extra-libs= --enable-gpl --enable-version3 --disable-unstable --disable-ffplay --disable-debug --disable-doc --disable-sdl2 --enable-lto=thin --disable-unstable --disable-libjack --disable-indev=jack --disable-libxcb --disable-xlib --enable-neon --enable-runtime-cpudetect --enable-audiotoolbox --enable-videotoolbox --enable-iconv --enable-zlib --enable-libfreetype --enable-libfribidi --enable-gmp --enable-libxml2 --enable-openssl --enable-lzma --enable-fontconfig --enable-libharfbuzz --enable-libvorbis --enable-opencl --enable-chromaprint --enable-libdav1d --disable-libfdk-aac --enable-libass --enable-libbluray --enable-libmp3lame --enable-libopus --disable-libplacebo --enable-libtheora --enable-libvpx --enable-libwebp --enable-libopenmpt --enable-libsrt --enable-libsvtav1 --enable-libx264 --enable-libx265 --enable-libzimg --enable-libzvbi
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, matroska,webm, from 'file:/tmp/u5-9-films/Test Pattern Two (2026).mkv':
+  Metadata:
+    ENCODER         : Lavf62.12.102
+  Duration: 00:20:00.00, start: 0.000000, bitrate: 768 kb/s
+  Stream #0:0: Video: mpeg2video (Main), yuv420p(tv, progressive), 1280x720 [SAR 1:1 DAR 16:9], 24 fps, 24 tbr, 1k tbn
+    Metadata:
+      ENCODER         : Lavc62.28.102 mpeg2video
+      DURATION        : 00:20:00.000000000
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 1130496 vbv_delay: N/A
+  Stream #0:1: Audio: mp2, 48000 Hz, mono, s16p, 192 kb/s
+    Metadata:
+      ENCODER         : Lavc62.28.102 mp2
+      DURATION        : 00:20:00.000000000
+Stream mapping:
+  Stream #0:0 -> #0:0 (mpeg2video (native) -> h264 (libx264))
+  Stream #0:1 -> #0:1 (mp2 (native) -> aac (aac_at))
+Press [q] to stop, [?] for help
+[libx264 @ 0x8ad874380] using SAR=1/1
+[libx264 @ 0x8ad874380] using cpu capabilities: ARMv8 NEON DotProd I8MM
+[libx264 @ 0x8ad874380] profile High, level 5.1, 4:2:0, 8-bit
+[libx264 @ 0x8ad874380] 264 - core 165 - H.264/MPEG-4 AVC codec - Copyleft 2003-2025 - http://www.videolan.org/x264.html - options: cabac=1 ref=1 deblock=1:0:0 analyse=0x3:0x113 me=hex subme=0 psy=1 psy_rd=1.00:0.00 mixed_ref=0 me_range=16 chroma_me=1 trellis=0 8x8dct=1 cqm=0 deadzone=21,11 fast_pskip=1 chroma_qp_offset=0 threads=18 lookahead_threads=3 sliced_threads=0 nr=0 decimate=1 interlaced=0 bluray_compat=0 constrained_intra=0 bframes=3 b_pyramid=2 b_adapt=1 b_bias=0 direct=1 weightb=1 open_gop=0 weightp=1 keyint=250 keyint_min=24 scenecut=0 intra_refresh=0 rc_lookahead=10 rc=crf mbtree=1 crf=23.0 qcomp=0.60 qpmin=0 qpmax=69 qpstep=4 vbv_maxrate=3602 vbv_bufsize=7205 crf_max=0.0 nal_hrd=none filler=0 ip_ratio=1.40 aq=1:1.00
+[hls @ 0x8ac42c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8-1.mp4' for writing
+Output #0, hls, to '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8.m3u8':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: h264, yuv420p(tv, bt709, progressive), 1280x720 [SAR 1:1 DAR 16:9], q=2-31, 24 fps, 12288 tbn
+    Metadata:
+      encoder         : Lavc62.28.102 libx264
+    Side data:
+      CPB properties: bitrate max/min/avg: 3602000/0/0 buffer size: 7205000 vbv_delay: N/A
+  Stream #0:1: Audio: aac, 48000 Hz, mono, s16, 128 kb/s
+    Metadata:
+      encoder         : Lavc62.28.102 aac_at
+[hls @ 0x8ac42c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8211.mp4' for writing
+frame=   92 fps=0.0 q=28.0 size=N/A time=00:00:00.00 bitrate=N/A speed=   0x elapsed=0:00:00.51    
+[hls @ 0x8ac42c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8212.mp4' for writing
+frame=  208 fps=205 q=28.0 size=N/A time=00:00:04.83 bitrate=N/A speed=4.76x elapsed=0:00:01.01    
+[hls @ 0x8ac42c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8213.mp4' for writing
+[hls @ 0x8ac42c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8214.mp4' for writing
+frame=  327 fps=196 q=28.0 size=N/A time=00:00:09.79 bitrate=N/A speed=5.88x elapsed=0:00:01.66    
+[hls @ 0x8ac42c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8215.mp4' for writing
+frame=  424 fps=195 q=28.0 size=N/A time=00:00:13.83 bitrate=N/A speed=6.35x elapsed=0:00:02.17    
+[hls @ 0x8ac42c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8216.mp4' for writing
+[hls @ 0x8ac42c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8217.mp4' for writing
+frame=  519 fps=183 q=28.0 size=N/A time=00:00:17.79 bitrate=N/A speed=6.29x elapsed=0:00:02.82    
+[hls @ 0x8ac42c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8218.mp4' for writing
+frame=  644 fps=186 q=28.0 size=N/A time=00:00:23.00 bitrate=N/A speed=6.63x elapsed=0:00:03.46    
+[hls @ 0x8ac42c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8219.mp4' for writing
+frame=  720 fps=175 q=28.0 size=N/A time=00:00:26.16 bitrate=N/A speed=6.35x elapsed=0:00:04.11    
+[hls @ 0x8ac42c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8220.mp4' for writing
+[hls @ 0x8ac42c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8221.mp4' for writing
+frame=  823 fps=172 q=28.0 size=N/A time=00:00:30.45 bitrate=N/A speed=6.38x elapsed=0:00:04.77    
+[hls @ 0x8ac42c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8222.mp4' for writing
+frame=  892 fps=165 q=28.0 size=N/A time=00:00:33.33 bitrate=N/A speed=6.15x elapsed=0:00:05.42    
+frame=  936 fps=155 q=28.0 size=N/A time=00:00:35.16 bitrate=N/A speed=5.81x elapsed=0:00:06.05    
+[hls @ 0x8ac42c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8223.mp4' for writing
+frame=  992 fps=148 q=25.0 size=N/A time=00:00:37.50 bitrate=N/A speed=5.59x elapsed=0:00:06.70    
+[hls @ 0x8ac42c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8224.mp4' for writing
+frame= 1027 fps=140 q=28.0 size=N/A time=00:00:38.95 bitrate=N/A speed=5.31x elapsed=0:00:07.33    
+frame= 1072 fps=134 q=28.0 size=N/A time=00:00:40.83 bitrate=N/A speed=5.11x elapsed=0:00:07.99    
+[hls @ 0x8ac42c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8225.mp4' for writing
+
+
+[q] command received. Exiting.
+
+[hls @ 0x8ac42c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8226.mp4' for writing
+[hls @ 0x8ac42c280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8227.mp4' for writing
+[out#0/hls @ 0x8ac494000] video:723KiB audio:761KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: unknown
+frame= 1169 fps=132 q=-1.0 Lsize=N/A time=00:00:44.87 bitrate=N/A speed=5.07x elapsed=0:00:08.84    
+[libx264 @ 0x8ad874380] frame I:17    Avg QP: 8.89  size:  9872
+[libx264 @ 0x8ad874380] frame P:292   Avg QP:13.62  size:  1143
+[libx264 @ 0x8ad874380] frame B:860   Avg QP:15.80  size:   277
+[libx264 @ 0x8ad874380] consecutive B-frames:  1.5%  0.0%  4.1% 94.4%
+[libx264 @ 0x8ad874380] mb I  I16..4: 90.5%  3.6%  5.9%
+[libx264 @ 0x8ad874380] mb P  I16..4:  5.1%  0.4%  0.3%  P16..4:  3.5%  0.8%  0.1%  0.0%  0.0%    skip:89.9%
+[libx264 @ 0x8ad874380] mb B  I16..4:  0.9%  0.0%  0.0%  B16..8:  1.3%  0.1%  0.0%  direct: 1.4%  skip:96.2%  L0:52.3% L1:47.4% BI: 0.4%
+[libx264 @ 0x8ad874380] 8x8 transform intra:4.4% inter:41.8%
+[libx264 @ 0x8ad874380] coded y,uvDC,uvAC intra: 3.9% 27.3% 12.5% inter: 0.0% 2.0% 0.1%
+[libx264 @ 0x8ad874380] i16 v,h,dc,p: 85% 10%  1%  4%
+[libx264 @ 0x8ad874380] i8 v,h,dc,ddl,ddr,vr,hd,vl,hu: 43% 14% 26%  3%  1%  3%  1%  5%  6%
+[libx264 @ 0x8ad874380] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu: 27% 42% 27%  1%  1%  1%  0%  1%  1%
+[libx264 @ 0x8ad874380] i8c dc,h,v,p: 30% 15% 43% 11%
+[libx264 @ 0x8ad874380] Weighted P-Frames: Y:0.0% UV:0.0%
+[libx264 @ 0x8ad874380] kb/s:121.47{"Protocol":0,"Id":"a15deeeeb693bf2e879cea1f0fd9aece","Path":"/tmp/u5-9-films/Test Pattern Two (2026).mkv","EncoderPath":null,"EncoderProtocol":null,"Type":0,"Container":"mkv","Size":115261393,"Name":"Test Pattern Two (2026)","IsRemote":false,"ETag":"35c53360e37fc18a02725b350bdc4693","RunTimeTicks":12000000000,"ReadAtNativeFramerate":false,"IgnoreDts":false,"IgnoreIndex":false,"GenPtsInput":false,"SupportsTranscoding":true,"SupportsDirectStream":true,"SupportsDirectPlay":true,"IsInfiniteStream":false,"UseMostCompatibleTranscodingProfile":false,"RequiresOpening":false,"OpenToken":null,"RequiresClosing":false,"LiveStreamId":null,"BufferMs":null,"RequiresLooping":false,"SupportsProbing":true,"VideoType":0,"IsoType":null,"Video3DFormat":null,"MediaStreams":[{"Codec":"mpeg2video","CodecTag":null,"Language":null,"ColorRange":null,"ColorSpace":null,"ColorTransfer":null,"ColorPrimaries":null,"DvVersionMajor":null,"DvVersionMinor":null,"DvProfile":null,"DvLevel":null,"RpuPresentFlag":null,"ElPresentFlag":null,"BlPresentFlag":null,"DvBlSignalCompatibilityId":null,"Rotation":null,"Comment":null,"TimeBase":"1/1000","CodecTimeBase":null,"Title":null,"Hdr10PlusPresentFlag":null,"VideoRange":1,"VideoRangeType":1,"VideoDoViTitle":null,"AudioSpatialFormat":0,"LocalizedUndefined":null,"LocalizedDefault":null,"LocalizedForced":null,"LocalizedExternal":null,"LocalizedHearingImpaired":null,"LocalizedLanguage":null,"LocalizedOriginal":null,"DisplayTitle":"720p MPEG2VIDEO SDR","NalLengthSize":null,"IsInterlaced":false,"IsAVC":null,"ChannelLayout":null,"BitRate":576409,"BitDepth":8,"RefFrames":1,"PacketLength":null,"Channels":null,"SampleRate":null,"IsDefault":false,"IsForced":false,"IsHearingImpaired":false,"IsOriginal":false,"Height":720,"Width":1280,"AverageFrameRate":24,"RealFrameRate":24,"ReferenceFrameRate":24,"Profile":"Main","Type":1,"AspectRatio":"16:9","Index":0,"Score":null,"IsExternal":false,"DeliveryMethod":null,"DeliveryUrl":null,"IsExternalUrl":null,"IsTextSubtitleStream":false,"SupportsExternalStream":false,"Path":null,"PixelFormat":"yuv420p","Level":6,"IsAnamorphic":false},{"Codec":"mp2","CodecTag":null,"Language":null,"ColorRange":null,"ColorSpace":null,"ColorTransfer":null,"ColorPrimaries":null,"DvVersionMajor":null,"DvVersionMinor":null,"DvProfile":null,"DvLevel":null,"RpuPresentFlag":null,"ElPresentFlag":null,"BlPresentFlag":null,"DvBlSignalCompatibilityId":null,"Rotation":null,"Comment":null,"TimeBase":"1/1000","CodecTimeBase":null,"Title":null,"Hdr10PlusPresentFlag":null,"VideoRange":0,"VideoRangeType":0,"VideoDoViTitle":null,"AudioSpatialFormat":0,"LocalizedUndefined":null,"LocalizedDefault":"Default","LocalizedForced":null,"LocalizedExternal":"External","LocalizedHearingImpaired":null,"LocalizedLanguage":null,"LocalizedOriginal":"Original","DisplayTitle":"MP2 - Mono","NalLengthSize":null,"IsInterlaced":false,"IsAVC":null,"ChannelLayout":"mono","BitRate":192000,"BitDepth":null,"RefFrames":null,"PacketLength":null,"Channels":1,"SampleRate":48000,"IsDefault":false,"IsForced":false,"IsHearingImpaired":false,"IsOriginal":false,"Height":null,"Width":null,"AverageFrameRate":null,"RealFrameRate":null,"ReferenceFrameRate":null,"Profile":null,"Type":0,"AspectRatio":null,"Index":1,"Score":null,"IsExternal":false,"DeliveryMethod":null,"DeliveryUrl":null,"IsExternalUrl":null,"IsTextSubtitleStream":false,"SupportsExternalStream":false,"Path":null,"PixelFormat":null,"Level":null,"IsAnamorphic":null}],"MediaAttachments":[],"Formats":[],"Bitrate":768409,"FallbackMaxStreamingBitrate":null,"Timestamp":null,"RequiredHttpHeaders":{},"TranscodingUrl":null,"TranscodingSubProtocol":0,"TranscodingContainer":null,"AnalyzeDurationMs":null,"DefaultAudioStreamIndex":null,"DefaultSubtitleStreamIndex":null,"HasSegments":false}
+
+/Applications/Jellyfin.app/Contents/MacOS/ffmpeg -analyzeduration 200M -probesize 1G -ss 00:10:00.000  -i file:"/tmp/u5-9-films/Test Pattern Two (2026).mkv" -map_metadata -1 -map_chapters -1 -threads 0 -map 0:0 -map 0:1 -map -0:s -codec:v:0 libx264 -preset veryfast -crf 23 -maxrate 3602555 -bufsize 7205110 -profile:v:0 high -level 51 -x264opts:0 subme=0:me_range=16:rc_lookahead=10:me=hex:open_gop=0 -force_key_frames:0 "expr:gte(t,n_forced*3)" -sc_threshold:v:0 0 -vf "setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709,scale=trunc(min(max(iw\,ih*a)\,min(1280\,720*a))/2)*2:trunc(min(max(iw/a\,ih)\,min(1280/a\,720))/2)*2,format=yuv420p" -codec:a:0 aac_at -ac 1 -ab 128000 -copyts -avoid_negative_ts disabled -max_muxing_queue_size 2048 -f hls -max_delay 5000000 -hls_time 3 -hls_segment_type fmp4 -hls_fmp4_init_filename "9348a68d6f8960f95d655c0b7a4567c8-1.mp4" -start_number 200 -hls_segment_filename "/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8%d.mp4" -hls_playlist_type vod -hls_list_size 0 -hls_segment_options movflags=+frag_discont+skip_sidx -y "/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8.m3u8"
+
+
+ffmpeg version 8.1.2-Jellyfin Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 21.0.0 (clang-2100.1.1.101)
+  configuration: --prefix=/ffbuild/prefix --disable-shared --enable-static --pkg-config-flags=--static --enable-pthreads --cc=clang --host-cflags='-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/opt/ffbuild/prefix/include' --host-ldflags='-L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib -L/opt/ffbuild/prefix/lib' --extra-version=Jellyfin --extra-cflags=-I/opt/ffbuild/prefix/include --extra-cxxflags= --extra-ldflags=-L/opt/ffbuild/prefix/lib --extra-ldexeflags= --extra-libs= --enable-gpl --enable-version3 --disable-unstable --disable-ffplay --disable-debug --disable-doc --disable-sdl2 --enable-lto=thin --disable-unstable --disable-libjack --disable-indev=jack --disable-libxcb --disable-xlib --enable-neon --enable-runtime-cpudetect --enable-audiotoolbox --enable-videotoolbox --enable-iconv --enable-zlib --enable-libfreetype --enable-libfribidi --enable-gmp --enable-libxml2 --enable-openssl --enable-lzma --enable-fontconfig --enable-libharfbuzz --enable-libvorbis --enable-opencl --enable-chromaprint --enable-libdav1d --disable-libfdk-aac --enable-libass --enable-libbluray --enable-libmp3lame --enable-libopus --disable-libplacebo --enable-libtheora --enable-libvpx --enable-libwebp --enable-libopenmpt --enable-libsrt --enable-libsvtav1 --enable-libx264 --enable-libx265 --enable-libzimg --enable-libzvbi
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, matroska,webm, from 'file:/tmp/u5-9-films/Test Pattern Two (2026).mkv':
+  Metadata:
+    ENCODER         : Lavf62.12.102
+  Duration: 00:20:00.00, start: 0.000000, bitrate: 768 kb/s
+  Stream #0:0: Video: mpeg2video (Main), yuv420p(tv, progressive), 1280x720 [SAR 1:1 DAR 16:9], 24 fps, 24 tbr, 1k tbn
+    Metadata:
+      ENCODER         : Lavc62.28.102 mpeg2video
+      DURATION        : 00:20:00.000000000
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 1130496 vbv_delay: N/A
+  Stream #0:1: Audio: mp2, 48000 Hz, mono, s16p, 192 kb/s
+    Metadata:
+      ENCODER         : Lavc62.28.102 mp2
+      DURATION        : 00:20:00.000000000
+Stream mapping:
+  Stream #0:0 -> #0:0 (mpeg2video (native) -> h264 (libx264))
+  Stream #0:1 -> #0:1 (mp2 (native) -> aac (aac_at))
+Press [q] to stop, [?] for help
+[libx264 @ 0x7d6c68380] using SAR=1/1
+[libx264 @ 0x7d6c68380] using cpu capabilities: ARMv8 NEON DotProd I8MM
+[libx264 @ 0x7d6c68380] profile High, level 5.1, 4:2:0, 8-bit
+[libx264 @ 0x7d6c68380] 264 - core 165 - H.264/MPEG-4 AVC codec - Copyleft 2003-2025 - http://www.videolan.org/x264.html - options: cabac=1 ref=1 deblock=1:0:0 analyse=0x3:0x113 me=hex subme=0 psy=1 psy_rd=1.00:0.00 mixed_ref=0 me_range=16 chroma_me=1 trellis=0 8x8dct=1 cqm=0 deadzone=21,11 fast_pskip=1 chroma_qp_offset=0 threads=18 lookahead_threads=3 sliced_threads=0 nr=0 decimate=1 interlaced=0 bluray_compat=0 constrained_intra=0 bframes=3 b_pyramid=2 b_adapt=1 b_bias=0 direct=1 weightb=1 open_gop=0 weightp=1 keyint=250 keyint_min=24 scenecut=0 intra_refresh=0 rc_lookahead=10 rc=crf mbtree=1 crf=23.0 qcomp=0.60 qpmin=0 qpmax=69 qpstep=4 vbv_maxrate=3602 vbv_bufsize=7205 crf_max=0.0 nal_hrd=none filler=0 ip_ratio=1.40 aq=1:1.00
+[hls @ 0x7d6c44280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8-1.mp4' for writing
+Output #0, hls, to '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8.m3u8':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: h264, yuv420p(tv, bt709, progressive), 1280x720 [SAR 1:1 DAR 16:9], q=2-31, 24 fps, 12288 tbn
+    Metadata:
+      encoder         : Lavc62.28.102 libx264
+    Side data:
+      CPB properties: bitrate max/min/avg: 3602000/0/0 buffer size: 7205000 vbv_delay: N/A
+  Stream #0:1: Audio: aac, 48000 Hz, mono, s16, 128 kb/s
+    Metadata:
+      encoder         : Lavc62.28.102 aac_at
+frame=   24 fps=0.0 q=28.0 size=N/A time=00:00:00.00 bitrate=N/A speed=   0x elapsed=0:00:00.63    
+[hls @ 0x7d6c44280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8200.mp4' for writing
+frame=   88 fps= 68 q=28.0 size=N/A time=00:00:02.66 bitrate=N/A speed=2.07x elapsed=0:00:01.28    
+frame=  140 fps= 72 q=28.0 size=N/A time=00:00:04.83 bitrate=N/A speed=2.49x elapsed=0:00:01.94    
+[hls @ 0x7d6c44280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8201.mp4' for writing
+frame=  168 fps= 65 q=28.0 size=N/A time=00:00:06.00 bitrate=N/A speed= 2.3x elapsed=0:00:02.60    
+frame=  188 fps= 58 q=28.0 size=N/A time=00:00:06.83 bitrate=N/A speed=2.09x elapsed=0:00:03.26    
+frame=  199 fps= 51 q=25.0 size=N/A time=00:00:07.33 bitrate=N/A speed=1.87x elapsed=0:00:03.91    
+[hls @ 0x7d6c44280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8202.mp4' for writing
+frame=  232 fps= 52 q=28.0 size=N/A time=00:00:08.66 bitrate=N/A speed=1.93x elapsed=0:00:04.49    
+frame=  271 fps= 52 q=28.0 size=N/A time=00:00:10.29 bitrate=N/A speed=1.97x elapsed=0:00:05.22    
+frame=  288 fps= 49 q=28.0 size=N/A time=00:00:11.00 bitrate=N/A speed=1.87x elapsed=0:00:05.87    
+[hls @ 0x7d6c44280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8203.mp4' for writing
+frame=  316 fps= 49 q=28.0 size=N/A time=00:00:12.16 bitrate=N/A speed=1.87x elapsed=0:00:06.49    
+frame=  332 fps= 47 q=28.0 size=N/A time=00:00:12.95 bitrate=N/A speed=1.82x elapsed=0:00:07.13    
+frame=  343 fps= 44 q=28.0 size=N/A time=00:00:13.29 bitrate=N/A speed=1.72x elapsed=0:00:07.74    
+frame=  356 fps= 43 q=28.0 size=N/A time=00:00:13.83 bitrate=N/A speed=1.66x elapsed=0:00:08.32    
+[hls @ 0x7d6c44280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8204.mp4' for writing
+frame=  363 fps= 41 q=28.0 size=N/A time=00:00:14.12 bitrate=N/A speed=1.58x elapsed=0:00:08.95    
+frame=  375 fps= 40 q=28.0 size=N/A time=00:00:14.66 bitrate=N/A speed=1.55x elapsed=0:00:09.47    
+frame=  384 fps= 38 q=28.0 size=N/A time=00:00:15.00 bitrate=N/A speed=1.49x elapsed=0:00:10.08    
+frame=  388 fps= 36 q=28.0 size=N/A time=00:00:15.16 bitrate=N/A speed=1.42x elapsed=0:00:10.70    
+frame=  396 fps= 35 q=28.0 size=N/A time=00:00:15.50 bitrate=N/A speed=1.37x elapsed=0:00:11.33    
+frame=  404 fps= 34 q=28.0 size=N/A time=00:00:15.83 bitrate=N/A speed=1.32x elapsed=0:00:12.00    
+frame=  415 fps= 33 q=28.0 size=N/A time=00:00:16.29 bitrate=N/A speed=1.29x elapsed=0:00:12.65    
+frame=  424 fps= 32 q=28.0 size=N/A time=00:00:16.66 bitrate=N/A speed=1.25x elapsed=0:00:13.29    
+[hls @ 0x7d6c44280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8205.mp4' for writing
+frame=  440 fps= 32 q=28.0 size=N/A time=00:00:17.33 bitrate=N/A speed=1.25x elapsed=0:00:13.89    
+frame=  444 fps= 31 q=28.0 size=N/A time=00:00:17.50 bitrate=N/A speed=1.21x elapsed=0:00:14.51    
+frame=  456 fps= 30 q=28.0 size=N/A time=00:00:18.00 bitrate=N/A speed=1.19x elapsed=0:00:15.13    
+frame=  460 fps= 29 q=28.0 size=N/A time=00:00:18.16 bitrate=N/A speed=1.15x elapsed=0:00:15.77    
+frame=  475 fps= 29 q=28.0 size=N/A time=00:00:18.79 bitrate=N/A speed=1.14x elapsed=0:00:16.42    
+frame=  480 fps= 28 q=28.0 size=N/A time=00:00:19.00 bitrate=N/A speed=1.12x elapsed=0:00:16.93    
+frame=  497 fps= 28 q=28.0 size=N/A time=00:00:19.75 bitrate=N/A speed=1.13x elapsed=0:00:17.44    
+[hls @ 0x7d6c44280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8206.mp4' for writing
+frame=  508 fps= 28 q=28.0 size=N/A time=00:00:20.16 bitrate=N/A speed=1.11x elapsed=0:00:18.10    
+frame=  520 fps= 28 q=28.0 size=N/A time=00:00:20.66 bitrate=N/A speed= 1.1x elapsed=0:00:18.76    
+frame=  528 fps= 27 q=28.0 size=N/A time=00:00:21.00 bitrate=N/A speed=1.08x elapsed=0:00:19.41    
+frame=  552 fps= 28 q=28.0 size=N/A time=00:00:22.00 bitrate=N/A speed= 1.1x elapsed=0:00:19.97    
+frame=  563 fps= 27 q=28.0 size=N/A time=00:00:22.45 bitrate=N/A speed=1.09x elapsed=0:00:20.60    
+frame=  572 fps= 27 q=28.0 size=N/A time=00:00:22.83 bitrate=N/A speed=1.08x elapsed=0:00:21.20    
+[hls @ 0x7d6c44280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8207.mp4' for writing
+frame=  584 fps= 27 q=28.0 size=N/A time=00:00:23.33 bitrate=N/A speed=1.07x elapsed=0:00:21.84    
+frame=  596 fps= 27 q=28.0 size=N/A time=00:00:23.87 bitrate=N/A speed=1.06x elapsed=0:00:22.47    
+frame=  616 fps= 27 q=28.0 size=N/A time=00:00:24.66 bitrate=N/A speed=1.07x elapsed=0:00:23.06    
+frame=  628 fps= 26 q=28.0 size=N/A time=00:00:25.16 bitrate=N/A speed=1.06x elapsed=0:00:23.70    
+frame=  648 fps= 27 q=28.0 size=N/A time=00:00:26.00 bitrate=N/A speed=1.07x elapsed=0:00:24.33    
+[hls @ 0x7d6c44280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8208.mp4' for writing
+frame=  660 fps= 26 q=28.0 size=N/A time=00:00:26.50 bitrate=N/A speed=1.06x elapsed=0:00:24.95    
+frame=  674 fps= 26 q=28.0 size=N/A time=00:00:27.08 bitrate=N/A speed=1.06x elapsed=0:00:25.59    
+frame=  692 fps= 26 q=28.0 size=N/A time=00:00:27.83 bitrate=N/A speed=1.06x elapsed=0:00:26.24    
+frame=  704 fps= 26 q=25.0 size=N/A time=00:00:28.33 bitrate=N/A speed=1.05x elapsed=0:00:26.89    
+[hls @ 0x7d6c44280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8209.mp4' for writing
+frame=  739 fps= 27 q=28.0 size=N/A time=00:00:29.79 bitrate=N/A speed=1.08x elapsed=0:00:27.50    
+frame=  791 fps= 28 q=28.0 size=N/A time=00:00:31.95 bitrate=N/A speed=1.14x elapsed=0:00:28.15    
+[hls @ 0x7d6c44280] Opening '/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8210.mp4' for writing[2026-10-06 22:21:05.250 -07:00] [INF] [1] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/tmp/u6-9r/jf/cache"
+[2026-10-06 22:21:05.665 -07:00] [INF] [4] Jellyfin.Server.ServerSetupApp.SetupServer: Kestrel is listening on "127.0.0.1"
+[2026-10-06 22:21:05.715 -07:00] [INF] [4] Main: Jellyfin version: "12.0.0"
+[2026-10-06 22:21:05.716 -07:00] [INF] [4] Main: Environment Variables: ["[JELLYFIN_LOG_DIR, /tmp/u6-9r/jf/log]"]
+[2026-10-06 22:21:05.718 -07:00] [INF] [4] Main: Arguments: ["/Applications/Jellyfin.app/Contents/MacOS/jellyfin.dll", "-d", "/tmp/u6-9r/jf/data", "-c", "/tmp/u6-9r/jf/config", "-C", "/tmp/u6-9r/jf/cache", "-l", "/tmp/u6-9r/jf/log", "-w", "/Applications/Jellyfin.app/Contents/Resources/jellyfin-web", "--ffmpeg", "/Applications/Jellyfin.app/Contents/MacOS/ffmpeg", "--nonetchange"]
+[2026-10-06 22:21:05.718 -07:00] [INF] [4] Main: Operating system: "macOS 26.5.2"
+[2026-10-06 22:21:05.718 -07:00] [INF] [4] Main: Architecture: Arm64
+[2026-10-06 22:21:05.718 -07:00] [INF] [4] Main: 64-Bit Process: True
+[2026-10-06 22:21:05.718 -07:00] [INF] [4] Main: User Interactive: True
+[2026-10-06 22:21:05.718 -07:00] [INF] [4] Main: Processor count: 12
+[2026-10-06 22:21:05.724 -07:00] [INF] [4] Main: Program data path: "/tmp/u6-9r/jf/data"
+[2026-10-06 22:21:05.724 -07:00] [INF] [4] Main: Log directory path: "/tmp/u6-9r/jf/log"
+[2026-10-06 22:21:05.724 -07:00] [INF] [4] Main: Config directory path: "/tmp/u6-9r/jf/config"
+[2026-10-06 22:21:05.724 -07:00] [INF] [4] Main: Cache path: "/tmp/u6-9r/jf/cache"
+[2026-10-06 22:21:05.724 -07:00] [INF] [4] Main: Temp directory path: "/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/jellyfin"
+[2026-10-06 22:21:05.724 -07:00] [INF] [4] Main: Web resources path: "/Applications/Jellyfin.app/Contents/Resources/jellyfin-web"
+[2026-10-06 22:21:05.724 -07:00] [INF] [4] Main: Application directory: "/Applications/Jellyfin.app/Contents/MacOS/"
+[2026-10-06 22:21:05.726 -07:00] [INF] [4] Jellyfin.Server.Startup: Storage path `"/tmp/u6-9r/jf/data/data"` (Fixed) successfully checked with "61.1GiB" free which is over the minimum of "2GiB".
+[2026-10-06 22:21:05.726 -07:00] [INF] [4] Jellyfin.Server.Startup: Storage path `"/tmp/u6-9r/jf/cache"` (Fixed) successfully checked with "61.1GiB" free which is over the minimum of "2GiB".
+[2026-10-06 22:21:05.726 -07:00] [INF] [4] Jellyfin.Server.Startup: Storage path `"/tmp/u6-9r/jf/data"` (Fixed) successfully checked with "61.1GiB" free which is over the minimum of "2GiB".
+[2026-10-06 22:21:05.801 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/tmp/u6-9r/jf/cache"
+[2026-10-06 22:21:05.932 -07:00] [INF] [4] Jellyfin.Database.Providers.Sqlite.SqliteDatabaseProvider: SQLite connection string: "Data Source=/tmp/u6-9r/jf/data/data/jellyfin.db;Cache=Private;Default Timeout=60;Pooling=True"
+[2026-10-06 22:21:05.937 -07:00] [INF] [4] Jellyfin.Database.Providers.Sqlite.SqliteDatabaseProvider: SQLITE connection pragma command set to: 
+"PRAGMA locking_mode=NORMAL;
+PRAGMA journal_size_limit=134217728;
+PRAGMA synchronous=1;
+PRAGMA temp_store=2;
+"
+[2026-10-06 22:21:05.938 -07:00] [INF] [4] Jellyfin.Database.Implementations.Locking.NoLockBehavior: The database locking mode has been set to: NoLock.
+[2026-10-06 22:21:05.982 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Initialise Migration service.
+[2026-10-06 22:21:05.984 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: System initialization detected. Seed data. Startup mode is: MediaServer
+[2026-10-06 22:21:07.435 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration 4124c2cd-e939-4ffb-9be9-9b311c413638-"DisableTranscodingThrottling".
+[2026-10-06 22:21:07.438 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration ef103419-8451-40d8-9f34-d1a8e93a1679-"CreateUserLoggingConfigFile".
+[2026-10-06 22:21:07.439 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration 3793eb59-bc8c-456c-8b9f-bd5a62a42978-"MigrateActivityLogDb".
+[2026-10-06 22:21:07.439 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration acbe17b7-8435-4a83-8b64-6fcf162cb9bd-"RemoveDuplicateExtras".
+[2026-10-06 22:21:07.439 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration 5c4b82a2-f053-4009-bd05-b6fcad82f14c-"MigrateUserDb".
+[2026-10-06 22:21:07.440 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration 06387815-c3cc-421f-a888-fb5f9992bea8-"MigrateDisplayPreferencesDb".
+[2026-10-06 22:21:07.440 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration a81f75e0-8f43-416f-a5e8-516ccab4d8cc-"RemoveDownloadImagesInAdvance".
+[2026-10-06 22:21:07.441 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration 5bd72f41-e6f3-4f60-90aa-09869abe0e22-"MigrateAuthenticationDb".
+[2026-10-06 22:21:07.441 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration 615dfa9e-2497-4dbb-a472-61938b752c5b-"FixPlaylistOwner".
+[2026-10-06 22:21:07.441 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration cf6fabc2-9fbe-4933-84a5-ffe52ef22a58-"FixAudioData".
+[2026-10-06 22:21:07.441 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"MigrateLibraryDbCompatibilityCheck".
+[2026-10-06 22:21:07.441 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"MigrateLibraryDb".
+[2026-10-06 22:21:07.441 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"MoveExtractedFiles".
+[2026-10-06 22:21:07.442 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"RefreshInternalDateModified".
+[2026-10-06 22:21:07.442 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"MigrateKeyframeData".
+[2026-10-06 22:21:07.442 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"MigrateLibraryUserData".
+[2026-10-06 22:21:07.442 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"FixDates".
+[2026-10-06 22:21:07.442 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"ReseedFolderFlag".
+[2026-10-06 22:21:07.442 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"CleanMusicArtist".
+[2026-10-06 22:21:07.442 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"MigrateLinkedChildren".
+[2026-10-06 22:21:07.443 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"CleanupOrphanedExtras".
+[2026-10-06 22:21:07.443 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"FixIncorrectOwnerIdRelationships".
+[2026-10-06 22:21:07.443 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"FixLibrarySubtitleDownloadLanguages".
+[2026-10-06 22:21:07.443 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"MigrateRatingLevels".
+[2026-10-06 22:21:07.443 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"MergeDuplicateMusicArtists".
+[2026-10-06 22:21:07.452 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"MergeDuplicatePeople".
+[2026-10-06 22:21:07.452 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"CleanupOrphanedExternalData".
+[2026-10-06 22:21:07.453 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"RefreshCleanNamesAndValues".
+[2026-10-06 22:21:07.453 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"RefreshForcedSortNames".
+[2026-10-06 22:21:07.454 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"RestorePlaylistChildrenFromMetadata".
+[2026-10-06 22:21:07.454 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"RecomputeSeriesPresentationKey".
+[2026-10-06 22:21:07.454 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"ConsolidateLocalizedUserViews".
+[2026-10-06 22:21:07.454 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"EnableLocalSimilarityProviders".
+[2026-10-06 22:21:07.454 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"UpdateNormalizedUsername".
+[2026-10-06 22:21:07.455 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration null-"DisableLegacyAuthorization".
+[2026-10-06 22:21:07.455 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration 9b354818-94d5-4b68-ac49-e35cb85f9d84-"CreateNetworkConfiguration".
+[2026-10-06 22:21:07.455 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration a8e61960-7726-4450-8f3d-82c12daabbcb-"MigrateEncodingOptions".
+[2026-10-06 22:21:07.455 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration a6dcacf4-c057-4ef9-80d3-61cef9ddb4f0-"MigrateMusicBrainzTimeout".
+[2026-10-06 22:21:07.455 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration 4fb5c950-1991-11ee-9b4b-0800200c9a66-"MigrateNetworkConfiguration".
+[2026-10-06 22:21:07.455 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Seed migration e73b777d-cd5c-4e71-957a-b86b3660b7cf-"RenameEnableGroupingIntoCollections".
+[2026-10-06 22:21:07.464 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: Migration system initialisation completed.
+[2026-10-06 22:21:07.481 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/tmp/u6-9r/jf/cache"
+[2026-10-06 22:21:07.577 -07:00] [INF] [4] Emby.Server.Implementations.ApplicationHost: Loading assemblies
+[2026-10-06 22:21:07.641 -07:00] [INF] [4] Jellyfin.Networking.Manager.NetworkManager: Defined LAN subnets: ["127.0.0.0/8", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+[2026-10-06 22:21:07.641 -07:00] [INF] [4] Jellyfin.Networking.Manager.NetworkManager: Defined LAN exclusions: []
+[2026-10-06 22:21:07.643 -07:00] [INF] [4] Jellyfin.Networking.Manager.NetworkManager: Used LAN subnets: ["127.0.0.0/8", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+[2026-10-06 22:21:07.644 -07:00] [INF] [4] Jellyfin.Networking.Manager.NetworkManager: Filtered interface addresses: ["127.0.0.1"]
+[2026-10-06 22:21:07.645 -07:00] [INF] [4] Jellyfin.Networking.Manager.NetworkManager: Bind Addresses ["127.0.0.1"]
+[2026-10-06 22:21:07.645 -07:00] [INF] [4] Jellyfin.Networking.Manager.NetworkManager: Remote IP filter is "Allowlist"
+[2026-10-06 22:21:07.645 -07:00] [INF] [4] Jellyfin.Networking.Manager.NetworkManager: Filtered subnets: []
+[2026-10-06 22:21:07.766 -07:00] [INF] [4] Jellyfin.Database.Providers.Sqlite.SqliteDatabaseProvider: SQLite connection string: "Data Source=/tmp/u6-9r/jf/data/data/jellyfin.db;Cache=Private;Default Timeout=60;Pooling=True"
+[2026-10-06 22:21:07.767 -07:00] [INF] [4] Jellyfin.Database.Providers.Sqlite.SqliteDatabaseProvider: SQLITE connection pragma command set to: 
+"PRAGMA locking_mode=NORMAL;
+PRAGMA journal_size_limit=134217728;
+PRAGMA synchronous=1;
+PRAGMA temp_store=2;
+"
+[2026-10-06 22:21:07.767 -07:00] [INF] [4] Jellyfin.Database.Implementations.Locking.NoLockBehavior: The database locking mode has been set to: NoLock.
+[2026-10-06 22:21:07.812 -07:00] [INF] [4] Main: Prepare system for possible migrations
+[2026-10-06 22:21:07.857 -07:00] [INF] [4] Main: A migration will attempt to modify the jellyfin.db, will attempt to backup the file now.
+[2026-10-06 22:21:07.858 -07:00] [INF] [4] Main: Jellyfin database has been backed up as "20261007052107"
+[2026-10-06 22:21:07.863 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: There are 55 migrations for stage CoreInitialisation.
+[2026-10-06 22:21:07.866 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20200514181226_AddActivityLog"
+[2026-10-06 22:21:07.909 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20200514181226_AddActivityLog" was successfully applied
+[2026-10-06 22:21:07.911 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20200613202153_AddUsers"
+[2026-10-06 22:21:07.950 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20200613202153_AddUsers" was successfully applied
+[2026-10-06 22:21:07.952 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20200728005145_AddDisplayPreferences"
+[2026-10-06 22:21:07.975 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20200728005145_AddDisplayPreferences" was successfully applied
+[2026-10-06 22:21:07.977 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20200905220533_FixDisplayPreferencesIndex"
+[2026-10-06 22:21:07.992 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20200905220533_FixDisplayPreferencesIndex" was successfully applied
+[2026-10-06 22:21:07.993 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20201004171403_AddMaxActiveSessions"
+[2026-10-06 22:21:08.016 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20201004171403_AddMaxActiveSessions" was successfully applied
+[2026-10-06 22:21:08.017 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20201204223655_AddCustomDisplayPreferences"
+[2026-10-06 22:21:08.046 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20201204223655_AddCustomDisplayPreferences" was successfully applied
+[2026-10-06 22:21:08.048 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20210320181425_AddIndexesAndCollations"
+[2026-10-06 22:21:08.076 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"SqlOperation"' will be attempted while a rebuild of table '"ImageInfos"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 22:21:08.078 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"SqlOperation"' will be attempted while a rebuild of table '"ImageInfos"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 22:21:08.080 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"SqlOperation"' will be attempted while a rebuild of table '"Permissions"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 22:21:08.080 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"SqlOperation"' will be attempted while a rebuild of table '"Permissions"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 22:21:08.081 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"SqlOperation"' will be attempted while a rebuild of table '"Preferences"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 22:21:08.081 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"SqlOperation"' will be attempted while a rebuild of table '"Preferences"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 22:21:08.082 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"SqlOperation"' will be attempted while a rebuild of table '"Users"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 22:21:08.082 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"SqlOperation"' will be attempted while a rebuild of table '"Users"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 22:21:08.091 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20210320181425_AddIndexesAndCollations" was successfully applied
+[2026-10-06 22:21:08.092 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20210407110544_NullableCustomPrefValue"
+[2026-10-06 22:21:08.108 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20210407110544_NullableCustomPrefValue" was successfully applied
+[2026-10-06 22:21:08.109 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20210814002109_AddDevices"
+[2026-10-06 22:21:08.123 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20210814002109_AddDevices" was successfully applied
+[2026-10-06 22:21:08.123 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20221022080052_AddIndexActivityLogsDateCreated"
+[2026-10-06 22:21:08.137 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20221022080052_AddIndexActivityLogsDateCreated" was successfully applied
+[2026-10-06 22:21:08.139 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20230526173516_RemoveEasyPassword"
+[2026-10-06 22:21:08.175 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20230526173516_RemoveEasyPassword" was successfully applied
+[2026-10-06 22:21:08.177 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20230626233818_AddTrickplayInfos"
+[2026-10-06 22:21:08.191 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20230626233818_AddTrickplayInfos" was successfully applied
+[2026-10-06 22:21:08.194 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20230923170422_UserCastReceiver"
+[2026-10-06 22:21:08.210 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20230923170422_UserCastReceiver" was successfully applied
+[2026-10-06 22:21:08.212 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20240729140605_AddMediaSegments"
+[2026-10-06 22:21:08.225 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20240729140605_AddMediaSegments" was successfully applied
+[2026-10-06 22:21:08.228 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20240928082930_MarkSegmentProviderIdNonNullable"
+[2026-10-06 22:21:08.250 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20240928082930_MarkSegmentProviderIdNonNullable" was successfully applied
+[2026-10-06 22:21:08.251 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20241020103111_LibraryDbMigration"
+[2026-10-06 22:21:08.293 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20241020103111_LibraryDbMigration" was successfully applied
+[2026-10-06 22:21:08.295 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20241111131257_AddedCustomDataKey"
+[2026-10-06 22:21:08.319 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20241111131257_AddedCustomDataKey" was successfully applied
+[2026-10-06 22:21:08.320 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20241111135439_AddedCustomDataKeyKey"
+[2026-10-06 22:21:08.366 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20241111135439_AddedCustomDataKeyKey" was successfully applied
+[2026-10-06 22:21:08.369 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20241112152323_FixAncestorIdConfig"
+[2026-10-06 22:21:08.413 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20241112152323_FixAncestorIdConfig" was successfully applied
+[2026-10-06 22:21:08.414 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20241112232041_FixMediaStreams"
+[2026-10-06 22:21:08.467 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20241112232041_FixMediaStreams" was successfully applied
+[2026-10-06 22:21:08.469 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20241112234144_FixMediaStreams2"
+[2026-10-06 22:21:08.499 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20241112234144_FixMediaStreams2" was successfully applied
+[2026-10-06 22:21:08.500 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20241113133548_EnforceUniqueItemValue"
+[2026-10-06 22:21:08.527 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20241113133548_EnforceUniqueItemValue" was successfully applied
+[2026-10-06 22:21:08.528 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250202021306_FixedCollation"
+[2026-10-06 22:21:08.573 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250202021306_FixedCollation" was successfully applied
+[2026-10-06 22:21:08.576 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250204092455_MakeStartEndDateNullable"
+[2026-10-06 22:21:08.613 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250204092455_MakeStartEndDateNullable" was successfully applied
+[2026-10-06 22:21:08.614 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250214031148_ChannelIdGuid"
+[2026-10-06 22:21:08.642 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250214031148_ChannelIdGuid" was successfully applied
+[2026-10-06 22:21:08.644 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250326065026_AddInheritedParentalRatingSubValue"
+[2026-10-06 22:21:08.678 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250326065026_AddInheritedParentalRatingSubValue" was successfully applied
+[2026-10-06 22:21:08.679 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250327101120_AddKeyframeData"
+[2026-10-06 22:21:08.708 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250327101120_AddKeyframeData" was successfully applied
+[2026-10-06 22:21:08.709 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250327171413_AddHdr10PlusFlag"
+[2026-10-06 22:21:08.740 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250327171413_AddHdr10PlusFlag" was successfully applied
+[2026-10-06 22:21:08.741 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250331182844_FixAttachmentMigration"
+[2026-10-06 22:21:08.779 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250331182844_FixAttachmentMigration" was successfully applied
+[2026-10-06 22:21:08.781 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250401142247_FixAncestors"
+[2026-10-06 22:21:08.805 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250401142247_FixAncestors" was successfully applied
+[2026-10-06 22:21:08.807 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250405075612_FixItemValuesIndices"
+[2026-10-06 22:21:08.829 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250405075612_FixItemValuesIndices" was successfully applied
+[2026-10-06 22:21:08.830 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250609115616_DetachUserDataInsteadOfDelete"
+[2026-10-06 22:21:08.873 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250609115616_DetachUserDataInsteadOfDelete" was successfully applied
+[2026-10-06 22:21:08.875 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250622170802_BaseItemImageInfoDateModifiedNullable"
+[2026-10-06 22:21:08.918 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250622170802_BaseItemImageInfoDateModifiedNullable" was successfully applied
+[2026-10-06 22:21:08.920 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250714044826_ResetJournalMode"
+[2026-10-06 22:21:08.948 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250714044826_ResetJournalMode" was successfully applied
+[2026-10-06 22:21:08.950 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250913211637_AddProperParentChildRelationBaseItemWithCascade"
+[2026-10-06 22:21:08.990 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250913211637_AddProperParentChildRelationBaseItemWithCascade" was successfully applied
+[2026-10-06 22:21:08.992 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20250925203415_ExtendPeopleMapKey"
+[2026-10-06 22:21:09.039 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20250925203415_ExtendPeopleMapKey" was successfully applied
+[2026-10-06 22:21:09.041 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260113102337_AddLinkedChildrenTable"
+[2026-10-06 22:21:09.065 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260113102337_AddLinkedChildrenTable" was successfully applied
+[2026-10-06 22:21:09.067 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260113203012_ChangeOwnerIdToGuid"
+[2026-10-06 22:21:09.138 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260113203012_ChangeOwnerIdToGuid" was successfully applied
+[2026-10-06 22:21:09.140 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260113233000_AddForeignKeyToOwnerId"
+[2026-10-06 22:21:09.177 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"SqlOperation"' will be attempted while a rebuild of table '"BaseItems"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 22:21:09.177 -07:00] [WRN] [4] Microsoft.EntityFrameworkCore.Migrations: An operation of type '"UpdateDataOperation"' will be attempted while a rebuild of table '"BaseItems"' is pending. The database may not be in an expected state. Review the SQL generated by this migration to help diagnose any failures. Consider moving these operations to a subsequent migration.
+[2026-10-06 22:21:09.186 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260113233000_AddForeignKeyToOwnerId" was successfully applied
+[2026-10-06 22:21:09.188 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260113233500_DropExtraIdsColumn"
+[2026-10-06 22:21:09.227 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260113233500_DropExtraIdsColumn" was successfully applied
+[2026-10-06 22:21:09.229 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260116114245_AddLatestItemsDateCreatedIndexes"
+[2026-10-06 22:21:09.256 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260116114245_AddLatestItemsDateCreatedIndexes" was successfully applied
+[2026-10-06 22:21:09.258 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260118182305_AddIndicesToImageInfo"
+[2026-10-06 22:21:09.282 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260118182305_AddIndicesToImageInfo" was successfully applied
+[2026-10-06 22:21:09.286 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260130232147_AddBaseItemNameIndex"
+[2026-10-06 22:21:09.308 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260130232147_AddBaseItemNameIndex" was successfully applied
+[2026-10-06 22:21:09.310 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260206224832_IndexOptimizations"
+[2026-10-06 22:21:09.331 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260206224832_IndexOptimizations" was successfully applied
+[2026-10-06 22:21:09.332 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260215201634_ChangePrimaryVersionIdToGuid"
+[2026-10-06 22:21:09.354 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260215201634_ChangePrimaryVersionIdToGuid" was successfully applied
+[2026-10-06 22:21:09.355 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260308123920_AddTypeCleanNameIndex"
+[2026-10-06 22:21:09.373 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260308123920_AddTypeCleanNameIndex" was successfully applied
+[2026-10-06 22:21:09.375 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260504075755_AddPartialIndexForItemCounts"
+[2026-10-06 22:21:09.396 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260504075755_AddPartialIndexForItemCounts" was successfully applied
+[2026-10-06 22:21:09.398 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260522092303_AddNormalizedUsername"
+[2026-10-06 22:21:09.420 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260522092303_AddNormalizedUsername" was successfully applied
+[2026-10-06 22:21:09.421 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260524120336_AddUniqueNormalizedUsernameIndex"
+[2026-10-06 22:21:09.441 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260524120336_AddUniqueNormalizedUsernameIndex" was successfully applied
+[2026-10-06 22:21:09.444 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260723111547_AllowDuplicatePlaylistChildren"
+[2026-10-06 22:21:09.483 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260723111547_AllowDuplicatePlaylistChildren" was successfully applied
+[2026-10-06 22:21:09.484 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260724185102_AddPrimaryVersionIdIndex"
+[2026-10-06 22:21:09.504 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260724185102_AddPrimaryVersionIdIndex" was successfully applied
+[2026-10-06 22:21:09.506 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260728170000_AddPeopleNameLowerIndex"
+[2026-10-06 22:21:09.531 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260728170000_AddPeopleNameLowerIndex" was successfully applied
+[2026-10-06 22:21:09.532 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260728182152_AddPeopleItemMapCoveringIndex"
+[2026-10-06 22:21:09.554 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260728182152_AddPeopleItemMapCoveringIndex" was successfully applied
+[2026-10-06 22:21:09.555 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260812050902_AddMediaStreamFilterIndex"
+[2026-10-06 22:21:09.573 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260812050902_AddMediaStreamFilterIndex" was successfully applied
+[2026-10-06 22:21:09.574 -07:00] [INF] [4] InternalDatabaseMigration: Perform migration "20260815063607_RemoveOrphanedUserPermissionsAndPreferences"
+[2026-10-06 22:21:09.608 -07:00] [INF] [4] InternalDatabaseMigration: Migration "20260815063607_RemoveOrphanedUserPermissionsAndPreferences" was successfully applied
+[2026-10-06 22:21:09.729 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Saving system configuration
+[2026-10-06 22:21:09.729 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/tmp/u6-9r/jf/cache"
+[2026-10-06 22:21:09.732 -07:00] [INF] [4] Emby.Server.Implementations.Plugins.PluginManager: Loaded plugin: "TMDb" "12.0.0.0"
+[2026-10-06 22:21:09.732 -07:00] [INF] [4] Emby.Server.Implementations.Plugins.PluginManager: Loaded plugin: "Studio Images" "12.0.0.0"
+[2026-10-06 22:21:09.733 -07:00] [INF] [4] Emby.Server.Implementations.Plugins.PluginManager: Loaded plugin: "OMDb" "12.0.0.0"
+[2026-10-06 22:21:09.741 -07:00] [INF] [4] Emby.Server.Implementations.Plugins.PluginManager: Loaded plugin: "MusicBrainz" "12.0.0.0"
+[2026-10-06 22:21:09.741 -07:00] [INF] [4] Emby.Server.Implementations.Plugins.PluginManager: Loaded plugin: "ListenBrainz Similarity Provider" "12.0.0.0"
+[2026-10-06 22:21:09.741 -07:00] [INF] [4] Emby.Server.Implementations.Plugins.PluginManager: Loaded plugin: "AudioDB" "12.0.0.0"
+[2026-10-06 22:21:09.809 -07:00] [INF] [4] Emby.Server.Implementations.Library.Search.SearchManager: Registered 0 external search providers: "". Fallback providers: "Database (priority 100)"
+[2026-10-06 22:21:09.816 -07:00] [INF] [4] Jellyfin.Server.Migrations.JellyfinMigrationService: There are 5 migrations for stage AppInitialisation.
+[2026-10-06 22:21:09.817 -07:00] [INF] [4] InternalCodeMigration: Perform migration "20250420090000_AddDefaultPluginRepository"
+[2026-10-06 22:21:09.820 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Saving system configuration
+[2026-10-06 22:21:09.821 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/tmp/u6-9r/jf/cache"
+[2026-10-06 22:21:09.822 -07:00] [INF] [4] InternalCodeMigration: Migration "20250420090000_AddDefaultPluginRepository" was successfully applied
+[2026-10-06 22:21:09.825 -07:00] [INF] [4] InternalCodeMigration: Perform migration "20250420110000_ReaddDefaultPluginRepository"
+[2026-10-06 22:21:09.826 -07:00] [INF] [4] InternalCodeMigration: Migration "20250420110000_ReaddDefaultPluginRepository" was successfully applied
+[2026-10-06 22:21:09.833 -07:00] [INF] [4] InternalCodeMigration: Perform migration "20250420160000_AddDefaultCastReceivers"
+[2026-10-06 22:21:09.834 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Saving system configuration
+[2026-10-06 22:21:09.835 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/tmp/u6-9r/jf/cache"
+[2026-10-06 22:21:09.839 -07:00] [INF] [4] InternalCodeMigration: Migration "20250420160000_AddDefaultCastReceivers" was successfully applied
+[2026-10-06 22:21:09.841 -07:00] [INF] [4] InternalCodeMigration: Perform migration "20250420170000_UpdateDefaultPluginRepository"
+[2026-10-06 22:21:09.842 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Saving system configuration
+[2026-10-06 22:21:09.842 -07:00] [INF] [4] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/tmp/u6-9r/jf/cache"
+[2026-10-06 22:21:09.843 -07:00] [INF] [4] InternalCodeMigration: Migration "20250420170000_UpdateDefaultPluginRepository" was successfully applied
+[2026-10-06 22:21:09.846 -07:00] [INF] [4] InternalCodeMigration: Perform migration "20250420230000_MoveTrickplayFiles"
+[2026-10-06 22:21:10.605 -07:00] [INF] [4] Jellyfin.Server.Migrations.Routines.MoveTrickplayFiles: Checked: 5000 - Moved: 0 - Time: 00:00:00.7573542
+[2026-10-06 22:21:10.605 -07:00] [INF] [4] Jellyfin.Server.Migrations.Routines.MoveTrickplayFiles: Moved 0 items in 00:00:00.7576802
+[2026-10-06 22:21:10.605 -07:00] [INF] [4] InternalCodeMigration: Migration "20250420230000_MoveTrickplayFiles" was successfully applied
+[2026-10-06 22:21:10.611 -07:00] [INF] [4] Main: Attempt to cleanup JellyfinDb backup.
+[2026-10-06 22:21:10.612 -07:00] [INF] [4] Main: Migrations have been applied, optimizing the database... This might take a while
+[2026-10-06 22:21:10.634 -07:00] [INF] [4] Jellyfin.Database.Providers.Sqlite.SqliteDatabaseProvider: jellyfin.db optimized successfully!
+[2026-10-06 22:21:10.657 -07:00] [INF] [14] Main: Kestrel is listening on "127.0.0.1"
+[2026-10-06 22:21:11.603 -07:00] [WRN] [14] Microsoft.AspNetCore.StaticFiles.StaticFileMiddleware: The WebRootPath was not found: "/Users/alexsbryan/dev/svrngs/wwwroot". Static files may be unavailable.
+[2026-10-06 22:21:12.455 -07:00] [INF] [14] Emby.Server.Implementations.ApplicationHost: Running startup tasks
+[2026-10-06 22:21:12.530 -07:00] [INF] [14] Emby.Server.Implementations.ScheduledTasks.TaskManager: Daily trigger for "Generate Trickplay Images" set to fire at 2026-10-07 03:00:00.000 -07:00, which is 04:38:47.4700430 from now.
+[2026-10-06 22:21:12.531 -07:00] [INF] [14] Emby.Server.Implementations.ScheduledTasks.TaskManager: Daily trigger for "Extract Chapter Images" set to fire at 2026-10-07 02:00:00.000 -07:00, which is 03:38:47.4686670 from now.
+[2026-10-06 22:21:12.657 -07:00] [INF] [14] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Found ffmpeg version "8.1.2"
+[2026-10-06 22:21:12.746 -07:00] [INF] [14] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Available "decoders": ["libdav1d", "av1", "h264", "hevc", "mpeg2video", "mpeg4", "msmpeg4", "vp8", "libvpx", "vp9", "libvpx-vp9", "aac", "ac3", "ac4", "dca", "flac", "mp3", "truehd"]
+[2026-10-06 22:21:12.810 -07:00] [INF] [14] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Available "encoders": ["libsvtav1", "libx264", "h264_videotoolbox", "libx265", "hevc_videotoolbox", "mjpeg_videotoolbox", "aac", "aac_at", "ac3", "alac", "dca", "flac", "libmp3lame", "libopus", "truehd", "libvorbis", "srt"]
+[2026-10-06 22:21:12.881 -07:00] [INF] [14] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Available filters: ["bwdif_opencl", "bwdif_videotoolbox", "overlay_opencl", "overlay_videotoolbox", "scale_opencl", "scale_vt", "tonemapx", "tonemap_opencl", "tonemap_videotoolbox", "transpose_opencl", "transpose_vt", "yadif_opencl", "yadif_videotoolbox", "zscale", "alphasrc"]
+[2026-10-06 22:21:12.937 -07:00] [WRN] [14] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Filter: "scale_cuda" with option "format" is not available
+[2026-10-06 22:21:12.994 -07:00] [WRN] [14] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Filter: "tonemap_cuda" with option "GPU accelerated HDR to SDR tonemapping" is not available
+[2026-10-06 22:21:13.182 -07:00] [WRN] [14] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Filter: "overlay_vaapi" with option "Action to take when encountering EOF from secondary input" is not available
+[2026-10-06 22:21:13.269 -07:00] [WRN] [14] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Filter: "overlay_vulkan" with option "Action to take when encountering EOF from secondary input" is not available
+[2026-10-06 22:21:13.464 -07:00] [WRN] [14] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Filter: "overlay_cuda" with option "alpha_format" is not available
+[2026-10-06 22:21:13.892 -07:00] [INF] [14] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: Available hwaccel types: ["videotoolbox", "opencl"]
+[2026-10-06 22:21:15.666 -07:00] [INF] [23] Emby.Server.Implementations.ScheduledTasks.TaskManager: "Clean Transcode Directory" Completed after 0 minute(s) and 0 seconds
+[2026-10-06 22:21:16.545 -07:00] [INF] [15] Emby.Server.Implementations.ScheduledTasks.TaskManager: "Update Plugins" Completed after 0 minute(s) and 0 seconds
+[2026-10-06 22:22:37.526 -07:00] [INF] [14] MediaBrowser.MediaEncoding.Encoder.MediaEncoder: FFmpeg: "/Applications/Jellyfin.app/Contents/MacOS/ffmpeg"
+[2026-10-06 22:22:37.527 -07:00] [INF] [14] Emby.Server.Implementations.ApplicationHost: ServerId: "c9ba635fc82349c08d3e87c94bad6771"
+[2026-10-06 22:22:37.527 -07:00] [INF] [14] Emby.Server.Implementations.ApplicationHost: Core startup complete
+[2026-10-06 22:22:37.527 -07:00] [INF] [14] Main: Startup complete 0:01:32.7586721
+[2026-10-06 22:22:39.969 -07:00] [INF] [23] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Saving system configuration
+[2026-10-06 22:22:39.972 -07:00] [INF] [23] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/tmp/u6-9r/jf/cache"
+[2026-10-06 22:22:40.033 -07:00] [WRN] [23] Jellyfin.Server.Implementations.Users.UserManager: No users, creating one with username "alexsbryan"
+[2026-10-06 22:22:40.301 -07:00] [WRN] [23] Microsoft.EntityFrameworkCore.Query: The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+[2026-10-06 22:22:42.064 -07:00] [WRN] [14] MediaBrowser.Controller.Entities.BaseItem: Library folder "/tmp/u6-9r/jf/data/data/playlists" is inaccessible or empty, skipping
+[2026-10-06 22:22:42.247 -07:00] [INF] [24] Emby.Server.Implementations.Library.LibraryManager: Validating media library
+[2026-10-06 22:22:42.263 -07:00] [WRN] [24] MediaBrowser.Controller.Entities.BaseItem: Library folder "/tmp/u6-9r/jf/data/data/playlists" is inaccessible or empty, skipping
+[2026-10-06 22:22:42.298 -07:00] [INF] [21] Jellyfin.Networking.Manager.NetworkManager: Defined LAN subnets: ["127.0.0.0/8", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+[2026-10-06 22:22:42.298 -07:00] [INF] [21] Jellyfin.Networking.Manager.NetworkManager: Defined LAN exclusions: []
+[2026-10-06 22:22:42.298 -07:00] [INF] [21] Jellyfin.Networking.Manager.NetworkManager: Used LAN subnets: ["127.0.0.0/8", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+[2026-10-06 22:22:42.298 -07:00] [INF] [21] Jellyfin.Networking.Manager.NetworkManager: Filtered interface addresses: ["127.0.0.1"]
+[2026-10-06 22:22:42.298 -07:00] [INF] [21] Jellyfin.Networking.Manager.NetworkManager: Bind Addresses ["127.0.0.1"]
+[2026-10-06 22:22:42.298 -07:00] [INF] [21] Jellyfin.Networking.Manager.NetworkManager: Remote IP filter is "Allowlist"
+[2026-10-06 22:22:42.298 -07:00] [INF] [21] Jellyfin.Networking.Manager.NetworkManager: Filtered subnets: []
+[2026-10-06 22:22:42.300 -07:00] [WRN] [24] MediaBrowser.Controller.Entities.BaseItem: Library folder "/tmp/u6-9r/jf/data/data/playlists" is inaccessible or empty, skipping
+[2026-10-06 22:22:42.326 -07:00] [INF] [23] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Saving system configuration
+[2026-10-06 22:22:42.329 -07:00] [INF] [23] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/tmp/u6-9r/jf/cache"
+[2026-10-06 22:22:42.330 -07:00] [INF] [23] Emby.Server.Implementations.ScheduledTasks.TaskManager: Attempting to cancel Scheduled Task "Scan Media Library"
+[2026-10-06 22:22:42.352 -07:00] [ERR] [24] MediaBrowser.Controller.LibraryTaskScheduler.LimitedConcurrencyLibraryScheduler: Error while performing a library operation
+System.OperationCanceledException: The operation was canceled.
+   at System.Threading.CancellationToken.ThrowOperationCanceledException()
+   at System.Threading.CancellationToken.ThrowIfCancellationRequested()
+   at MediaBrowser.Controller.Entities.Folder.ValidateChildrenInternal2(IProgress`1 progress, Boolean recursive, Boolean refreshChildMetadata, Boolean allowRemoveRoot, MetadataRefreshOptions refreshOptions, IDirectoryService directoryService, CancellationToken <masked>)
+   at MediaBrowser.Controller.Entities.Folder.ValidateChildrenInternal(IProgress`1 progress, Boolean recursive, Boolean refreshChildMetadata, Boolean allowRemoveRoot, MetadataRefreshOptions refreshOptions, IDirectoryService directoryService, CancellationToken <masked>)
+   at MediaBrowser.Controller.LibraryTaskScheduler.LimitedConcurrencyLibraryScheduler.ProcessItem(TaskQueueItem item)
+[2026-10-06 22:22:42.394 -07:00] [INF] [24] Emby.Server.Implementations.Library.LibraryManager: Running 8 post-scan task(s)
+[2026-10-06 22:22:42.394 -07:00] [INF] [24] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 1/8: "SplashscreenPostScanTask"
+[2026-10-06 22:22:42.550 -07:00] [INF] [24] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "SplashscreenPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 22:22:42.550 -07:00] [INF] [24] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 2/8: "ArtistsPostScanTask"
+[2026-10-06 22:22:42.618 -07:00] [INF] [24] Emby.Server.Implementations.Library.Validators.ArtistsValidator: Refreshed metadata for 0 new artists out of 0 total
+[2026-10-06 22:22:42.745 -07:00] [INF] [24] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "ArtistsPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 22:22:42.748 -07:00] [INF] [24] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 3/8: "CollectionPosterVerifyPostScanTask"
+[2026-10-06 22:22:42.750 -07:00] [INF] [24] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "CollectionPosterVerifyPostScanTask" cancelled after 0 minute(s) and 0 seconds
+[2026-10-06 22:22:42.751 -07:00] [INF] [24] Emby.Server.Implementations.ScheduledTasks.TaskManager: "Scan Media Library" Cancelled after 0 minute(s) and 0 seconds
+[2026-10-06 22:22:42.804 -07:00] [INF] [24] Emby.Server.Implementations.Library.LibraryManager: Validating media library
+[2026-10-06 22:22:42.837 -07:00] [WRN] [24] MediaBrowser.Controller.Entities.BaseItem: Library folder "/tmp/u6-9r/jf/data/data/playlists" is inaccessible or empty, skipping
+[2026-10-06 22:22:42.883 -07:00] [WRN] [14] MediaBrowser.Controller.Entities.BaseItem: Library folder "/tmp/u6-9r/jf/data/data/playlists" is inaccessible or empty, skipping
+[2026-10-06 22:22:46.807 -07:00] [INF] [21] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for "sam" has succeeded.
+[2026-10-06 22:22:46.811 -07:00] [INF] [21] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "sam": 0/0
+[2026-10-06 22:22:46.817 -07:00] [INF] [21] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user d5062819-fab9-4ffc-bae5-f296b4e4d78b
+[2026-10-06 22:22:47.382 -07:00] [INF] [21] Emby.Server.Implementations.ScheduledTasks.TaskManager: Attempting to cancel Scheduled Task "Scan Media Library"
+[2026-10-06 22:22:47.824 -07:00] [ERR] [24] MediaBrowser.Controller.LibraryTaskScheduler.LimitedConcurrencyLibraryScheduler: Error while performing a library operation
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at MediaBrowser.Providers.Manager.ImageSaver.SaveImageToLocation(Stream source, String path, CancellationToken <masked>)
+   at MediaBrowser.Providers.Manager.ImageSaver.SaveImageToLocation(Stream source, String path, CancellationToken <masked>)
+   at MediaBrowser.Providers.Manager.ImageSaver.SaveImageToLocation(Stream source, String path, String retryPath, CancellationToken <masked>)
+   at MediaBrowser.Providers.Manager.ImageSaver.SaveImage(BaseItem item, Stream source, String mimeType, ImageType type, Nullable`1 imageIndex, Nullable`1 saveLocallyWithMedia, CancellationToken <masked>)
+   at MediaBrowser.Providers.Manager.ImageSaver.SaveImage(BaseItem item, Stream source, String mimeType, ImageType type, Nullable`1 imageIndex, Nullable`1 saveLocallyWithMedia, CancellationToken <masked>)
+   at MediaBrowser.Providers.Manager.ProviderManager.SaveImage(BaseItem item, String source, String mimeType, ImageType type, Nullable`1 imageIndex, Nullable`1 saveLocallyWithMedia, CancellationToken <masked>)
+   at MediaBrowser.Providers.Manager.ItemImageProvider.RefreshFromProvider(BaseItem item, IDynamicImageProvider provider, ImageRefreshOptions refreshOptions, TypeOptions savedOptions, List`1 downloadedImages, RefreshResult result, CancellationToken <masked>)
+   at MediaBrowser.Providers.Manager.ItemImageProvider.RefreshImages(BaseItem item, LibraryOptions libraryOptions, IEnumerable`1 providers, ImageRefreshOptions refreshOptions, CancellationToken <masked>)
+   at MediaBrowser.Providers.Manager.MetadataService`2.RefreshMetadata(BaseItem item, MetadataRefreshOptions refreshOptions, CancellationToken <masked>)
+   at MediaBrowser.Controller.Entities.BaseItem.RefreshMetadata(MetadataRefreshOptions options, CancellationToken <masked>)
+   at MediaBrowser.Controller.Entities.Folder.RefreshChildMetadata(BaseItem child, MetadataRefreshOptions refreshOptions, Boolean recursive, IProgress`1 progress, CancellationToken <masked>)
+   at MediaBrowser.Controller.LibraryTaskScheduler.LimitedConcurrencyLibraryScheduler.ProcessItem(TaskQueueItem item)
+[2026-10-06 22:22:47.827 -07:00] [INF] [24] Emby.Server.Implementations.Library.LibraryManager: Running 8 post-scan task(s)
+[2026-10-06 22:22:47.827 -07:00] [INF] [24] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 1/8: "SplashscreenPostScanTask"
+[2026-10-06 22:22:48.007 -07:00] [INF] [24] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "SplashscreenPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 22:22:48.007 -07:00] [INF] [24] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 2/8: "ArtistsPostScanTask"
+[2026-10-06 22:22:48.013 -07:00] [INF] [24] Emby.Server.Implementations.Library.Validators.ArtistsValidator: Refreshed metadata for 0 new artists out of 0 total
+[2026-10-06 22:22:48.017 -07:00] [INF] [24] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "ArtistsPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 22:22:48.017 -07:00] [INF] [24] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 3/8: "CollectionPosterVerifyPostScanTask"
+[2026-10-06 22:22:48.017 -07:00] [INF] [24] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "CollectionPosterVerifyPostScanTask" cancelled after 0 minute(s) and 0 seconds
+[2026-10-06 22:22:48.030 -07:00] [INF] [24] Emby.Server.Implementations.ScheduledTasks.TaskManager: "Scan Media Library" Cancelled after 0 minute(s) and 5 seconds
+[2026-10-06 22:22:48.099 -07:00] [INF] [24] Emby.Server.Implementations.Library.LibraryManager: Validating media library
+[2026-10-06 22:22:48.144 -07:00] [WRN] [14] MediaBrowser.Controller.Entities.BaseItem: Library folder "/tmp/u6-9r/jf/data/data/playlists" is inaccessible or empty, skipping
+[2026-10-06 22:22:48.475 -07:00] [WRN] [19] MediaBrowser.Controller.Entities.BaseItem: Library folder "/tmp/u6-9r/jf/data/data/playlists" is inaccessible or empty, skipping
+[2026-10-06 22:22:49.264 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: Running 8 post-scan task(s)
+[2026-10-06 22:22:49.265 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 1/8: "SplashscreenPostScanTask"
+[2026-10-06 22:22:49.309 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "SplashscreenPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 22:22:49.310 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 2/8: "ArtistsPostScanTask"
+[2026-10-06 22:22:49.318 -07:00] [INF] [14] Emby.Server.Implementations.Library.Validators.ArtistsValidator: Refreshed metadata for 0 new artists out of 0 total
+[2026-10-06 22:22:49.320 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "ArtistsPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 22:22:49.320 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 3/8: "CollectionPosterVerifyPostScanTask"
+[2026-10-06 22:22:49.321 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "CollectionPosterVerifyPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 22:22:49.321 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 4/8: "CollectionPostScanTask"
+[2026-10-06 22:22:49.326 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "CollectionPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 22:22:49.326 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 5/8: "GenresPostScanTask"
+[2026-10-06 22:22:49.436 -07:00] [INF] [14] Emby.Server.Implementations.Library.Validators.GenresValidator: Refreshed metadata for 0 new genres out of 0 total
+[2026-10-06 22:22:49.521 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "GenresPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 22:22:49.521 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 6/8: "MusicGenresPostScanTask"
+[2026-10-06 22:22:49.527 -07:00] [INF] [14] Emby.Server.Implementations.Library.Validators.MusicGenresValidator: Refreshed metadata for 0 new music genres out of 0 total
+[2026-10-06 22:22:49.527 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "MusicGenresPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 22:22:49.527 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 7/8: "StudiosPostScanTask"
+[2026-10-06 22:22:49.531 -07:00] [INF] [14] Emby.Server.Implementations.Library.Validators.StudiosValidator: Refreshed metadata for 0 new studios out of 0 total
+[2026-10-06 22:22:49.593 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "StudiosPostScanTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 22:22:49.593 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: Running post-scan task 8/8: "CleanDatabaseScheduledTask"
+[2026-10-06 22:22:49.715 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: Post-scan task "CleanDatabaseScheduledTask" completed after 0 minute(s) and 0 seconds
+[2026-10-06 22:22:49.715 -07:00] [INF] [14] Emby.Server.Implementations.Library.LibraryManager: All post-scan tasks completed after 0 minute(s) and 0 seconds
+[2026-10-06 22:22:49.723 -07:00] [INF] [14] Emby.Server.Implementations.ScheduledTasks.TaskManager: "Scan Media Library" Completed after 0 minute(s) and 1 seconds
+[2026-10-06 22:22:59.552 -07:00] [ERR] [21] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:22:59.652 -07:00] [INF] [4] Jellyfin.Api.Auth.CustomAuthenticationHandler: "CustomAuthentication" was not authenticated. Failure message: "Invalid token."
+[2026-10-06 22:23:00.051 -07:00] [INF] [4] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for "sam" has succeeded.
+[2026-10-06 22:23:00.051 -07:00] [INF] [4] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "sam": 1/0
+[2026-10-06 22:23:00.051 -07:00] [INF] [4] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user d5062819-fab9-4ffc-bae5-f296b4e4d78b
+[2026-10-06 22:23:00.093 -07:00] [INF] [25] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 22:23:05.031 -07:00] [INF] [14] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed
+[2026-10-06 22:23:19.405 -07:00] [ERR] [21] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:23:19.896 -07:00] [INF] [26] Jellyfin.Api.Auth.CustomAuthenticationHandler: "CustomAuthentication" was not authenticated. Failure message: "Invalid token."
+[2026-10-06 22:23:20.564 -07:00] [ERR] [14] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:23:22.088 -07:00] [ERR] [14] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:23:24.590 -07:00] [ERR] [25] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:23:28.111 -07:00] [ERR] [25] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:23:33.269 -07:00] [ERR] [25] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:23:39.885 -07:00] [ERR] [33] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:23:40.194 -07:00] [INF] [31] Jellyfin.Api.Auth.CustomAuthenticationHandler: "CustomAuthentication" was not authenticated. Failure message: "Invalid token."
+[2026-10-06 22:23:40.959 -07:00] [ERR] [31] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:23:40.969 -07:00] [ERR] [33] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:23:42.224 -07:00] [INF] [19] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for "room" has succeeded.
+[2026-10-06 22:23:42.224 -07:00] [INF] [19] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "room": 0/0
+[2026-10-06 22:23:42.224 -07:00] [INF] [19] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user 9e88259f-ccca-4160-8cdf-1772261df348
+[2026-10-06 22:23:42.394 -07:00] [INF] [19] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 22:23:43.152 -07:00] [INF] [35] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "room": 1/0
+[2026-10-06 22:23:43.152 -07:00] [INF] [35] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user 9e88259f-ccca-4160-8cdf-1772261df348
+[2026-10-06 22:23:46.795 -07:00] [INF] [4] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 22:23:48.291 -07:00] [INF] [27] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed
+[2026-10-06 22:23:55.775 -07:00] [INF] [21] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 22:24:11.104 -07:00] [ERR] [31] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:24:11.397 -07:00] [INF] [35] Jellyfin.Api.Auth.CustomAuthenticationHandler: "CustomAuthentication" was not authenticated. Failure message: "Invalid token."
+[2026-10-06 22:24:12.292 -07:00] [ERR] [4] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:24:13.323 -07:00] [INF] [36] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for "room" has succeeded.
+[2026-10-06 22:24:13.323 -07:00] [INF] [36] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "room": 2/0
+[2026-10-06 22:24:13.323 -07:00] [INF] [36] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user 9e88259f-ccca-4160-8cdf-1772261df348
+[2026-10-06 22:24:13.425 -07:00] [INF] [4] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 22:24:18.485 -07:00] [WRN] [33] Emby.Server.Implementations.HttpServer.WebSocketConnection: WS "127.0.0.1" error receiving data: "The remote party closed the WebSocket connection without completing the close handshake."
+[2026-10-06 22:24:18.488 -07:00] [INF] [33] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed
+[2026-10-06 22:24:22.664 -07:00] [INF] [36] Jellyfin.Api.Helpers.MediaInfoHelper: User policy for "room". EnablePlaybackRemuxing: True EnableVideoPlaybackTranscoding: True EnableAudioPlaybackTranscoding: True
+[2026-10-06 22:24:24.551 -07:00] [INF] [4] Emby.Server.Implementations.Session.SessionManager: User "room" started playback of '"Test Pattern One"' ("Jellyfin Web" "12.0.0")
+[2026-10-06 22:24:52.090 -07:00] [ERR] [33] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:24:52.855 -07:00] [INF] [27] Jellyfin.Api.Auth.CustomAuthenticationHandler: "CustomAuthentication" was not authenticated. Failure message: "Invalid token."
+[2026-10-06 22:24:53.260 -07:00] [ERR] [27] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:24:55.025 -07:00] [ERR] [27] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:24:55.235 -07:00] [INF] [29] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for "room" has succeeded.
+[2026-10-06 22:24:55.235 -07:00] [INF] [29] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "room": 2/0
+[2026-10-06 22:24:55.235 -07:00] [INF] [29] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user 9e88259f-ccca-4160-8cdf-1772261df348
+[2026-10-06 22:24:55.446 -07:00] [INF] [27] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 22:25:04.186 -07:00] [INF] [29] Emby.Server.Implementations.Session.SessionManager: User "room" stopped playback of '"Test Pattern One"' at "631515"ms ("Jellyfin Web" "12.0.0")
+[2026-10-06 22:25:04.231 -07:00] [INF] [33] Jellyfin.Api.Helpers.MediaInfoHelper: User policy for "room". EnablePlaybackRemuxing: True EnableVideoPlaybackTranscoding: True EnableAudioPlaybackTranscoding: True
+[2026-10-06 22:25:05.453 -07:00] [INF] [28] MediaBrowser.MediaEncoding.Transcoding.TranscodeManager: "/Applications/Jellyfin.app/Contents/MacOS/ffmpeg" "-analyzeduration 200M -probesize 1G  -i file:\"/tmp/u5-9-films/Test Pattern Two (2026).mkv\" -map_metadata -1 -map_chapters -1 -threads 0 -map 0:0 -map 0:1 -map -0:s -codec:v:0 libx264 -preset veryfast -crf 23 -maxrate 3602555 -bufsize 7205110 -profile:v:0 high -level 51 -x264opts:0 subme=0:me_range=16:rc_lookahead=10:me=hex:open_gop=0 -force_key_frames:0 \"expr:gte(t,n_forced*3)\" -sc_threshold:v:0 0 -vf \"setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709,scale=trunc(min(max(iw\,ih*a)\,min(1280\,720*a))/2)*2:trunc(min(max(iw/a\,ih)\,min(1280/a\,720))/2)*2,format=yuv420p\" -codec:a:0 aac_at -ac 1 -ab 128000 -copyts -avoid_negative_ts disabled -max_muxing_queue_size 2048 -f hls -max_delay 5000000 -hls_time 3 -hls_segment_type fmp4 -hls_fmp4_init_filename \"c3c68bbf7e9febd6a30bdf885094e0e4-1.mp4\" -start_number 0 -hls_segment_filename \"/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4%d.mp4\" -hls_playlist_type vod -hls_list_size 0 -hls_segment_options movflags=+frag_discont+skip_sidx -y \"/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4.m3u8\""
+[2026-10-06 22:25:13.069 -07:00] [INF] [33] Emby.Server.Implementations.Session.SessionManager: User "room" started playback of '"Test Pattern Two"' ("Jellyfin Web" "12.0.0")
+[2026-10-06 22:25:21.614 -07:00] [INF] [30] MediaBrowser.Controller.MediaEncoding.TranscodingJob: Stopping ffmpeg process with q command for "/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4.m3u8"
+[2026-10-06 22:25:22.054 -07:00] [INF] [30] MediaBrowser.MediaEncoding.Transcoding.TranscodeManager: FFmpeg exited with code 0
+[2026-10-06 22:25:22.103 -07:00] [INF] [30] MediaBrowser.MediaEncoding.Transcoding.TranscodeManager: "/Applications/Jellyfin.app/Contents/MacOS/ffmpeg" "-analyzeduration 200M -probesize 1G -ss 00:10:00.000  -i file:\"/tmp/u5-9-films/Test Pattern Two (2026).mkv\" -map_metadata -1 -map_chapters -1 -threads 0 -map 0:0 -map 0:1 -map -0:s -codec:v:0 libx264 -preset veryfast -crf 23 -maxrate 3602555 -bufsize 7205110 -profile:v:0 high -level 51 -x264opts:0 subme=0:me_range=16:rc_lookahead=10:me=hex:open_gop=0 -force_key_frames:0 \"expr:gte(t,n_forced*3)\" -sc_threshold:v:0 0 -vf \"setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709,scale=trunc(min(max(iw\,ih*a)\,min(1280\,720*a))/2)*2:trunc(min(max(iw/a\,ih)\,min(1280/a\,720))/2)*2,format=yuv420p\" -codec:a:0 aac_at -ac 1 -ab 128000 -copyts -avoid_negative_ts disabled -max_muxing_queue_size 2048 -f hls -max_delay 5000000 -hls_time 3 -hls_segment_type fmp4 -hls_fmp4_init_filename \"c3c68bbf7e9febd6a30bdf885094e0e4-1.mp4\" -start_number 200 -hls_segment_filename \"/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4%d.mp4\" -hls_playlist_type vod -hls_list_size 0 -hls_segment_options movflags=+frag_discont+skip_sidx -y \"/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4.m3u8\""
+[2026-10-06 22:25:44.944 -07:00] [ERR] [18] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:25:45.332 -07:00] [INF] [29] Jellyfin.Api.Auth.CustomAuthenticationHandler: "CustomAuthentication" was not authenticated. Failure message: "Invalid token."
+[2026-10-06 22:25:46.163 -07:00] [ERR] [29] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:25:47.749 -07:00] [ERR] [23] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:25:49.708 -07:00] [INF] [33] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for "room" has succeeded.
+[2026-10-06 22:25:49.710 -07:00] [INF] [33] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "room": 3/0
+[2026-10-06 22:25:49.710 -07:00] [INF] [33] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user 9e88259f-ccca-4160-8cdf-1772261df348
+[2026-10-06 22:25:49.895 -07:00] [INF] [29] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 22:25:58.023 -07:00] [INF] [23] MediaBrowser.Controller.MediaEncoding.TranscodingJob: Stopping ffmpeg process with q command for "/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4.m3u8"
+[2026-10-06 22:25:58.182 -07:00] [INF] [29] Jellyfin.Api.Helpers.MediaInfoHelper: User policy for "room". EnablePlaybackRemuxing: True EnableVideoPlaybackTranscoding: True EnableAudioPlaybackTranscoding: True
+[2026-10-06 22:25:58.455 -07:00] [INF] [23] MediaBrowser.MediaEncoding.Transcoding.TranscodeManager: FFmpeg exited with code 0
+[2026-10-06 22:25:58.458 -07:00] [INF] [23] MediaBrowser.MediaEncoding.Transcoding.TranscodeManager: Deleting partial stream file(s) "/tmp/u6-9r/jf/cache/transcodes/c3c68bbf7e9febd6a30bdf885094e0e4.m3u8"
+[2026-10-06 22:25:58.981 -07:00] [INF] [15] Emby.Server.Implementations.Session.SessionManager: User "room" started playback of '"Test Pattern Three"' ("Jellyfin Web" "12.0.0")
+[2026-10-06 22:26:00.218 -07:00] [INF] [29] Emby.Server.Implementations.Session.SessionManager: User "room" stopped playback of '"Test Pattern Two"' at "633719"ms ("Jellyfin Web" "12.0.0")
+[2026-10-06 22:26:36.574 -07:00] [ERR] [42] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:26:37.037 -07:00] [INF] [33] Jellyfin.Api.Auth.CustomAuthenticationHandler: "CustomAuthentication" was not authenticated. Failure message: "Invalid token."
+[2026-10-06 22:26:37.814 -07:00] [ERR] [41] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:26:39.468 -07:00] [ERR] [44] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:26:39.780 -07:00] [INF] [42] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for "room" has succeeded.
+[2026-10-06 22:26:39.795 -07:00] [INF] [42] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "room": 4/0
+[2026-10-06 22:26:39.795 -07:00] [INF] [42] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user 9e88259f-ccca-4160-8cdf-1772261df348
+[2026-10-06 22:26:40.019 -07:00] [INF] [42] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 22:26:50.122 -07:00] [INF] [47] Emby.Server.Implementations.Session.SessionManager: User "room" stopped playback of '"Test Pattern Three"' at "628589"ms ("Jellyfin Web" "12.0.0")
+[2026-10-06 22:26:50.160 -07:00] [INF] [40] Jellyfin.Api.Helpers.MediaInfoHelper: User policy for "room". EnablePlaybackRemuxing: True EnableVideoPlaybackTranscoding: True EnableAudioPlaybackTranscoding: True
+[2026-10-06 22:26:51.217 -07:00] [INF] [15] Emby.Server.Implementations.Session.SessionManager: User "room" started playback of '"Test Pattern One"' ("Jellyfin Web" "12.0.0")
+[2026-10-06 22:27:10.118 -07:00] [ERR] [47] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:27:10.382 -07:00] [INF] [43] Jellyfin.Api.Auth.CustomAuthenticationHandler: "CustomAuthentication" was not authenticated. Failure message: "Invalid token."
+[2026-10-06 22:27:11.243 -07:00] [ERR] [48] Jellyfin.Api.Middleware.ExceptionMiddleware: Error processing request: "Token is required". URL "GET" "/socket".
+[2026-10-06 22:27:12.621 -07:00] [INF] [54] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for "room" has succeeded.
+[2026-10-06 22:27:12.621 -07:00] [INF] [54] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user "room": 5/0
+[2026-10-06 22:27:12.621 -07:00] [INF] [54] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user 9e88259f-ccca-4160-8cdf-1772261df348
+[2026-10-06 22:27:12.721 -07:00] [INF] [48] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" request
+[2026-10-06 22:27:19.473 -07:00] [INF] [47] Emby.Server.Implementations.Session.SessionManager: User "room" stopped playback of '"Test Pattern One"' at "622304"ms ("Jellyfin Web" "12.0.0")
+[2026-10-06 22:27:19.810 -07:00] [INF] [43] Jellyfin.Api.Helpers.MediaInfoHelper: User policy for "room". EnablePlaybackRemuxing: True EnableVideoPlaybackTranscoding: True EnableAudioPlaybackTranscoding: True
+[2026-10-06 22:27:20.391 -07:00] [INF] [30] MediaBrowser.MediaEncoding.Transcoding.TranscodeManager: "/Applications/Jellyfin.app/Contents/MacOS/ffmpeg" "-analyzeduration 200M -probesize 1G  -i file:\"/tmp/u5-9-films/Test Pattern Two (2026).mkv\" -map_metadata -1 -map_chapters -1 -threads 0 -map 0:0 -map 0:1 -map -0:s -codec:v:0 libx264 -preset veryfast -crf 23 -maxrate 3602555 -bufsize 7205110 -profile:v:0 high -level 51 -x264opts:0 subme=0:me_range=16:rc_lookahead=10:me=hex:open_gop=0 -force_key_frames:0 \"expr:gte(t,n_forced*3)\" -sc_threshold:v:0 0 -vf \"setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709,scale=trunc(min(max(iw\,ih*a)\,min(1280\,720*a))/2)*2:trunc(min(max(iw/a\,ih)\,min(1280/a\,720))/2)*2,format=yuv420p\" -codec:a:0 aac_at -ac 1 -ab 128000 -copyts -avoid_negative_ts disabled -max_muxing_queue_size 2048 -f hls -max_delay 5000000 -hls_time 3 -hls_segment_type fmp4 -hls_fmp4_init_filename \"9348a68d6f8960f95d655c0b7a4567c8-1.mp4\" -start_number 0 -hls_segment_filename \"/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8%d.mp4\" -hls_playlist_type vod -hls_list_size 0 -hls_segment_options movflags=+frag_discont+skip_sidx -y \"/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8.m3u8\""
+[2026-10-06 22:27:21.912 -07:00] [INF] [30] MediaBrowser.Controller.MediaEncoding.TranscodingJob: Stopping ffmpeg process with q command for "/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8.m3u8"
+[2026-10-06 22:27:22.551 -07:00] [INF] [30] MediaBrowser.MediaEncoding.Transcoding.TranscodeManager: FFmpeg exited with code 0
+[2026-10-06 22:27:22.569 -07:00] [INF] [30] MediaBrowser.MediaEncoding.Transcoding.TranscodeManager: "/Applications/Jellyfin.app/Contents/MacOS/ffmpeg" "-analyzeduration 200M -probesize 1G -ss 00:10:33.000  -i file:\"/tmp/u5-9-films/Test Pattern Two (2026).mkv\" -map_metadata -1 -map_chapters -1 -threads 0 -map 0:0 -map 0:1 -map -0:s -codec:v:0 libx264 -preset veryfast -crf 23 -maxrate 3602555 -bufsize 7205110 -profile:v:0 high -level 51 -x264opts:0 subme=0:me_range=16:rc_lookahead=10:me=hex:open_gop=0 -force_key_frames:0 \"expr:gte(t,n_forced*3)\" -sc_threshold:v:0 0 -vf \"setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709,scale=trunc(min(max(iw\,ih*a)\,min(1280\,720*a))/2)*2:trunc(min(max(iw/a\,ih)\,min(1280/a\,720))/2)*2,format=yuv420p\" -codec:a:0 aac_at -ac 1 -ab 128000 -copyts -avoid_negative_ts disabled -max_muxing_queue_size 2048 -f hls -max_delay 5000000 -hls_time 3 -hls_segment_type fmp4 -hls_fmp4_init_filename \"9348a68d6f8960f95d655c0b7a4567c8-1.mp4\" -start_number 211 -hls_segment_filename \"/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8%d.mp4\" -hls_playlist_type vod -hls_list_size 0 -hls_segment_options movflags=+frag_discont+skip_sidx -y \"/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8.m3u8\""
+[2026-10-06 22:27:24.072 -07:00] [INF] [43] Emby.Server.Implementations.Session.SessionManager: User "room" started playback of '"Test Pattern Two"' ("Jellyfin Web" "12.0.0")
+[2026-10-06 22:27:31.162 -07:00] [INF] [43] MediaBrowser.Controller.MediaEncoding.TranscodingJob: Stopping ffmpeg process with q command for "/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8.m3u8"
+[2026-10-06 22:27:31.576 -07:00] [INF] [43] MediaBrowser.MediaEncoding.Transcoding.TranscodeManager: FFmpeg exited with code 0
+[2026-10-06 22:27:31.583 -07:00] [INF] [43] MediaBrowser.MediaEncoding.Transcoding.TranscodeManager: "/Applications/Jellyfin.app/Contents/MacOS/ffmpeg" "-analyzeduration 200M -probesize 1G -ss 00:10:00.000  -i file:\"/tmp/u5-9-films/Test Pattern Two (2026).mkv\" -map_metadata -1 -map_chapters -1 -threads 0 -map 0:0 -map 0:1 -map -0:s -codec:v:0 libx264 -preset veryfast -crf 23 -maxrate 3602555 -bufsize 7205110 -profile:v:0 high -level 51 -x264opts:0 subme=0:me_range=16:rc_lookahead=10:me=hex:open_gop=0 -force_key_frames:0 \"expr:gte(t,n_forced*3)\" -sc_threshold:v:0 0 -vf \"setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709,scale=trunc(min(max(iw\,ih*a)\,min(1280\,720*a))/2)*2:trunc(min(max(iw/a\,ih)\,min(1280/a\,720))/2)*2,format=yuv420p\" -codec:a:0 aac_at -ac 1 -ab 128000 -copyts -avoid_negative_ts disabled -max_muxing_queue_size 2048 -f hls -max_delay 5000000 -hls_time 3 -hls_segment_type fmp4 -hls_fmp4_init_filename \"9348a68d6f8960f95d655c0b7a4567c8-1.mp4\" -start_number 200 -hls_segment_filename \"/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8%d.mp4\" -hls_playlist_type vod -hls_list_size 0 -hls_segment_options movflags=+frag_discont+skip_sidx -y \"/tmp/u6-9r/jf/cache/transcodes/9348a68d6f8960f95d655c0b7a4567c8.m3u8\""
+[2026-10-06 22:27:34.753 -07:00] [INF] [43] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "127.0.0.1" closed

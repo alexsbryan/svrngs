@@ -1,0 +1,114 @@
+{
+ "secrets_searched": [
+  "admin_token",
+  "room_pw",
+  "sam_pw"
+ ],
+ "lend_kept": [],
+ "pairs": {
+  "night-five": {
+   "ana": {
+    "scanned": {
+     "responses": 246,
+     "bodies": 220,
+     "bytes": 17422475,
+     "frames": 108
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "bo": {
+    "scanned": {
+     "responses": 295,
+     "bodies": 289,
+     "bytes": 18383850,
+     "frames": 114
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "cy": {
+    "scanned": {
+     "responses": 222,
+     "bodies": 194,
+     "bytes": 17248656,
+     "frames": 127
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "di": {
+    "scanned": {
+     "responses": 258,
+     "bodies": 252,
+     "bytes": 22503092,
+     "frames": 118
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ed": {
+    "scanned": {
+     "responses": 218,
+     "bodies": 189,
+     "bytes": 17194010,
+     "frames": 117
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "night-tv": {
+   "dee": {
+    "scanned": {
+     "responses": 181,
+     "bodies": 157,
+     "bytes": 11020805,
+     "frames": 119
+    },
+    "own_token": 1,
+    "own_token_in": [
+     "/Users/authenticatebyname"
+    ],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  }
+ },
+ "logs": {
+  "alex/join.log": {},
+  "alex/join.out": {},
+  "alex/run.log": {},
+  "alex/run.out": {},
+  "sam/new.out": {},
+  "sam/run.log": {},
+  "sam/share.log": {},
+  "sam/share.out": {}
+ }
+}

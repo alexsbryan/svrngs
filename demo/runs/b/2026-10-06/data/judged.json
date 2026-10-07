@@ -1,0 +1,179 @@
+{
+ "tv": {
+  "verdict": "passed",
+  "why": "Quick Connect approved on Dee's phone in 392 ms, the TV signed in 4734 ms after, as room, nothing typed on it"
+ },
+ "five": {
+  "people": [
+   {
+    "name": "Ana",
+    "engine": "webkit",
+    "device": null,
+    "film": "Test Pattern One",
+    "clock": {
+     "verdict": "passed",
+     "why": "25063 ms from the link to Test Pattern One on the TV, bar 180000"
+    },
+    "steps_ms": {
+     "list_ms": 5534,
+     "open_ms": 4437,
+     "shown_ms": 1854,
+     "signed_in_ms": 866,
+     "film_ms": 1797,
+     "play_on_ms": 6,
+     "tv_playing_ms": 3875
+    },
+    "play_method": "DirectPlay",
+    "tv_listed_among": [
+     "Google Cast Unsupported",
+     "Chrome - Jellyfin Web room",
+     "Safari iPhone - Jellyfin Web room"
+    ],
+    "pause_and_seek": {
+     "verdict": "passed",
+     "why": "{'paused': 505, 'sought': 382, 'played_on': 539} ms, bar 10000 each; the length shown on the phone after 34 ms ('20:00'); the TV at 7.237104 s by the lender's Jellyfin"
+    }
+   },
+   {
+    "name": "Bo",
+    "engine": "chromium",
+    "device": "Pixel 7",
+    "film": "Test Pattern Two",
+    "clock": {
+     "verdict": "passed",
+     "why": "39240 ms from the link to Test Pattern Two on the TV, bar 180000"
+    },
+    "steps_ms": {
+     "list_ms": 7474,
+     "open_ms": 5786,
+     "shown_ms": 4633,
+     "signed_in_ms": 1798,
+     "film_ms": 1470,
+     "play_on_ms": 17,
+     "tv_playing_ms": 11127
+    },
+    "play_method": "Transcode",
+    "tv_listed_among": [
+     "Chrome - Jellyfin Web room",
+     "Safari iPhone - Jellyfin Web room"
+    ],
+    "pause_and_seek": {
+     "verdict": "passed",
+     "why": "{'paused': 111, 'sought': 438, 'played_on': 2662} ms, bar 10000 each; the length shown on the phone after 2 ms ('20:00'); the TV at 7.386237 s by the lender's Jellyfin"
+    }
+   },
+   {
+    "name": "Cy",
+    "engine": "webkit",
+    "device": null,
+    "film": "Test Pattern Three",
+    "clock": {
+     "verdict": "passed",
+     "why": "29928 ms from the link to Test Pattern Three on the TV, bar 180000"
+    },
+    "steps_ms": {
+     "list_ms": 7079,
+     "open_ms": 6838,
+     "shown_ms": 3327,
+     "signed_in_ms": 1588,
+     "film_ms": 797,
+     "play_on_ms": 17,
+     "tv_playing_ms": 3115
+    },
+    "play_method": "DirectPlay",
+    "tv_listed_among": [
+     "Google Cast Unsupported",
+     "Chrome - Jellyfin Web room",
+     "Chrome Android - Jellyfin Web room",
+     "Safari iPhone - Jellyfin Web room"
+    ],
+    "pause_and_seek": {
+     "verdict": "passed",
+     "why": "{'paused': 120, 'sought': 133, 'played_on': 641} ms, bar 10000 each; the length shown on the phone after None ms (None); the TV at 6.8054 s by the lender's Jellyfin"
+    }
+   },
+   {
+    "name": "Di",
+    "engine": "chromium",
+    "device": "Pixel 7",
+    "film": "Test Pattern One",
+    "clock": {
+     "verdict": "passed",
+     "why": "28203 ms from the link to Test Pattern One on the TV, bar 180000"
+    },
+    "steps_ms": {
+     "list_ms": 6603,
+     "open_ms": 4748,
+     "shown_ms": 3125,
+     "signed_in_ms": 4260,
+     "film_ms": 786,
+     "play_on_ms": 25,
+     "tv_playing_ms": 1365
+    },
+    "play_method": "DirectPlay",
+    "tv_listed_among": [
+     "Chrome - Jellyfin Web room",
+     "Chrome Android - Jellyfin Web room",
+     "Safari iPhone - Jellyfin Web room",
+     "Safari iPhone - Jellyfin Web room"
+    ],
+    "pause_and_seek": {
+     "verdict": "passed",
+     "why": "{'paused': 109, 'sought': 155, 'played_on': 436} ms, bar 10000 each; the length shown on the phone after 16 ms ('20:00'); the TV at 637.042825 s by the lender's Jellyfin"
+    }
+   },
+   {
+    "name": "Ed",
+    "engine": "webkit",
+    "device": null,
+    "film": "Test Pattern Two",
+    "clock": {
+     "verdict": "passed",
+     "why": "25578 ms from the link to Test Pattern Two on the TV, bar 180000"
+    },
+    "steps_ms": {
+     "list_ms": 5583,
+     "open_ms": 4660,
+     "shown_ms": 2037,
+     "signed_in_ms": 876,
+     "film_ms": 672,
+     "play_on_ms": 13,
+     "tv_playing_ms": 4960
+    },
+    "play_method": "Transcode",
+    "tv_listed_among": [
+     "Google Cast Unsupported",
+     "Chrome - Jellyfin Web room",
+     "Chrome Android - Jellyfin Web room",
+     "Chrome Android - Jellyfin Web room",
+     "Safari iPhone - Jellyfin Web room",
+     "Safari iPhone - Jellyfin Web room"
+    ],
+    "pause_and_seek": {
+     "verdict": "passed",
+     "why": "{'paused': 330, 'sought': 900, 'played_on': 2935} ms, bar 10000 each; the length shown on the phone after 13 ms ('20:00'); the TV at 639.712375 s by the lender's Jellyfin"
+    }
+   }
+  ],
+  "in_time": 5,
+  "tv_requests_at_room": 246,
+  "tv_to_sam_another_way": {
+   "verdict": "passed",
+   "why": "0 to Sam's Jellyfin another way: []"
+  },
+  "tv_elsewhere_not_sam": [
+   "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"
+  ]
+ },
+ "record": {
+  "demo": "b",
+  "dry": true,
+  "participants": 5,
+  "succeeded_in_time": 5,
+  "accounts_created": 0,
+  "key_prompts": null,
+  "key_prompts_why": "a script answers only what it is asked; the recordings say what a phone asked",
+  "assisted": null,
+  "assisted_why": "a script is not a person; there was no one to help"
+ }
+}
