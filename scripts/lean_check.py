@@ -14,6 +14,7 @@
    included; apps/ and installed packages (any node_modules/) apart.
 """
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -26,9 +27,22 @@ BUDGET = {"crates/svrngs-core": 3000, ".": 14000}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
+def files(base):
+    """What git calls source, tracked or new and not ignored, so a build's
+    output never counts wherever it lands (#74: web/target/ was counted). A
+    tree outside git, such as an exported revision, is walked whole, and says so."""
+    r = subprocess.run(["git", "-C", str(ROOT), "ls-files", "-co", "--exclude-standard", "-z", "--",
+                        base.relative_to(ROOT).as_posix()], capture_output=True)
+    if r.returncode != 0:
+        print(f"lean_check: {ROOT} is not a git tree, so every file counts, build output included",
+              file=sys.stderr)
+        return base.rglob("*")
+    return (ROOT / p for p in r.stdout.decode().split("\0") if p)
+
+
 def code_lines(base):
     n = 0
-    for f in base.rglob("*"):
+    for f in files(base):
         rel = f.relative_to(ROOT).as_posix()
         if (f.suffix not in CODE or not f.is_file() or "/tests/" in f"/{rel}"
                 or "/node_modules/" in f"/{rel}"
