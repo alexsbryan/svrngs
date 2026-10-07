@@ -923,6 +923,54 @@ and which of §1's apps read one is the census's to find. *Jellyfin's own
 cross-origin rules were never measured* in either repository; with each lend
 at an origin of its own (call 1), stock jellyfin-web asks none.
 
+**U6's inventory.** What upstream at `e1a43bcd2`, and svrngs at `d95039c`,
+have for the room door, and what each becomes; written from the seat's
+survey (`ralph/next/u6/UPSTREAM.md`), made for a handoff to a TV that the
+operator has since taken out of scope (§3, "The room"), and kept here only
+where the room door uses it, each path:line read again at u6-0. Upstream
+has a LAN door that lives only while it is wanted and an address picker,
+and nothing measured on a TV; its door's proxy buffers, so U4's inventory
+left it. svrngs serves a lend only on an iroh stream or on loopback.
+
+| Upstream or svrngs | What it does there | Becomes |
+|---|---|---|
+| `sovereign/crates/sovereign-daemon/src/guest_door.rs:412-499` (`serve`, `wait_for`) | the LAN guest door's listener: `0.0.0.0:9744` when no bind is named (`:434-443`), bound only while a grant is live, the grant store polled (`:455-456`, `:491-499`), shut down gracefully at the last expiry (`:477-486`) — "safe by LIFETIME, not by address" (`:429-431`); `ConnectInfo` on its service (`:472-476`) | its shape, not its code: the room door's listeners live while the command runs, bound on the private address alone, so safe by both. Not forked: it waits on a grant store svrngs does not have (`:454`) and serves the daemon's router and auth (`:475`) |
+| `sovereign/crates/sovereign-cli-mesh/src/mesh_guest_link.rs:37-55` (`advertised_base`), `:63-96` (`guest_bind_url`) | "the door names the PORT, this machine names the ADDRESS" (`:10-12`): a wildcard or loopback bind is never advertised (`:45-53`), no candidate is absence (`:34-36`), and the LAN before tailscale, measured: "the default picked 100.104.36.28 while the room's phones needed 192.168.1.7" (`:67-73`) | its rules, written smaller (the next two rows). A device on the room's WiFi cannot reach tailscale's range, so here "before" is "instead of": the private LAN address or absence, never tailscale's. Not forked: it reads a config's bind and `relay_candidates` |
+| `commonwealth/crates/commonwealth-discovery/src/mesh_discovery.rs:56-77` (`classify_ip`), `:98-124` (`relay_candidates`), `:237-313` (`local_ip_candidates`) | every IPv4 address outside 100.64/10 is "lan", a public one included (`:58-66`); the interfaces from the `if-addrs` crate, which svrngs does not carry, minus loopback and link-local (`:259-283`); a container bridge listed before tailscale (`:21-32`); the outward route's address by a UDP connect that sends nothing, its fallback (`:290-298`) | not forked: its "lan" would pick a public address, which call 3 refuses, and iroh lists the interfaces already (next row). The classifier is std's `Ipv4Addr::is_private`, which `guess` uses already (`crates/svrngs-node/src/door/limit.rs:54-65`). The UDP connect is kept, as the tie-break: on this host it answers `192.168.1.4`, the address the TV reached in the reads |
+| iroh 1.0.2 `Endpoint::addr()` (`src/endpoint.rs:1196`, its addresses gathered at `src/socket.rs:1814-1955`), netwatch 0.19.1 `LocalAddresses::new` (`src/ip.rs:34-93`) | with the wildcard bound, every interface that is up, paired with the bound port (`socket.rs:1926-1953`); loopback only when there is nothing else (`:1937-1940`), link-local IPv4 likewise (`ip.rs:63-66`, `:86-93`); the port-mapped and reflexive addresses its reports find (`socket.rs:1814-1875`); no interface's name. Measured: a node here logged `dial=Some("…@192.168.1.4:49713")` (`demo/runs/a/2026-10-05/data/alex-run.log:3`) | **the picker's source, written smaller** (u6-1's row leaves the choice here), with no new crate: a pure function over the addresses `ip_addrs()` lists and the outward route's — the private IPv4 address the route leaves from, when it is among them; else the one private IPv4 address listed, when there is one; else absence, said so. With no name kept, a bridge in a private range (a container's, `172.17.0.0/16`) is told from the LAN only by the route, which does not leave through it. A node built `on_loopback_only` lists loopback alone (`crates/svrngs-node/src/guest.rs:215-219`), so the picker's tests plant the lists |
+| svrngs `crates/svrngs-node/src/origin.rs:59-107` (`lent`), `:119-158` (`carried`) | each lend's origin on loopback: the lend its `Host` names, this computer's own through the door's one body as `Who::Own` (`:68-79`), another's dialled as this computer's key through the bridge to its lender's door (`:90-106`), a WebSocket spliced once both sides switch (`:145-153`) | **the room door's body**, one with it (call 3): the lend named by the listener's port in place of the `Host`, which on a room's device is the private address |
+| svrngs `crates/svrngs-node/src/api.rs:64-85` (`router`), `:132-160` (`from_this_computer`), `:165` (`check_loopback`) | the loopback API's listener, where each lend's origin is served beside the record's routes behind one check that the caller is on this computer | not reused: the room door is a listener of its own that answers no route of the record's. Its caller check has `from_this_computer`'s shape and `guess`'s home as its predicate — private, link-local or unique-local — so "this network" has one decider |
+| svrngs `crates/svrngs-node/src/door.rs:736-805` (`lend_for`), with `guess` | the lender's door: the person from the dialer's key and the register (`:736-765`); the path's address guessed home or away (`:805`) | unchanged (call 3): the lender's door sees the room door's computer as its person, counted once however many devices in the room ask, its path guessed as now — from across town, away and counted |
+| svrngs `crates/svrngs-node/src/node.rs:300` (`Node::lends`), `:367-370` (`origin`) | `/v1/lends` answers where this computer's browser opens each lend | gains a served lend's room address (u6-1, §7) |
+| svrngs `apps/web-conformance`, `crates/svrngs-node/tests/conformance.rs` | the conformance canary (§8) | the room door's check: its routes at the private address, from a client not on loopback (u6-1) |
+
+Six facts follow. *Two of the survey's gaps are U6's:* no listener for a
+room's devices (`api.rs:165` refuses any bind off loopback, and the door
+answers only a verified dialer, `door.rs:718-731`) and no address picker;
+its other thirteen went with the handoff, each named in u6-0's commit.
+*The room is one person to the lender:* the room door dials as its
+computer's key, so a room of five is one person to Sam's limit and share,
+and who in the room asked is the app's to know, by its own sign-in.
+*Typed once needs an address that stays:* the screen's client is typed the
+address once (call 4), so the room door keeps each lend's port from one
+run to the next; the private address is the router's to hand out.
+*A port per lend parts roots and storage, not cookies:* a browser keeps
+cookies per host, not per port (RFC 6265 §8.5, not measured here), so on a
+device that opens two lends at the room address, each lend's cookies reach
+the other's requests. Every lend there is reached as the one person, and
+the screen's client is one app's. *Plain HTTP on the room's network:* as
+upstream's LAN door is by design, "the room's WiFi is the trust
+environment a room accepts" (`docs/THE_LINK.md:217-222`); a lend's secret
+never crosses it, staying in the lender's door, but what the app's own
+client sends does, its sign-in included, as in the reads, where the TV's
+app reached Jellyfin over plain HTTP (`jellyfin-conns.log:9`).
+*Unmeasured here:* whether macOS lets a device on the network reach a
+`svrngs` process's listener. In the reads the TV reached the Jellyfin
+app's server on this computer, never `svrngs`; a client on this host
+never crosses that gate, so u6-9's package is its first. And the
+repository stands at 13,826 of 14,000 lines (`scripts/lean_check.py` at
+`d95039c`), so the room door has 174; a raise is the operator's.
+
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
 | U1 a group is not a mesh | ring sync, its route and the dial-by-key tunnel forked into `svrngs-node`, the node's router served on each accepted stream; the register decides who may connect and who is synced, where upstream asked the mesh (`commonwealth/crates/commonwealth-rails/src/` at `e1a43bcd2`: `acceptor.rs:47-61`, `ring_sync/journal.rs:153-164`, the default roster at `lib.rs:404`) | a node in the group but no mesh syncs; a node outside the group is refused |
@@ -944,12 +992,17 @@ apps", call 4, on how that clause meets zero sign-in).
 |---|---|---|
 | U4 the browser | a phone opens a group's https link, on the page origin the group named, and is in: its own key, a dial by key to the issuer to join and to each lender for what they lend (§3, "Joining"), and the runtime that renders a lent app through it — fetch, POST, streaming, byte ranges; the page is static files any origin can serve | a stock phone browser plays a lent film and seeks |
 | U5 any app on a port, Jellyfin as it comes | what an app cannot yet ask (§3): the groups this computer holds and what their people lend, on the record API (u5-1); every lend at an origin of its own, a pass in place of the person's key, the web carried whole, its live socket included (u5-2); stock Jellyfin measured through a lend and the way past its sign-in decided (u5-3), then built (u5-4); §1's list of apps measured on five of them (u5-catalogue-dry); Demo A's dry run (u5-9) — on the §3 surface alone, and nothing that knows Jellyfin outside `apps/jellyfin/` | after `svrngs share 8096`, someone who never used Jellyfin opens it from the list, from a computer and from a phone, in Chromium and WebKit, plays, and seeks three times, each playing again within five seconds; two people at once, one seeking five times, never restart the other's play; no byte a person receives holds a secret the lend keeps; the conformance canary's routes all pass on a computer and with the wildcard, and on the floor (dropped since, u6-00) all but the two it cannot give, each named; §1 names only apps the census supports |
-| U6 the screen handoff | the meeting point serves one stream to a TV on its network at an unguessable address; AirPlay from Safari, Cast from Chrome; the phone is the remote and may lock | a film plays on the TV from a phone browser; the address serves only the device it was handed to |
+| U6 reach for the room | the room door: a member's computer serves the lends its person names to its own network while the command runs, each at a port of its own on its private address, as that person (u6-1); Jellyfin's own client for a screen measured through it, and what its lender sets written in `apps/jellyfin/` (u6-2); Demo B's dry run (u6-9) — and no screen, player or media word in svrngs (§3, "The room") | a client on the room's network, not on loopback, passes the conformance canary's routes through the room door; a lend not named is not served, nothing is served once the command stops, and a request from off the network is refused; the address picked is the private LAN's, or absent; Jellyfin's own client for a screen, stood in for by jellyfin-web, signs in, plays and seeks three times, every request through the room door |
 
-**Demo B — movie night** (after U6). Five friends at Sam's, phones only. Sam's
+**Demo B — movie night** (after U6; operator, 2026-10-05: the library is
+across town, and the people in the room are on the TV's WiFi). Five friends
+at Dee's, phones only; Sam's library is across town. Before the evening
+Dee sets up two things, once: Dee's computer runs the room door for Sam's
+library, and Dee's TV has Jellyfin's own app (§3, "The room"). Sam's
 group names a page origin, so its link opens in a phone's browser. Sam
-texts the link; each opens it, opens a library one of three members lends,
-and a film they pick plays on the TV. Nobody installs or signs up.
+texts the link; each opens it, opens Sam's library, and puts a film they
+pick on the TV. Nobody installs or signs up. The run-of-show is
+`demo/b.md`.
 Gate: four of five newcomers get from the link to the film on the TV within
 three minutes, unassisted.
 
