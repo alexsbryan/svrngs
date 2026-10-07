@@ -2554,3 +2554,216 @@ missed 5 s through a lend, 5 straight; 86 ended at a load above 12
 cores". Both kept, misses included; the host was not quiet again before
 this was written (31.80 at 23:13Z). This audit judges no rate: u5-9 and
 the operator judge Demo A's.
+
+## REVIEW-audit-u6-auto-1 (2026-10-07, range 90d31d8..4bfe1b8)
+
+The range starts at 90d31d8, the hash REVIEW-audit-u5-auto-4's row
+carries (ralph/next/u5/STATE.md:16), the last `REVIEW-audit-` row; the u6
+queue has none before this one. It ends at 4bfe1b8, the commit that made
+this row, and covers u6-00, u6-0, u6-1 and u6-2. a73dbfc (the operator's,
+after 4bfe1b8: apps/jellyfin/ROOM.md and demo/b.md, prose only) is outside
+it. The range touched crates/svrngs-core/, crates/svrngs/,
+crates/svrngs-node/, web/ and apps/jellyfin/ (`git log --format='%h %s'
+90d31d8..4bfe1b8 -- crates apps web scripts`: beb2f0c, 697e233, 57592a3,
+1976fa6, e019551, 4567181). This audit's fix is a7afc9e (#73).
+
+The row cites `docs/ARCH_PRINCIPLES.md`, which is at
+docs/principles/ARCH_PRINCIPLES.md, and `target/debug/sovereign-cli`,
+which svrngs does not build. The binary used is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, built 2026-10-06 19:25,
+sha256 7f5fbf4c…d2d1, **not** the one the last audit planted against
+(68f2d27b…50f4), so its tiers were planted again. The clean runs are on
+corpus `svrngs` at a73dbfc, the tree clean (`code index`, incremental: 26
+files, 457 chunks; `refresh`: SCIP at HEAD). The plants went into a clone
+of a73dbfc, /tmp/u6audit1/svrngs-plant, one commit holding them (d5ef2db
+there), corpus `svrngs-plant` (`code index --full`: 2259 chunks in 450 s;
+`refresh`: rust 9272 symbols, python 403, "typescript: skipped (export
+failed)").
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' 90d31d8..4bfe1b8`,
+summed by /tmp/u6audit1/ledger.py: the last audit's rules (a `check/` or
+`tests/` segment, or a lean_check test file, is a test; scripts/ is not
+counted, and the range changed none of it), but a commit counts toward the
+row whose `done` comes next after it, since the u6 queue writes no
+`started` commit. Each product commit's subject names that same unit,
+apart from 1976fa6 (`fix(jellyfin)`, inside u6-2's span).
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| u6-00-drop-floor | 94 | 275 | -181 | 58 | 174 | -116 |
+| u6-0-inventory | 0 | 0 | 0 | 0 | 0 | 0 |
+| u6-1-room-door | 267 | 5 | 262 | 516 | 0 | 516 |
+| u6-2-jellyfin-screen | 34 | 0 | 34 | 563 | 2 | 561 |
+| total | 395 | 280 | 115 | 1137 | 176 | 961 |
+
+- u6-00 src: cli.rs −96, group.rs −35, svrngs-core link.rs −27, web/app.js
+  −15, lend.js −4, open.js −2, store.js −1, door.rs −1 (the floor gone,
+  `checked_page` and the page origin kept).
+- u6-1 src: svrngs-node room.rs +179 (new), cli.rs +46 (`room`), node.rs
+  +21 (`label`, `room_address`, `Host::room`), origin.rs +8 (`reach`),
+  surface.rs +5 (`room` in `/v1/lends`), lib.rs +3. Tests: tests/room.rs
+  +363, room_tests.rs +106, crates/svrngs/tests/new.rs +47.
+- u6-2 src: apps/jellyfin/ROOM.md +34, prose, in the ledger because it is
+  under apps/. Tests: apps/jellyfin/check/screen.mjs +334, screen.py +115,
+  screen.sh +110, person.mjs +2.
+
+`python3 scripts/lean_check.py <tree>` (rc 0), trees from `git archive` in
+/tmp/u6audit1:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 90d31d8, range start | 2951 / 3000 | 13932 / 14000 |
+| 4bfe1b8, range end | 2931 / 3000 | 13976 / 14000 |
+| a73dbfc, the operator's after it | 2931 / 3000 | 13976 / 14000 |
+
+On this worktree lean_check said 13996 at a73dbfc and 13995 at a7afc9e:
+20 lines more than the archive, all of them build output (#74). The
+repository rose 44 lines over the range, u6-00's floor having given back
+what u6-1's door took, to **99.8%** of its ceiling. 24 lines are left in
+a clean tree, 5 on this worktree; svrngs-core has 69 left. A raise is the
+operator's; this audit names it and does not make it.
+
+### (2) Clones (`code dry-report`), each tier checked against a plant first
+
+**Plants**, each a symbol of the range:
+
+- **A** (exact, Rust): room.rs `from_this_network` (u6-1), verbatim and
+  named the same, in a `pub mod plant` at the end of door.rs (:1113).
+- **B** (near, Rust): room.rs `pick` (u6-1) as `choose` at the end of
+  surface.rs (:188), its locals and parameters renamed.
+- **D** (JS, verbatim body): apps/jellyfin/check/screen.mjs `until` (u6-2)
+  as `untilAgain` at the end of drive.mjs (:84).
+- **P** (Python, verbatim body): apps/jellyfin/check/screen.py `elsewhere`
+  (u6-2) as `elsewhere_again` at the end of judge.py (:91).
+- **N** (noun): room.rs `pub struct Room` in the plant module.
+
+| scope | clean at 0.95: locations / exact / near | plants seen |
+|---|---|---|
+| crates/svrngs-node/ | 367 / 5 / 1 | **A exact** at 0.95, 0.9, 0.8 (door.rs:1113 == room.rs:161), and near from 0.9 at door.rs:1110–1130 ~ room.rs:158–178. **B missed** at 0.95, 0.9 and 0.8; it joins `pick` at 0.7, in one cluster of 254 symbols (cosine 0.700–0.932) |
+| crates/svrngs/ | 64 / 0 / 0 | not planted |
+| crates/svrngs-core/ | 421 / 7 / 0 | not planted |
+| web/ | 85 / **could-not-judge** / 0 | not planted: the range added no web/ symbol |
+| apps/ | 70 / 0 / 0 | **D missed** at 0.95, 0.9, 0.8; it joins `until` at 0.7 in a cluster of 9 (0.706–0.828). **P missed** at 0.95 and 0.9; seen at 0.8 as a pair, cosine 0.842. The exact tier says 0 groups, not could-not-judge, with D in scope (I16) |
+
+All four planted functions are in the tool's symbol set (`--threshold 0.0
+--min-lines 1` scoped to each file lists `choose`, `pick`, `untilAgain`
+and `until`), so the misses come from the near tier's similarity, not from
+symbols left out (I13 does not apply).
+
+N: `converge noun Room` on the real corpus gives **definitions (1)**,
+room.rs:78 (it is at :79, I1); the plant was not run through converge,
+because (3) below needed none.
+
+**Clean runs.** Scoped at 0.95 (the table), each with a trailing slash
+(I11), and unscoped at 0.9: **14 exact groups and 28 near clusters** over
+1266 function/method symbols (14 and 29 over 1238 at the last audit).
+/tmp/u6audit1/blame.py blamed every side of every cluster (`git blame -w
+-M -C -C HEAD`) for lines in 90d31d8..4bfe1b8: **no cluster in any run has
+a side added in the range** (`grep -c ^ADDED` on each `.blame`: 0, over 42
+clusters unscoped, 6 in crates/svrngs-node/, 7 in crates/svrngs-core/,
+none elsewhere).
+
+**Substitute check, named as a substitute**, since the near tier saw none
+of B, D and P at 0.9: /tmp/u6audit1/windows.py (windows of 5 normalized
+lines over .rs .js .mjs .py .sh, tests included; a hit is new when either
+span has a line blamed in the range), unchanged from the last audit. On
+this tree at a73dbfc: 253 hits, **13 new**, every one in tests: the
+`.send().await.unwrap().json().await.unwrap()` chain of a reqwest call in
+crates/svrngs-node/tests/room.rs:194-200 and :325-330, the same chain in
+conformance.rs:114-118, lend_origin.rs:176-181 and record_api.rs:230-236,
+:349-354 (#76). On the plant clone: those 13 and 3 more, A
+(door.rs:1113-1125 == room.rs:161-173), D (drive.mjs:85-91 ==
+screen.mjs:98-104) and P (judge.py:92-101 == screen.py:38-47). B, renamed,
+it cannot see.
+
+Reading the range for what neither pass would show:
+
+- **#73, fixed.** a7afc9e: u6-1 copied `unshare`'s refusal of a lend's
+  name into `room` (crates/svrngs/src/cli.rs:308 and :315 at 4bfe1b8), and
+  `--name` (:210) spelled it a third time with its flag first. Now
+  `lend_name` (cli.rs:370 at a7afc9e). `svrngs` built before and after on
+  seven arguments, among them `unshare a.b`, `room ok a.b` and `share 8080
+  --name a.b`: the outputs compared equal.
+- **#74.** scripts/lean_check.py:33-35 leaves out `target/` only at the
+  root (`rel.startswith(("apps/", "target/"))`), so web/target/, the page's
+  wasm build, is counted: six `out/private.rs` files of serde, serde_core
+  and thiserror under web/target/wasm32-unknown-unknown/release/build/, 20
+  lines (a per-file comparison of `git archive a73dbfc` and this worktree:
+  cli.rs aside, those six files are the whole difference). The budget's
+  verdict therefore depends on what was built: 13996 here against 13976 in
+  the archive, with 24 lines of headroom. Another dependency's build
+  script writing a `private.rs` would break check.sh with no code changed.
+  Not fixed: it changes the gate's count, so it needs a plant of its own,
+  and the budget is the operator's.
+- **#75.** crates/svrngs-node/src/room.rs:127-129 at a7afc9e: a lend that
+  `room` was asked for, and that is lent, but whose key `label` cannot
+  read, is skipped with `continue` and no trace. `Said::Room` then lists
+  only what was served, so the person sees nothing for it. The same silent
+  drop was already in `/v1/lends` (surface.rs:171, `host.origin(...)?`,
+  before the range). Neither can happen while every key comes from the
+  record as actor hex; a debug line at each would say so if one ever does.
+  Not fixed: it adds a trace, which this audit leaves to a unit.
+- **#76, no change.** The 13 new windows above are reqwest's call and
+  decode chain in five test files, the crate's idiom, each with its own
+  request. node.rs:250 names the room door's `Asking` clone `room` and
+  stores it as `asking: room` (:270), named for its use and documented at
+  the field (:120).
+- **#57, #68, #70, #71, still open.** The range changed none of their
+  lines.
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff 90d31d8 4bfe1b8 -- crates apps web`, added lines matching
+`(struct|enum|trait|type|class) Name`: `pub struct Room` and `pub enum
+RoomError` (room.rs, u6-1). `converge noun`:
+
+- `Room`: **definitions (1)**, crates/svrngs-node/src/room.rs:78 (at :79).
+- `RoomError`: **definitions (1)**, crates/svrngs-node/src/room.rs:96 (at
+  :97).
+
+No noun is defined twice.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 73 | 8 | crates/svrngs/src/cli.rs:210, :308, :315, at 4bfe1b8 | a7afc9e | A lend's name refused in three places with one message, the third copied by u6-1. Now `lend_name`; output compared equal. |
+| 74 | 6, 7 | scripts/lean_check.py:33-35, and web/target/wasm32-unknown-unknown/release/build/*/out/private.rs, at a7afc9e | not fixed | The size budget counts the page's build output (20 lines here), so its verdict depends on what was built; 5 lines of headroom on this worktree, 24 in a clean tree. |
+| 75 | 1, 6 | crates/svrngs-node/src/room.rs:127-129, and crates/svrngs-node/src/surface.rs:171, at a7afc9e | not fixed | A named, lent lend whose key does not read is dropped with no line, at the room door and in `/v1/lends`. |
+| 76 | 8 | the "no change" items in (2) | no change | The tests' reqwest chains; the `room` local in node.rs. |
+| 57, 68, 70, 71 | as recorded | as recorded | not fixed | Untouched in the range. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still present on the new binary: `Room` at room.rs:78 for :79, `RoomError` at :96 for :97. |
+| I4 | 6 | `refresh` | Still present: "typescript: skipped (export failed)"; web/'s exact tier is could-not-judge. |
+| I10 | 6 | `code dry-report` header | Still present: "1266 function/method symbols" in every scope. |
+| I11 | 6 | `code dry-report --scope` | Not retested; every scoped run used a trailing slash. |
+| I14 | 6, 7 | `code dry-report` near tier and spans | Still present, now also over Rust: B, a renamed 14-line Rust function, is missed down to 0.8 and joins only at 0.7 in a cluster of 254. D, a verbatim 9-line JS body, joins only at 0.7. Spans are off: `from_this_network` 1110–1130 for 1113–1125, `pick` 39–58 for 42–55, `elsewhere` 34–50 for 37–47. |
+| I16 | 6 | `code dry-report --scope apps/` exact tier | Retested: "0 exact-clone groups" with D, a verbatim JS body, in scope, where web/ says could-not-judge for the same language. |
+| I17 | 6, 7 | `code dry-report` over Python | New: P, a verbatim 11-line Python body under another name, is not an exact group and is missed by the near tier at 0.95 and 0.9; it is seen at 0.8, cosine 0.842. The 5-line window pass sees it. |
+
+The row's check (LINT): `scripts/check.sh`'s lint steps at a7afc9e on a
+clean tree, /tmp/u6audit1/part.sh `lint`, 2026-10-07T04:05:19Z: principles
+pinned, lean and RUST_ARCH, app nouns gate, app nouns, rustfmt, clippy,
+every one `passed`, failed=0 (/tmp/u6audit1/check-lint.log). The rest of
+check.sh at a7afc9e, **a part at a time, not as one process** (one run is
+longer than this session's ten-minute foreground). part.sh is the last
+audit's, with `--test room` added to the short targets because u6-1 added
+tests/room.rs. Every part exited 0 and every step `passed`, 04:05:37Z to
+04:27:40Z (logs /tmp/u6audit1/check-*.log): the three test parts, browser
+tests, conformance tests, canaries, web rustfmt and clippy, browser,
+joining in a browser, the conformance canary (every route passed on a
+computer and with the wildcard) and app laws. What this does not show is
+one exit of check.sh itself, which is owed to whoever next has a
+foreground long enough. The host's 1-minute load was 16-75 on 12 cores
+throughout, from work this session did not start. WebKit's seeks back to
+back, the rate and not a gate: through a lend, computer 456, 479 and
+wildcard 4080, 3359, all passed; straight at the canary 2111-2929, all
+passed. check.sh's count: "of 36 here since 2026-10-07T01:30:06Z: 8 missed
+5 s through a lend, 5 straight; 28 ended at a load above 12 cores". This
+audit judges no rate.
