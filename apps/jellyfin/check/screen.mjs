@@ -26,7 +26,8 @@
 // null with what the page showed: never a number guessed.
 import fs from 'node:fs';
 import { execSync } from 'node:child_process';
-import { enter, lender, seek, shown, timed, watch } from './person.mjs';
+import { enter, lender, seek, timed, watch } from './person.mjs';
+import { kept, open as openAt, playOn, screen as screenAt, session as sessionOf, until, video } from './tv.mjs';
 import { launch } from '../../../web/tests/page.mjs';
 
 const [part, raw] = process.argv.slice(2);
@@ -36,98 +37,9 @@ const T0 = Date.now();
 const jf = lender(JF, ADMIN);
 const out = { part, room: args.room };
 const pw = (who) => fs.readFileSync(`${SECRETS}/${who}_pw`, 'utf8').trim();
-const masked = (u) => u.replace(/(ApiKey|api_key|Token|Secret)=[^&]+/gi, '$1=<masked>');
-
-// The screen: its profile's Chromium at a TV's size. Every request kept by
-// where it went; one off the room address refused, socket or not.
-async function screen(profile) {
-  const { context, close } = await launch('chromium', { profile });
-  const room = new URL(args.room).host;
-  const asked = { at_room: 0, elsewhere: [], sockets: [] };
-  fs.mkdirSync(DUMP, { recursive: true });
-  const log = fs.openSync(`${DUMP}/screen-${part}.jsonl`, 'a');
-  const web = (u) => /^(https?|wss?):$/.test(u.protocol);
-  context.on('request', (r) => {
-    const u = new URL(r.url());
-    if (!web(u)) return;
-    if (u.host === room) asked.at_room++;
-    fs.writeSync(log, JSON.stringify({ ms: Date.now() - T0, method: r.method(), host: u.host, path: masked(u.pathname + u.search) }) + '\n');
-  });
-  await context.route((u) => web(u) && u.host !== room, (route) => {
-    asked.elsewhere.push({ ms: Date.now() - T0, url: masked(route.request().url()) });
-    return route.abort('addressunreachable');
-  });
-  await context.routeWebSocket((u) => u.host !== room, (ws) => {
-    asked.elsewhere.push({ ms: Date.now() - T0, url: masked(ws.url()), socket: true });
-    ws.close();
-  });
-  const page = context.pages()[0] ?? (await context.newPage());
-  await page.setViewportSize({ width: 1920, height: 1080 });
-  asked.browser = await page.evaluate(() => navigator.userAgent);
-  page.on('websocket', (ws) => asked.sockets.push(masked(ws.url())));
-  const logs = [];
-  page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
-  page.on('response', (r) => { if (r.status() >= 400) logs.push(`http ${r.status()} ${r.request().method()} ${masked(r.url()).slice(0, 140)}`); });
-  return { context, page, asked, logs, close };
-}
-
-// In the screen: what jellyfin-web keeps of the server, and who it is.
-const kept = (page) => page.evaluate(async () => {
-  const c = JSON.parse(localStorage.getItem('jellyfin_credentials') ?? '{}');
-  const s = c.Servers?.[0] ?? {};
-  let me = null;
-  try { me = (await window.ApiClient.getJSON(window.ApiClient.getUrl('Users/Me'))).Name; } catch (e) { me = `refused: ${e?.status ?? e}`; }
-  return {
-    servers: c.Servers?.length ?? 0, ManualAddress: s.ManualAddress ?? null, LocalAddress: s.LocalAddress ?? null,
-    RemoteAddress: s.RemoteAddress ?? null, LastConnectionMode: s.LastConnectionMode ?? null, token: s.AccessToken ? 'held' : null,
-    serverAddress: window.ApiClient?.serverAddress() ?? null, device: localStorage.getItem('_deviceId2'), signed_in_as: me,
-  };
-}).catch((e) => ({ error: String(e).split('\n')[0] }));
-
-// The screen's session as the lender's Jellyfin sees it.
-async function session(device) {
-  const s = (await jf('GET', '/Sessions')).find((x) => x.DeviceId === device);
-  return s ? { user: s.UserName, client: s.Client, version: s.ApplicationVersion, device_name: s.DeviceName, remote_end: s.RemoteEndPoint,
-    remote_control: s.SupportsRemoteControl, media_control: s.SupportsMediaControl, playing: s.NowPlayingItem?.Name ?? null,
-    paused: s.PlayState?.IsPaused ?? null, play_method: s.PlayState?.PlayMethod ?? null } : null;
-}
-
-// In a page: its <video>, if any.
-const video = (page) => page.evaluate(() => { const v = document.querySelector('video'); return v && { ct: +v.currentTime.toFixed(2), paused: v.paused, rs: v.readyState, dur: v.duration }; }).catch(() => null);
-async function until(page, ok, within) {
-  const t0 = Date.now();
-  while (Date.now() - t0 < within) {
-    const v = await video(page);
-    if (ok(v)) return { ms: Date.now() - t0, video: v };
-    await page.waitForTimeout(100);
-  }
-  return { ms: null, video: await video(page), shown: await shown(page) };
-}
-
-// The screen opened at the room address; signed in typing `who`'s, or
-// left at what it shows when `who` is none.
-async function open(s, who) {
-  const step = {};
-  step.open_ms = await timed(s, 'the room address', async () => {
-    await s.page.goto(args.room);
-    await s.page.waitForSelector('#txtManualName, .manualLoginForm, .btnManual, .btnQuick, .card', { timeout: 60_000 });
-  });
-  if (step.open_ms === null) return step;
-  await s.page.waitForTimeout(1500);
-  step.asked = (await s.page.locator('#txtManualName:visible, .manualLoginForm:visible, .btnManual:visible').count()) > 0;
-  step.quick_connect_offered = (await s.page.locator('.btnQuick:visible').count()) > 0;
-  if (!who || !step.asked) return step;
-  step.signed_in_ms = await timed(s, 'signed in', async () => {
-    const manual = s.page.locator('.btnManual:visible');
-    if (await manual.count()) await manual.first().click();
-    await s.page.fill('#txtManualName', who);
-    await s.page.fill('#txtManualPassword', pw(who));
-    await s.page.locator('.manualLoginForm button[type=submit]').click();
-    await s.page.waitForSelector('.card', { timeout: 30_000 });
-  });
-  return step;
-}
-
+const screen = (profile) => screenAt(profile, { room: args.room, dir: DUMP, log: `screen-${part}.jsonl`, T0 });
+const session = (device) => sessionOf(jf, device);
+const open = (s, who) => openAt(s, who, args.room, pw);
 const phone = (name, user) => enter({ name, user }, { args: { way: 'phone', engine: 'webkit', at: args.link, server: args.server }, SECRETS, DUMP, T0 });
 const done = async (who) => { if (who?.close) await who.close().catch(() => {}); };
 const people = [];
@@ -214,15 +126,7 @@ try {
       // jellyfin-web's own "Play on": "Cast to Device" at the top — the
       // icon, or the player's name once one is picked — then the screen by
       // its name and its user's, as the menu writes them.
-      const cast = p.getByRole('button', { name: 'Cast to Device' });
-      const header = () => cast.first().innerText().then((t) => t.trim() || '(icon)', () => null);
-      const menu = async () => {
-        await cast.first().click();
-        // As a person waits for the list: tapped 1.5 s after its first item
-        // showed, the phone's play went to the phone itself (02:09-02:13).
-        await p.waitForTimeout(2000);
-        return (await p.locator('[role=menuitem]:visible').allInnerTexts()).map((x) => x.replace(/\s+/g, ' ').trim()).filter(Boolean);
-      };
+      const { cast, header, menu } = playOn(p);
       out.play_on_offered = await cast.first().waitFor({ timeout: 15_000 }).then(() => true, () => false);
       if (out.play_on_offered) {
         out.play_on_lists = await menu();
