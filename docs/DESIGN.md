@@ -372,6 +372,18 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
    `LocalAddress`, which is across town). What the lender sets is written
    in `apps/jellyfin/`, never in the infra; anything the door would need is
    general — any app — or it is a finding for the operator.
+   (Measured, u6-2, jellyfin-web 12.0.0 in a browser standing in for the
+   TV, `demo/runs/u6/2026-10-06-jellyfin-screen/`: the room door needs
+   nothing it does not do. Typed the room address once, the screen signed
+   in, played by DirectPlay and seeked, nothing reaching Sam's Jellyfin
+   but through the room door; Quick Connect, on as Jellyfin comes, signed
+   it in with nothing typed; it kept to the room address, opened again and
+   across the room door stopping, though Jellyfin reports itself at Sam's
+   loopback. A newcomer's phone starts a film on it once the lender ticks
+   "Allow remote control of other users" for them, then loses it — no
+   pause, no seek — as it does with no svrngs anywhere, where the phone of
+   the TV's own user keeps it. What the lender sets is
+   `apps/jellyfin/ROOM.md`.)
 5. *Demo B as it now runs* (operator, 2026-10-05: the library is across
    town; the people in the room are on the TV's WiFi): five friends at
    Dee's, Sam's library across town, Dee's computer running the room door

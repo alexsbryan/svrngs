@@ -10,12 +10,15 @@ on Dee's TV in Jellyfin's own app, reached through Dee's computer
 town: a computer running Jellyfin with at least three films, lent as
 `svrngs share` tells Sam (DESIGN §3, "Lent apps", call 4), and a group that
 names a page origin, so its link opens in a phone's browser; in Jellyfin's
-own pages, an account for each of the five and one for Dee's TV, every
-library ticked; then Jellyfin's list of users exported. Dee: in Sam's
+own pages, an account for each of the five, with "Allow remote control
+of other users" ticked, and one for Dee's TV, every library ticked; then
+Jellyfin's list of users exported. Dee: in Sam's
 group on a computer at home, on the WiFi the TV is on; that computer runs
 the room door for Sam's Jellyfin (u6-1 names its command), which prints
 the address the room reaches it at; Dee's TV has Jellyfin's own app from
-its store, that address typed into it once and signed in as u6-2 finds.
+its store, that address typed into it once and signed in by Quick
+Connect from Dee's phone with the TV's account (`apps/jellyfin/ROOM.md`,
+u6-2).
 The five: a phone each, on Dee's WiFi, never in Sam's group, nothing
 installed. Every phone's screen and the TV are recorded; Sam's and Dee's
 svrngs logs and Jellyfin's log are kept.
@@ -27,11 +30,10 @@ person's Jellyfin name and password. Each newcomer opens the link on their
 phone, gives their name and is in (DESIGN §3, "Joining"); opens Sam's
 jellyfin from the list, at an address of its own (DESIGN §7); signs in to
 Jellyfin's own page, once, with the name and password Sam sent; picks a
-film, and plays it on Dee's TV from Jellyfin's own "Play on". What Sam sets
-in Jellyfin for that — the TV's play started by another Jellyfin user, the
-TV signed in without typing on its remote — and whether the TV's app keeps
-to the room's address are u6-2's to measure (DESIGN §3, "The room", call
-4), and are written in `apps/jellyfin/` once measured.
+film, and plays it on Dee's TV from Jellyfin's own "Play on". Their phone
+loses the TV once the film starts, as Jellyfin does with no svrngs
+anywhere, so pausing and seeking are the TV's remote's; the TV's app kept
+to the room's address in u6-2's run (DESIGN §3, "The room", call 4).
 
 **What Sam is told, and nothing else:** "Share your Jellyfin with the group,
 and send the link to the five at Dee's."
