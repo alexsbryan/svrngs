@@ -14,6 +14,14 @@
 #                                           signed in as PHONE_AS (else ana), and with DIRECT=1 c's baseline
 #                                           with no svrngs: the screen (screen-direct) and the phone straight
 #                                           at Sam's Jellyfin
+#   screen.sh night <scratch> <out> <part>  Demo B's dry run (u6-9), night.mjs's part tv|five, after up with
+#                                           PEOPLE=room: tv signs the TV (profile tv) in by Quick Connect from
+#                                           Dee's phone as room; five has Ana, Bo, Cy, Di and Ed, one at a time,
+#                                           put a film on it; writes <out>/night-<part>[-$RUN].json, the TV's
+#                                           requests and each phone's responses, by time, status, host and path;
+#                                           WHO names some of the five (else all), and with DIRECT=1 five is the
+#                                           baseline with no svrngs: the TV (profile tv-direct) and the phones
+#                                           straight at Sam's Jellyfin
 #   screen.sh bounce <scratch> <out>        the room door stopped GAP s (else 15) and started again; d runs
 #                                           it with BOUNCE_DOOR=1
 #   screen.sh logs <scratch> <out>          the room door's, Sam's door's and Jellyfin's logs, and Jellyfin's
@@ -41,7 +49,7 @@ s = re.sub(r"(svrngs://join/|#)[A-Za-z0-9_-]{40,}", r"\1<the link>", s)
 sys.stdout.write(s)' "$R/secrets"; }
 
 up() {
-  PEOPLE="dee ana" "$HERE/check.sh" up "$R" "$OUT"
+  PEOPLE="${PEOPLE:-dee ana}" "$HERE/check.sh" up "$R" "$OUT"
   mkdir -p "$R/dee"
   local client; client="$(grep -o 'svrngs://join/[A-Za-z0-9_-]*' "$R/sam/new.out")"
   SVRNGS_DIR="$R/dee" NO_COLOR=1 nohup "$B" join "$client" --as Dee >"$R/dee/join.out" 2>"$R/dee/join.log" &
@@ -89,6 +97,41 @@ run() {
   say "$tag: $(head -c 600 "$OUT/$tag.json")"
 }
 
+# Demo B's dry run (u6-9; demo/runs/b/2026-10-06/README.md): the TV a
+# profile of its own at the room address, all signed in as the room's one
+# account; the five in WebKit as an iPhone and Chromium as a Pixel 7, by
+# turns, each picking the next of Sam's three films.
+night() {
+  # shellcheck disable=SC1091
+  . "$R/env"
+  local part="$1" tag="night-$1${RUN:+-$RUN}" i=0 films=("Test Pattern One" "Test Pattern Two" "Test Pattern Three") people=""
+  local room="$ROOM" profile="$R/tv" direct=false
+  [ -n "${DIRECT:-}" ] && { room=http://127.0.0.1:8096/web/; profile="$R/tv-direct"; direct=true; }
+  for p in Ana:webkit: Bo:chromium:Pixel\ 7 Cy:webkit: Di:chromium:Pixel\ 7 Ed:webkit:; do
+    IFS=: read -r name engine device <<<"$p"
+    i=$((i + 1))
+    [ -z "${WHO:-}" ] || [[ " $WHO " == *" $name "* ]] || continue
+    device="${device:+\"$device\"}"
+    people="$people${people:+,}{\"name\":\"$name\",\"user\":\"$(tr A-Z a-z <<<"$name")\",\"engine\":\"$engine\",\"device\":${device:-null},\"film\":\"${films[$(((i - 1) % 3))]}\"}"
+  done
+  rm -rf "$R/dump/$tag"
+  SECRETS="$R/secrets" JF=http://127.0.0.1:8096 ADMIN="$(cat "$R/secrets/admin_token")" DUMP="$R/dump/$tag" \
+    node "$HERE/night.mjs" "$part" "{\"room\":\"$room\",\"link\":\"$LINK\",\"server\":\"$SERVER\",\"profile\":\"$profile\",
+      \"account\":\"room\",\"direct\":$direct,\"people\":[$people]}" 2>"$R/$tag.err" | mask >"$OUT/$tag.json" || true
+  [ -f "$R/dump/$tag/screen-$part.jsonl" ] && mask <"$R/dump/$tag/screen-$part.jsonl" >"$OUT/$tag-tv-requests.jsonl"
+  for d in "$R/dump/$tag"/*/; do
+    [ -f "$d/index.jsonl" ] || continue
+    python3 -c '
+import json, sys, urllib.parse as u
+for line in open(sys.argv[1]):
+    e = json.loads(line); x = u.urlsplit(e["url"])
+    if x.scheme not in ("http", "https"): continue
+    print(json.dumps({"ms": e["ms"], "status": e["status"], "host": x.netloc, "path": x.path + ("?" + x.query if x.query else "")}))' "$d/index.jsonl" \
+      | sed -E 's#[a-z0-9]{20,}\.localhost#<label>.localhost#g' | mask >"$OUT/$tag-$(basename "$d")-requests.jsonl"
+  done
+  say "$tag: $(head -c 600 "$OUT/$tag.json")"
+}
+
 logs() {
   mask <"$R/dee/room.log" >"$OUT/dee-room.log"
   # Sam's at INFO and above: the person and path of each request its door
@@ -103,8 +146,9 @@ logs() {
 case "$STEP" in
   up) up ;;
   run) run "$4" ;;
+  night) night "$4" ;;
   logs) logs ;;
   bounce) bounce ;;
   down) "$HERE/check.sh" down "$R" "$OUT" ;;
-  *) echo "usage: screen.sh up|run|logs|down <scratch> <out> [part]" >&2; exit 2 ;;
+  *) echo "usage: screen.sh up|run|night|logs|down <scratch> <out> [part]" >&2; exit 2 ;;
 esac

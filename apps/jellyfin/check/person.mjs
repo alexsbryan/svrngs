@@ -2,13 +2,14 @@
 // drive.mjs, behaviour kept, so Demo A's run times a seek by the same
 // instrument: apps/jellyfin/check/trio.mjs). Each person is a browser of
 // their own, Playwright's headless Chromium or its WebKit as an iPhone
-// (web/tests/page.mjs): on `computer` they open the lend's origin on
+// (web/tests/page.mjs), or with `device` one of Playwright's (Chromium
+// as a Pixel 7): on `computer` they open the lend's origin on
 // Alex's loopback, as the bare command prints it; on `phone` they open
 // the group's link, give a name, and open the lend from the list. Each
 // signs in to jellyfin-web with the account the lender made, typing it,
 // and plays their film.
 //
-// `run` is what each caller gives: { args: {way, engine, at, server},
+// `run` is what each caller gives: { args: {way, engine, device?, at, server},
 // SECRETS (the passwords), DUMP (where every response each browser
 // receives is written, for scan.py), T0 (every time reported is in ms
 // from here) }. A step that did not happen within its time is null with
@@ -139,7 +140,7 @@ export function record(context, page, user, { DUMP, T0 }) {
 export async function enter(p, run) {
   const { args, SECRETS, DUMP, T0 } = run;
   const person = { user: p.user, name: p.name, account: p.account ?? p.user };
-  const { context, close } = await launch(args.engine);
+  const { context, close } = await launch(args.engine, { device: args.device });
   person.close = close;
   person.page = await context.newPage();
   const page = person.page;
@@ -172,6 +173,8 @@ export async function enter(p, run) {
   }
 
   if (args.way === 'phone') {
+    // When the link is opened: Demo B's clock starts here (night.mjs).
+    person.opened_at = Date.now() - T0;
     person.list_ms = await timed(person, 'the list', async () => {
       await page.goto(args.at);
       await page.waitForFunction(

@@ -54,8 +54,10 @@ const ENGINES = { chromium: null, webkit: 'iPhone 15' };
 // opens the page, and how to close it. With `profile`, a directory, the
 // context keeps what the page stores there, so a browser closed and
 // launched again on it finds the page's store and worker as a phone's
-// does when it opens the browser again.
-export async function launch(engine, { profile } = {}) {
+// does when it opens the browser again. With `device`, one of
+// Playwright's by name, the engine is that device in place of its own
+// (Demo B's Android phones: Chromium as a Pixel 7).
+export async function launch(engine, { profile, device: as } = {}) {
   if (!(engine in ENGINES)) {
     console.error(`no engine ${JSON.stringify(engine)}: one of ${Object.keys(ENGINES).join(', ')}`);
     process.exit(1);
@@ -67,7 +69,8 @@ export async function launch(engine, { profile } = {}) {
     console.error(`Playwright is not installed — run: ${INSTALL}\n${e}`);
     process.exit(3);
   }
-  const device = ENGINES[engine] ? pw.devices[ENGINES[engine]] : {};
+  const named = as ?? ENGINES[engine];
+  const device = named ? pw.devices[named] : {};
   try {
     if (profile) {
       const context = await pw[engine].launchPersistentContext(profile, device);
