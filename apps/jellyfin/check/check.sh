@@ -73,8 +73,8 @@ films() {
   mkdir -p "$dir"
   # Each written aside and moved in whole, so a film cut short is made again.
   make() {
-    local to="$dir/$1"; shift
-    [ -s "$to" ] || { "$ff" -v error -y "$@" "$dir/.part-$1" && mv "$dir/.part-$1" "$to"; }
+    local to="$dir/$1" part="$dir/.part-$1"; shift
+    [ -s "$to" ] || { "$ff" -v error -y "$@" "$part" && mv "$part" "$to"; }
   }
   make "Test Pattern One (2026).mp4" -f lavfi -i "testsrc2=size=1280x720:rate=24" -f lavfi -i "sine=frequency=440:sample_rate=48000" \
     -t "$len" -c:v libx264 -preset veryfast -b:v 3M -g 48 -pix_fmt yuv420p -c:a aac -b:a 128k -movflags +faststart -f mp4 &
