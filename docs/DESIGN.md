@@ -388,7 +388,11 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
    town; the people in the room are on the TV's WiFi): five friends at
    Dee's, Sam's library across town, Dee's computer running the room door
    and Dee's TV Jellyfin's own app, each set up once by Dee before the
-   evening (§8). The gate stands as it was.
+   evening (§8). The gate stands as it was. (Dry run, u6-9, on one
+   computer, `demo/runs/b/2026-10-06/`: five browser profiles as phones,
+   one at a time, from the link to their film on a TV stand-in in
+   25–39 s, the TV reaching Sam's Jellyfin only through the room door;
+   whether five people find the steps is the operator's run.)
 6. *Middleware, a spike after Demo B* (operator, 2026-10-06): a lent app
    that forwards to another, an ordinary program on the lender's computer,
    so `svrngs share <its port>` lends the pair; svrngs ships no runtime,

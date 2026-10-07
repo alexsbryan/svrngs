@@ -25,11 +25,14 @@ right, then Dashboard, Users and the plus; a name such as `room`, a
 password, every library ticked, and Save. The TV signs in with it by
 Quick Connect (above, from a phone signed in as `room`), and that name
 and password go to everyone in the room. Every phone signed in as `room`
-finds the TV under the button at the top that casts, and starts, pauses
-and seeks it, with nothing ticked (u6-2's run, `c-same`: a phone signed
-in as the TV's own account, which had no permission ticked). What it
-costs: the room shares one account, so a film one person plays shows as
-played for all.
+finds the TV under the button at the top that casts, by the TV's name
+among every phone signed in as `room`, and starts, pauses and seeks it,
+with nothing ticked (u6-2's run, `c-same`: a phone signed in as the TV's
+own account, which had no permission ticked; five phones in turn in
+u6-9's, `demo/runs/b/2026-10-06/`). What it costs: the room shares one
+account, so a film one person plays shows as played for all, and starts
+where they left it (u6-9's run: the second to pick a film started it
+631 s in).
 
 **Or an account for each person: a film on the TV from someone else's phone.** Whoever lends Jellyfin,
 for each person who will: in Jellyfin, your picture at the top right,

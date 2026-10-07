@@ -22,18 +22,30 @@ The five: a phone each, on Dee's WiFi, never in Sam's group, nothing
 installed. Every phone's screen and the TV are recorded; Sam's and Dee's
 svrngs logs and Jellyfin's log are kept.
 
-**The steps as the design has them now**, which nobody is told; u6-9's dry
-run takes them on one computer and writes here the ones it found. From the
-link on: Sam sends the group's link, on its page address, and the room
-account's name and password. Each newcomer opens the link on their
-phone, gives their name and is in (DESIGN §3, "Joining"); opens Sam's
-jellyfin from the list, at an address of its own (DESIGN §7); signs in to
-Jellyfin's own page, once, with the name and password Sam sent; picks a
-film, and plays it on Dee's TV from Jellyfin's own "Play on", and any
-phone in the room pauses and seeks it, all signed in as the room (u6-2's
-run, `c-same`; seat, 2026-10-07: one account for six and no permission
-ticked, where an account each loses the TV once a film starts); the TV's app kept
-to the room's address in u6-2's run (DESIGN §3, "The room", call 4).
+**The steps as the design has them now** (DESIGN §3, "Joining" and "The
+room"), which nobody is told; the dry run of 2026-10-06 took them on one
+computer, the TV a browser at the room address and the five phones
+through the page (`runs/b/2026-10-06/`). Set up before the evening: Sam
+runs `svrngs new <group> --origin <page>`, which prints the group's link,
+`svrngs://join/<token>`, and the same link on the page's address, for a
+phone, and keeps running; beside it, `svrngs share 8096`, which prints how
+to make an account in Jellyfin's own pages; Sam makes one for the room,
+every library ticked, and the export of Jellyfin's users is taken after
+that. Dee: `svrngs join <link>` on the computer on the TV's WiFi, then
+`svrngs room jellyfin`, which prints "Sam's jellyfin:" and
+`http://<an address on Dee's WiFi>:<port>/`, the same each time, and keeps
+running; that address typed into Jellyfin's app on the TV, "Use Quick
+Connect" there, and its code typed on Dee's phone, which opened the link
+and signed in to Jellyfin as the room. From the link on: Sam sends the
+five the link on its page address and the room account's name and
+password. Each opens the link on their phone, gives their name and is in;
+opens Sam's jellyfin from the list, at an address of its own; signs in to
+Jellyfin's own page, once, with the name and password Sam sent; taps a
+film on Jellyfin's home; taps the button at the top that casts ("Cast to
+Device") and the TV by its name, in a list that also holds every phone
+signed in as the room; and taps Play. The film plays on the TV, from
+where anyone last left it; the same button's Remote Control pauses and
+seeks it from their phone.
 
 **What Sam is told, and nothing else:** "Share your Jellyfin with the group,
 and send the link to the five at Dee's."
