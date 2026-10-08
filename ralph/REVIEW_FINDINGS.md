@@ -2982,3 +2982,227 @@ beside `git grep -nP '\b(struct|enum|trait|type|class) <Name>\b' HEAD`:
 | I14 | 6, 7 | `code dry-report` near tier | Still present: B, a renamed 27-line Rust body, is missed unscoped at 0.9 and 0.8 and joins only at 0.7 in a cluster of 5. |
 | I16 | 6 | `code dry-report --scope apps/` exact tier | Still present: "0 exact-clone groups" with D, a verbatim JS body, in scope. |
 | I18 | 6 | `code converge noun` | New, I8's rule seen from converge: a definition in a `src/*_tests.rs` file counts as production and one under `tests/` does not, so `Says`, defined twice, gives definitions (1), and scale.rs's nouns give (0) beside a sibling that gives (1). |
+
+## REVIEW-audit-mw-auto-1 (2026-10-08, range ea4b7ed..e9ed277)
+
+The range starts at ea4b7ed12, the hash REVIEW-audit-ceiling-auto-1's row
+carries (ralph/next/ceiling/STATE.md:15), the last `REVIEW-audit-` row; the
+mw queue has none before this one. It ends at e9ed277, the commit that made
+this row: 17 commits, the last audit's `done` (cdee0c0), the queue (5e877c9,
+3b4c608) and mw-0 to mw-3. The range's product code is all under
+apps/jellyfin/: the middleware, apps/jellyfin/mw/ (a Cargo workspace of its
+own, apps/jellyfin/mw/Cargo.toml:6), and its check, apps/jellyfin/check/.
+`git diff ea4b7ed..e9ed277 -- crates web | wc -l` is 0: the spike's fence
+held, so there is no crate dir under crates/ for (2) to scope. This audit
+fixes one finding (#84) and records the rest.
+
+The row cites `docs/ARCH_PRINCIPLES.md`, which is at
+docs/principles/ARCH_PRINCIPLES.md, and `target/debug/sovereign-cli`,
+which svrngs does not build. The binary used is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, built 2026-10-08 06:36,
+sha256 5f5e2d74…, **not** the one the last audit planted against
+(8bfb8a59…), so its tiers were planted again. No embedder was running
+(`code index` refused: "no embedder"), so this session ran `llama-server`
+on the corpus's own model (qwen-embedding-0.6b.gguf, the path
+~/.svrnmesh/config.toml:18 names) on :8080 for its length. The clean runs
+are on corpus `svrngs` at e9ed277, the tree clean (`code index`,
+incremental: 12 files, 131 chunks in 13 s; `refresh`: SCIP at HEAD). The
+plants went into a clone of e9ed277, /tmp/mwaudit1/svrngs-plant, one commit
+holding them (7035261 there), corpus `svrngs-plant` (`code index --full`:
+2448 chunks in 324 s; `refresh`: rust 9535 symbols, python 613,
+"typescript: skipped (export failed)").
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' ea4b7ed..e9ed277`,
+summed by /tmp/mwaudit1/ledger.py (REVIEW-audit-ceiling-auto-1's, its unit
+pattern `mw-\d`). The same rules: a commit counts toward the unit its
+subject names, else toward the next `done` commit's; product code is
+crates/, apps/, web/ and bridge/; a test is a `tests/` or `check/` segment
+or a lean_check test file name; lockfiles are left out (Cargo.lock, +1106).
+Tests inline in a src file (`#[cfg(test)] mod tests` in page.rs:86,
+person.rs:202, swap.rs:99, viewer.rs:376) count as src, as before.
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| mw-0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| mw-1 | 1686 | 299 | 1387 | 272 | 1 | 271 |
+| mw-2 | 522 | 39 | 483 | 205 | 32 | 173 |
+| mw-3 | 54 | 9 | 45 | 0 | 0 | 0 |
+| total | 2262 | 347 | 1915 | 477 | 33 | 444 |
+
+- mw-1 src: viewer.rs +747 (62560f0, upstream's `provision` unchanged),
+  then +176/−293 (717f433) and +3 (0d3feb6); forward.rs +257, person.rs
+  +259, people.rs +97, main.rs +11 then +101/−6, Cargo.toml +26 and +9.
+  Tests: check/mw.py +211, check.sh +61/−1 (705d217).
+- mw-2 src: forward.rs +132/−15, swap.rs +160, page.rs +118, people.rs
+  +70/−22, main.rs +29/−2, person.rs +13 (7e0e1c5). Tests: judge.py
+  +81/−7, check.sh +37/−8, person.mjs +26/−6, scan.py +22/−10, tokens.py
+  +35, drive.mjs +4/−1 (43c44e2).
+- mw-3 src: apps/jellyfin/README.md +45, prose; Cargo.toml and main.rs
+  +3/−3 and +6/−6, comments (f4e706f).
+
+`python3 scripts/lean_check.py <tree>` (rc 0) on `git archive` trees in
+/tmp/mwaudit1:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| ea4b7ed, range start | 2957 / 3000 | 13955 / 14000 |
+| e9ed277, range end | 2957 / 3000 | 13970 / 14000 |
+
+The worktree at e9ed277 says the same. The 15 lines are
+demo/runs/mw/2026-10-08/mw-2/run.sh (+23, the run's rerun script); the
+middleware's 1915 lines count nowhere, as apps/ is outside the budget
+(scripts/lean_check.py:14, :49). The repository has 30 lines left,
+**99.8%** of its ceiling (#80, still open, the operator's).
+
+### (2) Clones (`code dry-report`), each tier checked against a plant first
+
+**Plants**, each a symbol of the range:
+
+- **A** (exact, Rust, inside the middleware): swap.rs `inward` (mw-2, 25
+  lines and its 3 doc lines), verbatim, at the end of page.rs (:120).
+- **B** (near, Rust, across the two workspaces): forward.rs `send` (mw-1,
+  28 lines) as `dial_once` at the end of svrngs-node's lib.rs (:95), its
+  names changed (`jellyfin`→`service`, `stream`→`tcp`, `sender`→`tx`,
+  `conn`→`link`, which also made `connect` `linkect`; "mw:"→"door:").
+- **D** (Python, verbatim body): check/mw.py `socket_through` (mw-1) as
+  `socket_again` at the end of judge.py (:164).
+- **N1, N2** (nouns): `pub(crate) struct Signed` again at the end of the
+  middleware's main.rs (:136); `pub struct PersonKey(String)` at the end
+  of svrngs-node's lib.rs (:127).
+
+| scope | clean at 0.95: locations / exact / near | plants seen |
+|---|---|---|
+| apps/jellyfin/mw/ | 72 / **could-not-judge** ("no SCIP function symbols in scope") / 0 | **A missed**: the exact tier cannot judge, and the near tier has 0 clusters with A in scope (73 locations) |
+| apps/ | 162 / 0 / 1 (`playOn` ~ `menu`, I9) | **D missed** at 0.95 (it is at 0.940) |
+| crates/svrngs-node/ | not run clean: the range has no symbol there | B not in scope's clusters (I12) |
+| unscoped 0.95 | 14 exact / 12 near | A, B, D all missed |
+| unscoped 0.9 | 14 / 36 | **D seen**, judge.py:162–199 ~ mw.py:66–104, 0.940; A and B missed |
+| unscoped 0.8 | 14 / 208 | D seen; A and B missed |
+| unscoped 0.7 (plant corpus only) | 14 / 72 | A and B seen only inside one cluster of **846 symbols** (cosine 0.700–0.978), beside forward.rs `send` and swap.rs `inward` (I20, I14) |
+
+N1: `converge noun Signed` on the plant corpus gives **definitions (0)**
+where `git grep` finds two (main.rs:136, people.rs:46). N2: `PersonKey`
+gives **definitions (1)**, the plant at lib.rs:126 (at :127, I1), where
+`git grep` finds two (I19).
+
+**Clean runs.** /tmp/mwaudit1/blame.py (the last audit's, over
+/tmp/mwaudit1/dry-*.txt) blamed every side of every cluster, 843 sides,
+for lines in ea4b7ed..e9ed277. Scoped at 0.95, apps/jellyfin/mw/ and apps/
+have **0** clusters with a side added in the range. Unscoped (the plants
+show the scoped near tier cannot see across workspaces), the clusters with
+an added side:
+
+- 0.95, **1**: person.mjs `watch` (:18–43, 43c44e2) ~
+  demo/runs/u5/2026-10-05-jellyfin/drive.mjs `watch` (:37–62), 0.992.
+  The other side is a recorded run's script, kept as it ran (AGENTS.md 7);
+  no change.
+- 0.9, **5**: the above; judge.py `mw_bars` (:51–108) ~ `bars`
+  (:105–148), 0.939, and their closures `why` (:58–69) ~ `why`
+  (:114–123), 0.947 — **#84**; two pairs of tests inside viewer.rs's
+  forked `mod tests` (:449–471 ~ :470–497, 0.917; :573–588 ~ :587–602,
+  0.908), upstream's as they landed (62560f0); no change.
+- 0.8, **17**, among them the only cluster crossing the two workspaces:
+  forward.rs `upgrade_of` (:116–130) and `drop_hop` (:126–140) ~ door.rs
+  `upgrade_of` (:416–430) and `keep_upgrade` (:427–436), 0.810–0.854 —
+  **#82**; and person.rs's test `headers` (:204–216) ~ door/tests.rs `map`
+  and `identity`, 0.837–0.866, test builders of the same headers; no
+  change. The rest pair symbols of one middleware file with each other.
+
+**Substitute check, named as a substitute**, since A is invisible to both
+tiers: /tmp/ceilaudit1/windows.py, windows of 5 normalized lines over the
+tracked .rs .js .mjs .py .sh. At e9ed277: 161 hits, **5 new**: judge.py's
+imports (:34–38) == night.py's and screen.py's, and three in viewer.rs
+(:285–289 == :311–315, :300–307 == :324–331, :456–461 == :480–485),
+upstream's `call(...)` sequences and tests as forked; none to change. On
+the plant clone, against ea4b7ed..7035261: 163 hits, **7 new**, the same
+five and A (page.rs:124–142 == swap.rs:37–55) and D (judge.py:166–197 ==
+mw.py:70–101). B, renamed, it cannot see.
+
+Reading the range for what neither pass would show:
+
+- **#82.** apps/jellyfin/mw/src/forward.rs:39-48 and :129-137 against
+  crates/svrngs-node/src/door.rs:142-151 and :387-409, at e9ed277: two
+  lists of the headers that belong to one hop, which disagree. The
+  middleware's drops `proxy-authenticate` and keeps `trailer`; the door's
+  drops `trailer` and keeps `proxy-authenticate`; and the door also drops
+  every header a `Connection` names (RFC 9110 §7.6.1), which `drop_hop`
+  does not. `upgrade_of` is the same rule twice (forward.rs:119-127,
+  door.rs:415-423), the middleware's comparing with
+  `eq_ignore_ascii_case` and the door's through `compare_name`
+  (door.rs:362-368, which first drops every byte outside printable
+  ASCII). Principle 8: two implementations of one rule with no
+  equivalence test. They are two programs on purpose (DESIGN §9: svrngs
+  ships the middleware no SDK, and the spike's fence kept crates/ apart),
+  so the body cannot be shared. Not fixed: aligning either list changes
+  what reaches Jellyfin or a browser.
+- **#57, #68, #70, #71, #75, #77, #79, #81, still open.** The range changed
+  no line under crates/ or web/.
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff ea4b7ed e9ed277 -- crates apps web`, added lines matching
+`(struct|enum|trait|type|class) Name`: 16 nouns, every one in
+apps/jellyfin/mw/src/. `converge noun` on each, beside `git grep -nP
+'\b(struct|enum|trait|type|class) <Name>\b' HEAD -- crates apps web`
+(/tmp/mwaudit1/converge.txt):
+
+| noun | converge | git grep |
+|---|---|---|
+| Ask, At, DeviceFrom, Known, NotTheDoors, On, People, PersonKey, Plant, Server, Signed | definitions (0), "check the spelling, or the name is defined only in test code" | 1 each, all in apps/jellyfin/mw/src/ |
+| **Body** | definitions (1), admit.rs:765 | **2**: apps/jellyfin/mw/src/forward.rs:24 `type Body = BoxBody<…>` and crates/svrngs-core/src/admit.rs:766, a struct local to one function |
+| **Device** | definitions (1), lib.rs:517 | **2**: apps/jellyfin/mw/src/person.rs:77 `struct Device` (a device as Jellyfin's `MediaBrowser` header names one) and crates/svrngs-core/src/lib.rs:518 `enum Device` (what holds a standing key) |
+| **Origin** | definitions (1), link.rs:173 | **2**: apps/jellyfin/mw/src/viewer.rs:385, test-only, upstream's fake Jellyfin; crates/svrngs-core/src/link.rs:174 |
+| **Viewer** | definitions (1), limit.rs:85 | **2**: apps/jellyfin/mw/src/viewer.rs:53 (a person's Jellyfin account) and crates/svrngs-node/src/door/limit.rs:86 (one person's use of one lend) |
+| **Who** | definitions (1), door.rs:599 | **2**: apps/jellyfin/mw/src/person.rs:36 `struct Who` (the key and name the door's headers carry) and crates/svrngs-node/src/door.rs:600 `enum Who` (how the dialer reached the door) |
+
+- **#83, no change.** Five names defined twice, each pair two concepts in
+  two programs that cannot import each other (DESIGN §9; the middleware
+  is its own workspace). The nearest, `Who`, is the door's dialer on one
+  side and what the door writes into `x-svrngs-key` and `x-svrngs-person`
+  on the other; the middleware's names those headers from the door's
+  (person.rs:5-8 cites door.rs:103-111, which resolve at e9ed277). The
+  tool counted none of the five's middleware halves (I19).
+
+### Fixed here
+
+- **#84.** apps/jellyfin/check/judge.py:73-79 and :137-142, at e9ed277:
+  `mw_bars` and `bars` each read scan.py's word on a run the same way,
+  which person's bytes held another's secret and which secrets were
+  searched (`secrets_searched` with `lend_kept`), two spellings of one
+  rule (principle 8). Now one function, `scanned` (judge.py:54), that both
+  call (:85, :148). The two `why` closures the near tier paired judge
+  opposite things (mw-0's bar fails a person asked to sign in, u5-4's one
+  never asked) and stay apart. Behaviour kept, shown by
+  /tmp/mwaudit1/replay.sh: judge.py over every recorded pair, the mw-2 run
+  (8 pairs) and u5's two Jellyfin runs (9 and 12), 122 lines with every
+  verdict both functions give, sha1 820df814… before and after. The
+  replay watched failing first: `held` planted inverted in `scanned` made
+  28 of its lines differ; a first plant, `lend_kept` dropped, changed
+  none, since no recorded scan's `lend_kept` holds a secret
+  `secrets_searched` does not, so it was not counted as the gate.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 82 | 8 | apps/jellyfin/mw/src/forward.rs:39-48, :119-137 and crates/svrngs-node/src/door.rs:142-151, :387-409, :415-423, at e9ed277 | not fixed | The middleware's and the door's hop-by-hop lists disagree (`trailer`, `proxy-authenticate`, and headers a `Connection` names), with no equivalence test between the two programs. |
+| 83 | 8 | Body, Device, Origin, Viewer, Who: the sites in (3) | no change | Five names defined in both the middleware and svrngs, each two concepts in two programs. |
+| 84 | 8 | apps/jellyfin/check/judge.py:73-79 and :137-142, at e9ed277 | this audit | Two judges read scan.py's word two ways; now `scanned`, output identical on every recorded pair. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 30 lines left in the repository (13970 / 14000). |
+| 57, 68, 70, 71, 75, 77, 79, 81 | as recorded | as recorded | not fixed | Untouched in the range. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still present on this binary: the plant `PersonKey` at lib.rs:127 is given as :126; `Viewer` limit.rs:86 as :85, `Who` door.rs:600 as :599. |
+| I4 | 6 | `refresh` | Still present: "typescript: skipped (export failed)". |
+| I9 | 6, 7 | `code dry-report` near tier | Still present: `menu`, a closure inside `playOn` (tv.mjs:115), is reported as `playOn`'s near clone, 0.959. |
+| I10 | 6 | `code dry-report` header | Still present: "1383 function/method symbols" in every scope. |
+| I12 | 5, 6 | `code dry-report --scope` | Still present: a scoped run compares within its scope, so the one cluster across the two workspaces (#82) is in no scoped report. |
+| I14 | 6, 7 | `code dry-report` near tier | Still present: B, a renamed 28-line Rust body, is missed unscoped down to 0.8 and is seen at 0.7 only in a cluster of 846. |
+| I17 | 6, 7 | `code dry-report` over Python | Better: D, a verbatim 35-line Python body under another name, is seen at 0.9 (0.940); still missed at the default 0.95. |
+| I19 | 6 | `code converge noun`, and dry-report's exact tier | New: a Rust crate in its own Cargo workspace (apps/jellyfin/mw/Cargo.toml:6) has no SCIP symbols, so converge gives a noun defined only there "definitions (0) … check the spelling", N1 defined twice there (0), and N2 defined there and in svrngs-node (1), where each should say could-not-judge for that crate. The exact tier does say could-not-judge for the scope. |
+| I20 | 6, 7 | `code dry-report` near tier over Rust | New: A, a verbatim 25-line Rust function with its doc, is missed at 0.95, 0.9 and 0.8, scoped and not, and is seen at 0.7 only in a cluster of 846; with the exact tier blind there (I19), a verbatim copy inside the middleware is invisible to the tool. The window pass sees it. |
