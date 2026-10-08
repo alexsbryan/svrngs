@@ -631,9 +631,10 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
      refusals and traces), mwp-2 51, mwp-3's `run.sh` 2 — past the 320
      predicted by 108, inside the raise. Bar 4: the canary's answerer
      (`apps/web-conformance/answer.mjs`) is 30 lines and its accounts 32
-     more in `serve.mjs`; Alex's phone and Bo's computer, each in
-     Chromium and WebKit, are each signed in as themselves with nothing
-     typed — by the token the sign-in's script stored, sent as a query,
+     more, 22 in `serve.mjs` and the page's check 10 in `checks.js`
+     (`git diff 673db84 edb4072`, lines of code); Alex's phone and Bo's
+     computer, each in Chromium and WebKit, are each signed in as
+     themselves with nothing typed — by the token the sign-in's script stored, sent as a query,
      by the door's bearer and through a redirect — and no byte either
      receives holds either token or the lender's key; its plant, one
      person's account answered for both, caught by both of its asserts
