@@ -33,6 +33,10 @@
 //!   everyone.
 //! - `asleep_round` — with `SVRNGS_SCALE_ASLEEP` computers shut, how long
 //!   one round took and how many it could not reach.
+//! - `quiet_cpu_per_s` — the process's processor time a second over two
+//!   seconds with no round running, after the idle rounds: what every node
+//!   costs sitting idle, which a round's own reading includes for its wall
+//!   time.
 //! - `bytes_per_act`, `digest_pass_s`, `append_s`, and the journal's size.
 //! - `rounds` — each measured round's own account of what it cost (`push`,
 //!   the last `idle`, `asleep`): members `dialled`, `reached`, `asleep`
@@ -184,6 +188,14 @@
 //! over the line, outside its band. The account was the one predicted in
 //! all three, so every exchange answered from kept folds, as at the fitted
 //! points: what the line missed is not a fold read whole.
+//!
+//! The hypothesis, 2026-10-08 04:41 PDT, before any run that reads it: a
+//! round's processor includes the whole process's for its wall time, and
+//! N idle nodes cost about N times one, a term (N q)(wall) the line lacks.
+//! `quiet_cpu_per_s` at 100 members between 0.2 and 0.6 s a second, enough
+//! to cover half or more of the 0.04 s the line missed over the round's
+//! 0.07 to 0.11 s of wall; at 10 members under a tenth of that. Refuted if
+//! it is under 0.2 at 100.
 //!
 //! It needs the process's own processor time, which std does not give;
 //! `getrusage` through `libc` is the one way the lock already holds, and the
@@ -709,6 +721,11 @@ async fn scale() {
     let push = timed_round(&nodes[0]).await;
 
     let (idle_wall, idle_cpu, idle) = idle_rounds(&nodes).await;
+    // What the process spends with no round running, every node idle: a
+    // round's processor reading includes it for as long as the round takes.
+    let c = cpu_secs();
+    tokio::time::sleep(Duration::from_secs(2)).await;
+    let quiet_cpu_per_s = (cpu_secs() - c) / 2.0;
 
     let mut asleep_round = None;
     let mut rounds = serde_json::json!({
@@ -739,6 +756,7 @@ async fn scale() {
             "push_pushed": push.out.ops_pushed,
             "idle_round_wall_s": median(idle_wall),
             "idle_round_cpu_s": median(idle_cpu),
+            "quiet_cpu_per_s": quiet_cpu_per_s,
             "asleep_round": asleep_round,
             "rounds": rounds,
             "max_rss": usage().1,
