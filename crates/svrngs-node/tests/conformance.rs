@@ -234,6 +234,17 @@ fn a_rate(engine: Engine, check: &str) -> bool {
     matches!(engine, Engine::Webkit) && check == "seeks"
 }
 
+/// One verdict's line in `target/conformance/`, in the columns
+/// scripts/check.sh's `cut -c1-10,25-` reads: the way, then the route and
+/// its verdict, the engine and person between them cut.
+fn verdict_line(way: Way, engine: Engine, who: &str, route: &str, verdict: &str) -> String {
+    format!(
+        "{:<9} {:<8} {who:<4} {route:<34} {verdict}",
+        way.as_str(),
+        engine.as_str()
+    )
+}
+
 /// Each route's verdict for one lend: `passed` or `failed`; a rate's with
 /// `, a rate` after it.
 fn verdicts(engine: Engine, lend: &Value, other: &Value) -> Vec<(&'static str, String, String)> {
@@ -517,11 +528,7 @@ async fn conformance(way: Way, engine: Engine) {
     let mut failed = Vec::new();
     for (who, other) in [("sam", "bo"), ("bo", "sam")] {
         for (route, verdict, saw) in verdicts(engine, &ran["lends"][who], &ran["lends"][other]) {
-            let line = format!(
-                "{:<9} {:<8} {who:<4} {route:<34} {verdict}",
-                way.as_str(),
-                engine.as_str()
-            );
+            let line = verdict_line(way, engine, who, route, &verdict);
             table.push_str(&format!("{line}\n"));
             if verdict == "failed" {
                 failed.push(format!("{line}: {saw}"));
@@ -704,11 +711,12 @@ async fn two_people_signed_in(engine: Engine) {
             && ran["leaked"] == json!([]);
         println!("{who}'s page saw {}", account["saw"]);
         let verdict = if ok { "passed" } else { "failed" };
-        let line = format!(
-            "{:<9} {:<8} {who:<4} {:<34} {verdict}",
-            way.as_str(),
-            engine.as_str(),
-            "signed in by the lend, as themselves"
+        let line = verdict_line(
+            way,
+            engine,
+            who,
+            "signed in by the lend, as themselves",
+            verdict,
         );
         table.push_str(&format!("{line}\n"));
         if !ok {
