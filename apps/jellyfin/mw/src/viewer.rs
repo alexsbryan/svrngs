@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai cmnwlth/crates/sovereign-cli-mesh/src/mesh_media/viewer.rs@d4356181c
-//! The read-only account every member reaches this library as.
+//! The read-only account each person reaches this library as: one per
+//! person the door names, where upstream made one for every member
+//! (demo/runs/mw/2026-10-08/README.md §1; u5-3 finding 4, its first piece).
 //!
 //! # The defect this closes
 //!
@@ -13,9 +15,9 @@
 //! decided WHAT they could do once there.
 //!
 //! An API key cannot be minted FOR a user, so the read-only credential has to
-//! be a user's own `AccessToken`. `offer` FINDS that user or creates it, gives
-//! it a policy that says no to everything a viewer has no business doing,
-//! READS THE POLICY BACK, and declares that token in place of the admin key. A
+//! be a user's own `AccessToken`. [`provision`] FINDS that user or creates it,
+//! gives it a policy that says no to everything a viewer has no business
+//! doing, and READS THE POLICY BACK; [`sign_in`] then gets the token. A
 //! policy that does not read back as asked is a refusal, not a warning: an
 //! unchecked write here is a library handed over on the strength of a 200.
 //!
@@ -23,34 +25,55 @@
 //! learned by being refused (2026-09-19, run under `RING_ROOM_TOPOLOGY=room`):
 //! `POST /Users/{id}/Policy` REPLACES a policy rather than patching it, so
 //! what is sent must be the origin's own document with this verb's keys
-//! written over it ([`merge_read_only`]); and [`VIEWER_NAME`] is fixed, so
-//! `POST /Users/New` collides on the second offer and the account must be
-//! looked up first ([`viewer_id_in`]).
+//! written over it ([`merge_read_only`]); and a user's name is fixed
+//! ([`user_name`]), so `POST /Users/New` collides on the second provision and
+//! the account must be looked up first ([`viewer_id_in`]).
 //!
 //! # What the person types
 //!
-//! Nothing. The elevated credential is the one the INSTALL stage already
-//! declared (`svrn mesh media declare`, run by the wizard); `offer` spends it
-//! once and replaces it. The viewer's password is generated here, used once
-//! for `AuthenticateByName`, and never stored — the token is what is kept.
+//! Nothing. The elevated credential is the API key the lender gave the
+//! middleware once, as it started; it stays in this process, for the next
+//! person, and is never sent anywhere but to Jellyfin. Upstream spent it once
+//! and declared the viewer's token in its place, so it had to prove a viewer
+//! already made by that token (`already_provisioned`, upstream `:216-296`);
+//! here the key is never replaced, and that path is gone.
+//!
+//! The password is invented here and never written to disk, but it is KEPT
+//! in memory beside the account (upstream used it once and forgot it): a
+//! person signs in once per device (Jellyfin holds a session to the device a
+//! token was signed in under, whatever device later asks with it), and
+//! resetting the password to sign a second device in revokes the first's
+//! token (both measured against Jellyfin 12.0.0 on this host, 2026-10-08,
+//! `demo/runs/mw/2026-10-08/mw-1/README.md`).
 
 use std::net::SocketAddr;
 use std::time::Duration;
 
-/// The member-facing account and the credential that reaches it.
+/// A person's account, made or found, and what signs a device in to it.
 pub(crate) struct Viewer {
-    /// The account's id in the origin's own user space — what
-    /// `offer` keeps beside the house credential (`commonwealth_media::VIEWER_FILE`)
-    /// so the presence poll can tell the
-    /// holder's sessions from the house's.
+    /// The account's id in the origin's own user space.
     pub(crate) id: String,
-    /// The whole `authorization` header value viewers' requests carry.
-    pub(crate) credential: String,
+    /// The name it was made under, [`user_name`]'s.
+    pub(crate) name: String,
+    /// The password this process invented: kept in memory only, so each
+    /// device the person comes on can be signed in without a reset.
+    pub(crate) password: String,
 }
 
-/// The name the account is created under. Fixed so a second `offer` finds the
-/// same one rather than growing a user per run.
-const VIEWER_NAME: &str = "commonwealth-mesh";
+/// The name a person's account is made under: the name the door gives them,
+/// kept to the characters Jellyfin takes in a user name, and the first 16
+/// hex of their key, so two people of one name are two accounts, a second
+/// provision after a restart finds the same one, and no account the lender
+/// made by hand is ever taken for a person's.
+pub(crate) fn user_name(person: &str, key: &str) -> String {
+    let kept: String = person
+        .chars()
+        .filter(|c| c.is_alphanumeric() || " -'._@+".contains(*c))
+        .collect();
+    let kept = kept.trim();
+    let kept = if kept.is_empty() { "person" } else { kept };
+    format!("{kept}-{}", &key[..key.len().min(16)])
+}
 
 /// Every policy key a viewer must not have. Read back after the write and
 /// compared one by one, so a key the origin silently ignored is caught here
@@ -63,12 +86,11 @@ const MUST_BE_FALSE: [&str; 5] = [
     "EnableLyricManagement",
 ];
 
-/// The viewer's id in a `GET /Users` listing, if this origin already holds
-/// the account. Matched on `Name` because that is what `POST /Users/New`
-/// collides on.
-fn viewer_id_in(users: &serde_json::Value) -> Option<String> {
+/// The account's id in a `GET /Users` listing, if this origin already holds
+/// it. Matched on `Name` because that is what `POST /Users/New` collides on.
+fn viewer_id_in(users: &serde_json::Value, name: &str) -> Option<String> {
     users.as_array()?.iter().find_map(|u| {
-        (u.get("Name").and_then(serde_json::Value::as_str)? == VIEWER_NAME)
+        (u.get("Name").and_then(serde_json::Value::as_str)? == name)
             .then(|| u.get("Id").and_then(serde_json::Value::as_str))
             .flatten()
             .map(str::to_string)
@@ -82,17 +104,17 @@ fn client() -> Result<reqwest::Client, String> {
         .map_err(|e| format!("could not build an HTTP client: {e}"))
 }
 
-/// One request to the origin carrying the elevated credential.
+/// One request to the origin carrying `credential`'s headers.
 async fn call(
     client: &reqwest::Client,
-    elevated: &[(String, String)],
+    credential: &[(String, String)],
     method: reqwest::Method,
     origin: SocketAddr,
     path: &str,
     body: Option<serde_json::Value>,
 ) -> Result<String, String> {
     let mut req = client.request(method.clone(), format!("http://{origin}{path}"));
-    for (name, value) in elevated {
+    for (name, value) in credential {
         req = req.header(name, value);
     }
     if let Some(body) = body {
@@ -118,14 +140,8 @@ fn read_only_policy() -> serde_json::Value {
     for key in MUST_BE_FALSE {
         policy.insert(key.to_string(), serde_json::Value::Bool(false));
     }
-    policy.insert(
-        "EnableLiveTvManagement".to_string(),
-        serde_json::Value::Bool(false),
-    );
-    policy.insert(
-        "EnableMediaPlayback".to_string(),
-        serde_json::Value::Bool(true),
-    );
+    policy.insert("EnableLiveTvManagement".to_string(), serde_json::Value::Bool(false));
+    policy.insert("EnableMediaPlayback".to_string(), serde_json::Value::Bool(true));
     serde_json::Value::Object(policy)
 }
 
@@ -196,156 +212,38 @@ fn policy_is_read_only(user: &serde_json::Value) -> Result<(), String> {
     Ok(())
 }
 
-/// The viewer as it already stands, when `declared` IS this account's own
-/// token — the case on every offer after the first.
+/// Create (or find) the read-only account `name` on `origin` and prove its
+/// policy.
 ///
-/// `offer` REPLACES the install credential with the viewer's
-/// (`mesh_media.rs:650-652`), so a second offer reaches here holding a
-/// read-only token and no elevation at all. Everything the mint path does
-/// next needs an administrator: measured 2026-09-19 against Jellyfin 12.0.0,
-/// `POST /Users/Password` answered `403 "Invalid user or password entered."`
-/// — that string is the non-admin branch of `UpdateUserPassword`, which
-/// verifies `CurrentPw` only when the caller is NOT an administrator. So the
-/// reuse path could never complete, and clause (f) of the room's film bar
-/// could never pass (`target/ring-room-rr2-demo/room-offer.out`).
-///
-/// Nothing needs minting in that case. `GET /Users/Me` answers both questions
-/// this verb has — who the declared credential is, and what that account may
-/// do — in one request, so the account is proven rather than rebuilt.
-/// Returns `None` when the credential is not this viewer's, which sends the
-/// caller down the mint path where a missing elevation fails loudly.
-async fn already_provisioned(
-    client: &reqwest::Client,
-    declared: &[(String, String)],
-    origin: SocketAddr,
-    found: &str,
-) -> Option<Result<Viewer, String>> {
-    // The single header the caller re-declares. A set with no `authorization`,
-    // or more than one credential in it, is not one this verb can hand back.
-    let credential = match declared {
-        [(name, value)] if name == "authorization" => value.clone(),
-        _ => {
-            tracing::debug!(
-                %origin,
-                declared_headers = declared.len(),
-                "media offer: the declaration is not one `authorization` header — taking the mint path"
-            );
-            return None;
-        }
-    };
-    let me = match call(
-        client,
-        declared,
-        reqwest::Method::GET,
-        origin,
-        "/Users/Me",
-        None,
-    )
-    .await
-    {
-        Ok(body) => body,
-        Err(e) => {
-            tracing::debug!(
-                %origin,
-                error = %e,
-                "media offer: `GET /Users/Me` did not answer for the declared credential — taking the mint path"
-            );
-            return None;
-        }
-    };
-    let me: serde_json::Value = match serde_json::from_str(&me) {
-        Ok(v) => v,
-        Err(e) => {
-            tracing::debug!(
-                %origin,
-                error = %e,
-                "media offer: `/Users/Me` did not answer JSON — taking the mint path"
-            );
-            return None;
-        }
-    };
-    let declared_user = me.get("Id").and_then(serde_json::Value::as_str);
-    if declared_user != Some(found) {
-        tracing::debug!(
-            %origin,
-            ?declared_user,
-            viewer_user = %found,
-            "media offer: the declared credential is not this viewer's — taking the mint path"
-        );
-        return None;
-    }
-    // From here it IS the viewer's token, so this verb holds no elevation and
-    // cannot repair anything. A policy that does not read back as asked is a
-    // refusal, not a fall-through to a write that would only 403.
-    if let Err(e) = policy_is_read_only(&me) {
-        return Some(Err(format!(
-            "{e} — and the credential declared here is the viewer's own, which cannot \
-             change a policy; re-declare an administrator's with `svrn mesh media declare \
-             authorization` and offer again"
-        )));
-    }
-    tracing::info!(
-        %origin,
-        viewer_user = %found,
-        "media offer: the declared credential is already this viewer's own and its policy \
-         reads back read-only — nothing to mint"
-    );
-    Some(Ok(Viewer {
-        id: found.to_string(),
-        credential,
-    }))
-}
-
-/// Create (or find) the read-only viewer on `origin`, prove its policy, and
-/// return the credential viewers' requests will carry.
-///
-/// `elevated` is the credential the install stage declared — the only thing
-/// here that can create a user. It is spent once; the caller replaces the
-/// declaration with [`Viewer::credential`], which cannot.
-pub(crate) async fn provision(
-    origin: SocketAddr,
-    elevated: &[(String, String)],
-) -> Result<Viewer, String> {
+/// `elevated` is the key the lender gave the middleware — the only thing
+/// here that can create a user. It is used on Jellyfin's API alone.
+pub(crate) async fn provision(origin: SocketAddr, elevated: &[(String, String)], name: &str) -> Result<Viewer, String> {
     if elevated.is_empty() {
-        return Err(
-            "no credential is declared for this origin, so no viewer account can be created — \
-             `svrn mesh media declare authorization` first"
-                .to_string(),
-        );
+        return Err("no key was given to the middleware, so no account can be created — \
+             start it with the key from Jellyfin's Dashboard, API Keys"
+            .to_string());
     }
     let client = client()?;
-    // A password this process invents, uses once, and forgets. It is never
-    // stored: the token is the durable half, and a password on disk would be
-    // a second way in that nobody asked for.
+    // A password this process invents and keeps in memory, never on disk: a
+    // password on disk would be a second way in that nobody asked for.
     let password: String = uuid::Uuid::new_v4().simple().to_string();
 
-    // FIND, then create. `VIEWER_NAME` is fixed so a second `offer` reuses
-    // the one account -- but `POST /Users/New` answers 400 on a name that
-    // already exists, so an unconditional create makes every offer after the
-    // first fail (measured 2026-09-19,
+    // FIND, then create. The name is fixed per person so a second provision
+    // reuses the one account -- but `POST /Users/New` answers 400 on a name
+    // that already exists, so an unconditional create makes every provision
+    // after the first fail (measured 2026-09-19,
     // `target/ring-room-rr2-demo/room-offer.out:4`).
-    let existing = call(
-        &client,
-        elevated,
-        reqwest::Method::GET,
-        origin,
-        "/Users",
-        None,
-    )
-    .await?;
-    let existing: serde_json::Value = serde_json::from_str(&existing)
-        .map_err(|e| format!("the origin's user list is not JSON ({e})"))?;
-    let found = viewer_id_in(&existing);
+    let existing = call(&client, elevated, reqwest::Method::GET, origin, "/Users", None).await?;
+    let existing: serde_json::Value =
+        serde_json::from_str(&existing).map_err(|e| format!("the origin's user list is not JSON ({e})"))?;
+    let found = viewer_id_in(&existing, name);
 
     let id = match &found {
         Some(id) => {
-            if let Some(done) = already_provisioned(&client, elevated, origin, id).await {
-                return done;
-            }
             tracing::debug!(
                 viewer_user = %id,
-                name = VIEWER_NAME,
-                "media offer: viewer account found, reusing it"
+                name,
+                "mw: provision — the person's account found, reusing it"
             );
             id.clone()
         }
@@ -356,12 +254,11 @@ pub(crate) async fn provision(
                 reqwest::Method::POST,
                 origin,
                 "/Users/New",
-                Some(serde_json::json!({ "Name": VIEWER_NAME, "Password": password })),
+                Some(serde_json::json!({ "Name": name, "Password": password })),
             )
             .await?;
-            let created: serde_json::Value = serde_json::from_str(&created).map_err(|e| {
-                format!("the origin's new-user answer is not JSON ({e}): {created}")
-            })?;
+            let created: serde_json::Value = serde_json::from_str(&created)
+                .map_err(|e| format!("the origin's new-user answer is not JSON ({e}): {created}"))?;
             let id = created
                 .get("Id")
                 .and_then(serde_json::Value::as_str)
@@ -369,8 +266,8 @@ pub(crate) async fn provision(
                 .to_string();
             tracing::debug!(
                 viewer_user = %id,
-                name = VIEWER_NAME,
-                "media offer: no viewer account on this origin, created one"
+                name,
+                "mw: provision — no account for this person on this origin, created one"
             );
             id
         }
@@ -379,12 +276,12 @@ pub(crate) async fn provision(
     if found.is_some() {
         tracing::debug!(
             viewer_user = %id,
-            "media offer: resetting the reused viewer's password — this process keeps none"
+            "mw: provision — resetting the reused account's password: an earlier run of this \
+             process made it, and its password went with that run"
         );
-        // An account left by an earlier offer, whose password this process
-        // never kept (see the module header -- the token is the durable half).
-        // The elevated credential sets the one invented above so the
-        // `AuthenticateByName` below has something to spend.
+        // The elevated credential sets the one invented above so `sign_in`
+        // has something to spend. It revokes the account's other tokens
+        // (measured, module docs), which only that earlier run held.
         call(
             &client,
             elevated,
@@ -408,8 +305,8 @@ pub(crate) async fn provision(
         None,
     )
     .await?;
-    let before: serde_json::Value = serde_json::from_str(&before)
-        .map_err(|e| format!("the origin's user document is not JSON ({e}): {before}"))?;
+    let before: serde_json::Value =
+        serde_json::from_str(&before).map_err(|e| format!("the origin's user document is not JSON ({e}): {before}"))?;
 
     call(
         &client,
@@ -432,35 +329,46 @@ pub(crate) async fn provision(
         None,
     )
     .await?;
-    let back: serde_json::Value = serde_json::from_str(&back)
-        .map_err(|e| format!("the origin's user document is not JSON ({e}): {back}"))?;
+    let back: serde_json::Value =
+        serde_json::from_str(&back).map_err(|e| format!("the origin's user document is not JSON ({e}): {back}"))?;
     policy_is_read_only(&back)?;
-
-    let authed = call(
-        &client,
-        elevated,
-        reqwest::Method::POST,
-        origin,
-        "/Users/AuthenticateByName",
-        Some(serde_json::json!({ "Username": VIEWER_NAME, "Pw": password })),
-    )
-    .await?;
-    let authed: serde_json::Value = serde_json::from_str(&authed)
-        .map_err(|e| format!("the origin's authenticate answer is not JSON ({e})"))?;
-    let token = authed
-        .get("AccessToken")
-        .and_then(serde_json::Value::as_str)
-        .ok_or_else(|| "the origin authenticated the viewer without an AccessToken".to_string())?;
 
     tracing::info!(
         %origin,
         viewer_user = %id,
-        "media offer: read-only viewer account provisioned and its policy read back"
+        name,
+        "mw: provision — the person's read-only account made and its policy read back"
     );
     Ok(Viewer {
         id,
-        credential: format!("MediaBrowser Token=\"{token}\""),
+        name: name.to_string(),
+        password,
     })
+}
+
+/// Sign `viewer` in on the device `device` names — a whole `authorization`
+/// value with no token, `MediaBrowser Client="…", Device="…", DeviceId="…",
+/// Version="…"` — and return the token Jellyfin holds to that device. No
+/// elevation: `AuthenticateByName` is anyone's.
+pub(crate) async fn sign_in(origin: SocketAddr, viewer: &Viewer, device: &str) -> Result<String, String> {
+    let client = client()?;
+    let authed = call(
+        &client,
+        &[("authorization".to_string(), device.to_string())],
+        reqwest::Method::POST,
+        origin,
+        "/Users/AuthenticateByName",
+        Some(serde_json::json!({ "Username": viewer.name, "Pw": viewer.password })),
+    )
+    .await?;
+    let authed: serde_json::Value =
+        serde_json::from_str(&authed).map_err(|e| format!("the origin's authenticate answer is not JSON ({e})"))?;
+    let token = authed
+        .get("AccessToken")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "the origin authenticated the viewer without an AccessToken".to_string())?;
+    tracing::debug!(%origin, viewer_user = %viewer.id, "mw: sign in — a device signed in for the person");
+    Ok(token.to_string())
 }
 
 #[cfg(test)]
@@ -505,10 +413,7 @@ mod tests {
                     let path = line.split_whitespace().nth(1).unwrap_or("").to_string();
                     let (status, body) = match routes.iter().find(|(p, _)| &path == p) {
                         Some((_, body)) => ("200 OK", body.to_string()),
-                        None => (
-                            "403 Forbidden",
-                            "\"Invalid user or password entered.\"".to_string(),
-                        ),
+                        None => ("403 Forbidden", "\"Invalid user or password entered.\"".to_string()),
                     };
                     let resp = format!(
                         "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: \
@@ -527,85 +432,75 @@ mod tests {
         vec![("authorization".to_string(), value.to_string())]
     }
 
-    fn viewer_user(id: &str, policy: serde_json::Value) -> serde_json::Value {
-        serde_json::json!({ "Id": id, "Name": VIEWER_NAME, "Policy": policy })
+    /// A user document as the origin hands one back after the write: the
+    /// provider ids it requires, and every key this verb decides as decided.
+    fn read_back(id: &str) -> serde_json::Value {
+        let mut policy = origin_policy()["Policy"].clone();
+        for (key, value) in read_only_policy().as_object().unwrap() {
+            policy[key] = value.clone();
+        }
+        serde_json::json!({ "Id": id, "Policy": policy })
     }
 
-    /// THE DEFECT THIS CLOSES. `offer` replaces the install credential with
-    /// the viewer's own (`mesh_media.rs:650-652`), so every offer after the
-    /// first reaches `provision` holding a read-only token. The mint path
-    /// needs an administrator at every step, and the first of them —
-    /// `POST /Users/Password` — answered `403 "Invalid user or password
-    /// entered."` on the live origin, which is the non-admin branch of
-    /// Jellyfin 12's `UpdateUserPassword` (an administrator skips the
-    /// `CurrentPw` check). So `offer` declared no viewer and the room's film
-    /// bar could not read "in use" (clause (f), three runs of three:
-    /// `target/ring-room-rr2-demo/room-offer.out`).
-    ///
-    /// The account is proven, not rebuilt: this asserts the credential comes
-    /// back unchanged AND that nothing on the mint path was ever requested.
+    /// A person new to the origin is made an account under their own name,
+    /// its policy written and read back, and no password reset: there is no
+    /// earlier token to revoke.
     #[tokio::test]
-    async fn a_second_offer_proves_the_viewer_instead_of_re_minting_it() {
+    async fn a_new_person_is_made_an_account_of_their_own() {
         let o = origin(vec![
-            ("/Users/Me", viewer_user("abc123", read_only_policy())),
-            (
-                "/Users",
-                serde_json::json!([viewer_user("abc123", read_only_policy())]),
-            ),
+            ("/Users", serde_json::json!([{ "Name": "sam", "Id": "s" }])),
+            ("/Users/New", serde_json::json!({ "Id": "u1" })),
+            ("/Users/u1", read_back("u1")),
+            ("/Users/u1/Policy", serde_json::json!({})),
         ])
         .await;
-        let viewer = provision(o.addr, &declared("tok"))
+        let viewer = provision(o.addr, &declared("key"), "Ana-0123456789abcdef")
             .await
-            .expect("a declared viewer token with a read-only policy provisions");
-        assert_eq!(viewer.id, "abc123");
-        assert_eq!(viewer.credential, "tok");
+            .expect("a new person provisions");
+        assert_eq!(viewer.id, "u1");
+        assert_eq!(viewer.name, "Ana-0123456789abcdef");
         let asked = o.asked.lock().unwrap().clone();
-        assert!(
-            !asked.iter().any(|l| l.contains("/Users/Password")),
-            "the mint path was walked with a non-admin credential: {asked:?}"
-        );
-        assert!(
-            !asked.iter().any(|l| l.contains("/Policy")),
-            "a policy write was attempted with a credential that cannot make one: {asked:?}"
-        );
+        assert!(asked.iter().any(|l| l.starts_with("POST /Users/New")), "{asked:?}");
+        assert!(!asked.iter().any(|l| l.contains("/Users/Password")), "{asked:?}");
     }
 
-    /// The credential belongs to somebody else on the origin, so this verb
-    /// has learned nothing about the viewer: `None` sends the caller down the
-    /// mint path, where a missing elevation fails loudly rather than here.
+    /// An account an earlier run made is found by its name, not made again,
+    /// and its password is reset, since that run's went with it.
     #[tokio::test]
-    async fn a_credential_for_another_account_does_not_shortcut() {
-        let o = origin(vec![(
-            "/Users/Me",
-            viewer_user("someone-else", read_only_policy()),
-        )])
+    async fn a_person_an_earlier_run_made_is_found_and_their_password_reset() {
+        let o = origin(vec![
+            (
+                "/Users",
+                serde_json::json!([{ "Name": "Ana-0123456789abcdef", "Id": "u1" }]),
+            ),
+            ("/Users/Password?userId=u1", serde_json::json!({})),
+            ("/Users/u1", read_back("u1")),
+            ("/Users/u1/Policy", serde_json::json!({})),
+        ])
         .await;
+        let viewer = provision(o.addr, &declared("key"), "Ana-0123456789abcdef")
+            .await
+            .expect("a found person provisions");
+        assert_eq!(viewer.id, "u1");
+        let asked = o.asked.lock().unwrap().clone();
+        assert!(!asked.iter().any(|l| l.contains("/Users/New")), "{asked:?}");
         assert!(
-            already_provisioned(&client().unwrap(), &declared("tok"), o.addr, "abc123")
-                .await
-                .is_none()
+            asked.iter().any(|l| l.contains("/Users/Password?userId=u1")),
+            "{asked:?}"
         );
     }
 
-    /// It is the viewer's token, so this verb holds no elevation and cannot
-    /// repair the policy. Principle 6: refuse and name it, never fall through
-    /// to a write that can only 403.
-    #[tokio::test]
-    async fn a_viewer_whose_policy_is_not_read_only_is_refused_not_repaired() {
-        let mut policy = read_only_policy();
-        policy["IsAdministrator"] = serde_json::Value::Bool(true);
-        let o = origin(vec![("/Users/Me", viewer_user("abc123", policy))]).await;
-        let err = match already_provisioned(&client().unwrap(), &declared("tok"), o.addr, "abc123")
-            .await
-        {
-            // `Viewer` has no `Debug` on purpose — it holds the credential —
-            // so the Err is taken by match rather than `expect_err`.
-            Some(Err(e)) => e,
-            Some(Ok(_)) => panic!("an administrator policy was accepted as read-only"),
-            None => panic!("the shortcut did not apply"),
-        };
-        assert!(err.contains("IsAdministrator"), "{err}");
-        assert!(err.contains("svrn mesh media declare"), "{err}");
+    /// Two keys are two accounts though their people share a name; the
+    /// lender's own `sam` is never one of them; what Jellyfin refuses in a
+    /// name is left out.
+    #[test]
+    fn each_key_names_an_account_of_its_own() {
+        let a = user_name("Ana", &"ab".repeat(32));
+        let b = user_name("Ana", &"cd".repeat(32));
+        assert_eq!(a, "Ana-abababababababab");
+        assert_ne!(a, b);
+        assert_eq!(user_name("Ana/<Ben>", &"ab".repeat(32)), "AnaBen-abababababababab");
+        assert_eq!(user_name("  ", &"ab".repeat(32)), "person-abababababababab");
     }
 
     /// Positive: the policy this verb writes says false to every key the
@@ -633,10 +528,7 @@ mod tests {
     #[test]
     fn a_policy_key_the_origin_omitted_is_not_read_as_false() {
         let mut policy = read_only_policy();
-        policy
-            .as_object_mut()
-            .unwrap()
-            .remove("EnableContentDeletion");
+        policy.as_object_mut().unwrap().remove("EnableContentDeletion");
         let got = policy_is_read_only(&serde_json::json!({ "Policy": policy }));
         assert!(
             got.unwrap_err().contains("EnableContentDeletion"),
@@ -696,14 +588,8 @@ mod tests {
         let merged = merge_read_only(&origin_policy()).expect("a stated policy merges");
         policy_is_read_only(&serde_json::json!({ "Policy": merged.clone() }))
             .expect("what is sent must satisfy what is checked");
-        assert_eq!(
-            merged.get("EnableMediaPlayback"),
-            Some(&serde_json::json!(true))
-        );
-        assert_eq!(
-            merged.get("EnableLiveTvManagement"),
-            Some(&serde_json::json!(false))
-        );
+        assert_eq!(merged.get("EnableMediaPlayback"), Some(&serde_json::json!(true)));
+        assert_eq!(merged.get("EnableLiveTvManagement"), Some(&serde_json::json!(false)));
         // Keys this verb does not decide survive: replacing the document must
         // not quietly drop the holder's own settings.
         assert_eq!(merged.get("MaxActiveSessions"), Some(&serde_json::json!(3)));
@@ -714,10 +600,7 @@ mod tests {
     #[test]
     fn a_policy_missing_a_provider_id_is_refused_not_invented() {
         let mut doc = origin_policy();
-        doc["Policy"]
-            .as_object_mut()
-            .unwrap()
-            .remove("PasswordResetProviderId");
+        doc["Policy"].as_object_mut().unwrap().remove("PasswordResetProviderId");
         let got = merge_read_only(&doc).unwrap_err();
         assert!(
             got.contains("PasswordResetProviderId"),
@@ -725,16 +608,16 @@ mod tests {
         );
     }
 
-    /// A second `offer` FINDS the account the first one made. Without this,
-    /// `POST /Users/New` collides on the name and answers 400 -- every offer
-    /// after the first fails (`room-offer.out:4`, 2026-09-19).
+    /// A second provision FINDS the account the first one made. Without
+    /// this, `POST /Users/New` collides on the name and answers 400 -- every
+    /// offer after the first fails (`room-offer.out:4`, 2026-09-19).
     #[test]
     fn a_viewer_left_by_an_earlier_offer_is_found_not_recreated() {
         let users = serde_json::json!([
             { "Name": "alex", "Id": "aaa" },
-            { "Name": VIEWER_NAME, "Id": "bbb" },
+            { "Name": "Ana-0123456789abcdef", "Id": "bbb" },
         ]);
-        assert_eq!(viewer_id_in(&users).as_deref(), Some("bbb"));
+        assert_eq!(viewer_id_in(&users, "Ana-0123456789abcdef").as_deref(), Some("bbb"));
     }
 
     /// Negative: an origin holding no such account reports absence, so the
@@ -742,6 +625,6 @@ mod tests {
     #[test]
     fn an_origin_without_the_viewer_reports_absence() {
         let users = serde_json::json!([{ "Name": "alex", "Id": "aaa" }]);
-        assert_eq!(viewer_id_in(&users), None);
+        assert_eq!(viewer_id_in(&users, "Ana-0123456789abcdef"), None);
     }
 }
