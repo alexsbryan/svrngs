@@ -141,6 +141,117 @@ pub(crate) struct Signed {
     pub secrets: Vec<Secret>,
 }
 
+/// How a request through a lend is signed, decided once as the door lets
+/// the person in: by the lend's one secret, or by the person's sign-in at
+/// its port. Each way is taken at one site, [`Signing::inward`] on the
+/// request and [`Signing::outward`] on the answer.
+pub(crate) enum Signing {
+    /// The lend's one secret, as headers (`crate::declared`).
+    Secret(Vec<(HeaderName, HeaderValue)>),
+    /// The person, signed in by the lend's sign-in at the port.
+    Person(NonZeroU16, Signed),
+}
+
+/// What a textual answer's body is read with: every secret held for the
+/// lend, and the person's script for a page ([`Swapping`]).
+pub(crate) type Read = (Vec<Secret>, Option<Vec<u8>>);
+
+impl Signing {
+    /// The target `path` and `query` are asked as, and the headers set on
+    /// the request; `headers` made ready for them. Inward, the stand-in
+    /// becomes the asker's secret, in the query and each header.
+    pub(crate) fn inward(
+        &self,
+        headers: &mut HeaderMap,
+        path: String,
+        query: Option<&str>,
+    ) -> (String, Vec<(HeaderName, HeaderValue)>) {
+        let s = match self {
+            Self::Secret(secret) => {
+                let target = query.map_or(path.clone(), |q| format!("{path}?{q}"));
+                return (target, secret.clone());
+            }
+            Self::Person(_, s) => s,
+        };
+        let own = s.answer.secret.as_str();
+        let target = query.map_or(path.clone(), |q| {
+            format!("{path}?{}", q.replace(STAND_IN, own))
+        });
+        swap_headers(headers, &[STAND_IN.as_bytes()], own.as_bytes());
+        headers.remove(header::ACCEPT_ENCODING);
+        // No copy kept from before the person's script, or for another's.
+        if s.answer.script.is_some() && said(headers, header::ACCEPT).contains("text/html") {
+            headers.remove(header::IF_NONE_MATCH);
+            headers.remove(header::IF_MODIFIED_SINCE);
+        }
+        (target, s.answer.headers.clone())
+    }
+
+    /// The answer's head made ready for the person, who asked by `GET`
+    /// when `get`: a header holding the one secret dropped; or, signed in,
+    /// a kept answer the service refused forgotten, each secret held for
+    /// the lend swapped for the stand-in, and their script made for a page.
+    /// Answers what the body is read with, if it is, or the door's refusal
+    /// of an answer it cannot read.
+    pub(crate) fn outward(
+        self,
+        parts: &mut axum::http::response::Parts,
+        get: bool,
+        sign_ins: &SignIns,
+        (lend, actor): (&LendName, &str),
+    ) -> Result<Option<Read>, axum::response::Response> {
+        let (port, s) = match self {
+            Self::Secret(secret) => {
+                let echoed = super::drop_echoed_secret(&mut parts.headers, &secret);
+                if !echoed.is_empty() {
+                    tracing::warn!(target: "door", lend = %lend, headers = ?echoed,
+                        "door: the lend's service answered with its secret in a header — dropped, never sent on");
+                }
+                return Ok(None);
+            }
+            Self::Person(port, s) => (port, s),
+        };
+        if parts.status == StatusCode::UNAUTHORIZED {
+            sign_ins.forget(lend, port, actor, &s.answer.secret);
+        }
+        let swapped = swap_headers(&mut parts.headers, &bytes(&s.secrets), STAND_IN.as_bytes());
+        tracing::debug!(target: "door", lend = %lend, swapped, "door: secrets in the answer's headers swapped for the stand-in");
+        // A page to the person gets their script first in its `<head>`.
+        let page = said(&parts.headers, header::CONTENT_TYPE).to_ascii_lowercase();
+        let script = (s.answer.script.as_deref())
+            .filter(|_| get && page.starts_with("text/html") && parts.status == StatusCode::OK)
+            .map(|script| {
+                let policy = said(&parts.headers, header::CONTENT_SECURITY_POLICY);
+                let (tag, runs) = tag(script, &policy);
+                if !runs {
+                    tracing::warn!(target: "door", lend = %lend, ?policy,
+                        "door: the page's script policy runs no inline script, so the person's script is put in it and will not run");
+                }
+                tracing::debug!(target: "door", actor, lend = %lend, "door: a page to the person, their script put first in it, kept by no cache");
+                parts.headers.remove(header::ETAG);
+                parts.headers.remove(header::LAST_MODIFIED);
+                let no_store = HeaderValue::from_static("no-store");
+                parts.headers.insert(header::CACHE_CONTROL, no_store);
+                tag
+            });
+        // Outward, a textual body is read for every secret held for the lend.
+        if parts.status == StatusCode::SWITCHING_PROTOCOLS || !textual(&parts.headers) {
+            return Ok(None);
+        }
+        if compressed(&parts.headers) {
+            tracing::warn!(target: "door", lend = %lend, encoding = ?parts.headers.get(header::CONTENT_ENCODING),
+                "door: refused — a textual answer came compressed, so it cannot be read for a secret, and is not sent on");
+            return Err(crate::ring_routes::err(
+                StatusCode::BAD_GATEWAY,
+                format!("{lend} answered in a form the door cannot read"),
+            ));
+        }
+        tracing::debug!(target: "door", lend = %lend, "door: a textual answer, its body read for every secret held for the lend");
+        parts.headers.remove(header::CONTENT_LENGTH);
+        Ok(Some((s.secrets, script)))
+    }
+}
+
 /// Which answer: a lend, its sign-in's port, and a person's key.
 type Whose = (LendName, NonZeroU16, String);
 

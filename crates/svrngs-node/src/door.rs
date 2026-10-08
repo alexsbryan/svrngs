@@ -105,6 +105,7 @@ use svrngs_core::pass::{Label, Pass};
 
 pub mod limit;
 pub mod sign_in;
+use sign_in::Signing;
 
 /// svrngs's own header prefix: every header under it on a request through
 /// the door is the door's. A client's is stripped whole.
@@ -989,14 +990,14 @@ async fn forward(
         (HeaderName::from_static(PERSON_HEADER), person_value),
         (HeaderName::from_static(KEY_HEADER), key_value),
     ];
-    let signed = match lend.sign_in {
-        None => None,
+    let signing = match lend.sign_in {
+        None => Signing::Secret(secret_headers(door, &lend.name)),
         Some(port) => match door
             .sign_ins
             .of(&lend.name, port, actor, identity.clone())
             .await
         {
-            Ok(signed) => Some((port, signed)),
+            Ok(signed) => Signing::Person(port, signed),
             Err(why) => {
                 tracing::warn!(target: "door", actor, lend = %lend.name, %why,
                     "door: refused — the lend's sign-in did not sign the person in, so the request is not carried");
@@ -1008,28 +1009,7 @@ async fn forward(
             }
         },
     };
-    // Inward, the stand-in becomes the asker's secret, in the query and each header.
-    let own = signed.as_ref().map(|(_, s)| s.answer.secret.as_str());
-    let target = match (parts.uri.query(), own) {
-        (Some(q), Some(own)) => format!("{path}?{}", q.replace(sign_in::STAND_IN, own)),
-        (Some(q), None) => format!("{path}?{q}"),
-        (None, _) => path,
-    };
-    let secret = match &signed {
-        None => secret_headers(door, &lend.name),
-        Some((_, s)) => {
-            let to = s.answer.secret.as_str().as_bytes();
-            sign_in::swap_headers(&mut parts.headers, &[sign_in::STAND_IN.as_bytes()], to);
-            parts.headers.remove(header::ACCEPT_ENCODING);
-            // No copy kept from before the person's script, or for another's.
-            let html = sign_in::said(&parts.headers, header::ACCEPT).contains("text/html");
-            if s.answer.script.is_some() && html {
-                parts.headers.remove(header::IF_NONE_MATCH);
-                parts.headers.remove(header::IF_MODIFIED_SINCE);
-            }
-            s.answer.headers.clone()
-        }
-    };
+    let (target, secret) = signing.inward(&mut parts.headers, path, parts.uri.query());
     let displaced = rewrite_headers(&mut parts.headers, identity, &secret);
     if displaced > 0 {
         tracing::info!(target: "door", actor, lend = %lend.name, displaced,
@@ -1100,20 +1080,6 @@ async fn forward(
         }
         _ => held,
     };
-    let echoed = match &signed {
-        None => drop_echoed_secret(&mut parts.headers, &secret),
-        Some((port, s)) => {
-            if parts.status == StatusCode::UNAUTHORIZED {
-                door.sign_ins
-                    .forget(&lend.name, *port, actor, &s.answer.secret);
-            }
-            let to = sign_in::STAND_IN.as_bytes();
-            let swapped =
-                sign_in::swap_headers(&mut parts.headers, &sign_in::bytes(&s.secrets), to);
-            tracing::debug!(target: "door", lend = %lend.name, swapped, "door: secrets in the answer's headers swapped for the stand-in");
-            Vec::new()
-        }
-    };
     let own = parts
         .headers
         .get(header::LOCATION)
@@ -1131,52 +1097,16 @@ async fn forward(
             HeaderValue::from(share),
         );
     }
-    if !echoed.is_empty() {
-        tracing::warn!(target: "door", lend = %lend.name, headers = ?echoed,
-            "door: the lend's service answered with its secret in a header — dropped, never sent on");
-    }
     tracing::debug!(target: "door", actor, lend = %lend.name, status = parts.status.as_u16(),
         "door: the lend's service answered; streaming it back");
     let length = parts
         .headers
         .get(header::CONTENT_LENGTH)
         .and_then(|l| l.to_str().ok()?.parse().ok());
-    // A page to the person gets their script first in its `<head>`.
-    let page = sign_in::said(&parts.headers, header::CONTENT_TYPE).to_ascii_lowercase();
-    let script = (signed.as_ref().and_then(|(_, s)| s.answer.script.as_deref()))
-        .filter(|_| get && page.starts_with("text/html") && parts.status == StatusCode::OK)
-        .map(|script| {
-            let policy = sign_in::said(&parts.headers, header::CONTENT_SECURITY_POLICY);
-            let (tag, runs) = sign_in::tag(script, &policy);
-            if !runs {
-                tracing::warn!(target: "door", lend = %lend.name, ?policy,
-                    "door: the page's script policy runs no inline script, so the person's script is put in it and will not run");
-            }
-            tracing::debug!(target: "door", actor, lend = %lend.name, "door: a page to the person, their script put first in it, kept by no cache");
-            parts.headers.remove(header::ETAG);
-            parts.headers.remove(header::LAST_MODIFIED);
-            let no_store = HeaderValue::from_static("no-store");
-            parts.headers.insert(header::CACHE_CONTROL, no_store);
-            tag
-        });
-    // Outward, a textual body is read for every secret held for the lend.
-    let swapping = signed
-        .filter(|_| {
-            parts.status != StatusCode::SWITCHING_PROTOCOLS && sign_in::textual(&parts.headers)
-        })
-        .map(|(_, s)| s.secrets);
-    if swapping.is_some() && sign_in::compressed(&parts.headers) {
-        tracing::warn!(target: "door", lend = %lend.name, encoding = ?parts.headers.get(header::CONTENT_ENCODING),
-            "door: refused — a textual answer came compressed, so it cannot be read for a secret, and is not sent on");
-        return err(
-            StatusCode::BAD_GATEWAY,
-            format!("{} answered in a form the door cannot read", lend.name),
-        );
-    }
-    if swapping.is_some() {
-        tracing::debug!(target: "door", lend = %lend.name, "door: a textual answer, its body read for every secret held for the lend");
-        parts.headers.remove(header::CONTENT_LENGTH);
-    }
+    let swapping = match signing.outward(&mut parts, get, &door.sign_ins, (&lend.name, actor)) {
+        Ok(swapping) => swapping,
+        Err(refused) => return refused,
+    };
     carriage.answered = Some((parts.status.as_u16(), length));
     tracing::debug!(target: "carriage", lend = %lend.name, range = ?carriage.range, status = parts.status.as_u16(),
         content_range = ?parts.headers.get(header::CONTENT_RANGE), ms = carriage.began.elapsed().as_millis(), "door: answered");
@@ -1187,7 +1117,7 @@ async fn forward(
         frame
     });
     let body = match swapping {
-        Some(secrets) => Body::new(sign_in::Swapping::new(body, secrets, script)),
+        Some((secrets, script)) => Body::new(sign_in::Swapping::new(body, secrets, script)),
         None => Body::new(body),
     };
     let mut response = Response::new(body);
