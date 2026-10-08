@@ -25,6 +25,9 @@
 //   driver wrote it (demo/runs/a/dry-2026-10-04/drive.mjs:41-47): what no
 //   person can write, and what a lend keeping a token needs to play at all
 //   (u5-3's probe); the plants alone use it.
+//   With `"mw": true` and `"lend"` (check.sh pair with MW=1, mw-2), the lend
+//   is Jellyfin's middleware's and nothing is typed (person.mjs); a person
+//   may name an `"at"` of their own.
 //
 // Prints one JSON line. A step that did not happen within its time is
 // null with what the page showed: never a number guessed.
@@ -32,7 +35,7 @@ import { enter, judge, lender, seek, socket } from './person.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const { SECRETS, JF, ADMIN, DUMP } = process.env;
-const out = { way: args.way, engine: args.engine, people: {} };
+const out = { way: args.way, engine: args.engine, mw: !!args.mw, people: {} };
 // Every time this run reports is in ms from here.
 const T0 = Date.now();
 const jf = lender(JF, ADMIN);

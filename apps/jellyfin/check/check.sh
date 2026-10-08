@@ -19,7 +19,12 @@
 #                                                  ana ben); SHARE_FLAGS is what share is given (else --limit 8)
 #   check.sh pair  <scratch> <out> <way> <engine>  two people new to it through the lend, way computer|phone,
 #                                                  engine chromium|webkit: from the list to a playing film,
-#                                                  seeks, the other watched; writes <out>/pair-<way>-<engine>.json
+#                                                  seeks, the other watched; writes <out>/pair-<way>-<engine>.json.
+#                                                  With MW=1 (mw-2), after `mw`: through the middleware's lend,
+#                                                  started afresh (JELLYFIN_MW_PLANT passed on), nothing typed —
+#                                                  on a computer Alex and Bo, each from their own; each person's
+#                                                  Jellyfin tokens read from its database after (tokens.py);
+#                                                  writes <out>/pair-mw-<way>-<engine>[-plant-<plant>].json
 #   check.sh plant <scratch> <out> <plant> <engine> the lend made to keep a token, then a computer pair, then
 #                                                  the token taken back: plant `token`, a token of its own (the
 #                                                  lend's token reaching a browser); `one-device`, Ben's, on the
@@ -214,12 +219,28 @@ pair() {
   # Each phone joins as a person of its own: each engine's two are new names.
   local a=Ana b=Ben; [ "$engine" = webkit ] && { a=Cleo; b=Dara; }
   [ -n "${RUN:-}" ] && { a="$a$RUN"; b="$b$RUN"; }
+  local mw="" a_at="" b_at=""
+  if [ -n "${MW:-}" ]; then
+    # Through the middleware's lend, started afresh: two people new to it.
+    # On a computer they are Alex and Bo, each from their own computer's
+    # address of the lend, as the door names them; a phone is whoever it
+    # joined as.
+    [ -n "${MW_PORT_LENT:-}" ] || { say "pair: MW=1 needs \`check.sh mw\` run first"; exit 2; }
+    mw_up "pair $way $engine"
+    tag="mw-$tag${JELLYFIN_MW_PLANT:+-plant-$JELLYFIN_MW_PLANT}"
+    mw=',"mw":true,"lend":"jellyfin-mw"'
+    [ "$way" = computer ] && { a=Alex; b=Bo; a_at=",\"at\":\"$ALEX_AT\""; b_at=",\"at\":\"$BO_AT\""; }
+  fi
   rm -rf "$R/dump/$tag"
   SECRETS="$SECRETS" JF="$O" ADMIN="$(cat "$SECRETS/admin_token")" DUMP="$R/dump/$tag" \
-    node "$HERE/drive.mjs" "{\"way\":\"$way\",\"engine\":\"$engine\",\"at\":\"$at\",\"server\":\"$SERVER\",
-      \"people\":[{\"name\":\"$a\",\"user\":\"ana\",\"film\":\"$ONE\",\"seeks\":[50,15,80,30,65]${A_EXTRA:-}},
-                  {\"name\":\"$b\",\"user\":\"ben\",\"film\":\"$TWO\",\"seeks\":[60,20,75]${B_EXTRA:-}}]}" \
+    node "$HERE/drive.mjs" "{\"way\":\"$way\",\"engine\":\"$engine\",\"at\":\"$at\",\"server\":\"$SERVER\"$mw,
+      \"people\":[{\"name\":\"$a\",\"user\":\"ana\",\"film\":\"$ONE\",\"seeks\":[50,15,80,30,65]$a_at${A_EXTRA:-}},
+                  {\"name\":\"$b\",\"user\":\"ben\",\"film\":\"$TWO\",\"seeks\":[60,20,75]$b_at${B_EXTRA:-}}]}" \
     >"$OUT/pair-$tag.json" 2>"$R/pair-$tag.err" || true
+  if [ -n "$mw" ]; then
+    python3 "$HERE/tokens.py" "$R/jf/data/data/jellyfin.db" "$OUT/pair-$tag.json" "$R/dump/$tag" | tee -a "$OUT/steps.log"
+    cp "$R/mw.log" "$R/mw-$tag.log"
+  fi
   say "pair $tag: $(python3 "$HERE/summary.py" --line "$OUT/pair-$tag.json")"
 }
 
@@ -293,9 +314,11 @@ trio() {
 # computers, ask through the lend (mw.py). Only users named as the
 # middleware names them (<name>-<16 hex of a key>, viewer.rs user_name)
 # are deleted between runs, so a person's first ask in each run is new.
-mw() {
-  . "$R/env"
-  local tag="$1" port="${MW_PORT:-8097}" mwb="$REPO/apps/jellyfin/mw/target/debug/jellyfin-mw"
+# The middleware built, given its key (minted once), and started afresh
+# on MW_PORT (else 8097), JELLYFIN_MW_PLANT passed on, the users it named
+# before deleted.
+mw_up() {
+  local port="${MW_PORT:-8097}" mwb="$REPO/apps/jellyfin/mw/target/debug/jellyfin-mw"
   TOKEN="$(cat "$SECRETS/admin_token")"
   cargo build --quiet --manifest-path "$REPO/apps/jellyfin/mw/Cargo.toml"
   if [ ! -s "$SECRETS/mw_key" ]; then
@@ -308,7 +331,13 @@ mw() {
   NO_COLOR=1 RUST_LOG=info,jellyfin_mw=debug nohup "$mwb" --listen "127.0.0.1:$port" <"$SECRETS/mw_key" >"$R/mw.out" 2>"$R/mw.log" &
   echo $! >"$R/mw.pid"
   for _ in $(seq 1 50); do grep -q 'listening on port' "$R/mw.out" 2>/dev/null && break; sleep 0.1; done
-  say "mw $tag: $(head -1 "$R/mw.out")${JELLYFIN_MW_PLANT:+; planted: $JELLYFIN_MW_PLANT}; users: $(users)"
+  say "mw $1: $(head -1 "$R/mw.out")${JELLYFIN_MW_PLANT:+; planted: $JELLYFIN_MW_PLANT}; users: $(users)"
+}
+
+mw() {
+  . "$R/env"
+  local tag="$1" port="${MW_PORT:-8097}"
+  mw_up "$tag"
   if [ -z "${MW_PORT_LENT:-}" ]; then
     printf '\n' | SVRNGS_DIR="$R/sam" NO_COLOR=1 RUST_LOG=debug "$B" share "$port" --name jellyfin-mw --kind jellyfin --limit 8 >"$R/sam/share-mw.out" 2>>"$R/sam/share.log"
     say "sam: $(grep -m1 Lent "$R/sam/share-mw.out")"

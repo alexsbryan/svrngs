@@ -1,10 +1,14 @@
 """Search every byte each person's browser received (drive.mjs's dump),
-and both computers' svrngs output, for every secret of this run: the
-lender's password and token, each person's password, each person's token
-as Jellyfin handed it to their browser, every token a plant made the lend
-keep (check.sh `plant`), and whatever Sam's lends keep now. A person's own
+and the computers' svrngs output and the middleware's log, for every
+secret of this run: the lender's password and token, each person's
+password, each person's token as Jellyfin handed it to their browser (or,
+through the middleware, as Jellyfin's database holds it), the key the
+lender gave the middleware, every token a plant made the lend keep
+(check.sh `plant`), and whatever Sam's lends keep now. A person's own
 token in what they received is counted apart: Jellyfin answers a sign-in
-with it, and it is theirs. Forked from u5-3's
+with it, and it is theirs. A person's `token` file may hold more than one,
+a line each: through the middleware, every device of their account's
+(tokens.py). Forked from u5-3's
 (demo/runs/u5/2026-10-05-jellyfin/scan.py).
 
 usage: python3 scan.py <scratch dir> <out dir>    writes <out>/scan.json
@@ -28,7 +32,11 @@ def hits(blob, secrets):
 report = {"secrets_searched": sorted(base), "lend_kept": sorted(kept), "pairs": {}, "logs": {}}
 for pair in sorted(p for p in (root / "dump").iterdir() if p.is_dir()):
     people = sorted(p for p in pair.iterdir() if p.is_dir())
-    tokens = {f"{p.name}_token": (p / "token").read_text().strip() for p in people if (p / "token").exists()}
+    tokens = {}
+    for p in people:
+        if (p / "token").exists():
+            for i, t in enumerate((p / "token").read_text().split()):
+                tokens[f"{p.name}_token" + (f"_{i + 1}" if i else "")] = t
     report["pairs"][pair.name] = {}
     for p in people:
         secrets = {**base, **tokens}
@@ -56,10 +64,11 @@ for pair in sorted(p for p in (root / "dump").iterdir() if p.is_dir()):
                 if len(where[k]) < 4:
                     path = url.split("/", 3)[-1] if "://" in url else url
                     where[k].append("/" + path.split("?")[0][:80])
+        mine = [k for k in list(found) if k == own or k.startswith(f"{own}_")]
         report["pairs"][pair.name][p.name] = {
             "scanned": scanned,
-            "own_token": found.pop(own, 0),
-            "own_token_in": where.pop(own, []),
+            "own_token": sum(found.pop(k) for k in mine),
+            "own_token_in": sorted({w for k in mine for w in where.pop(k)}),
             "others_secrets": found,
             "others_secrets_in": {k: where[k] for k in found},
             "holds_none_of_anothers": not found,
@@ -67,8 +76,11 @@ for pair in sorted(p for p in (root / "dump").iterdir() if p.is_dir()):
 everyone = dict(base)
 for pair in (root / "dump").iterdir():
     for t in pair.glob("*/token"):
-        everyone[f"{pair.name}/{t.parent.name}_token"] = t.read_text().strip()
-for log in sorted(list((root / "sam").glob("*")) + list((root / "alex").glob("*"))):
+        for i, v in enumerate(t.read_text().split()):
+            everyone[f"{pair.name}/{t.parent.name}_token" + (f"_{i + 1}" if i else "")] = v
+# Bo's computer and the middleware's own log too, when a run has them (mw).
+for log in sorted(list((root / "sam").glob("*")) + list((root / "alex").glob("*"))
+                  + list((root / "bo").glob("*")) + list(root.glob("mw*.log")) + list(root.glob("mw.out"))):
     if log.is_file() and log.suffix in (".log", ".out"):
         report["logs"][str(log.relative_to(root))] = hits(log.read_bytes(), everyone)
 (out / "scan.json").write_text(json.dumps(report, indent=1) + "\n")

@@ -9,7 +9,13 @@
 // signs in to jellyfin-web with the account the lender made, typing it,
 // and plays their film.
 //
-// `run` is what each caller gives: { args: {way, engine, device?, at, server},
+// Through Jellyfin's middleware (`args.mw`, mw-2), nothing is typed: a
+// person asked to sign in stops there, and the stored sign-in the page
+// wrote is recorded, its token never read as theirs (tokens.py reads
+// theirs from Jellyfin). A person may name an `at` of their own: on a
+// computer through the middleware, each their own computer's address.
+//
+// `run` is what each caller gives: { args: {way, engine, device?, at, server, mw?, lend?},
 // SECRETS (the passwords), DUMP (where every response each browser
 // receives is written, for scan.py), T0 (every time reported is in ms
 // from here) }. A step that did not happen within its time is null with
@@ -140,6 +146,7 @@ export function record(context, page, user, { DUMP, T0 }) {
 export async function enter(p, run) {
   const { args, SECRETS, DUMP, T0 } = run;
   const person = { user: p.user, name: p.name, account: p.account ?? p.user };
+  const at = p.at ?? args.at;
   const { context, close } = await launch(args.engine, { device: args.device });
   person.close = close;
   person.page = await context.newPage();
@@ -176,7 +183,7 @@ export async function enter(p, run) {
     // When the link is opened: Demo B's clock starts here (night.mjs).
     person.opened_at = Date.now() - T0;
     person.list_ms = await timed(person, 'the list', async () => {
-      await page.goto(args.at);
+      await page.goto(at);
       await page.waitForFunction(
         () => !document.getElementById('join').hidden || /good|bad/.test(document.getElementById('status').className),
         null, { timeout: 120_000 });
@@ -187,11 +194,11 @@ export async function enter(p, run) {
     if (person.list_ms === null) return person;
     person.listed = await page.evaluate(() => [...document.querySelectorAll('#lent button')].map((b) => b.textContent));
     person.open_ms = await timed(person, 'the lend', async () => {
-      await page.locator('#lent button', { hasText: 'jellyfin' }).click();
+      await page.locator('#lent button', { hasText: args.lend ?? 'jellyfin' }).click();
       await page.waitForURL((u) => u.pathname.startsWith('/web/'), { timeout: 90_000 });
     });
   } else {
-    person.open_ms = await timed(person, 'the lend', () => page.goto(args.at));
+    person.open_ms = await timed(person, 'the lend', () => page.goto(at));
   }
   if (person.open_ms === null) return person;
   person.at = new URL(page.url()).host.replace(/^[a-z0-9]{20,}\./, '<label>.');
@@ -202,6 +209,11 @@ export async function enter(p, run) {
   await page.waitForTimeout(1500);
   person.asked = await page.locator('#txtManualName:visible, .manualLoginForm:visible, .btnManual:visible').count() > 0;
   person.shown = await shown(page);
+  if (args.mw && person.asked) {
+    person.stopped = `asked to sign in, with nothing to type; the page says: ${person.shown}`;
+    person.signed_in_ms = null;
+    return person;
+  }
   person.signed_in_ms = person.asked ? await timed(person, 'signed in', async () => {
     const pw = fs.readFileSync(`${SECRETS}/${person.account}_pw`, 'utf8').trim();
     const manual = page.locator('.btnManual:visible');
@@ -215,8 +227,16 @@ export async function enter(p, run) {
   const stored = JSON.parse((await page.evaluate(() => localStorage.getItem('jellyfin_credentials'))) ?? '{}');
   person.token = stored.Servers?.[0]?.AccessToken ?? null;
   person.device = await page.evaluate(() => localStorage.getItem('_deviceId2'));
-  // A token Jellyfin handed this browser is theirs; the placeholder is none.
-  if (person.token && person.token !== 'door') fs.writeFileSync(`${DUMP}/${p.user}/token`, person.token);
+  if (args.mw) {
+    // What the middleware's page wrote: whose account, and a token that is
+    // the stand-in or not; scan.py judges what the bytes hold.
+    const s = stored.Servers?.[0] ?? {};
+    person.stored = { user: s.UserId ?? null, address: s.ManualAddress ?? null,
+      token: s.AccessToken == null ? null : s.AccessToken === 'svrngs-stand-in' ? 'the stand-in' : 'not the stand-in' };
+  } else if (person.token && person.token !== 'door') {
+    // A token Jellyfin handed this browser is theirs; the placeholder is none.
+    fs.writeFileSync(`${DUMP}/${p.user}/token`, person.token);
+  }
   // Signed in, with no film to play: a phone used as a remote (u6-2).
   if (!p.film) return person;
 
