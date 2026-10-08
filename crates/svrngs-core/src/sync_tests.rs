@@ -382,3 +382,117 @@ fn repeating_a_budgeted_chunk_converges_and_every_round_moves_the_mark() {
     assert_eq!(digest_of(&peer), digest_of(&held), "two nodes, one claim");
     assert!(rounds > 1, "the control: this budget really did chunk");
 }
+
+// ── the kept fold ────────────────────────────────────
+
+/// Journals of every shape the digest turns on — holes, forks, seals,
+/// corrections (of seals too) and forged lines, among four actors — from a
+/// fixed xorshift, so a failure names a journal that comes back.
+fn journals() -> impl Iterator<Item = Vec<Op<SignedOp>>> {
+    let mut x: u64 = 0x9E37_79B9_7F4A_7C15;
+    let mut rnd = move |n: u64| {
+        x ^= x << 13;
+        x ^= x >> 7;
+        x ^= x << 17;
+        x % n
+    };
+    (0..400).map(move |_| {
+        let mut ops: Vec<Op<SignedOp>> = Vec::new();
+        for _ in 0..rnd(24) {
+            let a = rnd(4) as u8 + 1;
+            let (seq, ts) = (rnd(8), 100 + rnd(5) as i64);
+            let o = match rnd(10) {
+                0 => seal(a, seq, ts),
+                1 if !ops.is_empty() => {
+                    let corrects = crate::derive_id(&ops[rnd(ops.len() as u64) as usize], NS);
+                    signed(
+                        &key(a),
+                        ts,
+                        seq,
+                        RailAct::Correct {
+                            corrects,
+                            replacement: None,
+                        },
+                    )
+                }
+                2 => spoofed(a % 4 + 1, a, seq, ts, record("f")),
+                3 => spoofed(a % 4 + 1, a, seq, ts, RailAct::Seal),
+                _ => signed(
+                    &key(a),
+                    ts,
+                    seq,
+                    record(if rnd(2) == 0 { "x" } else { "y" }),
+                ),
+            };
+            ops.push(o);
+        }
+        ops
+    })
+}
+
+/// **A fold caught up from the tail answers what a fold of the whole
+/// journal would.** Each journal is folded in pieces, its digest asked
+/// between them as a journal asks it between appends, and each answer is
+/// the whole-journal digest of what was folded so far. Watched failing on
+/// a fold that did not refold the other actors when a floor moved.
+#[test]
+fn a_digest_folded_in_pieces_is_the_whole_journals() {
+    for ops in journals() {
+        let mut fold = DigestFold::default();
+        let mut at = 0;
+        while at < ops.len() {
+            let to = (at + 1 + (at * 7 + ops.len()) % 5).min(ops.len());
+            for (id, op) in authentic(&ops[at..to], NS, &Ed25519Verifier) {
+                fold.add(id, op);
+            }
+            assert_eq!(fold.digest(), digest_of(&ops[..to]), "{:#?}", &ops[..to]);
+            at = to;
+        }
+    }
+}
+
+/// **An equal digest is answered unread exactly when the slow path would
+/// send nothing.** For a peer in step (its digest ours), `missing_nothing`
+/// and `ops_missing_from_within` agree on every journal; for a peer behind
+/// (it holds the first half), `missing_nothing` never claims nothing is
+/// missing when something is.
+fn fold_of(ops: &[Op<SignedOp>]) -> DigestFold {
+    let mut fold = DigestFold::default();
+    for (id, op) in authentic(ops, NS, &Ed25519Verifier) {
+        fold.add(id, op);
+    }
+    fold
+}
+
+#[test]
+fn missing_nothing_agrees_with_the_slow_path() {
+    let (mut unread, mut slow) = (0, 0);
+    for ops in journals() {
+        let ours = digest_of(&ops);
+        let mut newest: BTreeMap<&str, u64> = BTreeMap::new();
+        for op in &ops {
+            let n = newest.entry(op.actor.as_str()).or_default();
+            *n = (*n).max(op.kind.seq);
+        }
+        let newest = || newest.iter().map(|(a, n)| (*a, *n));
+        let behind = digest_of(&ops[..ops.len() / 2]);
+        for theirs in [&ours, &behind] {
+            let sent = ops_missing_from_within(&ops, NS, &Ed25519Verifier, theirs, NO_BUDGET).0;
+            let judged = fold_of(&ops).missing_nothing(theirs, newest());
+            if theirs == &ours {
+                assert_eq!(judged, sent.is_empty(), "{ops:#?}");
+                if judged {
+                    unread += 1
+                } else {
+                    slow += 1
+                }
+            } else {
+                assert!(!judged || sent.is_empty(), "{ops:#?}");
+            }
+        }
+    }
+    assert!(
+        unread > 20 && slow > 20,
+        "both answers exercised: {unread} unread, {slow} slow"
+    );
+}

@@ -129,7 +129,9 @@ pub use sig::{
     act_id, actor_of, derive_id, field, redemption_message, ring_op_message, sign_act,
     sign_message, sign_ring_op, verify_hex,
 };
-pub use sync::{digest, ops_missing_from, ops_missing_from_within, Compaction, Floors, NO_BUDGET};
+pub use sync::{
+    digest, ops_missing_from, ops_missing_from_within, Compaction, DigestFold, Floors, NO_BUDGET,
+};
 pub use view::{Digest, View, DIGEST_V};
 
 /// The journal envelope, re-exported so a consumer of the rail names ONE

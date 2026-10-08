@@ -191,43 +191,92 @@ fn authentic<'a>(
 /// the actor's sealed floor, so a node that has compacted a retired prefix
 /// still makes a claim instead of falling silent.
 pub fn digest(ops: &[Op<SignedOp>], namespace: &str, verifier: &dyn RingVerifier) -> Digest {
-    let authentic = authentic(ops, namespace, verifier);
-    let mut voided: BTreeSet<OpId> = BTreeSet::new();
-    for (_, op) in &authentic {
-        if let RailAct::Correct { corrects, .. } = &op.kind.act {
-            voided.insert(corrects.clone());
+    let mut fold = DigestFold::default();
+    for (id, op) in authentic(ops, namespace, verifier) {
+        fold.add(id, op);
+    }
+    fold.digest()
+}
+
+/// [`digest`]'s fold, kept: each authentic act's derived id by actor and
+/// seq, the seals and what the corrections void, folded in as acts arrive,
+/// so a journal that keeps one beside its cursor answers its digest for
+/// the acts appended since (svrngs-runtime journal.rs `Held`). An actor's
+/// view is folded again only when one of its acts arrives or its floor
+/// moves. [`digest`] is this over a whole journal, so the two cannot part.
+#[derive(Debug, Default)]
+pub struct DigestFold {
+    runs: BTreeMap<String, BTreeMap<u64, BTreeSet<OpId>>>,
+    seals: Vec<(OpId, Op<SignedOp>)>,
+    voided: BTreeSet<OpId>,
+    floors: Floors,
+    stale: BTreeSet<String>,
+    views: BTreeMap<String, View>,
+}
+
+impl DigestFold {
+    /// Fold in one act already verified under its claimed actor, beside the
+    /// id its content derives ([`authentic`]'s pairs).
+    pub fn add(&mut self, id: OpId, op: &Op<SignedOp>) {
+        match &op.kind.act {
+            RailAct::Seal => self.seals.push((id.clone(), op.clone())),
+            RailAct::Correct { corrects, .. } => _ = self.voided.insert(corrects.clone()),
+            _ => {}
         }
+        let run = self.runs.entry(op.actor.clone()).or_default();
+        run.entry(op.kind.seq).or_default().insert(id);
+        self.stale.insert(op.actor.clone());
     }
-    let floors = sealed_floors(authentic.iter().map(|(id, op)| (id, *op)), &voided);
-    let mut by_actor: BTreeMap<&str, BTreeSet<u64>> = BTreeMap::new();
-    for (_, op) in &authentic {
-        by_actor
-            .entry(op.actor.as_str())
-            .or_default()
-            .insert(op.kind.seq);
-    }
-    by_actor
-        .into_iter()
-        .filter_map(|(actor, seqs)| {
+
+    /// The digest of everything added: each stale actor's view folded again.
+    pub fn digest(&mut self) -> Digest {
+        let floors = sealed_floors(self.seals.iter().map(|(id, op)| (id, op)), &self.voided);
+        if floors != self.floors {
+            self.stale.extend(self.runs.keys().cloned());
+            self.floors = floors;
+        }
+        for actor in core::mem::take(&mut self.stale) {
+            let seqs = &self.runs[&actor];
+            let from = self.floors.get(&actor).copied().unwrap_or(0);
             // Absent from the digest is the honest answer when the floor
             // itself is missing — "I have some of their ops but not from
             // where their history starts" is indistinguishable from "I have
             // none" for the purpose of asking. A sealed actor cannot reach
             // this: the floor IS the seal's own seq, so holding the seal is
             // holding the floor.
-            let from = floors.get(actor).copied().unwrap_or(0);
-            let mut n = from;
-            if !seqs.contains(&n) {
-                return None;
-            }
-            while seqs.contains(&(n + 1)) {
-                n += 1;
-            }
-            let view = View::of(actor, from, n, authentic.iter().map(|(id, op)| (id, *op)));
-            Some((actor.to_string(), view))
-        })
-        .collect::<BTreeMap<_, _>>()
-        .into()
+            let Some(mark) = (from..).take_while(|n| seqs.contains_key(n)).last() else {
+                self.views.remove(&actor);
+                continue;
+            };
+            let ids = seqs
+                .range(from..=mark)
+                .flat_map(|(n, ids)| ids.iter().map(move |id| (*n, id.to_string())));
+            let view = View::fold_pairs(&actor, from, mark, &ids.collect::<Vec<_>>());
+            self.views.insert(actor, view);
+        }
+        self.views.clone().into()
+    }
+
+    /// Whether [`ops_missing_from_within`] would send `theirs` nothing,
+    /// judged without the journal: `newest` is each actor's highest seq
+    /// among every line held, verified or not.
+    ///
+    /// Equal digests are not the whole test (svrn-docs
+    /// `rings/current/THE_CEILING.md`, fix 1): with `theirs` ours no window
+    /// mismatches, since both heads fold the same authentic set over the
+    /// same run, so what is still sent is every line of an actor absent from
+    /// the digest and every line above its actor's mark — a line past a
+    /// hole, a forged one. Those are the slow path's to answer, so this says
+    /// nothing is missing only when no line sits there.
+    pub fn missing_nothing<'a>(
+        &mut self,
+        theirs: &Digest,
+        newest: impl Iterator<Item = (&'a str, u64)>,
+    ) -> bool {
+        let ours = self.digest();
+        ours == *theirs && { newest }
+            .all(|(actor, seq)| ours.get(actor).is_some_and(|v| seq <= v.mark))
+    }
 }
 
 /// Every op this node holds that `theirs` says the peer is missing.
