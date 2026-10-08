@@ -1,9 +1,12 @@
 //! The scale instrument: how one group's cost grows with its members, its
 //! journal and its asleep computers. An instrument, not a check: it is
-//! `#[ignore]`d, so `scripts/check.sh` never runs it, and it asserts only
-//! what makes a reading meaningful (the group converged, every member was
-//! reached, an idle round moved nothing). What `scripts/check.sh` does run
-//! here is the account's hand count, below.
+//! `#[ignore]`d, so `scripts/check.sh`'s pass of every test never runs it,
+//! and it asserts only what makes a reading meaningful (the group
+//! converged, every member was reached, an idle round moved nothing). What
+//! `scripts/check.sh` does run here is the account's hand count, below, and
+//! by name, in release, the ceiling's canary,
+//! `an_idle_round_is_under_the_ceiling`: at 25 members and 10,000 acts an
+//! idle round under 0.1 s of processor (DESIGN §8 :1083).
 //!
 //! It stands up real nodes — the record, the round, iroh — as `canaries.rs`
 //! does: in one process, no relay, peers reached by seeded loopback
@@ -554,6 +557,63 @@ async fn stand_up(members: usize, acts: usize) -> (Vec<tempfile::TempDir>, Vec<N
     (dirs, nodes)
 }
 
+/// Three rounds of node 0 with nothing to move: their wall and processor
+/// times, and the last one's cost. A round that did not reach every member,
+/// or moved an act, is not an idle round, so it is no reading.
+async fn idle_rounds(nodes: &[Node]) -> (Vec<f64>, Vec<f64>, Cost) {
+    let (mut wall, mut cpu, mut last) = (Vec::new(), Vec::new(), None);
+    for _ in 0..3 {
+        let cost = timed_round(&nodes[0]).await;
+        let out = &cost.out;
+        assert_eq!(
+            out.peers_reached,
+            nodes.len() - 1,
+            "could not judge: every member reached: {out:?}"
+        );
+        assert_eq!(
+            out.ops_pulled + out.ops_pushed,
+            0,
+            "could not judge: an idle round moves nothing: {out:?}"
+        );
+        wall.push(cost.wall_s);
+        cpu.push(cost.cpu_s);
+        last = Some(cost);
+    }
+    (wall, cpu, last.expect("three idle rounds ran"))
+}
+
+/// The ceiling (DESIGN §8 :1083): at 25 members and 10,000 acts an idle
+/// round costs under this much processor, the median of three.
+const CEILING_CPU_S: f64 = 0.1;
+
+/// The ceiling's canary (ceiling-4), the one scale number
+/// `scripts/check.sh` holds, run there by name, in release. Processor, not
+/// wall time: an asleep member's ten-second timeout is DESIGN §9's
+/// dial-at-once row, not this bar. A round that could not be read panics in
+/// [`idle_rounds`] as could-not-judge, never a pass with a smaller number.
+#[tokio::test(flavor = "multi_thread", worker_threads = 12)]
+#[ignore = "the ceiling's canary: run by name, in release, by scripts/check.sh"]
+async fn an_idle_round_is_under_the_ceiling() {
+    let _alone = ONE_AT_A_TIME.lock().await;
+    count_folds();
+    let (_dirs, nodes) = stand_up(25, 10_000).await;
+    let (_, cpu, last) = idle_rounds(&nodes).await;
+    let idle = median(cpu.clone());
+    println!(
+        "CEILING idle round at 25 x 10,000: {idle:.4} s of processor, the median of {cpu:?}, \
+         against {CEILING_CPU_S} s; the last round's account {}",
+        last.account()
+    );
+    assert!(
+        idle < CEILING_CPU_S,
+        "an idle round at 25 x 10,000 cost {idle} s of processor, over the ceiling of \
+         {CEILING_CPU_S} s: {cpu:?}"
+    );
+    for node in &nodes {
+        node.endpoint().close().await;
+    }
+}
+
 #[tokio::test(flavor = "multi_thread", worker_threads = 12)]
 #[ignore = "an instrument, not a check: run by hand, in release (see the module docs)"]
 async fn scale() {
@@ -604,29 +664,12 @@ async fn scale() {
     // reaching everyone.
     let push = timed_round(&nodes[0]).await;
 
-    let (mut idle_wall, mut idle_cpu, mut idle) = (Vec::new(), Vec::new(), None);
-    for _ in 0..3 {
-        let cost = timed_round(&nodes[0]).await;
-        let out = &cost.out;
-        assert_eq!(
-            out.peers_reached,
-            members - 1,
-            "every member reached: {out:?}"
-        );
-        assert_eq!(
-            out.ops_pulled + out.ops_pushed,
-            0,
-            "an idle round moves nothing: {out:?}"
-        );
-        idle_wall.push(cost.wall_s);
-        idle_cpu.push(cost.cpu_s);
-        idle = Some(cost);
-    }
+    let (idle_wall, idle_cpu, idle) = idle_rounds(&nodes).await;
 
     let mut asleep_round = None;
     let mut rounds = serde_json::json!({
         "push": push.account(),
-        "idle": idle.expect("three idle rounds ran").account(),
+        "idle": idle.account(),
     });
     if asleep > 0 {
         for node in &nodes[members - asleep..] {
