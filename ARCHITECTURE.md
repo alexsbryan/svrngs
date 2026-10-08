@@ -551,7 +551,10 @@ self-hosted app leans on, and the checks its page runs (`checks.js`).
 `crates/svrngs-node/tests/conformance.rs` lends two of it and opens both
 from a computer and from a phone, each at an address of its own (DESIGN
 §7), through `web/tests/conformance.mjs`, and keeps each route's verdict in
-`target/conformance/`, which `scripts/check.sh` prints.
+`target/conformance/`, which `scripts/check.sh` prints. Given the lender's
+key, `serve.mjs` keeps accounts, a token each, and `answer.mjs` is the
+lend's sign-in that answers each person's (mwp-4): a second app, after
+Jellyfin's, on the door's sign-in (DESIGN §3, "The room", call 6).
 
 **`apps/jellyfin/`, `apps/tap/`**: so far only each app's `nouns.txt` — the
 words the infra may never use. `apps/jellyfin/` holds whatever knows

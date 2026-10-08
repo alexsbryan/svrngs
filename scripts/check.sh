@@ -38,8 +38,9 @@ if [ -f Cargo.toml ]; then
   step "joining in a browser" cargo test --quiet -p svrngs --test join_page
   # The conformance canary (DESIGN §8; u5-2): apps/web-conformance, lent by
   # two computers, opened from a computer and from a phone, each app at an
-  # address of its own (DESIGN §7), in both engines. Each route's verdict per
-  # way is printed, once for every engine and lender that agree.
+  # address of its own (DESIGN §7), in both engines; and, with accounts of its
+  # own, two people signed in through a lend's sign-in (mwp-4). Each route's
+  # verdict per way is printed, once for every engine and lender that agree.
   rm -rf target/conformance
   step "conformance canary" cargo test --quiet -p svrngs-node --test conformance
   cat target/conformance/*.txt 2>/dev/null | cut -c1-10,25- | sort -u | sed 's/^/           /'

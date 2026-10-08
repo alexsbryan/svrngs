@@ -619,6 +619,30 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
      5. *No app noun in the infra*: `scripts/vocab_check.py` at every
         commit of the queue. Predicted: passes; the door's new words are
         sign-in, secret, stand-in, script and header.
+   - *Landed* (mwp-1 to mwp-4, 2026-10-08), judged by each bar's spirit;
+     one host, one run of each. Bar 1: mw-2's four pairs passed and its
+     three plants were caught, the proxy gone, the slowest seek 4,008 ms,
+     each person's own token in no byte either
+     (`demo/runs/mwp/2026-10-08/README.md`). Bar 2: 669 lines, past 480
+     by 189, none of them the door's pieces — the checks' five plants
+     (about 55), the credential's `Device` form (about 35, not
+     predicted), and refusals and traces as rustfmt breaks them (the
+     same README). Bar 3: 14,398 of 14,400, 428 new — mwp-1 375 (its
+     refusals and traces), mwp-2 51, mwp-3's `run.sh` 2 — past the 320
+     predicted by 108, inside the raise. Bar 4: the canary's answerer
+     (`apps/web-conformance/answer.mjs`) is 30 lines and its accounts 32
+     more in `serve.mjs`; Alex's phone and Bo's computer, each in
+     Chromium and WebKit, are each signed in as themselves with nothing
+     typed — by the token the sign-in's script stored, sent as a query,
+     by the door's bearer and through a redirect — and no byte either
+     receives holds either token or the lender's key; its plant, one
+     person's account answered for both, caught by both of its asserts
+     (`a9ac3e1`). No line of `crates/`'s sources or of `web/` changed in
+     mwp-4; its test is beside the canary's others, in
+     `crates/svrngs-node/tests/conformance.rs`, the one harness that runs
+     it on this host alone, so the bar's letter (`crates/` empty) missed
+     by that test (`30dac6a`). Bar 5: clean at every commit. The catalogue
+     app, the harder proof, keeps its trigger above.
 
 **Chats are doors, and the last thing we build.** A small adapter per chat, in
 its own package, makes a group for a channel and posts its link. Onboarding
@@ -1284,7 +1308,11 @@ exists, each a small app in `apps/` using only §3:
   Neither lend's cookie reaches the other's requests, Bo's door names
   Alex's key, no byte Alex receives holds either secret, a lent page finds
   no group whose key it could unseal, and a lent page's post to the record
-  API writes nothing.
+  API writes nothing. Since mwp-4 it is the sign-in's second app too: given
+  the lender's key it keeps accounts, a token each, and its answerer
+  (`answer.mjs`) is a lend's sign-in, so `two_people_signed_in` has Alex's
+  phone and Bo's computer each signed in as themselves, in both engines
+  (§3, "The room", call 6, bar 4).
 - **Tap** (after U3) — private inputs and a ring born from a ring: two groups
   on one node; an app starts a group of two from inside a group; it seals its
   own payloads to members' public keys, which the register gains with it. (It
@@ -1317,15 +1345,18 @@ with a term in *N*² that nothing yet explains, it predicted 75 members within
 
 **Then**, in this order (operator, 2026-10-07): the ceiling, above; the
 middleware spike (§3, "The room", call 6; kept, 2026-10-08), then made
-production, the door carrying its general pieces (operator, 2026-10-08);
+production, the door carrying its general pieces (operator, 2026-10-08;
+landed, mwp-0 to mwp-4: Jellyfin's middleware from 1,039 lines to 669,
+svrngs 426 new, a second app signed in through the same sign-in in 30;
+call 6, "Landed");
 group folders
 (§3, call 7 of "Lent apps"; §9); the phone replica spike, iOS first (§9, "a
 native phone app"), after folders since they name the bytes a phone would
 hold; then the middleware's P1 follow-ups as one row (operator, 2026-10-08;
-`demo/runs/mw/2026-10-08/README.md` §7, items 5, 1 and 7): a lender keeps a
-library back from the people the middleware makes accounts for; `share`'s
-words for a lend whose accounts its middleware makes, without `share`
-learning middleware (§3, "Lent apps" call 3); Demo A's steps with nothing
+`demo/runs/mw/2026-10-08/README.md` §7, items 5 and 7; its item 1,
+`share`'s words, answered by the sign-in's declaration, mwp-1,
+`crates/svrngs/src/cli.rs:475`, `:769`): a lender keeps a
+library back from the people the middleware makes accounts for; Demo A's steps with nothing
 typed, and its dry run (its other four, P2 and below, wait in that §7);
 then removal (U7, the keeper of §6, with forks that void nothing), before
 any group of strangers; then the chat doors, Discord first —
