@@ -463,8 +463,10 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
      request's identity headers, `x-svrngs-person` and `x-svrngs-key`
      (`door.rs:103-111`), set as it sets them for the service, and
      nothing else: no client header, no body. One owner the door holds,
-     as it holds `Using` (`door.rs:187`), answers asks one person at a
-     time, so a person's first requests at once ask once.
+     as it holds `Using` (`door.rs:187`), asks for each person apart, so
+     one person's slow sign-in holds nobody else's request, and a person's
+     first requests at once wait on one ask (#88, si-1: until then it
+     asked one person at a time, and one slow ask held every lend's).
    - *What comes back.* `200` and a JSON object, every field required and
      an unknown one refused: `secret`, the person's secret, 16 to 512
      bytes of letters, digits, `-`, `_`, `.` and `~` — what a query, a

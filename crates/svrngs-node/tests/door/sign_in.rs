@@ -39,10 +39,15 @@ enum Answers {
     Each,
     Fails,
     Nonsense,
+    /// As `Each`, but bo's ask (`signing(2)`) is held [`HELD`] first.
+    SlowForBo,
 }
 
+/// How long the answerer holds bo's ask under [`Answers::SlowForBo`].
+const HELD: Duration = Duration::from_secs(3);
+
 /// The sign-in answerer: each person their own secret, as `authorization`
-/// too; keeps the head of every ask.
+/// too; keeps the head of every ask, each ask answered on its own.
 async fn answerer(answers: Answers) -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
@@ -50,34 +55,40 @@ async fn answerer(answers: Answers) -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
     let kept = asks.clone();
     tokio::spawn(async move {
         while let Ok((mut sock, _)) = listener.accept().await {
-            let Some(head) = origins::read_head(&mut sock).await else {
-                continue;
-            };
-            let key = header_values(&head, "x-svrngs-key")
-                .first()
-                .map(|k| k.to_string())
-                .unwrap_or_default();
-            kept.lock().unwrap().push(head);
-            let secret = secret_of(&format!("{key:0<24}"));
-            let (status, body) = match answers {
-                Answers::Each => (
-                    "200 OK",
-                    serde_json::json!({
-                        "secret": secret,
-                        "headers": { "Authorization": format!("Bearer {secret}") },
-                        "script": script_of(&key),
-                    })
-                    .to_string(),
-                ),
-                Answers::Fails => ("500 Internal Server Error", "down".into()),
-                Answers::Nonsense => ("200 OK", r#"{"secret": "x"}"#.into()),
-            };
-            let reply = format!(
-                "HTTP/1.1 {status}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
-                body.len()
-            );
-            let _ = sock.write_all(reply.as_bytes()).await;
-            let _ = sock.shutdown().await;
+            let kept = kept.clone();
+            tokio::spawn(async move {
+                let Some(head) = origins::read_head(&mut sock).await else {
+                    return;
+                };
+                let key = header_values(&head, "x-svrngs-key")
+                    .first()
+                    .map(|k| k.to_string())
+                    .unwrap_or_default();
+                kept.lock().unwrap().push(head);
+                if matches!(answers, Answers::SlowForBo) && key == actor_of(&signing(2)) {
+                    tokio::time::sleep(HELD).await;
+                }
+                let secret = secret_of(&format!("{key:0<24}"));
+                let (status, body) = match answers {
+                    Answers::Each | Answers::SlowForBo => (
+                        "200 OK",
+                        serde_json::json!({
+                            "secret": secret,
+                            "headers": { "Authorization": format!("Bearer {secret}") },
+                            "script": script_of(&key),
+                        })
+                        .to_string(),
+                    ),
+                    Answers::Fails => ("500 Internal Server Error", "down".into()),
+                    Answers::Nonsense => ("200 OK", r#"{"secret": "x"}"#.into()),
+                };
+                let reply = format!(
+                    "HTTP/1.1 {status}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                    body.len()
+                );
+                let _ = sock.write_all(reply.as_bytes()).await;
+                let _ = sock.shutdown().await;
+            });
         }
     });
     (addr, asks)
@@ -458,6 +469,73 @@ async fn each_person_s_script_goes_first_in_their_pages_and_never_in_another_s()
     );
     let asked = heads.lock().unwrap().last().cloned().unwrap();
     assert_eq!(header_values(&asked, "if-none-match"), vec!["\"v1\""]);
+    drop(cy);
+    pair.close().await;
+}
+
+/// One person's sign-in held slow holds nobody else's (#88; DESIGN §3,
+/// "The room", call 6): while the answerer holds bo's first ask through
+/// `signed` for [`HELD`], cy's first requests, through `signed` and through
+/// `other`, whose sign-in is another, are each answered within a second;
+/// and bo's two first requests at once, both answered, ask once.
+#[tokio::test]
+async fn one_person_s_slow_sign_in_holds_nobody_else_s() {
+    let pair = Pair::new().await;
+    let cy = cy_dials_a(&pair).await;
+    let (origin, _) = service().await;
+    let (slow, asked) = answerer(Answers::SlowForBo).await;
+    let (fast, _) = answerer(Answers::Each).await;
+    lend_signed(&pair, "signed", origin.port(), slow.port());
+    lend_signed(&pair, "other", origin.port(), fast.port());
+    let timed = |bridge, request| async move {
+        let began = tokio::time::Instant::now();
+        let reply = raw_to(bridge, request).await;
+        (reply.status, began.elapsed())
+    };
+    let bo = async {
+        let (one, two) = tokio::join!(
+            timed(pair.bridge, asks("echo")),
+            timed(pair.bridge, asks("echo"))
+        );
+        [one, two]
+    };
+    let others = async {
+        tokio::time::sleep(Duration::from_millis(300)).await;
+        let (same, other) = tokio::join!(
+            timed(cy.local_addr(), asks("echo")),
+            timed(
+                cy.local_addr(),
+                asks("echo").replace("/lend/signed/", "/lend/other/")
+            ),
+        );
+        [same, other]
+    };
+    let (bo, others) = tokio::join!(bo, others);
+    let waited: Vec<String> = ["the same lend", "another lend"]
+        .iter()
+        .zip(others)
+        .filter(|(_, (status, took))| *status != 200 || *took >= Duration::from_secs(1))
+        .map(|(through, (status, took))| format!("through {through}, {status} after {took:?}"))
+        .collect();
+    assert!(
+        waited.is_empty(),
+        "cy's first requests waited on bo's ask: {waited:?}"
+    );
+    for (status, took) in bo {
+        assert_eq!(status, 200);
+        assert!(
+            took >= HELD,
+            "bo's request answered before its ask: {took:?}"
+        );
+    }
+    let bo_key = actor_of(&signing(2));
+    let bo_asked = asked
+        .lock()
+        .unwrap()
+        .iter()
+        .filter(|h| header_values(h, "x-svrngs-key") == [bo_key.as_str()])
+        .count();
+    assert_eq!(bo_asked, 1, "bo's two first requests at once, asked once");
     drop(cy);
     pair.close().await;
 }

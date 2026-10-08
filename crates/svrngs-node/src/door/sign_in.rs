@@ -14,8 +14,9 @@
 //!
 //! **Kept** by [`SignIns`], one task that owns every answer, in memory for
 //! this run of the node — never logged, never on disk, never on the wire
-//! but to the service — and asks one person at a time, so a person's first
-//! requests at once ask once. A `401` from the service to a request signed
+//! but to the service — which asks for each person apart, so one person's
+//! slow sign-in holds nobody else's request, and a person's first requests
+//! at once wait on one ask. A `401` from the service to a request signed
 //! with a kept answer forgets it, and the next request asks again.
 //!
 //! **Swapped** ([`STAND_IN`]): in what the door carries in, the stand-in
@@ -122,7 +123,7 @@ impl Answer {
 
 /// Why a sign-in did not sign a person in: a closed set, traced at warn on
 /// the lender's side, never sent to the person.
-#[derive(Debug, thiserror::Error)]
+#[derive(Clone, Debug, thiserror::Error)]
 pub(crate) enum Refusal {
     #[error("nothing answered on its port, or not within 30 s")]
     Unanswered,
@@ -255,17 +256,19 @@ impl Signing {
 /// Which answer: a lend, its sign-in's port, and a person's key.
 type Whose = (LendName, NonZeroU16, String);
 
+/// Where a person's signed-in self is told.
+type Told = oneshot::Sender<Result<Signed, Refusal>>;
+
 enum Ask {
-    Of(
-        Whose,
-        [(HeaderName, HeaderValue); 2],
-        oneshot::Sender<Result<Signed, Refusal>>,
-    ),
+    Of(Whose, [(HeaderName, HeaderValue); 2], Told),
+    /// A sign-in's answer for a person, asked off the task.
+    Asked(Whose, Result<Answer, Refusal>),
     Forget(Whose, Secret),
 }
 
 /// Every person's sign-in answer, owned by one task and told by messages
-/// (RUST_ARCH 3, 4), as [`super::Using`] is.
+/// (RUST_ARCH 3, 4), as [`super::Using`] is. Each ask goes out on its own,
+/// so one person's slow sign-in holds nobody else's request (#88).
 #[derive(Clone)]
 pub struct SignIns(mpsc::UnboundedSender<Ask>);
 
@@ -273,31 +276,43 @@ impl SignIns {
     /// The task that keeps the answers, ending when the last handle drops.
     pub fn spawn() -> Self {
         let (tx, mut rx) = mpsc::unbounded_channel::<Ask>();
+        let back = tx.downgrade();
         tokio::spawn(async move {
             let mut kept: HashMap<Whose, Answer> = HashMap::new();
+            // Each ask out now, and who waits on its answer.
+            let mut out: HashMap<Whose, Vec<Told>> = HashMap::new();
             while let Some(ask) = rx.recv().await {
                 match ask {
-                    Ask::Of(whose, identity, answer) => {
+                    Ask::Of(whose, identity, told) => {
                         let (lend, port, actor) = &whose;
-                        let found = match kept.get(&whose) {
-                            Some(a) => {
-                                tracing::debug!(target: "door", lend = %lend, actor, "door: sign-in — the person's kept answer");
-                                Ok(a.clone())
-                            }
-                            None => ask_of(*port, identity, lend).await.inspect(|a| {
-                                tracing::info!(target: "door", lend = %lend, actor, "door: sign-in — asked for the person on their first request, and kept");
-                                kept.insert(whose.clone(), a.clone());
-                            }),
-                        };
-                        let signed = found.map(|answer| Signed {
-                            answer,
-                            secrets: kept
-                                .iter()
-                                .filter(|((l, _, _), _)| l == lend)
-                                .map(|(_, a)| a.secret.clone())
-                                .collect(),
-                        });
-                        let _ = answer.send(signed);
+                        if let Some(a) = kept.get(&whose) {
+                            tracing::debug!(target: "door", lend = %lend, actor, "door: sign-in — the person's kept answer");
+                            let _ = told.send(Ok(signed(&kept, lend, a.clone())));
+                        } else if let Some(waiting) = out.get_mut(&whose) {
+                            tracing::debug!(target: "door", lend = %lend, actor, "door: sign-in — the person's ask is out, so this request waits on it");
+                            waiting.push(told);
+                        } else {
+                            let (port, lend, back) = (*port, lend.clone(), back.clone());
+                            out.insert(whose.clone(), vec![told]);
+                            tokio::spawn(async move {
+                                let found = ask_of(port, identity, &lend).await;
+                                if let Some(tx) = back.upgrade() {
+                                    let _ = tx.send(Ask::Asked(whose, found));
+                                }
+                            });
+                        }
+                    }
+                    Ask::Asked(whose, found) => {
+                        let (lend, _, actor) = &whose;
+                        let waiting = out.remove(&whose).unwrap_or_default();
+                        if let Ok(a) = &found {
+                            tracing::info!(target: "door", lend = %lend, actor, requests = waiting.len(),
+                                "door: sign-in — asked for the person on their first request, and kept");
+                            kept.insert(whose.clone(), a.clone());
+                        }
+                        for told in waiting {
+                            let _ = told.send(found.clone().map(|a| signed(&kept, lend, a)));
+                        }
                     }
                     Ask::Forget(whose, secret) => {
                         if kept.get(&whose).is_some_and(|a| a.secret == secret) {
@@ -335,6 +350,13 @@ impl SignIns {
         let whose = (lend.clone(), port, actor.to_string());
         let _ = self.0.send(Ask::Forget(whose, secret.clone()));
     }
+}
+
+/// A person signed in to `lend` by `answer`, with every secret kept for it.
+fn signed(kept: &HashMap<Whose, Answer>, lend: &LendName, answer: Answer) -> Signed {
+    let secrets = kept.iter().filter(|((l, _, _), _)| l == lend);
+    let secrets = secrets.map(|(_, a)| a.secret.clone()).collect();
+    Signed { answer, secrets }
 }
 
 /// Ask the sign-in at `port` for the person `identity` names.
