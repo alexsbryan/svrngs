@@ -354,3 +354,99 @@ proof first"):
   non-media composition (Mealie and Grocy);
 - a person on a computer and a phone being one person (the middleware
   spike's follow-up 3, `demo/runs/mw/2026-10-08/README.md` §7).
+
+## 7. The run, against the predictions (mn-1)
+
+Run by `run.sh` here (`apps/movie-night/check/check.sh`, each step as
+written) from 22:21 to 22:46 UTC, 2026-10-08, the repository at `fa5f076`
+and Movie Night at `47dab7e`; Playwright's Chromium 147.0.7727.15 and
+WebKit 26.4 as an iPhone; load 8.7 at the start; the scratch at `/tmp/mn`,
+stopped after. Every number below is in this directory: the journeys in
+`phone-*.json`, `asleep-*.json`, `computer.json`, `limit.json`,
+`plant-*.json`; the judge's lines in `steps.log` and `verdicts.json`
+(`judge.py`); every request each lender's door carried, with the person
+it named, in `doors.log`, summed in `doors.json` (`doors.py`); every byte
+each browser received searched in `scan.json`. One host, one run of each:
+not a rate (AGENTS.md 7).
+
+**A correction to the top of this file.** It names `git diff
+37b4a4c..HEAD -- crates/*/src web` as the spike's: si-1, the queue's first
+row, changed `crates/` after `37b4a4c` (`ae898f0`, `effb427`, `6028168`).
+The spike's own diff starts at this file's commit, `c963f93`, before any
+app or data: `git diff c963f93..HEAD -- crates/*/src web` is empty
+(`verdicts.json`, "the product untouched"), and `scripts/check.sh` names
+Jellyfin 0 times.
+
+**Each plant failed its bar, then the runs as kept passed it** (22:25-22:30
+UTC, `steps.log`): `per-copy`, Ivy's `bladruner` gave two Blade Runner
+cards of one copy each (bar 1 failed); `asleep-empty`, Jo was shown Cy's
+library as "nothing by that name" at 60,471 ms (bar 4 failed); 
+`lender-token`, `scan.py` found `sam_admin_token` in `/plant.js` among
+Kai's bytes (bar 5 failed). Each plant's lines are §4's `plant` and none
+other's.
+
+| Bar | Predicted (§5) | The data | Verdict |
+|---|---|---|---|
+| 1, one card a film | passes on a phone in both engines; first card within 10 s cold, under 1 s again | One Blade Runner card with Sam's and Dee's copies for Ana, Ben (Chromium), Cleo, Dara (WebKit) and Alex (computer), no other card. `brazl`, after Sam's Brazil was kept from Ben and Dara: one Brazil card, Sam's, for Ana and Cleo; none for Ben and Dara. Cold, each person's first search: the first card in 448, 482, 645, 372 ms — but from Sam's alone: **Dee's door refused each new person's pass**, "its signer stands in no group held here" (19 refusals, `doors.json`), until its ring sync round learnt of them; every library answered at the 5th, 3rd, 3rd and 3rd search, 15 s apart. Then the first card in 112-161 ms and the last library's answer in 316-610 ms; a search again 103-162 ms | **passed**, once the person is known to every lender; the cold search is not whole, unpredicted |
+| 2, the copy opens playing | fails for a phone that never opened that Jellyfin from the list; passes after | Never opened: all four phone people landed on the page's static host's 404 (`/web/`, not served by a worker). Opened once from the list (nothing asked: `opened_jellyfin_asked` false), then chosen from Movie Night: jellyfin-web at the item, *Blade Runner*, its stored sign-in the stand-in, in 35.2, 20.1, 23.0, 13.2 s; one press of Play to a moving `<video>` in 19.8, 9.4, 17.6, 5.6 s, no second tap. On the computer: at the item in 6.4 s, moving 3.8 s after Play | **failed** never opened, **passed** opened, as predicted |
+| 3, back keeps the search | passes with one or two presses | Two presses of Back from the playing film, every time (5 of 5), the query and the cards as they were; one from the 404 | **passed** |
+| 4, asleep is never empty | passes asleep after the list, fails asleep before | After (Eli, Chromium; Fay, WebKit): "Asking…" from 8 and 7 ms, Sam's answer at 420 and 498 ms, then "the jellyfin at a43858b9 did not answer: its computer may be asleep" at 60,440 and 60,291 ms, never shown with nothing. Before (all four phone people): the group's page said "Cy’s computer did not answer, so what they lend is not listed"; Movie Night named two libraries and nothing of Cy's | after **passed** (60.3-60.4 s, the top of the predicted 10-60 s); before: letter **failed**, spirit **passed** (nothing shown empty), as predicted |
+| 5, no credential, proxy or address | fails in its letter on a phone, by discovery alone | No lender's password, token or middleware key, nor any person's own Jellyfin token, in a byte any of 11 people received outside the token plant: 210,576,385 bytes (`scan.json`). Source: `svrngs-lend` at `app.js:19`, `:32`; the pass record read whole at `app.js:39` | letter **failed**, as predicted; the spirit fails in part: on a phone Movie Night holds the pass and its holder key in memory for the read, though it sends neither |
+
+**The count, by §4's awk** (`verdicts.json`, "the count"; no line
+unmarked): **own 157** — `cards` 96, `match` 51, `choose` 10; **plumbing
+39** — `find` 28, `ask` 11, `open` 0, `signin` 0; **plant 7**. Predicted:
+own about 200 (120-300), plumbing about 45 (20-80), `find` 25, `ask` 10,
+`open` 10, `signin` none. Each plumbing piece, as §4 asks:
+
+- **`find`, 28 lines, `app.js:27-57`**: reading `pass <label>` from
+  `svrngs-lend` (`:30-50`), the labels made addresses as `baseOf` builds
+  them (`:28`), a library named by its lend's name and its lender's key's
+  first eight hex (`:56`), and the computer's stand-in, `#lends=` (`:53`).
+  In its place svrngs would hand a page what it reads — each lend's
+  person, kind, name and address, and who did not answer — without the
+  pass, on a phone and on a computer alike. The evidence: every phone
+  person read "the jellyfin at f9c85e53", not "Sam's"; Movie Night said
+  nothing of Cy asleep before the list (bar 4); on a computer, "No library
+  is open to Movie Night here", the origin keeping no store
+  (`computer.json`, `nothing_handed`).
+- **`ask`, 11 lines, `app.js:66-76`**: svrngs's answers told from the
+  library's by status alone, 502 away, any other failure "would not let
+  you in". It misnamed svrngs's own refusal: the 19 passes Dee's door
+  refused while its ring sync had not reached a new person were said as
+  the library refusing them. In its place svrngs would mark its own
+  refusals as its own, and a person's first request would not depend on
+  every lender's next sync round.
+- **`open`, 0 lines**: nothing an app can write opens another lend's
+  origin at an item for a phone that never opened it (`web/open.js:43`),
+  so Movie Night links to the item and the 404 is the bar-2 failure. In
+  its place svrngs would open a lend a page reads, at a path, from the
+  pass that page was handed.
+- **`signin`, 0 lines**: the door signed each person in to both
+  Jellyfins on their first request — 12 asks at each door, every later
+  request the kept answer (`doors.json`, `sign_in`) — with nothing in
+  Movie Night.
+
+**The limit while people browse** (`doors.json`): every phone request
+came through the relay and was counted (`relayed=Some(true)` on every
+`let in`); the most counted at once on each Jellyfin and on Movie Night
+was 2, in the limit's run, so nobody was refused. Gus, having searched
+once, was still counted on both Jellyfins 26.3 and 26.5 s after his last
+request, and no longer at 36.2 and 36.4 s (`limit`): `WINDOW`'s 30 s,
+after a search as after a film. Alex's computer was guessed home on every
+request — 153 at Sam's Jellyfin, 1 at Dee's, 5 at Movie Night — and never
+counted. As predicted.
+
+**`reads` on a computer** (`computer.json`): discovery stops, as
+predicted — with nothing handed Movie Night found no library. Handed the
+two labels in its address (the run's stand-in, counted `find`), both
+Jellyfins answered as Alex in 876 and 905 ms, the browser letting the page
+read each answer from another origin (no console error), as Jellyfin's
+own `access-control-allow-origin: *` permits; the item opened signed in
+and played. `--reads` neither granted nor limited any of it.
+
+**What no prediction named.** A person new to the group is a stranger to
+every lender but the group's computer until that lender's ring sync round
+(60 s, `crates/svrngs-node/src/ring_sync.rs:103`): Movie Night's first
+search, made seconds after joining, was never whole, and `up` waited for
+Dee's round before Alex's computer could list her lend.
