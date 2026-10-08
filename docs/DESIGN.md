@@ -1115,8 +1115,14 @@ with a term in *N*² that nothing yet explains, it predicted 75 members within
 middleware spike (§3, "The room", call 6; kept, 2026-10-08); group folders
 (§3, call 7 of "Lent apps"; §9); the phone replica spike, iOS first (§9, "a
 native phone app"), after folders since they name the bytes a phone would
-hold; then removal (U7, the keeper of §6, with forks that void nothing),
-before any group of strangers; then the chat doors, Discord first —
+hold; then the middleware's P1 follow-ups as one row (operator, 2026-10-08;
+`demo/runs/mw/2026-10-08/README.md` §7, items 5, 1 and 7): a lender keeps a
+library back from the people the middleware makes accounts for; `share`'s
+words for a lend whose accounts its middleware makes, without `share`
+learning middleware (§3, "Lent apps" call 3); Demo A's steps with nothing
+typed, and its dry run (its other four, P2 and below, wait in that §7);
+then removal (U7, the keeper of §6, with forks that void nothing), before
+any group of strangers; then the chat doors, Discord first —
 onboarding, last. After that the core grows one class at a time, each chosen
 by the north star's tests.
 
