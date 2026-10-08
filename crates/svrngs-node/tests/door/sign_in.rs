@@ -83,6 +83,19 @@ async fn answerer(answers: Answers) -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
     (addr, asks)
 }
 
+/// `start`, then `body` in two chunks cut at `cut`, 100 ms apart, so the
+/// door reads them as two.
+async fn chunked(sock: &mut tokio::net::TcpStream, start: &str, body: &str, cut: usize) {
+    let _ = sock.write_all(start.as_bytes()).await;
+    for part in [&body[..cut], &body[cut..]] {
+        let chunk = format!("{:x}\r\n{part}\r\n", part.len());
+        let _ = sock.write_all(chunk.as_bytes()).await;
+        let _ = sock.flush().await;
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    let _ = sock.write_all(b"0\r\n\r\n").await;
+}
+
 /// The stand-in service: keeps each head; `/page` answers [`PAGE`] in two
 /// chunks cut inside its `<head>`, cacheable, under a script policy naming
 /// a nonce when asked `?csp`; `/stale` answers 401; `/echo`
@@ -114,15 +127,8 @@ async fn service() -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
                          Last-Modified: Wed, 07 Oct 2026 00:00:00 GMT\r\nCache-Control: max-age=600\r\n\
                          Transfer-Encoding: chunked\r\nConnection: close\r\n\r\n"
                     );
-                    let _ = sock.write_all(start.as_bytes()).await;
                     let cut = PAGE.find("<head>").unwrap() + 3;
-                    for part in [&PAGE[..cut], &PAGE[cut..]] {
-                        let chunk = format!("{:x}\r\n{part}\r\n", part.len());
-                        let _ = sock.write_all(chunk.as_bytes()).await;
-                        let _ = sock.flush().await;
-                        tokio::time::sleep(Duration::from_millis(100)).await;
-                    }
-                    let _ = sock.write_all(b"0\r\n\r\n").await;
+                    chunked(&mut sock, &start, PAGE, cut).await;
                     return;
                 }
                 if target.starts_with("/stale") {
@@ -143,14 +149,7 @@ async fn service() -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
                     "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nX-Seen: {auth}\r\n\
                      Transfer-Encoding: chunked\r\nConnection: close\r\n\r\n"
                 );
-                let _ = sock.write_all(start.as_bytes()).await;
-                for part in [&body[..cut], &body[cut..]] {
-                    let chunk = format!("{:x}\r\n{part}\r\n", part.len());
-                    let _ = sock.write_all(chunk.as_bytes()).await;
-                    let _ = sock.flush().await;
-                    tokio::time::sleep(Duration::from_millis(100)).await;
-                }
-                let _ = sock.write_all(b"0\r\n\r\n").await;
+                chunked(&mut sock, &start, &body, cut).await;
                 let _ = sock.shutdown().await;
             });
         }
