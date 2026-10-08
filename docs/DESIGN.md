@@ -1082,6 +1082,14 @@ stays §9's row; the view each act carries goes with U7.
 |---|---|
 | first the round's own account of what it cost — members dialled, reached and asleep, acts moved, processor and wall time, each fold kept or rebuilt — then the digest folded from the journal's tail, with an equal digest answered unread; each act's signature checked once, as it enters; the register folded from the tail | at 25 members and 10,000 acts an idle round costs under 0.1 s of processor in the instrument (73 s at `15a9de7`, where it was measured), held by a canary in `scripts/check.sh` whose plant is today's code; the cost line predicts a point it was not fitted on |
 
+(Landed, ceiling-1 to ceiling-4: the account, then the digest, the
+signatures and the register each caught up from the tail; the canary,
+`an_idle_round_is_under_the_ceiling`, a step of `scripts/check.sh`, failed
+on the register read whole at 5.65 s and reads about 0.01 s. The line
+first fitted, its exchange linear in *N*, was refuted at 100 members; refitted
+with a term in *N*² that nothing yet explains, it predicted 75 members within
+8%. The runs and predictions are in `scale.rs`'s module docs.)
+
 **Then**, in this order (operator, 2026-10-07): the ceiling, above; the
 middleware spike (§3, "The room", call 6; §9); group folders (§3, call 7
 of "Lent apps"; §9); the phone replica spike, iOS first (§9, "a native
