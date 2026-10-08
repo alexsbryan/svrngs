@@ -113,6 +113,31 @@
 //!   98 times (ceiling-4's fold), and the 48 offers read whole, each line
 //!   parsed and its id derived, no longer verified.
 //!
+//! ceiling-4, the register kept (8991334), predicted 2026-10-08 04:01 PDT,
+//! before its runs, at 25 members and 10,000 acts in release, three runs at
+//! 61de5bc (the commit before, the register read whole) and three at
+//! 8991334, alternated:
+//! - the idle round's processor, median 4.5 to 7 s at 61de5bc (5.55 s at
+//!   1f22ee6, whose idle round is the same code) and 0.005 to 0.06 s at
+//!   8991334, under the bar of 0.1 s (the prototype's register kept,
+//!   0.010 s, THE_CEILING.md). Why: what the idle round paid for was 26
+//!   register reads of the whole log, about 0.2 s each; kept, each costs a
+//!   catch-up that reads no line and the seed's few hundred bytes.
+//! - its account at 8991334: register kept 26 and rebuilt 0 (the push
+//!   round before it folded every register once, and moved only records),
+//!   digest kept 96, offer kept 48, write index kept 122 (96 and the 26
+//!   register reads); at 61de5bc register rebuilt 26, write index kept 96.
+//! - the write reaching everyone (`push_round_s`), median 12 to 25 s at
+//!   8991334 (37.64 s at 1f22ee6): its 98 register reads, about 20 s of
+//!   one exchange after another, kept; its account register rebuilt 25
+//!   (each node's first read) and kept 73, write index kept 434.
+//!
+//! Then the line, as the size run's was: fitted on 10, 25 and 50 members at
+//! 10,000 acts, three runs each, an idle round's processor as (N - 1)(a +
+//! b N), THE_CEILING.md's model term; its prediction for 100 members at
+//! 2,000 acts, a point it was not fitted on in either variable, written and
+//! timestamped in a commit before that point runs.
+//!
 //! It needs the process's own processor time, which std does not give;
 //! `getrusage` through `libc` is the one way the lock already holds, and the
 //! one `unsafe` block below is that call. It counts folds with a
