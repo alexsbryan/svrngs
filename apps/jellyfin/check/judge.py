@@ -51,6 +51,18 @@ def seeks(d):
     return phases, (FAILED if slow else PASSED, f"{all_ms} ms")
 
 
+def scanned(run):
+    """scan.py's word on `run`, read the one way both bars read it: each
+    person's, whose bytes held another's secret (and where), and every
+    secret searched for. None when scan.py found no dump for it."""
+    seen = scan.get("pairs", {}).get(run)
+    if not seen:
+        return None
+    held = {u: s["others_secrets_in"] for u, s in seen.items() if not s["holds_none_of_anothers"]}
+    searched = sorted(set(scan.get("secrets_searched", [])) | set(scan.get("lend_kept", [])))
+    return seen, held, searched
+
+
 def mw_bars(run, d):
     people = d.get("people", {})
     v = {}
@@ -70,13 +82,12 @@ def mw_bars(run, d):
                               f"stored token: {p.get('stored', {}).get('token')}" for u, p in people.items()))
     phases, v["seeks"] = seeks(d)
     # 2. no lender's key
-    seen = scan.get("pairs", {}).get(run)
-    if not seen:
+    read = scanned(run)
+    if not read:
         v["no lender's key"] = (COULD_NOT, "scan.py found no dump for this run")
     else:
-        held = {u: s["others_secrets_in"] for u, s in seen.items() if not s["holds_none_of_anothers"]}
+        seen, held, searched = read
         own = {u: f"{s['own_token']} in {s['own_token_in']}" for u, s in seen.items()}
-        searched = sorted(set(scan.get("secrets_searched", [])) | set(scan.get("lend_kept", [])))
         v["no lender's key"] = (FAILED, f"held: {json.dumps(held)[:300]}") if held else (
             PASSED, f"none of {searched}, nor the other's token, in "
                     f"{sum(s['scanned']['bytes'] for s in seen.values())} bytes; recorded, their own token: {own}")
@@ -134,12 +145,11 @@ def bars(run, d):
     else:
         v["left alone"] = (PASSED, f"signed in after: {after}; left alone while the other seeked: {watched}")
     # 4. no secret
-    seen = scan.get("pairs", {}).get(run)
-    if not seen:
+    read = scanned(run)
+    if not read:
         v["no secret"] = (COULD_NOT, "scan.py found no dump for this run")
     else:
-        held = {u: s["others_secrets_in"] for u, s in seen.items() if not s["holds_none_of_anothers"]}
-        searched = sorted(set(scan.get("secrets_searched", [])) | set(scan.get("lend_kept", [])))
+        seen, held, searched = read
         v["no secret"] = (FAILED, f"held: {json.dumps(held)[:300]}") if held else (
             PASSED, f"none of {searched}, nor the other's token, in {sum(s['scanned']['bytes'] for s in seen.values())} bytes")
     return v
