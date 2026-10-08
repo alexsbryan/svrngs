@@ -3136,7 +3136,11 @@ Reading the range for what neither pass would show:
   equivalence test. They are two programs on purpose (DESIGN §9: svrngs
   ships the middleware no SDK, and the spike's fence kept crates/ apart),
   so the body cannot be shared. Not fixed: aligning either list changes
-  what reaches Jellyfin or a browser.
+  what reaches Jellyfin or a browser. **Closed in a81178d** (mwp-3):
+  forward.rs is deleted, its proxy and hop list with it; the door is the
+  one proxy and its list the one list (`ls apps/jellyfin/mw/src/`:
+  answer, main, page, people, person, viewer; `grep -n HOP` over them
+  finds nothing).
 - **#57, #68, #70, #71, #75, #77, #79, #81, still open.** The range changed
   no line under crates/ or web/.
 
