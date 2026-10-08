@@ -17,17 +17,18 @@ use tokio::net::TcpListener;
 
 use crate::page::{self, Server};
 use crate::people::People;
-use crate::person::{NotTheDoors, PersonKey, Who};
+use crate::person::{NotTheDoors, PersonKey, Who, STAND_IN_HEADER};
 use crate::Plant;
 
 /// What every answer holds: the server the stored sign-in names, the owner
-/// of the accounts, the token the stored sign-in holds ([`page::STAND_IN`],
-/// but under a plant), and the plant this run carries, if any.
+/// of the accounts, the token the stored sign-in holds under a plant (else
+/// the door's stand-in, as its ask names it), and the plant this run
+/// carries, if any.
 #[derive(Clone)]
 pub(crate) struct At {
     pub(crate) server: Server,
     pub(crate) people: People,
-    pub(crate) page_token: String,
+    pub(crate) page_token: Option<String>,
     pub(crate) plant: Option<Plant>,
 }
 
@@ -100,6 +101,15 @@ async fn answer(at: At, req: Request<hyper::body::Incoming>) -> Response<Full<By
             );
         }
     };
+    let Some(stand_in) = req.headers().get(STAND_IN_HEADER).and_then(|v| v.to_str().ok()) else {
+        tracing::info!("mw: refused — the ask names no stand-in");
+        return said(
+            StatusCode::FORBIDDEN,
+            text,
+            format!("This port answers only svrngs's door: no {STAND_IN_HEADER}.\n"),
+        );
+    };
+    let page_token = at.page_token.clone().unwrap_or(stand_in.to_string());
     tracing::info!(key = %who.key.as_str(), person = %who.name, "mw: the door asks who a person is to Jellyfin");
     let signed = match at.people.signed(who.clone()).await {
         Ok(s) => s,
@@ -117,12 +127,7 @@ async fn answer(at: At, req: Request<hyper::body::Incoming>) -> Response<Full<By
             tracing::warn!("mw: planted — answered with no script, so no stored sign-in");
             None
         }
-        _ => Some(page::script(
-            &at.server,
-            &signed.user,
-            &at.page_token,
-            &signed.device.id,
-        )),
+        _ => Some(page::script(&at.server, &signed.user, &page_token, &signed.device.id)),
     };
     tracing::info!(key = %who.key.as_str(), user = %signed.user, device = %signed.device.id,
         "mw: answered the door — the person's token, its authorization and the stored sign-in");

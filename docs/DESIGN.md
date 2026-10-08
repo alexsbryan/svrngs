@@ -462,6 +462,8 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
      lend, before carrying it, the door asks the sign-in with that
      request's identity headers, `x-svrngs-person` and `x-svrngs-key`
      (`door.rs:103-111`), set as it sets them for the service, and
+     `x-svrngs-stand-in`, the stand-in (below), so an answer's script
+     stores it as the door names it and no app spells it (#90, si-1);
      nothing else: no client header, no body. One owner the door holds,
      as it holds `Using` (`door.rs:187`), asks for each person apart, so
      one person's slow sign-in holds nobody else's request, and a person's
@@ -493,7 +495,9 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
      user's password revoked (`demo/runs/mw/2026-10-08/mw-1/README.md:28-33`),
      which an answerer restarting does (that run's §7, follow-up 4).
    - *The swap.* One stand-in for every lend and person,
-     `svrngs-stand-in`, the spike's (`apps/jellyfin/mw/src/swap.rs:16`):
+     `svrngs-stand-in`, the spike's (`apps/jellyfin/mw/src/swap.rs:16`),
+     spelled once, in the door (`door/sign_in.rs`, `STAND_IN`), and named
+     to the answerer in each ask:
      it names nobody, since the door puts in the secret of whoever it let
      in, never by the stand-in; one per lend would hide nothing and add
      a store; one an answer chose could be ordinary text or hold the

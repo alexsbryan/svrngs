@@ -4,7 +4,11 @@
 //!
 //! The person is what svrngs's door sends its sign-in: `x-svrngs-key`, the
 //! verified dialer's key as lowercase hex, and `x-svrngs-person`, their
-//! name in the register (crates/svrngs-node/src/door/sign_in.rs, `ask_of`).
+//! name in the register (crates/svrngs-node/src/door/sign_in.rs, `ask_of`);
+//! and `x-svrngs-stand-in`, what a browser holds in place of a token, which
+//! the door swaps for the person's token in what it carries in, and back in
+//! every answer: read from the ask, not spelled here, so the door is its
+//! one home (DESIGN §3, call 6).
 
 use hyper::http::HeaderMap;
 
@@ -12,6 +16,8 @@ use hyper::http::HeaderMap;
 pub(crate) const KEY_HEADER: &str = "x-svrngs-key";
 /// The door's header naming the person.
 pub(crate) const PERSON_HEADER: &str = "x-svrngs-person";
+/// The door's header naming its stand-in.
+pub(crate) const STAND_IN_HEADER: &str = "x-svrngs-stand-in";
 
 /// A key as the door spells it: 64 lowercase hex.
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]

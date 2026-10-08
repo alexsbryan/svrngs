@@ -6,10 +6,11 @@
 //! **Asked** on a person's first request through the lend, before it is
 //! carried: `POST /` at `127.0.0.1:<its port>`, with the request's
 //! [`super::PERSON_HEADER`] and [`super::KEY_HEADER`] as the door sets them
-//! for the service, and nothing else. **Answered** `200` and a JSON
-//! object, every field required and none other ([`Answer`]): the person's
-//! `secret`, the `headers` set on each of their requests, and a `script`
-//! or `null` (mwp-2 puts it in the lend's pages). Anything else is a
+//! for the service, and [`STAND_IN`] in [`STAND_IN_HEADER`], for a script
+//! to store, and nothing else. **Answered** `200` and a JSON object, every
+//! field required and none other ([`Answer`]): the person's `secret`, the
+//! `headers` set on each of their requests, and a `script` or `null` (mwp-2
+//! puts it in the lend's pages). Anything else is a
 //! [`Refusal`], and the person's request is refused, never carried unsigned.
 //!
 //! **Kept** by [`SignIns`], one task that owns every answer, in memory for
@@ -47,6 +48,10 @@ use crate::lend::LendName;
 /// lend and person: it names nobody, since the door puts in the secret of
 /// whoever it let in, never by the stand-in.
 pub const STAND_IN: &str = "svrngs-stand-in";
+
+/// The header the door's ask names [`STAND_IN`] in, so what an answer's
+/// script stores is read from the ask, never spelled by the app (#90).
+pub const STAND_IN_HEADER: &str = "x-svrngs-stand-in";
 
 /// How long a sign-in may take to answer, asked and read.
 const ASK_WITHIN: Duration = Duration::from_secs(30);
@@ -371,6 +376,8 @@ async fn ask_of(
         .body(Body::empty())
         .expect("a fixed request is one");
     request.headers_mut().extend(identity);
+    let stand_in = HeaderValue::from_static(STAND_IN);
+    (request.headers_mut()).insert(HeaderName::from_static(STAND_IN_HEADER), stand_in);
     let to = std::net::SocketAddr::from(([127, 0, 0, 1], port.get()));
     let asked = async {
         let name = format!("{lend}'s sign-in");

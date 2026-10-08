@@ -86,10 +86,7 @@ fn run() -> Result<(), String> {
         return Err("give it, on standard input, an API key from Jellyfin's Dashboard, API Keys".into());
     }
     let elevated = vec![("authorization".to_string(), format!("MediaBrowser Token=\"{key}\""))];
-    let page_token = match plant {
-        Some(Plant::LenderKey) => key.to_string(),
-        _ => page::STAND_IN.to_string(),
-    };
+    let page_token = matches!(plant, Some(Plant::LenderKey)).then(|| key.to_string());
     let rt = tokio::runtime::Runtime::new().map_err(|e| format!("no runtime: {e}"))?;
     rt.block_on(async move {
         let listener = tokio::net::TcpListener::bind(listen)

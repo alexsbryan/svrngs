@@ -6,7 +6,8 @@
 //! "Please sign in". So the answer carries a script, which svrngs's door
 //! puts first in `<head>` of the person's pages, ahead of every script of
 //! jellyfin-web's (all `defer`), naming the person's account, the server,
-//! the address the page is opened at and [`STAND_IN`] for a token: what
+//! the address the page is opened at and the door's stand-in for a token,
+//! as the door's ask names it (`x-svrngs-stand-in`, [`crate::person`]): what
 //! U3's dry run's driver wrote (demo/runs/a/dry-2026-10-04/drive.mjs:41-47),
 //! now written by what the lender runs, never by the infra. It names the
 //! person's device too (`_deviceId2`, where jellyfin-web keeps its own),
@@ -14,12 +15,6 @@
 
 use std::net::SocketAddr;
 use std::time::Duration;
-
-/// What a browser holds in place of a token: svrngs's door's stand-in
-/// (crates/svrngs-node/src/door/sign_in.rs, `STAND_IN`), which it swaps for
-/// the person's token in what it carries in, and back in every answer.
-/// Spelled here, not linked: svrngs ships no SDK (DESIGN §3, call 6).
-pub(crate) const STAND_IN: &str = "svrngs-stand-in";
 
 /// The server jellyfin-web's stored sign-in names, read once from
 /// Jellyfin's `/System/Info/Public` as the middleware starts.
@@ -94,7 +89,7 @@ mod tests {
                 name: "Sam's </script><b>".into(),
             },
             "u1",
-            STAND_IN,
+            "svrngs-stand-in",
             "svrngs-0123456789abcdef",
         );
         assert!(s.contains("UserId:\"u1\""));

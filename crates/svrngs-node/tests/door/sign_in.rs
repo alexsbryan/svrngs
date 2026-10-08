@@ -331,6 +331,11 @@ async fn two_people_are_each_signed_in_as_themselves_and_neither_receives_a_secr
             "no client header asked: {head}"
         );
         assert_eq!(header_values(head, "x-svrngs-person").len(), 1, "{head}");
+        assert_eq!(
+            header_values(head, "x-svrngs-stand-in"),
+            [STAND_IN],
+            "{head}"
+        );
     }
 
     assert_eq!(raw_to(pair.bridge, asks("stale")).await.status, 401);

@@ -5,7 +5,8 @@
 // person's `x-svrngs-person`, it has the canary find or make that
 // person's account by the lender's key, and answers its token as the
 // person's secret, a bearer `authorization` of it, and a script that
-// stores the door's stand-in where the canary's page reads its sign-in.
+// stores the door's stand-in, as the ask names it in `x-svrngs-stand-in`,
+// where the canary's page reads its sign-in.
 //
 //   node apps/web-conformance/answer.mjs <the canary's port> <lender's key>
 //
@@ -15,7 +16,6 @@
 import http from 'node:http';
 
 const [canary, lender] = process.argv.slice(2);
-const STAND_IN = 'svrngs-stand-in';
 let first = null;
 
 async function token(name) {
@@ -30,14 +30,15 @@ async function token(name) {
 
 const server = http.createServer(async (req, res) => {
   const person = req.headers['x-svrngs-person'];
-  if (req.method !== 'POST' || !person) {
-    res.writeHead(400).end('asked with no person');
+  const standIn = req.headers['x-svrngs-stand-in'];
+  if (req.method !== 'POST' || !person || !standIn) {
+    res.writeHead(400).end('asked with no person or no stand-in');
     return;
   }
   try {
     if (process.env.CANARY_PLANT === 'one-account') first ??= person;
     const secret = await token(first ?? person);
-    const script = `localStorage.setItem('canary-token', '${STAND_IN}');`;
+    const script = `localStorage.setItem('canary-token', ${JSON.stringify(standIn)});`;
     res.writeHead(200, { 'content-type': 'application/json' });
     res.end(JSON.stringify({ secret, headers: { authorization: `Bearer ${secret}` }, script }));
   } catch (e) {
