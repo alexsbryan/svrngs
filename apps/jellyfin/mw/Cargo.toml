@@ -1,0 +1,26 @@
+# Jellyfin's middleware (demo/runs/mw/2026-10-08/README.md; DESIGN §9
+# :1133): a program the lender runs on their own computer, in front of
+# Jellyfin. A workspace of its own, so the root workspace neither builds,
+# lints nor tests it and scripts/check.sh stays free of Jellyfin;
+# apps/jellyfin/check/check.sh runs it.
+[workspace]
+
+[package]
+name = "jellyfin-mw"
+version = "0.1.0"
+# Upstream's edition (commonwealth-ai Cargo.toml:289 at d4356181c), so the
+# fork lands unchanged.
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+
+[dependencies]
+# viewer.rs's, at upstream's requirements (commonwealth-ai Cargo.toml
+# :431-483 at d4356181c); reqwest without TLS, since Jellyfin is on loopback.
+reqwest = { version = "0.12", default-features = false, features = ["json"] }
+serde_json = "1"
+tracing = "0.1"
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
