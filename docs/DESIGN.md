@@ -1361,7 +1361,9 @@ landed, mwp-0 to mwp-4: Jellyfin's middleware from 1,039 lines to 669,
 svrngs 426 new, a second app signed in through the same sign-in in 30;
 call 6, "Landed"); then the sign-in decided in one place, its stand-in
 named once, and one person's sign-in never holding another's
-(`ralph/REVIEW_FINDINGS.md` #87, #90, #88; operator, 2026-10-08); then
+(`ralph/REVIEW_FINDINGS.md` #87, #90, #88; operator, 2026-10-08;
+landed, si-1: `forward` 242 lines to 171, the stand-in named in the
+door's ask; its Jellyfin run in `demo/runs/si/2026-10-08/`); then
 two spikes before folders (operator, 2026-10-08): Movie Night, a thin app
 composing the group's Jellyfins — discover, request as the person, open
 — with every line it writes that is not its own counted (svrn-docs
