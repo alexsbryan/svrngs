@@ -163,3 +163,54 @@ fn the_digest_is_caught_up_from_the_tail_and_restarts_on_a_replaced_log() {
     assert_eq!((ours.clone(), (sent.clone(), false)), whole(&a), "an act past a hole");
     assert_eq!(sent, [past_a_hole], "sent, though the digests are equal");
 }
+
+/// **Each signature is checked once, as its line enters** (ceiling-3): the
+/// offer to a peer not in step judges what is held by the signatures passed
+/// as their lines came in, not by checking them all again. A tampered act
+/// (alex's own line, its words changed under his signature) and a replayed
+/// one (alex's act signed in another group) are held, as every line pushed
+/// is, and still count for nothing: the offer is the one the file read whole
+/// gives under [`Ed25519Verifier`], the act the peer lacks and nothing of
+/// alex's window, which a tampered act believed would make look forked.
+#[test]
+fn a_tampered_or_replayed_act_is_still_refused_once_signatures_are_kept() {
+    let dir = tempfile::tempdir().unwrap();
+    let journal = open(dir.path());
+    let r = ring();
+    let alex: Vec<_> = (0..3)
+        .map(|_| {
+            journal
+                .append(record("x"), &key(1), &r, None, &Ed25519Verifier)
+                .unwrap()
+        })
+        .collect();
+    journal
+        .append(record("y"), &key(2), &r, None, &Ed25519Verifier)
+        .unwrap();
+    let lacked = journal
+        .append(record("y"), &key(2), &r, None, &Ed25519Verifier)
+        .unwrap();
+    let peer = svrngs_core::digest(&journal.read().unwrap().0[..4], NS, &Ed25519Verifier);
+    let mut tampered = alex[1].clone();
+    tampered.kind.act = record("words alex never signed");
+    let replayed = svrngs_core::tests_support::signed_in("another-group", &key(1), 101, 2, record("x"));
+    assert!(journal.ingest(&tampered).unwrap() && journal.ingest(&replayed).unwrap());
+
+    let ops = journal.read().unwrap().0;
+    let whole = svrngs_core::ops_missing_from_within(&ops, NS, &Ed25519Verifier, &peer, NO_BUDGET);
+    let ours = journal.digest().unwrap();
+    assert_eq!(ours, svrngs_core::digest(&ops, NS, &Ed25519Verifier));
+    let offer = journal.ops_missing_from_within(&peer, NO_BUDGET).unwrap();
+    assert_eq!(
+        serde_json::to_string(&offer).unwrap(),
+        serde_json::to_string(&whole).unwrap()
+    );
+    assert_eq!(
+        offer,
+        (vec![lacked], false),
+        "the act the peer lacks, and no window of alex's"
+    );
+    let gaps = journal.admit(&r, &Ed25519Verifier).unwrap();
+    let refused = gaps.gaps().iter().filter(|g| matches!(g, RailGap::BadSignature { .. }));
+    assert_eq!(refused.count(), 2, "{:?}", gaps.gaps());
+}

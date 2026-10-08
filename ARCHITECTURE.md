@@ -84,7 +84,10 @@ write index keeps the digest's fold too (svrngs-core `DigestFold`, which
 `digest` is over a whole journal), caught up from the log's tail with each
 act's signature checked as the tail brings it in; and a peer whose digest is
 ours is answered unread when it holds nothing the slow path would send
-(`DigestFold::missing_nothing`), from the whole log otherwise.
+(`DigestFold::missing_nothing`), from the whole log otherwise. Then
+(ceiling-3) the write index keeps each signature that passed as its line
+entered, and the offer read whole judges by those (`Checked`), checking
+again only a line it did not see enter.
 
 Beside the journals, `svrngs-node` holds the dialling half of sync over iroh
 (DESIGN §8, U1's inventory), forked at `e1a43bcd2` the same way:

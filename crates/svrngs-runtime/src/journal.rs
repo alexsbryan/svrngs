@@ -60,12 +60,48 @@ struct Writer {
 /// `rings/current/THE_CEILING.md`, fix 1). An act's signature is checked
 /// here as the tail brings it in, under [`Ed25519Verifier`], the scheme
 /// every caller of the digest judged by.
+///
+/// And each signature that verified is kept, so it is checked once, as its
+/// line enters, and not again by the offer ([`Checked`]): the offer read
+/// whole checked every signature it held again, every exchange with a peer
+/// not in step (THE_CEILING.md fix 2). A verdict is a function of the actor,
+/// the id and the signature alone, so one kept cannot go stale whatever
+/// happens to the file; what restarts the fold restarts this with it all
+/// the same, and a file replaced from outside has its lines checked again.
 #[derive(Default)]
 struct Held {
     cursor: crate::oplog::Cursor,
     newest: std::collections::HashMap<String, Newest>,
     ids: std::collections::HashSet<OpId>,
     digest: DigestFold,
+    passed: Passed,
+}
+
+/// Each line whose signature [`Ed25519Verifier`] passed as the tail brought
+/// it in: its actor, the id its content derives and its signature, the three
+/// the verifier judged.
+type Passed = std::collections::HashSet<(String, OpId, String)>;
+
+/// [`Ed25519Verifier`], answered from the signatures [`Held`] checked as each
+/// line entered. A line this handle did not see enter is checked now, so it
+/// answers as [`Ed25519Verifier`] does for every line, and trusts nothing it
+/// did not check.
+struct Checked<'a>(&'a Passed);
+
+impl RingVerifier for Checked<'_> {
+    fn name(&self) -> &'static str {
+        "ed25519, each line checked once as it entered"
+    }
+
+    fn verify(&self, actor: &str, id: &OpId, sig_hex: &str) -> bool {
+        if self.0.contains(&(actor.to_string(), id.clone(), sig_hex.to_string())) {
+            return true;
+        }
+        let verified = Ed25519Verifier.verify(actor, id, sig_hex);
+        tracing::debug!(actor, %id, verified,
+            "ring rail: a signature not passed as its line entered, checked now");
+        verified
+    }
 }
 
 /// One actor's newest seq on the log, and each line held at it: the id its
@@ -105,6 +141,7 @@ impl Held {
                 }
             }
             if Ed25519Verifier.verify(&op.actor, &id, &op.kind.sig) {
+                self.passed.insert((op.actor.clone(), id.clone(), op.kind.sig.clone()));
                 self.digest.add(id.clone(), op);
             } else {
                 unverified += 1;
@@ -269,7 +306,8 @@ impl RingJournal {
     /// A peer whose digest is ours is answered from the kept fold, unread,
     /// when [`DigestFold::missing_nothing`] says the slow path would send it
     /// nothing; every other peer is answered from the whole log, every
-    /// signature checked again, as the digest was before the fold was kept.
+    /// signature judged by [`Checked`]: the ones passed as their lines entered
+    /// are not checked again.
     pub fn ops_missing_from_within(
         &self,
         theirs: &Digest,
@@ -300,7 +338,7 @@ impl RingJournal {
         Ok(ops_missing_from_within(
             &ops,
             &self.namespace,
-            &Ed25519Verifier,
+            &Checked(&log.held.passed),
             theirs,
             budget_bytes,
         ))
