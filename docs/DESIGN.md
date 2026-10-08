@@ -438,7 +438,8 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
    answerer beside the service rather than a forward in front of it: for
    Jellyfin, making a user, its credential's form and what its page
    stores. The contract (mwp-0; `ralph/next/mwp/STATE.md`'s rows build
-   it):
+   it), each path:line in it as at `252bf22`, which wrote it — mwp-1 moved
+   `door.rs`'s lines and mwp-3 deleted `swap.rs` and `forward.rs`:
    - *Declared by `share`.* `svrngs share <port> --sign-in <its port>`
      names, beside `--kind` (`crates/svrngs/src/cli.rs:110-125`), a
      program on this computer that answers for the lend who each person
