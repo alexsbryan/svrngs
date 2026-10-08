@@ -179,6 +179,12 @@
 //! rebuilt 0 (4 (N - 1), 2 (N - 1), N + 1 and their sum, as at 10, 25 and
 //! 50).
 //!
+//! Measured 2026-10-08, after the prediction, three runs at ae45c71, load
+//! average 8 to 12: 0.1341, 0.0964, 0.1245 s (median 0.1245). Refuted: 47%
+//! over the line, outside its band. The account was the one predicted in
+//! all three, so every exchange answered from kept folds, as at the fitted
+//! points: what the line missed is not a fold read whole.
+//!
 //! It needs the process's own processor time, which std does not give;
 //! `getrusage` through `libc` is the one way the lock already holds, and the
 //! one `unsafe` block below is that call. It counts folds with a
