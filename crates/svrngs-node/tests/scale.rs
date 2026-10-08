@@ -52,6 +52,22 @@
 //! before reading a difference smaller than about 5% (the size run's two
 //! readings of one point).
 //!
+//! ceiling-2, the digest kept (17f4611), predicted 2026-10-08 02:58 PDT,
+//! before its runs, all in release on this computer:
+//! - at 25 members and 2,000 acts, the idle round's processor about 15 s
+//!   at 4d50557 (the instrument, promoted, read 15.09 s at that point,
+//!   THE_CEILING.md "Order of work") and 0.5 to 2 s at 17f4611: the
+//!   register, read whole once per member and twice by node 0, is what is
+//!   left.
+//! - at 25 and 10,000, the idle round's processor 3 to 10 s at 17f4611
+//!   (73.1 s at `15a9de7`; the prototype's digest kept, 6.4 s), its
+//!   account: digest kept 96 and rebuilt 0, offer kept 48 and rebuilt 0,
+//!   write index kept 96, register rebuilt 26 (four digest catch-ups, two
+//!   offers and one register read per member, as ceiling-1's 5-member
+//!   idle round counted its register); and the write reaching everyone
+//!   (`push_round_s`) in 25 to 60 s (206 s at `15a9de7`; 76 s with the
+//!   prototype's digest kept).
+//!
 //! It needs the process's own processor time, which std does not give;
 //! `getrusage` through `libc` is the one way the lock already holds, and the
 //! one `unsafe` block below is that call. It counts folds with a
