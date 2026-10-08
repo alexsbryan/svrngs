@@ -6,6 +6,7 @@
 
 use crate::*;
 
+use crate::tests::Doors;
 use svrngs_core::tests_support::*;
 
 fn open(dir: &std::path::Path) -> RingJournal {

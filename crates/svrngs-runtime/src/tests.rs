@@ -20,6 +20,23 @@ fn open(dir: &std::path::Path) -> RingJournal {
     RingJournal::open(dir, NS).unwrap()
 }
 
+/// One peer op, and the honest total a peer lacks: the tests' spellings of
+/// the doors the round uses, `ingest_all` of one and
+/// `ops_missing_from_within` with no budget.
+pub(crate) trait Doors {
+    fn ingest(&self, op: &Op<SignedOp>) -> Result<bool, RailError>;
+    fn ops_missing_from(&self, verifier: &dyn RingVerifier, theirs: &Digest) -> Result<Vec<Op<SignedOp>>, RailError>;
+}
+
+impl Doors for RingJournal {
+    fn ingest(&self, op: &Op<SignedOp>) -> Result<bool, RailError> {
+        Ok(self.ingest_all(std::slice::from_ref(op))? == 1)
+    }
+    fn ops_missing_from(&self, verifier: &dyn RingVerifier, theirs: &Digest) -> Result<Vec<Op<SignedOp>>, RailError> {
+        Ok(self.ops_missing_from_within(verifier, theirs, NO_BUDGET)?.0)
+    }
+}
+
 #[test]
 fn a_namespace_cannot_be_a_path() {
     let dir = tempfile::tempdir().unwrap();

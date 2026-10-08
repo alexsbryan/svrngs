@@ -218,30 +218,6 @@ impl RingJournal {
         }
     }
 
-    #[cfg(test)]
-    /// Append an op that arrived from a peer, exactly as it was signed.
-    ///
-    /// No validation and no re-signing: the signature covers the op, and
-    /// anything wrong with it becomes a gap when [`admit`] reads it back.
-    /// Doing otherwise would mean this node deciding what a peer said.
-    pub fn ingest(&self, op: &Op<SignedOp>) -> Result<bool, RailError> {
-        let mut guard = self.log();
-        let log = &mut *guard;
-        log.held.catch_up(&log.oplog, &self.namespace)?;
-        let id = derive_id(op, &self.namespace);
-        if log.held.ids.contains(&id) {
-            tracing::debug!(
-                namespace = %self.namespace,
-                id = %id,
-                "ring rail: peer op already held, not re-appended"
-            );
-            return Ok(false);
-        }
-        log.oplog.append(op).map_err(|e| RailError::Io(e.to_string()))?;
-        log.held.after_write(&log.oplog, &self.namespace);
-        Ok(true)
-    }
-
     /// What this node can honestly claim to need nothing below, per actor —
     /// the ~600-byte payload a peer needs in order to work out what to send
     /// back. See [`digest`] for why the mark is contiguous and why an op that
@@ -256,27 +232,10 @@ impl RingJournal {
         Ok(digest(&ops, &self.namespace, verifier))
     }
 
-    #[cfg(test)]
-    /// Every op this node holds that `theirs` says the peer is missing.
-    /// Author-blind: a node republishes what it HOLDS, so a housemate who
-    /// leaves the ring does not take their half of the journal with them.
-    ///
-    /// The honest TOTAL, and therefore the wrong thing to put on a wire: use
-    /// [`RingJournal::ops_missing_from_within`] for that.
-    ///
-    /// Takes the verifier for the reason [`RingJournal::digest`] does: the
-    /// peer's claim folds only authenticated ops, so ours must be judged by
-    /// the same scheme or a forged line reads as a fork that never heals.
-    pub fn ops_missing_from(
-        &self,
-        verifier: &dyn RingVerifier,
-        theirs: &Digest,
-    ) -> Result<Vec<Op<SignedOp>>, RailError> {
-        Ok(ops_missing_from(&self.read()?.0, &self.namespace, verifier, theirs))
-    }
-
-    /// [`RingJournal::ops_missing_from`], stopped at `budget_bytes` of
-    /// serialised ops. Returns `(ops, more)` — see
+    /// Every op this node holds that `theirs` says the peer is missing,
+    /// stopped at `budget_bytes` of serialised ops; author-blind, so a node
+    /// republishes what it HOLDS, and a housemate who leaves the ring does
+    /// not take their half of the journal with them. Returns `(ops, more)` — see
     /// [`ops_missing_from_within`] for why the truncation is in the return
     /// type and why repeating this terminates.
     ///
