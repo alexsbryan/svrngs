@@ -88,6 +88,8 @@ pub(crate) enum DeviceFrom {
     Authorization,
     /// A `deviceId` in the query, as jellyfin-web's socket names its own.
     Query,
+    /// The one device a plant signs everyone in on.
+    Planted,
 }
 
 /// A value put back between quotes in a header: printable ASCII with no
@@ -148,6 +150,17 @@ impl Device {
             *slot = v;
         }
         (!d.id.is_empty()).then_some(d)
+    }
+
+    /// The one device the `one-device` plant signs everyone in on, as a lend
+    /// keeping one token was (`apps/jellyfin/check/check.sh plant one-device`).
+    pub(crate) fn one() -> Device {
+        Device {
+            client: "svrngs".into(),
+            name: "one device".into(),
+            id: "svrngs-mw-one-device".into(),
+            version: "1".into(),
+        }
     }
 
     /// A device the query names by id alone, its name the person's.

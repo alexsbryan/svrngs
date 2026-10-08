@@ -12,13 +12,23 @@
 //! Dashboard, API Keys: the only thing it makes accounts with. It prints
 //! `listening on port <port>` and serves until stopped.
 //!
+//! jellyfin-web's page it answers carries the person's stored sign-in
+//! (page.rs), and their token is kept out of what Jellyfin answers and put
+//! back in what it is asked (swap.rs), so a person opens it from svrngs's
+//! list signed in, with nothing typed, and holds no token.
+//!
 //! JELLYFIN_MW_PLANT names a failure its check plants, never set otherwise:
 //! `one-user`, every person signed in as one account; `let-keyless`, a
-//! request with no `x-svrngs-key` let through as that account.
+//! request with no `x-svrngs-key` let through as that account;
+//! `no-sign-in`, the page passed on without its stored sign-in;
+//! `lender-key`, the page's stored sign-in holding the lender's key for
+//! its token; `one-device`, every person one account on one device.
 
 mod forward;
+mod page;
 mod people;
 mod person;
+mod swap;
 mod viewer;
 
 use std::io::BufRead;
@@ -29,6 +39,9 @@ use std::net::SocketAddr;
 pub(crate) enum Plant {
     OneUser,
     LetKeyless,
+    NoSignIn,
+    LenderKey,
+    OneDevice,
 }
 
 fn arg(args: &[String], name: &str, default: &str) -> Result<SocketAddr, String> {
@@ -55,7 +68,14 @@ fn run() -> Result<(), String> {
         None | Some("") => None,
         Some("one-user") => Some(Plant::OneUser),
         Some("let-keyless") => Some(Plant::LetKeyless),
-        Some(other) => return Err(format!("JELLYFIN_MW_PLANT `{other}`: one-user or let-keyless")),
+        Some("no-sign-in") => Some(Plant::NoSignIn),
+        Some("lender-key") => Some(Plant::LenderKey),
+        Some("one-device") => Some(Plant::OneDevice),
+        Some(other) => {
+            return Err(format!(
+                "JELLYFIN_MW_PLANT `{other}`: one-user, let-keyless, no-sign-in, lender-key or one-device"
+            ))
+        }
     };
     let mut key = String::new();
     std::io::stdin()
@@ -67,6 +87,10 @@ fn run() -> Result<(), String> {
         return Err("give it, on standard input, an API key from Jellyfin's Dashboard, API Keys".into());
     }
     let elevated = vec![("authorization".to_string(), format!("MediaBrowser Token=\"{key}\""))];
+    let page_token = match plant {
+        Some(Plant::LenderKey) => key.to_string(),
+        _ => swap::STAND_IN.to_string(),
+    };
     let rt = tokio::runtime::Runtime::new().map_err(|e| format!("no runtime: {e}"))?;
     rt.block_on(async move {
         let listener = tokio::net::TcpListener::bind(listen)
@@ -76,13 +100,16 @@ fn run() -> Result<(), String> {
         if let Some(p) = plant {
             tracing::warn!(plant = ?p, "mw: a planted failure is on — a check's run, never a lend");
         }
+        let server = page::Server::read(jellyfin).await?;
         println!("listening on port {port}, in front of Jellyfin at {jellyfin}");
         let people = people::People::start(jellyfin, elevated);
         forward::serve(
             listener,
             forward::At {
                 jellyfin,
+                server,
                 people,
+                page_token,
                 plant,
             },
         )
