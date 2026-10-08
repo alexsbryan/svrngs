@@ -81,6 +81,22 @@
 //!   rebuilt 26, and 188 s for the write. What the idle round still pays
 //!   for is the register, read whole 26 times: ceiling-4's fold.
 //!
+//! ceiling-3, each signature checked once (1f22ee6), predicted 2026-10-08
+//! 03:26 PDT, before its runs, at 25 members and 10,000 acts in release,
+//! three runs at 5a32d9e (the commit before) and three at 1f22ee6:
+//! - the write reaching everyone (`push_round_s`), median 45 to 70 s at
+//!   5a32d9e (54.2, 92.0, 58.0 at 17f4611, the same offer) and 28 to 45 s
+//!   at 1f22ee6; the push round's own `cpu_s` lower by 12 to 22 s. Why:
+//!   each of the 24 exchanges reads the log whole twice, an offer on each
+//!   side, and each read verified its 10,054 lines, about 482,000
+//!   signatures at 25 to 45 us.
+//! - the idle round's processor unchanged, each median within 15% of the
+//!   other (5.70 s at 17f4611): its 48 offers are answered unread and
+//!   check no signature, as the prototype's idle round stayed at 6.4 s
+//!   (THE_CEILING.md, "+ signatures once").
+//! - every fold count in both rounds' accounts the same at both commits,
+//!   and `append_s` within 15%: `commit` still checks every signature.
+//!
 //! It needs the process's own processor time, which std does not give;
 //! `getrusage` through `libc` is the one way the lock already holds, and the
 //! one `unsafe` block below is that call. It counts folds with a
