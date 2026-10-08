@@ -78,16 +78,17 @@ async fn start(dir: &Path, relay: &Server, me: u8) -> Node {
     node
 }
 
-/// A canary on this computer, as `who`, and the port it listens on.
+/// A program of the canary's on this computer, and the port it listens on.
 struct Canary {
     _child: tokio::process::Child,
     port: u16,
 }
 
-async fn canary(who: &str) -> Canary {
+/// `apps/web-conformance/<program>` run with `args`, once it prints its port.
+async fn canary(program: &str, args: &[&str]) -> Canary {
     let mut child = tokio::process::Command::new("node")
-        .arg(repo().join("apps/web-conformance/serve.mjs"))
-        .arg(who)
+        .arg(repo().join("apps/web-conformance").join(program))
+        .args(args)
         .stdout(Stdio::piped())
         .kill_on_drop(true)
         .spawn()
@@ -97,7 +98,7 @@ async fn canary(who: &str) -> Canary {
         .next_line()
         .await
         .unwrap()
-        .expect("the canary prints its port");
+        .expect("it prints its port");
     let port = serde_json::from_str::<Value>(&first).unwrap()["port"]
         .as_u64()
         .unwrap() as u16;
@@ -164,7 +165,10 @@ async fn group(relay: &Server) -> Group {
     ] {
         a.transport().add_known_peer(b.endpoint().id(), addrs(b));
     }
-    let canaries = (canary("sam").await, canary("bo").await);
+    let canaries = (
+        canary("serve.mjs", &["sam"]).await,
+        canary("serve.mjs", &["bo"]).await,
+    );
     for (dir, port, secret) in [
         (&dirs[0], canaries.0.port, SAMS),
         (&dirs[1], canaries.1.port, BOS),
