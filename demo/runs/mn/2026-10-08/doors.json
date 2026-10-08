@@ -1,0 +1,294 @@
+{
+ "requests": {
+  "sam/movie-night": {
+   "Ivy": {
+    "GET": 5
+   },
+   "Jo": {
+    "GET": 5
+   },
+   "Kai": {
+    "GET": 5
+   },
+   "Ana": {
+    "GET": 12
+   },
+   "Ben": {
+    "GET": 12
+   },
+   "Eli": {
+    "GET": 5
+   },
+   "Cleo": {
+    "GET": 16
+   },
+   "Dara": {
+    "GET": 16
+   },
+   "Fay": {
+    "GET": 5
+   },
+   "Alex": {
+    "GET": 5
+   },
+   "Gus": {
+    "GET": 5
+   },
+   "Hal": {
+    "GET": 5
+   }
+  },
+  "sam/jellyfin": {
+   "Ivy": {
+    "GET": 3
+   },
+   "Jo": {
+    "GET": 2
+   },
+   "Kai": {
+    "GET": 4
+   },
+   "Ana": {
+    "GET": 288,
+    "POST": 6
+   },
+   "Ben": {
+    "GET": 6
+   },
+   "Eli": {
+    "GET": 2
+   },
+   "Cleo": {
+    "GET": 267,
+    "POST": 6
+   },
+   "Dara": {
+    "GET": 6
+   },
+   "Fay": {
+    "GET": 2
+   },
+   "Alex": {
+    "GET": 148,
+    "POST": 5
+   },
+   "Hal": {
+    "GET": 7
+   },
+   "Gus": {
+    "GET": 1
+   }
+  },
+  "dee/jellyfin": {
+   "Ivy": {
+    "GET": 1
+   },
+   "Jo": {
+    "GET": 1
+   },
+   "Kai": {
+    "GET": 1
+   },
+   "Ana": {
+    "GET": 4
+   },
+   "Ben": {
+    "GET": 276,
+    "POST": 6
+   },
+   "Eli": {
+    "GET": 1
+   },
+   "Cleo": {
+    "GET": 4
+   },
+   "Dara": {
+    "GET": 262,
+    "POST": 5
+   },
+   "Fay": {
+    "GET": 1
+   },
+   "Alex": {
+    "GET": 1
+   },
+   "Hal": {
+    "GET": 6
+   },
+   "Gus": {
+    "GET": 1
+   }
+  }
+ },
+ "most_counted": {
+  "sam/movie-night": 2,
+  "sam/jellyfin": 2,
+  "dee/jellyfin": 2
+ },
+ "counted_by_people": {
+  "sam/movie-night": {
+   "1": 66,
+   "2": 25
+  },
+  "sam/jellyfin": {
+   "1": 582,
+   "2": 18
+  },
+  "dee/jellyfin": {
+   "1": 566,
+   "2": 3
+  }
+ },
+ "relayed": {
+  "sam/movie-night": {
+   "Ivy Some(true)": 5,
+   "Jo Some(true)": 5,
+   "Kai Some(true)": 5,
+   "Ana Some(true)": 12,
+   "Ben Some(true)": 12,
+   "Eli Some(true)": 5,
+   "Cleo Some(true)": 16,
+   "Dara Some(true)": 16,
+   "Fay Some(true)": 5,
+   "Gus Some(true)": 5,
+   "Hal Some(true)": 5
+  },
+  "sam/jellyfin": {
+   "Ivy Some(true)": 3,
+   "Jo Some(true)": 2,
+   "Kai Some(true)": 4,
+   "Ana Some(true)": 294,
+   "Ben Some(true)": 6,
+   "Eli Some(true)": 2,
+   "Cleo Some(true)": 273,
+   "Dara Some(true)": 6,
+   "Fay Some(true)": 2,
+   "Hal Some(true)": 7,
+   "Gus Some(true)": 1
+  },
+  "dee/jellyfin": {
+   "Ivy Some(true)": 1,
+   "Jo Some(true)": 1,
+   "Kai Some(true)": 1,
+   "Ana Some(true)": 4,
+   "Ben Some(true)": 282,
+   "Eli Some(true)": 1,
+   "Cleo Some(true)": 4,
+   "Dara Some(true)": 267,
+   "Fay Some(true)": 1,
+   "Hal Some(true)": 6,
+   "Gus Some(true)": 1
+  }
+ },
+ "guessed_home": {
+  "sam/movie-night": {
+   "Alex": 5
+  },
+  "sam/jellyfin": {
+   "Alex": 153
+  },
+  "dee/jellyfin": {
+   "Alex": 1
+  }
+ },
+ "refused": {
+  "dee": {
+   "a pass that does not open this lend (its signer stands in no group held here)": 19
+  }
+ },
+ "sign_in": {
+  "sam/jellyfin": {
+   "asked for the person on their first request, and kept": 12,
+   "the person's kept answer": 741
+  },
+  "dee/jellyfin": {
+   "asked for the person on their first request, and kept": 12,
+   "the person's kept answer": 558
+  }
+ },
+ "limit": {
+  "first": "Gus",
+  "second": "Hal",
+  "first_last_counted": {
+   "sam/jellyfin": "2026-10-08T22:45:51.396996+00:00",
+   "dee/jellyfin": "2026-10-08T22:45:51.616793+00:00"
+  },
+  "second_after": [
+   {
+    "after_s": 5,
+    "sam/jellyfin": {
+     "people": [
+      2
+     ],
+     "since_first_last_s": 6.4
+    },
+    "dee/jellyfin": {
+     "people": [
+      2
+     ],
+     "since_first_last_s": 6.2
+    }
+   },
+   {
+    "after_s": 15,
+    "sam/jellyfin": {
+     "people": [
+      2
+     ],
+     "since_first_last_s": 16.4
+    },
+    "dee/jellyfin": {
+     "people": [
+      2
+     ],
+     "since_first_last_s": 16.2
+    }
+   },
+   {
+    "after_s": 25,
+    "sam/jellyfin": {
+     "people": [
+      2
+     ],
+     "since_first_last_s": 26.5
+    },
+    "dee/jellyfin": {
+     "people": [
+      2
+     ],
+     "since_first_last_s": 26.3
+    }
+   },
+   {
+    "after_s": 35,
+    "sam/jellyfin": {
+     "people": [
+      1
+     ],
+     "since_first_last_s": 36.4
+    },
+    "dee/jellyfin": {
+     "people": [
+      1
+     ],
+     "since_first_last_s": 36.2
+    }
+   },
+   {
+    "after_s": 45,
+    "sam/jellyfin": {
+     "people": [
+      1
+     ],
+     "since_first_last_s": 46.5
+    },
+    "dee/jellyfin": {
+     "people": [
+      1
+     ],
+     "since_first_last_s": 46.2
+    }
+   }
+  ]
+ }
+}

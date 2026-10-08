@@ -1,0 +1,95 @@
+22:21:46 sam's jellyfin up at 8296: {"LocalAddress":"http://127.0.0.1:8296","ServerName":"Alexs-MacBook-Pro-2","Version":"12.0.0","ProductName":"Jellyfin Server","OperatingSystem":"","Id":"ff09eebbcd4e4727ac5a7ea1d9d5a7f3","StartupWizardCompleted":false}
+22:21:51 sam's films: [["Alien", 1979, {"Imdb": "tt0078748", "Tmdb": "348"}], ["Blade Runner", 1982, {"Imdb": "tt0083658", "Tmdb": "78"}], ["Brazil", 1985, {"Imdb": "tt0088846", "Tmdb": "68"}]]
+22:21:52 sam's middleware: listening on port 8297, signing people in to Jellyfin at 127.0.0.1:8296
+22:22:04 dee's jellyfin up at 8396: {"LocalAddress":"http://127.0.0.1:8396","ServerName":"Alexs-MacBook-Pro-2","Version":"12.0.0","ProductName":"Jellyfin Server","OperatingSystem":"","Id":"4e8a02b6973a4fa7861ca4e38d00c8cb","StartupWizardCompleted":false}
+22:22:08 dee's films: [["Arrival", 2016, {"Imdb": "tt2543164", "Tmdb": "329865"}], ["Blade Runner", 1982, {"Imdb": "tt0083658", "Tmdb": "78"}]]
+22:22:09 dee's middleware: listening on port 8397, signing people in to Jellyfin at 127.0.0.1:8396
+22:22:10 the page: http://localhost:64905/
+22:22:12 dee: You're in House, as Dee.
+22:22:13 cy: You're in House, as Cy.
+22:22:15 alex: You're in House, as Alex.
+22:22:15 sam: Lent jellyfin (port 8296) to everyone in your groups, up to 8 people at once.
+22:22:15 dee: Lent jellyfin (port 8396) to everyone in your groups, up to 8 people at once.
+22:22:16 cy: Lent jellyfin (port 8496) to everyone in your groups, up to 8 people at once.
+22:22:16 sam: Lent movie-night (port 8596) to everyone in your groups, up to 8 people at once.
+22:22:16 sam is told: Each person is signed in to it as themselves by what answers on port 8297, with nothing typed. svrngs is running here already, so they can open it now. `svrngs unshare jellyfin` stops lending it. It can open the jellyfin your groups lend, as whoever opens it. svrngs is running here already, so they can open it now. `svrngs unshare movie-night` stops lending it. 
+22:25:07 dee: round membership exchanged_with=["Cy/a43858b9", "Alex/df1a2d19", "Sam/f9c85e53"] skipped_offline=[]
+22:25:25 alex's computer: 3 lends listed; Cy asleep
+22:25:36 plant per-copy: Movie Night served with it
+22:26:39 plant-per-copy: Ivy; 'bladruner' 2 card(s) [1, 1] copies, first 132 ms, all 792 ms, ['answered', 'answered']
+22:26:39 plant taken back: Movie Night served as it is kept
+22:26:44 plant asleep-empty: Movie Night served with it
+22:26:45 cy: awake
+22:28:56 asleep-chromium-plant-asleep-empty: Jo; 'bladruner' 1 card(s) [2] copies, first 147 ms, all 60317 ms, ['answered', 'answered', 'answered']
+22:28:56 plant taken back: Movie Night served as it is kept
+22:29:00 plant lender-token: Movie Night served with it
+22:30:06 plant-lender-token: Kai; 'bladruner' 1 card(s) [2] copies, first 124 ms, all 620 ms, ['answered', 'answered']
+22:30:06 plant taken back: Movie Night served as it is kept
+22:35:13 phone-chromium: Ana; 'bladruner' 1 card(s) [2] copies, first 112 ms, all 316 ms, ['answered', 'answered']; never_opened: answered 404; opened: item signed in; played 19806 ms; back 2 press(es), same True/True | Ben; 'bladruner' 1 card(s) [2] copies, first 161 ms, all 574 ms, ['answered', 'answered']; never_opened: answered 404; opened: item signed in; played 9386 ms; back 2 press(es), same True/True
+22:35:18 cy: awake
+22:37:29 asleep-chromium: Eli; 'bladruner' 1 card(s) [2] copies, first 824 ms, all 60335 ms, ['away', 'answered', 'answered']
+22:41:45 phone-webkit: Cleo; 'bladruner' 1 card(s) [2] copies, first 150 ms, all 548 ms, ['answered', 'answered']; never_opened: answered 404; opened: item signed in; played 17577 ms; back 2 press(es), same True/True | Dara; 'bladruner' 1 card(s) [2] copies, first 161 ms, all 610 ms, ['answered', 'answered']; never_opened: answered 404; opened: item signed in; played 5607 ms; back 2 press(es), same True/True
+22:41:50 cy: awake
+22:44:01 asleep-webkit: Fay; 'bladruner' 1 card(s) [2] copies, first 182 ms, all 60255 ms, ['away', 'answered', 'answered']
+22:44:19 computer: Alex; 'bladruner' 1 card(s) [2] copies, first 876 ms, all 905 ms, ['answered', 'answered']; opened: item signed in; played 3763 ms; back 2 press(es), same True/True
+22:46:38 limit: Gus; 'bladruner' 1 card(s) [2] copies, first 1037 ms, all 1379 ms, ['answered', 'answered'] | Hal; 'bladruner' 1 card(s) [2] copies, first 238 ms, all 616 ms, ['answered', 'answered']
+tokens: {"asleep-chromium/eli": ["sam: Eli-4a5a90f42e256f1c 1", "dee: Eli-4a5a90f42e256f1c 1"], "asleep-chromium-plant-asleep-empty/jo": ["sam: Jo-6397a2701b0592f7 1", "dee: Jo-6397a2701b0592f7 1"], "asleep-webkit/fay": ["sam: Fay-4bcc7e9a2f27e6cb 1", "dee: Fay-4bcc7e9a2f27e6cb 1"], "computer/alex": ["sam: Alex-df1a2d194d92f5a1 1", "dee: Alex-df1a2d194d92f5a1 1"], "limit/gus": ["sam: Gus-e9792ff1375f1dfa 1", "dee: Gus-e9792ff1375f1dfa 1"], "limit/hal": ["sam: Hal-0ad305296528b408 1", "dee: Hal-0ad305296528b408 1"], "phone-chromium/ana": ["sam: Ana-2e5aa38e5669c654 1", "dee: Ana-2e5aa38e5669c654 1"], "phone-chromium/ben": ["sam: Ben-01b4495d294ee60b 1", "dee: Ben-01b4495d294ee60b 1"], "phone-webkit/cleo": ["sam: Cleo-d4a5ece6352a7bb1 1", "dee: Cleo-d4a5ece6352a7bb1 1"], "phone-webkit/dara": ["sam: Dara-a169d2cca99590ae 1", "dee: Dara-a169d2cca99590ae 1"], "plant-lender-token/kai": ["sam: Kai-4c379b1450b2a43a 1", "dee: Kai-4c379b1450b2a43a 1"], "plant-per-copy/ivy": ["sam: Ivy-b0e2dd470220c474 1", "dee: Ivy-b0e2dd470220c474 1"]}
+{"asleep-chromium": {"eli": true}, "asleep-chromium-plant-asleep-empty": {"jo": true}, "asleep-webkit": {"fay": true}, "computer": {"alex": true}, "limit": {"gus": true, "hal": true}, "phone-chromium": {"ana": true, "ben": true}, "phone-webkit": {"cleo": true, "dara": true}, "plant-lender-token": {"kai": false}, "plant-per-copy": {"ivy": true}}
+doors: {"most_counted": {"sam/movie-night": 2, "sam/jellyfin": 2, "dee/jellyfin": 2}, "guessed_home": {"sam/movie-night": {"Alex": 5}, "sam/jellyfin": {"Alex": 153}, "dee/jellyfin": {"Alex": 1}}, "refused": {"dee": {"a pass that does not open this lend (its signer stands in no group held here)": 19}}, "limit": [{"after_s": 5, "sam/jellyfin": {"people": [2], "since_first_last_s": 6.4}, "dee/jellyfin": {"people": [2], "since_first_last_s": 6.2}}, {"after_s": 15, "sam/jellyfin": {"people": [2], "since_first_last_s": 16.4}, "dee/jellyfin": {"people": [2], "since_first_last_s": 16.2}}, {"after_s": 25, "sam/jellyfin": {"people": [2], "since_first_last_s": 26.5}, "dee/jellyfin": {"people": [2], "since_first_last_s": 26.3}}, {"after_s": 35, "sam/jellyfin": {"people": [1], "since_first_last_s": 36.4}, "dee/jellyfin": {"people": [1], "since_first_last_s": 36.2}}, {"after_s": 45, "sam/jellyfin": {"people": [1], "since_first_last_s": 46.5}, "dee/jellyfin": {"people": [1], "since_first_last_s": 46.2}}]}
+failed           bar 4, asleep after the list · asleep-chromium-plant-asleep-empty Jo: Cy's library: [('asking', 13), ('answered', 60471)]; shown empty 1; said not to have answered at None ms; the others' first answer at 984 ms
+passed           bar 4, asleep after the list · asleep-chromium Eli: Cy's library: [('asking', 8), ('away', 60440)]; shown empty 0; said not to have answered at 60440 ms; the others' first answer at 420 ms
+passed           bar 4, asleep after the list · asleep-webkit Fay: Cy's library: [('asking', 7), ('away', 60291)]; shown empty 0; said not to have answered at 60291 ms; the others' first answer at 498 ms
+failed           reads on a computer, discover · computer Alex: with nothing handed Movie Night said: ['No library is open to Movie Night here.']; this origin's stores: []
+recorded         reads on a computer, request · computer Alex: the labels handed by the run: [('answered', 'the library at 9jfg6x8p: 1 film'), ('answered', 'the library at hkcf2rf5: 1 film')]
+passed           bar 1 · computer Alex: 'bladruner': 1 Blade Runner card(s), copies [2], other cards []
+passed           bar 2 · computer Alex: landed item in 6353 ms, 'Blade Runner', signed in True (asked from the list: None); Play to moving 3763 ms
+passed           bar 3 · computer Alex: 2 press(es) of Back to Movie Night; query kept True, cards the same True
+passed           bar 1 · phone-chromium Ana: 'bladruner': 1 Blade Runner card(s), copies [2], other cards []
+passed           bar 1, each their own · phone-chromium Ana: 'brazl' after Sam's Brazil was left to them (): 1 Brazil card(s)
+passed           bar 1 · phone-chromium Ben: 'bladruner': 1 Blade Runner card(s), copies [2], other cards []
+passed           bar 1, each their own · phone-chromium Ben: 'brazl' after Sam's Brazil was kept from them (Ben-01b4495d294ee60b): 0 Brazil card(s)
+failed           bar 2, never opened · phone-chromium Ana: chose or from the jellyfin at f9c85e53: landed answered 404 (status 404, from its worker False) at <label>.localhost:64905/web/#/details?id=a2ab195109e40342c4ecfa1c19d2dbec&serverId=ff09eebbcd4e4727ac5a7ea1d9d5a7f3
+passed           bar 2, opened from the list · phone-chromium Ana: landed item in 35161 ms, 'Blade Runner', signed in True (asked from the list: False); Play to moving 19806 ms
+passed           bar 3 · phone-chromium Ana: 2 press(es) of Back to Movie Night; query kept True, cards the same True
+failed           bar 2, never opened · phone-chromium Ben: chose or from the jellyfin at 32044c38: landed answered 404 (status 404, from its worker False) at <label>.localhost:64905/web/#/details?id=d888aa54b375decd281502a03895e10d&serverId=4e8a02b6973a4fa7861ca4e38d00c8cb
+passed           bar 2, opened from the list · phone-chromium Ben: landed item in 20149 ms, 'Blade Runner', signed in True (asked from the list: False); Play to moving 9386 ms
+passed           bar 3 · phone-chromium Ben: 2 press(es) of Back to Movie Night; query kept True, cards the same True
+passed           bar 4, asleep before the list · phone-chromium Ana: spirit: no library of Cy's shown empty (0); letter: Movie Night names 0 library beside Sam's and Dee's, so says nothing of Cy's (failed); the group's page said: True
+passed           bar 4, asleep before the list · phone-chromium Ben: spirit: no library of Cy's shown empty (0); letter: Movie Night names 0 library beside Sam's and Dee's, so says nothing of Cy's (failed); the group's page said: True
+passed           bar 1 · phone-webkit Cleo: 'bladruner': 1 Blade Runner card(s), copies [2], other cards []
+passed           bar 1, each their own · phone-webkit Cleo: 'brazl' after Sam's Brazil was left to them (): 1 Brazil card(s)
+passed           bar 1 · phone-webkit Dara: 'bladruner': 1 Blade Runner card(s), copies [2], other cards []
+passed           bar 1, each their own · phone-webkit Dara: 'brazl' after Sam's Brazil was kept from them (Dara-a169d2cca99590ae): 0 Brazil card(s)
+failed           bar 2, never opened · phone-webkit Cleo: chose or from the jellyfin at f9c85e53: landed answered 404 (status 404, from its worker False) at <label>.localhost:64905/web/#/details?id=a2ab195109e40342c4ecfa1c19d2dbec&serverId=ff09eebbcd4e4727ac5a7ea1d9d5a7f3
+passed           bar 2, opened from the list · phone-webkit Cleo: landed item in 22976 ms, 'Blade Runner', signed in True (asked from the list: False); Play to moving 17577 ms
+passed           bar 3 · phone-webkit Cleo: 2 press(es) of Back to Movie Night; query kept True, cards the same True
+failed           bar 2, never opened · phone-webkit Dara: chose or from the jellyfin at 32044c38: landed answered 404 (status 404, from its worker False) at <label>.localhost:64905/web/#/details?id=d888aa54b375decd281502a03895e10d&serverId=4e8a02b6973a4fa7861ca4e38d00c8cb
+passed           bar 2, opened from the list · phone-webkit Dara: landed item in 13220 ms, 'Blade Runner', signed in True (asked from the list: False); Play to moving 5607 ms
+passed           bar 3 · phone-webkit Dara: 2 press(es) of Back to Movie Night; query kept True, cards the same True
+passed           bar 4, asleep before the list · phone-webkit Cleo: spirit: no library of Cy's shown empty (0); letter: Movie Night names 0 library beside Sam's and Dee's, so says nothing of Cy's (failed); the group's page said: True
+passed           bar 4, asleep before the list · phone-webkit Dara: spirit: no library of Cy's shown empty (0); letter: Movie Night names 0 library beside Sam's and Dee's, so says nothing of Cy's (failed); the group's page said: True
+failed           bar 1 · plant-per-copy Ivy: 'bladruner': 2 Blade Runner card(s), copies [1, 1], other cards []
+passed           bar 5, no secret in a byte · asleep-chromium eli: 10482878 bytes in 87 responses: others' secrets {} in {}; their own token 0
+passed           bar 5, no secret in a byte · asleep-chromium-plant-asleep-empty jo: 10482613 bytes in 81 responses: others' secrets {} in {}; their own token 0
+passed           bar 5, no secret in a byte · asleep-webkit fay: 5275235 bytes in 47 responses: others' secrets {} in {}; their own token 0
+passed           bar 5, no secret in a byte · computer alex: 17498116 bytes in 172 responses: others' secrets {} in {}; their own token 0
+passed           bar 5, no secret in a byte · limit gus: 10480272 bytes in 75 responses: others' secrets {} in {}; their own token 0
+passed           bar 5, no secret in a byte · limit hal: 10495562 bytes in 89 responses: others' secrets {} in {}; their own token 0
+passed           bar 5, no secret in a byte · phone-chromium ana: 38493674 bytes in 515 responses: others' secrets {} in {}; their own token 0
+passed           bar 5, no secret in a byte · phone-chromium ben: 39564417 bytes in 438 responses: others' secrets {} in {}; their own token 0
+passed           bar 5, no secret in a byte · phone-webkit cleo: 28670101 bytes in 377 responses: others' secrets {} in {}; their own token 0
+passed           bar 5, no secret in a byte · phone-webkit dara: 28650094 bytes in 380 responses: others' secrets {} in {}; their own token 0
+failed           bar 5, no secret in a byte · plant-lender-token kai: 10485167 bytes in 66 responses: others' secrets {'sam_admin_token': 1} in {'sam_admin_token': ['/plant.js']}; their own token 0
+passed           bar 5, no secret in a byte · plant-per-copy ivy: 10483423 bytes in 63 responses: others' secrets {} in {}; their own token 0
+recorded         bar 5, no secret in a byte · searched for: dee_admin_token, dee_mw_key, dee_pw, sam_admin_token, sam_mw_key, sam_pw
+failed           bar 5, svrngs's names in Movie Night's source · apps/movie-night: 2 line(s): ['app.js:19 (plumbing find) `svrngs-lend`', 'app.js:32 (plumbing find) `svrngs-lend`']
+recorded         bar 5, a credential in Movie Night's code · apps/movie-night: 3 line(s) naming one outside the plants: ["app.js:39 (plumbing find): const get = db.transaction('kept').objectStore('kept').get(`pass ${OWN}`);", 'app.js:53 (plumbing find): const pass = await kept();', 'app.js:54 (plumbing find): return (pass?.lends ?? [])']
+recorded         the limit · most counted at once: {"sam/movie-night": 2, "sam/jellyfin": 2, "dee/jellyfin": 2}
+recorded         the limit · guessed home: {"sam/movie-night": {"Alex": 5}, "sam/jellyfin": {"Alex": 153}, "dee/jellyfin": {"Alex": 1}}
+recorded         the limit · relayed or not, by person: {"sam/movie-night": {"Ivy Some(true)": 5, "Jo Some(true)": 5, "Kai Some(true)": 5, "Ana Some(true)": 12, "Ben Some(true)": 12, "Eli Some(true)": 5, "Cleo Some(true)": 16, "Dara Some(true)": 16, "Fay Some(true)": 5, "Gus Some(true)": 5, "Hal Some(true)": 5}, "sam/jellyfin": {"Ivy Some(true)": 3, "Jo Some(true)": 2, "Kai Some(true)": 4, "Ana Some(true)": 294, "Ben Some(true)": 6, "Eli Some(true)": 2, "Cleo Some(true)": 273, "Dara Some(true)": 6, "Fay Some(true)": 2, "Hal Some(true)": 7, "Gus Some(true)": 1}, "dee/jellyfin": {"Ivy Some(true)": 1, "Jo Some(true)": 1, "Kai Some(true)": 1, "Ana Some(true)": 4, "Ben Some(true)": 282, "Eli Some(true)": 1, "Cleo Some(true)": 4, "Dara Some(true)": 267, "Fay Some(true)": 1, "Hal Some(true)": 6, "Gus Some(true)": 1}}
+recorded         the limit · Hal's searches after Gus's last: [{"after_s": 5, "sam/jellyfin": {"people": [2], "since_first_last_s": 6.4}, "dee/jellyfin": {"people": [2], "since_first_last_s": 6.2}}, {"after_s": 15, "sam/jellyfin": {"people": [2], "since_first_last_s": 16.4}, "dee/jellyfin": {"people": [2], "since_first_last_s": 16.2}}, {"after_s": 25, "sam/jellyfin": {"people": [2], "since_first_last_s": 26.5}, "dee/jellyfin": {"people": [2], "since_first_last_s": 26.3}}, {"after_s": 35, "sam/jellyfin": {"people": [1], "since_first_last_s": 36.4}, "dee/jellyfin": {"people": [1], "since_first_last_s": 36.2}}, {"after_s": 45, "sam/jellyfin": {"people": [1], "since_first_last_s": 46.5}, "dee/jellyfin": {"people": [1], "since_first_last_s": 46.2}}]
+recorded         the limit · refusals: {"dee": {"a pass that does not open this lend (its signer stands in no group held here)": 19}}
+recorded         the count · apps/movie-night: {'own': 157, 'plumbing': 39, 'plant': 7}; {'own cards': 96, 'own choose': 10, 'own match': 51, 'plant asleep-empty': 1, 'plant lender-token': 1, 'plant per-copy': 1, 'plant switch': 4, 'plumbing ask': 11, 'plumbing find': 28}
+passed           the product untouched · git diff c963f93..HEAD -- crates/*/src web: empty
+passed           scripts/check.sh free of Jellyfin · scripts/check.sh: 0 mention(s)
+plants: each failed its bar: True (3 verdicts)
