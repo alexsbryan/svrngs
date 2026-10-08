@@ -3447,3 +3447,154 @@ all 14 steps passed and the seeks' rate printed, exit 0,
 | I19 | 6 | `code converge noun`, dry-report's exact tier | Still present: apps/jellyfin/mw/ exact tier could-not-judge; `At` gives definitions (0), `Ask` and `Signed` (1) where git grep finds 1, 2, 2. |
 | I21 | 6, 7 | `code index` (incremental) after an embedder failure | New: an incremental run whose embedder died (exit 133) said "22 file(s) failed to re-index"; the next incremental run said "Incremental refresh complete … 22 file(s) changed — 280 chunk(s) embedded", yet dry-report then gave door.rs's symbols at e9ed277's lines (`router` :163–174, where it is :172–183 after `--full`; person.rs's `key` :212–220, a function of a file 179 lines long). A completed incremental index is not proof of a current one. Cause not isolated. |
 | I22 | 6, 7 | `code dry-report` near tier | New: one long function is two symbols of one name: door.rs `forward` (:956–1197) given as `forward` :953–1071 and `forward` :1072–1197, and those paired as near clones of each other and of `lend_for`, 0.834–0.839. |
+
+## REVIEW-audit-mwp-auto-2 (2026-10-08, range 673db84..edb4072)
+
+The range starts at 673db84cb, the hash REVIEW-audit-mwp-auto-1's row
+carries (ralph/next/mwp/STATE.md:18), the last `REVIEW-audit-` row. It ends
+at edb4072, the commit that made this row: 7 commits, the last audit's
+`done` (f573fa9), the queue's correction of mwp-4's check (30dac6a), and
+mwp-4 (a57852d, a9ac3e1, 28c430a, e46c7ba). Product code changed only in
+apps/web-conformance/ and crates/svrngs-node/tests/conformance.rs: `git
+diff --stat 673db84 edb4072 -- 'crates/*/src' web/ bridge/` is empty. This
+audit fixes three findings (#92, #93, #94) and records the rest.
+
+As before, `docs/ARCH_PRINCIPLES.md` is docs/principles/ARCH_PRINCIPLES.md,
+and `target/debug/sovereign-cli` is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256 5f5e2d74…, **the
+binary REVIEW-audit-mw-auto-1 planted its tiers against**, so its plants'
+readings stand and were not run again. The embedder was `llama-server` on
+the corpus's model (qwen-embedding-0.6b.gguf, ~/.svrnmesh/config.toml:18)
+on :8080, for this session. Its first start (`-np 1 -c 8192`, so n_batch =
+n_ubatch = 512, its log says) exited 133 during `code index . --full`, as
+the last audit's did, and the failed `--full` left the corpus without its
+chunks (I23); started again with `-b 8192 -ub 8192`, the `--full` at
+edb4072 finished: 2482 chunks in 154 s, then `refresh` (SCIP graph 8 s
+old by `project watch status`).
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' 673db84..HEAD`, summed
+by /tmp/mwpaudit2/ledger.py (the last audit's, unchanged), its rules as
+before: a commit counts toward the unit its subject names, else the next
+`done`'s; product code is crates/, apps/, web/, bridge/; a test is a
+`tests/` or `check/` segment or a lean_check test file name.
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| mwp-4 | 97 | 4 | 93 | 130 | 10 | 120 |
+| total | 97 | 4 | 93 | 130 | 10 | 120 |
+
+- mwp-4 src (a9ac3e1), all apps/web-conformance/: answer.mjs +48 new,
+  serve.mjs +35/−4, checks.js +14. By lines of code (no blank, no
+  comment): answer.mjs 30, serve.mjs +22/−2, checks.js +10.
+- mwp-4 tests: crates/svrngs-node/tests/conformance.rs +10/−6 (a57852d)
+  and +120/−4 (a9ac3e1).
+
+The ledger counts apps/ as product; lean_check does not count apps/
+(scripts/lean_check.py:49, `rel.startswith(("apps/", "target/"))`). On
+`git archive` trees in /tmp/mwpaudit2:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 673db84, range start | 2957 / 3000 | 14398 / 14400 |
+| edb4072, range end | 2957 / 3000 | **14398 / 14400** |
+
+mwp-4 added no counted line, as its bar asked (DESIGN §3 call 6, bar 4).
+**2 lines are left** (#80).
+
+### (2) Clones (`code dry-report`)
+
+Scoped, at 0.95, for the dirs the range touched:
+
+| scope | locations | exact | near | with a side added in the range |
+|---|---:|---|---:|---|
+| crates/svrngs-node/ | 391 | 5 (as at the last audit) | 1 (declared.rs `harden_file` ×2) | 0 |
+| crates/svrngs-node/tests/ | 0 | **could-not-judge** | **could-not-judge** | — |
+| apps/web-conformance/ | 11 | **could-not-judge** ("no SCIP function symbols in scope", I19's for JS) | 0 | 0 |
+| apps/ | 145 | 0 | 2 (tv.mjs `playOn`~`menu`, I9; judge.py `why`~`why`) | 0 |
+
+The tool leaves out every `tests` path segment by design ("First-party
+production code only"), so the range's one Rust file is outside it; it
+says could-not-judge for that scope, rightly. Unscoped: 0.95 (14 exact, 15
+near), 0.9 (14, 36), 0.8 (14, 214), the counts the last audit had.
+/tmp/mwpaudit2/blame.py blamed every side, 885, for a line in
+673db84..HEAD: **0** clusters with an added side at any threshold.
+
+**Window pass** (/tmp/mwpaudit2/windows.py . 673db84..HEAD, 5 normalized
+lines, tests included): 162 hits, **4 new**, all one:
+crates/svrngs-node/tests/conformance.rs:677–681 (the test asking the
+canary for each person's token) == lend_origin.rs:177–181,
+record_api.rs:232–236, room.rs:196–200 and :326–330: reqwest's
+`.send().await.unwrap().json().await.unwrap()`, each a different request;
+no change.
+
+Reading the range for what neither pass would show:
+
+- **#92, fixed (29bfaf9).** apps/web-conformance/serve.mjs:141 and :216,
+  at edb4072: the record `/seen` keeps of a request, a page's and a
+  WebSocket's, built twice on one line each, and a9ac3e1 added `signed`
+  to both alike. One line each is below the window pass's 5. Now
+  `saw(req, path)` (:60).
+- **#93, fixed (826a713).** crates/svrngs-node/tests/conformance.rs, in
+  `conformance` and in a9ac3e1's `two_people_signed_in`: the verdict line
+  "{:<9} {:<8} {who:<4} {route:<34} {verdict}" formatted twice, its
+  columns what scripts/check.sh:46's `cut -c1-10,25-` reads. Now
+  `verdict_line` (:240), its doc naming that reader.
+- **#94, fixed (9d0be57).** docs/DESIGN.md:633–634, bar 4's landing:
+  "its accounts 32 more in `serve.mjs`" — 22 there and the page's check
+  10 in checks.js (the ledger above). The total stood; where now said.
+- **#90, updated.** `svrngs-stand-in` is spelled a third time, at
+  apps/web-conformance/answer.mjs:18, beside
+  crates/svrngs-node/src/door/sign_in.rs:48 and
+  apps/jellyfin/mw/src/page.rs:22. The canary's spelling is held by
+  scripts/check.sh through `two_people_signed_in`: planted as
+  `svrngs-stand-ix`, `two_people_signed_in::chromium` failed, "not signed
+  in as themselves … stored svrngs-stand-ix; by query ," (reverted).
+  Jellyfin's is still held only by the mw-2 pairs. No change.
+- The test writes its lend's file by hand (conformance.rs:672–674, `port`,
+  `kind`, `limit`, `sign_in`), as conformance.rs:180–183, room.rs:79,
+  lend_origin.rs:56 and surface.rs:51 do; a renamed field breaks them, as
+  a reader of the format should. No change.
+- **#57, #68, #70, #71, #75, #77, #79, #81, #87, #88, #89, #91, still
+  open.** The range changed no line of crates/'s sources or of web/.
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff 673db84 edb4072 -- crates apps web bridge`, added lines matching
+`\b(struct|enum|trait|type|class)\s+[A-Z]\w*`: **none** (grep exit 1). The
+one type the range touched, `Canary` (conformance.rs:86, its doc
+changed): converge "definitions (0) … defined only in test code"; `git
+grep` one definition. No noun with more than one definition.
+
+### Fixed here
+
+- **#92** (29bfaf9) and **#93** (826a713). `cargo test -p svrngs-node
+  --test conformance`, before (clean tree at edb4072) and after: 6 passed
+  each (171 s, 181 s). `cmp` of target/conformance/*.txt: five files
+  byte-identical; wildcard-webkit.txt differs only in "seeks back to
+  back", a rate that never fails (u5-11), sam's and bo's lines trading
+  passed and failed. Plant for `saw`: `signed: ''`;
+  `two_people_signed_in::chromium` failed, "requests signed in as
+  another"; reverted.
+- **#94** (9d0be57). The line counts are those in (1).
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 92 | 8 | apps/web-conformance/serve.mjs:141 and :216, at edb4072 | 29bfaf9 | The `/seen` record of a request built twice; now `saw`. |
+| 93 | 8 | crates/svrngs-node/tests/conformance.rs `conformance` and `two_people_signed_in`, at edb4072 | 826a713 | The verdict line check.sh's `cut` reads, formatted twice; now `verdict_line`. |
+| 94 | 4 | docs/DESIGN.md:633-634 | 9d0be57 | Bar 4's accounts said to be 32 lines of serve.mjs; 22 there, 10 in checks.js. |
+| 90 | 8 | apps/web-conformance/answer.mjs:18, crates/svrngs-node/src/door/sign_in.rs:48, apps/jellyfin/mw/src/page.rs:22 | no change | `svrngs-stand-in` now spelled three times; the canary's held by check.sh (planted), Jellyfin's by the mw-2 runs alone. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 2 lines left (14398 / 14400). |
+| 57, 68, 70, 71, 75, 77, 79, 81, 87, 88, 89, 91 | as recorded | as recorded | not fixed | Untouched in the range. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I9 | 6, 7 | `code dry-report` near tier | Still present: tv.mjs `menu` inside `playOn`, 0.952. |
+| I19 | 6 | dry-report's exact tier | Still present for JS: apps/web-conformance/ exact tier could-not-judge, as web/'s was. |
+| I21 | 6, 7 | `code index` and its embedder | Narrowed, not isolated: `llama-server` with n_batch = n_ubatch = 512 exited 133 during `--full` again (/tmp/mwpaudit2/llama.log ends mid-task, no assertion line); with `-b 8192 -ub 8192` the same `--full` finished. One run each: a chunk past 512 tokens is the likely cause, unproven. |
+| I23 | 6 | `code index --full` | New: a `--full` whose embedder died ("✗ Indexing failed", rc 1) left ~/.svrnmesh/indexes/svrngs/ with only code_index_state.json and scip_graph.db: the previous index is deleted before the new one is whole, so a failed rebuild leaves nothing to judge with, not the last good index. |
