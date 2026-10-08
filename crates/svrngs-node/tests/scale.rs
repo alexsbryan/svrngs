@@ -135,6 +135,25 @@
 //!   one exchange after another, kept; its account register rebuilt 25
 //!   (each node's first read) and kept 73, write index kept 434.
 //!
+//! Measured 2026-10-08, after the predictions, three runs each, the two
+//! commits alternated, each built in a target of its own, load average 3 to
+//! 9 throughout (`uptime` before each):
+//! - the idle round's processor 5.66, 5.58, 6.14 s at 61de5bc (median
+//!   5.66) and 0.0101, 0.0098, 0.0096 s at 8991334 (median 0.0098), both
+//!   confirmed, under the bar by ten times; the prototype's, 0.010 s.
+//! - every account as predicted, in all six: idle register kept 26 and
+//!   rebuilt 0, write index kept 122, at 8991334; register rebuilt 26 and
+//!   write index kept 96 at 61de5bc; digest kept 96 and offer kept 48 at
+//!   both. Confirmed.
+//! - the write reaching everyone 38.33, 37.74, 39.68 s at 61de5bc (median
+//!   38.33) and 16.82, 16.92, 16.92 s at 8991334 (median 16.92), confirmed;
+//!   its account register rebuilt 25 and kept 73, write index kept 434.
+//!   What it still pays for is the 48 offers read whole.
+//! - void, and not counted: three earlier runs labelled 8991334 built in
+//!   the plant's target, whose fingerprints named the worktree's files, so
+//!   cargo ran the plant's binary; their accounts read register rebuilt 26,
+//!   the plant's.
+//!
 //! Then the line, as the size run's was: fitted on 10, 25 and 50 members at
 //! 10,000 acts, three runs each, an idle round's processor as (N - 1)(a +
 //! b N), THE_CEILING.md's model term; its prediction for 100 members at
