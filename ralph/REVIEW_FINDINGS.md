@@ -3433,6 +3433,10 @@ converge 0), `At` (answer.rs:27; converge 0, I19), `Secret`, `SignIns`,
 | 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 2 lines left in the repository (14398 / 14400). |
 | 57, 68, 70, 71, 75, 77, 79, 81 | as recorded | as recorded | not fixed | Untouched in the range. |
 
+The row's check (LINT): `scripts/check.sh` at 8e773b0 on a clean tree,
+all 15 steps passed and the seeks' rate printed, exit 0,
+2026-10-08T19:05:40Z (/tmp/mwpaudit1/check.out).
+
 ### Problems in the commonwealth-ai instrument (reported, not fixed here)
 
 | # | principle | site | finding |
