@@ -406,8 +406,8 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
    computer that listens on a port, takes the door's verified request and
    passes it to the service behind it, so `svrngs share <its port>` lends
    the pair. Only the lender runs one, on their own computer; svrngs ships
-   no runtime, SDK or plugin format for it, and never starts or supervises
-   one. The door's guarantees stay outside it (identity set, the limit and
+   no runtime or SDK for it, and never starts or supervises one. The
+   door's guarantees stay outside it (identity set, the limit and
    refused paths checked, an echoed secret stripped); its contract is
    HTTP, the door's `x-svrngs-*` headers and the loopback record API; an
    app's nouns live in middleware, never the infra. Its spike, after Demo
@@ -419,6 +419,17 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
    middleware's port believes loopback: a process on the lender's computer
    naming a person's key there is answered as them, and is the lender's
    own (§9's per-process tie keeps its trigger).
+   *Made production* (operator, 2026-10-08): the spike's middleware was
+   1,050 lines of code, about 600 of them any app's — a second proxy
+   beside the door, streaming and a WebSocket, whose list of hop headers
+   already disagreed with the door's (`ralph/REVIEW_FINDINGS.md` #82); a
+   credential per person, made on their first request; a secret swapped
+   for a stand-in in what the service answers and back in what it is
+   asked; a script put first in a page — and the library carried none of
+   it. So the door carries those three, general, as hooks a lend
+   declares over HTTP, and an app's middleware keeps only its own nouns:
+   for Jellyfin, making a user, its credential's form and what its page
+   stores. The contract is the `mwp` queue's first row's to write here.
 
 **Chats are doors, and the last thing we build.** A small adapter per chat, in
 its own package, makes a group for a channel and posts its link. Onboarding
@@ -504,14 +515,18 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,000 lines of code and the
-repository under 14,000, tests and `apps/` apart (`scripts/lean_check.py`);
+repository under 14,400, tests and `apps/` apart (`scripts/lean_check.py`);
 a raise is the operator's, with the reason in the commit. `svrngs-core` stands
 at 2,359: the operator raised its ceiling from 2,500 on 2026-10-05, for what U4
 to U7 still add to the core, since REVIEW-audit-u3-auto-2 found no duplication
 in it (ralph/REVIEW_FINDINGS.md #38), and the repository's from 12,000, at
 9,601, for U4's page and its wasm and U6's handoff, about 2,100 lines between
-them by the seat's estimate. `ARCHITECTURE.md` maps what
-exists and changes in the commit that changes it.
+them by the seat's estimate; and the repository's from 14,000, at 13,970,
+on 2026-10-08, for the door to carry what the middleware spike wrote twice
+(§3, "The room", call 6): of its 1,050 lines of code, about 600 are any
+app's, less the 330 the door and the command already have, about 270
+new, and 400 with the door's traces and refusals (the seat's estimate).
+`ARCHITECTURE.md` maps what exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file
 that holds them on one computer; the *register* is the part of the record that
@@ -1112,7 +1127,9 @@ with a term in *N*² that nothing yet explains, it predicted 75 members within
 8%. The runs and predictions are in `scale.rs`'s module docs.)
 
 **Then**, in this order (operator, 2026-10-07): the ceiling, above; the
-middleware spike (§3, "The room", call 6; kept, 2026-10-08); group folders
+middleware spike (§3, "The room", call 6; kept, 2026-10-08), then made
+production, the door carrying its general pieces (operator, 2026-10-08);
+group folders
 (§3, call 7 of "Lent apps"; §9); the phone replica spike, iOS first (§9, "a
 native phone app"), after folders since they name the bytes a phone would
 hold; then the middleware's P1 follow-ups as one row (operator, 2026-10-08;
@@ -1159,6 +1176,14 @@ by the north star's tests.
 
 ## 10. Decisions
 
+By the operator, 2026-10-08, after the middleware spike:
+- the library carries the weight. The door takes the middleware's general
+  pieces as hooks a lend declares over HTTP — a credential per person,
+  that credential kept out of answers, a script first in the lend's pages
+  — and an app's middleware keeps only its own nouns; before group folders
+  (§8, "Then"; §3, "The room", call 6). The repository's budget rose
+  from 14,000 to 14,400 for it (§5).
+
 By the operator, 2026-10-06:
 - a phone opens each app at an address of its own under the page's host,
   and only so: the floor, every app under one address apart from the
@@ -1170,8 +1195,9 @@ By the operator, 2026-10-06:
   such a host must do (§3, "Lent apps", call 1; §7; §9 has the trigger);
 - middleware is a spike after Demo B, and no U6 row builds it: a lent app
   that forwards to another, run only by its lender, with svrngs shipping no
-  runtime, SDK or plugin format for it (§3, "The room", call 6, with its
-  invariants). Its spike, 2026-10-08, was kept by its bars read for their
+  runtime or SDK for it (§3, "The room", call 6, with its invariants;
+  "or plugin format" dropped by the operator, 2026-10-08, above). Its
+  spike, 2026-10-08, was kept by its bars read for their
   spirit, as the operator read them that day ("the bars are guidance to
   align us at the start, the spirit of them are what guides how we
   iterate"): Jellyfin's zero sign-in is a middleware in `apps/jellyfin/`
