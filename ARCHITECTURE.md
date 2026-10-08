@@ -215,7 +215,11 @@ a member of another group in one process. `tests/scale.rs` is an instrument,
 not a check: ignored, and run by hand in release, it stands up one group of
 any size in one process and prints what an idle round, a write's round, an
 asleep member, an append and an act on disk cost (its module docs say how to
-read them); `Node::start_every` gives each of its nodes a round once a day, so
+read them), and each round's own account: members dialled, reached and
+asleep, acts moved, processor and wall time, and each fold of the journal
+kept or rebuilt, counted from the debug line each fold traces; that account's
+hand count, a four-member round with one member killed mid-round, is not
+ignored and runs with the tests. `Node::start_every` gives each of its nodes a round once a day, so
 no node's own round runs inside one it times. The round reads the node's `Host` and the
 `RingRail` directly: upstream's round read them through the `RingSyncHost`
 and `RingSyncJournal` traits, and with one implementor of each here the
