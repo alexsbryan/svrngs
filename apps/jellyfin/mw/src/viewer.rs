@@ -371,7 +371,10 @@ pub(crate) async fn sign_in(origin: SocketAddr, viewer: &Viewer, device: &str) -
     Ok(token.to_string())
 }
 
+// Upstream's stand-in origin records what it was asked behind a mutex, a
+// test fixture's; the middleware itself shares nothing mutable (people.rs).
 #[cfg(test)]
+#[allow(clippy::disallowed_types)]
 mod tests {
     use super::*;
 

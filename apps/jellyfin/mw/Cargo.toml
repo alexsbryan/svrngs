@@ -21,6 +21,15 @@ reqwest = { version = "0.12", default-features = false, features = ["json"] }
 serde_json = "1"
 tracing = "0.1"
 uuid = { version = "1", features = ["v4"] }
+# The forward (forward.rs): hyper's HTTP/1 server and client, one
+# connection to Jellyfin per request, at the versions svrngs's door uses
+# (crates/svrngs-node/Cargo.toml); its runtime; and its log.
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "io-util", "sync"] }
+hyper = { version = "1", features = ["server", "client", "http1"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+http-body-util = "0.1"
+bytes = "1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
