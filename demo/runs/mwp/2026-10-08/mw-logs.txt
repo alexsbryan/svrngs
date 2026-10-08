@@ -1,0 +1,115 @@
+# The middleware's whole log for each pair run (/tmp/mwp3/mw-<tag>.log, RUST_LOG=info,jellyfin_mw=debug),
+# searched by scan.py for every secret of the run: none (scan.json, logs). The mw1-again run's log was
+# overwritten by the next run's start (check.sh mw_up).
+
+## mw-mw-computer-chromium-plant-lender-key.log
+2026-10-08T18:10:41.293600Z  WARN jellyfin_mw: mw: a planted failure is on — a check's run, never a lend plant=LenderKey
+2026-10-08T18:10:41.820585Z  INFO jellyfin_mw::answer: mw: the door asks who a person is to Jellyfin key=e0bbe6435b6ec390ee63c608fdb4dc50aca4880d2899a79620f34e3940378f76 person=Alex
+2026-10-08T18:10:41.820659Z  INFO jellyfin_mw::people: mw: a key not seen by this process — finding or making its person's account key=e0bbe6435b6ec390ee63c608fdb4dc50aca4880d2899a79620f34e3940378f76 person=Alex user=Alex-e0bbe6435b6ec390
+2026-10-08T18:10:41.946181Z DEBUG jellyfin_mw::viewer: mw: provision — no account for this person on this origin, created one viewer_user=1c3f023a6256491e987f08aa8563b825 name="Alex-e0bbe6435b6ec390"
+2026-10-08T18:10:41.959112Z  INFO jellyfin_mw::viewer: mw: provision — the person's read-only account made and its policy read back origin=127.0.0.1:8096 viewer_user=1c3f023a6256491e987f08aa8563b825 name="Alex-e0bbe6435b6ec390"
+2026-10-08T18:10:41.959270Z  INFO jellyfin_mw::people: mw: signing the person's device in key=e0bbe6435b6ec390ee63c608fdb4dc50aca4880d2899a79620f34e3940378f76 user=Alex-e0bbe6435b6ec390 device=svrngs-e0bbe6435b6ec390
+2026-10-08T18:10:42.078362Z DEBUG jellyfin_mw::viewer: mw: sign in — a device signed in for the person origin=127.0.0.1:8096 viewer_user=1c3f023a6256491e987f08aa8563b825
+2026-10-08T18:10:42.078511Z  INFO jellyfin_mw::answer: mw: answered the door — the person's token, its authorization and the stored sign-in key=e0bbe6435b6ec390ee63c608fdb4dc50aca4880d2899a79620f34e3940378f76 user=1c3f023a6256491e987f08aa8563b825 device=svrngs-e0bbe6435b6ec390
+2026-10-08T18:10:47.747624Z  INFO jellyfin_mw::answer: mw: the door asks who a person is to Jellyfin key=c702768d928650766ea6ed39bd75df5c094112a52e180e622344d2fe4c674239 person=Bo
+2026-10-08T18:10:47.747785Z  INFO jellyfin_mw::people: mw: a key not seen by this process — finding or making its person's account key=c702768d928650766ea6ed39bd75df5c094112a52e180e622344d2fe4c674239 person=Bo user=Bo-c702768d92865076
+2026-10-08T18:10:47.900462Z DEBUG jellyfin_mw::viewer: mw: provision — no account for this person on this origin, created one viewer_user=e4b1277202c34e8aacc4961279042798 name="Bo-c702768d92865076"
+2026-10-08T18:10:47.913104Z  INFO jellyfin_mw::viewer: mw: provision — the person's read-only account made and its policy read back origin=127.0.0.1:8096 viewer_user=e4b1277202c34e8aacc4961279042798 name="Bo-c702768d92865076"
+2026-10-08T18:10:47.913218Z  INFO jellyfin_mw::people: mw: signing the person's device in key=c702768d928650766ea6ed39bd75df5c094112a52e180e622344d2fe4c674239 user=Bo-c702768d92865076 device=svrngs-c702768d92865076
+2026-10-08T18:10:48.044249Z DEBUG jellyfin_mw::viewer: mw: sign in — a device signed in for the person origin=127.0.0.1:8096 viewer_user=e4b1277202c34e8aacc4961279042798
+2026-10-08T18:10:48.044697Z  INFO jellyfin_mw::answer: mw: answered the door — the person's token, its authorization and the stored sign-in key=c702768d928650766ea6ed39bd75df5c094112a52e180e622344d2fe4c674239 user=e4b1277202c34e8aacc4961279042798 device=svrngs-c702768d92865076
+
+## mw-mw-computer-chromium-plant-no-sign-in.log
+2026-10-08T18:10:32.457564Z  WARN jellyfin_mw: mw: a planted failure is on — a check's run, never a lend plant=NoSignIn
+2026-10-08T18:10:33.361079Z  INFO jellyfin_mw::answer: mw: the door asks who a person is to Jellyfin key=e0bbe6435b6ec390ee63c608fdb4dc50aca4880d2899a79620f34e3940378f76 person=Alex
+2026-10-08T18:10:33.361161Z  INFO jellyfin_mw::people: mw: a key not seen by this process — finding or making its person's account key=e0bbe6435b6ec390ee63c608fdb4dc50aca4880d2899a79620f34e3940378f76 person=Alex user=Alex-e0bbe6435b6ec390
+2026-10-08T18:10:33.482594Z DEBUG jellyfin_mw::viewer: mw: provision — no account for this person on this origin, created one viewer_user=6682b392349a48cf9559cac6295d0fff name="Alex-e0bbe6435b6ec390"
+2026-10-08T18:10:33.496948Z  INFO jellyfin_mw::viewer: mw: provision — the person's read-only account made and its policy read back origin=127.0.0.1:8096 viewer_user=6682b392349a48cf9559cac6295d0fff name="Alex-e0bbe6435b6ec390"
+2026-10-08T18:10:33.497102Z  INFO jellyfin_mw::people: mw: signing the person's device in key=e0bbe6435b6ec390ee63c608fdb4dc50aca4880d2899a79620f34e3940378f76 user=Alex-e0bbe6435b6ec390 device=svrngs-e0bbe6435b6ec390
+2026-10-08T18:10:33.618596Z DEBUG jellyfin_mw::viewer: mw: sign in — a device signed in for the person origin=127.0.0.1:8096 viewer_user=6682b392349a48cf9559cac6295d0fff
+2026-10-08T18:10:33.618670Z  WARN jellyfin_mw::answer: mw: planted — answered with no script, so no stored sign-in
+2026-10-08T18:10:33.618684Z  INFO jellyfin_mw::answer: mw: answered the door — the person's token, its authorization and the stored sign-in key=e0bbe6435b6ec390ee63c608fdb4dc50aca4880d2899a79620f34e3940378f76 user=6682b392349a48cf9559cac6295d0fff device=svrngs-e0bbe6435b6ec390
+2026-10-08T18:10:36.566489Z  INFO jellyfin_mw::answer: mw: the door asks who a person is to Jellyfin key=c702768d928650766ea6ed39bd75df5c094112a52e180e622344d2fe4c674239 person=Bo
+2026-10-08T18:10:36.566569Z  INFO jellyfin_mw::people: mw: a key not seen by this process — finding or making its person's account key=c702768d928650766ea6ed39bd75df5c094112a52e180e622344d2fe4c674239 person=Bo user=Bo-c702768d92865076
+2026-10-08T18:10:36.688630Z DEBUG jellyfin_mw::viewer: mw: provision — no account for this person on this origin, created one viewer_user=0dff1a83a776473fa5997990ced3d24b name="Bo-c702768d92865076"
+2026-10-08T18:10:36.701813Z  INFO jellyfin_mw::viewer: mw: provision — the person's read-only account made and its policy read back origin=127.0.0.1:8096 viewer_user=0dff1a83a776473fa5997990ced3d24b name="Bo-c702768d92865076"
+2026-10-08T18:10:36.701938Z  INFO jellyfin_mw::people: mw: signing the person's device in key=c702768d928650766ea6ed39bd75df5c094112a52e180e622344d2fe4c674239 user=Bo-c702768d92865076 device=svrngs-c702768d92865076
+2026-10-08T18:10:36.820092Z DEBUG jellyfin_mw::viewer: mw: sign in — a device signed in for the person origin=127.0.0.1:8096 viewer_user=0dff1a83a776473fa5997990ced3d24b
+2026-10-08T18:10:36.820215Z  WARN jellyfin_mw::answer: mw: planted — answered with no script, so no stored sign-in
+2026-10-08T18:10:36.820245Z  INFO jellyfin_mw::answer: mw: answered the door — the person's token, its authorization and the stored sign-in key=c702768d928650766ea6ed39bd75df5c094112a52e180e622344d2fe4c674239 user=0dff1a83a776473fa5997990ced3d24b device=svrngs-c702768d92865076
+
+## mw-mw-computer-chromium-plant-one-device.log
+2026-10-08T18:11:27.427074Z  WARN jellyfin_mw: mw: a planted failure is on — a check's run, never a lend plant=OneDevice
+2026-10-08T18:11:28.684619Z  INFO jellyfin_mw::answer: mw: the door asks who a person is to Jellyfin key=eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee person=everyone
+2026-10-08T18:11:28.684770Z  INFO jellyfin_mw::people: mw: a key not seen by this process — finding or making its person's account key=eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee person=everyone user=everyone-eeeeeeeeeeeeeeee
+2026-10-08T18:11:28.915182Z DEBUG jellyfin_mw::viewer: mw: provision — no account for this person on this origin, created one viewer_user=cdf17b37ca82433cb068923ef45ff37c name="everyone-eeeeeeeeeeeeeeee"
+2026-10-08T18:11:28.955999Z  INFO jellyfin_mw::viewer: mw: provision — the person's read-only account made and its policy read back origin=127.0.0.1:8096 viewer_user=cdf17b37ca82433cb068923ef45ff37c name="everyone-eeeeeeeeeeeeeeee"
+2026-10-08T18:11:28.956300Z  INFO jellyfin_mw::people: mw: signing the person's device in key=eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee user=everyone-eeeeeeeeeeeeeeee device=svrngs-mw-one-device
+2026-10-08T18:11:29.240053Z DEBUG jellyfin_mw::viewer: mw: sign in — a device signed in for the person origin=127.0.0.1:8096 viewer_user=cdf17b37ca82433cb068923ef45ff37c
+2026-10-08T18:11:29.240202Z  INFO jellyfin_mw::answer: mw: answered the door — the person's token, its authorization and the stored sign-in key=eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee user=cdf17b37ca82433cb068923ef45ff37c device=svrngs-mw-one-device
+2026-10-08T18:11:39.672389Z  INFO jellyfin_mw::answer: mw: the door asks who a person is to Jellyfin key=eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee person=everyone
+2026-10-08T18:11:39.672514Z  INFO jellyfin_mw::answer: mw: answered the door — the person's token, its authorization and the stored sign-in key=eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee user=cdf17b37ca82433cb068923ef45ff37c device=svrngs-mw-one-device
+
+## mw-mw-computer-chromium.log
+2026-10-08T18:12:38.825197Z  INFO jellyfin_mw::answer: mw: the door asks who a person is to Jellyfin key=e0bbe6435b6ec390ee63c608fdb4dc50aca4880d2899a79620f34e3940378f76 person=Alex
+2026-10-08T18:12:38.825375Z  INFO jellyfin_mw::people: mw: a key not seen by this process — finding or making its person's account key=e0bbe6435b6ec390ee63c608fdb4dc50aca4880d2899a79620f34e3940378f76 person=Alex user=Alex-e0bbe6435b6ec390
+2026-10-08T18:12:38.957671Z DEBUG jellyfin_mw::viewer: mw: provision — no account for this person on this origin, created one viewer_user=0f48c7e5dfad4b438f9866752412a899 name="Alex-e0bbe6435b6ec390"
+2026-10-08T18:12:39.005519Z  INFO jellyfin_mw::viewer: mw: provision — the person's read-only account made and its policy read back origin=127.0.0.1:8096 viewer_user=0f48c7e5dfad4b438f9866752412a899 name="Alex-e0bbe6435b6ec390"
+2026-10-08T18:12:39.005835Z  INFO jellyfin_mw::people: mw: signing the person's device in key=e0bbe6435b6ec390ee63c608fdb4dc50aca4880d2899a79620f34e3940378f76 user=Alex-e0bbe6435b6ec390 device=svrngs-e0bbe6435b6ec390
+2026-10-08T18:12:39.151394Z DEBUG jellyfin_mw::viewer: mw: sign in — a device signed in for the person origin=127.0.0.1:8096 viewer_user=0f48c7e5dfad4b438f9866752412a899
+2026-10-08T18:12:39.151785Z  INFO jellyfin_mw::answer: mw: answered the door — the person's token, its authorization and the stored sign-in key=e0bbe6435b6ec390ee63c608fdb4dc50aca4880d2899a79620f34e3940378f76 user=0f48c7e5dfad4b438f9866752412a899 device=svrngs-e0bbe6435b6ec390
+2026-10-08T18:12:44.068360Z  INFO jellyfin_mw::answer: mw: the door asks who a person is to Jellyfin key=c702768d928650766ea6ed39bd75df5c094112a52e180e622344d2fe4c674239 person=Bo
+2026-10-08T18:12:44.068427Z  INFO jellyfin_mw::people: mw: a key not seen by this process — finding or making its person's account key=c702768d928650766ea6ed39bd75df5c094112a52e180e622344d2fe4c674239 person=Bo user=Bo-c702768d92865076
+2026-10-08T18:12:44.165250Z DEBUG jellyfin_mw::viewer: mw: provision — no account for this person on this origin, created one viewer_user=d5a270a0f11b4233af5f180b991c5b5b name="Bo-c702768d92865076"
+2026-10-08T18:12:44.175543Z  INFO jellyfin_mw::viewer: mw: provision — the person's read-only account made and its policy read back origin=127.0.0.1:8096 viewer_user=d5a270a0f11b4233af5f180b991c5b5b name="Bo-c702768d92865076"
+2026-10-08T18:12:44.175655Z  INFO jellyfin_mw::people: mw: signing the person's device in key=c702768d928650766ea6ed39bd75df5c094112a52e180e622344d2fe4c674239 user=Bo-c702768d92865076 device=svrngs-c702768d92865076
+2026-10-08T18:12:44.266797Z DEBUG jellyfin_mw::viewer: mw: sign in — a device signed in for the person origin=127.0.0.1:8096 viewer_user=d5a270a0f11b4233af5f180b991c5b5b
+2026-10-08T18:12:44.266931Z  INFO jellyfin_mw::answer: mw: answered the door — the person's token, its authorization and the stored sign-in key=c702768d928650766ea6ed39bd75df5c094112a52e180e622344d2fe4c674239 user=d5a270a0f11b4233af5f180b991c5b5b device=svrngs-c702768d92865076
+
+## mw-mw-computer-webkit.log
+2026-10-08T18:13:21.250177Z  INFO jellyfin_mw::answer: mw: the door asks who a person is to Jellyfin key=e0bbe6435b6ec390ee63c608fdb4dc50aca4880d2899a79620f34e3940378f76 person=Alex
+2026-10-08T18:13:21.250262Z  INFO jellyfin_mw::people: mw: a key not seen by this process — finding or making its person's account key=e0bbe6435b6ec390ee63c608fdb4dc50aca4880d2899a79620f34e3940378f76 person=Alex user=Alex-e0bbe6435b6ec390
+2026-10-08T18:13:21.398216Z DEBUG jellyfin_mw::viewer: mw: provision — no account for this person on this origin, created one viewer_user=759fa5439d1c474aaec0b37b9839d9ce name="Alex-e0bbe6435b6ec390"
+2026-10-08T18:13:21.408191Z  INFO jellyfin_mw::viewer: mw: provision — the person's read-only account made and its policy read back origin=127.0.0.1:8096 viewer_user=759fa5439d1c474aaec0b37b9839d9ce name="Alex-e0bbe6435b6ec390"
+2026-10-08T18:13:21.408308Z  INFO jellyfin_mw::people: mw: signing the person's device in key=e0bbe6435b6ec390ee63c608fdb4dc50aca4880d2899a79620f34e3940378f76 user=Alex-e0bbe6435b6ec390 device=svrngs-e0bbe6435b6ec390
+2026-10-08T18:13:21.529856Z DEBUG jellyfin_mw::viewer: mw: sign in — a device signed in for the person origin=127.0.0.1:8096 viewer_user=759fa5439d1c474aaec0b37b9839d9ce
+2026-10-08T18:13:21.529948Z  INFO jellyfin_mw::answer: mw: answered the door — the person's token, its authorization and the stored sign-in key=e0bbe6435b6ec390ee63c608fdb4dc50aca4880d2899a79620f34e3940378f76 user=759fa5439d1c474aaec0b37b9839d9ce device=svrngs-e0bbe6435b6ec390
+2026-10-08T18:13:26.264296Z  INFO jellyfin_mw::answer: mw: the door asks who a person is to Jellyfin key=c702768d928650766ea6ed39bd75df5c094112a52e180e622344d2fe4c674239 person=Bo
+2026-10-08T18:13:26.264359Z  INFO jellyfin_mw::people: mw: a key not seen by this process — finding or making its person's account key=c702768d928650766ea6ed39bd75df5c094112a52e180e622344d2fe4c674239 person=Bo user=Bo-c702768d92865076
+2026-10-08T18:13:26.413600Z DEBUG jellyfin_mw::viewer: mw: provision — no account for this person on this origin, created one viewer_user=584ffc377e6d46ecafa8248145fa6f65 name="Bo-c702768d92865076"
+2026-10-08T18:13:26.423712Z  INFO jellyfin_mw::viewer: mw: provision — the person's read-only account made and its policy read back origin=127.0.0.1:8096 viewer_user=584ffc377e6d46ecafa8248145fa6f65 name="Bo-c702768d92865076"
+2026-10-08T18:13:26.423808Z  INFO jellyfin_mw::people: mw: signing the person's device in key=c702768d928650766ea6ed39bd75df5c094112a52e180e622344d2fe4c674239 user=Bo-c702768d92865076 device=svrngs-c702768d92865076
+2026-10-08T18:13:26.558931Z DEBUG jellyfin_mw::viewer: mw: sign in — a device signed in for the person origin=127.0.0.1:8096 viewer_user=584ffc377e6d46ecafa8248145fa6f65
+2026-10-08T18:13:26.559022Z  INFO jellyfin_mw::answer: mw: answered the door — the person's token, its authorization and the stored sign-in key=c702768d928650766ea6ed39bd75df5c094112a52e180e622344d2fe4c674239 user=584ffc377e6d46ecafa8248145fa6f65 device=svrngs-c702768d92865076
+
+## mw-mw-phone-chromium.log
+2026-10-08T18:14:08.036163Z  INFO jellyfin_mw::answer: mw: the door asks who a person is to Jellyfin key=432d14aabea05f7f5dc7c12f0c6899181df66961195c4fd264a83e899099e350 person=Ana
+2026-10-08T18:14:08.036503Z  INFO jellyfin_mw::people: mw: a key not seen by this process — finding or making its person's account key=432d14aabea05f7f5dc7c12f0c6899181df66961195c4fd264a83e899099e350 person=Ana user=Ana-432d14aabea05f7f
+2026-10-08T18:14:08.161706Z DEBUG jellyfin_mw::viewer: mw: provision — no account for this person on this origin, created one viewer_user=ce2b8c4a211644f282c52493dc1358cd name="Ana-432d14aabea05f7f"
+2026-10-08T18:14:08.181557Z  INFO jellyfin_mw::viewer: mw: provision — the person's read-only account made and its policy read back origin=127.0.0.1:8096 viewer_user=ce2b8c4a211644f282c52493dc1358cd name="Ana-432d14aabea05f7f"
+2026-10-08T18:14:08.181802Z  INFO jellyfin_mw::people: mw: signing the person's device in key=432d14aabea05f7f5dc7c12f0c6899181df66961195c4fd264a83e899099e350 user=Ana-432d14aabea05f7f device=svrngs-432d14aabea05f7f
+2026-10-08T18:14:08.316153Z DEBUG jellyfin_mw::viewer: mw: sign in — a device signed in for the person origin=127.0.0.1:8096 viewer_user=ce2b8c4a211644f282c52493dc1358cd
+2026-10-08T18:14:08.316372Z  INFO jellyfin_mw::answer: mw: answered the door — the person's token, its authorization and the stored sign-in key=432d14aabea05f7f5dc7c12f0c6899181df66961195c4fd264a83e899099e350 user=ce2b8c4a211644f282c52493dc1358cd device=svrngs-432d14aabea05f7f
+2026-10-08T18:14:25.580839Z  INFO jellyfin_mw::answer: mw: the door asks who a person is to Jellyfin key=5fcf1ccd8205ec751a3b4def2f3d634cb0a1291b97405a70dc97be80f177aaa4 person=Ben
+2026-10-08T18:14:25.581009Z  INFO jellyfin_mw::people: mw: a key not seen by this process — finding or making its person's account key=5fcf1ccd8205ec751a3b4def2f3d634cb0a1291b97405a70dc97be80f177aaa4 person=Ben user=Ben-5fcf1ccd8205ec75
+2026-10-08T18:14:25.720961Z DEBUG jellyfin_mw::viewer: mw: provision — no account for this person on this origin, created one viewer_user=849d9ebcb9454dd9bd8ac665cbf68861 name="Ben-5fcf1ccd8205ec75"
+2026-10-08T18:14:25.733523Z  INFO jellyfin_mw::viewer: mw: provision — the person's read-only account made and its policy read back origin=127.0.0.1:8096 viewer_user=849d9ebcb9454dd9bd8ac665cbf68861 name="Ben-5fcf1ccd8205ec75"
+2026-10-08T18:14:25.733627Z  INFO jellyfin_mw::people: mw: signing the person's device in key=5fcf1ccd8205ec751a3b4def2f3d634cb0a1291b97405a70dc97be80f177aaa4 user=Ben-5fcf1ccd8205ec75 device=svrngs-5fcf1ccd8205ec75
+2026-10-08T18:14:25.849849Z DEBUG jellyfin_mw::viewer: mw: sign in — a device signed in for the person origin=127.0.0.1:8096 viewer_user=849d9ebcb9454dd9bd8ac665cbf68861
+2026-10-08T18:14:25.850216Z  INFO jellyfin_mw::answer: mw: answered the door — the person's token, its authorization and the stored sign-in key=5fcf1ccd8205ec751a3b4def2f3d634cb0a1291b97405a70dc97be80f177aaa4 user=849d9ebcb9454dd9bd8ac665cbf68861 device=svrngs-5fcf1ccd8205ec75
+
+## mw-mw-phone-webkit.log
+2026-10-08T18:15:25.774709Z  INFO jellyfin_mw::answer: mw: the door asks who a person is to Jellyfin key=e344c95cf072403a223e64d34fa3bfa0fe490d45a3ca727dd7ebfeccff61600e person=Cleo
+2026-10-08T18:15:25.775028Z  INFO jellyfin_mw::people: mw: a key not seen by this process — finding or making its person's account key=e344c95cf072403a223e64d34fa3bfa0fe490d45a3ca727dd7ebfeccff61600e person=Cleo user=Cleo-e344c95cf072403a
+2026-10-08T18:15:25.900488Z DEBUG jellyfin_mw::viewer: mw: provision — no account for this person on this origin, created one viewer_user=6d36c88710b54af094ac9f39830bf89a name="Cleo-e344c95cf072403a"
+2026-10-08T18:15:25.911871Z  INFO jellyfin_mw::viewer: mw: provision — the person's read-only account made and its policy read back origin=127.0.0.1:8096 viewer_user=6d36c88710b54af094ac9f39830bf89a name="Cleo-e344c95cf072403a"
+2026-10-08T18:15:25.912096Z  INFO jellyfin_mw::people: mw: signing the person's device in key=e344c95cf072403a223e64d34fa3bfa0fe490d45a3ca727dd7ebfeccff61600e user=Cleo-e344c95cf072403a device=svrngs-e344c95cf072403a
+2026-10-08T18:15:26.030162Z DEBUG jellyfin_mw::viewer: mw: sign in — a device signed in for the person origin=127.0.0.1:8096 viewer_user=6d36c88710b54af094ac9f39830bf89a
+2026-10-08T18:15:26.030253Z  INFO jellyfin_mw::answer: mw: answered the door — the person's token, its authorization and the stored sign-in key=e344c95cf072403a223e64d34fa3bfa0fe490d45a3ca727dd7ebfeccff61600e user=6d36c88710b54af094ac9f39830bf89a device=svrngs-e344c95cf072403a
+2026-10-08T18:15:48.097874Z  INFO jellyfin_mw::answer: mw: the door asks who a person is to Jellyfin key=a9eedd6cac061bd3597f348ac62134f0c08ead8746fd13268554004c9c7fd1fe person=Dara
+2026-10-08T18:15:48.098684Z  INFO jellyfin_mw::people: mw: a key not seen by this process — finding or making its person's account key=a9eedd6cac061bd3597f348ac62134f0c08ead8746fd13268554004c9c7fd1fe person=Dara user=Dara-a9eedd6cac061bd3
+2026-10-08T18:15:48.232710Z DEBUG jellyfin_mw::viewer: mw: provision — no account for this person on this origin, created one viewer_user=a798ea0d9f6e418e9e6a83940359dc6b name="Dara-a9eedd6cac061bd3"
+2026-10-08T18:15:48.250937Z  INFO jellyfin_mw::viewer: mw: provision — the person's read-only account made and its policy read back origin=127.0.0.1:8096 viewer_user=a798ea0d9f6e418e9e6a83940359dc6b name="Dara-a9eedd6cac061bd3"
+2026-10-08T18:15:48.251057Z  INFO jellyfin_mw::people: mw: signing the person's device in key=a9eedd6cac061bd3597f348ac62134f0c08ead8746fd13268554004c9c7fd1fe user=Dara-a9eedd6cac061bd3 device=svrngs-a9eedd6cac061bd3
+2026-10-08T18:15:48.397949Z DEBUG jellyfin_mw::viewer: mw: sign in — a device signed in for the person origin=127.0.0.1:8096 viewer_user=a798ea0d9f6e418e9e6a83940359dc6b
+2026-10-08T18:15:48.398113Z  INFO jellyfin_mw::answer: mw: answered the door — the person's token, its authorization and the stored sign-in key=a9eedd6cac061bd3597f348ac62134f0c08ead8746fd13268554004c9c7fd1fe user=a798ea0d9f6e418e9e6a83940359dc6b device=svrngs-a9eedd6cac061bd3

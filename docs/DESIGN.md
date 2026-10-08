@@ -555,7 +555,11 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
      the socket's query now does. The cost: one person in two browsers is
      one device to Jellyfin, where the spike kept each client's, since a
      token's session stays the device it was signed in under
-     (`mw-1/README.md:14-26`).
+     (`mw-1/README.md:14-26`). Landed (mwp-3): the script also names that
+     device as jellyfin-web's own (`_deviceId2`), so its socket names it;
+     mw-2's four pairs and three plants passed and were caught as before,
+     and the middleware is 669 lines by bar 2's count, past its prediction
+     — none of them the door's pieces (`demo/runs/mwp/2026-10-08/README.md`).
    - *The inventory* (AGENTS.md 11), upstream read at commonwealth-ai
      `e93aa6881` (HEAD, 2026-10-08); `git diff d4356181c e93aa6881` over
      each file below prints nothing, so the spike's inventory stands
