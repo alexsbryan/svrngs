@@ -133,6 +133,20 @@
       const ok = me.cookie.includes(`canary-${who}=`) && me.cookie.includes(`canary-${who}-hidden=1`) && now.includes(`canary-${who}=`) && !now.includes('hidden');
       return { ok, saw: `sent ${me.cookie}; the page read ${now}`, who };
     }),
+    // Signed in by the lend (mwp-4; answer.mjs): the token the page stored,
+    // as a query; the bearer the door sets; and a redirect carrying the
+    // token. Each names one account, and the page holds no token but the
+    // one it stored, the door's stand-in.
+    account: judged(async () => {
+      const stored = localStorage.getItem('canary-token');
+      const query = await (await fetch(`whoami?token=${stored}`)).json();
+      const bearer = await (await fetch('whoami')).json();
+      const res = await fetch('account');
+      const moved = await res.json();
+      const tokens = [query.token, bearer.token, moved.token, new URL(res.url).searchParams.get('token')];
+      const ok = Boolean(query.who) && bearer.who === query.who && moved.who === query.who && tokens.every((t) => t === stored);
+      return { ok, saw: `stored ${stored}; by query ${query.who}, by bearer ${bearer.who}, redirected to ${res.url} as ${moved.who}; tokens ${tokens.join(' ')}`, who: query.who };
+    }),
     // A post an app takes only from its own address, as Django's origin
     // check does (Paperless-ngx).
     // Asked twice: by fetch, and by a form, whose post a browser sends as

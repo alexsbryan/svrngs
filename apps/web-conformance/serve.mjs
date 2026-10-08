@@ -6,9 +6,12 @@
 // browser; crates/svrngs-node/tests/conformance.rs lends two of it, Sam's
 // and Bo's, and judges each route in each way.
 //
-//   node apps/web-conformance/serve.mjs <who>
+//   node apps/web-conformance/serve.mjs <who> [<lender's key>]
 //
 // Listens on 127.0.0.1, any port, and prints `{"port": N}`. No dependency.
+// Given the lender's key, it keeps accounts of its own, a token each, as an
+// app that signs its people in does (mwp-4; `answer.mjs` signs each person
+// in to them through the door).
 //
 // Routes:
 //   GET  /            its page, under COOP and COEP and a script policy by
@@ -31,13 +34,25 @@
 //   POST /guarded     refused unless its `Origin` is its own address, as
 //                     an app checking a post's origin against its Host does
 //   GET  /me          the cookies it was sent
-//   GET  /seen        every request it took: path, cookies, person and key
+//   GET  /seen        every request it took: path, cookies, person, key and
+//                     the account it was signed in as
+//   POST /accounts    `{"name"}`, by the lender's key as a bearer: that
+//                     account's token, the account made if it is new
+//   GET  /whoami      the account a request's `?token=`, else its bearer
+//                     `authorization`, names, and that token, in its body
+//   GET  /account     a redirect to `/whoami?token=<the bearer's token>`
 import { createHash, randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import http from 'node:http';
 import { Readable } from 'node:stream';
 
 const who = process.argv[2] ?? 'canary';
+const lender = process.argv[3];
+const accounts = new Map();
+// The token a request signs in with, by its query or its bearer, and the
+// account it names, or ''.
+const tokenOf = (req) => new URL(req.url, 'http://x').searchParams.get('token') ?? req.headers.authorization?.replace(/^Bearer /, '') ?? '';
+const nameOf = (token) => [...accounts].find(([, t]) => t === token)?.[0] ?? '';
 const SIZE = 64 * 1024 * 1024;
 const byte = (i) => (i * 7 + (i >> 10)) & 255;
 const seen = [];
@@ -123,7 +138,7 @@ self.addEventListener('fetch', (e) => {
 
 const server = http.createServer((req, res) => {
   const path = new URL(req.url, 'http://x').pathname;
-  seen.push({ path, cookie: req.headers.cookie ?? '', person: req.headers['x-svrngs-person'] ?? '', key: req.headers['x-svrngs-key'] ?? '', secret: Boolean(req.headers.authorization) });
+  seen.push({ path, cookie: req.headers.cookie ?? '', person: req.headers['x-svrngs-person'] ?? '', key: req.headers['x-svrngs-key'] ?? '', secret: Boolean(req.headers.authorization), signed: nameOf(tokenOf(req)) });
   const own = [`localhost:${server.address().port}`, `127.0.0.1:${server.address().port}`];
   if (req.method === 'POST' && path === '/upload') {
     const sha = createHash('sha256');
@@ -145,7 +160,23 @@ const server = http.createServer((req, res) => {
       'set-cookie': [`canary-${who}=${token}; Path=/`, `canary-${who}-hidden=1; Path=/; HttpOnly`],
     });
   }
+  if (req.method === 'POST' && path === '/accounts') {
+    if (!lender || req.headers.authorization !== `Bearer ${lender}`) return sends(res, 403, 'text/plain', 'not the lender');
+    let body = '';
+    req.on('data', (d) => (body += d));
+    return req.on('end', () => {
+      const { name } = JSON.parse(body);
+      if (!accounts.has(name)) accounts.set(name, randomBytes(16).toString('hex'));
+      sends(res, 200, 'application/json', JSON.stringify({ token: accounts.get(name) }));
+    });
+  }
   switch (path) {
+    case '/whoami': {
+      const token = tokenOf(req);
+      return sends(res, 200, 'application/json', JSON.stringify({ who: nameOf(token), token }));
+    }
+    case '/account':
+      return sends(res, 302, 'text/plain', '', { location: `/whoami?token=${tokenOf(req)}` });
     case '/': {
       const nonce = randomBytes(12).toString('base64');
       return sends(res, 200, 'text/html; charset=utf-8', page(nonce), {
@@ -182,7 +213,7 @@ const server = http.createServer((req, res) => {
 
 // A WebSocket echo (RFC 6455), by hand: each text or binary message back.
 server.on('upgrade', (req, sock, head) => {
-  seen.push({ path: req.url, cookie: req.headers.cookie ?? '', person: req.headers['x-svrngs-person'] ?? '', key: req.headers['x-svrngs-key'] ?? '', secret: Boolean(req.headers.authorization) });
+  seen.push({ path: req.url, cookie: req.headers.cookie ?? '', person: req.headers['x-svrngs-person'] ?? '', key: req.headers['x-svrngs-key'] ?? '', secret: Boolean(req.headers.authorization), signed: nameOf(tokenOf(req)) });
   if (req.url !== '/ws' || !req.headers['sec-websocket-key']) return sock.destroy();
   const accept = createHash('sha1').update(`${req.headers['sec-websocket-key']}258EAFA5-E914-47DA-95CA-C5AB0DC85B11`).digest('base64');
   sock.write(`HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ${accept}\r\n\r\n`);
