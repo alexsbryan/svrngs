@@ -2,14 +2,17 @@
 
 For whoever lends Jellyfin. Lent as it comes, `svrngs share 8096`, Jellyfin
 asks each person to sign in once, with an account you make them. Run this
-program in front of it instead and nobody signs in: each person who opens
-Jellyfin from the group's list is let straight in as themselves, on a
-computer or a phone, and two people watching at once stay apart. Nobody
-who comes gets your Jellyfin password or anything that stands for it.
-Measured on one computer (`demo/runs/mw/2026-10-08/`).
+program beside it and name it when you lend Jellyfin, and nobody signs in:
+each person who opens Jellyfin from the group's list is let straight in as
+themselves, on a computer or a phone, and two people watching at once stay
+apart. Nobody who comes gets your Jellyfin password or anything that
+stands for it, nor even their own account's. Measured on one computer
+(`demo/runs/mwp/2026-10-08/`).
 
 It runs on your computer only, beside Jellyfin, and you start and stop it
-yourself; svrngs does neither.
+yourself; svrngs does neither. svrngs asks it who each person is the first
+time they open Jellyfin; it makes them an account and answers. svrngs does
+the rest.
 
 **Once: build it.** With Rust's `cargo`, from this repository:
 
@@ -22,24 +25,25 @@ right, then Dashboard, "API Keys" and +; name it `svrngs`, and save. Copy
 the code it lists. It lets the program make an account for each person who
 comes; it never leaves your computer.
 
-**Each time: run it, and lend it.** Start it, paste the code, and press
-Enter:
+**Each time: run it.** Start it, paste the code, and press Enter:
 
     apps/jellyfin/mw/target/release/jellyfin-mw --listen 127.0.0.1:8097
 
-It says it is listening on port 8097, and keeps running. Then lend its port,
-not Jellyfin's — if Jellyfin is lent already, `svrngs unshare jellyfin`
-first:
+It says it is listening on port 8097, and keeps running.
 
-    svrngs share 8097 --kind jellyfin
+**Once: lend Jellyfin, naming it.** Lend Jellyfin's own port, and give
+`--sign-in` the program's — if Jellyfin is lent already, `svrngs unshare
+jellyfin` first:
 
-`share` then says to make each person an account in Jellyfin's pages: with
-this program running, skip that, it makes them. Each is named for the
-person, hidden from Jellyfin's sign-in page, can watch every library, and
-is no administrator and can delete nothing. They are in Dashboard, Users.
+    svrngs share 8096 --sign-in 8097
 
-If your Jellyfin is not at port 8096, add `--jellyfin 127.0.0.1:<its
-port>`. While the program is stopped, the lend does not open; start it
-again with the same code. (A restart keeps each person's account; that
-it signs them back in is not yet measured, `demo/runs/mw/2026-10-08/README.md`,
-follow-up 4.)
+`share` asks you no password and says each person is signed in by what
+answers on port 8097, with nothing typed. Each person's account is named
+for them, can watch every library, and is no administrator and can delete
+nothing; they are in Dashboard, Users.
+
+If your Jellyfin is not at port 8096, give `share` its port, and the
+program `--jellyfin 127.0.0.1:<its port>`. Someone opening Jellyfin for the
+first time while the program is stopped is told Jellyfin could not sign
+them in; start it again with the same code. A restart keeps each person's
+account.

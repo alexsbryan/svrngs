@@ -1,8 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! The one owner of every person's account and tokens: a task the
-//! forwards ask by message (RUST_ARCH: ownership is a tree, no shared
-//! mutable state). Asks are answered one at a time, so two first requests
-//! from one person make one account, not two.
+//! The one owner of every person's account: a task the answers ask by
+//! message (RUST_ARCH: ownership is a tree, no shared mutable state). Asks
+//! are answered one at a time, so two asks for one person make one
+//! account, not two.
+//!
+//! Each ask signs the person's device in afresh. The door asks again only
+//! after its own restart, or after Jellyfin answered `401` to the token it
+//! kept (crates/svrngs-node/src/door/sign_in.rs, `forget`): either way the
+//! token answered before is lost to it or revoked, and a sign-in on the
+//! same device puts a new one in its place.
 
 use std::collections::HashMap;
 use std::net::SocketAddr;
@@ -11,8 +17,9 @@ use tokio::sync::{mpsc, oneshot};
 
 use crate::person::{Device, PersonKey, Who};
 use crate::viewer::{self, Viewer};
+use crate::Plant;
 
-/// What a forward holds to ask the owner.
+/// What an answer holds to ask the owner.
 #[derive(Clone)]
 pub(crate) struct People {
     ask: mpsc::Sender<Ask>,
@@ -20,66 +27,48 @@ pub(crate) struct People {
 
 struct Ask {
     who: Who,
-    on: On,
     answer: oneshot::Sender<Result<Signed, String>>,
 }
 
-/// Which device a request is to be signed in on.
-#[derive(Clone, Debug)]
-pub(crate) enum On {
-    /// The device the request names.
-    Device(Device),
-    /// The person's last device that named itself: a request asks to be
-    /// signed in by its query's credential and names no device, as
-    /// jellyfin-web 12's socket does (`/socket?ApiKey=…`, mw-2's first run:
-    /// refused 403, 17 times for each person, while signed in as nobody;
-    /// demo/runs/mw/2026-10-08/mw-2/README.md). One person on
-    /// two browsers at once has their socket on the last one's session.
-    Last,
-    /// None: signed in as nobody.
-    Nobody,
-}
-
-/// What a request is signed in as: the person's account, and the device
-/// and the token it is signed in on, if any.
+/// A person signed in: their account's id, which jellyfin-web's stored
+/// sign-in names (page.rs), the device, and the token Jellyfin holds to it.
 #[derive(Clone, Debug)]
 pub(crate) struct Signed {
-    /// The account's id, which jellyfin-web's stored sign-in names (page.rs).
     pub(crate) user: String,
-    pub(crate) on: Option<(Device, String)>,
-}
-
-/// A person this process has made or found, each of their devices and the
-/// token it is signed in with, by `DeviceId`, and the last that named itself.
-struct Known {
-    viewer: Viewer,
-    devices: HashMap<String, (Device, String)>,
-    last: Option<String>,
+    pub(crate) device: Device,
+    pub(crate) token: String,
 }
 
 impl People {
     /// Start the owner. `elevated` is the lender's key, the only thing it
     /// makes accounts with; it never leaves the owner but to Jellyfin.
-    pub(crate) fn start(jellyfin: SocketAddr, elevated: Vec<(String, String)>) -> People {
+    pub(crate) fn start(jellyfin: SocketAddr, elevated: Vec<(String, String)>, plant: Option<Plant>) -> People {
         let (ask, mut asked) = mpsc::channel::<Ask>(64);
         tokio::spawn(async move {
-            let mut known: HashMap<PersonKey, Known> = HashMap::new();
+            let mut known: HashMap<PersonKey, Viewer> = HashMap::new();
+            // Under `one-device`, the one device's sign-in, made once and
+            // answered to everyone, as the spike's plant did.
+            let mut one: Option<Signed> = None;
             while let Some(a) = asked.recv().await {
-                let signed = signed(&mut known, jellyfin, &elevated, &a.who, a.on).await;
+                let signed = match (&one, plant) {
+                    (Some(s), Some(Plant::OneDevice)) => Ok(s.clone()),
+                    _ => signed(&mut known, jellyfin, &elevated, &a.who, plant).await,
+                };
+                if let (Ok(s), Some(Plant::OneDevice)) = (&signed, plant) {
+                    one = Some(s.clone());
+                }
                 let _ = a.answer.send(signed);
             }
         });
         People { ask }
     }
 
-    /// The account `who` is signed in as, and the device and token they are
-    /// signed in on, their account made and the device signed in first if
-    /// this process has not yet; on no device, their account made and no
-    /// token.
-    pub(crate) async fn signed(&self, who: Who, on: On) -> Result<Signed, String> {
+    /// `who` signed in: their account made first if this process has not
+    /// yet, then their own device signed in.
+    pub(crate) async fn signed(&self, who: Who) -> Result<Signed, String> {
         let (answer, answered) = oneshot::channel();
         self.ask
-            .send(Ask { who, on, answer })
+            .send(Ask { who, answer })
             .await
             .map_err(|_| "the owner of the accounts has stopped".to_string())?;
         answered
@@ -89,57 +78,30 @@ impl People {
 }
 
 async fn signed(
-    known: &mut HashMap<PersonKey, Known>,
+    known: &mut HashMap<PersonKey, Viewer>,
     jellyfin: SocketAddr,
     elevated: &[(String, String)],
     who: &Who,
-    on: On,
+    plant: Option<Plant>,
 ) -> Result<Signed, String> {
     if !known.contains_key(&who.key) {
         let name = viewer::user_name(&who.name, who.key.as_str());
         tracing::info!(key = %who.key.as_str(), person = %who.name, user = %name,
             "mw: a key not seen by this process — finding or making its person's account");
         let viewer = viewer::provision(jellyfin, elevated, &name).await?;
-        known.insert(
-            who.key.clone(),
-            Known {
-                viewer,
-                devices: HashMap::new(),
-                last: None,
-            },
-        );
+        known.insert(who.key.clone(), viewer);
     }
-    let person = known.get_mut(&who.key).expect("inserted above when absent");
-    let user = person.viewer.id.clone();
-    let device = match on {
-        On::Device(d) => d,
-        On::Last => {
-            let last = person.last.as_ref().and_then(|id| person.devices.get(id));
-            tracing::debug!(key = %who.key.as_str(), device = ?last.map(|(d, _)| &d.id),
-                "mw: a request naming no device asks to be signed in — on the person's last device, if any");
-            return Ok(Signed {
-                user,
-                on: last.cloned(),
-            });
-        }
-        On::Nobody => return Ok(Signed { user, on: None }),
+    let viewer = known.get(&who.key).expect("inserted above when absent");
+    let device = match plant {
+        Some(Plant::OneDevice) => Device::one(),
+        _ => Device::of(who),
     };
-    person.last = Some(device.id.clone());
-    if let Some(on) = person.devices.get(&device.id) {
-        tracing::debug!(key = %who.key.as_str(), device = %device.id, "mw: the person's device already signed in");
-        return Ok(Signed {
-            user,
-            on: Some(on.clone()),
-        });
-    }
-    tracing::info!(key = %who.key.as_str(), user = %person.viewer.name, device = %device.id,
-        "mw: a device of the person's not yet signed in — signing it in");
-    let token = viewer::sign_in(jellyfin, &person.viewer, &device.header()).await?;
-    person
-        .devices
-        .insert(device.id.clone(), (device.clone(), token.clone()));
+    tracing::info!(key = %who.key.as_str(), user = %viewer.name, device = %device.id,
+        "mw: signing the person's device in");
+    let token = viewer::sign_in(jellyfin, viewer, &device.header()).await?;
     Ok(Signed {
-        user,
-        on: Some((device, token)),
+        user: viewer.id.clone(),
+        device,
+        token,
     })
 }

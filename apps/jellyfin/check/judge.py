@@ -25,7 +25,9 @@ against mw-0's bars instead (demo/runs/mw/2026-10-08/README.md §3):
 3. apart — while one seeks the other is left alone (drive.mjs `judge`);
    afterwards each is still signed in as an account of their own, the one
    the middleware named for them (<their name>-<16 hex>); and Jellyfin
-   holds each browser's own device in a session of that account's.
+   holds the device jellyfin-web names (its `_deviceId2`) in a session of
+   that account's, the two people's devices apart. Through the sign-in
+   (mwp-3) that device is the person's own, which its script names.
 
 Each bar is passed, failed, or could-not-judge (what it reads never
 happened, as seeks when nobody played); a run with no file never ran.

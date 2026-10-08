@@ -20,8 +20,9 @@
 #   check.sh pair  <scratch> <out> <way> <engine>  two people new to it through the lend, way computer|phone,
 #                                                  engine chromium|webkit: from the list to a playing film,
 #                                                  seeks, the other watched; writes <out>/pair-<way>-<engine>.json.
-#                                                  With MW=1 (mw-2), after `mw`: through the middleware's lend,
-#                                                  started afresh (JELLYFIN_MW_PLANT passed on), nothing typed —
+#                                                  With MW=1 (mw-2, mwp-3), after `mw`: through the lend whose
+#                                                  sign-in is the middleware's, which is started afresh
+#                                                  (JELLYFIN_MW_PLANT passed on), nothing typed —
 #                                                  on a computer Alex and Bo, each from their own; each person's
 #                                                  Jellyfin tokens read from its database after (tokens.py);
 #                                                  writes <out>/pair-mw-<way>-<engine>[-plant-<plant>].json
@@ -37,10 +38,14 @@
 #                                                  summary (trio.py) and scan.json; takes over ten minutes
 #   check.sh mw    <scratch> <out> <tag>           mw-1's (ralph/next/mw/STATE.md), after up: the middleware
 #                                                  (apps/jellyfin/mw) on MW_PORT (else 8097), given a key from
-#                                                  Jellyfin's API Keys once, lent by Sam as jellyfin-mw, Bo joined as
+#                                                  Jellyfin's API Keys once; Sam lends 8096 again as jellyfin-mw
+#                                                  with it as its sign-in (mwp-3), Bo joined as
 #                                                  a second computer; each run starts it afresh, JELLYFIN_MW_PLANT
 #                                                  passed on, the users it made before deleted; then mw.py, which
 #                                                  writes <out>/mw-<tag>.json and exits 0 only if every bar passed
+#   check.sh mw2   <scratch> <out>                 mw-2's runs in their order (demo/runs/mw/2026-10-08/mw-2/run.sh),
+#                                                  through the sign-in since mwp-3: up, mw, each plant on a computer
+#                                                  in Chromium, judged; the four pairs, judged together; down
 #   check.sh judge <scratch> <out> <run>...        scan.py, then judge.py over the runs named (pair-*.json stems):
 #                                                  exit 0 only if every bar of every one passed
 #   check.sh down  <scratch> <out>                 stops everything; the scratch dir stays for the secrets
@@ -227,6 +232,7 @@ pair() {
     # joined as.
     [ -n "${MW_PORT_LENT:-}" ] || { say "pair: MW=1 needs \`check.sh mw\` run first"; exit 2; }
     mw_up "pair $way $engine"
+    [ "$way" = computer ] && mw_forget
     tag="mw-$tag${JELLYFIN_MW_PLANT:+-plant-$JELLYFIN_MW_PLANT}"
     mw=',"mw":true,"lend":"jellyfin-mw"'
     [ "$way" = computer ] && { a=Alex; b=Bo; a_at=",\"at\":\"$ALEX_AT\""; b_at=",\"at\":\"$BO_AT\""; }
@@ -309,9 +315,10 @@ trio() {
   python3 "$HERE/trio.py" "$OUT/$tag.json" "$R/sam/run.log" | tee -a "$OUT/steps.log"
 }
 
-# Jellyfin's middleware (mw-1): the lender mints it a key once, runs it in
-# front of Jellyfin and lends its port as any other; Alex and Bo, two
-# computers, ask through the lend (mw.py). Only users named as the
+# Jellyfin's middleware (mw-1; since mwp-3 the lend's sign-in): the lender
+# mints it a key once, runs it beside Jellyfin and lends Jellyfin naming
+# it, `share 8096 --sign-in <its port>`; Alex and Bo, two computers, ask
+# through the lend (mw.py). Only users named as the
 # middleware names them (<name>-<16 hex of a key>, viewer.rs user_name)
 # are deleted between runs, so a person's first ask in each run is new.
 # The middleware built, given its key (minted once), and started afresh
@@ -334,16 +341,30 @@ mw_up() {
   say "mw $1: $(head -1 "$R/mw.out")${JELLYFIN_MW_PLANT:+; planted: $JELLYFIN_MW_PLANT}; users: $(users)"
 }
 
+# The door keeps each person's sign-in answer while Sam's svrngs runs, and
+# mw_up just deleted the accounts they name: one request through each
+# computer's address, refused 401 by Jellyfin, makes the door forget it
+# (crates/svrngs-node/src/door/sign_in.rs, `Forget`), so Alex and Bo are
+# new to it again, and no plant's answer outlives its run. Phones join as
+# new people each pair, so only a computer pair needs it.
+mw_forget() {
+  local who at code
+  for who in ALEX BO; do
+    at="$(sed -n "s/^${who}_AT=//p" "$R/env" | tail -1)"
+    code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "${at}Users/Me")"
+    say "mw: $who's kept answer, its account deleted, asked once more: $code"
+    [ "$code" = 401 ] || { say "mw: $who's answer was not refused, so the door may keep it: stopping"; exit 3; }
+  done
+}
+
 mw() {
   . "$R/env"
   local tag="$1" port="${MW_PORT:-8097}"
   mw_up "$tag"
   if [ -z "${MW_PORT_LENT:-}" ]; then
-    printf '\n' | SVRNGS_DIR="$R/sam" NO_COLOR=1 RUST_LOG=debug "$B" share "$port" --name jellyfin-mw --kind jellyfin --limit 8 >"$R/sam/share-mw.out" 2>>"$R/sam/share.log"
+    SVRNGS_DIR="$R/sam" NO_COLOR=1 RUST_LOG=debug "$B" share 8096 --name jellyfin-mw --sign-in "$port" --limit 8 </dev/null >"$R/sam/share-mw.out" 2>>"$R/sam/share.log"
     say "sam: $(grep -m1 Lent "$R/sam/share-mw.out")"
-    # What share tells a lender of the middleware, kept for mw-3: for the
-    # kind jellyfin it says to make each person an account, which the
-    # middleware now does.
+    # What share tells a lender who names a sign-in: no accounts to make.
     say "sam is told: $(grep -v '^Lent' "$R/sam/share-mw.out" | tr '\n' ' ')"
     local client; client="$(grep -o 'svrngs://join/[A-Za-z0-9_-]*' "$R/sam/new.out")"
     # Bo joins once; a run stopped after it does not join again.
@@ -370,14 +391,33 @@ mw() {
   python3 "$HERE/mw.py" "$R" "$OUT" "$tag" | tee -a "$OUT/steps.log"
 }
 
+# mw-2's runs (its run.sh), as one step, so a later run of them (mwp-3's,
+# demo/runs/mwp/2026-10-08/run.sh) is the same sequence. Each step runs as
+# its own check.sh, as the run.sh did; a plant's judge fails by design.
+mw2() {
+  local C="$HERE/check.sh" plant way engine
+  "$C" up "$R" "$OUT"
+  "$C" mw "$R" "$OUT" mw1-again
+  for plant in no-sign-in lender-key one-device; do
+    JELLYFIN_MW_PLANT=$plant MW=1 "$C" pair "$R" "$OUT" computer chromium
+    "$C" judge "$R" "$OUT" "mw-computer-chromium-plant-$plant" || true
+  done
+  for way in computer phone; do for engine in chromium webkit; do
+    MW=1 "$C" pair "$R" "$OUT" $way $engine
+  done; done
+  "$C" judge "$R" "$OUT" mw-computer-chromium mw-computer-webkit mw-phone-chromium mw-phone-webkit
+  "$C" down "$R" "$OUT"
+}
+
 case "$STEP" in
   films) films "$R" "$OUT" ;;
   up) up ;;
   pair) pair "$4" "$5" ;;
   trio) trio ;;
   mw) mw "$4" ;;
+  mw2) mw2 ;;
   plant) plant "$4" "$5" ;;
   judge) shift 3; python3 "$HERE/scan.py" "$R" "$OUT" >/dev/null; python3 "$HERE/judge.py" "$OUT" "$@" | tee -a "$OUT/steps.log" ;;
   down) TOKEN="$(cat "$SECRETS/admin_token")"; users >"$OUT/users-after.json" 2>/dev/null || true; down ;;
-  *) echo "usage: check.sh films|up|pair|trio|plant|mw|judge|down <scratch> <out> [way engine | plant engine | run...]" >&2; exit 2 ;;
+  *) echo "usage: check.sh films|up|pair|trio|plant|mw|mw2|judge|down <scratch> <out> [way engine | plant engine | run...]" >&2; exit 2 ;;
 esac

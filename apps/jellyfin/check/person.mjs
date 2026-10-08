@@ -9,7 +9,7 @@
 // signs in to jellyfin-web with the account the lender made, typing it,
 // and plays their film.
 //
-// Through Jellyfin's middleware (`args.mw`, mw-2), nothing is typed: a
+// Through Jellyfin's middleware (`args.mw`, mw-2; the lend's sign-in since mwp-3), nothing is typed: a
 // person asked to sign in stops there, and the stored sign-in the page
 // wrote is recorded, its token never read as theirs (tokens.py reads
 // theirs from Jellyfin). A person may name an `at` of their own: on a

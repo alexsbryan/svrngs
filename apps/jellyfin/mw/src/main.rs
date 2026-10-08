@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! Jellyfin's middleware (demo/runs/mw/2026-10-08/README.md; DESIGN §3,
-//! "The room", call 6): a program the lender runs on their own computer, in
-//! front of their Jellyfin, and lends with `svrngs share <its port>`. Each
-//! person the door names is made a read-only Jellyfin user of their own on
-//! their first request, and every request is signed in as its person on the
-//! client's own device. svrngs neither ships, starts nor supervises it.
+//! Jellyfin's sign-in (DESIGN §3, "The room", call 6; mwp-3): a program the
+//! lender runs on their own computer, beside their Jellyfin, and names to
+//! svrngs with `svrngs share 8096 --sign-in <its port>`. svrngs's door asks
+//! it `POST /` on a person's first request (answer.rs); it makes the person
+//! a read-only Jellyfin user of their own (viewer.rs), signs it in on a
+//! device of the person's own, and answers the token, the `authorization`
+//! that carries it, and a script writing jellyfin-web's stored sign-in
+//! (page.rs). The door does the rest — the token set on each request,
+//! swapped for a stand-in in every answer, the script first in the pages —
+//! so a person opens Jellyfin from svrngs's list signed in, with nothing
+//! typed, and holds no token. svrngs neither ships, starts nor supervises it.
 //!
 //!   jellyfin-mw [--listen 127.0.0.1:<port>] [--jellyfin 127.0.0.1:8096]
 //!
@@ -12,23 +17,17 @@
 //! Dashboard, API Keys: the only thing it makes accounts with. It prints
 //! `listening on port <port>` and serves until stopped.
 //!
-//! jellyfin-web's page it answers carries the person's stored sign-in
-//! (page.rs), and their token is kept out of what Jellyfin answers and put
-//! back in what it is asked (swap.rs), so a person opens it from svrngs's
-//! list signed in, with nothing typed, and holds no token.
-//!
 //! JELLYFIN_MW_PLANT names a failure its check plants, never set otherwise:
-//! `one-user`, every person signed in as one account; `let-keyless`, a
-//! request with no `x-svrngs-key` let through as that account;
-//! `no-sign-in`, the page passed on without its stored sign-in;
-//! `lender-key`, the page's stored sign-in holding the lender's key for
-//! its token; `one-device`, every person one account on one device.
+//! `one-user`, every person signed in as one account; `let-keyless`, an
+//! ask with no `x-svrngs-key` answered as that account; `no-sign-in`, no
+//! script, so no stored sign-in; `lender-key`, the stored sign-in holding
+//! the lender's key for its token; `one-device`, every person one account
+//! on one device, signed in once.
 
-mod forward;
+mod answer;
 mod page;
 mod people;
 mod person;
-mod swap;
 mod viewer;
 
 use std::io::BufRead;
@@ -54,7 +53,7 @@ fn arg(args: &[String], name: &str, default: &str) -> Result<SocketAddr, String>
         .map_err(|_| format!("{name} `{raw}` is not an address, as 127.0.0.1:8096"))?;
     if !addr.ip().is_loopback() {
         return Err(format!(
-            "{name} `{raw}` is not on this computer's loopback: the middleware serves and asks there alone"
+            "{name} `{raw}` is not on this computer's loopback: the sign-in serves and asks there alone"
         ));
     }
     Ok(addr)
@@ -89,7 +88,7 @@ fn run() -> Result<(), String> {
     let elevated = vec![("authorization".to_string(), format!("MediaBrowser Token=\"{key}\""))];
     let page_token = match plant {
         Some(Plant::LenderKey) => key.to_string(),
-        _ => swap::STAND_IN.to_string(),
+        _ => page::STAND_IN.to_string(),
     };
     let rt = tokio::runtime::Runtime::new().map_err(|e| format!("no runtime: {e}"))?;
     rt.block_on(async move {
@@ -101,12 +100,11 @@ fn run() -> Result<(), String> {
             tracing::warn!(plant = ?p, "mw: a planted failure is on — a check's run, never a lend");
         }
         let server = page::Server::read(jellyfin).await?;
-        println!("listening on port {port}, in front of Jellyfin at {jellyfin}");
-        let people = people::People::start(jellyfin, elevated);
-        forward::serve(
+        println!("listening on port {port}, signing people in to Jellyfin at {jellyfin}");
+        let people = people::People::start(jellyfin, elevated, plant);
+        answer::serve(
             listener,
-            forward::At {
-                jellyfin,
+            answer::At {
                 server,
                 people,
                 page_token,

@@ -3,6 +3,10 @@
 the lend of Jellyfin's middleware, each from a computer of their own, and
 a process on the lender's computer asks its port with no key and with
 another person's. Every byte each person receives is kept and searched.
+Since mwp-3 the middleware is the lend's sign-in, which the door asks
+`POST /` (apps/jellyfin/mw/src/answer.rs), and the device each person is
+signed in on is theirs, named from their key (person.rs `Device::of`),
+not the one the client names.
 
   mw.py <scratch> <out> <tag>
 
@@ -145,15 +149,16 @@ def main():
     for s in sockets:
         s.close()
 
-    # The middleware's own port, asked by a process on this computer.
-    s, h, b = ask(MW, f"localhost:{MW[1]}", "GET", "/Users/Me", {"Authorization": device("Nobody")})
+    # The middleware's own port, asked by a process on this computer as the
+    # door asks it. What it answers another's key is kept to whether a
+    # secret came back, never the secret.
+    s, h, b = ask(MW, f"localhost:{MW[1]}", "POST", "/")
     run["no_key"] = {"status": s, "body": b.decode(errors="replace")[:300]}
     keys = dict(re.findall(r"key=([0-9a-f]{64}) person=(\w+)", open(f"{R}/mw.log").read()))
     alex_key = next((k for k, n in keys.items() if n == "Alex"), None)
     if alex_key:
-        s, h, b = ask(MW, f"localhost:{MW[1]}", "GET", "/Users/Me",
-                      {"Authorization": device("Mallory"), "x-svrngs-key": alex_key, "x-svrngs-person": "Alex"})
-        run["anothers_key"] = {"status": s, "user": json.loads(b).get("Name") if s == 200 else b.decode(errors="replace")[:300]}
+        s, h, b = ask(MW, f"localhost:{MW[1]}", "POST", "/", {"x-svrngs-key": alex_key, "x-svrngs-person": "Alex"})
+        run["anothers_key"] = {"status": s, "answered_a_secret": s == 200 and "secret" in json.loads(b)}
     else:
         run["anothers_key"] = {"status": None, "user": "never-ran: Alex's key is not in the middleware's log"}
     run["sessions_after_anothers_key"] = sorted((s.get("UserName"), s.get("DeviceId"), s.get("DeviceName"))
@@ -188,8 +193,9 @@ def main():
         f"made by the second asks: Alex {a['made_by_second']}, Bo {b_['made_by_second']}")
     names = {w: run["people"][w]["first"]["user"].get("Name") for w in ("Alex", "Bo") if run["people"][w]["first"]["status"] == 200}
     devices = {w: sorted({d for u, d, _, _ in run["sessions"] if u == names.get(w)}) for w in ("Alex", "Bo")}
-    bar("each person's own device", all(devices[w] == [f"mw1-{w.lower()}"] for w in ("Alex", "Bo")),
-        f"Jellyfin's sessions by user: {devices}")
+    theirs = {w: f"svrngs-{k[:16]}" for k, w in keys.items() if w in ("Alex", "Bo")}
+    bar("each person's own device", len(theirs) == 2 and all(devices[w] == [theirs[w]] for w in ("Alex", "Bo")),
+        f"Jellyfin's sessions by user: {devices}; each person's, named from their key: {theirs}")
     bar("neither receives the lender's key", not any(run["found"].values()),
         f"found: {run['found']}, in {run['received_bytes']} bytes")
     bar("no key is refused", run["no_key"]["status"] == 403 and "svrngs's door" in run["no_key"]["body"],
