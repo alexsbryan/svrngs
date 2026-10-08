@@ -189,13 +189,34 @@
 //! all three, so every exchange answered from kept folds, as at the fitted
 //! points: what the line missed is not a fold read whole.
 //!
-//! The hypothesis, 2026-10-08 04:41 PDT, before any run that reads it: a
+//! The hypothesis, 2026-10-08 04:27 PDT (its commit, ebaad9b, at 04:27:57;
+//! that commit's subject says 04:41, a stamp not read off the clock), before
+//! any run that reads it: a
 //! round's processor includes the whole process's for its wall time, and
 //! N idle nodes cost about N times one, a term (N q)(wall) the line lacks.
 //! `quiet_cpu_per_s` at 100 members between 0.2 and 0.6 s a second, enough
 //! to cover half or more of the 0.04 s the line missed over the round's
 //! 0.07 to 0.11 s of wall; at 10 members under a tenth of that. Refuted if
 //! it is under 0.2 at 100.
+//!
+//! Measured after it, one run each at ebaad9b, load average 10 to 15:
+//! `quiet_cpu_per_s` 0.0001 at 10 members and 0.002 at 100. Refuted: idle
+//! nodes cost the reading nothing to speak of. (Those runs' idle rounds,
+//! 0.0155 s at 10 x 10,000 and 0.1184 s at 100 x 2,000.) What the line
+//! missed is in the exchange: each one's share, c / (N - 1), is 0.333,
+//! 0.408 and 0.565 ms at 10, 25 and 50 and 1.26 ms at 100, its slope 5.0,
+//! 6.3 and then 13.8 us a member, steeper as N grows; what in an exchange
+//! grows faster than N is not yet found.
+//!
+//! The line refitted, 2026-10-08 04:31 PDT, with that term: c / (N - 1) =
+//! a + b N + c N^2 by least squares on the four medians (10, 25, 50 at
+//! 10,000 acts; 100 at 2,000): a = 0.326 ms, b = 0.575 us, c = 87.3 ns,
+//! within 3.3% of all four. Its prediction, before any run there: 75
+//! members at 5,000 acts, a point it was not fitted on in either variable,
+//! the idle round's processor median 0.064 s over three runs, confirmed if
+//! within 0.048 to 0.080 s (25% either side), refuted otherwise; the
+//! account digest kept 296, offer kept 148, register kept 76, write index
+//! kept 372, rebuilt 0 each.
 //!
 //! It needs the process's own processor time, which std does not give;
 //! `getrusage` through `libc` is the one way the lock already holds, and the
