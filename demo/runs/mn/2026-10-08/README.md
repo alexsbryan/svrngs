@@ -400,9 +400,9 @@ own about 200 (120-300), plumbing about 45 (20-80), `find` 25, `ask` 10,
 `open` 10, `signin` none. Each plumbing piece, as §4 asks:
 
 - **`find`, 28 lines, `app.js:27-57`**: reading `pass <label>` from
-  `svrngs-lend` (`:30-50`), the labels made addresses as `baseOf` builds
+  `svrngs-lend` (`:30-48`, read at `:53`), the labels made addresses as `baseOf` builds
   them (`:28`), a library named by its lend's name and its lender's key's
-  first eight hex (`:56`), and the computer's stand-in, `#lends=` (`:53`).
+  first eight hex (`:56`), and the computer's stand-in, `#lends=` (`:51-52`).
   In its place svrngs would hand a page what it reads — each lend's
   person, kind, name and address, and who did not answer — without the
   pass, on a phone and on a computer alike. The evidence: every phone
