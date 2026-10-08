@@ -246,8 +246,14 @@ impl RingJournal {
     /// the ~600-byte payload a peer needs in order to work out what to send
     /// back. See [`digest`] for why the mark is contiguous and why an op that
     /// does not verify under its claimed actor counts for nothing.
+    ///
+    /// Folded from the whole journal on every call, every signature checked
+    /// again; its line is the one the scale instrument counts as the digest
+    /// rebuilt (`crates/svrngs-node/tests/scale.rs`, the round's account).
     pub fn digest(&self, verifier: &dyn RingVerifier) -> Result<Digest, RailError> {
-        Ok(digest(&self.read()?.0, &self.namespace, verifier))
+        let (ops, _) = self.read()?;
+        tracing::debug!(namespace = %self.namespace, lines = ops.len(), "ring rail: digest folded from the whole log");
+        Ok(digest(&ops, &self.namespace, verifier))
     }
 
     #[cfg(test)]
@@ -293,8 +299,12 @@ impl RingJournal {
             );
             return Ok((Vec::new(), false));
         }
+        // Folded from the whole journal, as the digest is, and counted the
+        // same way by the scale instrument.
+        let (ops, _) = self.read()?;
+        tracing::debug!(namespace = %self.namespace, lines = ops.len(), "ring rail: offer folded from the whole log");
         Ok(ops_missing_from_within(
-            &self.read()?.0,
+            &ops,
             &self.namespace,
             verifier,
             theirs,
