@@ -74,7 +74,7 @@ use crate::ring_sync::{
     exchange, peer_client, run_one_round, spawn_ring_sync_loop, ExchangeOutcome, ExchangeStop,
     RingSyncHandle, RoundMembers, RoundOutcome, DEFAULT_RING_SYNC_INTERVAL,
 };
-use crate::{actor_of, Ed25519Verifier, Person, RingRail, SigningKey};
+use crate::{actor_of, Person, RingRail, SigningKey};
 
 /// A lend another computer of this one's groups lends, as it answered.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -411,7 +411,7 @@ impl Host {
         };
         let mut out = Vec::new();
         for namespace in namespaces {
-            match self.rail.standing(&namespace, &Ed25519Verifier) {
+            match self.rail.standing(&namespace) {
                 Ok(Standing::Members(m)) => out.push((namespace, m)),
                 Ok(_) => continue,
                 Err(e) => {
@@ -698,7 +698,7 @@ fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn
             return None;
         }
     }
-    if let Some((namespace, _)) = rail.standing_anywhere(&actor, &Ed25519Verifier) {
+    if let Some((namespace, _)) = rail.standing_anywhere(&actor) {
         tracing::debug!(target: "node", actor, namespace, "node: admitted — the dialer stands in a group held here");
         return Some(Alpn::Member);
     }

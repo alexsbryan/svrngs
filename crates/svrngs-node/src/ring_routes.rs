@@ -42,7 +42,7 @@ use crate::peer_wire::{
 use crate::rail::{LiveBuffer, LIVE_PAYLOAD_MAX_BYTES};
 use crate::register::Standing;
 use crate::ring_sync::answer;
-use crate::{Ed25519Verifier, RingRail};
+use crate::RingRail;
 
 // rail.rs's refusal body, forked with the route (DESIGN §8, U1's inventory).
 pub(crate) fn err(status: StatusCode, msg: impl Into<String>) -> Response {
@@ -96,7 +96,7 @@ fn standing_refusal(
     // One sentence for every refusal below, so the answer never says whether
     // this node holds the ring; the log says which it was.
     let refusal = format!("{namespace} is not served to {asker} here");
-    match rail.standing(namespace, &Ed25519Verifier) {
+    match rail.standing(namespace) {
         Ok(standing) if standing.names(&asker) => {
             tracing::debug!(target: "rails", route, namespace, asker, "ring: the asker stands in the ring");
             None

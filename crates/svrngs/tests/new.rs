@@ -11,7 +11,7 @@ use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::link::{Link, Origin, CLIENT_PREFIX};
 use svrngs_node::node::Node;
 use svrngs_node::register::Standing;
-use svrngs_node::{actor_of, derive_id, Ed25519Verifier, OpId, RailAct, SigningKey};
+use svrngs_node::{actor_of, derive_id, OpId, RailAct, SigningKey};
 
 /// The lines a group's journal holds on disk, as written.
 fn lines(node: &Node, group: &str) -> Vec<svrngs_node::Op<svrngs_node::SignedOp>> {
@@ -110,8 +110,7 @@ async fn new_twice_with_one_name_makes_two_groups_with_two_ids() {
             (invites[0].1 - now - LINK_LIFE_SECS).abs() <= 5,
             "it lapses in a day"
         );
-        let Standing::Members(standing) = node.rail().standing(&id, &Ed25519Verifier).unwrap()
-        else {
+        let Standing::Members(standing) = node.rail().standing(&id).unwrap() else {
             panic!("the group is held and seeded")
         };
         assert_eq!(

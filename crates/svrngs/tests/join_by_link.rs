@@ -26,8 +26,8 @@ use svrngs_node::redeem::{
     ask, redeem, AskRequest, Asked, RedeemError, RedeemRequest, Redeemed, REFUSAL,
 };
 use svrngs_node::{
-    actor_of, derive_id, redemption_message, sign_message, Device, Ed25519Verifier, Membership,
-    OpId, Person, RailAct, SigningKey, BROWSER_LINE_VERSION, LINK_LINE_VERSION,
+    actor_of, derive_id, redemption_message, sign_message, Device, Membership, OpId, Person,
+    RailAct, SigningKey, BROWSER_LINE_VERSION, LINK_LINE_VERSION,
 };
 
 /// The lines a group's journal holds on disk, as written.
@@ -148,10 +148,7 @@ fn admitted(node: &Node, group: &str) -> Vec<String> {
 }
 
 fn stands(node: &Node, group: &str, key: &SigningKey) -> bool {
-    node.rail()
-        .standing(group, &Ed25519Verifier)
-        .unwrap()
-        .names(&actor_of(key))
+    node.rail().standing(group).unwrap().names(&actor_of(key))
 }
 
 /// The issuer's answer to `link` presented by `who` on the wire, under

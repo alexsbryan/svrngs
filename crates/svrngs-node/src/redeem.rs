@@ -54,7 +54,7 @@ use crate::iroh::{Alpn, Dialer, Endpoint, EndpointAddr, HttpBridge};
 use crate::register::Standing;
 use crate::ring_routes::err;
 use crate::ring_sync::peer_client;
-use crate::{Ed25519Verifier, Name, NotAName, OpId, Person, RailError, RingRail};
+use crate::{Name, NotAName, OpId, Person, RailError, RingRail};
 use svrngs_core::{RedeemRefusal, Refused as CommitRefused};
 
 pub use svrngs_core::joining::{AskRequest, Asked, RedeemRequest};
@@ -234,7 +234,7 @@ fn serve_redeem(
 ) -> Result<Redeemed, NotAdmitted> {
     let person = parse_redeem(dialer.as_deref(), req)?;
     let group = req.group.as_str();
-    match rail.standing(group, &Ed25519Verifier) {
+    match rail.standing(group) {
         Ok(Standing::Members(_)) => {}
         Ok(_) => return Err(NotAdmitted::NotHeld),
         Err(e) => return Err(NotAdmitted::Unjudged(e)),

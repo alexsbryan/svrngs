@@ -16,8 +16,8 @@
 use std::collections::BTreeMap;
 
 use crate::{
-    admit, is_local_only, ring_dir, valid_namespace, Device, Membership, Op, Person, RailError, RingRail, RingVerifier,
-    Roster, SignedOp,
+    admit, is_local_only, ring_dir, valid_namespace, Device, Ed25519Verifier, Membership, Op, Person, RailError,
+    RingRail, RingVerifier, Roster, SignedOp,
 };
 
 /// Who stands in one group, on this node.
@@ -97,13 +97,14 @@ pub(crate) fn membership_in(
 
 impl RingRail {
     /// Who stands in `namespace` on this node — the ONE accessor the round,
-    /// the acceptor and the sync route ask (ARCH 8).
+    /// the acceptor and the sync route ask (ARCH 8). Its signatures are
+    /// judged by [`Ed25519Verifier`], the scheme every caller passed.
     ///
     /// A group this node does not hold is answered before anything is
     /// opened, so asking about it leaves no trace in the rail. Every branch
     /// traces at debug; a held group with no seed at warn, since it refuses
     /// everyone.
-    pub fn standing(&self, namespace: &str, verifier: &dyn RingVerifier) -> Result<Standing, RailError> {
+    pub fn standing(&self, namespace: &str) -> Result<Standing, RailError> {
         if !valid_namespace(namespace) || is_local_only(namespace) || !ring_dir(&self.root, namespace).is_dir() {
             tracing::debug!(
                 target: "register",
@@ -124,7 +125,7 @@ impl RingRail {
             return Ok(Standing::NoSeed);
         };
         let (ops, _) = journal.read()?;
-        let members = standing_in(&ops, &seed, namespace, verifier)?;
+        let members = standing_in(&ops, &seed, namespace, &Ed25519Verifier)?;
         tracing::debug!(
             target: "register",
             namespace,
@@ -141,7 +142,7 @@ impl RingRail {
     /// (`node::admit_dialer`) and the member door (`door::through`) ask. A
     /// group whose register is unreadable vouches for nobody, and groups
     /// that cannot be listed vouch for nobody at all.
-    pub fn standing_anywhere(&self, actor: &str, verifier: &dyn RingVerifier) -> Option<(String, Person)> {
+    pub fn standing_anywhere(&self, actor: &str) -> Option<(String, Person)> {
         let namespaces = match self.namespaces() {
             Ok(n) => n,
             Err(e) => {
@@ -151,7 +152,7 @@ impl RingRail {
             }
         };
         for namespace in &namespaces {
-            match self.standing(namespace, verifier) {
+            match self.standing(namespace) {
                 Ok(Standing::Members(m)) => {
                     if let Some(Member { person, device }) = m.get(actor) {
                         tracing::debug!(target: "register", actor, namespace, %person, ?device,

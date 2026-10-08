@@ -87,7 +87,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use crate::peer_wire::{RingSyncRequest, RingSyncResponse, RING_SYNC_OPS_BUDGET_BYTES};
-use crate::{Ed25519Verifier, RailError, RingRail};
+use crate::{RailError, RingRail};
 use tokio::sync::Notify;
 use tracing::{debug, info, warn};
 
@@ -277,7 +277,7 @@ pub async fn run_one_round(host: &Host) -> RoundOutcome {
         // A ring with no seed, or an UNREADABLE register, offers nothing for
         // this namespace. Under-share, never over-share — the same posture
         // `prune_what_the_peer_retired` takes when it cannot read a roster.
-        let standing = match rail.standing(namespace, &Ed25519Verifier) {
+        let standing = match rail.standing(namespace) {
             Ok(s) => s,
             Err(e) => {
                 warn!(

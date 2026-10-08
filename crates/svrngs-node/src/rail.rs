@@ -56,7 +56,7 @@ use crate::live::{push_ephemeral, LivePeer};
 use crate::node::dialled;
 use crate::register::{Member, Standing};
 use crate::ring_routes::err;
-use crate::{Compaction, Ed25519Verifier, Membership, Person, RailAct, RailError, RingRail};
+use crate::{Compaction, Membership, Person, RailAct, RailError, RingRail};
 use svrngs_core::{Append, AppendRefusal, Refused as CommitRefused};
 
 /// What the doors read: the journals, the nudge that wakes the round
@@ -148,7 +148,7 @@ pub(crate) fn standing_of(
         )
             .into_response()
     };
-    match rail.standing(namespace, &Ed25519Verifier) {
+    match rail.standing(namespace) {
         Ok(Standing::Members(people)) => {
             tracing::debug!(target: "rails", namespace, people = people.len(), "rail: the group is held here, and its register read");
             Ok(people)

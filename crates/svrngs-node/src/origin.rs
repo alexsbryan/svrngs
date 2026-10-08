@@ -29,7 +29,6 @@ use crate::door::{self, Door, Who, LEND_ROUTE};
 use crate::iroh::{key_actor, Contact, PublicKey};
 use crate::node::Asking;
 use crate::ring_routes::err;
-use crate::Ed25519Verifier;
 
 /// The suffix every lend's host on this computer ends in.
 const LOCALHOST: &str = ".localhost";
@@ -87,10 +86,7 @@ pub(crate) async fn reach(at: &Asking, label: Label, req: Request) -> Response {
     }
     let actor = hex::encode(lender);
     let key = PublicKey::from_bytes(&lender).ok();
-    let stands = door
-        .rail
-        .standing_anywhere(&actor, &Ed25519Verifier)
-        .is_some();
+    let stands = door.rail.standing_anywhere(&actor).is_some();
     let Some(key) = key.filter(|_| stands) else {
         tracing::debug!(target: "origin", %label, actor, "origin: refused — the label names no computer standing in a group held here");
         return err(StatusCode::NOT_FOUND, "nothing is lent here");

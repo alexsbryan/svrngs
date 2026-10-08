@@ -16,8 +16,8 @@ use svrngs_node::iroh::{Contact, PublicKey, RelayConfig};
 use svrngs_node::node::Node;
 use svrngs_node::register::Standing;
 use svrngs_node::{
-    actor_of, Device, Digest, Ed25519Verifier, Op, Payload, Person, RailAct, Redemption, Roster,
-    SignedOp, SigningKey,
+    actor_of, Device, Digest, Op, Payload, Person, RailAct, Redemption, Roster, SignedOp,
+    SigningKey,
 };
 
 const NS: &str = "house";
@@ -223,7 +223,7 @@ async fn a_round_dials_a_computer_and_never_a_browser() {
             key: actor_of(&signing(3)),
         },
     );
-    let Standing::Members(standing) = a.rail().standing(NS, &Ed25519Verifier).unwrap() else {
+    let Standing::Members(standing) = a.rail().standing(NS).unwrap() else {
         panic!("A holds the group, seeded")
     };
     let devices: Vec<_> = [2, 3]

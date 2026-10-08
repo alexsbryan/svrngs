@@ -33,7 +33,7 @@ use crate::redeem::SeedText;
 use crate::register::Standing;
 use crate::ring_routes::err;
 use crate::seed::Seed;
-use crate::{Ed25519Verifier, Person};
+use crate::Person;
 
 /// Where an app asks which groups this computer holds.
 pub const GROUPS_ROUTE: &str = "/v1/groups";
@@ -85,7 +85,7 @@ async fn groups(State(at): State<Surface>) -> Response {
     let mut held = Vec::with_capacity(namespaces.len());
     for id in namespaces {
         let name = name_of(&at, &id);
-        let person = match rail.standing(&id, &Ed25519Verifier) {
+        let person = match rail.standing(&id) {
             Ok(Standing::Members(people)) => {
                 people.get(at.asking.host.actor()).map(|m| m.person.clone())
             }

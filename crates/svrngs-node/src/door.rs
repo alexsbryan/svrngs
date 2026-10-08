@@ -92,7 +92,7 @@ use crate::declared::read_declared_in;
 use crate::iroh::{Dialer, Via};
 use crate::lend::{self, Lend, LendName, Offered};
 use crate::ring_routes::err;
-use crate::{Ed25519Verifier, Person, RingRail};
+use crate::{Person, RingRail};
 use limit::{Counts, Verdict, Whereabouts};
 use svrngs_core::pass::{Label, Pass};
 
@@ -304,11 +304,7 @@ async fn lends(State(door): State<Door>, dialer: Option<Extension<Dialer>>) -> R
         );
     };
     let actor = dialer.actor();
-    if door
-        .rail
-        .standing_anywhere(&actor, &Ed25519Verifier)
-        .is_none()
-    {
+    if door.rail.standing_anywhere(&actor).is_none() {
         tracing::debug!(target: "door", actor, "door: lends refused — the dialer stands in no group held here");
         return err(StatusCode::FORBIDDEN, "this computer lends nothing to you");
     }
@@ -702,7 +698,7 @@ fn holder_of(
     if let Err(fault) = pass.check(&key, &label, unix_now()) {
         return Err(refused(&fault.to_string()));
     }
-    let Some((group, person)) = door.rail.standing_anywhere(&pass.person, &Ed25519Verifier) else {
+    let Some((group, person)) = door.rail.standing_anywhere(&pass.person) else {
         return Err(refused("its signer stands in no group held here"));
     };
     tracing::debug!(target: "door", holder = key, person = person.as_str(), lend = %lend.name, until = pass.until,
@@ -752,8 +748,7 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
     };
     let pending = match who {
         Who::Member(_) | Who::Own => {
-            let Some((group, person)) = door.rail.standing_anywhere(&actor, &Ed25519Verifier)
-            else {
+            let Some((group, person)) = door.rail.standing_anywhere(&actor) else {
                 tracing::debug!(target: "door", actor, "door: refused — the dialer stands in no group held here");
                 return err(StatusCode::FORBIDDEN, "this computer lends nothing to you");
             };
