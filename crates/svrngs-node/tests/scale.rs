@@ -160,6 +160,25 @@
 //! 2,000 acts, a point it was not fitted on in either variable, written and
 //! timestamped in a commit before that point runs.
 //!
+//! The fit, 2026-10-08, all at e851793 (8991334's folds), load average 6 to
+//! 8: the idle round's processor at 10 x 10,000 0.0030, 0.0031, 0.0028 s
+//! (median 0.0030) and at 50 x 10,000 0.0284, 0.0271, 0.0277 s (median
+//! 0.0277), with 25 x 10,000's median above, 0.0098. Least squares on each
+//! exchange's share, c / (N - 1) = a + b N: a = 0.270 ms, b = 5.85 us, so
+//! c(N) = (N - 1)(0.270 ms + 5.85 us N), residuals under 0.2 ms at all
+//! three. (THE_CEILING.md's prototype, (N - 1)(0.18 + 0.009 N) ms.)
+//!
+//! Its prediction, 2026-10-08 04:22 PDT, before any run at that point: at
+//! 100 members and 2,000 acts, a point the line was not fitted on in either
+//! variable, the idle round's processor median 0.085 s, three runs,
+//! confirmed if the median is within 0.064 to 0.106 s (25% either side;
+//! the size run's line missed its unfitted point by 12%) and refuted
+//! otherwise. That 2,000 acts rather than 10,000 changes nothing is the
+//! structural claim under it: a kept fold reads no act. Its account: digest
+//! kept 396, offer kept 198, register kept 101, write index kept 497, each
+//! rebuilt 0 (4 (N - 1), 2 (N - 1), N + 1 and their sum, as at 10, 25 and
+//! 50).
+//!
 //! It needs the process's own processor time, which std does not give;
 //! `getrusage` through `libc` is the one way the lock already holds, and the
 //! one `unsafe` block below is that call. It counts folds with a
