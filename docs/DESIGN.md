@@ -121,7 +121,12 @@ paths it refuses, how many people may use it at once.
 - reach for the devices in a room: a member's computer serves the lends its
   person names to the network it is on while the command runs, so a device
   there — a TV, through the app's own client for it — opens a lend at an
-  address on its own network (below, "The room").
+  address on its own network (below, "The room");
+- for a lend whose lender declares a sign-in, each person signed in as
+  themselves with nothing typed, by what a program of the lender's answers
+  the door on their first request: a credential the door sets, a secret it
+  keeps out of every answer, a script first in the lend's pages (below,
+  "The room", call 6; mwp-1 and mwp-2 build it).
 
 An app that needs anything else is a decision, not a convenience.
 
@@ -420,16 +425,194 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
    naming a person's key there is answered as them, and is the lender's
    own (§9's per-process tie keeps its trigger).
    *Made production* (operator, 2026-10-08): the spike's middleware was
-   1,050 lines of code, about 600 of them any app's — a second proxy
-   beside the door, streaming and a WebSocket, whose list of hop headers
-   already disagreed with the door's (`ralph/REVIEW_FINDINGS.md` #82); a
-   credential per person, made on their first request; a secret swapped
-   for a stand-in in what the service answers and back in what it is
-   asked; a script put first in a page — and the library carried none of
-   it. So the door carries those three, general, as hooks a lend
-   declares over HTTP, and an app's middleware keeps only its own nouns:
-   for Jellyfin, making a user, its credential's form and what its page
-   stores. The contract is the `mwp` queue's first row's to write here.
+   1,039 lines of code (`apps/jellyfin/mw/src` at `3c5dbae`, counted as
+   bar 2 below counts; b764b6a's count was 1,043), about 600 of them any
+   app's — a second proxy beside the door, streaming and a WebSocket,
+   whose list of hop headers already disagreed with the door's
+   (`ralph/REVIEW_FINDINGS.md` #82); a credential per person, made on
+   their first request; a secret swapped for a stand-in in what the
+   service answers and back in what it is asked; a script put first in a
+   page — and the library carried none of it. So the door carries those
+   three, general, as one hook a lend declares over HTTP, its *sign-in*,
+   and an app's middleware keeps only its own nouns, as the sign-in's
+   answerer beside the service rather than a forward in front of it: for
+   Jellyfin, making a user, its credential's form and what its page
+   stores. The contract (mwp-0; `ralph/next/mwp/STATE.md`'s rows build
+   it):
+   - *Declared by `share`.* `svrngs share <port> --sign-in <its port>`
+     names, beside `--kind` (`crates/svrngs/src/cli.rs:110-125`), a
+     program on this computer that answers for the lend who each person
+     is to it. A port alone, as the lend is (`share.rs:12-14`): the door
+     asks `POST /` at `127.0.0.1:<its port>`, and `share` refuses it when
+     nothing listens there, as it refuses a lend's own port. It is kept in
+     the lend's declaration (`lend.rs:250`, `LendFile`), not with its
+     secret, since a port is none; a node that does not know the field
+     refuses the declaration (`deny_unknown_fields`), never ignores it. A
+     lend declares its one secret or a sign-in, never both: given
+     `--sign-in`, `share` asks no password, says each person is signed in
+     by that port's answer with nothing typed, and prints no kind's words
+     for making accounts — the spike's follow-up 1 (its README §7),
+     answered without
+     `share` learning middleware. A lend that declares no sign-in keeps
+     its one secret (`declared.rs`; `door.rs:497-516`, `secret_headers`,
+     displacing the client's header in `rewrite_headers`, `:468`) and its
+     door byte for byte, held by an existing door test unchanged.
+   - *What the door sends.* On a person's first request through the
+     lend, before carrying it, the door asks the sign-in with that
+     request's identity headers, `x-svrngs-person` and `x-svrngs-key`
+     (`door.rs:103-111`), set as it sets them for the service, and
+     nothing else: no client header, no body. One owner the door holds,
+     as it holds `Using` (`door.rs:187`), answers asks one person at a
+     time, so a person's first requests at once ask once.
+   - *What comes back.* `200` and a JSON object, every field required and
+     an unknown one refused: `secret`, the person's secret, 16 to 512
+     bytes of letters, digits, `-`, `_`, `.` and `~` — what a query, a
+     header and a JSON string carry unescaped, so one search finds it in
+     each; `headers`, headers set on each of the person's requests,
+     displacing the client's of the same name as the one secret does,
+     none under `x-svrngs-`, none hop-by-hop, no `host`, `{}` for none;
+     and `script`, JavaScript put first in the lend's pages to that person
+     (below), or `null`. Anything else — another status, no answer in
+     30 s, a field missing or malformed, a script holding the secret or
+     `</script` — refuses the person's request, `502`, `{"error": "<lend>
+     could not sign you in", "kind": "sign-in"}`, the reason traced at
+     warn on the lender's side, never sent to the person; the next
+     request asks again. Never forwarded unsigned.
+   - *What it keeps, and when it asks again.* Each person's answer, by
+     key, in the door's memory for this run of the node: never logged,
+     never in the record, never on the wire but to the service, as
+     `declared.rs` keeps the one secret; not on disk, since asking again
+     after a restart costs one ask a person, and a file would hold every
+     person's credential at rest. It asks again after a restart, and when
+     the service answers `401` to a request signed in with a kept answer:
+     the door forgets it and passes the `401` on, and the next request
+     asks. Measured: Jellyfin answers 401 to a token a reset of its
+     user's password revoked (`demo/runs/mw/2026-10-08/mw-1/README.md:28-33`),
+     which an answerer restarting does (that run's §7, follow-up 4).
+   - *The swap.* One stand-in for every lend and person,
+     `svrngs-stand-in`, the spike's (`apps/jellyfin/mw/src/swap.rs:16`):
+     it names nobody, since the door puts in the secret of whoever it let
+     in, never by the stand-in; one per lend would hide nothing and add
+     a store; one an answer chose could be ordinary text or hold the
+     secret, checks no app has asked for (the trigger: an app whose
+     client reads its token's form, as a JWT's expiry). Inward, the
+     stand-in in a request's query and in each header's value becomes the
+     asker's secret — the spike set the two query names it knew
+     (`swap.rs:21`), the door knows none — and a path and a request's
+     body go as sent. Outward, every secret the door holds for the lend,
+     the asker's and any other person's the service writes, becomes the
+     stand-in in every textual answer, header and body:
+     `drop_echoed_secret` (`door.rs:574-595`) swapping where it dropped,
+     a header that cannot hold the stand-in still dropped; a body
+     streamed, a secret split across two chunks found by holding back one
+     byte fewer than the longest secret; the answer's length dropped,
+     since the stand-in's is not the secret's. Textual by `Content-Type`:
+     `text/*`, JSON, XML, a playlist (`*mpegurl`), JavaScript, and none
+     named, read rather than presumed bytes (the spike skipped scripts and
+     styles, `swap.rs:63-76`, knowing Jellyfin's). Every request through a
+     lend with a sign-in goes without its `Accept-Encoding`, as the
+     spike's did (`forward.rs:188`), and a textual answer compressed
+     anyway is refused, `502`, never sent on unread. A socket's frames
+     are carried as the door carries them: mw-2 found no token in one
+     (`demo/runs/mw/2026-10-08/README.md` §6, bar 2).
+   - *The script*, put by the door first in `<head>` of every `text/html`
+     answer to a `GET` of that person's — after the first `<head…>`, else
+     `<html…>`, else `<!doctype…>`, else at the start, as `web/lend.js:338-340`
+     puts its shim, read in the answer's first 64 KiB and the rest
+     streamed — so it runs before every script of the page's own. In the
+     door, not at the lend's origin: the door is the one place a
+     computer's way (`origin.rs`, through `door::lend_for` as `Who::Own`
+     or across the dial), a phone's (the pass holders' protocol) and the
+     room's (`origin.rs`, `reach`) all pass. On a phone the lend's worker
+     then puts its shim after `<head…>` too, so the shim runs first and
+     the script second, both before the page's own — mw-2's order, the
+     middleware's script where the door's will be. Under a
+     `Content-Security-Policy` naming a nonce the script carries it, as
+     lend.js's shim does (`:250-257`), which the conformance canary's page
+     asks (`apps/web-conformance/serve.mjs:150-154`, `script-src
+     'nonce-…' 'strict-dynamic'`); under a policy that runs no inline
+     script, by nonce or `'unsafe-inline'`, it does not run, traced at
+     warn and not worked around, and a policy in a `<meta>` is not read.
+     Such a page goes with `Cache-Control: no-store`, its `ETag` and
+     `Last-Modified` dropped, and a request whose `Accept` names
+     `text/html` goes without `If-None-Match` and `If-Modified-Since`, so
+     no copy kept from before the script, or for another, is answered
+     (the spike's, `forward.rs:189-192`, `:280-284`).
+   - *What Jellyfin's middleware becomes* (mwp-3): the sign-in's answerer
+     and nothing else. Asked, it finds or makes the person's user
+     (`apps/jellyfin/mw/src/viewer.rs:220`, `provision`, kept), signs it
+     in on a device of the person's own, named from their key (`:353`,
+     `sign_in`), and answers the token as `secret`; `authorization`,
+     `MediaBrowser Client=…, Device=…, DeviceId=…, Version=…,
+     Token="<token>"`, in `headers`; and page.rs's script (`:60-71`),
+     writing jellyfin-web's stored sign-in with the stand-in for its
+     token. The lend is Jellyfin's own port: `svrngs share 8096 --sign-in
+     <the answerer's port>`. Deleted: forward.rs, its proxy and its hop
+     list (#82 closes with it); person.rs's identity parse and its device
+     read from the client, but for reading the two headers; swap.rs;
+     page.rs's `written`; people.rs's `On::Last`, which the stand-in in
+     the socket's query now does. The cost: one person in two browsers is
+     one device to Jellyfin, where the spike kept each client's, since a
+     token's session stays the device it was signed in under
+     (`mw-1/README.md:14-26`).
+   - *The inventory* (AGENTS.md 11), upstream read at commonwealth-ai
+     `e93aa6881` (HEAD, 2026-10-08); `git diff d4356181c e93aa6881` over
+     each file below prints nothing, so the spike's inventory stands
+     (`demo/runs/mw/2026-10-08/README.md` §1). `mesh_media/viewer.rs`'s
+     `provision`: forked already, the answerer's. host-kit's
+     `shell/files.rs:50-58` puts a `<script src>` before `</head>`, last:
+     not forked, since the door's must run ahead of a page's own scripts
+     that are not `defer`, so its rule is lend.js's, and mwp-2's test
+     gives the door lend.js's cases. `iroh_identity_forward.rs`: the door
+     already (§8, U1's inventory), its rewrite carrying a person's headers
+     where it carries the lend's one secret. `iroh_routed_forward.rs:247`
+     (`mint_tie`) and `:260` (`tied_pubkey`): not forked; the answerer
+     believes loopback as the middleware did, so a process on the lender's
+     computer asking it gets a person's credential, and is the lender's
+     own (§9 keeps the tie's trigger). Nothing upstream swaps a secret in
+     a body (`git grep -n -i "mask\|redact" e93aa6881` over
+     `commonwealth-transport`, `commonwealth-media` and
+     `sovereign-cli-mesh` finds only `iroh.rs:58`, a proxy's address
+     redacted for a log) or asks a program for a person's credential:
+     both are written new.
+   - *The bars*, each with its prediction, written before any product
+     commit of the queue; one host, one run of each, not a rate
+     (AGENTS.md 7), and a run that could not finish is could-not-judge:
+     1. *Jellyfin through the sign-in, the proxy gone*: mw-2's four pairs,
+        a computer and a phone each in Chromium and WebKit, and its three
+        plants (`demo/runs/mw/2026-10-08/mw-2/README.md`): nothing typed,
+        every seek playing again within 5 s, no byte holding the lender's
+        key, either person's password or the other's token, the two
+        apart; each plant — no stored sign-in, the lender's key for the
+        page's token, one account on one device — caught. Predicted: all
+        pass, one phone seek in WebKit perhaps missing, as the spike
+        predicted (its README §4); and each person's own token in no byte
+        either.
+     2. *The middleware is Jellyfin's part*: its code lines, `awk
+        'FNR==1{t=0} /^[[:space:]]*#\[cfg\(test\)\]/{t=1} !t &&
+        !/^[[:space:]]*($|\/\/|\/\*|\*)/' apps/jellyfin/mw/src/*.rs | wc
+        -l`, 1,039 at `3c5dbae`. Predicted: about 430, between 380 and 480
+        — viewer.rs's 241, the answerer's listener and answer about 90,
+        the script about 45, each person's user kept about 45, the two
+        headers read about 10. Over 480, the door carries less than this
+        contract says.
+     3. *svrngs's new lines inside the raise*: `scripts/lean_check.py`,
+        13,970 of 14,400 before the queue. Predicted: about 320, mwp-1
+        about 250 and mwp-2 about 70, between the seat's 270 and 400;
+        past 430 is the operator's.
+     4. *A second app on the same sign-in* (mwp-4): the conformance
+        canary, given accounts of its own — a token per person, read from
+        a bearer `authorization` and written back in a body, a redirect
+        and a query it answers — and an answerer of its own beside it,
+        run by `scripts/check.sh`, so every build keeps the sign-in
+        general rather than one run, with no service this host lacks. A
+        stranger's app from the catalogue run is the harder proof; its
+        trigger is a sign-in the canary passes and a stranger's app
+        cannot use. Predicted: its answerer about 60 lines, and `git diff`
+        of `crates/` and `web/` in mwp-4 empty.
+     5. *No app noun in the infra*: `scripts/vocab_check.py` at every
+        commit of the queue. Predicted: passes; the door's new words are
+        sign-in, secret, stand-in, script and header.
 
 **Chats are doors, and the last thing we build.** A small adapter per chat, in
 its own package, makes a group for a channel and posts its link. Onboarding
@@ -484,9 +667,9 @@ piece comes over:
 |---|---|---|
 | `svrngs-core` | the record: acts, admission into one order, membership, the sync digest; and what a browser's page spells as the command and the node do (u4-2): a link's token, the ask and the redemption a joiner signs with it, the issuer's answer and the seed it is believed by (u4-5), the protocols' names, and a relay's URL without the DNS root's trailing dot, which WebKit refuses (u4-9); a lend's label, one DNS label naming its lender's key and its name, and the pass a person signs for another key toward named lends until a time, with its check (u5-2). `no_std`, so the compiler refuses filesystem, clock, network and threads; time and keys are arguments | none |
 | `svrngs-runtime` | the only owner of each group's journal on disk, its projections and its writes: the journal and its write index, the open-journal map, the register's standing | the journals |
-| `svrngs-node` | the adapters: sync and its route over iroh, redemption, the loopback record API with its live lane (landed, u3-2 and u3-3), the member door (landed, u3-4), the list of what members lend, asked of each (landed, u3-5), and answered to a member by the computer it dials, each with its lender's key (landed, u4-5), and the door's limit and shares, a pure decision the door's task owns (landed, u3-6); a WebSocket's upgrade carried, and the pass holders' protocol, which any key may speak, where a request presenting a person's pass for the lend it names, by name or label, is that person's (landed, u5-2); every relay URL it makes or reads dotless where it enters — n0's relays, a relay it is told, a lookup's answers — in `relay.rs`, which the page compiles too (landed, u4-9); the room door, the lends a person names served to this computer's network at its private address while the command runs, one body with the origins (landed, u6-1) | each lend's declaration and secret; who is using each lend now |
+| `svrngs-node` | the adapters: sync and its route over iroh, redemption, the loopback record API with its live lane (landed, u3-2 and u3-3), the member door (landed, u3-4), the list of what members lend, asked of each (landed, u3-5), and answered to a member by the computer it dials, each with its lender's key (landed, u4-5), and the door's limit and shares, a pure decision the door's task owns (landed, u3-6); a WebSocket's upgrade carried, and the pass holders' protocol, which any key may speak, where a request presenting a person's pass for the lend it names, by name or label, is that person's (landed, u5-2); every relay URL it makes or reads dotless where it enters — n0's relays, a relay it is told, a lookup's answers — in `relay.rs`, which the page compiles too (landed, u4-9); the room door, the lends a person names served to this computer's network at its private address while the command runs, one body with the origins (landed, u6-1); a lend's sign-in, asked of the lender's program on a person's first request, its credential set on each of their requests, a stand-in swapped for its secret both ways, its script first in the lend's pages (mwp-1, mwp-2; §3, "The room", call 6) | each lend's declaration and secret; who is using each lend now; each person's sign-in answer, in memory |
 | `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell and a workspace of its own: a browser's endpoint, bound with the person's key, dialling a group's computer by key over a relay on the members' protocol (landed, u4-3); HTTP over the dial (landed, u4-4); joining — the ask and the redemption by svrngs-core's bodies, the key sealed in the page's store, and the list of what the group's people lend (landed, u4-5); the runtime, a service worker serving every request at a lend's address from the lender's door (landed, u4-6), a range that runs on — open-ended, or a `<video>`'s longer than a part — asked of the door in parts of 2 MiB (landed, u4-9), an open-ended one's first part at a new place 256 KiB and doubling as the reading runs on (u5-11), handed what it dials with in memory, and a page for a worker that holds nothing (landed, u4-10); since u5-2 at each lend's own origin, not the page's (`lend.js`, its start page `open.js`): the page signs a pass to a fresh key for the lend it opens and the lends it reads, the worker dials on the pass holders' protocol, keeps each lend's cookies, reads a redirect to a path under the lend, and with a shim in each lent page (`shim.js`) carries `WebSocket` and an app's own worker; an adapter | none: the page's store holds the key, sealed; a lend's origin's store holds its pass and its cookies |
-| `svrngs` | the command and the process: `new`, `join`, `link`, `share`, `unshare` and `room` (landed); the bare command prints where the record API listens, and what the people of its groups lend | a device's keys; each group's seed |
+| `svrngs` | the command and the process: `new`, `join`, `link`, `share`, `unshare` and `room` (landed), and `share --sign-in` (mwp-1); the bare command prints where the record API listens, and what the people of its groups lend | a device's keys; each group's seed |
 
 Held to `docs/principles/RUST_ARCH.md`: types encode the domain, ownership
 encodes the architecture, I/O lives at the edge. Parse, don't validate; closed
