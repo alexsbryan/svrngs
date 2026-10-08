@@ -224,7 +224,9 @@ up() {
   # Dee's computer admits only those it knows stand in House, and learns
   # of those who joined after it by its ring sync round, each 60 s
   # (crates/svrngs-node/src/ring_sync.rs:103): Alex's computer waits for it.
-  for _ in $(seq 1 150); do grep -q 'round membership exchanged_with=.*Alex/.*Cy/' "$R/dee/run.log" && break; sleep 1; done
+  for _ in $(seq 1 150); do
+    grep 'round membership exchanged_with=' "$R/dee/run.log" | grep 'Alex/' | grep -q 'Cy/' && break; sleep 1
+  done
   say "dee: $(grep -o 'round membership exchanged_with=.*' "$R/dee/run.log" | tail -1)"
   # Cy's computer goes to sleep; Alex's bare command lists the rest.
   kill "$(cat "$R/cy.pid")"; rm -f "$R/cy.pid"
