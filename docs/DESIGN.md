@@ -40,7 +40,9 @@ own root, so on a phone it needs a page host that gives every app an
 address of its own (ours does); where every app shares one, none of them
 opens. Stock Jellyfin plays and seeks through the door for two people at
 once, from a computer and from a phone, each signing in once with an
-account its lender made (`demo/runs/u5/2026-10-05-jellyfin-in/`); Home
+account its lender made (`demo/runs/u5/2026-10-05-jellyfin-in/`), or with
+nothing typed through a program its lender runs in front of it
+(`apps/jellyfin/`, `demo/runs/mw/2026-10-08/`); Home
 Assistant, Immich, Nextcloud, Actual and Paperless-ngx each do their first
 real act from a phone, the rest by a census of their own docs
 (`demo/runs/catalogue/2026-10-05/`, which says why Firefly III, BookStack,
@@ -268,21 +270,13 @@ is U5's inventory (§8).
 3. *The infra learns no Jellyfin.* Anything that knows Jellyfin's API lives
    in `apps/jellyfin/`, whose nouns `scripts/vocab_check.py` keeps out of
    the infra (§5), and what the door gains for it is general: any app.
-4. *Zero sign-in if it is small, else sign in once.* Zero sign-in: the
-   lender's computer gives each person their own Jellyfin user and the door
-   signs them in. Sign in once: the lend carries no secret, and each person
-   signs in with an account the lender made. u5-3 measures both and decides
-   by a rule it commits before its data — zero sign-in if it fits in at most
-   two rows and adds no Jellyfin noun outside `apps/jellyfin/`, else sign in
-   once — and the other goes to §9 with its trigger. Demo A's bar keeps
-   Jellyfin's list of users the same after the run as before (`demo/a.md`):
-   accounts the lender makes before the run keep it; users made per person
-   during the run do not, so a decision for zero sign-in brings that clause
-   to the operator before u5-9 runs (a bar is the operator's).
-   **Decided: sign in once** (u5-3, `demo/runs/u5/2026-10-05-jellyfin/`;
-   the operator, 2026-10-05). Zero sign-in took four rows, and Jellyfin
-   writes the person's token into the playback answers it sends, 43 times
-   in each engine. Through a lend with no secret, stock jellyfin-web signed
+4. *Sign in once, or none through a program the lender runs.* Lent as it
+   comes, the lend carries no secret and each person signs in once with an
+   account the lender made: **decided** (u5-3,
+   `demo/runs/u5/2026-10-05-jellyfin/`; the operator, 2026-10-05) over zero
+   sign-in in the infra, which took four rows, Jellyfin writing the
+   person's token into the playback answers it sends, 43 times in each
+   engine. Through a lend with no secret, stock jellyfin-web signed
    each person in with an account the lender made, played, and left the
    other alone in every pair; its socket was carried; no byte a person
    received held another's secret. One seek of 56 played again in 7,871 ms
@@ -298,6 +292,20 @@ is U5's inventory (§8).
    alone, no secret in a byte either received
    (`demo/runs/u5/2026-10-05-jellyfin-in/`). One seek of a computer run
    under a load of 33 on 12 cores missed, 6,389 ms, and stays a miss.)
+   Zero sign-in is the lender's to choose, outside the infra: a middleware
+   ("The room", call 6) in `apps/jellyfin/mw/` makes each person who comes
+   a Jellyfin user of their own with a code the lender gives it once
+   (upstream's `provision`, forked), writes jellyfin-web's stored sign-in
+   into the page it answers, and keeps each person's token out of what
+   they receive, putting it back in what they ask. Lent as `svrngs share
+   <its port>`, a newcomer played from the list with nothing typed, in
+   both engines on a computer and a phone, two people apart and no byte
+   holding the lender's key, with no line under `crates/` or `web/`
+   changed (the middleware spike, kept, `demo/runs/mw/2026-10-08/`; how
+   to run it, `apps/jellyfin/README.md`). Demo A's bar guards that nobody
+   who came made an account (`demo/a.md`, `accounts_created`): accounts
+   the lender makes before the run keep it, and so do the users the
+   lender's middleware makes, one per person (the operator, 2026-10-08).
    (Judged on this host, u5-9: three at once for ten minutes, Alex on a
    computer, Bo and Cy on phones over n0's relay, in two paced runs. Of the
    phones' 88 seeks, 1 missed, 19,293 ms, its first part held about 18 s
@@ -393,11 +401,24 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
    one at a time, from the link to their film on a TV stand-in in
    25–39 s, the TV reaching Sam's Jellyfin only through the room door;
    whether five people find the steps is the operator's run.)
-6. *Middleware, a spike after Demo B* (operator, 2026-10-06): a lent app
-   that forwards to another, an ordinary program on the lender's computer,
-   so `svrngs share <its port>` lends the pair; svrngs ships no runtime,
-   SDK or plugin format. Its invariants and the spike wait in §9, and no
-   U6 row builds it.
+6. *Middleware* (operator, 2026-10-06; its spike kept, 2026-10-08): a
+   lent app that forwards to another — an ordinary program on the lender's
+   computer that listens on a port, takes the door's verified request and
+   passes it to the service behind it, so `svrngs share <its port>` lends
+   the pair. Only the lender runs one, on their own computer; svrngs ships
+   no runtime, SDK or plugin format for it, and never starts or supervises
+   one. The door's guarantees stay outside it (identity set, the limit and
+   refused paths checked, an echoed secret stripped); its contract is
+   HTTP, the door's `x-svrngs-*` headers and the loopback record API; an
+   app's nouns live in middleware, never the infra. Its spike, after Demo
+   B, did Jellyfin's zero sign-in so ("Lent apps", call 4) with no diff
+   under `crates/` or `web/` and no header the door does not already set:
+   `x-svrngs-key` and `x-svrngs-person` name the person, the client's own
+   `authorization` its device (`demo/runs/mw/2026-10-08/`, its rule
+   judged by its spirit, §6, and its follow-ups, §7). Past the door, the
+   middleware's port believes loopback: a process on the lender's computer
+   naming a person's key there is answered as them, and is the lender's
+   own (§9's per-process tie keeps its trigger).
 
 **Chats are doors, and the last thing we build.** A small adapter per chat, in
 its own package, makes a group for a channel and posts its link. Onboarding
@@ -918,7 +939,7 @@ stock web app measured through one; what an app cannot yet ask of svrngs is
 
 | Upstream | What it does there | Becomes |
 |---|---|---|
-| `mesh_media/viewer.rs:304-463` (`provision`, 323 lines without its tests), with `:143-196` and `:216-296` | finds or makes one Jellyfin user, sets its password, writes its policy over the origin's own — `POST /Users/{id}/Policy` replaces rather than patches, and needs `AuthenticationProviderId` and `PasswordResetProviderId` (`:21-27`, `:143-175`) — reads the policy back (`:177-196`), signs in by `AuthenticateByName` (`:443`) and keeps `MediaBrowser Token="…"` (`:461`); a token already held is proved by one `GET /Users/Me` (`:216-296`). An `/Auth/Keys` key is admin-equivalent (`:6-12`); a non-admin sets no password (403, `:205-208`) | zero sign-in's shape (§3, call 4): a Jellyfin user per person, made by the lender's computer with a key the lender gives once. If u5-3 decides zero sign-in, forked into `apps/jellyfin/`, behaviour kept first, then a user per person in place of one viewer; never into the infra (call 3). Else it stays behind |
+| `mesh_media/viewer.rs:304-463` (`provision`, 323 lines without its tests), with `:143-196` and `:216-296` | finds or makes one Jellyfin user, sets its password, writes its policy over the origin's own — `POST /Users/{id}/Policy` replaces rather than patches, and needs `AuthenticationProviderId` and `PasswordResetProviderId` (`:21-27`, `:143-175`) — reads the policy back (`:177-196`), signs in by `AuthenticateByName` (`:443`) and keeps `MediaBrowser Token="…"` (`:461`); a token already held is proved by one `GET /Users/Me` (`:216-296`). An `/Auth/Keys` key is admin-equivalent (`:6-12`); a non-admin sets no password (403, `:205-208`) | zero sign-in's shape (§3, call 4): a Jellyfin user per person, made by the lender's computer with a key the lender gives once. Forked into `apps/jellyfin/mw/src/viewer.rs`, behaviour kept first, then a user per person in place of one viewer, as the middleware's first module (mw-1, `62560f0`, `717f433`); never into the infra (call 3) |
 | `docs/RING_APP_LIBRARY.md:802-816` | three ways a lent service keeps its users, cheapest first: the app reads the member header; the lender's credential injected, one shared viewer; an account per member, made on `Admit` and disabled on `Remove`. Mapping the member header onto an app's trusted proxy header is "From memory — verify per app" (`:810-811`) | the first is §1's "an app that takes the signed-in person from a request header", which u5-catalogue-dry's census checks per app against each app's own docs; the second is what U3's dry run broke on; the third is zero sign-in |
 | tag `e0-bot`, `docs/DESIGN.md:580-587` and `:878` | the door masked the secret in response bodies because "Jellyfin writes its token into playback info and into the HLS playlists' subtitle, trickplay and variant URLs"; a lend refused `/Sessions/Logout`, "which would sign the whole group out"; `Remote-User` and per-person accounts waited for "a named service that needs them" | not forked. The body claim was never measured: u5-3 (c) asks whether any byte a person receives carries a secret the lend holds, the transcode included. Jellyfin is now the named service |
 | `.canon/sources/notes/invariant/35104a7e.md:3-9`; `scripts/cw-media-demo.sh:31-40`, `:54-56` | Jellyfin 12.0.0 takes its credential only from `Authorization: MediaBrowser … Token="…"`: `X-Emby-Token`, `X-MediaBrowser-Token` and `?api_key=` each answer 401, and the inner space and quotes are load-bearing | a fact `apps/jellyfin/` and u5-3 build on: a lend's secret displaces the client's whole `authorization` (`crates/svrngs-node/src/door.rs:113-119`, `:386-412`), the client's device with it. Nothing forked |
@@ -1006,7 +1027,7 @@ different film from Sam's library in Jellyfin's own player through the
 lend, in their own browser, at the same time, seeking freely; none stalls
 another, and the door tells each its share of Sam's upload, in Sam's log.
 Sam's password never left Sam's computer; nobody made an account (§3, "Lent
-apps", call 4, on how that clause meets zero sign-in).
+apps", call 4, on how that clause meets a lender's middleware).
 
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
@@ -1091,13 +1112,13 @@ with a term in *N*² that nothing yet explains, it predicted 75 members within
 8%. The runs and predictions are in `scale.rs`'s module docs.)
 
 **Then**, in this order (operator, 2026-10-07): the ceiling, above; the
-middleware spike (§3, "The room", call 6; §9); group folders (§3, call 7
-of "Lent apps"; §9); the phone replica spike, iOS first (§9, "a native
-phone app"), after folders since they name the bytes a phone would hold;
-then removal (U7, the keeper of §6, with forks that void nothing), before
-any group of strangers; then the chat doors, Discord first — onboarding,
-last. After that the core grows one class at a time, each chosen by the
-north star's tests.
+middleware spike (§3, "The room", call 6; kept, 2026-10-08); group folders
+(§3, call 7 of "Lent apps"; §9); the phone replica spike, iOS first (§9, "a
+native phone app"), after folders since they name the bytes a phone would
+hold; then removal (U7, the keeper of §6, with forks that void nothing),
+before any group of strangers; then the chat doors, Discord first —
+onboarding, last. After that the core grows one class at a time, each chosen
+by the north star's tests.
 
 ## 9. Later, each with the trigger that brings it back
 
@@ -1123,14 +1144,12 @@ north star's tests.
 | any member's node redeeming a link, once its `Invite` has synced | a newcomer's link fails because its issuer's computer was asleep, counted |
 | a link's life set per link, other than a day | a newcomer meets a lapsed link, counted |
 | measuring a lender's upload rather than taking the figure they declare (BBR3's pacing estimate, or a timed saturating pull) | a declared figure is wrong by enough to stall a viewer in a recorded run |
-| a per-process tie between a node and the services it lends (upstream's `mint_tie`) | an app's act is written under a person by a process the lender did not run, or one computer is shared by people who do not trust each other |
+| a per-process tie between a node and the services it lends (upstream's `mint_tie`). A middleware believes loopback: a process on the lender's computer naming a person's key at its port was answered as them (`demo/runs/mw/2026-10-08/mw-1/`), which is the lender's own (§3, "The room", call 6) | an app's act is written under a person by a process the lender did not run, or one computer is shared by people who do not trust each other |
 | group folders (§3, call 7 of "Lent apps"): a member shares a folder at one level from a closed set; its file list in the record, its bytes content-addressed and fetched by verified range from whoever holds them (iroh-blobs 0.103, which takes iroh ^1.0.0); the meeting point runs one Jellyfin over everyone's shared films as `.strm` stubs; opt-in, beside lends. Its first run (svrn-docs `rings/runs/strm-2026-10-05/`, `457f120`): browsers played the holder's MP4 straight from the stub's URL, and WebKit remuxed an MKV through Jellyfin, the double hop; it failed its pre-registered byte-share bar on Jellyfin's per-play probe of a 47 MB file | U5 lands, and the operator runs it with a group in the wild and settles it (operator, 2026-10-05) |
 | a live payload naming its sender | an app needs to know who offered a live payload, and cannot take it from the payload |
 | WebKit's closed-range seeking through a lend: its seeks back to back, taken in serial 64 KiB reads of each short part, a round trip each, missed 5 s in 1 of 8 tries after u5-11, where straight at the canary over the same link they missed in none (`demo/runs/u5/2026-10-06-seek-stall/`; §11 risk 4); a rate in `scripts/check.sh`, not a gate | Demo A's real-phone sessions miss the seek bar in Safari more often than WebKit straight at the server on the same link |
 | our own relay as the default: `iroh-relay` (Let's Encrypt built in) on a small VPS, the operator inclined to DigitalOcean, US West, at `relay.svrnme.sh` (TCP 80 and 443, UDP 7842), carried in every link's token so a phone never needs n0's; `svrngs new --relay <url>` for a group that runs its own; n0's terms for production use read first. Open then: whether ours also drops n0's address lookup, computers learning each other's relay from the group's record. Until then n0's public relays and lookup, `RelayConfig::default()` (`crates/svrngs-node/src/guest.rs:66-76`), nothing paid for (operator, 2026-10-05). Every byte a phone sends crosses a relay (a browser is relay-only), so a host's bandwidth price decides it | svrngs goes to production, or a group beyond the operator's uses it |
-| zero sign-in for Jellyfin: a user per person made with a key the lender gives once (`apps/jellyfin/`), the door carrying a secret per person, an app's script at its lend's origin writing jellyfin-web's stored sign-in, and the door keeping the person's token out of the answers Jellyfin writes it into (u5-3, finding 4: four rows) | an app people lend that keeps its own accounts and asks a sign-in no one can give, or the operator asking Demo A for no sign-in at all |
 | the floor: every app under `/l/<label>/` of one address apart from the page's, on any static host, the link carrying that address after its token (a second address given to `svrngs new`, u5-2; dropped by u6-00). Its cost was one origin for every app, so a lent page could read what another kept and use another's pass while it lasted, and its every app lost its root: the catalogue run lent five self-hosted apps on it in Chromium and WebKit and none got past its sign-in, each asking for `/`-absolute paths the floor's host answered 404, and Paperless's post refused by its own origin check (`demo/runs/catalogue/2026-10-05/RESULTS.md`, "The floor"; `003e0d5`) | a group whose host answers no name nobody made asks for an app that keeps to relative paths, counted |
-| middleware (§3, "The room", call 6; operator, 2026-10-06): a lent app that forwards to another — an ordinary program on the lender's computer that listens on a port, takes the door's verified request and passes it to the service behind it, so `svrngs share <its port>` lends the pair; svrngs ships no runtime, SDK or plugin format. Only the lender runs one, on their own computer; the door's guarantees stay outside it (identity set, limit and refused paths checked, an echoed secret stripped from what it returns); its contract is HTTP, the door's `x-svrngs-*` headers and the loopback record API; an app's nouns live in middleware, never the infra; svrngs never starts or supervises one. The spike: Jellyfin's zero sign-in (its row above, four rows at u5-3) as a middleware, with no diff under `crates/` or `web/`; a newcomer plays from the list with no sign-in in both engines on a computer and a phone; no byte a person receives holds the lender's key; two people's plays stay apart. Killed if it needs a svrngs change beyond headers the door already sets. Open with it: Demo A's unchanged list of users, and the per-process tie (`mint_tie`, above) that "verified" leans on | Demo B passes |
 
 ## 10. Decisions
 
@@ -1145,8 +1164,12 @@ By the operator, 2026-10-06:
   such a host must do (§3, "Lent apps", call 1; §7; §9 has the trigger);
 - middleware is a spike after Demo B, and no U6 row builds it: a lent app
   that forwards to another, run only by its lender, with svrngs shipping no
-  runtime, SDK or plugin format for it (§3, "The room", call 6; §9 has its
-  invariants, the spike and the trigger).
+  runtime, SDK or plugin format for it (§3, "The room", call 6, with its
+  invariants). Its spike, 2026-10-08, was kept by its bars read for their
+  spirit, as the operator read them that day ("the bars are guidance to
+  align us at the start, the spirit of them are what guides how we
+  iterate"): Jellyfin's zero sign-in is a middleware in `apps/jellyfin/`
+  (§3, "Lent apps", call 4; `demo/runs/mw/2026-10-08/`).
 
 By the operator, 2026-10-05, after five reads on a real TV
 (`demo/runs/u6/2026-10-05-screen/reads.json`):

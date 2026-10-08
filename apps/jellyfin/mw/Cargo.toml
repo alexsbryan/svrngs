@@ -1,6 +1,6 @@
-# Jellyfin's middleware (demo/runs/mw/2026-10-08/README.md; DESIGN §9
-# :1133): a program the lender runs on their own computer, in front of
-# Jellyfin. A workspace of its own, so the root workspace neither builds,
+# Jellyfin's middleware (demo/runs/mw/2026-10-08/README.md; DESIGN §3, "The
+# room", call 6): a program the lender runs on their own computer, in front
+# of Jellyfin. A workspace of its own, so the root workspace neither builds,
 # lints nor tests it and scripts/check.sh stays free of Jellyfin;
 # apps/jellyfin/check/check.sh runs it.
 [workspace]

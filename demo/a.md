@@ -4,8 +4,11 @@ Gate: three of three people, each at home on their own computer, play a
 different film from Sam's lent library at the same time for ten minutes, each
 seeking at least three times, and every seek plays again within five seconds,
 whoever else is seeking; Sam's Jellyfin password is in nothing any of them
-received, and Jellyfin's list of users is the same after the run as before.
-Shown after U5, in Jellyfin's own player through the lend (DESIGN §8).
+received, and none of them made an account: every user in Jellyfin's list
+after the run was there before it, or was made by a program Sam runs in
+front of Jellyfin for a person who came, one each (`apps/jellyfin/README.md`;
+`runs/mw/2026-10-08/README.md` §6). Shown after U5, in Jellyfin's own player
+through the lend (DESIGN §8).
 
 **Before the run.** Sam: a computer at home running Jellyfin with at least
 three films, set up as `svrngs share` tells Sam (DESIGN §3, "Lent apps",
@@ -52,7 +55,8 @@ Sam's upload the door told it (Sam's node's log).
 
 **After.** Search the three HAR files and the three computers' svrngs logs for
 Sam's password: zero matches. Compare Jellyfin's list of users with the export:
-unchanged. Write the record in `runs/a/<date>.json` before looking at anything
-else — `participants` 3, `succeeded_in_time` the people who met the bar,
-`accounts_created` from the comparison — then the notes: where each person who
-did not finish got stuck. A failed run is kept, not rerun until it passes.
+any user it did not hold is one Sam's program made, one per person who came,
+or it is an account someone made. Write the record in `runs/a/<date>.json`
+before looking at anything else — `participants` 3, `succeeded_in_time` the
+people who met the bar, `accounts_created` the accounts someone made, from the
+comparison — then the notes: where each person who did not finish got stuck. A failed run is kept, not rerun until it passes.

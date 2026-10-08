@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! Jellyfin's middleware (demo/runs/mw/2026-10-08/README.md; DESIGN §9
-//! :1133): a program the lender runs on their own computer, in front of
-//! their Jellyfin, and lends with `svrngs share <its port>`. Each person the
-//! door names is made a read-only Jellyfin user of their own on their first
-//! request, and every request is signed in as its person on the client's
-//! own device. svrngs neither ships, starts nor supervises it.
+//! Jellyfin's middleware (demo/runs/mw/2026-10-08/README.md; DESIGN §3,
+//! "The room", call 6): a program the lender runs on their own computer, in
+//! front of their Jellyfin, and lends with `svrngs share <its port>`. Each
+//! person the door names is made a read-only Jellyfin user of their own on
+//! their first request, and every request is signed in as its person on the
+//! client's own device. svrngs neither ships, starts nor supervises it.
 //!
 //!   jellyfin-mw [--listen 127.0.0.1:<port>] [--jellyfin 127.0.0.1:8096]
 //!

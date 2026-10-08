@@ -191,3 +191,122 @@ Recorded, not answered (fence 4); mw-3 packages them in `QUESTIONS.md`.
    stand-in token with it — so a tie by the lend's secret is not free.
    mw-2 records whether any of its runs met a request at the middleware's
    port that did not come through the door.
+
+## 6. What the rule gives (mw-3)
+
+**Kept.** Written after mw-1's and mw-2's data (`mw-1/README.md`,
+`mw-2/README.md`), by §3's rule read for its spirit, as the operator set
+on 2026-10-08 (`3b4c608`: "the bars are guidance to align us at the
+start, the spirit of them are what guides how we iterate"): kept if a
+newcomer gets from the list to a playing film with nothing typed, two
+people stay apart and no byte holds the lender's key, without the infra
+learning the app.
+
+| Bar | Letter | Spirit | Data |
+|---|---|---|---|
+| 1. A newcomer plays from the list with no sign-in | passed in all four pairs | the same | `mw-2/steps.log` :76-91, "all passed" :92: every person `never asked`, the stored token the stand-in; opened in 525 to 19,357 ms and played in 1,197 to 15,264 ms after (Dara, a phone in WebKit, the slowest of both); every seek played again within 5 s, the slowest 1,938 ms |
+| 2. No byte a person receives holds the lender's key | passed in all four pairs | the same | `scan.json`; `steps.log` :78, :82, :86, :90: none of the middleware's key, Sam's password or token, either person's password or the other's token in 37,821,127, 76,970,352, 74,401,501 and 84,168,430 bytes; each person's own token in none (`0 in []`) |
+| 3. Two people's plays stay apart | passed in all four pairs | the same | `steps.log` :79, :83, :87, :91: each left alone while the other seeked, signed in after as their own account, in a playing session on their own device |
+| K1. No diff under `crates/` or `web/` | did not fire | the same | `git diff 5e877c9..HEAD -- crates web \| wc -l` prints 0, at this commit's parent |
+| K2. No header the door does not set | did not fire | the same | `x-svrngs-key` and `x-svrngs-person` name the person, the client's own `authorization` its device (`mw-2/README.md`, found 3) |
+
+Each was watched failing on its plant before it passed: `mw-1/README.md`'s
+table (one user for everyone; a request with no key let through) and
+`mw-2/README.md`'s (no stored sign-in; the lender's key as the token; both
+people one account on one device, `steps.log` :61-63).
+
+**Where the letter and the spirit part**, said openly (AGENTS.md 6), each
+judged by the spirit:
+
+1. *Demo A's "Jellyfin's list of users is the same after the run as
+   before"* (`demo/a.md:7`). The letter breaks by construction: mw-1's run
+   left two users that were not there before (`mw-1/mw-green.json`,
+   `users_before` three, `users_after` five), and each of mw-2's pairs made
+   two (`mw-2/README.md`, "Recorded"). The clause is there so nobody who
+   came signs up: a run's record counts `accounts_created`, and any makes
+   its value zero (`demo/README.md`). Nobody who came made an account
+   here; the lender's program made one for each, hidden from Jellyfin's
+   sign-in page and no administrator (`mw-green.json`, Alex's `Policy`:
+   `IsAdministrator` false, `IsHidden` true). Judged held, and the clause
+   is rewritten to say what it guards (`demo/a.md`, this commit).
+2. *The kill clause* reads "a svrngs change beyond headers the door
+   already sets" (§9 :1133). What the spike found wanting in svrngs is a
+   word, not a capability: lent `--kind jellyfin`, `share` tells the lender
+   to make each person an account in Jellyfin's pages
+   (`mw-1/sam-share-mw.out`), which the middleware now does. The lend
+   worked without it changing; it is follow-up 1, not a kill.
+3. *mw-2's third plant* was named for "one's play disturbed"; through the
+   middleware neither play was, and the bar caught the plant by the
+   account and the device instead (`steps.log` :62). The bar guards that
+   two people are not one; the plant was caught.
+4. *"Verified"*, which the middleware leans on, holds as far as its port.
+   A process on Sam's computer naming Alex's key in `x-svrngs-key` at the
+   middleware's port was answered as Alex, and Jellyfin then held a
+   session of Alex's on that process's device (`mw-1/mw-green.json`,
+   `anothers_key`, `sessions_after_anothers_key`). A process on the
+   lender's own computer is the lender's, who already holds Jellyfin's
+   administrator; §9 :1126's tie waits on a process the lender did not
+   run, or one computer shared by people who do not trust each other, and
+   neither is here. A note in that row, not a blocker. In none of mw-2's
+   eight runs did anything ask the middleware's port but the door
+   (`mw-2/mw-logs.txt`, "refused, not the door's: 0").
+
+So Jellyfin's zero sign-in, which u5-3 counted as four rows in the infra
+(DESIGN §9 :1131), is a program the lender runs in front of Jellyfin
+(`apps/jellyfin/mw/`), with nothing of svrngs changed. One host, one run
+of each pair: not a rate (AGENTS.md 7). DESIGN §3 ("Lent apps" call 4,
+"The room" call 6), §9 and §10 are rewritten for it in this commit, and
+`apps/jellyfin/README.md` tells a lender how to run it.
+
+## 7. The follow-ups it found
+
+Each a candidate row for the next ring, with its evidence. None blocks
+the verdict.
+
+1. **`share`'s words for a lend the middleware makes accounts for.** Lent
+   `--kind jellyfin`, `share` prints "asks each person to sign in once,
+   with an account you make them" and how (`mw-1/sam-share-mw.out`), from
+   the well-known table (`crates/svrngs/src/well_known.txt:15`, read by
+   `share::accounts_of`); with the middleware in front, it is wrong, and
+   a lender who follows it makes accounts nobody uses. The kind is the
+   only thing `share` knows, and it must not learn the middleware (§3,
+   "Lent apps" call 3): what a kind's words should be when a lender may
+   run either way is the row's question.
+2. **One person in two browsers at once.** jellyfin-web 12's socket names
+   no device (`/socket?ApiKey=…`), so the middleware signs it in on the
+   person's last device that named itself (`apps/jellyfin/mw/src/people.rs`,
+   `On::Last`; `mw-2/README.md`, found 1, 34 refusals before it). A
+   person with two browsers open has their socket on the last one's
+   session, so Jellyfin's messages reach only that one. No run here had
+   it: measure it.
+3. **A person on a computer and on a phone is two people.** A phone that
+   joins by the group's link is a person of their own to the door, and so
+   an account of their own to the middleware (`mw-2/README.md`,
+   "Recorded": Ana, Ben, Cleo and Dara apart from Alex and Bo). What one
+   watched on the computer is not resumed on the phone. It waits with §9's
+   "another device for the same person".
+4. **The middleware restarted, its people's accounts kept.** Every run
+   here deleted the accounts it named before it began (`mw-1/README.md`,
+   "The check"), so each person was new. On a restart the middleware
+   finds a person's account and resets its password
+   (`apps/jellyfin/mw/src/viewer.rs:275-293`), which ends that account's
+   other tokens (`mw-1/README.md`, probe 2): a person's open page then
+   holds a stand-in the middleware maps afresh, unmeasured. Run a pair,
+   restart the middleware, and run it again.
+5. **Which libraries a person sees.** The accounts the middleware makes
+   see every library (`mw-1/mw-green.json`, Alex's `Policy`:
+   `EnableAllFolders` true), where a lender making accounts by hand ticks
+   them (`crates/svrngs/src/well_known.txt:15`). A lender who wants some
+   kept back has no way to say so but Jellyfin's pages, account by
+   account, after each is made.
+6. **How a lender gets it.** The middleware is built from svrngs's source
+   with Rust's `cargo` (`apps/jellyfin/README.md`); nothing ships it.
+   Whether it ships beside `svrngs` (DESIGN §7) or as a release of its own
+   is the row's question; svrngs never starts or supervises it either way
+   (§3, "The room" call 6).
+7. **Demo A with no sign-in.** `demo/a.md`'s steps still have Sam make
+   three accounts and each person sign in once, as §3 "Lent apps" call 4
+   decided on 2026-10-05; its gate holds either way now that its clause
+   says what it guards. Whether Demo A's run (u5-9) lends the middleware
+   instead is a row of its own: its steps rewritten, a dry run on one
+   computer, then the operator's run.
