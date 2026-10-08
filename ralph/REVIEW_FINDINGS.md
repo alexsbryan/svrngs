@@ -3210,3 +3210,236 @@ apps/jellyfin/mw/src/. `converge noun` on each, beside `git grep -nP
 | I17 | 6, 7 | `code dry-report` over Python | Better: D, a verbatim 35-line Python body under another name, is seen at 0.9 (0.940); still missed at the default 0.95. |
 | I19 | 6 | `code converge noun`, and dry-report's exact tier | New: a Rust crate in its own Cargo workspace (apps/jellyfin/mw/Cargo.toml:6) has no SCIP symbols, so converge gives a noun defined only there "definitions (0) … check the spelling", N1 defined twice there (0), and N2 defined there and in svrngs-node (1), where each should say could-not-judge for that crate. The exact tier does say could-not-judge for the scope. |
 | I20 | 6, 7 | `code dry-report` near tier over Rust | New: A, a verbatim 25-line Rust function with its doc, is missed at 0.95, 0.9 and 0.8, scoped and not, and is seen at 0.7 only in a cluster of 846; with the exact tier blind there (I19), a verbatim copy inside the middleware is invisible to the tool. The window pass sees it. |
+
+## REVIEW-audit-mwp-auto-1 (2026-10-08, range 9bdcd1f..c487961)
+
+The range starts at 9bdcd1fb5, the hash REVIEW-audit-mw-auto-1's row
+carries (ralph/next/mw/STATE.md:17), the last `REVIEW-audit-` row; the mwp
+queue has none before this one. It ends at c487961, the commit that made
+this row: 11 commits, the last audit's `done` (3c5dbae), the design and
+queue (b764b6a, a21b657), and mwp-0 to mwp-3. Product code changed in
+crates/svrngs-node/, crates/svrngs/ and apps/jellyfin/ (`git diff --stat
+9bdcd1f c487961 -- crates apps web bridge`: 29 files, +1654 −902); web/
+and bridge/ are untouched. This audit fixes two findings (#85, #86) and
+records the rest.
+
+As before, the row's `docs/ARCH_PRINCIPLES.md` is
+docs/principles/ARCH_PRINCIPLES.md, and `target/debug/sovereign-cli` is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, which svrngs does not
+build: sha256 5f5e2d74…, **the binary REVIEW-audit-mw-auto-1 planted its
+tiers against** (its plants A, B, D, N1, N2, above), so those readings
+stand for it and the plants were not run again; the 5-line window pass
+stands in where they showed the tiers blind (I19, I20). The embedder was
+`llama-server` on the corpus's model (qwen-embedding-0.6b.gguf,
+~/.svrnmesh/config.toml:18) on :8080, run for this session; its first
+start (`-np 4 -c 32768`) died with exit 133 mid-index, and the next
+incremental index then reported complete with stale positions (I21), so
+every clean run below is on a `code index --full` of the clean tree at
+c487961 (2476 chunks in 328 s) and a `refresh` after it (SCIP idle,
+graph 4 s old).
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' 9bdcd1f..HEAD`, summed
+by /tmp/mwpaudit1/ledger.py (the last audit's, its unit pattern
+`mwp-\d`), with its rules: a commit counts toward the unit its subject
+names, else toward the next `done` commit's; product code is crates/,
+apps/, web/, bridge/; a test is a `tests/` or `check/` segment or a
+lean_check test file name; lockfiles left out.
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| mwp-0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| mwp-1 | 538 | 34 | 504 | 481 | 11 | 470 |
+| mwp-2 | 87 | 13 | 74 | 199 | 2 | 197 |
+| mwp-3 | 296 | 837 | −541 | 68 | 20 | 48 |
+| total | 921 | 884 | 37 | 748 | 33 | 715 |
+
+- mwp-1 src (8572711): door/sign_in.rs +388, door.rs +85/−15, cli.rs
+  +30/−12, share.rs +18/−5, lend.rs +16/−2, node.rs +1. Tests:
+  tests/door/sign_in.rs +346, door/sign_in/tests.rs +81, lend/tests.rs
+  +21, share tests +18/−4 and +10/−6, five one-line fixture additions.
+- mwp-2 src (d0f1f34): door/sign_in.rs +59/−11, door.rs +28/−2. Tests:
+  tests/door/sign_in.rs +120/−2, door/sign_in/tests.rs +79.
+- mwp-3 src (a81178d), all apps/jellyfin/: forward.rs −374 and swap.rs
+  −160 deleted; answer.rs +135 new; person.rs +30/−123, people.rs
+  +45/−83, page.rs +32/−44, main.rs +23/−25, Cargo.toml +6/−7, README
+  +25/−21. Tests: check.sh +51/−11, mw.py +13/−7, judge.py +3/−1,
+  person.mjs +1/−1.
+
+`python3 scripts/lean_check.py <tree>` (HEAD's script, rc 0) on `git
+archive` trees in /tmp/mwpaudit1:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 9bdcd1f, range start | 2957 / 3000 | 13970 / 14400 |
+| c487961, range end | 2957 / 3000 | **14398 / 14400** |
+
+The 428 lines: mwp-1 375 and mwp-2 51 (their commit bodies, 8572711 and
+d0f1f34: 14,345 then 14,396), and 2 from
+demo/runs/mwp/2026-10-08/run.sh (the only counted code file changed
+after d0f1f34, `git diff --stat d0f1f34 HEAD`). DESIGN §3's bar 3
+predicted about 320; fence 3's estimate was ~270, ~400 with traces and
+refusals: past it by 28, inside the 430 the raise left, as mwp-1's body
+said and why (the parse's refusals and the streaming body under rustfmt).
+**2 lines are left**: any change below that adds a counted line is the
+operator's raise first (#80).
+
+### (2) Clones (`code dry-report`)
+
+Scoped, one run each for the crate dirs the range touched, at 0.95:
+
+| scope | locations | exact | near | with a side added in the range |
+|---|---:|---|---:|---|
+| crates/svrngs-node/ | 391 | 5 (lend.rs `as_str` ×3, `try_from`, `fmt`; api.rs `addr`; api.rs/iroh.rs `drop`) | 1 (declared.rs `harden_file` ×2) | 0 |
+| crates/svrngs/ | 65 | 0 | 0 | 0 |
+| apps/jellyfin/mw/ | 52 | **could-not-judge** ("no SCIP function symbols in scope", I19) | 0 | 0 |
+| apps/ | 144 | 0 | 2 (tv.mjs `playOn`~`menu`, I9; judge.py `why`~`why`, #84's) | 0 |
+
+Since a scoped run cannot see across scopes (I12), the whole corpus too,
+at 0.95 (14 exact, 15 near), 0.9 (14, 36) and 0.8 (14, 214).
+/tmp/mwpaudit1/blame.py (the last audit's) blamed every side, 885, for a
+line in 9bdcd1f..c487961: **0** clusters with an added side at 0.95 and
+0.9; at 0.8, **9**, each read:
+
+- door.rs `lend_for` (:738–853) ~ `forward` (:953–1071) ~ `forward`
+  (:1072–1197), 0.834–0.839. door.rs has one `forward` (:956–1197): the
+  tool split it in two and paired the halves (I22). What is real is its
+  size, 155 lines at 9bdcd1f and 242 at c487961, the sign-in deciding at
+  five places in it — **#87**.
+- person.rs `Who::of` (:54–72) ~ its test helper `key` and three tests
+  (:136–179), 0.807–0.869: a parse and its tests; no change.
+- lend.rs `declare` (:394–442) ~ its test (lend/tests.rs:102–141), 0.810;
+  share.rs `lend_of` (:134–175) ~ its test (share/tests.rs:78–121), 0.866;
+  sign_in.rs `first_in` (:304–319) ~ its test (sign_in/tests.rs:84–104),
+  0.828: code and its test; no change.
+- lend.rs `read` (:333–366) ~ `all` (:365–391), 0.863: one line of `read`
+  is the range's (`sign_in: file.sign_in`), `all` calls `read`; no change.
+- people.rs `start` (:42–67) ~ `signed` (:77–107), 0.823: the owner's loop
+  and the step it runs; no change.
+- sign_in/tests.rs `a_secret_split_anywhere_is_swapped` (:65–84) ~
+  `a_streamed_page_gets_its_script_first_and_its_secrets_swapped`
+  (:133–160), 0.820: two tests cutting at every byte, one with a page;
+  no change.
+- person.rs `Device::of` (:84–102) ~ `Device::one` (:100–113), 0.830: a
+  person's device and the plant's one device; no change.
+- sign_in.rs `said` (:357–366) ~ `compressed` (:363–373), 0.859: two
+  header reads, one giving a string and one a yes or no; no change.
+
+**Window pass** (/tmp/ceilaudit1/windows.py . 9bdcd1f..HEAD, 5
+normalized lines, tests included): 167 hits, **2 new**:
+
+- crates/svrngs-node/tests/door/sign_in.rs:120–125 == :148–153: the
+  stand-in service wrote its head and two chunks by hand twice — **#85**,
+  fixed.
+- crates/svrngs/src/share/tests.rs:45–49 == crates/svrngs/tests/share.rs
+  :160–164: two `Share` literals, each a test's own input; no change.
+
+Reading the range for what neither pass would show:
+
+- **#87.** crates/svrngs-node/src/door.rs:956–1197, `forward`: 155 lines
+  at 9bdcd1f, 242 now. The sign-in is decided at :992 (asked), :1012 and
+  :1018 (inward), :1103 (outward headers, a 401 forgotten), :1146 (the
+  script) and :1163 (the body), each a `match`/`map` on `signed` beside
+  the one-secret path. Principle 8's "collapse the drive" would make the
+  sign-in a value with an inward and an outward step in sign_in.rs, and
+  `forward` call each once. Not fixed: it moves ~90 lines and adds
+  signatures, past the 2 lines left (#80), and it is no change in
+  behaviour to land alone.
+- **#88.** crates/svrngs-node/src/door/sign_in.rs:167–180: the one task
+  that keeps every answer awaits `ask_of` (:176) inside its loop, so
+  while one person's first ask is out (up to `ASK_WITHIN`, 30 s, :51),
+  every request through every lend with a sign-in waits, a kept answer's
+  too. DESIGN's contract asks "one person at a time, so a person's first
+  requests at once ask once" (docs/DESIGN.md:466-467): the letter is
+  kept; its spirit is one ask per person, which needs no wait across
+  people or lends. Read from the code, not reproduced by a run. Not
+  fixed: a change in behaviour, with lines past the budget; the trigger
+  is a lend whose sign-in is slow or down while another person is in.
+- **#89.** crates/svrngs-node/src/door/sign_in.rs:307–316 (`first_in`)
+  and :323–333 (`tag`'s nonce) against web/lend.js:338–339 and :255:
+  where a script goes first in a page, and the nonce it carries, decided
+  twice, in Rust in the door and in JavaScript in the phone's worker.
+  They agree on every case the door's unit test gives
+  (sign_in/tests.rs:87–101, "lend.js's cases", DESIGN :572), but nothing
+  runs both on one input (principle 8: a golden equivalence test). Not
+  fixed: the two run in two places that cannot share a body; a golden
+  test would need a JS runner in the crate's tests.
+- **#90.** `svrngs-stand-in` is spelled at
+  crates/svrngs-node/src/door/sign_in.rs:48 (`STAND_IN`) and
+  apps/jellyfin/mw/src/page.rs:22 (`STAND_IN`, citing the door's), and
+  read at apps/jellyfin/check/person.mjs:235. Its one home is the
+  contract (docs/DESIGN.md:493-494), as the identity headers' is (#83);
+  the middleware cannot link the door (DESIGN §3 call 6: no SDK). If the
+  two spellings parted, the page's stored token would go unswapped and
+  Jellyfin answer 401: the mw-2 pairs catch it, but they are not in
+  scripts/check.sh (`grep -ci jellyfin scripts/check.sh`: 0). No change.
+- **#57, #68, #70, #71, #75, #77, #79, #81, still open.** Not touched by
+  the range's lines (#82 closed in a81178d, recorded above).
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff 9bdcd1f c487961 -- crates apps web bridge`, added lines
+matching `(struct|enum|trait|type|class) Name`: 13. `converge noun` on
+each beside `git grep -nP '\b(struct|enum|trait|type|class) <Name>\b'
+HEAD -- crates apps web bridge` (/tmp/mwpaudit1/converge.txt). `Data`
+and `Error` are `hyper::body::Body`'s associated types in `Swapping`
+(sign_in.rs:401-402), and `Refusal`'s other `type` lines are
+`Command::Refusal` (svrngs-core/src/command.rs:39); none is a noun of
+its own. Once each: `Answers` (a test's, tests/door/sign_in.rs:38;
+converge 0), `At` (answer.rs:27; converge 0, I19), `Secret`, `SignIns`,
+`Swapping`, `Whose` (sign_in.rs; converge 1 each). More than one:
+
+| noun | converge | git grep | the two |
+|---|---|---|---|
+| **Refusal** | 2: cli.rs:333, sign_in.rs:125 | 2: crates/svrngs/src/cli.rs:334, crates/svrngs-node/src/door/sign_in.rs:126 | why the command stopped, in a person's words; why a lend's sign-in signed nobody in, told to the lender |
+| **Answer** | 2: sign_in.rs:64, node.rs:538 | 2: sign_in.rs:65, crates/svrngs-node/src/node.rs:539 | a sign-in's answer, parsed; a struct inside `ask_lends`, a lender's list of lends |
+| **Wire** | 2: project.rs:59, sign_in.rs:74 | 2: crates/svrngs-core/src/project.rs:60, sign_in.rs:75 | the ops a projection sends; a sign-in's answer as JSON before it is parsed |
+| **Ask** | 1: sign_in.rs:146 | **2**: apps/jellyfin/mw/src/people.rs:28, sign_in.rs:147 | the middleware's ask of its owner of accounts; the door's of its keeper of answers |
+| **Signed** | 1: sign_in.rs:138 | **2**: apps/jellyfin/mw/src/people.rs:36, sign_in.rs:139 | Jellyfin's user, device and token; the door's answer and every secret held for the lend |
+
+- **#91, no change.** Each pair is two concepts. `Ask` and `Signed` are
+  the two ends of one contract in two programs (as #83's five), and
+  converge counts neither middleware half (I19).
+
+### Fixed here
+
+- **#85** (c3327a3). crates/svrngs-node/tests/door/sign_in.rs:120–125
+  and :148–153, at c487961: the stand-in service wrote a head, two chunks
+  100 ms apart and the terminator by hand, twice. Now `chunked`
+  (:88; c3327a3's body says :85, where its doc's line before it is) for
+  both. 3 passed before and after; the fixture still splits where the
+  tests need, each watched failing on a plant then reverted (no holding
+  back in `swapped`: "a person received a secret"; `first_in` deciding
+  before `<head` can come: "the person's script first in <head>"). No
+  counted line.
+- **#86** (31eee93). docs/DESIGN.md:441–600, the sign-in's contract,
+  cited door.rs and the spike's swap.rs and forward.rs by path:line as at
+  252bf22; mwp-1 moved door.rs's lines and mwp-3 deleted the two files,
+  so at HEAD they resolved to nothing or to other lines (principle 4).
+  Each resolves at 252bf22; the contract now says so, one clause.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 85 | 8 | crates/svrngs-node/tests/door/sign_in.rs:120-125 and :148-153, at c487961 | c3327a3 | The stand-in service's chunked writer, twice; now `chunked`. |
+| 86 | 4 | docs/DESIGN.md:441-600 against crates/svrngs-node/src/door.rs and apps/jellyfin/mw/src/{swap,forward}.rs, at c487961 | 31eee93 | The contract's path:lines resolved only at 252bf22; it now says so. |
+| 87 | 8 | crates/svrngs-node/src/door.rs:992, :1012, :1018, :1103, :1146, :1163 | not fixed (budget, #80) | `forward` grew 155 → 242 lines, the sign-in decided at five places beside the one secret's. |
+| 88 | 8 (spirit of DESIGN :466) | crates/svrngs-node/src/door/sign_in.rs:167-180, :176 | not fixed (behaviour, budget) | One person's first ask, up to 30 s, holds every request through every sign-in lend, kept answers too. |
+| 89 | 8 | crates/svrngs-node/src/door/sign_in.rs:307-316, :323-333 and web/lend.js:338-339, :255 | not fixed | Where a script goes first and its nonce, decided in Rust and in JS, held by mirrored cases, not a golden test. |
+| 90 | 8 | crates/svrngs-node/src/door/sign_in.rs:48 and apps/jellyfin/mw/src/page.rs:22 | no change | `svrngs-stand-in` spelled in both programs; DESIGN :493 its home; checked only by the Jellyfin run, not check.sh. |
+| 91 | 8 | Refusal, Answer, Wire, Ask, Signed: the sites in (3) | no change | Five names defined twice, each two concepts. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 2 lines left in the repository (14398 / 14400). |
+| 57, 68, 70, 71, 75, 77, 79, 81 | as recorded | as recorded | not fixed | Untouched in the range. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still present: every sign_in.rs noun one line early (`Ask` :146 for :147, `Refusal` :125 for :126, `Wire` :74 for :75), and cli.rs `Refusal` :333 for :334. |
+| I9 | 6, 7 | `code dry-report` near tier | Still present: tv.mjs `menu` inside `playOn`, 0.952. |
+| I12 | 5, 6 | `code dry-report --scope` | Still present: 0 added-side clusters scoped; the 9 at 0.8 are seen only unscoped. |
+| I19 | 6 | `code converge noun`, dry-report's exact tier | Still present: apps/jellyfin/mw/ exact tier could-not-judge; `At` gives definitions (0), `Ask` and `Signed` (1) where git grep finds 1, 2, 2. |
+| I21 | 6, 7 | `code index` (incremental) after an embedder failure | New: an incremental run whose embedder died (exit 133) said "22 file(s) failed to re-index"; the next incremental run said "Incremental refresh complete … 22 file(s) changed — 280 chunk(s) embedded", yet dry-report then gave door.rs's symbols at e9ed277's lines (`router` :163–174, where it is :172–183 after `--full`; person.rs's `key` :212–220, a function of a file 179 lines long). A completed incremental index is not proof of a current one. Cause not isolated. |
+| I22 | 6, 7 | `code dry-report` near tier | New: one long function is two symbols of one name: door.rs `forward` (:956–1197) given as `forward` :953–1071 and `forward` :1072–1197, and those paired as near clones of each other and of `lend_for`, 0.834–0.839. |
