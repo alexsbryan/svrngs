@@ -161,13 +161,10 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
         refused: Vec::new(),
         upload: None,
         reads: Vec::new(),
+        sign_in: None,
     };
-    let lend = share::lend_of(
-        &asked,
-        share::listens(asked.port),
-        share::well_known_kind(asked.port),
-    )
-    .expect("something listens there, and its kind is given");
+    let lend = share::lend_of(&asked, share::listens, share::well_known_kind(asked.port))
+        .expect("something listens there, and its kind is given");
     cli::share_lend(sam.dir.path(), &lend, Some(SECRET)).unwrap();
     let mut said = vec![Said::Shared {
         lend: lend.clone(),
@@ -302,6 +299,13 @@ fn share_takes_no_password_on_the_command_line() {
     assert_eq!(reads, ["films", "music"]);
     assert!(cli::parse(argv(&["share", "8096", "--reads", "a/b"])).is_err());
     assert!(cli::parse(argv(&["new", "x", "--reads", "films"])).is_err());
+    // Its sign-in's port (mwp-1), a port as the lend's is.
+    let Ok(Verb::Share(asked)) = cli::parse(argv(&["share", "8096", "--sign-in", "9000"])) else {
+        panic!("share parses a sign-in");
+    };
+    assert_eq!(asked.sign_in.map(|p| p.get()), Some(9000));
+    assert!(cli::parse(argv(&["share", "8096", "--sign-in", "0"])).is_err());
+    assert!(cli::parse(argv(&["room", "x", "--sign-in", "9000"])).is_err());
 }
 
 /// The program, its output read line by line as it comes.

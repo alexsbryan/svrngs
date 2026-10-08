@@ -20,6 +20,10 @@
 //! u5-4: a kind the table says keeps its own accounts ([`accounts_of`]) is
 //! lent with no password, and its lender told how to make each person an
 //! account in it (DESIGN §3, "Lent apps", call 4: sign in once).
+//!
+//! mwp-1: `--sign-in <port>` names the lender's program that signs each
+//! person in (`svrngs_node::door::sign_in`), refused as a lend's port is
+//! when nothing listens there.
 
 use std::num::NonZeroU16;
 use std::time::Duration;
@@ -66,6 +70,8 @@ pub struct Share {
     pub upload: Option<Upload>,
     /// The kinds of lend its pages read (u5-2).
     pub reads: Vec<Kind>,
+    /// The port of its sign-in, if its lender names one (mwp-1).
+    pub sign_in: Option<NonZeroU16>,
 }
 
 /// Why a lend could not be decided, in a person's words.
@@ -75,6 +81,8 @@ pub enum ShareRefusal {
     NothingListens(NonZeroU16),
     #[error("say what is on port {0}: `svrngs share {0} --kind <kind>`")]
     NoKind(NonZeroU16),
+    #[error("nothing answers on port {0}, its sign-in, on this computer: start it, then share")]
+    NoSignIn(NonZeroU16),
 }
 
 /// `5000` → port 5000 on this computer. (svrngs: a port alone, where
@@ -122,16 +130,20 @@ pub fn listens(port: NonZeroU16) -> bool {
     up
 }
 
-/// The lend `share` declares, given whether something listens on its port
-/// and the kind the port is well known for: the kind given, else the
-/// port's; the name given, else the kind; the limit given, else
+/// The lend `share` declares, given what `listens` says of its port and
+/// its sign-in's, and the kind the port is well known for: the kind given,
+/// else the port's; the name given, else the kind; the limit given, else
 /// [`DEFAULT_LIMIT`].
 pub fn lend_of(
     share: &Share,
-    listening: bool,
+    listens: impl Fn(NonZeroU16) -> bool,
     well_known: Option<Kind>,
 ) -> Result<Lend, ShareRefusal> {
-    if !listening {
+    if let Some(port) = share.sign_in.filter(|p| !listens(*p)) {
+        tracing::debug!(target: "share", port, "share: refused — nothing listens on the sign-in's port");
+        return Err(ShareRefusal::NoSignIn(port));
+    }
+    if !listens(share.port) {
         tracing::debug!(target: "share", port = share.port, "share: refused — nothing listens on the port");
         return Err(ShareRefusal::NothingListens(share.port));
     }
@@ -155,6 +167,7 @@ pub fn lend_of(
         refused: share.refused.clone(),
         upload: share.upload,
         reads: share.reads.clone(),
+        sign_in: share.sign_in,
     })
 }
 

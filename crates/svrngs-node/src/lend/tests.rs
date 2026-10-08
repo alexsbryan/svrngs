@@ -95,6 +95,7 @@ fn lend(name: &str, port: u16) -> Lend {
         refused: vec![refused("/admin")],
         upload: None,
         reads: Vec::new(),
+        sign_in: None,
     }
 }
 
@@ -134,6 +135,26 @@ fn a_lend_declared_is_read_back_and_withdrawn_whole() {
         !withdraw(root.path(), &shelf.name).unwrap(),
         "nothing left to take"
     );
+}
+
+/// A sign-in (mwp-1) is kept in the declaration and read back; with a
+/// secret beside it, refused and nothing written; and a lend with none is
+/// written with no word of it, as before.
+#[test]
+fn a_sign_in_is_declared_alone_and_a_lend_without_one_as_before() {
+    let root = tempfile::tempdir().unwrap();
+    let mut signed = lend("signed", 8096);
+    signed.sign_in = NonZeroU16::new(9000);
+    assert!(matches!(
+        declare(root.path(), &signed, Some(("authorization", "s3cret"))),
+        Err(LendError::SecretAndSignIn(_))
+    ));
+    assert_eq!(read(root.path(), &signed.name).unwrap(), None);
+    declare(root.path(), &signed, None).unwrap();
+    assert_eq!(read(root.path(), &signed.name).unwrap(), Some(signed));
+    declare(root.path(), &lend("pad", 9001), None).unwrap();
+    let text = std::fs::read_to_string(lends_dir(root.path()).join("pad.json")).unwrap();
+    assert!(!text.contains("sign_in"), "{text}");
 }
 
 /// A lend's upload is its lender's to state: absent is none declared, never

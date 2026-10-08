@@ -334,6 +334,28 @@ computer lends (`lend::Offered`: name, kind, limit, upload) read from the
 declarations at each ask, and how many people use each now: `door::Using`,
 a task owning `limit::Counts` and the clock, told by messages, the answer's
 body holding a use until it ends.
+
+A lend may declare a sign-in instead of a secret (mwp-1; DESIGN §3, "The
+room", call 6): `sign_in` in its declaration, the port of a program of the
+lender's, set by `svrngs share --sign-in <port>`; `lend::declare` refuses a
+secret beside it. `door/sign_in.rs` holds it. `SignIns`, one task the door
+holds as it holds `Using`, keeps each person's answer by lend, port and key
+in memory, and on a person's first request asks `POST /` at the sign-in
+with the two identity headers alone, one ask at a time, within 30 s. The
+answer is `200` and `{secret, headers, script}`, every field required and
+none other (`Answer::parse`): a secret of 16 to 512 unreserved bytes; no
+header under `x-svrngs-`, hop-by-hop or `host`; a script holding neither
+the secret nor `</script`. Anything else refuses the request, `502` with
+`kind: "sign-in"`, the reason at warn, and nothing is carried. The answer's
+headers then stand where the one secret would (`rewrite_headers`); the
+stand-in `svrngs-stand-in` in the query and in each header becomes the
+asker's secret; `Accept-Encoding` goes. Outward, every secret held for the
+lend becomes the stand-in in each header, and in a textual body
+(`textual`: text, JSON, XML, a playlist, JavaScript, or no type) as it
+streams (`Swapping`, holding back one byte fewer than the longest secret),
+its length dropped; a textual answer compressed anyway is refused, `502`.
+A `401` to a request signed with a kept answer forgets it. A lend with no
+sign-in is carried as before.
 `Node::lends` asks every other computer's key standing in a group held, at once, and
 answers each lend with whose it is and its address on this computer's
 loopback, the dialler's bridge to its lender then `/lend/<name>/`; a

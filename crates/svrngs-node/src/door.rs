@@ -36,6 +36,12 @@
 //! **The secret never goes back.** A response header holding the lend's
 //! secret is dropped, named at warn by its header, never its value.
 //!
+//! **A lend's sign-in** (mwp-1, [`sign_in`]): a lend declaring one has no
+//! one secret; the door asks the lender's program on each person's first
+//! request, sets that person's headers on each of their requests, and swaps
+//! a stand-in for their secret both ways. A request it cannot sign in is
+//! refused, `502`, never carried unsigned.
+//!
 //! **How many at once, and each one's share** (u3-6; DESIGN §8, "Many
 //! people, one library"): before a request is carried, the door asks
 //! [`limit`] whether its person is let in — counted while a request of
@@ -97,6 +103,7 @@ use limit::{Counts, Verdict, Whereabouts};
 use svrngs_core::pass::{Label, Pass};
 
 pub mod limit;
+pub mod sign_in;
 
 /// svrngs's own header prefix: every header under it on a request through
 /// the door is the door's. A client's is stripped whole.
@@ -159,6 +166,7 @@ pub struct Door {
     pub key: [u8; 32],
     pub data_dir: PathBuf,
     pub using: Using,
+    pub sign_ins: sign_in::SignIns,
 }
 
 /// The door's routes, for the members' protocol's router: a lend, every
@@ -965,10 +973,6 @@ async fn forward(
     let upgrade = upgrade_of(req.headers());
     let asker_side = upgrade.as_ref().map(|_| hyper::upgrade::on(&mut req));
     let (mut parts, body) = req.into_parts();
-    let target = match parts.uri.query() {
-        Some(q) => format!("{path}?{q}"),
-        None => path,
-    };
     let (Ok(person_value), Ok(key_value)) = (
         HeaderValue::from_bytes(person.as_str().as_bytes()),
         HeaderValue::from_str(actor),
@@ -979,15 +983,46 @@ async fn forward(
             "who is asking cannot be told to this lend",
         );
     };
-    let secret = secret_headers(door, &lend.name);
-    let displaced = rewrite_headers(
-        &mut parts.headers,
-        [
-            (HeaderName::from_static(PERSON_HEADER), person_value),
-            (HeaderName::from_static(KEY_HEADER), key_value),
-        ],
-        &secret,
-    );
+    let identity = [
+        (HeaderName::from_static(PERSON_HEADER), person_value),
+        (HeaderName::from_static(KEY_HEADER), key_value),
+    ];
+    let signed = match lend.sign_in {
+        None => None,
+        Some(port) => match door
+            .sign_ins
+            .of(&lend.name, port, actor, identity.clone())
+            .await
+        {
+            Ok(signed) => Some((port, signed)),
+            Err(why) => {
+                tracing::warn!(target: "door", actor, lend = %lend.name, %why,
+                    "door: refused — the lend's sign-in did not sign the person in, so the request is not carried");
+                let body = serde_json::json!({
+                    "error": format!("{} could not sign you in", lend.name),
+                    "kind": "sign-in",
+                });
+                return (StatusCode::BAD_GATEWAY, Json(body)).into_response();
+            }
+        },
+    };
+    // Inward, the stand-in becomes the asker's secret, in the query and each header.
+    let own = signed.as_ref().map(|(_, s)| s.answer.secret.as_str());
+    let target = match (parts.uri.query(), own) {
+        (Some(q), Some(own)) => format!("{path}?{}", q.replace(sign_in::STAND_IN, own)),
+        (Some(q), None) => format!("{path}?{q}"),
+        (None, _) => path,
+    };
+    let secret = match &signed {
+        None => secret_headers(door, &lend.name),
+        Some((_, s)) => {
+            let to = s.answer.secret.as_str().as_bytes();
+            sign_in::swap_headers(&mut parts.headers, &[sign_in::STAND_IN.as_bytes()], to);
+            parts.headers.remove(header::ACCEPT_ENCODING);
+            s.answer.headers.clone()
+        }
+    };
+    let displaced = rewrite_headers(&mut parts.headers, identity, &secret);
     if displaced > 0 {
         tracing::info!(target: "door", actor, lend = %lend.name, displaced,
             "door: dropped headers the client typed in the door's or the secret's name before setting them");
@@ -1057,7 +1092,20 @@ async fn forward(
         }
         _ => held,
     };
-    let echoed = drop_echoed_secret(&mut parts.headers, &secret);
+    let echoed = match &signed {
+        None => drop_echoed_secret(&mut parts.headers, &secret),
+        Some((port, s)) => {
+            if parts.status == StatusCode::UNAUTHORIZED {
+                door.sign_ins
+                    .forget(&lend.name, *port, actor, &s.answer.secret);
+            }
+            let to = sign_in::STAND_IN.as_bytes();
+            let swapped =
+                sign_in::swap_headers(&mut parts.headers, &sign_in::bytes(&s.secrets), to);
+            tracing::debug!(target: "door", lend = %lend.name, swapped, "door: secrets in the answer's headers swapped for the stand-in");
+            Vec::new()
+        }
+    };
     let own = parts
         .headers
         .get(header::LOCATION)
@@ -1085,6 +1133,24 @@ async fn forward(
         .headers
         .get(header::CONTENT_LENGTH)
         .and_then(|l| l.to_str().ok()?.parse().ok());
+    // Outward, a textual body is read for every secret held for the lend.
+    let swapping = signed
+        .filter(|_| {
+            parts.status != StatusCode::SWITCHING_PROTOCOLS && sign_in::textual(&parts.headers)
+        })
+        .map(|(_, s)| s.secrets);
+    if swapping.is_some() && sign_in::compressed(&parts.headers) {
+        tracing::warn!(target: "door", lend = %lend.name, encoding = ?parts.headers.get(header::CONTENT_ENCODING),
+            "door: refused — a textual answer came compressed, so it cannot be read for a secret, and is not sent on");
+        return err(
+            StatusCode::BAD_GATEWAY,
+            format!("{} answered in a form the door cannot read", lend.name),
+        );
+    }
+    if swapping.is_some() {
+        tracing::debug!(target: "door", lend = %lend.name, "door: a textual answer, its body read for every secret held for the lend");
+        parts.headers.remove(header::CONTENT_LENGTH);
+    }
     carriage.answered = Some((parts.status.as_u16(), length));
     tracing::debug!(target: "carriage", lend = %lend.name, range = ?carriage.range, status = parts.status.as_u16(),
         content_range = ?parts.headers.get(header::CONTENT_RANGE), ms = carriage.began.elapsed().as_millis(), "door: answered");
@@ -1094,7 +1160,11 @@ async fn forward(
         carried.sent += frame.data_ref().map_or(0, |d| d.len() as u64);
         frame
     });
-    let mut response = Response::new(Body::new(body));
+    let body = match swapping {
+        Some(secrets) => Body::new(sign_in::Swapping::new(body, secrets)),
+        None => Body::new(body),
+    };
+    let mut response = Response::new(body);
     *response.status_mut() = parts.status;
     *response.headers_mut() = parts.headers;
     response.into_response()

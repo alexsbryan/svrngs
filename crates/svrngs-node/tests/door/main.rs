@@ -18,6 +18,7 @@
 mod common;
 mod limit;
 mod origins;
+mod sign_in;
 
 use std::net::SocketAddr;
 use std::time::Duration;

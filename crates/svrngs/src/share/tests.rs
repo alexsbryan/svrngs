@@ -46,6 +46,7 @@ fn share(p: u16) -> Share {
         refused: Vec::new(),
         upload: None,
         reads: Vec::new(),
+        sign_in: None,
     }
 }
 
@@ -79,7 +80,7 @@ fn the_well_known_table_reads_whole() {
 #[test]
 fn a_lend_is_decided_from_what_was_typed_and_what_listens() {
     let jf = Kind::parse("jellyfin").unwrap();
-    let lend = lend_of(&share(8096), true, Some(jf.clone())).unwrap();
+    let lend = lend_of(&share(8096), |_| true, Some(jf.clone())).unwrap();
     assert_eq!(
         (lend.name.as_str(), lend.kind.as_str(), lend.limit.get()),
         ("jellyfin", "jellyfin", 3)
@@ -88,18 +89,31 @@ fn a_lend_is_decided_from_what_was_typed_and_what_listens() {
     typed.kind = Some(Kind::parse("notes").unwrap());
     typed.name = Some(LendName::parse("pad").unwrap());
     typed.limit = Some(port(7));
-    let lend = lend_of(&typed, true, None).unwrap();
+    let lend = lend_of(&typed, |_| true, None).unwrap();
     assert_eq!(
         (lend.name.as_str(), lend.kind.as_str(), lend.limit.get()),
         ("pad", "notes", 7)
     );
     assert_eq!(
-        lend_of(&share(5000), true, None),
+        lend_of(&share(5000), |_| true, None),
         Err(ShareRefusal::NoKind(port(5000)))
     );
     assert_eq!(
-        lend_of(&share(8096), false, Some(jf)),
+        lend_of(&share(8096), |_| false, Some(jf.clone())),
         Err(ShareRefusal::NothingListens(port(8096)))
+    );
+    // A sign-in named is kept, and refused when nothing listens there.
+    let mut signed = share(8096);
+    signed.sign_in = Some(port(9000));
+    assert_eq!(
+        lend_of(&signed, |_| true, Some(jf.clone()))
+            .unwrap()
+            .sign_in,
+        Some(port(9000))
+    );
+    assert_eq!(
+        lend_of(&signed, |p| p != port(9000), Some(jf)),
+        Err(ShareRefusal::NoSignIn(port(9000)))
     );
 }
 

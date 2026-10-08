@@ -356,7 +356,7 @@ pub async fn streaming_origin() -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
 }
 
 /// A request head off `sock`, up to its blank line.
-async fn read_head(sock: &mut TcpStream) -> Option<String> {
+pub async fn read_head(sock: &mut TcpStream) -> Option<String> {
     let mut head = Vec::new();
     let mut buf = [0u8; 4096];
     while !head.windows(4).any(|w| w == b"\r\n\r\n") {
