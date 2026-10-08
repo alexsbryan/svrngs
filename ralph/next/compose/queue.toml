@@ -1,0 +1,22 @@
+# svrngs compose — the sign-in in one place, then two spikes: Movie Night and scoped use (docs/DESIGN.md §8 "Then"; operator, 2026-10-08). Launch, from anywhere:
+#
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py supervise --workdir ~/dev/svrngs \
+#     --queue compose --install-launchd -- python3 ~/dev/commonwealth-ai/scripts/ralph.py \
+#     run --workdir ~/dev/svrngs --queue compose --max-stall 3
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py start --workdir ~/dev/svrngs --queue compose
+#
+# Surveys of record: svrn-docs rings/current/THIN_APP_COMPOSITION.md and
+# ACL_AND_SCOPED_USE.md (drafts, 2026-10-08). Each spike's productionizing
+# queue is written from its verdict. Group folders come after (§8 "Then").
+# Budget 14,500 (d697b18).
+label = "svrngs-compose"
+session_timeout = 5400
+audit_every = 4
+worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
+settings = "ralph/claude-settings.json"
+
+[models]
+worker = "claude-opus-5-5"
+review = "claude-opus-5-5"
+resolve = "claude-opus-5-5"
+variant = "high"
