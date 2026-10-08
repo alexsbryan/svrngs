@@ -68,6 +68,19 @@
 //!   (`push_round_s`) in 25 to 60 s (206 s at `15a9de7`; 76 s with the
 //!   prototype's digest kept).
 //!
+//! Measured 2026-10-08, after the predictions:
+//! - 25 x 2,000, one run each: 14.12 s at 4d50557 and 1.13 s at 17f4611,
+//!   confirmed; the idle account at 4d50557 digest rebuilt 48, offer
+//!   rebuilt 48, register rebuilt 26.
+//! - 25 x 10,000 at 17f4611, three runs: the idle round's processor 5.70,
+//!   5.68 and 6.52 s (median 5.70), confirmed, its account in each exactly
+//!   the one predicted; the write reaching everyone 54.2, 92.0 and 58.0 s,
+//!   the median inside the 25 to 60 predicted and one of three above it:
+//!   not confirmed. At 4d50557, one run: 67.1 s idle (73.1 s at
+//!   `15a9de7`), its account digest rebuilt 48, offer rebuilt 48, register
+//!   rebuilt 26, and 188 s for the write. What the idle round still pays
+//!   for is the register, read whole 26 times: ceiling-4's fold.
+//!
 //! It needs the process's own processor time, which std does not give;
 //! `getrusage` through `libc` is the one way the lock already holds, and the
 //! one `unsafe` block below is that call. It counts folds with a
