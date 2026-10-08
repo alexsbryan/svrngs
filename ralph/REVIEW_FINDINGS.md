@@ -2779,3 +2779,206 @@ attempt; Dee's `join.log` is empty at the default level, so which hop failed
 (address lookup, relay, the dial) is unrecorded. Retried by hand at once with
 `RUST_LOG=info,svrngs=debug,svrngs_node=debug`, it joined in 2 s. Principle
 1: the refusal's branch carries no event a default run keeps. Not fixed.
+
+## REVIEW-audit-ceiling-auto-1 (2026-10-08, range cd58f97..824ce20)
+
+The range starts at cd58f9755, the hash REVIEW-audit-u6-auto-1's row
+carries (ralph/next/u6/STATE.md:7), the last `REVIEW-audit-` row; the
+ceiling queue has none before this one. It ends at 824ce20, the commit that
+made this row: 42 commits, u6-9 (Demo B's dry run), the #74 fix (910e373)
+and ceiling-1 to ceiling-4. The range's product code is in
+crates/svrngs-core/, crates/svrngs-runtime/, crates/svrngs-node/ and
+apps/jellyfin/; it touched crates/svrngs/ and web/ only in tests, and
+scripts/ in 910e373 (lean_check.py +15/−1) and 2f838b5 (check.sh +6, the
+ceiling canary). This audit fixes nothing; why each finding is left is in
+its row.
+
+The row cites `docs/ARCH_PRINCIPLES.md`, which is at
+docs/principles/ARCH_PRINCIPLES.md, and `target/debug/sovereign-cli`,
+which svrngs does not build. The binary used is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, built 2026-10-07 18:30,
+sha256 8bfb8a59…, **not** the one the last audit planted against
+(7f5fbf4c…), so its tiers were planted again. The clean runs are on corpus
+`svrngs` at 824ce20, the tree clean (`code index`, incremental: 31 files,
+495 chunks in 33 s; `refresh`: SCIP at HEAD). The plants went into a clone
+of 824ce20, /tmp/ceilaudit1/svrngs-plant, one commit holding them (64a91f7
+there), corpus `svrngs-plant` (`code index`: 2327 chunks in 184 s;
+`refresh`: rust 9552 symbols, python 436, "typescript: skipped (export
+failed)").
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' cd58f9755..824ce20`,
+summed by /tmp/ceilaudit1/ledger.py. A commit counts toward the unit its
+subject names in parentheses, else toward the next `done` commit's unit
+(0245640, 4b2cdfa: u6-9; the loop's own commits change no product code).
+Product code is crates/, apps/, web/ and bridge/; a test is a `tests/` or
+`check/` segment, or a file lean_check counts as a test (`*_tests.rs`,
+`tests_*.rs`, `tests.rs`, `*.test.mjs`); lockfiles are left out.
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| u6-9 | 8 | 5 | 3 | 535 | 114 | 421 |
+| #74 (910e373) | 0 | 0 | 0 | 0 | 0 | 0 |
+| ceiling-1 | 12 | 2 | 10 | 327 | 26 | 301 |
+| ceiling-2 | 142 | 197 | -55 | 422 | 63 | 359 |
+| ceiling-3 | 40 | 2 | 38 | 83 | 0 | 83 |
+| ceiling-4 | 77 | 48 | 29 | 299 | 47 | 252 |
+| total | 279 | 254 | 25 | 1666 | 250 | 1416 |
+
+- u6-9 src: apps/jellyfin/ROOM.md +8/−5, prose under apps/. Tests: tv.mjs
+  +123 and screen.mjs −102, the move of 52d8168; night.mjs +232, night.py
+  +107, screen.sh +46, check.sh +9/−4, person.mjs +6/−3, web/tests/page.mjs
+  +6/−3 (`device`).
+- ceiling-1 src: svrngs-runtime journal.rs +12/−2, the digest and offer
+  folds' debug lines (b47db37). Tests: scale.rs +327/−26.
+- ceiling-2 src: svrngs-core sync.rs +78/−29 (`DigestFold`), lib.rs +3/−1;
+  svrngs-runtime journal.rs +57/−63, register.rs −99 (its tests moved to
+  register_tests.rs, ef7251e), lib.rs +2/−3. Tests: sync_tests.rs +114,
+  register_tests.rs +100, tests_write_index.rs +45, ring_sync/tests.rs +59,
+  runtime tests.rs +32/−35, scale.rs +70/−22.
+- ceiling-3 src: journal.rs +40/−2 (`Passed`, `Checked`). Tests:
+  tests_write_index.rs +51, scale.rs +32.
+- ceiling-4 src: journal.rs +37 (the kept standing); register.rs +22/−21;
+  svrngs-node −29/+18 over eight files, `&Ed25519Verifier` dropped from
+  every `standing` and `standing_anywhere` call (61de5bc). Tests: scale.rs
+  +204/−34 (the canary, the line and its predictions), register_tests.rs
+  +87/−1, three test files +8/−12.
+
+`python3 scripts/lean_check.py <tree>` (rc 0), trees from `git archive` in
+/tmp/ceilaudit1 (lean_check walks a tree outside git whole, and says so):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| cd58f97, range start | 2931 / 3000 | 13975 / 14000 |
+| 824ce20, range end | 2957 / 3000 | 13955 / 14000 |
+
+This worktree at 824ce20 says the same, 2957 and 13955: since 910e373 the
+budget counts what git calls source, so the 20 lines of build output #74
+found no longer count. svrngs-core rose 26 lines (`DigestFold`) and has 43
+left; the repository fell 20 and has 45 left, **99.7%** of its ceiling
+(#80). A raise is the operator's; this audit names it and does not make it.
+
+### (2) Clones (`code dry-report`), each tier checked against a plant first
+
+**Plants**, each a symbol of the range:
+
+- **A** (exact, Rust): journal.rs `Held::catch_up` (ceiling-2 to -4, 48
+  lines), verbatim with the two doc lines above it, in an `impl Plant` at
+  the end of register.rs (:190).
+- **B** (near, Rust, across crates): svrngs-core sync.rs
+  `DigestFold::digest` (ceiling-2, 27 lines) as `summary` in an `impl
+  PlantB` at the end of svrngs-runtime oplog.rs (:776), its locals renamed
+  (`floors`→`marks`, `actor`→`who`, `seqs`→`runs_of`, `mark`→`top`,
+  `view`→`seen`).
+- **D** (JS, verbatim body): apps/jellyfin/check/tv.mjs `playOn` (u6-9) as
+  `playOnAgain` at the end of night.mjs (:235).
+- **N** (noun): `pub struct DigestFold` again at the end of register.rs
+  (:181).
+
+| scope | clean at 0.95: locations / exact / near | plants seen |
+|---|---|---|
+| crates/svrngs-runtime/ | 122 / 1 / 0 | **A exact** at 0.95, 0.9, 0.8 (journal.rs:128 == register.rs:190, both lines right), and near from 0.95 at journal.rs:125–179 ~ register.rs:187–239. **B not in scope**: its original is in svrngs-core, and a scoped run compares within its scope (I12) |
+| crates/svrngs-core/ | 428 / 7 / 0 | not planted |
+| crates/svrngs-node/ | 368 / 5 / 1 | not planted |
+| crates/svrngs/ | 65 / 0 / 0 | not planted |
+| apps/ | 79 / 0 / 1 | **D near** at 0.95, 0.9, 0.8 (night.mjs:232–246 ~ tv.mjs:109–123). The exact tier says 0 groups, not could-not-judge, with D in scope (I16) |
+| web/ | 85 / **could-not-judge** / 0 | not planted: the range added no web/ symbol outside tests |
+| unscoped | — | **B missed** at 0.9 and 0.8; it joins `digest` only at 0.7, in a cluster of 5 symbols (cosine 0.706–0.873) with view.rs `fold_pairs` and two tests (I14) |
+
+N: `converge noun DigestFold` on the plant corpus gives **definitions
+(2)**, sync.rs:207 and register.rs:180 (at :208 and :181, I1).
+
+**Clean runs**, scoped at 0.95 (the table), each with a trailing slash.
+/tmp/ceilaudit1/blame.py blamed every side of every cluster (`git blame -w
+-M -C -C HEAD`) for lines in cd58f97..824ce20. **One cluster has sides
+added in the range**, and it is not a clone:
+
+- apps/: `playOn` tv.mjs:109–123 ~ `menu` tv.mjs:112–123, cosine 0.959,
+  both blamed to 52d8168 (u6-9's move). `menu` is the closure inside
+  `playOn` (tv.mjs:115), so the tool paired a function with a part of
+  itself (I9). No change.
+
+Every other side (13 exact groups and 1 near cluster over core, runtime and
+node, the same ones the last audits read) is blamed before the range.
+
+**Substitute check, named as a substitute**, since the near tier sees B
+only at 0.7: /tmp/ceilaudit1/windows.py, windows of 5 normalized lines over
+the tracked .rs .js .mjs .py .sh (tests included, demo/ left out); a hit
+is new when either span has a line blamed in the range. At 824ce20: 156
+hits, **0 new**. On the plant clone, against cd58f97..64a91f7: 158 hits,
+**2 new**, A (journal.rs:128-175 == register.rs:190-237) and D
+(night.mjs:236-245 == tv.mjs:113-122). B, renamed, it cannot see.
+
+Reading the range for what neither pass would show:
+
+- **#79.** crates/svrngs-core/src/sync.rs:234-237 at 824ce20:
+  `DigestFold::digest` marks every actor stale when a seal or a correction
+  moves the sealed floors, so the next digest folds every view again, and
+  nothing traces that branch. The cost ceiling-2 removed comes back for
+  that one call, and ceiling-1's account sees only the journal's line
+  (journal.rs:304, `restarted`), which says false. svrngs-core traces
+  elsewhere (`tracing` in its Cargo.toml:20; membership.rs, admit.rs).
+  Not fixed: it adds a trace, which this audit leaves to a unit, as #75 was.
+- **#81.** web/tests/page.mjs:60, :72-73 at 824ce20, test code: `launch`'s
+  `device`, added by u6-9 (2f3f2c9), looks its name up in `pw.devices`, and
+  a name Playwright does not have gives `undefined`, so the browser
+  launches as no device and the run says nothing. An unknown engine at :61-63
+  is refused with exit 1. Demo B's phones pass 'Pixel 7'
+  (apps/jellyfin/check/screen.sh:110, through night.mjs:37), which exists. Not fixed: refusing a name that is not there changes
+  behaviour on that input.
+- **#74, fixed in the range** by 910e373; the archive and this worktree now
+  agree (above).
+- **#57, #68, #70, #71, #75, #77, still open.** The range changed none of
+  their lines: surface.rs changed only at :36 and :88 (61de5bc), page.mjs only at
+  :57-73.
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff cd58f9755 824ce20 -- crates apps web`, added lines matching
+`(struct|enum|trait|type|class) Name`: `DigestFold` (sync.rs, ceiling-2),
+`Passed` and `Checked` (journal.rs, ceiling-3), `Doors` (runtime
+tests.rs, ceiling-2), and `Says`, `Hold`, `Line`, `Counter`, `Cost`
+(svrngs-node tests/scale.rs, ceiling-1 and -4). `converge noun` on each,
+beside `git grep -nP '\b(struct|enum|trait|type|class) <Name>\b' HEAD`:
+
+| noun | converge | git grep |
+|---|---|---|
+| DigestFold | definitions (1), sync.rs:207 (at :208) | 1 |
+| Passed | definitions (1), journal.rs:93 (at :94) | 1 |
+| Checked | definitions (1), journal.rs:99 (at :100) | 1 |
+| Doors | definitions (1), tests.rs:25 (at :26) | 1 |
+| **Says** | **definitions (1)**, tests_sealing.rs:16 | **2**: crates/svrngs-core/src/tests_sealing.rs:17 `struct Says(bool)` and crates/svrngs-node/tests/scale.rs:356 `enum Says` |
+| Hold, Line, Counter, Cost | definitions (0), "defined only in test code" | 1 each, scale.rs:423, :434, :452, :508 |
+
+- **#78, no change.** `Says` twice, both test-only, in two crates and two
+  concepts: svrngs-core's is a verifier stub with a fixed answer
+  (tests_sealing.rs:14-17), scale.rs's the words a fold's debug line uses
+  (scale.rs:353-362). Neither can import the other (an integration test
+  of svrngs-node and a `#[cfg(test)]` module of svrngs-core). The tool
+  counted one of them (I18).
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 78 | 8 | crates/svrngs-core/src/tests_sealing.rs:17 and crates/svrngs-node/tests/scale.rs:356, at 824ce20 | no change | `Says` defined twice, test-only, two concepts in two crates. |
+| 79 | 1 | crates/svrngs-core/src/sync.rs:234-237, at 824ce20 | not fixed | A moved floor makes the digest fold every view again, and that branch traces nothing; the journal's line says `restarted=false`. |
+| 80 | — | scripts/lean_check.py BUDGET, at 824ce20 | not fixed (operator's) | 43 lines left in svrngs-core, 45 in the repository (13955 / 14000). |
+| 81 | 6 | web/tests/page.mjs:60, :72-73 (and :61-63, the engine refused), at 824ce20 | not fixed | An unknown `device` name launches as no device, silently; an unknown engine is refused. |
+| 74 | 6, 7 | scripts/lean_check.py | 910e373 | Fixed in the range. |
+| 57, 68, 70, 71, 75, 77 | as recorded | as recorded | not fixed | Untouched in the range. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Half fixed on this binary: dry-report's exact tier now gives the right line (`catch_up` journal.rs:128, plant A register.rs:190). converge noun is still one line high: `DigestFold` sync.rs:207 for :208, the plant register.rs:180 for :181, `Passed` :93 for :94. |
+| I4 | 6 | `refresh` | Still present: "typescript: skipped (export failed)". |
+| I9 | 6, 7 | `code dry-report` near tier | Still present: `menu`, a closure inside `playOn` (tv.mjs:115), is reported as `playOn`'s near clone, 0.959. |
+| I10 | 6 | `code dry-report` header | Still present: "1299 function/method symbols" in every scope. |
+| I11 | 6 | `code dry-report --scope` | Better: `--scope crates/svrngs/` now says it leaves out svrngs-core, -node and -runtime, "which share it only as a string prefix". Not retested without the slash. |
+| I12 | 5, 6 | `code dry-report --scope` | Still present: B, whose original is in another crate, is in no scoped report. |
+| I14 | 6, 7 | `code dry-report` near tier | Still present: B, a renamed 27-line Rust body, is missed unscoped at 0.9 and 0.8 and joins only at 0.7 in a cluster of 5. |
+| I16 | 6 | `code dry-report --scope apps/` exact tier | Still present: "0 exact-clone groups" with D, a verbatim JS body, in scope. |
+| I18 | 6 | `code converge noun` | New, I8's rule seen from converge: a definition in a `src/*_tests.rs` file counts as production and one under `tests/` does not, so `Says`, defined twice, gives definitions (1), and scale.rs's nouns give (0) beside a sibling that gives (1). |
