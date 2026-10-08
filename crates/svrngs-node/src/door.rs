@@ -39,7 +39,8 @@
 //! **A lend's sign-in** (mwp-1, [`sign_in`]): a lend declaring one has no
 //! one secret; the door asks the lender's program on each person's first
 //! request, sets that person's headers on each of their requests, and swaps
-//! a stand-in for their secret both ways. A request it cannot sign in is
+//! a stand-in for their secret both ways, and puts their script first in
+//! each page answered to them (mwp-2). A request it cannot sign in is
 //! refused, `502`, never carried unsigned.
 //!
 //! **How many at once, and each one's share** (u3-6; DESIGN §8, "Many
@@ -973,6 +974,7 @@ async fn forward(
     let upgrade = upgrade_of(req.headers());
     let asker_side = upgrade.as_ref().map(|_| hyper::upgrade::on(&mut req));
     let (mut parts, body) = req.into_parts();
+    let get = parts.method == axum::http::Method::GET;
     let (Ok(person_value), Ok(key_value)) = (
         HeaderValue::from_bytes(person.as_str().as_bytes()),
         HeaderValue::from_str(actor),
@@ -1019,6 +1021,12 @@ async fn forward(
             let to = s.answer.secret.as_str().as_bytes();
             sign_in::swap_headers(&mut parts.headers, &[sign_in::STAND_IN.as_bytes()], to);
             parts.headers.remove(header::ACCEPT_ENCODING);
+            // No copy kept from before the person's script, or for another's.
+            let html = sign_in::said(&parts.headers, header::ACCEPT).contains("text/html");
+            if s.answer.script.is_some() && html {
+                parts.headers.remove(header::IF_NONE_MATCH);
+                parts.headers.remove(header::IF_MODIFIED_SINCE);
+            }
             s.answer.headers.clone()
         }
     };
@@ -1133,6 +1141,24 @@ async fn forward(
         .headers
         .get(header::CONTENT_LENGTH)
         .and_then(|l| l.to_str().ok()?.parse().ok());
+    // A page to the person gets their script first in its `<head>`.
+    let page = sign_in::said(&parts.headers, header::CONTENT_TYPE).to_ascii_lowercase();
+    let script = (signed.as_ref().and_then(|(_, s)| s.answer.script.as_deref()))
+        .filter(|_| get && page.starts_with("text/html") && parts.status == StatusCode::OK)
+        .map(|script| {
+            let policy = sign_in::said(&parts.headers, header::CONTENT_SECURITY_POLICY);
+            let (tag, runs) = sign_in::tag(script, &policy);
+            if !runs {
+                tracing::warn!(target: "door", lend = %lend.name, ?policy,
+                    "door: the page's script policy runs no inline script, so the person's script is put in it and will not run");
+            }
+            tracing::debug!(target: "door", actor, lend = %lend.name, "door: a page to the person, their script put first in it, kept by no cache");
+            parts.headers.remove(header::ETAG);
+            parts.headers.remove(header::LAST_MODIFIED);
+            let no_store = HeaderValue::from_static("no-store");
+            parts.headers.insert(header::CACHE_CONTROL, no_store);
+            tag
+        });
     // Outward, a textual body is read for every secret held for the lend.
     let swapping = signed
         .filter(|_| {
@@ -1161,7 +1187,7 @@ async fn forward(
         frame
     });
     let body = match swapping {
-        Some(secrets) => Body::new(sign_in::Swapping::new(body, secrets)),
+        Some(secrets) => Body::new(sign_in::Swapping::new(body, secrets, script)),
         None => Body::new(body),
     };
     let mut response = Response::new(body);

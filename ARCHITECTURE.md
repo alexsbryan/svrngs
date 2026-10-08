@@ -354,7 +354,16 @@ lend becomes the stand-in in each header, and in a textual body
 (`textual`: text, JSON, XML, a playlist, JavaScript, or no type) as it
 streams (`Swapping`, holding back one byte fewer than the longest secret),
 its length dropped; a textual answer compressed anyway is refused, `502`.
-A `401` to a request signed with a kept answer forgets it. A lend with no
+A `401` to a request signed with a kept answer forgets it. A person's
+script (mwp-2) goes first in each `200` `text/html` answer to their `GET`:
+`tag` wraps it in a `<script>` carrying the nonce of the answer's
+`Content-Security-Policy` when it names one, saying at warn when the policy
+runs no inline script; `Swapping` holds the page back until `first_in`
+finds the place — after the first `<head…>`, else `<html…>`, else
+`<!doctype…>`, else the start, as `web/lend.js` puts its shim — within its
+first 64 KiB. Such a page goes `no-store`, without `ETag` or
+`Last-Modified`, and a request accepting `text/html` from a person with a
+script goes without `If-None-Match` and `If-Modified-Since`. A lend with no
 sign-in is carried as before.
 `Node::lends` asks every other computer's key standing in a group held, at once, and
 answers each lend with whose it is and its address on this computer's

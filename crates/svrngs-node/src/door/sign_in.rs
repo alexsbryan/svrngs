@@ -22,6 +22,10 @@
 //! in a query or a header's value becomes the asker's secret; in what it
 //! carries out, every secret held for the lend becomes the stand-in, in
 //! each header and in a textual body, streamed ([`Swapping`]).
+//!
+//! **Put first** (mwp-2): the person's `script`, in a `<script>` of the
+//! door's ([`tag`]), first in `<head>` of each page answered to their `GET`
+//! ([`first_in`]), so it runs before every script of the page's own.
 
 use std::collections::{BTreeMap, HashMap};
 use std::num::NonZeroU16;
@@ -62,10 +66,7 @@ pub(crate) struct Answer {
     pub secret: Secret,
     /// Set on each of the person's requests, displacing the client's.
     pub headers: Vec<(HeaderName, HeaderValue)>,
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "kept now; put in the lend's pages by mwp-2")
-    )]
+    /// Put first in the lend's pages to the person ([`tag`], [`first_in`]).
     pub script: Option<String>,
 }
 
@@ -296,6 +297,41 @@ pub(crate) fn swap_headers(headers: &mut HeaderMap, from: &[&[u8]], to: &[u8]) -
     n
 }
 
+/// How much of a page is read for where its script goes; the rest streams.
+const PAGE_READ: usize = 64 * 1024;
+
+/// Where a script goes first in `page`, as `web/lend.js` puts its shim:
+/// after the first `<head…>`, else `<html…>`, else `<!doctype…>`, else at
+/// the start. `None` while a `<head…>` may yet come, unless `all` of the
+/// page that is read is here.
+pub(crate) fn first_in(page: &[u8], all: bool) -> Option<usize> {
+    let lower = page.to_ascii_lowercase();
+    let after = |tag: &[u8]| {
+        let open = lower.windows(tag.len()).position(|w| w == tag)?;
+        let close = lower[open..].iter().position(|&b| b == b'>')?;
+        Some(open + close + 1)
+    };
+    let fallback = || after(b"<html").or_else(|| after(b"<!doctype")).unwrap_or(0);
+    after(b"<head").or_else(|| all.then(fallback))
+}
+
+/// `script` in the door's `<script>` for a page whose answer's
+/// `Content-Security-Policy` is `policy`, carrying its nonce when it names
+/// one, as lend.js's shim does (`:250-257`); and whether the policy runs an
+/// inline script, by nonce or `'unsafe-inline'` where it says what scripts
+/// run.
+pub(crate) fn tag(script: &str, policy: &str) -> (Vec<u8>, bool) {
+    let nonce = (policy.split("'nonce-").nth(1))
+        .and_then(|n| n.split_once('\''))
+        .map(|(n, _)| n);
+    let lower = policy.to_ascii_lowercase();
+    let says = |d| lower.split(';').map(str::trim).find(|p| p.starts_with(d));
+    let scripts = says("script-src ").or_else(|| says("default-src "));
+    let runs = nonce.is_some() || scripts.is_none_or(|d| d.contains("'unsafe-inline'"));
+    let open = nonce.map_or("<script>".into(), |n| format!("<script nonce=\"{n}\">"));
+    (format!("{open}{script}</script>").into_bytes(), runs)
+}
+
 /// The secrets as [`swapped`] reads them.
 pub(crate) fn bytes(secrets: &[Secret]) -> Vec<&[u8]> {
     secrets.iter().map(|s| s.0.as_bytes()).collect()
@@ -311,17 +347,19 @@ impl Secret {
 /// JSON, XML, a playlist, JavaScript, and one naming none, read rather than
 /// presumed bytes.
 pub(crate) fn textual(headers: &HeaderMap) -> bool {
-    let t = headers
-        .get(header::CONTENT_TYPE)
-        .map(|t| t.as_bytes())
-        .unwrap_or_default();
-    let t = String::from_utf8_lossy(t).to_ascii_lowercase();
+    let t = said(headers, header::CONTENT_TYPE).to_ascii_lowercase();
     let t = t.split(';').next().unwrap_or_default().trim();
     t.is_empty()
         || t.starts_with("text/")
         || ["json", "xml", "mpegurl", "javascript"]
             .iter()
             .any(|e| t.ends_with(e))
+}
+
+/// What `headers` say as `name`, the first of it; empty when they say none.
+pub(crate) fn said(headers: &HeaderMap, name: HeaderName) -> String {
+    String::from_utf8_lossy(headers.get(name).map(|v| v.as_bytes()).unwrap_or_default())
+        .into_owned()
 }
 
 /// Whether an answer's body is compressed, so cannot be read for a secret.
@@ -333,22 +371,25 @@ pub(crate) fn compressed(headers: &HeaderMap) -> bool {
 
 /// A textual answer's body, each secret swapped for the stand-in as it
 /// streams, a secret split across chunks found by [`swapped`]'s holding
-/// back. A trailer cannot be swapped, so is not carried.
+/// back, and a page's `script` put first in it ([`first_in`]), nothing sent
+/// until it is. A trailer cannot be swapped, so is not carried.
 pub(crate) struct Swapping<B> {
     inner: B,
     secrets: Vec<Secret>,
     held: Vec<u8>,
     done: bool,
+    script: Option<Vec<u8>>,
 }
 
 impl<B> Swapping<B> {
-    pub(crate) fn new(inner: B, secrets: Vec<Secret>) -> Self {
+    pub(crate) fn new(inner: B, secrets: Vec<Secret>, script: Option<Vec<u8>>) -> Self {
         let (held, done) = (Vec::new(), false);
         Self {
             inner,
             secrets,
             held,
             done,
+            script,
         }
     }
 }
@@ -374,6 +415,13 @@ where
                 None => this.done = true,
             }
             let end = this.done;
+            if let Some(script) = &this.script {
+                let Some(at) = first_in(&this.held, end || this.held.len() >= PAGE_READ) else {
+                    continue;
+                };
+                this.held.splice(at..at, script.iter().copied());
+                this.script = None;
+            }
             let (out, used) = swapped(&this.held, &bytes(&this.secrets), STAND_IN.as_bytes(), end);
             this.held.drain(..used);
             if !out.is_empty() {

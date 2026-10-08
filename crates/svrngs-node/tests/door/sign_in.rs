@@ -20,6 +20,14 @@ use super::*;
 
 const STAND_IN: &str = "svrngs-stand-in";
 
+/// The page the service answers at `/page`, its own script in its `<head>`.
+const PAGE: &str = "<!doctype html><html><head><script>own()</script></head><body>hi</body></html>";
+
+/// The script the answerer gives the person with `key`.
+fn script_of(key: &str) -> String {
+    format!("window.who='{key}'")
+}
+
 /// The secret the answerer gives the person with `key`.
 fn secret_of(key: &str) -> String {
     format!("secret-{}", &key[..24])
@@ -57,7 +65,7 @@ async fn answerer(answers: Answers) -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
                     serde_json::json!({
                         "secret": secret,
                         "headers": { "Authorization": format!("Bearer {secret}") },
-                        "script": null,
+                        "script": script_of(&key),
                     })
                     .to_string(),
                 ),
@@ -75,7 +83,9 @@ async fn answerer(answers: Answers) -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
     (addr, asks)
 }
 
-/// The stand-in service: keeps each head; `/stale` answers 401; `/echo`
+/// The stand-in service: keeps each head; `/page` answers [`PAGE`] in two
+/// chunks cut inside its `<head>`, cacheable, under a script policy naming
+/// a nonce when asked `?csp`; `/stale` answers 401; `/echo`
 /// answers the query and `authorization` it was sent in JSON, in two
 /// chunks cut inside the secret, and the secret again in a header; else
 /// 200 `ok`.
@@ -93,6 +103,28 @@ async fn service() -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
                 };
                 kept.lock().unwrap().push(head.clone());
                 let target = head.split_whitespace().nth(1).unwrap_or("").to_string();
+                if target.starts_with("/page") {
+                    let policy = if target.ends_with("?csp") {
+                        "Content-Security-Policy: script-src 'nonce-n0nce' 'strict-dynamic'\r\n"
+                    } else {
+                        ""
+                    };
+                    let start = format!(
+                        "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n{policy}ETag: \"v1\"\r\n\
+                         Last-Modified: Wed, 07 Oct 2026 00:00:00 GMT\r\nCache-Control: max-age=600\r\n\
+                         Transfer-Encoding: chunked\r\nConnection: close\r\n\r\n"
+                    );
+                    let _ = sock.write_all(start.as_bytes()).await;
+                    let cut = PAGE.find("<head>").unwrap() + 3;
+                    for part in [&PAGE[..cut], &PAGE[cut..]] {
+                        let chunk = format!("{:x}\r\n{part}\r\n", part.len());
+                        let _ = sock.write_all(chunk.as_bytes()).await;
+                        let _ = sock.flush().await;
+                        tokio::time::sleep(Duration::from_millis(100)).await;
+                    }
+                    let _ = sock.write_all(b"0\r\n\r\n").await;
+                    return;
+                }
                 if target.starts_with("/stale") {
                     let no = "HTTP/1.1 401 Unauthorized\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
                     let _ = sock.write_all(no.as_bytes()).await;
@@ -342,5 +374,91 @@ async fn a_sign_in_that_fails_or_answers_nonsense_refuses_the_request_never_carr
         "never carried unsigned: {:?}",
         heads.lock().unwrap()
     );
+    pair.close().await;
+}
+
+/// A request for a page, as a browser asks one it holds a copy of.
+fn asks_page(method: &str, lend: &str, path: &str) -> String {
+    format!(
+        "{method} /lend/{lend}/{path} HTTP/1.1\r\nHost: local\r\nAccept: text/html,*/*\r\n\
+         If-None-Match: \"v1\"\r\nIf-Modified-Since: Wed, 07 Oct 2026 00:00:00 GMT\r\n\
+         Content-Length: 0\r\nConnection: close\r\n\r\n"
+    )
+}
+
+/// Each person's script goes first in `<head>` of a page answered to their
+/// `GET`, before the page's own script, its `<head>` cut across chunks,
+/// carrying the nonce of the page's script policy, and kept by no cache:
+/// the page's `ETag` and `Last-Modified` dropped, `no-store`, and the
+/// service asked without the browser's copy's. Another person's script is
+/// in no page of theirs. A `POST`'s page, a non-HTML answer, and the page
+/// through a lend with no sign-in, go as before. Planted: the script after
+/// the page's own; one person's script in another's page.
+#[tokio::test]
+async fn each_person_s_script_goes_first_in_their_pages_and_never_in_another_s() {
+    let pair = Pair::new().await;
+    let cy = cy_dials_a(&pair).await;
+    let (origin, heads) = service().await;
+    let (hook, _) = answerer(Answers::Each).await;
+    lend_signed(&pair, "signed", origin.port(), hook.port());
+    lends_on(pair.dir.path(), "plain", origin.port());
+    let (bo_key, cy_key) = (actor_of(&signing(2)), actor_of(&signing(3)));
+    let body_of = |reply: &Reply| dechunked(reply.text.split_once("\r\n\r\n").unwrap().1);
+
+    for (bridge, own, other) in [
+        (pair.bridge, &bo_key, &cy_key),
+        (cy.local_addr(), &cy_key, &bo_key),
+    ] {
+        for (path, open) in [
+            ("page", "<script>"),
+            ("page?csp", "<script nonce=\"n0nce\">"),
+        ] {
+            let reply = raw_to(bridge, asks_page("GET", "signed", path)).await;
+            assert_eq!(reply.status, 200, "{}", reply.text);
+            let want = PAGE.replace(
+                "<head>",
+                &format!("<head>{open}{}</script>", script_of(own)),
+            );
+            assert_eq!(body_of(&reply), want, "the person's script first in <head>");
+            assert!(
+                !reply.text.contains(&script_of(other)),
+                "another's script in a person's page: {}",
+                reply.text
+            );
+            assert_eq!(
+                header_values(&reply.text, "cache-control"),
+                vec!["no-store"]
+            );
+            for kept in ["etag", "last-modified"] {
+                assert!(
+                    header_values(&reply.text, kept).is_empty(),
+                    "{}",
+                    reply.text
+                );
+            }
+        }
+    }
+    for head in heads.lock().unwrap().iter() {
+        for copy in ["if-none-match", "if-modified-since"] {
+            assert!(header_values(head, copy).is_empty(), "{head}");
+        }
+    }
+
+    let posted = raw_to(pair.bridge, asks_page("POST", "signed", "page")).await;
+    assert_eq!(body_of(&posted), PAGE, "a POST's page as before");
+    let other = raw_to(pair.bridge, asks("ok")).await;
+    assert_eq!(body_of(&other), "ok", "a non-HTML answer as before");
+    assert!(header_values(&other.text, "cache-control").is_empty());
+
+    let plain = raw_to(pair.bridge, asks_page("GET", "plain", "page")).await;
+    assert_eq!(body_of(&plain), PAGE, "a lend with no sign-in as before");
+    assert_eq!(header_values(&plain.text, "etag"), vec!["\"v1\""]);
+    assert_eq!(
+        header_values(&plain.text, "cache-control"),
+        vec!["max-age=600"]
+    );
+    let asked = heads.lock().unwrap().last().cloned().unwrap();
+    assert_eq!(header_values(&asked, "if-none-match"), vec!["\"v1\""]);
+    drop(cy);
     pair.close().await;
 }
