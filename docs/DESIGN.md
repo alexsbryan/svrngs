@@ -729,7 +729,7 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,000 lines of code and the
-repository under 14,400, tests and `apps/` apart (`scripts/lean_check.py`);
+repository under 14,500, tests and `apps/` apart (`scripts/lean_check.py`);
 a raise is the operator's, with the reason in the commit. `svrngs-core` stands
 at 2,359: the operator raised its ceiling from 2,500 on 2026-10-05, for what U4
 to U7 still add to the core, since REVIEW-audit-u3-auto-2 found no duplication
@@ -739,7 +739,11 @@ them by the seat's estimate; and the repository's from 14,000, at 13,970,
 on 2026-10-08, for the door to carry what the middleware spike wrote twice
 (§3, "The room", call 6): of its 1,050 lines of code, about 600 are any
 app's, less the 330 the door and the command already have, about 270
-new, and 400 with the door's traces and refusals (the seat's estimate).
+new, and 400 with the door's traces and refusals (the seat's estimate);
+and from 14,400, at 14,398, on 2026-10-08, the sign-in having taken 426
+against that 400: for its decision in one place and one person's sign-in
+never holding another's (`ralph/REVIEW_FINDINGS.md` #87, #88), and the
+one header the scoped-use spike may add (§8, "Then").
 `ARCHITECTURE.md` maps what exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file
@@ -1349,9 +1353,17 @@ middleware spike (§3, "The room", call 6; kept, 2026-10-08), then made
 production, the door carrying its general pieces (operator, 2026-10-08;
 landed, mwp-0 to mwp-4: Jellyfin's middleware from 1,039 lines to 669,
 svrngs 426 new, a second app signed in through the same sign-in in 30;
-call 6, "Landed");
-group folders
-(§3, call 7 of "Lent apps"; §9); the phone replica spike, iOS first (§9, "a
+call 6, "Landed"); then the sign-in decided in one place, its stand-in
+named once, and one person's sign-in never holding another's
+(`ralph/REVIEW_FINDINGS.md` #87, #90, #88; operator, 2026-10-08); then
+two spikes before folders (operator, 2026-10-08): Movie Night, a thin app
+composing the group's Jellyfins — discover, request as the person, open
+— with every line it writes that is not its own counted (svrn-docs
+`rings/current/THIN_APP_COMPOSITION.md`), then scoped use, an operation
+its owner offers beside their data, to one app acting for one person
+(`rings/current/ACL_AND_SCOPED_USE.md` §4, §9), each made production
+from its data, as the middleware was; group folders (§3, call 7 of
+"Lent apps"; §9); the phone replica spike, iOS first (§9, "a
 native phone app"), after folders since they name the bytes a phone would
 hold; then the middleware's P1 follow-ups as one row (operator, 2026-10-08;
 `demo/runs/mw/2026-10-08/README.md` §7, items 5 and 7; its item 1,
