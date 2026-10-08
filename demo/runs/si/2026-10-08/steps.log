@@ -1,0 +1,85 @@
+20:36:24 jellyfin up: {"LocalAddress":"http://127.0.0.1:8096","ServerName":"Alexs-MacBook-Pro-2","Version":"12.0.0","ProductName":"Jellyfin Server","OperatingSystem":"","Id":"6a4c6187dfda4944bcad27b8068c816c","StartupWizardCompleted":false}
+20:36:29 films: 3; users: ["sam"]
+20:36:29 the page: http://localhost:54243/
+20:36:31 sam: On a phone, each app opens at an address of its own under localhost:54243, which can see which app is opened.
+20:36:32 alex: You're in House, as Alex.
+20:36:32 sam: Lent jellyfin (port 8096) to everyone in your groups, up to 8 people at once.
+20:36:32 sam is told: jellyfin asks each person to sign in once, with an account you make them. In jellyfin: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save. Then tell each person theirs.
+20:36:34 sam made: ["ana", "ben", "sam"]
+20:36:37 alex's computer opens it at http://1v0n2437wprum1zbsd8ubma0bdjrrmqhz7hb0916fxv40rdlr5sabbq3n1prdr.localhost:54330/
+20:36:38 mw mw1-again: listening on port 8097, signing people in to Jellyfin at 127.0.0.1:8096; users: ["ana", "ben", "sam"]
+20:36:38 sam: Lent jellyfin-mw (port 8096) to everyone in your groups, up to 8 people at once.
+20:36:38 sam is told: Each person is signed in to it as themselves by what answers on port 8097, with nothing typed. svrngs is running here already, so they can open it now. `svrngs unshare jellyfin-mw` stops lending it. 
+20:36:39 bo: You're in House, as Bo.
+20:36:42 alex's computer opens the middleware's lend at http://1v0n2437wprum1zbsd8ubma0bdjrrmqhz7hb0916fxv40rdlr5sa22m038n775.localhost:54415/
+20:36:45 bo's computer opens the middleware's lend at http://1v0n2437wprum1zbsd8ubma0bdjrrmqhz7hb0916fxv40rdlr5sa22m038n775.localhost:54452/
+passed          each a user of their own: Alex Alex-9f2a645643411233 (7da8066037354a13918be57765fc05b4), made by the first ask [('Alex-9f2a645643411233', '7da8066037354a13918be57765fc05b4')]; Bo Bo-ddece11c9c464ac1 (d24bcc2d90c34ab8b33d22a0c5000ee3), made by the first ask [('Bo-ddece11c9c464ac1', 'd24bcc2d90c34ab8b33d22a0c5000ee3')]
+passed          a second ask makes none: made by the second asks: Alex [], Bo []
+passed          each person's own device: Jellyfin's sessions by user: {'Alex': ['svrngs-9f2a645643411233'], 'Bo': ['svrngs-ddece11c9c464ac1']}; each person's, named from their key: {'Alex': 'svrngs-9f2a645643411233', 'Bo': 'svrngs-ddece11c9c464ac1'}
+passed          neither receives the lender's key: found: {'Alex': [], 'Bo': []}, in {'Alex': 76859, 'Bo': 76859} bytes
+passed          no key is refused: 403: "This port answers only svrngs's door: the ask names no person: it carries no x-svrngs-key.\n"
+passed          carried: Alex: body sent 204, range {'status': 206, 'bytes': 65536}, page {'status': 200, 'bytes': 5938}, socket {'status': 101, 'first_frame': '{"MessageId":"6c87a244da7540cd9edb470cae9cbf3d","Data":60,"MessageType":"ForceKeepAlive"}'}; Bo: body sent 204, range {'status': 206, 'bytes': 65536}, page {'status': 200, 'bytes': 5938}, socket {'status': 101, 'first_frame': '{"MessageId":"3b65db623d0743dea81483962d58d5b5","Data":60,"MessageType":"ForceKeepAlive"}'}
+recorded        another person's key at the middleware's port: {'status': 200, 'answered_a_secret': True}
+20:36:51 mw pair computer chromium: listening on port 8097, signing people in to Jellyfin at 127.0.0.1:8096; planted: no-sign-in; users: ["ana", "ben", "sam"]
+20:36:51 mw: ALEX's kept answer, its account deleted, asked once more: 401
+20:36:51 mw: BO's kept answer, its account deleted, asked once more: 401
+tokens: {"ana": "no account found: no token to search for", "ben": "no account found: no token to search for"}
+20:36:56 pair mw-computer-chromium-plant-no-sign-in: ana stopped: asked to sign in, with nothing to type; the page says: Please sign in User Password Remember Me Sign In Use Quick Connect Forgot Password; ben stopped: asked to sign in, with nothing to type; the page says: Please sign in User Password Remember Me Sign In Use Quick Connect Forgot Password; devices apart: False
+failed           mw-computer-chromium-plant-no-sign-in · no sign-in: ana: asked to sign in; ben: asked to sign in
+could-not-judge  mw-computer-chromium-plant-no-sign-in · seeks: the two did not both play, so nobody seeked
+passed           mw-computer-chromium-plant-no-sign-in · no lender's key: none of ['admin_token', 'ana_pw', 'ben_pw', 'mw_key', 'sam_pw'], nor the other's token, in 11381810 bytes; recorded, their own token: {'ana': '0 in []', 'ben': '0 in []'}
+could-not-judge  mw-computer-chromium-plant-no-sign-in · apart: ['ana', 'ben'] never got to a playing film; signed in after: {'ana': None, 'ben': None}; sessions on their own device: {'ana': None, 'ben': None}; left alone while the other seeked: {}; devices apart: False
+not all passed
+20:36:58 mw pair computer chromium: listening on port 8097, signing people in to Jellyfin at 127.0.0.1:8096; planted: lender-key; users: ["ana", "ben", "sam"]
+20:36:58 mw: ALEX's kept answer, its account deleted, asked once more: 401
+20:36:58 mw: BO's kept answer, its account deleted, asked once more: 401
+tokens: {"ana": "Alex-9f2a645643411233: 1 token(s)", "ben": "Bo-ddece11c9c464ac1: 1 token(s)"}
+20:37:36 pair mw-computer-chromium-plant-lender-key: ana: open 1773 ms, signed in 0 ms, plays 1476 ms, socket message 24 ms, signed in after: Alex-9f2a645643411233; ben: open 622 ms, signed in 0 ms, plays 1960 ms, socket message 11 ms, signed in after: Bo-ddece11c9c464ac1; ana seeks [384, 399, 390, 389, 412] ms (5/5 within 5 s); ben left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); ben seeks [448, 411, 402] ms (3/3 within 5 s); ana left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); devices apart: True
+passed           mw-computer-chromium-plant-lender-key · no sign-in: ana (Alex) open 1773 + play 1476 ms, never asked, stored token: not the stand-in, ben (Bo) open 622 + play 1960 ms, never asked, stored token: not the stand-in
+passed           mw-computer-chromium-plant-lender-key · seeks: {'ana': [384, 399, 390, 389, 412], 'ben': [448, 411, 402]} ms
+failed           mw-computer-chromium-plant-lender-key · no lender's key: held: {"ana": {"mw_key": ["/web/"]}, "ben": {"mw_key": ["/web/"]}}
+passed           mw-computer-chromium-plant-lender-key · apart: signed in after: {'ana': 'Alex-9f2a645643411233', 'ben': 'Bo-ddece11c9c464ac1'}; sessions on their own device: {'ana': [{'user': 'Alex-9f2a645643411233', 'playing': True, 'client': 'svrngs'}], 'ben': [{'user': 'Bo-ddece11c9c464ac1', 'playing': True, 'client': 'svrngs'}]}; left alone while the other seeked: {'ben': True, 'ana': True}; devices apart: True
+not all passed
+20:37:38 mw pair computer chromium: listening on port 8097, signing people in to Jellyfin at 127.0.0.1:8096; planted: one-device; users: ["ana", "ben", "sam"]
+20:37:38 mw: ALEX's kept answer, its account deleted, asked once more: 401
+20:37:38 mw: BO's kept answer, its account deleted, asked once more: 401
+tokens: {"ana": "everyone-eeeeeeeeeeeeeeee: 1 token(s)", "ben": "everyone-eeeeeeeeeeeeeeee: 1 token(s)"}
+20:38:24 pair mw-computer-chromium-plant-one-device: ana: open 543 ms, signed in 0 ms, plays 1366 ms, socket message None ms, signed in after: everyone-eeeeeeeeeeeeeeee; ben: open 423 ms, signed in 0 ms, plays 1913 ms, socket message 10 ms, signed in after: everyone-eeeeeeeeeeeeeeee; ana seeks [379, 391, 416, 388, 406] ms (5/5 within 5 s); ben left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); ben seeks [450, 409, 402] ms (3/3 within 5 s); ana left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); devices apart: False
+passed           mw-computer-chromium-plant-one-device · no sign-in: ana (Alex) open 543 + play 1366 ms, never asked, stored token: the stand-in, ben (Bo) open 423 + play 1913 ms, never asked, stored token: the stand-in
+passed           mw-computer-chromium-plant-one-device · seeks: {'ana': [379, 391, 416, 388, 406], 'ben': [450, 409, 402]} ms
+passed           mw-computer-chromium-plant-one-device · no lender's key: none of ['admin_token', 'ana_pw', 'ben_pw', 'mw_key', 'sam_pw'], nor the other's token, in 38098270 bytes; recorded, their own token: {'ana': '0 in []', 'ben': '0 in []'}
+failed           mw-computer-chromium-plant-one-device · apart: signed in after: {'ana': 'everyone-eeeeeeeeeeeeeeee', 'ben': 'everyone-eeeeeeeeeeeeeeee'}; sessions on their own device: {'ana': [{'user': 'everyone-eeeeeeeeeeeeeeee', 'playing': True, 'client': 'svrngs'}], 'ben': [{'user': 'everyone-eeeeeeeeeeeeeeee', 'playing': True, 'client': 'svrngs'}]}; left alone while the other seeked: {'ben': True, 'ana': True}; devices apart: False
+not all passed
+20:38:29 mw pair computer chromium: listening on port 8097, signing people in to Jellyfin at 127.0.0.1:8096; users: ["ana", "ben", "sam"]
+20:38:29 mw: ALEX's kept answer, its account deleted, asked once more: 401
+20:38:29 mw: BO's kept answer, its account deleted, asked once more: 401
+tokens: {"ana": "Alex-9f2a645643411233: 1 token(s)", "ben": "Bo-ddece11c9c464ac1: 1 token(s)"}
+20:39:15 pair mw-computer-chromium: ana: open 770 ms, signed in 0 ms, plays 5464 ms, socket message 15 ms, signed in after: Alex-9f2a645643411233; ben: open 849 ms, signed in 0 ms, plays 6793 ms, socket message 10 ms, signed in after: Bo-ddece11c9c464ac1; ana seeks [393, 404, 419, 383, 382] ms (5/5 within 5 s); ben left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); ben seeks [444, 437, 410] ms (3/3 within 5 s); ana left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); devices apart: True
+20:39:17 mw pair computer webkit: listening on port 8097, signing people in to Jellyfin at 127.0.0.1:8096; users: ["ana", "ben", "sam"]
+20:39:17 mw: ALEX's kept answer, its account deleted, asked once more: 401
+20:39:17 mw: BO's kept answer, its account deleted, asked once more: 401
+tokens: {"ana": "Alex-9f2a645643411233: 1 token(s)", "ben": "Bo-ddece11c9c464ac1: 1 token(s)"}
+20:39:56 pair mw-computer-webkit: ana: open 683 ms, signed in 0 ms, plays 1166 ms, socket message 12 ms, signed in after: Alex-9f2a645643411233; ben: open 846 ms, signed in 0 ms, plays 1909 ms, socket message 11 ms, signed in after: Bo-ddece11c9c464ac1; ana seeks [410, 618, 521, 524, 403] ms (5/5 within 5 s); ben left alone: False (emptied 0, loadstart 0, new element 1, back 0 s, still 0 ms); ben seeks [404, 406, 430] ms (3/3 within 5 s); ana left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); devices apart: True
+20:40:09 mw pair phone chromium: listening on port 8097, signing people in to Jellyfin at 127.0.0.1:8096; users: ["ana", "ben", "sam"]
+tokens: {"ana": "Ana-c62aac3d7f419ec3: 1 token(s)", "ben": "Ben-de8704226af9c385: 1 token(s)"}
+20:42:06 pair mw-phone-chromium: ana: open 8370 ms, signed in 0 ms, plays 3910 ms, socket message 679 ms, signed in after: Ana-c62aac3d7f419ec3; ben: open 26846 ms, signed in 0 ms, plays 19245 ms, socket message 135 ms, signed in after: Ben-de8704226af9c385; ana seeks [381, 1775, 1175, 1181, 2073] ms (5/5 within 5 s); ben left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); ben seeks [1761, 383, 1070] ms (3/3 within 5 s); ana left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); devices apart: True
+20:42:07 mw pair phone webkit: listening on port 8097, signing people in to Jellyfin at 127.0.0.1:8096; users: ["ana", "ben", "sam"]
+tokens: {"ana": "Cleo-a60fcb7a0503191f: 1 token(s)", "ben": "Dara-cb8551f11a747f8f: 1 token(s)"}
+20:44:20 pair mw-phone-webkit: ana: open 9706 ms, signed in 0 ms, plays 10762 ms, socket message 70 ms, signed in after: Cleo-a60fcb7a0503191f; ben: open 42394 ms, signed in 0 ms, plays 12236 ms, socket message 51 ms, signed in after: Dara-cb8551f11a747f8f; ana seeks [402, 5371, 403, 401, 405] ms (4/5 within 5 s); ben left alone: False (emptied 0, loadstart 0, new element 1, back 0 s, still 0 ms); ben seeks [1242, 1292, 1222] ms (3/3 within 5 s); ana left alone: True (emptied 0, loadstart 0, new element 0, back 0 s, still 0 ms); devices apart: True
+passed           mw-computer-chromium · no sign-in: ana (Alex) open 770 + play 5464 ms, never asked, stored token: the stand-in, ben (Bo) open 849 + play 6793 ms, never asked, stored token: the stand-in
+passed           mw-computer-chromium · seeks: {'ana': [393, 404, 419, 383, 382], 'ben': [444, 437, 410]} ms
+passed           mw-computer-chromium · no lender's key: none of ['admin_token', 'ana_pw', 'ben_pw', 'mw_key', 'sam_pw'], nor the other's token, in 32047965 bytes; recorded, their own token: {'ana': '0 in []', 'ben': '0 in []'}
+passed           mw-computer-chromium · apart: signed in after: {'ana': 'Alex-9f2a645643411233', 'ben': 'Bo-ddece11c9c464ac1'}; sessions on their own device: {'ana': [{'user': 'Alex-9f2a645643411233', 'playing': True, 'client': 'svrngs'}], 'ben': [{'user': 'Bo-ddece11c9c464ac1', 'playing': True, 'client': 'svrngs'}]}; left alone while the other seeked: {'ben': True, 'ana': True}; devices apart: True
+passed           mw-computer-webkit · no sign-in: ana (Alex) open 683 + play 1166 ms, never asked, stored token: the stand-in, ben (Bo) open 846 + play 1909 ms, never asked, stored token: the stand-in
+passed           mw-computer-webkit · seeks: {'ana': [410, 618, 521, 524, 403], 'ben': [404, 406, 430]} ms
+passed           mw-computer-webkit · no lender's key: none of ['admin_token', 'ana_pw', 'ben_pw', 'mw_key', 'sam_pw'], nor the other's token, in 75586043 bytes; recorded, their own token: {'ana': '0 in []', 'ben': '0 in []'}
+failed           mw-computer-webkit · apart: signed in after: {'ana': 'Alex-9f2a645643411233', 'ben': 'Bo-ddece11c9c464ac1'}; sessions on their own device: {'ana': [{'user': 'Alex-9f2a645643411233', 'playing': True, 'client': 'svrngs'}], 'ben': [{'user': 'Bo-ddece11c9c464ac1', 'playing': True, 'client': 'svrngs'}]}; left alone while the other seeked: {'ben': False, 'ana': True}; devices apart: True
+passed           mw-phone-chromium · no sign-in: ana (Ana) open 8370 + play 3910 ms, never asked, stored token: the stand-in, ben (Ben) open 26846 + play 19245 ms, never asked, stored token: the stand-in
+passed           mw-phone-chromium · seeks: {'ana': [381, 1775, 1175, 1181, 2073], 'ben': [1761, 383, 1070]} ms
+passed           mw-phone-chromium · no lender's key: none of ['admin_token', 'ana_pw', 'ben_pw', 'mw_key', 'sam_pw'], nor the other's token, in 86961332 bytes; recorded, their own token: {'ana': '0 in []', 'ben': '0 in []'}
+passed           mw-phone-chromium · apart: signed in after: {'ana': 'Ana-c62aac3d7f419ec3', 'ben': 'Ben-de8704226af9c385'}; sessions on their own device: {'ana': [{'user': 'Ana-c62aac3d7f419ec3', 'playing': True, 'client': 'svrngs'}], 'ben': [{'user': 'Ben-de8704226af9c385', 'playing': True, 'client': 'svrngs'}]}; left alone while the other seeked: {'ben': True, 'ana': True}; devices apart: True
+passed           mw-phone-webkit · no sign-in: ana (Cleo) open 9706 + play 10762 ms, never asked, stored token: the stand-in, ben (Dara) open 42394 + play 12236 ms, never asked, stored token: the stand-in
+failed           mw-phone-webkit · seeks: {'ana': [402, 5371, 403, 401, 405], 'ben': [1242, 1292, 1222]} ms
+passed           mw-phone-webkit · no lender's key: none of ['admin_token', 'ana_pw', 'ben_pw', 'mw_key', 'sam_pw'], nor the other's token, in 79085209 bytes; recorded, their own token: {'ana': '0 in []', 'ben': '0 in []'}
+failed           mw-phone-webkit · apart: signed in after: {'ana': 'Cleo-a60fcb7a0503191f', 'ben': 'Dara-cb8551f11a747f8f'}; sessions on their own device: {'ana': [{'user': 'Cleo-a60fcb7a0503191f', 'playing': True, 'client': 'svrngs'}], 'ben': [{'user': 'Dara-cb8551f11a747f8f', 'playing': True, 'client': 'svrngs'}]}; left alone while the other seeked: {'ben': False, 'ana': True}; devices apart: True
+not all passed

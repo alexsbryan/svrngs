@@ -150,14 +150,16 @@ def main():
         s.close()
 
     # The middleware's own port, asked by a process on this computer as the
-    # door asks it. What it answers another's key is kept to whether a
-    # secret came back, never the secret.
+    # door asks it, its stand-in named as the door names it since si-1. What
+    # it answers another's key is kept to whether a secret came back, never
+    # the secret.
     s, h, b = ask(MW, f"localhost:{MW[1]}", "POST", "/")
     run["no_key"] = {"status": s, "body": b.decode(errors="replace")[:300]}
     keys = dict(re.findall(r"key=([0-9a-f]{64}) person=(\w+)", open(f"{R}/mw.log").read()))
     alex_key = next((k for k, n in keys.items() if n == "Alex"), None)
     if alex_key:
-        s, h, b = ask(MW, f"localhost:{MW[1]}", "POST", "/", {"x-svrngs-key": alex_key, "x-svrngs-person": "Alex"})
+        s, h, b = ask(MW, f"localhost:{MW[1]}", "POST", "/", {"x-svrngs-key": alex_key, "x-svrngs-person": "Alex",
+                                                          "x-svrngs-stand-in": "svrngs-stand-in"})
         run["anothers_key"] = {"status": s, "answered_a_secret": s == 200 and "secret" in json.loads(b)}
     else:
         run["anothers_key"] = {"status": None, "user": "never-ran: Alex's key is not in the middleware's log"}
