@@ -97,6 +97,22 @@
 //! - every fold count in both rounds' accounts the same at both commits,
 //!   and `append_s` within 15%: `commit` still checks every signature.
 //!
+//! Measured 2026-10-08, after the predictions, three runs each, the two
+//! commits alternated, the computer's load average 31 to 50 throughout:
+//! - the write reaching everyone 53.28, 53.10, 54.93 s at 5a32d9e (median
+//!   53.28) and 37.51, 37.64, 37.82 s at 1f22ee6 (median 37.64), both
+//!   confirmed; the push round's `cpu_s` medians 56.44 and 39.75 s, 16.7 s
+//!   lower, confirmed. The effect, 15.6 s, is over three times the wider
+//!   spread (1.8 s).
+//! - the idle round's processor 5.53, 6.20, 5.68 s (median 5.68) and
+//!   5.50, 5.55, 5.67 s (median 5.55), 2% apart, confirmed.
+//! - every fold count the same in all six runs, confirmed: push digest kept
+//!   264, offer kept 72 and rebuilt 48, register rebuilt 98, write index
+//!   kept 336; idle as ceiling-2's. `append_s` medians 0.740 and 0.734 s,
+//!   confirmed. What the write still pays for is the register, read whole
+//!   98 times (ceiling-4's fold), and the 48 offers read whole, each line
+//!   parsed and its id derived, no longer verified.
+//!
 //! It needs the process's own processor time, which std does not give;
 //! `getrusage` through `libc` is the one way the lock already holds, and the
 //! one `unsafe` block below is that call. It counts folds with a
