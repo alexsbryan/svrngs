@@ -1,0 +1,53 @@
+2026-10-08T13:59:15.797693Z DEBUG jellyfin_mw::forward: mw: asked path=/Users/Me key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d device=Some(("mw1-alex", Authorization))
+2026-10-08T13:59:15.797846Z  INFO jellyfin_mw::people: mw: a key not seen by this process — finding or making its person's account key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d person=Alex user=Alex-24e2646f6325dcc3
+2026-10-08T13:59:15.898520Z DEBUG jellyfin_mw::viewer: mw: provision — no account for this person on this origin, created one viewer_user=1b7f1a75ef994c51b99cb953cc559d01 name="Alex-24e2646f6325dcc3"
+2026-10-08T13:59:15.907864Z  INFO jellyfin_mw::viewer: mw: provision — the person's read-only account made and its policy read back origin=127.0.0.1:8096 viewer_user=1b7f1a75ef994c51b99cb953cc559d01 name="Alex-24e2646f6325dcc3"
+2026-10-08T13:59:15.907970Z  INFO jellyfin_mw::people: mw: a device of the person's not yet signed in — signing it in key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d user=Alex-24e2646f6325dcc3 device=mw1-alex
+2026-10-08T13:59:16.012043Z DEBUG jellyfin_mw::viewer: mw: sign in — a device signed in for the person origin=127.0.0.1:8096 viewer_user=1b7f1a75ef994c51b99cb953cc559d01
+2026-10-08T13:59:16.020261Z DEBUG jellyfin_mw::forward: mw: answered; streaming it back path=/Users/Me key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d status=200
+2026-10-08T13:59:16.036912Z DEBUG jellyfin_mw::forward: mw: asked path=/Users/Me key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d device=Some(("mw1-alex", Authorization))
+2026-10-08T13:59:16.036967Z DEBUG jellyfin_mw::people: mw: the person's device already signed in key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d device=mw1-alex
+2026-10-08T13:59:16.043965Z DEBUG jellyfin_mw::forward: mw: answered; streaming it back path=/Users/Me key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d status=200
+2026-10-08T13:59:16.060831Z DEBUG jellyfin_mw::forward: mw: asked path=/Sessions/Capabilities/Full key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d device=Some(("mw1-alex", Authorization))
+2026-10-08T13:59:16.060880Z DEBUG jellyfin_mw::people: mw: the person's device already signed in key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d device=mw1-alex
+2026-10-08T13:59:16.068030Z DEBUG jellyfin_mw::forward: mw: answered; streaming it back path=/Sessions/Capabilities/Full key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d status=204
+2026-10-08T13:59:16.071270Z DEBUG jellyfin_mw::forward: mw: asked path=/Videos/f40bc6a7bdae2ed3e93738c99da381af/stream key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d device=Some(("mw1-alex", Authorization))
+2026-10-08T13:59:16.071310Z DEBUG jellyfin_mw::people: mw: the person's device already signed in key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d device=mw1-alex
+2026-10-08T13:59:16.076951Z DEBUG jellyfin_mw::forward: mw: answered; streaming it back path=/Videos/f40bc6a7bdae2ed3e93738c99da381af/stream key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d status=206
+2026-10-08T13:59:16.081402Z DEBUG jellyfin_mw::forward: mw: asked path=/web/ key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d device=None
+2026-10-08T13:59:16.081450Z DEBUG jellyfin_mw::forward: mw: the request names no device — passed on signed in as nobody, its credentials dropped path=/web/ key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d
+2026-10-08T13:59:16.081900Z DEBUG jellyfin_mw::forward: mw: answered; streaming it back path=/web/ key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d status=200
+2026-10-08T13:59:16.084451Z DEBUG jellyfin_mw::forward: mw: asked path=/socket key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d device=Some(("mw1-alex", Authorization))
+2026-10-08T13:59:16.084483Z DEBUG jellyfin_mw::people: mw: the person's device already signed in key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d device=mw1-alex
+2026-10-08T13:59:16.089319Z DEBUG jellyfin_mw::forward: mw: Jellyfin switched protocols; splicing the two path=/socket key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d
+2026-10-08T13:59:16.089346Z DEBUG jellyfin_mw::forward: mw: answered; streaming it back path=/socket key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d status=101
+2026-10-08T13:59:16.107335Z DEBUG jellyfin_mw::forward: mw: asked path=/Users/Me key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4 device=Some(("mw1-bo", Authorization))
+2026-10-08T13:59:16.107373Z  INFO jellyfin_mw::people: mw: a key not seen by this process — finding or making its person's account key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4 person=Bo user=Bo-82fe24fec739be58
+2026-10-08T13:59:16.218559Z DEBUG jellyfin_mw::viewer: mw: provision — no account for this person on this origin, created one viewer_user=a3316d0d245842d98397f9e26c069b7d name="Bo-82fe24fec739be58"
+2026-10-08T13:59:16.230088Z  INFO jellyfin_mw::viewer: mw: provision — the person's read-only account made and its policy read back origin=127.0.0.1:8096 viewer_user=a3316d0d245842d98397f9e26c069b7d name="Bo-82fe24fec739be58"
+2026-10-08T13:59:16.230186Z  INFO jellyfin_mw::people: mw: a device of the person's not yet signed in — signing it in key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4 user=Bo-82fe24fec739be58 device=mw1-bo
+2026-10-08T13:59:16.335761Z DEBUG jellyfin_mw::viewer: mw: sign in — a device signed in for the person origin=127.0.0.1:8096 viewer_user=a3316d0d245842d98397f9e26c069b7d
+2026-10-08T13:59:16.343594Z DEBUG jellyfin_mw::forward: mw: answered; streaming it back path=/Users/Me key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4 status=200
+2026-10-08T13:59:16.362160Z DEBUG jellyfin_mw::forward: mw: asked path=/Users/Me key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4 device=Some(("mw1-bo", Authorization))
+2026-10-08T13:59:16.362207Z DEBUG jellyfin_mw::people: mw: the person's device already signed in key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4 device=mw1-bo
+2026-10-08T13:59:16.369368Z DEBUG jellyfin_mw::forward: mw: answered; streaming it back path=/Users/Me key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4 status=200
+2026-10-08T13:59:16.388426Z DEBUG jellyfin_mw::forward: mw: asked path=/Sessions/Capabilities/Full key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4 device=Some(("mw1-bo", Authorization))
+2026-10-08T13:59:16.388482Z DEBUG jellyfin_mw::people: mw: the person's device already signed in key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4 device=mw1-bo
+2026-10-08T13:59:16.395790Z DEBUG jellyfin_mw::forward: mw: answered; streaming it back path=/Sessions/Capabilities/Full key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4 status=204
+2026-10-08T13:59:16.399076Z DEBUG jellyfin_mw::forward: mw: asked path=/Videos/f40bc6a7bdae2ed3e93738c99da381af/stream key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4 device=Some(("mw1-bo", Authorization))
+2026-10-08T13:59:16.399114Z DEBUG jellyfin_mw::people: mw: the person's device already signed in key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4 device=mw1-bo
+2026-10-08T13:59:16.405091Z DEBUG jellyfin_mw::forward: mw: answered; streaming it back path=/Videos/f40bc6a7bdae2ed3e93738c99da381af/stream key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4 status=206
+2026-10-08T13:59:16.409362Z DEBUG jellyfin_mw::forward: mw: asked path=/web/ key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4 device=None
+2026-10-08T13:59:16.409408Z DEBUG jellyfin_mw::forward: mw: the request names no device — passed on signed in as nobody, its credentials dropped path=/web/ key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4
+2026-10-08T13:59:16.409817Z DEBUG jellyfin_mw::forward: mw: answered; streaming it back path=/web/ key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4 status=200
+2026-10-08T13:59:16.412582Z DEBUG jellyfin_mw::forward: mw: asked path=/socket key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4 device=Some(("mw1-bo", Authorization))
+2026-10-08T13:59:16.412620Z DEBUG jellyfin_mw::people: mw: the person's device already signed in key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4 device=mw1-bo
+2026-10-08T13:59:16.417575Z DEBUG jellyfin_mw::forward: mw: Jellyfin switched protocols; splicing the two path=/socket key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4
+2026-10-08T13:59:16.417610Z DEBUG jellyfin_mw::forward: mw: answered; streaming it back path=/socket key=82fe24fec739be584217b7b9096b564db2b5c3708c1602578e3d936168f314a4 status=101
+2026-10-08T13:59:16.442936Z  INFO jellyfin_mw::forward: mw: refused — not a request svrngs's door forwarded path=/Users/Me why=the request names no person: it carries no x-svrngs-key
+2026-10-08T13:59:16.442991Z DEBUG jellyfin_mw::forward: mw: a switched connection ended path=/socket up=0 down=91
+2026-10-08T13:59:16.443008Z DEBUG jellyfin_mw::forward: mw: a switched connection ended path=/socket up=0 down=91
+2026-10-08T13:59:16.443647Z DEBUG jellyfin_mw::forward: mw: asked path=/Users/Me key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d device=Some(("mw1-mallory", Authorization))
+2026-10-08T13:59:16.443689Z  INFO jellyfin_mw::people: mw: a device of the person's not yet signed in — signing it in key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d user=Alex-24e2646f6325dcc3 device=mw1-mallory
+2026-10-08T13:59:16.547008Z DEBUG jellyfin_mw::viewer: mw: sign in — a device signed in for the person origin=127.0.0.1:8096 viewer_user=1b7f1a75ef994c51b99cb953cc559d01
+2026-10-08T13:59:16.553626Z DEBUG jellyfin_mw::forward: mw: answered; streaming it back path=/Users/Me key=24e2646f6325dcc39f7c34bb1d36b98d9275c917a3855b0d057aef95858a563d status=200

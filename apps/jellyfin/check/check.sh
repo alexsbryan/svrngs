@@ -30,6 +30,12 @@
 #                                                  a Chromium phone Three, WINDOW s at once (else 600), seeking
 #                                                  10, 22 and 22 times; writes <out>/trio[-$RUN].json, its
 #                                                  summary (trio.py) and scan.json; takes over ten minutes
+#   check.sh mw    <scratch> <out> <tag>           mw-1's (ralph/next/mw/STATE.md), after up: the middleware
+#                                                  (apps/jellyfin/mw) on MW_PORT (else 8097), given a key from
+#                                                  Jellyfin's API Keys once, lent by Sam as jellyfin-mw, Bo joined as
+#                                                  a second computer; each run starts it afresh, JELLYFIN_MW_PLANT
+#                                                  passed on, the users it made before deleted; then mw.py, which
+#                                                  writes <out>/mw-<tag>.json and exits 0 only if every bar passed
 #   check.sh judge <scratch> <out> <run>...        scan.py, then judge.py over the runs named (pair-*.json stems):
 #                                                  exit 0 only if every bar of every one passed
 #   check.sh down  <scratch> <out>                 stops everything; the scratch dir stays for the secrets
@@ -282,13 +288,67 @@ trio() {
   python3 "$HERE/trio.py" "$OUT/$tag.json" "$R/sam/run.log" | tee -a "$OUT/steps.log"
 }
 
+# Jellyfin's middleware (mw-1): the lender mints it a key once, runs it in
+# front of Jellyfin and lends its port as any other; Alex and Bo, two
+# computers, ask through the lend (mw.py). Only users named as the
+# middleware names them (<name>-<16 hex of a key>, viewer.rs user_name)
+# are deleted between runs, so a person's first ask in each run is new.
+mw() {
+  . "$R/env"
+  local tag="$1" port="${MW_PORT:-8097}" mwb="$REPO/apps/jellyfin/mw/target/debug/jellyfin-mw"
+  TOKEN="$(cat "$SECRETS/admin_token")"
+  cargo build --quiet --manifest-path "$REPO/apps/jellyfin/mw/Cargo.toml"
+  if [ ! -s "$SECRETS/mw_key" ]; then
+    api POST "/Auth/Keys?app=svrngs-mw" >/dev/null
+    secret mw_key "$(api GET /Auth/Keys | python3 -c 'import json,sys;print(next(k["AccessToken"] for k in json.load(sys.stdin)["Items"] if k["AppName"]=="svrngs-mw"))')"
+  fi
+  if [ -f "$R/mw.pid" ]; then kill "$(cat "$R/mw.pid")" 2>/dev/null || true; rm -f "$R/mw.pid"; sleep 1; fi
+  api GET /Users | python3 -c 'import json,re,sys;[print(u["Id"]) for u in json.load(sys.stdin) if re.search(r"-[0-9a-f]{16}$",u["Name"])]' |
+    while read -r id; do api DELETE "/Users/$id" >/dev/null; done
+  NO_COLOR=1 RUST_LOG=info,jellyfin_mw=debug nohup "$mwb" --listen "127.0.0.1:$port" <"$SECRETS/mw_key" >"$R/mw.out" 2>"$R/mw.log" &
+  echo $! >"$R/mw.pid"
+  for _ in $(seq 1 50); do grep -q 'listening on port' "$R/mw.out" 2>/dev/null && break; sleep 0.1; done
+  say "mw $tag: $(head -1 "$R/mw.out")${JELLYFIN_MW_PLANT:+; planted: $JELLYFIN_MW_PLANT}; users: $(users)"
+  if [ -z "${MW_PORT_LENT:-}" ]; then
+    printf '\n' | SVRNGS_DIR="$R/sam" NO_COLOR=1 RUST_LOG=debug "$B" share "$port" --name jellyfin-mw --kind jellyfin --limit 8 >"$R/sam/share-mw.out" 2>>"$R/sam/share.log"
+    say "sam: $(grep -m1 Lent "$R/sam/share-mw.out")"
+    # What share tells a lender of the middleware, kept for mw-3: for the
+    # kind jellyfin it says to make each person an account, which the
+    # middleware now does.
+    say "sam is told: $(grep -v '^Lent' "$R/sam/share-mw.out" | tr '\n' ' ')"
+    local client; client="$(grep -o 'svrngs://join/[A-Za-z0-9_-]*' "$R/sam/new.out")"
+    # Bo joins once; a run stopped after it does not join again.
+    if [ ! -d "$R/bo/rings" ]; then
+      mkdir -p "$R/bo"
+      SVRNGS_DIR="$R/bo" RUST_LOG=info NO_COLOR=1 nohup "$B" join "$client" --as Bo >"$R/bo/join.out" 2>"$R/bo/join.log" &
+      echo $! >"$R/bo.pid"
+      for _ in $(seq 1 60); do grep -q "You're in" "$R/bo/join.out" 2>/dev/null && break; sleep 1; done
+      say "bo: $(head -1 "$R/bo/join.out")"
+    fi
+    local who at
+    for who in alex bo; do
+      kill "$(cat "$R/$who.pid")" 2>/dev/null || true; sleep 2
+      SVRNGS_DIR="$R/$who" RUST_LOG=info NO_COLOR=1 nohup "$B" >"$R/$who/run.out" 2>"$R/$who/run.log" &
+      echo $! >"$R/$who.pid"
+      for _ in $(seq 1 60); do grep -q 'jellyfin-mw.*in your browser' "$R/$who/run.out" 2>/dev/null && break; sleep 1; done
+      at="$(grep 'jellyfin-mw.*in your browser' "$R/$who/run.out" | grep -o 'http://[a-z0-9-]*\.localhost:[0-9]*/')"
+      [ -n "$at" ] || { say "$who's bare command lists no jellyfin-mw"; cat "$R/$who/run.out" >&2; exit 3; }
+      say "$who's computer opens the middleware's lend at $at"
+      printf '%s_AT=%s\n' "$(echo "$who" | tr a-z A-Z)" "$at" >>"$R/env"
+    done
+    printf 'MW_PORT=%s\nMW_PORT_LENT=1\n' "$port" >>"$R/env"
+  fi
+  python3 "$HERE/mw.py" "$R" "$OUT" "$tag" | tee -a "$OUT/steps.log"
+}
+
 case "$STEP" in
   films) films "$R" "$OUT" ;;
   up) up ;;
   pair) pair "$4" "$5" ;;
   trio) trio ;;
+  mw) mw "$4" ;;
   plant) plant "$4" "$5" ;;
   judge) shift 3; python3 "$HERE/scan.py" "$R" "$OUT" >/dev/null; python3 "$HERE/judge.py" "$OUT" "$@" | tee -a "$OUT/steps.log" ;;
   down) TOKEN="$(cat "$SECRETS/admin_token")"; users >"$OUT/users-after.json" 2>/dev/null || true; down ;;
-  *) echo "usage: check.sh films|up|pair|trio|plant|judge|down <scratch> <out> [way engine | plant engine | run...]" >&2; exit 2 ;;
+  *) echo "usage: check.sh films|up|pair|trio|plant|mw|judge|down <scratch> <out> [way engine | plant engine | run...]" >&2; exit 2 ;;
 esac
