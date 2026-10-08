@@ -181,16 +181,21 @@ async fn converge(nodes: &[Node]) {
 enum Says {
     /// Its words name a read of the whole journal.
     Rebuilt,
+    /// Its words name an answer from a kept fold, the journal unread.
+    Kept,
     /// It carries `restarted`: true when the fold began again from the top.
     Restarted,
 }
 
 /// Each fold of a group's journal a round pays for, by the line it traces
-/// in svrngs-runtime: the write index (journal.rs `Held::catch_up`), the
-/// digest (`RingJournal::digest`), the offer
-/// (`RingJournal::ops_missing_from_within`) and the register
-/// (register.rs `RingRail::standing`).
-const FOLDS: [(&str, &str, Says); 4] = [
+/// in svrngs-runtime: the write index (journal.rs `Held::catch_up`, which
+/// the digest is now caught up by too, so it counts every catch-up,
+/// whatever asked for it), the digest (`RingJournal::digest`, and the
+/// offer's own catch-up of it), the offer
+/// (`RingJournal::ops_missing_from_within`, its two lines: answered from
+/// the whole log, or unread) and the register (register.rs
+/// `RingRail::standing`).
+const FOLDS: [(&str, &str, Says); 5] = [
     (
         "write_index",
         "ring rail: write index caught up with the log",
@@ -198,13 +203,18 @@ const FOLDS: [(&str, &str, Says); 4] = [
     ),
     (
         "digest",
-        "ring rail: digest folded from the whole log",
-        Says::Rebuilt,
+        "ring rail: digest caught up with the log",
+        Says::Restarted,
     ),
     (
         "offer",
         "ring rail: offer folded from the whole log",
         Says::Rebuilt,
+    ),
+    (
+        "offer",
+        "ring rail: offer answered unread, the peer's digest is ours",
+        Says::Kept,
     ),
     (
         "register",
@@ -286,9 +296,10 @@ impl<S: tracing::Subscriber> Layer<S> for Counter {
         };
         let kept = match says {
             Says::Rebuilt => false,
+            Says::Kept => true,
             Says::Restarted => !line
                 .restarted
-                .expect("the write index's line carries `restarted`"),
+                .expect("a caught-up fold's line carries `restarted`"),
         };
         let mut folded = FOLDED.lock().unwrap();
         let n = folded.entry(fold).or_default();
@@ -335,7 +346,8 @@ impl Cost {
             "cpu_s": self.cpu_s,
             "wall_s": self.wall_s,
             // Every fold, its lines counted: a fold that traced no line in
-            // this round reads kept 0, rebuilt 0.
+            // this round reads kept 0, rebuilt 0. A fold with two lines is
+            // named twice, and answers the same both times.
             "folds": FOLDS.iter()
                 .map(|(f, _, _)| {
                     let (kept, rebuilt) = self.folds.get(f).copied().unwrap_or_default();
@@ -610,17 +622,24 @@ async fn the_account_matches_a_hand_count() {
     // mismatching window travels as one atomic per-actor unit"), which node
     // 0 already holds, and node 0 pushes its two new acts; chunk 2 moves
     // nothing and converges. Member 3 fails at chunk 1's first post.
-    // - write_index: kept, each time. Node 0 catches it up to find the six
-    //   acts held, once per reached member (journal.rs `ingest_all`); each
-    //   reached member catches it up before and after landing the two
-    //   (`ingest_all`, `Held::after_write`); an empty ingest folds nothing:
-    //   2 + 2 x 2 = 6.
-    // - digest: node 0 folds it for each chunk's first call, and again
-    //   before chunk 1's push: 3 per reached member, 1 for member 3; each
-    //   member answers each of its 3 posts with one (`answer`): 3 x 2 + 1 +
-    //   3 x 2 = 13.
+    // Every fold below is kept: each node's journal index was caught up by
+    // `stand_up`'s last digests, node 0's again after its two acts, and
+    // nothing replaces a file. An empty ingest returns before it folds.
+    // - digest: node 0 asks it for each chunk's first call, and again
+    //   before chunk 1's push, 3 per reached member, 1 for member 3; each
+    //   member answers each of its 3 posts with one (`answer`); and every
+    //   offer below catches it up first (journal.rs
+    //   `ops_missing_from_within`): 3 x 2 + 1 + 3 x 2 + 10 = 23.
     // - offer: node 0 once a chunk, 2 per reached member; each member once
-    //   per post, 3: 2 x 2 + 3 x 2 = 10.
+    //   per post, 3. Unread when the peer's digest is ours: node 0's in
+    //   chunk 2, and the member's at posts 2 and 3, once node 0's two acts
+    //   landed; read whole at chunk 1, the digests apart: kept 3 x 2,
+    //   rebuilt 2 x 2.
+    // - write_index: every digest catch-up above, 23, and the ingests that
+    //   fold: node 0 finds the six acts held, once per reached member
+    //   (`ingest_all`); each reached member catches up before and after
+    //   landing the two (`ingest_all`, `Held::after_write`): 23 + 2 + 2 x 2
+    //   = 29.
     // - register: node 0 lists its members (node.rs `standings`) and then
     //   offers the group to them (`run_one_round`); each member admits node
     //   0's one connection (node.rs `admit_dialer`) and checks each of 3
@@ -630,9 +649,9 @@ async fn the_account_matches_a_hand_count() {
         "acts_moved": 4,
         "cpu_s": null, "wall_s": null,
         "folds": {
-            "write_index": {"kept": 6, "rebuilt": 0},
-            "digest": {"kept": 0, "rebuilt": 13},
-            "offer": {"kept": 0, "rebuilt": 10},
+            "write_index": {"kept": 29, "rebuilt": 0},
+            "digest": {"kept": 23, "rebuilt": 0},
+            "offer": {"kept": 6, "rebuilt": 4},
             "register": {"kept": 0, "rebuilt": 10},
         },
     });

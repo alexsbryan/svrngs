@@ -79,7 +79,12 @@ skipped as held; the door names, as the previous act, the line at its newest
 seq whose signature verifies under its own key; compaction keeps a cited
 act by its derived id; and the journal is the `Store` adapter `commit`
 appends through: under the write lock it hands over the lines held and
-appends only the `Authored` lines `commit` returns.
+appends only the `Authored` lines `commit` returns. Then (ceiling-2) the
+write index keeps the digest's fold too (svrngs-core `DigestFold`, which
+`digest` is over a whole journal), caught up from the log's tail with each
+act's signature checked as the tail brings it in; and a peer whose digest is
+ours is answered unread when it holds nothing the slow path would send
+(`DigestFold::missing_nothing`), from the whole log otherwise.
 
 Beside the journals, `svrngs-node` holds the dialling half of sync over iroh
 (DESIGN §8, U1's inventory), forked at `e1a43bcd2` the same way:

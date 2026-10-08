@@ -119,3 +119,47 @@ fn a_write_reads_only_what_the_log_gained_since_the_last_one() {
         4
     );
 }
+
+/// **The digest is caught up from the tail, as the write index is**
+/// (ceiling-2): after each change below, one handle's digest and its offer
+/// to a peer in step are what the file read whole gives (svrngs-core
+/// `digest`, `ops_missing_from_within`) — through its own appends, lines
+/// another handle appended, a compaction another handle renamed over the
+/// log, a shorter log renamed over that, and an act past a hole, its actor absent from the digest, which
+/// an equal digest does not cover, so the offer reads the log and sends it.
+#[test]
+fn the_digest_is_caught_up_from_the_tail_and_restarts_on_a_replaced_log() {
+    let dir = tempfile::tempdir().unwrap();
+    let (a, b) = (open(dir.path()), open(dir.path()));
+    let r = ring();
+    let whole = |j: &RingJournal| {
+        let ops = j.read().unwrap().0;
+        let ours = svrngs_core::digest(&ops, NS, &Ed25519Verifier);
+        let offer = svrngs_core::ops_missing_from_within(&ops, NS, &Ed25519Verifier, &ours, NO_BUDGET);
+        (ours, offer)
+    };
+    let kept = |j: &RingJournal| {
+        let ours = j.digest().unwrap();
+        let offer = j.ops_missing_from_within(&ours, NO_BUDGET).unwrap();
+        (ours, offer)
+    };
+    for _ in 0..3 {
+        a.append(record("x"), &key(1), &r, None, &Ed25519Verifier).unwrap();
+    }
+    assert_eq!(kept(&a), whole(&a), "its own appends");
+    b.append(record("y"), &key(2), &r, None, &Ed25519Verifier).unwrap();
+    assert_eq!(kept(&a), whole(&a), "another handle's append, from the tail");
+    a.append(RailAct::Seal, &key(1), &r, None, &Ed25519Verifier).unwrap();
+    assert_eq!(b.compact(&r, &Ed25519Verifier).unwrap().removed, 3);
+    assert_eq!(kept(&a), whole(&a), "a compaction renamed over the log");
+    let first = a.read().unwrap().0.remove(0);
+    crate::oplog::Oplog::<SignedOp>::new(a.dir().to_path_buf())
+        .replace_all(&[first])
+        .unwrap();
+    assert_eq!(kept(&a), whole(&a), "a shorter log renamed over it, as a restore would");
+    let past_a_hole = signed(&key(3), 9, 7, record("seqs 0 to 6 never came"));
+    assert!(b.ingest(&past_a_hole).unwrap());
+    let (ours, (sent, _)) = kept(&a);
+    assert_eq!((ours.clone(), (sent.clone(), false)), whole(&a), "an act past a hole");
+    assert_eq!(sent, [past_a_hole], "sent, though the digests are equal");
+}

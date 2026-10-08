@@ -25,15 +25,15 @@ fn open(dir: &std::path::Path) -> RingJournal {
 /// `ops_missing_from_within` with no budget.
 pub(crate) trait Doors {
     fn ingest(&self, op: &Op<SignedOp>) -> Result<bool, RailError>;
-    fn ops_missing_from(&self, verifier: &dyn RingVerifier, theirs: &Digest) -> Result<Vec<Op<SignedOp>>, RailError>;
+    fn ops_missing_from(&self, theirs: &Digest) -> Result<Vec<Op<SignedOp>>, RailError>;
 }
 
 impl Doors for RingJournal {
     fn ingest(&self, op: &Op<SignedOp>) -> Result<bool, RailError> {
         Ok(self.ingest_all(std::slice::from_ref(op))? == 1)
     }
-    fn ops_missing_from(&self, verifier: &dyn RingVerifier, theirs: &Digest) -> Result<Vec<Op<SignedOp>>, RailError> {
-        Ok(self.ops_missing_from_within(verifier, theirs, NO_BUDGET)?.0)
+    fn ops_missing_from(&self, theirs: &Digest) -> Result<Vec<Op<SignedOp>>, RailError> {
+        Ok(self.ops_missing_from_within(theirs, NO_BUDGET)?.0)
     }
 }
 
@@ -355,12 +355,8 @@ fn two_partitioned_nodes_converge_on_an_identical_admission() {
     );
 
     // Heal, both directions, one exchange each way.
-    let for_a = b
-        .ops_missing_from(&Ed25519Verifier, &a.digest(&Ed25519Verifier).unwrap())
-        .unwrap();
-    let for_b = a
-        .ops_missing_from(&Ed25519Verifier, &b.digest(&Ed25519Verifier).unwrap())
-        .unwrap();
+    let for_a = b.ops_missing_from(&a.digest().unwrap()).unwrap();
+    let for_b = a.ops_missing_from(&b.digest().unwrap()).unwrap();
     assert_eq!(a.ingest_all(&for_a).unwrap(), 1);
     assert_eq!(b.ingest_all(&for_b).unwrap(), 1);
 
@@ -380,9 +376,7 @@ fn two_partitioned_nodes_converge_on_an_identical_admission() {
     assert_eq!(acts, vec!["beer", "groceries"]);
 
     // And the exchange is idempotent: running it again moves nothing.
-    let again = b
-        .ops_missing_from(&Ed25519Verifier, &a.digest(&Ed25519Verifier).unwrap())
-        .unwrap();
+    let again = b.ops_missing_from(&a.digest().unwrap()).unwrap();
     assert!(again.is_empty());
     assert_eq!(a.ingest_all(&for_a).unwrap(), 0);
     assert_eq!(a.admit(&r, &Ed25519Verifier).unwrap(), fa);
@@ -411,12 +405,8 @@ fn two_forked_nodes_exchange_until_both_hold_the_fork() {
     b.ingest_all(&b_holds).unwrap();
 
     for round in 0..5 {
-        let for_a = b
-            .ops_missing_from(&Ed25519Verifier, &a.digest(&Ed25519Verifier).unwrap())
-            .unwrap();
-        let for_b = a
-            .ops_missing_from(&Ed25519Verifier, &b.digest(&Ed25519Verifier).unwrap())
-            .unwrap();
+        let for_a = b.ops_missing_from(&a.digest().unwrap()).unwrap();
+        let for_b = a.ops_missing_from(&b.digest().unwrap()).unwrap();
         if for_a.is_empty() && for_b.is_empty() {
             break;
         }
@@ -461,12 +451,8 @@ fn a_forked_window_with_a_tiny_budget_still_converges() {
     // Room for roughly two ops: a split window would never reach seq 20.
     let budget = 400;
     for round in 0..40 {
-        let (for_a, more_a) = b
-            .ops_missing_from_within(&Ed25519Verifier, &a.digest(&Ed25519Verifier).unwrap(), budget)
-            .unwrap();
-        let (for_b, more_b) = a
-            .ops_missing_from_within(&Ed25519Verifier, &b.digest(&Ed25519Verifier).unwrap(), budget)
-            .unwrap();
+        let (for_a, more_a) = b.ops_missing_from_within(&a.digest().unwrap(), budget).unwrap();
+        let (for_b, more_b) = a.ops_missing_from_within(&b.digest().unwrap(), budget).unwrap();
         if for_a.is_empty() && for_b.is_empty() && !more_a && !more_b {
             break;
         }
@@ -615,12 +601,10 @@ fn a_half_delivered_peer_is_a_named_hole_not_a_clean_answer() {
 
     // And the digest asks for the hole rather than claiming the high mark.
     assert!(
-        !a.digest(&Ed25519Verifier).unwrap().contains_key(&actor_of(&key(2))),
+        !a.digest().unwrap().contains_key(&actor_of(&key(2))),
         "A holds nothing contiguous from B, so it must claim nothing"
     );
-    let repair = b
-        .ops_missing_from(&Ed25519Verifier, &a.digest(&Ed25519Verifier).unwrap())
-        .unwrap();
+    let repair = b.ops_missing_from(&a.digest().unwrap()).unwrap();
     assert_eq!(repair.len(), 2, "the hole and everything above it come back");
     a.ingest_all(&repair).unwrap();
     let healed = a.admit(&r, &Ed25519Verifier).unwrap();
@@ -756,16 +740,14 @@ fn a_compacted_journal_stays_complete_and_stops_the_prefix_coming_back() {
 
     // 2. It can still say what it needs, from the floor rather than from zero.
     assert_eq!(
-        marks(&a.digest(&Ed25519Verifier).unwrap()),
+        marks(&a.digest().unwrap()),
         BTreeMap::from([(actor_of(&key(1)), 4)]),
         "a compacted actor must make a claim, not fall silent"
     );
 
     // 3. So the peer that still holds the retired prefix sends none of it.
     assert!(
-        b.ops_missing_from(&Ed25519Verifier, &a.digest(&Ed25519Verifier).unwrap())
-            .unwrap()
-            .is_empty(),
+        b.ops_missing_from(&a.digest().unwrap()).unwrap().is_empty(),
         "the retired prefix must not come back every sixty seconds"
     );
     assert_eq!(a.ingest_all(&[]).unwrap(), 0);
@@ -1130,9 +1112,7 @@ fn a_peers_introduction_arrives_readable_and_changes_no_roster_row() {
     let written = b.append(intro, &key(2), &r, None, &Ed25519Verifier).unwrap();
 
     // Ring-sync, the way a peer delivers: digest out, missing ops back in.
-    let for_me = b
-        .ops_missing_from(&Ed25519Verifier, &a.digest(&Ed25519Verifier).unwrap())
-        .unwrap();
+    let for_me = b.ops_missing_from(&a.digest().unwrap()).unwrap();
     assert_eq!(a.ingest_all(&for_me).unwrap(), 1, "the op must actually arrive");
 
     // ── nothing moved ──

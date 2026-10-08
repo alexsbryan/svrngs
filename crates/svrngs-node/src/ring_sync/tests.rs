@@ -613,3 +613,62 @@ async fn a_peer_whose_digest_never_moves_stops_the_loop_instead_of_spinning() {
          {MAX_CHUNKS_PER_EXCHANGE} — {calls} calls"
     );
 }
+
+/// **The answer from the kept digest is the whole log's, byte for byte**
+/// (ceiling-2). This node answers, through `answer` as the route does, a
+/// peer two acts ahead and then a peer in step, and each response, with its
+/// `more`, is set beside the one built from the journal file read whole —
+/// what `answer` sent when the digest and the offer were folded from the
+/// whole log (svrngs-core `digest`, `ops_missing_from_within`). Two of the
+/// four are answered unread, the peer's digest ours.
+#[test]
+fn the_answer_from_the_kept_digest_is_the_whole_logs_byte_for_byte() {
+    let key = SigningKey::from_bytes(&[1u8; 32]);
+    let dirs: Vec<_> = (0..3).map(|_| tempfile::tempdir().unwrap()).collect();
+    let (us, journal) = node(dirs[0].path(), &key, 40);
+    let (ahead, _) = node(dirs[1].path(), &key, 40);
+    let (in_step, _) = node(dirs[2].path(), &key, 40);
+    let two = ops_in(NS, &key, 42).split_off(40);
+    assert_eq!(ahead.ingest_all(NS, &two).unwrap(), 2);
+    us.digest(NS).unwrap(); // caught up, as the last round left it
+
+    let mut answers = Vec::new();
+    let mut ask = |peer: &RingRail, ops: Vec<Op<SignedOp>>| {
+        let req = RingSyncRequest {
+            namespace: NS.to_string(),
+            digest: peer.digest(NS).unwrap(),
+            ops,
+        };
+        let (kept, more) = answer(&us, &req).unwrap();
+        let held = journal.read().unwrap().0;
+        let (sent, whole_more) = svrngs_core::ops_missing_from_within(
+            &held,
+            NS,
+            &Ed25519Verifier,
+            &req.digest,
+            RING_SYNC_OPS_BUDGET_BYTES,
+        );
+        let whole = RingSyncResponse {
+            namespace: NS.to_string(),
+            digest: svrngs_core::digest(&held, NS, &Ed25519Verifier),
+            ops: sent,
+            ingested: kept.ingested,
+        };
+        let bytes = |r: &RingSyncResponse| serde_json::to_string(r).unwrap();
+        assert_eq!((bytes(&kept), more), (bytes(&whole), whole_more));
+        answers.push((kept.digest == req.digest, kept.ops.len(), kept.ingested));
+        kept
+    };
+    ask(&ahead, Vec::new());
+    ask(&ahead, two.clone());
+    let behind = ask(&in_step, Vec::new());
+    in_step.ingest_all(NS, &behind.ops).unwrap();
+    ask(&in_step, Vec::new());
+    assert_eq!(
+        answers,
+        [(false, 40, 0), (true, 0, 2), (false, 2, 0), (true, 0, 0)],
+        "(digests equal, ops sent, ops ingested): ahead, whose window [0, 41] \
+         folds differently here and so travels whole (svrngs-core sync.rs); \
+         ahead with its two; behind once we hold them; and in step"
+    );
+}

@@ -35,7 +35,9 @@ struct Writer {
 
 /// The facts [`RingJournal::append_all`] and [`RingJournal::ingest_all`]
 /// read off the log: each actor's newest seq, with the lines held at it, and
-/// the ids already held.
+/// the ids already held; and the digest's fold ([`DigestFold`]), which
+/// [`RingJournal::digest`] and [`RingJournal::ops_missing_from_within`] answer
+/// from.
 ///
 /// svrngs (U2): each id is the one the act's content derives ([`derive_id`]),
 /// never the `id` field its line carries. A held set keyed by the line's field
@@ -51,11 +53,19 @@ struct Writer {
 /// (pc-rails-journal-linear). The file stays the source of truth: lines
 /// another process appended are in the tail, and a file renamed over the path
 /// (a compaction, ours or theirs) restarts the fold from the top.
+///
+/// The digest is caught up the same way, for the same reason: rebuilt from
+/// the whole log, every signature checked again, it cost an idle round at 25
+/// members and 10,000 acts most of its 73 s of processor (svrn-docs
+/// `rings/current/THE_CEILING.md`, fix 1). An act's signature is checked
+/// here as the tail brings it in, under [`Ed25519Verifier`], the scheme
+/// every caller of the digest judged by.
 #[derive(Default)]
 struct Held {
     cursor: crate::oplog::Cursor,
     newest: std::collections::HashMap<String, Newest>,
     ids: std::collections::HashSet<OpId>,
+    digest: DigestFold,
 }
 
 /// One actor's newest seq on the log, and each line held at it: the id its
@@ -66,15 +76,18 @@ struct Newest {
 }
 
 impl Held {
-    /// Fold in whatever the log gained since the last call.
-    fn catch_up(&mut self, oplog: &Oplog<SignedOp>, namespace: &str) -> Result<(), RailError> {
+    /// Fold in whatever the log gained since the last call; true when the
+    /// fold began again from the top.
+    fn catch_up(&mut self, oplog: &Oplog<SignedOp>, namespace: &str) -> Result<bool, RailError> {
         let tail = oplog
             .read_since(self.cursor)
             .map_err(|e| RailError::Io(e.to_string()))?;
         if tail.restarted {
-            self.newest.clear();
-            self.ids.clear();
+            *self = Held::default();
         }
+        // Held, but not verified under its claimed actor: no part of the
+        // digest (svrngs-core sync.rs `digest`).
+        let mut unverified = 0usize;
         for op in &tail.ops {
             let id = derive_id(op, namespace);
             let line = (id.clone(), op.kind.sig.clone());
@@ -91,17 +104,23 @@ impl Held {
                     );
                 }
             }
+            if Ed25519Verifier.verify(&op.actor, &id, &op.kind.sig) {
+                self.digest.add(id.clone(), op);
+            } else {
+                unverified += 1;
+            }
             self.ids.insert(id);
         }
         tracing::debug!(
             namespace,
             folded = tail.ops.len(),
+            unverified,
             restarted = tail.restarted,
             held = self.ids.len(),
             "ring rail: write index caught up with the log"
         );
         self.cursor = tail.cursor;
-        Ok(())
+        Ok(tail.restarted)
     }
 
     /// [`Self::catch_up`] past a write that already landed. A failure here
@@ -223,13 +242,15 @@ impl RingJournal {
     /// back. See [`digest`] for why the mark is contiguous and why an op that
     /// does not verify under its claimed actor counts for nothing.
     ///
-    /// Folded from the whole journal on every call, every signature checked
-    /// again; its line is the one the scale instrument counts as the digest
-    /// rebuilt (`crates/svrngs-node/tests/scale.rs`, the round's account).
-    pub fn digest(&self, verifier: &dyn RingVerifier) -> Result<Digest, RailError> {
-        let (ops, _) = self.read()?;
-        tracing::debug!(namespace = %self.namespace, lines = ops.len(), "ring rail: digest folded from the whole log");
-        Ok(digest(&ops, &self.namespace, verifier))
+    /// Caught up from the log's tail ([`Held`]); its line is the one the
+    /// scale instrument counts as the digest, kept or, when the fold began
+    /// again from the top, rebuilt (`crates/svrngs-node/tests/scale.rs`).
+    pub fn digest(&self) -> Result<Digest, RailError> {
+        let mut guard = self.log();
+        let log = &mut *guard;
+        let restarted = log.held.catch_up(&log.oplog, &self.namespace)?;
+        tracing::debug!(namespace = %self.namespace, restarted, "ring rail: digest caught up with the log");
+        Ok(log.held.digest.digest())
     }
 
     /// Every op this node holds that `theirs` says the peer is missing,
@@ -244,9 +265,13 @@ impl RingJournal {
     /// body limit by the crate that owns that limit
     /// (`sovereign_daemon::routes_internal::RING_SYNC_OPS_BUDGET_BYTES`), so
     /// the rail stays a crate a ring app can lift without an HTTP server.
+    ///
+    /// A peer whose digest is ours is answered from the kept fold, unread,
+    /// when [`DigestFold::missing_nothing`] says the slow path would send it
+    /// nothing; every other peer is answered from the whole log, every
+    /// signature checked again, as the digest was before the fold was kept.
     pub fn ops_missing_from_within(
         &self,
-        verifier: &dyn RingVerifier,
         theirs: &Digest,
         budget_bytes: usize,
     ) -> Result<(Vec<Op<SignedOp>>, bool), RailError> {
@@ -258,14 +283,24 @@ impl RingJournal {
             );
             return Ok((Vec::new(), false));
         }
-        // Folded from the whole journal, as the digest is, and counted the
-        // same way by the scale instrument.
-        let (ops, _) = self.read()?;
+        let mut guard = self.log();
+        let log = &mut *guard;
+        let restarted = log.held.catch_up(&log.oplog, &self.namespace)?;
+        tracing::debug!(namespace = %self.namespace, restarted, "ring rail: digest caught up with the log");
+        let newest = log.held.newest.iter().map(|(actor, n)| (actor.as_str(), n.seq));
+        if log.held.digest.missing_nothing(theirs, newest) {
+            tracing::debug!(namespace = %self.namespace, "ring rail: offer answered unread, the peer's digest is ours");
+            return Ok((Vec::new(), false));
+        }
+        let (ops, _) = log
+            .oplog
+            .read_all_with_skips()
+            .map_err(|e| RailError::Io(e.to_string()))?;
         tracing::debug!(namespace = %self.namespace, lines = ops.len(), "ring rail: offer folded from the whole log");
         Ok(ops_missing_from_within(
             &ops,
             &self.namespace,
-            verifier,
+            &Ed25519Verifier,
             theirs,
             budget_bytes,
         ))

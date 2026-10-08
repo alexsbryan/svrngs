@@ -37,12 +37,8 @@ fn a_local_only_journal_is_held_but_never_offered() {
     assert_eq!(local.read().unwrap().0.len(), 1, "journaled on this node");
     assert_eq!(rail.namespaces().unwrap(), vec![CARRIED.to_string()]);
 
-    let (for_peer, more) = local
-        .ops_missing_from_within(&Ed25519Verifier, &Digest::new(), NO_BUDGET)
-        .unwrap();
+    let (for_peer, more) = local.ops_missing_from_within(&Digest::new(), NO_BUDGET).unwrap();
     assert!(for_peer.is_empty() && !more, "a peer is answered nothing");
-    let (for_peer, _) = carried
-        .ops_missing_from_within(&Ed25519Verifier, &Digest::new(), NO_BUDGET)
-        .unwrap();
+    let (for_peer, _) = carried.ops_missing_from_within(&Digest::new(), NO_BUDGET).unwrap();
     assert_eq!(for_peer.len(), 1, "control: the carried namespace is answered");
 }

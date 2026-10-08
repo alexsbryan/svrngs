@@ -238,7 +238,7 @@ impl RingRail {
     }
 
     pub fn digest(&self, namespace: &str) -> Result<Digest, RailError> {
-        self.journal(namespace)?.digest(&Ed25519Verifier)
+        self.journal(namespace)?.digest()
     }
 
     pub fn ops_missing_from_within(
@@ -247,8 +247,7 @@ impl RingRail {
         theirs: &Digest,
         budget_bytes: usize,
     ) -> Result<(Vec<Op<SignedOp>>, bool), RailError> {
-        self.journal(namespace)?
-            .ops_missing_from_within(&Ed25519Verifier, theirs, budget_bytes)
+        self.journal(namespace)?.ops_missing_from_within(theirs, budget_bytes)
     }
 
     pub fn ingest_all(&self, namespace: &str, ops: &[Op<SignedOp>]) -> Result<usize, RailError> {
