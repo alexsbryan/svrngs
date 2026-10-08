@@ -221,10 +221,10 @@
 //! Measured 2026-10-08, after it, three runs at cb396e7, load average 25
 //! to 76 (other work on this computer): 0.0864, 0.0587, 0.0586 s, median
 //! 0.0587, 8% under the line: confirmed, the account the one predicted in
-//! all three. So the line that holds is the refitted one, (N - 1)(0.326 ms
-//! + 0.575 us N + 87.3 ns N^2); the first, linear in its share, was refuted
-//! at 100 members, and the term that refuted it is in the exchange and
-//! unexplained. At 150 members the refitted line reads 0.35 s, a reading
+//! all three. So the line that holds is the refitted one,
+//! (N - 1)(0.326 ms + 0.575 us N + 87.3 ns N^2); the first, linear in its
+//! share, was refuted at 100 members, and the term that refuted it is in
+//! the exchange and unexplained. At 150 members the refitted line reads 0.35 s, a reading
 //! for the next ring to test, not a result.
 //!
 //! It needs the process's own processor time, which std does not give;
