@@ -56,6 +56,8 @@ const nameOf = (token) => [...accounts].find(([, t]) => t === token)?.[0] ?? '';
 const SIZE = 64 * 1024 * 1024;
 const byte = (i) => (i * 7 + (i >> 10)) & 255;
 const seen = [];
+// What `/seen` gives of a request, a page's or a WebSocket's, read one way.
+const saw = (req, path) => seen.push({ path, cookie: req.headers.cookie ?? '', person: req.headers['x-svrngs-person'] ?? '', key: req.headers['x-svrngs-key'] ?? '', secret: Boolean(req.headers.authorization), signed: nameOf(tokenOf(req)) });
 const SAME = { 'cross-origin-resource-policy': 'same-origin', 'cache-control': 'no-store' };
 const checks = readFileSync(new URL('./checks.js', import.meta.url));
 // Under `script-src 'nonce-…' 'strict-dynamic'`, as Nextcloud's pages are:
@@ -138,7 +140,7 @@ self.addEventListener('fetch', (e) => {
 
 const server = http.createServer((req, res) => {
   const path = new URL(req.url, 'http://x').pathname;
-  seen.push({ path, cookie: req.headers.cookie ?? '', person: req.headers['x-svrngs-person'] ?? '', key: req.headers['x-svrngs-key'] ?? '', secret: Boolean(req.headers.authorization), signed: nameOf(tokenOf(req)) });
+  saw(req, path);
   const own = [`localhost:${server.address().port}`, `127.0.0.1:${server.address().port}`];
   if (req.method === 'POST' && path === '/upload') {
     const sha = createHash('sha256');
@@ -213,7 +215,7 @@ const server = http.createServer((req, res) => {
 
 // A WebSocket echo (RFC 6455), by hand: each text or binary message back.
 server.on('upgrade', (req, sock, head) => {
-  seen.push({ path: req.url, cookie: req.headers.cookie ?? '', person: req.headers['x-svrngs-person'] ?? '', key: req.headers['x-svrngs-key'] ?? '', secret: Boolean(req.headers.authorization), signed: nameOf(tokenOf(req)) });
+  saw(req, req.url);
   if (req.url !== '/ws' || !req.headers['sec-websocket-key']) return sock.destroy();
   const accept = createHash('sha1').update(`${req.headers['sec-websocket-key']}258EAFA5-E914-47DA-95CA-C5AB0DC85B11`).digest('base64');
   sock.write(`HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ${accept}\r\n\r\n`);
