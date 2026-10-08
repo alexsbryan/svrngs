@@ -255,8 +255,9 @@ enum Says {
 /// offer's own catch-up of it), the offer
 /// (`RingJournal::ops_missing_from_within`, its two lines: answered from
 /// the whole log, or unread) and the register (register.rs
-/// `RingRail::standing`).
-const FOLDS: [(&str, &str, Says); 5] = [
+/// `RingRail::standing`, its two lines: folded from the acts that move
+/// membership, or answered from the standing kept since).
+const FOLDS: [(&str, &str, Says); 6] = [
     (
         "write_index",
         "ring rail: write index caught up with the log",
@@ -281,6 +282,11 @@ const FOLDS: [(&str, &str, Says); 5] = [
         "register",
         "register: standing read from the seed and the group's acts",
         Says::Rebuilt,
+    ),
+    (
+        "register",
+        "register: standing answered from the kept fold, no act that moves it since",
+        Says::Kept,
     ),
 ];
 
@@ -696,24 +702,28 @@ async fn the_account_matches_a_hand_count() {
     //   chunk 2, and the member's at posts 2 and 3, once node 0's two acts
     //   landed; read whole at chunk 1, the digests apart: kept 3 x 2,
     //   rebuilt 2 x 2.
-    // - write_index: every digest catch-up above, 23, and the ingests that
+    // - write_index: every digest catch-up above, 23, the ingests that
     //   fold: node 0 finds the six acts held, once per reached member
     //   (`ingest_all`); each reached member catches up before and after
     //   landing the two (`ingest_all`, `Held::after_write`): 23 + 2 + 2 x 2
-    //   = 29.
+    //   = 29; and every register read below catches up first
+    //   (journal.rs `RingJournal::standing`), 10: 39.
     // - register: node 0 lists its members (node.rs `standings`) and then
     //   offers the group to them (`run_one_round`); each member admits node
     //   0's one connection (node.rs `admit_dialer`) and checks each of 3
     //   posts (ring_routes.rs `standing_refusal`): 2 + (1 + 3) x 2 = 10.
+    //   Each node's first read folds (nothing asked its register before
+    //   the round) and the rest are kept: the two acts node 0 pushes are
+    //   records, which move no membership: kept 1 + 3 x 2, rebuilt 3.
     let hand = serde_json::json!({
         "dialled": 3, "reached": 2, "asleep": 1, "refused": 0,
         "acts_moved": 4,
         "cpu_s": null, "wall_s": null,
         "folds": {
-            "write_index": {"kept": 29, "rebuilt": 0},
+            "write_index": {"kept": 39, "rebuilt": 0},
             "digest": {"kept": 23, "rebuilt": 0},
             "offer": {"kept": 6, "rebuilt": 4},
-            "register": {"kept": 0, "rebuilt": 10},
+            "register": {"kept": 7, "rebuilt": 3},
         },
     });
     assert_eq!(account, hand, "the round's account against the hand count");

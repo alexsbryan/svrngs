@@ -87,7 +87,12 @@ ours is answered unread when it holds nothing the slow path would send
 (`DigestFold::missing_nothing`), from the whole log otherwise. Then
 (ceiling-3) the write index keeps each signature that passed as its line
 entered, and the offer read whole judges by those (`Checked`), checking
-again only a line it did not see enter.
+again only a line it did not see enter. Then (ceiling-4) the write index
+keeps the acts that move membership, in the log's order, and the standing
+last folded from them with the seed it was folded from (`RingJournal::standing`):
+the register answers from it until an act that moves membership arrives
+or the seed changes, judged by `Ed25519Verifier`, which `standing` no
+longer takes.
 
 Beside the journals, `svrngs-node` holds the dialling half of sync over iroh
 (DESIGN §8, U1's inventory), forked at `e1a43bcd2` the same way:

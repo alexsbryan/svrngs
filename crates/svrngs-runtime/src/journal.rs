@@ -68,6 +68,15 @@ struct Writer {
 /// the id and the signature alone, so one kept cannot go stale whatever
 /// happens to the file; what restarts the fold restarts this with it all
 /// the same, and a file replaced from outside has its lines checked again.
+///
+/// And the register ([`RingRail::standing`]) is caught up the same way: the
+/// acts that move membership, a handful among thousands, kept in the log's
+/// order as the tail brings them in, and the standing last folded from them,
+/// with the seed it was folded from. Read whole on every connection, sync
+/// request and round, it was what an idle round still paid for (26 reads
+/// of 10,000 acts, 5.5 s; scale.rs, ceiling-3's runs; THE_CEILING.md fix 3).
+/// An act that moves membership voids the standing; a seed unlike the one it
+/// was folded from folds it again.
 #[derive(Default)]
 struct Held {
     cursor: crate::oplog::Cursor,
@@ -75,6 +84,8 @@ struct Held {
     ids: std::collections::HashSet<OpId>,
     digest: DigestFold,
     passed: Passed,
+    membership: Vec<Op<SignedOp>>,
+    standing: Option<(Roster, BTreeMap<String, crate::register::Member>)>,
 }
 
 /// Each line whose signature [`Ed25519Verifier`] passed as the tail brought
@@ -145,6 +156,10 @@ impl Held {
                 self.digest.add(id.clone(), op);
             } else {
                 unverified += 1;
+            }
+            if op.kind.act.moves_membership() {
+                self.membership.push(op.clone());
+                self.standing = None;
             }
             self.ids.insert(id);
         }
@@ -288,6 +303,28 @@ impl RingJournal {
         let restarted = log.held.catch_up(&log.oplog, &self.namespace)?;
         tracing::debug!(namespace = %self.namespace, restarted, "ring rail: digest caught up with the log");
         Ok(log.held.digest.digest())
+    }
+
+    /// Who stands in this group from `seed` ([`crate::register::standing_in`]),
+    /// over the acts that move membership as [`Held`] caught them up, judged
+    /// by [`Checked`]; and true when it was answered from the standing kept
+    /// since the last call, false when folded now.
+    pub(crate) fn standing(
+        &self,
+        seed: &Roster,
+    ) -> Result<(BTreeMap<String, crate::register::Member>, bool), RailError> {
+        let mut guard = self.log();
+        let log = &mut *guard;
+        log.held.catch_up(&log.oplog, &self.namespace)?;
+        let held = &mut log.held;
+        if let Some((folded_from, members)) = &held.standing {
+            if folded_from == seed {
+                return Ok((members.clone(), true));
+            }
+        }
+        let members = crate::register::standing_in(&held.membership, seed, &self.namespace, &Checked(&held.passed))?;
+        held.standing = Some((seed.clone(), members.clone()));
+        Ok((members, false))
     }
 
     /// Every op this node holds that `theirs` says the peer is missing,

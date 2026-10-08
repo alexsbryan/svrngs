@@ -16,8 +16,8 @@
 use std::collections::BTreeMap;
 
 use crate::{
-    admit, is_local_only, ring_dir, valid_namespace, Device, Ed25519Verifier, Membership, Op, Person, RailError,
-    RingRail, RingVerifier, Roster, SignedOp,
+    admit, is_local_only, ring_dir, valid_namespace, Device, Membership, Op, Person, RailError, RingRail, RingVerifier,
+    Roster, SignedOp,
 };
 
 /// Who stands in one group, on this node.
@@ -53,8 +53,8 @@ impl Standing {
 
 /// The keys standing in `namespace` after `ops`, from `seed`: membership
 /// over the acts admission authenticates, each with its person and device. The one
-/// decider: [`RingRail::standing`] answers with it, and the door
-/// ([`crate::RingJournal::append_all`]) asks it under its write lock.
+/// decider: [`RingRail::standing`] answers with it, through the journal's
+/// kept fold (`RingJournal::standing`), which asks it under its write lock.
 pub(crate) fn standing_in(
     ops: &[Op<SignedOp>],
     seed: &Roster,
@@ -98,7 +98,7 @@ pub(crate) fn membership_in(
 impl RingRail {
     /// Who stands in `namespace` on this node — the ONE accessor the round,
     /// the acceptor and the sync route ask (ARCH 8). Its signatures are
-    /// judged by [`Ed25519Verifier`], the scheme every caller passed.
+    /// judged by [`crate::Ed25519Verifier`], the scheme every caller passed.
     ///
     /// A group this node does not hold is answered before anything is
     /// opened, so asking about it leaves no trace in the rail. Every branch
@@ -124,15 +124,15 @@ impl RingRail {
             );
             return Ok(Standing::NoSeed);
         };
-        let (ops, _) = journal.read()?;
-        let members = standing_in(&ops, &seed, namespace, &Ed25519Verifier)?;
-        tracing::debug!(
-            target: "register",
-            namespace,
-            seeded = seed.members.values().flatten().count(),
-            standing = members.len(),
-            "register: standing read from the seed and the group's acts"
-        );
+        let (members, kept) = journal.standing(&seed)?;
+        let seeded = seed.members.values().flatten().count();
+        if kept {
+            tracing::debug!(target: "register", namespace, seeded, standing = members.len(),
+                "register: standing answered from the kept fold, no act that moves it since");
+        } else {
+            tracing::debug!(target: "register", namespace, seeded, standing = members.len(),
+                "register: standing read from the seed and the group's acts");
+        }
         Ok(Standing::Members(members))
     }
 
