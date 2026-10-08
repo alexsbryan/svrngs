@@ -3598,3 +3598,49 @@ grep` one definition. No noun with more than one definition.
 | I19 | 6 | dry-report's exact tier | Still present for JS: apps/web-conformance/ exact tier could-not-judge, as web/'s was. |
 | I21 | 6, 7 | `code index` and its embedder | Narrowed, not isolated: `llama-server` with n_batch = n_ubatch = 512 exited 133 during `--full` again (/tmp/mwpaudit2/llama.log ends mid-task, no assertion line); with `-b 8192 -ub 8192` the same `--full` finished. One run each: a chunk past 512 tokens is the likely cause, unproven. |
 | I23 | 6 | `code index --full` | New: a `--full` whose embedder died ("✗ Indexing failed", rc 1) left ~/.svrnmesh/indexes/svrngs/ with only code_index_state.json and scip_graph.db: the previous index is deleted before the new one is whole, so a failed rebuild leaves nothing to judge with, not the last good index. |
+
+## si-1-one-sign-in (2026-10-08): #87, #88, #90 closed
+
+- **#87, closed (ae898f0).** `forward` decides the sign-in once — `lend.sign_in`
+  to a `sign_in::Signing`, the lend's one secret or the person signed in at
+  its port — and calls `Signing::inward` once and `Signing::outward` once
+  (door/sign_in.rs). The grep, over `forward` at HEAD
+  (`awk '/^async fn forward\(/{s=1} s{print NR": "$0} s && /^}/{exit}'
+  crates/svrngs-node/src/door.rs | grep -nE "sign_in|signing|signed|STAND_IN"`):
+  door.rs:993 (decided), :1012 (`inward`), :1106 (`outward`), :1120 (the
+  body read as `outward` said). `forward` 242 lines to 171. Behaviour kept
+  in its own commit: `cargo test -p svrngs-node --lib door` 18 passed and
+  `--test door` 20 passed, no test touched.
+- **#88, closed (effb427).** The keeper sends each ask out on its own task
+  and a person's further first requests wait on the ask already out. Red
+  before the fix (tests/door/sign_in.rs
+  `one_person_s_slow_sign_in_holds_nobody_else_s`, bo's ask held 3 s):
+  cy's first requests through the same lend and another, "200 after
+  2.910681667s" and "200 after 2.910584667s"; green after, each under 1 s,
+  bo's two first requests at once asked once. Plant (no join on an ask
+  out) caught by two tests.
+- **#90, closed (6028168).** The door's ask names the stand-in,
+  `x-svrngs-stand-in` (sign_in.rs `STAND_IN_HEADER`), and both answerers
+  store what it names; DESIGN §3 call 6 says so. `git grep -n
+  "svrngs-stand-in" -- ':!*.md' ':!demo' | grep -v x-svrngs-stand-in`:
+  sign_in.rs:50 alone outside tests (tests/door/sign_in.rs:21, page.rs's
+  `#[cfg(test)]` :92, :96) and the Jellyfin checks that judge what a page
+  stored (apps/jellyfin/check/person.mjs:235; mw.py's probe asks as the
+  door does). The canary holds the answerer's read (planted
+  `x-svrngs-stand-ix`: both `two_people_signed_in` failed), and the
+  Jellyfin run holds the middleware's (demo/runs/si/2026-10-08/).
+- **#95, new, not fixed.** apps/jellyfin/check/person.mjs `watch` counts
+  a new `<video>` in the watched person's page as not left alone, and
+  records the count, not the element. In si-1's run both WebKit pairs
+  counted one while the person's film never stopped (back 0 s, still 0
+  ms); the WebKit computer pair alone counted one at 37b4a4c, before
+  si-1, 2 of 2, and at 6028168 1 of 2; no earlier recorded WebKit pair
+  did (demo/runs/si/2026-10-08/README.md). Whether it is a second player
+  or a false count, the instrument cannot say (principle 7).
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 87 | 8 | crates/svrngs-node/src/door.rs `forward` | ae898f0 | The sign-in decided at one site, a value with an inward and an outward step; `forward` 242 → 171 lines. |
+| 88 | 8 (spirit of DESIGN call 6) | crates/svrngs-node/src/door/sign_in.rs `SignIns::spawn` | effb427 | One person's slow sign-in holds nobody else's request; a person's first requests at once still ask once. |
+| 90 | 8 | crates/svrngs-node/src/door/sign_in.rs:50 | 6028168 | `svrngs-stand-in` spelled once outside tests, named to each answerer in the door's ask. |
+| 95 | 7 | apps/jellyfin/check/person.mjs `watch` | not fixed | A new `<video>` counted, never described; counted in WebKit today before and after si-1. |
