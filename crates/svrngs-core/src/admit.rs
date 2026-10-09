@@ -340,6 +340,8 @@ pub struct Admission {
     floors: crate::sync::Floors,
     seals: Vec<OpId>,
     membership: crate::membership::Membership,
+    /// Each key's newest folder list by name, with its seq (gf-1).
+    pub(crate) folders: Vec<(u64, crate::SharedFolder)>,
 }
 
 impl Admission {
@@ -670,6 +672,14 @@ pub fn admit(
         ))
     });
 
+    let folders = crate::folder::newest(order.iter().map(|a| {
+        (
+            a.op.actor.as_str(),
+            &a.person,
+            a.op.kind.seq,
+            &a.op.kind.act,
+        )
+    }));
     let out: Vec<AdmittedOp> = order
         .into_iter()
         .map(|a| {
@@ -686,7 +696,8 @@ pub fn admit(
                 RailAct::Seal
                 | RailAct::Admit { .. }
                 | RailAct::Remove { .. }
-                | RailAct::Invite { .. } => (None, None),
+                | RailAct::Invite { .. }
+                | RailAct::Folder { .. } => (None, None),
             };
             AdmittedOp {
                 id: a.id.clone(),
@@ -739,6 +750,7 @@ pub fn admit(
         floors,
         seals,
         membership: m,
+        folders,
     }
 }
 

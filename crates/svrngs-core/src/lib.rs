@@ -85,6 +85,7 @@ mod act_set;
 mod admit;
 pub mod alpn;
 mod command;
+mod folder;
 mod hash;
 pub mod joining;
 pub mod link;
@@ -115,6 +116,7 @@ use serde::{Deserialize, Serialize};
 pub use act_set::ActSet;
 pub use admit::{admit, body_json, Admission, AdmittedOp, GapClass, RailGap};
 pub use command::{commit, Author, Authored, Command, Reads, Recorded, Refused, Store, Tip};
+pub use folder::{FileHash, ShareFolder, SharedFile, SharedFolder};
 pub use membership::{membership, InviteFault, Invited, Membership};
 pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
 pub use process::{Compact, Due, ProcessManager, Retire, Uncaused};
@@ -431,6 +433,13 @@ pub enum RailAct {
         /// Unix seconds; a redeeming `Admit` counts only when timed before it.
         until: i64,
     },
+    /// A member says: my folder `name` now holds these files, each by
+    /// hash (gf-1, [`folder`]); an empty list stops it. Carries no
+    /// [`Payload`] and never reaches an app reducer.
+    Folder {
+        name: String,
+        files: Vec<SharedFile>,
+    },
 }
 
 /// What a redeeming [`RailAct::Admit`] carries: the [`RailAct::Invite`] it
@@ -570,7 +579,11 @@ impl RailAct {
         match self {
             Self::Record { payload } => Some(payload),
             Self::Correct { replacement, .. } => replacement.as_ref(),
-            Self::Seal | Self::Admit { .. } | Self::Remove { .. } | Self::Invite { .. } => None,
+            Self::Seal
+            | Self::Admit { .. }
+            | Self::Remove { .. }
+            | Self::Invite { .. }
+            | Self::Folder { .. } => None,
         }
     }
 }
@@ -664,13 +677,17 @@ pub const LINK_LINE_VERSION: u32 = 3;
 /// `NewerVersionLine` instead.
 pub const BROWSER_LINE_VERSION: u32 = 4;
 
+/// The line format version a shared folder ships at (gf-1): a build at
+/// [`BROWSER_LINE_VERSION`] names a [`RailAct::Folder`] `NewerVersionLine`.
+pub const FOLDER_LINE_VERSION: u32 = 5;
+
 impl Journaled for SignedOp {
     const FILE: &'static str = "ring_oplog.jsonl";
     const ID_PREFIX: &'static str = "ring";
     const LABEL: &'static str = "ring_rail";
     /// This build reads the membership cohort's, the link's and a
     /// browser's redemption's lines too (see [`Self::line_version`]).
-    const UNDERSTANDS: u32 = BROWSER_LINE_VERSION;
+    const UNDERSTANDS: u32 = FOLDER_LINE_VERSION;
     /// The membership acts — [`RailAct::Admit`] and [`RailAct::Remove`] —
     /// ship at the bumped line version and the original three keep the bytes
     /// they always had, so an un-upgraded node names exactly the acts it
@@ -692,6 +709,7 @@ impl Journaled for SignedOp {
                 invite: Some(_), ..
             } => LINK_LINE_VERSION,
             RailAct::Admit { .. } | RailAct::Remove { .. } => MEMBERSHIP_LINE_VERSION,
+            RailAct::Folder { .. } => FOLDER_LINE_VERSION,
             _ => Self::VERSION,
         }
     }
