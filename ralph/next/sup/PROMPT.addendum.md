@@ -39,9 +39,9 @@ Fences the rows keep:
    and judge by that; where letter and spirit part, say both and keep
    going.
 7. *The budget is 15,200* (aaecbdb), svrngs-core 3,000. The design's
-   estimate is about 650 against the 556 left, the home page's list and
-   the asleep row past what the raise was given for; a row that would
-   pass it stops for the operator.
+   estimate is about 650 against the 556 left; core-0 deletes about 286
+   lines no code uses, which makes the room (operator, 2026-10-09). A row
+   that would pass it stops for the operator.
 
 One host, one run of each: not a rate (AGENTS.md 7). A run that could
 not finish is could-not-judge, never a pass (AGENTS.md 6). A computer that
