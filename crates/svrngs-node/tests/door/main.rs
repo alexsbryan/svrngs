@@ -986,6 +986,73 @@ async fn a_pass_opens_only_the_lend_it_names_to_the_key_holding_it() {
     pair.close().await;
 }
 
+/// The app a pass's holder asks for (su-1, `demo/runs/su/2026-10-09/`
+/// §5): the service is told `x-svrngs-app`, the pass's first lend — the
+/// one the person's page opened — whichever lend is asked, and the
+/// client's own is stripped; a key of the group's, asking with no pass, is
+/// told no app, its own stripped too. Planted: the door naming the lend
+/// asked rather than the first, and the client's header let through.
+#[tokio::test]
+async fn a_pass_s_first_lend_is_told_as_the_app_and_a_client_s_own_stripped() {
+    use svrngs_core::alpn::Alpn;
+    use svrngs_core::pass::{Label, Pass};
+    use svrngs_node::iroh::{
+        ring_crypto_provider, EndpointAddr, EndpointBuilder, HttpBridge, SecretKey,
+    };
+
+    let (pair, heads) = lending_heads().await;
+    let a = *pair.a.endpoint().id().as_bytes();
+    let (shelf, app) = (Label::of(&a, "shelf"), Label::of(&a, "picks"));
+    let holder = signing(9);
+    let dialling = EndpointBuilder::empty()
+        .crypto_provider(ring_crypto_provider())
+        .secret_key(SecretKey::from_bytes(&holder.to_bytes()))
+        .bind()
+        .await
+        .unwrap();
+    let mut target = EndpointAddr::new(pair.a.endpoint().id());
+    for sock in loopback_sockets(pair.a.endpoint()) {
+        target = target.with_ip_addr(sock);
+    }
+    let bridge = HttpBridge::spawn_preferring(dialling, target, Alpn::Lend.bytes(), None)
+        .await
+        .unwrap();
+    let pass = Pass::sign(
+        &signing(2),
+        &actor_of(&holder),
+        vec![app.clone(), shelf.clone()],
+        unix_now() + 3600,
+    );
+    let opened = raw_to(
+        bridge.local_addr(),
+        format!(
+            "GET /lend/{shelf}/whoami HTTP/1.1\r\nHost: local\r\nx-svrngs-pass: {}\r\nX-Svrngs-App: forged\r\nConnection: close\r\n\r\n",
+            pass.encode()
+        ),
+    )
+    .await;
+    assert_eq!(opened.status, 200, "{}", opened.text);
+    let head = last(&heads);
+    assert_eq!(
+        header_values(&head, "x-svrngs-app"),
+        vec![app.as_str()],
+        "{head}"
+    );
+    assert_eq!(
+        header_values(&head, "x-svrngs-person"),
+        vec!["bo"],
+        "{head}"
+    );
+
+    let member = pair
+        .get("/lend/shelf/whoami", "X-Svrngs-App: forged\r\n")
+        .await;
+    assert_eq!(member.status, 200, "{}", member.text);
+    let head = last(&heads);
+    assert!(header_values(&head, "x-svrngs-app").is_empty(), "{head}");
+    pair.close().await;
+}
+
 /// The service is asked as on its own computer (u5-2): the door names it
 /// `localhost:<its port>` in `Host`, whatever address the member's browser
 /// used, so an app that refuses a host it does not know answers; and a

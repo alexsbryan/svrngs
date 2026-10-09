@@ -119,6 +119,12 @@ pub const PERSON_HEADER: &str = "x-svrngs-person";
 /// lowercase hex.
 pub const KEY_HEADER: &str = "x-svrngs-key";
 
+/// The app asking, on a request a pass's holder made: the label of the
+/// pass's first lend, the lend the person's page opened (`web/app.js`,
+/// `open`), under the person's signature. Absent with no pass, so a
+/// service reads its absence as no app named (su-1, the scoped-use spike).
+pub const APP_HEADER: &str = "x-svrngs-app";
+
 /// A person's share of the upload a lend declares, in bits a second, on
 /// each request through the door and its answer: a declared figure, as the
 /// name says (DESIGN §8, "The upload is declared"), never a measured one.
@@ -624,6 +630,8 @@ struct Asker {
     actor: String,
     group: String,
     person: Person,
+    /// The pass's first lend, for a holder; none for a key of the group's.
+    app: Option<Label>,
 }
 
 /// Who asks, decided before the lend is found or after: a member by the
@@ -714,6 +722,7 @@ fn holder_of(
     tracing::debug!(target: "door", holder = key, person = person.as_str(), lend = %lend.name, until = pass.until,
         "door: a pass opens this lend, so its holder asks as the person who signed it");
     Ok(Asker {
+        app: pass.lends.first().cloned(),
         actor: pass.person,
         group,
         person,
@@ -766,6 +775,7 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
                 actor: actor.clone(),
                 group,
                 person,
+                app: None,
             })
         }
         Who::Holder(dialer) => Pending::Pass(dialer),
@@ -788,6 +798,7 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
         actor,
         group,
         person,
+        app,
     } = match pending {
         Pending::Known(asker) => asker,
         Pending::Pass(holder) => match holder_of(door, &holder, req.headers(), &lend) {
@@ -844,10 +855,18 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
             share
         }
     };
-    tracing::debug!(target: "door", actor, person = person.as_str(), group, lend = %lend.name,
-        method = %req.method(), path = service_path, "door: carrying a request to the lend's service");
+    tracing::debug!(target: "door", actor, person = person.as_str(), group, lend = %lend.name, app = ?app.as_ref().map(Label::as_str),
+        method = %req.method(), path = service_path, "door: carrying a request to the lend's service, the app the pass's first lend or none");
     let told = Told { share, held };
-    forward(door, &lend, (&actor, &person), service_path, req, told).await
+    forward(
+        door,
+        &lend,
+        (&actor, &person, app.as_ref()),
+        service_path,
+        req,
+        told,
+    )
+    .await
 }
 
 /// What the door decided for a request let in: the share it is told, and
@@ -957,7 +976,7 @@ impl Drop for Carriage {
 async fn forward(
     door: &Door,
     lend: &Lend,
-    (actor, person): (&str, &Person),
+    (actor, person, app): (&str, &Person, Option<&Label>),
     path: String,
     req: Request,
     Told { share, held }: Told,
@@ -1011,6 +1030,12 @@ async fn forward(
     };
     let (target, secret) = signing.inward(&mut parts.headers, path, parts.uri.query());
     let displaced = rewrite_headers(&mut parts.headers, identity, &secret);
+    if let Some(app) = app {
+        let app = HeaderValue::from_str(app.as_str()).expect("a label is base32, so a header");
+        parts
+            .headers
+            .insert(HeaderName::from_static(APP_HEADER), app);
+    }
     if displaced > 0 {
         tracing::info!(target: "door", actor, lend = %lend.name, displaced,
             "door: dropped headers the client typed in the door's or the secret's name before setting them");
