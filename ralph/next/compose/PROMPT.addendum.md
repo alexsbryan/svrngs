@@ -34,7 +34,8 @@ Fences the rows keep:
    to align us at the start, the spirit of them are what guides how we
    iterate"): ask what a bar guards and judge by that; where letter and
    spirit part, say both and keep going.
-5. *The budget is 14,500* (d697b18). A further raise is the operator's.
+5. *The budget is 14,750* (d697b18, then 250 more for Movie Night made
+   production). A further raise is the operator's.
 
 One host, one run of each: not a rate (AGENTS.md 7). A run that could
 not finish is could-not-judge, never a pass (AGENTS.md 6). A library

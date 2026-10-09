@@ -757,7 +757,7 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,000 lines of code and the
-repository under 14,500, tests and `apps/` apart (`scripts/lean_check.py`);
+repository under 14,750, tests and `apps/` apart (`scripts/lean_check.py`);
 a raise is the operator's, with the reason in the commit. `svrngs-core` stands
 at 2,359: the operator raised its ceiling from 2,500 on 2026-10-05, for what U4
 to U7 still add to the core, since REVIEW-audit-u3-auto-2 found no duplication
@@ -771,7 +771,13 @@ new, and 400 with the door's traces and refusals (the seat's estimate);
 and from 14,400, at 14,398, on 2026-10-08, the sign-in having taken 426
 against that 400: for its decision in one place and one person's sign-in
 never holding another's (`ralph/REVIEW_FINDINGS.md` #87, #88), and the
-one header the scoped-use spike may add (§8, "Then").
+one header the scoped-use spike may add (§8, "Then"); and from 14,500,
+at 14,466, on 2026-10-08, for Movie Night made production (§8, "Then";
+`demo/runs/mn/2026-10-08/README.md` §9): svrngs's refusals named as its
+own (~30), a newcomer let in by every lender at once (~50), a lent page
+told the lends it reads on a phone and a computer (~75), a lend opened
+at a path (~25), and ~70 for the traces and refusals they carry, 250
+by the seat's estimate.
 `ARCHITECTURE.md` maps what exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file

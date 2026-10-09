@@ -24,7 +24,7 @@ stop.
 
 **Leave for the operator** (write `NEEDS_HUMAN.md` and stop): a product
 change in a spike beyond su-0's one header; an app's noun in the infra; a
-change against a bar's spirit; raising the size budget past 14,500;
+change against a bar's spirit; raising the size budget past 14,750;
 changing a decision in DESIGN §10; docker, OrbStack or any tool that is
 not open software (operator, 2026-10-05: podman and open software only); a
 dependency on a commonwealth-ai or sovereign crate; anything that needs a
