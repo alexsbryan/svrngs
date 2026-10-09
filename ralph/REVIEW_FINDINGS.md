@@ -4223,3 +4223,273 @@ step, u5-11), exit 0 (/tmp/composeaudit3/check.out). Its first run, at
 the budget to 15,200 (aaecbdb, 08:59) and queued sup (5e87364, 9a452e4,
 df842e8), none touching crates/, web/ or apps/ (`git diff --stat 55fff43
 df842e8`); against it, #80's 14,644 leaves 556.
+
+## REVIEW-audit-sup-auto-1 (2026-10-09, range 341bc2b..8020f03)
+
+The range starts at 341bc2b8e, the hash REVIEW-audit-compose-auto-3's row
+carries (ralph/next/compose/STATE.md:26), the last `REVIEW-audit-` row. It
+ends at 8020f03, the commit that made this row: 21 commits (`git rev-list
+--count 341bc2b..8020f03`): the last audit's `done` (8000a60), two state
+commits (ee06adc, c0bc0f3), core-0 (fffdd8d, 0008f75), asleep-1 (9c1da3c,
+9ac5ab6, 9fbdb30), sup-1 (790e25b, c255814, b482e08), sup-2 (1c3d662,
+a57d80f, d9cb3c4, a754b73, 50ecc20), each unit's `done`, and this row's
+(`git log --reverse --format='%h %s' 341bc2b..8020f03`). This audit fixes
+two findings (#105, #106), records one (#107), narrows #103, and says
+where #80's budget stands before sup-3.
+
+As before, `docs/ARCH_PRINCIPLES.md` is docs/principles/ARCH_PRINCIPLES.md,
+and `target/debug/sovereign-cli` is
+~/dev/commonwealth-ai/target/debug/sovereign-cli: **a new binary**, sha256
+c9b653d3… (`shasum -a 256`, built 2026-10-09 12:03), not the last three
+audits' 35d97ed2…, so its tiers were planted again (below). The embedder
+was `llama-server` on the corpus's model (qwen-embedding-0.6b.gguf,
+~/.svrnmesh/config.toml:18) on :8080, `-b 8192 -ub 8192` (I21), for this
+session. The /tmp scripts the last audits cite were gone; this audit's
+are /tmp/supaudit1/ledger.py, windows.py and clusters.py, their rules the
+ones the last sections state, but for blame (below).
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' 341bc2b..8020f03`,
+summed by /tmp/supaudit1/ledger.py: a commit counts toward the unit its
+subject names, else the next `done`'s (so ee06adc and c0bc0f3 are
+core-0's; neither touches product code); product code is crates/, apps/,
+web/, bridge/; a test is a `tests/` or `check/` segment or a lean_check
+test file name.
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| core-0-unused | 19 | 607 | −588 | 69 | 679 | −610 |
+| asleep-1-none-held | 175 | 92 | 83 | 213 | 2 | 211 |
+| sup-1-app-named | 291 | 67 | 224 | 324 | 17 | 307 |
+| sup-2-yes-stop-home | 960 | 79 | 881 | 744 | 0 | 744 |
+| total | 1445 | 845 | 600 | 1350 | 698 | 652 |
+
+- core-0 src: svrngs-core attest.rs −146, introduce.rs −363, lib.rs
+  +12/−93, sig.rs +5/−4; svrngs-node rail.rs +2/−1 (fffdd8d).
+- asleep-1 src: ring_sync.rs +83/−51 (9ac5ab6, the move) and +60/−26
+  (9fbdb30); node.rs +16/−3, surface.rs +3/−2 (9c1da3c); door.rs +11/−8,
+  node.rs +2/−2 (9fbdb30).
+- sup-1 src: svrngs-core pass.rs +30/−17, door.rs +7/−6, web/src/lib.rs
+  +9/−9, web/app.js +1/−1, svrngs-node Cargo.toml +2 (790e25b); origin.rs
+  +147/−16, door.rs +62/−13, node.rs +20/−2, lend.rs +9, room.rs +3/−2,
+  surface.rs +1/−1 (c255814).
+- sup-2 src: door.rs +40/−9, sign_in.rs +17/−11 (1c3d662); lend.rs
+  +15/−1, svrngs cli.rs +24/−5, share.rs +3, surface.rs +5/−1, door.rs +1
+  (a57d80f); door/choices.rs +338, door.rs +20/−14, lend.rs +19/−1,
+  node.rs +1 (d9cb3c4); origin.rs +29/−18 (a754b73, the move); home.rs
+  +232, home/home.js +109, home/index.html +15, home/home.css +7,
+  choices.rs +26, node.rs +23/−12, origin.rs +15/−3, surface.rs +9/−2,
+  api.rs +5/−2, cli.rs +5, lib.rs +2 (50ecc20).
+- Tests: tests/home.rs +434 (50ecc20), tests/door/choices.rs +211 and
+  door/choices/tests.rs +45 (d9cb3c4), tests/lend_origin.rs +196 and
+  door/main.rs +39/−2 (c255814), +43/−10 (790e25b), newcomer.rs +108
+  (9fbdb30), tests/surface.rs +89 (9c1da3c), svrngs tests/share.rs +48
+  (a57d80f); svrngs-core tests_introduce.rs −599, attest_tests.rs −51,
+  tests.rs +46, svrngs-runtime tests.rs +23/−29 (fffdd8d).
+
+lean_check on `git archive` trees in /tmp/supaudit1 (apps/ and tests
+not counted, scripts/lean_check.py:49):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 341bc2b, range start | 2957 / 3000 | 14644 / 15200 |
+| 826ce52, core-0 done | 2628 / 3000 | 14315 / 15200 |
+| 8cb33fc, asleep-1 done | 2628 / 3000 | 14366 / 15200 |
+| bcc7ef7, sup-1 done | 2635 / 3000 | 14529 / 15200 |
+| 8020f03, sup-2 done, range end | 2635 / 3000 | **15162 / 15200** |
+| b4aab80, this audit's fixes | 2635 / 3000 | 15162 / 15200 |
+
+core-0 made 329 counted lines of room (the queue's estimate: about 286);
+asleep-1 spent 51, sup-1 163, **sup-2 633**. **38 are left** (#80), with
+sup-3 to come: the phone's ask in web/app.js, web/lend.js, web/open.js and
+web/src/lib.rs, all counted. The design's estimate for the whole queue
+was about 650 (ralph/next/sup/STATE.md's fence 7); sup-1 and sup-2 have
+spent 796. By the queue's own fence a row that would pass the budget
+stops for the operator; sup-3 is likely to be that row.
+
+### (2) Clones (`code dry-report`), each tier checked against a plant
+
+**Plants**, the binary being new: a clone of the repository at 8020f03
+(/tmp/supaudit1/plant), two functions appended to door/choices.rs, the
+range's largest new file:
+
+- **E** (exact): `write` (:171–182, 12 lines), verbatim, as `plant_exact`.
+- **N** (near): the same body as `plant_near`, its names changed
+  (`path`→`file`, `said`→`given`, `kept`→`all`, `person`→`who`,
+  `choices`→`what`, `partial`→`tmp`, `text`→`body`, `e`→`err`).
+
+Indexed `--full` (corpus `svrngs-supplant`, 2702 chunks, 482 s); `project
+refresh` there then embedded it again as corpus `plant`, named for the
+directory (2700 chunks in 8m; I25), and wrote its SCIP graph:
+
+| scope, threshold | E | N |
+|---|---|---|
+| door/choices.rs, 0.95 | **missed**: 0 exact groups, 0 near | missed |
+| crates/svrngs-node/, 0.95 | **missed**: the same 5 exact groups as clean, 1 near (`harden_file`) | missed |
+| choices.rs and svrngs-node/, 0.9 | E ~ N only, 0.912; never with `write` | seen with E alone |
+| choices.rs and svrngs-node/, 0.8 | E ~ N only, 0.914; `write` in another cluster | seen with E alone |
+| window pass, no range | **seen**: choices.rs:172–181 == :368–377 | missed (renamed) |
+
+So I24 stands on the new binary: the exact tier missed a verbatim body
+under a new name, every group it finds pairing one name, and the near
+tier's spans take their neighbours' lines (`write` :168–185 for :171–182,
+E :364–381 running into N :378–392; I9). Its zeros in Rust are weak
+evidence; the window pass found E. The plants were reverted (`git
+checkout`) and the clone's corpus rebuilt clean at 8020f03 (`project
+refresh --rebuild-index`, 2700 chunks in 511 s; its SCIP graph at
+8020f03): 1537 symbols, the plants' 2 gone, choices.rs's 17 locations.
+
+**Clean runs.** Scoped, at 0.95, for each crate dir the range touched:
+
+| scope | locations | exact | near | with a side added in the range |
+|---|---:|---|---:|---|
+| crates/svrngs-core/ | 392 | 7 (`is_empty` ×3, `as_str` ×3, `len`, `lines`, `key` (tests), `signed_by_link`, `fmt`) | 0 | 0 |
+| crates/svrngs-node/ | 447 | 5 (`as_str` ×4, `fmt` ×3, `drop`, `addr`, `try_from`) | 1 (declared.rs `harden_file` ×2, as before) | 2: `as_str` door.rs:731 and `fmt` :737 |
+| crates/svrngs-node/tests/ | 0 | **could-not-judge** | **could-not-judge** | — |
+| crates/svrngs-runtime/ | 122 | 1 (`open`, tests) | 0 | 0 |
+| crates/svrngs/ | 66 | 0 | 0 | 0 |
+| crates/svrngs/tests/ | 0 | **could-not-judge** | **could-not-judge** | — |
+| web/ | 87 | **could-not-judge** (I19) | 0 | — |
+
+The two with a side added: `PersonKey`'s `as_str` and `Display`
+(door.rs:731–739 at 8020f03, 1c3d662), three lines each, beside
+`LendName`'s, `Kind`'s and `RefusedPath`'s in lend.rs: a newtype's
+accessors, as each audit since u3 judged them. No change.
+
+**Unscoped**: 0.95 (14 exact, 18 near), 0.9 (14, 43), 0.8 (14, 233).
+/tmp/supaudit1/clusters.py blamed every side (`git blame -w` at 8020f03)
+for a line in 341bc2b..8020f03: **2** groups at 0.95 (the two above),
+**5** at 0.9:
+
+| at | cluster | cosine | read |
+|---|---|---|---|
+| 0.9 | origin.rs `kept_to_reads` :99–138 (c255814) ~ surface.rs `reads` :203–243 | 0.912 | Both judge "the page of `app` reads `label`" by one rule, `Offered::reads_one`, over the groups `Host::shared_with` gives (#101's one decider); `kept_to_reads` asks two lenders per request and refuses, `reads` asks all and lists, and its doc cites the other. One rule, two callers. No change. |
+| 0.9 | door/sign_in.rs `of` :334–353 ~ `forget` :351–366 (1c3d662, `PersonKey`) | 0.926 | Two senders on one task's channel, neighbours (I9). No change. |
+| 0.9 | door/choices.rs `load` :78–90 ~ `read` :87–98 (d9cb3c4) | 0.918 | `read` calls `load`; neighbours (I9). No change. |
+
+**Window pass** (/tmp/supaudit1/windows.py . 341bc2b..8020f03, 5
+normalized lines over crates/, web/, apps/ in .rs, .js, .mjs, .py, tests
+included). Its first run blamed with `-M -C -C`, as clusters.py did at the
+last audits, and found 6 new; but `-C -C` credits a line copied from
+another file to the commit it was copied from, so a copy made in the
+range reads as old. With `git blame -w`: 318 window hits in 118 spans,
+**21 new**. Product code, 2:
+
+- door/choices.rs:269–274 == :300–305: `choose`'s and `stop_with_pass`'s
+  axum signatures (`State(door)`, `dialer`, `Segment(raw)`, `headers`,
+  `body`). No change.
+- lend.rs:228–244 == svrngs share.rs:67–76: `Lend`'s and `Share`'s
+  fields, `asks` added to each by a57d80f, as `reads` and `sign_in` were:
+  the declaration and what the command was told, as before. No change.
+
+Tests, 19: test set-ups copied, #31's case, but three are not across
+binaries:
+
+- **#106.** The 13 lines that bind an endpoint as a key and bridge it to
+  a node's door, six times in the one `door` binary: door/main.rs:929,
+  :1066, door/choices.rs:110, door/newcomer.rs:46, :177, door/sign_in.rs
+  :195 (four added in the range). Fixed (1b246ea): `bridge_as`.
+- **#106.** lend_origin.rs:139–159 == :436–456: sup-1 copied the u5-2
+  test's two computers in the same file. Fixed (b4aab80):
+  `alex_lets_sam_in`.
+- The rest cross binaries, #31's case, not moved for #31's reason:
+  tests/home.rs:154–174 (50ecc20) is lend_origin's two computers again,
+  and :10–22, :30–38, :405–412 its header, `start` and a `Roster` seed;
+  the `Fixture { act: RailAct::Admit … }` literal at
+  tests/door/newcomer.rs:152, surface.rs:369, lend_origin.rs, home.rs:166
+  (beside 16 older sites, `git grep -n "RailAct::Admit" crates/*/tests`);
+  newcomer.rs:42–59 == :173–190, :67–79 == :198–207 (two tests' own
+  arrangements, after #106 their bridges one call); surface.rs:282–290 ==
+  :359–367 and two more there; svrngs share/tests.rs:46–50 ==
+  join_page.rs, phone_dry.rs, share.rs (the `Share` literal, `asks: None`
+  added to each).
+
+Reading the range for what neither pass would show:
+
+- **#105.** door/choices.rs:66 (d9cb3c4) named the body `{app, said}` a
+  private `Person`, the core's noun (svrngs-core lib.rs:251), and
+  home.rs:187 (50ecc20) spelled the same body again as `json!({ "app":
+  app, "said": said })` to post it to a lender's door: one wire shape,
+  two homes in one crate. Fixed (838f364): `Saying`, both ways.
+- **#107, not fixed.** How svrngs-node writes a file whole is decided
+  three times, each its own partial name: api.rs:51–53 `write_address`
+  (`.api.partial`), lend.rs:461–463 the declaration
+  (`.<name>.json.partial`), and door/choices.rs:176–181 `write`
+  (`<name>.json.partial`, not hidden, sup-2). One function would rename
+  two of the partials on disk, a change of behaviour, and save about 3
+  counted lines; not done in an audit.
+- **#103 narrowed** (50ecc20): `Host::shared_with` (node.rs:448–461) now
+  answers svrngs's `fault` 500 when the groups held cannot be listed,
+  and tests/home.rs `groups_that_cannot_be_read_are_said_so` watched it
+  fail first. Still: `Node::lends` (node.rs:327–329,
+  `standings().unwrap_or_default()`), which room.rs:109 and the bare
+  command (svrngs cli.rs:914) read, so they say "lends nothing" where
+  svrngs could not judge.
+- **#104 still open**, as the loop's ee06adc keeps in view for sup-3:
+  surface.rs `reads` (:229–240 at 8020f03) now adds `asks` and `ask` to
+  each lend it tells a page; web/lend.js `told` does not yet, and is
+  sup-3's.
+- **Glassbox.** The new branches trace: home.rs `only_itself` (:126) on
+  every answer, choices.rs `check` (:142) on every judgment, `member`,
+  `found`, `stop` and `keep` on each refusal, origin.rs `kept_to_reads`
+  on each of its three outcomes.
+- **#57, #68, #70, #71, #75, #77, #79, #81, #89, #91, #95, #97, #99, #100
+  still open**, none touched in the range (`git diff --stat 341bc2b
+  8020f03 -- apps` is empty).
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff 341bc2b 8020f03 -- crates apps web bridge`, added lines
+matching `\b(struct|enum|trait|type|class)\s+[A-Z]\w*`: `PersonKey`,
+`Said`, `Stopping`, `Choice`, `Choices`, `Person`, `App`, `Choosing`,
+`Of`, `Progress`, `Reach`, `Got` (tests), and the aliases `Kept`, `Done`,
+`Whose`, `Rounds`. `converge noun --corpus-id plant` (the clean corpus,
+its SCIP graph at 8020f03), beside `git grep -nP
+"\b(struct|enum|trait|type|class)\s+<Name>\b" -- crates apps web bridge`:
+
+| noun | converge | git grep | read |
+|---|---|---|---|
+| Said | 2: svrngs cli.rs:662, svrngs-node door/choices.rs:39 | 3: cli.rs:663, choices.rs:40, web/app.js:69 (`class Said extends Error`) | Three concepts: what a verb tells the person, what a person says of an app, a page's thrown words. svrngs never imports choices' (`grep -rn "choices::" crates/svrngs/src`: none). No change. |
+| Person | 2: svrngs-core lib.rs:250, choices.rs:65 | 2: lib.rs:251, choices.rs:66 | **#105**: the door's request body under the core's noun. Fixed (838f364), `Saying`. |
+| PersonKey | 1: door.rs:721 | 2: door.rs:722, apps/jellyfin/mw/src/person.rs:24 | One key, two programs either side of the door's `x-svrngs-key` header (door.rs:1184, the `PersonKey` the door resolves); the middleware parses what the door says, as #50 judged a protocol's two ends. No change. |
+
+Every other noun: one definition (converge and git grep agree; `Got` is
+tests/home.rs:69 alone, converge's scope leaving out `tests`). converge
+reported each line one early (I1).
+
+### Fixed here
+
+- **#105** (838f364). `Saying` in door/choices.rs, `Serialize` and
+  `Deserialize`, read by the door and serialized by home.rs `say`; the
+  JSON object is the same (serde_json's map sorted either way). `cargo
+  test -p svrngs-node --test home --test door --lib`: 2, 26, 91 passed.
+  Counted 0.
+- **#106** (1b246ea, b4aab80). `bridge_as` in tests/door/main.rs for six
+  sites, `alex_lets_sam_in` in tests/lend_origin.rs for two: 71 test
+  lines fewer (`git diff --stat 838f364 b4aab80`). `--test door` 26,
+  `--test lend_origin` 3 passed; clippy `--tests` clean.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 105 | 8, 3 | crates/svrngs-node/src/door/choices.rs:66 and crates/svrngs-node/src/home.rs:187, at 8020f03 | 838f364 | The choice body `{app, said}` shaped twice in one crate, the door's under the core's noun `Person`. |
+| 106 | 8 | crates/svrngs-node/tests/door/main.rs:929, :1066, choices.rs:110, newcomer.rs:46, :177, sign_in.rs:195; tests/lend_origin.rs:139 and :436, at 8020f03 | 1b246ea, b4aab80 | Test set-ups copied within one binary, so #31's reason did not hold. |
+| 107 | 8 | crates/svrngs-node/src/api.rs:51–53, lend.rs:461–463 and door/choices.rs:176–181, at b4aab80 | not fixed | A file written whole through a partial renamed into place, decided three times, three partial names. |
+| 103 | 6 | crates/svrngs-node/src/node.rs:327–329, at b4aab80 | narrowed (50ecc20) | `shared_with` now says svrngs could not judge; `Node::lends`, read by the room and the bare command, still reads unlistable groups as none. |
+| 104 | 8 | web/lend.js:363–371 and crates/svrngs-node/src/surface.rs:229–240, at 8020f03 | not fixed (sup-3's) | What a page is told of its reads, shaped in the page and the node; sup-2 added `asks` and `ask` to the node's half. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 38 lines left (15162 / 15200), sup-3's counted web/ changes to come. |
+| 31 | 8 | tests/home.rs:154–174 ~ tests/lend_origin.rs; the `RailAct::Admit` fixture across binaries | not fixed | Grown by the range: home.rs's two computers, five more `Admit` literals. |
+| 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99, 100 | as recorded | as recorded | not fixed | Untouched in the range. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still present on c9b653d3…: every definition a line early (`PersonKey` :721 for :722, `Said` :662 for :663). |
+| I9 | 6, 7 | `code dry-report` near tier | Still present: spans take neighbours' lines (`write` :168–185 for :171–182; `load` ~ `read`, `of` ~ `forget`). |
+| I19 | 6 | dry-report's exact tier | Still present, and said: web/ and every `tests` scope "could-not-judge … not a pass". |
+| I24 | 6, 7 | `code dry-report` exact tier | **Still present on the new binary** c9b653d3…: plant E, a verbatim `write` renamed, is no exact group, scoped to its file or its crate. The window pass caught it. |
+| I25 | 6 | `project refresh` and corpus ids | New: `project refresh` names the corpus after the directory, not the `--corpus-id` the index was built under, so a clone at /tmp/supaudit1/plant was embedded twice (as `svrngs-supplant` and `plant`). Then `refresh --rebuild-index` there deleted `plant/chunks.lance` and, its promotion refused ("both hold corpus data named documents.lance", a `plant-partition-local` left by the first refresh), left the new index in `plant-partition-local`; dry-report then said "no chunk index … run `svrn project init`", an error, not a zero. The partition was moved into place by hand (`mv`), its symbols checked: 1537, the plants gone. |
+| I26 | 6, 7 | the `svrngs` corpus's SCIP graph | New: ~/.svrnmesh/indexes/svrngs/scip_graph.db, written 15:25 (after 50ecc20, 15:09), gave `PersonKey` at door.rs:707, its line at 1c3d662 (:707) or a57d80f (:708, I1), and no `Stopping` or `Choice`, which d9cb3c4 added: a graph from an older tree under a newer mtime. Cause not isolated; this audit judged from its own corpus at 8020f03. |
