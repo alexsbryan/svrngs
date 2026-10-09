@@ -3650,8 +3650,8 @@ grep` one definition. No noun with more than one definition.
 The range starts at 9a013f471, the hash REVIEW-audit-mwp-auto-2's row
 carries (ralph/next/mwp/STATE.md:20), the last `REVIEW-audit-` row; this
 queue has none before this one. It ends at 731c469, the commit that made
-this row: 25 commits, the last audit's `done` (78b3520), the operator's
-design and budget (d697b18, 508356d), the queue (37b4a4c, ba5970d2), si-1
+this row: 26 commits, the last audit's `done` (78b3520), the operator's
+design and budget (d697b18, 508356d), the queue (37b4a4c, ba5760e), si-1
 (ae898f0, effb427, 6028168, 7ac7cf0, dd2a501, 1d9d5f3), mn-0 (c963f93),
 mn-1 (47dab7e, a40fe81, fa5f076, c966cbc, 7a1e94b, 86b092d, 83e2335) and
 mn-2 (931b9ed, f9a4c9b), with their `done`s. Product code outside apps/
