@@ -6,9 +6,6 @@
 use super::*;
 use svrngs_core::alpn::Alpn;
 use svrngs_core::pass::{Label, Pass};
-use svrngs_node::iroh::{
-    ring_crypto_provider, EndpointAddr, EndpointBuilder, HttpBridge, SecretKey,
-};
 
 const WORDS: &str = "the app receives ranked suggestions; your history stays where it is";
 
@@ -108,19 +105,7 @@ async fn a_lend_that_asks_lets_in_only_the_app_its_person_said_yes_to() {
     );
 
     let holder = signing(9);
-    let dialling = EndpointBuilder::empty()
-        .crypto_provider(ring_crypto_provider())
-        .secret_key(SecretKey::from_bytes(&holder.to_bytes()))
-        .bind()
-        .await
-        .unwrap();
-    let mut target = EndpointAddr::new(pair.a.endpoint().id());
-    for sock in loopback_sockets(pair.a.endpoint()) {
-        target = target.with_ip_addr(sock);
-    }
-    let holders = HttpBridge::spawn_preferring(dialling, target, Alpn::Lend.bytes(), None)
-        .await
-        .unwrap();
+    let holders = bridge_as(&holder, &pair.a, Alpn::Lend).await;
     let phones = Pass::sign(
         &signing(2),
         &actor_of(&holder),

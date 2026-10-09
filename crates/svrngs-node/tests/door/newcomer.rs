@@ -9,12 +9,12 @@
 use std::time::{Duration, Instant};
 
 use super::common::loopback_sockets;
-use super::{header_values, last, lends_on, origins, raw_to, signing, unix_now, Pair, NS};
+use super::{
+    bridge_as, header_values, last, lends_on, origins, raw_to, signing, unix_now, Pair, NS,
+};
 use svrngs_core::alpn::Alpn;
 use svrngs_core::pass::{Label, Pass};
-use svrngs_node::iroh::{
-    ring_crypto_provider, EndpointAddr, EndpointBuilder, HttpBridge, SecretKey,
-};
+use svrngs_node::iroh::EndpointAddr;
 use svrngs_node::{actor_of, Person, RailAct, Roster};
 
 /// Nia, admitted at A, asks B's `shelf` with her pass seconds after, and
@@ -44,19 +44,7 @@ async fn a_newcomer_s_first_request_through_a_second_lender_is_answered_within_s
     let shelf = Label::of(pair.b.endpoint().id().as_bytes(), "shelf");
 
     let holder = signing(9);
-    let dialling = EndpointBuilder::empty()
-        .crypto_provider(ring_crypto_provider())
-        .secret_key(SecretKey::from_bytes(&holder.to_bytes()))
-        .bind()
-        .await
-        .unwrap();
-    let mut at_b = EndpointAddr::new(pair.b.endpoint().id());
-    for sock in loopback_sockets(pair.b.endpoint()) {
-        at_b = at_b.with_ip_addr(sock);
-    }
-    let bridge = HttpBridge::spawn_preferring(dialling, at_b, Alpn::Lend.bytes(), None)
-        .await
-        .unwrap();
+    let bridge = bridge_as(&holder, &pair.b, Alpn::Lend).await;
     let ask = |signer: u8| {
         let pass = Pass::sign(
             &signing(signer),
@@ -175,19 +163,7 @@ async fn a_newcomer_is_let_in_while_a_computer_of_the_group_sleeps() {
     let shelf = Label::of(pair.b.endpoint().id().as_bytes(), "shelf");
 
     let holder = signing(9);
-    let dialling = EndpointBuilder::empty()
-        .crypto_provider(ring_crypto_provider())
-        .secret_key(SecretKey::from_bytes(&holder.to_bytes()))
-        .bind()
-        .await
-        .unwrap();
-    let mut at_b = EndpointAddr::new(pair.b.endpoint().id());
-    for sock in loopback_sockets(pair.b.endpoint()) {
-        at_b = at_b.with_ip_addr(sock);
-    }
-    let bridge = HttpBridge::spawn_preferring(dialling, at_b, Alpn::Lend.bytes(), None)
-        .await
-        .unwrap();
+    let bridge = bridge_as(&holder, &pair.b, Alpn::Lend).await;
     let pass = Pass::sign(
         &signing(7),
         &actor_of(&holder),
