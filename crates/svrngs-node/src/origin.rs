@@ -35,7 +35,7 @@ use axum::Router;
 use svrngs_core::pass::{Label, Pass};
 
 use crate::door::{self, Door, LendRefusal, Who, LEND_ROUTE, PASS_HEADER};
-use crate::iroh::{key_actor, Contact, PublicKey};
+use crate::iroh::{Contact, PublicKey};
 use crate::lend::Offered;
 use crate::node::Asking;
 
@@ -211,21 +211,9 @@ pub(crate) async fn reach(at: &Asking, label: Label, app: Label, mut req: Reques
         parts.uri = uri;
         return door::lend_for(door, Who::Own(app), None, Request::from_parts(parts, body)).await;
     }
-    let actor = hex::encode(lender);
-    let key = PublicKey::from_bytes(&lender).ok();
-    let stands = door.rail.standing_anywhere(&actor).is_some();
-    let Some(key) = key.filter(|_| stands) else {
-        tracing::debug!(target: "origin", %label, actor, "origin: refused — the label names no computer standing in a group held here");
-        return LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here");
-    };
-    let contact = Contact {
-        key,
-        relay_url: None,
-        iroh_direct_addrs: Vec::new(),
-    };
-    let Some(base) = at.host.transport().base_url(&contact).await else {
-        tracing::debug!(target: "origin", %label, actor, "origin: no dialable path to the lender's computer");
-        return away();
+    let base = match dialled(at, &label).await {
+        Ok(base) => base,
+        Err(refused) => return refused,
     };
     let Some(bridge) = base
         .strip_prefix("http://")
@@ -240,12 +228,35 @@ pub(crate) async fn reach(at: &Asking, label: Label, app: Label, mut req: Reques
         );
     };
     req.headers_mut().insert(PASS_HEADER, pass);
-    tracing::debug!(target: "origin", %label, %app, lender = %key_actor(&key), %bridge, "origin: another computer's lend, through the dial to its door, the app in this computer's own pass");
+    tracing::debug!(target: "origin", %label, %app, lender = hex::encode(lender), %bridge, "origin: another computer's lend, through the dial to its door, the app in this computer's own pass");
     carried(req, bridge, &target, label.as_str()).await
 }
 
+/// The bridge to the door of the computer lending `label`, dialled as this
+/// computer's key; refused for a lender standing in no group held here, so
+/// no page makes this computer dial a stranger, and `away` with no path.
+pub(crate) async fn dialled(at: &Asking, label: &Label) -> Result<String, Response> {
+    let actor = hex::encode(label.lender());
+    let key = PublicKey::from_bytes(&label.lender()).ok();
+    let stands = at.door().rail.standing_anywhere(&actor).is_some();
+    let Some(key) = key.filter(|_| stands) else {
+        tracing::debug!(target: "origin", %label, actor, "origin: refused — the label names no computer standing in a group held here");
+        return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
+    };
+    let contact = Contact {
+        key,
+        relay_url: None,
+        iroh_direct_addrs: Vec::new(),
+    };
+    let Some(base) = at.host.transport().base_url(&contact).await else {
+        tracing::debug!(target: "origin", %label, actor, "origin: no dialable path to the lender's computer");
+        return Err(away());
+    };
+    Ok(base)
+}
+
 /// The lender's computer could not be reached.
-fn away() -> Response {
+pub(crate) fn away() -> Response {
     LendRefusal::Away.say(
         StatusCode::BAD_GATEWAY,
         "the computer that lends this did not answer; try again later",
