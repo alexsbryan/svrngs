@@ -412,7 +412,7 @@ the taste's log line (`<run>-taste.log`) and Ana's door's
    path", the taste no line for it. The scan (`scan.json`, by
    `apps/jellyfin/check/scan.py` unchanged, the five rows' markers among
    the secrets it searches): no marker in any byte any of the seven
-   browsers of the kept runs received, 141 to 174 responses each; the
+   browsers of the kept runs received, 62 to 174 responses each; the
    five in `plant-history`'s, its plant.
 4. **Another app refused: passed in both**, as predicted with the header:
    the other app's ask, from a pass naming Ana's taste, refused
@@ -464,8 +464,8 @@ By §4's awk at `305efde`, none unmarked (`verdicts.json` "the count"):
 | plumbing, Tonight's Picks | 39 (about 30) | find 26 (20), refusal 13 (10) |
 | plant, apart | 5 | bo, other-app, after-stop, empty, the switch |
 
-Every figure inside its predicted range but the taste's own, under it
-(52 against 50–160). The enforce lines, at `apps/taste/taste.mjs` as
+Every figure inside its predicted range, the taste's own near its
+floor (52 against about 90, 50–160). The enforce lines, at `apps/taste/taste.mjs` as
 `305efde` has it, and what the door could decide in their place:
 
 - `owner`, 3 (:76-77, :130): Ana's keys in a file, compared with
