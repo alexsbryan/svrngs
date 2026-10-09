@@ -450,3 +450,170 @@ every lender but the group's computer until that lender's ring sync round
 (60 s, `crates/svrngs-node/src/ring_sync.rs:103`): Movie Night's first
 search, made seconds after joining, was never whole, and `up` waited for
 Dee's round before Alex's computer could list her lend.
+
+## 8. What the rule gives (mn-2)
+
+**The composition works, and svrngs carries one of its three operations
+whole.** Written after mn-1's data (§7; every number below is in this
+directory, the file named), by §4's rule and §3's bars, each read for what
+it guards (the operator, 2026-10-08: "the bars are guidance to align us at
+the start, the spirit of them are what guides how we iterate").
+
+By §4's count Movie Night wrote 196 lines outside its plants, 157 its own
+and 39 svrngs's, about one in five (`verdicts.json`, "the count"); §5 put
+the line at 80, over which svrngs carries less than §2 reads, and 39 is
+under it. The spike this one follows from wrote about 600 of its 1,039
+lines for any app (DESIGN §3, "The room", call 6, "Made production").
+But the count measures what an app could write. Of the three operations:
+
+- **Request is carried whole.** Movie Night set no credential and wrote
+  no line of sign-in (`signin` 0); the door asked each lender's program
+  for each person on their first request and kept the answer, 12 asks at
+  each door (`doors.json`, `sign_in`), and each person saw what their own
+  account may: one *Brazil* card for Ana and Cleo, none for Ben and Dara
+  (`verdicts.json`, "bar 1, each their own").
+- **Discovery is carried, but not to the app.** On a phone the lends a
+  page reads reach it only in svrngs's own store, which Movie Night read
+  whole — the pass and its holder key with the labels — in 28 lines
+  (`find`, `app.js:27-57`; `verdicts.json`, "bar 5, a credential in Movie
+  Night's code", `app.js:39`, `:53`, `:54`). It names no lender and says
+  nothing of who did not answer, so every phone person read "the jellyfin
+  at f9c85e53", and asleep before the list Cy's library was not named at
+  all (bar 4's letter). On a computer nothing is handed: "No library is
+  open to Movie Night here" (`computer.json`, `nothing_handed`, its store
+  `[]`).
+- **Opening is not carried.** For a phone that never opened that Jellyfin
+  from the list there is nothing an app can write (`open` 0): all four
+  landed on the page's host's 404, no worker answering (`verdicts.json`,
+  "bar 2, never opened", `from_worker` false).
+
+| Bar | Letter | Spirit — what it guards | Data |
+|---|---|---|---|
+| 1. One card a film | passed, once the person was known to every lender | partly held: each person's results are what each library lets them see, but a new person's first searches were not whole, and Dee's door's refusal was said as the library's | One *Blade Runner* card with two copies for Ana, Ben, Cleo, Dara and Alex; cold, Dee's said "would not let you in" to all four phone people, 19 passes refused, "its signer stands in no group held here" (`doors.json`, `refused`); every library answered at the 5th, 3rd, 3rd and 3rd search (`settled.searches` 4, 2, 2, 2 after the cold one), 46.3, 15.9, 16.0 and 15.8 s after the cold search (`phone-*.json`, `started`); then the first card in 155, 128, 162 and 103 ms (`warm`) |
+| 2. The copy opens playing | failed for a phone that never opened it, passed after | the same: a person who never opened that Jellyfin reached a 404, not the film | Never opened: 404 for all four. Opened once from the list: at the item, signed in with the stand-in, in 35,161, 20,149, 22,976 and 13,220 ms; one Play to a moving `<video>` in 19,806, 9,386, 17,577 and 5,607 ms. Alex's computer: 6,353 ms, then 3,763 ms (`verdicts.json`, "bar 2") |
+| 3. Back keeps the search | passed | the same | 2 presses from the playing film, 5 of 5, query and cards the same; 1 from the 404 (`verdicts.json`, "bar 3"; `phone-*.json`, `never_opened_back`) |
+| 4. Asleep is never empty | passed asleep after the list; failed asleep before | held in both: nothing was shown empty | After: "did not answer" at 60,440 and 60,291 ms, the others' first answer at 420 and 498 ms. Before: the group's page said Cy's computer did not answer, Movie Night named no third library, none shown empty (`verdicts.json`, "bar 4") |
+| 5. No credential, proxy or address | failed: `svrngs-lend` at `app.js:19`, `:32`, the address built at `:28` | held for the bytes, not for the code: no secret in 210,576,385 bytes eleven people received, but on a phone Movie Night holds the pass and its holder key to read the lends | `scan.json`; `verdicts.json`, "bar 5" |
+
+Each plant failed its bar before the kept runs passed it (§7;
+`verdicts.json`, `"plant": true`: two cards of one copy each; Cy's shown
+as "nothing by that name" at 60,471 ms; `sam_admin_token` in `/plant.js`).
+The product is untouched (`git diff c963f93..HEAD -- crates/*/src web`
+empty) and `scripts/check.sh` names no Jellyfin (`verdicts.json`).
+
+**Where the letter and the spirit part**, each judged by the spirit:
+
+1. *Bar 1 passed, and a newcomer's first search was not whole.* Its
+   letter is one card per film; it guards that a person's results are
+   theirs and the group's whole. Seconds after joining a person is a
+   stranger to every lender but the group's computer until that lender's
+   ring round, 60 s (`crates/svrngs-node/src/ring_sync.rs:103`), and its
+   door refuses their pass (`crates/svrngs-node/src/door.rs:711-712`).
+   That is svrngs's, not Movie Night's, and any lend's newcomer meets it.
+   Candidate 3 below.
+2. *Bar 4's second case.* Its letter asks Movie Night to say Cy did not
+   answer; it guards against a library shown empty. Nothing was; the group's
+   page said Cy did not answer, Movie Night could not (the handoff carries
+   no `unanswered`, `web/app.js:173`). Held; the gap is candidate 1's.
+3. *Bar 5.* Its letter forbids reading svrngs's store and building an
+   address; it guards that an app cannot leak what it never holds and
+   does not break when svrngs's addresses change. No byte leaked, and
+   Movie Night sent the pass nowhere, but it holds it, and its 28 lines
+   break when `svrngs-lend`, its record's shape or `baseOf`'s scheme does.
+   Failed in part, said so; candidate 1 removes the cause.
+4. *The count under 80.* §5 read a low count as svrngs carrying the
+   operations. `open`'s 0 is a capability missing, not a line saved: bar 2
+   failed where it was predicted to. The count is judged with the bars,
+   never alone.
+
+So a thin app composing the group's Jellyfins is 157 lines of its own over
+what svrngs gives, and svrngs gives request; discovery it holds and does
+not hand on, and opening it does not carry for a phone. One host, one run
+of each: not a rate (AGENTS.md 7). DESIGN §3 ("Lent apps", call 6), §8
+and §9 are rewritten for it.
+
+## 9. What makes it production (mn-2)
+
+Each plumbing piece Movie Night wrote or could not, with its lines, what
+svrngs would carry in its place and the evidence: a candidate row each,
+the operator's to queue (the queue's preamble). Each check is the bar it
+would turn, rerun by `apps/movie-night/check/check.sh`, with Movie Night's
+piece cut to what is left.
+
+1. **A lent page told the lends it reads** (`find`, 28 lines,
+   `apps/movie-night/app.js:27-57`). In its place svrngs answers a page,
+   at its own origin, the lends its lender declared it reads: each one's
+   kind, name, lender (their name in the group), the address to ask it at,
+   and the people whose computer did not answer — on a phone from the
+   handoff, which now carries only `{label, key, name}` and keeps
+   `unanswered` back (`web/app.js:173`, `:207`), and on a computer from the
+   record, as `/v1/lends` answers it to no page
+   (`crates/svrngs-node/src/surface.rs:138-185`;
+   `crates/svrngs-node/src/api.rs:100-124`) — never the pass or its holder
+   key. Evidence: every phone person read "the jellyfin at f9c85e53"
+   (`phone-*.json`, `cold.said`); asleep before the list Movie Night named
+   no third library (`verdicts.json`, "bar 4, asleep before the list",
+   `letter` failed); on a computer nothing was handed (`computer.json`,
+   `nothing_handed`). Open in the row: on a computer the origin carries a
+   page to every lend of a group held here, `--reads` or not
+   (`crates/svrngs-node/src/origin.rs:87-93`; §7, "`reads` on a
+   computer"), so whether that answer also limits what the page reaches
+   is the row's question; DESIGN §9 holds that limit, with its trigger,
+   until it is asked. Check: bar 4's second case and bar 5's letter pass, the library
+   named by its lender, the computer finding both with nothing handed.
+2. **svrngs's refusals named as its own** (`ask`, 11 lines,
+   `app.js:66-76`). Movie Night told them by status alone, 502 or 504
+   away, any other failure "would not let you in"; the door's refusal of a
+   pass is a 403 whose only mark is its JSON body (`door.rs:692-698`, kind
+   `pass`), the status Jellyfin's own refusals use. In its place every
+   answer svrngs makes rather than the lend — the door's refusals, the
+   worker's 403, 502 and 503 (`web/lend.js:262-309`), the computer's 502 —
+   carries one header naming it svrngs's and which: away, a pass refused,
+   not open to this page. Evidence: Dee's door's 19 refusals were said to
+   all four phone people as the library refusing them (`doors.json`,
+   `refused`; `phone-*.json`, `cold.said`). Check: a planted refusal at the
+   door said as svrngs's, a planted 403 from the lend said as the
+   library's.
+3. **A newcomer let in by every lender at once** (no line of Movie
+   Night's; found by bar 1). A door that meets a pass whose signer stands
+   in no group it holds refuses it (`door.rs:711-712`) until its ring
+   round, every 60 s (`ring_sync.rs:103`), brings the newcomer. In its
+   place the door, meeting a signer it does not know, asks the group's
+   ring once before it answers, so a person's first request does not wait
+   on every lender's next round. Evidence: 19 refusals at Dee's door, every
+   phone person's first search missing Dee's library, whole 15.8 to 46.3 s
+   later (bar 1's row above); `apps/jellyfin/check/check.sh up` waited for
+   Dee's round before Alex's computer listed her lend (§7, "What no
+   prediction named"; `c966cbc`). Check: a person's first search whole, in
+   both engines, seconds after joining.
+4. **A lend opened at a path from a page that reads it** (`open`, 0
+   lines: nothing an app can write does it). A lend's start page takes a
+   pass for its own label alone (`web/open.js:43`), the group's page hands
+   none with a path (`web/app.js:178`), and a lend's origin a phone never
+   opened is the page's host, which answers 404 (`web/tests/page.mjs:30-42`).
+   In its place the address candidate 1 hands for each lend opens it: the
+   group's page signs that lend's pass and hands it with the path, and its
+   start page goes there, as it goes to `back` today (`web/open.js:54`).
+   Evidence: bar 2, never opened, 404 for all four phone people; opened
+   once from the list, the same link reached the item and played
+   (`verdicts.json`, "bar 2"). Check: bar 2 passes for a phone that never
+   opened that Jellyfin, in both engines, and bar 3's presses are counted
+   again.
+
+Not candidates, said so:
+
+- **`reads` grants writes.** A pass names lends and a lapse, no method or
+  path (`crates/svrngs-core/src/pass.rs:136-151`): Movie Night may ask a
+  Jellyfin anything its person may. That is scoped use's spike, next in
+  the queue (`ralph/next/compose/STATE.md`, su-0).
+- **A searcher counted as a watcher.** Gus, having searched once, was
+  counted on both Jellyfins 26.3 and 26.5 s after his last request and not
+  at 36.2 and 36.4 s; the most counted at once was 2, and nobody was
+  refused (`doors.json`, `limit`, `most_counted`). It waits
+  in DESIGN §9 for a lend at its limit refusing someone while those
+  counted only searched.
+- **Reading another origin on a computer** rested on Jellyfin's own
+  answer: both libraries were read from Movie Night's origin
+  (`computer.json`, `handed`); the header that allowed it was not
+  recorded. An app whose answers allow no other origin is unread there,
+  unmeasured.
