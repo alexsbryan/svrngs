@@ -15,6 +15,8 @@
 //! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--sign-in S]
 //!                                          lend a service on this computer
 //! svrngs unshare <name>                    stop lending it
+//! svrngs share --folder <dir>              share a folder's files, asked of svrngs running here
+//! svrngs unshare --folder <name>           stop sharing it
 //! svrngs room <name>...                    serve lends to this computer's network, run
 //! ```
 //!
@@ -68,6 +70,7 @@ use std::time::Duration;
 use ed25519_dalek::VerifyingKey;
 use std::num::{NonZeroU16, NonZeroU32};
 
+use svrngs_node::folder::FolderAsk;
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath, Upload};
 use svrngs_node::node::{Lends, Lent, Node, NodeError};
@@ -128,6 +131,9 @@ svrngs — keep what your group shares on your own computers.
   svrngs unshare <name>
       Stop lending <name>.
 
+  svrngs share --folder <dir>  /  svrngs unshare --folder <name>
+      Share the files under <dir> with your groups while svrngs runs here; stop sharing it.
+
   svrngs room <name>...
       Let anyone on this computer's network (its WiFi) open what your groups
       lend as <name>, as you, while this runs.
@@ -172,6 +178,8 @@ pub enum Verb {
     /// No secret: it is read from a prompt (the module docs).
     Share(Share),
     Unshare(LendName),
+    /// `share --folder` or its stop, asked of svrngs running here.
+    Folder(FolderAsk),
     /// The lends named, served to this computer's network.
     Room(Vec<LendName>),
     Help,
@@ -191,6 +199,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let mut upload = None;
     let mut reads = Vec::new();
     let mut sign_in = None;
+    let mut folder = None;
     let mut more = Vec::new();
     while let Some(arg) = it.next() {
         let mut value = |flag: &str| it.next().ok_or_else(|| format!("{flag} wants a value"));
@@ -248,6 +257,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 sign_in =
                     Some(share::resolve_target(&raw).map_err(|why| format!("--sign-in {why}"))?);
             }
+            "--folder" => folder = Some(value("--folder")?),
             "-h" | "--help" => return Ok(Verb::Help),
             other if other.starts_with('-') => return Err(format!("unknown argument `{other}`")),
             other if positional.is_none() => positional = Some(other.to_string()),
@@ -274,6 +284,15 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "--name, --kind, --limit, --refuse, --upload, --reads and --sign-in are `share` flags"
                 .into(),
         );
+    }
+    match (verb.as_str(), folder) {
+        ("share", Some(dir)) => {
+            let dir = std::path::absolute(&dir).map_err(|e| format!("--folder `{dir}`: {e}"))?;
+            return Ok(Verb::Folder(FolderAsk::Share(dir)));
+        }
+        ("unshare", Some(name)) => return Ok(Verb::Folder(FolderAsk::Stop(name))),
+        (_, Some(_)) => return Err("--folder is a `share` and `unshare` flag".into()),
+        _ => {}
     }
     match verb.as_str() {
         "new" => {
@@ -376,6 +395,10 @@ pub enum Refusal {
     NoRoomAddress,
     #[error(transparent)]
     Room(#[from] svrngs_node::room::RoomError),
+    #[error("svrngs is not running on this computer, and only it shares a folder: start it, then run this again")]
+    NotRunning,
+    #[error("the folder was refused: {0}")]
+    Folder(String),
     #[error("cannot tell from here whether {0} gives each app an address of its own: the page does not open there (RUST_LOG=debug says why); try again")]
     CannotCheck(String),
 }
@@ -410,6 +433,7 @@ impl Refusal {
             | Refusal::NotLent { .. }
             | Refusal::NoAppAddress(_)
             | Refusal::Room(_)
+            | Refusal::Folder(_)
             | Refusal::Busy(_) => 1,
             Refusal::NoDataDir
             | Refusal::DataDir(..)
@@ -420,6 +444,7 @@ impl Refusal {
             | Refusal::KeepLend(_)
             | Refusal::CannotCheck(_)
             | Refusal::NoRoomAddress
+            | Refusal::NotRunning
             | Refusal::Keep(_) => 3,
         }
     }
@@ -470,6 +495,10 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             print!("{}", unshare(&root, &name)?);
             return Ok(());
         }
+        Verb::Folder(asked) => {
+            println!("{}", folder(&root, asked).await?);
+            return Ok(());
+        }
         Verb::Share(asked) => {
             let lend = share::lend_of(&asked, share::listens, share::well_known_kind(asked.port))?;
             let accounts = share::accounts_of(&lend.kind).filter(|_| lend.sign_in.is_none());
@@ -511,6 +540,26 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
     };
     let claimed = claim(&root)?;
     start(command, root, relay, claimed).await
+}
+
+/// `share --folder` and its stop, asked of the node running here
+/// (`svrngs_node::folder::FolderAsk`): it alone writes this computer's acts,
+/// the journal's next index being its process's (svrngs-node journal.rs:16-27).
+async fn folder(root: &Path, asked: FolderAsk) -> Result<String, Refusal> {
+    let api = std::fs::read_to_string(root.join(svrngs_node::api::API_FILE)).unwrap_or_default();
+    let body = serde_json::to_string(&asked).expect("a folder's ask is JSON");
+    let to = format!("{}/v1/folders", api.trim());
+    let sent = reqwest::Client::new()
+        .post(to)
+        .header("content-type", "application/json");
+    let answer = sent.body(body).send().await.map_err(|e| {
+        tracing::debug!(target: "cli", api, error = %e, "cli: refused — no svrngs answers at the API it wrote");
+        Refusal::NotRunning
+    })?;
+    let ok = answer.status().is_success();
+    let text = answer.text().await.unwrap_or_default();
+    tracing::debug!(target: "cli", ?asked, ok, "cli: the folder's ask answered");
+    ok.then_some(text.clone()).ok_or(Refusal::Folder(text))
 }
 
 /// Start the node over the data dir `claimed` holds, do the verb, and run
@@ -939,7 +988,7 @@ async fn serve(
             _room = room::open(node, at, &names).await?;
             Said::Room(_room.served.clone())
         }
-        Verb::Help | Verb::Share(_) | Verb::Unshare(_) => {
+        Verb::Help | Verb::Share(_) | Verb::Unshare(_) | Verb::Folder(_) => {
             unreachable!("answered in `run`")
         }
     };
