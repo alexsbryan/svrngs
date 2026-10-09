@@ -874,7 +874,7 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,000 lines of code and the
-repository under 15,200, tests and `apps/` apart (`scripts/lean_check.py`);
+repository under 15,350, tests and `apps/` apart (`scripts/lean_check.py`);
 a raise is the operator's, with the reason in the commit. `svrngs-core` stands
 at 2,359: the operator raised its ceiling from 2,500 on 2026-10-05, for what U4
 to U7 still add to the core, since REVIEW-audit-u3-auto-2 found no duplication
@@ -906,6 +906,10 @@ room (operator, 2026-10-09; svrn-docs `rings/current/ONE_PERSON_MANY_DEVICES.md`
 §6): upstream's guest attestation and roster warrant, which no code of
 svrngs used (`attest.rs`, `introduce.rs`, `Roster.vouches`), deleted —
 svrngs-core from 2,957 to 2,628, the repository from 14,644 to 14,315.
+And from 15,200, at 15,162, on 2026-10-09, after sup-2: the repository
+had grown 847 since core-0, against the 541 the design estimated for
+asleep-1, sup-1 and sup-2, and the phone's page and worker (~110, sup-3)
+had 38 left; 150 by the operator's choice.
 `ARCHITECTURE.md` maps what exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file

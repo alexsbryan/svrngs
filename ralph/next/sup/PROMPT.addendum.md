@@ -38,7 +38,7 @@ Fences the rows keep:
 6. *Bars by their spirit* (operator, 2026-10-08): ask what a bar guards
    and judge by that; where letter and spirit part, say both and keep
    going.
-7. *The budget is 15,200* (aaecbdb), svrngs-core 3,000. The design's
+7. *The budget is 15,350* (aaecbdb, then this raise after sup-2), svrngs-core 3,000. The design's
    estimate is about 650 against the 556 left; core-0 deletes about 286
    lines no code uses, which makes the room (operator, 2026-10-09). A row
    that would pass it stops for the operator.
