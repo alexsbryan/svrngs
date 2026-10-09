@@ -4029,3 +4029,184 @@ The row's check: `scripts/check.sh` at a9a8789, all 14 steps passed
 (principles pinned through app laws; the WebKit seek rate "failed, a
 rate" for wildcard and sam's 5016 ms first seek "failed" in the app laws'
 table, neither failing its step, u5-11), exit 0.
+
+## REVIEW-audit-compose-auto-3 (2026-10-09, range 22d1a2c..2e6edc7)
+
+The range starts at 22d1a2c6b, the hash REVIEW-audit-compose-auto-2's row
+carries (ralph/next/compose/STATE.md:24), the last `REVIEW-audit-` row. It
+ends at 2e6edc7, the commit that made this row: 9 commits (`git rev-list
+--count 22d1a2c..2e6edc7`), the last audit's `done` (ffd5fbc) and mnp-2
+(ef75c07, 44784a4, a9e333f, 8566b86, be796ca, e09fefa), with its `done`
+(93685ba) (`git log --format='%h %s' 22d1a2c..2e6edc7`). Product code
+changed in ef75c07 (svrngs-node and web/) and 44784a4 (apps/movie-night/)
+alone. This audit fixes two findings (#101, #102) and records two (#103,
+#104), and narrows #100.
+
+As before, `docs/ARCH_PRINCIPLES.md` is docs/principles/ARCH_PRINCIPLES.md,
+and `target/debug/sovereign-cli` is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, **the binary the last two
+audits used**, sha256 35d97ed2… (`shasum -a 256`, built 2026-10-08 15:05),
+so its tiers' plants (I24, I9) stand and were not run again. The embedder
+was `llama-server` on the corpus's model (qwen-embedding-0.6b.gguf,
+~/.svrnmesh/config.toml:18) on :8080, `-b 8192 -ub 8192` (I21), for this
+session. `code index . --full` at 2e6edc7, tree clean: 2639 chunks in
+406 s (/tmp/composeaudit3/index-full.out); the SCIP graph (scip_graph.db
+02:07) written after the range's last product commit (44784a4, 01:22).
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' 22d1a2c..2e6edc7`,
+summed by /tmp/composeaudit3/ledger.py (the first audit's, unchanged), its
+rules as before: a commit counts toward the unit its subject names, else
+the next `done`'s; product code is crates/, apps/, web/, bridge/; a test is
+a `tests/` or `check/` segment or a lean_check test file name.
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| mnp-2 | 142 | 58 | 84 | 349 | 36 | 313 |
+| total | 142 | 58 | 84 | 349 | 36 | 313 |
+
+- mnp-2 src: surface.rs +50, origin.rs +4, node.rs +1/−1, web/lend.js
+  +42/−1, web/app.js +22/−13, web/open.js +3/−1 (ef75c07);
+  apps/movie-night/app.js +20/−42 (44784a4, `find` cut to one fetch).
+- mnp-2 tests: tests/browser/main.rs +147, tests/surface.rs +75,
+  web/tests/reads.mjs +76 (ef75c07); apps/movie-night/check/ judge.py
+  +35/−22, mn.mjs +15/−12, check.sh +1/−2 (44784a4).
+- The last audit's `done` and this row's commit: none.
+
+lean_check on `git archive` trees in /tmp/composeaudit3 (apps/ and tests
+not counted, scripts/lean_check.py:49):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 22d1a2c, range start | 2957 / 3000 | 14565 / 14750 |
+| 2e6edc7, range end | 2957 / 3000 | 14643 / 14750 |
+| 484fea5, this audit's fixes | 2957 / 3000 | **14646 / 14750** |
+
+mnp-2 spent 78 counted lines, #101 3; **104 are left** (#80).
+
+### (2) Clones (`code dry-report`)
+
+**Scoped**, at 0.95, for each dir the range touched:
+
+| scope | locations | exact | near | with a side added in the range |
+|---|---:|---|---:|---|
+| crates/svrngs-node/ | 400 | 5 (as before: `as_str` ×3, `fmt`, `addr`, `drop`, `try_from`) | 1 (declared.rs `harden_file` ×2) | 0 |
+| crates/svrngs-node/tests/ | 0 | **could-not-judge** | **could-not-judge** | — |
+| web/ | 87 | **could-not-judge** (I19) | 0 | 0 |
+| web/tests/ | 0 | **could-not-judge** | **could-not-judge** | — |
+| apps/movie-night/ | 59 | 0 | 0 | 0 |
+| apps/ | 239 | 0 | 5 (#99's three, tv.mjs and judge.py's, as before) | 0 |
+
+**Unscoped**: 0.95 (14 exact, 18 near), 0.9 (14, 43), 0.8 (14, 234).
+/tmp/composeaudit3/clusters.py blamed every side (`git blame -w -M -C -C`,
+HEAD 2e6edc7) for a line in 22d1a2c..2e6edc7: **0** clusters at 0.95,
+**1** at 0.9, 10 at 0.8.
+
+| at | cluster | cosine | read |
+|---|---|---|---|
+| 0.9, 0.8 | apps/movie-night/check/judge.py `bar4_before` :140–162 ~ `bar4_after` :165–182 (44784a4) | 0.916 | Two bars, before and after the list, each its own verdict; a neighbour overlap (I9) and a shared `people(run)` loop. No change. |
+| 0.8 | surface.rs `reads` :202–235 (ef75c07) ~ node.rs `people_lends` :618–647, among 12 symbols (`lends`, `standings`, `lends_in`, register.rs `standing`…) | 0.801–0.884 | **#101**: `reads` copied `people_lends`'s prelude, the groups an actor and this computer share and this computer's person in them. Fixed (70077c4). The rest of the cluster reads standings and lends each its own way, as at the last audits. |
+| 0.8 | web/app.js `open` :168–201, `enter` :199–238, `opening` :261–282 ~ web/open.js `start` :34–60 (ef75c07) | 0.818–0.855 | The group's page opening a lend and the lend's start page taking it: two halves of one handoff, neighbours in app.js. No change. |
+| 0.8 | crates/svrngs-node/src/api.rs `to_a_lend` :86–101 ~ origin.rs `lent` :54–70 (ef75c07, +4) | 0.821 | As at the last audit: a middleware routing by `Host` and its handler. No change. |
+| 0.8 | apps/movie-night/check/judge.py `bar1`, `bar2_3`, `bar4_*`, `bar5` ~ `main`; `count` ~ apps/taste/check/judge.py `count` (44784a4) | 0.809–0.916 | Each bar its own verdict; the two counts two spikes' rules, as at the last audit. No change. |
+| 0.8 | apps/movie-night/check/mn.mjs `choose`, `play`, `back` ~ person.mjs `judge`, `seek` ~ demo/ drive.mjs; mn.mjs `computer` ~ `limit` ~ `once` (44784a4) | 0.801–0.998 | #97's fork, which 44784a4 touched (a copy chosen by its lender); neighbours otherwise. No change here. |
+| 0.8 | apps/movie-night/app.js `card` ~ `render`; `listed` ~ picks/picks.js `group` (44784a4) | 0.820, 0.832 | Neighbours; `listed` asks one library, `group` lists the group's. No change. |
+
+**Window pass** (/tmp/composeaudit3/windows.py . 22d1a2c..2e6edc7, 5
+normalized lines, tests included): 191 hits, **4 new**, all one:
+crates/svrngs-node/tests/browser/main.rs:872–876 (`kept_page`, ef75c07) ==
+tests/door/origins.rs:234–238, :352–356, :408–412 and tests/door/sign_in.rs:120–124:
+the five lines that bind a listener and keep its heads, before each
+fake answers its own way (a range, a stream, an upgrade, an echo). Each
+answers differently and lives in another test binary but origins.rs, which
+browser/main.rs includes (:19–20); no change for the shared lines. Reading
+`kept_page` beside them found **#102**: it was `page_origin` (:432–451, the
+same file) with the heads kept. Fixed (484fea5).
+
+Reading the range for what neither pass would show:
+
+- **#103, not fixed.** `Host::standings` gives `None` when the groups held
+  cannot be listed (node.rs:407–413, a warn); `people_lends` and, copied
+  from it, `reads` read that as no group (`unwrap_or_default`, node.rs:627,
+  surface.rs:205 at 2e6edc7), so a computer that could not read its own
+  groups answers a member 403 "this computer lends nothing to you" and a
+  lent page 404 "nothing is lent here": an absence answered as a refusal
+  (AGENTS.md 6). Since #101 it is one line, node.rs `shared_with`. Not
+  fixed: a 503 there changes what both answer, and no test plants an
+  unlistable rail; `Node::lends` (node.rs:313) does the same for the
+  node's own round.
+- **#104, not fixed.** What a lent page is told of the lends it reads is
+  decided and shaped in two programs: which lends it reads, web/app.js:177
+  (`l.reads` holds `o.kind`, not itself, for the handoff's pass) and
+  surface.rs:226 (the same, by label); and the answer's shape `{kind, name,
+  lender, address}` and `unanswered`, web/lend.js:363–371 `told` and
+  surface.rs:229, :234. Each is held by its own test (tests/browser
+  `a_lent_page_is_told_…`, tests/surface `a_lent_page_asks_…`), neither
+  against the other's answer. As #50 judged a protocol constant across two
+  programs, but this is a rule, not a name: one home would be svrngs-web's
+  wasm deciding the page's half from the Rust both programs build. Not
+  small; not fixed. `READS_PATH`/`READS` (surface.rs:52, lend.js:53) cite
+  each other, as #50's header does. No change for them.
+- **#100 narrowed.** 44784a4 cut Movie Night's own read of svrngs's lend
+  store: apps/movie-night/app.js:20 asks GET /svrngs-reads. Still spelled:
+  apps/movie-night/picks/picks.js:20–49 (`svrngs-lend`, `kept`, `pass
+  <label>`, `baseOf`), apps/taste/check/other/other.js:6–14 and
+  apps/taste/check/su.mjs:171–172. picks.js is served at Movie Night's
+  origin, so /svrngs-reads answers it too, but it names each lend by its
+  key (:49), which the answer leaves out by design. Not fixed: an app's
+  change needs its run.
+- **web/open.js `start`** (ef75c07, :54–56): `back` resolved against the
+  page and kept only at its own origin, else `/`; no trace of its own, as
+  the lines around it have none. The worker's `opening` and `told` trace
+  each answer (lend.js:366, :377). No change.
+- **#57, #68, #70, #71, #75, #77, #79, #81, #89, #91, #95, #97, #99 still
+  open**, none touched in the range but #97 (mn.mjs, 44784a4, its forked
+  lines kept).
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff 22d1a2c 2e6edc7 -- crates apps web bridge`, added lines
+matching `\b(struct|enum|trait|type|class)\s+[A-Z]\w*`: one, a type alias,
+and no `struct`, `enum` or `trait`.
+
+| noun | converge | git grep (`(struct\|enum\|trait\|type\|class)[[:space:]]+KeptHeads\b`) |
+|---|---|---|
+| KeptHeads | definitions (0): "defined only in test code" (its scope leaves out `tests`) | 1, tests/browser/main.rs:896 |
+
+No noun with more than one definition. The alias names the
+`Arc<Mutex<Vec<String>>>` nine test fakes return unnamed
+(tests/door/origins.rs:97, :230, :348, :404; sign_in.rs:51, :116;
+door/main.rs:194; limit.rs:35; crates/svrngs/tests/share.rs:83); a name
+in one file of nine is no second concept. No change.
+
+### Fixed here
+
+- **#101** (70077c4). `Host::shared_with`: the groups an actor stands in
+  and this computer's person in the first it stands in too, for
+  `people_lends` and `reads`; `standings` private again. `cargo test -p
+  svrngs-node --lib --test surface --test door`: 90, 24, 4 passed;
+  `--test browser`: 10 passed. Counted +3.
+- **#102** (484fea5). `page_origin` is `kept_page(html).0`; 17 test lines
+  fewer. `--test browser`: 10 passed, both engines.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 101 | 8 | crates/svrngs-node/src/surface.rs:205–211 and node.rs:627–632, at 2e6edc7 | 70077c4 | `reads` copied `people_lends`'s groups-shared prelude; one method decides it. |
+| 102 | 8 | crates/svrngs-node/tests/browser/main.rs:868–894 and :432–451, at 2e6edc7 | 484fea5 | `kept_page` forked `page_origin` in the same file. |
+| 103 | 6 | crates/svrngs-node/src/node.rs `shared_with` (ex-:627, surface.rs:205), and :313, at 484fea5 | not fixed | Groups that could not be listed are read as none: a member refused 403, a lent page 404, where svrngs could not judge. |
+| 104 | 8 | web/app.js:177 and crates/svrngs-node/src/surface.rs:226; web/lend.js:363–371 and surface.rs:229, :234, at 2e6edc7 | not fixed | Which lends a page reads, and what it is told of them, decided and shaped in the page and the node, each held by its own test. |
+| 100 | 8 | apps/movie-night/picks/picks.js:20–49; apps/taste/check/other/other.js:6–14, su.mjs:171–172, at 2e6edc7 | narrowed (44784a4) | Movie Night's app.js no longer reads svrngs's lend store; Tonight's Picks and scoped use's other app still do. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 104 lines left (14646 / 14750). |
+| 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99 | as recorded | as recorded | not fixed | Untouched in the range but #97's lines, kept. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I9 | 6, 7 | `code dry-report` near tier | Still present: judge.py `bar4_before` :140–162 runs into `bar4_after`; mn.mjs `choose`/`play`/`back` overlap. |
+| I19 | 6 | dry-report's exact tier | Still present: web/ could-not-judge; a `tests` scope is always could-not-judge, its segment excluded, so #102 was found by reading. |
+| I21 | 6, 7 | `code index` and its embedder | Unchanged: `-b 8192 -ub 8192` finished `--full`. |
+| I24 | 6, 7 | `code dry-report` exact tier | Unchanged binary; its "0 exact" in Rust is still no evidence of no copy. The window pass ran over every file. |
