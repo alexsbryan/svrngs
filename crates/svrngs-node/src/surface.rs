@@ -223,7 +223,11 @@ pub(crate) async fn reads(at: &Asking, label: &svrngs_core::pass::Label) -> Resp
         .filter(|l| named(l).as_ref() != Some(label) && reading.offered.reads_one(&l.offered))
         .filter_map(|l| {
             let address = host.origin(&l.key, l.offered.name.as_str())?;
-            Some(serde_json::json!({ "kind": l.offered.kind, "name": l.offered.name, "lender": l.person, "address": address }))
+            let mut read = serde_json::json!({ "kind": l.offered.kind, "name": l.offered.name, "lender": l.person, "address": address });
+            if let Some(words) = &l.offered.asks {
+                read["asks"] = words.as_str().into();
+            }
+            Some(read)
         })
         .collect();
     tracing::debug!(target: "surface", %label, reads = ?reading.offered.reads, read = read.len(), unanswered = unanswered.len(),
