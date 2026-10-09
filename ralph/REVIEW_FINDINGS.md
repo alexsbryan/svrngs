@@ -4213,3 +4213,13 @@ in one file of nine is no second concept. No change.
 | I19 | 6 | dry-report's exact tier | Still present: web/ could-not-judge; a `tests` scope is always could-not-judge, its segment excluded, so #102 was found by reading. |
 | I21 | 6, 7 | `code index` and its embedder | Unchanged: `-b 8192 -ub 8192` finished `--full`. |
 | I24 | 6, 7 | `code dry-report` exact tier | Unchanged binary; its "0 exact" in Rust is still no evidence of no copy. The window pass ran over every file. |
+
+The row's check: `scripts/check.sh` started at decf376 (08:52, its code
+as at 55fff43), all 14 steps passed (principles pinned through app laws;
+the WebKit seek rate "failed, a rate" for wildcard and sam's 9892 ms
+through the lend "failed" in the app laws' table, neither failing its
+step, u5-11), exit 0 (/tmp/composeaudit3/check.out). Its first run, at
+4669120, failed clippy (decf376 above). While it ran the operator raised
+the budget to 15,200 (aaecbdb, 08:59) and queued sup (5e87364, 9a452e4,
+df842e8), none touching crates/, web/ or apps/ (`git diff --stat 55fff43
+df842e8`); against it, #80's 14,644 leaves 556.
