@@ -32,7 +32,8 @@
 //! starts a round when the append door signs onto a journal or a member comes
 //! back Online, so the sixty seconds
 //! is a ceiling on idleness rather than on a write. (svrngs: the record
-//! API's append door nudges, [`append`]; nothing else does yet.)
+//! API's append door nudges, [`append`], and the member door when a pass's
+//! signer is unknown to it, [`AskRound`], waiting on the round it starts.)
 //!
 //! # The exchange
 //!
@@ -88,7 +89,7 @@ use std::time::{Duration, Instant};
 
 use crate::peer_wire::{RingSyncRequest, RingSyncResponse, RING_SYNC_OPS_BUDGET_BYTES};
 use crate::{RailError, RingRail};
-use tokio::sync::Notify;
+use tokio::sync::{watch, Notify};
 use tracing::{debug, info, warn};
 
 mod journal;
@@ -156,6 +157,37 @@ pub struct RoundOutcome {
     pub ops_pushed: usize,
 }
 
+/// How many rounds have begun and how many have ended, written by the loop
+/// alone: rounds run one at a time, so the last ended is the `ended`th.
+pub type Rounds = watch::Sender<(u64, u64)>;
+
+/// A round asked for now and waited on (mnp-1): what a door holds to ask
+/// the group's ring once before it answers a signer it does not know.
+/// Asks while a round runs share the next round, as nudges do.
+#[derive(Clone)]
+pub struct AskRound {
+    nudge: Arc<Notify>,
+    rounds: watch::Receiver<(u64, u64)>,
+}
+
+impl AskRound {
+    pub fn new(nudge: Arc<Notify>, rounds: &Rounds) -> Self {
+        let rounds = rounds.subscribe();
+        Self { nudge, rounds }
+    }
+
+    /// Wake the round now and wait, at most `within`, for a round begun
+    /// after this ask to end: whether one did.
+    pub async fn now(&self, within: Duration) -> bool {
+        let mut rounds = self.rounds.clone();
+        let after = rounds.borrow().0 + 1;
+        self.nudge.notify_one();
+        let ended = rounds.wait_for(|&(_, ended)| ended >= after);
+        let ended = matches!(tokio::time::timeout(within, ended).await, Ok(Ok(_)));
+        ended
+    }
+}
+
 /// Spawn the periodic ring-sync task. Call once per daemon start.
 ///
 /// Runs one round **immediately** before entering the interval, because the
@@ -172,11 +204,13 @@ pub struct RoundOutcome {
 /// be the same number: the nudge starts a round now, and the round is the same
 /// round. **Nothing about the sender census changes** — the pump does not talk
 /// to a peer, it asks this loop to. (svrngs: of those writers, the record
-/// API's append door alone exists, [`append`].)
+/// API's append door, [`append`]; beside it the member door asks one,
+/// [`AskRound`], and `rounds` counts them begun and ended for it.)
 pub fn spawn_ring_sync_loop(
     host: Arc<Host>,
     interval: Duration,
     nudge: Arc<Notify>,
+    rounds: Rounds,
 ) -> RingSyncHandle {
     let task = tokio::spawn(async move {
         info!(
@@ -189,7 +223,9 @@ pub fn spawn_ring_sync_loop(
                 reason = "times a round for its trace; no decision reads it"
             )]
             let started = Instant::now();
+            rounds.send_modify(|(begun, _)| *begun += 1);
             let outcome = run_one_round(host.as_ref()).await;
+            rounds.send_modify(|(begun, ended)| *ended = *begun);
             if outcome.namespaces > 0 {
                 debug!(
                     namespaces = outcome.namespaces,

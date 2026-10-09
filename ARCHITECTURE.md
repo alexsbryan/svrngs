@@ -172,7 +172,9 @@ live lane share, the accept loop serving
 the sync route's router on the members' ALPN and the redemption route on
 the second, and the round, which runs at start, every sixty seconds and at
 once after an app's append (one `Notify`, held by the round and the record
-API)
+API), and when the member door meets a pass whose signer stands in no
+group held here, which waits up to 10 s for a round begun after its ask to
+end before it answers (`ring_sync::AskRound`, mnp-1)
 (`Node::round` runs one now; `Node::sync_with` runs one exchange with a
 peer the register may not name yet).
 

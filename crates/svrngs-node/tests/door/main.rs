@@ -17,6 +17,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 mod limit;
+mod newcomer;
 mod origins;
 mod sign_in;
 

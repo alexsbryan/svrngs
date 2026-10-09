@@ -195,6 +195,11 @@ impl Refused {
     }
 }
 
+/// How long the door waits on the group's ring for a pass's unknown
+/// signer: a round over awake peers takes well under a second on a relay;
+/// one a peer asleep holds ends past this, and the pass is refused as before.
+const ASK_WITHIN: Duration = Duration::from_secs(10);
+
 /// Where a request for a lend starts.
 pub const LEND_ROUTE: &str = "/lend/";
 
@@ -230,6 +235,8 @@ const HOP_BY_HOP: [&str; 8] = [
 #[derive(Clone)]
 pub struct Door {
     pub rail: Arc<RingRail>,
+    /// A round of the group's ring, asked for a pass's unknown signer.
+    pub ring: crate::ring_sync::AskRound,
     /// This computer's key, which its lends' labels name.
     pub key: [u8; 32],
     pub data_dir: PathBuf,
@@ -749,8 +756,11 @@ fn unix_now() -> i64 {
 /// pass must open it to that key now, and its signer stand in a group held
 /// here. A refusal names no group, and says only that this is not open to
 /// the asker, with `kind: "pass"`, so a runtime holding the pass knows to
-/// ask its person's page for another.
-fn holder_of(
+/// ask its person's page for another. A signer standing in no group held
+/// here is asked of the group's ring once, a round within [`ASK_WITHIN`],
+/// before the refusal: a person admitted at another computer is known here
+/// only after a round (mnp-1).
+async fn holder_of(
     door: &Door,
     holder: &Dialer,
     headers: &HeaderMap,
@@ -778,7 +788,16 @@ fn holder_of(
     if let Err(fault) = pass.check(&key, &label, unix_now()) {
         return Err(refused(&fault.to_string()));
     }
-    let Some((group, person)) = door.rail.standing_anywhere(&pass.person) else {
+    let mut standing = door.rail.standing_anywhere(&pass.person);
+    if standing.is_none() {
+        tracing::debug!(target: "door", holder = key, signer = pass.person, lend = %lend.name,
+            "door: the pass's signer stands in no group held here, so the group's ring is asked once first");
+        let ended = door.ring.now(ASK_WITHIN).await;
+        standing = door.rail.standing_anywhere(&pass.person);
+        tracing::debug!(target: "door", signer = pass.person, ended, known = standing.is_some(),
+            "door: the ring asked — whether a round ended in time, and whether the signer stands now");
+    }
+    let Some((group, person)) = standing else {
         return Err(refused("its signer stands in no group held here"));
     };
     tracing::debug!(target: "door", holder = key, person = person.as_str(), lend = %lend.name, until = pass.until,
@@ -864,7 +883,7 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
         app,
     } = match pending {
         Pending::Known(asker) => asker,
-        Pending::Pass(holder) => match holder_of(door, &holder, req.headers(), &lend) {
+        Pending::Pass(holder) => match holder_of(door, &holder, req.headers(), &lend).await {
             Ok(asker) => asker,
             Err(refused) => return refused,
         },

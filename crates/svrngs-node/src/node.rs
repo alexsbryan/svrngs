@@ -71,8 +71,8 @@ use crate::redeem::SeedText;
 use crate::register::{Member, Standing};
 use crate::ring_routes::{self, err, RingInbound};
 use crate::ring_sync::{
-    exchange, peer_client, run_one_round, spawn_ring_sync_loop, ExchangeOutcome, ExchangeStop,
-    RingSyncHandle, RoundMembers, RoundOutcome, DEFAULT_RING_SYNC_INTERVAL,
+    exchange, peer_client, run_one_round, spawn_ring_sync_loop, AskRound, ExchangeOutcome,
+    ExchangeStop, RingSyncHandle, RoundMembers, RoundOutcome, Rounds, DEFAULT_RING_SYNC_INTERVAL,
 };
 use crate::{actor_of, Person, RingRail, SigningKey};
 
@@ -209,7 +209,9 @@ impl Node {
             api_port: api.addr().port(),
             room: tokio::sync::watch::Sender::new(BTreeMap::new()),
         });
+        let rounds = Rounds::new((0, 0));
         let door = crate::door::Door {
+            ring: AskRound::new(nudge.clone(), &rounds),
             rail: rail.clone(),
             key: endpoint.id().as_bytes().to_owned(),
             data_dir: data_dir.clone(),
@@ -265,7 +267,7 @@ impl Node {
                     None => Admit::Refuse,
                 }
             });
-        let round = spawn_ring_sync_loop(host.clone(), every, nudge);
+        let round = spawn_ring_sync_loop(host.clone(), every, nudge, rounds);
         Ok(Self {
             host,
             asking: room,
