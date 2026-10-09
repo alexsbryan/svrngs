@@ -19,8 +19,8 @@ use std::time::{Duration, Instant};
 use axum::body::Body;
 use axum::extract::State;
 use axum::http::{header, HeaderMap, StatusCode, Uri};
-use axum::response::{IntoResponse, Response};
-use axum::routing::{get, post};
+use axum::response::{AppendHeaders, IntoResponse, Response};
+use axum::routing::get;
 use axum::{Json, Router};
 use iroh::endpoint::Connection;
 use iroh_blobs::api::blobs::{AddPathOptions, ImportMode};
@@ -147,10 +147,7 @@ impl Folders {
     /// act naming them in every group held here. A link is not followed,
     /// since it may reach outside the folder.
     pub async fn share(&self, dir: &Path) -> Result<ShareFolder, FolderError> {
-        let name = dir
-            .file_name()
-            .map(|n| n.to_string_lossy().into_owned())
-            .unwrap_or_default();
+        let name = dir.file_name().unwrap_or_default().to_string_lossy();
         let mut files = Vec::new();
         let mut walk = vec![dir.to_path_buf()];
         while let Some(at) = walk.pop() {
@@ -174,14 +171,10 @@ impl Folders {
                     };
                     let tag = self.store.add_path_with_opts(options).with_tag().await;
                     let tag = tag.map_err(|e| FolderError::Store(path.clone(), e.to_string()))?;
-                    let rel = path
-                        .strip_prefix(dir)
-                        .unwrap_or(&path)
-                        .to_string_lossy()
-                        .into_owned();
+                    let rel = path.strip_prefix(dir).unwrap_or(&path).to_string_lossy();
                     tracing::debug!(target: "folder", path = %rel, hash = %tag.hash, size = meta.len(), "folder: a file taken by reference");
                     files.push(SharedFile {
-                        path: rel,
+                        path: rel.into_owned(),
                         size: meta.len(),
                         hash: FileHash(*tag.hash.as_bytes()),
                     });
@@ -189,6 +182,7 @@ impl Folders {
             }
         }
         files.sort();
+        let name = name.into_owned();
         self.write(ShareFolder { name, files }).await
     }
 
@@ -268,23 +262,21 @@ impl Folders {
             let got = tokio::time::timeout(within, self.fetch(key, missing.clone())).await;
             let said = match got {
                 Ok(Ok(stats)) => {
-                    self.unanswered.send_modify(|m| {
-                        m.remove(key);
-                    });
+                    self.unanswered
+                        .send_if_modified(|m| m.remove(key).is_some());
                     tracing::info!(target: "folder", hash = %hash, holder = %key, start, end, payload = stats.payload_bytes_read, other = stats.other_bytes_read, ms = t0.elapsed().as_millis() as u64, "folder: fetched, verified");
                     return Ok(Some(key.clone()));
                 }
                 Ok(Err(e)) => e,
                 Err(_) => {
-                    self.unanswered.send_modify(|m| {
-                        m.insert(key.clone(), Instant::now());
-                    });
+                    // Kept whether new or not; nothing waits on a change.
+                    let at = Instant::now();
+                    self.unanswered
+                        .send_if_modified(|m| m.insert(key.clone(), at).is_none());
                     format!("did not answer within {within:?}")
                 }
             };
-            self.conns.send_modify(|m| {
-                m.remove(key);
-            });
+            self.conns.send_if_modified(|m| m.remove(key).is_some());
             tracing::warn!(target: "folder", hash = %hash, holder = %key, start, end, why = %said, "folder: a holder gave nothing of the range");
             why.push((key.clone(), said));
         }
@@ -311,9 +303,8 @@ impl Folders {
                     .connect(peer, Alpn::Blobs.bytes())
                     .await
                     .map_err(|e| format!("the dial: {e}"))?;
-                self.conns.send_modify(|m| {
-                    m.insert(key.into(), c.clone());
-                });
+                self.conns
+                    .send_modify(|m| drop(m.insert(key.into(), c.clone())));
                 c
             }
         };
@@ -381,16 +372,14 @@ fn provider(store: &Store, folders: Folders) -> BlobsProtocol {
     reason = "the endpoint is an adapter: it times each answer it logs"
 )]
 async fn bytes(State(f): State<Folders>, uri: Uri, headers: HeaderMap) -> Response {
-    let ua = headers
-        .get(header::USER_AGENT)
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("")
-        .to_string();
-    let asked = headers
-        .get(header::RANGE)
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("")
-        .to_string();
+    let said = |name| {
+        headers
+            .get(name)
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("")
+            .to_string()
+    };
+    let (ua, asked) = (said(header::USER_AGENT), said(header::RANGE));
     let path = uri.path().trim_start_matches('/');
     let named = FileHash::parse(path.split('/').next().unwrap_or(""));
     let folders = f.all();
@@ -403,9 +392,10 @@ async fn bytes(State(f): State<Folders>, uri: Uri, headers: HeaderMap) -> Respon
     });
     let Some(file) = file else {
         tracing::info!(target: "folder", path, %ua, "folder: refused — no standing folder names the hash");
+        let refused = [("x-svrngs-refused", "not-shared")];
         return (
             StatusCode::NOT_FOUND,
-            [("x-svrngs-refused", "not-shared")],
+            refused,
             "no folder shared in your groups names this hash\n",
         )
             .into_response();
@@ -416,15 +406,12 @@ async fn bytes(State(f): State<Folders>, uri: Uri, headers: HeaderMap) -> Respon
         .map(|d| d.key.clone())
         .collect();
     let size = file.size;
-    let (start, end) = match range(&asked, size) {
-        Some(r) => r,
-        None => {
-            return (
-                StatusCode::RANGE_NOT_SATISFIABLE,
-                [(header::CONTENT_RANGE, format!("bytes */{size}"))],
-            )
-                .into_response()
-        }
+    let Some((start, end)) = range(&asked, size) else {
+        return (
+            StatusCode::RANGE_NOT_SATISFIABLE,
+            [(header::CONTENT_RANGE, format!("bytes */{size}"))],
+        )
+            .into_response();
     };
     let hash = Hash::from_bytes(file.hash.0);
     let first = (start + PIECE).min(end);
@@ -453,27 +440,20 @@ async fn bytes(State(f): State<Folders>, uri: Uri, headers: HeaderMap) -> Respon
                 return None;
             }
             let to = (at + PIECE).min(end);
-            if let Err(why) = f.hold(hash, &holders, at, to).await {
-                tracing::warn!(target: "folder", %hash, start = at, end = to, ?why, "folder: refused mid-answer — no holder gave the range, verified");
-                return Some((
-                    Err(std::io::Error::other("no holder gave the range, verified")),
-                    (f, holders, end, served),
-                ));
-            }
-            let read = f
-                .store
-                .blobs()
-                .export_ranges(hash, at..to)
-                .concatenate()
-                .await;
-            let piece = match read {
-                Ok(b) => b,
-                Err(e) => {
-                    return Some((
-                        Err(std::io::Error::other(e.to_string())),
-                        (f, holders, end, served),
-                    ))
-                }
+            let piece = match f.hold(hash, &holders, at, to).await {
+                Err(why) => Err(format!("no holder gave the range, verified: {why:?}")),
+                Ok(_) => (f
+                    .store
+                    .blobs()
+                    .export_ranges(hash, at..to)
+                    .concatenate()
+                    .await)
+                    .map_err(|e| e.to_string()),
+            };
+            let Ok(piece) = piece.inspect_err(|why| {
+                tracing::warn!(target: "folder", %hash, start = at, end = to, why, "folder: refused mid-answer");
+            }) else {
+                return Some((Err(std::io::Error::other("no holder gave the range, verified")), (f, holders, end, served)));
             };
             served.sent += piece.len() as u64;
             served.digest.update(&piece);
@@ -483,24 +463,23 @@ async fn bytes(State(f): State<Folders>, uri: Uri, headers: HeaderMap) -> Respon
     let content = uri
         .query()
         .and_then(|q| q.strip_prefix("type="))
-        .unwrap_or("application/octet-stream")
-        .replace("%2F", "/");
-    let mut response = Response::new(Body::from_stream(stream));
-    let h = response.headers_mut();
-    h.insert(header::ACCEPT_RANGES, "bytes".parse().expect("a header"));
-    h.insert(header::CONTENT_LENGTH, (end - start).into());
-    h.insert(
-        header::CONTENT_TYPE,
-        content
-            .parse()
-            .unwrap_or(header::HeaderValue::from_static("application/octet-stream")),
-    );
-    if !asked.is_empty() {
-        let span = format!("bytes {start}-{}/{size}", end - 1);
-        h.insert(header::CONTENT_RANGE, span.parse().expect("a header"));
-        *response.status_mut() = StatusCode::PARTIAL_CONTENT;
-    }
-    response
+        .unwrap_or("application/octet-stream");
+    let mut h = vec![
+        (header::ACCEPT_RANGES, "bytes".to_string()),
+        (header::CONTENT_LENGTH, (end - start).to_string()),
+        (header::CONTENT_TYPE, content.replace("%2F", "/")),
+    ];
+    let status = match asked.is_empty() {
+        true => StatusCode::OK,
+        false => {
+            h.push((
+                header::CONTENT_RANGE,
+                format!("bytes {start}-{}/{size}", end - 1),
+            ));
+            StatusCode::PARTIAL_CONTENT
+        }
+    };
+    (status, AppendHeaders(h), Body::from_stream(stream)).into_response()
 }
 
 /// `bytes=a-b` or `bytes=a-` within `size`, as `[start, end)`; none asked
@@ -511,10 +490,9 @@ fn range(asked: &str, size: u64) -> Option<(u64, u64)> {
     }
     let (a, b) = asked.strip_prefix("bytes=")?.split_once('-')?;
     let start: u64 = a.parse().ok()?;
-    let end = if b.is_empty() {
-        size
-    } else {
-        b.parse::<u64>().ok()?.saturating_add(1).min(size)
+    let end = match b {
+        "" => size,
+        b => b.parse::<u64>().ok()?.saturating_add(1).min(size),
     };
     (start < end).then_some((start, end))
 }
@@ -535,11 +513,12 @@ impl Drop for Served {
     }
 }
 
-/// The record API's folder routes: what this computer's apps ask.
+/// The record API's folder routes: what this computer's apps ask. GET
+/// names the endpoint, every standing folder and the holders lately
+/// unanswered; POST shares a folder or stops one.
 pub(crate) fn router(folders: Folders) -> Router {
     Router::new()
-        .route("/v1/folders", get(list).post(share))
-        .route("/v1/folders/unshare", post(unshare))
+        .route("/v1/folders", get(list).post(ask))
         .with_state(folders)
 }
 
@@ -550,22 +529,22 @@ async fn list(State(f): State<Folders>) -> Json<serde_json::Value> {
     )
 }
 
-#[derive(serde::Deserialize)]
-struct Asked {
-    dir: Option<PathBuf>,
-    name: Option<String>,
+/// What `svrngs share --folder` and `unshare --folder` ask of the running
+/// node, the one process that writes this computer's acts: `{"share": dir}`
+/// or `{"stop": name}`.
+#[derive(Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum FolderAsk {
+    Share(PathBuf),
+    Stop(String),
 }
 
-async fn share(State(f): State<Folders>, Json(a): Json<Asked>) -> Response {
-    answer(f.share(&a.dir.unwrap_or_default()).await)
-}
-
-async fn unshare(State(f): State<Folders>, Json(a): Json<Asked>) -> Response {
-    answer(f.unshare(&a.name.unwrap_or_default()).await)
-}
-
-fn answer(r: Result<ShareFolder, FolderError>) -> Response {
-    match r {
+async fn ask(State(f): State<Folders>, Json(asked): Json<FolderAsk>) -> Response {
+    let done = match asked {
+        FolderAsk::Share(dir) => f.share(&dir).await,
+        FolderAsk::Stop(name) => f.unshare(&name).await,
+    };
+    match done {
         Ok(f) => Json(serde_json::json!({ "name": f.name, "files": f.files })).into_response(),
         Err(e) => (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()).into_response(),
     }
