@@ -34,9 +34,15 @@ async fn start(seed: u8, dir: &Path) -> Node {
     let relay = RelayConfig::from_parts(Vec::new(), Some("none"))
         .unwrap()
         .on_loopback_only();
-    Node::start(dir.to_path_buf(), signing(seed), &relay, seed_file, "127.0.0.1:0".parse().unwrap())
-        .await
-        .expect("a node starts")
+    Node::start(
+        dir.to_path_buf(),
+        signing(seed),
+        &relay,
+        seed_file,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("a node starts")
 }
 
 /// Ana's group, Ben and Cy admitted, each computer knowing where the
@@ -127,7 +133,11 @@ async fn ask(node: &Node, body: serde_json::Value) -> serde_json::Value {
         .send()
         .await
         .unwrap();
-    assert!(answer.status().is_success(), "{}", answer.text().await.unwrap());
+    assert!(
+        answer.status().is_success(),
+        "{}",
+        answer.text().await.unwrap()
+    );
     answer.json().await.unwrap()
 }
 
@@ -165,7 +175,10 @@ async fn get_range(ben: &Node, hash: &str, start: u64, end: u64) -> (u16, Vec<u8
     .expect("the endpoint answers")
     .unwrap();
     let status = answer.status().as_u16();
-    (status, answer.bytes().await.map(|b| b.to_vec()).unwrap_or_default())
+    (
+        status,
+        answer.bytes().await.map(|b| b.to_vec()).unwrap_or_default(),
+    )
 }
 
 /// Ana's folder of one 3 MiB file, a link inside it to a file beside it.
@@ -198,7 +211,11 @@ async fn a_range_at_the_meeting_point_is_the_holder_s_bytes_verified() {
         .iter()
         .map(|f| f["path"].as_str().unwrap())
         .collect();
-    assert_eq!(paths, vec!["film.bin"], "the link is not shared: {shared:#}");
+    assert_eq!(
+        paths,
+        vec!["film.bin"],
+        "the link is not shared: {shared:#}"
+    );
     let hash = shared["files"][0]["hash"].as_str().unwrap().to_string();
     assert_eq!(hash, blake3::hash(&film).to_hex().as_str());
     round(&group.ben).await;
@@ -206,7 +223,10 @@ async fn a_range_at_the_meeting_point_is_the_holder_s_bytes_verified() {
     let (start, end) = ((1 << 20) - 5, (2 << 20) + 100);
     let (status, body) = get_range(&group.ben, &hash, start, end).await;
     assert_eq!(status, 206);
-    assert!(body == film[start as usize..=end as usize], "the range is Ana's bytes");
+    assert!(
+        body == film[start as usize..=end as usize],
+        "the range is Ana's bytes"
+    );
     let (status, _) = get_range(&group.ben, &"0".repeat(64), 0, 9).await;
     assert_eq!(status, 404, "a hash no folder names is refused");
     group.close().await;
@@ -231,7 +251,11 @@ async fn a_holder_whose_bytes_do_not_match_the_hash_is_refused_by_name() {
     let (status, body) = get_range(&group.ben, &hash, 0, 200_000).await;
     let said: serde_json::Value = serde_json::from_slice(&body).unwrap_or_default();
     assert_eq!(status, 502, "{said:#}");
-    assert_eq!(said["holders"][0][0], actor_of(&signing(1)), "Ana is named: {said:#}");
+    assert_eq!(
+        said["holders"][0][0],
+        actor_of(&signing(1)),
+        "Ana is named: {said:#}"
+    );
     assert_eq!(said["hash"], hash.as_str());
     group.close().await;
 }
@@ -262,7 +286,10 @@ async fn a_holder_s_provider_refuses_a_hash_she_stopped_sharing() {
     group.ana.rail().commit(&group.id, &stop).unwrap().unwrap();
     let (status, body) = get_range(&group.ben, &hash, 2 << 20, (2 << 20) + 9).await;
     let said: serde_json::Value = serde_json::from_slice(&body).unwrap_or_default();
-    assert_eq!(status, 502, "Ana's provider refuses what she stopped sharing");
+    assert_eq!(
+        status, 502,
+        "Ana's provider refuses what she stopped sharing"
+    );
     assert_eq!(said["holders"][0][0], actor_of(&signing(1)), "{said:#}");
     round(&group.ben).await;
     let (status, _) = get_range(&group.ben, &hash, 0, 9).await;
