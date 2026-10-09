@@ -85,10 +85,13 @@ pub fn router(api: RailApi, apps: Router, lends: Router) -> Router {
 }
 
 /// A request whose `Host` is a lend's, `<label>.localhost`, goes to the
-/// lend's origin and never to the record (u5-2).
+/// lend's origin and never to the record (u5-2); one whose `Host` is the
+/// home page's, `svrngs.localhost`, to the home page (sup-2,
+/// [`crate::home`]), which `lends` serves beside the origins.
 async fn to_a_lend(State(lends): State<Router>, request: Request, next: Next) -> Response {
     use tower::ServiceExt;
-    if crate::origin::label_of(request.headers().get(axum::http::header::HOST)).is_none() {
+    let host = request.headers().get(axum::http::header::HOST);
+    if crate::origin::label_of(host).is_none() && !crate::home::named(host) {
         return next.run(request).await;
     }
     match lends.oneshot(request).await {

@@ -148,7 +148,7 @@ pub struct Host {
     transport: Arc<IrohTransport>,
     actor: String,
     /// The record API's port, where each lend has its origin (u5-2).
-    api_port: u16,
+    pub(crate) api_port: u16,
     /// Each lend the room door serves, and where (u6-1, [`crate::room`]):
     /// written by the room alone, read by `/v1/lends`.
     pub(crate) room: tokio::sync::watch::Sender<BTreeMap<Label, SocketAddr>>,
@@ -237,15 +237,16 @@ impl Node {
             key,
         };
         // The record, and beside it what an app asks of this computer (u5-1).
+        let rail_api = RailApi {
+            rail: rail.clone(),
+            nudge: nudge.clone(),
+            live: live.clone(),
+            transport,
+        };
         let routes = crate::api::router(
-            RailApi {
-                rail: rail.clone(),
-                nudge: nudge.clone(),
-                live: live.clone(),
-                transport,
-            },
+            rail_api.clone(),
             crate::surface::router(asking.clone(), seeds),
-            crate::origin::router(asking.clone()),
+            crate::home::router(asking.clone(), seeds, rail_api),
         );
         let api = crate::api::serve(routes.clone(), api);
         if let Err(e) = crate::api::write_address(&data_dir, api.addr()) {
@@ -442,14 +443,21 @@ impl Host {
     /// The groups held here that `actor` stands in, as [`Self::standings`]
     /// gives them, and this computer's person in the first of them it
     /// stands in too: whom a group's lends are answered to, and as whom.
-    pub(crate) fn shared_with(&self, actor: &str) -> (Groups, Option<Person>) {
-        let mut groups = self.standings().unwrap_or_default();
+    /// Groups that cannot be listed are svrngs's refusal, never no group
+    /// (ralph/REVIEW_FINDINGS.md #103).
+    pub(crate) fn shared_with(&self, actor: &str) -> Result<(Groups, Option<Person>), Response> {
+        let Some(mut groups) = self.standings() else {
+            return Err(crate::door::LendRefusal::Fault.say(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "the groups this computer is in cannot be read on it",
+            ));
+        };
         groups.retain(|(_, standing)| standing.contains_key(actor));
         let own = groups
             .iter()
             .find_map(|(_, standing)| standing.get(&self.actor))
             .map(|m| m.person.clone());
-        (groups, own)
+        Ok((groups, own))
     }
 
     /// Every key standing in `groups` that is dialled — a computer's,
@@ -672,7 +680,10 @@ async fn people_lends(State(at): State<Asking>, dialer: Option<Extension<Dialer>
         );
     };
     let asker = dialer.actor();
-    let (groups, own) = at.host.shared_with(&asker);
+    let (groups, own) = match at.host.shared_with(&asker) {
+        Ok(shared) => shared,
+        Err(refused) => return refused,
+    };
     let Some(own) = own else {
         tracing::debug!(target: "node", asker, "node: people's lends refused — the dialer stands in no group this computer stands in");
         return err(StatusCode::FORBIDDEN, "this computer lends nothing to you");

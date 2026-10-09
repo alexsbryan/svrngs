@@ -75,6 +75,8 @@ pub mod rail;
 pub mod surface;
 // Every lend at an origin of its own on this computer's loopback, u5-2's
 // (docs/DESIGN.md §3, "Lent apps", call 1), on the same listener.
+/// The home page at `svrngs.localhost` (sup-2).
+pub mod home;
 pub mod origin;
 // The room door, u6-1's (docs/DESIGN.md §3, "The room"): the lends a
 // person names, served to this computer's network while the command runs.

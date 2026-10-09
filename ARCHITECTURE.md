@@ -373,6 +373,34 @@ first 64 KiB. Such a page goes `no-store`, without `ETag` or
 `Last-Modified`, and a request accepting `text/html` from a person with a
 script goes without `If-None-Match` and `If-Modified-Since`. A lend with no
 sign-in is carried as before.
+
+A lend may ask (sup-2; DESIGN §3, "What an app gets"): `asks` in its
+declaration, its lender's words, set by `svrngs share --ask`, carried in
+`lend::Offered.asks` on every list and never read. `door/choices.rs` holds
+what its door keeps and decides: each person's `Choice { said: Yes | Stop,
+at }` per app at `<data dir>/choices/<lend>.json` (`lend::choices_path`),
+written through `Choices`, one task, read on each request for a lend that
+asks; `judge`, the one check in `lend_for` before the path check, carries a
+lend asking nobody and its own pages, and refuses `unasked` or `stopped`.
+`POST /choices/<lend>` on the members' protocol takes the dialler's person's
+`{app, said}`; with a pass, on either protocol, only `{said: "stop"}` (the
+type `Stopping`). `GET /choices/<lend>` answers the dialler's own. Every
+choice and sign-in answer is keyed by `door::PersonKey`, which only the
+door makes. `lend::withdraw` removes them with the lend.
+
+The home page (`home.rs`, sup-2), `http://svrngs.localhost:<api port>/`, is
+routed by its `Host` (`api::to_a_lend`) beside the lends' origins and
+served only at its exact host and port: a read only from its own origin, a
+typed address or a navigation, a write only from its own origin with its
+exact `Origin` (`only_itself`), every answer `default-src 'self';
+frame-ancestors 'none'`. It serves `home/index.html`, `home/home.js` and
+`home/home.css`, the record API's `/v1/groups`, `/v1/lends` and
+`/v1/rail/people` from the same routers, and `/choices`, kept by this
+computer's door for its own lends and dialled to the lender's otherwise
+(`origin::dialled`). A lend's page stops itself at its origin, `POST
+/svrngs-reads/<label>/svrngs-stop`, carried the same way with the pass its
+origin signs. `/svrngs-reads` gives each asked lend's `asks` and its `ask`
+address there.
 `Node::lends` asks every other computer's key standing in a group held, at once, and
 answers each lend with whose it is and its address on this computer's
 loopback, the dialler's bridge to its lender then `/lend/<name>/`; a

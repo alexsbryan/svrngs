@@ -24,12 +24,14 @@
 //! keeps it. The app is carried as the door's [`Who::Own`] to this
 //! computer's own lend, and to another computer's in a pass this computer
 //! signs for itself ([`own_pass`]), so the far door reads it from the one
-//! carrier a phone's request brings too.
+//! carrier a phone's request brings too. A page stops its own app using a
+//! lend, `POST /svrngs-reads/<label>/svrngs-stop` at its origin (sup-2),
+//! carried the same way ([`crate::home::stop`]).
 
 use axum::body::Body;
 use axum::extract::{Request, State};
 use axum::http::header::{self, HeaderMap, HeaderValue};
-use axum::http::{StatusCode, Uri};
+use axum::http::{Method, StatusCode, Uri};
 use axum::response::{IntoResponse, Response};
 use axum::Router;
 use svrngs_core::pass::{Label, Pass};
@@ -100,7 +102,7 @@ fn app_of(headers: &HeaderMap, host: &Label) -> Option<Label> {
 async fn kept_to_reads(at: &Asking, app: &Label, label: &Label) -> Result<(), Response> {
     let (reader, read) = (hex::encode(app.lender()), hex::encode(label.lender()));
     let this = at.host.actor();
-    let (groups, _) = at.host.shared_with(&reader);
+    let (groups, _) = at.host.shared_with(&reader)?;
     if !groups
         .iter()
         .any(|(_, s)| s.contains_key(this) && s.contains_key(&read))
@@ -182,6 +184,16 @@ async fn lent(State(at): State<Asking>, req: Request) -> Response {
             "a page reaches another lend only by fetch, which says where it is from",
         );
     };
+    let stop = req.uri().path().strip_prefix(crate::surface::READS_PATH);
+    let stop = stop.and_then(|p| p.strip_prefix('/')?.strip_suffix("/svrngs-stop"));
+    if let Some(lend) = stop
+        .and_then(Label::parse)
+        .filter(|_| req.method() == Method::POST)
+    {
+        tracing::debug!(target: "origin", %label, %app, %lend, "origin: a page stops its app using a lend");
+        let pass = own_pass(&at, &app, &lend);
+        return crate::home::say(&at, &lend, app, crate::door::choices::Said::Stop, pass).await;
+    }
     if app != label {
         if let Err(refused) = kept_to_reads(&at, &app, &label).await {
             return refused;

@@ -730,6 +730,11 @@ impl std::fmt::Display for Said {
                     f,
                     "Apps on this computer reach your groups at http://{api}."
                 )?;
+                writeln!(
+                    f,
+                    "Your groups, and what apps use of them, open at http://svrngs.localhost:{}/.",
+                    api.port()
+                )?;
                 for lent in &lends.lent {
                     let (name, kind) = (&lent.offered.name, &lent.offered.kind);
                     let what = if name.as_str() == kind.as_str() {

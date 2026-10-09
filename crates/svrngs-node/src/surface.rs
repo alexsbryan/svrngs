@@ -198,12 +198,18 @@ async fn lends(State(at): State<Surface>, Query(q): Query<RailQuery>) -> Respons
 /// `GET /svrngs-reads` at the origin of the lend `label` (mnp-2): each lend
 /// of a kind its lender declared it reads, in the groups its lender and this
 /// computer stand in — its kind, name, lender's person and the origin this
-/// computer's browser asks it at — and whose computer did not answer. No
+/// computer's browser asks it at; for a lend that asks, its lender's words,
+/// `asks`, and `ask`, where the page sends its person to say yes, on the
+/// home page ([`crate::home`]; the page adds `&back=<its path>`) — and
+/// whose computer did not answer. No
 /// key: a page needs none to ask, and the address is all it builds on.
 pub(crate) async fn reads(at: &Asking, label: &svrngs_core::pass::Label) -> Response {
     let reader = hex::encode(label.lender());
     let host = &at.host;
-    let (mut groups, own) = host.shared_with(&reader);
+    let (mut groups, own) = match host.shared_with(&reader) {
+        Ok(shared) => shared,
+        Err(refused) => return refused,
+    };
     groups.retain(|(_, s)| s.contains_key(host.actor()));
     let Some(own) = own else {
         tracing::debug!(target: "surface", %label, "surface: reads refused — its lender and this computer share no group");
@@ -226,6 +232,7 @@ pub(crate) async fn reads(at: &Asking, label: &svrngs_core::pass::Label) -> Resp
             let mut read = serde_json::json!({ "kind": l.offered.kind, "name": l.offered.name, "lender": l.person, "address": address });
             if let Some(words) = &l.offered.asks {
                 read["asks"] = words.as_str().into();
+                read["ask"] = crate::home::ask_address(host.api_port, &named(l)?, label).into();
             }
             Some(read)
         })

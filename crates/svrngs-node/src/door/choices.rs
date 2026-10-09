@@ -334,5 +334,31 @@ pub(super) async fn choices_of(
     }
 }
 
+/// This computer's person's `said` of `app` on its own lend `label`, with
+/// no dial: the home page's and its origin's ([`crate::home`]).
+pub(crate) async fn own_choose(door: &Door, label: &Label, app: Label, said: Said) -> Response {
+    match found(door, label.as_str()) {
+        Ok(lend) => {
+            keep(
+                door,
+                &lend,
+                PersonKey::resolved(hex::encode(door.key)),
+                app,
+                said,
+            )
+            .await
+        }
+        Err(refused) => refused,
+    }
+}
+
+/// This computer's person's choices on its own lend `label`.
+pub(crate) fn own_choices(door: &Door, label: &Label) -> Response {
+    match found(door, label.as_str()) {
+        Ok(lend) => kept(door, &lend, &PersonKey::resolved(hex::encode(door.key))),
+        Err(refused) => refused,
+    }
+}
+
 #[cfg(test)]
 mod tests;
