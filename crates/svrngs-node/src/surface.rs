@@ -202,13 +202,9 @@ async fn lends(State(at): State<Surface>, Query(q): Query<RailQuery>) -> Respons
 pub(crate) async fn reads(at: &Asking, label: &svrngs_core::pass::Label) -> Response {
     let reader = hex::encode(label.lender());
     let host = &at.host;
-    let mut groups = host.standings().unwrap_or_default();
-    groups.retain(|(_, s)| s.contains_key(&reader) && s.contains_key(host.actor()));
-    let Some(own) = groups
-        .iter()
-        .find_map(|(_, s)| s.get(host.actor()))
-        .map(|m| m.person.clone())
-    else {
+    let (mut groups, own) = host.shared_with(&reader);
+    groups.retain(|(_, s)| s.contains_key(host.actor()));
+    let Some(own) = own else {
         tracing::debug!(target: "surface", %label, "surface: reads refused — its lender and this computer share no group");
         return LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here");
     };

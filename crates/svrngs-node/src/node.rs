@@ -404,7 +404,7 @@ impl Host {
     /// Every group this node holds, with who stands in it; or `None` when
     /// the groups held cannot be listed. A group whose register is
     /// unreadable is left out.
-    pub(crate) fn standings(&self) -> Option<Vec<(String, BTreeMap<String, Member>)>> {
+    fn standings(&self) -> Option<Vec<(String, BTreeMap<String, Member>)>> {
         let namespaces = match self.rail.namespaces() {
             Ok(n) => n,
             Err(e) => {
@@ -423,6 +423,22 @@ impl Host {
             }
         }
         Some(out)
+    }
+
+    /// The groups held here that `actor` stands in, as [`Self::standings`]
+    /// gives them, and this computer's person in the first of them it
+    /// stands in too: whom a group's lends are answered to, and as whom.
+    pub(crate) fn shared_with(
+        &self,
+        actor: &str,
+    ) -> (Vec<(String, BTreeMap<String, Member>)>, Option<Person>) {
+        let mut groups = self.standings().unwrap_or_default();
+        groups.retain(|(_, standing)| standing.contains_key(actor));
+        let own = groups
+            .iter()
+            .find_map(|(_, standing)| standing.get(&self.actor))
+            .map(|m| m.person.clone());
+        (groups, own)
     }
 
     /// Every key standing in `groups` that is dialled — a computer's,
@@ -624,12 +640,7 @@ async fn people_lends(State(at): State<Asking>, dialer: Option<Extension<Dialer>
         );
     };
     let asker = dialer.actor();
-    let mut groups = at.host.standings().unwrap_or_default();
-    groups.retain(|(_, standing)| standing.contains_key(&asker));
-    let own = groups
-        .iter()
-        .find_map(|(_, standing)| standing.get(&at.host.actor))
-        .map(|m| m.person.clone());
+    let (groups, own) = at.host.shared_with(&asker);
     let Some(own) = own else {
         tracing::debug!(target: "node", asker, "node: people's lends refused — the dialer stands in no group this computer stands in");
         return err(StatusCode::FORBIDDEN, "this computer lends nothing to you");
