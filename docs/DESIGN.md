@@ -803,7 +803,7 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,000 lines of code and the
-repository under 14,750, tests and `apps/` apart (`scripts/lean_check.py`);
+repository under 15,200, tests and `apps/` apart (`scripts/lean_check.py`);
 a raise is the operator's, with the reason in the commit. `svrngs-core` stands
 at 2,359: the operator raised its ceiling from 2,500 on 2026-10-05, for what U4
 to U7 still add to the core, since REVIEW-audit-u3-auto-2 found no duplication
@@ -823,7 +823,14 @@ at 14,466, on 2026-10-08, for Movie Night made production (§8, "Then";
 own (~30), a newcomer let in by every lender at once (~50), a lent page
 told the lends it reads on a phone and a computer (~75), a lend opened
 at a path (~25), and ~70 for the traces and refusals they carry, 250
-by the seat's estimate.
+by the seat's estimate; and from 14,750, at 14,644, on 2026-10-09, for
+scoped use made production, the computer first (§8, "Then"; svrn-docs
+`rings/current/SCOPED_USE_MADE_PRODUCTION.md` §8): the door's choices,
+their check and routes (~180), the computer's origin naming the app,
+keeping a page to its reads and carrying the app by its own pass (~120),
+the computer's page at `svrngs.localhost` (~100), the phone's page and
+worker (~110), `share --ask` (~25) and the pass's app (~6), about 540
+against the 106 left, 450 by the seat's estimate.
 `ARCHITECTURE.md` maps what exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file
