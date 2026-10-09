@@ -510,3 +510,169 @@ lend's name, since no kind comes with a lend.
 - **One `--reads` page holds the taste for anyone who opens it.** Bo's
   pass named Ana's taste the moment he opened Tonight's Picks (bar 2's
   door line): the refusal is wholly the taste's.
+
+## 9. What the rule gives (su-2)
+
+**Scoped use works, and the service carries it.** Written after su-1's data
+(§8; every number below is in this directory, the file named), by §4's rule
+and §3's bars, each read for what it guards (the queue's fence 4). Every bar
+passed in both engines and every plant failed first (`verdicts.json`). But
+of the six things §4 named a service might enforce, svrngs carried one, the
+history kept back (`diary`, 0 lines, by `--refuse`), and with su-1's one
+header it named the app (`55dca40`, `door.rs` +29 −4). Ana's taste wrote
+the rest: 46 of its 98 lines decide who may (`verdicts.json`, "the count":
+enforce 46, own 52), nearly one line in two, and of the 46, `owner`,
+`app`, `yes` and `stop` — 37 — are what every owner's app would write
+again, since each is about a person, an app and a yes, never a film.
+
+The middleware's lesson, again: a spike can pass every bar while svrngs
+carries little of the weight. Here the plants say how little. Each of
+bars 2, 4 and 5 had its plant made by one line of the taste
+(`plant bo`, `plant other-app`, `plant after-stop`, 1 each, "the count"),
+and each was answered: Bo ranked by Ana's taste, the other app ranked,
+her ask after the stop ranked (`verdicts.json`, "plants"). What each of
+those bars guards is as strong as each owner's program remembering one
+line. Bar 3's plant alone was a lender's declaration, not an app's code:
+the lend shared without `--refuse` answered all five rows.
+
+| Bar | Letter | Spirit — what it guards | Data |
+|---|---|---|---|
+| 1. Asked once | passed | held, by the taste: the yes kept where the taste is held once across both phones; the group's page put Ana's taste in every pass Tonight's Picks held before any yes (`web/app.js:172-175`) | the list 243 and 229 ms after the yes; again 2,572 and 2,114 ms, the other phone 3,623 and 3,102 ms, no question (`verdicts.json`, "bar 1") |
+| 2. Bo refused | passed | held by the taste's 3 lines alone: Ana's door let Bo in for the same request | `not-yours`, and Ana's door "a pass opens this lend ... person="Bo"" (`verdicts.json`, "bar 2"); plant `bo`: ranked |
+| 3. The history kept | passed | held by the door, the one piece svrngs carried | 403 "taste is lent without /diary", no line in the taste's log; no marker in the seven browsers' 62 to 174 responses each, all five in `plant-history`'s (`scan.json`) |
+| 4. Another app refused | passed | held for an app that waits for Ana's yes; not for one that says it: the other app's own yes, sent with no word to her, was kept and its next ask ranked | `not-asked` with the header; the unasked yes 200, then Arrival, Alien ranked, in both engines (`verdicts.json`, "the unasked yes") |
+| 5. Stopped | passed | held where the data is, and said honestly: the door carries her pass's asks to a taste that refuses them until the pass lapses | `stopped` 397 and 422 ms after the press; Ana's door "a pass opens this lend", then `status=403` (`night-chromium-ana-door.log`, 06:17:22.918); the pass lapses 12 h after it was signed (`web/app.js:63`) |
+| 6. Never empty | passed | held | Bo's and the stop's refusals said beside four films unranked; asleep "did not answer" at 32,384 ms (`verdicts.json`, "bar 6"); plant `empty`: "No picks for you tonight." and no films |
+
+**Where the letter and the spirit part**, each judged by the spirit:
+
+1. *Bar 4 passed, and a yes to one app is not Ana's.* Its letter is the
+   other app refused; it guards that a yes to one app is not a yes to all.
+   It held for an app that asks her; the other app sent the yes itself, as
+   Ana, from its own pass, and was ranked. The taste cannot tell the two
+   yeses apart: both come as Ana from an app the door names
+   (`taste.mjs:134-140`). Failed in spirit for an app that does not wait,
+   said so; candidate 3 below.
+2. *Bar 2 passed, by a line every owner's app must keep.* The door let Bo
+   in, since his pass named Ana's taste the moment he opened Tonight's
+   Picks; the refusal was the taste's alone, and one line out of it ranked
+   Bo by her history. Held, at the wrong boundary; candidate 1.
+3. *The owner's 3 lines are few because the work was done by hand.* The
+   taste compares a key with a list (`taste.mjs:76-77`, `:130`); the run
+   wrote each of Ana's phones' keys into it, read from Sam's computer's log
+   as it admitted them (`apps/taste/check/check.sh:137`, `OWN`), since
+   svrngs names no person across devices (DESIGN §9). A person's second
+   phone is a stranger to her own taste until someone lists it. The count
+   understates `owner`; candidate 1 carries the list.
+4. *Bar 5 passed, and the stop is the taste's, not Ana's pass's.* It guards
+   that changing your mind takes effect where the data is and nobody is
+   told sooner: both held. The door, which let each refused ask in, will
+   until the pass lapses, and the page signs her another without a word
+   (`web/app.js:60-63`); a service that forgot its stop (plant
+   `after-stop`) ranked her. Candidate 4.
+5. *What the page wrote is Movie Night's again.* Tonight's Picks' `find`,
+   26 lines (`picks.js:24-51`), read svrngs's store whole and told a taste
+   from a library by its lend's name (`:50`), no kind coming with a lend;
+   its `refusal`, 13 (`:58-70`), told svrngs's answers from the taste's by
+   status and body, and said Ana's door's refusals of her newly joined
+   phones, 8 in its logs ("its signer stands in no group held here",
+   `*-ana-door.log`), as the taste not letting her in (`refused-svrngs` in
+   the plants' `tries`). These are mn's candidates 1, 2 and 3
+   (`demo/runs/mn/2026-10-08/README.md` §9), queued as mnp-1 and mnp-2
+   (`ralph/next/compose/STATE.md`): evidence for them, not new rows.
+6. *The `Origin` a service sees is not an app's name.* The worker set
+   Tonight's Picks' origin on each ask to the taste (§8, "What no
+   prediction named"), unsigned; `x-svrngs-app` is under the person's
+   signature. No service should be taught to read the former.
+
+So an owner's operation beside their data can be offered to one app
+acting for one person, on a phone, today — by a program of the owner's that
+writes about half its lines to decide who may, and that leaks exactly what
+it forgets. svrngs kept the history back and named the app; the person, the
+app's yes and the stop it left to the service. On a computer the door names
+no app (`crates/svrngs-node/src/origin.rs:85`, `Who::Own`), so a service
+keeping to the app refuses every page there (`taste.mjs:132`, `no-app`):
+read from the code, not run. One host, one run of each: not a rate
+(AGENTS.md 7). DESIGN §3, §8 and §9 are rewritten for it.
+
+## 10. What makes it production (su-2)
+
+Each check the taste made that every owner's app would make, with its
+lines at `305efde` (`apps/taste/taste.mjs`), what the door, the pass or the
+page would carry in its place, and the evidence: a candidate row each, the
+operator's to queue (the queue's preamble). Each row's check is its bar
+passing with the taste's own check of that piece taken out — the plant
+that failed in su-1 becomes the code kept — rerun by
+`apps/taste/check/check.sh`, so the taste's `enforce` lines fall from 46
+toward `refuse`'s 9, its own words.
+
+1. **A personal lend** (`owner`, 3 lines, `:76-77`, `:130`, and the key
+   list by hand). In its place the lender declares a lend their own,
+   `svrngs share --own` or its like: the door lets in only its lender's
+   person — on any of their devices — and refuses every other pass before
+   the service sees it, where today it lets in anyone standing in a group
+   held here (`crates/svrngs-node/src/door.rs:719-721`); and the group's
+   page puts no one else's own lend in a pass (`web/app.js:172`). It needs
+   svrngs to know a person across devices: a phone joining as another
+   device of a member, not a member of its own — DESIGN §9's "another
+   device for the same person", whose trigger, someone asks, this is.
+   Evidence: bar 2 held by the taste alone, Ana's door letting Bo in;
+   plant `bo`, one line, ranked him; each of Ana's phones' keys listed by
+   hand (`check.sh:137`). Check: bar 2 refused at the door with the taste's
+   owner check out; Ana's second phone ranked with nothing listed.
+2. **An app named on the pass** (`app`, 9 lines, `:94-96`, `:100`,
+   `:107-108`, `:132`, `:150-151`). su-1's header names the pass's first
+   lend, a convention of the page's (`web/app.js:172-173`) that the pass
+   gives no meaning (`crates/svrngs-core/src/pass.rs:137-152`) and the
+   door reads (`door.rs:725`). In its place the pass names the app it was
+   signed for, apart from its lends and under the same signature
+   (`pass.rs:182-193`), and the door sets `x-svrngs-app` from that field.
+   Candidates 3 and 4 key on it: a yes and a stop are a person's for an
+   app. Evidence: bar 4 held by the header alone (plant `other-app` ranked
+   with the app check out). Check: a door test that a pass whose app is
+   not its first lend tells its app; bar 4 rerun.
+3. **A yes before a lend enters an app's pass** (`yes`, 16 lines,
+   `:82-90`, `:134-140`). In its place the group's page — the person's
+   key's origin, which no app's page runs at (DESIGN §7, "A phone's apps
+   open apart from its page") — asks the person before it puts a lend of a
+   kind an app reads into that app's pass, and sends the yes to the lend's
+   door, which keeps it, so it holds on every device of theirs as the
+   taste's did; the door refuses a pass naming a lend for an app its
+   person never said yes to. An app holds only its pass, so it cannot say
+   the yes itself. Where the yes is kept — the lend's door, the resource's
+   boundary (svrn-docs `rings/current/ACL_AND_SCOPED_USE.md` §6, "one
+   authoritative decision path at the resource's boundary"), or the
+   group's record, which that survey keeps private grants out of — and the
+   words the page asks in are the row's. Evidence: the unasked yes
+   answered in both engines; every pass Tonight's Picks held named Ana's
+   taste before any yes, Bo's too (bar 2's door line). Check: the other
+   app's own yes refused and its ask refused at the door with the taste's
+   app and yes checks out; bar 1 still asked once across both phones.
+4. **A stop the door holds** (`stop`, 9 lines, `:105`, `:142-148`,
+   `:153`). In its place the person's stop, sent from the page or the app
+   as the yes is, reaches the lend's door, which refuses that app's pass
+   for that lend from then on, sooner than its `until`, and the page stops
+   signing that lend into the app's passes (`web/app.js:60-63`). What
+   happens to an ask in flight is the row's to define and say (the survey's
+   §6, "Define in-flight behavior"). Evidence: the stop held at the taste,
+   397 and 422 ms; the door let each refused ask in and would for the
+   pass's 12 h; plant `after-stop`, one line, ranked her. Check: bar 5
+   refused at the door with the taste's stop check out, its delay from the
+   press on either phone recorded.
+
+Not candidates, said so:
+
+- **`refuse`, 9 lines** (`:68-71`, `:115-119`): who asks, read from the
+  door's headers, and a refusal as one; a service's own words. svrngs's
+  part, its refusals told from the service's, is mnp-1's (a).
+- **`diary`, 0**: the door does it, by `--refuse` (bar 3).
+- **Tonight's Picks' `find` and `refusal`**, 26 and 13: mnp-2's (a) and
+  mnp-1's (a) and (b), with the evidence of §9's fifth part.
+- **On a computer** no app is named (§9's close); DESIGN §9 holds a
+  computer's origin limiting a page, with its trigger.
+- **What waits**, each in DESIGN §9 with its trigger, as §7 set them out:
+  the runner and code that travels to the data, with a yes to an app's
+  code at a version; peer inference and the journal; budgets, an
+  operation asked often enough to rebuild what it keeps back — the taste
+  ranks whatever films it is given, and ranked the other app's two
+  (`verdicts.json`, "the unasked yes").
