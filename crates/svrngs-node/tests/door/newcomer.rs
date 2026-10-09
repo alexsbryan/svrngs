@@ -123,3 +123,111 @@ async fn a_newcomer_s_first_request_through_a_second_lender_is_answered_within_s
     );
     pair.close().await;
 }
+
+/// As above, with Cy in the group and Cy's computer asleep
+/// (asleep-1-none-held (a); `demo/runs/mnp/2026-10-09/README.md`, "What no
+/// prediction named" 1): nia's first request through B's door is answered
+/// as nia within [`SOON`] of joining, refused never — let in as soon as A,
+/// which knows her, has answered B's round, not when Cy's dial gives up.
+/// Cy's key sorts before A's, so a round dialling its members one by one in
+/// key order dials Cy first. Planted: the round's members dialled one by
+/// one and the door waiting on the round's end (ring_sync.rs and door.rs
+/// before this row), which refused nia once at about 10 s, as Dee's door
+/// refused Ben.
+#[tokio::test]
+async fn a_newcomer_is_let_in_while_a_computer_of_the_group_sleeps() {
+    const SOON: Duration = Duration::from_secs(2);
+    let pair = Pair::new().await;
+    let ada = actor_of(&signing(1));
+    let cy = (10..=255u8)
+        .find(|&s| actor_of(&signing(s)) < ada)
+        .expect("a key sorting before ada's");
+    let seed = Roster::new(
+        [(Person::parse("ada").unwrap(), vec![ada])]
+            .into_iter()
+            .collect(),
+    );
+    pair.b.rail().set_seed(NS, &seed).unwrap();
+    let admit = |person: &str, key: u8| svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse(person).unwrap(),
+            key: actor_of(&signing(key)),
+            invite: None,
+        },
+        on_behalf_of: None,
+    };
+    pair.a.rail().commit(NS, &admit("cy", cy)).unwrap().unwrap();
+    let (_asleep, at_cy) = super::common::never_answers();
+    let cy_key =
+        svrngs_node::iroh::PublicKey::from_bytes(signing(cy).verifying_key().as_bytes()).unwrap();
+    pair.b.transport().add_known_peer(cy_key, at_cy);
+    let mut at_a = EndpointAddr::new(pair.a.endpoint().id());
+    for sock in loopback_sockets(pair.a.endpoint()) {
+        at_a = at_a.with_ip_addr(sock);
+    }
+    let synced = pair.b.sync_with(NS, &at_a).await;
+    assert!(
+        synced.stop.is_none(),
+        "B holds the group, Cy in it: {synced:?}"
+    );
+    let (shelf_origin, heads) = origins::head_origin().await;
+    lends_on(pair._db.path(), "shelf", shelf_origin.port());
+    let shelf = Label::of(pair.b.endpoint().id().as_bytes(), "shelf");
+
+    let holder = signing(9);
+    let dialling = EndpointBuilder::empty()
+        .crypto_provider(ring_crypto_provider())
+        .secret_key(SecretKey::from_bytes(&holder.to_bytes()))
+        .bind()
+        .await
+        .unwrap();
+    let mut at_b = EndpointAddr::new(pair.b.endpoint().id());
+    for sock in loopback_sockets(pair.b.endpoint()) {
+        at_b = at_b.with_ip_addr(sock);
+    }
+    let bridge = HttpBridge::spawn_preferring(dialling, at_b, Alpn::Lend.bytes(), None)
+        .await
+        .unwrap();
+    let pass = Pass::sign(
+        &signing(7),
+        &actor_of(&holder),
+        vec![shelf.clone()],
+        unix_now() + 3600,
+    );
+    let ask = || {
+        raw_to(
+            bridge.local_addr(),
+            format!(
+                "GET /lend/{shelf}/whoami HTTP/1.1\r\nHost: local\r\nx-svrngs-pass: {}\r\nConnection: close\r\n\r\n",
+                pass.encode()
+            ),
+        )
+    };
+
+    tokio::time::sleep(Duration::from_secs(2)).await;
+    pair.a.rail().commit(NS, &admit("nia", 7)).unwrap().unwrap();
+    let joined = Instant::now();
+    let mut refused = 0;
+    let answered = loop {
+        let reply = ask().await;
+        if reply.status == 200 {
+            break joined.elapsed();
+        }
+        assert_eq!(reply.status, 403, "{}", reply.text);
+        refused += 1;
+        eprintln!("nia refused {:?} after joining", joined.elapsed());
+        assert!(
+            joined.elapsed() < Duration::from_secs(75),
+            "nia was never let in: {}",
+            reply.text
+        );
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    };
+    eprintln!("nia answered {answered:?} after joining, Cy asleep, refused {refused} times before");
+    assert!(
+        answered < SOON && refused == 0,
+        "nia's first request must be answered within {SOON:?} of joining, Cy asleep: answered {answered:?} after, refused {refused} times before"
+    );
+    assert_eq!(header_values(&last(&heads), "x-svrngs-person"), vec!["nia"]);
+    pair.close().await;
+}

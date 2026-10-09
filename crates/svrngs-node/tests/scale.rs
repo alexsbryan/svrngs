@@ -674,8 +674,8 @@ const CEILING_CPU_S: f64 = 0.1;
 
 /// The ceiling's canary (ceiling-4), the one scale number
 /// `scripts/check.sh` holds, run there by name, in release. Processor, not
-/// wall time: an asleep member's ten-second timeout is DESIGN §9's
-/// dial-at-once row, not this bar. A round that could not be read panics in
+/// wall time: an asleep member's ten-second timeout is its own dial's,
+/// the others dialled beside it (asleep-1-none-held), not this bar. A round that could not be read panics in
 /// [`idle_rounds`] as could-not-judge, never a pass with a smaller number.
 #[tokio::test(flavor = "multi_thread", worker_threads = 12)]
 #[ignore = "the ceiling's canary: run by name, in release, by scripts/check.sh"]

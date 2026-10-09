@@ -157,9 +157,18 @@ pub struct RoundOutcome {
     pub ops_pushed: usize,
 }
 
-/// How many rounds have begun and how many have ended, written by the loop
-/// alone: rounds run one at a time, so the last ended is the `ended`th.
-pub type Rounds = watch::Sender<(u64, u64)>;
+/// How many rounds have begun and how many have ended, and how many of
+/// their exchanges a member has answered, written by the loop alone: rounds
+/// run one at a time, so the last ended is the `ended`th.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct Progress {
+    pub begun: u64,
+    pub ended: u64,
+    pub answered: u64,
+}
+
+/// The loop's [`Progress`], for a door to wait on.
+pub type Rounds = watch::Sender<Progress>;
 
 /// A round asked for now and waited on (mnp-1): what a door holds to ask
 /// the group's ring once before it answers a signer it does not know.
@@ -167,7 +176,7 @@ pub type Rounds = watch::Sender<(u64, u64)>;
 #[derive(Clone)]
 pub struct AskRound {
     nudge: Arc<Notify>,
-    rounds: watch::Receiver<(u64, u64)>,
+    rounds: watch::Receiver<Progress>,
 }
 
 impl AskRound {
@@ -176,15 +185,23 @@ impl AskRound {
         Self { nudge, rounds }
     }
 
-    /// Wake the round now and wait, at most `within`, for a round begun
-    /// after this ask to end: whether one did.
-    pub async fn now(&self, within: Duration) -> bool {
+    /// Wake the round now and wait, at most `within`, until `known` holds,
+    /// asked again as each member answers, or a round begun after this ask
+    /// ends: whether either came in time. A member that answers ends the
+    /// wait; one asleep holds only its own dial (asleep-1-none-held).
+    pub async fn until(&self, within: Duration, known: impl Fn() -> bool) -> bool {
         let mut rounds = self.rounds.clone();
-        let after = rounds.borrow().0 + 1;
+        let after = rounds.borrow_and_update().begun + 1;
         self.nudge.notify_one();
-        let ended = rounds.wait_for(|&(_, ended)| ended >= after);
-        let ended = matches!(tokio::time::timeout(within, ended).await, Ok(Ok(_)));
-        ended
+        let waited = tokio::time::timeout(within, async {
+            while !known() && rounds.borrow_and_update().ended < after {
+                if rounds.changed().await.is_err() {
+                    return false;
+                }
+            }
+            true
+        });
+        waited.await.unwrap_or(false)
     }
 }
 
@@ -223,9 +240,10 @@ pub fn spawn_ring_sync_loop(
                 reason = "times a round for its trace; no decision reads it"
             )]
             let started = Instant::now();
-            rounds.send_modify(|(begun, _)| *begun += 1);
-            let outcome = run_one_round(host.as_ref()).await;
-            rounds.send_modify(|(begun, ended)| *ended = *begun);
+            rounds.send_modify(|p| p.begun += 1);
+            let answered = || rounds.send_modify(|p| p.answered += 1);
+            let outcome = run_one_round(host.as_ref(), &answered).await;
+            rounds.send_modify(|p| p.ended = p.begun);
             if outcome.namespaces > 0 {
                 debug!(
                     namespaces = outcome.namespaces,
@@ -253,8 +271,16 @@ pub fn spawn_ring_sync_loop(
 }
 
 /// One anti-entropy pass over every namespace this node holds, against every
-/// online peer **standing in its register** (svrngs: upstream, its roster).
-pub async fn run_one_round(host: &Host) -> RoundOutcome {
+/// online peer **standing in its register** (svrngs: upstream, its roster),
+/// every pair dialled at once and `answered` told as each member answers.
+///
+/// (svrngs, asleep-1-none-held: upstream dialled one pair after another, so
+/// an asleep member held every exchange after it to its dial's ten-second
+/// timeout, and a door waiting on the round refused a newcomer another
+/// member had already let in, `demo/runs/mnp/2026-10-09/README.md`, "What
+/// no prediction named" 1. Each exchange is idempotent and keyed on the op
+/// id, so two at once with one journal duplicate nothing.)
+pub async fn run_one_round(host: &Host, answered: &(impl Fn() + Sync)) -> RoundOutcome {
     let mut outcome = RoundOutcome::default();
     let rail = host.rail();
     let namespaces = match rail.namespaces() {
@@ -299,6 +325,7 @@ pub async fn run_one_round(host: &Host) -> RoundOutcome {
     }
     let transport = host.transport();
 
+    let mut dials = Vec::new();
     for namespace in &namespaces {
         outcome.namespaces += 1;
         // ── A ring is OFFERED to its register, and to nobody else.
@@ -348,16 +375,23 @@ pub async fn run_one_round(host: &Host) -> RoundOutcome {
         );
 
         for OnlinePeer { contact, .. } in offered_to {
-            let (pulled, pushed, reach) =
-                exchange_with(http, transport, rail, namespace, contact).await;
-            // Counted BEFORE the verdict is read: see `exchange_with`.
-            outcome.ops_pulled += pulled;
-            outcome.ops_pushed += pushed;
-            match reach {
-                Reach::Reached => outcome.peers_reached += 1,
-                Reach::Refused => outcome.peers_refused += 1,
-                Reach::Unreachable => outcome.peers_unreachable += 1,
-            }
+            dials.push(async move {
+                let ended = exchange_with(http, transport, rail, namespace, contact).await;
+                if matches!(ended.2, Reach::Reached) {
+                    answered();
+                }
+                ended
+            });
+        }
+    }
+    for (pulled, pushed, reach) in n0_future::join_all(dials).await {
+        // Counted BEFORE the verdict is read: see `exchange_with`.
+        outcome.ops_pulled += pulled;
+        outcome.ops_pushed += pushed;
+        match reach {
+            Reach::Reached => outcome.peers_reached += 1,
+            Reach::Refused => outcome.peers_refused += 1,
+            Reach::Unreachable => outcome.peers_unreachable += 1,
         }
     }
     outcome

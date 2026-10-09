@@ -220,7 +220,7 @@ impl Node {
             api_port: api.addr().port(),
             room: tokio::sync::watch::Sender::new(BTreeMap::new()),
         });
-        let rounds = Rounds::new((0, 0));
+        let rounds = Rounds::new(Default::default());
         let door = crate::door::Door {
             ring: AskRound::new(nudge.clone(), &rounds),
             rail: rail.clone(),
@@ -327,7 +327,7 @@ impl Node {
 
     /// Run one round now, beside the interval's, and say what it moved.
     pub async fn round(&self) -> RoundOutcome {
-        run_one_round(self.host.as_ref()).await
+        run_one_round(self.host.as_ref(), &|| {}).await
     }
 
     /// One exchange of `namespace` with the node at `peer`, whatever this

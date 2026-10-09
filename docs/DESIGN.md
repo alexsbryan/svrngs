@@ -220,10 +220,17 @@ browser-dial-2, `HTTP/1.1 200 OK`); no phone has dialled. A phone holds no
 copy of the record; it reads and writes through the nodes it dials. A
 person admitted at one computer is known at another after a round of the
 group's ring; a lender's door meeting their pass before its round asks
-the ring once, a round within 10 s, before it answers, so their first
+the ring once, for at most 10 s, before it answers, so their first
 request is answered by every lender awake (mnp-1: 17 ms after joining,
 where it was refused 58 times until the door's round, 58.5 s,
-`crates/svrngs-node/tests/door/newcomer.rs`). U4 builds
+`crates/svrngs-node/tests/door/newcomer.rs`). The round dials every
+member at once and the door answers as soon as one that knows them has
+answered, so a computer asleep in the group holds only its own dial
+(asleep-1: with one that never answers, 21 ms, where the round dialled
+one by one and the door waited on its end, and refused once at 10.0 s,
+as Dee's door refused Ben, `demo/runs/mnp/2026-10-09/`). A newcomer met
+while a round already waits on an asleep dial waits for the next round,
+up to that dial's ten seconds; read from the code, not run. U4 builds
 the rest, by five calls (the seat, 2026-10-05, from its survey of upstream;
 the evidence is U4's inventory, §8):
 1. *The page holds the key's bytes, sealed.* The person's key is 32 bytes,
@@ -399,7 +406,9 @@ is U5's inventory (§8).
    3.0 s (`crates/svrngs-node/tests/surface.rs`, one run each), the
    same bound on `/v1/lends` and a phone's list, one function. And a
    newcomer's first request at a second lender was refused once at about
-   10 s, that lender's round dialling the same computer. Two others have landed (mnp-1): svrngs's
+   10 s, that lender's round dialling the same computer; since asleep-1
+   the round dials its members at once and the door is answered by the
+   first that knows them ("Joining"). Two others have landed (mnp-1): svrngs's
    refusals marked as its own, `x-svrngs-refused`, where Movie Night told
    them by status alone and said 19 of Dee's door's as the library's (11
    lines); and a newcomer let in by every lender at once ("Joining").
@@ -777,7 +786,7 @@ piece comes over:
 |---|---|---|
 | `svrngs-core` | the record: acts, admission into one order, membership, the sync digest; and what a browser's page spells as the command and the node do (u4-2): a link's token, the ask and the redemption a joiner signs with it, the issuer's answer and the seed it is believed by (u4-5), the protocols' names, and a relay's URL without the DNS root's trailing dot, which WebKit refuses (u4-9); a lend's label, one DNS label naming its lender's key and its name, and the pass a person signs for another key toward named lends until a time, with its check (u5-2). `no_std`, so the compiler refuses filesystem, clock, network and threads; time and keys are arguments | none |
 | `svrngs-runtime` | the only owner of each group's journal on disk, its projections and its writes: the journal and its write index, the open-journal map, the register's standing | the journals |
-| `svrngs-node` | the adapters: sync and its route over iroh, redemption, the loopback record API with its live lane (landed, u3-2 and u3-3), the member door (landed, u3-4), the list of what members lend, asked of each (landed, u3-5), each for at most 3 s (landed, asleep-1, `node::ANSWER_WITHIN`), and answered to a member by the computer it dials, each with its lender's key (landed, u4-5), and the door's limit and shares, a pure decision the door's task owns (landed, u3-6); a WebSocket's upgrade carried, and the pass holders' protocol, which any key may speak, where a request presenting a person's pass for the lend it names, by name or label, is that person's (landed, u5-2), and its service told the pass's first lend, the app the page opened, as `x-svrngs-app`, none with no pass (the scoped-use spike's one header, su-1, `demo/runs/su/2026-10-09/` §5); every relay URL it makes or reads dotless where it enters — n0's relays, a relay it is told, a lookup's answers — in `relay.rs`, which the page compiles too (landed, u4-9); the room door, the lends a person names served to this computer's network at its private address while the command runs, one body with the origins (landed, u6-1); a lend's sign-in, asked of the lender's program on a person's first request, its credential set on each of their requests, a stand-in swapped for its secret both ways (landed, mwp-1, `door/sign_in.rs`), its script first in the lend's pages (landed, mwp-2, the same file; §3, "The room", call 6); every answer it makes in a lend's place marked as its own, `x-svrngs-refused` and its kind, a service's own dropped (landed, mnp-1, `door::LendRefusal`), and a pass whose signer it does not know asked of the group's ring once, a round within 10 s, before it is refused (landed, mnp-1, `ring_sync::AskRound`); a lend's pages on this computer told, at its origin's `/svrngs-reads`, the lends they read, from the record (landed, mnp-2, `surface::reads`) | each lend's declaration and secret; who is using each lend now; each person's sign-in answer, in memory |
+| `svrngs-node` | the adapters: sync and its route over iroh, redemption, the loopback record API with its live lane (landed, u3-2 and u3-3), the member door (landed, u3-4), the list of what members lend, asked of each (landed, u3-5), each for at most 3 s (landed, asleep-1, `node::ANSWER_WITHIN`), and answered to a member by the computer it dials, each with its lender's key (landed, u4-5), and the door's limit and shares, a pure decision the door's task owns (landed, u3-6); a WebSocket's upgrade carried, and the pass holders' protocol, which any key may speak, where a request presenting a person's pass for the lend it names, by name or label, is that person's (landed, u5-2), and its service told the pass's first lend, the app the page opened, as `x-svrngs-app`, none with no pass (the scoped-use spike's one header, su-1, `demo/runs/su/2026-10-09/` §5); every relay URL it makes or reads dotless where it enters — n0's relays, a relay it is told, a lookup's answers — in `relay.rs`, which the page compiles too (landed, u4-9); the room door, the lends a person names served to this computer's network at its private address while the command runs, one body with the origins (landed, u6-1); a lend's sign-in, asked of the lender's program on a person's first request, its credential set on each of their requests, a stand-in swapped for its secret both ways (landed, mwp-1, `door/sign_in.rs`), its script first in the lend's pages (landed, mwp-2, the same file; §3, "The room", call 6); every answer it makes in a lend's place marked as its own, `x-svrngs-refused` and its kind, a service's own dropped (landed, mnp-1, `door::LendRefusal`), and a pass whose signer it does not know asked of the group's ring once, within 10 s, until a member that knows them answers, before it is refused (landed, mnp-1, `ring_sync::AskRound`; the members dialled at once, asleep-1); a lend's pages on this computer told, at its origin's `/svrngs-reads`, the lends they read, from the record (landed, mnp-2, `surface::reads`) | each lend's declaration and secret; who is using each lend now; each person's sign-in answer, in memory |
 | `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell and a workspace of its own: a browser's endpoint, bound with the person's key, dialling a group's computer by key over a relay on the members' protocol (landed, u4-3); HTTP over the dial (landed, u4-4); joining — the ask and the redemption by svrngs-core's bodies, the key sealed in the page's store, and the list of what the group's people lend (landed, u4-5); the runtime, a service worker serving every request at a lend's address from the lender's door (landed, u4-6), a range that runs on — open-ended, or a `<video>`'s longer than a part — asked of the door in parts of 2 MiB (landed, u4-9), an open-ended one's first part at a new place 256 KiB and doubling as the reading runs on (u5-11), handed what it dials with in memory, and a page for a worker that holds nothing (landed, u4-10); since u5-2 at each lend's own origin, not the page's (`lend.js`, its start page `open.js`): the page signs a pass to a fresh key for the lend it opens and the lends it reads, the worker dials on the pass holders' protocol, keeps each lend's cookies, reads a redirect to a path under the lend, and with a shim in each lent page (`shim.js`) carries `WebSocket` and an app's own worker; its own answers in a lend's place marked as the door marks its own (mnp-1); its pages told the lends they read at `/svrngs-reads`, each at an address under their own origin that opens that lend at a path through the group's page (landed, mnp-2); an adapter | none: the page's store holds the key, sealed; a lend's origin's store holds its pass and its cookies |
 | `svrngs` | the command and the process: `new`, `join`, `link`, `share`, `unshare` and `room` (landed), and `share --sign-in` (landed, mwp-1); the bare command prints where the record API listens, and what the people of its groups lend | a device's keys; each group's seed |
 
@@ -1104,8 +1113,9 @@ addresses the mesh gossiped, and refuses a bare key
 gossip, iroh's address lookup, upstream's default
 (`mesh-reach/src/guest.rs:79-88`), resolves a member's key, so the fork accepts
 a bare key when lookup is on, and tests seed addresses as upstream's do. *No
-presence:* the round dials every standing member's computer, and one that
-is offline costs a dial timeout each round; a browser's key is never
+presence:* the round dials every standing member's computer, all at once
+(asleep-1), and one that is offline costs its own dial's timeout each
+round, the others' exchanges not waiting on it; a browser's key is never
 dialled (u4-1, §3 call 2). *The door asks the register too:*
 `RingJournal::append` refused a signer the seed did not name
 (now `commit`'s standing check, `crates/svrngs-core/src/command.rs`), which would leave two answers to
@@ -1517,7 +1527,7 @@ by the north star's tests.
 | compacting the journal | a journal grows past a size measured to matter |
 | exporting a group as one document (upstream's checkpoint route), checking the asker is in that group | a group refounds from a copy, or someone asks to export one |
 | the endpoint's self-heal (upstream's `self_heal.rs`, `iroh_watchdog.rs`) | a node's endpoint wedges in a recorded run |
-| dialling a round's members at once, or skipping the ones known offline | a round's measured time nears its interval |
+| skipping a round's members known offline. Dialling them at once landed (asleep-1, `ring_sync::run_one_round`), so an asleep one holds only its own dial; the round still ends when that dial gives up, about 10 s, and a door's ask begun meanwhile waits for the next round (§3, "Joining") | a round's measured time nears its interval, or a newcomer is refused while a round waits on an asleep computer, counted |
 | another device for the same person. Scoped use asked (`demo/runs/su/2026-10-09/` §9): its run listed each of Ana's phones' keys in her taste's owners by hand (`apps/taste/check/check.sh:137`), each phone joining as a member of its own, and a lend its lender's person alone reaches needs it (§8, "Then") | that row is queued |
 | the wire published for a second implementation | someone sets out to write one |
 | local discovery on one WiFi | Apple's multicast entitlement is granted |
