@@ -4134,7 +4134,7 @@ Reading the range for what neither pass would show:
   lent page 404 "nothing is lent here": an absence answered as a refusal
   (AGENTS.md 6). Since #101 it is one line, node.rs `shared_with`. Not
   fixed: a 503 there changes what both answer, and no test plants an
-  unlistable rail; `Node::lends` (node.rs:313) does the same for the
+  unlistable rail (`grep -rln "namespaces()" crates/svrngs-node/tests`: none); `Node::lends` (node.rs:313) does the same for the
   node's own round.
 - **#104, not fixed.** What a lent page is told of the lends it reads is
   decided and shaped in two programs: which lends it reads, web/app.js:177
@@ -4172,10 +4172,10 @@ and no `struct`, `enum` or `trait`.
 
 | noun | converge | git grep (`(struct\|enum\|trait\|type\|class)[[:space:]]+KeptHeads\b`) |
 |---|---|---|
-| KeptHeads | definitions (0): "defined only in test code" (its scope leaves out `tests`) | 1, tests/browser/main.rs:896 |
+| KeptHeads | definitions (0): "defined only in test code" (its scope leaves out `tests`) | 1, tests/browser/main.rs:896 at 2e6edc7 (:465 at 484fea5) |
 
 No noun with more than one definition. The alias names the
-`Arc<Mutex<Vec<String>>>` nine test fakes return unnamed
+`Arc<Mutex<Vec<String>>>` nine test sites spell unnamed, eight fakes' returns and a field
 (tests/door/origins.rs:97, :230, :348, :404; sign_in.rs:51, :116;
 door/main.rs:194; limit.rs:35; crates/svrngs/tests/share.rs:83); a name
 in one file of nine is no second concept. No change.
