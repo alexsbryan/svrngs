@@ -372,3 +372,199 @@ async fn the_record_answers_no_lend_s_origin_and_refuses_a_page() {
     );
     alex.endpoint().close().await;
 }
+
+/// `dir`'s computer lends `name` on `port`, of `kind`, its pages reading
+/// `reads`.
+fn declare(dir: &std::path::Path, name: &str, port: u16, kind: &str, reads: &[&str]) {
+    let at = lend::lends_dir(dir);
+    std::fs::create_dir_all(&at).unwrap();
+    let body = serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads });
+    std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+    let secrets = lend::secret_dir(dir, &LendName::parse(name).unwrap());
+    declared::write_declared_in(&secrets, "authorization", ALEXS).unwrap();
+}
+
+/// `GET /x` at `host` with `extra` header lines: the status, the refusal's
+/// kind, and the app the service behind it was told — `None` when the
+/// service was not asked.
+async fn judged(
+    api: SocketAddr,
+    host: &str,
+    extra: &str,
+    heads: &std::sync::Mutex<Vec<String>>,
+) -> (u16, Option<String>, Option<Vec<String>>) {
+    let before = heads.lock().unwrap().len();
+    let (head, sock) = ask(
+        api,
+        host,
+        &format!("GET /x HTTP/1.1\r\nConnection: close\r\n{extra}"),
+    )
+    .await;
+    body(sock).await;
+    let status = head[9..12].parse().unwrap();
+    let refused = header_values(&head, "x-svrngs-refused")
+        .first()
+        .map(|k| k.to_string());
+    let after = heads.lock().unwrap();
+    let told = (after.len() > before).then(|| {
+        header_values(after.last().unwrap(), "x-svrngs-app")
+            .into_iter()
+            .map(str::to_string)
+            .collect()
+    });
+    (status, refused, told)
+}
+
+/// **A computer's origin names the app asking, and keeps a page to its
+/// reads** (sup-1; DESIGN §3, "Lent apps", call 7, and its table). Alex
+/// lends a page, `night`, reading kind `media`, a `telly` of it and a
+/// `diary`; Sam a `films` and a `notes`. At Alex's computer, each row of
+/// the table: a program (no `Sec-Fetch-*`), a typed address, a navigation
+/// (whatever its `Origin`) and a request from the lend's own origin are the
+/// lend's own page, its service told its own label; a `fetch` from
+/// `night`'s page, by its `Origin`, is `night`'s, at Alex's own `telly` and
+/// at Sam's `films` alike, Sam's door told it from the pass Alex's computer
+/// signs; Sam's page at its origin is Sam's `films` at Sam's door. Refused
+/// `closed`, its service never asked: `night`'s page at `diary` and at
+/// Sam's `notes`, which it does not read; a request from another page with
+/// no `Origin` (an `<img>`); an `Origin` at another port; a site's.
+/// Planted, each watched failing: the origin taking the `Host` for a
+/// cross-origin `fetch`; a page reaching a lend it does not read; Alex's
+/// computer presenting no pass of its own to Sam's door.
+#[tokio::test]
+async fn a_computer_s_origin_names_the_app_and_keeps_a_page_to_its_reads() {
+    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let alex = start(1, alex_dir.path()).await;
+    let sam = start(2, sam_dir.path()).await;
+    let seed = Roster::new(
+        [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
+            .into_iter()
+            .collect(),
+    );
+    for node in [&alex, &sam] {
+        node.rail().set_seed(NS, &seed).unwrap();
+    }
+    let admit = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse("sam").unwrap(),
+            key: actor_of(&signing(2)),
+            invite: None,
+        },
+        on_behalf_of: None,
+    };
+    alex.rail().commit(NS, &admit).unwrap().unwrap();
+    alex.transport()
+        .add_known_peer(sam.endpoint().id(), loopback_sockets(sam.endpoint()));
+    let mut heads = std::collections::BTreeMap::new();
+    for (dir, name, kind, reads) in [
+        (alex_dir.path(), "night", "night", &["media"][..]),
+        (alex_dir.path(), "telly", "media", &[]),
+        (alex_dir.path(), "diary", "notes", &[]),
+        (sam_dir.path(), "films", "media", &[]),
+        (sam_dir.path(), "notes", "notes", &[]),
+    ] {
+        let (at, kept) = origins::head_origin().await;
+        declare(dir, name, at.port(), kind, reads);
+        heads.insert(name, kept);
+    }
+    let api = alex.api_addr();
+    let port = api.port();
+    let label = |seed: u8, name: &str| Label::of(&signing(seed).verifying_key().to_bytes(), name);
+    let night = label(1, "night");
+    let from = |l: &Label| format!("Origin: http://{l}.localhost:{port}\r\n");
+    let fetch = "Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: cors\r\n";
+    let told = |l: &Label| (200, None, Some(vec![l.to_string()]));
+    let closed = (403, Some("closed".to_string()), None);
+    let rows = [
+        ("a program", 1, "night", String::new(), told(&night)),
+        (
+            "a typed address",
+            1,
+            "night",
+            "Sec-Fetch-Site: none\r\nSec-Fetch-Mode: navigate\r\n".into(),
+            told(&night),
+        ),
+        (
+            "a navigation from another page",
+            1,
+            "telly",
+            format!(
+                "Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: navigate\r\n{}",
+                from(&night)
+            ),
+            told(&label(1, "telly")),
+        ),
+        (
+            "its own origin",
+            1,
+            "night",
+            "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n".into(),
+            told(&night),
+        ),
+        (
+            "night's fetch at Alex's telly",
+            1,
+            "telly",
+            format!("{fetch}{}", from(&night)),
+            told(&night),
+        ),
+        (
+            "night's fetch at Sam's films",
+            2,
+            "films",
+            format!("{fetch}{}", from(&night)),
+            told(&night),
+        ),
+        (
+            "Sam's page at its origin",
+            2,
+            "films",
+            "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n".into(),
+            told(&label(2, "films")),
+        ),
+        (
+            "night's fetch at Alex's diary, unread",
+            1,
+            "diary",
+            format!("{fetch}{}", from(&night)),
+            closed.clone(),
+        ),
+        (
+            "night's fetch at Sam's notes, unread",
+            2,
+            "notes",
+            format!("{fetch}{}", from(&night)),
+            closed.clone(),
+        ),
+        (
+            "another page's <img>",
+            1,
+            "telly",
+            "Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: no-cors\r\n".into(),
+            closed.clone(),
+        ),
+        (
+            "an Origin at another port",
+            1,
+            "telly",
+            format!("{fetch}Origin: http://{night}.localhost:1\r\n"),
+            closed.clone(),
+        ),
+        (
+            "a site's",
+            1,
+            "telly",
+            "Sec-Fetch-Site: cross-site\r\nSec-Fetch-Mode: cors\r\nOrigin: https://example.com\r\n"
+                .into(),
+            closed.clone(),
+        ),
+    ];
+    for (row, seed, name, extra, want) in rows {
+        let host = format!("{}.localhost:{port}", label(seed, name));
+        let got = judged(api, &host, &extra, &heads[name]).await;
+        eprintln!("{row}: {got:?}");
+        assert_eq!(got, want, "{row}");
+    }
+    sam.endpoint().close().await;
+    alex.endpoint().close().await;
+}

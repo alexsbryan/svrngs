@@ -681,17 +681,18 @@ fn drop_echoed_secret(
 
 /// Who asks for a lend through the door: a closed set (AGENTS 9), each
 /// shown to be a person in a group held here its own way.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub(crate) enum Who {
-    /// A dialer on the members' protocol, whose key is the person's.
+    /// A dialer on the members' protocol, whose key is the person's; the
+    /// app its own pass names, when it presents one ([`own_app`]).
     Member(Dialer),
     /// A dialer on the pass holders' protocol, whose key holds the pass it
     /// presents, signed by the person (u5-2).
     Holder(Dialer),
     /// This computer, opening its own lend at the lend's origin on its
     /// loopback ([`crate::origin`], u5-2): the person this computer's key
-    /// is, counted as any other.
-    Own,
+    /// is, counted as any other, for the app its origin names (sup-1).
+    Own(Label),
 }
 
 /// The person a request for a lend is carried as.
@@ -746,9 +747,9 @@ fn find(door: &Door, raw: &str) -> Result<Option<Lend>, lend::LendError> {
 
 #[expect(
     clippy::disallowed_methods,
-    reason = "the door's clock: whether a pass has lapsed"
+    reason = "the door's clock: whether a pass has lapsed, and until when a computer's own lasts"
 )]
-fn unix_now() -> i64 {
+pub(crate) fn unix_now() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |d| d.as_secs() as i64)
@@ -814,6 +815,45 @@ async fn holder_of(
     })
 }
 
+/// The app a member's own pass names (sup-1): a computer's origin signs
+/// one for itself, its key the person and the holder, naming the app its
+/// page is ([`crate::origin`]), so this door reads the app from the one
+/// carrier a phone's request brings too. `None` with no pass; a pass not
+/// the dialer's own, or not opening this lend to it now, is refused
+/// `pass`, never read as no app.
+fn own_app(
+    door: &Door,
+    dialer: &Dialer,
+    headers: &HeaderMap,
+    lend: &Lend,
+) -> Result<Option<Label>, Response> {
+    let Some(raw) = headers.get(PASS_HEADER) else {
+        return Ok(None);
+    };
+    let key = dialer.actor();
+    let label = Label::of(&door.key, lend.name.as_str());
+    let pass = raw.to_str().ok().and_then(Pass::decode);
+    let fault = match &pass {
+        None => Some("none that reads".to_string()),
+        Some(p) if p.person != key => Some("signed by another key than the one dialling".into()),
+        Some(p) => p
+            .check(&key, &label, unix_now())
+            .err()
+            .map(|f| f.to_string()),
+    };
+    if let Some(why) = fault {
+        tracing::debug!(target: "door", actor = key, lend = %lend.name, why, "door: refused — a member's own pass that does not open this lend");
+        return Err(LendRefusal::Pass.say(
+            StatusCode::FORBIDDEN,
+            format!("{} is not open to that app here", lend.name),
+        ));
+    }
+    let app = pass.map(|p| p.app);
+    tracing::debug!(target: "door", actor = key, lend = %lend.name, app = ?app.as_ref().map(Label::as_str),
+        "door: a member's own pass names the app its page is");
+    Ok(app)
+}
+
 /// One request through the door on the members' protocol.
 async fn through(
     State(door): State<Door>,
@@ -834,9 +874,9 @@ async fn through(
 /// One request for a lend, from `who`: refused by name, or carried to the
 /// lend's service and its answer streamed back.
 pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Request) -> Response {
-    let actor = match who {
+    let actor = match &who {
         Who::Member(dialer) | Who::Holder(dialer) => dialer.actor(),
-        Who::Own => hex::encode(door.key),
+        Who::Own(_) => hex::encode(door.key),
     };
     let path = req.uri().path().to_string();
     if can_step_out(&path) {
@@ -850,8 +890,8 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
         tracing::debug!(target: "door", actor, path, "door: refused — no lend named in the path");
         return LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here by that name");
     };
-    let pending = match who {
-        Who::Member(_) | Who::Own => {
+    let pending = match &who {
+        Who::Member(_) | Who::Own(_) => {
             let Some((group, person)) = door.rail.standing_anywhere(&actor) else {
                 tracing::debug!(target: "door", actor, "door: refused — the dialer stands in no group held here");
                 return LendRefusal::Closed
@@ -861,10 +901,13 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
                 actor: actor.clone(),
                 group,
                 person,
-                app: None,
+                app: match &who {
+                    Who::Own(app) => Some(app.clone()),
+                    _ => None,
+                },
             })
         }
-        Who::Holder(dialer) => Pending::Pass(dialer),
+        Who::Holder(dialer) => Pending::Pass(*dialer),
     };
     let lend = match find(door, raw_name) {
         Ok(Some(lend)) => lend,
@@ -885,7 +928,7 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
         actor,
         group,
         person,
-        app,
+        mut app,
     } = match pending {
         Pending::Known(asker) => asker,
         Pending::Pass(holder) => match holder_of(door, &holder, req.headers(), &lend).await {
@@ -893,6 +936,12 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
             Err(refused) => return refused,
         },
     };
+    if let Who::Member(dialer) = &who {
+        match own_app(door, dialer, req.headers(), &lend) {
+            Ok(own) => app = own,
+            Err(refused) => return refused,
+        }
+    }
     if let Some(refused) = lend.refusing(&service_path) {
         tracing::debug!(target: "door", actor, lend = %lend.name, path = service_path, refused = refused.as_str(),
             "door: refused — the lend refuses this path");

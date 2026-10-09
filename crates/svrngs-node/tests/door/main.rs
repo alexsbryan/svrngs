@@ -1045,9 +1045,12 @@ async fn a_pass_opens_only_the_lend_it_names_to_the_key_holding_it() {
 /// client's own is stripped; a key of the group's, asking with no pass, is
 /// told no app, its own stripped too. A pass from before the app had a
 /// field of its own, `lends` and no `app`, is refused `pass`, so the
-/// lend's worker asks the page for another. Planted: the door naming the
+/// lend's worker asks the page for another. A key of the group's
+/// presenting its own pass, as a computer's origin signs one for its page
+/// (sup-1), is told that pass's app; its pass naming another lend, or
+/// signed by another key, is refused `pass`. Planted: the door naming the
 /// pass's first read, the lend asked here; the client's header let
-/// through.
+/// through; a member's pass read whoever signed it.
 #[tokio::test]
 async fn a_pass_s_app_is_told_and_a_client_s_own_stripped() {
     use svrngs_core::alpn::Alpn;
@@ -1126,6 +1129,40 @@ async fn a_pass_s_app_is_told_and_a_client_s_own_stripped() {
     assert_eq!(member.status, 200, "{}", member.text);
     let head = last(&heads);
     assert!(header_values(&head, "x-svrngs-app").is_empty(), "{head}");
+
+    let bo = actor_of(&signing(2));
+    let own = |by: u8, reads: Vec<Label>| {
+        let pass = Pass::sign(&signing(by), &bo, (app.clone(), reads), unix_now() + 300);
+        format!("x-svrngs-pass: {}\r\n", pass.encode())
+    };
+    let member = pair
+        .get("/lend/shelf/whoami", &own(2, vec![shelf.clone()]))
+        .await;
+    assert_eq!(member.status, 200, "{}", member.text);
+    let head = last(&heads);
+    assert_eq!(
+        header_values(&head, "x-svrngs-app"),
+        vec![app.as_str()],
+        "a member's own pass names its page's app: {head}"
+    );
+    let asked = heads.lock().unwrap().len();
+    for (row, pass) in [
+        ("naming another lend", own(2, vec![])),
+        ("signed by another key", own(5, vec![shelf.clone()])),
+    ] {
+        let refused = pair.get("/lend/shelf/whoami", &pass).await;
+        assert_eq!(refused.status, 403, "{row}: {}", refused.text);
+        assert!(
+            refused.text.contains(r#""kind":"pass""#),
+            "{row}: {}",
+            refused.text
+        );
+    }
+    assert_eq!(
+        heads.lock().unwrap().len(),
+        asked,
+        "no refused pass reached shelf"
+    );
     pair.close().await;
 }
 

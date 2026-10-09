@@ -292,6 +292,15 @@ pub struct Offered {
     pub reads: Vec<Kind>,
 }
 
+impl Offered {
+    /// Whether this lend's pages read `other`: the one decider of what a
+    /// page reaches on a computer ([`crate::origin`]) and what
+    /// `/svrngs-reads` tells it ([`crate::surface::reads`]).
+    pub(crate) fn reads_one(&self, other: &Offered) -> bool {
+        self.reads.contains(&other.kind)
+    }
+}
+
 /// Why a lend could not be read.
 #[derive(Debug, thiserror::Error)]
 pub enum LendError {

@@ -220,7 +220,7 @@ pub(crate) async fn reads(at: &Asking, label: &svrngs_core::pass::Label) -> Resp
     };
     let read: Vec<serde_json::Value> = lent
         .iter()
-        .filter(|l| named(l).as_ref() != Some(label) && reading.offered.reads.contains(&l.offered.kind))
+        .filter(|l| named(l).as_ref() != Some(label) && reading.offered.reads_one(&l.offered))
         .filter_map(|l| {
             let address = host.origin(&l.key, l.offered.name.as_str())?;
             Some(serde_json::json!({ "kind": l.offered.kind, "name": l.offered.name, "lender": l.person, "address": address }))

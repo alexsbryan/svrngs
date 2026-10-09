@@ -111,10 +111,13 @@ lend declaration, kept as data: a secret the door injects and never lets out, th
 paths it refuses, how many people may use it at once.
 
 **What an app gets — the whole surface, for our apps and a stranger's alike:**
-- the person asking, verified, in a header the door sets, and for a
-  request a pass's holder makes, the app the person's page opened, the
-  pass's first lend, in another (`x-svrngs-app`, the scoped-use spike's one
-  header; none with no pass, so a computer's page names none);
+- the person asking, verified, in a header the door sets, and the app
+  asking in another (`x-svrngs-app`), read only from a pass (sup-1): on a
+  phone the pass's `app`, the lend whose pages the group's page handed it
+  to; on a computer the app its origin names from what the browser says
+  of the page ("Lent apps", call 6), carried to another computer's door
+  in a pass that computer signs for itself; none for a key of the group's
+  asking with no pass;
 - the people in the group, each with a public key the app may seal to;
 - the record, over a loopback API on the member's own node: append, read, live;
 - the services the group's members lend, each by name and an opaque kind the
@@ -183,8 +186,9 @@ u5-0):
   each lend at an origin of its own, a lent page reads both from its own.
   A page composing other lends ("Lent apps", call 6) reads them on a
   phone through its own worker, at addresses under its own origin
-  (mnp-2), and on a computer, at each lend's own origin, only as far as
-  the other app's own answer lets another origin: Jellyfin's did
+  (mnp-2), and on a computer, at each lend's own origin, by `fetch`, which
+  says where it is from, only the lends it reads (sup-1), and only as far
+  as the other app's own answer lets another origin: Jellyfin's did
   (`demo/runs/mn/2026-10-08/computer.json`, `handed`).
 - *A secret kept out of response bodies* (u5-3 (c) measures; under sign in
   once, call 4, the lend carries none). The door drops a response header
@@ -362,8 +366,8 @@ is U5's inventory (§8).
    gives, on a phone: the page's worker asks each lend of that kind as the
    person, and the door signs them in with nothing of the page's (12 asks
    at each door, no line of sign-in) — anything the person may, writes
-   included, since a pass names lends and a lapse and no method or path
-   (`crates/svrngs-core/src/pass.rs:136-151`). So an owner's operation
+   included, since a pass names its app, the lends it reads and a lapse,
+   and no method or path (`crates/svrngs-core/src/pass.rs:139-156`). So an owner's operation
    beside their data is offered to one app for one person by the lend's
    own program (the scoped-use spike, `demo/runs/su/2026-10-09/` §9): Ana's
    taste ranked the films Tonight's Picks gave it and kept her history
@@ -389,10 +393,31 @@ is U5's inventory (§8).
    so a phone that never opened it opens it at the path, and Back skips
    both (`web/lend.js`, `told` and `opening`). On a computer its origin
    answers from the record, each address the lend's own origin
-   (`crates/svrngs-node/src/surface.rs`, `reads`). The answer does not
-   limit what a page reaches on a computer, where it reaches every lend
-   of a group held here as the computer's person, `--reads` or not
-   (`crates/svrngs-node/src/origin.rs:87-93`; §9). Movie Night cut to it
+   (`crates/svrngs-node/src/surface.rs`, `reads`). Since sup-1 the answer
+   is also what a page reaches on a computer, one decider
+   (`lend::Offered::reads_one`), and the app is named there as on a phone.
+   A pass names its app apart from the lends it reads, `Pass { app, reads
+   }`, signing the bytes `[app, ...reads]` signed before, and the door
+   tells a service the app from it alone. A computer's origin names the
+   app from what the browser says of the page asking, which no page's
+   script can set (`crates/svrngs-node/src/origin.rs`, `app_of`): a
+   navigation, a typed address (`Sec-Fetch-Site: none`) or a request from
+   the lend's own origin is that lend's own page; a request from another
+   lend's page is that page's, by its `Origin` at this computer's port;
+   one from another page with no `Origin` (an `<img>`) is nobody's and
+   refused `closed`, so a page wanting another lend's bytes asks by
+   `fetch`; one with no `Sec-Fetch-*` is a program's, and the lend's own,
+   as loopback is trusted (§9). A page reaches its own lend and those of
+   the kinds its lender declared it reads, in a group both lenders and
+   this computer stand in, else `closed`; a lender that did not answer is
+   `away`, never a lend not read (`kept_to_reads`). The app is carried as
+   the door's `Who::Own` to this computer's own lend, and to another's in
+   a pass this computer signs for its page, its own key the person and
+   the holder, five minutes long and signed for each request, so none is
+   kept; that door reads the app from it and refuses one not the
+   dialler's own `pass` (`door.rs`, `own_app`). Held by
+   `crates/svrngs-node/tests/lend_origin.rs`, every row of the table at
+   Alex's own lends and Sam's. Movie Night cut to it
    (`demo/runs/mnp/2026-10-09/`): its `find` 28 lines to 1, each library
    named by its lender and an asleep one's person said; four phones that
    never opened a Jellyfin opened the chosen copy at its item, signed in,
@@ -1012,7 +1037,7 @@ own), then print where the apps open (`crates/svrngs/src/cli.rs`,
 `checked_page`). group.svrnme.sh does (the Vercel project svrngs-page,
 deployed by `scripts/deploy-page.sh`), so a group that names ours types
 nothing more. Each app's root and storage are its own, and its pages hold a
-pass for it and the lends it reads, no other. The cost: the page's host and
+pass naming it as the app and the lends it reads, no other. The cost: the page's host and
 the phone's name lookups see which app is opened, since its label names its
 lender's key and the app. A page at an address no name falls under — an IP
 address — or on a host whose name nobody made does not serve the page is
@@ -1021,7 +1046,9 @@ does not give the page — its host unreachable, or no page there — is not
 judged (exit 3). On a computer each app opens at
 `http://<label>.localhost:<port>/` on its own loopback
 (`crates/svrngs-node/src/origin.rs`), which every browser measured resolves
-(`demo/runs/u5/2026-10-05-localhost/`).
+(`demo/runs/u5/2026-10-05-localhost/`); there the origin names the app
+asking from what the browser says of its page, and keeps the page to its
+own lend and the lends it reads (sup-1; §3, "Lent apps", call 6).
 
 **A room's devices reach a lend through a member's computer there** (u6-1
 landed it; §3, "The room", calls 2 and 3). A TV takes no link and runs no
@@ -1487,7 +1514,8 @@ before the list and bar 5's letter passed, `demo/runs/mnp/2026-10-09/`;
 scoped use by four (`demo/runs/su/2026-10-09/README.md` §10), three
 of them next, the computer first (operator, 2026-10-09; svrn-docs
 `rings/current/SCOPED_USE_MADE_PRODUCTION.md`): the app named on the
-pass, and by a computer's origin, which keeps a page to its reads; a
+pass, and by a computer's origin, which keeps a page to its reads
+(landed, sup-1; §3, "Lent apps", call 6); a
 person's yes and stop kept by the lend's door, said on a page no app
 runs at — on a computer the home page, `svrngs.localhost`, and on a
 phone the group's page — never by the app; then the spike run again,
@@ -1534,11 +1562,10 @@ by the north star's tests.
 | any member's node redeeming a link, once its `Invite` has synced | a newcomer's link fails because its issuer's computer was asleep, counted |
 | a link's life set per link, other than a day | a newcomer meets a lapsed link, counted |
 | measuring a lender's upload rather than taking the figure they declare (BBR3's pacing estimate, or a timed saturating pull) | a declared figure is wrong by enough to stall a viewer in a recorded run |
-| a per-process tie between a node and the services it lends (upstream's `mint_tie`). A middleware believes loopback: a process on the lender's computer naming a person's key at its port was answered as them (`demo/runs/mw/2026-10-08/mw-1/`), which is the lender's own (§3, "The room", call 6) | an app's act is written under a person by a process the lender did not run, or one computer is shared by people who do not trust each other |
+| a per-process tie between a node and the services it lends (upstream's `mint_tie`). A middleware believes loopback: a process on the lender's computer naming a person's key at its port was answered as them (`demo/runs/mw/2026-10-08/mw-1/`), which is the lender's own (§3, "The room", call 6); and a request at a lend's origin with no `Sec-Fetch-*` is taken for that lend's own page (sup-1, `origin.rs` `app_of`), which neither widens nor narrows what a process could reach before | an app's act is written under a person by a process the lender did not run, or one computer is shared by people who do not trust each other |
 | group folders (§3, call 7 of "Lent apps"): a member shares a folder at one level from a closed set; its file list in the record, its bytes content-addressed and fetched by verified range from whoever holds them (iroh-blobs 0.103, which takes iroh ^1.0.0); the meeting point runs one Jellyfin over everyone's shared films as `.strm` stubs; opt-in, beside lends. Its first run (svrn-docs `rings/runs/strm-2026-10-05/`, `457f120`): browsers played the holder's MP4 straight from the stub's URL, and WebKit remuxed an MKV through Jellyfin, the double hop; it failed its pre-registered byte-share bar on Jellyfin's per-play probe of a 47 MB file | U5 lands, and the operator runs it with a group in the wild and settles it (operator, 2026-10-05) |
 | a person who only searches counted apart from one who watches: the door counts each on a lend for `WINDOW`, 30 s, after their last request (`crates/svrngs-node/src/door/limit.rs:17-19`), a search as a film — Movie Night's searcher was counted on both Jellyfins 26.3 and 26.5 s after one search and not at 36.2 and 36.4 s, the most at once 2, nobody refused (`demo/runs/mn/2026-10-08/doors.json`, `limit`) | a lend at its limit refuses someone while those it counts only searched, counted |
 | budgets on an owner's operation: how often an app may ask it, so asks cannot rebuild what it keeps back (`rings/current/ACL_AND_SCOPED_USE.md` §4, §6). Ana's taste ranks whatever films it is given, and ranked an app's two that sent her yes itself (`demo/runs/su/2026-10-09/verdicts.json`, "the unasked yes") | an operation's answers rebuild what its owner kept back, shown in a run, or an owner asks for a limit on one |
-| a computer's origin carrying a lent page only to the lends its lender declared it reads, as a phone's pass does: on a computer `--reads` decides only what its origin's `/svrngs-reads` tells the page (mnp-2), and a page reaches every lend of a group held here as the computer's person (`crates/svrngs-node/src/origin.rs:87-93`; `demo/runs/mn/2026-10-08/computer.json`); nor does it name the app, so a service keeping a lend to the app a person said yes to refuses every page there (`crates/svrngs-node/src/origin.rs:85`, `Who::Own`; `apps/taste/taste.mjs:132`; read from the code, not run, `demo/runs/su/2026-10-09/` §9) | the door keeps a lend from an app it names on a phone (scoped use made production, §8) and the same app on a computer reaches it |
 | a live payload naming its sender | an app needs to know who offered a live payload, and cannot take it from the payload |
 | WebKit's closed-range seeking through a lend: its seeks back to back, taken in serial 64 KiB reads of each short part, a round trip each, missed 5 s in 1 of 8 tries after u5-11, where straight at the canary over the same link they missed in none (`demo/runs/u5/2026-10-06-seek-stall/`; §11 risk 4); a rate in `scripts/check.sh`, not a gate | Demo A's real-phone sessions miss the seek bar in Safari more often than WebKit straight at the server on the same link |
 | our own relay as the default: `iroh-relay` (Let's Encrypt built in) on a small VPS, the operator inclined to DigitalOcean, US West, at `relay.svrnme.sh` (TCP 80 and 443, UDP 7842), carried in every link's token so a phone never needs n0's; `svrngs new --relay <url>` for a group that runs its own; n0's terms for production use read first. Open then: whether ours also drops n0's address lookup, computers learning each other's relay from the group's record. Until then n0's public relays and lookup, `RelayConfig::default()` (`crates/svrngs-node/src/guest.rs:66-76`), nothing paid for (operator, 2026-10-05). Every byte a phone sends crosses a relay (a browser is relay-only), so a host's bandwidth price decides it | svrngs goes to production, or a group beyond the operator's uses it |

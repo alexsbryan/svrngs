@@ -148,9 +148,10 @@ pub async fn open(node: &Node, at: Ipv4Addr, names: &[LendName]) -> Result<Room,
     Ok(room)
 }
 
-/// A request at the room door, carried to its lend as at its origin.
+/// A request at the room door, carried to its lend as at its origin, for
+/// the lend's own page: the room serves one lend at each port.
 async fn in_room(State((at, label)): State<(Asking, Label)>, req: Request) -> Response {
-    crate::origin::reach(&at, label, req).await
+    crate::origin::reach(&at, label.clone(), label, req).await
 }
 
 /// Serve a request only from a caller on this computer's network: one the

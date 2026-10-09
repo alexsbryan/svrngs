@@ -190,7 +190,8 @@ impl Node {
         })?;
         let actor = actor_of(&key);
         let secret = SecretKey::from_bytes(&key.to_bytes());
-        let rail = Arc::new(RingRail::new(&data_dir, Arc::new(key)));
+        let key = Arc::new(key);
+        let rail = Arc::new(RingRail::new(&data_dir, key.clone()));
         // Bound before the endpoint, so a refused address leaves no endpoint
         // dropped open.
         // One nudge, the round's, which the append door fires so a write
@@ -232,6 +233,7 @@ impl Node {
         let asking = Asking {
             host: host.clone(),
             door,
+            key,
         };
         // The record, and beside it what an app asks of this computer (u5-1).
         let routes = crate::api::router(
@@ -618,17 +620,33 @@ pub struct Lending {
 }
 
 /// What the people route reads: the node's groups and transport, and its
-/// own door.
+/// own door; and the key a computer's origin signs its own passes with
+/// ([`crate::origin`], sup-1).
 #[derive(Clone)]
 pub(crate) struct Asking {
     pub(crate) host: Arc<Host>,
     door: crate::door::Door,
+    pub(crate) key: Arc<SigningKey>,
 }
 
 impl Asking {
     /// This computer's door.
     pub(crate) fn door(&self) -> &crate::door::Door {
         &self.door
+    }
+
+    /// What the computer whose key is `actor` lends now: this computer's
+    /// from its declarations, another's asked as [`Node::lends`] asks it,
+    /// within [`ANSWER_WITHIN`]; `None` when it did not answer, or this
+    /// computer cannot read its own.
+    pub(crate) async fn offered_by(&self, actor: &str) -> Option<Vec<Offered>> {
+        if actor == self.host.actor {
+            return crate::door::offered(&self.door).await.ok();
+        }
+        let key = actor_key(actor)?;
+        tokio::time::timeout(ANSWER_WITHIN, ask_lends(&self.host.transport, actor, key))
+            .await
+            .ok()?
     }
 }
 
