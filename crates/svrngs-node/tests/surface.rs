@@ -342,3 +342,92 @@ async fn a_lent_page_asks_at_its_own_origin_the_lends_it_reads() {
     );
     house.close().await;
 }
+
+/// **A lent page is not held by a computer that never answers**
+/// (asleep-1-none-held (b); `demo/runs/mnp/2026-10-09/README.md`, "What no
+/// prediction named" 2): as `a_lent_page_asks_at_its_own_origin_the_lends_it_reads`,
+/// with Cy let in too and Cy's computer asleep. `/svrngs-reads` at `night`'s
+/// origin answers `telly` and Sam's `films` within
+/// [`svrngs_node::node::ANSWER_WITHIN`] and a second, Cy named as not
+/// answering, never dropped. Planted: every lender's ask awaited to its own
+/// end (node.rs `lends_in` before this row), which held the answer to the
+/// asleep dial's timeout.
+#[tokio::test]
+async fn a_lent_page_is_not_held_by_a_computer_that_never_answers() {
+    use tower::ServiceExt;
+    let house = House::new().await;
+    let declare = |dir: &std::path::Path, name: &str, port: u16, kind: &str, reads: &[&str]| {
+        let at = lend::lends_dir(dir);
+        std::fs::create_dir_all(&at).unwrap();
+        let body = serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads });
+        std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+    };
+    declare(house.alex_dir.path(), "night", 8596, "night", &["media"]);
+    declare(house.alex_dir.path(), "telly", 8096, "media", &[]);
+    declare(house.sam_dir.path(), "films", 8097, "media", &[]);
+    let admit = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse("cy").unwrap(),
+            key: actor_of(&signing(3)),
+            invite: None,
+        },
+        on_behalf_of: None,
+    };
+    house
+        .alex
+        .rail()
+        .commit(&house.id, &admit)
+        .unwrap()
+        .unwrap();
+    let (_asleep, at_cy) = common::never_answers();
+    let cy =
+        svrngs_node::iroh::PublicKey::from_bytes(signing(3).verifying_key().as_bytes()).unwrap();
+    house.alex.transport().add_known_peer(cy, at_cy);
+    let port = house.alex.api_addr().port();
+    let label = |seed: u8, name: &str| {
+        svrngs_core::pass::Label::of(signing(seed).verifying_key().as_bytes(), name)
+    };
+    let at = |seed: u8, name: &str| svrngs_node::origin::origin(&label(seed, name), port);
+    let mut request = axum::http::Request::get(svrngs_node::surface::READS_PATH)
+        .header("host", format!("{}.localhost:{port}", label(1, "night")))
+        .body(axum::body::Body::empty())
+        .unwrap();
+    let caller: SocketAddr = "127.0.0.1:50000".parse().unwrap();
+    request
+        .extensions_mut()
+        .insert(axum::extract::ConnectInfo(caller));
+
+    let asked = std::time::Instant::now();
+    let answer = tokio::time::timeout(
+        Duration::from_secs(30),
+        house.alex.api_routes().oneshot(request),
+    )
+    .await
+    .expect("the ask finishes")
+    .unwrap();
+    let took = asked.elapsed();
+    let status = answer.status().as_u16();
+    let body = axum::body::to_bytes(answer.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let body: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    eprintln!("the reads answered in {took:?}: {body}");
+    assert_eq!(status, 200, "{body:#}");
+    assert_eq!(
+        body,
+        serde_json::json!({
+            "lends": [
+                { "kind": "media", "name": "telly", "lender": "alex", "address": at(1, "telly") },
+                { "kind": "media", "name": "films", "lender": "sam", "address": at(2, "films") },
+            ],
+            "unanswered": ["cy"],
+        }),
+        "Cy's computer asleep: named as not answering, never dropped"
+    );
+    let bound = svrngs_node::node::ANSWER_WITHIN + Duration::from_secs(1);
+    assert!(
+        took < bound,
+        "the reads waited {took:?} on a computer that never answers, past {bound:?}"
+    );
+    house.close().await;
+}

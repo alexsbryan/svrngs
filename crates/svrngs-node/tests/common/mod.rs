@@ -20,3 +20,17 @@ pub fn loopback_sockets(endpoint: &Endpoint) -> Vec<SocketAddr> {
         })
         .collect()
 }
+
+/// A computer that never answers, as an asleep one in the field: a socket
+/// bound on loopback that nobody reads, so a dial to it is neither refused
+/// nor answered and waits out its own timeout. Held for as long as it
+/// should stay asleep.
+#[allow(
+    dead_code,
+    reason = "each test binary compiles this file; only some sleep a computer"
+)]
+pub fn never_answers() -> (std::net::UdpSocket, Vec<SocketAddr>) {
+    let socket = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
+    let at = socket.local_addr().unwrap();
+    (socket, vec![at])
+}

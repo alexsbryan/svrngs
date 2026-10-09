@@ -16,8 +16,9 @@
 //!   upload (`upload_bps`, `null` when its lender states none), and where
 //!   this computer's browser opens it, its `origin` (u5-2,
 //!   [`crate::origin`]), and its `room` address while the room door serves
-//!   it (u6-1, [`crate::room`]); and the people whose computer did not answer,
-//!   named, their lends absent rather than stale. The body [`crate::node`]'s `GET /people/lends`
+//!   it (u6-1, [`crate::room`]); and the people whose computer did not answer
+//!   within [`crate::node::ANSWER_WITHIN`], named, their lends absent rather
+//!   than stale. The body [`crate::node`]'s `GET /people/lends`
 //!   answers a member, for one group.
 //! - `GET /svrngs-reads`, at a lend's own origin and to its pages (mnp-2,
 //!   [`reads`]): the lends of each kind its lender declared it reads, as a

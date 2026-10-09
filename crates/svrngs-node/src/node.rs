@@ -94,6 +94,14 @@ pub struct Lent {
     pub address: String,
 }
 
+/// How long an ask of what the people of a group lend waits on one
+/// computer before naming it unanswered (asleep-1-none-held): an awake
+/// lender answered a phone's page in 90-324 ms and an asleep one's dial
+/// gave up at about 10 s (`demo/runs/mnp/2026-10-09/README.md`, "What no
+/// prediction named" 2), so a computer that answers is not held by one
+/// that does not.
+pub const ANSWER_WITHIN: Duration = Duration::from_secs(3);
+
 /// What the people of this computer's groups lend, asked now.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Lends {
@@ -466,8 +474,8 @@ impl Host {
 
     /// What the other computers' keys standing in `groups` lend, but
     /// `asker`'s, which knows its own, each computer asked now and all at
-    /// once, and where this computer reaches each lend. Nothing is kept
-    /// between asks.
+    /// once, each for at most [`ANSWER_WITHIN`], and where this computer
+    /// reaches each lend. Nothing is kept between asks.
     async fn lends_in(
         &self,
         groups: &[(String, BTreeMap<String, Member>)],
@@ -479,7 +487,12 @@ impl Host {
         for (actor, person, key) in peers {
             let transport = self.transport.clone();
             asks.push(tokio::spawn(async move {
-                let answer = ask_lends(&transport, &actor, key).await;
+                let asked = tokio::time::timeout(ANSWER_WITHIN, ask_lends(&transport, &actor, key));
+                let answer = asked.await.unwrap_or_else(|_| {
+                    tracing::debug!(target: "node", actor, within_ms = ANSWER_WITHIN.as_millis() as u64,
+                        "node: lends — the computer did not answer in time, so it is named unanswered");
+                    None
+                });
                 (person, actor, answer)
             }));
         }
