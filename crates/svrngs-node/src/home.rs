@@ -35,7 +35,7 @@ use axum::{Json, Router};
 use serde::Deserialize;
 use svrngs_core::pass::Label;
 
-use crate::door::choices::{own_choices, own_choose, Said};
+use crate::door::choices::{own_choices, own_choose, Said, Saying};
 use crate::door::{LendRefusal, PASS_HEADER, REFUSED_HEADER};
 use crate::node::Asking;
 
@@ -184,7 +184,7 @@ pub(crate) async fn say(
     }
     let body = match pass {
         Some(_) => serde_json::json!({ "said": said }),
-        None => serde_json::json!({ "app": app, "said": said }),
+        None => serde_json::json!(Saying { app, said }),
     };
     at_door(at, lend, Some(body), pass).await
 }

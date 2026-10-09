@@ -60,12 +60,13 @@ pub struct Choice {
 type Kept = BTreeMap<PersonKey, BTreeMap<Label, Choice>>;
 type Done = oneshot::Sender<Result<(), String>>;
 
-/// A person's body: the app, and what they say of it.
-#[derive(Deserialize)]
+/// A person's body: the app, and what they say of it; the one shape of
+/// both its halves, the door's and the home page's ([`crate::home::say`]).
+#[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Person {
-    app: Label,
-    said: Said,
+pub(crate) struct Saying {
+    pub(crate) app: Label,
+    pub(crate) said: Said,
 }
 
 /// An app's body, with its pass.
@@ -282,8 +283,8 @@ pub(super) async fn choose(
             Err(refused) => refused,
         };
     }
-    match serde_json::from_slice::<Person>(&body) {
-        Ok(Person { app, said }) => keep(&door, &lend, person, app, said).await,
+    match serde_json::from_slice::<Saying>(&body) {
+        Ok(Saying { app, said }) => keep(&door, &lend, person, app, said).await,
         Err(e) => {
             tracing::debug!(target: "door", lend = %lend.name, error = %e, "door: refused — not a choice");
             LendRefusal::Path.say(
