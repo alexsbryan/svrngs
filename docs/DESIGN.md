@@ -1465,11 +1465,19 @@ mnp-1 and mnp-2: Movie Night's plumbing 39 lines to 12, `find` 28 to 1,
 bar 2 passed for a phone that never opened that Jellyfin, bar 4 asleep
 before the list and bar 5's letter passed, `demo/runs/mnp/2026-10-09/`;
 §3, "Lent apps", call 6) — and
-scoped use by four (`demo/runs/su/2026-10-09/README.md` §10): a lend
-its lender's person alone reaches, on any device of theirs; an app named
-on the pass; a person's yes before a lend enters an app's pass, kept
-where the lend is, never sent by the app; a stop the door holds, sooner
-than the pass's lapse; group folders (§3, call 7 of
+scoped use by four (`demo/runs/su/2026-10-09/README.md` §10), three
+of them next, the computer first (operator, 2026-10-09; svrn-docs
+`rings/current/SCOPED_USE_MADE_PRODUCTION.md`): the app named on the
+pass, and by a computer's origin, which keeps a page to its reads; a
+person's yes and stop kept by the lend's door, said on a page no app
+runs at — on a computer the home page, `svrngs.localhost`, and on a
+phone the group's page — never by the app; then the spike run again,
+on a computer first; after a row that keeps an asleep computer from
+holding anyone's answer (`demo/runs/mnp/2026-10-09/README.md`, "What no
+prediction named" 1 and 2). The fourth, a lend its lender's person
+alone reaches on any device of theirs, waits on another device for the
+same person (§9; `rings/current/ONE_PERSON_MANY_DEVICES.md`, deferred);
+group folders (§3, call 7 of
 "Lent apps"; §9); the phone replica spike, iOS first (§9, "a
 native phone app"), after folders since they name the bytes a phone would
 hold; then the middleware's P1 follow-ups as one row (operator, 2026-10-08;
@@ -1518,6 +1526,18 @@ by the north star's tests.
 | the floor: every app under `/l/<label>/` of one address apart from the page's, on any static host, the link carrying that address after its token (a second address given to `svrngs new`, u5-2; dropped by u6-00). Its cost was one origin for every app, so a lent page could read what another kept and use another's pass while it lasted, and its every app lost its root: the catalogue run lent five self-hosted apps on it in Chromium and WebKit and none got past its sign-in, each asking for `/`-absolute paths the floor's host answered 404, and Paperless's post refused by its own origin check (`demo/runs/catalogue/2026-10-05/RESULTS.md`, "The floor"; `003e0d5`) | a group whose host answers no name nobody made asks for an app that keeps to relative paths, counted |
 
 ## 10. Decisions
+
+By the operator, 2026-10-09, before scoped use made production:
+- a computer is the main way in, and a phone its teaser and onboarding,
+  for now: a piece is built for a computer first, a phone beside it.
+- a person's yes to an app is said on a page no app runs at, never by
+  the app. On a computer that page is the home page,
+  `http://svrngs.localhost:<port>/`, served by the person's own node:
+  their groups, what each lends, opened from there, and what apps use of
+  theirs. It answers only itself and is never framed. Its writes are the
+  person's own choices; sharing, links and removing someone stay in the
+  command until a row moves each. The repository's budget rose from
+  14,750 to 15,200 for it (§5).
 
 By the operator, 2026-10-08, after the middleware spike:
 - the library carries the weight. The door takes the middleware's general
