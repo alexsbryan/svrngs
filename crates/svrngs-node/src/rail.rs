@@ -195,7 +195,8 @@ pub(crate) fn people_json<'a>(
 /// number or actor could write as somebody else.
 ///
 /// (svrngs: upstream dropped a bare `on_behalf_of`, since a caller could
-/// stamp only with a signed `GuestAttestation`, which went with `attest`.
+/// stamp only with a signed `GuestAttestation`, which went with `attest`,
+/// and from the core in core-0.
 /// Here an app serving someone else names them, and the act is signed as
 /// this computer with `on_behalf_of` naming that person — whom the member
 /// door verified (DESIGN §3, §8 "Localhost is the trust boundary"). The

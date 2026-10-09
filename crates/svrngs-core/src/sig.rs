@@ -168,8 +168,8 @@ pub fn redemption_message(namespace: &str, invite: &OpId, person: &str, key: &st
 }
 
 /// Hex Ed25519 signature over `msg`: the ONE place a signature is made and
-/// spelled, for an act's id, a redemption and a guest attestation alike, as
-/// [`verify_hex`] is the one place one is read.
+/// spelled, for an act's id, a redemption, a joiner's ask and a pass alike,
+/// as [`verify_hex`] is the one place one is read.
 pub fn sign_message(key: &SigningKey, msg: &[u8]) -> String {
     hex::encode(key.sign(msg).to_bytes())
 }
@@ -236,8 +236,9 @@ pub(crate) fn verify_ring_op(actor: &str, id: &OpId, sig_hex: &str) -> bool {
 }
 
 /// Verify `sig_hex` over `msg` under the hex public key `signer`. The ONE
-/// place a hex key and a hex signature are parsed, shared by ring ops and
-/// guest attestations; `false` on any malformed input, never a panic.
+/// place a hex key and a hex signature are parsed, shared by ring ops,
+/// redemptions, asks and passes; `false` on any malformed input, never a
+/// panic.
 pub fn verify_hex(signer: &str, msg: &[u8], sig_hex: &str) -> bool {
     let Ok(key_bytes) = hex::decode(signer) else {
         return false;

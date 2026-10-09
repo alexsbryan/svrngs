@@ -830,7 +830,11 @@ their check and routes (~180), the computer's origin naming the app,
 keeping a page to its reads and carrying the app by its own pass (~120),
 the computer's page at `svrngs.localhost` (~100), the phone's page and
 worker (~110), `share --ask` (~25) and the pass's app (~6), about 540
-against the 106 left, 450 by the seat's estimate.
+against the 106 left, 450 by the seat's estimate. Then core-0 made the
+room (operator, 2026-10-09; svrn-docs `rings/current/ONE_PERSON_MANY_DEVICES.md`
+§6): upstream's guest attestation and roster warrant, which no code of
+svrngs used (`attest.rs`, `introduce.rs`, `Roster.vouches`), deleted —
+svrngs-core from 2,957 to 2,628, the repository from 14,644 to 14,315.
 `ARCHITECTURE.md` maps what exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file

@@ -960,3 +960,49 @@ fn a_person_is_made_only_from_a_name() {
         assert!(serde_json::from_str::<Person>(raw).is_err(), "{raw}");
     }
 }
+
+// ── the roster's bytes ───────────────────────────────────────
+
+/// **A roster reads as it always did, with or without upstream's `vouches`.**
+/// svrngs never wrote that field (it was `skip_serializing_if` empty) and it
+/// went with `introduce.rs` in core-0; a file that carried it must still
+/// parse to the same members, and a roster serializes to exactly the bytes a
+/// deployed `roster.json` holds. Watched failing first with
+/// `#[serde(deny_unknown_fields)]` on [`Roster`]: the second parse refused.
+/// (Moved from upstream's `tests_introduce.rs`, its warrant half deleted with
+/// the warrant.)
+#[test]
+fn a_roster_written_with_or_without_vouches_reads_as_its_members() {
+    let before = r#"{
+  "members": {
+    "alex": [
+      "aaaa",
+      "bbbb"
+    ],
+    "bo": [
+      "cccc"
+    ]
+  }
+}"#;
+    let with_vouches = r#"{
+  "members": { "alex": ["aaaa", "bbbb"], "bo": ["cccc"] },
+  "vouches": { "bbbb": { "op": "ring-0123456789abcdef", "by": "aaaa", "at": 200 } }
+}"#;
+    let roster: Roster = serde_json::from_str(before).expect("a deployed roster.json must parse");
+    assert_eq!(roster.members.len(), 2);
+    assert_eq!(roster.members[&p("alex")], vec!["aaaa", "bbbb"]);
+    let vouched: Roster =
+        serde_json::from_str(with_vouches).expect("a roster with upstream's vouches must parse");
+    assert_eq!(vouched, roster, "and to the same members");
+    assert_eq!(serde_json::to_string_pretty(&roster).unwrap(), before);
+    assert_eq!(serde_json::to_string_pretty(&vouched).unwrap(), before);
+}
+
+/// The one rendering every surface that shows an op id to a person uses.
+/// (Upstream's `tests_introduce.rs` held it with `short_stamp`'s, which went
+/// with the warrant, core-0.)
+#[test]
+fn an_op_id_reads_short_enough_to_say() {
+    assert_eq!(short_id("ring-0123456789abcdef"), "ring-0123456…");
+    assert_eq!(short_id("short"), "short");
+}

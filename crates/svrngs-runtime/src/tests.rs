@@ -1073,7 +1073,8 @@ fn a_refused_line_under_a_real_floor_goes_and_is_counted() {
 
 // ── an op never changes a roster ─────────────────────────────
 
-/// **A peer's introduction arrives, is readable, and moves nothing.**
+/// **A peer's act naming a stranger's key arrives, is readable, and moves
+/// nothing.**
 ///
 /// The load-bearing negative leg of `ra-roster-stays-independent`, and the
 /// refusal `sovereign-mesh/src/ring_roster.rs` states in prose: "there is no
@@ -1085,16 +1086,15 @@ fn a_refused_line_under_a_real_floor_goes_and_is_counted() {
 /// **Asserted on the FILE BYTES**, not on an in-memory `Roster` this test
 /// built: an in-memory comparison would pass on a node whose `roster.json`
 /// had been rewritten and re-read identically, and the thing being prevented
-/// is a write. Watched failing first, with `ingest_all` taught to fold an
-/// arriving introduction into the roster — the one line this whole rung
-/// refuses — which rewrites the file and fails here.
+/// is a write. Watched failing first, with `ingest_all` rewriting the file.
 ///
 /// The other half is from the bar's own goodhart line: zero is the expected
-/// good result and proves nothing alone. So the same run shows the
-/// introduction ARRIVING and being READABLE — an `Introduce` no peer ever
-/// sent would score a perfect zero.
+/// good result and proves nothing alone. So the same run shows the act
+/// ARRIVING and being READABLE. (svrngs, core-0: upstream's act was an
+/// `Introduce`, which went from the core with the roster warrant; this one
+/// is a payload of its own, naming the same person and key.)
 #[test]
-fn a_peers_introduction_arrives_readable_and_changes_no_roster_row() {
+fn a_peers_act_naming_a_key_arrives_readable_and_changes_no_roster_row() {
     let (mine, theirs) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (a, b) = (open(mine.path()), open(theirs.path()));
     let r = ring();
@@ -1102,14 +1102,16 @@ fn a_peers_introduction_arrives_readable_and_changes_no_roster_row() {
     a.set_roster(&r).unwrap();
     let before = std::fs::read(a.roster_path()).unwrap();
 
-    // bo — a member I already claim — vouches for a key nobody claims.
+    // bo — a member I already claim — writes an act naming a key nobody claims.
     let stranger = actor_of(&key(9));
-    let intro = RailAct::Record {
-        payload: Introduce::new(Person::parse("dee").unwrap(), &stranger, "she fixed the boiler")
-            .payload()
-            .unwrap(),
-    };
-    let written = b.append(intro, &key(2), &r, None, &Ed25519Verifier).unwrap();
+    let says = Payload::new(serde_json::json!({
+        "kind": "thing",
+        "person": "dee",
+        "key": stranger,
+    }))
+    .unwrap();
+    let act = RailAct::Record { payload: says.clone() };
+    let written = b.append(act, &key(2), &r, None, &Ed25519Verifier).unwrap();
 
     // Ring-sync, the way a peer delivers: digest out, missing ops back in.
     let for_me = b.ops_missing_from(&a.digest().unwrap()).unwrap();
@@ -1126,26 +1128,18 @@ fn a_peers_introduction_arrives_readable_and_changes_no_roster_row() {
     assert_eq!(on_disk, r, "and the roster it parses to is the one I wrote");
     assert!(
         !on_disk.knows(&Person::parse("dee").unwrap()),
-        "dee is introduced, not admitted — that is an operator's decision"
+        "dee is named, not admitted"
     );
-    assert!(on_disk.vouch_for(&stranger).is_none());
+    assert!(on_disk.person_for(&stranger).is_none());
 
-    // ── and the introduction is there to read ──
+    // ── and the act is there to read ──
     let admission = a.admit(&r, &Ed25519Verifier).unwrap();
     assert!(admission.is_complete(), "{:?}", admission.gaps());
     let ops = wire_ops(&admission);
     let op = ops
         .iter()
         .find(|o| o.id == written.id)
-        .expect("the introduction is admitted — it was signed by a member");
-    assert_eq!(op.person, Person::parse("bo").unwrap(), "and it says who vouched");
-    assert_eq!(
-        Introduce::from_payload(op.payload.as_ref().unwrap()),
-        Some(Introduce::new(
-            Person::parse("dee").unwrap(),
-            &stranger,
-            "she fixed the boiler"
-        )),
-        "readable, in the vocabulary an operator acts on"
-    );
+        .expect("the act is admitted — it was signed by a member");
+    assert_eq!(op.person, Person::parse("bo").unwrap(), "and it says who wrote it");
+    assert_eq!(op.payload.as_ref(), Some(&says), "readable, as it was written");
 }

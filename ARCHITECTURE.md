@@ -29,7 +29,9 @@ only as a projection (`project.rs`: the sealed `Projection`, folded for
 (`process.rs`: the sealed `ProcessManager`, the `Due` only `Admission::react`
 makes and only when every act it names as a cause stands, and `Compact`, a
 seal's retirement), the register's commands (`register.rs`: `MintInvite`, `Redeem`), the
-record's (`record.rs`: `Append`, `Seal`), attestation and introductions. `no_std`, so the
+record's (`record.rs`: `Append`, `Seal`); upstream's guest attestation
+(`attest.rs`) and roster warrant (`introduce.rs`, `Roster.vouches`, with
+`short_stamp`) were deleted in core-0, nothing of svrngs using them. `no_std`, so the
 compiler refuses filesystem, clock, network, threads and `HashMap`; time and
 keys arrive as arguments. It is commonwealth-ai's
 `commonwealth-rail-core` at `e1a43bcd2`, with `oplog-types` (`op.rs`) and
@@ -271,7 +273,8 @@ node's (`live_peers`, from the register; u4-1 skips a browser's), over the node'
 by `RailApi`, and answers each peer and whether it took it. The sync
 doors and `attest` stay behind, and with them the other routes beside them
 in upstream's `api.rs`. Then it changed: the append door's
-attestation branch went with `attest`. An append's `on_behalf_of` is the
+attestation branch went with `attest`, and `GuestAttestation` from the
+core in core-0. An append's `on_behalf_of` is the
 person an app names when it serves someone else — whom the member door
 verified (DESIGN §8, "Localhost is the trust boundary") — signed by this
 computer, and refused (`not_a_name`, `not_in_group`) unless it parses as a

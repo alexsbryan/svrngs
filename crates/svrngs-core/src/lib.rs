@@ -84,10 +84,8 @@ extern crate alloc;
 mod act_set;
 mod admit;
 pub mod alpn;
-mod attest;
 mod command;
 mod hash;
-mod introduce;
 pub mod joining;
 pub mod link;
 mod membership;
@@ -116,9 +114,7 @@ use serde::{Deserialize, Serialize};
 
 pub use act_set::ActSet;
 pub use admit::{admit, body_json, Admission, AdmittedOp, GapClass, RailGap};
-pub use attest::{AttestRefusal, GuestAttestation};
 pub use command::{commit, Author, Authored, Command, Reads, Recorded, Refused, Store, Tip};
-pub use introduce::{trace, trace_op, Introduce, Vouch, VouchStatus};
 pub use membership::{membership, InviteFault, Invited, Membership};
 pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
 pub use process::{Compact, Due, ProcessManager, Retire, Uncaused};
@@ -301,65 +297,21 @@ impl core::fmt::Display for Person {
 /// housemate moves in, and the reference app has a test pinning that it does
 /// not.
 ///
-/// A row may also carry WHY it is here — the introduction the key was
-/// admitted on. That is provenance and not derivation: see [`Vouch`] and
-/// [`Introduce`] for the distinction, which is the same one this paragraph is
-/// about.
+/// (svrngs: upstream's row could also carry the introduction a key was
+/// admitted on, `vouches`; svrngs never wrote one, and it went with
+/// `introduce.rs` in core-0. A roster written with `vouches` still parses,
+/// since unknown fields are ignored, and one without serializes to the bytes
+/// it always did.)
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Roster {
     /// Person → the hex node public keys that person signs with. Two laptops
     /// is two keys in one row.
     pub members: BTreeMap<Person, Vec<String>>,
-    /// Key → the introduction it was admitted on, for the keys that have one.
-    ///
-    /// Keyed by KEY and not by person because that is the grain of the
-    /// question: two laptops can join a ring on two different evenings, on
-    /// two different people's word.
-    ///
-    /// **`default` and `skip_serializing_if` are both load-bearing.** Every
-    /// `roster.json` on every deployed ring was written without this field,
-    /// and a shape that turned those into a parse error would be an outage
-    /// rather than a migration — they read as [`VouchStatus::Unknown`]. And a
-    /// roster with no vouches serializes to exactly the bytes it did before,
-    /// so adding the field moves no file that has nothing to say.
-    ///
-    /// A vouch here is a claim, never a conclusion: resolve it with
-    /// [`trace`] against an [`Admission`], which is the only thing that knows
-    /// whether the op exists and verifies.
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub vouches: BTreeMap<String, Vouch>,
 }
 
 impl Roster {
     pub fn new(members: BTreeMap<Person, Vec<String>>) -> Self {
-        Self {
-            members,
-            vouches: BTreeMap::new(),
-        }
-    }
-
-    /// Bind a key to a person, with the introduction it was admitted on.
-    ///
-    /// The ONE writer of both maps, so a vouch naming a key no row carries is
-    /// unrepresentable rather than checked (ARCH §7.1). `false` when the
-    /// person already signs with that key, and nothing is touched — a caller
-    /// re-running an add must not silently rewrite the warrant on a key that
-    /// is already in the ring.
-    pub fn bind_key(&mut self, person: Person, key: String, vouch: Option<Vouch>) -> bool {
-        let keys = self.members.entry(person).or_default();
-        if keys.iter().any(|k| k == &key) {
-            return false;
-        }
-        keys.push(key.clone());
-        if let Some(v) = vouch {
-            self.vouches.insert(key, v);
-        }
-        true
-    }
-
-    /// The introduction this key was admitted on, if the row carries one.
-    pub fn vouch_for(&self, key: &str) -> Option<&Vouch> {
-        self.vouches.get(key)
+        Self { members }
     }
 
     /// Who signed with this key, if anyone in the ring did.
@@ -786,11 +738,6 @@ pub enum RailError {
         actor_prefix(.actor)
     )]
     NotInRoster { actor: String, namespace: String },
-    /// A guest attestation the journal's writer would not honour. Typed so
-    /// the refusal's name crosses a dial intact (`AttestRefusal::name`) and
-    /// the door can hand it to the caller verbatim.
-    #[error("the guest attestation was refused: {0}")]
-    AttestRefused(AttestRefusal),
 }
 
 /// Enough of an actor key to recognise, short enough to read in a sentence.
@@ -798,13 +745,13 @@ fn actor_prefix(actor: &str) -> String {
     actor.chars().take(12).collect()
 }
 
-// ── Rendering the two fields every reader shortens ───────────
+// ── Rendering an op id to a person ───────────────────────────
 //
-// An op id is 40-odd characters and a timestamp is an integer, and every
-// surface that shows either to a person cuts them the same way. These were
-// `short_id` and `short_stamp` in `svrn ring`'s own module until the roster
-// warrant needed the same two — and a sentence the rail composes must not
-// spell a date differently from the log line printed above it (ARCH §10.6).
+// An op id is 40-odd characters, and every surface that shows one to a
+// person cuts it the same way: a refusal's sentence must not spell an id
+// differently from the log line printed above it (ARCH §10.6). (svrngs:
+// `short_stamp`, its date-shaped twin, went with the roster warrant that
+// alone used it, core-0.)
 
 /// Enough of an op id to recognise, short enough to read in a sentence.
 pub fn short_id(id: &str) -> String {
@@ -813,30 +760,6 @@ pub fn short_id(id: &str) -> String {
     } else {
         id.to_string()
     }
-}
-
-/// `YYYY-MM-DD HH:MM` in UTC. Enough to order a conversation about the
-/// journal, without a date library.
-pub fn short_stamp(ts: i64) -> String {
-    let days = ts.div_euclid(86_400);
-    let secs = ts.rem_euclid(86_400);
-    // Civil-from-days (Howard Hinnant's algorithm), shifted to the 0000-03-01
-    // era so leap years fall at the end of the cycle.
-    let z = days + 719_468;
-    let era = z.div_euclid(146_097);
-    let doe = z.rem_euclid(146_097);
-    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
-    let y = yoe + era * 400;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let d = doy - (153 * mp + 2) / 5 + 1;
-    let m = if mp < 10 { mp + 3 } else { mp - 9 };
-    let y = if m <= 2 { y + 1 } else { y };
-    format!(
-        "{y:04}-{m:02}-{d:02} {:02}:{:02}",
-        secs / 3600,
-        (secs % 3600) / 60
-    )
 }
 
 // ── Signing without holding key material ─────────────────────
@@ -918,10 +841,6 @@ mod tests;
 
 #[cfg(test)]
 mod tests_sealing;
-// The roster-provenance half, split out when the two together passed the
-// 1200-line ceiling (ARCH §3.2). Named for its subject, not numbered.
-#[cfg(test)]
-mod tests_introduce;
 
 /// The rail's ONE set of op fixtures.
 ///
