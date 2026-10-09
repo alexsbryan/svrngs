@@ -46,7 +46,7 @@ JF_APP="${JF_APP:-/Applications/Jellyfin.app/Contents}"
 # Ports of their own, apart from apps/jellyfin/check's 8096 and 8097.
 SAM_JF=8296; DEE_JF=8396; CY_PORT=8496; MN_PORT=8596
 SECRETS="$R/secrets"; mkdir -p "$OUT"
-LOG='info,door=debug,origin=debug'
+LOG="${LOG:-info,door=debug,origin=debug}"
 say() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*" | tee -a "$OUT/steps.log" >&2; }
 field() { python3 -c "import json,sys;print(json.load(sys.stdin)$1)"; }
 port_of() { for _ in $(seq 1 100); do grep -m1 -o 'port [0-9]*' "$1" 2>/dev/null | cut -d' ' -f2 && return; sleep 0.1; done; return 1; }

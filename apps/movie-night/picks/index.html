@@ -1,0 +1,26 @@
+<!-- mn: own picks -->
+<!-- su: own picks — Tonight's Picks' page: what each library and the taste said, the question, the films -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tonight's Picks</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="picks.css">
+<script type="module" src="picks.js"></script>
+</head>
+<body>
+<h1>Tonight's Picks</h1>
+<ul id="said" aria-live="polite"></ul>
+<!-- su: own consent — the question, the survey's words (svrn-docs rings/current/ACL_AND_SCOPED_USE.md §7) -->
+<section id="ask" hidden>
+<p><strong>Make these suggestions more your thing?</strong> Tonight's Picks can use your movie preferences. Your detailed viewing history stays where it is stored; the app receives ranked film suggestions.</p>
+<button id="yes">Use my preferences</button> <button id="no" class="quiet">Keep browsing</button>
+</section>
+<p id="taste" aria-live="polite"></p>
+<button id="stop" class="quiet" hidden>Stop using my taste</button>
+<!-- su: own picks -->
+<ol id="picks"></ol>
+</body>
+</html>

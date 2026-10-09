@@ -1,0 +1,4 @@
+# The taste service's nouns: what knows a watch history and its ranking lives in apps/taste/ (demo/runs/su/2026-10-09/README.md). The infra may not use them (scripts/vocab_check.py).
+taste
+rankcandidates
+viewingdiary
