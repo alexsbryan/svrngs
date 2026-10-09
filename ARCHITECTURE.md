@@ -387,7 +387,12 @@ from the register. Both are merged into `api::router` before its loopback
 check, and the node writes the address it serves on to `<data dir>/api`
 (`api::API_FILE`) at each start. Each lend carries the upload its lender
 declares (`lend::Offered`'s `upload_bps`, required on read, `null` when
-none). A refused path covers what is under it
+none). At a lend's origin on this computer (`origin.rs`), `GET
+/svrngs-reads` (`surface::READS_PATH`, mnp-2) answers that lend's pages
+the lends of each kind its lender declared it reads, in the groups its
+lender and this computer stand in, through the same body: each one's kind,
+name, lender's person and origin here, and whose computer did not answer,
+no key (`surface::reads`). A refused path covers what is under it
 at a segment boundary, as upstream's `covers`, compared percent-decoded,
 case-blind and with repeated slashes as one. `tests/door/` runs a lender
 and a member through it, with upstream's `picky_origin` and Range origin
@@ -521,7 +526,14 @@ page's `Response` drops it); reads a redirect to a path under the lend;
 asks for another pass through the page when the door refuses one; and puts
 `shim.js` in each lent page, which gives the page its lend's cookies,
 carries `WebSocket` to the worker (`socket`, the door switching a raw
-stream) and hands an app's own worker to it. With no pass in memory and
+stream) and hands an app's own worker to it. At `/svrngs-reads` (mnp-2,
+`told`) it tells its pages the lends they read from what the page handed —
+each one's kind, name and lender, the people whose computer did not
+answer, and an address under `/svrngs-reads/<label>/` of this origin to
+ask it at, never the pass or its key; a navigation to such an address is
+sent to the group's page at `#open=<label>&at=<path>`, which signs that
+lend's pass and opens its `open.html?back=<path>` in its own place, so
+Back skips it (`opening`). With no pass in memory and
 none it can read, it sends a navigation to `open.html?for=<label>`, which
 reads the pass and hands it over again. The shell's paths are relative, and
 the CSP admits a relay on 127.0.0.1. `scripts/build-web.sh` (upstream's

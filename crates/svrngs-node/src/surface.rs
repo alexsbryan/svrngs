@@ -19,6 +19,10 @@
 //!   it (u6-1, [`crate::room`]); and the people whose computer did not answer,
 //!   named, their lends absent rather than stale. The body [`crate::node`]'s `GET /people/lends`
 //!   answers a member, for one group.
+//! - `GET /svrngs-reads`, at a lend's own origin and to its pages (mnp-2,
+//!   [`reads`]): the lends of each kind its lender declared it reads, as a
+//!   phone's lend worker answers it from what the group's page handed
+//!   (`web/lend.js`, `told`).
 
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
@@ -27,6 +31,7 @@ use axum::routing::get;
 use axum::{Json, Router};
 use serde::Serialize;
 
+use crate::door::LendRefusal;
 use crate::node::Asking;
 use crate::rail::{namespace_of, standing_of, RailQuery};
 use crate::redeem::SeedText;
@@ -40,6 +45,11 @@ pub const GROUPS_ROUTE: &str = "/v1/groups";
 
 /// Where an app asks what a group's people lend.
 pub const LENDS_ROUTE: &str = "/v1/lends";
+
+/// Where a lent page asks, at its own origin, the lends it reads: the one
+/// path svrngs answers there in the lend's place (DESIGN §3, "Lent apps",
+/// call 6; `web/lend.js` spells it for a phone).
+pub const READS_PATH: &str = "/svrngs-reads";
 
 /// What the routes read: the node's groups and transport and its own door
 /// ([`Asking`]), and how it reads a group's seed, for its name.
@@ -182,4 +192,44 @@ async fn lends(State(at): State<Surface>, Query(q): Query<RailQuery>) -> Respons
         "surface: lends — answered what the group's people lend, this computer's own among them, each at its origin");
     Json(serde_json::json!({ "namespace": namespace, "lent": lent, "unanswered": unanswered }))
         .into_response()
+}
+
+/// `GET /svrngs-reads` at the origin of the lend `label` (mnp-2): each lend
+/// of a kind its lender declared it reads, in the groups its lender and this
+/// computer stand in — its kind, name, lender's person and the origin this
+/// computer's browser asks it at — and whose computer did not answer. No
+/// key: a page needs none to ask, and the address is all it builds on.
+pub(crate) async fn reads(at: &Asking, label: &svrngs_core::pass::Label) -> Response {
+    let reader = hex::encode(label.lender());
+    let host = &at.host;
+    let mut groups = host.standings().unwrap_or_default();
+    groups.retain(|(_, s)| s.contains_key(&reader) && s.contains_key(host.actor()));
+    let Some(own) = groups
+        .iter()
+        .find_map(|(_, s)| s.get(host.actor()))
+        .map(|m| m.person.clone())
+    else {
+        tracing::debug!(target: "surface", %label, "surface: reads refused — its lender and this computer share no group");
+        return LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here");
+    };
+    let (lent, unanswered) = match at.lent(&groups, &own, None).await {
+        Ok(answer) => answer,
+        Err(refused) => return refused,
+    };
+    let named = |l: &crate::node::Lending| crate::node::label(&l.key, l.offered.name.as_str());
+    let Some(reading) = lent.iter().find(|l| named(l).as_ref() == Some(label)) else {
+        tracing::debug!(target: "surface", %label, unanswered = unanswered.len(), "surface: reads refused — the lend is not lent now");
+        return LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here");
+    };
+    let read: Vec<serde_json::Value> = lent
+        .iter()
+        .filter(|l| named(l).as_ref() != Some(label) && reading.offered.reads.contains(&l.offered.kind))
+        .filter_map(|l| {
+            let address = host.origin(&l.key, l.offered.name.as_str())?;
+            Some(serde_json::json!({ "kind": l.offered.kind, "name": l.offered.name, "lender": l.person, "address": address }))
+        })
+        .collect();
+    tracing::debug!(target: "surface", %label, reads = ?reading.offered.reads, read = read.len(), unanswered = unanswered.len(),
+        "surface: reads — answered a lent page the lends of the kinds it reads, each at its origin here");
+    Json(serde_json::json!({ "lends": read, "unanswered": unanswered })).into_response()
 }

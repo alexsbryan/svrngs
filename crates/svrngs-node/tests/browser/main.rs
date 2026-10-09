@@ -863,3 +863,150 @@ async fn a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_ha
     );
     drop(ada);
 }
+
+/// A lent page, `html` for every request, each request's head kept.
+async fn kept_page(html: &'static str) -> (std::net::SocketAddr, KeptHeads) {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    let heads = KeptHeads::default();
+    let kept = heads.clone();
+    tokio::spawn(async move {
+        while let Ok((mut sock, _)) = listener.accept().await {
+            let kept = kept.clone();
+            tokio::spawn(async move {
+                let mut head = [0u8; 8192];
+                let n = tokio::io::AsyncReadExt::read(&mut sock, &mut head)
+                    .await
+                    .unwrap_or(0);
+                kept.lock()
+                    .unwrap()
+                    .push(String::from_utf8_lossy(&head[..n]).into_owned());
+                let answer = format!(
+                    "HTTP/1.1 200 OK\r\ncontent-type: text/html; charset=utf-8\r\n\
+                     content-length: {}\r\nconnection: close\r\n\r\n{html}",
+                    html.len()
+                );
+                let _ = sock.write_all(answer.as_bytes()).await;
+            });
+        }
+    });
+    (addr, heads)
+}
+
+type KeptHeads = std::sync::Arc<std::sync::Mutex<Vec<String>>>;
+
+in_both_engines!(
+    /// A lent page told the lends it reads, and one opened at a path (mnp-2;
+    /// DESIGN §3, "Lent apps", call 6). Ada lends a page reading kind `k`,
+    /// cy a shelf of it; dee stands in the group and her computer never
+    /// answers. The phone opens ada's page from its list, and at its own
+    /// origin the page asks `/svrngs-reads`: cy's shelf, its kind, name and
+    /// lender, at an address under the page's own origin, and dee as not
+    /// having answered — neither the pass nor its holder key, which the
+    /// origin keeps beside them. A fetch at that address reaches cy's shelf
+    /// as bo; the page navigated to a path under it lands on cy's shelf's
+    /// own origin at that path, its query and fragment kept — through the
+    /// group's page, which signs its pass, and its start page, which goes
+    /// there — though this phone never opened the shelf, and one Back
+    /// returns to ada's page. Planted: the whole handoff answered (the pass
+    /// in it); the unanswered answered none; the start page going to the
+    /// lend's root, the path dropped.
+    a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path
+);
+async fn a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let (ada_dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ada = node(ada_dir.path(), &relay, &bo).await;
+    let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
+    // Dee stands in the group; no computer of hers ever answers.
+    let dee = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse("dee").unwrap(),
+            key: actor_of(&signing(3)),
+            invite: None,
+        },
+        on_behalf_of: None,
+    };
+    ada.rail().commit(NS, &dee).unwrap().unwrap();
+    let page = page_origin("<!doctype html><title>ada's page</title>".to_string()).await;
+    lend_reading(ada_dir.path(), "page", page.port(), &["k"]);
+    let (shelf, heads) = kept_page("<!doctype html><title>cy's shelf</title>").await;
+    lend(cy_dir.path(), "shelf", shelf.port());
+
+    let seen = drive(
+        engine,
+        "reads.mjs",
+        json!({
+            "site": site,
+            "key": hex::encode(bo.to_bytes()),
+            "token": token(&signing(1), &relay),
+            "open": "page",
+            "ask": "probe?n=1",
+            "go": "deep/path?n=2#/details?id=3",
+            "title": "cy's shelf",
+        }),
+        None,
+    )
+    .await;
+    eprintln!("the reads' run: {seen:#}");
+
+    assert!(at_origin(&seen["opened"], &label(1, "page")), "{seen:#}");
+    let told = &seen["told"];
+    assert_eq!(told["status"], 200, "{seen:#}");
+    let body = told["body"].as_str().unwrap();
+    for kept in ["pass", "holder"] {
+        let secret = told[kept]
+            .as_str()
+            .expect("the origin keeps the pass and its holder");
+        assert!(
+            !body.contains(secret),
+            "the page must be told neither the pass nor its holder key, here its {kept}: {body}"
+        );
+    }
+    let answer: Value = serde_json::from_str(body).unwrap();
+    let address = answer["lends"][0]["address"].as_str().unwrap_or_default();
+    assert_eq!(
+        answer,
+        json!({
+            "lends": [{ "kind": "k", "name": "shelf", "lender": "cy", "address": address }],
+            "unanswered": ["dee"],
+        }),
+        "{seen:#}"
+    );
+    assert!(
+        at_origin(&json!(address), &label(1, "page"))
+            && address.ends_with(&format!("/svrngs-reads/{}/", label(2, "shelf"))),
+        "the address is under the page's own origin: {address}"
+    );
+    assert_eq!(seen["asked"]["status"], 200, "{seen:#}");
+    let landed = &seen["landed"];
+    let shelf_at = landed["url"].as_str().unwrap_or_default();
+    assert!(
+        at_origin(&landed["url"], &label(2, "shelf"))
+            && shelf_at.ends_with("/deep/path?n=2#/details?id=3")
+            && landed["title"] == "cy's shelf",
+        "the shelf must open at the path asked, at its own origin:\n{seen:#}"
+    );
+    let asked: Vec<String> = heads
+        .lock()
+        .unwrap()
+        .iter()
+        .filter_map(|h| h.lines().next().map(str::to_string))
+        .collect();
+    assert!(
+        asked.iter().any(|l| l.starts_with("GET /probe?n=1 "))
+            && asked.iter().any(|l| l.starts_with("GET /deep/path?n=2 ")),
+        "cy's shelf must be asked each path: {asked:?}"
+    );
+    assert!(
+        keys(&heads).iter().all(|k| *k == actor_of(&bo)),
+        "cy's door must name bo"
+    );
+    assert!(
+        at_origin(&seen["backAt"], &label(1, "page")),
+        "one Back returns to ada's page:\n{seen:#}"
+    );
+    drop((ada, cy));
+}

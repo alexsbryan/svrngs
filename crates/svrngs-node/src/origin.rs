@@ -59,6 +59,10 @@ async fn lent(State(at): State<Asking>, req: Request) -> Response {
         tracing::debug!(target: "origin", host = ?req.headers().get(header::HOST), "origin: refused — no lend's host");
         return LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here");
     };
+    if req.uri().path() == crate::surface::READS_PATH {
+        tracing::debug!(target: "origin", %label, "origin: the lend's page asks the lends it reads, answered from the record");
+        return crate::surface::reads(&at, &label).await;
+    }
     reach(&at, label, req).await
 }
 

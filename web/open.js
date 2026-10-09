@@ -51,7 +51,9 @@ async function start() {
   const script = new URL('./lend.js?v=__VERSION__', import.meta.url).pathname;
   const worker = await running(await navigator.serviceWorker.register(script, { scope: '/', type: 'module' }));
   if (!(await store.handOver(worker, { handed }))) throw new Error('the lend’s worker did not say it holds the pass');
-  location.replace(asked.get('back') ?? '/');
+  // A path of this origin's alone: the group's page hands one a lend asked for.
+  const back = new URL(asked.get('back') ?? '/', location.href);
+  location.replace(back.origin === location.origin ? back.href : '/');
 }
 
 start().catch((e) => {

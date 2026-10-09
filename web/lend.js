@@ -13,6 +13,14 @@
 // declared it reads; else refused. Each answer goes back as the door gave
 // it, a 206 and its `Content-Range` with it, its body streamed.
 //
+// Its pages are told the lends they read at `READS` on their own origin
+// (mnp-2; DESIGN §3, "Lent apps", call 6): each one's kind, name, lender
+// and an address under `READS` to ask it at, and whose computer did not
+// answer — what the group's page handed, never the pass or its key. A
+// request at such an address is that lend's; a page navigated there opens
+// that lend at the path asked, through the group's page, which signs its
+// pass, and its start page (open.js), which goes there.
+//
 // What a browser does for an origin and a worker cannot see, it does here:
 // - Cookies (a worker's request carries no `Cookie`, and its answer sets
 //   none): kept per lend, each in its own jar in this origin's store, sent
@@ -40,6 +48,9 @@ const SHELL = /^(open\.html|open\.js|lend\.js|shim\.js|store\.js|wasm\/svrngs_we
 const OWN = SCOPE.hostname.split('.')[0];
 const PLAIN = { 'content-type': 'text/plain; charset=utf-8' };
 const TRACE = `${SCOPE.pathname}svrngs-trace`;
+// Where its pages ask the lends they read, as a computer's origin answers
+// them too (crates/svrngs-node/src/surface.rs, `READS_PATH`).
+const READS = `${SCOPE.pathname}svrngs-reads`;
 
 // Enough for a film's seeks, each range's lines with them (u5-11), over
 // this run and the last.
@@ -79,8 +90,11 @@ let app;
 // at an address of its own beside this one.
 const baseOf = (label) => (label === OWN ? SCOPE.href : `${SCOPE.protocol}//${label}${SCOPE.host.slice(OWN.length)}/`);
 
-// The lend `url` is at, and its path there; or none.
+// The lend `url` is at, and its path there; or none. Under `READS`, a
+// lend this page reads, by its label.
 function at(url) {
+  const [, read, path] = (url.origin === SCOPE.origin && url.pathname.match(new RegExp(`^${READS}/([^/]+)(/.*)?$`))) || [];
+  if (read) return { label: read, path: `${path ?? '/'}${url.search}`, read: true };
   for (const label of [OWN, ...(handed?.lends ?? []).map((l) => l.label)]) {
     const base = new URL(baseOf(label));
     if (url.origin === base.origin && url.pathname.startsWith(base.pathname)) {
@@ -270,6 +284,7 @@ async function lent(request, url, where) {
   }
   const lend = h.lends.find((l) => l.label === where.label);
   if (!lend) return say(403, 'This is not open to this page.', 'closed');
+  if (where.read && request.mode === 'navigate') return opening(h, where);
   const jar = await jarOf(where.label);
   const headers = bounded(
     [...request.headers].filter(([n]) => !['cookie', 'content-length'].includes(n.toLowerCase())),
@@ -342,6 +357,31 @@ async function lent(request, url, where) {
   return new Response(page, { status: res.status, statusText: res.statusText, headers: headed });
 }
 
+// What this lend's pages are told of the lends they read: none of the
+// pass. A handoff that names no one unanswered is from a page before
+// mnp-2, which said nothing of them: asked for again, never read as none.
+async function told() {
+  const h = await holding();
+  if (!h?.unanswered) return say(503, 'Open this again from your group’s page.', 'pass');
+  const lends = h.lends.filter((l) => l.label !== OWN);
+  trace(`RUNTIME: told this lend's page the ${lends.length} lend(s) it reads, ${h.unanswered.length} unanswered`);
+  return Response.json({
+    lends: lends.map((l) => ({ kind: l.kind, name: l.name, lender: l.person, address: `${SCOPE.origin}${READS}/${l.label}/` })),
+    unanswered: h.unanswered,
+  });
+}
+
+// A page navigated to `where`, a lend it reads: the group's page opens that
+// lend at the path, its fragment with it, which the browser keeps from a
+// worker; so a page of this worker's own sends it on, `<` escaped.
+function opening(h, where) {
+  trace(`RUNTIME: a page opens ${where.label}, which it reads, at ${where.path}: through the group's page`);
+  const to = JSON.stringify(`${h.page}#open=${where.label}&at=`).replace(/</g, '\\u003c');
+  const path = JSON.stringify(where.path).replace(/</g, '\\u003c');
+  const page = `<!doctype html><script>location.replace(${to} + encodeURIComponent(${path} + location.hash))</script>`;
+  return new Response(page, { headers: { 'content-type': 'text/html; charset=utf-8' } });
+}
+
 // ── the app's own worker ────────────────────────────────────────────────
 //
 // An app that registers a worker of its own would put it over this one,
@@ -394,6 +434,7 @@ self.addEventListener('fetch', (e) => {
   }
   const shell = url.origin === self.location.origin && url.searchParams.has('v') && url.pathname.startsWith(SITE);
   if (shell && SHELL.test(url.pathname.slice(SITE.length))) return;
+  if (url.origin === self.location.origin && url.pathname === READS) return e.respondWith(told());
   const where = at(url);
   if (!where) return;
   e.respondWith(answered(e, url, where));

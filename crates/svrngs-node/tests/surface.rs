@@ -267,3 +267,78 @@ async fn a_caller_off_loopback_is_refused_the_groups_and_the_lends() {
     }
     house.close().await;
 }
+
+/// **A lent page asks, at its own origin, the lends it reads** (mnp-2):
+/// Alex lends a page, `night`, reading kind `media`, and a `telly` of it;
+/// Sam a `films`. At `night`'s origin on Alex's computer, `/svrngs-reads`
+/// answers `telly` and `films`, each with its kind, name, lender's person
+/// and its origin on this computer, never `night` itself; then, Sam's
+/// computer gone, `telly` alone and Sam named as not answering. Planted:
+/// the unanswered answered none.
+#[tokio::test]
+async fn a_lent_page_asks_at_its_own_origin_the_lends_it_reads() {
+    use tower::ServiceExt;
+    let mut house = House::new().await;
+    let declare = |dir: &std::path::Path, name: &str, port: u16, kind: &str, reads: &[&str]| {
+        let at = lend::lends_dir(dir);
+        std::fs::create_dir_all(&at).unwrap();
+        let body = serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads });
+        std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+    };
+    declare(house.alex_dir.path(), "night", 8596, "night", &["media"]);
+    declare(house.alex_dir.path(), "telly", 8096, "media", &[]);
+    declare(house.sam_dir.path(), "films", 8097, "media", &[]);
+    let port = house.alex.api_addr().port();
+    let label = |seed: u8, name: &str| {
+        svrngs_core::pass::Label::of(signing(seed).verifying_key().as_bytes(), name)
+    };
+    let at = |seed: u8, name: &str| svrngs_node::origin::origin(&label(seed, name), port);
+    let ask = |alex: &Node| {
+        let mut request = axum::http::Request::get(svrngs_node::surface::READS_PATH)
+            .header("host", format!("{}.localhost:{port}", label(1, "night")))
+            .body(axum::body::Body::empty())
+            .unwrap();
+        let caller: SocketAddr = "127.0.0.1:50000".parse().unwrap();
+        request
+            .extensions_mut()
+            .insert(axum::extract::ConnectInfo(caller));
+        let routes = alex.api_routes();
+        async move {
+            let answer = tokio::time::timeout(Duration::from_secs(30), routes.oneshot(request))
+                .await
+                .expect("the ask finishes")
+                .unwrap();
+            let status = answer.status().as_u16();
+            let body = axum::body::to_bytes(answer.into_body(), usize::MAX)
+                .await
+                .unwrap();
+            (
+                status,
+                serde_json::from_slice::<serde_json::Value>(&body).unwrap(),
+            )
+        }
+    };
+    let telly = serde_json::json!({ "kind": "media", "name": "telly", "lender": "alex", "address": at(1, "telly") });
+
+    let (status, body) = ask(&house.alex).await;
+    assert_eq!(status, 200, "{body:#}");
+    assert_eq!(
+        body,
+        serde_json::json!({
+            "lends": [telly, { "kind": "media", "name": "films", "lender": "sam", "address": at(2, "films") }],
+            "unanswered": [],
+        }),
+    );
+
+    let gone = house.sam.take().unwrap();
+    gone.endpoint().close().await;
+    drop(gone);
+    let (status, body) = ask(&house.alex).await;
+    assert_eq!(status, 200, "{body:#}");
+    assert_eq!(
+        body,
+        serde_json::json!({ "lends": [telly], "unanswered": ["sam"] }),
+        "Sam's computer gone: his lend not told, he named as not answering"
+    );
+    house.close().await;
+}

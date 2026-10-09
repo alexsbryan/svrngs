@@ -404,7 +404,7 @@ impl Host {
     /// Every group this node holds, with who stands in it; or `None` when
     /// the groups held cannot be listed. A group whose register is
     /// unreadable is left out.
-    fn standings(&self) -> Option<Vec<(String, BTreeMap<String, Member>)>> {
+    pub(crate) fn standings(&self) -> Option<Vec<(String, BTreeMap<String, Member>)>> {
         let namespaces = match self.rail.namespaces() {
             Ok(n) => n,
             Err(e) => {
