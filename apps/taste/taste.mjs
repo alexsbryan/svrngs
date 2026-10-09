@@ -74,8 +74,9 @@ function refuse(res, kind, words, who) {
 // hers. svrngs names no person across devices (DESIGN §9), so her keys
 // are listed here, read on each ask.
 const owners = () => fs.readFileSync(at('owners'), 'utf8').split(/\s+/).filter(Boolean);
+const owned = (key) => owners().includes(key);
 // su: plant bo — bar 2's plant: the owner check taken out
-const isOwner = (key) => PLANT === 'bo' || owners().includes(key);
+const isOwner = PLANT === 'bo' ? () => true : owned;
 
 // su: enforce yes — Ana's yeses, by app, kept beside her taste.
 function yeses() {
@@ -92,8 +93,9 @@ const keep = (all) => fs.writeFileSync(at('yeses.json'), JSON.stringify(all, nul
 // since; else why not.
 function allowed(app) {
   const all = yeses();
+  let mine = all[app];
   // su: plant other-app — bar 4's plant: a yes to any app is a yes to this one
-  const mine = PLANT === 'other-app' ? Object.values(all).find((y) => !y.stopped) : all[app];
+  if (PLANT === 'other-app') mine = Object.values(all).find((y) => !y.stopped);
   // su: enforce app
   if (!mine) return 'not-asked';
   // su: enforce stop — a stop refuses every ask after it

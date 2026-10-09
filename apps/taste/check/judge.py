@@ -29,7 +29,7 @@ def line(run):
     for user, p in run.get("people", {}).items():
         said = p.get("yes", {}).get("after", {}) if p.get("yes") else {}
         bits.append(f"{user}: yes→{said.get('taste', {}).get('state')} {said.get('films')}"
-                    if said else f"{user}: {p.get('stopped') or 'ok'}")
+                    if said else f"{user}: {p['stopped'] if isinstance(p.get('stopped'), str) else 'ok'}")
     if run.get("stopped"):
         bits.append(f"stopped: {run['stopped']}")
     return "; ".join(bits)
@@ -77,7 +77,7 @@ def bar1(runs, expected):
     rows = {}
     for engine, run in runs.items():
         if run is None:
-            rows[engine] = verdict(None, "never-ran")
+            rows[engine] = {"verdict": "never-ran"}
             continue
         other = "webkit" if engine == "chromium" else "chromium"
         first, second = get(run, "people", f"ana-{engine}"), get(run, "people", f"ana-{other}")
@@ -118,7 +118,7 @@ def main(out):
     for engine, run in nights.items():
         if run is None:
             for d in (b2, b3, b4, gap, b5):
-                d[engine] = verdict(None, "never-ran")
+                d[engine] = {"verdict": "never-ran"}
             continue
         other = "webkit" if engine == "chromium" else "chromium"
         first, last, bo = (get(run, "people", u) for u in (f"ana-{engine}", f"ana-{other}", "bo"))
@@ -130,7 +130,7 @@ def main(out):
                              "Bo's ask refused by the taste's owner check, his films unranked; the door let him in",
                              bo_reads=get(picks, "taste", "text"), bo_films=get(picks, "films"),
                              taste_refused=has(taste_log, "refused not-yours")[:2],
-                             door_let_bo_in=has(door_log, "a pass opens this lend", "person=Bo")[:2],
+                             door_let_bo_in=has(door_log, "a pass opens this lend", "person=\"Bo\"")[:2],
                              tries=len(get(picks, "tries") or []))
         diary = get(first, "diary")
         b3[engine] = verdict(None if not diary or "status" not in diary else
@@ -170,7 +170,7 @@ def main(out):
 
     # The history's markers in no byte any browser received, plants apart.
     if scan is None:
-        v["bar 3"]["scan"] = verdict(None, "never-ran")
+        v["bar 3"]["scan"] = {"verdict": "never-ran"}
     else:
         hits = {f"{tag}/{u}": sorted(k for k in r["others_secrets"] if k.startswith("diary_row_"))
                 for tag, people in scan["pairs"].items() for u, r in people.items()}

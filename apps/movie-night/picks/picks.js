@@ -88,7 +88,7 @@ function libraryWords(l) {
 async function group(libs) {
   const copies = [];
   const state = libs.map((l) => ({ ...l, state: 'asking' }));
-  const draw = () => said.replaceChildren(...state.map((l) => el('li', libraryWords(l), { state: l.state })));
+  const draw = () => said.replaceChildren(...state.map((l) => el('li', cap(libraryWords(l)), { state: l.state })));
   draw();
   await Promise.all(
     libs.map(async (lib, i) => {
@@ -110,9 +110,11 @@ function list(order, how) {
 
 // su: own consent — what the person reads of the taste, each refusal said
 // as what it is, the films beside it unranked.
+const cap = (words) => words.charAt(0).toUpperCase() + words.slice(1);
+
 function tell(state, words) {
   taste.dataset.state = state;
-  taste.textContent = words;
+  taste.textContent = cap(words);
 }
 
 const REFUSED = {
@@ -182,7 +184,7 @@ async function start() {
     const got = await asked(`${t.base}stop`, {});
     if (got.state !== 'answered') return refused(t, got, films);
     picks.dataset.order = 'ranked before the stop';
-    tell('stopped', `Stopped. ${t.who} refuses Tonight’s Picks from now on. The list ranked before you stopped stays on this screen until you leave it.`);
+    tell('stopped', `Stopped. From now on ${t.who} refuses Tonight’s Picks. The list ranked before you stopped stays on this screen until you leave it.`);
   };
   // su: own picks
   await rank(t, films);
