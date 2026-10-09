@@ -4397,8 +4397,10 @@ binaries:
   tests/home.rs:154–174 (50ecc20) is lend_origin's two computers again,
   and :10–22, :30–38, :405–412 its header, `start` and a `Roster` seed;
   the `Fixture { act: RailAct::Admit … }` literal at
-  tests/door/newcomer.rs:152, surface.rs:369, lend_origin.rs, home.rs:166
-  (beside 16 older sites, `git grep -n "RailAct::Admit" crates/*/tests`);
+  tests/door/newcomer.rs:152, surface.rs:369, lend_origin.rs:448 and
+  home.rs:166, the four of 28 `RailAct::Admit` sites in tests that blame
+  into the range (`git grep -n "RailAct::Admit" 8020f03 -- crates/*/tests`,
+  each line `git blame -w`);
   newcomer.rs:42–59 == :173–190, :67–79 == :198–207 (two tests' own
   arrangements, after #106 their bridges one call); surface.rs:282–290 ==
   :359–367 and two more there; svrngs share/tests.rs:46–50 ==
@@ -4430,8 +4432,8 @@ Reading the range for what neither pass would show:
   surface.rs `reads` (:229–240 at 8020f03) now adds `asks` and `ask` to
   each lend it tells a page; web/lend.js `told` does not yet, and is
   sup-3's.
-- **Glassbox.** The new branches trace: home.rs `only_itself` (:126) on
-  every answer, choices.rs `check` (:142) on every judgment, `member`,
+- **Glassbox.** The new branches trace: home.rs `only_itself` (:129) on
+  every answer, choices.rs `check` (:142–143) on every judgment, `member`,
   `found`, `stop` and `keep` on each refusal, origin.rs `kept_to_reads`
   on each of its three outcomes.
 - **#57, #68, #70, #71, #75, #77, #79, #81, #89, #91, #95, #97, #99, #100
@@ -4466,8 +4468,8 @@ reported each line one early (I1).
   test -p svrngs-node --test home --test door --lib`: 2, 26, 91 passed.
   Counted 0.
 - **#106** (1b246ea, b4aab80). `bridge_as` in tests/door/main.rs for six
-  sites, `alex_lets_sam_in` in tests/lend_origin.rs for two: 71 test
-  lines fewer (`git diff --stat 838f364 b4aab80`). `--test door` 26,
+  sites, `alex_lets_sam_in` in tests/lend_origin.rs for two: 72 test
+  lines fewer (`git diff --shortstat 838f364 b4aab80`: +59/−131). `--test door` 26,
   `--test lend_origin` 3 passed; clippy `--tests` clean.
 
 ### Findings
@@ -4480,7 +4482,7 @@ reported each line one early (I1).
 | 103 | 6 | crates/svrngs-node/src/node.rs:327–329, at b4aab80 | narrowed (50ecc20) | `shared_with` now says svrngs could not judge; `Node::lends`, read by the room and the bare command, still reads unlistable groups as none. |
 | 104 | 8 | web/lend.js:363–371 and crates/svrngs-node/src/surface.rs:229–240, at 8020f03 | not fixed (sup-3's) | What a page is told of its reads, shaped in the page and the node; sup-2 added `asks` and `ask` to the node's half. |
 | 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 38 lines left (15162 / 15200), sup-3's counted web/ changes to come. |
-| 31 | 8 | tests/home.rs:154–174 ~ tests/lend_origin.rs; the `RailAct::Admit` fixture across binaries | not fixed | Grown by the range: home.rs's two computers, five more `Admit` literals. |
+| 31 | 8 | tests/home.rs:154–174 ~ tests/lend_origin.rs; the `RailAct::Admit` fixture across binaries | not fixed | Grown by the range: home.rs's two computers, four more `Admit` literals. |
 | 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99, 100 | as recorded | as recorded | not fixed | Untouched in the range. |
 
 ### Problems in the commonwealth-ai instrument (reported, not fixed here)
