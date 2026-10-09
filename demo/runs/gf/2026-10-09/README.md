@@ -263,3 +263,77 @@ against 671 left of 15,200 and 365 of svrngs-core's 3,000 at `b482e08`
 | `share --folder` and its stop | about 50 |
 
 A row that would pass either budget stops for the operator (fence 6).
+
+## 7. The run, bar by bar (gf-1)
+
+`run.sh` at `575a911`, 2026-10-09 23:15-23:22 UTC, every phase once
+(`run/steps.log`); its numbers are `run/summary.txt`, from
+`apps/jellyfin/folders/analyze.py`. Setup's load average was 30.24
+(`steps.log:1`), above this host's 12 cores, and Jellyfin's
+`/System/Info/Public` answered 12.0.0 (`steps.log:8`). One run of each:
+not a rate.
+
+| Bar | Its number | Prediction | Bar | Prediction |
+|---|---|---|---|---|
+| B1 | 119 ranges, 252,484,839 bytes served, none not the source's; the plant refused 6 times naming Ana, the flipped byte served 0 times, Chromium's `error` (MEDIA_ELEMENT_ERROR 4) 6.6 s after the click and never `playing` | errors within 10 s | passed | held |
+| B2 | 0.9957: 41,254,912 of the 41,432,704 bytes Ana sent for the MP4 reached Chromium | 97% or more | passed | held |
+| B3 | 0 holder requests, 0 endpoint answers, in a 21.5 s scan | 0 | passed | held |
+| B4 | 113, 123 and 92 ms | each under 500 ms | passed | held |
+| B5 | 2,106,000 bytes from Ana under Jellyfin's probe | under 3 MB | passed | held |
+| B6 | `playing` at 3,977 ms, fetched from Cy, Ana named unanswered ("did not answer within 3s") | about 4 s | passed | held |
+| B7 | the act names `exp.mkv` and `exp.mp4`, not `link.bin`; Ana served the planted hash 0 times; the scan of Ben's data dir, 37 files and 155,582,491 bytes, finds 0 hits; after `unshare`, Ana refused the MKV from 0.056 s and Ben's endpoint answered 502 from 0.016 s; Ben's list dropped her folder at 68.3 s | refused under 1 s; list under 60 s | passed | the refusal held; **the list missed, 68.3 s against 60 s** |
+
+B1's 6.6 s is the error event against the click, by the driver's two
+clocks (`run/results.jsonl`, phase D: the media request at
+`performance.now()` 3,627 ms went out at 1791588006.174, the click at
+1791588002.548); Jellyfin then fell back to its HLS, whose ffmpeg Ben's
+endpoint refused as well, and Chromium waited out the driver's 45 s.
+B7's stop has no bar on time; it is said. In C-plant, Ben's list dropped
+the folder 8.2 s after `unshare` returned, in C 68.3 s; the run logs only
+`folder` and `rail:folder` (`apps/jellyfin/folders/run.sh:33`), so which
+sync round carried the stop to Ben is not in the data. What Ben's store
+already held of the MKV stays there.
+
+**WebKit's MP4**, as data: 0.9581 of what Ana sent reached it, 6,113,189
+bytes, Ben's store holding the rest from Chromium's play; `playing` at
+912 ms, seeks 46, 47 and 99 ms. **WebKit's MKV through Jellyfin's HLS**,
+the measurement with no bar: Ana sent 47,247,899 bytes, 47,050,291 of
+them payload, of a 47,050,291-byte file; `playing` at 1,518 ms; Jellyfin
+read 53,574,683 bytes in 6 answers from Ben's endpoint. Predicted: about
+the whole file, first frame under 3 s.
+
+### Each plant, its guard out, then in
+
+| Plant | Guard out | Guard in |
+|---|---|---|
+| a flipped byte served (D) | the first run's range server over Ana's file: 2 requests served the flipped byte, Lavf's and Chromium's, and Chromium played at 677 ms | Ben's endpoint: refused naming Ana, "stream reset by peer" (her store stops at the group before the flip) with Cy's "did not answer within 3s" |
+| an unshared hash fetched (C) | `SVRNGS_GF_PLANT=unchecked`: Ana sent the MKV 75 times between `unshare` returning and Ben's list dropping it, 8.2 s; all 74 probes after it 206 (`run/C-plant-probe.jsonl`, `ana.log`) | refused from 0.056 s; all 198 probes after it 502 (`run/C-probe.jsonl`) |
+| a file beside the folder (P) | `follow-links`: the act names `link.bin` (`run/P-plant-share.json`), Ben fetched all 1,048,576 bytes (`P-plant-fetch.txt`), the scan finds it in his store | not in the act, 0 served, 0 hits (B7) |
+| a stopped holder's film (B) | `unbounded`: `playing` at 31,042 ms, Ana's dial timed out | 3,977 ms from Cy, Ana unanswered |
+
+svrngs's own tests, each red first in its commit's body: the act,
+`crates/svrngs-core/src/folder_tests.rs` (`bbf00e1`); the verified fetch
+and the endpoint's refusals, `crates/svrngs-node/tests/folders.rs`
+(`aee58ae`); `share --folder`, `crates/svrngs/tests/share.rs` (`1490f61`).
+
+### The lines, against §6
+
+By `scripts/lean_check.py`'s rule, `2bf0e1b` to `575a911`; the node's
+`folder.rs` split at its functions (serving: `:1-232`, `provider`
+`:319-366`; the fetch and endpoint: `hold`, `fetch` `:233-318`, `bytes`,
+`range`, `Served` `:367-515`; its record API routes `:516-`):
+
+| Part | Estimated | Counted |
+|---|---|---|
+| the folder's act, in svrngs-core (`folder.rs` 103, `lib.rs` 12, `admit.rs` 11, `alpn.rs` 2) | about 70 | 128 |
+| serving a folder's files by iroh-blobs, and refusing the rest | about 120 | 220 |
+| the verified fetch and the local endpoint | about 150 | 221 |
+| wiring: `iroh.rs` 7, `node.rs` 10, `lib.rs` 1 (the ALPN is in the act's 2) | about 40 | 18 |
+| `share --folder` and its stop: `cli.rs` 39, the node's routes 25 | about 50 | 64 |
+| the run's script, `demo/runs/gf/2026-10-09/run.sh` | — | 4 |
+| **total** | **about 430** | **655** |
+
+`python3 scripts/lean_check.py`: svrngs-core 2763 of 3000, the
+repository 15184 of 15200. `apps/jellyfin/folders/`, apart from the
+budget: 978 by the same rule (`analyze.py` 322, `driver.cjs` 201, `run.sh`
+192, `rangeserver.py` 99, `jf_setup.py` 92, `probe.py` 38, `strm.py` 34).
