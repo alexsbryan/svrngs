@@ -3844,3 +3844,7 @@ which sit in two programs. Fixed (8024f76): sign_in.rs's is `Waiter`.
 | I19 | 6 | dry-report's exact tier | Still present: apps/jellyfin/mw/ (Rust) and apps/web-conformance/ could-not-judge. |
 | I22 | 6, 7 | `code dry-report` near tier | Still present: door.rs `forward` (:957–1127) as `forward` :954–1051 and :1052–1127. |
 | I24 | 6, 7 | `code dry-report` exact tier | New, on binary 35d97ed2…: a verbatim body under another name (plant E, `swap_headers` as `plant_exact`, svrngs-node, SCIP symbols present) is no exact group; every group it finds pairs one name. Its "0 exact" in Rust is not evidence of no copy; the window pass caught E. Cause not isolated (the hash may take the name; unproven, one plant). |
+
+The row's check: `scripts/check.sh` at 7985cfc, all 14 steps passed
+(principles pinned through app laws; the WebKit seek rate "failed, a
+rate" for wildcard, which never fails the step, u5-11), exit 0.
