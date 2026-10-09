@@ -111,7 +111,10 @@ lend declaration, kept as data: a secret the door injects and never lets out, th
 paths it refuses, how many people may use it at once.
 
 **What an app gets — the whole surface, for our apps and a stranger's alike:**
-- the person asking, verified, in a header the door sets;
+- the person asking, verified, in a header the door sets, and for a
+  request a pass's holder makes, the app the person's page opened, the
+  pass's first lend, in another (`x-svrngs-app`, the scoped-use spike's one
+  header; none with no pass, so a computer's page names none);
 - the people in the group, each with a public key the app may seal to;
 - the record, over a loopback API on the member's own node: append, read, live;
 - the services the group's members lend, each by name and an opaque kind the
@@ -341,8 +344,17 @@ is U5's inventory (§8).
    person, and the door signs them in with nothing of the page's (12 asks
    at each door, no line of sign-in) — anything the person may, writes
    included, since a pass names lends and a lapse and no method or path
-   (`crates/svrngs-core/src/pass.rs:136-151`; scoped use, §8, is its
-   spike). What it does not give: which lends those are, but in svrngs's
+   (`crates/svrngs-core/src/pass.rs:136-151`). So an owner's operation
+   beside their data is offered to one app for one person by the lend's
+   own program (the scoped-use spike, `demo/runs/su/2026-10-09/` §9): Ana's
+   taste ranked the films Tonight's Picks gave it and kept her history
+   back, every bar passed in both engines, and the door carried two of its
+   checks — the history refused by `--refuse`, the app named — while 46 of
+   the taste's 98 lines decided the rest: that the asker is its owner on
+   any of her phones, that she said yes to this app, that she has not
+   stopped it; each one line from leaking, as its plants showed, and an
+   app able to say her yes itself. Each is a row of scoped use made
+   production (§8). What `reads` does not give: which lends those are, but in svrngs's
    own store, which the page read whole with the pass in it (28 lines;
    the handoff names no lender and keeps back who did not answer,
    `web/app.js:173`); svrngs's refusals told from the lend's (11 lines,
@@ -1399,13 +1411,20 @@ composing the group's Jellyfins — discover, request as the person, open
 own, 39 svrngs's, request carried whole, discovery and opening not, §3,
 "Lent apps", call 6), then scoped use, an operation
 its owner offers beside their data, to one app acting for one person
-(`rings/current/ACL_AND_SCOPED_USE.md` §4, §9), each made production
+(`rings/current/ACL_AND_SCOPED_USE.md` §4, §9; run, 2026-10-09: every
+bar passed, held by 46 of the service's 98 lines and two of the door's checks,
+§3, "Lent apps", call 6), each made production
 from its data, as the middleware was — Movie Night by four rows
 (`demo/runs/mn/2026-10-08/README.md` §9): a lent page told the lends it
 reads, whose and where and who did not answer, on a phone and a
 computer alike, with no pass in its hands; svrngs's refusals named as
 its own; a newcomer let in by every lender at once, not at each one's
-next round; a lend opened at a path from a page that reads it; group folders (§3, call 7 of
+next round; a lend opened at a path from a page that reads it — and
+scoped use by four (`demo/runs/su/2026-10-09/README.md` §10): a lend
+its lender's person alone reaches, on any device of theirs; an app named
+on the pass; a person's yes before a lend enters an app's pass, kept
+where the lend is, never sent by the app; a stop the door holds, sooner
+than the pass's lapse; group folders (§3, call 7 of
 "Lent apps"; §9); the phone replica spike, iOS first (§9, "a
 native phone app"), after folders since they name the bytes a phone would
 hold; then the middleware's P1 follow-ups as one row (operator, 2026-10-08;
@@ -1423,21 +1442,21 @@ by the north star's tests.
 
 | Waits | Trigger |
 |---|---|
-| an app SDK, a sandboxed fold engine, signed manifests and install acts (QuickJS behind an `Engine` trait was `crates/svrngs-engine`, deleted 2026-10-04 with no user; it is at tag `e0-bot`) | an app needs its state offline on a device that is not its host, or strangers' code runs on members' devices |
+| an app SDK, a sandboxed fold engine, signed manifests and install acts (QuickJS behind an `Engine` trait was `crates/svrngs-engine`, deleted 2026-10-04 with no user; it is at tag `e0-bot`); and the runner that would carry an app's function to a person's data, its yes to that code at a version — scoped use's spike served its operation from a program its owner runs, as the survey orders (`rings/current/ACL_AND_SCOPED_USE.md` §4: "a subsequent convenience to earn with a real distributed app"; `demo/runs/su/2026-10-09/` §7) | an app needs its state offline on a device that is not its host, or strangers' code runs on members' devices, or an app sends its function to run beside a person's data |
 | a native phone app, and groups of phones only; first, phones as replicas of the group (operator, 2026-10-07): a member's phone holds the group's record and the files it shares, and syncs with whoever it reaches through a relay, so the group stays reachable while every computer sleeps (§11, risk 1) — a replica, not a relay in iroh's sense, since a phone on cellular sits behind its carrier's NAT. The phone's OS decides it: a page cannot listen and a browser's iroh is relay-only (§3, "The room", call 2), iOS suspends an app soon after it leaves the screen, and a network extension (the VPN slot) runs in the background under a memory cap. The spike, on iOS first and no larger than proves it: an iPhone app whose network extension holds an iroh endpoint with a member's key and answers a computer's dial by key every few minutes for 24 hours, the phone locked in a pocket; recorded, answered of dialled, memory against the cap, battery and data, against bars the operator sets before it runs. The record on the phone follows only if the endpoint stays reachable; Android after iOS | Demo B passes, and after group folders (§8, "Then"; operator, 2026-10-07); or the browser cannot keep what a group needs — its key, or a copy — measured |
 | Windows | a group asks |
 | AirPlay and Cast from a page, and DLNA: a screen handed a lend's address by a phone, for an app with no client of its own on it. In the reads (`demo/runs/u6/2026-10-05-screen/reads.json`) AirPlay from Safari on an iPhone showed the LG no video three ways — the page's address, which only the phone's worker answers; jellyfin-web, whose hls.js sets `disableRemotePlayback`; a plain LAN file, which the TV never fetched — and iOS has no Cast sender. Until 2026-10-05 this was U6 (§3, "The room", call 1) | an app with no client of its own for a screen is asked for on one, counted |
 | a public address per lend, for a room with no member's computer in it: a relay that forwards bytes it cannot read to the lender, who holds a certificate per lend — a new service, and Let's Encrypt's per-domain limit (§3, "The room", call 2) | a group with no computer in the room asks, counted |
 | watching together from different homes: one transcode, shared, in step | a group asks to watch the same film apart at the same time |
 | sealing in the infra | two apps need the same seal |
-| group compute: asks leased by members' computers and answered as acts | Ask is next |
+| group compute: asks leased by members' computers and answered as acts; and peer inference, a source's excerpts released to another member's computer for a job (`rings/current/ACL_AND_SCOPED_USE.md` §5), out of scoped use's spike (`demo/runs/su/2026-10-09/` §7) | Ask is next, or an owner's operation needs inference their own computer cannot run |
 | files beside the record; the live channel beyond what U3 carries | the reference app that needs each |
 | a second chat adapter, and the trait it earns | a group on another chat asks |
 | compacting the journal | a journal grows past a size measured to matter |
 | exporting a group as one document (upstream's checkpoint route), checking the asker is in that group | a group refounds from a copy, or someone asks to export one |
 | the endpoint's self-heal (upstream's `self_heal.rs`, `iroh_watchdog.rs`) | a node's endpoint wedges in a recorded run |
 | dialling a round's members at once, or skipping the ones known offline | a round's measured time nears its interval |
-| another device for the same person | someone asks |
+| another device for the same person. Scoped use asked (`demo/runs/su/2026-10-09/` §9): its run listed each of Ana's phones' keys in her taste's owners by hand (`apps/taste/check/check.sh:137`), each phone joining as a member of its own, and a lend its lender's person alone reaches needs it (§8, "Then") | that row is queued |
 | the wire published for a second implementation | someone sets out to write one |
 | local discovery on one WiFi | Apple's multicast entitlement is granted |
 | any member's node redeeming a link, once its `Invite` has synced | a newcomer's link fails because its issuer's computer was asleep, counted |
@@ -1446,7 +1465,8 @@ by the north star's tests.
 | a per-process tie between a node and the services it lends (upstream's `mint_tie`). A middleware believes loopback: a process on the lender's computer naming a person's key at its port was answered as them (`demo/runs/mw/2026-10-08/mw-1/`), which is the lender's own (§3, "The room", call 6) | an app's act is written under a person by a process the lender did not run, or one computer is shared by people who do not trust each other |
 | group folders (§3, call 7 of "Lent apps"): a member shares a folder at one level from a closed set; its file list in the record, its bytes content-addressed and fetched by verified range from whoever holds them (iroh-blobs 0.103, which takes iroh ^1.0.0); the meeting point runs one Jellyfin over everyone's shared films as `.strm` stubs; opt-in, beside lends. Its first run (svrn-docs `rings/runs/strm-2026-10-05/`, `457f120`): browsers played the holder's MP4 straight from the stub's URL, and WebKit remuxed an MKV through Jellyfin, the double hop; it failed its pre-registered byte-share bar on Jellyfin's per-play probe of a 47 MB file | U5 lands, and the operator runs it with a group in the wild and settles it (operator, 2026-10-05) |
 | a person who only searches counted apart from one who watches: the door counts each on a lend for `WINDOW`, 30 s, after their last request (`crates/svrngs-node/src/door/limit.rs:17-19`), a search as a film — Movie Night's searcher was counted on both Jellyfins 26.3 and 26.5 s after one search and not at 36.2 and 36.4 s, the most at once 2, nobody refused (`demo/runs/mn/2026-10-08/doors.json`, `limit`) | a lend at its limit refuses someone while those it counts only searched, counted |
-| a computer's origin carrying a lent page only to the lends its lender declared it reads, as a phone's pass does: on a computer `--reads` neither grants nor limits, and a page reaches every lend of a group held here as the computer's person (`crates/svrngs-node/src/origin.rs:87-93`; `demo/runs/mn/2026-10-08/computer.json`) | a lend is kept from an app on a phone (scoped use, §8) and the same app on a computer reaches it |
+| budgets on an owner's operation: how often an app may ask it, so asks cannot rebuild what it keeps back (`rings/current/ACL_AND_SCOPED_USE.md` §4, §6). Ana's taste ranks whatever films it is given, and ranked an app's two that sent her yes itself (`demo/runs/su/2026-10-09/verdicts.json`, "the unasked yes") | an operation's answers rebuild what its owner kept back, shown in a run, or an owner asks for a limit on one |
+| a computer's origin carrying a lent page only to the lends its lender declared it reads, as a phone's pass does: on a computer `--reads` neither grants nor limits, and a page reaches every lend of a group held here as the computer's person (`crates/svrngs-node/src/origin.rs:87-93`; `demo/runs/mn/2026-10-08/computer.json`); nor does it name the app, so a service keeping a lend to the app a person said yes to refuses every page there (`crates/svrngs-node/src/origin.rs:85`, `Who::Own`; `apps/taste/taste.mjs:132`; read from the code, not run, `demo/runs/su/2026-10-09/` §9) | the door keeps a lend from an app it names on a phone (scoped use made production, §8) and the same app on a computer reaches it |
 | a live payload naming its sender | an app needs to know who offered a live payload, and cannot take it from the payload |
 | WebKit's closed-range seeking through a lend: its seeks back to back, taken in serial 64 KiB reads of each short part, a round trip each, missed 5 s in 1 of 8 tries after u5-11, where straight at the canary over the same link they missed in none (`demo/runs/u5/2026-10-06-seek-stall/`; §11 risk 4); a rate in `scripts/check.sh`, not a gate | Demo A's real-phone sessions miss the seek bar in Safari more often than WebKit straight at the server on the same link |
 | our own relay as the default: `iroh-relay` (Let's Encrypt built in) on a small VPS, the operator inclined to DigitalOcean, US West, at `relay.svrnme.sh` (TCP 80 and 443, UDP 7842), carried in every link's token so a phone never needs n0's; `svrngs new --relay <url>` for a group that runs its own; n0's terms for production use read first. Open then: whether ours also drops n0's address lookup, computers learning each other's relay from the group's record. Until then n0's public relays and lookup, `RelayConfig::default()` (`crates/svrngs-node/src/guest.rs:66-76`), nothing paid for (operator, 2026-10-05). Every byte a phone sends crosses a relay (a browser is relay-only), so a host's bandwidth price decides it | svrngs goes to production, or a group beyond the operator's uses it |
