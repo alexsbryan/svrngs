@@ -315,7 +315,7 @@ request off the stream, a dialer standing in no group held, a path with a
 not declared, a path the lend refuses, and a newcomer past the lend's
 limit; each answer it makes in a lend's place, the lend's origin's and the
 room's too, carries `x-svrngs-refused` and the body's `kind`, one of
-`door::Refused`, and a service's own `x-svrngs-refused` is dropped (mnp-1).
+`door::LendRefusal`, and a service's own `x-svrngs-refused` is dropped (mnp-1).
 Who is let in is `door/limit.rs` (u3-6), a pure decision with the
 time an argument, in `fair_share_cap`'s shape counted in people: a person is
 counted on a lend while a request of theirs is in flight or within

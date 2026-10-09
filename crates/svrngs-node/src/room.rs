@@ -167,7 +167,7 @@ pub(crate) async fn from_this_network(request: Request, next: Next) -> Response 
         return next.run(request).await;
     }
     tracing::debug!(target: "room", ?caller, path = %request.uri().path(), "room: refused — the caller is not on this computer's network");
-    crate::door::Refused::Closed.say(
+    crate::door::LendRefusal::Closed.say(
         StatusCode::FORBIDDEN,
         "this is opened only on the network of the computer that serves it",
     )

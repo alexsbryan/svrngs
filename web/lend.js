@@ -246,7 +246,7 @@ function sent(blob, what) {
 const PAGE_COOKIES = 'x-svrngs-page-cookies';
 
 // svrngs's own answer in the lend's place, marked with its kind as the
-// door marks its own (door.rs, `Refused`), so a page tells it from the
+// door marks its own (door.rs, `LendRefusal`), so a page tells it from the
 // lend's (mnp-1).
 const REFUSED = 'x-svrngs-refused';
 const say = (status, words, kind) => new Response(words, { status, headers: { ...PLAIN, [REFUSED]: kind } });

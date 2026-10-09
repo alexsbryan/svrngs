@@ -80,7 +80,7 @@
 //! this computer does not declare; a path the lend refuses
 //! ([`crate::lend::RefusedPath::covers`]); and a newcomer past the lend's
 //! limit. Each refusal, and the answer for a service that does not answer,
-//! is marked as svrngs's, which ([`Refused`]); the service's own answers never are.
+//! is marked as svrngs's, which ([`LendRefusal`]); the service's own answers never are.
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -137,7 +137,7 @@ pub const SHARE_HEADER: &str = "x-svrngs-declared-share-bps";
 pub const PASS_HEADER: &str = "x-svrngs-pass";
 
 /// On every answer svrngs makes in a lend's place, never on the lend's
-/// own (a service's is dropped, [`forward`]): which of [`Refused`] it is,
+/// own (a service's is dropped, [`forward`]): which of [`LendRefusal`] it is,
 /// so an app tells svrngs's word from the lend's by more than a status
 /// that both use (mnp-1; `demo/runs/mn/2026-10-08/README.md` §9, 2).
 pub const REFUSED_HEADER: &str = "x-svrngs-refused";
@@ -146,7 +146,7 @@ pub const REFUSED_HEADER: &str = "x-svrngs-refused";
 /// each kind spelt once in [`REFUSED_HEADER`] and the body's `kind`, as the
 /// lend's worker spells it too (`web/lend.js`, `say`).
 #[derive(Debug, Clone, Copy)]
-pub enum Refused {
+pub enum LendRefusal {
     /// The lender's computer, or the lend's service on it, did not answer.
     Away,
     /// The pass presented does not open the lend now: ask the page for another.
@@ -165,17 +165,17 @@ pub enum Refused {
     Fault,
 }
 
-impl Refused {
+impl LendRefusal {
     pub const fn as_str(self) -> &'static str {
         match self {
-            Refused::Away => "away",
-            Refused::Pass => "pass",
-            Refused::Closed => "closed",
-            Refused::Unlent => "unlent",
-            Refused::Path => "path",
-            Refused::Full => "full",
-            Refused::SignIn => "sign-in",
-            Refused::Fault => "fault",
+            LendRefusal::Away => "away",
+            LendRefusal::Pass => "pass",
+            LendRefusal::Closed => "closed",
+            LendRefusal::Unlent => "unlent",
+            LendRefusal::Path => "path",
+            LendRefusal::Full => "full",
+            LendRefusal::SignIn => "sign-in",
+            LendRefusal::Fault => "fault",
         }
     }
 
@@ -717,7 +717,7 @@ async fn through_pass(
 ) -> Response {
     let Some(Extension(dialer)) = dialer else {
         tracing::warn!(target: "door", "door: refused — no verified dialer, so the request did not come on an iroh stream");
-        return Refused::Closed.say(
+        return LendRefusal::Closed.say(
             StatusCode::FORBIDDEN,
             "a lend is reached only through its group",
         );
@@ -769,7 +769,7 @@ async fn holder_of(
     let key = holder.actor();
     let refused = |why: &str| {
         tracing::debug!(target: "door", holder = key, lend = %lend.name, why, "door: refused — a pass that does not open this lend");
-        Refused::Pass.say(
+        LendRefusal::Pass.say(
             StatusCode::FORBIDDEN,
             format!(
                 "{} is not open to you here; open it again from your group's page",
@@ -819,7 +819,7 @@ async fn through(
 ) -> Response {
     let Some(Extension(dialer)) = dialer else {
         tracing::warn!(target: "door", "door: refused — no verified dialer, so the request did not come on an iroh stream");
-        return Refused::Closed.say(
+        return LendRefusal::Closed.say(
             StatusCode::FORBIDDEN,
             "a lend is reached only from another computer of its group",
         );
@@ -837,20 +837,20 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
     let path = req.uri().path().to_string();
     if can_step_out(&path) {
         tracing::debug!(target: "door", actor, path, "door: refused — a path that can step out of its lend");
-        return Refused::Path.say(
+        return LendRefusal::Path.say(
             StatusCode::BAD_REQUEST,
             "a path that can step outside a lend is refused",
         );
     }
     let Some((raw_name, service_path)) = split_lend(&path) else {
         tracing::debug!(target: "door", actor, path, "door: refused — no lend named in the path");
-        return Refused::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here by that name");
+        return LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here by that name");
     };
     let pending = match who {
         Who::Member(_) | Who::Own => {
             let Some((group, person)) = door.rail.standing_anywhere(&actor) else {
                 tracing::debug!(target: "door", actor, "door: refused — the dialer stands in no group held here");
-                return Refused::Closed
+                return LendRefusal::Closed
                     .say(StatusCode::FORBIDDEN, "this computer lends nothing to you");
             };
             Pending::Known(Asker {
@@ -866,11 +866,12 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
         Ok(Some(lend)) => lend,
         Ok(None) => {
             tracing::debug!(target: "door", actor, lend = raw_name, "door: refused — no lend declared by that name");
-            return Refused::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here by that name");
+            return LendRefusal::Unlent
+                .say(StatusCode::NOT_FOUND, "nothing is lent here by that name");
         }
         Err(e) => {
             tracing::warn!(target: "door", lend = raw_name, error = %e, "door: refused — the lend's declaration cannot be read");
-            return Refused::Fault.say(
+            return LendRefusal::Fault.say(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "this lend cannot be read on the computer that lends it",
             );
@@ -891,7 +892,7 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
     if let Some(refused) = lend.refusing(&service_path) {
         tracing::debug!(target: "door", actor, lend = %lend.name, path = service_path, refused = refused.as_str(),
             "door: refused — the lend refuses this path");
-        return Refused::Path.say(
+        return LendRefusal::Path.say(
             StatusCode::FORBIDDEN,
             format!("{} is lent without {}", lend.name, refused.as_str()),
         );
@@ -903,7 +904,7 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
     let whereabouts = limit::guess(observed.and_then(|o| o.addr));
     let Some((verdict, held)) = door.using.ask(&lend, &actor, whereabouts).await else {
         tracing::warn!(target: "door", lend = %lend.name, "door: refused — no count of who uses the lend, so none can be let in");
-        return Refused::Fault.say(
+        return LendRefusal::Fault.say(
             StatusCode::INTERNAL_SERVER_ERROR,
             "who is using this lend cannot be counted on the computer that lends it",
         );
@@ -972,7 +973,7 @@ fn busy(lend: &Lend, using: u32) -> Response {
         if using == 1 { "is" } else { "are" },
     );
     let body = serde_json::json!({ "error": reason, "using": using, "limit": limit });
-    Refused::Full.said(StatusCode::SERVICE_UNAVAILABLE, body)
+    LendRefusal::Full.said(StatusCode::SERVICE_UNAVAILABLE, body)
 }
 
 /// Send `request` on a new HTTP/1 connection to `to`, driven with
@@ -1082,7 +1083,7 @@ async fn forward(
         HeaderValue::from_str(actor),
     ) else {
         tracing::warn!(target: "door", actor, "door: refused — the person's name cannot be a header");
-        return Refused::Fault.say(
+        return LendRefusal::Fault.say(
             StatusCode::INTERNAL_SERVER_ERROR,
             "who is asking cannot be told to this lend",
         );
@@ -1102,7 +1103,7 @@ async fn forward(
             Err(why) => {
                 tracing::warn!(target: "door", actor, lend = %lend.name, %why,
                     "door: refused — the lend's sign-in did not sign the person in, so the request is not carried");
-                return Refused::SignIn.say(
+                return LendRefusal::SignIn.say(
                     StatusCode::BAD_GATEWAY,
                     format!("{} could not sign you in", lend.name),
                 );
@@ -1140,7 +1141,7 @@ async fn forward(
         Ok(r) => r,
         Err(e) => {
             tracing::debug!(target: "door", actor, error = %e, "door: refused — the request target is not a path");
-            return Refused::Path.say(
+            return LendRefusal::Path.say(
                 StatusCode::BAD_REQUEST,
                 "the request is not one a lend can be asked",
             );
@@ -1157,7 +1158,7 @@ async fn forward(
     // has the whole answer or leaves it: the answer's body holds it.
 
     let unanswered = || {
-        Refused::Away.say(
+        LendRefusal::Away.say(
             StatusCode::BAD_GATEWAY,
             format!(
                 "{} is not answering on the computer that lends it",
