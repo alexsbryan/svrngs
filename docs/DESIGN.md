@@ -385,7 +385,16 @@ is U5's inventory (§8).
    (`crates/svrngs-node/src/surface.rs`, `reads`). The answer does not
    limit what a page reaches on a computer, where it reaches every lend
    of a group held here as the computer's person, `--reads` or not
-   (`crates/svrngs-node/src/origin.rs:87-93`; §9). Two others have landed (mnp-1): svrngs's
+   (`crates/svrngs-node/src/origin.rs:87-93`; §9). Movie Night cut to it
+   (`demo/runs/mnp/2026-10-09/`): its `find` 28 lines to 1, each library
+   named by its lender and an asleep one's person said; four phones that
+   never opened a Jellyfin opened the chosen copy at its item, signed in,
+   in 15.8-17.2 s, one Back from it to the same results; the computer
+   found both libraries with nothing handed. Two costs it measured wait
+   on an asleep lender: the computer's answer asks every lender, so its
+   first card waited 10.2 s on Cy's dial, and a newcomer's first request
+   at a second lender was refused once at about 10 s, that lender's round
+   dialling the same computer. Two others have landed (mnp-1): svrngs's
    refusals marked as its own, `x-svrngs-refused`, where Movie Night told
    them by status alone and said 19 of Dee's door's as the library's (11
    lines); and a newcomer let in by every lender at once ("Joining").
@@ -1444,7 +1453,11 @@ from its data, as the middleware was — Movie Night by four rows
 reads, whose and where and who did not answer, on a phone and a
 computer alike, with no pass in its hands; svrngs's refusals named as
 its own; a newcomer let in by every lender at once, not at each one's
-next round; a lend opened at a path from a page that reads it — and
+next round; a lend opened at a path from a page that reads it (landed,
+mnp-1 and mnp-2: Movie Night's plumbing 39 lines to 12, `find` 28 to 1,
+bar 2 passed for a phone that never opened that Jellyfin, bar 4 asleep
+before the list and bar 5's letter passed, `demo/runs/mnp/2026-10-09/`;
+§3, "Lent apps", call 6) — and
 scoped use by four (`demo/runs/su/2026-10-09/README.md` §10): a lend
 its lender's person alone reaches, on any device of theirs; an app named
 on the pass; a person's yes before a lend enters an app's pass, kept
