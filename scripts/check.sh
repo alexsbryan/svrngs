@@ -4,6 +4,13 @@
 # a step that never ran is owed, never counted as a pass.
 set -u
 cd "$(dirname "$0")/.."
+# The conformance canary holds about 250 files open at once (six tests, three
+# nodes each, in one process), so under launchd's soft limit of 256
+# (`launchctl limit maxfiles`) it fails by the launcher, not the code: raised
+# here, said, so a run reads the same from any shell (sup-1-app-named).
+soft=$(ulimit -n)
+ulimit -Sn 10240 2>/dev/null || ulimit -Sn "$(ulimit -Hn)"
+echo "note       open files: $soft, raised to $(ulimit -n)"
 failed=0
 step() {  # step <name> <command...>
   local name=$1; shift
