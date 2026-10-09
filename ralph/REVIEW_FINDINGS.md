@@ -4024,3 +4024,8 @@ is `LendRefusal`, beside AppendRefusal, RedeemRefusal, ShareRefusal.
 | I19 | 6 | dry-report's exact tier | Still present: web/ and crates/svrngs-node/tests/ could-not-judge. |
 | I22 | 6, 7 | `code dry-report` near tier | Still present: door.rs `forward` as :1055–1157 and :1158–1235. |
 | I24 | 6, 7 | `code dry-report` exact tier | Unchanged binary; its "0 exact" in Rust is still no evidence of no copy. The window pass ran over every file. |
+
+The row's check: `scripts/check.sh` at a9a8789, all 14 steps passed
+(principles pinned through app laws; the WebKit seek rate "failed, a
+rate" for wildcard and sam's 5016 ms first seek "failed" in the app laws'
+table, neither failing its step, u5-11), exit 0.
