@@ -348,61 +348,93 @@ pub async fn run_one_round(host: &Host) -> RoundOutcome {
         );
 
         for OnlinePeer { contact, .. } in offered_to {
-            // Upstream's transport answered a list of candidate addresses;
-            // `base_url` answers at most one, and the loop below keeps its shape.
-            let endpoints: Vec<String> = transport.base_url(contact).await.into_iter().collect();
-            let mut reached = false;
-            let mut refused = false;
-            for base_url in &endpoints {
-                let url = format!("{base_url}/internal/ring/sync");
-                let ex = exchange(http, &url, rail, namespace).await;
-                // Counted BEFORE the verdict is read. `ingest_all` has already
-                // written these lines to disk, so they are progress whether or
-                // not a later call in the same exchange failed — the old shape
-                // returned `Err` and threw the pulled count away, which made
-                // `ops_pulled` undercount exactly in the failure case.
-                outcome.ops_pulled += ex.pulled;
-                outcome.ops_pushed += ex.pushed;
-                match ex.stop {
-                    None => {
-                        reached = true;
-                        break; // one working address is enough
-                    }
-                    Some(ExchangeStop::Refused { sent_bytes, status }) => {
-                        refused = true;
-                        warn!(
-                            peer = %contact.key,
-                            url = %url,
-                            sent_bytes,
-                            status,
-                            budget_bytes = RING_SYNC_OPS_BUDGET_BYTES,
-                            "ring sync: peer REFUSED — it answered, so this is \
-                             not an unreachable peer. 413: its body limit is \
-                             below this build's exchange budget. 403: it does \
-                             not serve this ring to us — we hold no standing \
-                             in its register there, or it holds no such ring"
-                        );
-                    }
-                    Some(ExchangeStop::Failed(detail)) => {
-                        debug!(
-                            peer = %contact.key,
-                            url = %url,
-                            detail,
-                            "ring sync: exchange failed, trying next address"
-                        );
-                    }
-                }
-            }
-            if reached {
-                outcome.peers_reached += 1;
-            } else if refused {
-                outcome.peers_refused += 1;
-            } else {
-                outcome.peers_unreachable += 1;
+            let (pulled, pushed, reach) =
+                exchange_with(http, transport, rail, namespace, contact).await;
+            // Counted BEFORE the verdict is read: see `exchange_with`.
+            outcome.ops_pulled += pulled;
+            outcome.ops_pushed += pushed;
+            match reach {
+                Reach::Reached => outcome.peers_reached += 1,
+                Reach::Refused => outcome.peers_refused += 1,
+                Reach::Unreachable => outcome.peers_unreachable += 1,
             }
         }
     }
     outcome
+}
+
+/// How a round's exchange with one member ended: it answered, it answered
+/// and refused, or no address of it answered.
+enum Reach {
+    Reached,
+    Refused,
+    Unreachable,
+}
+
+/// One round's exchange of `namespace` with the member at `contact`, at each
+/// address the transport answers until one works: the ops pulled and pushed,
+/// and how it ended.
+async fn exchange_with(
+    http: &reqwest::Client,
+    transport: &crate::iroh::IrohTransport,
+    rail: &RingRail,
+    namespace: &str,
+    contact: &crate::iroh::Contact,
+) -> (usize, usize, Reach) {
+    let (mut pulled, mut pushed) = (0, 0);
+    // Upstream's transport answered a list of candidate addresses;
+    // `base_url` answers at most one, and the loop below keeps its shape.
+    let endpoints: Vec<String> = transport.base_url(contact).await.into_iter().collect();
+    let mut reached = false;
+    let mut refused = false;
+    for base_url in &endpoints {
+        let url = format!("{base_url}/internal/ring/sync");
+        let ex = exchange(http, &url, rail, namespace).await;
+        // Counted BEFORE the verdict is read. `ingest_all` has already
+        // written these lines to disk, so they are progress whether or
+        // not a later call in the same exchange failed — the old shape
+        // returned `Err` and threw the pulled count away, which made
+        // `ops_pulled` undercount exactly in the failure case.
+        pulled += ex.pulled;
+        pushed += ex.pushed;
+        match ex.stop {
+            None => {
+                reached = true;
+                break; // one working address is enough
+            }
+            Some(ExchangeStop::Refused { sent_bytes, status }) => {
+                refused = true;
+                warn!(
+                    peer = %contact.key,
+                    url = %url,
+                    sent_bytes,
+                    status,
+                    budget_bytes = RING_SYNC_OPS_BUDGET_BYTES,
+                    "ring sync: peer REFUSED — it answered, so this is \
+                     not an unreachable peer. 413: its body limit is \
+                     below this build's exchange budget. 403: it does \
+                     not serve this ring to us — we hold no standing \
+                     in its register there, or it holds no such ring"
+                );
+            }
+            Some(ExchangeStop::Failed(detail)) => {
+                debug!(
+                    peer = %contact.key,
+                    url = %url,
+                    detail,
+                    "ring sync: exchange failed, trying next address"
+                );
+            }
+        }
+    }
+    let reach = if reached {
+        Reach::Reached
+    } else if refused {
+        Reach::Refused
+    } else {
+        Reach::Unreachable
+    };
+    (pulled, pushed, reach)
 }
 
 /// Why an exchange with one peer address stopped.
