@@ -4081,9 +4081,9 @@ not counted, scripts/lean_check.py:49):
 |---|---:|---:|
 | 22d1a2c, range start | 2957 / 3000 | 14565 / 14750 |
 | 2e6edc7, range end | 2957 / 3000 | 14643 / 14750 |
-| 484fea5, this audit's fixes | 2957 / 3000 | **14646 / 14750** |
+| decf376, this audit's fixes | 2957 / 3000 | **14644 / 14750** |
 
-mnp-2 spent 78 counted lines, #101 3; **104 are left** (#80).
+mnp-2 spent 78 counted lines, #101 1; **106 are left** (#80).
 
 ### (2) Clones (`code dry-report`)
 
@@ -4186,7 +4186,10 @@ in one file of nine is no second concept. No change.
   and this computer's person in the first it stands in too, for
   `people_lends` and `reads`; `standings` private again. `cargo test -p
   svrngs-node --lib --test surface --test door`: 90, 24, 4 passed;
-  `--test browser`: 10 passed. Counted +3.
+  `--test browser`: 10 passed. Counted +3. Its signature failed
+  scripts/check.sh's clippy step at 4669120 (`clippy::type_complexity`,
+  node.rs:434); `Groups` names the type for it and `standings` (decf376),
+  counted −2.
 - **#102** (484fea5). `page_origin` is `kept_page(html).0`; 17 test lines
   fewer. `--test browser`: 10 passed, both engines.
 
@@ -4194,12 +4197,12 @@ in one file of nine is no second concept. No change.
 
 | # | principle | path:line | fixed in | finding |
 |---|---|---|---|---|
-| 101 | 8 | crates/svrngs-node/src/surface.rs:205–211 and node.rs:627–632, at 2e6edc7 | 70077c4 | `reads` copied `people_lends`'s groups-shared prelude; one method decides it. |
+| 101 | 8 | crates/svrngs-node/src/surface.rs:205–211 and node.rs:627–632, at 2e6edc7 | 70077c4, decf376 | `reads` copied `people_lends`'s groups-shared prelude; one method decides it. |
 | 102 | 8 | crates/svrngs-node/tests/browser/main.rs:868–894 and :432–451, at 2e6edc7 | 484fea5 | `kept_page` forked `page_origin` in the same file. |
 | 103 | 6 | crates/svrngs-node/src/node.rs `shared_with` (ex-:627, surface.rs:205), and :313, at 484fea5 | not fixed | Groups that could not be listed are read as none: a member refused 403, a lent page 404, where svrngs could not judge. |
 | 104 | 8 | web/app.js:177 and crates/svrngs-node/src/surface.rs:226; web/lend.js:363–371 and surface.rs:229, :234, at 2e6edc7 | not fixed | Which lends a page reads, and what it is told of them, decided and shaped in the page and the node, each held by its own test. |
 | 100 | 8 | apps/movie-night/picks/picks.js:20–49; apps/taste/check/other/other.js:6–14, su.mjs:171–172, at 2e6edc7 | narrowed (44784a4) | Movie Night's app.js no longer reads svrngs's lend store; Tonight's Picks and scoped use's other app still do. |
-| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 104 lines left (14646 / 14750). |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 106 lines left (14644 / 14750). |
 | 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99 | as recorded | as recorded | not fixed | Untouched in the range but #97's lines, kept. |
 
 ### Problems in the commonwealth-ai instrument (reported, not fixed here)
