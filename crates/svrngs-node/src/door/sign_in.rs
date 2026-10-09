@@ -261,11 +261,11 @@ impl Signing {
 /// Which answer: a lend, its sign-in's port, and a person's key.
 type Whose = (LendName, NonZeroU16, String);
 
-/// Where a person's signed-in self is told.
-type Told = oneshot::Sender<Result<Signed, Refusal>>;
+/// Who waits on a person's signed-in self.
+type Waiter = oneshot::Sender<Result<Signed, Refusal>>;
 
 enum Ask {
-    Of(Whose, [(HeaderName, HeaderValue); 2], Told),
+    Of(Whose, [(HeaderName, HeaderValue); 2], Waiter),
     /// A sign-in's answer for a person, asked off the task.
     Asked(Whose, Result<Answer, Refusal>),
     Forget(Whose, Secret),
@@ -285,7 +285,7 @@ impl SignIns {
         tokio::spawn(async move {
             let mut kept: HashMap<Whose, Answer> = HashMap::new();
             // Each ask out now, and who waits on its answer.
-            let mut out: HashMap<Whose, Vec<Told>> = HashMap::new();
+            let mut out: HashMap<Whose, Vec<Waiter>> = HashMap::new();
             while let Some(ask) = rx.recv().await {
                 match ask {
                     Ask::Of(whose, identity, told) => {
