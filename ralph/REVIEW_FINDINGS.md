@@ -3848,3 +3848,179 @@ which sit in two programs. Fixed (8024f76): sign_in.rs's is `Waiter`.
 The row's check: `scripts/check.sh` at 7985cfc, all 14 steps passed
 (principles pinned through app laws; the WebKit seek rate "failed, a
 rate" for wildcard, which never fails the step, u5-11), exit 0.
+
+## REVIEW-audit-compose-auto-2 (2026-10-09, range 34d5272..0b5cac1)
+
+The range starts at 34d52729a, the hash REVIEW-audit-compose-auto-1's row
+carries (ralph/next/compose/STATE.md:19), the last `REVIEW-audit-` row. It
+ends at 0b5cac1, the commit that made this row: 17 commits (`git rev-list
+--count 34d5272..0b5cac1`), the last audit's `done` (766be45), su-0
+(cf56039), su-1 (55dca40, 0095684, 305efde, c0c64ff, 3847360), su-2
+(5153bdc, 62582ee) and mnp-1 (1f08560, e02a203, 11dbb9b), with their
+`done`s (`git log --format='%h %s' 34d5272..0b5cac1`). Product code outside apps/ changed in su-1's one
+header (55dca40, door.rs +29/−4, the fence's exception) and in mnp-1.
+This audit fixes one finding (#98) and records two (#99, #100).
+
+As before, `docs/ARCH_PRINCIPLES.md` is docs/principles/ARCH_PRINCIPLES.md,
+and `target/debug/sovereign-cli` is
+~/dev/commonwealth-ai/target/debug/sovereign-cli: **the binary the last
+audit planted against**, sha256 35d97ed2… (built 2026-10-08 15:05), so its
+tiers' plants (I24, I9) stand and were not run again. The embedder was
+`llama-server` on the corpus's model (qwen-embedding-0.6b.gguf,
+~/.svrnmesh/config.toml:18) on :8080, `-b 8192 -ub 8192` (I21), for this
+session. `code index . --full` at 0b5cac1, tree clean: 2630 chunks in
+152 s; the SCIP graph (scip_graph.db 00:44) written after the range's last
+product commit (e02a203, 00:13).
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' 34d5272..0b5cac1`,
+summed by /tmp/composeaudit2/ledger.py (the last audit's, unchanged), its
+rules as before: a commit counts toward the unit its subject names, else
+the next `done`'s; product code is crates/, apps/, web/, bridge/; a test is
+a `tests/` or `check/` segment or a lean_check test file name.
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| su-0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| su-1 | 435 | 9 | 426 | 781 | 6 | 775 |
+| su-2 | 0 | 0 | 0 | 0 | 0 | 0 |
+| mnp-1 | 175 | 55 | 120 | 254 | 11 | 243 |
+| total | 610 | 64 | 546 | 1035 | 17 | 1018 |
+
+- su-1 src: door.rs +29/−4 (55dca40, `x-svrngs-app`); the rest apps/
+  (0095684, 305efde): apps/taste/taste.mjs +169/−2, nouns.txt +4;
+  apps/movie-night/picks/ picks.js +196/−3, index.html 26, picks.css 8,
+  match.js, plant.js, style.css 1 each.
+- su-1 tests: tests/door/main.rs +67 (55dca40); apps/taste/check/ su.mjs
+  261, judge.py +220/−5, check.sh 186, other/ 46; apps/movie-night/check/
+  check.sh +1/−1.
+- mnp-1 src: door.rs +89/−25, sign_in.rs +1/−1, origin.rs +6/−7, room.rs
+  +1/−2, web/lend.js +11/−10 (1f08560); door.rs +23/−4, node.rs +5/−3,
+  ring_sync.rs +39/−3 (e02a203).
+- mnp-1 tests: tests/door/main.rs +43, origins.rs +27, newcomer.rs +125,
+  tests/browser/main.rs +33/−5, web/tests/ +26/−6.
+
+lean_check on `git archive` trees in /tmp/composeaudit2 (apps/ is not
+counted, scripts/lean_check.py:49):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 34d5272, range start | 2957 / 3000 | 14466 / 14750 |
+| 0b5cac1, range end | 2957 / 3000 | **14564 / 14750** |
+
+su-1's header and mnp-1 spent 98 counted lines; **186 are left** (#80).
+
+### (2) Clones (`code dry-report`)
+
+**Scoped**, at 0.95, for each dir the range touched:
+
+| scope | locations | exact | near | with a side added in the range |
+|---|---:|---|---:|---|
+| crates/svrngs-node/ | 399 | 5 (as at the last audit: `as_str` ×3, `drop`, `fmt`, `try_from`, `addr`) | 1 (declared.rs `harden_file` ×2) | 0 |
+| crates/svrngs-node/tests/ | 0 | **could-not-judge** | **could-not-judge** | — |
+| apps/movie-night/ | 60 | 0 | 0 | 0 |
+| apps/taste/ | 35 | 0 | 0 | 0 |
+| web/ | 85 | **could-not-judge** (I19) | 0 | 0 |
+| apps/ | 240 | 0 | 5 | **3**, all su.mjs (below) |
+
+**Unscoped**: 0.95 (14 exact, 18 near), 0.9 (14, 43), 0.8 (14, 235).
+/tmp/composeaudit2/clusters.py blamed every side (`git blame -w -M -C -C`)
+for a line in 34d5272..0b5cac1: **3** clusters at 0.95, **5** at 0.9, 17 at
+0.8.
+
+| at | cluster | cosine | read |
+|---|---|---|---|
+| 0.95, 0.9, apps/ | apps/taste/check/su.mjs `browser` :40–59 ~ apps/movie-night/check/mn.mjs `browser` :44–64 (0095684) | 0.974 | **#99.** Forked, by su.mjs's own heading: "the group's page (mn.mjs's)" (:58). |
+| 0.95, 0.9, apps/ | su.mjs `join` :57–75 ~ mn.mjs `join` :62–80 | 0.994 | **#99**; mn.mjs's is itself #97's fork of person.mjs:185–192. |
+| 0.95, 0.9, apps/ | su.mjs `listed` :71–82 ~ mn.mjs `listed` :76–88 | 0.956 | **#99.** |
+| 0.9 | su.mjs `openFromList` :86–98 ~ mn.mjs :94–109; su.mjs `group` :78–90 ~ mn.mjs :85–97 | 0.904, 0.902 | **#99.** |
+| 0.8 | the same five, with su.mjs `openPicks` :130–148, and su.mjs `showing`, `settled`, `picks`, `past` :98–132 ~ mn.mjs `showing` :108–122 | 0.801–0.994 | #99 for the group's page; `showing` reads another page's elements in each, and the rest are su's own. |
+| 0.8 | apps/movie-night/picks/picks.js `kept` :24–47 ~ apps/movie-night/app.js `kept` :27–51; picks.js `lends` :43–54 ~ app.js `libraries` :47–60; picks.js `asked` :55–73 ~ app.js `ask` :63–79 (0095684) | 0.802–0.890 | Tonight's Picks' `find` and `refusal`, counted by su-2 as Movie Night's plumbing again (demo/runs/su/2026-10-09/README.md §9, 5) and queued as mnp-2. The store's layout they read is **#100**. |
+| 0.8 | apps/taste/check/other/other.js `kept` :7–21 ~ web/store.js `lendDb` :139–152 (0095684) | 0.824 | **#100**: the other app reads svrngs's store as the two pages do. |
+| 0.8 | door.rs `lend_for` :829–955 ~ `forward` :1055–1157 ~ `forward` :1158–1235 (1f08560, 55dca40, e02a203) | 0.827–0.836 | I22 still: one `forward` given as two symbols. No change. |
+| 0.8 | door.rs `through_pass` :709–729 ~ `through` :811–831 (1f08560) | 0.881 | The holders' and the members' axum handlers, twins since before the range (34d5272:637, :724); mnp-1 changed only `err(` to `Refused::Closed.say(` in each. They differ in `Who` and their words; a shared body saves ~6 lines and costs a parameter. No change. |
+| 0.8 | door.rs `say` :180–188 and `said` :185–198 ~ apps/jellyfin/mw/src/answer.rs `said` :58–70 (1f08560, e02a203) | 0.808–0.845 | svrngs's refusal and the middleware's answer: two programs. No change. |
+| 0.8 | api.rs `to_a_lend` :86–101 ~ origin.rs `lent` :54–66 (1f08560) | 0.827 | A middleware that routes by `Host` and the handler it routes to. No change. |
+| 0.8 | picks.js `rank` :137–162 ~ `start` :158–193; su.mjs `yes` ~ `diary`; apps/taste/check/judge.py `verdict` ~ `get` | 0.818–0.887 | Neighbours in one file, overlapping spans (I9). No change. |
+| 0.8 | apps/movie-night/check/judge.py `count` :205–225 ~ apps/taste/check/judge.py `count` :48–76; `load` :28–36 ~ :15–25 | 0.854, 0.826 | Two spikes' counts by two rules written before each (mn-0 §4, su-0 §6); `load` 3 and 5 lines, one returns None on an empty file, the other on an unreadable one. No change. |
+
+**Window pass** (/tmp/composeaudit2/windows.py . 34d5272..0b5cac1, 5
+normalized lines, tests included): 178 hits, **3 new**:
+
+- apps/movie-night/check/mn.mjs:54–81 == apps/taste/check/su.mjs:49–76 and
+  mn.mjs:83–100 == su.mjs:77–92 (0095684): #99, 44 lines verbatim but for
+  names.
+- crates/svrngs-node/src/door.rs:713–721 == :815–823 (1f08560): the twin
+  handlers above. No change.
+
+Reading the range for what neither pass would show:
+
+- **#100, new, not fixed.** svrngs's lend store and a lend's address are
+  spelled in three app files: IndexedDB `svrngs-lend`, store `kept`, key
+  `pass <label>` and `baseOf` at apps/movie-night/app.js:28, :32, :39
+  (mn-1), apps/movie-night/picks/picks.js:25, :29, :35 and
+  apps/taste/check/other/other.js:6, :11, :14 (0095684); their one home is
+  web/store.js:137–152 and web/lend.js:80, :96. A change to the store's
+  layout or the lend's host breaks all three with nothing red in svrngs's
+  own tests. This is mn's candidate 1 (demo/runs/mn/2026-10-08/README.md
+  §9), which mnp-2 (a) makes production; the row names Movie Night's `find`
+  only, and picks.js and other.js are its sites too. Not fixed: a spike
+  changes no product, and the cut is mnp-2's.
+- **The refusal kinds across the Rust/JS line.** door.rs `LendRefusal`
+  (ex-`Refused`) spells eight kinds; web/lend.js `say` (:252, :267, :272,
+  :311) spells three of them for the worker's own answers and reads `pass`
+  (:320). As #50 judged `x-svrngs-pass`: a protocol constant across two
+  programs, each kind exercised end to end by the page tests 1f08560 cites
+  (both engines). No change.
+- **ring_sync.rs `AskRound::now`** (e02a203): no trace of its own; its one
+  caller, door.rs `holder_of`, traces before and after with `ended` and
+  whether the signer stands. Every branch is at debug. No change.
+- **#57, #68, #70, #71, #75, #77, #79, #81, #89, #91, #95, #97 still
+  open.** #97 grows by #99.
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff 34d5272 0b5cac1 -- crates apps web bridge`, added lines
+matching `\b(struct|enum|trait|type|class)\s+[A-Z]\w*`: three.
+
+| noun | converge | git grep (`(struct\|enum\|trait\|type\|class)[[:space:]]+Name\b`) |
+|---|---|---|
+| **Refused** | **definitions (2)**: svrngs-core command.rs:66, svrngs-node door.rs:148 | **3**: command.rs:67 `Refused<R>` (why a commit wrote nothing), door.rs:149 (1f08560, why svrngs answered in a lend's place), web/src/http.rs:47 (why a request got no response; another workspace, #50) |
+| Rounds | definitions (1), ring_sync.rs:161 | 1, :162 |
+| AskRound | definitions (1), ring_sync.rs:167 | 1, :168 |
+
+(converge's lines one early, I1; web/ unseen by it, as at #50.) **#98**:
+svrngs-node names core's `Refused<R>` at its root (`pub use
+svrngs_runtime::*`, lib.rs:33) and imports it as `CommitRefused` to tell it
+apart (rail.rs:60, redeem.rs:58; svrngs cli.rs:77), so `crate::Refused`
+and `crate::door::Refused` were two concepts in one crate — #35's pattern,
+fixed then by renaming the node's (c0e063f). Fixed (9999bff): the door's
+is `LendRefusal`, beside AppendRefusal, RedeemRefusal, ShareRefusal.
+
+### Fixed here
+
+- **#98** (9999bff). A rename: no variant, string or header changed.
+  `cargo test -p svrngs-node --lib --test door`: 90 passed, 24 passed, the
+  mnp-1 door tests among them. git grep for a `Refused` definition: core's
+  and web/'s only.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 98 | 8 | crates/svrngs-node/src/door.rs:149 and crates/svrngs-core/src/command.rs:67 (named at svrngs-node's root, lib.rs:33), at 0b5cac1 | 9999bff | A second `Refused` in svrngs-node, as #35; the door's is `LendRefusal`. |
+| 99 | 8 | apps/taste/check/su.mjs:40–98 (`browser`, `join`, `listed`, `group`, `openFromList`); apps/movie-night/check/mn.mjs:44–109, at 0b5cac1 | not fixed | Scoped use's driver forks Movie Night's group-page driver, 44 lines verbatim but for names (window pass), itself #97's fork of person.mjs. mn.mjs exports nothing; a shared driver is proven only by both apps' Jellyfin runs, which this audit did not run. |
+| 100 | 8 | apps/movie-night/app.js:28, :32, :39; apps/movie-night/picks/picks.js:25, :29, :35; apps/taste/check/other/other.js:6, :11, :14; web/store.js:137–152, web/lend.js:80, :96, at 0b5cac1 | not fixed (mnp-2 a) | svrngs's lend store (`svrngs-lend`, `kept`, `pass <label>`) and a lend's address spelled in three app files beside their home. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 186 lines left (14564 / 14750). |
+| 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97 | as recorded | as recorded | not fixed | Untouched in the range; #97 grown by #99. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still present: `Refused` door.rs:148 for :149, command.rs:66 for :67; `Rounds` :161 for :162, `AskRound` :167 for :168. |
+| I9 | 6, 7 | `code dry-report` near tier | Still present: su.mjs `browser` :40–59 runs into `join` :57–75; picks.js `rank` :137–162 into `start` :158–193. |
+| I19 | 6 | dry-report's exact tier | Still present: web/ and crates/svrngs-node/tests/ could-not-judge. |
+| I22 | 6, 7 | `code dry-report` near tier | Still present: door.rs `forward` as :1055–1157 and :1158–1235. |
+| I24 | 6, 7 | `code dry-report` exact tier | Unchanged binary; its "0 exact" in Rust is still no evidence of no copy. The window pass ran over every file. |
