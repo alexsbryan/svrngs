@@ -314,6 +314,9 @@ pub enum Admit {
     /// Serve every bi-stream on the connection with this router: the
     /// routes its protocol reaches, and no others.
     Serve(axum::Router),
+    /// Hand the connection to iroh-blobs' provider (gf-1): a shared
+    /// folder's bytes by hash, on its own protocol.
+    Blobs(iroh_blobs::BlobsProtocol),
     /// Close the connection before any stream is read: no HTTP answer.
     Refuse,
 }
@@ -453,6 +456,12 @@ impl IrohAcceptor {
                                 "iroh acceptor: dialer not admitted — closing connection"
                             );
                             conn.close(0u32.into(), b"not admitted");
+                            return;
+                        }
+                        Admit::Blobs(blobs) => {
+                            use iroh::protocol::ProtocolHandler;
+                            tracing::debug!(target: "transport", dialer = %dialer.actor(), "iroh acceptor: dialer admitted — its connection handed to the blobs provider");
+                            blobs.accept(conn).await.ok();
                             return;
                         }
                         Admit::Serve(router) => {

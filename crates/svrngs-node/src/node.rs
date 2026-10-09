@@ -221,6 +221,15 @@ impl Node {
             api_port: api.addr().port(),
             room: tokio::sync::watch::Sender::new(BTreeMap::new()),
         });
+        let (folders, blobs) = crate::folder::Folders::start(
+            &data_dir,
+            rail.clone(),
+            endpoint.clone(),
+            actor.clone(),
+            nudge.clone(),
+        )
+        .await
+        .map_err(NodeError::Endpoint)?;
         let rounds = Rounds::new(Default::default());
         let door = crate::door::Door {
             ring: AskRound::new(nudge.clone(), &rounds),
@@ -243,7 +252,7 @@ impl Node {
                 live: live.clone(),
                 transport,
             },
-            crate::surface::router(asking.clone(), seeds),
+            crate::surface::router(asking.clone(), seeds).merge(crate::folder::router(folders)),
             crate::origin::router(asking.clone()),
         );
         let api = crate::api::serve(routes.clone(), api);
@@ -277,6 +286,7 @@ impl Node {
                     Some(Alpn::Member) => Admit::Serve(members.clone()),
                     Some(Alpn::Redeem) => Admit::Serve(redeem.clone()),
                     Some(Alpn::Lend) => Admit::Serve(holders.clone()),
+                    Some(Alpn::Blobs) => Admit::Blobs(blobs.clone()),
                     None => Admit::Refuse,
                 }
             });
@@ -729,7 +739,7 @@ impl Asking {
 fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn> {
     let actor = key_actor(dialer);
     match Alpn::of(alpn) {
-        Some(Alpn::Member) => {}
+        Some(Alpn::Member) | Some(Alpn::Blobs) => {}
         Some(Alpn::Redeem) => {
             tracing::debug!(target: "node", actor, "node: admitted to redeem a link — any dialer may");
             return Some(Alpn::Redeem);
@@ -745,7 +755,7 @@ fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn
     }
     if let Some((namespace, _)) = rail.standing_anywhere(&actor) {
         tracing::debug!(target: "node", actor, namespace, "node: admitted — the dialer stands in a group held here");
-        return Some(Alpn::Member);
+        return Alpn::of(alpn);
     }
     tracing::debug!(target: "node", actor, "node: refused — the dialer stands in no group held here");
     None
