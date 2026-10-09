@@ -3,11 +3,18 @@
 // seeks, capture <video>.currentSrc, PlaybackInfo and PlayMethod. Writes one
 // window mark per (browser, file) to marks.jsonl so the range-server log can
 // be attributed by request start time.
-// usage: node driver.cjs STATE_JSON OUT_DIR [browsers comma list]
+// usage: node driver.cjs STATE_JSON OUT_DIR [browser:file comma list]
+//
+// Forked from svrn-docs rings/runs/strm-2026-10-05/driver.cjs@457f120 (gf-1):
+// each play named browser:file and once (chromium:mp4,webkit:mkv), its
+// marks carrying the run's PHASE; Jellyfin's ffmpeg looked for on this host,
+// not in a container; quiet read from the meeting point's log (QUIET_LOG),
+// not the range server's.
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const PW = process.env.PW_MODULE || '/Users/alexsbryan/dev/svrngs/web/node_modules/playwright';
+const PW = process.env.PW_MODULE || path.join(__dirname, '../../../web/node_modules/playwright');
+const PHASE = process.env.PHASE || '';
 const { chromium, webkit, devices } = require(PW);
 
 const [stateFile, outDir, browserList] = process.argv.slice(2);
@@ -45,15 +52,15 @@ const INIT = () => {
 };
 
 function ffmpegInContainer() {
+  // Jellyfin's own ffmpeg and ffprobe, the app's, on this host.
   try {
-    // the image has no pgrep; scan /proc for ffmpeg/ffprobe command lines
-    const out = execSync(`docker exec strm-exp-jellyfin sh -c 'for p in /proc/[0-9]*; do tr "\\0" " " < $p/cmdline 2>/dev/null; echo; done'`).toString();
-    return out.split('\n').filter((l) => /jellyfin-ffmpeg\/ff(mpeg|probe)/.test(l)).join('\n').trim();
+    // Anchored: Jellyfin's own command line names its ffmpeg too.
+    return execSync(`pgrep -fl '^[^ ]*Jellyfin.app/Contents/MacOS/ff(mpeg|probe) ' || true`).toString().trim();
   } catch (e) { return 'pgrep-failed: ' + e.message; }
 }
 
 function rangeLogLines() {
-  try { return fs.readFileSync(path.join(outDir, 'range.jsonl'), 'utf8').split('\n').filter(Boolean).length; }
+  try { return fs.readFileSync(process.env.QUIET_LOG, 'utf8').split('\n').filter(Boolean).length; }
   catch { return 0; }
 }
 
@@ -146,7 +153,7 @@ async function runOne(cfgName, file, rep) {
     }
   });
 
-  const rec = { browser: cfgName, file: file.key, rep, item_id: item.id };
+  const rec = { phase: PHASE, browser: cfgName, file: file.key, rep, item_id: item.id };
   try {
     await login(page);
     rec.ua = await page.evaluate(() => navigator.userAgent);
@@ -160,7 +167,7 @@ async function runOne(cfgName, file, rep) {
     // Window opens BEFORE the item page loads: everything from here to the
     // quiet point after stop is attributed to this (browser, file).
     rec.window_start = now();
-    fs.appendFileSync(marks, JSON.stringify({ browser: cfgName, file: file.key, rep, phase: 'start', t: rec.window_start, ua: rec.ua }) + '\n');
+    fs.appendFileSync(marks, JSON.stringify({ run: PHASE, browser: cfgName, file: file.key, rep, phase: 'start', t: rec.window_start, ua: rec.ua }) + '\n');
     await page.goto(`${BASE}/web/#/details?id=${item.id}&serverId=${state.server_id}`);
     const play = page.locator('.btnPlay >> visible=true').first();
     await play.waitFor({ state: 'visible', timeout: 30000 });
@@ -216,17 +223,16 @@ async function runOne(cfgName, file, rep) {
   await browser.close().catch(() => {});
   await quiet();
   rec.window_end = now();
-  fs.appendFileSync(marks, JSON.stringify({ browser: cfgName, file: file.key, rep, phase: 'end', t: rec.window_end }) + '\n');
+  fs.appendFileSync(marks, JSON.stringify({ run: PHASE, browser: cfgName, file: file.key, rep, phase: 'end', t: rec.window_end }) + '\n');
   fs.appendFileSync(results, JSON.stringify(rec) + '\n');
   log(cfgName, file.key, 'rep', rep, 'first', JSON.stringify(rec.first), 'seeks', JSON.stringify((rec.seeks || []).map((s) => s.ms)),
     'src', rec.video && rec.video.currentSrc, 'method', playMethod);
 }
 
 (async () => {
-  // spec "name:reps", e.g. chromium:2,webkit:2,webkit-iphone:1
-  const which = (browserList || 'chromium:2,webkit:2,webkit-iphone:1').split(',');
-  for (const spec of which) {
-    const [b, n] = spec.split(':');
-    for (let rep = 1; rep <= Number(n || 1); rep++) for (const f of FILES) await runOne(b, f, rep);
+  // spec "browser:file", e.g. chromium:mp4,webkit:mp4,webkit:mkv; each once
+  for (const spec of (browserList || 'chromium:mp4').split(',')) {
+    const [b, key] = spec.split(':');
+    await runOne(b, FILES.find((f) => f.key === key), 1);
   }
 })().catch((e) => { console.error(e); process.exit(1); });

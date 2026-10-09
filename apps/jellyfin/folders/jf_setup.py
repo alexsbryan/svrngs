@@ -1,10 +1,14 @@
 # Completes Jellyfin's first-run wizard over HTTP, adds the Movies library
 # (default LibraryOptions), waits for the scan to finish, and writes
 # state.json (token, ids, scan window). Throwaway identity only.
-# usage: jf_setup.py BASE_URL STATE_OUT
+# usage: jf_setup.py BASE_URL STATE_OUT LIBRARY_DIR
+#
+# Forked from svrn-docs rings/runs/strm-2026-10-05/jf_setup.py@457f120 (gf-1):
+# the library is a directory on this host, given, where the first run's was
+# /media/Movies inside its container.
 import json, sys, time, urllib.request, urllib.parse
 
-BASE, OUT = sys.argv[1].rstrip("/"), sys.argv[2]
+BASE, OUT, LIBRARY = sys.argv[1].rstrip("/"), sys.argv[2], sys.argv[3]
 AUTH = 'MediaBrowser Client="strm-exp", Device="strm-exp", DeviceId="strm-exp-setup", Version="1.0"'
 USER, PW = "exp", "exp-throwaway-pw"
 
@@ -72,7 +76,7 @@ folders = call("GET", "/Library/VirtualFolders", token=tok)
 scan_start = time.time()
 if not any(f["Name"] == "Movies" for f in folders):
     call("POST", "/Library/VirtualFolders", {"LibraryOptions": {}}, tok,
-         {"name": "Movies", "collectionType": "movies", "paths": "/media/Movies",
+         {"name": "Movies", "collectionType": "movies", "paths": LIBRARY,
           "refreshLibrary": "true"})
     log("library added, refreshLibrary=true")
 else:

@@ -4,6 +4,11 @@
 # socket (a client abort mid-body is counted up to the abort), plus the
 # fetch-metadata headers that identify a browser media request.
 # usage: rangeserver.py ROOT PORT LOGFILE
+#
+# Forked from svrn-docs rings/runs/strm-2026-10-05/rangeserver.py@457f120
+# (gf-1): B1's plant with its guard taken out, a server that serves what is
+# on disk, a flipped byte included, unverified. It binds loopback alone,
+# where the meeting point's endpoint does.
 import json, os, sys, time, threading
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
@@ -110,7 +115,7 @@ class H(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    srv = ThreadingHTTPServer(("0.0.0.0", PORT), H)
+    srv = ThreadingHTTPServer(("127.0.0.1", PORT), H)
     srv.daemon_threads = True
-    print(f"serving {ROOT} on 0.0.0.0:{PORT}, log {LOGPATH}", flush=True)
+    print(f"serving {ROOT} on 127.0.0.1:{PORT}, log {LOGPATH}", flush=True)
     srv.serve_forever()
