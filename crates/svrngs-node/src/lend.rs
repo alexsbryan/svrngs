@@ -8,6 +8,7 @@
 //!
 //! ```text
 //!   <data dir>/lends/<lend>.json                       what the door may do
+//!   <data dir>/choices/<lend>.json                     each person's yes and stop
 //!   <data dir>/secrets/lends/<lend>/<header>   0600    the lender's secret
 //! ```
 //!
@@ -346,6 +347,12 @@ pub fn lends_dir(data_dir: &Path) -> PathBuf {
     data_dir.join("lends")
 }
 
+/// Where the lend `name`'s door keeps each person's choices
+/// ([`crate::door::choices`]), beside its declaration.
+pub fn choices_path(data_dir: &Path, name: &LendName) -> PathBuf {
+    data_dir.join("choices").join(format!("{name}.json"))
+}
+
 /// Where the lend `name` keeps its secret: [`crate::declared`]'s store, one
 /// directory per lend, apart from the declaration.
 pub fn secret_dir(data_dir: &Path, name: &LendName) -> PathBuf {
@@ -461,7 +468,8 @@ pub fn declare(
     Ok(())
 }
 
-/// Take back the lend `name`: its declaration, then its secret. `false`
+/// Take back the lend `name`: its declaration, then its choices, then its
+/// secret, so a lend shared again asks again. `false`
 /// when this computer lends nothing by that name.
 pub fn withdraw(data_dir: &Path, name: &LendName) -> Result<bool, LendError> {
     let path = lends_dir(data_dir).join(format!("{name}.json"));
@@ -470,6 +478,16 @@ pub fn withdraw(data_dir: &Path, name: &LendName) -> Result<bool, LendError> {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => false,
         Err(source) => return Err(LendError::Unwritable { path, source }),
     };
+    let choices = choices_path(data_dir, name);
+    match std::fs::remove_file(&choices) {
+        Err(e) if e.kind() != std::io::ErrorKind::NotFound => {
+            return Err(LendError::Unwritable {
+                path: choices,
+                source: e,
+            })
+        }
+        _ => {}
+    }
     let secrets = secret_dir(data_dir, name);
     match std::fs::remove_dir_all(&secrets) {
         Ok(()) => {}

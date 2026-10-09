@@ -104,6 +104,7 @@ use crate::{Person, RingRail};
 use limit::{Counts, Verdict, Whereabouts};
 use svrngs_core::pass::{Label, Pass};
 
+pub mod choices;
 pub mod limit;
 pub mod sign_in;
 use sign_in::Signing;
@@ -164,6 +165,10 @@ pub enum LendRefusal {
     SignIn,
     /// The computer that lends it cannot read its own state.
     Fault,
+    /// The lend asks, and its person said no yes to the app asking (sup-2).
+    Unasked,
+    /// The lend asks, and its person stopped the app asking.
+    Stopped,
 }
 
 impl LendRefusal {
@@ -177,6 +182,8 @@ impl LendRefusal {
             LendRefusal::Full => "full",
             LendRefusal::SignIn => "sign-in",
             LendRefusal::Fault => "fault",
+            LendRefusal::Unasked => "unasked",
+            LendRefusal::Stopped => "stopped",
         }
     }
 
@@ -207,6 +214,9 @@ pub const LEND_ROUTE: &str = "/lend/";
 
 /// Where a member asks what this computer lends.
 pub const LENDS_ROUTE: &str = "/lends";
+
+/// Where a lend's choices are said and asked ([`choices`]).
+const CHOICES: &str = "/choices/{lend}";
 
 /// How long the door waits for a lend's service to take a connection; once
 /// connected, a body takes as long as it takes, as upstream's
@@ -244,6 +254,8 @@ pub struct Door {
     pub data_dir: PathBuf,
     pub using: Using,
     pub sign_ins: sign_in::SignIns,
+    /// Each person's yes and stop to an app, written through one task.
+    pub choices: choices::Choices,
 }
 
 /// The door's routes, for the members' protocol's router: a lend, every
@@ -252,6 +264,7 @@ pub fn router(door: Door) -> axum::Router {
     axum::Router::new()
         .route("/lend/{*rest}", any(through))
         .route(LENDS_ROUTE, get(lends))
+        .route(CHOICES, get(choices::choices_of).post(choices::choose))
         .with_state(door)
 }
 
@@ -260,6 +273,7 @@ pub fn router(door: Door) -> axum::Router {
 pub fn holders_router(door: Door) -> axum::Router {
     axum::Router::new()
         .route("/lend/{*rest}", any(through_pass))
+        .route(CHOICES, axum::routing::post(choices::stop_with_pass))
         .with_state(door)
 }
 
@@ -939,20 +953,9 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
         }
         Who::Holder(dialer) => Pending::Pass(*dialer),
     };
-    let lend = match find(door, raw_name) {
-        Ok(Some(lend)) => lend,
-        Ok(None) => {
-            tracing::debug!(target: "door", actor, lend = raw_name, "door: refused — no lend declared by that name");
-            return LendRefusal::Unlent
-                .say(StatusCode::NOT_FOUND, "nothing is lent here by that name");
-        }
-        Err(e) => {
-            tracing::warn!(target: "door", lend = raw_name, error = %e, "door: refused — the lend's declaration cannot be read");
-            return LendRefusal::Fault.say(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "this lend cannot be read on the computer that lends it",
-            );
-        }
+    let lend = match choices::found(door, raw_name) {
+        Ok(lend) => lend,
+        Err(refused) => return refused,
     };
     let Asker {
         actor: whose,
@@ -972,6 +975,9 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
             Ok(own) => app = own,
             Err(refused) => return refused,
         }
+    }
+    if let Some(refused) = choices::check(door, &lend, &whose, app.as_ref()) {
+        return refused;
     }
     if let Some(refused) = lend.refusing(&service_path) {
         tracing::debug!(target: "door", actor, lend = %lend.name, path = service_path, refused = refused.as_str(),

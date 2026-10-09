@@ -229,6 +229,7 @@ impl Node {
             data_dir: data_dir.clone(),
             using: crate::door::Using::spawn(),
             sign_ins: crate::door::sign_in::SignIns::spawn(),
+            choices: crate::door::choices::Choices::spawn(),
         };
         let asking = Asking {
             host: host.clone(),

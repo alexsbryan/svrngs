@@ -14,6 +14,7 @@
 //! byte B receives is scanned for A's secret ([`clean`]).
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
+mod choices;
 #[path = "../common/mod.rs"]
 mod common;
 mod limit;
