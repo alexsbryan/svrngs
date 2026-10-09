@@ -17,15 +17,16 @@
 //             (SLEEP) before Movie Night asks it; each library's every word
 //             recorded as it changed.
 //   computer  Alex opens Movie Night at his computer's origin for it: what
-//             it finds with nothing handed; then with `lends` in its address,
-//             the run's stand-in for discovery; chooses, plays, Back.
+//             it finds with nothing handed (mn-1 handed it `lends` in its
+//             address, a stand-in for discovery, until mnp-2); chooses,
+//             plays, Back.
 //   limit     two people: the first searches once, the second at each of
 //             `after_s` seconds after the first's search ended; the doors'
 //             logs say whom each counted (doors.py).
 //   once      a person joins, opens Movie Night and searches `bladruner`
 //             until every library answered (the plants' run).
 //
-//   node mn.mjs '{"journey", "engine": "chromium"|"webkit", "link"?, "at"?, "lends"?,
+//   node mn.mjs '{"journey", "engine": "chromium"|"webkit", "link"?, "at"?,
 //     "labels": {"Sam": <his jellyfin's label>, "Dee": <hers>},
 //     "people": [{"name", "choose"?: "Sam"|"Dee", "kept_from"?}], "after_s"?}'
 //   env: DUMP; JF_SAM, SAM_ADMIN, MOVIES (Sam's Jellyfin, his token and his
@@ -154,9 +155,12 @@ async function search(person, q, limit = 180_000) {
   return r;
 }
 
-const everyAnswered = (r) => r.said.length > 0 && r.said.every((l) => l.state === 'answered');
+// Every library answered; a person whose computer did not answer before
+// the list is no library (mnp-2: Movie Night names them).
+const libraries = (r) => r.said.filter((l) => l.state !== 'unanswered');
+const everyAnswered = (r) => libraries(r).length > 0 && libraries(r).every((l) => l.state === 'answered');
 // With a computer asleep: every library answered but the one said away.
-const awayOrAnswered = (r) => r.said.length > 0 && r.said.every((l) => l.state === 'answered' || l.state === 'away');
+const awayOrAnswered = (r) => libraries(r).length > 0 && libraries(r).every((l) => l.state === 'answered' || l.state === 'away');
 
 // Search `q` until `done` says so of it (else every library answered), at
 // most `tries` times, `gap` ms apart: each search is kept.
@@ -187,8 +191,9 @@ async function keepFrom(person) {
 // whether it is jellyfin-web at that item, signed in as the person.
 async function choose(person, card, who) {
   const page = person.page;
-  // Movie Night names no lender: their lend's label, from the run, picks it.
-  const copy = card?.copies.find((c) => c.library === args.labels[who]);
+  // Each copy's library is its lender's, by their name (mnp-2; mn-1 picked
+  // it by their lend's label, from the run).
+  const copy = card?.copies.find((c) => c.library === who);
   if (!copy) return { chose: null, why: 'no copy to choose' };
   const t0 = Date.now();
   const [nav] = await Promise.all([
@@ -335,13 +340,11 @@ async function computer(p) {
   const page = person.page;
   person.open_ms = await timed(person, 'Movie Night', async () => { await page.goto(args.at, { waitUntil: 'load' }); await page.waitForSelector('#q'); });
   if (person.open_ms === null) return;
-  person.nothing_handed = await search(person, 'bladruner', 30_000);
+  person.nothing_handed = await search(person, 'bladruner');
   person.store = await page.evaluate(() => indexedDB.databases?.().then((d) => d.map((x) => `${x.name} v${x.version}`)) ?? 'not listed').catch((e) => String(e));
-  await page.goto(`${args.at}#lends=${args.lends}`);
-  person.handed = await search(person, 'bladruner');
-  person.opened = await choose(person, film(person.handed, 'Blade Runner'), p.choose);
+  person.opened = await choose(person, film(person.nothing_handed, 'Blade Runner'), p.choose);
   if (person.opened.landed === 'item') person.played = await play(person);
-  person.opened_back = await back(person, person.handed, args.at);
+  person.opened_back = await back(person, person.nothing_handed, args.at);
 }
 
 async function limit() {

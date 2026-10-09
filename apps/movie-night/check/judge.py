@@ -8,7 +8,10 @@ Reads <out>: phone-<engine>.json, asleep-<engine>.json, computer.json,
 limit.json, plant-*.json and asleep-chromium-plant-asleep-empty.json
 (mn.mjs), scan.json (apps/jellyfin/check/scan.py), doors.json (doors.py);
 the repository for Movie Night's source, the line count by mn-0's rule
-and the spike's diff. Writes <out>/verdicts.json; prints a line a verdict,
+and the spike's diff. Since mnp-2 Movie Night names each library by its
+lender, so a copy's `library` is "Sam" or "Dee", not their lend's label,
+and a person whose computer did not answer before the list is said as
+`unanswered`; the run's `labels` stay what bar 5 searches the source for. Writes <out>/verdicts.json; prints a line a verdict,
 and whether each plant's run failed the bar it plants against.
 
 usage: python3 judge.py <out dir>
@@ -24,7 +27,9 @@ REPO = Path(__file__).resolve().parents[3]
 MN = REPO / "apps/movie-night"
 # The commit before any of the spike's app or data: mn-0's README
 # (c963f93). The queue's first commit (37b4a4c), which the README names,
-# precedes si-1, which changed crates/ (ae898f0, effb427, 6028168).
+# precedes si-1, which changed crates/ (ae898f0, effb427, 6028168). Since
+# Movie Night made production (mnp-1, mnp-2) changes the product, the diff
+# from it is recorded, not judged.
 BASE = "c963f93"
 
 
@@ -49,7 +54,7 @@ def line(path):
     run = json.loads(Path(path).read_text())
     said = []
     for p in people(run):
-        s = p.get("settled") or p.get("handed") or p.get("first")
+        s = p.get("settled") or p.get("handed") or p.get("nothing_handed") or p.get("first")
         bits = [p["name"]]
         if p.get("stopped"):
             bits.append(f"stopped: {p['stopped'][:160]}")
@@ -79,7 +84,7 @@ def verdict(bar, run, verdict, why, **more):
 def bar1(name, run, labels, plant=False):
     for p in people(run):
         who = f"{name} {p['name']}"
-        s = p.get("settled") or p.get("handed")
+        s = p.get("settled") or p.get("handed") or p.get("nothing_handed")
         if not s:
             verdict("bar 1", who, "could-not-judge", f"no search where every library answered: {p.get('stopped')}")
             continue
@@ -142,11 +147,16 @@ def bar4_before(name, run, labels):
             continue
         strangers = {l["library"] for s in searches for l in s["said"]} - set(labels.values())
         empty = [l for s in searches for l in s["said"] if l["library"] in strangers and l["state"] == "answered"]
+        # The letter: every search says Cy did not answer (mn-1's Movie
+        # Night named no library of Cy's, and failed it).
+        named = all(any(l["library"] == "Cy" and l["state"] == "unanswered" for l in s["said"]) for s in searches)
+        cy = next((l["text"] for s in searches for l in s["said"] if l["library"] == "Cy"), None)
         told = "Cy’s computer did not answer" in said
-        verdict("bar 4, asleep before the list", who, "failed" if empty else "passed",
-                f"spirit: no library of Cy's shown empty ({len(empty)}); letter: Movie Night names {len(strangers)} library beside "
-                f"Sam's and Dee's, so says nothing of Cy's (failed); the group's page said: {told}",
-                letter="failed", spirit="failed" if empty else "passed")
+        letter, spirit = ("passed" if named else "failed"), ("failed" if empty else "passed")
+        verdict("bar 4, asleep before the list", who, "passed" if letter == spirit == "passed" else "failed",
+                f"spirit: no library of Cy's shown empty ({len(empty)}); letter: Movie Night said of Cy in every one of "
+                f"{len(searches)} searches: {named} ({cy!r}); the group's page said: {told}",
+                letter=letter, spirit=spirit)
 
 
 def bar4_after(name, run, labels, plant=False):
@@ -205,8 +215,8 @@ def bar5(out, scan, runs):
             f"{len(sets)} line(s) naming one outside the plants: {sets}", lines=sets)
 
 
-def count():
-    awk = r"""find apps/movie-night -path apps/movie-night/check -prune -o -type f \
+def count(only=""):
+    awk = r"""find apps/movie-night -path apps/movie-night/check -prune """ + only + r"""-o -type f \
       \( -name '*.js' -o -name '*.mjs' -o -name '*.html' -o -name '*.css' \) -print \
       | sort | xargs awk '
       FNR == 1 { piece = "unmarked" }
@@ -218,7 +228,7 @@ def count():
     got = subprocess.run(["bash", "-c", awk], cwd=REPO, capture_output=True, text=True).stdout.split("\n")
     pieces = {" ".join(l.split()[1:]): int(l.split()[0]) for l in got if l.strip()}
     sides = {s: sum(n for p, n in pieces.items() if p.startswith(s)) for s in ("own", "plumbing", "plant")}
-    verdict("the count", "apps/movie-night", "could-not-judge" if "unmarked" in pieces else "recorded",
+    verdict("the count" + (", Movie Night alone" if only else ""), "apps/movie-night", "could-not-judge" if "unmarked" in pieces else "recorded",
             f"{sides}; {pieces}", pieces=pieces, sides=sides)
 
 
@@ -226,8 +236,8 @@ def product():
     diff = subprocess.run(["git", "diff", "--stat", f"{BASE}..HEAD", "--", "crates/*/src", "web"], cwd=REPO,
                           capture_output=True, text=True).stdout.strip()
     dirty = subprocess.run(["git", "diff", "--stat", "--", "crates/*/src", "web"], cwd=REPO, capture_output=True, text=True).stdout.strip()
-    verdict("the product untouched", f"git diff {BASE}..HEAD -- crates/*/src web", "passed" if not diff and not dirty else "failed",
-            diff or dirty or "empty")
+    verdict("the product's diff", f"git diff {BASE}..HEAD -- crates/*/src web", "recorded",
+            (diff.splitlines()[-1] if diff else "empty") + (f"; uncommitted: {dirty.splitlines()[-1]}" if dirty else ""))
     n = (REPO / "scripts/check.sh").read_text().lower().count("jellyfin")
     verdict("scripts/check.sh free of Jellyfin", "scripts/check.sh", "passed" if n == 0 else "failed", f"{n} mention(s)")
 
@@ -251,33 +261,36 @@ def main(out):
     if not labels:
         print("could-not-judge  every bar: no run names its labels")
         return 1
+    libs = {who: who for who in labels}
     for name, run in runs.items():
         planted = "plant" in name
         if run.get("stopped"):
             verdict("the run", name, "could-not-judge", f"stopped: {run['stopped']}")
         if name.startswith("phone-"):
-            bar1(name, run, labels)
+            bar1(name, run, libs)
             bar2_3(name, run)
-            bar4_before(name, run, labels)
+            bar4_before(name, run, libs)
         elif name.startswith("asleep-"):
-            bar4_after(name, run, labels, plant=planted)
+            bar4_after(name, run, libs, plant=planted)
         elif name == "computer":
             p = people(run)[0] if people(run) else {}
             nh = p.get("nothing_handed")
-            verdict("reads on a computer, discover", "computer Alex", "failed" if nh and not nh["said"][0].get("library") else "could-not-judge",
+            found = sorted(l["library"] for l in (nh or {}).get("said", []) if l["state"] == "answered")
+            verdict("reads on a computer, discover", "computer Alex",
+                    "could-not-judge" if not nh else "passed" if found == sorted(libs.values()) else "failed",
                     f"with nothing handed Movie Night said: {[l['text'] for l in (nh or {}).get('said', [])]}; this origin's stores: {p.get('store')}")
-            h = p.get("handed") or {}
-            verdict("reads on a computer, request", "computer Alex", "recorded",
-                    f"the labels handed by the run: {[(l['state'], l['text']) for l in h.get('said', [])]}")
-            bar1(name, run, labels)
+            bar1(name, run, libs)
             bar2_3(name, run)
         elif name.startswith("plant-per-copy"):
-            bar1(name, run, labels, plant=True)
+            bar1(name, run, libs, plant=True)
         elif name == "limit" or name.startswith("plant-lender-token"):
             pass
     bar5(out, load(out, "scan.json"), list(runs.values()))
     limit(load(out, "doors.json"))
     count()
+    # Tonight's Picks (su-1) lives beside Movie Night in picks/, which mn-0's
+    # rule, written before it, counts too: Movie Night's own files apart.
+    count("-o -path apps/movie-night/picks -prune ")
     product()
     (out / "verdicts.json").write_text(json.dumps(V, indent=1) + "\n")
     plants_failed = all(v["verdict"] == "failed" for v in V if v.get("plant"))

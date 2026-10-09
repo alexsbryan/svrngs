@@ -24,7 +24,7 @@
 #                                              the second kept from Sam's Brazil; writes <out>/phone-<engine>.json
 #   check.sh asleep   <scratch> <out> <engine> Cy woken, a person new lists the group, Cy put to sleep, then
 #                                              Movie Night searched (mn.mjs `asleep`); <out>/asleep-<engine>.json
-#   check.sh computer <scratch> <out>          Alex on his computer, Chromium (mn.mjs `computer`)
+#   check.sh computer <scratch> <out>          Alex on his computer, Chromium (mn.mjs `computer`), nothing handed
 #   check.sh limit    <scratch> <out>          two phones in Chromium, one searching once and the other every
 #                                              ten seconds after (mn.mjs `limit`): what each door counted
 #   check.sh plant    <scratch> <out> <plant>  Movie Night served with plant.js naming <plant> — per-copy,
@@ -290,7 +290,6 @@ case "$STEP" in
   asleep) asleep "$4" ;;
   computer) . "$R/env"
     drive computer "{\"journey\":\"computer\",\"engine\":\"chromium\",\"at\":\"$MN_AT\",
-      \"lends\":\"$(label "$SAM_AT"),$(label "$DEE_AT")\",
       \"people\":[{\"name\":\"Alex\",\"choose\":\"Sam\"}]}" ;;
   limit) . "$R/env"
     drive limit "{\"journey\":\"limit\",\"engine\":\"chromium\",\"link\":\"$LINK\",\"people\":[{\"name\":\"Gus\"},{\"name\":\"Hal\"}],\"after_s\":[5,15,25,35,45]}" ;;

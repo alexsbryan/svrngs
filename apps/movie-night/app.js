@@ -14,46 +14,19 @@ const said = document.getElementById('said');
 const results = document.getElementById('results');
 const KEPT = 'movie-night';
 
-// mn: plumbing find — which libraries there are, whose each is, and where.
-// On a phone svrngs's start page keeps what the group's page handed this
-// origin in IndexedDB `svrngs-lend`, as `pass <this origin's label>`
-// (web/open.js:41-44): the lends the pass opens, each {label, key, name},
-// beside the pass and its holder's key, which come with them though Movie
-// Night uses neither. No person and no kind: a library is named by its
-// lend's name and its lender's key. On a computer nothing is handed
-// (crates/svrngs-node/src/origin.rs), so the run hands the labels in the
-// address, `#lends=<label>,…`, a stand-in for discovery. Each lend is at
-// `<label>.<this host>`, as web/lend.js `baseOf` builds it.
-const OWN = location.hostname.split('.')[0];
-const baseOf = (label) => `${location.protocol}//${label}${location.host.slice(OWN.length)}/`;
+// mn: plumbing find — which libraries there are, whose each is, where to
+// ask each and whose computer did not answer: svrngs tells a page at its
+// own origin (DESIGN §3, "Lent apps", call 6), or answers no.
+const told = () => fetch('/svrngs-reads').then((r) => (r.ok ? r.json() : null), () => null);
 
-function kept() {
-  return new Promise((done) => {
-    const req = indexedDB.open('svrngs-lend');
-    // None here: this open made it, so it is undone, left for svrngs to make.
-    req.onupgradeneeded = () => req.transaction.abort();
-    req.onerror = () => done(null);
-    req.onsuccess = () => {
-      const db = req.result;
-      try {
-        const get = db.transaction('kept').objectStore('kept').get(`pass ${OWN}`);
-        get.onsuccess = () => (db.close(), done(get.result ?? null));
-        get.onerror = () => (db.close(), done(null));
-      } catch {
-        db.close();
-        done(null);
-      }
-    };
-  });
-}
-
+// mn: own cards — each library by its lender, in the person's words.
 async function libraries() {
-  const handed = new URLSearchParams(location.hash.slice(1)).get('lends');
-  if (handed) return handed.split(',').map((label) => ({ label, who: `the library at ${label.slice(0, 8)}`, base: baseOf(label) }));
-  const pass = await kept();
-  return (pass?.lends ?? [])
-    .filter((l) => l.label !== OWN)
-    .map((l) => ({ label: l.label, who: `the ${l.name} at ${l.key.slice(0, 8)}`, base: baseOf(l.label) }));
+  const t = await told();
+  if (!t) return null;
+  return {
+    libs: t.lends.map((l) => ({ library: l.lender, who: `${l.lender}’s ${l.name}`, base: l.address })),
+    unanswered: t.unanswered,
+  };
 }
 
 // mn: plumbing ask — a library asked as the person. svrngs signs them in
@@ -91,7 +64,7 @@ async function listed(lib) {
   if (PLANT === 'asleep-empty' && got.state === 'away') return { state: 'answered', copies: [] };
   // mn: own match
   if (got.state !== 'answered') return got;
-  return { state: 'answered', copies: (got.body.Items ?? []).map((item) => copyOf(item, lib.label)) };
+  return { state: 'answered', copies: (got.body.Items ?? []).map((item) => copyOf(item, lib.library)) };
 }
 
 // mn: own cards — a search: every library asked at once, each said as it
@@ -101,8 +74,11 @@ let asked = 0;
 
 async function search(query) {
   const n = ++asked;
-  const libs = await libraries();
-  const state = { query, films: [], libs: libs.map((l) => ({ label: l.label, who: l.who, state: 'asking', matched: 0 })) };
+  const found = await libraries();
+  const libs = found?.libs ?? [];
+  const asking = libs.map((l) => ({ library: l.library, who: l.who, state: 'asking', matched: 0 }));
+  const away = (found?.unanswered ?? []).map((p) => ({ library: p, who: `${p}’s computer`, state: 'unanswered' }));
+  const state = { query, films: [], libs: found ? [...asking, ...away] : [{ state: 'untold' }] };
   const copies = [];
   render(state);
   if (!libs.length) return;
@@ -136,6 +112,8 @@ const WORDS = {
   away: (l) => `${l.who} did not answer: its computer may be asleep. Its films are not here.`,
   refused: (l) => `${l.who} would not let you in.`,
   failed: (l) => `${l.who} could not be read from here.`,
+  unanswered: (l) => `${l.who} did not answer, so no library of theirs is here.`,
+  untold: () => 'Movie Night could not learn which libraries are open to it. Open it again from your group’s page.',
 };
 
 function card(film) {
@@ -162,7 +140,7 @@ function render(state) {
     ...(state.libs.length ? state.libs : [{ state: 'none' }]).map((l) => {
       const li = el('li', null, l.state === 'none' ? 'No library is open to Movie Night here.' : WORDS[l.state](l));
       li.dataset.state = l.state;
-      if (l.label) li.dataset.library = l.label;
+      if (l.library) li.dataset.library = l.library;
       return li;
     }),
   );
