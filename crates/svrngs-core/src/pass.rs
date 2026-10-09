@@ -12,11 +12,13 @@
 //! door reads back, from what it declares: 62 letters of [`BASE32`].
 //!
 //! **A pass**: a person's key signs that a fresh key, the holder, may act
-//! as them toward the lends it names until a time. The page signs one for
-//! the lend it opens, and the lend's origin dials with the holder, so the
-//! person's key never enters a lend's origin. The door checks it
-//! ([`Pass::check`]) and then sets the person as it would for the person's
-//! own key. Pure: the time is an argument.
+//! as them for an app — a lend, whose pages ask — toward it and the lends
+//! it reads until a time. The page signs one for the lend it opens, and the
+//! lend's origin dials with the holder, so the person's key never enters a
+//! lend's origin; a computer signs one for itself, naming the app its page
+//! is (sup-1). The door checks it ([`Pass::check`]) and then sets the
+//! person as it would for the person's own key, and the app from `app`.
+//! Pure: the time is an argument.
 
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -143,11 +145,13 @@ pub struct Pass {
     pub person: String,
     /// The key that may act as them.
     pub holder: String,
-    /// The lends it opens.
-    pub lends: Vec<Label>,
+    /// The app asking: the lend whose pages hold the pass, which it opens.
+    pub app: Label,
+    /// The other lends it opens: those of the kinds the app reads.
+    pub reads: Vec<Label>,
     /// When it stops opening them.
     pub until: i64,
-    /// The person's signature over the four.
+    /// The person's signature over the five.
     pub sig: String,
 }
 
@@ -165,13 +169,19 @@ pub enum PassFault {
 }
 
 impl Pass {
-    /// `person` lets `holder`, actor hex, act as them toward `lends` until
-    /// `until`.
-    pub fn sign(person: &SigningKey, holder: &str, lends: Vec<Label>, until: i64) -> Self {
+    /// `person` lets `holder`, actor hex, act as them for `app` toward it
+    /// and `reads` until `until`.
+    pub fn sign(
+        person: &SigningKey,
+        holder: &str,
+        (app, reads): (Label, Vec<Label>),
+        until: i64,
+    ) -> Self {
         let mut pass = Self {
             person: actor_of(person),
             holder: holder.into(),
-            lends,
+            app,
+            reads,
             until,
             sig: String::new(),
         };
@@ -179,20 +189,23 @@ impl Pass {
         pass
     }
 
-    /// `DOMAIN || person || holder || until[8 BE] || each lend`, every
-    /// variable field preceded by its `u32` big-endian length.
+    /// `DOMAIN || person || holder || until[8 BE] || app || each read`,
+    /// every variable field preceded by its `u32` big-endian length: the
+    /// bytes a pass naming `[app, ...reads]` as its lends signed before the
+    /// app had a field of its own (sup-1).
     fn message(&self) -> Vec<u8> {
         let mut msg = PASS_DOMAIN.to_vec();
         field(&mut msg, self.person.as_bytes());
         field(&mut msg, self.holder.as_bytes());
         msg.extend_from_slice(&self.until.to_be_bytes());
-        for lend in &self.lends {
+        for lend in core::iter::once(&self.app).chain(&self.reads) {
             field(&mut msg, lend.as_str().as_bytes());
         }
         msg
     }
 
-    /// Whether this pass, presented by `holder` at `now`, opens `lend`.
+    /// Whether this pass, presented by `holder` at `now`, opens `lend`: its
+    /// app or one of its reads.
     pub fn check(&self, holder: &str, lend: &Label, now: i64) -> Result<(), PassFault> {
         if !verify_hex(&self.person, &self.message(), &self.sig) {
             return Err(PassFault::Unsigned);
@@ -203,7 +216,7 @@ impl Pass {
         if now >= self.until {
             return Err(PassFault::Lapsed);
         }
-        if !self.lends.contains(lend) {
+        if &self.app != lend && !self.reads.contains(lend) {
             return Err(PassFault::NotNamed);
         }
         Ok(())

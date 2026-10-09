@@ -120,9 +120,10 @@ pub const PERSON_HEADER: &str = "x-svrngs-person";
 /// lowercase hex.
 pub const KEY_HEADER: &str = "x-svrngs-key";
 
-/// The app asking, on a request a pass's holder made: the label of the
-/// pass's first lend, the lend the person's page opened (`web/app.js`,
-/// `open`), under the person's signature. Absent with no pass, so a
+/// The app asking: the label of the pass's `app`, the lend whose pages
+/// hold it, under the person's signature (sup-1) — the lend the person's
+/// page opened (`web/app.js`, `open`), or a computer's page as its origin
+/// names it ([`crate::origin`]). Absent with no pass and no app named, so a
 /// service reads its absence as no app named (su-1, the scoped-use spike).
 pub const APP_HEADER: &str = "x-svrngs-app";
 
@@ -698,7 +699,7 @@ struct Asker {
     actor: String,
     group: String,
     person: Person,
-    /// The pass's first lend, for a holder; none for a key of the group's.
+    /// The pass's app; none for a key of the group's with no pass.
     app: Option<Label>,
 }
 
@@ -806,7 +807,7 @@ async fn holder_of(
     tracing::debug!(target: "door", holder = key, person = person.as_str(), lend = %lend.name, until = pass.until,
         "door: a pass opens this lend, so its holder asks as the person who signed it");
     Ok(Asker {
-        app: pass.lends.first().cloned(),
+        app: Some(pass.app),
         actor: pass.person,
         group,
         person,
@@ -942,7 +943,7 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
         }
     };
     tracing::debug!(target: "door", actor, person = person.as_str(), group, lend = %lend.name, app = ?app.as_ref().map(Label::as_str),
-        method = %req.method(), path = service_path, "door: carrying a request to the lend's service, the app the pass's first lend or none");
+        method = %req.method(), path = service_path, "door: carrying a request to the lend's service, the app the pass's or none");
     let told = Told { share, held };
     forward(
         door,

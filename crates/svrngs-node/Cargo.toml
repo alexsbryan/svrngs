@@ -58,6 +58,8 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # The scale instrument (tests/scale.rs) reads its own processor time with
 # `getrusage`, which std does not offer; libc is already in the lock.
 libc = "0.2"
+# A door test writes a pass of the shape before sup-1 as a page then would.
+base64 = "0.22"
 
 [lints.clippy]
 empty_line_after_doc_comments = "allow"

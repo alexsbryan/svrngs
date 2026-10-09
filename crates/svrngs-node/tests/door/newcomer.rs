@@ -61,7 +61,7 @@ async fn a_newcomer_s_first_request_through_a_second_lender_is_answered_within_s
         let pass = Pass::sign(
             &signing(signer),
             &actor_of(&holder),
-            vec![shelf.clone()],
+            (shelf.clone(), vec![]),
             unix_now() + 3600,
         );
         raw_to(
@@ -191,7 +191,7 @@ async fn a_newcomer_is_let_in_while_a_computer_of_the_group_sleeps() {
     let pass = Pass::sign(
         &signing(7),
         &actor_of(&holder),
-        vec![shelf.clone()],
+        (shelf.clone(), vec![]),
         unix_now() + 3600,
     );
     let ask = || {

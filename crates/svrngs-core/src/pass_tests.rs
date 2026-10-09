@@ -63,7 +63,7 @@ fn no_label_spells_a_word_people_are_not_shown() {
 fn a_pass_opens_only_the_lends_it_names_to_its_holder_until_it_lapses() {
     let (alex, holder) = (key(1), actor_of(&key(9)));
     let (sams, bos) = (Label::of(&lender(2), "app"), Label::of(&lender(3), "app"));
-    let pass = Pass::sign(&alex, &holder, alloc::vec![sams.clone()], 1_000);
+    let pass = Pass::sign(&alex, &holder, (sams.clone(), alloc::vec![]), 1_000);
     assert_eq!(pass.check(&holder, &sams, 999), Ok(()));
     assert_eq!(pass.check(&holder, &bos, 999), Err(PassFault::NotNamed));
     assert_eq!(
@@ -72,7 +72,7 @@ fn a_pass_opens_only_the_lends_it_names_to_its_holder_until_it_lapses() {
     );
     assert_eq!(pass.check(&holder, &sams, 1_000), Err(PassFault::Lapsed));
     let mut widened = pass.clone();
-    widened.lends.push(bos.clone());
+    widened.reads.push(bos.clone());
     assert_eq!(widened.check(&holder, &bos, 999), Err(PassFault::Unsigned));
     let mut longer = pass.clone();
     longer.until = 5_000;
@@ -89,7 +89,7 @@ fn a_pass_round_trips_through_its_header_form() {
     let pass = Pass::sign(
         &key(1),
         &actor_of(&key(9)),
-        alloc::vec![Label::of(&lender(2), "app")],
+        (Label::of(&lender(2), "app"), alloc::vec![]),
         1_000,
     );
     let encoded = pass.encode();
@@ -99,4 +99,45 @@ fn a_pass_round_trips_through_its_header_form() {
     assert_eq!(Pass::decode(&encoded), Some(pass));
     assert_eq!(Pass::decode("not a pass"), None);
     assert_eq!(Pass::decode(""), None);
+}
+
+/// A pass names its app apart from the lends it reads (sup-1): it opens
+/// its app and each read, and nothing else; moving a read into the app's
+/// place, or the app among the reads, opens nothing; and it signs the bytes
+/// a pass naming `[app, ...reads]` as its lends signed before, pinned as
+/// that pass's signature at `8cb33fc`, so a page that signed one then is
+/// read as naming its first lend the app. A pass of that shape, `lends`
+/// and no `app`, no longer decodes, so the door refuses it `pass` and the
+/// page signs another. The failing input: `check` opening the first read
+/// alone.
+#[test]
+fn a_pass_names_its_app_and_its_reads_in_the_bytes_signed_before() {
+    let holder = actor_of(&key(9));
+    let (app, taste) = (Label::of(&lender(2), "app"), Label::of(&lender(3), "taste"));
+    let pass = Pass::sign(
+        &key(1),
+        &holder,
+        (app.clone(), alloc::vec![taste.clone()]),
+        1_000,
+    );
+    assert_eq!(pass.sig, "1c4f8534215d277e1d0c49432768ba8f02273c738ff9aa016543dd973108237d959217dbb6c7a0713736c4320361e0ce9f4701f6b18e97a24a33eef31adaa708");
+    assert_eq!(pass.check(&holder, &app, 999), Ok(()));
+    assert_eq!(pass.check(&holder, &taste, 999), Ok(()));
+    let other = Label::of(&lender(4), "app");
+    assert_eq!(pass.check(&holder, &other, 999), Err(PassFault::NotNamed));
+    let mut swapped = pass.clone();
+    (swapped.app, swapped.reads) = (taste.clone(), alloc::vec![app.clone()]);
+    assert_eq!(
+        swapped.check(&holder, &taste, 999),
+        Err(PassFault::Unsigned)
+    );
+    let mut before = serde_json::to_value(&pass).unwrap();
+    let lends = serde_json::json!([app.as_str(), taste.as_str()]);
+    let fields = before.as_object_mut().unwrap();
+    fields.remove("app");
+    fields.remove("reads");
+    fields.insert("lends".into(), lends);
+    let json = serde_json::to_vec(&before).unwrap();
+    let raw = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(json);
+    assert_eq!(Pass::decode(&raw), None);
 }

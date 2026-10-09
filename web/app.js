@@ -185,7 +185,7 @@ function open(group, key, lent, unanswered, l, at) {
   const handoff = {
     label: lends[0].label,
     lends,
-    pass: pass(key, holder, lends.map((o) => o.label), until),
+    pass: pass(key, holder, lends[0].label, lends.slice(1).map((o) => o.label), until),
     holder: hex(holder),
     relay: relay_of(group.token) ?? null,
     page: `${location.origin}${location.pathname}`,

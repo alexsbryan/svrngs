@@ -339,22 +339,22 @@ pub fn label(lender: String, name: String) -> Result<String, JsError> {
     Ok(Label::of(&key, &name).to_string())
 }
 
-/// The person whose key is `person` lets the key `holder` act as them
-/// toward the lends `labels` until `until`, seconds since 1970: the pass,
-/// as the door reads it from a request (u5-2; svrngs-core's `Pass`).
+/// The person whose key is `person` lets the key `holder` act as them for
+/// the app `app` toward it and the lends `reads` until `until`, seconds
+/// since 1970: the pass, as the door reads it from a request (u5-2, sup-1;
+/// svrngs-core's `Pass`).
 #[wasm_bindgen]
-pub fn pass(person: Vec<u8>, holder: Vec<u8>, labels: Vec<String>, until: f64) -> Result<String, JsError> {
+pub fn pass(person: Vec<u8>, holder: Vec<u8>, app: String, reads: Vec<String>, until: f64) -> Result<String, JsError> {
     let key = |bytes: Vec<u8>| {
         <[u8; 32]>::try_from(bytes.as_slice())
             .map(|b| svrngs_core::SigningKey::from_bytes(&b))
             .map_err(|_| JsError::new("a key is 32 bytes"))
     };
-    let lends = labels
-        .iter()
-        .map(|l| Label::parse(l).ok_or_else(|| JsError::new(&format!("{l} is not a lend's label"))))
-        .collect::<Result<Vec<_>, _>>()?;
+    let parse = |l: &String| Label::parse(l).ok_or_else(|| JsError::new(&format!("{l} is not a lend's label")));
+    let app = parse(&app)?;
+    let reads = reads.iter().map(parse).collect::<Result<Vec<_>, _>>()?;
     let holder = svrngs_core::actor_of(&key(holder)?);
-    Ok(Pass::sign(&key(person)?, &holder, lends, until as i64).encode())
+    Ok(Pass::sign(&key(person)?, &holder, (app, reads), until as i64).encode())
 }
 
 /// A browser endpoint bound with the person's key, online at a relay.

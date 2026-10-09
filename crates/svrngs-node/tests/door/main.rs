@@ -949,7 +949,12 @@ async fn a_pass_opens_only_the_lend_it_names_to_the_key_holding_it() {
         )
     };
     let until = unix_now() + 3600;
-    let bos = Pass::sign(&signing(2), &actor_of(&holder), vec![shelf.clone()], until);
+    let bos = Pass::sign(
+        &signing(2),
+        &actor_of(&holder),
+        (shelf.clone(), vec![]),
+        until,
+    );
 
     let opened = ask(format!("/lend/{shelf}/whoami"), Some(&bos)).await;
     assert_eq!(opened.status, 200, "{}", opened.text);
@@ -975,14 +980,19 @@ async fn a_pass_opens_only_the_lend_it_names_to_the_key_holding_it() {
     let lapsed = Pass::sign(
         &signing(2),
         &actor_of(&holder),
-        vec![shelf.clone()],
+        (shelf.clone(), vec![]),
         unix_now() - 1,
     );
-    let nobodys = Pass::sign(&signing(5), &actor_of(&holder), vec![shelf.clone()], until);
+    let nobodys = Pass::sign(
+        &signing(5),
+        &actor_of(&holder),
+        (shelf.clone(), vec![]),
+        until,
+    );
     let anothers = Pass::sign(
         &signing(2),
         &actor_of(&signing(8)),
-        vec![shelf.clone()],
+        (shelf.clone(), vec![]),
         until,
     );
     for (why, path, pass) in [
@@ -1030,13 +1040,16 @@ async fn a_pass_opens_only_the_lend_it_names_to_the_key_holding_it() {
 }
 
 /// The app a pass's holder asks for (su-1, `demo/runs/su/2026-10-09/`
-/// §5): the service is told `x-svrngs-app`, the pass's first lend — the
-/// one the person's page opened — whichever lend is asked, and the
+/// §5; sup-1): the service is told `x-svrngs-app`, the pass's `app` — the
+/// lend the person's page opened — whichever lend is asked, and the
 /// client's own is stripped; a key of the group's, asking with no pass, is
-/// told no app, its own stripped too. Planted: the door naming the lend
-/// asked rather than the first, and the client's header let through.
+/// told no app, its own stripped too. A pass from before the app had a
+/// field of its own, `lends` and no `app`, is refused `pass`, so the
+/// lend's worker asks the page for another. Planted: the door naming the
+/// pass's first read, the lend asked here; the client's header let
+/// through.
 #[tokio::test]
-async fn a_pass_s_first_lend_is_told_as_the_app_and_a_client_s_own_stripped() {
+async fn a_pass_s_app_is_told_and_a_client_s_own_stripped() {
     use svrngs_core::alpn::Alpn;
     use svrngs_core::pass::{Label, Pass};
     use svrngs_node::iroh::{
@@ -1063,7 +1076,7 @@ async fn a_pass_s_first_lend_is_told_as_the_app_and_a_client_s_own_stripped() {
     let pass = Pass::sign(
         &signing(2),
         &actor_of(&holder),
-        vec![app.clone(), shelf.clone()],
+        (app.clone(), vec![shelf.clone()]),
         unix_now() + 3600,
     );
     let opened = raw_to(
@@ -1085,6 +1098,26 @@ async fn a_pass_s_first_lend_is_told_as_the_app_and_a_client_s_own_stripped() {
         header_values(&head, "x-svrngs-person"),
         vec!["bo"],
         "{head}"
+    );
+
+    let mut before = serde_json::to_value(&pass).unwrap();
+    let fields = before.as_object_mut().unwrap();
+    fields.remove("app");
+    let lends = fields.remove("reads").unwrap();
+    fields.insert("lends".into(), serde_json::json!([app.as_str(), lends[0]]));
+    use base64::Engine as _;
+    let before = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .encode(serde_json::to_vec(&before).unwrap());
+    let refused = raw_to(
+        bridge.local_addr(),
+        format!("GET /lend/{shelf}/whoami HTTP/1.1\r\nHost: local\r\nx-svrngs-pass: {before}\r\nConnection: close\r\n\r\n"),
+    )
+    .await;
+    assert_eq!(refused.status, 403, "{}", refused.text);
+    assert!(
+        refused.text.contains(r#""kind":"pass""#),
+        "{}",
+        refused.text
     );
 
     let member = pair
