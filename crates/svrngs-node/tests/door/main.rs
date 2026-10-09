@@ -370,6 +370,48 @@ async fn a_refused_path_is_refused() {
     pair.close().await;
 }
 
+/// svrngs's word told from the lend's (mnp-1; `demo/runs/mn/2026-10-08/`
+/// README §9, 2): each answer the door makes in a lend's place carries
+/// `x-svrngs-refused`, naming which — a lend not declared, a path the lend
+/// refuses, a service not answering — and a 403 the lend's own service
+/// answers carries none, the one it forged dropped, its body its own; nor
+/// does an answer let through. Planted: the header off.
+#[tokio::test]
+async fn svrngs_s_refusals_are_marked_its_own_and_a_lend_s_are_not() {
+    let (pair, _heads) = lending_heads().await;
+    pair.lend("strict", origins::refusing_origin().await.port(), &[]);
+    let gone = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    pair.lend("gone", gone.local_addr().unwrap().port(), &[]);
+    drop(gone);
+    for (path, status, refused) in [
+        ("/lend/nothing/x", 404, Some("unlent")),
+        ("/lend/shelf/Auth/Keys", 403, Some("path")),
+        ("/lend/shelf/../x", 400, Some("path")),
+        ("/lend/gone/x", 502, Some("away")),
+        ("/lend/strict/x", 403, None),
+        ("/lend/shelf/x", 200, None),
+    ] {
+        let reply = pair.get(path, "").await;
+        assert_eq!(reply.status, status, "{path}: {}", reply.text);
+        let (head, body) = reply.text.split_once("\r\n\r\n").unwrap();
+        assert_eq!(
+            header_values(head, "x-svrngs-refused").first().copied(),
+            refused,
+            "{path}: {}",
+            reply.text
+        );
+        if let Some(kind) = refused {
+            assert!(
+                body.contains(&format!(r#""kind":"{kind}""#)),
+                "{path}: {body}"
+            );
+        }
+    }
+    let strict = pair.get("/lend/strict/x", "").await;
+    assert!(strict.text.contains("the app's own no"), "{}", strict.text);
+    pair.close().await;
+}
+
 const FILE_BYTES: u64 = 64 * 1024 * 1024;
 
 /// Read a reply's body off `resp` chunk by chunk: its length and SHA-256,

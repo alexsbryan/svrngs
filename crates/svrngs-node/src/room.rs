@@ -28,7 +28,6 @@ use crate::api::ApiError;
 use crate::door::limit::{guess, Whereabouts};
 use crate::lend::LendName;
 use crate::node::{label, Asking, Lent, Node};
-use crate::ring_routes::err;
 
 /// The address a room's devices reach this computer at, from the
 /// addresses its endpoint lists (`Endpoint::addr().ip_addrs()`) and the
@@ -168,7 +167,7 @@ pub(crate) async fn from_this_network(request: Request, next: Next) -> Response 
         return next.run(request).await;
     }
     tracing::debug!(target: "room", ?caller, path = %request.uri().path(), "room: refused — the caller is not on this computer's network");
-    err(
+    crate::door::Refused::Closed.say(
         StatusCode::FORBIDDEN,
         "this is opened only on the network of the computer that serves it",
     )

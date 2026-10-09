@@ -247,7 +247,7 @@ impl Signing {
         if compressed(&parts.headers) {
             tracing::warn!(target: "door", lend = %lend, encoding = ?parts.headers.get(header::CONTENT_ENCODING),
                 "door: refused — a textual answer came compressed, so it cannot be read for a secret, and is not sent on");
-            return Err(crate::ring_routes::err(
+            return Err(super::Refused::SignIn.say(
                 StatusCode::BAD_GATEWAY,
                 format!("{lend} answered in a form the door cannot read"),
             ));

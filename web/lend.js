@@ -245,7 +245,11 @@ function sent(blob, what) {
 // The header an answer that set cookies carries to the shim (shim.js).
 const PAGE_COOKIES = 'x-svrngs-page-cookies';
 
-const say = (status, words) => new Response(words, { status, headers: PLAIN });
+// svrngs's own answer in the lend's place, marked with its kind as the
+// door marks its own (door.rs, `Refused`), so a page tells it from the
+// lend's (mnp-1).
+const REFUSED = 'x-svrngs-refused';
+const say = (status, words, kind) => new Response(words, { status, headers: { ...PLAIN, [REFUSED]: kind } });
 
 // The shim (shim.js) for a lend's page, with the cookies its pages read,
 // and the nonce of the page's script policy when it names one: under
@@ -260,12 +264,12 @@ const shim = (label, jar, policy) => {
 async function lent(request, url, where) {
   const h = await holding();
   if (!h) {
-    if (request.mode !== 'navigate') return say(503, 'Open this again from your group’s page.');
+    if (request.mode !== 'navigate') return say(503, 'Open this again from your group’s page.', 'pass');
     trace(`RUNTIME: no pass for ${OWN}: its start page reads it again`);
     return Response.redirect(`${SCOPE.origin}${SITE}open.html?v=__VERSION__&for=${OWN}&back=${encodeURIComponent(url.pathname + url.search)}`, 302);
   }
   const lend = h.lends.find((l) => l.label === where.label);
-  if (!lend) return say(403, 'This is not open to this page.');
+  if (!lend) return say(403, 'This is not open to this page.', 'closed');
   const jar = await jarOf(where.label);
   const headers = bounded(
     [...request.headers].filter(([n]) => !['cookie', 'content-length'].includes(n.toLowerCase())),
@@ -304,7 +308,7 @@ async function lent(request, url, where) {
     } catch (e) {
       dials.delete(lend.key);
       trace(`RUNTIME: ${request.method} ${path} failed (try ${tries + 1}): ${e}`);
-      if (body || tries) return say(502, 'The computer lending this did not answer. Try again later.');
+      if (body || tries) return say(502, 'The computer lending this did not answer. Try again later.', 'away');
     }
   }
   said?.(`answered ${res.status} ${res.headers.get('content-range') ?? ''}${request.signal?.aborted ? ', after the browser let go of it' : ''}`);
@@ -313,12 +317,9 @@ async function lent(request, url, where) {
     for (const line of JSON.parse(set)) setCookie(jar, line);
     await keepJar(where.label);
   }
-  if (res.status === 403 && res.headers.get('content-type')?.includes('json')) {
-    const why = await res.clone().json().catch(() => ({}));
-    if (why.kind === 'pass' && request.mode === 'navigate') {
-      trace(`RUNTIME: the pass for ${where.label} is refused: its start page asks the group's page for another`);
-      return Response.redirect(`${SCOPE.origin}${SITE}open.html?v=__VERSION__&for=${OWN}&again`, 302);
-    }
+  if (res.headers.get(REFUSED) === 'pass' && request.mode === 'navigate') {
+    trace(`RUNTIME: the pass for ${where.label} is refused: its start page asks the group's page for another`);
+    return Response.redirect(`${SCOPE.origin}${SITE}open.html?v=__VERSION__&for=${OWN}&again`, 302);
   }
   const to = res.headers.get('location');
   if (res.status >= 300 && res.status < 400 && to) {

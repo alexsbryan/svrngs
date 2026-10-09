@@ -10,14 +10,16 @@
 // its DevTools protocol, WebKit by closing and opening the browser again —
 // seeks at the last, and loads a range of a second computer's lend, which
 // the first reads, at its origin (`args.other`), and an open-ended range of
-// it too (`args.openEnded`, `bytes=N-`). It prints what it saw as one JSON
-// line.
+// it too (`args.openEnded`, `bytes=N-`), and asks paths of other lends
+// it reads (`args.refusals`), each answer's status and whose word it is.
+// It prints what it saw as one JSON line.
 //
 //   node web/tests/runtime.mjs '{"engine": "chromium"|"webkit", "site": ...,
 //     "key": ..., "token": ...,
 //     "open": "<the lend's name>", "seeks": [s, s, s],
 //     "other": {"lend": "<label>", "path": "<file>", "range": "bytes=a-b"},
-//     "openEnded": {"path": ..., "range": "bytes=a-"}}'
+//     "openEnded": {"path": ..., "range": "bytes=a-"},
+//     "refusals": [{"lend": "<label>", "path": ...}]}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
@@ -42,6 +44,14 @@ async function range({ lend, path, range }) {
   } catch (e) {
     return { error: String(e) };
   }
+}
+
+// In the lend's page: `path` at the lend `lend`'s origin, its status and
+// whose word it is (mnp-1): svrngs's kind, or null for the lend's own.
+async function refusal({ lend, path }) {
+  const at = `${location.protocol}//${lend}${location.host.slice(location.hostname.split('.')[0].length)}/${path}`;
+  const res = await fetch(at).catch((e) => ({ status: String(e), headers: new Headers() }));
+  return { path, status: res.status, refused: res.headers.get('x-svrngs-refused') };
 }
 
 const server = await serve(args.site);
@@ -106,8 +116,10 @@ try {
   seeks.push(await page.evaluate(play, { at: args.seeks.at(-1), within: 15_000 }));
   const other = await page.evaluate(range, args.other);
   const openEnded = args.openEnded ? await page.evaluate(range, args.openEnded) : null;
+  const refusals = [];
+  for (const r of args.refusals ?? []) refusals.push(await page.evaluate(refusal, r));
   console.log(
-    JSON.stringify({ listed, opened, reopened, replayed, first, seeks, runsAtStop, runs, other, openEnded, logs }),
+    JSON.stringify({ listed, opened, reopened, replayed, first, seeks, runsAtStop, runs, other, openEnded, refusals, logs }),
   );
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);

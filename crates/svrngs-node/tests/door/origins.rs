@@ -262,6 +262,33 @@ pub async fn head_origin() -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
     (addr, heads)
 }
 
+/// The door's own (mnp-1): an origin that refuses everything 403 as an
+/// app does, with a JSON body and svrngs's own header forged on it
+/// (`x-svrngs-refused: pass`), which the door must drop: the lend's word
+/// is the lend's.
+pub async fn refusing_origin() -> SocketAddr {
+    let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind");
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        while let Ok((mut sock, _)) = listener.accept().await {
+            tokio::spawn(async move {
+                if read_head(&mut sock).await.is_none() {
+                    return;
+                }
+                let body = r#"{"error":"the app's own no","kind":"pass"}"#;
+                let answer = format!(
+                    "HTTP/1.1 403 Forbidden\r\ncontent-type: application/json\r\n\
+                     x-svrngs-refused: pass\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                    body.len()
+                );
+                let _ = sock.write_all(answer.as_bytes()).await;
+                let _ = sock.shutdown().await;
+            });
+        }
+    });
+    addr
+}
+
 /// The door's own: an origin that takes one upload, says when its body's
 /// first byte arrives, and answers its length and SHA-256.
 pub async fn upload_origin() -> (SocketAddr, tokio::sync::oneshot::Receiver<()>) {

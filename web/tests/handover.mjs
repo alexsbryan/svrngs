@@ -8,7 +8,9 @@
 // lend's start page (open.js) hands its worker the pass in memory, and the
 // `<video>` plays. Then the browser stops the worker — Chromium through its
 // DevTools protocol, WebKit by closing the browser and opening it again —
-// and the lend's address is opened directly: the worker holds no pass and
+// and a page it serves fetches: the worker holds no pass and reads none,
+// so it answers itself, marked as svrngs's (mnp-1). Then the lend's
+// address is opened directly: the worker holds no pass and
 // reads none, so it sends the page to its start page, which reads the
 // pass, hands it over and opens the address again, and the `<video>`
 // plays. Last, the group's page's own unseal must still open the person's
@@ -98,6 +100,12 @@ try {
     while (!runs.includes('stopped') && Date.now() - stopped < 10_000) await new Promise((r) => setTimeout(r, 50));
     if (!runs.includes('stopped')) throw new Error(`the worker did not stop: ${runs}`);
   }
+  // The worker's own word (mnp-1): holding no pass and reading none, it
+  // answers a page's fetch itself, marked as svrngs's, a pass refused.
+  await page.goto(new URL('svrngs-trace', opened).href);
+  const unheld = await page.evaluate(() =>
+    fetch('/probe').then((r) => ({ status: r.status, refused: r.headers.get('x-svrngs-refused') })),
+  );
   await page.goto(opened);
   await page.waitForSelector('video', { timeout: 60_000 }).catch(() => {});
   await page.waitForLoadState('load');
@@ -109,7 +117,7 @@ try {
   await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
   const unsealedAfter = await page.evaluate(unsealed);
   console.log(
-    JSON.stringify({ listed, opened, first, handedTrace, reopened, replayed, stoppedTrace, unsealedAfter, logs }),
+    JSON.stringify({ listed, opened, first, handedTrace, unheld, reopened, replayed, stoppedTrace, unsealedAfter, logs }),
   );
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);

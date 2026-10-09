@@ -25,10 +25,9 @@ use axum::response::{IntoResponse, Response};
 use axum::Router;
 use svrngs_core::pass::Label;
 
-use crate::door::{self, Door, Who, LEND_ROUTE};
+use crate::door::{self, Door, Refused, Who, LEND_ROUTE};
 use crate::iroh::{key_actor, Contact, PublicKey};
 use crate::node::Asking;
-use crate::ring_routes::err;
 
 /// The suffix every lend's host on this computer ends in.
 const LOCALHOST: &str = ".localhost";
@@ -58,7 +57,7 @@ pub(crate) fn router(asking: Asking) -> Router {
 async fn lent(State(at): State<Asking>, req: Request) -> Response {
     let Some(label) = label_of(req.headers().get(header::HOST)) else {
         tracing::debug!(target: "origin", host = ?req.headers().get(header::HOST), "origin: refused — no lend's host");
-        return err(StatusCode::NOT_FOUND, "nothing is lent here");
+        return Refused::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here");
     };
     reach(&at, label, req).await
 }
@@ -76,7 +75,7 @@ pub(crate) async fn reach(at: &Asking, label: Label, req: Request) -> Response {
         tracing::debug!(target: "origin", %label, "origin: this computer's own lend, through its door's rules");
         let (mut parts, body) = req.into_parts();
         let Ok(uri) = target.parse::<Uri>() else {
-            return err(
+            return Refused::Path.say(
                 StatusCode::BAD_REQUEST,
                 "this is not an address a lend can be asked",
             );
@@ -89,7 +88,7 @@ pub(crate) async fn reach(at: &Asking, label: Label, req: Request) -> Response {
     let stands = door.rail.standing_anywhere(&actor).is_some();
     let Some(key) = key.filter(|_| stands) else {
         tracing::debug!(target: "origin", %label, actor, "origin: refused — the label names no computer standing in a group held here");
-        return err(StatusCode::NOT_FOUND, "nothing is lent here");
+        return Refused::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here");
     };
     let contact = Contact {
         key,
@@ -112,7 +111,7 @@ pub(crate) async fn reach(at: &Asking, label: Label, req: Request) -> Response {
 
 /// The lender's computer could not be reached.
 fn away() -> Response {
-    err(
+    Refused::Away.say(
         StatusCode::BAD_GATEWAY,
         "the computer that lends this did not answer; try again later",
     )
@@ -134,7 +133,7 @@ async fn carried(
         door::keep_upgrade(&mut parts.headers, protocol);
     }
     let Ok(uri) = target.parse::<Uri>() else {
-        return err(
+        return Refused::Path.say(
             StatusCode::BAD_REQUEST,
             "this is not an address a lend can be asked",
         );

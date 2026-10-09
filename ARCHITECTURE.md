@@ -311,7 +311,10 @@ response header holding the secret is dropped. It refuses, by name, a
 request off the stream, a dialer standing in no group held, a path with a
 `..` segment or an encoded `.` or `/` (`route_by_prefix`'s guard), a lend
 not declared, a path the lend refuses, and a newcomer past the lend's
-limit. Who is let in is `door/limit.rs` (u3-6), a pure decision with the
+limit; each answer it makes in a lend's place, the lend's origin's and the
+room's too, carries `x-svrngs-refused` and the body's `kind`, one of
+`door::Refused`, and a service's own `x-svrngs-refused` is dropped (mnp-1).
+Who is let in is `door/limit.rs` (u3-6), a pure decision with the
 time an argument, in `fair_share_cap`'s shape counted in people: a person is
 counted on a lend while a request of theirs is in flight or within
 `limit::WINDOW` (30 s) of one, a viewer whose path ends at a private,

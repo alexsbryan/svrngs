@@ -587,11 +587,13 @@ in_both_engines!(
     /// reaches ada's door as a part of at most 2 MiB: Chromium asks
     /// `bytes=N-`, WebKit `bytes=N-<the end>`, and WebKit read such a range
     /// through before it asked for a seek's bytes (ralph/REVIEW_FINDINGS.md
-    /// #53). Planted: a
+    /// #53). A 403 cy's `strict` answers comes back unmarked, the
+    /// `x-svrngs-refused` it forged dropped, and cy's door's refusal of a
+    /// path it is lent without comes back marked `path` (mnp-1). Planted: a
     /// range answered 200 with the whole body (the worker dropping `Range`);
     /// the worker's endpoint never reopened (opened once, when it activates);
     /// the open range answered whole (u4-8's worker); a `<video>`'s closed
-    /// range to the end answered whole (b6ea0ab's).
+    /// range to the end answered whole (b6ea0ab's); the door's mark off.
     a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself
 );
 async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself(
@@ -617,6 +619,10 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
     std::fs::write(&file, (0..OTHER).map(origins::byte_at).collect::<Vec<u8>>()).unwrap();
     let (shelf, shelf_heads) = origins::kept_range_origin(file, OTHER).await;
     lend(cy_dir.path(), "shelf", shelf.port());
+    let strict = origins::refusing_origin().await;
+    let lends = svrngs_node::lend::lends_dir(cy_dir.path());
+    let body = json!({ "port": strict.port(), "kind": "k", "limit": 3, "refused": ["/private"] });
+    std::fs::write(lends.join("strict.json"), body.to_string()).unwrap();
 
     let (from, to) = (1_000_000, 1_000_000 + 4 * MIB - 1);
     let seen = drive(
@@ -630,6 +636,10 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
             "seeks": [40.0, 20.0, 52.0],
             "other": { "lend": label(2, "shelf"), "path": "title.bin", "range": format!("bytes={from}-{to}") },
             "openEnded": { "lend": label(2, "shelf"), "path": "title.bin", "range": format!("bytes={from}-") },
+            "refusals": [
+                { "lend": label(2, "strict"), "path": "x" },
+                { "lend": label(2, "strict"), "path": "private/x" },
+            ],
         }),
         None,
     )
@@ -734,6 +744,17 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
         sha((from..from + got).map(origins::byte_at)),
         "{shown:#}"
     );
+    // Whose word each answer is (mnp-1): the lend's own 403 unmarked, the
+    // header it forged dropped; the door's refusal of a path, through the
+    // worker, marked svrngs's.
+    assert_eq!(
+        seen["refusals"],
+        json!([
+            { "path": "x", "status": 403, "refused": null },
+            { "path": "private/x", "status": 403, "refused": "path" },
+        ]),
+        "{shown:#}"
+    );
     let shelf_keys = keys(&shelf_heads);
     assert!(
         !shelf_keys.is_empty() && shelf_keys.iter().all(|k| *k == bo_key),
@@ -759,9 +780,11 @@ in_both_engines!(
     /// worker and the lend's address is opened again: the worker holds no
     /// pass and reads none, so it sends the page to its start page, which
     /// reads the pass, hands it over and opens the address again, and the
-    /// film plays. The group's page's own unseal still opens bo's key
-    /// after. Planted: the handed pass ignored (lend.js reading only its
-    /// store).
+    /// film plays; before that, a fetch from a page it serves is answered
+    /// by the worker itself, 503, marked svrngs's, a pass refused (mnp-1).
+    /// The group's page's own unseal still opens bo's key after. Planted:
+    /// the handed pass ignored (lend.js reading only its store); the
+    /// worker's mark off.
     a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it
 );
 async fn a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it(
@@ -813,6 +836,11 @@ async fn a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_ha
     assert!(
         seen["first"]["ms"].is_u64(),
         "the film must play with the handed pass:\n{shown:#}"
+    );
+    assert_eq!(
+        seen["unheld"],
+        json!({ "status": 503, "refused": "pass" }),
+        "a worker holding no pass must answer a fetch itself, marked svrngs's:\n{shown:#}"
     );
     let stopped = trace_of(&seen, "stoppedTrace");
     assert!(
