@@ -76,6 +76,9 @@ use crate::ring_sync::{
 };
 use crate::{actor_of, Person, RingRail, SigningKey};
 
+/// Groups held here, each by its namespace with who stands in it.
+pub(crate) type Groups = Vec<(String, BTreeMap<String, Member>)>;
+
 /// A lend another computer of this one's groups lends, as it answered.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Lent {
@@ -404,7 +407,7 @@ impl Host {
     /// Every group this node holds, with who stands in it; or `None` when
     /// the groups held cannot be listed. A group whose register is
     /// unreadable is left out.
-    fn standings(&self) -> Option<Vec<(String, BTreeMap<String, Member>)>> {
+    fn standings(&self) -> Option<Groups> {
         let namespaces = match self.rail.namespaces() {
             Ok(n) => n,
             Err(e) => {
@@ -428,10 +431,7 @@ impl Host {
     /// The groups held here that `actor` stands in, as [`Self::standings`]
     /// gives them, and this computer's person in the first of them it
     /// stands in too: whom a group's lends are answered to, and as whom.
-    pub(crate) fn shared_with(
-        &self,
-        actor: &str,
-    ) -> (Vec<(String, BTreeMap<String, Member>)>, Option<Person>) {
+    pub(crate) fn shared_with(&self, actor: &str) -> (Groups, Option<Person>) {
         let mut groups = self.standings().unwrap_or_default();
         groups.retain(|(_, standing)| standing.contains_key(actor));
         let own = groups
