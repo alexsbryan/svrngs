@@ -3644,3 +3644,203 @@ grep` one definition. No noun with more than one definition.
 | 88 | 8 (spirit of DESIGN call 6) | crates/svrngs-node/src/door/sign_in.rs `SignIns::spawn` | effb427 | One person's slow sign-in holds nobody else's request; a person's first requests at once still ask once. |
 | 90 | 8 | crates/svrngs-node/src/door/sign_in.rs:50 | 6028168 | `svrngs-stand-in` spelled once outside tests, named to each answerer in the door's ask. |
 | 95 | 7 | apps/jellyfin/check/person.mjs `watch` | not fixed | A new `<video>` counted, never described; counted in WebKit today before and after si-1. |
+
+## REVIEW-audit-compose-auto-1 (2026-10-08, range 9a013f4..731c469)
+
+The range starts at 9a013f471, the hash REVIEW-audit-mwp-auto-2's row
+carries (ralph/next/mwp/STATE.md:20), the last `REVIEW-audit-` row; this
+queue has none before this one. It ends at 731c469, the commit that made
+this row: 25 commits, the last audit's `done` (78b3520), the operator's
+design and budget (d697b18, 508356d), the queue (37b4a4c, ba5970d2), si-1
+(ae898f0, effb427, 6028168, 7ac7cf0, dd2a501, 1d9d5f3), mn-0 (c963f93),
+mn-1 (47dab7e, a40fe81, fa5f076, c966cbc, 7a1e94b, 86b092d, 83e2335) and
+mn-2 (931b9ed, f9a4c9b), with their `done`s. Product code outside apps/
+changed only in si-1: `git diff --stat fab9b8c 731c469 -- crates web
+bridge scripts/check.sh` is empty, as the spikes' fence asks. This audit
+fixes one finding (#96) and records the rest.
+
+As before, `docs/ARCH_PRINCIPLES.md` is docs/principles/ARCH_PRINCIPLES.md,
+and `target/debug/sovereign-cli` is
+~/dev/commonwealth-ai/target/debug/sovereign-cli. **It is not the binary
+the last three audits used**: sha256 35d97ed2… (built 15:05), not
+5f5e2d74…. No commonwealth-ai commit from 11:00 to its build names a path
+matching `dry|converge|code_index|scip|embed` (`git log --since
+"2026-10-08 11:00" --until "2026-10-08 15:06" --name-only`), and every
+reading below on code the range did not touch is the last audit's; its
+tiers were planted again all the same (below). The embedder was
+`llama-server` on the corpus's model (qwen-embedding-0.6b.gguf) on :8080,
+`-b 8192 -ub 8192` as I21 found needed, for this session. `code index .
+--full` at 731c469, tree clean: 2550 chunks in 486 s; the SCIP graph
+written after the range's last product commit (scip_graph.db 17:54,
+c966cbc 15:47).
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' 9a013f4..731c469`,
+summed by /tmp/composeaudit1/ledger.py (the last audit's, its unit
+pattern `(si|mn|su|mnp)-\d`), its rules as before: a commit counts toward
+the unit its subject names, else the next `done`'s; product code is
+crates/, apps/, web/, bridge/; a test is a `tests/` or `check/` segment
+or a lean_check test file name. #87 is in `si-1`'s row (ae898f0 names
+no unit), #88 and #90 apart, by their subjects.
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| si-1 (#87, the move) | 121 | 80 | 41 | 5 | 3 | 2 |
+| si-1 (#88) | 51 | 29 | 22 | 107 | 29 | 78 |
+| si-1 (#90) | 43 | 32 | 11 | 5 | 0 | 5 |
+| mn-0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| mn-1 | 300 | 0 | 300 | 1127 | 1 | 1126 |
+| mn-2 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 515 | 141 | 374 | 1244 | 33 | 1211 |
+
+- si-1 src: door.rs +10/−80 and door/sign_in.rs +111 (ae898f0);
+  sign_in.rs +51/−29 (effb427); +11/−4 there and apps/jellyfin/mw/ +26/−23,
+  apps/web-conformance/answer.mjs +6/−5 (6028168). `forward` 242 lines
+  (9a013f4, door.rs:956–1197) to 171 (731c469, :957–1127).
+- si-1 tests: tests/door/sign_in.rs +107/−29 (effb427), +5 (6028168);
+  apps/jellyfin/check/mw.py +5/−3 (7ac7cf0).
+- mn-1 src, all apps/movie-night/ (47dab7e): app.js 180, match.js 76,
+  index.html 20, style.css 13, plant.js 6, nouns.txt 5.
+- mn-1 tests, apps/movie-night/check/ (a40fe81, c966cbc): mn.mjs 390,
+  check.sh 314, judge.py 292, doors.py 99, tokens.py 31. The run's data
+  and run.sh are under demo/, not product.
+
+lean_check on `git archive` trees in /tmp/composeaudit1 (apps/ is not
+counted, scripts/lean_check.py:49):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 9a013f4, range start | 2957 / 3000 | 14398 / 14400 |
+| 731c469, range end | 2957 / 3000 | **14466 / 14750** |
+
+si-1 spent 68 counted lines; the spikes none. **284 lines are left**
+(#80).
+
+### (2) Clones (`code dry-report`), each tier checked against a plant
+
+**Plants**, uncommitted in the working tree, the corpus indexed `--full`
+over them (2552 chunks, 425 s; `refresh`: SCIP +14 symbols) then again
+without them (2550, 363 s), so the corpus stands at 731c469:
+
+- **E** (exact): sign_in.rs `swap_headers` (:428–437, 10 lines; si-1's
+  file), verbatim, as `plant_exact` at the file's end.
+- **N** (near): the same body as `plant_near`, its names changed
+  (`headers`→`map`, `from`→`old`, `to`→`new`, `n`→`count`,
+  `value`→`v`, `out`→`swapped_bytes`).
+
+| scope, threshold | E | N |
+|---|---|---|
+| crates/svrngs-node/src/door/sign_in.rs, 0.95 | **missed**: 0 exact groups (21 locations, the two plants among them: 1454 → 1456 symbols) | **missed** |
+| crates/svrngs-node/, 0.95 | **missed**: the same 5 exact groups as clean | missed |
+| sign_in.rs, 0.9 and 0.8 | E ~ N only, 0.937; never with `swap_headers` | seen with E alone |
+| sign_in.rs, 0.7 | `swap_headers` :425–441 ~ E :576–592 ~ N :589–602, 0.727–0.937 | seen |
+| window pass (below), no range | **seen**: sign_in.rs:429–437 == :580–588 | missed (renamed; it cannot see one, as before) |
+
+So for Rust, the dry-report tiers' zeros below are weak evidence: the
+exact tier missed a verbatim body under a new name (each of the 5 groups
+it finds pairs symbols of one name: `as_str`, `fmt`, `addr`, `drop`,
+`try_from`), and the near tier's spans take their neighbours' lines
+(`swap_headers` :425–441 for :428–437; E's span runs into N's, I9), so a
+verbatim copy scored 0.727. A verbatim copy is the window pass's to find,
+and it did (I24).
+
+**Clean runs.** Scoped, at 0.95, for each dir the range touched:
+
+| scope | locations | exact | near | with a side added in the range |
+|---|---:|---|---:|---|
+| crates/svrngs-node/ | 394 | 5 (as at the last audit) | 1 (declared.rs `harden_file` ×2) | 0 |
+| crates/svrngs-node/tests/ | 0 | **could-not-judge** | **could-not-judge** | — |
+| apps/jellyfin/mw/ | 52 | **could-not-judge** (I19) | 0 | 0 |
+| apps/web-conformance/ | 11 | **could-not-judge** (I19) | 0 | 0 |
+| apps/movie-night/ | 49 | 0 | 0 | 0 |
+| apps/jellyfin/check/ | 57 | 0 | 2 (`playOn`~`menu`, I9; judge.py `why`~`why`) | 0 |
+| apps/ | 194 | 0 | 2 (the same) | 0 |
+
+Unscoped: 0.95 (14 exact, 15 near), 0.9 (14, 38), 0.8 (14, 222).
+/tmp/composeaudit1/clusters.py blamed every side (919) for a line in
+9a013f4..731c469 (`git blame -w -M -C -C`). **0** at 0.95; at 0.9, **2**,
+both in Movie Night's check; at 0.8, 10 (the 2 among them):
+
+| at | cluster | cosine | read |
+|---|---|---|---|
+| 0.9, 0.8 | judge.py `bar4_before` :132–152 ~ `bar4_after` :149–172 (a40fe81) | 0.911 | Two bars, before and after the list; different reads of the run. No change. |
+| 0.9, 0.8 | doors.py `when` :26–33 ~ `fields` :30–37 (a40fe81) | 0.903 | Two one-line functions in overlapping 8-line spans (I9). No change. |
+| 0.8 | door.rs `lend_for` :739–854 ~ `forward` :954–1051 ~ `forward` :1052–1127 (ae898f0) | 0.828–0.837 | I22 still: one function given as two symbols. No change. |
+| 0.8 | mn.mjs `choose` :185–220, `play` :218–248, `back` :246–275 (a40fe81) ~ person.mjs `judge`, `seek`, trio.mjs `over`, a u5 drive.mjs | 0.801–0.998 | The tool pairs the wrong functions; `play` is a fork of person.mjs's play inside `enter`, which it cannot see (#97). |
+| 0.8 | mn.mjs `join`, `listed`, `group`, `openFromList` :62–109 | 0.848–0.881 | Neighbours in one driver; `join` is a fork of person.mjs:185–192 (#97). |
+| 0.8 | mn.mjs `computer`, `limit`, `once` :329–378; `phone` ~ `asleep` :276–333 | 0.835–0.845 | One driver's journeys; see the window pass. No change. |
+| 0.8 | match.js `copyOf`, `same`, `films` :38–75 (47dab7e) | 0.814–0.850 | Three different functions, overlapping spans (I9). No change. |
+| 0.8 | app.js `card` :138–160 ~ `render` :156–174 (47dab7e) | 0.814 | A card and the page that lists cards. No change. |
+| 0.8 | people.rs `signed` :65–80 ~ sign_in.rs `forget` :351–360, `signed` :358–368 (effb427) | 0.809–0.822 | An app's actor handle and the door's; different messages, two programs. No change. |
+
+**Window pass** (/tmp/composeaudit1/windows.py . 9a013f4..731c469, 5
+normalized lines, tests included): 167 hits, **2 new**:
+
+- apps/movie-night/check/mn.mjs:280–285 == :368–373 (a40fe81): `phone`
+  and `once` begin alike (browser, join, open from the list); `once` is
+  `phone` cut at its first settle, for the limit's count. No change.
+- crates/svrngs-node/tests/door/sign_in.rs:56–61 == :121–126 (effb427):
+  two fixture servers' accept loops, the answerer's and the service's.
+  No change.
+
+Reading the range for what neither pass would show:
+
+- **#97, new, not fixed.** apps/movie-night/check/mn.mjs re-drives what
+  apps/jellyfin/check/person.mjs `enter` (:146) does inline, though it
+  already imports `record`, `shown` and `timed` from it (mn.mjs:38):
+  the press of Play and its second tap (mn.mjs `play` :221, "(person.mjs's)";
+  person.mjs:245–266), the group page's join (mn.mjs `join` :65;
+  person.mjs:185–192) and the stand-in read from what the page stored
+  (mn.mjs:209–211; person.mjs:233–235). The held rule (paused, ready, under
+  0.5 s, for 3 s; 30 s in all) is a threshold in two homes. Not fixed here:
+  `enter` exports none of these steps, and a change to it is proven only
+  by the Jellyfin runs (demo/runs/mwp/2026-10-08/run.sh,
+  apps/movie-night/check/check.sh), which this audit did not run.
+- **#90's spellings.** `svrngs-stand-in` outside tests is still
+  sign_in.rs:50 alone; mn.mjs:211 is a fourth check that judges what a
+  page stored by it, as person.mjs:235 does. A renamed stand-in fails
+  both loudly. No change.
+- **#57, #68, #70, #71, #75, #77, #79, #81, #89, #95, still open.** #89's
+  sites in sign_in.rs moved with the file; its finding stands.
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff 9a013f4 731c469 -- crates apps web bridge`, added lines
+matching `\b(struct|enum|trait|type|class)\s+[A-Z]\w*`: three, all in
+crates/svrngs-node/src/door/sign_in.rs.
+
+| noun | converge | git grep (`(struct\|enum\|trait\|type\|class)[[:space:]]+Name\b`) |
+|---|---|---|
+| Signing | definitions (1), sign_in.rs:153 | 1 |
+| Read | definitions (1), sign_in.rs:162; kin `Reads` | 1 |
+| **Told** | **definitions (2)**: door.rs:855, door/sign_in.rs:264 | **2**: door.rs:856 `struct Told` (a request's share and held use; at 9a013f4:855), sign_in.rs:265 `type Told` (effb427, the sender a request waits on) |
+
+(converge's lines one early, I1.) **#96**: one name, two meanings, in a
+module and its child, where `super::Told` is in scope; unlike #91's pairs,
+which sit in two programs. Fixed (8024f76): sign_in.rs's is `Waiter`.
+
+### Fixed here
+
+- **#96** (8024f76). `git grep -nw Waiter -- crates apps web bridge`
+  outside sign_in.rs: none. `cargo test -p svrngs-node --test door`: 21
+  passed, the four `sign_in::` tests among them.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 96 | 8, 3 | crates/svrngs-node/src/door/sign_in.rs:265 and door.rs:856, at 731c469 | 8024f76 | Two `Told`s, two concepts, a module and its child; the child's is `Waiter`. |
+| 97 | 8 | apps/movie-night/check/mn.mjs:65, :209–211, :221; apps/jellyfin/check/person.mjs:185–192, :233–235, :245–266 | not fixed | Movie Night's driver forks the Jellyfin driver's join, stand-in read and Play with its held rule; `enter` exports none of them. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 284 lines left (14466 / 14750). |
+| 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95 | as recorded | as recorded | not fixed | Untouched in the range, or moved with their file. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still present: `Told` door.rs:855 for :856, sign_in.rs:264 for :265. |
+| I9 | 6, 7 | `code dry-report` near tier | Still present, and now measured on a plant: a verbatim 10-line copy scored 0.727 against its original, the original's span (:425–441) three lines either side of the function (:428–437). |
+| I19 | 6 | dry-report's exact tier | Still present: apps/jellyfin/mw/ (Rust) and apps/web-conformance/ could-not-judge. |
+| I22 | 6, 7 | `code dry-report` near tier | Still present: door.rs `forward` (:957–1127) as `forward` :954–1051 and :1052–1127. |
+| I24 | 6, 7 | `code dry-report` exact tier | New, on binary 35d97ed2…: a verbatim body under another name (plant E, `swap_headers` as `plant_exact`, svrngs-node, SCIP symbols present) is no exact group; every group it finds pairs one name. Its "0 exact" in Rust is not evidence of no copy; the window pass caught E. Cause not isolated (the hash may take the name; unproven, one plant). |
