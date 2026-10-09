@@ -204,7 +204,7 @@ impl Signing {
         parts: &mut axum::http::response::Parts,
         get: bool,
         sign_ins: &SignIns,
-        (lend, actor): (&LendName, &str),
+        (lend, actor): (&LendName, &super::PersonKey),
     ) -> Result<Option<Read>, axum::response::Response> {
         let (port, s) = match self {
             Self::Secret(secret) => {
@@ -233,7 +233,7 @@ impl Signing {
                     tracing::warn!(target: "door", lend = %lend, ?policy,
                         "door: the page's script policy runs no inline script, so the person's script is put in it and will not run");
                 }
-                tracing::debug!(target: "door", actor, lend = %lend, "door: a page to the person, their script put first in it, kept by no cache");
+                tracing::debug!(target: "door", %actor, lend = %lend, "door: a page to the person, their script put first in it, kept by no cache");
                 parts.headers.remove(header::ETAG);
                 parts.headers.remove(header::LAST_MODIFIED);
                 let no_store = HeaderValue::from_static("no-store");
@@ -259,7 +259,7 @@ impl Signing {
 }
 
 /// Which answer: a lend, its sign-in's port, and a person's key.
-type Whose = (LendName, NonZeroU16, String);
+type Whose = (LendName, NonZeroU16, super::PersonKey);
 
 /// Who waits on a person's signed-in self.
 type Waiter = oneshot::Sender<Result<Signed, Refusal>>;
@@ -291,10 +291,10 @@ impl SignIns {
                     Ask::Of(whose, identity, told) => {
                         let (lend, port, actor) = &whose;
                         if let Some(a) = kept.get(&whose) {
-                            tracing::debug!(target: "door", lend = %lend, actor, "door: sign-in — the person's kept answer");
+                            tracing::debug!(target: "door", lend = %lend, %actor, "door: sign-in — the person's kept answer");
                             let _ = told.send(Ok(signed(&kept, lend, a.clone())));
                         } else if let Some(waiting) = out.get_mut(&whose) {
-                            tracing::debug!(target: "door", lend = %lend, actor, "door: sign-in — the person's ask is out, so this request waits on it");
+                            tracing::debug!(target: "door", lend = %lend, %actor, "door: sign-in — the person's ask is out, so this request waits on it");
                             waiting.push(told);
                         } else {
                             let (port, lend, back) = (*port, lend.clone(), back.clone());
@@ -311,7 +311,7 @@ impl SignIns {
                         let (lend, _, actor) = &whose;
                         let waiting = out.remove(&whose).unwrap_or_default();
                         if let Ok(a) = &found {
-                            tracing::info!(target: "door", lend = %lend, actor, requests = waiting.len(),
+                            tracing::info!(target: "door", lend = %lend, %actor, requests = waiting.len(),
                                 "door: sign-in — asked for the person on their first request, and kept");
                             kept.insert(whose.clone(), a.clone());
                         }
@@ -321,7 +321,7 @@ impl SignIns {
                     }
                     Ask::Forget(whose, secret) => {
                         if kept.get(&whose).is_some_and(|a| a.secret == secret) {
-                            tracing::info!(target: "door", lend = %whose.0, actor = whose.2,
+                            tracing::info!(target: "door", lend = %whose.0, actor = %whose.2,
                                 "door: sign-in — the service refused a kept answer, so it is forgotten and asked again next");
                             kept.remove(&whose);
                         }
@@ -338,11 +338,11 @@ impl SignIns {
         &self,
         lend: &LendName,
         port: NonZeroU16,
-        actor: &str,
+        actor: &super::PersonKey,
         identity: [(HeaderName, HeaderValue); 2],
     ) -> Result<Signed, Refusal> {
         let (answer, told) = oneshot::channel();
-        let whose = (lend.clone(), port, actor.to_string());
+        let whose = (lend.clone(), port, actor.clone());
         self.0
             .send(Ask::Of(whose, identity, answer))
             .map_err(|_| Refusal::Gone)?;
@@ -351,8 +351,14 @@ impl SignIns {
 
     /// Forget `actor`'s answer for `lend`, if it is still the one holding
     /// `secret`.
-    pub(crate) fn forget(&self, lend: &LendName, port: NonZeroU16, actor: &str, secret: &Secret) {
-        let whose = (lend.clone(), port, actor.to_string());
+    pub(crate) fn forget(
+        &self,
+        lend: &LendName,
+        port: NonZeroU16,
+        actor: &super::PersonKey,
+        secret: &Secret,
+    ) {
+        let whose = (lend.clone(), port, actor.clone());
         let _ = self.0.send(Ask::Forget(whose, secret.clone()));
     }
 }

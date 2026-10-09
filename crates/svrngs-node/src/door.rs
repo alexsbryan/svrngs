@@ -695,9 +695,38 @@ pub(crate) enum Who {
     Own(Label),
 }
 
+/// The person the door resolves a request to (ONE_PERSON_MANY_DEVICES.md
+/// §4): today the one key they have, a member's dialler or a pass's signer.
+/// Made only here ([`PersonKey::resolved`]), so nothing kept about a person
+/// — a sign-in's answer, a choice — is keyed by the raw key a request came
+/// with, and another device for the same person changes that one function.
+#[derive(
+    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize, serde::Deserialize,
+)]
+#[serde(transparent)]
+pub struct PersonKey(String);
+
+impl PersonKey {
+    /// The person `key`, actor hex, is: the key itself, until a person
+    /// spans devices.
+    fn resolved(key: String) -> Self {
+        Self(key)
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for PersonKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
 /// The person a request for a lend is carried as.
 struct Asker {
-    actor: String,
+    actor: PersonKey,
     group: String,
     person: Person,
     /// The pass's app; none for a key of the group's with no pass.
@@ -809,7 +838,7 @@ async fn holder_of(
         "door: a pass opens this lend, so its holder asks as the person who signed it");
     Ok(Asker {
         app: Some(pass.app),
-        actor: pass.person,
+        actor: PersonKey::resolved(pass.person),
         group,
         person,
     })
@@ -898,7 +927,7 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
                     .say(StatusCode::FORBIDDEN, "this computer lends nothing to you");
             };
             Pending::Known(Asker {
-                actor: actor.clone(),
+                actor: PersonKey::resolved(actor.clone()),
                 group,
                 person,
                 app: match &who {
@@ -925,7 +954,7 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
         }
     };
     let Asker {
-        actor,
+        actor: whose,
         group,
         person,
         mut app,
@@ -936,6 +965,7 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
             Err(refused) => return refused,
         },
     };
+    let actor = whose.as_str();
     if let Who::Member(dialer) = &who {
         match own_app(door, dialer, req.headers(), &lend) {
             Ok(own) => app = own,
@@ -955,7 +985,7 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
         tracing::debug!(target: "door", actor, lend = %lend.name, "door: no path observed, so the person is taken to be away");
     }
     let whereabouts = limit::guess(observed.and_then(|o| o.addr));
-    let Some((verdict, held)) = door.using.ask(&lend, &actor, whereabouts).await else {
+    let Some((verdict, held)) = door.using.ask(&lend, actor, whereabouts).await else {
         tracing::warn!(target: "door", lend = %lend.name, "door: refused — no count of who uses the lend, so none can be let in");
         return LendRefusal::Fault.say(
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -997,7 +1027,7 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
     forward(
         door,
         &lend,
-        (&actor, &person, app.as_ref()),
+        (&whose, &person, app.as_ref()),
         service_path,
         req,
         told,
@@ -1112,11 +1142,12 @@ impl Drop for Carriage {
 async fn forward(
     door: &Door,
     lend: &Lend,
-    (actor, person, app): (&str, &Person, Option<&Label>),
+    (whose, person, app): (&PersonKey, &Person, Option<&Label>),
     path: String,
     req: Request,
     Told { share, held }: Told,
 ) -> Response {
+    let actor = whose.as_str();
     let mut req = req;
     let range = req.headers().get(header::RANGE);
     let mut carriage = Carriage {
@@ -1149,7 +1180,7 @@ async fn forward(
         None => Signing::Secret(secret_headers(door, &lend.name)),
         Some(port) => match door
             .sign_ins
-            .of(&lend.name, port, actor, identity.clone())
+            .of(&lend.name, port, whose, identity.clone())
             .await
         {
             Ok(signed) => Signing::Person(port, signed),
@@ -1265,7 +1296,7 @@ async fn forward(
         .headers
         .get(header::CONTENT_LENGTH)
         .and_then(|l| l.to_str().ok()?.parse().ok());
-    let swapping = match signing.outward(&mut parts, get, &door.sign_ins, (&lend.name, actor)) {
+    let swapping = match signing.outward(&mut parts, get, &door.sign_ins, (&lend.name, whose)) {
         Ok(swapping) => swapping,
         Err(refused) => return refused,
     };
