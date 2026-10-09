@@ -361,3 +361,152 @@ invitation to build a general framework before the experience works"):
   (§6): the yes lives in the taste service's own file on Ana's computer;
 - the computer's origin (§2), a second non-media composition, and the
   access review page (§7) beyond Tonight's Picks' own stop.
+
+## 8. What the run gave (su-1)
+
+The run of 2026-10-09, 06:06–06:21 UTC, on this host through iroh's public
+relays: `run.sh` here, through `apps/taste/check/check.sh`, the plants
+first (06:09–06:15), then the runs as the code is kept (06:15–06:21), then
+the judge (`apps/taste/check/judge.py`, its verdicts in `verdicts.json`,
+each line in `steps.log`). The code run is `305efde`'s; the header is
+`55dca40`'s. A first whole run at 05:46–06:06 gave the same verdicts; what
+it showed was fixed in `305efde` before this one, and its data is not kept.
+One host, one run of each: not a rate (AGENTS.md 7).
+
+Each person joined from the group's link, Ana twice, a phone an engine,
+each phone's key read from Sam's computer's log as it admitted it and added
+to her taste's owners (`check.sh`, `OWN`; nothing in svrngs names a person
+across devices, §2). Every refusal below is the taste's 403 with its kind,
+the taste's log line (`<run>-taste.log`) and Ana's door's
+(`<run>-ana-door.log`).
+
+### Each bar against its prediction
+
+1. **Ana's picks, asked once: passed in both engines**, as predicted. One
+   question, the survey's words (`verdicts.json` "bar 1" `question`); the
+   list in the plant's `expected` order, Arrival, Brazil, Blade Runner,
+   Alien (`diary-planted.json`), 243 ms after her yes in Chromium and 229
+   ms in WebKit (`yes_to_list_ms`); opened again on that phone, no
+   question, the list in that order in 2,572 and 2,114 ms; on her other
+   phone, no question, in 3,623 and 3,102 ms (`again_ms`,
+   `other_phone_ms`). The prediction said within 2 s of opening: the
+   reopenings took 2.1–3.6 s, because Tonight's Picks asks the taste
+   only after both Jellyfins have listed their films; the taste logged
+   each answer 0 to 48 ms after the ask, most within 5
+   (`night-*-taste.log`). Predicted, each Ana's
+   first ask refused by Ana's computer's door until its ring round: so in
+   all six first opens of the plants and `asleep`, each a phone that had
+   just joined alone (`refused-svrngs` in their `tries`; Ana's door "its
+   signer stands in no group held here", 8 times in its log, twice in
+   `history` and `other-app`), and in neither night, where three joins
+   before the first open took about 45 s (`join_ms`, about 15 s each).
+   Said, not judged.
+2. **Bo refused: passed in both**, as predicted: the taste refused him
+   `not-yours` by his key while Ana's door logged "a pass opens this lend
+   ... person="Bo"" for the same request (`verdicts.json` "bar 2"); he read
+   "The taste at 93868136 is someone else's. These films are not ranked.",
+   the group's four films beside it, unranked.
+3. **No app reaches the history: passed in both**, as predicted: `/diary`
+   asked from Tonight's Picks' page as Ana answered 403 `{"error":"taste
+   is lent without /diary"}`, Ana's door logging "the lend refuses this
+   path", the taste no line for it. The scan (`scan.json`, by
+   `apps/jellyfin/check/scan.py` unchanged, the five rows' markers among
+   the secrets it searches): no marker in any byte any of the seven
+   browsers of the kept runs received, 141 to 174 responses each; the
+   five in `plant-history`'s, its plant.
+4. **Another app refused: passed in both**, as predicted with the header:
+   the other app's ask, from a pass naming Ana's taste, refused
+   `not-asked` — the door named it `x-svrngs-app` by its own label, which
+   Ana's yes does not name (`night-*-taste.log`).
+5. **Stopped: passed in both**, as predicted: after "Stop using my
+   taste" on her second phone, the next ask, from that phone reopening,
+   refused `stopped`, 397 ms after the press in Chromium-first and 422 ms
+   in WebKit-first (`stop_to_refused_ms`), and her first phone's next ask
+   too. What she read at the stop: "Stopped. From now on the taste at
+   93868136 refuses Tonight's Picks. The list ranked before you stopped
+   stays on this screen until you leave it." The door carried each refused
+   ask, "a pass opens this lend" then `status=403` (`night-chromium-ana-
+   door.log`, 06:17:22.918): it will until the pass's `until`, 12 hours
+   on. No ask was in flight at a stop.
+6. **A refusal never shown as empty: passed**, as predicted: Bo's and the
+   stop's refusals each said as themselves beside the four films unranked,
+   in both engines; and Ana's computer put to sleep after her list, "The
+   taste at 93868136 did not answer: its computer may be asleep. These
+   films are not ranked." after 32,384 ms, not the 60 s predicted from
+   Cy's (`verdicts.json` "bar 6" `asleep`), the films shown unranked.
+
+**The unasked yes: answered**, as predicted, in both runs: the other app
+sent a yes as Ana with no word to her (200), and its next ask was ranked
+(`the unasked yes`). The taste cannot tell it from the yes she pressed:
+both come as Ana from an app the door names.
+
+**Each plant watched failing first**, then the code as kept green in the
+runs after (`verdicts.json` "plants", each `failed` as it should be):
+`bo` — Bo ranked by Ana's taste; `history` — `/diary` answered 200 with
+the rows, all five markers in what the browser received; `other-app` —
+the other app ranked; `after-stop` — her next ask after the stop ranked;
+`empty` — Bo's refusal shown as "No picks for you tonight." and no films.
+
+**The product: one commit**, as predicted: `git diff cf56039..HEAD --
+crates web` is `55dca40` alone, `crates/svrngs-node/src/door.rs` +29 −4
+and its test; `scripts/lean_check.py` 14,485 of 14,750, 19 lines over
+su-0's 14,466; `scripts/check.sh` names neither Jellyfin nor taste.
+
+### The count, and what the door could carry
+
+By §4's awk at `305efde`, none unmarked (`verdicts.json` "the count"):
+
+| Side | Lines | Pieces (predicted) |
+|---|---|---|
+| own, the taste service | 52 (about 90) | serve 28, rank 22, diary 2 |
+| own, Tonight's Picks | 134 (about 80) | picks 86, consent 48 |
+| enforce, the taste service | 46 (about 50) | yes 16 (12), app 9 (6), stop 9 (8), refuse 9 (15), owner 3 (6), diary 0 (0) |
+| plumbing, Tonight's Picks | 39 (about 30) | find 26 (20), refusal 13 (10) |
+| plant, apart | 5 | bo, other-app, after-stop, empty, the switch |
+
+Every figure inside its predicted range but the taste's own, under it
+(52 against 50–160). The enforce lines, at `apps/taste/taste.mjs` as
+`305efde` has it, and what the door could decide in their place:
+
+- `owner`, 3 (:76-77, :130): Ana's keys in a file, compared with
+  `x-svrngs-key`. The door holds the lend's lender and verifies the key;
+  it could keep a lend to its lender's person if svrngs knew a person
+  across devices. The run had to read each phone's key from Sam's log.
+- `app`, 9 (:94-96, :100, :107-108, :132, :150-151): the yes looked up by
+  `x-svrngs-app`, an absent header refused (:132, here and not under
+  `refuse`). With 55dca40 the service decides; the door could, if it held
+  which apps the lender allows.
+- `yes`, 16 (:82-90, :134-140): a file of yeses by app, written on
+  `/yes`. The page could ask before a lend enters a pass, and the door read
+  the answer from it; that also closes the unasked yes, which here is
+  answered.
+- `stop`, 9 (:105, :142-148, :153): a stop kept beside the yes and every
+  ask after refused. The door could refuse a pass's lend sooner than
+  `until` if it held the stop, and the page stop re-signing it.
+- `diary`, 0: the door did it, by `--refuse` (bar 3).
+- `refuse`, 9 (:68-71, :115-119): who asks, read from the door's headers,
+  and a refusal as one. A service's own words; svrngs's part is that its
+  refusals are told from the service's, which Tonight's Picks did itself
+  (`plumbing refusal`, 13, `apps/movie-night/picks/picks.js:58-70`).
+
+Of the 46, `owner`, `app`, `yes` and `stop` — 37, about four in five — are
+the door's to carry if svrngs held a person across devices, the apps a
+lender allows, a yes and a stop (predicted about three in four).
+`plumbing find`, 26 (`picks.js:24-51`), is mn's candidate again: the lends
+read from svrngs's own store whole, and a taste told from a library by its
+lend's name, since no kind comes with a lend.
+
+### What no prediction named
+
+- **The `Origin` a service sees.** The door left the worker's
+  `origin`, Tonight's Picks' own origin, on each ask to the taste (Ana's
+  door, "the request's origin is not the lend's own; left as it is"): set
+  by svrngs's worker for a post (`web/lend.js:278-289`), not signed, so a
+  holder outside a browser can name any. `x-svrngs-app` is the pass's
+  first lend, under the person's signature.
+- **Ana's computer refused her new phones, as predicted, but not in the
+  nights:** the ring round had come while the others joined (bar 1).
+  `past` in `su.mjs` reopened until it had.
+- **One `--reads` page holds the taste for anyone who opens it.** Bo's
+  pass named Ana's taste the moment he opened Tonight's Picks (bar 2's
+  door line): the refusal is wholly the taste's.

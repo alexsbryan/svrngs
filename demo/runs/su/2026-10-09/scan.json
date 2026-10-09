@@ -1,0 +1,249 @@
+{
+ "secrets_searched": [
+  "dee_admin_token",
+  "dee_mw_key",
+  "dee_pw",
+  "diary_row_1",
+  "diary_row_2",
+  "diary_row_3",
+  "diary_row_4",
+  "diary_row_5",
+  "sam_admin_token",
+  "sam_mw_key",
+  "sam_pw"
+ ],
+ "lend_kept": [],
+ "pairs": {
+  "asleep": {
+   "ana-chromium": {
+    "scanned": {
+     "responses": 141,
+     "bodies": 141,
+     "bytes": 20978382,
+     "frames": 263
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "night-chromium": {
+   "ana-chromium": {
+    "scanned": {
+     "responses": 174,
+     "bodies": 174,
+     "bytes": 31435920,
+     "frames": 358
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ana-webkit": {
+    "scanned": {
+     "responses": 71,
+     "bodies": 40,
+     "bytes": 10510940,
+     "frames": 185
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "bo": {
+    "scanned": {
+     "responses": 63,
+     "bodies": 63,
+     "bytes": 10482350,
+     "frames": 147
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "night-webkit": {
+   "ana-chromium": {
+    "scanned": {
+     "responses": 73,
+     "bodies": 73,
+     "bytes": 10505652,
+     "frames": 147
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ana-webkit": {
+    "scanned": {
+     "responses": 138,
+     "bodies": 86,
+     "bytes": 26241822,
+     "frames": 366
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "bo": {
+    "scanned": {
+     "responses": 62,
+     "bodies": 62,
+     "bytes": 10482350,
+     "frames": 136
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "plant-after-stop": {
+   "ana-chromium": {
+    "scanned": {
+     "responses": 109,
+     "bodies": 109,
+     "bytes": 15753355,
+     "frames": 231
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "plant-bo": {
+   "ana-chromium": {
+    "scanned": {
+     "responses": 98,
+     "bodies": 98,
+     "bytes": 15730058,
+     "frames": 189
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "bo": {
+    "scanned": {
+     "responses": 61,
+     "bodies": 61,
+     "bytes": 10482611,
+     "frames": 124
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "plant-empty": {
+   "ana-chromium": {
+    "scanned": {
+     "responses": 97,
+     "bodies": 97,
+     "bytes": 15729514,
+     "frames": 197
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "bo": {
+    "scanned": {
+     "responses": 63,
+     "bodies": 63,
+     "bytes": 10482078,
+     "frames": 132
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "plant-history": {
+   "ana-chromium": {
+    "scanned": {
+     "responses": 143,
+     "bodies": 143,
+     "bytes": 20978160,
+     "frames": 244
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {
+     "diary_row_1": 1,
+     "diary_row_2": 1,
+     "diary_row_3": 1,
+     "diary_row_4": 1,
+     "diary_row_5": 1
+    },
+    "others_secrets_in": {
+     "diary_row_1": [
+      "/diary"
+     ],
+     "diary_row_2": [
+      "/diary"
+     ],
+     "diary_row_3": [
+      "/diary"
+     ],
+     "diary_row_4": [
+      "/diary"
+     ],
+     "diary_row_5": [
+      "/diary"
+     ]
+    },
+    "holds_none_of_anothers": false
+   }
+  },
+  "plant-other-app": {
+   "ana-chromium": {
+    "scanned": {
+     "responses": 165,
+     "bodies": 165,
+     "bytes": 31434675,
+     "frames": 343
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  }
+ },
+ "logs": {
+  "alex/join.out": {},
+  "alex/run.log": {},
+  "alex/run.out": {},
+  "mw-dee.log": {},
+  "mw-sam.log": {},
+  "sam/new.out": {},
+  "sam/run.log": {},
+  "sam/share.log": {},
+  "sam/share.out": {}
+ }
+}

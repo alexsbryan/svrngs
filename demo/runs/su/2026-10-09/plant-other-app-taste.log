@@ -1,0 +1,14 @@
+2026-10-09T06:12:08.175Z taste: listening on 127.0.0.1:8696, /tmp/su/taste
+2026-10-09T06:12:08.407Z GET / {"person":null,"key":null,"app":null}
+2026-10-09T06:13:23.687Z POST /rank {"person":"Ana","key":"005cc7bf5b7ead0e8ed050aa58f60080489bdda41e0f72444589bcd5f544cabf","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:13:23.688Z refused not-asked: {"person":"Ana","key":"005cc7bf5b7ead0e8ed050aa58f60080489bdda41e0f72444589bcd5f544cabf","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:13:24.031Z POST /yes {"person":"Ana","key":"005cc7bf5b7ead0e8ed050aa58f60080489bdda41e0f72444589bcd5f544cabf","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:13:24.032Z yes kept for aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n
+2026-10-09T06:13:24.109Z POST /rank {"person":"Ana","key":"005cc7bf5b7ead0e8ed050aa58f60080489bdda41e0f72444589bcd5f544cabf","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:13:24.111Z ranked 4 films for aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n
+2026-10-09T06:13:37.427Z POST /rank {"person":"Ana","key":"005cc7bf5b7ead0e8ed050aa58f60080489bdda41e0f72444589bcd5f544cabf","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btfdhjzwr7az"}
+2026-10-09T06:13:37.445Z ranked 2 films for aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btfdhjzwr7az
+2026-10-09T06:13:37.565Z POST /yes {"person":"Ana","key":"005cc7bf5b7ead0e8ed050aa58f60080489bdda41e0f72444589bcd5f544cabf","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btfdhjzwr7az"}
+2026-10-09T06:13:37.566Z yes kept for aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btfdhjzwr7az
+2026-10-09T06:13:37.656Z POST /rank {"person":"Ana","key":"005cc7bf5b7ead0e8ed050aa58f60080489bdda41e0f72444589bcd5f544cabf","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btfdhjzwr7az"}
+2026-10-09T06:13:37.656Z ranked 2 films for aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btfdhjzwr7az

@@ -1,0 +1,26 @@
+2026-10-09T06:15:44.374Z taste: listening on 127.0.0.1:8696, /tmp/su/taste
+2026-10-09T06:15:44.562Z GET / {"person":null,"key":null,"app":null}
+2026-10-09T06:16:33.784Z POST /rank {"person":"Ana","key":"8127e850f923990cc9214742ddc1df308c9f9535fcce4df1f9fc34f5d7665fa9","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:16:33.784Z refused not-asked: {"person":"Ana","key":"8127e850f923990cc9214742ddc1df308c9f9535fcce4df1f9fc34f5d7665fa9","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:16:33.893Z POST /yes {"person":"Ana","key":"8127e850f923990cc9214742ddc1df308c9f9535fcce4df1f9fc34f5d7665fa9","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:16:33.893Z yes kept for aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n
+2026-10-09T06:16:33.972Z POST /rank {"person":"Ana","key":"8127e850f923990cc9214742ddc1df308c9f9535fcce4df1f9fc34f5d7665fa9","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:16:34.020Z ranked 4 films for aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n
+2026-10-09T06:16:47.848Z POST /rank {"person":"Ana","key":"8127e850f923990cc9214742ddc1df308c9f9535fcce4df1f9fc34f5d7665fa9","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:16:47.849Z ranked 4 films for aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n
+2026-10-09T06:17:05.209Z POST /rank {"person":"Ana","key":"c80c83babace71a5700fc695c4e3e36458ed2c21875f7fe830fe62a8e43f8870","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:17:05.214Z ranked 4 films for aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n
+2026-10-09T06:17:08.331Z POST /rank {"person":"Bo","key":"28d2d5bf40727f3f1682534fb978fe5cd40608af05b9253bad7444966b13add3","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:17:08.331Z refused not-yours: {"person":"Bo","key":"28d2d5bf40727f3f1682534fb978fe5cd40608af05b9253bad7444966b13add3","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:17:22.351Z POST /rank {"person":"Ana","key":"8127e850f923990cc9214742ddc1df308c9f9535fcce4df1f9fc34f5d7665fa9","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btfdhjzwr7az"}
+2026-10-09T06:17:22.352Z refused not-asked: {"person":"Ana","key":"8127e850f923990cc9214742ddc1df308c9f9535fcce4df1f9fc34f5d7665fa9","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btfdhjzwr7az"}
+2026-10-09T06:17:22.455Z POST /yes {"person":"Ana","key":"8127e850f923990cc9214742ddc1df308c9f9535fcce4df1f9fc34f5d7665fa9","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btfdhjzwr7az"}
+2026-10-09T06:17:22.456Z yes kept for aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btfdhjzwr7az
+2026-10-09T06:17:22.535Z POST /rank {"person":"Ana","key":"8127e850f923990cc9214742ddc1df308c9f9535fcce4df1f9fc34f5d7665fa9","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btfdhjzwr7az"}
+2026-10-09T06:17:22.540Z ranked 2 films for aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btfdhjzwr7az
+2026-10-09T06:17:22.643Z POST /stop {"person":"Ana","key":"c80c83babace71a5700fc695c4e3e36458ed2c21875f7fe830fe62a8e43f8870","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:17:22.644Z stop kept for aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n
+2026-10-09T06:17:22.919Z POST /rank {"person":"Ana","key":"c80c83babace71a5700fc695c4e3e36458ed2c21875f7fe830fe62a8e43f8870","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:17:22.919Z refused stopped: {"person":"Ana","key":"c80c83babace71a5700fc695c4e3e36458ed2c21875f7fe830fe62a8e43f8870","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:17:36.641Z POST /rank {"person":"Ana","key":"8127e850f923990cc9214742ddc1df308c9f9535fcce4df1f9fc34f5d7665fa9","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:17:36.642Z refused stopped: {"person":"Ana","key":"8127e850f923990cc9214742ddc1df308c9f9535fcce4df1f9fc34f5d7665fa9","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}

@@ -1,0 +1,4 @@
+Lent taste (port 8696) to everyone in your groups, up to 8 people at once.
+They cannot open /diary.
+svrngs is running here already, so they can open it now.
+`svrngs unshare taste` stops lending it.
