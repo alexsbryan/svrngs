@@ -1,0 +1,111 @@
+{
+ "verdict": {
+  "B3": "passed",
+  "B2": "never-ran",
+  "B4": "never-ran",
+  "B5": "never-ran",
+  "B6": "passed",
+  "B1": "never-ran",
+  "B7": "never-ran"
+ },
+ "data": {
+  "B3": {
+   "scan_s": 21.4,
+   "holder_requests": 0,
+   "endpoint_answers": 0,
+   "endpoint_uas": []
+  },
+  "A_chromium_mp4": null,
+  "A_webkit_mp4": null,
+  "A_webkit_mkv": null,
+  "B6_plant": {
+   "playing_ms": 30996,
+   "first": {
+    "playing_ms": 30996,
+    "advancing_seen_ms": 31023
+   },
+   "fetched_from": [
+    "Cy"
+   ],
+   "gave_nothing": [
+    [
+     "Ana",
+     "the dial: timed out"
+    ]
+   ],
+   "listed_folders_of": [
+    "Ana",
+    "Cy"
+   ],
+   "unanswered": []
+  },
+  "B6": {
+   "playing_ms": 4128,
+   "first": {
+    "playing_ms": 4128,
+    "advancing_seen_ms": 4192
+   },
+   "fetched_from": [
+    "Cy"
+   ],
+   "gave_nothing": [
+    [
+     "Ana",
+     "did not answer within 3s"
+    ]
+   ],
+   "listed_folders_of": [
+    "Ana",
+    "Cy"
+   ],
+   "unanswered": [
+    "Ana"
+   ]
+  },
+  "B1_served_ranges": {
+   "answers": 7,
+   "bytes": 65011712,
+   "not_the_source_s_bytes": []
+  },
+  "B7_stop_plant": null,
+  "B7_stop": null,
+  "B7_scan": {
+   "root": "/tmp/gf-reh/ben",
+   "files": 18,
+   "bytes": 47442266,
+   "hits": []
+  },
+  "B7_scan_plant": null,
+  "B7": {
+   "act_names": [
+    "exp.mkv",
+    "exp.mp4"
+   ],
+   "plant_act_names": [],
+   "planted_served_by_ana_before_the_plant": 0,
+   "planted_bytes_served_by_ben": 0
+  }
+ },
+ "keys": {
+  "Ana": "35e6d4c3bd74a8f59e8b0a9beae0d18e3c9a4a076949eb901ba1eb3171650847",
+  "Cy": "7dae68d775dfc5dba1535cea968f01489b41b3969a1d170fa05c2984c64c9a8e"
+ },
+ "media": [
+  {
+   "path": "/tmp/gf-reh/media/ana/films/exp.mp4",
+   "size": 47081635,
+   "blake3": "2e7313364c8d5a002a928c8801ffa462a8a28d38de9b1bd320e58abd5b3bce9c"
+  },
+  {
+   "path": "/tmp/gf-reh/media/ana/films/exp.mkv",
+   "size": 47020143,
+   "blake3": "c9e0d4ec4b3d108e9939cda586f6e49e5e094bbe02c7f7c92247a6d1fce6d175"
+  },
+  {
+   "path": "/tmp/gf-reh/media/ana/beside.bin",
+   "size": 1048576,
+   "blake3": "70f292481bf881e6695fedc439ca0bc79edea01d4b701e5077aaf9671bbbaa1e"
+  }
+ ],
+ "jellyfin_version": "12.0.0"
+}
