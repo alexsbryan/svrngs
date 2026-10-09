@@ -429,15 +429,27 @@ fn film(path: &Path) -> u64 {
 }
 
 /// A lent page: `html` for every request.
-async fn page_origin(html: String) -> std::net::SocketAddr {
+async fn page_origin(html: &'static str) -> std::net::SocketAddr {
+    kept_page(html).await.0
+}
+
+/// A lent page, `html` for every request, each request's head kept.
+async fn kept_page(html: &'static str) -> (std::net::SocketAddr, KeptHeads) {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
+    let heads = KeptHeads::default();
+    let kept = heads.clone();
     tokio::spawn(async move {
         while let Ok((mut sock, _)) = listener.accept().await {
-            let html = html.clone();
+            let kept = kept.clone();
             tokio::spawn(async move {
                 let mut head = [0u8; 8192];
-                let _ = tokio::io::AsyncReadExt::read(&mut sock, &mut head).await;
+                let n = tokio::io::AsyncReadExt::read(&mut sock, &mut head)
+                    .await
+                    .unwrap_or(0);
+                kept.lock()
+                    .unwrap()
+                    .push(String::from_utf8_lossy(&head[..n]).into_owned());
                 let answer = format!(
                     "HTTP/1.1 200 OK\r\ncontent-type: text/html; charset=utf-8\r\n\
                      content-length: {}\r\nconnection: close\r\n\r\n{html}",
@@ -447,8 +459,10 @@ async fn page_origin(html: String) -> std::net::SocketAddr {
             });
         }
     });
-    addr
+    (addr, heads)
 }
+
+type KeptHeads = std::sync::Arc<std::sync::Mutex<Vec<String>>>;
 
 /// A lent page and its film at one origin (u5-2: each lend an origin of
 /// its own, as a lent app serves its pages and its media): `/` answered by
@@ -612,7 +626,7 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
     let (film_origin, film_heads) = origins::kept_range_origin(mp4, size).await;
     let html = "<!doctype html><title>a page</title>\
                 <video src=\"title.mp4\" playsinline preload=\"auto\"></video>";
-    let page = one_origin(page_origin(html.to_string()).await, film_origin).await;
+    let page = one_origin(page_origin(html).await, film_origin).await;
     lend_reading(ada_dir.path(), "page", page.port(), &["k"]);
     const OTHER: u64 = 16 * MIB;
     let file = cy_dir.path().join("title.bin");
@@ -801,7 +815,7 @@ async fn a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_ha
     let (film_origin, film_heads) = origins::kept_range_origin(mp4, size).await;
     let html = "<!doctype html><title>a page</title>\
                 <video src=\"title.mp4\" playsinline preload=\"auto\"></video>";
-    let page = one_origin(page_origin(html.to_string()).await, film_origin).await;
+    let page = one_origin(page_origin(html).await, film_origin).await;
     lend(dir.path(), "page", page.port());
 
     let seen = drive(
@@ -864,37 +878,6 @@ async fn a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_ha
     drop(ada);
 }
 
-/// A lent page, `html` for every request, each request's head kept.
-async fn kept_page(html: &'static str) -> (std::net::SocketAddr, KeptHeads) {
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let addr = listener.local_addr().unwrap();
-    let heads = KeptHeads::default();
-    let kept = heads.clone();
-    tokio::spawn(async move {
-        while let Ok((mut sock, _)) = listener.accept().await {
-            let kept = kept.clone();
-            tokio::spawn(async move {
-                let mut head = [0u8; 8192];
-                let n = tokio::io::AsyncReadExt::read(&mut sock, &mut head)
-                    .await
-                    .unwrap_or(0);
-                kept.lock()
-                    .unwrap()
-                    .push(String::from_utf8_lossy(&head[..n]).into_owned());
-                let answer = format!(
-                    "HTTP/1.1 200 OK\r\ncontent-type: text/html; charset=utf-8\r\n\
-                     content-length: {}\r\nconnection: close\r\n\r\n{html}",
-                    html.len()
-                );
-                let _ = sock.write_all(answer.as_bytes()).await;
-            });
-        }
-    });
-    (addr, heads)
-}
-
-type KeptHeads = std::sync::Arc<std::sync::Mutex<Vec<String>>>;
-
 in_both_engines!(
     /// A lent page told the lends it reads, and one opened at a path (mnp-2;
     /// DESIGN §3, "Lent apps", call 6). Ada lends a page reading kind `k`,
@@ -930,7 +913,7 @@ async fn a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path(engine: 
         on_behalf_of: None,
     };
     ada.rail().commit(NS, &dee).unwrap().unwrap();
-    let page = page_origin("<!doctype html><title>ada's page</title>".to_string()).await;
+    let page = page_origin("<!doctype html><title>ada's page</title>").await;
     lend_reading(ada_dir.path(), "page", page.port(), &["k"]);
     let (shelf, heads) = kept_page("<!doctype html><title>cy's shelf</title>").await;
     lend(cy_dir.path(), "shelf", shelf.port());
