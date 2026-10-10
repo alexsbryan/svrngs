@@ -4459,3 +4459,11 @@ one line early, I1).
 | I9 | 6, 7 | `code dry-report` near tier | Still present: each new 0.8 cluster but #108's is a function and its neighbour. |
 | I19 | 6 | dry-report, `tests` scopes | Still present, and said: "could-not-judge"; the window pass found #31's growth. |
 | I24 | 6, 7 | `code dry-report` exact tier | The same binary as main's sup audit's plant, which it missed; its zeros in Rust are weak evidence. The window pass ran over every file. #108 was found by reading; the 0.8 tier paired it after. |
+
+The row's check: `scripts/check.sh` at b764f8a, tree clean, all 14 steps
+passed (principles pinned through app laws; the ceiling canary 0.0331 s
+of processor against 0.1 s; in the conformance table wildcard's WebKit
+seeks back to back "failed, a rate" once, and in the rate's table
+computer/bo straight at the canary 5738 ms and wildcard/sam through the
+lend 23566 ms "failed", none failing its step, u5-11), exit 0
+(/tmp/gfaudit1/check.out).
