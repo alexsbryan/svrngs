@@ -34,3 +34,32 @@ pub fn never_answers() -> (std::net::UdpSocket, Vec<SocketAddr>) {
     let at = socket.local_addr().unwrap();
     (socket, vec![at])
 }
+
+/// A bridge on this computer's loopback to `to`'s door on `alpn`,
+/// dialling as `key`: a member's, or a pass holder's.
+#[allow(
+    dead_code,
+    reason = "each test binary compiles this file; only some bridge to a door"
+)]
+pub async fn bridge_as(
+    key: &svrngs_node::SigningKey,
+    to: &svrngs_node::node::Node,
+    alpn: svrngs_core::alpn::Alpn,
+) -> svrngs_node::iroh::HttpBridge {
+    use svrngs_node::iroh::{
+        ring_crypto_provider, EndpointAddr, EndpointBuilder, HttpBridge, SecretKey,
+    };
+    let dialling = EndpointBuilder::empty()
+        .crypto_provider(ring_crypto_provider())
+        .secret_key(SecretKey::from_bytes(&key.to_bytes()))
+        .bind()
+        .await
+        .unwrap();
+    let mut target = EndpointAddr::new(to.endpoint().id());
+    for sock in loopback_sockets(to.endpoint()) {
+        target = target.with_ip_addr(sock);
+    }
+    HttpBridge::spawn_preferring(dialling, target, alpn.bytes(), None)
+        .await
+        .unwrap()
+}

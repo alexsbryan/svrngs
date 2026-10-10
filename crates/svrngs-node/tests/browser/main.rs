@@ -18,6 +18,9 @@
 #[allow(dead_code)]
 #[path = "../door/origins.rs"]
 mod origins;
+// The bridge to a door as a pass holder, the door's tests' own.
+#[path = "../common/mod.rs"]
+mod common;
 // The page built, and a relay on 127.0.0.1: shared with the command's
 // joining test (crates/svrngs/tests/join_page.rs).
 #[macro_use]
@@ -26,6 +29,7 @@ mod harness;
 use std::path::Path;
 use std::time::Duration;
 
+use common::bridge_as;
 use harness::{relay, relay_url, repo, site, Engine};
 use iroh_relay::server::Server;
 use serde_json::{json, Value};
@@ -1117,7 +1121,7 @@ async fn a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped(eng
         panic!("the origin keeps the pass and its holder: {seen:#}");
     };
     let holder = SigningKey::from_bytes(&holder.try_into().expect("a key is 32 bytes"));
-    let door = holders_bridge(&holder, &cy).await;
+    let door = bridge_as(&holder, &cy, svrngs_core::alpn::Alpn::Lend).await;
     let at = door.local_addr();
     let asked = |head: String| async move {
         let mut sock = tokio::net::TcpStream::connect(at).await.unwrap();
@@ -1148,30 +1152,4 @@ async fn a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped(eng
         "nothing kept of a pass's yes: {after}"
     );
     drop((ada, cy, door));
-}
-
-/// A bridge to `to`'s door on the pass holders' protocol, as `key`, dialled
-/// at its addresses on this computer, with no relay.
-async fn holders_bridge(key: &SigningKey, to: &Node) -> svrngs_node::iroh::HttpBridge {
-    use svrngs_node::iroh::{
-        ring_crypto_provider, EndpointAddr, EndpointBuilder, HttpBridge, SecretKey,
-    };
-    let dialling = EndpointBuilder::empty()
-        .crypto_provider(ring_crypto_provider())
-        .secret_key(SecretKey::from_bytes(&key.to_bytes()))
-        .bind()
-        .await
-        .unwrap();
-    let mut target = EndpointAddr::new(to.endpoint().id());
-    for sock in to.endpoint().addr().ip_addrs() {
-        target = target.with_ip_addr(*sock);
-    }
-    HttpBridge::spawn_preferring(
-        dialling,
-        target,
-        svrngs_core::alpn::Alpn::Lend.bytes(),
-        None,
-    )
-    .await
-    .unwrap()
 }

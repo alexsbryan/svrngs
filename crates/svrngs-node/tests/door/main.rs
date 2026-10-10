@@ -25,7 +25,7 @@ mod sign_in;
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use common::loopback_sockets;
+use common::{bridge_as, loopback_sockets};
 use sha2::{Digest, Sha256};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
@@ -62,31 +62,6 @@ async fn start(seed: u8, dir: &std::path::Path) -> Node {
     )
     .await
     .expect("a node starts")
-}
-
-/// A bridge on this computer's loopback to `to`'s door on `alpn`,
-/// dialling as `key`: a member's, or a pass holder's.
-async fn bridge_as(
-    key: &SigningKey,
-    to: &Node,
-    alpn: svrngs_core::alpn::Alpn,
-) -> svrngs_node::iroh::HttpBridge {
-    use svrngs_node::iroh::{
-        ring_crypto_provider, EndpointAddr, EndpointBuilder, HttpBridge, SecretKey,
-    };
-    let dialling = EndpointBuilder::empty()
-        .crypto_provider(ring_crypto_provider())
-        .secret_key(SecretKey::from_bytes(&key.to_bytes()))
-        .bind()
-        .await
-        .unwrap();
-    let mut target = EndpointAddr::new(to.endpoint().id());
-    for sock in loopback_sockets(to.endpoint()) {
-        target = target.with_ip_addr(sock);
-    }
-    HttpBridge::spawn_preferring(dialling, target, alpn.bytes(), None)
-        .await
-        .unwrap()
 }
 
 /// A lender and a member of its group, and the member's bridge to it.
