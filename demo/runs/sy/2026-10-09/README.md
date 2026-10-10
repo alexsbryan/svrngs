@@ -251,3 +251,104 @@ Dee's probe and svrngs's own tests are tests, apart. Group folders' spike
 ran 52% over its estimate (430 to 655, its §7); the same miss here is about
 730, past 587. A count that would pass either budget stops for the operator
 (fence 5).
+
+## 7. The run of 20:33, against the predictions
+
+`python3 demo/runs/sy/2026-10-09/run.py` at `ea0f3a5`, exit 0 after 16m08s;
+its data in `run/` (`events.jsonl`, `summary.json`, `dee*.out`, each node's
+log). The host was loaded: load averages 40.38 43.17 63.64 at its start
+(`events.jsonl:1`). The verdict, read for the bars' spirit, is sy-2's; this
+section gives the numbers and where each is. A partial run of 20:28, kept in
+`partial-2028/`, is not the bars' data (its commit `ea0f3a5` says why).
+
+### The plants, each watched failing with its guard out
+
+| Plant | Guard out | What the run saw (`summary.json`) |
+|---|---|---|
+| S1 | `deaf`: Ana's scan out | Ana's add reached neither Ben nor Cy in 10 s: `add_s` null, failed |
+| S2 | `own-only`: Ben serves only what he wrote | Cy did not hold Ana's file in 10 s, from no one: `cy_s` null, `from` [], failed |
+| S3 | `later-wins`: only a path's first head placed | after Ben's start all three held Ana's edit alone (`e59a14e6…`), Ben's (`05513869…`) in none: failed |
+| S4 | `open-gate`: any dialer admitted | Dee's member connection open after 5 s; the bytes given whole, `payload` 65,536; the scan found 2 hits in Dee's data dir, `asked/blobs.db` and `asked/data/e0049707….data`: failed |
+
+S4's plant shows a second refusal, not the gate's: with the gate out, Dee's
+ask for the record was answered 403, 163 bytes, "e5b4aa9d… is not served to
+72518b4c… here" (`/internal/ring/sync`, `ring_routes.rs:98`). The record's
+route refuses a non-member on its own; the file's bytes have no such second
+refusal, so the gate is the one that keeps them.
+
+### The bars
+
+| Bar | Predicted | Run | Number |
+|---|---|---|---|
+| S1 both ways | pass, about 3 s each | **passed** | Ana's add at Ben and Cy 1.06 s; Ben's edit at Ana and Cy 1.63 s; Cy's delete gone at Ana and Ben 1.36 s (bound 10 s) |
+| S2 its author asleep | pass, about 6 s | **passed** | Cy held `s2.bin` byte-identical 4.47 s after her command, from Ben (bound 10 s) |
+| S3 conflicts kept | pass | **passed** | 17.0 s after Ben's start (bound 30 s), all three directories: `s3.txt` Ana's edit `36f7c2fd…`, `s3 (conflict Ben).txt` Ben's `eb066e59…` |
+| S4 members only | pass | **passed** | Dee refused on both protocols, 0 hits in Dee's data dir, 0 of the planted file anywhere |
+
+- **S1** (`events.jsonl`, phase S1): each change within 2 s, under the 3 s
+  predicted.
+- **S2**: Cy asked Ana first, the writer, and passed her over at
+  `ANSWER_WITHIN` — "a holder gave nothing of the range … did not answer
+  within 3s" (`run/cy.log:76`) — then fetched it whole from Ben, verified,
+  in 33 ms (`cy.log:77`, holder `f0e1461d…`, Ben's key, `events.jsonl`'s
+  `keys`). The round did not wait on Ana's dial (the risk named).
+- **S3**: Ben's start sent his edit with its base (`run/ben.log:155`, "a
+  change sent"), then wrote Ana's under the name and his own beside it
+  (`ben.log:159-160`, `beside=true`). Which is under the name is the key
+  order's: Ana's key `7c1ce9b3…` sorts before Ben's `f0e1461d…`. 17.0 s
+  against the bound of 30 s; the prediction gave no time.
+- **S4**: Dee's three answers (`run/dee.out`): the member connection
+  "closed by peer: not admitted (code 0)"; the record's ask, over that
+  protocol, failed under it, `IncompleteMessage`, its own words not naming
+  the refusal; the bytes "connection lost … closed by peer: not admitted
+  (code 0)". **The scan**: every file under Dee's data dir
+  (`/tmp/sy-run/dee`: `api`, `asked`, `blobs`) searched for `s4.bin`'s
+  BLAKE3 hex, its 32 bytes and its first 64 bytes: 0 hits; Ben's and Cy's
+  data dirs and directories and Dee's searched for the planted file's
+  marker: 0 hits (`beside_hits`), in the plant's run as in the bar's.
+
+### The measurements, no bar
+
+- **M1. 1,000 files of 4 KiB.** Predicted about 20 s. Ben and Cy held all
+  1,000 after **395.27 s**; Eve, joining later, after **242.24 s** from her
+  command. The time is the fetches, one file at a time: Ben wrote the
+  first at 03:36:20 and the last at 03:42:42 (`run/ben.log`, "written into
+  the directory", 0.38 s a file), Eve from 03:42:44 to 03:46:53
+  (`run/eve.log`, 0.25 s a file), on the loaded host. Index: Eve's journal
+  133,738 bytes once she held the folder, its longest line, an act of
+  Ana's changes, 80,300 bytes (Ana's scans took the 1,000 in two acts, seq
+  12 and 13 at Ben's log); one later change reached Eve in 7.1 s and moved
+  **1,166 bytes** of her journal, against about 700 predicted.
+- **M2. 1 MiB rewritten inside 100 MiB.** Predicted about 100 MiB each.
+  Ben and Cy each received **104,857,600 bytes** for the new version, a
+  hundred times the 1 MiB edit (`summary.json`, from each log's "fetched,
+  verified" lines for `2b41a956…`, 1 MiB ranges from Ana, e.g.
+  `ben.log:2596`). The first version reached both in 96.23 s, the edit in
+  74.34 s.
+
+### Seen, not asked
+
+A member's store gave nothing of a file its directory still held, three
+times: Ana's `s2-plant.bin` and `s2.bin` after her `kill -9`
+(`run/ana.log:13741`, `:13745`, `done=false payload=0`); and Cy's `s2.bin`
+at 03:46:47 (`run/cy.log:2481-2482`), 12 minutes after she fetched and
+verified it (`cy.log:77`), with only SIGTERM stops between
+(`events.jsonl`). Eve took it from Ben (`run/eve.log:2017`). The other
+`payload=0` answers in the logs are members asked for a file before they
+had fetched it themselves. Why a stopped node's store loses what it held
+is not instrumented by this run.
+
+### The lines, by `scripts/lean_check.py`'s rule, `396b0b6..HEAD`
+
+| Part | Estimated | Counted |
+|---|---|---|
+| the synced act and its layout, in svrngs-core (`synced.rs` 111, `lib.rs` 9, `admit.rs` 9, `membership.rs` 3) | about 90 | 132 |
+| the node's scan, write and apply, and what it keeps (`svrngs-node/src/synced.rs`) | about 170 | 180 |
+| the provider serving synced files, the split share and the plants (`folder.rs` 40, `node.rs` 4) | about 20 | 44 |
+| wiring: `share --folder --both-ways` (`cli.rs`) | about 20 | 7 |
+| the run's script, `run.py` | about 180 | 180 |
+| **total** | **about 480** | **543**, 13% over |
+
+`python3 scripts/lean_check.py`: 15,706 / 15,750, svrngs-core 2,873 /
+3,000. Dee's probe (`crates/svrngs-node/tests/sy_dee.rs`) and the tests are
+tests, apart.
