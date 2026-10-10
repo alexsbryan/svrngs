@@ -407,7 +407,7 @@ browser asked for the same bytes, and the holder sent them once.
    provider serves a hash to a dialer standing in any group held here
    (`crates/svrngs-node/src/node.rs:742`, `:758`), asking only whether a
    standing folder of hers names it, never whether it is shared where the
-   dialer stands (`folder.rs:218-223`). The run held one group
+   dialer stands (`folder.rs:218-224`). The run held one group
    (`run/steps.log`: `svrngs new Films`, two joins), where the two are one.
    Candidate 2.
 
@@ -436,9 +436,9 @@ unchanged at `dfd00c3`), and what production keeps, changes or drops of it:
 
 | Part | Lines | Production |
 |---|---|---|
-| the folder's act, in svrngs-core | 128 | keeps; the act gains its level (2). `Admission::holders`, 9 (`crates/svrngs-core/src/folder.rs:131-139`), is read only by its test while the endpoint decides holders itself across groups (`crates/svrngs-node/src/folder.rs:403-407`): one decider (2) |
-| serving by iroh-blobs, and refusing the rest | 220 | keeps; the provider's gate asks where the dialer stands (2); the port is kept for the stubs (1); the plants' switch, `SVRNGS_GF_PLANT`, 21 (`folder.rs:45-56`, `:76`, `:97-102`, `:117`, `:157-160`, `:254-258`), drops — each plant stays a test's red run, as svrngs's are |
-| the verified fetch and the local endpoint | 221 | keeps; who the endpoint answers changes (3); the BLAKE3 of each answer, the run's instrument, 3 (`Served.digest`, `:433`, `:459`, `:506`), drops |
+| the folder's act, in svrngs-core | 128 | keeps; the act gains its level (2). `Admission::holders`, 9 (`crates/svrngs-core/src/folder.rs:103-111`), is read only by its test while the endpoint decides holders itself across groups (`crates/svrngs-node/src/folder.rs:404-408`): one decider (2) |
+| serving by iroh-blobs, and refusing the rest | 220 | keeps; the provider's gate asks where the dialer stands (2); the port is kept for the stubs (1); the plants' switch, `SVRNGS_GF_PLANT`, 21 (`folder.rs:45-56`, `:76`, `:97-102`, `:117`, `:157-160`, `:255-259`), drops — each plant stays a test's red run, as svrngs's are |
+| the verified fetch and the local endpoint | 221 | keeps; who the endpoint answers changes (3); the BLAKE3 of each answer, the run's instrument, 3 (`Served.digest`, `:434`, `:460`, `:507`), drops |
 | wiring | 18 | keeps |
 | `share --folder` and its stop | 64 | keeps; names the level (2) |
 | the run's script, in `demo/` | 4 | the run's |
@@ -505,7 +505,7 @@ Not candidates, said so:
 
 - **The person told why a film does not start** (§8's second part):
   Jellyfin's to show; svrngs names its refusal (`x-svrngs-refused:
-  no-holder`, `folder.rs:423`). Waits for a person in the group's run who
+  no-holder`, `folder.rs:424`). Waits for a person in the group's run who
   presses play on a film no holder gives and is told nothing.
 - **The others' lists after a stop**, 8.2 and 68.3 s: the holder's refusal
   is what keeps the bytes (B7). Waits for a stopped film listed and failing
@@ -515,19 +515,21 @@ Not candidates, said so:
   after the computer (DESIGN §10, 2026-10-09, a computer first), with the
   phone replica spike (DESIGN §9, "a native phone app").
 - **A folder of many files**: one act names every file again at each
-  change (`ShareFolder`, `crates/svrngs-core/src/folder.rs:66-84`); the run
+  change (`ShareFolder`, `crates/svrngs-core/src/folder.rs:39-56`); the run
   had two. Waits for a folder whose act's size is measured too large to
   write at each change.
 - **Real links and a rate**: the operator's run with a group in the wild
   (DESIGN §9's row), after these rows.
 
-**The budget.** Production keeps about 620 of the spike's 655: the plants'
-21, the digest's 3 and the run's script's 4 out, and `holders`' 9 folded
-into the one decider. It adds, by the same rule, about 25 for the level
-(the enum, the act, the flag, the write), 15 for the provider's gate, 10
-for the kept port, 40 for the endpoint's mark and 30 for the store's drop:
-about 740, svrngs-core's part about 140 (2,763 of 3,000 on this branch,
-`python3 scripts/lean_check.py`). gf-0's estimate ran 52% short (430 to
-655, §7); the same miss on the 120 added makes about 800. That is the raise
+**The budget.** Production keeps about 600 of the spike's 634 (655 until
+the audit after gf-2 named a file's hash by the core's `ContentHash`, 21
+fewer, `ralph/REVIEW_FINDINGS.md` #108): the plants' 21, the digest's 3
+and the run's script's 4 out, and `holders`' 9 folded into the one
+decider. It adds, by the same rule, about 25 for the level (the enum, the
+act, the flag, the write), 15 for the provider's gate, 10 for the kept
+port, 40 for the endpoint's mark and 30 for the store's drop: about 720,
+svrngs-core's part about 120 (2,741 of 3,000 on this branch, `python3
+scripts/lean_check.py`). gf-0's estimate ran 52% short (430 to 655, §7);
+the same miss on the 120 added makes about 780. That is the raise
 folders need over main's count when they merge — the operator's, with the
 merge (DESIGN §5; the queue's fence 6).

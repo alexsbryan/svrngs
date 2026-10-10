@@ -10,40 +10,10 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::convert::Infallible;
 
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
 use crate::command::{Command, Reads};
-use crate::{Admission, Person};
-
-/// A blob's BLAKE3 hash, as iroh-blobs names it; spelled as lowercase hex.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct FileHash(pub [u8; 32]);
-
-impl FileHash {
-    /// The hash 64 hex digits spell, or `None`.
-    pub fn parse(hex: &str) -> Option<Self> {
-        let mut out = [0u8; 32];
-        hex::decode_to_slice(hex, &mut out).ok()?;
-        Some(Self(out))
-    }
-
-    pub fn hex(&self) -> String {
-        hex::encode(self.0)
-    }
-}
-
-impl Serialize for FileHash {
-    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        s.serialize_str(&self.hex())
-    }
-}
-
-impl<'de> Deserialize<'de> for FileHash {
-    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
-        let s = String::deserialize(d)?;
-        Self::parse(&s).ok_or_else(|| serde::de::Error::custom("a hash is 64 hex digits"))
-    }
-}
+use crate::{Admission, ContentHash, Person};
 
 /// One file of a shared folder.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -51,7 +21,9 @@ pub struct SharedFile {
     /// Where it sits under the folder: a name to show, never a path to open.
     pub path: String,
     pub size: u64,
-    pub hash: FileHash,
+    /// The BLAKE3 hash of its bytes, which is the name iroh-blobs gives a
+    /// raw blob.
+    pub hash: ContentHash,
 }
 
 /// A folder as the record stands: whose, its name, its files.
@@ -128,7 +100,7 @@ impl Admission {
     }
 
     /// The keys whose standing folders name `hash`, in the record's order.
-    pub fn holders(&self, hash: &FileHash) -> Vec<String> {
+    pub fn holders(&self, hash: &ContentHash) -> Vec<String> {
         let mut keys: Vec<String> = Vec::new();
         for f in self.folders() {
             if f.files.iter().any(|x| &x.hash == hash) && !keys.contains(&f.key) {

@@ -31,7 +31,7 @@ use iroh_blobs::provider::events::{
 };
 use iroh_blobs::store::fs::FsStore;
 use iroh_blobs::{BlobFormat, BlobsProtocol, Hash};
-use svrngs_core::{FileHash, ShareFolder, SharedFile, SharedFolder};
+use svrngs_core::{ContentHash, ShareFolder, SharedFile, SharedFolder};
 use tokio::sync::{watch, Notify};
 
 use crate::iroh::{actor_key, Alpn, Endpoint};
@@ -176,7 +176,7 @@ impl Folders {
                     files.push(SharedFile {
                         path: rel.into_owned(),
                         size: meta.len(),
-                        hash: FileHash(*tag.hash.as_bytes()),
+                        hash: ContentHash::from_bytes(tag.hash.into()),
                     });
                 }
             }
@@ -216,7 +216,8 @@ impl Folders {
     }
 
     /// Whether a standing folder of this computer's names `hash`.
-    fn shares(&self, hash: &FileHash) -> bool {
+    fn shares(&self, hash: Hash) -> bool {
+        let hash = &ContentHash::from_bytes(hash.into());
         self.all()
             .iter()
             .any(|f| f.key == self.actor && f.files.iter().any(|x| &x.hash == hash))
@@ -336,7 +337,7 @@ fn provider(store: &Store, folders: Folders) -> BlobsProtocol {
                 format!("{:?}", asked.inner.request.ranges),
             );
             let (conn, request) = (asked.inner.connection_id, asked.inner.request_id);
-            if folders.plant != Plant::Unchecked && !folders.shares(&FileHash(*hash.as_bytes())) {
+            if folders.plant != Plant::Unchecked && !folders.shares(hash) {
                 tracing::info!(target: "folder", %hash, conn, request, ranges, "folder: refused — no standing folder of this computer's names the hash");
                 asked.tx.send(Err(AbortReason::Permission)).await.ok();
                 continue;
@@ -381,7 +382,7 @@ async fn bytes(State(f): State<Folders>, uri: Uri, headers: HeaderMap) -> Respon
     };
     let (ua, asked) = (said(header::USER_AGENT), said(header::RANGE));
     let path = uri.path().trim_start_matches('/');
-    let named = FileHash::parse(path.split('/').next().unwrap_or(""));
+    let named = ContentHash::from_hex(path.split('/').next().unwrap_or(""));
     let folders = f.all();
     let file = named.and_then(|h| {
         folders
@@ -413,7 +414,7 @@ async fn bytes(State(f): State<Folders>, uri: Uri, headers: HeaderMap) -> Respon
         )
             .into_response();
     };
-    let hash = Hash::from_bytes(file.hash.0);
+    let hash = Hash::from_bytes(*file.hash.as_bytes());
     let first = (start + PIECE).min(end);
     if let Err(why) = f.hold(hash, &holders, start, first).await {
         tracing::warn!(target: "folder", %hash, start, end = first, %ua, ?why, "folder: refused — no holder gave the range, verified");

@@ -8,7 +8,7 @@ fn file(path: &str, fill: u8) -> SharedFile {
     SharedFile {
         path: path.into(),
         size: 47_000_000,
-        hash: FileHash([fill; 32]),
+        hash: ContentHash::from_bytes([fill; 32]),
     }
 }
 
@@ -56,20 +56,22 @@ fn two_people_holding_one_hash_are_two_holders_of_it() {
         1_000,
         [folder("copy", vec![file("same.mp4", 7)])],
     ));
-    let holders = admitted(&ops).holders(&FileHash([7; 32]));
+    let holders = admitted(&ops).holders(&ContentHash::from_bytes([7; 32]));
     assert_eq!(holders, vec![actor_of(&key(1)), actor_of(&key(3))]);
-    assert!(admitted(&ops).holders(&FileHash([9; 32])).is_empty());
+    assert!(admitted(&ops)
+        .holders(&ContentHash::from_bytes([9; 32]))
+        .is_empty());
 }
 
 #[test]
 fn a_hash_is_spelled_as_hex_and_nothing_else_parses() {
-    let h = FileHash([0xab; 32]);
+    let h = ContentHash::from_bytes([0xab; 32]);
     let json = serde_json::to_string(&h).unwrap();
     assert_eq!(json, format!("\"{}\"", "ab".repeat(32)));
-    assert_eq!(serde_json::from_str::<FileHash>(&json).unwrap(), h);
-    assert!(serde_json::from_str::<FileHash>("\"abcd\"").is_err());
-    assert_eq!(FileHash::parse(&"ab".repeat(32)), Some(h));
-    assert_eq!(FileHash::parse("zz"), None);
+    assert_eq!(serde_json::from_str::<ContentHash>(&json).unwrap(), h);
+    assert!(serde_json::from_str::<ContentHash>("\"abcd\"").is_err());
+    assert_eq!(ContentHash::from_hex(&"ab".repeat(32)), Some(h));
+    assert_eq!(ContentHash::from_hex("zz"), None);
 }
 
 #[test]
