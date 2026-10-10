@@ -78,5 +78,5 @@ fn a_hash_is_spelled_as_hex_and_nothing_else_parses() {
 fn a_folder_ships_at_its_own_line_version() {
     let op = &run(&key(1), 1_000, [folder("films", vec![file("a.mp4", 7)])])[0];
     assert_eq!(op.kind.line_version(), FOLDER_LINE_VERSION);
-    assert_eq!(SignedOp::UNDERSTANDS, FOLDER_LINE_VERSION);
+    const { assert!(SignedOp::UNDERSTANDS >= FOLDER_LINE_VERSION) };
 }

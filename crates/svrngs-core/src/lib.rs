@@ -101,6 +101,7 @@ pub mod relay;
 pub mod seed;
 mod sig;
 mod sync;
+mod synced;
 mod view;
 
 use alloc::collections::BTreeMap;
@@ -130,6 +131,7 @@ pub use sig::{
 pub use sync::{
     digest, ops_missing_from, ops_missing_from_within, Compaction, DigestFold, Floors, NO_BUDGET,
 };
+pub use synced::{Change, Entry, Placed, SyncFolder};
 pub use view::{Digest, View, DIGEST_V};
 
 /// The journal envelope, re-exported so a consumer of the rail names ONE
@@ -440,6 +442,13 @@ pub enum RailAct {
         name: String,
         files: Vec<SharedFile>,
     },
+    /// A member says: these files of my folder `folder`, synced both ways,
+    /// changed, each naming the entry it replaces (sy-1, [`synced`]).
+    /// Carries no [`Payload`] and never reaches an app reducer.
+    Synced {
+        folder: String,
+        changes: Vec<Change>,
+    },
 }
 
 /// What a redeeming [`RailAct::Admit`] carries: the [`RailAct::Invite`] it
@@ -583,7 +592,8 @@ impl RailAct {
             | Self::Admit { .. }
             | Self::Remove { .. }
             | Self::Invite { .. }
-            | Self::Folder { .. } => None,
+            | Self::Folder { .. }
+            | Self::Synced { .. } => None,
         }
     }
 }
@@ -681,13 +691,16 @@ pub const BROWSER_LINE_VERSION: u32 = 4;
 /// [`BROWSER_LINE_VERSION`] names a [`RailAct::Folder`] `NewerVersionLine`.
 pub const FOLDER_LINE_VERSION: u32 = 5;
 
+/// The line format version a synced folder's change ships at (sy-1).
+pub const SYNCED_LINE_VERSION: u32 = 6;
+
 impl Journaled for SignedOp {
     const FILE: &'static str = "ring_oplog.jsonl";
     const ID_PREFIX: &'static str = "ring";
     const LABEL: &'static str = "ring_rail";
     /// This build reads the membership cohort's, the link's and a
     /// browser's redemption's lines too (see [`Self::line_version`]).
-    const UNDERSTANDS: u32 = FOLDER_LINE_VERSION;
+    const UNDERSTANDS: u32 = SYNCED_LINE_VERSION;
     /// The membership acts — [`RailAct::Admit`] and [`RailAct::Remove`] —
     /// ship at the bumped line version and the original three keep the bytes
     /// they always had, so an un-upgraded node names exactly the acts it
@@ -710,6 +723,7 @@ impl Journaled for SignedOp {
             } => LINK_LINE_VERSION,
             RailAct::Admit { .. } | RailAct::Remove { .. } => MEMBERSHIP_LINE_VERSION,
             RailAct::Folder { .. } => FOLDER_LINE_VERSION,
+            RailAct::Synced { .. } => SYNCED_LINE_VERSION,
             _ => Self::VERSION,
         }
     }
