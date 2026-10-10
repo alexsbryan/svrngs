@@ -1,0 +1,21 @@
+# svrngs lean — the budget counts product only, test code out of counted files, what nothing reaches cut, the same code written once; then scoped use's three follow-ups (docs/DESIGN.md §5, §8 "Then"; operator, 2026-10-10). Launch, from anywhere:
+#
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py supervise --workdir ~/dev/svrngs \
+#     --queue lean --install-launchd -- python3 ~/dev/commonwealth-ai/scripts/ralph.py \
+#     run --workdir ~/dev/svrngs --queue lean --max-stall 3
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py start --workdir ~/dev/svrngs --queue lean
+#
+# The seat's survey: ralph/next/lean/SURVEY.md. Runs beside the queue syp on
+# the branch `folders` (~/dev/svrngs-folders), which merges main in. Budget
+# 15,350, unchanged.
+label = "svrngs-lean"
+session_timeout = 5400
+audit_every = 4
+worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
+settings = "ralph/claude-settings.json"
+
+[models]
+worker = "claude-opus-5-5"
+review = "claude-opus-5-5"
+resolve = "claude-opus-5-5"
+variant = "high"

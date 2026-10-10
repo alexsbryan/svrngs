@@ -1598,7 +1598,8 @@ on a computer first (landed, sup-4: the taste's enforcing 46 lines to 11,
 Tonight's Picks' plumbing 39 to 16, every bar passed in its spirit on a
 computer from its home page in Chromium and WebKit and on the phones, the
 unasked yes refused by svrngs on a computer, `demo/runs/sup/2026-10-10/`;
-its three follow-ups there, the operator's to queue: svrngs's answers at
+its three follow-ups there, queued after the lean rows below (operator,
+2026-10-10; `ralph/next/lean/`): svrngs's answers at
 a lend's origin readable by the page that reads it, one wording of
 svrngs's question, a stop address beside `ask`); after a row that keeps an
 asleep computer from holding anyone's answer
@@ -1607,7 +1608,11 @@ asleep computer from holding anyone's answer
 alone reaches on any device of theirs, waits on another device for the
 same person (§9; `rings/current/ONE_PERSON_MANY_DEVICES.md`, deferred);
 group folders (§3, call 7 of
-"Lent apps"; §9); the phone replica spike, iOS first (§9, "a
+"Lent apps"; §9), synced onto each member's disk and not streamed
+(operator, 2026-10-10; §10), made production on the branch `folders`
+(its queue `syp`) once the lean rows have cut what the product does not
+carry — recorded runs' drivers, tests in counted files, code nothing
+reaches, code written twice (`ralph/next/lean/SURVEY.md`); the phone replica spike, iOS first (§9, "a
 native phone app"), after folders since they name the bytes a phone would
 hold; then the middleware's P1 follow-ups as one row (operator, 2026-10-08;
 `demo/runs/mw/2026-10-08/README.md` §7, items 5 and 7; its item 1,
@@ -1654,6 +1659,21 @@ by the north star's tests.
 | the floor: every app under `/l/<label>/` of one address apart from the page's, on any static host, the link carrying that address after its token (a second address given to `svrngs new`, u5-2; dropped by u6-00). Its cost was one origin for every app, so a lent page could read what another kept and use another's pass while it lasted, and its every app lost its root: the catalogue run lent five self-hosted apps on it in Chromium and WebKit and none got past its sign-in, each asking for `/`-absolute paths the floor's host answered 404, and Paperless's post refused by its own origin check (`demo/runs/catalogue/2026-10-05/RESULTS.md`, "The floor"; `003e0d5`) | a group whose host answers no name nobody made asks for an app that keeps to relative paths, counted |
 
 ## 10. Decisions
+
+By the operator, 2026-10-10, before the synced folder made production
+(`ralph/next/lean/SURVEY.md`):
+- "Queue them increase the budget, but let's also see if there are
+  opportunities to economize": the lean rows cut what the product does not
+  carry; main's cap stays 15,350, and the branch `folders`' may rise to
+  16,500 at most while it merges main in (syp-3), coming back to main's
+  with the last merge.
+- the budget counts the product: `demo/runs/` apart, as `apps/` and tests
+  are, a recorded run's driver kept as it ran (lean-1, §5).
+- a group's folder is synced onto its members' disks, not streamed: group
+  folders' loopback endpoint and its one-way share are dropped on the branch
+  `folders` (syp-1), and watching a member's films stays their lent
+  Jellyfin's. A folder fetched on open, by verified range, waits for a member
+  whose disk cannot hold the group's folder (§9).
 
 By the operator, 2026-10-09, before scoped use made production:
 - a computer is the main way in, and a phone its teaser and onboarding,
