@@ -165,7 +165,7 @@ EOF
   # localhost, where every name under it answers ---------------------------
   if [ -z "${PAGE:-}" ]; then
     "$REPO/scripts/build-web.sh" --out "$R/site" >"$R/build.log"
-    node "$REPO/demo/runs/u4/2026-10-05/drive.mjs" serve "$R/site" >"$R/site.out" 2>&1 & echo $! >"$R/site.pid"
+    node "$REPO/web/tests/serve.mjs" "$R/site" >"$R/site.out" 2>&1 & echo $! >"$R/site.pid"
     PAGE="http://localhost:$(port_of "$R/site.out")/"
   fi
   say "the page: $PAGE"
