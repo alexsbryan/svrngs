@@ -6,7 +6,7 @@ are the compass; where they and this charter disagree, they win and the
 decision says so. The operator, 2026-10-10: "let's also see if there are
 opportunities to economize". Lines are cut here only where the product does
 not carry them; nothing a person or an app sees changes in a `lean-` row, and
-the `supf-` rows change only what sup-4's run asked.
+lean-4-once-and-follow-ups' parts (b) to (d), sup-4's follow-ups, change only what sup-4's run asked.
 
 **Decide:** row order, splitting and re-scoping a row that cannot execute;
 where a moved test or a helper lands; whether a test-only item moves into test
@@ -23,7 +23,7 @@ and keep going; a finding that keeps the spirit is a follow-up row, not a
 stop.
 
 **Leave for the operator** (write `NEEDS_HUMAN.md` and stop): a cut that
-changes what a person or an app sees, outside the `supf-` rows; raising the
+changes what a person or an app sees, outside lean-4-once-and-follow-ups' parts (b) to (d); raising the
 budget past 15,350, or svrngs-core's past 3,000; deleting a recorded run's
 file under `demo/runs/`; anything written in `~/dev/svrngs-folders`, where
 the queue syp runs on the branch `folders`; merging `folders` into main;
