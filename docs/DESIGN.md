@@ -1513,6 +1513,10 @@ exists, each a small app in `apps/` using only §3:
   beside the same seeks straight at a canary over the same link
   (`web/tests/control.mjs`) and the host's load, and `scripts/check.sh`
   counts every run's misses on this host (§9 has the trigger).
+  Chromium's stay a gate, but on a host whose load at the run's start is
+  past 3 a core (`BUSY`) a miss is could-not-judge, with that load, and
+  fails nothing; a pass is passed at any load, and `scripts/check.sh`
+  prints each could-not-judge line apart (chk-1; operator, 2026-10-10).
   Neither lend's cookie reaches the other's requests, Bo's door names
   Alex's key, no byte Alex receives holds either secret, a lent page finds
   no group whose key it could unseal, and a lent page's post to the record
@@ -1645,7 +1649,7 @@ by the north star's tests.
 | a person who only searches counted apart from one who watches: the door counts each on a lend for `WINDOW`, 30 s, after their last request (`crates/svrngs-node/src/door/limit.rs:17-19`), a search as a film — Movie Night's searcher was counted on both Jellyfins 26.3 and 26.5 s after one search and not at 36.2 and 36.4 s, the most at once 2, nobody refused (`demo/runs/mn/2026-10-08/doors.json`, `limit`) | a lend at its limit refuses someone while those it counts only searched, counted |
 | budgets on an owner's operation: how often an app may ask it, so asks cannot rebuild what it keeps back (`rings/current/ACL_AND_SCOPED_USE.md` §4, §6). Ana's taste ranks whatever films it is given, and ranked an app's two that sent her yes itself (`demo/runs/su/2026-10-09/verdicts.json`, "the unasked yes") | an operation's answers rebuild what its owner kept back, shown in a run, or an owner asks for a limit on one |
 | a live payload naming its sender | an app needs to know who offered a live payload, and cannot take it from the payload |
-| WebKit's closed-range seeking through a lend: its seeks back to back, taken in serial 64 KiB reads of each short part, a round trip each, missed 5 s in 1 of 8 tries after u5-11, where straight at the canary over the same link they missed in none (`demo/runs/u5/2026-10-06-seek-stall/`; §11 risk 4); a rate in `scripts/check.sh`, not a gate | Demo A's real-phone sessions miss the seek bar in Safari more often than WebKit straight at the server on the same link |
+| WebKit's closed-range seeking through a lend: its seeks back to back, taken in serial 64 KiB reads of each short part, a round trip each, missed 5 s in 1 of 8 tries after u5-11, where straight at the canary over the same link they missed in none (`demo/runs/u5/2026-10-06-seek-stall/`; §11 risk 4); a rate in `scripts/check.sh`, not a gate. And Chromium's on a loaded host: its seeks are a gate, but sup-4's check, sy-1's three on the branch `folders` and REVIEW-audit-sup-auto-2's each missed only them, at load averages of about 40-130 on this host's 12 cores, with nothing near them changed, and passed alone; since chk-1 a miss past 3 a core (`conformance.rs` `BUSY`) is could-not-judge, never passed (operator, 2026-10-10) | Demo A's real-phone sessions miss the seek bar in Safari more often than WebKit straight at the server on the same link; or Chromium's seeks are could-not-judge in more `scripts/check.sh` runs than they are judged, counted |
 | our own relay as the default: `iroh-relay` (Let's Encrypt built in) on a small VPS, the operator inclined to DigitalOcean, US West, at `relay.svrnme.sh` (TCP 80 and 443, UDP 7842), carried in every link's token so a phone never needs n0's; `svrngs new --relay <url>` for a group that runs its own; n0's terms for production use read first. Open then: whether ours also drops n0's address lookup, computers learning each other's relay from the group's record. Until then n0's public relays and lookup, `RelayConfig::default()` (`crates/svrngs-node/src/guest.rs:66-76`), nothing paid for (operator, 2026-10-05). Every byte a phone sends crosses a relay (a browser is relay-only), so a host's bandwidth price decides it | svrngs goes to production, or a group beyond the operator's uses it |
 | the floor: every app under `/l/<label>/` of one address apart from the page's, on any static host, the link carrying that address after its token (a second address given to `svrngs new`, u5-2; dropped by u6-00). Its cost was one origin for every app, so a lent page could read what another kept and use another's pass while it lasted, and its every app lost its root: the catalogue run lent five self-hosted apps on it in Chromium and WebKit and none got past its sign-in, each asking for `/`-absolute paths the floor's host answered 404, and Paperless's post refused by its own origin check (`demo/runs/catalogue/2026-10-05/RESULTS.md`, "The floor"; `003e0d5`) | a group whose host answers no name nobody made asks for an app that keeps to relative paths, counted |
 
@@ -1798,7 +1802,8 @@ By the operator, 2026-10-03:
    over the same link in none of 8 (1.9–4.2 s): through a lend WebKit
    answers each short part with serial 64 KiB reads, one round trip each.
    Chromium's played again there in 0.7–0.8 s (4.0–5.0 s before), a gate
-   in `scripts/check.sh`; WebKit's is a rate there, beside the same seeks
+   in `scripts/check.sh` save on a host past 3 a core's load, where a miss
+   is could-not-judge (chk-1); WebKit's is a rate there, beside the same seeks
    straight at the canary each run, and waits in §9.
 5. **Members find each other through iroh's address lookup**, n0's DNS by
    default, as upstream's (§8, U1's inventory): it maps a key to its relay,
