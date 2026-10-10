@@ -363,3 +363,184 @@ beyond them:
 - **T6: the round to nine.** P5 58.6-68.8%, P1 12.6-40.9%, and P4 —
   the act carried to nine members — 233 and 201 ms in two of the three
   (15.6%), against 11 ms to two.
+
+## 10. What makes it fast (part b)
+
+From §9's data alone. Each gain below is a measured phase's time and the
+part of it a fix removes; each line count is an estimate by
+`scripts/lean_check.py`'s rule (code, not blank, comment or test), at
+13,440 of 15,750 now (`python3 scripts/lean_check.py` at `be07f97`, the
+traces' 57 within it). No prototype was run: the host stood at load 22.76
+when this was written (`sysctl -n vm.loadavg`), past 18, so a prototype's
+number would be could-not-judge — each gain is a prediction, with what
+would falsify it.
+
+### The gaps, and what holds each
+
+| # | Target | Measured (§9) | Held by |
+|---|---|---|---|
+| T1 | 300 ms | 1,182 ms, failed | P5, the member's wait for its step, 91.7%; P1, the writer's, 6.3% here and up to a second between computers |
+| T2 | 10 s | 24.3 s, could-not-judge | the holder's record read once a get, 13.5 s of holder time over 2,000 gets, in one task; the fetches one at a time behind it (P5 87.3%) |
+| T3 | 100 MB/s | 11.8 MB/s, could-not-judge | P6 81.7%: 100 gets of a MiB, 5.14 s inside them and 3.69 s between them; inside each, about 27 MB/s after the first byte |
+| T4 | 2 MiB moved | 100 MiB, could-not-judge | a version fetched by its own hash: nothing of the old counts |
+| T5 | found in 1 s, idle under 2% | 1.0-2.9 s, 58.2%, could-not-judge | the step, every file each second: walk 576 ms, stat 540, the record read 524, the kept state read and written 311 |
+| T6 | 1 s | 1.5-2.4 s, could-not-judge | P5 59-69%, P1 13-41%, the round to nine 15.6% |
+
+Beside them, two costs no target names, each quadratic: the holder's
+record read grows with the record, so a join costs the files times the
+journal (77% of the 10,000 join, 98% of the 100,000's); and the apply
+matches each file taken against every placed entry (95.3 s of the
+100,000 take's 196.6).
+
+### The candidates, by gain per line
+
+1. **One get a file, its wait for the first byte.** The apply asks `hold`
+   for the whole file, not a MiB at a time (the loop,
+   `synced.rs:209-215`; `PIECE`, `folder.rs:46`). *Gain*: T3's 3.69 s
+   between gets (42% of its P6) and 99 of its 100 first-byte waits (9.6
+   ms each, 0.95 s): P6 for 100 MiB from 8.85 s to about 4.2 s at that
+   load, the same for T4's edit. *Lines*: about -8 for the loop and
+   `PIECE`, +5 for the wait (below): net about -3. *Risk*: `ANSWER_WITHIN`,
+   3 s (`node.rs:103`), bounds the whole fetch (`folder.rs:218`); a 100
+   MiB get at 25 MB/s takes 4 s, so a whole-file get must wait 3 s for
+   its first byte, not its last, or every large file's holder is taken as
+   asleep. A holder that stops mid-file loses nothing: `hold` asks the
+   next for what the store lacks (`local.missing()`, `folder.rs:202-207`).
+   *Needs*: nothing. *Falsified if*: P6 for 100 MiB on loopback at load
+   under 18 is not under 5 s. **What then holds T3** is the get itself,
+   about 27-33 MB/s after the first byte (§9), the transport and two
+   stores not told apart by these traces: the next measurement is one get
+   of 100 MiB between two iroh-blobs stores on loopback at load under 18,
+   a prototype on a scratch branch. Under 100 MB/s there, T3 is iroh's
+   and iroh-blobs', not svrngs's code.
+2. **The apply's match by path.** Each file taken found among the placed
+   entries through a map by path, not a scan of all of them
+   (`synced.rs:187-197`). *Gain*: 95.3 s of the 100,000-file take's
+   196.6 (48%), 589 ms of the 10,000's 3,722. *Lines*: about 2.
+   *Risk*: none to what it decides — the same entry, by key, path and
+   hash. *Needs*: nothing. *Falsified if*: the 100,000-file take's first
+   step spends over 1 s in its apply.
+3. **The record read once a change, not once a get or a step.** The
+   placed layout, and the set of its hashes, kept with the record state it
+   was read at, and read again only when that state moved — the
+   journals' lengths, a stat each, checked before every get answered and
+   every apply, so a stale layout never answers (AGENTS.md 10: by
+   structure, not a notice that could be missed). The provider's `shares`
+   (`folder.rs:181-183`) and the apply's `placed` (`synced.rs:166-170`)
+   read it. *Gain*: the holder's read per get — 6.5 ms at 1,000 files, 50.6
+   at 10,000, 399.6 at 100,000 — to a stat. T2: a file each about 3 ms,
+   as at 100 files (`loopback-100-files`, first byte 1.3-1.8 ms beside a
+   0.9 ms read), so 1,000 in about 3 s plus P1's 1.24: **T2 met one
+   fetch at a time**, predicted 4-5 s. The 10,000 join from 688.7 s to
+   about 156 (what its holder's read did not hold); the 100,000's to
+   about 1,000 s (9.8 ms a file, the 10,000 join's rest). T5's idle step
+   loses its apply's 524 ms (27%). *Lines*: about 25. *Risk*: a layout
+   kept past a change would serve a hash the record no longer places —
+   a member removed, a file deleted; the length check before every answer
+   is what closes it, and a test plants a change between two gets.
+   syp-4 (a) makes the rule a group's, so the kept layout is keyed by
+   group. *Needs*: nothing. *Falsified if*: the holder's `record_ms` at
+   1,000 files is not under 0.5 ms, or T2 not under 10 s at load under 18.
+4. **The apply woken by the record.** `both_ways`'s loop woken when the
+   record takes an act — the rail's ingest (`ingest_all`,
+   `crates/svrngs-runtime/src/lib.rs:253`) and this node's own write —
+   as the round is nudged (`folder.rs:176`, `node.rs:197-201`), its second
+   kept for the walk. *Gain*: P5's 958 ms (91.7% of T1, 59-69% of T6) to
+   the apply's own few ms. T1 here predicted about 100 ms (P1's 65, 21 ms
+   between, the apply); between computers P1 is anywhere in a second, so
+   T1 met only with 7. T6: P1 and the round's 200-233 ms and nine fetches,
+   about 0.3-1.2 s. *Lines*: about 12. *Risk*: a burst of acts — a
+   `Notify` keeps one permit, so a burst is one apply. *Needs*: nothing.
+   *Falsified if*: T1's P5 is not under 50 ms.
+5. **Files taken at once.** The step takes each changed file into the
+   store after the last (`synced.rs:98`): 98.4 s for 100,000, about 1 ms
+   each at load 70, and 2.9 s for 10,000. Taken several at once, the act
+   written of them in the order the walk gave. *Gain*: up to the cores
+   used, of T2's P1 (1.24 s) and the big take. *Lines*: about 15.
+   *Risk*: an act's order must not depend on which import finished first.
+   *Needs*: nothing. *Falsified if*: 100,000 files taken 8 at once not 4x
+   faster at the same load.
+6. **Fetches at once** — syp-4 (f), as written there. *Gain*, after 3:
+   T2's remaining ~3 ms a file and a join's ~9.8 ms, over the number at
+   once. **Before 3 it gains little**: the holder's provider takes one
+   get after another and reads the record whole for each
+   (`folder.rs:313-327`), so fetches at once queue there — T2's two
+   members already waited on each other's gets (§9). And with 3, one
+   at a time already meets (f)'s bar, M1's 1,000 files within 60 s
+   (predicted 4-5 s), so (f)'s plant, one at a time, would no longer miss
+   it. *Lines*: about 30, (f)'s. *Risk*: (f)'s. The 3 s wait on an asleep
+   writer (sy-1's S2, 3 of 4.3 s; not exercised in this run) is (f)'s
+   "who is taken as asleep", one decider.
+7. **The walk on the file system's events, and the step's state in
+   memory.** The step woken by the OS's file events (FSEvents on macOS,
+   inotify on Linux, through the `notify` crate) with the paths changed,
+   and only those stat'ed and taken; the full walk kept as a sweep for
+   what the OS drops (FSEvents' "must scan subdirs"), each ten minutes;
+   the kept state held in memory and written when it changes. *Gain*:
+   T5's idle step (1,952 ms: walk 576, stat 540, kept state 311) gone
+   between changes, its record read gone with 3: idle predicted under 1%
+   (a 2 s sweep each 10 min is 0.3%); a change found in the events'
+   latency, about 50 ms, not 1-3 s: **T5 met**. T1's P1, up to a second
+   between computers, to the same 50 ms: with 4, **T1 met**, about 100
+   ms. *Lines*: about 80, and a dependency. *Risk*: the largest here
+   short of 8: an event the OS drops, found only at the sweep; editors
+   that save by rename; a directory moved whole. *Needs*: `notify`, a
+   dependency, the operator's to take. *Falsified if*: at 100,000 files
+   and load under 18, idle over 2% or a change found past 1 s.
+8. **A version as its blocks.** A file's version a hash sequence of its 1
+   MiB blocks (iroh-blobs' `HashSeq`, `src/hashseq.rs`, which a get
+   already fetches child by child, `local_for_request`,
+   `src/api/remote.rs:435`), the record's entry naming the sequence, so a
+   member fetches only the blocks its store lacks. *Gain*: T4's
+   104,857,600 bytes to one block for an aligned 1 MiB edit in place, two
+   unaligned: **T4 met** for an edit in place. *Lines*: about 150, core
+   and node. *Risk*: high — what an entry's hash names changes in the
+   record, so every member must read it alike; the store keeps blocks
+   shared by versions, so syp-4 (b)'s "keep what the layout places" counts
+   blocks; an edit that inserts shifts every later block and moves them
+   all. The other way — the BLAKE3 tree's unchanged parts reused, since a
+   chunk's hash at the same offset is the same in both versions — has no
+   API in iroh-blobs 0.103 short of `import_bao` (`src/api/blobs.rs:422`,
+   hidden from its docs, "the store assumes that these are already
+   verified"), a fork of its import. *Needs*: nothing new for the
+   sequence. *Falsified if*: a 1 MiB edit in place inside 100 MiB moves
+   more than 2 MiB, counted from the holder's `sent` lines.
+
+**Dialling direct before a relay** gains nothing measured here: iroh moved
+each connection on each path direct before the fetch (§9). It waits
+(DESIGN §9).
+
+### Predicted, with 1-7, on loopback at load under 18
+
+T1 about 100 ms, met; T2 about 2 s, met; T3 unknown — 1 removes half of
+P6, and what remains is the get's own rate, the measurement 1 names; T4
+missed, 100 MiB, until 8; T5 met; T6 about 0.3-0.5 s, met. Lines about
++160 with 7, 13,440 to about 13,600, inside 15,750.
+
+### Candidate rows, the operator's to queue
+
+One row, its parts in order, as the operator asked rows be merged:
+
+- **perf-2-make-it-fast** — depends [perf-1-diagnose-and-propose]; before
+  syp-4 (f). (a) one get a file, its wait for the first byte (1); (b) the
+  apply's match by path (2); (c) the record read once a change (3), a test
+  planting a change between two gets; (d) the apply woken by the record
+  (4); (e) files taken at once (5); then the targets' pass rerun at load
+  under 18, each target against this section's prediction. Check: each
+  part's falsifier above, red first where it is a test.
+- **perf-3-events** — the operator's yes to `notify` first. (7), then T1
+  and T5 rerun.
+
+Against syp-4-production's parts:
+
+- **(b), the store**: left as written. 8 would change it — blocks, not
+  files, kept — and 8 waits (DESIGN §9).
+- **(f), fetches at once**: changed. It follows perf-2 (c), since before
+  it fetches at once queue at the holder's one task; and its bar is
+  re-set, since after perf-2 (c) one at a time is predicted to meet M1's
+  60 s, and its plant must miss its bar: the 10,000-file join (688.7 s
+  here, about 156 s predicted after perf-2 one at a time) within a bar
+  the operator sets from perf-2's rerun.
+- **(a), one group's**: left; perf-2 (c)'s kept layout keyed by group.
+- **(e), what a node keeps**: left; perf-3 holds the kept state in memory
+  after (e)'s read-or-refuse at start.
