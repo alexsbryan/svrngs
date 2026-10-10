@@ -50,10 +50,16 @@ async fn dee_asks_a_member() {
 
     // The record, on the member protocol: its connection's fate, then a
     // round's first ask over the node's own bridge.
-    let conn = node.endpoint().connect(peer, Alpn::Member.bytes()).await;
-    let fate = match conn {
-        Err(e) => format!("the dial: {e}"),
-        Ok(c) => match tokio::time::timeout(Duration::from_secs(5), c.closed()).await {
+    let dial = |alpn: Alpn| {
+        tokio::time::timeout(
+            Duration::from_secs(20),
+            node.endpoint().connect(peer, alpn.bytes()),
+        )
+    };
+    let fate = match dial(Alpn::Member).await {
+        Err(_) => "the dial: no answer in 20s".into(),
+        Ok(Err(e)) => format!("the dial: {e}"),
+        Ok(Ok(c)) => match tokio::time::timeout(Duration::from_secs(5), c.closed()).await {
             Ok(why) => format!("closed: {why}"),
             Err(_) => "open after 5s".into(),
         },
@@ -94,16 +100,18 @@ async fn dee_asks_a_member() {
     };
     said("record", answer);
 
-    // The bytes, on the blobs protocol, into Dee's own store.
-    let store = FsStore::load(dir.join("blobs")).await.expect("Dee's store");
+    // The bytes, on the blobs protocol, into a store of the probe's own in
+    // Dee's data dir: the node holds `blobs/`.
+    let store = FsStore::load(dir.join("asked")).await.expect("Dee's store");
     let hash = Hash::from_bytes(
         *svrngs_node::ContentHash::from_hex(&hash)
             .expect("a hash")
             .as_bytes(),
     );
-    let got = match node.endpoint().connect(peer, Alpn::Blobs.bytes()).await {
-        Err(e) => serde_json::json!({ "error": format!("the dial: {e}") }),
-        Ok(conn) => {
+    let got = match dial(Alpn::Blobs).await {
+        Err(_) => serde_json::json!({ "error": "the dial: no answer in 20s" }),
+        Ok(Err(e)) => serde_json::json!({ "error": format!("the dial: {e}") }),
+        Ok(Ok(conn)) => {
             let get = store.remote().execute_get(conn, GetRequest::blob(hash));
             match tokio::time::timeout(Duration::from_secs(20), get).await {
                 Err(_) => serde_json::json!({ "error": "no answer in 20s" }),
