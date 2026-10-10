@@ -4495,3 +4495,257 @@ reported each line one early (I1).
 | I24 | 6, 7 | `code dry-report` exact tier | **Still present on the new binary** c9b653d3…: plant E, a verbatim `write` renamed, is no exact group, scoped to its file or its crate. The window pass caught it. |
 | I25 | 6 | `project refresh` and corpus ids | New: `project refresh` names the corpus after the directory, not the `--corpus-id` the index was built under, so a clone at /tmp/supaudit1/plant was embedded twice (as `svrngs-supplant` and `plant`). Then `refresh --rebuild-index` there deleted `plant/chunks.lance` and, its promotion refused ("both hold corpus data named documents.lance", a `plant-partition-local` left by the first refresh), left the new index in `plant-partition-local`; dry-report then said "no chunk index … run `svrn project init`", an error, not a zero. The partition was moved into place by hand (`mv`), its symbols checked: 1537, the plants gone. |
 | I26 | 6, 7 | the `svrngs` corpus's SCIP graph | New: ~/.svrnmesh/indexes/svrngs/scip_graph.db, written 15:25 (after 50ecc20, 15:09), gave `PersonKey` at door.rs:707, its line at 1c3d662 (:707) or a57d80f (:708, I1), and no `Stopping` or `Choice`, which d9cb3c4 added: a graph from an older tree under a newer mtime. Cause not isolated; this audit judged from its own corpus at 8020f03. |
+
+## REVIEW-audit-sup-auto-2 (2026-10-10, range 30d975a..204b3d4)
+
+The range starts at 30d975a39, the hash REVIEW-audit-sup-auto-1's row
+carries (ralph/next/sup/STATE.md:25), the last `REVIEW-audit-` row. It
+ends at 204b3d4, the commit that made this row: 15 commits (`git rev-list
+--count 30d975a..204b3d4`): the last audit's `done` (c3c9637), sup-3
+(caf017e, 85986c2), sup-4 (da3004d, 517225a, e30975c, 7cbf217, 2f30f10,
+c0c999a, 478fedf, 5dc463e, d4868ee), each unit's `done`, and this row's
+(`git log --reverse --format='%h %s' 30d975a..204b3d4`). No product
+source under crates/ changed in it (`git diff --stat 30d975a 204b3d4 --
+'crates/*/src'` is empty): sup-3 is web/ and a browser test, sup-4 apps/
+and a run. This audit fixes two findings (#108, #109), records two (#110,
+#111), closes #100 and narrows #104.
+
+As before, `docs/ARCH_PRINCIPLES.md` is docs/principles/ARCH_PRINCIPLES.md,
+and `target/debug/sovereign-cli` is
+~/dev/commonwealth-ai/target/debug/sovereign-cli: **a new binary** again,
+sha256 384ef1ca… (built 2026-10-09 19:22), not the last audit's
+c9b653d3…, so its tiers were planted again (below). The embedder was
+`llama-server` on qwen-embedding-0.6b.gguf (~/.svrnmesh/config.toml:18)
+on :8080, `-b 8192 -ub 8192` (I21), for this session. Scripts:
+/tmp/supaudit2/ledger.py, windows.py, clusters.py, the last audit's
+unchanged.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' 30d975a..204b3d4`,
+summed by /tmp/supaudit2/ledger.py (its rules the last section's: a
+commit counts toward the unit its subject names, else the next `done`'s;
+product code is crates/, apps/, web/, bridge/; a test is a `tests/` or
+`check/` segment or a lean_check test file name):
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| sup-3-phone-ask | 186 | 26 | 160 | 319 | 0 | 319 |
+| sup-4-taste-rerun | 83 | 170 | −87 | 578 | 315 | 263 |
+| total | 269 | 196 | 73 | 897 | 315 | 582 |
+
+- sup-3 src: web/lend.js +11/−6 (caf017e, the move) and +56/−1, web/app.js
+  +107/−16, web/index.html +10/−2, web/vercel.json +2/−1 (85986c2).
+- sup-4 src, all apps/: taste/taste.mjs +22/−70, movie-night/picks/picks.js
+  +58/−97, picks/index.html +1/−1 (da3004d); one line each in taste.mjs
+  and picks.js (e30975c).
+- Tests: tests/browser/main.rs +182, web/tests/ask.mjs +129, page.mjs +8
+  (85986c2); apps/taste/check/ su.mjs +196/−113, judge.py +213/−126,
+  check.sh +98/−54, other/other.js +69/−20, other/index.html +3/−2
+  (517225a, e30975c, 7cbf217, c0c999a).
+
+lean_check on `git archive` trees in /tmp/supaudit2 (apps/ and tests not
+counted, scripts/lean_check.py:49):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 30d975a, range start (the raise to 15,350) | 2635 / 3000 | 15162 / 15350 |
+| 502d0e6, sup-3 done | 2635 / 3000 | 15272 / 15350 |
+| 872a821, sup-4 done, range end | 2635 / 3000 | 15283 / 15350 |
+| 3c29dda, this audit's fixes (tests only) | 2635 / 3000 | 15283 / 15350 |
+
+sup-3 spent 110 counted lines (web/app.js, web/lend.js; vercel.json and
+index.html are not code to lean_check, scripts/lean_check.py:29). sup-4's
+apps/ cut counts nothing, and its 11 are demo/runs/sup/2026-10-10/run.sh
+(`git diff --stat 502d0e6 872a821 -- '*.rs' '*.js' '*.mjs' '*.ts' '*.py'
+'*.sh' ':!apps'`: that file alone, 11 of its 22 lines code). **67 are
+left** (#80). The queue spent 796 + 121 = 917 counted lines against the
+design's estimate of about 650 (fence 7), core-0's 329 of room and the
+operator's two raises (aaecbdb, 30d975a) between.
+
+### (2) Clones (`code dry-report`), each tier checked against a plant
+
+**Plants**, the binary being new: a clone of the repository at 204b3d4
+(/tmp/supaudit2/plant), one commit there (4607a9c) appending, since the
+range's code is JavaScript:
+
+- **E** (exact, JS): sup-3's `stopping` (web/lend.js:422–440), verbatim,
+  as `plantExact`.
+- **N** (near, JS): the same body as `plantNear`, its names changed
+  (`label`→`which`, `h`→`held`, `lend`→`found`, `body`→`bytes`,
+  `headers`→`hs`, `e`→`err`).
+- **R** (exact, Rust, a positive control for the tier the last audit
+  planted): door/choices.rs `write` (:172–183) verbatim as `plant_exact`.
+
+Indexed `code index … --corpus-id plant --full` (2726 chunks; I25 again,
+below), its SCIP graph by `refresh` there (rust 10790 symbols, python 996,
+"typescript: skipped (export failed)"):
+
+| scope, threshold | E | N | R |
+|---|---|---|---|
+| web/lend.js, 0.95 | **missed**: exact tier "could-not-judge" (I19), 0 near | missed | — |
+| web/lend.js and web/, 0.9 | E ~ N only, 0.935; never with `stopping` | seen with E alone | — |
+| web/lend.js, 0.8 | **seen**: `stopping`, E, N, `asking` one cluster, 0.870–0.935 | seen | — |
+| door/choices.rs, 0.95 / 0.9 / 0.8 | — | — | **missed** at each: 0 exact groups, and `plant_exact` (in SCIP, choices.rs:366–377) in no near cluster even at 0.8, where `write` is |
+| window pass | **seen**: lend.js:423–438 == :610–625 | missed (renamed) | **seen**: choices.rs:173–182 == :368–377 |
+
+So on 384ef1ca the exact tier still misses a verbatim Rust body (I24) and
+judges no JavaScript (I19, said so), and the near tier pairs a verbatim
+JS copy with its original only at 0.8, its spans running into their
+neighbours (`stopping` :419–443 for :422–440; I9). Its zeros here are weak
+evidence; the window pass is the instrument that saw E and R.
+
+**Runs.** The scoped and unscoped reports below are on the planted
+corpus, not a second clean one: the plants are appended at the ends of
+their files, so every other line is 204b3d4's, and they sit in no group or
+cluster at 0.95 or 0.9 but with each other (above). Planting only adds
+symbols, so a clone with a side added in the range is in these reports if
+it is in a clean one. Scoped, for each dir the range touched:
+
+| scope | locations | exact | near 0.95 | near 0.9 | with a side added in the range |
+|---|---:|---|---:|---:|---|
+| crates/svrngs-node/ | 448 | 5 (`as_str` ×4, `fmt` ×3, `drop`, `addr`, `try_from`), as before | 1 (`harden_file`), as before | 6 | 0 (no src changed) |
+| crates/svrngs-node/tests/ | 0 | **could-not-judge** | **could-not-judge** | — | — |
+| web/ | 96 | **could-not-judge** (I19) | 0 | 2 | lend.js `asking` ~ `stopping` (0.903), and E ~ N |
+| apps/taste/ | 44 | 0 (judge.py's only: no JS in SCIP, I27) | 0 | 0 | 0 |
+| apps/movie-night/ | 57 | 0 (likewise) | 0 | 2 (judge.py `bar4_before` ~ `bar4_after`, doors.py `when` ~ `fields`, neighbours, I9) | 0 |
+
+**Unscoped**: 0.95 (14 exact, 16 near), 0.9 (14, 43), 0.8 (14, 233), 1438
+locations. /tmp/supaudit2/clusters.py blamed every side (`git blame -w` at
+204b3d4) for a line in 30d975a..204b3d4: **1** group at 0.95, **4** at
+0.9, 15 at 0.8:
+
+| at | cluster | cosine | read |
+|---|---|---|---|
+| 0.95 | crates/svrngs-node/src/home/home.js `uses` :65–88 (sup-2) ~ web/app.js `uses` :255–283 (85986c2) | 0.956 | **#110.** Not seen scoped (I12: home.js is under crates/, app.js under web/). |
+| 0.9 | web/lend.js `asking` :406–422 ~ `stopping` :419–443 (both 85986c2) | 0.903 | **#111.** |
+| 0.9 | apps/movie-night/check/mn.mjs `browser` :45–65 ~ apps/taste/check/su.mjs `browser` :58–77; `join` :63–81 ~ :75–92 | 0.915, 0.913 | The spike's driver, forked from Movie Night's (su.mjs:79's own words, "mn.mjs's"), sup-4 touching 6 and 3 of its lines: #97's case. No change. |
+| 0.8 | home.js `uses` ~ app.js `asking` ~ `uses`; home.js `get`, `said` ~ app.js `choose` | 0.806–0.956 | #110 again: the phone's ask and the computer's. |
+| 0.8 | the rest, 11 | 0.802–0.935 | Neighbours (I9: app.js `reach` ~ `joining`, judge.py `ranked` ~ `asked_once` ~ `unranked`, su.mjs `yes` ~ `again` ~ `otherPerson`, `settled` ~ `picks`, `stop` ~ `homeStop`), app.js `open` ~ `enter` ~ `opening` ~ open.js `start`, picks.js `refused`, `rank` ~ other.js `rank`, and judge.py and su.mjs ~ Movie Night's (#97). No change. |
+
+**Window pass** (/tmp/supaudit2/windows.py . 30d975a..204b3d4, as the
+last audit's, `git blame -w`): 290 window hits in 117 spans, **9 new**,
+none in product code:
+
+- **#108.** crates/svrngs-node/tests/browser/main.rs:1156–1165 ==
+  tests/door/main.rs:74–83: sup-3's `holders_bridge` is #106's
+  `bridge_as` with the ALPN fixed. Separate test binaries, #31's reason
+  for leaving copies; but tests/common/mod.rs is the file each binary may
+  compile (`#[path = "../common/mod.rs"]`, door/main.rs:18), so the
+  reason does not hold. Fixed (2dc268a).
+- **#109.** web/tests/ask.mjs:40–44 == handover.mjs:71–75 ==
+  reads.mjs:28–32 == runtime.mjs:69–73: the five steps that open the
+  group's page as the person, ask.mjs the fourth copy; page.mjs is the
+  module the drivers share. Fixed (3c29dda), `held`.
+- tests/browser/main.rs:616–621 == :900–905 == :1018–1023 and :645–649
+  == :824–828 == :924–928 == :1037–1041: three tests' set-up (site,
+  relay, bo, two computers, cy joined) and four `drive(engine, "<x>.mjs",
+  json!({ site, key, token, open … }))` headers, each with its own fields
+  after. A helper would return a seven-part tuple; the test reads better
+  as it is. No change.
+- web/tests/ask.mjs:23–30 == reads.mjs:17–24 and :37–42 == :25–30: a
+  driver's prologue (args, `serve`, `launch`, its console kept) and, before
+  #109, the steps `held` now is. No change.
+- apps/movie-night/check/judge.py:19–24 == apps/taste/check/judge.py:10–15
+  (the imports) and mn.mjs:58–75 == su.mjs:70–87 (#97's fork). No change.
+
+After the fixes (`windows.py . 30d975a..HEAD`): 278 hits in 113 spans, 7
+new; the two fixed gone, handover.mjs and runtime.mjs's imports and their
+lines around `held` now counted new only because `held`'s line is.
+
+Reading the range for what neither pass would show:
+
+- **#110, not fixed.** The computer's home page and the phone's group's
+  page each ask the person and list what apps use, in the same words, by
+  the same reading of a choice: crates/svrngs-node/src/home/home.js
+  `uses` :68–85 and `ask` :88–96 (sup-2), web/app.js `uses` :258–281 and
+  `asking` :229–256 (sup-3) — "uses" / "was stopped using" on `c.said ===
+  'yes'`, "cannot be asked now", "That app, or what it asks to use, is not
+  lent in your group(s) now." The decision is the door's either way
+  (door/choices.rs `check`); the pages only say it. One home would be a
+  module both pages load, but the home page answers only itself (fence 3,
+  home.rs's `only_itself`) and the group's page is static files on the page
+  host: not small, and a choice of the operator's about where the page
+  shell lives. Recorded.
+- **#111, not fixed.** web/lend.js `asking` :409–419 and `stopping`
+  :422–440 (sup-3), with `answered` :290–297 before them, each hold the
+  pass (`holding()`), refuse 503 `pass` without it, and refuse 403
+  `closed` a lend it does not read, in the same words. The refusal is
+  one function already (`say`); the guards differ (`asking` refuses the
+  page's own lend, `answered` a navigation without a pass); one guard
+  returning a pass or a Response would save about 2 counted lines. Not
+  done in an audit.
+- **The choice's body** `{app, said}`, one shape in Rust since #105
+  (`Saying`), is spelled at its JavaScript ends: web/app.js:221
+  (`JSON.stringify({ app, said })`), web/lend.js:430 (`'{"said":"stop"}'`,
+  the app the pass's), home.js:28 (`{ lend, app, said }` to its own
+  origin's `/choices`, home.rs's own body). Two ends of a wire, as #50
+  judged; each held by a test that posts it (tests/browser/main.rs ask
+  test, tests/home.rs). No change.
+- **#104 narrowed** (85986c2): web/lend.js `told` (:377–389) now gives a
+  page `asks` and `ask` in the shape surface.rs `reads` gives on a
+  computer. Still two homes, the page's and the node's, each held by its
+  own test (web/tests/reads.mjs and ask.mjs; tests/surface.rs).
+- **#100 closed** (da3004d): Tonight's Picks reads its lends from
+  `/svrngs-reads` (picks.js:26) and stops through `svrngs-stop` (:27),
+  no longer svrngs's lend store. apps/taste/check/other/other.js:26 still
+  opens `svrngs-lend`, on purpose: it is the plant, an app's page reading
+  what its origin keeps to say a yes for itself (its header, :5–8), which
+  svrngs refuses.
+- **Glassbox.** sup-3's branches trace: app.js `asking` on both outcomes
+  (:232, :236), its yes kept (:249), `uses` each failure (:276), `post`
+  each refusal (:114); lend.js `asking` and `stopping` each branch
+  (:414, :417, :427, :432, :437).
+- **The browser test's one failure.** With #108 in place, one run of
+  `--test browser -- a_lent_page_asks` failed in Chromium (148 s, while
+  the plant corpus embedded; its output not kept). After it Chromium alone
+  passed (43.98 s) and both engines passed in three runs (54.65 s, 68.09
+  s, 65.10 s, the embedder busy in two), then the whole binary, 12 passed
+  (152.81 s), after #109. One unexplained failure in five runs is not a
+  rate (AGENTS.md 7); the next run that fails keeps its output.
+- **#103, #107 still open**, nothing under crates/*/src changed in the
+  range; **#57, #68, #70, #71, #75, #77, #79, #81, #89, #91, #95, #97, #99
+  still open**, as recorded.
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff 30d975a 204b3d4 -- crates apps web bridge`, added lines
+matching `\b(struct|enum|trait|type|class)\s+[A-Z]\w*`: **none** (the
+command's output is empty). The range added functions in JavaScript and
+tests, no type, so no noun was run through `converge noun`.
+
+### Fixed here
+
+- **#108** (2dc268a). `bridge_as` in tests/common/mod.rs, called by the
+  door's tests and the browser test (`Alpn::Lend`); `holders_bridge`
+  deleted. The browser's copy dialled `addr().ip_addrs()`, the shared one
+  `loopback_sockets`, both this computer with no relay. `git diff
+  --shortstat`: +35/−53. fmt, clippy `--tests` clean; `--test door` 26
+  passed; the browser test as above.
+- **#109** (3c29dda). page.mjs `held`, called by four drivers; drive.mjs's
+  copy differs (a 15 s goto, its failure named) and stays. +19/−24;
+  `--test browser` 12 passed.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 108 | 8 | crates/svrngs-node/tests/browser/main.rs:1155 and tests/door/main.rs:69, at 204b3d4 | 2dc268a | sup-3's `holders_bridge`, #106's `bridge_as` again, the shared tests/common unused for it. |
+| 109 | 8 | web/tests/ask.mjs:40, handover.mjs:71, reads.mjs:28, runtime.mjs:69, at 204b3d4 | 3c29dda | Four drivers open the group's page as the person by the same five steps. |
+| 110 | 8, 3 | crates/svrngs-node/src/home/home.js:68–96 and web/app.js:229–281, at 204b3d4 | not fixed | The computer's and the phone's pages each ask and list what apps use, in the same words by the same reading; two hosts, the home page answering only itself. |
+| 111 | 8 | web/lend.js:409–419 and :422–440 (and :290–297), at 204b3d4 | not fixed | The worker's pass-and-lend guard written three times, its refusals in the same words. |
+| 104 | 8 | web/lend.js:377–389 and crates/svrngs-node/src/surface.rs `reads`, at 204b3d4 | narrowed (85986c2) | The page's half now gives `asks` and `ask`; still two homes, each held by its own test. |
+| 100 | 8 | apps/movie-night/picks/picks.js:26–27, at 204b3d4 | closed (da3004d) | Tonight's Picks off svrngs's lend store; other.js's read is the plant's. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 67 lines left (15283 / 15350). |
+| 31, 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99, 103, 107 | as recorded | as recorded | not fixed | Untouched in the range but #97 (su.mjs, 517225a; its fork kept). |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I9 | 6, 7 | `code dry-report` near tier | Still present on 384ef1ca…: `stopping` :419–443 for :422–440, `plantExact` :606–630 running into `plantNear`; a verbatim JS copy and its original cluster only at 0.8. |
+| I12 | 5, 6 | `code dry-report --scope` | Still present: home.js ~ app.js (0.956) is in no scoped report. |
+| I19 | 6 | dry-report's exact tier | Still present, and said: web/ and every `tests` scope "could-not-judge … no SCIP function symbols in scope". |
+| I24 | 6, 7 | `code dry-report` exact tier | **Still present on 384ef1ca…**: plant R, `write` verbatim as `plant_exact`, in SCIP (scip_graph.db `symbols`: choices.rs 366–377) and in no exact group; and in no near cluster at 0.8, where `write` is in one. The window pass caught it. |
+| I25 | 6 | `code index` and corpus ids | **Worse than recorded**: `code index --corpus-id plant --full` exited 0 and printed "✓ Indexed 2726 chunks" while its log said "finalise_solo_ingest failed — partition-of-self left in place … both hold corpus data named documents.lance" (the last audit's `plant` corpus in the way): a success-shaped line over a failed promotion. `refresh` then found no `_corpus_meta.json`, discarded the partition ("starting fresh") and embedded again. The last audit's documents.lance and texts were moved aside (/tmp/supaudit2/old-plant-index), and `code index --full` run again promoted (2726 chunks, 774 s). |
+| I27 | 6 | dry-report's exact tier over mixed languages | New: apps/taste/ and apps/movie-night/ report "**0** exact-clone groups", not could-not-judge, though only their Python is in SCIP (`refresh`: "typescript: skipped (export failed)"); their .mjs and .js are unjudged under a zero. |
