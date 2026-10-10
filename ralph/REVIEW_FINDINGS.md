@@ -4467,3 +4467,234 @@ seeks back to back "failed, a rate" once, and in the rate's table
 computer/bo straight at the canary 5738 ms and wildcard/sam through the
 lend 23566 ms "failed", none failing its step, u5-11), exit 0
 (/tmp/gfaudit1/check.out).
+
+## REVIEW-audit-sync-auto-1 (2026-10-10, range e4e5437..8171ed6)
+
+No `REVIEW-audit-` row precedes this one in its queue
+(ralph/next/sync/STATE.md), so the range starts where the queue did:
+e4e5437, the commit that made it (the budget's raise, e8042bd, sits just
+before and touches scripts/lean_check.py alone). It ends at 8171ed6, the
+commit that made this row: 14 commits (`git rev-list --count
+e4e5437..8171ed6`), sy-1 (67abfa3, 6a260fc, e7d0ca9, db706d3, 162d298,
+ea0f3a5, e3b3df9, 4926df0), main's chk-1 cherry-picked (a9659e1, from
+e31bdce; main's REVIEW-audit-sup-auto-2, b841412, audits it there), sy-2
+(09793b5, 1b5706e), each unit's `done` and this row's. Product code
+changed in sy-1 and, in a test file, chk-1. This audit fixes one finding
+by a move (6982059, #113's reading given one home), records four
+(#113-#116), and grows #109 and #110. **Numbering**: main has since used
+#108-#111 for its own (REVIEW-audit-sup-auto-2), so this branch's
+#108-#112 already clash with main's; this audit goes on from #113, and
+the merge renumbers one side.
+
+As before, `docs/ARCH_PRINCIPLES.md` is docs/principles/ARCH_PRINCIPLES.md,
+and `target/debug/sovereign-cli` is
+~/dev/commonwealth-ai/target/debug/sovereign-cli — **a new binary**, sha256
+7dfd54da… (`shasum -a 256`, built 2026-10-09 23:19), not c9b653d3…, the
+one planted before, so its exact tier was planted again here (I24 below).
+The embedder was `llama-server` on the corpus's model
+(qwen-embedding-0.6b.gguf, ~/.svrnmesh/config.toml:18) on :8080, `-b 8192
+-ub 8192`, for this session. The corpus is the worktree's own,
+`svrngs-folders`: `code index . --corpus-id svrngs-folders`, incremental
+from b2a76db, 38 files changed, 414 chunks embedded in 42 s
+(/tmp/syaudit1/index.out); `project refresh`: rust 11039 symbols, python
+1462, "typescript: skipped (export failed)" (I4). The scripts are the
+folders audit's, copied to /tmp/syaudit1: ledger.py with sy's unit names
+and chk-1's, clusters.py, and windows-sy.py (windows.py over crates, web,
+apps, demo and scripts, .cjs and .sh included).
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' e4e5437..8171ed6`,
+summed by /tmp/syaudit1/ledger.py (/tmp/syaudit1/ledger.out): a commit
+counts toward the unit its subject names, else the next `done`'s; product
+code is crates/, apps/, web/, bridge/; a test is a `tests/` or `check/`
+segment or a lean_check test file name.
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| sy-1-build-run | 510 | 46 | 464 | 386 | 10 | 376 |
+| chk-1 (main's, cherry-picked) | 0 | 0 | 0 | 101 | 12 | 89 |
+| sy-2-verdict | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 510 | 46 | 464 | 487 | 22 | 465 |
+
+- sy-1 src: svrngs-core synced.rs +156 (6a260fc), +1/−1 (db706d3), lib.rs
+  +16/−2, admit.rs +19/−9, membership.rs +4/−1 (6a260fc); svrngs-node
+  folder.rs +58/−27 (e7d0ca9, the move) and +27/−4, synced.rs +216, node.rs
+  +4 (db706d3); svrngs cli.rs +9/−2 (db706d3).
+- sy-1 tests: svrngs-core synced_tests.rs +130, folder_tests.rs +1/−1
+  (6a260fc); svrngs-node tests/folders.rs +120, tests/sy_dee.rs +118
+  (db706d3) and +17/−9 (162d298).
+- chk-1: tests/conformance.rs +101/−12 (a9659e1).
+- Outside product code but inside the budget (scripts included):
+  demo/runs/sy/2026-10-09/run.py, 180 counted; scripts/check.sh +1.
+
+lean_check on `git archive` trees in /tmp/syaudit1 (by file,
+/tmp/syaudit1/bylean.out): svrngs-core synced.rs +111, admit.rs +9,
+lib.rs +9, membership.rs +3; svrngs-node synced.rs +180, folder.rs +40,
+node.rs +4; svrngs cli.rs +7; run.py +180; check.sh +1: **+544**.
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| e4e5437, range start | 2741 / 3000 | 15163 / 15750 |
+| 8bf279d, sy-1 done | 2873 / 3000 | 15707 / 15750 |
+| 8171ed6, range end | 2873 / 3000 | 15707 / 15750 |
+| 6982059, this audit's move (the tree) | 2873 / 3000 | **15704 / 15750** |
+
+sy-1 spent 132 of the core's and 544 of the repository's; **46 are left**
+on this branch (#80).
+
+### (2) Clones (`code dry-report`)
+
+**Scoped**, at 0.95, for each dir the range touched
+(/tmp/syaudit1/clean-*0.95.md):
+
+| scope | locations | exact | near | with a side added in the range |
+|---|---:|---|---:|---|
+| crates/svrngs-core/ | 418 | 7, as at the folders audit | 0 | 0 |
+| crates/svrngs-node/ | 432 | 5, as at the folders audit | 1 (declared.rs `harden_file` ×2) | 0 |
+| crates/svrngs-node/tests/ | 0 | **could-not-judge** | **could-not-judge** | — |
+| crates/svrngs/ | 67 | 0 | 0 | 0 |
+| demo/runs/sy/ | 20 | 0 | 0 | 0 |
+
+**Unscoped**: 0.95 (14 exact, 18 near), 0.9 (14, 42), 0.8 (14, 246).
+clusters.py blamed every side (`git blame -w` at 8171ed6) for a line in
+e4e5437..8171ed6 (/tmp/syaudit1/clusters.out): **0** groups at 0.95,
+**1** at 0.9, 9 at 0.8. Every one with a side added in the range:
+
+| at | cluster | cosine | read |
+|---|---|---|---|
+| 0.9, 0.8 | svrngs-core synced_tests.rs `two_edits` :69-90 ~ `two_edits_of_one_version_are_both_kept_…` :87-107 (at 0.8 with `an_add_then_an_edit_…` :44-71, `a_delete_beside_an_edit_…` :104-115, `deleting_the_conflict_s_copy_…` :112-126) | 0.843-0.908 | A helper and the tests that call it, each a different history; the shape of a test of the layout. No change. |
+| 0.8 | svrngs-core synced.rs `SyncFolder::decide` :62-73 ~ folder.rs, record.rs, register.rs, tests_support.rs `decide`, command.rs `confirm` | 0.803-0.948 | Each `Command` its own act; the trait's shape, as at the folders audit. No change. |
+| 0.8 | svrngs-node synced.rs `step` :77-142 ~ `apply` :142-216 | 0.876 | Neighbours (I9), one calling the other. No change. |
+| 0.8 | svrngs-node synced.rs `both_ways` :50-68 ~ `placed` :65-81 | 0.868 | Neighbours (I9). No change — but `placed`'s body was `all`'s (folder.rs:153-159), which neither tier paired: fixed by a move, 6982059. |
+| 0.8 | svrngs-node folder.rs `router` ~ `list` ~ `ask` :591-606 | 0.823-0.847 | One route's handlers; `ask` grew the `BothWays` arm. No change. |
+| 0.8 | synced_tests.rs `synced` :17-32 ~ `placed` :29-43; `now` :5-13 ~ `entry` :9-21 | 0.826-0.833 | Neighbouring test fixtures. No change. |
+| 0.8 | demo/runs/sy/2026-10-09/run.py `s1` :88-104 ~ `s2` :101-116 ~ `s3` :113-131; `holds` :69-77 ~ `write` :74-83 | 0.810-0.851 | The run's bars, each its own scenario, and neighbours. Its data are at e3b3df9; a change is proven only by the run again. No change. |
+
+dry-report gives lines one early (I1); the spans above are as it printed
+them.
+
+**Window pass** (/tmp/syaudit1/windows-sy.py . e4e5437..8171ed6,
+/tmp/syaudit1/windows-sy.out): 567 window hits in 139 spans, **2 new**:
+
+- svrngs-core folder.rs:8-16 == synced.rs:13-21: the two modules' `use`
+  lines. No change.
+- tests/folders.rs:333-337 == :370-374: two tests' set-up, a group and
+  two synced directories. No change.
+
+**The instrument, planted** (this binary is new): a copy of
+svrngs-core synced.rs `beside` (11 lines) as `pub fn planted_beside`,
+uncommitted; `code index` (3 files, 7 chunks), `project refresh` (rust
+11047), `dry-report --scope crates/svrngs-core/`
+(/tmp/syaudit1/plant-core.md): 1611 symbols, 419 locations (one more
+than unplanted, so the copy was considered), **7 exact groups, 0 near —
+the plant in neither**. Reverted and reindexed (`git checkout`, index
+1 file, refresh rust 11038). The exact tier's zeros are no evidence here
+(I24); the window pass and reading carry the clone question.
+
+Reading the range for what neither pass would show:
+
+- **`placed` re-wrote `all`, fixed by a move (6982059).** sy-1's `placed`
+  (svrngs-node synced.rs:68-72 at 8171ed6) read every group's admission
+  as `all` does (folder.rs:153-159): every namespace, an unlistable rail
+  read as none, an admission that fails skipped. Both call
+  `Folders::admissions` (folder.rs:160-165 at 6982059). Behaviour kept:
+  `cargo test -p svrngs-node --test folders --test sy_dee`, 5 passed, 1
+  ignored (the spike's instrument). −3 lines.
+- **#113, not fixed.** That reading is now the synced directory's, where
+  an absence deletes: if the rail cannot list its groups, or a group's
+  admission fails, `placed` (synced.rs:68) holds none of that group's
+  files, and `apply` deletes every file it last wrote or took that is
+  unchanged on disk, "the record placing nothing there" (synced.rs:162-165
+  at 6982059), untraced as to why. No delete is sent — the entry leaves
+  `held`, so the next step finds no file and no held entry — and the
+  files come back when the rail reads again and a member serves them.
+  Read, not run. #109's case, grown from a wrong refusal to a member's
+  files taken off their disk; the queue's fence ("a member that did not
+  answer is never an empty folder"). Not in the verdict's candidates
+  (demo/runs/sy/2026-10-09/README.md §9; its 9 names the kept state, not
+  the record). Not fixed: the apply's answer changes.
+- **#114, not fixed.** The run's plant variable, `SVRNGS_GF_PLANT`, has
+  two readers: folder.rs:109-117 parses it into `Plant` at start, and
+  node.rs:756 reads it again, by string, on every dial, for `open-gate`,
+  which `Plant` does not name — while folder.rs:51 says it is "read once
+  at start". Principle 8. The plants drop in production (verdict §9's
+  line table), and this with them; recorded so the drop takes both.
+- **#115, not fixed.** `both_ways` (synced.rs:53-65) spawns a loop that
+  nothing owns or can stop: asked twice for one directory (or for two
+  directories of one name), two loops step at once over one
+  `synced-<name>.json` (:77) and one folder, each reading and rewriting
+  it. RUST_ARCH's ownership tree; the verdict's candidate 9 keeps the
+  directories in the data dir, and is where one owner per directory
+  belongs. Read, not run.
+- **#116, not fixed.** The apply's skips do not trace: a held file the
+  record no longer places but changed on disk, kept (synced.rs:162, the
+  `else` of the delete); a placed file not written because the disk
+  changed since it was last taken (:181); a file written whose mtime
+  cannot be read, left unheld (:206-208); and the step's same-bytes touch
+  (:96). Each is a decision ("never touching a file changed on disk",
+  the module's doc, :10-11) that AGENTS.md 1 wants at debug. Small, but
+  the trace's text is the row's to write with candidate 9's base.
+- **#110, grown.** `apply` builds a third list of who may hold a file
+  (synced.rs:153-158): every standing member of every group held here,
+  beside the endpoint's (folder.rs) and the core's unused
+  `Admission::holders`. The verdict's §8 first part and candidate 2 name
+  the many-groups half; the three homes are this audit's.
+- **The provider pays for a layout per request.** `shares` (folder.rs:270)
+  builds every group's synced layout on each request, before the shared
+  folders' answer is known, and `layout` traces at debug each time. Not a
+  principle; for candidate 2's rewrite of `shares`. No finding.
+- **Glassbox otherwise.** The new branches trace: the core's `layout`
+  (svrngs-core synced.rs:148), the step's failure (svrngs-node
+  synced.rs:59), each change sent (:129), each delete (:164), each
+  write and its two failures (:196, :201, :204), the gate's plant
+  (node.rs:757).
+- **#57, #68, #70, #71, #75, #77, #79, #81, #89, #91, #95, #97, #99, #100,
+  #104, #111, #112 still open**, none touched in the range (`git diff
+  --stat e4e5437 8171ed6 -- web apps crates/svrngs/src/cli.rs` touches
+  cli.rs's `--both-ways` alone, not #111's lines).
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff e4e5437 8171ed6 -- crates apps web bridge demo scripts`, added
+lines matching `\b(struct|enum|trait|type|class)\s+[A-Z]\w*`: `Entry`,
+`Change`, `Placed`, `SyncFolder`, `Written` (a type alias), svrngs-core;
+`Held`, svrngs-node; and `type Refusal = Infallible`, the `Command`
+trait's, no noun. `converge noun <Name> --corpus-id svrngs-folders`
+(/tmp/syaudit1/nouns.out), beside `git grep -nP` for each:
+
+| noun | converge | git grep | read |
+|---|---|---|---|
+| Held | 3: svrngs-node surface.rs:72, synced.rs:31, svrngs-runtime journal.rs:80 | 3: surface.rs:73, synced.rs:32, journal.rs:81 | Three private types, three concepts: a group as `/v1/groups` lists it, the journal's cache of what it folded, what a synced path was last taken or written as. One name, no shared meaning; nothing to fold. No change. |
+
+Every other noun: one definition (converge and git grep agree, converge
+one line early, I1).
+
+### Fixed here
+
+- **#113's reading, one home** (6982059). `all` and `placed` call
+  `Folders::admissions`; behaviour kept, as above. #113 itself, the
+  delete, stays open.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 113 | 6, 1 | crates/svrngs-node/src/folder.rs:160-165 (`admissions`) and crates/svrngs-node/src/synced.rs:68, :162-165, at 6982059 | not fixed (the reading folded, 6982059) | A group that cannot be listed or admitted reads as placing nothing, and the synced directory then deletes every file it held there that is unchanged on disk, untraced as to why. |
+| 114 | 8 | crates/svrngs-node/src/folder.rs:109-117 and crates/svrngs-node/src/node.rs:756, at 6982059 | not fixed (drops with the plants) | The plant variable read twice, the second time on every dial and for a value `Plant` does not name, against folder.rs:51's "read once at start". |
+| 115 | 10 (RUST_ARCH ownership) | crates/svrngs-node/src/synced.rs:53-65 and :77, at 6982059 | not fixed (the verdict's candidate 9) | `both_ways` spawns an unowned, unstoppable loop per ask; two asks for one name step at once over one kept state. |
+| 116 | 1 | crates/svrngs-node/src/synced.rs:96, :162, :181, :206-208, at 6982059 | not fixed | The apply's skips — a changed file kept, a placed file not written, an mtime unread — and the step's same-bytes touch are untraced. |
+| 110 | 8 | as recorded; and crates/svrngs-node/src/synced.rs:153-158, at 6982059 | grown (the verdict's candidate 2) | A third list of who holds a file: every standing member of every group. |
+| 109 | 6, 1 | as recorded; folder.rs:160-165 at 6982059 | grown into #113 | The same absence, now one helper's, read by the synced directory too. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 46 lines left on this branch (15704 / 15750). |
+| 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99, 100, 104, 111, 112 | as recorded | as recorded | not fixed | Untouched in the range. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun`, `dry-report` spans | Still present: each noun one line early (`Held` :31 for :32, `Entry` :24 for :25). |
+| I4 | 6 | `project refresh` | Still present: "typescript: skipped (export failed)". |
+| I9 | 6, 7 | `code dry-report` near tier | Still present: of the 9 clusters with a side in the range, all are neighbours, a trait's shape or tests of one shape; the one real re-write (`placed` ~ `all`) was not paired at 0.8. |
+| I19 | 6 | dry-report, `tests` scopes | Still present, and said: "could-not-judge". |
+| I24 | 6, 7 | `code dry-report` exact and near tiers | **Present in the new binary (7dfd54da…)**: an 11-line byte-identical copy of `beside`, considered (419 locations against 418), found by neither tier at 0.95. |
