@@ -194,7 +194,7 @@ def judge_run(kind, engine, run, logs, expected):
                                        yes=y, home_page=home_refused[:2], then=get(ot, "unasked"))
 
     # Bar 5: stopped, at the door, its delay recorded.
-    st = get(last, "stopped")
+    st = get(last, "stopping")
     s_at = get(st, "at")
     stopped_door = has(door, "judged=Err(Stopped)", since=s_at) if s_at else []
     if not st or not st.get("pressed"):
@@ -273,7 +273,7 @@ def main(out):
     o = ana(p, "other", "ask", "state")
     plants["other-app"] = verdict(None if o is None else o != "rank 200", "the other app answered, the taste lent without --ask", ask=o)
     p = load(out / "plant-after-stop.json")
-    s = ana(p, "stopped")
+    s = ana(p, "stopping")
     plants["after-stop"] = verdict(None if not get(s, "again") else get(s, "again", "taste", "state") != "ranked",
                                    "an ask after the stop answered, the stop's record put back to the yes",
                                    planted=get(s, "planted"), again=get(s, "again", "taste"))

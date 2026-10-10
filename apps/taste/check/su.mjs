@@ -260,17 +260,17 @@ const uses = (person) => home(person).then(() => person.page.waitForFunction(
 async function stop(last, first) {
   if (!(await last.page.$('#stop'))) await openPicks(last, 'to stop');
   const before = await showing(last.page);
-  if (!before.stop) return (last.stopped = { pressed: false, before });
+  if (!before.stop) return (last.stopping = { pressed: false, before });
   const t0 = Date.now();
   await last.page.click('#stop');
   await last.page.waitForFunction(() => document.getElementById('taste').dataset.state !== 'ranked', null, { timeout: 60_000 }).catch(() => {});
-  last.stopped = { pressed: true, at: new Date(t0).toISOString(), said: await showing(last.page), said_ms: Date.now() - t0 };
-  if (AFTER_STOP) last.stopped.planted = execSync(AFTER_STOP).toString().trim();
+  last.stopping = { pressed: true, at: new Date(t0).toISOString(), said: await showing(last.page), said_ms: Date.now() - t0 };
+  if (AFTER_STOP) last.stopping.planted = execSync(AFTER_STOP).toString().trim();
   const t1 = Date.now();
   await last.page.reload({ timeout: 60_000 }).catch((e) => last.logs.push(`reload: ${e}`));
-  last.stopped.again = await picks(last, t1);
-  last.stopped.stop_to_refused_ms = last.stopped.again.taste?.state?.startsWith('refused') ? Date.now() - t0 : null;
-  if (last.home) last.stopped.uses = await uses(last);
+  last.stopping.again = await picks(last, t1);
+  last.stopping.stop_to_refused_ms = last.stopping.again.taste?.state?.startsWith('refused') ? Date.now() - t0 : null;
+  if (last.home) last.stopping.uses = await uses(last);
   if (first !== last) first.after_stop = await openPicks(first, 'the other phone, after the stop');
 }
 
@@ -283,9 +283,12 @@ async function homeStop(ana) {
   if (!(await button.count())) return (ana.home_stop.pressed = false);
   const t0 = Date.now();
   ana.home_stop.at = new Date(t0).toISOString();
+  // The page reloads itself once the stop is kept: read after that.
   const kept = ana.page.waitForResponse((r) => r.url().endsWith('/choices') && r.request().method() === 'POST', { timeout: 60_000 });
+  const reloaded = ana.page.waitForEvent('load', { timeout: 60_000 }).catch(() => {});
   await button.first().click();
   ana.home_stop.answer = await kept.then((r) => r.status(), (e) => String(e));
+  await reloaded;
   ana.home_stop.uses_after = await uses(ana);
   await openFrom(ana, PICKS, '#taste');
   ana.home_stop.after = await picks(ana, Date.now());
