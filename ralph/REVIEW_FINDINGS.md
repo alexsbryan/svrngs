@@ -4223,3 +4223,239 @@ step, u5-11), exit 0 (/tmp/composeaudit3/check.out). Its first run, at
 the budget to 15,200 (aaecbdb, 08:59) and queued sup (5e87364, 9a452e4,
 df842e8), none touching crates/, web/ or apps/ (`git diff --stat 55fff43
 df842e8`); against it, #80's 14,644 leaves 556.
+
+## REVIEW-audit-folders-auto-1 (2026-10-09, range 2bf0e1b..b2a76db)
+
+No `REVIEW-audit-` row precedes this one in its queue
+(ralph/next/folders/STATE.md), so the range starts where the queue did:
+2bf0e1b, the commit that made it, on the branch `folders` cut from main
+at b482e08. It ends at b2a76db, the commit that made this row: 18 commits
+(`git rev-list --count 2bf0e1b..b2a76db`), gf-0 (e7715bd), gf-1 (bbf00e1,
+88c4362, 33bb0b7, 1490f61, aee58ae, 362a6bd, 75e34ae, 0360181, 575a911,
+e49a006, dfd00c3), gf-2 (71490c4, 8251050), each unit's `done` and this
+row's (`git log --reverse --format='%h %s' 2bf0e1b..b2a76db`). Product
+code changed in gf-1 alone. This audit fixes one finding (#108), records
+three (#109-#111), and grows #31 and #103. Main holds #105-#107 (its
+REVIEW-audit-sup-auto-1, c3c9637, after this branch was cut); this branch
+numbers from #108 so the two files merge without a clash.
+
+As before, `docs/ARCH_PRINCIPLES.md` is docs/principles/ARCH_PRINCIPLES.md,
+and `target/debug/sovereign-cli` is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256 c9b653d3…
+(`shasum -a 256`, built 2026-10-09 12:03), **the binary main's
+REVIEW-audit-sup-auto-1 planted against the same day**, so its tiers'
+readings (I24, I9) stand and were not planted again. The embedder was
+`llama-server` on the corpus's model (qwen-embedding-0.6b.gguf,
+~/.svrnmesh/config.toml:18) on :8080, `-b 8192 -ub 8192` (I21), for this
+session. The worktree is its own corpus, `svrngs-folders`, so main's
+`svrngs` was not touched: `code index . --corpus-id svrngs-folders
+--full` at b2a76db, tree clean, 2726 chunks in 358 s
+(/tmp/gfaudit1/index-full.out); `project refresh` there (the corpus named
+after the directory, I25, the same name): rust 10707 symbols, python
+1274, "typescript: skipped (export failed)" (I4). The scripts are
+main's sup audit's, copied to /tmp/gfaudit1: ledger.py with gf's unit
+names, windows.py, clusters.py.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' 2bf0e1b..b2a76db`,
+summed by /tmp/gfaudit1/ledger.py: a commit counts toward the unit its
+subject names (`gf-1` is gf-1-build-run), else the next `done`'s; product
+code is crates/, apps/, web/, bridge/; a test is a `tests/` or `check/`
+segment or a lean_check test file name.
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| gf-0-rule | 0 | 0 | 0 | 0 | 0 | 0 |
+| gf-1-build-run | 2129 | 134 | 1995 | 444 | 9 | 435 |
+| gf-2-verdict | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 2129 | 134 | 1995 | 444 | 9 | 435 |
+
+- gf-1 src, crates: svrngs-core folder.rs +144, lib.rs +20/−2, admit.rs
+  +13/−1, alpn.rs +7/−1, membership.rs +1/−1 (bbf00e1); svrngs-node
+  folder.rs +572 (88c4362) and +83/−104 (33bb0b7, the trim), node.rs
+  +13/−3, iroh.rs +9, Cargo.toml +5, lib.rs +1 (88c4362); svrngs cli.rs
+  +50/−1, Cargo.toml +3/−2 (1490f61). Crates: +921/−115.
+- gf-1 src, apps/jellyfin/folders/ (not counted, scripts/lean_check.py:49):
+  driver.cjs +232, jf_setup.py +118, rangeserver.py +116, the first run's,
+  unchanged (362a6bd); analyze.py +387, run.sh +241, probe.py +41, strm.py
+  +39, and the forks' changes +34/−19 (75e34ae). Apps: +1208/−19.
+- gf-1 tests: svrngs-node tests/folders.rs +272 (aee58ae), +36/−9
+  (575a911, rustfmt); svrngs-core folder_tests.rs +80 (bbf00e1); svrngs
+  tests/share.rs +56 (1490f61).
+- gf-0 and gf-2 wrote demo/ and docs/ alone.
+
+lean_check on `git archive` trees in /tmp/gfaudit1 (apps/ and tests not
+counted):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 2bf0e1b, range start (b482e08's code) | 2635 / 3000 | 14529 / 15200 |
+| f2f6945, gf-1 done | 2763 / 3000 | 15184 / 15200 |
+| b2a76db, range end | 2763 / 3000 | 15184 / 15200 |
+| b8d2b97, this audit's fix (the tree) | 2741 / 3000 | **15163 / 15200** |
+
+gf-1 spent 128 of the core's and 655 of the repository's, against gf-0's
+estimate of about 430 (its README §7 counts them by part); #108 gives
+back 21. **37 are left** on this branch (#80). Main's own count has
+moved since the cut (its 30d975a raised the budget to 15,350 for sup-3);
+the merge's budget is the operator's, as the queue's fence 6 says.
+
+### (2) Clones (`code dry-report`)
+
+**Scoped**, at 0.95, for each dir the range touched
+(/tmp/gfaudit1/clean-*_0.95.md):
+
+| scope | locations | exact | near | with a side added in the range |
+|---|---:|---|---:|---|
+| crates/svrngs-core/ | 407 | 7 (as at main's sup audit: `is_empty` ×3, `as_str` ×3, `key` (tests), `len`, `signed_by_link`, `lines`, `fmt`) | 0 | 0 |
+| crates/svrngs-node/ | 424 | 5 (`as_str` ×3, `addr`, `fmt`, `try_from`, `drop`) | 1 (declared.rs `harden_file` ×2, as before) | 0 |
+| crates/svrngs-node/tests/ | 0 | **could-not-judge** | **could-not-judge** | — |
+| crates/svrngs/ | 67 | 0 | 0 | 0 |
+| crates/svrngs/tests/ | 0 | **could-not-judge** | **could-not-judge** | — |
+| apps/jellyfin/folders/ | 36 | 0 | 0 | 0 |
+| apps/ | 275 | 0 | 5 (#99's three, tv.mjs and judge.py's, as before) | 0 |
+
+**Unscoped**: 0.95 (14 exact, 18 near), 0.9 (14, 41), 0.8 (14, 239).
+/tmp/gfaudit1/clusters.py blamed every side (`git blame -w` at b2a76db)
+for a line in 2bf0e1b..b2a76db: **0** groups at 0.95, **0** at 0.9, 11
+at 0.8 (/tmp/gfaudit1/clusters.out). converge and dry-report give lines
+one early (I1), corrected here:
+
+| at | cluster | cosine | read |
+|---|---|---|---|
+| 0.8 | svrngs-core folder.rs `FileHash::parse` :24-28, `hex` :30-32 ~ hash.rs `ContentHash::from_hex` :81-84, op.rs `from_hex` :89-91; folder.rs `serialize`/`deserialize` :35-46 ~ hash.rs `serialize` :110-114 | 0.805-0.847 | **#108**: `FileHash` was a second BLAKE3-256 type beside the core's one decider. Fixed (b8d2b97). op.rs's is `OpId`'s, another value. |
+| 0.8 | folder.rs `ShareFolder::decide` :75-86 ~ record.rs, register.rs, tests_support.rs `decide`, command.rs `confirm` | 0.812-0.948 | Each `Command` its own act; the trait's shape. No change. |
+| 0.8 | folder.rs `folders` :114-131 ~ `holders` :128-142 | 0.883 | Neighbours (I9); `holders` calls `folders`. #110 is about `holders`, not this pair. |
+| 0.8 | membership.rs `moves_membership` :370-384 among 40 symbols | 0.801-0.928 | One line in range, `Folder` added to its `false` arm. No change. |
+| 0.8 | svrngs-node folder.rs `router` ~ `list` ~ `ask` :516-551 | 0.808-0.832 | Neighbours, one route's two handlers. No change. |
+| 0.8 | folder_tests.rs `file` ~ `folder` ~ the first test | 0.859-0.874 | Neighbours. No change. |
+| 0.8 | apps/jellyfin/folders/ driver.cjs `quiet` ~ `login`, `ffmpegInContainer` ~ `rangeLogLines`; analyze.py `event` ~ `window` ~ `result`, `union` ~ `overlap` | 0.815-0.862 | Neighbours (I9), the run's instruments. No change. |
+
+**Window pass** (/tmp/gfaudit1/windows.py . 2bf0e1b..b2a76db, 5
+normalized lines over crates/, web/, apps/ in .rs, .js, .mjs, .py, tests
+included): 307 window hits in 111 spans, **1 new**; with .cjs and .sh
+added (windows-cjs.py, since the range's driver and run script are
+those), 309 in 113, **3 new**:
+
+- tests/folders.rs:17-22 == tests/surface.rs:17-22: the imports and
+  `signing`, then `seed_file` (folders.rs:21-31, surface.rs:21-34). Two
+  test binaries: **#31's case, grown**. `signing` is now in 11 binaries
+  (`grep -rn "fn signing(" crates/*/tests`), `seed_file` in 2; folders.rs
+  `Group` (:50) is conformance.rs `Group`'s (:130) shape, three nodes
+  each, the third. Not moved, for #31's reason.
+- apps/jellyfin/folders/run.sh:177-181 == :193-197: the byte flipped and
+  flipped back, the same inline Python twice. The run's script, whose data
+  are at 575a911 (e49a006); a change to it is proven only by the run
+  again. No change here.
+- run.sh:138-142 == apps/jellyfin/check/check.sh:118-122 ==
+  apps/movie-night/check/check.sh:102-106: Jellyfin's network.xml, its
+  loopback lines, each run's Jellyfin of its own (the queue's fence 3).
+  Three runs' set-ups, #99's kind; no change.
+
+Reading the range for what neither pass would show:
+
+- **#108, fixed.** `FileHash` (svrngs-core folder.rs:18-46 at b2a76db)
+  re-made `ContentHash` (hash.rs:44): one algorithm, one wire form,
+  a second parse, serde and hex. iroh-blobs names a raw blob by the
+  BLAKE3 of its bytes, so the record's file hash is a `ContentHash`.
+- **#109, not fixed.** `Folders::all` (svrngs-node folder.rs:137-144)
+  reads groups that cannot be listed, and a group whose admission fails,
+  as none (`namespaces().unwrap_or_default()`, `admission(ns).ok()`), with
+  no trace. Every reader inherits it: `/v1/folders` (`list`, :526-531)
+  answers "no folders", the endpoint (`bytes`, :385, :394-403) answers 404
+  `x-svrngs-refused: not-shared`, and the provider (`shares`, :219-224)
+  refuses "no standing folder of this computer's names the hash" where
+  svrngs could not judge: #103's case, and the queue's own fence ("a
+  refusal is never an empty answer"). Not fixed: each answer changes, and
+  no test plants an unlistable rail. For the production rows (the
+  verdict's candidates 2 and 3 rewrite these readers).
+- **#110, not fixed.** Who holds a hash is decided twice: `Admission::
+  holders` (svrngs-core folder.rs:103-111), read only by its test, and
+  the endpoint's own list across groups (svrngs-node folder.rs:404-408),
+  which keeps a key once per group: Ana sharing in two groups is asked
+  twice for a piece she did not answer, and each ask waits
+  `ANSWER_WITHIN`. The verdict names the fold (its §9, candidate 2);
+  the duplicate ask is this audit's. Not fixed: folding them changes who
+  is asked.
+- **#111, not fixed.** `svrngs share --folder` (svrngs cli.rs:548-563)
+  reads the node's API file with `unwrap_or_default()` (:549), so an
+  unreadable file and an absent one both say `NotRunning`, the first
+  untrue; and the answer's body with `unwrap_or_default()` (:560), so a
+  refusal whose body could not be read is "the folder was refused: ",
+  empty. Small, but each changes what the command says.
+- **Glassbox.** The new branches trace: `share`'s link skipped and each
+  file taken (svrngs-node folder.rs:165, :175), `write`'s each namespace
+  (:206, :209), `hold`'s each holder (:268, :281), the provider's every
+  request (:341, :345, :360), `bytes`'s refusals (:395, :420, :455) and
+  each answer (`Served`, :513), the core's `folders` (svrngs-core
+  folder.rs:97-98), the CLI's ask (cli.rs:556,
+  :561). Two do not, recorded with their fix's home: the 416 for a range
+  outside the file (svrngs-node folder.rs:410-416), and `all`'s skipped
+  groups (#109).
+- **Nouns of one program each.** `Plant` is folder.rs:48's and
+  apps/jellyfin/mw/src/main.rs:38's, each its program's own planted
+  failures (converge sees the first alone); the spike's drops in
+  production (verdict §9). The 60 s after which an unanswered holder is
+  asked first again (folder.rs:253) has one home, unnamed. No change.
+- **#57, #68, #70, #71, #75, #77, #79, #81, #89, #91, #95, #97, #99, #100,
+  #104 still open**, none touched in the range (`git diff --stat 2bf0e1b
+  b2a76db -- web apps/movie-night apps/taste apps/jellyfin/check
+  apps/jellyfin/mw` is empty).
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff 2bf0e1b b2a76db -- crates apps web bridge`, added lines
+matching `\b(struct|enum|trait|type|class)\s+[A-Z]\w*`: `FileHash`,
+`SharedFile`, `SharedFolder`, `ShareFolder` (svrngs-core); `Folders`,
+`FolderError`, `FolderAsk`, `Plant`, `Served` (svrngs-node); `Group`
+(tests/folders.rs); `H` (apps/jellyfin/folders/rangeserver.py); and
+`type Refusal = Infallible`, the `Command` trait's associated type, no
+noun. `converge noun <Name> --corpus-id svrngs-folders`
+(/tmp/gfaudit1/nouns.out), beside `git grep -nP
+"\b(struct|enum|trait|type|class)\s+<Name>\b" -- crates apps web bridge`:
+
+| noun | converge | git grep | read |
+|---|---|---|---|
+| Plant | 1: svrngs-node folder.rs:47 | 2: folder.rs:48, apps/jellyfin/mw/src/main.rs:38 | Two programs' planted failures, each its own closed set. No change. |
+| Group | 0: "defined only in test code" | 3: tests/folders.rs:50, tests/conformance.rs:130, web/src/join.rs:50 | Two test fixtures, three nodes each (#31), and the join page's group, another concept. No change. |
+| FileHash | 1: svrngs-core folder.rs:19 | 1: folder.rs:20 | One name, but the concept of `ContentHash` (hash.rs:44): **#108**, by reading, which converge cannot see. Fixed. |
+
+Every other noun: one definition (converge and git grep agree, converge
+one line early, I1).
+
+### Fixed here
+
+- **#108** (b8d2b97). `SharedFile::hash` is a `ContentHash`; `FileHash`
+  deleted. The record's spelling is unchanged (folder_tests.rs
+  `a_hash_is_spelled_as_hex_and_nothing_else_parses`, its type swapped,
+  passes); `ContentHash::from_hex` trims (hash.rs:82), the one difference,
+  for input svrngs never writes. `cargo test -p svrngs-core`: 138 passed;
+  `-p svrngs-node --lib --test folders`: 90, 3; `-p svrngs --test
+  share`: 5. Counted −21. The verdict's §9 citations into both folder.rs
+  files, and its budget (with DESIGN §8 and §9's row, about 800 to about
+  780), moved with it.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 108 | 8 | crates/svrngs-core/src/folder.rs:18-46 and crates/svrngs-core/src/hash.rs:44-126, at b2a76db | b8d2b97 | A shared file's hash was a second BLAKE3-256 type, `FileHash`, beside the core's `ContentHash`. |
+| 109 | 6, 1 | crates/svrngs-node/src/folder.rs:137-144, read at :219-224, :385 and :526-531, at b8d2b97 | not fixed | Groups that cannot be listed, or admitted, read as no folders: the list says none, the endpoint and the provider refuse "not shared", untraced. |
+| 110 | 8 | crates/svrngs-core/src/folder.rs:103-111 and crates/svrngs-node/src/folder.rs:404-408, at b8d2b97 | not fixed (the verdict's candidate 2) | Who holds a hash decided twice, the core's unused; the endpoint's list repeats a holder per group, so an unanswering holder is waited on once per group. |
+| 111 | 6 | crates/svrngs/src/cli.rs:549 and :560, at b8d2b97 | not fixed | `share --folder` reads an unreadable API file as "not running" and an unreadable refusal as an empty one. |
+| 112 | 1 | crates/svrngs-node/src/folder.rs:410-416, at b8d2b97 | not fixed (the verdict's candidate 3 rewrites the endpoint) | A range outside the file is answered 416 with no trace. |
+| 103 | 6 | as recorded; and crates/svrngs-node/src/folder.rs:137-144 (#109) | grown | The same absence read as none, in the folders' reader. |
+| 31 | 8 | crates/svrngs-node/tests/folders.rs:17-31, :50 and tests/surface.rs:17-34, tests/conformance.rs:130 | not fixed | Grown by gf-1: `signing` (11 binaries), `seed_file` (2), a three-node `Group` (2). |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 37 lines left on this branch (15163 / 15200); the merge's raise is the operator's. |
+| 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99, 100, 104 | as recorded | as recorded | not fixed | Untouched in the range. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun`, `dry-report` spans | Still present: `FileHash` :19 for :20, `Plant` :47 for :48, `parse` :21-31 for :24-28. |
+| I4 | 6 | `project refresh` | Still present: "typescript: skipped (export failed)". |
+| I9 | 6, 7 | `code dry-report` near tier | Still present: each new 0.8 cluster but #108's is a function and its neighbour. |
+| I19 | 6 | dry-report, `tests` scopes | Still present, and said: "could-not-judge"; the window pass found #31's growth. |
+| I24 | 6, 7 | `code dry-report` exact tier | The same binary as main's sup audit's plant, which it missed; its zeros in Rust are weak evidence. The window pass ran over every file. #108 was found by reading; the 0.8 tier paired it after. |
