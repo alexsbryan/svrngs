@@ -371,15 +371,20 @@ async function told() {
   });
 }
 
+// The group's page at `to`, then `then` and the fragment this page was
+// opened with, which the browser keeps from a worker; so a page of this
+// worker's own sends it on, `<` escaped.
+function onward(to, then) {
+  const [there, tail] = [to, then].map((x) => JSON.stringify(x).replace(/</g, '\\u003c'));
+  const page = `<!doctype html><script>location.replace(${there} + encodeURIComponent(${tail} + location.hash))</script>`;
+  return new Response(page, { headers: { 'content-type': 'text/html; charset=utf-8' } });
+}
+
 // A page navigated to `where`, a lend it reads: the group's page opens that
-// lend at the path, its fragment with it, which the browser keeps from a
-// worker; so a page of this worker's own sends it on, `<` escaped.
+// lend at the path.
 function opening(h, where) {
   trace(`RUNTIME: a page opens ${where.label}, which it reads, at ${where.path}: through the group's page`);
-  const to = JSON.stringify(`${h.page}#open=${where.label}&at=`).replace(/</g, '\\u003c');
-  const path = JSON.stringify(where.path).replace(/</g, '\\u003c');
-  const page = `<!doctype html><script>location.replace(${to} + encodeURIComponent(${path} + location.hash))</script>`;
-  return new Response(page, { headers: { 'content-type': 'text/html; charset=utf-8' } });
+  return onward(`${h.page}#open=${where.label}&at=`, where.path);
 }
 
 // ── the app's own worker ────────────────────────────────────────────────
