@@ -223,3 +223,143 @@ The traces, about 50 lines counted by `scripts/lean_check.py`'s rule
 (`python3 scripts/lean_check.py` at `607add5`: 13,383 of 15,750). The
 instrument (`crates/svrngs-node/tests/perf.rs`) is a test and the driver is
 under `demo/runs/`, neither counted.
+
+## 9. What the run gave
+
+Two passes, each `run.py`'s, its data under `run/<pass>/`: `events.jsonl`
+each event as it happened, `summary.json` each number with its load at
+its start and end, its path and its phases, and each node's log at debug
+(gzipped past 5 MiB, `run.py:423`).
+
+- **The breakdown pass** at `9ea632a` (`run/breakdown/events.jsonl:1`):
+  load 21.17 at its start, 12.92 at its end, 161.9 GB free; `df -k`
+  158,078,580 KiB available before and 157,838,216 after.
+- **The targets' pass** at `6a1d3ac`, through `ralph-result await`, its
+  wait past at once (`run/targets/events.jsonl:1`): load 7.75 on 12 cores,
+  swap 5,920.56 MB in use, 160.4 GB free, `df -k` 156,663,644 KiB
+  available; at its end, 2 h 44 min later (the last line): load 12.89,
+  swap 6,279.56 MB, `df -k` 156,143,668 KiB; the scratch, `/tmp/perf-run`,
+  removed. Its largest group's scratch was 1,075,620 KiB (`t-relay`'s
+  `scratch` event), under the 6 GB.
+
+The load rose past 18 within the pass — the pass's own nodes and this
+host's other work, not told apart — so most targets are **could-not-judge**
+by §6's rule, kept as their phases' shares. Swap in use did not grow
+during any judged number.
+
+**Two things of the instrument, before the numbers.**
+
+- **The nodes tick together.** Each group's nodes start within half a
+  second of each other (`up` events), and each step is a few
+  milliseconds then a second's sleep (`synced.rs:57-61`), so every node's
+  step lands at the same point of the second. Around three of T1's
+  changes the member's step ended 13, 24 and 29 ms before the writer's act
+  was written, and the writer's next step 1,006-1,008 ms after
+  (`run/targets/t-loopback-p0.log`, `-p1.log`, the steps around the
+  second to fourth `written to the record`). So P5 here is nearly a whole
+  second, where between computers started apart it would fall anywhere in
+  the second, half of one on average. P1 is the driver's cadence against
+  the writer's tick, a median of 65 ms. T1's sum is near its ceiling, not
+  its mean: the shares below hold, the totals are the worst of the second.
+- **Every path was direct.** Every fetch on every path names a direct
+  address as iroh selected it: `127.0.0.1` on loopback and on this host's
+  relay, `192.168.1.4`, this host's LAN address, through n0's
+  (`summary.json`, each number's `paths`). iroh moved each relayed
+  connection direct before the fetch, so no number here measures a byte
+  through a relay; the relay and n0 numbers are direct paths reached
+  another way, each reported, not judged (§2), and each above 18's load
+  besides.
+
+**Against the targets** (`run/targets/summary.json`, keyed by the name
+given; each on loopback, direct, unless said):
+
+| # | Measured | Load, start-end | Verdict | Predicted (§7) |
+|---|---|---|---|---|
+| T1 | **1,182 ms**, the median of 10, 1,087-1,468 (`T1-loopback-median`) | 9.38-14.2, swap flat | **failed** | missed, about 1.0 s (0.3-2.0): held |
+| T2 | 24.3 s (`T2-loopback`); 20.1 s on the relay's (`T2-relay`), 16.4 s through n0's (`T2-n0`) | 14.2-26.29 | could-not-judge | missed, about 30 s (10-90): within it |
+| T3 | 11.8 MB/s over P6, 11.07 s end to end (`T3T4-loopback-rate`); 13.4 and 11.1 on the others; 15.2 MB/s for 10 MiB in the breakdown pass at load 15.17 (`loopback-10m-rate`) | 25.53-25.93 | could-not-judge | met or near, 50-150 MB/s: **wrong**, a tenth of it |
+| T4 | **104,857,600 bytes** moved to each member for a 1 MiB edit, on all three paths (`T3T4-*-edit`) | 25.93-22.84 | could-not-judge | 100 MiB moved: held |
+| T5 | a change found in 993, 2,950 and 1,821 ms (`f100k-found#0-2`); idle **58.2%** of a core (`f100k-idle`) | 24.33-27.17; 39.94-26.68 | could-not-judge | found in 3-8 s: lower, 1-3 s; idle 60-90%: just under |
+| T6 | 1,640, 1,500 and 2,372 ms, ten members (`T6#0-2`) | 19.63-20.46 | could-not-judge | missed, about 2 s (1-4): held |
+
+Measured with no target: two writers at once, each change at the other
+members in 1,811, 1,410 and 1,457 ms (`two-writers#0-2`). **The record's
+bytes per change**: 739-741 bytes of a member's journal for an act of one
+(`T1-loopback-median`'s `record_bytes`; predicted about 1,200, sy-1's
+1,166, so lower), and 119 bytes a change in an act of many, 1,193,305
+bytes for 10,003 changes and 11,903,305 for 100,003 (the `journal`
+events of `f10k` and `f100k`; predicted about 130). **A member joining**:
+10,003 files in 688.7 s (`f10k-join`, load 25.37 rising to 63.58); the
+100,000-file folder **did not finish within its 2 h bound**, 16,238 of
+100,003 held at it (`f100k-join`, its value null) — predicted not within
+2 h: held.
+
+**Where each goes** — the phases' medians over each number's changes
+(`summary.json`, each number's `phases`), and what the traces split
+beyond them:
+
+- **T1: the two waits for a step.** P5 958 ms (91.7%), P1 65 ms (6.3%);
+  P2-P4, P6 and P7 together 21 ms — the act 7.7, the record carried 11.2,
+  the fetch 2.0 (its first byte 2.4 ms after the ask). The same on the
+  relay's path (1,216 ms, P5 86.6%) and n0's (1,224 ms, P5 86.0%).
+- **T2: the holder's record read, once a get, one get at a time.** Each
+  member took the 1,000 files one after another, 23.3 s from the first
+  `to fetch` to the last `written` at each, a file each 13.3 ms at the
+  median, 23.4 on average; of the 23.3 s, 19.0 s inside `hold`
+  (`fetch_ms` summed, `t-loopback-p1.log`; the same at p2). Each 4 KiB
+  get's first byte came 11.8 ms after the ask, its last 12.1: what holds
+  a get is before its first byte. There the holder reads the record whole
+  for each get (`shares`, `folder.rs:181-183`): 6.5 ms at the median,
+  2,000 gets, 13.5 s summed (`T2-loopback`'s `holder`), in one task that
+  takes one get after another (`provider`, `folder.rs:313-327`), so the
+  two members' gets wait on each other's. P5 is 87.3% of the median
+  change: a file's wait behind those fetched before it. P1 is 1.24 s: the
+  writer taking the 1,000 before the act.
+- **The record read grows with the record.** The holder's read per get:
+  0.9 ms at 100 files (`loopback-100-files`), 6.5 at 1,000, 50.6 at
+  10,000 (a journal of 1.19 MB), 399.6 at 100,000 (11.9 MB) — linear in
+  the journal, so a member fetching every file of a folder costs its
+  holder the files times the journal: quadratic. It held 532.5 s of the
+  10,000-file join's 688.7 (77%), and 7,067 s of the 100,000-file join's
+  7,200 (98%) (`f10k-join`'s and `f100k-join`'s `holder`).
+- **T3: a get a MiB, a store asked between each.** P6 81.7% of the
+  change, 8.85 s for 100 MiB at the member p1: 100 gets of 1 MiB one
+  after another (`PIECE`, `folder.rs:46`; the loop, `synced.rs:210-215`),
+  5.14 s inside them — 48.5 ms each at the median, its first byte at 9.6,
+  of which the holder's record read was 6.7 (200 gets, both members, 1.43
+  s summed) — and **3.69 s between them**, 36 ms at the median from one
+  get's end to the next's start: `hold`'s ask of the store what of the
+  blob it lacks (`local_for_request`, `folder.rs:202`) and the loop,
+  split no further by a trace. Inside a get, 1 MiB came in about 39 ms
+  after its first byte, about 27 MB/s at that load (about 32 ms, 33 MB/s,
+  at load 15 in the breakdown's 10 MiB): the transport and the two
+  stores, not split by these traces. P1 829 ms, P5 866, P2 (hashing and
+  copying 100 MiB in) 219.
+- **T4: a version by its own hash.** 104,857,600 bytes of payload to each
+  member, P6 81.7% of the edit's 10.5 s (`T3T4-loopback-edit`): nothing
+  of the old version counted, as §1 read.
+- **T5: the step, linear in files, once a second.** An idle step of the
+  100,000-file folder took 1,952 ms at the median: the kept state read
+  195, the walk 576, the files stat'ed again 540 (`unchanged`,
+  `synced.rs:93`), the apply 524 (the record read whole and its layout,
+  `synced.rs:166-170`), the kept state written 116 (`f100k-idle`'s
+  `steps`). At 10,000 files, 204 ms (`f10k-idle`). An idle node's share
+  of a core is about the step over the step and its second's sleep:
+  1.95/2.95 is 66%, measured 58.2; 0.204/1.204 is 17%, measured 16.1.
+  A change is found at the next step, so within a step and a second.
+- **Taking 100,000 files: the apply's match, quadratic.** The share's
+  first step took 196.6 s (`f100k-taken`): 98.4 s taking the files one
+  after another, about 1 ms each, and **95.3 s in the apply** — each file
+  taken matched against every placed entry (`placed.iter().find(mine)`,
+  `synced.rs:190`), 100,000 by 100,000. At 10,000 files the apply took
+  589 ms (`f100k-p0.log.gz`, `f10k-p0.log.gz`, the first `a step`): ten
+  times the files, 162 times the time.
+- **The 100,000-file act, refused and pulled.** The writer's push of the
+  11.9 MB act was refused, 413 (`f100k-p0.log.gz`, 21:35:32); the
+  member's own round pulled it 13 s later (`f100k-p1.log.gz`, 21:35:45,
+  `ops_pulled=1`) — as §7 predicted. A joining member's first fetch came
+  58.3 s (10,000) and 63.8 s (100,000) after its start: the round's
+  minute (`DEFAULT_RING_SYNC_INTERVAL`, `ring_sync.rs:104`).
+- **T6: the round to nine.** P5 58.6-68.8%, P1 12.6-40.9%, and P4 —
+  the act carried to nine members — 233 and 201 ms in two of the three
+  (15.6%), against 11 ms to two.
