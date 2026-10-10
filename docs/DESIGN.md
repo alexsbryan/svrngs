@@ -894,9 +894,17 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,000 lines of code and the
-repository under 15,350, tests and `apps/` apart (`scripts/lean_check.py`);
-a raise is the operator's, with the reason in the commit. `svrngs-core` stands
-at 2,359: the operator raised its ceiling from 2,500 on 2026-10-05, for what U4
+repository under 15,350 (`scripts/lean_check.py`); a raise is the
+operator's, with the reason in the commit. The budget counts the product:
+tests, `apps/` and `demo/runs/` apart. A recorded run's driver is what ran,
+kept byte for byte so its data reads against it (`ralph/REVIEW_FINDINGS.md`
+#61), and no check runs one; a helper a check runs lives outside it
+(`web/tests/serve.mjs`, `web/tests/control.mjs`), and code elsewhere under
+`demo/` counts. The operator set `demo/runs/` apart on 2026-10-10 (lean-1,
+"Budget counts product only"): the repository went from 15,284 to 13,428,
+the cap kept. Every figure below counted `demo/runs/`, as the rule then did.
+`svrngs-core` stood at 2,359 when the operator raised its ceiling from 2,500
+on 2026-10-05, for what U4
 to U7 still add to the core, since REVIEW-audit-u3-auto-2 found no duplication
 in it (ralph/REVIEW_FINDINGS.md #38), and the repository's from 12,000, at
 9,601, for U4's page and its wasm and U6's handoff, about 2,100 lines between

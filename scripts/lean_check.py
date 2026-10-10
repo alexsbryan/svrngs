@@ -11,7 +11,10 @@
    (the core is synchronous).
 4. Lines of code — not blank, not a comment, not a test — stay under budget:
    svrngs-core under 3,000, the whole repository under 15,350 — scripts
-   included; apps/ and installed packages (any node_modules/) apart.
+   included. The budget counts the product: apps/, installed packages (any
+   node_modules/) and demo/runs/ apart. A recorded run's driver is what ran,
+   kept byte for byte so its data reads against it (ralph/REVIEW_FINDINGS.md
+   #61), and no check runs one; code elsewhere under demo/ counts.
 """
 import re
 import subprocess
@@ -46,7 +49,7 @@ def code_lines(base):
         rel = f.relative_to(ROOT).as_posix()
         if (f.suffix not in CODE or not f.is_file() or "/tests/" in f"/{rel}"
                 or "/node_modules/" in f"/{rel}"
-                or rel.startswith(("apps/", "target/"))
+                or rel.startswith(("apps/", "target/", "demo/runs/"))
                 or re.search(r"(^|/)tests?(_\w+)?\.rs$|_tests?\.rs$|\.test\.m?js$", rel)):
             continue
         for line in f.read_text(errors="replace").splitlines():
