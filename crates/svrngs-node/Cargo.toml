@@ -42,8 +42,16 @@ tower = { version = "0.5", features = ["util"] }
 # loopback bridge; "json" reads the answer, as upstream's workspace enabled it.
 reqwest = { version = "0.12", default-features = false, features = ["json"] }
 
+[features]
+# What only a test asks of a node (src/node/tests_support.rs): its routes as a
+# caller no socket can be, its transport, a round now.
+test-support = []
+
 [dev-dependencies]
 svrngs-core = { workspace = true, features = ["test-support"] }
+# This crate's integration tests (tests/) link it as any caller does, so they
+# turn its test support on here.
+svrngs-node = { path = ".", features = ["test-support"] }
 tempfile = "3"
 tokio = { version = "1", features = ["full"] }
 # The door's tests check a file's bytes through it sha-exact.

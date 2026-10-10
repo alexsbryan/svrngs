@@ -125,9 +125,7 @@ pub use sig::{
     act_id, actor_of, derive_id, field, redemption_message, ring_op_message, sign_act,
     sign_message, sign_ring_op, verify_hex,
 };
-pub use sync::{
-    digest, ops_missing_from, ops_missing_from_within, Compaction, DigestFold, Floors, NO_BUDGET,
-};
+pub use sync::{digest, ops_missing_from_within, Compaction, DigestFold, Floors, NO_BUDGET};
 pub use view::{Digest, View, DIGEST_V};
 
 /// The journal envelope, re-exported so a consumer of the rail names ONE
@@ -138,16 +136,14 @@ pub use view::{Digest, View, DIGEST_V};
 pub use hash::ContentHash;
 pub use op::{Journaled, Op, OpId, SkippedLine};
 
-// A consumer cannot use this crate without both of these, and until 2026-09-04
-// neither was exported — so the only shipped `RingSigner` impl was for a type
-// the crate refused to hand you, and the only `Payload` constructor took a type
-// it never named. Both forced the caller to add the dependency themselves and
-// match our version by hand; a mismatch makes `impl RingSigner for SigningKey`
-// silently not apply to their key, which is a trait-resolution error a long way
-// from its cause. Found by physically lifting the package (cw-lift), not by a
-// gate — nothing in the repo can see an export that is missing.
-/// The JSON value [`Payload::new`] takes.
-pub use serde_json::Value;
+// Until 2026-09-04 neither `SigningKey` (above) nor serde_json's `Value` was
+// exported — so the only shipped `RingSigner` impl was for a type the crate
+// refused to hand you, and the only `Payload` constructor took a type it never
+// named. A mismatch makes `impl RingSigner for SigningKey` silently not apply to
+// their key, a trait-resolution error a long way from its cause. Found by
+// physically lifting the package (cw-lift). `Value`'s re-export went in lean-3:
+// svrngs's crates take serde_json from the workspace's one pin, and only a test
+// read it here.
 
 // ── Local-only namespaces ────────────────────────────────────
 
@@ -312,19 +308,6 @@ pub struct Roster {
 impl Roster {
     pub fn new(members: BTreeMap<Person, Vec<String>>) -> Self {
         Self { members }
-    }
-
-    /// Who signed with this key, if anyone in the ring did.
-    pub fn person_for(&self, actor: &str) -> Option<&Person> {
-        self.members
-            .iter()
-            .find(|(_, keys)| keys.iter().any(|k| k == actor))
-            .map(|(p, _)| p)
-    }
-
-    /// Whether this name is one the ring knows.
-    pub fn knows(&self, person: &Person) -> bool {
-        self.members.contains_key(person)
     }
 }
 

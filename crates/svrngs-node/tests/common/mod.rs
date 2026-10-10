@@ -46,9 +46,9 @@ pub async fn bridge_as(
     to: &svrngs_node::node::Node,
     alpn: svrngs_core::alpn::Alpn,
 ) -> svrngs_node::iroh::HttpBridge {
-    use svrngs_node::iroh::{
-        ring_crypto_provider, EndpointAddr, EndpointBuilder, HttpBridge, SecretKey,
-    };
+    use iroh::endpoint::Builder as EndpointBuilder;
+    use svrngs_node::guest::ring_crypto_provider;
+    use svrngs_node::iroh::{EndpointAddr, HttpBridge, SecretKey};
     let dialling = EndpointBuilder::empty()
         .crypto_provider(ring_crypto_provider())
         .secret_key(SecretKey::from_bytes(&key.to_bytes()))

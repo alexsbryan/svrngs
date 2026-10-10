@@ -71,8 +71,8 @@ use crate::redeem::SeedText;
 use crate::register::{Member, Standing};
 use crate::ring_routes::{self, err, RingInbound};
 use crate::ring_sync::{
-    exchange, peer_client, run_one_round, spawn_ring_sync_loop, AskRound, ExchangeOutcome,
-    ExchangeStop, RingSyncHandle, RoundMembers, RoundOutcome, Rounds, DEFAULT_RING_SYNC_INTERVAL,
+    exchange, peer_client, spawn_ring_sync_loop, AskRound, ExchangeOutcome, ExchangeStop,
+    RingSyncHandle, RoundMembers, Rounds, DEFAULT_RING_SYNC_INTERVAL,
 };
 use crate::{actor_of, Person, RingRail, SigningKey};
 
@@ -132,7 +132,8 @@ pub struct Node {
     pub(crate) asking: Asking,
     api: crate::api::Serving,
     /// What [`Self::api`] serves, kept so a test can ask it as a caller
-    /// no socket can be (one off this computer, [`Node::api_routes`]).
+    /// no socket can be (one off this computer, `Node::api_routes`).
+    #[cfg(any(test, feature = "test-support"))]
     routes: axum::Router,
     _acceptor: IrohAcceptor,
     _round: RingSyncHandle,
@@ -287,6 +288,7 @@ impl Node {
             host,
             asking: room,
             api,
+            #[cfg(any(test, feature = "test-support"))]
             routes,
             _acceptor: acceptor,
             _round: round,
@@ -304,21 +306,9 @@ impl Node {
         self.api.addr()
     }
 
-    /// The routes served at [`Node::api_addr`], behind their loopback
-    /// check: what a test hands a request whose caller it names.
-    pub fn api_routes(&self) -> axum::Router {
-        self.routes.clone()
-    }
-
     /// The endpoint this node dials and is dialled on.
     pub fn endpoint(&self) -> &Endpoint {
         &self.host.endpoint
-    }
-
-    /// The dial-by-key transport the round dials through; a caller seeds a
-    /// member's addresses here when no address lookup can find it.
-    pub fn transport(&self) -> &IrohTransport {
-        &self.host.transport
     }
 
     /// What every other computer's key standing in a group this node holds
@@ -327,11 +317,6 @@ impl Node {
     pub async fn lends(&self) -> Lends {
         let groups = self.host.standings().unwrap_or_default();
         self.host.lends_in(&groups, None).await
-    }
-
-    /// Run one round now, beside the interval's, and say what it moved.
-    pub async fn round(&self) -> RoundOutcome {
-        run_one_round(self.host.as_ref(), &|| {}).await
     }
 
     /// One exchange of `namespace` with the node at `peer`, whatever this
@@ -762,3 +747,6 @@ fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn
     tracing::debug!(target: "node", actor, "node: refused — the dialer stands in no group held here");
     None
 }
+
+#[cfg(any(test, feature = "test-support"))]
+mod tests_support;

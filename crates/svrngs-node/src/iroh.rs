@@ -50,15 +50,10 @@ pub use crate::alpn::{Alpn, ALPN};
 // The guest dialer and the one HTTP bridge live in `crate::guest`, as they
 // lived in `mesh_reach::guest` upstream (pb-reach-guest, phase-b-35);
 // re-exported so callers spell them `svrngs_node::iroh::`.
-pub use crate::guest::{
-    build_relayed_endpoint, configured_proxy_redacted, ring_crypto_provider, HttpBridge,
-    RelayConfig,
-};
+pub use crate::guest::{build_relayed_endpoint, HttpBridge, RelayConfig};
 
 // Re-exported so callers build endpoints without declaring their own iroh
 // dependency — keeps the version pin in exactly one place.
-pub use iroh::endpoint::presets;
-pub use iroh::endpoint::Builder as EndpointBuilder;
 pub use iroh::{Endpoint, EndpointAddr, PublicKey, RelayUrl, SecretKey};
 // svrngs: iroh's address book in memory, so a test tells a joiner the
 // loopback addresses a link's bare key resolves to (u2-8).

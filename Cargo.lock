@@ -3691,6 +3691,7 @@ dependencies = [
  "serde_json",
  "sha2 0.10.9",
  "svrngs-core",
+ "svrngs-node",
  "svrngs-runtime",
  "tempfile",
  "thiserror 2.0.21",

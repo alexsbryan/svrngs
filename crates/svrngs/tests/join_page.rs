@@ -90,9 +90,12 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     let site = harness::site();
     let relay = harness::relay().await;
     let dir = tempfile::tempdir().unwrap();
-    let ours = RelayConfig::from_parts(vec![harness::relay_url(&relay)], Some("none"))
-        .unwrap()
-        .on_loopback_only();
+    let ours = RelayConfig {
+        relay_urls: vec![harness::relay_url(&relay)],
+        n0_services: false,
+        loopback_only: false,
+    }
+    .on_loopback_only();
     let sam = Node::start(
         dir.path().to_path_buf(),
         SigningKey::from_bytes(&[1; 32]),

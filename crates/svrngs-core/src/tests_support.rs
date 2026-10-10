@@ -163,9 +163,10 @@ pub fn forged(
     sign_act(&impostor, NS, ts, seq, prev, act, None, None)
 }
 
-/// An id no act here derives: `fill` repeated over 32 bytes.
+/// An id no act here derives: `fill` repeated over 32 bytes, read as a
+/// line's id is.
 pub fn stray_id(fill: u8) -> OpId {
-    OpId::from_hex(&format!("{fill:02x}").repeat(32)).unwrap()
+    serde_json::from_value(serde_json::Value::String(format!("{fill:02x}").repeat(32))).unwrap()
 }
 
 /// Each op beside its id, for a function that takes ids its caller derived.
@@ -188,13 +189,34 @@ pub fn wire_ops(a: &Admission) -> Vec<crate::AdmittedOp> {
         .expect("an app reads back what the wire carries")
 }
 
+/// Every op `ops` holds that `theirs` says the peer is missing:
+/// [`ops_missing_from_within`] with no budget, the honest TOTAL a test
+/// measures. (Moved here from `sync.rs` in lean-3: nothing but tests asked
+/// for it, and everything that puts ops on a wire uses the budgeted form.)
+pub fn ops_missing_from(
+    ops: &[Op<SignedOp>],
+    namespace: &str,
+    verifier: &dyn RingVerifier,
+    theirs: &Digest,
+) -> Vec<Op<SignedOp>> {
+    ops_missing_from_within(ops, namespace, verifier, theirs, NO_BUDGET).0
+}
+
 /// The marks projection of a digest — what most sync bars assert on. The
 /// content commitment is asserted where it is the point (`view`'s tests and
 /// the fork bars); everywhere else the mark is the claim under test.
 pub fn marks(d: &crate::Digest) -> BTreeMap<String, u64> {
-    d.iter()
-        .map(|(actor, view)| (actor.clone(), view.mark))
+    entries(d)
+        .into_iter()
+        .map(|(actor, view)| (actor, view.mark))
         .collect()
+}
+
+/// A digest's `{actor → View}`, read as a peer reads it: through the wire,
+/// so the digest keeps its map to itself.
+pub fn entries(d: &crate::Digest) -> BTreeMap<String, crate::View> {
+    let mut wire = serde_json::to_value(d).expect("a digest serialises");
+    serde_json::from_value(wire["entries"].take()).expect("a digest's entries read back")
 }
 
 /// The `what` of every act an app's reducer would see, in order — the shape
@@ -204,9 +226,8 @@ pub fn applied(a: &Admission) -> Vec<String> {
         .iter()
         .filter(|o| o.applies())
         .filter_map(|o| {
-            o.payload
-                .as_ref()?
-                .as_value()
+            serde_json::to_value(o.payload.as_ref()?)
+                .ok()?
                 .get("what")?
                 .as_str()
                 .map(str::to_string)

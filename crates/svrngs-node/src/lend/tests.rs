@@ -184,7 +184,7 @@ fn an_upload_is_declared_or_absent_never_defaulted() {
     assert_eq!(upload.bps(), 30_000_000);
     assert_eq!(upload.to_string(), "30 Mbit/s");
     assert_eq!(
-        Upload::new(NonZeroU64::new(1_500_000).unwrap()).to_string(),
+        Upload(NonZeroU64::new(1_500_000).unwrap()).to_string(),
         "1500000 bit/s"
     );
 }

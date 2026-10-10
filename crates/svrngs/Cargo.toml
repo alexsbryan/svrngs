@@ -31,6 +31,7 @@ tempfile = "3"
 # join_by_link.rs dials as a stranger, as svrngs-node's own tests do.
 reqwest = { version = "0.12", default-features = false }
 svrngs-core = { workspace = true, features = ["test-support"] }
+svrngs-node = { workspace = true, features = ["test-support"] }
 # join_page.rs drives a phone's page (web/tests/join.mjs) through a relay on
 # 127.0.0.1, as svrngs-node's browser tests do, whose harness it includes.
 iroh-relay = { version = "=1.0.2", features = ["server"] }

@@ -85,10 +85,6 @@ impl OpId {
     pub(crate) fn from_hash(h: ContentHash) -> Self {
         Self(h)
     }
-    /// `None` on anything that is not exactly 64 hex characters.
-    pub fn from_hex(s: &str) -> Option<Self> {
-        ContentHash::from_hex(s).map(Self)
-    }
     pub fn as_bytes(&self) -> &[u8; 32] {
         self.0.as_bytes()
     }

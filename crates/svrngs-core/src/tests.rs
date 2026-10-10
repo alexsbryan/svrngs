@@ -212,16 +212,16 @@ fn one_actors_acts_inside_one_second_fold_in_seq_order() {
     // The precondition that makes this a gate rather than a coincidence: the
     // ids do NOT already sort in seq order, so the old comparator produced a
     // different answer.
-    let by_id: Vec<&str> = {
+    let by_id: Vec<String> = {
         let mut v: Vec<_> = ops.iter().collect();
         v.sort_by(|a, b| a.id.cmp(&b.id));
         v.iter()
             .map(|o| match &o.kind.act {
-                RailAct::Record { payload } => payload
-                    .as_value()
-                    .get("what")
-                    .and_then(|w| w.as_str())
-                    .expect("what"),
+                RailAct::Record { payload } => serde_json::to_value(payload).expect("a payload")
+                    ["what"]
+                    .as_str()
+                    .expect("what")
+                    .to_string(),
                 _ => unreachable!(),
             })
             .collect()

@@ -179,8 +179,10 @@ once after an app's append (one `Notify`, held by the round and the record
 API), and when the member door meets a pass whose signer stands in no
 group held here, which waits up to 10 s for a round begun after its ask to
 end before it answers (`ring_sync::AskRound`, mnp-1)
-(`Node::round` runs one now; `Node::sync_with` runs one exchange with a
-peer the register may not name yet).
+(`Node::sync_with` runs one exchange with a peer the register may not name
+yet; a test runs a round now with `Node::round`, which with `transport` and
+`api_routes` is test support since lean-3, `node/tests_support.rs` behind
+svrngs-node's `test-support` feature).
 
 Redemption is `redeem.rs` (DESIGN §6, U2), new code in the shape of
 commonwealth-rails' mesh join. A link carries only the issuer's key and the

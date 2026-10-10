@@ -55,7 +55,7 @@
 //!
 //! # Everyone republishes everything they hold
 //!
-//! [`ops_missing_from`] does not filter by author. A node that has been
+//! [`ops_missing_from_within`] does not filter by author. A node that has been
 //! offline gets its ops back from whoever holds them, and a housemate who
 //! leaves the ring does not take their half of the journal with them. This is
 //! also why there is no own-origin skip to get wrong: the mesh store's
@@ -279,29 +279,8 @@ impl DigestFold {
     }
 }
 
-/// Every op this node holds that `theirs` says the peer is missing.
-///
-/// A mark of `n` means the peer needs nothing at or below `n`, sealed or held
-/// alike, so honouring the floor is the same `>` this always was — the peer's
-/// retired prefix is simply never above its own mark. Author-blind on purpose
-/// (see the module docs). Ordered by
-/// `(actor, seq)` so the wire payload is deterministic — two nodes with the
-/// same holdings produce byte-identical bodies, which makes a diff of two
-/// captures mean something.
-///
-/// This is [`ops_missing_from_within`] with no budget, and it is the honest
-/// TOTAL: what a caller wants when it is measuring, not when it is sending.
-/// Everything that puts ops on a wire uses the budgeted form.
-pub fn ops_missing_from(
-    ops: &[Op<SignedOp>],
-    namespace: &str,
-    verifier: &dyn RingVerifier,
-    theirs: &Digest,
-) -> Vec<Op<SignedOp>> {
-    ops_missing_from_within(ops, namespace, verifier, theirs, NO_BUDGET).0
-}
-
-/// The budget that never binds — what [`ops_missing_from`] passes.
+/// The budget that never binds: with it, [`ops_missing_from_within`] is the
+/// honest TOTAL, what a caller wants when it is measuring, not sending.
 ///
 /// Named rather than spelled `usize::MAX` at the call site because it is also
 /// the value the pricing fast path tests for: costing every op is a second
@@ -310,7 +289,9 @@ pub fn ops_missing_from(
 pub const NO_BUDGET: usize = usize::MAX;
 
 /// Every op this node holds that `theirs` says the peer is missing, stopped
-/// at `budget_bytes` of serialised ops.
+/// at `budget_bytes` of serialised ops. Ordered by `(actor, seq)` so the wire
+/// payload is deterministic — two nodes with the same holdings produce
+/// byte-identical bodies, which makes a diff of two captures mean something.
 ///
 /// Returns `(ops, more)`. **`more` is the whole reason this is not a
 /// `Vec`**: "here is everything you lack" and "here is as much of it as fits"

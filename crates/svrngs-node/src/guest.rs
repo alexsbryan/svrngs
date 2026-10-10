@@ -63,7 +63,7 @@ pub struct RelayConfig {
 impl Default for RelayConfig {
     fn default() -> Self {
         // Bootstrap posture: full n0 (relays + DNS). Callers that want
-        // sovereignty opt out via `from_parts(discovery = "none")`.
+        // sovereignty opt out with `n0_services: false`.
         Self {
             relay_urls: Vec::new(),
             n0_services: true,
@@ -72,59 +72,7 @@ impl Default for RelayConfig {
     }
 }
 
-/// The closed set of `discovery` spellings (ROOT_CAUSE_FIXES C2). The
-/// config is DATA, and a data value this build does not know is a refusal,
-/// never a default (ARCH §9, §18.3).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Discovery {
-    /// The n0 relays and DNS — the bootstrap posture.
-    N0,
-    /// Severed from n0: no relay service, no DNS lookup.
-    None,
-}
-
-impl std::str::FromStr for Discovery {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.trim() {
-            "n0" => Ok(Discovery::N0),
-            "none" => Ok(Discovery::None),
-            "self" | "local" => Err(format!(
-                "`{s}` was never implemented — `none` is the setting that severs n0 \
-                 (ROOT_CAUSE_FIXES C2: a spelling that promises a capability it does \
-                 not have is refused, not aliased)"
-            )),
-            other => Err(format!(
-                "unknown [iroh] discovery `{other}` — accepted: `n0`, `none`"
-            )),
-        }
-    }
-}
-
 impl RelayConfig {
-    /// Build from operator config: the `relay_urls` list and a
-    /// `discovery` spelling. The spellings are a CLOSED set —
-    /// [`Discovery::from_str`] names every one it accepts and refuses the
-    /// rest by name (ROOT_CAUSE_FIXES C2). Absent/`"n0"` = the n0 services
-    /// (bootstrap posture); `"none"` = severed. `"self"`/`"local"` are
-    /// refused rather than aliased: they were never implemented, and a
-    /// spelling that promises a capability it does not have is the
-    /// substitution this door exists to stop. Central so every program
-    /// maps its config identically — and a typo refuses to LOAD instead of
-    /// quietly phoning n0.
-    pub fn from_parts(relay_urls: Vec<String>, discovery: Option<&str>) -> Result<Self, String> {
-        let discovery = match discovery.map(str::trim) {
-            None | Some("") => Discovery::N0,
-            Some(s) => s.parse::<Discovery>()?,
-        };
-        Ok(Self {
-            relay_urls,
-            n0_services: discovery == Discovery::N0,
-            loopback_only: false,
-        })
-    }
-
     /// The same posture, listening on 127.0.0.1 alone
     /// ([`RelayConfig::loopback_only`]).
     pub fn on_loopback_only(self) -> Self {
@@ -549,16 +497,15 @@ where
 
 /// Which end of a tunnel `pump` is splicing — the warn's direction and
 /// wording depend on it. On the BRIDGE side the client's request flows
-/// tcp→iroh and the answer iroh→tcp; on the ACCEPTOR side it is the
-/// mirror, and "nothing came back" indicts the LOCAL forward target.
+/// tcp→iroh and the answer iroh→tcp. (Upstream's ACCEPTOR side, the
+/// mirror, went in lean-3: svrngs's acceptor serves a router, not a splice.)
 #[derive(Clone, Copy)]
 pub enum PumpSide {
     Bridge,
-    Acceptor,
 }
 
 /// Splice one TCP connection and one iroh bi-stream, both ways. The bridge
-/// and the acceptor both call this; it is pub for that.
+/// calls this, and the bridge's tests splice their far end with it.
 pub async fn pump(
     tcp: tokio::net::TcpStream,
     mut send: iroh::endpoint::SendStream,
@@ -589,19 +536,6 @@ pub async fn pump(
                     request_bytes = request,
                     "iroh bridge: the peer accepted the stream but answered nothing — \
                      its origin or forward is down on the far side"
-                );
-            }
-        }
-        PumpSide::Acceptor => {
-            // request = dialer→origin, answer = origin→dialer.
-            if request > 0 && answer == 0 {
-                tracing::warn!(
-                    target: "transport",
-                    dialer = %peer,
-                    alpn = %String::from_utf8_lossy(alpn),
-                    request_bytes = request,
-                    "iroh acceptor: the local forward accepted the request but the \
-                     origin answered nothing — is the forwarded-to listener running?"
                 );
             }
         }

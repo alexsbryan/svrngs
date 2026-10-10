@@ -110,12 +110,6 @@ impl Payload {
         }
         Ok(Self(canonical))
     }
-
-    /// The app's value. Read it; never rebuild a `Payload` around a mutated
-    /// copy without going back through [`Payload::new`].
-    pub fn as_value(&self) -> &Value {
-        &self.0
-    }
 }
 
 /// Rebuild `value` in its one canonical spelling: objects keyed in sorted

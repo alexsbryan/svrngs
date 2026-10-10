@@ -46,7 +46,11 @@ fn lines(node: &Node, group: &str) -> Vec<svrngs_node::Op<svrngs_node::SignedOp>
 }
 
 fn no_relay() -> RelayConfig {
-    RelayConfig::from_parts(Vec::new(), Some("none")).unwrap()
+    RelayConfig {
+        relay_urls: Vec::new(),
+        n0_services: false,
+        loopback_only: false,
+    }
 }
 
 fn name(s: &str) -> Name {
@@ -670,7 +674,11 @@ async fn a_member_prints_links_on_the_page_the_founders_opened() {
 #[tokio::test(flavor = "multi_thread")]
 async fn a_link_from_a_computer_without_lookup_carries_its_relay() {
     let relay: RelayUrl = "https://relay.example./".parse().unwrap();
-    let ours = RelayConfig::from_parts(vec![relay.to_string()], Some("none")).unwrap();
+    let ours = RelayConfig {
+        relay_urls: vec![relay.to_string()],
+        n0_services: false,
+        loopback_only: false,
+    };
     assert!(!ours.n0_services, "lookup off");
     let sam = computer_on(1, &ours).await;
     let (seed, printed) = cli::new_group(&sam.node, name("house"), name("Sam"), None, &ours)

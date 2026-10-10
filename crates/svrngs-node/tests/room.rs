@@ -46,9 +46,12 @@ async fn start(seed: u8, dir: &std::path::Path) -> Node {
     Node::start(
         dir.to_path_buf(),
         signing(seed),
-        &RelayConfig::from_parts(Vec::new(), Some("none"))
-            .unwrap()
-            .on_loopback_only(),
+        &RelayConfig {
+            relay_urls: Vec::new(),
+            n0_services: false,
+            loopback_only: false,
+        }
+        .on_loopback_only(),
         no_seed,
         "127.0.0.1:0".parse().unwrap(),
     )

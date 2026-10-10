@@ -46,9 +46,12 @@ async fn sam_through_a_relay_on_this_computer() {
         .parse()
         .expect("DRY_LIMIT is how many at once");
     let relay = harness::relay().await;
-    let ours = RelayConfig::from_parts(vec![harness::relay_url(&relay)], Some("none"))
-        .unwrap()
-        .on_loopback_only();
+    let ours = RelayConfig {
+        relay_urls: vec![harness::relay_url(&relay)],
+        n0_services: false,
+        loopback_only: false,
+    }
+    .on_loopback_only();
     let sam_dir = dir.join("sam");
     std::fs::create_dir_all(&sam_dir).unwrap();
     let sam = Node::start(

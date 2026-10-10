@@ -315,7 +315,7 @@ impl<K: Journaled> Oplog<K> {
     /// offset, the read starts again from the top and the returned
     /// [`Tail::restarted`] says the caller's fold is void. Lines are judged by
     /// the same rules as [`Self::read_all_with_skips`]; skipped ones are warned
-    /// and counted, with line numbers counted from where this read began.
+    /// and counted in its trace, with line numbers counted from where this read began.
     pub fn read_since(&self, cursor: Cursor) -> Result<Tail<K>> {
         use std::io::{Read, Seek, SeekFrom};
         let mut file = match fs::File::open(&self.path) {
@@ -323,7 +323,6 @@ impl<K: Journaled> Oplog<K> {
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
                 return Ok(Tail {
                     ops: Vec::new(),
-                    skipped: 0,
                     cursor: Cursor::default(),
                     restarted: cursor != Cursor::default(),
                 });
@@ -363,7 +362,6 @@ impl<K: Journaled> Oplog<K> {
         );
         Ok(Tail {
             ops,
-            skipped,
             cursor: Cursor {
                 file: file_id,
                 end: start + whole as u64,
@@ -426,12 +424,6 @@ pub struct Cursor {
 pub struct Tail<K> {
     /// The ops past the cursor, in append order.
     pub ops: Vec<Op<K>>,
-    /// Lines past the cursor this build could not use (already warned).
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "the cursor tests read it; the write index needs only the ops")
-    )]
-    pub skipped: usize,
     /// Where the next read starts.
     pub cursor: Cursor,
     /// The read began at the top of the file, not at the cursor: whatever the

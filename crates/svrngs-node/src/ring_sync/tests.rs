@@ -303,7 +303,7 @@ async fn ten_thousand_ops_do_not_fit_one_chunk() {
     let (chunk, more) = journal
         .ops_missing_from_within(
             &crate::Ed25519Verifier,
-            &Digest::new(),
+            &Digest::default(),
             RING_SYNC_OPS_BUDGET_BYTES,
         )
         .unwrap();
@@ -318,7 +318,7 @@ async fn ten_thousand_ops_do_not_fit_one_chunk() {
         "a chunk must fit the limit it was budgeted against"
     );
     let all = journal
-        .ops_missing_from(&crate::Ed25519Verifier, &Digest::new())
+        .ops_missing_from(&crate::Ed25519Verifier, &Digest::default())
         .unwrap();
     let per_op = serde_json::to_vec(&all).unwrap().len() / all.len();
     assert!(
@@ -342,7 +342,7 @@ async fn the_budgeted_chunk_is_served_where_the_whole_journal_is_refused() {
             namespace: NS.to_string(),
             digest: journal.digest(&crate::Ed25519Verifier).unwrap(),
             ops: journal
-                .ops_missing_from(&crate::Ed25519Verifier, &Digest::new())
+                .ops_missing_from(&crate::Ed25519Verifier, &Digest::default())
                 .unwrap(),
         };
         let (url, _served) = serve(peer, &key).await;
@@ -355,7 +355,7 @@ async fn the_budgeted_chunk_is_served_where_the_whole_journal_is_refused() {
     let (ops, more) = journal
         .ops_missing_from_within(
             &crate::Ed25519Verifier,
-            &Digest::new(),
+            &Digest::default(),
             RING_SYNC_OPS_BUDGET_BYTES,
         )
         .unwrap();
@@ -475,7 +475,7 @@ async fn a_seal_shortens_the_exchange_only_once_the_retired_lines_are_deleted() 
     let (ops, more) = journal
         .ops_missing_from_within(
             &crate::Ed25519Verifier,
-            &Digest::new(),
+            &Digest::default(),
             RING_SYNC_OPS_BUDGET_BYTES,
         )
         .unwrap();
@@ -525,7 +525,7 @@ async fn a_second_call_that_fails_still_reports_what_the_first_call_pulled() {
         }
         axum::Json(RingSyncResponse {
             namespace: req.namespace,
-            digest: Digest::new(),
+            digest: Digest::default(),
             ops: gift.clone(),
             ingested: 0,
         })
@@ -593,7 +593,7 @@ async fn a_peer_whose_digest_never_moves_stops_the_loop_instead_of_spinning() {
         counter.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         axum::Json(RingSyncResponse {
             namespace: req.namespace,
-            digest: Digest::new(),
+            digest: Digest::default(),
             ops: Vec::new(),
             ingested: 0,
         })

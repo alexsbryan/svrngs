@@ -191,10 +191,6 @@ fn comparable(path: &str) -> String {
 pub struct Upload(NonZeroU64);
 
 impl Upload {
-    pub fn new(bps: NonZeroU64) -> Self {
-        Self(bps)
-    }
-
     /// `mbit` megabits a second, as a speed test states an upload.
     pub fn from_mbit(mbit: NonZeroU32) -> Self {
         Self(NonZeroU64::from(mbit).saturating_mul(NonZeroU64::new(1_000_000).expect("not 0")))

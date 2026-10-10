@@ -11,9 +11,10 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use axum::{routing::get, Extension, Router};
+use iroh::endpoint::Builder as EndpointBuilder;
+use svrngs_node::guest::ring_crypto_provider;
 use svrngs_node::iroh::{
-    ring_crypto_provider, Admit, Contact, Dialer, Endpoint, EndpointBuilder, IrohAcceptor,
-    IrohTransport, PublicKey, SecretKey, ALPN,
+    Admit, Contact, Dialer, Endpoint, IrohAcceptor, IrohTransport, PublicKey, SecretKey, ALPN,
 };
 
 /// Bind an empty (no-relay, deterministic) endpoint serving `alpns` — iroh.rs

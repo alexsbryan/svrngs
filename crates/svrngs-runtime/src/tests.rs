@@ -601,7 +601,7 @@ fn a_half_delivered_peer_is_a_named_hole_not_a_clean_answer() {
 
     // And the digest asks for the hole rather than claiming the high mark.
     assert!(
-        !a.digest().unwrap().contains_key(&actor_of(&key(2))),
+        a.digest().unwrap().get(&actor_of(&key(2))).is_none(),
         "A holds nothing contiguous from B, so it must claim nothing"
     );
     let repair = b.ops_missing_from(&a.digest().unwrap()).unwrap();
@@ -1127,10 +1127,10 @@ fn a_peers_act_naming_a_key_arrives_readable_and_changes_no_roster_row() {
     let on_disk = a.roster_file().unwrap();
     assert_eq!(on_disk, r, "and the roster it parses to is the one I wrote");
     assert!(
-        !on_disk.knows(&Person::parse("dee").unwrap()),
+        !on_disk.members.contains_key(&Person::parse("dee").unwrap()),
         "dee is named, not admitted"
     );
-    assert!(on_disk.person_for(&stranger).is_none());
+    assert!(on_disk.members.values().flatten().all(|k| *k != stranger));
 
     // ── and the act is there to read ──
     let admission = a.admit(&r, &Ed25519Verifier).unwrap();
