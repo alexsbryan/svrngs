@@ -173,6 +173,22 @@ The plants are one switch, read once at a node's start, as group folders'
 (`SVRNGS_GF_PLANT`, `crates/svrngs-node/src/folder.rs:45-56`); never set
 outside the run.
 
+**Since: the plants out (syp-2).** The switch ran at the runs' commits,
+sy-1's at `ea0f3a5` (§7) and syp-1's rerun at `ff62f07`
+(`demo/runs/syp/2026-10-10/no-stream/`), and is deleted from product code
+at syp-2-plants-out's commit (`ralph/next/syp/STATE.md`). From that commit
+each plant is a test's red run, the guard taken out of the code and the
+test of `crates/svrngs-node/tests/folders.rs` watched failing: `deaf`,
+`a_change_by_any_member_reaches_another_s_directory`; `own-only` and
+`open-gate`, `a_synced_file_is_served_by_a_member_who_did_not_write_it_and_to_no_one_outside`;
+`later-wins`, `both_sides_of_a_conflict_are_kept`; and group folders'
+three that guard the synced folder too, `unchecked`,
+`a_hash_no_synced_folder_places_is_refused_though_the_store_holds_it`,
+`follow-links`, `a_link_in_a_synced_directory_is_not_followed`, and
+`unbounded`, `a_holder_asleep_is_waited_on_for_a_bound_then_the_next_asked`.
+`run.py` still sets the variable, which nothing reads after that commit:
+its plant phases there run the guard in, and are not a plant's run.
+
 **Two measurements with no bar**, the operator's call after the data:
 
 - **M1. 1,000 files reaching a member who joins later.** Ana's `Shared`

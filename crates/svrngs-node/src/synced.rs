@@ -23,7 +23,7 @@ use iroh_blobs::Hash;
 use serde::{Deserialize, Serialize};
 use svrngs_core::{Change, ContentHash, Placed, SyncFolder};
 
-use super::{FolderError, Folders, Plant, PIECE};
+use super::{FolderError, Folders, PIECE};
 use crate::register::Standing;
 
 /// What this computer last took or wrote at a path: the record's entry, and
@@ -66,11 +66,7 @@ impl Folders {
 
     /// Every synced folder's files where the records held here place them.
     pub(super) fn placed(&self) -> Vec<Placed> {
-        let mut placed: Vec<Placed> = self.admissions().flat_map(|a| a.layout()).collect();
-        if self.plant == Plant::LaterWins {
-            placed.retain(|p| !p.beside);
-        }
-        placed
+        self.admissions().flat_map(|a| a.layout()).collect()
     }
 
     async fn step(&self, dir: &Path, folder: &str) -> Result<(), FolderError> {
@@ -81,44 +77,42 @@ impl Folders {
             .unwrap_or_default();
         let mut changes = Vec::new();
         let mut taken = BTreeMap::new();
-        if self.plant != Plant::Deaf {
-            let mut seen = BTreeSet::new();
-            for (rel, path, meta) in self.walk(dir)? {
-                seen.insert(rel.clone());
-                let before = held.get_mut(&rel);
-                if unchanged(before.as_deref(), &path) {
-                    continue;
-                }
-                let hash = self.take(&path, ImportMode::Copy).await?;
-                let hash = ContentHash::from_bytes(hash.into());
-                let mtime = meta.modified().map_err(io(&path))?;
-                match before {
-                    Some(h) if h.p.hash == hash => h.mtime = mtime,
-                    before => {
-                        let base = before.map(|h| h.p.entry.clone());
-                        let now = Some((hash, meta.len()));
-                        changes.push(Change {
-                            path: rel.clone(),
-                            now,
-                            base,
-                        });
-                        taken.insert(rel, (hash, mtime));
-                    }
+        let mut seen = BTreeSet::new();
+        for (rel, path, meta) in self.walk(dir)? {
+            seen.insert(rel.clone());
+            let before = held.get_mut(&rel);
+            if unchanged(before.as_deref(), &path) {
+                continue;
+            }
+            let hash = self.take(&path, ImportMode::Copy).await?;
+            let hash = ContentHash::from_bytes(hash.into());
+            let mtime = meta.modified().map_err(io(&path))?;
+            match before {
+                Some(h) if h.p.hash == hash => h.mtime = mtime,
+                before => {
+                    let base = before.map(|h| h.p.entry.clone());
+                    let now = Some((hash, meta.len()));
+                    changes.push(Change {
+                        path: rel.clone(),
+                        now,
+                        base,
+                    });
+                    taken.insert(rel, (hash, mtime));
                 }
             }
-            changes.extend(
-                held.iter()
-                    .filter(|(rel, _)| !seen.contains(*rel))
-                    .map(|(rel, h)| {
-                        let base = Some(h.p.entry.clone());
-                        Change {
-                            path: rel.clone(),
-                            now: None,
-                            base,
-                        }
-                    }),
-            );
         }
+        changes.extend(
+            held.iter()
+                .filter(|(rel, _)| !seen.contains(*rel))
+                .map(|(rel, h)| {
+                    let base = Some(h.p.entry.clone());
+                    Change {
+                        path: rel.clone(),
+                        now: None,
+                        base,
+                    }
+                }),
+        );
         if !changes.is_empty() {
             let act = SyncFolder {
                 folder: folder.into(),

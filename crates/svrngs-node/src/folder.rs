@@ -43,25 +43,6 @@ mod synced;
 /// What a fetch asks a holder for at once.
 const PIECE: u64 = 1 << 20;
 
-/// A guard the run takes out to watch its plant pass (gf-1's README §3):
-/// `SVRNGS_GF_PLANT`, read once at start; never set outside the run.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Plant {
-    None,
-    /// A holder is waited on without [`ANSWER_WITHIN`] (B6).
-    Unbounded,
-    /// A folder's walk follows links (B7, the file beside the folder).
-    FollowLinks,
-    /// The provider serves any hash its store holds (B7, the stopped file).
-    Unchecked,
-    /// A synced directory is never walked (sy-1's S1).
-    Deaf,
-    /// The provider serves a synced file only to its writer's (S2).
-    OwnOnly,
-    /// A synced path's first head alone is placed (S3).
-    LaterWins,
-}
-
 #[derive(Debug, thiserror::Error)]
 pub enum FolderError {
     #[error("the folder {0} cannot be read: {1}")]
@@ -80,7 +61,6 @@ pub struct Folders {
     endpoint: Endpoint,
     actor: String,
     nudge: Arc<Notify>,
-    plant: Plant,
     data_dir: PathBuf,
     /// Each holder's open connection, and when one last did not answer.
     conns: watch::Sender<BTreeMap<String, Connection>>,
@@ -99,15 +79,6 @@ impl Folders {
         let fs = FsStore::load(data_dir.join("blobs"))
             .await
             .map_err(|e| format!("the blob store: {e}"))?;
-        let plant = match std::env::var("SVRNGS_GF_PLANT").as_deref() {
-            Ok("unbounded") => Plant::Unbounded,
-            Ok("follow-links") => Plant::FollowLinks,
-            Ok("unchecked") => Plant::Unchecked,
-            Ok("deaf") => Plant::Deaf,
-            Ok("own-only") => Plant::OwnOnly,
-            Ok("later-wins") => Plant::LaterWins,
-            _ => Plant::None,
-        };
         let store: Store = (*fs).clone();
         let folders = Folders {
             store: store.clone(),
@@ -115,12 +86,11 @@ impl Folders {
             endpoint,
             actor,
             nudge,
-            plant,
             data_dir: data_dir.to_path_buf(),
             conns: watch::Sender::new(BTreeMap::new()),
             unanswered: watch::Sender::new(BTreeMap::new()),
         };
-        tracing::info!(target: "folder", ?plant, "folder: the store is open");
+        tracing::info!(target: "folder", "folder: the store is open");
         // The store's actor lives as long as the node.
         tokio::spawn(async move {
             let _keep = fs;
@@ -149,11 +119,8 @@ impl Folders {
             let entries = std::fs::read_dir(&at).map_err(|e| FolderError::Read(at.clone(), e))?;
             for entry in entries.flatten() {
                 let path = entry.path();
-                let meta = match self.plant {
-                    Plant::FollowLinks => std::fs::metadata(&path),
-                    _ => std::fs::symlink_metadata(&path),
-                };
-                let meta = meta.map_err(|e| FolderError::Read(path.clone(), e))?;
+                let meta = std::fs::symlink_metadata(&path)
+                    .map_err(|e| FolderError::Read(path.clone(), e))?;
                 if meta.is_dir() {
                     walk.push(path);
                 } else if !meta.is_file() {
@@ -211,8 +178,7 @@ impl Folders {
     /// Whether a synced folder places `hash`, whoever wrote it (sy-1).
     fn shares(&self, hash: Hash) -> bool {
         let hash = &ContentHash::from_bytes(hash.into());
-        let placed = self.placed().into_iter().filter(|p| &p.hash == hash);
-        { placed }.any(|p| self.plant != Plant::OwnOnly || p.entry.key == self.actor)
+        self.placed().iter().any(|p| &p.hash == hash)
     }
 
     /// Make `[start, end)` of `hash` held here, verified, asking each holder
@@ -244,15 +210,10 @@ impl Folders {
                 .get(*k)
                 .is_some_and(|t| t.elapsed() < Duration::from_secs(60))
         });
-        let within = if self.plant == Plant::Unbounded {
-            Duration::from_secs(3600)
-        } else {
-            ANSWER_WITHIN
-        };
         let mut why = Vec::new();
         for key in order {
             let t0 = Instant::now();
-            let got = tokio::time::timeout(within, self.fetch(key, missing.clone())).await;
+            let got = tokio::time::timeout(ANSWER_WITHIN, self.fetch(key, missing.clone())).await;
             let said = match got {
                 Ok(Ok(stats)) => {
                     self.unanswered
@@ -266,7 +227,7 @@ impl Folders {
                     let at = Instant::now();
                     self.unanswered
                         .send_if_modified(|m| m.insert(key.clone(), at).is_none());
-                    format!("did not answer within {within:?}")
+                    format!("did not answer within {ANSWER_WITHIN:?}")
                 }
             };
             self.conns.send_if_modified(|m| m.remove(key).is_some());
@@ -329,7 +290,7 @@ fn provider(store: &Store, folders: Folders) -> BlobsProtocol {
                 format!("{:?}", asked.inner.request.ranges),
             );
             let (conn, request) = (asked.inner.connection_id, asked.inner.request_id);
-            if folders.plant != Plant::Unchecked && !folders.shares(hash) {
+            if !folders.shares(hash) {
                 tracing::info!(target: "folder", %hash, conn, request, ranges, "folder: refused — no synced folder places the hash");
                 asked.tx.send(Err(AbortReason::Permission)).await.ok();
                 continue;

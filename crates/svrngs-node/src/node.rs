@@ -753,10 +753,6 @@ fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn
             return None;
         }
     }
-    if std::env::var("SVRNGS_GF_PLANT").as_deref() == Ok("open-gate") {
-        tracing::warn!(target: "node", actor, "node: admitted — the gate that asks the record is out (sy-1's plant)");
-        return Alpn::of(alpn);
-    }
     if let Some((namespace, _)) = rail.standing_anywhere(&actor) {
         tracing::debug!(target: "node", actor, namespace, "node: admitted — the dialer stands in a group held here");
         return Alpn::of(alpn);
