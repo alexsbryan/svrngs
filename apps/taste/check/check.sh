@@ -1,39 +1,45 @@
 #!/usr/bin/env bash
-# Scoped use's run (ralph/next/compose/STATE.md su-1; the rule, bars and
-# predictions in demo/runs/su/2026-10-09/README.md, su-0): the group as
-# mn-1's run made it (apps/movie-night/check/check.sh `up`: Sam's and Dee's
-# Jellyfins through their middlewares, Cy's asleep, Movie Night, Alex's
-# computer), and on it:
+# Scoped use's run (su-1's, ralph/next/compose/STATE.md; the rule, bars and
+# predictions in demo/runs/su/2026-10-09/README.md, su-0), run again on
+# what svrngs carries since sup-1 to sup-3, the computer first (sup-4,
+# ralph/next/sup/STATE.md; demo/runs/sup/2026-10-09/README.md): the group
+# as mn-1's run made it (apps/movie-night/check/check.sh `up`: Sam's and
+# Dee's Jellyfins through their middlewares, Cy's asleep, Movie Night,
+# Alex's computer), and on it:
 #
 # - Ana's computer, joined as Ana, running her taste (apps/taste/taste.mjs)
 #   on loopback beside a planted history, lent `share <its port> --name
-#   taste --kind taste --refuse /diary`. Its owners: the key of her
-#   computer and of each of her phones, each read from Sam's computer's
-#   log as it admits it (the only place a person's key across devices is
-#   told; DESIGN §9).
+#   taste --kind taste --refuse /diary --ask "$ASK"`. Its owners: the key
+#   of her computer and of each of her phones, each read from Sam's
+#   computer's log as it admits it (the only place a person's key across
+#   devices is told; DESIGN §9).
 # - Tonight's Picks (apps/movie-night/picks), served by a plain file
 #   server, lent by Sam `--name tonights-picks --kind movie-night --reads
 #   jellyfin --reads taste`.
 # - The other app (check/other), lent by Sam `--name other --kind other
 #   --reads taste`: a plant's page, counted nowhere.
 #
-#   check.sh up     <scratch> <out>          all of the above
-#   check.sh night  <scratch> <out> <engine> Ana's two phones, <engine> first and the other engine
-#                                            second, and Bo in Chromium: every step of su.mjs but
-#                                            `asleep`; writes <out>/night-<engine>.json
-#   check.sh asleep <scratch> <out>          Ana in Chromium, her yes, then her computer put to sleep
-#                                            after the list (su.mjs `asleep`); <out>/asleep.json
-#   check.sh plant  <scratch> <out> <plant>  one plant on, su-0 §3 — bo, history, other-app,
-#                                            after-stop, empty — a journey in Chromium that
-#                                            meets it, then the plant taken back
-#   check.sh judge  <scratch> <out>          scan.py over every byte each browser received
-#                                            for the history's markers, then judge.py
-#   check.sh down   <scratch> <out>          stops everything
+#   check.sh up       <scratch> <out>          all of the above
+#   check.sh computer <scratch> <out> <engine> Ana's computer and Alex's, from each one's home page, in
+#                                              <engine> as a desktop: every step of su.mjs but `join` and
+#                                              `asleep`; writes <out>/computer-<engine>.json
+#   check.sh phone    <scratch> <out> <engine> Ana's two phones, <engine> first and the other engine
+#                                              second, and Bo in Chromium: every step of su.mjs but
+#                                              `home-stop` and `asleep`; <out>/phone-<engine>.json
+#   check.sh asleep   <scratch> <out>          Ana's phone in Chromium, her yes, then her computer put to
+#                                              sleep after the list (su.mjs `asleep`); <out>/asleep.json
+#   check.sh plant    <scratch> <out> <plant>  one plant on, on the computer in Chromium — bo, history,
+#                                              other-app, after-stop, empty — a journey that meets it,
+#                                              then the plant taken back
+#   check.sh judge    <scratch> <out>          scan.py over every byte each browser received
+#                                              for the history's markers, then judge.py
+#   check.sh down     <scratch> <out>          stops everything
 #
 # Each step stays inside ten minutes on this host; each journey starts on
-# a taste with no yes kept. svrngs built first: cargo build -p svrngs; and
-# what mn's check needs: Jellyfin.app, Playwright's browsers (web/tests),
-# the middleware. scripts/check.sh runs none of this: it needs Jellyfin.
+# a taste lent afresh, so no choice is kept. svrngs built first: cargo
+# build -p svrngs; and what mn's check needs: Jellyfin.app, Playwright's
+# browsers (web/tests), the middleware. scripts/check.sh runs none of
+# this: it needs Jellyfin.
 set -euo pipefail
 STEP="$1"; R="$2"; OUT="$3"
 HERE="$(cd "$(dirname "$0")" && pwd)"; REPO="$(cd "$HERE/../../.." && pwd)"
@@ -42,21 +48,37 @@ B="$REPO/target/debug/svrngs"
 TASTE_PORT=8696; PICKS_PORT=8697; OTHER_PORT=8698
 # Sam's computer admits each joiner: its key, at debug, is how Ana's
 # owners are read.
-export LOG='info,door=debug,origin=debug,redeem=debug'
+export LOG='info,door=debug,origin=debug,redeem=debug,home=debug,surface=debug'
+# The lender's words for what an app receives (svrn-docs
+# rings/current/SCOPED_USE_MADE_PRODUCTION.md §4, its example).
+ASK='the app receives ranked film suggestions; your viewing history stays where it is stored'
 mkdir -p "$OUT"
 say() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*" | tee -a "$OUT/steps.log" >&2; }
 admitted() { grep 'redeem: admitted' "$R/sam/run.log" | tail -1 | grep -o 'key=[0-9a-f]*' | cut -d= -f2; }
 ana() { SVRNGS_DIR="$R/ana" NO_COLOR=1 RUST_LOG=debug "$B" "$@" </dev/null >>"$R/ana/share.out" 2>>"$R/ana/share.log"; }
 sam() { SVRNGS_DIR="$R/sam" NO_COLOR=1 RUST_LOG=debug "$B" "$@" </dev/null >>"$R/sam/share.out" 2>>"$R/sam/share.log"; }
 
-# Ana's taste, its switch set to PLANT (else none), on a fresh `yeses.json`.
+# Ana's taste, its switch set to PLANT (else none).
 taste() {
   [ -f "$R/taste.pid" ] && { kill "$(cat "$R/taste.pid")" 2>/dev/null || true; sleep 1; }
-  rm -f "$R/taste/yeses.json"
   TASTE_PLANT="${PLANT:-}" nohup node "$REPO/apps/taste/taste.mjs" $TASTE_PORT "$R/taste" >>"$R/taste.log" 2>&1 &
   echo $! >"$R/taste.pid"
   for _ in $(seq 1 50); do curl -s -o /dev/null "http://127.0.0.1:$TASTE_PORT/" && break; sleep 0.1; done
-  say "taste: up${PLANT:+ with plant $PLANT}, no yes kept"
+  say "taste: up${PLANT:+ with plant $PLANT}"
+}
+
+# The taste lent afresh, so its door keeps no one's choice (`unshare` takes
+# them): as kept, `--refuse /diary --ask`, or as a plant names it.
+lent() {
+  local how="${1:-kept}"
+  [ -f "$R/ana/lent-taste" ] && ana unshare taste
+  case "$how" in
+    kept) ana share $TASTE_PORT --name taste --kind taste --refuse /diary --ask "$ASK" --limit 8 ;;
+    no-refuse) ana share $TASTE_PORT --name taste --kind taste --ask "$ASK" --limit 8 ;;
+    no-ask) ana share $TASTE_PORT --name taste --kind taste --refuse /diary --limit 8 ;;
+  esac
+  touch "$R/ana/lent-taste"
+  say "taste lent ($how), no choice kept: $(grep Lent "$R/ana/share.out" | tail -1)"
 }
 
 # Tonight's Picks as the check serves it: its links copied as files, and
@@ -105,8 +127,7 @@ up() {
   admitted >"$R/taste/owners"
   say "ana's taste: owned by her computer's key $(cat "$R/taste/owners")"
   PLANT='' taste
-  ana share $TASTE_PORT --name taste --kind taste --refuse /diary --limit 8
-  say "ana: $(grep Lent "$R/ana/share.out" | tail -1)"
+  lent kept
   PLANT='' picks_site
   nohup python3 -m http.server $PICKS_PORT --bind 127.0.0.1 --directory "$R/picks-site" >"$R/picks-server.log" 2>&1 &
   echo $! >"$R/picks-server.pid"
@@ -122,6 +143,21 @@ up() {
     grep 'round membership exchanged_with=' "$R/ana/run.log" | grep 'Dee/' | grep -q 'Sam/' && break; sleep 1
   done
   say "ana: $(grep -o 'round membership exchanged_with=.*' "$R/ana/run.log" | tail -1)"
+  # Alex's computer learns of Ana's by its own round, so it can dial her door.
+  for _ in $(seq 1 150); do
+    grep 'round membership exchanged_with=' "$R/alex/run.log" | grep -q 'Ana/' && break; sleep 1
+  done
+  say "alex: $(grep -o 'round membership exchanged_with=.*' "$R/alex/run.log" | tail -1)"
+  homes
+}
+
+# Each computer's home page, from the address its node wrote.
+homes() {
+  local who
+  for who in ana alex; do
+    echo "$(echo $who | tr a-z A-Z)_HOME=http://svrngs.localhost:$(sed 's/.*://' "$R/$who/api")/" >>"$R/env"
+  done
+  say "home pages: $(grep _HOME "$R/env" | tr '\n' ' ')"
 }
 
 drive() {
@@ -135,52 +171,60 @@ drive() {
   local t0; t0="$(date -u +%Y-%m-%dT%H:%M:%S)"
   DUMP="$R/dump/$tag" \
     OWN="k=\$(grep 'redeem: admitted' '$R/sam/run.log' | tail -1 | grep -o 'key=[0-9a-f]*' | cut -d= -f2); echo \$k >>'$R/taste/owners'; echo \$k" \
-    SLEEP="kill \$(cat '$R/ana.pid') && rm -f '$R/ana.pid'" \
+    SLEEP="kill \$(cat '$R/ana.pid') && rm -f '$R/ana.pid'" AFTER_STOP="${AFTER_STOP:-}" \
     node "$HERE/su.mjs" "{\"tag\":\"$tag\",\"link\":\"$LINK\",\"steps\":$steps,\"people\":$people}" >"$OUT/$tag.json" 2>"$R/$tag.err" \
     || say "$tag: the driver exited $?: $(tail -3 "$R/$tag.err")"
-  # What the taste and Ana's door said during it, and the yeses it kept.
+  # What the taste and Ana's door said during it, and the choices it kept.
   awk -v t0="$t0" '$1 >= t0' "$R/taste.log" >"$OUT/$tag-taste.log"
-  grep -h 'taste\|lend=taste' "$R/ana/run.log" 2>/dev/null | awk -v t0="$t0" '$1 >= t0' >"$OUT/$tag-ana-door.log" || true
-  cp "$R/taste/yeses.json" "$OUT/$tag-yeses.json" 2>/dev/null || echo '{}' >"$OUT/$tag-yeses.json"
+  grep -h 'taste\|lend=taste\|home:' "$R/ana/run.log" 2>/dev/null | awk -v t0="$t0" '$1 >= t0' >"$OUT/$tag-ana-door.log" || true
+  grep -h 'home:\|origin:' "$R/alex/run.log" 2>/dev/null | awk -v t0="$t0" '$1 >= t0' >"$OUT/$tag-alex.log" || true
+  cp "$R/ana/choices/taste.json" "$OUT/$tag-choices.json" 2>/dev/null || echo '{}' >"$OUT/$tag-choices.json"
   say "$tag: $(python3 "$HERE/judge.py" --line "$OUT/$tag.json")"
 }
 
 ana_phone() { echo "{\"name\":\"Ana\",\"user\":\"ana-$1\",\"engine\":\"$1\"}"; }
 BO='{"name":"Bo","user":"bo","engine":"chromium"}'
+# Ana's and Alex's computers, in <engine> as a desktop, from their home pages.
+computers() {
+  # shellcheck disable=SC1090
+  . "$R/env"
+  echo "{\"name\":\"Ana\",\"user\":\"ana-computer-$1\",\"engine\":\"$1\",\"home\":\"$ANA_HOME\"},{\"name\":\"Alex\",\"user\":\"alex-computer-$1\",\"engine\":\"$1\",\"home\":\"$ALEX_HOME\"}"
+}
 
 case "$STEP" in
   up) up ;;
-  night)
+  computer)
+    PLANT='' taste; lent kept
+    drive "computer-$4" "[$(computers "$4")]" '["yes","again","other-person","diary","other","stop","home-stop"]' ;;
+  phone)
     first="$4"; second=webkit; [ "$first" = webkit ] && second=chromium
-    PLANT='' taste
-    drive "night-$first" "[$(ana_phone "$first"),$(ana_phone $second),$BO]" '["join","yes","again","bo","diary","other","stop"]' ;;
+    PLANT='' taste; lent kept
+    drive "phone-$first" "[$(ana_phone "$first"),$(ana_phone $second),$BO]" '["join","yes","again","other-person","diary","other","stop"]' ;;
   asleep)
-    PLANT='' taste
+    PLANT='' taste; lent kept
     drive asleep "[$(ana_phone chromium)]" '["join","yes","asleep"]'
     if [ -f "$R/ana.pid" ]; then kill "$(cat "$R/ana.pid")"; rm -f "$R/ana.pid"; say "ana: put to sleep, the driver having not"; fi ;;
   plant)
     PLANT="$4"; export PLANT
     case "$PLANT" in
-      bo) taste; steps='["join","yes","bo"]'; people="[$(ana_phone chromium),$BO]" ;;
-      other-app) taste; steps='["join","yes","other"]'; people="[$(ana_phone chromium)]" ;;
-      after-stop) taste; steps='["join","yes","stop"]'; people="[$(ana_phone chromium)]" ;;
-      history)
-        PLANT='' taste; ana unshare taste; ana share $TASTE_PORT --name taste --kind taste --limit 8
-        say "plant history: taste lent without --refuse: $(grep Lent "$R/ana/share.out" | tail -1)"
-        steps='["join","yes","diary"]'; people="[$(ana_phone chromium)]" ;;
-      empty) PLANT='' taste; steps='["join","yes","bo"]'; people="[$(ana_phone chromium),$BO]" ;;
+      bo) taste; lent kept; steps='["other-person"]' ;;
+      history) PLANT='' taste; lent no-refuse; steps='["yes","diary"]' ;;
+      other-app) PLANT='' taste; lent no-ask; steps='["other"]' ;;
+      after-stop)
+        # A door that kept no stop: the stop's record put back to the yes it replaced.
+        PLANT='' taste; lent kept; steps='["yes","stop"]'
+        export AFTER_STOP="perl -pi -e 's/\"said\": \"stop\"/\"said\": \"yes\"/' '$R/ana/choices/taste.json' && cat '$R/ana/choices/taste.json'" ;;
+      empty) PLANT='' taste; lent kept; steps='["other-person"]' ;;
       *) echo "plant: bo|history|other-app|after-stop|empty" >&2; exit 2 ;;
     esac
     say "plant $PLANT: on"
-    drive "plant-$PLANT" "$people" "$steps"
-    case "$PLANT" in
-      history) ana unshare taste; ana share $TASTE_PORT --name taste --kind taste --refuse /diary --limit 8 ;;
-      empty) PLANT='' picks_site ;;
-    esac
-    PLANT='' taste; say "plant $4 taken back" ;;
+    drive "plant-$PLANT" "[$(computers chromium)]" "$steps"
+    unset AFTER_STOP
+    [ "$PLANT" = empty ] && PLANT='' picks_site
+    PLANT='' taste; lent kept; say "plant $4 taken back" ;;
   judge)
     python3 "$REPO/apps/jellyfin/check/scan.py" "$R" "$OUT" | tee -a "$OUT/steps.log"
     python3 "$HERE/judge.py" "$OUT" | tee -a "$OUT/steps.log" ;;
   down) "$MN" down "$R" "$OUT" ;;
-  *) echo "usage: check.sh up|night|asleep|plant|judge|down <scratch> <out> [engine | plant]" >&2; exit 2 ;;
+  *) echo "usage: check.sh up|computer|phone|asleep|plant|judge|down <scratch> <out> [engine | plant]" >&2; exit 2 ;;
 esac
