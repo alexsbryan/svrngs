@@ -352,3 +352,239 @@ is not instrumented by this run.
 `python3 scripts/lean_check.py`: 15,706 / 15,750, svrngs-core 2,873 /
 3,000. Dee's probe (`crates/svrngs-node/tests/sy_dee.rs`) and the tests are
 tests, apart.
+
+## 8. What the run gives (sy-2)
+
+**A group's folder, a real directory on each member's disk, synced both
+ways: an add, an edit and a delete by any of three reached the other two
+within 2 s; a file stayed reachable with its author killed; two edits made
+apart were both kept; and a node outside the group was given no byte.**
+Written after sy-1's data (§7; every number below is in `run/summary.json`
+by its key, `run/events.jsonl`, or the file named), by §3's bars, each read
+for what it guards. All four passed, each plant failing first with its
+guard out (§7, "The plants"). The index is the record, one act per scan's
+changes, and the bytes move by group folders' provider and verified fetch,
+unchanged (§1).
+
+| Bar | Letter | Spirit — what it guards | Data |
+|---|---|---|---|
+| S1. Both ways | passed | held: any member's change reaches every other's disk, on one host | add 1.06 s, edit 1.63 s, delete 1.36 s, bound 10 s (`S1`); with Ana's scan out her add reached no one in 10 s (`S1-plant`) |
+| S2. Its author asleep | passed | held for this run: a file is reachable while one member who holds it is up; a store that loses what it held is a hole in it (4) | Cy held `s2.bin` 4.47 s after her command, from Ben (`S2`), Ana passed over at 3 s (`cy.log:76`); Ben serving only what he wrote, from no one in 10 s (`S2-plant`) |
+| S3. Conflicts kept | passed | held for an edit made while its writer's node was stopped (2) | 17.0 s after Ben's start, bound 30 s: `s3.txt` Ana's `36f7c2fd…`, `s3 (conflict Ben).txt` Ben's `eb066e59…`, in all three (`S3`); with the later edit winning, Ben's `05513869…` in none (`S3-plant`) |
+| S4. Members only | passed | held for a node in no group held here; a member of another group Ana holds was not asked (1); a member writing outside the folder was not asked (3) | Dee refused on both protocols, 0 hits in her data dir, 0 of the planted file anywhere (`S4`); with the gate out, the bytes given whole, `payload` 65,536, and 2 hits (`S4-plant`) |
+
+**Where the letter and the spirit part**, each judged by the spirit:
+
+1. *S4 asked one outsider; group folders' second gap is this one's too.*
+   Dee stood in no group of Ana's. The gate admits a dialer standing in any
+   group held here (`admit_dialer`, `crates/svrngs-node/src/node.rs:760`);
+   the provider serves a hash any synced folder in any group held here
+   places (`shares`, `crates/svrngs-node/src/folder.rs:265-273`, through
+   `placed`, `synced.rs:67-78`); and the node writes each scan's act into
+   every group held here (`write`, `folder.rs:236-258`) and places every
+   group's folder of that name in the one directory (`apply`,
+   `synced.rs:152-156`), fetching from the members of every group
+   (`:157-162`). The run held one group (`events.jsonl`, setup: `new
+   Shared`, two joins), where the two are one. Read from the code, not run;
+   as group folders' §8, fifth part. Candidate 2.
+2. *S3 kept an edit made while its writer's node was stopped*, which §3's
+   letter allowed: Ben's edit was written to his directory while his node
+   was down (`events.jsonl`, S3: Ben down at …304.086, his write at
+   …304.088), and found at his start by its size and mtime against what he
+   last held (`unchanged`, `synced.rs:38-44`), then sent (`ben.log:155`).
+   That line names no base (`synced.rs:133`), a trace short of AGENTS.md
+   1, and candidate 9's; both edits kept as heads says Ben's base was the
+   entry both edited, not Ana's edit. Two nodes running and unable to
+   reach each other take the same path — the once-a-second scan sends with
+   the base held — read from the code, not run.
+3. *A member can write outside the folder, on every other member's disk.*
+   A change's path is a string its writer names (`Change.path`,
+   `crates/svrngs-core/src/synced.rs:34`), placed as written
+   (`synced.rs:91`), joined to the directory (`synced.rs:184`) and the
+   fetched bytes exported there (`:203`); nothing refuses `../` or an
+   absolute path, which `Path::join` takes in place of the directory. A
+   conflict's name carries its writer's person (`beside`, `:114-124`),
+   which `Name::parse` refuses only empty, past 64 bytes or with a control
+   character (`crates/svrngs-core/src/lib.rs:207-220`), so a `/` in it is
+   a directory. S4 guards what leaves the group; this is what a member's
+   act does to another member's disk, which no bar asked. Read from the
+   code, not run. Candidate 7.
+4. *A member's store gave nothing of files its directory still held*, three
+   times (§7, "Seen, not asked"): Ana's `s2-plant.bin` and `s2.bin` after
+   her `kill -9` (`ana.log:13741`, `:13745`, `done=false payload=0`), and
+   Cy's `s2.bin` (`cy.log:2481-2482`) after SIGTERM stops alone. S2 passed
+   because Ben's store held `s2.bin`; had his lost it as Cy's did, a file
+   on two members' disks would have reached no one. Why is not
+   instrumented by this run: a store's loss is to be reproduced before
+   anything is changed (AGENTS.md 2). Candidate 8.
+5. *A refusal named at the connection, not on the record's answer.* Dee's
+   member connection and her ask for the bytes were each told "closed by
+   peer: not admitted (code 0)"; her ask for the record over that
+   connection failed as `IncompleteMessage`, its words not naming the
+   refusal (`run/dee.out`). The refusal is the connection's close, named
+   there; the ask over it says only that its answer broke. Said; it waits
+   (§9).
+
+**The measurements, no bar, the operator's call.**
+
+- *M1, 1,000 files of 4 KiB*: Ben and Cy held all 1,000 after 395.27 s,
+  Eve, joining later, after 242.24 s, where §5 predicted about 20 s. The
+  time is the fetches, one file after another (`apply`'s loop,
+  `synced.rs:183-214`, each file's pieces awaited in turn, `:193-198`): 0.38
+  s a file at Ben, 0.25 s at Eve (§7), on a host at load 40.38
+  (`events.jsonl:1`). The index: Eve's journal 133,738 bytes once she held
+  the folder, its longest line 80,300; one later change moved 1,166 bytes
+  of it, against about 700 predicted, and reached her in 7.1 s. Every
+  change stays in the journal: §9's compaction row, unchanged.
+- *M2, 1 MiB rewritten inside 100 MiB*: Ben and Cy each received
+  104,857,600 bytes, the whole new version, against 1,048,576 edited, as
+  §5 predicted: a version is fetched by its own hash, and nothing of the
+  old one counts. The first version reached both in 96.23 s, the edit in
+  74.34 s. Whether a member's every edit costing each other member the
+  whole file is acceptable is the operator's call (§9, "Not candidates").
+
+So a group's folder synced both ways on its members' disks does what a
+Dropbox's folder does for three members on one host: anyone's change
+everywhere within 2 s, a file kept while its author sleeps, a conflict kept
+beside its file with its writer's name, and no byte to a node outside the
+group. What the run did not reach: a second group held by one member, a
+path that leaves the folder, a store that keeps what it held across a stop,
+a folder of many files in reasonable time, a large file's small edit, and
+everything off this host. The spike cost 543 lines where §6 estimated
+about 480, 13% over. One host, one run of each: not a rate (AGENTS.md 7).
+DESIGN §3, §8 and §9 are rewritten for it on this branch.
+
+## 9. What makes a mesh Dropbox production (sy-2)
+
+Each part sy-1 counted (§7, by `scripts/lean_check.py`'s rule,
+`396b0b6..4926df0`), and what production keeps, changes or drops of it:
+
+| Part | Lines | Production |
+|---|---|---|
+| the synced act and its layout, in svrngs-core | 132 | keeps; a path is parsed, not a string (7); the layout read per group (2) |
+| the node's scan, write and apply, and what it keeps | 180 | keeps; writes one group's act and applies one group's layout (2); its kept state refused by name when unreadable, and the directories it syncs kept (9); fetches several files at once (10). The plants' lines, 5 (`synced.rs:74-76`, `:88` and its close), drop |
+| the provider serving synced files, the split share and the plants | 44 | keeps the provider's rule and the split; the plants, 10 (`folder.rs:62-66`, `:113-115`, `node.rs:756-759`), drop — each stays a test's red run |
+| wiring: `share --folder --both-ways` | 7 | keeps; names its group (2) |
+| the run's script, `run.py` | 180 | the run's |
+
+**Against group folders' six** (`demo/runs/gf/2026-10-09/README.md` §9).
+The synced folder writes each file onto each member's disk (`apply`'s
+export, `synced.rs:203`), so an app on that computer reads its own
+directory; it never asks the loopback endpoint (`bytes`,
+`crates/svrngs-node/src/folder.rs:424-535`), which today binds on every node
+that runs folders (`start`, `:122-145`).
+
+| gf's row | For a mesh Dropbox |
+|---|---|
+| 1. A stub that reaches its viewer | drops: the bytes are on the viewer's disk |
+| 2. A folder at one level, served only there | carries over, wider: the synced act, its layout, its fetch's holders and the provider's rule each per group, not across every group held here (§8's first part) |
+| 3. Who the endpoint answers | drops with the endpoint, if the operator drops streaming; carries over unchanged if not |
+| 4. Stubs in step with the record | drops: no stubs |
+| 5. What the meeting point keeps | changes: every member's store copies each version it takes (`ImportMode::Copy`, `synced.rs:96`) and keeps each it fetched, and drops none; and the store also lost what it held across a stop (§8's fourth part). Candidates 5 and 8 |
+| 6. A holder that sends wrong bytes, planted | carries over unchanged: the apply's fetch is the same `hold` (`synced.rs:195`). Tests only |
+
+Whether a group's folder is streamed by range (group folders), synced onto
+every disk (this spike), or both, is the operator's: a film folder synced is
+every member holding every film, M2's whole copies at each edit; a synced
+folder streamed is no folder on anyone's disk. The rows below are for the
+synced folder; rows 1, 3 and 4 of group folders' stay as they are written
+there for a streamed one.
+
+Candidate rows, the operator's to queue, numbered as group folders' where
+one carries over and from 7 where new. Each check is a bar rerun with its
+plant, red first:
+
+- **2. A synced folder is one group's.** `share --folder <dir> --both-ways`
+  names its group; its act is written there alone; the directory holds
+  that group's layout alone; its files are fetched from that group's
+  members and served by the provider only to a dialer standing there.
+  With group folders' row 2, one change: the level is the group's.
+  Evidence: §8's first part. Check: Ana in two groups, each with a folder
+  `Shared`; a member of the other refused her hash by name and her
+  directory holding the one group's files alone, then the same with the
+  per-group rule out.
+- **5. A store that keeps what the layout places, and no more.** A version
+  no head names, nor the directory holds, is dropped from the store at the
+  next record change; a conflict's other side and a file the directory
+  holds stay. Check: M2 rerun, each member's store holding the edit's
+  version and not the first, measured in bytes; with the drop out, both.
+- **7. A path under the folder, parsed.** A change's path is a type of the
+  core's, made only from a relative path of named parts — never empty,
+  `.`, `..`, a root or a prefix — on admission and on the write that makes
+  it, and a conflict's name made from it and a person whose `/` cannot
+  make a part. Evidence: §8's third part. Check: a member's act naming
+  `../outside` refused by name at admission, nothing written beside the
+  directory; with the parse out, the file written there. A test of
+  svrngs's, red first.
+- **8. A store that keeps what it held across a stop, reproduced first.** A
+  test of svrngs's: a file taken and a file fetched, the node stopped by
+  SIGTERM and by `kill -9`, started, its provider asked for each. If it
+  reproduces, the fix is its row's; if not, the run's step that lost them
+  instrumented and rerun. Evidence: §8's fourth part. Check: S2 rerun with
+  Ben's node stopped and started before Cy's start, Cy holding the file
+  from him.
+- **9. What a node keeps of its syncing.** The directories it syncs kept in
+  its data dir, so a restart resumes them (today the command is asked
+  again at each start, §2); its kept state, `synced-<folder>.json`, read
+  or refused by name, never read as empty — today an unreadable one is
+  read as nothing held (`synced.rs:82-85`), so every file is sent again
+  with no base and placed beside every other member's entry for it as a
+  conflict (the layout's rule, `crates/svrngs-core/src/synced.rs:130-146`;
+  read, not run); and a change sent names its base in its trace (§8's
+  second part). Check: the kept state planted unreadable, the node
+  refusing to sync that directory by name; with the refusal out, every
+  file conflicted in every directory.
+- **10. Several files fetched at once.** The apply fetches each file after the
+  last (`synced.rs:183-214`); in its place a bound of fetches at once, the
+  row's. Evidence: M1, 395.27 s for 1,000 files. Check: M1 rerun against
+  a bound the operator sets from that number; with one at a time, the
+  bound missed.
+
+Group folders' row 6 carries over as its row, unchanged.
+
+Not candidates, said so, each with what brings it back:
+
+- **A large file's small edit costing the whole file** (M2): fetching by
+  the parts that changed is a version as a list of chunks' hashes, a new
+  layout in the record and the fetch. The operator's call after M2, or a
+  group's edits to a large file measured too costly.
+- **A phone in the folder**: a phone holds no directory a person edits as a
+  computer's, and iOS suspends an app soon after it leaves the screen
+  (DESIGN §9, "a native phone app"). After the computer (DESIGN §10,
+  2026-10-09), with the phone replica spike, once its endpoint is shown to
+  stay reachable.
+- **A mounted folder**: every file listed from the layout and fetched on
+  open, by verified range as group folders' endpoint fetches — the two
+  shapes met — needs a file system of svrngs's (macFUSE, or Apple's File
+  Provider), a dependency and a process apart. Waits for a member whose
+  disk cannot hold the group's folder, counted.
+- **Many groups, many folders**: each folder is walked once a second
+  (`both_ways`, `synced.rs:53-65`) and each step and each provider answer
+  reads every group's layout from every act (`placed`, `:67-78`), unmeasured
+  here. A watcher of the file system in place of the walk, and a layout
+  kept in place of read, wait for a step measured near its second.
+- **The journal's growth**: every change stays, 1,166 bytes a change at M1;
+  DESIGN §9's compaction row, its trigger unchanged.
+- **The record's refusal named on its answer** (§8's fifth part): waits for
+  a person refused who is told nothing.
+- **A member removed keeps what they hold**: what has reached a member's
+  disk, a removal does not take back, as group folders' stop (its §8,
+  third part). Said; never a candidate.
+- **Real links and a rate**: the operator's run with a group in the wild
+  (DESIGN §9's row), after these rows.
+
+**The budget.** By `python3 scripts/lean_check.py` at `8bf279d`: 15,707 of
+15,750 on this branch, svrngs-core 2,873 of 3,000. A mesh Dropbox's
+production drops the plants' 15 (above) and group folders' 21 and its
+digest's 3 (its §9), and, with streaming dropped, the endpoint's 138
+(`folder.rs:420-567`, by the same rule) and the rest of its wiring; it adds,
+by the same rule, about 50 for one group's folder (2), 30 for the store's
+drop (5), 30 for the parsed path (7), 20 for the store kept across a stop
+(8, until it is reproduced), 35 for what a node keeps (9) and 15 for
+fetches at once (10): about 180, svrngs-core's part about 40. That is about
+15,710 with streaming dropped, svrngs-core about 2,913. sy-1 ran 13% over its
+estimate (§7) and group folders 52% (its §7); the same misses on the 180
+make about 15,730 and 15,800. With streaming kept, group folders' rows 1
+and 3 add their 10 and 40 and the endpoint stays: about 15,900. Either is
+past main's 15,200 (DESIGN §5); the raise is the operator's, with the
+merge (the queue's fence 5).
