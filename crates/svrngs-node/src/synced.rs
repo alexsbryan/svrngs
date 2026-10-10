@@ -16,7 +16,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, Instant, SystemTime};
 
 use iroh_blobs::api::blobs::ImportMode;
 use iroh_blobs::Hash;
@@ -69,7 +69,13 @@ impl Folders {
         self.admissions().flat_map(|a| a.layout()).collect()
     }
 
+    #[expect(
+        clippy::disallowed_methods,
+        reason = "times each phase of a step for its trace (perf-1); no decision reads it"
+    )]
     async fn step(&self, dir: &Path, folder: &str) -> Result<(), FolderError> {
+        let t0 = Instant::now();
+        let ms = |t: Instant| t.elapsed().as_millis() as u64;
         let kept = self.data_dir.join(format!("synced-{folder}.json"));
         let read = std::fs::read(&kept).ok();
         let mut held: BTreeMap<String, Held> = read
@@ -78,13 +84,19 @@ impl Folders {
         let mut changes = Vec::new();
         let mut taken = BTreeMap::new();
         let mut seen = BTreeSet::new();
-        for (rel, path, meta) in self.walk(dir)? {
+        let (read_ms, t) = (ms(t0), Instant::now());
+        let walked = self.walk(dir)?;
+        let (files, walk_ms, t) = (walked.len(), ms(t), Instant::now());
+        for (rel, path, meta) in walked {
             seen.insert(rel.clone());
             let before = held.get_mut(&rel);
             if unchanged(before.as_deref(), &path) {
                 continue;
             }
+            tracing::debug!(target: "folder", folder, path = rel, size = meta.len(), "synced: found on disk, changed since it was last held");
+            let took = Instant::now();
             let hash = self.take(&path, ImportMode::Copy).await?;
+            tracing::debug!(target: "folder", folder, path = rel, %hash, ms = ms(took), "synced: taken into the store");
             let hash = ContentHash::from_bytes(hash.into());
             let mtime = meta.modified().map_err(io(&path))?;
             match before {
@@ -113,6 +125,8 @@ impl Folders {
                     }
                 }),
         );
+        let (take_ms, t) = (ms(t), Instant::now());
+        let sent = changes.len();
         if !changes.is_empty() {
             let act = SyncFolder {
                 folder: folder.into(),
@@ -124,14 +138,22 @@ impl Folders {
                 held.remove(&c.path);
             }
         }
+        let (write_ms, t) = (ms(t), Instant::now());
         self.apply(dir, folder, &mut held, &taken).await;
-        std::fs::write(&kept, serde_json::to_vec(&held).unwrap_or_default()).map_err(io(&kept))
+        let (apply_ms, t) = (ms(t), Instant::now());
+        let wrote = std::fs::write(&kept, serde_json::to_vec(&held).unwrap_or_default());
+        tracing::debug!(target: "folder", folder, files, sent, read_ms, walk_ms, take_ms, write_ms, apply_ms, kept_ms = ms(t), ms = ms(t0), "synced: a step");
+        wrote.map_err(io(&kept))
     }
 
     /// The layout written into `dir`, what `held` says updated. A file just
     /// `taken` and sent is held as its entry, wherever the record places
     /// that entry: beside, when it met another edit, and the record's
     /// choice is then written at its path.
+    #[expect(
+        clippy::disallowed_methods,
+        reason = "times the layout's read, each fetch and each export for their traces (perf-1); no decision reads it"
+    )]
     async fn apply(
         &self,
         dir: &Path,
@@ -139,11 +161,14 @@ impl Folders {
         held: &mut BTreeMap<String, Held>,
         taken: &BTreeMap<String, (ContentHash, SystemTime)>,
     ) {
+        let t0 = Instant::now();
+        let ms = |t: Instant| t.elapsed().as_millis() as u64;
         let placed: Vec<Placed> = self
             .placed()
             .into_iter()
             .filter(|p| p.folder == folder)
             .collect();
+        tracing::debug!(target: "folder", folder, placed = placed.len(), ms = ms(t0), "synced: the layout read");
         let mut standing = BTreeSet::new();
         for ns in self.rail.namespaces().unwrap_or_default() {
             if let Ok(Standing::Members(m)) = self.rail.standing(&ns) {
@@ -177,6 +202,8 @@ impl Folders {
             }
             if before.is_none_or(|h| h.p.hash != p.hash) {
                 let hash = Hash::from_bytes(*p.hash.as_bytes());
+                tracing::debug!(target: "folder", folder, path = p.path, %hash, size = p.size, from = p.entry.key, seq = p.entry.seq, "synced: to fetch, the layout placing it here");
+                let fetched = Instant::now();
                 let mut from = vec![p.entry.key.clone()];
                 from.extend(standing.iter().filter(|k| **k != p.entry.key).cloned());
                 let (mut got, mut from_at) = (Ok(None), 0);
@@ -190,12 +217,13 @@ impl Folders {
                     tracing::warn!(target: "folder", folder, path = p.path, %hash, ?why, "synced: not written — no member gave it, verified");
                     continue;
                 }
+                let (fetch_ms, exported) = (ms(fetched), Instant::now());
                 let wrote = self.store.blobs().export(hash, &at).finish().await;
                 if let Err(why) = wrote {
                     tracing::warn!(target: "folder", folder, path = p.path, %hash, %why, "synced: not written into the directory");
                     continue;
                 }
-                tracing::info!(target: "folder", folder, path = p.path, %hash, from = p.entry.key, seq = p.entry.seq, beside = p.beside, "synced: written into the directory");
+                tracing::info!(target: "folder", folder, path = p.path, %hash, from = p.entry.key, seq = p.entry.seq, beside = p.beside, fetch_ms, export_ms = ms(exported), "synced: written into the directory");
             }
             let Ok(mtime) = std::fs::metadata(&at).and_then(|m| m.modified()) else {
                 continue;

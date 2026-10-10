@@ -21,6 +21,7 @@ use axum::routing::post;
 use axum::{Json, Router};
 use iroh::endpoint::Connection;
 use iroh_blobs::api::blobs::{AddPathOptions, ImportMode};
+use iroh_blobs::api::remote::GetProgressItem;
 use iroh_blobs::api::Store;
 use iroh_blobs::protocol::{ChunkRanges, ChunkRangesExt, GetRequest};
 use iroh_blobs::provider::events::{
@@ -28,6 +29,7 @@ use iroh_blobs::provider::events::{
 };
 use iroh_blobs::store::fs::FsStore;
 use iroh_blobs::{BlobFormat, BlobsProtocol, Hash};
+use n0_future::StreamExt as _;
 use std::convert::Infallible;
 
 use svrngs_core::{Command, ContentHash, Recorded};
@@ -237,11 +239,20 @@ impl Folders {
         Err(why)
     }
 
+    /// `request` asked of `key` on its open connection, else one dialled;
+    /// its dial, first byte and last byte, and the path iroh selected for
+    /// the connection, traced (perf-1).
+    #[expect(
+        clippy::disallowed_methods,
+        reason = "times the fetch's dial, first byte and last byte for their trace (perf-1); no decision reads it"
+    )]
     async fn fetch(
         &self,
         key: &str,
         request: GetRequest,
     ) -> Result<iroh_blobs::get::Stats, String> {
+        let t0 = Instant::now();
+        let ms = |t: Instant| t.elapsed().as_micros() as f64 / 1000.0;
         let open = self
             .conns
             .borrow()
@@ -262,15 +273,37 @@ impl Folders {
                 c
             }
         };
-        self.store
-            .remote()
-            .execute_get(conn, request)
-            .await
-            .map_err(|e| format!("{e:?}"))
+        let dial_ms = ms(t0);
+        let paths = conn.paths();
+        let path = paths.iter().find(|p| p.is_selected());
+        let (relayed, addr) = (
+            path.as_ref().map(|p| p.is_relay()),
+            path.as_ref().map(|p| format!("{:?}", p.remote_addr())),
+        );
+        let rtt_ms = path.as_ref().map(|p| p.rtt().as_micros() as f64 / 1000.0);
+        drop(paths);
+        let mut got = std::pin::pin!(self.store.remote().execute_get(conn, request).stream());
+        let mut first_ms = None;
+        let done = loop {
+            match got.next().await {
+                Some(GetProgressItem::Progress(_)) => {
+                    first_ms = first_ms.or(Some(ms(t0)));
+                }
+                Some(GetProgressItem::Done(stats)) => break Ok(stats),
+                Some(GetProgressItem::Error(e)) => break Err(format!("{e:?}")),
+                None => break Err("the get ended without a result".into()),
+            }
+        };
+        tracing::debug!(target: "folder", holder = %key, dial_ms, first_ms, last_ms = ms(t0), ?relayed, addr, rtt_ms, ok = done.is_ok(), "folder: the fetch's phases, and the path iroh selected");
+        done
     }
 }
 
 /// The provider: every get asked of the record, and its bytes logged.
+#[expect(
+    clippy::disallowed_methods,
+    reason = "times each get's read of the record for its trace (perf-1); no decision reads it"
+)]
 fn provider(store: &Store, folders: Folders) -> BlobsProtocol {
     let mask = EventMask {
         get: RequestMode::InterceptLog,
@@ -290,12 +323,15 @@ fn provider(store: &Store, folders: Folders) -> BlobsProtocol {
                 format!("{:?}", asked.inner.request.ranges),
             );
             let (conn, request) = (asked.inner.connection_id, asked.inner.request_id);
-            if !folders.shares(hash) {
-                tracing::info!(target: "folder", %hash, conn, request, ranges, "folder: refused — no synced folder places the hash");
+            let t0 = Instant::now();
+            let shares = folders.shares(hash);
+            let record_ms = t0.elapsed().as_micros() as f64 / 1000.0;
+            if !shares {
+                tracing::info!(target: "folder", %hash, conn, request, ranges, record_ms, "folder: refused — no synced folder places the hash");
                 asked.tx.send(Err(AbortReason::Permission)).await.ok();
                 continue;
             }
-            tracing::info!(target: "folder", %hash, conn, request, ranges, "folder: serving — a synced folder places the hash");
+            tracing::info!(target: "folder", %hash, conn, request, ranges, record_ms, "folder: serving — a synced folder places the hash");
             asked.tx.send(Ok(())).await.ok();
             let mut updates = asked.rx;
             tokio::spawn(async move {
