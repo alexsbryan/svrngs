@@ -4751,7 +4751,8 @@ Run again at b841412 (`REVIEW-audit-sup-auto-2-4.await.log`, 23m37s),
 scripts/check.sh exited 0: every step `passed`, none failed, could-not-judge
 or never-ran (the log's 48 lines; `grep -E '^(failed|could-not|never)'`
 finds none). All 26 conformance routes passed, both Chromium seeks among
-them; chk-1's could-not-judge line was not needed. One run, at a load near
+them (the log's :26-27 and :39-40); chk-1's could-not-judge line was not
+needed. One run, at a load near
 70-90 on 12 cores (`uptime` after it: 69.87 78.63 91.39), not a rate.
 
 ### Findings
