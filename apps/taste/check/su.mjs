@@ -1,6 +1,6 @@
 // Scoped use's journey (check.sh; su-0's bars, demo/runs/su/2026-10-09/
 // README.md §3, rerun on what svrngs carries since sup-1 to sup-3,
-// demo/runs/sup/2026-10-09/README.md). Each person is a browser of their
+// demo/runs/sup/2026-10-10/README.md). Each person is a browser of their
 // own, every response it receives written to DUMP/<user>/ for scan.py
 // (apps/jellyfin/check/person.mjs `record`):
 // - on a computer (`home`, the computer's home page,

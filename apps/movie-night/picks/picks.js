@@ -1,6 +1,6 @@
 // mn: own picks
 // su: own picks — Tonight's Picks (demo/runs/su/2026-10-09/README.md, su-0;
-// cut to what svrngs carries, sup-4, demo/runs/sup/2026-10-09/): the
+// cut to what svrngs carries, sup-4, demo/runs/sup/2026-10-10/): the
 // group's films, as Movie Night lists them, ranked by the person's taste
 // once they say yes. Lent apart from Movie Night's search, `--reads
 // jellyfin --reads taste`, so the yes it is given is its own. A static

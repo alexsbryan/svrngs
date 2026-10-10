@@ -1,5 +1,5 @@
 // su: own serve — Ana's taste (demo/runs/su/2026-10-09/README.md, su-0;
-// cut to what svrngs carries, sup-4, demo/runs/sup/2026-10-09/): a small
+// cut to what svrngs carries, sup-4, demo/runs/sup/2026-10-10/): a small
 // program on Ana's computer, on loopback alone, offering `rankCandidates`
 // (POST /rank) beside her watch history and keeping `viewingDiary` (GET
 // /diary) back. Lent by Ana `svrngs share <port> --name taste --kind taste

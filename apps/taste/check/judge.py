@@ -1,6 +1,6 @@
 """Judge scoped use's run (check.sh) by su-0's bars
 (demo/runs/su/2026-10-09/README.md §3), rerun on what svrngs carries,
-the computer first (demo/runs/sup/2026-10-09/README.md): four verdicts,
+the computer first (demo/runs/sup/2026-10-10/README.md): four verdicts,
 passed, failed, could-not-judge and never-ran (AGENTS.md 6) — a run
 missing, or a step it did not reach, is never a pass. Each plant is judged
 as watched failing: `failed` is what it should give.

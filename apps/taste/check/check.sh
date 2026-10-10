@@ -2,7 +2,7 @@
 # Scoped use's run (su-1's, ralph/next/compose/STATE.md; the rule, bars and
 # predictions in demo/runs/su/2026-10-09/README.md, su-0), run again on
 # what svrngs carries since sup-1 to sup-3, the computer first (sup-4,
-# ralph/next/sup/STATE.md; demo/runs/sup/2026-10-09/README.md): the group
+# ralph/next/sup/STATE.md; demo/runs/sup/2026-10-10/README.md): the group
 # as mn-1's run made it (apps/movie-night/check/check.sh `up`: Sam's and
 # Dee's Jellyfins through their middlewares, Cy's asleep, Movie Night,
 # Alex's computer), and on it:
