@@ -337,3 +337,197 @@ By `scripts/lean_check.py`'s rule, `2bf0e1b` to `575a911`; the node's
 repository 15184 of 15200. `apps/jellyfin/folders/`, apart from the
 budget: 978 by the same rule (`analyze.py` 322, `driver.cjs` 201, `run.sh`
 192, `rangeserver.py` 99, `jf_setup.py` 92, `probe.py` 38, `strm.py` 34).
+
+## 8. What the run gives (gf-2)
+
+**A group's films, shared as a folder, play in one Jellyfin with their
+bytes fetched by verified range from whoever holds them, and nothing else
+left a holder.** Written after gf-1's data (§7; every number below is in
+`run/summary.json`, by its key, or the file named), by §3's bars, each read
+for what it guards. All seven passed in Chromium, and every plant passed
+with its guard out before it was refused (§7, "Each plant"). The first
+run's one miss is answered: of what Ana sent for the MP4, 0.9957 reached
+Chromium, where the range server gave 93.0%; and every payload byte she
+sent did, 41,254,912 of 41,254,912 (`A_chromium_mp4`,
+`holder_payload_bytes` and `browser_bytes_of_what_holders_sent`). The
+0.43% left, 1 − 0.9957, is the verification's own hash pairs and header,
+which §5 put at 0.4%. The meeting point's store is why: Jellyfin's probe and the
+browser asked for the same bytes, and the holder sent them once.
+
+| Bar | Letter | Spirit — what it guards | Data |
+|---|---|---|---|
+| B1. Verified, or refused by name | passed | held for a holder whose file changed under her store; a holder whose program sends wrong bytes was not planted (1, below) | 119 ranges served, 252,484,839 bytes, none not the source's (`B1_served_ranges`); 6 refusals, each naming Ana, the flipped byte served 0 times (`B1`); Chromium's `error` at 6,646 ms, never `playing` (`run/results.jsonl`, phase D) |
+| B2. The holder's bytes go to the viewer | passed | held: what is not the viewer's is the verification's | 0.9957, 41,254,912 of 41,432,704 bytes (`A_chromium_mp4`) |
+| B3. The scan fetches nothing | passed | held | 0 holder requests, 0 endpoint answers, in 21.5 s (`B3`) |
+| B4. Seeks | passed | held, on one host (4) | 113, 123 and 92 ms (`A_chromium_mp4.seeks_ms`) |
+| B5. The probe | passed | held, the endpoint fetching one piece past what Jellyfin read | 2,106,000 bytes from Ana; Jellyfin read 1,048,576 in 1 answer (`A_chromium_mp4`) |
+| B6. A holder asleep | passed | held | `playing` at 3,977 ms, fetched from Cy, Ana "did not answer within 3s", both folders listed (`B6`); unbounded, 31,042 ms (`B6_plant`) |
+| B7. Only what is shared leaves a holder | passed | held where the bytes are; the record learns later, and the meeting point keeps what it fetched (3) | the act names `exp.mkv` and `exp.mp4`, not `link.bin`; 0 planted bytes served; Ben's data dir, 37 files and 155,582,491 bytes, 0 hits (`B7`, `B7_scan`); after `unshare`, Ana refused from 0.056 s, Ben's endpoint 502 from 0.016 s, his list 68.288 s (`B7_stop`) |
+
+**Where the letter and the spirit part**, each judged by the spirit:
+
+1. *B1 passed, and Ben's check was not the one that caught it.* The plant
+   flipped a byte of Ana's MP4 at 500,000 after her store took it by
+   reference (`run/steps.log`, 23:19:34), one of the two plants §3 allowed.
+   Her store, reading the file against its own tree, stopped each send at
+   the 16 KiB group before the flip: `done=false last=491520`, six times
+   (`run/ana.log:287-302`). Ben's fetch ended "stream reset by peer"
+   (`B1.why`), not `LeafHashMismatch`, as §5 predicted: no log of the run
+   names a mismatch (`grep -ci mismatch run/*.log`, 0 each). That guards an
+   honest holder whose disk changed. The bar guards a holder serving wrong
+   bytes, which a changed program does past its store's check; Ben's
+   verification of bytes that arrive wrong is iroh-blobs' `get`
+   (`src/get.rs:629-650`), exercised neither here nor by svrngs's test,
+   which plants the same way (`crates/svrngs-node/tests/folders.rs:235-248`).
+   Held for the case planted; candidate 6 plants the other.
+2. *B1's refusal is the browser's, not the person's.* Chromium erred and
+   never played; Jellyfin then asked for its HLS, which Ben's endpoint
+   refused as well, and the page waited out the driver's 45 s (`B1.events`,
+   `B1.first`). Why — Ana's bytes did not verify, Cy did not answer — is in
+   the endpoint's 502 and Ben's log, not before whoever pressed play, who
+   sees a film that does not start. Said; it waits (§9).
+3. *B7 passed where the bytes are; the record learns later, and the
+   meeting point keeps.* Ana's node refused the MKV 0.056 s after `unshare`
+   returned, and Ben's endpoint answered 502 from 0.016 s, since it asks her
+   and she refuses. Ben's list named her folder for 68.288 s (`B7_stop`), and
+   8.159 s with the guard out (`B7_stop_plant`); which round carried the stop
+   is not logged (§7). §5 said under 60 s: missed, with no bar on it. What
+   Ben's store fetched stays: 155,582,491 bytes in his data dir after the
+   run (`B7_scan`), both films whole among them. What is not shared never
+   left Ana; what has left, a stop does not take back. Candidate 5.
+4. *Every hop was on one host, the browser on the meeting point.* The
+   stub's URL, `http://127.0.0.1:18733/<hash>/exp.mp4`, is what Jellyfin
+   handed the browser to play itself (`A_chromium_mp4.src`, `play_method`
+   `DirectPlay`). A member watching Ben's Jellyfin through its lend from
+   their own computer would be handed the same URL, which names their own
+   loopback, not Ben's: read from the data, not run. Setup's load average
+   was 30.24 on this host's 12 cores (`run/steps.log:1`). Candidate 1.
+5. *The run's group was one.* `share --folder` signs its act into every
+   group held here (`crates/svrngs-node/src/folder.rs:198-216`), and Ana's
+   provider serves a hash to a dialer standing in any group held here
+   (`crates/svrngs-node/src/node.rs:742`, `:758`), asking only whether a
+   standing folder of hers names it, never whether it is shared where the
+   dialer stands (`folder.rs:218-223`). The run held one group
+   (`run/steps.log`: `svrngs new Films`, two joins), where the two are one.
+   Candidate 2.
+
+**The MKV, the measurement with no bar.** WebKit's remux through Jellyfin's
+HLS took the whole file from Ana once, unpaced: 47,247,899 bytes sent,
+47,050,291 of them payload, of a 47,050,291-byte file, while Jellyfin read
+53,574,683 bytes in 6 answers from Ben's endpoint; `playing` at 1,518 ms
+(`A_webkit_mkv`). As predicted. The first run's holder sent 54.7-57.5 MB
+for the same remux (§5); here Ben's store took Jellyfin's rereads. What it
+says: a film Jellyfin remuxes costs its holder the file once, at the first
+play, and no more. Whether that is acceptable is the operator's call.
+
+So a group's films, shared as a folder, play in one Jellyfin from whoever
+holds them, every byte the meeting point served verified, a holder asleep
+named and passed over within 4 s, and nothing beside the folder, nor after
+its stop, leaving the holder. What the run did not reach is everything off
+this host: a viewer on another computer, a second group, a real link. The
+spike cost 655 lines where gf-0 estimated about 430 (§7), and leaves 16 of
+15,200. One host, one run of each: not a rate (AGENTS.md 7). DESIGN §3, §8
+and §9 are rewritten for it on this branch.
+
+## 9. What makes folders production (gf-2)
+
+Each part gf-1 counted (§7, by `scripts/lean_check.py`'s rule at `575a911`,
+unchanged at `dfd00c3`), and what production keeps, changes or drops of it:
+
+| Part | Lines | Production |
+|---|---|---|
+| the folder's act, in svrngs-core | 128 | keeps; the act gains its level (2). `Admission::holders`, 9 (`crates/svrngs-core/src/folder.rs:131-139`), is read only by its test while the endpoint decides holders itself across groups (`crates/svrngs-node/src/folder.rs:403-407`): one decider (2) |
+| serving by iroh-blobs, and refusing the rest | 220 | keeps; the provider's gate asks where the dialer stands (2); the port is kept for the stubs (1); the plants' switch, `SVRNGS_GF_PLANT`, 21 (`folder.rs:45-56`, `:76`, `:97-102`, `:117`, `:157-160`, `:254-258`), drops — each plant stays a test's red run, as svrngs's are |
+| the verified fetch and the local endpoint | 221 | keeps; who the endpoint answers changes (3); the BLAKE3 of each answer, the run's instrument, 3 (`Served.digest`, `:433`, `:459`, `:506`), drops |
+| wiring | 18 | keeps |
+| `share --folder` and its stop | 64 | keeps; names the level (2) |
+| the run's script, in `demo/` | 4 | the run's |
+| `apps/jellyfin/folders/strm.py`, apart | 34 | changes, in `apps/` (4) |
+| the rest of `apps/jellyfin/folders/`, apart | 944 | the run's |
+
+The lock took 30 crates for iroh-blobs, redb among them
+(`git diff 2bf0e1b..dfd00c3 -- Cargo.lock | grep -c '^+name = '`); the
+build's size was not measured.
+
+Candidate rows, the operator's to queue (the queue's preamble). Each check
+is a bar rerun with its plant, red first:
+
+1. **A stub that reaches its viewer.** Every member's node answers the
+   endpoint at one loopback port, kept across restarts — today
+   `SVRNGS_FOLDER_PORT`, else any port (`folder.rs:103-106`), the run fixing
+   18733 (`apps/jellyfin/folders/run.sh:32`) — so a stub's URL names, on
+   each computer, that person's own node, which fetches by verified range
+   from whoever holds the file: the bytes go from holder to viewer, and the
+   meeting point serves Jellyfin's probe alone. The port taken by another
+   program is refused by name. Evidence: §8's fourth part. Check: Ben's
+   Jellyfin opened through its lend from Cy's computer, a second host, the
+   MP4 playing, B2 and B4 rerun there with the holder's upload counted at
+   her node.
+2. **A folder shared at one level, and served only there.** The act names
+   its level from the closed set §9 names (an enum; the row names the set,
+   "the group" at least); `share --folder` writes it to the group named,
+   not every group held here; the provider serves a hash only to a dialer
+   standing where a standing folder of this computer's names it; and the
+   holders of a hash are decided once. Evidence: §8's fifth part. Check:
+   Ana in two groups, a member of the other refused her hash by name at her
+   provider, answered with the dialer's check out.
+3. **Who the endpoint answers.** It is served without the record API's
+   guards (`folder.rs:123-126`; `crates/svrngs-node/src/api.rs:64-84`) and
+   must answer a page, since the browser plays the stub's URL itself; so
+   any page in this computer's browser, or any program on it, that names a
+   hash reads the file, and a hash is no secret — the record names it, and
+   the same bytes have it anywhere. In its place a stub's URL carries a mark
+   the node made for it, and the endpoint refuses a request without one,
+   naming why; its form is the row's, and with candidate 1 every member's
+   node honours it. Check: a request with the hash alone refused, a stub's
+   URL answered, and the hash alone answered with the guard out.
+4. **Stubs in step with the record**, in `apps/` (fence 5). `strm.py`
+   writes once, names each film by its extension as the run's driver needed
+   (`apps/jellyfin/folders/strm.py:34`), and removes nothing. In its place a
+   stub per file, by its name, written when `/v1/folders` names it and
+   removed when it stops, then Jellyfin's library refreshed. Check: B3
+   rerun after a share and after an `unshare`, the stub gone and the scan
+   fetching nothing.
+5. **What the meeting point keeps.** Ben's store kept every byte it fetched,
+   a stopped file's among them (§8's third part). In its place a hash no
+   standing folder names is dropped from the meeting point's store at the
+   next record change, and the store held under a bound the row names.
+   Check: after `unshare`, B7's scan of Ben's data dir finds none of the
+   MKV's bytes, and with the drop out finds them.
+6. **A holder that sends wrong bytes, planted.** A test of svrngs's whose
+   holder sends a flipped byte on the wire — a provider of the test's, past
+   any store — and Ben's endpoint refuses that range naming the holder and
+   the mismatch. Tests only, no line of the budget. Evidence: §8's first
+   part. Check: the test red against the first run's range server in Ben's
+   place, as D's plant was (§7), then refused.
+
+Not candidates, said so:
+
+- **The person told why a film does not start** (§8's second part):
+  Jellyfin's to show; svrngs names its refusal (`x-svrngs-refused:
+  no-holder`, `folder.rs:423`). Waits for a person in the group's run who
+  presses play on a film no holder gives and is told nothing.
+- **The others' lists after a stop**, 8.2 and 68.3 s: the holder's refusal
+  is what keeps the bytes (B7). Waits for a stopped film listed and failing
+  to play, counted in the group's run.
+- **The MKV's remux** (§8): the operator's call.
+- **A phone watching** has no node to answer a stub's URL (candidate 1):
+  after the computer (DESIGN §10, 2026-10-09, a computer first), with the
+  phone replica spike (DESIGN §9, "a native phone app").
+- **A folder of many files**: one act names every file again at each
+  change (`ShareFolder`, `crates/svrngs-core/src/folder.rs:66-84`); the run
+  had two. Waits for a folder whose act's size is measured too large to
+  write at each change.
+- **Real links and a rate**: the operator's run with a group in the wild
+  (DESIGN §9's row), after these rows.
+
+**The budget.** Production keeps about 620 of the spike's 655: the plants'
+21, the digest's 3 and the run's script's 4 out, and `holders`' 9 folded
+into the one decider. It adds, by the same rule, about 25 for the level
+(the enum, the act, the flag, the write), 15 for the provider's gate, 10
+for the kept port, 40 for the endpoint's mark and 30 for the store's drop:
+about 740, svrngs-core's part about 140 (2,763 of 3,000 on this branch,
+`python3 scripts/lean_check.py`). gf-0's estimate ran 52% short (430 to
+655, §7); the same miss on the 120 added makes about 800. That is the raise
+folders need over main's count when they merge — the operator's, with the
+merge (DESIGN §5; the queue's fence 6).
