@@ -25,7 +25,7 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { hold, launch, play, serve } from './page.mjs';
+import { held, launch, play, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 
@@ -68,11 +68,7 @@ const watch = (context) => {
 try {
   watch(context);
   page = await context.newPage();
-  await page.goto(origin);
-  await page.evaluate(hold, { hex: args.key, token: args.token });
-  await page.goto('about:blank');
-  await page.goto(`${origin}#${args.token}`);
-  await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
+  await held(page, origin, args);
   const listed = await page.evaluate(() => [...document.querySelectorAll('#lent button')].map((b) => b.textContent));
   const button = page.locator('#lent button', { hasText: args.open });
   const away = (url) => url.hostname.endsWith('.localhost');

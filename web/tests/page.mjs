@@ -103,6 +103,17 @@ export async function hold({ hex, token, person = 'bo' }) {
   await store.keep({ id: 'held', name: 'house', person, token, key });
 }
 
+// The group's page at `origin`, opened by the person `args.key` names in
+// the group `args.token` joins, their store holding it (`hold`); its list
+// said, or its refusal.
+export async function held(page, origin, args) {
+  await page.goto(origin);
+  await page.evaluate(hold, { hex: args.key, token: args.token });
+  await page.goto('about:blank');
+  await page.goto(`${origin}#${args.token}`);
+  await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
+}
+
 // In the lend's page: play its `<video>`, or seek it to `at`, and answer
 // how long until it plays on from there — `ms`, or `null` past `within` —
 // with where it stood then, or what the page says when it holds no video.
