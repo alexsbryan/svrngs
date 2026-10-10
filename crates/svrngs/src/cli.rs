@@ -131,8 +131,10 @@ svrngs — keep what your group shares on your own computers.
   svrngs unshare <name>
       Stop lending <name>.
 
-  svrngs share --folder <dir>  /  svrngs unshare --folder <name>
+  svrngs share --folder <dir> [--both-ways]  /  svrngs unshare --folder <name>
       Share the files under <dir> with your groups while svrngs runs here; stop sharing it.
+      --both-ways keeps <dir> the same on every computer in your groups that
+      shares a folder of its name: anyone may add, change and delete in it.
 
   svrngs room <name>...
       Let anyone on this computer's network (its WiFi) open what your groups
@@ -200,6 +202,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let mut reads = Vec::new();
     let mut sign_in = None;
     let mut folder = None;
+    let mut both_ways = false;
     let mut more = Vec::new();
     while let Some(arg) = it.next() {
         let mut value = |flag: &str| it.next().ok_or_else(|| format!("{flag} wants a value"));
@@ -258,6 +261,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                     Some(share::resolve_target(&raw).map_err(|why| format!("--sign-in {why}"))?);
             }
             "--folder" => folder = Some(value("--folder")?),
+            "--both-ways" => both_ways = true,
             "-h" | "--help" => return Ok(Verb::Help),
             other if other.starts_with('-') => return Err(format!("unknown argument `{other}`")),
             other if positional.is_none() => positional = Some(other.to_string()),
@@ -288,7 +292,10 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     match (verb.as_str(), folder) {
         ("share", Some(dir)) => {
             let dir = std::path::absolute(&dir).map_err(|e| format!("--folder `{dir}`: {e}"))?;
-            return Ok(Verb::Folder(FolderAsk::Share(dir)));
+            return Ok(Verb::Folder(match both_ways {
+                true => FolderAsk::BothWays(dir),
+                false => FolderAsk::Share(dir),
+            }));
         }
         ("unshare", Some(name)) => return Ok(Verb::Folder(FolderAsk::Stop(name))),
         (_, Some(_)) => return Err("--folder is a `share` and `unshare` flag".into()),

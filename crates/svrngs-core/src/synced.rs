@@ -39,7 +39,7 @@ pub struct Change {
 }
 
 /// A file where the record places it.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Placed {
     pub folder: String,
     /// Where it sits under the folder: its entry's path, or beside it.

@@ -297,3 +297,123 @@ async fn a_holder_s_provider_refuses_a_hash_she_stopped_sharing() {
     assert_eq!(listed(&group.ben).await["folders"], serde_json::json!([]));
     group.close().await;
 }
+
+// ── A folder synced both ways (sy-1, the mesh-Dropbox spike) ──────────
+
+/// `who` syncs a directory of its own named `Shared`, as `share --folder
+/// <dir> --both-ways` asks: the directory.
+async fn both_ways(who: &Node, root: &Path) -> std::path::PathBuf {
+    let dir = root.join("Shared");
+    std::fs::create_dir_all(&dir).unwrap();
+    let said = ask(who, serde_json::json!({ "bothways": dir })).await;
+    assert_eq!(said["name"], "Shared");
+    dir
+}
+
+/// Up to 30 s, rounds run on every node: whether `done` came true.
+async fn until(group: &Group, done: impl Fn() -> bool) -> bool {
+    for _ in 0..30 {
+        if done() {
+            return true;
+        }
+        for node in [&group.ana, &group.ben, &group.cy] {
+            round(node).await;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    done()
+}
+
+/// **A change by any member reaches another's directory**: Ana and Ben
+/// each sync a directory; a file Ana writes appears in Ben's, byte for
+/// byte; Ben's edit of it appears in Ana's; Ben's delete of it takes it
+/// from Ana's. Red with the node's apply taken out (nothing reaches Ben).
+#[tokio::test]
+async fn a_change_by_any_member_reaches_another_s_directory() {
+    let group = Group::new().await;
+    let (ra, rb) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (ana, ben) = (
+        both_ways(&group.ana, ra.path()).await,
+        both_ways(&group.ben, rb.path()).await,
+    );
+    let first = noise(70_000, b"first");
+    std::fs::write(ana.join("a.bin"), &first).unwrap();
+    let at_ben = || std::fs::read(ben.join("a.bin")).ok();
+    assert!(
+        until(&group, || at_ben().as_ref() == Some(&first)).await,
+        "Ana's file reaches Ben"
+    );
+
+    let edit = noise(1 << 20, b"edit");
+    std::fs::write(ben.join("a.bin"), &edit).unwrap();
+    let at_ana = || std::fs::read(ana.join("a.bin")).ok();
+    assert!(
+        until(&group, || at_ana().as_ref() == Some(&edit)).await,
+        "Ben's edit reaches Ana"
+    );
+
+    std::fs::remove_file(ben.join("a.bin")).unwrap();
+    assert!(
+        until(&group, || at_ana().is_none()).await,
+        "Ben's delete reaches Ana"
+    );
+    group.close().await;
+}
+
+/// **A synced file is served by a member who did not write it, and to no
+/// one outside the group**: Ana writes, Ben's directory takes it; Cy asks
+/// Ben's provider for its hash and is given it, verified; a node standing
+/// in no group held at Ben's is closed at the accept. Red with the provider
+/// asking only this computer's own shared folders (Ben refuses Cy).
+#[tokio::test]
+async fn a_synced_file_is_served_by_a_member_who_did_not_write_it_and_to_no_one_outside() {
+    let group = Group::new().await;
+    let (ra, rb) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (ana, ben) = (
+        both_ways(&group.ana, ra.path()).await,
+        both_ways(&group.ben, rb.path()).await,
+    );
+    let bytes = noise(50_000, b"served");
+    std::fs::write(ana.join("b.bin"), &bytes).unwrap();
+    let held = || std::fs::read(ben.join("b.bin")).ok() == Some(bytes.clone());
+    assert!(until(&group, held).await, "Ana's file reaches Ben");
+    let hash = iroh_blobs::Hash::from_bytes(*blake3::hash(&bytes).as_bytes());
+
+    let ask_ben = |from: &Node, dir: std::path::PathBuf| {
+        let (endpoint, ben) = (from.endpoint().clone(), group.ben.endpoint().id());
+        async move {
+            let store = iroh_blobs::store::fs::FsStore::load(dir).await.unwrap();
+            let conn = endpoint.connect(ben, b"/iroh-bytes/4").await;
+            let conn = conn.map_err(|e| format!("the dial: {e}"))?;
+            let get = store
+                .remote()
+                .execute_get(conn, iroh_blobs::protocol::GetRequest::blob(hash));
+            let got = tokio::time::timeout(Duration::from_secs(10), get).await;
+            got.map_err(|_| "no answer".to_string())?
+                .map_err(|e| format!("{e:?}"))
+        }
+    };
+    let cy = ask_ben(&group.cy, tempfile::tempdir().unwrap().keep()).await;
+    assert_eq!(
+        cy.map(|s| s.payload_bytes_read),
+        Ok(50_000),
+        "Ben serves Cy what Ana wrote"
+    );
+
+    let dee_dir = tempfile::tempdir().unwrap();
+    let dee = start(4, dee_dir.path()).await;
+    let book = MemoryLookup::new();
+    let mut addr = EndpointAddr::new(group.ben.endpoint().id());
+    for a in loopback_sockets(group.ben.endpoint()) {
+        addr = addr.with_ip_addr(a);
+    }
+    book.add_endpoint_info(addr);
+    dee.endpoint().address_lookup().unwrap().add(book);
+    let refused = ask_ben(&dee, dee_dir.path().join("asked")).await;
+    assert!(
+        refused.is_err(),
+        "Dee, in no group, is given nothing: {refused:?}"
+    );
+    dee.endpoint().close().await;
+    group.close().await;
+}

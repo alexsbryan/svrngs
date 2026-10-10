@@ -40,6 +40,9 @@ use crate::iroh::{actor_key, Alpn, Endpoint};
 use crate::node::ANSWER_WITHIN;
 use crate::RingRail;
 
+#[path = "synced.rs"]
+mod synced;
+
 /// What a fetch asks a holder for at once, and so the most the endpoint
 /// holds of a response ahead of what it has sent.
 const PIECE: u64 = 1 << 20;
@@ -55,6 +58,12 @@ enum Plant {
     FollowLinks,
     /// The provider serves any hash its store holds (B7, the stopped file).
     Unchecked,
+    /// A synced directory is never walked (sy-1's S1).
+    Deaf,
+    /// The provider serves a synced file only to its writer's (S2).
+    OwnOnly,
+    /// A synced path's first head alone is placed (S3).
+    LaterWins,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -76,6 +85,7 @@ pub struct Folders {
     actor: String,
     nudge: Arc<Notify>,
     plant: Plant,
+    data_dir: PathBuf,
     /// Where the endpoint listens.
     pub(crate) at: std::net::SocketAddr,
     /// Each holder's open connection, and when one last did not answer.
@@ -100,6 +110,9 @@ impl Folders {
             Ok("unbounded") => Plant::Unbounded,
             Ok("follow-links") => Plant::FollowLinks,
             Ok("unchecked") => Plant::Unchecked,
+            Ok("deaf") => Plant::Deaf,
+            Ok("own-only") => Plant::OwnOnly,
+            Ok("later-wins") => Plant::LaterWins,
             _ => Plant::None,
         };
         let port: u16 = std::env::var("SVRNGS_FOLDER_PORT")
@@ -117,6 +130,7 @@ impl Folders {
             actor,
             nudge,
             plant,
+            data_dir: data_dir.to_path_buf(),
             at: bound.addr(),
             conns: watch::Sender::new(BTreeMap::new()),
             unanswered: watch::Sender::new(BTreeMap::new()),
@@ -151,7 +165,7 @@ impl Folders {
         let name = dir.file_name().unwrap_or_default().to_string_lossy();
         let mut files = Vec::new();
         for (rel, path, meta) in self.walk(dir)? {
-            let hash = self.take(&path).await?;
+            let hash = self.take(&path, ImportMode::TryReference).await?;
             tracing::debug!(target: "folder", path = %rel, %hash, size = meta.len(), "folder: a file taken by reference");
             files.push(SharedFile {
                 path: rel,
@@ -196,10 +210,10 @@ impl Folders {
     }
 
     /// The file at `path` into the store by reference, by its hash.
-    async fn take(&self, path: &Path) -> Result<Hash, FolderError> {
+    async fn take(&self, path: &Path, mode: ImportMode) -> Result<Hash, FolderError> {
         let options = AddPathOptions {
             path: path.to_path_buf(),
-            mode: ImportMode::TryReference,
+            mode,
             format: BlobFormat::Raw,
         };
         let tag = self.store.add_path_with_opts(options).with_tag().await;
@@ -247,11 +261,15 @@ impl Folders {
     }
 
     /// Whether a standing folder of this computer's names `hash`.
+    /// Or a synced folder places it, whoever wrote it (sy-1).
     fn shares(&self, hash: Hash) -> bool {
         let hash = &ContentHash::from_bytes(hash.into());
+        let mine = |key: &str| key == self.actor;
+        let placed = self.placed().into_iter().filter(|p| &p.hash == hash);
         self.all()
             .iter()
-            .any(|f| f.key == self.actor && f.files.iter().any(|x| &x.hash == hash))
+            .any(|f| mine(&f.key) && f.files.iter().any(|x| &x.hash == hash))
+            || { placed }.any(|p| self.plant != Plant::OwnOnly || mine(&p.entry.key))
     }
 
     /// Make `[start, end)` of `hash` held here, verified, asking each holder
@@ -569,12 +587,17 @@ async fn list(State(f): State<Folders>) -> Json<serde_json::Value> {
 pub enum FolderAsk {
     Share(PathBuf),
     Stop(String),
+    /// Keep a directory in step with the folder of its name (sy-1).
+    BothWays(PathBuf),
 }
 
 async fn ask(State(f): State<Folders>, Json(asked): Json<FolderAsk>) -> Response {
     let done = match asked {
         FolderAsk::Share(dir) => f.share(&dir).await,
         FolderAsk::Stop(name) => f.unshare(&name).await,
+        FolderAsk::BothWays(dir) => {
+            return Json(serde_json::json!({ "name": f.both_ways(dir) })).into_response()
+        }
     };
     match done {
         Ok(f) => Json(serde_json::json!({ "name": f.name, "files": f.files })).into_response(),
