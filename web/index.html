@@ -3,7 +3,8 @@
 <!--
   The page a group's link opens on a phone: `<origin>#<token>` (DESIGN §3,
   "Joining"). It asks a newcomer's name once, then lists what the group's
-  people lend (app.js). Static files any origin can serve — no server, no certificate,
+  people lend (app.js); it asks the person's yes when an app sends them
+  here, and lists what apps use (sup-3). Static files any origin can serve — no server, no certificate,
   no data. The FRAGMENT carries the link's token, and a browser never sends
   the fragment to the origin, so the page loads from public static hosting
   while the link stays on the phone; `no-referrer` keeps it out of every
@@ -14,7 +15,8 @@
   by key over a relay (web/src/lib.rs).
 
   The CSP is deliberately strict: no inline script (app.js is external), no
-  remote code. `wasm-unsafe-eval` is required to instantiate WebAssembly;
+  remote code. It is never framed: `frame-ancestors` cannot ride a
+  `<meta>`, so the page host sends it (vercel.json). `wasm-unsafe-eval` is required to instantiate WebAssembly;
   `connect-src` must allow the relay's WebSocket (wss://*.relay.n0.iroh.link
   by default, plus any self-hosted relay a link carries), and iroh's latency
   probe, an HTTP GET of the relay's `/ping`. A relay on this computer, plain
@@ -52,7 +54,13 @@
   <p id="why" class="bad"></p>
   <button>Join</button>
 </form>
+<form id="ask" hidden>
+  <blockquote id="words"></blockquote>
+  <button>Yes</button>
+  <button type="button" id="not">Not now</button>
+</form>
 <ul id="lent"></ul>
+<details id="uses" hidden><summary>What apps use</summary><ul id="used"></ul></details>
 <pre id="response"></pre>
 <script type="module" src="./app.js?v=__VERSION__"></script>
 </body>

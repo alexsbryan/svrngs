@@ -151,16 +151,23 @@ paths it refuses, how many people may use it at once.
   what apps use, each with Stop — shown from the routes that answer an app
   (`/v1/groups`, `/v1/lends`, `/v1/rail/people`), groups that cannot be
   read said so (sup-2, `crates/svrngs-node/src/home.rs`). An app sends its
-  person there: on a computer `/svrngs-reads` gives each lend that asks
-  (a phone's lend worker not yet: sup-3) its words,
-  `asks`, and `ask`, `…/ask?lend=<label>&app=<label>`, to which it adds
-  `&back=<its path>`; the page asks "Let Sam's night use Ana's taste?"
-  around the lender's words, and a yes is kept by this computer's door for
-  its own lend, else posted to the lender's door as this computer's key,
-  then the person goes back to the app. An app stops itself, `POST
-  /svrngs-reads/<label>/svrngs-stop` at its own origin. The page answers
-  only itself, is never framed, runs no app's code, and its only writes
-  are the person's yes and stop; every other act stays in the command;
+  person there: `/svrngs-reads` gives each lend that asks its words,
+  `asks`, and `ask`, to which it adds `&back=<its path>` — on a computer
+  `…svrngs.localhost:<port>/ask?lend=<label>&app=<label>`, on a phone
+  `<its origin>/svrngs-ask?lend=<label>&app=<label>`, which the lend's
+  worker sends to the group's page at `#ask=<lend>&app=<label>&at=<path>`
+  (sup-3, `web/lend.js` `asking`). Either page asks "Let Sam's night use
+  Ana's taste?" around the lender's words. On a computer a yes is kept by
+  this computer's door for its own lend, else posted to the lender's door
+  as this computer's key; on a phone the group's page posts it to the
+  lender's door, dialled as the person; then the person goes back to the
+  app at its path. An app stops itself, `POST
+  /svrngs-reads/<label>/svrngs-stop` at its own origin; on a phone its
+  worker sends that to the lend's door with the pass. The group's page
+  lists what apps use too, asked of each lender when the person opens it,
+  each yes with Stop. Neither page is ever framed, and neither runs an
+  app's code; the home page answers only itself, and its only writes are
+  the person's yes and stop; every other act stays in the command;
 - reach for the devices in a room: a member's computer serves the lends its
   person names to the network it is on while the command runs, so a device
   there — a TV, through the app's own client for it — opens a lend at an
@@ -844,7 +851,7 @@ piece comes over:
 | `svrngs-core` | the record: acts, admission into one order, membership, the sync digest; and what a browser's page spells as the command and the node do (u4-2): a link's token, the ask and the redemption a joiner signs with it, the issuer's answer and the seed it is believed by (u4-5), the protocols' names, and a relay's URL without the DNS root's trailing dot, which WebKit refuses (u4-9); a lend's label, one DNS label naming its lender's key and its name, and the pass a person signs for another key toward named lends until a time, with its check (u5-2). `no_std`, so the compiler refuses filesystem, clock, network and threads; time and keys are arguments | none |
 | `svrngs-runtime` | the only owner of each group's journal on disk, its projections and its writes: the journal and its write index, the open-journal map, the register's standing | the journals |
 | `svrngs-node` | the adapters: sync and its route over iroh, redemption, the loopback record API with its live lane (landed, u3-2 and u3-3), the member door (landed, u3-4), the list of what members lend, asked of each (landed, u3-5), each for at most 3 s (landed, asleep-1, `node::ANSWER_WITHIN`), and answered to a member by the computer it dials, each with its lender's key (landed, u4-5), and the door's limit and shares, a pure decision the door's task owns (landed, u3-6); a WebSocket's upgrade carried, and the pass holders' protocol, which any key may speak, where a request presenting a person's pass for the lend it names, by name or label, is that person's (landed, u5-2), and its service told the pass's first lend, the app the page opened, as `x-svrngs-app`, none with no pass (the scoped-use spike's one header, su-1, `demo/runs/su/2026-10-09/` §5); every relay URL it makes or reads dotless where it enters — n0's relays, a relay it is told, a lookup's answers — in `relay.rs`, which the page compiles too (landed, u4-9); the room door, the lends a person names served to this computer's network at its private address while the command runs, one body with the origins (landed, u6-1); a lend's sign-in, asked of the lender's program on a person's first request, its credential set on each of their requests, a stand-in swapped for its secret both ways (landed, mwp-1, `door/sign_in.rs`), its script first in the lend's pages (landed, mwp-2, the same file; §3, "The room", call 6); every answer it makes in a lend's place marked as its own, `x-svrngs-refused` and its kind, a service's own dropped (landed, mnp-1, `door::LendRefusal`), and a pass whose signer it does not know asked of the group's ring once, within 10 s, until a member that knows them answers, before it is refused (landed, mnp-1, `ring_sync::AskRound`; the members dialled at once, asleep-1); a lend's pages on this computer told, at its origin's `/svrngs-reads`, the lends they read, from the record (landed, mnp-2, `surface::reads`); each person's yes and stop to an app kept by the lend's door and decided there, by the person the door resolves (landed, sup-2, `door/choices.rs`, `door::PersonKey`); the home page at `svrngs.localhost`, answering only itself, never framed, its writes the person's yes and stop alone (landed, sup-2, `home.rs`) | each lend's declaration and secret, and each person's choices for it; who is using each lend now; each person's sign-in answer, in memory |
-| `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell and a workspace of its own: a browser's endpoint, bound with the person's key, dialling a group's computer by key over a relay on the members' protocol (landed, u4-3); HTTP over the dial (landed, u4-4); joining — the ask and the redemption by svrngs-core's bodies, the key sealed in the page's store, and the list of what the group's people lend (landed, u4-5); the runtime, a service worker serving every request at a lend's address from the lender's door (landed, u4-6), a range that runs on — open-ended, or a `<video>`'s longer than a part — asked of the door in parts of 2 MiB (landed, u4-9), an open-ended one's first part at a new place 256 KiB and doubling as the reading runs on (u5-11), handed what it dials with in memory, and a page for a worker that holds nothing (landed, u4-10); since u5-2 at each lend's own origin, not the page's (`lend.js`, its start page `open.js`): the page signs a pass to a fresh key for the lend it opens and the lends it reads, the worker dials on the pass holders' protocol, keeps each lend's cookies, reads a redirect to a path under the lend, and with a shim in each lent page (`shim.js`) carries `WebSocket` and an app's own worker; its own answers in a lend's place marked as the door marks its own (mnp-1); its pages told the lends they read at `/svrngs-reads`, each at an address under their own origin that opens that lend at a path through the group's page (landed, mnp-2); an adapter | none: the page's store holds the key, sealed; a lend's origin's store holds its pass and its cookies |
+| `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell and a workspace of its own: a browser's endpoint, bound with the person's key, dialling a group's computer by key over a relay on the members' protocol (landed, u4-3); HTTP over the dial (landed, u4-4); joining — the ask and the redemption by svrngs-core's bodies, the key sealed in the page's store, and the list of what the group's people lend (landed, u4-5); the runtime, a service worker serving every request at a lend's address from the lender's door (landed, u4-6), a range that runs on — open-ended, or a `<video>`'s longer than a part — asked of the door in parts of 2 MiB (landed, u4-9), an open-ended one's first part at a new place 256 KiB and doubling as the reading runs on (u5-11), handed what it dials with in memory, and a page for a worker that holds nothing (landed, u4-10); since u5-2 at each lend's own origin, not the page's (`lend.js`, its start page `open.js`): the page signs a pass to a fresh key for the lend it opens and the lends it reads, the worker dials on the pass holders' protocol, keeps each lend's cookies, reads a redirect to a path under the lend, and with a shim in each lent page (`shim.js`) carries `WebSocket` and an app's own worker; its own answers in a lend's place marked as the door marks its own (mnp-1); its pages told the lends they read at `/svrngs-reads`, each at an address under their own origin that opens that lend at a path through the group's page (landed, mnp-2); a lend that asks told with its lender's words and an `ask` address that opens the group's page at `#ask=`, where the person's yes is posted to the lender's door as them, an app's stop sent by the worker with the pass, and what apps use listed there with Stop, the page never framed on its host (landed, sup-3); an adapter | none: the page's store holds the key, sealed; a lend's origin's store holds its pass and its cookies |
 | `svrngs` | the command and the process: `new`, `join`, `link`, `share`, `unshare` and `room` (landed), and `share --sign-in` (landed, mwp-1), and `share --ask "<words>"`, its lender's words for what an app receives, carried in `asks` on every list of lends and never read by svrngs (landed, sup-2); the bare command prints where the record API listens, where the home page opens (sup-2), and what the people of its groups lend | a device's keys; each group's seed |
 
 Held to `docs/principles/RUST_ARCH.md`: types encode the domain, ownership
@@ -1091,7 +1098,14 @@ page on their computer, where they say yes to an app and stop it (sup-2;
 origin, a typed address or a navigation, writes only with its own exact
 `Origin` — so a lent page, same-site but never same-origin, can neither
 read it nor say a yes, and it sends `frame-ancestors 'none'`, which
-Chromium was watched refusing a lent page's frame of it.
+Chromium was watched refusing a lent page's frame of it. On a phone the
+group's page is the page no app runs at, where a person says yes (sup-3;
+§3, "What an app gets"): a lent app is a name under the page's host and
+could frame it at `#ask=`, so the host sends `frame-ancestors 'none'` on
+every answer (`web/vercel.json`; a `<meta>` policy cannot carry it), which
+Chromium and WebKit were watched refusing, and a host a group names in
+its place must send it too. Ours sends it once the operator deploys the
+page again (`scripts/deploy-page.sh`).
 
 **A room's devices reach a lend through a member's computer there** (u6-1
 landed it; §3, "The room", calls 2 and 3). A TV takes no link and runs no
@@ -1561,8 +1575,8 @@ pass, and by a computer's origin, which keeps a page to its reads
 (landed, sup-1; §3, "Lent apps", call 6); a
 person's yes and stop kept by the lend's door, said on a page no app
 runs at — on a computer the home page, `svrngs.localhost` (landed,
-sup-2; §3, "What an app gets"), and on a phone the group's page — never
-by the app; then the spike run again,
+sup-2; §3, "What an app gets"), and on a phone the group's page (landed,
+sup-3) — never by the app; then the spike run again,
 on a computer first; after a row that keeps an asleep computer from
 holding anyone's answer (`demo/runs/mnp/2026-10-09/README.md`, "What no
 prediction named" 1 and 2). The fourth, a lend its lender's person

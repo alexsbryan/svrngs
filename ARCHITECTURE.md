@@ -564,7 +564,21 @@ answer, and an address under `/svrngs-reads/<label>/` of this origin to
 ask it at, never the pass or its key; a navigation to such an address is
 sent to the group's page at `#open=<label>&at=<path>`, which signs that
 lend's pass and opens its `open.html?back=<path>` in its own place, so
-Back skips it (`opening`). With no pass in memory and
+Back skips it (`opening`). A lend that asks is told with its lender's
+words, `asks`, and `ask`, `<this origin>/svrngs-ask?lend=<label>&app=<this
+lend>`, a computer's shape (sup-3); navigated with `&back=<path>`, it
+sends the page to the group's page at `#ask=<lend>&app=<label>&at=<path>`
+(`asking`, through `onward`, as `opening` goes). There `app.js` asks "Let
+Sam's night use Ana's taste?" around the lender's words; Yes posts
+`{app, said: "yes"}` to the lender's door, `POST /choices/<label>`, on a
+dial from `endpoint` as the person; yes or not, it opens the app again at
+the path. Its "What apps use", when opened, asks each lender that asks
+`GET /choices/<label>` and gives each yes a Stop. A page stops its own
+app, `POST /svrngs-reads/<label>/svrngs-stop`, which the worker sends to
+that lend's door with the pass, `{said: "stop"}` (`stopping`). The page
+host is told to send `frame-ancestors 'none'` (`web/vercel.json`), which
+a `<meta>` policy cannot, and the tests' server sends `vercel.json`'s
+headers (`web/tests/page.mjs`). With no pass in memory and
 none it can read, it sends a navigation to `open.html?for=<label>`, which
 reads the pass and hands it over again. The shell's paths are relative, and
 the CSP admits a relay on 127.0.0.1. `scripts/build-web.sh` (upstream's
@@ -584,6 +598,10 @@ opened at its own origin, `svrngs new` deciding that itself for a page on
 browser binary, plays and seeks an H.264 film ffmpeg makes at its lend's
 origin, stops the worker through Chromium's DevTools protocol, and reads a
 second computer's lend, which the first reads, at its origin.
+`web/tests/ask.mjs` is the phone's ask (sup-3): a lent page asking, the
+group's page's Yes, "What apps use" and its Stop, the page's own stop,
+the group's page framed by the lent page, and the page's pass and holder
+key handed to the test, which posts a yes with them at the lender's door.
 
 **`apps/expenses/`**: the Expenses fold (`expenses.js`) and its tests, from E0,
 the bot at tag `e0-bot`. Its reducer (`init`, `reduce`) folds the acts

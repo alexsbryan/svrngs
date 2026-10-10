@@ -21,6 +21,15 @@
 // that lend at the path asked, through the group's page, which signs its
 // pass, and its start page (open.js), which goes there.
 //
+// A lend that asks (sup-3; DESIGN §3, "What an app gets") is told with
+// its lender's words, `asks`, and `ask`, `<origin>/svrngs-ask?lend=&app=`,
+// the shape a computer's `/svrngs-reads` gives (surface.rs `reads`), to
+// which the page adds `&back=<its path>`: navigated, it opens the group's
+// page at `#ask=<lend>&app=<this lend>&at=<back>`, where only the person
+// says yes. A page stops its app using a lend, `POST
+// <READS>/<label>/svrngs-stop`, sent to that lend's door with the pass,
+// whose app is this lend; the door takes no yes with a pass.
+//
 // What a browser does for an origin and a worker cannot see, it does here:
 // - Cookies (a worker's request carries no `Cookie`, and its answer sets
 //   none): kept per lend, each in its own jar in this origin's store, sent
@@ -51,6 +60,8 @@ const TRACE = `${SCOPE.pathname}svrngs-trace`;
 // Where its pages ask the lends they read, as a computer's origin answers
 // them too (crates/svrngs-node/src/surface.rs, `READS_PATH`).
 const READS = `${SCOPE.pathname}svrngs-reads`;
+const ASK = `${SCOPE.pathname}svrngs-ask`;
+const STOP = new RegExp(`^${READS}/([^/]+)/svrngs-stop$`);
 
 // Enough for a film's seeks, each range's lines with them (u5-11), over
 // this run and the last.
@@ -366,7 +377,13 @@ async function told() {
   const lends = h.lends.filter((l) => l.label !== OWN);
   trace(`RUNTIME: told this lend's page the ${lends.length} lend(s) it reads, ${h.unanswered.length} unanswered`);
   return Response.json({
-    lends: lends.map((l) => ({ kind: l.kind, name: l.name, lender: l.person, address: `${SCOPE.origin}${READS}/${l.label}/` })),
+    lends: lends.map((l) => ({
+      kind: l.kind,
+      name: l.name,
+      lender: l.person,
+      address: `${SCOPE.origin}${READS}/${l.label}/`,
+      ...(l.asks ? { asks: l.asks, ask: `${SCOPE.origin}${ASK}?lend=${l.label}&app=${OWN}` } : {}),
+    })),
     unanswered: h.unanswered,
   });
 }
@@ -385,6 +402,41 @@ function onward(to, then) {
 function opening(h, where) {
   trace(`RUNTIME: a page opens ${where.label}, which it reads, at ${where.path}: through the group's page`);
   return onward(`${h.page}#open=${where.label}&at=`, where.path);
+}
+
+// A page sends its person to say yes to this lend using `lend`, one it
+// reads: the group's page asks, then opens this lend again at `back`.
+async function asking(url) {
+  const h = await holding();
+  const lend = url.searchParams.get('lend');
+  if (!h) return say(503, 'Open this again from your group’s page.', 'pass');
+  if (!h.lends.some((l) => l.label === lend && l.label !== OWN)) {
+    trace(`RUNTIME: a page asks for ${lend}, which it does not read: refused`);
+    return say(403, 'This is not open to this page.', 'closed');
+  }
+  trace(`RUNTIME: a page asks its person to let ${OWN} use ${lend}: through the group's page`);
+  return onward(`${h.page}#ask=${lend}&app=${OWN}&at=`, url.searchParams.get('back') ?? '/');
+}
+
+// A page stops this lend using `label`: sent to its door with the pass.
+async function stopping(label) {
+  const h = await holding();
+  if (!h) return say(503, 'Open this again from your group’s page.', 'pass');
+  const lend = h.lends.find((l) => l.label === label);
+  if (!lend) {
+    trace(`RUNTIME: a page stops ${OWN} using ${label}, which it does not read: refused`);
+    return say(403, 'This is not open to this page.', 'closed');
+  }
+  const body = new TextEncoder().encode('{"said":"stop"}');
+  const headers = [['x-svrngs-pass', h.pass], ['content-type', 'application/json'], ['content-length', String(body.length)]];
+  trace(`RUNTIME: a page stops ${OWN} using ${label}`);
+  try {
+    return await (await dialFor(lend.key)).fetch('POST', `/choices/${label}`, headers, new Blob([body]).stream());
+  } catch (e) {
+    dials.delete(lend.key);
+    trace(`RUNTIME: the stop for ${label} failed: ${e}`);
+    return say(502, 'The computer lending this did not answer. Try again later.', 'away');
+  }
 }
 
 // ── the app's own worker ────────────────────────────────────────────────
@@ -440,6 +492,9 @@ self.addEventListener('fetch', (e) => {
   const shell = url.origin === self.location.origin && url.searchParams.has('v') && url.pathname.startsWith(SITE);
   if (shell && SHELL.test(url.pathname.slice(SITE.length))) return;
   if (url.origin === self.location.origin && url.pathname === READS) return e.respondWith(told());
+  if (url.origin === self.location.origin && url.pathname === ASK) return e.respondWith(asking(url));
+  const stop = url.origin === self.location.origin && e.request.method === 'POST' && STOP.exec(url.pathname);
+  if (stop) return e.respondWith(stopping(stop[1]));
   const where = at(url);
   if (!where) return;
   e.respondWith(answered(e, url, where));
