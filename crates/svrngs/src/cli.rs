@@ -420,6 +420,8 @@ pub enum Refusal {
     NotRunning,
     #[error("the folder was refused: {0}")]
     Folder(String),
+    #[error("cannot ask svrngs running here: no HTTP client ({0})")]
+    NoClient(String),
     #[error("cannot tell from here whether {0} gives each app an address of its own: the page does not open there (RUST_LOG=debug says why); try again")]
     CannotCheck(String),
 }
@@ -466,6 +468,7 @@ impl Refusal {
             | Refusal::CannotCheck(_)
             | Refusal::NoRoomAddress
             | Refusal::NotRunning
+            | Refusal::NoClient(_)
             | Refusal::Keep(_) => 3,
         }
     }
@@ -570,9 +573,13 @@ async fn folder(root: &Path, asked: FolderAsk) -> Result<String, Refusal> {
     let api = std::fs::read_to_string(root.join(svrngs_node::api::API_FILE)).unwrap_or_default();
     let body = serde_json::to_string(&asked).expect("a folder's ask is JSON");
     let to = format!("{}/v1/folders", api.trim());
-    let sent = reqwest::Client::new()
-        .post(to)
-        .header("content-type", "application/json");
+    let client = http()
+        .and_then(|b| b.build().map_err(|e| e.to_string()))
+        .map_err(|error| {
+            tracing::debug!(target: "cli", error, "cli: refused — no client to ask svrngs running here with");
+            Refusal::NoClient(error)
+        })?;
+    let sent = client.post(to).header("content-type", "application/json");
     let answer = sent.body(body).send().await.map_err(|e| {
         tracing::debug!(target: "cli", api, error = %e, "cli: refused — no svrngs answers at the API it wrote");
         Refusal::NotRunning
@@ -581,6 +588,20 @@ async fn folder(root: &Path, asked: FolderAsk) -> Result<String, Refusal> {
     let text = answer.text().await.unwrap_or_default();
     tracing::debug!(target: "cli", ?asked, ok, "cli: the folder's ask answered");
     ok.then_some(text.clone()).ok_or(Refusal::Folder(text))
+}
+
+/// The command's one HTTP client, iroh's reqwest 0.13: its
+/// `rustls-no-provider` brings no TLS provider, and a client built without
+/// one panics, so its TLS is given ring and this computer's verifier here.
+fn http() -> Result<reqwest13::ClientBuilder, String> {
+    let ring = std::sync::Arc::new(rustls::crypto::ring::default_provider());
+    rustls::ClientConfig::builder_with_provider(ring)
+        .with_safe_default_protocol_versions()
+        .and_then(rustls_platform_verifier::BuilderVerifierExt::with_platform_verifier)
+        .map(|tls| {
+            reqwest13::Client::builder().tls_backend_preconfigured(tls.with_no_client_auth())
+        })
+        .map_err(|e| e.to_string())
 }
 
 /// Start the node over the data dir `claimed` holds, do the verb, and run
@@ -636,23 +657,15 @@ pub async fn checked_page(page: Origin) -> Result<Origin, Refusal> {
         return Err(no());
     };
     let unjudged = || Refusal::CannotCheck(page.as_str().into());
-    let client = rustls::ClientConfig::builder_with_provider(std::sync::Arc::new(
-        rustls::crypto::ring::default_provider(),
-    ))
-    .with_safe_default_protocol_versions()
-    .and_then(rustls_platform_verifier::BuilderVerifierExt::with_platform_verifier)
-    .map_err(|e| e.to_string())
-    .and_then(|tls| {
-        reqwest13::Client::builder()
-            .tls_backend_preconfigured(tls.with_no_client_auth())
-            .timeout(std::time::Duration::from_secs(10))
-            .build()
-            .map_err(|e| e.to_string())
-    })
-    .map_err(|error| {
-        tracing::debug!(target: "cli", error, "cli: not judged — no client to ask the page's host with");
-        unjudged()
-    })?;
+    let client = http()
+        .and_then(|b| {
+            let b = b.timeout(std::time::Duration::from_secs(10));
+            b.build().map_err(|e| e.to_string())
+        })
+        .map_err(|error| {
+            tracing::debug!(target: "cli", error, "cli: not judged — no client to ask the page's host with");
+            unjudged()
+        })?;
     let get = |url: String| {
         let client = &client;
         async move {
