@@ -437,24 +437,47 @@ is U5's inventory (§8).
    refusals marked as its own, `x-svrngs-refused`, where Movie Night told
    them by status alone and said 19 of Dee's door's as the library's (11
    lines); and a newcomer let in by every lender at once ("Joining").
-7. *Group folders, by verified range*, beside lends and opt-in, a spike on
-   the branch `folders` (`demo/runs/gf/2026-10-09/README.md`). `svrngs share
-   --folder <dir>` names the folder's files by hash in the record, one act;
-   the holder's node serves those hashes by iroh-blobs to a member and
-   refuses every other, a stop taking at its next request; the meeting
-   point's node answers each named hash's ranges on loopback, fetching what
-   it lacks by verified range from whoever holds it, a holder that does not
-   answer within 3 s named and passed over; Jellyfin plays `.strm` stubs at
-   that endpoint. All seven bars passed on one host, 99.57% of the holder's
-   bytes reaching the browser where the first run's range server gave 93.0%;
-   Cy's copy played at 3,977 ms with Ana's node killed; nothing beside the
-   folder, nor after its stop, left her node. Off one host it is unrun, and
-   six rows make it production (its §9): a stub that reaches a viewer on
-   another computer, a folder shared at one level and served only there,
-   the endpoint answering only a stub's URL, stubs kept in step with the
-   record, the meeting point dropping what is no longer shared, and a
-   holder sending wrong bytes planted, since the run's flipped byte was
-   stopped by the holder's own store.
+7. *Group folders, streamed by verified range or synced both ways*,
+   beside lends and opt-in, two spikes on the branch `folders`. Streamed
+   (`demo/runs/gf/2026-10-09/README.md`): `svrngs share --folder <dir>`
+   names the folder's files by hash in the record, one act; the holder's
+   node serves those hashes by iroh-blobs to a member and refuses every
+   other, a stop taking at its next request; the meeting point's node
+   answers each named hash's ranges on loopback, fetching what it lacks by
+   verified range from whoever holds it, a holder that does not answer
+   within 3 s named and passed over; Jellyfin plays `.strm` stubs at that
+   endpoint. All seven bars passed on one host, 99.57% of the holder's
+   bytes reaching the browser where the first run's range server gave
+   93.0%; Cy's copy played at 3,977 ms with Ana's node killed; nothing
+   beside the folder, nor after its stop, left her node. Synced, a mesh
+   Dropbox (`demo/runs/sy/2026-10-09/README.md`): `share --folder <dir>
+   --both-ways` keeps a directory the same on each member's disk; each
+   scan's changes are one act in the record, each naming a path, its bytes
+   by hash, and the entry it replaces; an entry no other replaces is a
+   head, a path's second head written beside it named as a conflict with
+   its writer's person; the bytes move by the same provider and verified
+   fetch. The index is the record, not iroh-docs, whose namespace id would
+   be a second decider of who reads. All four bars passed on one host: an
+   add, an edit and a delete by three members everywhere within 1.63 s; a
+   file reached Cy in 4.47 s from Ben with its author killed; two edits
+   made apart both kept in all three directories; a node outside the group
+   given no byte. A thousand files took 395.27 s, fetched one at a time,
+   and a 1 MiB edit of a 100 MiB file cost each member the whole file.
+   Off one host both are unrun, and whether a folder is streamed, synced or
+   both is the operator's. The streamed folder's six rows are its §9: a
+   stub that reaches a viewer on another computer, a folder shared at one
+   level and served only there, the endpoint answering only a stub's URL,
+   stubs kept in step with the record, the meeting point dropping what is
+   no longer shared, and a holder sending wrong bytes planted. The synced
+   folder's are the synced README's §9: the folder one group's, as the
+   level is; a path parsed, since a member's act can write outside the
+   folder on every other member's disk today; the store keeping what it
+   held across a stop, reproduced first, since three times a store gave
+   nothing of a file its directory held; what a node keeps of its syncing,
+   never an unreadable state read as empty; several files fetched at once;
+   the store keeping what the layout places and no more; and the planted
+   wrong bytes, carried over. The stub, the endpoint's mark and the stubs
+   in step are a streamed folder's alone.
 
 **The room: the screen is the app's own client** (operator, 2026-10-05,
 after five reads on a real TV, `demo/runs/u6/2026-10-05-screen/reads.json`:
@@ -892,9 +915,10 @@ svrngs used (`attest.rs`, `introduce.rs`, `Roster.vouches`), deleted —
 svrngs-core from 2,957 to 2,628, the repository from 14,644 to 14,315.
 And on the branch `folders` alone, from 15,200, at 15,163, on 2026-10-09,
 for the mesh-Dropbox spike (`ralph/next/sync/`): about 500 lines for
-iroh-docs' wiring, the folder's watcher and the apply of others' changes
-with their conflicts, the gate that asks the record, and `svrngs sync`, by
-the seat's estimate. Main's budget is its own until the operator merges.
+the folder's index, its watcher and the apply of others' changes with
+their conflicts, the gate that asks the record, and the command, by the
+seat's estimate; the spike counted 543, its index the record's, not
+iroh-docs (`demo/runs/sy/2026-10-09/README.md` §1, §7). Main's budget is its own until the operator merges.
 `ARCHITECTURE.md` maps what exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file
@@ -1550,12 +1574,13 @@ prediction named" 1 and 2). The fourth, a lend its lender's person
 alone reaches on any device of theirs, waits on another device for the
 same person (§9; `rings/current/ONE_PERSON_MANY_DEVICES.md`, deferred);
 group folders, whose second spike passed its seven bars on one host on
-the branch `folders` (run 2026-10-09; §3, call 7 of "Lent apps"), then a
-spike of a group's folder synced both ways on its members' disks, a mesh
-Dropbox, on the same branch (`ralph/next/sync/`), before any of the six
-rows group folders' verdict lists (`demo/runs/gf/2026-10-09/README.md`
-§9) is queued, since which of them carry over is that spike's to say; the
-rows, their budget and the merge into main the operator's (operator,
+the branch `folders`, and the mesh-Dropbox spike after it, a group's
+folder synced both ways on its members' disks, its four (runs
+2026-10-09; §3, call 7 of "Lent apps"); whether a folder is streamed,
+synced or both, the rows each verdict lists
+(`demo/runs/gf/2026-10-09/README.md` §9, `demo/runs/sy/2026-10-09/README.md`
+§9), a synced folder's path parsed first since a member can write outside
+it today, their budget and the merge into main the operator's (operator,
 2026-10-09; §9); the
 phone replica spike, iOS first (§9, "a
 native phone app"), after folders since they name the bytes a phone would
@@ -1595,7 +1620,7 @@ by the north star's tests.
 | a link's life set per link, other than a day | a newcomer meets a lapsed link, counted |
 | measuring a lender's upload rather than taking the figure they declare (BBR3's pacing estimate, or a timed saturating pull) | a declared figure is wrong by enough to stall a viewer in a recorded run |
 | a per-process tie between a node and the services it lends (upstream's `mint_tie`). A middleware believes loopback: a process on the lender's computer naming a person's key at its port was answered as them (`demo/runs/mw/2026-10-08/mw-1/`), which is the lender's own (§3, "The room", call 6); and a request at a lend's origin with no `Sec-Fetch-*` is taken for that lend's own page (sup-1, `origin.rs` `app_of`), which neither widens nor narrows what a process could reach before | an app's act is written under a person by a process the lender did not run, or one computer is shared by people who do not trust each other |
-| group folders made production (§3, call 7 of "Lent apps"): a member shares a folder at one level from a closed set; its file list in the record, its bytes content-addressed and fetched by verified range from whoever holds them (iroh-blobs 0.103 over iroh 1.0.2); one Jellyfin over everyone's shared films as `.strm` stubs, opt-in, beside lends. Its first run (svrn-docs `rings/runs/strm-2026-10-05/`, `457f120`) failed its byte-share bar on Jellyfin's per-play probe, 93.0% and 85.8%; its second (`demo/runs/gf/2026-10-09/`, branch `folders`) passed all seven bars on one host, 0.9957, every payload byte the holder sent reaching the browser, at 655 lines where gf-0 estimated 430. Six rows make it production (that README's §9), about 780 lines: a stub that reaches a viewer on another computer, which the run's `127.0.0.1` URL does not; a folder shared at one level and served only there, the run's provider serving any group held here; the endpoint answering only a stub's URL, any page naming a hash being answered today; stubs in step with the record; the meeting point dropping what is no longer shared; a holder sending wrong bytes planted | the operator queues the rows, raises the budget and merges `folders`, then runs it with a group in the wild |
+| group folders made production (§3, call 7 of "Lent apps"): a member's folder in the record, its bytes content-addressed and fetched verified from whoever holds them (iroh-blobs 0.103 over iroh 1.0.2), opt-in, beside lends; streamed, one Jellyfin over everyone's shared films as `.strm` stubs, or synced both ways onto each member's disk, or both. Streamed: its first run (svrn-docs `rings/runs/strm-2026-10-05/`, `457f120`) failed its byte-share bar on Jellyfin's per-play probe, 93.0% and 85.8%; its second (`demo/runs/gf/2026-10-09/`) passed all seven bars on one host, 0.9957, every payload byte the holder sent reaching the browser, at 655 lines where gf-0 estimated 430; six rows make it production (that README's §9), about 780 lines: a stub that reaches a viewer on another computer, which the run's `127.0.0.1` URL does not; a folder shared at one level and served only there, the run's provider serving any group held here; the endpoint answering only a stub's URL, any page naming a hash being answered today; stubs in step with the record; the meeting point dropping what is no longer shared; a holder sending wrong bytes planted. Synced (`demo/runs/sy/2026-10-09/`) passed all four bars on one host at 543 lines where sy-1 estimated about 480; a thousand files reached a member in 242.24 s and a 1 MiB edit of 100 MiB cost each member 104,857,600 bytes, both the operator's call. For it the stub, the endpoint's mark and the stubs drop, the level carries over as the folder being one group's, the meeting point's drop becomes the store keeping what the layout places, and the planted wrong bytes carry over; it adds a parsed path, since a member's act can write outside the folder today, a store kept across a stop, reproduced first, what a node keeps of its syncing, and fetches at once (that README's §9): about 15,710 with streaming dropped, 15,900 kept. A mounted folder, a phone in it and many groups wait there, each with its trigger | the operator picks streamed, synced or both, queues the rows, raises the budget and merges `folders`, then runs it with a group in the wild |
 | a person who only searches counted apart from one who watches: the door counts each on a lend for `WINDOW`, 30 s, after their last request (`crates/svrngs-node/src/door/limit.rs:17-19`), a search as a film — Movie Night's searcher was counted on both Jellyfins 26.3 and 26.5 s after one search and not at 36.2 and 36.4 s, the most at once 2, nobody refused (`demo/runs/mn/2026-10-08/doors.json`, `limit`) | a lend at its limit refuses someone while those it counts only searched, counted |
 | budgets on an owner's operation: how often an app may ask it, so asks cannot rebuild what it keeps back (`rings/current/ACL_AND_SCOPED_USE.md` §4, §6). Ana's taste ranks whatever films it is given, and ranked an app's two that sent her yes itself (`demo/runs/su/2026-10-09/verdicts.json`, "the unasked yes") | an operation's answers rebuild what its owner kept back, shown in a run, or an owner asks for a limit on one |
 | a live payload naming its sender | an app needs to know who offered a live payload, and cannot take it from the payload |
