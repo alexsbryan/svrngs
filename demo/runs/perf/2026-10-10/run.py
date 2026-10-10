@@ -105,7 +105,9 @@ class Group:
 
     def start(self, members=None, share=True):
         for i in members if members is not None else range(self.n): self.up(i)
-        self.tell(); time.sleep(2)
+        self.tell()
+        held = lambda: all(any(self.data(i).rglob("ring_oplog.jsonl")) for i in self.addrs)
+        say("converged", group=self.tag, s=wait(held, 120, every=0.25)); time.sleep(1)
         if share: [self.share(i) for i in self.addrs]
         time.sleep(1.5)
 
