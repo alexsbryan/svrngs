@@ -66,11 +66,7 @@ impl Folders {
 
     /// Every synced folder's files where the records held here place them.
     pub(super) fn placed(&self) -> Vec<Placed> {
-        let namespaces = self.rail.namespaces().unwrap_or_default();
-        let admissions = namespaces
-            .iter()
-            .filter_map(|ns| self.rail.admission(ns).ok());
-        let mut placed: Vec<Placed> = admissions.flat_map(|a| a.layout()).collect();
+        let mut placed: Vec<Placed> = self.admissions().flat_map(|a| a.layout()).collect();
         if self.plant == Plant::LaterWins {
             placed.retain(|p| !p.beside);
         }

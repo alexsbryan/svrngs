@@ -151,12 +151,17 @@ impl Folders {
 
     /// Every standing folder in every group held here.
     pub fn all(&self) -> Vec<SharedFolder> {
+        self.admissions().flat_map(|a| a.folders()).collect()
+    }
+
+    /// The record of every group held here, read for its folders. A group
+    /// that cannot be listed or admitted is skipped, untraced: #109, and
+    /// #113 for the files a synced directory then deletes.
+    fn admissions(&self) -> impl Iterator<Item = svrngs_core::Admission> + '_ {
         let namespaces = self.rail.namespaces().unwrap_or_default();
         namespaces
-            .iter()
-            .filter_map(|ns| self.rail.admission(ns).ok())
-            .flat_map(|a| a.folders())
-            .collect()
+            .into_iter()
+            .filter_map(|ns| self.rail.admission(&ns).ok())
     }
 
     /// Share `dir`: each file under it into the store by reference, and one
