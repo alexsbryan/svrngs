@@ -159,16 +159,50 @@ async fn both_ways(who: &Node, root: &Path) -> std::path::PathBuf {
 
 /// Up to 30 s, rounds run on every node: whether `done` came true.
 async fn until(group: &Group, done: impl Fn() -> bool) -> bool {
+    until_on(&[&group.ana, &group.ben, &group.cy], done).await
+}
+
+/// Up to 30 s, rounds run on `nodes`: whether `done` came true.
+async fn until_on(nodes: &[&Node], done: impl Fn() -> bool) -> bool {
     for _ in 0..30 {
         if done() {
             return true;
         }
-        for node in [&group.ana, &group.ben, &group.cy] {
+        for node in nodes {
             round(node).await;
         }
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
     done()
+}
+
+/// `from` asks `holder`'s provider for `hash` whole, into a store of its
+/// own under `dir`: the payload's bytes, or why none came.
+async fn get(
+    from: &Node,
+    holder: &Node,
+    hash: iroh_blobs::Hash,
+    dir: &Path,
+) -> Result<u64, String> {
+    let store = iroh_blobs::store::fs::FsStore::load(dir).await.unwrap();
+    let conn = from
+        .endpoint()
+        .connect(holder.endpoint().id(), b"/iroh-bytes/4")
+        .await;
+    let conn = conn.map_err(|e| format!("the dial: {e}"))?;
+    let get = store
+        .remote()
+        .execute_get(conn, iroh_blobs::protocol::GetRequest::blob(hash));
+    let got = tokio::time::timeout(Duration::from_secs(10), get).await;
+    let got = got.map_err(|_| "no answer".to_string())?;
+    got.map(|s| s.payload_bytes_read)
+        .map_err(|e| format!("{e:?}"))
+}
+
+/// The contents of every file in `dir`, each once.
+fn contents(dir: &Path) -> std::collections::BTreeSet<Vec<u8>> {
+    let files = std::fs::read_dir(dir).unwrap().flatten();
+    files.filter_map(|e| std::fs::read(e.path()).ok()).collect()
 }
 
 /// **A change by any member reaches another's directory**: Ana and Ben
@@ -262,5 +296,153 @@ async fn a_synced_file_is_served_by_a_member_who_did_not_write_it_and_to_no_one_
         "Dee, in no group, is given nothing: {refused:?}"
     );
     dee.endpoint().close().await;
+    group.close().await;
+}
+
+/// **A link in a synced directory is not followed**: Ana's directory holds
+/// a link to a file beside it and a file of its own; the file reaches Ben,
+/// the link's target never does. Red with the walk following links (sy-1's
+/// `follow-links`, group folders' B7): the target reaches Ben as `link.bin`.
+#[tokio::test]
+async fn a_link_in_a_synced_directory_is_not_followed() {
+    let group = Group::new().await;
+    let (ra, rb) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (ana, ben) = (
+        both_ways(&group.ana, ra.path()).await,
+        both_ways(&group.ben, rb.path()).await,
+    );
+    let outside = noise(30_000, b"outside");
+    std::fs::write(ra.path().join("outside.bin"), &outside).unwrap();
+    std::os::unix::fs::symlink(ra.path().join("outside.bin"), ana.join("link.bin")).unwrap();
+    let own = noise(20_000, b"own");
+    std::fs::write(ana.join("z.bin"), &own).unwrap();
+    let held = || std::fs::read(ben.join("z.bin")).ok().as_ref() == Some(&own);
+    assert!(until(&group, held).await, "Ana's own file reaches Ben");
+    // Placed in path order, the link's version is written before `z.bin`.
+    assert!(
+        !contents(&ben).contains(&outside),
+        "the link's target never reaches Ben: {:?}",
+        std::fs::read_dir(&ben)
+            .unwrap()
+            .flatten()
+            .map(|e| e.file_name())
+            .collect::<Vec<_>>()
+    );
+    group.close().await;
+}
+
+/// **A hash no synced folder places is refused, though the store holds
+/// it**: Ana writes a file and deletes it, the delete reaching Ben; her
+/// store keeps the version (copied, never dropped), and Cy, a member, asks
+/// her provider for it and is refused. Red with the provider serving any
+/// hash its store holds (`unchecked`, group folders' B7): the bytes given.
+#[tokio::test]
+async fn a_hash_no_synced_folder_places_is_refused_though_the_store_holds_it() {
+    let group = Group::new().await;
+    let (ra, rb) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (ana, ben) = (
+        both_ways(&group.ana, ra.path()).await,
+        both_ways(&group.ben, rb.path()).await,
+    );
+    let bytes = noise(40_000, b"deleted");
+    std::fs::write(ana.join("d.bin"), &bytes).unwrap();
+    let at_ben = || std::fs::read(ben.join("d.bin")).ok();
+    assert!(
+        until(&group, || at_ben().as_ref() == Some(&bytes)).await,
+        "Ana's file reaches Ben"
+    );
+    std::fs::remove_file(ana.join("d.bin")).unwrap();
+    assert!(
+        until(&group, || at_ben().is_none()).await,
+        "Ana's delete reaches Ben"
+    );
+    let hash = iroh_blobs::Hash::from_bytes(*blake3::hash(&bytes).as_bytes());
+    let cy = tempfile::tempdir().unwrap();
+    let asked = get(&group.cy, &group.ana, hash, cy.path()).await;
+    assert!(
+        asked.is_err(),
+        "Ana refuses Cy a version nothing places: {asked:?}"
+    );
+    group.close().await;
+}
+
+/// **A holder asleep is waited on for a bound, then the next asked**: Ana
+/// writes, Ben's directory takes it, Ana's node goes away; Cy, syncing
+/// after, asks Ana first, as the writer, and holds the file from Ben within
+/// 10 s. Red with the holder waited on without
+/// [`svrngs_node::node::ANSWER_WITHIN`] (`unbounded`, group folders' B6):
+/// Cy waits on Ana, and holds nothing.
+#[tokio::test]
+async fn a_holder_asleep_is_waited_on_for_a_bound_then_the_next_asked() {
+    let group = Group::new().await;
+    let (ra, rb, rc) = (
+        tempfile::tempdir().unwrap(),
+        tempfile::tempdir().unwrap(),
+        tempfile::tempdir().unwrap(),
+    );
+    let (ana, ben) = (
+        both_ways(&group.ana, ra.path()).await,
+        both_ways(&group.ben, rb.path()).await,
+    );
+    let bytes = noise(60_000, b"asleep");
+    std::fs::write(ana.join("e.bin"), &bytes).unwrap();
+    let at = |dir: &Path| std::fs::read(dir.join("e.bin")).ok() == Some(bytes.clone());
+    assert!(until(&group, || at(&ben)).await, "Ana's file reaches Ben");
+    // Cy's record holds Ana's act before Ana goes.
+    round(&group.cy).await;
+    group.ana.endpoint().close().await;
+    let t0 = std::time::Instant::now();
+    let cy = both_ways(&group.cy, rc.path()).await;
+    // No round: one would wait on Ana too, and Cy's record needs none.
+    assert!(
+        until_on(&[], || at(&cy)).await,
+        "Cy holds Ana's file from Ben"
+    );
+    assert!(
+        t0.elapsed() < Duration::from_secs(10),
+        "Cy holds it within 10 s: {:?}",
+        t0.elapsed()
+    );
+    for node in [&group.ben, &group.cy] {
+        node.endpoint().close().await;
+    }
+}
+
+/// **Both sides of a conflict are kept**: Ana and Ben each edit a file both
+/// hold, each from the version they last held; every directory then holds
+/// both edits, one under the file's name and the other beside it. Red with
+/// a path's first head alone placed (sy-1's `later-wins`): one edit lost.
+#[tokio::test]
+async fn both_sides_of_a_conflict_are_kept() {
+    let group = Group::new().await;
+    let (ra, rb) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (ana, ben) = (
+        both_ways(&group.ana, ra.path()).await,
+        both_ways(&group.ben, rb.path()).await,
+    );
+    let first = noise(10_000, b"before");
+    std::fs::write(ana.join("c.bin"), &first).unwrap();
+    let held = || std::fs::read(ben.join("c.bin")).ok().as_ref() == Some(&first);
+    assert!(until(&group, held).await, "Ana's file reaches Ben");
+
+    let (by_ana, by_ben) = (noise(11_000, b"ana"), noise(12_000, b"ben"));
+    std::fs::write(ana.join("c.bin"), &by_ana).unwrap();
+    std::fs::write(ben.join("c.bin"), &by_ben).unwrap();
+    let both: std::collections::BTreeSet<_> = [by_ana, by_ben].into();
+    let kept = || contents(&ana) == both && contents(&ben) == both;
+    assert!(
+        until(&group, kept).await,
+        "both edits in both directories: Ana's {:?}, Ben's {:?}",
+        std::fs::read_dir(&ana)
+            .unwrap()
+            .flatten()
+            .map(|e| e.file_name())
+            .collect::<Vec<_>>(),
+        std::fs::read_dir(&ben)
+            .unwrap()
+            .flatten()
+            .map(|e| e.file_name())
+            .collect::<Vec<_>>()
+    );
     group.close().await;
 }
