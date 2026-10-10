@@ -523,7 +523,7 @@ Not candidates, said so:
 
 **The budget.** Production keeps about 600 of the spike's 634 (655 until
 the audit after gf-2 named a file's hash by the core's `ContentHash`, 21
-fewer, `ralph/REVIEW_FINDINGS.md` #108): the plants' 21, the digest's 3
+fewer, `ralph/REVIEW_FINDINGS.md` #112): the plants' 21, the digest's 3
 and the run's script's 4 out, and `holders`' 9 folded into the one
 decider. It adds, by the same rule, about 25 for the level (the enum, the
 act, the flag, the write), 15 for the provider's gate, 10 for the kept

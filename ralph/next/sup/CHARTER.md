@@ -30,7 +30,7 @@ the home page beyond the person's own yes and stop — sharing, links,
 removing someone, adding a device; a lend only its owner reaches (row 1
 of the spike's verdict, which waits on another device for the same
 person); an app's noun in the infra; a change against a bar's spirit;
-raising the budget past 15,200, or svrngs-core's past 3,000; deploying
+raising the budget past 15,350, or svrngs-core's past 3,000; deploying
 the page host (`scripts/deploy-page.sh`) or anything else outward-facing;
 changing a decision in DESIGN §10; docker, OrbStack or any tool that is
 not open software (operator, 2026-10-05: podman and open software only); a

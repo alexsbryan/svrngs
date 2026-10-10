@@ -1,5 +1,8 @@
 <!-- APPEND ONLY. One section per REVIEW-audit- row; a finding is cited by row
-     and number, so entries are never renumbered or reordered. -->
+     and number, so entries are never renumbered or reordered — save once:
+     syp-3's merge of main into `folders` renumbered that branch's #108-#116
+     as #112-#120, after main's #108-#111, each table row saying its number
+     on `folders`. -->
 
 # svrngs — review findings
 
@@ -4224,6 +4227,561 @@ the budget to 15,200 (aaecbdb, 08:59) and queued sup (5e87364, 9a452e4,
 df842e8), none touching crates/, web/ or apps/ (`git diff --stat 55fff43
 df842e8`); against it, #80's 14,644 leaves 556.
 
+## REVIEW-audit-sup-auto-1 (2026-10-09, range 341bc2b..8020f03)
+
+The range starts at 341bc2b8e, the hash REVIEW-audit-compose-auto-3's row
+carries (ralph/next/compose/STATE.md:26), the last `REVIEW-audit-` row. It
+ends at 8020f03, the commit that made this row: 21 commits (`git rev-list
+--count 341bc2b..8020f03`): the last audit's `done` (8000a60), two state
+commits (ee06adc, c0bc0f3), core-0 (fffdd8d, 0008f75), asleep-1 (9c1da3c,
+9ac5ab6, 9fbdb30), sup-1 (790e25b, c255814, b482e08), sup-2 (1c3d662,
+a57d80f, d9cb3c4, a754b73, 50ecc20), each unit's `done`, and this row's
+(`git log --reverse --format='%h %s' 341bc2b..8020f03`). This audit fixes
+two findings (#105, #106), records one (#107), narrows #103, and says
+where #80's budget stands before sup-3.
+
+As before, `docs/ARCH_PRINCIPLES.md` is docs/principles/ARCH_PRINCIPLES.md,
+and `target/debug/sovereign-cli` is
+~/dev/commonwealth-ai/target/debug/sovereign-cli: **a new binary**, sha256
+c9b653d3… (`shasum -a 256`, built 2026-10-09 12:03), not the last three
+audits' 35d97ed2…, so its tiers were planted again (below). The embedder
+was `llama-server` on the corpus's model (qwen-embedding-0.6b.gguf,
+~/.svrnmesh/config.toml:18) on :8080, `-b 8192 -ub 8192` (I21), for this
+session. The /tmp scripts the last audits cite were gone; this audit's
+are /tmp/supaudit1/ledger.py, windows.py and clusters.py, their rules the
+ones the last sections state, but for blame (below).
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' 341bc2b..8020f03`,
+summed by /tmp/supaudit1/ledger.py: a commit counts toward the unit its
+subject names, else the next `done`'s (so ee06adc and c0bc0f3 are
+core-0's; neither touches product code); product code is crates/, apps/,
+web/, bridge/; a test is a `tests/` or `check/` segment or a lean_check
+test file name.
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| core-0-unused | 19 | 607 | −588 | 69 | 679 | −610 |
+| asleep-1-none-held | 175 | 92 | 83 | 213 | 2 | 211 |
+| sup-1-app-named | 291 | 67 | 224 | 324 | 17 | 307 |
+| sup-2-yes-stop-home | 960 | 79 | 881 | 744 | 0 | 744 |
+| total | 1445 | 845 | 600 | 1350 | 698 | 652 |
+
+- core-0 src: svrngs-core attest.rs −146, introduce.rs −363, lib.rs
+  +12/−93, sig.rs +5/−4; svrngs-node rail.rs +2/−1 (fffdd8d).
+- asleep-1 src: ring_sync.rs +83/−51 (9ac5ab6, the move) and +60/−26
+  (9fbdb30); node.rs +16/−3, surface.rs +3/−2 (9c1da3c); door.rs +11/−8,
+  node.rs +2/−2 (9fbdb30).
+- sup-1 src: svrngs-core pass.rs +30/−17, door.rs +7/−6, web/src/lib.rs
+  +9/−9, web/app.js +1/−1, svrngs-node Cargo.toml +2 (790e25b); origin.rs
+  +147/−16, door.rs +62/−13, node.rs +20/−2, lend.rs +9, room.rs +3/−2,
+  surface.rs +1/−1 (c255814).
+- sup-2 src: door.rs +40/−9, sign_in.rs +17/−11 (1c3d662); lend.rs
+  +15/−1, svrngs cli.rs +24/−5, share.rs +3, surface.rs +5/−1, door.rs +1
+  (a57d80f); door/choices.rs +338, door.rs +20/−14, lend.rs +19/−1,
+  node.rs +1 (d9cb3c4); origin.rs +29/−18 (a754b73, the move); home.rs
+  +232, home/home.js +109, home/index.html +15, home/home.css +7,
+  choices.rs +26, node.rs +23/−12, origin.rs +15/−3, surface.rs +9/−2,
+  api.rs +5/−2, cli.rs +5, lib.rs +2 (50ecc20).
+- Tests: tests/home.rs +434 (50ecc20), tests/door/choices.rs +211 and
+  door/choices/tests.rs +45 (d9cb3c4), tests/lend_origin.rs +196 and
+  door/main.rs +39/−2 (c255814), +43/−10 (790e25b), newcomer.rs +108
+  (9fbdb30), tests/surface.rs +89 (9c1da3c), svrngs tests/share.rs +48
+  (a57d80f); svrngs-core tests_introduce.rs −599, attest_tests.rs −51,
+  tests.rs +46, svrngs-runtime tests.rs +23/−29 (fffdd8d).
+
+lean_check on `git archive` trees in /tmp/supaudit1 (apps/ and tests
+not counted, scripts/lean_check.py:49):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 341bc2b, range start | 2957 / 3000 | 14644 / 15200 |
+| 826ce52, core-0 done | 2628 / 3000 | 14315 / 15200 |
+| 8cb33fc, asleep-1 done | 2628 / 3000 | 14366 / 15200 |
+| bcc7ef7, sup-1 done | 2635 / 3000 | 14529 / 15200 |
+| 8020f03, sup-2 done, range end | 2635 / 3000 | **15162 / 15200** |
+| b4aab80, this audit's fixes | 2635 / 3000 | 15162 / 15200 |
+
+core-0 made 329 counted lines of room (the queue's estimate: about 286);
+asleep-1 spent 51, sup-1 163, **sup-2 633**. **38 are left** (#80), with
+sup-3 to come: the phone's ask in web/app.js, web/lend.js, web/open.js and
+web/src/lib.rs, all counted. The design's estimate for the whole queue
+was about 650 (ralph/next/sup/STATE.md's fence 7); sup-1 and sup-2 have
+spent 796. By the queue's own fence a row that would pass the budget
+stops for the operator; sup-3 is likely to be that row.
+
+### (2) Clones (`code dry-report`), each tier checked against a plant
+
+**Plants**, the binary being new: a clone of the repository at 8020f03
+(/tmp/supaudit1/plant), two functions appended to door/choices.rs, the
+range's largest new file:
+
+- **E** (exact): `write` (:171–182, 12 lines), verbatim, as `plant_exact`.
+- **N** (near): the same body as `plant_near`, its names changed
+  (`path`→`file`, `said`→`given`, `kept`→`all`, `person`→`who`,
+  `choices`→`what`, `partial`→`tmp`, `text`→`body`, `e`→`err`).
+
+Indexed `--full` (corpus `svrngs-supplant`, 2702 chunks, 482 s); `project
+refresh` there then embedded it again as corpus `plant`, named for the
+directory (2700 chunks in 8m; I25), and wrote its SCIP graph:
+
+| scope, threshold | E | N |
+|---|---|---|
+| door/choices.rs, 0.95 | **missed**: 0 exact groups, 0 near | missed |
+| crates/svrngs-node/, 0.95 | **missed**: the same 5 exact groups as clean, 1 near (`harden_file`) | missed |
+| choices.rs and svrngs-node/, 0.9 | E ~ N only, 0.912; never with `write` | seen with E alone |
+| choices.rs and svrngs-node/, 0.8 | E ~ N only, 0.914; `write` in another cluster | seen with E alone |
+| window pass, no range | **seen**: choices.rs:172–181 == :368–377 | missed (renamed) |
+
+So I24 stands on the new binary: the exact tier missed a verbatim body
+under a new name, every group it finds pairing one name, and the near
+tier's spans take their neighbours' lines (`write` :168–185 for :171–182,
+E :364–381 running into N :378–392; I9). Its zeros in Rust are weak
+evidence; the window pass found E. The plants were reverted (`git
+checkout`) and the clone's corpus rebuilt clean at 8020f03 (`project
+refresh --rebuild-index`, 2700 chunks in 511 s; its SCIP graph at
+8020f03): 1537 symbols, the plants' 2 gone, choices.rs's 17 locations.
+
+**Clean runs.** Scoped, at 0.95, for each crate dir the range touched:
+
+| scope | locations | exact | near | with a side added in the range |
+|---|---:|---|---:|---|
+| crates/svrngs-core/ | 392 | 7 (`is_empty` ×3, `as_str` ×3, `len`, `lines`, `key` (tests), `signed_by_link`, `fmt`) | 0 | 0 |
+| crates/svrngs-node/ | 447 | 5 (`as_str` ×4, `fmt` ×3, `drop`, `addr`, `try_from`) | 1 (declared.rs `harden_file` ×2, as before) | 2: `as_str` door.rs:731 and `fmt` :737 |
+| crates/svrngs-node/tests/ | 0 | **could-not-judge** | **could-not-judge** | — |
+| crates/svrngs-runtime/ | 122 | 1 (`open`, tests) | 0 | 0 |
+| crates/svrngs/ | 66 | 0 | 0 | 0 |
+| crates/svrngs/tests/ | 0 | **could-not-judge** | **could-not-judge** | — |
+| web/ | 87 | **could-not-judge** (I19) | 0 | — |
+
+The two with a side added: `PersonKey`'s `as_str` and `Display`
+(door.rs:731–739 at 8020f03, 1c3d662), three lines each, beside
+`LendName`'s, `Kind`'s and `RefusedPath`'s in lend.rs: a newtype's
+accessors, as each audit since u3 judged them. No change.
+
+**Unscoped**: 0.95 (14 exact, 18 near), 0.9 (14, 43), 0.8 (14, 233).
+/tmp/supaudit1/clusters.py blamed every side (`git blame -w` at 8020f03)
+for a line in 341bc2b..8020f03: **2** groups at 0.95 (the two above),
+**5** at 0.9:
+
+| at | cluster | cosine | read |
+|---|---|---|---|
+| 0.9 | origin.rs `kept_to_reads` :99–138 (c255814) ~ surface.rs `reads` :203–243 | 0.912 | Both judge "the page of `app` reads `label`" by one rule, `Offered::reads_one`, over the groups `Host::shared_with` gives (#101's one decider); `kept_to_reads` asks two lenders per request and refuses, `reads` asks all and lists, and its doc cites the other. One rule, two callers. No change. |
+| 0.9 | door/sign_in.rs `of` :334–353 ~ `forget` :351–366 (1c3d662, `PersonKey`) | 0.926 | Two senders on one task's channel, neighbours (I9). No change. |
+| 0.9 | door/choices.rs `load` :78–90 ~ `read` :87–98 (d9cb3c4) | 0.918 | `read` calls `load`; neighbours (I9). No change. |
+
+**Window pass** (/tmp/supaudit1/windows.py . 341bc2b..8020f03, 5
+normalized lines over crates/, web/, apps/ in .rs, .js, .mjs, .py, tests
+included). Its first run blamed with `-M -C -C`, as clusters.py did at the
+last audits, and found 6 new; but `-C -C` credits a line copied from
+another file to the commit it was copied from, so a copy made in the
+range reads as old. With `git blame -w`: 318 window hits in 118 spans,
+**21 new**. Product code, 2:
+
+- door/choices.rs:269–274 == :300–305: `choose`'s and `stop_with_pass`'s
+  axum signatures (`State(door)`, `dialer`, `Segment(raw)`, `headers`,
+  `body`). No change.
+- lend.rs:228–244 == svrngs share.rs:67–76: `Lend`'s and `Share`'s
+  fields, `asks` added to each by a57d80f, as `reads` and `sign_in` were:
+  the declaration and what the command was told, as before. No change.
+
+Tests, 19: test set-ups copied, #31's case, but three are not across
+binaries:
+
+- **#106.** The 13 lines that bind an endpoint as a key and bridge it to
+  a node's door, six times in the one `door` binary: door/main.rs:929,
+  :1066, door/choices.rs:110, door/newcomer.rs:46, :177, door/sign_in.rs
+  :195 (four added in the range). Fixed (1b246ea): `bridge_as`.
+- **#106.** lend_origin.rs:139–159 == :436–456: sup-1 copied the u5-2
+  test's two computers in the same file. Fixed (b4aab80):
+  `alex_lets_sam_in`.
+- The rest cross binaries, #31's case, not moved for #31's reason:
+  tests/home.rs:154–174 (50ecc20) is lend_origin's two computers again,
+  and :10–22, :30–38, :405–412 its header, `start` and a `Roster` seed;
+  the `Fixture { act: RailAct::Admit … }` literal at
+  tests/door/newcomer.rs:152, surface.rs:369, lend_origin.rs:448 and
+  home.rs:166, the four of 28 `RailAct::Admit` sites in tests that blame
+  into the range (`git grep -n "RailAct::Admit" 8020f03 -- crates/*/tests`,
+  each line `git blame -w`);
+  newcomer.rs:42–59 == :173–190, :67–79 == :198–207 (two tests' own
+  arrangements, after #106 their bridges one call); surface.rs:282–290 ==
+  :359–367 and two more there; svrngs share/tests.rs:46–50 ==
+  join_page.rs, phone_dry.rs, share.rs (the `Share` literal, `asks: None`
+  added to each).
+
+Reading the range for what neither pass would show:
+
+- **#105.** door/choices.rs:66 (d9cb3c4) named the body `{app, said}` a
+  private `Person`, the core's noun (svrngs-core lib.rs:251), and
+  home.rs:187 (50ecc20) spelled the same body again as `json!({ "app":
+  app, "said": said })` to post it to a lender's door: one wire shape,
+  two homes in one crate. Fixed (838f364): `Saying`, both ways.
+- **#107, not fixed.** How svrngs-node writes a file whole is decided
+  three times, each its own partial name: api.rs:51–53 `write_address`
+  (`.api.partial`), lend.rs:461–463 the declaration
+  (`.<name>.json.partial`), and door/choices.rs:176–181 `write`
+  (`<name>.json.partial`, not hidden, sup-2). One function would rename
+  two of the partials on disk, a change of behaviour, and save about 3
+  counted lines; not done in an audit.
+- **#103 narrowed** (50ecc20): `Host::shared_with` (node.rs:448–461) now
+  answers svrngs's `fault` 500 when the groups held cannot be listed,
+  and tests/home.rs `groups_that_cannot_be_read_are_said_so` watched it
+  fail first. Still: `Node::lends` (node.rs:327–329,
+  `standings().unwrap_or_default()`), which room.rs:109 and the bare
+  command (svrngs cli.rs:914) read, so they say "lends nothing" where
+  svrngs could not judge.
+- **#104 still open**, as the loop's ee06adc keeps in view for sup-3:
+  surface.rs `reads` (:229–240 at 8020f03) now adds `asks` and `ask` to
+  each lend it tells a page; web/lend.js `told` does not yet, and is
+  sup-3's.
+- **Glassbox.** The new branches trace: home.rs `only_itself` (:129) on
+  every answer, choices.rs `check` (:142–143) on every judgment, `member`,
+  `found`, `stop` and `keep` on each refusal, origin.rs `kept_to_reads`
+  on each of its three outcomes.
+- **#57, #68, #70, #71, #75, #77, #79, #81, #89, #91, #95, #97, #99, #100
+  still open**, none touched in the range (`git diff --stat 341bc2b
+  8020f03 -- apps` is empty).
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff 341bc2b 8020f03 -- crates apps web bridge`, added lines
+matching `\b(struct|enum|trait|type|class)\s+[A-Z]\w*`: `PersonKey`,
+`Said`, `Stopping`, `Choice`, `Choices`, `Person`, `App`, `Choosing`,
+`Of`, `Progress`, `Reach`, `Got` (tests), and the aliases `Kept`, `Done`,
+`Whose`, `Rounds`. `converge noun --corpus-id plant` (the clean corpus,
+its SCIP graph at 8020f03), beside `git grep -nP
+"\b(struct|enum|trait|type|class)\s+<Name>\b" -- crates apps web bridge`:
+
+| noun | converge | git grep | read |
+|---|---|---|---|
+| Said | 2: svrngs cli.rs:662, svrngs-node door/choices.rs:39 | 3: cli.rs:663, choices.rs:40, web/app.js:69 (`class Said extends Error`) | Three concepts: what a verb tells the person, what a person says of an app, a page's thrown words. svrngs never imports choices' (`grep -rn "choices::" crates/svrngs/src`: none). No change. |
+| Person | 2: svrngs-core lib.rs:250, choices.rs:65 | 2: lib.rs:251, choices.rs:66 | **#105**: the door's request body under the core's noun. Fixed (838f364), `Saying`. |
+| PersonKey | 1: door.rs:721 | 2: door.rs:722, apps/jellyfin/mw/src/person.rs:24 | One key, two programs either side of the door's `x-svrngs-key` header (door.rs:1184, the `PersonKey` the door resolves); the middleware parses what the door says, as #50 judged a protocol's two ends. No change. |
+
+Every other noun: one definition (converge and git grep agree; `Got` is
+tests/home.rs:69 alone, converge's scope leaving out `tests`). converge
+reported each line one early (I1).
+
+### Fixed here
+
+- **#105** (838f364). `Saying` in door/choices.rs, `Serialize` and
+  `Deserialize`, read by the door and serialized by home.rs `say`; the
+  JSON object is the same (serde_json's map sorted either way). `cargo
+  test -p svrngs-node --test home --test door --lib`: 2, 26, 91 passed.
+  Counted 0.
+- **#106** (1b246ea, b4aab80). `bridge_as` in tests/door/main.rs for six
+  sites, `alex_lets_sam_in` in tests/lend_origin.rs for two: 72 test
+  lines fewer (`git diff --shortstat 838f364 b4aab80`: +59/−131). `--test door` 26,
+  `--test lend_origin` 3 passed; clippy `--tests` clean.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 105 | 8, 3 | crates/svrngs-node/src/door/choices.rs:66 and crates/svrngs-node/src/home.rs:187, at 8020f03 | 838f364 | The choice body `{app, said}` shaped twice in one crate, the door's under the core's noun `Person`. |
+| 106 | 8 | crates/svrngs-node/tests/door/main.rs:929, :1066, choices.rs:110, newcomer.rs:46, :177, sign_in.rs:195; tests/lend_origin.rs:139 and :436, at 8020f03 | 1b246ea, b4aab80 | Test set-ups copied within one binary, so #31's reason did not hold. |
+| 107 | 8 | crates/svrngs-node/src/api.rs:51–53, lend.rs:461–463 and door/choices.rs:176–181, at b4aab80 | not fixed | A file written whole through a partial renamed into place, decided three times, three partial names. |
+| 103 | 6 | crates/svrngs-node/src/node.rs:327–329, at b4aab80 | narrowed (50ecc20) | `shared_with` now says svrngs could not judge; `Node::lends`, read by the room and the bare command, still reads unlistable groups as none. |
+| 104 | 8 | web/lend.js:363–371 and crates/svrngs-node/src/surface.rs:229–240, at 8020f03 | not fixed (sup-3's) | What a page is told of its reads, shaped in the page and the node; sup-2 added `asks` and `ask` to the node's half. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 38 lines left (15162 / 15200), sup-3's counted web/ changes to come. |
+| 31 | 8 | tests/home.rs:154–174 ~ tests/lend_origin.rs; the `RailAct::Admit` fixture across binaries | not fixed | Grown by the range: home.rs's two computers, four more `Admit` literals. |
+| 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99, 100 | as recorded | as recorded | not fixed | Untouched in the range. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still present on c9b653d3…: every definition a line early (`PersonKey` :721 for :722, `Said` :662 for :663). |
+| I9 | 6, 7 | `code dry-report` near tier | Still present: spans take neighbours' lines (`write` :168–185 for :171–182; `load` ~ `read`, `of` ~ `forget`). |
+| I19 | 6 | dry-report's exact tier | Still present, and said: web/ and every `tests` scope "could-not-judge … not a pass". |
+| I24 | 6, 7 | `code dry-report` exact tier | **Still present on the new binary** c9b653d3…: plant E, a verbatim `write` renamed, is no exact group, scoped to its file or its crate. The window pass caught it. |
+| I25 | 6 | `project refresh` and corpus ids | New: `project refresh` names the corpus after the directory, not the `--corpus-id` the index was built under, so a clone at /tmp/supaudit1/plant was embedded twice (as `svrngs-supplant` and `plant`). Then `refresh --rebuild-index` there deleted `plant/chunks.lance` and, its promotion refused ("both hold corpus data named documents.lance", a `plant-partition-local` left by the first refresh), left the new index in `plant-partition-local`; dry-report then said "no chunk index … run `svrn project init`", an error, not a zero. The partition was moved into place by hand (`mv`), its symbols checked: 1537, the plants gone. |
+| I26 | 6, 7 | the `svrngs` corpus's SCIP graph | New: ~/.svrnmesh/indexes/svrngs/scip_graph.db, written 15:25 (after 50ecc20, 15:09), gave `PersonKey` at door.rs:707, its line at 1c3d662 (:707) or a57d80f (:708, I1), and no `Stopping` or `Choice`, which d9cb3c4 added: a graph from an older tree under a newer mtime. Cause not isolated; this audit judged from its own corpus at 8020f03. |
+
+## REVIEW-audit-sup-auto-2 (2026-10-10, range 30d975a..204b3d4)
+
+The range starts at 30d975a39, the hash REVIEW-audit-sup-auto-1's row
+carries (ralph/next/sup/STATE.md:25), the last `REVIEW-audit-` row. It
+ends at 204b3d4, the commit that made this row: 15 commits (`git rev-list
+--count 30d975a..204b3d4`): the last audit's `done` (c3c9637), sup-3
+(caf017e, 85986c2), sup-4 (da3004d, 517225a, e30975c, 7cbf217, 2f30f10,
+c0c999a, 478fedf, 5dc463e, d4868ee), each unit's `done`, and this row's
+(`git log --reverse --format='%h %s' 30d975a..204b3d4`). No product
+source under crates/ changed in it (`git diff --stat 30d975a 204b3d4 --
+'crates/*/src'` is empty): sup-3 is web/ and a browser test, sup-4 apps/
+and a run. This audit fixes two findings (#108, #109), records two (#110,
+#111), closes #100 and narrows #104.
+
+As before, `docs/ARCH_PRINCIPLES.md` is docs/principles/ARCH_PRINCIPLES.md,
+and `target/debug/sovereign-cli` is
+~/dev/commonwealth-ai/target/debug/sovereign-cli: **a new binary** again,
+sha256 384ef1ca… (built 2026-10-09 19:22), not the last audit's
+c9b653d3…, so its tiers were planted again (below). The embedder was
+`llama-server` on qwen-embedding-0.6b.gguf (~/.svrnmesh/config.toml:18)
+on :8080, `-b 8192 -ub 8192` (I21), for this session. Scripts:
+/tmp/supaudit2/ledger.py, windows.py, clusters.py, the last audit's
+unchanged.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' 30d975a..204b3d4`,
+summed by /tmp/supaudit2/ledger.py (its rules the last section's: a
+commit counts toward the unit its subject names, else the next `done`'s;
+product code is crates/, apps/, web/, bridge/; a test is a `tests/` or
+`check/` segment or a lean_check test file name):
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| sup-3-phone-ask | 186 | 26 | 160 | 319 | 0 | 319 |
+| sup-4-taste-rerun | 83 | 170 | −87 | 578 | 315 | 263 |
+| total | 269 | 196 | 73 | 897 | 315 | 582 |
+
+- sup-3 src: web/lend.js +11/−6 (caf017e, the move) and +56/−1, web/app.js
+  +107/−16, web/index.html +10/−2, web/vercel.json +2/−1 (85986c2).
+- sup-4 src, all apps/: taste/taste.mjs +22/−70, movie-night/picks/picks.js
+  +58/−97, picks/index.html +1/−1 (da3004d); one line each in taste.mjs
+  and picks.js (e30975c).
+- Tests: tests/browser/main.rs +182, web/tests/ask.mjs +129, page.mjs +8
+  (85986c2); apps/taste/check/ su.mjs +196/−113, judge.py +213/−126,
+  check.sh +98/−54, other/other.js +69/−20, other/index.html +3/−2
+  (517225a, e30975c, 7cbf217, c0c999a).
+
+lean_check on `git archive` trees in /tmp/supaudit2 (apps/ and tests not
+counted, scripts/lean_check.py:49):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 30d975a, range start (the raise to 15,350) | 2635 / 3000 | 15162 / 15350 |
+| 502d0e6, sup-3 done | 2635 / 3000 | 15272 / 15350 |
+| 872a821, sup-4 done, range end | 2635 / 3000 | 15283 / 15350 |
+| 3c29dda, this audit's fixes (tests only) | 2635 / 3000 | 15283 / 15350 |
+
+sup-3 spent 110 counted lines (web/app.js, web/lend.js; vercel.json and
+index.html are not code to lean_check, scripts/lean_check.py:29). sup-4's
+apps/ cut counts nothing, and its 11 are demo/runs/sup/2026-10-10/run.sh
+(`git diff --stat 502d0e6 872a821 -- '*.rs' '*.js' '*.mjs' '*.ts' '*.py'
+'*.sh' ':!apps'`: that file alone, 11 of its 22 lines code). **67 are
+left** (#80). The queue spent 796 + 121 = 917 counted lines against the
+design's estimate of about 650 (fence 7), core-0's 329 of room and the
+operator's two raises (aaecbdb, 30d975a) between.
+
+### (2) Clones (`code dry-report`), each tier checked against a plant
+
+**Plants**, the binary being new: a clone of the repository at 204b3d4
+(/tmp/supaudit2/plant), one commit there (4607a9c) appending, since the
+range's code is JavaScript:
+
+- **E** (exact, JS): sup-3's `stopping` (web/lend.js:422–440), verbatim,
+  as `plantExact`.
+- **N** (near, JS): the same body as `plantNear`, its names changed
+  (`label`→`which`, `h`→`held`, `lend`→`found`, `body`→`bytes`,
+  `headers`→`hs`, `e`→`err`).
+- **R** (exact, Rust, a positive control for the tier the last audit
+  planted): door/choices.rs `write` (:172–183) verbatim as `plant_exact`.
+
+Indexed `code index … --corpus-id plant --full` (2726 chunks; I25 again,
+below), its SCIP graph by `refresh` there (rust 10790 symbols, python 996,
+"typescript: skipped (export failed)"):
+
+| scope, threshold | E | N | R |
+|---|---|---|---|
+| web/lend.js, 0.95 | **missed**: exact tier "could-not-judge" (I19), 0 near | missed | — |
+| web/lend.js and web/, 0.9 | E ~ N only, 0.935; never with `stopping` | seen with E alone | — |
+| web/lend.js, 0.8 | **seen**: `stopping`, E, N, `asking` one cluster, 0.870–0.935 | seen | — |
+| door/choices.rs, 0.95 / 0.9 / 0.8 | — | — | **missed** at each: 0 exact groups, and `plant_exact` (in SCIP, choices.rs:366–377) in no near cluster even at 0.8, where `write` is |
+| window pass | **seen**: lend.js:423–438 == :610–625 | missed (renamed) | **seen**: choices.rs:173–182 == :368–377 |
+
+So on 384ef1ca the exact tier still misses a verbatim Rust body (I24) and
+judges no JavaScript (I19, said so), and the near tier pairs a verbatim
+JS copy with its original only at 0.8, its spans running into their
+neighbours (`stopping` :419–443 for :422–440; I9). Its zeros here are weak
+evidence; the window pass is the instrument that saw E and R.
+
+**Runs.** The scoped and unscoped reports below are on the planted
+corpus, not a second clean one: the plants are appended at the ends of
+their files, so every other line is 204b3d4's, and they sit in no group or
+cluster at 0.95 or 0.9 but with each other (above). Planting only adds
+symbols, so a clone with a side added in the range is in these reports if
+it is in a clean one. Scoped, for each dir the range touched:
+
+| scope | locations | exact | near 0.95 | near 0.9 | with a side added in the range |
+|---|---:|---|---:|---:|---|
+| crates/svrngs-node/ | 448 | 5 (`as_str` ×4, `fmt` ×3, `drop`, `addr`, `try_from`), as before | 1 (`harden_file`), as before | 6 | 0 (no src changed) |
+| crates/svrngs-node/tests/ | 0 | **could-not-judge** | **could-not-judge** | — | — |
+| web/ | 96 | **could-not-judge** (I19) | 0 | 2 | lend.js `asking` ~ `stopping` (0.903), and E ~ N |
+| apps/taste/ | 44 | 0 (judge.py's only: no JS in SCIP, I27) | 0 | 0 | 0 |
+| apps/movie-night/ | 57 | 0 (likewise) | 0 | 2 (judge.py `bar4_before` ~ `bar4_after`, doors.py `when` ~ `fields`, neighbours, I9) | 0 |
+
+**Unscoped**: 0.95 (14 exact, 16 near), 0.9 (14, 43), 0.8 (14, 233), 1438
+locations. /tmp/supaudit2/clusters.py blamed every side (`git blame -w` at
+204b3d4) for a line in 30d975a..204b3d4: **1** group at 0.95, **4** at
+0.9, 15 at 0.8:
+
+| at | cluster | cosine | read |
+|---|---|---|---|
+| 0.95 | crates/svrngs-node/src/home/home.js `uses` :65–88 (sup-2) ~ web/app.js `uses` :255–283 (85986c2) | 0.956 | **#110.** Not seen scoped (I12: home.js is under crates/, app.js under web/). |
+| 0.9 | web/lend.js `asking` :406–422 ~ `stopping` :419–443 (both 85986c2) | 0.903 | **#111.** |
+| 0.9 | apps/movie-night/check/mn.mjs `browser` :45–65 ~ apps/taste/check/su.mjs `browser` :58–77; `join` :63–81 ~ :75–92 | 0.915, 0.913 | The spike's driver, forked from Movie Night's (su.mjs:76's own words, "mn.mjs's"), sup-4 touching 6 and 3 of its lines: #97's case. No change. |
+| 0.8 | home.js `uses` ~ app.js `asking` ~ `uses`; home.js `get`, `said` ~ app.js `choose` | 0.806–0.956 | #110 again: the phone's ask and the computer's. |
+| 0.8 | the rest, 11 | 0.802–0.935 | Neighbours (I9: app.js `reach` ~ `joining`, judge.py `ranked` ~ `asked_once` ~ `unranked`, su.mjs `yes` ~ `again` ~ `otherPerson`, `settled` ~ `picks`, `stop` ~ `homeStop`), app.js `open` ~ `enter` ~ `opening` ~ open.js `start`, picks.js `refused`, `rank` ~ other.js `rank`, and judge.py and su.mjs ~ Movie Night's (#97). No change. |
+
+**Window pass** (/tmp/supaudit2/windows.py . 30d975a..204b3d4, as the
+last audit's, `git blame -w`): 290 window hits in 117 spans, **9 new**,
+none in product code:
+
+- **#108.** crates/svrngs-node/tests/browser/main.rs:1156–1165 ==
+  tests/door/main.rs:74–83: sup-3's `holders_bridge` is #106's
+  `bridge_as` with the ALPN fixed. Separate test binaries, #31's reason
+  for leaving copies; but tests/common/mod.rs is the file each binary may
+  compile (`#[path = "../common/mod.rs"]`, door/main.rs:18), so the
+  reason does not hold. Fixed (2dc268a).
+- **#109.** web/tests/ask.mjs:40–44 == handover.mjs:71–75 ==
+  reads.mjs:28–32 == runtime.mjs:69–73: the five steps that open the
+  group's page as the person, ask.mjs the fourth copy; page.mjs is the
+  module the drivers share. Fixed (3c29dda), `held`.
+- tests/browser/main.rs:616–621 == :900–905 == :1018–1023 and :645–649
+  == :824–828 == :924–928 == :1037–1041: three tests' set-up (site,
+  relay, bo, two computers, cy joined) and four `drive(engine, "<x>.mjs",
+  json!({ site, key, token, open … }))` headers, each with its own fields
+  after. A helper would return a seven-part tuple; the test reads better
+  as it is. No change.
+- web/tests/ask.mjs:23–30 == reads.mjs:17–24 and :37–42 == :25–30: a
+  driver's prologue (args, `serve`, `launch`, its console kept) and, before
+  #109, the steps `held` now is. No change.
+- apps/movie-night/check/judge.py:19–24 == apps/taste/check/judge.py:10–15
+  (the imports) and mn.mjs:58–75 == su.mjs:70–87 (#97's fork). No change.
+
+After the fixes (`windows.py . 30d975a..HEAD`): 278 hits in 113 spans, 7
+new; the two fixed gone, handover.mjs and runtime.mjs's imports and their
+lines around `held` now counted new only because `held`'s line is.
+
+Reading the range for what neither pass would show:
+
+- **#110, not fixed.** The computer's home page and the phone's group's
+  page each ask the person and list what apps use, in the same words, by
+  the same reading of a choice: crates/svrngs-node/src/home/home.js
+  `uses` :68–85 and `ask` :88–96 (sup-2), web/app.js `uses` :258–281 and
+  `asking` :229–256 (sup-3) — "uses" / "was stopped using" on `c.said ===
+  'yes'`, "cannot be asked now", "That app, or what it asks to use, is not
+  lent in your group(s) now." The decision is the door's either way
+  (door/choices.rs `check`); the pages only say it. One home would be a
+  module both pages load, but the home page answers only itself (fence 3,
+  home.rs's `only_itself`) and the group's page is static files on the page
+  host: not small, and a choice of the operator's about where the page
+  shell lives. Recorded.
+- **#111, not fixed.** web/lend.js `asking` :409–419 and `stopping`
+  :422–440 (sup-3), with `answered` :290–297 before them, each hold the
+  pass (`holding()`), refuse 503 `pass` without it, and refuse 403
+  `closed` a lend it does not read, in the same words. The refusal is
+  one function already (`say`); the guards differ (`asking` refuses the
+  page's own lend, `answered` a navigation without a pass); one guard
+  returning a pass or a Response would save about 2 counted lines. Not
+  done in an audit.
+- **The choice's body** `{app, said}`, one shape in Rust since #105
+  (`Saying`), is spelled at its JavaScript ends: web/app.js:221
+  (`JSON.stringify({ app, said })`), web/lend.js:430 (`'{"said":"stop"}'`,
+  the app the pass's), home.js:28 (`{ lend, app, said }` to its own
+  origin's `/choices`, home.rs's own body). Two ends of a wire, as #50
+  judged; each held by a test that posts it (tests/browser/main.rs ask
+  test, tests/home.rs). No change.
+- **#104 narrowed** (85986c2): web/lend.js `told` (:374–389) now gives a
+  page `asks` and `ask` in the shape surface.rs `reads` gives on a
+  computer. Still two homes, the page's and the node's, each held by its
+  own test (web/tests/reads.mjs and ask.mjs; tests/surface.rs).
+- **#100 closed** (da3004d): Tonight's Picks reads its lends from
+  `/svrngs-reads` (picks.js:26) and stops through `svrngs-stop` (:27),
+  no longer svrngs's lend store. apps/taste/check/other/other.js:26 still
+  opens `svrngs-lend`, on purpose: it is the plant, an app's page reading
+  what its origin keeps to say a yes for itself (its header, :5–8), which
+  svrngs refuses.
+- **Glassbox.** sup-3's branches trace: app.js `asking` on both outcomes
+  (:232, :236), its yes kept (:248), `uses` each failure (:276), `post`
+  each refusal (:114); lend.js `asking` and `stopping` each branch
+  (:414, :417, :427, :432, :437).
+- **The browser test's one failure.** With #108 in place, one run of
+  `--test browser -- a_lent_page_asks` failed in Chromium (148 s, while
+  the plant corpus embedded; its output not kept). After it Chromium alone
+  passed (43.98 s) and both engines passed in three runs (54.65 s, 68.09
+  s, 65.10 s, the embedder busy in two), then the whole binary, 12 passed
+  (152.81 s), after #109. One unexplained failure in five runs is not a
+  rate (AGENTS.md 7); the next run that fails keeps its output.
+- **#103, #107 still open**, nothing under crates/*/src changed in the
+  range; **#57, #68, #70, #71, #75, #77, #79, #81, #89, #91, #95, #97, #99
+  still open**, as recorded.
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff 30d975a 204b3d4 -- crates apps web bridge`, added lines
+matching `\b(struct|enum|trait|type|class)\s+[A-Z]\w*`: **none** (the
+command's output is empty). The range added functions in JavaScript and
+tests, no type, so no noun was run through `converge noun`.
+
+### Fixed here
+
+- **#108** (2dc268a). `bridge_as` in tests/common/mod.rs, called by the
+  door's tests and the browser test (`Alpn::Lend`); `holders_bridge`
+  deleted. The browser's copy dialled `addr().ip_addrs()`, the shared one
+  `loopback_sockets`, both this computer with no relay. `git diff
+  --shortstat`: +35/−53. fmt, clippy `--tests` clean; `--test door` 26
+  passed; the browser test as above.
+- **#109** (3c29dda). page.mjs `held`, called by four drivers; drive.mjs's
+  copy differs (a 15 s goto, its failure named) and stays. +19/−24;
+  `--test browser` 12 passed.
+
+### The check
+
+scripts/check.sh at 12afe52 failed one step, `conformance canary`: wildcard
+Chromium Sam's "64 MiB uploaded, its length told", "nothing within 60000
+ms". The upload was not lost: the worker's trace in the same failure says
+"upload handed its body to the dial whole, 60128 ms", then "upload answered
+200" (Bo's took 45 s), at a load of 65 on 12 cores (`uptime` after: 64.23
+over 15 min). Neither move touches that test: conformance.rs and
+conformance.mjs call neither `bridge_as` nor `held`. Run alone at a load of
+27-72, the step passed (`cargo test -p svrngs-node --test conformance`: 6
+passed, 227.51 s). One run, not a rate; a 64 MiB upload's 60 s window is
+close to what this host gives under load.
+
+Run again at 45b2ce3 (`REVIEW-audit-sup-auto-2-3.await.log`, ended 23:09
+local), it failed one other route of the same step: wildcard Chromium Sam's
+"seeks back to back", "the last played again in 6580 ms", at a load of
+93.79 then 50.59 on 12 cores (the failure's `load` lines), the upload now
+passed. That is the miss chk-1 (e31bdce, 23:13) makes could-not-judge past
+3 a core (conformance.rs:252-264); the run began before it landed, so it
+ran without it. check.sh is run again at HEAD.
+
+Run again at b841412 (`REVIEW-audit-sup-auto-2-4.await.log`, 23m37s),
+scripts/check.sh exited 0: every step `passed`, none failed, could-not-judge
+or never-ran (the log's 48 lines; `grep -E '^(failed|could-not|never)'`
+finds none). All 26 conformance routes passed, both Chromium seeks among
+them (the log's :26-27 and :39-40); chk-1's could-not-judge line was not
+needed. One run, at a load near
+70-90 on 12 cores (`uptime` after it: 69.87 78.63 91.39), not a rate.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 108 | 8 | crates/svrngs-node/tests/browser/main.rs:1155 and tests/door/main.rs:69, at 204b3d4 | 2dc268a | sup-3's `holders_bridge`, #106's `bridge_as` again, the shared tests/common unused for it. |
+| 109 | 8 | web/tests/ask.mjs:40, handover.mjs:71, reads.mjs:28, runtime.mjs:69, at 204b3d4 | 3c29dda | Four drivers open the group's page as the person by the same five steps. |
+| 110 | 8, 3 | crates/svrngs-node/src/home/home.js:68–96 and web/app.js:229–281, at 204b3d4 | not fixed | The computer's and the phone's pages each ask and list what apps use, in the same words by the same reading; two hosts, the home page answering only itself. |
+| 111 | 8 | web/lend.js:409–419 and :422–440 (and :290–297), at 204b3d4 | not fixed | The worker's pass-and-lend guard written three times, its refusals in the same words. |
+| 104 | 8 | web/lend.js:374–389 and crates/svrngs-node/src/surface.rs `reads`, at 204b3d4 | narrowed (85986c2) | The page's half now gives `asks` and `ask`; still two homes, each held by its own test. |
+| 100 | 8 | apps/movie-night/picks/picks.js:26–27, at 204b3d4 | closed (da3004d) | Tonight's Picks off svrngs's lend store; other.js's read is the plant's. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 67 lines left (15283 / 15350). |
+| 31, 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99, 103, 107 | as recorded | as recorded | not fixed | Untouched in the range but #97 (su.mjs, 517225a; its fork kept). |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I9 | 6, 7 | `code dry-report` near tier | Still present on 384ef1ca…: `stopping` :419–443 for :422–440, `plantExact` :606–630 running into `plantNear`; a verbatim JS copy and its original cluster only at 0.8. |
+| I12 | 5, 6 | `code dry-report --scope` | Still present: home.js ~ app.js (0.956) is in no scoped report. |
+| I19 | 6 | dry-report's exact tier | Still present, and said: web/ and every `tests` scope "could-not-judge … no SCIP function symbols in scope". |
+| I24 | 6, 7 | `code dry-report` exact tier | **Still present on 384ef1ca…**: plant R, `write` verbatim as `plant_exact`, in SCIP (scip_graph.db `symbols`: choices.rs 366–377) and in no exact group; and in no near cluster at 0.8, where `write` is in one. The window pass caught it. |
+| I25 | 6 | `code index` and corpus ids | **Worse than recorded**: `code index --corpus-id plant --full` exited 0 and printed "✓ Indexed 2726 chunks" while its log said "finalise_solo_ingest failed — partition-of-self left in place … both hold corpus data named documents.lance" (the last audit's `plant` corpus in the way): a success-shaped line over a failed promotion. `refresh` then found no `_corpus_meta.json`, discarded the partition ("starting fresh") and embedded again. The last audit's documents.lance and texts were moved aside (/tmp/supaudit2/old-plant-index), and `code index --full` run again promoted (2726 chunks, 774 s). |
+| I27 | 6 | dry-report's exact tier over mixed languages | New: apps/taste/ and apps/movie-night/ report "**0** exact-clone groups", not could-not-judge, though only their Python is in SCIP (`refresh`: "typescript: skipped (export failed)"); their .mjs and .js are unjudged under a zero. |
+
 ## REVIEW-audit-folders-auto-1 (2026-10-09, range 2bf0e1b..b2a76db)
 
 No `REVIEW-audit-` row precedes this one in its queue
@@ -4234,10 +4792,12 @@ at b482e08. It ends at b2a76db, the commit that made this row: 18 commits
 88c4362, 33bb0b7, 1490f61, aee58ae, 362a6bd, 75e34ae, 0360181, 575a911,
 e49a006, dfd00c3), gf-2 (71490c4, 8251050), each unit's `done` and this
 row's (`git log --reverse --format='%h %s' 2bf0e1b..b2a76db`). Product
-code changed in gf-1 alone. This audit fixes one finding (#108), records
-three (#109-#111), and grows #31 and #103. Main holds #105-#107 (its
-REVIEW-audit-sup-auto-1, c3c9637, after this branch was cut); this branch
-numbers from #108 so the two files merge without a clash.
+code changed in gf-1 alone. This audit fixes one finding (#112), records
+three (#113-#115), and grows #31 and #103. These were #108-#111 on
+`folders`, numbered past main's #105-#107; main went on to use #108-#111
+itself (REVIEW-audit-sup-auto-2), so syp-3's merge renumbered this
+branch's #108-#116 as #112-#120, after main's last, each row of a table
+below saying its number on `folders`.
 
 As before, `docs/ARCH_PRINCIPLES.md` is docs/principles/ARCH_PRINCIPLES.md,
 and `target/debug/sovereign-cli` is
@@ -4296,7 +4856,7 @@ counted):
 | b8d2b97, this audit's fix (the tree) | 2741 / 3000 | **15163 / 15200** |
 
 gf-1 spent 128 of the core's and 655 of the repository's, against gf-0's
-estimate of about 430 (its README §7 counts them by part); #108 gives
+estimate of about 430 (its README §7 counts them by part); #112 gives
 back 21. **37 are left** on this branch (#80). Main's own count has
 moved since the cut (its 30d975a raised the budget to 15,350 for sup-3);
 the merge's budget is the operator's, as the queue's fence 6 says.
@@ -4324,9 +4884,9 @@ one early (I1), corrected here:
 
 | at | cluster | cosine | read |
 |---|---|---|---|
-| 0.8 | svrngs-core folder.rs `FileHash::parse` :24-28, `hex` :30-32 ~ hash.rs `ContentHash::from_hex` :81-84, op.rs `from_hex` :89-91; folder.rs `serialize`/`deserialize` :35-46 ~ hash.rs `serialize` :110-114 | 0.805-0.847 | **#108**: `FileHash` was a second BLAKE3-256 type beside the core's one decider. Fixed (b8d2b97). op.rs's is `OpId`'s, another value. |
+| 0.8 | svrngs-core folder.rs `FileHash::parse` :24-28, `hex` :30-32 ~ hash.rs `ContentHash::from_hex` :81-84, op.rs `from_hex` :89-91; folder.rs `serialize`/`deserialize` :35-46 ~ hash.rs `serialize` :110-114 | 0.805-0.847 | **#112**: `FileHash` was a second BLAKE3-256 type beside the core's one decider. Fixed (b8d2b97). op.rs's is `OpId`'s, another value. |
 | 0.8 | folder.rs `ShareFolder::decide` :75-86 ~ record.rs, register.rs, tests_support.rs `decide`, command.rs `confirm` | 0.812-0.948 | Each `Command` its own act; the trait's shape. No change. |
-| 0.8 | folder.rs `folders` :114-131 ~ `holders` :128-142 | 0.883 | Neighbours (I9); `holders` calls `folders`. #110 is about `holders`, not this pair. |
+| 0.8 | folder.rs `folders` :114-131 ~ `holders` :128-142 | 0.883 | Neighbours (I9); `holders` calls `folders`. #114 is about `holders`, not this pair. |
 | 0.8 | membership.rs `moves_membership` :370-384 among 40 symbols | 0.801-0.928 | One line in range, `Folder` added to its `false` arm. No change. |
 | 0.8 | svrngs-node folder.rs `router` ~ `list` ~ `ask` :516-551 | 0.808-0.832 | Neighbours, one route's two handlers. No change. |
 | 0.8 | folder_tests.rs `file` ~ `folder` ~ the first test | 0.859-0.874 | Neighbours. No change. |
@@ -4355,11 +4915,11 @@ those), 309 in 113, **3 new**:
 
 Reading the range for what neither pass would show:
 
-- **#108, fixed.** `FileHash` (svrngs-core folder.rs:18-46 at b2a76db)
+- **#112, fixed.** `FileHash` (svrngs-core folder.rs:18-46 at b2a76db)
   re-made `ContentHash` (hash.rs:44): one algorithm, one wire form,
   a second parse, serde and hex. iroh-blobs names a raw blob by the
   BLAKE3 of its bytes, so the record's file hash is a `ContentHash`.
-- **#109, not fixed.** `Folders::all` (svrngs-node folder.rs:137-144)
+- **#113, not fixed.** `Folders::all` (svrngs-node folder.rs:137-144)
   reads groups that cannot be listed, and a group whose admission fails,
   as none (`namespaces().unwrap_or_default()`, `admission(ns).ok()`), with
   no trace. Every reader inherits it: `/v1/folders` (`list`, :526-531)
@@ -4370,7 +4930,7 @@ Reading the range for what neither pass would show:
   refusal is never an empty answer"). Not fixed: each answer changes, and
   no test plants an unlistable rail. For the production rows (the
   verdict's candidates 2 and 3 rewrite these readers).
-- **#110, not fixed.** Who holds a hash is decided twice: `Admission::
+- **#114, not fixed.** Who holds a hash is decided twice: `Admission::
   holders` (svrngs-core folder.rs:103-111), read only by its test, and
   the endpoint's own list across groups (svrngs-node folder.rs:404-408),
   which keeps a key once per group: Ana sharing in two groups is asked
@@ -4378,7 +4938,7 @@ Reading the range for what neither pass would show:
   `ANSWER_WITHIN`. The verdict names the fold (its §9, candidate 2);
   the duplicate ask is this audit's. Not fixed: folding them changes who
   is asked.
-- **#111, not fixed.** `svrngs share --folder` (svrngs cli.rs:548-563)
+- **#115, not fixed.** `svrngs share --folder` (svrngs cli.rs:548-563)
   reads the node's API file with `unwrap_or_default()` (:549), so an
   unreadable file and an absent one both say `NotRunning`, the first
   untrue; and the answer's body with `unwrap_or_default()` (:560), so a
@@ -4392,7 +4952,7 @@ Reading the range for what neither pass would show:
   folder.rs:97-98), the CLI's ask (cli.rs:556,
   :561). Two do not, recorded with their fix's home: the 416 for a range
   outside the file (svrngs-node folder.rs:410-416), and `all`'s skipped
-  groups (#109).
+  groups (#113).
 - **Nouns of one program each.** `Plant` is folder.rs:48's and
   apps/jellyfin/mw/src/main.rs:38's, each its program's own planted
   failures (converge sees the first alone); the spike's drops in
@@ -4419,14 +4979,14 @@ noun. `converge noun <Name> --corpus-id svrngs-folders`
 |---|---|---|---|
 | Plant | 1: svrngs-node folder.rs:47 | 2: folder.rs:48, apps/jellyfin/mw/src/main.rs:38 | Two programs' planted failures, each its own closed set. No change. |
 | Group | 0: "defined only in test code" | 3: tests/folders.rs:50, tests/conformance.rs:130, web/src/join.rs:50 | Two test fixtures, three nodes each (#31), and the join page's group, another concept. No change. |
-| FileHash | 1: svrngs-core folder.rs:19 | 1: folder.rs:20 | One name, but the concept of `ContentHash` (hash.rs:44): **#108**, by reading, which converge cannot see. Fixed. |
+| FileHash | 1: svrngs-core folder.rs:19 | 1: folder.rs:20 | One name, but the concept of `ContentHash` (hash.rs:44): **#112**, by reading, which converge cannot see. Fixed. |
 
 Every other noun: one definition (converge and git grep agree, converge
 one line early, I1).
 
 ### Fixed here
 
-- **#108** (b8d2b97). `SharedFile::hash` is a `ContentHash`; `FileHash`
+- **#112** (b8d2b97). `SharedFile::hash` is a `ContentHash`; `FileHash`
   deleted. The record's spelling is unchanged (folder_tests.rs
   `a_hash_is_spelled_as_hex_and_nothing_else_parses`, its type swapped,
   passes); `ContentHash::from_hex` trims (hash.rs:82), the one difference,
@@ -4440,12 +5000,12 @@ one line early, I1).
 
 | # | principle | path:line | fixed in | finding |
 |---|---|---|---|---|
-| 108 | 8 | crates/svrngs-core/src/folder.rs:18-46 and crates/svrngs-core/src/hash.rs:44-126, at b2a76db | b8d2b97 | A shared file's hash was a second BLAKE3-256 type, `FileHash`, beside the core's `ContentHash`. |
-| 109 | 6, 1 | crates/svrngs-node/src/folder.rs:137-144, read at :219-224, :385 and :526-531, at b8d2b97 | not fixed | Groups that cannot be listed, or admitted, read as no folders: the list says none, the endpoint and the provider refuse "not shared", untraced. |
-| 110 | 8 | crates/svrngs-core/src/folder.rs:103-111 and crates/svrngs-node/src/folder.rs:404-408, at b8d2b97 | not fixed (the verdict's candidate 2) | Who holds a hash decided twice, the core's unused; the endpoint's list repeats a holder per group, so an unanswering holder is waited on once per group. |
-| 111 | 6 | crates/svrngs/src/cli.rs:549 and :560, at b8d2b97 | not fixed | `share --folder` reads an unreadable API file as "not running" and an unreadable refusal as an empty one. |
-| 112 | 1 | crates/svrngs-node/src/folder.rs:410-416, at b8d2b97 | not fixed (the verdict's candidate 3 rewrites the endpoint) | A range outside the file is answered 416 with no trace. |
-| 103 | 6 | as recorded; and crates/svrngs-node/src/folder.rs:137-144 (#109) | grown | The same absence read as none, in the folders' reader. |
+| 112 (was #108 on `folders`) | 8 | crates/svrngs-core/src/folder.rs:18-46 and crates/svrngs-core/src/hash.rs:44-126, at b2a76db | b8d2b97 | A shared file's hash was a second BLAKE3-256 type, `FileHash`, beside the core's `ContentHash`. |
+| 113 (was #109 on `folders`) | 6, 1 | crates/svrngs-node/src/folder.rs:137-144, read at :219-224, :385 and :526-531, at b8d2b97 | not fixed | Groups that cannot be listed, or admitted, read as no folders: the list says none, the endpoint and the provider refuse "not shared", untraced. |
+| 114 (was #110 on `folders`) | 8 | crates/svrngs-core/src/folder.rs:103-111 and crates/svrngs-node/src/folder.rs:404-408, at b8d2b97 | not fixed (the verdict's candidate 2) | Who holds a hash decided twice, the core's unused; the endpoint's list repeats a holder per group, so an unanswering holder is waited on once per group. |
+| 115 (was #111 on `folders`) | 6 | crates/svrngs/src/cli.rs:549 and :560, at b8d2b97 | not fixed | `share --folder` reads an unreadable API file as "not running" and an unreadable refusal as an empty one. |
+| 116 (was #112 on `folders`) | 1 | crates/svrngs-node/src/folder.rs:410-416, at b8d2b97 | not fixed (the verdict's candidate 3 rewrites the endpoint) | A range outside the file is answered 416 with no trace. |
+| 103 | 6 | as recorded; and crates/svrngs-node/src/folder.rs:137-144 (#113) | grown | The same absence read as none, in the folders' reader. |
 | 31 | 8 | crates/svrngs-node/tests/folders.rs:17-31, :50 and tests/surface.rs:17-34, tests/conformance.rs:130 | not fixed | Grown by gf-1: `signing` (11 binaries), `seed_file` (2), a three-node `Group` (2). |
 | 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 37 lines left on this branch (15163 / 15200); the merge's raise is the operator's. |
 | 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99, 100, 104 | as recorded | as recorded | not fixed | Untouched in the range. |
@@ -4456,9 +5016,9 @@ one line early, I1).
 |---|---|---|---|
 | I1 | 7 | `code converge noun`, `dry-report` spans | Still present: `FileHash` :19 for :20, `Plant` :47 for :48, `parse` :21-31 for :24-28. |
 | I4 | 6 | `project refresh` | Still present: "typescript: skipped (export failed)". |
-| I9 | 6, 7 | `code dry-report` near tier | Still present: each new 0.8 cluster but #108's is a function and its neighbour. |
+| I9 | 6, 7 | `code dry-report` near tier | Still present: each new 0.8 cluster but #112's is a function and its neighbour. |
 | I19 | 6 | dry-report, `tests` scopes | Still present, and said: "could-not-judge"; the window pass found #31's growth. |
-| I24 | 6, 7 | `code dry-report` exact tier | The same binary as main's sup audit's plant, which it missed; its zeros in Rust are weak evidence. The window pass ran over every file. #108 was found by reading; the 0.8 tier paired it after. |
+| I24 | 6, 7 | `code dry-report` exact tier | The same binary as main's sup audit's plant, which it missed; its zeros in Rust are weak evidence. The window pass ran over every file. #112 was found by reading; the 0.8 tier paired it after. |
 
 The row's check: `scripts/check.sh` at b764f8a, tree clean, all 14 steps
 passed (principles pinned through app laws; the ceiling canary 0.0331 s
@@ -4480,11 +5040,10 @@ ea0f3a5, e3b3df9, 4926df0), main's chk-1 cherry-picked (a9659e1, from
 e31bdce; main's REVIEW-audit-sup-auto-2, b841412, audits it there), sy-2
 (09793b5, 1b5706e), each unit's `done` and this row's. Product code
 changed in sy-1 and, in a test file, chk-1. This audit fixes one finding
-by a move (6982059, #113's reading given one home), records four
-(#113-#116), and grows #109 and #110. **Numbering**: main has since used
-#108-#111 for its own (REVIEW-audit-sup-auto-2), so this branch's
-#108-#112 already clash with main's; this audit goes on from #113, and
-the merge renumbers one side.
+by a move (6982059, #117's reading given one home), records four
+(#117-#120), and grows #113 and #114: #113-#116 and #109, #110 on
+`folders`, renumbered by syp-3's merge (REVIEW-audit-folders-auto-1's
+opening says how).
 
 As before, `docs/ARCH_PRINCIPLES.md` is docs/principles/ARCH_PRINCIPLES.md,
 and `target/debug/sovereign-cli` is
@@ -4601,7 +5160,7 @@ Reading the range for what neither pass would show:
   `Folders::admissions` (folder.rs:160-165 at 6982059). Behaviour kept:
   `cargo test -p svrngs-node --test folders --test sy_dee`, 5 passed, 1
   ignored (the spike's instrument). −3 lines.
-- **#113, not fixed.** That reading is now the synced directory's, where
+- **#117, not fixed.** That reading is now the synced directory's, where
   an absence deletes: if the rail cannot list its groups, or a group's
   admission fails, `placed` (synced.rs:68) holds none of that group's
   files, and `apply` deletes every file it last wrote or took that is
@@ -4609,25 +5168,25 @@ Reading the range for what neither pass would show:
   at 6982059), untraced as to why. No delete is sent — the entry leaves
   `held`, so the next step finds no file and no held entry — and the
   files come back when the rail reads again and a member serves them.
-  Read, not run. #109's case, grown from a wrong refusal to a member's
+  Read, not run. #113's case, grown from a wrong refusal to a member's
   files taken off their disk; the queue's fence ("a member that did not
   answer is never an empty folder"). Not in the verdict's candidates
   (demo/runs/sy/2026-10-09/README.md §9; its 9 names the kept state, not
   the record). Not fixed: the apply's answer changes.
-- **#114, not fixed.** The run's plant variable, `SVRNGS_GF_PLANT`, has
+- **#118, not fixed.** The run's plant variable, `SVRNGS_GF_PLANT`, has
   two readers: folder.rs:109-117 parses it into `Plant` at start, and
   node.rs:756 reads it again, by string, on every dial, for `open-gate`,
   which `Plant` does not name — while folder.rs:51 says it is "read once
   at start". Principle 8. The plants drop in production (verdict §9's
   line table), and this with them; recorded so the drop takes both.
-- **#115, not fixed.** `both_ways` (synced.rs:53-65) spawns a loop that
+- **#119, not fixed.** `both_ways` (synced.rs:53-65) spawns a loop that
   nothing owns or can stop: asked twice for one directory (or for two
   directories of one name), two loops step at once over one
   `synced-<name>.json` (:77) and one folder, each reading and rewriting
   it. RUST_ARCH's ownership tree; the verdict's candidate 9 keeps the
   directories in the data dir, and is where one owner per directory
   belongs. Read, not run.
-- **#116, not fixed.** The apply's skips do not trace: a held file the
+- **#120, not fixed.** The apply's skips do not trace: a held file the
   record no longer places but changed on disk, kept (synced.rs:162, the
   `else` of the delete); a placed file not written because the disk
   changed since it was last taken (:181); a file written whose mtime
@@ -4635,7 +5194,7 @@ Reading the range for what neither pass would show:
   (:96). Each is a decision ("never touching a file changed on disk",
   the module's doc, :10-11) that AGENTS.md 1 wants at debug. Small, but
   the trace's text is the row's to write with candidate 9's base.
-- **#110, grown.** `apply` builds a third list of who may hold a file
+- **#114, grown.** `apply` builds a third list of who may hold a file
   (synced.rs:153-158): every standing member of every group held here,
   beside the endpoint's (folder.rs) and the core's unused
   `Admission::holders`. The verdict's §8 first part and candidate 2 name
@@ -4650,9 +5209,9 @@ Reading the range for what neither pass would show:
   write and its two failures (:196, :201, :204), the gate's plant
   (node.rs:757).
 - **#57, #68, #70, #71, #75, #77, #79, #81, #89, #91, #95, #97, #99, #100,
-  #104, #111, #112 still open**, none touched in the range (`git diff
+  #104, #115, #116 still open**, none touched in the range (`git diff
   --stat e4e5437 8171ed6 -- web apps crates/svrngs/src/cli.rs` touches
-  cli.rs's `--both-ways` alone, not #111's lines).
+  cli.rs's `--both-ways` alone, not #115's lines).
 
 ### (3) Duplicate type names (`code converge noun`)
 
@@ -4672,22 +5231,22 @@ one line early, I1).
 
 ### Fixed here
 
-- **#113's reading, one home** (6982059). `all` and `placed` call
-  `Folders::admissions`; behaviour kept, as above. #113 itself, the
+- **#117's reading, one home** (6982059). `all` and `placed` call
+  `Folders::admissions`; behaviour kept, as above. #117 itself, the
   delete, stays open.
 
 ### Findings
 
 | # | principle | path:line | fixed in | finding |
 |---|---|---|---|---|
-| 113 | 6, 1 | crates/svrngs-node/src/folder.rs:160-165 (`admissions`) and crates/svrngs-node/src/synced.rs:68, :162-165, at 6982059 | not fixed (the reading folded, 6982059) | A group that cannot be listed or admitted reads as placing nothing, and the synced directory then deletes every file it held there that is unchanged on disk, untraced as to why. |
-| 114 | 8 | crates/svrngs-node/src/folder.rs:109-117 and crates/svrngs-node/src/node.rs:756, at 6982059 | not fixed (drops with the plants) | The plant variable read twice, the second time on every dial and for a value `Plant` does not name, against folder.rs:51's "read once at start". |
-| 115 | 10 (RUST_ARCH ownership) | crates/svrngs-node/src/synced.rs:53-65 and :77, at 6982059 | not fixed (the verdict's candidate 9) | `both_ways` spawns an unowned, unstoppable loop per ask; two asks for one name step at once over one kept state. |
-| 116 | 1 | crates/svrngs-node/src/synced.rs:96, :162, :181, :206-208, at 6982059 | not fixed | The apply's skips — a changed file kept, a placed file not written, an mtime unread — and the step's same-bytes touch are untraced. |
-| 110 | 8 | as recorded; and crates/svrngs-node/src/synced.rs:153-158, at 6982059 | grown (the verdict's candidate 2) | A third list of who holds a file: every standing member of every group. |
-| 109 | 6, 1 | as recorded; folder.rs:160-165 at 6982059 | grown into #113 | The same absence, now one helper's, read by the synced directory too. |
+| 117 (was #113 on `folders`) | 6, 1 | crates/svrngs-node/src/folder.rs:160-165 (`admissions`) and crates/svrngs-node/src/synced.rs:68, :162-165, at 6982059 | not fixed (the reading folded, 6982059) | A group that cannot be listed or admitted reads as placing nothing, and the synced directory then deletes every file it held there that is unchanged on disk, untraced as to why. |
+| 118 (was #114 on `folders`) | 8 | crates/svrngs-node/src/folder.rs:109-117 and crates/svrngs-node/src/node.rs:756, at 6982059 | not fixed (drops with the plants) | The plant variable read twice, the second time on every dial and for a value `Plant` does not name, against folder.rs:51's "read once at start". |
+| 119 (was #115 on `folders`) | 10 (RUST_ARCH ownership) | crates/svrngs-node/src/synced.rs:53-65 and :77, at 6982059 | not fixed (the verdict's candidate 9) | `both_ways` spawns an unowned, unstoppable loop per ask; two asks for one name step at once over one kept state. |
+| 120 (was #116 on `folders`) | 1 | crates/svrngs-node/src/synced.rs:96, :162, :181, :206-208, at 6982059 | not fixed | The apply's skips — a changed file kept, a placed file not written, an mtime unread — and the step's same-bytes touch are untraced. |
+| 114 (was #110 on `folders`) | 8 | as recorded; and crates/svrngs-node/src/synced.rs:153-158, at 6982059 | grown (the verdict's candidate 2) | A third list of who holds a file: every standing member of every group. |
+| 113 (was #109 on `folders`) | 6, 1 | as recorded; folder.rs:160-165 at 6982059 | grown into #117 | The same absence, now one helper's, read by the synced directory too. |
 | 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 46 lines left on this branch (15704 / 15750). |
-| 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99, 100, 104, 111, 112 | as recorded | as recorded | not fixed | Untouched in the range. |
+| 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99, 100, 104, 115, 116 | as recorded | as recorded | not fixed | Untouched in the range. |
 
 ### Problems in the commonwealth-ai instrument (reported, not fixed here)
 

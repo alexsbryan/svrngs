@@ -18,6 +18,9 @@
 #[allow(dead_code)]
 #[path = "../door/origins.rs"]
 mod origins;
+// The bridge to a door as a pass holder, the door's tests' own.
+#[path = "../common/mod.rs"]
+mod common;
 // The page built, and a relay on 127.0.0.1: shared with the command's
 // joining test (crates/svrngs/tests/join_page.rs).
 #[macro_use]
@@ -26,6 +29,7 @@ mod harness;
 use std::path::Path;
 use std::time::Duration;
 
+use common::bridge_as;
 use harness::{relay, relay_url, repo, site, Engine};
 use iroh_relay::server::Server;
 use serde_json::{json, Value};
@@ -992,4 +996,160 @@ async fn a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path(engine: 
         "one Back returns to ada's page:\n{seen:#}"
     );
     drop((ada, cy));
+}
+
+in_both_engines!(
+    /// A lent page asks its person through the group's page, and is stopped
+    /// (sup-3; DESIGN §3, "What an app gets"). Ada lends a page reading kind
+    /// `k`, cy a shelf of it that asks, in cy's words. At its origin ada's
+    /// page is told the shelf's words and an `ask` address, `…/svrngs-ask?
+    /// lend=<shelf>&app=<page>`, and is refused `unasked`. Sent there with
+    /// `&back=`, the group's page asks "Let ada's page use cy's shelf?"
+    /// around cy's words; its Yes is posted to cy's door as bo, and the page
+    /// opens again at the path it gave, carried now, cy's shelf told the app.
+    /// The group's page's "What apps use" says so, and its Stop refuses the
+    /// page `stopped`; said yes again, the page's own stop, sent by the
+    /// worker with the pass, refuses it again. The group's page framed by
+    /// the lent page is not shown in the frame, and the page's own yes, on
+    /// a dial of its own with the pass its origin keeps, is refused and
+    /// keeps nothing. Planted, each watched failing: a holder's yes accepted
+    /// at the door; the group's page framed (no `frame-ancestors`); the
+    /// ask's `back` dropped.
+    a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped
+);
+async fn a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped(engine: Engine) {
+    const WORDS: &str = "the page receives what is on the shelf; nothing leaves cy's computer";
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let (ada_dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ada = node(ada_dir.path(), &relay, &bo).await;
+    let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
+    let page = page_origin("<!doctype html><title>ada's page</title>").await;
+    lend_reading(ada_dir.path(), "page", page.port(), &["k"]);
+    let (shelf, heads) = kept_page("<!doctype html><title>cy's shelf</title>").await;
+    let lends = svrngs_node::lend::lends_dir(cy_dir.path());
+    std::fs::create_dir_all(&lends).unwrap();
+    let body =
+        json!({ "port": shelf.port(), "kind": "k", "limit": 3, "refused": [], "asks": WORDS });
+    std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
+    let (page_label, shelf_label) = (label(1, "page"), label(2, "shelf"));
+
+    let seen = drive(
+        engine,
+        "ask.mjs",
+        json!({
+            "site": site,
+            "key": hex::encode(bo.to_bytes()),
+            "token": token(&signing(1), &relay),
+            "open": "page",
+            "probe": "probe?n=1",
+            "back": "/after?n=1",
+        }),
+        None,
+    )
+    .await;
+    eprintln!("the ask's run: {seen:#}");
+    let refused = |step: &str| (seen[step]["status"].clone(), seen[step]["refused"].clone());
+
+    let told = &seen["told"]["lends"][0];
+    assert_eq!(told["asks"], WORDS, "{seen:#}");
+    let ask = told["ask"].as_str().unwrap_or_default();
+    assert!(
+        at_origin(&json!(ask), &page_label)
+            && ask.ends_with(&format!("/svrngs-ask?lend={shelf_label}&app={page_label}")),
+        "the ask address, at the page's own origin: {ask}"
+    );
+    assert_eq!(
+        refused("before"),
+        (json!(403), json!("unasked")),
+        "{seen:#}"
+    );
+    for asked in ["asked", "again"] {
+        let asked = &seen[asked];
+        assert_eq!(
+            asked["heading"], "Let ada’s page (k) use cy’s shelf (k)?",
+            "{seen:#}"
+        );
+        assert_eq!(asked["words"], WORDS, "{seen:#}");
+        let landed = asked["landed"].as_str().unwrap_or_default();
+        assert!(
+            at_origin(&asked["landed"], &page_label) && landed.ends_with("/after?n=1"),
+            "the page opens again at the path it gave: {landed}"
+        );
+    }
+    for yes in ["yes", "yesAgain"] {
+        assert_eq!(refused(yes), (json!(200), json!(null)), "{yes}: {seen:#}");
+    }
+    let last = heads.lock().unwrap().last().cloned().unwrap_or_default();
+    assert!(
+        last.to_lowercase()
+            .contains(&format!("x-svrngs-app: {page_label}")),
+        "cy's shelf is told the app: {last}"
+    );
+    let used = seen["used"].as_str().unwrap_or_default();
+    assert!(
+        used.contains("ada’s page (k) uses cy’s shelf (k)"),
+        "{seen:#}"
+    );
+    let unused = seen["unused"].as_str().unwrap_or_default();
+    assert!(
+        unused.contains("ada’s page (k) was stopped using cy’s shelf (k)"),
+        "{seen:#}"
+    );
+    assert_eq!(seen["appStop"]["status"], 200, "{seen:#}");
+    for stopped in ["pageStopped", "appStopped"] {
+        assert_eq!(
+            refused(stopped),
+            (json!(403), json!("stopped")),
+            "{stopped}: {seen:#}"
+        );
+    }
+    assert_eq!(
+        seen["framed"],
+        json!([]),
+        "the group's page must never show in a lent page's frame:\n{seen:#}"
+    );
+    // The app's own yes, with what its origin keeps, at cy's door on the
+    // pass holders' protocol: dialled straight, not through the relay,
+    // where the worker holds that key.
+    let kept = &seen["kept"];
+    let (Some(pass), Ok(holder)) = (
+        kept["pass"].as_str(),
+        hex::decode(kept["holder"].as_str().unwrap_or_default()),
+    ) else {
+        panic!("the origin keeps the pass and its holder: {seen:#}");
+    };
+    let holder = SigningKey::from_bytes(&holder.try_into().expect("a key is 32 bytes"));
+    let door = bridge_as(&holder, &cy, svrngs_core::alpn::Alpn::Lend).await;
+    let at = door.local_addr();
+    let asked = |head: String| async move {
+        let mut sock = tokio::net::TcpStream::connect(at).await.unwrap();
+        sock.write_all(head.as_bytes()).await.unwrap();
+        let mut answer = String::new();
+        tokio::io::AsyncReadExt::read_to_string(&mut sock, &mut answer)
+            .await
+            .unwrap();
+        answer
+    };
+    let body = format!(r#"{{"app":"{page_label}","said":"yes"}}"#);
+    let yes = asked(format!(
+        "POST /choices/{shelf_label} HTTP/1.1\r\nHost: cy\r\nx-svrngs-pass: {pass}\r\n\
+         content-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+        body.len()
+    ))
+    .await;
+    assert!(
+        yes.starts_with("HTTP/1.1 403"),
+        "a pass's yes is refused: {yes}"
+    );
+    let after = asked(format!(
+        "GET /lend/{shelf_label}/probe HTTP/1.1\r\nHost: cy\r\nx-svrngs-pass: {pass}\r\nconnection: close\r\n\r\n"
+    ))
+    .await;
+    assert!(
+        after.to_lowercase().contains("x-svrngs-refused: stopped"),
+        "nothing kept of a pass's yes: {after}"
+    );
+    drop((ada, cy, door));
 }

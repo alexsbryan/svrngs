@@ -16,12 +16,9 @@ use std::sync::Arc;
 
 use iroh::endpoint::presets;
 use iroh::endpoint::Builder as EndpointBuilder;
-use iroh::{Endpoint, EndpointAddr, PublicKey, RelayUrl, SecretKey};
+use iroh::{Endpoint, EndpointAddr, RelayUrl, SecretKey};
 
 use crate::relay::{self, DotlessLookup};
-
-mod tunnel;
-pub use tunnel::GuestTunnel;
 
 #[cfg(test)]
 mod tests;
@@ -519,46 +516,6 @@ impl HttpBridge {
     pub fn retarget(&self, target: EndpointAddr) {
         *self.target.lock().unwrap_or_else(|e| e.into_inner()) = target;
     }
-}
-
-/// Parse a pairing dial string: `<64-hex-endpoint-id>@<target>[,<target>...]`
-/// where each target is either a UDP `SocketAddr` (LAN-direct / tests)
-/// or a relay URL (`https://…`). This is the string a host's pairing
-/// surface displays and a client stores as its opaque transport
-/// address.
-pub fn parse_dial_string(s: &str) -> Result<EndpointAddr, String> {
-    let (id_hex, targets) = s.split_once('@').ok_or_else(|| {
-        format!("dial string '{s}' missing '@' — expected <endpoint-id>@<relay-or-addr>[,...]")
-    })?;
-    let id_bytes =
-        hex::decode(id_hex.trim()).map_err(|e| format!("endpoint id is not hex: {e}"))?;
-    let id_arr: [u8; 32] = id_bytes
-        .as_slice()
-        .try_into()
-        .map_err(|_| format!("endpoint id is {} bytes, expected 32", id_bytes.len()))?;
-    let id = PublicKey::from_bytes(&id_arr).map_err(|e| format!("invalid endpoint id: {e}"))?;
-
-    let mut ea = EndpointAddr::new(id);
-    let mut any_target = false;
-    for raw in targets.split(',') {
-        let t = raw.trim();
-        if t.is_empty() {
-            continue;
-        }
-        any_target = true;
-        if let Ok(sock) = t.parse::<SocketAddr>() {
-            ea = ea.with_ip_addr(sock);
-        } else {
-            let relay: RelayUrl = relay::parse(t).map_err(|e| {
-                format!("target '{t}' is neither a socket address nor a relay URL: {e}")
-            })?;
-            ea = ea.with_relay_url(relay);
-        }
-    }
-    if !any_target {
-        return Err(format!("dial string '{s}' has no targets after '@'"));
-    }
-    Ok(ea)
 }
 
 /// Copy with a byte count that survives an error on the write side:

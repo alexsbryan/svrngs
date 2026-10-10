@@ -1,0 +1,344 @@
+{
+ "secrets_searched": [
+  "dee_admin_token",
+  "dee_mw_key",
+  "dee_pw",
+  "diary_row_1",
+  "diary_row_2",
+  "diary_row_3",
+  "diary_row_4",
+  "diary_row_5",
+  "sam_admin_token",
+  "sam_mw_key",
+  "sam_pw"
+ ],
+ "lend_kept": [],
+ "pairs": {
+  "asleep": {
+   "ana-chromium": {
+    "scanned": {
+     "responses": 151,
+     "bodies": 150,
+     "bytes": 20998334,
+     "frames": 262
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "computer-chromium": {
+   "alex-computer-chromium": {
+    "scanned": {
+     "responses": 33,
+     "bodies": 32,
+     "bytes": 50633,
+     "frames": 0
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ana-computer-chromium": {
+    "scanned": {
+     "responses": 157,
+     "bodies": 152,
+     "bytes": 232838,
+     "frames": 0
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "computer-webkit": {
+   "alex-computer-webkit": {
+    "scanned": {
+     "responses": 33,
+     "bodies": 33,
+     "bytes": 50745,
+     "frames": 0
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ana-computer-webkit": {
+    "scanned": {
+     "responses": 158,
+     "bodies": 158,
+     "bytes": 233889,
+     "frames": 0
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "phone-chromium": {
+   "ana-chromium": {
+    "scanned": {
+     "responses": 243,
+     "bodies": 242,
+     "bytes": 41909561,
+     "frames": 412
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ana-webkit": {
+    "scanned": {
+     "responses": 135,
+     "bodies": 84,
+     "bytes": 21032024,
+     "frames": 356
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "bo": {
+    "scanned": {
+     "responses": 118,
+     "bodies": 118,
+     "bytes": 15745165,
+     "frames": 223
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "phone-webkit": {
+   "ana-chromium": {
+    "scanned": {
+     "responses": 164,
+     "bodies": 163,
+     "bytes": 21022078,
+     "frames": 256
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ana-webkit": {
+    "scanned": {
+     "responses": 184,
+     "bodies": 112,
+     "bytes": 36721957,
+     "frames": 439
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "bo": {
+    "scanned": {
+     "responses": 121,
+     "bodies": 121,
+     "bytes": 15745165,
+     "frames": 229
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "plant-after-stop": {
+   "alex-computer-chromium": {
+    "scanned": {
+     "responses": 0,
+     "bodies": 0,
+     "bytes": 0,
+     "frames": 0
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ana-computer-chromium": {
+    "scanned": {
+     "responses": 51,
+     "bodies": 50,
+     "bytes": 76716,
+     "frames": 0
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "plant-bo": {
+   "alex-computer-chromium": {
+    "scanned": {
+     "responses": 33,
+     "bodies": 32,
+     "bytes": 50894,
+     "frames": 0
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ana-computer-chromium": {
+    "scanned": {
+     "responses": 0,
+     "bodies": 0,
+     "bytes": 0,
+     "frames": 0
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "plant-empty": {
+   "alex-computer-chromium": {
+    "scanned": {
+     "responses": 16,
+     "bodies": 16,
+     "bytes": 25019,
+     "frames": 0
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ana-computer-chromium": {
+    "scanned": {
+     "responses": 0,
+     "bodies": 0,
+     "bytes": 0,
+     "frames": 0
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "plant-history": {
+   "alex-computer-chromium": {
+    "scanned": {
+     "responses": 0,
+     "bodies": 0,
+     "bytes": 0,
+     "frames": 0
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ana-computer-chromium": {
+    "scanned": {
+     "responses": 35,
+     "bodies": 34,
+     "bytes": 52396,
+     "frames": 0
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {
+     "diary_row_1": 1,
+     "diary_row_2": 1,
+     "diary_row_3": 1,
+     "diary_row_4": 1,
+     "diary_row_5": 1
+    },
+    "others_secrets_in": {
+     "diary_row_1": [
+      "/diary"
+     ],
+     "diary_row_2": [
+      "/diary"
+     ],
+     "diary_row_3": [
+      "/diary"
+     ],
+     "diary_row_4": [
+      "/diary"
+     ],
+     "diary_row_5": [
+      "/diary"
+     ]
+    },
+    "holds_none_of_anothers": false
+   }
+  },
+  "plant-other-app": {
+   "alex-computer-chromium": {
+    "scanned": {
+     "responses": 0,
+     "bodies": 0,
+     "bytes": 0,
+     "frames": 0
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ana-computer-chromium": {
+    "scanned": {
+     "responses": 11,
+     "bodies": 11,
+     "bytes": 13562,
+     "frames": 0
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  }
+ },
+ "logs": {
+  "alex/join.out": {},
+  "alex/run.log": {},
+  "alex/run.out": {},
+  "mw-dee.log": {},
+  "mw-sam.log": {},
+  "sam/new.out": {},
+  "sam/run.log": {},
+  "sam/share.log": {},
+  "sam/share.out": {}
+ }
+}

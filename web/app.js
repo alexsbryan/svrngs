@@ -27,11 +27,22 @@
 // a page that reads a lend opens it at a path by `#open=<label>&at=<path>`
 // (mnp-2, lend.js `READS`), and the lend's start page goes there. Either
 // way this page steps aside, so the browser's Back skips it.
+//
+// Asking the person (sup-3; DESIGN §3, "What an app gets"): a lent page
+// sends its person here at `#ask=<lend>&app=<its label>&at=<path>` (lend.js
+// `asking`), and the page asks in the home page's words around the
+// lender's. A yes is posted to the lender's door, dialled as the person,
+// which no app's page can; yes or not, the app opens again at the path.
+// "What apps use" asks each lender that asks, when the person opens it,
+// what they said, each yes with Stop. On the page host this page is never
+// framed (vercel.json's `frame-ancestors 'none'`): a lent page is a name
+// under that host and could frame it at `#ask=` to borrow a click.
 import init, {
   ask,
   believe,
   connect,
   connect_to_join,
+  endpoint,
   label,
   pass,
   redemption,
@@ -83,9 +94,14 @@ async function reach(dialling, away) {
   }
 }
 
+const joining = (status) =>
+  status === 403
+    ? 'This link lets nobody in. Ask for a new one.'
+    : 'The computer that sent this link cannot let anyone in just now. Try again later.';
+
 // POST `body`, JSON, on `dialled`: the answer's text, or the computer's
-// refusal in its words.
-async function post(dialled, path, body) {
+// refusal in the words `refused` gives its status.
+async function post(dialled, path, body, refused = joining) {
   const bytes = new TextEncoder().encode(body);
   const res = await dialled.fetch(
     'POST',
@@ -96,8 +112,7 @@ async function post(dialled, path, body) {
   const text = await res.text();
   if (res.ok) return text;
   trace(`PAGE: ${path} answered ${res.status}: ${text}`);
-  if (res.status === 403) throw new Said('This link lets nobody in. Ask for a new one.');
-  throw new Said('The computer that sent this link cannot let anyone in just now. Try again later.');
+  throw new Said(refused(res.status));
 }
 
 // The person's name, asked once, in the group's name.
@@ -175,7 +190,7 @@ function open(group, key, lent, unanswered, l, at) {
   }
   said.textContent = `Opening ${what(l)}…`;
   const reads = lent.filter((o) => o !== l && (l.reads ?? []).includes(o.kind));
-  const lends = [l, ...reads].map((o) => ({ label: label(o.key, o.name), key: o.key, name: o.name, kind: o.kind, person: o.person }));
+  const lends = [l, ...reads].map((o) => ({ label: label(o.key, o.name), key: o.key, name: o.name, kind: o.kind, person: o.person, asks: o.asks }));
   const holder = crypto.getRandomValues(new Uint8Array(32));
   const until = Math.floor(Date.now() / 1000) + PASS_LIFE;
   // Each app at an address of its own under this page's host (DESIGN §7),
@@ -197,9 +212,77 @@ function open(group, key, lent, unanswered, l, at) {
   location[at === undefined ? 'assign' : 'replace'](`${start}#${fragment}`);
 }
 
-// In `group`: list what its people lend, and open the one labelled
-// `again` at once, at `at`, when a lend's origin asked for it.
-async function enter(group, again, at) {
+// The person's answer `said` for the app labelled `app` on `l`, posted to
+// its lender's door, dialled as the person from `dialler`'s endpoint.
+async function choose(dialler, l, app, said) {
+  const away = `${l.person}’s computer did not answer. Try again later.`;
+  const d = await reach((await dialler()).dial(l.key), away);
+  try {
+    await post(d, `/choices/${label(l.key, l.name)}`, JSON.stringify({ app, said }), () => `${l.person}’s computer did not keep your answer.`);
+  } finally {
+    await d.close();
+  }
+}
+
+// Ask the person whether the app `q` names may use the lend it names,
+// then open the app again at `q`'s path, whatever they said.
+function asking(group, key, lent, unanswered, dialler, q) {
+  const [lend, app] = [q.get('ask'), q.get('app')].map((x) => lent.find((l) => label(l.key, l.name) === x));
+  if (!lend?.asks || !app) {
+    trace(`PAGE: asked whether ${q.get('app')} may use ${q.get('ask')}, not both lent here or not asking`);
+    said.textContent = 'That app, or what it asks to use, is not lent in your group now.';
+    return;
+  }
+  trace(`PAGE: asking whether ${q.get('app')} may use ${q.get('ask')}`);
+  const back = () => open(group, key, lent, unanswered, app, q.get('at') ?? '/');
+  show(`Let ${what(app)} use ${what(lend)}?`, true);
+  document.getElementById('words').textContent = lend.asks;
+  const form = document.getElementById('ask');
+  form.hidden = false;
+  document.getElementById('not').onclick = back;
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    form.hidden = true;
+    try {
+      await choose(dialler, lend, q.get('app'), 'yes');
+      trace(`PAGE: the yes kept at ${lend.person}'s computer`);
+      back();
+    } catch (err) {
+      show(err instanceof Said ? err.message : 'Your answer could not be sent.', false);
+    }
+  };
+}
+
+// What apps use of what lends ask, asked of each lender now, each yes
+// with Stop.
+async function uses(lent, dialler, shown) {
+  shown.replaceChildren();
+  for (const l of lent.filter((o) => o.asks)) {
+    const line = (words) => shown.appendChild(Object.assign(document.createElement('li'), { textContent: words }));
+    try {
+      const d = await reach((await dialler()).dial(l.key), '');
+      const res = await d.fetch('GET', `/choices/${label(l.key, l.name)}`, [['accept', 'application/json']], null);
+      await d.close();
+      if (!res.ok) throw new Error(`answered ${res.status}`);
+      for (const [app, c] of Object.entries((await res.json()).choices)) {
+        const by = lent.find((o) => label(o.key, o.name) === app);
+        const item = line(`${by ? what(by) : 'An app'} ${c.said === 'yes' ? 'uses' : 'was stopped using'} ${what(l)}. `);
+        if (c.said !== 'yes') continue;
+        const stop = Object.assign(document.createElement('button'), { textContent: 'Stop' });
+        stop.onclick = () => choose(dialler, l, app, 'stop').then(() => uses(lent, dialler, shown), (e) => item.append(e.message));
+        item.append(stop);
+      }
+    } catch (e) {
+      trace(`PAGE: what apps use of ${l.name} not asked: ${e}`);
+      line(`What apps use of ${what(l)} cannot be asked now.`);
+    }
+  }
+}
+
+// In `group`: list what its people lend, and open the one `asked` names
+// at once, at its path, when a lend's origin asked for it; or ask whether
+// an app may use a lend.
+async function enter(group, asked) {
   group = await store.opened(group);
   document.title = group.name;
   const key = await store.unseal(group);
@@ -224,14 +307,22 @@ async function enter(group, again, at) {
       return item;
     }),
   );
-  const asked = again && lent.find((l) => label(l.key, l.name) === again);
-  if (asked) open(group, key, lent, unanswered, asked, at ?? '/');
+  // One endpoint as the person, bound when first asked: a relay keeps one
+  // per key (web/src/lib.rs `endpoint`).
+  let bound;
+  const dialler = () => (bound ??= endpoint(key, group.token));
+  const again = asked?.get('open') && lent.find((l) => label(l.key, l.name) === asked.get('open'));
+  if (again) open(group, key, lent, unanswered, again, asked.get('at') ?? '/');
+  const using = document.getElementById('uses');
+  using.hidden = !lent.some((l) => l.asks);
+  using.ontoggle = () => using.open && uses(lent, dialler, document.getElementById('used'));
   said.textContent = [
     lent.length ? '' : `Nobody in ${group.name} lends anything yet.`,
     ...unanswered.map((p) => `${p}’s computer did not answer, so what they lend is not listed.`),
   ]
     .filter(Boolean)
     .join('\n');
+  if (asked?.has('ask')) asking(group, key, lent, unanswered, dialler, asked);
 }
 
 // The service worker: the runtime that serves what the group's people lend
@@ -259,21 +350,21 @@ if ('serviceWorker' in navigator) {
 // wasm's fetch at its top, then opened it again — the next navigation never
 // reached the origin (u4-7; ralph/REVIEW_FINDINGS.md has the runs).
 //
-// A lend's origin asking for another pass opens `#open=<label>`, and a
-// page opening a lend it reads `#open=<label>&at=<path>`.
+// A lend's origin asking for another pass opens `#open=<label>`, a
+// page opening a lend it reads `#open=<label>&at=<path>`, and one asking
+// its person `#ask=<lend>&app=<label>&at=<path>`.
 async function opening(fragment) {
   try {
     // The wasm by its one URL, from the cache the worker reads it from
     // too (store.js `runtime`, u4-9).
     await init({ module_or_path: store.runtime() });
-    const asked = fragment.startsWith('open=') ? new URLSearchParams(fragment) : null;
-    const again = asked?.get('open') ?? null;
-    const token = again ? '' : fragment;
+    const asked = /^(open|ask)=/.test(fragment) ? new URLSearchParams(fragment) : null;
+    const token = asked ? '' : fragment;
     const kept = await store.groups();
     let group = token ? kept.find((g) => g.token === token) : kept[0];
     if (token && !group) group = await join(token, kept);
     if (!group) throw new Said('Open this page from your group’s link.');
-    await enter(group, again, asked?.get('at'));
+    await enter(group, asked);
   } catch (e) {
     console.error(e);
     show(e instanceof Said ? e.message : 'This browser could not open the page.', false);

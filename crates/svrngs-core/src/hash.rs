@@ -94,14 +94,8 @@ impl ContentHash {
     }
 }
 
-impl fmt::Display for ContentHash {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.to_hex())
-    }
-}
-
 impl fmt::Debug for ContentHash {
-    /// Truncated for humans; [`Display`](fmt::Display) is the full value.
+    /// Truncated for humans; [`to_hex`](ContentHash::to_hex) is the full value.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "ContentHash({})", self.short())
     }

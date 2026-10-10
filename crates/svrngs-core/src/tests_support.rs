@@ -283,3 +283,38 @@ impl crate::Command for Batch {
         Ok(self.0.clone())
     }
 }
+
+// Op::new ported from commonwealth-ai oplog-types/src/lib.rs@e1a43bcd2, out of op.rs
+// so the budget counts no test code.
+impl<K: crate::Journaled> crate::Op<K> {
+    /// Build an op, deriving its content-addressed [`OpId`] from the
+    /// (prefix, ts, actor, body) tuple.
+    ///
+    /// svrngs: test-only, so no production path can build a ring act whose id
+    /// hashes the line, signature included — a ring act's id is
+    /// [`crate::act_id`]'s (U2). The journal's own tests build envelopes of
+    /// other kinds with it.
+    ///
+    /// Two byte-identical acts at the same second by the same actor collide by
+    /// design — callers append in real time, so this does not arise in
+    /// practice (the same birthday-bound caveat the atom content-hash ids
+    /// carry).
+    pub fn new(kind: K, ts_unix: i64, actor: impl Into<String>) -> Self {
+        let actor = actor.into();
+        // serde_json writes fields in declaration order, so the body string —
+        // and therefore the id — is deterministic across runs and builds. A
+        // kind failing to serialise is unreachable; silent `""` would derive
+        // an id over empty bytes (ROOT_CAUSE_FIXES C4).
+        let body = serde_json::to_string(&kind)
+            .expect("a kind serialises — an id over empty bytes is the named catastrophe");
+        let input = alloc::format!("{}|{ts_unix}|{actor}|{body}", K::ID_PREFIX);
+        let v = kind.line_version();
+        Self {
+            id: OpId::from_hash(ContentHash::of_str(&input)),
+            v,
+            ts_unix,
+            actor,
+            kind,
+        }
+    }
+}

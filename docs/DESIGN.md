@@ -127,8 +127,50 @@ paths it refuses, how many people may use it at once.
 - svrngs's word told from the lend's: every answer svrngs makes in a
   lend's place — the door's refusals, the lend's worker's and the
   computer's — carries `x-svrngs-refused`, naming which (`away`, `pass`,
-  `closed`, `unlent`, `path`, `full`, `sign-in`, `fault`), and a lend's own
-  answer never does (mnp-1, `door::LendRefusal`);
+  `closed`, `unlent`, `path`, `full`, `sign-in`, `fault`, `unasked`,
+  `stopped`), and a lend's own answer never does (mnp-1, `door::LendRefusal`);
+  on a computer a page asking another lend's origin reads it only if
+  that answer lets its origin, and svrngs's own do not yet (sup-4,
+  `demo/runs/sup/2026-10-10/`, follow-up 1);
+- for a lend that asks (`svrngs share --ask "<what an app receives>"`, the
+  lender's words, carried in `asks` on every list and never read by
+  svrngs), only the app its person said yes to: the lend's door keeps each
+  person's yes and stop per app, beside the lend's declaration and never
+  in the record, and decides on them (sup-2, `door/choices.rs`). A lend
+  asking nobody is carried as before; its own pages are carried whatever
+  was said; an app with no yes, or no app named, is refused `unasked`, and
+  one stopped `stopped`. Only the person says yes — `POST /choices/<lend>`
+  on the members' protocol, `{app, said}` — and anything holding the
+  access may say stop: with a pass, on either protocol, the body's type
+  has no yes. `GET /choices/<lend>` answers the dialler's own. A stop
+  refuses every request after it; one already carried, a live socket
+  included, runs to its end. Each choice is keyed by the person the door
+  resolves (`door::PersonKey`), today the one key they have, so a yes said
+  on a computer holds there, and one said on a phone holds for that phone;
+  `svrngs unshare` takes the choices with the lend;
+- the home page, `http://svrngs.localhost:<port>/`, where a person says
+  their yes on a computer, and sees their groups, the people in each,
+  what each lends, opened at its origin, whose computer did not answer and
+  what apps use, each with Stop — shown from the routes that answer an app
+  (`/v1/groups`, `/v1/lends`, `/v1/rail/people`), groups that cannot be
+  read said so (sup-2, `crates/svrngs-node/src/home.rs`). An app sends its
+  person there: `/svrngs-reads` gives each lend that asks its words,
+  `asks`, and `ask`, to which it adds `&back=<its path>` — on a computer
+  `…svrngs.localhost:<port>/ask?lend=<label>&app=<label>`, on a phone
+  `<its origin>/svrngs-ask?lend=<label>&app=<label>`, which the lend's
+  worker sends to the group's page at `#ask=<lend>&app=<label>&at=<path>`
+  (sup-3, `web/lend.js` `asking`). Either page asks "Let Sam's night use
+  Ana's taste?" around the lender's words. On a computer a yes is kept by
+  this computer's door for its own lend, else posted to the lender's door
+  as this computer's key; on a phone the group's page posts it to the
+  lender's door, dialled as the person; then the person goes back to the
+  app at its path. An app stops itself, `POST
+  /svrngs-reads/<label>/svrngs-stop` at its own origin; on a phone its
+  worker sends that to the lend's door with the pass. The group's page
+  lists what apps use too, asked of each lender when the person opens it,
+  each yes with Stop. Neither page is ever framed, and neither runs an
+  app's code; the home page answers only itself, and its only writes are
+  the person's yes and stop; every other act stays in the command;
 - reach for the devices in a room: a member's computer serves the lends its
   person names to the network it is on while the command runs, so a device
   there — a TV, through the app's own client for it — opens a lend at an
@@ -376,8 +418,18 @@ is U5's inventory (§8).
    the taste's 98 lines decided the rest: that the asker is its owner on
    any of her phones, that she said yes to this app, that she has not
    stopped it; each one line from leaking, as its plants showed, and an
-   app able to say her yes itself. Each is a row of scoped use made
-   production (§8). What `reads` did not give, Movie Night found: which
+   app able to say her yes itself. Each became a row of scoped use made
+   production (§8), and run again on them (sup-4,
+   `demo/runs/sup/2026-10-10/`) the taste decides only that the asker is
+   its owner and its own refusals' words, 11 lines, the app, the yes and
+   the stop the door's; every bar passed in its spirit on Ana's computer
+   from her home page, in Chromium and WebKit, and on her phones, and the
+   other app's own yes was refused by the home page's rule. On a computer
+   a page asking another lend's origin by `fetch` reads none of svrngs's
+   own answers there, which carry no access-control header, so Tonight's
+   Picks could read neither `unasked` nor `stopped` and said it could not
+   read whether the taste lets it rank (that run's first follow-up). What
+   `reads` did not give, Movie Night found: which
    lends those are, but in svrngs's own store, which the page read whole
    with the pass in it (28 lines; the handoff named no lender and kept
    back who did not answer); a lend opened at a path on a phone that
@@ -841,9 +893,9 @@ piece comes over:
 |---|---|---|
 | `svrngs-core` | the record: acts, admission into one order, membership, the sync digest; and what a browser's page spells as the command and the node do (u4-2): a link's token, the ask and the redemption a joiner signs with it, the issuer's answer and the seed it is believed by (u4-5), the protocols' names, and a relay's URL without the DNS root's trailing dot, which WebKit refuses (u4-9); a lend's label, one DNS label naming its lender's key and its name, and the pass a person signs for another key toward named lends until a time, with its check (u5-2). `no_std`, so the compiler refuses filesystem, clock, network and threads; time and keys are arguments | none |
 | `svrngs-runtime` | the only owner of each group's journal on disk, its projections and its writes: the journal and its write index, the open-journal map, the register's standing | the journals |
-| `svrngs-node` | the adapters: sync and its route over iroh, redemption, the loopback record API with its live lane (landed, u3-2 and u3-3), the member door (landed, u3-4), the list of what members lend, asked of each (landed, u3-5), each for at most 3 s (landed, asleep-1, `node::ANSWER_WITHIN`), and answered to a member by the computer it dials, each with its lender's key (landed, u4-5), and the door's limit and shares, a pure decision the door's task owns (landed, u3-6); a WebSocket's upgrade carried, and the pass holders' protocol, which any key may speak, where a request presenting a person's pass for the lend it names, by name or label, is that person's (landed, u5-2), and its service told the pass's first lend, the app the page opened, as `x-svrngs-app`, none with no pass (the scoped-use spike's one header, su-1, `demo/runs/su/2026-10-09/` §5); every relay URL it makes or reads dotless where it enters — n0's relays, a relay it is told, a lookup's answers — in `relay.rs`, which the page compiles too (landed, u4-9); the room door, the lends a person names served to this computer's network at its private address while the command runs, one body with the origins (landed, u6-1); a lend's sign-in, asked of the lender's program on a person's first request, its credential set on each of their requests, a stand-in swapped for its secret both ways (landed, mwp-1, `door/sign_in.rs`), its script first in the lend's pages (landed, mwp-2, the same file; §3, "The room", call 6); every answer it makes in a lend's place marked as its own, `x-svrngs-refused` and its kind, a service's own dropped (landed, mnp-1, `door::LendRefusal`), and a pass whose signer it does not know asked of the group's ring once, within 10 s, until a member that knows them answers, before it is refused (landed, mnp-1, `ring_sync::AskRound`; the members dialled at once, asleep-1); a lend's pages on this computer told, at its origin's `/svrngs-reads`, the lends they read, from the record (landed, mnp-2, `surface::reads`) | each lend's declaration and secret; who is using each lend now; each person's sign-in answer, in memory |
-| `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell and a workspace of its own: a browser's endpoint, bound with the person's key, dialling a group's computer by key over a relay on the members' protocol (landed, u4-3); HTTP over the dial (landed, u4-4); joining — the ask and the redemption by svrngs-core's bodies, the key sealed in the page's store, and the list of what the group's people lend (landed, u4-5); the runtime, a service worker serving every request at a lend's address from the lender's door (landed, u4-6), a range that runs on — open-ended, or a `<video>`'s longer than a part — asked of the door in parts of 2 MiB (landed, u4-9), an open-ended one's first part at a new place 256 KiB and doubling as the reading runs on (u5-11), handed what it dials with in memory, and a page for a worker that holds nothing (landed, u4-10); since u5-2 at each lend's own origin, not the page's (`lend.js`, its start page `open.js`): the page signs a pass to a fresh key for the lend it opens and the lends it reads, the worker dials on the pass holders' protocol, keeps each lend's cookies, reads a redirect to a path under the lend, and with a shim in each lent page (`shim.js`) carries `WebSocket` and an app's own worker; its own answers in a lend's place marked as the door marks its own (mnp-1); its pages told the lends they read at `/svrngs-reads`, each at an address under their own origin that opens that lend at a path through the group's page (landed, mnp-2); an adapter | none: the page's store holds the key, sealed; a lend's origin's store holds its pass and its cookies |
-| `svrngs` | the command and the process: `new`, `join`, `link`, `share`, `unshare` and `room` (landed), and `share --sign-in` (landed, mwp-1); the bare command prints where the record API listens, and what the people of its groups lend | a device's keys; each group's seed |
+| `svrngs-node` | the adapters: sync and its route over iroh, redemption, the loopback record API with its live lane (landed, u3-2 and u3-3), the member door (landed, u3-4), the list of what members lend, asked of each (landed, u3-5), each for at most 3 s (landed, asleep-1, `node::ANSWER_WITHIN`), and answered to a member by the computer it dials, each with its lender's key (landed, u4-5), and the door's limit and shares, a pure decision the door's task owns (landed, u3-6); a WebSocket's upgrade carried, and the pass holders' protocol, which any key may speak, where a request presenting a person's pass for the lend it names, by name or label, is that person's (landed, u5-2), and its service told the pass's first lend, the app the page opened, as `x-svrngs-app`, none with no pass (the scoped-use spike's one header, su-1, `demo/runs/su/2026-10-09/` §5); every relay URL it makes or reads dotless where it enters — n0's relays, a relay it is told, a lookup's answers — in `relay.rs`, which the page compiles too (landed, u4-9); the room door, the lends a person names served to this computer's network at its private address while the command runs, one body with the origins (landed, u6-1); a lend's sign-in, asked of the lender's program on a person's first request, its credential set on each of their requests, a stand-in swapped for its secret both ways (landed, mwp-1, `door/sign_in.rs`), its script first in the lend's pages (landed, mwp-2, the same file; §3, "The room", call 6); every answer it makes in a lend's place marked as its own, `x-svrngs-refused` and its kind, a service's own dropped (landed, mnp-1, `door::LendRefusal`), and a pass whose signer it does not know asked of the group's ring once, within 10 s, until a member that knows them answers, before it is refused (landed, mnp-1, `ring_sync::AskRound`; the members dialled at once, asleep-1); a lend's pages on this computer told, at its origin's `/svrngs-reads`, the lends they read, from the record (landed, mnp-2, `surface::reads`); each person's yes and stop to an app kept by the lend's door and decided there, by the person the door resolves (landed, sup-2, `door/choices.rs`, `door::PersonKey`); the home page at `svrngs.localhost`, answering only itself, never framed, its writes the person's yes and stop alone (landed, sup-2, `home.rs`) | each lend's declaration and secret, and each person's choices for it; who is using each lend now; each person's sign-in answer, in memory |
+| `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell and a workspace of its own: a browser's endpoint, bound with the person's key, dialling a group's computer by key over a relay on the members' protocol (landed, u4-3); HTTP over the dial (landed, u4-4); joining — the ask and the redemption by svrngs-core's bodies, the key sealed in the page's store, and the list of what the group's people lend (landed, u4-5); the runtime, a service worker serving every request at a lend's address from the lender's door (landed, u4-6), a range that runs on — open-ended, or a `<video>`'s longer than a part — asked of the door in parts of 2 MiB (landed, u4-9), an open-ended one's first part at a new place 256 KiB and doubling as the reading runs on (u5-11), handed what it dials with in memory, and a page for a worker that holds nothing (landed, u4-10); since u5-2 at each lend's own origin, not the page's (`lend.js`, its start page `open.js`): the page signs a pass to a fresh key for the lend it opens and the lends it reads, the worker dials on the pass holders' protocol, keeps each lend's cookies, reads a redirect to a path under the lend, and with a shim in each lent page (`shim.js`) carries `WebSocket` and an app's own worker; its own answers in a lend's place marked as the door marks its own (mnp-1); its pages told the lends they read at `/svrngs-reads`, each at an address under their own origin that opens that lend at a path through the group's page (landed, mnp-2); a lend that asks told with its lender's words and an `ask` address that opens the group's page at `#ask=`, where the person's yes is posted to the lender's door as them, an app's stop sent by the worker with the pass, and what apps use listed there with Stop, the page never framed on its host (landed, sup-3); an adapter | none: the page's store holds the key, sealed; a lend's origin's store holds its pass and its cookies |
+| `svrngs` | the command and the process: `new`, `join`, `link`, `share`, `unshare` and `room` (landed), and `share --sign-in` (landed, mwp-1), and `share --ask "<words>"`, its lender's words for what an app receives, carried in `asks` on every list of lends and never read by svrngs (landed, sup-2); the bare command prints where the record API listens, where the home page opens (sup-2), and what the people of its groups lend | a device's keys; each group's seed |
 
 Held to `docs/principles/RUST_ARCH.md`: types encode the domain, ownership
 encodes the architecture, I/O lives at the edge. Parse, don't validate; closed
@@ -872,9 +924,20 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,000 lines of code and the
-repository under 15,750 on the branch `folders`, tests and `apps/` apart (`scripts/lean_check.py`);
-a raise is the operator's, with the reason in the commit. `svrngs-core` stands
-at 2,359: the operator raised its ceiling from 2,500 on 2026-10-05, for what U4
+repository under 15,750 on the branch `folders`, main's 15,350
+(`scripts/lean_check.py`); a raise is the operator's, with the reason in
+the commit. The budget counts the product:
+tests, `apps/` and `demo/runs/` apart. A recorded run's driver is what ran,
+kept byte for byte so its data reads against it (`ralph/REVIEW_FINDINGS.md`
+#61), and no check runs one; a helper a check runs lives outside it
+(`web/tests/serve.mjs`, `web/tests/control.mjs`), and code elsewhere under
+`demo/` counts. The operator set `demo/runs/` apart on 2026-10-10 (lean-1,
+"Budget counts product only"): the repository went from 15,284 to 13,428,
+the cap kept; main merged into the branch `folders` at syp-3 counted
+13,372, `svrngs-core` 2,729, inside both caps. Every figure below counted
+`demo/runs/`, as the rule then did.
+`svrngs-core` stood at 2,359 when the operator raised its ceiling from 2,500
+on 2026-10-05, for what U4
 to U7 still add to the core, since REVIEW-audit-u3-auto-2 found no duplication
 in it (ralph/REVIEW_FINDINGS.md #38), and the repository's from 12,000, at
 9,601, for U4's page and its wasm and U6's handoff, about 2,100 lines between
@@ -904,12 +967,18 @@ room (operator, 2026-10-09; svrn-docs `rings/current/ONE_PERSON_MANY_DEVICES.md`
 §6): upstream's guest attestation and roster warrant, which no code of
 svrngs used (`attest.rs`, `introduce.rs`, `Roster.vouches`), deleted —
 svrngs-core from 2,957 to 2,628, the repository from 14,644 to 14,315.
-And on the branch `folders` alone, from 15,200, at 15,163, on 2026-10-09,
-for the mesh-Dropbox spike (`ralph/next/sync/`): about 500 lines for
-the folder's index, its watcher and the apply of others' changes with
-their conflicts, the gate that asks the record, and the command, by the
-seat's estimate; the spike counted 543, its index the record's, not
-iroh-docs (`demo/runs/sy/2026-10-09/README.md` §1, §7). Main's budget is its own until the operator merges.
+And from 15,200, at 15,162, on 2026-10-09, after sup-2: the repository
+had grown 847 since core-0, against the 541 the design estimated for
+asleep-1, sup-1 and sup-2, and the phone's page and worker (~110, sup-3)
+had 38 left; 150 by the operator's choice. And on the branch `folders`
+alone, from 15,200, at 15,163, on 2026-10-09, for the mesh-Dropbox spike
+(`ralph/next/sync/`): about 500 lines for the folder's index, its watcher
+and the apply of others' changes with their conflicts, the gate that asks
+the record, and the command, by the seat's estimate; the spike counted
+543, its index the record's, not iroh-docs
+(`demo/runs/sy/2026-10-09/README.md` §1, §7). The branch keeps its cap,
+16,500 at most while it merges main in, and takes main's with the last
+merge (§10).
 `ARCHITECTURE.md` maps what exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file
@@ -1084,7 +1153,21 @@ judged (exit 3). On a computer each app opens at
 (`crates/svrngs-node/src/origin.rs`), which every browser measured resolves
 (`demo/runs/u5/2026-10-05-localhost/`); there the origin names the app
 asking from what the browser says of its page, and keeps the page to its
-own lend and the lends it reads (sup-1; §3, "Lent apps", call 6).
+own lend and the lends it reads (sup-1; §3, "Lent apps", call 6). Beside
+them, at `http://svrngs.localhost:<port>/`, the home page: the person's
+page on their computer, where they say yes to an app and stop it (sup-2;
+§3, "What an app gets"). It answers only itself — reads from its own
+origin, a typed address or a navigation, writes only with its own exact
+`Origin` — so a lent page, same-site but never same-origin, can neither
+read it nor say a yes, and it sends `frame-ancestors 'none'`, which
+Chromium was watched refusing a lent page's frame of it. On a phone the
+group's page is the page no app runs at, where a person says yes (sup-3;
+§3, "What an app gets"): a lent app is a name under the page's host and
+could frame it at `#ask=`, so the host sends `frame-ancestors 'none'` on
+every answer (`web/vercel.json`; a `<meta>` policy cannot carry it), which
+Chromium and WebKit were watched refusing, and a host a group names in
+its place must send it too. Ours sends it once the operator deploys the
+page again (`scripts/deploy-page.sh`).
 
 **A room's devices reach a lend through a member's computer there** (u6-1
 landed it; §3, "The room", calls 2 and 3). A TV takes no link and runs no
@@ -1557,21 +1640,32 @@ of them next, the computer first (operator, 2026-10-09; svrn-docs
 pass, and by a computer's origin, which keeps a page to its reads
 (landed, sup-1; §3, "Lent apps", call 6); a
 person's yes and stop kept by the lend's door, said on a page no app
-runs at — on a computer the home page, `svrngs.localhost`, and on a
-phone the group's page — never by the app; then the spike run again,
-on a computer first; after a row that keeps an asleep computer from
-holding anyone's answer (`demo/runs/mnp/2026-10-09/README.md`, "What no
-prediction named" 1 and 2). The fourth, a lend its lender's person
+runs at — on a computer the home page, `svrngs.localhost` (landed,
+sup-2; §3, "What an app gets"), and on a phone the group's page (landed,
+sup-3) — never by the app; then the spike run again,
+on a computer first (landed, sup-4: the taste's enforcing 46 lines to 11,
+Tonight's Picks' plumbing 39 to 16, every bar passed in its spirit on a
+computer from its home page in Chromium and WebKit and on the phones, the
+unasked yes refused by svrngs on a computer, `demo/runs/sup/2026-10-10/`;
+its three follow-ups there, queued after the lean rows below (operator,
+2026-10-10; `ralph/next/lean/`): svrngs's answers at
+a lend's origin readable by the page that reads it, one wording of
+svrngs's question, a stop address beside `ask`); after a row that keeps an
+asleep computer from holding anyone's answer
+(`demo/runs/mnp/2026-10-09/README.md`, "What no prediction named" 1 and
+2). The fourth, a lend its lender's person
 alone reaches on any device of theirs, waits on another device for the
 same person (§9; `rings/current/ONE_PERSON_MANY_DEVICES.md`, deferred);
-group folders (§3, call 7 of "Lent apps"), synced onto each member's
+group folders (§3, call 7 of "Lent apps"; §9), synced onto each member's
 disk and not streamed (operator, 2026-10-10, after the mesh-Dropbox
-spike's four bars on one host, `demo/runs/sy/2026-10-09/`), made
-production on the branch `folders` by its queue `syp`: the rows its
-README's §9 lists, a synced folder's path parsed first since a member can
-write outside it today, the budget's raise and the merge into main the
-operator's (§10); the
-phone replica spike, iOS first (§9, "a
+spike's four bars on one host, `demo/runs/sy/2026-10-09/`; §10), made
+production on the branch `folders` by its queue `syp`, main merged in as
+the lean rows cut what the product does not carry — recorded runs'
+drivers, tests in counted files, code nothing reaches, code written twice
+(`ralph/next/lean/SURVEY.md`; lean-1, lean-2 and lean-3's first cut in at
+syp-3): the rows the spike's README's §9 lists, a synced folder's path
+parsed first since a member can write outside it today, the merge into
+main the operator's (§10); the phone replica spike, iOS first (§9, "a
 native phone app"), after folders since they name the bytes a phone would
 hold; then the middleware's P1 follow-ups as one row (operator, 2026-10-08;
 `demo/runs/mw/2026-10-08/README.md` §7, items 5 and 7; its item 1,
@@ -1602,7 +1696,7 @@ by the north star's tests.
 | exporting a group as one document (upstream's checkpoint route), checking the asker is in that group | a group refounds from a copy, or someone asks to export one |
 | the endpoint's self-heal (upstream's `self_heal.rs`, `iroh_watchdog.rs`) | a node's endpoint wedges in a recorded run |
 | skipping a round's members known offline. Dialling them at once landed (asleep-1, `ring_sync::run_one_round`), so an asleep one holds only its own dial; the round still ends when that dial gives up, about 10 s, and a door's ask begun meanwhile waits for the next round (§3, "Joining") | a round's measured time nears its interval, or a newcomer is refused while a round waits on an asleep computer, counted |
-| another device for the same person. Scoped use asked (`demo/runs/su/2026-10-09/` §9): its run listed each of Ana's phones' keys in her taste's owners by hand (`apps/taste/check/check.sh:137`), each phone joining as a member of its own, and a lend its lender's person alone reaches needs it (§8, "Then") | that row is queued |
+| another device for the same person. Scoped use asked (`demo/runs/su/2026-10-09/` §9): its run listed each of Ana's phones' keys in her taste's owners by hand (`apps/taste/check/check.sh:173`, `OWN`; `:137` at `305efde`), each phone joining as a member of its own, and a lend its lender's person alone reaches needs it (§8, "Then"); made production, Ana was asked once on her computer and once on each phone, and a stop on one phone left the other's yes, each choice its own key's (sup-4, `demo/runs/sup/2026-10-10/`) | that row is queued |
 | the wire published for a second implementation | someone sets out to write one |
 | local discovery on one WiFi | Apple's multicast entitlement is granted |
 | any member's node redeeming a link, once its `Invite` has synced | a newcomer's link fails because its issuer's computer was asleep, counted |
@@ -1618,6 +1712,21 @@ by the north star's tests.
 | the floor: every app under `/l/<label>/` of one address apart from the page's, on any static host, the link carrying that address after its token (a second address given to `svrngs new`, u5-2; dropped by u6-00). Its cost was one origin for every app, so a lent page could read what another kept and use another's pass while it lasted, and its every app lost its root: the catalogue run lent five self-hosted apps on it in Chromium and WebKit and none got past its sign-in, each asking for `/`-absolute paths the floor's host answered 404, and Paperless's post refused by its own origin check (`demo/runs/catalogue/2026-10-05/RESULTS.md`, "The floor"; `003e0d5`) | a group whose host answers no name nobody made asks for an app that keeps to relative paths, counted |
 
 ## 10. Decisions
+
+By the operator, 2026-10-10, before the synced folder made production
+(`ralph/next/lean/SURVEY.md`):
+- "Queue them increase the budget, but let's also see if there are
+  opportunities to economize": the lean rows cut what the product does not
+  carry; main's cap stays 15,350, and the branch `folders`' may rise to
+  16,500 at most while it merges main in (syp-3), coming back to main's
+  with the last merge.
+- the budget counts the product: `demo/runs/` apart, as `apps/` and tests
+  are, a recorded run's driver kept as it ran (lean-1, §5).
+- a group's folder is synced onto its members' disks, not streamed: group
+  folders' loopback endpoint and its one-way share are dropped on the branch
+  `folders` (syp-1), and watching a member's films stays their lent
+  Jellyfin's. A folder fetched on open, by verified range, waits for a member
+  whose disk cannot hold the group's folder (§9).
 
 By the operator, 2026-10-09, during scoped use made production:
 - group folders' second spike runs now, in a worktree beside scoped use,

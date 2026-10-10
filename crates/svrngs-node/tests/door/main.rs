@@ -14,6 +14,7 @@
 //! byte B receives is scanned for A's secret ([`clean`]).
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
+mod choices;
 #[path = "../common/mod.rs"]
 mod common;
 mod limit;
@@ -24,7 +25,7 @@ mod sign_in;
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use common::loopback_sockets;
+use common::{bridge_as, loopback_sockets};
 use sha2::{Digest, Sha256};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
@@ -916,9 +917,6 @@ fn unix_now() -> i64 {
 async fn a_pass_opens_only_the_lend_it_names_to_the_key_holding_it() {
     use svrngs_core::alpn::Alpn;
     use svrngs_core::pass::{Label, Pass};
-    use svrngs_node::iroh::{
-        ring_crypto_provider, EndpointAddr, EndpointBuilder, HttpBridge, SecretKey,
-    };
 
     let (pair, heads) = lending_heads().await;
     let (other, other_heads) = origins::head_origin().await;
@@ -926,19 +924,7 @@ async fn a_pass_opens_only_the_lend_it_names_to_the_key_holding_it() {
     let a = *pair.a.endpoint().id().as_bytes();
     let (shelf, elsewhere) = (Label::of(&a, "shelf"), Label::of(&a, "other"));
     let holder = signing(9);
-    let dialling = EndpointBuilder::empty()
-        .crypto_provider(ring_crypto_provider())
-        .secret_key(SecretKey::from_bytes(&holder.to_bytes()))
-        .bind()
-        .await
-        .unwrap();
-    let mut target = EndpointAddr::new(pair.a.endpoint().id());
-    for sock in loopback_sockets(pair.a.endpoint()) {
-        target = target.with_ip_addr(sock);
-    }
-    let bridge = HttpBridge::spawn_preferring(dialling, target, Alpn::Lend.bytes(), None)
-        .await
-        .unwrap();
+    let bridge = bridge_as(&holder, &pair.a, Alpn::Lend).await;
     let ask = |path: String, pass: Option<&Pass>| {
         let pass = pass.map_or(String::new(), |p| {
             format!("x-svrngs-pass: {}\r\n", p.encode())
@@ -1055,27 +1041,12 @@ async fn a_pass_opens_only_the_lend_it_names_to_the_key_holding_it() {
 async fn a_pass_s_app_is_told_and_a_client_s_own_stripped() {
     use svrngs_core::alpn::Alpn;
     use svrngs_core::pass::{Label, Pass};
-    use svrngs_node::iroh::{
-        ring_crypto_provider, EndpointAddr, EndpointBuilder, HttpBridge, SecretKey,
-    };
 
     let (pair, heads) = lending_heads().await;
     let a = *pair.a.endpoint().id().as_bytes();
     let (shelf, app) = (Label::of(&a, "shelf"), Label::of(&a, "picks"));
     let holder = signing(9);
-    let dialling = EndpointBuilder::empty()
-        .crypto_provider(ring_crypto_provider())
-        .secret_key(SecretKey::from_bytes(&holder.to_bytes()))
-        .bind()
-        .await
-        .unwrap();
-    let mut target = EndpointAddr::new(pair.a.endpoint().id());
-    for sock in loopback_sockets(pair.a.endpoint()) {
-        target = target.with_ip_addr(sock);
-    }
-    let bridge = HttpBridge::spawn_preferring(dialling, target, Alpn::Lend.bytes(), None)
-        .await
-        .unwrap();
+    let bridge = bridge_as(&holder, &pair.a, Alpn::Lend).await;
     let pass = Pass::sign(
         &signing(2),
         &actor_of(&holder),

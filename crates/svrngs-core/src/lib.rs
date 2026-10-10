@@ -568,24 +568,6 @@ impl RailAct {
             RailError::Rejected(if cleaned.is_empty() { raw } else { cleaned })
         })
     }
-
-    /// Every payload this act carries — one, or none.
-    ///
-    /// Public since the split (2026-09-04): the append door in
-    /// `commonwealth-rail` asserts on it, and a second walk of the two
-    /// variants there would be a second answer to "what does this act carry"
-    /// (ARCH §10.6).
-    pub fn payloads(&self) -> Option<&Payload> {
-        match self {
-            Self::Record { payload } => Some(payload),
-            Self::Correct { replacement, .. } => replacement.as_ref(),
-            Self::Seal
-            | Self::Admit { .. }
-            | Self::Remove { .. }
-            | Self::Invite { .. }
-            | Self::Synced { .. } => None,
-        }
-    }
 }
 
 /// The journal line's body: the act, plus the two fields that make it

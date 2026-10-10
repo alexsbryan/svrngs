@@ -162,6 +162,7 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
         upload: None,
         reads: Vec::new(),
         sign_in: None,
+        asks: None,
     };
     let lend = share::lend_of(&asked, share::listens, share::well_known_kind(asked.port))
         .expect("something listens there, and its kind is given");
@@ -306,6 +307,53 @@ fn share_takes_no_password_on_the_command_line() {
     assert_eq!(asked.sign_in.map(|p| p.get()), Some(9000));
     assert!(cli::parse(argv(&["share", "8096", "--sign-in", "0"])).is_err());
     assert!(cli::parse(argv(&["room", "x", "--sign-in", "9000"])).is_err());
+}
+
+/// **A lend that asks** (sup-2 (a)): `share --ask "<words>"` keeps its
+/// lender's words in the declaration, read back whole, and says them;
+/// words that are none, or a control character, are refused, and `--ask`
+/// is `share`'s alone. `unshare` takes it back. Planted, watched failing:
+/// the declaration not writing `asks`.
+#[test]
+fn a_lend_that_asks_keeps_its_lender_s_words() {
+    let argv = |rest: &[&str]| {
+        std::iter::once("svrngs".to_string())
+            .chain(rest.iter().map(|s| s.to_string()))
+            .collect::<Vec<_>>()
+    };
+    let words = "the app receives ranked suggestions; your history stays where it is";
+    let Ok(Verb::Share(asked)) = cli::parse(argv(&["share", "8096", "--ask", words])) else {
+        panic!("share parses what it asks");
+    };
+    assert_eq!(asked.asks.as_deref(), Some(words));
+    for bad in ["", "  ", "a\nb"] {
+        assert!(
+            cli::parse(argv(&["share", "8096", "--ask", bad])).is_err(),
+            "{bad:?}"
+        );
+    }
+    assert!(cli::parse(argv(&["link", "x", "--ask", words])).is_err());
+    let dir = tempfile::tempdir().unwrap();
+    let lend = share::lend_of(&asked, |_| true, Some(Kind::parse("taste").unwrap())).unwrap();
+    cli::share_lend(dir.path(), &lend, None).unwrap();
+    let name = LendName::parse("taste").unwrap();
+    let read = svrngs_node::lend::read(dir.path(), &name).unwrap().unwrap();
+    assert_eq!(
+        read.asks.as_deref(),
+        Some(words),
+        "the words come back whole"
+    );
+    let said = Said::Shared {
+        lend: read,
+        secret: false,
+        accounts: None,
+        running: false,
+    };
+    assert!(said.to_string().contains(words), "{said}");
+    cli::unshare(dir.path(), &name).unwrap();
+    assert!(svrngs_node::lend::read(dir.path(), &name)
+        .unwrap()
+        .is_none());
 }
 
 /// The program, its output read line by line as it comes.

@@ -123,22 +123,11 @@ async fn body(mut sock: tokio::net::TcpStream) -> String {
     String::from_utf8_lossy(&rest).into_owned()
 }
 
-/// **Each lend at an origin of its own** (the u5-2 row). Alex's
-/// `/v1/lends` answers each lend's origin, `http://<label>.localhost:<api
-/// port>/`. At Sam's, Alex reaches Sam's service through the dial to Sam's
-/// door, as Alex — Sam's door names Alex's key — with Sam's secret
-/// injected; at Alex's own, Alex's service through Alex's door's rules,
-/// Alex's secret injected and Alex counted. A WebSocket opened at Sam's
-/// origin is carried through both doors and echoes. No byte Alex receives
-/// holds either secret. A label naming a key that stands nowhere reaches
-/// nothing. Planted: this computer's own lend sent through a dial to
-/// itself (the label's lender not compared with this computer's key),
-/// which no member dials, so it does not answer.
-#[tokio::test]
-async fn each_lend_opens_at_an_origin_of_its_own_on_this_computer() {
-    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let alex = start(1, alex_dir.path()).await;
-    let sam = start(2, sam_dir.path()).await;
+/// Alex's computer and Sam's: Alex founds a group and lets Sam in, and
+/// Alex's knows where Sam's listens.
+async fn alex_lets_sam_in(alex_dir: &std::path::Path, sam_dir: &std::path::Path) -> (Node, Node) {
+    let alex = start(1, alex_dir).await;
+    let sam = start(2, sam_dir).await;
     let seed = Roster::new(
         [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
             .into_iter()
@@ -158,6 +147,24 @@ async fn each_lend_opens_at_an_origin_of_its_own_on_this_computer() {
     alex.rail().commit(NS, &admit).unwrap().unwrap();
     alex.transport()
         .add_known_peer(sam.endpoint().id(), loopback_sockets(sam.endpoint()));
+    (alex, sam)
+}
+
+/// **Each lend at an origin of its own** (the u5-2 row). Alex's
+/// `/v1/lends` answers each lend's origin, `http://<label>.localhost:<api
+/// port>/`. At Sam's, Alex reaches Sam's service through the dial to Sam's
+/// door, as Alex — Sam's door names Alex's key — with Sam's secret
+/// injected; at Alex's own, Alex's service through Alex's door's rules,
+/// Alex's secret injected and Alex counted. A WebSocket opened at Sam's
+/// origin is carried through both doors and echoes. No byte Alex receives
+/// holds either secret. A label naming a key that stands nowhere reaches
+/// nothing. Planted: this computer's own lend sent through a dial to
+/// itself (the label's lender not compared with this computer's key),
+/// which no member dials, so it does not answer.
+#[tokio::test]
+async fn each_lend_opens_at_an_origin_of_its_own_on_this_computer() {
+    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
     let (pad, pad_heads) = origins::head_origin().await;
     lends(sam_dir.path(), "pad", pad.port(), SAMS);
     let (live, live_heads) = origins::upgrade_origin().await;
@@ -434,27 +441,7 @@ async fn judged(
 #[tokio::test]
 async fn a_computer_s_origin_names_the_app_and_keeps_a_page_to_its_reads() {
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let alex = start(1, alex_dir.path()).await;
-    let sam = start(2, sam_dir.path()).await;
-    let seed = Roster::new(
-        [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
-            .into_iter()
-            .collect(),
-    );
-    for node in [&alex, &sam] {
-        node.rail().set_seed(NS, &seed).unwrap();
-    }
-    let admit = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("sam").unwrap(),
-            key: actor_of(&signing(2)),
-            invite: None,
-        },
-        on_behalf_of: None,
-    };
-    alex.rail().commit(NS, &admit).unwrap().unwrap();
-    alex.transport()
-        .add_known_peer(sam.endpoint().id(), loopback_sockets(sam.endpoint()));
+    let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
     let mut heads = std::collections::BTreeMap::new();
     for (dir, name, kind, reads) in [
         (alex_dir.path(), "night", "night", &["media"][..]),

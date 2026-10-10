@@ -72,6 +72,8 @@ pub struct Share {
     pub reads: Vec<Kind>,
     /// The port of its sign-in, if its lender names one (mwp-1).
     pub sign_in: Option<NonZeroU16>,
+    /// What an app receives of it, in its lender's words (sup-2).
+    pub asks: Option<String>,
 }
 
 /// Why a lend could not be decided, in a person's words.
@@ -168,6 +170,7 @@ pub fn lend_of(
         upload: share.upload,
         reads: share.reads.clone(),
         sign_in: share.sign_in,
+        asks: share.asks.clone(),
     })
 }
 

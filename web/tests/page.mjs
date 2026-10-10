@@ -24,12 +24,20 @@ const TYPES = {
 // What it was asked is in `server.asked`, each `<time> <method> <host><path>
 // <status>`: a lend's request that reaches the page's host is one the
 // lend's worker did not answer (u5-12).
+//
+// Each answer carries the headers the page host is told to send
+// (web/vercel.json, sup-3), each `source` read as a pattern of the path:
+// its `frame-ancestors` is the one guard a `<meta>` policy cannot be.
+const HOST = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8')).headers;
 export function serve(dir, { worker } = {}) {
   const root = resolve(dir);
   const asked = [];
   const server = http.createServer(async (req, res) => {
     const path = new URL(req.url, 'http://page').pathname;
     res.on('finish', () => asked.push(`${new Date().toISOString()} ${req.method} ${req.headers.host}${req.url} ${res.statusCode}`));
+    for (const { source, headers } of HOST) {
+      if (new RegExp(`^${source}$`).test(path)) for (const { key, value } of headers) res.setHeader(key, value);
+    }
     const file = join(root, normalize(path.endsWith('/') ? `${path}index.html` : path));
     if (!file.startsWith(root)) return res.writeHead(403).end();
     try {
@@ -93,6 +101,17 @@ export async function hold({ hex, token, person = 'bo' }) {
   const store = await import(new URL(`./store.js${new URL(app).search}`, app).href);
   const key = Uint8Array.from(hex.match(/../g), (h) => parseInt(h, 16));
   await store.keep({ id: 'held', name: 'house', person, token, key });
+}
+
+// The group's page at `origin`, opened by the person `args.key` names in
+// the group `args.token` joins, their store holding it (`hold`); its list
+// said, or its refusal.
+export async function held(page, origin, args) {
+  await page.goto(origin);
+  await page.evaluate(hold, { hex: args.key, token: args.token });
+  await page.goto('about:blank');
+  await page.goto(`${origin}#${args.token}`);
+  await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
 }
 
 // In the lend's page: play its `<video>`, or seek it to `at`, and answer

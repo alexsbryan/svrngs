@@ -12,7 +12,7 @@
 //! svrngs join <link> [--as N]              join a group by its link, run
 //! svrngs link <group> [--origin U]
 //!                                          a new link to a group, print it, run
-//! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--sign-in S]
+//! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--sign-in S] [--ask W]
 //!                                          lend a service on this computer
 //! svrngs unshare <name>                    stop lending it
 //! svrngs share --folder <dir> --both-ways keep a folder the same on every member's disk,
@@ -111,7 +111,7 @@ svrngs — keep what your group shares on your own computers.
       first 8 letters of its id when two groups share a name. --origin
       also prints it on a page address, from now on, as `new` does.
 
-  svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--sign-in <port>]
+  svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--sign-in <port>] [--ask <words>]
       Lend what runs on <port> on this computer to everyone in your groups:
       each reaches it through this computer, as themselves. It asks for the
       password the service takes on each request, if any; that stays on
@@ -126,7 +126,10 @@ svrngs — keep what your group shares on your own computers.
       --reads lets it open, as whoever opens it, what your groups lend of
       <kind>; say it again for more. --sign-in names the port of your
       program that signs each person in to it as themselves; then no
-      password is asked, and nobody types one.
+      password is asked, and nobody types one. --ask says, in your words,
+      what an app receives from it: then an app uses it only once the
+      person it acts for says yes, on their own home page, and stops when
+      they say stop.
 
   svrngs unshare <name>
       Stop lending <name>.
@@ -203,6 +206,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let mut sign_in = None;
     let mut folder = None;
     let mut both_ways = false;
+    let mut asks = None;
     let mut more = Vec::new();
     while let Some(arg) = it.next() {
         let mut value = |flag: &str| it.next().ok_or_else(|| format!("{flag} wants a value"));
@@ -262,6 +266,13 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             }
             "--folder" => folder = Some(value("--folder")?),
             "--both-ways" => both_ways = true,
+            "--ask" => {
+                let raw = value("--ask")?;
+                if raw.trim().is_empty() || raw.chars().any(char::is_control) {
+                    return Err("--ask wants words: what an app receives from it".into());
+                }
+                asks = Some(raw);
+            }
             "-h" | "--help" => return Ok(Verb::Help),
             other if other.starts_with('-') => return Err(format!("unknown argument `{other}`")),
             other if positional.is_none() => positional = Some(other.to_string()),
@@ -281,11 +292,12 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         || !refused.is_empty()
         || upload.is_some()
         || !reads.is_empty()
-        || sign_in.is_some())
+        || sign_in.is_some()
+        || asks.is_some())
         && verb != "share"
     {
         return Err(
-            "--name, --kind, --limit, --refuse, --upload, --reads and --sign-in are `share` flags"
+            "--name, --kind, --limit, --refuse, --upload, --reads, --sign-in and --ask are `share` flags"
                 .into(),
         );
     }
@@ -337,6 +349,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 upload,
                 reads,
                 sign_in,
+                asks,
             }))
         }
         "unshare" => {
@@ -774,6 +787,11 @@ impl std::fmt::Display for Said {
                     f,
                     "Apps on this computer reach your groups at http://{api}."
                 )?;
+                writeln!(
+                    f,
+                    "Your groups, and what apps use of them, open at http://svrngs.localhost:{}/.",
+                    api.port()
+                )?;
                 for lent in &lends.lent {
                     let (name, kind) = (&lent.offered.name, &lent.offered.kind);
                     let what = if name.as_str() == kind.as_str() {
@@ -828,6 +846,12 @@ impl std::fmt::Display for Said {
                 }
                 for path in &lend.refused {
                     writeln!(f, "They cannot open {}.", path.as_str())?;
+                }
+                if let Some(words) = &lend.asks {
+                    writeln!(
+                        f,
+                        "An app uses it only once the person it acts for says yes to: \"{words}\"."
+                    )?;
                 }
                 for kind in &lend.reads {
                     writeln!(

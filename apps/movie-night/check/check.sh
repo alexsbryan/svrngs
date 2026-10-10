@@ -184,7 +184,7 @@ up() {
 
   # The page, built and served on localhost, where every name answers.
   "$REPO/scripts/build-web.sh" --out "$R/site" >"$R/build.log"
-  node "$REPO/demo/runs/u4/2026-10-05/drive.mjs" serve "$R/site" >"$R/site.out" 2>&1 & echo $! >"$R/site.pid"
+  node "$REPO/web/tests/serve.mjs" "$R/site" >"$R/site.out" 2>&1 & echo $! >"$R/site.pid"
   local page; page="http://localhost:$(port_of "$R/site.out")/"
   say "the page: $page"
 

@@ -101,8 +101,8 @@ impl Folders {
     }
 
     /// The record of every group held here, read for its folder. A group
-    /// that cannot be listed or admitted is skipped, untraced: #109, and
-    /// #113 for the files a synced directory then deletes.
+    /// that cannot be listed or admitted is skipped, untraced: #113, and
+    /// #117 for the files a synced directory then deletes.
     fn admissions(&self) -> impl Iterator<Item = svrngs_core::Admission> + '_ {
         let namespaces = self.rail.namespaces().unwrap_or_default();
         namespaces

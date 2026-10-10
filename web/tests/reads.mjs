@@ -14,7 +14,7 @@
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
-import { hold, launch, serve } from './page.mjs';
+import { held, launch, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const server = await serve(args.site);
@@ -25,11 +25,7 @@ context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
 try {
   const page = await context.newPage();
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
-  await page.goto(origin);
-  await page.evaluate(hold, { hex: args.key, token: args.token });
-  await page.goto('about:blank');
-  await page.goto(`${origin}#${args.token}`);
-  await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
+  await held(page, origin, args);
   const said = await page.evaluate(() => document.getElementById('response').textContent);
   // At the lend's origin, its start page gone.
   const away = (url) => url.hostname.endsWith('.localhost') && !url.pathname.endsWith('/open.html');

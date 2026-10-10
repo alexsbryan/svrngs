@@ -258,37 +258,6 @@ impl RingJournal {
         ))
     }
 
-    /// A test's fixture, written through [`commit`](svrngs_core::commit) like
-    /// every other act: never compiled outside tests.
-    #[cfg(test)]
-    pub fn append(
-        &self,
-        act: RailAct,
-        signer: &dyn RingSigner,
-        roster: &Roster,
-        on_behalf_of: Option<&str>,
-        verifier: &dyn RingVerifier,
-    ) -> Result<Op<SignedOp>, RailError> {
-        let fixture = svrngs_core::tests_support::Fixture {
-            act,
-            on_behalf_of: on_behalf_of.map(str::to_string),
-        };
-        let author = svrngs_core::Author {
-            signer,
-            roster,
-            namespace: &self.namespace,
-            verifier,
-            now: now_unix(&self.namespace)?,
-        };
-        match svrngs_core::commit(self, &fixture, &author)? {
-            Ok(recorded) => Ok(recorded.lines()[0].clone()),
-            Err(_) => Err(RailError::NotInRoster {
-                actor: signer.actor(),
-                namespace: self.namespace.clone(),
-            }),
-        }
-    }
-
     /// What this node can honestly claim to need nothing below, per actor —
     /// the ~600-byte payload a peer needs in order to work out what to send
     /// back. See [`digest`] for why the mark is contiguous and why an op that
@@ -729,3 +698,7 @@ impl svrngs_core::Store for RingJournal {
         Ok(answer)
     }
 }
+
+#[cfg(test)]
+#[path = "journal_tests.rs"]
+mod tests;

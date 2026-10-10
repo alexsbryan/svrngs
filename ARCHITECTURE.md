@@ -69,8 +69,9 @@ about the journal describes this crate.
 
 **`crates/svrngs-node`**: a group's journal on disk — one append-only JSONL
 log per group under `<root>/rings/<ns>/` (`journal.rs`), the single-writer
-door that signs and the peer-ingest path that does not, and
-the checkpoint (`ring_checkpoint.rs`). The writer underneath is `oplog.rs`. It
+door that signs and the peer-ingest path that does not; upstream's checkpoint
+(`ring_checkpoint.rs`), which nothing of svrngs composed, went in lean-3.
+The writer underneath is `oplog.rs`. It
 is commonwealth-ai's `commonwealth-rail` and `oplog` at `e1a43bcd2`, forked the
 same way as the core; its one edit is gating `oplog.rs`'s test-only serde
 import. Upstream's shape stays: `RingRail` keeps its open journals in a map
@@ -102,13 +103,14 @@ Beside the journals, `svrngs-node` holds the dialling half of sync over iroh
 and the exchange budget); `alpn.rs` is `mesh-reach`'s `alpn.rs` with its one
 `ALPN`, then the enum it promised (`Alpn`, U2), moved whole into svrngs-core
 (u4-2) so a browser's page spells each protocol as the node does, and
-re-exported as `svrngs_node::alpn`; `guest.rs` and `guest/tunnel.rs` are `mesh-reach`'s guest dialer, the
+re-exported as `svrngs_node::alpn`; `guest.rs` is `mesh-reach`'s guest dialer, the
 relayed endpoint and the one loopback bridge (`HttpBridge`, `pump`); `iroh.rs`
 is `commonwealth-transport`'s client side (`IrohTransport`,
 `format_dial_string`, `preferred_bridge_port`). Its edits: no IP transport;
 one ALPN, so the per-class ALPNs (`RPC_ALPN`, `CLIENT_ALPN`, `GUEST_ALPN`,
 `OFFER_ALPN`, `MEDIA_ALPN`, `APP_ALPN`) and `alpn_for_class` go, and the guest
-tunnel dials `ALPN`; no bench relay pin (`relay_pin_active`,
+tunnel dialled `ALPN` until lean-3 deleted it (`guest/tunnel.rs`,
+`parse_dial_string`), nothing of svrngs reaching it; no bench relay pin (`relay_pin_active`,
 `build_relay_only_endpoint`); no `PeerTransport`, `PeerContact`,
 `PeerEndpoint` or `TrafficClass`, so the transport is a concrete type whose
 `base_url` takes a `Contact` (a key with optional dial hints) and its bridges
@@ -373,6 +375,34 @@ first 64 KiB. Such a page goes `no-store`, without `ETag` or
 `Last-Modified`, and a request accepting `text/html` from a person with a
 script goes without `If-None-Match` and `If-Modified-Since`. A lend with no
 sign-in is carried as before.
+
+A lend may ask (sup-2; DESIGN §3, "What an app gets"): `asks` in its
+declaration, its lender's words, set by `svrngs share --ask`, carried in
+`lend::Offered.asks` on every list and never read. `door/choices.rs` holds
+what its door keeps and decides: each person's `Choice { said: Yes | Stop,
+at }` per app at `<data dir>/choices/<lend>.json` (`lend::choices_path`),
+written through `Choices`, one task, read on each request for a lend that
+asks; `judge`, the one check in `lend_for` before the path check, carries a
+lend asking nobody and its own pages, and refuses `unasked` or `stopped`.
+`POST /choices/<lend>` on the members' protocol takes the dialler's person's
+`{app, said}`; with a pass, on either protocol, only `{said: "stop"}` (the
+type `Stopping`). `GET /choices/<lend>` answers the dialler's own. Every
+choice and sign-in answer is keyed by `door::PersonKey`, which only the
+door makes. `lend::withdraw` removes them with the lend.
+
+The home page (`home.rs`, sup-2), `http://svrngs.localhost:<api port>/`, is
+routed by its `Host` (`api::to_a_lend`) beside the lends' origins and
+served only at its exact host and port: a read only from its own origin, a
+typed address or a navigation, a write only from its own origin with its
+exact `Origin` (`only_itself`), every answer `default-src 'self';
+frame-ancestors 'none'`. It serves `home/index.html`, `home/home.js` and
+`home/home.css`, the record API's `/v1/groups`, `/v1/lends` and
+`/v1/rail/people` from the same routers, and `/choices`, kept by this
+computer's door for its own lends and dialled to the lender's otherwise
+(`origin::dialled`). A lend's page stops itself at its origin, `POST
+/svrngs-reads/<label>/svrngs-stop`, carried the same way with the pass its
+origin signs. `/svrngs-reads` gives each asked lend's `asks` and its `ask`
+address there.
 `Node::lends` asks every other computer's key standing in a group held, at once, and
 answers each lend with whose it is and its address on this computer's
 loopback, the dialler's bridge to its lender then `/lend/<name>/`; a
@@ -536,7 +566,21 @@ answer, and an address under `/svrngs-reads/<label>/` of this origin to
 ask it at, never the pass or its key; a navigation to such an address is
 sent to the group's page at `#open=<label>&at=<path>`, which signs that
 lend's pass and opens its `open.html?back=<path>` in its own place, so
-Back skips it (`opening`). With no pass in memory and
+Back skips it (`opening`). A lend that asks is told with its lender's
+words, `asks`, and `ask`, `<this origin>/svrngs-ask?lend=<label>&app=<this
+lend>`, a computer's shape (sup-3); navigated with `&back=<path>`, it
+sends the page to the group's page at `#ask=<lend>&app=<label>&at=<path>`
+(`asking`, through `onward`, as `opening` goes). There `app.js` asks "Let
+Sam's night use Ana's taste?" around the lender's words; Yes posts
+`{app, said: "yes"}` to the lender's door, `POST /choices/<label>`, on a
+dial from `endpoint` as the person; yes or not, it opens the app again at
+the path. Its "What apps use", when opened, asks each lender that asks
+`GET /choices/<label>` and gives each yes a Stop. A page stops its own
+app, `POST /svrngs-reads/<label>/svrngs-stop`, which the worker sends to
+that lend's door with the pass, `{said: "stop"}` (`stopping`). The page
+host is told to send `frame-ancestors 'none'` (`web/vercel.json`), which
+a `<meta>` policy cannot, and the tests' server sends `vercel.json`'s
+headers (`web/tests/page.mjs`). With no pass in memory and
 none it can read, it sends a navigation to `open.html?for=<label>`, which
 reads the pass and hands it over again. The shell's paths are relative, and
 the CSP admits a relay on 127.0.0.1. `scripts/build-web.sh` (upstream's
@@ -556,6 +600,10 @@ opened at its own origin, `svrngs new` deciding that itself for a page on
 browser binary, plays and seeks an H.264 film ffmpeg makes at its lend's
 origin, stops the worker through Chromium's DevTools protocol, and reads a
 second computer's lend, which the first reads, at its origin.
+`web/tests/ask.mjs` is the phone's ask (sup-3): a lent page asking, the
+group's page's Yes, "What apps use" and its Stop, the page's own stop,
+the group's page framed by the lent page, and the page's pass and holder
+key handed to the test, which posts a yes with them at the lender's door.
 
 **`apps/expenses/`**: the Expenses fold (`expenses.js`) and its tests, from E0,
 the bot at tag `e0-bot`. Its reducer (`init`, `reduce`) folds the acts

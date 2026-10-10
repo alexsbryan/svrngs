@@ -1,0 +1,12 @@
+2026-10-10T02:04:51.266Z taste: listening on 127.0.0.1:8696, /tmp/sup/taste
+2026-10-10T02:04:51.404Z GET / {"person":null,"key":null,"app":null}
+2026-10-10T02:05:07.533Z POST /rank {"person":"Ana","key":"52c19b2b7b1355c0f35d1da3fb5ca7fb0e8e8a5f3b7d8a2f5dfdf72f7c9822d0","app":"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n"}
+2026-10-10T02:05:07.538Z ranked 4 films for 9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n
+2026-10-10T02:05:13.905Z POST /rank {"person":"Ana","key":"52c19b2b7b1355c0f35d1da3fb5ca7fb0e8e8a5f3b7d8a2f5dfdf72f7c9822d0","app":"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n"}
+2026-10-10T02:05:13.906Z ranked 4 films for 9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n
+2026-10-10T02:05:26.798Z POST /rank {"person":"Alex","key":"e0570c421f305333871c8693ea55240328c3de70c9f9d6cdaf74830904b7df43","app":"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n"}
+2026-10-10T02:05:26.801Z refused not-yours: {"person":"Alex","key":"e0570c421f305333871c8693ea55240328c3de70c9f9d6cdaf74830904b7df43"}
+2026-10-10T02:05:42.365Z POST /rank {"person":"Ana","key":"52c19b2b7b1355c0f35d1da3fb5ca7fb0e8e8a5f3b7d8a2f5dfdf72f7c9822d0","app":"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n"}
+2026-10-10T02:05:42.366Z ranked 4 films for 9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n
+2026-10-10T02:06:01.362Z POST /rank {"person":"Ana","key":"52c19b2b7b1355c0f35d1da3fb5ca7fb0e8e8a5f3b7d8a2f5dfdf72f7c9822d0","app":"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n"}
+2026-10-10T02:06:01.364Z ranked 4 films for 9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n

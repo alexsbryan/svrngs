@@ -180,9 +180,6 @@ fn lend_signed(pair: &Pair, name: &str, port: u16, sign_in: u16) {
 /// protocol with cy's key, as the pass test dials (`main.rs`).
 async fn cy_dials_a(pair: &Pair) -> svrngs_node::iroh::HttpBridge {
     use svrngs_core::alpn::Alpn;
-    use svrngs_node::iroh::{
-        ring_crypto_provider, EndpointAddr, EndpointBuilder, HttpBridge, SecretKey,
-    };
     let admit = svrngs_core::tests_support::Fixture {
         act: RailAct::Admit {
             person: Person::parse("cy").unwrap(),
@@ -192,19 +189,7 @@ async fn cy_dials_a(pair: &Pair) -> svrngs_node::iroh::HttpBridge {
         on_behalf_of: None,
     };
     pair.a.rail().commit(NS, &admit).unwrap().unwrap();
-    let dialling = EndpointBuilder::empty()
-        .crypto_provider(ring_crypto_provider())
-        .secret_key(SecretKey::from_bytes(&signing(3).to_bytes()))
-        .bind()
-        .await
-        .unwrap();
-    let mut target = EndpointAddr::new(pair.a.endpoint().id());
-    for sock in loopback_sockets(pair.a.endpoint()) {
-        target = target.with_ip_addr(sock);
-    }
-    HttpBridge::spawn_preferring(dialling, target, Alpn::Member.bytes(), None)
-        .await
-        .unwrap()
+    bridge_as(&signing(3), &pair.a, Alpn::Member).await
 }
 
 /// A chunked body's bytes, its framing taken off, so a secret cut across

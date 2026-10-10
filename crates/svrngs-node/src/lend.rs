@@ -8,6 +8,7 @@
 //!
 //! ```text
 //!   <data dir>/lends/<lend>.json                       what the door may do
+//!   <data dir>/choices/<lend>.json                     each person's yes and stop
 //!   <data dir>/secrets/lends/<lend>/<header>   0600    the lender's secret
 //! ```
 //!
@@ -236,6 +237,11 @@ pub struct Lend {
     /// in (mwp-1, `svrngs share --sign-in`; `crate::door::sign_in`): a lend
     /// declares it or a secret, never both.
     pub sign_in: Option<NonZeroU16>,
+    /// What an app receives of it, in its lender's words (sup-2, `svrngs
+    /// share --ask`): a lend that asks lets an app in only on its person's
+    /// yes ([`crate::door::choices`]). svrngs carries the words to every
+    /// list and never reads them.
+    pub asks: Option<String>,
 }
 
 impl Lend {
@@ -267,6 +273,8 @@ struct LendFile {
     reads: Vec<Kind>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     sign_in: Option<NonZeroU16>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    asks: Option<String>,
 }
 
 /// A lend as its lender's computer answers a member who asks what it
@@ -290,6 +298,11 @@ pub struct Offered {
     /// The kinds of lend it reads (u5-2): none from a computer before u5-2.
     #[serde(default)]
     pub reads: Vec<Kind>,
+    /// Its lender's words for what an app receives, when it asks (sup-2):
+    /// none from a computer before sup-2, which asks nobody, and absent
+    /// from a list when it asks nobody.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub asks: Option<String>,
 }
 
 impl Offered {
@@ -334,6 +347,12 @@ pub fn lends_dir(data_dir: &Path) -> PathBuf {
     data_dir.join("lends")
 }
 
+/// Where the lend `name`'s door keeps each person's choices
+/// ([`crate::door::choices`]), beside its declaration.
+pub fn choices_path(data_dir: &Path, name: &LendName) -> PathBuf {
+    data_dir.join("choices").join(format!("{name}.json"))
+}
+
 /// Where the lend `name` keeps its secret: [`crate::declared`]'s store, one
 /// directory per lend, apart from the declaration.
 pub fn secret_dir(data_dir: &Path, name: &LendName) -> PathBuf {
@@ -368,6 +387,7 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         upload: file.upload,
         reads: file.reads,
         sign_in: file.sign_in,
+        asks: file.asks,
     }))
 }
 
@@ -434,6 +454,7 @@ pub fn declare(
         upload: lend.upload,
         reads: lend.reads.clone(),
         sign_in: lend.sign_in,
+        asks: lend.asks.clone(),
     };
     let text = serde_json::to_string_pretty(&file).expect("a declaration always serializes");
     let path = dir.join(format!("{}.json", lend.name));
@@ -442,12 +463,13 @@ pub fn declare(
     std::fs::rename(&partial, &path).map_err(unwritable(&path))?;
     tracing::debug!(target: "lend", lend = %lend.name, port = lend.port, kind = %lend.kind,
         limit = lend.limit, refused = lend.refused.len(), upload = ?lend.upload.map(Upload::bps),
-        secret = secret.is_some(), sign_in = ?lend.sign_in,
+        secret = secret.is_some(), sign_in = ?lend.sign_in, asks = lend.asks.is_some(),
         "lend: declared");
     Ok(())
 }
 
-/// Take back the lend `name`: its declaration, then its secret. `false`
+/// Take back the lend `name`: its declaration, then its choices, then its
+/// secret, so a lend shared again asks again. `false`
 /// when this computer lends nothing by that name.
 pub fn withdraw(data_dir: &Path, name: &LendName) -> Result<bool, LendError> {
     let path = lends_dir(data_dir).join(format!("{name}.json"));
@@ -456,6 +478,16 @@ pub fn withdraw(data_dir: &Path, name: &LendName) -> Result<bool, LendError> {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => false,
         Err(source) => return Err(LendError::Unwritable { path, source }),
     };
+    let choices = choices_path(data_dir, name);
+    match std::fs::remove_file(&choices) {
+        Err(e) if e.kind() != std::io::ErrorKind::NotFound => {
+            return Err(LendError::Unwritable {
+                path: choices,
+                source: e,
+            })
+        }
+        _ => {}
+    }
     let secrets = secret_dir(data_dir, name);
     match std::fs::remove_dir_all(&secrets) {
         Ok(()) => {}

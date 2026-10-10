@@ -7,7 +7,7 @@
 #
 # Design of record: svrn-docs rings/current/SCOPED_USE_MADE_PRODUCTION.md
 # (23c94f3), its companion ONE_PERSON_MANY_DEVICES.md (deferred). The
-# spike's data: demo/runs/su/2026-10-09/. Budget 15,200 (aaecbdb).
+# spike's data: demo/runs/su/2026-10-09/. Budget 15,350 (aaecbdb; raised after sup-2).
 label = "svrngs-sup"
 session_timeout = 5400
 audit_every = 4
