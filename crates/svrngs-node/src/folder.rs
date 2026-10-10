@@ -31,7 +31,9 @@ use iroh_blobs::provider::events::{
 };
 use iroh_blobs::store::fs::FsStore;
 use iroh_blobs::{BlobFormat, BlobsProtocol, Hash};
-use svrngs_core::{ContentHash, ShareFolder, SharedFile, SharedFolder};
+use std::convert::Infallible;
+
+use svrngs_core::{Command, ContentHash, Recorded, ShareFolder, SharedFile, SharedFolder};
 use tokio::sync::{watch, Notify};
 
 use crate::iroh::{actor_key, Alpn, Endpoint};
@@ -144,10 +146,31 @@ impl Folders {
     }
 
     /// Share `dir`: each file under it into the store by reference, and one
-    /// act naming them in every group held here. A link is not followed,
-    /// since it may reach outside the folder.
+    /// act naming them in every group held here.
     pub async fn share(&self, dir: &Path) -> Result<ShareFolder, FolderError> {
         let name = dir.file_name().unwrap_or_default().to_string_lossy();
+        let mut files = Vec::new();
+        for (rel, path, meta) in self.walk(dir)? {
+            let hash = self.take(&path).await?;
+            tracing::debug!(target: "folder", path = %rel, %hash, size = meta.len(), "folder: a file taken by reference");
+            files.push(SharedFile {
+                path: rel,
+                size: meta.len(),
+                hash: ContentHash::from_bytes(hash.into()),
+            });
+        }
+        files.sort();
+        let act = ShareFolder {
+            name: name.into_owned(),
+            files,
+        };
+        self.write(&act, &act.name, act.files.len()).await?;
+        Ok(act)
+    }
+
+    /// Every file under `dir`, by its path under it. A link is not
+    /// followed, since it may reach outside the folder.
+    fn walk(&self, dir: &Path) -> Result<Vec<(String, PathBuf, std::fs::Metadata)>, FolderError> {
         let mut files = Vec::new();
         let mut walk = vec![dir.to_path_buf()];
         while let Some(at) = walk.pop() {
@@ -164,46 +187,54 @@ impl Folders {
                 } else if !meta.is_file() {
                     tracing::debug!(target: "folder", path = %path.display(), "folder: not shared — a link, which may reach outside the folder");
                 } else {
-                    let options = AddPathOptions {
-                        path: path.clone(),
-                        mode: ImportMode::TryReference,
-                        format: BlobFormat::Raw,
-                    };
-                    let tag = self.store.add_path_with_opts(options).with_tag().await;
-                    let tag = tag.map_err(|e| FolderError::Store(path.clone(), e.to_string()))?;
                     let rel = path.strip_prefix(dir).unwrap_or(&path).to_string_lossy();
-                    tracing::debug!(target: "folder", path = %rel, hash = %tag.hash, size = meta.len(), "folder: a file taken by reference");
-                    files.push(SharedFile {
-                        path: rel.into_owned(),
-                        size: meta.len(),
-                        hash: ContentHash::from_bytes(tag.hash.into()),
-                    });
+                    files.push((rel.into_owned(), path, meta));
                 }
             }
         }
-        files.sort();
-        let name = name.into_owned();
-        self.write(ShareFolder { name, files }).await
+        Ok(files)
+    }
+
+    /// The file at `path` into the store by reference, by its hash.
+    async fn take(&self, path: &Path) -> Result<Hash, FolderError> {
+        let options = AddPathOptions {
+            path: path.to_path_buf(),
+            mode: ImportMode::TryReference,
+            format: BlobFormat::Raw,
+        };
+        let tag = self.store.add_path_with_opts(options).with_tag().await;
+        let tag = tag.map_err(|e| FolderError::Store(path.to_path_buf(), e.to_string()))?;
+        Ok(tag.hash)
     }
 
     /// Stop sharing the folder `name`: an act naming no file.
     pub async fn unshare(&self, name: &str) -> Result<ShareFolder, FolderError> {
-        self.write(ShareFolder {
+        let act = ShareFolder {
             name: name.into(),
             files: Vec::new(),
-        })
-        .await
+        };
+        self.write(&act, name, 0).await?;
+        Ok(act)
     }
 
-    async fn write(&self, act: ShareFolder) -> Result<ShareFolder, FolderError> {
+    /// `act` written in every group held here where this computer stands,
+    /// and the round nudged; what it recorded in each.
+    async fn write<C: Command<Refusal = Infallible>>(
+        &self,
+        act: &C,
+        folder: &str,
+        files: usize,
+    ) -> Result<Vec<Recorded>, FolderError> {
+        let mut recorded = Vec::new();
         for ns in self
             .rail
             .namespaces()
             .map_err(|e| FolderError::Record(e.to_string()))?
         {
-            match self.rail.commit(&ns, &act) {
-                Ok(Ok(_)) => {
-                    tracing::info!(target: "folder", namespace = %ns, folder = %act.name, files = act.files.len(), "folder: written to the record")
+            match self.rail.commit(&ns, act) {
+                Ok(Ok(done)) => {
+                    tracing::info!(target: "folder", namespace = %ns, folder, files, "folder: written to the record");
+                    recorded.push(done);
                 }
                 Ok(Err(why)) => {
                     tracing::debug!(target: "folder", namespace = %ns, ?why, "folder: not written — this computer does not stand there")
@@ -212,7 +243,7 @@ impl Folders {
             }
         }
         self.nudge.notify_one();
-        Ok(act)
+        Ok(recorded)
     }
 
     /// Whether a standing folder of this computer's names `hash`.
