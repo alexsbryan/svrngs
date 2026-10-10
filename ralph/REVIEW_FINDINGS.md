@@ -4739,6 +4739,14 @@ conformance.mjs call neither `bridge_as` nor `held`. Run alone at a load of
 passed, 227.51 s). One run, not a rate; a 64 MiB upload's 60 s window is
 close to what this host gives under load.
 
+Run again at 45b2ce3 (`REVIEW-audit-sup-auto-2-3.await.log`, ended 23:09
+local), it failed one other route of the same step: wildcard Chromium Sam's
+"seeks back to back", "the last played again in 6580 ms", at a load of
+93.79 then 50.59 on 12 cores (the failure's `load` lines), the upload now
+passed. That is the miss chk-1 (e31bdce, 23:13) makes could-not-judge past
+3 a core (conformance.rs:252-264); the run began before it landed, so it
+ran without it. check.sh is run again at HEAD.
+
 ### Findings
 
 | # | principle | path:line | fixed in | finding |
