@@ -73,7 +73,7 @@ class Group:
         self.tag, self.n, self.path, self.relay = tag, n, path, relay
         self.root = W / tag; subprocess.run(["rm", "-rf", str(self.root)])
         for i in range(n): self.data(i).mkdir(parents=True); self.disk(i).mkdir(parents=True)
-        self.addrs = {}
+        self.addrs, self.shared = {}, {}
 
     def data(self, i): return self.root / "data" / f"p{i}"
     def disk(self, i): return self.root / "disk" / f"p{i}" / "Shared"
@@ -98,6 +98,7 @@ class Group:
         wait(lambda: all("PERF told" in (self.data(i) / "out").read_text() for i in self.addrs), 30)
 
     def share(self, i):
+        self.shared[i] = time.time()
         body = json.dumps({"bothways": str(self.disk(i))}).encode()
         req = urllib.request.Request(f"http://{self.addrs[i]['api']}/v1/folders", data=body,
                                      headers={"content-type": "application/json"})
@@ -314,9 +315,10 @@ def folder(n_files, path, name, join_bound):
         p = g.disk(0) / f"f{k // 1000:03}" / f"{k:06}.bin"; p.parent.mkdir(parents=True, exist_ok=True)
         p.write_bytes(os.urandom(KiB))
     before = host(); t0 = time.time(); g.start(members=[0])
-    taken = wait(lambda: any(m.startswith("synced: a step") and int(f.get("sent", 0)) >= n_files
-                             for _, m, f in g.lines(0)), 3600, every=2)
-    record(f"{name}-taken", taken and taken * 1000, None, None, before, unit="ms", path=path,
+    sent = lambda: next((t for t, m, f in g.lines(0) if m.startswith("synced: a step")
+                         and int(f.get("sent", 0)) >= n_files), None)
+    wait(sent, 3600, every=2); at = sent()
+    record(f"{name}-taken", at and round((at - g.shared[0]) * 1000, 1), None, None, before, unit="ms", path=path,
            steps=step_split(g, 0, t0))
     time.sleep(10); before = host(); c0 = g.cpu_s(0); time.sleep(60); idle = (g.cpu_s(0) - c0) / 60
     record(f"{name}-idle", round(idle * 100, 2), "under 2% of a core", lambda v: v < 2, before, unit="% of a core",
