@@ -39,7 +39,8 @@
 //             sleep, then Tonight's Picks is opened (bar 6)
 //
 //   node su.mjs '{"tag", "link", "steps": [...], "people": [{"name", "user", "engine", "home"?}]}'
-//   env: DUMP; OWN (adds the last key admitted to Ana's owners); SLEEP; AFTER_STOP
+//   env: DUMP; OWN (adds the last key admitted to Ana's owners); SLEEP; AFTER_STOP;
+//   SU_DEBUG (every console line a page writes kept, not only its errors)
 //
 // Prints one JSON line. A step that did not happen within its time is null
 // with what the page showed: never a number guessed.
@@ -65,7 +66,7 @@ async function browser(p) {
   person.tally = record(context, person.page, p.user, { DUMP, T0 });
   const page = person.page;
   page.on('pageerror', (e) => person.logs.push(`pageerror: ${e}`));
-  page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') person.logs.push(`console.${m.type()}: ${m.text().slice(0, 240)}`); });
+  page.on('console', (m) => { if (process.env.SU_DEBUG || m.type() === 'error' || m.type() === 'warning') person.logs.push(`console.${m.type()}: ${m.text().slice(0, 240)}`); });
   page.on('requestfailed', (r) => person.logs.push(`failed: ${r.url().slice(0, 120)}: ${r.failure()?.errorText}`));
   page.on('response', (r) => { if (r.status() >= 400) person.logs.push(`http ${r.status()} ${r.request().method()} ${r.url().slice(0, 140)}`); });
   person.browser = context.browser()?.version() ?? null;
@@ -241,7 +242,7 @@ async function other(ana) {
   const asked = await ana.page.waitForFunction(() => document.getElementById('out').dataset.state, null, { timeout: 120_000 }).then(() => true, () => false);
   const read = () => ana.page.evaluate(() => {
     const o = document.getElementById('out');
-    return { state: o.dataset.state ?? null, refused: o.dataset.refused || null, yes: o.dataset.yes ? JSON.parse(o.dataset.yes) : null, text: o.textContent };
+    return { state: o.dataset.state ?? null, refused: o.dataset.refused || null, yes: o.dataset.yes ? JSON.parse(o.dataset.yes) : null, reached: o.dataset.reached ?? null, text: o.textContent };
   });
   ana.other = { opened_ms: opened, asked_ms: asked ? Date.now() - t0 : null, at: now(), ask: await read() };
   await ana.page.click('#unasked');

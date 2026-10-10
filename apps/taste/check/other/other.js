@@ -32,6 +32,11 @@ const kept = (own) => new Promise((done) => {
   };
 });
 
+// Each stage of the yes reached, kept on #out, so one that hangs is named.
+// The runtime's trace, to this page's console.
+globalThis.__trace = (l) => console.debug(l);
+const reached = (what) => (out.dataset.reached = `${out.dataset.reached ?? ''} ${what}`.trim());
+
 async function yes() {
   if (!t?.ask) return { how: 'none', body: 'no taste that asks is read here' };
   const ask = new URL(t.ask);
@@ -44,10 +49,20 @@ async function yes() {
       return { how: 'the home page', status: res.type === 'opaque' ? 'opaque' : res.status };
     }
     const k = await kept(location.hostname.split('.')[0]);
-    const { default: init, holder_endpoint } = await import('/wasm/svrngs_web.js');
-    await init({ module_or_path: '/wasm/svrngs_web_bg.wasm' });
+    reached('kept');
+    // The page's runtime, which the lend's worker leaves to the network
+    // when asked with a version (web/lend.js `SHELL`).
+    const { default: init, holder_endpoint } = await import('/wasm/svrngs_web.js?v=other');
+    await init({ module_or_path: '/wasm/svrngs_web_bg.wasm?v=other' });
+    reached('runtime');
     const holder = Uint8Array.from(k.holder.match(/../g), (h) => parseInt(h, 16));
-    const door = await (await holder_endpoint(holder, k.relay)).dial_lend(k.lends.find((l) => l.label === lend).key);
+    // The lend's worker holds an endpoint of the same key on the relay;
+    // one that does not come online beside it within 30 s is said so.
+    const late = new Promise((_, no) => setTimeout(() => no(new Error('the holder\'s endpoint did not come online within 30 s')), 30_000));
+    const endpoint = await Promise.race([holder_endpoint(holder, k.relay), late]);
+    reached('online');
+    const door = await Promise.race([endpoint.dial_lend(k.lends.find((l) => l.label === lend).key), late]);
+    reached('dialled');
     const body = new TextEncoder().encode(JSON.stringify({ app, said: 'yes' }));
     const headers = [['x-svrngs-pass', k.pass], ['content-type', 'application/json'], ['content-length', String(body.length)]];
     const res = await door.fetch('POST', `/choices/${lend}`, headers, new Blob([body]).stream());

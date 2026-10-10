@@ -9,13 +9,16 @@ usage: python3 judge.py --line <run.json>    one line about one run
        python3 judge.py <out>               every bar; writes <out>/verdicts.json
 """
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 ENGINES = ("chromium", "webkit")
-QUESTION = "Let Sam's tonights-picks use Ana's taste?"
+# svrngs's question, as each page words it: the home page "Let Sam's
+# tonights-picks use Ana's taste?", the group's page with the app's kind.
+QUESTION = re.compile(r"Let Sam.s tonights-picks( \(movie-night\))? use Ana.s taste\?")
 ASK = "the app receives ranked film suggestions; your viewing history stays where it is stored"
 
 
@@ -103,7 +106,7 @@ def ranked(r, expected):
 def asked_once(said, expected):
     """Invited, asked svrngs's question in the lender's words, said yes, ranked."""
     q = said.get("question") or "" if said else ""
-    return bool(said) and said.get("asked") and QUESTION in q and ASK in q and ranked(said.get("after"), expected)
+    return bool(said) and said.get("asked") and bool(QUESTION.search(q)) and ASK in q and ranked(said.get("after"), expected)
 
 
 def unranked(r, n):
@@ -180,10 +183,12 @@ def judge_run(kind, engine, run, logs, expected):
         home_refused = has(door, "home:", "path=/choices", "answers=false", since=s0, until=s1)
         if kind == "computer":
             said_refused = y.get("how") == "the home page" and bool(home_refused)
+        elif y.get("how") == "failed":
+            said_refused = None  # the yes never reached the door: not judged, said
         else:
             said_refused = y.get("how") == "the door, as the holder" and y.get("status") == 403 and y.get("refused") == "closed"
         again_refused = get(ot, "unasked", "refused") == "unasked" or (kind == "computer" and get(ot, "unasked", "state") == "unasked null")
-        v["the unasked yes"] = verdict(said_refused and again_refused,
+        v["the unasked yes"] = verdict(None if said_refused is None else said_refused and again_refused,
                                        "the other app's own yes refused by svrngs — at the home page on a computer, at the door "
                                        "on a phone — and its next ask refused `unasked`",
                                        yes=y, home_page=home_refused[:2], then=get(ot, "unasked"))
@@ -273,7 +278,8 @@ def main(out):
                                    "an ask after the stop answered, the stop's record put back to the yes",
                                    planted=get(s, "planted"), again=get(s, "again", "taste"))
     p = load(out / "plant-empty.json")
-    e = alex(p)
+    # The first refusal Alex meets is shown, before any yes he could say.
+    e = alex(p) or get(p, "people", "alex-computer-chromium", "picks", "opened")
     plants["empty"] = verdict(None if not e else not (e.get("films") == [] and "No picks" in (get(e, "taste", "text") or "")),
                               "a refusal shown as an empty ranking", alex=get(e, "taste"), films=get(e, "films"))
     v["plants (each should be failed)"] = plants
