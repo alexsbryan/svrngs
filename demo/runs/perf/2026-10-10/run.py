@@ -206,6 +206,7 @@ def phases(g, writer, member, path, digest, t_write):
             "dial_ms": [float(f["dial_ms"]) for f in fetches],
             "first_ms": [float(f["first_ms"]) for f in fetches if f.get("first_ms", "None") != "None"],
             "last_ms": [float(f["last_ms"]) for f in fetches],
+            "gets_ms": round(sum(float(f["last_ms"]) for f in fetches), 1) if fetches else None,
             "paths": sorted({f"{'relay' if f.get('relayed') == 'Some(true)' else 'direct' if f.get('relayed') == 'Some(false)' else 'none'} {f.get('addr', '')}" for f in fetches}),
             "payload": sum(int(f.get("payload", 0)) for f in got)}
 
@@ -223,7 +224,8 @@ def shares(ph):
     return {"median_ms": m, "share": {k: round(v / total, 3) if v and total else None for k, v in m.items()},
             "paths": sorted({x for p in ph for x in p["paths"]}),
             "dial_ms": med([x for p in ph for x in p["dial_ms"]]), "first_ms": med([x for p in ph for x in p["first_ms"]]),
-            "last_ms": med([x for p in ph for x in p["last_ms"]]), "changes": len(ph)}
+            "last_ms": med([x for p in ph for x in p["last_ms"]]), "gets_ms": med([p["gets_ms"] for p in ph]),
+            "changes": len(ph)}
 
 
 def step_split(g, i, since):
@@ -415,6 +417,8 @@ def main():
     finally:
         for k in list(procs): p = procs.pop(k); p.send_signal(signal.SIGTERM); p.wait()
         (OUT[0] / "summary.json").write_text(json.dumps(summary, indent=1))
+        for log in OUT[0].glob("*.log"):
+            if log.stat().st_size > 5 * MiB: subprocess.run(["gzip", "-9", str(log)])
         say("end", host=host(), df=subprocess.run(["df", "-k", str(REPO)], capture_output=True, text=True).stdout)
         subprocess.run(["rm", "-rf", str(W)])
 
