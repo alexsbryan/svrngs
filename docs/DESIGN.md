@@ -129,6 +129,9 @@ paths it refuses, how many people may use it at once.
   computer's — carries `x-svrngs-refused`, naming which (`away`, `pass`,
   `closed`, `unlent`, `path`, `full`, `sign-in`, `fault`, `unasked`,
   `stopped`), and a lend's own answer never does (mnp-1, `door::LendRefusal`);
+  on a computer a page asking another lend's origin reads it only if
+  that answer lets its origin, and svrngs's own do not yet (sup-4,
+  `demo/runs/sup/2026-10-10/`, follow-up 1);
 - for a lend that asks (`svrngs share --ask "<what an app receives>"`, the
   lender's words, carried in `asks` on every list and never read by
   svrngs), only the app its person said yes to: the lend's door keeps each
@@ -415,8 +418,18 @@ is U5's inventory (§8).
    the taste's 98 lines decided the rest: that the asker is its owner on
    any of her phones, that she said yes to this app, that she has not
    stopped it; each one line from leaking, as its plants showed, and an
-   app able to say her yes itself. Each is a row of scoped use made
-   production (§8). What `reads` did not give, Movie Night found: which
+   app able to say her yes itself. Each became a row of scoped use made
+   production (§8), and run again on them (sup-4,
+   `demo/runs/sup/2026-10-10/`) the taste decides only that the asker is
+   its owner and its own refusals' words, 11 lines, the app, the yes and
+   the stop the door's; every bar passed in its spirit on Ana's computer
+   from her home page, in Chromium and WebKit, and on her phones, and the
+   other app's own yes was refused by the home page's rule. On a computer
+   a page asking another lend's origin by `fetch` reads none of svrngs's
+   own answers there, which carry no access-control header, so Tonight's
+   Picks could read neither `unasked` nor `stopped` and said it could not
+   read whether the taste lets it rank (that run's first follow-up). What
+   `reads` did not give, Movie Night found: which
    lends those are, but in svrngs's own store, which the page read whole
    with the pass in it (28 lines; the handoff named no lender and kept
    back who did not answer); a lend opened at a path on a phone that
@@ -1577,9 +1590,16 @@ person's yes and stop kept by the lend's door, said on a page no app
 runs at — on a computer the home page, `svrngs.localhost` (landed,
 sup-2; §3, "What an app gets"), and on a phone the group's page (landed,
 sup-3) — never by the app; then the spike run again,
-on a computer first; after a row that keeps an asleep computer from
-holding anyone's answer (`demo/runs/mnp/2026-10-09/README.md`, "What no
-prediction named" 1 and 2). The fourth, a lend its lender's person
+on a computer first (landed, sup-4: the taste's enforcing 46 lines to 11,
+Tonight's Picks' plumbing 39 to 16, every bar passed in its spirit on a
+computer from its home page in Chromium and WebKit and on the phones, the
+unasked yes refused by svrngs on a computer, `demo/runs/sup/2026-10-10/`;
+its three follow-ups there, the operator's to queue: svrngs's answers at
+a lend's origin readable by the page that reads it, one wording of
+svrngs's question, a stop address beside `ask`); after a row that keeps an
+asleep computer from holding anyone's answer
+(`demo/runs/mnp/2026-10-09/README.md`, "What no prediction named" 1 and
+2). The fourth, a lend its lender's person
 alone reaches on any device of theirs, waits on another device for the
 same person (§9; `rings/current/ONE_PERSON_MANY_DEVICES.md`, deferred);
 group folders (§3, call 7 of
@@ -1614,7 +1634,7 @@ by the north star's tests.
 | exporting a group as one document (upstream's checkpoint route), checking the asker is in that group | a group refounds from a copy, or someone asks to export one |
 | the endpoint's self-heal (upstream's `self_heal.rs`, `iroh_watchdog.rs`) | a node's endpoint wedges in a recorded run |
 | skipping a round's members known offline. Dialling them at once landed (asleep-1, `ring_sync::run_one_round`), so an asleep one holds only its own dial; the round still ends when that dial gives up, about 10 s, and a door's ask begun meanwhile waits for the next round (§3, "Joining") | a round's measured time nears its interval, or a newcomer is refused while a round waits on an asleep computer, counted |
-| another device for the same person. Scoped use asked (`demo/runs/su/2026-10-09/` §9): its run listed each of Ana's phones' keys in her taste's owners by hand (`apps/taste/check/check.sh:137`), each phone joining as a member of its own, and a lend its lender's person alone reaches needs it (§8, "Then") | that row is queued |
+| another device for the same person. Scoped use asked (`demo/runs/su/2026-10-09/` §9): its run listed each of Ana's phones' keys in her taste's owners by hand (`apps/taste/check/check.sh:173`, `OWN`; `:137` at `305efde`), each phone joining as a member of its own, and a lend its lender's person alone reaches needs it (§8, "Then"); made production, Ana was asked once on her computer and once on each phone, and a stop on one phone left the other's yes, each choice its own key's (sup-4, `demo/runs/sup/2026-10-10/`) | that row is queued |
 | the wire published for a second implementation | someone sets out to write one |
 | local discovery on one WiFi | Apple's multicast entitlement is granted |
 | any member's node redeeming a link, once its `Invite` has synced | a newcomer's link fails because its issuer's computer was asleep, counted |
