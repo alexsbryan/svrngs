@@ -858,7 +858,7 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,000 lines of code and the
-repository under 15,200, tests and `apps/` apart (`scripts/lean_check.py`);
+repository under 15,750 on the branch `folders`, tests and `apps/` apart (`scripts/lean_check.py`);
 a raise is the operator's, with the reason in the commit. `svrngs-core` stands
 at 2,359: the operator raised its ceiling from 2,500 on 2026-10-05, for what U4
 to U7 still add to the core, since REVIEW-audit-u3-auto-2 found no duplication
@@ -890,6 +890,11 @@ room (operator, 2026-10-09; svrn-docs `rings/current/ONE_PERSON_MANY_DEVICES.md`
 §6): upstream's guest attestation and roster warrant, which no code of
 svrngs used (`attest.rs`, `introduce.rs`, `Roster.vouches`), deleted —
 svrngs-core from 2,957 to 2,628, the repository from 14,644 to 14,315.
+And on the branch `folders` alone, from 15,200, at 15,163, on 2026-10-09,
+for the mesh-Dropbox spike (`ralph/next/sync/`): about 500 lines for
+iroh-docs' wiring, the folder's watcher and the apply of others' changes
+with their conflicts, the gate that asks the record, and `svrngs sync`, by
+the seat's estimate. Main's budget is its own until the operator merges.
 `ARCHITECTURE.md` maps what exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file
@@ -1541,11 +1546,13 @@ prediction named" 1 and 2). The fourth, a lend its lender's person
 alone reaches on any device of theirs, waits on another device for the
 same person (§9; `rings/current/ONE_PERSON_MANY_DEVICES.md`, deferred);
 group folders, whose second spike passed its seven bars on one host on
-the branch `folders` (run 2026-10-09; §3, call 7 of "Lent apps"), made
-production by the six rows its verdict lists
-(`demo/runs/gf/2026-10-09/README.md` §9), a stub that reaches a viewer on
-another computer first, the rows, their budget of about 780 lines and the
-merge into main the operator's (operator, 2026-10-09; §9); the
+the branch `folders` (run 2026-10-09; §3, call 7 of "Lent apps"), then a
+spike of a group's folder synced both ways on its members' disks, a mesh
+Dropbox, on the same branch (`ralph/next/sync/`), before any of the six
+rows group folders' verdict lists (`demo/runs/gf/2026-10-09/README.md`
+§9) is queued, since which of them carry over is that spike's to say; the
+rows, their budget and the merge into main the operator's (operator,
+2026-10-09; §9); the
 phone replica spike, iOS first (§9, "a
 native phone app"), after folders since they name the bytes a phone would
 hold; then the middleware's P1 follow-ups as one row (operator, 2026-10-08;
@@ -1598,6 +1605,9 @@ By the operator, 2026-10-09, during scoped use made production:
 - group folders' second spike runs now, in a worktree beside scoped use,
   not after it (§8, §9): a spike's code lives on its own branch, and how
   folders become production is decided from its verdict.
+- a group's folder is more than its films in one Jellyfin: a folder synced
+  both ways on its members' disks, written by any of them, is spiked next
+  on the same branch, before group folders' production rows (§8, §9).
 
 By the operator, 2026-10-09, before scoped use made production:
 - a computer is the main way in, and a phone its teaser and onboarding,
