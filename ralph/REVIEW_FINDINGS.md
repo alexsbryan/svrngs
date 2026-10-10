@@ -4726,6 +4726,19 @@ tests, no type, so no noun was run through `converge noun`.
   copy differs (a 15 s goto, its failure named) and stays. +19/−24;
   `--test browser` 12 passed.
 
+### The check
+
+scripts/check.sh at 12afe52 failed one step, `conformance canary`: wildcard
+Chromium Sam's "64 MiB uploaded, its length told", "nothing within 60000
+ms". The upload was not lost: the worker's trace in the same failure says
+"upload handed its body to the dial whole, 60128 ms", then "upload answered
+200" (Bo's took 45 s), at a load of 65 on 12 cores (`uptime` after: 64.23
+over 15 min). Neither move touches that test: conformance.rs and
+conformance.mjs call neither `bridge_as` nor `held`. Run alone at a load of
+27-72, the step passed (`cargo test -p svrngs-node --test conformance`: 6
+passed, 227.51 s). One run, not a rate; a 64 MiB upload's 60 s window is
+close to what this host gives under load.
+
 ### Findings
 
 | # | principle | path:line | fixed in | finding |
