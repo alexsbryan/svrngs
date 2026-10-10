@@ -9,7 +9,8 @@
 //! route's verdict is printed per way and kept in `target/conformance/` for
 //! `scripts/check.sh`, and every route passes. WebKit's seeks back to back are
 //! a rate, not a gate (`a_rate`): kept beside the same seeks straight at a
-//! canary, and counted by scripts/check.sh. Neither lend's cookie reaches the
+//! canary, and counted by scripts/check.sh; Chromium's, missed on a host
+//! whose load is past `BUSY` a core, are could-not-judge (`verdict`). Neither lend's cookie reaches the
 //! other's requests; Bo's door names Alex's key; no byte Alex receives
 //! holds either secret; a lent page finds no group whose key it could
 //! unseal; and on a computer a lent page's post to the record API writes
@@ -234,6 +235,38 @@ fn a_rate(engine: Engine, check: &str) -> bool {
     matches!(engine, Engine::Webkit) && check == "seeks"
 }
 
+/// The load per core past which Chromium's seeks back to back are not
+/// judged (chk-1; operator, 2026-10-10, "Could-not-judge above a load
+/// bar"): sup-4's check, sy-1's three on the branch `folders` and
+/// REVIEW-audit-sup-auto-2's each failed only
+/// `on_a_phone_with_the_wildcard::chromium`'s seeks, at load averages of
+/// about 40-130 on this host's 12 cores, while the code they ran changed
+/// nothing near it and passed alone or at a quieter moment.
+const BUSY: f64 = 3.0;
+
+/// One route's verdict, from whether it held, the engine and `load()`'s
+/// reading at the run's start: `passed` or `failed`; a rate's with `, a
+/// rate` after it; and Chromium's seeks missed while uptime's first average
+/// was past `BUSY` times `cores`, `could-not-judge` with that load. A load
+/// that does not read is never past the bar: the miss fails, as before chk-1.
+fn verdict(engine: Engine, check: &str, ok: bool, load: &str, cores: usize) -> String {
+    let held = if ok { "passed" } else { "failed" };
+    if a_rate(engine, check) {
+        return format!("{held}, a rate");
+    }
+    // `load averages: 1.5 1.2 1.0` on macOS, `load average: 1.5, 1.2, 1.0` on Linux.
+    let first = load
+        .split_once("average: ")
+        .or_else(|| load.split_once("averages: "))
+        .and_then(|(_, a)| a.split([' ', ',']).next()?.parse::<f64>().ok());
+    match first {
+        Some(l) if !ok && check == "seeks" && l > BUSY * cores as f64 => {
+            format!("could-not-judge, load {l} on {cores} cores, past {BUSY} a core")
+        }
+        _ => held.to_string(),
+    }
+}
+
 /// One verdict's line in `target/conformance/`, in the columns
 /// scripts/check.sh's `cut -c1-10,25-` reads: the way, then the route and
 /// its verdict, the engine and person between them cut.
@@ -245,9 +278,15 @@ fn verdict_line(way: Way, engine: Engine, who: &str, route: &str, verdict: &str)
     )
 }
 
-/// Each route's verdict for one lend: `passed` or `failed`; a rate's with
-/// `, a rate` after it.
-fn verdicts(engine: Engine, lend: &Value, other: &Value) -> Vec<(&'static str, String, String)> {
+/// Each route's verdict for one lend (`verdict`), the host's load read once,
+/// at the run's start.
+fn verdicts(
+    engine: Engine,
+    lend: &Value,
+    other: &Value,
+    load: &str,
+    cores: usize,
+) -> Vec<(&'static str, String, String)> {
     ROUTES
         .iter()
         .map(|(route, check)| {
@@ -270,14 +309,60 @@ fn verdicts(engine: Engine, lend: &Value, other: &Value) -> Vec<(&'static str, S
                 }
                 _ => {}
             }
-            let verdict = if ok { "passed" } else { "failed" };
-            let verdict = match a_rate(engine, check) {
-                true => format!("{verdict}, a rate"),
-                false => verdict.to_string(),
-            };
-            (*route, verdict, saw)
+            (*route, verdict(engine, check, ok, load, cores), saw)
         })
         .collect()
+}
+
+/// Chromium's seeks judged against the load (chk-1), from `load()`'s lines
+/// as macOS and Linux print them, on this host's 12 cores: the bar is 36.
+mod seeks_by_load {
+    use super::*;
+    const QUIET: &str =
+        "2026-10-10T05:00:00Z 22:00  up 3 days, 2 users, load averages: 35.9 20.1 12.0";
+    const BUSY_MAC: &str =
+        "2026-10-10T05:00:00Z 22:00  up 3 days, 2 users, load averages: 64.2 40.3 30.1";
+    const BUSY_LINUX: &str =
+        "2026-10-10T05:00:00Z 05:00:00 up 3 days, 2 users, load average: 64.20, 40.30, 30.10";
+
+    #[test]
+    fn a_miss_under_the_bar_failed() {
+        assert_eq!(
+            verdict(Engine::Chromium, "seeks", false, QUIET, 12),
+            "failed"
+        );
+    }
+
+    #[test]
+    fn a_miss_over_the_bar_could_not_judge() {
+        for load in [BUSY_MAC, BUSY_LINUX] {
+            assert_eq!(
+                verdict(Engine::Chromium, "seeks", false, load, 12),
+                "could-not-judge, load 64.2 on 12 cores, past 3 a core"
+            );
+        }
+        // Only the seeks; WebKit's stay a rate.
+        assert_eq!(
+            verdict(Engine::Chromium, "upload", false, BUSY_MAC, 12),
+            "failed"
+        );
+        assert_eq!(
+            verdict(Engine::Webkit, "seeks", false, BUSY_MAC, 12),
+            "failed, a rate"
+        );
+    }
+
+    #[test]
+    fn a_pass_over_the_bar_passed() {
+        assert_eq!(
+            verdict(Engine::Chromium, "seeks", true, BUSY_MAC, 12),
+            "passed"
+        );
+        assert_eq!(
+            verdict(Engine::Webkit, "seeks", true, BUSY_MAC, 12),
+            "passed, a rate"
+        );
+    }
 }
 
 /// The relay as a phone away from home reaches it (u5-11): every byte each
@@ -526,8 +611,12 @@ async fn conformance(way: Way, engine: Engine) {
     // Each route's verdict, printed and kept for scripts/check.sh.
     let mut table = String::new();
     let mut failed = Vec::new();
+    let cores = std::thread::available_parallelism()
+        .expect("this host's cores")
+        .get();
     for (who, other) in [("sam", "bo"), ("bo", "sam")] {
-        for (route, verdict, saw) in verdicts(engine, &ran["lends"][who], &ran["lends"][other]) {
+        let (lend, other) = (&ran["lends"][who], &ran["lends"][other]);
+        for (route, verdict, saw) in verdicts(engine, lend, other, &began, cores) {
             let line = verdict_line(way, engine, who, route, &verdict);
             table.push_str(&format!("{line}\n"));
             if verdict == "failed" {
@@ -543,7 +632,7 @@ async fn conformance(way: Way, engine: Engine) {
     .unwrap();
     assert!(
         failed.is_empty(),
-        "routes failed:\n{}\n{shown:#}",
+        "routes failed, the host at {began} on {cores} cores:\n{}\n{shown:#}",
         failed.join("\n")
     );
     if matches!(engine, Engine::Webkit) {

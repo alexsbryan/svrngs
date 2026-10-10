@@ -50,7 +50,9 @@ if [ -f Cargo.toml ]; then
   # verdict per way is printed, once for every engine and lender that agree.
   rm -rf target/conformance
   step "conformance canary" cargo test --quiet -p svrngs-node --test conformance
-  cat target/conformance/*.txt 2>/dev/null | cut -c1-10,25- | sort -u | sed 's/^/           /'
+  cat target/conformance/*.txt 2>/dev/null | grep -v could-not-judge | cut -c1-10,25- | sort -u | sed 's/^/           /'
+  # Chromium's seeks on a host past its load bar (chk-1): said apart, never a pass.
+  grep -h could-not-judge target/conformance/*.txt 2>/dev/null | sed 's/^/could-not-judge /'
   # WebKit's seeks back to back, a rate and not a gate (u5-11): this run's,
   # beside the same seeks straight at the canary, then every run's here.
   if [ -s target/seeks-webkit.log ] && ls target/conformance/seeks-*.tsv >/dev/null 2>&1; then
