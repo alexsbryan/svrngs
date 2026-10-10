@@ -20,7 +20,7 @@ pub enum Alpn {
     /// A lend, to a key holding a pass from a person standing in a group
     /// held there (u5-2): the door's one route, a pass on every request.
     Lend,
-    /// A shared folder's bytes by hash (gf-1): iroh-blobs' own protocol,
+    /// A synced folder's bytes by hash (gf-1, sy-1): iroh-blobs' own protocol,
     /// served to a dialer standing in a group held there.
     Blobs,
 }

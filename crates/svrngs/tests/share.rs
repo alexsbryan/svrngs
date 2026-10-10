@@ -560,15 +560,15 @@ fn a_service_with_its_own_accounts_is_lent_with_no_password() {
     drop(stand_in);
 }
 
-/// **A folder is shared by asking svrngs running here** (gf-1): `share
-/// --folder <dir>` takes the folder's absolute path and `unshare --folder`
-/// its name, and only they take `--folder`; with no svrngs running here the
-/// ask is refused as a precondition absent, never answered empty; with one
-/// running, a folder it cannot read is refused in its words and one it can
-/// is shared. Planted: the ask posted where the node does not answer
-/// (every ask refused); the node's refusal read as success.
+/// **A folder is synced by asking svrngs running here** (gf-1, sy-1):
+/// `share --folder <dir> --both-ways` takes the folder's absolute path, and
+/// only `share` takes `--folder`, never without `--both-ways` (syp-1: no
+/// folder is shared one way); with no svrngs running here the ask is
+/// refused as a precondition absent, never answered empty; with one
+/// running, it is answered. Planted: the ask posted where the node
+/// does not answer (every ask refused); `--folder` taken alone.
 #[tokio::test]
-async fn a_folder_is_shared_by_asking_svrngs_running_here() {
+async fn a_folder_is_synced_by_asking_svrngs_running_here() {
     use svrngs_node::folder::FolderAsk;
     let argv = |rest: &[&str]| {
         std::iter::once("svrngs".to_string())
@@ -577,19 +577,18 @@ async fn a_folder_is_shared_by_asking_svrngs_running_here() {
     };
     let cwd = std::env::current_dir().unwrap();
     assert_eq!(
-        cli::parse(argv(&["share", "--folder", "films"])),
-        Ok(Verb::Folder(FolderAsk::Share(cwd.join("films"))))
+        cli::parse(argv(&["share", "--folder", "films", "--both-ways"])),
+        Ok(Verb::Folder(FolderAsk::BothWays(cwd.join("films"))))
     );
-    assert_eq!(
-        cli::parse(argv(&["unshare", "--folder", "films"])),
-        Ok(Verb::Folder(FolderAsk::Stop("films".into())))
-    );
+    assert!(cli::parse(argv(&["share", "--folder", "films"])).is_err());
+    assert!(cli::parse(argv(&["unshare", "--folder", "films"])).is_err());
     assert!(cli::parse(argv(&["link", "x", "--folder", "films"])).is_err());
 
     let dir = tempfile::tempdir().unwrap();
     let relay = no_relay();
     let ask = |asked| cli::run(Verb::Folder(asked), dir.path().to_path_buf(), &relay);
-    let refused = ask(FolderAsk::Stop("films".into())).await;
+    let films = tempfile::tempdir().unwrap();
+    let refused = ask(FolderAsk::BothWays(films.path().to_path_buf())).await;
     assert!(matches!(refused, Err(Refusal::NotRunning)), "{refused:?}");
     assert_eq!(refused.unwrap_err().exit_code(), 3);
 
@@ -603,15 +602,7 @@ async fn a_folder_is_shared_by_asking_svrngs_running_here() {
     )
     .await
     .unwrap();
-    let films = tempfile::tempdir().unwrap();
-    std::fs::write(films.path().join("a.bin"), b"a film's bytes").unwrap();
-    let unread = ask(FolderAsk::Share(films.path().join("absent"))).await;
-    assert!(
-        matches!(&unread, Err(Refusal::Folder(why)) if why.contains("cannot be read")),
-        "{unread:?}"
-    );
-    assert!(ask(FolderAsk::Share(films.path().to_path_buf()))
-        .await
-        .is_ok());
+    let synced = ask(FolderAsk::BothWays(films.path().to_path_buf())).await;
+    assert!(synced.is_ok(), "{synced:?}");
     node.endpoint().close().await;
 }

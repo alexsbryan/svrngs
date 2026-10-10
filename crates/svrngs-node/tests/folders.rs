@@ -1,10 +1,7 @@
-//! Shared folders (gf-1, group folders' second spike; DESIGN §9): Ana
-//! shares a folder, Ben's computer is the meeting point and Cy is in the
-//! group. Ben's endpoint answers a range of Ana's file with her bytes,
-//! fetched by verified range; refuses a range whose bytes do not match the
-//! hash, naming Ana; and Ana's provider refuses a hash she stopped sharing
-//! though Ben's record still names it. Three nodes in one process, no relay,
-//! each reached by the addresses seeded in the others' lookup.
+//! A folder synced both ways (sy-1, the mesh-Dropbox spike; DESIGN §9):
+//! Ana, Ben and Cy in one group, each change reaching the others' disks,
+//! and the bytes served to members alone. Three nodes in one process, no
+//! relay, each reached by the addresses seeded in the others' lookup.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
@@ -51,7 +48,6 @@ struct Group {
     ana: Node,
     ben: Node,
     cy: Node,
-    id: String,
     _dirs: Vec<tempfile::TempDir>,
 }
 
@@ -101,7 +97,6 @@ impl Group {
             ana,
             ben,
             cy,
-            id,
             _dirs: dirs,
         }
     }
@@ -123,8 +118,7 @@ fn http() -> reqwest::Client {
     reqwest::Client::builder().no_proxy().build().unwrap()
 }
 
-/// `node`'s record API asked to share `dir` or stop `name`, as the command
-/// asks it: the folder its act names.
+/// `node`'s record API asked what the command asks it: its answer.
 async fn ask(node: &Node, body: serde_json::Value) -> serde_json::Value {
     let answer = http()
         .post(format!("http://{}/v1/folders", node.api_addr()))
@@ -141,16 +135,6 @@ async fn ask(node: &Node, body: serde_json::Value) -> serde_json::Value {
     answer.json().await.unwrap()
 }
 
-/// What `node`'s record API lists: its endpoint, folders, unanswered.
-async fn listed(node: &Node) -> serde_json::Value {
-    let answer = http()
-        .get(format!("http://{}/v1/folders", node.api_addr()))
-        .send()
-        .await
-        .unwrap();
-    answer.json().await.unwrap()
-}
-
 /// `len` bytes no two runs agree on by accident: BLAKE3's output stream.
 fn noise(len: usize, salt: &[u8]) -> Vec<u8> {
     let mut out = vec![0u8; len];
@@ -159,143 +143,6 @@ fn noise(len: usize, salt: &[u8]) -> Vec<u8> {
         .finalize_xof()
         .fill(&mut out);
     out
-}
-
-/// Ben's endpoint asked for `[start, end]` of `hash`: status, body.
-async fn get_range(ben: &Node, hash: &str, start: u64, end: u64) -> (u16, Vec<u8>) {
-    let at = listed(ben).await["endpoint"].as_str().unwrap().to_string();
-    let answer = tokio::time::timeout(
-        Duration::from_secs(30),
-        http()
-            .get(format!("{at}{hash}"))
-            .header("range", format!("bytes={start}-{end}"))
-            .send(),
-    )
-    .await
-    .expect("the endpoint answers")
-    .unwrap();
-    let status = answer.status().as_u16();
-    (
-        status,
-        answer.bytes().await.map(|b| b.to_vec()).unwrap_or_default(),
-    )
-}
-
-/// Ana's folder of one 3 MiB file, a link inside it to a file beside it.
-fn folder_of(root: &Path) -> (std::path::PathBuf, Vec<u8>) {
-    let dir = root.join("shared");
-    std::fs::create_dir_all(&dir).unwrap();
-    let film = noise(3 << 20, b"film");
-    std::fs::write(dir.join("film.bin"), &film).unwrap();
-    std::fs::write(root.join("beside.bin"), noise(1 << 16, b"beside")).unwrap();
-    std::os::unix::fs::symlink(root.join("beside.bin"), dir.join("link.bin")).unwrap();
-    (dir, film)
-}
-
-/// **A range at the meeting point is the holder's bytes, verified**: Ana
-/// shares a folder; its act names the file and not the link beside it;
-/// after Ben's round, Ben's endpoint answers a range spanning two pieces
-/// with exactly Ana's bytes, and a hash no folder names with 404. Planted:
-/// the walk following links (`SVRNGS_GF_PLANT=follow-links`, the act names
-/// the file beside the folder); the endpoint reading its store without
-/// fetching (the range is not held).
-#[tokio::test]
-async fn a_range_at_the_meeting_point_is_the_holder_s_bytes_verified() {
-    let group = Group::new().await;
-    let root = tempfile::tempdir().unwrap();
-    let (dir, film) = folder_of(root.path());
-    let shared = ask(&group.ana, serde_json::json!({ "share": dir })).await;
-    let paths: Vec<&str> = shared["files"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .map(|f| f["path"].as_str().unwrap())
-        .collect();
-    assert_eq!(
-        paths,
-        vec!["film.bin"],
-        "the link is not shared: {shared:#}"
-    );
-    let hash = shared["files"][0]["hash"].as_str().unwrap().to_string();
-    assert_eq!(hash, blake3::hash(&film).to_hex().as_str());
-    round(&group.ben).await;
-
-    let (start, end) = ((1 << 20) - 5, (2 << 20) + 100);
-    let (status, body) = get_range(&group.ben, &hash, start, end).await;
-    assert_eq!(status, 206);
-    assert!(
-        body == film[start as usize..=end as usize],
-        "the range is Ana's bytes"
-    );
-    let (status, _) = get_range(&group.ben, &"0".repeat(64), 0, 9).await;
-    assert_eq!(status, 404, "a hash no folder names is refused");
-    group.close().await;
-}
-
-/// **A holder whose bytes do not match the hash is refused by name**: Ana
-/// shares her file, then a byte of it flips on her disk (her store took it
-/// by reference); Cy holds nothing; Ben's endpoint refuses the range 502,
-/// naming Ana's key and why, and sends none of it. Planted: the first
-/// piece's refusal dropped (the endpoint answers 206 and fails mid-body).
-#[tokio::test]
-async fn a_holder_whose_bytes_do_not_match_the_hash_is_refused_by_name() {
-    let group = Group::new().await;
-    let root = tempfile::tempdir().unwrap();
-    let (dir, mut film) = folder_of(root.path());
-    let shared = ask(&group.ana, serde_json::json!({ "share": dir })).await;
-    let hash = shared["files"][0]["hash"].as_str().unwrap().to_string();
-    film[100_000] ^= 0xff;
-    std::fs::write(dir.join("film.bin"), &film).unwrap();
-    round(&group.ben).await;
-
-    let (status, body) = get_range(&group.ben, &hash, 0, 200_000).await;
-    let said: serde_json::Value = serde_json::from_slice(&body).unwrap_or_default();
-    assert_eq!(status, 502, "{said:#}");
-    assert_eq!(
-        said["holders"][0][0],
-        actor_of(&signing(1)),
-        "Ana is named: {said:#}"
-    );
-    assert_eq!(said["hash"], hash.as_str());
-    group.close().await;
-}
-
-/// **A holder's provider refuses a hash she stopped sharing**: Ana shares,
-/// Ben fetches the first piece, Ana stops; Ben, his record not yet synced,
-/// still names her folder and asks her for the next piece, and her provider
-/// refuses it: 502 naming Ana. After Ben's round the hash is 404 at his
-/// endpoint. Planted: the provider serving any hash its store holds
-/// (`SVRNGS_GF_PLANT=unchecked`, the second ask answers 206).
-#[tokio::test]
-async fn a_holder_s_provider_refuses_a_hash_she_stopped_sharing() {
-    let group = Group::new().await;
-    let root = tempfile::tempdir().unwrap();
-    let (dir, film) = folder_of(root.path());
-    let shared = ask(&group.ana, serde_json::json!({ "share": dir })).await;
-    let hash = shared["files"][0]["hash"].as_str().unwrap().to_string();
-    round(&group.ben).await;
-    let (status, body) = get_range(&group.ben, &hash, 0, 1000).await;
-    assert_eq!((status, body.as_slice()), (206, &film[..=1000]));
-
-    // Written to her record without the nudge `stop` gives, so Ben's round
-    // has not carried it yet, as when Ben's last round came before it.
-    let stop = svrngs_core::ShareFolder {
-        name: "shared".into(),
-        files: Vec::new(),
-    };
-    group.ana.rail().commit(&group.id, &stop).unwrap().unwrap();
-    let (status, body) = get_range(&group.ben, &hash, 2 << 20, (2 << 20) + 9).await;
-    let said: serde_json::Value = serde_json::from_slice(&body).unwrap_or_default();
-    assert_eq!(
-        status, 502,
-        "Ana's provider refuses what she stopped sharing"
-    );
-    assert_eq!(said["holders"][0][0], actor_of(&signing(1)), "{said:#}");
-    round(&group.ben).await;
-    let (status, _) = get_range(&group.ben, &hash, 0, 9).await;
-    assert_eq!(status, 404, "a stopped folder names no hash at Ben's");
-    assert_eq!(listed(&group.ben).await["folders"], serde_json::json!([]));
-    group.close().await;
 }
 
 // ── A folder synced both ways (sy-1, the mesh-Dropbox spike) ──────────

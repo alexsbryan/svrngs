@@ -41,15 +41,15 @@ tower = { version = "0.5", features = ["util"] }
 # Ring sync (U1): the round posts each exchange with reqwest through the
 # loopback bridge; "json" reads the answer, as upstream's workspace enabled it.
 reqwest = { version = "0.12", default-features = false, features = ["json"] }
-# Shared folders (gf-1): the store, its provider and verified range fetch,
-# without the rpc default, over the lock's iroh 1.0.2.
+# A group's folders (gf-1, sy-1): the store, its provider and verified range
+# fetch, without the rpc default, over the lock's iroh 1.0.2.
 iroh-blobs = { version = "=0.103.0", default-features = false, features = ["fs-store"] }
-blake3 = { workspace = true }
-bytes = "1"
 
 [dev-dependencies]
 svrngs-core = { workspace = true, features = ["test-support"] }
 tempfile = "3"
+# The folders' tests (tests/folders.rs) hash and fill files with BLAKE3.
+blake3 = { workspace = true }
 tokio = { version = "1", features = ["full"] }
 # The door's tests check a file's bytes through it sha-exact.
 sha2 = "0.10"

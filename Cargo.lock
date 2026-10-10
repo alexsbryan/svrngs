@@ -4022,7 +4022,6 @@ dependencies = [
  "axum",
  "base64 0.22.1",
  "blake3",
- "bytes",
  "hex",
  "http-body-util",
  "hyper",

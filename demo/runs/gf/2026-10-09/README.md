@@ -533,3 +533,20 @@ scripts/lean_check.py`). gf-0's estimate ran 52% short (430 to 655, §7);
 the same miss on the 120 added makes about 780. That is the raise
 folders need over main's count when they merge — the operator's, with the
 merge (DESIGN §5; the queue's fence 6).
+
+**Since: streaming dropped (syp-1).** The operator, 2026-10-10, chose
+"Drop streaming + share" on the mesh-Dropbox spike's verdict
+(`demo/runs/sy/2026-10-09/README.md` §8-§9): a group's folder is synced
+onto its members' disks, not streamed. syp-1 (`ralph/next/syp/STATE.md`)
+deleted the loopback endpoint (`bytes`, `range`, `Served`,
+`SVRNGS_FOLDER_PORT`), the one-way share (`ShareFolder`, its act and line
+version 5, `share --folder` without `--both-ways`, `unshare --folder`,
+`GET /v1/folders`), `Admission::holders`, and the tests of them named
+above. The provider, the verified fetch (`hold`) and the plants' switch
+stay, the synced folder's now. This run and `apps/jellyfin/folders/` ran
+at `575a911` and do not run after syp-1. Of the six rows: 1, 3 and 4 drop
+with the endpoint and wait with a mounted folder (DESIGN §9), a folder not
+on its viewer's disk; 2 carries over as the synced folder's row 2, the
+level a group; 5 changes into its row 5, the store keeping what the
+layout places; 6 carries over unchanged, against the synced folder's
+fetch.

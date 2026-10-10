@@ -15,8 +15,8 @@
 //! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--sign-in S]
 //!                                          lend a service on this computer
 //! svrngs unshare <name>                    stop lending it
-//! svrngs share --folder <dir>              share a folder's files, asked of svrngs running here
-//! svrngs unshare --folder <name>           stop sharing it
+//! svrngs share --folder <dir> --both-ways keep a folder the same on every member's disk,
+//!                                          asked of svrngs running here
 //! svrngs room <name>...                    serve lends to this computer's network, run
 //! ```
 //!
@@ -131,10 +131,10 @@ svrngs — keep what your group shares on your own computers.
   svrngs unshare <name>
       Stop lending <name>.
 
-  svrngs share --folder <dir> [--both-ways]  /  svrngs unshare --folder <name>
-      Share the files under <dir> with your groups while svrngs runs here; stop sharing it.
-      --both-ways keeps <dir> the same on every computer in your groups that
-      shares a folder of its name: anyone may add, change and delete in it.
+  svrngs share --folder <dir> --both-ways
+      Keep <dir> the same on every computer in your groups that shares a
+      folder of its name, while svrngs runs here: anyone may add, change and
+      delete in it.
 
   svrngs room <name>...
       Let anyone on this computer's network (its WiFi) open what your groups
@@ -180,7 +180,7 @@ pub enum Verb {
     /// No secret: it is read from a prompt (the module docs).
     Share(Share),
     Unshare(LendName),
-    /// `share --folder` or its stop, asked of svrngs running here.
+    /// `share --folder --both-ways`, asked of svrngs running here.
     Folder(FolderAsk),
     /// The lends named, served to this computer's network.
     Room(Vec<LendName>),
@@ -290,15 +290,16 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         );
     }
     match (verb.as_str(), folder) {
-        ("share", Some(dir)) => {
+        ("share", Some(dir)) if both_ways => {
             let dir = std::path::absolute(&dir).map_err(|e| format!("--folder `{dir}`: {e}"))?;
-            return Ok(Verb::Folder(match both_ways {
-                true => FolderAsk::BothWays(dir),
-                false => FolderAsk::Share(dir),
-            }));
+            return Ok(Verb::Folder(FolderAsk::BothWays(dir)));
         }
-        ("unshare", Some(name)) => return Ok(Verb::Folder(FolderAsk::Stop(name))),
-        (_, Some(_)) => return Err("--folder is a `share` and `unshare` flag".into()),
+        ("share", Some(_)) => {
+            return Err(
+                "--folder takes --both-ways: a folder is synced onto its members' disks".into(),
+            )
+        }
+        (_, Some(_)) => return Err("--folder is a `share` flag".into()),
         _ => {}
     }
     match verb.as_str() {
@@ -402,7 +403,7 @@ pub enum Refusal {
     NoRoomAddress,
     #[error(transparent)]
     Room(#[from] svrngs_node::room::RoomError),
-    #[error("svrngs is not running on this computer, and only it shares a folder: start it, then run this again")]
+    #[error("svrngs is not running on this computer, and only it syncs a folder: start it, then run this again")]
     NotRunning,
     #[error("the folder was refused: {0}")]
     Folder(String),
@@ -549,7 +550,7 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
     start(command, root, relay, claimed).await
 }
 
-/// `share --folder` and its stop, asked of the node running here
+/// `share --folder --both-ways`, asked of the node running here
 /// (`svrngs_node::folder::FolderAsk`): it alone writes this computer's acts,
 /// the journal's next index being its process's (svrngs-node journal.rs:16-27).
 async fn folder(root: &Path, asked: FolderAsk) -> Result<String, Refusal> {

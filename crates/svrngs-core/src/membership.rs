@@ -376,10 +376,7 @@ impl RailAct {
             | RailAct::Remove { .. }
             | RailAct::Correct { .. }
             | RailAct::Invite { .. } => true,
-            RailAct::Record { .. }
-            | RailAct::Seal
-            | RailAct::Folder { .. }
-            | RailAct::Synced { .. } => false,
+            RailAct::Record { .. } | RailAct::Seal | RailAct::Synced { .. } => false,
         }
     }
 }
