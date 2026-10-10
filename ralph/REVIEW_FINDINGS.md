@@ -4619,7 +4619,7 @@ locations. /tmp/supaudit2/clusters.py blamed every side (`git blame -w` at
 |---|---|---|---|
 | 0.95 | crates/svrngs-node/src/home/home.js `uses` :65–88 (sup-2) ~ web/app.js `uses` :255–283 (85986c2) | 0.956 | **#110.** Not seen scoped (I12: home.js is under crates/, app.js under web/). |
 | 0.9 | web/lend.js `asking` :406–422 ~ `stopping` :419–443 (both 85986c2) | 0.903 | **#111.** |
-| 0.9 | apps/movie-night/check/mn.mjs `browser` :45–65 ~ apps/taste/check/su.mjs `browser` :58–77; `join` :63–81 ~ :75–92 | 0.915, 0.913 | The spike's driver, forked from Movie Night's (su.mjs:79's own words, "mn.mjs's"), sup-4 touching 6 and 3 of its lines: #97's case. No change. |
+| 0.9 | apps/movie-night/check/mn.mjs `browser` :45–65 ~ apps/taste/check/su.mjs `browser` :58–77; `join` :63–81 ~ :75–92 | 0.915, 0.913 | The spike's driver, forked from Movie Night's (su.mjs:76's own words, "mn.mjs's"), sup-4 touching 6 and 3 of its lines: #97's case. No change. |
 | 0.8 | home.js `uses` ~ app.js `asking` ~ `uses`; home.js `get`, `said` ~ app.js `choose` | 0.806–0.956 | #110 again: the phone's ask and the computer's. |
 | 0.8 | the rest, 11 | 0.802–0.935 | Neighbours (I9: app.js `reach` ~ `joining`, judge.py `ranked` ~ `asked_once` ~ `unranked`, su.mjs `yes` ~ `again` ~ `otherPerson`, `settled` ~ `picks`, `stop` ~ `homeStop`), app.js `open` ~ `enter` ~ `opening` ~ open.js `start`, picks.js `refused`, `rank` ~ other.js `rank`, and judge.py and su.mjs ~ Movie Night's (#97). No change. |
 
@@ -4682,7 +4682,7 @@ Reading the range for what neither pass would show:
   origin's `/choices`, home.rs's own body). Two ends of a wire, as #50
   judged; each held by a test that posts it (tests/browser/main.rs ask
   test, tests/home.rs). No change.
-- **#104 narrowed** (85986c2): web/lend.js `told` (:377–389) now gives a
+- **#104 narrowed** (85986c2): web/lend.js `told` (:374–389) now gives a
   page `asks` and `ask` in the shape surface.rs `reads` gives on a
   computer. Still two homes, the page's and the node's, each held by its
   own test (web/tests/reads.mjs and ask.mjs; tests/surface.rs).
@@ -4693,7 +4693,7 @@ Reading the range for what neither pass would show:
   what its origin keeps to say a yes for itself (its header, :5–8), which
   svrngs refuses.
 - **Glassbox.** sup-3's branches trace: app.js `asking` on both outcomes
-  (:232, :236), its yes kept (:249), `uses` each failure (:276), `post`
+  (:232, :236), its yes kept (:248), `uses` each failure (:276), `post`
   each refusal (:114); lend.js `asking` and `stopping` each branch
   (:414, :417, :427, :432, :437).
 - **The browser test's one failure.** With #108 in place, one run of
@@ -4734,7 +4734,7 @@ tests, no type, so no noun was run through `converge noun`.
 | 109 | 8 | web/tests/ask.mjs:40, handover.mjs:71, reads.mjs:28, runtime.mjs:69, at 204b3d4 | 3c29dda | Four drivers open the group's page as the person by the same five steps. |
 | 110 | 8, 3 | crates/svrngs-node/src/home/home.js:68–96 and web/app.js:229–281, at 204b3d4 | not fixed | The computer's and the phone's pages each ask and list what apps use, in the same words by the same reading; two hosts, the home page answering only itself. |
 | 111 | 8 | web/lend.js:409–419 and :422–440 (and :290–297), at 204b3d4 | not fixed | The worker's pass-and-lend guard written three times, its refusals in the same words. |
-| 104 | 8 | web/lend.js:377–389 and crates/svrngs-node/src/surface.rs `reads`, at 204b3d4 | narrowed (85986c2) | The page's half now gives `asks` and `ask`; still two homes, each held by its own test. |
+| 104 | 8 | web/lend.js:374–389 and crates/svrngs-node/src/surface.rs `reads`, at 204b3d4 | narrowed (85986c2) | The page's half now gives `asks` and `ask`; still two homes, each held by its own test. |
 | 100 | 8 | apps/movie-night/picks/picks.js:26–27, at 204b3d4 | closed (da3004d) | Tonight's Picks off svrngs's lend store; other.js's read is the plant's. |
 | 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 67 lines left (15283 / 15350). |
 | 31, 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99, 103, 107 | as recorded | as recorded | not fixed | Untouched in the range but #97 (su.mjs, 517225a; its fork kept). |
