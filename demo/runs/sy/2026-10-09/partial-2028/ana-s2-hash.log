@@ -1,0 +1,5 @@
+60:2026-10-10T03:27:15.609440Z  INFO folder: synced: a change sent folder="Shared" path="s2.bin" now=Some((ContentHash(10b2de5581f20e7c), 65536))
+64:2026-10-10T03:27:15.721418Z  INFO folder: folder: serving — a standing folder of this computer's names the hash hash=10b2de5581f20e7ceb0ba1e11dcbc217717e1f6a6adcff249168ec989eb1e7cd conn=535476737456 request=0 ranges="ChunkRangesSeq([(0, RangeSet{0..64}), (1, RangeSet{})])"
+65:2026-10-10T03:27:15.722013Z  INFO folder: folder: sent hash=10b2de5581f20e7ceb0ba1e11dcbc217717e1f6a6adcff249168ec989eb1e7cd conn=535476737456 request=0 done=true last=65536 payload=65536 other=200
+246:2026-10-10T03:28:26.001068Z  INFO folder: folder: serving — a standing folder of this computer's names the hash hash=10b2de5581f20e7ceb0ba1e11dcbc217717e1f6a6adcff249168ec989eb1e7cd conn=514750218288 request=0 ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])"
+247:2026-10-10T03:28:26.001520Z  INFO folder: folder: sent hash=10b2de5581f20e7ceb0ba1e11dcbc217717e1f6a6adcff249168ec989eb1e7cd conn=514750218288 request=0 done=false last=0 payload=0 other=0
