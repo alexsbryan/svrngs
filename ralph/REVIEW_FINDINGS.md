@@ -4747,6 +4747,13 @@ passed. That is the miss chk-1 (e31bdce, 23:13) makes could-not-judge past
 3 a core (conformance.rs:252-264); the run began before it landed, so it
 ran without it. check.sh is run again at HEAD.
 
+Run again at b841412 (`REVIEW-audit-sup-auto-2-4.await.log`, 23m37s),
+scripts/check.sh exited 0: every step `passed`, none failed, could-not-judge
+or never-ran (the log's 48 lines; `grep -E '^(failed|could-not|never)'`
+finds none). All 26 conformance routes passed, both Chromium seeks among
+them; chk-1's could-not-judge line was not needed. One run, at a load near
+70-90 on 12 cores (`uptime` after it: 69.87 78.63 91.39), not a rate.
+
 ### Findings
 
 | # | principle | path:line | fixed in | finding |
