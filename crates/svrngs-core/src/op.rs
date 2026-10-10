@@ -74,9 +74,9 @@ pub trait Journaled: Serialize + DeserializeOwned {
 /// than an act with a second spelling of identity.
 ///
 /// A ring act's id is minted by [`crate::act_id`]; [`Op::new`] is the
-/// generic envelope's, for the journal's own tests. `from_hex` reads an id
-/// back off a line or an argument, and is named so a reader sees no hashing
-/// happened here.
+/// generic envelope's, for the journal's own tests. An id is read back off a
+/// line by its serde form, `ContentHash`'s 64-hex parse
+/// ([`ContentHash::from_hex`]): no hashing happens there.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct OpId(ContentHash);
