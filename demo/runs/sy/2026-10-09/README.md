@@ -542,6 +542,14 @@ plant, red first:
 
 Group folders' row 6 carries over as its row, unchanged.
 
+**Since: streaming dropped (syp-1).** The operator, 2026-10-10, chose the
+synced folder alone, "Drop streaming + share": group folders' endpoint
+(`bytes`, cited above) and their one-way share are deleted on this branch
+(`ralph/next/syp/STATE.md`, syp-1-no-stream), so rows 1, 3 and 4 of theirs
+wait with a mounted folder (below; DESIGN §9). S1-S4 ran again after it,
+each plant failing first and each bar passing
+(`demo/runs/syp/2026-10-10/no-stream/`).
+
 Not candidates, said so, each with what brings it back:
 
 - **A large file's small edit costing the whole file** (M2): fetching by
