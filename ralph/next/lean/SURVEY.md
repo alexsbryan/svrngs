@@ -92,6 +92,13 @@ register.rs:108. A group's namespace is its seed's 64-hex BLAKE3
 to its seed is dropped (`crates/svrngs/src/group.rs:158`); behaviour differs
 only for a directory of one of those names placed by hand under `rings/`.
 `tests_local_only.rs` goes with it; the doc at runtime lib.rs:95 changes.
+*Not taken* (lean-3): group.rs:158 drops such a directory from the
+command's list only. The node reads `rings/` with no group.rs between —
+the round lists `RingRail::namespaces` (`ring_sync.rs:286`), the sync route
+asks `RingRail::standing` (`ring_routes.rs:99`) — and with `is_local_only`
+planted false a hand-placed `rings/notes-private/` naming dee is listed and
+stands dee, where it is `([], NotHeld)` now. So D changes behaviour, and
+stays.
 
 **B, used only by tests** (~120): `Digest::{new, insert, contains_key, keys,
 iter, is_empty, len, entries}` (core view.rs:115-151; `get` is the product's,
