@@ -138,8 +138,7 @@ async fn spawn_marker_listener(marker: &'static [u8]) -> SocketAddr {
 /// one [`pump`](crate::guest::pump) — what upstream's
 /// `IrohAcceptor::spawn_routed` did for these tests with a one-entry
 /// table. These are the bridge's tests, which carry bytes, so a byte
-/// splice shaped as `guest/tests.rs`'s `spawn_lender` stands in, whatever
-/// the acceptor serves.
+/// splice stands in, whatever the acceptor serves.
 fn spawn_splicing_acceptor(endpoint: Endpoint, forward_to: SocketAddr) {
     use crate::guest::{pump, PumpSide};
     tokio::spawn(async move {

@@ -32,10 +32,6 @@
 
 pub use svrngs_runtime::*;
 
-// The v1 checkpoint document's one composer (moved from sovereign-mesh,
-// phase-b pb-rails-parity).
-pub mod ring_checkpoint;
-
 // The dialling half of sync, forked in U1 (docs/DESIGN.md §8, U1's
 // inventory): the sync bodies (`sovereign-peer-wire`), the one ALPN, the
 // relayed endpoint and the loopback bridge (`mesh-reach::guest`), and the

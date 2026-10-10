@@ -14,8 +14,6 @@ use crate::{RingSigner, RingVerifier, Roster};
 pub enum Reads {
     /// The acts the register folds ([`RailAct::moves_membership`]).
     Membership,
-    /// Every act held.
-    All,
 }
 
 /// A request to change a group's record. A type implements this once, so a
@@ -181,7 +179,6 @@ fn authored<C: Command>(
 
 fn read<C: Command>(held: &ActSet) -> ActSet {
     match C::READS {
-        Reads::All => held.clone(),
         Reads::Membership => ActSet::of(held.iter().filter(|op| op.kind.act.moves_membership())),
     }
 }

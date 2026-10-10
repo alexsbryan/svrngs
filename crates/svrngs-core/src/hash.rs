@@ -57,13 +57,6 @@ impl ContentHash {
         ContentHash::of(s.as_bytes())
     }
 
-    /// Adopt a digest computed elsewhere. Named `from_bytes` rather than
-    /// `new` so a reader sees that no hashing happened here and asks where it
-    /// did.
-    pub fn from_bytes(bytes: [u8; 32]) -> Self {
-        ContentHash(bytes)
-    }
-
     pub fn as_bytes(&self) -> &[u8; 32] {
         &self.0
     }
@@ -94,14 +87,8 @@ impl ContentHash {
     }
 }
 
-impl fmt::Display for ContentHash {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.to_hex())
-    }
-}
-
 impl fmt::Debug for ContentHash {
-    /// Truncated for humans; [`Display`](fmt::Display) is the full value.
+    /// Truncated for humans; [`to_hex`](ContentHash::to_hex) is the full value.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "ContentHash({})", self.short())
     }

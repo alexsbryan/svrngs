@@ -51,8 +51,8 @@ pub use crate::alpn::{Alpn, ALPN};
 // lived in `mesh_reach::guest` upstream (pb-reach-guest, phase-b-35);
 // re-exported so callers spell them `svrngs_node::iroh::`.
 pub use crate::guest::{
-    build_relayed_endpoint, configured_proxy_redacted, parse_dial_string, ring_crypto_provider,
-    HttpBridge, RelayConfig,
+    build_relayed_endpoint, configured_proxy_redacted, ring_crypto_provider, HttpBridge,
+    RelayConfig,
 };
 
 // Re-exported so callers build endpoints without declaring their own iroh
@@ -65,7 +65,7 @@ pub use iroh::{Endpoint, EndpointAddr, PublicKey, RelayUrl, SecretKey};
 pub use iroh::address_lookup::MemoryLookup;
 
 /// Render an endpoint's current dial info as a pairing string
-/// ([`parse_dial_string`]'s inverse). Relay URLs first (stable),
+/// (`<64-hex-endpoint-id>@<target>[,<target>...]`). Relay URLs first (stable),
 /// then direct addresses. `None` while the endpoint has no
 /// reachable address yet.
 pub fn format_dial_string(addr: &EndpointAddr) -> Option<String> {
@@ -326,11 +326,6 @@ pub enum Admit {
 pub struct Dialer(PublicKey);
 
 impl Dialer {
-    /// The verified key.
-    pub fn key(&self) -> PublicKey {
-        self.0
-    }
-
     /// The record's actor: the key's lowercase hex, as
     /// [`actor_of`](svrngs_core::actor_of) spells a signer.
     pub fn actor(&self) -> String {

@@ -69,8 +69,9 @@ about the journal describes this crate.
 
 **`crates/svrngs-node`**: a group's journal on disk — one append-only JSONL
 log per group under `<root>/rings/<ns>/` (`journal.rs`), the single-writer
-door that signs and the peer-ingest path that does not, and
-the checkpoint (`ring_checkpoint.rs`). The writer underneath is `oplog.rs`. It
+door that signs and the peer-ingest path that does not; upstream's checkpoint
+(`ring_checkpoint.rs`), which nothing of svrngs composed, went in lean-3.
+The writer underneath is `oplog.rs`. It
 is commonwealth-ai's `commonwealth-rail` and `oplog` at `e1a43bcd2`, forked the
 same way as the core; its one edit is gating `oplog.rs`'s test-only serde
 import. Upstream's shape stays: `RingRail` keeps its open journals in a map
@@ -102,13 +103,14 @@ Beside the journals, `svrngs-node` holds the dialling half of sync over iroh
 and the exchange budget); `alpn.rs` is `mesh-reach`'s `alpn.rs` with its one
 `ALPN`, then the enum it promised (`Alpn`, U2), moved whole into svrngs-core
 (u4-2) so a browser's page spells each protocol as the node does, and
-re-exported as `svrngs_node::alpn`; `guest.rs` and `guest/tunnel.rs` are `mesh-reach`'s guest dialer, the
+re-exported as `svrngs_node::alpn`; `guest.rs` is `mesh-reach`'s guest dialer, the
 relayed endpoint and the one loopback bridge (`HttpBridge`, `pump`); `iroh.rs`
 is `commonwealth-transport`'s client side (`IrohTransport`,
 `format_dial_string`, `preferred_bridge_port`). Its edits: no IP transport;
 one ALPN, so the per-class ALPNs (`RPC_ALPN`, `CLIENT_ALPN`, `GUEST_ALPN`,
 `OFFER_ALPN`, `MEDIA_ALPN`, `APP_ALPN`) and `alpn_for_class` go, and the guest
-tunnel dials `ALPN`; no bench relay pin (`relay_pin_active`,
+tunnel dialled `ALPN` until lean-3 deleted it (`guest/tunnel.rs`,
+`parse_dial_string`), nothing of svrngs reaching it; no bench relay pin (`relay_pin_active`,
 `build_relay_only_endpoint`); no `PeerTransport`, `PeerContact`,
 `PeerEndpoint` or `TrafficClass`, so the transport is a concrete type whose
 `base_url` takes a `Contact` (a key with optional dial hints) and its bridges
