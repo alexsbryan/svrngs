@@ -174,3 +174,48 @@ fn an_act_refused_inside_its_authors_chain_is_not_a_hole() {
     );
     assert_eq!(applied(&a), vec!["one", "two"]);
 }
+
+fn correct_of(target: &Op<SignedOp>) -> RailAct {
+    RailAct::Correct {
+        corrects: target.id.clone(),
+        replacement: None,
+    }
+}
+
+/// **A removed key cannot take back its removal** (DESIGN §6, "A removed
+/// key cannot remove"; "There is no recovery inside a group"). Alex removes
+/// bo; bo signs a `Correct` of alex's `Remove`. Bo stays out and bo's later
+/// act counts nowhere. At the base the void layer bound every key an
+/// unvoided `Admit` named, cut or not (membership.rs:214-245), so bo's
+/// correction voided the cut and restored bo.
+#[test]
+fn a_removed_key_cannot_take_back_its_removal() {
+    let bo_in = signed(&key(1), 100, 0, admit_of("bo", 2));
+    let kept = signed(&key(2), 101, 0, record("kept"));
+    let cut = after(&key(1), &bo_in, 110, remove_of(2, 0));
+    let undo = after(&key(2), &kept, 111, correct_of(&cut));
+    let later = after(&key(2), &undo, 112, record("later"));
+    let a = admitted_under(&alex_alone(), &[bo_in, kept, cut, undo, later.clone()]);
+    assert!(!standing(&a, 2), "bo stays out: {:?}", a.gaps());
+    assert!(
+        !a.membership().counts(&later.id),
+        "and bo's later act counts nowhere"
+    );
+}
+
+/// **A member's `Correct` of an `Admit` unseats nobody** (DESIGN §6,
+/// "Removal has one decider"). Alex admits cy; bo, a member, signs a
+/// `Correct` of that `Admit`. Cy stands: voiding an `Admit` was a removal
+/// no keeper sequenced. At the base any bound key's `Correct` voided any
+/// act, an `Admit` included, and every key it admitted fell with it
+/// (membership.rs:214-252).
+#[test]
+fn a_members_correct_of_an_admit_unseats_nobody() {
+    let bo_in = signed(&key(1), 100, 0, admit_of("bo", 2));
+    let cy_in = after(&key(1), &bo_in, 101, admit_of("cy", 3));
+    let undo = signed(&key(2), 102, 0, correct_of(&cy_in));
+    let cy_writes = signed(&key(3), 103, 0, record("cy-writes"));
+    let a = admitted_under(&alex_alone(), &[bo_in, cy_in, undo, cy_writes.clone()]);
+    assert!(standing(&a, 3), "cy stands: {:?}", a.gaps());
+    assert!(a.membership().counts(&cy_writes.id), "and cy's act counts");
+}
