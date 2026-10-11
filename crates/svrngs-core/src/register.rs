@@ -125,11 +125,7 @@ impl Command for Removal {
 
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, RemovalRefusal> {
         let m = before.membership();
-        let keys: Vec<&String> = m
-            .standing
-            .iter()
-            .filter(|k| m.bindings.get(*k) == Some(&self.person))
-            .collect();
+        let keys: Vec<&String> = m.keys_of(&self.person).collect();
         let verdict = match keys.iter().any(|k| m.keeper.as_ref() == Some(*k)) {
             _ if keys.is_empty() => Err(RemovalRefusal::NotInGroup),
             true => Err(RemovalRefusal::Keeps),
@@ -164,9 +160,8 @@ pub enum HandOnRefusal {
 
 impl HandOnTo {
     fn key<'a>(&self, m: &'a crate::Membership) -> Option<&'a String> {
-        m.standing.iter().find(|k| {
-            m.bindings.get(*k) == Some(&self.person) && m.device(k) == Some(Device::Computer)
-        })
+        m.keys_of(&self.person)
+            .find(|k| m.device(k) == Some(Device::Computer))
     }
 }
 

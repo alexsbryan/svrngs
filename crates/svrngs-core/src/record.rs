@@ -33,12 +33,7 @@ impl Command for Append {
             return Err(AppendRefusal::NotAnAppAct);
         }
         if let Some(person) = &self.on_behalf_of {
-            let register = before.membership();
-            let stands = register
-                .standing
-                .iter()
-                .any(|key| register.bindings.get(key) == Some(person));
-            if !stands {
+            if before.membership().keys_of(person).next().is_none() {
                 return Err(AppendRefusal::NotInGroup(person.clone()));
             }
         }

@@ -168,6 +168,16 @@ impl Membership {
         self.bindings.get(actor)
     }
 
+    /// The keys standing now as `person`.
+    pub fn keys_of<'a, 'p>(
+        &'a self,
+        person: &'p Person,
+    ) -> impl Iterator<Item = &'a String> + use<'a, 'p> {
+        self.standing
+            .iter()
+            .filter(move |k| self.bindings.get(*k) == Some(person))
+    }
+
     /// What holds `key`, if it stands now; `None` if it does not.
     pub fn device(&self, key: &str) -> Option<Device> {
         self.standing.contains(key).then(|| {
