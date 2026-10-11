@@ -1115,7 +1115,11 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   which commits svrngs-core's `Removal` (a `Remove` of each key standing
   as that person, naming each key's newest acts held) or `HandOnTo`; from
   anyone but the keeper it is an ask, and the words name who decides. The
-  cut is told once to the removed person's computers, the cut alone. From
+  cut is told once to the removed person's computers, the cut alone, and
+  each removal or hand-on written wakes the round, so every other computer
+  holds it at once, not at the next round a minute on (take 1 of
+  `demo/runs/u7/2026-10-11/`: a lender not the keeper served the removed
+  person 43.3 s after the cut). From
   then on each computer of the group answers a removed key on the
   members' protocol only with svrngs's refusal `removed`, "You are no
   longer in this group", and refuses a pass it signed the same, so every

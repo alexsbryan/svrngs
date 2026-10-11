@@ -180,6 +180,12 @@ impl AskRound {
         Self { nudge, rounds }
     }
 
+    /// Wake the round now, waiting on nothing: a write that must reach the
+    /// group before the next interval (U7, a removal and a hand-on).
+    pub fn wake(&self) {
+        self.nudge.notify_one();
+    }
+
     /// Wake the round now and wait, at most `within`, until `known` holds,
     /// asked again as each member answers, or a round begun after this ask
     /// ends: whether either came in time. A member that answers ends the

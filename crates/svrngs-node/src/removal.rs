@@ -9,6 +9,10 @@
 //! fold decides whether a removal is the cut or an ask; this module only
 //! carries it.
 //!
+//! Each removal or hand-on written wakes the round, as a folder's write
+//! does, so every computer of the group holds it now rather than at the
+//! next round, up to a minute on (demo/runs/u7/2026-10-11, take 1).
+//!
 //! A cut is told to the removed person's computers once, as it lands: one
 //! sync request carrying the cut and nothing else of the group, which their
 //! node takes since this computer stands in their copy of the register.
@@ -132,7 +136,11 @@ async fn remove(State(at): State<Asking>, Json(asked): Json<Asked>) -> Outcome {
         .cloned()
         .collect();
     tracing::debug!(target: "removal", group, written = recorded.lines().len(), ?cut,
-        "removal: written — the cut when this computer decides, else an ask");
+        "removal: written — the cut when this computer decides, else an ask; the round woken");
+    // Now, not at the next round: every other lender refuses the removed
+    // person only once its computer holds the cut, and the keeper sees an
+    // ask only once it holds it (demo/runs/u7/2026-10-11, take 1: 43.3 s).
+    at.door().ring.wake();
     if cut.is_empty() {
         return Outcome::Asked {
             decides: decides(&after),
@@ -200,7 +208,10 @@ async fn hand_over(State(at): State<Asking>, Json(asked): Json<Asked>) -> Outcom
     let rail = at.host.rail();
     let group = asked.group.as_str();
     let outcome = match rail.commit(group, &HandOnTo { person }) {
-        Ok(Ok(_)) => Outcome::Handed,
+        Ok(Ok(_)) => {
+            at.door().ring.wake();
+            Outcome::Handed
+        }
         Ok(Err(Refused::NoStanding)) => Outcome::NotIn,
         Ok(Err(Refused::Command(HandOnRefusal::NotInGroup))) => Outcome::NotInGroup,
         Ok(Err(Refused::Command(HandOnRefusal::NotKeeper))) => Outcome::NotDecider {
@@ -211,6 +222,6 @@ async fn hand_over(State(at): State<Asking>, Json(asked): Json<Asked>) -> Outcom
             Outcome::Fault
         }
     };
-    tracing::debug!(target: "removal", group, ?outcome, "removal: a hand-on asked");
+    tracing::debug!(target: "removal", group, ?outcome, "removal: a hand-on asked; the round woken when written");
     outcome
 }
