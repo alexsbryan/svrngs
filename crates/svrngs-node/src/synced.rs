@@ -403,14 +403,18 @@ impl Folders {
         let took = n0_future::stream::iter(found)
             .map(|(rel, path, meta)| async move {
                 let took = Instant::now();
-                let tag = self.take(&path).await;
+                let tag = self.take(&path, &meta).await;
                 (rel, path, meta, tag, ms(took))
             })
             .buffered_ordered(TAKE_AT_ONCE)
             .collect::<Vec<_>>()
             .await;
         for (rel, path, meta, tag, took_ms) in took {
-            let tag = tag?;
+            // Held as it was, so the next step, which the write wakes, takes it.
+            let Some(tag) = tag? else {
+                tracing::debug!(target: "folder", folder, path = %rel, ms = took_ms, "synced: not taken — written as it was taken; the next step takes it");
+                continue;
+            };
             let hash = tag.hash();
             hold.push(tag);
             tracing::debug!(target: "folder", folder, path = %rel, %hash, ms = took_ms, "synced: taken into the store");

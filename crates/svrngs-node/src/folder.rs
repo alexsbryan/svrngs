@@ -16,6 +16,8 @@
 //! 2026-10-10): a group's folder is synced onto its members' disks.
 
 use std::collections::{BTreeMap, BTreeSet, HashSet};
+use std::fs::Metadata;
+use std::io::Read as _;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -87,6 +89,9 @@ pub enum FolderError {
 #[derive(Clone)]
 pub struct Folders {
     store: Store,
+    /// The most bytes the store holds inline, as it was opened with:
+    /// [`Self::take`] reads a file that small itself.
+    inline: u64,
     /// The journals, the endpoint, this computer's key, and who stands
     /// where ([`Host::standings`]): the round's, read here too.
     host: Arc<Host>,
@@ -158,6 +163,7 @@ impl Folders {
             interval: SWEEP,
             add_protected: Some(protect),
         });
+        let inline = options.inline.max_data_inlined;
         let fs = FsStore::load_with_opts(root.join("blobs.db"), options)
             .await
             .map_err(|e| format!("the blob store: {e}"))?;
@@ -168,6 +174,7 @@ impl Folders {
         let untagged = untagged.map_err(|e| format!("the blob store's tags: {e}"))?;
         let folders = Folders {
             store: store.clone(),
+            inline,
             host,
             nudge,
             data_dir: data_dir.to_path_buf(),
@@ -315,14 +322,40 @@ impl Folders {
     /// fetching it, or as a conflict's other side — and a referenced file
     /// edited in place would answer its old hash with new bytes, which
     /// every fetch refuses, so the version would reach no one.
-    async fn take(&self, path: &Path) -> Result<TempTag, FolderError> {
-        let options = AddPathOptions {
-            path: path.to_path_buf(),
-            mode: ImportMode::Copy,
-            format: BlobFormat::Raw,
+    ///
+    /// `None` when the file is not as `was` says through the take: written
+    /// as it was taken, what the store hashed may be what neither stat saw,
+    /// and an act sent 0 bytes of a 100 MiB hash so that no member's file
+    /// matched what it held again (perf-2 h). A file the store would hold
+    /// inline is read here, never past a byte more than `was`: the store
+    /// reads one that small whole after a stat of its own, and holds one
+    /// that grew between the two inline, or panics where debug asserts
+    /// (iroh-blobs 0.103 `import_path_impl`, `finish_import_impl`).
+    async fn take(&self, path: &Path, was: &Metadata) -> Result<Option<TempTag>, FolderError> {
+        let read = |e| FolderError::Read(path.to_path_buf(), e);
+        let tag = match was.len() <= self.inline {
+            true => {
+                let mut bytes = Vec::new();
+                let file = std::fs::File::open(path).map_err(read)?;
+                file.take(was.len() + 1).read_to_end(&mut bytes).map_err(read)?;
+                if bytes.len() as u64 != was.len() {
+                    return Ok(None);
+                }
+                self.store.add_bytes(bytes).temp_tag().await
+            }
+            false => {
+                let options = AddPathOptions {
+                    path: path.to_path_buf(),
+                    mode: ImportMode::Copy,
+                    format: BlobFormat::Raw,
+                };
+                self.store.add_path_with_opts(options).temp_tag().await
+            }
         };
-        let tag = self.store.add_path_with_opts(options).temp_tag().await;
-        tag.map_err(|e| FolderError::Store(path.to_path_buf(), e.to_string()))
+        let tag = tag.map_err(|e| FolderError::Store(path.to_path_buf(), e.to_string()))?;
+        let now = std::fs::symlink_metadata(path).map_err(read)?;
+        let same = now.len() == was.len() && now.modified().ok() == was.modified().ok();
+        Ok(same.then_some(tag))
     }
 
     /// The groups a directory here syncs: a version is in the store only

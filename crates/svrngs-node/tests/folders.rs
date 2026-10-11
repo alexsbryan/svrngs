@@ -574,6 +574,52 @@ async fn a_save_by_rename_is_synced_and_a_directory_moved_whole() {
     group.close().await;
 }
 
+/// **A file written as the step takes it is sent as it was taken, and the
+/// next edit still reaches a member**: Ana rewrites a file whole, 100 MiB in
+/// one write, so the step its truncate wakes stats it mid-write and takes it
+/// after; Ben holds it, then Ana's small edit of it. Red with the file taken
+/// as its stat before the take said (perf-2 h, the targets' pass): in
+/// release, an act said 0 bytes of a 100 MiB hash, Ben's file never matched
+/// what he held, and Ana's edit after it never reached him; in debug, the
+/// store's import panics on a file that grew past its own stat, and the
+/// rewrite reaches no one.
+#[tokio::test]
+async fn a_file_written_as_it_is_taken_is_sent_as_taken_and_the_next_edit_arrives() {
+    let group = Group::new().await;
+    let (ra, rb) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (ana, ben) = (
+        both_ways(&group.ana, ra.path()).await,
+        both_ways(&group.ben, rb.path()).await,
+    );
+    let at_ben = || std::fs::read(ben.join("big.bin")).ok();
+    let first = noise(4_000, b"first");
+    std::fs::write(ana.join("big.bin"), &first).unwrap();
+    assert!(
+        until(&group, || at_ben().as_ref() == Some(&first)).await,
+        "Ana's file reaches Ben"
+    );
+    // Truncated, then written while the step woken by the truncate looks.
+    let file = std::fs::File::create(ana.join("big.bin")).unwrap();
+    tokio::time::sleep(Duration::from_millis(30)).await;
+    let big = noise(100 << 20, b"big");
+    let written = big.clone();
+    tokio::task::spawn_blocking(move || std::io::Write::write_all(&mut &file, &written))
+        .await
+        .unwrap()
+        .unwrap();
+    assert!(
+        until(&group, || at_ben().as_ref() == Some(&big)).await,
+        "Ana's rewrite reaches Ben"
+    );
+    let edit = noise(5_000, b"edit");
+    std::fs::write(ana.join("big.bin"), &edit).unwrap();
+    assert!(
+        until(&group, || at_ben().as_ref() == Some(&edit)).await,
+        "Ana's edit after it reaches Ben"
+    );
+    group.close().await;
+}
+
 /// **A holder asleep is waited on for a bound, then the next asked**: Ana
 /// writes, Ben's directory takes it, Ana's node goes away; Cy, syncing
 /// after, asks Ana first, as the writer, and holds the file from Ben within
