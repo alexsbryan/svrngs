@@ -196,9 +196,10 @@ async fn lends(
 /// of a kind its lender declared it reads, in the groups its lender and this
 /// computer stand in — its kind, name, lender's person and the origin this
 /// computer's browser asks it at; for a lend that asks, its lender's words,
-/// `asks`, and `ask`, where the page sends its person to say yes, on the
-/// home page ([`crate::home`]; the page adds `&back=<its path>`) — and
-/// whose computer did not answer. No
+/// `asks`, `ask`, where the page sends its person to say yes, on the
+/// home page ([`crate::home`]; the page adds `&back=<its path>`), and
+/// `stop`, where the page posts its own stop at its origin
+/// ([`crate::origin`]) — and whose computer did not answer. No
 /// key: a page needs none to ask, and the address is all it builds on.
 pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Response> {
     let reader = hex::encode(label.lender());
@@ -222,8 +223,11 @@ pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Respon
             let address = host.origin(&l.key, l.offered.name.as_str())?;
             let mut read = serde_json::json!({ "kind": l.offered.kind, "name": l.offered.name, "lender": l.person, "address": address });
             if let Some(words) = &l.offered.asks {
+                let lend = named(l)?;
                 read["asks"] = words.as_str().into();
-                read["ask"] = crate::home::ask_address(host.api_port, &named(l)?, label).into();
+                read["ask"] = crate::home::ask_address(host.api_port, &lend, label).into();
+                let page = crate::origin::origin(label, host.api_port);
+                read["stop"] = format!("{page}{}/{lend}/svrngs-stop", &READS_PATH[1..]).into();
             }
             Some(read)
         })

@@ -20,11 +20,9 @@ const LIST = 'Items?Recursive=true&IncludeItemTypes=Movie&Fields=ProviderIds,Pro
 
 // su: plumbing find — what svrngs tells this page at its own origin: each
 // lend it reads, its kind, name, lender and address, a lend that asks its
-// words and its `ask` address, and whose computer did not answer (DESIGN
-// §3, "Lent apps", call 6). A stop is sent to `/svrngs-reads/<label>/
-// svrngs-stop` here, the label the one `ask` names.
+// words, its `ask` address and its `stop` address, and whose computer did
+// not answer (DESIGN §3, "Lent apps", call 6).
 const told = () => fetch('/svrngs-reads').then((r) => (r.ok ? r.json() : null), () => null);
-const stopAt = (t) => `/svrngs-reads/${new URL(t.ask).searchParams.get('lend')}/svrngs-stop`;
 
 // su: plumbing refusal — svrngs's answers in a lend's place told from the
 // lend's by `x-svrngs-refused` (DESIGN §3), the taste's by its `refused`.
@@ -142,7 +140,7 @@ async function start() {
   };
   stop.onclick = async () => {
     stop.hidden = true;
-    const got = await asked(stopAt(t), {});
+    const got = await asked(t.stop, {});
     if (got.state !== 'answered') return refused(t, got, films);
     picks.dataset.order = 'ranked before the stop';
     tell('stopped', `Stopped. From now on ${t.who} refuses Tonight’s Picks. The list ranked before you stopped stays on this screen until you leave it.`);

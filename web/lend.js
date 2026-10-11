@@ -26,9 +26,10 @@
 // the shape a computer's `/svrngs-reads` gives (surface.rs `reads`), to
 // which the page adds `&back=<its path>`: navigated, it opens the group's
 // page at `#ask=<lend>&app=<this lend>&at=<back>`, where only the person
-// says yes. A page stops its app using a lend, `POST
-// <READS>/<label>/svrngs-stop`, sent to that lend's door with the pass,
-// whose app is this lend; the door takes no yes with a pass.
+// says yes. A page stops its app using a lend, `POST` at `stop`,
+// `<origin><READS>/<label>/svrngs-stop`, told beside `ask`, sent to that
+// lend's door with the pass, whose app is this lend; the door takes no yes
+// with a pass.
 //
 // What a browser does for an origin and a worker cannot see, it does here:
 // - Cookies (a worker's request carries no `Cookie`, and its answer sets
@@ -386,7 +387,7 @@ async function told() {
       name: l.name,
       lender: l.person,
       address: `${SCOPE.origin}${READS}/${l.label}/`,
-      ...(l.asks ? { asks: l.asks, ask: `${SCOPE.origin}${ASK}?lend=${l.label}&app=${OWN}` } : {}),
+      ...(l.asks ? { asks: l.asks, ask: `${SCOPE.origin}${ASK}?lend=${l.label}&app=${OWN}`, stop: `${SCOPE.origin}${READS}/${l.label}/svrngs-stop` } : {}),
     })),
     unanswered: h.unanswered,
   });

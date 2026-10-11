@@ -1091,6 +1091,12 @@ async fn a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped(eng
             && ask.ends_with(&format!("/svrngs-ask?lend={shelf_label}&app={page_label}")),
         "the ask address, at the page's own origin: {ask}"
     );
+    let stop = told["stop"].as_str().unwrap_or_default();
+    assert!(
+        at_origin(&json!(stop), &page_label)
+            && stop.ends_with(&format!("/svrngs-reads/{shelf_label}/svrngs-stop")),
+        "the stop address, beside ask, at the page's own origin: {stop}"
+    );
     assert_eq!(
         refused("before"),
         (json!(403), json!("unasked")),

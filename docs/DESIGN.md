@@ -158,7 +158,8 @@ paths it refuses, how many people may use it at once.
   (`/v1/groups`, `/v1/lends`, `/v1/rail/people`), groups that cannot be
   read said so (sup-2, `crates/svrngs-node/src/home.rs`). An app sends its
   person there: `/svrngs-reads` gives each lend that asks its words,
-  `asks`, and `ask`, to which it adds `&back=<its path>` — on a computer
+  `asks`, `ask`, to which it adds `&back=<its path>`, and `stop`, the
+  address at its own origin it posts its own stop to (lean-4 (d)) — on a computer
   `…svrngs.localhost:<port>/ask?lend=<label>&app=<label>`, on a phone
   `<its origin>/svrngs-ask?lend=<label>&app=<label>`, which the lend's
   worker sends to the group's page at `#ask=<lend>&app=<label>&at=<path>`
@@ -170,8 +171,8 @@ paths it refuses, how many people may use it at once.
   this computer's door for its own lend, else posted to the lender's door
   as this computer's key; on a phone the group's page posts it to the
   lender's door, dialled as the person; then the person goes back to the
-  app at its path. An app stops itself, `POST
-  /svrngs-reads/<label>/svrngs-stop` at its own origin; on a phone its
+  app at its path. An app stops itself, `POST` at `stop`,
+  `/svrngs-reads/<label>/svrngs-stop` at its own origin; on a phone its
   worker sends that to the lend's door with the pass. The group's page
   lists what apps use too, asked of each lender when the person opens it,
   each yes with Stop. Neither page is ever framed, and neither runs an

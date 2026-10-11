@@ -366,6 +366,11 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
             one["ask"],
             format!("http://{home}/ask?lend={l}&app={night}")
         );
+        assert_eq!(
+            one["stop"],
+            format!("http://{}/svrngs-reads/{l}/svrngs-stop", at(&night)),
+            "the stop address, beside ask, at night's own origin"
+        );
     }
 
     let same = "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n";
