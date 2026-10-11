@@ -65,8 +65,11 @@ pub struct RingRail {
     /// here or ingested from a peer (perf-2 d): what wakes a synced
     /// folder's apply, where it waited up to a second (svrngs-node
     /// synced.rs).
-    on_write: OnceLock<Box<dyn Fn(&str) + Send + Sync>>,
+    on_write: OnceLock<Teller>,
 }
+
+/// What [`RingRail::on_write`] tells.
+type Teller = Box<dyn Fn(&str) + Send + Sync>;
 
 impl RingRail {
     #[expect(clippy::disallowed_types, reason = "the open-journal map")]
