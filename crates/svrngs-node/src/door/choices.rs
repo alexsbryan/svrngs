@@ -272,25 +272,20 @@ pub(super) async fn choose(
     Segment(raw): Segment<String>,
     headers: HeaderMap,
     body: Bytes,
-) -> Response {
-    let (dialer, person, lend) = match member(&door, dialer, &raw) {
-        Ok(m) => m,
-        Err(refused) => return refused,
-    };
+) -> Result<Response, Response> {
+    let (dialer, person, lend) = member(&door, dialer, &raw)?;
     if headers.contains_key(PASS_HEADER) {
-        return match own_app(&door, &dialer, &headers, &lend) {
-            Ok(app) => stop(&door, &lend, person, app.expect("a pass is present"), &body).await,
-            Err(refused) => refused,
-        };
+        let app = own_app(&door, &dialer, &headers, &lend)?.expect("a pass is present");
+        return Ok(stop(&door, &lend, person, app, &body).await);
     }
     match serde_json::from_slice::<Saying>(&body) {
-        Ok(Saying { app, said }) => keep(&door, &lend, person, app, said).await,
+        Ok(Saying { app, said }) => Ok(keep(&door, &lend, person, app, said).await),
         Err(e) => {
             tracing::debug!(target: "door", lend = %lend.name, error = %e, "door: refused — not a choice");
-            LendRefusal::Path.say(
+            Err(LendRefusal::Path.say(
                 StatusCode::BAD_REQUEST,
                 "a choice is {app, said: yes or stop}",
-            )
+            ))
         }
     }
 }
@@ -303,24 +298,15 @@ pub(super) async fn stop_with_pass(
     Segment(raw): Segment<String>,
     headers: HeaderMap,
     body: Bytes,
-) -> Response {
+) -> Result<Response, Response> {
     let (Some(Extension(dialer)), Ok(lend)) = (dialer, found(&door, &raw)) else {
-        return LendRefusal::Closed
-            .say(StatusCode::FORBIDDEN, "nothing is lent to you by that name");
+        return Err(
+            LendRefusal::Closed.say(StatusCode::FORBIDDEN, "nothing is lent to you by that name")
+        );
     };
-    match holder_of(&door, &dialer, &headers, &lend).await {
-        Ok(Asker { actor, app, .. }) => {
-            stop(
-                &door,
-                &lend,
-                actor,
-                app.expect("a pass names its app"),
-                &body,
-            )
-            .await
-        }
-        Err(refused) => refused,
-    }
+    let Asker { actor, app, .. } = holder_of(&door, &dialer, &headers, &lend).await?;
+    let app = app.expect("a pass names its app");
+    Ok(stop(&door, &lend, actor, app, &body).await)
 }
 
 /// `GET /choices/<lend>`: the dialler's own.
@@ -328,11 +314,9 @@ pub(super) async fn choices_of(
     State(door): State<Door>,
     dialer: Option<Extension<Dialer>>,
     Segment(raw): Segment<String>,
-) -> Response {
-    match member(&door, dialer, &raw) {
-        Ok((_, person, lend)) => kept(&door, &lend, &person),
-        Err(refused) => refused,
-    }
+) -> Result<Response, Response> {
+    let (_, person, lend) = member(&door, dialer, &raw)?;
+    Ok(kept(&door, &lend, &person))
 }
 
 /// This computer's person's `said` of `app` on its own lend `label`, with

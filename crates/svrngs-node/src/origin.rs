@@ -168,10 +168,10 @@ pub(crate) fn router(asking: Asking) -> Router {
 }
 
 /// A request at a lend's origin, carried to the lend.
-async fn lent(State(at): State<Asking>, req: Request) -> Response {
+async fn lent(State(at): State<Asking>, req: Request) -> Result<Response, Response> {
     let Some(label) = label_of(req.headers().get(header::HOST)) else {
         tracing::debug!(target: "origin", host = ?req.headers().get(header::HOST), "origin: refused — no lend's host");
-        return LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here");
+        return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
     };
     if req.uri().path() == crate::surface::READS_PATH {
         tracing::debug!(target: "origin", %label, "origin: the lend's page asks the lends it reads, answered from the record");
@@ -179,10 +179,10 @@ async fn lent(State(at): State<Asking>, req: Request) -> Response {
     }
     let Some(app) = app_of(req.headers(), &label) else {
         tracing::debug!(target: "origin", %label, "origin: refused — from another page that names no origin");
-        return LendRefusal::Closed.say(
+        return Err(LendRefusal::Closed.say(
             StatusCode::FORBIDDEN,
             "a page reaches another lend only by fetch, which says where it is from",
-        );
+        ));
     };
     let stop = req.uri().path().strip_prefix(crate::surface::READS_PATH);
     let stop = stop.and_then(|p| p.strip_prefix('/')?.strip_suffix("/svrngs-stop"));
@@ -192,12 +192,10 @@ async fn lent(State(at): State<Asking>, req: Request) -> Response {
     {
         tracing::debug!(target: "origin", %label, %app, %lend, "origin: a page stops its app using a lend");
         let pass = own_pass(&at, &app, &lend);
-        return crate::home::say(&at, &lend, app, crate::door::choices::Said::Stop, pass).await;
+        return Ok(crate::home::say(&at, &lend, app, crate::door::choices::Said::Stop, pass).await);
     }
     if app != label {
-        if let Err(refused) = kept_to_reads(&at, &app, &label).await {
-            return refused;
-        }
+        kept_to_reads(&at, &app, &label).await?;
     }
     reach(&at, label, app, req).await
 }
@@ -206,7 +204,12 @@ async fn lent(State(at): State<Asking>, req: Request) -> Response {
 /// page of the lend `app`: by the `Host` at its origin on loopback, or by
 /// the port at the room door (u6-1), one body for both (DESIGN §3, "The
 /// room", call 3).
-pub(crate) async fn reach(at: &Asking, label: Label, app: Label, mut req: Request) -> Response {
+pub(crate) async fn reach(
+    at: &Asking,
+    label: Label,
+    app: Label,
+    mut req: Request,
+) -> Result<Response, Response> {
     let tail = req.uri().path_and_query().map_or("/", |p| p.as_str());
     let target = format!("{LEND_ROUTE}{label}{tail}");
     let lender = label.lender();
@@ -215,33 +218,30 @@ pub(crate) async fn reach(at: &Asking, label: Label, app: Label, mut req: Reques
         tracing::debug!(target: "origin", %label, "origin: this computer's own lend, through its door's rules");
         let (mut parts, body) = req.into_parts();
         let Ok(uri) = target.parse::<Uri>() else {
-            return LendRefusal::Path.say(
+            return Err(LendRefusal::Path.say(
                 StatusCode::BAD_REQUEST,
                 "this is not an address a lend can be asked",
-            );
+            ));
         };
         parts.uri = uri;
         return door::lend_for(door, Who::Own(app), None, Request::from_parts(parts, body)).await;
     }
-    let base = match dialled(at, &label).await {
-        Ok(base) => base,
-        Err(refused) => return refused,
-    };
+    let base = dialled(at, &label).await?;
     let Some(bridge) = base
         .strip_prefix("http://")
         .and_then(|a| a.parse::<std::net::SocketAddr>().ok())
     else {
-        return away();
+        return Err(away());
     };
     let Some(pass) = own_pass(at, &app, &label) else {
-        return LendRefusal::Fault.say(
+        return Err(LendRefusal::Fault.say(
             StatusCode::INTERNAL_SERVER_ERROR,
             "this computer could not say which app asks",
-        );
+        ));
     };
     req.headers_mut().insert(PASS_HEADER, pass);
     tracing::debug!(target: "origin", %label, %app, lender = hex::encode(lender), %bridge, "origin: another computer's lend, through the dial to its door, the app in this computer's own pass");
-    carried(req, bridge, &target, label.as_str()).await
+    Ok(carried(req, bridge, &target, label.as_str()).await)
 }
 
 /// The bridge to the door of the computer lending `label`, dialled as this

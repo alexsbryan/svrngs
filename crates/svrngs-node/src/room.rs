@@ -150,7 +150,10 @@ pub async fn open(node: &Node, at: Ipv4Addr, names: &[LendName]) -> Result<Room,
 
 /// A request at the room door, carried to its lend as at its origin, for
 /// the lend's own page: the room serves one lend at each port.
-async fn in_room(State((at, label)): State<(Asking, Label)>, req: Request) -> Response {
+async fn in_room(
+    State((at, label)): State<(Asking, Label)>,
+    req: Request,
+) -> Result<Response, Response> {
     crate::origin::reach(&at, label.clone(), label, req).await
 }
 

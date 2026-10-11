@@ -800,7 +800,9 @@ pub async fn append(
     body: axum::Json<serde_json::Value>,
 ) -> axum::response::Response {
     let nudge = api.nudge.clone();
-    let answer = crate::rail::append(axum::extract::State(api), query, body).await;
+    let answer = crate::rail::append(axum::extract::State(api), query, body)
+        .await
+        .unwrap_or_else(|refused| refused);
     if answer.status().is_success() {
         nudge.notify_one();
         info!(target: "rails", "ring sync: an append woke the round");

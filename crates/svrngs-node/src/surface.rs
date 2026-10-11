@@ -146,21 +146,18 @@ fn name_of(at: &Surface, id: &str) -> Option<String> {
 /// `GET /v1/lends?namespace=<id>`. A group not held, or held with no seed,
 /// is refused as the rail's doors refuse it ([`standing_of`]); one this
 /// computer does not stand in, since no lender's computer would answer it.
-async fn lends(State(at): State<Surface>, Query(q): Query<RailQuery>) -> Response {
-    let namespace = match namespace_of(&q) {
-        Ok(ns) => ns,
-        Err(refusal) => return refusal,
-    };
-    let standing = match standing_of(at.asking.host.rail(), &namespace) {
-        Ok(people) => people,
-        Err(refusal) => return refusal,
-    };
+async fn lends(
+    State(at): State<Surface>,
+    Query(q): Query<RailQuery>,
+) -> Result<Response, Response> {
+    let namespace = namespace_of(&q)?;
+    let standing = standing_of(at.asking.host.rail(), &namespace)?;
     let Some(own) = standing
         .get(at.asking.host.actor())
         .map(|m| m.person.clone())
     else {
         tracing::debug!(target: "surface", namespace, "surface: lends refused — this computer does not stand in the group");
-        return (
+        return Err((
             StatusCode::CONFLICT,
             Json(serde_json::json!({
                 "error": format!("this computer is not in {namespace}, so nobody in it lends to it"),
@@ -168,13 +165,10 @@ async fn lends(State(at): State<Surface>, Query(q): Query<RailQuery>) -> Respons
                 "namespace": namespace,
             })),
         )
-            .into_response();
+            .into_response());
     };
     let groups = [(namespace.clone(), standing)];
-    let (lent, unanswered) = match at.asking.lent(&groups, &own, None).await {
-        Ok(answer) => answer,
-        Err(refused) => return refused,
-    };
+    let (lent, unanswered) = at.asking.lent(&groups, &own, None).await?;
     let host = &at.asking.host;
     let lent: Vec<serde_json::Value> = lent
         .into_iter()
@@ -191,8 +185,10 @@ async fn lends(State(at): State<Surface>, Query(q): Query<RailQuery>) -> Respons
         .collect();
     tracing::debug!(target: "surface", namespace, lent = lent.len(), unanswered = unanswered.len(),
         "surface: lends — answered what the group's people lend, this computer's own among them, each at its origin");
-    Json(serde_json::json!({ "namespace": namespace, "lent": lent, "unanswered": unanswered }))
-        .into_response()
+    Ok(
+        Json(serde_json::json!({ "namespace": namespace, "lent": lent, "unanswered": unanswered }))
+            .into_response(),
+    )
 }
 
 /// `GET /svrngs-reads` at the origin of the lend `label` (mnp-2): each lend
@@ -203,26 +199,23 @@ async fn lends(State(at): State<Surface>, Query(q): Query<RailQuery>) -> Respons
 /// home page ([`crate::home`]; the page adds `&back=<its path>`) — and
 /// whose computer did not answer. No
 /// key: a page needs none to ask, and the address is all it builds on.
-pub(crate) async fn reads(at: &Asking, label: &svrngs_core::pass::Label) -> Response {
+pub(crate) async fn reads(
+    at: &Asking,
+    label: &svrngs_core::pass::Label,
+) -> Result<Response, Response> {
     let reader = hex::encode(label.lender());
     let host = &at.host;
-    let (mut groups, own) = match host.shared_with(&reader) {
-        Ok(shared) => shared,
-        Err(refused) => return refused,
-    };
+    let (mut groups, own) = host.shared_with(&reader)?;
     groups.retain(|(_, s)| s.contains_key(host.actor()));
     let Some(own) = own else {
         tracing::debug!(target: "surface", %label, "surface: reads refused — its lender and this computer share no group");
-        return LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here");
+        return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
     };
-    let (lent, unanswered) = match at.lent(&groups, &own, None).await {
-        Ok(answer) => answer,
-        Err(refused) => return refused,
-    };
+    let (lent, unanswered) = at.lent(&groups, &own, None).await?;
     let named = |l: &crate::node::Lending| crate::node::label(&l.key, l.offered.name.as_str());
     let Some(reading) = lent.iter().find(|l| named(l).as_ref() == Some(label)) else {
         tracing::debug!(target: "surface", %label, unanswered = unanswered.len(), "surface: reads refused — the lend is not lent now");
-        return LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here");
+        return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
     };
     let read: Vec<serde_json::Value> = lent
         .iter()
@@ -239,5 +232,5 @@ pub(crate) async fn reads(at: &Asking, label: &svrngs_core::pass::Label) -> Resp
         .collect();
     tracing::debug!(target: "surface", %label, reads = ?reading.offered.reads, read = read.len(), unanswered = unanswered.len(),
         "surface: reads — answered a lent page the lends of the kinds it reads, each at its origin here");
-    Json(serde_json::json!({ "lends": read, "unanswered": unanswered })).into_response()
+    Ok(Json(serde_json::json!({ "lends": read, "unanswered": unanswered })).into_response())
 }

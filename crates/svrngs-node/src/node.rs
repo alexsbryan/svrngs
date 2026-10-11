@@ -656,30 +656,30 @@ fn people_router(asking: Asking) -> axum::Router {
 /// with its key — and whose computer did not answer. A browser asks it of the computer it
 /// dials, which answers what it can see and proxies no lend (DESIGN §3,
 /// call 4). A group the dialer does not stand in adds nothing.
-async fn people_lends(State(at): State<Asking>, dialer: Option<Extension<Dialer>>) -> Response {
+async fn people_lends(
+    State(at): State<Asking>,
+    dialer: Option<Extension<Dialer>>,
+) -> Result<Response, Response> {
     let Some(Extension(dialer)) = dialer else {
         tracing::warn!(target: "node", "node: people's lends refused — no verified dialer, so the request did not come on an iroh stream");
-        return err(
+        return Err(err(
             StatusCode::FORBIDDEN,
             "what a group's people lend is asked only from within it",
-        );
+        ));
     };
     let asker = dialer.actor();
-    let (groups, own) = match at.host.shared_with(&asker) {
-        Ok(shared) => shared,
-        Err(refused) => return refused,
-    };
+    let (groups, own) = at.host.shared_with(&asker)?;
     let Some(own) = own else {
         tracing::debug!(target: "node", asker, "node: people's lends refused — the dialer stands in no group this computer stands in");
-        return err(StatusCode::FORBIDDEN, "this computer lends nothing to you");
+        return Err(err(
+            StatusCode::FORBIDDEN,
+            "this computer lends nothing to you",
+        ));
     };
-    let (lent, unanswered) = match at.lent(&groups, &own, Some(&asker)).await {
-        Ok(answer) => answer,
-        Err(refused) => return refused,
-    };
+    let (lent, unanswered) = at.lent(&groups, &own, Some(&asker)).await?;
     tracing::debug!(target: "node", asker, groups = groups.len(), lent = lent.len(), unanswered = unanswered.len(),
         "node: people's lends — answered what the people of the asker's groups lend, each with its lender's key");
-    Json(serde_json::json!({ "lent": lent, "unanswered": unanswered })).into_response()
+    Ok(Json(serde_json::json!({ "lent": lent, "unanswered": unanswered })).into_response())
 }
 
 impl Asking {
