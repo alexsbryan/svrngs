@@ -15,7 +15,7 @@
 //! and the one-way share it served, were dropped at syp-1 (operator,
 //! 2026-10-10): a group's folder is synced onto its members' disks.
 
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -40,7 +40,7 @@ use iroh_blobs::{BlobFormat, BlobsProtocol, Hash};
 use n0_future::StreamExt as _;
 use std::convert::Infallible;
 
-use svrngs_core::{Command, ContentHash, Placed, Recorded};
+use svrngs_core::{Command, ContentHash, Digest, Placed, Recorded};
 use tokio::sync::{mpsc, oneshot, watch, Notify};
 
 use crate::iroh::{actor_key, key_actor, Alpn};
@@ -103,6 +103,10 @@ pub struct Folders {
     unanswered: watch::Sender<BTreeMap<String, Instant>>,
 }
 
+/// What the store's keep is read from: each synced group's digest, and
+/// every version a directory holds.
+type ReadAt = (Vec<(String, Digest)>, Vec<ContentHash>);
+
 impl Folders {
     /// The store under `data_dir/blobs`, its sweep, and its provider.
     pub(crate) async fn start(
@@ -150,9 +154,19 @@ impl Folders {
         tracing::info!(target: "folder", untagged, "folder: the store is open");
         let keeper = folders.clone();
         tokio::spawn(async move {
-            let mut last = None;
+            let (mut last, mut read_at) = (None, None);
             while let Some(answer) = keep_asked.recv().await {
+                // Each sweep reading every group's layout cost each node a
+                // whole record's admission a second: 25 nodes of 10,000 acts
+                // reached none of 24 in the ceiling's canary (syp-4).
+                let at = keeper.read_at();
+                if at.is_some() && at == read_at {
+                    tracing::debug!(target: "folder", "folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read");
+                    answer.send(None).ok();
+                    continue;
+                }
                 let keep = keeper.keep();
+                read_at = at.filter(|_| keep.is_some());
                 let sweep = keep.is_some() && keep != last;
                 if sweep {
                     let kept = keep.as_ref().map_or(0, HashSet::len);
@@ -221,14 +235,42 @@ impl Folders {
         tag.map_err(|e| FolderError::Store(path.to_path_buf(), e.to_string()))
     }
 
+    /// The groups a directory here syncs: a version is in the store only
+    /// as one of their directories took or fetched it, so no other group's
+    /// layout is read for what it keeps. `Err` when the list cannot be read.
+    fn synced_groups(&self) -> Result<BTreeSet<String>, String> {
+        let syncing = self.syncing.borrow();
+        let kept = syncing
+            .as_ref()
+            .map_err(|(at, e)| format!("{}: {e}", at.display()))?;
+        Ok(kept.keys().map(|(group, _)| group.clone()).collect())
+    }
+
+    /// What [`Self::keep`] is read from, cheaply: each synced group's
+    /// digest, since equal digests hold equal acts (svrngs-core view.rs,
+    /// `View`), and every version a directory holds. `None` when any cannot
+    /// be read, so `keep` is read and says why.
+    fn read_at(&self) -> Option<ReadAt> {
+        let groups = self.synced_groups().ok()?;
+        let rail = self.host.rail();
+        let digests = groups
+            .into_iter()
+            .map(|ns| rail.digest(&ns).ok().map(|d| (ns, d)));
+        Some((
+            digests.collect::<Option<_>>()?,
+            self.held_everywhere().ok()?,
+        ))
+    }
+
     /// What the store keeps: every version a synced folder's layout places
-    /// in any group held here, a conflict's other side among them, and
-    /// every version a synced directory holds as last taken or written;
+    /// in a group a directory here syncs, a conflict's other side among
+    /// them, and every version a synced directory holds as last taken or
+    /// written;
     /// `None`, said, when any of it cannot be read, so nothing is dropped
     /// on a guess.
     fn keep(&self) -> Option<HashSet<Hash>> {
-        let groups = self.host.rail().namespaces();
-        let groups = groups.inspect_err(|e| tracing::warn!(target: "folder", error = %e, "folder: the store keeps everything — the groups held cannot be listed")).ok()?;
+        let groups = self.synced_groups();
+        let groups = groups.inspect_err(|e| tracing::warn!(target: "folder", error = %e, "folder: the store keeps everything — the directories synced here cannot be listed")).ok()?;
         let (mut keep, mut why) = (HashSet::new(), None);
         for ns in groups {
             match self.layout(&ns) {
