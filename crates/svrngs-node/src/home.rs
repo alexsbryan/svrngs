@@ -110,21 +110,14 @@ pub(crate) fn router(
 /// The home page's one rule (the module doc), and its policy on every answer.
 async fn only_itself(State(at): State<Asking>, req: Request, next: Next) -> Response {
     let own = format!("{HOST}:{}", at.host.api_port);
-    let [site, mode, origin, host] =
-        ["sec-fetch-site", "sec-fetch-mode", "origin", "host"].map(|name| {
-            req.headers()
-                .get(name)
-                .and_then(|v| v.to_str().ok())
-                .map(str::to_string)
-        });
-    let (site, mode) = (site.as_deref(), mode.as_deref());
+    let ([site, mode, origin, host], own_page) = crate::origin::fetch(req.headers());
     let at_own = host.is_some_and(|h| h.eq_ignore_ascii_case(&own));
     let reads = matches!(*req.method(), Method::GET | Method::HEAD);
     let answers = at_own
         && if reads {
-            mode == Some("navigate") || matches!(site, Some("same-origin" | "none"))
+            own_page
         } else {
-            site == Some("same-origin") && origin == Some(format!("http://{own}"))
+            site == Some("same-origin") && origin.is_some_and(|o| o == format!("http://{own}"))
         };
     tracing::debug!(target: "home", path = %req.uri().path(), method = %req.method(), at_own, ?site, ?mode, ?origin, answers,
         "home: answered only from itself, a typed address or, to read, a navigation");

@@ -72,25 +72,36 @@ fn at(host: &str) -> Option<(Label, Option<String>)> {
 /// `None`. A request with no `Sec-Fetch-*` is a program's, not a page's, and
 /// is the lend's own, as loopback is trusted (DESIGN §9).
 fn app_of(headers: &HeaderMap, host: &Label) -> Option<Label> {
-    let said = |name: &str| headers.get(name).and_then(|v| v.to_str().ok());
-    let (site, mode) = (said("sec-fetch-site"), said("sec-fetch-mode"));
+    let ([site, mode, origin, at_host], own) = fetch(headers);
     if site.is_none() && mode.is_none() {
         tracing::debug!(target: "origin", %host, "origin: no Sec-Fetch-*, a program on this computer, so the lend's own");
         return Some(host.clone());
     }
-    if mode == Some("navigate") || matches!(site, Some("none" | "same-origin")) {
+    if own {
         tracing::debug!(target: "origin", %host, ?site, ?mode, "origin: a navigation, a typed address or its own origin, so the lend's own page");
         return Some(host.clone());
     }
-    let port = at(said(header::HOST.as_str())?)?.1;
-    let from = said(header::ORIGIN.as_str())
+    let port = at(at_host?)?.1;
+    let from = origin
         .and_then(|o| o.strip_prefix("http://"))
         .and_then(at)
         .filter(|(_, p)| *p == port)
         .map(|(label, _)| label);
-    tracing::debug!(target: "origin", %host, ?site, ?mode, origin = ?said(header::ORIGIN.as_str()), app = ?from.as_ref().map(Label::as_str),
+    tracing::debug!(target: "origin", %host, ?site, ?mode, ?origin, app = ?from.as_ref().map(Label::as_str),
         "origin: from another page, so the app its Origin names, or none");
     from
+}
+
+/// What the browser says of the page asking, which no page's script can
+/// set — its `Sec-Fetch-Site`, `Sec-Fetch-Mode`, `Origin` and the `Host`
+/// it asked — and whether it is a navigation, a typed address or the page's
+/// own origin: read once for a lend's origin ([`app_of`]) and the home page
+/// (`crate::home`'s `only_itself`), each deciding the rest by its own rule.
+pub(crate) fn fetch(headers: &HeaderMap) -> ([Option<&str>; 4], bool) {
+    let [site, mode, origin, host] = ["sec-fetch-site", "sec-fetch-mode", "origin", "host"]
+        .map(|name| headers.get(name).and_then(|v| v.to_str().ok()));
+    let own = mode == Some("navigate") || matches!(site, Some("none" | "same-origin"));
+    ([site, mode, origin, host], own)
 }
 
 /// Whether the page of the lend `app` may reach the lend `label`: both
