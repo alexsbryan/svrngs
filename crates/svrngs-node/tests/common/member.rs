@@ -20,7 +20,7 @@ pub fn signing(i: usize) -> SigningKey {
     SigningKey::from_bytes(&[i as u8 + 1; 32])
 }
 
-fn seed_file(dir: &Path) -> Result<Option<String>, String> {
+pub fn seed_file(dir: &Path) -> Result<Option<String>, String> {
     match std::fs::read_to_string(dir.join("seed.json")) {
         Ok(t) => Ok(Some(t)),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
@@ -133,4 +133,3 @@ pub async fn node() {
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
 }
-

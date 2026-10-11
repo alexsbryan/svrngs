@@ -207,6 +207,15 @@ impl Folders {
                 .await,
         );
         let (apply_ms, t) = (ms(t), Instant::now());
+        // What this step took or fetched made durable before the kept state
+        // names it: the store commits its writes in batches up to 500 ms
+        // apart (iroh-blobs 0.103 `BatchOptions`), and a node stopped
+        // between lost a fetched file's bytes (syp-4 d, tests/kept.rs).
+        if !hold.is_empty() {
+            let synced = self.store.sync_db().await;
+            synced.map_err(|e| FolderError::Store(dir.into(), e.to_string()))?;
+            tracing::debug!(target: "folder", folder, held = hold.len(), "synced: what the step took or fetched made durable");
+        }
         let wrote = std::fs::write(&kept, serde_json::to_vec(&held).unwrap_or_default());
         drop(hold);
         tracing::debug!(target: "folder", folder, files, sent, read_ms, walk_ms, take_ms, write_ms, apply_ms, kept_ms = ms(t), ms = ms(t0), "synced: a step");
