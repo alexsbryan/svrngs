@@ -5883,3 +5883,289 @@ for :601, `SyncPath` :32 for :33).
 | I19 | 6 | dry-report, `tests/` scopes | Still present, and said: "could-not-judge". |
 | I24 | 6, 7 | `code dry-report` exact tier | Still present on b604bcb6…: a 10-line verbatim Rust copy, and two 30-line byte-identical Python functions, each considered and each in no exact group. |
 | I25 | 6 | `code index`'s automatic full rebuild | Still present, reached without `--full`: past 500 changed files, `code index` rebuilds whole, refuses its own promotion over the corpus's `documents.lance`, and leaves the corpus with no chunk index. dry-report then errors rather than reporting a zero. `svrngs-folders` is left so (above). |
+
+## REVIEW-audit-v1-auto-1 (2026-10-11, range ec703b5..4e1d3a9)
+
+No `REVIEW-audit-` row precedes this one in its queue
+(ralph/next/v1/STATE.md), so the range starts where the queue did:
+ec703b5, the commit that made it. It ends at 4e1d3a9, the commit that
+made this row. `git rev-list --count ec703b5..4e1d3a9` is 21, no merge
+among them (`--merges`: 0), all on main. One unit, u7-removal, and its
+`done` (cebb39a). The audit's own commits: f2ed770 (docs), f941db2,
+14ce2a7, e07b98b, 45af469 and 0414547 (moves, behaviour kept), and
+3e9c51f (traces, decisions unchanged). It opens #123 and #124, grows
+#31, moves #117, narrows #103, and closes none.
+
+The row's `docs/ARCH_PRINCIPLES.md` is docs/principles/ARCH_PRINCIPLES.md,
+and `target/debug/sovereign-cli` is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256 b604bcb6…
+(`shasum -a 256`, built 2026-10-10 14:10), the binary the last two
+audits planted; the row is corrected in ralph/next/v1/STATE.md beside
+this section. The embedder was `llama-server` on the corpus's model
+(qwen-embedding-0.6b.gguf, ~/.svrnmesh/config.toml:18) on :8080, `-b 8192
+-ub 8192`, for this session. The corpus is 4e1d3a9's tree, `git archive`
+into /tmp/v1audit1/tree-4e1d3a9: `code index . --corpus-id tree-4e1d3a9`,
+3177 chunks in 216 s (/tmp/v1audit1/index.out); `refresh` gave rust
+12865 symbols and "typescript: skipped (export failed)", "python: skipped
+(export failed)" (I4; /tmp/v1audit1/refresh.out). The corpora
+`tree-4e1d3a9` and `tree-plant1` stay in ~/.svrnmesh/indexes, about 23 MB
+each. The scripts are the syp audit's (/tmp/sypaudit1), copied to
+/tmp/v1audit1: ledger.py with this queue's unit name, and clusters.py and
+windows.py without their `^main`, since this range is main's own.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+ec703b5..4e1d3a9`, summed by /tmp/v1audit1/ledger.py
+(/tmp/v1audit1/ledger.out). A commit counts toward the unit its subject
+names, else toward the next `done`'s; product code is crates/, apps/,
+web/ and bridge/; a test is a `tests/` or `check/` segment, or a test
+file name (`*_tests.rs`, `tests.rs`, `*.test.mjs`).
+
+| unit | commits | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| u7-removal | 20 | 1090 | 274 | 816 | 1440 | 101 | 1339 |
+| REVIEW-audit-v1-auto-1 (the row's own commit) | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+
+By crate (/tmp/v1audit1/byfile.out): svrngs-core +488/−190, net 298;
+svrngs-node +297/−10, net 287; the command +148/−6, net 142;
+svrngs-runtime +154/−67, net 87; web/ +3/−1. By file, the most:
+svrngs-node removal.rs +227 (2289372, a473f1d), cli.rs +142 (d0abac4),
+core membership.rs +130 (f915bc2's +245/−119, the keeper and the cut),
+core register.rs +88 (5f5a585, the two commands), core admit.rs +58
+(45b338b, f915bc2, 995dd13, 5f5a585), runtime register.rs +48 and
+journal.rs +39 (f915bc2, 995dd13, 2d927be, 3bcf840).
+
+The size budget, scripts/lean_check.py at HEAD over a `git archive` tree
+of each commit (`python3 scripts/lean_check.py <tree>`,
+/tmp/v1audit1/lean-points.out):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| ec703b5, range start | 2719 / 3000 | 13848 / 15350 |
+| 888a3ee, (a) the holes planted | 2720 | 13849 |
+| 45b338b, (b) forks void nothing | 2720 | 13849 |
+| f915bc2, (c) removal is the keeper's | 2850 | 13994 |
+| 995dd13, (d) #16 and the hole in a chain | 2854 | 14000 |
+| 5f5a585, the two commands | 2939 | 14085 |
+| 3bcf840, the kept fold one `Register` | 2939 | 14126 |
+| 2289372, the record API | 2939 | 14295 |
+| d0abac4, the command | 2939 | 14410 |
+| cf6ea9c, the words, the doors, the folder | 2939 | 14450 |
+| a473f1d, the round woken | 2939 | 14457 |
+| 4e1d3a9, range end | 2939 | 14457 |
+| 0414547, this audit's last | **2937 / 3000** | **14463 / 15350** |
+
+The range nets +609 by the budget's count, svrngs-core +220 of it. **63
+lines are left in svrngs-core and 887 in the repository** (#80). The core
+is the one near its edge: f915bc2 and 5f5a585 took 215 of the 281 it had.
+
+### (2) Clones (`code dry-report`)
+
+**Scoped**, at 0.95, for each dir the range touched
+(/tmp/v1audit1/clean-*0.95.md; every side blamed by `git blame -w` at
+4e1d3a9 against the range's commits, /tmp/v1audit1/clusters.out):
+
+| scope | locations | exact | near | with a side added in the range |
+|---|---:|---:|---:|---|
+| crates/svrngs-core/ | 431 | 6 | 0 | 1: `standing` (below) |
+| crates/svrngs-runtime/ | 131 | 1 | 0 | 0 |
+| crates/svrngs-node/ | 462 | 1 | 0 | 0 |
+| crates/svrngs-node/tests/ | 0 | **could-not-judge** | **could-not-judge** | — (I19) |
+| crates/svrngs/ | 72 | 0 | 0 | 0 |
+| crates/svrngs/tests/ | 0 | **could-not-judge** | **could-not-judge** | — (I19) |
+| web/ | 93 | **could-not-judge** | 0 | 0 (I4: no JavaScript symbols for the exact tier) |
+
+**Unscoped**: 0.95 (9 exact, 46 near; 1 group with a side in the range),
+0.9 (9, 76; 7), 0.8 (9, 265; 25). Every group with a side the range
+added:
+
+| at | cluster | cosine | read |
+|---|---|---|---|
+| exact | `standing` core membership_invite_tests.rs:65-67 ~ removal_tests.rs:36-38 | — | Byte for byte, 888a3ee's copy of a test helper. **Folded, 45af469**: one `standing` in tests_support.rs. |
+| 0.9 | core register.rs `decide` :174-185 ~ record.rs `decide` :58-66 ~ tests_support.rs `decide` :284-292, :300-308 | 0.922-0.940 | `HandOnTo::decide` beside other commands' one-act decides: the `Command` trait's shape. No change. Reading them found the walk "keys standing as this person" spelled three times (register.rs:128-132, :167-169, record.rs:37-41): **folded, 0414547**, `Membership::keys_of`. |
+| 0.9 | removal_tests.rs `a_hand_on_moves_the_keeper…` :271-301 ~ `a_removed_key_cannot_remove…` :301-332; register_tests.rs :138-155 ~ :152-166; membership_tests.rs `admit_act` ~ removal_tests.rs `admit_of` | 0.917-0.922 | Tests of one shape, each a different case; `admit_act` signs where `admit_of` builds the act unsigned. No change. |
+| 0.9 | demo/runs/u7/2026-10-11/run.py `say` ~ perf drivers' `say`; `poll_lends` ~ `one` | 0.940-1.000 | Run drivers, kept byte for byte beside their data (#61); `demo/runs/` is outside the budget. No change. |
+| 0.8 | core membership.rs `membership` :186-295 ~ `walk` :333-470 | 0.879 | One calls the other: the fixpoint and its one walk. No change; see #124. |
+| 0.8 | core admit.rs `admit` ×3 (:443-563, :564-700, :701-813) | 0.810-0.826 | Chunks of one function. No change. |
+| 0.8 | core register.rs `decide` :123-150 ~ record.rs, register.rs `decide` | 0.860-0.862 | As at 0.9. |
+| 0.8 | runtime register.rs `standing_in` :63-76 ~ `membership_in` :109-129; `standing` ~ node.rs `standings`, `shared_with`, `standing_peers` | 0.80-0.878 | `standing_in` is a test-only projection of `register_in`. Reading `standing` beside its neighbour found `RingRail::register` (:173-180) repeating `standing`'s held-and-seeded check with no trace: **folded and traced, 3e9c51f** (`seeded`). |
+| 0.8 | runtime journal.rs `standing` :310-321 ~ `register` :318-326 | 0.828 | Both ask one `folded`. No change. |
+| 0.8 | node removal.rs `status` ~ `into_response`, `router` ~ `decides`, `remove` in an 82-symbol cluster of signing helpers | 0.80-0.84 | Neighbours, each its own. No change. |
+| 0.8 | node surface.rs `groups` ~ rail.rs `standing_of`, `log_answer`; home.js `groups` ~ `list`; ring_sync.rs `new` ~ `wake`; cli.rs `run` ~ `serve`, `folder` ~ folder.rs `ask` | 0.80-0.86 | A line or two in range each, in clusters of one shape. No change. |
+| 0.8 | demo/runs/u7/2026-10-11/phone.mjs `opening`, `open` ~ apps' check drivers, web/app.js `open` | 0.80-0.91 | A run's driver (#61). No change. |
+
+**Window pass** (/tmp/v1audit1/windows.py . ec703b5..4e1d3a9,
+/tmp/v1audit1/windows.out): 854 window hits in 171 spans, 18 new: 2 in
+product source, 16 in tests, 0 in the run drivers.
+
+- **origin.rs:298-303 == removal.rs:183-188**: a `Contact` built from a
+  key alone, the fifth such in product code (node.rs:620, origin.rs:301,
+  rail.rs:576, removal.rs:186, ring_sync/journal.rs:40). **Folded,
+  e07b98b**: `Contact::by_key`, −8 lines.
+- folder.rs:25-29 == removal.rs:23-27: the two modules' axum imports. No
+  change.
+- **tests/removal.rs:19-49 == canaries.rs:22-54 == group_not_mesh.rs:26-59**:
+  2289372 wrote out again the node-start block (`signing`, `key`,
+  `no_relay`, `no_seed`, `start`), the third binary to hold all five
+  (record_api.rs:27-53 holds four, its `start` calling `start_on`);
+  `signing` alone is in 13 (`grep -l "fn signing(seed: u8)"` over
+  crates/svrngs-node/tests). #31, grown; not folded here, since one home
+  for them is a change to 13 test binaries, not the range's one.
+- No change to the rest: core membership_tests.rs:63-68 == :199-203,
+  register_tests.rs:242-246 == :303-307, removal_tests.rs:251-255 ==
+  :311-315 and runtime tests.rs:1014-1019 == :1042-1047 are a test's
+  set-up written in the test; browser/main.rs:231-241 == :372-378 ==
+  :1253-1263 are its page set-up, and :1330-1335 the record API's POST,
+  as in conformance.rs, record_api.rs, room.rs and lend_origin.rs;
+  group_not_mesh.rs:92-96 == removal.rs:60-64 is a seed written; and
+  svrngs/tests/remove.rs:165-171 == share.rs:673-679 the "svrngs stopped"
+  ending both command tests share.
+
+**The instrument, planted** in /tmp/v1audit1/tree-plant1, a copy of
+tree-4e1d3a9 with two plants of removal.rs's `tell` (35 lines): P1, its
+body byte for byte as `planted_tell` in removal.rs; P2, byte for byte under
+its own name `tell`, in a new `mod planted` (planted.rs). `code index`
+then `refresh` (rust 12892 symbols), `dry-report --scope
+crates/svrngs-node/` at 0.95 and 0.8 (/tmp/v1audit1/plant-node*.md): 464
+locations against 462, so both were seen. **P2 is an exact group** (`tell`
+planted.rs:6 ~ removal.rs:169, 34 lines) and a near one at 0.954. **P1
+is in no exact group**, and in the near tier only at 0.8, at cosine
+0.933 with `tell`. So the exact tier finds a verbatim copy only when it
+keeps its name (I24, refined below): the scoped tables' "0 exact" says
+nothing of a renamed copy, and the window pass, which compares bodies,
+carries that question. It found the one product copy the range made
+(`Contact`, above), which neither tier did.
+
+### Reading the range
+
+- **Docs on the wrong item, fixed in f2ed770.** f915bc2 put `names`
+  between `moves_membership`'s doc and its body (core membership.rs:469-
+  477 at 4e1d3a9), and 3bcf840 put `Register` under `Member`'s doc
+  (runtime register.rs:38-41). Moved back. journal.rs's `Held` said the
+  acts the register reads are "kept in the log's order"; since f915bc2 a
+  newly named key's acts are added from the whole log after the tail's,
+  and one after its `Remove` in the same tail is pushed twice. Harmless,
+  since `ActSet::of` reads a set, and now said.
+- **Two `Asked`, fixed in f941db2.** `converge noun Asked`: core
+  joining.rs:71, the issuer's answer to a link's ask (svrngs-node
+  re-exports it as `redeem::Asked`), and 2289372's removal.rs:44, the
+  command's request. The range's is now `RemovalAsk`, after `FolderAsk`.
+- **`removed_anywhere`, moved in 14ce2a7 and traced in 3e9c51f.**
+  cf6ea9c wrote it in node.rs as `standing_anywhere`'s loop again, for the
+  same two callers, reading groups that cannot be listed and a register
+  that cannot be read as "nobody removed", with no line (AGENTS.md 6,
+  ARCH 6's smell: "an `Err` collapsed into a success-shaped value"). It
+  is now `RingRail::removed_anywhere` beside `standing_anywhere`, and
+  says both at warn, as that one does. Its answers are unchanged. #103
+  narrowed by one site.
+- **`RingRail::register`'s silent empty register, fixed in 3e9c51f.** A
+  group not held, local-only or without a seed answered
+  `Register::default()` with no line, where `standing`, the same check,
+  says each. One `seeded` now makes the check for both and says it.
+- **Silent branches in the node and the core, traced in 3e9c51f**:
+  removal.rs's name that is no `Person` (in `remove` and `hand_over`),
+  `tell`'s key that is no iroh key, and core `HandOnTo::decide`'s
+  refusal. Each answer is unchanged.
+- **#123, not fixed.** `hand_over`'s `NotDecider` names who decides by
+  reading the register again, `.ok()` (removal.rs:217), so an unreadable
+  register becomes `decides: None`, which the command words as "Only
+  whoever decides who is removed can …" (cli.rs, `Said::Removal`). That
+  is the same words as a register naming no keeper's person. And
+  surface.rs:108-110 reads an unreadable register as `removed: false`;
+  the `standing` read beside it says its own failure at warn, but they
+  are two reads. Not fixed: telling "could not read" apart changes what
+  the person sees.
+- **#124, not fixed.** `membership`'s fixpoint (core membership.rs:254-
+  264) stops after `ops.len() + 1` walks whether or not the cuts
+  settled, and returns the last walk as the answer. The only sign is the
+  round's debug line, `settled=false`, the same line every unsettled round
+  prints. Not reproduced: no test or run here reached the cap, and
+  whether cuts can cycle is not shown. Not fixed: saying it as
+  could-not-judge changes the fold's type, in a core with 63 lines left.
+- **#117 moved.** d0abac4 moved `share --folder`'s POST into
+  `ask_running` (cli.rs:683-706), which `remove` and `handover` share: the
+  unreadable API file read as "" (:688) and the unreadable answer read as
+  "" (:703) now serve all three. For `remove` and `handover` the empty
+  answer fails to parse and is refused as "cannot be changed on this
+  computer", said at debug (cli.rs, `removal`), so it is not lost there.
+- **`tell` is detached** (removal.rs:159, `tokio::spawn`), its handle
+  dropped. It is bounded (one request per removed computer, never
+  retried) and traces each, so no finding; it is the shape #121 named.
+- **A person's words** (fence 5): the range's strings a person reads
+  hold none of key, member, keeper, ring, act or journal as a word
+  (`grep -iwE "key|keys|member|members|keeper|ring|act|acts|journal"` over
+  the quoted strings of cli.rs's `Said::Removal` arm and the `remove` and
+  `handover` help, and over door.rs's, home.js's and web/app.js's strings
+  that say "removed" or "no longer": no line). "decides who is removed"
+  stands for the keeper.
+- **This audit's own misstatements**, not amended: e07b98b's body gives
+  the four test binaries' counts in the wrong order (`cargo test`
+  printed canaries 1, group_not_mesh 3, record_api 9, removal 3), and
+  3e9c51f's "as before" for the core and runtime counts rests on the
+  commit changing no test file (`git show --stat 3e9c51f`), not on a run
+  at its parent.
+- **Still open, none touched by the range** (its files, `git log
+  --no-merges --name-only ec703b5..4e1d3a9`, are core admit, command, lib,
+  membership, register, sync; runtime journal, register; node door,
+  home.js, lib, node, removal, ring_sync, surface; cli.rs; web/app.js;
+  tests): #57, #68, #70, #71, #75, #77, #79, #81, #89, #91, #95, #97,
+  #99, #100, #104, #113. #79 (core sync.rs:234-237) is in a file
+  45b338b touched, at one line of `Compaction`'s doc ("either branch of
+  a fork"; `git show 45b338b -- crates/svrngs-core/src/sync.rs`), not
+  that branch.
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges ec703b5..4e1d3a9 -- crates apps
+web bridge` matching `\b(struct|enum|trait|type)\s+[A-Z]\w*` are:
+`HandOnRefusal`, `Outcome`, `RemovalRefusal`, `Asked`, `Cut`, `HandOnTo`,
+`Register`, `Removal`, `Folded`, and `type Refusal` twice (the `Command`
+trait's associated type). Each was run through `converge noun <Name>
+--corpus-id tree-4e1d3a9` (/tmp/v1audit1/nouns.out):
+
+| noun | converge (production) | read |
+|---|---|---|
+| Asked | 2: core joining.rs:71, svrngs-node removal.rs:44 | Two meanings under one name, both public in svrngs-node: the issuer's answer and the command's request. **Renamed, f941db2**: `RemovalAsk`. |
+
+Every other noun has one definition. `Folded` has none: a type alias
+2d927be added and 3bcf840 removed. converge's lines are still one early
+(I1: `Asked` :71 for :72 and :44 for :45, `Cut` :145 for :146,
+`Register` :42 for :43).
+
+### Fixed here
+
+- f2ed770: three docs, comments only.
+- f941db2: `removal::Asked` is `RemovalAsk`. A rename; the wire unchanged.
+- 14ce2a7: `removed_anywhere` moved to `RingRail`, beside
+  `standing_anywhere`. `cargo test -p svrngs-node --test removal`: 3
+  passed.
+- 3e9c51f: six silent branches traced, and `RingRail::register` through
+  `standing`'s one check. Decisions unchanged. svrngs-core 2939, the
+  repository 14457 → 14476.
+- e07b98b: `Contact::by_key`, five sites. 14476 → 14465.
+- 45af469: the core tests' `standing`, once. Tests only.
+- 0414547: `Membership::keys_of`, three sites. svrngs-core 2939 → 2937,
+  the repository 14465 → 14463.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 124 | 6, 1 | crates/svrngs-core/src/membership.rs:254-264, at 0414547 | not fixed | The cut fixpoint stops at `ops.len() + 1` walks settled or not, and answers with the last walk, said only by the round's ordinary debug line. Not reproduced. |
+| 123 | 6 | crates/svrngs-node/src/removal.rs:217; crates/svrngs-node/src/surface.rs:108-110, at 0414547 | not fixed | An unreadable register is read as "nobody decides" in the hand-on's refusal, worded as a person would read a register with no keeper; and as "not removed" on the home page. |
+| 117 | 6 | crates/svrngs/src/cli.rs:688, :703, at 0414547 | not fixed, moved (d0abac4) | `ask_running`, now `share --folder`'s, `remove`'s and `handover`'s, reads an unreadable API file as "not running" and an unreadable answer as an empty one. |
+| 103 | 6 | crates/svrngs-node/src/node.rs `Node::lends`, as recorded | narrowed (3e9c51f) | `removed_anywhere`'s unlistable groups now said at warn; `Node::lends` still reads them as none. |
+| 31 | 8 | crates/svrngs-node/tests/removal.rs:19-49 ~ canaries.rs:22-54 ~ group_not_mesh.rs:26-59 ~ record_api.rs:27-53 | not fixed | Grown by 2289372: a third binary holding the node-start block whole; `signing` in 13. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 63 lines left in svrngs-core (2937 / 3000), 887 in the repository (14463 / 15350). |
+| 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99, 100, 104, 113 | as recorded | as recorded | not fixed | Untouched by the range. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` lines | Still present: one line early. |
+| I4 | 6 | `refresh` | Still present: "typescript: skipped (export failed)", "python: skipped (export failed)". The web/ scope's exact tier says could-not-judge, which it is. |
+| I19 | 6 | dry-report, `tests/` scopes | Still present, and said: "could-not-judge". |
+| I24 | 6, 7 | `code dry-report` exact tier | Still present on b604bcb6…, and narrowed by this plant: a 35-line verbatim copy under its own name, in another file, is an exact group; the same copy renamed is in none. The tier keys on the name with the body, so "0 exact" is no evidence against a renamed copy. |
+| I9 | 6, 7 | `code dry-report` near tier | Still present: the renamed verbatim copy reaches cosine 0.933, and the same-named one 0.954, against their original. |
