@@ -40,6 +40,7 @@ use crate::door::{self, Door, LendRefusal, Who, LEND_ROUTE, PASS_HEADER, REFUSED
 use crate::iroh::{Contact, PublicKey};
 use crate::lend::Offered;
 use crate::node::Asking;
+use crate::surface::STOP_SUFFIX;
 
 /// How long a pass this computer signs for its own page lasts: one
 /// request's, signed afresh for each, so none is kept.
@@ -196,7 +197,7 @@ async fn lent(State(at): State<Asking>, req: Request) -> Result<Response, Respon
         ));
     };
     let stop = req.uri().path().strip_prefix(crate::surface::READS_PATH);
-    let stop = stop.and_then(|p| p.strip_prefix('/')?.strip_suffix("/svrngs-stop"));
+    let stop = stop.and_then(|p| p.strip_prefix('/')?.strip_suffix(STOP_SUFFIX));
     if let Some(lend) = stop
         .and_then(Label::parse)
         .filter(|_| req.method() == Method::POST)

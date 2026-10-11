@@ -53,6 +53,11 @@ pub const LENDS_ROUTE: &str = "/v1/lends";
 /// call 6; `web/lend.js` spells it for a phone).
 pub const READS_PATH: &str = "/svrngs-reads";
 
+/// What ends `<READS_PATH>/<label>`, where a page posts its own stop at its
+/// origin: `reads` tells it, `crate::origin`'s `lent` takes it
+/// (`web/lend.js` spells it for a phone).
+pub const STOP_SUFFIX: &str = "/svrngs-stop";
+
 /// What the routes read: the node's groups and transport and its own door
 /// ([`Asking`]), and how it reads a group's seed, for its name.
 #[derive(Clone)]
@@ -227,7 +232,7 @@ pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Respon
                 read["asks"] = words.as_str().into();
                 read["ask"] = crate::home::ask_address(host.api_port, &lend, label).into();
                 let page = crate::origin::origin(label, host.api_port);
-                read["stop"] = format!("{page}{}/{lend}/svrngs-stop", &READS_PATH[1..]).into();
+                read["stop"] = format!("{page}{}/{lend}{STOP_SUFFIX}", &READS_PATH[1..]).into();
             }
             Some(read)
         })
