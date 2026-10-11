@@ -219,6 +219,18 @@ impl RingRail {
             "register: the key stands in no group held here");
         None
     }
+
+    /// The first group held here whose keeper cut `actor`, or `None` (U7):
+    /// whom the members' protocol and the door tell they were removed.
+    pub fn removed_anywhere(&self, actor: &str) -> Option<String> {
+        let found = self
+            .namespaces()
+            .ok()?
+            .into_iter()
+            .find(|ns| self.register(ns).is_ok_and(|r| r.removed.contains_key(actor)));
+        tracing::debug!(target: "node", actor, group = ?found, "node: whether a group held here removed the dialer");
+        found
+    }
 }
 
 #[cfg(test)]

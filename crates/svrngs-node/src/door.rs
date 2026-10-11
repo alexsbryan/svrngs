@@ -839,7 +839,7 @@ async fn holder_of(
     let mut standing = door.rail.standing_anywhere(&pass.person);
     // A key the keeper cut never stands again (U7), so it is told so at once
     // rather than after the ring is asked.
-    if standing.is_none() && crate::node::removed_anywhere(&door.rail, &pass.person).is_some() {
+    if standing.is_none() && door.rail.removed_anywhere(&pass.person).is_some() {
         tracing::debug!(target: "door", holder = key, signer = pass.person, lend = %lend.name,
             "door: refused — the pass's signer was removed from a group held here");
         return Err(gone());
