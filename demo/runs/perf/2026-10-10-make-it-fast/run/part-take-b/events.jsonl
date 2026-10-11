@@ -1,0 +1,10 @@
+{"t": 1791686674.349, "phase": "setup", "event": "start", "pass_": "part", "host": {"load": [8.42, 11.44, 11.02], "cores": 12, "swap_used_mb": 16021.06, "free_gb": 105.2}, "head": "7603cf0", "df": "Filesystem   1024-blocks      Used Available Capacity iused      ifree %iused  Mounted on\n/dev/disk3s5   971350180 824966568 102754352    89% 6619754 1027543520    1%   /System/Volumes/Data\n"}
+{"t": 1791686674.595, "phase": "setup", "event": "built", "bin": "/Users/alexsbryan/dev/svrngs-folders/target/release/deps/perf-f6cf85cfd0f52350"}
+{"t": 1791686674.595, "phase": "part-take", "event": "phase"}
+{"t": 1791686674.595, "phase": "f100000", "event": "phase"}
+{"t": 1791686685.012, "phase": "f100000", "event": "up", "group": "f100000", "who": 0, "path": "loopback"}
+{"t": 1791686715.019, "phase": "f100000", "event": "converged", "group": "f100000", "s": 0.001}
+{"t": 1791686716.22, "phase": "f100000", "event": "shared", "group": "f100000", "who": 0, "answer": {"name": "Shared"}}
+{"t": 1791686741.067, "phase": "f100000", "event": "number", "name": "f100000-taken", "value": 18745.1, "target": null, "verdict": "reported", "start": {"load": [8.13, 11.27, 10.97], "cores": 12, "swap_used_mb": 16021.06, "free_gb": 104.8}, "end": {"load": [4.98, 9.83, 10.45], "cores": 12, "swap_used_mb": 16021.06, "free_gb": 104.4}, "unit": "ms", "path": "loopback", "steps": {"read_ms": 324.0, "walk_ms": 386.0, "take_ms": 463.0, "write_ms": 0.0, "apply_ms": 71.0, "kept_ms": 63.0, "ms": 1439.0, "steps": 3}, "first_step": {"folder": "Shared", "files": "100000", "sent": "100000", "read_ms": "0", "walk_ms": "314", "take_ms": "17411", "write_ms": "561", "apply_ms": "264", "kept_ms": "134", "ms": "18686"}}
+{"t": 1791686741.316, "phase": "f100000", "event": "scratch", "group": "f100000", "kib": 632256}
+{"t": 1791686748.045, "phase": "f100000", "event": "end", "host": {"load": [10.11, 10.77, 10.78], "cores": 12, "swap_used_mb": 16021.06, "free_gb": 105.2}, "df": "Filesystem   1024-blocks      Used Available Capacity iused      ifree %iused  Mounted on\n/dev/disk3s5   971350180 824948792 102772128    89% 6619832 1027721280    1%   /System/Volumes/Data\n"}
