@@ -12,8 +12,10 @@ use crate::{RingSigner, RingVerifier, Roster};
 /// Which of the held acts a command's decision reads.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Reads {
-    /// The acts the register folds ([`RailAct::moves_membership`]).
+    /// The acts the register folds ([`crate::standing_reads`]).
     Membership,
+    /// Every act held: a removal names the removed key's newest acts (U7).
+    All,
 }
 
 /// A request to change a group's record. A type implements this once, so a
@@ -179,7 +181,11 @@ fn authored<C: Command>(
 
 fn read<C: Command>(held: &ActSet) -> ActSet {
     match C::READS {
-        Reads::Membership => ActSet::of(held.iter().filter(|op| op.kind.act.moves_membership())),
+        Reads::Membership => {
+            let all: Vec<Op<SignedOp>> = held.iter().cloned().collect();
+            ActSet::of(crate::standing_reads(&all))
+        }
+        Reads::All => held.clone(),
     }
 }
 

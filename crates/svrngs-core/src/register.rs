@@ -101,6 +101,94 @@ impl Command for MintInvite {
     }
 }
 
+/// A member asks that `person` leave the group (U7; DESIGN §6 "Removal has
+/// one decider"): a `Remove` of each key standing as them, naming each key's
+/// newest acts this node holds. From the keeper it is the cut; from anyone
+/// else an ask, which the keeper sequences by asking the same.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Removal {
+    pub person: Person,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RemovalRefusal {
+    /// No key stands as that person.
+    NotInGroup,
+    /// The person keeps the group, and the keeper cannot be removed: they
+    /// hand it on first.
+    Keeps,
+}
+
+impl Command for Removal {
+    type Refusal = RemovalRefusal;
+    const READS: Reads = Reads::All;
+
+    fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, RemovalRefusal> {
+        let m = before.membership();
+        let keys: Vec<&String> = m
+            .standing
+            .iter()
+            .filter(|k| m.bindings.get(*k) == Some(&self.person))
+            .collect();
+        let verdict = match keys.iter().any(|k| m.keeper.as_ref() == Some(*k)) {
+            _ if keys.is_empty() => Err(RemovalRefusal::NotInGroup),
+            true => Err(RemovalRefusal::Keeps),
+            false => Ok(keys
+                .iter()
+                .map(|k| RailAct::Remove {
+                    key: (*k).clone(),
+                    through: before.tips(k).to_vec(),
+                })
+                .collect()),
+        };
+        tracing::debug!(target: "register", person = %self.person, keys = keys.len(),
+            keeper = ?m.keeper, ok = verdict.is_ok(), "removal: decided");
+        verdict
+    }
+}
+
+/// The keeper hands the group's keeping to `person`'s computer (U7).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HandOnTo {
+    pub person: Person,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum HandOnRefusal {
+    /// No computer's key stands as that person.
+    NotInGroup,
+    /// The signer does not keep the group, so the hand-on would move
+    /// nothing.
+    NotKeeper,
+}
+
+impl HandOnTo {
+    fn key<'a>(&self, m: &'a crate::Membership) -> Option<&'a String> {
+        m.standing.iter().find(|k| {
+            m.bindings.get(*k) == Some(&self.person) && m.device(k) == Some(Device::Computer)
+        })
+    }
+}
+
+impl Command for HandOnTo {
+    type Refusal = HandOnRefusal;
+    const READS: Reads = Reads::Membership;
+
+    fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, HandOnRefusal> {
+        let key = self
+            .key(before.membership())
+            .ok_or(HandOnRefusal::NotInGroup)?;
+        Ok(vec![RailAct::HandOn { key: key.clone() }])
+    }
+
+    fn confirm(&self, after: &Admission, _written: &[OpId]) -> Result<(), HandOnRefusal> {
+        let m = after.membership();
+        let moved = self.key(m).is_some_and(|k| m.keeper.as_ref() == Some(k));
+        tracing::debug!(target: "register", person = %self.person, moved, "hand-on: the fold's verdict");
+        moved.then_some(()).ok_or(HandOnRefusal::NotKeeper)
+    }
+}
+
 #[cfg(test)]
 #[path = "register_tests.rs"]
 mod tests;

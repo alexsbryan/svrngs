@@ -161,3 +161,151 @@ fn a_signer_without_standing_writes_nothing() {
     assert_eq!(refused, Err(Refused::NoStanding));
     assert_eq!(store.0.borrow().len(), 1);
 }
+
+// ── removal (U7) ────────────────────────────────────────────────
+
+/// A group alex made, alex keeping it: bo on two computers, cy on one, and
+/// an act of bo's on each key.
+fn alexs_group() -> (Roster, Memory) {
+    let seed = Roster::new([(p("alex"), vec![actor_of(&key(1))])].into_iter().collect());
+    let admit = |person: &str, k: u8| RailAct::Admit {
+        person: p(person),
+        key: actor_of(&key(k)),
+        invite: None,
+    };
+    let ins = run(
+        &key(1),
+        100,
+        [admit("bo", 2), admit("bo", 5), admit("cy", 3)],
+    );
+    let bo_writes = signed(&key(2), 110, 0, record("bo-writes"));
+    let bo_again = signed(&key(5), 111, 0, record("bo-again"));
+    let store = Memory::holding(&[ins, vec![bo_writes, bo_again]].concat());
+    (seed, store)
+}
+
+fn register(store: &Memory, seed: &Roster) -> Membership {
+    admit(&store.0.borrow(), &[], seed, NS, &Ed25519Verifier).project::<Membership>()
+}
+
+/// **The keeper's removal cuts every key of the person, through what the
+/// keeper holds** (U7 (e)). Alex removes bo: a `Remove` of each of bo's two
+/// keys, each naming that key's newest act, and bo stands nowhere.
+#[test]
+fn the_keepers_removal_cuts_every_key_of_the_person() {
+    let (seed, store) = alexs_group();
+    let done = commit(
+        &store,
+        &Removal { person: p("bo") },
+        &author(&key(1), &seed, 200),
+    )
+    .unwrap()
+    .unwrap();
+    assert_eq!(done.lines().len(), 2, "one Remove per key");
+    for line in done.lines() {
+        let RailAct::Remove { through, .. } = &line.kind.act else {
+            panic!("a Remove")
+        };
+        assert_eq!(through.len(), 1, "the key's one newest act");
+    }
+    let m = register(&store, &seed);
+    assert!(!m.standing.contains(&actor_of(&key(2))) && !m.standing.contains(&actor_of(&key(5))));
+    assert!(m.standing.contains(&actor_of(&key(3))), "cy stays");
+}
+
+/// **A member's removal is an ask and cuts nobody** (U7 (e)): bo asks to
+/// remove cy, the `Remove` is written and counts, and cy stands; then alex
+/// asks the same and cy is out. Red with the fold's keeper check out
+/// (membership.rs, `let keeps = true`).
+#[test]
+fn a_members_removal_is_an_ask_until_the_keeper_asks_the_same() {
+    let (seed, store) = alexs_group();
+    let asked = commit(
+        &store,
+        &Removal { person: p("cy") },
+        &author(&key(2), &seed, 200),
+    )
+    .unwrap()
+    .unwrap();
+    assert_eq!(asked.lines().len(), 1, "the ask is written");
+    assert!(
+        register(&store, &seed)
+            .standing
+            .contains(&actor_of(&key(3))),
+        "cy stands"
+    );
+    commit(
+        &store,
+        &Removal { person: p("cy") },
+        &author(&key(1), &seed, 201),
+    )
+    .unwrap()
+    .unwrap();
+    assert!(
+        !register(&store, &seed)
+            .standing
+            .contains(&actor_of(&key(3))),
+        "the keeper's cuts"
+    );
+    let refused = commit(
+        &store,
+        &Removal { person: p("bo") },
+        &author(&key(3), &seed, 202),
+    )
+    .unwrap();
+    assert_eq!(
+        refused,
+        Err(Refused::NoStanding),
+        "a removed person asks nothing"
+    );
+}
+
+/// **The keeper is not removed, and only the keeper hands on** (U7 (e)).
+/// Bo's removal of alex is refused `Keeps`; bo's hand-on to cy is refused
+/// `NotKeeper` and writes nothing; alex hands on to bo, and then bo's
+/// removal of alex is the cut. A person not in the group is `NotInGroup`.
+#[test]
+fn the_keeper_hands_on_and_is_removed_only_after() {
+    let (seed, store) = alexs_group();
+    let bo = key(2);
+    let as_bo = author(&bo, &seed, 200);
+    assert_eq!(
+        commit(&store, &Removal { person: p("alex") }, &as_bo).unwrap(),
+        Err(Refused::Command(RemovalRefusal::Keeps))
+    );
+    let held = store.0.borrow().len();
+    assert_eq!(
+        commit(&store, &HandOnTo { person: p("cy") }, &as_bo).unwrap(),
+        Err(Refused::Command(HandOnRefusal::NotKeeper))
+    );
+    assert_eq!(store.0.borrow().len(), held, "nothing written");
+    assert_eq!(
+        commit(&store, &Removal { person: p("dee") }, &as_bo).unwrap(),
+        Err(Refused::Command(RemovalRefusal::NotInGroup))
+    );
+    commit(
+        &store,
+        &HandOnTo { person: p("bo") },
+        &author(&key(1), &seed, 201),
+    )
+    .unwrap()
+    .unwrap();
+    let keeper = register(&store, &seed).keeper.unwrap();
+    let bos = [key(2), key(5)];
+    let Some(bo_keeps) = bos.iter().find(|k| actor_of(k) == keeper) else {
+        panic!("one of bo's computers keeps")
+    };
+    commit(
+        &store,
+        &Removal { person: p("alex") },
+        &author(bo_keeps, &seed, 202),
+    )
+    .unwrap()
+    .unwrap();
+    assert!(
+        !register(&store, &seed)
+            .standing
+            .contains(&actor_of(&key(1))),
+        "alex is out"
+    );
+}

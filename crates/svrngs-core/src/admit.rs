@@ -363,6 +363,9 @@ pub struct Admission {
     membership: crate::membership::Membership,
     /// Every synced folder's change, in admission's order (sy-1).
     pub(crate) synced: crate::synced::Written,
+    /// Each actor's newest acts held: chained, and named as `prev` by no
+    /// other act of theirs. What a removal names (U7).
+    tips: BTreeMap<String, Vec<OpId>>,
 }
 
 impl Admission {
@@ -395,6 +398,11 @@ impl Admission {
     /// Who is in: the one membership walk admission made.
     pub(crate) fn membership(&self) -> &crate::membership::Membership {
         &self.membership
+    }
+
+    /// `actor`'s newest acts this copy holds, by id (U7).
+    pub(crate) fn tips(&self, actor: &str) -> &[OpId] {
+        self.tips.get(actor).map_or(&[], Vec::as_slice)
     }
 }
 
@@ -530,6 +538,16 @@ pub fn admit(
     drop(at);
     for id in &broken {
         authentic.remove(id);
+    }
+    let parents: BTreeSet<(&str, &OpId)> = authentic
+        .values()
+        .filter_map(|op| Some((op.actor.as_str(), op.kind.prev.as_ref()?)))
+        .collect();
+    let mut tips: BTreeMap<String, Vec<OpId>> = BTreeMap::new();
+    for (id, op) in &authentic {
+        if !parents.contains(&(op.actor.as_str(), id)) {
+            tips.entry(op.actor.clone()).or_default().push(id.clone());
+        }
     }
 
     // ── membership: the seed plus two act kinds, one function ─────────
@@ -790,6 +808,7 @@ pub fn admit(
         seals,
         membership: m,
         synced,
+        tips,
     }
 }
 
