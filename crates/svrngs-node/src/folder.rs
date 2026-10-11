@@ -337,7 +337,9 @@ impl Folders {
             true => {
                 let mut bytes = Vec::new();
                 let file = std::fs::File::open(path).map_err(read)?;
-                file.take(was.len() + 1).read_to_end(&mut bytes).map_err(read)?;
+                file.take(was.len() + 1)
+                    .read_to_end(&mut bytes)
+                    .map_err(read)?;
                 if bytes.len() as u64 != was.len() {
                     return Ok(None);
                 }
