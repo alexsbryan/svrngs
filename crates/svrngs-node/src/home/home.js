@@ -4,7 +4,9 @@
 // computer's apps (/v1/groups, /v1/lends, /v1/rail/people); the ask at
 // /ask; and what apps use, each with Stop. Its only writes are the
 // person's yes and stop, to its own origin's /choices. Its words are
-// DESIGN §1's: groups, people, what they lend, computer.
+// DESIGN §1's: groups, people, what they lend, computer; its question and
+// what apps use are question.js's, the group's page's too.
+import { named, question, unasked, uses as used } from './question.js';
 
 const main = document.getElementById('home');
 const el = (tag, text, ...kids) => {
@@ -45,8 +47,6 @@ async function groups() {
   }));
 }
 
-const named = (l) => `${l.person}'s ${l.name}`;
-
 function list(all) {
   for (const g of all) {
     const s = el('section', '', el('h2', g.name ?? 'A group whose name this computer cannot read'));
@@ -72,14 +72,11 @@ async function uses(lent) {
     const at = label(l);
     try {
       const { choices } = await get(`/choices?lend=${at}`);
-      for (const [app, c] of Object.entries(choices)) {
-        const by = lent.find((o) => label(o) === app);
-        const line = el('p', `${by ? named(by) : 'An app'} ${c.said === 'yes' ? 'uses' : 'was stopped using'} ${named(l)}. `);
-        if (c.said === 'yes') line.append(button('Stop', () => said(at, app, 'stop').then(() => location.reload(), (e) => line.append(e.message))));
-        s.append(line);
-      }
+      const appOf = (app) => lent.find((o) => label(o) === app);
+      const stop = (app, line) => said(at, app, 'stop').then(() => location.reload(), (e) => line.append(e.message));
+      used(l, choices, appOf, (words) => s.appendChild(el('p', words)), stop);
     } catch (e) {
-      s.append(el('p', `What apps use of ${named(l)} cannot be asked now: ${e.message}`));
+      s.append(el('p', `${unasked(l)} ${e.message}`));
     }
   }
 }
@@ -90,7 +87,7 @@ function ask(lent, q) {
   if (!lend || !app || !lend.asks) return main.append(el('p', 'That app, or what it asks to use, is not lent in your groups now.'));
   const back = q.get('back')?.startsWith('/') && !q.get('back').startsWith('//') ? q.get('back') : '/';
   const go = () => location.assign(new URL(back, app.origin));
-  const s = el('section', '', el('h2', `Let ${named(app)} use ${named(lend)}?`), el('blockquote', lend.asks));
+  const s = el('section', '', el('h2', question(app, lend)), el('blockquote', lend.asks));
   s.append(button('Yes', () => said(label(lend), label(app), 'yes').then(go, (e) => s.append(e.message))), button('Not now', go));
   main.append(s);
 }

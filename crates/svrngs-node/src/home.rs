@@ -50,6 +50,13 @@ const MODULE: ([(header::HeaderName, &str); 1], &str) = (
     include_str!("home/home.js"),
 );
 
+/// svrngs's question and what apps use, in the one wording the group's page
+/// loads too (`scripts/build-web.sh` gives it the same file).
+const QUESTION: ([(header::HeaderName, &str); 1], &str) = (
+    [(header::CONTENT_TYPE, "text/javascript")],
+    include_str!("home/question.js"),
+);
+
 /// Its look, a file of its own, since its policy runs no inline style.
 const LOOK: ([(header::HeaderName, &str); 1], &str) = (
     [(header::CONTENT_TYPE, "text/css")],
@@ -82,6 +89,7 @@ pub(crate) fn router(
         .route("/", get(page))
         .route("/ask", get(page))
         .route("/home.js", get(|| async { MODULE }))
+        .route("/question.js", get(|| async { QUESTION }))
         .route("/home.css", get(|| async { LOOK }))
         .route("/choices", get(choices).post(choose))
         .with_state(at.clone())

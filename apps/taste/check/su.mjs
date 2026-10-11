@@ -279,7 +279,7 @@ async function homeStop(ana) {
   const opened = await openPicks(ana, 'to say yes again');
   ana.home_stop = { opened, yes: await sayYes(ana) };
   ana.home_stop.uses_before = await uses(ana);
-  const button = ana.page.locator('#home section p', { hasText: 'tonights-picks uses' }).getByRole('button', { name: 'Stop' });
+  const button = ana.page.locator('#home section p', { hasText: /tonights-picks( \(movie-night\))? uses/ }).getByRole('button', { name: 'Stop' });
   if (!(await button.count())) return (ana.home_stop.pressed = false);
   const t0 = Date.now();
   ana.home_stop.at = new Date(t0).toISOString();

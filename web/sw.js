@@ -21,7 +21,7 @@ const CACHE = store.CACHE;
 // the directory's trailing slash is what makes `./` the page. The wasm is
 // not here: the page keeps it in this cache when it first fetches it
 // (store.js `runtime`, u4-9).
-const SHELL = ['./', './app.js?v=__VERSION__', './store.js?v=__VERSION__', './wasm/svrngs_web.js?v=__VERSION__'];
+const SHELL = ['./', './app.js?v=__VERSION__', './store.js?v=__VERSION__', './question.js?v=__VERSION__', './wasm/svrngs_web.js?v=__VERSION__'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

@@ -162,8 +162,11 @@ paths it refuses, how many people may use it at once.
   `…svrngs.localhost:<port>/ask?lend=<label>&app=<label>`, on a phone
   `<its origin>/svrngs-ask?lend=<label>&app=<label>`, which the lend's
   worker sends to the group's page at `#ask=<lend>&app=<label>&at=<path>`
-  (sup-3, `web/lend.js` `asking`). Either page asks "Let Sam's night use
-  Ana's taste?" around the lender's words. On a computer a yes is kept by
+  (sup-3, `web/lend.js` `asking`). Either page asks "Let Sam’s night use
+  Ana’s taste?" around the lender's words, and lists what apps use, in
+  one wording both load, a lend named as the bare command names it, with
+  its kind when that differs from its name (lean-4 (c),
+  `crates/svrngs-node/src/home/question.js`). On a computer a yes is kept by
   this computer's door for its own lend, else posted to the lender's door
   as this computer's key; on a phone the group's page posts it to the
   lender's door, dialled as the person; then the person goes back to the
