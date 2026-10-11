@@ -548,6 +548,15 @@ impl Folders {
             Some(c) => c,
             None => {
                 let peer = actor_key(key).ok_or(Nothing::Said("not a key".into()))?;
+                // Which of the key's addresses iroh dials: one in use is
+                // the only one it sends to (syp-6 b).
+                let known = self.host.endpoint().remote_info(peer).await;
+                let known: Vec<String> = known
+                    .iter()
+                    .flat_map(|i| i.addrs())
+                    .map(|a| format!("{:?} {:?}", a.addr(), a.usage()))
+                    .collect();
+                tracing::debug!(target: "folder", holder = %key, ?known, "folder: dialled by key, iroh holding these addresses for it");
                 let dial = self.host.endpoint().connect(peer, Alpn::Blobs.bytes());
                 let c = tokio::time::timeout(ANSWER_WITHIN, dial)
                     .await
