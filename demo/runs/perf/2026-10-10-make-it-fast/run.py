@@ -24,7 +24,7 @@ part's before and after, each built at its commit, run back to back.
 Data in run/<pass>/ beside this file; W is the scratch dir (else
 /tmp/perf-run), removed after each group. scripts/check.sh runs none of
 this."""
-import json, os, re, signal, statistics, subprocess, sys, time, urllib.request
+import json, os, re, signal, statistics, subprocess, sys, time, urllib.error, urllib.request
 from datetime import datetime
 from pathlib import Path
 import blake3
@@ -107,13 +107,21 @@ class Group:
             (self.data(i) / "peers.tmp").rename(self.data(i) / "peers.json")
         wait(lambda: all("PERF told" in (self.data(i) / "out").read_text() for i in self.addrs), 30)
 
-    def share(self, i):
-        self.shared[i] = time.time()
+    def share(self, i, bound=180):
+        """Asked until it stands in the group: since syp-4 (a) a computer the
+        record does not yet name is refused, 409, until a round carries it."""
+        self.shared[i] = t0 = time.time()
         group = (self.data(i) / "group").read_text()
         body = json.dumps({"dir": str(self.disk(i)), "group": group}).encode()
-        req = urllib.request.Request(f"http://{self.addrs[i]['api']}/v1/folders", data=body,
-                                     headers={"content-type": "application/json"})
-        say("shared", group=self.tag, who=i, answer=json.load(urllib.request.urlopen(req, timeout=10)))
+        while True:
+            req = urllib.request.Request(f"http://{self.addrs[i]['api']}/v1/folders", data=body,
+                                         headers={"content-type": "application/json"})
+            try:
+                answer = json.load(urllib.request.urlopen(req, timeout=10)); break
+            except urllib.error.HTTPError as e:
+                if time.time() - t0 > bound: raise
+                refused = e.read().decode(errors="replace"); time.sleep(0.5)
+        say("shared", group=self.tag, who=i, answer=answer, refused_for_s=round(time.time() - t0, 3))
 
     def start(self, members=None, share=True):
         for i in members if members is not None else range(self.n): self.up(i)
@@ -319,7 +327,7 @@ def at_once(g, writers, tag, name, target=None, meets=None):
            path=g.path, each_ms=[t and round(t * 1000, 1) for t in times], phases=shares(ph))
 
 
-def folder(n_files, path, name, join_bound, parts=("taken", "idle", "found", "join")):
+def folder(n_files, path, name, join_bound, parts=("taken", "idle", "found", "join"), part=False):
     """A folder of n_files of 1 KiB pointed at, then idle, then a change, then a member joining."""
     phase(name); g = Group(name, 2, path, RELAY[0])
     for k in range(n_files):
@@ -347,10 +355,13 @@ def folder(n_files, path, name, join_bound, parts=("taken", "idle", "found", "jo
     if "join" not in parts: g.close(); return
     rec_before = g.journal(0).stat().st_size
     say("journal", group=name, bytes=rec_before)
-    before = host(); t0 = time.time(); g.up(1); g.tell(); g.share(1)
+    before = host(); t0 = time.time(); g.up(1); g.tell(); g.share(1); stood = time.time()
     extra = 3 if "found" in parts else 0
-    t = wait(lambda: count(g.disk(1)) >= n_files + extra, join_bound, every=5)
+    t = wait(lambda: count(g.disk(1)) >= n_files + extra, join_bound, every=0.25 if part else 5)
+    # From the accepted share, as perf-1's (its share accepted at once); and
+    # from the member's start, the wait to stand in it, the round's, beside.
     record(f"{name}-join", t and t * 1000, None, None, before, unit="ms", path=path, held=count(g.disk(1)),
+           stand_ms=round((stood - t0) * 1000, 1),
            of=n_files + extra, member_steps=step_split(g, 1, t0), holder=record_reads(g, 0, t0),
            journal_bytes=rec_before)
     g.close()
@@ -410,7 +421,7 @@ def part(case, n):
     if case in ("take", "idle", "found", "join"):
         parts = {"take": ("taken",), "idle": ("taken", "idle", "found"), "found": ("taken", "found"),
                  "join": ("taken", "join")}[case]
-        return folder(n, "loopback", f"f{n}", 3600, parts)
+        return folder(n, "loopback", f"f{n}", 3600, parts, part=True)
     g = Group(f"part-{case}", 3, "loopback"); g.start()
     if case == "p6": big(g, 100 * MiB, "p6", "P6-loopback")
     elif case == "t2": many(g, 1000, 4 * KiB, "t2", "T2-loopback", "10 s", lambda v: v <= 10_000)
