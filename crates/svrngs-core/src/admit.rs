@@ -550,6 +550,23 @@ pub fn admit(
             missing: missing.clone(),
         }));
     }
+    // ── per-actor sequence audit, over every act of a bound signer ───
+    //
+    // Counted, refused or removed alike: an act refused inside its author's
+    // chain is held, so it is reported as what it is and never also as a
+    // hole (U7; DESIGN §6). Before, the audit counted admitted acts only.
+    let mut seqs: BTreeMap<&str, BTreeMap<u64, Vec<OpId>>> = BTreeMap::new();
+    for (id, op) in authentic
+        .iter()
+        .filter(|(_, op)| m.person_for(&op.actor).is_some())
+    {
+        let op: &Op<SignedOp> = op;
+        seqs.entry(op.actor.as_str())
+            .or_default()
+            .entry(op.kind.seq)
+            .or_default()
+            .push(id.clone());
+    }
     let mut admitted: BTreeMap<OpId, Candidate<'_>> = BTreeMap::new();
     for (id, op) in authentic {
         let Some(person) = m.person_for(&op.actor) else {
@@ -585,15 +602,6 @@ pub fn admit(
         );
     }
 
-    // ── per-actor sequence audit ─────────────────────────────
-    let mut seqs: BTreeMap<&str, BTreeMap<u64, Vec<OpId>>> = BTreeMap::new();
-    for a in admitted.values() {
-        seqs.entry(a.op.actor.as_str())
-            .or_default()
-            .entry(a.op.kind.seq)
-            .or_default()
-            .push(a.id.clone());
-    }
     // Forks void nothing (svrngs, U7; DESIGN §6): both branches are held and
     // each act is weighed as itself, so no second act at a seq takes back the
     // first. The fork is named beside a complete answer.

@@ -1081,14 +1081,16 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   second at its seq, and every copy read as incomplete; standing never read
   the fork, since `membership` folds before the audit. Sync already carries
   both branches (`two_forked_nodes_exchange_until_both_hold_the_fork`,
-  svrngs-runtime). U7 also closes two holes of the
+  svrngs-runtime). U7 also closed two holes of the
   same family that only a member can open, each leaving a copy that never
-  reads as complete while the acts themselves still apply: a forged line
-  above a member's newest act moves their door's next seq past it
-  (`crates/svrngs-node/src/journal.rs`, `Held::catch_up`; ralph/REVIEW_FINDINGS.md
-  #16), and an act refused inside its author's chain is reported as a hole,
-  since admission's seq audit counts admitted acts only (`admit.rs`, the
-  per-actor sequence audit; 40b9466's body).
+  read as complete while the acts themselves still applied (landed,
+  u7-removal (d)): a forged line above a member's newest act moved their
+  door's next seq past it, and now only a line whose signature verifies
+  moves it (`crates/svrngs-runtime/src/journal.rs`, `Held::catch_up`;
+  ralph/REVIEW_FINDINGS.md #16); and an act refused inside its author's
+  chain was reported as a hole, since admission's seq audit counted
+  admitted acts only, and now it counts every act of a bound signer
+  (`admit.rs`, the per-actor sequence audit; 40b9466's body).
 - **Removal has one decider** (U7). Anyone may ask to remove anyone; the group's
   keeper — one person's key, handed on by an act — sequences each request. A
   removed key cannot remove. There is no recovery inside a group. Landed in

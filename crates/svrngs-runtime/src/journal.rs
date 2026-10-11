@@ -44,7 +44,8 @@ struct Writer {
 /// skipped a peer's act as already held when another line merely claimed its
 /// id, so the act never landed (DESIGN §6). The lines at an actor's newest
 /// seq are kept, id and signature, because the door's next act names one of
-/// them as its previous act, and only one that verifies is the signer's own.
+/// them as its previous act; only a line whose signature verifies counts
+/// toward it, so a forged line moves no member's next seq (U7, #16).
 ///
 /// Folded from the file and caught up from its tail before each write
 /// ([`Oplog::read_since`]), so a write costs the lines appended since the last
@@ -120,8 +121,8 @@ impl RingVerifier for Checked<'_> {
     }
 }
 
-/// One actor's newest seq on the log, and each line held at it: the id its
-/// content derives and the signature it carries.
+/// One actor's newest seq among the lines that actor signed, and each such
+/// line held at it: the id its content derives and the signature it carries.
 struct Newest {
     seq: u64,
     lines: Vec<(OpId, String)>,
@@ -144,7 +145,13 @@ impl Held {
         for op in &tail.ops {
             let id = derive_id(op, namespace);
             let line = (id.clone(), op.kind.sig.clone());
+            let verified = Ed25519Verifier.verify(&op.actor, &id, &op.kind.sig);
+            // Only a line its claimed actor signed moves that actor's newest
+            // seq (U7; ralph/REVIEW_FINDINGS.md #16): a forged line above a
+            // member's newest act left the door signing past it, holes that
+            // never fill.
             match self.newest.get_mut(&op.actor) {
+                _ if !verified => {}
                 Some(n) if n.seq > op.kind.seq => {}
                 Some(n) if n.seq == op.kind.seq => n.lines.push(line),
                 _ => {
@@ -157,7 +164,7 @@ impl Held {
                     );
                 }
             }
-            if Ed25519Verifier.verify(&op.actor, &id, &op.kind.sig) {
+            if verified {
                 self.passed.insert((op.actor.clone(), id.clone(), op.kind.sig.clone()));
                 self.digest.add(id.clone(), op);
             } else {

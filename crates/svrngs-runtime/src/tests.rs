@@ -1076,10 +1076,12 @@ fn a_refused_line_under_a_real_floor_goes_and_is_counted() {
             .append(record(what), &key(1), &r, None, &Ed25519Verifier)
             .unwrap();
     }
-    // Cy's signature over a line claiming to be alex's: refused by admission,
-    // still on the disk, still counted in `held`.
+    // Cy's signature over a line claiming to be alex's seq 1, beside "two":
+    // refused by admission, still on the disk, still counted in `held`. (At
+    // seq 2 it once moved alex's next seq, so alex's seal landed above it;
+    // since U7 a forged line moves nothing, #16.)
     journal
-        .ingest(&forged_as_alex(2, &journal.read().unwrap().0[1]))
+        .ingest(&forged_as_alex(1, &journal.read().unwrap().0[0]))
         .unwrap();
     let before = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert!(
