@@ -861,6 +861,124 @@ impl std::io::Write for Said {
     }
 }
 
+/// The encoding of `bytes` a holder sends for a get of them whole, and
+/// their hash.
+async fn wire_of(bytes: &[u8]) -> (iroh_blobs::Hash, Vec<u8>) {
+    let hash = iroh_blobs::Hash::from_bytes(*blake3::hash(bytes).as_bytes());
+    let mem = iroh_blobs::store::mem::MemStore::new();
+    mem.add_slice(bytes).await.unwrap();
+    let all = iroh_blobs::protocol::ChunkRanges::all();
+    (hash, mem.export_bao(hash, all).bao_to_vec().await.unwrap())
+}
+
+/// Ana's computer in a group with Ben's key admitted, Ben's key an
+/// endpoint of this test's, past any store, answering each get with `wire`
+/// in `pieces` parts `pause` apart; Ana syncing `Shared` under `root`, and
+/// her record placing `size` bytes of `hash` at `f.bin` as hers, written
+/// from a store that is not hers, so she asks Ben for them as she would any
+/// holder.
+struct Asking {
+    ana: Node,
+    ben: iroh::Endpoint,
+    shared: std::path::PathBuf,
+    asked: std::sync::Arc<std::sync::atomic::AtomicUsize>,
+    _dir: tempfile::TempDir,
+}
+
+impl Asking {
+    async fn new(
+        root: &Path,
+        (hash, size): (iroh_blobs::Hash, u64),
+        wire: Vec<u8>,
+        pieces: usize,
+        pause: Duration,
+    ) -> Self {
+        use svrngs_core::{Change, ContentHash, SyncPath};
+        let dir = tempfile::tempdir().unwrap();
+        let ana = start(1, dir.path()).await;
+        let ns = found("films", 9, &ana, &[]);
+        let admit = svrngs_core::tests_support::Fixture {
+            act: RailAct::Admit {
+                person: Person::parse("ben").unwrap(),
+                key: actor_of(&signing(2)),
+                invite: None,
+            },
+            on_behalf_of: None,
+        };
+        ana.rail().commit(&ns, &admit).unwrap().unwrap();
+        let relay = RelayConfig::from_parts(Vec::new(), Some("none"))
+            .unwrap()
+            .on_loopback_only();
+        let ben = svrngs_node::guest::build_relayed_endpoint(
+            svrngs_node::iroh::SecretKey::from_bytes(&[2; 32]),
+            vec![b"/iroh-bytes/4".to_vec()],
+            &relay,
+        )
+        .await
+        .unwrap();
+        let asked = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let (serving, counted) = (ben.clone(), asked.clone());
+        let part = wire.len().div_ceil(pieces);
+        tokio::spawn(async move {
+            while let Some(incoming) = serving.accept().await {
+                let Ok(conn) = incoming.await else { continue };
+                let (wire, counted) = (wire.clone(), counted.clone());
+                tokio::spawn(async move {
+                    while let Ok((mut send, mut recv)) = conn.accept_bi().await {
+                        recv.read_to_end(1 << 16).await.ok();
+                        counted.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                        for (i, piece) in wire.chunks(part).enumerate() {
+                            if i > 0 {
+                                tokio::time::sleep(pause).await;
+                            }
+                            send.write_all(piece).await.ok();
+                        }
+                        send.finish().ok();
+                    }
+                });
+            }
+        });
+        let book = MemoryLookup::new();
+        let mut addr = EndpointAddr::new(ben.id());
+        for a in loopback_sockets(&ben) {
+            addr = addr.with_ip_addr(a);
+        }
+        book.add_endpoint_info(addr);
+        ana.endpoint().address_lookup().unwrap().add(book);
+
+        let shared = synced_in(&ana, root, &ns).await;
+        let act = RailAct::Synced {
+            folder: "Shared".into(),
+            changes: vec![Change {
+                path: SyncPath::parse("f.bin").unwrap(),
+                now: Some((ContentHash::from_bytes(*hash.as_bytes()), size)),
+                base: None,
+            }],
+        };
+        let written = svrngs_core::tests_support::Fixture {
+            act,
+            on_behalf_of: None,
+        };
+        ana.rail().commit(&ns, &written).unwrap().unwrap();
+        Asking {
+            ana,
+            ben,
+            shared,
+            asked,
+            _dir: dir,
+        }
+    }
+
+    fn asked(&self) -> usize {
+        self.asked.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    async fn close(self) {
+        self.ben.close().await;
+        self.ana.endpoint().close().await;
+    }
+}
+
 /// **A holder that sends a flipped byte is refused by name**: Ana's record
 /// places a file her store lacks, and Ben's key, the group's other member,
 /// answers her fetch with the file's encoding one byte flipped on the wire
@@ -870,7 +988,6 @@ impl std::io::Write for Said {
 /// bytes in her directory.
 #[tokio::test]
 async fn a_holder_that_sends_a_flipped_byte_is_refused_by_name() {
-    use svrngs_core::{Change, ContentHash, SyncPath};
     let said = Said::default();
     let writer = said.clone();
     let subscriber = tracing_subscriber::fmt()
@@ -880,84 +997,19 @@ async fn a_holder_that_sends_a_flipped_byte_is_refused_by_name() {
         .finish();
     let _said = tracing::subscriber::set_default(subscriber);
 
-    let (dir, ra) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let ana = start(1, dir.path()).await;
-    let ns = found("films", 9, &ana, &[]);
-    let admit = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("ben").unwrap(),
-            key: actor_of(&signing(2)),
-            invite: None,
-        },
-        on_behalf_of: None,
-    };
-    ana.rail().commit(&ns, &admit).unwrap().unwrap();
-
     // Ben's key, answering any get with the file's encoding, flipped.
+    let ra = tempfile::tempdir().unwrap();
     let bytes = noise(10_000, b"flipped");
-    let hash = iroh_blobs::Hash::from_bytes(*blake3::hash(&bytes).as_bytes());
-    let mem = iroh_blobs::store::mem::MemStore::new();
-    mem.add_slice(&bytes).await.unwrap();
-    let all = iroh_blobs::protocol::ChunkRanges::all();
-    let mut wire = mem.export_bao(hash, all).bao_to_vec().await.unwrap();
+    let (hash, mut wire) = wire_of(&bytes).await;
     assert_eq!(
         wire.len(),
         8 + 10_000,
         "one chunk group: its size, then its bytes"
     );
     wire[8 + 5_000] ^= 1;
-    let relay = RelayConfig::from_parts(Vec::new(), Some("none"))
-        .unwrap()
-        .on_loopback_only();
-    let ben = svrngs_node::guest::build_relayed_endpoint(
-        svrngs_node::iroh::SecretKey::from_bytes(&[2; 32]),
-        vec![b"/iroh-bytes/4".to_vec()],
-        &relay,
-    )
-    .await
-    .unwrap();
-    let asked = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
-    let (serving, counted) = (ben.clone(), asked.clone());
-    tokio::spawn(async move {
-        while let Some(incoming) = serving.accept().await {
-            let Ok(conn) = incoming.await else { continue };
-            let (wire, counted) = (wire.clone(), counted.clone());
-            tokio::spawn(async move {
-                while let Ok((mut send, mut recv)) = conn.accept_bi().await {
-                    recv.read_to_end(1 << 16).await.ok();
-                    counted.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-                    send.write_all(&wire).await.ok();
-                    send.finish().ok();
-                }
-            });
-        }
-    });
-    let book = MemoryLookup::new();
-    let mut addr = EndpointAddr::new(ben.id());
-    for a in loopback_sockets(&ben) {
-        addr = addr.with_ip_addr(a);
-    }
-    book.add_endpoint_info(addr);
-    ana.endpoint().address_lookup().unwrap().add(book);
-
-    let shared = synced_in(&ana, ra.path(), &ns).await;
-    let act = RailAct::Synced {
-        folder: "Shared".into(),
-        changes: vec![Change {
-            path: SyncPath::parse("f.bin").unwrap(),
-            now: Some((ContentHash::from_bytes(*hash.as_bytes()), 10_000)),
-            base: None,
-        }],
-    };
-    // Written as Ana's, from a store that is not this one: Ana asks the
-    // group's other member for it, Ben, as she would any holder.
-    let written = svrngs_core::tests_support::Fixture {
-        act,
-        on_behalf_of: None,
-    };
-    ana.rail().commit(&ns, &written).unwrap().unwrap();
+    let asking = Asking::new(ra.path(), (hash, 10_000), wire, 1, Duration::ZERO).await;
     for _ in 0..50 {
-        if asked.load(std::sync::atomic::Ordering::SeqCst) >= 2 {
+        if asking.asked() >= 2 {
             break;
         }
         tokio::time::sleep(Duration::from_millis(100)).await;
@@ -971,13 +1023,9 @@ async fn a_holder_that_sends_a_flipped_byte_is_refused_by_name() {
         })
         .unwrap_or_default()
         .to_string();
-    let held = names(&shared);
-    ben.close().await;
-    ana.endpoint().close().await;
-    assert!(
-        asked.load(std::sync::atomic::Ordering::SeqCst) >= 1,
-        "Ben's key was asked: {log}"
-    );
+    let (held, asked) = (names(&asking.shared), asking.asked());
+    asking.close().await;
+    assert!(asked >= 1, "Ben's key was asked: {log}");
     assert!(
         held.is_empty(),
         "Ana's directory never holds the flipped file: {held:?}"
