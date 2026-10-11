@@ -217,13 +217,7 @@ pub(crate) async fn reach(
     if lender == door.key {
         tracing::debug!(target: "origin", %label, "origin: this computer's own lend, through its door's rules");
         let (mut parts, body) = req.into_parts();
-        let Ok(uri) = target.parse::<Uri>() else {
-            return Err(LendRefusal::Path.say(
-                StatusCode::BAD_REQUEST,
-                "this is not an address a lend can be asked",
-            ));
-        };
-        parts.uri = uri;
+        parts.uri = uri_of(&target)?;
         return door::lend_for(door, Who::Own(app), None, Request::from_parts(parts, body)).await;
     }
     let base = dialled(at, &label).await?;
@@ -241,7 +235,17 @@ pub(crate) async fn reach(
     };
     req.headers_mut().insert(PASS_HEADER, pass);
     tracing::debug!(target: "origin", %label, %app, lender = hex::encode(lender), %bridge, "origin: another computer's lend, through the dial to its door, the app in this computer's own pass");
-    Ok(carried(req, bridge, &target, label.as_str()).await)
+    carried(req, bridge, &target, label.as_str()).await
+}
+
+/// `target` as the address a lend is asked at, or refused as no path.
+fn uri_of(target: &str) -> Result<Uri, Response> {
+    target.parse().map_err(|_| {
+        LendRefusal::Path.say(
+            StatusCode::BAD_REQUEST,
+            "this is not an address a lend can be asked",
+        )
+    })
 }
 
 /// The bridge to the door of the computer lending `label`, dialled as this
@@ -282,7 +286,7 @@ async fn carried(
     bridge: std::net::SocketAddr,
     target: &str,
     label: &str,
-) -> Response {
+) -> Result<Response, Response> {
     let upgrade = door::upgrade_of(req.headers());
     let asker = upgrade.as_ref().map(|_| hyper::upgrade::on(&mut req));
     let (mut parts, body) = req.into_parts();
@@ -290,18 +294,12 @@ async fn carried(
     if let Some(protocol) = upgrade {
         door::keep_upgrade(&mut parts.headers, protocol);
     }
-    let Ok(uri) = target.parse::<Uri>() else {
-        return LendRefusal::Path.say(
-            StatusCode::BAD_REQUEST,
-            "this is not an address a lend can be asked",
-        );
-    };
     let mut request = axum::http::Request::new(body);
-    *request.uri_mut() = uri;
+    *request.uri_mut() = uri_of(target)?;
     *request.method_mut() = parts.method;
     *request.headers_mut() = parts.headers;
     let Some(mut answer) = door::send_to(bridge, request, label).await else {
-        return away();
+        return Err(away());
     };
     let switched = door::upgrade_of(answer.headers())
         .filter(|_| answer.status() == StatusCode::SWITCHING_PROTOCOLS);
@@ -315,5 +313,5 @@ async fn carried(
     let mut response = Response::new(Body::new(body));
     *response.status_mut() = parts.status;
     *response.headers_mut() = parts.headers;
-    response.into_response()
+    Ok(response.into_response())
 }
