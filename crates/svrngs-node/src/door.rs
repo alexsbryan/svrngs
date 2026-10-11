@@ -495,12 +495,17 @@ pub(crate) fn strip_hop_by_hop(headers: &mut HeaderMap) -> usize {
         .flat_map(|v| v.split(','))
         .map(compare_name)
         .collect();
+    remove_counted(headers, |name| {
+        HOP_BY_HOP.contains(&name) || named.iter().any(|n| n == name)
+    })
+}
+
+/// Remove every header whose name, as [`compare_name`] reads it, `goes`;
+/// answer how many values went.
+fn remove_counted(headers: &mut HeaderMap, goes: impl Fn(&str) -> bool) -> usize {
     let gone: Vec<HeaderName> = headers
         .keys()
-        .filter(|n| {
-            let name = compare_name(n.as_str());
-            HOP_BY_HOP.contains(&name.as_str()) || named.contains(&name)
-        })
+        .filter(|n| goes(&compare_name(n.as_str())))
         .cloned()
         .collect();
     let mut n = 0;
@@ -578,19 +583,9 @@ fn rewrite_headers(
         .iter()
         .map(|(n, _)| compare_name(n.as_str()))
         .collect();
-    let typed: Vec<HeaderName> = headers
-        .keys()
-        .filter(|n| {
-            let name = compare_name(n.as_str());
-            name.starts_with(IDENTITY_PREFIX) || declared.contains(&name)
-        })
-        .cloned()
-        .collect();
-    let mut displaced = 0;
-    for name in typed {
-        displaced += headers.get_all(&name).iter().count();
-        headers.remove(&name);
-    }
+    let displaced = remove_counted(headers, |name| {
+        name.starts_with(IDENTITY_PREFIX) || declared.iter().any(|d| d == name)
+    });
     for (name, value) in identity.into_iter().chain(secret.iter().cloned()) {
         headers.append(name, value);
     }
@@ -1136,6 +1131,17 @@ impl Drop for Carriage {
     }
 }
 
+/// The share, when the door tells one, on the head of a request carried to
+/// the service and of its answer ([`SHARE_HEADER`]).
+fn tell_share(headers: &mut HeaderMap, share: Option<u64>) {
+    if let Some(share) = share {
+        headers.insert(
+            HeaderName::from_static(SHARE_HEADER),
+            HeaderValue::from(share),
+        );
+    }
+}
+
 /// Carry `req` to `lend`'s service as `path` (with its query), the head
 /// rewritten, and stream the answer back.
 async fn forward(
@@ -1230,12 +1236,7 @@ async fn forward(
             ));
         }
     };
-    if let Some(share) = share {
-        parts.headers.insert(
-            HeaderName::from_static(SHARE_HEADER),
-            HeaderValue::from(share),
-        );
-    }
+    tell_share(&mut parts.headers, share);
     *request.headers_mut() = parts.headers;
     // The use began when the person was let in, and lasts until the member
     // has the whole answer or leaves it: the answer's body holds it.
@@ -1283,12 +1284,7 @@ async fn forward(
     // service's own of either is displaced.
     parts.headers.remove(SHARE_HEADER);
     parts.headers.remove(REFUSED_HEADER);
-    if let Some(share) = share {
-        parts.headers.insert(
-            HeaderName::from_static(SHARE_HEADER),
-            HeaderValue::from(share),
-        );
-    }
+    tell_share(&mut parts.headers, share);
     tracing::debug!(target: "door", actor, lend = %lend.name, status = parts.status.as_u16(),
         "door: the lend's service answered; streaming it back");
     let length = parts
