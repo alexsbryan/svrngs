@@ -442,7 +442,7 @@ def part(case, n):
                  "join": ("taken", "join")}[case]
         return folder(n, "loopback", f"f{n}", 3600, parts, poll=0.25)
     if case == "blobs": return blobs()
-    g = Group(f"part-{case}", 3, "loopback"); g.start()
+    g = Group(f"part-{case}", n or 3, "loopback"); g.start()  # n: the members, the holder one of them
     if case == "p6": big(g, 100 * MiB, "p6", "P6-loopback")
     elif case == "t2": many(g, 1000, 4 * KiB, "t2", "T2-loopback", "10 s", lambda v: v <= 10_000)
     elif case == "t1":
