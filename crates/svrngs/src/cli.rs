@@ -1161,9 +1161,6 @@ pub async fn new_group(
     Ok((seed, Printed::of(&token, page)))
 }
 
-/// `svrngs link`: a new link to the group `reference` names: the client's
-/// link, and the https one on `page`, kept from now on, when given, else
-/// on the group's kept origin, if it keeps one.
 /// The one group held under `root` that `reference` names, by its name or
 /// the start of its id ([`group::named`]): `link`'s and `share --folder`'s.
 fn group_named(root: &Path, reference: &str) -> Result<Seed, Refusal> {
@@ -1185,6 +1182,9 @@ fn group_named(root: &Path, reference: &str) -> Result<Seed, Refusal> {
     }
 }
 
+/// `svrngs link`: a new link to the group `reference` names: the client's
+/// link, and the https one on `page`, kept from now on, when given, else
+/// on the group's kept origin, if it keeps one.
 pub async fn new_link(
     node: &Node,
     reference: &str,
