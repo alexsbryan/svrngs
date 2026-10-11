@@ -129,9 +129,12 @@ paths it refuses, how many people may use it at once.
   computer's — carries `x-svrngs-refused`, naming which (`away`, `pass`,
   `closed`, `unlent`, `path`, `full`, `sign-in`, `fault`, `unasked`,
   `stopped`), and a lend's own answer never does (mnp-1, `door::LendRefusal`);
-  on a computer a page asking another lend's origin reads it only if
-  that answer lets its origin, and svrngs's own do not yet (sup-4,
-  `demo/runs/sup/2026-10-10/`, follow-up 1);
+  on a computer a page asking another lend's origin by `fetch` reads
+  svrngs's own answers there when it reads that lend — they allow its
+  origin alone, never `*`, and expose `x-svrngs-refused` (lean-4 (b),
+  `origin.rs` `readable`; sup-4's follow-up 1) — and a lend's own answer
+  only as far as that answer lets its origin; a page that does not read
+  the lend, and the home page, are allowed nothing;
 - for a lend that asks (`svrngs share --ask "<what an app receives>"`, the
   lender's words, carried in `asks` on every list and never read by
   svrngs), only the app its person said yes to: the lend's door keeps each
@@ -222,10 +225,13 @@ u5-0):
   WebSocket at all, so on a phone a shim in the lend's pages carries it to
   the lend's worker, which speaks its frames over a stream the door
   switches (`web/shim.js`, `web/lend.js`).
-- *A read from another origin* (none: u5-2 makes it unneeded). The door
-  sets no `access-control-*` header (`door.rs` has none), so a page on
-  another origin can read neither a lend's JSON nor its share header; with
-  each lend at an origin of its own, a lent page reads both from its own.
+- *A read from another origin* (none but svrngs's own refusals: u5-2
+  makes the rest unneeded). The door sets no `access-control-*` header
+  (`door.rs` has none), so a page on another origin can read neither a
+  lend's JSON nor its share header; with each lend at an origin of its
+  own, a lent page reads both from its own. A computer's origin allows
+  the page of a lend that reads it to read svrngs's own refusals there,
+  and nothing else (lean-4 (b), `origin.rs` `readable`).
   A page composing other lends ("Lent apps", call 6) reads them on a
   phone through its own worker, at addresses under its own origin
   (mnp-2), and on a computer, at each lend's own origin, by `fetch`, which
@@ -428,7 +434,9 @@ is U5's inventory (§8).
    a page asking another lend's origin by `fetch` reads none of svrngs's
    own answers there, which carry no access-control header, so Tonight's
    Picks could read neither `unasked` nor `stopped` and said it could not
-   read whether the taste lets it rank (that run's first follow-up). What
+   read whether the taste lets it rank (that run's first follow-up,
+   landed in lean-4 (b): svrngs's own answers there now allow a page that
+   reads the lend). What
    `reads` did not give, Movie Night found: which
    lends those are, but in svrngs's own store, which the page read whole
    with the pass in it (28 lines; the handoff named no lender and kept

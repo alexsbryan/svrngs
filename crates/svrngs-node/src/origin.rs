@@ -36,7 +36,7 @@ use axum::response::{IntoResponse, Response};
 use axum::Router;
 use svrngs_core::pass::{Label, Pass};
 
-use crate::door::{self, Door, LendRefusal, Who, LEND_ROUTE, PASS_HEADER};
+use crate::door::{self, Door, LendRefusal, Who, LEND_ROUTE, PASS_HEADER, REFUSED_HEADER};
 use crate::iroh::{Contact, PublicKey};
 use crate::lend::Offered;
 use crate::node::Asking;
@@ -207,8 +207,32 @@ async fn lent(State(at): State<Asking>, req: Request) -> Result<Response, Respon
     }
     if app != label {
         kept_to_reads(&at, &app, &label).await?;
+        let page = req.headers().get(header::ORIGIN).cloned();
+        return Ok(readable(reach(&at, label, app, req).await, page));
     }
     reach(&at, label, app, req).await
+}
+
+/// svrngs's own answer to the page of another lend that reads this one —
+/// an answer marked [`REFUSED_HEADER`], which no service's carries (the
+/// door displaces a service's, mnp-1) — made readable by that page: its
+/// origin, `page`, alone allowed, never `*`, and the mark exposed (DESIGN
+/// §3, "What an app gets"). A preflight is a request like any other here,
+/// under the same rule. A service's own answer is left as it sent it.
+fn readable(answer: Result<Response, Response>, page: Option<HeaderValue>) -> Response {
+    let mut answer = answer.unwrap_or_else(|refused| refused);
+    let kind = answer.headers().get(REFUSED_HEADER).cloned();
+    let (Some(kind), Some(page)) = (kind, page) else {
+        tracing::debug!(target: "origin", status = answer.status().as_u16(), "origin: the lend's own answer to a page that reads it, its headers its own");
+        return answer;
+    };
+    tracing::debug!(target: "origin", ?page, ?kind, "origin: svrngs's own answer, readable by the page that reads the lend");
+    let headers = answer.headers_mut();
+    headers.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, page);
+    let exposed = HeaderValue::from_static(REFUSED_HEADER);
+    headers.insert(header::ACCESS_CONTROL_EXPOSE_HEADERS, exposed);
+    headers.append(header::VARY, HeaderValue::from_static("origin"));
+    answer
 }
 
 /// `req` carried to the lend `label`, as this computer's person, for the
