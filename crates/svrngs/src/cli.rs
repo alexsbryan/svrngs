@@ -18,7 +18,18 @@
 //! svrngs share --folder <dir> --group <group> keep a folder the same on every member's disk,
 //!                                          asked of svrngs running here
 //! svrngs room <name>...                    serve lends to this computer's network, run
+//! svrngs remove <name> --group <group>     remove someone from a group, or ask it,
+//!                                          asked of svrngs running here
+//! svrngs handover <name> --group <group>   let someone else decide who is removed,
+//!                                          asked of svrngs running here
 //! ```
+//!
+//! `remove` and `handover` ask the node running here, as `share --folder`
+//! does (U7; DESIGN §6 "Removal has one decider"; §10, 2026-10-09):
+//! `svrngs_node::removal` commits them and answers what happened, worded
+//! here. One person in a group decides who is removed from it — its maker
+//! at first, until they hand that on — and anyone else's `remove` asks
+//! them; the words name them.
 //!
 //! `share` and `unshare` write a lend's declaration and its secret into the
 //! data dir (`svrngs_node::lend`), which the door reads on every request,
@@ -75,6 +86,7 @@ use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath, Upload};
 use svrngs_node::node::{Lends, Lent, Node, NodeError};
 use svrngs_node::redeem::{ask, redeem, AskRequest, RedeemError, RedeemRequest, Redeemed};
+use svrngs_node::removal::{Asked, Outcome, HANDOVERS_ROUTE, REMOVALS_ROUTE};
 use svrngs_node::room;
 use svrngs_node::{actor_of, Device, Person, SigningKey};
 use svrngs_node::{MintInvite, Refused as CommitRefused};
@@ -145,6 +157,17 @@ svrngs — keep what your group shares on your own computers.
       Let anyone on this computer's network (its WiFi) open what your groups
       lend as <name>, as you, while this runs.
 
+  svrngs remove <name> --group <group>
+      Remove <name> from <group>: every computer and phone of theirs. One
+      person decides who is removed — whoever made the group, until they
+      hand that on — so from anyone else this asks them, and says who.
+      What <name> already has stays with them; nothing new reaches them.
+      Asked of svrngs running here.
+
+  svrngs handover <name> --group <group>
+      Let <name> decide who is removed from <group> from now on, instead
+      of you. Asked of svrngs running here.
+
 Data:    $SVRNGS_DIR, else ~/.svrngs.
 Logging: RUST_LOG, default `error`.";
 
@@ -193,6 +216,17 @@ pub enum Verb {
     },
     /// The lends named, served to this computer's network.
     Room(Vec<LendName>),
+    /// `remove` (U7), asked of svrngs running here: the person, and the
+    /// group as typed.
+    Remove {
+        person: Name,
+        group: String,
+    },
+    /// `handover` (U7), likewise.
+    Handover {
+        person: Name,
+        group: String,
+    },
     Help,
 }
 
@@ -306,6 +340,20 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 .into(),
         );
     }
+    let removes = matches!(verb.as_str(), "remove" | "handover");
+    if removes && folder.is_none() {
+        let raw = positional.ok_or(format!(
+            "{verb} wants a name: `svrngs {verb} <name> --group <group>`"
+        ))?;
+        let person = Name::parse(&raw).map_err(|why| format!("`{raw}` is not a name: {why}"))?;
+        let group = group.ok_or(format!(
+            "{verb} wants --group: `svrngs {verb} <name> --group <group>`"
+        ))?;
+        return Ok(match verb.as_str() {
+            "remove" => Verb::Remove { person, group },
+            _ => Verb::Handover { person, group },
+        });
+    }
     match (verb.as_str(), folder, group) {
         ("share", Some(dir), Some(group)) => {
             let dir = std::path::absolute(&dir).map_err(|e| format!("--folder `{dir}`: {e}"))?;
@@ -316,7 +364,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         }
         ("share", None, Some(_)) => return Err("--group is a `share --folder` flag".into()),
         (_, None, None) => {}
-        _ => return Err("--folder and --group are `share` flags".into()),
+        _ => return Err("--folder is a `share` flag, and --group a `share --folder`, `remove` and `handover` one".into()),
     }
     match verb.as_str() {
         "new" => {
@@ -428,6 +476,11 @@ pub enum Refusal {
     NoClient(String),
     #[error("cannot tell from here whether {0} gives each app an address of its own: the page does not open there (RUST_LOG=debug says why); try again")]
     CannotCheck(String),
+    /// `remove` or `handover` refused, in the words [`Said::Removal`] says.
+    #[error("{0}")]
+    Removal(String),
+    #[error("{0} cannot be changed on this computer (RUST_LOG=debug says why)")]
+    Unchanged(Name),
 }
 
 /// `raw` as a lend's name, or the one refusal every verb that takes one
@@ -461,6 +514,7 @@ impl Refusal {
             | Refusal::NoAppAddress(_)
             | Refusal::Room(_)
             | Refusal::Folder(_)
+            | Refusal::Removal(_)
             | Refusal::Busy(_) => 1,
             Refusal::NoDataDir
             | Refusal::DataDir(..)
@@ -473,6 +527,7 @@ impl Refusal {
             | Refusal::NoRoomAddress
             | Refusal::NotRunning
             | Refusal::NoClient(_)
+            | Refusal::Unchanged(_)
             | Refusal::Keep(_) => 3,
         }
     }
@@ -527,6 +582,14 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             println!("{}", folder(&root, dir, &group).await?);
             return Ok(());
         }
+        Verb::Remove { person, group } => {
+            print!("{}", removal(&root, REMOVALS_ROUTE, person, &group).await?);
+            return Ok(());
+        }
+        Verb::Handover { person, group } => {
+            print!("{}", removal(&root, HANDOVERS_ROUTE, person, &group).await?);
+            return Ok(());
+        }
         Verb::Share(asked) => {
             let lend = share::lend_of(&asked, share::listens, share::well_known_kind(asked.port))?;
             let accounts = share::accounts_of(&lend.kind).filter(|_| lend.sign_in.is_none());
@@ -577,9 +640,54 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
 async fn folder(root: &Path, dir: PathBuf, reference: &str) -> Result<String, Refusal> {
     let group = group_named(root, reference)?.id();
     let asked = FolderAsk { dir, group };
+    let (ok, text) = ask_running(root, "/v1/folders", &asked).await?;
+    tracing::debug!(target: "cli", ?asked, ok, "cli: the folder's ask answered");
+    ok.then_some(text.clone()).ok_or(Refusal::Folder(text))
+}
+
+/// `remove` and `handover` (U7), asked of svrngs running here at `route`
+/// for the group `reference` names, as `link` names it: what happened, in
+/// a person's words, or the refusal.
+async fn removal(root: &Path, route: &str, person: Name, reference: &str) -> Result<Said, Refusal> {
+    let seed = group_named(root, reference)?;
+    let asked = Asked {
+        group: seed.id(),
+        person: person.as_str().to_string(),
+    };
+    let (_, text) = ask_running(root, route, &asked).await?;
+    let outcome: Outcome = serde_json::from_str(&text).map_err(|e| {
+        tracing::debug!(target: "cli", error = %e, text, "cli: refused — svrngs running here answered no outcome");
+        Refusal::Unchanged(seed.name().clone())
+    })?;
+    tracing::debug!(target: "cli", route, group = %seed.id(), %person, ?outcome, "cli: a removal asked");
+    let said = Said::Removal {
+        group: seed.name().clone(),
+        person,
+        outcome,
+    };
+    match &said {
+        Said::Removal {
+            outcome: Outcome::Out | Outcome::Asked { .. } | Outcome::Handed,
+            ..
+        } => Ok(said),
+        Said::Removal {
+            outcome: Outcome::Fault,
+            ..
+        } => Err(Refusal::Unchanged(seed.name().clone())),
+        _ => Err(Refusal::Removal(said.to_string().trim_end().to_string())),
+    }
+}
+
+/// POST `body` to `route` of svrngs running here, at the API it wrote:
+/// whether it answered success, and its body.
+async fn ask_running(
+    root: &Path,
+    route: &str,
+    body: &impl serde::Serialize,
+) -> Result<(bool, String), Refusal> {
     let api = std::fs::read_to_string(root.join(svrngs_node::api::API_FILE)).unwrap_or_default();
-    let body = serde_json::to_string(&asked).expect("a folder's ask is JSON");
-    let to = format!("{}/v1/folders", api.trim());
+    let body = serde_json::to_string(body).expect("an ask is JSON");
+    let to = format!("{}{route}", api.trim());
     let client = http()
         .and_then(|b| b.build().map_err(|e| e.to_string()))
         .map_err(|error| {
@@ -593,8 +701,8 @@ async fn folder(root: &Path, dir: PathBuf, reference: &str) -> Result<String, Re
     })?;
     let ok = answer.status().is_success();
     let text = answer.text().await.unwrap_or_default();
-    tracing::debug!(target: "cli", ?asked, ok, "cli: the folder's ask answered");
-    ok.then_some(text.clone()).ok_or(Refusal::Folder(text))
+    tracing::debug!(target: "cli", route, ok, "cli: svrngs running here answered");
+    Ok((ok, text))
 }
 
 /// The command's one HTTP client, iroh's reqwest 0.13: its
@@ -766,6 +874,12 @@ pub enum Said {
     Unshared(LendName),
     /// `room`: each lend served to this computer's network, and where.
     Room(Vec<(Lent, SocketAddr)>),
+    /// `remove` or `handover` (U7): what happened to `person` in `group`.
+    Removal {
+        group: Name,
+        person: Name,
+        outcome: Outcome,
+    },
 }
 
 impl std::fmt::Display for Said {
@@ -900,6 +1014,29 @@ impl std::fmt::Display for Said {
                 writeln!(f, "`svrngs unshare {}` stops lending it.", lend.name)
             }
             Said::Unshared(name) => writeln!(f, "Stopped lending {name}."),
+            Said::Removal {
+                group,
+                person,
+                outcome,
+            } => {
+                let decides = |who: &Option<Person>| match who {
+                    Some(p) => p.to_string(),
+                    None => "whoever decides who is removed".into(),
+                };
+                match outcome {
+                    Outcome::Out => writeln!(f, "{person} is no longer in {group}. What {person} already has stays with them; nothing new reaches them."),
+                    Outcome::Asked { decides: who } => {
+                        let who = decides(who);
+                        writeln!(f, "You asked {who} to remove {person} from {group}. {person} stays in it until {who} does.")
+                    }
+                    Outcome::Handed => writeln!(f, "{person} now decides who is removed from {group}, instead of you."),
+                    Outcome::NotInGroup => writeln!(f, "Nobody called {person} is in {group}."),
+                    Outcome::Decides => writeln!(f, "{person} decides who is removed from {group}, so cannot be removed: hand that to someone else first, with `svrngs handover <name> --group {group}`."),
+                    Outcome::NotDecider { decides: who } => writeln!(f, "Only {} can let someone else decide who is removed from {group}.", decides(who)),
+                    Outcome::NotIn => writeln!(f, "You are no longer in {group}."),
+                    Outcome::Fault => writeln!(f, "{group} cannot be changed on this computer (RUST_LOG=debug says why)"),
+                }
+            }
             Said::Room(served) => {
                 writeln!(f, "Anyone on this computer's network (its WiFi) can open these, as you, while this runs; nobody off it can:")?;
                 for (lent, at) in served {
@@ -1040,7 +1177,12 @@ async fn serve(
             _room = room::open(node, at, &names).await?;
             Said::Room(_room.served.clone())
         }
-        Verb::Help | Verb::Share(_) | Verb::Unshare(_) | Verb::Folder { .. } => {
+        Verb::Help
+        | Verb::Share(_)
+        | Verb::Unshare(_)
+        | Verb::Folder { .. }
+        | Verb::Remove { .. }
+        | Verb::Handover { .. } => {
             unreachable!("answered in `run`")
         }
     };
