@@ -34,9 +34,20 @@ fn kept_member() {
     runtime.block_on(member::node());
 }
 
+/// A member's process, killed when dropped, so a failing test leaves none
+/// running.
+struct Member(Child);
+
+impl Drop for Member {
+    fn drop(&mut self) {
+        self.0.kill().ok();
+        self.0.wait().ok();
+    }
+}
+
 /// Member `me`'s process over `dir`, its log `dir/log`: its address once
 /// up.
-async fn spawn(dir: &Path, me: usize) -> (Child, Addr) {
+async fn spawn(dir: &Path, me: usize) -> (Member, Addr) {
     let addr = dir.join("addr.json");
     std::fs::remove_file(&addr).ok();
     let log = std::fs::OpenOptions::new()
@@ -44,17 +55,19 @@ async fn spawn(dir: &Path, me: usize) -> (Child, Addr) {
         .append(true)
         .open(dir.join("log"))
         .unwrap();
-    let child = Command::new(std::env::current_exe().unwrap())
-        .args(["--exact", "kept_member", "--ignored", "--nocapture"])
-        .env("PERF_DIR", dir)
-        .env("PERF_ME", me.to_string())
-        .env("PERF_MEMBERS", "3")
-        .env("PERF_PATH", "loopback")
-        .env("RUST_LOG", "folder=debug,warn")
-        .stdout(std::process::Stdio::null())
-        .stderr(log)
-        .spawn()
-        .unwrap();
+    let child = Member(
+        Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", "kept_member", "--ignored", "--nocapture"])
+            .env("PERF_DIR", dir)
+            .env("PERF_ME", me.to_string())
+            .env("PERF_MEMBERS", "3")
+            .env("PERF_PATH", "loopback")
+            .env("RUST_LOG", "folder=debug,warn")
+            .stdout(std::process::Stdio::null())
+            .stderr(log)
+            .spawn()
+            .unwrap(),
+    );
     for _ in 0..300 {
         if let Ok(text) = std::fs::read(&addr) {
             return (child, serde_json::from_slice(&text).unwrap());
@@ -215,7 +228,7 @@ async fn a_store_keeps_what_it_held_across_a_stop() {
     )
     .id();
     let (mut ana, mut ana_addr) = spawn(&ana_dir, 0).await;
-    let (mut ben, ben_addr) = spawn(&ben_dir, 1).await;
+    let (ben, ben_addr) = spawn(&ben_dir, 1).await;
     tell(
         &[&ana_addr, &ben_addr, &cy_addr],
         &[&ana_dir, &ben_dir],
@@ -241,13 +254,12 @@ async fn a_store_keeps_what_it_held_across_a_stop() {
 
     let mut said = Vec::new();
     for sig in ["TERM", "KILL"] {
-        let pid = ana.id().to_string();
-        assert!(Command::new("kill")
+        let pid = ana.0.id().to_string();
+        let kill = Command::new("kill")
             .args([&format!("-{sig}"), &pid])
-            .status()
-            .unwrap()
-            .success());
-        ana.wait().unwrap();
+            .status();
+        assert!(kill.unwrap().success());
+        ana.0.wait().unwrap();
         (ana, ana_addr) = spawn(&ana_dir, 0).await;
         tell(
             &[&ana_addr, &ben_addr, &cy_addr],
@@ -261,10 +273,7 @@ async fn a_store_keeps_what_it_held_across_a_stop() {
             said.push((sig, name, get(&cy, &ana_addr, hash, into).await));
         }
     }
-    for child in [&mut ana, &mut ben] {
-        child.kill().ok();
-        child.wait().ok();
-    }
+    drop((ana, ben));
     cy.endpoint().close().await;
     let whole = |name: &str| if name == "taken" { 50_000 } else { 60_000 };
     assert!(
