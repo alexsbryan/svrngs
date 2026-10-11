@@ -33,5 +33,12 @@ service this host cannot run (say what, and the command that would run it);
 pushing, history rewrites, a rebase of the branch, `--no-verify`; anything
 whose evidence you could not reproduce.
 
+**Taken by the operator** (2026-10-10, on perf-1's candidate 7): the crate
+`notify` for perf-2-make-it-fast (f). Version 8.2.0 and what it depends on are
+in cargo's cache on this host (`ls ~/.cargo/registry/cache/*/ | grep notify`),
+so it builds with `--offline`; a fetch from crates.io for it alone, if one is
+needed, is this yes, not a fetch beyond this host. Any other new crate is still
+the operator's.
+
 **Always:** one decision, one commit, with the fork, the choice, the evidence
 and what would falsify it in the body.
