@@ -166,16 +166,26 @@ impl Folders {
         }
     }
 
-    /// `dir` stepped once a second while the node runs: its one loop.
+    /// `dir` stepped a second after its last step, or at once when its
+    /// group's record takes an act, a burst of acts one step: its one loop.
+    /// The wait for the next second was 958 ms of a change's 1,182 at
+    /// another member (perf-1's README §9 T1; perf-2 d).
     fn keep_in_step(&self, dir: PathBuf, group: String, folder: String) {
         tracing::info!(target: "folder", namespace = group, folder, dir = %dir.display(), "synced: the directory kept in step with the group's folder");
         let f = self.clone();
+        let mut woken = self.woken.subscribe();
         tokio::spawn(async move {
+            let count = |m: &BTreeMap<String, u64>| m.get(&group).copied().unwrap_or(0);
             loop {
+                // Read before the step, so an act taken during it wakes the next.
+                let seen = count(&woken.borrow_and_update());
                 if let Err(why) = f.step(&dir, &group, &folder).await {
                     tracing::warn!(target: "folder", namespace = group, folder, %why, "synced: the step stopped short; the next one tries again");
                 }
-                tokio::time::sleep(Duration::from_secs(1)).await;
+                let acts = woken.wait_for(|m| count(m) != seen);
+                if let Ok(Ok(_)) = tokio::time::timeout(Duration::from_secs(1), acts).await {
+                    tracing::debug!(target: "folder", namespace = group, folder, "synced: the step woken, the group's record having taken an act");
+                }
             }
         });
     }

@@ -101,6 +101,10 @@ pub struct Folders {
     /// Each group's layout as last read, with the record state it was read
     /// at (perf-2 c).
     layouts: watch::Sender<BTreeMap<String, Layout>>,
+    /// Each group's acts taken since the node started, counted by the
+    /// rail's teller: a synced directory's loop waits on its group's
+    /// (perf-2 d).
+    woken: watch::Sender<BTreeMap<String, u64>>,
 }
 
 /// A group's synced folders' files where its record places them, the set
@@ -164,7 +168,12 @@ impl Folders {
             conns: watch::Sender::new(BTreeMap::new()),
             unanswered: watch::Sender::new(BTreeMap::new()),
             layouts: watch::Sender::new(BTreeMap::new()),
+            woken: watch::Sender::new(BTreeMap::new()),
         };
+        let woken = folders.woken.clone();
+        folders.host.rail().on_write(move |ns| {
+            woken.send_modify(|m| *m.entry(ns.into()).or_default() += 1);
+        });
         tracing::info!(target: "folder", untagged, "folder: the store is open");
         let keeper = folders.clone();
         tokio::spawn(async move {
