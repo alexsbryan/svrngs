@@ -31,6 +31,7 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Json, Router};
 use serde::Serialize;
+use svrngs_core::pass::Label;
 
 use crate::door::LendRefusal;
 use crate::node::Asking;
@@ -199,10 +200,7 @@ async fn lends(
 /// home page ([`crate::home`]; the page adds `&back=<its path>`) — and
 /// whose computer did not answer. No
 /// key: a page needs none to ask, and the address is all it builds on.
-pub(crate) async fn reads(
-    at: &Asking,
-    label: &svrngs_core::pass::Label,
-) -> Result<Response, Response> {
+pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Response> {
     let reader = hex::encode(label.lender());
     let host = &at.host;
     let (mut groups, own) = host.shared_with(&reader)?;
@@ -212,7 +210,7 @@ pub(crate) async fn reads(
         return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
     };
     let (lent, unanswered) = at.lent(&groups, &own, None).await?;
-    let named = |l: &crate::node::Lending| crate::node::label(&l.key, l.offered.name.as_str());
+    let named = |l: &crate::node::Lending| Label::of_hex(&l.key, l.offered.name.as_str());
     let Some(reading) = lent.iter().find(|l| named(l).as_ref() == Some(label)) else {
         tracing::debug!(target: "surface", %label, unanswered = unanswered.len(), "surface: reads refused — the lend is not lent now");
         return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));

@@ -27,7 +27,7 @@ use svrngs_core::pass::Label;
 use crate::api::ApiError;
 use crate::door::limit::{guess, Whereabouts};
 use crate::lend::LendName;
-use crate::node::{label, Asking, Lent, Node};
+use crate::node::{Asking, Lent, Node};
 
 /// The address a room's devices reach this computer at, from the
 /// addresses its endpoint lists (`Endpoint::addr().ip_addrs()`) and the
@@ -123,7 +123,7 @@ pub async fn open(node: &Node, at: Ipv4Addr, names: &[LendName]) -> Result<Room,
         asking: asking.clone(),
     };
     for lent in lent {
-        let Some(label) = label(&lent.key, lent.offered.name.as_str()) else {
+        let Some(label) = Label::of_hex(&lent.key, lent.offered.name.as_str()) else {
             continue;
         };
         let addr = SocketAddr::new(at.into(), port_of(&label));

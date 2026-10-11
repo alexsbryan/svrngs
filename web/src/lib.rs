@@ -334,9 +334,8 @@ pub fn relay_of(token: String) -> Result<Option<String>, JsError> {
 /// `lender`, 64 hex: one DNS label, its origin's name (u5-2).
 #[wasm_bindgen]
 pub fn label(lender: String, name: String) -> Result<String, JsError> {
-    let key = <[u8; 32]>::try_from(hex::decode(&lender).unwrap_or_default().as_slice())
-        .map_err(|_| JsError::new("not a computer's key"))?;
-    Ok(Label::of(&key, &name).to_string())
+    let label = Label::of_hex(&lender, &name).ok_or_else(|| JsError::new("not a computer's key"))?;
+    Ok(label.to_string())
 }
 
 /// The person whose key is `person` lets the key `holder` act as them for

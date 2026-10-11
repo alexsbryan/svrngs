@@ -97,6 +97,14 @@ impl Label {
         Self(label)
     }
 
+    /// [`Self::of`] for a lender named by its key in 64 hex, as the record
+    /// spells an actor; `None` for text that is not a key — one reading for
+    /// the node and the page (REVIEW_FINDINGS #58).
+    pub fn of_hex(lender: &str, name: &str) -> Option<Self> {
+        let key: [u8; 32] = hex::decode(lender).ok()?.try_into().ok()?;
+        Some(Self::of(&key, name))
+    }
+
     /// `raw` as a label: 62 letters of [`BASE32`] whose first 52 spell a
     /// key. `None` for anything else, in any case: a host is lowercased
     /// before it is read.

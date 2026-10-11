@@ -377,13 +377,14 @@ impl Host {
     /// whose key is `lender`, actor hex: the lend's origin, or `None` for a
     /// key that is not one.
     pub(crate) fn origin(&self, lender: &str, name: &str) -> Option<String> {
-        Some(crate::origin::origin(&label(lender, name)?, self.api_port))
+        let label = Label::of_hex(lender, name)?;
+        Some(crate::origin::origin(&label, self.api_port))
     }
 
     /// Where the room reaches the lend `name` of `lender`, while the room
     /// door serves it (u6-1).
     pub(crate) fn room_address(&self, lender: &str, name: &str) -> Option<String> {
-        let at = *self.room.borrow().get(&label(lender, name)?)?;
+        let at = *self.room.borrow().get(&Label::of_hex(lender, name)?)?;
         Some(format!("http://{at}/"))
     }
 
@@ -521,13 +522,6 @@ impl Host {
             "node: lends — asked every computer of the groups");
         lends
     }
-}
-
-/// The label of the lend `name` of the computer whose key is `lender`,
-/// actor hex, or `None` for a key that is not one.
-pub(crate) fn label(lender: &str, name: &str) -> Option<Label> {
-    let key: [u8; 32] = hex::decode(lender).ok()?.try_into().ok()?;
-    Some(Label::of(&key, name))
 }
 
 /// The keys standing in `namespace` that this node, `this`, dials: each a
