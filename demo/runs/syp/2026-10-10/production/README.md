@@ -94,3 +94,15 @@ files were written 0.2 s apart (01:31:04.486, .685). This is perf-1's
 prediction (`demo/runs/perf/2026-10-10/README.md` §10, candidate 6):
 before the record is read once a change (candidate 3), fetches at once
 queue at the holder.
+
+## The row's close
+
+`scripts/check.sh` at 7aaafed exited 0 after 14m02s, every gate passed
+(the loop's await log, `syp-4-production-2.await.log`). Its first run at
+the close had failed at the ceiling canary, 0 of 24 reached: (b)'s store
+sweep read every group's whole record each second; 7aaafed reads a
+synced group's layout only when its record or a directory moved. The
+canary at the close: 0.0327 s of processor, the median of three rounds,
+against 0.1 s, 24 of 24 reached. `python3 scripts/lean_check.py`: 13,730
+of 15,750, svrngs-core 2,776 of 3,000 — 7aaafed's body says 13,723, the
+count before rustfmt.
