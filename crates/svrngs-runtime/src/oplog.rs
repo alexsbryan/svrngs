@@ -142,6 +142,21 @@ impl<K: Journaled> Oplog<K> {
         }
     }
 
+    /// `ops` as the log's lines, each ending in a newline. (svrngs,
+    /// lean-4: `append_all` and `replace_all` each wrote this upstream.)
+    fn lines(ops: &[Op<K>]) -> Result<String> {
+        let mut buf = String::new();
+        for op in ops {
+            let line = serde_json::to_string(op).map_err(|e| OplogError::Serialise {
+                log: K::LABEL,
+                source: e,
+            })?;
+            buf.push_str(&line);
+            buf.push('\n');
+        }
+        Ok(buf)
+    }
+
     /// Append several ops in one open. Creates the parent directory on
     /// first write.
     pub fn append_all(&self, ops: &[Op<K>]) -> Result<()> {
@@ -156,15 +171,7 @@ impl<K: Journaled> Oplog<K> {
             .append(true)
             .open(&self.path)
             .map_err(OplogError::Io)?;
-        let mut buf = String::new();
-        for op in ops {
-            let line = serde_json::to_string(op).map_err(|e| OplogError::Serialise {
-                log: K::LABEL,
-                source: e,
-            })?;
-            buf.push_str(&line);
-            buf.push('\n');
-        }
+        let buf = Self::lines(ops)?;
         // ONE write for the whole batch, so `O_APPEND`'s atomicity covers it.
         // Two calls (the body, then the newline) left a window in which a
         // second writer could interleave and split a line in half.
@@ -219,15 +226,7 @@ impl<K: Journaled> Oplog<K> {
         if let Some(parent) = self.path.parent() {
             fs::create_dir_all(parent).map_err(OplogError::Io)?;
         }
-        let mut buf = String::new();
-        for op in ops {
-            let line = serde_json::to_string(op).map_err(|e| OplogError::Serialise {
-                log: K::LABEL,
-                source: e,
-            })?;
-            buf.push_str(&line);
-            buf.push('\n');
-        }
+        let buf = Self::lines(ops)?;
         let tmp = self.path.with_extension("compacting");
         {
             let mut f = OpenOptions::new()
