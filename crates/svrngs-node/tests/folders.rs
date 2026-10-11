@@ -276,7 +276,9 @@ async fn a_change_by_any_member_reaches_another_s_directory() {
 /// one outside the group**: Ana writes, Ben's directory takes it; Cy asks
 /// Ben's provider for its hash and is given it, verified; a node standing
 /// in no group held at Ben's is closed at the accept. Red with the provider
-/// asking only this computer's own shared folders (Ben refuses Cy).
+/// asking only this computer's own shared folders (Ben refuses Cy); and
+/// with the gate admitting any dialer (sy-1's `open-gate`), Dee then
+/// refused by the provider alone, which asks who stands too (syp-4 a).
 #[tokio::test]
 async fn a_synced_file_is_served_by_a_member_who_did_not_write_it_and_to_no_one_outside() {
     let group = Group::new().await;
@@ -323,8 +325,8 @@ async fn a_synced_file_is_served_by_a_member_who_did_not_write_it_and_to_no_one_
     dee.endpoint().address_lookup().unwrap().add(book);
     let refused = ask_ben(&dee, dee_dir.path().join("asked")).await;
     assert!(
-        refused.is_err(),
-        "Dee, in no group, is given nothing: {refused:?}"
+        refused.as_ref().is_err_and(|e| e.contains("not admitted")),
+        "Dee, in no group, is closed at the accept: {refused:?}"
     );
     dee.endpoint().close().await;
     group.close().await;
