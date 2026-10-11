@@ -21,6 +21,7 @@ use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
+use n0_future::task::AbortOnDropHandle;
 
 use crate::rail::RailApi;
 
@@ -181,19 +182,13 @@ pub fn check_loopback(listen: SocketAddr) -> Result<(), ApiError> {
 /// `0` among them, so the address bound is answered too.)
 pub struct Serving {
     addr: SocketAddr,
-    task: tokio::task::JoinHandle<()>,
+    _task: AbortOnDropHandle<()>,
 }
 
 impl Serving {
     /// Where an app on this computer reaches the API.
     pub fn addr(&self) -> SocketAddr {
         self.addr
-    }
-}
-
-impl Drop for Serving {
-    fn drop(&mut self) {
-        self.task.abort();
     }
 }
 
@@ -235,5 +230,8 @@ pub fn serve(router: Router, bound: Bound) -> Serving {
             tracing::error!(target: "rails", error = %e, "api: listener stopped");
         }
     });
-    Serving { addr, task }
+    Serving {
+        addr,
+        _task: AbortOnDropHandle::new(task),
+    }
 }

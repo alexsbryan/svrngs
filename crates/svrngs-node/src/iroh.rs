@@ -43,6 +43,7 @@
 use std::collections::HashMap;
 use std::net::{IpAddr, SocketAddr};
 
+use n0_future::task::AbortOnDropHandle;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -388,13 +389,7 @@ pub fn actor_key(actor: &str) -> Option<PublicKey> {
 /// Server half: accept iroh connections, and serve each bi-stream of an
 /// admitted one with hyper's HTTP/1 server and the caller's router.
 pub struct IrohAcceptor {
-    task: tokio::task::JoinHandle<()>,
-}
-
-impl Drop for IrohAcceptor {
-    fn drop(&mut self) {
-        self.task.abort();
-    }
+    _task: AbortOnDropHandle<()>,
 }
 
 impl IrohAcceptor {
@@ -463,7 +458,9 @@ impl IrohAcceptor {
                 });
             }
         });
-        Self { task }
+        Self {
+            _task: AbortOnDropHandle::new(task),
+        }
     }
 }
 
