@@ -362,11 +362,12 @@ async fn a_link_in_a_synced_directory_is_not_followed() {
     group.close().await;
 }
 
-/// **A hash no synced folder places is refused, though the store holds
-/// it**: Ana writes a file and deletes it, the delete reaching Ben; her
-/// store keeps the version (copied, never dropped), and Cy, a member, asks
-/// her provider for it and is refused. Red with the provider serving any
-/// hash its store holds (`unchecked`, group folders' B7): the bytes given.
+/// **A hash no synced folder places is refused**: Ana writes a file and
+/// deletes it, the delete reaching Ben, and Cy, a member, asks her
+/// provider for it and is refused. Red with the provider serving any hash
+/// its store holds (`unchecked`, group folders' B7) only while her store
+/// holds the version, which since syp-4 (b) it drops at the delete;
+/// `a_synced_folder_is_one_group_s` refuses a hash the store keeps.
 #[tokio::test]
 async fn a_hash_no_synced_folder_places_is_refused_though_the_store_holds_it() {
     let group = Group::new().await;
@@ -584,5 +585,91 @@ async fn a_group_whose_record_cannot_be_read_is_said_so_never_read_as_none() {
     std::fs::set_permissions(&journal, std::fs::Permissions::from_mode(0o644)).unwrap();
     let len = kept.as_ref().map(Vec::len);
     assert!(kept == Some(bytes), "Ben's file stays on his disk: {len:?}");
+    group.close().await;
+}
+
+// ── A store keeps what the layout places (syp-4 b) ────────────────────
+
+/// The bytes `node`'s store holds of `hash` on disk: its data file's
+/// length, or none. A file past 16 KiB is never inlined in the store's
+/// database (iroh-blobs 0.103 `InlineOptions::default`).
+fn stored(node: &Node, hash: &[u8; 32]) -> Option<u64> {
+    let name = format!("{}.data", iroh_blobs::Hash::from_bytes(*hash).to_hex());
+    let at = node.rail().root().join("blobs/data").join(name);
+    std::fs::metadata(at).ok().map(|m| m.len())
+}
+
+/// **A store keeps what the layout places, and no more**: Ana writes a
+/// file and edits it, and each version reaches Ben; then neither store
+/// holds the first version, and each holds the edit's, in bytes. Ana's
+/// earlier edit met by Ben's, both kept as heads, stays in both stores.
+/// Red with nothing dropped (sy-1: every version copied and kept): the
+/// first version's bytes in both stores.
+#[tokio::test]
+async fn a_store_keeps_what_the_layout_places_and_no_more() {
+    let group = Group::new().await;
+    let (ra, rb) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (ana, ben) = (
+        both_ways(&group.ana, ra.path()).await,
+        both_ways(&group.ben, rb.path()).await,
+    );
+    let first = noise(200_000, b"first");
+    std::fs::write(ana.join("m.bin"), &first).unwrap();
+    let at_ben = || std::fs::read(ben.join("m.bin")).ok();
+    assert!(
+        until(&group, || at_ben().as_ref() == Some(&first)).await,
+        "the first version reaches Ben"
+    );
+    let edit = noise(210_000, b"edit");
+    std::fs::write(ana.join("m.bin"), &edit).unwrap();
+    assert!(
+        until(&group, || at_ben().as_ref() == Some(&edit)).await,
+        "the edit reaches Ben"
+    );
+    let (v1, v2) = (
+        *blake3::hash(&first).as_bytes(),
+        *blake3::hash(&edit).as_bytes(),
+    );
+    let dropped = || {
+        [&group.ana, &group.ben]
+            .iter()
+            .all(|n| stored(n, &v1).is_none())
+    };
+    until(&group, dropped).await;
+    for (who, node) in [("Ana", &group.ana), ("Ben", &group.ben)] {
+        assert_eq!(
+            stored(node, &v1),
+            None,
+            "{who}'s store drops the first version"
+        );
+        assert_eq!(
+            stored(node, &v2),
+            Some(210_000),
+            "{who}'s store keeps the edit's"
+        );
+    }
+
+    let (by_ana, by_ben) = (noise(30_000, b"ana's side"), noise(40_000, b"ben's side"));
+    std::fs::write(ana.join("m.bin"), &by_ana).unwrap();
+    std::fs::write(ben.join("m.bin"), &by_ben).unwrap();
+    let both: std::collections::BTreeSet<_> = [by_ana.clone(), by_ben.clone()].into();
+    assert!(
+        until(&group, || contents(&ana) == both && contents(&ben) == both).await,
+        "both sides kept"
+    );
+    for _ in 0..3 {
+        group.settle().await;
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    for (who, node) in [("Ana", &group.ana), ("Ben", &group.ben)] {
+        for side in [&by_ana, &by_ben] {
+            let hash = *blake3::hash(side).as_bytes();
+            assert_eq!(
+                stored(node, &hash),
+                Some(side.len() as u64),
+                "{who} keeps each side"
+            );
+        }
+    }
     group.close().await;
 }

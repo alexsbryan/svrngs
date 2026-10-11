@@ -9,11 +9,13 @@
 //! verified range from a holder the record names; bytes that do not match
 //! the hash never reach the store, and each holder asked is named with why
 //! it gave nothing. A group whose record cannot be read is said by name,
-//! never read as one placing nothing (#113, #117). Streaming a folder by range on loopback,
+//! never read as one placing nothing (#113, #117). The store keeps what a
+//! layout places and a synced directory holds, and drops every other
+//! version once what it keeps changes (syp-4 b). Streaming a folder by range on loopback,
 //! and the one-way share it served, were dropped at syp-1 (operator,
 //! 2026-10-10): a group's folder is synced onto its members' disks.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -26,19 +28,20 @@ use axum::{Json, Router};
 use iroh::endpoint::Connection;
 use iroh_blobs::api::blobs::{AddPathOptions, ImportMode};
 use iroh_blobs::api::remote::GetProgressItem;
-use iroh_blobs::api::Store;
+use iroh_blobs::api::{Store, TempTag};
 use iroh_blobs::protocol::{ChunkRanges, ChunkRangesExt, GetRequest};
 use iroh_blobs::provider::events::{
     AbortReason, ConnectMode, EventMask, EventSender, ObserveMode, ProviderMessage, RequestMode,
     RequestUpdate,
 };
-use iroh_blobs::store::fs::FsStore;
+use iroh_blobs::store::fs::{options::Options, FsStore};
+use iroh_blobs::store::{GcConfig, ProtectCb, ProtectOutcome};
 use iroh_blobs::{BlobFormat, BlobsProtocol, Hash};
 use n0_future::StreamExt as _;
 use std::convert::Infallible;
 
 use svrngs_core::{Command, ContentHash, Placed, Recorded};
-use tokio::sync::{watch, Notify};
+use tokio::sync::{mpsc, oneshot, watch, Notify};
 
 use crate::iroh::{actor_key, key_actor, Alpn};
 use crate::node::{Host, ANSWER_WITHIN};
@@ -48,6 +51,14 @@ mod synced;
 
 /// What a fetch asks a holder for at once.
 const PIECE: u64 = 1 << 20;
+
+/// How often the store asks whether what it keeps has changed, and drops
+/// what it no longer keeps if so (syp-4 b).
+const SWEEP: Duration = Duration::from_secs(1);
+
+/// What the store's sweep asks the node: what to keep, or `None` to keep
+/// everything this time.
+type KeepAsk = oneshot::Sender<Option<HashSet<Hash>>>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum FolderError {
@@ -78,16 +89,40 @@ pub struct Folders {
 }
 
 impl Folders {
-    /// The store under `data_dir/blobs`, and its provider.
+    /// The store under `data_dir/blobs`, its sweep, and its provider.
     pub(crate) async fn start(
         data_dir: &Path,
         host: Arc<Host>,
         nudge: Arc<Notify>,
     ) -> Result<(Self, BlobsProtocol), String> {
-        let fs = FsStore::load(data_dir.join("blobs"))
+        // The sweep runs on the store's own runtime and asks this node what
+        // to keep; a sweep told nothing keeps everything.
+        let (ask_keep, mut keep_asked) = mpsc::unbounded_channel::<KeepAsk>();
+        let protect: ProtectCb = Arc::new(move |live| {
+            let (tx, rx) = oneshot::channel();
+            ask_keep.send(tx).ok();
+            Box::pin(async move {
+                let Ok(Some(keep)) = rx.await else {
+                    return ProtectOutcome::Abort;
+                };
+                live.extend(keep);
+                ProtectOutcome::Continue
+            })
+        });
+        let root = data_dir.join("blobs");
+        let mut options = Options::new(&root);
+        options.gc = Some(GcConfig {
+            interval: SWEEP,
+            add_protected: Some(protect),
+        });
+        let fs = FsStore::load_with_opts(root.join("blobs.db"), options)
             .await
             .map_err(|e| format!("the blob store: {e}"))?;
         let store: Store = (*fs).clone();
+        // Nothing of the folders' is tagged since syp-4 (b): a tag a spike's
+        // take left would keep its version past every layout.
+        let untagged = store.tags().delete_all().await;
+        let untagged = untagged.map_err(|e| format!("the blob store's tags: {e}"))?;
         let folders = Folders {
             store: store.clone(),
             host,
@@ -96,7 +131,21 @@ impl Folders {
             conns: watch::Sender::new(BTreeMap::new()),
             unanswered: watch::Sender::new(BTreeMap::new()),
         };
-        tracing::info!(target: "folder", "folder: the store is open");
+        tracing::info!(target: "folder", untagged, "folder: the store is open");
+        let keeper = folders.clone();
+        tokio::spawn(async move {
+            let mut last = None;
+            while let Some(answer) = keep_asked.recv().await {
+                let keep = keeper.keep();
+                let sweep = keep.is_some() && keep != last;
+                if sweep {
+                    let kept = keep.as_ref().map_or(0, HashSet::len);
+                    tracing::debug!(target: "folder", kept, "folder: what the store keeps changed, so it drops every other version");
+                    last.clone_from(&keep);
+                }
+                answer.send(keep.filter(|_| sweep)).ok();
+            }
+        });
         // The store's actor lives as long as the node.
         tokio::spawn(async move {
             let _keep = fs;
@@ -139,16 +188,46 @@ impl Folders {
         Ok(files)
     }
 
-    /// The file at `path` into the store by reference, by its hash.
-    async fn take(&self, path: &Path, mode: ImportMode) -> Result<Hash, FolderError> {
+    /// The file at `path` copied into the store, held from the sweep
+    /// while its tag lives. Copied, not referenced: the store serves a
+    /// version after the directory has overwritten it — to a member still
+    /// fetching it, or as a conflict's other side — and a referenced file
+    /// edited in place would answer its old hash with new bytes, which
+    /// every fetch refuses, so the version would reach no one.
+    async fn take(&self, path: &Path) -> Result<TempTag, FolderError> {
         let options = AddPathOptions {
             path: path.to_path_buf(),
-            mode,
+            mode: ImportMode::Copy,
             format: BlobFormat::Raw,
         };
-        let tag = self.store.add_path_with_opts(options).with_tag().await;
-        let tag = tag.map_err(|e| FolderError::Store(path.to_path_buf(), e.to_string()))?;
-        Ok(tag.hash)
+        let tag = self.store.add_path_with_opts(options).temp_tag().await;
+        tag.map_err(|e| FolderError::Store(path.to_path_buf(), e.to_string()))
+    }
+
+    /// What the store keeps: every version a synced folder's layout places
+    /// in any group held here, a conflict's other side among them, and
+    /// every version a synced directory holds as last taken or written;
+    /// `None`, said, when any of it cannot be read, so nothing is dropped
+    /// on a guess.
+    fn keep(&self) -> Option<HashSet<Hash>> {
+        let groups = self.host.rail().namespaces();
+        let groups = groups.inspect_err(|e| tracing::warn!(target: "folder", error = %e, "folder: the store keeps everything — the groups held cannot be listed")).ok()?;
+        let (mut keep, mut why) = (HashSet::new(), None);
+        for ns in groups {
+            match self.layout(&ns) {
+                Ok(placed) => keep.extend(placed.iter().map(|p| Hash::from(*p.hash.as_bytes()))),
+                Err(e) => why = Some(e),
+            }
+        }
+        match self.held_everywhere() {
+            Ok(held) => keep.extend(held.iter().map(|h| Hash::from(*h.as_bytes()))),
+            Err(e) => why = Some(e),
+        }
+        if let Some(why) = why {
+            tracing::warn!(target: "folder", %why, "folder: the store keeps everything — what it keeps cannot be read");
+            return None;
+        }
+        Some(keep)
     }
 
     /// `act` written in `group` alone, and the round nudged; what it

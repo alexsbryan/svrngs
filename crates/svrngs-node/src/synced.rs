@@ -20,7 +20,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant, SystemTime};
 
-use iroh_blobs::api::blobs::ImportMode;
+use iroh_blobs::api::TempTag;
 use iroh_blobs::Hash;
 use serde::{Deserialize, Serialize};
 use svrngs_core::{Change, ContentHash, Placed, SyncFolder};
@@ -86,6 +86,25 @@ impl Folders {
         Ok(found.ok_or_else(unread)?.1.into_keys().collect())
     }
 
+    /// Every version a synced directory on this computer holds, as each
+    /// was last taken or written: what the store keeps beside the layouts.
+    pub(super) fn held_everywhere(&self) -> Result<Vec<ContentHash>, FolderError> {
+        let unread = |e| FolderError::Read(self.data_dir.clone(), e);
+        let mut out = Vec::new();
+        for entry in std::fs::read_dir(&self.data_dir).map_err(unread)? {
+            let path = entry.map_err(unread)?.path();
+            let name = path.file_name().unwrap_or_default().to_string_lossy();
+            if !(name.starts_with("synced-") && name.ends_with(".json")) {
+                continue;
+            }
+            let bytes = std::fs::read(&path).map_err(io(&path))?;
+            let held: BTreeMap<String, Held> = serde_json::from_slice(&bytes)
+                .map_err(|e| FolderError::Store(path.clone(), e.to_string()))?;
+            out.extend(held.into_values().map(|h| h.p.hash));
+        }
+        Ok(out)
+    }
+
     #[expect(
         clippy::disallowed_methods,
         reason = "times each phase of a step for its trace (perf-1); no decision reads it"
@@ -105,6 +124,9 @@ impl Folders {
         let mut changes = Vec::new();
         let mut taken = BTreeMap::new();
         let mut seen = BTreeSet::new();
+        // What this step took or fetched, held from the store's sweep until
+        // the kept state names it.
+        let mut hold: Vec<TempTag> = Vec::new();
         let (read_ms, t) = (ms(t0), Instant::now());
         let walked = self.walk(dir)?;
         let (files, walk_ms, t) = (walked.len(), ms(t), Instant::now());
@@ -116,7 +138,9 @@ impl Folders {
             }
             tracing::debug!(target: "folder", folder, path = rel, size = meta.len(), "synced: found on disk, changed since it was last held");
             let took = Instant::now();
-            let hash = self.take(&path, ImportMode::Copy).await?;
+            let tag = self.take(&path).await?;
+            let hash = tag.hash();
+            hold.push(tag);
             tracing::debug!(target: "folder", folder, path = rel, %hash, ms = ms(took), "synced: taken into the store");
             let hash = ContentHash::from_bytes(hash.into());
             let mtime = meta.modified().map_err(io(&path))?;
@@ -169,10 +193,13 @@ impl Folders {
             _ => self.layout(group)?,
         };
         let placed = placed.into_iter().filter(|p| p.folder == folder).collect();
-        self.apply(dir, folder, placed, &holders, &mut held, &taken)
-            .await;
+        hold.extend(
+            self.apply(dir, folder, placed, &holders, &mut held, &taken)
+                .await,
+        );
         let (apply_ms, t) = (ms(t), Instant::now());
         let wrote = std::fs::write(&kept, serde_json::to_vec(&held).unwrap_or_default());
+        drop(hold);
         tracing::debug!(target: "folder", folder, files, sent, read_ms, walk_ms, take_ms, write_ms, apply_ms, kept_ms = ms(t), ms = ms(t0), "synced: a step");
         wrote.map_err(io(&kept))
     }
@@ -180,7 +207,8 @@ impl Folders {
     /// The layout written into `dir`, what `held` says updated. A file just
     /// `taken` and sent is held as its entry, wherever the record places
     /// that entry: beside, when it met another edit, and the record's
-    /// choice is then written at its path.
+    /// choice is then written at its path. What it fetched, held from the
+    /// store's sweep for the step to drop once the kept state names it.
     #[expect(
         clippy::disallowed_methods,
         reason = "times the layout's read, each fetch and each export for their traces (perf-1); no decision reads it"
@@ -193,7 +221,8 @@ impl Folders {
         standing: &Holders,
         held: &mut BTreeMap<String, Held>,
         taken: &BTreeMap<String, (ContentHash, SystemTime)>,
-    ) {
+    ) -> Vec<TempTag> {
+        let mut hold = Vec::new();
         let ms = |t: Instant| t.elapsed().as_millis() as u64;
         tracing::debug!(target: "folder", folder, placed = placed.len(), "synced: the layout to write");
         let paths: BTreeSet<&String> = placed.iter().map(|p| &p.path).collect();
@@ -225,6 +254,13 @@ impl Folders {
             if before.is_none_or(|h| h.p.hash != p.hash) {
                 let hash = Hash::from_bytes(*p.hash.as_bytes());
                 tracing::debug!(target: "folder", folder, path = p.path, %hash, size = p.size, from = p.entry.key, seq = p.entry.seq, "synced: to fetch, the layout placing it here");
+                match self.store.tags().temp_tag(hash).await {
+                    Ok(tag) => hold.push(tag),
+                    Err(why) => {
+                        tracing::warn!(target: "folder", folder, path = p.path, %hash, %why, "synced: not fetched — the store cannot hold it from its sweep");
+                        continue;
+                    }
+                }
                 let fetched = Instant::now();
                 let mut from = vec![p.entry.key.clone()];
                 from.extend(standing.iter().filter(|k| **k != p.entry.key).cloned());
@@ -252,5 +288,6 @@ impl Folders {
             };
             held.insert(p.path.clone(), Held { p, mtime });
         }
+        hold
     }
 }
