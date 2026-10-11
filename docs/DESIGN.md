@@ -530,8 +530,12 @@ is U5's inventory (§8).
    after the edit); and a holder sending wrong bytes, planted (landed: a
    byte flipped on the wire refused by the fetch naming the holder, and
    who is taken as asleep decided once, the fetch's 60 s `ASLEEP_FOR`).
-   Several files fetched at once moved to perf-2 (g), after the record is
-   read once a change (operator, 2026-10-10). A folder streamed by
+   Made fast by perf-2 (`demo/runs/perf/2026-10-10-make-it-fast/`): a
+   file in one get, the record's layout read once a change, the apply woken
+   by the record, files taken 8 at once and fetched 8 at once, and the step
+   woken by the OS's file events (`notify`), the whole walk a sweep each
+   ten minutes; a file written as it is taken left for its write's next
+   event, found by that run. A folder streamed by
    range, group folders' second spike (`demo/runs/gf/2026-10-09/README.md`:
    a one-way share, one Jellyfin playing `.strm` stubs at a loopback
    endpoint on the meeting point, seven bars passed on one host), was
@@ -1680,9 +1684,16 @@ production on the branch `folders` by its queue `syp`, main merged in as
 the lean rows cut what the product does not carry — recorded runs'
 drivers, tests in counted files, code nothing reaches, code written twice
 (`ralph/next/lean/SURVEY.md`; lean-1, lean-2 and lean-3's first cut in at
-syp-3): the rows the spike's README's §9 lists, a synced folder's path
-parsed first since a member can write outside it today, the merge into
-main the operator's (§10); the phone replica spike, iOS first (§9, "a
+syp-3): the rows the spike's README's §9 lists (landed, syp-4: §3, call 7
+of "Lent apps"), then made fast by perf-1's candidates 1-7 (landed,
+perf-2: on loopback, one host, a small change at another member's disk in
+164 ms, 1,000 files in 373 ms, a change in a folder of 100,000 found
+within 432 ms with an idle node at 0.33% of a core, ten members each
+holding one change within 515 ms, a member joining 10,000 files in 1.7 s
+once it stands; a 100 MiB file at 83 MB/s to each of two members at once
+and 139 MB/s to one, a bare iroh-blobs get's own rate; a 1 MiB edit still
+moving the whole file, `demo/runs/perf/2026-10-10-make-it-fast/README.md`),
+then the spike's run again, the merge into main the operator's (§10); the phone replica spike, iOS first (§9, "a
 native phone app"), after folders since they name the bytes a phone would
 hold; then the middleware's P1 follow-ups as one row (operator, 2026-10-08;
 `demo/runs/mw/2026-10-08/README.md` §7, items 5 and 7; its item 1,
@@ -1720,7 +1731,7 @@ by the north star's tests.
 | a link's life set per link, other than a day | a newcomer meets a lapsed link, counted |
 | measuring a lender's upload rather than taking the figure they declare (BBR3's pacing estimate, or a timed saturating pull) | a declared figure is wrong by enough to stall a viewer in a recorded run |
 | a per-process tie between a node and the services it lends (upstream's `mint_tie`). A middleware believes loopback: a process on the lender's computer naming a person's key at its port was answered as them (`demo/runs/mw/2026-10-08/mw-1/`), which is the lender's own (§3, "The room", call 6); and a request at a lend's origin with no `Sec-Fetch-*` is taken for that lend's own page (sup-1, `origin.rs` `app_of`), which neither widens nor narrows what a process could reach before | an app's act is written under a person by a process the lender did not run, or one computer is shared by people who do not trust each other |
-| a synced folder's later parts, each with its trigger. A mounted folder: every file of a group's folder listed from the record's layout and fetched on open, by verified range, as group folders' streamed spike fetched (`demo/runs/gf/2026-10-09/`, its endpoint dropped at syp-1; `demo/runs/sy/2026-10-09/README.md` §9, "A mounted folder") — a file system of svrngs's (macFUSE, or Apple's File Provider), a dependency and a process apart. Its streamed spike's rows that only a folder not on the viewer's disk needs — a stub that reaches its viewer, who the endpoint answers, stubs in step with the record (that README's §9, rows 1, 3 and 4) — wait with it. A version as its blocks: a file a hash sequence of its 1 MiB blocks (iroh-blobs' `HashSeq`), the record's entry naming the sequence, so an edit moves only the blocks it changed — a 1 MiB edit inside 100 MiB moved all 104,857,600 bytes to each member, and what an entry's hash names would change in the record and in what a store keeps (perf-1, `demo/runs/perf/2026-10-10/README.md` §9 T4, §10 candidate 8). Dialling direct before a relay: no gain measured, iroh having moved every connection on all three paths direct before its first fetch (that README §9) | the mounted folder: a member whose disk cannot hold the group's folder, counted. The blocks: a member waiting on a large file moved whole for a small edit, counted, or the operator queues T4. The dial: a fetch measured through a relay between two members a direct path reaches |
+| a synced folder's later parts, each with its trigger. A mounted folder: every file of a group's folder listed from the record's layout and fetched on open, by verified range, as group folders' streamed spike fetched (`demo/runs/gf/2026-10-09/`, its endpoint dropped at syp-1; `demo/runs/sy/2026-10-09/README.md` §9, "A mounted folder") — a file system of svrngs's (macFUSE, or Apple's File Provider), a dependency and a process apart. Its streamed spike's rows that only a folder not on the viewer's disk needs — a stub that reaches its viewer, who the endpoint answers, stubs in step with the record (that README's §9, rows 1, 3 and 4) — wait with it. A version as its blocks: a file a hash sequence of its 1 MiB blocks (iroh-blobs' `HashSeq`), the record's entry naming the sequence, so an edit moves only the blocks it changed — a 1 MiB edit inside 100 MiB moved all 104,857,600 bytes to each member on every path, before perf-2 and after it, in 1.9 s on loopback, and what an entry's hash names would change in the record and in what a store keeps (perf-1, `demo/runs/perf/2026-10-10/README.md` §9 T4, §10 candidate 8; perf-2, `demo/runs/perf/2026-10-10-make-it-fast/README.md` §3 T4; the operator, "Wait, revisit after the rerun", §10). A file past one holder's upload: a 100 MiB file reached each of two members at 83 MB/s at once, about 167 MB/s from its one holder, where one member alone took it at 139 MB/s, a bare iroh-blobs get's rate (that README §4) — a member fetching from another that holds the file is unmeasured. A joining member's wait to stand: its share refused until the round admits it, 54-58 s of the round's 60 s, where its every file then arrived in 1.7 s of 10,000 and 61.5 s of 100,000 (that README §5). Dialling direct before a relay: no gain measured, iroh having moved every connection on all three paths direct before its first fetch, in perf-1 and perf-2 alike (perf-1's README §9; perf-2's §3) | the mounted folder: a member whose disk cannot hold the group's folder, counted. The blocks: a member waiting on a large file moved whole for a small edit, counted, or the operator queues T4. A file past one holder: a member waiting on a large file several fetch at once, counted between computers. The wait to stand: a newcomer's folder waiting on the round past a bar the operator sets. The dial: a fetch measured through a relay between two members a direct path reaches |
 | a person who only searches counted apart from one who watches: the door counts each on a lend for `WINDOW`, 30 s, after their last request (`crates/svrngs-node/src/door/limit.rs:17-19`), a search as a film — Movie Night's searcher was counted on both Jellyfins 26.3 and 26.5 s after one search and not at 36.2 and 36.4 s, the most at once 2, nobody refused (`demo/runs/mn/2026-10-08/doors.json`, `limit`) | a lend at its limit refuses someone while those it counts only searched, counted |
 | budgets on an owner's operation: how often an app may ask it, so asks cannot rebuild what it keeps back (`rings/current/ACL_AND_SCOPED_USE.md` §4, §6). Ana's taste ranks whatever films it is given, and ranked an app's two that sent her yes itself (`demo/runs/su/2026-10-09/verdicts.json`, "the unasked yes") | an operation's answers rebuild what its owner kept back, shown in a run, or an owner asks for a limit on one |
 | a live payload naming its sender | an app needs to know who offered a live payload, and cannot take it from the payload |
