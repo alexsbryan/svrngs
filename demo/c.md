@@ -42,13 +42,13 @@ parts in order and `scripts/check.sh` once at its close (operator,
 |---|---|---|
 | the group's link in the channel | `svrngs new <name> --origin <page>` prints it on the page's address, for a phone and a computer alike (Demo B's steps, `b.md`); pasted, it shows as a bare address titled "Your group" | **onboarding** (below): the link previews as an invitation, its title and description on the group's page; the token stays in the link's `#` part, which no chat's preview fetches, so the preview names no group and leaks no token |
 | a newcomer's computer in from the link, nothing typed, the group's folder on their disk | `svrngs join <link>` in a terminal on a computer that built svrngs (README, "Run it"); each member's `share --folder <dir>` (branch `folders`, syp-4 a) | **onboarding**, with the middleware's P1 follow-ups (DESIGN §8, "Then"): svrngs got from the link on a computer, the link handed to it, the group's folder placed for the person |
-| Sam removing Bo, and only Sam | the fold cuts any standing key's `Remove`, asking no keeper (`crates/svrngs-core/src/membership.rs:323-326`; DESIGN §6) | **U7**: one keeper sequences removals, a removed key cannot remove, forks void nothing (DESIGN §6, §10) |
+| Sam removing Bo, and only Sam | landed, U7 (u7-removal; DESIGN §6): `svrngs remove Bo --group <name>` on Sam's computer is the cut, anyone else's an ask; every lender refused the removed person 0.048 s after, on one host (`runs/u7/2026-10-11/`) | — |
 | every person in their own home | every number so far on one host, every path direct (the branch `folders`' `demo/runs/perf/2026-10-10/README.md` §9 and `…/2026-10-10-make-it-fast/README.md`) | **two homes**: the library, the folder and a join measured between computers on two networks, through a relay |
 | the trip's photos on every computer, kept while their author sleeps | landed on the branch `folders` (syp-1 to syp-4, perf-2; S2, a file whose author is asleep reaching a member who starts: 4.47 s at sy-1, 4.27 s at syp-1) | the operator's merge of `folders` |
 | Sam's library, each person signed in with nothing typed | landed (`apps/jellyfin/`, `demo/runs/mw/2026-10-08/`, mwp) | — |
 | Ana's music as each person, nothing typed | Navidrome takes the person from a header by its docs, `ND_EXTAUTH_USERHEADER=X-Svrngs-Person` (`runs/catalogue/2026-10-05/CENSUS.md:53`); never run through a lend | onboarding's dry run reads it; if Navidrome does not, the scene names another app the census marks "yes", and says so |
 | a phone in the group within ten seconds | Chromium through n0 joined in 5.4 s (`runs/u4/2026-10-05/README.md`, its finding 4) | — |
-| a person's words for each refusal and each asleep computer | landed ("Cy's computer did not answer, so what they lend is not listed", `runs/supf/2026-10-10/`) | U7 adds the removed person's |
+| a person's words for each refusal and each asleep computer | landed ("Cy's computer did not answer, so what they lend is not listed", `runs/supf/2026-10-10/`); the removed person's, landed with U7 ("You are no longer in <group>. …", on the home page and the group's page) | — |
 
 **Left out, each said:** money — Actual asks every person the one password
 its lender set (CENSUS.md:59), and no reference app for the money class is
@@ -98,8 +98,9 @@ before the first run.
    them, nothing typed — and opens a photo from the folder. Cy does the
    same on a phone, the link opening the group's page in the browser,
    without the folder.
-4. **Sam removes Bo**, as U7 has it (DESIGN §10, 2026-10-09: removing
-   someone stays in the command until a row moves it).
+4. **Sam removes Bo**: `svrngs remove Bo --group <name>` on Sam's
+   computer, which says "Bo is no longer in <name>. …" (DESIGN §10,
+   2026-10-09: removing someone stays in the command until a row moves it).
 5. **Ana's laptop is closed.** Then Eve, the last newcomer, opens the link
    on Eve's computer and does step 3's three things.
 

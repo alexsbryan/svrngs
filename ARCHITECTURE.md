@@ -430,8 +430,10 @@ keeps (the `SeedText` the redeem routes read) and this computer's person
 from the register. Removal as the command asks it (`removal.rs`, U7):
 `POST /v1/removals` commits svrngs-core's `Removal` and `POST
 /v1/handovers` its `HandOnTo`, each answering an `Outcome` the command
-words; a cut is then told to the removed person's computers once, one
-sync request carrying the cut alone (`ring_sync::post`). A dialer the
+words; each written wakes the round (`AskRound::wake`), so every
+computer of the group holds it now, and a cut is told to the removed
+person's computers once, one sync request carrying the cut alone
+(`ring_sync::post`). A dialer the
 keeper cut is served, on the members' protocol, only svrngs's refusal
 `removed` (`door::gone`, chosen in `node.rs`'s accept by
 `removed_anywhere`), and a pass it signed is refused the same; `/v1/groups`

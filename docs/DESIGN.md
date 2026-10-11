@@ -1787,7 +1787,10 @@ node stopped by SIGTERM closing its endpoint, a file no member gave asked
 again; S3 passed three runs of three, `demo/runs/syp/2026-10-11/restart/`),
 merged into main by the operator (2026-10-11, `4475a89`; §10); then
 Demo C's units, below (operator, 2026-10-10): removal (U7, the keeper of
-§6, with forks that void nothing), before any group of strangers;
+§6, with forks that void nothing; landed, u7-removal: Demo C's removal
+check passed on one host, every lender refusing the removed person 0.048 s
+after the keeper's command, `demo/runs/u7/2026-10-11/README.md`), before
+any group of strangers;
 onboarding — a computer's svrngs got from the group's link, the link handed
 to it, the group's folder placed for the person, the link previewing as an
 invitation in any chat (§3, "A chat's door is the group's link") — with
@@ -1816,7 +1819,7 @@ the link; no account but one a lender's program makes, no key asked for.
 
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
-| U7 removal | one keeper, the group's maker at first, sequences removals; a removed key cannot remove; forks void nothing (§6, §10) | within 30 s of the keeper's removal every lender refuses the removed person in a person's words, and nothing new in a folder reaches them; their own `Remove` counts nowhere; what they held stays theirs |
+| U7 removal | landed, u7-removal: one keeper, the group's maker at first, sequences removals, handed on only by its own act; anyone's `svrngs remove <name> --group <group>` is an ask until the keeper's is the cut, by hash; a removed key cannot remove, ask or hand on; forks void nothing; a removal or hand-on wakes the round (§6, §10) | within 30 s of the keeper's removal every lender refuses the removed person in a person's words, and nothing new in a folder reaches them; their own `Remove` counts nowhere; what they held stays theirs. Watched failing: take 1, a lender not the keeper refused at 43.3 s, at its next round; passed at take 2, 0.048 s, on one host (`demo/runs/u7/2026-10-11/`) |
 | onboarding | on a computer, svrngs got from the group's link, the link handed to it, the home page opened and the group's folder on the person's disk; the link previewing as an invitation in any chat; the middleware's P1 follow-ups, above | a newcomer's computer from the link to the group's three things within five minutes, unassisted, nothing typed |
 | two homes | the library, the folder and a join measured between computers on two networks, through a relay, each path as iroh selected it | measured, not judged: the numbers Demo C's bars are read against |
 
