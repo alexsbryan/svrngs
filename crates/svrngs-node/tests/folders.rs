@@ -475,6 +475,52 @@ async fn a_hash_the_record_stopped_placing_is_refused_at_the_next_get() {
     );
 }
 
+/// **A step's act names its changes in the walk's order** (perf-2 e): 24
+/// files in Ana's directory before she shares it, the first the walk meets
+/// the largest, 8 MB, and each after smaller, down to 1 KiB; her one act
+/// names them in the order the directory lists them (the walk's, for a
+/// directory of files alone). Red with the files taken at once answered
+/// as each import finished (`buffered_unordered`): the 8 MB file named
+/// after files met after it.
+#[tokio::test]
+async fn a_step_s_act_names_its_changes_in_the_walk_s_order() {
+    let (dir, ra) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ana = start(1, dir.path()).await;
+    let ns = found("films", 9, &ana, &[]);
+    let shared = ra.path().join("Shared");
+    std::fs::create_dir_all(&shared).unwrap();
+    for k in 0..24 {
+        std::fs::write(shared.join(format!("w{k:02}.bin")), b"").unwrap();
+    }
+    let walked: Vec<String> = std::fs::read_dir(&shared)
+        .unwrap()
+        .flatten()
+        .map(|e| e.file_name().to_string_lossy().into_owned())
+        .collect();
+    for (i, name) in walked.iter().enumerate() {
+        let len = if i == 0 { 8 << 20 } else { (24 - i) << 10 };
+        std::fs::write(shared.join(name), noise(len, name.as_bytes())).unwrap();
+    }
+    synced_in(&ana, ra.path(), &ns).await;
+    let journal = ana.rail().group_dir(&ns).unwrap().join("ring_oplog.jsonl");
+    let act = || {
+        let text = std::fs::read_to_string(&journal).unwrap_or_default();
+        let line = text
+            .lines()
+            .find(|l| walked.iter().all(|n| l.contains(n.as_str())));
+        line.map(str::to_owned)
+    };
+    let t0 = std::time::Instant::now();
+    while act().is_none() && t0.elapsed() < Duration::from_secs(20) {
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    let line = act().expect("one act names all 24");
+    ana.endpoint().close().await;
+    let mut named = walked.clone();
+    named.sort_by_key(|n| line.find(n.as_str()));
+    assert_eq!(named, walked, "the act's order is the walk's");
+}
+
 /// **A holder asleep is waited on for a bound, then the next asked**: Ana
 /// writes, Ben's directory takes it, Ana's node goes away; Cy, syncing
 /// after, asks Ana first, as the writer, and holds the file from Ben within

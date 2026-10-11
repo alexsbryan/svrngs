@@ -26,6 +26,7 @@ use std::time::{Duration, Instant, SystemTime};
 
 use iroh_blobs::api::TempTag;
 use iroh_blobs::Hash;
+use n0_future::{BufferedStreamExt as _, StreamExt as _};
 use serde::{Deserialize, Serialize};
 use svrngs_core::{Change, ContentHash, Placed, SyncFolder, SyncPath};
 
@@ -37,6 +38,10 @@ type Holders = BTreeSet<String>;
 
 /// Where the directories this computer syncs are kept.
 const SYNCED: &str = "synced.json";
+
+/// How many changed files a step takes into the store at once: one after
+/// another, 100,000 took 98.4 s at load 70 (perf-1's README §9; perf-2 e).
+const TAKE_AT_ONCE: usize = 8;
 
 /// The directories this computer syncs, each by its group and folder, one
 /// directory each, so one loop owns a directory and its kept state (#119);
@@ -240,7 +245,7 @@ impl Folders {
         };
         let mut changes = Vec::new();
         let mut taken = BTreeMap::new();
-        let mut seen = BTreeSet::new();
+        let (mut seen, mut found) = (BTreeSet::new(), Vec::new());
         // What this step took or fetched, held from the store's sweep until
         // the kept state names it.
         let mut hold: Vec<TempTag> = Vec::new();
@@ -258,19 +263,31 @@ impl Folders {
                 }
             };
             seen.insert(rel.clone());
-            let before = held.get_mut(&rel);
-            if unchanged(before.as_deref(), &path) {
+            if unchanged(held.get(&rel), &path) {
                 continue;
             }
             tracing::debug!(target: "folder", folder, path = %rel, size = meta.len(), "synced: found on disk, changed since it was last held");
-            let took = Instant::now();
-            let tag = self.take(&path).await?;
+            found.push((rel, path, meta));
+        }
+        // Taken several at once, each answered in the walk's order, never
+        // the order the imports finished: the act names them so (perf-2 e).
+        let took = n0_future::stream::iter(found)
+            .map(|(rel, path, meta)| async move {
+                let took = Instant::now();
+                let tag = self.take(&path).await;
+                (rel, path, meta, tag, ms(took))
+            })
+            .buffered_ordered(TAKE_AT_ONCE)
+            .collect::<Vec<_>>()
+            .await;
+        for (rel, path, meta, tag, took_ms) in took {
+            let tag = tag?;
             let hash = tag.hash();
             hold.push(tag);
-            tracing::debug!(target: "folder", folder, path = %rel, %hash, ms = ms(took), "synced: taken into the store");
+            tracing::debug!(target: "folder", folder, path = %rel, %hash, ms = took_ms, "synced: taken into the store");
             let hash = ContentHash::from_bytes(hash.into());
             let mtime = meta.modified().map_err(io(&path))?;
-            match before {
+            match held.get_mut(&rel) {
                 Some(h) if h.p.hash == hash => h.mtime = mtime,
                 before => {
                     let base = before.map(|h| h.p.entry.clone());
