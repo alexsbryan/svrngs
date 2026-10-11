@@ -3,7 +3,7 @@
 //! "Removal has one decider", "A removal names the removed key's acts by
 //! hash", "U7 also closes two holes"), each planted red at u7-removal's base.
 use super::*;
-use crate::tests_support::{after, applied, key, record, signed, NS};
+use crate::tests_support::{after, applied, key, record, signed, standing, NS};
 use crate::{actor_of, admit, Admission, Ed25519Verifier, RailGap};
 
 /// A seed of alex alone, as `svrngs new` writes one: the maker's key.
@@ -31,10 +31,6 @@ fn remove_of(leaving: u8, through: &[&Op<SignedOp>]) -> RailAct {
         key: actor_of(&key(leaving)),
         through: through.iter().map(|op| op.id.clone()).collect(),
     }
-}
-
-fn standing(a: &Admission, k: u8) -> bool {
-    a.membership().standing.contains(&actor_of(&key(k)))
 }
 
 fn sorted(mut v: Vec<String>) -> Vec<String> {

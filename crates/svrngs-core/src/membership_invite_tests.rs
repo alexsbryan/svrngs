@@ -3,7 +3,7 @@
 //! once"): an `Invite`, and the `Admit`s that redeem it, judged by
 //! `membership` and named by `admit`.
 use super::*;
-use crate::tests_support::{after, key, ring, signed, NS};
+use crate::tests_support::{after, key, ring, signed, standing, NS};
 use crate::{actor_of, admit, Admission, Ed25519Verifier, RailGap};
 
 /// The link's key: the `Invite` names its public half.
@@ -60,10 +60,6 @@ fn redeem(inv: &Op<SignedOp>, person: &str, joining: u8) -> RailAct {
 
 fn admitted(ops: &[Op<SignedOp>]) -> Admission {
     admit(&crate::ActSet::of(ops), &[], &ring(), NS, &Ed25519Verifier)
-}
-
-fn standing(a: &Admission, k: u8) -> bool {
-    a.membership().standing.contains(&actor_of(&key(k)))
 }
 
 /// The one gap `a` names, which must refuse `refused` for `fault`, and the

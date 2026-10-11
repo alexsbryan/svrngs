@@ -221,6 +221,11 @@ pub fn entries(d: &crate::Digest) -> BTreeMap<String, crate::View> {
 
 /// The `what` of every act an app's reducer would see, in order — the shape
 /// most of these tests assert on.
+/// Whether `key(k)` stands in the register `a` folds.
+pub fn standing(a: &Admission, k: u8) -> bool {
+    a.membership().standing.contains(&actor_of(&key(k)))
+}
+
 pub fn applied(a: &Admission) -> Vec<String> {
     a.ops()
         .iter()
