@@ -5558,3 +5558,328 @@ one line early, I1).
 | I9 | 6, 7 | `code dry-report` near tier | Still present: of the 9 clusters with a side in the range, all are neighbours, a trait's shape or tests of one shape; the one real re-write (`placed` ~ `all`) was not paired at 0.8. |
 | I19 | 6 | dry-report, `tests` scopes | Still present, and said: "could-not-judge". |
 | I24 | 6, 7 | `code dry-report` exact and near tiers | **Present in the new binary (7dfd54da…)**: an 11-line byte-identical copy of `beside`, considered (419 locations against 418), found by neither tier at 0.95. |
+
+## REVIEW-audit-syp-auto-1 (2026-10-11, range 7442463..baa3061)
+
+No `REVIEW-audit-` row precedes this one in its queue
+(ralph/next/syp/STATE.md), so the range starts where the queue did:
+7442463, the commit that made it. It ends at baa3061, the commit that
+made this row. `git rev-list --count 7442463..baa3061` is 183, of which
+82 are main's, carried by syp-3's merge (fb98c92, main at 265ffa9) and
+syp-5's (05eee01, main at 8966ac8) and audited on main by its own rows
+(REVIEW-audit-sup-auto-2, REVIEW-audit-lean-auto-1). This audit reads
+the other 101 (`git rev-list --count 7442463..baa3061 ^main`): 99
+commits and the two merges. Units: syp-1, syp-2, syp-3, perf-1, syp-4,
+perf-2, syp-5 and syp-6. The audit's own commits: dedc224 (a doc moved),
+5d36346 and 35a9ef2 (test set-up and helpers folded), cf21f71 and
+734018d (#122's skips traced).
+It closes #115, #116, #118, #119, #120 and #121, all by the range's
+units, and #122 by this audit's two commits. It records no new finding.
+#117 stays open, at new lines.
+
+As before, `docs/ARCH_PRINCIPLES.md` is docs/principles/ARCH_PRINCIPLES.md,
+and `target/debug/sovereign-cli` is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256 b604bcb6…
+(`shasum -a 256`, built 2026-10-10 14:10). Main's REVIEW-audit-lean-auto-1
+already planted this binary (its I9, I24), and it was planted again here
+(below). The embedder was `llama-server` on the corpus's model
+(qwen-embedding-0.6b.gguf, ~/.svrnmesh/config.toml:18) on :8080, `-b 8192
+-ub 8192`, for this session.
+
+**The corpus is not the worktree's.** `code index . --corpus-id
+svrngs-folders` (no `--full`) found 527 files changed since 6982059 and
+rebuilt whole. Its promotion was then refused: "promote_single_shard:
+cannot merge …/svrngs-folders-partition-local into …/svrngs-folders —
+both hold corpus data named documents.lance". That left `svrngs-folders`
+with no `chunks.lance` (dry-report: "no chunk index … run `svrn project
+init` first") and the new index in `svrngs-folders-partition-local`
+(I25). REVIEW-audit-sup-auto-1 repaired the same refusal with a `mv` by
+hand, but this session's tool permissions refused the `mv`, so
+`svrngs-folders` is left as described, for the operator: move its
+`documents.lance` aside, then run `svrn code finalize svrngs-folders`.
+The corpus read here is instead baa3061's tree, `git archive baa3061`
+into /tmp/sypaudit1/tree-baa3061 (the corpus is named after its
+directory, I25): `code index . --corpus-id tree-baa3061`, 3039 chunks in
+364 s (/tmp/sypaudit1/index.out). `refresh` gave rust 12260 symbols,
+"typescript: skipped (export failed)" and "python: skipped (export
+failed)" (I4; /tmp/sypaudit1/refresh.out). The corpora `tree-baa3061`
+and `tree-plant` stay in ~/.svrnmesh/indexes, about 23 MB each. The
+scripts are the sync audit's, copied to /tmp/sypaudit1: ledger.py with
+this queue's unit names and extra `git log` arguments, and clusters.py
+and windows-sy.py with `^main` added to their `rev-list`, so that a line
+blamed on main's commits is not counted as this range's.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+7442463..baa3061 ^main`, summed by /tmp/sypaudit1/ledger.py
+(/tmp/sypaudit1/ledger.out). A commit counts toward the unit its
+subject names, else toward the next `done`'s. Product code is crates/,
+apps/, web/ and bridge/. A test is a `tests/` or `check/` segment, or a
+lean_check test file name. The merges are not in this table; their
+lines are in the count below.
+
+| unit | commits | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| syp-1-no-stream | 4 | 76 | 439 | −363 | 21 | 265 | −244 |
+| syp-2-plants-out | 4 | 42 | 91 | −49 | 183 | 1 | 182 |
+| syp-3-merge-main (adf104f; the merge apart) | 6 | 37 | 24 | 13 | 0 | 0 | 0 |
+| perf-1-diagnose-and-propose | 12 | 76 | 12 | 64 | 185 | 0 | 185 |
+| syp-4-production | 19 | 775 | 339 | 436 | 1213 | 216 | 997 |
+| perf-2-make-it-fast | 37 | 576 | 194 | 382 | 486 | 80 | 406 |
+| syp-5-rerun-and-merge (the merge apart) | 7 | 0 | 0 | 0 | 5 | 3 | 2 |
+| syp-6-restart-and-retry | 9 | 112 | 26 | 86 | 197 | 26 | 171 |
+| total | 98 + this row's | 1694 | 1125 | 569 | 2290 | 591 | 1699 |
+
+- syp-1 src: 12d0ba2 alone, which removed streaming. svrngs-core
+  folder.rs −116 (the file gone), admit.rs +8/−18, lib.rs +3/−16,
+  membership.rs +1/−4; svrngs-node folder.rs +33/−264; cli.rs +17/−16.
+- syp-2 src: 4867dcf, the plants out. folder.rs +7/−46, synced.rs
+  +35/−41, node.rs −4.
+- syp-4 src, the most of any unit: folder.rs +264/−96 (7102542, 2254580,
+  db60756, ea9d95f, 7aaafed), synced.rs +344/−188 (9600be0's +71/−36
+  reverted by 7a5dca4's +36/−71), core synced.rs +79/−8 (af50f20,
+  `SyncPath`), cli.rs +53/−40.
+- perf-2 src: synced.rs +302/−119, folder.rs +236/−73, svrngs-runtime
+  lib.rs +35/−3 (6910f25, 7732812, the rail's teller).
+- syp-6 src: synced.rs +66/−22 (4a79316, the retry), node.rs +34
+  (c50d7f2, `asked_to_stop`), folder.rs +9 (31750ee, the dial's trace),
+  cli.rs +1/−3.
+
+The size budget, scripts/lean_check.py at HEAD run on a `git archive`
+tree of each commit (/tmp/sypaudit1/lean-points.out). HEAD's rule leaves
+`demo/runs/` apart (lean-1), so the early figures are not those the
+units' own commits printed:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 7442463, range start | 2873 / 3000 | 13673 / 15350 |
+| 36bd119, syp-1 done | 2771 | 13366 |
+| 8bf59cc, syp-2 done | 2771 | 13327 |
+| fb98c92, syp-3's merge (main's side) | 2732 | 13375 |
+| 607add5, syp-3 done | 2732 | 13383 |
+| 619a1e4, perf-1 done | 2732 | 13440 |
+| b16a2b9, syp-4 done | 2776 | 13730 |
+| af109e9, perf-2 done | 2776 | 13982 |
+| 05eee01, syp-5's merge (main's side) | 2719 | 13778 |
+| 94fbea3, syp-6 done | 2719 | 13828 |
+| baa3061, range end | 2719 | 13828 |
+| 734018d, this audit's traces | 2719 | **13848 / 15350** |
+
+The range nets +155 (/tmp/sypaudit1/bylean.out, by file): the branch's
+units +311 (syp-1 −307, syp-2 −39, syp-3 +8, perf-1 +57, syp-4 +290,
+perf-2 +252, syp-6 +50) and the merges −156 (+48, −204), main's lean
+cuts. svrngs-node synced.rs +314 and core synced.rs +44 are this queue's
+largest growths; core folder.rs −81 and svrngs-node folder.rs +4 net are
+streaming's removal and the synced folder's growth in one file. **1,502
+left** (#80).
+
+### (2) Clones (`code dry-report`)
+
+**Scoped**, at 0.95, for each crate dir the range's branch commits
+touched (/tmp/sypaudit1/clean-*0.95.md):
+
+| scope | locations | exact | near | with a side added in the range |
+|---|---:|---:|---:|---|
+| crates/svrngs-core/ | 397 | 5 | 0 | 1: `as_str` (below) |
+| crates/svrngs-node/ | 452 | 1 | 0 | 0 |
+| crates/svrngs-node/tests/ | 0 | **could-not-judge** | **could-not-judge** | — (I19) |
+| crates/svrngs/ | 69 | 0 | 0 | 0 |
+| crates/svrngs/tests/ | 0 | **could-not-judge** | **could-not-judge** | — (I19) |
+| crates/svrngs-runtime/ | 125 | 1 | 0 | 0 |
+
+**Unscoped**: 0.95 (8 exact, 46 near), 0.9 (8, 73), 0.8 (8, 265).
+clusters.py blamed every side (`git blame -w` at baa3061, this range's
+branch commits only) (/tmp/sypaudit1/clusters.out). Groups with a side
+in the range: **32** at 0.95, of which 31 pair perf-1's driver with
+perf-2's; 35 at 0.9; 42 at 0.8. Every one in product code:
+
+| at | cluster | cosine | read |
+|---|---|---|---|
+| exact | `as_str` core synced.rs:67-69 ~ link.rs:186-188 ~ svrngs-node lend.rs:91-93 | — | A newtype's `&self.0`, three types; RUST_ARCH's parse-don't-validate shape. No change. |
+| 0.8 | svrngs-node synced.rs `kept_files` :336-353 ~ `kept_at` :350-363 ~ `held_everywhere` :361-376 | 0.851-0.912 | Already one: both call `kept_files`. Neighbours (I9). No change. |
+| 0.8 | folder.rs `synced_groups` :363-375 ~ `read_at` :377-390 | 0.844 | One calls the other. No change. |
+| 0.8 | folder.rs `start` :138-227 ~ `provider` :613-683 | 0.809 | The store's set-up and its provider's event loop. No change. |
+| 0.8 | cli.rs `group_named` :1166-1189 ~ `new_group` :1142-1165; `new_link` :1185-1222 ~ `mint` :1226-1254 | 0.817-0.828 | Neighbours, each its own verb. Reading them found `new_link`'s doc above `group_named` (7102542 put it between them): moved back, dedc224. |
+| 0.8 | core synced.rs `as_str`, `try_from`, `from` :64-85 | 0.818-0.844 | `SyncPath`'s conversions. No change. |
+| 0.8 | node.rs `standings` (1 line in range), runtime lib.rs `ingest_all`, `ops_missing_from_within`, membership.rs `moves_membership` (1 line each) | 0.80-0.94 | A line each, in clusters of one shape (rail delegations, a trait's arms). No change. |
+| 0.8 | synced_tests.rs `synced` ~ `placed`, `now` ~ `entry` (1 line each) | 0.820-0.834 | Test fixtures, as at the sync audit. No change. |
+
+**Run drivers.** 31 of the 32 groups at 0.95 pair
+demo/runs/perf/2026-10-10/run.py with
+demo/runs/perf/2026-10-10-make-it-fast/run.py, most at cosine 1.000.
+perf-2 copied perf-1's driver unchanged (e5a9847) and changed the copy
+in later commits. The windows also pair syp-5's and syp-1's drivers
+(no-stream ~ production ~ rerun `main`/`setup`). Each driver is the
+code that ran beside its data, kept byte for byte (#61), and
+`demo/runs/` is outside the budget (lean-1). No change.
+
+**Window pass** (/tmp/sypaudit1/windows-sy.py . 7442463..baa3061,
+/tmp/sypaudit1/windows-syp.out): 866 window hits in 165 spans, 23 new:
+7 in the perf drivers, 2 in the syp drivers, 14 in tests, **0 in product
+source**. Of the tests:
+
+- **kept.rs:210-236 == :322-348 == :423-449**, three tests each starting
+  Cy in the test's process with one 20-line block, and the group's seed
+  built four times (member.rs:65-70 and three in kept.rs; member.rs:69-73
+  == kept.rs:451-455). **Folded, 5d36346**: `cy_here`, `member::seed`,
+  `member::hold_seed`, behaviour kept (`cargo test -p svrngs-node --test
+  kept --test perf`: 3 passed, 4 ignored, as before). −42 test lines.
+- **folders.rs:225-229 == :303-307**: syp-2's `get` (4f46785,
+  folders.rs:212-233) wrote out again the body of sy-1's `ask_ben`
+  closure (db706d3, :298-311), both in one file (35a9ef2's body says
+  :211-232 and :297-310, one line early each); and **folders.rs:165-171
+  == kept.rs:193-199**, `noise`, in two test binaries. **Folded,
+  35a9ef2**: the test calls `get`, and `noise` lives in tests/common
+  (`cargo test -p svrngs-node --test folders --test kept`: 19 passed,
+  and 3 passed with 1 ignored, as before). −28 test lines. kept.rs's
+  `get` (:183-187 == folders.rs:225-229) stays its own: it takes the
+  holder as a member process's `Addr`, folders.rs's as a `Node`.
+- No change to the rest: folders.rs:247-251 and ten more like it are
+  the tests' two-directory set-up (`Group::new`, `both_ways` twice);
+  :414-421 == :1229-1236 is two tests' log subscriber; :360-366 ==
+  :699-705, :439-444 == :458-463 and :1295-1301 == :1324-1330 are an
+  assertion's message, a `get` call and a wait; and kept.rs:28-34 ==
+  perf.rs:40-46 is each binary's member-process entry.
+
+**The instrument, planted** in /tmp/sypaudit1/tree-plant, a copy of
+tree-baa3061 with two plants in svrngs-node synced.rs: a byte-identical
+copy of `held_everywhere` (10 lines) as `planted_held_everywhere`, and
+`kept_files` with its names changed as `planted_kept_files`. Steps:
+`code index` 3042 chunks, `refresh` rust 12276 symbols, `dry-report
+--scope crates/svrngs-node/` (/tmp/sypaudit1/plant-node.md). It
+considered 454 locations against 452 unplanted, so both plants were
+seen, and found **1 exact group, 0 near: neither plant**. At 0.8
+(plant-node-0.8.md), both plants sit in one 5-symbol cluster with
+`kept_files`, `kept_at` and `held_everywhere`, at cosine 0.831-0.920,
+never 1.0, and no exact group pairs the verbatim copy. The same holds
+for Python: the perf drivers' `phases` are byte-identical (`diff` of
+perf/2026-10-10/run.py:186-215 against
+2026-10-10-make-it-fast/run.py:208-237 prints nothing), and they are in
+no exact group. I24 and I9 are still present, so the exact tier's zeros
+are no evidence; the window pass and the reading carry the clone
+question.
+
+### Reading the range
+
+- **#115, #119: closed by the range.** syp-1 removed the folder list and
+  the endpoint (12d0ba2). syp-4 (a) (7102542) replaced `admissions` with
+  `Host::standings`. A step now reads who stands and the layout before
+  anything is sent or deleted, and stops by the group's name
+  (svrngs-node synced.rs:389-391 at baa3061: "so a group that cannot be
+  read stops the step by its name"). The provider serves nothing of a
+  group it cannot read, said at warn (folder.rs:442-457, node.rs:456,
+  :466). Held by `a_group_whose_record_cannot_be_read_is_said_so_never_read_as_none`
+  (tests/folders.rs:783 at baa3061), red with the old reading.
+- **#116: closed.** The core's `Admission::holders` and the endpoint's
+  holder list went with streaming (12d0ba2). The synced directory's own
+  list became `holders` (synced.rs:329-335), which reads
+  `Host::standings`. One home.
+- **#118: closed by removal**: the endpoint and its 416 (12d0ba2).
+- **#120: closed.** syp-2 removed the plants (4867dcf). `git grep -n
+  "PLANT\|Plant" -- crates` outside tests finds none. apps/jellyfin/mw's
+  `Plant` belongs to that app.
+- **#121: closed in its failure.** `both_ways` now refuses a second
+  directory for one (group, folder), and a second (group, folder) for
+  one directory, and answers an ask it has had as before (synced.rs:172-181,
+  db60756). So one loop runs per kept entry, held by
+  `one_directory_keeps_one_group_s_folder` (tests/folders.rs:1048 at baa3061). The
+  loop's task is still detached (`keep_in_step`, synced.rs:243). No verb
+  stops a sync, so nothing needs its handle yet; the verb that unsyncs
+  will need one.
+- **#122: fixed here**, cf21f71 and 734018d. Five silent decisions now
+  trace: a touch with the bytes held, a held file the record no longer
+  places kept because it changed, a placed file not written over a
+  changed disk, and a written or re-pointed file whose mtime cannot be
+  read. Each condition is unchanged, split where it was joined. +20
+  lines.
+- **#117, not fixed, new lines.** `share --folder` still reads an
+  unreadable API file as "" and so refuses "not running"
+  (cli.rs:580, :589-592), and reads an unreadable answer as an empty
+  refusal (:595). It is not fixed here because the refusal the person
+  sees would change.
+- **syp-6 (a)'s retry for a file no member will give.** The retry runs
+  each 15 s for as long as any placed file is unwritten
+  (synced.rs:66-79, :268-278), each wake a step: who stands, the layout,
+  and the apply over every placed file. perf-2's idle bar was rerun with
+  every file written (f86a6fa, 0.4% of a core), not with one that never
+  arrives. Not a principle, and each wake traces at debug (:320). No
+  finding; it is for the run that measures a holder gone for good.
+- **syp-6 (b) is glassbox.** `asked_to_stop` says Ctrl-C, SIGTERM, and
+  each failure to wait on them (node.rs:116-137). The dial traces the
+  addresses iroh holds (folder.rs:551-559). The command is the one
+  caller that starts a node (`git grep -n "Node::start" -- crates apps`
+  outside tests: cli.rs:623), so no other path leaves an endpoint open
+  on SIGTERM.
+- **dedc224's body is wrong**: it says `cargo doc -p svrngs --no-deps`
+  was clean, but that printed two warnings. Both predate this audit:
+  issuer.rs:18 links to the private `DRAWS`, and identity.rs:4 to
+  `commonwealth_core::ids::NodePubkey`. None is in cli.rs. Said here
+  rather than amended.
+- **Still open, none touched by the range's branch commits** (their
+  files, `git log --no-merges --name-only 7442463..baa3061 ^main`, are
+  core admit, alpn, folder, lib, membership, synced; node folder, node,
+  synced, Cargo.toml; runtime lib; the command's cli.rs and Cargo.toml;
+  and tests): #31, #57, #68, #70, #71, #75, #77, #79, #81, #89, #91,
+  #95, #97, #99, #100, #103 (node.rs `shared_with`, untouched: 7102542
+  and 4867dcf changed `start`, `endpoint`, `standings`' visibility and
+  the gate's plant), #104 and #113 (main's).
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges 7442463..baa3061 ^main --
+crates apps web bridge` matching `\b(struct|enum|trait|type)\s+[A-Z]\w*`
+are: `Look`, `NotASyncPath`, `Nothing`, `Addr`, `Asking`, `FolderAsk`,
+`Layout`, `Member`, `Said`, `SyncPath`, `Found`, `Holders`, `KeepAsk`,
+`ReadAt`, `Syncing`, `Teller`, and `type Error`, an associated type. No
+merge added one (`git diff --cc` of fb98c92 and 05eee01). Each was run
+through `converge noun <Name> --corpus-id tree-baa3061`
+(/tmp/sypaudit1/nouns.out), beside `git grep -nP` at baa3061:
+
+| noun | converge (production) | git grep (all) | read |
+|---|---|---|---|
+| Said | 2: cli.rs:739, door/choices.rs:39 | 3: those and tests/folders.rs:1078 (the range's) | Neither production `Said` is the range's. The range's is a test's log sink, `io::Write` over a buffer. The two older ones are distinct: the command's words to a person, and a person's yes or stop to an app. No change. |
+| Asking | 1: node.rs:657 | 2: and tests/folders.rs:1107 (the range's) | The people route's state against a test's fixture: Ana's node with Ben a hand-driven holder. Private to each. No change. |
+| Member | 1: svrngs-runtime register.rs:40 | 2: and tests/kept.rs:39 (the range's) | A key standing in a group against a test's child process, killed on drop. No change. |
+
+Every other noun has one definition. `Addr` is in tests alone
+(member.rs:32), which converge's scope leaves out ("definitions (0)").
+converge's lines are one early (I1: `Look` :81 for :82, `Nothing` :600
+for :601, `SyncPath` :32 for :33).
+
+### Fixed here
+
+- dedc224: `new_link`'s doc moved back above it. Comments only.
+- 5d36346: kept.rs's three in-process Cy set-ups and the members' seed
+  each written once. Tests only, behaviour kept.
+- 35a9ef2: folders.rs's `ask_ben` closure is its `get`; `noise` written
+  once, in tests/common. Tests only, behaviour kept.
+- cf21f71, 734018d: #122's five skips traced, decisions unchanged
+  (`cargo test -p svrngs-node --test folders --test kept`: 19 passed,
+  and 3 passed with 1 ignored, after each).
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 122 (was #120 on `folders`; #116 before syp-3's merge) | 1 | crates/svrngs-node/src/synced.rs:462, :559, :584, :591-594, :615, at baa3061 | cf21f71, 734018d | The apply's skips and the step's same-bytes touch were untraced. |
+| 121 (was #119 on `folders`; #115 before syp-3's merge) | 10 (RUST_ARCH ownership) | crates/svrngs-node/src/synced.rs:172-181, :243, at baa3061 | closed in its failure (db60756) | One loop per directory and folder now. The loop's task stays detached until a verb stops a sync. |
+| 120 (was #118 on `folders`; #114 before syp-3's merge) | 8 | — | closed (4867dcf) | The plants are gone from product code. |
+| 119 (was #117 on `folders`; #113 before syp-3's merge) | 6, 1 | crates/svrngs-node/src/synced.rs:389-391, at baa3061 | closed (7102542) | A group that cannot be read stops the step by its name before anything is deleted. |
+| 118 (was #116 on `folders`; #112 before syp-3's merge) | 1 | — | closed (12d0ba2) | The endpoint and its 416 were removed. |
+| 117 (was #115 on `folders`; #111 before syp-3's merge) | 6 | crates/svrngs/src/cli.rs:580, :589-592, :595, at baa3061 | not fixed | `share --folder` reads an unreadable API file as "not running", and an unreadable answer as an empty refusal. |
+| 116 (was #114 on `folders`; #110 before syp-3's merge) | 8 | crates/svrngs-node/src/synced.rs:329-335, at baa3061 | closed (12d0ba2, 7102542) | Who holds a file has one home: `Host::standings`. |
+| 115 (was #113 on `folders`; #109 before syp-3's merge) | 6, 1 | crates/svrngs-node/src/folder.rs:442-457, at baa3061 | closed (12d0ba2, 7102542) | No list or endpoint is left to read an absence as none. The provider refuses, said. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 1,502 lines left (13848 / 15350). |
+| 31, 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99, 100, 103, 104, 113 | as recorded | as recorded | not fixed | Untouched by the range's branch commits. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` lines | Still present: one line early. |
+| I4 | 6 | `refresh` | Still present, and grown on a tree outside git: "typescript: skipped (export failed)" and "python: skipped (export failed)". Yet dry-report paired the run drivers' Python functions, so its Python symbols came from somewhere other than the export it called skipped. |
+| I9 | 6, 7 | `code dry-report` near tier | Still present on b604bcb6…: a verbatim copy and its original reach only cosine 0.920. |
+| I19 | 6 | dry-report, `tests/` scopes | Still present, and said: "could-not-judge". |
+| I24 | 6, 7 | `code dry-report` exact tier | Still present on b604bcb6…: a 10-line verbatim Rust copy, and two 30-line byte-identical Python functions, each considered and each in no exact group. |
+| I25 | 6 | `code index`'s automatic full rebuild | Still present, reached without `--full`: past 500 changed files, `code index` rebuilds whole, refuses its own promotion over the corpus's `documents.lance`, and leaves the corpus with no chunk index. dry-report then errors rather than reporting a zero. `svrngs-folders` is left so (above). |
