@@ -394,7 +394,8 @@ impl Folders {
             if !seen.insert(rel.clone()) || unchanged(held.get(&rel), &path) {
                 continue;
             }
-            tracing::debug!(target: "folder", folder, path = %rel, size = meta.len(), "synced: found on disk, changed since it was last held");
+            let was = held.get(&rel).map(|h| (h.p.size, h.mtime));
+            tracing::debug!(target: "folder", folder, path = %rel, size = meta.len(), mtime = ?meta.modified().ok(), ?was, "synced: found on disk, changed since it was last held");
             found.push((rel, path, meta));
         }
         // Taken several at once, each answered in the walk's order, never
