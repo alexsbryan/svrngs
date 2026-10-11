@@ -1,0 +1,25 @@
+{
+ "S3": {
+  "both_s": null,
+  "ana_edit": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd",
+  "ben_edit": "eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b",
+  "found": {
+   "ana": {
+    "s3 (conflict Ana).txt": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd",
+    "s3.txt": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd"
+   },
+   "ben": {
+    "s3 (conflict Ana).txt": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd",
+    "s3.txt": "eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b"
+   },
+   "cy": {
+    "s3 (conflict Ana).txt": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd",
+    "s3.txt": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd"
+   }
+  },
+  "verdict": "failed"
+ },
+ "load": {
+  "S3": "judged"
+ }
+}

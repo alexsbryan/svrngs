@@ -100,6 +100,7 @@ pub mod relay;
 pub mod seed;
 mod sig;
 mod sync;
+mod synced;
 mod view;
 
 use alloc::collections::BTreeMap;
@@ -126,6 +127,7 @@ pub use sig::{
     sign_message, sign_ring_op, verify_hex,
 };
 pub use sync::{digest, ops_missing_from_within, Compaction, DigestFold, Floors, NO_BUDGET};
+pub use synced::{Change, Entry, NotASyncPath, Placed, SyncFolder, SyncPath};
 pub use view::{Digest, View, DIGEST_V};
 
 /// The journal envelope, re-exported so a consumer of the rail names ONE
@@ -415,6 +417,13 @@ pub enum RailAct {
         /// Unix seconds; a redeeming `Admit` counts only when timed before it.
         until: i64,
     },
+    /// A member says: these files of my folder `folder`, synced both ways,
+    /// changed, each naming the entry it replaces (sy-1, [`synced`]).
+    /// Carries no [`Payload`] and never reaches an app reducer.
+    Synced {
+        folder: String,
+        changes: Vec<Change>,
+    },
 }
 
 /// What a redeeming [`RailAct::Admit`] carries: the [`RailAct::Invite`] it
@@ -634,13 +643,18 @@ pub const LINK_LINE_VERSION: u32 = 3;
 /// `NewerVersionLine` instead.
 pub const BROWSER_LINE_VERSION: u32 = 4;
 
+/// The line format version a synced folder's change ships at (sy-1). 5
+/// was a one-way shared folder's (gf-1), dropped by syp-1 before any record
+/// outside a run's scratch held one: no build reads it.
+pub const SYNCED_LINE_VERSION: u32 = 6;
+
 impl Journaled for SignedOp {
     const FILE: &'static str = "ring_oplog.jsonl";
     const ID_PREFIX: &'static str = "ring";
     const LABEL: &'static str = "ring_rail";
     /// This build reads the membership cohort's, the link's and a
     /// browser's redemption's lines too (see [`Self::line_version`]).
-    const UNDERSTANDS: u32 = BROWSER_LINE_VERSION;
+    const UNDERSTANDS: u32 = SYNCED_LINE_VERSION;
     /// The membership acts — [`RailAct::Admit`] and [`RailAct::Remove`] —
     /// ship at the bumped line version and the original three keep the bytes
     /// they always had, so an un-upgraded node names exactly the acts it
@@ -662,6 +676,7 @@ impl Journaled for SignedOp {
                 invite: Some(_), ..
             } => LINK_LINE_VERSION,
             RailAct::Admit { .. } | RailAct::Remove { .. } => MEMBERSHIP_LINE_VERSION,
+            RailAct::Synced { .. } => SYNCED_LINE_VERSION,
             _ => Self::VERSION,
         }
     }

@@ -15,6 +15,8 @@
 //! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--sign-in S] [--ask W]
 //!                                          lend a service on this computer
 //! svrngs unshare <name>                    stop lending it
+//! svrngs share --folder <dir> --group <group> keep a folder the same on every member's disk,
+//!                                          asked of svrngs running here
 //! svrngs room <name>...                    serve lends to this computer's network, run
 //! ```
 //!
@@ -68,6 +70,7 @@ use std::time::Duration;
 use ed25519_dalek::VerifyingKey;
 use std::num::{NonZeroU16, NonZeroU32};
 
+use svrngs_node::folder::FolderAsk;
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath, Upload};
 use svrngs_node::node::{Lends, Lent, Node, NodeError};
@@ -131,6 +134,13 @@ svrngs — keep what your group shares on your own computers.
   svrngs unshare <name>
       Stop lending <name>.
 
+  svrngs share --folder <dir> --group <group>
+      Keep <dir> the same on every computer in <group> that shares a folder
+      of its name, whenever svrngs runs here, from now on: anyone in it may
+      add, change and delete in it, and nobody outside it receives a byte.
+      <group> is its name, or the first 8 letters of its id, as `link`
+      takes it.
+
   svrngs room <name>...
       Let anyone on this computer's network (its WiFi) open what your groups
       lend as <name>, as you, while this runs.
@@ -175,6 +185,12 @@ pub enum Verb {
     /// No secret: it is read from a prompt (the module docs).
     Share(Share),
     Unshare(LendName),
+    /// `share --folder --group`, asked of svrngs running here: the
+    /// directory, absolute, and the group as typed.
+    Folder {
+        dir: PathBuf,
+        group: String,
+    },
     /// The lends named, served to this computer's network.
     Room(Vec<LendName>),
     Help,
@@ -194,6 +210,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let mut upload = None;
     let mut reads = Vec::new();
     let mut sign_in = None;
+    let (mut folder, mut group) = (None, None);
     let mut asks = None;
     let mut more = Vec::new();
     while let Some(arg) = it.next() {
@@ -252,6 +269,8 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 sign_in =
                     Some(share::resolve_target(&raw).map_err(|why| format!("--sign-in {why}"))?);
             }
+            "--folder" => folder = Some(value("--folder")?),
+            "--group" => group = Some(value("--group")?),
             "--ask" => {
                 let raw = value("--ask")?;
                 if raw.trim().is_empty() || raw.chars().any(char::is_control) {
@@ -286,6 +305,18 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "--name, --kind, --limit, --refuse, --upload, --reads, --sign-in and --ask are `share` flags"
                 .into(),
         );
+    }
+    match (verb.as_str(), folder, group) {
+        ("share", Some(dir), Some(group)) => {
+            let dir = std::path::absolute(&dir).map_err(|e| format!("--folder `{dir}`: {e}"))?;
+            return Ok(Verb::Folder { dir, group });
+        }
+        ("share", Some(_), None) => {
+            return Err("--folder takes --group: a folder is one group's".into())
+        }
+        ("share", None, Some(_)) => return Err("--group is a `share --folder` flag".into()),
+        (_, None, None) => {}
+        _ => return Err("--folder and --group are `share` flags".into()),
     }
     match verb.as_str() {
         "new" => {
@@ -389,6 +420,12 @@ pub enum Refusal {
     NoRoomAddress,
     #[error(transparent)]
     Room(#[from] svrngs_node::room::RoomError),
+    #[error("svrngs is not running on this computer, and only it syncs a folder: start it, then run this again")]
+    NotRunning,
+    #[error("the folder was refused: {0}")]
+    Folder(String),
+    #[error("cannot ask svrngs running here: no HTTP client ({0})")]
+    NoClient(String),
     #[error("cannot tell from here whether {0} gives each app an address of its own: the page does not open there (RUST_LOG=debug says why); try again")]
     CannotCheck(String),
 }
@@ -423,6 +460,7 @@ impl Refusal {
             | Refusal::NotLent { .. }
             | Refusal::NoAppAddress(_)
             | Refusal::Room(_)
+            | Refusal::Folder(_)
             | Refusal::Busy(_) => 1,
             Refusal::NoDataDir
             | Refusal::DataDir(..)
@@ -433,6 +471,8 @@ impl Refusal {
             | Refusal::KeepLend(_)
             | Refusal::CannotCheck(_)
             | Refusal::NoRoomAddress
+            | Refusal::NotRunning
+            | Refusal::NoClient(_)
             | Refusal::Keep(_) => 3,
         }
     }
@@ -483,6 +523,10 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             print!("{}", unshare(&root, &name)?);
             return Ok(());
         }
+        Verb::Folder { dir, group } => {
+            println!("{}", folder(&root, dir, &group).await?);
+            return Ok(());
+        }
         Verb::Share(asked) => {
             let lend = share::lend_of(&asked, share::listens, share::well_known_kind(asked.port))?;
             let accounts = share::accounts_of(&lend.kind).filter(|_| lend.sign_in.is_none());
@@ -524,6 +568,47 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
     };
     let claimed = claim(&root)?;
     start(command, root, relay, claimed).await
+}
+
+/// `share --folder --group`, asked of the node running here
+/// (`svrngs_node::folder::FolderAsk`): it alone writes this computer's acts,
+/// the journal's next index being its process's (svrngs-node journal.rs:16-27).
+/// The group is named as `link` names it ([`group::named`]).
+async fn folder(root: &Path, dir: PathBuf, reference: &str) -> Result<String, Refusal> {
+    let group = group_named(root, reference)?.id();
+    let asked = FolderAsk { dir, group };
+    let api = std::fs::read_to_string(root.join(svrngs_node::api::API_FILE)).unwrap_or_default();
+    let body = serde_json::to_string(&asked).expect("a folder's ask is JSON");
+    let to = format!("{}/v1/folders", api.trim());
+    let client = http()
+        .and_then(|b| b.build().map_err(|e| e.to_string()))
+        .map_err(|error| {
+            tracing::debug!(target: "cli", error, "cli: refused — no client to ask svrngs running here with");
+            Refusal::NoClient(error)
+        })?;
+    let sent = client.post(to).header("content-type", "application/json");
+    let answer = sent.body(body).send().await.map_err(|e| {
+        tracing::debug!(target: "cli", api, error = %e, "cli: refused — no svrngs answers at the API it wrote");
+        Refusal::NotRunning
+    })?;
+    let ok = answer.status().is_success();
+    let text = answer.text().await.unwrap_or_default();
+    tracing::debug!(target: "cli", ?asked, ok, "cli: the folder's ask answered");
+    ok.then_some(text.clone()).ok_or(Refusal::Folder(text))
+}
+
+/// The command's one HTTP client, iroh's reqwest 0.13: its
+/// `rustls-no-provider` brings no TLS provider, and a client built without
+/// one panics, so its TLS is given ring and this computer's verifier here.
+fn http() -> Result<reqwest13::ClientBuilder, String> {
+    let ring = std::sync::Arc::new(rustls::crypto::ring::default_provider());
+    rustls::ClientConfig::builder_with_provider(ring)
+        .with_safe_default_protocol_versions()
+        .and_then(rustls_platform_verifier::BuilderVerifierExt::with_platform_verifier)
+        .map(|tls| {
+            reqwest13::Client::builder().tls_backend_preconfigured(tls.with_no_client_auth())
+        })
+        .map_err(|e| e.to_string())
 }
 
 /// Start the node over the data dir `claimed` holds, do the verb, and run
@@ -579,23 +664,15 @@ pub async fn checked_page(page: Origin) -> Result<Origin, Refusal> {
         return Err(no());
     };
     let unjudged = || Refusal::CannotCheck(page.as_str().into());
-    let client = rustls::ClientConfig::builder_with_provider(std::sync::Arc::new(
-        rustls::crypto::ring::default_provider(),
-    ))
-    .with_safe_default_protocol_versions()
-    .and_then(rustls_platform_verifier::BuilderVerifierExt::with_platform_verifier)
-    .map_err(|e| e.to_string())
-    .and_then(|tls| {
-        reqwest13::Client::builder()
-            .tls_backend_preconfigured(tls.with_no_client_auth())
-            .timeout(std::time::Duration::from_secs(10))
-            .build()
-            .map_err(|e| e.to_string())
-    })
-    .map_err(|error| {
-        tracing::debug!(target: "cli", error, "cli: not judged — no client to ask the page's host with");
-        unjudged()
-    })?;
+    let client = http()
+        .and_then(|b| {
+            let b = b.timeout(std::time::Duration::from_secs(10));
+            b.build().map_err(|e| e.to_string())
+        })
+        .map_err(|error| {
+            tracing::debug!(target: "cli", error, "cli: not judged — no client to ask the page's host with");
+            unjudged()
+        })?;
     let get = |url: String| {
         let client = &client;
         async move {
@@ -963,16 +1040,14 @@ async fn serve(
             _room = room::open(node, at, &names).await?;
             Said::Room(_room.served.clone())
         }
-        Verb::Help | Verb::Share(_) | Verb::Unshare(_) => {
+        Verb::Help | Verb::Share(_) | Verb::Unshare(_) | Verb::Folder { .. } => {
             unreachable!("answered in `run`")
         }
     };
     print!("{said}");
     println!();
     println!("Leave this running; Ctrl-C stops it.");
-    if let Err(e) = tokio::signal::ctrl_c().await {
-        tracing::warn!(target: "cli", error = %e, "cli: cannot wait for Ctrl-C, so stopping now");
-    }
+    svrngs_node::node::asked_to_stop().await;
     tracing::debug!(target: "cli", "cli: stopping");
     Ok(())
 }
@@ -1086,6 +1161,27 @@ pub async fn new_group(
     Ok((seed, Printed::of(&token, page)))
 }
 
+/// The one group held under `root` that `reference` names, by its name or
+/// the start of its id ([`group::named`]): `link`'s and `share --folder`'s.
+fn group_named(root: &Path, reference: &str) -> Result<Seed, Refusal> {
+    let held = group::groups(root);
+    match group::named(&held, reference).as_slice() {
+        [] => {
+            tracing::debug!(target: "cli", reference, held = held.len(), "cli: refused — no group by that name");
+            Err(Refusal::NoGroup(reference.to_string()))
+        }
+        [one] => Ok((*one).clone()),
+        many => {
+            let ids = many.iter().map(|s| s.id()[..8].to_string()).collect();
+            tracing::debug!(target: "cli", reference, n = many.len(), "cli: refused — the name is ambiguous");
+            Err(Refusal::Ambiguous {
+                name: reference.to_string(),
+                ids,
+            })
+        }
+    }
+}
+
 /// `svrngs link`: a new link to the group `reference` names: the client's
 /// link, and the https one on `page`, kept from now on, when given, else
 /// on the group's kept origin, if it keeps one.
@@ -1095,22 +1191,7 @@ pub async fn new_link(
     page: Option<&Origin>,
     relay: &RelayConfig,
 ) -> Result<(Seed, Printed), Refusal> {
-    let held = group::groups(node.rail().root());
-    let seed = match group::named(&held, reference).as_slice() {
-        [] => {
-            tracing::debug!(target: "cli", reference, held = held.len(), "cli: refused — no group by that name");
-            return Err(Refusal::NoGroup(reference.to_string()));
-        }
-        [one] => (*one).clone(),
-        many => {
-            let ids = many.iter().map(|s| s.id()[..8].to_string()).collect();
-            tracing::debug!(target: "cli", reference, n = many.len(), "cli: refused — the name is ambiguous");
-            return Err(Refusal::Ambiguous {
-                name: reference.to_string(),
-                ids,
-            });
-        }
-    };
+    let seed = group_named(node.rail().root(), reference)?;
     let dir = node
         .rail()
         .group_dir(&seed.id())

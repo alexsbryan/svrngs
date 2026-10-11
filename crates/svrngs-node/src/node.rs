@@ -102,6 +102,40 @@ pub struct Lent {
 /// that does not.
 pub const ANSWER_WITHIN: Duration = Duration::from_secs(3);
 
+/// Until this process is asked to stop: Ctrl-C, or SIGTERM, which a
+/// service manager and `kill` send (syp-6 b). Its caller then closes the
+/// node's endpoint, telling every peer each connection is closed. A
+/// process gone on SIGTERM with it open left each peer's iroh sending to
+/// its dead address alone, the path in use, until that idled out at 15 s
+/// (iroh-1.0.2 `remote_state.rs:799`, `socket.rs:117`), so its next
+/// process was not reached: syp-5's S3, Ana dialling Ben's last process
+/// (`demo/runs/syp/2026-10-10/rerun/README.md` §6, item 3). Closed, a
+/// peer's last connection to it closes and iroh forgets the path
+/// (`remote_state.rs:486-488`). A process killed outright still leaves
+/// it, until it idles out.
+pub async fn asked_to_stop() {
+    #[cfg(unix)]
+    let term = async {
+        use tokio::signal::unix::{signal, SignalKind};
+        match signal(SignalKind::terminate()) {
+            Ok(mut term) => drop(term.recv().await),
+            Err(e) => {
+                tracing::warn!(target: "node", error = %e, "node: SIGTERM cannot be waited on, so it stops this process with its endpoint open");
+                std::future::pending::<()>().await
+            }
+        }
+    };
+    #[cfg(not(unix))]
+    let term = std::future::pending::<()>();
+    tokio::select! {
+        said = tokio::signal::ctrl_c() => match said {
+            Ok(()) => tracing::debug!(target: "node", "node: asked to stop by Ctrl-C"),
+            Err(e) => tracing::warn!(target: "node", error = %e, "node: Ctrl-C cannot be waited on, so stopping now"),
+        },
+        () = term => tracing::debug!(target: "node", "node: asked to stop by SIGTERM"),
+    }
+}
+
 /// What the people of this computer's groups lend, asked now.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Lends {
@@ -222,6 +256,10 @@ impl Node {
             api_port: api.addr().port(),
             room: tokio::sync::watch::Sender::new(BTreeMap::new()),
         });
+        let (folders, blobs) =
+            crate::folder::Folders::start(&data_dir, host.clone(), nudge.clone())
+                .await
+                .map_err(NodeError::Endpoint)?;
         let rounds = Rounds::new(Default::default());
         let door = crate::door::Door {
             ring: AskRound::new(nudge.clone(), &rounds),
@@ -246,7 +284,7 @@ impl Node {
         };
         let routes = crate::api::router(
             rail_api.clone(),
-            crate::surface::router(asking.clone(), seeds),
+            crate::surface::router(asking.clone(), seeds).merge(crate::folder::router(folders)),
             crate::home::router(asking.clone(), seeds, rail_api),
         );
         let api = crate::api::serve(routes.clone(), api);
@@ -280,6 +318,7 @@ impl Node {
                     Some(Alpn::Member) => Admit::Serve(members.clone()),
                     Some(Alpn::Redeem) => Admit::Serve(redeem.clone()),
                     Some(Alpn::Lend) => Admit::Serve(holders.clone()),
+                    Some(Alpn::Blobs) => Admit::Blobs(blobs.clone()),
                     None => Admit::Refuse,
                 }
             });
@@ -368,6 +407,11 @@ impl Host {
         &self.actor
     }
 
+    /// The endpoint this node dials and is dialled on.
+    pub(crate) fn endpoint(&self) -> &Endpoint {
+        &self.endpoint
+    }
+
     /// The transport a member's contact is resolved through.
     pub(crate) fn transport(&self) -> &IrohTransport {
         &self.transport
@@ -405,7 +449,7 @@ impl Host {
     /// Every group this node holds, with who stands in it; or `None` when
     /// the groups held cannot be listed. A group whose register is
     /// unreadable is left out.
-    fn standings(&self) -> Option<Groups> {
+    pub(crate) fn standings(&self) -> Option<Groups> {
         let namespaces = match self.rail.namespaces() {
             Ok(n) => n,
             Err(e) => {
@@ -720,7 +764,7 @@ impl Asking {
 fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn> {
     let actor = key_actor(dialer);
     match Alpn::of(alpn) {
-        Some(Alpn::Member) => {}
+        Some(Alpn::Member) | Some(Alpn::Blobs) => {}
         Some(Alpn::Redeem) => {
             tracing::debug!(target: "node", actor, "node: admitted to redeem a link — any dialer may");
             return Some(Alpn::Redeem);
@@ -736,7 +780,7 @@ fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn
     }
     if let Some((namespace, _)) = rail.standing_anywhere(&actor) {
         tracing::debug!(target: "node", actor, namespace, "node: admitted — the dialer stands in a group held here");
-        return Some(Alpn::Member);
+        return Alpn::of(alpn);
     }
     tracing::debug!(target: "node", actor, "node: refused — the dialer stands in no group held here");
     None

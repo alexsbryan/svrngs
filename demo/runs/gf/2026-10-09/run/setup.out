@@ -1,0 +1,8 @@
+16:16:01 server 12.0.0 wizard_done= False
+16:16:02 wizard completed
+16:16:02 authenticated user 12642193b39e4e4b8cdc5b5587961c18
+16:16:03 pre-existing scan idle
+16:16:03 library added, refreshLibrary=true
+16:16:04 scan ran 2026-10-09T23:16:03.907616Z -> 2026-10-09T23:16:04.700425Z Completed
+16:16:05 movies: [('ExpMkv (2026)', '/tmp/gf-run/lib/Movies/ExpMkv (2026)/ExpMkv (2026).strm'), ('ExpMp4 (2026)', '/tmp/gf-run/lib/Movies/ExpMp4 (2026)/ExpMp4 (2026).strm')]
+16:16:25 state written /Users/alexsbryan/dev/svrngs-folders/demo/runs/gf/2026-10-09/run/state.json

@@ -1,0 +1,590 @@
+B1: passed
+B2: passed
+B3: passed
+B4: passed
+B5: passed
+B6: passed
+B7: passed
+{
+ "B3": {
+  "scan_s": 21.5,
+  "holder_requests": 0,
+  "endpoint_answers": 0,
+  "endpoint_uas": []
+ },
+ "A_chromium_mp4": {
+  "window": [
+   1791587787.482,
+   1791587810.58
+  ],
+  "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36",
+  "holder_sent_bytes": 41432704,
+  "holder_payload_bytes": 41254912,
+  "holder_requests": 40,
+  "holders": [
+   "ana"
+  ],
+  "browser_bytes_of_what_holders_sent": 41254912,
+  "browser_bytes_written": 41254912,
+  "share": 0.9957,
+  "probe_holder_bytes": 2106000,
+  "jellyfin_answers": 1,
+  "jellyfin_bytes_written": 1048576,
+  "jellyfin_uas": [
+   "Lavf/62.12.102"
+  ],
+  "first": {
+   "playing_ms": 1130,
+   "advancing_seen_ms": 1156
+  },
+  "seeks_ms": [
+   113,
+   123,
+   92
+  ],
+  "play_method": "DirectPlay",
+  "src": "http://127.0.0.1:18733/55d719b9499d14c436422354233daf52fc6416092b53d30293c1cf9c3f2e92a8/exp.mp4?type=video%2Fmp4",
+  "error": null
+ },
+ "A_webkit_mp4": {
+  "window": [
+   1791587812.064,
+   1791587834.657
+  ],
+  "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Safari/605.1.15",
+  "holder_sent_bytes": 6113189,
+  "holder_payload_bytes": 6086245,
+  "holder_requests": 8,
+  "holders": [
+   "ana"
+  ],
+  "browser_bytes_of_what_holders_sent": 5856869,
+  "browser_bytes_written": 47111781,
+  "share": 0.9581,
+  "probe_holder_bytes": 0,
+  "jellyfin_answers": 1,
+  "jellyfin_bytes_written": 1048576,
+  "jellyfin_uas": [
+   "Lavf/62.12.102"
+  ],
+  "first": {
+   "playing_ms": 912,
+   "advancing_seen_ms": 939
+  },
+  "seeks_ms": [
+   46,
+   47,
+   99
+  ],
+  "play_method": "DirectPlay",
+  "src": "http://127.0.0.1:18733/55d719b9499d14c436422354233daf52fc6416092b53d30293c1cf9c3f2e92a8/exp.mp4?type=video%2Fmp4",
+  "error": null
+ },
+ "A_webkit_mkv": {
+  "window": [
+   1791587836.099,
+   1791587859.415
+  ],
+  "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Safari/605.1.15",
+  "holder_sent_bytes": 47247899,
+  "holder_payload_bytes": 47050291,
+  "holder_requests": 45,
+  "holders": [
+   "ana"
+  ],
+  "browser_bytes_of_what_holders_sent": 0,
+  "browser_bytes_written": 0,
+  "share": 0.0,
+  "probe_holder_bytes": null,
+  "jellyfin_answers": 6,
+  "jellyfin_bytes_written": 53574683,
+  "jellyfin_uas": [
+   "Lavf/62.12.102"
+  ],
+  "first": {
+   "playing_ms": 1518,
+   "advancing_seen_ms": 1550
+  },
+  "seeks_ms": [
+   111,
+   101,
+   113
+  ],
+  "play_method": "Transcode",
+  "src": "http://127.0.0.1:18096/videos/2d1ed735-bf3f-368e-f6b8-ff95c4515e5f/master.m3u8?DeviceId=TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNjA1LjEuMTUgKEtIVE1MLCBsaWtlIEdlY2tvKSBWZXJzaW9uLzI2LjQgU2FmYXJpLzYwNS4xLjE1fDE3OTE1ODc4MzU0MTE1&MediaSourceId=2d1ed735bf3f368ef6b8ff95c4515e5f&VideoCodec=hevc,h264,vp9&AudioCodec=aac&AudioStreamIndex=1&VideoBitrate=2147291647&AudioBitrate=192000&AudioSampleRate=48000&MaxFramerate=30&SegmentContainer=mp4&MinSegments=2&PlaySessionId=303f50aaa3eb4748b20e7132c0a53477&ApiKey=f612a72006a24da8aa7bf0c5022851be&TranscodingMaxAudioChannels=6&RequireAvc=false&EnableAudioVbrEncoding=true&Tag=c294da6ee2a09f92ba58d0bd642ab1b6&SubtitleMethod=Encode&h264-level=40&h264-videobitdepth=8&h264-profile=high&h264-audiochannels=2&aac-profile=lc&vp9-rangetype=SDR,HDR10,HDR10Plus,HLG&hevc-profile=main,main10&hevc-rangetype=SDR,HDR10,HDR10Plus,HLG,DOVI,DOVIWithHDR10,DOVIWithHLG,DOVIWithSDR,DOVIWithHDR10Plus&hevc-level=186&hevc-deinterlace=true&hevc-codectag=hvc1,dvh1&h264-rangetype=SDR&h264-deinterlace=true&TranscodeReasons=ContainerNotSupported",
+  "error": null,
+  "file_size": 47050291
+ },
+ "B6_plant": {
+  "playing_ms": 31042,
+  "first": {
+   "playing_ms": 31042,
+   "advancing_seen_ms": 31084
+  },
+  "fetched_from": [
+   "Cy"
+  ],
+  "gave_nothing": [
+   [
+    "Ana",
+    "the dial: timed out"
+   ]
+  ],
+  "listed_folders_of": [
+   "Ana",
+   "Cy"
+  ],
+  "unanswered": []
+ },
+ "B6": {
+  "playing_ms": 3977,
+  "first": {
+   "playing_ms": 3977,
+   "advancing_seen_ms": 4082
+  },
+  "fetched_from": [
+   "Cy"
+  ],
+  "gave_nothing": [
+   [
+    "Ana",
+    "did not answer within 3s"
+   ]
+  ],
+  "listed_folders_of": [
+   "Ana",
+   "Cy"
+  ],
+  "unanswered": [
+   "Ana"
+  ]
+ },
+ "B1_served_ranges": {
+  "answers": 119,
+  "bytes": 252484839,
+  "not_the_source_s_bytes": []
+ },
+ "B1": {
+  "refusals": 6,
+  "naming_ana": 6,
+  "why": [
+   "[(\"fed3d39f986110f69d173c995d284a9e708f00821a2e8d649c9db2a4e2ef494f\", \"read: stream reset by peer: error 3\\nCaused by:\\n    stream reset by peer: error 3\"), (\"c6992554f059ac78fdab459cb94b7f79f64aff4ef17bef27e2deb6d88bfb0050\", \"did not answer within 3s\")]",
+   "[(\"fed3d39f986110f69d173c995d284a9e708f00821a2e8d649c9db2a4e2ef494f\", \"read: stream reset by peer: error 3\\nCaused by:\\n    stream reset by peer: error 3\"), (\"c6992554f059ac78fdab459cb94b7f79f64aff4ef17bef27e2deb6d88bfb0050\", \"did not answer within 3s\")]",
+   "[(\"fed3d39f986110f69d173c995d284a9e708f00821a2e8d649c9db2a4e2ef494f\", \"read: stream reset by peer: error 3\\nCaused by:\\n    stream reset by peer: error 3\"), (\"c6992554f059ac78fdab459cb94b7f79f64aff4ef17bef27e2deb6d88bfb0050\", \"did not answer within 3s\")]"
+  ],
+  "statuses_to_browser": [],
+  "served_the_flipped_byte": 0,
+  "browser_played": false,
+  "browser_error": null,
+  "first": {
+   "error": "TimeoutError: page.waitForFunction: Timeout 45000ms exceeded."
+  },
+  "events": [
+   "waiting",
+   "loadstart",
+   "error",
+   "pause",
+   "emptied",
+   "loadstart",
+   "waiting",
+   "emptied",
+   "loadstart",
+   "waiting"
+  ]
+ },
+ "B1_plant": {
+  "requests_serving_the_flipped_byte": 2,
+  "uas": [
+   "Lavf/62.12.102",
+   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36"
+  ],
+  "browser_played": true,
+  "first": {
+   "playing_ms": 677,
+   "advancing_seen_ms": 698
+  }
+ },
+ "B7_stop_plant": {
+  "ben_list_drop_s": 8.159,
+  "probe_statuses_after": [
+   [
+    0.07,
+    206
+   ],
+   [
+    0.149,
+    206
+   ],
+   [
+    0.242,
+    206
+   ],
+   [
+    0.317,
+    206
+   ],
+   [
+    0.408,
+    206
+   ],
+   [
+    0.498,
+    206
+   ],
+   [
+    0.579,
+    206
+   ],
+   [
+    0.67,
+    206
+   ],
+   [
+    0.748,
+    206
+   ],
+   [
+    0.829,
+    206
+   ],
+   [
+    0.915,
+    206
+   ],
+   [
+    1.004,
+    206
+   ],
+   [
+    1.091,
+    206
+   ],
+   [
+    1.181,
+    206
+   ],
+   [
+    1.269,
+    206
+   ],
+   [
+    1.367,
+    206
+   ],
+   [
+    1.456,
+    206
+   ],
+   [
+    1.539,
+    206
+   ],
+   [
+    1.625,
+    206
+   ],
+   [
+    1.711,
+    206
+   ],
+   [
+    1.799,
+    206
+   ],
+   [
+    1.876,
+    206
+   ],
+   [
+    1.975,
+    206
+   ],
+   [
+    2.061,
+    206
+   ],
+   [
+    2.125,
+    206
+   ],
+   [
+    2.201,
+    206
+   ],
+   [
+    2.292,
+    206
+   ],
+   [
+    2.374,
+    206
+   ],
+   [
+    2.445,
+    206
+   ],
+   [
+    2.532,
+    206
+   ],
+   [
+    2.611,
+    206
+   ],
+   [
+    2.72,
+    206
+   ],
+   [
+    2.819,
+    206
+   ],
+   [
+    2.938,
+    206
+   ],
+   [
+    3.058,
+    206
+   ],
+   [
+    3.156,
+    206
+   ],
+   [
+    3.247,
+    206
+   ],
+   [
+    3.349,
+    206
+   ],
+   [
+    3.465,
+    206
+   ],
+   [
+    3.577,
+    206
+   ]
+  ],
+  "ana_served_mkv_after_s": [
+   0.009,
+   0.09,
+   0.168,
+   0.255,
+   0.337,
+   0.429,
+   0.514,
+   0.599,
+   0.683,
+   0.765
+  ],
+  "ana_refused_mkv_after_s": []
+ },
+ "B7_stop": {
+  "ben_list_drop_s": 68.288,
+  "probe_statuses_after": [
+   [
+    0.016,
+    502
+   ],
+   [
+    0.069,
+    502
+   ],
+   [
+    0.135,
+    502
+   ],
+   [
+    0.229,
+    502
+   ],
+   [
+    0.314,
+    502
+   ],
+   [
+    0.362,
+    502
+   ],
+   [
+    0.443,
+    502
+   ],
+   [
+    0.51,
+    502
+   ],
+   [
+    0.61,
+    502
+   ],
+   [
+    0.656,
+    502
+   ],
+   [
+    0.737,
+    502
+   ],
+   [
+    0.807,
+    502
+   ],
+   [
+    0.889,
+    502
+   ],
+   [
+    0.931,
+    502
+   ],
+   [
+    1.014,
+    502
+   ],
+   [
+    1.083,
+    502
+   ],
+   [
+    1.17,
+    502
+   ],
+   [
+    1.214,
+    502
+   ],
+   [
+    1.283,
+    502
+   ],
+   [
+    1.461,
+    502
+   ],
+   [
+    1.537,
+    502
+   ],
+   [
+    1.623,
+    502
+   ],
+   [
+    1.703,
+    502
+   ],
+   [
+    1.75,
+    502
+   ],
+   [
+    1.827,
+    502
+   ],
+   [
+    1.909,
+    502
+   ],
+   [
+    1.973,
+    502
+   ],
+   [
+    2.05,
+    502
+   ],
+   [
+    2.122,
+    502
+   ],
+   [
+    2.191,
+    502
+   ],
+   [
+    2.264,
+    502
+   ],
+   [
+    2.405,
+    502
+   ],
+   [
+    2.43,
+    502
+   ],
+   [
+    2.453,
+    502
+   ],
+   [
+    2.479,
+    502
+   ],
+   [
+    2.505,
+    502
+   ],
+   [
+    2.528,
+    502
+   ],
+   [
+    2.554,
+    502
+   ],
+   [
+    2.578,
+    502
+   ],
+   [
+    2.599,
+    502
+   ]
+  ],
+  "ana_served_mkv_after_s": [],
+  "ana_refused_mkv_after_s": [
+   0.056,
+   0.122,
+   0.189,
+   0.267,
+   0.35,
+   0.415,
+   0.495,
+   0.568,
+   0.644,
+   0.712
+  ]
+ },
+ "B7_scan": {
+  "root": "/tmp/gf-run/ben",
+  "files": 37,
+  "bytes": 155582491,
+  "hits": []
+ },
+ "B7_scan_plant": {
+  "root": "/tmp/gf-run/ben/blobs-P-plant",
+  "files": 4,
+  "bytes": 2109888,
+  "hits": [
+   "data/84cf801b3d1b8ac15e86008ec19a82bd5b40b92d87349e7db1d9fe75e0fc3c6b.data"
+  ]
+ },
+ "B7": {
+  "act_names": [
+   "exp.mkv",
+   "exp.mp4"
+  ],
+  "plant_act_names": [
+   "exp.mkv",
+   "exp.mp4",
+   "link.bin"
+  ],
+  "planted_served_by_ana_before_the_plant": 0,
+  "planted_bytes_served_by_ben": 0
+ }
+}

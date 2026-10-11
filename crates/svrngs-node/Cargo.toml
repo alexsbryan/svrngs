@@ -22,7 +22,12 @@ iroh = "=1.0.2"
 # The stream an address lookup answers with, as iroh names it (src/relay.rs):
 # iroh's own, at the version the lock already holds.
 n0-future = "0.3"
-tokio = { version = "1", features = ["net", "rt", "sync", "time", "io-util", "macros"] }
+# A synced directory's changes as the OS reports them (FSEvents, inotify),
+# so a step looks only at what changed (perf-2 f; the operator's yes,
+# 2026-10-10, ralph/next/syp/CHARTER.md).
+notify = "=8.2.0"
+# `signal`: a node stopped by SIGTERM closes its endpoint (syp-6 b).
+tokio = { version = "1", features = ["net", "rt", "sync", "time", "io-util", "macros", "signal"] }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 hex = { workspace = true }
 rand = "0.9"
@@ -41,6 +46,9 @@ tower = { version = "0.5", features = ["util"] }
 # Ring sync (U1): the round posts each exchange with reqwest through the
 # loopback bridge; "json" reads the answer, as upstream's workspace enabled it.
 reqwest = { version = "0.12", default-features = false, features = ["json"] }
+# A group's folders (gf-1, sy-1): the store, its provider and verified range
+# fetch, without the rpc default, over the lock's iroh 1.0.2.
+iroh-blobs = { version = "=0.103.0", default-features = false, features = ["fs-store"] }
 
 [features]
 # What only a test asks of a node (src/node/tests_support.rs): its routes as a
@@ -53,6 +61,8 @@ svrngs-core = { workspace = true, features = ["test-support"] }
 # turn its test support on here.
 svrngs-node = { path = ".", features = ["test-support"] }
 tempfile = "3"
+# The folders' tests (tests/folders.rs) hash and fill files with BLAKE3.
+blake3 = { workspace = true }
 tokio = { version = "1", features = ["full"] }
 # The door's tests check a file's bytes through it sha-exact.
 sha2 = "0.10"

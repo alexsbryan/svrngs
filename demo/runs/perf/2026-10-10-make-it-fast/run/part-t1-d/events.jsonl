@@ -1,0 +1,13 @@
+{"t": 1791687611.031, "phase": "setup", "event": "start", "pass_": "part", "host": {"load": [15.19, 14.81, 12.04], "cores": 12, "swap_used_mb": 8703.5, "free_gb": 112.5}, "head": "7732812", "df": "Filesystem   1024-blocks      Used Available Capacity iused      ifree %iused  Mounted on\n/dev/disk3s5   971350180 825173864 109887492    89% 6620238 1098874920    1%   /System/Volumes/Data\n"}
+{"t": 1791687611.403, "phase": "setup", "event": "built", "bin": "/Users/alexsbryan/dev/svrngs-folders/target/release/deps/perf-f6cf85cfd0f52350"}
+{"t": 1791687611.403, "phase": "part-t1", "event": "phase"}
+{"t": 1791687611.923, "phase": "part-t1", "event": "up", "group": "part-t1", "who": 0, "path": "loopback"}
+{"t": 1791687612.098, "phase": "part-t1", "event": "up", "group": "part-t1", "who": 1, "path": "loopback"}
+{"t": 1791687612.269, "phase": "part-t1", "event": "up", "group": "part-t1", "who": 2, "path": "loopback"}
+{"t": 1791687672.107, "phase": "part-t1", "event": "converged", "group": "part-t1", "s": 29.772}
+{"t": 1791687673.276, "phase": "part-t1", "event": "shared", "group": "part-t1", "who": 0, "answer": {"name": "Shared"}}
+{"t": 1791687673.277, "phase": "part-t1", "event": "shared", "group": "part-t1", "who": 1, "answer": {"name": "Shared"}}
+{"t": 1791687673.277, "phase": "part-t1", "event": "shared", "group": "part-t1", "who": 2, "answer": {"name": "Shared"}}
+{"t": 1791687695.527, "phase": "part-t1", "event": "number", "name": "T1-loopback-median", "value": 290.0, "target": "300 ms", "verdict": "passed", "start": {"load": [16.14, 15.16, 12.37], "cores": 12, "swap_used_mb": 8703.5, "free_gb": 112.6}, "end": {"load": [12.94, 14.49, 12.19], "cores": 12, "swap_used_mb": 8703.5, "free_gb": 112.5}, "unit": "ms", "each_s": [0.612, 0.309, 0.275, 0.305, 0.136, 0.337, 0.165, 0.168, 0.313, 0.161], "path": "loopback", "phases": {"median_ms": {"P1_found": 151.8, "P2_stored": 0.5, "P3_act": 10.2, "P4_carried": 18.5, "P5_apply": 3.8, "P6_fetch": 1.0, "P7_write": 0.0}, "share": {"P1_found": 0.817, "P2_stored": 0.003, "P3_act": 0.055, "P4_carried": 0.1, "P5_apply": 0.02, "P6_fetch": 0.005, "P7_write": null}, "paths": ["direct Ip(127.0.0.1:58991)"], "dial_ms": 0.0, "first_ms": 1.0, "last_ms": 1.1, "gets_ms": 1.1, "changes": 20}, "record_bytes": [739, 739, 739, 739, 739, 739, 739, 739, 740, 741]}
+{"t": 1791687695.544, "phase": "part-t1", "event": "scratch", "group": "part-t1", "kib": 3360}
+{"t": 1791687695.578, "phase": "part-t1", "event": "end", "host": {"load": [12.94, 14.49, 12.19], "cores": 12, "swap_used_mb": 8703.5, "free_gb": 112.5}, "df": "Filesystem   1024-blocks      Used Available Capacity iused      ifree %iused  Mounted on\n/dev/disk3s5   971350180 825206732 109854624    89% 6620231 1098546240    1%   /System/Volumes/Data\n"}

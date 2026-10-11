@@ -1,0 +1,21 @@
+# svrngs syp — a group's synced folder made production, streaming dropped, main merged in, on the branch `folders` (docs/DESIGN.md §8 "Then", §9, §10; operator, 2026-10-10). Launch, from anywhere:
+#
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py supervise --workdir ~/dev/svrngs-folders \
+#     --queue syp --install-launchd -- python3 ~/dev/commonwealth-ai/scripts/ralph.py \
+#     run --workdir ~/dev/svrngs-folders --queue syp --max-stall 3
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py start --workdir ~/dev/svrngs-folders --queue syp
+#
+# The branch merges into main only by the operator's word. The spike:
+# demo/runs/sy/2026-10-09/ (its verdict, §8-§9); the seat's survey: main's
+# ralph/next/lean/SURVEY.md (7e29266). Runs beside main's queue lean.
+label = "svrngs-syp"
+session_timeout = 5400
+audit_every = 8
+worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
+settings = "ralph/claude-settings.json"
+
+[models]
+worker = "claude-opus-5-5"
+review = "claude-opus-5-5"
+resolve = "claude-opus-5-5"
+variant = "high"

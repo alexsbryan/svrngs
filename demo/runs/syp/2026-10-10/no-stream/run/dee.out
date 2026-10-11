@@ -1,0 +1,8 @@
+
+running 1 test
+SY-DEE {"answer":"closed: closed by peer: not admitted (code 0)","ask":"member-connection"}
+SY-DEE {"answer":{"error":"reqwest::Error { kind: Request, url: \"http://127.0.0.1:52352/internal/ring/sync\", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) }"},"ask":"record"}
+SY-DEE {"answer":{"error":"io: connection lost\nCaused by:\n    connection lost\n    closed by peer: not admitted (code 0)"},"ask":"bytes"}
+.
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.31s
+

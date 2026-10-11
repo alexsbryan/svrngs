@@ -63,3 +63,17 @@ pub async fn bridge_as(
         .await
         .unwrap()
 }
+
+/// `len` bytes no two runs agree on by accident: BLAKE3's output stream.
+#[allow(
+    dead_code,
+    reason = "each test binary compiles this file; only the synced folder's write files"
+)]
+pub fn noise(len: usize, salt: &[u8]) -> Vec<u8> {
+    let mut out = vec![0u8; len];
+    blake3::Hasher::new()
+        .update(salt)
+        .finalize_xof()
+        .fill(&mut out);
+    out
+}

@@ -1,0 +1,36 @@
+22:54:57 setup load: 15:54  up  4:37, 3 users, load averages: 6.38 20.31 40.88
+22:54:57 setup svrngs 362a6bd, ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers
+22:55:05 setup media: [('exp.mp4', 47079362), ('exp.mkv', 47017876), ('beside.bin', 1048576)]
+22:55:05 setup ana up, plant -: svrngs new Films --as Ana
+22:55:07 setup ben up, plant -: svrngs join <the link> --as Ben
+22:55:08 setup cy up, plant -: svrngs join <the link> --as Cy
+22:55:10 setup ana and cy shared
+22:55:18 setup jellyfin: {"LocalAddress":"http://127.0.0.1:18096","ServerName":"Alexs-MacBook-Pro-2","Version":"12.0.0","ProductName":"Jellyfin Server","OperatingSystem":"","Id":"c53bdc2d94b546238ec6223956110085","StartupWizardCompleted":false}
+22:55:42 D-plant cy stopped (KILL)
+22:55:42 D-plant cy killed (-9)
+22:55:42 D-plant a byte of ana's mp4 flipped at 500000, after her store took it by reference
+22:55:42 D-plant ben stopped (TERM)
+22:55:42 D-plant the first run's range server on 18733 over the flipped file, unverified
+22:57:07 D ben up, plant -: svrngs 
+22:59:01 D the byte flipped back
+22:59:02 C-plant ana stopped (TERM)
+22:59:02 C-plant ana up, plant unchecked: svrngs 
+22:59:02 C-plant ben stopped (TERM)
+22:59:02 C-plant ben up, plant -: svrngs 
+22:59:04 C-plant unshare called
+22:59:04 C-plant unshare returned
+22:59:12 C-plant ben's list no longer names ana's folder
+22:59:12 C ana stopped (TERM)
+22:59:12 C ana up, plant -: svrngs 
+22:59:13 C ana shared again
+22:59:13 C ben stopped (TERM)
+22:59:13 C ben up, plant -: svrngs 
+22:59:14 C unshare called
+22:59:14 C unshare returned
+23:00:23 C ben's list no longer names ana's folder
+23:00:23 P-plant ana stopped (TERM)
+23:00:23 P-plant ana up, plant follow-links: svrngs 
+23:00:24 P-plant ana shared again, following links
+23:00:24 P-plant ben stopped (TERM)
+23:00:24 P-plant ben up, plant -: svrngs 
+23:00:25 P-plant ben stopped (TERM)

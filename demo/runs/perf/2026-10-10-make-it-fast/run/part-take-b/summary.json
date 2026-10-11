@@ -1,0 +1,51 @@
+{
+ "f100000-taken": {
+  "value": 18745.1,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    8.13,
+    11.27,
+    10.97
+   ],
+   "cores": 12,
+   "swap_used_mb": 16021.06,
+   "free_gb": 104.8
+  },
+  "end": {
+   "load": [
+    4.98,
+    9.83,
+    10.45
+   ],
+   "cores": 12,
+   "swap_used_mb": 16021.06,
+   "free_gb": 104.4
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "steps": {
+   "read_ms": 324.0,
+   "walk_ms": 386.0,
+   "take_ms": 463.0,
+   "write_ms": 0.0,
+   "apply_ms": 71.0,
+   "kept_ms": 63.0,
+   "ms": 1439.0,
+   "steps": 3
+  },
+  "first_step": {
+   "folder": "Shared",
+   "files": "100000",
+   "sent": "100000",
+   "read_ms": "0",
+   "walk_ms": "314",
+   "take_ms": "17411",
+   "write_ms": "561",
+   "apply_ms": "264",
+   "kept_ms": "134",
+   "ms": "18686"
+  }
+ }
+}

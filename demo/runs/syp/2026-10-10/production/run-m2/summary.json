@@ -1,0 +1,41 @@
+{
+ "M2": {
+  "first_s": 9.14,
+  "edit_s": 8.37,
+  "dropped_s": 0.89,
+  "stores": {
+   "ana": {
+    "first": 0,
+    "edit": 104857600
+   },
+   "ben": {
+    "first": 0,
+    "edit": 104857600
+   },
+   "cy": {
+    "first": 0,
+    "edit": 104857600
+   }
+  },
+  "v1": "6a9378a42edb4260c4beede2d6d38136e3036acc2fcb51704ebbd854f958d62f",
+  "v2": "c9f7d799682ac46496f8352b4bf7f0accd336126d42de9b364bfd141d999462d"
+ },
+ "M2-store": {
+  "stores": {
+   "ana": {
+    "first": 0,
+    "edit": 104857600
+   },
+   "ben": {
+    "first": 0,
+    "edit": 104857600
+   },
+   "cy": {
+    "first": 0,
+    "edit": 104857600
+   }
+  },
+  "dropped_s": 0.89,
+  "verdict": "passed"
+ }
+}

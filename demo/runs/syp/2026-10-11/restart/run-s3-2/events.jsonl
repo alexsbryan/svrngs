@@ -1,0 +1,28 @@
+{"t": 1791703713.173, "phase": "setup", "event": "load", "at": "start", "of": "run", "uptime": "0:28  up 1 day, 13:11, 5 users, load averages: 14.90 14.96 14.83", "cores": "12", "swap": "vm.swapusage: total = 7168.00M  used = 5644.12M  free = 1523.88M  (encrypted)", "load1": 14.9, "free_gb": 93.5, "swap_mb": 5644.12, "df": "/dev/disk3s1s1       926   12        87    13%  484019 913169480    0%   /", "head": "c50d7f2", "bin": "/Users/alexsbryan/dev/svrngs-folders/target/debug/svrngs"}
+{"t": 1791703714.076, "phase": "setup", "event": "up", "who": "ana", "args": ["new", "Shared", "--as", "Ana"]}
+{"t": 1791703714.702, "phase": "setup", "event": "up", "who": "ben", "args": ["join", "<the link>", "--as", "Ben"]}
+{"t": 1791703715.426, "phase": "setup", "event": "up", "who": "cy", "args": ["join", "<the link>", "--as", "Cy"]}
+{"t": 1791703715.902, "phase": "setup", "event": "keys", "keys": {"ben": "43ac6c9f6c1d1f3f860984d6029e7c8759cd6cd1d6e5139954b45286c019f6c2", "ana": "fb1395013ffba4c1174bf121cab37a759844ed5076132c8d412ea443af83512c", "cy": "9ac5c2788ec7d32d8fd9ac8d8dc7f3da2a7d2c41fa6371c48fb98c7994f5b457"}, "group": "0ac60b0e479191214a3abf458a84cb96d0ede199553eb84cedd4eec255066c91"}
+{"t": 1791703716.073, "phase": "setup", "event": "load", "at": "start", "of": "S3", "uptime": "0:28  up 1 day, 13:11, 5 users, load averages: 14.90 14.96 14.83", "cores": "12", "swap": "vm.swapusage: total = 7168.00M  used = 5644.12M  free = 1523.88M  (encrypted)", "load1": 14.9, "free_gb": 93.5, "swap_mb": 5644.12, "df": "/dev/disk3s1s1       926   12        87    13%  484019 912776240    0%   /", "head": "c50d7f2", "bin": "/Users/alexsbryan/dev/svrngs-folders/target/debug/svrngs"}
+{"t": 1791703716.073, "phase": "S3", "event": "phase"}
+{"t": 1791703716.148, "phase": "S3", "event": "down", "who": "ana", "sig": "SIGTERM"}
+{"t": 1791703716.804, "phase": "S3", "event": "down", "who": "ben", "sig": "SIGTERM"}
+{"t": 1791703717.577, "phase": "S3", "event": "down", "who": "cy", "sig": "SIGTERM"}
+{"t": 1791703717.771, "phase": "S3", "event": "up", "who": "ana", "args": []}
+{"t": 1791703717.793, "phase": "S3", "event": "synced", "who": "ana", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791703718.037, "phase": "S3", "event": "up", "who": "ben", "args": []}
+{"t": 1791703718.057, "phase": "S3", "event": "synced", "who": "ben", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791703718.265, "phase": "S3", "event": "up", "who": "cy", "args": []}
+{"t": 1791703718.288, "phase": "S3", "event": "synced", "who": "cy", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791703718.289, "phase": "S3", "event": "wrote", "who": "ana", "path": "s3.txt", "size": 14, "blake3": "c23fddead5d762f252f52b6f9b3297f1120acc76074e55cca4ea4e4792c21862"}
+{"t": 1791703720.774, "phase": "S3", "event": "down", "who": "ben", "sig": "SIGTERM"}
+{"t": 1791703720.775, "phase": "S3", "event": "wrote", "who": "ben", "path": "s3.txt", "size": 44, "blake3": "eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b"}
+{"t": 1791703720.775, "phase": "S3", "event": "wrote", "who": "ana", "path": "s3.txt", "size": 46, "blake3": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd"}
+{"t": 1791703721.277, "phase": "S3", "event": "up", "who": "ben", "args": []}
+{"t": 1791703721.298, "phase": "S3", "event": "synced", "who": "ben", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791703721.67, "phase": "S3", "event": "bar", "bar": "S3", "both_s": 0.37, "ana_edit": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd", "ben_edit": "eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b", "found": {"ana": {"s3 (conflict Ana).txt": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd", "s3.txt": "eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b"}, "ben": {"s3 (conflict Ana).txt": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd", "s3.txt": "eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b"}, "cy": {"s3 (conflict Ana).txt": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd", "s3.txt": "eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b"}}, "verdict": "passed"}
+{"t": 1791703721.721, "phase": "S3", "event": "load", "at": "end", "of": "S3", "uptime": "0:28  up 1 day, 13:11, 5 users, load averages: 15.31 15.04 14.86", "cores": "12", "swap": "vm.swapusage: total = 7168.00M  used = 5644.12M  free = 1523.88M  (encrypted)", "load1": 15.31, "free_gb": 93.5, "swap_mb": 5644.12, "df": "/dev/disk3s1s1       926   12        87    13%  484019 912612040    0%   /", "head": "c50d7f2", "bin": "/Users/alexsbryan/dev/svrngs-folders/target/debug/svrngs"}
+{"t": 1791703721.755, "phase": "S3", "event": "load", "at": "end", "of": "run", "uptime": "0:28  up 1 day, 13:11, 5 users, load averages: 15.31 15.04 14.86", "cores": "12", "swap": "vm.swapusage: total = 7168.00M  used = 5644.12M  free = 1523.88M  (encrypted)", "load1": 15.31, "free_gb": 93.5, "swap_mb": 5644.12, "df": "/dev/disk3s1s1       926   12        87    13%  484019 912612040    0%   /", "head": "c50d7f2", "bin": "/Users/alexsbryan/dev/svrngs-folders/target/debug/svrngs"}
+{"t": 1791703724.759, "phase": "S3", "event": "down", "who": "ana", "sig": "SIGTERM"}
+{"t": 1791703724.85, "phase": "S3", "event": "down", "who": "cy", "sig": "SIGTERM"}
+{"t": 1791703724.894, "phase": "S3", "event": "down", "who": "ben", "sig": "SIGTERM"}

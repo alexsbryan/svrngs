@@ -1,0 +1,394 @@
+2026-10-10T16:18:44.943028Z  INFO folder: folder: the store is open plant=None
+2026-10-10T16:18:45.579749Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=20469 peer=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 error=Address already in use (os error 48)
+2026-10-10T16:18:46.125846Z  INFO folder: folder: the store is open plant=None
+2026-10-10T16:18:46.128094Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=20469 peer=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 error=Address already in use (os error 48)
+2026-10-10T16:18:46.128416Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=29126 peer=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 error=Address already in use (os error 48)
+2026-10-10T16:18:46.275318Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-10T16:18:46.587759Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 alpn=cwth/http/0 request_bytes=59
+2026-10-10T16:18:46.606792Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 alpn=cwth/http/0 request_bytes=405
+2026-10-10T16:18:47.281542Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-10T16:18:48.285169Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-10T16:18:49.289026Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-10T16:18:50.294796Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-10T16:18:51.299799Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-10T16:18:52.305484Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-10T16:18:53.310132Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-10T16:18:54.314363Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-10T16:18:55.319285Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-10T16:18:56.784756Z  INFO folder: folder: the store is open plant=None
+2026-10-10T16:18:56.786865Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=29126 peer=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 error=Address already in use (os error 48)
+2026-10-10T16:18:56.787046Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=20469 peer=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 error=Address already in use (os error 48)
+2026-10-10T16:18:56.906713Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-10T16:18:57.910775Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=1 replaced=0 placed=1 conflicts=0
+2026-10-10T16:18:57.917144Z  INFO folder: folder: fetched, verified hash=77b29fe90feaaff9179226d8e52d89641fa54de61c912325752d74256030faf7 holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=4096 payload=4096 other=8 ms=5
+2026-10-10T16:18:57.917682Z  INFO folder: synced: written into the directory folder="Shared" path="s1.txt" hash=77b29fe90feaaff9179226d8e52d89641fa54de61c912325752d74256030faf7 from="9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117" seq=3 beside=false
+2026-10-10T16:18:58.923547Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=2 replaced=1 placed=1 conflicts=0
+2026-10-10T16:18:58.931844Z  INFO folder: folder: fetched, verified hash=83826d87188179bea0bb93ad20e04a50e3b1d716f2c71b73fbcbacd2efcec702 holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=5000 payload=5000 other=8 ms=7
+2026-10-10T16:18:58.932632Z  INFO folder: synced: written into the directory folder="Shared" path="s1.txt" hash=83826d87188179bea0bb93ad20e04a50e3b1d716f2c71b73fbcbacd2efcec702 from="f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526" seq=0 beside=false
+2026-10-10T16:18:59.947361Z  INFO folder: folder: written to the record namespace=2529b358fbc0bce277cbb3420d7574697a675e48441127ff03c90e154ec87407 folder="Shared" files=1
+2026-10-10T16:18:59.947436Z  INFO folder: synced: a change sent folder="Shared" path="s1.txt" now=None
+2026-10-10T16:18:59.950108Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=2 replaced=2 placed=0 conflicts=0
+2026-10-10T16:19:01.356150Z  INFO folder: folder: the store is open plant=None
+2026-10-10T16:19:01.359537Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=29126 peer=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 error=Address already in use (os error 48)
+2026-10-10T16:19:01.359745Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=20469 peer=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 error=Address already in use (os error 48)
+2026-10-10T16:19:01.499031Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=2 replaced=2 placed=0 conflicts=0
+2026-10-10T16:19:02.505205Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=2 replaced=2 placed=0 conflicts=0
+2026-10-10T16:19:03.512375Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=2 replaced=2 placed=0 conflicts=0
+2026-10-10T16:19:04.522044Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=2 replaced=2 placed=0 conflicts=0
+2026-10-10T16:19:05.556904Z  INFO folder: folder: the store is open plant=None
+2026-10-10T16:19:05.559228Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=20469 peer=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 error=Address already in use (os error 48)
+2026-10-10T16:19:05.678297Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=2 replaced=2 placed=0 conflicts=0
+2026-10-10T16:19:06.685211Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=3 replaced=2 placed=1 conflicts=0
+2026-10-10T16:19:09.688239Z  WARN folder: folder: a holder gave nothing of the range hash=ab8ce143d7fd36d79cd9ac7a5227e8db5f32ccc142ef3a262a714f783b1d07a8 holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=65536 why=did not answer within 3s
+2026-10-10T16:19:09.696919Z  WARN folder: folder: a holder gave nothing of the range hash=ab8ce143d7fd36d79cd9ac7a5227e8db5f32ccc142ef3a262a714f783b1d07a8 holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=65536 why=io: stream reset by peer: error 1
+Caused by:
+    stream reset by peer: error 1
+2026-10-10T16:19:09.696977Z  WARN folder: synced: not written — no member gave it, verified folder="Shared" path="s2-plant.bin" hash=ab8ce143d7fd36d79cd9ac7a5227e8db5f32ccc142ef3a262a714f783b1d07a8 why=[("9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117", "did not answer within 3s"), ("f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526", "io: stream reset by peer: error 1\nCaused by:\n    stream reset by peer: error 1")]
+2026-10-10T16:19:10.702825Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=3 replaced=2 placed=1 conflicts=0
+2026-10-10T16:19:10.709220Z  WARN folder: folder: a holder gave nothing of the range hash=ab8ce143d7fd36d79cd9ac7a5227e8db5f32ccc142ef3a262a714f783b1d07a8 holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=65536 why=io: stream reset by peer: error 1
+Caused by:
+    stream reset by peer: error 1
+2026-10-10T16:19:13.710293Z  WARN folder: folder: a holder gave nothing of the range hash=ab8ce143d7fd36d79cd9ac7a5227e8db5f32ccc142ef3a262a714f783b1d07a8 holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=65536 why=did not answer within 3s
+2026-10-10T16:19:13.710381Z  WARN folder: synced: not written — no member gave it, verified folder="Shared" path="s2-plant.bin" hash=ab8ce143d7fd36d79cd9ac7a5227e8db5f32ccc142ef3a262a714f783b1d07a8 why=[("f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526", "io: stream reset by peer: error 1\nCaused by:\n    stream reset by peer: error 1"), ("9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117", "did not answer within 3s")]
+2026-10-10T16:19:14.716817Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=3 replaced=2 placed=1 conflicts=0
+2026-10-10T16:19:14.726228Z  WARN folder: folder: a holder gave nothing of the range hash=ab8ce143d7fd36d79cd9ac7a5227e8db5f32ccc142ef3a262a714f783b1d07a8 holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=65536 why=io: stream reset by peer: error 1
+Caused by:
+    stream reset by peer: error 1
+2026-10-10T16:19:16.161038Z  INFO folder: folder: the store is open plant=None
+2026-10-10T16:19:16.166656Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=20469 peer=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 error=Address already in use (os error 48)
+2026-10-10T16:19:16.167073Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=29126 peer=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 error=Address already in use (os error 48)
+2026-10-10T16:19:16.257276Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=3 replaced=2 placed=1 conflicts=0
+2026-10-10T16:19:16.854550Z  WARN folder: folder: a holder gave nothing of the range hash=ab8ce143d7fd36d79cd9ac7a5227e8db5f32ccc142ef3a262a714f783b1d07a8 holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=65536 why=io: stream reset by peer: error 3
+Caused by:
+    stream reset by peer: error 3
+2026-10-10T16:19:16.886196Z  INFO folder: folder: fetched, verified hash=ab8ce143d7fd36d79cd9ac7a5227e8db5f32ccc142ef3a262a714f783b1d07a8 holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=65536 payload=65536 other=200 ms=31
+2026-10-10T16:19:16.887060Z  INFO folder: synced: written into the directory folder="Shared" path="s2-plant.bin" hash=ab8ce143d7fd36d79cd9ac7a5227e8db5f32ccc142ef3a262a714f783b1d07a8 from="9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117" seq=4 beside=false
+2026-10-10T16:19:17.896708Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=3 replaced=2 placed=1 conflicts=0
+2026-10-10T16:19:18.908326Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=3 replaced=2 placed=1 conflicts=0
+2026-10-10T16:19:20.350921Z  INFO folder: folder: the store is open plant=None
+2026-10-10T16:19:20.353366Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=20469 peer=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 error=Address already in use (os error 48)
+2026-10-10T16:19:20.485985Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=3 replaced=2 placed=1 conflicts=0
+2026-10-10T16:19:21.496413Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=4 replaced=2 placed=2 conflicts=0
+2026-10-10T16:19:24.499720Z  WARN folder: folder: a holder gave nothing of the range hash=93ac405fb5bc6eef7544e9ae4ca37cba59099890a6acc92c2ec28a820f7ff3ef holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=65536 why=did not answer within 3s
+2026-10-10T16:19:24.543678Z  INFO folder: folder: fetched, verified hash=93ac405fb5bc6eef7544e9ae4ca37cba59099890a6acc92c2ec28a820f7ff3ef holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=65536 payload=65536 other=200 ms=43
+2026-10-10T16:19:24.545543Z  INFO folder: synced: written into the directory folder="Shared" path="s2.bin" hash=93ac405fb5bc6eef7544e9ae4ca37cba59099890a6acc92c2ec28a820f7ff3ef from="9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117" seq=5 beside=false
+2026-10-10T16:19:24.963065Z  INFO folder: folder: the store is open plant=LaterWins
+2026-10-10T16:19:24.965784Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=20469 peer=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 error=Address already in use (os error 48)
+2026-10-10T16:19:24.965942Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=29126 peer=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 error=Address already in use (os error 48)
+2026-10-10T16:19:25.051193Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=4 replaced=2 placed=2 conflicts=0
+2026-10-10T16:19:26.058471Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=5 replaced=2 placed=3 conflicts=0
+2026-10-10T16:19:26.069643Z  INFO folder: folder: fetched, verified hash=925e9121558176816ec122ebadd212083d215ab517f91204c27c684ba2b8bcef holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=20 payload=20 other=8 ms=10
+2026-10-10T16:19:26.070230Z  INFO folder: synced: written into the directory folder="Shared" path="s3-plant.txt" hash=925e9121558176816ec122ebadd212083d215ab517f91204c27c684ba2b8bcef from="9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117" seq=6 beside=false
+2026-10-10T16:19:27.077509Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=5 replaced=2 placed=3 conflicts=0
+2026-10-10T16:19:28.084507Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=5 replaced=2 placed=3 conflicts=0
+2026-10-10T16:19:29.093482Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=6 replaced=3 placed=3 conflicts=0
+2026-10-10T16:19:29.101314Z  INFO folder: folder: fetched, verified hash=e59a14e668d020e03edb0d326f05084dedc2650951a474583305874054fd2f81 holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=52 payload=52 other=8 ms=7
+2026-10-10T16:19:29.102976Z  INFO folder: synced: written into the directory folder="Shared" path="s3-plant.txt" hash=e59a14e668d020e03edb0d326f05084dedc2650951a474583305874054fd2f81 from="9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117" seq=7 beside=false
+2026-10-10T16:19:30.110759Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:31.119081Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:32.127607Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:33.136572Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:34.145572Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:35.155392Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:36.166915Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:37.179217Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:38.187200Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:39.195474Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:40.204751Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:41.213423Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:42.222188Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:43.232871Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:44.245058Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:45.264590Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:46.278971Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:47.292432Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:48.302715Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:49.310873Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:50.318711Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:51.327626Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:52.345638Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:53.364138Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:54.378581Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:55.386033Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:56.401001Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:57.409871Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:58.418169Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:19:59.872961Z  INFO folder: folder: the store is open plant=None
+2026-10-10T16:19:59.883817Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=20469 peer=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 error=Address already in use (os error 48)
+2026-10-10T16:19:59.885018Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=29126 peer=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 error=Address already in use (os error 48)
+2026-10-10T16:19:59.966729Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:20:00.306458Z  INFO folder: folder: fetched, verified hash=05513869d0de20108c9ec0b3fa16dcb4991ba7436a245831330d1d7d5f0db758 holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=50 payload=50 other=8 ms=339
+2026-10-10T16:20:00.307442Z  INFO folder: synced: written into the directory folder="Shared" path="s3-plant (conflict Ben).txt" hash=05513869d0de20108c9ec0b3fa16dcb4991ba7436a245831330d1d7d5f0db758 from="f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526" seq=1 beside=true
+2026-10-10T16:20:01.315713Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=7 replaced=3 placed=4 conflicts=1
+2026-10-10T16:20:02.324882Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=8 replaced=3 placed=5 conflicts=1
+2026-10-10T16:20:02.335211Z  INFO folder: folder: fetched, verified hash=c23fddead5d762f252f52b6f9b3297f1120acc76074e55cca4ea4e4792c21862 holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=14 payload=14 other=8 ms=9
+2026-10-10T16:20:02.335765Z  INFO folder: synced: written into the directory folder="Shared" path="s3.txt" hash=c23fddead5d762f252f52b6f9b3297f1120acc76074e55cca4ea4e4792c21862 from="9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117" seq=8 beside=false
+2026-10-10T16:20:03.344531Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=8 replaced=3 placed=5 conflicts=1
+2026-10-10T16:20:04.353466Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=8 replaced=3 placed=5 conflicts=1
+2026-10-10T16:20:05.366214Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=9 replaced=4 placed=5 conflicts=1
+2026-10-10T16:20:05.382041Z  INFO folder: folder: fetched, verified hash=36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=46 payload=46 other=8 ms=15
+2026-10-10T16:20:05.382701Z  INFO folder: synced: written into the directory folder="Shared" path="s3.txt" hash=36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd from="9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117" seq=9 beside=false
+2026-10-10T16:20:06.394304Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=10 replaced=4 placed=6 conflicts=2
+2026-10-10T16:20:09.396753Z  WARN folder: folder: a holder gave nothing of the range hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=44 why=did not answer within 3s
+2026-10-10T16:20:09.406158Z  WARN folder: folder: a holder gave nothing of the range hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=44 why=io: stream reset by peer: error 3
+Caused by:
+    stream reset by peer: error 3
+2026-10-10T16:20:09.406199Z  WARN folder: synced: not written — no member gave it, verified folder="Shared" path="s3 (conflict Ben).txt" hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b why=[("f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526", "did not answer within 3s"), ("9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117", "io: stream reset by peer: error 3\nCaused by:\n    stream reset by peer: error 3")]
+2026-10-10T16:20:09.864723Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=10 replaced=4 placed=6 conflicts=2
+2026-10-10T16:20:09.864866Z  INFO folder: folder: serving — a synced folder places the hash hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b conn=528832124112 request=0 ranges="ChunkRangesSeq([(0, RangeSet{0..1}), (1, RangeSet{})])"
+2026-10-10T16:20:09.865171Z  INFO folder: folder: sent hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b conn=528832124112 request=0 done=false last=0 payload=0 other=0
+2026-10-10T16:20:10.417993Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=10 replaced=4 placed=6 conflicts=2
+2026-10-10T16:20:10.431621Z  WARN folder: folder: a holder gave nothing of the range hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=44 why=io: stream reset by peer: error 3
+Caused by:
+    stream reset by peer: error 3
+2026-10-10T16:20:10.885410Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=10 replaced=4 placed=6 conflicts=2
+2026-10-10T16:20:10.885523Z  INFO folder: folder: serving — a synced folder places the hash hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b conn=528832121520 request=0 ranges="ChunkRangesSeq([(0, RangeSet{0..1}), (1, RangeSet{})])"
+2026-10-10T16:20:10.885792Z  INFO folder: folder: sent hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b conn=528832121520 request=0 done=false last=0 payload=0 other=0
+2026-10-10T16:20:13.433376Z  WARN folder: folder: a holder gave nothing of the range hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=44 why=did not answer within 3s
+2026-10-10T16:20:13.433510Z  WARN folder: synced: not written — no member gave it, verified folder="Shared" path="s3 (conflict Ben).txt" hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b why=[("9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117", "io: stream reset by peer: error 3\nCaused by:\n    stream reset by peer: error 3"), ("f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526", "did not answer within 3s")]
+2026-10-10T16:20:14.445953Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=10 replaced=4 placed=6 conflicts=2
+2026-10-10T16:20:14.460189Z  WARN folder: folder: a holder gave nothing of the range hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=44 why=io: stream reset by peer: error 3
+Caused by:
+    stream reset by peer: error 3
+2026-10-10T16:20:14.911010Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=10 replaced=4 placed=6 conflicts=2
+2026-10-10T16:20:14.911096Z  INFO folder: folder: serving — a synced folder places the hash hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b conn=528832119248 request=0 ranges="ChunkRangesSeq([(0, RangeSet{0..1}), (1, RangeSet{})])"
+2026-10-10T16:20:14.911370Z  INFO folder: folder: sent hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b conn=528832119248 request=0 done=false last=0 payload=0 other=0
+2026-10-10T16:20:17.461501Z  WARN folder: folder: a holder gave nothing of the range hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=44 why=did not answer within 3s
+2026-10-10T16:20:17.461588Z  WARN folder: synced: not written — no member gave it, verified folder="Shared" path="s3 (conflict Ben).txt" hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b why=[("9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117", "io: stream reset by peer: error 3\nCaused by:\n    stream reset by peer: error 3"), ("f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526", "did not answer within 3s")]
+2026-10-10T16:20:18.475733Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=10 replaced=4 placed=6 conflicts=2
+2026-10-10T16:20:18.490157Z  WARN folder: folder: a holder gave nothing of the range hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=44 why=io: stream reset by peer: error 3
+Caused by:
+    stream reset by peer: error 3
+2026-10-10T16:20:18.940951Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=10 replaced=4 placed=6 conflicts=2
+2026-10-10T16:20:18.941045Z  INFO folder: folder: serving — a synced folder places the hash hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b conn=528832120592 request=0 ranges="ChunkRangesSeq([(0, RangeSet{0..1}), (1, RangeSet{})])"
+2026-10-10T16:20:18.941445Z  INFO folder: folder: sent hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b conn=528832120592 request=0 done=false last=0 payload=0 other=0
+2026-10-10T16:20:21.492610Z  WARN folder: folder: a holder gave nothing of the range hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=44 why=did not answer within 3s
+2026-10-10T16:20:21.492749Z  WARN folder: synced: not written — no member gave it, verified folder="Shared" path="s3 (conflict Ben).txt" hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b why=[("9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117", "io: stream reset by peer: error 3\nCaused by:\n    stream reset by peer: error 3"), ("f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526", "did not answer within 3s")]
+2026-10-10T16:20:22.505159Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=10 replaced=4 placed=6 conflicts=2
+2026-10-10T16:20:22.517857Z  WARN folder: folder: a holder gave nothing of the range hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=44 why=io: stream reset by peer: error 3
+Caused by:
+    stream reset by peer: error 3
+2026-10-10T16:20:22.522275Z  INFO folder: folder: fetched, verified hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=44 payload=44 other=8 ms=4
+2026-10-10T16:20:22.522592Z  INFO folder: synced: written into the directory folder="Shared" path="s3 (conflict Ben).txt" hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b from="f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526" seq=2 beside=true
+2026-10-10T16:20:22.970894Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=10 replaced=4 placed=6 conflicts=2
+2026-10-10T16:20:22.970987Z  INFO folder: folder: serving — a synced folder places the hash hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b conn=528832130288 request=0 ranges="ChunkRangesSeq([(0, RangeSet{0..1}), (1, RangeSet{})])"
+2026-10-10T16:20:22.971250Z  INFO folder: folder: sent hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b conn=528832130288 request=0 done=true last=44 payload=44 other=8
+2026-10-10T16:20:23.534225Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=10 replaced=4 placed=6 conflicts=2
+2026-10-10T16:20:24.550761Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:27.553044Z  WARN folder: folder: a holder gave nothing of the range hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=65536 why=did not answer within 3s
+2026-10-10T16:20:27.561731Z  WARN folder: folder: a holder gave nothing of the range hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=65536 why=io: stream reset by peer: error 3
+Caused by:
+    stream reset by peer: error 3
+2026-10-10T16:20:27.561771Z  WARN folder: synced: not written — no member gave it, verified folder="Shared" path="s4-plant.bin" hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 why=[("9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117", "did not answer within 3s"), ("f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526", "io: stream reset by peer: error 3\nCaused by:\n    stream reset by peer: error 3")]
+2026-10-10T16:20:27.934122Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:27.934212Z  INFO folder: folder: serving — a synced folder places the hash hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 conn=528832122128 request=0 ranges="ChunkRangesSeq([(0, RangeSet{0..64}), (1, RangeSet{})])"
+2026-10-10T16:20:27.934545Z  INFO folder: folder: sent hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 conn=528832122128 request=0 done=false last=0 payload=0 other=0
+2026-10-10T16:20:28.571643Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:28.609443Z  WARN folder: folder: a holder gave nothing of the range hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=65536 why=io: stream reset by peer: error 3
+Caused by:
+    stream reset by peer: error 3
+2026-10-10T16:20:29.062894Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:29.063023Z  INFO folder: folder: serving — a synced folder places the hash hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 conn=528832129840 request=0 ranges="ChunkRangesSeq([(0, RangeSet{0..64}), (1, RangeSet{})])"
+2026-10-10T16:20:29.067070Z  INFO folder: folder: sent hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 conn=528832129840 request=0 done=false last=0 payload=0 other=0
+2026-10-10T16:20:31.611232Z  WARN folder: folder: a holder gave nothing of the range hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=65536 why=did not answer within 3s
+2026-10-10T16:20:31.611306Z  WARN folder: synced: not written — no member gave it, verified folder="Shared" path="s4-plant.bin" hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 why=[("f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526", "io: stream reset by peer: error 3\nCaused by:\n    stream reset by peer: error 3"), ("9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117", "did not answer within 3s")]
+2026-10-10T16:20:32.623522Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:32.742838Z  WARN folder: folder: a holder gave nothing of the range hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=65536 why=io: stream reset by peer: error 3
+Caused by:
+    stream reset by peer: error 3
+2026-10-10T16:20:33.104763Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:33.104846Z  INFO folder: folder: serving — a synced folder places the hash hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 conn=528832129680 request=0 ranges="ChunkRangesSeq([(0, RangeSet{0..64}), (1, RangeSet{})])"
+2026-10-10T16:20:33.105075Z  INFO folder: folder: sent hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 conn=528832129680 request=0 done=false last=0 payload=0 other=0
+2026-10-10T16:20:35.745848Z  WARN folder: folder: a holder gave nothing of the range hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=65536 why=did not answer within 3s
+2026-10-10T16:20:35.745916Z  WARN folder: synced: not written — no member gave it, verified folder="Shared" path="s4-plant.bin" hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 why=[("f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526", "io: stream reset by peer: error 3\nCaused by:\n    stream reset by peer: error 3"), ("9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117", "did not answer within 3s")]
+2026-10-10T16:20:36.755530Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:36.765776Z  WARN folder: folder: a holder gave nothing of the range hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=65536 why=io: stream reset by peer: error 3
+Caused by:
+    stream reset by peer: error 3
+2026-10-10T16:20:37.129075Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:37.129176Z  INFO folder: folder: serving — a synced folder places the hash hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 conn=528832121680 request=0 ranges="ChunkRangesSeq([(0, RangeSet{0..64}), (1, RangeSet{})])"
+2026-10-10T16:20:37.129451Z  INFO folder: folder: sent hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 conn=528832121680 request=0 done=false last=0 payload=0 other=0
+2026-10-10T16:20:39.767235Z  WARN folder: folder: a holder gave nothing of the range hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=65536 why=did not answer within 3s
+2026-10-10T16:20:39.767319Z  WARN folder: synced: not written — no member gave it, verified folder="Shared" path="s4-plant.bin" hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 why=[("f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526", "io: stream reset by peer: error 3\nCaused by:\n    stream reset by peer: error 3"), ("9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117", "did not answer within 3s")]
+2026-10-10T16:20:40.776793Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:40.787819Z  WARN folder: folder: a holder gave nothing of the range hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=65536 why=io: stream reset by peer: error 3
+Caused by:
+    stream reset by peer: error 3
+2026-10-10T16:20:41.163015Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:41.163161Z  INFO folder: folder: serving — a synced folder places the hash hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 conn=528832123472 request=0 ranges="ChunkRangesSeq([(0, RangeSet{0..64}), (1, RangeSet{})])"
+2026-10-10T16:20:41.163386Z  INFO folder: folder: sent hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 conn=528832123472 request=0 done=false last=0 payload=0 other=0
+2026-10-10T16:20:43.789749Z  WARN folder: folder: a holder gave nothing of the range hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=65536 why=did not answer within 3s
+2026-10-10T16:20:43.789841Z  WARN folder: synced: not written — no member gave it, verified folder="Shared" path="s4-plant.bin" hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 why=[("f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526", "io: stream reset by peer: error 3\nCaused by:\n    stream reset by peer: error 3"), ("9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117", "did not answer within 3s")]
+2026-10-10T16:20:44.801320Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:44.831685Z  INFO folder: folder: fetched, verified hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=65536 payload=65536 other=200 ms=29
+2026-10-10T16:20:44.832699Z  INFO folder: synced: written into the directory folder="Shared" path="s4-plant.bin" hash=ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491 from="9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117" seq=10 beside=false
+2026-10-10T16:20:45.838640Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:46.844471Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:47.849773Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:48.858956Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:49.868329Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:50.885541Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:51.895719Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:53.025242Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:54.522002Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:56.233420Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:57.659720Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:58.671441Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:20:59.683256Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:00.705203Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:01.718786Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:02.723229Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:03.733981Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:04.743810Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:08.551626Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:10.159837Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:11.166146Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:12.179151Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:13.190323Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:14.224195Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:15.248799Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:16.301270Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:17.310189Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:18.321341Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:19.333264Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:20.346571Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:21.352822Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:22.359135Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:23.384419Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:24.400088Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:25.411558Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:26.431616Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:27.442276Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:28.453729Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:29.462627Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:30.470158Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:31.488151Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:32.496727Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:33.508465Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:34.518712Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:35.527285Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:36.543207Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:37.558660Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:38.568240Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:39.582036Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:40.601556Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:41.615071Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:42.630761Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:43.639626Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:44.647943Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:45.659184Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:46.672434Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:47.682018Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:48.689275Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:49.695923Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:50.710198Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:51.718835Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:52.739737Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:53.749469Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:54.755393Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:55.761448Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:56.768689Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:57.772537Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:58.782046Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:21:59.790447Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:00.804784Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:01.817765Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:02.824588Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:03.844491Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:04.856712Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:05.867793Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:06.883918Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:07.893838Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:08.904785Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:09.924074Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:10.930743Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:11.959374Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:12.966385Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:13.974604Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:14.981596Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:15.991633Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:17.001428Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:18.006966Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:19.011418Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:20.016264Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:21.026871Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:22.032377Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:23.040742Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:24.050100Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:25.062468Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:26.073565Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:27.085878Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:28.134139Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:29.163683Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:30.176996Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:31.189534Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:32.213220Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:33.222888Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:34.237565Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:35.244168Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:36.257162Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:37.266231Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:38.275008Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:39.283216Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:40.294241Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:41.302058Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:42.310574Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:43.317738Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:44.328061Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:45.336944Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:46.346688Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:47.354130Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:48.360741Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:49.376787Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:50.386650Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:51.395710Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:52.413228Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:53.428428Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:54.440643Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:55.453252Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:56.470808Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=11 replaced=4 placed=7 conflicts=2
+2026-10-10T16:22:57.486197Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=12 replaced=4 placed=8 conflicts=2
+2026-10-10T16:23:00.282980Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=12 replaced=4 placed=8 conflicts=2
+2026-10-10T16:23:00.283082Z  INFO folder: folder: serving — a synced folder places the hash hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 conn=528832125904 request=0 ranges="ChunkRangesSeq([(0, RangeSet{0..64}), (1, RangeSet{})])"
+2026-10-10T16:23:00.283365Z  INFO folder: folder: sent hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 conn=528832125904 request=0 done=false last=0 payload=0 other=0
+2026-10-10T16:23:00.489018Z  WARN folder: folder: a holder gave nothing of the range hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=65536 why=did not answer within 3s
+2026-10-10T16:23:00.507628Z  WARN folder: folder: a holder gave nothing of the range hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=65536 why=io: stream reset by peer: error 3
+Caused by:
+    stream reset by peer: error 3
+2026-10-10T16:23:00.507676Z  WARN folder: synced: not written — no member gave it, verified folder="Shared" path="s4.bin" hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 why=[("9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117", "did not answer within 3s"), ("f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526", "io: stream reset by peer: error 3\nCaused by:\n    stream reset by peer: error 3")]
+2026-10-10T16:23:01.316914Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=12 replaced=4 placed=8 conflicts=2
+2026-10-10T16:23:01.317644Z  INFO folder: folder: serving — a synced folder places the hash hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 conn=528832130768 request=0 ranges="ChunkRangesSeq([(0, RangeSet{0..64}), (1, RangeSet{})])"
+2026-10-10T16:23:01.317927Z  INFO folder: folder: sent hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 conn=528832130768 request=0 done=false last=0 payload=0 other=0
+2026-10-10T16:23:01.521118Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=12 replaced=4 placed=8 conflicts=2
+2026-10-10T16:23:01.536831Z  WARN folder: folder: a holder gave nothing of the range hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=65536 why=io: stream reset by peer: error 3
+Caused by:
+    stream reset by peer: error 3
+2026-10-10T16:23:04.539495Z  WARN folder: folder: a holder gave nothing of the range hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=65536 why=did not answer within 3s
+2026-10-10T16:23:04.539572Z  WARN folder: synced: not written — no member gave it, verified folder="Shared" path="s4.bin" hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 why=[("f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526", "io: stream reset by peer: error 3\nCaused by:\n    stream reset by peer: error 3"), ("9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117", "did not answer within 3s")]
+2026-10-10T16:23:05.343718Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=12 replaced=4 placed=8 conflicts=2
+2026-10-10T16:23:05.343839Z  INFO folder: folder: serving — a synced folder places the hash hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 conn=528832120336 request=0 ranges="ChunkRangesSeq([(0, RangeSet{0..64}), (1, RangeSet{})])"
+2026-10-10T16:23:05.344107Z  INFO folder: folder: sent hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 conn=528832120336 request=0 done=false last=0 payload=0 other=0
+2026-10-10T16:23:05.552787Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=12 replaced=4 placed=8 conflicts=2
+2026-10-10T16:23:05.565066Z  WARN folder: folder: a holder gave nothing of the range hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=65536 why=io: stream reset by peer: error 3
+Caused by:
+    stream reset by peer: error 3
+2026-10-10T16:23:08.568767Z  WARN folder: folder: a holder gave nothing of the range hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=65536 why=did not answer within 3s
+2026-10-10T16:23:08.568845Z  WARN folder: synced: not written — no member gave it, verified folder="Shared" path="s4.bin" hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 why=[("f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526", "io: stream reset by peer: error 3\nCaused by:\n    stream reset by peer: error 3"), ("9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117", "did not answer within 3s")]
+2026-10-10T16:23:09.375032Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=12 replaced=4 placed=8 conflicts=2
+2026-10-10T16:23:09.375075Z  INFO folder: folder: serving — a synced folder places the hash hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 conn=528832126672 request=0 ranges="ChunkRangesSeq([(0, RangeSet{0..64}), (1, RangeSet{})])"
+2026-10-10T16:23:09.375262Z  INFO folder: folder: sent hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 conn=528832126672 request=0 done=false last=0 payload=0 other=0
+2026-10-10T16:23:09.579857Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=12 replaced=4 placed=8 conflicts=2
+2026-10-10T16:23:09.592607Z  WARN folder: folder: a holder gave nothing of the range hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=65536 why=io: stream reset by peer: error 3
+Caused by:
+    stream reset by peer: error 3
+2026-10-10T16:23:12.593995Z  WARN folder: folder: a holder gave nothing of the range hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 holder=9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117 start=0 end=65536 why=did not answer within 3s
+2026-10-10T16:23:12.594068Z  WARN folder: synced: not written — no member gave it, verified folder="Shared" path="s4.bin" hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 why=[("f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526", "io: stream reset by peer: error 3\nCaused by:\n    stream reset by peer: error 3"), ("9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117", "did not answer within 3s")]
+2026-10-10T16:23:13.402024Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=12 replaced=4 placed=8 conflicts=2
+2026-10-10T16:23:13.402083Z  INFO folder: folder: serving — a synced folder places the hash hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 conn=528832120336 request=0 ranges="ChunkRangesSeq([(0, RangeSet{0..64}), (1, RangeSet{})])"
+2026-10-10T16:23:13.402321Z  INFO folder: folder: sent hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 conn=528832120336 request=0 done=false last=0 payload=0 other=0
+2026-10-10T16:23:13.606952Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=12 replaced=4 placed=8 conflicts=2
+2026-10-10T16:23:13.632318Z  INFO folder: folder: fetched, verified hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 holder=f8608f502b2c125223f71908dcc198c869dc542daa5161fdbe4a11c272202526 start=0 end=65536 payload=65536 other=200 ms=24
+2026-10-10T16:23:13.632901Z  INFO folder: synced: written into the directory folder="Shared" path="s4.bin" hash=b391186babbc3452cae5ce2df070ce6524f0946bf7cda425eeea1e6542daade4 from="9e2ee82053a214056e6b8ab60a97346a78d7e2e178e4a01c8a13881314ac8117" seq=11 beside=false
+2026-10-10T16:23:14.639813Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=12 replaced=4 placed=8 conflicts=2
+2026-10-10T16:23:15.649909Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=12 replaced=4 placed=8 conflicts=2
+2026-10-10T16:23:16.660915Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=12 replaced=4 placed=8 conflicts=2

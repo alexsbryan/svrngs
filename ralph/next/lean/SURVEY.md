@@ -175,13 +175,16 @@ gf READMEs' sites are stale against `51a624c` (sy cites synced.rs:74-76 and
 :88, now :70-72 and :84). Written twice on the branch: synced.rs:153-158
 rebuilds node.rs:422-440 `Host::standings()` without its traces;
 folder.rs:160-165 `admissions` walks the namespaces a fourth time and drops a
-failure unsaid (the branch's #109, #113); folder.rs:280-339 `hold` remembers
+failure unsaid (the branch's #109, #113 — #113, #117 since
+syp-3's merge, #115, #119 since syp-5's); folder.rs:280-339 `hold` remembers
 an unanswered holder for 60 s where node.rs:488-535 `lent` remembers none
 (node.rs:98) — two deciders of who is asleep; a hash's holders listed at
-folder.rs:458-462, core :102-111 and synced.rs:186-187 (the branch's #110);
+folder.rs:458-462, core :102-111 and synced.rs:186-187 (the branch's #110 — #114 since syp-3's merge, #116 since syp-5's);
 cli.rs:555-570 adds reqwest 0.12 beside the command's reqwest 0.13.
 `ralph/REVIEW_FINDINGS.md` numbers #108-#111 were given on both sides apart:
 main's #110 and #111 (:4764-4765) are not the branch's (:4445-4446).
+syp-3's merge renumbered the branch's #108-#116 as #112-#120, and syp-5's
+those as #114-#122.
 
 ## What the cuts make of the merge
 

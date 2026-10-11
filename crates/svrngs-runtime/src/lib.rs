@@ -7,6 +7,7 @@ pub use svrngs_core::*;
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 #[expect(
     clippy::disallowed_types,
     reason = "the open-journal map; an actor per journal replaces it (DESIGN §5)"
@@ -60,7 +61,15 @@ pub struct RingRail {
         reason = "the open-journal map; an actor per journal replaces it (DESIGN §5)"
     )]
     open: Mutex<BTreeMap<String, Arc<RingJournal>>>,
+    /// Told a group's name after the group's journal takes an act, written
+    /// here or ingested from a peer (perf-2 d): what wakes a synced
+    /// folder's apply, where it waited up to a second (svrngs-node
+    /// synced.rs).
+    on_write: OnceLock<Teller>,
 }
+
+/// What [`RingRail::on_write`] tells.
+type Teller = Box<dyn Fn(&str) + Send + Sync>;
 
 impl RingRail {
     #[expect(clippy::disallowed_types, reason = "the open-journal map")]
@@ -69,6 +78,21 @@ impl RingRail {
             root: root.into(),
             signer,
             open: Mutex::new(BTreeMap::new()),
+            on_write: OnceLock::new(),
+        }
+    }
+
+    /// `tell` told each group's name after its journal takes an act; one
+    /// teller, the first set, for the rail's life.
+    pub fn on_write(&self, tell: impl Fn(&str) + Send + Sync + 'static) {
+        if self.on_write.set(Box::new(tell)).is_err() {
+            tracing::warn!("ring rail: a second teller of writes refused; the first is kept");
+        }
+    }
+
+    fn wrote(&self, namespace: &str) {
+        if let Some(tell) = self.on_write.get() {
+            tell(namespace);
         }
     }
 
@@ -199,7 +223,11 @@ impl RingRail {
             verifier: &Ed25519Verifier,
             now: now_unix(namespace)?,
         };
-        svrngs_core::commit(&*journal, command, &author)
+        let done = svrngs_core::commit(&*journal, command, &author);
+        if matches!(done, Ok(Ok(_))) {
+            self.wrote(namespace);
+        }
+        done
     }
 
     /// The seal, then the prune it authorises.
@@ -251,7 +279,11 @@ impl RingRail {
     }
 
     pub fn ingest_all(&self, namespace: &str, ops: &[Op<SignedOp>]) -> Result<usize, RailError> {
-        self.journal(namespace)?.ingest_all(ops)
+        let taken = self.journal(namespace)?.ingest_all(ops)?;
+        if taken > 0 {
+            self.wrote(namespace);
+        }
+        Ok(taken)
     }
 
     /// Deletes what the group's admitted seals retire.

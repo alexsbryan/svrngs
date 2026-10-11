@@ -1,0 +1,195 @@
+{
+ "f100000-taken": {
+  "value": 13477.5,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    9.2,
+    5.57,
+    6.67
+   ],
+   "cores": 12,
+   "swap_used_mb": 8647.5,
+   "free_gb": 110.8
+  },
+  "end": {
+   "load": [
+    6.42,
+    5.32,
+    6.51
+   ],
+   "cores": 12,
+   "swap_used_mb": 8647.5,
+   "free_gb": 110.6
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "steps": {
+   "read_ms": 5.5,
+   "walk_ms": 157.0,
+   "take_ms": 6199.0,
+   "write_ms": 272.5,
+   "apply_ms": 66.5,
+   "kept_ms": 44.0,
+   "ms": 6746.0,
+   "steps": 2
+  },
+  "first_step": {
+   "folder": "Shared",
+   "files": "100000",
+   "sent": "100000",
+   "read_ms": "0",
+   "walk_ms": "314",
+   "take_ms": "12396",
+   "write_ms": "545",
+   "apply_ms": "69",
+   "kept_ms": "85",
+   "ms": "13410"
+  }
+ },
+ "f100000-idle": {
+  "value": 0.33,
+  "target": "under 2% of a core",
+  "verdict": "passed",
+  "start": {
+   "load": [
+    5.75,
+    5.21,
+    6.45
+   ],
+   "cores": 12,
+   "swap_used_mb": 8647.5,
+   "free_gb": 110.6
+  },
+  "end": {
+   "load": [
+    3.97,
+    4.84,
+    6.23
+   ],
+   "cores": 12,
+   "swap_used_mb": 8647.5,
+   "free_gb": 110.6
+  },
+  "unit": "% of a core",
+  "steps": {
+   "read_ms": null,
+   "walk_ms": null,
+   "take_ms": null,
+   "write_ms": null,
+   "apply_ms": null,
+   "kept_ms": null,
+   "ms": null,
+   "steps": 0
+  }
+ },
+ "f100000-found#0": {
+  "value": 193.2,
+  "target": "within 1 s",
+  "verdict": "passed",
+  "start": {
+   "load": [
+    3.97,
+    4.84,
+    6.23
+   ],
+   "cores": 12,
+   "swap_used_mb": 8647.5,
+   "free_gb": 110.6
+  },
+  "end": {
+   "load": [
+    4.13,
+    4.86,
+    6.23
+   ],
+   "cores": 12,
+   "swap_used_mb": 8647.5,
+   "free_gb": 110.6
+  },
+  "unit": "ms",
+  "steps": {
+   "read_ms": 7.5,
+   "walk_ms": 0.0,
+   "take_ms": 2.0,
+   "write_ms": 84.0,
+   "apply_ms": 149.5,
+   "kept_ms": 31.0,
+   "ms": 275.5,
+   "steps": 2
+  }
+ },
+ "f100000-found#1": {
+  "value": 72.8,
+  "target": "within 1 s",
+  "verdict": "passed",
+  "start": {
+   "load": [
+    4.13,
+    4.86,
+    6.23
+   ],
+   "cores": 12,
+   "swap_used_mb": 8647.5,
+   "free_gb": 110.6
+  },
+  "end": {
+   "load": [
+    4.12,
+    4.85,
+    6.22
+   ],
+   "cores": 12,
+   "swap_used_mb": 8647.5,
+   "free_gb": 110.6
+  },
+  "unit": "ms",
+  "steps": {
+   "read_ms": 7.0,
+   "walk_ms": 0.0,
+   "take_ms": 2.0,
+   "write_ms": 83.0,
+   "apply_ms": 150.0,
+   "kept_ms": 35.0,
+   "ms": 279.5,
+   "steps": 2
+  }
+ },
+ "f100000-found#2": {
+  "value": 73.3,
+  "target": "within 1 s",
+  "verdict": "passed",
+  "start": {
+   "load": [
+    4.12,
+    4.85,
+    6.22
+   ],
+   "cores": 12,
+   "swap_used_mb": 8647.5,
+   "free_gb": 110.6
+  },
+  "end": {
+   "load": [
+    4.11,
+    4.83,
+    6.2
+   ],
+   "cores": 12,
+   "swap_used_mb": 8647.5,
+   "free_gb": 110.6
+  },
+  "unit": "ms",
+  "steps": {
+   "read_ms": 7.0,
+   "walk_ms": 0.0,
+   "take_ms": 1.5,
+   "write_ms": 83.5,
+   "apply_ms": 151.0,
+   "kept_ms": 31.5,
+   "ms": 276.5,
+   "steps": 2
+  }
+ }
+}

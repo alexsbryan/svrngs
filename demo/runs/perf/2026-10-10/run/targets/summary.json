@@ -1,0 +1,2953 @@
+{
+ "T1-loopback#0": {
+  "value": 1468.0,
+  "target": "300 ms",
+  "verdict": "failed",
+  "start": {
+   "load": [
+    9.38,
+    11.63,
+    24.32
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.2
+  },
+  "end": {
+   "load": [
+    9.38,
+    11.63,
+    24.32
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.2
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "phases": {
+   "median_ms": {
+    "P1_found": 434.8,
+    "P2_stored": 0.7,
+    "P3_act": 9.9,
+    "P4_carried": 11.4,
+    "P5_apply": 982.6,
+    "P6_fetch": 3.0,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.301,
+    "P2_stored": 0.0,
+    "P3_act": 0.007,
+    "P4_carried": 0.008,
+    "P5_apply": 0.681,
+    "P6_fetch": 0.002,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:53903)"
+   ],
+   "dial_ms": 1.7,
+   "first_ms": 3.3,
+   "last_ms": 3.4,
+   "gets_ms": 3.4,
+   "changes": 2
+  }
+ },
+ "T1-loopback#1": {
+  "value": 1322.0,
+  "target": "300 ms",
+  "verdict": "failed",
+  "start": {
+   "load": [
+    9.38,
+    11.63,
+    24.32
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.2
+  },
+  "end": {
+   "load": [
+    9.59,
+    11.64,
+    24.25
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.2
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "phases": {
+   "median_ms": {
+    "P1_found": 158.3,
+    "P2_stored": 0.4,
+    "P3_act": 7.0,
+    "P4_carried": 10.5,
+    "P5_apply": 979.4,
+    "P6_fetch": 1.0,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.137,
+    "P2_stored": 0.0,
+    "P3_act": 0.006,
+    "P4_carried": 0.009,
+    "P5_apply": 0.847,
+    "P6_fetch": 0.001,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:53903)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 1.5,
+   "last_ms": 1.5,
+   "gets_ms": 1.5,
+   "changes": 2
+  }
+ },
+ "T1-loopback#2": {
+  "value": 1149.0,
+  "target": "300 ms",
+  "verdict": "failed",
+  "start": {
+   "load": [
+    9.59,
+    11.64,
+    24.25
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.2
+  },
+  "end": {
+   "load": [
+    9.59,
+    11.64,
+    24.25
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.2
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "phases": {
+   "median_ms": {
+    "P1_found": 6.4,
+    "P2_stored": 0.4,
+    "P3_act": 7.3,
+    "P4_carried": 11.3,
+    "P5_apply": 967.6,
+    "P6_fetch": 1.5,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.006,
+    "P2_stored": 0.0,
+    "P3_act": 0.007,
+    "P4_carried": 0.011,
+    "P5_apply": 0.973,
+    "P6_fetch": 0.002,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:53903)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 1.7,
+   "last_ms": 1.7,
+   "gets_ms": 1.8,
+   "changes": 2
+  }
+ },
+ "T1-loopback#3": {
+  "value": 1105.0,
+  "target": "300 ms",
+  "verdict": "failed",
+  "start": {
+   "load": [
+    10.58,
+    11.81,
+    24.24
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.2
+  },
+  "end": {
+   "load": [
+    10.58,
+    11.81,
+    24.24
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.2
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "phases": {
+   "median_ms": {
+    "P1_found": 20.6,
+    "P2_stored": 0.5,
+    "P3_act": 7.1,
+    "P4_carried": 10.9,
+    "P5_apply": 964.0,
+    "P6_fetch": 2.5,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.02,
+    "P2_stored": 0.0,
+    "P3_act": 0.007,
+    "P4_carried": 0.011,
+    "P5_apply": 0.959,
+    "P6_fetch": 0.002,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:53903)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 2.6,
+   "last_ms": 2.6,
+   "gets_ms": 2.6,
+   "changes": 2
+  }
+ },
+ "T1-loopback#4": {
+  "value": 1182.0,
+  "target": "300 ms",
+  "verdict": "failed",
+  "start": {
+   "load": [
+    10.58,
+    11.81,
+    24.24
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.1
+  },
+  "end": {
+   "load": [
+    10.58,
+    11.81,
+    24.24
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.1
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "phases": {
+   "median_ms": {
+    "P1_found": 69.1,
+    "P2_stored": 0.4,
+    "P3_act": 7.6,
+    "P4_carried": 12.0,
+    "P5_apply": 959.0,
+    "P6_fetch": 1.0,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.066,
+    "P2_stored": 0.0,
+    "P3_act": 0.007,
+    "P4_carried": 0.011,
+    "P5_apply": 0.914,
+    "P6_fetch": 0.001,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:53903)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 1.6,
+   "last_ms": 1.6,
+   "gets_ms": 1.5,
+   "changes": 2
+  }
+ },
+ "T1-loopback#5": {
+  "value": 1182.0,
+  "target": "300 ms",
+  "verdict": "failed",
+  "start": {
+   "load": [
+    11.18,
+    11.91,
+    24.2
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.0
+  },
+  "end": {
+   "load": [
+    11.18,
+    11.91,
+    24.2
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.0
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "phases": {
+   "median_ms": {
+    "P1_found": 41.6,
+    "P2_stored": 1.9,
+    "P3_act": 11.7,
+    "P4_carried": 10.2,
+    "P5_apply": 955.0,
+    "P6_fetch": 1.5,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.041,
+    "P2_stored": 0.002,
+    "P3_act": 0.011,
+    "P4_carried": 0.01,
+    "P5_apply": 0.935,
+    "P6_fetch": 0.001,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:53903)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 2.1,
+   "last_ms": 2.1,
+   "gets_ms": 2.1,
+   "changes": 2
+  }
+ },
+ "T1-loopback#6": {
+  "value": 1120.0,
+  "target": "300 ms",
+  "verdict": "failed",
+  "start": {
+   "load": [
+    11.18,
+    11.91,
+    24.2
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.0
+  },
+  "end": {
+   "load": [
+    12.44,
+    12.16,
+    24.22
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.0
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "phases": {
+   "median_ms": {
+    "P1_found": 4.4,
+    "P2_stored": 0.6,
+    "P3_act": 7.7,
+    "P4_carried": 12.5,
+    "P5_apply": 937.5,
+    "P6_fetch": 2.5,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.005,
+    "P2_stored": 0.001,
+    "P3_act": 0.008,
+    "P4_carried": 0.013,
+    "P5_apply": 0.971,
+    "P6_fetch": 0.003,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:53903)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 3.0,
+   "last_ms": 3.0,
+   "gets_ms": 3.0,
+   "changes": 2
+  }
+ },
+ "T1-loopback#7": {
+  "value": 1245.0,
+  "target": "300 ms",
+  "verdict": "failed",
+  "start": {
+   "load": [
+    12.44,
+    12.16,
+    24.22
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.0
+  },
+  "end": {
+   "load": [
+    12.44,
+    12.16,
+    24.22
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.0
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "phases": {
+   "median_ms": {
+    "P1_found": 137.4,
+    "P2_stored": 0.4,
+    "P3_act": 7.6,
+    "P4_carried": 13.2,
+    "P5_apply": 932.7,
+    "P6_fetch": 7.5,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.125,
+    "P2_stored": 0.0,
+    "P3_act": 0.007,
+    "P4_carried": 0.012,
+    "P5_apply": 0.849,
+    "P6_fetch": 0.007,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:53903)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 7.6,
+   "last_ms": 7.6,
+   "gets_ms": 7.6,
+   "changes": 2
+  }
+ },
+ "T1-loopback#8": {
+  "value": 1087.0,
+  "target": "300 ms",
+  "verdict": "failed",
+  "start": {
+   "load": [
+    12.65,
+    12.21,
+    24.16
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.0
+  },
+  "end": {
+   "load": [
+    12.65,
+    12.21,
+    24.16
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.0
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "phases": {
+   "median_ms": {
+    "P1_found": 61.7,
+    "P2_stored": 0.4,
+    "P3_act": 9.7,
+    "P4_carried": 13.4,
+    "P5_apply": 929.6,
+    "P6_fetch": 2.0,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.061,
+    "P2_stored": 0.0,
+    "P3_act": 0.01,
+    "P4_carried": 0.013,
+    "P5_apply": 0.914,
+    "P6_fetch": 0.002,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:53903)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 2.4,
+   "last_ms": 2.4,
+   "gets_ms": 2.5,
+   "changes": 2
+  }
+ },
+ "T1-loopback#9": {
+  "value": 1199.0,
+  "target": "300 ms",
+  "verdict": "failed",
+  "start": {
+   "load": [
+    12.65,
+    12.21,
+    24.16
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.0
+  },
+  "end": {
+   "load": [
+    12.65,
+    12.21,
+    24.16
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.0
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "phases": {
+   "median_ms": {
+    "P1_found": 124.4,
+    "P2_stored": 0.4,
+    "P3_act": 9.9,
+    "P4_carried": 16.5,
+    "P5_apply": 920.6,
+    "P6_fetch": 3.5,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.116,
+    "P2_stored": 0.0,
+    "P3_act": 0.009,
+    "P4_carried": 0.015,
+    "P5_apply": 0.856,
+    "P6_fetch": 0.003,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:53903)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 3.8,
+   "last_ms": 3.9,
+   "gets_ms": 3.9,
+   "changes": 2
+  }
+ },
+ "T1-loopback-median": {
+  "value": 1182.0,
+  "target": "300 ms",
+  "verdict": "failed",
+  "start": {
+   "load": [
+    9.38,
+    11.63,
+    24.32
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.2
+  },
+  "end": {
+   "load": [
+    14.2,
+    12.54,
+    24.21
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.0
+  },
+  "unit": "ms",
+  "each_s": [
+   1.468,
+   1.322,
+   1.149,
+   1.105,
+   1.182,
+   1.182,
+   1.12,
+   1.245,
+   1.087,
+   1.199
+  ],
+  "path": "loopback",
+  "phases": {
+   "median_ms": {
+    "P1_found": 65.4,
+    "P2_stored": 0.4,
+    "P3_act": 7.7,
+    "P4_carried": 11.2,
+    "P5_apply": 957.8,
+    "P6_fetch": 2.0,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.063,
+    "P2_stored": 0.0,
+    "P3_act": 0.007,
+    "P4_carried": 0.011,
+    "P5_apply": 0.917,
+    "P6_fetch": 0.002,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:53903)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 2.4,
+   "last_ms": 2.4,
+   "gets_ms": 2.5,
+   "changes": 20
+  },
+  "record_bytes": [
+   739,
+   739,
+   739,
+   739,
+   739,
+   739,
+   739,
+   739,
+   740,
+   741
+  ]
+ },
+ "T2-loopback": {
+  "value": 24305.0,
+  "target": "10 s",
+  "verdict": "could-not-judge: load 14.2-26.29 past 18.0",
+  "start": {
+   "load": [
+    14.2,
+    12.54,
+    24.21
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 160.0
+  },
+  "end": {
+   "load": [
+    26.29,
+    23.52,
+    25.86
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 153.4
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "files": 1000,
+  "size": 4096,
+  "phases": {
+   "median_ms": {
+    "P1_found": 1243.0,
+    "P2_stored": 0.2,
+    "P3_act": 232.6,
+    "P4_carried": 57.1,
+    "P5_apply": 10594.7,
+    "P6_fetch": 12.0,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.102,
+    "P2_stored": 0.0,
+    "P3_act": 0.019,
+    "P4_carried": 0.005,
+    "P5_apply": 0.873,
+    "P6_fetch": 0.001,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:53903)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 11.8,
+   "last_ms": 12.0,
+   "gets_ms": 12.0,
+   "changes": 2000
+  },
+  "holder": {
+   "gets": 2000,
+   "median_ms": 6.5,
+   "sum_ms": 13544.6
+  },
+  "member_steps": {
+   "read_ms": 2.0,
+   "walk_ms": 10.0,
+   "take_ms": 6.0,
+   "write_ms": 0.0,
+   "apply_ms": 8.0,
+   "kept_ms": 1.0,
+   "ms": 35.0,
+   "steps": 320
+  }
+ },
+ "loopback-change-1m": {
+  "value": 1260.0,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    26.29,
+    23.52,
+    25.86
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 153.4
+  },
+  "end": {
+   "load": [
+    25.53,
+    23.44,
+    25.8
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 152.6
+  },
+  "unit": "ms",
+  "each_s": [
+   1.229,
+   1.26,
+   2.108
+  ],
+  "path": "loopback",
+  "phases": {
+   "median_ms": {
+    "P1_found": 112.7,
+    "P2_stored": 3.0,
+    "P3_act": 22.6,
+    "P4_carried": 44.0,
+    "P5_apply": 541.2,
+    "P6_fetch": 38.5,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.148,
+    "P2_stored": 0.004,
+    "P3_act": 0.03,
+    "P4_carried": 0.058,
+    "P5_apply": 0.71,
+    "P6_fetch": 0.051,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:53903)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 10.1,
+   "last_ms": 38.7,
+   "gets_ms": 38.7,
+   "changes": 6
+  }
+ },
+ "T3T4-loopback-rate": {
+  "value": 11.8,
+  "target": "100 MB/s over P6",
+  "verdict": "could-not-judge: load 25.53-25.93 past 18.0",
+  "start": {
+   "load": [
+    25.53,
+    23.44,
+    25.8
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 152.6
+  },
+  "end": {
+   "load": [
+    25.93,
+    23.64,
+    25.83
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 153.8
+  },
+  "unit": "MB/s",
+  "path": "loopback",
+  "end_to_end_ms": 11072.0,
+  "per_member_mb_s": [
+   11.9,
+   11.8
+  ],
+  "phases": {
+   "median_ms": {
+    "P1_found": 828.7,
+    "P2_stored": 219.4,
+    "P3_act": 21.7,
+    "P4_carried": 47.2,
+    "P5_apply": 865.6,
+    "P6_fetch": 8878.0,
+    "P7_write": 1.0
+   },
+   "share": {
+    "P1_found": 0.076,
+    "P2_stored": 0.02,
+    "P3_act": 0.002,
+    "P4_carried": 0.004,
+    "P5_apply": 0.08,
+    "P6_fetch": 0.817,
+    "P7_write": 0.0
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:53903)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 9.6,
+   "last_ms": 48.7,
+   "gets_ms": 5136.6,
+   "changes": 2
+  },
+  "holder": {
+   "gets": 200,
+   "median_ms": 6.7,
+   "sum_ms": 1430.0
+  }
+ },
+ "T3T4-loopback-edit": {
+  "value": 104857600,
+  "target": "at most 2 MiB moved",
+  "verdict": "could-not-judge: load 25.93-22.84 past 18.0",
+  "start": {
+   "load": [
+    25.93,
+    23.64,
+    25.83
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 153.8
+  },
+  "end": {
+   "load": [
+    22.84,
+    23.07,
+    25.59
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 153.0
+  },
+  "unit": "bytes",
+  "path": "loopback",
+  "edit_bytes": 1048576,
+  "per_member": [
+   104857600,
+   104857600
+  ],
+  "end_to_end_ms": 10511.0,
+  "phases": {
+   "median_ms": {
+    "P1_found": 829.5,
+    "P2_stored": 234.8,
+    "P3_act": 25.3,
+    "P4_carried": 39.0,
+    "P5_apply": 551.5,
+    "P6_fetch": 8003.5,
+    "P7_write": 115.0
+   },
+   "share": {
+    "P1_found": 0.085,
+    "P2_stored": 0.024,
+    "P3_act": 0.003,
+    "P4_carried": 0.004,
+    "P5_apply": 0.056,
+    "P6_fetch": 0.817,
+    "P7_write": 0.012
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:53903)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 8.9,
+   "last_ms": 50.0,
+   "gets_ms": 4958.1,
+   "changes": 2
+  }
+ },
+ "two-writers#0": {
+  "value": 1811.3,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    22.84,
+    23.07,
+    25.59
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 153.0
+  },
+  "end": {
+   "load": [
+    22.84,
+    23.07,
+    25.59
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 152.9
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "each_ms": [
+   1811.1,
+   1811.3
+  ],
+  "phases": {
+   "median_ms": {
+    "P1_found": 711.5,
+    "P2_stored": 0.5,
+    "P3_act": 19.4,
+    "P4_carried": 39.0,
+    "P5_apply": 894.0,
+    "P6_fetch": 9.5,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.425,
+    "P2_stored": 0.0,
+    "P3_act": 0.012,
+    "P4_carried": 0.023,
+    "P5_apply": 0.534,
+    "P6_fetch": 0.006,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:53903)",
+    "direct Ip(127.0.0.1:65000)"
+   ],
+   "dial_ms": 0.6,
+   "first_ms": 7.9,
+   "last_ms": 7.9,
+   "gets_ms": 7.9,
+   "changes": 4
+  }
+ },
+ "two-writers#1": {
+  "value": 1409.6,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    22.84,
+    23.07,
+    25.59
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 152.9
+  },
+  "end": {
+   "load": [
+    22.38,
+    22.97,
+    25.54
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 152.8
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "each_ms": [
+   1409.4,
+   1409.6
+  ],
+  "phases": {
+   "median_ms": {
+    "P1_found": 289.5,
+    "P2_stored": 0.4,
+    "P3_act": 21.6,
+    "P4_carried": 42.7,
+    "P5_apply": 890.9,
+    "P6_fetch": 7.5,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.231,
+    "P2_stored": 0.0,
+    "P3_act": 0.017,
+    "P4_carried": 0.034,
+    "P5_apply": 0.711,
+    "P6_fetch": 0.006,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:53903)",
+    "direct Ip(127.0.0.1:65000)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 7.8,
+   "last_ms": 7.9,
+   "gets_ms": 7.9,
+   "changes": 4
+  }
+ },
+ "two-writers#2": {
+  "value": 1456.6,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    22.38,
+    22.97,
+    25.54
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 152.8
+  },
+  "end": {
+   "load": [
+    22.38,
+    22.97,
+    25.54
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 152.8
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "each_ms": [
+   1456.4,
+   1456.6
+  ],
+  "phases": {
+   "median_ms": {
+    "P1_found": 297.4,
+    "P2_stored": 4.5,
+    "P3_act": 23.9,
+    "P4_carried": 43.6,
+    "P5_apply": 886.1,
+    "P6_fetch": 7.5,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.235,
+    "P2_stored": 0.004,
+    "P3_act": 0.019,
+    "P4_carried": 0.035,
+    "P5_apply": 0.702,
+    "P6_fetch": 0.006,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:53903)",
+    "direct Ip(127.0.0.1:65000)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 8.0,
+   "last_ms": 8.1,
+   "gets_ms": 8.1,
+   "changes": 4
+  }
+ },
+ "T6#0": {
+  "value": 1640.3,
+  "target": "1 s",
+  "verdict": "could-not-judge: load 19.63-19.63 past 18.0",
+  "start": {
+   "load": [
+    19.63,
+    22.04,
+    25.0
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 151.7
+  },
+  "end": {
+   "load": [
+    19.63,
+    22.04,
+    25.0
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 152.6
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "each_ms": [
+   1477.8,
+   1478.5,
+   1479.2,
+   1479.9,
+   1636.9,
+   1637.7,
+   1638.3,
+   1639.0,
+   1639.7,
+   1640.3
+  ],
+  "phases": {
+   "median_ms": {
+    "P1_found": 339.0,
+    "P2_stored": 3.2,
+    "P3_act": 33.6,
+    "P4_carried": 232.7,
+    "P5_apply": 874.3,
+    "P6_fetch": 9.0,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.227,
+    "P2_stored": 0.002,
+    "P3_act": 0.023,
+    "P4_carried": 0.156,
+    "P5_apply": 0.586,
+    "P6_fetch": 0.006,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:51735)",
+    "direct Ip(127.0.0.1:52097)",
+    "direct Ip(127.0.0.1:53061)",
+    "direct Ip(127.0.0.1:56092)",
+    "direct Ip(127.0.0.1:58886)",
+    "direct Ip(127.0.0.1:60737)",
+    "direct Ip(127.0.0.1:61376)",
+    "direct Ip(127.0.0.1:61917)",
+    "direct Ip(127.0.0.1:64160)",
+    "direct Ip(127.0.0.1:64594)"
+   ],
+   "dial_ms": 1.6,
+   "first_ms": 7.6,
+   "last_ms": 8.3,
+   "gets_ms": 8.3,
+   "changes": 90
+  }
+ },
+ "T6#1": {
+  "value": 1500.4,
+  "target": "1 s",
+  "verdict": "could-not-judge: load 20.46-20.46 past 18.0",
+  "start": {
+   "load": [
+    20.46,
+    22.17,
+    25.03
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 152.5
+  },
+  "end": {
+   "load": [
+    20.46,
+    22.17,
+    25.03
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 152.5
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "each_ms": [
+   1319.7,
+   1320.5,
+   1321.3,
+   1322.2,
+   1323.4,
+   1496.2,
+   1496.8,
+   1497.5,
+   1498.1,
+   1500.4
+  ],
+  "phases": {
+   "median_ms": {
+    "P1_found": 161.1,
+    "P2_stored": 6.6,
+    "P3_act": 21.5,
+    "P4_carried": 200.5,
+    "P5_apply": 879.8,
+    "P6_fetch": 9.0,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.126,
+    "P2_stored": 0.005,
+    "P3_act": 0.017,
+    "P4_carried": 0.157,
+    "P5_apply": 0.688,
+    "P6_fetch": 0.007,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:51735)",
+    "direct Ip(127.0.0.1:52097)",
+    "direct Ip(127.0.0.1:53061)",
+    "direct Ip(127.0.0.1:56092)",
+    "direct Ip(127.0.0.1:58886)",
+    "direct Ip(127.0.0.1:60737)",
+    "direct Ip(127.0.0.1:61376)",
+    "direct Ip(127.0.0.1:61917)",
+    "direct Ip(127.0.0.1:64160)",
+    "direct Ip(127.0.0.1:64594)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 7.3,
+   "last_ms": 7.7,
+   "gets_ms": 7.7,
+   "changes": 90
+  }
+ },
+ "T6#2": {
+  "value": 2371.7,
+  "target": "1 s",
+  "verdict": "could-not-judge: load 20.1-20.1 past 18.0",
+  "start": {
+   "load": [
+    20.1,
+    22.07,
+    24.98
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 152.4
+  },
+  "end": {
+   "load": [
+    20.1,
+    22.07,
+    24.98
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 152.2
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "each_ms": [
+   1945.9,
+   2273.1,
+   2274.8,
+   2275.5,
+   2276.8,
+   2277.7,
+   2278.5,
+   2279.2,
+   2280.0,
+   2371.7
+  ],
+  "phases": {
+   "median_ms": {
+    "P1_found": 838.8,
+    "P2_stored": 2.6,
+    "P3_act": 31.1,
+    "P4_carried": 56.7,
+    "P5_apply": 1114.8,
+    "P6_fetch": 6.0,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.409,
+    "P2_stored": 0.001,
+    "P3_act": 0.015,
+    "P4_carried": 0.028,
+    "P5_apply": 0.544,
+    "P6_fetch": 0.003,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:51735)",
+    "direct Ip(127.0.0.1:52097)",
+    "direct Ip(127.0.0.1:53061)",
+    "direct Ip(127.0.0.1:56092)",
+    "direct Ip(127.0.0.1:58886)",
+    "direct Ip(127.0.0.1:60737)",
+    "direct Ip(127.0.0.1:61376)",
+    "direct Ip(127.0.0.1:61917)",
+    "direct Ip(127.0.0.1:64160)",
+    "direct Ip(127.0.0.1:64594)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 6.6,
+   "last_ms": 6.7,
+   "gets_ms": 6.7,
+   "changes": 90
+  }
+ },
+ "T1-relay#0": {
+  "value": 1435.0,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    19.79,
+    21.69,
+    24.63
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 148.4
+  },
+  "end": {
+   "load": [
+    19.17,
+    21.53,
+    24.55
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 148.3
+  },
+  "unit": "ms",
+  "path": "relay",
+  "phases": {
+   "median_ms": {
+    "P1_found": 308.2,
+    "P2_stored": 0.5,
+    "P3_act": 13.6,
+    "P4_carried": 11.3,
+    "P5_apply": 991.1,
+    "P6_fetch": 18.0,
+    "P7_write": 1.0
+   },
+   "share": {
+    "P1_found": 0.229,
+    "P2_stored": 0.0,
+    "P3_act": 0.01,
+    "P4_carried": 0.008,
+    "P5_apply": 0.738,
+    "P6_fetch": 0.013,
+    "P7_write": 0.001
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:64508)"
+   ],
+   "dial_ms": 11.4,
+   "first_ms": 18.2,
+   "last_ms": 18.3,
+   "gets_ms": 18.3,
+   "changes": 2
+  }
+ },
+ "T1-relay#1": {
+  "value": 1116.0,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    19.17,
+    21.53,
+    24.55
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 148.3
+  },
+  "end": {
+   "load": [
+    19.17,
+    21.53,
+    24.55
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 148.3
+  },
+  "unit": "ms",
+  "path": "relay",
+  "phases": {
+   "median_ms": {
+    "P1_found": 67.1,
+    "P2_stored": 0.6,
+    "P3_act": 6.7,
+    "P4_carried": 20.0,
+    "P5_apply": 984.8,
+    "P6_fetch": 8.0,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.062,
+    "P2_stored": 0.001,
+    "P3_act": 0.006,
+    "P4_carried": 0.018,
+    "P5_apply": 0.906,
+    "P6_fetch": 0.007,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:64508)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 8.2,
+   "last_ms": 8.2,
+   "gets_ms": 8.2,
+   "changes": 2
+  }
+ },
+ "T1-relay#2": {
+  "value": 1229.0,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    18.75,
+    21.4,
+    24.49
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 148.3
+  },
+  "end": {
+   "load": [
+    18.75,
+    21.4,
+    24.49
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 148.3
+  },
+  "unit": "ms",
+  "path": "relay",
+  "phases": {
+   "median_ms": {
+    "P1_found": 120.0,
+    "P2_stored": 0.9,
+    "P3_act": 8.1,
+    "P4_carried": 14.4,
+    "P5_apply": 992.8,
+    "P6_fetch": 12.5,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.104,
+    "P2_stored": 0.001,
+    "P3_act": 0.007,
+    "P4_carried": 0.013,
+    "P5_apply": 0.864,
+    "P6_fetch": 0.011,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:64508)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 12.7,
+   "last_ms": 12.9,
+   "gets_ms": 12.9,
+   "changes": 2
+  }
+ },
+ "T1-relay#3": {
+  "value": 1216.0,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    18.75,
+    21.4,
+    24.49
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 148.4
+  },
+  "end": {
+   "load": [
+    18.85,
+    21.38,
+    24.46
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 148.4
+  },
+  "unit": "ms",
+  "path": "relay",
+  "phases": {
+   "median_ms": {
+    "P1_found": 122.9,
+    "P2_stored": 0.4,
+    "P3_act": 9.3,
+    "P4_carried": 13.6,
+    "P5_apply": 991.3,
+    "P6_fetch": 1.5,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.108,
+    "P2_stored": 0.0,
+    "P3_act": 0.008,
+    "P4_carried": 0.012,
+    "P5_apply": 0.87,
+    "P6_fetch": 0.001,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:64508)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 1.6,
+   "last_ms": 1.7,
+   "gets_ms": 1.7,
+   "changes": 2
+  }
+ },
+ "T1-relay#4": {
+  "value": 1120.0,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    18.85,
+    21.38,
+    24.46
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 148.4
+  },
+  "end": {
+   "load": [
+    18.85,
+    21.38,
+    24.46
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 148.3
+  },
+  "unit": "ms",
+  "path": "relay",
+  "phases": {
+   "median_ms": {
+    "P1_found": 74.1,
+    "P2_stored": 1.4,
+    "P3_act": 15.2,
+    "P4_carried": 13.1,
+    "P5_apply": 979.2,
+    "P6_fetch": 8.5,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.068,
+    "P2_stored": 0.001,
+    "P3_act": 0.014,
+    "P4_carried": 0.012,
+    "P5_apply": 0.897,
+    "P6_fetch": 0.008,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:64508)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 8.8,
+   "last_ms": 8.9,
+   "gets_ms": 8.9,
+   "changes": 2
+  }
+ },
+ "T1-relay-median": {
+  "value": 1216.0,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    19.79,
+    21.69,
+    24.63
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 148.4
+  },
+  "end": {
+   "load": [
+    18.85,
+    21.38,
+    24.46
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 148.2
+  },
+  "unit": "ms",
+  "each_s": [
+   1.435,
+   1.116,
+   1.229,
+   1.216,
+   1.12
+  ],
+  "path": "relay",
+  "phases": {
+   "median_ms": {
+    "P1_found": 120.0,
+    "P2_stored": 0.6,
+    "P3_act": 9.3,
+    "P4_carried": 14.4,
+    "P5_apply": 985.9,
+    "P6_fetch": 8.5,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.105,
+    "P2_stored": 0.001,
+    "P3_act": 0.008,
+    "P4_carried": 0.013,
+    "P5_apply": 0.866,
+    "P6_fetch": 0.007,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:64508)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 8.6,
+   "last_ms": 8.6,
+   "gets_ms": 8.7,
+   "changes": 10
+  },
+  "record_bytes": [
+   739,
+   739,
+   739,
+   739,
+   739
+  ]
+ },
+ "T2-relay": {
+  "value": 20083.0,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    18.85,
+    21.38,
+    24.46
+   ],
+   "cores": 12,
+   "swap_used_mb": 5920.56,
+   "free_gb": 148.2
+  },
+  "end": {
+   "load": [
+    20.85,
+    22.47,
+    24.36
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 144.8
+  },
+  "unit": "ms",
+  "path": "relay",
+  "files": 1000,
+  "size": 4096,
+  "phases": {
+   "median_ms": {
+    "P1_found": 1274.2,
+    "P2_stored": 0.2,
+    "P3_act": 167.2,
+    "P4_carried": 84.0,
+    "P5_apply": 8534.5,
+    "P6_fetch": 11.0,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.127,
+    "P2_stored": 0.0,
+    "P3_act": 0.017,
+    "P4_carried": 0.008,
+    "P5_apply": 0.847,
+    "P6_fetch": 0.001,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:64508)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 11.3,
+   "last_ms": 11.3,
+   "gets_ms": 11.3,
+   "changes": 2000
+  },
+  "holder": {
+   "gets": 2000,
+   "median_ms": 5.9,
+   "sum_ms": 12248.1
+  },
+  "member_steps": {
+   "read_ms": 2.0,
+   "walk_ms": 8.0,
+   "take_ms": 5.0,
+   "write_ms": 0.0,
+   "apply_ms": 8.0,
+   "kept_ms": 1.0,
+   "ms": 27.0,
+   "steps": 245
+  }
+ },
+ "relay-change-1m": {
+  "value": 1196.0,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    20.85,
+    22.47,
+    24.36
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 144.8
+  },
+  "end": {
+   "load": [
+    20.76,
+    22.39,
+    24.31
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 144.7
+  },
+  "unit": "ms",
+  "each_s": [
+   1.278,
+   1.054,
+   1.196
+  ],
+  "path": "relay",
+  "phases": {
+   "median_ms": {
+    "P1_found": 430.6,
+    "P2_stored": 4.2,
+    "P3_act": 18.6,
+    "P4_carried": 36.3,
+    "P5_apply": 377.2,
+    "P6_fetch": 23.5,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.484,
+    "P2_stored": 0.005,
+    "P3_act": 0.021,
+    "P4_carried": 0.041,
+    "P5_apply": 0.424,
+    "P6_fetch": 0.026,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:64508)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 7.8,
+   "last_ms": 24.0,
+   "gets_ms": 24.0,
+   "changes": 6
+  }
+ },
+ "T3T4-relay-rate": {
+  "value": 13.4,
+  "target": "100 MB/s over P6",
+  "verdict": "could-not-judge: load 20.76-21.77 past 18.0",
+  "start": {
+   "load": [
+    20.76,
+    22.39,
+    24.31
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 144.7
+  },
+  "end": {
+   "load": [
+    21.77,
+    22.54,
+    24.34
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 143.7
+  },
+  "unit": "MB/s",
+  "path": "relay",
+  "end_to_end_ms": 9498.0,
+  "per_member_mb_s": [
+   13.4,
+   13.4
+  ],
+  "phases": {
+   "median_ms": {
+    "P1_found": 159.0,
+    "P2_stored": 217.8,
+    "P3_act": 25.8,
+    "P4_carried": 47.8,
+    "P5_apply": 680.1,
+    "P6_fetch": 7809.5,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.018,
+    "P2_stored": 0.024,
+    "P3_act": 0.003,
+    "P4_carried": 0.005,
+    "P5_apply": 0.076,
+    "P6_fetch": 0.874,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:64508)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 9.1,
+   "last_ms": 41.9,
+   "gets_ms": 4463.8,
+   "changes": 2
+  },
+  "holder": {
+   "gets": 200,
+   "median_ms": 5.9,
+   "sum_ms": 1208.0
+  }
+ },
+ "T3T4-relay-edit": {
+  "value": 104857600,
+  "target": "at most 2 MiB moved",
+  "verdict": "could-not-judge: load 21.77-22.55 past 18.0",
+  "start": {
+   "load": [
+    21.77,
+    22.54,
+    24.34
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 143.7
+  },
+  "end": {
+   "load": [
+    22.55,
+    22.69,
+    24.37
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 142.8
+  },
+  "unit": "bytes",
+  "path": "relay",
+  "edit_bytes": 1048576,
+  "per_member": [
+   104857600,
+   104857600
+  ],
+  "end_to_end_ms": 10163.0,
+  "phases": {
+   "median_ms": {
+    "P1_found": 463.9,
+    "P2_stored": 195.6,
+    "P3_act": 25.6,
+    "P4_carried": 21.9,
+    "P5_apply": 593.3,
+    "P6_fetch": 8163.0,
+    "P7_write": 136.0
+   },
+   "share": {
+    "P1_found": 0.048,
+    "P2_stored": 0.02,
+    "P3_act": 0.003,
+    "P4_carried": 0.002,
+    "P5_apply": 0.062,
+    "P6_fetch": 0.85,
+    "P7_write": 0.014
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:64508)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 9.4,
+   "last_ms": 43.6,
+   "gets_ms": 4681.0,
+   "changes": 2
+  }
+ },
+ "T1-n0#0": {
+  "value": 1390.0,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    21.12,
+    22.35,
+    24.13
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 141.1
+  },
+  "end": {
+   "load": [
+    20.23,
+    22.15,
+    24.05
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 141.1
+  },
+  "unit": "ms",
+  "path": "n0",
+  "phases": {
+   "median_ms": {
+    "P1_found": 318.6,
+    "P2_stored": 0.4,
+    "P3_act": 9.7,
+    "P4_carried": 12.8,
+    "P5_apply": 993.0,
+    "P6_fetch": 4.0,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.238,
+    "P2_stored": 0.0,
+    "P3_act": 0.007,
+    "P4_carried": 0.01,
+    "P5_apply": 0.742,
+    "P6_fetch": 0.003,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(192.168.1.4:49618)"
+   ],
+   "dial_ms": 1.7,
+   "first_ms": 3.1,
+   "last_ms": 3.2,
+   "gets_ms": 3.2,
+   "changes": 2
+  }
+ },
+ "T1-n0#1": {
+  "value": 1224.0,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    20.23,
+    22.15,
+    24.05
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 141.1
+  },
+  "end": {
+   "load": [
+    20.23,
+    22.15,
+    24.05
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 141.0
+  },
+  "unit": "ms",
+  "path": "n0",
+  "phases": {
+   "median_ms": {
+    "P1_found": 136.0,
+    "P2_stored": 0.4,
+    "P3_act": 14.5,
+    "P4_carried": 12.9,
+    "P5_apply": 991.0,
+    "P6_fetch": 2.5,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.118,
+    "P2_stored": 0.0,
+    "P3_act": 0.013,
+    "P4_carried": 0.011,
+    "P5_apply": 0.856,
+    "P6_fetch": 0.002,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(192.168.1.4:49618)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 2.9,
+   "last_ms": 2.9,
+   "gets_ms": 2.9,
+   "changes": 2
+  }
+ },
+ "T1-n0#2": {
+  "value": 1188.0,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    19.81,
+    22.03,
+    23.99
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 140.9
+  },
+  "end": {
+   "load": [
+    19.81,
+    22.03,
+    23.99
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 140.9
+  },
+  "unit": "ms",
+  "path": "n0",
+  "phases": {
+   "median_ms": {
+    "P1_found": 136.8,
+    "P2_stored": 0.4,
+    "P3_act": 11.1,
+    "P4_carried": 11.4,
+    "P5_apply": 987.2,
+    "P6_fetch": 12.5,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.118,
+    "P2_stored": 0.0,
+    "P3_act": 0.01,
+    "P4_carried": 0.01,
+    "P5_apply": 0.851,
+    "P6_fetch": 0.011,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(192.168.1.4:49618)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 13.0,
+   "last_ms": 13.1,
+   "gets_ms": 13.1,
+   "changes": 2
+  }
+ },
+ "T1-n0#3": {
+  "value": 1251.0,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    19.81,
+    22.03,
+    23.99
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 140.9
+  },
+  "end": {
+   "load": [
+    19.59,
+    21.94,
+    23.95
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 140.8
+  },
+  "unit": "ms",
+  "path": "n0",
+  "phases": {
+   "median_ms": {
+    "P1_found": 109.2,
+    "P2_stored": 0.7,
+    "P3_act": 8.0,
+    "P4_carried": 10.2,
+    "P5_apply": 993.0,
+    "P6_fetch": 9.0,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.097,
+    "P2_stored": 0.001,
+    "P3_act": 0.007,
+    "P4_carried": 0.009,
+    "P5_apply": 0.879,
+    "P6_fetch": 0.008,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(192.168.1.4:49618)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 8.3,
+   "last_ms": 8.4,
+   "gets_ms": 8.4,
+   "changes": 2
+  }
+ },
+ "T1-n0#4": {
+  "value": 1159.0,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    19.59,
+    21.94,
+    23.95
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 140.8
+  },
+  "end": {
+   "load": [
+    19.59,
+    21.94,
+    23.95
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 140.8
+  },
+  "unit": "ms",
+  "path": "n0",
+  "phases": {
+   "median_ms": {
+    "P1_found": 30.9,
+    "P2_stored": 0.5,
+    "P3_act": 8.4,
+    "P4_carried": 12.8,
+    "P5_apply": 497.9,
+    "P6_fetch": 7.0,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.055,
+    "P2_stored": 0.001,
+    "P3_act": 0.015,
+    "P4_carried": 0.023,
+    "P5_apply": 0.893,
+    "P6_fetch": 0.013,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(192.168.1.4:49618)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 7.2,
+   "last_ms": 7.2,
+   "gets_ms": 7.2,
+   "changes": 2
+  }
+ },
+ "T1-n0-median": {
+  "value": 1224.0,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    21.12,
+    22.35,
+    24.13
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 141.1
+  },
+  "end": {
+   "load": [
+    19.59,
+    21.94,
+    23.95
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 140.8
+  },
+  "unit": "ms",
+  "each_s": [
+   1.39,
+   1.224,
+   1.188,
+   1.251,
+   1.159
+  ],
+  "path": "n0",
+  "phases": {
+   "median_ms": {
+    "P1_found": 136.0,
+    "P2_stored": 0.4,
+    "P3_act": 9.7,
+    "P4_carried": 10.4,
+    "P5_apply": 990.5,
+    "P6_fetch": 5.0,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.118,
+    "P2_stored": 0.0,
+    "P3_act": 0.008,
+    "P4_carried": 0.009,
+    "P5_apply": 0.86,
+    "P6_fetch": 0.004,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(192.168.1.4:49618)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 3.3,
+   "last_ms": 3.4,
+   "gets_ms": 3.5,
+   "changes": 10
+  },
+  "record_bytes": [
+   739,
+   739,
+   739,
+   739,
+   739
+  ]
+ },
+ "T2-n0": {
+  "value": 16370.000000000002,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    19.59,
+    21.94,
+    23.95
+   ],
+   "cores": 12,
+   "swap_used_mb": 5912.56,
+   "free_gb": 140.8
+  },
+  "end": {
+   "load": [
+    24.59,
+    23.71,
+    24.16
+   ],
+   "cores": 12,
+   "swap_used_mb": 5904.56,
+   "free_gb": 129.1
+  },
+  "unit": "ms",
+  "path": "n0",
+  "files": 1000,
+  "size": 4096,
+  "phases": {
+   "median_ms": {
+    "P1_found": 1283.1,
+    "P2_stored": 0.1,
+    "P3_act": 77.5,
+    "P4_carried": 61.4,
+    "P5_apply": 8158.4,
+    "P6_fetch": 11.0,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.134,
+    "P2_stored": 0.0,
+    "P3_act": 0.008,
+    "P4_carried": 0.006,
+    "P5_apply": 0.851,
+    "P6_fetch": 0.001,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(192.168.1.4:49618)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 11.4,
+   "last_ms": 11.5,
+   "gets_ms": 11.5,
+   "changes": 2000
+  },
+  "holder": {
+   "gets": 2000,
+   "median_ms": 6.0,
+   "sum_ms": 11414.4
+  },
+  "member_steps": {
+   "read_ms": 2.0,
+   "walk_ms": 8.0,
+   "take_ms": 6.0,
+   "write_ms": 0.0,
+   "apply_ms": 8.0,
+   "kept_ms": 1.0,
+   "ms": 28.0,
+   "steps": 266
+  }
+ },
+ "n0-change-1m": {
+  "value": 1048.0,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    24.59,
+    23.71,
+    24.16
+   ],
+   "cores": 12,
+   "swap_used_mb": 5904.56,
+   "free_gb": 129.1
+  },
+  "end": {
+   "load": [
+    24.53,
+    23.72,
+    24.16
+   ],
+   "cores": 12,
+   "swap_used_mb": 5896.56,
+   "free_gb": 128.6
+  },
+  "unit": "ms",
+  "each_s": [
+   1.242,
+   0.967,
+   1.048
+  ],
+  "path": "n0",
+  "phases": {
+   "median_ms": {
+    "P1_found": 475.3,
+    "P2_stored": 3.3,
+    "P3_act": 18.3,
+    "P4_carried": 33.4,
+    "P5_apply": 410.8,
+    "P6_fetch": 50.0,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.48,
+    "P2_stored": 0.003,
+    "P3_act": 0.018,
+    "P4_carried": 0.034,
+    "P5_apply": 0.414,
+    "P6_fetch": 0.05,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(192.168.1.4:49618)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 7.3,
+   "last_ms": 48.8,
+   "gets_ms": 48.8,
+   "changes": 6
+  }
+ },
+ "T3T4-n0-rate": {
+  "value": 11.1,
+  "target": "100 MB/s over P6",
+  "verdict": "could-not-judge: load 24.53-26.82 past 18.0",
+  "start": {
+   "load": [
+    24.53,
+    23.72,
+    24.16
+   ],
+   "cores": 12,
+   "swap_used_mb": 5896.56,
+   "free_gb": 128.6
+  },
+  "end": {
+   "load": [
+    26.82,
+    24.26,
+    24.34
+   ],
+   "cores": 12,
+   "swap_used_mb": 5896.56,
+   "free_gb": 127.1
+  },
+  "unit": "MB/s",
+  "path": "n0",
+  "end_to_end_ms": 10831.0,
+  "per_member_mb_s": [
+   11.1,
+   11.2
+  ],
+  "phases": {
+   "median_ms": {
+    "P1_found": 613.0,
+    "P2_stored": 269.3,
+    "P3_act": 28.2,
+    "P4_carried": 41.3,
+    "P5_apply": 145.7,
+    "P6_fetch": 9398.5,
+    "P7_write": 2.0
+   },
+   "share": {
+    "P1_found": 0.058,
+    "P2_stored": 0.026,
+    "P3_act": 0.003,
+    "P4_carried": 0.004,
+    "P5_apply": 0.014,
+    "P6_fetch": 0.895,
+    "P7_write": 0.0
+   },
+   "paths": [
+    "direct Ip(192.168.1.4:49618)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 8.9,
+   "last_ms": 61.2,
+   "gets_ms": 6208.1,
+   "changes": 2
+  },
+  "holder": {
+   "gets": 200,
+   "median_ms": 5.8,
+   "sum_ms": 1149.3
+  }
+ },
+ "T3T4-n0-edit": {
+  "value": 104857600,
+  "target": "at most 2 MiB moved",
+  "verdict": "could-not-judge: load 26.82-25.24 past 18.0",
+  "start": {
+   "load": [
+    26.82,
+    24.26,
+    24.34
+   ],
+   "cores": 12,
+   "swap_used_mb": 5896.56,
+   "free_gb": 127.1
+  },
+  "end": {
+   "load": [
+    25.24,
+    24.05,
+    24.26
+   ],
+   "cores": 12,
+   "swap_used_mb": 5896.56,
+   "free_gb": 126.3
+  },
+  "unit": "bytes",
+  "path": "n0",
+  "edit_bytes": 1048576,
+  "per_member": [
+   104857600,
+   104857600
+  ],
+  "end_to_end_ms": 15016.0,
+  "phases": {
+   "median_ms": {
+    "P1_found": 842.4,
+    "P2_stored": 197.0,
+    "P3_act": 21.8,
+    "P4_carried": 38.8,
+    "P5_apply": 930.3,
+    "P6_fetch": 12534.5,
+    "P7_write": 125.0
+   },
+   "share": {
+    "P1_found": 0.057,
+    "P2_stored": 0.013,
+    "P3_act": 0.001,
+    "P4_carried": 0.003,
+    "P5_apply": 0.063,
+    "P6_fetch": 0.853,
+    "P7_write": 0.009
+   },
+   "paths": [
+    "direct Ip(192.168.1.4:49618)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 11.1,
+   "last_ms": 68.1,
+   "gets_ms": 7823.9,
+   "changes": 2
+  }
+ },
+ "f10k-taken": {
+  "value": 3721.7,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    27.47,
+    24.53,
+    24.43
+   ],
+   "cores": 12,
+   "swap_used_mb": 5896.56,
+   "free_gb": 127.2
+  },
+  "end": {
+   "load": [
+    32.85,
+    26.21,
+    25.04
+   ],
+   "cores": 12,
+   "swap_used_mb": 5896.56,
+   "free_gb": 129.1
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "steps": {
+   "read_ms": 0.0,
+   "walk_ms": 72.0,
+   "take_ms": 2930.0,
+   "write_ms": 113.0,
+   "apply_ms": 589.0,
+   "kept_ms": 15.0,
+   "ms": 3720.0,
+   "steps": 1
+  }
+ },
+ "f10k-idle": {
+  "value": 16.13,
+  "target": "under 2% of a core",
+  "verdict": "could-not-judge: load 29.79-22.88 past 18.0",
+  "start": {
+   "load": [
+    29.79,
+    25.77,
+    24.9
+   ],
+   "cores": 12,
+   "swap_used_mb": 5896.56,
+   "free_gb": 128.0
+  },
+  "end": {
+   "load": [
+    22.88,
+    24.39,
+    24.44
+   ],
+   "cores": 12,
+   "swap_used_mb": 5896.56,
+   "free_gb": 122.1
+  },
+  "unit": "% of a core",
+  "steps": {
+   "read_ms": 24.0,
+   "walk_ms": 68.0,
+   "take_ms": 51.0,
+   "write_ms": 0.0,
+   "apply_ms": 52.0,
+   "kept_ms": 12.0,
+   "ms": 204.0,
+   "steps": 49
+  }
+ },
+ "f10k-found#0": {
+  "value": 1051.4,
+  "target": "within 1 s",
+  "verdict": "could-not-judge: load 22.88-24.97 past 18.0",
+  "start": {
+   "load": [
+    22.88,
+    24.39,
+    24.44
+   ],
+   "cores": 12,
+   "swap_used_mb": 5896.56,
+   "free_gb": 122.1
+  },
+  "end": {
+   "load": [
+    24.97,
+    24.8,
+    24.58
+   ],
+   "cores": 12,
+   "swap_used_mb": 5896.56,
+   "free_gb": 122.1
+  },
+  "unit": "ms",
+  "steps": {
+   "read_ms": 22.0,
+   "walk_ms": 47.0,
+   "take_ms": 68.0,
+   "write_ms": 47.0,
+   "apply_ms": 25.0,
+   "kept_ms": 4.0,
+   "ms": 216.0,
+   "steps": 1
+  }
+ },
+ "f10k-found#1": {
+  "value": 524.9,
+  "target": "within 1 s",
+  "verdict": "could-not-judge: load 24.97-24.97 past 18.0",
+  "start": {
+   "load": [
+    24.97,
+    24.8,
+    24.58
+   ],
+   "cores": 12,
+   "swap_used_mb": 5896.56,
+   "free_gb": 122.0
+  },
+  "end": {
+   "load": [
+    24.97,
+    24.8,
+    24.58
+   ],
+   "cores": 12,
+   "swap_used_mb": 5896.56,
+   "free_gb": 122.0
+  },
+  "unit": "ms",
+  "steps": {
+   "read_ms": 29.0,
+   "walk_ms": 46.0,
+   "take_ms": 36.0,
+   "write_ms": 49.0,
+   "apply_ms": 40.0,
+   "kept_ms": 4.0,
+   "ms": 208.0,
+   "steps": 1
+  }
+ },
+ "f10k-found#2": {
+  "value": 587.6,
+  "target": "within 1 s",
+  "verdict": "could-not-judge: load 25.37-25.37 past 18.0",
+  "start": {
+   "load": [
+    25.37,
+    24.88,
+    24.61
+   ],
+   "cores": 12,
+   "swap_used_mb": 5896.56,
+   "free_gb": 121.9
+  },
+  "end": {
+   "load": [
+    25.37,
+    24.88,
+    24.61
+   ],
+   "cores": 12,
+   "swap_used_mb": 5896.56,
+   "free_gb": 121.9
+  },
+  "unit": "ms",
+  "steps": {
+   "read_ms": 26.0,
+   "walk_ms": 80.0,
+   "take_ms": 63.0,
+   "write_ms": 31.0,
+   "apply_ms": 50.0,
+   "kept_ms": 11.0,
+   "ms": 265.0,
+   "steps": 1
+  }
+ },
+ "f10k-join": {
+  "value": 688737.0,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    25.37,
+    24.88,
+    24.61
+   ],
+   "cores": 12,
+   "swap_used_mb": 5896.56,
+   "free_gb": 122.0
+  },
+  "end": {
+   "load": [
+    63.58,
+    50.74,
+    39.87
+   ],
+   "cores": 12,
+   "swap_used_mb": 5848.56,
+   "free_gb": 113.0
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "held": 10003,
+  "of": 10003,
+  "member_steps": {
+   "read_ms": 0.0,
+   "walk_ms": 0.0,
+   "take_ms": 0.0,
+   "write_ms": 0.0,
+   "apply_ms": 0.0,
+   "kept_ms": 0.0,
+   "ms": 1.0,
+   "steps": 31
+  },
+  "holder": {
+   "gets": 10003,
+   "median_ms": 50.6,
+   "sum_ms": 532470.0
+  },
+  "journal_bytes": 1193305
+ },
+ "f100k-taken": {
+  "value": 196637.8,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    70.61,
+    53.77,
+    41.4
+   ],
+   "cores": 12,
+   "swap_used_mb": 5840.56,
+   "free_gb": 112.7
+  },
+  "end": {
+   "load": [
+    43.94,
+    51.68,
+    43.62
+   ],
+   "cores": 12,
+   "swap_used_mb": 5840.56,
+   "free_gb": 110.8
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "steps": {
+   "read_ms": 242.0,
+   "walk_ms": 854.0,
+   "take_ms": 826.0,
+   "write_ms": 0.0,
+   "apply_ms": 887.0,
+   "kept_ms": 155.0,
+   "ms": 2920.0,
+   "steps": 3
+  }
+ },
+ "f100k-idle": {
+  "value": 58.2,
+  "target": "under 2% of a core",
+  "verdict": "could-not-judge: load 39.94-26.68 past 18.0",
+  "start": {
+   "load": [
+    39.94,
+    50.57,
+    43.32
+   ],
+   "cores": 12,
+   "swap_used_mb": 5840.56,
+   "free_gb": 110.8
+  },
+  "end": {
+   "load": [
+    26.68,
+    45.11,
+    41.79
+   ],
+   "cores": 12,
+   "swap_used_mb": 5840.56,
+   "free_gb": 110.7
+  },
+  "unit": "% of a core",
+  "steps": {
+   "read_ms": 195.0,
+   "walk_ms": 576.0,
+   "take_ms": 539.5,
+   "write_ms": 0.0,
+   "apply_ms": 524.0,
+   "kept_ms": 116.0,
+   "ms": 1952.5,
+   "steps": 20
+  }
+ },
+ "f100k-found#0": {
+  "value": 993.0,
+  "target": "within 1 s",
+  "verdict": "could-not-judge: load 26.68-24.37 past 18.0",
+  "start": {
+   "load": [
+    26.68,
+    45.11,
+    41.79
+   ],
+   "cores": 12,
+   "swap_used_mb": 5840.56,
+   "free_gb": 110.7
+  },
+  "end": {
+   "load": [
+    24.37,
+    44.0,
+    41.43
+   ],
+   "cores": 12,
+   "swap_used_mb": 5840.56,
+   "free_gb": 110.7
+  },
+  "unit": "ms",
+  "steps": {
+   "read_ms": 188.5,
+   "walk_ms": 508.0,
+   "take_ms": 430.5,
+   "write_ms": 161.0,
+   "apply_ms": 424.0,
+   "kept_ms": 89.5,
+   "ms": 1803.5,
+   "steps": 2
+  }
+ },
+ "f100k-found#1": {
+  "value": 2949.7,
+  "target": "within 1 s",
+  "verdict": "could-not-judge: load 24.37-24.33 past 18.0",
+  "start": {
+   "load": [
+    24.37,
+    44.0,
+    41.43
+   ],
+   "cores": 12,
+   "swap_used_mb": 5840.56,
+   "free_gb": 110.7
+  },
+  "end": {
+   "load": [
+    24.33,
+    43.01,
+    41.12
+   ],
+   "cores": 12,
+   "swap_used_mb": 5840.56,
+   "free_gb": 110.7
+  },
+  "unit": "ms",
+  "steps": {
+   "read_ms": 190.0,
+   "walk_ms": 627.0,
+   "take_ms": 629.0,
+   "write_ms": 0.0,
+   "apply_ms": 629.0,
+   "kept_ms": 112.0,
+   "ms": 2236.0,
+   "steps": 3
+  }
+ },
+ "f100k-found#2": {
+  "value": 1821.0,
+  "target": "within 1 s",
+  "verdict": "could-not-judge: load 24.33-27.17 past 18.0",
+  "start": {
+   "load": [
+    24.33,
+    43.01,
+    41.12
+   ],
+   "cores": 12,
+   "swap_used_mb": 5840.56,
+   "free_gb": 110.7
+  },
+  "end": {
+   "load": [
+    27.17,
+    43.01,
+    41.14
+   ],
+   "cores": 12,
+   "swap_used_mb": 5840.56,
+   "free_gb": 110.6
+  },
+  "unit": "ms",
+  "steps": {
+   "read_ms": 285.0,
+   "walk_ms": 857.0,
+   "take_ms": 716.5,
+   "write_ms": 194.5,
+   "apply_ms": 610.5,
+   "kept_ms": 113.5,
+   "ms": 2779.0,
+   "steps": 2
+  }
+ },
+ "f100k-join": {
+  "value": null,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    27.17,
+    43.01,
+    41.14
+   ],
+   "cores": 12,
+   "swap_used_mb": 5840.56,
+   "free_gb": 110.6
+  },
+  "end": {
+   "load": [
+    13.92,
+    16.25,
+    16.4
+   ],
+   "cores": 12,
+   "swap_used_mb": 6287.56,
+   "free_gb": 159.0
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "held": 16238,
+  "of": 100003,
+  "member_steps": {
+   "read_ms": 0.0,
+   "walk_ms": 0.0,
+   "take_ms": 0.0,
+   "write_ms": 0.0,
+   "apply_ms": 0.0,
+   "kept_ms": 0.0,
+   "ms": 0.0,
+   "steps": 33
+  },
+  "holder": {
+   "gets": 16246,
+   "median_ms": 399.6,
+   "sum_ms": 7067104.7
+  },
+  "journal_bytes": 11903305
+ }
+}

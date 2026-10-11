@@ -57,6 +57,13 @@ impl ContentHash {
         ContentHash::of(s.as_bytes())
     }
 
+    /// Adopt a digest computed elsewhere. Named `from_bytes` rather than
+    /// `new` so a reader sees that no hashing happened here and asks where it
+    /// did.
+    pub fn from_bytes(bytes: [u8; 32]) -> Self {
+        ContentHash(bytes)
+    }
+
     pub fn as_bytes(&self) -> &[u8; 32] {
         &self.0
     }

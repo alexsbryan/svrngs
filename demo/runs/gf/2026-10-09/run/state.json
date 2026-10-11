@@ -1,0 +1,91 @@
+{
+ "base": "http://127.0.0.1:18096",
+ "server_id": "292cf152b6444ef7837e5e90cb427923",
+ "user_id": "12642193b39e4e4b8cdc5b5587961c18",
+ "token": "9736f49390874abfbaa5de1a7aa098d7",
+ "user": "exp",
+ "pw": "exp-throwaway-pw",
+ "version": "12.0.0",
+ "scan_window": [
+  1791587763.7424178,
+  1791587785.262342
+ ],
+ "scan_task_idle_at": 1791587764.987457,
+ "refresh_kicked": false,
+ "items": {
+  "ExpMkv (2026)": {
+   "id": "2d1ed735bf3f368ef6b8ff95c4515e5f",
+   "path": "/tmp/gf-run/lib/Movies/ExpMkv (2026)/ExpMkv (2026).strm",
+   "media_sources_pre_play": [
+    {
+     "Protocol": "Http",
+     "Id": "2d1ed735bf3f368ef6b8ff95c4515e5f",
+     "Path": "http://127.0.0.1:18733/951e8ddcfec4af7db27ab993efe449900a62c19f44be1168f2a9788c7cd04354/exp.mkv?type=video%2Fx-matroska",
+     "Type": "Default",
+     "Container": "strm",
+     "Size": 120,
+     "Name": "ExpMkv (2026)",
+     "IsRemote": true,
+     "ETag": "c294da6ee2a09f92ba58d0bd642ab1b6",
+     "ReadAtNativeFramerate": false,
+     "IgnoreDts": false,
+     "IgnoreIndex": false,
+     "GenPtsInput": false,
+     "SupportsTranscoding": true,
+     "SupportsDirectStream": true,
+     "SupportsDirectPlay": true,
+     "IsInfiniteStream": false,
+     "UseMostCompatibleTranscodingProfile": false,
+     "RequiresOpening": false,
+     "RequiresClosing": false,
+     "RequiresLooping": false,
+     "SupportsProbing": true,
+     "VideoType": "VideoFile",
+     "MediaStreams": [],
+     "MediaAttachments": [],
+     "Formats": [],
+     "RequiredHttpHeaders": {},
+     "TranscodingSubProtocol": "http",
+     "HasSegments": false
+    }
+   ]
+  },
+  "ExpMp4 (2026)": {
+   "id": "40f38aee9ac7da33152e73844b78cc62",
+   "path": "/tmp/gf-run/lib/Movies/ExpMp4 (2026)/ExpMp4 (2026).strm",
+   "media_sources_pre_play": [
+    {
+     "Protocol": "Http",
+     "Id": "40f38aee9ac7da33152e73844b78cc62",
+     "Path": "http://127.0.0.1:18733/55d719b9499d14c436422354233daf52fc6416092b53d30293c1cf9c3f2e92a8/exp.mp4?type=video%2Fmp4",
+     "Type": "Default",
+     "Container": "strm",
+     "Size": 113,
+     "Name": "ExpMp4 (2026)",
+     "IsRemote": true,
+     "ETag": "477e228a3aa933c4731d45fedf3bdcf4",
+     "ReadAtNativeFramerate": false,
+     "IgnoreDts": false,
+     "IgnoreIndex": false,
+     "GenPtsInput": false,
+     "SupportsTranscoding": true,
+     "SupportsDirectStream": true,
+     "SupportsDirectPlay": true,
+     "IsInfiniteStream": false,
+     "UseMostCompatibleTranscodingProfile": false,
+     "RequiresOpening": false,
+     "RequiresClosing": false,
+     "RequiresLooping": false,
+     "SupportsProbing": true,
+     "VideoType": "VideoFile",
+     "MediaStreams": [],
+     "MediaAttachments": [],
+     "Formats": [],
+     "RequiredHttpHeaders": {},
+     "TranscodingSubProtocol": "http",
+     "HasSegments": false
+    }
+   ]
+  }
+ }
+}

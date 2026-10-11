@@ -340,6 +340,8 @@ pub struct Admission {
     floors: crate::sync::Floors,
     seals: Vec<OpId>,
     membership: crate::membership::Membership,
+    /// Every synced folder's change, in admission's order (sy-1).
+    pub(crate) synced: crate::synced::Written,
 }
 
 impl Admission {
@@ -670,6 +672,14 @@ pub fn admit(
         ))
     });
 
+    let synced = crate::synced::written(order.iter().map(|a| {
+        (
+            a.op.actor.as_str(),
+            &a.person,
+            a.op.kind.seq,
+            &a.op.kind.act,
+        )
+    }));
     let out: Vec<AdmittedOp> = order
         .into_iter()
         .map(|a| {
@@ -686,7 +696,8 @@ pub fn admit(
                 RailAct::Seal
                 | RailAct::Admit { .. }
                 | RailAct::Remove { .. }
-                | RailAct::Invite { .. } => (None, None),
+                | RailAct::Invite { .. }
+                | RailAct::Synced { .. } => (None, None),
             };
             AdmittedOp {
                 id: a.id.clone(),
@@ -739,6 +750,7 @@ pub fn admit(
         floors,
         seals,
         membership: m,
+        synced,
     }
 }
 

@@ -501,8 +501,72 @@ is U5's inventory (§8).
    refusals marked as its own, `x-svrngs-refused`, where Movie Night told
    them by status alone and said 19 of Dee's door's as the library's (11
    lines); and a newcomer let in by every lender at once ("Joining").
-7. *Group folders, an experiment after U5*, beside lends and opt-in; its
-   design and first measurement wait in §9, and no U5 row builds it.
+7. *A group's folder, synced both ways onto its members' disks*, beside
+   lends and opt-in, a spike on the branch `folders`
+   (`demo/runs/sy/2026-10-09/README.md`), a mesh Dropbox: `share --folder
+   <dir> --group <group>` keeps a directory the same on the disk of each
+   member of that one group (syp-4); each scan's changes are one act in
+   that group's record alone, each naming a path, its
+   bytes by hash, and the entry it replaces; an entry no other replaces is a
+   head, a path's second head written beside it named as a conflict with
+   its writer's person. The bytes move by iroh-blobs: a member's node
+   serves a hash only while a synced folder of a group the dialer stands
+   in places it, and refuses every other, and fetches what it lacks by
+   verified range from the group's members, a holder that does not answer
+   within 3 s named and passed over. Who stands where is the round's
+   (`Host::standings`), and a group whose record cannot be read stops its
+   directory's step by the group's name, never read as placing nothing. The index is the record, not iroh-docs, whose
+   namespace id would be a second decider of who reads. Run again on
+   production (syp-5, `demo/runs/syp/2026-10-10/rerun/`, one host), all
+   four of the spike's bars pass: an add, an edit and a delete by three
+   members everywhere within 0.32 s (the spike's 1.63); a file reached Cy
+   in 3.56 s from Ben with its author killed; two edits made apart both
+   kept in every directory within 0.34-0.65 s, three runs of three (syp-6,
+   `demo/runs/syp/2026-10-11/restart/`; the spike's 17.0 s); a node
+   outside the group given no byte, refused at the accept and by the
+   provider each. The edits had failed at syp-5, three of three, on two
+   holes (that README §6), closed by syp-6: a node stopped by SIGTERM now
+   closes its endpoint, where it had left each peer's iroh sending only to
+   its dead address for up to 15 s, so its next process was not dialled;
+   and a file no member gave is asked again with no event to wake it. A
+   process killed outright still leaves that dead address for up to 15 s,
+   the retry's cap. A thousand files reached two members in 0.92 s and one
+   joining later in 0.53 s (the spike's 395.27 and 242.24), and a 1 MiB
+   edit of a 100 MiB file still cost each member the whole file, in 7.04
+   s. Off one host it is unrun. Its rows are the
+   README's §9, made production by syp-4: the folder one group's (landed,
+   Ana in two groups each with a folder `Shared`, the other's member
+   refused her hash); a path parsed, since a member's act
+   could write outside the folder on every other member's disk (landed: a
+   `SyncPath` of named parts, an act naming `../outside` a malformed line
+   on every copy); the
+   store keeping what it held across a stop, reproduced first, since three
+   times a store gave nothing of a file its directory held (landed: a
+   fetched file's bytes lost at SIGTERM and `kill -9` alike, the store's
+   writes committed in batches up to 500 ms apart, now made durable before
+   the kept state names them); what a node keeps of its syncing, never an
+   unreadable state read as empty (landed: the directories it syncs kept
+   and resumed at each start, one directory each, and a kept state that
+   cannot be read stopping its directory by name); the store keeping what
+   the layout places and no more (landed: every other version dropped when
+   what it keeps changes, M2's first version gone from each store 0.89 s
+   after the edit); and a holder sending wrong bytes, planted (landed: a
+   byte flipped on the wire refused by the fetch naming the holder, and
+   who is taken as asleep decided once, the fetch's 60 s `ASLEEP_FOR`).
+   Made fast by perf-2 (`demo/runs/perf/2026-10-10-make-it-fast/`): a
+   file in one get, the record's layout read once a change, the apply woken
+   by the record, files taken 8 at once and fetched 8 at once, and the step
+   woken by the OS's file events (`notify`), the whole walk a sweep each
+   ten minutes; a file written as it is taken left for its write's next
+   event, found by that run. A file no member gave is asked again, a
+   second after and doubling to 15 s, with no event to wake it, and
+   nothing woken so while every file is written (syp-6 a). A folder streamed by
+   range, group folders' second spike (`demo/runs/gf/2026-10-09/README.md`:
+   a one-way share, one Jellyfin playing `.strm` stubs at a loopback
+   endpoint on the meeting point, seven bars passed on one host), was
+   dropped with its endpoint and its share at syp-1 (operator, 2026-10-10,
+   "Drop streaming + share"): watching a member's films stays their lent
+   Jellyfin's, and a folder fetched on open waits in §9.
 
 **The room: the screen is the app's own client** (operator, 2026-10-05,
 after five reads on a real TV, `demo/runs/u6/2026-10-05-screen/reads.json`:
@@ -906,15 +970,18 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,000 lines of code and the
-repository under 15,350 (`scripts/lean_check.py`); a raise is the
-operator's, with the reason in the commit. The budget counts the product:
+repository under 15,350 (`scripts/lean_check.py`), the branch `folders`
+too since main merged into it at syp-5, counting 13,778 and `svrngs-core`
+2,719 there; a raise is the operator's, with the reason in the commit. The budget counts the product:
 tests, `apps/` and `demo/runs/` apart. A recorded run's driver is what ran,
 kept byte for byte so its data reads against it (`ralph/REVIEW_FINDINGS.md`
 #61), and no check runs one; a helper a check runs lives outside it
 (`web/tests/serve.mjs`, `web/tests/control.mjs`), and code elsewhere under
 `demo/` counts. The operator set `demo/runs/` apart on 2026-10-10 (lean-1,
 "Budget counts product only"): the repository went from 15,284 to 13,428,
-the cap kept. Every figure below counted `demo/runs/`, as the rule then did.
+the cap kept; main merged into the branch `folders` at syp-3 counted
+13,372, `svrngs-core` 2,729, inside both caps. Every figure below counted
+`demo/runs/`, as the rule then did.
 `svrngs-core` stood at 2,359 when the operator raised its ceiling from 2,500
 on 2026-10-05, for what U4
 to U7 still add to the core, since REVIEW-audit-u3-auto-2 found no duplication
@@ -949,7 +1016,15 @@ svrngs-core from 2,957 to 2,628, the repository from 14,644 to 14,315.
 And from 15,200, at 15,162, on 2026-10-09, after sup-2: the repository
 had grown 847 since core-0, against the 541 the design estimated for
 asleep-1, sup-1 and sup-2, and the phone's page and worker (~110, sup-3)
-had 38 left; 150 by the operator's choice.
+had 38 left; 150 by the operator's choice. And on the branch `folders`
+alone, from 15,200, at 15,163, on 2026-10-09, for the mesh-Dropbox spike
+(`ralph/next/sync/`): about 500 lines for the folder's index, its watcher
+and the apply of others' changes with their conflicts, the gate that asks
+the record, and the command, by the seat's estimate; the spike counted
+543, its index the record's, not iroh-docs
+(`demo/runs/sy/2026-10-09/README.md` §1, §7). The branch keeps its cap,
+16,500 at most while it merges main in, and takes main's with the last
+merge (§10).
 `ARCHITECTURE.md` maps what exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file
@@ -1630,12 +1705,28 @@ asleep computer from holding anyone's answer
 2). The fourth, a lend its lender's person
 alone reaches on any device of theirs, waits on another device for the
 same person (§9; `rings/current/ONE_PERSON_MANY_DEVICES.md`, deferred);
-group folders (§3, call 7 of
-"Lent apps"; §9), synced onto each member's disk and not streamed
-(operator, 2026-10-10; §10), made production on the branch `folders`
-(its queue `syp`) once the lean rows have cut what the product does not
-carry — recorded runs' drivers, tests in counted files, code nothing
-reaches, code written twice (`ralph/next/lean/SURVEY.md`); the phone replica spike, iOS first (§9, "a
+group folders (§3, call 7 of "Lent apps"; §9), synced onto each member's
+disk and not streamed (operator, 2026-10-10, after the mesh-Dropbox
+spike's four bars on one host, `demo/runs/sy/2026-10-09/`; §10), made
+production on the branch `folders` by its queue `syp`, main merged in as
+the lean rows cut what the product does not carry — recorded runs'
+drivers, tests in counted files, code nothing reaches, code written twice
+(`ralph/next/lean/SURVEY.md`; lean-1, lean-2 and lean-3's first cut in at
+syp-3): the rows the spike's README's §9 lists (landed, syp-4: §3, call 7
+of "Lent apps"), then made fast by perf-1's candidates 1-7 (landed,
+perf-2: on loopback, one host, a small change at another member's disk in
+164 ms, 1,000 files in 373 ms, a change in a folder of 100,000 found
+within 432 ms with an idle node at 0.33% of a core, ten members each
+holding one change within 515 ms, a member joining 10,000 files in 1.7 s
+once it stands; a 100 MiB file at 83 MB/s to each of two members at once
+and 139 MB/s to one, a bare iroh-blobs get's own rate; a 1 MiB edit still
+moving the whole file, `demo/runs/perf/2026-10-10-make-it-fast/README.md`),
+then the spike's run again (landed, syp-5: three of its four bars
+passed on production, `demo/runs/syp/2026-10-10/rerun/README.md`), main
+merged in again; then the fourth's two holes closed (landed, syp-6: a
+node stopped by SIGTERM closing its endpoint, a file no member gave asked
+again; S3 passed three runs of three, `demo/runs/syp/2026-10-11/restart/`),
+before the operator's merge into main (§10); the phone replica spike, iOS first (§9, "a
 native phone app"), after folders since they name the bytes a phone would
 hold; then the middleware's P1 follow-ups as one row (operator, 2026-10-08;
 `demo/runs/mw/2026-10-08/README.md` §7, items 5 and 7; its item 1,
@@ -1673,7 +1764,7 @@ by the north star's tests.
 | a link's life set per link, other than a day | a newcomer meets a lapsed link, counted |
 | measuring a lender's upload rather than taking the figure they declare (BBR3's pacing estimate, or a timed saturating pull) | a declared figure is wrong by enough to stall a viewer in a recorded run |
 | a per-process tie between a node and the services it lends (upstream's `mint_tie`). A middleware believes loopback: a process on the lender's computer naming a person's key at its port was answered as them (`demo/runs/mw/2026-10-08/mw-1/`), which is the lender's own (§3, "The room", call 6); and a request at a lend's origin with no `Sec-Fetch-*` is taken for that lend's own page (sup-1, `origin.rs` `app_of`), which neither widens nor narrows what a process could reach before | an app's act is written under a person by a process the lender did not run, or one computer is shared by people who do not trust each other |
-| group folders (§3, call 7 of "Lent apps"): a member shares a folder at one level from a closed set; its file list in the record, its bytes content-addressed and fetched by verified range from whoever holds them (iroh-blobs 0.103, which takes iroh ^1.0.0); the meeting point runs one Jellyfin over everyone's shared films as `.strm` stubs; opt-in, beside lends. Its first run (svrn-docs `rings/runs/strm-2026-10-05/`, `457f120`): browsers played the holder's MP4 straight from the stub's URL, and WebKit remuxed an MKV through Jellyfin, the double hop; it failed its pre-registered byte-share bar on Jellyfin's per-play probe of a 47 MB file | U5 lands, and the operator runs it with a group in the wild and settles it (operator, 2026-10-05) |
+| a synced folder's later parts, each with its trigger. A mounted folder: every file of a group's folder listed from the record's layout and fetched on open, by verified range, as group folders' streamed spike fetched (`demo/runs/gf/2026-10-09/`, its endpoint dropped at syp-1; `demo/runs/sy/2026-10-09/README.md` §9, "A mounted folder") — a file system of svrngs's (macFUSE, or Apple's File Provider), a dependency and a process apart. Its streamed spike's rows that only a folder not on the viewer's disk needs — a stub that reaches its viewer, who the endpoint answers, stubs in step with the record (that README's §9, rows 1, 3 and 4) — wait with it. A version as its blocks: a file a hash sequence of its 1 MiB blocks (iroh-blobs' `HashSeq`), the record's entry naming the sequence, so an edit moves only the blocks it changed — a 1 MiB edit inside 100 MiB moved all 104,857,600 bytes to each member on every path, before perf-2 and after it, in 1.9 s on loopback, and again on production in 7.04 s through n0's (syp-5, `demo/runs/syp/2026-10-10/rerun/README.md` §5), and what an entry's hash names would change in the record and in what a store keeps (perf-1, `demo/runs/perf/2026-10-10/README.md` §9 T4, §10 candidate 8; perf-2, `demo/runs/perf/2026-10-10-make-it-fast/README.md` §3 T4; the operator, "Wait, revisit after the rerun", §10). A file past one holder's upload: a 100 MiB file reached each of two members at 83 MB/s at once, about 167 MB/s from its one holder, where one member alone took it at 139 MB/s, a bare iroh-blobs get's rate (that README §4) — a member fetching from another that holds the file is unmeasured. A joining member's wait to stand: its share refused until the round admits it, 54-58 s of the round's 60 s, where its every file then arrived in 1.7 s of 10,000 and 61.5 s of 100,000 (that README §5) — perf-2's harness's, members started apart; a member joining by `join` stood before its share, and held 1,000 files 0.53 s after it (syp-5's rerun, §5). Dialling direct before a relay: no gain measured, iroh having moved every connection on all three paths direct before its first fetch, in perf-1 and perf-2 alike (perf-1's README §9; perf-2's §3) | the mounted folder: a member whose disk cannot hold the group's folder, counted. The blocks: a member waiting on a large file moved whole for a small edit, counted, or the operator queues T4. A file past one holder: a member waiting on a large file several fetch at once, counted between computers. The wait to stand: a newcomer's folder waiting on the round past a bar the operator sets. The dial: a fetch measured through a relay between two members a direct path reaches |
 | a person who only searches counted apart from one who watches: the door counts each on a lend for `WINDOW`, 30 s, after their last request (`crates/svrngs-node/src/door/limit.rs:17-19`), a search as a film — Movie Night's searcher was counted on both Jellyfins 26.3 and 26.5 s after one search and not at 36.2 and 36.4 s, the most at once 2, nobody refused (`demo/runs/mn/2026-10-08/doors.json`, `limit`) | a lend at its limit refuses someone while those it counts only searched, counted |
 | budgets on an owner's operation: how often an app may ask it, so asks cannot rebuild what it keeps back (`rings/current/ACL_AND_SCOPED_USE.md` §4, §6). Ana's taste ranks whatever films it is given, and ranked an app's two that sent her yes itself (`demo/runs/su/2026-10-09/verdicts.json`, "the unasked yes") | an operation's answers rebuild what its owner kept back, shown in a run, or an owner asks for a limit on one |
 | a live payload naming its sender | an app needs to know who offered a live payload, and cannot take it from the payload |
@@ -1682,6 +1773,19 @@ by the north star's tests.
 | the floor: every app under `/l/<label>/` of one address apart from the page's, on any static host, the link carrying that address after its token (a second address given to `svrngs new`, u5-2; dropped by u6-00). Its cost was one origin for every app, so a lent page could read what another kept and use another's pass while it lasted, and its every app lost its root: the catalogue run lent five self-hosted apps on it in Chromium and WebKit and none got past its sign-in, each asking for `/`-absolute paths the floor's host answered 404, and Paperless's post refused by its own origin check (`demo/runs/catalogue/2026-10-05/RESULTS.md`, "The floor"; `003e0d5`) | a group whose host answers no name nobody made asks for an app that keeps to relative paths, counted |
 
 ## 10. Decisions
+
+By the operator, 2026-10-10, on perf-1's candidates for a fast synced
+folder (`demo/runs/perf/2026-10-10/README.md` §10):
+- "One row after syp-4 (a)-(e)" for candidates 1-6: one get a file, the
+  apply's match by path, the record read once a change, the apply woken by
+  the record, files taken at once, fetches at once — perf-2-make-it-fast,
+  fetches at once moved into it from syp-4 (f), since before the record is
+  read once a change they queue at the holder's one task.
+- "Yes, in the same row" for candidate 7: the step woken by the file
+  system's events, through the dependency `notify` (8.2.0); any other new
+  crate is still the operator's.
+- "Wait, revisit after the rerun" for candidate 8, a version as its blocks
+  (§9 keeps it waiting, with its trigger).
 
 By the operator, 2026-10-10, before the synced folder made production
 (`ralph/next/lean/SURVEY.md`):
@@ -1697,6 +1801,14 @@ By the operator, 2026-10-10, before the synced folder made production
   `folders` (syp-1), and watching a member's films stays their lent
   Jellyfin's. A folder fetched on open, by verified range, waits for a member
   whose disk cannot hold the group's folder (§9).
+
+By the operator, 2026-10-09, during scoped use made production:
+- group folders' second spike runs now, in a worktree beside scoped use,
+  not after it (§8, §9): a spike's code lives on its own branch, and how
+  folders become production is decided from its verdict.
+- a group's folder is more than its films in one Jellyfin: a folder synced
+  both ways on its members' disks, written by any of them, is spiked next
+  on the same branch, before group folders' production rows (§8, §9).
 
 By the operator, 2026-10-09, before scoped use made production:
 - a computer is the main way in, and a phone its teaser and onboarding,

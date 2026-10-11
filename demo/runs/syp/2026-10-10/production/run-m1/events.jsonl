@@ -1,0 +1,20 @@
+{"t": 1791682101.824, "phase": "setup", "event": "load", "uptime": "18:28  up 1 day,  7:11, 5 users, load averages: 8.34 10.84 14.98", "cores": "12", "swap": "vm.swapusage: total = 16384.00M  used = 16039.50M  free = 344.50M  (encrypted)", "load1": 8.34, "free_gb": 106.3, "swap_mb": 16039.5, "df": "/dev/disk3s1s1       926   12        99    12%  484019 1038473560    0%   /", "head": "9600be0", "bin": "/Users/alexsbryan/dev/svrngs-folders/target/debug/svrngs"}
+{"t": 1791682102.839, "phase": "setup", "event": "up", "who": "ana", "plant": "", "args": ["new", "Shared", "--as", "Ana"]}
+{"t": 1791682103.451, "phase": "setup", "event": "up", "who": "ben", "plant": "", "args": ["join", "<the link>", "--as", "Ben"]}
+{"t": 1791682104.248, "phase": "setup", "event": "up", "who": "cy", "plant": "", "args": ["join", "<the link>", "--as", "Cy"]}
+{"t": 1791682104.739, "phase": "setup", "event": "keys", "keys": {"ben": "0effe6cb564cf52eab6f82ebc7acf9d68b7a9daf001902909b9e6398256fdbbd", "ana": "8bad97ae2404394f1e009039df9a0e41c096caa3eb914a951089fde20d142ddf", "cy": "9f487e12383ec438d179adbd1fc6ac65eb7946e454b134c558ab66f508b312b0"}, "group": "3f29b4941e72df0c8fda1e91ab3dee69990f957506ee963b3ba620d86e7aa009"}
+{"t": 1791682104.739, "phase": "M1", "event": "phase"}
+{"t": 1791682104.759, "phase": "M1", "event": "synced", "who": "ana", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791682104.776, "phase": "M1", "event": "synced", "who": "ben", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791682104.79, "phase": "M1", "event": "synced", "who": "cy", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791682104.832, "phase": "M1", "event": "phase"}
+{"t": 1791682178.322, "phase": "M1", "event": "up", "who": "eve", "plant": "", "args": ["join", "<the link>", "--as", "Eve"]}
+{"t": 1791682179.141, "phase": "M1", "event": "synced", "who": "eve", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791682262.046, "phase": "M1", "event": "wrote", "who": "ana", "path": "m1/0001.bin", "size": 4096, "blake3": "6a03542e58904de7aeab681c071b3d67d78c4952cad98394f460c99bdf5374ec"}
+{"t": 1791682265.081, "phase": "M1", "event": "measured", "ben_cy_s": 73.0, "eve_s": 82.93, "eve_journal_bytes": 118793, "act_line_bytes": 115626, "one_change_s": 3.03, "one_change_bytes": 841}
+{"t": 1791682265.254, "phase": "M1", "event": "bar", "bar": "M1", "eve_s": 82.93, "ben_cy_s": 73.0, "bar_s": 60, "verdict": "could-not-judge: load 7.99-21.88 past 18.0", "load1": [7.99, 21.88], "swap_mb": [16209.75, 11818.88]}
+{"t": 1791682265.4, "phase": "M1", "event": "load", "uptime": "18:31  up 1 day,  7:13, 5 users, load averages: 21.88 14.82 15.79", "cores": "12", "swap": "vm.swapusage: total = 13312.00M  used = 11818.88M  free = 1493.12M  (encrypted)", "load1": 21.88, "free_gb": 110.3, "swap_mb": 11818.88, "df": "/dev/disk3s1s1       926   12       102    12%  484019 1077007480    0%   /", "head": "9600be0", "bin": "/Users/alexsbryan/dev/svrngs-folders/target/debug/svrngs"}
+{"t": 1791682265.404, "phase": "M1", "event": "down", "who": "ana", "sig": "SIGTERM"}
+{"t": 1791682265.406, "phase": "M1", "event": "down", "who": "ben", "sig": "SIGTERM"}
+{"t": 1791682265.408, "phase": "M1", "event": "down", "who": "cy", "sig": "SIGTERM"}
+{"t": 1791682265.41, "phase": "M1", "event": "down", "who": "eve", "sig": "SIGTERM"}
