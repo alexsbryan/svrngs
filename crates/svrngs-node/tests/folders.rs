@@ -748,3 +748,99 @@ async fn a_member_s_act_naming_a_path_outside_the_folder_is_refused_at_admission
     );
     group.close().await;
 }
+
+// ── What a node keeps of its syncing (syp-4 e) ────────────────────────
+
+/// **A kept state that cannot be read is refused, never read as empty**:
+/// two files reach both Ana's and Ben's directories; then Ben's kept state
+/// for the folder cannot be parsed, and his node stops syncing that
+/// directory, by its name, rather than send every file again with no base.
+/// No directory holds a conflict. Red with the kept state read as empty
+/// when it cannot be read (sy-1): every file of Ben's sent again with no
+/// base, and every directory holds each beside itself as a conflict.
+#[tokio::test]
+async fn a_kept_state_that_cannot_be_read_is_refused_never_read_as_empty() {
+    let group = Group::new().await;
+    let (ra, rb) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (ana, ben) = (
+        both_ways(&group.ana, ra.path()).await,
+        both_ways(&group.ben, rb.path()).await,
+    );
+    let (one, two) = (noise(20_000, b"one"), noise(21_000, b"two"));
+    std::fs::write(ana.join("one.bin"), &one).unwrap();
+    std::fs::write(ana.join("two.bin"), &two).unwrap();
+    let both: std::collections::BTreeSet<_> = [one, two].into();
+    assert!(
+        until(&group, || contents(&ben) == both).await,
+        "Ana's files reach Ben"
+    );
+    let kept = group
+        .ben
+        .rail()
+        .root()
+        .join(format!("synced-{}-Shared.json", seed("films", 9).id()));
+    assert!(kept.exists(), "Ben's kept state: {}", kept.display());
+    // Twice, 300 ms apart: a step under way at the first write would
+    // write its own state over it as it ends.
+    for _ in 0..2 {
+        std::fs::write(&kept, b"not the kept state").unwrap();
+        tokio::time::sleep(Duration::from_millis(300)).await;
+    }
+    for _ in 0..4 {
+        group.settle().await;
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    let conflicted = |dir: &Path| {
+        names(dir)
+            .into_iter()
+            .filter(|n| n.contains("(conflict"))
+            .count()
+    };
+    assert_eq!(
+        (conflicted(&ana), conflicted(&ben)),
+        (0, 0),
+        "no directory holds a conflict: Ana's {:?}, Ben's {:?}",
+        names(&ana),
+        names(&ben)
+    );
+    let now = std::fs::read(&kept).unwrap();
+    assert!(
+        now == b"not the kept state",
+        "Ben's node leaves the kept state as it found it: {}",
+        String::from_utf8_lossy(&now)
+    );
+    group.close().await;
+}
+
+/// **One directory keeps one group's folder, with one loop** (syp-4 e;
+/// #119): asked again for the directory it syncs, Ana's node answers as
+/// before and starts nothing more; asked for a second directory named
+/// `Shared` in the same group, or for the same directory in another, it
+/// refuses by the directory's name. Red with every ask taken (sy-1: a loop
+/// each, two over one kept state).
+#[tokio::test]
+async fn one_directory_keeps_one_group_s_folder() {
+    let group = Group::computers().await;
+    let films = found("films", 9, &group.ana, &[(&group.ben, 2)]);
+    let house = found("house", 7, &group.ana, &[(&group.cy, 3)]);
+    let (ra, other) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let dir = synced_in(&group.ana, ra.path(), &films).await;
+    let again = ask(
+        &group.ana,
+        serde_json::json!({ "dir": dir, "group": films }),
+    )
+    .await;
+    assert_eq!(again.0, 200, "asked again, answered as before: {}", again.1);
+    let second = other.path().join("Shared");
+    std::fs::create_dir_all(&second).unwrap();
+    for (d, g) in [(&second, &films), (&dir, &house)] {
+        let refused = ask(&group.ana, serde_json::json!({ "dir": d, "group": g })).await;
+        assert_eq!(refused.0, 409, "{}", refused.1);
+        assert!(
+            refused.1.contains("one directory keeps one group's folder"),
+            "{}",
+            refused.1
+        );
+    }
+    group.close().await;
+}

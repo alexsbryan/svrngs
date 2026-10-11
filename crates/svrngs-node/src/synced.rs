@@ -13,8 +13,12 @@
 //! the directory has since overwritten: a conflict's other side. What was
 //! last taken or written at each path, and from which entry, is kept in the
 //! data dir, so an edit made while the node was stopped is sent with its
-//! base. A step whose group's record, or who stands in it, cannot be read
-//! stops before it sends or deletes anything, said by the group's name.
+//! base; a kept state that cannot be read stops its directory's steps, said
+//! by its name, never read as nothing held (syp-4 e). The directories it
+//! syncs are kept in the data dir too, so a restart resumes each unasked,
+//! one loop each. A step whose group's record, or who stands in it, cannot
+//! be read stops before it sends or deletes anything, said by the group's
+//! name.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
@@ -25,11 +29,50 @@ use iroh_blobs::Hash;
 use serde::{Deserialize, Serialize};
 use svrngs_core::{Change, ContentHash, Placed, SyncFolder, SyncPath};
 
-use super::{FolderError, Folders, PIECE};
+use super::{FolderAsk, FolderError, Folders, PIECE};
 use crate::register::Standing;
 
 /// The keys standing in the group a step syncs with.
 type Holders = BTreeSet<String>;
+
+/// Where the directories this computer syncs are kept.
+const SYNCED: &str = "synced.json";
+
+/// The directories this computer syncs, each by its group and folder, one
+/// directory each, so one loop owns a directory and its kept state (#119);
+/// or why the list kept cannot be read, so no ask writes over it.
+pub(super) type Syncing = Result<BTreeMap<(String, String), PathBuf>, (PathBuf, String)>;
+
+/// The folder `dir` keeps: its name.
+fn folder_of(dir: &Path) -> String {
+    dir.file_name()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .into_owned()
+}
+
+/// The directories kept under `data_dir`: none when none was ever kept, and
+/// a list that cannot be read said by its path.
+pub(super) fn syncing_in(data_dir: &Path) -> Syncing {
+    let at = data_dir.join(SYNCED);
+    let asks: Vec<FolderAsk> = match std::fs::read(&at) {
+        Ok(bytes) => serde_json::from_slice(&bytes).map_err(|e| (at.clone(), e.to_string()))?,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Vec::new(),
+        Err(e) => return Err((at, e.to_string())),
+    };
+    let kept = asks
+        .into_iter()
+        .map(|a| ((a.group, folder_of(&a.dir)), a.dir));
+    Ok(kept.collect())
+}
+
+/// `bytes` at `path` whole or not at all: a stop mid-write leaves the last
+/// whole one, never a torn file the next start would refuse.
+fn write_whole(path: &Path, bytes: &[u8]) -> Result<(), FolderError> {
+    let part = path.with_extension("part");
+    std::fs::write(&part, bytes).map_err(io(&part))?;
+    std::fs::rename(&part, path).map_err(io(path))
+}
 
 /// What this computer last took or wrote at a path: the record's entry, and
 /// the file's mtime then.
@@ -54,18 +97,79 @@ fn io(path: &Path) -> impl Fn(std::io::Error) -> FolderError + '_ {
 
 impl Folders {
     /// Keep `dir` in step with the folder of its name in `group`, once a
-    /// second while the node runs; its name, or why not, when this computer
-    /// does not stand in the group.
+    /// second while the node runs and after each start; its name, or why
+    /// not: this computer does not stand in the group, the directories it
+    /// syncs cannot be read, or the folder or the directory is synced
+    /// already elsewhere. Asked again as it is, it is answered as it is.
     pub fn both_ways(&self, dir: PathBuf, group: String) -> Result<String, FolderError> {
-        let name = dir.file_name().unwrap_or_default().to_string_lossy();
-        let (f, folder, name) = (self.clone(), name.to_string(), name.into_owned());
+        let folder = folder_of(&dir);
         let standing = self.host.rail().standing(&group);
         let standing = standing.map_err(|e| FolderError::Unread(group.clone(), e.to_string()))?;
         if !matches!(&standing, Standing::Members(m) if m.contains_key(self.host.actor())) {
             tracing::debug!(target: "folder", namespace = group, folder, "synced: refused — this computer does not stand in the group");
             return Err(FolderError::NotStanding(group));
         }
+        let key = (group.clone(), folder.clone());
+        let mut added = Ok(false);
+        self.syncing.send_if_modified(|kept| {
+            added = match kept {
+                Err((at, why)) => Err(FolderError::Kept(at.clone(), why.clone())),
+                Ok(kept) if kept.get(&key) == Some(&dir) => Ok(false),
+                Ok(kept) if kept.contains_key(&key) || kept.values().any(|d| d == &dir) => {
+                    Err(FolderError::Synced(dir.clone()))
+                }
+                Ok(kept) => {
+                    let mut asks: Vec<FolderAsk> = kept
+                        .iter()
+                        .map(|((group, _), dir)| FolderAsk {
+                            dir: dir.clone(),
+                            group: group.clone(),
+                        })
+                        .collect();
+                    asks.push(FolderAsk {
+                        dir: dir.clone(),
+                        group: group.clone(),
+                    });
+                    let bytes = serde_json::to_vec(&asks).unwrap_or_default();
+                    write_whole(&self.data_dir.join(SYNCED), &bytes)
+                        .map(|()| kept.insert(key, dir.clone()).is_none())
+                }
+            };
+            matches!(added, Ok(true))
+        });
+        match added {
+            Ok(true) => self.keep_in_step(dir, group, folder.clone()),
+            Ok(false) => {
+                tracing::debug!(target: "folder", namespace = group, folder, "synced: kept in step already, as asked")
+            }
+            Err(why) => {
+                tracing::warn!(target: "folder", namespace = group, folder, %why, "synced: refused");
+                return Err(why);
+            }
+        }
+        Ok(folder)
+    }
+
+    /// Every directory kept as synced resumed, at the node's start; none
+    /// when the list kept cannot be read, said by its path.
+    pub(super) fn resume(&self) {
+        let kept = self.syncing.borrow().clone();
+        match kept {
+            Ok(kept) => {
+                for ((group, folder), dir) in kept {
+                    self.keep_in_step(dir, group, folder);
+                }
+            }
+            Err((at, why)) => {
+                tracing::warn!(target: "folder", at = %at.display(), why, "synced: the directories this computer syncs cannot be read, so none resumes and none is added")
+            }
+        }
+    }
+
+    /// `dir` stepped once a second while the node runs: its one loop.
+    fn keep_in_step(&self, dir: PathBuf, group: String, folder: String) {
         tracing::info!(target: "folder", namespace = group, folder, dir = %dir.display(), "synced: the directory kept in step with the group's folder");
+        let f = self.clone();
         tokio::spawn(async move {
             loop {
                 if let Err(why) = f.step(&dir, &group, &folder).await {
@@ -74,7 +178,6 @@ impl Folders {
                 tokio::time::sleep(Duration::from_secs(1)).await;
             }
         });
-        Ok(name)
     }
 
     /// Who stands in `group`, as [`crate::node::Host::standings`] reads it;
@@ -99,7 +202,7 @@ impl Folders {
             }
             let bytes = std::fs::read(&path).map_err(io(&path))?;
             let held: BTreeMap<SyncPath, Held> = serde_json::from_slice(&bytes)
-                .map_err(|e| FolderError::Store(path.clone(), e.to_string()))?;
+                .map_err(|e| FolderError::Kept(path.clone(), e.to_string()))?;
             out.extend(held.into_values().map(|h| h.p.hash));
         }
         Ok(out)
@@ -117,10 +220,14 @@ impl Folders {
         let (holders, placed) = (self.holders(group)?, self.layout(group)?);
         tracing::debug!(target: "folder", folder, placed = placed.len(), holders = holders.len(), ms = ms(t0), "synced: the layout read");
         let kept = self.data_dir.join(format!("synced-{group}-{folder}.json"));
-        let read = std::fs::read(&kept).ok();
-        let mut held: BTreeMap<SyncPath, Held> = read
-            .and_then(|b| serde_json::from_slice(&b).ok())
-            .unwrap_or_default();
+        // Nothing kept is nothing held; a kept state that cannot be read is
+        // never read as that, or every file would go again with no base.
+        let mut held: BTreeMap<SyncPath, Held> = match std::fs::read(&kept) {
+            Ok(bytes) => serde_json::from_slice(&bytes)
+                .map_err(|e| FolderError::Kept(kept.clone(), e.to_string()))?,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => BTreeMap::new(),
+            Err(e) => return Err(FolderError::Kept(kept.clone(), e.to_string())),
+        };
         let mut changes = Vec::new();
         let mut taken = BTreeMap::new();
         let mut seen = BTreeSet::new();
@@ -188,7 +295,7 @@ impl Folders {
             };
             self.write(&act, group, folder, act.changes.len()).await?;
             for c in act.changes {
-                tracing::info!(target: "folder", folder, path = %c.path, now = ?c.now, "synced: a change sent");
+                tracing::info!(target: "folder", folder, path = %c.path, now = ?c.now, base = ?c.base, "synced: a change sent");
                 held.remove(&c.path);
             }
         }
@@ -216,10 +323,10 @@ impl Folders {
             synced.map_err(|e| FolderError::Store(dir.into(), e.to_string()))?;
             tracing::debug!(target: "folder", folder, held = hold.len(), "synced: what the step took or fetched made durable");
         }
-        let wrote = std::fs::write(&kept, serde_json::to_vec(&held).unwrap_or_default());
+        let wrote = write_whole(&kept, &serde_json::to_vec(&held).unwrap_or_default());
         drop(hold);
         tracing::debug!(target: "folder", folder, files, sent, read_ms, walk_ms, take_ms, write_ms, apply_ms, kept_ms = ms(t), ms = ms(t0), "synced: a step");
-        wrote.map_err(io(&kept))
+        wrote
     }
 
     /// The layout written into `dir`, what `held` says updated. A file just
@@ -291,6 +398,7 @@ impl Folders {
                 }
                 if let Err(why) = got {
                     tracing::warn!(target: "folder", folder, path = %p.path, %hash, ?why, "synced: not written — no member gave it, verified");
+                    hold.pop();
                     continue;
                 }
                 let (fetch_ms, exported) = (ms(fetched), Instant::now());

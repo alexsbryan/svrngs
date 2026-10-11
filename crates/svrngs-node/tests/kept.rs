@@ -282,3 +282,81 @@ async fn a_store_keeps_what_it_held_across_a_stop() {
         std::fs::read_to_string(ana_dir.join("log")).unwrap_or_default()
     );
 }
+
+/// **A restart resumes a synced directory unasked** (syp-4 e): Ana syncs
+/// her directory and her file reaches Ben; her process is stopped and
+/// started, nobody asking it again; Ben writes a file, and once his act is
+/// written Ana writes one of her own, which her resumed step takes and
+/// sends, its act nudging her round to pull Ben's; Ben's file then reaches
+/// her directory. Ana dials Ben, not Ben her: Ben's process could not dial
+/// hers after her start within this test's 30 s (`iroh bridge: dial failed
+/// … timed out`), which this test does not judge. Red with the directories
+/// it syncs not kept (sy-1: the command asked again at each start): her
+/// file is never taken, and Ben's never reaches her.
+#[tokio::test]
+async fn a_restart_resumes_a_synced_directory_unasked() {
+    let root = tempfile::tempdir().unwrap();
+    let dir = |name: &str| {
+        let d = root.path().join(name);
+        std::fs::create_dir_all(&d).unwrap();
+        d
+    };
+    let (ana_dir, ben_dir, cy_dir) = (dir("ana"), dir("ben"), dir("cy"));
+    let (ana_disk, ben_disk) = (dir("disk/ana/Shared"), dir("disk/ben/Shared"));
+    let relay = RelayConfig::from_parts(Vec::new(), Some("none"))
+        .unwrap()
+        .on_loopback_only();
+    let cy = Node::start(
+        cy_dir.clone(),
+        signing(2),
+        &relay,
+        member::seed_file,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .unwrap();
+    let cy_addr = Addr {
+        me: 2,
+        id: cy.endpoint().id().to_string(),
+        sockets: loopback_sockets(cy.endpoint()),
+        api: cy.api_addr(),
+    };
+    let group = Seed::from_parts(
+        Name::parse("perf").unwrap(),
+        Name::parse("p0").unwrap(),
+        signing(0).verifying_key(),
+        [9; 16],
+    )
+    .id();
+    let (ana, ana_addr) = spawn(&ana_dir, 0).await;
+    let (ben, ben_addr) = spawn(&ben_dir, 1).await;
+    let dirs = [ana_dir.as_path(), ben_dir.as_path()];
+    tell(&[&ana_addr, &ben_addr, &cy_addr], &dirs, &cy).await;
+    sync(&ana_addr, &ana_disk, &group).await;
+    let first = noise(30_000, b"before the stop");
+    std::fs::write(ana_disk.join("first.bin"), &first).unwrap();
+    sync(&ben_addr, &ben_disk, &group).await;
+    assert!(
+        holds(&ben_disk.join("first.bin"), &first).await,
+        "Ana's file reaches Ben"
+    );
+
+    let pid = ana.0.id().to_string();
+    let kill = Command::new("kill").args(["-TERM", &pid]).status();
+    assert!(kill.unwrap().success());
+    drop(ana);
+    let (ana, ana_addr) = spawn(&ana_dir, 0).await;
+    tell(&[&ana_addr, &ben_addr, &cy_addr], &dirs, &cy).await;
+    let after = noise(31_000, b"after the start");
+    std::fs::write(ben_disk.join("after.bin"), &after).unwrap();
+    assert!(kept(&ben_dir, "after.bin").await, "Ben's step sends it");
+    std::fs::write(ana_disk.join("mine.bin"), noise(32_000, b"mine")).unwrap();
+    let reached = holds(&ana_disk.join("after.bin"), &after).await;
+    drop((ana, ben));
+    cy.endpoint().close().await;
+    assert!(
+        reached,
+        "Ben's file reaches Ana's directory after her start, unasked: {}",
+        std::fs::read_to_string(ana_dir.join("log")).unwrap_or_default()
+    );
+}

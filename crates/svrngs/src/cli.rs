@@ -136,9 +136,10 @@ svrngs — keep what your group shares on your own computers.
 
   svrngs share --folder <dir> --group <group>
       Keep <dir> the same on every computer in <group> that shares a folder
-      of its name, while svrngs runs here: anyone in it may add, change and
-      delete in it, and nobody outside it receives a byte. <group> is its
-      name, or the first 8 letters of its id, as `link` takes it.
+      of its name, whenever svrngs runs here, from now on: anyone in it may
+      add, change and delete in it, and nobody outside it receives a byte.
+      <group> is its name, or the first 8 letters of its id, as `link`
+      takes it.
 
   svrngs room <name>...
       Let anyone on this computer's network (its WiFi) open what your groups

@@ -518,10 +518,17 @@ is U5's inventory (§8).
    `SyncPath` of named parts, an act naming `../outside` a malformed line
    on every copy); the
    store keeping what it held across a stop, reproduced first, since three
-   times a store gave nothing of a file its directory held; what a node
-   keeps of its syncing, never an unreadable state read as empty; several
-   files fetched at once; the store keeping what the layout places and no
-   more; and a holder sending wrong bytes, planted. A folder streamed by
+   times a store gave nothing of a file its directory held (landed: a
+   fetched file's bytes lost at SIGTERM and `kill -9` alike, the store's
+   writes committed in batches up to 500 ms apart, now made durable before
+   the kept state names them); what a node keeps of its syncing, never an
+   unreadable state read as empty (landed: the directories it syncs kept
+   and resumed at each start, one directory each, and a kept state that
+   cannot be read stopping its directory by name); several files fetched
+   at once; the store keeping what the layout places and no more (landed:
+   every other version dropped when what it keeps changes, M2's first
+   version gone from each store 0.89 s after the edit); and a holder
+   sending wrong bytes, planted. A folder streamed by
    range, group folders' second spike (`demo/runs/gf/2026-10-09/README.md`:
    a one-way share, one Jellyfin playing `.strm` stubs at a loopback
    endpoint on the meeting point, seven bars passed on one host), was

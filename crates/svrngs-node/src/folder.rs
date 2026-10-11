@@ -72,6 +72,10 @@ pub enum FolderError {
     Unread(String, String),
     #[error("this computer does not stand in the group {0}")]
     NotStanding(String),
+    #[error("{0} cannot be read, so nothing it keeps is synced: {1}")]
+    Kept(PathBuf, String),
+    #[error("{0} is not synced: one directory keeps one group's folder, and this folder or this directory is kept already")]
+    Synced(PathBuf),
 }
 
 /// This computer's folders and its fetches' memory: one per node.
@@ -83,6 +87,9 @@ pub struct Folders {
     host: Arc<Host>,
     nudge: Arc<Notify>,
     data_dir: PathBuf,
+    /// The directories this computer syncs (syp-4 e), written by `both_ways`
+    /// alone.
+    syncing: watch::Sender<synced::Syncing>,
     /// Each holder's open connection, and when one last did not answer.
     conns: watch::Sender<BTreeMap<String, Connection>>,
     unanswered: watch::Sender<BTreeMap<String, Instant>>,
@@ -128,6 +135,7 @@ impl Folders {
             host,
             nudge,
             data_dir: data_dir.to_path_buf(),
+            syncing: watch::Sender::new(synced::syncing_in(data_dir)),
             conns: watch::Sender::new(BTreeMap::new()),
             unanswered: watch::Sender::new(BTreeMap::new()),
         };
@@ -151,6 +159,7 @@ impl Folders {
             let _keep = fs;
             std::future::pending::<()>().await
         });
+        folders.resume();
         let blobs = provider(&store, folders.clone());
         Ok((folders, blobs))
     }
@@ -475,7 +484,7 @@ pub(crate) fn router(folders: Folders) -> Router {
 /// node, the one process that writes this computer's acts: keep `dir` in
 /// step with the folder of its name in the group whose id is `group`
 /// (sy-1; syp-4), `{"dir": dir, "group": id}`.
-#[derive(Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct FolderAsk {
     pub dir: PathBuf,
     pub group: String,
