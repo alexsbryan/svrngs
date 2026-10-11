@@ -556,7 +556,9 @@ is U5's inventory (§8).
    by the record, files taken 8 at once and fetched 8 at once, and the step
    woken by the OS's file events (`notify`), the whole walk a sweep each
    ten minutes; a file written as it is taken left for its write's next
-   event, found by that run. A folder streamed by
+   event, found by that run. A file no member gave is asked again, a
+   second after and doubling to 15 s, with no event to wake it, and
+   nothing woken so while every file is written (syp-6 a). A folder streamed by
    range, group folders' second spike (`demo/runs/gf/2026-10-09/README.md`:
    a one-way share, one Jellyfin playing `.strm` stubs at a loopback
    endpoint on the meeting point, seven bars passed on one host), was

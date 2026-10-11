@@ -1099,7 +1099,8 @@ async fn wire_of(bytes: &[u8]) -> (iroh_blobs::Hash, Vec<u8>) {
 
 /// Ana's computer in a group with Ben's key admitted, Ben's key an
 /// endpoint of this test's, past any store, answering each get with `wire`
-/// in `pieces` parts `pause` apart; Ana syncing `Shared` under `root`, and
+/// in `pieces` parts `pause` apart, its first `silent` gets answered with
+/// nothing; Ana syncing `Shared` under `root`, and
 /// her record placing `size` bytes of `hash` at `f.bin` as hers, written
 /// from a store that is not hers, so she asks Ben for them as she would any
 /// holder.
@@ -1118,6 +1119,7 @@ impl Asking {
         wire: Vec<u8>,
         pieces: usize,
         pause: Duration,
+        silent: usize,
     ) -> Self {
         use svrngs_core::{Change, ContentHash, SyncPath};
         let dir = tempfile::tempdir().unwrap();
@@ -1154,7 +1156,15 @@ impl Asking {
                 tokio::spawn(async move {
                     while let Ok((mut send, mut recv)) = conn.accept_bi().await {
                         recv.read_to_end(1 << 16).await.ok();
-                        counted.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                        let n = counted.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                        if n < silent {
+                            // Held open, never written: the asker's bound runs out.
+                            tokio::spawn(async move {
+                                tokio::time::sleep(Duration::from_secs(30)).await;
+                                drop(send);
+                            });
+                            continue;
+                        }
                         for (i, piece) in wire.chunks(part).enumerate() {
                             if i > 0 {
                                 tokio::time::sleep(pause).await;
@@ -1235,7 +1245,7 @@ async fn a_holder_that_sends_a_flipped_byte_is_refused_by_name() {
         "one chunk group: its size, then its bytes"
     );
     wire[8 + 5_000] ^= 1;
-    let asking = Asking::new(ra.path(), (hash, 10_000), wire, 1, Duration::ZERO).await;
+    let asking = Asking::new(ra.path(), (hash, 10_000), wire, 1, Duration::ZERO, 0).await;
     for _ in 0..50 {
         if asking.asked() >= 2 {
             break;
@@ -1277,7 +1287,7 @@ async fn a_holder_slower_than_the_bound_to_its_last_byte_still_answers() {
     let bytes = noise(200_000, b"slow");
     let (hash, wire) = wire_of(&bytes).await;
     let pause = Duration::from_millis(1_500);
-    let asking = Asking::new(ra.path(), (hash, 200_000), wire, 4, pause).await;
+    let asking = Asking::new(ra.path(), (hash, 200_000), wire, 4, pause, 0).await;
     let at = asking.shared.join("f.bin");
     let t0 = std::time::Instant::now();
     while std::fs::read(&at).ok().as_deref() != Some(&bytes[..])
@@ -1290,5 +1300,34 @@ async fn a_holder_slower_than_the_bound_to_its_last_byte_still_answers() {
     assert!(
         held.as_deref() == Some(&bytes[..]),
         "Ana holds Ben's file, 4.5 s to its last byte; asked {asked} times in {took:?}"
+    );
+}
+
+/// **A file no member gave is asked again, with nothing to wake it**
+/// (syp-6 a): Ben's key leaves Ana's first get of a file her record places
+/// unanswered, so her step writes nothing, and answers the next; Ana's
+/// directory holds the file within 15 s, with no OS event under it, no act
+/// and no restart. Red with the retry out (perf-2's loop, woken only by the
+/// OS, an act or the sweep each 600 s): Ben's key asked once, and the file
+/// never held — syp-5's S3 (`demo/runs/syp/2026-10-10/rerun/README.md` §6,
+/// item 4).
+#[tokio::test]
+async fn a_file_no_member_gave_is_asked_again_with_nothing_to_wake_it() {
+    let ra = tempfile::tempdir().unwrap();
+    let bytes = noise(20_000, b"asked again");
+    let (hash, wire) = wire_of(&bytes).await;
+    let asking = Asking::new(ra.path(), (hash, 20_000), wire, 1, Duration::ZERO, 1).await;
+    let at = asking.shared.join("f.bin");
+    let t0 = std::time::Instant::now();
+    while std::fs::read(&at).ok().as_deref() != Some(&bytes[..])
+        && t0.elapsed() < Duration::from_secs(15)
+    {
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    let (held, took, asked) = (std::fs::read(&at).ok(), t0.elapsed(), asking.asked());
+    asking.close().await;
+    assert!(
+        held.as_deref() == Some(&bytes[..]),
+        "Ana holds the file Ben's key gave at its second ask; asked {asked} times in {took:?}"
     );
 }

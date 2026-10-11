@@ -2,8 +2,9 @@
 //! A directory kept in step with its folder in one group, synced both ways
 //! (sy-1, the mesh-Dropbox spike; syp-4; DESIGN §9). Each time the OS says
 //! files under it changed (perf-2 f), the group's record takes an act
-//! (perf-2 d), and at its start and each ten minutes, when it is walked
-//! whole: each new or changed file
+//! (perf-2 d), at its start and each ten minutes, when it is walked
+//! whole, and again, a second and doubling to fifteen, while a file the
+//! layout places is not written (syp-6 a): each new or changed file
 //! copied into the store and one act written in the group of the changes,
 //! each naming the entry it replaces ([`svrngs_core::SyncFolder`]); then
 //! the group's layout ([`svrngs_core::Admission::layout`]) is written into
@@ -61,6 +62,21 @@ const SWEEP_EVERY: Duration = Duration::from_secs(600);
 /// How long a step waits after the OS's first event, so a burst of writes
 /// is one step and one act.
 const GATHER_FOR: Duration = Duration::from_millis(50);
+
+/// How soon a step that left a file the layout places unwritten, no member
+/// having given it, is woken again, doubling at each such step up to
+/// [`RETRY_UP_TO`] (syp-6 a): with no OS event or act to wake it, the next
+/// was the sweep, 600 s on, and syp-5's S3 conflict was never fetched
+/// (`demo/runs/syp/2026-10-10/rerun/README.md` §6, item 4).
+const RETRY_FIRST: Duration = Duration::from_secs(1);
+
+/// The longest wait between two asks of a file not written: iroh drops a
+/// dead process's path within its 15 s path idle timeout
+/// (iroh-1.0.2/src/socket.rs:117; at 15.6-17.6 s in syp-5's
+/// `run-s3-2/ana.log:443`, `:448`), so a member killed and started again is
+/// dialled within one wait of that, where a longer one only delays a
+/// holder iroh can already reach.
+const RETRY_UP_TO: Duration = Duration::from_secs(15);
 
 /// What a step looks at on disk.
 enum Look {
@@ -209,8 +225,10 @@ impl Folders {
     }
 
     /// `dir` stepped when the OS says a file under it changed, at once when
-    /// its group's record takes an act, and walked whole at its start and
-    /// each [`SWEEP_EVERY`]: its one loop, holding its kept state. A step
+    /// its group's record takes an act, after [`RETRY_FIRST`] and longer
+    /// while a file the layout places is not written, and walked whole at
+    /// its start and each [`SWEEP_EVERY`]: its one loop, holding its kept
+    /// state. A step
     /// each second walked every file, 1,952 ms of each at 100,000 files,
     /// and its wait was 958 ms of a change's 1,182 at another member
     /// (perf-1's README §9 T1, T5; perf-2 d, f).
@@ -241,17 +259,28 @@ impl Folders {
                 }
             };
             let (mut held, mut look, mut due) = (None, Look::Everything, Instant::now());
+            // When the step is woken again for a file not written; none
+            // while every file is, so an idle directory wakes nothing.
+            let mut retry: Option<Duration> = None;
             loop {
                 if matches!(look, Look::Everything) {
                     due = Instant::now() + every;
                 }
                 // Read before the step, so an act taken during it wakes the next.
                 let seen = count(&woken.borrow_and_update());
-                if let Err(why) = f.step(&dir, &group, &folder, &mut held, &look).await {
-                    // Read again from the last whole kept state, as each step
-                    // read it before: what this one changed is not kept.
-                    held = None;
-                    tracing::warn!(target: "folder", namespace = group, folder, %why, "synced: the step stopped short; the next one tries again, its kept state read again");
+                match f.step(&dir, &group, &folder, &mut held, &look).await {
+                    Ok(0) => retry = None,
+                    Ok(unwritten) => {
+                        let next = retry.map_or(RETRY_FIRST, |d| (d * 2).min(RETRY_UP_TO));
+                        retry = Some(next);
+                        tracing::debug!(target: "folder", namespace = group, folder, unwritten, again_in = ?next, "synced: files the layout places here not written, so the step is woken again");
+                    }
+                    Err(why) => {
+                        // Read again from the last whole kept state, as each
+                        // step read it before: what this one changed is not kept.
+                        held = None;
+                        tracing::warn!(target: "folder", namespace = group, folder, %why, "synced: the step stopped short; the next one tries again, its kept state read again");
+                    }
                 }
                 look = tokio::select! {
                     first = events.recv() => {
@@ -280,6 +309,15 @@ impl Folders {
                     // held across the other branch's settle.
                     () = async { drop(woken.wait_for(|m| count(m) != seen).await) } => {
                         tracing::debug!(target: "folder", namespace = group, folder, "synced: the step woken, the group's record having taken an act");
+                        Look::Paths(BTreeSet::new())
+                    }
+                    () = async {
+                        match retry {
+                            Some(d) => tokio::time::sleep(d).await,
+                            None => std::future::pending().await,
+                        }
+                    } => {
+                        tracing::debug!(target: "folder", namespace = group, folder, "synced: the step woken again, a file the layout places here not written");
                         Look::Paths(BTreeSet::new())
                     }
                     _ = tokio::time::sleep_until(due.into()) => Look::Everything,
@@ -345,7 +383,7 @@ impl Folders {
         folder: &str,
         held: &mut Option<BTreeMap<SyncPath, Held>>,
         look: &Look,
-    ) -> Result<(), FolderError> {
+    ) -> Result<usize, FolderError> {
         let t0 = Instant::now();
         let ms = |t: Instant| t.elapsed().as_millis() as u64;
         // Read before anything is sent or deleted, so a group that cannot
@@ -473,10 +511,10 @@ impl Folders {
             .iter()
             .filter(|p| p.folder == folder)
             .collect();
-        hold.extend(
-            self.apply(dir, folder, &placed, &holders, held, &taken)
-                .await,
-        );
+        let (fetched, unwritten) = self
+            .apply(dir, folder, &placed, &holders, held, &taken)
+            .await;
+        hold.extend(fetched);
         let (apply_ms, t) = (ms(t), Instant::now());
         // What this step took or fetched made durable before the kept state
         // names it: the store commits its writes in batches up to 500 ms
@@ -494,15 +532,16 @@ impl Folders {
         drop(hold);
         // Each file looked at once, though the OS named it and its directory.
         let files = seen.len();
-        tracing::debug!(target: "folder", folder, files, sent, read_ms, walk_ms, take_ms, write_ms, apply_ms, kept_ms = ms(t), ms = ms(t0), "synced: a step");
-        wrote
+        tracing::debug!(target: "folder", folder, files, sent, unwritten, read_ms, walk_ms, take_ms, write_ms, apply_ms, kept_ms = ms(t), ms = ms(t0), "synced: a step");
+        wrote.map(|()| unwritten)
     }
 
     /// The layout written into `dir`, what `held` says updated. A file just
     /// `taken` and sent is held as its entry, wherever the record places
     /// that entry: beside, when it met another edit, and the record's
     /// choice is then written at its path. What it fetched, held from the
-    /// store's sweep for the step to drop once the kept state names it.
+    /// store's sweep for the step to drop once the kept state names it, and
+    /// how many files it placed here it could not write.
     async fn apply(
         &self,
         dir: &Path,
@@ -511,7 +550,7 @@ impl Folders {
         standing: &Holders,
         held: &mut BTreeMap<SyncPath, Held>,
         taken: &BTreeMap<SyncPath, (ContentHash, SystemTime)>,
-    ) -> Vec<TempTag> {
+    ) -> (Vec<TempTag>, usize) {
         let mut hold = Vec::new();
         tracing::debug!(target: "folder", folder, placed = placed.len(), "synced: the layout to write");
         let paths: BTreeSet<&SyncPath> = placed.iter().map(|p| &p.path).collect();
@@ -564,14 +603,19 @@ impl Folders {
             .buffered_unordered(FETCH_AT_ONCE)
             .collect::<Vec<_>>()
             .await;
+        let mut unwritten = 0;
         for (p, at, tag) in fetched {
-            let Some(tag) = tag else { continue };
+            let Some(tag) = tag else {
+                unwritten += 1;
+                continue;
+            };
             hold.push(tag);
-            if let Ok(mtime) = std::fs::metadata(&at).and_then(|m| m.modified()) {
-                held.insert(p.path.clone(), Held { p, mtime });
+            match std::fs::metadata(&at).and_then(|m| m.modified()) {
+                Ok(mtime) => drop(held.insert(p.path.clone(), Held { p, mtime })),
+                Err(_) => unwritten += 1,
             }
         }
-        hold
+        (hold, unwritten)
     }
 
     /// `p`'s version fetched from a member standing in the group, its
