@@ -4887,7 +4887,7 @@ test file name, so lean-2's `iroh/tests.rs`, `oplog_tests.rs`,
   ring_checkpoint.rs −42, guest.rs −44 and −70, view.rs −32, lib.rs −14
   and −26, sync.rs −25, node.rs −20; tests rewritten on what the product
   uses (+228/−223).
-- lean-4 (a), 13 commits, src −151 net (732285d to e978122); (b) origin.rs
+- lean-4 (a), 13 commits, src −97 net (732285d to e978122); (b) origin.rs
   +25/−1 (9cdfda5); (c) question.js +31, home.js +8/−11, app.js +9/−19,
   home.rs +8, sw.js +1/−1 (7b10b4a); (d) surface.rs +8/−4, lend.js
   +5/−4, picks.js +3/−5 (c42939a). Tests: home.rs +189, browser/main.rs
@@ -5023,7 +5023,7 @@ Reading the range for what neither pass would show:
 - **#110, closed (7b10b4a)**: one wording, question.js, for both pages'
   question and what apps use; **#113** is what is left of it.
 - **#113, not fixed.** home.js `uses` :68–82 and web/app.js `uses`
-  :252–271 each walk the lends that ask, get their choices, and on a
+  :253–270 each walk the lends that ask, get their choices, and on a
   failure say `unasked(l)`: the home page from its node's `/choices` with
   the error's message after the line, the group's page by a dial, the
   error traced and not shown. And "That app, or what it asks to use, is
@@ -5033,8 +5033,8 @@ Reading the range for what neither pass would show:
   arguments and give them one failure line, a change of what a page says,
   not a move; each saves about 3 lines. Recorded.
 - **Glassbox.** lean-4 (b) traces both of `readable`'s branches
-  (origin.rs:226, :229); (d)'s `stop` is built where `ask` is, inside the
-  branch `reads` traces (surface.rs:239). lean-2 and lean-3 moved and
+  (origin.rs:226, :229 at 06bece5); (d)'s `stop` is built where `ask` is,
+  inside the branch `reads` traces (surface.rs:235–236 at 06bece5). lean-2 and lean-3 moved and
   deleted without dropping a trace: their commits name each refusal kept.
 - **#57, #68, #70, #71, #75, #77, #79, #81, #89, #91, #95, #97, #99, #103,
   #104 still open**, as recorded; #42, #48, #63 said why not in lean-4 (a).
@@ -5062,7 +5062,7 @@ more than one production definition.**
 | # | principle | path:line | fixed in | finding |
 |---|---|---|---|---|
 | 112 | 8 | crates/svrngs-node/src/surface.rs:230 and origin.rs:199, at 06bece5 | 0ca47dc | The stop's `/svrngs-stop` suffix built in one file and parsed in another, two literals. |
-| 113 | 8, 3 | crates/svrngs-node/src/home/home.js:68–87 and web/app.js:228–271, at 06bece5 | not fixed | The two callers of question.js `uses` walk, fetch and fail alike; the "not lent" line spelled in each, "groups" and "group". |
+| 113 | 8, 3 | crates/svrngs-node/src/home/home.js:68–87 and web/app.js:228–270, at 06bece5 | not fixed | The two callers of question.js `uses` walk, fetch and fail alike; the "not lent" line spelled in each, "groups" and "group". |
 | 110 | 8, 3 | home.js and web/app.js | closed (7b10b4a) | One wording in question.js; #113 the rest. |
 | 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 2,822 lines left (12528 / 15350). |
 | 31, 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99, 103, 104 | as recorded | as recorded | not fixed | Untouched in the range but by moves that kept them. |
