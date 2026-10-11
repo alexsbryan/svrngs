@@ -5,7 +5,7 @@
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
-use common::loopback_sockets;
+use common::{loopback_sockets, noise};
 
 use std::path::Path;
 use std::time::Duration;
@@ -161,16 +161,6 @@ async fn ask(node: &Node, body: serde_json::Value) -> (u16, String) {
     (answer.status().as_u16(), answer.text().await.unwrap())
 }
 
-/// `len` bytes no two runs agree on by accident: BLAKE3's output stream.
-fn noise(len: usize, salt: &[u8]) -> Vec<u8> {
-    let mut out = vec![0u8; len];
-    blake3::Hasher::new()
-        .update(salt)
-        .finalize_xof()
-        .fill(&mut out);
-    out
-}
-
 // ── A folder synced both ways (sy-1, the mesh-Dropbox spike) ──────────
 
 /// `who` syncs a directory of its own named `Shared` in `films`, as
@@ -295,26 +285,9 @@ async fn a_synced_file_is_served_by_a_member_who_did_not_write_it_and_to_no_one_
     assert!(until(&group, held).await, "Ana's file reaches Ben");
     let hash = iroh_blobs::Hash::from_bytes(*blake3::hash(&bytes).as_bytes());
 
-    let ask_ben = |from: &Node, dir: std::path::PathBuf| {
-        let (endpoint, ben) = (from.endpoint().clone(), group.ben.endpoint().id());
-        async move {
-            let store = iroh_blobs::store::fs::FsStore::load(dir).await.unwrap();
-            let conn = endpoint.connect(ben, b"/iroh-bytes/4").await;
-            let conn = conn.map_err(|e| format!("the dial: {e}"))?;
-            let get = store
-                .remote()
-                .execute_get(conn, iroh_blobs::protocol::GetRequest::blob(hash));
-            let got = tokio::time::timeout(Duration::from_secs(10), get).await;
-            got.map_err(|_| "no answer".to_string())?
-                .map_err(|e| format!("{e:?}"))
-        }
-    };
-    let cy = ask_ben(&group.cy, tempfile::tempdir().unwrap().keep()).await;
-    assert_eq!(
-        cy.map(|s| s.payload_bytes_read),
-        Ok(50_000),
-        "Ben serves Cy what Ana wrote"
-    );
+    let cy_dir = tempfile::tempdir().unwrap().keep();
+    let cy = get(&group.cy, &group.ben, hash, &cy_dir).await;
+    assert_eq!(cy, Ok(50_000), "Ben serves Cy what Ana wrote");
 
     let dee_dir = tempfile::tempdir().unwrap();
     let dee = start(4, dee_dir.path()).await;
@@ -325,7 +298,7 @@ async fn a_synced_file_is_served_by_a_member_who_did_not_write_it_and_to_no_one_
     }
     book.add_endpoint_info(addr);
     dee.endpoint().address_lookup().unwrap().add(book);
-    let refused = ask_ben(&dee, dee_dir.path().join("asked")).await;
+    let refused = get(&dee, &group.ben, hash, &dee_dir.path().join("asked")).await;
     assert!(
         refused.as_ref().is_err_and(|e| e.contains("not admitted")),
         "Dee, in no group, is closed at the accept: {refused:?}"

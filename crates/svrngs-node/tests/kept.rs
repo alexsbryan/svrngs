@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Child, Command};
 use std::time::Duration;
 
-use common::loopback_sockets;
+use common::{loopback_sockets, noise};
 use member::{signing, Addr};
 use svrngs_node::iroh::{EndpointAddr, MemoryLookup, PublicKey, RelayConfig};
 use svrngs_node::node::Node;
@@ -212,15 +212,6 @@ async fn get(
     let got = got.map_err(|_| "no answer".to_string())?;
     got.map(|s| s.payload_bytes_read)
         .map_err(|e| format!("{e:?}"))
-}
-
-fn noise(len: usize, salt: &[u8]) -> Vec<u8> {
-    let mut out = vec![0u8; len];
-    blake3::Hasher::new()
-        .update(salt)
-        .finalize_xof()
-        .fill(&mut out);
-    out
 }
 
 /// **A store keeps what it held across a stop**: Ana takes a file and
