@@ -35,8 +35,6 @@ pub enum Standing {
     Members(BTreeMap<String, Member>),
 }
 
-/// One key standing in a group: the person it is bound to, and what holds
-/// it ([`Device`], u4-1), as `membership` answers both.
 /// One fold of a group's register (U7): who stands, each key the group's
 /// keeper cut with the person it was bound to, and the keeper's key.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -46,6 +44,8 @@ pub struct Register {
     pub keeper: Option<String>,
 }
 
+/// One key standing in a group: the person it is bound to, and what holds
+/// it ([`Device`], u4-1), as `membership` answers both.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Member {
     pub person: Person,

@@ -72,11 +72,15 @@ struct Writer {
 ///
 /// And the register ([`RingRail::standing`]) is caught up the same way: the
 /// acts that move membership, a handful among thousands, and every act of a
-/// key a `Remove` names (U7), kept in the log's order as the tail brings
-/// them in, and the standing last folded from them,
-/// with the seed it was folded from. Read whole on every connection, sync
-/// request and round, it was what an idle round still paid for (26 reads
-/// of 10,000 acts, 5.5 s; scale.rs, ceiling-3's runs; THE_CEILING.md fix 3).
+/// key a `Remove` names (U7), kept as the tail brings them in, and the
+/// register last folded from them, with the seed it was folded from. A key
+/// named for the first time has its acts already held added from the whole
+/// log, after the tail's, so they are not in the log's order, and an act
+/// of it after the `Remove` in the same tail is kept twice; the fold reads
+/// them as a set (`ActSet::of`), so neither moves it. Read whole on every
+/// connection, sync request and round, it was what an idle round still
+/// paid for (26 reads of 10,000 acts, 5.5 s; scale.rs, ceiling-3's runs;
+/// THE_CEILING.md fix 3).
 /// An act that moves membership voids the standing; a seed unlike the one it
 /// was folded from folds it again.
 #[derive(Default)]

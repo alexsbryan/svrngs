@@ -467,13 +467,6 @@ fn walk(
 }
 
 impl RailAct {
-    /// Whether this act moves membership: it binds (`Admit`), cuts or asks
-    /// (`Remove`), hands the keeper on (`HandOn`) or opens a link
-    /// (`Invite`). A `Correct` does not, since U7: it voids nothing that
-    /// moves membership. [`standing_reads`] keeps these, and the acts
-    /// of every key a `Remove` names, so the list has one home beside the
-    /// fold that reads it, and the match has no wildcard: a new kind of act
-    /// does not compile until it is placed here.
     /// The key a `Remove` names, asked or cut; `None` for any other act.
     pub fn names(&self) -> Option<&str> {
         match self {
@@ -482,6 +475,13 @@ impl RailAct {
         }
     }
 
+    /// Whether this act moves membership: it binds (`Admit`), cuts or asks
+    /// (`Remove`), hands the keeper on (`HandOn`) or opens a link
+    /// (`Invite`). A `Correct` does not, since U7: it voids nothing that
+    /// moves membership. [`standing_reads`] keeps these, and the acts
+    /// of every key a `Remove` names, so the list has one home beside the
+    /// fold that reads it, and the match has no wildcard: a new kind of act
+    /// does not compile until it is placed here.
     pub const fn moves_membership(&self) -> bool {
         match self {
             RailAct::Admit { .. }
