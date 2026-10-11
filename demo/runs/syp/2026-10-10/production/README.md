@@ -28,3 +28,24 @@ both versions stayed: the test's red run, `a_store_keeps_what_the_layout_places_
 Each member still received the whole edit: 100 gets of 1 MiB at Ben
 (`grep -c "fetched, verified" run-m2/ben.log`: 200, the first version's
 and the edit's) — a version as its blocks waits (DESIGN §9).
+
+## S2, Ben's node stopped and started before Cy's (syp-4 d)
+
+`python3 run.py s2`, at `1911547`, load 8.01 on 12 cores at its start,
+swap 5,782.50 MB at its start and end (not grown), 109 GB free.
+
+Cy stopped; Ana wrote `s2.bin` and Ben fetched it (`run-s2/ben.log:15`,
+"fetched, verified", 00:59:53.375); Ana was killed (`kill -9`) and Ben
+stopped by SIGTERM 11 ms after his fetch, then started (`events.jsonl`,
+`down` ben at …393.386, `up` at …393.641). Cy then started and held
+`s2.bin` 4.51 s after her command, from Ben (`bar` S2-restarted, `from`
+["ben"]): Ana, killed, passed over (`cy.log:23`, "a holder gave
+nothing"), and Ben's provider sent the whole file, `done=true
+payload=65536` (`ben.log:30`). **Passed.** Ben's step had written its kept
+state before the stop: his restarted step sent no change for `s2.bin`
+(no "a change sent" in `ben.log`), and the kept state is written only
+after the store's `sync_db`.
+
+The loss itself is reproduced by a test, `tests/kept.rs`, red three times
+of three without the fix and green three of three with it (its commit,
+7f0c479).
