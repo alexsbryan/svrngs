@@ -1618,10 +1618,13 @@ on a computer first (landed, sup-4: the taste's enforcing 46 lines to 11,
 Tonight's Picks' plumbing 39 to 16, every bar passed in its spirit on a
 computer from its home page in Chromium and WebKit and on the phones, the
 unasked yes refused by svrngs on a computer, `demo/runs/sup/2026-10-10/`;
-its three follow-ups there, queued after the lean rows below (operator,
+its three follow-ups there landed in lean-4 (b) to (d) (operator,
 2026-10-10; `ralph/next/lean/`): svrngs's answers at
 a lend's origin readable by the page that reads it, one wording of
-svrngs's question, a stop address beside `ask`); after a row that keeps an
+svrngs's question, a stop address beside `ask` — and its computer
+journeys run again on them, Tonight's Picks saying `refused-unasked`
+before the yes and `refused-stopped` after a stop in Chromium and WebKit,
+`demo/runs/supf/2026-10-10/`); after a row that keeps an
 asleep computer from holding anyone's answer
 (`demo/runs/mnp/2026-10-09/README.md`, "What no prediction named" 1 and
 2). The fourth, a lend its lender's person
