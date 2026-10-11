@@ -5,8 +5,8 @@
 //! acts, written in that group alone, name them by hash
 //! ([`svrngs_core::SyncFolder`]). The provider serves a hash to a dialer
 //! only while a synced folder of a group the dialer stands in places it,
-//! asked of the record on every request. A fetch takes a range of a hash by
-//! verified range from a holder the record names; bytes that do not match
+//! asked of the record on every request. A fetch takes what the store lacks
+//! of a hash, verified, from a holder the record names; bytes that do not match
 //! the hash never reach the store, and each holder asked is named with why
 //! it gave nothing. A group whose record cannot be read is said by name,
 //! never read as one placing nothing (#113, #117). The store keeps what a
@@ -29,7 +29,7 @@ use iroh::endpoint::Connection;
 use iroh_blobs::api::blobs::{AddPathOptions, ImportMode};
 use iroh_blobs::api::remote::GetProgressItem;
 use iroh_blobs::api::{Store, TempTag};
-use iroh_blobs::protocol::{ChunkRanges, ChunkRangesExt, GetRequest};
+use iroh_blobs::protocol::GetRequest;
 use iroh_blobs::provider::events::{
     AbortReason, ConnectMode, EventMask, EventSender, ObserveMode, ProviderMessage, RequestMode,
     RequestUpdate,
@@ -48,9 +48,6 @@ use crate::node::{Host, ANSWER_WITHIN};
 
 #[path = "synced.rs"]
 mod synced;
-
-/// What a fetch asks a holder for at once.
-const PIECE: u64 = 1 << 20;
 
 /// How long a holder that did not answer within [`ANSWER_WITHIN`] is
 /// taken as asleep: asked last, after every other holder, for this long
@@ -333,10 +330,12 @@ impl Folders {
         false
     }
 
-    /// Make `[start, end)` of `hash` held here, verified, asking each holder
-    /// in turn, one that did not answer lately last. `Ok` names the holder
-    /// it came from, or none when the store held it; `Err` names each
-    /// holder asked and why it gave nothing.
+    /// Make `hash` held here whole, verified, in one get of what the store
+    /// lacks, asking each holder in turn, one that did not answer lately
+    /// last; a holder that stops mid-file leaves what the store still lacks
+    /// to the next (perf-2 a). `Ok` names the holder it came from, or none
+    /// when the store held it; `Err` names each holder asked and why it gave
+    /// nothing.
     #[expect(
         clippy::disallowed_methods,
         reason = "the fetch is an adapter: it times what a holder takes, and when one did not answer"
@@ -345,33 +344,26 @@ impl Folders {
         &self,
         hash: Hash,
         holders: &[String],
-        start: u64,
-        end: u64,
     ) -> Result<Option<String>, Vec<(String, String)>> {
-        let want = GetRequest::blob_ranges(hash, ChunkRanges::bytes(start..end));
-        let local = self.store.remote().local_for_request(want).await;
-        let local =
-            local.map_err(|e| vec![(self.host.actor().into(), format!("the store: {e}"))])?;
-        if local.is_complete() {
-            return Ok(None);
-        }
-        let missing = local.missing();
+        let mut lacks = self.lacks(hash).await?;
         let mut order: Vec<&String> = holders.iter().filter(|k| *k != self.host.actor()).collect();
         let lately = self.unanswered.borrow().clone();
         order.sort_by_key(|k| lately.get(*k).is_some_and(|t| t.elapsed() < ASLEEP_FOR));
         let mut why = Vec::new();
         for key in order {
+            let Some(missing) = lacks else {
+                return Ok(None);
+            };
             let t0 = Instant::now();
-            let got = tokio::time::timeout(ANSWER_WITHIN, self.fetch(key, missing.clone())).await;
-            let said = match got {
-                Ok(Ok(stats)) => {
+            let said = match self.fetch(key, missing).await {
+                Ok(stats) => {
                     self.unanswered
                         .send_if_modified(|m| m.remove(key).is_some());
-                    tracing::info!(target: "folder", hash = %hash, holder = %key, start, end, payload = stats.payload_bytes_read, other = stats.other_bytes_read, ms = t0.elapsed().as_millis() as u64, "folder: fetched, verified");
+                    tracing::info!(target: "folder", hash = %hash, holder = %key, payload = stats.payload_bytes_read, other = stats.other_bytes_read, ms = t0.elapsed().as_millis() as u64, "folder: fetched, verified");
                     return Ok(Some(key.clone()));
                 }
-                Ok(Err(e)) => e,
-                Err(_) => {
+                Err(Nothing::Said(e)) => e,
+                Err(Nothing::Silent) => {
                     // Kept whether new or not; nothing waits on a change.
                     let at = Instant::now();
                     self.unanswered
@@ -380,15 +372,34 @@ impl Folders {
                 }
             };
             self.conns.send_if_modified(|m| m.remove(key).is_some());
-            tracing::warn!(target: "folder", hash = %hash, holder = %key, start, end, why = %said, "folder: a holder gave nothing of the range");
+            tracing::warn!(target: "folder", hash = %hash, holder = %key, why = %said, "folder: a holder gave nothing of what the store lacks");
             why.push((key.clone(), said));
+            lacks = self.lacks(hash).await?;
         }
-        Err(why)
+        match lacks {
+            None => Ok(None),
+            Some(_) => Err(why),
+        }
+    }
+
+    /// What of `hash` the store lacks, as a get; `None` when it holds it whole.
+    async fn lacks(&self, hash: Hash) -> Result<Option<GetRequest>, Vec<(String, String)>> {
+        let local = self
+            .store
+            .remote()
+            .local_for_request(GetRequest::blob(hash))
+            .await;
+        let local =
+            local.map_err(|e| vec![(self.host.actor().into(), format!("the store: {e}"))])?;
+        Ok((!local.is_complete()).then(|| local.missing()))
     }
 
     /// `request` asked of `key` on its open connection, else one dialled;
     /// its dial, first byte and last byte, and the path iroh selected for
-    /// the connection, traced (perf-1).
+    /// the connection, traced (perf-1). The dial and the first byte wait
+    /// [`ANSWER_WITHIN`], and each next byte as long after the last, never
+    /// the whole file: 100 MiB at 25 MB/s takes 4 s (perf-1's README §10,
+    /// candidate 1), and a large file's holder is not asleep.
     #[expect(
         clippy::disallowed_methods,
         reason = "times the fetch's dial, first byte and last byte for their trace (perf-1); no decision reads it"
@@ -397,7 +408,7 @@ impl Folders {
         &self,
         key: &str,
         request: GetRequest,
-    ) -> Result<iroh_blobs::get::Stats, String> {
+    ) -> Result<iroh_blobs::get::Stats, Nothing> {
         let t0 = Instant::now();
         let ms = |t: Instant| t.elapsed().as_micros() as f64 / 1000.0;
         let open = self
@@ -409,13 +420,12 @@ impl Folders {
         let conn = match open {
             Some(c) => c,
             None => {
-                let peer = actor_key(key).ok_or("not a key")?;
-                let c = self
-                    .host
-                    .endpoint()
-                    .connect(peer, Alpn::Blobs.bytes())
+                let peer = actor_key(key).ok_or(Nothing::Said("not a key".into()))?;
+                let dial = self.host.endpoint().connect(peer, Alpn::Blobs.bytes());
+                let c = tokio::time::timeout(ANSWER_WITHIN, dial)
                     .await
-                    .map_err(|e| format!("the dial: {e}"))?;
+                    .map_err(|_| Nothing::Silent)?
+                    .map_err(|e| Nothing::Said(format!("the dial: {e}")))?;
                 self.conns
                     .send_modify(|m| drop(m.insert(key.into(), c.clone())));
                 c
@@ -431,20 +441,33 @@ impl Folders {
         let rtt_ms = path.as_ref().map(|p| p.rtt().as_micros() as f64 / 1000.0);
         drop(paths);
         let mut got = std::pin::pin!(self.store.remote().execute_get(conn, request).stream());
-        let mut first_ms = None;
+        let (mut first_ms, mut by) = (None, t0 + ANSWER_WITHIN);
         let done = loop {
-            match got.next().await {
+            let Ok(next) = tokio::time::timeout_at(by.into(), got.next()).await else {
+                break Err(Nothing::Silent);
+            };
+            match next {
                 Some(GetProgressItem::Progress(_)) => {
                     first_ms = first_ms.or(Some(ms(t0)));
+                    by = Instant::now() + ANSWER_WITHIN;
                 }
                 Some(GetProgressItem::Done(stats)) => break Ok(stats),
-                Some(GetProgressItem::Error(e)) => break Err(format!("{e:?}")),
-                None => break Err("the get ended without a result".into()),
+                Some(GetProgressItem::Error(e)) => break Err(Nothing::Said(format!("{e:?}"))),
+                None => break Err(Nothing::Said("the get ended without a result".into())),
             }
         };
         tracing::debug!(target: "folder", holder = %key, dial_ms, first_ms, last_ms = ms(t0), ?relayed, addr, rtt_ms, ok = done.is_ok(), "folder: the fetch's phases, and the path iroh selected");
         done
     }
+}
+
+/// Why a holder gave nothing of a fetch.
+enum Nothing {
+    /// No byte within [`ANSWER_WITHIN`] of the ask or of the last byte:
+    /// taken as asleep for [`ASLEEP_FOR`].
+    Silent,
+    /// An answer refused, or a dial that failed, by what it said.
+    Said(String),
 }
 
 /// The provider: every get asked of the record for its dialer, and its

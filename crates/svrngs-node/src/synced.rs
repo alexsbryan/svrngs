@@ -29,7 +29,7 @@ use iroh_blobs::Hash;
 use serde::{Deserialize, Serialize};
 use svrngs_core::{Change, ContentHash, Placed, SyncFolder, SyncPath};
 
-use super::{FolderAsk, FolderError, Folders, PIECE};
+use super::{FolderAsk, FolderError, Folders};
 use crate::register::Standing;
 
 /// The keys standing in the group a step syncs with.
@@ -389,14 +389,7 @@ impl Folders {
                 let fetched = Instant::now();
                 let mut from = vec![p.entry.key.clone()];
                 from.extend(standing.iter().filter(|k| **k != p.entry.key).cloned());
-                let (mut got, mut from_at) = (Ok(None), 0);
-                while from_at < p.size && got.is_ok() {
-                    got = self
-                        .hold(hash, &from, from_at, (from_at + PIECE).min(p.size))
-                        .await;
-                    from_at += PIECE;
-                }
-                if let Err(why) = got {
+                if let Err(why) = self.hold(hash, &from).await {
                     tracing::warn!(target: "folder", folder, path = %p.path, %hash, ?why, "synced: not written — no member gave it, verified");
                     hold.pop();
                     continue;

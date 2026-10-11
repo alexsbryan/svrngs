@@ -1019,7 +1019,8 @@ async fn a_holder_that_sends_a_flipped_byte_is_refused_by_name() {
     let refusal = log
         .lines()
         .find(|l| {
-            l.contains("a holder gave nothing of the range") && l.contains(&actor_of(&signing(2)))
+            l.contains("a holder gave nothing of what the store lacks")
+                && l.contains(&actor_of(&signing(2)))
         })
         .unwrap_or_default()
         .to_string();
@@ -1033,5 +1034,33 @@ async fn a_holder_that_sends_a_flipped_byte_is_refused_by_name() {
     assert!(
         refusal.contains("Mismatch") || refusal.contains("mismatch"),
         "the fetch names Ben and the mismatch: {refusal:?}"
+    );
+}
+
+/// **A holder slower than [`svrngs_node::node::ANSWER_WITHIN`] to its last
+/// byte still answers** (perf-2 a): Ben's key sends a file of 200,000 bytes
+/// in four parts 1.5 s apart, 4.5 s to its last byte, each part within the
+/// bound of the last; Ana's directory holds the file, byte for byte. Red
+/// with the bound on the whole fetch (e25c939's `hold`): Ben taken as asleep
+/// at 3 s, every time, and the file never held.
+#[tokio::test]
+async fn a_holder_slower_than_the_bound_to_its_last_byte_still_answers() {
+    let ra = tempfile::tempdir().unwrap();
+    let bytes = noise(200_000, b"slow");
+    let (hash, wire) = wire_of(&bytes).await;
+    let pause = Duration::from_millis(1_500);
+    let asking = Asking::new(ra.path(), (hash, 200_000), wire, 4, pause).await;
+    let at = asking.shared.join("f.bin");
+    let t0 = std::time::Instant::now();
+    while std::fs::read(&at).ok().as_deref() != Some(&bytes[..])
+        && t0.elapsed() < Duration::from_secs(20)
+    {
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    let (held, took, asked) = (std::fs::read(&at).ok(), t0.elapsed(), asking.asked());
+    asking.close().await;
+    assert!(
+        held.as_deref() == Some(&bytes[..]),
+        "Ana holds Ben's file, 4.5 s to its last byte; asked {asked} times in {took:?}"
     );
 }
