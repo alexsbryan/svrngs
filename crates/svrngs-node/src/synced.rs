@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! A directory kept in step with its folder in one group, synced both ways
-//! (sy-1, the mesh-Dropbox spike; syp-4; DESIGN §9). Once a second: the
-//! directory is walked as a shared folder is, each new or changed file
+//! (sy-1, the mesh-Dropbox spike; syp-4; DESIGN §9). Each time the OS says
+//! files under it changed (perf-2 f), the group's record takes an act
+//! (perf-2 d), and at its start and each ten minutes, when it is walked
+//! whole: each new or changed file
 //! copied into the store and one act written in the group of the changes,
 //! each naming the entry it replaces ([`svrngs_core::SyncFolder`]); then
 //! the group's layout ([`svrngs_core::Admission::layout`]) is written into
@@ -12,8 +14,9 @@
 //! referenced as a shared folder's is, since the store must keep a version
 //! the directory has since overwritten: a conflict's other side. What was
 //! last taken or written at each path, and from which entry, is kept in the
-//! data dir, so an edit made while the node was stopped is sent with its
-//! base; a kept state that cannot be read stops its directory's steps, said
+//! data dir, read at a loop's first step and written when it changes, so
+//! an edit made while the node was stopped is sent with its base, found by
+//! the walk at its start; a kept state that cannot be read stops its directory's steps, said
 //! by its name, never read as nothing held (syp-4 e). The directories it
 //! syncs are kept in the data dir too, so a restart resumes each unasked,
 //! one loop each. A step whose group's record, or who stands in it, cannot
@@ -27,8 +30,10 @@ use std::time::{Duration, Instant, SystemTime};
 use iroh_blobs::api::TempTag;
 use iroh_blobs::Hash;
 use n0_future::{BufferedStreamExt as _, StreamExt as _};
+use notify::{RecursiveMode, Watcher as _};
 use serde::{Deserialize, Serialize};
 use svrngs_core::{Change, ContentHash, Placed, SyncFolder, SyncPath};
+use tokio::sync::mpsc;
 
 use super::{FolderAsk, FolderError, Folders};
 use crate::register::Standing;
@@ -42,6 +47,34 @@ const SYNCED: &str = "synced.json";
 /// How many changed files a step takes into the store at once: one after
 /// another, 100,000 took 98.4 s at load 70 (perf-1's README §9; perf-2 e).
 const TAKE_AT_ONCE: usize = 8;
+
+/// How often a watched directory is walked whole, for what the OS's events
+/// did not say (perf-2 f): beside its start and every time the OS says it
+/// dropped some. A directory the OS cannot watch is walked each second, as
+/// every directory was before.
+const SWEEP_EVERY: Duration = Duration::from_secs(600);
+
+/// How long a step waits after the OS's first event, so a burst of writes
+/// is one step and one act.
+const SETTLE: Duration = Duration::from_millis(50);
+
+/// What a step looks at on disk.
+enum Look {
+    /// Every file under the directory: the sweep.
+    Everything,
+    /// The paths the OS said changed, each a file, a directory moved or
+    /// written whole, or gone; none when the record woke the step.
+    Paths(BTreeSet<PathBuf>),
+}
+
+/// Whether `rel` is `scope` or under it; every path is under `""`.
+fn under(rel: &SyncPath, scope: &str) -> bool {
+    let rel = rel.as_str();
+    scope.is_empty()
+        || rel
+            .strip_prefix(scope)
+            .is_some_and(|rest| rest.is_empty() || rest.starts_with('/'))
+}
 
 /// The directories this computer syncs, each by its group and folder, one
 /// directory each, so one loop owns a directory and its kept state (#119);
@@ -171,26 +204,82 @@ impl Folders {
         }
     }
 
-    /// `dir` stepped a second after its last step, or at once when its
-    /// group's record takes an act, a burst of acts one step: its one loop.
-    /// The wait for the next second was 958 ms of a change's 1,182 at
-    /// another member (perf-1's README §9 T1; perf-2 d).
+    /// `dir` stepped when the OS says a file under it changed, at once when
+    /// its group's record takes an act, and walked whole at its start and
+    /// each [`SWEEP_EVERY`]: its one loop, holding its kept state. A step
+    /// each second walked every file, 1,952 ms of each at 100,000 files,
+    /// and its wait was 958 ms of a change's 1,182 at another member
+    /// (perf-1's README §9 T1, T5; perf-2 d, f).
+    #[expect(
+        clippy::disallowed_methods,
+        reason = "the loop is an adapter: it reads the clock for when the next sweep is due"
+    )]
     fn keep_in_step(&self, dir: PathBuf, group: String, folder: String) {
         tracing::info!(target: "folder", namespace = group, folder, dir = %dir.display(), "synced: the directory kept in step with the group's folder");
         let f = self.clone();
         let mut woken = self.woken.subscribe();
         tokio::spawn(async move {
             let count = |m: &BTreeMap<String, u64>| m.get(&group).copied().unwrap_or(0);
+            // `tx` lives with the loop, so a watcher that could not start
+            // leaves the channel open and the sweep its only waker.
+            let (tx, mut events) = mpsc::unbounded_channel();
+            let told = tx.clone();
+            let watching = notify::recommended_watcher(move |e| drop(told.send(e)))
+                .and_then(|mut w| w.watch(&dir, RecursiveMode::Recursive).map(|()| w));
+            let every = match &watching {
+                Ok(_) => {
+                    tracing::debug!(target: "folder", namespace = group, folder, "synced: the OS's file events watched, the directory walked whole each {SWEEP_EVERY:?}");
+                    SWEEP_EVERY
+                }
+                Err(why) => {
+                    tracing::warn!(target: "folder", namespace = group, folder, %why, "synced: the OS's file events cannot be watched here, so the directory is walked each second");
+                    Duration::from_secs(1)
+                }
+            };
+            let (mut held, mut look, mut due) = (None, Look::Everything, Instant::now());
             loop {
+                if matches!(look, Look::Everything) {
+                    due = Instant::now() + every;
+                }
                 // Read before the step, so an act taken during it wakes the next.
                 let seen = count(&woken.borrow_and_update());
-                if let Err(why) = f.step(&dir, &group, &folder).await {
-                    tracing::warn!(target: "folder", namespace = group, folder, %why, "synced: the step stopped short; the next one tries again");
+                if let Err(why) = f.step(&dir, &group, &folder, &mut held, &look).await {
+                    // Read again from the last whole kept state, as each step
+                    // read it before: what this one changed is not kept.
+                    held = None;
+                    tracing::warn!(target: "folder", namespace = group, folder, %why, "synced: the step stopped short; the next one tries again, its kept state read again");
                 }
-                let acts = woken.wait_for(|m| count(m) != seen);
-                if let Ok(Ok(_)) = tokio::time::timeout(Duration::from_secs(1), acts).await {
-                    tracing::debug!(target: "folder", namespace = group, folder, "synced: the step woken, the group's record having taken an act");
-                }
+                look = tokio::select! {
+                    first = events.recv() => {
+                        tokio::time::sleep(SETTLE).await;
+                        let mut said = vec![first];
+                        while let Ok(e) = events.try_recv() {
+                            said.push(Some(e));
+                        }
+                        let mut paths = BTreeSet::new();
+                        let mut whole = false;
+                        for e in said.into_iter().flatten() {
+                            match e {
+                                Ok(e) if !e.need_rescan() => paths.extend(e.paths),
+                                _ => whole = true,
+                            }
+                        }
+                        if whole {
+                            tracing::debug!(target: "folder", namespace = group, folder, "synced: the OS says it dropped events, so the directory is walked whole");
+                            Look::Everything
+                        } else {
+                            tracing::debug!(target: "folder", namespace = group, folder, paths = paths.len(), "synced: the step woken, the OS saying files changed");
+                            Look::Paths(paths)
+                        }
+                    }
+                    // The guard `wait_for` answers is dropped inside, never
+                    // held across the other branch's settle.
+                    () = async { drop(woken.wait_for(|m| count(m) != seen).await) } => {
+                        tracing::debug!(target: "folder", namespace = group, folder, "synced: the step woken, the group's record having taken an act");
+                        Look::Paths(BTreeSet::new())
+                    }
+                    _ = tokio::time::sleep_until(due.into()) => Look::Everything,
+                };
             }
         });
     }
@@ -204,17 +293,35 @@ impl Folders {
         Ok(found.ok_or_else(unread)?.1.into_keys().collect())
     }
 
-    /// Every version a synced directory on this computer holds, as each
-    /// was last taken or written: what the store keeps beside the layouts.
-    pub(super) fn held_everywhere(&self) -> Result<Vec<ContentHash>, FolderError> {
+    /// Each synced directory's kept state on this computer, by its path.
+    fn kept_files(&self) -> Result<Vec<PathBuf>, FolderError> {
         let unread = |e| FolderError::Read(self.data_dir.clone(), e);
         let mut out = Vec::new();
         for entry in std::fs::read_dir(&self.data_dir).map_err(unread)? {
             let path = entry.map_err(unread)?.path();
             let name = path.file_name().unwrap_or_default().to_string_lossy();
-            if !(name.starts_with("synced-") && name.ends_with(".json")) {
-                continue;
+            if name.starts_with("synced-") && name.ends_with(".json") {
+                out.push(path);
             }
+        }
+        Ok(out)
+    }
+
+    /// Each kept state's path, size and mtime: whether one moved.
+    pub(super) fn kept_at(&self) -> Result<Vec<(PathBuf, u64, SystemTime)>, FolderError> {
+        let stat = |path: PathBuf| {
+            let meta = std::fs::metadata(&path).map_err(io(&path))?;
+            let mtime = meta.modified().map_err(io(&path))?;
+            Ok((path, meta.len(), mtime))
+        };
+        self.kept_files()?.into_iter().map(stat).collect()
+    }
+
+    /// Every version a synced directory on this computer holds, as each
+    /// was last taken or written: what the store keeps beside the layouts.
+    pub(super) fn held_everywhere(&self) -> Result<Vec<ContentHash>, FolderError> {
+        let mut out = Vec::new();
+        for path in self.kept_files()? {
             let bytes = std::fs::read(&path).map_err(io(&path))?;
             let held: BTreeMap<SyncPath, Held> = serde_json::from_slice(&bytes)
                 .map_err(|e| FolderError::Kept(path.clone(), e.to_string()))?;
@@ -227,7 +334,14 @@ impl Folders {
         clippy::disallowed_methods,
         reason = "times each phase of a step for its trace (perf-1); no decision reads it"
     )]
-    async fn step(&self, dir: &Path, group: &str, folder: &str) -> Result<(), FolderError> {
+    async fn step(
+        &self,
+        dir: &Path,
+        group: &str,
+        folder: &str,
+        held: &mut Option<BTreeMap<SyncPath, Held>>,
+        look: &Look,
+    ) -> Result<(), FolderError> {
         let t0 = Instant::now();
         let ms = |t: Instant| t.elapsed().as_millis() as u64;
         // Read before anything is sent or deleted, so a group that cannot
@@ -235,14 +349,20 @@ impl Folders {
         let (holders, placed) = (self.holders(group)?, self.layout(group)?);
         tracing::debug!(target: "folder", folder, placed = placed.placed.len(), holders = holders.len(), ms = ms(t0), "synced: the layout read");
         let kept = self.data_dir.join(format!("synced-{group}-{folder}.json"));
-        // Nothing kept is nothing held; a kept state that cannot be read is
-        // never read as that, or every file would go again with no base.
-        let mut held: BTreeMap<SyncPath, Held> = match std::fs::read(&kept) {
-            Ok(bytes) => serde_json::from_slice(&bytes)
-                .map_err(|e| FolderError::Kept(kept.clone(), e.to_string()))?,
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => BTreeMap::new(),
-            Err(e) => return Err(FolderError::Kept(kept.clone(), e.to_string())),
+        // Read at the loop's first step, then held here and written when it
+        // changes (perf-2 f). Nothing kept is nothing held; a kept state that
+        // cannot be read is never read as that, or every file would go again
+        // with no base, so each step asks again until it can be read.
+        let held = match held {
+            Some(held) => held,
+            None => held.insert(match std::fs::read(&kept) {
+                Ok(bytes) => serde_json::from_slice(&bytes)
+                    .map_err(|e| FolderError::Kept(kept.clone(), e.to_string()))?,
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => BTreeMap::new(),
+                Err(e) => return Err(FolderError::Kept(kept.clone(), e.to_string())),
+            }),
         };
+        let was = held.clone();
         let mut changes = Vec::new();
         let mut taken = BTreeMap::new();
         let (mut seen, mut found) = (BTreeSet::new(), Vec::new());
@@ -250,7 +370,12 @@ impl Folders {
         // the kept state names it.
         let mut hold: Vec<TempTag> = Vec::new();
         let (read_ms, t) = (ms(t0), Instant::now());
-        let walked = self.walk(dir)?;
+        // What is looked at: every file, or what the OS named; and under
+        // which paths a file held but not found is a delete.
+        let (walked, scopes) = match look {
+            Look::Everything => (self.walk(dir, "")?, vec![String::new()]),
+            Look::Paths(paths) => self.look_at(dir, paths)?,
+        };
         let (files, walk_ms, t) = (walked.len(), ms(t), Instant::now());
         for (rel, path, meta) in walked {
             // Parsed on the write that makes it (syp-4 c): a name this
@@ -262,8 +387,7 @@ impl Folders {
                     continue;
                 }
             };
-            seen.insert(rel.clone());
-            if unchanged(held.get(&rel), &path) {
+            if !seen.insert(rel.clone()) || unchanged(held.get(&rel), &path) {
                 continue;
             }
             tracing::debug!(target: "folder", folder, path = %rel, size = meta.len(), "synced: found on disk, changed since it was last held");
@@ -303,7 +427,7 @@ impl Folders {
         }
         changes.extend(
             held.iter()
-                .filter(|(rel, _)| !seen.contains(*rel))
+                .filter(|(rel, _)| !seen.contains(*rel) && scopes.iter().any(|s| under(rel, s)))
                 .map(|(rel, h)| {
                     let base = Some(h.p.entry.clone());
                     Change {
@@ -341,7 +465,7 @@ impl Folders {
             .filter(|p| p.folder == folder)
             .collect();
         hold.extend(
-            self.apply(dir, folder, &placed, &holders, &mut held, &taken)
+            self.apply(dir, folder, &placed, &holders, held, &taken)
                 .await,
         );
         let (apply_ms, t) = (ms(t), Instant::now());
@@ -354,7 +478,10 @@ impl Folders {
             synced.map_err(|e| FolderError::Store(dir.into(), e.to_string()))?;
             tracing::debug!(target: "folder", folder, held = hold.len(), "synced: what the step took or fetched made durable");
         }
-        let wrote = write_whole(&kept, &serde_json::to_vec(&held).unwrap_or_default());
+        let wrote = match *held == was {
+            true => Ok(()),
+            false => write_whole(&kept, &serde_json::to_vec(&held).unwrap_or_default()),
+        };
         drop(hold);
         tracing::debug!(target: "folder", folder, files, sent, read_ms, walk_ms, take_ms, write_ms, apply_ms, kept_ms = ms(t), ms = ms(t0), "synced: a step");
         wrote

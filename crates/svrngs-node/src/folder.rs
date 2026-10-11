@@ -120,9 +120,16 @@ struct Layout {
     hashes: Arc<HashSet<ContentHash>>,
 }
 
+/// A file found under a synced directory: its path under it, where it is,
+/// and its metadata then.
+type Found = (String, PathBuf, std::fs::Metadata);
+
 /// What the store's keep is read from: each synced group's digest, and
-/// every version a directory holds.
-type ReadAt = (Vec<(String, Digest)>, Vec<ContentHash>);
+/// each synced directory's kept state by its size and mtime.
+type ReadAt = (
+    Vec<(String, Digest)>,
+    Vec<(PathBuf, u64, std::time::SystemTime)>,
+);
 
 impl Folders {
     /// The store under `data_dir/blobs`, its sweep, and its provider.
@@ -239,11 +246,12 @@ impl Folders {
         Ok(read)
     }
 
-    /// Every file under `dir`, by its path under it. A link is not
-    /// followed, since it may reach outside the folder.
-    fn walk(&self, dir: &Path) -> Result<Vec<(String, PathBuf, std::fs::Metadata)>, FolderError> {
+    /// Every file under `from`, by its path under the synced directory,
+    /// `from_rel` being `from`'s. A link is not followed, since it may reach
+    /// outside the folder.
+    fn walk(&self, from: &Path, from_rel: &str) -> Result<Vec<Found>, FolderError> {
         let mut files = Vec::new();
-        let mut walk = vec![dir.to_path_buf()];
+        let mut walk = vec![from.to_path_buf()];
         while let Some(at) = walk.pop() {
             let entries = std::fs::read_dir(&at).map_err(|e| FolderError::Read(at.clone(), e))?;
             for entry in entries.flatten() {
@@ -255,12 +263,50 @@ impl Folders {
                 } else if !meta.is_file() {
                     tracing::debug!(target: "folder", path = %path.display(), "folder: not shared — a link, which may reach outside the folder");
                 } else {
-                    let rel = path.strip_prefix(dir).unwrap_or(&path).to_string_lossy();
-                    files.push((rel.into_owned(), path, meta));
+                    let rel = path.strip_prefix(from).unwrap_or(&path).to_string_lossy();
+                    let rel = match from_rel {
+                        "" => rel.into_owned(),
+                        _ => format!("{from_rel}/{rel}"),
+                    };
+                    files.push((rel, path, meta));
                 }
             }
         }
         Ok(files)
+    }
+
+    /// The files at or under each of `paths` the OS named under `dir`, as
+    /// [`Self::walk`] gives them, and each path's own path under `dir`: a
+    /// file held under one but not found is a delete. A file written is
+    /// itself; a directory moved in, or written whole, is walked; a path
+    /// gone, a file deleted or renamed away or a directory moved out, finds
+    /// nothing, so what was held under it is deleted. A save by rename names
+    /// both its paths, the new file found at the one it replaced.
+    fn look_at(
+        &self,
+        dir: &Path,
+        paths: &BTreeSet<PathBuf>,
+    ) -> Result<(Vec<Found>, Vec<String>), FolderError> {
+        // The OS names a path as it resolves it (macOS: /private/var for
+        // /var), so it is matched against the directory resolved too.
+        let real = dir.canonicalize().unwrap_or_else(|_| dir.to_path_buf());
+        let (mut files, mut scopes) = (Vec::new(), Vec::new());
+        for path in paths {
+            let Some(rel) = [&real, dir].iter().find_map(|d| path.strip_prefix(d).ok()) else {
+                continue;
+            };
+            let rel = rel.to_string_lossy().into_owned();
+            match std::fs::symlink_metadata(path) {
+                Ok(m) if m.is_dir() => files.extend(self.walk(path, &rel)?),
+                Ok(m) if m.is_file() => files.push((rel.clone(), path.clone(), m)),
+                Ok(_) => {
+                    tracing::debug!(target: "folder", path = %path.display(), "folder: not shared — a link, which may reach outside the folder")
+                }
+                Err(_) => {}
+            }
+            scopes.push(rel);
+        }
+        Ok((files, scopes))
     }
 
     /// The file at `path` copied into the store, held from the sweep
@@ -292,18 +338,17 @@ impl Folders {
 
     /// What [`Self::keep`] is read from, cheaply: each synced group's
     /// digest, since equal digests hold equal acts (svrngs-core view.rs,
-    /// `View`), and every version a directory holds. `None` when any cannot
-    /// be read, so `keep` is read and says why.
+    /// `View`), and each kept state's size and mtime, since a step writes
+    /// its kept state whenever it changes (perf-2 f), not each kept state
+    /// read whole each second. `None` when any cannot be read, so `keep` is
+    /// read and says why.
     fn read_at(&self) -> Option<ReadAt> {
         let groups = self.synced_groups().ok()?;
         let rail = self.host.rail();
         let digests = groups
             .into_iter()
             .map(|ns| rail.digest(&ns).ok().map(|d| (ns, d)));
-        Some((
-            digests.collect::<Option<_>>()?,
-            self.held_everywhere().ok()?,
-        ))
+        Some((digests.collect::<Option<_>>()?, self.kept_at().ok()?))
     }
 
     /// What the store keeps: every version a synced folder's layout places

@@ -521,6 +521,59 @@ async fn a_step_s_act_names_its_changes_in_the_walk_s_order() {
     assert_eq!(named, walked, "the act's order is the walk's");
 }
 
+/// **A save by rename is synced, and a directory moved whole** (perf-2 f):
+/// Ana's file reaches Ben; she saves it again as editors do, writing a new
+/// file beside it and renaming it over the old, and Ben holds the new
+/// bytes; then a directory of two files moved into her directory whole
+/// reaches Ben's, and moved out whole leaves it. Red with the OS's renames
+/// not looked at (events of kind `Modify(Name)` dropped): the save never
+/// reaches Ben.
+#[tokio::test]
+async fn a_save_by_rename_is_synced_and_a_directory_moved_whole() {
+    let group = Group::new().await;
+    let (ra, rb) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (ana, ben) = (
+        both_ways(&group.ana, ra.path()).await,
+        both_ways(&group.ben, rb.path()).await,
+    );
+    let first = noise(20_000, b"first save");
+    std::fs::write(ana.join("r.txt"), &first).unwrap();
+    let at_ben = |rel: &str| std::fs::read(ben.join(rel)).ok();
+    assert!(
+        until(&group, || at_ben("r.txt").as_ref() == Some(&first)).await,
+        "Ana's file reaches Ben"
+    );
+    let second = noise(21_000, b"second save");
+    std::fs::write(ana.join(".r.txt.swp"), &second).unwrap();
+    std::fs::rename(ana.join(".r.txt.swp"), ana.join("r.txt")).unwrap();
+    assert!(
+        until(&group, || at_ben("r.txt").as_ref() == Some(&second)).await,
+        "Ana's save by rename reaches Ben: {:?}",
+        names(&ben)
+    );
+    let moved = ra.path().join("moved");
+    std::fs::create_dir_all(&moved).unwrap();
+    let (one, two) = (noise(5_000, b"one"), noise(6_000, b"two"));
+    std::fs::write(moved.join("one.bin"), &one).unwrap();
+    std::fs::write(moved.join("two.bin"), &two).unwrap();
+    std::fs::rename(&moved, ana.join("moved")).unwrap();
+    let both = || {
+        at_ben("moved/one.bin").as_ref() == Some(&one)
+            && at_ben("moved/two.bin").as_ref() == Some(&two)
+    };
+    assert!(
+        until(&group, both).await,
+        "a directory moved in whole reaches Ben"
+    );
+    std::fs::rename(ana.join("moved"), &moved).unwrap();
+    let gone = || at_ben("moved/one.bin").is_none() && at_ben("moved/two.bin").is_none();
+    assert!(
+        until(&group, gone).await,
+        "a directory moved out whole leaves Ben's"
+    );
+    group.close().await;
+}
+
 /// **A holder asleep is waited on for a bound, then the next asked**: Ana
 /// writes, Ben's directory takes it, Ana's node goes away; Cy, syncing
 /// after, asks Ana first, as the writer, and holds the file from Ben within

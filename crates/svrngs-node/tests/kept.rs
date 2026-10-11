@@ -131,6 +131,19 @@ async fn sync(who: &Addr, dir: &Path, group: &str) {
     panic!("member {} never synced {}", who.me, dir.display());
 }
 
+/// Up to 30 s, until the member's log over `dir` says its directory's
+/// file events have been watched `times` times since its first start.
+async fn watched(dir: &Path, times: usize) {
+    for _ in 0..300 {
+        let log = std::fs::read_to_string(dir.join("log")).unwrap_or_default();
+        if log.matches("synced: the OS's file events watched").count() >= times {
+            return;
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    panic!("{}'s file events never watched", dir.display());
+}
+
 /// Up to 30 s, whether `path` came to hold `bytes`.
 async fn holds(path: &Path, bytes: &[u8]) -> bool {
     for _ in 0..300 {
@@ -293,6 +306,15 @@ async fn a_store_keeps_what_it_held_across_a_stop() {
 /// … timed out`), which this test does not judge. Red with the directories
 /// it syncs not kept (sy-1: the command asked again at each start): her
 /// file is never taken, and Ben's never reaches her.
+///
+/// And **a change the OS's events missed is found at the sweep** (perf-2
+/// f): Ana's file edited while her process is stopped, no watcher running,
+/// is found by the walk her loop starts with, and her provider gives Cy the
+/// edit, which only a record placing it allows. Red with the start's sweep
+/// out (the loop's first step looking at no path): the edit never sent,
+/// and Cy refused it. Neither the sweep each ten minutes nor the OS saying
+/// it dropped events can be brought about by a test in seconds: each is a
+/// walk of the same step.
 #[tokio::test]
 async fn a_restart_resumes_a_synced_directory_unasked() {
     let root = tempfile::tempdir().unwrap();
@@ -333,6 +355,7 @@ async fn a_restart_resumes_a_synced_directory_unasked() {
     let dirs = [ana_dir.as_path(), ben_dir.as_path()];
     tell(&[&ana_addr, &ben_addr, &cy_addr], &dirs, &cy).await;
     sync(&ana_addr, &ana_disk, &group).await;
+    watched(&ana_dir, 1).await;
     let first = noise(30_000, b"before the stop");
     std::fs::write(ana_disk.join("first.bin"), &first).unwrap();
     sync(&ben_addr, &ben_disk, &group).await;
@@ -345,8 +368,26 @@ async fn a_restart_resumes_a_synced_directory_unasked() {
     let kill = Command::new("kill").args(["-TERM", &pid]).status();
     assert!(kill.unwrap().success());
     drop(ana);
+    let edited = noise(30_500, b"edited while stopped");
+    std::fs::write(ana_disk.join("first.bin"), &edited).unwrap();
     let (ana, ana_addr) = spawn(&ana_dir, 0).await;
     tell(&[&ana_addr, &ben_addr, &cy_addr], &dirs, &cy).await;
+    watched(&ana_dir, 2).await;
+    let hash = iroh_blobs::Hash::from_bytes(*blake3::hash(&edited).as_bytes());
+    let mut swept = Err("not asked".to_string());
+    for k in 0..30 {
+        swept = get(&cy, &ana_addr, hash, root.path().join(format!("cy-{k}"))).await;
+        if swept.is_ok() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    assert_eq!(
+        swept,
+        Ok(30_500),
+        "Ana's edit while stopped is found at her start's sweep and placed: {}",
+        std::fs::read_to_string(ana_dir.join("log")).unwrap_or_default()
+    );
     let after = noise(31_000, b"after the start");
     std::fs::write(ben_disk.join("after.bin"), &after).unwrap();
     assert!(kept(&ben_dir, "after.bin").await, "Ben's step sends it");
