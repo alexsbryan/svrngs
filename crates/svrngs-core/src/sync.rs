@@ -355,6 +355,23 @@ pub fn ops_missing_from_within(
         // receiver — not a silent drop — judge it.
         Err(_) => budget_bytes,
     };
+    // (svrngs, lean-4: the two walks below were written twice upstream.)
+    // Each op onto `out` while it fits the budget — one always fits an empty
+    // `out` — and `false` at the first that does not.
+    let fill = |ops: Vec<&Op<SignedOp>>, out: &mut Vec<Op<SignedOp>>, spent: &mut usize| {
+        for op in ops {
+            let cost = cost_of(op, budget_bytes);
+            if budget_bytes != NO_BUDGET
+                && !out.is_empty()
+                && spent.saturating_add(cost) > budget_bytes
+            {
+                return false;
+            }
+            *spent = spent.saturating_add(cost);
+            out.push(op.clone());
+        }
+        true
+    };
 
     let trusted = authentic(ops, namespace, verifier);
 
@@ -385,16 +402,8 @@ pub fn ops_missing_from_within(
         let Some(view) = theirs.get(*actor) else {
             // Absent actor: absence asks for everything (module docs) — the
             // first non-fitting op stops the walk and names `more`.
-            for op in held {
-                let cost = cost_of(op, budget_bytes);
-                if budget_bytes != NO_BUDGET
-                    && !out.is_empty()
-                    && spent.saturating_add(cost) > budget_bytes
-                {
-                    return (out, true);
-                }
-                spent = spent.saturating_add(cost);
-                out.push((*op).clone());
+            if !fill(held.clone(), &mut out, &mut spent) {
+                return (out, true);
             }
             continue;
         };
@@ -420,16 +429,8 @@ pub fn ops_missing_from_within(
         .head
             != view.head;
         if !mismatch {
-            for op in over {
-                let cost = cost_of(op, budget_bytes);
-                if budget_bytes != NO_BUDGET
-                    && !out.is_empty()
-                    && spent.saturating_add(cost) > budget_bytes
-                {
-                    return (out, true);
-                }
-                spent = spent.saturating_add(cost);
-                out.push((*op).clone());
+            if !fill(over, &mut out, &mut spent) {
+                return (out, true);
             }
             continue;
         }
