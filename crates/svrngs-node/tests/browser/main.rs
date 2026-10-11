@@ -1323,7 +1323,7 @@ async fn removal(ada: &Node, who: &str) -> svrngs_node::removal::Outcome {
             ada.api_addr(),
             svrngs_node::removal::REMOVALS_ROUTE
         ))
-        .json(&svrngs_node::removal::Asked {
+        .json(&svrngs_node::removal::RemovalAsk {
             group: NS.into(),
             person: who.into(),
         })

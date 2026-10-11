@@ -11,7 +11,7 @@ use std::time::Duration;
 
 use svrngs_node::iroh::{PublicKey, RelayConfig};
 use svrngs_node::node::Node;
-use svrngs_node::removal::{Asked, Outcome, HANDOVERS_ROUTE, REMOVALS_ROUTE};
+use svrngs_node::removal::{Outcome, RemovalAsk, HANDOVERS_ROUTE, REMOVALS_ROUTE};
 use svrngs_node::{actor_of, Person, RailAct, Roster, SigningKey};
 
 const NS: &str = "trip";
@@ -72,7 +72,7 @@ async fn ask(node: &Node, route: &str, person: &str) -> (u16, Outcome) {
         .build()
         .unwrap()
         .post(format!("http://{}{route}", node.api_addr()))
-        .json(&Asked {
+        .json(&RemovalAsk {
             group: NS.into(),
             person: person.into(),
         })

@@ -42,7 +42,7 @@ pub const HANDOVERS_ROUTE: &str = "/v1/handovers";
 
 /// What the command asks: the group by its id, and a person by name.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Asked {
+pub struct RemovalAsk {
     pub group: String,
     pub person: String,
 }
@@ -100,7 +100,7 @@ fn decides(register: &Register) -> Option<Person> {
     register.members.get(keeper).map(|m| m.person.clone())
 }
 
-async fn remove(State(at): State<Asking>, Json(asked): Json<Asked>) -> Outcome {
+async fn remove(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outcome {
     let Ok(person) = Person::parse(&asked.person) else {
         return Outcome::NotInGroup;
     };
@@ -201,7 +201,7 @@ async fn tell(
     }
 }
 
-async fn hand_over(State(at): State<Asking>, Json(asked): Json<Asked>) -> Outcome {
+async fn hand_over(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outcome {
     let Ok(person) = Person::parse(&asked.person) else {
         return Outcome::NotInGroup;
     };

@@ -86,7 +86,7 @@ use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath, Upload};
 use svrngs_node::node::{Lends, Lent, Node, NodeError};
 use svrngs_node::redeem::{ask, redeem, AskRequest, RedeemError, RedeemRequest, Redeemed};
-use svrngs_node::removal::{Asked, Outcome, HANDOVERS_ROUTE, REMOVALS_ROUTE};
+use svrngs_node::removal::{Outcome, RemovalAsk, HANDOVERS_ROUTE, REMOVALS_ROUTE};
 use svrngs_node::room;
 use svrngs_node::{actor_of, Device, Person, SigningKey};
 use svrngs_node::{MintInvite, Refused as CommitRefused};
@@ -650,7 +650,7 @@ async fn folder(root: &Path, dir: PathBuf, reference: &str) -> Result<String, Re
 /// a person's words, or the refusal.
 async fn removal(root: &Path, route: &str, person: Name, reference: &str) -> Result<Said, Refusal> {
     let seed = group_named(root, reference)?;
-    let asked = Asked {
+    let asked = RemovalAsk {
         group: seed.id(),
         person: person.as_str().to_string(),
     };
