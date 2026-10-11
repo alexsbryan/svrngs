@@ -49,3 +49,20 @@ after the store's `sync_db`.
 The loss itself is reproduced by a test, `tests/kept.rs`, red three times
 of three without the fix and green three of three with it (its commit,
 7f0c479).
+
+## Seen, not asked: a restarted member not dialled back in 30 s
+
+Writing syp-4 (e)'s restart test (`tests/kept.rs`,
+`a_restart_resumes_a_synced_directory_unasked`), Ben's process, a member
+process of perf-1's (`tests/common/member.rs`) on loopback, could not dial
+Ana's after her process was stopped and started: his round's exchange with
+her failed at each try, 10 s each, then `iroh bridge: dial failed
+peer=8a88e3dd… alpn=cwth/http/0 error=timed out`, and each of his fetches
+from her "did not answer within 3s", 14 times in one run of 30 s; Ana's
+dials of Ben's process went through at once (her round `pushed=1
+peer_sent=3`). Told the new address by a second `MemoryLookup` beside the
+first, he may hold Ana's dead address; or iroh may hold the dead path.
+Which, this run does not tell apart: the test asks the way that works,
+said in its doc. Off this harness — a member's computer restarted, its
+peers dialling it by n0's lookup — it is unmeasured. For syp-5's rerun,
+whose S2 restarts a member.
