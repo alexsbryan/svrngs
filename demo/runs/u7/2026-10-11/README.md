@@ -124,3 +124,14 @@ file reached everyone but Bo, Bo's own removal counted nowhere, and
 
 Fix, then take 2 (below): the removal route wakes the round as the folder's
 write and an app's append do.
+
+## Take 2 — predictions, before it ran
+
+The repository at `a473f1d`: the removal route wakes the round
+(`crates/svrngs-node/src/removal.rs`), red at `6bc56b0` and green there.
+`run.py` unchanged; `OUT=take-2`.
+
+- **4′.** Ana's lend refuses Bo with 403 `removed` inside 5 s of Sam's
+  command (the woken round dials Ana at once, on a path the setup's rounds
+  already found), so both lenders inside the 30 s bar.
+- 1-3 and 5-9 as take 1 had them.
