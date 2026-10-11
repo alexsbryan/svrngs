@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! A directory kept in step with its folder, synced both ways (sy-1, the
-//! mesh-Dropbox spike; DESIGN §9). Once a second: the directory is walked
-//! as a shared folder is, each new or changed file copied into the store
-//! and one act written of the changes, each naming the entry it replaces
-//! ([`svrngs_core::SyncFolder`]); then the record's layout
-//! ([`svrngs_core::Admission::layout`]) is written into the directory —
-//! what it lacks fetched whole, verified, from any standing member, the
-//! writer first, and what it no longer places deleted — never touching a
+//! A directory kept in step with its folder in one group, synced both ways
+//! (sy-1, the mesh-Dropbox spike; syp-4; DESIGN §9). Once a second: the
+//! directory is walked as a shared folder is, each new or changed file
+//! copied into the store and one act written in the group of the changes,
+//! each naming the entry it replaces ([`svrngs_core::SyncFolder`]); then
+//! the group's layout ([`svrngs_core::Admission::layout`]) is written into
+//! the directory — what it lacks fetched whole, verified, from a member
+//! standing in the group, the writer first, and what it no longer places
+//! deleted — never touching a
 //! file changed on disk since it was last taken. A file is copied, not
 //! referenced as a shared folder's is, since the store must keep a version
 //! the directory has since overwritten: a conflict's other side. What was
 //! last taken or written at each path, and from which entry, is kept in the
 //! data dir, so an edit made while the node was stopped is sent with its
-//! base.
+//! base. A step whose group's record, or who stands in it, cannot be read
+//! stops before it sends or deletes anything, said by the group's name.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
@@ -25,6 +27,9 @@ use svrngs_core::{Change, ContentHash, Placed, SyncFolder};
 
 use super::{FolderError, Folders, PIECE};
 use crate::register::Standing;
+
+/// The keys standing in the group a step syncs with.
+type Holders = BTreeSet<String>;
 
 /// What this computer last took or wrote at a path: the record's entry, and
 /// the file's mtime then.
@@ -48,35 +53,51 @@ fn io(path: &Path) -> impl Fn(std::io::Error) -> FolderError + '_ {
 }
 
 impl Folders {
-    /// Keep `dir` in step with the folder of its name, once a second while
-    /// the node runs; its name.
-    pub fn both_ways(&self, dir: PathBuf) -> String {
+    /// Keep `dir` in step with the folder of its name in `group`, once a
+    /// second while the node runs; its name, or why not, when this computer
+    /// does not stand in the group.
+    pub fn both_ways(&self, dir: PathBuf, group: String) -> Result<String, FolderError> {
         let name = dir.file_name().unwrap_or_default().to_string_lossy();
         let (f, folder, name) = (self.clone(), name.to_string(), name.into_owned());
+        let standing = self.host.rail().standing(&group);
+        let standing = standing.map_err(|e| FolderError::Unread(group.clone(), e.to_string()))?;
+        if !matches!(&standing, Standing::Members(m) if m.contains_key(self.host.actor())) {
+            tracing::debug!(target: "folder", namespace = group, folder, "synced: refused — this computer does not stand in the group");
+            return Err(FolderError::NotStanding(group));
+        }
+        tracing::info!(target: "folder", namespace = group, folder, dir = %dir.display(), "synced: the directory kept in step with the group's folder");
         tokio::spawn(async move {
             loop {
-                if let Err(why) = f.step(&dir, &folder).await {
-                    tracing::warn!(target: "folder", folder, %why, "synced: the step stopped short; the next one tries again");
+                if let Err(why) = f.step(&dir, &group, &folder).await {
+                    tracing::warn!(target: "folder", namespace = group, folder, %why, "synced: the step stopped short; the next one tries again");
                 }
                 tokio::time::sleep(Duration::from_secs(1)).await;
             }
         });
-        name
+        Ok(name)
     }
 
-    /// Every synced folder's files where the records held here place them.
-    pub(super) fn placed(&self) -> Vec<Placed> {
-        self.admissions().flat_map(|a| a.layout()).collect()
+    /// Who stands in `group`, as [`crate::node::Host::standings`] reads it;
+    /// a group it leaves out is one whose register cannot be read here.
+    fn holders(&self, group: &str) -> Result<Holders, FolderError> {
+        let groups = self.host.standings().unwrap_or_default();
+        let found = groups.into_iter().find(|(ns, _)| ns == group);
+        let unread = || FolderError::Unread(group.into(), "who stands in it cannot be read".into());
+        Ok(found.ok_or_else(unread)?.1.into_keys().collect())
     }
 
     #[expect(
         clippy::disallowed_methods,
         reason = "times each phase of a step for its trace (perf-1); no decision reads it"
     )]
-    async fn step(&self, dir: &Path, folder: &str) -> Result<(), FolderError> {
+    async fn step(&self, dir: &Path, group: &str, folder: &str) -> Result<(), FolderError> {
         let t0 = Instant::now();
         let ms = |t: Instant| t.elapsed().as_millis() as u64;
-        let kept = self.data_dir.join(format!("synced-{folder}.json"));
+        // Read before anything is sent or deleted, so a group that cannot
+        // be read stops the step by its name.
+        let (holders, placed) = (self.holders(group)?, self.layout(group)?);
+        tracing::debug!(target: "folder", folder, placed = placed.len(), holders = holders.len(), ms = ms(t0), "synced: the layout read");
+        let kept = self.data_dir.join(format!("synced-{group}-{folder}.json"));
         let read = std::fs::read(&kept).ok();
         let mut held: BTreeMap<String, Held> = read
             .and_then(|b| serde_json::from_slice(&b).ok())
@@ -132,14 +153,24 @@ impl Folders {
                 folder: folder.into(),
                 changes,
             };
-            self.write(&act, folder, act.changes.len()).await?;
+            self.write(&act, group, folder, act.changes.len()).await?;
             for c in act.changes {
                 tracing::info!(target: "folder", folder, path = c.path, now = ?c.now, "synced: a change sent");
                 held.remove(&c.path);
             }
         }
         let (write_ms, t) = (ms(t), Instant::now());
-        self.apply(dir, folder, &mut held, &taken).await;
+        // Read again past this step's own act, which places what it took.
+        // Should the record turn unreadable between the two reads, the kept
+        // state stays as it was, and the next step sends the same change
+        // again: a second head of this computer's, kept beside, never lost.
+        let placed = match sent {
+            0 => placed,
+            _ => self.layout(group)?,
+        };
+        let placed = placed.into_iter().filter(|p| p.folder == folder).collect();
+        self.apply(dir, folder, placed, &holders, &mut held, &taken)
+            .await;
         let (apply_ms, t) = (ms(t), Instant::now());
         let wrote = std::fs::write(&kept, serde_json::to_vec(&held).unwrap_or_default());
         tracing::debug!(target: "folder", folder, files, sent, read_ms, walk_ms, take_ms, write_ms, apply_ms, kept_ms = ms(t), ms = ms(t0), "synced: a step");
@@ -158,23 +189,13 @@ impl Folders {
         &self,
         dir: &Path,
         folder: &str,
+        placed: Vec<Placed>,
+        standing: &Holders,
         held: &mut BTreeMap<String, Held>,
         taken: &BTreeMap<String, (ContentHash, SystemTime)>,
     ) {
-        let t0 = Instant::now();
         let ms = |t: Instant| t.elapsed().as_millis() as u64;
-        let placed: Vec<Placed> = self
-            .placed()
-            .into_iter()
-            .filter(|p| p.folder == folder)
-            .collect();
-        tracing::debug!(target: "folder", folder, placed = placed.len(), ms = ms(t0), "synced: the layout read");
-        let mut standing = BTreeSet::new();
-        for ns in self.rail.namespaces().unwrap_or_default() {
-            if let Ok(Standing::Members(m)) = self.rail.standing(&ns) {
-                standing.extend(m.into_keys());
-            }
-        }
+        tracing::debug!(target: "folder", folder, placed = placed.len(), "synced: the layout to write");
         let paths: BTreeSet<&String> = placed.iter().map(|p| &p.path).collect();
         for (rel, h) in held.clone() {
             let at = dir.join(&rel);
@@ -185,8 +206,9 @@ impl Folders {
             }
         }
         for (path, &(hash, mtime)) in taken {
-            let mine =
-                |q: &&Placed| q.entry.key == self.actor && &q.entry.path == path && q.hash == hash;
+            let mine = |q: &&Placed| {
+                q.entry.key == self.host.actor() && &q.entry.path == path && q.hash == hash
+            };
             if let Some(q) = placed.iter().find(mine) {
                 let p = Placed {
                     path: path.clone(),

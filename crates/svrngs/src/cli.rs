@@ -15,7 +15,7 @@
 //! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--sign-in S] [--ask W]
 //!                                          lend a service on this computer
 //! svrngs unshare <name>                    stop lending it
-//! svrngs share --folder <dir> --both-ways keep a folder the same on every member's disk,
+//! svrngs share --folder <dir> --group <group> keep a folder the same on every member's disk,
 //!                                          asked of svrngs running here
 //! svrngs room <name>...                    serve lends to this computer's network, run
 //! ```
@@ -134,10 +134,11 @@ svrngs — keep what your group shares on your own computers.
   svrngs unshare <name>
       Stop lending <name>.
 
-  svrngs share --folder <dir> --both-ways
-      Keep <dir> the same on every computer in your groups that shares a
-      folder of its name, while svrngs runs here: anyone may add, change and
-      delete in it.
+  svrngs share --folder <dir> --group <group>
+      Keep <dir> the same on every computer in <group> that shares a folder
+      of its name, while svrngs runs here: anyone in it may add, change and
+      delete in it, and nobody outside it receives a byte. <group> is its
+      name, or the first 8 letters of its id, as `link` takes it.
 
   svrngs room <name>...
       Let anyone on this computer's network (its WiFi) open what your groups
@@ -183,8 +184,12 @@ pub enum Verb {
     /// No secret: it is read from a prompt (the module docs).
     Share(Share),
     Unshare(LendName),
-    /// `share --folder --both-ways`, asked of svrngs running here.
-    Folder(FolderAsk),
+    /// `share --folder --group`, asked of svrngs running here: the
+    /// directory, absolute, and the group as typed.
+    Folder {
+        dir: PathBuf,
+        group: String,
+    },
     /// The lends named, served to this computer's network.
     Room(Vec<LendName>),
     Help,
@@ -204,8 +209,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let mut upload = None;
     let mut reads = Vec::new();
     let mut sign_in = None;
-    let mut folder = None;
-    let mut both_ways = false;
+    let (mut folder, mut group) = (None, None);
     let mut asks = None;
     let mut more = Vec::new();
     while let Some(arg) = it.next() {
@@ -265,7 +269,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                     Some(share::resolve_target(&raw).map_err(|why| format!("--sign-in {why}"))?);
             }
             "--folder" => folder = Some(value("--folder")?),
-            "--both-ways" => both_ways = true,
+            "--group" => group = Some(value("--group")?),
             "--ask" => {
                 let raw = value("--ask")?;
                 if raw.trim().is_empty() || raw.chars().any(char::is_control) {
@@ -301,18 +305,17 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 .into(),
         );
     }
-    match (verb.as_str(), folder) {
-        ("share", Some(dir)) if both_ways => {
+    match (verb.as_str(), folder, group) {
+        ("share", Some(dir), Some(group)) => {
             let dir = std::path::absolute(&dir).map_err(|e| format!("--folder `{dir}`: {e}"))?;
-            return Ok(Verb::Folder(FolderAsk::BothWays(dir)));
+            return Ok(Verb::Folder { dir, group });
         }
-        ("share", Some(_)) => {
-            return Err(
-                "--folder takes --both-ways: a folder is synced onto its members' disks".into(),
-            )
+        ("share", Some(_), None) => {
+            return Err("--folder takes --group: a folder is one group's".into())
         }
-        (_, Some(_)) => return Err("--folder is a `share` flag".into()),
-        _ => {}
+        ("share", None, Some(_)) => return Err("--group is a `share --folder` flag".into()),
+        (_, None, None) => {}
+        _ => return Err("--folder and --group are `share` flags".into()),
     }
     match verb.as_str() {
         "new" => {
@@ -519,8 +522,8 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             print!("{}", unshare(&root, &name)?);
             return Ok(());
         }
-        Verb::Folder(asked) => {
-            println!("{}", folder(&root, asked).await?);
+        Verb::Folder { dir, group } => {
+            println!("{}", folder(&root, dir, &group).await?);
             return Ok(());
         }
         Verb::Share(asked) => {
@@ -566,10 +569,13 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
     start(command, root, relay, claimed).await
 }
 
-/// `share --folder --both-ways`, asked of the node running here
+/// `share --folder --group`, asked of the node running here
 /// (`svrngs_node::folder::FolderAsk`): it alone writes this computer's acts,
 /// the journal's next index being its process's (svrngs-node journal.rs:16-27).
-async fn folder(root: &Path, asked: FolderAsk) -> Result<String, Refusal> {
+/// The group is named as `link` names it ([`group::named`]).
+async fn folder(root: &Path, dir: PathBuf, reference: &str) -> Result<String, Refusal> {
+    let group = group_named(root, reference)?.id();
+    let asked = FolderAsk { dir, group };
     let api = std::fs::read_to_string(root.join(svrngs_node::api::API_FILE)).unwrap_or_default();
     let body = serde_json::to_string(&asked).expect("a folder's ask is JSON");
     let to = format!("{}/v1/folders", api.trim());
@@ -1033,7 +1039,7 @@ async fn serve(
             _room = room::open(node, at, &names).await?;
             Said::Room(_room.served.clone())
         }
-        Verb::Help | Verb::Share(_) | Verb::Unshare(_) | Verb::Folder(_) => {
+        Verb::Help | Verb::Share(_) | Verb::Unshare(_) | Verb::Folder { .. } => {
             unreachable!("answered in `run`")
         }
     };
@@ -1159,28 +1165,34 @@ pub async fn new_group(
 /// `svrngs link`: a new link to the group `reference` names: the client's
 /// link, and the https one on `page`, kept from now on, when given, else
 /// on the group's kept origin, if it keeps one.
+/// The one group held under `root` that `reference` names, by its name or
+/// the start of its id ([`group::named`]): `link`'s and `share --folder`'s.
+fn group_named(root: &Path, reference: &str) -> Result<Seed, Refusal> {
+    let held = group::groups(root);
+    match group::named(&held, reference).as_slice() {
+        [] => {
+            tracing::debug!(target: "cli", reference, held = held.len(), "cli: refused — no group by that name");
+            Err(Refusal::NoGroup(reference.to_string()))
+        }
+        [one] => Ok((*one).clone()),
+        many => {
+            let ids = many.iter().map(|s| s.id()[..8].to_string()).collect();
+            tracing::debug!(target: "cli", reference, n = many.len(), "cli: refused — the name is ambiguous");
+            Err(Refusal::Ambiguous {
+                name: reference.to_string(),
+                ids,
+            })
+        }
+    }
+}
+
 pub async fn new_link(
     node: &Node,
     reference: &str,
     page: Option<&Origin>,
     relay: &RelayConfig,
 ) -> Result<(Seed, Printed), Refusal> {
-    let held = group::groups(node.rail().root());
-    let seed = match group::named(&held, reference).as_slice() {
-        [] => {
-            tracing::debug!(target: "cli", reference, held = held.len(), "cli: refused — no group by that name");
-            return Err(Refusal::NoGroup(reference.to_string()));
-        }
-        [one] => (*one).clone(),
-        many => {
-            let ids = many.iter().map(|s| s.id()[..8].to_string()).collect();
-            tracing::debug!(target: "cli", reference, n = many.len(), "cli: refused — the name is ambiguous");
-            return Err(Refusal::Ambiguous {
-                name: reference.to_string(),
-                ids,
-            });
-        }
-    };
+    let seed = group_named(node.rail().root(), reference)?;
     let dir = node
         .rail()
         .group_dir(&seed.id())

@@ -221,15 +221,10 @@ impl Node {
             api_port: api.addr().port(),
             room: tokio::sync::watch::Sender::new(BTreeMap::new()),
         });
-        let (folders, blobs) = crate::folder::Folders::start(
-            &data_dir,
-            rail.clone(),
-            endpoint.clone(),
-            actor.clone(),
-            nudge.clone(),
-        )
-        .await
-        .map_err(NodeError::Endpoint)?;
+        let (folders, blobs) =
+            crate::folder::Folders::start(&data_dir, host.clone(), nudge.clone())
+                .await
+                .map_err(NodeError::Endpoint)?;
         let rounds = Rounds::new(Default::default());
         let door = crate::door::Door {
             ring: AskRound::new(nudge.clone(), &rounds),
@@ -393,6 +388,11 @@ impl Host {
         &self.actor
     }
 
+    /// The endpoint this node dials and is dialled on.
+    pub(crate) fn endpoint(&self) -> &Endpoint {
+        &self.endpoint
+    }
+
     /// The transport a member's contact is resolved through.
     pub(crate) fn transport(&self) -> &IrohTransport {
         &self.transport
@@ -429,7 +429,7 @@ impl Host {
     /// Every group this node holds, with who stands in it; or `None` when
     /// the groups held cannot be listed. A group whose register is
     /// unreadable is left out.
-    fn standings(&self) -> Option<Groups> {
+    pub(crate) fn standings(&self) -> Option<Groups> {
         let namespaces = match self.rail.namespaces() {
             Ok(n) => n,
             Err(e) => {

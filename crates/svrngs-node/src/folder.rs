@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! A group's folders' bytes (gf-1, group folders' second spike, kept for
-//! sy-1's synced folder; DESIGN §9). A synced folder's files go into this
-//! computer's iroh-blobs store, and its acts name them by hash
+//! sy-1's synced folder; DESIGN §9). A synced folder is one group's
+//! (syp-4): its files go into this computer's iroh-blobs store, and its
+//! acts, written in that group alone, name them by hash
 //! ([`svrngs_core::SyncFolder`]). The provider serves a hash to a dialer
-//! standing in a group held here, and only while a synced folder's layout
-//! places it, asked of the record on every request. A fetch takes a range
-//! of a hash by verified range from a holder the record names; bytes that
-//! do not match the hash never reach the store, and each holder asked is
-//! named with why it gave nothing. Streaming a folder by range on loopback,
+//! only while a synced folder of a group the dialer stands in places it,
+//! asked of the record on every request. A fetch takes a range of a hash by
+//! verified range from a holder the record names; bytes that do not match
+//! the hash never reach the store, and each holder asked is named with why
+//! it gave nothing. A group whose record cannot be read is said by name,
+//! never read as one placing nothing (#113, #117). Streaming a folder by range on loopback,
 //! and the one-way share it served, were dropped at syp-1 (operator,
 //! 2026-10-10): a group's folder is synced onto its members' disks.
 
@@ -17,6 +19,8 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use axum::extract::State;
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
 use axum::routing::post;
 use axum::{Json, Router};
 use iroh::endpoint::Connection;
@@ -25,19 +29,19 @@ use iroh_blobs::api::remote::GetProgressItem;
 use iroh_blobs::api::Store;
 use iroh_blobs::protocol::{ChunkRanges, ChunkRangesExt, GetRequest};
 use iroh_blobs::provider::events::{
-    AbortReason, EventMask, EventSender, ObserveMode, ProviderMessage, RequestMode, RequestUpdate,
+    AbortReason, ConnectMode, EventMask, EventSender, ObserveMode, ProviderMessage, RequestMode,
+    RequestUpdate,
 };
 use iroh_blobs::store::fs::FsStore;
 use iroh_blobs::{BlobFormat, BlobsProtocol, Hash};
 use n0_future::StreamExt as _;
 use std::convert::Infallible;
 
-use svrngs_core::{Command, ContentHash, Recorded};
+use svrngs_core::{Command, ContentHash, Placed, Recorded};
 use tokio::sync::{watch, Notify};
 
-use crate::iroh::{actor_key, Alpn, Endpoint};
-use crate::node::ANSWER_WITHIN;
-use crate::RingRail;
+use crate::iroh::{actor_key, key_actor, Alpn};
+use crate::node::{Host, ANSWER_WITHIN};
 
 #[path = "synced.rs"]
 mod synced;
@@ -53,15 +57,19 @@ pub enum FolderError {
     Store(PathBuf, String),
     #[error("the record refused the folder: {0}")]
     Record(String),
+    #[error("the record of the group {0} cannot be read here: {1}")]
+    Unread(String, String),
+    #[error("this computer does not stand in the group {0}")]
+    NotStanding(String),
 }
 
 /// This computer's folders and its fetches' memory: one per node.
 #[derive(Clone)]
 pub struct Folders {
     store: Store,
-    rail: Arc<RingRail>,
-    endpoint: Endpoint,
-    actor: String,
+    /// The journals, the endpoint, this computer's key, and who stands
+    /// where ([`Host::standings`]): the round's, read here too.
+    host: Arc<Host>,
     nudge: Arc<Notify>,
     data_dir: PathBuf,
     /// Each holder's open connection, and when one last did not answer.
@@ -73,9 +81,7 @@ impl Folders {
     /// The store under `data_dir/blobs`, and its provider.
     pub(crate) async fn start(
         data_dir: &Path,
-        rail: Arc<RingRail>,
-        endpoint: Endpoint,
-        actor: String,
+        host: Arc<Host>,
         nudge: Arc<Notify>,
     ) -> Result<(Self, BlobsProtocol), String> {
         let fs = FsStore::load(data_dir.join("blobs"))
@@ -84,9 +90,7 @@ impl Folders {
         let store: Store = (*fs).clone();
         let folders = Folders {
             store: store.clone(),
-            rail,
-            endpoint,
-            actor,
+            host,
             nudge,
             data_dir: data_dir.to_path_buf(),
             conns: watch::Sender::new(BTreeMap::new()),
@@ -102,14 +106,13 @@ impl Folders {
         Ok((folders, blobs))
     }
 
-    /// The record of every group held here, read for its folder. A group
-    /// that cannot be listed or admitted is skipped, untraced: #113, and
-    /// #117 for the files a synced directory then deletes.
-    fn admissions(&self) -> impl Iterator<Item = svrngs_core::Admission> + '_ {
-        let namespaces = self.rail.namespaces().unwrap_or_default();
-        namespaces
-            .into_iter()
-            .filter_map(|ns| self.rail.admission(&ns).ok())
+    /// Every synced folder's files where the record of `group` places
+    /// them; a record that cannot be read is said by the group's name,
+    /// never read as one placing nothing (#113, #117).
+    fn layout(&self, group: &str) -> Result<Vec<Placed>, FolderError> {
+        let read = self.host.rail().admission(group);
+        read.map(|a| a.layout())
+            .map_err(|e| FolderError::Unread(group.into(), e.to_string()))
     }
 
     /// Every file under `dir`, by its path under it. A link is not
@@ -148,39 +151,48 @@ impl Folders {
         Ok(tag.hash)
     }
 
-    /// `act` written in every group held here where this computer stands,
-    /// and the round nudged; what it recorded in each.
+    /// `act` written in `group` alone, and the round nudged; what it
+    /// recorded.
     async fn write<C: Command<Refusal = Infallible>>(
         &self,
         act: &C,
+        group: &str,
         folder: &str,
         files: usize,
-    ) -> Result<Vec<Recorded>, FolderError> {
-        let mut recorded = Vec::new();
-        for ns in self
-            .rail
-            .namespaces()
-            .map_err(|e| FolderError::Record(e.to_string()))?
-        {
-            match self.rail.commit(&ns, act) {
-                Ok(Ok(done)) => {
-                    tracing::info!(target: "folder", namespace = %ns, folder, files, "folder: written to the record");
-                    recorded.push(done);
-                }
-                Ok(Err(why)) => {
-                    tracing::debug!(target: "folder", namespace = %ns, ?why, "folder: not written — this computer does not stand there")
-                }
-                Err(e) => return Err(FolderError::Record(e.to_string())),
+    ) -> Result<Recorded, FolderError> {
+        let done = match self.host.rail().commit(group, act) {
+            Ok(Ok(done)) => done,
+            Ok(Err(why)) => {
+                tracing::warn!(target: "folder", namespace = group, folder, ?why, "folder: not written — this computer does not stand in the folder's group");
+                return Err(FolderError::NotStanding(group.into()));
             }
-        }
+            Err(e) => return Err(FolderError::Record(e.to_string())),
+        };
+        tracing::info!(target: "folder", namespace = group, folder, files, "folder: written to the record");
         self.nudge.notify_one();
-        Ok(recorded)
+        Ok(done)
     }
 
-    /// Whether a synced folder places `hash`, whoever wrote it (sy-1).
-    fn shares(&self, hash: Hash) -> bool {
+    /// Whether a synced folder of a group `dialer` stands in places `hash`,
+    /// whoever wrote it: who stands where is [`Host::standings`]'s, and a
+    /// group whose record cannot be read places nothing it serves, said by
+    /// its name.
+    fn serves(&self, hash: Hash, dialer: &str) -> bool {
         let hash = &ContentHash::from_bytes(hash.into());
-        self.placed().iter().any(|p| &p.hash == hash)
+        let groups = self.host.standings().unwrap_or_default();
+        for (ns, _) in groups.iter().filter(|(_, m)| m.contains_key(dialer)) {
+            match self.layout(ns) {
+                Ok(placed) if placed.iter().any(|p| &p.hash == hash) => {
+                    tracing::debug!(target: "folder", namespace = ns, dialer, "folder: the dialer stands in a group whose synced folder places the hash");
+                    return true;
+                }
+                Ok(_) => {}
+                Err(why) => {
+                    tracing::warn!(target: "folder", namespace = ns, dialer, %why, "folder: a group the dialer stands in cannot be read, so nothing of it is served")
+                }
+            }
+        }
+        false
     }
 
     /// Make `[start, end)` of `hash` held here, verified, asking each holder
@@ -200,12 +212,13 @@ impl Folders {
     ) -> Result<Option<String>, Vec<(String, String)>> {
         let want = GetRequest::blob_ranges(hash, ChunkRanges::bytes(start..end));
         let local = self.store.remote().local_for_request(want).await;
-        let local = local.map_err(|e| vec![(self.actor.clone(), format!("the store: {e}"))])?;
+        let local =
+            local.map_err(|e| vec![(self.host.actor().into(), format!("the store: {e}"))])?;
         if local.is_complete() {
             return Ok(None);
         }
         let missing = local.missing();
-        let mut order: Vec<&String> = holders.iter().filter(|k| **k != self.actor).collect();
+        let mut order: Vec<&String> = holders.iter().filter(|k| *k != self.host.actor()).collect();
         let lately = self.unanswered.borrow().clone();
         order.sort_by_key(|k| {
             lately
@@ -264,7 +277,8 @@ impl Folders {
             None => {
                 let peer = actor_key(key).ok_or("not a key")?;
                 let c = self
-                    .endpoint
+                    .host
+                    .endpoint()
                     .connect(peer, Alpn::Blobs.bytes())
                     .await
                     .map_err(|e| format!("the dial: {e}"))?;
@@ -299,24 +313,39 @@ impl Folders {
     }
 }
 
-/// The provider: every get asked of the record, and its bytes logged.
+/// The provider: every get asked of the record for its dialer, and its
+/// bytes logged. Each connection's dialer is kept by its id from its
+/// connect, which the provider awaits before it reads a request.
 #[expect(
     clippy::disallowed_methods,
     reason = "times each get's read of the record for its trace (perf-1); no decision reads it"
 )]
 fn provider(store: &Store, folders: Folders) -> BlobsProtocol {
     let mask = EventMask {
+        connected: ConnectMode::Intercept,
         get: RequestMode::InterceptLog,
         observe: ObserveMode::Intercept,
         ..EventMask::DEFAULT
     };
     let (events, mut rx) = EventSender::channel(32, mask);
     tokio::spawn(async move {
+        let mut dialers: BTreeMap<u64, String> = BTreeMap::new();
         while let Some(message) = rx.recv().await {
             // Every other request, an observe or a get of many, is refused by
             // its answer dropped.
-            let ProviderMessage::GetRequestReceived(asked) = message else {
-                continue;
+            let asked = match message {
+                ProviderMessage::ClientConnected(c) => {
+                    let (conn, id) = (c.inner.connection_id, c.inner.endpoint_id);
+                    dialers.extend(id.map(|id| (conn, key_actor(&id))));
+                    c.tx.send(Ok(())).await.ok();
+                    continue;
+                }
+                ProviderMessage::ConnectionClosed(c) => {
+                    dialers.remove(&c.inner.connection_id);
+                    continue;
+                }
+                ProviderMessage::GetRequestReceived(asked) => asked,
+                _ => continue,
             };
             let (hash, ranges) = (
                 asked.inner.request.hash,
@@ -324,14 +353,15 @@ fn provider(store: &Store, folders: Folders) -> BlobsProtocol {
             );
             let (conn, request) = (asked.inner.connection_id, asked.inner.request_id);
             let t0 = Instant::now();
-            let shares = folders.shares(hash);
+            let dialer = dialers.get(&conn);
+            let shares = dialer.is_some_and(|d| folders.serves(hash, d));
             let record_ms = t0.elapsed().as_micros() as f64 / 1000.0;
             if !shares {
-                tracing::info!(target: "folder", %hash, conn, request, ranges, record_ms, "folder: refused — no synced folder places the hash");
+                tracing::info!(target: "folder", %hash, conn, request, ?dialer, ranges, record_ms, "folder: refused — no synced folder of a group the dialer stands in places the hash");
                 asked.tx.send(Err(AbortReason::Permission)).await.ok();
                 continue;
             }
-            tracing::info!(target: "folder", %hash, conn, request, ranges, record_ms, "folder: serving — a synced folder places the hash");
+            tracing::info!(target: "folder", %hash, conn, request, ?dialer, ranges, record_ms, "folder: serving — a synced folder of a group the dialer stands in places the hash");
             asked.tx.send(Ok(())).await.ok();
             let mut updates = asked.rx;
             tokio::spawn(async move {
@@ -362,16 +392,19 @@ pub(crate) fn router(folders: Folders) -> Router {
         .with_state(folders)
 }
 
-/// What `svrngs share --folder <dir> --both-ways` asks of the running node,
-/// the one process that writes this computer's acts: `{"bothways": dir}`.
+/// What `svrngs share --folder <dir> --group <group>` asks of the running
+/// node, the one process that writes this computer's acts: keep `dir` in
+/// step with the folder of its name in the group whose id is `group`
+/// (sy-1; syp-4), `{"dir": dir, "group": id}`.
 #[derive(Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum FolderAsk {
-    /// Keep a directory in step with the folder of its name (sy-1).
-    BothWays(PathBuf),
+pub struct FolderAsk {
+    pub dir: PathBuf,
+    pub group: String,
 }
 
-async fn ask(State(f): State<Folders>, Json(asked): Json<FolderAsk>) -> Json<serde_json::Value> {
-    let FolderAsk::BothWays(dir) = asked;
-    Json(serde_json::json!({ "name": f.both_ways(dir) }))
+async fn ask(State(f): State<Folders>, Json(asked): Json<FolderAsk>) -> Response {
+    match f.both_ways(asked.dir, asked.group) {
+        Ok(name) => Json(serde_json::json!({ "name": name })).into_response(),
+        Err(why) => (StatusCode::CONFLICT, why.to_string()).into_response(),
+    }
 }

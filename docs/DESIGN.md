@@ -492,15 +492,18 @@ is U5's inventory (§8).
 7. *A group's folder, synced both ways onto its members' disks*, beside
    lends and opt-in, a spike on the branch `folders`
    (`demo/runs/sy/2026-10-09/README.md`), a mesh Dropbox: `share --folder
-   <dir> --both-ways` keeps a directory the same on each member's disk;
-   each scan's changes are one act in the record, each naming a path, its
+   <dir> --group <group>` keeps a directory the same on the disk of each
+   member of that one group (syp-4); each scan's changes are one act in
+   that group's record alone, each naming a path, its
    bytes by hash, and the entry it replaces; an entry no other replaces is a
    head, a path's second head written beside it named as a conflict with
    its writer's person. The bytes move by iroh-blobs: a member's node
-   serves a hash the layout places to a dialer standing in a group held
-   there and refuses every other, and fetches what it lacks by verified
-   range from whoever holds it, a holder that does not answer within 3 s
-   named and passed over. The index is the record, not iroh-docs, whose
+   serves a hash only while a synced folder of a group the dialer stands
+   in places it, and refuses every other, and fetches what it lacks by
+   verified range from the group's members, a holder that does not answer
+   within 3 s named and passed over. Who stands where is the round's
+   (`Host::standings`), and a group whose record cannot be read stops its
+   directory's step by the group's name, never read as placing nothing. The index is the record, not iroh-docs, whose
    namespace id would be a second decider of who reads. All four bars
    passed on one host: an add, an edit and a delete by three members
    everywhere within 1.63 s; a file reached Cy in 4.47 s from Ben with its
@@ -508,7 +511,9 @@ is U5's inventory (§8).
    a node outside the group given no byte. A thousand files took 395.27 s,
    fetched one at a time, and a 1 MiB edit of a 100 MiB file cost each
    member the whole file. Off one host it is unrun. Its rows are the
-   README's §9: the folder one group's; a path parsed, since a member's act
+   README's §9, made production by syp-4: the folder one group's (landed,
+   Ana in two groups each with a folder `Shared`, the other's member
+   refused her hash); a path parsed, since a member's act
    can write outside the folder on every other member's disk today; the
    store keeping what it held across a stop, reproduced first, since three
    times a store gave nothing of a file its directory held; what a node
