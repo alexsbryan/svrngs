@@ -7,7 +7,7 @@ and Cy's phone (Playwright's WebKit as an iPhone, the group's page served on
 `localhost`), in one group, Trip, through iroh's public relays. Sam and Ana
 each lend a page (`films`, `music`, each a plain file server); the three
 computers share a folder, Trip. Sam removes Bo. `run.py` is the driver;
-its data is in `run/`. One host, one run: not a rate (AGENTS.md 7). The
+each take's data is in its own directory, `OUT=take-<n> python3 run.py`. One host, one run: not a rate (AGENTS.md 7). The
 30 s bar is the seat's proposal, the operator's to set (`demo/c.md`).
 
 The run, in order (`run.py`, each phase its own `phase` line in
@@ -77,3 +77,50 @@ Written and committed before `run.py` ran once.
    `the_home_page_tells_a_removed_person`).
 9. **Cy's phone is unmoved**: the group's page lists Sam's films and Ana's
    music, and Sam's lend opens, after the removal as before.
+
+## Take 1 — 18:31-18:35 UTC, the repository at `7412588`
+
+`run.py` as committed with this section, the repository otherwise as
+u7-removal (e) left it (`cf6ea9c`); its data in `take-1/`: every event in
+`events.jsonl` (each `since_cut_s` from the clock's zero, Sam's command),
+the measures in `summary.json`, each computer's log kept to the lines
+naming a removal, a refusal, a cut, the folder or a round (`<who>.log`),
+and what each node printed (`<who>.out`). Through iroh's public relays;
+load averages near 5 (`events.jsonl`, `load`). Setup: Bo's computer opened
+both lends 52.7 s after the lends were made (the computers learn each other
+at their rounds); `before.bin` reached Ana's and Bo's disks 0.65 s after
+Sam put it; Cy's phone was in 5.6 s after the link was opened, and opened
+Sam's films.
+
+| Prediction | The data | Verdict |
+|---|---|---|
+| 1, Ana's ask cuts nobody | "You asked Sam to remove Bo from Trip. Bo stays in it until Sam does.", exit 0, 18 ms; Bo's computer then read `films 200`, `music 200` for 10 s (`after-ask`) | **held** |
+| 2, Sam's command is the cut, inside 1 s | "Bo is no longer in Trip. What Bo already has stays with them; nothing new reaches them.", exit 0, 37 ms | **held** |
+| 3, Sam's lend refuses Bo inside 2 s | 403 `removed`, "You are no longer in this group, so nothing of it is open to you.", first at 0.052 s (`events.jsonl`, `lend`, films) | **held** |
+| 4, Ana's lend refuses Bo only once Ana holds the cut, 0-60 s | `music` answered Bo 200 from 0.053 s until 43.32 s, then 403 `removed` with the same words (`events.jsonl`, `lend`, music); Ana's computer's round at 18:33:29.46 is when it took the cut from Sam (`ana.log`, `round membership`), 43.0 s after the command | **held**, and with it the 30 s bar **failed**: one lender of two refused Bo at 43.3 s |
+| 5, Bo's computer told within 10 s | `/v1/groups` answered `removed: true` for Trip at 0.341 s (`summary.json`, `cut.bo_told`); Sam's log: "the removed computer told its cut … told=true" | **held** |
+| 6, the folder's next file to Ana inside 10 s, never to Bo | `after.bin`, put by Sam 90.2 s after the command, on Ana's disk 0.35 s later; Bo's disk held `before.bin` alone 45 s after, as before the cut (`folder-measured`) | **held** |
+| 7, Bo's own removal counts nowhere | `svrngs remove Sam --group Trip` and `… Ana …` from Bo's computer: "svrngs: You are no longer in Trip.", exit 1, each; Bo's log "removal: refused … NoStanding" twice; no act of Bo's key in Bo's journal before or after (`bo_acts_before`, `bo_acts_after`, both empty: Bo never wrote one); standing on Sam's and on Ana's computers: Ana, Cy, Sam | **held** |
+| 8, Bo's home page | Chromium: heading "Trip", "You are no longer in Trip. What you already have stays on this computer; nothing new reaches it." — the group's name read, not "this group" | **held** |
+| 9, Cy's phone unmoved | 141 s after the cut, the group's page listed "Ana’s music", "Sam’s films" and opened Sam's films ("Sam's films", 1,652 ms) and Ana's music ("Ana's music", 2,383 ms) | **held** |
+
+**Removed, by demo/c.md's check: failed.** Every lender's refusal inside
+30 s did not hold: Ana's door served Bo for 43.3 s after Sam's command,
+because a removal waits for the keeper's next round to reach any computer
+but the removed one's. The rest of the check held: the refusal is
+svrngs's in a person's words, Bo's home page says so, the folder's next
+file reached everyone but Bo, Bo's own removal counted nowhere, and
+`before.bin` stayed on Bo's disk.
+
+**What no prediction named.**
+
+1. *Bo's computer goes on logging rounds that "exchanged" with Ana and
+   Sam* after the cut (`bo.log`, 18:33:29, 18:34:29, 18:35:29), while
+   Sam's computer refused every one of Bo's dials, 268 in all, "the
+   dialer stands in no group held here" (`sam.log`, after 18:32:46). The
+   round's trace counts a peer it dialled, not one that took anything;
+   Bo's disk and register gained nothing. A trace that reads as an
+   exchange where every dial was refused is a follow-up, not this row's.
+
+Fix, then take 2 (below): the removal route wakes the round as the folder's
+write and an app's append do.

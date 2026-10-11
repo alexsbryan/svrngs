@@ -1,0 +1,10 @@
+2026-10-11T18:31:29.957396Z  INFO folder: folder: the store is open untagged=0
+2026-10-11T18:31:31.288621Z  INFO folder: synced: the directory kept in step with the group's folder namespace="3888e715fa677afd5fd8b067a39cf93e242203057ebfe6f0ee399976a9e43fc5" folder="Trip" dir=/tmp/u7-run/disk/bo/Trip
+2026-10-11T18:32:29.917660Z  INFO folder: folder: fetched, verified hash=291c75721c7ac231f635a782e39eccb70160709f04f2a3b810c4d6b4db3ab5e5 holder=61f8367708ef980c76564ff5800c88203705980a14e9ab20e0a21343aa33b576 payload=1048576 other=4040 ms=55
+2026-10-11T18:32:29.918424Z  INFO folder: synced: written into the directory folder="Trip" path=before.bin hash=291c75721c7ac231f635a782e39eccb70160709f04f2a3b810c4d6b4db3ab5e5 from="61f8367708ef980c76564ff5800c88203705980a14e9ab20e0a21343aa33b576" seq=4 beside=false fetch_ms=55 export_ms=0
+2026-10-11T18:32:29.961851Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Ana/21ed88a6", "Sam/61f83677"] skipped_offline=[]
+2026-10-11T18:33:29.965906Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Ana/21ed88a6", "Sam/61f83677"] skipped_offline=[]
+2026-10-11T18:34:29.974915Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Ana/21ed88a6", "Sam/61f83677"] skipped_offline=[]
+2026-10-11T18:35:02.186697Z DEBUG removal: removal: refused group="3888e715fa677afd5fd8b067a39cf93e242203057ebfe6f0ee399976a9e43fc5" refused=NoStanding
+2026-10-11T18:35:02.201336Z DEBUG removal: removal: refused group="3888e715fa677afd5fd8b067a39cf93e242203057ebfe6f0ee399976a9e43fc5" refused=NoStanding
+2026-10-11T18:35:29.984226Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Ana/21ed88a6", "Sam/61f83677"] skipped_offline=[]
