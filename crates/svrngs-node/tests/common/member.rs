@@ -109,33 +109,41 @@ pub async fn node() {
     std::fs::rename(at.with_extension("tmp"), &at).unwrap();
     let peers = dir.join("peers.json");
     let mut told = Vec::new();
-    loop {
-        if let Ok(text) = std::fs::read(&peers) {
-            if text != told {
-                let all: Vec<Addr> = serde_json::from_slice(&text).unwrap();
-                let book = MemoryLookup::new();
-                for other in all.iter().filter(|a| a.me != me) {
-                    let key: PublicKey = other.id.parse().unwrap();
-                    let mut ea = EndpointAddr::new(key);
-                    match path.as_str() {
-                        "loopback" => {
-                            for s in &other.sockets {
-                                ea = ea.with_ip_addr(*s);
+    // Stopped as the command stops (syp-6 b): its endpoint closed.
+    let told_of_peers = async {
+        loop {
+            if let Ok(text) = std::fs::read(&peers) {
+                if text != told {
+                    let all: Vec<Addr> = serde_json::from_slice(&text).unwrap();
+                    let book = MemoryLookup::new();
+                    for other in all.iter().filter(|a| a.me != me) {
+                        let key: PublicKey = other.id.parse().unwrap();
+                        let mut ea = EndpointAddr::new(key);
+                        match path.as_str() {
+                            "loopback" => {
+                                for s in &other.sockets {
+                                    ea = ea.with_ip_addr(*s);
+                                }
+                                node.transport().add_known_peer(key, other.sockets.clone());
                             }
-                            node.transport().add_known_peer(key, other.sockets.clone());
+                            "relay" => ea = ea.with_relay_url(env("PERF_RELAY").parse().unwrap()),
+                            _ => {}
                         }
-                        "relay" => ea = ea.with_relay_url(env("PERF_RELAY").parse().unwrap()),
-                        _ => {}
+                        book.add_endpoint_info(ea);
                     }
-                    book.add_endpoint_info(ea);
+                    if path != "n0" {
+                        node.endpoint().address_lookup().unwrap().add(book);
+                    }
+                    told = text;
+                    eprintln!("PERF told of {} members", all.len() - 1);
                 }
-                if path != "n0" {
-                    node.endpoint().address_lookup().unwrap().add(book);
-                }
-                told = text;
-                eprintln!("PERF told of {} members", all.len() - 1);
             }
+            tokio::time::sleep(Duration::from_millis(100)).await;
         }
-        tokio::time::sleep(Duration::from_millis(100)).await;
+    };
+    tokio::select! {
+        () = told_of_peers => {}
+        () = svrngs_node::node::asked_to_stop() => {}
     }
+    node.endpoint().close().await;
 }

@@ -405,3 +405,127 @@ async fn a_restart_resumes_a_synced_directory_unasked() {
         std::fs::read_to_string(ana_dir.join("log")).unwrap_or_default()
     );
 }
+
+/// **A member restarted is answered at once** (syp-6 b): Ana's process
+/// fetches Cy's file, holding its connection into Cy open, as Ben's held
+/// his into Ana in S3, and Cy fetches Ana's; Ana's process is
+/// stopped by SIGTERM, as a service manager and syp-5's driver stop it,
+/// and started, on another port; Cy asks her for the file at once, and is
+/// answered within [`svrngs_node::node::ANSWER_WITHIN`]. Red with the
+/// process gone on SIGTERM, its endpoint left open (d4fb5bf): Cy's iroh
+/// sends only to the path in use, the dead process's, until it idles out
+/// at 15 s (iroh-1.0.2 `remote_state.rs:799`, `socket.rs:117`), so the ask
+/// is not answered — syp-5's S3, Ana dialling Ben's last process
+/// (`demo/runs/syp/2026-10-10/rerun/README.md` §6, item 3). The failure
+/// says the addresses Cy's iroh holds for Ana.
+#[tokio::test]
+async fn a_member_restarted_is_answered_at_once() {
+    let root = tempfile::tempdir().unwrap();
+    let dir = |name: &str| {
+        let d = root.path().join(name);
+        std::fs::create_dir_all(&d).unwrap();
+        d
+    };
+    let (ana_dir, ben_dir, cy_dir) = (dir("ana"), dir("ben"), dir("cy"));
+    let (ana_disk, cy_disk) = (dir("disk/ana/Shared"), dir("disk/cy/Shared"));
+    let relay = RelayConfig {
+        relay_urls: Vec::new(),
+        n0_services: false,
+        loopback_only: true,
+    };
+    let cy = Node::start(
+        cy_dir.clone(),
+        signing(2),
+        &relay,
+        member::seed_file,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .unwrap();
+    let cy_addr = Addr {
+        me: 2,
+        id: cy.endpoint().id().to_string(),
+        sockets: loopback_sockets(cy.endpoint()),
+        api: cy.api_addr(),
+    };
+    let seed = Seed::from_parts(
+        Name::parse("perf").unwrap(),
+        Name::parse("p0").unwrap(),
+        signing(0).verifying_key(),
+        [9; 16],
+    );
+    let group = seed.id();
+    // Cy holds the group's seed, as each member process does (member.rs).
+    cy.rail().set_seed(&group, &seed.roster()).unwrap();
+    let held = cy.rail().group_dir(&group).unwrap();
+    std::fs::write(held.join("seed.json"), seed.to_text()).unwrap();
+    let (ana, ana_addr) = spawn(&ana_dir, 0).await;
+    let (ben, ben_addr) = spawn(&ben_dir, 1).await;
+    let dirs = [ana_dir.as_path(), ben_dir.as_path()];
+    tell(&[&ana_addr, &ben_addr, &cy_addr], &dirs, &cy).await;
+    sync(&ana_addr, &ana_disk, &group).await;
+    // Cy's round takes Ana's admission of her, so she stands.
+    tokio::time::timeout(Duration::from_secs(30), cy.round())
+        .await
+        .expect("Cy's round finishes");
+    sync(&cy_addr, &cy_disk, &group).await;
+    let cys = noise(20_000, b"Cy's");
+    std::fs::write(cy_disk.join("c.bin"), &cys).unwrap();
+    assert!(
+        holds(&ana_disk.join("c.bin"), &cys).await,
+        "Ana's process fetches Cy's file"
+    );
+    let bytes = noise(40_000, b"restarted");
+    std::fs::write(ana_disk.join("r.bin"), &bytes).unwrap();
+    assert!(kept(&ana_dir, "r.bin").await, "Ana's step takes it");
+    let hash = iroh_blobs::Hash::from_bytes(*blake3::hash(&bytes).as_bytes());
+    let mut before = Err("not asked".to_string());
+    for k in 0..30 {
+        before = get(
+            &cy,
+            &ana_addr,
+            hash,
+            root.path().join(format!("before-{k}")),
+        )
+        .await;
+        if before.is_ok() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    assert_eq!(before, Ok(40_000), "Cy holds a path to Ana's first process");
+
+    let pid = ana.0.id().to_string();
+    let kill = Command::new("kill").args(["-TERM", &pid]).status();
+    assert!(kill.unwrap().success());
+    // Its own exit waited on, as syp-5's driver waits (sy run.py:39):
+    // dropped now, it is killed outright, mid-close.
+    let mut ana = ana;
+    ana.0.wait().unwrap();
+    drop(ana);
+    let (ana, ana_addr) = spawn(&ana_dir, 0).await;
+    tell(&[&ana_addr, &ben_addr, &cy_addr], &dirs, &cy).await;
+    let t0 = std::time::Instant::now();
+    let within = svrngs_node::node::ANSWER_WITHIN;
+    let asked = get(&cy, &ana_addr, hash, root.path().join("after"));
+    let after = tokio::time::timeout(within, asked).await;
+    let took = t0.elapsed();
+    let key: PublicKey = ana_addr.id.parse().unwrap();
+    let known: Vec<String> = cy
+        .endpoint()
+        .remote_info(key)
+        .await
+        .iter()
+        .flat_map(|i| i.addrs())
+        .map(|a| format!("{:?} {:?}", a.addr(), a.usage()))
+        .collect();
+    drop((ana, ben));
+    cy.endpoint().close().await;
+    assert_eq!(
+        after,
+        Ok(Ok(40_000)),
+        "Ana's process, started again on {:?}, answers Cy within {within:?} (took {took:?}); \
+         Cy's iroh holding for her {known:?}",
+        ana_addr.sockets
+    );
+}

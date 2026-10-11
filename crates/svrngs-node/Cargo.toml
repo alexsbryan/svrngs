@@ -26,7 +26,8 @@ n0-future = "0.3"
 # so a step looks only at what changed (perf-2 f; the operator's yes,
 # 2026-10-10, ralph/next/syp/CHARTER.md).
 notify = "=8.2.0"
-tokio = { version = "1", features = ["net", "rt", "sync", "time", "io-util", "macros"] }
+# `signal`: a node stopped by SIGTERM closes its endpoint (syp-6 b).
+tokio = { version = "1", features = ["net", "rt", "sync", "time", "io-util", "macros", "signal"] }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 hex = { workspace = true }
 rand = "0.9"

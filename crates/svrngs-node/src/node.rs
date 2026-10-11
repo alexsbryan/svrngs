@@ -102,6 +102,40 @@ pub struct Lent {
 /// that does not.
 pub const ANSWER_WITHIN: Duration = Duration::from_secs(3);
 
+/// Until this process is asked to stop: Ctrl-C, or SIGTERM, which a
+/// service manager and `kill` send (syp-6 b). Its caller then closes the
+/// node's endpoint, telling every peer each connection is closed. A
+/// process gone on SIGTERM with it open left each peer's iroh sending to
+/// its dead address alone, the path in use, until that idled out at 15 s
+/// (iroh-1.0.2 `remote_state.rs:799`, `socket.rs:117`), so its next
+/// process was not reached: syp-5's S3, Ana dialling Ben's last process
+/// (`demo/runs/syp/2026-10-10/rerun/README.md` §6, item 3). Closed, a
+/// peer's last connection to it closes and iroh forgets the path
+/// (`remote_state.rs:486-488`). A process killed outright still leaves
+/// it, until it idles out.
+pub async fn asked_to_stop() {
+    #[cfg(unix)]
+    let term = async {
+        use tokio::signal::unix::{signal, SignalKind};
+        match signal(SignalKind::terminate()) {
+            Ok(mut term) => drop(term.recv().await),
+            Err(e) => {
+                tracing::warn!(target: "node", error = %e, "node: SIGTERM cannot be waited on, so it stops this process with its endpoint open");
+                std::future::pending::<()>().await
+            }
+        }
+    };
+    #[cfg(not(unix))]
+    let term = std::future::pending::<()>();
+    tokio::select! {
+        said = tokio::signal::ctrl_c() => match said {
+            Ok(()) => tracing::debug!(target: "node", "node: asked to stop by Ctrl-C"),
+            Err(e) => tracing::warn!(target: "node", error = %e, "node: Ctrl-C cannot be waited on, so stopping now"),
+        },
+        () = term => tracing::debug!(target: "node", "node: asked to stop by SIGTERM"),
+    }
+}
+
 /// What the people of this computer's groups lend, asked now.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Lends {

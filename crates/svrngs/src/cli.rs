@@ -1047,9 +1047,7 @@ async fn serve(
     print!("{said}");
     println!();
     println!("Leave this running; Ctrl-C stops it.");
-    if let Err(e) = tokio::signal::ctrl_c().await {
-        tracing::warn!(target: "cli", error = %e, "cli: cannot wait for Ctrl-C, so stopping now");
-    }
+    svrngs_node::node::asked_to_stop().await;
     tracing::debug!(target: "cli", "cli: stopping");
     Ok(())
 }
