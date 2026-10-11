@@ -66,3 +66,27 @@ Which, this run does not tell apart: the test asks the way that works,
 said in its doc. Off this harness — a member's computer restarted, its
 peers dialling it by n0's lookup — it is unmeasured. For syp-5's rerun,
 whose S2 restarts a member.
+
+## M1, 8 files at once (syp-4 f)
+
+`python3 run.py m1 --wait 60`, at `9600be0` (8 at once), load 7.99 at its
+start and 21.88 at its end, past 18 (1.5x 12 cores): **could-not-judge**
+against the row's bar, 60 s (`run-m1/events.jsonl`, `bar` M1). Swap in use
+fell, 16,209.75 to 11,818.88 MB, with 16,039.50 of 16,384 MB in use at the
+start: a host short of memory. The logs are gzipped.
+
+Eve, joining later, held all 1,000 files 82.93 s after her command; Ben and
+Cy, synced from the start, 73.0 s after Ana wrote them (`measured`). Both
+past 60 s, at a load that judges neither.
+
+Where it went (`zcat run-m1/*.log.gz`): every fetch went to Ana, the
+writer, asked first — 3,003 gets served, all by her (`folder: serving`),
+none by Ben or Cy. Her provider answers one get after another in one task
+(folder.rs `provider`), reading the group's layout from the record for
+each: `record_ms` median 34.6 ms, 152.1 s summed over the 3,003. A fetch
+at Ben took a median 475 ms (max 1,734), at Eve 626 ms (max 1,023): eight
+at once, each waiting its turn at Ana's one task. Ben's and Eve's last
+files were written 0.2 s apart (01:31:04.486, .685). This is perf-1's
+prediction (`demo/runs/perf/2026-10-10/README.md` §10, candidate 6):
+before the record is read once a change (candidate 3), fetches at once
+queue at the holder.

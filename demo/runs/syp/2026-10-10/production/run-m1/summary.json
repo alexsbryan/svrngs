@@ -1,0 +1,24 @@
+{
+ "M1": {
+  "ben_cy_s": 73.0,
+  "eve_s": 82.93,
+  "eve_journal_bytes": 118793,
+  "act_line_bytes": 115626,
+  "one_change_s": 3.03,
+  "one_change_bytes": 841
+ },
+ "M1-bar": {
+  "eve_s": 82.93,
+  "ben_cy_s": 73.0,
+  "bar_s": 60,
+  "verdict": "could-not-judge: load 7.99-21.88 past 18.0",
+  "load1": [
+   7.99,
+   21.88
+  ],
+  "swap_mb": [
+   16209.75,
+   11818.88
+  ]
+ }
+}
