@@ -90,6 +90,18 @@ pub struct Contact {
     pub iroh_direct_addrs: Vec<SocketAddr>,
 }
 
+impl Contact {
+    /// A peer known by its key alone, no hint: how svrngs dials a member,
+    /// since nothing gossips addresses (DESIGN §8, "A bare key is dialled").
+    pub fn by_key(key: PublicKey) -> Self {
+        Self {
+            key,
+            relay_url: None,
+            iroh_direct_addrs: Vec::new(),
+        }
+    }
+}
+
 /// Client half: resolves a peer's key to a localhost base
 /// URL bridged over iroh.
 #[derive(Debug)]

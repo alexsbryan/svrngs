@@ -182,11 +182,7 @@ async fn tell(
             tracing::debug!(target: "removal", group, actor, "removal: the removed key is no computer's address, so it is not told");
             continue;
         };
-        let contact = Contact {
-            key,
-            relay_url: None,
-            iroh_direct_addrs: Vec::new(),
-        };
+        let contact = Contact::by_key(key);
         let Some(base) = at.host.transport().base_url(&contact).await else {
             tracing::debug!(target: "removal", group, actor, "removal: no path to the removed computer, so it is not told");
             continue;

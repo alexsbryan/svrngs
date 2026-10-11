@@ -34,11 +34,7 @@ impl RoundMembers {
         let peers = members
             .into_iter()
             .map(|(name, key)| OnlinePeer {
-                contact: Contact {
-                    key,
-                    relay_url: None,
-                    iroh_direct_addrs: Vec::new(),
-                },
+                contact: Contact::by_key(key),
                 pubkey: Some(key),
                 name,
             })

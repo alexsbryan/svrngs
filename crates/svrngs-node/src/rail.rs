@@ -570,11 +570,7 @@ fn live_peers(this: &str, namespace: &str, standing: &BTreeMap<String, Member>) 
         peers.push(LivePeer {
             node: actor.clone(),
             name: Some(person.to_string()),
-            contact: Contact {
-                key,
-                relay_url: None,
-                iroh_direct_addrs: Vec::new(),
-            },
+            contact: Contact::by_key(key),
         });
     }
     peers

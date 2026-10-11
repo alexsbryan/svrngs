@@ -295,11 +295,7 @@ pub(crate) async fn dialled(at: &Asking, label: &Label) -> Result<String, Respon
         tracing::debug!(target: "origin", %label, actor, "origin: refused — the label names no computer standing in a group held here");
         return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
     };
-    let contact = Contact {
-        key,
-        relay_url: None,
-        iroh_direct_addrs: Vec::new(),
-    };
+    let contact = Contact::by_key(key);
     let Some(base) = at.host.transport().base_url(&contact).await else {
         tracing::debug!(target: "origin", %label, actor, "origin: no dialable path to the lender's computer");
         return Err(away());

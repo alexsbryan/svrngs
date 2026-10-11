@@ -614,11 +614,7 @@ async fn ask_lends(transport: &IrohTransport, actor: &str, key: PublicKey) -> Op
     struct Answer {
         lends: Vec<Offered>,
     }
-    let contact = Contact {
-        key,
-        relay_url: None,
-        iroh_direct_addrs: Vec::new(),
-    };
+    let contact = Contact::by_key(key);
     let Some(base) = transport.base_url(&contact).await else {
         tracing::debug!(target: "node", actor, "node: lends — no dialable path to the computer");
         return None;
