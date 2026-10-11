@@ -204,3 +204,79 @@ async fn only_the_keeper_hands_on() {
         .unwrap();
     assert_eq!(ask(&ana, REMOVALS_ROUTE, "sam").await, (200, Outcome::Out));
 }
+
+/// Whether `node`'s copy holds `seed`'s key cut, within `within`.
+async fn holds_cut(node: &Node, seed: u8, within: Duration) -> bool {
+    tokio::time::timeout(within, async {
+        while !node
+            .rail()
+            .register(NS)
+            .unwrap()
+            .removed
+            .contains_key(&actor_of(&signing(seed)))
+        {
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+    })
+    .await
+    .is_ok()
+}
+
+/// **A removal goes now, not at the next round** (U7 (e); u7-removal (f)'s
+/// run, demo/runs/u7/2026-10-11/README.md, take 1: Ana's lend refused Bo
+/// 43.3 s after Sam's command, at Ana's next round). Ana's ask reaches Sam,
+/// Sam's cut reaches Ana, and Sam's hand-on to Ana reaches her, each within
+/// 5 s, with every round 60 s apart and none asked for. Red with the
+/// removal route waking no round (removal.rs at 7412588).
+#[tokio::test]
+async fn a_removal_reaches_every_computer_without_waiting_for_a_round() {
+    let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
+    let [sam, ana, _bo] = three(&dirs).await;
+    let soon = Duration::from_secs(5);
+    // Ana's ask is her first act, so any act of hers held is it.
+    let asks = |node: &Node| {
+        node.rail()
+            .digest(NS)
+            .unwrap()
+            .get(&actor_of(&signing(2)))
+            .is_some()
+    };
+
+    assert_eq!(
+        ask(&ana, REMOVALS_ROUTE, "bo").await.1,
+        Outcome::Asked {
+            decides: Some(Person::parse("sam").unwrap())
+        }
+    );
+    let reached = tokio::time::timeout(soon, async {
+        while !asks(&sam) {
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+    })
+    .await;
+    assert!(
+        reached.is_ok(),
+        "Ana's ask reached Sam's computer within 5 s"
+    );
+
+    assert_eq!(ask(&sam, REMOVALS_ROUTE, "bo").await, (200, Outcome::Out));
+    assert!(
+        holds_cut(&ana, 3, soon).await,
+        "Sam's cut reached Ana's computer within 5 s"
+    );
+
+    assert_eq!(
+        ask(&sam, HANDOVERS_ROUTE, "ana").await,
+        (200, Outcome::Handed)
+    );
+    let handed = tokio::time::timeout(soon, async {
+        while ana.rail().register(NS).unwrap().keeper != Some(actor_of(&signing(2))) {
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+    })
+    .await;
+    assert!(
+        handed.is_ok(),
+        "Sam's hand-on reached Ana's computer within 5 s"
+    );
+}
