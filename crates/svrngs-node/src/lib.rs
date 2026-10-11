@@ -90,3 +90,5 @@ pub mod lend;
 // serving the sync route and the round, in place of upstream's `RailsDaemon`.
 pub mod folder;
 pub mod node;
+// Removal as this computer's person asks it (U7, DESIGN §6).
+pub mod removal;

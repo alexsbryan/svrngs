@@ -702,7 +702,7 @@ pub async fn exchange(
     out
 }
 
-async fn post(
+pub(crate) async fn post(
     http: &reqwest::Client,
     url: &str,
     body: &RingSyncRequest,

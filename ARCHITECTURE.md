@@ -427,8 +427,12 @@ An app on this computer asks the same of one group on the record API,
 body (`node::Asking::lent`), with no asker left out; beside it `GET
 /v1/groups` answers each group held, its name from the seed the command
 keeps (the `SeedText` the redeem routes read) and this computer's person
-from the register. Both are merged into `api::router` before its loopback
-check, and the node writes the address it serves on to `<data dir>/api`
+from the register. Removal as the command asks it (`removal.rs`, U7):
+`POST /v1/removals` commits svrngs-core's `Removal` and `POST
+/v1/handovers` its `HandOnTo`, each answering an `Outcome` the command
+words; a cut is then told to the removed person's computers once, one
+sync request carrying the cut alone (`ring_sync::post`). All are merged
+into `api::router` before its loopback check, and the node writes the address it serves on to `<data dir>/api`
 (`api::API_FILE`) at each start. Each lend carries the upload its lender
 declares (`lend::Offered`'s `upload_bps`, required on read, `null` when
 none). At a lend's origin on this computer (`origin.rs`), `GET

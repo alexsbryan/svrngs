@@ -284,7 +284,9 @@ impl Node {
         };
         let routes = crate::api::router(
             rail_api.clone(),
-            crate::surface::router(asking.clone(), seeds).merge(crate::folder::router(folders)),
+            crate::surface::router(asking.clone(), seeds)
+                .merge(crate::folder::router(folders))
+                .merge(crate::removal::router(asking.clone())),
             crate::home::router(asking.clone(), seeds, rail_api),
         );
         let api = crate::api::serve(routes.clone(), api);
