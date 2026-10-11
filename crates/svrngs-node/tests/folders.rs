@@ -673,3 +673,78 @@ async fn a_store_keeps_what_the_layout_places_and_no_more() {
     }
     group.close().await;
 }
+
+// ── A path under the folder, parsed (syp-4 c) ─────────────────────────
+
+/// **A member's act naming a path outside the folder is refused at
+/// admission**: Ben's file reaches Ana's directory; then an act of Ben's,
+/// signed by his key, naming those bytes at `../outside` reaches Ana's
+/// record. Her record reads it as a malformed line naming the path, and
+/// nothing is written beside her directory. Red with the parse taking any
+/// text: Ana writes Ben's bytes at `../outside`, beside her directory.
+#[tokio::test]
+async fn a_member_s_act_naming_a_path_outside_the_folder_is_refused_at_admission() {
+    use svrngs_core::tests_support::after_in;
+    use svrngs_core::{act_id, body_json, sign_ring_op, Change, Op, SignedOp, SyncPath};
+    let group = Group::new().await;
+    let (ra, rb) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (ana, ben) = (
+        both_ways(&group.ana, ra.path()).await,
+        both_ways(&group.ben, rb.path()).await,
+    );
+    let bytes = noise(20_000, b"outside");
+    std::fs::write(ben.join("in.bin"), &bytes).unwrap();
+    let at_ana = || std::fs::read(ana.join("in.bin")).ok();
+    assert!(
+        until(&group, || at_ana().as_ref() == Some(&bytes)).await,
+        "Ben's file reaches Ana"
+    );
+
+    // Ben's act after his last, its path written `../outside` and signed
+    // again, as a build that does not parse it could write it.
+    let ns = seed("films", 9).id();
+    let journal = |n: &Node| n.rail().group_dir(&ns).unwrap().join("ring_oplog.jsonl");
+    let ben_key = actor_of(&signing(2));
+    let last: Op<SignedOp> = std::fs::read_to_string(journal(&group.ben))
+        .unwrap()
+        .lines()
+        .map(|l| serde_json::from_str::<Op<SignedOp>>(l).unwrap())
+        .rfind(|op| op.actor == ben_key)
+        .unwrap();
+    let hash = svrngs_core::ContentHash::from_bytes(*blake3::hash(&bytes).as_bytes());
+    let act = RailAct::Synced {
+        folder: "Shared".into(),
+        changes: vec![Change {
+            path: SyncPath::parse("PLACEHOLDER").unwrap(),
+            now: Some((hash, bytes.len() as u64)),
+            base: None,
+        }],
+    };
+    let held = after_in(&ns, &signing(2), &last, last.ts_unix + 1, act);
+    let body = body_json(&held.kind.act, None, None).replace("PLACEHOLDER", "../outside");
+    let prev = held.kind.prev.as_ref();
+    let id = act_id(&ns, &ben_key, held.kind.seq, prev, held.ts_unix, &body);
+    let line = serde_json::to_string(&held)
+        .unwrap()
+        .replace("PLACEHOLDER", "../outside")
+        .replace(&held.id.to_string(), &id.to_string())
+        .replace(&held.kind.sig, &sign_ring_op(&signing(2), &id));
+    let mut file = std::fs::OpenOptions::new()
+        .append(true)
+        .open(journal(&group.ana))
+        .unwrap();
+    std::io::Write::write_all(&mut file, format!("{line}\n").as_bytes()).unwrap();
+
+    let gaps = format!("{:?}", group.ana.rail().admission(&ns).unwrap().gaps());
+    tokio::time::sleep(Duration::from_secs(3)).await;
+    let outside = ra.path().join("outside");
+    assert!(
+        !outside.exists(),
+        "nothing is written beside Ana's directory: {gaps}"
+    );
+    assert!(
+        gaps.contains("MalformedLine") && gaps.contains("`../outside` is not under the folder"),
+        "Ana's record names the line it refused: {gaps}"
+    );
+    group.close().await;
+}

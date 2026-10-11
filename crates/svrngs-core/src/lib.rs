@@ -129,7 +129,7 @@ pub use sig::{
 pub use sync::{
     digest, ops_missing_from, ops_missing_from_within, Compaction, DigestFold, Floors, NO_BUDGET,
 };
-pub use synced::{Change, Entry, Placed, SyncFolder};
+pub use synced::{Change, Entry, NotASyncPath, Placed, SyncFolder, SyncPath};
 pub use view::{Digest, View, DIGEST_V};
 
 /// The journal envelope, re-exported so a consumer of the rail names ONE

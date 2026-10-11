@@ -514,7 +514,9 @@ is U5's inventory (§8).
    README's §9, made production by syp-4: the folder one group's (landed,
    Ana in two groups each with a folder `Shared`, the other's member
    refused her hash); a path parsed, since a member's act
-   can write outside the folder on every other member's disk today; the
+   could write outside the folder on every other member's disk (landed: a
+   `SyncPath` of named parts, an act naming `../outside` a malformed line
+   on every copy); the
    store keeping what it held across a stop, reproduced first, since three
    times a store gave nothing of a file its directory held; what a node
    keeps of its syncing, never an unreadable state read as empty; several
