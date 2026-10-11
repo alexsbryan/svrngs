@@ -28,6 +28,27 @@ pub fn seed_file(dir: &Path) -> Result<Option<String>, String> {
     }
 }
 
+/// The group every member is in: perf-1's, founded by member 0.
+pub fn seed() -> Seed {
+    Seed::from_parts(
+        Name::parse("perf").unwrap(),
+        Name::parse("p0").unwrap(),
+        signing(0).verifying_key(),
+        [9; 16],
+    )
+}
+
+/// `node` holding [`seed`]'s group, as each member process does: the
+/// group's id and its directory.
+pub fn hold_seed(node: &Node) -> (String, PathBuf) {
+    let seed = seed();
+    let id = seed.id();
+    node.rail().set_seed(&id, &seed.roster()).unwrap();
+    let group = node.rail().group_dir(&id).unwrap();
+    std::fs::write(group.join("seed.json"), seed.to_text()).unwrap();
+    (id, group)
+}
+
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Addr {
     pub me: usize,
@@ -66,16 +87,7 @@ pub async fn node() {
     )
     .await
     .expect("a node starts");
-    let seed = Seed::from_parts(
-        Name::parse("perf").unwrap(),
-        Name::parse("p0").unwrap(),
-        signing(0).verifying_key(),
-        [9; 16],
-    );
-    let id = seed.id();
-    node.rail().set_seed(&id, &seed.roster()).unwrap();
-    let group = node.rail().group_dir(&id).unwrap();
-    std::fs::write(group.join("seed.json"), seed.to_text()).unwrap();
+    let (id, group) = hold_seed(&node);
     // The group's id, for the driver's `share --folder` ask (syp-4 a).
     std::fs::write(dir.join("group"), &id).unwrap();
     let admitted = group.join("perf-admitted");

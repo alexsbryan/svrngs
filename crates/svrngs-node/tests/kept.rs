@@ -19,8 +19,6 @@ use common::loopback_sockets;
 use member::{signing, Addr};
 use svrngs_node::iroh::{EndpointAddr, MemoryLookup, PublicKey, RelayConfig};
 use svrngs_node::node::Node;
-use svrngs_node::seed::Seed;
-use svrngs_node::Name;
 
 #[test]
 #[ignore = "the member process the test below starts"]
@@ -43,6 +41,32 @@ impl Drop for Member {
         self.0.kill().ok();
         self.0.wait().ok();
     }
+}
+
+/// Cy: a node in this test's process over `dir`, on loopback, and its
+/// address as the member processes are told it.
+async fn cy_here(dir: &Path) -> (Node, Addr) {
+    let relay = RelayConfig {
+        relay_urls: Vec::new(),
+        n0_services: false,
+        loopback_only: true,
+    };
+    let cy = Node::start(
+        dir.to_path_buf(),
+        signing(2),
+        &relay,
+        member::seed_file,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .unwrap();
+    let addr = Addr {
+        me: 2,
+        id: cy.endpoint().id().to_string(),
+        sockets: loopback_sockets(cy.endpoint()),
+        api: cy.api_addr(),
+    };
+    (cy, addr)
 }
 
 /// Member `me`'s process over `dir`, its log `dir/log`: its address once
@@ -215,33 +239,8 @@ async fn a_store_keeps_what_it_held_across_a_stop() {
     };
     let (ana_dir, ben_dir, cy_dir) = (dir("ana"), dir("ben"), dir("cy"));
     let (ana_disk, ben_disk) = (dir("disk/ana/Shared"), dir("disk/ben/Shared"));
-    let relay = RelayConfig {
-        relay_urls: Vec::new(),
-        n0_services: false,
-        loopback_only: true,
-    };
-    let cy = Node::start(
-        cy_dir.clone(),
-        signing(2),
-        &relay,
-        member::seed_file,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .unwrap();
-    let cy_addr = Addr {
-        me: 2,
-        id: cy.endpoint().id().to_string(),
-        sockets: loopback_sockets(cy.endpoint()),
-        api: cy.api_addr(),
-    };
-    let group = Seed::from_parts(
-        Name::parse("perf").unwrap(),
-        Name::parse("p0").unwrap(),
-        signing(0).verifying_key(),
-        [9; 16],
-    )
-    .id();
+    let (cy, cy_addr) = cy_here(&cy_dir).await;
+    let group = member::seed().id();
     let (mut ana, mut ana_addr) = spawn(&ana_dir, 0).await;
     let (ben, ben_addr) = spawn(&ben_dir, 1).await;
     tell(
@@ -327,33 +326,8 @@ async fn a_restart_resumes_a_synced_directory_unasked() {
     };
     let (ana_dir, ben_dir, cy_dir) = (dir("ana"), dir("ben"), dir("cy"));
     let (ana_disk, ben_disk) = (dir("disk/ana/Shared"), dir("disk/ben/Shared"));
-    let relay = RelayConfig {
-        relay_urls: Vec::new(),
-        n0_services: false,
-        loopback_only: true,
-    };
-    let cy = Node::start(
-        cy_dir.clone(),
-        signing(2),
-        &relay,
-        member::seed_file,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .unwrap();
-    let cy_addr = Addr {
-        me: 2,
-        id: cy.endpoint().id().to_string(),
-        sockets: loopback_sockets(cy.endpoint()),
-        api: cy.api_addr(),
-    };
-    let group = Seed::from_parts(
-        Name::parse("perf").unwrap(),
-        Name::parse("p0").unwrap(),
-        signing(0).verifying_key(),
-        [9; 16],
-    )
-    .id();
+    let (cy, cy_addr) = cy_here(&cy_dir).await;
+    let group = member::seed().id();
     let (ana, ana_addr) = spawn(&ana_dir, 0).await;
     let (ben, ben_addr) = spawn(&ben_dir, 1).await;
     let dirs = [ana_dir.as_path(), ben_dir.as_path()];
@@ -428,37 +402,9 @@ async fn a_member_restarted_is_answered_at_once() {
     };
     let (ana_dir, ben_dir, cy_dir) = (dir("ana"), dir("ben"), dir("cy"));
     let (ana_disk, cy_disk) = (dir("disk/ana/Shared"), dir("disk/cy/Shared"));
-    let relay = RelayConfig {
-        relay_urls: Vec::new(),
-        n0_services: false,
-        loopback_only: true,
-    };
-    let cy = Node::start(
-        cy_dir.clone(),
-        signing(2),
-        &relay,
-        member::seed_file,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .unwrap();
-    let cy_addr = Addr {
-        me: 2,
-        id: cy.endpoint().id().to_string(),
-        sockets: loopback_sockets(cy.endpoint()),
-        api: cy.api_addr(),
-    };
-    let seed = Seed::from_parts(
-        Name::parse("perf").unwrap(),
-        Name::parse("p0").unwrap(),
-        signing(0).verifying_key(),
-        [9; 16],
-    );
-    let group = seed.id();
-    // Cy holds the group's seed, as each member process does (member.rs).
-    cy.rail().set_seed(&group, &seed.roster()).unwrap();
-    let held = cy.rail().group_dir(&group).unwrap();
-    std::fs::write(held.join("seed.json"), seed.to_text()).unwrap();
+    let (cy, cy_addr) = cy_here(&cy_dir).await;
+    // Cy holds the group's seed, as each member process does.
+    let (group, _) = member::hold_seed(&cy);
     let (ana, ana_addr) = spawn(&ana_dir, 0).await;
     let (ben, ben_addr) = spawn(&ben_dir, 1).await;
     let dirs = [ana_dir.as_path(), ben_dir.as_path()];
