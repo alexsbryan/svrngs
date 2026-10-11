@@ -51,29 +51,50 @@ impl Standing {
     }
 }
 
-/// The keys standing in `namespace` after `ops`, from `seed`: membership
-/// over the acts admission authenticates, each with its person and device. The one
-/// decider: [`RingRail::standing`] answers with it, through the journal's
-/// kept fold (`RingJournal::standing`), which asks it under its write lock.
+/// The keys standing in `namespace` after `ops`, from `seed`: [`register_in`]'s
+/// first answer, which the tests hold the kept fold to.
+#[cfg(test)]
 pub(crate) fn standing_in(
     ops: &[Op<SignedOp>],
     seed: &Roster,
     namespace: &str,
     verifier: &dyn RingVerifier,
 ) -> Result<BTreeMap<String, Member>, RailError> {
+    Ok(register_in(ops, seed, namespace, verifier)?.0)
+}
+
+/// The keys standing in `namespace` after `ops`, from `seed`: membership
+/// over the acts admission authenticates, each with its person and device;
+/// and beside them each key the group's keeper cut, with the person it was
+/// bound to (U7). The one decider: [`RingRail::standing`] and
+/// [`RingRail::removed`] answer with it, through the journal's kept fold
+/// (`RingJournal::standing`), which asks it under its write lock.
+pub(crate) fn register_in(
+    ops: &[Op<SignedOp>],
+    seed: &Roster,
+    namespace: &str,
+    verifier: &dyn RingVerifier,
+) -> Result<(BTreeMap<String, Member>, BTreeMap<String, Person>), RailError> {
     let m = membership_in(ops, seed, namespace, verifier)?;
-    Ok(m.standing
+    let members = m
+        .standing
         .iter()
         .filter_map(|key| {
             let person = m.bindings.get(key)?.clone();
             let device = m.device(key)?;
             Some((key.clone(), Member { person, device }))
         })
-        .collect())
+        .collect();
+    let removed = m
+        .cut
+        .keys()
+        .filter_map(|key| Some((key.clone(), m.bindings.get(key)?.clone())))
+        .collect();
+    Ok((members, removed))
 }
 
 /// `membership` over the acts admission authenticates among `ops`, from
-/// `seed`: what [`standing_in`] reads, and what a redemption asks of the
+/// `seed`: what [`register_in`] reads, and what a redemption asks of the
 /// journal with its `Admit` in it (`crate::redeem`).
 pub(crate) fn membership_in(
     ops: &[Op<SignedOp>],
@@ -130,6 +151,23 @@ impl RingRail {
                 "register: standing read from the seed and the group's acts");
         }
         Ok(Standing::Members(members))
+    }
+
+    /// Each key the keeper of `namespace` cut, with its person (U7; DESIGN
+    /// §6): from the journal's kept fold, as [`Self::standing`] is. A group
+    /// not held here, local-only or with no seed cut nobody here.
+    pub fn removed(&self, namespace: &str) -> Result<BTreeMap<String, Person>, RailError> {
+        if !valid_namespace(namespace) || is_local_only(namespace) || !ring_dir(&self.root, namespace).is_dir() {
+            return Ok(BTreeMap::new());
+        }
+        let journal = self.journal(namespace)?;
+        let Some(seed) = journal.seed()?.filter(|s| !s.members.is_empty()) else {
+            return Ok(BTreeMap::new());
+        };
+        let removed = journal.removed(&seed)?;
+        tracing::debug!(target: "register", namespace, removed = removed.len(),
+            "register: the keys the group's keeper cut");
+        Ok(removed)
     }
 
     /// The first group this node holds, in [`RingRail::namespaces`]' order,
