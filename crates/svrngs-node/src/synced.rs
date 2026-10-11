@@ -359,14 +359,18 @@ impl Folders {
                 held.remove(&rel);
             }
         }
+        // This computer's entries by path and hash, each file taken found by
+        // key: a scan of every entry for each was 95.3 s of 100,000 files'
+        // first step (perf-1's README §9; perf-2 b).
+        let mut mine: BTreeMap<(&SyncPath, ContentHash), &Placed> = BTreeMap::new();
+        for q in placed.iter().filter(|q| q.entry.key == self.host.actor()) {
+            mine.entry((&q.entry.path, q.hash)).or_insert(q);
+        }
         for (path, &(hash, mtime)) in taken {
-            let mine = |q: &&Placed| {
-                q.entry.key == self.host.actor() && &q.entry.path == path && q.hash == hash
-            };
-            if let Some(q) = placed.iter().find(mine) {
+            if let Some(q) = mine.get(&(path, hash)) {
                 let p = Placed {
                     path: path.clone(),
-                    ..q.clone()
+                    ..(*q).clone()
                 };
                 held.insert(path.clone(), Held { p, mtime });
             }
