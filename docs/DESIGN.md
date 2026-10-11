@@ -1730,6 +1730,19 @@ by the north star's tests.
 
 ## 10. Decisions
 
+By the operator, 2026-10-10, on perf-1's candidates for a fast synced
+folder (`demo/runs/perf/2026-10-10/README.md` §10):
+- "One row after syp-4 (a)-(e)" for candidates 1-6: one get a file, the
+  apply's match by path, the record read once a change, the apply woken by
+  the record, files taken at once, fetches at once — perf-2-make-it-fast,
+  fetches at once moved into it from syp-4 (f), since before the record is
+  read once a change they queue at the holder's one task.
+- "Yes, in the same row" for candidate 7: the step woken by the file
+  system's events, through the dependency `notify` (8.2.0); any other new
+  crate is still the operator's.
+- "Wait, revisit after the rerun" for candidate 8, a version as its blocks
+  (§9 keeps it waiting, with its trigger).
+
 By the operator, 2026-10-10, before the synced folder made production
 (`ralph/next/lean/SURVEY.md`):
 - "Queue them increase the budget, but let's also see if there are
