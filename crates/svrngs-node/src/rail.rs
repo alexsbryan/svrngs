@@ -397,12 +397,11 @@ fn people_answer(rail: &RingRail, namespace: &str) -> Response {
 }
 
 /// GET /v1/rail/people.
-pub async fn people(State(api): State<RailApi>, Query(q): Query<RailQuery>) -> Response {
-    let namespace = match namespace_of(&q) {
-        Ok(ns) => ns,
-        Err(refusal) => return refusal,
-    };
-    people_answer(&api.rail, &namespace)
+pub async fn people(
+    State(api): State<RailApi>,
+    Query(q): Query<RailQuery>,
+) -> Result<Response, Response> {
+    Ok(people_answer(&api.rail, &namespace_of(&q)?))
 }
 
 /// POST /v1/rail/append.
@@ -410,27 +409,20 @@ pub async fn append(
     State(api): State<RailApi>,
     Query(q): Query<RailQuery>,
     Json(body): Json<serde_json::Value>,
-) -> Response {
-    let namespace = match namespace_of(&q) {
-        Ok(ns) => ns,
-        Err(refusal) => return refusal,
-    };
-    if let Err(refusal) = group_of(&api.rail, &namespace) {
-        return refusal;
-    }
-    append_act(&api.rail, &namespace, body).await
+) -> Result<Response, Response> {
+    let namespace = namespace_of(&q)?;
+    group_of(&api.rail, &namespace)?;
+    Ok(append_act(&api.rail, &namespace, body).await)
 }
 
 /// GET /v1/rail/log.
-pub async fn log(State(api): State<RailApi>, Query(q): Query<RailQuery>) -> Response {
-    let namespace = match namespace_of(&q) {
-        Ok(ns) => ns,
-        Err(refusal) => return refusal,
-    };
-    if let Err(refusal) = group_of(&api.rail, &namespace) {
-        return refusal;
-    }
-    log_answer(&api.rail, &namespace).await
+pub async fn log(
+    State(api): State<RailApi>,
+    Query(q): Query<RailQuery>,
+) -> Result<Response, Response> {
+    let namespace = namespace_of(&q)?;
+    group_of(&api.rail, &namespace)?;
+    Ok(log_answer(&api.rail, &namespace).await)
 }
 
 // ── The live lane ────────────────────────────────────────────
@@ -613,21 +605,16 @@ pub async fn live_push(
     State(api): State<RailApi>,
     Query(q): Query<RailQuery>,
     body: axum::body::Bytes,
-) -> Response {
-    let namespace = match namespace_of(&q) {
-        Ok(ns) => ns,
-        Err(refusal) => return refusal,
-    };
-    push_answer(&api, &namespace, body).await
+) -> Result<Response, Response> {
+    Ok(push_answer(&api, &namespace_of(&q)?, body).await)
 }
 
 /// GET /v1/rail/live.
-pub async fn live_drain(State(api): State<RailApi>, Query(q): Query<RailQuery>) -> Response {
-    let namespace = match namespace_of(&q) {
-        Ok(ns) => ns,
-        Err(refusal) => return refusal,
-    };
-    drain_answer(&api.live, &namespace)
+pub async fn live_drain(
+    State(api): State<RailApi>,
+    Query(q): Query<RailQuery>,
+) -> Result<Response, Response> {
+    Ok(drain_answer(&api.live, &namespace_of(&q)?))
 }
 
 #[cfg(test)]

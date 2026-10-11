@@ -40,7 +40,7 @@ async function start() {
   if (location.hash.length > 1) {
     handed = decode(location.hash.slice(1));
     history.replaceState(null, '', `${location.pathname}${location.search}`);
-    if (!location.hostname.startsWith(`${handed.label}.`)) throw new Error(`a pass for ${handed.label} opened at ${location.origin}`);
+    if (store.labelOf(location.hostname) !== handed.label) throw new Error(`a pass for ${handed.label} opened at ${location.origin}`);
     await store.lendKeep(`pass ${handed.label}`, handed);
   } else {
     handed = asked.get('for') && (await store.lendKept(`pass ${asked.get('for')}`));

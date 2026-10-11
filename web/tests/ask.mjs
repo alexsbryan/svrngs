@@ -7,8 +7,8 @@
 //      `args.back`; the group's page asks, Yes is clicked, and the browser
 //      lands wherever it is taken, which the test judges;
 //   2. the group's page, opened again: "What apps use", then its Stop;
-//   3. asked and said yes again, the page stops its app itself, `POST
-//      /svrngs-reads/<label>/svrngs-stop`;
+//   3. asked and said yes again, the page stops its app itself, `POST` at
+//      the `stop` address it was told, `…/svrngs-reads/<label>/svrngs-stop`;
 //   4. the page frames the group's page at `#ask=`, and the test reads
 //      whether the group's page is in the frame;
 //   5. what an app at the page's origin can read there, its pass and its
@@ -84,7 +84,7 @@ try {
   out.again = await ask();
   out.yesAgain = await probe();
   await at();
-  out.appStop = await read(`/svrngs-reads/${new URL(shelf.address).pathname.split('/')[2]}/svrngs-stop`, { method: 'POST' });
+  out.appStop = await read(shelf.stop, { method: 'POST' });
   out.appStopped = await probe();
 
   // 4. The group's page, framed by the lent page.

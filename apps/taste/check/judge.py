@@ -16,8 +16,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 ENGINES = ("chromium", "webkit")
-# svrngs's question, as each page words it: the home page "Let Sam's
-# tonights-picks use Ana's taste?", the group's page with the app's kind.
+# svrngs's question: "Let Sam’s tonights-picks (movie-night) use Ana’s
+# taste?", one wording on both pages since lean-4 (c)
+# (crates/svrngs-node/src/home/question.js); sup-4's home page dropped the
+# kind, so a run before it reads without.
 QUESTION = re.compile(r"Let Sam.s tonights-picks( \(movie-night\))? use Ana.s taste\?")
 ASK = "the app receives ranked film suggestions; your viewing history stays where it is stored"
 

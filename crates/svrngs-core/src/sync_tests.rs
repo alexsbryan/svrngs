@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai commonwealth/crates/commonwealth-rail-core/src/sync.rs@e1a43bcd2
 use super::*;
-use crate::tests_support::{key, marks, record, signed, NS};
+use crate::tests_support::{key, marks, ops_missing_from, record, signed, NS};
 use crate::{Ed25519Verifier, RailAct};
 
 fn actor(seed: u8) -> String {
@@ -45,7 +45,7 @@ fn a_hole_lowers_the_mark_so_the_peer_re_sends_across_it() {
 #[test]
 fn an_actor_whose_first_op_is_missing_is_absent_from_the_digest() {
     let held = vec![op(1, 3, 13)];
-    assert!(digest_of(&held).is_empty());
+    assert_eq!(digest_of(&held), Digest::default());
     let peer_has = vec![op(1, 0, 10), op(1, 1, 11), op(1, 3, 13)];
     assert_eq!(
         ops_missing_from(&peer_has, NS, &Ed25519Verifier, &digest_of(&held)).len(),
@@ -60,7 +60,7 @@ fn an_actor_whose_first_op_is_missing_is_absent_from_the_digest() {
 fn an_unknown_actor_gets_their_whole_history() {
     let peer_has = vec![op(2, 0, 10), op(2, 1, 11)];
     assert_eq!(
-        ops_missing_from(&peer_has, NS, &Ed25519Verifier, &Digest::new()).len(),
+        ops_missing_from(&peer_has, NS, &Ed25519Verifier, &Digest::default()).len(),
         2
     );
 }
@@ -103,7 +103,7 @@ fn seal(seed: u8, seq: u64, ts: i64) -> Op<SignedOp> {
 fn a_compacted_actor_is_advertised_from_its_seal_instead_of_not_at_all() {
     let no_seal = vec![op(1, 3, 103), op(1, 4, 104)];
     assert!(
-        digest_of(&no_seal).is_empty(),
+        digest_of(&no_seal) == Digest::default(),
         "control: nothing sealed, nothing contiguous from 0, nothing to claim"
     );
 
@@ -277,8 +277,8 @@ fn the_payload_order_is_content_derived_not_arrival_order() {
     let a = vec![op(1, 0, 10), op(2, 0, 11), op(1, 1, 12)];
     let b = vec![op(1, 1, 12), op(1, 0, 10), op(2, 0, 11)];
     assert_eq!(
-        ops_missing_from(&a, NS, &Ed25519Verifier, &Digest::new()),
-        ops_missing_from(&b, NS, &Ed25519Verifier, &Digest::new())
+        ops_missing_from(&a, NS, &Ed25519Verifier, &Digest::default()),
+        ops_missing_from(&b, NS, &Ed25519Verifier, &Digest::default())
     );
 }
 
@@ -294,10 +294,10 @@ fn wire_bytes(ops: &[Op<SignedOp>]) -> usize {
 fn the_unbudgeted_form_is_the_budgeted_one_with_no_budget() {
     let held: Vec<_> = (0..20).map(|s| op(1, s, 100 + s as i64)).collect();
     let (all, more) =
-        ops_missing_from_within(&held, NS, &Ed25519Verifier, &Digest::new(), NO_BUDGET);
+        ops_missing_from_within(&held, NS, &Ed25519Verifier, &Digest::default(), NO_BUDGET);
     assert_eq!(
         all,
-        ops_missing_from(&held, NS, &Ed25519Verifier, &Digest::new())
+        ops_missing_from(&held, NS, &Ed25519Verifier, &Digest::default())
     );
     assert!(!more, "a budget that cannot bind never truncates");
 }
@@ -308,7 +308,7 @@ fn a_budget_nothing_reaches_sends_everything_and_reports_no_more() {
     let held: Vec<_> = (0..20).map(|s| op(1, s, 100 + s as i64)).collect();
     let whole = wire_bytes(&held);
     let (sent, more) =
-        ops_missing_from_within(&held, NS, &Ed25519Verifier, &Digest::new(), whole * 2);
+        ops_missing_from_within(&held, NS, &Ed25519Verifier, &Digest::default(), whole * 2);
     assert_eq!(sent.len(), 20);
     assert!(!more);
 }
@@ -320,7 +320,8 @@ fn a_budget_nothing_reaches_sends_everything_and_reports_no_more() {
 fn a_budget_that_binds_sends_the_lowest_ops_and_reports_more() {
     let held: Vec<_> = (0..20).map(|s| op(1, s, 100 + s as i64)).collect();
     let five = wire_bytes(&held[..5]);
-    let (sent, more) = ops_missing_from_within(&held, NS, &Ed25519Verifier, &Digest::new(), five);
+    let (sent, more) =
+        ops_missing_from_within(&held, NS, &Ed25519Verifier, &Digest::default(), five);
     assert!(more, "the budget cut it short and must say so");
     assert!(
         (1..20).contains(&sent.len()),
@@ -344,7 +345,7 @@ fn a_budget_that_binds_sends_the_lowest_ops_and_reports_more() {
 #[test]
 fn an_op_bigger_than_the_whole_budget_is_still_sent_alone() {
     let held: Vec<_> = (0..3).map(|s| op(1, s, 100 + s as i64)).collect();
-    let (sent, more) = ops_missing_from_within(&held, NS, &Ed25519Verifier, &Digest::new(), 1);
+    let (sent, more) = ops_missing_from_within(&held, NS, &Ed25519Verifier, &Digest::default(), 1);
     assert_eq!(sent.len(), 1, "exactly one, never zero");
     assert_eq!(sent[0].kind.seq, 0);
     assert!(more);

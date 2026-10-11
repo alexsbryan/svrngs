@@ -49,8 +49,16 @@ reqwest = { version = "0.12", default-features = false, features = ["json"] }
 # fetch, without the rpc default, over the lock's iroh 1.0.2.
 iroh-blobs = { version = "=0.103.0", default-features = false, features = ["fs-store"] }
 
+[features]
+# What only a test asks of a node (src/node/tests_support.rs): its routes as a
+# caller no socket can be, its transport, a round now.
+test-support = []
+
 [dev-dependencies]
 svrngs-core = { workspace = true, features = ["test-support"] }
+# This crate's integration tests (tests/) link it as any caller does, so they
+# turn its test support on here.
+svrngs-node = { path = ".", features = ["test-support"] }
 tempfile = "3"
 # The folders' tests (tests/folders.rs) hash and fill files with BLAKE3.
 blake3 = { workspace = true }

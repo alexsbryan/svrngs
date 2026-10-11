@@ -29,7 +29,11 @@ fn key(seed: u8) -> PublicKey {
 
 /// No relay and no address lookup: peers are reached by seeded addresses.
 fn no_relay() -> RelayConfig {
-    RelayConfig::from_parts(Vec::new(), Some("none")).unwrap()
+    RelayConfig {
+        relay_urls: Vec::new(),
+        n0_services: false,
+        loopback_only: false,
+    }
 }
 
 /// No link is asked about here.

@@ -113,40 +113,8 @@ pub struct Digest(BTreeMap<String, View>);
 pub const DIGEST_V: u32 = 2;
 
 impl Digest {
-    pub fn new() -> Self {
-        Self(BTreeMap::new())
-    }
-
-    pub fn insert(&mut self, actor: String, view: View) {
-        self.0.insert(actor, view);
-    }
-
     pub fn get(&self, actor: &str) -> Option<&View> {
         self.0.get(actor)
-    }
-
-    pub fn contains_key(&self, actor: &str) -> bool {
-        self.0.contains_key(actor)
-    }
-
-    pub fn keys(&self) -> impl Iterator<Item = &String> {
-        self.0.keys()
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = (&String, &View)> {
-        self.0.iter()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    pub fn entries(&self) -> &BTreeMap<String, View> {
-        &self.0
     }
 }
 

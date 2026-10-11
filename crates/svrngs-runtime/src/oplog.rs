@@ -142,6 +142,21 @@ impl<K: Journaled> Oplog<K> {
         }
     }
 
+    /// `ops` as the log's lines, each ending in a newline. (svrngs,
+    /// lean-4: `append_all` and `replace_all` each wrote this upstream.)
+    fn lines(ops: &[Op<K>]) -> Result<String> {
+        let mut buf = String::new();
+        for op in ops {
+            let line = serde_json::to_string(op).map_err(|e| OplogError::Serialise {
+                log: K::LABEL,
+                source: e,
+            })?;
+            buf.push_str(&line);
+            buf.push('\n');
+        }
+        Ok(buf)
+    }
+
     /// Append several ops in one open. Creates the parent directory on
     /// first write.
     pub fn append_all(&self, ops: &[Op<K>]) -> Result<()> {
@@ -156,15 +171,7 @@ impl<K: Journaled> Oplog<K> {
             .append(true)
             .open(&self.path)
             .map_err(OplogError::Io)?;
-        let mut buf = String::new();
-        for op in ops {
-            let line = serde_json::to_string(op).map_err(|e| OplogError::Serialise {
-                log: K::LABEL,
-                source: e,
-            })?;
-            buf.push_str(&line);
-            buf.push('\n');
-        }
+        let buf = Self::lines(ops)?;
         // ONE write for the whole batch, so `O_APPEND`'s atomicity covers it.
         // Two calls (the body, then the newline) left a window in which a
         // second writer could interleave and split a line in half.
@@ -219,15 +226,7 @@ impl<K: Journaled> Oplog<K> {
         if let Some(parent) = self.path.parent() {
             fs::create_dir_all(parent).map_err(OplogError::Io)?;
         }
-        let mut buf = String::new();
-        for op in ops {
-            let line = serde_json::to_string(op).map_err(|e| OplogError::Serialise {
-                log: K::LABEL,
-                source: e,
-            })?;
-            buf.push_str(&line);
-            buf.push('\n');
-        }
+        let buf = Self::lines(ops)?;
         let tmp = self.path.with_extension("compacting");
         {
             let mut f = OpenOptions::new()
@@ -315,7 +314,7 @@ impl<K: Journaled> Oplog<K> {
     /// offset, the read starts again from the top and the returned
     /// [`Tail::restarted`] says the caller's fold is void. Lines are judged by
     /// the same rules as [`Self::read_all_with_skips`]; skipped ones are warned
-    /// and counted, with line numbers counted from where this read began.
+    /// and counted in its trace, with line numbers counted from where this read began.
     pub fn read_since(&self, cursor: Cursor) -> Result<Tail<K>> {
         use std::io::{Read, Seek, SeekFrom};
         let mut file = match fs::File::open(&self.path) {
@@ -323,7 +322,6 @@ impl<K: Journaled> Oplog<K> {
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
                 return Ok(Tail {
                     ops: Vec::new(),
-                    skipped: 0,
                     cursor: Cursor::default(),
                     restarted: cursor != Cursor::default(),
                 });
@@ -363,7 +361,6 @@ impl<K: Journaled> Oplog<K> {
         );
         Ok(Tail {
             ops,
-            skipped,
             cursor: Cursor {
                 file: file_id,
                 end: start + whole as u64,
@@ -426,12 +423,6 @@ pub struct Cursor {
 pub struct Tail<K> {
     /// The ops past the cursor, in append order.
     pub ops: Vec<Op<K>>,
-    /// Lines past the cursor this build could not use (already warned).
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "the cursor tests read it; the write index needs only the ops")
-    )]
-    pub skipped: usize,
     /// Where the next read starts.
     pub cursor: Cursor,
     /// The read began at the top of the file, not at the cursor: whatever the

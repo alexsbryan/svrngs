@@ -44,12 +44,16 @@ pub async fn node() {
     let members: usize = env("PERF_MEMBERS").parse().unwrap();
     let path = env("PERF_PATH");
     let relay = match path.as_str() {
-        "loopback" => RelayConfig::from_parts(Vec::new(), Some("none"))
-            .unwrap()
-            .on_loopback_only(),
-        "relay" => RelayConfig::from_parts(vec![env("PERF_RELAY")], Some("none"))
-            .unwrap()
-            .on_loopback_only(),
+        "loopback" => RelayConfig {
+            relay_urls: Vec::new(),
+            n0_services: false,
+            loopback_only: true,
+        },
+        "relay" => RelayConfig {
+            relay_urls: vec![env("PERF_RELAY")],
+            n0_services: false,
+            loopback_only: true,
+        },
         "n0" => RelayConfig::default(),
         other => panic!("PERF_PATH {other}: loopback, relay or n0"),
     };

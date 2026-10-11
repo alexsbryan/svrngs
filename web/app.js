@@ -49,6 +49,7 @@ import init, {
   relay_of,
 } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
+import { named, question, unasked, uses as used } from './question.js?v=__VERSION__';
 
 const heading = document.getElementById('status');
 const said = document.getElementById('response');
@@ -170,12 +171,6 @@ async function join(token, kept) {
   }
 }
 
-// What the group's people lend, as the bare command prints it: "Sam's
-// <name>", and "<name> (<kind>)" when the two differ.
-function what(l) {
-  return `${l.person}’s ${l.name === l.kind ? l.name : `${l.name} (${l.kind})`}`;
-}
-
 const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
 
 // Open `l`, one of `lent`, as the person whose key is `key` in `group`: a
@@ -185,10 +180,10 @@ const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).jo
 // tells its pages (lend.js `told`). Asked by a lend, at `at`.
 function open(group, key, lent, unanswered, l, at) {
   if (!('serviceWorker' in navigator)) {
-    said.textContent = `This browser cannot open ${what(l)}.`;
+    said.textContent = `This browser cannot open ${named(l)}.`;
     return;
   }
-  said.textContent = `Opening ${what(l)}…`;
+  said.textContent = `Opening ${named(l)}…`;
   const reads = lent.filter((o) => o !== l && (l.reads ?? []).includes(o.kind));
   const lends = [l, ...reads].map((o) => ({ label: label(o.key, o.name), key: o.key, name: o.name, kind: o.kind, person: o.person, asks: o.asks }));
   const holder = crypto.getRandomValues(new Uint8Array(32));
@@ -196,7 +191,7 @@ function open(group, key, lent, unanswered, l, at) {
   // Each app at an address of its own under this page's host (DESIGN §7),
   // the page's files at its root.
   const back = at ? `&back=${encodeURIComponent(at)}` : '';
-  const start = `${location.protocol}//${lends[0].label}.${location.host}/open.html?v=__VERSION__${back}`;
+  const start = `${store.lendOrigin(location.protocol, lends[0].label, location.host)}/open.html?v=__VERSION__${back}`;
   const handoff = {
     label: lends[0].label,
     lends,
@@ -235,7 +230,7 @@ function asking(group, key, lent, unanswered, dialler, q) {
   }
   trace(`PAGE: asking whether ${q.get('app')} may use ${q.get('ask')}`);
   const back = () => open(group, key, lent, unanswered, app, q.get('at') ?? '/');
-  show(`Let ${what(app)} use ${what(lend)}?`, true);
+  show(question(app, lend), true);
   document.getElementById('words').textContent = lend.asks;
   const form = document.getElementById('ask');
   form.hidden = false;
@@ -264,17 +259,12 @@ async function uses(lent, dialler, shown) {
       const res = await d.fetch('GET', `/choices/${label(l.key, l.name)}`, [['accept', 'application/json']], null);
       await d.close();
       if (!res.ok) throw new Error(`answered ${res.status}`);
-      for (const [app, c] of Object.entries((await res.json()).choices)) {
-        const by = lent.find((o) => label(o.key, o.name) === app);
-        const item = line(`${by ? what(by) : 'An app'} ${c.said === 'yes' ? 'uses' : 'was stopped using'} ${what(l)}. `);
-        if (c.said !== 'yes') continue;
-        const stop = Object.assign(document.createElement('button'), { textContent: 'Stop' });
-        stop.onclick = () => choose(dialler, l, app, 'stop').then(() => uses(lent, dialler, shown), (e) => item.append(e.message));
-        item.append(stop);
-      }
+      const appOf = (app) => lent.find((o) => label(o.key, o.name) === app);
+      const stop = (app, item) => choose(dialler, l, app, 'stop').then(() => uses(lent, dialler, shown), (e) => item.append(e.message));
+      used(l, (await res.json()).choices, appOf, line, stop);
     } catch (e) {
       trace(`PAGE: what apps use of ${l.name} not asked: ${e}`);
-      line(`What apps use of ${what(l)} cannot be asked now.`);
+      line(unasked(l));
     }
   }
 }
@@ -301,7 +291,7 @@ async function enter(group, asked) {
     ...lent.map((l) => {
       const item = document.createElement('li');
       const button = document.createElement('button');
-      button.textContent = what(l);
+      button.textContent = named(l);
       button.onclick = () => open(group, key, lent, unanswered, l);
       item.append(button);
       return item;

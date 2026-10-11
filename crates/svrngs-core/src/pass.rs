@@ -97,6 +97,14 @@ impl Label {
         Self(label)
     }
 
+    /// [`Self::of`] for a lender named by its key in 64 hex, as the record
+    /// spells an actor; `None` for text that is not a key — one reading for
+    /// the node and the page (REVIEW_FINDINGS #58).
+    pub fn of_hex(lender: &str, name: &str) -> Option<Self> {
+        let key: [u8; 32] = hex::decode(lender).ok()?.try_into().ok()?;
+        Some(Self::of(&key, name))
+    }
+
     /// `raw` as a label: 62 letters of [`BASE32`] whose first 52 spell a
     /// key. `None` for anything else, in any case: a host is lowercased
     /// before it is read.
@@ -111,11 +119,8 @@ impl Label {
     pub fn lender(&self) -> [u8; 32] {
         key_of(&self.0[..KEY_LETTERS]).expect("a label parsed holds a key")
     }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
 }
+crate::text_newtype!(Label);
 
 impl TryFrom<String> for Label {
     type Error = &'static str;
@@ -127,12 +132,6 @@ impl TryFrom<String> for Label {
 impl From<Label> for String {
     fn from(label: Label) -> Self {
         label.0
-    }
-}
-
-impl core::fmt::Display for Label {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.0)
     }
 }
 

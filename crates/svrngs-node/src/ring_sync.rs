@@ -89,6 +89,7 @@ use std::time::{Duration, Instant};
 
 use crate::peer_wire::{RingSyncRequest, RingSyncResponse, RING_SYNC_OPS_BUDGET_BYTES};
 use crate::{RailError, RingRail};
+use n0_future::task::AbortOnDropHandle;
 use tokio::sync::{watch, Notify};
 use tracing::{debug, info, warn};
 
@@ -124,13 +125,7 @@ pub const MAX_CHUNKS_PER_EXCHANGE: usize = 16;
 /// the daemon's `GossipHandle` so the daemon tears both
 /// down the same way.
 pub struct RingSyncHandle {
-    _task: tokio::task::JoinHandle<()>,
-}
-
-impl Drop for RingSyncHandle {
-    fn drop(&mut self) {
-        self._task.abort();
-    }
+    _task: AbortOnDropHandle<()>,
 }
 
 /// What one round moved. Returned rather than only logged so a test can
@@ -267,7 +262,9 @@ pub fn spawn_ring_sync_loop(
             }
         }
     });
-    RingSyncHandle { _task: task }
+    RingSyncHandle {
+        _task: AbortOnDropHandle::new(task),
+    }
 }
 
 /// One anti-entropy pass over every namespace this node holds, against every
@@ -800,7 +797,9 @@ pub async fn append(
     body: axum::Json<serde_json::Value>,
 ) -> axum::response::Response {
     let nudge = api.nudge.clone();
-    let answer = crate::rail::append(axum::extract::State(api), query, body).await;
+    let answer = crate::rail::append(axum::extract::State(api), query, body)
+        .await
+        .unwrap_or_else(|refused| refused);
     if answer.status().is_success() {
         nudge.notify_one();
         info!(target: "rails", "ring sync: an append woke the round");

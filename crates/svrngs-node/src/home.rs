@@ -50,6 +50,13 @@ const MODULE: ([(header::HeaderName, &str); 1], &str) = (
     include_str!("home/home.js"),
 );
 
+/// svrngs's question and what apps use, in the one wording the group's page
+/// loads too (`scripts/build-web.sh` gives it the same file).
+const QUESTION: ([(header::HeaderName, &str); 1], &str) = (
+    [(header::CONTENT_TYPE, "text/javascript")],
+    include_str!("home/question.js"),
+);
+
 /// Its look, a file of its own, since its policy runs no inline style.
 const LOOK: ([(header::HeaderName, &str); 1], &str) = (
     [(header::CONTENT_TYPE, "text/css")],
@@ -82,6 +89,7 @@ pub(crate) fn router(
         .route("/", get(page))
         .route("/ask", get(page))
         .route("/home.js", get(|| async { MODULE }))
+        .route("/question.js", get(|| async { QUESTION }))
         .route("/home.css", get(|| async { LOOK }))
         .route("/choices", get(choices).post(choose))
         .with_state(at.clone())
@@ -110,21 +118,14 @@ pub(crate) fn router(
 /// The home page's one rule (the module doc), and its policy on every answer.
 async fn only_itself(State(at): State<Asking>, req: Request, next: Next) -> Response {
     let own = format!("{HOST}:{}", at.host.api_port);
-    let [site, mode, origin, host] =
-        ["sec-fetch-site", "sec-fetch-mode", "origin", "host"].map(|name| {
-            req.headers()
-                .get(name)
-                .and_then(|v| v.to_str().ok())
-                .map(str::to_string)
-        });
-    let (site, mode) = (site.as_deref(), mode.as_deref());
+    let ([site, mode, origin, host], own_page) = crate::origin::fetch(req.headers());
     let at_own = host.is_some_and(|h| h.eq_ignore_ascii_case(&own));
     let reads = matches!(*req.method(), Method::GET | Method::HEAD);
     let answers = at_own
         && if reads {
-            mode == Some("navigate") || matches!(site, Some("same-origin" | "none"))
+            own_page
         } else {
-            site == Some("same-origin") && origin == Some(format!("http://{own}"))
+            site == Some("same-origin") && origin.is_some_and(|o| o == format!("http://{own}"))
         };
     tracing::debug!(target: "home", path = %req.uri().path(), method = %req.method(), at_own, ?site, ?mode, ?origin, answers,
         "home: answered only from itself, a typed address or, to read, a navigation");

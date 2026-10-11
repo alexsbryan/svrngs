@@ -1,0 +1,31 @@
+00:59:01 sam's jellyfin up at 8296: {"LocalAddress":"http://127.0.0.1:8296","ServerName":"Alexs-MacBook-Pro-4","Version":"12.0.0","ProductName":"Jellyfin Server","OperatingSystem":"","Id":"91902bc7b2994e5084e11354e03f4924","StartupWizardCompleted":false}
+00:59:05 sam's films: [["Alien", 1979, {"Imdb": "tt0078748", "Tmdb": "348"}], ["Blade Runner", 1982, {"Imdb": "tt0083658", "Tmdb": "78"}], ["Brazil", 1985, {"Imdb": "tt0088846", "Tmdb": "68"}]]
+00:59:06 sam's middleware: listening on port 8297, signing people in to Jellyfin at 127.0.0.1:8296
+00:59:13 dee's jellyfin up at 8396: {"LocalAddress":"http://127.0.0.1:8396","ServerName":"Alexs-MacBook-Pro-4","Version":"12.0.0","ProductName":"Jellyfin Server","OperatingSystem":"","Id":"accb8b924d9a47ae89fe853aa74939de","StartupWizardCompleted":false}
+00:59:17 dee's films: [["Arrival", 2016, {"Imdb": "tt2543164", "Tmdb": "329865"}], ["Blade Runner", 1982, {"Imdb": "tt0083658", "Tmdb": "78"}]]
+00:59:17 dee's middleware: listening on port 8397, signing people in to Jellyfin at 127.0.0.1:8396
+00:59:18 the page: http://localhost:59375/
+00:59:20 dee: You're in House, as Dee.
+00:59:22 cy: You're in House, as Cy.
+00:59:23 alex: You're in House, as Alex.
+00:59:23 sam: Lent jellyfin (port 8296) to everyone in your groups, up to 8 people at once.
+00:59:23 dee: Lent jellyfin (port 8396) to everyone in your groups, up to 8 people at once.
+00:59:24 cy: Lent jellyfin (port 8496) to everyone in your groups, up to 8 people at once.
+00:59:24 sam: Lent movie-night (port 8596) to everyone in your groups, up to 8 people at once.
+00:59:24 sam is told: Each person is signed in to it as themselves by what answers on port 8297, with nothing typed. svrngs is running here already, so they can open it now. `svrngs unshare jellyfin` stops lending it. It can open the jellyfin your groups lend, as whoever opens it. svrngs is running here already, so they can open it now. `svrngs unshare movie-night` stops lending it. 
+01:00:20 dee: round membership exchanged_with=["Alex/0f7ada3e", "Cy/5db3ed07", "Sam/85579219"] skipped_offline=[]
+01:00:29 alex's computer: 3 lends listed; Cy asleep
+01:00:30 ana: You're in House, as Ana.
+01:00:30 ana's taste: owned by her computer's key 89922bc1808abf2b95e7e85b2cc158d705690ea13b4b866ed80dde396a4cd43f
+01:00:30 taste: up
+01:00:30 taste lent (kept), no choice kept: Lent taste (port 8696) to everyone in your groups, up to 8 people at once.
+01:00:32 sam: Lent tonights-picks (port 8697) to everyone in your groups, up to 8 people at once. Lent other (port 8698) to everyone in your groups, up to 8 people at once. 
+01:01:30 ana: round membership exchanged_with=["Alex/0f7ada3e", "Cy/5db3ed07", "Sam/85579219", "Dee/e80f464e"] skipped_offline=[]
+01:01:33 alex: round membership exchanged_with=["Cy/5db3ed07", "Sam/85579219", "Ana/89922bc1", "Dee/e80f464e"] skipped_offline=[]
+01:01:33 home pages: ANA_HOME=http://svrngs.localhost:59882/ ALEX_HOME=http://svrngs.localhost:59837/ 
+01:01:35 taste: up
+01:01:35 taste lent (kept), no choice kept: Lent taste (port 8696) to everyone in your groups, up to 8 people at once.
+01:02:52 computer-chromium: computer-chromium; ana-computer-chromium: ranked ['Arrival', 'Brazil', 'Blade Runner', 'Alien']; alex-computer-chromium: refused-not-yours ['Alien', 'Blade Runner', 'Brazil', 'Arrival']
+01:02:53 taste: up
+01:02:53 taste lent (kept), no choice kept: Lent taste (port 8696) to everyone in your groups, up to 8 people at once.
+01:04:11 computer-webkit: computer-webkit; ana-computer-webkit: ranked ['Arrival', 'Brazil', 'Blade Runner', 'Alien']; alex-computer-webkit: refused-not-yours ['Alien', 'Blade Runner', 'Brazil', 'Arrival']

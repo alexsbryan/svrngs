@@ -91,9 +91,12 @@ async fn a_loopback_only_endpoint_binds_loopback_alone() {
     let ep = build_relayed_endpoint(
         SecretKey::from_bytes(&[79u8; 32]),
         vec![ALPN.to_vec()],
-        &RelayConfig::from_parts(Vec::new(), Some("none"))
-            .unwrap()
-            .on_loopback_only(),
+        &RelayConfig {
+            relay_urls: Vec::new(),
+            n0_services: false,
+            loopback_only: false,
+        }
+        .on_loopback_only(),
     )
     .await
     .expect("a loopback-only endpoint binds");

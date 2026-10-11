@@ -36,10 +36,11 @@ use axum::response::{IntoResponse, Response};
 use axum::Router;
 use svrngs_core::pass::{Label, Pass};
 
-use crate::door::{self, Door, LendRefusal, Who, LEND_ROUTE, PASS_HEADER};
+use crate::door::{self, Door, LendRefusal, Who, LEND_ROUTE, PASS_HEADER, REFUSED_HEADER};
 use crate::iroh::{Contact, PublicKey};
 use crate::lend::Offered;
 use crate::node::Asking;
+use crate::surface::STOP_SUFFIX;
 
 /// How long a pass this computer signs for its own page lasts: one
 /// request's, signed afresh for each, so none is kept.
@@ -72,25 +73,36 @@ fn at(host: &str) -> Option<(Label, Option<String>)> {
 /// `None`. A request with no `Sec-Fetch-*` is a program's, not a page's, and
 /// is the lend's own, as loopback is trusted (DESIGN §9).
 fn app_of(headers: &HeaderMap, host: &Label) -> Option<Label> {
-    let said = |name: &str| headers.get(name).and_then(|v| v.to_str().ok());
-    let (site, mode) = (said("sec-fetch-site"), said("sec-fetch-mode"));
+    let ([site, mode, origin, at_host], own) = fetch(headers);
     if site.is_none() && mode.is_none() {
         tracing::debug!(target: "origin", %host, "origin: no Sec-Fetch-*, a program on this computer, so the lend's own");
         return Some(host.clone());
     }
-    if mode == Some("navigate") || matches!(site, Some("none" | "same-origin")) {
+    if own {
         tracing::debug!(target: "origin", %host, ?site, ?mode, "origin: a navigation, a typed address or its own origin, so the lend's own page");
         return Some(host.clone());
     }
-    let port = at(said(header::HOST.as_str())?)?.1;
-    let from = said(header::ORIGIN.as_str())
+    let port = at(at_host?)?.1;
+    let from = origin
         .and_then(|o| o.strip_prefix("http://"))
         .and_then(at)
         .filter(|(_, p)| *p == port)
         .map(|(label, _)| label);
-    tracing::debug!(target: "origin", %host, ?site, ?mode, origin = ?said(header::ORIGIN.as_str()), app = ?from.as_ref().map(Label::as_str),
+    tracing::debug!(target: "origin", %host, ?site, ?mode, ?origin, app = ?from.as_ref().map(Label::as_str),
         "origin: from another page, so the app its Origin names, or none");
     from
+}
+
+/// What the browser says of the page asking, which no page's script can
+/// set — its `Sec-Fetch-Site`, `Sec-Fetch-Mode`, `Origin` and the `Host`
+/// it asked — and whether it is a navigation, a typed address or the page's
+/// own origin: read once for a lend's origin ([`app_of`]) and the home page
+/// (`crate::home`'s `only_itself`), each deciding the rest by its own rule.
+pub(crate) fn fetch(headers: &HeaderMap) -> ([Option<&str>; 4], bool) {
+    let [site, mode, origin, host] = ["sec-fetch-site", "sec-fetch-mode", "origin", "host"]
+        .map(|name| headers.get(name).and_then(|v| v.to_str().ok()));
+    let own = mode == Some("navigate") || matches!(site, Some("none" | "same-origin"));
+    ([site, mode, origin, host], own)
 }
 
 /// Whether the page of the lend `app` may reach the lend `label`: both
@@ -168,10 +180,10 @@ pub(crate) fn router(asking: Asking) -> Router {
 }
 
 /// A request at a lend's origin, carried to the lend.
-async fn lent(State(at): State<Asking>, req: Request) -> Response {
+async fn lent(State(at): State<Asking>, req: Request) -> Result<Response, Response> {
     let Some(label) = label_of(req.headers().get(header::HOST)) else {
         tracing::debug!(target: "origin", host = ?req.headers().get(header::HOST), "origin: refused — no lend's host");
-        return LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here");
+        return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
     };
     if req.uri().path() == crate::surface::READS_PATH {
         tracing::debug!(target: "origin", %label, "origin: the lend's page asks the lends it reads, answered from the record");
@@ -179,34 +191,61 @@ async fn lent(State(at): State<Asking>, req: Request) -> Response {
     }
     let Some(app) = app_of(req.headers(), &label) else {
         tracing::debug!(target: "origin", %label, "origin: refused — from another page that names no origin");
-        return LendRefusal::Closed.say(
+        return Err(LendRefusal::Closed.say(
             StatusCode::FORBIDDEN,
             "a page reaches another lend only by fetch, which says where it is from",
-        );
+        ));
     };
     let stop = req.uri().path().strip_prefix(crate::surface::READS_PATH);
-    let stop = stop.and_then(|p| p.strip_prefix('/')?.strip_suffix("/svrngs-stop"));
+    let stop = stop.and_then(|p| p.strip_prefix('/')?.strip_suffix(STOP_SUFFIX));
     if let Some(lend) = stop
         .and_then(Label::parse)
         .filter(|_| req.method() == Method::POST)
     {
         tracing::debug!(target: "origin", %label, %app, %lend, "origin: a page stops its app using a lend");
         let pass = own_pass(&at, &app, &lend);
-        return crate::home::say(&at, &lend, app, crate::door::choices::Said::Stop, pass).await;
+        return Ok(crate::home::say(&at, &lend, app, crate::door::choices::Said::Stop, pass).await);
     }
     if app != label {
-        if let Err(refused) = kept_to_reads(&at, &app, &label).await {
-            return refused;
-        }
+        kept_to_reads(&at, &app, &label).await?;
+        let page = req.headers().get(header::ORIGIN).cloned();
+        return Ok(readable(reach(&at, label, app, req).await, page));
     }
     reach(&at, label, app, req).await
+}
+
+/// svrngs's own answer to the page of another lend that reads this one —
+/// an answer marked [`REFUSED_HEADER`], which no service's carries (the
+/// door displaces a service's, mnp-1) — made readable by that page: its
+/// origin, `page`, alone allowed, never `*`, and the mark exposed (DESIGN
+/// §3, "What an app gets"). A preflight is a request like any other here,
+/// under the same rule. A service's own answer is left as it sent it.
+fn readable(answer: Result<Response, Response>, page: Option<HeaderValue>) -> Response {
+    let mut answer = answer.unwrap_or_else(|refused| refused);
+    let kind = answer.headers().get(REFUSED_HEADER).cloned();
+    let (Some(kind), Some(page)) = (kind, page) else {
+        tracing::debug!(target: "origin", status = answer.status().as_u16(), "origin: the lend's own answer to a page that reads it, its headers its own");
+        return answer;
+    };
+    tracing::debug!(target: "origin", ?page, ?kind, "origin: svrngs's own answer, readable by the page that reads the lend");
+    let headers = answer.headers_mut();
+    headers.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, page);
+    let exposed = HeaderValue::from_static(REFUSED_HEADER);
+    headers.insert(header::ACCESS_CONTROL_EXPOSE_HEADERS, exposed);
+    headers.append(header::VARY, HeaderValue::from_static("origin"));
+    answer
 }
 
 /// `req` carried to the lend `label`, as this computer's person, for the
 /// page of the lend `app`: by the `Host` at its origin on loopback, or by
 /// the port at the room door (u6-1), one body for both (DESIGN §3, "The
 /// room", call 3).
-pub(crate) async fn reach(at: &Asking, label: Label, app: Label, mut req: Request) -> Response {
+pub(crate) async fn reach(
+    at: &Asking,
+    label: Label,
+    app: Label,
+    mut req: Request,
+) -> Result<Response, Response> {
     let tail = req.uri().path_and_query().map_or("/", |p| p.as_str());
     let target = format!("{LEND_ROUTE}{label}{tail}");
     let lender = label.lender();
@@ -214,34 +253,35 @@ pub(crate) async fn reach(at: &Asking, label: Label, app: Label, mut req: Reques
     if lender == door.key {
         tracing::debug!(target: "origin", %label, "origin: this computer's own lend, through its door's rules");
         let (mut parts, body) = req.into_parts();
-        let Ok(uri) = target.parse::<Uri>() else {
-            return LendRefusal::Path.say(
-                StatusCode::BAD_REQUEST,
-                "this is not an address a lend can be asked",
-            );
-        };
-        parts.uri = uri;
+        parts.uri = uri_of(&target)?;
         return door::lend_for(door, Who::Own(app), None, Request::from_parts(parts, body)).await;
     }
-    let base = match dialled(at, &label).await {
-        Ok(base) => base,
-        Err(refused) => return refused,
-    };
+    let base = dialled(at, &label).await?;
     let Some(bridge) = base
         .strip_prefix("http://")
         .and_then(|a| a.parse::<std::net::SocketAddr>().ok())
     else {
-        return away();
+        return Err(away());
     };
     let Some(pass) = own_pass(at, &app, &label) else {
-        return LendRefusal::Fault.say(
+        return Err(LendRefusal::Fault.say(
             StatusCode::INTERNAL_SERVER_ERROR,
             "this computer could not say which app asks",
-        );
+        ));
     };
     req.headers_mut().insert(PASS_HEADER, pass);
     tracing::debug!(target: "origin", %label, %app, lender = hex::encode(lender), %bridge, "origin: another computer's lend, through the dial to its door, the app in this computer's own pass");
     carried(req, bridge, &target, label.as_str()).await
+}
+
+/// `target` as the address a lend is asked at, or refused as no path.
+fn uri_of(target: &str) -> Result<Uri, Response> {
+    target.parse().map_err(|_| {
+        LendRefusal::Path.say(
+            StatusCode::BAD_REQUEST,
+            "this is not an address a lend can be asked",
+        )
+    })
 }
 
 /// The bridge to the door of the computer lending `label`, dialled as this
@@ -282,7 +322,7 @@ async fn carried(
     bridge: std::net::SocketAddr,
     target: &str,
     label: &str,
-) -> Response {
+) -> Result<Response, Response> {
     let upgrade = door::upgrade_of(req.headers());
     let asker = upgrade.as_ref().map(|_| hyper::upgrade::on(&mut req));
     let (mut parts, body) = req.into_parts();
@@ -290,18 +330,12 @@ async fn carried(
     if let Some(protocol) = upgrade {
         door::keep_upgrade(&mut parts.headers, protocol);
     }
-    let Ok(uri) = target.parse::<Uri>() else {
-        return LendRefusal::Path.say(
-            StatusCode::BAD_REQUEST,
-            "this is not an address a lend can be asked",
-        );
-    };
     let mut request = axum::http::Request::new(body);
-    *request.uri_mut() = uri;
+    *request.uri_mut() = uri_of(target)?;
     *request.method_mut() = parts.method;
     *request.headers_mut() = parts.headers;
     let Some(mut answer) = door::send_to(bridge, request, label).await else {
-        return away();
+        return Err(away());
     };
     let switched = door::upgrade_of(answer.headers())
         .filter(|_| answer.status() == StatusCode::SWITCHING_PROTOCOLS);
@@ -315,5 +349,5 @@ async fn carried(
     let mut response = Response::new(Body::new(body));
     *response.status_mut() = parts.status;
     *response.headers_mut() = parts.headers;
-    response.into_response()
+    Ok(response.into_response())
 }

@@ -9,7 +9,7 @@
 //! of a hash, verified, from a holder the record names; bytes that do not match
 //! the hash never reach the store, and each holder asked is named with why
 //! it gave nothing. A group whose record cannot be read is said by name,
-//! never read as one placing nothing (#113, #117). The store keeps what a
+//! never read as one placing nothing (#115, #119). The store keeps what a
 //! layout places and a synced directory holds, and drops every other
 //! version once what it keeps changes (syp-4 b). Streaming a folder by range on loopback,
 //! and the one-way share it served, were dropped at syp-1 (operator,
@@ -227,7 +227,7 @@ impl Folders {
     /// them, read whole only when its digest moved since the last read: a
     /// whole read once a get was 6.5 ms at 1,000 files and 399.6 at 100,000
     /// (perf-1's README §9). A record that cannot be read is said by the
-    /// group's name, never read as one placing nothing (#113, #117).
+    /// group's name, never read as one placing nothing (#115, #119).
     fn layout(&self, group: &str) -> Result<Layout, FolderError> {
         let unread =
             |e: svrngs_runtime::RailError| FolderError::Unread(group.into(), e.to_string());

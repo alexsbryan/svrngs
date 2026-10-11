@@ -43,6 +43,7 @@
 use std::collections::HashMap;
 use std::net::{IpAddr, SocketAddr};
 
+use n0_future::task::AbortOnDropHandle;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -50,15 +51,10 @@ pub use crate::alpn::{Alpn, ALPN};
 // The guest dialer and the one HTTP bridge live in `crate::guest`, as they
 // lived in `mesh_reach::guest` upstream (pb-reach-guest, phase-b-35);
 // re-exported so callers spell them `svrngs_node::iroh::`.
-pub use crate::guest::{
-    build_relayed_endpoint, configured_proxy_redacted, ring_crypto_provider, HttpBridge,
-    RelayConfig,
-};
+pub use crate::guest::{build_relayed_endpoint, HttpBridge, RelayConfig};
 
 // Re-exported so callers build endpoints without declaring their own iroh
 // dependency — keeps the version pin in exactly one place.
-pub use iroh::endpoint::presets;
-pub use iroh::endpoint::Builder as EndpointBuilder;
 pub use iroh::{Endpoint, EndpointAddr, PublicKey, RelayUrl, SecretKey};
 // svrngs: iroh's address book in memory, so a test tells a joiner the
 // loopback addresses a link's bare key resolves to (u2-8).
@@ -396,13 +392,7 @@ pub fn actor_key(actor: &str) -> Option<PublicKey> {
 /// Server half: accept iroh connections, and serve each bi-stream of an
 /// admitted one with hyper's HTTP/1 server and the caller's router.
 pub struct IrohAcceptor {
-    task: tokio::task::JoinHandle<()>,
-}
-
-impl Drop for IrohAcceptor {
-    fn drop(&mut self) {
-        self.task.abort();
-    }
+    _task: AbortOnDropHandle<()>,
 }
 
 impl IrohAcceptor {
@@ -477,7 +467,9 @@ impl IrohAcceptor {
                 });
             }
         });
-        Self { task }
+        Self {
+            _task: AbortOnDropHandle::new(task),
+        }
     }
 }
 

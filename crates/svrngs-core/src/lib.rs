@@ -126,9 +126,7 @@ pub use sig::{
     act_id, actor_of, derive_id, field, redemption_message, ring_op_message, sign_act,
     sign_message, sign_ring_op, verify_hex,
 };
-pub use sync::{
-    digest, ops_missing_from, ops_missing_from_within, Compaction, DigestFold, Floors, NO_BUDGET,
-};
+pub use sync::{digest, ops_missing_from_within, Compaction, DigestFold, Floors, NO_BUDGET};
 pub use synced::{Change, Entry, NotASyncPath, Placed, SyncFolder, SyncPath};
 pub use view::{Digest, View, DIGEST_V};
 
@@ -140,16 +138,14 @@ pub use view::{Digest, View, DIGEST_V};
 pub use hash::ContentHash;
 pub use op::{Journaled, Op, OpId, SkippedLine};
 
-// A consumer cannot use this crate without both of these, and until 2026-09-04
-// neither was exported — so the only shipped `RingSigner` impl was for a type
-// the crate refused to hand you, and the only `Payload` constructor took a type
-// it never named. Both forced the caller to add the dependency themselves and
-// match our version by hand; a mismatch makes `impl RingSigner for SigningKey`
-// silently not apply to their key, which is a trait-resolution error a long way
-// from its cause. Found by physically lifting the package (cw-lift), not by a
-// gate — nothing in the repo can see an export that is missing.
-/// The JSON value [`Payload::new`] takes.
-pub use serde_json::Value;
+// Until 2026-09-04 neither `SigningKey` (above) nor serde_json's `Value` was
+// exported — so the only shipped `RingSigner` impl was for a type the crate
+// refused to hand you, and the only `Payload` constructor took a type it never
+// named. A mismatch makes `impl RingSigner for SigningKey` silently not apply to
+// their key, a trait-resolution error a long way from its cause. Found by
+// physically lifting the package (cw-lift). `Value`'s re-export went in lean-3:
+// svrngs's crates take serde_json from the workspace's one pin, and only a test
+// read it here.
 
 // ── Local-only namespaces ────────────────────────────────────
 
@@ -176,6 +172,27 @@ pub fn is_local_only(namespace: &str) -> bool {
 }
 
 // ── People ───────────────────────────────────────────────────
+
+/// A name kept as text, read as it: `as_str`, and `Display` writing those
+/// bytes — each name's own, where every one wrote the two alike. For a
+/// newtype whose field is `String` or another of these; never for a secret,
+/// which no `Display` may print.
+#[macro_export]
+macro_rules! text_newtype {
+    ($($name:ty),+) => {$(
+        impl $name {
+            pub fn as_str(&self) -> &str {
+                self.0.as_str()
+            }
+        }
+        impl core::fmt::Display for $name {
+            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                f.write_str(self.as_str())
+            }
+        }
+    )+};
+}
+crate::text_newtype!(Name, Person);
 
 /// A name a person reads: a group's, or a person's. Trimmed, 1..=64 bytes,
 /// no control characters: it is printed in a terminal, carried in a group's
@@ -227,16 +244,6 @@ impl Name {
         }
         Ok(name)
     }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-}
-
-impl core::fmt::Display for Name {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.0)
-    }
 }
 
 /// A member of the ring, by the name the house calls them.
@@ -257,10 +264,6 @@ impl Person {
     pub fn parse(raw: &str) -> Result<Self, NotAName> {
         Name::parse(raw).map(Self)
     }
-
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
 }
 
 impl From<Name> for Person {
@@ -279,12 +282,6 @@ impl<'de> Deserialize<'de> for Person {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         let raw = String::deserialize(d)?;
         Name::kept(raw).map(Self).map_err(serde::de::Error::custom)
-    }
-}
-
-impl core::fmt::Display for Person {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        self.0.fmt(f)
     }
 }
 
@@ -314,19 +311,6 @@ pub struct Roster {
 impl Roster {
     pub fn new(members: BTreeMap<Person, Vec<String>>) -> Self {
         Self { members }
-    }
-
-    /// Who signed with this key, if anyone in the ring did.
-    pub fn person_for(&self, actor: &str) -> Option<&Person> {
-        self.members
-            .iter()
-            .find(|(_, keys)| keys.iter().any(|k| k == actor))
-            .map(|(p, _)| p)
-    }
-
-    /// Whether this name is one the ring knows.
-    pub fn knows(&self, person: &Person) -> bool {
-        self.members.contains_key(person)
     }
 }
 

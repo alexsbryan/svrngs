@@ -29,7 +29,11 @@ fn lines(node: &Node, group: &str) -> Vec<svrngs_node::Op<svrngs_node::SignedOp>
 }
 
 fn no_relay() -> RelayConfig {
-    RelayConfig::from_parts(Vec::new(), Some("none")).unwrap()
+    RelayConfig {
+        relay_urls: Vec::new(),
+        n0_services: false,
+        loopback_only: false,
+    }
 }
 
 async fn start(dir: &tempfile::TempDir) -> Node {
@@ -233,10 +237,18 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
 fn a_link_carries_the_relay_only_without_lookup() {
     let ours: RelayUrl = "https://relay.example./".parse().unwrap();
     let home: RelayUrl = "https://home.example./".parse().unwrap();
-    let lookup = RelayConfig::from_parts(vec![ours.to_string()], None).unwrap();
+    let lookup = RelayConfig {
+        relay_urls: vec![ours.to_string()],
+        n0_services: true,
+        loopback_only: false,
+    };
     assert_eq!(cli::link_relay(&lookup, Some(home.clone())), None);
     assert_eq!(cli::link_relay(&RelayConfig::default(), None), None);
-    let without = RelayConfig::from_parts(vec![ours.to_string()], Some("none")).unwrap();
+    let without = RelayConfig {
+        relay_urls: vec![ours.to_string()],
+        n0_services: false,
+        loopback_only: false,
+    };
     assert_eq!(cli::link_relay(&without, Some(home.clone())), Some(home));
     let dotless: RelayUrl = "https://relay.example/".parse().unwrap();
     assert_ne!(ours, dotless, "control: the operator wrote the dot");

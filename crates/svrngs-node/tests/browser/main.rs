@@ -70,9 +70,12 @@ async fn computer(
     let node = Node::start(
         dir.to_path_buf(),
         signing(me),
-        &RelayConfig::from_parts(vec![relay_url(relay)], Some("none"))
-            .unwrap()
-            .on_loopback_only(),
+        &RelayConfig {
+            relay_urls: vec![relay_url(relay)],
+            n0_services: false,
+            loopback_only: false,
+        }
+        .on_loopback_only(),
         no_seed,
         "127.0.0.1:0".parse().unwrap(),
     )
@@ -119,9 +122,12 @@ async fn joined(dir: &Path, relay: &Server, ada: &Node, me: u8, person: &str) ->
     let node = Node::start(
         dir.to_path_buf(),
         signing(me),
-        &RelayConfig::from_parts(vec![relay_url(relay)], Some("none"))
-            .unwrap()
-            .on_loopback_only(),
+        &RelayConfig {
+            relay_urls: vec![relay_url(relay)],
+            n0_services: false,
+            loopback_only: false,
+        }
+        .on_loopback_only(),
         no_seed,
         "127.0.0.1:0".parse().unwrap(),
     )
@@ -290,6 +296,31 @@ fn lend_reading(dir: &Path, name: &str, port: u16, reads: &[&str]) {
     std::fs::create_dir_all(&lends).unwrap();
     let body = json!({ "port": port, "kind": "k", "limit": 3, "refused": [], "reads": reads });
     std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
+}
+
+/// svrngs's question for the app lent as `app` and the lend `lend`, each
+/// `[person, name, kind]`, as its one source words it
+/// (`crates/svrngs-node/src/home/question.js`, which the home page and
+/// the group's page both load), asked of node (lean-4 (c)).
+fn question(app: [&str; 3], lend: [&str; 3]) -> String {
+    let source = repo().join("crates/svrngs-node/src/home/question.js");
+    let script = format!(
+        "const q = await import({:?}); const [a, l] = JSON.parse(process.argv[1]); console.log(q.question(a, l));",
+        format!("file://{}", source.display())
+    );
+    let as_lend =
+        |[person, name, kind]: [&str; 3]| json!({ "person": person, "name": name, "kind": kind });
+    let out = std::process::Command::new("node")
+        .args(["--input-type=module", "-e", &script])
+        .arg(json!([as_lend(app), as_lend(lend)]).to_string())
+        .output()
+        .expect("node runs");
+    assert!(
+        out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    String::from_utf8_lossy(&out.stdout).trim().to_string()
 }
 
 /// Where the phone opens `name`, lent by the computer whose key is `seed`'s:
@@ -1060,6 +1091,12 @@ async fn a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped(eng
             && ask.ends_with(&format!("/svrngs-ask?lend={shelf_label}&app={page_label}")),
         "the ask address, at the page's own origin: {ask}"
     );
+    let stop = told["stop"].as_str().unwrap_or_default();
+    assert!(
+        at_origin(&json!(stop), &page_label)
+            && stop.ends_with(&format!("/svrngs-reads/{shelf_label}/svrngs-stop")),
+        "the stop address, beside ask, at the page's own origin: {stop}"
+    );
     assert_eq!(
         refused("before"),
         (json!(403), json!("unasked")),
@@ -1068,7 +1105,8 @@ async fn a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped(eng
     for asked in ["asked", "again"] {
         let asked = &seen[asked];
         assert_eq!(
-            asked["heading"], "Let ada’s page (k) use cy’s shelf (k)?",
+            asked["heading"],
+            question(["ada", "page", "k"], ["cy", "shelf", "k"]),
             "{seen:#}"
         );
         assert_eq!(asked["words"], WORDS, "{seen:#}");
@@ -1152,4 +1190,44 @@ async fn a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped(eng
         "nothing kept of a pass's yes: {after}"
     );
     drop((ada, cy, door));
+}
+
+in_both_engines!(
+    /// The home page on a computer asks svrngs's question in the one
+    /// wording the group's page asks it (lean-4 (c); sup-4's follow-up 2,
+    /// `demo/runs/sup/2026-10-10/README.md`). Ada lends a page reading
+    /// kind `k` and a shelf, `shelf` of kind `books`, that asks; her home
+    /// page's `/ask?lend=<shelf>&app=<page>` heads its question as
+    /// `question.js` words it: the shelf named with its kind, as the bare
+    /// command names a lend. Planted, watched failing: the home page with
+    /// words of its own (the kind dropped, as before).
+    the_home_page_asks_in_the_one_wording
+);
+async fn the_home_page_asks_in_the_one_wording(engine: Engine) {
+    let relay = relay().await;
+    let ada_dir = tempfile::tempdir().unwrap();
+    let ada = node(ada_dir.path(), &relay, &signing(7)).await;
+    let page = page_origin("<!doctype html><title>ada's page</title>").await;
+    lend_reading(ada_dir.path(), "page", page.port(), &["books"]);
+    let (shelf, _) = kept_page("<!doctype html><title>ada's shelf</title>").await;
+    let body = json!({ "port": shelf.port(), "kind": "books", "limit": 3, "asks": "the page reads the shelf" });
+    std::fs::write(
+        svrngs_node::lend::lends_dir(ada_dir.path()).join("shelf.json"),
+        body.to_string(),
+    )
+    .unwrap();
+    let ask = format!(
+        "http://svrngs.localhost:{}/ask?lend={}&app={}",
+        ada.api_addr().port(),
+        label(1, "shelf"),
+        label(1, "page")
+    );
+    let seen = drive(engine, "home.mjs", json!({ "ask": ask }), None).await;
+    eprintln!("the home page's run: {seen:#}");
+    assert_eq!(
+        seen["heading"],
+        question(["ada", "page", "k"], ["ada", "shelf", "books"]),
+        "{seen:#}"
+    );
+    drop(ada);
 }

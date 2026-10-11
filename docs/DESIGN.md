@@ -129,9 +129,12 @@ paths it refuses, how many people may use it at once.
   computer's — carries `x-svrngs-refused`, naming which (`away`, `pass`,
   `closed`, `unlent`, `path`, `full`, `sign-in`, `fault`, `unasked`,
   `stopped`), and a lend's own answer never does (mnp-1, `door::LendRefusal`);
-  on a computer a page asking another lend's origin reads it only if
-  that answer lets its origin, and svrngs's own do not yet (sup-4,
-  `demo/runs/sup/2026-10-10/`, follow-up 1);
+  on a computer a page asking another lend's origin by `fetch` reads
+  svrngs's own answers there when it reads that lend — they allow its
+  origin alone, never `*`, and expose `x-svrngs-refused` (lean-4 (b),
+  `origin.rs` `readable`; sup-4's follow-up 1) — and a lend's own answer
+  only as far as that answer lets its origin; a page that does not read
+  the lend, and the home page, are allowed nothing;
 - for a lend that asks (`svrngs share --ask "<what an app receives>"`, the
   lender's words, carried in `asks` on every list and never read by
   svrngs), only the app its person said yes to: the lend's door keeps each
@@ -155,17 +158,21 @@ paths it refuses, how many people may use it at once.
   (`/v1/groups`, `/v1/lends`, `/v1/rail/people`), groups that cannot be
   read said so (sup-2, `crates/svrngs-node/src/home.rs`). An app sends its
   person there: `/svrngs-reads` gives each lend that asks its words,
-  `asks`, and `ask`, to which it adds `&back=<its path>` — on a computer
+  `asks`, `ask`, to which it adds `&back=<its path>`, and `stop`, the
+  address at its own origin it posts its own stop to (lean-4 (d)) — on a computer
   `…svrngs.localhost:<port>/ask?lend=<label>&app=<label>`, on a phone
   `<its origin>/svrngs-ask?lend=<label>&app=<label>`, which the lend's
   worker sends to the group's page at `#ask=<lend>&app=<label>&at=<path>`
-  (sup-3, `web/lend.js` `asking`). Either page asks "Let Sam's night use
-  Ana's taste?" around the lender's words. On a computer a yes is kept by
+  (sup-3, `web/lend.js` `asking`). Either page asks "Let Sam’s night use
+  Ana’s taste?" around the lender's words, and lists what apps use, in
+  one wording both load, a lend named as the bare command names it, with
+  its kind when that differs from its name (lean-4 (c),
+  `crates/svrngs-node/src/home/question.js`). On a computer a yes is kept by
   this computer's door for its own lend, else posted to the lender's door
   as this computer's key; on a phone the group's page posts it to the
   lender's door, dialled as the person; then the person goes back to the
-  app at its path. An app stops itself, `POST
-  /svrngs-reads/<label>/svrngs-stop` at its own origin; on a phone its
+  app at its path. An app stops itself, `POST` at `stop`,
+  `/svrngs-reads/<label>/svrngs-stop` at its own origin; on a phone its
   worker sends that to the lend's door with the pass. The group's page
   lists what apps use too, asked of each lender when the person opens it,
   each yes with Stop. Neither page is ever framed, and neither runs an
@@ -222,10 +229,13 @@ u5-0):
   WebSocket at all, so on a phone a shim in the lend's pages carries it to
   the lend's worker, which speaks its frames over a stream the door
   switches (`web/shim.js`, `web/lend.js`).
-- *A read from another origin* (none: u5-2 makes it unneeded). The door
-  sets no `access-control-*` header (`door.rs` has none), so a page on
-  another origin can read neither a lend's JSON nor its share header; with
-  each lend at an origin of its own, a lent page reads both from its own.
+- *A read from another origin* (none but svrngs's own refusals: u5-2
+  makes the rest unneeded). The door sets no `access-control-*` header
+  (`door.rs` has none), so a page on another origin can read neither a
+  lend's JSON nor its share header; with each lend at an origin of its
+  own, a lent page reads both from its own. A computer's origin allows
+  the page of a lend that reads it to read svrngs's own refusals there,
+  and nothing else (lean-4 (b), `origin.rs` `readable`).
   A page composing other lends ("Lent apps", call 6) reads them on a
   phone through its own worker, at addresses under its own origin
   (mnp-2), and on a computer, at each lend's own origin, by `fetch`, which
@@ -428,7 +438,9 @@ is U5's inventory (§8).
    a page asking another lend's origin by `fetch` reads none of svrngs's
    own answers there, which carry no access-control header, so Tonight's
    Picks could read neither `unasked` nor `stopped` and said it could not
-   read whether the taste lets it rank (that run's first follow-up). What
+   read whether the taste lets it rank (that run's first follow-up,
+   landed in lean-4 (b): svrngs's own answers there now allow a page that
+   reads the lend). What
    `reads` did not give, Movie Night found: which
    lends those are, but in svrngs's own store, which the page read whole
    with the pass in it (28 lines; the handoff named no lender and kept
@@ -954,9 +966,9 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,000 lines of code and the
-repository under 15,750 on the branch `folders`, main's 15,350
-(`scripts/lean_check.py`); a raise is the operator's, with the reason in
-the commit. The budget counts the product:
+repository under 15,350 (`scripts/lean_check.py`), the branch `folders`
+too since main merged into it at syp-5, counting 13,778 and `svrngs-core`
+2,719 there; a raise is the operator's, with the reason in the commit. The budget counts the product:
 tests, `apps/` and `demo/runs/` apart. A recorded run's driver is what ran,
 kept byte for byte so its data reads against it (`ralph/REVIEW_FINDINGS.md`
 #61), and no check runs one; a helper a check runs lives outside it
@@ -1677,10 +1689,13 @@ on a computer first (landed, sup-4: the taste's enforcing 46 lines to 11,
 Tonight's Picks' plumbing 39 to 16, every bar passed in its spirit on a
 computer from its home page in Chromium and WebKit and on the phones, the
 unasked yes refused by svrngs on a computer, `demo/runs/sup/2026-10-10/`;
-its three follow-ups there, queued after the lean rows below (operator,
+its three follow-ups there landed in lean-4 (b) to (d) (operator,
 2026-10-10; `ralph/next/lean/`): svrngs's answers at
 a lend's origin readable by the page that reads it, one wording of
-svrngs's question, a stop address beside `ask`); after a row that keeps an
+svrngs's question, a stop address beside `ask` — and its computer
+journeys run again on them, Tonight's Picks saying `refused-unasked`
+before the yes and `refused-stopped` after a stop in Chromium and WebKit,
+`demo/runs/supf/2026-10-10/`); after a row that keeps an
 asleep computer from holding anyone's answer
 (`demo/runs/mnp/2026-10-09/README.md`, "What no prediction named" 1 and
 2). The fourth, a lend its lender's person

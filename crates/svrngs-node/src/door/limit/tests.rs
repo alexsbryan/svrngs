@@ -5,11 +5,11 @@
 #![allow(clippy::disallowed_methods)]
 
 use std::net::IpAddr;
-use std::num::{NonZeroU16, NonZeroU32, NonZeroU64};
+use std::num::{NonZeroU16, NonZeroU32};
 use std::time::{Duration, Instant};
 
 use super::*;
-use crate::lend::{Kind, Lend, LendName, Upload};
+use crate::lend::{Kind, Lend, LendName};
 
 const AWAY: Whereabouts = Whereabouts::Away;
 
@@ -21,7 +21,8 @@ fn shelf(upload: Option<u64>) -> Lend {
         kind: Kind::parse("k").unwrap(),
         limit: NonZeroU16::new(3).unwrap(),
         refused: Vec::new(),
-        upload: upload.map(|b| Upload::new(NonZeroU64::new(b).unwrap())),
+        // Read as a declaration's `upload_bps` is.
+        upload: upload.map(|b| serde_json::from_value(serde_json::json!(b)).unwrap()),
         reads: Vec::new(),
         sign_in: None,
         asks: None,

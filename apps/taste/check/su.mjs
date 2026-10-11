@@ -110,7 +110,7 @@ async function list(person) {
 async function openFrom(person, what, ready) {
   return timed(person, `${what} from the list`, async () => {
     const link = person.home
-      ? person.page.locator('#home a', { hasText: `'s ${what}` })
+      ? person.page.locator('#home a', { hasText: `’s ${what}` })
       : person.page.locator('#lent button', { hasText: what });
     await link.first().click();
     await person.page.waitForURL((u) => !/^svrngs\./.test(u.hostname) && !u.href.startsWith(args.link.split('#')[0]), { timeout: 90_000 });
@@ -279,7 +279,7 @@ async function homeStop(ana) {
   const opened = await openPicks(ana, 'to say yes again');
   ana.home_stop = { opened, yes: await sayYes(ana) };
   ana.home_stop.uses_before = await uses(ana);
-  const button = ana.page.locator('#home section p', { hasText: 'tonights-picks uses' }).getByRole('button', { name: 'Stop' });
+  const button = ana.page.locator('#home section p', { hasText: /tonights-picks( \(movie-night\))? uses/ }).getByRole('button', { name: 'Stop' });
   if (!(await button.count())) return (ana.home_stop.pressed = false);
   const t0 = Date.now();
   ana.home_stop.at = new Date(t0).toISOString();

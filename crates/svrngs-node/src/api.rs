@@ -21,6 +21,7 @@ use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
+use n0_future::task::AbortOnDropHandle;
 
 use crate::rail::RailApi;
 
@@ -48,10 +49,8 @@ pub const API_FILE: &str = "api";
 /// place, so an app never reads half an address.
 pub fn write_address(data_dir: &std::path::Path, addr: SocketAddr) -> Result<(), ApiError> {
     let path = data_dir.join(API_FILE);
-    let partial = data_dir.join(format!(".{API_FILE}.partial"));
-    std::fs::write(&partial, format!("http://{addr}\n"))
-        .and_then(|()| std::fs::rename(&partial, &path))
-        .map_err(|e| ApiError::AddressFile(path.clone(), e))?;
+    crate::declared::write_whole(&path, &format!("http://{addr}\n"))
+        .map_err(|(_, e)| ApiError::AddressFile(path.clone(), e))?;
     tracing::debug!(target: "rails", path = %path.display(), %addr, "api: wrote where it listens, for apps it did not start");
     Ok(())
 }
@@ -181,19 +180,13 @@ pub fn check_loopback(listen: SocketAddr) -> Result<(), ApiError> {
 /// `0` among them, so the address bound is answered too.)
 pub struct Serving {
     addr: SocketAddr,
-    task: tokio::task::JoinHandle<()>,
+    _task: AbortOnDropHandle<()>,
 }
 
 impl Serving {
     /// Where an app on this computer reaches the API.
     pub fn addr(&self) -> SocketAddr {
         self.addr
-    }
-}
-
-impl Drop for Serving {
-    fn drop(&mut self) {
-        self.task.abort();
     }
 }
 
@@ -235,5 +228,8 @@ pub fn serve(router: Router, bound: Bound) -> Serving {
             tracing::error!(target: "rails", error = %e, "api: listener stopped");
         }
     });
-    Serving { addr, task }
+    Serving {
+        addr,
+        _task: AbortOnDropHandle::new(task),
+    }
 }

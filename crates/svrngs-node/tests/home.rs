@@ -36,9 +36,12 @@ fn no_seed(_: &std::path::Path) -> Result<Option<String>, String> {
 }
 
 async fn start(seed: u8, dir: &std::path::Path) -> Node {
-    let relay = RelayConfig::from_parts(Vec::new(), Some("none"))
-        .unwrap()
-        .on_loopback_only();
+    let relay = RelayConfig {
+        relay_urls: Vec::new(),
+        n0_services: false,
+        loopback_only: false,
+    }
+    .on_loopback_only();
     Node::start(
         dir.to_path_buf(),
         signing(seed),
@@ -363,6 +366,11 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
             one["ask"],
             format!("http://{home}/ask?lend={l}&app={night}")
         );
+        assert_eq!(
+            one["stop"],
+            format!("http://{}/svrngs-reads/{l}/svrngs-stop", at(&night)),
+            "the stop address, beside ask, at night's own origin"
+        );
     }
 
     let same = "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n";
@@ -430,5 +438,189 @@ async fn groups_that_cannot_be_read_are_said_so() {
         "{}",
         got.body
     );
+    alex.endpoint().close().await;
+}
+
+/// **svrngs's own answers at a lend's origin are readable by a page that
+/// reads the lend, and by no other** (lean-4 (b); sup-4's follow-up 1,
+/// `demo/runs/sup/2026-10-10/README.md`). Alex lends `night`, reading
+/// `media`, and `telly` (asking), `shows` (refusing `/x`) and a `diary`
+/// (`notes`); Sam lends `films` (refusing `/x`) and `reels`, its service
+/// not listening. `night`'s page, by `fetch`, reads each refusal's kind —
+/// its origin alone allowed, `x-svrngs-refused` exposed: `unasked` at
+/// `telly`, `stopped` there once it stops itself, `path` at `shows` and at
+/// Sam's `films`, `away` at Sam's `reels`. A service's own answer carries
+/// what the service sent. The `diary`, which it does not read, is
+/// `closed` and allows nobody; so is a fetch from the home page's origin,
+/// and the home page allows `night` nothing. Planted, watched failing: the
+/// allowance given to any origin, `*`.
+#[tokio::test]
+async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_other() {
+    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let alex = start(1, alex_dir.path()).await;
+    let sam = start(2, sam_dir.path()).await;
+    let seed = Roster::new(
+        [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
+            .into_iter()
+            .collect(),
+    );
+    for node in [&alex, &sam] {
+        node.rail().set_seed(NS, &seed).unwrap();
+    }
+    let admit = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse("sam").unwrap(),
+            key: actor_of(&signing(2)),
+            invite: None,
+        },
+        on_behalf_of: None,
+    };
+    alex.rail().commit(NS, &admit).unwrap().unwrap();
+    alex.transport()
+        .add_known_peer(sam.endpoint().id(), loopback_sockets(sam.endpoint()));
+    // A port nothing listens on: bound, read and let go.
+    let silent = std::net::TcpListener::bind("127.0.0.1:0")
+        .unwrap()
+        .local_addr()
+        .unwrap()
+        .port();
+    for (dir, name, kind, reads, asks) in [
+        (alex_dir.path(), "night", "night", &["media"][..], None),
+        (alex_dir.path(), "telly", "media", &[], Some(WORDS)),
+        (alex_dir.path(), "diary", "notes", &[], None),
+    ] {
+        let (at, _) = origins::head_origin().await;
+        declare(dir, name, at.port(), kind, reads, asks);
+    }
+    for (dir, name, port, refused) in [
+        (alex_dir.path(), "shows", None, &["/x"][..]),
+        (sam_dir.path(), "films", None, &["/x"]),
+        (sam_dir.path(), "reels", Some(silent), &[]),
+    ] {
+        let port = match port {
+            Some(p) => p,
+            None => origins::head_origin().await.0.port(),
+        };
+        let body =
+            serde_json::json!({ "port": port, "kind": "media", "limit": 3, "refused": refused });
+        std::fs::create_dir_all(lend::lends_dir(dir)).unwrap();
+        std::fs::write(
+            lend::lends_dir(dir).join(format!("{name}.json")),
+            body.to_string(),
+        )
+        .unwrap();
+    }
+    let api = alex.api_addr();
+    let port = api.port();
+    let label = |seed: u8, name: &str| Label::of(&signing(seed).verifying_key().to_bytes(), name);
+    let night = label(1, "night");
+    let at = |l: &Label| format!("{l}.localhost:{port}");
+    let page = format!("http://{}", at(&night));
+    let home = format!("svrngs.localhost:{port}");
+    let from = |origin: &str| {
+        format!("Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: cors\r\nOrigin: {origin}\r\n")
+    };
+    let read = |got: &Got| {
+        (
+            got.status,
+            got.header("x-svrngs-refused").map(str::to_string),
+            got.header("access-control-allow-origin")
+                .map(str::to_string),
+            got.header("access-control-expose-headers")
+                .map(str::to_string),
+        )
+    };
+    let readable = |status: u16, kind: &str| {
+        (
+            status,
+            Some(kind.to_string()),
+            Some(page.clone()),
+            Some("x-svrngs-refused".to_string()),
+        )
+    };
+    let unread = |status: u16, kind: Option<&str>| (status, kind.map(str::to_string), None, None);
+    let night_at = |l: Label, path: &'static str| {
+        let (host, extra) = (at(&l), from(&page));
+        async move { ask(api, "GET", &host, path, &extra, "").await }
+    };
+    let rows = [
+        (
+            "telly, unasked",
+            label(1, "telly"),
+            "/x",
+            readable(403, "unasked"),
+        ),
+        (
+            "shows, a refused path",
+            label(1, "shows"),
+            "/x",
+            readable(403, "path"),
+        ),
+        (
+            "Sam's films, a refused path",
+            label(2, "films"),
+            "/x",
+            readable(403, "path"),
+        ),
+        (
+            "Sam's reels, not listening",
+            label(2, "reels"),
+            "/x",
+            readable(502, "away"),
+        ),
+        (
+            "Sam's films, its own answer",
+            label(2, "films"),
+            "/",
+            unread(200, None),
+        ),
+        (
+            "the diary, not read",
+            label(1, "diary"),
+            "/x",
+            unread(403, Some("closed")),
+        ),
+    ];
+    for (row, l, path, want) in rows {
+        let got = night_at(l, path).await;
+        eprintln!("{row}: {:?}", read(&got));
+        assert_eq!(read(&got), want, "{row}: {}", got.body);
+        if want.2.is_some() {
+            assert!(
+                got.head.to_ascii_lowercase().contains("vary: origin"),
+                "{row}: {}",
+                got.head
+            );
+        }
+    }
+    let same = "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n";
+    let telly = label(1, "telly");
+    let stop = format!("/svrngs-reads/{telly}/svrngs-stop");
+    let stopped = ask(api, "POST", &at(&night), &stop, same, "").await;
+    assert_eq!(stopped.status, 200, "night stops itself: {}", stopped.body);
+    let got = night_at(telly.clone(), "/x").await;
+    assert_eq!(read(&got), readable(403, "stopped"), "{}", got.body);
+
+    let from_home = ask(
+        api,
+        "GET",
+        &at(&telly),
+        "/x",
+        &from(&format!("http://{home}")),
+        "",
+    )
+    .await;
+    assert_eq!(
+        read(&from_home),
+        unread(403, Some("closed")),
+        "the home page's fetch"
+    );
+    let at_home = ask(api, "GET", &home, "/v1/lends", &from(&page), "").await;
+    assert_eq!(
+        read(&at_home),
+        unread(403, Some("closed")),
+        "night's fetch at the home page"
+    );
+    sam.endpoint().close().await;
     alex.endpoint().close().await;
 }

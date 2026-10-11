@@ -81,7 +81,7 @@ fn under(rel: &SyncPath, scope: &str) -> bool {
 }
 
 /// The directories this computer syncs, each by its group and folder, one
-/// directory each, so one loop owns a directory and its kept state (#119);
+/// directory each, so one loop owns a directory and its kept state (#121);
 /// or why the list kept cannot be read, so no ask writes over it.
 pub(super) type Syncing = Result<BTreeMap<(String, String), PathBuf>, (PathBuf, String)>;
 

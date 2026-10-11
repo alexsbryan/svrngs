@@ -71,8 +71,8 @@ use crate::redeem::SeedText;
 use crate::register::{Member, Standing};
 use crate::ring_routes::{self, err, RingInbound};
 use crate::ring_sync::{
-    exchange, peer_client, run_one_round, spawn_ring_sync_loop, AskRound, ExchangeOutcome,
-    ExchangeStop, RingSyncHandle, RoundMembers, RoundOutcome, Rounds, DEFAULT_RING_SYNC_INTERVAL,
+    exchange, peer_client, spawn_ring_sync_loop, AskRound, ExchangeOutcome, ExchangeStop,
+    RingSyncHandle, RoundMembers, Rounds, DEFAULT_RING_SYNC_INTERVAL,
 };
 use crate::{actor_of, Person, RingRail, SigningKey};
 
@@ -132,7 +132,8 @@ pub struct Node {
     pub(crate) asking: Asking,
     api: crate::api::Serving,
     /// What [`Self::api`] serves, kept so a test can ask it as a caller
-    /// no socket can be (one off this computer, [`Node::api_routes`]).
+    /// no socket can be (one off this computer, `Node::api_routes`).
+    #[cfg(any(test, feature = "test-support"))]
     routes: axum::Router,
     _acceptor: IrohAcceptor,
     _round: RingSyncHandle,
@@ -292,6 +293,7 @@ impl Node {
             host,
             asking: room,
             api,
+            #[cfg(any(test, feature = "test-support"))]
             routes,
             _acceptor: acceptor,
             _round: round,
@@ -309,21 +311,9 @@ impl Node {
         self.api.addr()
     }
 
-    /// The routes served at [`Node::api_addr`], behind their loopback
-    /// check: what a test hands a request whose caller it names.
-    pub fn api_routes(&self) -> axum::Router {
-        self.routes.clone()
-    }
-
     /// The endpoint this node dials and is dialled on.
     pub fn endpoint(&self) -> &Endpoint {
         &self.host.endpoint
-    }
-
-    /// The dial-by-key transport the round dials through; a caller seeds a
-    /// member's addresses here when no address lookup can find it.
-    pub fn transport(&self) -> &IrohTransport {
-        &self.host.transport
     }
 
     /// What every other computer's key standing in a group this node holds
@@ -332,11 +322,6 @@ impl Node {
     pub async fn lends(&self) -> Lends {
         let groups = self.host.standings().unwrap_or_default();
         self.host.lends_in(&groups, None).await
-    }
-
-    /// Run one round now, beside the interval's, and say what it moved.
-    pub async fn round(&self) -> RoundOutcome {
-        run_one_round(self.host.as_ref(), &|| {}).await
     }
 
     /// One exchange of `namespace` with the node at `peer`, whatever this
@@ -402,13 +387,14 @@ impl Host {
     /// whose key is `lender`, actor hex: the lend's origin, or `None` for a
     /// key that is not one.
     pub(crate) fn origin(&self, lender: &str, name: &str) -> Option<String> {
-        Some(crate::origin::origin(&label(lender, name)?, self.api_port))
+        let label = Label::of_hex(lender, name)?;
+        Some(crate::origin::origin(&label, self.api_port))
     }
 
     /// Where the room reaches the lend `name` of `lender`, while the room
     /// door serves it (u6-1).
     pub(crate) fn room_address(&self, lender: &str, name: &str) -> Option<String> {
-        let at = *self.room.borrow().get(&label(lender, name)?)?;
+        let at = *self.room.borrow().get(&Label::of_hex(lender, name)?)?;
         Some(format!("http://{at}/"))
     }
 
@@ -548,13 +534,6 @@ impl Host {
     }
 }
 
-/// The label of the lend `name` of the computer whose key is `lender`,
-/// actor hex, or `None` for a key that is not one.
-pub(crate) fn label(lender: &str, name: &str) -> Option<Label> {
-    let key: [u8; 32] = hex::decode(lender).ok()?.try_into().ok()?;
-    Some(Label::of(&key, name))
-}
-
 /// The keys standing in `namespace` that this node, `this`, dials: each a
 /// computer's ([`crate::Device::dialled`], u4-1) and an iroh key, with its
 /// person. The one decider the round, [`Node::lends`] and the live fan-out
@@ -681,30 +660,30 @@ fn people_router(asking: Asking) -> axum::Router {
 /// with its key — and whose computer did not answer. A browser asks it of the computer it
 /// dials, which answers what it can see and proxies no lend (DESIGN §3,
 /// call 4). A group the dialer does not stand in adds nothing.
-async fn people_lends(State(at): State<Asking>, dialer: Option<Extension<Dialer>>) -> Response {
+async fn people_lends(
+    State(at): State<Asking>,
+    dialer: Option<Extension<Dialer>>,
+) -> Result<Response, Response> {
     let Some(Extension(dialer)) = dialer else {
         tracing::warn!(target: "node", "node: people's lends refused — no verified dialer, so the request did not come on an iroh stream");
-        return err(
+        return Err(err(
             StatusCode::FORBIDDEN,
             "what a group's people lend is asked only from within it",
-        );
+        ));
     };
     let asker = dialer.actor();
-    let (groups, own) = match at.host.shared_with(&asker) {
-        Ok(shared) => shared,
-        Err(refused) => return refused,
-    };
+    let (groups, own) = at.host.shared_with(&asker)?;
     let Some(own) = own else {
         tracing::debug!(target: "node", asker, "node: people's lends refused — the dialer stands in no group this computer stands in");
-        return err(StatusCode::FORBIDDEN, "this computer lends nothing to you");
+        return Err(err(
+            StatusCode::FORBIDDEN,
+            "this computer lends nothing to you",
+        ));
     };
-    let (lent, unanswered) = match at.lent(&groups, &own, Some(&asker)).await {
-        Ok(answer) => answer,
-        Err(refused) => return refused,
-    };
+    let (lent, unanswered) = at.lent(&groups, &own, Some(&asker)).await?;
     tracing::debug!(target: "node", asker, groups = groups.len(), lent = lent.len(), unanswered = unanswered.len(),
         "node: people's lends — answered what the people of the asker's groups lend, each with its lender's key");
-    Json(serde_json::json!({ "lent": lent, "unanswered": unanswered })).into_response()
+    Ok(Json(serde_json::json!({ "lent": lent, "unanswered": unanswered })).into_response())
 }
 
 impl Asking {
@@ -772,3 +751,6 @@ fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn
     tracing::debug!(target: "node", actor, "node: refused — the dialer stands in no group held here");
     None
 }
+
+#[cfg(any(test, feature = "test-support"))]
+mod tests_support;

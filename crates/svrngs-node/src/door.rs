@@ -394,25 +394,28 @@ impl Drop for InFlight {
 /// it holds, read from the declarations now. A declaration that cannot be
 /// read is left out, named at warn; a lend whose count cannot be had is
 /// left out too, never answered as used by none.
-async fn lends(State(door): State<Door>, dialer: Option<Extension<Dialer>>) -> Response {
+async fn lends(
+    State(door): State<Door>,
+    dialer: Option<Extension<Dialer>>,
+) -> Result<Response, Response> {
     let Some(Extension(dialer)) = dialer else {
         tracing::warn!(target: "door", "door: lends refused — no verified dialer, so the request did not come on an iroh stream");
-        return err(
+        return Err(err(
             StatusCode::FORBIDDEN,
             "what a computer lends is asked only from another computer of its group",
-        );
+        ));
     };
     let actor = dialer.actor();
     if door.rail.standing_anywhere(&actor).is_none() {
         tracing::debug!(target: "door", actor, "door: lends refused — the dialer stands in no group held here");
-        return err(StatusCode::FORBIDDEN, "this computer lends nothing to you");
+        return Err(err(
+            StatusCode::FORBIDDEN,
+            "this computer lends nothing to you",
+        ));
     }
-    let offered = match offered(&door).await {
-        Ok(o) => o,
-        Err(refused) => return refused,
-    };
+    let offered = offered(&door).await?;
     tracing::debug!(target: "door", actor, lends = offered.len(), "door: lends — answered what this computer lends");
-    Json(serde_json::json!({ "lends": offered })).into_response()
+    Ok(Json(serde_json::json!({ "lends": offered })).into_response())
 }
 
 /// Every lend this computer declares now, each with how many people use
@@ -492,12 +495,17 @@ pub(crate) fn strip_hop_by_hop(headers: &mut HeaderMap) -> usize {
         .flat_map(|v| v.split(','))
         .map(compare_name)
         .collect();
+    remove_counted(headers, |name| {
+        HOP_BY_HOP.contains(&name) || named.iter().any(|n| n == name)
+    })
+}
+
+/// Remove every header whose name, as [`compare_name`] reads it, `goes`;
+/// answer how many values went.
+fn remove_counted(headers: &mut HeaderMap, goes: impl Fn(&str) -> bool) -> usize {
     let gone: Vec<HeaderName> = headers
         .keys()
-        .filter(|n| {
-            let name = compare_name(n.as_str());
-            HOP_BY_HOP.contains(&name.as_str()) || named.contains(&name)
-        })
+        .filter(|n| goes(&compare_name(n.as_str())))
         .cloned()
         .collect();
     let mut n = 0;
@@ -575,19 +583,9 @@ fn rewrite_headers(
         .iter()
         .map(|(n, _)| compare_name(n.as_str()))
         .collect();
-    let typed: Vec<HeaderName> = headers
-        .keys()
-        .filter(|n| {
-            let name = compare_name(n.as_str());
-            name.starts_with(IDENTITY_PREFIX) || declared.contains(&name)
-        })
-        .cloned()
-        .collect();
-    let mut displaced = 0;
-    for name in typed {
-        displaced += headers.get_all(&name).iter().count();
-        headers.remove(&name);
-    }
+    let displaced = remove_counted(headers, |name| {
+        name.starts_with(IDENTITY_PREFIX) || declared.iter().any(|d| d == name)
+    });
     for (name, value) in identity.into_iter().chain(secret.iter().cloned()) {
         headers.append(name, value);
     }
@@ -727,17 +725,8 @@ impl PersonKey {
     fn resolved(key: String) -> Self {
         Self(key)
     }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
 }
-
-impl std::fmt::Display for PersonKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0)
-    }
-}
+svrngs_core::text_newtype!(PersonKey);
 
 /// The person a request for a lend is carried as.
 struct Asker {
@@ -761,13 +750,13 @@ async fn through_pass(
     dialer: Option<Extension<Dialer>>,
     via: Option<Extension<Via>>,
     req: Request,
-) -> Response {
+) -> Result<Response, Response> {
     let Some(Extension(dialer)) = dialer else {
         tracing::warn!(target: "door", "door: refused — no verified dialer, so the request did not come on an iroh stream");
-        return LendRefusal::Closed.say(
+        return Err(LendRefusal::Closed.say(
             StatusCode::FORBIDDEN,
             "a lend is reached only through its group",
-        );
+        ));
     };
     lend_for(&door, Who::Holder(dialer), via.map(|Extension(v)| v), req).await
 }
@@ -904,20 +893,25 @@ async fn through(
     dialer: Option<Extension<Dialer>>,
     via: Option<Extension<Via>>,
     req: Request,
-) -> Response {
+) -> Result<Response, Response> {
     let Some(Extension(dialer)) = dialer else {
         tracing::warn!(target: "door", "door: refused — no verified dialer, so the request did not come on an iroh stream");
-        return LendRefusal::Closed.say(
+        return Err(LendRefusal::Closed.say(
             StatusCode::FORBIDDEN,
             "a lend is reached only from another computer of its group",
-        );
+        ));
     };
     lend_for(&door, Who::Member(dialer), via.map(|Extension(v)| v), req).await
 }
 
 /// One request for a lend, from `who`: refused by name, or carried to the
 /// lend's service and its answer streamed back.
-pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Request) -> Response {
+pub(crate) async fn lend_for(
+    door: &Door,
+    who: Who,
+    via: Option<Via>,
+    req: Request,
+) -> Result<Response, Response> {
     let actor = match &who {
         Who::Member(dialer) | Who::Holder(dialer) => dialer.actor(),
         Who::Own(_) => hex::encode(door.key),
@@ -925,21 +919,23 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
     let path = req.uri().path().to_string();
     if can_step_out(&path) {
         tracing::debug!(target: "door", actor, path, "door: refused — a path that can step out of its lend");
-        return LendRefusal::Path.say(
+        return Err(LendRefusal::Path.say(
             StatusCode::BAD_REQUEST,
             "a path that can step outside a lend is refused",
-        );
+        ));
     }
     let Some((raw_name, service_path)) = split_lend(&path) else {
         tracing::debug!(target: "door", actor, path, "door: refused — no lend named in the path");
-        return LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here by that name");
+        return Err(
+            LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here by that name")
+        );
     };
     let pending = match &who {
         Who::Member(_) | Who::Own(_) => {
             let Some((group, person)) = door.rail.standing_anywhere(&actor) else {
                 tracing::debug!(target: "door", actor, "door: refused — the dialer stands in no group held here");
-                return LendRefusal::Closed
-                    .say(StatusCode::FORBIDDEN, "this computer lends nothing to you");
+                return Err(LendRefusal::Closed
+                    .say(StatusCode::FORBIDDEN, "this computer lends nothing to you"));
             };
             Pending::Known(Asker {
                 actor: PersonKey::resolved(actor.clone()),
@@ -953,10 +949,7 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
         }
         Who::Holder(dialer) => Pending::Pass(*dialer),
     };
-    let lend = match choices::found(door, raw_name) {
-        Ok(lend) => lend,
-        Err(refused) => return refused,
-    };
+    let lend = choices::found(door, raw_name)?;
     let Asker {
         actor: whose,
         group,
@@ -964,28 +957,22 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
         mut app,
     } = match pending {
         Pending::Known(asker) => asker,
-        Pending::Pass(holder) => match holder_of(door, &holder, req.headers(), &lend).await {
-            Ok(asker) => asker,
-            Err(refused) => return refused,
-        },
+        Pending::Pass(holder) => holder_of(door, &holder, req.headers(), &lend).await?,
     };
     let actor = whose.as_str();
     if let Who::Member(dialer) = &who {
-        match own_app(door, dialer, req.headers(), &lend) {
-            Ok(own) => app = own,
-            Err(refused) => return refused,
-        }
+        app = own_app(door, dialer, req.headers(), &lend)?;
     }
     if let Some(refused) = choices::check(door, &lend, &whose, app.as_ref()) {
-        return refused;
+        return Err(refused);
     }
     if let Some(refused) = lend.refusing(&service_path) {
         tracing::debug!(target: "door", actor, lend = %lend.name, path = service_path, refused = refused.as_str(),
             "door: refused — the lend refuses this path");
-        return LendRefusal::Path.say(
+        return Err(LendRefusal::Path.say(
             StatusCode::FORBIDDEN,
             format!("{} is lent without {}", lend.name, refused.as_str()),
-        );
+        ));
     }
     let observed = via.and_then(|v| v.observe());
     if observed.is_none() {
@@ -994,10 +981,10 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
     let whereabouts = limit::guess(observed.and_then(|o| o.addr));
     let Some((verdict, held)) = door.using.ask(&lend, actor, whereabouts).await else {
         tracing::warn!(target: "door", lend = %lend.name, "door: refused — no count of who uses the lend, so none can be let in");
-        return LendRefusal::Fault.say(
+        return Err(LendRefusal::Fault.say(
             StatusCode::INTERNAL_SERVER_ERROR,
             "who is using this lend cannot be counted on the computer that lends it",
-        );
+        ));
     };
     let (relayed, rtt_ms, sent, received) = observed.map_or((None, None, None, None), |o| {
         (
@@ -1011,7 +998,7 @@ pub(crate) async fn lend_for(door: &Door, who: Who, via: Option<Via>, req: Reque
         Verdict::Full { using } => {
             tracing::info!(target: "door", person = person.as_str(), lend = %lend.name, using, limit = lend.limit,
                 "door: refused — as many people as the lend's limit are using it");
-            return busy(&lend, using);
+            return Err(busy(&lend, using));
         }
         Verdict::Home => {
             tracing::info!(target: "door", person = person.as_str(), lend = %lend.name, addr = ?observed.and_then(|o| o.addr),
@@ -1144,6 +1131,17 @@ impl Drop for Carriage {
     }
 }
 
+/// The share, when the door tells one, on the head of a request carried to
+/// the service and of its answer ([`SHARE_HEADER`]).
+fn tell_share(headers: &mut HeaderMap, share: Option<u64>) {
+    if let Some(share) = share {
+        headers.insert(
+            HeaderName::from_static(SHARE_HEADER),
+            HeaderValue::from(share),
+        );
+    }
+}
+
 /// Carry `req` to `lend`'s service as `path` (with its query), the head
 /// rewritten, and stream the answer back.
 async fn forward(
@@ -1153,7 +1151,7 @@ async fn forward(
     path: String,
     req: Request,
     Told { share, held }: Told,
-) -> Response {
+) -> Result<Response, Response> {
     let actor = whose.as_str();
     let mut req = req;
     let range = req.headers().get(header::RANGE);
@@ -1174,10 +1172,10 @@ async fn forward(
         HeaderValue::from_str(actor),
     ) else {
         tracing::warn!(target: "door", actor, "door: refused — the person's name cannot be a header");
-        return LendRefusal::Fault.say(
+        return Err(LendRefusal::Fault.say(
             StatusCode::INTERNAL_SERVER_ERROR,
             "who is asking cannot be told to this lend",
-        );
+        ));
     };
     let identity = [
         (HeaderName::from_static(PERSON_HEADER), person_value),
@@ -1194,10 +1192,10 @@ async fn forward(
             Err(why) => {
                 tracing::warn!(target: "door", actor, lend = %lend.name, %why,
                     "door: refused — the lend's sign-in did not sign the person in, so the request is not carried");
-                return LendRefusal::SignIn.say(
+                return Err(LendRefusal::SignIn.say(
                     StatusCode::BAD_GATEWAY,
                     format!("{} could not sign you in", lend.name),
-                );
+                ));
             }
         },
     };
@@ -1232,18 +1230,13 @@ async fn forward(
         Ok(r) => r,
         Err(e) => {
             tracing::debug!(target: "door", actor, error = %e, "door: refused — the request target is not a path");
-            return LendRefusal::Path.say(
+            return Err(LendRefusal::Path.say(
                 StatusCode::BAD_REQUEST,
                 "the request is not one a lend can be asked",
-            );
+            ));
         }
     };
-    if let Some(share) = share {
-        parts.headers.insert(
-            HeaderName::from_static(SHARE_HEADER),
-            HeaderValue::from(share),
-        );
-    }
+    tell_share(&mut parts.headers, share);
     *request.headers_mut() = parts.headers;
     // The use began when the person was let in, and lasts until the member
     // has the whole answer or leaves it: the answer's body holds it.
@@ -1261,7 +1254,7 @@ async fn forward(
     let Some(answer) = send_to(origin, request, lend.name.as_str()).await else {
         let unanswered = unanswered();
         carriage.answered = Some((unanswered.status().as_u16(), None));
-        return unanswered;
+        return Err(unanswered);
     };
     let mut answer = answer;
     let switched =
@@ -1291,22 +1284,14 @@ async fn forward(
     // service's own of either is displaced.
     parts.headers.remove(SHARE_HEADER);
     parts.headers.remove(REFUSED_HEADER);
-    if let Some(share) = share {
-        parts.headers.insert(
-            HeaderName::from_static(SHARE_HEADER),
-            HeaderValue::from(share),
-        );
-    }
+    tell_share(&mut parts.headers, share);
     tracing::debug!(target: "door", actor, lend = %lend.name, status = parts.status.as_u16(),
         "door: the lend's service answered; streaming it back");
     let length = parts
         .headers
         .get(header::CONTENT_LENGTH)
         .and_then(|l| l.to_str().ok()?.parse().ok());
-    let swapping = match signing.outward(&mut parts, get, &door.sign_ins, (&lend.name, whose)) {
-        Ok(swapping) => swapping,
-        Err(refused) => return refused,
-    };
+    let swapping = signing.outward(&mut parts, get, &door.sign_ins, (&lend.name, whose))?;
     carriage.answered = Some((parts.status.as_u16(), length));
     tracing::debug!(target: "carriage", lend = %lend.name, range = ?carriage.range, status = parts.status.as_u16(),
         content_range = ?parts.headers.get(header::CONTENT_RANGE), ms = carriage.began.elapsed().as_millis(), "door: answered");
@@ -1323,7 +1308,7 @@ async fn forward(
     let mut response = Response::new(body);
     *response.status_mut() = parts.status;
     *response.headers_mut() = parts.headers;
-    response.into_response()
+    Ok(response.into_response())
 }
 
 #[cfg(test)]

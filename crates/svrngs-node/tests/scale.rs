@@ -332,7 +332,7 @@ async fn converge(nodes: &[Node]) {
     for n in nodes {
         let (ops, more) = n
             .rail()
-            .ops_missing_from_within(GROUP, &Digest::new(), usize::MAX)
+            .ops_missing_from_within(GROUP, &Digest::default(), usize::MAX)
             .unwrap();
         assert!(!more, "an unbounded budget leaves nothing behind");
         all.extend(ops);
@@ -558,7 +558,11 @@ async fn timed_round(node: &Node) -> Cost {
 /// in equal shares, each node rounding once a day.
 async fn stand_up(members: usize, acts: usize) -> (Vec<tempfile::TempDir>, Vec<Node>) {
     let dirs: Vec<_> = (0..members).map(|_| tempfile::tempdir().unwrap()).collect();
-    let no_relay = RelayConfig::from_parts(Vec::new(), Some("none")).unwrap();
+    let no_relay = RelayConfig {
+        relay_urls: Vec::new(),
+        n0_services: false,
+        loopback_only: false,
+    };
     let mut nodes = Vec::new();
     for (i, d) in dirs.iter().enumerate() {
         nodes.push(
@@ -719,7 +723,7 @@ async fn scale() {
 
     let (held, _) = nodes[0]
         .rail()
-        .ops_missing_from_within(GROUP, &Digest::new(), usize::MAX)
+        .ops_missing_from_within(GROUP, &Digest::default(), usize::MAX)
         .unwrap();
     let journal_acts = held.len();
     let journal_bytes = dir_bytes(&nodes[0].rail().group_dir(GROUP).unwrap());

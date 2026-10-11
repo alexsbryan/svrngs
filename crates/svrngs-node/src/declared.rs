@@ -16,8 +16,11 @@
 //!
 //! For Jellyfin 12 the value is the whole credential the header carries,
 //! `MediaBrowser Token="<key>"`, not the bare key.
+//!
+//! (svrngs: and how this node writes any file it keeps whole,
+//! [`write_whole`].)
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// A header name the wire can carry and a path cannot escape: RFC 9110 token
 /// characters minus the ones no origin uses, lowercased.
@@ -105,49 +108,47 @@ pub fn write_declared_in(dir: &Path, name: &str, value: &str) -> std::io::Result
     // never in a wider file even for a moment; a file already there with
     // wider modes is narrowed after the write.
     std::fs::create_dir_all(dir)?;
-    harden_dir(dir)?;
+    harden(dir, 0o700)?;
     write_owner_only(&path, value.trim())?;
-    harden_file(&path)
+    harden(&path, 0o600)
 }
 
-#[cfg(unix)]
+/// `value` at `path`, the file created owner-only (0600) where the system
+/// has modes. (svrngs, lean-4: upstream wrote this, and each `harden`, once
+/// per `cfg`.)
 fn write_owner_only(path: &Path, value: &str) -> std::io::Result<()> {
     use std::io::Write;
-    use std::os::unix::fs::OpenOptionsExt;
-    std::fs::OpenOptions::new()
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .mode(0o600)
-        .open(path)?
-        .write_all(value.as_bytes())
+    let mut open = std::fs::OpenOptions::new();
+    open.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    std::os::unix::fs::OpenOptionsExt::mode(&mut open, 0o600);
+    open.open(path)?.write_all(value.as_bytes())
 }
 
-#[cfg(unix)]
-fn harden_file(path: &Path) -> std::io::Result<()> {
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600))
+/// `text` at `path`, whole: written to `.<its name>.partial` beside it and
+/// renamed into place, so no reader sees half of it — the one way this node
+/// writes a file whole (REVIEW_FINDINGS #107: the API's address, a lend's
+/// declaration, its choices). An error names the file that failed, the
+/// partial or `path`.
+pub(crate) fn write_whole(path: &Path, text: &str) -> Result<(), (PathBuf, std::io::Error)> {
+    let name = path.file_name().unwrap_or_default().to_string_lossy();
+    let partial = path.with_file_name(format!(".{name}.partial"));
+    std::fs::write(&partial, text).map_err(|e| (partial.clone(), e))?;
+    std::fs::rename(&partial, path).map_err(|e| (path.to_path_buf(), e))
 }
 
-#[cfg(unix)]
-fn harden_dir(path: &Path) -> std::io::Result<()> {
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o700))
-}
-
-#[cfg(not(unix))]
-fn write_owner_only(path: &Path, value: &str) -> std::io::Result<()> {
-    std::fs::write(path, value)
-}
-
-#[cfg(not(unix))]
-fn harden_file(_path: &Path) -> std::io::Result<()> {
-    Ok(())
-}
-
-#[cfg(not(unix))]
-fn harden_dir(_path: &Path) -> std::io::Result<()> {
-    Ok(())
+/// `path` narrowed to `mode` where the system has modes; elsewhere nothing.
+fn harden(path: &Path, mode: u32) -> std::io::Result<()> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(path, std::fs::Permissions::from_mode(mode))
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = (path, mode);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

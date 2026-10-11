@@ -31,7 +31,11 @@ use svrngs_node::SigningKey;
 const SECRET: &str = r#"MediaBrowser Token="sams-own-1234""#;
 
 fn no_relay() -> RelayConfig {
-    RelayConfig::from_parts(Vec::new(), Some("none")).unwrap()
+    RelayConfig {
+        relay_urls: Vec::new(),
+        n0_services: false,
+        loopback_only: false,
+    }
 }
 
 fn name(s: &str) -> Name {

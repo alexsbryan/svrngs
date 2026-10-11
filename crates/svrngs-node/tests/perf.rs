@@ -58,9 +58,11 @@ fn perf_blobs() {
     let ms = |t: Instant| t.elapsed().as_micros() as f64 / 1000.0;
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
-        let relay = svrngs_node::guest::RelayConfig::from_parts(Vec::new(), Some("none"))
-            .unwrap()
-            .on_loopback_only();
+        let relay = svrngs_node::guest::RelayConfig {
+            relay_urls: Vec::new(),
+            n0_services: false,
+            loopback_only: true,
+        };
         let alpn = vec![iroh_blobs::ALPN.to_vec()];
         let key = |b| svrngs_node::iroh::SecretKey::from_bytes(&[b; 32]);
         let bind = |b| svrngs_node::guest::build_relayed_endpoint(key(b), alpn.clone(), &relay);

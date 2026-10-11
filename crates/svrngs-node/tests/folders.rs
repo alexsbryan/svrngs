@@ -28,9 +28,11 @@ fn seed_file(dir: &Path) -> Result<Option<String>, String> {
 }
 
 async fn start(seed: u8, dir: &Path) -> Node {
-    let relay = RelayConfig::from_parts(Vec::new(), Some("none"))
-        .unwrap()
-        .on_loopback_only();
+    let relay = RelayConfig {
+        relay_urls: Vec::new(),
+        n0_services: false,
+        loopback_only: true,
+    };
     Node::start(
         dir.to_path_buf(),
         signing(seed),
@@ -775,7 +777,7 @@ async fn a_synced_folder_is_one_group_s() {
 /// none**: Ana's file reaches Ben's directory; then Ben's journal of the
 /// group cannot be read, and his steps stop by the group's name, the file
 /// left on his disk. Red with the record read as placing nothing when it
-/// cannot be read (`admission(ns).ok()`, #117): Ben's apply deletes it,
+/// cannot be read (`admission(ns).ok()`, #119): Ben's apply deletes it,
 /// "the record placing nothing there".
 #[tokio::test]
 async fn a_group_whose_record_cannot_be_read_is_said_so_never_read_as_none() {
@@ -1037,7 +1039,7 @@ async fn a_kept_state_that_cannot_be_read_is_refused_never_read_as_empty() {
 }
 
 /// **One directory keeps one group's folder, with one loop** (syp-4 e;
-/// #119): asked again for the directory it syncs, Ana's node answers as
+/// #121): asked again for the directory it syncs, Ana's node answers as
 /// before and starts nothing more; asked for a second directory named
 /// `Shared` in the same group, or for the same directory in another, it
 /// refuses by the directory's name. Red with every ask taken (sy-1: a loop
@@ -1130,9 +1132,11 @@ impl Asking {
             on_behalf_of: None,
         };
         ana.rail().commit(&ns, &admit).unwrap().unwrap();
-        let relay = RelayConfig::from_parts(Vec::new(), Some("none"))
-            .unwrap()
-            .on_loopback_only();
+        let relay = RelayConfig {
+            relay_urls: Vec::new(),
+            n0_services: false,
+            loopback_only: true,
+        };
         let ben = svrngs_node::guest::build_relayed_endpoint(
             svrngs_node::iroh::SecretKey::from_bytes(&[2; 32]),
             vec![b"/iroh-bytes/4".to_vec()],

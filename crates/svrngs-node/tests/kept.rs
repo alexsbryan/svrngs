@@ -215,9 +215,11 @@ async fn a_store_keeps_what_it_held_across_a_stop() {
     };
     let (ana_dir, ben_dir, cy_dir) = (dir("ana"), dir("ben"), dir("cy"));
     let (ana_disk, ben_disk) = (dir("disk/ana/Shared"), dir("disk/ben/Shared"));
-    let relay = RelayConfig::from_parts(Vec::new(), Some("none"))
-        .unwrap()
-        .on_loopback_only();
+    let relay = RelayConfig {
+        relay_urls: Vec::new(),
+        n0_services: false,
+        loopback_only: true,
+    };
     let cy = Node::start(
         cy_dir.clone(),
         signing(2),
@@ -325,9 +327,11 @@ async fn a_restart_resumes_a_synced_directory_unasked() {
     };
     let (ana_dir, ben_dir, cy_dir) = (dir("ana"), dir("ben"), dir("cy"));
     let (ana_disk, ben_disk) = (dir("disk/ana/Shared"), dir("disk/ben/Shared"));
-    let relay = RelayConfig::from_parts(Vec::new(), Some("none"))
-        .unwrap()
-        .on_loopback_only();
+    let relay = RelayConfig {
+        relay_urls: Vec::new(),
+        n0_services: false,
+        loopback_only: true,
+    };
     let cy = Node::start(
         cy_dir.clone(),
         signing(2),

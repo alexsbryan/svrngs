@@ -302,7 +302,12 @@ fn read_since_reads_the_tail_and_restarts_on_a_replace() {
     let tail = log.read_since(both.cursor).unwrap();
     assert_eq!(tail.ops, vec![c.clone()], "only the line after the cursor");
     assert!(!tail.restarted);
-    assert_eq!(tail.skipped, 0, "a half-written line is not judged yet");
+    let len = std::fs::metadata(log.path()).unwrap().len();
+    assert_eq!(
+        tail.cursor.end,
+        len - b"{\"id\":\"half".len() as u64,
+        "a half-written line is not judged yet: the cursor stops before it"
+    );
 
     log.replace_all(&[c.clone()]).unwrap();
     let again = log.read_since(tail.cursor).unwrap();
