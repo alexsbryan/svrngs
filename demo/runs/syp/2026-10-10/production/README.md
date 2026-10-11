@@ -67,7 +67,11 @@ said in its doc. Off this harness — a member's computer restarted, its
 peers dialling it by n0's lookup — it is unmeasured. For syp-5's rerun,
 whose S2 restarts a member.
 
-## M1, 8 files at once (syp-4 f)
+## M1, 8 files at once (syp-4 f, moved to perf-2 g)
+
+Fetching at once moved to perf-2-make-it-fast's part (g), after its (c)
+(operator, f9ea972); the code that ran here, 9600be0, was reverted at
+7a5dca4. The run stays, as (g)'s data before (c).
 
 `python3 run.py m1 --wait 60`, at `9600be0` (8 at once), load 7.99 at its
 start and 21.88 at its end, past 18 (1.5x 12 cores): **could-not-judge**
