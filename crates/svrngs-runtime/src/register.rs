@@ -14,10 +14,11 @@
 //! §6).
 
 use std::collections::BTreeMap;
+use std::sync::Arc;
 
 use crate::{
-    admit, is_local_only, ring_dir, valid_namespace, Device, Membership, Op, Person, RailError, RingRail, RingVerifier,
-    Roster, SignedOp,
+    admit, is_local_only, ring_dir, valid_namespace, Device, Membership, Op, Person, RailError, RingJournal, RingRail,
+    RingVerifier, Roster, SignedOp,
 };
 
 /// Who stands in one group, on this node.
@@ -135,24 +136,9 @@ impl RingRail {
     /// traces at debug; a held group with no seed at warn, since it refuses
     /// everyone.
     pub fn standing(&self, namespace: &str) -> Result<Standing, RailError> {
-        if !valid_namespace(namespace) || is_local_only(namespace) || !ring_dir(&self.root, namespace).is_dir() {
-            tracing::debug!(
-                target: "register",
-                namespace,
-                "register: this node holds no such group to offer, so nobody stands in it here"
-            );
-            return Ok(Standing::NotHeld);
-        }
-        let journal = self.journal(namespace)?;
-        let Some(seed) = journal.seed()?.filter(|s| !s.members.is_empty()) else {
-            tracing::warn!(
-                target: "register",
-                namespace,
-                seed = %journal.roster_path().display(),
-                "register: this group has no seed, so nobody can be shown to stand in it and \
-                 everyone is refused"
-            );
-            return Ok(Standing::NoSeed);
+        let (journal, seed) = match self.seeded(namespace)? {
+            Ok(held) => held,
+            Err(nobody) => return Ok(nobody),
         };
         let (members, kept) = journal.standing(&seed)?;
         let seeded = seed.members.values().flatten().count();
@@ -169,19 +155,43 @@ impl RingRail {
     /// The register of `namespace` (U7; DESIGN §6): who stands, each key
     /// its keeper cut with its person, and the keeper; from the journal's
     /// kept fold, as [`Self::standing`] is. A group not held here,
-    /// local-only or with no seed is the empty register.
+    /// local-only or with no seed is the empty register, said as
+    /// [`Self::standing`] says it.
     pub fn register(&self, namespace: &str) -> Result<Register, RailError> {
-        if !valid_namespace(namespace) || is_local_only(namespace) || !ring_dir(&self.root, namespace).is_dir() {
-            return Ok(Register::default());
-        }
-        let journal = self.journal(namespace)?;
-        let Some(seed) = journal.seed()?.filter(|s| !s.members.is_empty()) else {
+        let Ok((journal, seed)) = self.seeded(namespace)? else {
             return Ok(Register::default());
         };
         let register = journal.register(&seed)?;
         tracing::debug!(target: "register", namespace, standing = register.members.len(),
             removed = register.removed.len(), keeper = ?register.keeper, "register: the group's register");
         Ok(register)
+    }
+
+    /// The journal of `namespace` and its seed, or why nobody stands in it
+    /// here: the one check [`Self::standing`] and [`Self::register`] make.
+    /// A group not held is said at debug; a held group with no seed at
+    /// warn, since it refuses everyone.
+    fn seeded(&self, namespace: &str) -> Result<Result<(Arc<RingJournal>, Roster), Standing>, RailError> {
+        if !valid_namespace(namespace) || is_local_only(namespace) || !ring_dir(&self.root, namespace).is_dir() {
+            tracing::debug!(
+                target: "register",
+                namespace,
+                "register: this node holds no such group to offer, so nobody stands in it here"
+            );
+            return Ok(Err(Standing::NotHeld));
+        }
+        let journal = self.journal(namespace)?;
+        let Some(seed) = journal.seed()?.filter(|s| !s.members.is_empty()) else {
+            tracing::warn!(
+                target: "register",
+                namespace,
+                seed = %journal.roster_path().display(),
+                "register: this group has no seed, so nobody can be shown to stand in it and \
+                 everyone is refused"
+            );
+            return Ok(Err(Standing::NoSeed));
+        };
+        Ok(Ok((journal, seed)))
     }
 
     /// The first group this node holds, in [`RingRail::namespaces`]' order,
@@ -222,13 +232,28 @@ impl RingRail {
 
     /// The first group held here whose keeper cut `actor`, or `None` (U7):
     /// whom the members' protocol and the door tell they were removed.
+    ///
+    /// Groups that cannot be listed, and a group whose register is
+    /// unreadable, show nobody removed: said at warn, as
+    /// [`Self::standing_anywhere`] says them.
     pub fn removed_anywhere(&self, actor: &str) -> Option<String> {
-        let found = self
-            .namespaces()
-            .ok()?
-            .into_iter()
-            .find(|ns| self.register(ns).is_ok_and(|r| r.removed.contains_key(actor)));
-        tracing::debug!(target: "node", actor, group = ?found, "node: whether a group held here removed the dialer");
+        let namespaces = match self.namespaces() {
+            Ok(n) => n,
+            Err(e) => {
+                tracing::warn!(target: "register", actor, error = %e,
+                    "register: cannot list the groups held, so nobody can be shown to have been removed from one");
+                return None;
+            }
+        };
+        let found = namespaces.into_iter().find(|ns| match self.register(ns) {
+            Ok(r) => r.removed.contains_key(actor),
+            Err(e) => {
+                tracing::warn!(target: "register", actor, namespace = ns, error = %e,
+                    "register: a group's register is unreadable, so it shows nobody removed");
+                false
+            }
+        });
+        tracing::debug!(target: "register", actor, group = ?found, "register: whether a group held here removed the key");
         found
     }
 }

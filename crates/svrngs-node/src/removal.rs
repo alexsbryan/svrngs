@@ -102,6 +102,7 @@ fn decides(register: &Register) -> Option<Person> {
 
 async fn remove(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outcome {
     let Ok(person) = Person::parse(&asked.person) else {
+        tracing::debug!(target: "removal", ?asked, "removal: refused — the name asked is no name, so nobody of it is in the group");
         return Outcome::NotInGroup;
     };
     let rail = at.host.rail();
@@ -178,6 +179,7 @@ async fn tell(
     };
     for actor in computers {
         let Some(key) = actor_key(&actor) else {
+            tracing::debug!(target: "removal", group, actor, "removal: the removed key is no computer's address, so it is not told");
             continue;
         };
         let contact = Contact {
@@ -203,6 +205,7 @@ async fn tell(
 
 async fn hand_over(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outcome {
     let Ok(person) = Person::parse(&asked.person) else {
+        tracing::debug!(target: "removal", ?asked, "removal: refused — the name asked is no name, so nobody of it is in the group");
         return Outcome::NotInGroup;
     };
     let rail = at.host.rail();

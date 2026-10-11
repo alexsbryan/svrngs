@@ -175,9 +175,9 @@ impl Command for HandOnTo {
     const READS: Reads = Reads::Membership;
 
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, HandOnRefusal> {
-        let key = self
-            .key(before.membership())
-            .ok_or(HandOnRefusal::NotInGroup)?;
+        let key = self.key(before.membership());
+        tracing::debug!(target: "register", person = %self.person, ?key, "hand-on: the computer it goes to");
+        let key = key.ok_or(HandOnRefusal::NotInGroup)?;
         Ok(vec![RailAct::HandOn { key: key.clone() }])
     }
 
