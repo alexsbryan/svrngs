@@ -524,11 +524,14 @@ is U5's inventory (§8).
    the kept state names them); what a node keeps of its syncing, never an
    unreadable state read as empty (landed: the directories it syncs kept
    and resumed at each start, one directory each, and a kept state that
-   cannot be read stopping its directory by name); several files fetched
-   at once; the store keeping what the layout places and no more (landed:
-   every other version dropped when what it keeps changes, M2's first
-   version gone from each store 0.89 s after the edit); and a holder
-   sending wrong bytes, planted. A folder streamed by
+   cannot be read stopping its directory by name); the store keeping what
+   the layout places and no more (landed: every other version dropped when
+   what it keeps changes, M2's first version gone from each store 0.89 s
+   after the edit); and a holder sending wrong bytes, planted (landed: a
+   byte flipped on the wire refused by the fetch naming the holder, and
+   who is taken as asleep decided once, the fetch's 60 s `ASLEEP_FOR`).
+   Several files fetched at once moved to perf-2 (g), after the record is
+   read once a change (operator, 2026-10-10). A folder streamed by
    range, group folders' second spike (`demo/runs/gf/2026-10-09/README.md`:
    a one-way share, one Jellyfin playing `.strm` stubs at a loopback
    endpoint on the meeting point, seven bars passed on one host), was
