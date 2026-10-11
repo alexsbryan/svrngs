@@ -459,7 +459,10 @@ impl Folders {
             let hash = ContentHash::from_bytes(hash.into());
             let mtime = meta.modified().map_err(io(&path))?;
             match held.get_mut(&rel) {
-                Some(h) if h.p.hash == hash => h.mtime = mtime,
+                Some(h) if h.p.hash == hash => {
+                    tracing::debug!(target: "folder", folder, path = %rel, "synced: not sent — the bytes held, touched; its new mtime held");
+                    h.mtime = mtime;
+                }
                 before => {
                     let base = before.map(|h| h.p.entry.clone());
                     let now = Some((hash, meta.len()));
@@ -556,10 +559,15 @@ impl Folders {
         let paths: BTreeSet<&SyncPath> = placed.iter().map(|p| &p.path).collect();
         for (rel, h) in held.clone() {
             let at = dir.join(rel.as_str());
-            if !paths.contains(&rel) && unchanged(Some(&h), &at) {
+            if paths.contains(&rel) {
+                continue;
+            }
+            if unchanged(Some(&h), &at) {
                 let gone = std::fs::remove_file(&at);
                 tracing::info!(target: "folder", folder, path = %rel, ?gone, "synced: deleted, the record placing nothing there");
                 held.remove(&rel);
+            } else {
+                tracing::debug!(target: "folder", folder, path = %rel, "synced: not deleted, the record placing nothing there — the disk changed since it was last held");
             }
         }
         // This computer's entries by path and hash, each file taken found by
@@ -581,7 +589,11 @@ impl Folders {
         let mut fetches = Vec::new();
         for &p in placed {
             let (at, before) = (dir.join(p.path.as_str()), held.get(&p.path));
-            if before.is_some_and(|h| h.p.entry == p.entry) || !unchanged(before, &at) {
+            if before.is_some_and(|h| h.p.entry == p.entry) {
+                continue;
+            }
+            if !unchanged(before, &at) {
+                tracing::debug!(target: "folder", folder, path = %p.path, "synced: not written — the disk changed since it was last held, and is never written over");
                 continue;
             }
             if before.is_none_or(|h| h.p.hash != p.hash) {
@@ -612,7 +624,10 @@ impl Folders {
             hold.push(tag);
             match std::fs::metadata(&at).and_then(|m| m.modified()) {
                 Ok(mtime) => drop(held.insert(p.path.clone(), Held { p, mtime })),
-                Err(_) => unwritten += 1,
+                Err(why) => {
+                    tracing::warn!(target: "folder", folder, path = %p.path, %why, "synced: written, but its mtime cannot be read, so it is not held");
+                    unwritten += 1;
+                }
             }
         }
         (hold, unwritten)
