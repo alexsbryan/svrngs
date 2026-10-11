@@ -4778,3 +4778,65 @@ needed. One run, at a load near
 | I24 | 6, 7 | `code dry-report` exact tier | **Still present on 384ef1ca…**: plant R, `write` verbatim as `plant_exact`, in SCIP (scip_graph.db `symbols`: choices.rs 366–377) and in no exact group; and in no near cluster at 0.8, where `write` is in one. The window pass caught it. |
 | I25 | 6 | `code index` and corpus ids | **Worse than recorded**: `code index --corpus-id plant --full` exited 0 and printed "✓ Indexed 2726 chunks" while its log said "finalise_solo_ingest failed — partition-of-self left in place … both hold corpus data named documents.lance" (the last audit's `plant` corpus in the way): a success-shaped line over a failed promotion. `refresh` then found no `_corpus_meta.json`, discarded the partition ("starting fresh") and embedded again. The last audit's documents.lance and texts were moved aside (/tmp/supaudit2/old-plant-index), and `code index --full` run again promoted (2726 chunks, 774 s). |
 | I27 | 6 | dry-report's exact tier over mixed languages | New: apps/taste/ and apps/movie-night/ report "**0** exact-clone groups", not could-not-judge, though only their Python is in SCIP (`refresh`: "typescript: skipped (export failed)"); their .mjs and .js are unjudged under a zero. |
+
+## lean-4-once-and-follow-ups (a) (2026-10-10): #49, #58, #64, #107, #111 closed; #42, #48, #63, #89 said why not
+
+The row's part (a) took the open findings in counted code whose fix is a
+move. Each commit's body holds its run; `git log --format='%h %s'
+73a234d..e978122` lists them.
+
+- **#107, closed (dfa0b31).** One `declared::write_whole(path, text)`,
+  `.<its name>.partial` renamed into place, for the API's address, a
+  lend's declaration and its choices; each keeps its refusal. The
+  choices' partial is now hidden, the one difference #107 named. Not
+  owner-only, as the row's letter asked: the three files are 0644 under
+  the umask today (`ls -la ~/.svrngs/api`), and `api` is read by apps the
+  node did not start (api.rs:40-44); narrowing them is a change, a
+  follow-up, not a move. `declared::write_owner_only` stays beside it.
+- **#58, closed (4a6e233).** `Label::of_hex(lender, name)` in svrngs-core
+  beside `Label`, read by the node (node.rs `origin`, `room_address`;
+  surface.rs; room.rs) and the page (web/src/lib.rs `label`); node.rs's
+  `label` is gone.
+- **#64, closed (77602a7).** share.rs `rows` gives a parsed `Kind`; both
+  readers take it. #64's "a change of behaviour" did not hold: a row whose
+  kind does not parse never matched `accounts_of`'s parsed `Kind` either.
+- **#111, closed (0c25cdf).** The worker's refusals at the pass and the
+  lend, `unheld()` and `closed()`, each in one set of words at all seven
+  sites. The three guards stay three: each decides differently (`lent`
+  redirects a navigation and does not trace; `asking` refuses its own
+  lend).
+- **#49, closed for the page's files (e978122).** store.js's
+  `lendOrigin` and `labelOf`, read by app.js, lend.js and open.js. The
+  door's `own_origin` (Rust, an `Origin`'s first label) and origin.rs
+  (`<label>.localhost`) are other languages and hosts, each one home in
+  its crate.
+- **#42, not fixed.** issuer.rs `key`/`addr` and web/src/lib.rs's issuer
+  read decide differently — the command `expect`s where the page refuses,
+  and the page with a bare key falls back to n0's lookup and relays where
+  `addr` dials the key alone — and one home needs a crate both workspaces
+  link that names iroh (svrngs-core does not, being `no_std` and
+  iroh-free). A change of shape, not a move.
+- **#48, not fixed.** The three reads of the person's 32 bytes in
+  web/src (join.rs `person`, lib.rs `bind`, lib.rs `pass`) are each the
+  array's own rule, `<[u8; 32]>::try_from`, into a key type of its own,
+  refused in words and a trace of its own (`JOIN: REFUSED`, `LAYER key:
+  REFUSED`, none); fence 4 keeps each, and a function over `try_from`
+  would decide nothing more and save no line. `pass`'s refusal has no
+  trace (#48's last note): a glassbox gap, a change, not a move.
+- **#63, not fixed.** `x-svrngs-page-cookies` is named by the worker
+  (lend.js) and by the shim (shim.js), which runs as a classic script in
+  a lent page and shares no module with it; carrying the name on the
+  shim's address changes the address every lent page loads — a change —
+  and saves no line.
+- **#89, not fixed.** Where a script goes first and its nonce are decided
+  in Rust in the door and in JavaScript in the phone's worker: two
+  runtimes that cannot share a body. A golden test over both is a change
+  to the tests, not a move.
+
+Pairs of SURVEY.md's "written twice" not taken, each said in its commit:
+rail.rs `append_act` and `push_answer`'s early returns (their tests read
+a `Response`; 732285d); `through_pass` and `through`, which take the
+dialer as different `Who`s and refuse in their own words (0aa120e);
+sync.rs's mismatching unit, which decides differently from the two walks
+written once (6cad0b9); `Origin`, `RefusedPath` and `Secret`, which have
+an `as_str` and no `Display` (7a111b2).
