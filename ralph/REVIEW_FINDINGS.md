@@ -4840,3 +4840,238 @@ dialer as different `Who`s and refuse in their own words (0aa120e);
 sync.rs's mismatching unit, which decides differently from the two walks
 written once (6cad0b9); `Origin`, `RefusedPath` and `Secret`, which have
 an `as_str` and no `Display` (7a111b2).
+
+## REVIEW-audit-lean-auto-1 (2026-10-10, range 8b508d0..06bece5)
+
+No `REVIEW-audit-` row in this queue came before it, so the range starts
+where the queue does: 8b508d0, REVIEW-audit-sup-auto-2's `done` and the
+parent of 7e29266, the commit that made ralph/next/lean/STATE.md. It ends
+at 06bece5, the commit that made this row: 37 commits (`git rev-list
+--count 8b508d0..06bece5`), lean-1 to lean-4 and their `done`s. This audit
+fixes one finding (#112), records one (#113), and closes #110.
+
+As before, `docs/ARCH_PRINCIPLES.md` is docs/principles/ARCH_PRINCIPLES.md
+and `target/debug/sovereign-cli` is
+~/dev/commonwealth-ai/target/debug/sovereign-cli: **a new binary**, sha256
+b604bcb6… (built 2026-10-10 14:10), not the last audit's 384ef1ca…, so its
+tiers were planted again (below). The embedder was `llama-server` on
+qwen-embedding-0.6b.gguf (~/.svrnmesh/config.toml:18) on :8080, `-b 8192
+-ub 8192` (I21), for this session. Scripts: /tmp/leanaudit/ledger.py (the
+last audit's, its unit pattern `lean-N`), windows.py and clusters.py
+unchanged.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' 8b508d0..06bece5`,
+summed by /tmp/leanaudit/ledger.py (a commit counts toward the unit its
+subject names, else the next `done`'s; product code is crates/, apps/,
+web/, bridge/; a test is a `tests/` or `check/` segment or a lean_check
+test file name, so lean-2's `iroh/tests.rs`, `oplog_tests.rs`,
+`tests_support.rs` count as tests):
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| lean-1-product-only | 0 | 0 | 0 | 26 | 2 | 24 |
+| lean-2-tests-out | 7 | 782 | −775 | 780 | 0 | 780 |
+| lean-3-unreached | 46 | 478 | −432 | 228 | 223 | 5 |
+| lean-4-once-and-follow-ups | 505 | 549 | −44 | 298 | 8 | 290 |
+| total | 558 | 1809 | −1251 | 1332 | 233 | 1099 |
+
+- lean-1: no product line; web/tests/serve.mjs +24 (5a8872e, the page
+  server out of demo/runs/) and the counting rule in scripts/ (fa98e42,
+  not product code).
+- lean-2 (dd65852): iroh.rs −403, oplog.rs −314, journal.rs −31, op.rs −34
+  into iroh/tests.rs +399, oplog_tests.rs +311, journal_tests.rs +35,
+  tests_support.rs +35 — a move, +780 test against −782 src.
+- lean-3 (1c6fe9d, 4f6037d, bfce2b7): guest/tunnel.rs −137,
+  ring_checkpoint.rs −42, guest.rs −44 and −70, view.rs −32, lib.rs −14
+  and −26, sync.rs −25, node.rs −20; tests rewritten on what the product
+  uses (+228/−223).
+- lean-4 (a), 13 commits, src −151 net (732285d to e978122); (b) origin.rs
+  +25/−1 (9cdfda5); (c) question.js +31, home.js +8/−11, app.js +9/−19,
+  home.rs +8, sw.js +1/−1 (7b10b4a); (d) surface.rs +8/−4, lend.js
+  +5/−4, picks.js +3/−5 (c42939a). Tests: home.rs +189, browser/main.rs
+  +73, web/tests/home.mjs +27.
+
+lean_check on `git archive` trees in /tmp/leanaudit (each tree's own
+scripts/lean_check.py, and HEAD's where the rule changed):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 8b508d0, range start | 2635 / 3000 | 15284 / 15350 (13426 by lean-1's rule) |
+| c5b5648, lean-1 done | 2635 / 3000 | 13428 / 15350 |
+| b77d996, lean-2 done | 2619 / 3000 | 12879 / 15350 |
+| 73a234d, lean-3 done | 2547 / 3000 | 12615 / 15350 |
+| f22f7cb, lean-4 (a) done | 2540 / 3000 | 12496 / 15350 |
+| 06bece5, range end | 2540 / 3000 | 12526 / 15350 |
+| 0ca47dc, this audit's fix (#112) | 2540 / 3000 | 12528 / 15350 |
+
+The queue took 2,758 counted lines off (15284 → 12526): 1,856 by lean-1's
+rule, 549 by lean-2, 264 by lean-3, 119 by lean-4 (a); lean-4 (b) to (d)
+spent 30. **2,822 are left** (#80), against the survey's estimate of about
+3,000 the product does not carry (ralph/next/lean/SURVEY.md).
+
+### (2) Clones (`code dry-report`), each tier checked against a plant
+
+**Plants**, the binary being new: a clone of the repository at 06bece5
+(/tmp/leanaudit/leanplant), one commit there (faac109) appending copies of
+two symbols the range added:
+
+- **R** (exact, Rust): door.rs `remove_counted` (:505–517, 0aa120e),
+  verbatim, as `plant_exact`.
+- **RN** (near, Rust): the same body as `plant_near`, its names changed
+  (`headers`→`map`, `goes`→`drops`, `gone`→`dropped`, `n`→`count`,
+  `name`→`key`).
+- **J** (exact, JS): question.js `uses` (:22–32, 7b10b4a), verbatim, as
+  `plantExact`.
+- **JN** (near, JS): the same body as `plantNear`, its names changed.
+
+Indexed under a corpus id of its own, `leanplant`, so no earlier audit's
+corpus was in the way (I25): `code index … --corpus-id leanplant --full`
+("✓ Indexed 2675 chunks in 416s", rc 0), then `refresh` there (rust 10695
+symbols, python 996, "typescript: skipped (export failed)"); the SCIP graph
+holds `plant_exact` (door.rs 1316–1328) and `remove_counted` (504–516).
+
+| scope, threshold | R | RN | J | JN |
+|---|---|---|---|---|
+| door.rs, 0.95 | **missed**: 0 exact groups, 0 near | missed | — | — |
+| door.rs, 0.9 | R ~ RN only, 0.920; never with `remove_counted` | seen with R alone | — | — |
+| door.rs, 0.8 | **missed** against its original: `remove_counted` clusters with its neighbours `strip_hop_by_hop`, `upgrade_of`, `keep_upgrade` (0.821–0.868), R with RN alone | as at 0.9 | — | — |
+| question.js, 0.95 | — | — | **missed**: exact tier "could-not-judge" (I19), 0 near | missed |
+| question.js, 0.9 | — | — | J ~ JN only, 0.940 | seen with J alone |
+| question.js, 0.8 | — | — | **seen**: `uses` ~ J, one cluster | seen |
+| window pass | **seen**: door.rs:506–516 == :1318–1328 | missed (renamed) | **seen**: question.js:23–29 == :34–40 | missed (renamed) |
+
+So on b604bcb6 the exact tier still misses a verbatim Rust body that is in
+SCIP (I24) and judges no JavaScript (I19, said so); the near tier pairs a
+verbatim JS copy with its original only at 0.8, and a verbatim Rust copy
+with its original at no threshold run, its spans running into their
+neighbours (`plant_exact` 1314–1332 for 1316–1328, `remove_counted`
+502–520 for 504–516; I9). Its zeros are weak evidence; the window pass saw
+both exact plants.
+
+**Runs**, on the planted corpus as the last audit's were (the plants are
+appended at their files' ends, every other line 06bece5's, and they sit
+in no group or cluster but with each other and, at 0.8, J with `uses`).
+Scoped, for each dir the range touched, /tmp/leanaudit/clusters.py blaming
+every side (`git blame -w` at faac109) for a line in the range:
+
+| scope | locations | exact | near 0.95 | near 0.9 | a side touched in the range |
+|---|---:|---|---:|---:|---|
+| crates/svrngs-core/ | 373 | 4 (`lines`, `is_empty`, `signed_by_link`, tests' `key`) | 0 | 9 | 1 at 0.9: `decide` ×4, tests_support.rs:300–308 (2 lines, 4f6037d) |
+| crates/svrngs-node/ | 421 | 1 (`addr`), down from the last audit's 5: `as_str` ×4, `fmt` ×3 (7a111b2), `drop` (ad82d1e), `try_from` gone | 0 | 9 | 4 at 0.9: R ~ RN, J ~ JN, `kept_to_reads` ~ `reads`, `live_push` ~ `live_drain` |
+| crates/svrngs-runtime/ | 123 | 1 (tests' `open`) | 0 | 0 | 0 |
+| crates/svrngs/ | 66 | 0 | 0 | 0 | 0 |
+| web/ | 93 | **could-not-judge** (I19) | 0 | 0, was 2 (#111 closed in 0c25cdf) | 0 |
+| apps/movie-night/ | 57 | 0 (I27) | 0 | 2 | 0 |
+| apps/taste/ | 44 | 0 (I27) | 0 | 0 | 0 |
+| apps/jellyfin/ | 109 | 0 (I27) | 2 | 5 | 0 (check/ only, lean-1's one line) |
+
+**Unscoped**: 0.95 (9 exact, 15 near), 0.9 (9, 41), 0.8 (9, 221), 1390
+locations. The row asks for every clone with a side that is a symbol
+ADDED in the range. The names defined at 06bece5 and not at 8b508d0, over
+the product's .rs and .js (tests and check/ apart): `appOf`, `closed`,
+`harden`, `labelOf`, `lendOrigin`, `of_hex`, `question`, `readable`,
+`remove_counted`, `tell_share`, `unasked`, `uri_of`, `write_whole`, with
+question.js's `uses` and `named`, moved there from the pages. Of these,
+those in a group or cluster:
+
+| at | cluster | cosine | read |
+|---|---|---|---|
+| 0.95, 0.9 | home.js `uses` :65–85 ~ web/app.js `uses` :250–273 | 0.951 | **#113**: the two pages' callers of question.js `uses` since 7b10b4a, each side touched by it. |
+| 0.8 | question.js `uses` :19–34 ~ home.js `uses`, `ask` ~ app.js `asking`, `uses` (and J, JN) | 0.809–0.951 | #113 again: the callers and the shared body. |
+| 0.8 | pass.rs `of_hex` :100–109 ~ `of`, `parse`, `lender`, web/src/lib.rs `label`, pass_tests.rs `key`, `lender` | 0.803–0.858 | `of_hex` reads hex into `of`; lib.rs `label` calls `of_hex` (4a6e233). Neighbours and a caller (I9). No change. |
+| 0.8 | door.rs `remove_counted` :502–520 ~ `strip_hop_by_hop`, `upgrade_of`, `keep_upgrade` | 0.821–0.868 | `strip_hop_by_hop` calls `remove_counted` (door.rs:498); the rest neighbours (I9). No change. |
+| 0.8 | declared.rs `write_whole` :130–141 ~ `write_owner_only` :116–129 ~ `harden` :138–155 | 0.809–0.811 | Neighbours; `write_owner_only` stays beside `write_whole`, lean-4 (a) said why (#107's close). No change. |
+
+The rest with a side touched in the range, though no side added: 0.9
+origin.rs `kept_to_reads` ~ surface.rs `reads` (0.916; one rule, two
+callers, as REVIEW-audit-sup-auto-1 judged); rail.rs `live_push` ~
+`live_drain` (0.916, two three-line handlers whose spans run together,
+I9); svrngs-core `decide` ×4 (0.918–0.948; tests_support.rs's two are the
+test fixtures lean-3 B moved there). No change.
+
+**Window pass** (/tmp/leanaudit/windows.py . 8b508d0..06bece5): 282 window
+hits in 114 spans, **24 new**. In product code, 3:
+
+- door.rs:749–757 == :892–900: `through_pass` and `through`'s signatures
+  and first refusal, each in its own words; lean-4 (a) left them two, said
+  in 0aa120e (REVIEW-audit-sup-auto-2's last paragraph). No change.
+- door/choices.rs:267–272 == :293–298: `choose` and `stop_with_pass`'s
+  axum extractor lists. No change.
+- svrngs-runtime journal.rs:418–423 == journal_tests.rs:20–25: `seal`'s
+  `Author` literal and the test fixture's, moved out of journal.rs by
+  lean-2. No change.
+
+The other 21 are tests: lean-2's moved modules now beside the integration
+tests they resemble (iroh/tests.rs:62–72 == tests/common/mod.rs:11–21,
+:50–56 == tests/accept.rs:23–29), lean-3 B's rewritten set-up in each
+integration test (door/main.rs:44–67 == lend_origin.rs:32–53 ==
+room.rs:38–59; canaries.rs:22–34 == group_not_mesh.rs:26–38; and the
+like), lean-4 (b)'s new test beside the home test (home.rs:160–177 ==
+:462–479 == lend_origin.rs:134–151), and web/tests/home.mjs's prologue
+(:13–18 == reads.mjs:22–27). Each binary's set-up, #31's case. No change.
+
+Reading the range for what neither pass would show:
+
+- **#112, fixed (0ca47dc).** c42939a built a page's stop address in
+  surface.rs `reads` with "/svrngs-stop" (surface.rs:230 at 06bece5), which
+  origin.rs `lent` parsed with its own literal (origin.rs:199): one path,
+  two spellings in one crate. `surface::STOP_SUFFIX` beside `READS_PATH`
+  now. web/lend.js's (`STOP` :65, `told` :390) is the phone's, another
+  language and host, as `READS` is.
+- **#110, closed (7b10b4a)**: one wording, question.js, for both pages'
+  question and what apps use; **#113** is what is left of it.
+- **#113, not fixed.** home.js `uses` :68–82 and web/app.js `uses`
+  :252–271 each walk the lends that ask, get their choices, and on a
+  failure say `unasked(l)`: the home page from its node's `/choices` with
+  the error's message after the line, the group's page by a dial, the
+  error traced and not shown. And "That app, or what it asks to use, is
+  not lent in your group(s) now." is spelled in each, home.js:87 ("groups",
+  the page of all of them) and app.js:228 ("group", the page of one). The
+  loop into question.js would take each page's fetch and failure as
+  arguments and give them one failure line, a change of what a page says,
+  not a move; each saves about 3 lines. Recorded.
+- **Glassbox.** lean-4 (b) traces both of `readable`'s branches
+  (origin.rs:226, :229); (d)'s `stop` is built where `ask` is, inside the
+  branch `reads` traces (surface.rs:239). lean-2 and lean-3 moved and
+  deleted without dropping a trace: their commits name each refusal kept.
+- **#57, #68, #70, #71, #75, #77, #79, #81, #89, #91, #95, #97, #99, #103,
+  #104 still open**, as recorded; #42, #48, #63 said why not in lean-4 (a).
+
+### (3) Duplicate type names (`code converge noun`)
+
+`git diff 8b508d0 06bece5 -- crates apps web bridge`, added lines matching
+`\b(struct|enum|trait|type|class)\s+[A-Z]\w*`: `struct OnStream`, `enum
+Probe`, `enum Other` (and `type Error = LendError`, an associated type).
+All three are lean-2's moves: OnStream from iroh.rs:520 to
+iroh/tests.rs:10, Probe from oplog.rs:492 and Other from oplog.rs:546 to
+oplog_tests.rs:34 and :88 (`git grep` at each end). `code converge noun
+<Name> --corpus-id leanplant` for each: "definitions (0), first-party
+production … the name is defined only in test code". The SCIP graph has
+them (OnStream iroh/tests.rs:9; Probe oplog_tests.rs:33; Other
+oplog_tests.rs:87 and svrngs/tests/new.rs:458, two test-local enums in
+two crates' tests). As a positive control, `converge noun Said` gives
+"definitions (2)": cli.rs:662 and door/choices.rs:39, a pair `converge
+census --local` sets aside (neither reached from another crate) and
+REVIEW-audit-e0's census already named. **No noun added in the range has
+more than one production definition.**
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 112 | 8 | crates/svrngs-node/src/surface.rs:230 and origin.rs:199, at 06bece5 | 0ca47dc | The stop's `/svrngs-stop` suffix built in one file and parsed in another, two literals. |
+| 113 | 8, 3 | crates/svrngs-node/src/home/home.js:68–87 and web/app.js:228–271, at 06bece5 | not fixed | The two callers of question.js `uses` walk, fetch and fail alike; the "not lent" line spelled in each, "groups" and "group". |
+| 110 | 8, 3 | home.js and web/app.js | closed (7b10b4a) | One wording in question.js; #113 the rest. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 2,822 lines left (12528 / 15350). |
+| 31, 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99, 103, 104 | as recorded | as recorded | not fixed | Untouched in the range but by moves that kept them. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I9 | 6, 7 | `code dry-report` near tier | Still present on b604bcb6…: `plant_exact` 1314–1332 for 1316–1328, `remove_counted` 502–520 for 504–516; a verbatim Rust copy and its original in no cluster even at 0.8. |
+| I19 | 6 | dry-report's exact tier | Still present, and said: web/ and question.js "could-not-judge … no SCIP function symbols in scope". |
+| I24 | 6, 7 | `code dry-report` exact tier | **Still present on b604bcb6…**: plant R, `remove_counted` verbatim as `plant_exact`, both in SCIP (`symbols`: door.rs 504–516, 1316–1328, kind `unknown`, as 9,543 of the graph's rust symbols are), in no exact group. The window pass caught it. |
+| I27 | 6 | dry-report's exact tier over mixed languages | Still present: apps/ scopes report "**0** exact-clone groups", their JS unjudged. |
