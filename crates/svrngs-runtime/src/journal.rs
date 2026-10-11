@@ -91,16 +91,8 @@ struct Held {
     /// `membership` too, since a cut covers a key's acts along their chain
     /// (U7; `svrngs_core::standing_reads`).
     named: std::collections::HashSet<String>,
-    standing: Option<Folded>,
+    standing: Option<(Roster, crate::register::Register)>,
 }
-
-/// The register last folded, with the seed it was folded from: who stands,
-/// and each key the keeper cut with its person (U7).
-type Folded = (
-    Roster,
-    BTreeMap<String, crate::register::Member>,
-    BTreeMap<String, Person>,
-);
 
 /// Each line whose signature [`Ed25519Verifier`] passed as the tail brought
 /// it in: its actor, the id its content derives and its signature, the three
@@ -322,28 +314,25 @@ impl RingJournal {
         &self,
         seed: &Roster,
     ) -> Result<(BTreeMap<String, crate::register::Member>, bool), RailError> {
-        self.folded(seed).map(|((_, members, _), kept)| (members, kept))
+        self.folded(seed).map(|(register, kept)| (register.members, kept))
     }
 
-    /// Each key the keeper cut, with its person, from the fold
-    /// [`Self::standing`] keeps (U7).
-    pub(crate) fn removed(&self, seed: &Roster) -> Result<BTreeMap<String, Person>, RailError> {
-        self.folded(seed).map(|((_, _, removed), _)| removed)
+    /// The whole register, from the fold [`Self::standing`] keeps (U7).
+    pub(crate) fn register(&self, seed: &Roster) -> Result<crate::register::Register, RailError> {
+        self.folded(seed).map(|(register, _)| register)
     }
 
-    fn folded(&self, seed: &Roster) -> Result<(Folded, bool), RailError> {
+    fn folded(&self, seed: &Roster) -> Result<(crate::register::Register, bool), RailError> {
         let mut guard = self.log();
         let log = &mut *guard;
         log.held.catch_up(&log.oplog, &self.namespace)?;
         let held = &mut log.held;
-        if let Some(folded) = held.standing.as_ref().filter(|f| &f.0 == seed) {
-            return Ok((folded.clone(), true));
+        if let Some((_, register)) = held.standing.as_ref().filter(|(from, _)| from == seed) {
+            return Ok((register.clone(), true));
         }
-        let (members, removed) =
-            crate::register::register_in(&held.membership, seed, &self.namespace, &Checked(&held.passed))?;
-        let folded = (seed.clone(), members, removed);
-        held.standing = Some(folded.clone());
-        Ok((folded, false))
+        let register = crate::register::register_in(&held.membership, seed, &self.namespace, &Checked(&held.passed))?;
+        held.standing = Some((seed.clone(), register.clone()));
+        Ok((register, false))
     }
 
     /// Every op this node holds that `theirs` says the peer is missing,

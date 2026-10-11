@@ -232,11 +232,12 @@ fn a_cut_keys_earlier_acts_join_the_kept_register() {
     names.sort();
     assert_eq!(names, ["alex", "fay"], "control: bo out, fay covered");
     assert_eq!(rail.standing(NS).unwrap(), Standing::Members(whole));
-    let removed = rail.removed(NS).unwrap();
+    let register = rail.register(NS).unwrap();
     assert_eq!(
-        removed.into_iter().collect::<Vec<_>>(),
+        register.removed.into_iter().collect::<Vec<_>>(),
         [(actor_of(&key(2)), Person::parse("bo").unwrap())],
         "bo, cut, with bo's person"
     );
-    assert!(rail.removed("not-held").unwrap().is_empty());
+    assert_eq!(register.keeper, Some(actor_of(&key(1))), "alex keeps");
+    assert_eq!(rail.register("not-held").unwrap(), Register::default());
 }
