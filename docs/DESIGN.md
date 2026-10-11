@@ -517,18 +517,20 @@ is U5's inventory (§8).
    (`Host::standings`), and a group whose record cannot be read stops its
    directory's step by the group's name, never read as placing nothing. The index is the record, not iroh-docs, whose
    namespace id would be a second decider of who reads. Run again on
-   production (syp-5, `demo/runs/syp/2026-10-10/rerun/`, one host), three
-   of the spike's four bars passed: an add, an edit and a delete by three
+   production (syp-5, `demo/runs/syp/2026-10-10/rerun/`, one host), all
+   four of the spike's bars pass: an add, an edit and a delete by three
    members everywhere within 0.32 s (the spike's 1.63); a file reached Cy
-   in 3.56 s from Ben with its author killed; a node outside the group
-   given no byte, refused at the accept and by the provider each. Two
-   edits made apart were not both kept within 30 s, three runs of three:
-   the second edit's act reached every record and was placed beside as a
-   conflict, but its bytes did not leave its writer's restarted node — a
-   dial to a member restarted aims at its last process, and a file no
-   member gave is asked again only at the step's next wake, where the
-   spike's walk each second asked it again until it came, at 17.0 s (that
-   README §6). A thousand files reached two members in 0.92 s and one
+   in 3.56 s from Ben with its author killed; two edits made apart both
+   kept in every directory within 0.34-0.65 s, three runs of three (syp-6,
+   `demo/runs/syp/2026-10-11/restart/`; the spike's 17.0 s); a node
+   outside the group given no byte, refused at the accept and by the
+   provider each. The edits had failed at syp-5, three of three, on two
+   holes (that README §6), closed by syp-6: a node stopped by SIGTERM now
+   closes its endpoint, where it had left each peer's iroh sending only to
+   its dead address for up to 15 s, so its next process was not dialled;
+   and a file no member gave is asked again with no event to wake it. A
+   process killed outright still leaves that dead address for up to 15 s,
+   the retry's cap. A thousand files reached two members in 0.92 s and one
    joining later in 0.53 s (the spike's 395.27 and 242.24), and a 1 MiB
    edit of a 100 MiB file still cost each member the whole file, in 7.04
    s. Off one host it is unrun. Its rows are the
@@ -1720,12 +1722,11 @@ once it stands; a 100 MiB file at 83 MB/s to each of two members at once
 and 139 MB/s to one, a bare iroh-blobs get's own rate; a 1 MiB edit still
 moving the whole file, `demo/runs/perf/2026-10-10-make-it-fast/README.md`),
 then the spike's run again (landed, syp-5: three of its four bars
-passed on production; two edits made apart not both kept within 30 s, a
-dial to a member restarted aiming at its last process and a file no
-member gave not asked again until the step's next wake,
-`demo/runs/syp/2026-10-10/rerun/README.md` §6), main merged in again; then
-a row closing those two holes, the operator's to queue, before the
-operator's merge into main (§10); the phone replica spike, iOS first (§9, "a
+passed on production, `demo/runs/syp/2026-10-10/rerun/README.md`), main
+merged in again; then the fourth's two holes closed (landed, syp-6: a
+node stopped by SIGTERM closing its endpoint, a file no member gave asked
+again; S3 passed three runs of three, `demo/runs/syp/2026-10-11/restart/`),
+before the operator's merge into main (§10); the phone replica spike, iOS first (§9, "a
 native phone app"), after folders since they name the bytes a phone would
 hold; then the middleware's P1 follow-ups as one row (operator, 2026-10-08;
 `demo/runs/mw/2026-10-08/README.md` §7, items 5 and 7; its item 1,
