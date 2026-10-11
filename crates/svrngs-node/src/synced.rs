@@ -600,9 +600,14 @@ impl Folders {
                 fetches.push((p.clone(), at));
                 continue;
             }
-            if let Ok(mtime) = std::fs::metadata(&at).and_then(|m| m.modified()) {
-                let p = p.clone();
-                held.insert(p.path.clone(), Held { p, mtime });
+            match std::fs::metadata(&at).and_then(|m| m.modified()) {
+                Ok(mtime) => {
+                    let p = p.clone();
+                    held.insert(p.path.clone(), Held { p, mtime });
+                }
+                Err(why) => {
+                    tracing::warn!(target: "folder", folder, path = %p.path, %why, "synced: the bytes held, now another entry's, but its mtime cannot be read, so it is held as before");
+                }
             }
         }
         // Fetched FETCH_AT_ONCE at once, each written when it is held
