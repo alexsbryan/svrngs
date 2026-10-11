@@ -280,8 +280,10 @@ async function enter(group, asked) {
   const d = await reach(connect(key, group.token), `Your group’s computer did not answer. Try again later.`);
   const res = await d.fetch('GET', PEOPLE_LENDS, [['accept', 'application/json']], null);
   if (!res.ok) {
-    trace(`PAGE: ${PEOPLE_LENDS} answered ${res.status}`);
+    const why = res.headers.get('x-svrngs-refused');
+    trace(`PAGE: ${PEOPLE_LENDS} answered ${res.status}, refused ${why}`);
     await d.close();
+    if (why === 'removed') throw new Said(`You are no longer in ${group.name}.`);
     throw new Said('Your group’s computer said no.');
   }
   const { lent, unanswered } = await res.json();

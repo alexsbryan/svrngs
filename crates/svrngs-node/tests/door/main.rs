@@ -1160,3 +1160,66 @@ async fn the_service_is_asked_on_its_own_address_and_its_redirect_comes_back_a_p
     );
     pair.close().await;
 }
+
+/// **A removed person is refused as removed, by pass and by dial** (U7
+/// (e); DESIGN §6; demo/c.md, "Removed"). Ada keeps the group and removes
+/// bo. A pass bo signed for `shelf`, presented by its holder, and bo's own
+/// computer dialling on the members' protocol are each answered 403 with
+/// svrngs's refusal `removed` and its words; neither reaches the service.
+/// Planted, watched failing: the pass's removed check out (refused `pass`,
+/// after the ring was asked) and a removed dialer closed like a stranger
+/// (no reply).
+#[tokio::test]
+async fn a_removed_person_is_refused_as_removed_by_pass_and_by_dial() {
+    use svrngs_core::alpn::Alpn;
+    use svrngs_core::pass::{Label, Pass};
+
+    let (pair, heads) = lending_heads().await;
+    let shelf = Label::of(pair.a.endpoint().id().as_bytes(), "shelf");
+    let bo = svrngs_node::Removal {
+        person: Person::parse("bo").unwrap(),
+    };
+    pair.a.rail().commit(NS, &bo).unwrap().unwrap();
+    let holder = signing(9);
+    let pass = Pass::sign(
+        &signing(2),
+        &actor_of(&holder),
+        (shelf.clone(), vec![]),
+        unix_now() + 3600,
+    );
+    let (as_holder, as_bo) = (
+        bridge_as(&holder, &pair.a, Alpn::Lend).await,
+        bridge_as(&signing(2), &pair.a, Alpn::Member).await,
+    );
+    let by_pass = raw_to(
+        as_holder.local_addr(),
+        format!(
+            "GET /lend/{shelf}/x HTTP/1.1\r\nHost: local\r\nx-svrngs-pass: {}\r\nConnection: close\r\n\r\n",
+            pass.encode()
+        ),
+    )
+    .await;
+    let by_dial = raw_to(
+        as_bo.local_addr(),
+        "GET /lend/shelf/x HTTP/1.1\r\nHost: local\r\nConnection: close\r\n\r\n".into(),
+    )
+    .await;
+    for (how, reply) in [("by pass", by_pass), ("by dial", by_dial)] {
+        assert_eq!(reply.status, 403, "{how}: {}", reply.text);
+        assert!(
+            reply.text.contains("x-svrngs-refused: removed"),
+            "{how}: {}",
+            reply.text
+        );
+        assert!(
+            reply.text.contains("You are no longer in this group"),
+            "{how}: {}",
+            reply.text
+        );
+    }
+    assert!(
+        heads.lock().unwrap().is_empty(),
+        "the service was never asked"
+    );
+    pair.close().await;
+}

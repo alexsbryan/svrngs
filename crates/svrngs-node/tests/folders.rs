@@ -1304,3 +1304,53 @@ async fn a_file_no_member_gave_is_asked_again_with_nothing_to_wake_it() {
         "Ana holds the file Ben's key gave at its second ask; asked {asked} times in {took:?}"
     );
 }
+
+/// **A removed member gets nothing new from the folder, and keeps what
+/// they had** (U7 (e); DESIGN §6; demo/c.md, "Removed"). Ana, Ben and Cy
+/// sync the folder; a file Ana writes reaches Cy. Ana removes Cy as
+/// `svrngs remove` asks (`/v1/removals`); a file Ana writes after reaches
+/// Ben and never Cy, Cy's ask of Ben's provider for it is refused, and the
+/// first file stays on Cy's disk: removal sends nothing back. Red with the
+/// cut leaving Cy standing (membership.rs, the cut's `live.remove` out).
+#[tokio::test]
+async fn a_removed_member_gets_nothing_new_from_the_folder_and_keeps_what_they_had() {
+    let group = Group::new().await;
+    let roots = [(); 3].map(|_| tempfile::tempdir().unwrap());
+    let ana = both_ways(&group.ana, roots[0].path()).await;
+    let ben = both_ways(&group.ben, roots[1].path()).await;
+    let cy = both_ways(&group.cy, roots[2].path()).await;
+    let old = noise(20_000, b"before");
+    std::fs::write(ana.join("old.bin"), &old).unwrap();
+    let cy_has_old = || std::fs::read(cy.join("old.bin")).ok() == Some(old.clone());
+    assert!(
+        until(&group, cy_has_old).await,
+        "control: Ana's file reaches Cy"
+    );
+
+    let removed = http()
+        .post(format!("http://{}/v1/removals", group.ana.api_addr()))
+        .json(&serde_json::json!({ "group": seed("films", 9).id(), "person": "cy" }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(removed.status().as_u16(), 200, "{:?}", removed.text().await);
+
+    let new = noise(20_000, b"after");
+    std::fs::write(ana.join("new.bin"), &new).unwrap();
+    let ben_has_new = || std::fs::read(ben.join("new.bin")).ok() == Some(new.clone());
+    assert!(until(&group, ben_has_new).await, "the new file reaches Ben");
+    for _ in 0..3 {
+        for node in [&group.ana, &group.ben, &group.cy] {
+            round(node).await;
+        }
+    }
+    assert!(!cy.join("new.bin").exists(), "nothing new reaches Cy");
+    let hash = iroh_blobs::Hash::from_bytes(*blake3::hash(&new).as_bytes());
+    let asked = get(&group.cy, &group.ben, hash, &roots[2].path().join("asked")).await;
+    assert!(
+        asked.is_err(),
+        "Ben's provider serves Cy nothing: {asked:?}"
+    );
+    assert!(cy_has_old(), "what Cy had stays");
+    group.close().await;
+}

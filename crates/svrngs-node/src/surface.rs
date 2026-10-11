@@ -8,8 +8,8 @@
 //! sent.
 //!
 //! - `GET /v1/groups` — each group this computer holds: its id (the
-//!   `namespace` every other route names), its name, and this computer's
-//!   person in it.
+//!   `namespace` every other route names), its name, this computer's
+//!   person in it, and whether its keeper removed this computer (U7).
 //! - `GET /v1/lends?namespace=<id>` — what the group's people lend now,
 //!   this computer's own lends among them, each with its lender's person
 //!   and key, its name, kind, limit, how many use it and its declared
@@ -84,6 +84,9 @@ struct Held {
     /// `null` when this computer does not stand in it — not let in yet, or
     /// taken out — so it is nobody there.
     person: Option<Person>,
+    /// Whether the group's keeper removed this computer (U7): the home
+    /// page says so in a person's words.
+    removed: bool,
 }
 
 /// `GET /v1/groups`.
@@ -102,6 +105,9 @@ async fn groups(State(at): State<Surface>) -> Response {
     let mut held = Vec::with_capacity(namespaces.len());
     for id in namespaces {
         let name = name_of(&at, &id);
+        let removed = rail
+            .register(&id)
+            .is_ok_and(|r| r.removed.contains_key(at.asking.host.actor()));
         let person = match rail.standing(&id) {
             Ok(Standing::Members(people)) => {
                 people.get(at.asking.host.actor()).map(|m| m.person.clone())
@@ -115,8 +121,13 @@ async fn groups(State(at): State<Surface>) -> Response {
                 None
             }
         };
-        tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?person, "surface: groups — a group held");
-        held.push(Held { id, name, person });
+        tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?person, removed, "surface: groups — a group held");
+        held.push(Held {
+            id,
+            name,
+            person,
+            removed,
+        });
     }
     Json(serde_json::json!({ "groups": held })).into_response()
 }

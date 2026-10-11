@@ -314,6 +314,9 @@ impl Node {
         .merge(crate::door::router(asking.door.clone()))
         .merge(people_router(asking));
         let redeem = crate::redeem::router(rail, seeds);
+        // A dialer the keeper cut, on the members' protocol, is told so in
+        // words on every route, and served nothing else (U7).
+        let gone = axum::Router::new().fallback(|| async { crate::door::gone() });
         let acceptor =
             IrohAcceptor::spawn(endpoint.clone(), move |alpn: &[u8], dialer: &PublicKey| {
                 match admit_dialer(&admitting, alpn, dialer) {
@@ -321,6 +324,11 @@ impl Node {
                     Some(Alpn::Redeem) => Admit::Serve(redeem.clone()),
                     Some(Alpn::Lend) => Admit::Serve(holders.clone()),
                     Some(Alpn::Blobs) => Admit::Blobs(blobs.clone()),
+                    None if Alpn::of(alpn) == Some(Alpn::Member)
+                        && removed_anywhere(&admitting, &key_actor(dialer)).is_some() =>
+                    {
+                        Admit::Serve(gone.clone())
+                    }
                     None => Admit::Refuse,
                 }
             });
@@ -755,6 +763,17 @@ impl Asking {
         });
         Ok((lent, others.unanswered))
     }
+}
+
+/// The first group held here whose keeper cut `actor`, or `None` (U7):
+/// whom the members' protocol and the door tell they were removed.
+pub(crate) fn removed_anywhere(rail: &RingRail, actor: &str) -> Option<String> {
+    let found = rail.namespaces().ok()?.into_iter().find(|ns| {
+        rail.register(ns)
+            .is_ok_and(|r| r.removed.contains_key(actor))
+    });
+    tracing::debug!(target: "node", actor, group = ?found, "node: whether a group held here removed the dialer");
+    found
 }
 
 /// The accept loop's decision: the protocol whose routes a dialer is

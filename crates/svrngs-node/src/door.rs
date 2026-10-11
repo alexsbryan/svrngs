@@ -169,6 +169,8 @@ pub enum LendRefusal {
     Unasked,
     /// The lend asks, and its person stopped the app asking.
     Stopped,
+    /// The asker was removed from the group (U7; DESIGN §6).
+    Removed,
 }
 
 impl LendRefusal {
@@ -184,6 +186,7 @@ impl LendRefusal {
             LendRefusal::Fault => "fault",
             LendRefusal::Unasked => "unasked",
             LendRefusal::Stopped => "stopped",
+            LendRefusal::Removed => "removed",
         }
     }
 
@@ -208,6 +211,14 @@ impl LendRefusal {
 /// and ends the wait, whoever else is asleep (asleep-1-none-held); with
 /// none awake that knows them the pass is refused as before.
 const ASK_WITHIN: Duration = Duration::from_secs(10);
+
+/// svrngs's answer to someone removed from the group (U7), in their words.
+pub(crate) fn gone() -> Response {
+    LendRefusal::Removed.say(
+        StatusCode::FORBIDDEN,
+        "You are no longer in this group, so nothing of it is open to you.",
+    )
+}
 
 /// Where a request for a lend starts.
 pub const LEND_ROUTE: &str = "/lend/";
@@ -826,6 +837,13 @@ async fn holder_of(
         return Err(refused(&fault.to_string()));
     }
     let mut standing = door.rail.standing_anywhere(&pass.person);
+    // A key the keeper cut never stands again (U7), so it is told so at once
+    // rather than after the ring is asked.
+    if standing.is_none() && crate::node::removed_anywhere(&door.rail, &pass.person).is_some() {
+        tracing::debug!(target: "door", holder = key, signer = pass.person, lend = %lend.name,
+            "door: refused — the pass's signer was removed from a group held here");
+        return Err(gone());
+    }
     if standing.is_none() {
         tracing::debug!(target: "door", holder = key, signer = pass.person, lend = %lend.name,
             "door: the pass's signer stands in no group held here, so the group's ring is asked once first");

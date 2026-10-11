@@ -37,6 +37,7 @@ const label = (l) => new URL(l.origin).hostname.split('.')[0];
 async function groups() {
   const { groups } = await get('/v1/groups');
   return Promise.all(groups.map(async (g) => {
+    if (g.removed) return g;
     try {
       const ns = encodeURIComponent(g.id);
       const [lends, people] = await Promise.all([get(`/v1/lends?namespace=${ns}`), get(`/v1/rail/people?namespace=${ns}`)]);
@@ -50,7 +51,8 @@ async function groups() {
 function list(all) {
   for (const g of all) {
     const s = el('section', '', el('h2', g.name ?? 'A group whose name this computer cannot read'));
-    if (g.unread) s.append(el('p', `What this group lends cannot be read on this computer: ${g.unread}`));
+    if (g.removed) s.append(el('p', `You are no longer in ${g.name ?? 'this group'}. What you already have stays on this computer; nothing new reaches it.`));
+    else if (g.unread) s.append(el('p', `What this group lends cannot be read on this computer: ${g.unread}`));
     else {
       s.append(el('p', `People: ${g.people.map((p) => p.person).join(', ')}`));
       const ul = el('ul');

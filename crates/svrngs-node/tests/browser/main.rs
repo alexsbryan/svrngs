@@ -1231,3 +1231,106 @@ async fn the_home_page_asks_in_the_one_wording(engine: Engine) {
     );
     drop(ada);
 }
+
+in_both_engines!(
+    /// **A removed person's phone is told so in a person's words** (U7
+    /// (e); DESIGN §6). Ada removes bo through her computer's
+    /// `/v1/removals`; the page holding bo's key opens the group's link,
+    /// and ada's computer, which closes a stranger's dial, serves bo's only
+    /// to refuse it as removed: the page says "You are no longer in house."
+    /// Planted, watched failing: a removed dialer closed like a stranger
+    /// (the page said "This browser could not open the page.").
+    the_group_s_page_tells_a_removed_person
+);
+async fn the_group_s_page_tells_a_removed_person(engine: Engine) {
+    let site = site();
+    let dir = tempfile::tempdir().unwrap();
+    let relay = relay().await;
+    let bo = signing(7);
+    let ada = node(dir.path(), &relay, &bo).await;
+    let removed = removal(&ada, "bo").await;
+    assert_eq!(removed, svrngs_node::removal::Outcome::Out);
+    let seen = drive(
+        engine,
+        "drive.mjs",
+        json!({
+            "site": site,
+            "key": hex::encode(bo.to_bytes()),
+            "token": token(&signing(1), &relay),
+        }),
+        None,
+    )
+    .await;
+    assert_eq!(seen["status"], "You are no longer in house.", "{seen:#}");
+    drop(ada);
+}
+
+in_both_engines!(
+    /// **A removed person's home page tells them so** (U7 (e)). Ada and
+    /// bo's computer are in house; ada removes bo through `/v1/removals`,
+    /// which tells bo's computer its cut; bo's home page then says bo is no
+    /// longer in the group, and lists nothing of it. Planted, watched
+    /// failing: the home page without the removed line (it listed the
+    /// group's people).
+    the_home_page_tells_a_removed_person
+);
+async fn the_home_page_tells_a_removed_person(engine: Engine) {
+    let relay = relay().await;
+    let (ada_dir, bo_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ada = node(ada_dir.path(), &relay, &signing(9)).await;
+    let bo = joined(bo_dir.path(), &relay, &ada, 2, "bo").await;
+    assert_eq!(
+        removal(&ada, "bo").await,
+        svrngs_node::removal::Outcome::Out
+    );
+    let told = tokio::time::timeout(Duration::from_secs(20), async {
+        while !bo
+            .rail()
+            .register(NS)
+            .unwrap()
+            .removed
+            .contains_key(&actor_of(&signing(2)))
+        {
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+    })
+    .await;
+    assert!(told.is_ok(), "bo's computer is told its cut");
+    let home = format!("http://svrngs.localhost:{}/", bo.api_addr().port());
+    let seen = drive(
+        engine,
+        "home.mjs",
+        json!({ "ask": home, "read": "#home section p" }),
+        None,
+    )
+    .await;
+    assert_eq!(
+        seen["read"],
+        "You are no longer in this group. What you already have stays on this computer; nothing new reaches it.",
+        "{seen:#}"
+    );
+    drop((ada, bo));
+}
+
+/// Ada's computer removes `who` from house as `svrngs remove` asks it.
+async fn removal(ada: &Node, who: &str) -> svrngs_node::removal::Outcome {
+    reqwest::Client::builder()
+        .no_proxy()
+        .build()
+        .unwrap()
+        .post(format!(
+            "http://{}{}",
+            ada.api_addr(),
+            svrngs_node::removal::REMOVALS_ROUTE
+        ))
+        .json(&svrngs_node::removal::Asked {
+            group: NS.into(),
+            person: who.into(),
+        })
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap()
+}

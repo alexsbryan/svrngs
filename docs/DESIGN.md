@@ -1108,7 +1108,25 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   `Correct` of its cut restored it (`membership.rs`'s void layer, red at
   `f2b9e03`) — so a link closes only by its issuer's next `Invite`, and
   `InviteFault::Voided` is gone. The keeper can equivocate, signing two
-  acts on one parent; that is the trust risk 2 names.
+  acts on one parent; that is the trust risk 2 names. A person removes
+  someone, or asks it, in the command (u7-removal (e); §10, 2026-10-09):
+  `svrngs remove <name> --group <group>` and `svrngs handover <name>
+  --group <group>` ask the node running here (`crates/svrngs-node/src/removal.rs`),
+  which commits svrngs-core's `Removal` (a `Remove` of each key standing
+  as that person, naming each key's newest acts held) or `HandOnTo`; from
+  anyone but the keeper it is an ask, and the words name who decides. The
+  cut is told once to the removed person's computers, the cut alone. From
+  then on each computer of the group answers a removed key on the
+  members' protocol only with svrngs's refusal `removed`, "You are no
+  longer in this group", and refuses a pass it signed the same, so every
+  lender's door refuses them by the register (`node.rs`,
+  `removed_anywhere`); their home page and the group's page on their
+  phone say they are no longer in the group; a synced folder serves them
+  nothing new, since its provider and the acceptor ask standing. **What
+  they already hold stays theirs**: removal sends nothing back and
+  deletes nothing on their disk — the files a folder gave them, the copy
+  of the record they hold. A removed computer that was off as the cut
+  landed is not told by svrngs; every door refuses it all the same.
 - **Leaving is cheap.** A group's whole state is a directory every member's
   computer holds. A group that goes wrong refounds from any copy, within
   hours, without whoever it leaves out (operator: "with dotfile elegance").

@@ -431,7 +431,12 @@ from the register. Removal as the command asks it (`removal.rs`, U7):
 `POST /v1/removals` commits svrngs-core's `Removal` and `POST
 /v1/handovers` its `HandOnTo`, each answering an `Outcome` the command
 words; a cut is then told to the removed person's computers once, one
-sync request carrying the cut alone (`ring_sync::post`). All are merged
+sync request carrying the cut alone (`ring_sync::post`). A dialer the
+keeper cut is served, on the members' protocol, only svrngs's refusal
+`removed` (`door::gone`, chosen in `node.rs`'s accept by
+`removed_anywhere`), and a pass it signed is refused the same; `/v1/groups`
+says `removed` for this computer, and the home page and the group's page
+word it. All are merged
 into `api::router` before its loopback check, and the node writes the address it serves on to `<data dir>/api`
 (`api::API_FILE`) at each start. Each lend carries the upload its lender
 declares (`lend::Offered`'s `upload_bps`, required on read, `null` when

@@ -216,8 +216,8 @@ async fn an_app_asks_what_the_group_s_people_lend_its_own_included_and_none_stal
 }
 
 /// **An app asks which groups this computer holds, and finds the API by
-/// itself** (the u5-1 row): `/v1/groups` answers the group's id, its name
-/// and Alex as this computer's person; the data dir's `api` file names the
+/// itself** (the u5-1 row): `/v1/groups` answers the group's id, its name,
+/// Alex as this computer's person, and that Alex was not removed (U7); the data dir's `api` file names the
 /// address the app asked at. Planted: the file not written.
 #[tokio::test]
 async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
@@ -230,7 +230,7 @@ async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
     assert_eq!(status, 200, "{body:#}");
     assert_eq!(
         body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "person": "alex" }] }),
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "person": "alex", "removed": false }] }),
     );
     house.close().await;
 }

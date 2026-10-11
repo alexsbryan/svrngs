@@ -3,7 +3,7 @@
 // `args.ask`, its `/ask?lend=<label>&app=<label>`, it is read for its
 // heading, which the test holds to the one source (question.js).
 //
-//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>"}'
+//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "read"?: "<selector>"}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
@@ -18,7 +18,10 @@ try {
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
   await page.goto(args.ask);
   const heading = await page.locator('#home h2').first().textContent({ timeout: 30_000 });
-  console.log(JSON.stringify({ heading, logs }));
+  // With `read`, a selector, its first match's words too (U7: a removed
+  // person's line).
+  const read = args.read ? await page.locator(args.read).first().textContent({ timeout: 30_000 }) : null;
+  console.log(JSON.stringify({ heading, read, logs }));
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;
