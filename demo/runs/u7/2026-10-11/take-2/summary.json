@@ -1,0 +1,219 @@
+{
+ "setup": {
+  "bo_opens_both": {
+   "music": "http://3k6bagv3q7q3pq6m3uvzu5t1vwnc6rd6dv2hnkfjuf1k278kr41ab7j29vdqd4.localhost:64753/",
+   "films": "http://vk2n49r3d565m5wsdv9j133v80m9mcdr3wdgcvmrf7t3ruj31qtt6xu2lqzzth.localhost:64753/"
+  },
+  "before_everywhere_s": 0.63,
+  "cy_before": {
+   "do": "open",
+   "t": 1791744039.097,
+   "ms": 3286,
+   "status": "You\u2019re in Trip, as Cy",
+   "lent": [
+    "Ana\u2019s music",
+    "Sam\u2019s films"
+   ],
+   "opened": {
+    "origin": "http://vk2n49r3d565m5wsdv9j133v80m9mcdr3wdgcvmrf7t3ruj31qtt6xu2lqzzth.localhost:64706",
+    "text": "Sam's films",
+    "ms": 2433
+   },
+   "logs": [
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: LAYER parse: ok \u2014 issuer 9230bd7dd91ef9b56e6f1cbe7be732f595f5086eccc651494e27619744f9bb61",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok \u2014 the key c2b86dfc238b4211a4b7610c22e2e2b0f9c61c22711b404d8e21ad9d6b86f112",
+    "debug: LAYER parse: ok \u2014 a bare key: found by n0's address lookup; n0's relays RelayMap { relays: RwLock { data: {RelayUrl(\"https://aps1-1.relay.n0.iroh.link/\"): RelayConfig { url: RelayUrl(\"https://aps1-1.relay.n0.iroh.link/\"), quic: Some(RelayQuicConfig { port: 7842 }), auth_token: None }, RelayUrl(\"https://euc1-1.relay.n0.iroh.link/\"): RelayConfig { url: RelayUrl(\"https://euc1-1.relay.n0.iroh.link/\"), quic: Some(RelayQuicConfig { port: 7842 }), auth_token: None }, RelayUrl(\"https://use1-1.relay.n0.iroh.link/\"): RelayConfig { url: RelayUrl(\"https://use1-1.relay.n0.iroh.link/\"), quic: Some(RelayQuicConfig { port: 7842 }), auth_token: None }, RelayUrl(\"https://usw1-1.relay.n0.iroh.link/\"): RelayConfig { url: RelayUrl(\"https://usw1-1.relay.n0.iroh.link/\"), quic: Some(RelayQuicConfig { port: 7842 }), auth_token: None }}, poisoned: false, .. } }",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only)\u2026",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok \u2014 local endpoint c2b86dfc238b4211a4b7610c22e2e2b0f9c61c22711b404d8e21ad9d6b86f112 bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())\u2026",
+    "debug: LAYER relay-connect: ok \u2014 endpoint reports online (relay handshake done)",
+    "debug: LAYER tls/alpn+relay-hop: dialing 9230bd7dd91ef9b56e6f1cbe7be732f595f5086eccc651494e27619744f9bb61 on the Member protocol through a relay\u2026",
+    "debug: LAYER tls/alpn+relay-hop: ok \u2014 QUIC connection established to 9230bd7dd91ef9b56e6f1cbe7be732f595f5086eccc651494e27619744f9bb61 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: HTTP: GET /people/lends \u2014 a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends \u2014 the stream is done",
+    "debug: PAGE: opening vk2n49r3d565m5wsdv9j133v80m9mcdr3wdgcvmrf7t3ruj31qtt6xu2lqzzth at http://vk2n49r3d565m5wsdv9j133v80m9mcdr3wdgcvmrf7t3ruj31qtt6xu2lqzzth.localhost:64706/open.html?v=d2a53021ea20, a pass to 1 lend(s) until 1791787236",
+    "error: WebSocket connection to 'wss://usw1-1.relay.n0.iroh.link/relay' failed: The operation couldn\u2019t be completed. Socket is not connected"
+   ]
+  }
+ },
+ "ask": {
+  "who": "ana",
+  "args": [
+   "remove",
+   "Bo",
+   "--group",
+   "Trip"
+  ],
+  "exit": 0,
+  "said": "You asked Sam to remove Bo from Trip. Bo stays in it until Sam does.",
+  "ms": 19,
+  "bo_after": [
+   "films 200",
+   "music 200"
+  ]
+ },
+ "cut": {
+  "command": {
+   "who": "sam",
+   "args": [
+    "remove",
+    "Bo",
+    "--group",
+    "Trip"
+   ],
+   "exit": 0,
+   "said": "Bo is no longer in Trip. What Bo already has stays with them; nothing new reaches them.",
+   "ms": 37
+  },
+  "refused_removed_s": {
+   "music": 0.048,
+   "films": 0.048
+  },
+  "bo_told": {
+   "s": 0.357,
+   "body": {
+    "id": "6e48d05b2495a1b3da4e6baf258338c4d1355d0e439c4c8a4a4b501ce461af56",
+    "name": "Trip",
+    "person": null,
+    "removed": true
+   }
+  }
+ },
+ "folder": {
+  "ana_s": 0.35,
+  "written_since_cut_s": 90.31,
+  "bo_holds_after": false,
+  "bo_before": [
+   "before.bin"
+  ],
+  "bo_now": [
+   "before.bin"
+  ],
+  "bo_keeps_before": true
+ },
+ "bo_removes": {
+  "tries": [
+   {
+    "who": "bo",
+    "args": [
+     "remove",
+     "Sam",
+     "--group",
+     "Trip"
+    ],
+    "exit": 1,
+    "said": "svrngs: You are no longer in Trip.",
+    "ms": 29
+   },
+   {
+    "who": "bo",
+    "args": [
+     "remove",
+     "Ana",
+     "--group",
+     "Trip"
+    ],
+    "exit": 1,
+    "said": "svrngs: You are no longer in Trip.",
+    "ms": 16
+   }
+  ],
+  "bo_key": "107f32d086db5767d1490f025fd24315e2fb269e4ce9a4f82eb70c443850f4f3",
+  "bo_acts_before": [],
+  "bo_acts_after": [],
+  "standing": {
+   "sam": [
+    "Ana",
+    "Cy",
+    "Sam"
+   ],
+   "ana": [
+    "Ana",
+    "Cy",
+    "Sam"
+   ]
+  }
+ },
+ "seen": {
+  "bo_home": {
+   "heading": "Trip",
+   "read": "You are no longer in Trip. What you already have stays on this computer; nothing new reaches it.",
+   "logs": []
+  },
+  "cy_after": {
+   "do": "open",
+   "t": 1791744194.724,
+   "ms": 2267,
+   "status": "You\u2019re in Trip, as Cy",
+   "lent": [
+    "Ana\u2019s music",
+    "Sam\u2019s films"
+   ],
+   "opened": {
+    "origin": "http://vk2n49r3d565m5wsdv9j133v80m9mcdr3wdgcvmrf7t3ruj31qtt6xu2lqzzth.localhost:64706",
+    "text": "Sam's films",
+    "ms": 1635
+   },
+   "logs": [
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: LAYER parse: ok \u2014 issuer 9230bd7dd91ef9b56e6f1cbe7be732f595f5086eccc651494e27619744f9bb61",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok \u2014 the key c2b86dfc238b4211a4b7610c22e2e2b0f9c61c22711b404d8e21ad9d6b86f112",
+    "debug: LAYER parse: ok \u2014 a bare key: found by n0's address lookup; n0's relays RelayMap { relays: RwLock { data: {RelayUrl(\"https://aps1-1.relay.n0.iroh.link/\"): RelayConfig { url: RelayUrl(\"https://aps1-1.relay.n0.iroh.link/\"), quic: Some(RelayQuicConfig { port: 7842 }), auth_token: None }, RelayUrl(\"https://euc1-1.relay.n0.iroh.link/\"): RelayConfig { url: RelayUrl(\"https://euc1-1.relay.n0.iroh.link/\"), quic: Some(RelayQuicConfig { port: 7842 }), auth_token: None }, RelayUrl(\"https://use1-1.relay.n0.iroh.link/\"): RelayConfig { url: RelayUrl(\"https://use1-1.relay.n0.iroh.link/\"), quic: Some(RelayQuicConfig { port: 7842 }), auth_token: None }, RelayUrl(\"https://usw1-1.relay.n0.iroh.link/\"): RelayConfig { url: RelayUrl(\"https://usw1-1.relay.n0.iroh.link/\"), quic: Some(RelayQuicConfig { port: 7842 }), auth_token: None }}, poisoned: false, .. } }",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only)\u2026",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok \u2014 local endpoint c2b86dfc238b4211a4b7610c22e2e2b0f9c61c22711b404d8e21ad9d6b86f112 bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())\u2026",
+    "debug: LAYER relay-connect: ok \u2014 endpoint reports online (relay handshake done)",
+    "debug: LAYER tls/alpn+relay-hop: dialing 9230bd7dd91ef9b56e6f1cbe7be732f595f5086eccc651494e27619744f9bb61 on the Member protocol through a relay\u2026",
+    "debug: LAYER tls/alpn+relay-hop: ok \u2014 QUIC connection established to 9230bd7dd91ef9b56e6f1cbe7be732f595f5086eccc651494e27619744f9bb61 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: HTTP: GET /people/lends \u2014 a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends \u2014 the stream is done",
+    "debug: PAGE: opening vk2n49r3d565m5wsdv9j133v80m9mcdr3wdgcvmrf7t3ruj31qtt6xu2lqzzth at http://vk2n49r3d565m5wsdv9j133v80m9mcdr3wdgcvmrf7t3ruj31qtt6xu2lqzzth.localhost:64706/open.html?v=d2a53021ea20, a pass to 1 lend(s) until 1791787393",
+    "error: WebSocket connection to 'wss://usw1-1.relay.n0.iroh.link/relay' failed: The operation couldn\u2019t be completed. Socket is not connected"
+   ]
+  },
+  "cy_music": {
+   "do": "open",
+   "t": 1791744198.162,
+   "ms": 1118,
+   "status": "You\u2019re in Trip, as Cy",
+   "lent": [
+    "Ana\u2019s music",
+    "Sam\u2019s films"
+   ],
+   "opened": {
+    "origin": "http://3k6bagv3q7q3pq6m3uvzu5t1vwnc6rd6dv2hnkfjuf1k278kr41ab7j29vdqd4.localhost:64706",
+    "text": "Ana's music",
+    "ms": 2316
+   },
+   "logs": [
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: LAYER parse: ok \u2014 issuer 9230bd7dd91ef9b56e6f1cbe7be732f595f5086eccc651494e27619744f9bb61",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok \u2014 the key c2b86dfc238b4211a4b7610c22e2e2b0f9c61c22711b404d8e21ad9d6b86f112",
+    "debug: LAYER parse: ok \u2014 a bare key: found by n0's address lookup; n0's relays RelayMap { relays: RwLock { data: {RelayUrl(\"https://aps1-1.relay.n0.iroh.link/\"): RelayConfig { url: RelayUrl(\"https://aps1-1.relay.n0.iroh.link/\"), quic: Some(RelayQuicConfig { port: 7842 }), auth_token: None }, RelayUrl(\"https://euc1-1.relay.n0.iroh.link/\"): RelayConfig { url: RelayUrl(\"https://euc1-1.relay.n0.iroh.link/\"), quic: Some(RelayQuicConfig { port: 7842 }), auth_token: None }, RelayUrl(\"https://use1-1.relay.n0.iroh.link/\"): RelayConfig { url: RelayUrl(\"https://use1-1.relay.n0.iroh.link/\"), quic: Some(RelayQuicConfig { port: 7842 }), auth_token: None }, RelayUrl(\"https://usw1-1.relay.n0.iroh.link/\"): RelayConfig { url: RelayUrl(\"https://usw1-1.relay.n0.iroh.link/\"), quic: Some(RelayQuicConfig { port: 7842 }), auth_token: None }}, poisoned: false, .. } }",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only)\u2026",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok \u2014 local endpoint c2b86dfc238b4211a4b7610c22e2e2b0f9c61c22711b404d8e21ad9d6b86f112 bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())\u2026",
+    "debug: LAYER relay-connect: ok \u2014 endpoint reports online (relay handshake done)",
+    "debug: LAYER tls/alpn+relay-hop: dialing 9230bd7dd91ef9b56e6f1cbe7be732f595f5086eccc651494e27619744f9bb61 on the Member protocol through a relay\u2026",
+    "debug: LAYER tls/alpn+relay-hop: ok \u2014 QUIC connection established to 9230bd7dd91ef9b56e6f1cbe7be732f595f5086eccc651494e27619744f9bb61 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: HTTP: GET /people/lends \u2014 a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends \u2014 the stream is done",
+    "debug: PAGE: opening 3k6bagv3q7q3pq6m3uvzu5t1vwnc6rd6dv2hnkfjuf1k278kr41ab7j29vdqd4 at http://3k6bagv3q7q3pq6m3uvzu5t1vwnc6rd6dv2hnkfjuf1k278kr41ab7j29vdqd4.localhost:64706/open.html?v=d2a53021ea20, a pass to 1 lend(s) until 1791787395",
+    "error: WebSocket connection to 'wss://usw1-1.relay.n0.iroh.link/relay' failed: The operation couldn\u2019t be completed. Socket is not connected"
+   ]
+  }
+ }
+}

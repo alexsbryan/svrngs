@@ -135,3 +135,33 @@ The repository at `a473f1d`: the removal route wakes the round
   command (the woken round dials Ana at once, on a path the setup's rounds
   already found), so both lenders inside the 30 s bar.
 - 1-3 and 5-9 as take 1 had them.
+
+## Take 2 — 18:39-18:43 UTC, the repository at `773bbad`
+
+The product as `a473f1d` left it; data in `take-2/`, as take 1's. Load
+averages near 6. Setup: Bo's computer opened both lends 52.6 s after they
+were made; `before.bin` on Ana's and Bo's disks 0.63 s after Sam put it;
+Cy's phone in 5.2 s.
+
+| Prediction | The data | Verdict |
+|---|---|---|
+| 1, Ana's ask cuts nobody | the same words, exit 0, 19 ms; Bo read `films 200`, `music 200` for the 10 s after | **held** |
+| 2, Sam's command is the cut | the same words, exit 0, 37 ms | **held** |
+| 3, Sam's lend refuses Bo inside 2 s | 403 `removed`, the same words, at 0.048 s | **held** |
+| 4′, Ana's lend refuses Bo inside 5 s | 403 `removed`, the same words, at 0.048 s (`events.jsonl`, `lend`, music). Sam's log: the cut written, "the round woken", at 18:40:49.315; the round with Ana at .317; Ana's computer refused Bo's dial, "whether a group held here removed the dialer … group=Some(…)", at .327 (`sam.log`, `ana.log`) | **held** |
+| 5, Bo's computer told within 10 s | `removed: true` at 0.357 s | **held** |
+| 6, the folder | `after.bin`, put 90.3 s after the command, on Ana's disk 0.35 s later; Bo's disk `before.bin` alone 45 s after | **held** |
+| 7, Bo's own removal counts nowhere | both "svrngs: You are no longer in Trip.", exit 1, 29 and 16 ms; no act of Bo's key in Bo's journal; standing on Sam's and Ana's computers: Ana, Cy, Sam | **held** |
+| 8, Bo's home page | Chromium: "Trip", "You are no longer in Trip. What you already have stays on this computer; nothing new reaches it." | **held** |
+| 9, Cy's phone unmoved | 145 s after the cut, the group's page listed both and opened Sam's films (1,635 ms) and Ana's music (2,316 ms) | **held** |
+
+**Removed, by demo/c.md's check, on this host: passed.** From Sam's
+command, every lender refused Bo with svrngs's refusal in a person's words
+at 0.048 s, against the 30 s bar; Bo's home page said Bo is no longer in
+Trip; the folder's next file reached every computer but Bo's; Bo's own
+removals counted nowhere; what Bo held stayed on Bo's disk. One host, every
+path as iroh chose it on one machine, one run: not a rate, and not two
+homes (Demo C's **Apart** is the two-homes row's). Take 1's unpredicted
+trace — Bo's rounds logging an "exchange" with computers that refused every
+dial — showed again (`bo.log`, 18:41:33 to 18:43:33; 267 refusals of Bo's
+dials in `sam.log`, 289 in `ana.log`), a follow-up.
