@@ -1072,11 +1072,13 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   seq − 1 a `WrongPrevious` gap, `crates/svrngs-core/src/admit.rs`); a copy
   holds an act only with its parent, so copies converge by union. Two acts on one parent are a fork, and
   forks void nothing (U7; operator, 2026-10-04, moved from U2). Today two acts
-  on one seq exclude both (`crates/svrngs-core/src/admit.rs:467-492`), so
-  whoever signed an `Admit` can take it back on every copy by signing a second
-  act at its seq: a removal nobody sequenced. Until U7 that grants nothing a
-  member lacks, since any standing key's `Remove` counts
-  (`membership.rs:153-156`), so it lands with the removal it protects, and
+  on one seq exclude both from what an app folds and a folder's changes
+  (`crates/svrngs-core/src/admit.rs`, the per-actor audit), so an author can
+  take back their own act on every copy by signing a second at its seq, and
+  every copy reads as incomplete. Standing ignores the fork: `membership`
+  folds before the audit and counts an `Admit` on either branch (u7-removal
+  (a), `a_second_act_at_an_admits_seq_takes_nothing_back`). It lands with
+  the removal, and
   with the sync that carries both branches of a fork. U7 also closes two holes of the
   same family that only a member can open, each leaving a copy that never
   reads as complete while the acts themselves still apply: a forged line
