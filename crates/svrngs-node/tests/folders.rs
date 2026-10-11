@@ -398,6 +398,83 @@ async fn a_hash_no_synced_folder_places_is_refused_though_the_store_holds_it() {
     group.close().await;
 }
 
+/// **A hash the record stopped placing is refused at the next get**
+/// (perf-2 c): Cy gets Ana's file from her provider; then an act of Ana's
+/// deleting it is planted in her record, past her directory, and Cy's next
+/// get of the same hash, at once, is refused by the record, though her
+/// store may still hold it. Red with the layout kept past a moved record
+/// (the digest's check out): a layout read before her act answers.
+#[tokio::test]
+async fn a_hash_the_record_stopped_placing_is_refused_at_the_next_get() {
+    use svrngs_core::{Change, SyncPath};
+    let said = Said::default();
+    let writer = said.clone();
+    let subscriber = tracing_subscriber::fmt()
+        .with_env_filter("folder=debug")
+        .with_ansi(false)
+        .with_writer(move || writer.clone())
+        .finish();
+    let _said = tracing::subscriber::set_default(subscriber);
+    let group = Group::new().await;
+    let ra = tempfile::tempdir().unwrap();
+    let ana = both_ways(&group.ana, ra.path()).await;
+    let bytes = noise(40_000, b"stopped");
+    let hash = iroh_blobs::Hash::from_bytes(*blake3::hash(&bytes).as_bytes());
+    std::fs::write(ana.join("s.bin"), &bytes).unwrap();
+    let ns = seed("films", 9).id();
+    let placed = || {
+        let layout = group.ana.rail().admission(&ns).unwrap().layout();
+        layout.into_iter().find(|p| p.path.as_str() == "s.bin")
+    };
+    let t0 = std::time::Instant::now();
+    while placed().is_none() && t0.elapsed() < Duration::from_secs(10) {
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+    let entry = placed().expect("Ana's act places her file").entry;
+    let first = get(
+        &group.cy,
+        &group.ana,
+        hash,
+        tempfile::tempdir().unwrap().path(),
+    )
+    .await;
+    let deleted = svrngs_core::tests_support::Fixture {
+        act: RailAct::Synced {
+            folder: "Shared".into(),
+            changes: vec![Change {
+                path: SyncPath::parse("s.bin").unwrap(),
+                now: None,
+                base: Some(entry),
+            }],
+        },
+        on_behalf_of: None,
+    };
+    group.ana.rail().commit(&ns, &deleted).unwrap().unwrap();
+    let second = get(
+        &group.cy,
+        &group.ana,
+        hash,
+        tempfile::tempdir().unwrap().path(),
+    )
+    .await;
+    let log = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    let answers: Vec<&str> = log
+        .lines()
+        .filter(|l| {
+            l.contains(&hash.to_string())
+                && l.contains("folder: ")
+                && l.contains("the dialer stands in places the hash")
+        })
+        .collect();
+    group.close().await;
+    assert_eq!(first, Ok(40_000), "Ana serves Cy her file: {answers:#?}");
+    assert!(second.is_err(), "the second get is refused: {second:?}");
+    assert!(
+        answers.last().is_some_and(|l| l.contains("refused")),
+        "the record refused it, not the store: {answers:#?}"
+    );
+}
+
 /// **A holder asleep is waited on for a bound, then the next asked**: Ana
 /// writes, Ben's directory takes it, Ana's node goes away; Cy, syncing
 /// after, asks Ana first, as the writer, and holds the file from Ben within

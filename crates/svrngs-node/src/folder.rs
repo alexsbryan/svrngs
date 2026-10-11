@@ -98,6 +98,22 @@ pub struct Folders {
     /// Each holder's open connection, and when one last did not answer.
     conns: watch::Sender<BTreeMap<String, Connection>>,
     unanswered: watch::Sender<BTreeMap<String, Instant>>,
+    /// Each group's layout as last read, with the record state it was read
+    /// at (perf-2 c).
+    layouts: watch::Sender<BTreeMap<String, Layout>>,
+}
+
+/// A group's synced folders' files where its record places them, the set
+/// of their hashes, and the record's digest when they were read: equal
+/// digests hold equal acts (svrngs-core view.rs, `View`), as the store's
+/// sweep reads them ([`Folders::read_at`]). Read again only when the
+/// digest moved, which [`Folders::layout`] asks before each answer, so a
+/// layout the record has moved past never answers.
+#[derive(Clone)]
+struct Layout {
+    at: Digest,
+    placed: Arc<[Placed]>,
+    hashes: Arc<HashSet<ContentHash>>,
 }
 
 /// What the store's keep is read from: each synced group's digest, and
@@ -147,6 +163,7 @@ impl Folders {
             syncing: watch::Sender::new(synced::syncing_in(data_dir)),
             conns: watch::Sender::new(BTreeMap::new()),
             unanswered: watch::Sender::new(BTreeMap::new()),
+            layouts: watch::Sender::new(BTreeMap::new()),
         };
         tracing::info!(target: "folder", untagged, "folder: the store is open");
         let keeper = folders.clone();
@@ -184,12 +201,33 @@ impl Folders {
     }
 
     /// Every synced folder's files where the record of `group` places
-    /// them; a record that cannot be read is said by the group's name,
-    /// never read as one placing nothing (#113, #117).
-    fn layout(&self, group: &str) -> Result<Vec<Placed>, FolderError> {
-        let read = self.host.rail().admission(group);
-        read.map(|a| a.layout())
-            .map_err(|e| FolderError::Unread(group.into(), e.to_string()))
+    /// them, read whole only when its digest moved since the last read: a
+    /// whole read once a get was 6.5 ms at 1,000 files and 399.6 at 100,000
+    /// (perf-1's README §9). A record that cannot be read is said by the
+    /// group's name, never read as one placing nothing (#113, #117).
+    fn layout(&self, group: &str) -> Result<Layout, FolderError> {
+        let unread =
+            |e: svrngs_runtime::RailError| FolderError::Unread(group.into(), e.to_string());
+        // The digest before the acts, so a layout is never older than the
+        // digest it is kept with: an act between the two is read again.
+        let at = self.host.rail().digest(group).map_err(unread)?;
+        let kept = self.layouts.borrow().get(group).cloned();
+        if let Some(kept) = kept.filter(|l| l.at == at) {
+            return Ok(kept);
+        }
+        let placed: Arc<[Placed]> = self
+            .host
+            .rail()
+            .admission(group)
+            .map_err(unread)?
+            .layout()
+            .into();
+        let hashes = Arc::new(placed.iter().map(|p| p.hash).collect());
+        tracing::debug!(target: "folder", namespace = group, placed = placed.len(), "folder: the layout read again, the record having moved");
+        let read = Layout { at, placed, hashes };
+        self.layouts
+            .send_modify(|m| drop(m.insert(group.into(), read.clone())));
+        Ok(read)
     }
 
     /// Every file under `dir`, by its path under it. A link is not
@@ -271,7 +309,7 @@ impl Folders {
         let (mut keep, mut why) = (HashSet::new(), None);
         for ns in groups {
             match self.layout(&ns) {
-                Ok(placed) => keep.extend(placed.iter().map(|p| Hash::from(*p.hash.as_bytes()))),
+                Ok(read) => keep.extend(read.hashes.iter().map(|h| Hash::from(*h.as_bytes()))),
                 Err(e) => why = Some(e),
             }
         }
@@ -317,7 +355,7 @@ impl Folders {
         let groups = self.host.standings().unwrap_or_default();
         for (ns, _) in groups.iter().filter(|(_, m)| m.contains_key(dialer)) {
             match self.layout(ns) {
-                Ok(placed) if placed.iter().any(|p| &p.hash == hash) => {
+                Ok(read) if read.hashes.contains(hash) => {
                     tracing::debug!(target: "folder", namespace = ns, dialer, "folder: the dialer stands in a group whose synced folder places the hash");
                     return true;
                 }

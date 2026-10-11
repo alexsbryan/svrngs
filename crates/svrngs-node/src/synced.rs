@@ -218,7 +218,7 @@ impl Folders {
         // Read before anything is sent or deleted, so a group that cannot
         // be read stops the step by its name.
         let (holders, placed) = (self.holders(group)?, self.layout(group)?);
-        tracing::debug!(target: "folder", folder, placed = placed.len(), holders = holders.len(), ms = ms(t0), "synced: the layout read");
+        tracing::debug!(target: "folder", folder, placed = placed.placed.len(), holders = holders.len(), ms = ms(t0), "synced: the layout read");
         let kept = self.data_dir.join(format!("synced-{group}-{folder}.json"));
         // Nothing kept is nothing held; a kept state that cannot be read is
         // never read as that, or every file would go again with no base.
@@ -308,9 +308,13 @@ impl Folders {
             0 => placed,
             _ => self.layout(group)?,
         };
-        let placed = placed.into_iter().filter(|p| p.folder == folder).collect();
+        let placed: Vec<&Placed> = placed
+            .placed
+            .iter()
+            .filter(|p| p.folder == folder)
+            .collect();
         hold.extend(
-            self.apply(dir, folder, placed, &holders, &mut held, &taken)
+            self.apply(dir, folder, &placed, &holders, &mut held, &taken)
                 .await,
         );
         let (apply_ms, t) = (ms(t), Instant::now());
@@ -342,7 +346,7 @@ impl Folders {
         &self,
         dir: &Path,
         folder: &str,
-        placed: Vec<Placed>,
+        placed: &[&Placed],
         standing: &Holders,
         held: &mut BTreeMap<SyncPath, Held>,
         taken: &BTreeMap<SyncPath, (ContentHash, SystemTime)>,
@@ -363,7 +367,7 @@ impl Folders {
         // key: a scan of every entry for each was 95.3 s of 100,000 files'
         // first step (perf-1's README §9; perf-2 b).
         let mut mine: BTreeMap<(&SyncPath, ContentHash), &Placed> = BTreeMap::new();
-        for q in placed.iter().filter(|q| q.entry.key == self.host.actor()) {
+        for &q in placed.iter().filter(|q| q.entry.key == self.host.actor()) {
             mine.entry((&q.entry.path, q.hash)).or_insert(q);
         }
         for (path, &(hash, mtime)) in taken {
@@ -375,7 +379,7 @@ impl Folders {
                 held.insert(path.clone(), Held { p, mtime });
             }
         }
-        for p in placed {
+        for &p in placed {
             let (at, before) = (dir.join(p.path.as_str()), held.get(&p.path));
             if before.is_some_and(|h| h.p.entry == p.entry) || !unchanged(before, &at) {
                 continue;
@@ -409,7 +413,13 @@ impl Folders {
             let Ok(mtime) = std::fs::metadata(&at).and_then(|m| m.modified()) else {
                 continue;
             };
-            held.insert(p.path.clone(), Held { p, mtime });
+            held.insert(
+                p.path.clone(),
+                Held {
+                    p: p.clone(),
+                    mtime,
+                },
+            );
         }
         hold
     }
