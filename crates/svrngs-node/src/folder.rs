@@ -52,6 +52,14 @@ mod synced;
 /// What a fetch asks a holder for at once.
 const PIECE: u64 = 1 << 20;
 
+/// How long a holder that did not answer within [`ANSWER_WITHIN`] is
+/// taken as asleep: asked last, after every other holder, for this long
+/// (syp-4 f). The one decider of who is asleep: the node's lends keep
+/// none, asking every computer at once and waiting on none past
+/// [`ANSWER_WITHIN`] (node.rs `Lends`), where a fetch asks its holders in
+/// turn, and would wait out an asleep writer at every file.
+const ASLEEP_FOR: Duration = Duration::from_secs(60);
+
 /// How often the store asks whether what it keeps has changed, and drops
 /// what it no longer keeps if so (syp-4 b).
 const SWEEP: Duration = Duration::from_secs(1);
@@ -308,11 +316,7 @@ impl Folders {
         let missing = local.missing();
         let mut order: Vec<&String> = holders.iter().filter(|k| *k != self.host.actor()).collect();
         let lately = self.unanswered.borrow().clone();
-        order.sort_by_key(|k| {
-            lately
-                .get(*k)
-                .is_some_and(|t| t.elapsed() < Duration::from_secs(60))
-        });
+        order.sort_by_key(|k| lately.get(*k).is_some_and(|t| t.elapsed() < ASLEEP_FOR));
         let mut why = Vec::new();
         for key in order {
             let t0 = Instant::now();
