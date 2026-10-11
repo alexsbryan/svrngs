@@ -42,9 +42,10 @@ pub const DEFAULT_LIMIT: NonZeroU16 = NonZeroU16::new(3).expect("3 is not 0");
 /// gate).
 pub const WELL_KNOWN: &str = include_str!("well_known.txt");
 
-/// [`WELL_KNOWN`]'s rows: the port as written, the kind, and the rest of
-/// the line, empty when there is none.
-fn rows() -> impl Iterator<Item = (&'static str, &'static str, &'static str)> {
+/// [`WELL_KNOWN`]'s rows: the port as written, the kind, parsed once for
+/// both readers (REVIEW_FINDINGS #64), and the rest of the line, empty when
+/// there is none. A row whose kind does not parse is none.
+fn rows() -> impl Iterator<Item = (&'static str, Kind, &'static str)> {
     WELL_KNOWN
         .lines()
         .map(|l| l.split('#').next().unwrap_or("").trim())
@@ -53,7 +54,7 @@ fn rows() -> impl Iterator<Item = (&'static str, &'static str, &'static str)> {
             let (port, rest) = l.split_once(char::is_whitespace)?;
             let rest = rest.trim_start();
             let (kind, how) = rest.split_once(char::is_whitespace).unwrap_or((rest, ""));
-            Some((port, kind, how.trim()))
+            Some((port, Kind::parse(kind).ok()?, how.trim()))
         })
 }
 
@@ -105,9 +106,7 @@ pub fn resolve_target(port: &str) -> Result<NonZeroU16, String> {
 
 /// The kind [`WELL_KNOWN`] names for `port`, if any.
 pub fn well_known_kind(port: NonZeroU16) -> Option<Kind> {
-    rows().find_map(|(p, kind, _)| {
-        (p.parse::<u16>().ok()? == port.get()).then(|| Kind::parse(kind).ok())?
-    })
+    rows().find_map(|(p, kind, _)| (p.parse::<u16>().ok()? == port.get()).then_some(kind))
 }
 
 /// How a lender makes a person an account in a service of `kind`, if
@@ -118,7 +117,7 @@ pub fn well_known_kind(port: NonZeroU16) -> Option<Kind> {
 /// browsers (`demo/runs/a/dry-2026-10-04/README.md:39-50`;
 /// `demo/runs/u5/2026-10-05-jellyfin/README.md`, finding 3).
 pub fn accounts_of(kind: &Kind) -> Option<&'static str> {
-    let how = rows().find_map(|(_, k, how)| (k == kind.as_str() && !how.is_empty()).then_some(how));
+    let how = rows().find_map(|(_, k, how)| (k == *kind && !how.is_empty()).then_some(how));
     tracing::debug!(target: "share", kind = %kind, own_accounts = how.is_some(), "share: whether the kind keeps its own accounts");
     how
 }
