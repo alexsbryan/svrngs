@@ -110,7 +110,7 @@ async function list(person) {
 async function openFrom(person, what, ready) {
   return timed(person, `${what} from the list`, async () => {
     const link = person.home
-      ? person.page.locator('#home a', { hasText: `'s ${what}` })
+      ? person.page.locator('#home a', { hasText: `’s ${what}` })
       : person.page.locator('#lent button', { hasText: what });
     await link.first().click();
     await person.page.waitForURL((u) => !/^svrngs\./.test(u.hostname) && !u.href.startsWith(args.link.split('#')[0]), { timeout: 90_000 });
