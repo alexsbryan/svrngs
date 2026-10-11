@@ -18,6 +18,9 @@ its path as iroh selected it, and its phases from the nodes' debug traces.
                                  p6 (100 MiB and its edit), t1, t2, or a folder
                                  of N files' take, idle, found or join
 
+PERF_BIN, if set, is the instrument to run in place of this tree's build: a
+part's before and after, each built at its commit, run back to back.
+
 Data in run/<pass>/ beside this file; W is the scratch dir (else
 /tmp/perf-run), removed after each group. scripts/check.sh runs none of
 this."""
@@ -434,10 +437,15 @@ def main():
         ["git", "-C", str(REPO), "rev-parse", "--short", "HEAD"], capture_output=True, text=True).stdout.strip(),
         df=subprocess.run(["df", "-k", str(REPO)], capture_output=True, text=True).stdout)
     if start["free_gb"] < FREE_GB: sys.exit(f"{start['free_gb']} GB free, under {FREE_GB}: not started")
-    built = subprocess.run(["cargo", "test", "--release", "--offline", "-p", "svrngs-node", "--test", "perf",
-                            "--no-run", "--message-format=json"], cwd=REPO, capture_output=True, text=True, check=True)
-    BIN[0] = next(json.loads(l)["executable"] for l in built.stdout.splitlines()
-                  if '"executable":"' in l and "/perf-" in l)
+    if os.environ.get("PERF_BIN"):
+        # A binary built at another commit, so two products run back to back at one load.
+        BIN[0] = os.environ["PERF_BIN"]
+    else:
+        built = subprocess.run(["cargo", "test", "--release", "--offline", "-p", "svrngs-node", "--test", "perf",
+                                "--no-run", "--message-format=json"], cwd=REPO, capture_output=True, text=True,
+                               check=True)
+        BIN[0] = next(json.loads(l)["executable"] for l in built.stdout.splitlines()
+                      if '"executable":"' in l and "/perf-" in l)
     say("built", bin=BIN[0])
     paths = [a for a in sys.argv[2:] if a in ("loopback", "relay", "n0")] or (
         ["loopback"] if which == "part" else ["loopback", "relay", "n0"])
