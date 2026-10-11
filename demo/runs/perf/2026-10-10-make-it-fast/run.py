@@ -12,7 +12,8 @@ n0). Each number keeps the host's load, cores and swap at its start and end,
 its path as iroh selected it, and its phases from the nodes' debug traces.
 
   run.py breakdown [path ...]    small scales, whatever the load
-  run.py targets [--wait SECS]   the targets; first waits up to SECS for the
+  run.py targets [--wait SECS] [--as L]
+                                 the targets, into run/targets[-L]; first waits up to SECS for the
                                  1-minute load under 1.5x cores and 20 GB free,
                                  then gets 100 MiB between two bare iroh-blobs
                                  stores (perf_blobs, candidate 1's measurement)
@@ -455,7 +456,7 @@ def part(case, n):
 def main():
     which = sys.argv[1] if len(sys.argv) > 1 else "breakdown"
     label = sys.argv[sys.argv.index("--as") + 1] if "--as" in sys.argv else None
-    sub = f"part-{sys.argv[2]}" + (f"-{label}" if label else "") if which == "part" else which
+    sub = (f"part-{sys.argv[2]}" if which == "part" else which) + (f"-{label}" if label else "")
     OUT[0] = HERE / "run" / sub; OUT[0].mkdir(parents=True, exist_ok=True)
     if which == "targets" and "--wait" in sys.argv:
         bound = float(sys.argv[sys.argv.index("--wait") + 1]); t0 = time.time()
