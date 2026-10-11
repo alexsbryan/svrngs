@@ -65,7 +65,7 @@ against perf-1's measured (its §9) and the prediction with 1-7 (its §10,
 
 | # | Target | Measured | Load at start | Verdict | perf-1 | Predicted |
 |---|---|---|---|---|---|---|
-| T1 | 300 ms | **164 ms**, median of 10, 115-196 (`T1-loopback-median`) | 2.73 | **passed** | 1,182 ms | about 100 ms, met: met, slower — P1 65.8 ms, 66.7%, of it 50 the step's `SETTLE` after the OS's first event (`synced.rs:63`) |
+| T1 | 300 ms | **164 ms**, median of 10, 115-196 (`T1-loopback-median`) | 2.73 | **passed** | 1,182 ms | about 100 ms, met: met, slower — P1 65.8 ms, 66.7%, of it 50 the step's `GATHER_FOR` after the OS's first event (`synced.rs:63`) |
 | T2 | 10 s | **373 ms** (`T2-loopback`) | 2.61 | **passed** | 24.3 s | about 2 s, met: met, five times under |
 | T3 | 100 MB/s | **83.4 MB/s** per member, two at once (`T3T4-loopback-rate`); one alone 139.3 (§4) | 3.97 | **failed** | 11.8 MB/s | unknown, the get's own rate |
 | T4 | 2 MiB moved | **104,857,600 bytes** to each member (`T3T4-loopback-edit`) | 4.53 | **failed** | the same | missed until 8: held |

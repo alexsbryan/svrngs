@@ -60,7 +60,7 @@ const SWEEP_EVERY: Duration = Duration::from_secs(600);
 
 /// How long a step waits after the OS's first event, so a burst of writes
 /// is one step and one act.
-const SETTLE: Duration = Duration::from_millis(50);
+const GATHER_FOR: Duration = Duration::from_millis(50);
 
 /// What a step looks at on disk.
 enum Look {
@@ -255,7 +255,7 @@ impl Folders {
                 }
                 look = tokio::select! {
                     first = events.recv() => {
-                        tokio::time::sleep(SETTLE).await;
+                        tokio::time::sleep(GATHER_FOR).await;
                         let mut said = vec![first];
                         while let Ok(e) = events.try_recv() {
                             said.push(Some(e));
