@@ -275,6 +275,10 @@ const PAGE_COOKIES = 'x-svrngs-page-cookies';
 // lend's (mnp-1).
 const REFUSED = 'x-svrngs-refused';
 const say = (status, words, kind) => new Response(words, { status, headers: { ...PLAIN, [REFUSED]: kind } });
+// The two refusals a page meets at the pass and the lend, each in one set of
+// words (#111): no pass held, and a lend the pass does not open.
+const unheld = () => say(503, 'Open this again from your group’s page.', 'pass');
+const closed = () => say(403, 'This is not open to this page.', 'closed');
 
 // The shim (shim.js) for a lend's page, with the cookies its pages read,
 // and the nonce of the page's script policy when it names one: under
@@ -289,12 +293,12 @@ const shim = (label, jar, policy) => {
 async function lent(request, url, where) {
   const h = await holding();
   if (!h) {
-    if (request.mode !== 'navigate') return say(503, 'Open this again from your group’s page.', 'pass');
+    if (request.mode !== 'navigate') return unheld();
     trace(`RUNTIME: no pass for ${OWN}: its start page reads it again`);
     return Response.redirect(`${SCOPE.origin}${SITE}open.html?v=__VERSION__&for=${OWN}&back=${encodeURIComponent(url.pathname + url.search)}`, 302);
   }
   const lend = h.lends.find((l) => l.label === where.label);
-  if (!lend) return say(403, 'This is not open to this page.', 'closed');
+  if (!lend) return closed();
   if (where.read && request.mode === 'navigate') return opening(h, where);
   const jar = await jarOf(where.label);
   const headers = bounded(
@@ -373,7 +377,7 @@ async function lent(request, url, where) {
 // mnp-2, which said nothing of them: asked for again, never read as none.
 async function told() {
   const h = await holding();
-  if (!h?.unanswered) return say(503, 'Open this again from your group’s page.', 'pass');
+  if (!h?.unanswered) return unheld();
   const lends = h.lends.filter((l) => l.label !== OWN);
   trace(`RUNTIME: told this lend's page the ${lends.length} lend(s) it reads, ${h.unanswered.length} unanswered`);
   return Response.json({
@@ -409,10 +413,10 @@ function opening(h, where) {
 async function asking(url) {
   const h = await holding();
   const lend = url.searchParams.get('lend');
-  if (!h) return say(503, 'Open this again from your group’s page.', 'pass');
+  if (!h) return unheld();
   if (!h.lends.some((l) => l.label === lend && l.label !== OWN)) {
     trace(`RUNTIME: a page asks for ${lend}, which it does not read: refused`);
-    return say(403, 'This is not open to this page.', 'closed');
+    return closed();
   }
   trace(`RUNTIME: a page asks its person to let ${OWN} use ${lend}: through the group's page`);
   return onward(`${h.page}#ask=${lend}&app=${OWN}&at=`, url.searchParams.get('back') ?? '/');
@@ -421,11 +425,11 @@ async function asking(url) {
 // A page stops this lend using `label`: sent to its door with the pass.
 async function stopping(label) {
   const h = await holding();
-  if (!h) return say(503, 'Open this again from your group’s page.', 'pass');
+  if (!h) return unheld();
   const lend = h.lends.find((l) => l.label === label);
   if (!lend) {
     trace(`RUNTIME: a page stops ${OWN} using ${label}, which it does not read: refused`);
-    return say(403, 'This is not open to this page.', 'closed');
+    return closed();
   }
   const body = new TextEncoder().encode('{"said":"stop"}');
   const headers = [['x-svrngs-pass', h.pass], ['content-type', 'application/json'], ['content-length', String(body.length)]];
