@@ -886,16 +886,25 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
      by that test (`30dac6a`). Bar 5: clean at every commit. The catalogue
      app, the harder proof, keeps its trigger above.
 
-**Chats are doors, and the last thing we build.** A small adapter per chat, in
-its own package, makes a group for a channel and posts its link. Onboarding
-comes after the core (§8). The core never knows a chat exists.
+**A chat's door is the group's link** (operator, 2026-10-10: "Hopefully not
+more the 50 lines in our own source and a pretty commodity integration"). A
+person posts the link where they talk, as they post any link, and it opens
+the same from Discord, iMessage, WhatsApp, Slack or Signal. svrngs's part is
+the link previewing as an invitation — a title and a description on the
+group's page — with the token in the link's `#` part, which no chat's
+preview fetches, so the preview names no group and carries no token. No
+package per chat, no bot, no commands: E0's Discord door, `discord.js` on
+Discord's gateway with a bot token, slash commands and a guest book keyed by
+Discord user id, 517 code lines (`bridge/*.mjs` and `crates/svrngs/src/bridge.rs`
+at tag `e0-bot`), is the failure this answers; a chat's own door waits in
+§9. The core never knows a chat exists.
 
 ## 4. Domains, and the fork
 
 | Domain | What it owns | Meets svrngs by |
 |---|---|---|
 | **svrngs** | the record, the node, the doors, the command, plain words, reference apps, demos | — |
-| **chat doors** | one package per chat: make a group for a channel, post its link | the `svrngs` command |
+| **chats** | nothing of ours: a person posts the group's link where they talk (§3, "A chat's door is the group's link") | the link |
 | **apps (rngapps)** | anything served on localhost; app-specific code lives only in `apps/<app>/` | the surface in §3, and nothing else |
 | **sovereign (svrn)** | local AI on a member's computer | its OpenAI-compatible endpoint on loopback |
 | **commonwealth-ai** | the mesh for one owner's machines, and the ring code svrngs forked | nothing at runtime; `scripts/ports.py` pairs each forked file with its original |
@@ -1726,25 +1735,48 @@ passed on production, `demo/runs/syp/2026-10-10/rerun/README.md`), main
 merged in again; then the fourth's two holes closed (landed, syp-6: a
 node stopped by SIGTERM closing its endpoint, a file no member gave asked
 again; S3 passed three runs of three, `demo/runs/syp/2026-10-11/restart/`),
-before the operator's merge into main (§10); the phone replica spike, iOS first (§9, "a
-native phone app"), after folders since they name the bytes a phone would
-hold; then the middleware's P1 follow-ups as one row (operator, 2026-10-08;
+merged into main by the operator (2026-10-11, `4475a89`; §10); then
+Demo C's units, below (operator, 2026-10-10): removal (U7, the keeper of
+§6, with forks that void nothing), before any group of strangers;
+onboarding — a computer's svrngs got from the group's link, the link handed
+to it, the group's folder placed for the person, the link previewing as an
+invitation in any chat (§3, "A chat's door is the group's link") — with
+the middleware's P1 follow-ups as its parts (operator, 2026-10-08;
 `demo/runs/mw/2026-10-08/README.md` §7, items 5 and 7; its item 1,
-`share`'s words, answered by the sign-in's declaration, mwp-1,
-`crates/svrngs/src/cli.rs:475`, `:769`): a lender keeps a
-library back from the people the middleware makes accounts for; Demo A's steps with nothing
-typed, and its dry run (its other four, P2 and below, wait in that §7);
-then removal (U7, the keeper of §6, with forks that void nothing), before
-any group of strangers; then the chat doors, Discord first —
-onboarding, last. After that the core grows one class at a time, each chosen
-by the north star's tests.
+`share`'s words, answered by the sign-in's declaration, mwp-1): a lender
+keeps a library back from the people the middleware makes accounts for;
+Demo A's steps with nothing typed, and its dry run (its other four, P2 and
+below, wait in that §7); then the library, the folder and a join measured
+between computers in two homes, through a relay; then Demo C. The phone
+replica spike waits in §9 (operator, 2026-10-10). After that the core grows
+one class at a time, each chosen by the north star's tests.
+
+**Demo C — the group's whole life** (after U7, onboarding and the two homes;
+operator, 2026-10-10; its run-of-show `demo/c.md`, its bars the seat's
+proposal and the operator's to set). Friends who already share a Discord
+channel, each in their own home: Sam makes the group and posts its link
+there; Ana puts a trip's photos in the group's folder; four newcomers on
+computers and one on a phone open the link and play a film of Sam's, an
+album of Ana's — Navidrome taking the person from svrngs's header — and, on
+a computer, open a photo from their own disk; Sam removes Bo; Ana's laptop
+closes, and the last newcomer still gets the trip from the others. Gate:
+four of five within five minutes on a computer, svrngs got from the link
+included, and two on a phone, the phone in the group within ten seconds of
+the link; no account but one a lender's program makes, no key asked for.
+
+| Unit | What lands | Bar, watched failing first |
+|---|---|---|
+| U7 removal | one keeper, the group's maker at first, sequences removals; a removed key cannot remove; forks void nothing (§6, §10) | within 30 s of the keeper's removal every lender refuses the removed person in a person's words, and nothing new in a folder reaches them; their own `Remove` counts nowhere; what they held stays theirs |
+| onboarding | on a computer, svrngs got from the group's link, the link handed to it, the home page opened and the group's folder on the person's disk; the link previewing as an invitation in any chat; the middleware's P1 follow-ups, above | a newcomer's computer from the link to the group's three things within five minutes, unassisted, nothing typed |
+| two homes | the library, the folder and a join measured between computers on two networks, through a relay, each path as iroh selected it | measured, not judged: the numbers Demo C's bars are read against |
 
 ## 9. Later, each with the trigger that brings it back
 
 | Waits | Trigger |
 |---|---|
 | an app SDK, a sandboxed fold engine, signed manifests and install acts (QuickJS behind an `Engine` trait was `crates/svrngs-engine`, deleted 2026-10-04 with no user; it is at tag `e0-bot`); and the runner that would carry an app's function to a person's data, its yes to that code at a version — scoped use's spike served its operation from a program its owner runs, as the survey orders (`rings/current/ACL_AND_SCOPED_USE.md` §4: "a subsequent convenience to earn with a real distributed app"; `demo/runs/su/2026-10-09/` §7) | an app needs its state offline on a device that is not its host, or strangers' code runs on members' devices, or an app sends its function to run beside a person's data |
-| a native phone app, and groups of phones only; first, phones as replicas of the group (operator, 2026-10-07): a member's phone holds the group's record and the files it shares, and syncs with whoever it reaches through a relay, so the group stays reachable while every computer sleeps (§11, risk 1) — a replica, not a relay in iroh's sense, since a phone on cellular sits behind its carrier's NAT. The phone's OS decides it: a page cannot listen and a browser's iroh is relay-only (§3, "The room", call 2), iOS suspends an app soon after it leaves the screen, and a network extension (the VPN slot) runs in the background under a memory cap. The spike, on iOS first and no larger than proves it: an iPhone app whose network extension holds an iroh endpoint with a member's key and answers a computer's dial by key every few minutes for 24 hours, the phone locked in a pocket; recorded, answered of dialled, memory against the cap, battery and data, against bars the operator sets before it runs. The record on the phone follows only if the endpoint stays reachable; Android after iOS | Demo B passes, and after group folders (§8, "Then"; operator, 2026-10-07); or the browser cannot keep what a group needs — its key, or a copy — measured |
+| a native phone app, and groups of phones only; first, phones as replicas of the group (operator, 2026-10-07): a member's phone holds the group's record and the files it shares, and syncs with whoever it reaches through a relay, so the group stays reachable while every computer sleeps (§11, risk 1) — a replica, not a relay in iroh's sense, since a phone on cellular sits behind its carrier's NAT. The phone's OS decides it: a page cannot listen and a browser's iroh is relay-only (§3, "The room", call 2), iOS suspends an app soon after it leaves the screen, and a network extension (the VPN slot) runs in the background under a memory cap. The spike, on iOS first and no larger than proves it: an iPhone app whose network extension holds an iroh endpoint with a member's key and answers a computer's dial by key every few minutes for 24 hours, the phone locked in a pocket; recorded, answered of dialled, memory against the cap, battery and data, against bars the operator sets before it runs. The record on the phone follows only if the endpoint stays reachable; Android after iOS | after Demo C, or the operator moves it in (operator, 2026-10-10: "I don't want to distract us from the core right now, but wanna keep it on the back burner"; its design, deferred, svrn-docs `rings/current/PHONE_REPLICA.md`); or the browser cannot keep what a group needs — its key, or a copy — measured |
+| a chat's own door: a package that posts a group's link for a person, names a group for its channel, or follows a channel's members (E0's, at tag `e0-bot`, §3) | a group asks for one that a pasted link cannot answer, counted |
 | Windows | a group asks |
 | AirPlay and Cast from a page, and DLNA: a screen handed a lend's address by a phone, for an app with no client of its own on it. In the reads (`demo/runs/u6/2026-10-05-screen/reads.json`) AirPlay from Safari on an iPhone showed the LG no video three ways — the page's address, which only the phone's worker answers; jellyfin-web, whose hls.js sets `disableRemotePlayback`; a plain LAN file, which the TV never fetched — and iOS has no Cast sender. Until 2026-10-05 this was U6 (§3, "The room", call 1) | an app with no client of its own for a screen is asked for on one, counted |
 | a public address per lend, for a room with no member's computer in it: a relay that forwards bytes it cannot read to the lender, who holds a certificate per lend — a new service, and Let's Encrypt's per-domain limit (§3, "The room", call 2) | a group with no computer in the room asks, counted |
@@ -1773,6 +1805,19 @@ by the north star's tests.
 | the floor: every app under `/l/<label>/` of one address apart from the page's, on any static host, the link carrying that address after its token (a second address given to `svrngs new`, u5-2; dropped by u6-00). Its cost was one origin for every app, so a lent page could read what another kept and use another's pass while it lasted, and its every app lost its root: the catalogue run lent five self-hosted apps on it in Chromium and WebKit and none got past its sign-in, each asking for `/`-absolute paths the floor's host answered 404, and Paperless's post refused by its own origin check (`demo/runs/catalogue/2026-10-05/RESULTS.md`, "The floor"; `003e0d5`) | a group whose host answers no name nobody made asks for an app that keeps to relative paths, counted |
 
 ## 10. Decisions
+
+By the operator, 2026-10-10 and 2026-10-11, on the scene v1 answers to
+(`demo/c.md`):
+- "Yeah write the scene that we can fulfill and the Demo C run of show":
+  Demo C, the group's whole life, after U7, onboarding and the two homes
+  (§8); its bars the seat's proposal, the operator's to set.
+- on a chat, "Hopefully not more the 50 lines in our own source and a pretty
+  commodity integration", then "Rewrite that way": a chat's door is the
+  group's link (§3, §4); a chat's own door waits (§9).
+- the phone replica: "I don't want to distract us from the core right now,
+  but wanna keep it on the back burner" (§9).
+- S3's two holes, "Queue it now", fixed before the merge (syp-6); the
+  branch `folders` merged into main by the operator, 2026-10-11 (`4475a89`).
 
 By the operator, 2026-10-10, on perf-1's candidates for a fast synced
 folder (`demo/runs/perf/2026-10-10/README.md` §10):
@@ -1921,7 +1966,8 @@ By the operator, 2026-10-03:
   first, through the browser; chat doors are onboarding, built last. (The
   experience is the group's films in stock Jellyfin since 2026-10-05,
   above; Films is dropped. The screen handoff is reach for a room's
-  devices since 2026-10-05, above.)
+  devices since 2026-10-05, above. A chat's door is the group's link since
+  2026-10-10, above.)
 
 ## 11. Risks
 
