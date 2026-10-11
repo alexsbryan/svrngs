@@ -161,6 +161,12 @@ export const lendKeep = (name, value) => run('kept', 'readwrite', (s) => s.put(v
 // with the version, and one entry in the version's cache, which whoever
 // asks first fills — the page, on a cold join — and the worker reads.
 // __VERSION__ is stamped at build time, as in sw.js.
+// A lend's address on a phone, `<label>.<the page's host>` (#49): built by
+// the page for a lend and by a lend's worker for another, read back by its
+// first name — here alone in the page's files.
+export const lendOrigin = (protocol, label, pageHost) => `${protocol}//${label}.${pageHost}`;
+export const labelOf = (hostname) => hostname.split('.')[0];
+
 export const CACHE = 'svrngs-web-__VERSION__';
 const RUNTIME = new URL('./wasm/svrngs_web_bg.wasm?v=__VERSION__', import.meta.url);
 

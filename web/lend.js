@@ -54,7 +54,7 @@ const SCOPE = new URL(self.registration.scope);
 const SITE = new URL('./', self.location).pathname;
 const SHELL = /^(open\.html|open\.js|lend\.js|shim\.js|store\.js|wasm\/svrngs_web(_bg\.wasm|\.js))$/;
 // This worker's lend: the first name of its address.
-const OWN = SCOPE.hostname.split('.')[0];
+const OWN = store.labelOf(SCOPE.hostname);
 const PLAIN = { 'content-type': 'text/plain; charset=utf-8' };
 const TRACE = `${SCOPE.pathname}svrngs-trace`;
 // Where its pages ask the lends they read, as a computer's origin answers
@@ -99,7 +99,7 @@ let app;
 
 // Where `label`'s pages are: this worker's lend under its scope; another
 // at an address of its own beside this one.
-const baseOf = (label) => (label === OWN ? SCOPE.href : `${SCOPE.protocol}//${label}${SCOPE.host.slice(OWN.length)}/`);
+const baseOf = (label) => (label === OWN ? SCOPE.href : `${store.lendOrigin(SCOPE.protocol, label, SCOPE.host.slice(OWN.length + 1))}/`);
 
 // The lend `url` is at, and its path there; or none. Under `READS`, a
 // lend this page reads, by its label.

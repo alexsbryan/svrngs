@@ -196,7 +196,7 @@ function open(group, key, lent, unanswered, l, at) {
   // Each app at an address of its own under this page's host (DESIGN §7),
   // the page's files at its root.
   const back = at ? `&back=${encodeURIComponent(at)}` : '';
-  const start = `${location.protocol}//${lends[0].label}.${location.host}/open.html?v=__VERSION__${back}`;
+  const start = `${store.lendOrigin(location.protocol, lends[0].label, location.host)}/open.html?v=__VERSION__${back}`;
   const handoff = {
     label: lends[0].label,
     lends,
