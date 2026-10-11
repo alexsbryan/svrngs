@@ -132,3 +132,13 @@ gain, and on one host it would share the same cores.
 - **T3 past one holder's upload**: no candidate; DESIGN §9, with its trigger.
 - **Imports and fetches past 4 at once**: the store's one actor, iroh-blobs'
   (§1); a store of svrngs's own is not proposed.
+
+## 7. The row's close
+
+`scripts/check.sh` at `6428a1a` exited 1 on one gate: the app nouns,
+`SETTLE` (`synced.rs:63`, from (f)) an app's noun; renamed `GATHER_FOR`
+(`4fe1e39`). At `4fe1e39` it exited 0, every check passed: principles
+pinned, lean and RUST_ARCH, app nouns gate, app nouns, rustfmt, clippy,
+tests, canaries, ceiling canary, web rustfmt and clippy, browser, joining
+in a browser, conformance canary, app laws. `python3 scripts/lean_check.py`:
+13,982 of 15,750, svrngs-core 2,776 of 3,000.
