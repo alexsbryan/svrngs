@@ -11,10 +11,13 @@ run/ beside this file. Changes to sy's, said:
     plants.py, its output in plants/;
   - each phase's load, cores, swap and free disk at its start and end, by
     ../production/run.py's `host`, and whether perf-1's load rule judges it;
-  - M2 also measures each member's store of each version, in bytes.
+  - M2 also measures each member's store of each version, in bytes;
+  - `run.py s3` runs the setup and S3 alone, its data in run-s3-<n>/, each
+    node's log at SYP5_LOG when set (else sy's), to trace S3's miss (README
+    §5).
 W is the scratch dir (else /tmp/syp5-run), removed after. scripts/check.sh
 runs none of this."""
-import importlib.util, json, os, subprocess
+import importlib.util, json, os, subprocess, sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -32,6 +35,22 @@ sy.OUT, sy.W = HERE / "run", Path(os.environ.get("W", "/tmp/syp5-run"))
 prod.sy = sy
 sy.api = lambda who, path, body=None, asked=sy.api: asked(who, "/v1/groups" if path == "/v1/folders" else path, body)
 sy.sync = prod.sync
+PART = sys.argv[1] if len(sys.argv) > 1 else ""
+if PART: sy.OUT = HERE / f"run-{PART}-{sys.argv[2]}"
+LOG = os.environ.get("SYP5_LOG", "folder=info,rail:folder=debug,transport=warn")
+
+
+def up(who, *args, plant=""):
+    """sy's up (run.py:28-36), each node's log at LOG, which sy's sets as a literal."""
+    env = {**os.environ, "SVRNGS_DIR": str(sy.data(who)), "NO_COLOR": "1", "RUST_LOG": LOG}
+    (sy.data(who) / "api").unlink(missing_ok=True)
+    sy.nodes[who] = subprocess.Popen([sy.B, *args], env=env, stdout=open(sy.data(who) / "out", "a"),
+                                     stderr=open(sy.OUT / f"{who}.log", "a"))
+    if not sy.wait(lambda: sy.api(who, "/v1/folders"), 60): raise SystemExit(f"{who}'s node did not come up")
+    sy.say("up", who=who, args=[a if "join/" not in a else "<the link>" for a in args])
+
+
+sy.up = up
 judgements = {}
 
 
@@ -72,7 +91,7 @@ def main():
     for name, run in (("S1", lambda: sy.s1("", "")), ("S2", lambda: sy.s2("", "")),
                       ("S3", lambda: sy.s3("", "")), ("S4", lambda: sy.s4("", "")),
                       ("M1", lambda: sy.m1(link)), ("M2", m2)):
-        phased(name, run)
+        if PART in ("", name.lower()): phased(name, run)
     sy.summary["load"] = judgements
     sy.say("load", at="end", of="run", **prod.host())
 
