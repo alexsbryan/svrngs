@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""perf-1's run, rerunnable (README §3-§6), derived from sy-1's run.py
+"""perf-2's measurements and its targets' pass again: perf-1's run.py
+(demo/runs/perf/2026-10-10/run.py at e25c939), its share asked as syp-4 (a)
+asks it, naming the group, and a `part` pass of one case each.
+
+perf-1's run, rerunnable (README §3-§6), derived from sy-1's run.py
 (demo/runs/sy/2026-10-09/run.py): its say/phase/summary, its directory
 polled for each file's size and BLAKE3, its nodes started and stopped. Each
 member is crates/svrngs-node/tests/perf.rs's perf_node, a node of its own in
@@ -10,6 +14,9 @@ its path as iroh selected it, and its phases from the nodes' debug traces.
   run.py breakdown [path ...]    small scales, whatever the load
   run.py targets [--wait SECS]   the targets; first waits up to SECS for the
                                  1-minute load under 1.5x cores and 20 GB free
+  run.py part CASE [N] [--as L]  one case on loopback, into run/part-CASE[-L]:
+                                 p6 (100 MiB and its edit), t1, t2, or a folder
+                                 of N files' take, idle, found or join
 
 Data in run/<pass>/ beside this file; W is the scratch dir (else
 /tmp/perf-run), removed after each group. scripts/check.sh runs none of
@@ -99,7 +106,8 @@ class Group:
 
     def share(self, i):
         self.shared[i] = time.time()
-        body = json.dumps({"bothways": str(self.disk(i))}).encode()
+        group = (self.data(i) / "group").read_text()
+        body = json.dumps({"dir": str(self.disk(i)), "group": group}).encode()
         req = urllib.request.Request(f"http://{self.addrs[i]['api']}/v1/folders", data=body,
                                      headers={"content-type": "application/json"})
         say("shared", group=self.tag, who=i, answer=json.load(urllib.request.urlopen(req, timeout=10)))
@@ -308,7 +316,7 @@ def at_once(g, writers, tag, name, target=None, meets=None):
            path=g.path, each_ms=[t and round(t * 1000, 1) for t in times], phases=shares(ph))
 
 
-def folder(n_files, path, name, join_bound):
+def folder(n_files, path, name, join_bound, parts=("taken", "idle", "found", "join")):
     """A folder of n_files of 1 KiB pointed at, then idle, then a change, then a member joining."""
     phase(name); g = Group(name, 2, path, RELAY[0])
     for k in range(n_files):
@@ -318,25 +326,29 @@ def folder(n_files, path, name, join_bound):
     sent = lambda: next((t for t, m, f in g.lines(0) if m.startswith("synced: a step")
                          and int(f.get("sent", 0)) >= n_files), None)
     wait(sent, 3600, every=2); at = sent()
+    first_step = next((f for t, m, f in g.lines(0) if m.startswith("synced: a step")
+                       and int(f.get("sent", 0)) >= n_files), None)
     record(f"{name}-taken", at and round((at - g.shared[0]) * 1000, 1), None, None, before, unit="ms", path=path,
-           steps=step_split(g, 0, t0))
-    time.sleep(10); before = host(); c0 = g.cpu_s(0); time.sleep(60); idle = (g.cpu_s(0) - c0) / 60
-    record(f"{name}-idle", round(idle * 100, 2), "under 2% of a core", lambda v: v < 2, before, unit="% of a core",
-           steps=step_split(g, 0, time.time() - 60))
-    found = []
-    for k in range(3):
+           steps=step_split(g, 0, t0), first_step=first_step)
+    if "idle" in parts:
+        time.sleep(10); before = host(); c0 = g.cpu_s(0); time.sleep(60); idle = (g.cpu_s(0) - c0) / 60
+        record(f"{name}-idle", round(idle * 100, 2), "under 2% of a core", lambda v: v < 2, before,
+               unit="% of a core", steps=step_split(g, 0, time.time() - 60))
+    for k in range(3 if "found" in parts else 0):
         before = host(); t0 = time.time(); write(g.disk(0), f"change-{k}.bin", os.urandom(KiB))
         t = wait(lambda: first(g.lines(0), "synced: found on disk", t0 - 1, path=f"change-{k}.bin")[0], 30, every=0.25)
         at = first(g.lines(0), "synced: found on disk", t0 - 1, path=f"change-{k}.bin")[0]
         record(f"{name}-found#{k}", at and round((at - t0) * 1000, 1), "within 1 s", lambda v: v <= 1000, before,
                unit="ms", steps=step_split(g, 0, t0))
         time.sleep(2)
+    if "join" not in parts: g.close(); return
     rec_before = g.journal(0).stat().st_size
     say("journal", group=name, bytes=rec_before)
     before = host(); t0 = time.time(); g.up(1); g.tell(); g.share(1)
-    t = wait(lambda: count(g.disk(1)) >= n_files + 3, join_bound, every=5)
+    extra = 3 if "found" in parts else 0
+    t = wait(lambda: count(g.disk(1)) >= n_files + extra, join_bound, every=5)
     record(f"{name}-join", t and t * 1000, None, None, before, unit="ms", path=path, held=count(g.disk(1)),
-           of=n_files + 3, member_steps=step_split(g, 1, t0), holder=record_reads(g, 0, t0),
+           of=n_files + extra, member_steps=step_split(g, 1, t0), holder=record_reads(g, 0, t0),
            journal_bytes=rec_before)
     g.close()
 
@@ -389,9 +401,29 @@ def targets(path):
         g.close()
 
 
+def part(case, n):
+    """One case on loopback, for a part's own check (perf-2's row)."""
+    phase(f"part-{case}")
+    if case in ("take", "idle", "found", "join"):
+        parts = {"take": ("taken",), "idle": ("taken", "idle", "found"), "found": ("taken", "found"),
+                 "join": ("taken", "join")}[case]
+        return folder(n, "loopback", f"f{n}", 3600, parts)
+    g = Group(f"part-{case}", 3, "loopback"); g.start()
+    if case == "p6": big(g, 100 * MiB, "p6", "P6-loopback")
+    elif case == "t2": many(g, 1000, 4 * KiB, "t2", "T2-loopback", "10 s", lambda v: v <= 10_000)
+    elif case == "t1":
+        before = host(); times, ph, rec = change(g, 4 * KiB, "t1", repeat=10)
+        record("T1-loopback-median", med([t and t * 1000 for t in times]), "300 ms", lambda v: v <= 300, before,
+               unit="ms", each_s=times, path="loopback", phases=shares(ph), record_bytes=rec)
+    else: sys.exit(f"part {case}: p6, t1, t2, take, idle, found or join")
+    g.close()
+
+
 def main():
     which = sys.argv[1] if len(sys.argv) > 1 else "breakdown"
-    OUT[0] = HERE / "run" / which; OUT[0].mkdir(parents=True, exist_ok=True)
+    label = sys.argv[sys.argv.index("--as") + 1] if "--as" in sys.argv else None
+    sub = f"part-{sys.argv[2]}" + (f"-{label}" if label else "") if which == "part" else which
+    OUT[0] = HERE / "run" / sub; OUT[0].mkdir(parents=True, exist_ok=True)
     if which == "targets" and "--wait" in sys.argv:
         bound = float(sys.argv[sys.argv.index("--wait") + 1]); t0 = time.time()
         while time.time() - t0 < bound:
@@ -407,10 +439,13 @@ def main():
     BIN[0] = next(json.loads(l)["executable"] for l in built.stdout.splitlines()
                   if '"executable":"' in l and "/perf-" in l)
     say("built", bin=BIN[0])
-    paths = [a for a in sys.argv[2:] if a in ("loopback", "relay", "n0")] or ["loopback", "relay", "n0"]
+    paths = [a for a in sys.argv[2:] if a in ("loopback", "relay", "n0")] or (
+        ["loopback"] if which == "part" else ["loopback", "relay", "n0"])
     try:
         if "relay" in paths: relay_up()
-        if which == "breakdown":
+        if which == "part":
+            part(sys.argv[2], int(sys.argv[3]) if len(sys.argv) > 3 and sys.argv[3].isdigit() else 0)
+        elif which == "breakdown":
             for p in paths: small(p)
         else:
             for p in paths: targets(p)

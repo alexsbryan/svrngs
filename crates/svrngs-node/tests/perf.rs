@@ -13,8 +13,8 @@
 //!   told the others' keys there) or `n0` (iroh's defaults, as `svrngs`
 //!   runs, nothing told).
 //!
-//! It writes `PERF_DIR/addr.json` (its key, loopback sockets and record
-//! API) once up, then reads `PERF_DIR/peers.json` (every member's
+//! It writes `PERF_DIR/group` (the group's id) and `PERF_DIR/addr.json`
+//! (its key, loopback sockets and record API) once up, then reads `PERF_DIR/peers.json` (every member's
 //! `addr.json`, a list) each time the driver writes it anew, and runs until killed.
 //! Its log is the node's traces on stderr, as `RUST_LOG` asks.
 //!

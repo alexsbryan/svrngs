@@ -72,6 +72,8 @@ pub async fn node() {
     node.rail().set_seed(&id, &seed.roster()).unwrap();
     let group = node.rail().group_dir(&id).unwrap();
     std::fs::write(group.join("seed.json"), seed.to_text()).unwrap();
+    // The group's id, for the driver's `share --folder` ask (syp-4 a).
+    std::fs::write(dir.join("group"), &id).unwrap();
     let admitted = group.join("perf-admitted");
     if me == 0 && !admitted.exists() {
         for i in 1..members {
