@@ -126,7 +126,11 @@ fn deleting_the_conflict_s_copy_ends_the_conflict() {
 fn a_synced_change_ships_at_its_own_line_version() {
     let op = &run(&key(1), 1_000, [synced("a", now(7), None)])[0];
     assert_eq!(op.kind.line_version(), SYNCED_LINE_VERSION);
-    assert_eq!(SignedOp::UNDERSTANDS, SYNCED_LINE_VERSION);
+    assert_eq!(
+        SignedOp::UNDERSTANDS,
+        crate::REMOVAL_LINE_VERSION,
+        "this build reads it, and removal's after"
+    );
 }
 
 /// **A path under a folder is named parts, and nothing else** (syp-4 c):

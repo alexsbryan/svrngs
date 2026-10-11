@@ -18,12 +18,14 @@ fn void(target: &OpId) -> RailAct {
     }
 }
 
-/// Leaving out every act but `Admit`, `Remove`, `Correct` and `Invite`
-/// changes nobody's standing: records between the membership acts, an
-/// `Admit` voided, a `Remove`, a record voided, and an `Admit` redeeming
-/// an `Invite` fold to the same standing keys and persons from those acts
-/// alone as from the whole journal. The failing inputs are a filter that
-/// leaves out `Correct`, and one that leaves out `Invite`.
+/// Leaving out every act `standing_reads` does not keep changes nobody's
+/// standing: records between the membership acts, an `Admit` corrected
+/// (which voids nothing since U7), the keeper's `Remove` covering cy's
+/// `Admit` of fay through cy's later record, a record voided, and an
+/// `Admit` redeeming an `Invite` fold to the same standing keys and persons
+/// from those acts alone as from the whole journal. The failing inputs are
+/// a filter that leaves out `Invite`, and one that leaves out the acts of a
+/// key a `Remove` names (U7: fay falls, her admission no longer covered).
 #[test]
 fn standing_from_the_membership_acts_alone_is_the_journals() {
     let seed = Roster::new(
@@ -35,13 +37,15 @@ fn standing_from_the_membership_acts_alone_is_the_journals() {
     let bo_writes = signed(&key(2), 101, 0, record("a"));
     let admit_dee = after(&key(1), &admit_bo, 103, admit_act("dee", 4));
     let void_dee = after(&key(1), &admit_dee, 104, void(&admit_dee.id));
+    let cy_admits_fay = signed(&key(3), 105, 0, admit_act("fay", 6));
+    let cy_writes = after(&key(3), &cy_admits_fay, 105, record("b"));
     let remove_cy = after(
         &key(1),
         &void_dee,
         106,
         RailAct::Remove {
             key: actor_of(&key(3)),
-            through_seq: 0,
+            through: vec![cy_writes.id.clone()],
         },
     );
     let ops = vec![
@@ -50,7 +54,8 @@ fn standing_from_the_membership_acts_alone_is_the_journals() {
         after(&key(2), &bo_writes, 102, admit_act("cy", 3)),
         admit_dee.clone(),
         void_dee,
-        signed(&key(3), 105, 0, record("b")),
+        cy_admits_fay,
+        cy_writes,
         remove_cy.clone(),
         after(&key(1), &remove_cy, 107, void(&bo_writes.id)),
     ];
@@ -90,11 +95,11 @@ fn standing_from_the_membership_acts_alone_is_the_journals() {
     assert_eq!(
         expected.keys().cloned().collect::<Vec<_>>(),
         {
-            let mut v = vec![actor_of(&key(1)), actor_of(&key(2)), actor_of(&key(5))];
+            let mut v = [1, 2, 4, 5, 6].map(|k| actor_of(&key(k))).to_vec();
             v.sort();
             v
         },
-        "control: alex, bo and eve stand; cy was removed and dee's Admit voided"
+        "control: alex, bo, dee, eve and fay stand; cy was removed"
     );
     assert_eq!(standing_in(&ops, &seed, NS, &Ed25519Verifier).unwrap(), expected);
 }
@@ -183,4 +188,48 @@ fn the_kept_register_is_the_whole_files_and_folds_again_when_membership_moves() 
     );
     kept_before("a tampered Admit ingested", false);
     assert_eq!(step("a tampered Admit ingested"), 3, "eve stands nowhere");
+}
+
+/// **A cut key's earlier acts join the kept register** (U7 (c)). The kept
+/// fold holds the acts that move membership; once a `Remove` names bo, bo's
+/// record already held, which the cut names, is read in from the log, so
+/// bo's `Admit` of fay, under the record in bo's chain, is covered and fay
+/// stands, as in the whole file. The failing input is the kept fold without
+/// that read: the cut names an act it does not hold, and fay falls.
+#[test]
+fn a_cut_keys_earlier_acts_join_the_kept_register() {
+    use std::sync::Arc;
+    let dir = tempfile::tempdir().unwrap();
+    let rail = RingRail::new(dir.path(), Arc::new(key(1)));
+    let alex = Roster::new(
+        [(Person::parse("alex").unwrap(), vec![actor_of(&key(1))])]
+            .into_iter()
+            .collect(),
+    );
+    rail.set_seed(NS, &alex).unwrap();
+    let bo_in = signed(&key(1), 100, 0, admit_act("bo", 2));
+    let bo_admits_fay = signed(&key(2), 101, 0, admit_act("fay", 6));
+    let bo_writes = after(&key(2), &bo_admits_fay, 102, record("bo-writes"));
+    rail.ingest_all(NS, &[bo_in.clone(), bo_admits_fay, bo_writes.clone()])
+        .unwrap();
+    let Standing::Members(before) = rail.standing(NS).unwrap() else {
+        panic!("held, seeded")
+    };
+    assert_eq!(before.len(), 3, "control: alex, bo and fay");
+    let cut = after(
+        &key(1),
+        &bo_in,
+        103,
+        RailAct::Remove {
+            key: actor_of(&key(2)),
+            through: vec![bo_writes.id.clone()],
+        },
+    );
+    rail.ingest_all(NS, &[cut]).unwrap();
+    let journal = rail.journal(NS).unwrap();
+    let whole = standing_in(&journal.read().unwrap().0, &alex, NS, &Ed25519Verifier).unwrap();
+    let mut names: Vec<String> = whole.values().map(|m| m.person.to_string()).collect();
+    names.sort();
+    assert_eq!(names, ["alex", "fay"], "control: bo out, fay covered");
+    assert_eq!(rail.standing(NS).unwrap(), Standing::Members(whole));
 }

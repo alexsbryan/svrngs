@@ -110,8 +110,12 @@ fn a_redemption_under_a_lapsed_invite_is_refused() {
     refused_for(&a, &dee, InviteFault::Lapsed, &[4]);
 }
 
-/// A `Correct` of the `Invite` voids the link, and is not how it closes
-/// (u2-4b). Watched failing with the void ignored.
+/// A `Correct` of the `Invite` voided the link until U7, unseating every
+/// key it admitted: a removal no keeper sequenced. Since U7 a `Correct` of
+/// an act that moves membership voids nothing, so the redemption counts
+/// (DESIGN §6, "Removal has one decider"); a link closes by its issuer's
+/// next `Invite`. The name is the rule before U7, kept so u7-removal's
+/// check follows every test by name.
 #[test]
 fn a_redemption_under_a_voided_invite_is_refused() {
     let inv = signed(&key(1), 100, 0, invite(200));
@@ -125,8 +129,9 @@ fn a_redemption_under_a_voided_invite_is_refused() {
         },
     );
     let dee = after(&key(1), &close, 102, redeem(&inv, "dee", 4));
-    let a = admitted(&[inv, close, dee.clone()]);
-    refused_for(&a, &dee, InviteFault::Voided, &[4]);
+    let a = admitted(&[inv, close, dee]);
+    assert_eq!(a.gaps(), vec![], "nothing is refused");
+    assert!(standing(&a, 4), "dee stands");
 }
 
 /// Only the `Invite`'s signer redeems it: bo stands, but alex made the
@@ -307,7 +312,7 @@ fn the_register_answers_what_holds_each_standing_key() {
         105,
         RailAct::Remove {
             key: actor_of(&key(7)),
-            through_seq: 0,
+            through: Vec::new(),
         },
     );
     let now = admitted(&[inv, dee, eve, fay, gus, gone]);
@@ -369,7 +374,7 @@ fn what_holds_each_key_is_a_function_of_the_set_of_acts() {
         105,
         RailAct::Remove {
             key: actor_of(&key(4)),
-            through_seq: 0,
+            through: Vec::new(),
         },
     );
     let ops = vec![inv, dee, eve, fay, fay_again, gone];

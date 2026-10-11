@@ -1,59 +1,56 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai commonwealth/crates/commonwealth-rail-core/src/membership.rs@e1a43bcd2
-//! Membership — the seed plus two act kinds, in one function (ARCH §10.6).
+//! Membership — the seed plus the acts that move it, in one function (ARCH
+//! §10.6).
 //!
 //! `RING_APPLICATIONS.md` "Amendment 2026-09-18" is the design; this is its
 //! one membership function, the piece `admit` calls and "the piece most likely
 //! to be replaced", with the permutation property as its contract. Nothing
-//! else on the journal changes membership. `p2panda-auth` was read first (its
-//! strong-removal rule 4 — invalidation is transitive over dependents — is
-//! what the walk below gets for free; its absence of a `Remove{key,
-//! through_seq}` cut is what makes ours novel).
+//! else on the journal changes membership. `p2panda-auth` was read first.
 //!
-//! The rule, in two layers:
+//! The rule (svrngs, U7; DESIGN §6 "Removal has one decider"):
 //!
-//! 1. **The void set, computed first and commutatively** (today's rule,
-//!    carried forward): the targets of [`RailAct::Correct`]s whose signer is
-//!    seed-bound or named by a non-voided [`RailAct::Admit`] — a monotone
-//!    fixpoint, so voiding an `Admit` unbinds its key and that key's own
-//!    corrections stop voiding. Known limit of the replaceable rule, stated
-//!    rather than discovered: a key whose `Admit` is voided in the SAME batch
-//!    as its corrections may still land those voids (one pass of the fixpoint
-//!    cannot see the other's removal). The same layer binds structurally, so
-//!    a key that a `Remove` cut (rather than an un-admit) can still land
-//!    voids — a candidate future leg.
-//! 2. **One walk in the rail's order** `(ts_unix, actor, seq, id)` over the
-//!    survivors: an act counts iff its signer holds standing at the act's
-//!    position — the seed's keys to start, plus keys admitted by counting
-//!    `Admit`s, minus keys cut by counting `Remove`s. This one sentence is
-//!    the cascade (void one `Admit` and everything that key admitted falls —
-//!    their admissions were signed by a key that no longer holds), the
-//!    no-cuts-back rule (a removed key's later `Remove` does not count), and
-//!    the mutual-removal resolver (the rail's order picks one — the
-//!    replaceable place).
+//! 1. **One walk in the rail's order** `(ts_unix, actor, seq, id)`: an act
+//!    counts iff its signer holds standing at the act's position — the
+//!    seed's keys to start, plus keys admitted by counting `Admit`s, minus
+//!    keys the keeper cut — and, for a cut key, iff the cut covers it. The
+//!    keeper is one key at every position: the seed's (the maker's; for a
+//!    seed of many keys, upstream's shape, the first key of the person whose
+//!    name sorts first), moved only by the keeper's own counting
+//!    [`RailAct::HandOn`] to a standing key. A counting [`RailAct::Remove`]
+//!    by the keeper of a standing key other than its own is the cut; by
+//!    anyone else it is an ask, and cuts nobody. A cut key's own acts after
+//!    it count nowhere, so it cannot remove, ask or hand on.
+//! 2. **The cut names acts by hash.** It covers the acts `through` names and
+//!    every act they descend from by `prev`; any other act of the cut key
+//!    counts nowhere, wherever its timestamp puts it. Which cuts count turns
+//!    on the walk, and the walk on which acts the cuts cover, so the walk
+//!    runs again with the cuts it found until they are the cuts it was
+//!    given (a cut key's unseen acts cannot move the keeper, who alone
+//!    cuts, so this settles at the second walk unless the keeper forked;
+//!    it is bounded either way, and a function of the set).
+//! 3. **Then the void set**: the targets of counting [`RailAct::Correct`]s,
+//!    except an act that moves membership, which nothing undoes. Voids
+//!    never resurrect, and they cannot reach standing, so they come after
+//!    the walk. A voided act is not [`Membership::counted`].
 //!
 //! The permutation contract: the walk sorts, so every permutation of the op
 //! set produces a byte-identical [`Membership`], gaps included.
-//! `ra-membership-is-order-free`'s five legs pin exactly that.
+//! `ra-membership-is-order-free`'s legs pin exactly that.
 //!
 //! svrngs (U2, DESIGN §6 "A link admits each person once"): an `Admit` that
 //! redeems an [`RailAct::Invite`] counts only when its signer signed that
-//! `Invite`, the `Invite` is held, no counting `Correct` voids it and it
-//! counted earlier in the walk, the `Admit` is timed before the `Invite`'s
-//! `until`, and the admitted key's co-signature verifies. Otherwise it is
-//! [`Membership::refused`] with its [`InviteFault`], and binds nothing in
-//! either layer — a refused redemption's key lands no voids. An `Admit`
-//! naming no `Invite` keeps the rule above.
+//! `Invite`, the `Invite` is held and counted earlier in the walk, the
+//! `Admit` is timed before the `Invite`'s `until`, and the admitted key's
+//! co-signature verifies. Otherwise it is [`Membership::refused`] with its
+//! [`InviteFault`], and binds nothing. An `Admit` naming no `Invite` keeps
+//! the rule above.
 //!
 //! An issuer has one open link (u2-4b, DESIGN §8 "A new link closes the old
 //! one"): their newest counting `Invite` at a place in the walk. A
 //! redemption under an older one of theirs, after the newer, is refused
 //! [`InviteFault::Closed`]; what the older link admitted before keeps its
-//! standing, since closing is a place in the order and voids are not.
-//! Known limit, as for a `Remove` above: the void layer cannot see an
-//! order, so a closed redemption's key still binds there and can land
-//! voids. Only the issuer signs a redemption, so one exists only if the
-//! issuer's own node redeemed a link it had closed.
+//! standing, since closing is a place in the order.
 //!
 //! svrngs (u4-1, DESIGN §3 "Joining", call 2): each standing key is held by
 //! a [`Device`] — a browser's when the counting `Admit` that last bound it
@@ -74,9 +71,6 @@ use crate::{Device, OpId, Person, RailAct, Redemption, Roster, SignedOp};
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum InviteFault {
-    /// A counting `Correct` voids the `Invite`, and with it everything it
-    /// admitted: voids are order-free, so this is not how a link closes.
-    Voided,
     /// No `Invite` with that id is held here.
     Unheld,
     /// The `Admit`'s signer is not the `Invite`'s.
@@ -95,7 +89,6 @@ pub enum InviteFault {
 impl core::fmt::Display for InviteFault {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.write_str(match self {
-            Self::Voided => "its link was taken back",
             Self::Unheld => "this node does not hold its link",
             Self::NotIssuer => "its link was made by someone else",
             Self::Lapsed => "its link had lapsed",
@@ -113,14 +106,16 @@ pub struct Membership {
     /// cut key keeps its binding — names stay stable and every past act keeps
     /// the person it always had (leg 4) — it only leaves [`Self::standing`].
     pub bindings: BTreeMap<String, Person>,
-    /// Who holds standing NOW: the seed plus counting `Admit`s, minus
-    /// counting `Remove`s.
+    /// Who holds standing NOW: the seed plus counting `Admit`s, minus the
+    /// keys the keeper cut.
     pub standing: BTreeSet<String>,
     /// Derived ids of the acts that count: the signer held standing at the
-    /// act's position in the rail's order. Everything else is held and
+    /// act's position in the rail's order, a cut covers it if its signer was
+    /// cut, and no counting `Correct` voids it. Everything else is held and
     /// reported, never counted.
     pub counted: BTreeSet<OpId>,
-    /// The void set the walk applied — the targets of counting corrections.
+    /// The void set — the targets of counting corrections, never an act
+    /// that moves membership.
     pub voided: BTreeSet<OpId>,
     /// Redeeming `Admit`s by a standing signer that do not count, each with
     /// its fault (svrngs, U2). Skipped when empty, so a fold with none
@@ -136,6 +131,22 @@ pub struct Membership {
     /// when empty, so a fold with none serialises as before.
     #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
     pub browsers: BTreeSet<String>,
+    /// The group's keeper now (U7): the seed's, or whoever it was handed
+    /// on to. `None` only for an empty seed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub keeper: Option<String>,
+    /// Each key the keeper cut, with the cut (U7).
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub cut: BTreeMap<String, Cut>,
+}
+
+/// One counting cut: the keeper's `Remove`, and the acts it names in
+/// `through` that this copy does not hold, so cannot yet cover.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct Cut {
+    pub by: OpId,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub unheld: Vec<OpId>,
 }
 
 /// An `Invite` as the register holds it.
@@ -180,13 +191,10 @@ pub fn membership<'a>(
     seed: &Roster,
     namespace: &str,
 ) -> Membership {
-    let ops: Vec<(&OpId, &Op<SignedOp>)> = ops.into_iter().collect();
+    let mut ops: Vec<(&OpId, &Op<SignedOp>)> = ops.into_iter().collect();
+    ops.sort_by_key(|(id, op)| (op.ts_unix, op.actor.clone(), op.kind.seq, *id));
 
     // ── the link: each redemption judged once on what it alone says ───
-    //
-    // Issuer, lapse and co-signature turn on the `Admit` and its `Invite`
-    // alone, so they are judged here, before either layer; the void and
-    // whether the `Invite` counted are each layer's own.
     let invites: BTreeMap<&OpId, (&str, i64)> = ops
         .iter()
         .filter_map(|(id, op)| match &op.kind.act {
@@ -206,52 +214,132 @@ pub fn membership<'a>(
         })
         .collect();
 
-    // ── layer 1: the void set (commutative; today's rule, carried) ────
+    // ── what follows a hand-on in its author's chain keeps nothing ───
     //
-    // Targets of corrections whose signer is bound by the seed or by a
-    // non-voided Admit. Monotone: voids only grow, so the loop terminates,
-    // and "undoing an undo is a new act" keeps the original voided.
-    let mut voided: BTreeSet<OpId> = BTreeSet::new();
-    loop {
-        let mut bound: BTreeSet<&str> = seed
-            .members
-            .values()
-            .flatten()
-            .map(String::as_str)
-            .collect();
-        for (id, op) in &ops {
-            if let RailAct::Admit { key, .. } = &op.kind.act {
-                let redeemed = match redeems.get(*id) {
-                    None => true,
-                    Some(Ok(invite)) => !voided.contains(*invite),
-                    Some(Err(_)) => false,
-                };
-                if redeemed && !voided.contains(*id) {
-                    bound.insert(key);
-                }
-            }
-        }
-        let mut grew = false;
-        for (_, op) in &ops {
-            if let RailAct::Correct { corrects, .. } = &op.kind.act {
-                if bound.contains(op.actor.as_str()) && voided.insert(corrects.clone()) {
-                    grew = true;
-                }
-            }
-        }
-        if !grew {
+    // An act descending by `prev` from a `HandOn` its own author signed
+    // carries no keeper's authority, wherever its timestamp puts it: an
+    // ex-keeper's backdated second hand-on moves nothing.
+    let mut by_chain = ops.clone();
+    by_chain.sort_by_key(|(id, op)| (op.actor.clone(), op.kind.seq, *id));
+    // id → whether the act is a hand-on or follows one, along its chain.
+    let mut handed: BTreeMap<&OpId, (bool, bool)> = BTreeMap::new();
+    for (id, op) in &by_chain {
+        let after = op
+            .kind
+            .prev
+            .as_ref()
+            .and_then(|p| handed.get(p))
+            .is_some_and(|(is, after)| *is || *after);
+        handed.insert(*id, (matches!(op.kind.act, RailAct::HandOn { .. }), after));
+    }
+    let kept: BTreeSet<&OpId> = handed
+        .into_iter()
+        .filter(|(_, (_, after))| !after)
+        .map(|(id, _)| id)
+        .collect();
+
+    // ── the walk, again until the cuts it finds are the cuts it was given ──
+    let mut covers: BTreeMap<String, BTreeSet<OpId>> = BTreeMap::new();
+    let mut m = walk(&ops, seed, &redeems, &covers, &kept);
+    for round in 0.. {
+        let found = covered(&ops, &mut m.cut);
+        let settled = found == covers;
+        tracing::debug!(target: "rail:membership", round, cuts = found.len(), settled,
+            "membership: the walk's cuts against the cuts it was given");
+        if settled || round > ops.len() {
             break;
         }
+        covers = found;
+        m = walk(&ops, seed, &redeems, &covers, &kept);
     }
 
-    // ── layer 2: one walk in the rail's order over the survivors ──────
-    let mut order: Vec<(&OpId, &Op<SignedOp>)> = ops
+    // ── the void set, from the corrections that counted ──────────────
+    let moves: BTreeSet<&OpId> = ops
         .iter()
-        .copied()
-        .filter(|(id, _)| !voided.contains(*id))
+        .filter(|(_, op)| op.kind.act.moves_membership())
+        .map(|(id, _)| *id)
         .collect();
-    order.sort_by_key(|(id, op)| (op.ts_unix, op.actor.clone(), op.kind.seq, *id));
+    for (id, op) in &ops {
+        if let RailAct::Correct { corrects, .. } = &op.kind.act {
+            if !m.counted.contains(*id) {
+                continue;
+            }
+            if moves.contains(corrects) {
+                tracing::debug!(target: "rail:membership", id = %id, target = %corrects,
+                    "membership: a Correct of an act that moves membership voids nothing");
+                continue;
+            }
+            m.voided.insert(corrects.clone());
+        }
+    }
+    let voided = m.voided.clone();
+    m.counted.retain(|id| !voided.contains(id));
+    m.invites = ops
+        .iter()
+        .filter_map(|(id, op)| match &op.kind.act {
+            RailAct::Invite { key, until } => Some((
+                (*id).clone(),
+                Invited {
+                    issuer: op.actor.clone(),
+                    key: key.clone(),
+                    until: *until,
+                },
+            )),
+            _ => None,
+        })
+        .collect();
+    m
+}
 
+/// For each cut, the acts it covers: the acts of the cut key its `through`
+/// names and every act they descend from by `prev`, among `ops`. A name
+/// this copy does not hold goes in the cut's `unheld`.
+fn covered(
+    ops: &[(&OpId, &Op<SignedOp>)],
+    cuts: &mut BTreeMap<String, Cut>,
+) -> BTreeMap<String, BTreeSet<OpId>> {
+    let mut out = BTreeMap::new();
+    for (key, cut) in cuts.iter_mut() {
+        let chain: BTreeMap<&OpId, Option<&OpId>> = ops
+            .iter()
+            .filter(|(_, op)| &op.actor == key)
+            .map(|(id, op)| (*id, op.kind.prev.as_ref()))
+            .collect();
+        let Some(RailAct::Remove { through, .. }) = ops
+            .iter()
+            .find(|(id, _)| **id == cut.by)
+            .map(|(_, op)| &op.kind.act)
+        else {
+            continue;
+        };
+        let mut seen = BTreeSet::new();
+        cut.unheld.clear();
+        for tip in through {
+            if !chain.contains_key(tip) {
+                cut.unheld.push(tip.clone());
+            }
+            let mut at = Some(tip);
+            while let Some(id) =
+                at.filter(|id| chain.contains_key(id) && seen.insert((*id).clone()))
+            {
+                at = chain[id];
+            }
+        }
+        out.insert(key.clone(), seen);
+    }
+    out
+}
+
+/// One walk in the rail's order, a cut key's acts counting only when
+/// `covers` holds them, and the keeper's acting as the keeper only when
+/// `kept` holds them.
+fn walk(
+    order: &[(&OpId, &Op<SignedOp>)],
+    seed: &Roster,
+    redeems: &BTreeMap<&OpId, Result<&OpId, InviteFault>>,
+    covers: &BTreeMap<String, BTreeSet<OpId>>,
+    kept: &BTreeSet<&OpId>,
+) -> Membership {
     let mut bindings: BTreeMap<String, Person> = seed
         .members
         .iter()
@@ -262,19 +350,25 @@ pub fn membership<'a>(
         })
         .collect();
     let mut live: BTreeMap<String, Person> = bindings.clone();
+    let mut keeper: Option<String> = seed.members.values().flatten().next().cloned();
+    let mut cut: BTreeMap<String, Cut> = BTreeMap::new();
     let mut counted: BTreeSet<OpId> = BTreeSet::new();
     let mut refused: BTreeMap<OpId, InviteFault> = BTreeMap::new();
     let mut browsers: BTreeSet<String> = BTreeSet::new();
     // Each issuer's newest counting `Invite` so far: their one open link.
     let mut open: BTreeMap<&str, &OpId> = BTreeMap::new();
-    for (id, op) in order {
+    for (id, op) in order.iter().copied() {
         if !live.contains_key(&op.actor) {
+            continue;
+        }
+        if covers.get(&op.actor).is_some_and(|c| !c.contains(id)) {
+            tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor,
+                "membership: an act of a cut key its cut does not cover counts nowhere");
             continue;
         }
         let fault = match redeems.get(id) {
             None => None,
             Some(Err(fault)) => Some(fault.clone()),
-            Some(Ok(invite)) if voided.contains(*invite) => Some(InviteFault::Voided),
             Some(Ok(invite)) if !counted.contains(*invite) => Some(InviteFault::Uncounted),
             // Counted, so it opened: the issuer (the signer, past NotIssuer)
             // has an open link, and it is this one or a newer one.
@@ -297,6 +391,7 @@ pub fn membership<'a>(
             continue;
         }
         counted.insert(id.clone());
+        let keeps = keeper.as_deref() == Some(op.actor.as_str()) && kept.contains(id);
         match &op.kind.act {
             RailAct::Admit {
                 person,
@@ -321,8 +416,29 @@ pub fn membership<'a>(
                 live.insert(key.clone(), person.clone());
             }
             RailAct::Remove { key, .. } => {
-                tracing::debug!(target: "rail:membership", key = %key, "membership: standing lost");
-                live.remove(key);
+                let cuts = keeps && *key != op.actor && live.contains_key(key);
+                tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, key = %key,
+                    keeper = ?keeper, cuts,
+                    "membership: a Remove — the keeper's cuts; anyone else's is an ask and cuts nobody");
+                if cuts {
+                    live.remove(key);
+                    cut.insert(
+                        key.clone(),
+                        Cut {
+                            by: id.clone(),
+                            unheld: Vec::new(),
+                        },
+                    );
+                }
+            }
+            RailAct::HandOn { key } => {
+                let hands = keeps && *key != op.actor && live.contains_key(key);
+                tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, key = %key,
+                    keeper = ?keeper, hands,
+                    "membership: a HandOn — only the keeper's, to a standing key, moves the keeper");
+                if hands {
+                    keeper = Some(key.clone());
+                }
             }
             RailAct::Invite { .. } => {
                 let older = open.insert(op.actor.as_str(), id);
@@ -337,54 +453,64 @@ pub fn membership<'a>(
             _ => {}
         }
     }
-
-    let invites = ops
-        .iter()
-        .filter_map(|(id, op)| match &op.kind.act {
-            RailAct::Invite { key, until } => Some((
-                (*id).clone(),
-                Invited {
-                    issuer: op.actor.clone(),
-                    key: key.clone(),
-                    until: *until,
-                },
-            )),
-            _ => None,
-        })
-        .collect();
     Membership {
         bindings,
         standing: live.into_keys().collect(),
         counted,
-        voided,
+        voided: BTreeSet::new(),
         refused,
-        invites,
+        invites: BTreeMap::new(),
         browsers,
+        keeper,
+        cut,
     }
 }
 
 impl RailAct {
-    /// Whether [`membership`] reads this act: it binds (`Admit`), cuts
-    /// (`Remove`), voids (`Correct`) or opens a link (`Invite`). A caller that
-    /// folds standing from fewer acts than the journal holds (svrngs-node's
-    /// `register::standing_in`) keeps these and only these, so the list has
-    /// one home beside the fold that reads it, and the match has no wildcard:
-    /// a new kind of act does not compile until it is placed here.
+    /// Whether this act moves membership: it binds (`Admit`), cuts or asks
+    /// (`Remove`), hands the keeper on (`HandOn`) or opens a link
+    /// (`Invite`). A `Correct` does not, since U7: it voids nothing that
+    /// moves membership. [`standing_reads`] keeps these, and the acts
+    /// of every key a `Remove` names, so the list has one home beside the
+    /// fold that reads it, and the match has no wildcard: a new kind of act
+    /// does not compile until it is placed here.
+    /// The key a `Remove` names, asked or cut; `None` for any other act.
+    pub fn names(&self) -> Option<&str> {
+        match self {
+            RailAct::Remove { key, .. } => Some(key),
+            _ => None,
+        }
+    }
+
     pub const fn moves_membership(&self) -> bool {
         match self {
             RailAct::Admit { .. }
             | RailAct::Remove { .. }
-            | RailAct::Correct { .. }
+            | RailAct::HandOn { .. }
             | RailAct::Invite { .. } => true,
-            RailAct::Record { .. } | RailAct::Seal | RailAct::Synced { .. } => false,
+            RailAct::Record { .. }
+            | RailAct::Correct { .. }
+            | RailAct::Seal
+            | RailAct::Synced { .. } => false,
         }
     }
 }
 
+/// The acts a fold of standing reads (U7): every act that moves membership,
+/// and every act of a key some `Remove` names, since a cut covers that key's
+/// acts along their chain by `prev`. A caller that folds standing from
+/// fewer acts than it holds (svrngs-runtime's register) keeps these, and
+/// [`RailAct::names`] is how it tells a key named as it goes.
+pub fn standing_reads(ops: &[Op<SignedOp>]) -> impl Iterator<Item = &Op<SignedOp>> {
+    let named: BTreeSet<&str> = ops.iter().filter_map(|op| op.kind.act.names()).collect();
+    ops.iter()
+        .filter(move |op| op.kind.act.moves_membership() || named.contains(op.actor.as_str()))
+}
+
 /// What a redeeming `Admit` says alone: the `Invite` it names, if that is
 /// held, was signed by the `Admit`'s own signer, had not lapsed when the
-/// `Admit` was timed, and the admitted key consented. The void and whether
-/// the `Invite` counted are the walk's.
+/// `Admit` was timed, and the admitted key consented. Whether the `Invite`
+/// counted is the walk's.
 fn redemption<'a>(
     op: &Op<SignedOp>,
     person: &Person,

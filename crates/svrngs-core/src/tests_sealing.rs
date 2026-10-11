@@ -397,7 +397,7 @@ fn the_membership_acts_ship_at_a_bumped_line_version() {
         4,
         RailAct::Remove {
             key: crate::actor_of(&key(2)),
-            through_seq: 0,
+            through: Vec::new(),
         },
     );
     assert_eq!(
@@ -407,8 +407,8 @@ fn the_membership_acts_ship_at_a_bumped_line_version() {
     );
     assert_eq!(
         (admitted_someone.v, cut.v),
-        (MEMBERSHIP_LINE_VERSION, MEMBERSHIP_LINE_VERSION),
-        "the membership acts ship at the bump"
+        (MEMBERSHIP_LINE_VERSION, crate::REMOVAL_LINE_VERSION),
+        "the membership acts ship at the bump, a removal at U7's"
     );
 }
 

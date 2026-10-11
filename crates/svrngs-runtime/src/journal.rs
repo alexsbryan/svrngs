@@ -70,8 +70,9 @@ struct Writer {
 /// the same, and a file replaced from outside has its lines checked again.
 ///
 /// And the register ([`RingRail::standing`]) is caught up the same way: the
-/// acts that move membership, a handful among thousands, kept in the log's
-/// order as the tail brings them in, and the standing last folded from them,
+/// acts that move membership, a handful among thousands, and every act of a
+/// key a `Remove` names (U7), kept in the log's order as the tail brings
+/// them in, and the standing last folded from them,
 /// with the seed it was folded from. Read whole on every connection, sync
 /// request and round, it was what an idle round still paid for (26 reads
 /// of 10,000 acts, 5.5 s; scale.rs, ceiling-3's runs; THE_CEILING.md fix 3).
@@ -85,6 +86,10 @@ struct Held {
     digest: DigestFold,
     passed: Passed,
     membership: Vec<Op<SignedOp>>,
+    /// The keys some held `Remove` names: their every act is kept in
+    /// `membership` too, since a cut covers a key's acts along their chain
+    /// (U7; `svrngs_core::standing_reads`).
+    named: std::collections::HashSet<String>,
     standing: Option<(Roster, BTreeMap<String, crate::register::Member>)>,
 }
 
@@ -135,6 +140,7 @@ impl Held {
         // Held, but not verified under its claimed actor: no part of the
         // digest (svrngs-core sync.rs `digest`).
         let mut unverified = 0usize;
+        let mut newly_named: Vec<String> = Vec::new();
         for op in &tail.ops {
             let id = derive_id(op, namespace);
             let line = (id.clone(), op.kind.sig.clone());
@@ -157,11 +163,30 @@ impl Held {
             } else {
                 unverified += 1;
             }
-            if op.kind.act.moves_membership() {
+            if let Some(key) = op.kind.act.names().filter(|k| self.named.insert(k.to_string())) {
+                newly_named.push(key.to_string());
+            }
+            if op.kind.act.moves_membership() || self.named.contains(&op.actor) {
                 self.membership.push(op.clone());
                 self.standing = None;
             }
             self.ids.insert(id);
+        }
+        if !newly_named.is_empty() {
+            // A key a `Remove` names for the first time: its acts already
+            // held join the fold of standing, read once from the whole log.
+            let (all, _) = oplog.read_all_with_skips().map_err(|e| RailError::Io(e.to_string()))?;
+            let before = self.membership.len();
+            self.membership.extend(
+                all.into_iter()
+                    .filter(|op| newly_named.contains(&op.actor) && !op.kind.act.moves_membership()),
+            );
+            tracing::debug!(
+                namespace,
+                ?newly_named,
+                kept = self.membership.len() - before,
+                "ring rail: a key a Remove names — its acts held join the fold of standing"
+            );
         }
         tracing::debug!(
             namespace,

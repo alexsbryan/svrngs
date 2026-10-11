@@ -116,7 +116,7 @@ use serde::{Deserialize, Serialize};
 pub use act_set::ActSet;
 pub use admit::{admit, body_json, Admission, AdmittedOp, GapClass, RailGap};
 pub use command::{commit, Author, Authored, Command, Reads, Recorded, Refused, Store, Tip};
-pub use membership::{membership, InviteFault, Invited, Membership};
+pub use membership::{membership, standing_reads, Cut, InviteFault, Invited, Membership};
 pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
 pub use process::{Compact, Due, ProcessManager, Retire, Uncaused};
 pub use project::{Invites, Projection, Wire};
@@ -367,10 +367,9 @@ pub enum RailAct {
     ///
     /// The binding rides IN the record — the reason a `roster.json` edit
     /// cannot retroactively flip a member's past: acts admitted through an
-    /// `Admit` resolve through the record, not through the file. Undo is the
-    /// [`Self::Correct`] that exists: voiding an `Admit` drops that key and
-    /// every key it transitively admitted, because their admissions were
-    /// signed by a key that no longer holds.
+    /// `Admit` resolve through the record, not through the file. Nothing
+    /// undoes it but the keeper's [`Self::Remove`] (U7): a `Correct` of an
+    /// act that moves membership voids nothing.
     ///
     /// Carries no [`Payload`] and never reaches an app reducer — an app that
     /// read membership would re-divide every past expense the day someone
@@ -389,29 +388,36 @@ pub enum RailAct {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         invite: Option<Redemption>,
     },
-    /// A member says: this key is out. The cut is by the removed key's own
-    /// signed seq (`through_seq`) and never by a position in the order —
-    /// `(ts_unix, actor, seq, id)` starts with the author's own timestamp, so
-    /// a positional cutoff could be dodged by backdating, while a seq cutoff
-    /// cannot (admit already refuses a fork on seq). Two cuts compose by
-    /// minimum with no shared order (the OpenSSH KRL shape).
+    /// A member says: this key is out (svrngs, U7; DESIGN §6 "Removal has one
+    /// decider"). Anyone standing may sign one: from the group's keeper it is
+    /// the cut, from anyone else it is an ask the keeper may sequence, and
+    /// it cuts nobody. A removed key's own `Remove` counts nowhere.
     ///
-    /// The cut is PROSPECTIVE at its position in the rail's order: past acts
-    /// by the key stay admitted. PKISN's rule falls out of that position
-    /// scoping — a removed key's later `Remove`s do not count, so a cut party
-    /// cannot cut back. Undo is [`Self::Correct`]: voiding the `Remove`
-    /// restores the member and admits what they wrote while removed.
+    /// The cut names the removed key's acts by hash, never by position or
+    /// time: `through` is that key's newest acts the remover held, by id,
+    /// and the cut covers them and every act they descend from by `prev`.
+    /// Every other act of the key counts nowhere, wherever its timestamp puts
+    /// it — a backdated act, or one beside an act the remover saw. Empty when
+    /// the remover held none. Nothing undoes a cut: a [`Self::Correct`] of
+    /// an act that moves membership voids nothing.
     Remove {
         key: String,
-        /// The last seq of the removed key's own chain that this cut covers.
-        through_seq: u64,
+        /// The removed key's newest acts the remover held: each act of the
+        /// key that no other held act of the key names as its previous act.
+        through: Vec<OpId>,
     },
+    /// The keeper says: this standing key is the group's keeper now (svrngs,
+    /// U7; DESIGN §6). The keeper at the seed is the maker's key; only the
+    /// keeper's own `HandOn` moves it, so the keeper is one key at every
+    /// place in the order. Carries no [`Payload`].
+    HandOn { key: String },
     /// A member says: whoever holds this link's key may join, until `until`
     /// (svrngs, U2; DESIGN §6 "A link admits each person once"). `key` is
     /// the link's public key as actor hex; the secret half travels in the
     /// link and never in the record. Each use is an [`Self::Admit`] naming
-    /// this act's id, signed by this act's signer; a [`Self::Correct`]
-    /// closes the link. Carries no [`Payload`] and grants nothing itself.
+    /// this act's id, signed by this act's signer; the issuer's next
+    /// `Invite` closes the link. Carries no [`Payload`] and grants nothing
+    /// itself.
     Invite {
         key: String,
         /// Unix seconds; a redeeming `Admit` counts only when timed before it.
@@ -607,9 +613,9 @@ pub struct SignedOp {
     /// [`View`] over what this writer held (the sync digest's entries). It is
     /// the act citing its context — the DAG heads of
     /// `RING_APP_LIBRARY.md` §19 step 0 — so an equivocation carries two
-    /// claimed histories in its own two lines, and a future cut
-    /// (`Remove{key, through_seq}`) is weighable against what its remover
-    /// claimed to have seen.
+    /// claimed histories in its own two lines. (A cut names what its remover
+    /// saw of the removed key in its own body, [`RailAct::Remove`]'s
+    /// `through`, so it is judged without this.)
     ///
     /// **Self-asserted and unforgable-by-others, like the name above it:** a
     /// writer claims their own view; nobody can rewrite it in flight because
@@ -648,13 +654,20 @@ pub const BROWSER_LINE_VERSION: u32 = 4;
 /// outside a run's scratch held one: no build reads it.
 pub const SYNCED_LINE_VERSION: u32 = 6;
 
+/// The line format version removal ships at (U7): a [`RailAct::Remove`]
+/// naming the acts it covers by id, and a [`RailAct::HandOn`]. A build at
+/// [`SYNCED_LINE_VERSION`] read `Remove` by a seq it no longer carries; at
+/// this version it names the line `NewerVersionLine` instead.
+pub const REMOVAL_LINE_VERSION: u32 = 7;
+
 impl Journaled for SignedOp {
     const FILE: &'static str = "ring_oplog.jsonl";
     const ID_PREFIX: &'static str = "ring";
     const LABEL: &'static str = "ring_rail";
-    /// This build reads the membership cohort's, the link's and a
-    /// browser's redemption's lines too (see [`Self::line_version`]).
-    const UNDERSTANDS: u32 = SYNCED_LINE_VERSION;
+    /// This build reads the membership cohort's, the link's, a browser's
+    /// redemption's, a folder's and removal's lines too (see
+    /// [`Self::line_version`]).
+    const UNDERSTANDS: u32 = REMOVAL_LINE_VERSION;
     /// The membership acts — [`RailAct::Admit`] and [`RailAct::Remove`] —
     /// ship at the bumped line version and the original three keep the bytes
     /// they always had, so an un-upgraded node names exactly the acts it
@@ -675,7 +688,8 @@ impl Journaled for SignedOp {
             | RailAct::Admit {
                 invite: Some(_), ..
             } => LINK_LINE_VERSION,
-            RailAct::Admit { .. } | RailAct::Remove { .. } => MEMBERSHIP_LINE_VERSION,
+            RailAct::Admit { .. } => MEMBERSHIP_LINE_VERSION,
+            RailAct::Remove { .. } | RailAct::HandOn { .. } => REMOVAL_LINE_VERSION,
             RailAct::Synced { .. } => SYNCED_LINE_VERSION,
             _ => Self::VERSION,
         }

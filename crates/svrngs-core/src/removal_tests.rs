@@ -25,10 +25,11 @@ fn admit_of(person: &str, joining: u8) -> RailAct {
     }
 }
 
-fn remove_of(leaving: u8, through_seq: u64) -> RailAct {
+/// `leaving`'s removal, having seen `through` of their acts.
+fn remove_of(leaving: u8, through: &[&Op<SignedOp>]) -> RailAct {
     RailAct::Remove {
         key: actor_of(&key(leaving)),
-        through_seq,
+        through: through.iter().map(|op| op.id.clone()).collect(),
     }
 }
 
@@ -87,7 +88,7 @@ fn a_second_act_at_an_admits_seq_takes_nothing_back() {
 fn a_members_remove_with_no_keeper_sequencing_it_cuts_nobody() {
     let bo_in = signed(&key(1), 100, 0, admit_of("bo", 2));
     let cy_in = after(&key(1), &bo_in, 101, admit_of("cy", 3));
-    let ask = signed(&key(2), 102, 0, remove_of(3, 0));
+    let ask = signed(&key(2), 102, 0, remove_of(3, &[]));
     let cy_writes = signed(&key(3), 103, 0, record("cy-writes"));
     let a = admitted_under(&alex_alone(), &[bo_in, cy_in, ask, cy_writes.clone()]);
     assert!(standing(&a, 3), "cy stands: {:?}", a.gaps());
@@ -101,12 +102,13 @@ fn a_members_remove_with_no_keeper_sequencing_it_cuts_nobody() {
 /// act beside the one alex saw. Neither counts; the act alex saw does. At
 /// the base the cut was placed by the `Remove`'s place in the order and
 /// `through_seq` went unread (`lib.rs`, `RailAct::Remove`;
-/// membership.rs:323-326), so the backdated act counted.
+/// membership.rs:323-326), so the backdated act counted. (`Remove` then
+/// carried `through_seq`; it names acts by id since (c).)
 #[test]
 fn a_backdated_act_does_not_slip_under_a_removal() {
     let bo_in = signed(&key(1), 100, 0, admit_of("bo", 2));
     let kept = signed(&key(2), 101, 0, record("kept"));
-    let cut = after(&key(1), &bo_in, 110, remove_of(2, 0));
+    let cut = after(&key(1), &bo_in, 110, remove_of(2, &[&kept]));
     let above = after(&key(2), &kept, 105, record("above-the-cut"));
     let beside = signed(&key(2), 102, 0, record("beside-the-cut"));
     let a = admitted_under(
@@ -192,7 +194,7 @@ fn correct_of(target: &Op<SignedOp>) -> RailAct {
 fn a_removed_key_cannot_take_back_its_removal() {
     let bo_in = signed(&key(1), 100, 0, admit_of("bo", 2));
     let kept = signed(&key(2), 101, 0, record("kept"));
-    let cut = after(&key(1), &bo_in, 110, remove_of(2, 0));
+    let cut = after(&key(1), &bo_in, 110, remove_of(2, &[&kept]));
     let undo = after(&key(2), &kept, 111, correct_of(&cut));
     let later = after(&key(2), &undo, 112, record("later"));
     let a = admitted_under(&alex_alone(), &[bo_in, kept, cut, undo, later.clone()]);
@@ -215,7 +217,197 @@ fn a_members_correct_of_an_admit_unseats_nobody() {
     let cy_in = after(&key(1), &bo_in, 101, admit_of("cy", 3));
     let undo = signed(&key(2), 102, 0, correct_of(&cy_in));
     let cy_writes = signed(&key(3), 103, 0, record("cy-writes"));
-    let a = admitted_under(&alex_alone(), &[bo_in, cy_in, undo, cy_writes.clone()]);
+    let a = admitted_under(
+        &alex_alone(),
+        &[bo_in, cy_in.clone(), undo, cy_writes.clone()],
+    );
     assert!(standing(&a, 3), "cy stands: {:?}", a.gaps());
     assert!(a.membership().counts(&cy_writes.id), "and cy's act counts");
+    assert!(a.membership().counts(&cy_in.id), "and the Admit, unvoided");
+}
+
+fn hand_on(to: u8) -> RailAct {
+    RailAct::HandOn {
+        key: actor_of(&key(to)),
+    }
+}
+
+fn gaps_named(a: &Admission, f: impl Fn(&RailGap) -> bool) -> usize {
+    a.gaps().iter().filter(|g| f(g)).count()
+}
+
+/// **The keeper sequences an ask, and only then it cuts** (U7 (c)). Bo
+/// asks to remove cy; alex, the keeper, sequences it by removing cy,
+/// having seen cy's one act. Cy is out; cy's act alex saw still counts; a
+/// later act of cy's is `Removed`, beside a complete answer.
+#[test]
+fn the_keeper_sequences_an_ask_and_only_then_it_cuts() {
+    let bo_in = signed(&key(1), 100, 0, admit_of("bo", 2));
+    let cy_in = after(&key(1), &bo_in, 101, admit_of("cy", 3));
+    let cy_writes = signed(&key(3), 102, 0, record("cy-writes"));
+    let ask = signed(&key(2), 103, 0, remove_of(3, &[&cy_writes]));
+    let cut = after(&key(1), &cy_in, 104, remove_of(3, &[&cy_writes]));
+    let cy_later = after(&key(3), &cy_writes, 105, record("cy-later"));
+    let a = admitted_under(
+        &alex_alone(),
+        &[
+            bo_in,
+            cy_in,
+            cy_writes.clone(),
+            ask.clone(),
+            cut.clone(),
+            cy_later,
+        ],
+    );
+    assert!(!standing(&a, 3), "cy is out");
+    assert!(a.membership().counts(&ask.id) && a.membership().counts(&cut.id));
+    assert_eq!(a.membership().cut[&actor_of(&key(3))].by, cut.id);
+    assert_eq!(applied(&a), vec!["cy-writes"]);
+    assert_eq!(gaps_named(&a, |g| matches!(g, RailGap::Removed { .. })), 1);
+    assert!(a.is_complete(), "{:?}", a.gaps());
+}
+
+/// **The keeper is handed on only by the keeper** (U7 (c)). Cy, not the
+/// keeper, hands on to cy: nothing moves. Alex hands on to
+/// bo; after it alex's `Remove` of cy is an ask, and bo's cuts.
+#[test]
+fn a_hand_on_moves_the_keeper_and_only_the_keepers_counts() {
+    let bo_in = signed(&key(1), 100, 0, admit_of("bo", 2));
+    let cy_in = after(&key(1), &bo_in, 101, admit_of("cy", 3));
+    let cy_hands = signed(&key(3), 102, 0, hand_on(3));
+    let alex_hands = after(&key(1), &cy_in, 103, hand_on(2));
+    let alex_asks = after(&key(1), &alex_hands, 104, remove_of(3, &[&cy_hands]));
+    let a = admitted_under(
+        &alex_alone(),
+        &[
+            bo_in.clone(),
+            cy_in.clone(),
+            cy_hands.clone(),
+            alex_hands.clone(),
+            alex_asks.clone(),
+        ],
+    );
+    assert_eq!(a.membership().keeper, Some(actor_of(&key(2))), "bo keeps");
+    assert!(standing(&a, 3), "alex's Remove after the hand-on is an ask");
+    let bo_cuts = signed(&key(2), 105, 0, remove_of(3, &[&cy_hands]));
+    let a = admitted_under(
+        &alex_alone(),
+        &[bo_in, cy_in, cy_hands, alex_hands, alex_asks, bo_cuts],
+    );
+    assert!(!standing(&a, 3), "bo's Remove cuts");
+}
+
+/// **A removed key cannot remove, ask or hand on, and the keeper cannot
+/// remove itself** (U7 (c)). Bo, cut, then removes cy and hands on: both
+/// count nowhere. Alex's `Remove` of alex cuts nobody.
+#[test]
+fn a_removed_key_cannot_remove_ask_or_hand_on() {
+    let bo_in = signed(&key(1), 100, 0, admit_of("bo", 2));
+    let cy_in = after(&key(1), &bo_in, 101, admit_of("cy", 3));
+    let cut = after(&key(1), &cy_in, 102, remove_of(2, &[]));
+    let bo_removes = signed(&key(2), 103, 0, remove_of(3, &[]));
+    let bo_hands = after(&key(2), &bo_removes, 104, hand_on(3));
+    let alex_alone_out = after(&key(1), &cut, 105, remove_of(1, &[]));
+    let a = admitted_under(
+        &alex_alone(),
+        &[
+            bo_in,
+            cy_in,
+            cut,
+            bo_removes,
+            bo_hands,
+            alex_alone_out.clone(),
+        ],
+    );
+    assert!(standing(&a, 3) && standing(&a, 1), "cy and alex stand");
+    assert_eq!(a.membership().keeper, Some(actor_of(&key(1))));
+    assert_eq!(gaps_named(&a, |g| matches!(g, RailGap::Removed { .. })), 2);
+    assert!(
+        a.membership().counts(&alex_alone_out.id),
+        "an act, cutting nobody"
+    );
+}
+
+/// **An ex-keeper's backdated hand-on moves nothing** (U7 (c)). Alex hands
+/// on to bo, then signs a second hand-on to cy, timed before the first.
+/// It follows alex's hand-on in alex's chain, so it carries no keeper's
+/// authority wherever its timestamp puts it: bo keeps.
+#[test]
+fn an_ex_keepers_backdated_hand_on_moves_nothing() {
+    let bo_in = signed(&key(1), 100, 0, admit_of("bo", 2));
+    let cy_in = after(&key(1), &bo_in, 101, admit_of("cy", 3));
+    let to_bo = after(&key(1), &cy_in, 110, hand_on(2));
+    let to_cy = after(&key(1), &to_bo, 105, hand_on(3));
+    let a = admitted_under(&alex_alone(), &[bo_in, cy_in, to_bo, to_cy]);
+    assert_eq!(a.membership().keeper, Some(actor_of(&key(2))), "bo keeps");
+}
+
+/// **A cut naming an act this copy lacks is a gap until it arrives** (U7
+/// (c)). Alex's cut names bo's second act; a copy holding only bo's first
+/// names the missing one `UnheldCut` and reads incomplete, and bo's first
+/// act, an ancestor of what the cut names, counts once the second arrives.
+#[test]
+fn a_cut_naming_an_act_this_copy_lacks_is_a_gap_until_it_arrives() {
+    let bo_in = signed(&key(1), 100, 0, admit_of("bo", 2));
+    let first = signed(&key(2), 101, 0, record("first"));
+    let second = after(&key(2), &first, 102, record("second"));
+    let cut = after(&key(1), &bo_in, 103, remove_of(2, &[&second]));
+    let lacking = admitted_under(&alex_alone(), &[bo_in.clone(), first.clone(), cut.clone()]);
+    assert_eq!(
+        gaps_named(
+            &lacking,
+            |g| matches!(g, RailGap::UnheldCut { missing, .. } if *missing == second.id)
+        ),
+        1,
+        "{:?}",
+        lacking.gaps()
+    );
+    assert!(!lacking.is_complete());
+    let whole = admitted_under(&alex_alone(), &[bo_in, first, second, cut]);
+    assert_eq!(applied(&whole), vec!["first", "second"]);
+    assert!(whole.is_complete(), "{:?}", whole.gaps());
+}
+
+/// **Removal is a function of the set** (U7 (c); the permutation contract,
+/// `membership.rs`'s module docs). Every arrival order of an ask, a cut, a
+/// backdated act, a fork beside what the cut saw, a hand-on, an ex-keeper's
+/// backdated hand-on and a removed key's own `Remove` folds to one answer.
+#[test]
+fn every_arrival_of_a_removal_folds_identically() {
+    let bo_in = signed(&key(1), 100, 0, admit_of("bo", 2));
+    let cy_in = after(&key(1), &bo_in, 101, admit_of("cy", 3));
+    let kept = signed(&key(2), 102, 0, record("kept"));
+    let ask = signed(&key(3), 103, 0, remove_of(2, &[&kept]));
+    let cut = after(&key(1), &cy_in, 110, remove_of(2, &[&kept]));
+    let above = after(&key(2), &kept, 105, record("above"));
+    let beside = signed(&key(2), 104, 0, remove_of(3, &[]));
+    let to_cy = after(&key(1), &cut, 111, hand_on(3));
+    let back = after(&key(1), &to_cy, 106, hand_on(2));
+    let ops = [bo_in, cy_in, kept, ask, cut, above, beside, to_cy, back];
+    let once = admitted_under(&alex_alone(), &ops);
+    assert_eq!(
+        once.membership().keeper,
+        Some(actor_of(&key(3))),
+        "control: cy keeps"
+    );
+    assert!(
+        !standing(&once, 2) && standing(&once, 3),
+        "control: bo out, cy in"
+    );
+    // A fixed-seed shuffle, as membership_tests.rs's battery: deterministic,
+    // no new dependency; nine acts have 362,880 orders, too many to fold each.
+    let mut state: u64 = 0x5eed;
+    for round in 0..256u64 {
+        let mut order: Vec<&Op<SignedOp>> = ops.iter().collect();
+        for i in (1..order.len()).rev() {
+            state = state.wrapping_mul(6364136223846793005).wrapping_add(1);
+            order.swap(i, (state >> 33) as usize % (i + 1));
+        }
+        let shuffled: Vec<Op<SignedOp>> = order.into_iter().cloned().collect();
+        assert_eq!(
+            admitted_under(&alex_alone(), &shuffled),
+            once,
+            "round {round}"
+        );
+    }
 }

@@ -127,12 +127,19 @@ pub enum RailGap {
     /// forever (ROOT_CAUSE_FIXES A2).
     DanglingCorrection { by: OpId, missing: OpId },
     /// The signer is bound in the record but held no standing at this act's
-    /// position — written while removed, or before their own
-    /// [`Admit`](crate::RailAct::Admit) in the order. The act counts for
-    /// nothing and is named rather than dropped: it may be real data (voiding
-    /// the [`Remove`](crate::RailAct::Remove) admits it back — leg 3 of
-    /// `ra-membership-is-order-free`).
+    /// position — before their own [`Admit`](crate::RailAct::Admit) in the
+    /// order (an act of a key the keeper cut is [`Self::Removed`]). The act
+    /// counts for nothing and is named rather than dropped: it may be real
+    /// data under an `Admit` this copy does not hold yet.
     NotAMember { id: OpId, actor: String },
+    /// The signer was cut by the group's keeper, and the cut does not cover
+    /// this act (svrngs, U7; DESIGN §6): written after the removal, or
+    /// beside or above the acts the removal names. Nothing undoes a cut, so
+    /// the act is refused for good.
+    Removed { id: OpId, actor: String },
+    /// A counting cut names an act of the removed key this copy does not
+    /// hold, so the acts it covers cannot all be told yet (U7).
+    UnheldCut { by: OpId, missing: OpId },
     /// The act's `prev` is not the id of its author's act at `seq − 1`: it
     /// names a parent at seq 0, names none above it, or names one other than
     /// the act this copy holds there (svrngs, U2; DESIGN §6). The act is not
@@ -191,12 +198,14 @@ impl RailGap {
             | Self::BadSignature { .. }
             | Self::UnknownSigner { .. }
             | Self::NotAMember { .. }
+            | Self::UnheldCut { .. }
             | Self::WrongPrevious { .. }
             | Self::RefusedRedemption { .. }
             | Self::SequenceHole { .. } => GapClass::Absence,
             Self::TamperedId { .. }
             | Self::DanglingCorrection { .. }
-            | Self::SequenceFork { .. } => GapClass::Contradiction,
+            | Self::SequenceFork { .. }
+            | Self::Removed { .. } => GapClass::Contradiction,
         }
     }
 }
@@ -227,6 +236,16 @@ impl core::fmt::Display for RailGap {
             Self::NotAMember { actor, .. } => write!(
                 f,
                 "an op by actor {actor} was written while they held no standing in the ring"
+            ),
+            Self::Removed { actor, .. } => write!(
+                f,
+                "an act by {}… after they were removed from the group does not count",
+                crate::actor_prefix(actor)
+            ),
+            Self::UnheldCut { missing, .. } => write!(
+                f,
+                "a removal names an act ({}) this node does not hold yet",
+                crate::short_id(&missing.to_string())
             ),
             Self::UnknownSigner { actor, .. } => write!(
                 f,
@@ -525,6 +544,12 @@ pub fn admit(
         namespace,
     );
 
+    for cut in m.cut.values() {
+        gaps.extend(cut.unheld.iter().map(|missing| RailGap::UnheldCut {
+            by: cut.by.clone(),
+            missing: missing.clone(),
+        }));
+    }
     let mut admitted: BTreeMap<OpId, Candidate<'_>> = BTreeMap::new();
     for (id, op) in authentic {
         let Some(person) = m.person_for(&op.actor) else {
@@ -543,9 +568,10 @@ pub fn admit(
             continue;
         }
         if !m.counted.contains(&id) && !m.voided.contains(&id) {
-            gaps.push(RailGap::NotAMember {
-                id,
-                actor: op.actor.clone(),
+            let actor = op.actor.clone();
+            gaps.push(match m.cut.contains_key(&actor) {
+                true => RailGap::Removed { id, actor },
+                false => RailGap::NotAMember { id, actor },
             });
             continue;
         }
@@ -700,6 +726,7 @@ pub fn admit(
                 RailAct::Seal
                 | RailAct::Admit { .. }
                 | RailAct::Remove { .. }
+                | RailAct::HandOn { .. }
                 | RailAct::Invite { .. }
                 | RailAct::Synced { .. } => (None, None),
             };

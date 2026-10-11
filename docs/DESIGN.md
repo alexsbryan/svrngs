@@ -1047,7 +1047,7 @@ ARCH principles by old section number (ARCH §18.1); the table at the end of
 
 ## 6. The record
 
-**Today**, as forked: signed acts — `Record`, `Correct`, `Seal`,
+**As forked**: signed acts — `Record`, `Correct`, `Seal`,
 `Admit{person, key}` and `Remove{key, through_seq}` — admitted into one total
 order by `(ts_unix, actor, seq, id)`; `Correct` voids without erasing; a
 membership fold over `Admit` and `Remove`; a per-actor digest, so sync sends
@@ -1091,7 +1091,22 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   per-actor sequence audit; 40b9466's body).
 - **Removal has one decider** (U7). Anyone may ask to remove anyone; the group's
   keeper — one person's key, handed on by an act — sequences each request. A
-  removed key cannot remove. There is no recovery inside a group.
+  removed key cannot remove. There is no recovery inside a group. Landed in
+  the core, u7-removal (c) (`crates/svrngs-core/src/membership.rs`, its
+  module docs the rule): the keeper at the seed is the maker's key (for a
+  seed of many keys, upstream's shape, the first key of the person whose
+  name sorts first), moved only by the keeper's own `HandOn` to a standing
+  key; an act that follows its author's own `HandOn` by `prev` carries no
+  keeper's authority, so an ex-keeper's backdated second hand-on moves
+  nothing. The keeper's `Remove` of a standing key not its own is the cut;
+  anyone else's is an ask, counted as an act, cutting nobody. A cut key's
+  later acts count nowhere (`RailGap::Removed`), so it cannot remove, ask
+  or hand on. A `Correct` voids nothing that moves membership — before,
+  any member's `Correct` of an `Admit` unseated its key and a removed key's
+  `Correct` of its cut restored it (`membership.rs`'s void layer, red at
+  `f2b9e03`) — so a link closes only by its issuer's next `Invite`, and
+  `InviteFault::Voided` is gone. The keeper can equivocate, signing two
+  acts on one parent; that is the trust risk 2 names.
 - **Leaving is cheap.** A group's whole state is a directory every member's
   computer holds. A group that goes wrong refounds from any copy, within
   hours, without whoever it leaves out (operator: "with dotfile elegance").
@@ -1116,8 +1131,8 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   closes by its issuer's next `Invite`, from that `Invite`'s place in the
   order (u2-4b, landed: `InviteFault::Closed` names the newer `Invite`), so
   everyone the old link admitted keeps standing. A `Correct` of an `Invite`
-  is not how a link closes: the void set is order-free, so it unseats every
-  key the `Invite` admitted, as voiding each `Admit` would (`Voided`). Both
+  voids nothing (U7, below "Removal has one decider"); before, it unseated
+  every key the `Invite` admitted, a removal no keeper sequenced. Both
   kinds ship at line version 3. A redemption also names what holds the
   new key, a computer or a browser (u4-1, landed: `Device` in the
   `Redemption`, `crates/svrngs-core/src/lib.rs`); a browser's `Admit` ships
@@ -1160,10 +1175,17 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   line's id: two acts one member ground to share a prefix, about 2^32
   hashes, were held one or the other by whichever a copy saw first, and
   copies diverged. A removal names the removed key's acts by hash,
-  never by position or time (U7): today the fold ignores `through_seq` and
-  cuts the key at the `Remove`'s place in the order
-  (`crates/svrngs-core/src/membership.rs:153`), so a backdated act slips under
-  the cut. The same order would put an act signed in the second of the
+  never by position or time (U7; landed, u7-removal (c)): `Remove{key,
+  through}` names the removed key's newest acts its signer held, by id, and
+  the cut covers them and every act they descend from by `prev`; any other
+  act of the key counts nowhere, wherever its timestamp puts it. Before, the
+  fold ignored `through_seq` and cut the key at the `Remove`'s place in the
+  order, so a backdated act slipped under the cut. Which cuts count turns
+  on the walk and the walk on what they cover, so the walk runs again until
+  the cuts settle; a cut naming an act a copy lacks is `UnheldCut`, an
+  absence. The node's register folds standing from the acts that move
+  membership and every act of a key a `Remove` names
+  (`svrngs_core::standing_reads`), so it covers what admission covers. The same order would put an act signed in the second of the
   `Admit` that gave its author standing before that `Admit` when the author's
   key sorts first (`membership.rs:124`), so the act would not count. The door
   signs at the later of now and one second past the newest act its journal

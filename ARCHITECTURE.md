@@ -18,7 +18,7 @@ joining by that link is next (U2).
 ## Code map
 
 **`crates/svrngs-core`**: the group's record — signed acts (`Record`,
-`Correct`, `Seal`, `Admit`, `Remove`, `Invite`), the lines a computer holds as
+`Correct`, `Seal`, `Admit`, `Remove`, `HandOn`, `Invite`), the lines a computer holds as
 a set (`ActSet`, `act_set.rs`), admission of that set into one total order
 (`admit.rs`; only `admit` makes an `Admission`), whose state leaves the core
 only as a projection (`project.rs`: the sealed `Projection`, folded for
@@ -57,7 +57,15 @@ An issuer's newer `Invite` closes their older one from its place in the
 order, so what the older link admitted keeps standing. A redemption names
 what holds the new key (`Device`, u4-1): a browser's ships at line version
 4, and `Membership::device` answers each standing key, a computer's unless
-the counting `Admit` that last bound it named a browser.
+the counting `Admit` that last bound it named a browser. Forks void nothing
+(U7): both branches count, the fork named a `SequenceFork` beside a complete
+answer. Removal has one decider (U7, `membership.rs`'s module docs): the
+group's keeper — the seed's key, moved only by its own `HandOn` — cuts by
+its `Remove`; anyone else's is an ask that cuts nobody. The cut names the
+removed key's acts by id (`Remove::through`) and covers them and their
+ancestors by `prev`; any other act of the key is `Removed`, and a cut naming
+an act a copy lacks is `UnheldCut`. A `Correct` voids nothing that moves
+membership, so nothing undoes a cut; voids fold after the walk.
 
 **`crates/svrngs-runtime`**: the journal, its write index, the open-journal map
 (`RingRail`) and the register's standing (`register.rs`), split out of
@@ -91,7 +99,8 @@ ours is answered unread when it holds nothing the slow path would send
 (ceiling-3) the write index keeps each signature that passed as its line
 entered, and the offer read whole judges by those (`Checked`), checking
 again only a line it did not see enter. Then (ceiling-4) the write index
-keeps the acts that move membership, in the log's order, and the standing
+keeps the acts that move membership, with every act of a key a `Remove`
+names (`standing_reads`; U7), in the log's order, and the standing
 last folded from them with the seed it was folded from (`RingJournal::standing`):
 the register answers from it until an act that moves membership arrives
 or the seed changes, judged by `Ed25519Verifier`, which `standing` no

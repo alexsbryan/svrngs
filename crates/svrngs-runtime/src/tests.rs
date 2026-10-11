@@ -478,8 +478,9 @@ fn a_forked_window_with_a_tiny_budget_still_converges() {
 /// **The mutual-removal resolver is deterministic across nodes.** The
 /// amendment's "two members removing each other… the rail's order picks one"
 /// — with both cuts arriving at BOTH nodes in OPPOSITE orders. The rail's
-/// order is content-derived: both nodes fold the same survivor (alex's cut
-/// sorts first at ts 100, so bo is out and bo's counter-cut is NotAMember).
+/// order is content-derived: both nodes fold the same survivor. Since U7
+/// only the keeper cuts (alex, the seed's first person), so bo is out and
+/// bo's counter-cut, outside what alex's cut covers, is `Removed`.
 /// The arrival-order defect's WATCH is the battery in
 /// `membership.rs::every_interleaving_of_a_membership_set_folds_identically`
 /// — measured, not assumed: this end-to-end form stays green under that
@@ -498,7 +499,7 @@ fn two_nodes_that_receive_the_cuts_in_opposite_orders_agree() {
         0,
         RailAct::Remove {
             key: actor_of(&key(2)),
-            through_seq: 0,
+            through: Vec::new(),
         },
     );
     let bo_cut = signed(
@@ -507,7 +508,7 @@ fn two_nodes_that_receive_the_cuts_in_opposite_orders_agree() {
         0,
         RailAct::Remove {
             key: actor_of(&key(1)),
-            through_seq: 0,
+            through: Vec::new(),
         },
     );
     // Same SET, opposite ARRIVAL.
@@ -519,12 +520,12 @@ fn two_nodes_that_receive_the_cuts_in_opposite_orders_agree() {
         b.admit(&r, &Ed25519Verifier).unwrap(),
     );
     assert_eq!(fa, fb, "the rail's order picks one — the same one on both nodes");
-    let not_member = fa
+    let removed = fa
         .gaps()
         .iter()
-        .filter(|g| matches!(g, RailGap::NotAMember { .. }))
+        .filter(|g| matches!(g, RailGap::Removed { .. }))
         .count();
-    assert_eq!(not_member, 1, "exactly bo's counter-cut is unstanding: {:?}", fa.gaps());
+    assert_eq!(removed, 1, "exactly bo's counter-cut is unstanding: {:?}", fa.gaps());
     assert!(
         wire_ops(&fa).iter().any(|o| o.id == alex_cut.id),
         "alex's cut counted — it sorted first, so bo was already out when theirs arrived"

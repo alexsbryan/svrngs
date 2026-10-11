@@ -440,7 +440,7 @@ fn a_replacement_key_leaves_every_past_act_admitted() {
         1,
         RailAct::Remove {
             key: actor_of(&key(4)),
-            through_seq: 1,
+            through: vec![old.id.clone(), past.id.clone()],
         },
     );
     let new_writes = signed(&key(5), 104, 0, record("new-key-writes"));

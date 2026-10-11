@@ -82,16 +82,12 @@ pub(crate) fn membership_in(
     verifier: &dyn RingVerifier,
 ) -> Result<Membership, RailError> {
     // Standing turns only on the acts `membership` reads
-    // (`RailAct::moves_membership`, beside it in svrngs-core's
+    // (`svrngs_core::standing_reads`, beside it in svrngs-core's
     // membership.rs), so the rest are left out before admission verifies
     // each signature — the sync route asks this per request, of journals of
     // tens of thousands of acts (ring_sync's ceiling tests timed out
     // verifying them all).
-    let acts: Vec<Op<SignedOp>> = ops
-        .iter()
-        .filter(|op| op.kind.act.moves_membership())
-        .cloned()
-        .collect();
+    let acts: Vec<Op<SignedOp>> = svrngs_core::standing_reads(ops).cloned().collect();
     Ok(admit(&crate::ActSet::of(&acts), &[], seed, namespace, verifier).project::<Membership>())
 }
 
