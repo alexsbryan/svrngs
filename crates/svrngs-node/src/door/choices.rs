@@ -174,12 +174,9 @@ fn write(path: &Path, said: Kept) -> Result<(), String> {
     for (person, choices) in said {
         kept.entry(person).or_default().extend(choices);
     }
-    let partial = path.with_extension("json.partial");
     let text = serde_json::to_string_pretty(&kept).map_err(|e| e.to_string())?;
-    std::fs::create_dir_all(path.parent().ok_or("no directory")?)
-        .and_then(|()| std::fs::write(&partial, text))
-        .and_then(|()| std::fs::rename(&partial, path))
-        .map_err(|e| e.to_string())
+    std::fs::create_dir_all(path.parent().ok_or("no directory")?).map_err(|e| e.to_string())?;
+    crate::declared::write_whole(path, &text).map_err(|(_, e)| e.to_string())
 }
 
 /// The lend `raw` names here, or svrngs's refusal.

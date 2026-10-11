@@ -49,10 +49,8 @@ pub const API_FILE: &str = "api";
 /// place, so an app never reads half an address.
 pub fn write_address(data_dir: &std::path::Path, addr: SocketAddr) -> Result<(), ApiError> {
     let path = data_dir.join(API_FILE);
-    let partial = data_dir.join(format!(".{API_FILE}.partial"));
-    std::fs::write(&partial, format!("http://{addr}\n"))
-        .and_then(|()| std::fs::rename(&partial, &path))
-        .map_err(|e| ApiError::AddressFile(path.clone(), e))?;
+    crate::declared::write_whole(&path, &format!("http://{addr}\n"))
+        .map_err(|(_, e)| ApiError::AddressFile(path.clone(), e))?;
     tracing::debug!(target: "rails", path = %path.display(), %addr, "api: wrote where it listens, for apps it did not start");
     Ok(())
 }

@@ -16,8 +16,11 @@
 //!
 //! For Jellyfin 12 the value is the whole credential the header carries,
 //! `MediaBrowser Token="<key>"`, not the bare key.
+//!
+//! (svrngs: and how this node writes any file it keeps whole,
+//! [`write_whole`].)
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// A header name the wire can carry and a path cannot escape: RFC 9110 token
 /// characters minus the ones no origin uses, lowercased.
@@ -120,6 +123,18 @@ fn write_owner_only(path: &Path, value: &str) -> std::io::Result<()> {
     #[cfg(unix)]
     std::os::unix::fs::OpenOptionsExt::mode(&mut open, 0o600);
     open.open(path)?.write_all(value.as_bytes())
+}
+
+/// `text` at `path`, whole: written to `.<its name>.partial` beside it and
+/// renamed into place, so no reader sees half of it — the one way this node
+/// writes a file whole (REVIEW_FINDINGS #107: the API's address, a lend's
+/// declaration, its choices). An error names the file that failed, the
+/// partial or `path`.
+pub(crate) fn write_whole(path: &Path, text: &str) -> Result<(), (PathBuf, std::io::Error)> {
+    let name = path.file_name().unwrap_or_default().to_string_lossy();
+    let partial = path.with_file_name(format!(".{name}.partial"));
+    std::fs::write(&partial, text).map_err(|e| (partial.clone(), e))?;
+    std::fs::rename(&partial, path).map_err(|e| (path.to_path_buf(), e))
 }
 
 /// `path` narrowed to `mode` where the system has modes; elsewhere nothing.

@@ -414,10 +414,8 @@ pub fn declare(
         asks: lend.asks.clone(),
     };
     let text = serde_json::to_string_pretty(&file).expect("a declaration always serializes");
-    let path = dir.join(format!("{}.json", lend.name));
-    let partial = dir.join(format!(".{}.json.partial", lend.name));
-    std::fs::write(&partial, text).map_err(unwritable(&partial))?;
-    std::fs::rename(&partial, &path).map_err(unwritable(&path))?;
+    crate::declared::write_whole(&dir.join(format!("{}.json", lend.name)), &text)
+        .map_err(|(path, source)| LendError::Unwritable { path, source })?;
     tracing::debug!(target: "lend", lend = %lend.name, port = lend.port, kind = %lend.kind,
         limit = lend.limit, refused = lend.refused.len(), upload = ?lend.upload.map(Upload::bps),
         secret = secret.is_some(), sign_in = ?lend.sign_in, asks = lend.asks.is_some(),
