@@ -171,6 +171,27 @@ pub fn is_local_only(namespace: &str) -> bool {
 
 // ── People ───────────────────────────────────────────────────
 
+/// A name kept as text, read as it: `as_str`, and `Display` writing those
+/// bytes — each name's own, where every one wrote the two alike. For a
+/// newtype whose field is `String` or another of these; never for a secret,
+/// which no `Display` may print.
+#[macro_export]
+macro_rules! text_newtype {
+    ($($name:ty),+) => {$(
+        impl $name {
+            pub fn as_str(&self) -> &str {
+                self.0.as_str()
+            }
+        }
+        impl core::fmt::Display for $name {
+            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                f.write_str(self.as_str())
+            }
+        }
+    )+};
+}
+crate::text_newtype!(Name, Person);
+
 /// A name a person reads: a group's, or a person's. Trimmed, 1..=64 bytes,
 /// no control characters: it is printed in a terminal, carried in a group's
 /// seed and, as a [`Person`], signed into every copy of the record (svrngs,
@@ -221,16 +242,6 @@ impl Name {
         }
         Ok(name)
     }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-}
-
-impl core::fmt::Display for Name {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.0)
-    }
 }
 
 /// A member of the ring, by the name the house calls them.
@@ -251,10 +262,6 @@ impl Person {
     pub fn parse(raw: &str) -> Result<Self, NotAName> {
         Name::parse(raw).map(Self)
     }
-
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
 }
 
 impl From<Name> for Person {
@@ -273,12 +280,6 @@ impl<'de> Deserialize<'de> for Person {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         let raw = String::deserialize(d)?;
         Name::kept(raw).map(Self).map_err(serde::de::Error::custom)
-    }
-}
-
-impl core::fmt::Display for Person {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        self.0.fmt(f)
     }
 }
 

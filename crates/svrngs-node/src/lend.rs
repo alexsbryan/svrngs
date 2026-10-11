@@ -35,42 +35,6 @@ use serde::{Deserialize, Serialize};
 #[serde(try_from = "String", into = "String")]
 pub struct LendName(String);
 
-impl TryFrom<String> for LendName {
-    type Error = LendError;
-    fn try_from(raw: String) -> Result<Self, LendError> {
-        Self::parse(&raw)
-    }
-}
-
-impl From<LendName> for String {
-    fn from(name: LendName) -> String {
-        name.0
-    }
-}
-
-impl LendName {
-    pub fn parse(raw: &str) -> Result<Self, LendError> {
-        // A declared header's rule, the same bytes and bound: both names
-        // become a file name under the data dir and a token on the wire.
-        if crate::declared::valid_header_name(raw) {
-            Ok(Self(raw.to_string()))
-        } else {
-            tracing::debug!(target: "lend", raw, "lend: not a lend's name");
-            Err(LendError::NotAName(raw.to_string()))
-        }
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-}
-
-impl std::fmt::Display for LendName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0)
-    }
-}
-
 /// What a lend is, for the apps that read the list of what members lend
 /// (DESIGN §3, "an opaque kind the app interprets"): a name of the same
 /// rule as [`LendName`]'s, which svrngs carries and never reads.
@@ -78,39 +42,36 @@ impl std::fmt::Display for LendName {
 #[serde(try_from = "String", into = "String")]
 pub struct Kind(String);
 
-impl Kind {
-    pub fn parse(raw: &str) -> Result<Self, LendError> {
-        if crate::declared::valid_header_name(raw) {
-            Ok(Self(raw.to_string()))
-        } else {
-            tracing::debug!(target: "lend", raw, "lend: not a kind");
-            Err(LendError::NotAKind(raw.to_string()))
+/// A name of a declared header's rule, the same bytes and bound — both
+/// become a file name under the data dir and a token on the wire — parsed
+/// once for [`LendName`] and [`Kind`], each refused by its own name.
+macro_rules! header_named {
+    ($($name:ident: $refused:ident, $not:literal);+) => {$(
+        impl $name {
+            pub fn parse(raw: &str) -> Result<Self, LendError> {
+                if crate::declared::valid_header_name(raw) {
+                    Ok(Self(raw.to_string()))
+                } else {
+                    tracing::debug!(target: "lend", raw, $not);
+                    Err(LendError::$refused(raw.to_string()))
+                }
+            }
         }
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
+        impl TryFrom<String> for $name {
+            type Error = LendError;
+            fn try_from(raw: String) -> Result<Self, LendError> {
+                Self::parse(&raw)
+            }
+        }
+        impl From<$name> for String {
+            fn from(name: $name) -> String {
+                name.0
+            }
+        }
+        svrngs_core::text_newtype!($name);
+    )+};
 }
-
-impl TryFrom<String> for Kind {
-    type Error = LendError;
-    fn try_from(raw: String) -> Result<Self, LendError> {
-        Self::parse(&raw)
-    }
-}
-
-impl From<Kind> for String {
-    fn from(kind: Kind) -> String {
-        kind.0
-    }
-}
-
-impl std::fmt::Display for Kind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0)
-    }
-}
+header_named!(LendName: NotAName, "lend: not a lend's name"; Kind: NotAKind, "lend: not a kind");
 
 /// A path the door refuses for one lend, and every path under it at a
 /// segment boundary. Kept as the lender wrote it, compared as

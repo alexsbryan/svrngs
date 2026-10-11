@@ -111,11 +111,8 @@ impl Label {
     pub fn lender(&self) -> [u8; 32] {
         key_of(&self.0[..KEY_LETTERS]).expect("a label parsed holds a key")
     }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
 }
+crate::text_newtype!(Label);
 
 impl TryFrom<String> for Label {
     type Error = &'static str;
@@ -127,12 +124,6 @@ impl TryFrom<String> for Label {
 impl From<Label> for String {
     fn from(label: Label) -> Self {
         label.0
-    }
-}
-
-impl core::fmt::Display for Label {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.0)
     }
 }
 

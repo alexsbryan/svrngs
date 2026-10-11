@@ -730,17 +730,8 @@ impl PersonKey {
     fn resolved(key: String) -> Self {
         Self(key)
     }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
 }
-
-impl std::fmt::Display for PersonKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0)
-    }
-}
+svrngs_core::text_newtype!(PersonKey);
 
 /// The person a request for a lend is carried as.
 struct Asker {
