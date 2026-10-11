@@ -342,13 +342,13 @@ fn a_dangling_correction_is_named_beside_a_complete_answer() {
 
 /// **Every gap kind has a named verdict.** One classification table (ARCH
 /// §10.6), split by coverage: can this gap hide acts that belong in the
-/// fold? A refused or forked act CAN — it may be real data the fold turned
-/// away (the pinned "an unverifiable op makes this a subset"). A tampered id
-/// cannot ("this changes no outcome" — the act folds under its derived id),
-/// and a dangling citation cannot (it is the ask, not a hole). The A2
-/// pre-registration's parenthetical grouped fork and tamper with dangling;
-/// fork stays Absence here because dropping both branches loses the seq's
-/// real content — the coverage question is the one `is_complete` answers.
+/// fold? A refused act CAN — it may be real data the fold turned away (the
+/// pinned "an unverifiable op makes this a subset"). A tampered id cannot
+/// ("this changes no outcome" — the act folds under its derived id), a
+/// dangling citation cannot (it is the ask, not a hole), and since U7 a fork
+/// cannot: both branches fold, so nothing at the seq is lost. The A2
+/// pre-registration's parenthetical grouped fork and tamper with dangling,
+/// which is where fork now sits.
 #[test]
 fn every_gap_class_is_classified() {
     let actor = actor_of(&key(1));
@@ -376,11 +376,6 @@ fn every_gap_class_is_classified() {
             actor: actor.clone(),
             seq: 1,
         },
-        RailGap::SequenceFork {
-            actor: actor.clone(),
-            seq: 3,
-            ids: vec![id.clone()],
-        },
         RailGap::SequenceHole {
             actor: actor.clone(),
             missing: 4,
@@ -401,6 +396,11 @@ fn every_gap_class_is_classified() {
         RailGap::DanglingCorrection {
             by: id.clone(),
             missing: id.clone(),
+        },
+        RailGap::SequenceFork {
+            actor: actor.clone(),
+            seq: 3,
+            ids: vec![id.clone()],
         },
     ];
     for gap in &contradictions {
@@ -735,14 +735,18 @@ fn a_hole_in_an_actors_sequence_is_reported() {
 }
 
 /// One actor, one sequence number, two different ops: either equivocation or
-/// a counter lost across a restart. Both are excluded — choosing one would be
-/// inventing an answer.
+/// a counter lost across a restart. Choosing one would be inventing an
+/// answer, and since U7 neither is excluded: forks void nothing (DESIGN §6),
+/// so both count and the fork is named beside a complete answer. The name
+/// is the rule before U7, kept so u7-removal's check follows every test by
+/// name.
 #[test]
 fn one_sequence_number_used_twice_excludes_both_ops() {
     let a = signed(&key(1), 100, 0, record("a"));
     let b = signed(&key(1), 101, 0, record("b"));
     let f = admitted(&[a.clone(), b.clone()]);
-    assert!(f.ops().is_empty(), "{:?}", f.ops());
+    assert_eq!(applied(&f), vec!["a", "b"]);
+    assert!(f.is_complete());
     let mut ids = vec![a.id, b.id];
     ids.sort();
     assert_eq!(

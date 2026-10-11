@@ -132,7 +132,7 @@ pub struct Compaction {
 ///
 /// **Which ops you hand it is the whole safety question**, and both callers
 /// hand it only ops they authenticated: [`admit`](crate::admit) — ops that
-/// passed the signature and roster checks and survived fork exclusion;
+/// passed the signature and roster checks, either branch of a fork;
 /// [`digest`] — ops whose signature verified under their claimed actor. The
 /// `actor` field is just what the line claimed until a verifier says
 /// otherwise, and a seal is the one act that makes the rail stop asking for

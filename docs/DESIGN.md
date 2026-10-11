@@ -1071,15 +1071,17 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   admission names an act whose previous act is not its author's act at
   seq − 1 a `WrongPrevious` gap, `crates/svrngs-core/src/admit.rs`); a copy
   holds an act only with its parent, so copies converge by union. Two acts on one parent are a fork, and
-  forks void nothing (U7; operator, 2026-10-04, moved from U2). Today two acts
-  on one seq exclude both from what an app folds and a folder's changes
-  (`crates/svrngs-core/src/admit.rs`, the per-actor audit), so an author can
-  take back their own act on every copy by signing a second at its seq, and
-  every copy reads as incomplete. Standing ignores the fork: `membership`
-  folds before the audit and counts an `Admit` on either branch (u7-removal
-  (a), `a_second_act_at_an_admits_seq_takes_nothing_back`). It lands with
-  the removal, and
-  with the sync that carries both branches of a fork. U7 also closes two holes of the
+  forks void nothing (U7; operator, 2026-10-04, moved from U2). Landed,
+  u7-removal (b): both branches are held and each act weighed as itself, so
+  every act on either branch counts by the rules any act does, and the fork
+  is named, a `SequenceFork` beside a complete answer (`GapClass::Contradiction`,
+  `crates/svrngs-core/src/admit.rs`, the per-actor audit). Before, two acts
+  on one seq were excluded from what an app folds and a folder's changes,
+  so an author could take back their own act on every copy by signing a
+  second at its seq, and every copy read as incomplete; standing never read
+  the fork, since `membership` folds before the audit. Sync already carries
+  both branches (`two_forked_nodes_exchange_until_both_hold_the_fork`,
+  svrngs-runtime). U7 also closes two holes of the
   same family that only a member can open, each leaving a copy that never
   reads as complete while the acts themselves still apply: a forged line
   above a member's newest act moves their door's next seq past it

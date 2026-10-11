@@ -109,8 +109,9 @@ pub enum RailGap {
     /// than missing.
     SequenceHole { actor: String, missing: u64 },
     /// One actor used one sequence number for two different ops. Equivocation
-    /// or a lost counter after a restart; either way both ops are excluded,
-    /// because picking one would be picking an answer out of the air.
+    /// or a lost counter after a restart. Both count, each weighed as itself:
+    /// forks void nothing (svrngs, U7; DESIGN §6), since excluding both let an
+    /// author take back their own act on every copy by signing a second.
     SequenceFork {
         actor: String,
         seq: u64,
@@ -159,22 +160,22 @@ pub enum RailGap {
 /// absence (ARCH §18.3), and an absence is never silence — but "the fold is
 /// missing data" and "the record contradicts itself" are different facts and
 /// one typo'd [`Correct`](crate::RailAct::Correct) used to masquerade as the
-/// former forever. The split is by coverage, not by scariness: a forged or
-/// forked act is Absence precisely because it may be REAL data the fold
-/// refused (the acts are real but they are a subset), while a tampered id or
-/// a dangling citation is Contradiction because every act that could be
+/// former forever. The split is by coverage, not by scariness: a forged act
+/// is Absence precisely because it may be REAL data the fold refused (the
+/// acts are real but they are a subset), while a tampered id, a dangling
+/// citation or a fork is Contradiction because every act that could be
 /// folded is folded — the gap is a fact about a claim the record makes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GapClass {
     /// The fold may lack acts that belong in it — an unreadable line, a
-    /// refused or unattributable act (which may be real), a forked-out seq,
-    /// a seq that never arrived. [`Admission::is_complete`] is false exactly
+    /// refused or unattributable act (which may be real), a seq that never
+    /// arrived. [`Admission::is_complete`] is false exactly
     /// on these.
     Absence,
     /// Every act that could be folded is folded: the gap is a claim the
     /// record makes that nothing here can stand behind — an id its content
-    /// does not derive, or a correction citing an op nobody holds. Named
-    /// beside a complete answer.
+    /// does not derive, a correction citing an op nobody holds, or two acts
+    /// at one seq, both folded (U7). Named beside a complete answer.
     Contradiction,
 }
 
@@ -192,9 +193,10 @@ impl RailGap {
             | Self::NotAMember { .. }
             | Self::WrongPrevious { .. }
             | Self::RefusedRedemption { .. }
-            | Self::SequenceFork { .. }
             | Self::SequenceHole { .. } => GapClass::Absence,
-            Self::TamperedId { .. } | Self::DanglingCorrection { .. } => GapClass::Contradiction,
+            Self::TamperedId { .. }
+            | Self::DanglingCorrection { .. }
+            | Self::SequenceFork { .. } => GapClass::Contradiction,
         }
     }
 }
@@ -253,7 +255,7 @@ impl core::fmt::Display for RailGap {
             ),
             Self::SequenceFork { actor, seq, .. } => write!(
                 f,
-                "{}… used one sequence number twice (#{seq}) — both ops are excluded",
+                "{}… used one sequence number twice (#{seq}) — both acts count",
                 crate::actor_prefix(actor)
             ),
             Self::DanglingCorrection { missing, .. } => write!(
@@ -472,7 +474,7 @@ pub fn admit(
     // function of the set like everything else here. A parent not held is
     // not judged: its absence is the `SequenceHole` below. Two acts held at
     // `seq − 1` are a fork, and an act naming either follows a parent this
-    // copy holds (what a fork voids is U7's).
+    // copy holds (forks void nothing, U7: the audit below names one).
     let mut at: BTreeMap<(&str, u64), BTreeSet<&OpId>> = BTreeMap::new();
     for (id, op) in &authentic {
         at.entry((op.actor.as_str(), op.kind.seq))
@@ -566,22 +568,24 @@ pub fn admit(
             .or_default()
             .push(a.id.clone());
     }
-    let mut forked: BTreeSet<OpId> = BTreeSet::new();
+    // Forks void nothing (svrngs, U7; DESIGN §6): both branches are held and
+    // each act is weighed as itself, so no second act at a seq takes back the
+    // first. The fork is named beside a complete answer.
     for (actor, by_seq) in &seqs {
         for (seq, ids) in by_seq {
             if ids.len() > 1 {
                 let mut ids = ids.clone();
                 ids.sort();
+                tracing::debug!(target: "rail:admit", actor, seq, ?ids,
+                    "admit: a fork — every branch counts");
                 gaps.push(RailGap::SequenceFork {
                     actor: (*actor).to_string(),
                     seq: *seq,
-                    ids: ids.clone(),
+                    ids,
                 });
-                forked.extend(ids);
             }
         }
     }
-    admitted.retain(|id, _| !forked.contains(id));
 
     // ── the void set: commutative, and it never resurrects ───
     //
@@ -610,10 +614,10 @@ pub fn admit(
     // op — permanently, to every housemate, while being in perfect health.
     // That report is what made compaction indistinguishable from breakage.
     //
-    // The floors come from ops that survived BOTH the signature/roster checks
-    // above and the fork exclusion just now, minus what the void set just
-    // retired: a seal the rail refused, one it cannot choose between, or one
-    // the log itself corrected retires nothing. Suppressing a hole is a claim
+    // The floors come from ops that survived the signature/roster checks
+    // above, minus what the void set just retired: a seal the rail refused,
+    // or one the log itself corrected, retires nothing. A seal on either
+    // branch of a fork counts, as every forked act does (U7). Suppressing a hole is a claim
     // of completeness, and a claim of completeness may only rest on an act the
     // rail could actually authenticate (ARCH §18.3).
     let floors = crate::sync::sealed_floors(admitted.values().map(|c| (&c.id, c.op)), &voided);

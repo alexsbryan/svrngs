@@ -386,8 +386,8 @@ fn two_partitioned_nodes_converge_on_an_identical_admission() {
 /// equivocation — and each node holds only its own branch. Marks-only
 /// digests agree at the same mark and exchange NOTHING, so each node keeps a
 /// private history forever while both claim completeness. The content
-/// commitment is what makes the branches meet; admit then excludes both by
-/// name.
+/// commitment is what makes the branches meet; admit then names the fork
+/// and, since U7, counts both branches (forks void nothing, DESIGN §6).
 #[test]
 fn two_forked_nodes_exchange_until_both_hold_the_fork() {
     let (dir_a, dir_b) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
@@ -427,7 +427,8 @@ fn two_forked_nodes_exchange_until_both_hold_the_fork() {
         fa.gaps()
     );
     assert_eq!(fa, fb, "two nodes, one answer");
-    assert!(!fa.is_complete());
+    assert!(fa.is_complete(), "both branches fold: {:?}", fa.gaps());
+    assert_eq!(applied(&fa), vec!["shared-0", "shared-1", "left", "right"]);
 }
 
 /// **The termination pin for the window rule.** A fork at the LAST seq of a
