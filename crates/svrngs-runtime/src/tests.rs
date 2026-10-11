@@ -1029,6 +1029,31 @@ fn the_door_names_its_own_act_and_not_a_forgery_beside_it() {
     assert_eq!(applied(&f), vec!["one", "two", "three"]);
 }
 
+/// **A forged line above a member's newest act never moves their next seq**
+/// (DESIGN §6, "U7 also closes two holes"; ralph/REVIEW_FINDINGS.md #16).
+/// Cy pushes a line claiming alex's key at seq 5, above alex's seq 0. Alex's
+/// next act is seq 1, following alex's own, and the one gap is the forgery.
+/// At u7-removal's base `Held::catch_up` folded every line's seq, verified
+/// or not, so the door signed seq 6 and left holes 1 to 5 that never fill.
+#[test]
+fn a_forged_line_above_a_members_newest_never_moves_their_next_seq() {
+    let dir = tempfile::tempdir().unwrap();
+    let journal = open(dir.path());
+    let r = ring();
+    let one = journal
+        .append(record("one"), &key(1), &r, None, &Ed25519Verifier)
+        .unwrap();
+    journal.ingest(&forged_as_alex(5, &one)).unwrap();
+    let two = journal
+        .append(record("two"), &key(1), &r, None, &Ed25519Verifier)
+        .unwrap();
+    assert_eq!(two.kind.seq, 1, "the forgery moved nothing");
+    assert_eq!(two.kind.prev.as_ref(), Some(&one.id));
+    let f = journal.admit(&r, &Ed25519Verifier).unwrap();
+    assert!(matches!(f.gaps(), [RailGap::BadSignature { .. }]), "{:?}", f.gaps());
+    assert_eq!(applied(&f), vec!["one", "two"]);
+}
+
 /// **A gap may DISAPPEAR, and the count says so.** A line that failed the
 /// signature check, sitting below a floor its claimed author authenticated, is
 /// one nobody will ever ask for again — and keeping it would let anyone grow a
