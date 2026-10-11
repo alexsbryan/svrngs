@@ -20,6 +20,11 @@
 //!
 //! `perf_relay` runs iroh's relay on 127.0.0.1, plain HTTP (the conformance
 //! canary's, `tests/browser/harness.rs`), writing its URL to `PERF_RELAY_URL`.
+//!
+//! `perf_blobs` is the measurement perf-1's candidate 1 names (its README
+//! §10): one get of `PERF_SIZE` bytes between two iroh-blobs stores on
+//! loopback, past every svrngs path but the endpoint's builder, so what of
+//! T3 remains is said iroh's or svrngs's. It prints one JSON line.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
@@ -39,6 +44,65 @@ fn perf_node() {
         .init();
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(member::node());
+}
+
+#[test]
+#[ignore = "an instrument the perf run's driver starts"]
+fn perf_blobs() {
+    use iroh_blobs::api::remote::GetProgressItem;
+    use iroh_blobs::store::fs::FsStore;
+    use n0_future::StreamExt as _;
+    use std::time::Instant;
+    let size: usize = env("PERF_SIZE").parse().unwrap();
+    let dir = std::path::PathBuf::from(env("PERF_DIR"));
+    let ms = |t: Instant| t.elapsed().as_micros() as f64 / 1000.0;
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        let relay = svrngs_node::guest::RelayConfig::from_parts(Vec::new(), Some("none"))
+            .unwrap()
+            .on_loopback_only();
+        let alpn = vec![iroh_blobs::ALPN.to_vec()];
+        let key = |b| svrngs_node::iroh::SecretKey::from_bytes(&[b; 32]);
+        let bind = |b| svrngs_node::guest::build_relayed_endpoint(key(b), alpn.clone(), &relay);
+        let (a, b) = (bind(1).await.unwrap(), bind(2).await.unwrap());
+        let (held, asks) = (
+            FsStore::load(dir.join("a")).await.unwrap(),
+            FsStore::load(dir.join("b")).await.unwrap(),
+        );
+        let mut bytes = vec![0; size];
+        blake3::Hasher::new().finalize_xof().fill(&mut bytes);
+        let t = Instant::now();
+        let hash = held.add_bytes(bytes).await.unwrap().hash;
+        let import_ms = ms(t);
+        let blobs = iroh_blobs::BlobsProtocol::new(&held, None);
+        let _router = iroh::protocol::Router::builder(a.clone())
+            .accept(iroh_blobs::ALPN, blobs)
+            .spawn();
+        let t = Instant::now();
+        let conn = b.connect(a.addr(), iroh_blobs::ALPN).await.unwrap();
+        let dial_ms = ms(t);
+        let relayed = conn
+            .paths()
+            .iter()
+            .find(|p| p.is_selected())
+            .map(|p| p.is_relay());
+        let request = iroh_blobs::protocol::GetRequest::blob(hash);
+        let mut got = std::pin::pin!(asks.remote().execute_get(conn, request).stream());
+        let (t, mut first_ms) = (Instant::now(), None);
+        let stats = loop {
+            match got.next().await.expect("the get ends with a result") {
+                GetProgressItem::Progress(_) => first_ms = first_ms.or(Some(ms(t))),
+                GetProgressItem::Done(stats) => break stats,
+                GetProgressItem::Error(e) => panic!("the get: {e:?}"),
+            }
+        };
+        let last_ms = ms(t);
+        let mb_s = size as f64 / (last_ms / 1000.0) / 1e6;
+        let said = serde_json::json!({"size": size, "import_ms": import_ms, "dial_ms": dial_ms,
+            "first_ms": first_ms, "last_ms": last_ms, "mb_s": mb_s, "relayed": relayed,
+            "payload": stats.payload_bytes_read});
+        println!("PERF_BLOBS {said}");
+    });
 }
 
 #[test]

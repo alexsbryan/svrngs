@@ -13,10 +13,12 @@ its path as iroh selected it, and its phases from the nodes' debug traces.
 
   run.py breakdown [path ...]    small scales, whatever the load
   run.py targets [--wait SECS]   the targets; first waits up to SECS for the
-                                 1-minute load under 1.5x cores and 20 GB free
+                                 1-minute load under 1.5x cores and 20 GB free,
+                                 then gets 100 MiB between two bare iroh-blobs
+                                 stores (perf_blobs, candidate 1's measurement)
   run.py part CASE [N] [--as L]  one case on loopback, into run/part-CASE[-L]:
-                                 p6 (100 MiB and its edit), t1, t2, or a folder
-                                 of N files' take, idle, found or join
+                                 p6 (100 MiB and its edit), t1, t2, blobs, or a
+                                 folder of N files' take, idle, found or join
 
 PERF_BIN, if set, is the instrument to run in place of this tree's build: a
 part's before and after, each built at its commit, run back to back.
@@ -327,7 +329,7 @@ def at_once(g, writers, tag, name, target=None, meets=None):
            path=g.path, each_ms=[t and round(t * 1000, 1) for t in times], phases=shares(ph))
 
 
-def folder(n_files, path, name, join_bound, parts=("taken", "idle", "found", "join"), part=False):
+def folder(n_files, path, name, join_bound, parts=("taken", "idle", "found", "join"), poll=5):
     """A folder of n_files of 1 KiB pointed at, then idle, then a change, then a member joining."""
     phase(name); g = Group(name, 2, path, RELAY[0])
     for k in range(n_files):
@@ -357,7 +359,7 @@ def folder(n_files, path, name, join_bound, parts=("taken", "idle", "found", "jo
     say("journal", group=name, bytes=rec_before)
     before = host(); t0 = time.time(); g.up(1); g.tell(); g.share(1); stood = time.time()
     extra = 3 if "found" in parts else 0
-    t = wait(lambda: count(g.disk(1)) >= n_files + extra, join_bound, every=0.25 if part else 5)
+    t = wait(lambda: count(g.disk(1)) >= n_files + extra, join_bound, every=poll)
     # From the accepted share, as perf-1's (its share accepted at once); and
     # from the member's start, the wait to stand in it, the round's, beside.
     record(f"{name}-join", t and t * 1000, None, None, before, unit="ms", path=path, held=count(g.disk(1)),
@@ -365,6 +367,22 @@ def folder(n_files, path, name, join_bound, parts=("taken", "idle", "found", "jo
            of=n_files + extra, member_steps=step_split(g, 1, t0), holder=record_reads(g, 0, t0),
            journal_bytes=rec_before)
     g.close()
+
+
+def blobs(size=100 * MiB, repeat=3):
+    """Candidate 1's measurement (perf-1's README §10): one get of `size`
+    between two bare iroh-blobs stores on loopback, so what of T3 remains
+    is said iroh's or svrngs's."""
+    phase("blobs")
+    for k in range(repeat):
+        root = W / f"blobs-{k}"; subprocess.run(["rm", "-rf", str(root)]); before = host()
+        out = subprocess.run([BIN[0], "--ignored", "--exact", "perf_blobs", "--nocapture"], capture_output=True,
+                             text=True, timeout=600, env={**os.environ, "PERF_SIZE": str(size), "PERF_DIR": str(root)})
+        subprocess.run(["rm", "-rf", str(root)])
+        said = next((json.loads(l.split(" ", 1)[1]) for l in out.stdout.splitlines()
+                     if l.startswith("PERF_BLOBS ")), None)
+        record(f"P6-bare-loopback#{k}", said and round(said["mb_s"], 1), None, None, before, unit="MB/s",
+               path="relay" if said and said["relayed"] else "direct", **(said or {"stderr": out.stderr[-2000:]}))
 
 
 RELAY = [None]
@@ -421,7 +439,8 @@ def part(case, n):
     if case in ("take", "idle", "found", "join"):
         parts = {"take": ("taken",), "idle": ("taken", "idle", "found"), "found": ("taken", "found"),
                  "join": ("taken", "join")}[case]
-        return folder(n, "loopback", f"f{n}", 3600, parts, part=True)
+        return folder(n, "loopback", f"f{n}", 3600, parts, poll=0.25)
+    if case == "blobs": return blobs()
     g = Group(f"part-{case}", 3, "loopback"); g.start()
     if case == "p6": big(g, 100 * MiB, "p6", "P6-loopback")
     elif case == "t2": many(g, 1000, 4 * KiB, "t2", "T2-loopback", "10 s", lambda v: v <= 10_000)
@@ -429,7 +448,7 @@ def part(case, n):
         before = host(); times, ph, rec = change(g, 4 * KiB, "t1", repeat=10)
         record("T1-loopback-median", med([t and t * 1000 for t in times]), "300 ms", lambda v: v <= 300, before,
                unit="ms", each_s=times, path="loopback", phases=shares(ph), record_bytes=rec)
-    else: sys.exit(f"part {case}: p6, t1, t2, take, idle, found or join")
+    else: sys.exit(f"part {case}: p6, t1, t2, blobs, take, idle, found or join")
     g.close()
 
 
@@ -467,9 +486,12 @@ def main():
         elif which == "breakdown":
             for p in paths: small(p)
         else:
+            blobs()
             for p in paths: targets(p)
-            folder(10_000, "loopback", "f10k", 1800)
-            folder(100_000, "loopback", "f100k", 7200)
+            # The join polled finer than perf-1's 5 s: since perf-2 (g) it
+            # takes about 2 s at 10,000 files.
+            folder(10_000, "loopback", "f10k", 1800, poll=0.25)
+            folder(100_000, "loopback", "f100k", 7200, poll=1)
     finally:
         for k in list(procs): p = procs.pop(k); p.send_signal(signal.SIGTERM); p.wait()
         (OUT[0] / "summary.json").write_text(json.dumps(summary, indent=1))

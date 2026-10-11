@@ -1,0 +1,107 @@
+{
+ "P6-bare-loopback#0": {
+  "value": 134.7,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    13.62,
+    13.89,
+    10.04
+   ],
+   "cores": 12,
+   "swap_used_mb": 8559.5,
+   "free_gb": 108.7
+  },
+  "end": {
+   "load": [
+    13.62,
+    13.89,
+    10.04
+   ],
+   "cores": 12,
+   "swap_used_mb": 8559.5,
+   "free_gb": 108.7
+  },
+  "unit": "MB/s",
+  "path": "direct",
+  "dial_ms": 1.042,
+  "first_ms": 0.558,
+  "import_ms": 151.263,
+  "last_ms": 778.675,
+  "mb_s": 134.66157254310207,
+  "payload": 104857600,
+  "relayed": false,
+  "size": 104857600
+ },
+ "P6-bare-loopback#1": {
+  "value": 135.5,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    13.62,
+    13.89,
+    10.04
+   ],
+   "cores": 12,
+   "swap_used_mb": 8559.5,
+   "free_gb": 108.7
+  },
+  "end": {
+   "load": [
+    12.85,
+    13.73,
+    10.01
+   ],
+   "cores": 12,
+   "swap_used_mb": 8559.5,
+   "free_gb": 108.7
+  },
+  "unit": "MB/s",
+  "path": "direct",
+  "dial_ms": 0.884,
+  "first_ms": 0.568,
+  "import_ms": 143.569,
+  "last_ms": 773.878,
+  "mb_s": 135.49629269729851,
+  "payload": 104857600,
+  "relayed": false,
+  "size": 104857600
+ },
+ "P6-bare-loopback#2": {
+  "value": 138.0,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    12.85,
+    13.73,
+    10.01
+   ],
+   "cores": 12,
+   "swap_used_mb": 8559.5,
+   "free_gb": 108.7
+  },
+  "end": {
+   "load": [
+    12.85,
+    13.73,
+    10.01
+   ],
+   "cores": 12,
+   "swap_used_mb": 8559.5,
+   "free_gb": 108.7
+  },
+  "unit": "MB/s",
+  "path": "direct",
+  "dial_ms": 0.971,
+  "first_ms": 0.476,
+  "import_ms": 116.55,
+  "last_ms": 759.836,
+  "mb_s": 138.00030532904466,
+  "payload": 104857600,
+  "relayed": false,
+  "size": 104857600
+ }
+}
