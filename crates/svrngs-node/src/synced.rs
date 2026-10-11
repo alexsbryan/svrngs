@@ -29,11 +29,18 @@ use iroh_blobs::Hash;
 use serde::{Deserialize, Serialize};
 use svrngs_core::{Change, ContentHash, Placed, SyncFolder, SyncPath};
 
+use n0_future::{BufferedStreamExt as _, StreamExt as _};
+
 use super::{FolderAsk, FolderError, Folders, PIECE};
 use crate::register::Standing;
 
 /// The keys standing in the group a step syncs with.
 type Holders = BTreeSet<String>;
+
+/// How many files a step fetches at once (syp-4 f): sy-1's apply fetched
+/// each after the last, 0.25-0.38 s a file through relays at M1 (the sy
+/// README §7). Set by the measurement in demo/runs/syp/2026-10-10/production.
+const FETCHES_AT_ONCE: usize = 8;
 
 /// Where the directories this computer syncs are kept.
 const SYNCED: &str = "synced.json";
@@ -334,10 +341,7 @@ impl Folders {
     /// that entry: beside, when it met another edit, and the record's
     /// choice is then written at its path. What it fetched, held from the
     /// store's sweep for the step to drop once the kept state names it.
-    #[expect(
-        clippy::disallowed_methods,
-        reason = "times the layout's read, each fetch and each export for their traces (perf-1); no decision reads it"
-    )]
+    /// Up to [`FETCHES_AT_ONCE`] files are fetched at once.
     async fn apply(
         &self,
         dir: &Path,
@@ -348,7 +352,6 @@ impl Folders {
         taken: &BTreeMap<SyncPath, (ContentHash, SystemTime)>,
     ) -> Vec<TempTag> {
         let mut hold = Vec::new();
-        let ms = |t: Instant| t.elapsed().as_millis() as u64;
         tracing::debug!(target: "folder", folder, placed = placed.len(), "synced: the layout to write");
         let paths: BTreeSet<&SyncPath> = placed.iter().map(|p| &p.path).collect();
         for (rel, h) in held.clone() {
@@ -371,49 +374,81 @@ impl Folders {
                 held.insert(path.clone(), Held { p, mtime });
             }
         }
+        let mut fetches = Vec::new();
         for p in placed {
             let (at, before) = (dir.join(p.path.as_str()), held.get(&p.path));
             if before.is_some_and(|h| h.p.entry == p.entry) || !unchanged(before, &at) {
                 continue;
             }
             if before.is_none_or(|h| h.p.hash != p.hash) {
-                let hash = Hash::from_bytes(*p.hash.as_bytes());
-                tracing::debug!(target: "folder", folder, path = %p.path, %hash, size = p.size, from = p.entry.key, seq = p.entry.seq, "synced: to fetch, the layout placing it here");
-                match self.store.tags().temp_tag(hash).await {
-                    Ok(tag) => hold.push(tag),
-                    Err(why) => {
-                        tracing::warn!(target: "folder", folder, path = %p.path, %hash, %why, "synced: not fetched — the store cannot hold it from its sweep");
-                        continue;
-                    }
-                }
-                let fetched = Instant::now();
-                let mut from = vec![p.entry.key.clone()];
-                from.extend(standing.iter().filter(|k| **k != p.entry.key).cloned());
-                let (mut got, mut from_at) = (Ok(None), 0);
-                while from_at < p.size && got.is_ok() {
-                    got = self
-                        .hold(hash, &from, from_at, (from_at + PIECE).min(p.size))
-                        .await;
-                    from_at += PIECE;
-                }
-                if let Err(why) = got {
-                    tracing::warn!(target: "folder", folder, path = %p.path, %hash, ?why, "synced: not written — no member gave it, verified");
-                    hold.pop();
-                    continue;
-                }
-                let (fetch_ms, exported) = (ms(fetched), Instant::now());
-                let wrote = self.store.blobs().export(hash, &at).finish().await;
-                if let Err(why) = wrote {
-                    tracing::warn!(target: "folder", folder, path = %p.path, %hash, %why, "synced: not written into the directory");
-                    continue;
-                }
-                tracing::info!(target: "folder", folder, path = %p.path, %hash, from = p.entry.key, seq = p.entry.seq, beside = p.beside, fetch_ms, export_ms = ms(exported), "synced: written into the directory");
+                fetches.push((p, at));
+                continue;
             }
             let Ok(mtime) = std::fs::metadata(&at).and_then(|m| m.modified()) else {
                 continue;
             };
             held.insert(p.path.clone(), Held { p, mtime });
         }
+        let fetched: Vec<_> = n0_future::stream::iter(fetches)
+            .map(|(p, at)| self.fetch_into(folder, p, at, standing))
+            .buffered_unordered(FETCHES_AT_ONCE)
+            .collect()
+            .await;
+        for (p, at, tag) in fetched.into_iter().flatten() {
+            hold.push(tag);
+            let Ok(mtime) = std::fs::metadata(&at).and_then(|m| m.modified()) else {
+                continue;
+            };
+            held.insert(p.path.clone(), Held { p, mtime });
+        }
         hold
+    }
+
+    /// `p` fetched whole, verified, from its writer first and then the
+    /// group's other members, and written at `at`; with the tag that holds
+    /// it from the store's sweep, or none, said why.
+    #[expect(
+        clippy::disallowed_methods,
+        reason = "times each fetch and each export for their traces (perf-1); no decision reads it"
+    )]
+    async fn fetch_into(
+        &self,
+        folder: &str,
+        p: Placed,
+        at: PathBuf,
+        standing: &Holders,
+    ) -> Option<(Placed, PathBuf, TempTag)> {
+        let ms = |t: Instant| t.elapsed().as_millis() as u64;
+        let hash = Hash::from_bytes(*p.hash.as_bytes());
+        tracing::debug!(target: "folder", folder, path = %p.path, %hash, size = p.size, from = p.entry.key, seq = p.entry.seq, "synced: to fetch, the layout placing it here");
+        let tag = match self.store.tags().temp_tag(hash).await {
+            Ok(tag) => tag,
+            Err(why) => {
+                tracing::warn!(target: "folder", folder, path = %p.path, %hash, %why, "synced: not fetched — the store cannot hold it from its sweep");
+                return None;
+            }
+        };
+        let fetched = Instant::now();
+        let mut from = vec![p.entry.key.clone()];
+        from.extend(standing.iter().filter(|k| **k != p.entry.key).cloned());
+        let (mut got, mut from_at) = (Ok(None), 0);
+        while from_at < p.size && got.is_ok() {
+            got = self
+                .hold(hash, &from, from_at, (from_at + PIECE).min(p.size))
+                .await;
+            from_at += PIECE;
+        }
+        if let Err(why) = got {
+            tracing::warn!(target: "folder", folder, path = %p.path, %hash, ?why, "synced: not written — no member gave it, verified");
+            return None;
+        }
+        let (fetch_ms, exported) = (ms(fetched), Instant::now());
+        let wrote = self.store.blobs().export(hash, &at).finish().await;
+        if let Err(why) = wrote {
+            tracing::warn!(target: "folder", folder, path = %p.path, %hash, %why, "synced: not written into the directory");
+            return None;
+        }
+        tracing::info!(target: "folder", folder, path = %p.path, %hash, from = p.entry.key, seq = p.entry.seq, beside = p.beside, fetch_ms, export_ms = ms(exported), "synced: written into the directory");
+        Some((p, at, tag))
     }
 }

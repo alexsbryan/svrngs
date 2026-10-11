@@ -8,10 +8,16 @@ rerun does (../no-stream/run.py), the endpoint it named being gone; `share
 measures what its row asks:
   m2  (b) each member's store, in bytes, for the first version and the edit's;
   s2  (d) S2 with Ben's node stopped and started before Cy's start;
-  m1  (f) M1, 1,000 files reaching a member who joins later.
-No plant here: each is a test's red run (fence 3). W is the scratch dir
+  m1  (f) M1, 1,000 files reaching a member who joins later, against the
+      row's bar, 60 s; m1-one the same by a binary built before fetches
+      at once (SVRNGS_BIN, said in its data), the bar's plant: a build, not
+      a switch in product code.
+`--wait SECS` first waits up to SECS for the 1-minute load under 1.5x
+cores and 20 GB free, as perf-1's driver does; a number taken past that
+load, or while swap in use grew, is could-not-judge (AGENTS.md 6). No
+other plant here: each is a test's red run (fence 3). W is the scratch dir
 (else /tmp/syp4-run). scripts/check.sh runs none of this."""
-import importlib.util, json, os, signal, subprocess, sys, time
+import importlib.util, json, os, re, signal, subprocess, sys, time
 from pathlib import Path
 import blake3
 
@@ -20,6 +26,9 @@ spec = importlib.util.spec_from_file_location("sy", HERE.parents[2] / "sy/2026-1
 sy = importlib.util.module_from_spec(spec); spec.loader.exec_module(sy)
 PART = sys.argv[1] if len(sys.argv) > 1 else ""
 sy.OUT, sy.W = HERE / f"run-{PART}", Path(os.environ.get("W", "/tmp/syp4-run"))
+sy.B = Path(os.environ.get("SVRNGS_BIN", sy.B))
+CORES = int(subprocess.run(["sysctl", "-n", "hw.ncpu"], capture_output=True, text=True).stdout)
+BUSY, FREE_GB = 1.5 * CORES, 20
 asked = sy.api
 sy.api = lambda who, path, body=None: asked(who, "/v1/groups" if path == "/v1/folders" else path, body)
 
@@ -37,13 +46,36 @@ sy.sync = sync
 
 def host():
     out = lambda *a: subprocess.run(a, capture_output=True, text=True).stdout.strip()
+    st = os.statvfs("/")
     return {"uptime": out("uptime"), "cores": out("sysctl", "-n", "hw.ncpu"), "swap": out("sysctl", "vm.swapusage"),
-            "df": out("df", "-g", "/").splitlines()[-1], "head": out("git", "-C", str(sy.REPO), "rev-parse", "--short", "HEAD")}
+            "load1": float(out("sysctl", "-n", "vm.loadavg").split()[1]), "free_gb": round(st.f_bavail * st.f_frsize / 1e9, 1),
+            "swap_mb": float(re.search(r"used = ([\d.]+)M", out("sysctl", "vm.swapusage"))[1]),
+            "df": out("df", "-g", "/").splitlines()[-1], "head": out("git", "-C", str(sy.REPO), "rev-parse", "--short", "HEAD"),
+            "bin": str(sy.B)}
+
+
+def judged(before, after):
+    """None when the load lets a number be judged, else why it cannot be (perf-1's rule)."""
+    if max(before["load1"], after["load1"]) > BUSY:
+        return f"could-not-judge: load {before['load1']}-{after['load1']} past {BUSY}"
+    if after["swap_mb"] > before["swap_mb"]:
+        return f"could-not-judge: swap in use grew {before['swap_mb']}-{after['swap_mb']} MB"
+    return None
+
+
+def wait_for_load():
+    if "--wait" not in sys.argv: return
+    bound, t0 = float(sys.argv[sys.argv.index("--wait") + 1]), time.time()
+    while time.time() - t0 < bound:
+        h = host()
+        if h["load1"] < BUSY and h["free_gb"] >= FREE_GB: return
+        print(json.dumps({"waiting": h}), flush=True); time.sleep(60)
 
 
 def setup():
     """sy's main to its group (run.py:171-185), the link kept for M1."""
-    subprocess.run(["cargo", "build", "--offline", "-q", "-p", "svrngs"], cwd=sy.REPO, check=True)
+    if "SVRNGS_BIN" not in os.environ:
+        subprocess.run(["cargo", "build", "--offline", "-q", "-p", "svrngs"], cwd=sy.REPO, check=True)
     subprocess.run(["rm", "-rf", str(sy.W), str(sy.OUT)]); sy.OUT.mkdir(parents=True)
     for w in ("ana", "ben", "cy", "eve"): sy.data(w).mkdir(parents=True); sy.disk(w).mkdir(parents=True)
     sy.say("load", **host())
@@ -93,9 +125,21 @@ def s2():
     sy.bar("S2-restarted", {"cy_s": t, "hash": a, "from": by}, t is not None and by == ["ben"])
 
 
+def m1(link):
+    """sy's M1 (run.py:200-213), judged against the row's bar: Eve, joining later, holds all 1,000 within 60 s."""
+    sy.phase("M1"); [sync(w) for w in ("ana", "ben", "cy")]
+    before = host(); sy.m1(link); after = host()
+    m, why = sy.summary["M1"], judged(before, after)
+    verdict = why or ("passed" if m["eve_s"] is not None and m["eve_s"] <= 60 else "failed")
+    sy.summary["M1-bar"] = {"eve_s": m["eve_s"], "ben_cy_s": m["ben_cy_s"], "bar_s": 60, "verdict": verdict,
+                            "load1": [before["load1"], after["load1"]], "swap_mb": [before["swap_mb"], after["swap_mb"]]}
+    sy.say("bar", bar="M1", **sy.summary["M1-bar"])
+
+
 def main():
+    wait_for_load()
     link = setup()
-    {"m2": m2, "s2": s2, "m1": lambda: sy.m1(link)}[PART]()
+    {"m2": m2, "s2": s2, "m1": lambda: m1(link), "m1-one": lambda: m1(link)}[PART]()
     sy.say("load", **host())
     (sy.OUT / "summary.json").write_text(json.dumps(sy.summary, indent=1))
 
