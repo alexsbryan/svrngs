@@ -601,20 +601,22 @@ fn provider(store: &Store, folders: Folders) -> BlobsProtocol {
                 format!("{:?}", asked.inner.request.ranges),
             );
             let (conn, request) = (asked.inner.connection_id, asked.inner.request_id);
-            let t0 = Instant::now();
-            let dialer = dialers.get(&conn);
-            let shares = dialer.is_some_and(|d| folders.serves(hash, d));
-            let record_ms = t0.elapsed().as_micros() as f64 / 1000.0;
-            if !shares {
-                tracing::info!(target: "folder", %hash, conn, request, ?dialer, ranges, record_ms, "folder: refused — no synced folder of a group the dialer stands in places the hash");
-                asked.tx.send(Err(AbortReason::Permission)).await.ok();
-                continue;
-            }
-            tracing::info!(target: "folder", %hash, conn, request, ?dialer, ranges, record_ms, "folder: serving — a synced folder of a group the dialer stands in places the hash");
-            asked.tx.send(Ok(())).await.ok();
-            let mut updates = asked.rx;
+            // Each get asked of the record in a task of its own, so gets at
+            // once are answered at once: in this one task 10,000 gets of a
+            // member fetching 8 at once queued 1,178 ms of checks (perf-2 g).
+            let (dialer, folders) = (dialers.get(&conn).cloned(), folders.clone());
             tokio::spawn(async move {
-                let mut last = 0;
+                let t0 = Instant::now();
+                let shares = dialer.as_ref().is_some_and(|d| folders.serves(hash, d));
+                let record_ms = t0.elapsed().as_micros() as f64 / 1000.0;
+                if !shares {
+                    tracing::info!(target: "folder", %hash, conn, request, ?dialer, ranges, record_ms, "folder: refused — no synced folder of a group the dialer stands in places the hash");
+                    asked.tx.send(Err(AbortReason::Permission)).await.ok();
+                    return;
+                }
+                tracing::info!(target: "folder", %hash, conn, request, ?dialer, ranges, record_ms, "folder: serving — a synced folder of a group the dialer stands in places the hash");
+                asked.tx.send(Ok(())).await.ok();
+                let (mut updates, mut last) = (asked.rx, 0);
                 while let Ok(Some(update)) = updates.recv().await {
                     let (stats, done) = match update {
                         RequestUpdate::Progress(p) => {
