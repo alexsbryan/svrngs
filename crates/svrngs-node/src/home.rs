@@ -168,14 +168,14 @@ async fn choose(State(at): State<Asking>, Json(c): Json<Choosing>) -> Response {
 #[serde(deny_unknown_fields)]
 struct Changing {
     lend: LendName,
-    to: Change,
+    to: LendChange,
 }
 
 /// A closed set (AGENTS 9): let in this many at once, none for everyone in
 /// its groups; or lend it no longer.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "lowercase")]
-enum Change {
+enum LendChange {
     Limit(Option<NonZeroU16>),
     Stop,
 }
@@ -193,8 +193,8 @@ async fn lent(State(at): State<Asking>) -> Response {
 async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
     let dir = &at.door().data_dir;
     let done = match c.to {
-        Change::Limit(limit) => lend::limit(dir, &c.lend, limit),
-        Change::Stop => lend::withdraw(dir, &c.lend),
+        LendChange::Limit(limit) => lend::limit(dir, &c.lend, limit),
+        LendChange::Stop => lend::withdraw(dir, &c.lend),
     };
     tracing::debug!(target: "home", lend = %c.lend, to = ?c.to, done = ?done.as_ref().ok(), "home: the person changed a lend");
     match done {

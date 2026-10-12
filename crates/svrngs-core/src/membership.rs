@@ -192,7 +192,7 @@ pub struct Invited {
 
 /// A redemption judged on what it alone says: the `Invite` it redeems and
 /// that `Invite`'s person, or why it does not count.
-type Redeemed<'a> = Result<(&'a OpId, Option<&'a str>), InviteFault>;
+type Judged<'a> = Result<(&'a OpId, Option<&'a str>), InviteFault>;
 
 impl Membership {
     /// Whether the act with this derived id counts.
@@ -280,7 +280,7 @@ pub fn membership<'a>(
             _ => None,
         })
         .collect();
-    let redeems: BTreeMap<&OpId, Redeemed> = ops
+    let redeems: BTreeMap<&OpId, Judged> = ops
         .iter()
         .filter_map(|(id, op)| match &op.kind.act {
             RailAct::Admit {
@@ -407,7 +407,7 @@ fn covered(
 fn walk(
     order: &[(&OpId, &Op<SignedOp>)],
     seed: &Roster,
-    redeems: &BTreeMap<&OpId, Redeemed>,
+    redeems: &BTreeMap<&OpId, Judged>,
     covers: &BTreeMap<String, BTreeSet<OpId>>,
     kept: &BTreeSet<&OpId>,
 ) -> Membership {
@@ -622,7 +622,7 @@ fn redemption<'a>(
     r: &'a Redemption,
     invites: &'a BTreeMap<OpId, Invited>,
     namespace: &str,
-) -> Redeemed<'a> {
+) -> Judged<'a> {
     let verdict = match invites.get(&r.id) {
         None => Err(InviteFault::Unheld),
         Some(i) if i.issuer != op.actor => Err(InviteFault::NotIssuer),

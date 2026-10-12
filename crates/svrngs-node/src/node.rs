@@ -558,7 +558,7 @@ impl Host {
                 let answer = asked.await.unwrap_or_else(|_| {
                     tracing::debug!(target: "node", actor, within_ms = ANSWER_WITHIN.as_millis() as u64,
                         "node: lends — the computer did not answer in time, so it is named unanswered");
-                    Asked::Unanswered
+                    Answered::Unanswered
                 });
                 (person, actor, answer)
             }));
@@ -566,7 +566,7 @@ impl Host {
         let mut lends = Lends::default();
         for ask in asks {
             match ask.await {
-                Ok((person, key, Asked::Lends(answered))) => {
+                Ok((person, key, Answered::Lends(answered))) => {
                     for offered in answered {
                         let Some(address) = self.origin(&key, offered.name.as_str()) else {
                             continue;
@@ -579,9 +579,9 @@ impl Host {
                         });
                     }
                 }
-                Ok((person, _, Asked::Unanswered)) => lends.unlisted.unanswered.push(person),
-                Ok((person, _, Asked::Unheard)) => lends.unlisted.unheard.push(person),
-                Ok((person, _, Asked::Refused)) => lends.unlisted.refused.push(person),
+                Ok((person, _, Answered::Unanswered)) => lends.unlisted.unanswered.push(person),
+                Ok((person, _, Answered::Unheard)) => lends.unlisted.unheard.push(person),
+                Ok((person, _, Answered::Refused)) => lends.unlisted.refused.push(person),
                 Err(e) => {
                     tracing::warn!(target: "node", error = %e, "node: lends — an ask ended without an answer")
                 }
@@ -627,7 +627,7 @@ pub(crate) fn dialled<'a>(
 
 /// How a computer asked what it lends answered: a closed set (AGENTS 9),
 /// one for each of [`Unlisted`]'s lists and the list itself.
-enum Asked {
+enum Answered {
     Lends(Vec<Offered>),
     Unanswered,
     Unheard,
@@ -637,7 +637,7 @@ enum Asked {
 /// Ask the computer `key` what it lends. A request that fails is asked
 /// again at the connection, where a computer that has not heard of this
 /// one closes it as not admitted (`demo/runs/first-minute/2026-10-12/`).
-async fn ask_lends(transport: &IrohTransport, actor: &str, key: PublicKey) -> Asked {
+async fn ask_lends(transport: &IrohTransport, actor: &str, key: PublicKey) -> Answered {
     #[derive(serde::Deserialize)]
     struct Answer {
         lends: Vec<Offered>,
@@ -645,35 +645,35 @@ async fn ask_lends(transport: &IrohTransport, actor: &str, key: PublicKey) -> As
     let contact = Contact::by_key(key);
     let Some(base) = transport.base_url(&contact).await else {
         tracing::debug!(target: "node", actor, "node: lends — no dialable path to the computer");
-        return Asked::Unanswered;
+        return Answered::Unanswered;
     };
     let Ok(http) = peer_client() else {
         tracing::warn!(target: "node", actor, "node: lends — no http client, so the computer is not asked");
-        return Asked::Unanswered;
+        return Answered::Unanswered;
     };
     let answer = match http.get(format!("{base}{LENDS_ROUTE}")).send().await {
         Ok(r) if r.status().is_success() => r.json::<Answer>().await,
         Ok(r) => {
             tracing::debug!(target: "node", actor, status = r.status().as_u16(), "node: lends — the computer refused the ask");
-            return Asked::Refused;
+            return Answered::Refused;
         }
         Err(e) if transport.closes_unadmitted(&contact).await => {
             tracing::debug!(target: "node", actor, error = %e, "node: lends — the computer has not heard this one is in its group");
-            return Asked::Unheard;
+            return Answered::Unheard;
         }
         Err(e) => {
             tracing::debug!(target: "node", actor, error = %e, "node: lends — the computer did not answer");
-            return Asked::Unanswered;
+            return Answered::Unanswered;
         }
     };
     match answer {
         Ok(a) => {
             tracing::debug!(target: "node", actor, lends = a.lends.len(), "node: lends — the computer answered");
-            Asked::Lends(a.lends)
+            Answered::Lends(a.lends)
         }
         Err(e) => {
             tracing::debug!(target: "node", actor, error = %e, "node: lends — the answer is not a list of lends, so it is refused");
-            Asked::Refused
+            Answered::Refused
         }
     }
 }
@@ -719,7 +719,7 @@ impl Asking {
         let key = actor_key(actor)?;
         match tokio::time::timeout(ANSWER_WITHIN, ask_lends(&self.host.transport, actor, key)).await
         {
-            Ok(Asked::Lends(lends)) => Some(lends),
+            Ok(Answered::Lends(lends)) => Some(lends),
             _ => None,
         }
     }
