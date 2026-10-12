@@ -119,6 +119,9 @@ QUESTION="crates/svrngs-node/src/home/question.js"
 PAGE=(index.html app.js store.js sw.js open.html open.js lend.js shim.js)
 VERSION="$(cat "$OUT/wasm/svrngs_web_bg.wasm" "$OUT/wasm/svrngs_web.js" "${PAGE[@]/#/$APP/}" "$QUESTION" | $SHA_CMD | cut -c1-12)"
 cp "$QUESTION" "$OUT/"
+# install.sh, the line a computer pastes, served at the page's address with
+# what scripts/build-release.sh puts under get/ (DESIGN §7).
+cp "$APP/install.sh" "$OUT/"
 for f in "${PAGE[@]}"; do
   cp "$APP/$f" "$OUT/"
   sed -i.bak "s/__VERSION__/${VERSION}/g" "$OUT/$f"
