@@ -287,7 +287,7 @@ impl core::fmt::Display for RailGap {
                 crate::short_id(&missing.to_string())
             ),
             Self::Unsettled => {
-                f.write_str("the removals do not settle to one answer, so who is in cannot be told")
+                f.write_str("the removals do not come to one answer, so who is in cannot be told")
             }
         }
     }

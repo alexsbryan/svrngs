@@ -267,7 +267,7 @@ pub fn membership<'a>(
         }
         if round > ops.len() {
             tracing::warn!(target: "rail:membership", round,
-                "membership: the cuts did not settle, each walk giving another's, so who stands cannot be judged");
+                "membership: the cuts came to no one answer, each walk giving another's, so who stands cannot be judged");
             m.unsettled = true;
             break;
         }

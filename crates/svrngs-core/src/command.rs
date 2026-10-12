@@ -189,7 +189,7 @@ fn settled<R>(fold: &Admission, ns: &str) -> Result<(), Refused<R>> {
     if !fold.membership().unsettled {
         return Ok(());
     }
-    tracing::warn!(target: "rail:door", ns, "commit refused — the group's removals do not settle, so nothing is judged on them");
+    tracing::warn!(target: "rail:door", ns, "commit refused — the group's removals do not come to one answer, so nothing is judged on them");
     Err(Refused::Unsettled)
 }
 
