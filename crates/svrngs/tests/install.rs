@@ -333,3 +333,93 @@ async fn the_line_run_twice_installs_runs_at_login_opens_home_and_joins_once() {
     assert_eq!(admits, 1, "run twice, the line joined {admits} times");
     sam.endpoint().close().await;
 }
+
+/// Joining puts the group's folder at `~/svrngs/<group>` (v1-onboarding
+/// (d)), kept the same as everyone's: `svrngs join --no-run`, this build's,
+/// in a `HOME` of its own, says where and makes it; svrngs then run there
+/// as login runs it keeps it, and `/v1/groups` — what the home page says
+/// it from — names the place. A file of Sam's reaching it is measured in
+/// the onboarding run (demo/runs/onboarding/): a member is dialled by key
+/// through n0's lookup, which no test here reaches. Watched failing: join
+/// before it placed the folder.
+#[tokio::test(flavor = "multi_thread")]
+async fn joining_places_the_groups_folder() {
+    let relay = harness::relay().await;
+    let ours = RelayConfig {
+        relay_urls: vec![harness::relay_url(&relay)],
+        n0_services: false,
+        loopback_only: false,
+    }
+    .on_loopback_only();
+    let dir = tempfile::tempdir().unwrap();
+    let sam = Node::start(
+        dir.path().to_path_buf(),
+        SigningKey::from_bytes(&[2; 32]),
+        &ours,
+        group::seed_text,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("Sam's computer starts");
+    tokio::time::timeout(Duration::from_secs(20), sam.endpoint().online())
+        .await
+        .expect("Sam's computer reaches the relay on 127.0.0.1");
+    let (_, printed) = cli::new_group(
+        &sam,
+        Name::parse("trip").unwrap(),
+        Name::parse("Sam").unwrap(),
+        None,
+        &ours,
+    )
+    .await
+    .expect("Sam makes trip");
+
+    let home = tempfile::tempdir().unwrap();
+    let svrngs = |args: &[&str]| {
+        let mut c = tokio::process::Command::new(env!("CARGO_BIN_EXE_svrngs"));
+        c.args(args)
+            .env_clear()
+            .env("HOME", home.path())
+            .env("USER", "Alex")
+            .kill_on_drop(true);
+        c
+    };
+    let joined = svrngs(&["join", &printed.client, "--no-run"])
+        .output()
+        .await
+        .unwrap();
+    let said = String::from_utf8_lossy(&joined.stdout);
+    eprintln!("{said}{}", String::from_utf8_lossy(&joined.stderr));
+    assert!(joined.status.success());
+    let place = home.path().join("svrngs/trip");
+    assert!(
+        said.contains(&format!(
+            "trip's folder is {}: what anyone in trip puts there reaches this computer",
+            place.display()
+        )),
+        "{said}"
+    );
+    assert!(place.is_dir(), "{} not made", place.display());
+
+    let mut running = svrngs(&[]).spawn().unwrap();
+    let http = reqwest::Client::builder().no_proxy().build().unwrap();
+    let groups = tokio::time::timeout(Duration::from_secs(30), async {
+        loop {
+            let api = std::fs::read_to_string(home.path().join(".svrngs/api")).unwrap_or_default();
+            if let Ok(answer) = http.get(format!("{}/v1/groups", api.trim())).send().await {
+                break answer.json::<serde_json::Value>().await.unwrap();
+            }
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+    })
+    .await
+    .expect("svrngs answers at the API it wrote");
+    eprintln!("/v1/groups: {groups}");
+    assert_eq!(
+        groups["groups"][0]["folders"],
+        serde_json::json!([place]),
+        "{groups:#}"
+    );
+    running.kill().await.unwrap();
+    sam.endpoint().close().await;
+}

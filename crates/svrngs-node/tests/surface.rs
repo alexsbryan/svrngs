@@ -231,7 +231,7 @@ async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
     assert_eq!(status, 200, "{body:#}");
     assert_eq!(
         body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "person": "alex", "removed": false, "removals": [] }] }),
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "person": "alex", "removed": false, "removals": [], "folders": [] }] }),
     );
     house.close().await;
 }
@@ -260,7 +260,7 @@ async fn an_unreadable_register_is_not_read_as_not_removed() {
     assert_eq!(status, 200, "{body:#}");
     assert_eq!(
         body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "person": null, "removed": null, "removals": null }] }),
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "person": null, "removed": null, "removals": null, "folders": [] }] }),
     );
     house.close().await;
 }

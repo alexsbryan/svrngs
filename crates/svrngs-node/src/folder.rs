@@ -679,6 +679,19 @@ fn provider(store: &Store, folders: Folders) -> BlobsProtocol {
     BlobsProtocol::new(store, Some(events))
 }
 
+/// The directories this computer keeps in step with `group`'s folders, as
+/// kept under `data_dir` (synced.rs `syncing_in`, the one list), for
+/// `/v1/groups`; or why that list cannot be read.
+pub(crate) fn dirs_of(data_dir: &Path, group: &str) -> Result<Vec<PathBuf>, String> {
+    let kept =
+        synced::syncing_in(data_dir).map_err(|(at, why)| format!("{}: {why}", at.display()))?;
+    Ok(kept
+        .into_iter()
+        .filter(|((g, _), _)| g == group)
+        .map(|(_, dir)| dir)
+        .collect())
+}
+
 /// The record API's folder route: what this computer's apps ask. POST
 /// keeps a directory in step with its folder.
 pub(crate) fn router(folders: Folders) -> Router {

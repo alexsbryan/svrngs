@@ -95,6 +95,10 @@ struct Held {
     /// home page shows them to everyone in the group. `null` beside
     /// `removed`'s.
     removals: Option<Vec<svrngs_runtime::register::Removing>>,
+    /// Where this computer keeps the group's folders (v1-onboarding (d)):
+    /// the home page says so. `null` when the list cannot be read here,
+    /// said at warn, never read as none.
+    folders: Option<Vec<std::path::PathBuf>>,
 }
 
 /// `GET /v1/groups`.
@@ -127,14 +131,18 @@ async fn groups(State(at): State<Surface>) -> Response {
                 (None, None, None)
             }
         };
+        let folders = crate::folder::dirs_of(&at.asking.door().data_dir, &id)
+            .inspect_err(|e| tracing::warn!(target: "surface", namespace = id, error = %e, "surface: groups — where its folders are kept cannot be read"))
+            .ok();
         tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?person, removed = ?removed,
-            removals = ?removals.as_ref().map(Vec::len), "surface: groups — a group held");
+            removals = ?removals.as_ref().map(Vec::len), folders = ?folders, "surface: groups — a group held");
         held.push(Held {
             id,
             name,
             person,
             removed,
             removals,
+            folders,
         });
     }
     Json(serde_json::json!({ "groups": held })).into_response()

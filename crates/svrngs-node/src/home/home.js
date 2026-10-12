@@ -59,6 +59,10 @@ function list(all) {
     else if (g.unread) s.append(el('p', `What this group lends cannot be read on this computer: ${g.unread}`));
     else {
       s.append(el('p', `People: ${g.people.map((p) => p.person).join(', ')}`));
+      // Where the group's folder is on this disk (v1-onboarding (d)).
+      const its = g.name ? `${g.name}’s folder` : 'The group’s folder';
+      if (g.folders === null) s.append(el('p', `Where ${its} is cannot be read on this computer.`));
+      for (const dir of g.folders ?? []) s.append(Object.assign(el('p', `${its} is on this computer at ${dir}`), { className: 'folder' }));
       if (g.removals.length) s.append(Object.assign(el('ul', '', ...g.removals.map((r) => el('li', removal(r)))), { className: 'removals' }));
       const ul = el('ul');
       for (const l of g.lent) ul.append(el('li', '', Object.assign(el('a', named(l)), { href: l.origin })));

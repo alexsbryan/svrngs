@@ -115,7 +115,8 @@ svrngs — keep what your group shares on your own computers.
   svrngs join <link> [--as <your name>] [--no-run]
       Join the group a link you were sent is for. The computer that sent it
       must be on. --as is the name the group knows you by; else this
-      computer's user name. --no-run stops once you are in, rather than
+      computer's user name. The group's folder is put at ~/svrngs/<group>.
+      --no-run stops once you are in, rather than
       run: for a computer where svrngs runs at login, as install.sh keeps it.
 
   svrngs link <group> [--origin <url>]
@@ -861,6 +862,13 @@ pub enum Said {
     Joined { seed: Seed, person: Name },
     /// `join` of a group this computer is in already.
     AlreadyIn(Seed),
+    /// After `join`: the group's folder at `dir`, kept the same as
+    /// everyone's, or why not.
+    Folder {
+        group: Name,
+        dir: PathBuf,
+        placed: Result<(), String>,
+    },
     /// The bare command: the names of the groups it runs for, where this
     /// computer's apps reach them, and what the people in them lend.
     Running {
@@ -914,6 +922,24 @@ impl std::fmt::Display for Said {
             Said::AlreadyIn(seed) => {
                 writeln!(f, "You're in {} already, on this computer.", seed.name())
             }
+            Said::Folder {
+                group,
+                dir,
+                placed: Ok(()),
+            } => writeln!(
+                f,
+                "{group}'s folder is {}: what anyone in {group} puts there reaches this computer, and what you put there reaches theirs.",
+                dir.display()
+            ),
+            Said::Folder {
+                group,
+                dir,
+                placed: Err(why),
+            } => writeln!(
+                f,
+                "{group}'s folder is not at {}: {why}. `svrngs share --folder <dir> --group {group}` keeps it where you choose.",
+                dir.display()
+            ),
             Said::Running { groups, api, lends } => {
                 if groups.is_empty() {
                     writeln!(
@@ -1169,7 +1195,12 @@ async fn serve(
                 Some(p) => p,
                 None => user_name().ok_or(Refusal::NoNameToJoin)?,
             };
-            join_group(node, key, &link, &person).await?
+            let joined = join_group(node, key, &link, &person).await?;
+            print!("{joined}");
+            let (Said::Joined { seed, .. } | Said::AlreadyIn(seed)) = joined else {
+                unreachable!("join_group says joined or in already")
+            };
+            folder_at_join(root, &seed).await
         }
         Verb::Link { group, origin } => {
             let page = match origin {
@@ -1274,6 +1305,52 @@ pub async fn join_group(
         seed,
         person: person.clone(),
     })
+}
+
+/// Where joining puts a group's folder (v1-onboarding (d)): `~/svrngs/`
+/// and the group's name, which every member who joined derives alike, so
+/// their folders are one; `/`, `\` and `:` read as `-` and leading dots
+/// dropped, so the name stays one directory under it, else the id's start.
+fn folder_place(seed: &Seed) -> Option<PathBuf> {
+    let home = std::env::var_os("HOME").filter(|h| !h.is_empty())?;
+    let name = seed.name().as_str().replace(['/', '\\', ':'], "-");
+    let name = match name.trim_start_matches('.') {
+        "" => seed.id()[..8].to_string(),
+        name => name.to_string(),
+    };
+    Some(PathBuf::from(home).join("svrngs").join(name))
+}
+
+/// The group's folder kept the same at [`folder_place`] as everyone's,
+/// asked of this node's own API as `share --folder` asks it; or why not,
+/// said beside the join, which stands either way.
+async fn folder_at_join(root: &Path, seed: &Seed) -> Said {
+    let group = seed.name().clone();
+    let Some(dir) = folder_place(seed) else {
+        tracing::debug!(target: "cli", group = %seed.id(), "cli: join — no $HOME, so no folder placed");
+        let why = "this computer names no home folder ($HOME)".to_string();
+        return Said::Folder {
+            group,
+            dir: PathBuf::from("~/svrngs"),
+            placed: Err(why),
+        };
+    };
+    let placed = match std::fs::create_dir_all(&dir) {
+        Err(e) => Err(e.to_string()),
+        Ok(()) => {
+            let asked = FolderAsk {
+                dir: dir.clone(),
+                group: seed.id(),
+            };
+            match ask_running(root, "/v1/folders", &asked).await {
+                Ok((true, _)) => Ok(()),
+                Ok((false, why)) => Err(why),
+                Err(e) => Err(e.to_string()),
+            }
+        }
+    };
+    tracing::debug!(target: "cli", group = %seed.id(), dir = %dir.display(), ?placed, "cli: join — the group's folder placed, or why not");
+    Said::Folder { group, dir, placed }
 }
 
 /// The issuer did not let this computer in: it refused, or never answered.

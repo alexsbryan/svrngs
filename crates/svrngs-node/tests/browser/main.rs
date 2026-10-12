@@ -1543,3 +1543,49 @@ async fn the_page_offers_a_computer_one_line_and_sends_the_token_nowhere(engine:
     assert!(!served.contains("house") && !served.contains(&token));
     drop(ada);
 }
+
+in_both_engines!(
+    /// The home page says where the group's folder is on this computer
+    /// (v1-onboarding (d)), from `/v1/groups`' `folders`; this node keeps
+    /// no seed, so the group is named as the page names a group whose name
+    /// it cannot read. Watched failing: home.js before it said so, and
+    /// saying "null’s folder".
+    the_home_page_says_where_the_groups_folder_is
+);
+async fn the_home_page_says_where_the_groups_folder_is(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let folder = dir.path().join("house");
+    std::fs::create_dir(&folder).unwrap();
+    let kept = reqwest::Client::builder()
+        .no_proxy()
+        .build()
+        .unwrap()
+        .post(format!("http://{}/v1/folders", ada.api_addr()))
+        .json(&svrngs_node::folder::FolderAsk {
+            dir: folder.clone(),
+            group: NS.into(),
+        })
+        .send()
+        .await
+        .unwrap();
+    assert!(kept.status().is_success(), "{:?}", kept.text().await);
+    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
+    let seen = drive(
+        engine,
+        "home.mjs",
+        json!({ "ask": home, "read": ".folder" }),
+        None,
+    )
+    .await;
+    assert_eq!(
+        seen["read"],
+        format!(
+            "The group’s folder is on this computer at {}",
+            folder.display()
+        ),
+        "{seen:#}"
+    );
+    drop(ada);
+}
