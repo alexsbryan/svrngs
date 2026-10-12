@@ -206,7 +206,9 @@ link's secret, so the joiner first asks: `AskRequest`, the link's key and
 its own, signed by the link's key, answered (`Asked`) with the group whose
 `Invite` of this node's names that key, its seed as the command keeps it
 (read through the `SeedText` function `Node::start` is handed, since the
-seed is the command's) and the `Invite`'s id. Then `RedeemRequest` — the group's id, the
+seed is the command's), the `Invite`'s id and, for a device link, its
+person by name (`Asked::person`, bash-devices; `RingRail::invite_for`), whom
+`svrngs join` and the page join as, asked no name. Then `RedeemRequest` — the group's id, the
 `Invite`'s id, a person's name, the new key, its consent, what holds it
 (`Device`) and the link's key, signed by the link's secret — posted on `Alpn::Redeem`, which the
 accept loop serves to any dialer with these two routes. The two requests,

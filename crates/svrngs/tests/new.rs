@@ -309,13 +309,24 @@ fn the_verbs_parse() {
         Verb::Link {
             group: "house".into(),
             origin: Some(Origin::parse("https://links.example.org/").unwrap()),
+            device: false,
         }
+    );
+    assert_eq!(
+        cli::parse(argv("link house --device")).unwrap(),
+        Verb::Link {
+            group: "house".into(),
+            origin: None,
+            device: true,
+        },
+        "--device: a link for another device of yours (bash-devices)"
     );
     assert_eq!(
         cli::parse(argv("link house")).unwrap(),
         Verb::Link {
             group: "house".into(),
             origin: None,
+            device: false,
         },
         "no --origin is the group's own, not the default"
     );

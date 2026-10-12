@@ -266,6 +266,10 @@ impl Person {
     pub fn parse(raw: &str) -> Result<Self, NotAName> {
         Name::parse(raw).map(Self)
     }
+
+    pub fn name(&self) -> &Name {
+        &self.0
+    }
 }
 
 impl From<Name> for Person {

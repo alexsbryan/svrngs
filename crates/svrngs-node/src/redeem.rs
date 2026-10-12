@@ -200,7 +200,7 @@ fn serve_ask(
     req: &AskRequest,
 ) -> Result<Asked, NotAdmitted> {
     parse_ask(dialer.as_deref(), req)?;
-    let (group, invite) = issuer
+    let (group, invite, person) = issuer
         .rail
         .invite_for(&req.link)
         .map_err(NotAdmitted::Unjudged)?
@@ -212,12 +212,13 @@ fn serve_ask(
     let seed = (issuer.seeds)(&dir)
         .map_err(|e| NotAdmitted::Unjudged(RailError::Io(e)))?
         .ok_or(NotAdmitted::NotHeld)?;
-    tracing::debug!(target: "redeem", group, key = %req.key, invite = %invite,
-        "redeem: asked — the link's key is named by this node's Invite; answering its group's seed");
+    tracing::debug!(target: "redeem", group, key = %req.key, invite = %invite, ?person,
+        "redeem: asked — the link's key is named by this node's Invite; answering its group's seed, and a device link's person");
     Ok(Asked {
         group,
         seed,
         invite,
+        person,
     })
 }
 

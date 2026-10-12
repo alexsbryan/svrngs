@@ -190,7 +190,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         "the page asks a newcomer's name:\n{seen:#}"
     );
     assert_eq!(
-        first["why"], "Someone in house already goes by Sam. Join under another name.",
+        first["why"], "Someone in house already goes by Sam. If that’s you, add this phone from your computer: `svrngs link house --device` there makes a link for it. Else join under another name.",
         "a name someone goes by is refused, and another asked (bash-person):\n{seen:#}"
     );
     assert_eq!(first["status"], "You’re in house, as Pia", "{seen:#}");
@@ -248,6 +248,134 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         seen["opened"],
         json!({ "origin": format!("http://{shelf}.localhost:{port}"), "text": "hi" }),
         "{seen:#}"
+    );
+    sam.endpoint().close().await;
+}
+
+in_both_engines!(
+    /// **A phone opening a link Sam's computer made for Sam's devices is
+    /// added as Sam, asked no name** (bash-devices (d); `svrngs link house
+    /// --device`). It reads "Adding this phone to house as Sam’s…", then
+    /// that it is in as Sam; Sam's record holds one `Admit` of a browser's
+    /// key, and Sam's register names that key Sam, by Sam's first key. Red
+    /// before the page read the link's person: it asked the name.
+    a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name
+);
+async fn a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name(engine: harness::Engine) {
+    let site = harness::site();
+    let relay = harness::relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ours = RelayConfig {
+        relay_urls: vec![harness::relay_url(&relay)],
+        n0_services: false,
+        loopback_only: false,
+    }
+    .on_loopback_only();
+    let sam = Node::start(
+        dir.path().to_path_buf(),
+        SigningKey::from_bytes(&[1; 32]),
+        &ours,
+        group::seed_text,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("Sam's computer starts");
+    tokio::time::timeout(Duration::from_secs(20), sam.endpoint().online())
+        .await
+        .expect("Sam's computer reaches the relay on 127.0.0.1");
+    let mut phone = tokio::process::Command::new("node")
+        .arg(harness::repo().join("web/tests/join.mjs"))
+        .arg(json!({ "engine": engine.as_str(), "site": site }).to_string())
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .kill_on_drop(true)
+        .spawn()
+        .expect("node runs: the browser tests need Node 18 or later");
+    let mut out = BufReader::new(phone.stdout.take().unwrap()).lines();
+    let first = out
+        .next_line()
+        .await
+        .unwrap()
+        .expect("the browser half prints its origin");
+    let origin: Value = serde_json::from_str(&first).unwrap();
+    let origin = Origin::parse(origin["origin"].as_str().unwrap()).unwrap();
+    let page = cli::checked_page(origin).await.expect("the page is served");
+    let (seed, _) = cli::new_group(
+        &sam,
+        Name::parse("house").unwrap(),
+        Name::parse("Sam").unwrap(),
+        Some(&page),
+        &ours,
+    )
+    .await
+    .expect("Sam makes house");
+    let (_, printed, _) = cli::link_to(&sam, "house", Some(&page), &ours, true)
+        .await
+        .expect("Sam's computer makes a link for Sam's devices");
+    let link = printed.https.clone().expect("an https link on the origin");
+    let mut stdin = phone.stdin.take().unwrap();
+    let told = json!({ "link": link, "name": "Pia" });
+    stdin
+        .write_all(format!("{told}\n").as_bytes())
+        .await
+        .unwrap();
+    stdin.flush().await.unwrap();
+    let mut last = None;
+    while let Some(line) = out.next_line().await.unwrap() {
+        last = Some(line);
+    }
+    let mut stderr = String::new();
+    phone
+        .stderr
+        .take()
+        .unwrap()
+        .read_to_string(&mut stderr)
+        .await
+        .unwrap();
+    let status = phone.wait().await.unwrap();
+    assert!(
+        status.success(),
+        "the browser half failed ({status}):\n{stderr}"
+    );
+    let seen: Value = serde_json::from_str(&last.expect("the browser half printed")).unwrap();
+
+    let first = &seen["first"];
+    assert_eq!(
+        first["asked"], false,
+        "a device link asks no name:\n{seen:#}"
+    );
+    assert!(
+        (first["said"].as_array().unwrap())
+            .contains(&json!("Adding this phone to house as Sam’s…")),
+        "the phone reads whose it is being added as:\n{seen:#}"
+    );
+    assert_eq!(first["status"], "You’re in house, as Sam", "{seen:#}");
+
+    let key: [u8; 32] = hex::decode(seen["stored"]["key"].as_str().unwrap())
+        .unwrap()
+        .try_into()
+        .expect("the page's key is 32 bytes");
+    let phones = actor_of(&SigningKey::from_bytes(&key));
+    let id = seed.id();
+    let joined: Vec<_> = admits(&sam, &id)
+        .into_iter()
+        .filter_map(|(_, key, device)| (key == phones).then_some(device))
+        .collect();
+    assert_eq!(
+        joined,
+        vec![Some(Device::Browser)],
+        "one Admit of the phone's key:\n{seen:#}"
+    );
+    let svrngs_node::register::Standing::Members(members) = sam.rail().standing(&id).unwrap()
+    else {
+        panic!("house is held at Sam's")
+    };
+    let m = &members[&phones];
+    let sams = actor_of(&SigningKey::from_bytes(&[1; 32]));
+    assert_eq!(
+        (m.person.as_str(), m.person_key.as_str()),
+        ("Sam", sams.as_str())
     );
     sam.endpoint().close().await;
 }

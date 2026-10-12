@@ -123,11 +123,13 @@ svrngs — keep what your group shares on your own computers.
       --no-run stops once you are in, rather than
       run: for a computer where svrngs runs at login, as install.sh keeps it.
 
-  svrngs link <group> [--origin <url>]
+  svrngs link <group> [--device] [--origin <url>]
       Print a new link to <group>. Any link you sent before stops letting
       anyone new in; everyone it let in stays. <group> is its name, or the
       first 8 letters of its id when two groups share a name. --origin
       also prints it on a page address, from now on, as `new` does.
+      --device makes it a link for another computer or phone of yours: it
+      joins as you, asked no name.
 
   svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--sign-in <port>] [--ask <words>]
       Lend what runs on <port> on this computer to everyone in your groups:
@@ -215,6 +217,9 @@ pub enum Verb {
         group: String,
         /// `None` keeps the group's kept origin, if any.
         origin: Option<Origin>,
+        /// `--device`: a device link, for another device of this
+        /// computer's person (bash-devices).
+        device: bool,
     },
     /// No secret: it is read from a prompt (the module docs).
     Share(Share),
@@ -258,6 +263,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let (mut folder, mut group) = (None, None);
     let mut asks = None;
     let mut run = true;
+    let mut device = false;
     let mut more = Vec::new();
     while let Some(arg) = it.next() {
         let mut value = |flag: &str| it.next().ok_or_else(|| format!("{flag} wants a value"));
@@ -325,6 +331,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 asks = Some(raw);
             }
             "--no-run" if verb == "join" => run = false,
+            "--device" if verb == "link" => device = true,
             "-h" | "--help" => return Ok(Verb::Help),
             other if other.starts_with('-') => return Err(format!("unknown argument `{other}`")),
             other if positional.is_none() => positional = Some(other.to_string()),
@@ -403,6 +410,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         "link" => Ok(Verb::Link {
             group: positional.ok_or("link wants a group: `svrngs link <group>`")?,
             origin,
+            device,
         }),
         "share" => {
             let raw = positional.ok_or("share wants a port: `svrngs share <port>`")?;
@@ -456,8 +464,8 @@ pub enum Refusal {
     NoNameToJoin,
     #[error("this link lets nobody new in: ask whoever sent it for a new one")]
     LinkRefused,
-    #[error("someone in the group already goes by {0}, so you were not let in as them: join under another name, with `--as <your name>` after the link")]
-    NameTaken(Name),
+    #[error("someone in {group} already goes by {holder}, so you were not let in as them. If that's you, add this computer from one of yours: `svrngs link {group} --device` there makes a link it joins as you by. Else join under another name, with `--as <your name>` after the link")]
+    NameTaken { holder: Name, group: Name },
     #[error(
         "the computer that sent this link cannot be reached; it may be off, so try again later"
     )]
@@ -522,7 +530,7 @@ impl Refusal {
             Refusal::NoName(_)
             | Refusal::NoNameToJoin
             | Refusal::LinkRefused
-            | Refusal::NameTaken(_)
+            | Refusal::NameTaken { .. }
             | Refusal::NoGroup(_)
             | Refusal::Ambiguous { .. }
             | Refusal::NotIn(_)
@@ -870,7 +878,12 @@ pub enum Said {
     /// `new`: the group made, and its first link.
     Made { seed: Seed, link: Printed },
     /// `link`: a new link to a group.
-    Linked { seed: Seed, link: Printed },
+    /// A new link; a device link's person when it is one (bash-devices).
+    Linked {
+        seed: Seed,
+        link: Printed,
+        device: Option<Person>,
+    },
     /// `join`: let in by the link's issuer, as `person`.
     Joined { seed: Seed, person: Name },
     /// `join` of a group this computer is in already.
@@ -920,12 +933,15 @@ impl std::fmt::Display for Said {
                 writeln!(f)?;
                 write!(f, "{link}")
             }
-            Said::Linked { seed, link } => {
-                writeln!(
-                    f,
-                    "A new link to {}. Any link you sent before stops letting anyone new in; everyone it let in stays.",
-                    seed.name()
-                )?;
+            Said::Linked { seed, link, device } => {
+                let group = seed.name();
+                match device {
+                    None => writeln!(f, "A new link to {group}. Any link you sent before stops letting anyone new in; everyone it let in stays.")?,
+                    Some(person) => {
+                        writeln!(f, "A link that adds another computer or phone of yours to {group}: open it there, and it joins as you, {person}, asked no name. Send it to nobody else: whoever opens it joins as you. Any link you sent before stops letting anyone new in; everyone it let in stays.")?;
+                        writeln!(f, "A computer or phone already in {group} on its own stays as it joined.")?;
+                    }
+                }
                 writeln!(f, "It works for a day, while this computer is on:")?;
                 writeln!(f)?;
                 write!(f, "{link}")
@@ -1235,13 +1251,17 @@ async fn serve(
             };
             folder_at_join(root, &seed).await
         }
-        Verb::Link { group, origin } => {
+        Verb::Link {
+            group,
+            origin,
+            device,
+        } => {
             let page = match origin {
                 Some(page) => Some(checked_page(page).await?),
                 None => None,
             };
-            let (seed, link) = new_link(node, &group, page.as_ref(), relay).await?;
-            Said::Linked { seed, link }
+            let (seed, link, device) = link_to(node, &group, page.as_ref(), relay, device).await?;
+            Said::Linked { seed, link, device }
         }
         Verb::Run => running(root, node).await,
         Verb::Room(names) => {
@@ -1293,7 +1313,7 @@ pub async fn join_group(
         &AskRequest::sign(&link_key, key),
     )
     .await
-    .map_err(not_let_in)?;
+    .map_err(|e| not_let_in(e, None))?;
     let Some(seed) = group::answered(&asked.group, &asked.seed) else {
         tracing::debug!(target: "cli", group = %asked.group, "cli: join — the issuer's answer is not believed, so nothing is redeemed");
         return Err(Refusal::LinkRefused);
@@ -1306,17 +1326,21 @@ pub async fn join_group(
         tracing::debug!(target: "cli", group = %id, "cli: join — this computer holds the group already, so nothing is redeemed");
         return Ok(Said::AlreadyIn(seed));
     }
+    // A device link's person is who this computer joins as, asked no name
+    // (bash-devices); else the name given.
+    let person = asked.person.unwrap_or_else(|| Person::from(person.clone()));
+    tracing::debug!(target: "cli", group = %id, %person, "cli: join — redeeming as this person");
     let request = RedeemRequest::sign(
         &link_key,
         key,
         &id,
         &asked.invite,
-        &Person::from(person.clone()),
+        &person,
         Device::Computer,
     );
     let redeemed = redeem(node.endpoint(), issuer.clone(), &request)
         .await
-        .map_err(not_let_in)?;
+        .map_err(|e| not_let_in(e, Some(seed.name())))?;
     tracing::debug!(target: "cli", group = %id, redeemed = ?redeemed, "cli: join — let in");
     keep_group(node, &seed, link.origin.as_ref())?;
     if link.origin.is_none() {
@@ -1336,7 +1360,7 @@ pub async fn join_group(
     }
     Ok(Said::Joined {
         seed,
-        person: person.clone(),
+        person: person.name().clone(),
     })
 }
 
@@ -1388,11 +1412,19 @@ async fn folder_at_join(root: &Path, seed: &Seed) -> Said {
 }
 
 /// The issuer did not let this computer in: it refused, or never answered.
-fn not_let_in(e: RedeemError) -> Refusal {
+fn not_let_in(e: RedeemError, group: Option<&Name>) -> Refusal {
     tracing::debug!(target: "cli", error = %e, "cli: join — not let in");
     match e {
         RedeemError::Refused(_) => Refusal::LinkRefused,
-        RedeemError::NameTaken(holder) => Refusal::NameTaken(holder),
+        RedeemError::NameTaken(holder) => match group {
+            Some(group) => Refusal::NameTaken {
+                holder,
+                group: group.clone(),
+            },
+            // Only a redemption answers that a name is taken: to an ask
+            // it is an answer this build cannot read.
+            None => Refusal::IssuerAway,
+        },
         RedeemError::Unjudged | RedeemError::NoAnswer(_) => Refusal::IssuerAway,
     }
 }
@@ -1447,7 +1479,7 @@ pub async fn new_group(
     let id = seed.id();
     keep_group(node, &seed, page)?;
     tracing::debug!(target: "cli", group = %id, name = %seed.name(), page = ?page.map(Origin::as_str), "cli: group made");
-    let token = mint(node, &seed, relay).await?;
+    let token = mint(node, &seed, relay, None).await?;
     Ok((seed, Printed::of(&token, page)))
 }
 
@@ -1481,6 +1513,20 @@ pub async fn new_link(
     page: Option<&Origin>,
     relay: &RelayConfig,
 ) -> Result<(Seed, Printed), Refusal> {
+    let (seed, printed, _) = link_to(node, reference, page, relay, false).await?;
+    Ok((seed, printed))
+}
+
+/// [`new_link`], or with `device` a device link (`svrngs link --device`;
+/// bash-devices): one this computer's person's other computer or phone
+/// joins as them by, and that person.
+pub async fn link_to(
+    node: &Node,
+    reference: &str,
+    page: Option<&Origin>,
+    relay: &RelayConfig,
+    device: bool,
+) -> Result<(Seed, Printed, Option<Person>), Refusal> {
     let seed = group_named(node.rail().root(), reference)?;
     let dir = node
         .rail()
@@ -1504,8 +1550,33 @@ pub async fn new_link(
             }
         },
     };
-    let token = mint(node, &seed, relay).await?;
-    Ok((seed, Printed::of(&token, page.as_ref())))
+    let person = match device {
+        true => Some(own_person(node, &seed)?),
+        false => None,
+    };
+    let token = mint(node, &seed, relay, person.as_ref().map(|(k, _)| k.clone())).await?;
+    Ok((
+        seed,
+        Printed::of(&token, page.as_ref()),
+        person.map(|(_, p)| p),
+    ))
+}
+
+/// This computer's person in `seed`'s group, by their first key and name,
+/// as the register names them (bash-devices): whom a device link adds a
+/// device of. A computer that stands there as nobody makes none.
+fn own_person(node: &Node, seed: &Seed) -> Result<(String, Person), Refusal> {
+    let me = node.rail().signer().actor();
+    let standing =
+        (node.rail().standing(&seed.id())).map_err(|e| keep_refused(seed, &e.to_string()))?;
+    let own = match standing {
+        svrngs_node::register::Standing::Members(m) => {
+            m.get(&me).map(|m| (m.person_key.clone(), m.person.clone()))
+        }
+        _ => None,
+    };
+    tracing::debug!(target: "cli", group = %seed.id(), ?own, "cli: link --device — this computer's person");
+    own.ok_or_else(|| Refusal::NotIn(seed.name().clone()))
 }
 
 /// Append an `Invite` for a fresh link's key that lapses in
@@ -1516,7 +1587,12 @@ pub async fn new_link(
     clippy::disallowed_methods,
     reason = "the command's clock: a link's life starts now"
 )]
-async fn mint(node: &Node, seed: &Seed, relay: &RelayConfig) -> Result<Token, Refusal> {
+async fn mint(
+    node: &Node,
+    seed: &Seed,
+    relay: &RelayConfig,
+    device_of: Option<String>,
+) -> Result<Token, Refusal> {
     let token = issuer::mint(node.endpoint().id(), issuer_relay(node, relay).await);
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -1525,7 +1601,7 @@ async fn mint(node: &Node, seed: &Seed, relay: &RelayConfig) -> Result<Token, Re
     let mint = MintInvite {
         key: actor_of(&token.key()),
         until: now + LINK_LIFE_SECS,
-        device_of: None,
+        device_of,
     };
     let group = seed.id();
     let recorded = match node.rail().commit(&group, &mint) {

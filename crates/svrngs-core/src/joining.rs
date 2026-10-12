@@ -76,6 +76,11 @@ pub struct Asked {
     pub seed: String,
     /// The id of the issuer's `Invite` naming the link's key.
     pub invite: OpId,
+    /// A device link's person, by name (bash-devices): the joiner joins as
+    /// them, asked no name. Skipped when absent, so any other answer reads
+    /// as before.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub person: Option<Person>,
 }
 
 /// What a joiner presents.

@@ -330,15 +330,26 @@ case-blind: the `Redeem` command refuses it at the issuer's write, before
 anything is written (`crates/svrngs-core/src/register.rs`, `NameTaken`),
 and not the fold, where "first in the rail's order binds" would let any
 member's computer evict a person by a backdated `Admit` under their name.
-The joiner is told who goes by it and how to join under another name —
-`--as <your name>` after the link on a computer, the page's line
-included; another name typed on a phone, which the page asks again — and
-a removed person's name is free again. What it costs until device links
-(§9): a person's second device under the same name is refused, and so is
-a phone whose key was lost (Safari clears a site's storage after seven
-days unused) rejoining as itself; each joins under another name, as a
-person of their own. Squatting a name before its person joins stays
-possible; the keeper can remove the squatter. U4 builds
+The joiner is told who goes by it, how to add this device if it is
+theirs — `svrngs link <group> --device` on a computer of theirs — and how
+to join under another name — `--as <your name>` after the link on a
+computer, the page's line included; another name typed on a phone, which
+the page asks again — and a removed person's name is free again.
+Squatting a name before its person joins stays possible; the keeper can
+remove the squatter.
+
+*A person's other device joins by a link of theirs* (bash-devices;
+svrn-docs `rings/current/ONE_PERSON_MANY_DEVICES.md` §3, phase 1): `svrngs
+link <group> --device` on a computer makes a device link, an `Invite`
+naming that computer's person (§6), and the issuer's answer to an ask
+names them (`joining.rs`, `Asked::person`). A phone opening it reads
+"Adding this phone to <group> as <name>’s…" and is asked no name; a
+computer's `svrngs join`, the page's line included, joins as them. Whoever
+opens it joins as that person, so the command says to send it to nobody
+else. A computer or phone already in the group on its own stays as it
+joined — the command says so once — and a phone that lost its key joins
+again by a device link. Only a computer makes one, as only a computer
+redeems a link (§9). U4 builds
 the rest, by five calls (the seat, 2026-10-05, from its survey of upstream;
 the evidence is U4's inventory, §8):
 1. *The page holds the key's bytes, sealed.* The person's key is 32 bytes,
@@ -1969,7 +1980,8 @@ the link; no account but one a lender's program makes, no key asked for.
 | exporting a group as one document (upstream's checkpoint route), checking the asker is in that group | a group refounds from a copy, or someone asks to export one |
 | the endpoint's self-heal (upstream's `self_heal.rs`, `iroh_watchdog.rs`) | a node's endpoint wedges in a recorded run |
 | skipping a round's members known offline. Dialling them at once landed (asleep-1, `ring_sync::run_one_round`), so an asleep one holds only its own dial; the round still ends when that dial gives up, about 10 s, and a door's ask begun meanwhile waits for the next round (§3, "Joining") | a round's measured time nears its interval, or a newcomer is refused while a round waits on an asleep computer, counted |
-| another device for the same person. Scoped use asked (`demo/runs/su/2026-10-09/` §9): its run listed each of Ana's phones' keys in her taste's owners by hand (`apps/taste/check/check.sh:173`, `OWN`; `:137` at `305efde`), each phone joining as a member of its own, and a lend its lender's person alone reaches needs it (§8, "Then"); made production, Ana was asked once on her computer and once on each phone, and a stop on one phone left the other's yes, each choice its own key's (sup-4, `demo/runs/sup/2026-10-10/`). Demo C's dry run let a second member in as `ana`, Ana's Navidrome admin (`demo/runs/c/dry-2026-10-12/data/name.json`); since bash-person a link refuses a name someone goes by (§3, "Joining"), so a person's own second device has no way in as them at all | that row is queued (bash-devices) |
+| a phone making a device link (phase 2 of svrn-docs `rings/current/ONE_PERSON_MANY_DEVICES.md` §3). Since bash-devices a computer makes one (`svrngs link <group> --device`), and a phone or another computer opening it joins as that computer's person, asked no name (§3, "Joining"); a phone cannot make one, since only a computer redeems a link (the row "any member's node redeeming a link", below), so a person whose only device in a group is a phone adds no second one as themselves | a person whose devices in a group are phones alone asks to add another as themselves, counted; or any member's node redeeming a link lands |
+| removing one lost device of a person: a `Remove` is per key already, and the person's other devices keep standing (svrn-docs `rings/current/ONE_PERSON_MANY_DEVICES.md` §3, "Removal"), but `svrngs remove` names a person and takes every device of theirs (bash-devices); naming one device — by the person from another of theirs, or by the keeper — is a change to who a person is beyond phase 1, the operator's (ralph/next/bash/CHARTER.md). Until then a lost phone's key stands as its person until the keeper removes the person | a person loses a device that stands in a group, counted |
 | the wire published for a second implementation | someone sets out to write one |
 | local discovery on one WiFi | Apple's multicast entitlement is granted |
 | any member's node redeeming a link, once its `Invite` has synced | a newcomer's link fails because its issuer's computer was asleep, counted |

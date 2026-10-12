@@ -320,6 +320,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
         Said::Linked {
             seed: linked,
             link: printed2.clone(),
+            device: None,
         }
         .to_string(),
     );
@@ -600,11 +601,14 @@ async fn a_name_someone_in_the_group_goes_by_is_refused_with_how_to_join() {
         .expect_err("a second sam is refused");
     let words = refused.to_string();
     assert!(
-        matches!(&refused, Refusal::NameTaken(holder) if *holder == name("Sam")),
+        matches!(&refused, Refusal::NameTaken { holder, .. } if *holder == name("Sam")),
         "{refused:?}"
     );
+    // How to add this computer as Sam, if it is Sam's (bash-devices (d)).
     assert!(
-        words.contains("already goes by Sam") && words.contains("--as <your name>"),
+        words.contains("already goes by Sam")
+            && words.contains("`svrngs link house --device`")
+            && words.contains("--as <your name>"),
         "{words}"
     );
     assert_eq!(refused.exit_code(), 1);
@@ -615,6 +619,44 @@ async fn a_name_someone_in_the_group_goes_by_is_refused_with_how_to_join() {
         .expect("Hal is let in");
     assert!(stands(&sam.node, &group, &hal.key));
     for c in [&sam, &hal] {
+        c.node.endpoint().close().await;
+    }
+}
+
+/// **Another computer of Sam's joins as Sam, by a link Sam's computer makes
+/// for Sam's devices** (bash-devices (d); `svrngs link house --device`):
+/// asked no name — the name the command would give, `whoever`, is not the
+/// one it joins as — it is let in as Sam, prints so, and stands in Sam's
+/// register as Sam's own person.
+#[tokio::test]
+async fn another_computer_of_sams_joins_as_sam_by_a_link_for_sams_devices() {
+    let sam = computer(1).await;
+    let (seed, _) = cli::new_group(&sam.node, name("house"), name("Sam"), None, &no_relay())
+        .await
+        .expect("Sam makes house");
+    let (_, printed, device) = cli::link_to(&sam.node, "house", None, &no_relay(), true)
+        .await
+        .expect("Sam's computer makes a link for Sam's devices");
+    assert_eq!(device.map(|p| p.to_string()), Some("Sam".to_string()));
+    let link = parsed(&printed, &sam.node);
+    let second = computer(4).await;
+    knows(&second, &sam.node);
+    let joined = cli::join_group(&second.node, &second.key, &link, &name("whoever"))
+        .await
+        .expect("Sam's second computer is let in");
+    assert_eq!(joined.to_string(), "You're in house, as Sam.\n");
+    let group = seed.id();
+    let standing = sam.node.rail().standing(&group).unwrap();
+    let svrngs_node::register::Standing::Members(members) = standing else {
+        panic!("house is held at Sam's")
+    };
+    let m = &members[&actor_of(&second.key)];
+    assert_eq!(
+        (m.person.as_str(), m.person_key.as_str()),
+        ("Sam", actor_of(&sam.key).as_str()),
+        "Sam's second computer is Sam, by Sam's first key"
+    );
+    for c in [&sam, &second] {
         c.node.endpoint().close().await;
     }
 }

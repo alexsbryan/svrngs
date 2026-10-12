@@ -14,7 +14,9 @@
 // already, by another link, is in too. Otherwise the page asks the
 // person's name once, makes the person's key, redeems the link at its
 // issuer as a browser, and keeps the key sealed and the group's name
-// (store.js). Every word a person reads here is DESIGN §1's.
+// (store.js). A link made for a person's devices (`svrngs link --device`,
+// bash-devices) names that person: the page asks no name and joins as
+// them. Every word a person reads here is DESIGN §1's.
 //
 // Opening a lend (u5-2; DESIGN §3, "Lent apps", calls 1 and 6; §7): the
 // page signs a pass — a fresh key may act as this person toward this lend,
@@ -157,7 +159,12 @@ async function join(token, kept) {
   }
   let why;
   for (;;) {
-    const name = await askName(group.name, why);
+    const mine = group.person;
+    if (mine) {
+      trace(`PAGE: a link for ${mine}’s devices, so no name is asked`);
+      heading.textContent = `Adding this phone to ${group.name} as ${mine}’s…`;
+    }
+    const name = mine ?? (await askName(group.name, why));
     let body;
     try {
       body = redemption(key, token, asked, name);
@@ -165,12 +172,14 @@ async function join(token, kept) {
       why = `${e.message[0].toUpperCase()}${e.message.slice(1)}.`;
       continue;
     }
-    heading.textContent = `Joining ${group.name}…`;
+    if (!mine) heading.textContent = `Joining ${group.name}…`;
     issuer = await reach(connect_to_join(key, token), away);
     // 409: someone in the group goes by the name (bash-person), so another
-    // is asked, saying whose it is.
+    // is asked, saying whose it is and how to add this phone if it is theirs.
     const taken = (status, text) =>
-      status === 409 ? `Someone in ${group.name} already goes by ${JSON.parse(text).error}. Join under another name.` : joining(status);
+      status === 409
+        ? `Someone in ${group.name} already goes by ${JSON.parse(text).error}. If that’s you, add this phone from your computer: \`svrngs link ${group.name} --device\` there makes a link for it. Else join under another name.`
+        : joining(status);
     try {
       await post(issuer, '/redeem', body, taken);
     } catch (e) {

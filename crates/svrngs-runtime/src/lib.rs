@@ -236,20 +236,23 @@ impl RingRail {
         journal.seal(self.signer(), &journal.roster_file()?, &Ed25519Verifier)
     }
 
-    /// This computer's newest `Invite` naming the link's key `link`, and the
-    /// group it is in.
-    pub fn invite_for(&self, link: &str) -> Result<Option<(String, OpId)>, RailError> {
+    /// This computer's newest `Invite` naming the link's key `link`, the
+    /// group it is in, and, for a device link, the person it adds a device
+    /// of, by name (bash-devices).
+    pub fn invite_for(&self, link: &str) -> Result<Option<(String, OpId, Option<Person>)>, RailError> {
         let me = self.signer().actor();
         for namespace in self.namespaces()? {
             let journal = self.journal(&namespace)?;
             let (ops, _) = journal.read()?;
             let register = ActSet::of(ops.iter().filter(|op| op.kind.act.moves_membership()));
-            let invites =
-                admit(&register, &[], &journal.roster_file()?, &namespace, &Ed25519Verifier).project::<Invites>();
-            if let Some(id) = invites.newest(&me, link) {
-                tracing::debug!(target: "register", namespace, invite = %id,
-                    "runtime: this computer's newest Invite naming the link's key");
-                return Ok(Some((namespace, id.clone())));
+            let admission = admit(&register, &[], &journal.roster_file()?, &namespace, &Ed25519Verifier);
+            if let Some(id) = admission.project::<Invites>().newest(&me, link) {
+                let m = admission.project::<Membership>();
+                let of = m.invites.get(id).and_then(|i| i.device_of.as_deref());
+                let person = of.and_then(|f| m.person_of(f)).map(|(_, p)| p.clone());
+                tracing::debug!(target: "register", namespace, invite = %id, ?of, ?person,
+                    "runtime: this computer's newest Invite naming the link's key, and a device link's person");
+                return Ok(Some((namespace, id.clone(), person)));
             }
         }
         Ok(None)
