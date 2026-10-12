@@ -116,7 +116,7 @@ use serde::{Deserialize, Serialize};
 pub use act_set::ActSet;
 pub use admit::{admit, body_json, Admission, AdmittedOp, GapClass, RailGap};
 pub use command::{commit, Author, Authored, Command, Reads, Recorded, Refused, Store, Tip};
-pub use membership::{membership, standing_reads, Cut, InviteFault, Invited, Membership};
+pub use membership::{membership, standing_reads, Cut, InviteFault, Invited, Joined, Membership};
 pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
 pub use process::{Compact, Due, ProcessManager, Retire, Uncaused};
 pub use project::{Invites, Projection, Wire};

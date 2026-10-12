@@ -62,9 +62,12 @@ first key in the group (bash-devices): a seed row's first, or the key an
 `Admit` binds, so two people of one name are two people; a device link — an
 `Invite` naming that person (`device_of`, line version 8) — counts only from
 a key standing as them, and a key it admits is theirs, under their name.
-`Membership::person_of` answers each key's first key and name, `named` the
-people standing under a name, and `Removal` and `HandOnTo` take the one
-person a name names, refusing one two people hold (`Shared`). Forks void nothing
+`Membership::person_of` answers each key's first key and name, `joined`
+when a person joined — the time on the `Admit` that made their first key a
+person, or that they started the group (bash-same-name) — and `one_named`
+the one person a name and, of two people of one name, that time name;
+`Removal` and `HandOnTo` take it, refusing an ask that names no one person
+with when each person of the name joined (`Which`), never guessing. Forks void nothing
 (U7): both branches count, the fork named a `SequenceFork` beside a complete
 answer. Removal has one decider (U7, `membership.rs`'s module docs): the
 group's keeper — the seed's key, moved only by its own `HandOn` — cuts by

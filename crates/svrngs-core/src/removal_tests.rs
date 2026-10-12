@@ -512,6 +512,7 @@ fn cuts_that_cycle_are_said_unsettled() {
     let store = crate::tests_support::Memory::holding(&cycled);
     let removal = crate::Removal {
         person: Person::parse("cy").unwrap(),
+        joined: None,
     };
     assert_eq!(
         crate::commit(&store, &removal, &as_bo).unwrap(),

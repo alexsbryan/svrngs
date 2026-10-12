@@ -215,7 +215,10 @@ fn the_keepers_removal_cuts_every_key_of_the_person() {
     let (seed, store) = alexs_group();
     let done = commit(
         &store,
-        &Removal { person: p("bo") },
+        &Removal {
+            person: p("bo"),
+            joined: None,
+        },
         &author(&key(1), &seed, 200),
     )
     .unwrap()
@@ -241,7 +244,10 @@ fn a_members_removal_is_an_ask_until_the_keeper_asks_the_same() {
     let (seed, store) = alexs_group();
     let asked = commit(
         &store,
-        &Removal { person: p("cy") },
+        &Removal {
+            person: p("cy"),
+            joined: None,
+        },
         &author(&key(2), &seed, 200),
     )
     .unwrap()
@@ -255,7 +261,10 @@ fn a_members_removal_is_an_ask_until_the_keeper_asks_the_same() {
     );
     commit(
         &store,
-        &Removal { person: p("cy") },
+        &Removal {
+            person: p("cy"),
+            joined: None,
+        },
         &author(&key(1), &seed, 201),
     )
     .unwrap()
@@ -268,7 +277,10 @@ fn a_members_removal_is_an_ask_until_the_keeper_asks_the_same() {
     );
     let refused = commit(
         &store,
-        &Removal { person: p("bo") },
+        &Removal {
+            person: p("bo"),
+            joined: None,
+        },
         &author(&key(3), &seed, 202),
     )
     .unwrap();
@@ -289,22 +301,49 @@ fn the_keeper_hands_on_and_is_removed_only_after() {
     let bo = key(2);
     let as_bo = author(&bo, &seed, 200);
     assert_eq!(
-        commit(&store, &Removal { person: p("alex") }, &as_bo).unwrap(),
+        commit(
+            &store,
+            &Removal {
+                person: p("alex"),
+                joined: None
+            },
+            &as_bo
+        )
+        .unwrap(),
         Err(Refused::Command(RemovalRefusal::Keeps))
     );
     let held = store.0.borrow().len();
     assert_eq!(
-        commit(&store, &HandOnTo { person: p("cy") }, &as_bo).unwrap(),
+        commit(
+            &store,
+            &HandOnTo {
+                person: p("cy"),
+                joined: None
+            },
+            &as_bo
+        )
+        .unwrap(),
         Err(Refused::Command(HandOnRefusal::NotKeeper))
     );
     assert_eq!(store.0.borrow().len(), held, "nothing written");
     assert_eq!(
-        commit(&store, &Removal { person: p("dee") }, &as_bo).unwrap(),
+        commit(
+            &store,
+            &Removal {
+                person: p("dee"),
+                joined: None
+            },
+            &as_bo
+        )
+        .unwrap(),
         Err(Refused::Command(RemovalRefusal::NotInGroup))
     );
     commit(
         &store,
-        &HandOnTo { person: p("bo") },
+        &HandOnTo {
+            person: p("bo"),
+            joined: None,
+        },
         &author(&key(1), &seed, 201),
     )
     .unwrap()
@@ -316,7 +355,10 @@ fn the_keeper_hands_on_and_is_removed_only_after() {
     };
     commit(
         &store,
-        &Removal { person: p("alex") },
+        &Removal {
+            person: p("alex"),
+            joined: None,
+        },
         &author(bo_keeps, &seed, 202),
     )
     .unwrap()
@@ -389,7 +431,10 @@ fn a_stranger_under_the_keepers_name_does_not_stand() {
     redeem_in_alexs_group(&store, &seed, "alex", &joining());
     let _ = commit(
         &store,
-        &Removal { person: p("alex") },
+        &Removal {
+            person: p("alex"),
+            joined: None,
+        },
         &author(&key(1), &seed, 1_001),
     )
     .unwrap();
@@ -417,7 +462,10 @@ fn a_hand_on_to_a_name_never_reaches_a_strangers_computer() {
     redeem_in_alexs_group(&store, &seed, "bo", &stranger);
     let _ = commit(
         &store,
-        &HandOnTo { person: p("bo") },
+        &HandOnTo {
+            person: p("bo"),
+            joined: None,
+        },
         &author(&key(1), &seed, 1_001),
     )
     .unwrap();
@@ -449,9 +497,16 @@ fn a_removed_persons_name_is_free_again() {
         commit(&store, &asked, &keeper).unwrap(),
         Err(Refused::Command(RedeemRefusal::NameTaken(p("cy"))))
     );
-    commit(&store, &Removal { person: p("cy") }, &keeper)
-        .unwrap()
-        .unwrap();
+    commit(
+        &store,
+        &Removal {
+            person: p("cy"),
+            joined: None,
+        },
+        &keeper,
+    )
+    .unwrap()
+    .unwrap();
     commit(&store, &asked, &author(&alex, &seed, 1_001))
         .unwrap()
         .unwrap();
@@ -487,8 +542,24 @@ fn two_people_a_race_gave_one_name_are_not_taken_as_one() {
     let alex = key(1);
     let as_alex = author(&alex, &seed, 200);
     let (removing, handing) = (raced(), raced());
-    let removed = commit(&removing, &Removal { person: p("dee") }, &as_alex).unwrap();
-    let handed = commit(&handing, &HandOnTo { person: p("dee") }, &as_alex).unwrap();
+    let removed = commit(
+        &removing,
+        &Removal {
+            person: p("dee"),
+            joined: None,
+        },
+        &as_alex,
+    )
+    .unwrap();
+    let handed = commit(
+        &handing,
+        &HandOnTo {
+            person: p("dee"),
+            joined: None,
+        },
+        &as_alex,
+    )
+    .unwrap();
     let (r, h) = (register(&removing, &seed), register(&handing, &seed));
     let stand = [6, 8].map(|k| r.standing.contains(&actor_of(&key(k))));
     assert_eq!(
@@ -541,7 +612,10 @@ fn a_persons_second_device_stands_as_them_by_a_link_of_theirs() {
     );
     commit(
         &store,
-        &Removal { person: p("cy") },
+        &Removal {
+            person: p("cy"),
+            joined: None,
+        },
         &author(&key(1), &seed, 1_001),
     )
     .unwrap()
@@ -599,7 +673,7 @@ fn a_device_link_counts_only_from_a_key_standing_as_its_person() {
 /// **A plain redemption of a name is a new person, never a merge.** A
 /// stranger joins as `dee` through alex's link while no dee stands, then
 /// the keeper's hand lets another key in as `dee`: two people, each their
-/// own first key, and removal by the name is refused `Shared` in the
+/// own first key, and removal by the name is refused `Which` in the
 /// fold's words, cutting neither.
 #[test]
 fn a_plain_redemption_is_a_new_person_keyed_by_its_own_key() {
@@ -632,10 +706,89 @@ fn a_plain_redemption_is_a_new_person_keyed_by_its_own_key() {
     assert_eq!(
         commit(
             &store,
-            &Removal { person: p("dee") },
+            &Removal {
+                person: p("dee"),
+                joined: None
+            },
             &author(&key(1), &seed, 1_003)
         )
         .unwrap(),
-        Err(Refused::Command(RemovalRefusal::Shared))
+        Err(Refused::Command(RemovalRefusal::Which(vec![
+            Joined::At(1_000),
+            Joined::At(1_002)
+        ])))
     );
+}
+
+// ── two people of one name, told apart (bash-same-name) ─────────────
+
+/// **The keeper removes one of two people of one name, by when they
+/// joined.** dee joins through alex's link at 1,000 and another dee by
+/// alex's hand at 1,002. By the name alone, removal and hand-on are refused
+/// with when each dee joined; asked of a time neither joined at, the same;
+/// of 1,002, the removal cuts that dee alone and the other stands, and a
+/// hand-on of 1,000 reaches the other. Of a seed row's person, as having
+/// started the group. Red at this row's base: no way to name one dee.
+#[test]
+fn the_keeper_names_one_of_two_people_of_one_name_by_when_they_joined() {
+    let (seed, store) = alexs_group();
+    redeem_in_alexs_group(&store, &seed, "dee", &joining());
+    let alexs = (store.0.borrow().iter())
+        .filter(|o| o.actor == actor_of(&key(1)))
+        .max_by_key(|o| o.kind.seq)
+        .cloned()
+        .unwrap();
+    let by_hand = RailAct::Admit {
+        person: p("dee"),
+        key: actor_of(&key(6)),
+        invite: None,
+    };
+    let by_hand = after(&key(1), &alexs, 1_002, by_hand);
+    store.0.borrow_mut().insert(by_hand);
+    let alexs_key = key(1);
+    let as_alex = author(&alexs_key, &seed, 1_003);
+    let each = vec![Joined::At(1_000), Joined::At(1_002)];
+    let dee = |joined| Removal {
+        person: p("dee"),
+        joined,
+    };
+    let to_dee = |joined| HandOnTo {
+        person: p("dee"),
+        joined,
+    };
+    assert_eq!(
+        (
+            commit(&store, &dee(None), &as_alex).unwrap(),
+            commit(&store, &dee(Some(Joined::At(1_001))), &as_alex).unwrap(),
+            commit(&store, &to_dee(None), &as_alex).unwrap(),
+        ),
+        (
+            Err(Refused::Command(RemovalRefusal::Which(each.clone()))),
+            Err(Refused::Command(RemovalRefusal::Which(each.clone()))),
+            Err(Refused::Command(HandOnRefusal::Which(each))),
+        ),
+        "(by name alone, by a time neither joined at, a hand-on by name alone)"
+    );
+    assert!(commit(&store, &dee(Some(Joined::At(1_002))), &as_alex)
+        .unwrap()
+        .is_ok());
+    let m = register(&store, &seed);
+    assert_eq!(
+        [actor_of(&joining()), actor_of(&key(6))].map(|k| m.standing.contains(&k)),
+        [true, false],
+        "the dee who joined at 1,002 is out, the other stands"
+    );
+    let alex = || Removal {
+        person: p("alex"),
+        joined: Some(Joined::Started),
+    };
+    assert_eq!(
+        commit(&store, &alex(), &as_alex).unwrap(),
+        Err(Refused::Command(RemovalRefusal::Keeps)),
+        "alex, who started the group, named so"
+    );
+    assert!(commit(&store, &to_dee(Some(Joined::At(1_000))), &as_alex)
+        .unwrap()
+        .is_ok());
+    assert_eq!(register(&store, &seed).keeper, Some(actor_of(&joining())));
 }

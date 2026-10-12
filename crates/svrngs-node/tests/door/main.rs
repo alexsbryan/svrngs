@@ -1291,6 +1291,7 @@ async fn a_removed_person_is_refused_as_removed_by_pass_and_by_dial() {
     let shelf = Label::of(pair.a.endpoint().id().as_bytes(), "shelf");
     let bo = svrngs_node::Removal {
         person: Person::parse("bo").unwrap(),
+        joined: None,
     };
     pair.a.rail().commit(NS, &bo).unwrap().unwrap();
     let holder = signing(9);

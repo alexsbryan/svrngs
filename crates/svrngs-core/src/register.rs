@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! The register's commands: minting an invite, and redeeming one; removing
 //! a person, and handing the group's keeping on to one, each named as the
-//! fold names them ([`crate::Membership::named`]).
+//! fold names them, by name and, of two people of one name, by when they
+//! joined ([`crate::Membership::one_named`]).
 
 use alloc::string::String;
 use alloc::vec;
@@ -10,7 +11,7 @@ use alloc::vec::Vec;
 use crate::command::{Command, Reads};
 use core::convert::Infallible;
 
-use crate::{Admission, Device, InviteFault, OpId, Person, RailAct, Redemption};
+use crate::{Admission, Device, InviteFault, Joined, OpId, Person, RailAct, Redemption};
 
 /// The issuer's node asked to admit `key` as `person` through its `Invite`.
 /// Decided at the issuer's write, where a link holder's name arrives, and
@@ -131,21 +132,26 @@ impl Command for MintInvite {
 
 /// A member asks that `person` leave the group (U7; DESIGN §6 "Removal has
 /// one decider"): a `Remove` of each key standing as the one person of that
-/// name, every device of theirs, naming each key's newest acts this node
-/// holds. From the keeper it is the cut; from anyone else an ask, which the
-/// keeper sequences by asking the same.
+/// name who joined `joined`, when it is asked, every device of theirs,
+/// naming each key's newest acts this node holds. From the keeper it is the
+/// cut; from anyone else an ask, which the keeper sequences by asking the
+/// same.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Removal {
     pub person: Person,
+    /// Which of two people of the name (bash-same-name); `None` names
+    /// whoever stands under it, if one person does.
+    pub joined: Option<Joined>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RemovalRefusal {
     /// No key stands as that person.
     NotInGroup,
-    /// More than one person stands under the name (bash-devices), so it
-    /// names no one person.
-    Shared,
+    /// The ask names no one person: more than one stands under the name
+    /// (bash-devices), or none of them joined when it says
+    /// (bash-same-name). When each of them joined, which names one.
+    Which(Vec<Joined>),
     /// The person keeps the group, and the keeper cannot be removed: they
     /// hand it on first.
     Keeps,
@@ -157,16 +163,15 @@ impl Command for Removal {
 
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, RemovalRefusal> {
         let m = before.membership();
-        let people = m.named(&self.person);
-        let keys: Vec<&String> = match people[..] {
-            [first] => m.devices_of(first).collect(),
-            _ => Vec::new(),
-        };
-        let verdict = match keys.iter().any(|k| m.keeper.as_ref() == Some(*k)) {
-            _ if people.len() > 1 => Err(RemovalRefusal::Shared),
-            _ if keys.is_empty() => Err(RemovalRefusal::NotInGroup),
-            true => Err(RemovalRefusal::Keeps),
-            false => Ok(keys
+        let keys = (m.one_named(&self.person, self.joined))
+            .map(|first| m.devices_of(first).collect::<Vec<&String>>());
+        let verdict = match keys {
+            Err(each) if each.is_empty() => Err(RemovalRefusal::NotInGroup),
+            Err(each) => Err(RemovalRefusal::Which(each)),
+            Ok(keys) if keys.iter().any(|k| m.keeper.as_ref() == Some(*k)) => {
+                Err(RemovalRefusal::Keeps)
+            }
+            Ok(keys) => Ok(keys
                 .iter()
                 .map(|k| RailAct::Remove {
                     key: (*k).clone(),
@@ -174,39 +179,43 @@ impl Command for Removal {
                 })
                 .collect()),
         };
-        tracing::debug!(target: "register", person = %self.person, keys = keys.len(),
-            keeper = ?m.keeper, ok = verdict.is_ok(), "removal: decided");
+        tracing::debug!(target: "register", person = %self.person, joined = ?self.joined,
+            keeper = ?m.keeper, ?verdict, "removal: decided");
         verdict
     }
 }
 
-/// The keeper hands the group's keeping to `person`'s computer (U7).
+/// The keeper hands the group's keeping to `person`'s computer (U7): of
+/// the one person of that name who joined `joined`, when it is asked.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HandOnTo {
     pub person: Person,
+    /// Which of two people of the name (bash-same-name), as [`Removal`]'s.
+    pub joined: Option<Joined>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum HandOnRefusal {
     /// No computer's key stands as that person.
     NotInGroup,
-    /// More than one person stands under the name (bash-devices).
-    Shared,
+    /// The ask names no one person, as [`RemovalRefusal::Which`]: when
+    /// each person of the name joined.
+    Which(Vec<Joined>),
     /// The signer does not keep the group, so the hand-on would move
     /// nothing.
     NotKeeper,
 }
 
 impl HandOnTo {
-    /// A computer of the one person of that name.
+    /// A computer of the one person the ask names.
     fn key<'a>(&self, m: &'a crate::Membership) -> Result<&'a String, HandOnRefusal> {
-        match m.named(&self.person)[..] {
-            [first] => (m
+        match m.one_named(&self.person, self.joined) {
+            Ok(first) => (m
                 .devices_of(first)
                 .find(|k| m.device(k) == Some(Device::Computer)))
             .ok_or(HandOnRefusal::NotInGroup),
-            [] => Err(HandOnRefusal::NotInGroup),
-            _ => Err(HandOnRefusal::Shared),
+            Err(each) if each.is_empty() => Err(HandOnRefusal::NotInGroup),
+            Err(each) => Err(HandOnRefusal::Which(each)),
         }
     }
 }

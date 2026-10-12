@@ -74,6 +74,12 @@
 //! the `Admit` carries. Any other `Admit` makes its key a new person, so two
 //! people of one name are two people, never merged.
 //! [`Membership::person_of`] answers it.
+//!
+//! svrngs (bash-same-name): two people of one name are told apart by when
+//! each joined — the time on the `Admit` that made their first key a
+//! person, or that they started the group, a seed row's — which the people
+//! list says and a removal or a hand-on may name. [`Membership::one_named`]
+//! answers which person a name and that time name.
 
 use alloc::collections::{BTreeMap, BTreeSet};
 use alloc::string::String;
@@ -116,6 +122,18 @@ impl core::fmt::Display for InviteFault {
     }
 }
 
+/// When a person joined the group (bash-same-name): they started it, a
+/// seed row's person, or the `Admit` that made them a person is timed at
+/// `At`, the seconds its signer stamped.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum Joined {
+    Started,
+    At(i64),
+}
+
 /// What one fold of the membership acts concludes.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Membership {
@@ -129,6 +147,11 @@ pub struct Membership {
     /// when empty, so a fold with none serialises as before.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub devices: BTreeMap<String, String>,
+    /// first key → the time on the `Admit` that made it a person
+    /// (bash-same-name); a seed row's has none. Cumulative as
+    /// [`Self::bindings`] is; ask [`Self::joined`]. Skipped when empty.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub admitted_at: BTreeMap<String, i64>,
     /// Who holds standing NOW: the seed plus counting `Admit`s, minus the
     /// keys the keeper cut.
     pub standing: BTreeSet<String>,
@@ -212,16 +235,35 @@ impl Membership {
         (self.standing.iter()).filter(move |k| self.person_of(k).is_some_and(|(f, _)| f == first))
     }
 
-    /// The people standing now under `name`, by their first keys: one, or
-    /// none, or more than one when a race or a member's hand gave two
-    /// people one name.
-    pub fn named(&self, name: &Person) -> Vec<&str> {
-        let people: BTreeSet<&str> = (self.keys_of(name))
-            .filter_map(|k| Some(self.person_of(k)?.0))
+    /// When the person whose first key is `first` joined: at their
+    /// `Admit`'s time, else they started the group, as a seed row's person
+    /// is the one first key with none.
+    pub fn joined(&self, first: &str) -> Joined {
+        self.admitted_at
+            .get(first)
+            .map_or(Joined::Started, |t| Joined::At(*t))
+    }
+
+    /// The one person standing under `name` who joined `when`, when it is
+    /// asked, by their first key; else when each person standing under the
+    /// name joined, earliest first — none when nobody does, more than one
+    /// when a race or a member's hand gave two people one name. svrngs
+    /// never guesses which of two (bash-same-name).
+    pub fn one_named(&self, name: &Person, when: Option<Joined>) -> Result<&str, Vec<Joined>> {
+        let all: BTreeSet<(Joined, &str)> = (self.keys_of(name))
+            .filter_map(|k| self.person_of(k))
+            .map(|(first, _)| (self.joined(first), first))
             .collect();
-        tracing::debug!(target: "rail:membership", %name, people = people.len(),
-            "membership: the people standing under a name");
-        people.into_iter().collect()
+        let of: Vec<&str> = (all.iter())
+            .filter(|(j, _)| when.is_none_or(|w| *j == w))
+            .map(|(_, first)| *first)
+            .collect();
+        tracing::debug!(target: "rail:membership", %name, ?when, people = all.len(), asked = of.len(),
+            "membership: the one person a name and when they joined name, or when each joined");
+        match of[..] {
+            [first] => Ok(first),
+            _ => Err(all.iter().map(|(j, _)| *j).collect()),
+        }
     }
 
     /// The keys standing now under the name `person`.
@@ -423,6 +465,7 @@ fn walk(
     let mut devices: BTreeMap<String, String> = (seed.members.values())
         .flat_map(|keys| keys.iter().skip(1).map(|k| (k.clone(), keys[0].clone())))
         .collect();
+    let mut admitted_at: BTreeMap<String, i64> = BTreeMap::new();
     let mut live: BTreeMap<String, Person> = bindings.clone();
     let mut keeper: Option<String> = seed.members.values().flatten().next().cloned();
     let mut cut: BTreeMap<String, Cut> = BTreeMap::new();
@@ -495,7 +538,10 @@ fn walk(
                 let person = of.and_then(|f| bindings.get(f)).unwrap_or(person).clone();
                 match of {
                     Some(f) => devices.insert(key.clone(), String::from(f)),
-                    None => devices.remove(key),
+                    None => {
+                        admitted_at.insert(key.clone(), op.ts_unix);
+                        devices.remove(key)
+                    }
                 };
                 tracing::debug!(
                     target: "rail:membership",
@@ -558,6 +604,7 @@ fn walk(
     Membership {
         bindings,
         devices,
+        admitted_at,
         standing: live.into_keys().collect(),
         counted,
         voided: BTreeSet::new(),

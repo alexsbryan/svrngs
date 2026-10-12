@@ -119,7 +119,13 @@ async fn remove(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outc
         tracing::warn!(target: "removal", group, "removal: the group's register cannot be read");
         return Outcome::Fault;
     };
-    let recorded = match rail.commit(group, &Removal { person }) {
+    let recorded = match rail.commit(
+        group,
+        &Removal {
+            person,
+            joined: None,
+        },
+    ) {
         Ok(Ok(recorded)) => recorded,
         Ok(Err(refused)) => {
             tracing::debug!(target: "removal", group, ?refused, "removal: refused");
@@ -127,7 +133,7 @@ async fn remove(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outc
                 Refused::NoStanding => Outcome::NotIn,
                 Refused::Unsettled => Outcome::Fault,
                 Refused::Command(RemovalRefusal::NotInGroup) => Outcome::NotInGroup,
-                Refused::Command(RemovalRefusal::Shared) => Outcome::Shared,
+                Refused::Command(RemovalRefusal::Which(_)) => Outcome::Shared,
                 Refused::Command(RemovalRefusal::Keeps) => Outcome::Decides,
             };
         }
@@ -216,7 +222,13 @@ async fn hand_over(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> O
     };
     let rail = at.host.rail();
     let group = asked.group.as_str();
-    let outcome = match rail.commit(group, &HandOnTo { person }) {
+    let outcome = match rail.commit(
+        group,
+        &HandOnTo {
+            person,
+            joined: None,
+        },
+    ) {
         Ok(Ok(_)) => {
             at.door().ring.wake();
             Outcome::Handed
@@ -224,7 +236,7 @@ async fn hand_over(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> O
         Ok(Err(Refused::NoStanding)) => Outcome::NotIn,
         Ok(Err(Refused::Unsettled)) => Outcome::Fault,
         Ok(Err(Refused::Command(HandOnRefusal::NotInGroup))) => Outcome::NotInGroup,
-        Ok(Err(Refused::Command(HandOnRefusal::Shared))) => Outcome::Shared,
+        Ok(Err(Refused::Command(HandOnRefusal::Which(_)))) => Outcome::Shared,
         Ok(Err(Refused::Command(HandOnRefusal::NotKeeper))) => match rail.register(group) {
             Ok(register) => Outcome::NotDecider {
                 decides: decides(&register),
