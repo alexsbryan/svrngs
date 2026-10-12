@@ -10,7 +10,9 @@
 //! - `GET /v1/groups` — each group this computer holds: its id (the
 //!   `namespace` every other route names), its name, this computer's
 //!   person in it, and whether its keeper removed this computer (U7),
-//!   `null` when its register cannot be read here.
+//!   `null` when its register cannot be read here; and every removal and
+//!   ask to remove in it, who of whom and when (v1-keeper-office (b)),
+//!   `null` likewise.
 //! - `GET /v1/lends?namespace=<id>` — what the group's people lend now,
 //!   this computer's own lends among them, each with its lender's person
 //!   and key, its name, kind, limit, how many use it and its declared
@@ -89,6 +91,10 @@ struct Held {
     /// be read here, said at warn: could-not-judge, never "not removed"
     /// (ralph/REVIEW_FINDINGS.md #123).
     removed: Option<bool>,
+    /// Every removal and ask to remove, from the register, by time: the
+    /// home page shows them to everyone in the group. `null` beside
+    /// `removed`'s.
+    removals: Option<Vec<svrngs_runtime::register::Removing>>,
 }
 
 /// `GET /v1/groups`.
@@ -110,22 +116,25 @@ async fn groups(State(at): State<Surface>) -> Response {
         // One read for both: a group not held or with no seed is the empty
         // register, said by the rail (`RingRail::register`).
         let me = at.asking.host.actor();
-        let (person, removed) = match rail.register(&id) {
+        let (person, removed, removals) = match rail.register(&id) {
             Ok(r) => (
                 r.members.get(me).map(|m| m.person.clone()),
                 Some(r.removed.contains_key(me)),
+                Some(r.removals),
             ),
             Err(e) => {
                 tracing::warn!(target: "surface", namespace = id, error = %e, "surface: groups — its register is unreadable, so neither this computer's person nor whether it was removed is known");
-                (None, None)
+                (None, None, None)
             }
         };
-        tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?person, removed = ?removed, "surface: groups — a group held");
+        tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?person, removed = ?removed,
+            removals = ?removals.as_ref().map(Vec::len), "surface: groups — a group held");
         held.push(Held {
             id,
             name,
             person,
             removed,
+            removals,
         });
     }
     Json(serde_json::json!({ "groups": held })).into_response()

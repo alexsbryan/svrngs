@@ -145,6 +145,7 @@ try {
     status: document.getElementById('status').textContent,
     answer: document.getElementById('response').textContent,
     lent: [...document.querySelectorAll('#lent button')].map((b) => b.textContent),
+    removals: [...document.querySelectorAll('#removals li')].map((l) => l.textContent),
     lines: window.__lines,
   }));
   if (args.http) {

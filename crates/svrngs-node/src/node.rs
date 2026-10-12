@@ -699,7 +699,9 @@ fn people_router(asking: Asking) -> axum::Router {
 /// other computer's but the asker's, asked now as [`Node::lends`] asks,
 /// with its key — and whose computer did not answer. A browser asks it of the computer it
 /// dials, which answers what it can see and proxies no lend (DESIGN §3,
-/// call 4). A group the dialer does not stand in adds nothing.
+/// call 4). A group the dialer does not stand in adds nothing. Beside them,
+/// every removal and ask to remove in those groups, from each register
+/// (v1-keeper-office (b)): `null` when one cannot be read here.
 async fn people_lends(
     State(at): State<Asking>,
     dialer: Option<Extension<Dialer>>,
@@ -721,9 +723,23 @@ async fn people_lends(
         ));
     };
     let (lent, unanswered) = at.lent(&groups, &own, Some(&asker)).await?;
+    let removals = groups
+        .iter()
+        .map(|(namespace, _)| {
+            at.host.rail().register(namespace).map(|r| r.removals).inspect_err(|e| {
+                tracing::warn!(target: "node", asker, namespace, error = %e, "node: people's lends — a group's register is unreadable, so its removals are not known");
+            })
+        })
+        .collect::<Result<Vec<_>, _>>()
+        .ok()
+        .map(|each| each.concat());
     tracing::debug!(target: "node", asker, groups = groups.len(), lent = lent.len(), unanswered = unanswered.len(),
+        removals = ?removals.as_ref().map(Vec::len),
         "node: people's lends — answered what the people of the asker's groups lend, each with its lender's key");
-    Ok(Json(serde_json::json!({ "lent": lent, "unanswered": unanswered })).into_response())
+    Ok(
+        Json(serde_json::json!({ "lent": lent, "unanswered": unanswered, "removals": removals }))
+            .into_response(),
+    )
 }
 
 impl Asking {

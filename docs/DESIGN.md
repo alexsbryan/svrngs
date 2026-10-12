@@ -1140,6 +1140,12 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   deletes nothing on their disk — the files a folder gave them, the copy
   of the record they hold. A removed computer that was off as the cut
   landed is not told by svrngs; every door refuses it all the same.
+  Everyone in the group sees every removal and every ask to remove — who
+  of whom, and when — on a computer's home page and a phone's group page,
+  read from the register and written nowhere new (v1-keeper-office (b);
+  §10, 2026-10-12): `Register::removals`
+  (`crates/svrngs-runtime/src/register.rs`), carried by `/v1/groups` and
+  `/people/lends`, in `question.js`'s one wording.
 - **Leaving is cheap.** A group's whole state is a directory every member's
   computer holds. A group that goes wrong refounds from any copy, within
   hours, without whoever it leaves out (operator: "with dotfile elegance").

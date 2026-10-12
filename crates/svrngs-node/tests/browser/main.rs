@@ -1344,6 +1344,120 @@ async fn the_home_page_says_an_unreadable_register(engine: Engine) {
     drop(ada);
 }
 
+/// House's removals, held on ada's computer: cy and dee admitted, cy's
+/// ask to remove dee signed on cy's own key and taken in, then ada's cut
+/// of dee through `/v1/removals`.
+async fn removals_held(ada: &Node) {
+    for (person, me) in [("cy", 3), ("dee", 4)] {
+        let fixture = svrngs_core::tests_support::Fixture {
+            act: RailAct::Admit {
+                person: Person::parse(person).unwrap(),
+                key: actor_of(&signing(me)),
+                invite: None,
+            },
+            on_behalf_of: None,
+        };
+        ada.rail().commit(NS, &fixture).unwrap().unwrap();
+    }
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
+    let ask = RailAct::Remove {
+        key: actor_of(&signing(4)),
+        through: vec![],
+    };
+    let asked = svrngs_core::tests_support::signed_in(NS, &signing(3), now + 5, 0, ask);
+    ada.rail().ingest_all(NS, &[asked]).unwrap();
+    assert_eq!(
+        removal(ada, "dee").await,
+        svrngs_node::removal::Outcome::Out
+    );
+}
+
+/// Each line of the removals a page lists, up to its time: the time is
+/// the browser's own words for it.
+fn removals_said(seen: &Value) -> Vec<String> {
+    seen["removals"]
+        .as_array()
+        .unwrap_or_else(|| panic!("the page lists no removals: {seen:#}"))
+        .iter()
+        .map(|l| {
+            l.as_str()
+                .unwrap()
+                .split(" on ")
+                .next()
+                .unwrap()
+                .to_string()
+        })
+        .collect()
+}
+
+in_both_engines!(
+    /// **The home page shows everyone each removal and each ask** (the
+    /// operator, 2026-10-12; v1-keeper-office (b)). On ada's computer cy
+    /// asks to remove dee and ada removes dee; ada's home page lists both,
+    /// by name, with when, from the record alone. Planted, watched failing:
+    /// the home page before (b), which listed none.
+    the_home_page_shows_every_removal_and_ask
+);
+async fn the_home_page_shows_every_removal_and_ask(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    removals_held(&ada).await;
+    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
+    let seen = drive(
+        engine,
+        "home.mjs",
+        json!({ "ask": home, "all": "#home .removals li" }),
+        None,
+    )
+    .await;
+    eprintln!("the home page's run: {seen:#}");
+    assert_eq!(
+        removals_said(&json!({ "removals": seen["all"] })),
+        ["cy asked to remove dee", "ada removed dee"],
+        "{seen:#}"
+    );
+    drop(ada);
+}
+
+in_both_engines!(
+    /// **The group's page shows everyone each removal and each ask**
+    /// (v1-keeper-office (b)). The same removals on ada's computer; the
+    /// page holding bo's key opens the group's link and lists both, as the
+    /// home page does. Planted, watched failing: the page before (b).
+    the_group_s_page_shows_every_removal_and_ask
+);
+async fn the_group_s_page_shows_every_removal_and_ask(engine: Engine) {
+    let site = site();
+    let dir = tempfile::tempdir().unwrap();
+    let relay = relay().await;
+    let bo = signing(7);
+    let ada = node(dir.path(), &relay, &bo).await;
+    removals_held(&ada).await;
+    let seen = drive(
+        engine,
+        "drive.mjs",
+        json!({
+            "site": site,
+            "key": hex::encode(bo.to_bytes()),
+            "token": token(&signing(1), &relay),
+        }),
+        None,
+    )
+    .await;
+    eprintln!("the group's page's run: {seen:#}");
+    assert_eq!(seen["status"], "You’re in house, as bo", "{seen:#}");
+    assert_eq!(
+        removals_said(&seen),
+        ["cy asked to remove dee", "ada removed dee"],
+        "{seen:#}"
+    );
+    drop(ada);
+}
+
 /// Ada's computer removes `who` from house as `svrngs remove` asks it.
 async fn removal(ada: &Node, who: &str) -> svrngs_node::removal::Outcome {
     reqwest::Client::builder()

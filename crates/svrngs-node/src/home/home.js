@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // The home page (crates/svrngs-node/src/home.rs): the person's groups, the
 // people in each and what each lends, from the routes that answer this
-// computer's apps (/v1/groups, /v1/lends, /v1/rail/people); the ask at
+// computer's apps (/v1/groups, /v1/lends, /v1/rail/people), and who was
+// removed or asked to be, from /v1/groups (v1-keeper-office (b)); the ask at
 // /ask; and what apps use, each with Stop. Its only writes are the
 // person's yes and stop, to its own origin's /choices. Its words are
 // DESIGN §1's: groups, people, what they lend, computer; its question and
-// what apps use are question.js's, the group's page's too.
-import { named, question, unasked, uses as used } from './question.js';
+// what apps use and its removals are question.js's, the group's page's too.
+import { named, question, removal, unasked, uses as used } from './question.js';
 
 const main = document.getElementById('home');
 const el = (tag, text, ...kids) => {
@@ -58,6 +59,7 @@ function list(all) {
     else if (g.unread) s.append(el('p', `What this group lends cannot be read on this computer: ${g.unread}`));
     else {
       s.append(el('p', `People: ${g.people.map((p) => p.person).join(', ')}`));
+      if (g.removals.length) s.append(Object.assign(el('ul', '', ...g.removals.map((r) => el('li', removal(r)))), { className: 'removals' }));
       const ul = el('ul');
       for (const l of g.lent) ul.append(el('li', '', Object.assign(el('a', named(l)), { href: l.origin })));
       for (const p of g.unanswered) ul.append(el('li', `${p}'s computer did not answer, so what they lend is not listed.`));

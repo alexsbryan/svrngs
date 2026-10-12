@@ -49,7 +49,7 @@ import init, {
   relay_of,
 } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
-import { named, question, unasked, uses as used } from './question.js?v=__VERSION__';
+import { named, question, removal, unasked, uses as used } from './question.js?v=__VERSION__';
 
 const heading = document.getElementById('status');
 const said = document.getElementById('response');
@@ -286,8 +286,15 @@ async function enter(group, asked) {
     if (why === 'removed') throw new Said(`You are no longer in ${group.name}.`);
     throw new Said('Your group’s computer said no.');
   }
-  const { lent, unanswered } = await res.json();
+  const { lent, unanswered, removals } = await res.json();
   await d.close();
+  // Who was removed or asked to be, shown to everyone in the group
+  // (v1-keeper-office (b)); `null` when the computer could not read it.
+  document.getElementById('removals').replaceChildren(
+    ...(removals ?? [null]).map((r) =>
+      Object.assign(document.createElement('li'), { textContent: r ? removal(r) : `Who was removed from ${group.name} cannot be read just now.` }),
+    ),
+  );
   show(`You’re in ${group.name}, as ${group.person}`, true);
   list.replaceChildren(
     ...lent.map((l) => {

@@ -17,8 +17,8 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use crate::{
-    admit, is_local_only, ring_dir, valid_namespace, Device, Membership, Op, Person, RailError, RingJournal, RingRail,
-    RingVerifier, Roster, SignedOp,
+    admit, is_local_only, ring_dir, valid_namespace, Device, Membership, Op, Person, RailAct, RailError, RingJournal,
+    RingRail, RingVerifier, Roster, SignedOp,
 };
 
 /// Who stands in one group, on this node.
@@ -37,12 +37,35 @@ pub enum Standing {
 }
 
 /// One fold of a group's register (U7): who stands, each key the group's
-/// keeper cut with the person it was bound to, and the keeper's key.
+/// keeper cut with the person it was bound to, the keeper's key, and every
+/// removal and ask to remove, shown to everyone in the group.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Register {
     pub members: BTreeMap<String, Member>,
     pub removed: BTreeMap<String, Person>,
     pub keeper: Option<String>,
+    pub removals: Vec<Removing>,
+}
+
+/// One counting `Remove`, as the group is shown it (v1-keeper-office (b)):
+/// who signed it, whom it names, when it is timed, and whether it was the
+/// keeper's cut or an ask, as `membership` judged it.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct Removing {
+    pub by: Person,
+    pub of: Person,
+    pub at: i64,
+    pub said: Said,
+}
+
+/// What a counting `Remove` was (DESIGN §6, "Removal has one decider").
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Said {
+    /// The keeper's: the cut.
+    Removed,
+    /// Anyone else's, or one that cut nobody: an ask.
+    Asked,
 }
 
 /// One key standing in a group: the person it is bound to, and what holds
@@ -104,11 +127,40 @@ pub(crate) fn register_in(
         .keys()
         .filter_map(|key| Some((key.clone(), m.bindings.get(key)?.clone())))
         .collect();
+    let removals = removals_in(ops, &m, namespace);
     Ok(Register {
         members,
         removed,
         keeper: m.keeper,
+        removals,
     })
+}
+
+/// Every `Remove` among `ops` that counts in `m`, by time: the cut when it
+/// is the one `m` cut its key by, an ask otherwise. One naming a key bound
+/// to nobody names no one, said at debug and left out.
+fn removals_in(ops: &[Op<SignedOp>], m: &Membership, namespace: &str) -> Vec<Removing> {
+    let mut out: Vec<Removing> = ops
+        .iter()
+        .filter_map(|op| {
+            let RailAct::Remove { key, .. } = &op.kind.act else {
+                return None;
+            };
+            let id = crate::derive_id(op, namespace);
+            if !m.counts(&id) {
+                return None;
+            }
+            let (Some(by), Some(of)) = (m.bindings.get(&op.actor), m.bindings.get(key)) else {
+                tracing::debug!(target: "register", namespace, id = %id, key, "register: a removal names a key bound to nobody, so it is not shown");
+                return None;
+            };
+            let said = if m.cut.get(key).is_some_and(|c| c.by == id) { Said::Removed } else { Said::Asked };
+            tracing::debug!(target: "register", namespace, id = %id, by = %by, of = %of, ?said, "register: a removal shown to the group");
+            Some(Removing { by: by.clone(), of: of.clone(), at: op.ts_unix, said })
+        })
+        .collect();
+    out.sort_by_key(|r| r.at);
+    out
 }
 
 /// `membership` over the acts admission authenticates among `ops`, from
