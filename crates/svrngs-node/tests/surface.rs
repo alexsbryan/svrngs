@@ -217,7 +217,8 @@ async fn an_app_asks_what_the_group_s_people_lend_its_own_included_and_none_stal
 
 /// **An app asks which groups this computer holds, and finds the API by
 /// itself** (the u5-1 row): `/v1/groups` answers the group's id, its name,
-/// Alex as this computer's person, and that Alex was not removed (U7); the data dir's `api` file names the
+/// Alex as this computer's person, that Alex was not removed (U7) and that
+/// nobody was removed or asked to be (v1-keeper-office (b)); the data dir's `api` file names the
 /// address the app asked at. Planted: the file not written.
 #[tokio::test]
 async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
@@ -230,14 +231,15 @@ async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
     assert_eq!(status, 200, "{body:#}");
     assert_eq!(
         body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "person": "alex", "removed": false }] }),
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "person": "alex", "removed": false, "removals": [] }] }),
     );
     house.close().await;
 }
 
 /// **A register that cannot be read is said as itself** (REVIEW_FINDINGS
 /// #123): with Alex's copy of the group's seed unreadable, `/v1/groups`
-/// answers `removed: null`, never "not removed", so the home page can say
+/// answers `removed: null`, never "not removed", and `removals: null`,
+/// never none (v1-keeper-office (b)), so the home page can say
 /// this computer could not read who is in the group. Red at 09e1484,
 /// which read it `removed: false`.
 #[tokio::test]
@@ -258,7 +260,7 @@ async fn an_unreadable_register_is_not_read_as_not_removed() {
     assert_eq!(status, 200, "{body:#}");
     assert_eq!(
         body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "person": null, "removed": null }] }),
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "person": null, "removed": null, "removals": null }] }),
     );
     house.close().await;
 }
