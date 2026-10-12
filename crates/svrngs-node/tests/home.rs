@@ -125,6 +125,33 @@ async fn ask(
     }
 }
 
+/// Alex's computer and Sam's: Alex founds a group and lets Sam in, and
+/// Alex's knows where Sam's listens.
+async fn alex_lets_sam_in(alex_dir: &std::path::Path, sam_dir: &std::path::Path) -> (Node, Node) {
+    let alex = start(1, alex_dir).await;
+    let sam = start(2, sam_dir).await;
+    let seed = Roster::new(
+        [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
+            .into_iter()
+            .collect(),
+    );
+    for node in [&alex, &sam] {
+        node.rail().set_seed(NS, &seed).unwrap();
+    }
+    let admit = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse("sam").unwrap(),
+            key: actor_of(&signing(2)),
+            invite: None,
+        },
+        on_behalf_of: None,
+    };
+    alex.rail().commit(NS, &admit).unwrap().unwrap();
+    alex.transport()
+        .add_known_peer(sam.endpoint().id(), loopback_sockets(sam.endpoint()));
+    (alex, sam)
+}
+
 fn unchunk(mut rest: &str) -> String {
     let mut out = String::new();
     while let Some((size, tail)) = rest.split_once("\r\n") {
@@ -155,27 +182,7 @@ fn unchunk(mut rest: &str) -> String {
 #[tokio::test]
 async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices() {
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let alex = start(1, alex_dir.path()).await;
-    let sam = start(2, sam_dir.path()).await;
-    let seed = Roster::new(
-        [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
-            .into_iter()
-            .collect(),
-    );
-    for node in [&alex, &sam] {
-        node.rail().set_seed(NS, &seed).unwrap();
-    }
-    let admit = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("sam").unwrap(),
-            key: actor_of(&signing(2)),
-            invite: None,
-        },
-        on_behalf_of: None,
-    };
-    alex.rail().commit(NS, &admit).unwrap().unwrap();
-    alex.transport()
-        .add_known_peer(sam.endpoint().id(), loopback_sockets(sam.endpoint()));
+    let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
     let mut heads = std::collections::BTreeMap::new();
     for (who, dir, name, kind, reads, asks) in [
         (1, alex_dir.path(), "night", "night", &["taste"][..], None),
@@ -415,27 +422,7 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
 #[tokio::test]
 async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let alex = start(1, alex_dir.path()).await;
-    let sam = start(2, sam_dir.path()).await;
-    let seed = Roster::new(
-        [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
-            .into_iter()
-            .collect(),
-    );
-    for node in [&alex, &sam] {
-        node.rail().set_seed(NS, &seed).unwrap();
-    }
-    let admit = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("sam").unwrap(),
-            key: actor_of(&signing(2)),
-            invite: None,
-        },
-        on_behalf_of: None,
-    };
-    alex.rail().commit(NS, &admit).unwrap().unwrap();
-    alex.transport()
-        .add_known_peer(sam.endpoint().id(), loopback_sockets(sam.endpoint()));
+    let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
     sam.transport()
         .add_known_peer(alex.endpoint().id(), loopback_sockets(alex.endpoint()));
     tokio::time::timeout(Duration::from_secs(30), sam.round())
@@ -605,27 +592,7 @@ async fn groups_that_cannot_be_read_are_said_so() {
 #[tokio::test]
 async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_other() {
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let alex = start(1, alex_dir.path()).await;
-    let sam = start(2, sam_dir.path()).await;
-    let seed = Roster::new(
-        [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
-            .into_iter()
-            .collect(),
-    );
-    for node in [&alex, &sam] {
-        node.rail().set_seed(NS, &seed).unwrap();
-    }
-    let admit = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("sam").unwrap(),
-            key: actor_of(&signing(2)),
-            invite: None,
-        },
-        on_behalf_of: None,
-    };
-    alex.rail().commit(NS, &admit).unwrap().unwrap();
-    alex.transport()
-        .add_known_peer(sam.endpoint().id(), loopback_sockets(sam.endpoint()));
+    let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
     // A port nothing listens on: bound, read and let go.
     let silent = std::net::TcpListener::bind("127.0.0.1:0")
         .unwrap()
