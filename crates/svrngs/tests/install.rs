@@ -16,45 +16,17 @@
 #[macro_use]
 #[allow(unused_macros, dead_code)]
 mod harness;
+mod common;
 
 use std::path::{Path, PathBuf};
 use std::process::Output;
 use std::time::Duration;
 
-use iroh_relay::server::Server;
 use svrngs::cli;
-use svrngs::group::{self, Name};
-use svrngs_node::iroh::RelayConfig;
+use svrngs::group::Name;
 use svrngs_node::link::Origin;
-use svrngs_node::node::Node;
-use svrngs_node::{RailAct, SigningKey};
+use svrngs_node::RailAct;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-
-/// Sam's computer, its key from `seed`, online through a relay on
-/// 127.0.0.1: the relay and the folder are kept alive by the caller.
-async fn sams_computer(seed: u8) -> (Server, RelayConfig, tempfile::TempDir, Node) {
-    let relay = harness::relay().await;
-    let ours = RelayConfig {
-        relay_urls: vec![harness::relay_url(&relay)],
-        n0_services: false,
-        loopback_only: false,
-    }
-    .on_loopback_only();
-    let dir = tempfile::tempdir().unwrap();
-    let sam = Node::start(
-        dir.path().to_path_buf(),
-        SigningKey::from_bytes(&[seed; 32]),
-        &ours,
-        group::seed_text,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .expect("Sam's computer starts");
-    tokio::time::timeout(Duration::from_secs(20), sam.endpoint().online())
-        .await
-        .expect("Sam's computer reaches the relay on 127.0.0.1");
-    (relay, ours, dir, sam)
-}
 
 /// This computer's tarball, as install.sh names it from `uname`.
 fn tarball() -> String {
@@ -264,7 +236,7 @@ async fn a_platform_svrngs_is_not_built_for_is_refused() {
 async fn the_line_run_twice_installs_runs_at_login_opens_home_and_joins_once() {
     let site = site(None);
     let port = host(site.path().to_path_buf()).await;
-    let (_relay, ours, _dir, sam) = sams_computer(1).await;
+    let (_relay, ours, _dir, sam) = common::sams_computer(1).await;
     let page = Origin::parse(&format!("http://127.0.0.1:{port}/")).unwrap();
     let (seed, printed) = cli::new_group(
         &sam,
@@ -415,7 +387,7 @@ async fn new_places_the_groups_folder() {
 /// before it placed the folder.
 #[tokio::test(flavor = "multi_thread")]
 async fn joining_places_the_groups_folder() {
-    let (_relay, ours, _dir, sam) = sams_computer(2).await;
+    let (_relay, ours, _dir, sam) = common::sams_computer(2).await;
     let (_, printed) = cli::new_group(
         &sam,
         Name::parse("trip").unwrap(),

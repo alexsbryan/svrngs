@@ -20,15 +20,14 @@
 #[path = "../../svrngs-node/tests/browser/harness.rs"]
 #[macro_use]
 mod harness;
+mod common;
 
 use std::num::NonZeroU16;
 use std::process::Stdio;
-use std::time::Duration;
 
 use serde_json::{json, Value};
 use svrngs::cli;
-use svrngs::group::{self, Name};
-use svrngs_node::iroh::RelayConfig;
+use svrngs::group::Name;
 use svrngs_node::lend::{self, Kind, Lend, LendName};
 use svrngs_node::link::Origin;
 use svrngs_node::node::Node;
@@ -90,26 +89,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     engine: harness::Engine,
 ) {
     let site = harness::site();
-    let relay = harness::relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let ours = RelayConfig {
-        relay_urls: vec![harness::relay_url(&relay)],
-        n0_services: false,
-        loopback_only: false,
-    }
-    .on_loopback_only();
-    let sam = Node::start(
-        dir.path().to_path_buf(),
-        SigningKey::from_bytes(&[1; 32]),
-        &ours,
-        group::seed_text,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .expect("Sam's computer starts");
-    tokio::time::timeout(Duration::from_secs(20), sam.endpoint().online())
-        .await
-        .expect("Sam's computer reaches the relay on 127.0.0.1");
+    let (_relay, ours, dir, sam) = common::sams_computer(1).await;
     let shelf = Lend {
         name: LendName::parse("shelf").unwrap(),
         port: NonZeroU16::new(service().await).unwrap(),
@@ -263,26 +243,7 @@ in_both_engines!(
 );
 async fn a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name(engine: harness::Engine) {
     let site = harness::site();
-    let relay = harness::relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let ours = RelayConfig {
-        relay_urls: vec![harness::relay_url(&relay)],
-        n0_services: false,
-        loopback_only: false,
-    }
-    .on_loopback_only();
-    let sam = Node::start(
-        dir.path().to_path_buf(),
-        SigningKey::from_bytes(&[1; 32]),
-        &ours,
-        group::seed_text,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .expect("Sam's computer starts");
-    tokio::time::timeout(Duration::from_secs(20), sam.endpoint().online())
-        .await
-        .expect("Sam's computer reaches the relay on 127.0.0.1");
+    let (_relay, ours, _dir, sam) = common::sams_computer(1).await;
     let mut phone = tokio::process::Command::new("node")
         .arg(harness::repo().join("web/tests/join.mjs"))
         .arg(json!({ "engine": engine.as_str(), "site": site }).to_string())
