@@ -43,14 +43,15 @@ parts in order and `scripts/check.sh` once at its close (operator,
 | The scene needs | Today | Built by |
 |---|---|---|
 | the group's link in the channel | landed, v1-onboarding (c): `svrngs new <name> --origin <page>` prints it on the page's address, and pasted it previews as an invitation, a title and a description in `web/index.html` naming no group; the token stays in the link's `#` part, which no chat's preview fetches | — |
-| a newcomer's computer in from the link by one line pasted in a terminal, nothing else typed, the group's folder on their disk | landed, v1-onboarding: on a computer the group's page gives `curl -fsSL <page>install.sh \| sh -s -- '<link>'`, which installs svrngs from the page's host, joins, keeps it running at login and opens the home page; the group's folder at `~/svrngs/<group>`. Once on one host, the paste to a member's photo on disk: 6,489 ms (`runs/onboarding/2026-10-11/`). The person is named by their computer's login (its finding 1) | the operator's `scripts/deploy-page.sh`, so group.svrnme.sh serves `install.sh` and the tarballs |
+| a newcomer's computer in from the link by one line pasted in a terminal, nothing else typed, the group's folder on their disk | landed, v1-onboarding: on a computer the group's page gives `curl -fsSL <page>install.sh \| sh -s -- '<link>'`, which installs svrngs from the page's host, joins, keeps it running at login and opens the home page; the group's folder at `~/svrngs/<group>`. Once on one host, the paste to a member's photo on disk: 6,489 ms (`runs/onboarding/2026-10-11/`). Since bash-person (e) the person is named by their account's full name where the system shows one, else their login. In the dry run again, on the page and tarball built from its commit and served on its host, each newcomer from the link to film, album and photo in 12,736–13,762 ms, the home page listing both lends 346–403 ms after the line (bash-first-minute (b); the dry run's 45–50 s), `runs/c/dry-2026-10-12-rerun/` | the operator's `scripts/deploy-page.sh`, so group.svrnme.sh serves this build's `install.sh` and tarballs |
 | Sam removing Bo, and only Sam | landed, U7 (u7-removal; DESIGN §6): `svrngs remove Bo --group <name>` on Sam's computer is the cut, anyone else's an ask; every lender refused the removed person 0.048 s after, on one host (`runs/u7/2026-10-11/`) | — |
 | every person in their own home | every number so far on one host, every path direct (the branch `folders`' `demo/runs/perf/2026-10-10/README.md` §9 and `…/2026-10-10-make-it-fast/README.md`) | **two homes**: the library, the folder and a join measured between computers on two networks, through a relay |
-| the trip's photos on every computer, kept while their author sleeps | landed on the branch `folders` (syp-1 to syp-4, perf-2; S2, a file whose author is asleep reaching a member who starts: 4.47 s at sy-1, 4.27 s at syp-1) | the operator's merge of `folders` |
+| the trip's photos on every computer, kept while their author sleeps | landed, the branch `folders` merged by the operator (`4475a89`; syp-1 to syp-4, perf-2); in the dry run again, with Ana's computer asleep, all thirty on Eve's disk 9.6 s after Eve was in, `runs/c/dry-2026-10-12-rerun/` | — |
 | Sam's library, each person signed in with nothing typed | landed (`apps/jellyfin/`, `demo/runs/mw/2026-10-08/`, mwp) | — |
-| Ana's music as each person, nothing typed | run through a lend in the dry run (`runs/c/dry-2026-10-12/`): Navidrome 0.64.2 signed each person in as their name from `X-Svrngs-Person`, nothing typed, on a computer and on a phone; but a second member joined as `ana` was signed in as Ana, its admin (its finding 1). Landed since, bash-person: Navidrome told `X-Svrngs-User`, an account's name unique by the person's key, and a link refusing a name someone in the group goes by; `svrngs share 4533` lends it and prints its two settings (finding 2) | bash-rerun, the dry run again |
+| Ana's music as each person, nothing typed | landed, bash-person: `svrngs share 4533` lends Navidrome and prints its two settings; Navidrome takes the person from `X-Svrngs-User`, an account's name the door makes unique by the person's key, never an account of the lender's; a link lets no one in under a name someone in the group goes by, and tells them how to add a device of theirs instead (bash-devices). In the dry run again, Navidrome 0.64.2 set as `share` printed signed each person in as their own `<name>-<16 hex>`, the same name Jellyfin's middleware gave them, on a computer and on a phone; a second computer whose login is `ana` was refused at the line, and a member opening Ana's Navidrome was not its admin, `runs/c/dry-2026-10-12-rerun/` | — |
 | a phone in the group within ten seconds | Chromium through n0 joined in 5.4 s (`runs/u4/2026-10-05/README.md`, its finding 4) | — |
-| a person's words for each refusal and each asleep computer | landed ("Cy's computer did not answer, so what they lend is not listed", `runs/supf/2026-10-10/`); the removed person's, landed with U7 ("You are no longer in <group>. …", on the home page and the group's page) | — |
+| a person's words for each refusal and each asleep computer | landed ("Cy's computer did not answer, so what they lend is not listed", `runs/supf/2026-10-10/`), and since bash-first-minute (c) a computer that has not heard of the asker, or answered without saying what it lends, said so apart; the removed person's, landed with U7 ("You are no longer in <group>. …", on the home page and the group's page). In the dry run again only Ana's asleep computer was said not to answer, on every look kept, `runs/c/dry-2026-10-12-rerun/` | — |
+| Sam's library open to everyone in one evening | landed, bash-limit: a lend whose lender names no limit lets in everyone in its groups at once, `share` saying so, and its lender sets, changes or clears a limit on the home page, in place. On one host the door counts no computer, so six at once is not judged there (`runs/c/dry-2026-10-12-rerun/`, its row 9) | the two homes |
 
 **Left out, each said:** money — Actual asks every person the one password
 its lender set (CENSUS.md:59), and no reference app for the money class is
@@ -62,7 +63,10 @@ every computer sleeps (the phone replica, on the back burner, operator,
 ## Before the evening, each set up once and not timed
 
 **The page**: group.svrnme.sh serving `install.sh` and the four tarballs
-beside the page, by the operator's `scripts/deploy-page.sh` (DESIGN §7).
+beside the page, built from the commit the run is on, by the operator's
+`scripts/deploy-page.sh` (DESIGN §7). The dry run again served that build
+on its own host (`runs/c/dry-2026-10-12-rerun/`); the page published is
+still the one the first dry run fetched, until the operator deploys again.
 
 **Sam**, at home: svrngs on a computer, the tarball for it from the page's
 `get/` unpacked into `~/.local/bin` (not timed; the line is for one who
@@ -93,7 +97,8 @@ before the first run.
 1. **Sam makes the group and posts its link in the channel.** On Sam's
    computer Sam makes the group, named as the channel is, Sam its keeper:
    `svrngs new <name> --origin https://group.svrnme.sh/`, which prints the
-   link on the page's address; Sam pastes that in the channel, where it
+   link on the page's address and places the group's folder at
+   `~/svrngs/<name>` on Sam's disk, saying where; Sam pastes that in the channel, where it
    shows as an invitation.
 2. **Ana brings the trip.** Ana opens the link on Ana's computer; the
    group's page gives one line with the link in it and a button that

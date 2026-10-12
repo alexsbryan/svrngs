@@ -1977,11 +1977,19 @@ four of five within five minutes on a computer, svrngs got from the link
 included — one line the group's page gives, pasted in a terminal (operator,
 2026-10-11), and two on a phone, the phone in the group within ten seconds of
 the link; no account but one a lender's program makes, no key asked for.
+Its steps have run twice on one host, every person a program: the dry run
+against the published page found eight things (`demo/runs/c/dry-2026-10-12/`),
+the bash queue closed seven (the phone's typed name is the operator's), and
+the dry run again, on the page and tarball built from its commit and served
+on its host, held each closing (`demo/runs/c/dry-2026-10-12-rerun/`). What
+stands before Demo C is the two homes, the phone's typed name and publishing
+that build, the last two the operator's.
 
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
 | U7 removal | landed, u7-removal: one keeper, the group's maker at first, sequences removals, handed on only by its own act; anyone's `svrngs remove <name> --group <group>` is an ask until the keeper's is the cut, by hash; a removed key cannot remove, ask or hand on; forks void nothing; a removal or hand-on wakes the round (§6, §10) | within 30 s of the keeper's removal every lender refuses the removed person in a person's words, and nothing new in a folder reaches them; their own `Remove` counts nowhere; what they held stays theirs. Watched failing: take 1, a lender not the keeper refused at 43.3 s, at its next round; passed at take 2, 0.048 s, on one host (`demo/runs/u7/2026-10-11/`) |
 | onboarding | landed, v1-onboarding: on a computer, svrngs got from the group's link by one line, `install.sh` and four tarballs served beside the page, the link handed to it, the home page opened and the group's folder at `~/svrngs/<group>`; the link previewing as an invitation in any chat; the middleware's P1 follow-ups, above | a newcomer's computer from the link to the group's three things within five minutes, unassisted, one line pasted in a terminal and nothing else typed. Measured, not yet judged by people: once on one host, the paste to a member's photo on disk 6,489 ms, loopback, nobody reading; Linux could-not-judge (`demo/runs/onboarding/2026-10-11/`) |
+| the dry runs | Demo C's steps on one host, every person a program. The first, against the published page, found a name merging a stranger into a person and Navidrome's admin given by it, Navidrome lent only by `--kind`, a limit of 3 nobody chose, logins as names, the phone's typed name, running computers said not to answer, no folder for the founder, and a newcomer's 51–56 s wait for the lends; bash-first-minute, bash-limit, bash-person and bash-devices closed all but the typed name | the machine's floor under each bar, never the bar: again on what landed, each newcomer from the link to film, album and photo in 12,736–13,762 ms, the lends listed 346–403 ms after the line, only the asleep computer said not to answer, each person their own Navidrome account by `x-svrngs-user`, a second `ana` refused at the line and told how to add a device; a limit's count could-not-judge on one host, Apart never-ran (`demo/runs/c/dry-2026-10-12-rerun/`) |
 | two homes | the library, the folder and a join measured between computers on two networks, through a relay, each path as iroh selected it | measured, not judged: the numbers Demo C's bars are read against |
 
 ## 9. Later, each with the trigger that brings it back
