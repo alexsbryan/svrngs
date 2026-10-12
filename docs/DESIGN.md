@@ -1310,8 +1310,16 @@ refuses a mismatch; installs into `~/.local/bin`, never with `sudo`;
 joins the link as `svrngs join` does; keeps svrngs running at login as
 the person (a LaunchAgent on macOS, a `systemd --user` unit on Linux);
 and opens the home page. Run again, it updates in place and joins
-nothing twice. Publishing the binaries with the page is the operator's
-(`scripts/deploy-page.sh`).
+nothing twice. The person is named by their computer's login (`join`
+takes `$USER`, `crates/svrngs/src/cli.rs:1369`), since the line gives no
+name. Measured once, on this host over loopback, nobody reading the page:
+from the paste to the home page listing the group and its folder, 6,029
+ms, and to a member's photo in that folder, 6,489 ms; the four tarballs
+built cold in 11:31; the Linux two never run, could-not-judge
+(`demo/runs/onboarding/2026-10-11/`). Publishing the binaries with the
+page is the operator's (`scripts/deploy-page.sh`, which builds both into
+one site); until it runs, group.svrnme.sh serves no `install.sh` (404,
+2026-10-11).
 
 **A room's devices reach a lend through a member's computer there** (u6-1
 landed it; §3, "The room", calls 2 and 3). A TV takes no link and runs no
@@ -1838,7 +1846,12 @@ the middleware's P1 follow-ups as its parts (operator, 2026-10-08;
 `share`'s words, answered by the sign-in's declaration, mwp-1): a lender
 keeps a library back from the people the middleware makes accounts for;
 Demo A's steps with nothing typed, and its dry run (its other four, P2 and
-below, wait in that §7); then the library, the folder and a join measured
+below, wait in that §7) (landed, v1-onboarding: one line from the group's
+page to a newcomer in the group with a member's photo on their disk in
+6,489 ms, once on one host, §7; `jellyfin-mw --keep-back`; Demo A's dry
+run with nothing typed, nobody asked to sign in, three of Bo's ten
+converted seeks missing 5 s on a host loaded past its cores,
+`demo/runs/a/2026-10-11/`); then the library, the folder and a join measured
 between computers in two homes, through a relay; then Demo C. The phone
 replica spike waits in §9 (operator, 2026-10-10). After that the core grows
 one class at a time, each chosen by the north star's tests.
@@ -1860,7 +1873,7 @@ the link; no account but one a lender's program makes, no key asked for.
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
 | U7 removal | landed, u7-removal: one keeper, the group's maker at first, sequences removals, handed on only by its own act; anyone's `svrngs remove <name> --group <group>` is an ask until the keeper's is the cut, by hash; a removed key cannot remove, ask or hand on; forks void nothing; a removal or hand-on wakes the round (§6, §10) | within 30 s of the keeper's removal every lender refuses the removed person in a person's words, and nothing new in a folder reaches them; their own `Remove` counts nowhere; what they held stays theirs. Watched failing: take 1, a lender not the keeper refused at 43.3 s, at its next round; passed at take 2, 0.048 s, on one host (`demo/runs/u7/2026-10-11/`) |
-| onboarding | on a computer, svrngs got from the group's link, the link handed to it, the home page opened and the group's folder on the person's disk; the link previewing as an invitation in any chat; the middleware's P1 follow-ups, above | a newcomer's computer from the link to the group's three things within five minutes, unassisted, one line pasted in a terminal and nothing else typed |
+| onboarding | landed, v1-onboarding: on a computer, svrngs got from the group's link by one line, `install.sh` and four tarballs served beside the page, the link handed to it, the home page opened and the group's folder at `~/svrngs/<group>`; the link previewing as an invitation in any chat; the middleware's P1 follow-ups, above | a newcomer's computer from the link to the group's three things within five minutes, unassisted, one line pasted in a terminal and nothing else typed. Measured, not yet judged by people: once on one host, the paste to a member's photo on disk 6,489 ms, loopback, nobody reading; Linux could-not-judge (`demo/runs/onboarding/2026-10-11/`) |
 | two homes | the library, the folder and a join measured between computers on two networks, through a relay, each path as iroh selected it | measured, not judged: the numbers Demo C's bars are read against |
 
 ## 9. Later, each with the trigger that brings it back
@@ -1880,7 +1893,7 @@ the link; no account but one a lender's program makes, no key asked for.
 | a second chat adapter, and the trait it earns | a group on another chat asks |
 | compacting the journal | a journal grows past a size measured to matter |
 | a keeper the group chooses, or one that rotates (Ostrom's third principle, collective choice; §11 risk 2): today the keeper is the maker's key, moved only by the keeper's own hand-on (§6, "Removal has one decider"), and a hand-on survives its giver's removal (§10, 2026-10-12); a group's choice would be acts its people sign that the fold counts into one hand-on, or a turn the fold moves on its own — a new rule of §6, the operator's | a group asks to choose its keeper, or to take turns, counted |
-| a ladder of sanctions people can see, removal its last rung (Ostrom's fifth principle, graduated sanctions): the gentler steps are each owner's already and need no keeper — a yes stopped (`question.js`'s Stop, on both pages), a share stopped (`svrngs unshare`), a lend kept back from one person (v1-onboarding (e), queued) — so the ladder is only those steps shown to the group beside its removals (§6, v1-keeper-office (b)) | a group removes someone for what a lesser step would have met, counted |
+| a ladder of sanctions people can see, removal its last rung (Ostrom's fifth principle, graduated sanctions): the gentler steps are each owner's already and need no keeper — a yes stopped (`question.js`'s Stop, on both pages), a share stopped (`svrngs unshare`), a library kept back from everyone the middleware signs in (v1-onboarding (e), landed, `jellyfin-mw --keep-back`; from one person, not yet) — so the ladder is only those steps shown to the group beside its removals (§6, v1-keeper-office (b)) | a group removes someone for what a lesser step would have met, counted |
 | exporting a group as one document (upstream's checkpoint route), checking the asker is in that group | a group refounds from a copy, or someone asks to export one |
 | the endpoint's self-heal (upstream's `self_heal.rs`, `iroh_watchdog.rs`) | a node's endpoint wedges in a recorded run |
 | skipping a round's members known offline. Dialling them at once landed (asleep-1, `ring_sync::run_one_round`), so an asleep one holds only its own dial; the round still ends when that dial gives up, about 10 s, and a door's ask begun meanwhile waits for the next round (§3, "Joining") | a round's measured time nears its interval, or a newcomer is refused while a round waits on an asleep computer, counted |

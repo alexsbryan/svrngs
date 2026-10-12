@@ -25,8 +25,8 @@ someone removed, a computer asleep — everyone in their own home.
 pastes the link in the channel as anyone pastes a link, and it works the
 same in Discord, iMessage, WhatsApp, Slack or Signal. svrngs's whole part is
 the link previewing as an invitation, a title and a description on the
-group's page, about five lines of HTML (`web/index.html` has only `<title>Your
-group</title>` today). E0's door at tag `e0-bot` — `discord.js` on Discord's
+group's page, five lines of HTML (`web/index.html`, "You’re invited to a
+group", v1-onboarding (c)). E0's door at tag `e0-bot` — `discord.js` on Discord's
 gateway, a bot token, slash commands, a guest book keyed by Discord user id,
 517 code lines (`bridge/*.mjs` 349, `crates/svrngs/src/bridge.rs` 168, by
 `git show e0-bot:<file>`, blank and comment lines out) — is the failure this
@@ -42,13 +42,13 @@ parts in order and `scripts/check.sh` once at its close (operator,
 
 | The scene needs | Today | Built by |
 |---|---|---|
-| the group's link in the channel | `svrngs new <name> --origin <page>` prints it on the page's address, for a phone and a computer alike (Demo B's steps, `b.md`); pasted, it shows as a bare address titled "Your group" | **onboarding** (below): the link previews as an invitation, its title and description on the group's page; the token stays in the link's `#` part, which no chat's preview fetches, so the preview names no group and leaks no token |
-| a newcomer's computer in from the link by one line pasted in a terminal, nothing else typed, the group's folder on their disk | `svrngs join <link>` in a terminal on a computer that built svrngs (README, "Run it"); each member's `share --folder <dir>` (branch `folders`, syp-4 a) | **onboarding**, with the middleware's P1 follow-ups (DESIGN §8, "Then"): svrngs got from the link on a computer, the link handed to it, the group's folder placed for the person |
+| the group's link in the channel | landed, v1-onboarding (c): `svrngs new <name> --origin <page>` prints it on the page's address, and pasted it previews as an invitation, a title and a description in `web/index.html` naming no group; the token stays in the link's `#` part, which no chat's preview fetches | — |
+| a newcomer's computer in from the link by one line pasted in a terminal, nothing else typed, the group's folder on their disk | landed, v1-onboarding: on a computer the group's page gives `curl -fsSL <page>install.sh \| sh -s -- '<link>'`, which installs svrngs from the page's host, joins, keeps it running at login and opens the home page; the group's folder at `~/svrngs/<group>`. Once on one host, the paste to a member's photo on disk: 6,489 ms (`runs/onboarding/2026-10-11/`). The person is named by their computer's login (its finding 1) | the operator's `scripts/deploy-page.sh`, so group.svrnme.sh serves `install.sh` and the tarballs |
 | Sam removing Bo, and only Sam | landed, U7 (u7-removal; DESIGN §6): `svrngs remove Bo --group <name>` on Sam's computer is the cut, anyone else's an ask; every lender refused the removed person 0.048 s after, on one host (`runs/u7/2026-10-11/`) | — |
 | every person in their own home | every number so far on one host, every path direct (the branch `folders`' `demo/runs/perf/2026-10-10/README.md` §9 and `…/2026-10-10-make-it-fast/README.md`) | **two homes**: the library, the folder and a join measured between computers on two networks, through a relay |
 | the trip's photos on every computer, kept while their author sleeps | landed on the branch `folders` (syp-1 to syp-4, perf-2; S2, a file whose author is asleep reaching a member who starts: 4.47 s at sy-1, 4.27 s at syp-1) | the operator's merge of `folders` |
 | Sam's library, each person signed in with nothing typed | landed (`apps/jellyfin/`, `demo/runs/mw/2026-10-08/`, mwp) | — |
-| Ana's music as each person, nothing typed | Navidrome takes the person from a header by its docs, `ND_EXTAUTH_USERHEADER=X-Svrngs-Person` (`runs/catalogue/2026-10-05/CENSUS.md:53`); never run through a lend | onboarding's dry run reads it; if Navidrome does not, the scene names another app the census marks "yes", and says so |
+| Ana's music as each person, nothing typed | Navidrome takes the person from a header by its docs, `ND_EXTAUTH_USERHEADER=X-Svrngs-Person` (`runs/catalogue/2026-10-05/CENSUS.md:53`); never run through a lend, and v1-onboarding's row named no run of it | not yet a row: a dry run reads it before Demo C's; if Navidrome does not, the scene names another app the census marks "yes", and says so |
 | a phone in the group within ten seconds | Chromium through n0 joined in 5.4 s (`runs/u4/2026-10-05/README.md`, its finding 4) | — |
 | a person's words for each refusal and each asleep computer | landed ("Cy's computer did not answer, so what they lend is not listed", `runs/supf/2026-10-10/`); the removed person's, landed with U7 ("You are no longer in <group>. …", on the home page and the group's page) | — |
 
@@ -61,7 +61,13 @@ every computer sleeps (the phone replica, on the back burner, operator,
 
 ## Before the evening, each set up once and not timed
 
-**Sam**, at home: svrngs on a computer, got as onboarding will have it;
+**The page**: group.svrnme.sh serving `install.sh` and the four tarballs
+beside the page, by the operator's `scripts/deploy-page.sh` (DESIGN §7).
+
+**Sam**, at home: svrngs on a computer, the tarball for it from the page's
+`get/` unpacked into `~/.local/bin` (not timed; the line is for one who
+joins: it keeps a svrngs running, and `svrngs new` refuses while one runs,
+`crates/svrngs/src/cli.rs`, `Refusal::Busy`);
 Jellyfin with at least three
 films, lent as `svrngs share` tells Sam, with the program Sam runs in front
 of it (`apps/jellyfin/`); Jellyfin's list of users exported.
@@ -84,19 +90,23 @@ step names the row; the run-of-show is rewritten in place when it lands,
 before the first run.
 
 1. **Sam makes the group and posts its link in the channel.** On Sam's
-   computer Sam makes the group, named as the channel is, Sam its keeper
-   (`svrngs new <name> --origin <page>` today; onboarding may give it a
-   button on the home page), and pastes its link in the channel, where it
+   computer Sam makes the group, named as the channel is, Sam its keeper:
+   `svrngs new <name> --origin https://group.svrnme.sh/`, which prints the
+   link on the page's address; Sam pastes that in the channel, where it
    shows as an invitation.
-2. **Ana brings the trip.** Ana opens the link on Ana's computer and is in,
-   the group's folder on Ana's disk (onboarding); Ana puts the thirty
-   photos in it.
+2. **Ana brings the trip.** Ana opens the link on Ana's computer; the
+   group's page gives one line with the link in it and a button that
+   copies it; Ana pastes it in a terminal, `curl -fsSL
+   https://group.svrnme.sh/install.sh | sh -s -- '<the link>'`, and is in,
+   the group's folder at `~/svrngs/<name>` on Ana's disk; Ana puts the
+   thirty photos in it.
 3. **The newcomers, one at a time, each timed.** Alex, Bo and Dee open the
-   link on their computers: the group's page gives one line, pasted in a
-   terminal; svrngs comes from it, takes the link and opens
-   the person's home page (onboarding; the home page, DESIGN §7); there
-   they see the group, Sam's jellyfin and Ana's music, and the group's
-   folder is on their disk with the trip in it. Each plays a film from
+   link on their computers and paste the line the page gives in a
+   terminal, as Ana did; it installs svrngs in `~/.local/bin`, joins, keeps
+   svrngs running at login and opens the person's home page (DESIGN §7);
+   there they see the group, Sam's jellyfin and Ana's music, and the
+   group's folder is at `~/svrngs/<name>` on their disk with the trip in
+   it. Each plays a film from
    Sam's jellyfin, plays an album from Ana's music — Navidrome opening as
    them, nothing typed — and opens a photo from the folder. Cy does the
    same on a phone, the link opening the group's page in the browser,
