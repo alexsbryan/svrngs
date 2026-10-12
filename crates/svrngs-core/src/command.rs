@@ -67,6 +67,9 @@ pub struct Author<'a> {
 pub enum Refused<R> {
     /// The signer holds no standing in the group.
     NoStanding,
+    /// The group's cuts do not settle, before the acts or after them
+    /// (#124): nothing is judged on that, so nothing is written.
+    Unsettled,
     Command(R),
 }
 
@@ -157,6 +160,7 @@ fn authored<C: Command>(
 ) -> Result<Vec<Op<SignedOp>>, Refused<C::Refusal>> {
     let actor = a.signer.actor();
     let before = admit(&read::<C>(held), &[], a.roster, a.namespace, a.verifier);
+    settled(&before, a.namespace)?;
     if !before.membership().standing.contains(&actor) {
         tracing::debug!(target: "rail:door", ns = a.namespace, %actor,
             "commit refused — the signer holds no standing in the group");
@@ -174,9 +178,19 @@ fn authored<C: Command>(
         with.insert(line.clone());
     }
     let after = admit(&read::<C>(&with), &[], a.roster, a.namespace, a.verifier);
+    settled(&after, a.namespace)?;
     let ids: Vec<OpId> = lines.iter().map(|l| l.id.clone()).collect();
     command.confirm(&after, &ids).map_err(Refused::Command)?;
     Ok(lines)
+}
+
+/// Refuses a fold whose cuts did not settle (#124), said at warn.
+fn settled<R>(fold: &Admission, ns: &str) -> Result<(), Refused<R>> {
+    if !fold.membership().unsettled {
+        return Ok(());
+    }
+    tracing::warn!(target: "rail:door", ns, "commit refused — the group's removals do not settle, so nothing is judged on them");
+    Err(Refused::Unsettled)
 }
 
 fn read<C: Command>(held: &ActSet) -> ActSet {

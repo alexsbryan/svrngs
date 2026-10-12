@@ -407,3 +407,57 @@ fn every_arrival_of_a_removal_folds_identically() {
         );
     }
 }
+
+/// **Cuts can cycle, and the fold says it did not settle** (#124; DESIGN
+/// §6). Alex hands on to bo; bo, the keeper, removes alex naming only
+/// alex's act before the hand-on. With no cut, the hand-on counts, bo
+/// keeps and the cut counts; with it, the hand-on is an act of a cut key
+/// its cut does not cover, so it counts nowhere, alex keeps and bo's
+/// `Remove` is an ask that cuts nobody: each walk gives the other's cuts.
+/// The fold stopped at its cap with whichever walk the count of acts left
+/// last, so one unrelated act of bo's turned who stands — said only by a
+/// debug line. Now each answer says it did not settle, an `Unsettled` gap,
+/// and reads incomplete, and a commit on it is refused, writing nothing.
+/// Red at 233daf0, which read both as settled.
+#[test]
+fn cuts_that_cycle_are_said_unsettled() {
+    let bo_in = signed(&key(1), 100, 0, admit_of("bo", 2));
+    let hands = after(&key(1), &bo_in, 101, hand_on(2));
+    let cut = signed(&key(2), 102, 0, remove_of(1, &[&bo_in]));
+    let more = after(&key(2), &cut, 103, record("more"));
+    let cycled = [bo_in.clone(), hands.clone(), cut.clone()];
+    let three = admitted_under(&alex_alone(), &cycled);
+    let four = admitted_under(&alex_alone(), &[bo_in, hands, cut, more]);
+    assert_ne!(
+        (three.membership().keeper.clone(), standing(&three, 1)),
+        (four.membership().keeper.clone(), standing(&four, 1)),
+        "the cycle: the walk the cap left turns on how many acts are held"
+    );
+    for a in [&three, &four] {
+        assert!(a.membership().unsettled, "the fold says it did not settle");
+        assert_eq!(
+            gaps_named(a, |g| matches!(g, RailGap::Unsettled)),
+            1,
+            "{:?}",
+            a.gaps()
+        );
+        assert!(!a.is_complete());
+    }
+    let as_bo = crate::Author {
+        signer: &key(2),
+        roster: &alex_alone(),
+        namespace: NS,
+        verifier: &Ed25519Verifier,
+        now: 200,
+    };
+    let store = crate::tests_support::Memory::holding(&cycled);
+    let removal = crate::Removal {
+        person: Person::parse("alex").unwrap(),
+    };
+    assert_eq!(
+        crate::commit(&store, &removal, &as_bo).unwrap(),
+        Err(crate::Refused::Unsettled),
+        "nothing is decided on it"
+    );
+    assert_eq!(store.0.borrow().len(), cycled.len(), "nothing written");
+}

@@ -86,6 +86,10 @@ pub(crate) fn register_in(
     verifier: &dyn RingVerifier,
 ) -> Result<Register, RailError> {
     let m = membership_in(ops, seed, namespace, verifier)?;
+    if m.unsettled {
+        tracing::warn!(target: "register", namespace, "register: the group's removals do not settle, so nobody is read as standing");
+        return Err(RailError::Unsettled(namespace.to_string()));
+    }
     let members = m
         .standing
         .iter()

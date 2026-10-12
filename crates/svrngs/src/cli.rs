@@ -1386,6 +1386,12 @@ async fn mint(node: &Node, seed: &Seed, relay: &RelayConfig) -> Result<Token, Re
             tracing::debug!(target: "cli", group = %group, "cli: refused — this computer does not stand in the group");
             return Err(Refusal::NotIn(seed.name().clone()));
         }
+        Ok(Err(CommitRefused::Unsettled)) => {
+            return Err(keep_refused(
+                seed,
+                &svrngs_node::RailError::Unsettled(group).to_string(),
+            ))
+        }
         Ok(Err(CommitRefused::Command(never))) => match never {},
         Err(e) => return Err(keep_refused(seed, &e.to_string())),
     };

@@ -157,6 +157,9 @@ pub enum RailGap {
         actor: String,
         fault: crate::membership::InviteFault,
     },
+    /// The keeper's cuts did not settle to one answer (#124): who stands,
+    /// and so which acts count, cannot be judged on this copy.
+    Unsettled,
 }
 
 /// What a gap means for the fold's answer — the one classification (ARCH
@@ -201,6 +204,7 @@ impl RailGap {
             | Self::UnheldCut { .. }
             | Self::WrongPrevious { .. }
             | Self::RefusedRedemption { .. }
+            | Self::Unsettled
             | Self::SequenceHole { .. } => GapClass::Absence,
             Self::TamperedId { .. }
             | Self::DanglingCorrection { .. }
@@ -282,6 +286,9 @@ impl core::fmt::Display for RailGap {
                 "a correction of {}, which this node does not hold",
                 crate::short_id(&missing.to_string())
             ),
+            Self::Unsettled => {
+                f.write_str("the removals do not settle to one answer, so who is in cannot be told")
+            }
         }
     }
 }
@@ -562,6 +569,9 @@ pub fn admit(
         namespace,
     );
 
+    if m.unsettled {
+        gaps.push(RailGap::Unsettled);
+    }
     for cut in m.cut.values() {
         gaps.extend(cut.unheld.iter().map(|missing| RailGap::UnheldCut {
             by: cut.by.clone(),

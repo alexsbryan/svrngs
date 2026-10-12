@@ -26,9 +26,11 @@
 //!    counts nowhere, wherever its timestamp puts it. Which cuts count turns
 //!    on the walk, and the walk on which acts the cuts cover, so the walk
 //!    runs again with the cuts it found until they are the cuts it was
-//!    given (a cut key's unseen acts cannot move the keeper, who alone
-//!    cuts, so this settles at the second walk unless the keeper forked;
-//!    it is bounded either way, and a function of the set).
+//!    given. It is bounded, and a function of the set, but need not
+//!    settle: a keeper's cut that does not cover the hand-on that made
+//!    them keeper undoes itself on the next walk, and that walk redoes it
+//!    (#124). Past `ops.len() + 1` walks the answer is the last walk,
+//!    [`Membership::unsettled`]: who stands is not judged on it.
 //! 3. **Then the void set**: the targets of counting [`RailAct::Correct`]s,
 //!    except an act that moves membership, which nothing undoes. Voids
 //!    never resurrect, and they cannot reach standing, so they come after
@@ -138,6 +140,10 @@ pub struct Membership {
     /// Each key the keeper cut, with the cut (U7).
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub cut: BTreeMap<String, Cut>,
+    /// The cuts did not settle: each walk gave the other's (#124), so who
+    /// stands cannot be judged, and this answer is only the last walk.
+    #[serde(default, skip_serializing_if = "core::ops::Not::not")]
+    pub unsettled: bool,
 }
 
 /// One counting cut: the keeper's `Remove`, and the acts it names in
@@ -256,7 +262,13 @@ pub fn membership<'a>(
         let settled = found == covers;
         tracing::debug!(target: "rail:membership", round, cuts = found.len(), settled,
             "membership: the walk's cuts against the cuts it was given");
-        if settled || round > ops.len() {
+        if settled {
+            break;
+        }
+        if round > ops.len() {
+            tracing::warn!(target: "rail:membership", round,
+                "membership: the cuts did not settle, each walk giving another's, so who stands cannot be judged");
+            m.unsettled = true;
             break;
         }
         covers = found;
@@ -473,6 +485,7 @@ fn walk(
         browsers,
         keeper,
         cut,
+        unsettled: false,
     }
 }
 

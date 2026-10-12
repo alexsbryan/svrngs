@@ -237,6 +237,7 @@ pub(crate) async fn append_act(
                 actor: rail.signer().actor(),
                 namespace: namespace.to_string(),
             }),
+            Ok(Err(CommitRefused::Unsettled)) => Err(RailError::Unsettled(namespace.to_string())),
             Ok(Err(CommitRefused::Command(AppendRefusal::NotInGroup(person)))) => {
                 tracing::debug!(target: "rails", namespace, %person, "rail: refused — on_behalf_of names nobody in the group");
                 return refused(
@@ -376,7 +377,9 @@ async fn log_answer(rail: &RingRail, namespace: &str) -> Response {
         "gaps": gaps,
         "held": admission.held(),
         "complete": admission.is_complete(),
-        "people": people_json(&people),
+        // Unsettled cuts (#124): who stands is not judged, so nobody is
+        // listed as standing; the `unsettled` gap says why.
+        "people": (!register.unsettled).then(|| people_json(&people)),
     }))
     .into_response()
 }

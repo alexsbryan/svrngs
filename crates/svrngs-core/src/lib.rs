@@ -718,6 +718,10 @@ pub enum RailError {
     Clock,
     #[error("ring rail io: {0}")]
     Io(String),
+    /// The keeper's cuts in this group do not settle to one answer (#124),
+    /// so who stands in it is not judged: never read as anyone standing.
+    #[error("who is in `{0}` cannot be judged: its removals do not settle to one answer")]
+    Unsettled(String),
     /// The door refused to author this act. The string is a sentence, because
     /// it is the 422 body an app shows a person.
     #[error("refused: {0}")]

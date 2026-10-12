@@ -267,6 +267,9 @@ fn serve_redeem(
             actor: rail.signer().actor(),
             namespace: group.to_string(),
         })),
+        Err(CommitRefused::Unsettled) => Err(NotAdmitted::Unjudged(RailError::Unsettled(
+            group.to_string(),
+        ))),
         Err(CommitRefused::Command(why)) => Err(NotAdmitted::Decided(why)),
     }
 }

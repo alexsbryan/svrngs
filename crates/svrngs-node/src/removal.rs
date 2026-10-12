@@ -70,7 +70,8 @@ pub enum Outcome {
     NotDeciderUnread,
     /// This computer is not in the group.
     NotIn,
-    /// The group's record could not be read or written here: said at warn.
+    /// The group's record could not be read or written here, or who is in
+    /// it cannot be judged, its removals unsettled (#124): said at warn.
     Fault,
 }
 
@@ -121,6 +122,7 @@ async fn remove(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outc
             tracing::debug!(target: "removal", group, ?refused, "removal: refused");
             return match refused {
                 Refused::NoStanding => Outcome::NotIn,
+                Refused::Unsettled => Outcome::Fault,
                 Refused::Command(RemovalRefusal::NotInGroup) => Outcome::NotInGroup,
                 Refused::Command(RemovalRefusal::Keeps) => Outcome::Decides,
             };
@@ -216,6 +218,7 @@ async fn hand_over(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> O
             Outcome::Handed
         }
         Ok(Err(Refused::NoStanding)) => Outcome::NotIn,
+        Ok(Err(Refused::Unsettled)) => Outcome::Fault,
         Ok(Err(Refused::Command(HandOnRefusal::NotInGroup))) => Outcome::NotInGroup,
         Ok(Err(Refused::Command(HandOnRefusal::NotKeeper))) => match rail.register(group) {
             Ok(register) => Outcome::NotDecider {
