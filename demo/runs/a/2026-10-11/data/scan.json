@@ -1,0 +1,72 @@
+{
+ "secrets_searched": [
+  "admin_token",
+  "mw_key",
+  "sam_pw"
+ ],
+ "lend_kept": [],
+ "pairs": {
+  "mw-trio": {
+   "alex": {
+    "scanned": {
+     "responses": 261,
+     "bodies": 182,
+     "bytes": 11872836,
+     "frames": 27
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "bo": {
+    "scanned": {
+     "responses": 1632,
+     "bodies": 1562,
+     "bytes": 147588487,
+     "frames": 27
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "cy": {
+    "scanned": {
+     "responses": 268,
+     "bodies": 187,
+     "bytes": 17666550,
+     "frames": 27
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  }
+ },
+ "logs": {
+  "alex/join.log": {},
+  "alex/join.out": {},
+  "alex/run.log": {},
+  "alex/run.out": {},
+  "bo/join.log": {},
+  "bo/join.out": {},
+  "bo/run.log": {},
+  "bo/run.out": {},
+  "cy/join.log": {},
+  "cy/join.out": {},
+  "cy/run.log": {},
+  "cy/run.out": {},
+  "mw.log": {},
+  "mw.out": {},
+  "sam/new.out": {},
+  "sam/run.log": {},
+  "sam/share-mw.out": {},
+  "sam/share.log": {},
+  "sam/share.out": {}
+ }
+}

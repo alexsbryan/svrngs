@@ -11,32 +11,35 @@ front of Jellyfin for a person who came, one each (`apps/jellyfin/README.md`;
 through the lend (DESIGN §8).
 
 **Before the run.** Sam: a computer at home running Jellyfin with at least
-three films, set up as `svrngs share` tells Sam (DESIGN §3, "Lent apps",
-call 4, as u5-3 decides it), and svrngs. Alex, Bo and Cy: a computer each, in three homes on three
-networks, with svrngs put there by the operator beforehand — installing is not
-what this demo shows, and Demo B's newcomers do none. Each of the three browsers records
-the session as a HAR file, and every screen is recorded. Before anyone starts:
-Sam's upload measured once and written down, and Jellyfin's list of users
-exported.
+three films, svrngs, and Jellyfin's sign-in program beside it, built and
+given its code from Jellyfin's API Keys once, as `apps/jellyfin/README.md`
+says (DESIGN §3, "Lent apps", call 4; "The room", call 6). Alex, Bo and
+Cy: a computer each, in three homes on three networks, with svrngs put
+there by the operator beforehand — installing is not what this demo shows;
+Demo C's newcomers get it from the group's page. Each of the three
+browsers records the session as a HAR file, and every screen is recorded.
+Before anyone starts: Sam's upload measured once and written down, and
+Jellyfin's list of users exported.
 
 **The steps as the design has them now** (DESIGN §3, "Joining" and "Lent
-apps, as they come", sign in once), which nobody is told; the dry run of
-2026-10-05 took them on one computer, Alex on a computer and Bo and Cy on
-phones through the page (`runs/a/2026-10-05/`). Set up before the run: Sam
-runs `svrngs share 8096 --upload <the upload written down>`, which keeps
-nothing of Jellyfin's and prints how to make each person an account in
-Jellyfin's own pages; Sam makes Alex, Bo and Cy one each, every library
-ticked, and the export of Jellyfin's users is taken after that. From the
-link on: Sam runs `svrngs new <group>`, which prints the group's link,
-`svrngs://join/<token>`, and keeps running (with `--origin <page>` it also
-prints the link on a page address, for a phone); Sam sends each person the
-link and their Jellyfin name and password. Each of the others:
+apps", call 4, none through a program the lender runs), which nobody is
+told; the dry run of 2026-10-11 took them on one computer, each of the
+three on a computer of their own (`runs/a/2026-10-11/`). Set up before the
+run: Sam starts the sign-in program, `jellyfin-mw --listen 127.0.0.1:8097`,
+pasting its code, with `--keep-back <library>` for any library Sam keeps
+from the group, and lends Jellyfin naming it, `svrngs share 8096 --sign-in
+8097 --upload <the upload written down>`, which keeps nothing of Jellyfin's
+and asks Sam to make nobody an account; the export of Jellyfin's users is
+taken after that. From the link on: Sam runs `svrngs new <group>`, which
+prints the group's link, `svrngs://join/<token>`, and keeps running; Sam
+sends each person the link, and nothing else. Each of the others:
 `svrngs join <link>` on their computer; then `svrngs` alone, which prints
 "Sam's jellyfin, in your browser:" and an address of the lend's own,
 `http://<label>.localhost:<port>/`, opened in their browser (`join` prints
 no lends; the bare command asks for them as it starts). Jellyfin's own page
-asks them to sign in, once, with the name and password Sam sent; then they
-pick a film, play it, and seek with its own seek bar.
+opens signed in as them, an account Sam's program made them as they came,
+with nothing typed; they pick a film, play it, and seek with its own seek
+bar. A library Sam keeps back is not among what they see.
 
 **What Sam is told, and nothing else:** "Share your Jellyfin with the group,
 and send the link to Alex, Bo and Cy."
