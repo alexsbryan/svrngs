@@ -275,7 +275,13 @@ Playwright, through n0's relay (commonwealth-ai `ralph/DECISIONS.md:9909-10013`,
 browser-dial-2, `HTTP/1.1 200 OK`); no phone has dialled. A phone holds no
 copy of the record; it reads and writes through the nodes it dials. A
 person admitted at one computer is known at another after a round of the
-group's ring; a lender's door meeting their pass before its round asks
+group's ring, which the admitting computer starts once it writes the
+`Admit` (bash-first-minute (b): a newcomer's computer listed every lend
+1.05 s after its join, where it had waited 57 s on the issuer's 60 s
+round, `demo/runs/first-minute/2026-10-12/`). A computer that has not
+heard of them yet closes their computer's dial as not admitted, and is
+said so — "has not heard of this computer yet" — never as one that did
+not answer ((c)). A lender's door meeting their pass before its round asks
 the ring once, for at most 10 s, before it answers, so their first
 request is answered by every lender awake (mnp-1: 17 ms after joining,
 where it was refused 58 times until the door's round, 58.5 s,
