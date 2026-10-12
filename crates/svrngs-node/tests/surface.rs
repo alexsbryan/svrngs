@@ -235,6 +235,34 @@ async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
     house.close().await;
 }
 
+/// **A register that cannot be read is said as itself** (REVIEW_FINDINGS
+/// #123): with Alex's copy of the group's seed unreadable, `/v1/groups`
+/// answers `removed: null`, never "not removed", so the home page can say
+/// this computer could not read who is in the group. Red at 09e1484,
+/// which read it `removed: false`.
+#[tokio::test]
+async fn an_unreadable_register_is_not_read_as_not_removed() {
+    use std::os::unix::fs::PermissionsExt;
+    let house = House::new().await;
+    let roster = house
+        .alex
+        .rail()
+        .group_dir(&house.id)
+        .unwrap()
+        .join("roster.json");
+    std::fs::set_permissions(&roster, std::fs::Permissions::from_mode(0o000)).unwrap();
+    let unread = house.alex.rail().register(&house.id).is_err();
+    let (status, body) = house.ask(svrngs_node::surface::GROUPS_ROUTE).await;
+    std::fs::set_permissions(&roster, std::fs::Permissions::from_mode(0o644)).unwrap();
+    assert!(unread, "the plant: Alex's register cannot be read");
+    assert_eq!(status, 200, "{body:#}");
+    assert_eq!(
+        body,
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "person": null, "removed": null }] }),
+    );
+    house.close().await;
+}
+
 /// **A caller off loopback is refused on both** (the u5-1 row): the new
 /// routes stand behind the record API's one check, asked of the routes the
 /// node serves, so a caller at a network address is refused 403

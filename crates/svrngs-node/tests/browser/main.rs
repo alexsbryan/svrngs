@@ -1312,6 +1312,38 @@ async fn the_home_page_tells_a_removed_person(engine: Engine) {
     drop((ada, bo));
 }
 
+in_both_engines!(
+    /// **A register that cannot be read is said as itself** (REVIEW_FINDINGS
+    /// #123; DESIGN §1). Ada's copy of house's seed is unreadable, so
+    /// `/v1/groups` answers `removed: null`; her home page says this
+    /// computer could not read who is in the group, never what it lends.
+    /// Planted, watched failing: home.js as at 09e1484, which read `null`
+    /// as not removed and said "What this group lends cannot be read".
+    the_home_page_says_an_unreadable_register
+);
+async fn the_home_page_says_an_unreadable_register(engine: Engine) {
+    use std::os::unix::fs::PermissionsExt;
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(2)).await;
+    let roster = ada.rail().group_dir(NS).unwrap().join("roster.json");
+    std::fs::set_permissions(&roster, std::fs::Permissions::from_mode(0o000)).unwrap();
+    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
+    let seen = drive(
+        engine,
+        "home.mjs",
+        json!({ "ask": home, "read": "#home section p" }),
+        None,
+    )
+    .await;
+    std::fs::set_permissions(&roster, std::fs::Permissions::from_mode(0o644)).unwrap();
+    assert_eq!(
+        seen["read"], "This computer could not read who is in this group.",
+        "{seen:#}"
+    );
+    drop(ada);
+}
+
 /// Ada's computer removes `who` from house as `svrngs remove` asks it.
 async fn removal(ada: &Node, who: &str) -> svrngs_node::removal::Outcome {
     reqwest::Client::builder()

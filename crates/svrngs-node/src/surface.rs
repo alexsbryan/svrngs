@@ -9,7 +9,8 @@
 //!
 //! - `GET /v1/groups` — each group this computer holds: its id (the
 //!   `namespace` every other route names), its name, this computer's
-//!   person in it, and whether its keeper removed this computer (U7).
+//!   person in it, and whether its keeper removed this computer (U7),
+//!   `null` when its register cannot be read here.
 //! - `GET /v1/lends?namespace=<id>` — what the group's people lend now,
 //!   this computer's own lends among them, each with its lender's person
 //!   and key, its name, kind, limit, how many use it and its declared
@@ -37,7 +38,6 @@ use crate::door::LendRefusal;
 use crate::node::Asking;
 use crate::rail::{namespace_of, standing_of, RailQuery};
 use crate::redeem::SeedText;
-use crate::register::Standing;
 use crate::ring_routes::err;
 use crate::seed::Seed;
 use crate::Person;
@@ -85,8 +85,10 @@ struct Held {
     /// taken out — so it is nobody there.
     person: Option<Person>,
     /// Whether the group's keeper removed this computer (U7): the home
-    /// page says so in a person's words.
-    removed: bool,
+    /// page says so in a person's words. `null` when its register cannot
+    /// be read here, said at warn: could-not-judge, never "not removed"
+    /// (ralph/REVIEW_FINDINGS.md #123).
+    removed: Option<bool>,
 }
 
 /// `GET /v1/groups`.
@@ -105,23 +107,20 @@ async fn groups(State(at): State<Surface>) -> Response {
     let mut held = Vec::with_capacity(namespaces.len());
     for id in namespaces {
         let name = name_of(&at, &id);
-        let removed = rail
-            .register(&id)
-            .is_ok_and(|r| r.removed.contains_key(at.asking.host.actor()));
-        let person = match rail.standing(&id) {
-            Ok(Standing::Members(people)) => {
-                people.get(at.asking.host.actor()).map(|m| m.person.clone())
-            }
-            Ok(other) => {
-                tracing::debug!(target: "surface", namespace = id, standing = ?other, "surface: groups — nobody can be shown to stand in it");
-                None
-            }
+        // One read for both: a group not held or with no seed is the empty
+        // register, said by the rail (`RingRail::register`).
+        let me = at.asking.host.actor();
+        let (person, removed) = match rail.register(&id) {
+            Ok(r) => (
+                r.members.get(me).map(|m| m.person.clone()),
+                Some(r.removed.contains_key(me)),
+            ),
             Err(e) => {
-                tracing::warn!(target: "surface", namespace = id, error = %e, "surface: groups — its register is unreadable, so this computer's person is not known");
-                None
+                tracing::warn!(target: "surface", namespace = id, error = %e, "surface: groups — its register is unreadable, so neither this computer's person nor whether it was removed is known");
+                (None, None)
             }
         };
-        tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?person, removed, "surface: groups — a group held");
+        tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?person, removed = ?removed, "surface: groups — a group held");
         held.push(Held {
             id,
             name,

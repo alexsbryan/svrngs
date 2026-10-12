@@ -437,8 +437,8 @@ person's computers once, one sync request carrying the cut alone
 keeper cut is served, on the members' protocol, only svrngs's refusal
 `removed` (`door::gone`, chosen in `node.rs`'s accept by
 `removed_anywhere`), and a pass it signed is refused the same; `/v1/groups`
-says `removed` for this computer, and the home page and the group's page
-word it. All are merged
+says `removed` for this computer, `null` when its register cannot be read,
+and the home page and the group's page word it. All are merged
 into `api::router` before its loopback check, and the node writes the address it serves on to `<data dir>/api`
 (`api::API_FILE`) at each start. Each lend carries the upload its lender
 declares (`lend::Offered`'s `upload_bps`, required on read, `null` when
