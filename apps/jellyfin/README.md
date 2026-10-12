@@ -39,8 +39,17 @@ jellyfin` first:
 
 `share` asks you no password and says each person is signed in by what
 answers on port 8097, with nothing typed. Each person's account is named
-for them, can watch every library, and is no administrator and can delete
+for them, can watch every library you do not keep back (below), and is no administrator and can delete
 nothing; they are in Dashboard, Users.
+
+**To keep a library back.** Name it as Jellyfin's pages show it, once for
+each, when you start the program:
+
+    apps/jellyfin/mw/target/release/jellyfin-mw --listen 127.0.0.1:8097 --keep-back "Home Videos"
+
+It says what it keeps back, and nobody it signs in sees that library; a
+library you add later is seen by everyone it signs in after. A name your
+Jellyfin has no library by stops it as it starts, naming the ones it has.
 
 If your Jellyfin is not at port 8096, give `share` its port, and the
 program `--jellyfin 127.0.0.1:<its port>`. Someone opening Jellyfin for the

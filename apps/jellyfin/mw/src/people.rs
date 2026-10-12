@@ -42,7 +42,13 @@ pub(crate) struct Signed {
 impl People {
     /// Start the owner. `elevated` is the lender's key, the only thing it
     /// makes accounts with; it never leaves the owner but to Jellyfin.
-    pub(crate) fn start(jellyfin: SocketAddr, elevated: Vec<(String, String)>, plant: Option<Plant>) -> People {
+    /// `keep_back` names the libraries no account it makes may open.
+    pub(crate) fn start(
+        jellyfin: SocketAddr,
+        elevated: Vec<(String, String)>,
+        keep_back: Vec<String>,
+        plant: Option<Plant>,
+    ) -> People {
         let (ask, mut asked) = mpsc::channel::<Ask>(64);
         tokio::spawn(async move {
             let mut known: HashMap<PersonKey, Viewer> = HashMap::new();
@@ -52,7 +58,7 @@ impl People {
             while let Some(a) = asked.recv().await {
                 let signed = match (&one, plant) {
                     (Some(s), Some(Plant::OneDevice)) => Ok(s.clone()),
-                    _ => signed(&mut known, jellyfin, &elevated, &a.who, plant).await,
+                    _ => signed(&mut known, jellyfin, &elevated, &keep_back, &a.who, plant).await,
                 };
                 if let (Ok(s), Some(Plant::OneDevice)) = (&signed, plant) {
                     one = Some(s.clone());
@@ -81,6 +87,7 @@ async fn signed(
     known: &mut HashMap<PersonKey, Viewer>,
     jellyfin: SocketAddr,
     elevated: &[(String, String)],
+    keep_back: &[String],
     who: &Who,
     plant: Option<Plant>,
 ) -> Result<Signed, String> {
@@ -88,7 +95,7 @@ async fn signed(
         let name = viewer::user_name(&who.name, who.key.as_str());
         tracing::info!(key = %who.key.as_str(), person = %who.name, user = %name,
             "mw: a key not seen by this process — finding or making its person's account");
-        let viewer = viewer::provision(jellyfin, elevated, &name).await?;
+        let viewer = viewer::provision(jellyfin, elevated, &name, keep_back).await?;
         known.insert(who.key.clone(), viewer);
     }
     let viewer = known.get(&who.key).expect("inserted above when absent");

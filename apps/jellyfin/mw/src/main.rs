@@ -12,10 +12,14 @@
 //! typed, and holds no token. svrngs neither ships, starts nor supervises it.
 //!
 //!   jellyfin-mw [--listen 127.0.0.1:<port>] [--jellyfin 127.0.0.1:8096]
+//!               [--keep-back <library>]...
 //!
 //! The lender gives it, once, on standard input, an API key from Jellyfin's
 //! Dashboard, API Keys: the only thing it makes accounts with. It prints
-//! `listening on port <port>` and serves until stopped.
+//! `listening on port <port>` and serves until stopped. Each `--keep-back`
+//! names a library, as Jellyfin's pages do, that no account it makes may
+//! open (the mw README §7, item 5); a name Jellyfin has no library by
+//! stops it as it starts.
 //!
 //! JELLYFIN_MW_PLANT names a failure its check plants, never set otherwise:
 //! `one-user`, every person signed in as one account; `let-keyless`, an
@@ -63,6 +67,14 @@ fn run() -> Result<(), String> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let listen = arg(&args, "--listen", "127.0.0.1:0")?;
     let jellyfin = arg(&args, "--jellyfin", "127.0.0.1:8096")?;
+    if args.last().is_some_and(|a| a == "--keep-back") {
+        return Err("--keep-back needs a library's name, as Jellyfin's pages show it".into());
+    }
+    let keep_back: Vec<String> = args
+        .windows(2)
+        .filter(|w| w[0] == "--keep-back")
+        .map(|w| w[1].clone())
+        .collect();
     let plant = match std::env::var("JELLYFIN_MW_PLANT").ok().as_deref() {
         None | Some("") => None,
         Some("one-user") => Some(Plant::OneUser),
@@ -97,8 +109,12 @@ fn run() -> Result<(), String> {
             tracing::warn!(plant = ?p, "mw: a planted failure is on — a check's run, never a lend");
         }
         let server = page::Server::read(jellyfin).await?;
+        viewer::folders(&viewer::libraries(jellyfin, &elevated).await?, &keep_back)?;
         println!("listening on port {port}, signing people in to Jellyfin at {jellyfin}");
-        let people = people::People::start(jellyfin, elevated, plant);
+        if !keep_back.is_empty() {
+            println!("keeping {} back from everyone it signs in", keep_back.join(", "));
+        }
+        let people = people::People::start(jellyfin, elevated, keep_back, plant);
         answer::serve(
             listener,
             answer::At {

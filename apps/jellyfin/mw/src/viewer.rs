@@ -45,6 +45,13 @@
 //! resetting the password to sign a second device in revokes the first's
 //! token (both measured against Jellyfin 12.0.0 on this host, 2026-10-08,
 //! `demo/runs/mw/2026-10-08/mw-1/README.md`).
+//!
+//! # What the person sees
+//!
+//! Every library, unless the lender keeps some back (`--keep-back`,
+//! main.rs; the mw README §7, item 5): then every one but those, by the
+//! ids Jellyfin's own list of libraries gives, written into the policy
+//! with the rest and read back as written ([`folders`], [`folders_are`]).
 
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -145,6 +152,70 @@ fn read_only_policy() -> serde_json::Value {
     serde_json::Value::Object(policy)
 }
 
+/// Which libraries a person's account may open: every one, or every one
+/// but those the lender keeps back. `media` is `GET /Library/MediaFolders`'s
+/// answer, read at each provision, so a library made since is open to the
+/// next person made. A name kept back that Jellyfin has no library by is
+/// refused, never passed over: a lender who misspelled it, or renamed the
+/// library since, would otherwise show it to everyone.
+pub(crate) fn folders(media: &serde_json::Value, keep_back: &[String]) -> Result<serde_json::Value, String> {
+    let libraries: Vec<(&str, &str)> = media
+        .get("Items")
+        .and_then(serde_json::Value::as_array)
+        .ok_or("Jellyfin's list of libraries names none")?
+        .iter()
+        .filter_map(|l| Some((l.get("Name")?.as_str()?, l.get("Id")?.as_str()?)))
+        .collect();
+    if let Some(name) = keep_back.iter().find(|k| !libraries.iter().any(|(n, _)| n == k)) {
+        let names: Vec<&str> = libraries.iter().map(|(n, _)| *n).collect();
+        tracing::debug!(kept_back = %name, libraries = ?names, "mw: folders — a library kept back is not Jellyfin's, refused");
+        return Err(format!(
+            "Jellyfin has no library called \"{name}\" to keep back; its libraries are: {}",
+            names.join(", ")
+        ));
+    }
+    if keep_back.is_empty() {
+        tracing::debug!("mw: folders — no library kept back, every one open");
+        return Ok(serde_json::json!({ "EnableAllFolders": true, "EnabledFolders": [] }));
+    }
+    let open: Vec<&str> = libraries
+        .iter()
+        .filter(|(n, _)| !keep_back.iter().any(|k| k == n))
+        .map(|(_, id)| *id)
+        .collect();
+    tracing::debug!(kept_back = ?keep_back, open = ?open, "mw: folders — every library open but those kept back");
+    Ok(serde_json::json!({ "EnableAllFolders": false, "EnabledFolders": open }))
+}
+
+/// Check the libraries a policy the origin handed back opens are the ones
+/// [`folders`] wrote: `EnableAllFolders` as written, and when false, the
+/// same ids, whatever their order or dashes.
+fn folders_are(user: &serde_json::Value, written: &serde_json::Value) -> Result<(), String> {
+    let policy = user
+        .get("Policy")
+        .ok_or_else(|| "the origin returned a user with no Policy to check".to_string())?;
+    let all = policy.get("EnableAllFolders").and_then(serde_json::Value::as_bool);
+    if all != written["EnableAllFolders"].as_bool() {
+        return Err(format!(
+            "the origin's policy has EnableAllFolders = {all:?}, where {} was written",
+            written["EnableAllFolders"]
+        ));
+    }
+    let ids = |v: &serde_json::Value| -> Option<std::collections::BTreeSet<String>> {
+        v.as_array()?
+            .iter()
+            .map(|i| i.as_str().map(|s| s.replace('-', "").to_lowercase()))
+            .collect()
+    };
+    if all == Some(false) && ids(&policy["EnabledFolders"]) != ids(&written["EnabledFolders"]) {
+        return Err(format!(
+            "the origin's policy opens the libraries {}, where {} was written",
+            policy["EnabledFolders"], written["EnabledFolders"]
+        ));
+    }
+    Ok(())
+}
+
 /// Fields `UserPolicy` declares `required` with `minLength: 1`, so a partial
 /// document is refused whole. Read from the running origin's own OpenAPI
 /// (`target/ralph/jf-inventory/openapi.json`, Jellyfin 12.0.0:
@@ -158,14 +229,15 @@ fn read_only_policy() -> serde_json::Value {
 const PROVIDER_IDS: [&str; 2] = ["AuthenticationProviderId", "PasswordResetProviderId"];
 
 /// The document `POST /Users/{id}/Policy` actually takes: the policy the
-/// origin handed back, with [`read_only_policy`]'s keys written over it.
+/// origin handed back, with [`read_only_policy`]'s keys and the libraries
+/// [`folders`] opens written over it.
 ///
 /// `POST .../Policy` REPLACES a user's whole policy — it is not a patch. Sent
 /// the bare read-only keys, Jellyfin 12 answers 400 naming the two required
 /// provider ids and writes nothing, which is what shipped until now: the
 /// account stayed at its creation defaults and `offer` declared no viewer at
 /// all (measured 2026-09-19, `target/ring-room-rr2-demo/room-holder-setup-little.out:10`).
-fn merge_read_only(base: &serde_json::Value) -> Result<serde_json::Value, String> {
+fn merge_read_only(base: &serde_json::Value, folders: &serde_json::Value) -> Result<serde_json::Value, String> {
     let base = base
         .get("Policy")
         .and_then(serde_json::Value::as_object)
@@ -185,6 +257,8 @@ fn merge_read_only(base: &serde_json::Value) -> Result<serde_json::Value, String
     for (key, value) in read_only_policy()
         .as_object()
         .expect("read_only_policy builds an object")
+        .iter()
+        .chain(folders.as_object().into_iter().flatten())
     {
         merged.insert(key.clone(), value.clone());
     }
@@ -212,12 +286,32 @@ fn policy_is_read_only(user: &serde_json::Value) -> Result<(), String> {
     Ok(())
 }
 
-/// Create (or find) the read-only account `name` on `origin` and prove its
-/// policy.
+/// Jellyfin's list of its libraries, `GET /Library/MediaFolders`, asked
+/// with the lender's key: what [`folders`] reads.
+pub(crate) async fn libraries(origin: SocketAddr, elevated: &[(String, String)]) -> Result<serde_json::Value, String> {
+    let media = call(
+        &client()?,
+        elevated,
+        reqwest::Method::GET,
+        origin,
+        "/Library/MediaFolders",
+        None,
+    )
+    .await?;
+    serde_json::from_str(&media).map_err(|e| format!("the origin's list of libraries is not JSON ({e})"))
+}
+
+/// Create (or find) the read-only account `name` on `origin`, opening every
+/// library but those in `keep_back`, and prove its policy.
 ///
 /// `elevated` is the key the lender gave the middleware — the only thing
 /// here that can create a user. It is used on Jellyfin's API alone.
-pub(crate) async fn provision(origin: SocketAddr, elevated: &[(String, String)], name: &str) -> Result<Viewer, String> {
+pub(crate) async fn provision(
+    origin: SocketAddr,
+    elevated: &[(String, String)],
+    name: &str,
+    keep_back: &[String],
+) -> Result<Viewer, String> {
     if elevated.is_empty() {
         return Err("no key was given to the middleware, so no account can be created — \
              start it with the key from Jellyfin's Dashboard, API Keys"
@@ -307,6 +401,7 @@ pub(crate) async fn provision(origin: SocketAddr, elevated: &[(String, String)],
     .await?;
     let before: serde_json::Value =
         serde_json::from_str(&before).map_err(|e| format!("the origin's user document is not JSON ({e}): {before}"))?;
+    let open = folders(&libraries(origin, elevated).await?, keep_back)?;
 
     call(
         &client,
@@ -314,7 +409,7 @@ pub(crate) async fn provision(origin: SocketAddr, elevated: &[(String, String)],
         reqwest::Method::POST,
         origin,
         &format!("/Users/{id}/Policy"),
-        Some(merge_read_only(&before)?),
+        Some(merge_read_only(&before, &open)?),
     )
     .await?;
 
@@ -332,6 +427,7 @@ pub(crate) async fn provision(origin: SocketAddr, elevated: &[(String, String)],
     let back: serde_json::Value =
         serde_json::from_str(&back).map_err(|e| format!("the origin's user document is not JSON ({e}): {back}"))?;
     policy_is_read_only(&back)?;
+    folders_are(&back, &open)?;
 
     tracing::info!(
         %origin,
@@ -442,7 +538,17 @@ mod tests {
         for (key, value) in read_only_policy().as_object().unwrap() {
             policy[key] = value.clone();
         }
+        policy["EnableAllFolders"] = serde_json::Value::Bool(true);
         serde_json::json!({ "Id": id, "Policy": policy })
+    }
+
+    /// Jellyfin's list of libraries, as `GET /Library/MediaFolders` answers:
+    /// Sam's films, and home videos Sam may keep back.
+    fn media() -> serde_json::Value {
+        serde_json::json!({ "Items": [
+            { "Name": "Movies", "Id": "f137a2dd21bbc1b99aa5c0f6bf02a805" },
+            { "Name": "Home Videos", "Id": "0c8a2c2a6b9f4e0e8f1d3c5b7a9e1d2f" },
+        ], "TotalRecordCount": 2 })
     }
 
     /// A person new to the origin is made an account under their own name,
@@ -455,9 +561,10 @@ mod tests {
             ("/Users/New", serde_json::json!({ "Id": "u1" })),
             ("/Users/u1", read_back("u1")),
             ("/Users/u1/Policy", serde_json::json!({})),
+            ("/Library/MediaFolders", media()),
         ])
         .await;
-        let viewer = provision(o.addr, &declared("key"), "Ana-0123456789abcdef")
+        let viewer = provision(o.addr, &declared("key"), "Ana-0123456789abcdef", &[])
             .await
             .expect("a new person provisions");
         assert_eq!(viewer.id, "u1");
@@ -479,9 +586,10 @@ mod tests {
             ("/Users/Password?userId=u1", serde_json::json!({})),
             ("/Users/u1", read_back("u1")),
             ("/Users/u1/Policy", serde_json::json!({})),
+            ("/Library/MediaFolders", media()),
         ])
         .await;
-        let viewer = provision(o.addr, &declared("key"), "Ana-0123456789abcdef")
+        let viewer = provision(o.addr, &declared("key"), "Ana-0123456789abcdef", &[])
             .await
             .expect("a found person provisions");
         assert_eq!(viewer.id, "u1");
@@ -491,6 +599,78 @@ mod tests {
             asked.iter().any(|l| l.contains("/Users/Password?userId=u1")),
             "{asked:?}"
         );
+    }
+
+    /// A library the lender keeps back is in no account's policy: every
+    /// library is no longer open, and the others are, by Jellyfin's ids.
+    #[test]
+    fn a_library_kept_back_is_left_out_of_the_account() {
+        let open = folders(&media(), &["Home Videos".to_string()]).expect("a library Jellyfin has");
+        assert_eq!(open["EnableAllFolders"], serde_json::json!(false));
+        assert_eq!(
+            open["EnabledFolders"],
+            serde_json::json!(["f137a2dd21bbc1b99aa5c0f6bf02a805"])
+        );
+        let merged = merge_read_only(&origin_policy(), &open).expect("a stated policy merges");
+        assert_eq!(merged["EnableAllFolders"], serde_json::json!(false));
+        assert_eq!(merged["EnabledFolders"], open["EnabledFolders"]);
+    }
+
+    /// None kept back, every library is open, as before `--keep-back`.
+    #[test]
+    fn no_library_kept_back_opens_every_one() {
+        let open = folders(&media(), &[]).expect("nothing to refuse");
+        assert_eq!(open["EnableAllFolders"], serde_json::json!(true));
+    }
+
+    /// Negative: a name Jellyfin has no library by is refused by name, with
+    /// the ones it has, never passed over to open everything.
+    #[test]
+    fn a_library_kept_back_that_jellyfin_has_not_is_refused() {
+        let got = folders(&media(), &["Home Video".to_string()]).unwrap_err();
+        assert!(
+            got.contains("\"Home Video\"") && got.contains("Movies, Home Videos"),
+            "{got}"
+        );
+    }
+
+    /// Negative: an origin whose policy, read back, still opens the library
+    /// kept back is refused, whether it kept every library open or listed it.
+    #[test]
+    fn an_origin_that_opens_a_library_kept_back_is_refused() {
+        let open = folders(&media(), &["Home Videos".to_string()]).unwrap();
+        let all = serde_json::json!({ "Policy": { "EnableAllFolders": true, "EnabledFolders": [] } });
+        assert!(folders_are(&all, &open).unwrap_err().contains("EnableAllFolders"));
+        let listed = serde_json::json!({ "Policy": { "EnableAllFolders": false,
+            "EnabledFolders": ["f137a2dd21bbc1b99aa5c0f6bf02a805", "0c8a2c2a6b9f4e0e8f1d3c5b7a9e1d2f"] } });
+        assert!(folders_are(&listed, &open).unwrap_err().contains("0c8a2c2a"));
+        let dashed = serde_json::json!({ "Policy": { "EnableAllFolders": false,
+            "EnabledFolders": ["F137A2DD-21BB-C1B9-9AA5-C0F6BF02A805"] } });
+        assert_eq!(folders_are(&dashed, &open), Ok(()));
+    }
+
+    /// Kept back, a person's account whose policy the origin left opening
+    /// every library is no account to answer with: provision refuses it.
+    #[tokio::test]
+    async fn a_person_whose_account_still_opens_every_library_is_refused() {
+        let o = origin(vec![
+            ("/Users", serde_json::json!([])),
+            ("/Users/New", serde_json::json!({ "Id": "u1" })),
+            ("/Users/u1", read_back("u1")),
+            ("/Users/u1/Policy", serde_json::json!({})),
+            ("/Library/MediaFolders", media()),
+        ])
+        .await;
+        let got = provision(
+            o.addr,
+            &declared("key"),
+            "Ana-0123456789abcdef",
+            &["Home Videos".to_string()],
+        )
+        .await
+        .err()
+        .expect("an account opening what is kept back is refused");
+        assert!(got.contains("EnableAllFolders"), "{got}");
     }
 
     /// Two keys are two accounts though their people share a name; the
@@ -574,7 +754,7 @@ mod tests {
     /// assertion that goes red if the partial document comes back.
     #[test]
     fn the_merged_policy_carries_the_origins_required_provider_ids() {
-        let merged = merge_read_only(&origin_policy()).expect("a stated policy merges");
+        let merged = merge_read_only(&origin_policy(), &serde_json::json!({})).expect("a stated policy merges");
         for key in PROVIDER_IDS {
             assert_eq!(
                 merged.get(key).and_then(serde_json::Value::as_str),
@@ -588,7 +768,7 @@ mod tests {
     /// document, so every key this verb decides must be in what it sends.
     #[test]
     fn the_merged_policy_overrules_every_right_a_viewer_must_not_have() {
-        let merged = merge_read_only(&origin_policy()).expect("a stated policy merges");
+        let merged = merge_read_only(&origin_policy(), &serde_json::json!({})).expect("a stated policy merges");
         policy_is_read_only(&serde_json::json!({ "Policy": merged.clone() }))
             .expect("what is sent must satisfy what is checked");
         assert_eq!(merged.get("EnableMediaPlayback"), Some(&serde_json::json!(true)));
@@ -604,7 +784,7 @@ mod tests {
     fn a_policy_missing_a_provider_id_is_refused_not_invented() {
         let mut doc = origin_policy();
         doc["Policy"].as_object_mut().unwrap().remove("PasswordResetProviderId");
-        let got = merge_read_only(&doc).unwrap_err();
+        let got = merge_read_only(&doc, &serde_json::json!({})).unwrap_err();
         assert!(
             got.contains("PasswordResetProviderId"),
             "the refusal must name the field the origin left unstated: {got}"
