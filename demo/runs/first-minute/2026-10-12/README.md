@@ -67,3 +67,19 @@ The reading the row gave, line by line:
 
 So the minute is: the join, under 1 s; then waiting on the issuer's next
 round, about 56 s here, up to 60 s; then under 0.1 s to list.
+
+## After (b): the redeem route wakes the round (`data/woken/`)
+
+The same run, `run.py woken`, on the commit that makes the redeem route
+wake the round once it writes an `Admit` (`crates/svrngs-node/src/redeem.rs`,
+`redeem_route`). The 1-minute load was 40.0 at its start
+(`data/woken/events.jsonl`). Alex's join started at 15:15:14.356 UTC.
+
+| at | what | where |
+|---|---|---|
+| +0.625 s | Sam writes Alex's `Admit` and wakes the round | `sam.log`, "redeem: the round woken" |
+| +0.643 s | the round, 17 ms, pushes the `Admit` to Ana | `sam.log`, "ring sync: round … ops_pushed=1 round_ms=17" |
+| +1.010 s | Ana admits Alex's computer, the first time it dials | `ana.log`; no refusal of Alex's key there |
+| +1.053 s | Alex's first look ends listing both lends, `unanswered: []` | `alex.log`; `looks.json`, its one look, begun at 648 ms |
+
+Ana refused Alex's computer 0 times, against 100 before.

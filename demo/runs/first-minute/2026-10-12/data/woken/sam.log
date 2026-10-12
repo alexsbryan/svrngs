@@ -1,0 +1,51 @@
+2026-10-12T15:15:10.716528Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/tmp/fm-w/sam/.svrngs"
+2026-10-12T15:15:10.717944Z DEBUG cli: cli: data dir claimed lock=/tmp/fm-w/sam/.svrngs/lock
+2026-10-12T15:15:10.734337Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=c7267fbad17ac8de4741ee6a480e23b6a114dcb685821c31be5bfefe0983c03d
+2026-10-12T15:15:10.817036Z  INFO folder: folder: the store is open untagged=0
+2026-10-12T15:15:10.818942Z  INFO rails: api: serving the record to this computer's apps addr=127.0.0.1:56219
+2026-10-12T15:15:10.819636Z  INFO node: node: endpoint bound with the signing key actor="c7267fbad17ac8de4741ee6a480e23b6a114dcb685821c31be5bfefe0983c03d" data_dir=/tmp/fm-w/sam/.svrngs dial=Some("c7267fbad17ac8de4741ee6a480e23b6a114dcb685821c31be5bfefe0983c03d@192.168.1.4:56330") api=127.0.0.1:56219
+2026-10-12T15:15:10.820162Z  INFO svrngs_node::ring_sync: ring sync: loop started interval_secs=60
+2026-10-12T15:15:10.821722Z DEBUG cli: cli: group made group=5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6 name=trip page=None
+2026-10-12T15:15:11.150190Z  INFO endpoint{id=c7267fbad1}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was None
+2026-10-12T15:15:11.267572Z DEBUG cli: cli: waited for a relay before printing the link online=true
+2026-10-12T15:15:11.267680Z DEBUG cli: cli: the link carries the key alone — lookup finds this computer
+2026-10-12T15:15:11.275229Z DEBUG cli: cli: link minted group=5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6 invite=b2230b1b7a4dbc619f5b1c2115789afc8d51f40018e35c6f6797e34003786681 until=1791904511
+2026-10-12T15:15:11.349045Z DEBUG surface: surface: groups — a group held namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" name=Some("trip") person=Some(Person(Name("Sam"))) removed=Some(false) removals=Some(0) folders=Some([])
+2026-10-12T15:15:12.158357Z DEBUG node: node: admitted to redeem a link — any dialer may actor="c20f8f85ad796bd3af9c6c9a5a1955ef33855003fe8bb0c8bf8e1b83b275663a"
+2026-10-12T15:15:12.159999Z DEBUG redeem: redeem: asked — the link's key is named by this node's Invite; answering its group's seed group="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" key=c20f8f85ad796bd3af9c6c9a5a1955ef33855003fe8bb0c8bf8e1b83b275663a invite=b2230b1b7a4dbc619f5b1c2115789afc8d51f40018e35c6f6797e34003786681
+2026-10-12T15:15:12.210327Z DEBUG node: node: admitted to redeem a link — any dialer may actor="c20f8f85ad796bd3af9c6c9a5a1955ef33855003fe8bb0c8bf8e1b83b275663a"
+2026-10-12T15:15:12.219328Z DEBUG redeem: redeem: admitted — the Admit is written, naming the device the request named group="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" key=c20f8f85ad796bd3af9c6c9a5a1955ef33855003fe8bb0c8bf8e1b83b275663a admit=276efab3788a3567e797cd53d4a44bf94211b37aa39cc3757a2f549753e7a41c device=Computer
+2026-10-12T15:15:12.219425Z DEBUG redeem: redeem: the round woken, so the group's computers hear of the newcomer now key=c20f8f85ad796bd3af9c6c9a5a1955ef33855003fe8bb0c8bf8e1b83b275663a admit=276efab3788a3567e797cd53d4a44bf94211b37aa39cc3757a2f549753e7a41c
+2026-10-12T15:15:12.219587Z DEBUG svrngs_node::ring_sync: ring sync: woken by a local write rather than the interval
+2026-10-12T15:15:12.221047Z DEBUG node: node: a member stands in the group, to dial namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" member=ana/c20f8f85
+2026-10-12T15:15:12.221167Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["ana/c20f8f85"] skipped_offline=[]
+2026-10-12T15:15:12.221334Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" offered_to=["ana/c20f8f85"] skipped_not_standing=[]
+2026-10-12T15:15:12.224605Z DEBUG node: node: admitted — the dialer stands in a group held here actor="c20f8f85ad796bd3af9c6c9a5a1955ef33855003fe8bb0c8bf8e1b83b275663a" namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6"
+2026-10-12T15:15:12.235392Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" url="http://127.0.0.1:20370/internal/ring/sync" chunk=1 pulled=0 pushed=0 peer_sent=0 offered=2 more_for_peer=false
+2026-10-12T15:15:12.236830Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" url="http://127.0.0.1:20370/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-12T15:15:12.236885Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=0 round_ms=17
+2026-10-12T15:15:12.311616Z DEBUG node: node: a member stands in the group, to dial namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" member=ana/c20f8f85
+2026-10-12T15:15:12.313366Z DEBUG node: node: lends — the computer answered actor="c20f8f85ad796bd3af9c6c9a5a1955ef33855003fe8bb0c8bf8e1b83b275663a" lends=1
+2026-10-12T15:15:12.313495Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=0
+2026-10-12T15:15:12.313642Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" lent=2 unanswered=0
+2026-10-12T15:15:12.870184Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:15:13.872242Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:15:14.919842Z DEBUG node: node: admitted to redeem a link — any dialer may actor="c5eb6ab8bcbb948cbdf65ffea852fda079cfa107070ed2463da60638215df932"
+2026-10-12T15:15:14.933896Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:15:14.961234Z DEBUG redeem: redeem: asked — the link's key is named by this node's Invite; answering its group's seed group="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" key=c5eb6ab8bcbb948cbdf65ffea852fda079cfa107070ed2463da60638215df932 invite=b2230b1b7a4dbc619f5b1c2115789afc8d51f40018e35c6f6797e34003786681
+2026-10-12T15:15:14.965607Z DEBUG node: node: admitted to redeem a link — any dialer may actor="c5eb6ab8bcbb948cbdf65ffea852fda079cfa107070ed2463da60638215df932"
+2026-10-12T15:15:14.980764Z DEBUG redeem: redeem: admitted — the Admit is written, naming the device the request named group="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" key=c5eb6ab8bcbb948cbdf65ffea852fda079cfa107070ed2463da60638215df932 admit=d414e0b74c721520c8f2b029274b2100a6e60c5ad5c6a632723097a604622d63 device=Computer
+2026-10-12T15:15:14.980908Z DEBUG redeem: redeem: the round woken, so the group's computers hear of the newcomer now key=c5eb6ab8bcbb948cbdf65ffea852fda079cfa107070ed2463da60638215df932 admit=d414e0b74c721520c8f2b029274b2100a6e60c5ad5c6a632723097a604622d63
+2026-10-12T15:15:14.981046Z DEBUG svrngs_node::ring_sync: ring sync: woken by a local write rather than the interval
+2026-10-12T15:15:14.982609Z DEBUG node: node: a member stands in the group, to dial namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" member=ana/c20f8f85
+2026-10-12T15:15:14.982702Z DEBUG node: node: a member stands in the group, to dial namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" member=alex/c5eb6ab8
+2026-10-12T15:15:14.982836Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["ana/c20f8f85", "alex/c5eb6ab8"] skipped_offline=[]
+2026-10-12T15:15:14.983035Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" offered_to=["ana/c20f8f85", "alex/c5eb6ab8"] skipped_not_standing=[]
+2026-10-12T15:15:14.986706Z DEBUG node: node: admitted — the dialer stands in a group held here actor="c5eb6ab8bcbb948cbdf65ffea852fda079cfa107070ed2463da60638215df932" namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6"
+2026-10-12T15:15:14.992319Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" url="http://127.0.0.1:20370/internal/ring/sync" chunk=1 pulled=0 pushed=1 peer_sent=2 offered=1 more_for_peer=false
+2026-10-12T15:15:14.993293Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" url="http://127.0.0.1:20370/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-12T15:15:14.998191Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" url="http://127.0.0.1:21706/internal/ring/sync" chunk=1 pulled=0 pushed=0 peer_sent=0 offered=3 more_for_peer=false
+2026-10-12T15:15:14.998885Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" url="http://127.0.0.1:21706/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-12T15:15:14.998913Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=2 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=17
+2026-10-12T15:15:15.411058Z DEBUG node: node: asked to stop by SIGTERM
+2026-10-12T15:15:15.411085Z DEBUG cli: cli: stopping

@@ -32,8 +32,9 @@
 //! starts a round when the append door signs onto a journal or a member comes
 //! back Online, so the sixty seconds
 //! is a ceiling on idleness rather than on a write. (svrngs: the record
-//! API's append door nudges, [`append`], and the member door when a pass's
-//! signer is unknown to it, [`AskRound`], waiting on the round it starts.)
+//! API's append door nudges, [`append`]; the redeem route once it writes
+//! an `Admit`; and the member door when a pass's signer is unknown to it,
+//! [`AskRound`], waiting on the round it starts.)
 //!
 //! # The exchange
 //!

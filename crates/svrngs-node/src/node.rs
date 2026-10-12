@@ -313,7 +313,7 @@ impl Node {
         })
         .merge(crate::door::router(asking.door.clone()))
         .merge(people_router(asking));
-        let redeem = crate::redeem::router(rail, seeds);
+        let redeem = crate::redeem::router(rail, seeds, AskRound::new(nudge.clone(), &rounds));
         // A dialer the keeper cut, on the members' protocol, is told so in
         // words on every route, and served nothing else (U7).
         let gone = axum::Router::new().fallback(|| async { crate::door::gone() });

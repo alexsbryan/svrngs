@@ -632,6 +632,66 @@ async fn the_redeem_route_writes_the_device_the_request_names() {
     sam.node.endpoint().close().await;
 }
 
+/// How soon a newcomer's computer lists what the group's other computers
+/// lend once let in (bash-first-minute (b)). The split
+/// (`demo/runs/first-minute/2026-10-12/README.md`): the join took 0.7 s,
+/// listing took under 0.1 s once Ana's computer held the `Admit`, and the
+/// rest, 56 s, was waiting for Sam's round at its 60 s period. A round's
+/// exchange on loopback took 14 ms there; five seconds holds one ask cut at
+/// `ANSWER_WITHIN`, 3 s, and a loaded host, and is far inside the 51-56 s
+/// Demo C's dry run measured.
+const HEARD_WITHIN: Duration = Duration::from_secs(5);
+
+/// A newcomer is heard by the group at once (bash-first-minute (b); Demo
+/// C's dry run, finding 8): Ana is in Sam's group and lends one thing;
+/// Alex is let in by Sam's computer, and Alex's computer lists Ana's lend,
+/// asked of Ana's computer, within [`HEARD_WITHIN`] — every round's period
+/// left at its 60 s. Watched failing with the redeem route waking no round.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_newcomer_lists_what_every_computer_lends_within_seconds() {
+    let sam = computer(1).await;
+    let (_, printed) = cli::new_group(&sam.node, name("house"), name("Sam"), None, &no_relay())
+        .await
+        .expect("Sam makes house");
+    let link = parsed(&printed, &sam.node);
+    let ana = computer(2).await;
+    knows(&ana, &sam.node);
+    cli::join_group(&ana.node, &ana.key, &link, &name("ana"))
+        .await
+        .expect("Ana is let in");
+    let lends = svrngs_node::lend::lends_dir(ana._dir.path());
+    std::fs::create_dir_all(&lends).unwrap();
+    let music = serde_json::json!({ "port": 4533, "kind": "navidrome", "limit": 3 });
+    std::fs::write(lends.join("music.json"), music.to_string()).unwrap();
+    knows(&sam, &ana.node);
+    let alex = computer(3).await;
+    knows(&alex, &sam.node);
+    knows(&alex, &ana.node);
+    cli::join_group(&alex.node, &alex.key, &link, &name("alex"))
+        .await
+        .expect("Alex is let in");
+    let started = Instant::now();
+    loop {
+        let lends = alex.node.lends().await;
+        if lends.lent.iter().any(|l| l.person.as_str() == "ana") {
+            eprintln!(
+                "Alex lists Ana's lend {:?} after being let in",
+                started.elapsed()
+            );
+            break;
+        }
+        assert!(
+            started.elapsed() < HEARD_WITHIN,
+            "Alex's computer lists no lend of Ana's {:?} after being let in: {lends:?}",
+            started.elapsed()
+        );
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    for c in [&sam, &ana, &alex] {
+        c.node.endpoint().close().await;
+    }
+}
+
 /// A member's later link opens the page the founder's did (u2-7): Sam
 /// makes house on x.example; Alex, let in by its https link, keeps that
 /// origin, and the link Alex prints with no `--origin` is on x.example

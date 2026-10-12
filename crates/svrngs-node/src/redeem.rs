@@ -26,7 +26,9 @@
 //! new key does not stand already, and that `membership` over the journal
 //! with the redeeming `Admit` in it counts that `Admit` — the one decider of
 //! a lapsed, closed or voided link, and of the consent (svrngs-core
-//! membership.rs). Only then is the `Admit` written, and the answer sent.
+//! membership.rs). Only then is the `Admit` written, the round woken so
+//! the group's other computers hear of the newcomer now, and the answer
+//! sent.
 //!
 //! Every refusal is answered in one sentence, [`REFUSAL`], so the answer
 //! never says which groups the node holds or why — but a name that does not
@@ -53,7 +55,7 @@ use serde::{Deserialize, Serialize};
 use crate::iroh::{Alpn, Dialer, Endpoint, EndpointAddr, HttpBridge};
 use crate::register::Standing;
 use crate::ring_routes::err;
-use crate::ring_sync::peer_client;
+use crate::ring_sync::{peer_client, AskRound};
 use crate::{Name, NotAName, OpId, Person, RailError, RingRail};
 use svrngs_core::{RedeemRefusal, Refused as CommitRefused};
 
@@ -109,19 +111,21 @@ enum NotAdmitted {
     Unjudged(RailError),
 }
 
-/// What the routes read: this node's journals, and how it reads a seed.
+/// What the routes read: this node's journals, how it reads a seed, and
+/// the round, woken once an `Admit` is written.
 #[derive(Clone)]
 struct Issuer {
     rail: Arc<RingRail>,
     seeds: SeedText,
+    ring: AskRound,
 }
 
 /// The ask and redemption routes, served on [`Alpn::Redeem`] to any dialer.
-pub fn router(rail: Arc<RingRail>, seeds: SeedText) -> axum::Router {
+pub fn router(rail: Arc<RingRail>, seeds: SeedText, ring: AskRound) -> axum::Router {
     axum::Router::new()
         .route(ASK_ROUTE, post(ask_route))
         .route(ROUTE, post(redeem_route))
-        .with_state(Issuer { rail, seeds })
+        .with_state(Issuer { rail, seeds, ring })
 }
 
 async fn ask_route(
@@ -139,6 +143,15 @@ async fn redeem_route(
     Json(req): Json<RedeemRequest>,
 ) -> Response {
     let redeemed = serve_redeem(&issuer.rail, dialer.map(|Extension(d)| d.actor()), &req);
+    // The group's other computers hear of the newcomer now, not at the
+    // round's next interval: until they hold the `Admit` each refuses the
+    // newcomer's computer, and waiting on the interval was 56 of a
+    // newcomer's 57 s (`demo/runs/first-minute/2026-10-12/README.md`).
+    if let Ok(Redeemed::Admitted(admit)) = &redeemed {
+        tracing::debug!(target: "redeem", key = %req.key, admit = %admit,
+            "redeem: the round woken, so the group's computers hear of the newcomer now");
+        issuer.ring.wake();
+    }
     answer("redeem", &req.key, redeemed)
 }
 
