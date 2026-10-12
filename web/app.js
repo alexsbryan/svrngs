@@ -78,7 +78,12 @@ const PEOPLE_LENDS = '/people/lends';
 const PASS_LIFE = 12 * 60 * 60;
 
 // Why the page stopped, in a person's words.
-class Said extends Error {}
+class Said extends Error {
+  constructor(words, status) {
+    super(words);
+    this.status = status;
+  }
+}
 
 function show(words, good) {
   heading.textContent = words;
@@ -101,7 +106,7 @@ const joining = (status) =>
     : 'The computer that sent this link cannot let anyone in just now. Try again later.';
 
 // POST `body`, JSON, on `dialled`: the answer's text, or the computer's
-// refusal in the words `refused` gives its status.
+// refusal in the words `refused` gives its status and text.
 async function post(dialled, path, body, refused = joining) {
   const bytes = new TextEncoder().encode(body);
   const res = await dialled.fetch(
@@ -113,7 +118,7 @@ async function post(dialled, path, body, refused = joining) {
   const text = await res.text();
   if (res.ok) return text;
   trace(`PAGE: ${path} answered ${res.status}: ${text}`);
-  throw new Said(refused(res.status));
+  throw new Said(refused(res.status, text), res.status);
 }
 
 // The person's name, asked once, in the group's name.
@@ -162,8 +167,19 @@ async function join(token, kept) {
     }
     heading.textContent = `Joining ${group.name}…`;
     issuer = await reach(connect_to_join(key, token), away);
-    await post(issuer, '/redeem', body);
-    await issuer.close();
+    // 409: someone in the group goes by the name (bash-person), so another
+    // is asked, saying whose it is.
+    const taken = (status, text) =>
+      status === 409 ? `Someone in ${group.name} already goes by ${JSON.parse(text).error}. Join under another name.` : joining(status);
+    try {
+      await post(issuer, '/redeem', body, taken);
+    } catch (e) {
+      if (e.status !== 409) throw e;
+      why = e.message;
+      continue;
+    } finally {
+      await issuer.close();
+    }
     const person = JSON.parse(body).person;
     await store.keep({ id: group.id, name: group.name, person, token, key });
     trace(`PAGE: joined ${group.id} as ${person}; the key is kept sealed`);

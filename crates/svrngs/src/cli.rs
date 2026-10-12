@@ -451,6 +451,8 @@ pub enum Refusal {
     NoNameToJoin,
     #[error("this link lets nobody new in: ask whoever sent it for a new one")]
     LinkRefused,
+    #[error("someone in the group already goes by {0}, so you were not let in as them: join under another name, with `--as <your name>` after the link")]
+    NameTaken(Name),
     #[error(
         "the computer that sent this link cannot be reached; it may be off, so try again later"
     )]
@@ -515,6 +517,7 @@ impl Refusal {
             Refusal::NoName(_)
             | Refusal::NoNameToJoin
             | Refusal::LinkRefused
+            | Refusal::NameTaken(_)
             | Refusal::NoGroup(_)
             | Refusal::Ambiguous { .. }
             | Refusal::NotIn(_)
@@ -1372,6 +1375,7 @@ fn not_let_in(e: RedeemError) -> Refusal {
     tracing::debug!(target: "cli", error = %e, "cli: join — not let in");
     match e {
         RedeemError::Refused(_) => Refusal::LinkRefused,
+        RedeemError::NameTaken(holder) => Refusal::NameTaken(holder),
         RedeemError::Unjudged | RedeemError::NoAnswer(_) => Refusal::IssuerAway,
     }
 }

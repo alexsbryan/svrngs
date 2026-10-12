@@ -572,6 +572,52 @@ async fn a_name_that_is_not_one_is_refused_and_nothing_is_written() {
     }
 }
 
+/// **A name binds once where a stranger gives one** (bash-person; the
+/// charter's "The name"). Sam founds house; a second computer joining Sam's
+/// link as `sam` is refused, told who goes by it and how to join under
+/// another name, exit 1, and Sam's record is byte for byte what it was; the
+/// same computer joining as `Hal` is let in.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_name_someone_in_the_group_goes_by_is_refused_with_how_to_join() {
+    let sam = computer(1).await;
+    let (seed, printed) = cli::new_group(&sam.node, name("house"), name("Sam"), None, &no_relay())
+        .await
+        .expect("Sam makes house");
+    let group = seed.id();
+    let link = parsed(&printed, &sam.node);
+    let file = sam
+        .node
+        .rail()
+        .group_dir(&group)
+        .unwrap()
+        .join("ring_oplog.jsonl");
+    let before = std::fs::read_to_string(&file).unwrap();
+    let hal = computer(9).await;
+    knows(&hal, &sam.node);
+    let refused = cli::join_group(&hal.node, &hal.key, &link, &name("sam"))
+        .await
+        .expect_err("a second sam is refused");
+    let words = refused.to_string();
+    assert!(
+        matches!(&refused, Refusal::NameTaken(holder) if *holder == name("Sam")),
+        "{refused:?}"
+    );
+    assert!(
+        words.contains("already goes by Sam") && words.contains("--as <your name>"),
+        "{words}"
+    );
+    assert_eq!(refused.exit_code(), 1);
+    assert_eq!(std::fs::read_to_string(&file).unwrap(), before);
+    assert!(!stands(&sam.node, &group, &hal.key));
+    cli::join_group(&hal.node, &hal.key, &link, &name("Hal"))
+        .await
+        .expect("Hal is let in");
+    assert!(stands(&sam.node, &group, &hal.key));
+    for c in [&sam, &hal] {
+        c.node.endpoint().close().await;
+    }
+}
+
 /// The redeem route writes what the request names (u4-1; DESIGN §3
 /// "Joining", call 2): Pia's request names a browser, and Sam's record holds
 /// one `Admit` of Pia's key naming a browser, at line version 4, and Sam's

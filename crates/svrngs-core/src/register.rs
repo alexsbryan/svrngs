@@ -11,6 +11,10 @@ use core::convert::Infallible;
 use crate::{Admission, Device, InviteFault, OpId, Person, RailAct, Redemption};
 
 /// The issuer's node asked to admit `key` as `person` through its `Invite`.
+/// Decided at the issuer's write, where a link holder's name arrives, and
+/// not in the fold, where a rule of "first in the rail's order binds" would
+/// let any member's computer evict a person by a backdated `Admit` under
+/// their name (ralph/next/bash/CHARTER.md, "The name").
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Redeem {
     pub invite: OpId,
@@ -35,6 +39,10 @@ pub enum RedeemRefusal {
     Fault(InviteFault),
     /// The register neither counted the `Admit` nor said why.
     Uncounted,
+    /// A standing person goes by the name, in some case: a name binds once
+    /// where a stranger gives one (bash-person), so a link lets no one in
+    /// as someone already in. Who holds it, as they are named.
+    NameTaken(Person),
 }
 
 impl Command for Redeem {
@@ -57,6 +65,15 @@ impl Command for Redeem {
             tracing::debug!(target: "redeem", key = %self.key,
                 "redeem: the key stands already, so nothing is written");
             return Ok(Vec::new());
+        }
+        let folded = self.person.as_str().to_lowercase();
+        let holder = (register.standing.iter())
+            .filter_map(|k| register.person_for(k))
+            .find(|p| p.as_str().to_lowercase() == folded);
+        if let Some(holder) = holder {
+            tracing::debug!(target: "redeem", key = %self.key, person = %self.person, %holder,
+                "redeem: refused — a standing person goes by the name, so nothing is written");
+            return Err(RedeemRefusal::NameTaken(holder.clone()));
         }
         Ok(vec![RailAct::Admit {
             person: self.person.clone(),

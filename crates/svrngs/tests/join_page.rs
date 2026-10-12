@@ -1,10 +1,11 @@
 //! Joining from a phone (DESIGN §3, "Joining"; §8, U4; u4-5): Sam makes a
 //! group whose links open a page on an origin, `svrngs new --origin`, and
 //! lends a service. A phone opens the https link printed, in Playwright's
-//! headless Chromium and in its WebKit as an iPhone (u4-7): the page asks the person's name once, makes their
+//! headless Chromium and in its WebKit as an iPhone (u4-7): the page asks the person's name, makes their
 //! key, redeems the link at Sam's computer naming itself a browser, keeps
 //! the key sealed, and lists what the group's people lend as the bare
-//! command prints it. Opening the link again, or the page alone, is in
+//! command prints it. The person types `sam` first, a name Sam goes by:
+//! the page says so and asks again (bash-person). Opening the link again, or the page alone, is in
 //! without asking; a lend opens at an origin of its own, `<label>.<the
 //! page's host>`, whose worker dials its lender's key with a pass (u5-2).
 //! The page's origin is `localhost`, whose every name this computer
@@ -81,7 +82,8 @@ fn admits(sam: &Node, group: &str) -> Vec<(String, String, Option<Device>)> {
 in_both_engines!(
     /// Planted: the key stored unsealed beside its seal (store.js `keep`
     /// writing `raw: key`); a second `Admit` on reopening (app.js joining
-    /// anew, with a fresh key, on every opening of a link).
+    /// anew, with a fresh key, on every opening of a link); a taken name
+    /// said as the link refused (app.js's 409 not asked again).
     a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking
 );
 async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
@@ -156,7 +158,13 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     eprintln!("the link printed: {link}");
     let mut stdin = phone.stdin.take().unwrap();
     stdin
-        .write_all(format!("{}\n", json!({ "link": link, "name": "Pia" })).as_bytes())
+        .write_all(
+            format!(
+                "{}\n",
+                json!({ "link": link, "name": "Pia", "taken": "sam" })
+            )
+            .as_bytes(),
+        )
         .await
         .unwrap();
     stdin.flush().await.unwrap();
@@ -180,6 +188,10 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     assert_eq!(
         first["asked"], true,
         "the page asks a newcomer's name:\n{seen:#}"
+    );
+    assert_eq!(
+        first["why"], "Someone in house already goes by Sam. Join under another name.",
+        "a name someone goes by is refused, and another asked (bash-person):\n{seen:#}"
     );
     assert_eq!(first["status"], "You’re in house, as Pia", "{seen:#}");
     assert_eq!(first["lent"], json!(["Sam’s shelf"]), "{seen:#}");

@@ -295,7 +295,27 @@ answered, so a computer asleep in the group holds only its own dial
 one by one and the door waited on its end, and refused once at 10.0 s,
 as Dee's door refused Ben, `demo/runs/mnp/2026-10-09/`). A newcomer met
 while a round already waits on an asleep dial waits for the next round,
-up to that dial's ten seconds; read from the code, not run. U4 builds
+up to that dial's ten seconds; read from the code, not run.
+
+*A name binds once where a stranger gives one* (bash-person; the
+charter's "The name", `ralph/next/bash/CHARTER.md`): a key is who someone
+is, a name is a claim, and a claim on a name someone already holds counts
+only with that someone's key — canon's rule for its own ledger (`~/dev/canon`
+`a6960fc`, `docs/SIGNING_DESIGN.md` §2, "A name binds once"). A link lets
+no one in under a name a standing person of the group goes by, compared
+case-blind: the `Redeem` command refuses it at the issuer's write, before
+anything is written (`crates/svrngs-core/src/register.rs`, `NameTaken`),
+and not the fold, where "first in the rail's order binds" would let any
+member's computer evict a person by a backdated `Admit` under their name.
+The joiner is told who goes by it and how to join under another name —
+`--as <your name>` after the link on a computer, the page's line
+included; another name typed on a phone, which the page asks again — and
+a removed person's name is free again. What it costs until device links
+(§9): a person's second device under the same name is refused, and so is
+a phone whose key was lost (Safari clears a site's storage after seven
+days unused) rejoining as itself; each joins under another name, as a
+person of their own. Squatting a name before its person joins stays
+possible; the keeper can remove the squatter. U4 builds
 the rest, by five calls (the seat, 2026-10-05, from its survey of upstream;
 the evidence is U4's inventory, §8):
 1. *The page holds the key's bytes, sealed.* The person's key is 32 bytes,
@@ -1202,11 +1222,13 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   a browser holds it, all signed by the
   link's secret key; the node checks the name parses, the `Invite` is its
   own and names that key, then writes the `Admit` through its door only when the key does not
-  stand already and `membership` over its journal with the `Admit` in it
+  stand already, no standing person goes by the name in any case (bash-person, §3 "Joining"),
+  and `membership` over its journal with the `Admit` in it
   counts it, both under the write lock (`commit` with svrngs-core's `Redeem`), so the
   fold stays the one decider of a lapsed, closed or voided link. Every
-  refusal is one sentence naming no group; a key that already stands is
-  answered success and nothing is written.
+  refusal is one sentence naming no group, but a name that does not parse,
+  said with why, and a name someone goes by, answered `409` with theirs; a
+  key that already stands is answered success and nothing is written.
 - **A person's name is parsed once, in the core** (u2-9, landed): trimmed,
   1..=64 bytes, no control characters (`Name::parse`,
   `crates/svrngs-core/src/lib.rs`). A `Person` is made only from a `Name`,
@@ -1914,7 +1936,7 @@ the link; no account but one a lender's program makes, no key asked for.
 | exporting a group as one document (upstream's checkpoint route), checking the asker is in that group | a group refounds from a copy, or someone asks to export one |
 | the endpoint's self-heal (upstream's `self_heal.rs`, `iroh_watchdog.rs`) | a node's endpoint wedges in a recorded run |
 | skipping a round's members known offline. Dialling them at once landed (asleep-1, `ring_sync::run_one_round`), so an asleep one holds only its own dial; the round still ends when that dial gives up, about 10 s, and a door's ask begun meanwhile waits for the next round (§3, "Joining") | a round's measured time nears its interval, or a newcomer is refused while a round waits on an asleep computer, counted |
-| another device for the same person. Scoped use asked (`demo/runs/su/2026-10-09/` §9): its run listed each of Ana's phones' keys in her taste's owners by hand (`apps/taste/check/check.sh:173`, `OWN`; `:137` at `305efde`), each phone joining as a member of its own, and a lend its lender's person alone reaches needs it (§8, "Then"); made production, Ana was asked once on her computer and once on each phone, and a stop on one phone left the other's yes, each choice its own key's (sup-4, `demo/runs/sup/2026-10-10/`) | that row is queued |
+| another device for the same person. Scoped use asked (`demo/runs/su/2026-10-09/` §9): its run listed each of Ana's phones' keys in her taste's owners by hand (`apps/taste/check/check.sh:173`, `OWN`; `:137` at `305efde`), each phone joining as a member of its own, and a lend its lender's person alone reaches needs it (§8, "Then"); made production, Ana was asked once on her computer and once on each phone, and a stop on one phone left the other's yes, each choice its own key's (sup-4, `demo/runs/sup/2026-10-10/`). Demo C's dry run let a second member in as `ana`, Ana's Navidrome admin (`demo/runs/c/dry-2026-10-12/data/name.json`); since bash-person a link refuses a name someone goes by (§3, "Joining"), so a person's own second device has no way in as them at all | that row is queued (bash-devices) |
 | the wire published for a second implementation | someone sets out to write one |
 | local discovery on one WiFi | Apple's multicast entitlement is granted |
 | any member's node redeeming a link, once its `Invite` has synced | a newcomer's link fails because its issuer's computer was asleep, counted |

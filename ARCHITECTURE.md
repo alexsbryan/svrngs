@@ -223,8 +223,10 @@ stand, decided under the lock), a seal is `Seal` followed by compaction, and
 journal deletes only from the `Due<Retire>` that `react` hands back, after
 this computer's seal and a peer's alike. The journal's own `append` exists only
 in tests, as a fixture that also goes through `commit`.
-Every refusal answers `REFUSAL`, one sentence naming no group; a key that
-already stands is answered `AlreadyIn`, nothing written.
+Every refusal answers `REFUSAL`, one sentence naming no group, but a name
+that does not parse, answered with why, and a name a standing person goes by
+(`RedeemRefusal::NameTaken`), answered `409` with theirs; a key that already
+stands is answered `AlreadyIn`, nothing written.
 
 Who is in a group is the register's (`register.rs`, DESIGN §6, U1):
 `RingRail::standing` answers a group's standing keys from `membership` over

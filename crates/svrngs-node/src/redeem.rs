@@ -32,8 +32,11 @@
 //!
 //! Every refusal is answered in one sentence, [`REFUSAL`], so the answer
 //! never says which groups the node holds or why — but a name that does not
-//! parse, answered with why it is not a name, which says nothing of groups; the trace at debug says
-//! which check it was. A key that already stands is answered success and
+//! parse, answered with why it is not a name, which says nothing of groups,
+//! and a name a standing person of the link's group goes by
+//! ([`RedeemRefusal::NameTaken`], bash-person), answered `409` with that
+//! person's name alone as its `error`, which the link's holder may know: the joiner words
+//! it and asks another name. The trace at debug says which check it was. A key that already stands is answered success and
 //! nothing is written, so a joiner whose answer was lost may open the link
 //! again.
 //!
@@ -170,6 +173,11 @@ fn answer<T: Serialize>(route: &str, key: &str, decided: Result<T, NotAdmitted>)
                 "redeem: refused — the name is not one; answered with why, naming no group");
             err(StatusCode::FORBIDDEN, why.to_string())
         }
+        Err(NotAdmitted::Decided(RedeemRefusal::NameTaken(holder))) => {
+            tracing::debug!(target: "redeem", route, key, %holder,
+                "redeem: refused — a standing person goes by the name; answered 409 with theirs");
+            err(StatusCode::CONFLICT, holder.to_string())
+        }
         Err(NotAdmitted::Decided(why)) => {
             tracing::debug!(target: "redeem", route, key, why = ?why,
                 "redeem: the decider refused, answered in the one sentence every refusal shares");
@@ -304,6 +312,10 @@ pub enum RedeemError {
     /// from a node of this build.
     #[error("refused: {0}")]
     Refused(String),
+    /// The issuer's node answered that someone in the group already goes
+    /// by the name: theirs, as the group names them.
+    #[error("someone in the group already goes by {0}")]
+    NameTaken(Name),
     /// The issuer's node answered that it could not judge: [`UNJUDGED`].
     #[error("the issuer could not judge")]
     Unjudged,
@@ -361,6 +373,14 @@ async fn call<T: DeserializeOwned>(
         StatusCode::FORBIDDEN => Err(RedeemError::Refused(
             response.text().await.unwrap_or_default(),
         )),
+        StatusCode::CONFLICT => {
+            let said: serde_json::Value = response.json().await.unwrap_or_default();
+            let holder = said["error"].as_str().unwrap_or_default().to_string();
+            Err(Name::kept(holder).map_or_else(
+                |e| RedeemError::NoAnswer(format!("a name this build cannot read: {e}")),
+                RedeemError::NameTaken,
+            ))
+        }
         StatusCode::SERVICE_UNAVAILABLE => Err(RedeemError::Unjudged),
         other => Err(RedeemError::NoAnswer(format!("HTTP {other}"))),
     }

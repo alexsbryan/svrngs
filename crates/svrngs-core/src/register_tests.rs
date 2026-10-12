@@ -405,3 +405,38 @@ fn a_hand_on_to_a_name_never_reaches_a_strangers_computer() {
     let keeper = register(&store, &seed).keeper.unwrap();
     assert!(bos.contains(&keeper), "a stranger keeps: {keeper}");
 }
+
+/// **A removed person's name is free again**: a stranger redeeming as `Cy`
+/// is refused, naming cy as cy stands; the keeper removes cy, and the same
+/// redemption admits the stranger as `Cy`.
+#[test]
+fn a_removed_persons_name_is_free_again() {
+    let (seed, store) = alexs_group();
+    let invite = invite_by(&key(1), &link(), 10_000);
+    store.0.borrow_mut().insert(invite.clone());
+    let id = derive_id(&invite, NS);
+    let asked = Redeem {
+        invite: id.clone(),
+        person: p("Cy"),
+        key: actor_of(&joining()),
+        cosig: Redemption::sign(&joining(), NS, &id, &p("Cy"), Device::Computer).sig,
+        device: Device::Computer,
+        link: actor_of(&link()),
+        issuer: actor_of(&key(1)),
+    };
+    let alex = key(1);
+    let keeper = author(&alex, &seed, 1_000);
+    assert_eq!(
+        commit(&store, &asked, &keeper).unwrap(),
+        Err(Refused::Command(RedeemRefusal::NameTaken(p("cy"))))
+    );
+    commit(&store, &Removal { person: p("cy") }, &keeper)
+        .unwrap()
+        .unwrap();
+    commit(&store, &asked, &author(&alex, &seed, 1_001))
+        .unwrap()
+        .unwrap();
+    let m = register(&store, &seed);
+    assert!(m.standing.contains(&actor_of(&joining())));
+    assert_eq!(m.person_for(&actor_of(&joining())), Some(&p("Cy")));
+}

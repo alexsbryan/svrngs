@@ -3,7 +3,7 @@
 # "A computer gets svrngs from the group's link"), the line the group's
 # page gives:
 #
-#   curl -fsSL <page>install.sh | sh -s -- '<link>'
+#   curl -fsSL <page>install.sh | sh -s -- '<link>' [--as '<your name>']
 #
 # It gets svrngs for this computer from the page's address the link names
 # (else $SVRNGS_FROM), refuses it unless it matches SHA256SUMS there, puts
@@ -21,6 +21,7 @@ no() {
 }
 
 link="${1:-}"
+if [ $# -gt 0 ]; then shift; fi # what follows the link, `--as <name>`, is join's
 from="${SVRNGS_FROM:-${link%%#*}}"
 case "$from" in
   http://* | https://*) ;;
@@ -79,7 +80,7 @@ case ":$PATH:" in
 esac
 
 if [ -n "$link" ]; then
-  SVRNGS_DIR="$dir" "$bin/svrngs" join "$link" --no-run ||
+  SVRNGS_DIR="$dir" "$bin/svrngs" join "$link" --no-run "$@" ||
     no "svrngs is in $bin, and did not join the group: it said why above."
 fi
 
