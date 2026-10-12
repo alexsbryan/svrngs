@@ -972,7 +972,7 @@ impl std::fmt::Display for Said {
                         lent.person, lent.address
                     )?;
                 }
-                for person in &lends.unanswered {
+                for person in &lends.unlisted.unanswered {
                     writeln!(
                         f,
                         "{person}'s computer did not answer, so what they lend is not listed."

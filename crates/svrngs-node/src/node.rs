@@ -140,9 +140,23 @@ pub async fn asked_to_stop() {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Lends {
     pub lent: Vec<Lent>,
-    /// The people whose computer did not answer, so what they lend is not
-    /// known: absent, which is not lending nothing.
+    pub unlisted: Unlisted,
+}
+
+/// The people whose computer did not say what they lend, so it is not
+/// known: absent, which is not lending nothing — each by how it was not
+/// said, so a computer that answered is never said not to have answered
+/// (bash-first-minute (c); Demo C's dry run, finding 6).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
+pub struct Unlisted {
+    /// Whose computer did not answer.
     pub unanswered: Vec<Person>,
+    /// Whose computer answered that it has not heard this one is in its
+    /// group: it closed the connection as not admitted.
+    pub unheard: Vec<Person>,
+    /// Whose computer answered with a refusal, or with what is not a list
+    /// of lends.
+    pub refused: Vec<Person>,
 }
 
 /// Why a node did not start.
@@ -563,7 +577,7 @@ impl Host {
                         });
                     }
                 }
-                Ok((person, _, None)) => lends.unanswered.push(person),
+                Ok((person, _, None)) => lends.unlisted.unanswered.push(person),
                 Err(e) => {
                     tracing::warn!(target: "node", error = %e, "node: lends — an ask ended without an answer")
                 }
@@ -572,7 +586,7 @@ impl Host {
         lends.lent.sort_by(|a, b| {
             (a.person.as_str(), &a.offered.name).cmp(&(b.person.as_str(), &b.offered.name))
         });
-        tracing::debug!(target: "node", lent = lends.lent.len(), unanswered = lends.unanswered.len(),
+        tracing::debug!(target: "node", lent = lends.lent.len(), unlisted = ?lends.unlisted,
             "node: lends — asked every computer of the groups");
         lends
     }
@@ -697,7 +711,7 @@ fn people_router(asking: Asking) -> axum::Router {
 /// `GET /people/lends`: what the people of the groups the dialer stands
 /// in lend — this computer's lends under its own person and key, and each
 /// other computer's but the asker's, asked now as [`Node::lends`] asks,
-/// with its key — and whose computer did not answer. A browser asks it of the computer it
+/// with its key — and whose computer did not say, and how. A browser asks it of the computer it
 /// dials, which answers what it can see and proxies no lend (DESIGN §3,
 /// call 4). A group the dialer does not stand in adds nothing. Beside them,
 /// every removal and ask to remove in those groups, from each register
@@ -722,7 +736,7 @@ async fn people_lends(
             "this computer lends nothing to you",
         ));
     };
-    let (lent, unanswered) = at.lent(&groups, &own, Some(&asker)).await?;
+    let (lent, unlisted) = at.lent(&groups, &own, Some(&asker)).await?;
     let removals = groups
         .iter()
         .map(|(namespace, _)| {
@@ -733,20 +747,20 @@ async fn people_lends(
         .collect::<Result<Vec<_>, _>>()
         .ok()
         .map(|each| each.concat());
-    tracing::debug!(target: "node", asker, groups = groups.len(), lent = lent.len(), unanswered = unanswered.len(),
+    tracing::debug!(target: "node", asker, groups = groups.len(), lent = lent.len(), ?unlisted,
         removals = ?removals.as_ref().map(Vec::len),
         "node: people's lends — answered what the people of the asker's groups lend, each with its lender's key");
-    Ok(
-        Json(serde_json::json!({ "lent": lent, "unanswered": unanswered, "removals": removals }))
-            .into_response(),
-    )
+    let mut body = serde_json::json!(unlisted);
+    body["lent"] = serde_json::json!(lent);
+    body["removals"] = serde_json::json!(removals);
+    Ok(Json(body).into_response())
 }
 
 impl Asking {
     /// What the people of `groups` lend: this computer's own lends under
     /// `own`, its person, and each other computer's but `asker`'s, asked now
     /// as [`Node::lends`] asks, each with its lender's key, sorted by
-    /// person then name; and whose computer did not answer. The refusal is
+    /// person then name; and whose computer did not say. The refusal is
     /// [`crate::door::offered`]'s, when this computer's declarations cannot
     /// be read.
     pub(crate) async fn lent(
@@ -754,7 +768,7 @@ impl Asking {
         groups: &[(String, BTreeMap<String, Member>)],
         own: &Person,
         asker: Option<&str>,
-    ) -> Result<(Vec<Lending>, Vec<Person>), Response> {
+    ) -> Result<(Vec<Lending>, Unlisted), Response> {
         let offered = crate::door::offered(&self.door).await?;
         let others = self.host.lends_in(groups, asker).await;
         let mut lent: Vec<Lending> = offered
@@ -773,7 +787,7 @@ impl Asking {
         lent.sort_by(|a, b| {
             (a.person.as_str(), &a.offered.name).cmp(&(b.person.as_str(), &b.offered.name))
         });
-        Ok((lent, others.unanswered))
+        Ok((lent, others.unlisted))
     }
 }
 

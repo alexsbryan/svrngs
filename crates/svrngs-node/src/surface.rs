@@ -19,9 +19,10 @@
 //!   upload (`upload_bps`, `null` when its lender states none), and where
 //!   this computer's browser opens it, its `origin` (u5-2,
 //!   [`crate::origin`]), and its `room` address while the room door serves
-//!   it (u6-1, [`crate::room`]); and the people whose computer did not answer
-//!   within [`crate::node::ANSWER_WITHIN`], named, their lends absent rather
-//!   than stale. The body [`crate::node`]'s `GET /people/lends`
+//!   it (u6-1, [`crate::room`]); and the people whose computer did not say
+//!   what they lend, named in [`crate::node::Unlisted`]'s three lists by how:
+//!   `unanswered` within [`crate::node::ANSWER_WITHIN`], `unheard` and
+//!   `refused` — their lends absent rather than stale. The body [`crate::node`]'s `GET /people/lends`
 //!   answers a member, for one group.
 //! - `GET /svrngs-reads`, at a lend's own origin and to its pages (mnp-2,
 //!   [`reads`]): the lends of each kind its lender declared it reads, as a
@@ -37,7 +38,7 @@ use serde::Serialize;
 use svrngs_core::pass::Label;
 
 use crate::door::LendRefusal;
-use crate::node::Asking;
+use crate::node::{Asking, Unlisted};
 use crate::rail::{namespace_of, standing_of, RailQuery};
 use crate::redeem::SeedText;
 use crate::ring_routes::err;
@@ -201,7 +202,7 @@ async fn lends(
             .into_response());
     };
     let groups = [(namespace.clone(), standing)];
-    let (lent, unanswered) = at.asking.lent(&groups, &own, None).await?;
+    let (lent, unlisted) = at.asking.lent(&groups, &own, None).await?;
     let host = &at.asking.host;
     let lent: Vec<serde_json::Value> = lent
         .into_iter()
@@ -216,12 +217,12 @@ async fn lends(
             Some(l)
         })
         .collect();
-    tracing::debug!(target: "surface", namespace, lent = lent.len(), unanswered = unanswered.len(),
+    tracing::debug!(target: "surface", namespace, lent = lent.len(), ?unlisted,
         "surface: lends — answered what the group's people lend, this computer's own among them, each at its origin");
-    Ok(
-        Json(serde_json::json!({ "namespace": namespace, "lent": lent, "unanswered": unanswered }))
-            .into_response(),
-    )
+    let mut body = serde_json::json!(unlisted);
+    body["namespace"] = namespace.into();
+    body["lent"] = lent.into();
+    Ok(Json(body).into_response())
 }
 
 /// `GET /svrngs-reads` at the origin of the lend `label` (mnp-2): each lend
@@ -242,7 +243,7 @@ pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Respon
         tracing::debug!(target: "surface", %label, "surface: reads refused — its lender and this computer share no group");
         return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
     };
-    let (lent, unanswered) = at.lent(&groups, &own, None).await?;
+    let (lent, Unlisted { unanswered, .. }) = at.lent(&groups, &own, None).await?;
     let named = |l: &crate::node::Lending| Label::of_hex(&l.key, l.offered.name.as_str());
     let Some(reading) = lent.iter().find(|l| named(l).as_ref() == Some(label)) else {
         tracing::debug!(target: "surface", %label, unanswered = unanswered.len(), "surface: reads refused — the lend is not lent now");

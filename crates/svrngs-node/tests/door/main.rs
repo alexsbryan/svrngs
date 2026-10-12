@@ -681,7 +681,10 @@ async fn a_member_s_computer_lists_what_is_lent_with_where_to_reach_it() {
     assert!(synced.stop.is_none(), "{synced:?}");
 
     let lends = pair.b.lends().await;
-    assert_eq!(lends.unanswered, vec![Person::parse("cy").unwrap()]);
+    assert_eq!(
+        lends.unlisted.unanswered,
+        vec![Person::parse("cy").unwrap()]
+    );
     assert_eq!(lends.lent.len(), 1, "{lends:?}");
     let shelf = &lends.lent[0];
     assert_eq!(shelf.person, Person::parse("ada").unwrap());

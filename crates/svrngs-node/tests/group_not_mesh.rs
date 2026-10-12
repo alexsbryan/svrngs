@@ -250,7 +250,11 @@ async fn a_round_dials_a_computer_and_never_a_browser() {
     let lends = tokio::time::timeout(Duration::from_secs(30), a.lends())
         .await
         .expect("the ask finishes");
-    assert_eq!(lends.unanswered, Vec::<Person>::new(), "A asks B alone");
+    assert_eq!(
+        lends.unlisted.unanswered,
+        Vec::<Person>::new(),
+        "A asks B alone"
+    );
 
     p.transport()
         .add_known_peer(key(1), loopback_sockets(a.endpoint()));
