@@ -25,9 +25,10 @@ stop.
 in DESIGN §6 or a decision in §10 — who decides a removal, whether a removed
 key may act, whether a group can recover inside itself; raising the budget
 past 15,350, or svrngs-core's past 3,000 (say the lines needed and why, with
-the count) — but for v1-said-not-substituted's #124, which may take
-svrngs-core to 3,050 for what no cut makes room for (the operator,
-2026-10-11, "Fix 123 + 124"), in its own commit with the reason; Demo C's bars (`demo/c.md`, the operator's to set); deploying the
+the count) — but for v1-said-not-substituted's #124 and v1-keeper-office, which ends
+#124's cycle, which may take svrngs-core to 3,050 for what no cut makes room
+for (the operator, 2026-10-11, "Fix 123 + 124"; 2026-10-12, "Yes that sounds
+good"), in its own commit with the reason; Demo C's bars (`demo/c.md`, the operator's to set); deploying the
 page host (`scripts/deploy-page.sh`) or anything else outward-facing; docker,
 OrbStack or any tool that is not open software (an open-source build tool
 installed on this host for v1-onboarding's cross builds, e.g. zig and
