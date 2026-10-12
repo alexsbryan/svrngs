@@ -7,7 +7,12 @@
 mod common;
 use common::loopback_sockets;
 
+use std::path::PathBuf;
+use std::sync::{Mutex, OnceLock};
+use std::thread::ThreadId;
 use std::time::Duration;
+
+use tracing_subscriber::layer::SubscriberExt;
 
 use svrngs_node::iroh::{PublicKey, RelayConfig};
 use svrngs_node::node::Node;
@@ -37,6 +42,7 @@ fn no_seed(_: &std::path::Path) -> Result<Option<String>, String> {
 }
 
 async fn start(seed: u8, dir: &tempfile::TempDir) -> Node {
+    plant();
     Node::start(
         dir.path().to_path_buf(),
         signing(seed),
@@ -282,14 +288,16 @@ async fn a_removal_reaches_every_computer_without_waiting_for_a_round() {
 }
 
 /// `node`'s copy of the group's seed, the file the register reads first.
-fn seed_path(node: &Node) -> std::path::PathBuf {
+fn seed_path(node: &Node) -> PathBuf {
     node.rail().group_dir(NS).unwrap().join("roster.json")
 }
 
-/// The plant for #123: a layer that makes `seed` unreadable as the core
-/// gives its hand-on verdict, so the commit reads the register and the
-/// read after it cannot.
-struct Unreadable(std::path::PathBuf);
+/// The plant for #123: armed with a thread and a seed, a layer that makes
+/// the seed unreadable as the core gives that thread its hand-on verdict,
+/// so the commit reads the register and the read after it cannot.
+static ARMED: Mutex<Option<(ThreadId, PathBuf)>> = Mutex::new(None);
+
+struct Unreadable;
 
 impl<S: tracing::Subscriber> tracing_subscriber::Layer<S> for Unreadable {
     fn on_event(&self, event: &tracing::Event<'_>, _: tracing_subscriber::layer::Context<'_, S>) {
@@ -304,10 +312,29 @@ impl<S: tracing::Subscriber> tracing_subscriber::Layer<S> for Unreadable {
         }
         let mut m = Message(String::new());
         event.record(&mut m);
-        if m.0 == "hand-on: the fold's verdict" {
-            std::fs::set_permissions(&self.0, std::fs::Permissions::from_mode(0o000)).unwrap();
+        if m.0 != "hand-on: the fold's verdict" {
+            return;
+        }
+        match &*ARMED.lock().unwrap() {
+            Some((thread, seed)) if *thread == std::thread::current().id() => {
+                std::fs::set_permissions(seed, std::fs::Permissions::from_mode(0o000)).unwrap()
+            }
+            _ => {}
         }
     }
+}
+
+/// The plant is the process's one subscriber, set before any node starts.
+/// Set per test with `set_default`, it missed the verdict in 5 of 60 runs
+/// under load, only beside the file's other tests: a line another thread
+/// met first as it was set was cached as never wanted (tracing-core
+/// 0.1.36 callsite.rs `register`, `DISPATCHERS.rebuilder()`).
+fn plant() {
+    static ONCE: OnceLock<()> = OnceLock::new();
+    ONCE.get_or_init(|| {
+        tracing::subscriber::set_global_default(tracing_subscriber::registry().with(Unreadable))
+            .expect("the plant is the process's one subscriber");
+    });
 }
 
 /// **A register that cannot be read is said as itself** (REVIEW_FINDINGS
@@ -318,17 +345,14 @@ impl<S: tracing::Subscriber> tracing_subscriber::Layer<S> for Unreadable {
 #[tokio::test]
 async fn an_unreadable_register_is_said_on_a_hand_on() {
     use std::os::unix::fs::PermissionsExt;
-    use tracing_subscriber::layer::SubscriberExt;
     let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
     let [_sam, ana, _bo] = three(&dirs).await;
     let seed = seed_path(&ana);
     let readable = || std::fs::set_permissions(&seed, std::fs::Permissions::from_mode(0o644));
 
-    let planted = tracing_subscriber::registry().with(Unreadable(seed.clone()));
-    let after = {
-        let _on = tracing::subscriber::set_default(planted);
-        ask(&ana, HANDOVERS_ROUTE, "ana").await
-    };
+    *ARMED.lock().unwrap() = Some((std::thread::current().id(), seed.clone()));
+    let after = ask(&ana, HANDOVERS_ROUTE, "ana").await;
+    *ARMED.lock().unwrap() = None;
     let unread = ana.rail().register(NS).is_err();
     readable().unwrap();
     assert!(
