@@ -1033,6 +1033,7 @@ impl std::fmt::Display for Said {
                     Outcome::NotInGroup => writeln!(f, "Nobody called {person} is in {group}."),
                     Outcome::Decides => writeln!(f, "{person} decides who is removed from {group}, so cannot be removed: hand that to someone else first, with `svrngs handover <name> --group {group}`."),
                     Outcome::NotDecider { decides: who } => writeln!(f, "Only {} can let someone else decide who is removed from {group}.", decides(who)),
+                    Outcome::NotDeciderUnread => writeln!(f, "You do not decide who is removed from {group}, and this computer could not read who is in the group, so cannot say who does (RUST_LOG=debug says why)."),
                     Outcome::NotIn => writeln!(f, "You are no longer in {group}."),
                     Outcome::Fault => writeln!(f, "{group} cannot be changed on this computer (RUST_LOG=debug says why)"),
                 }

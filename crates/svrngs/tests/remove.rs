@@ -74,6 +74,7 @@ fn every_outcome_is_said_in_a_persons_words() {
         Outcome::NotInGroup,
         Outcome::Decides,
         Outcome::NotDecider { decides: sam },
+        Outcome::NotDeciderUnread,
         Outcome::NotIn,
         Outcome::Fault,
     ];

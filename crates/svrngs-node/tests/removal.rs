@@ -280,3 +280,60 @@ async fn a_removal_reaches_every_computer_without_waiting_for_a_round() {
         "Sam's hand-on reached Ana's computer within 5 s"
     );
 }
+
+/// `node`'s copy of the group's seed, the file the register reads first.
+fn seed_path(node: &Node) -> std::path::PathBuf {
+    node.rail().group_dir(NS).unwrap().join("roster.json")
+}
+
+/// The plant for #123: a layer that makes `seed` unreadable as the core
+/// gives its hand-on verdict, so the commit reads the register and the
+/// read after it cannot.
+struct Unreadable(std::path::PathBuf);
+
+impl<S: tracing::Subscriber> tracing_subscriber::Layer<S> for Unreadable {
+    fn on_event(&self, event: &tracing::Event<'_>, _: tracing_subscriber::layer::Context<'_, S>) {
+        use std::os::unix::fs::PermissionsExt;
+        struct Message(String);
+        impl tracing::field::Visit for Message {
+            fn record_debug(&mut self, f: &tracing::field::Field, v: &dyn std::fmt::Debug) {
+                if f.name() == "message" {
+                    self.0 = format!("{v:?}");
+                }
+            }
+        }
+        let mut m = Message(String::new());
+        event.record(&mut m);
+        if m.0 == "hand-on: the fold's verdict" {
+            std::fs::set_permissions(&self.0, std::fs::Permissions::from_mode(0o000)).unwrap();
+        }
+    }
+}
+
+/// **A register that cannot be read is said as itself** (REVIEW_FINDINGS
+/// #123). Ana's hand-on is refused, and her computer cannot read the
+/// register to name who decides: she is told so, not told the words of a
+/// group nobody decides. The seed is made unreadable between the core's
+/// refusal and the read that names who decides (the plant, [`Unreadable`]).
+#[tokio::test]
+async fn an_unreadable_register_is_said_on_a_hand_on() {
+    use std::os::unix::fs::PermissionsExt;
+    use tracing_subscriber::layer::SubscriberExt;
+    let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
+    let [_sam, ana, _bo] = three(&dirs).await;
+    let seed = seed_path(&ana);
+    let readable = || std::fs::set_permissions(&seed, std::fs::Permissions::from_mode(0o644));
+
+    let planted = tracing_subscriber::registry().with(Unreadable(seed.clone()));
+    let after = {
+        let _on = tracing::subscriber::set_default(planted);
+        ask(&ana, HANDOVERS_ROUTE, "ana").await
+    };
+    let unread = ana.rail().register(NS).is_err();
+    readable().unwrap();
+    assert!(
+        unread,
+        "the plant: Ana's register turned unreadable after the refusal"
+    );
+    assert_eq!(after, (409, Outcome::NotDeciderUnread));
+}

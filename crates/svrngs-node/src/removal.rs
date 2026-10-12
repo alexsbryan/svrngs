@@ -64,6 +64,10 @@ pub enum Outcome {
     Decides,
     /// Only `decides` hands deciding on.
     NotDecider { decides: Option<Person> },
+    /// Only whoever decides removals hands deciding on, and who that is
+    /// could not be read here: said at warn, never as a group nobody
+    /// decides (ralph/REVIEW_FINDINGS.md #123).
+    NotDeciderUnread,
     /// This computer is not in the group.
     NotIn,
     /// The group's record could not be read or written here: said at warn.
@@ -213,8 +217,15 @@ async fn hand_over(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> O
         }
         Ok(Err(Refused::NoStanding)) => Outcome::NotIn,
         Ok(Err(Refused::Command(HandOnRefusal::NotInGroup))) => Outcome::NotInGroup,
-        Ok(Err(Refused::Command(HandOnRefusal::NotKeeper))) => Outcome::NotDecider {
-            decides: rail.register(group).ok().as_ref().and_then(decides),
+        Ok(Err(Refused::Command(HandOnRefusal::NotKeeper))) => match rail.register(group) {
+            Ok(register) => Outcome::NotDecider {
+                decides: decides(&register),
+            },
+            Err(e) => {
+                tracing::warn!(target: "removal", group, error = %e,
+                    "removal: a hand-on refused, and the register that names who decides cannot be read");
+                Outcome::NotDeciderUnread
+            }
         },
         Err(e) => {
             tracing::warn!(target: "removal", group, error = %e, "removal: the group's record cannot be written");
