@@ -972,11 +972,18 @@ impl std::fmt::Display for Said {
                         lent.person, lent.address
                     )?;
                 }
-                for person in &lends.unlisted.unanswered {
+                let unlisted = &lends.unlisted;
+                for person in &unlisted.unanswered {
                     writeln!(
                         f,
                         "{person}'s computer did not answer, so what they lend is not listed."
                     )?;
+                }
+                for person in &unlisted.unheard {
+                    writeln!(f, "{person}'s computer has not heard of this computer yet, so what they lend is not listed yet.")?;
+                }
+                for person in &unlisted.refused {
+                    writeln!(f, "{person}'s computer answered without saying what they lend, so it is not listed.")?;
                 }
                 Ok(())
             }

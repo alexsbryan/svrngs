@@ -286,7 +286,8 @@ async function enter(group, asked) {
     if (why === 'removed') throw new Said(`You are no longer in ${group.name}.`);
     throw new Said('Your group’s computer said no.');
   }
-  const { lent, unanswered, removals } = await res.json();
+  // A computer before bash-first-minute (c) answers neither unheard nor refused.
+  const { lent, unanswered, unheard = [], refused = [], removals } = await res.json();
   await d.close();
   // Who was removed or asked to be, shown to everyone in the group
   // (v1-keeper-office (b)); `null` when the computer could not read it.
@@ -315,9 +316,16 @@ async function enter(group, asked) {
   const using = document.getElementById('uses');
   using.hidden = !lent.some((l) => l.asks);
   using.ontoggle = () => using.open && uses(lent, dialler, document.getElementById('used'));
-  said.textContent = [
-    lent.length ? '' : `Nobody in ${group.name} lends anything yet.`,
+  // Each computer that did not say by how (bash-first-minute (c)), and
+  // nobody lending said only when every computer did.
+  const unlisted = [
     ...unanswered.map((p) => `${p}’s computer did not answer, so what they lend is not listed.`),
+    ...unheard.map((p) => `${p}’s computer has not heard of your group’s computer yet, so what they lend is not listed yet.`),
+    ...refused.map((p) => `${p}’s computer answered without saying what they lend, so it is not listed.`),
+  ];
+  said.textContent = [
+    lent.length || unlisted.length ? '' : `Nobody in ${group.name} lends anything yet.`,
+    ...unlisted,
   ]
     .filter(Boolean)
     .join('\n');

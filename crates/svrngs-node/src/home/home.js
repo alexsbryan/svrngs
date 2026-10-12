@@ -66,8 +66,12 @@ function list(all) {
       if (g.removals.length) s.append(Object.assign(el('ul', '', ...g.removals.map((r) => el('li', removal(r)))), { className: 'removals' }));
       const ul = el('ul');
       for (const l of g.lent) ul.append(el('li', '', Object.assign(el('a', named(l)), { href: l.origin })));
+      // Each computer that did not say by how (bash-first-minute (c)):
+      // one that answered is never said not to have.
       for (const p of g.unanswered) ul.append(el('li', `${p}'s computer did not answer, so what they lend is not listed.`));
-      if (!g.lent.length && !g.unanswered.length) ul.append(el('li', 'Nobody lends anything here yet.'));
+      for (const p of g.unheard) ul.append(el('li', `${p}'s computer has not heard of this computer yet, so what they lend is not listed yet.`));
+      for (const p of g.refused) ul.append(el('li', `${p}'s computer answered without saying what they lend, so it is not listed.`));
+      if (!ul.children.length) ul.append(el('li', 'Nobody lends anything here yet.'));
       s.append(ul);
     }
     main.append(s);

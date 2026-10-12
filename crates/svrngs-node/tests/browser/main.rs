@@ -1589,3 +1589,114 @@ async fn the_home_page_says_where_the_groups_folder_is(engine: Engine) {
     );
     drop(ada);
 }
+
+/// Ada's computer, `admitted` let in as bo, and three more of house who
+/// do not say what they lend (bash-first-minute (c)): dee's computer never
+/// answers, having none; eve's holds no group of ada's, so it has not
+/// heard of ada's and closes it; cy's cannot read what it lends, and
+/// answers so. The computers are returned, to be dropped with ada's.
+async fn unlisted_held(
+    relay: &Server,
+    admitted: &SigningKey,
+    dirs: &[tempfile::TempDir; 3],
+) -> (Node, [Node; 2]) {
+    let ada = node(dirs[0].path(), relay, admitted).await;
+    for (person, me) in [("dee", 4), ("eve", 5)] {
+        let fixture = svrngs_core::tests_support::Fixture {
+            act: RailAct::Admit {
+                person: Person::parse(person).unwrap(),
+                key: actor_of(&signing(me)),
+                invite: None,
+            },
+            on_behalf_of: None,
+        };
+        ada.rail().commit(NS, &fixture).unwrap().unwrap();
+    }
+    let eve = computer(dirs[1].path(), relay, &signing(9), 5, "eve").await;
+    let addrs = eve.endpoint().addr().ip_addrs().copied().collect();
+    ada.transport().add_known_peer(eve.endpoint().id(), addrs);
+    let cy = joined(dirs[2].path(), relay, &ada, 2, "cy").await;
+    std::fs::write(
+        svrngs_node::lend::lends_dir(dirs[2].path()),
+        "not a directory",
+    )
+    .unwrap();
+    (ada, [eve, cy])
+}
+
+in_both_engines!(
+    /// **The home page says a refusal as itself** (bash-first-minute (c);
+    /// Demo C's dry run, finding 6). On ada's computer, bo's and dee's
+    /// computers never answer, eve's has not heard of ada's, and cy's
+    /// answers that it cannot say: the home page names each by how, and
+    /// says neither eve's nor cy's did not answer. Planted, watched failing:
+    /// home.js before (c), which named bo and dee alone.
+    the_home_page_says_a_refusal_apart_from_no_answer
+);
+async fn the_home_page_says_a_refusal_apart_from_no_answer(engine: Engine) {
+    let relay = relay().await;
+    let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
+    let (ada, others) = unlisted_held(&relay, &signing(7), &dirs).await;
+    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
+    let seen = drive(
+        engine,
+        "home.mjs",
+        json!({ "ask": home, "all": "#home section > ul:not(.removals) li" }),
+        None,
+    )
+    .await;
+    eprintln!("the home page's run: {seen:#}");
+    let mut said: Vec<String> = serde_json::from_value(seen["all"].clone()).unwrap();
+    said.sort();
+    assert_eq!(
+        said,
+        [
+            "bo's computer did not answer, so what they lend is not listed.",
+            "cy's computer answered without saying what they lend, so it is not listed.",
+            "dee's computer did not answer, so what they lend is not listed.",
+            "eve's computer has not heard of this computer yet, so what they lend is not listed yet.",
+        ],
+        "{seen:#}"
+    );
+    drop((ada, others));
+}
+
+in_both_engines!(
+    /// **The group's page says a refusal as itself**, as the home page
+    /// does: the page holding bo's key opens the group's link, and ada's
+    /// computer answers for dee's, eve's and cy's. Planted, watched
+    /// failing: app.js before (c), which named dee alone, and said nobody
+    /// in house lends anything.
+    the_group_s_page_says_a_refusal_apart_from_no_answer
+);
+async fn the_group_s_page_says_a_refusal_apart_from_no_answer(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
+    let (ada, others) = unlisted_held(&relay, &bo, &dirs).await;
+    let seen = drive(
+        engine,
+        "drive.mjs",
+        json!({
+            "site": site,
+            "key": hex::encode(bo.to_bytes()),
+            "token": token(&signing(1), &relay),
+        }),
+        None,
+    )
+    .await;
+    eprintln!("the group's page's run: {seen:#}");
+    assert_eq!(seen["status"], "You’re in house, as bo", "{seen:#}");
+    assert_eq!(
+        seen["answer"],
+        [
+            "dee’s computer did not answer, so what they lend is not listed.",
+            "eve’s computer has not heard of your group’s computer yet, so what they lend is not listed yet.",
+            "cy’s computer answered without saying what they lend, so it is not listed.",
+        ]
+        .join("\n"),
+        "{seen:#}"
+    );
+    drop((ada, others));
+}
