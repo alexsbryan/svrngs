@@ -1289,6 +1289,26 @@ Chromium and WebKit were watched refusing, and a host a group names in
 its place must send it too. Ours sends it once the operator deploys the
 page again (`scripts/deploy-page.sh`).
 
+**A computer gets svrngs from the group's link** (v1-onboarding; the
+operator, 2026-10-11, §10). On a computer the group's page gives one line
+to paste in a terminal, `curl -fsSL <page>install.sh | sh -s --
+'<link>'`, composed in the page from the link's `#` part, so the token
+reaches no server. The host that serves the page serves the rest beside
+it, so any host a group names in ours' place serves it too: `install.sh`
+at the page's address, and under `get/` a tarball of `svrngs` for each
+platform built — macOS on Apple silicon and on Intel, Linux on x86_64 and
+aarch64 as static musl binaries, cross-built here by zig
+(cargo-zigbuild) — beside one `SHA256SUMS`. Nothing is fetched from
+anywhere else: the repository is private and has no releases.
+`install.sh`, POSIX `sh`, names the platform and refuses any other;
+fetches the tarball and the sums from the address the link names and
+refuses a mismatch; installs into `~/.local/bin`, never with `sudo`;
+joins the link as `svrngs join` does; keeps svrngs running at login as
+the person (a LaunchAgent on macOS, a `systemd --user` unit on Linux);
+and opens the home page. Run again, it updates in place and joins
+nothing twice. Publishing the binaries with the page is the operator's
+(`scripts/deploy-page.sh`).
+
 **A room's devices reach a lend through a member's computer there** (u6-1
 landed it; §3, "The room", calls 2 and 3). A TV takes no link and runs no
 page: the app's own client for it is typed an address on its network
@@ -1893,7 +1913,9 @@ By the operator, 2026-10-10 and 2026-10-11, on the scene v1 answers to
   requires the least machinery. We're a lazy but brilliant dev team; we
   want the most general purpose solutions possible"; and of Demo C's gate,
   "Pasting one line in the terminal is fine" — a computer's newcomer pastes
-  one line the group's page gives, and types nothing else (§8, "Demo C").
+  one line the group's page gives, and types nothing else (§8, "Demo C");
+  the route, the page's host serving the script and the binaries beside
+  the page, is §7's ("A computer gets svrngs from the group's link").
 
 By the operator, 2026-10-12, "Yes that sounds good", on the seat's reading
 of Ostrom: the hand-on is a collective-choice act, a removal operational
