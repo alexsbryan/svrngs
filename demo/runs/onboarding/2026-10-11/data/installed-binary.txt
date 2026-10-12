@@ -1,0 +1,4 @@
+# the installed svrngs, after the run: xattr -l, then codesign -dv
+com.apple.provenance: 
+CodeDirectory v=20400 size=240632 flags=0x20002(adhoc,linker-signed) hashes=7516+0 location=embedded
+Signature=adhoc

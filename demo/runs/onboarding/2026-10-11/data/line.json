@@ -1,0 +1,1 @@
+{"mode":"line","shown_ms":329,"line":"curl -fsSL http://localhost:59132/install.sh | sh -s -- 'http://localhost:59132/#<the token>'"}

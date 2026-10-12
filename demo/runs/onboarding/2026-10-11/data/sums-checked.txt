@@ -1,0 +1,4 @@
+svrngs-darwin-aarch64.tar.gz: OK
+svrngs-darwin-x86_64.tar.gz: OK
+svrngs-linux-aarch64.tar.gz: OK
+svrngs-linux-x86_64.tar.gz: OK

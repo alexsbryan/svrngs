@@ -1,0 +1,10 @@
+# scripts/build-release.sh --out /tmp/onb-f-warm, before run.sh, the caches cold for this tree (its lines, and zsh's time)
+build-release: darwin-x86_64 (x86_64-apple-darwin) by cargo build…
+build-release: linux-x86_64 (x86_64-unknown-linux-musl) by cargo zigbuild…
+build-release: linux-aarch64 (aarch64-unknown-linux-musl) by cargo zigbuild…
+built: /tmp/onb-f-warm/get
+ce412d26bcc598bca131840c3c282c5dfb69ec6e694ff333f954e682011c411e  svrngs-darwin-aarch64.tar.gz
+b5c029eabf2dfb826a8ed6bae3080e76099047aa88b3f0afbdc6c25d2b89dee1  svrngs-darwin-x86_64.tar.gz
+67284c36a7cdd36c5333bd8af47165b64d132498e6023cf04a194dfa9b9c8f13  svrngs-linux-aarch64.tar.gz
+47d4da71986d56761a561ecc858e9fd4eba3857b8bc6eb4543b564bc81a49320  svrngs-linux-x86_64.tar.gz
+scripts/build-release.sh --out /tmp/onb-f-warm 2>&1  1025.45s user 32.68s system 153% cpu 11:31.16 total

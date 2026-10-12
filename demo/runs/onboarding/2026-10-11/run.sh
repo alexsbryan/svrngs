@@ -80,7 +80,7 @@ while [ $(( $(ms) - T0 )) -lt 300000 ]; do
 done
 say "Sam's beach.jpg in the newcomer's $DIR: ${T_FILE} ms after the paste"
 cp "$R/newcomer/.svrngs/svrngs.log" "$OUT/newcomer-svrngs.log" 2>/dev/null || true
-sed -E 's/#[A-Za-z0-9_-]+/#<the link>/g' "$R/sam/new.out" >"$OUT/sam-new.out"
+sed -E 's#(svrngs://join/|\#)[A-Za-z0-9_-]+#\1<the link>#g' "$R/sam/new.out" >"$OUT/sam-new.out"
 sed -i '' -E 's/#[A-Za-z0-9_-]+/#<the token>/g' "$OUT/install.out" "$OUT/line.json"
 python3 - "$OUT" "$T0" "$code" "$T_INSTALLED" "${T_OPENED:-null}" "$T_FILE" "$(sw_vers -productVersion)" "$(uname -m)" <<'PY'
 import json, sys

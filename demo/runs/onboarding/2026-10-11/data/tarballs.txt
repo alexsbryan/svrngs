@@ -1,0 +1,5 @@
+376 SHA256SUMS
+12111448 svrngs-darwin-aarch64.tar.gz
+12801252 svrngs-darwin-x86_64.tar.gz
+11231192 svrngs-linux-aarch64.tar.gz
+11977674 svrngs-linux-x86_64.tar.gz
