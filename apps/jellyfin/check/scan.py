@@ -78,9 +78,11 @@ for pair in (root / "dump").iterdir():
     for t in pair.glob("*/token"):
         for i, v in enumerate(t.read_text().split()):
             everyone[f"{pair.name}/{t.parent.name}_token" + (f"_{i + 1}" if i else "")] = v
-# Bo's computer and the middleware's own log too, when a run has them (mw).
+# Bo's and Cy's computers and the middleware's own log too, when a run has
+# them (mw; Demo A's three computers, trio with MW=1).
 for log in sorted(list((root / "sam").glob("*")) + list((root / "alex").glob("*"))
-                  + list((root / "bo").glob("*")) + list(root.glob("mw*.log")) + list(root.glob("mw.out"))):
+                  + list((root / "bo").glob("*")) + list((root / "cy").glob("*"))
+                  + list(root.glob("mw*.log")) + list(root.glob("mw.out"))):
     if log.is_file() and log.suffix in (".log", ".out"):
         report["logs"][str(log.relative_to(root))] = hits(log.read_bytes(), everyone)
 (out / "scan.json").write_text(json.dumps(report, indent=1) + "\n")

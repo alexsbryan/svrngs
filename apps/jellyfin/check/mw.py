@@ -16,7 +16,9 @@ keys it saw are named); <scratch>/secrets holds the key the lender gave it,
 the lender's password and token. Writes <out>/mw-<tag>.json, prints a
 verdict per bar, and exits 0 only if every judged bar passed. What is
 recorded and not judged (another person's key at the port) is printed as
-`recorded`.
+`recorded`. When <scratch>/env names a library Sam made to keep back
+(KEPT, check.sh up's KEEP_BACK), each person's libraries, as their own
+address of the lend lists them, are judged to hold every one but it.
 """
 import http.client
 import json
@@ -124,6 +126,11 @@ def main():
         after_second = users()
         p["made_by_first"] = sorted(set(after_first) - set(before))
         p["made_by_second"] = sorted(set(after_second) - set(after_first))
+        # The libraries Jellyfin lists to them, asked through their lend.
+        if p["first"]["status"] == 200:
+            s, h, b = via(at, "GET", f"/UserViews?userId={p['first']['user']['Id']}", {"Authorization": device(who)})
+            got.append(h.encode() + b)
+            p["views"] = [v["Name"] for v in json.loads(b)["Items"]] if s == 200 else f"{s}: {b[:200]!r}"
         # A body sent: the session's capabilities, as jellyfin-web posts them.
         s, h, b = via(at, "POST", "/Sessions/Capabilities/Full",
                       {"Authorization": device(who), "Content-Type": "application/json"},
@@ -206,6 +213,12 @@ def main():
                        and p["page"]["status"] == 200 and p["socket"]["status"] == 101 for p in (a, b_)),
         "; ".join(f"{w}: body sent {p['body_sent']}, range {p['range']}, page {p['page']}, socket {p['socket']}"
                   for w, p in run["people"].items()))
+    if ENV.get("KEPT"):
+        views = {w: p.get("views") for w, p in run["people"].items()}
+        judged = all(isinstance(v, list) for v in views.values())
+        bar(f"{ENV['KEPT']} kept back from each", None if not judged else
+            all(ENV["KEPT"] not in v and "Movies" in v for v in views.values()),
+            f"each person's libraries, as their lend lists them: {views}")
     run["recorded"] = {"another person's key at the middleware's port": run["anothers_key"]}
 
     with open(f"{OUT}/mw-{TAG}.json", "w") as f:

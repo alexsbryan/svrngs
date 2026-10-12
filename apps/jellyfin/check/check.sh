@@ -16,7 +16,9 @@
 #   check.sh films <dir> <seconds>                 Sam's three films, that long, made in <dir> unless there
 #   check.sh up    <scratch> <out>                 all of the above; with MEDIA=<dir>, Sam's library is <dir>'s
 #                                                  films; PEOPLE names who the lender makes accounts for (else
-#                                                  ana ben); SHARE_FLAGS is what share is given (else --limit 8)
+#                                                  ana ben; empty, nobody); SHARE_FLAGS is what share is given (else --limit 8);
+#                                                  with KEEP_BACK=<name>, one more library, of home videos, so named
+#                                                  (one word: the env file is read by words)
 #   check.sh pair  <scratch> <out> <way> <engine>  two people new to it through the lend, way computer|phone,
 #                                                  engine chromium|webkit: from the list to a playing film,
 #                                                  seeks, the other watched; writes <out>/pair-<way>-<engine>.json.
@@ -35,14 +37,22 @@
 #                                                  Alex on the computer plays One, Bo on a WebKit phone Two, Cy on
 #                                                  a Chromium phone Three, WINDOW s at once (else 600), seeking
 #                                                  10, 22 and 22 times; writes <out>/trio[-$RUN].json, its
-#                                                  summary (trio.py) and scan.json; takes over ten minutes
+#                                                  summary (trio.py) and scan.json; takes over ten minutes.
+#                                                  With MW=1, after `mw` with COMPUTERS="alex bo cy": Demo A's
+#                                                  steps with nothing typed (demo/a.md), the middleware started
+#                                                  afresh, each of the three on their own computer, Bo in
+#                                                  WebKit; then the libraries each account sees, in
+#                                                  <out>/views-<tag>.json
 #   check.sh mw    <scratch> <out> <tag>           mw-1's (ralph/next/mw/STATE.md), after up: the middleware
 #                                                  (apps/jellyfin/mw) on MW_PORT (else 8097), given a key from
 #                                                  Jellyfin's API Keys once; Sam lends 8096 again as jellyfin-mw
 #                                                  with it as its sign-in (mwp-3), Bo joined as
 #                                                  a second computer; each run starts it afresh, JELLYFIN_MW_PLANT
 #                                                  passed on, the users it made before deleted; then mw.py, which
-#                                                  writes <out>/mw-<tag>.json and exits 0 only if every bar passed
+#                                                  writes <out>/mw-<tag>.json and exits 0 only if every bar passed.
+#                                                  KEEP_BACK=<name> is given it as --keep-back; COMPUTERS names
+#                                                  who joins on a computer (else alex bo); MW_SHARE_FLAGS is what
+#                                                  share is given (else --limit 8)
 #   check.sh mw2   <scratch> <out>                 mw-2's runs in their order (demo/runs/mw/2026-10-08/mw-2/run.sh),
 #                                                  through the sign-in since mwp-3: up, mw, each plant on a computer
 #                                                  in Chromium, judged; the four pairs, judged together; down
@@ -63,7 +73,7 @@ O=http://127.0.0.1:8096
 SECRETS="$R/secrets"; [ "$STEP" = films ] || mkdir -p "$OUT"
 # Who the lender makes accounts for, and what share is told: u5-4's pair
 # unless a run says otherwise (Demo A's, `trio`).
-PEOPLE="${PEOPLE:-ana ben}"; SHARE_FLAGS="${SHARE_FLAGS---limit 8}"
+PEOPLE="${PEOPLE-ana ben}"; SHARE_FLAGS="${SHARE_FLAGS---limit 8}"
 say() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*" | tee -a "$OUT/steps.log" >&2; }
 field() { python3 -c "import json,sys;print(json.load(sys.stdin)$1)"; }
 port_of() { for _ in $(seq 1 100); do grep -m1 -o 'port [0-9]*' "$1" 2>/dev/null | cut -d' ' -f2 && return; sleep 0.1; done; return 1; }
@@ -112,6 +122,12 @@ up() {
   # --- Sam's Jellyfin, its films made here, or MEDIA's (`films`) ----------
   local ff="$JF_APP/MacOS/ffmpeg" lib="${MEDIA:-$R/jf/media}"
   [ -n "${MEDIA:-}" ] || films "$lib" 120
+  # Sam's home videos, a library Sam may keep back (the mw README §7, item 5).
+  if [ -n "${KEEP_BACK:-}" ]; then
+    mkdir -p "$R/jf/kept"
+    "$ff" -v error -y -f lavfi -i "testsrc2=size=640x360:rate=24" -t 20 -c:v libx264 -preset veryfast \
+      -pix_fmt yuv420p "$R/jf/kept/Picnic.mp4"
+  fi
   cat >"$R/jf/config/network.xml" <<'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <NetworkConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
@@ -144,6 +160,8 @@ EOF
   api POST /Startup/User "{\"Name\":\"sam\",\"Password\":\"$(cat "$SECRETS/sam_pw")\"}" >/dev/null
   api POST "/Library/VirtualFolders?name=Movies&collectionType=movies&refreshLibrary=true" \
     "{\"LibraryOptions\":{\"PathInfos\":[{\"Path\":\"$lib\"}],\"EnableRealtimeMonitor\":false}}" >/dev/null
+  [ -z "${KEEP_BACK:-}" ] || api POST "/Library/VirtualFolders?name=$KEEP_BACK&collectionType=homevideos&refreshLibrary=true" \
+    "{\"LibraryOptions\":{\"PathInfos\":[{\"Path\":\"$R/jf/kept\"}],\"EnableRealtimeMonitor\":false}}" >/dev/null
   api POST /Startup/RemoteAccess '{"EnableRemoteAccess":false,"EnableAutomaticPortMapping":false}' >/dev/null
   api POST /Startup/Complete >/dev/null
   sleep 3
@@ -177,7 +195,9 @@ EOF
   LINK="$(grep -o "$PAGE#[A-Za-z0-9_-]*" "$R/sam/new.out")"
   local client; client="$(grep -o 'svrngs://join/[A-Za-z0-9_-]*' "$R/sam/new.out")"
   say "sam: $(grep -i 'phone' "$R/sam/new.out" || head -1 "$R/sam/new.out")"
-  SVRNGS_DIR="$R/alex" RUST_LOG=info NO_COLOR=1 nohup "$B" join "$client" --as Alex >"$R/alex/join.out" 2>"$R/alex/join.log" &
+  # Each join with a HOME of its own: joining places the group's folder
+  # under it (cli.rs `folder_place`), never in this host's.
+  HOME="$R/alex" SVRNGS_DIR="$R/alex" RUST_LOG=info NO_COLOR=1 nohup "$B" join "$client" --as Alex >"$R/alex/join.out" 2>"$R/alex/join.log" &
   echo $! >"$R/alex.pid"
   for _ in $(seq 1 60); do grep -q "You're in" "$R/alex/join.out" 2>/dev/null && break; sleep 1; done
   say "alex: $(head -1 "$R/alex/join.out")"
@@ -210,6 +230,7 @@ THREE=$THREE
 PAGE=$PAGE
 LINK=$LINK
 ORIGIN=$ORIGIN
+KEPT=${KEEP_BACK:-}
 EOF
   cp "$R/alex/run.out" "$OUT/alex-bare-command.out"
   sed -E 's#(svrngs://join/|'"$PAGE"'\#)[A-Za-z0-9_-]+#\1<the link>#g' "$R/sam/new.out" >"$OUT/sam-new.out"
@@ -302,15 +323,38 @@ plant() {
 trio() {
   . "$R/env"
   local tag="trio${RUN:+-$RUN}"
+  local people="
+      {\"name\":\"Alex\",\"user\":\"alex\",\"way\":\"computer\",\"engine\":\"chromium\",\"at\":\"$ORIGIN\",\"film\":\"$ONE\",\"seeks\":10},
+      {\"name\":\"Bo\",\"user\":\"bo\",\"way\":\"phone\",\"engine\":\"webkit\",\"at\":\"$LINK\",\"film\":\"$TWO\",\"seeks\":22},
+      {\"name\":\"Cy\",\"user\":\"cy\",\"way\":\"phone\",\"engine\":\"chromium\",\"at\":\"$LINK\",\"film\":\"$THREE\",\"seeks\":22}" mw=""
+  if [ -n "${MW:-}" ]; then
+    # Demo A with nothing typed: the middleware's lend, started afresh, so
+    # all three are new to it; each on a computer of their own.
+    [ -n "${CY_AT:-}" ] || { say "trio: MW=1 needs \`check.sh mw\` run first with COMPUTERS=\"alex bo cy\""; exit 2; }
+    mw_up "trio $tag"
+    mw_forget
+    tag="mw-$tag"; mw=',"mw":true'
+    people="
+      {\"name\":\"Alex\",\"user\":\"alex\",\"way\":\"computer\",\"engine\":\"chromium\",\"at\":\"$ALEX_AT\",\"film\":\"$ONE\",\"seeks\":10},
+      {\"name\":\"Bo\",\"user\":\"bo\",\"way\":\"computer\",\"engine\":\"webkit\",\"at\":\"$BO_AT\",\"film\":\"$TWO\",\"seeks\":10},
+      {\"name\":\"Cy\",\"user\":\"cy\",\"way\":\"computer\",\"engine\":\"chromium\",\"at\":\"$CY_AT\",\"film\":\"$THREE\",\"seeks\":10}"
+  fi
   say "trio $tag: load at the start: $(uptime)"
   rm -rf "$R/dump/$tag"
   SECRETS="$SECRETS" JF="$O" ADMIN="$(cat "$SECRETS/admin_token")" DUMP="$R/dump/$tag" \
-    node "$HERE/trio.mjs" "{\"server\":\"$SERVER\",\"window_s\":${WINDOW:-600},\"people\":[
-      {\"name\":\"Alex\",\"user\":\"alex\",\"way\":\"computer\",\"engine\":\"chromium\",\"at\":\"$ORIGIN\",\"film\":\"$ONE\",\"seeks\":10},
-      {\"name\":\"Bo\",\"user\":\"bo\",\"way\":\"phone\",\"engine\":\"webkit\",\"at\":\"$LINK\",\"film\":\"$TWO\",\"seeks\":22},
-      {\"name\":\"Cy\",\"user\":\"cy\",\"way\":\"phone\",\"engine\":\"chromium\",\"at\":\"$LINK\",\"film\":\"$THREE\",\"seeks\":22}]}" \
+    node "$HERE/trio.mjs" "{\"server\":\"$SERVER\",\"window_s\":${WINDOW:-600}$mw,\"people\":[$people]}" \
     >"$OUT/$tag.json" 2>"$R/$tag.err" || true
   say "trio $tag: load at the end: $(uptime)"
+  if [ -n "$mw" ]; then
+    # What each account the middleware made may open, as Jellyfin lists it
+    # to that account: a library kept back is in none.
+    TOKEN="$(cat "$SECRETS/admin_token")"
+    api GET /Users | python3 -c 'import json,re,sys;[print(u["Id"],u["Name"]) for u in json.load(sys.stdin) if re.search(r"-[0-9a-f]{16}$",u["Name"])]' |
+      while read -r id name; do
+        printf '{"user":"%s","views":%s}\n' "$name" "$(api GET "/UserViews?userId=$id" | python3 -c 'import json,sys;print(json.dumps([v["Name"] for v in json.load(sys.stdin)["Items"]]))')"
+      done >"$OUT/views-$tag.json"
+    say "trio $tag: each account opens: $(tr '\n' ' ' <"$OUT/views-$tag.json"); kept back: ${KEPT:-none}"
+  fi
   python3 "$HERE/scan.py" "$R" "$OUT" | tee -a "$OUT/steps.log"
   python3 "$HERE/trio.py" "$OUT/$tag.json" "$R/sam/run.log" | tee -a "$OUT/steps.log"
 }
@@ -335,10 +379,11 @@ mw_up() {
   if [ -f "$R/mw.pid" ]; then kill "$(cat "$R/mw.pid")" 2>/dev/null || true; rm -f "$R/mw.pid"; sleep 1; fi
   api GET /Users | python3 -c 'import json,re,sys;[print(u["Id"]) for u in json.load(sys.stdin) if re.search(r"-[0-9a-f]{16}$",u["Name"])]' |
     while read -r id; do api DELETE "/Users/$id" >/dev/null; done
-  NO_COLOR=1 RUST_LOG=info,jellyfin_mw=debug nohup "$mwb" --listen "127.0.0.1:$port" <"$SECRETS/mw_key" >"$R/mw.out" 2>"$R/mw.log" &
+  NO_COLOR=1 RUST_LOG=info,jellyfin_mw=debug nohup "$mwb" --listen "127.0.0.1:$port" ${KEEP_BACK:+--keep-back "$KEEP_BACK"} \
+    <"$SECRETS/mw_key" >"$R/mw.out" 2>"$R/mw.log" &
   echo $! >"$R/mw.pid"
   for _ in $(seq 1 50); do grep -q 'listening on port' "$R/mw.out" 2>/dev/null && break; sleep 0.1; done
-  say "mw $1: $(head -1 "$R/mw.out")${JELLYFIN_MW_PLANT:+; planted: $JELLYFIN_MW_PLANT}; users: $(users)"
+  say "mw $1: $(tr '\n' ' ' <"$R/mw.out")${JELLYFIN_MW_PLANT:+; planted: $JELLYFIN_MW_PLANT}; users: $(users)"
 }
 
 # The door keeps each person's sign-in answer while Sam's svrngs runs, and
@@ -361,22 +406,28 @@ mw() {
   . "$R/env"
   local tag="$1" port="${MW_PORT:-8097}"
   mw_up "$tag"
+  # A run after the first: the door keeps Alex's and Bo's answers from it,
+  # whose accounts mw_up just deleted.
+  [ -z "${MW_PORT_LENT:-}" ] || mw_forget
   if [ -z "${MW_PORT_LENT:-}" ]; then
-    SVRNGS_DIR="$R/sam" NO_COLOR=1 RUST_LOG=debug "$B" share 8096 --name jellyfin-mw --sign-in "$port" --limit 8 </dev/null >"$R/sam/share-mw.out" 2>>"$R/sam/share.log"
+    SVRNGS_DIR="$R/sam" NO_COLOR=1 RUST_LOG=debug "$B" share 8096 --name jellyfin-mw --sign-in "$port" ${MW_SHARE_FLAGS---limit 8} </dev/null >"$R/sam/share-mw.out" 2>>"$R/sam/share.log"
     say "sam: $(grep -m1 Lent "$R/sam/share-mw.out")"
     # What share tells a lender who names a sign-in: no accounts to make.
     say "sam is told: $(grep -v '^Lent' "$R/sam/share-mw.out" | tr '\n' ' ')"
     local client; client="$(grep -o 'svrngs://join/[A-Za-z0-9_-]*' "$R/sam/new.out")"
-    # Bo joins once; a run stopped after it does not join again.
-    if [ ! -d "$R/bo/rings" ]; then
-      mkdir -p "$R/bo"
-      SVRNGS_DIR="$R/bo" RUST_LOG=info NO_COLOR=1 nohup "$B" join "$client" --as Bo >"$R/bo/join.out" 2>"$R/bo/join.log" &
-      echo $! >"$R/bo.pid"
-      for _ in $(seq 1 60); do grep -q "You're in" "$R/bo/join.out" 2>/dev/null && break; sleep 1; done
-      say "bo: $(head -1 "$R/bo/join.out")"
-    fi
-    local who at
-    for who in alex bo; do
+    # Each computer but Alex's joins once; a run stopped after it does not
+    # join again.
+    local who at computers="${COMPUTERS:-alex bo}"
+    for who in $computers; do
+      [ "$who" != alex ] && [ ! -d "$R/$who/rings" ] || continue
+      mkdir -p "$R/$who"
+      HOME="$R/$who" SVRNGS_DIR="$R/$who" RUST_LOG=info NO_COLOR=1 nohup "$B" join "$client" --as "$(printf '%s' "${who:0:1}" | tr a-z A-Z)${who:1}" \
+        >"$R/$who/join.out" 2>"$R/$who/join.log" &
+      echo $! >"$R/$who.pid"
+      for _ in $(seq 1 60); do grep -q "You're in" "$R/$who/join.out" 2>/dev/null && break; sleep 1; done
+      say "$who: $(head -1 "$R/$who/join.out")"
+    done
+    for who in $computers; do
       kill "$(cat "$R/$who.pid")" 2>/dev/null || true; sleep 2
       SVRNGS_DIR="$R/$who" RUST_LOG=info NO_COLOR=1 nohup "$B" >"$R/$who/run.out" 2>"$R/$who/run.log" &
       echo $! >"$R/$who.pid"

@@ -37,7 +37,10 @@ for line in log.read_text(errors="replace").splitlines():
         continue
     if "told their share of the declared upload" in line and (m := LINE.search(line)):
         who, _, people, share, declared, relayed, rtt = m.groups()
-        p = door.setdefault(who, {"let_in": 0, "people": [], "share_bps": [], "declared_bps": None, "relayed": {}, "rtt_ms": []})
+        # A person's first line may be another kind (below): its keys added here.
+        p = door.setdefault(who, {"let_in": 0})
+        for k, v in (("people", []), ("share_bps", []), ("declared_bps", None), ("relayed", {}), ("rtt_ms", [])):
+            p.setdefault(k, v)
         p["let_in"] += 1
         p["people"].append(int(people))
         num = lambda v: int(v[5:-1]) if v.startswith("Some(") else None
@@ -85,7 +88,11 @@ for user, p in people.items():
         verdict(f"{user} plays through the window", True, False, p.get("stopped") or "never played")
         continue
     ev = w["outside_own_seeks"]
-    ok = not w["stills_5s"] and ev["ended"] == 0 and ev["error"] == 0 and p.get("signed_in_after") == p.get("account")
+    # Through the middleware, their account is the one it named for them,
+    # <their name>-<16 hex of their key> (viewer.rs `user_name`).
+    me = (re.fullmatch(rf"{re.escape(p.get('name') or '')}-[0-9a-f]{{16}}", p.get("signed_in_after") or "") is not None
+          if d.get("mw") else p.get("signed_in_after") == p.get("account"))
+    ok = not w["stills_5s"] and ev["ended"] == 0 and ev["error"] == 0 and me
     verdict(f"{user} plays through the window", True, ok,
             f"played {w['played_s']} s of {window}; stills of 5 s or more outside their own seeks {w['stills_5s']}; "
             f"events outside their own seeks {ev}; signed in after as {p.get('signed_in_after')}")
