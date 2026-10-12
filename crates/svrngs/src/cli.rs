@@ -1437,8 +1437,10 @@ fn not_let_in(e: RedeemError, group: Option<&Name>) -> Refusal {
 fn user_name() -> Option<Name> {
     let user = std::env::var("USER").ok()?;
     let full = full_name(&user);
-    tracing::debug!(target: "cli", %user, ?full, "cli: the name with no --as — the account's full name, else $USER");
-    (full.and_then(|f| Name::parse(&f).ok())).or_else(|| Name::parse(&user).ok())
+    let taken =
+        (full.as_deref().and_then(|f| Name::parse(f).ok())).or_else(|| Name::parse(&user).ok());
+    tracing::debug!(target: "cli", %user, ?full, ?taken, "cli: the name with no --as — the account's full name if it is a name, else $USER");
+    taken
 }
 
 /// The full name the system shows for the account `user`, if it shows
