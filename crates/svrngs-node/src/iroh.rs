@@ -296,7 +296,43 @@ impl IrohTransport {
         );
         Some(format!("http://{local}"))
     }
+
+    /// Whether `peer`, dialled on the members' protocol now, closes the
+    /// connection as [`NOT_ADMITTED`]: it answered, and does not know this
+    /// computer stands in any group it holds. Asked once a request through
+    /// the bridge has failed, which reads that close as no answer
+    /// (`demo/runs/first-minute/2026-10-12/README.md`). A dial that fails, or
+    /// a connection still open after [`CLOSED_WITHIN`], is not that.
+    pub async fn closes_unadmitted(&self, peer: &Contact) -> bool {
+        let label = &peer.key.to_string()[..8];
+        let closed = match self.endpoint_addr_for(peer) {
+            None => None,
+            Some(target) => match self.endpoint.connect(target, ALPN).await {
+                Ok(conn) => tokio::time::timeout(CLOSED_WITHIN, conn.closed())
+                    .await
+                    .ok(),
+                Err(e) => {
+                    tracing::debug!(target: "transport", peer = %label, error = %e, "iroh: the peer did not answer a dial");
+                    None
+                }
+            },
+        };
+        let unadmitted = matches!(&closed, Some(iroh::endpoint::ConnectionError::ApplicationClosed(c))
+            if c.reason.as_ref() == NOT_ADMITTED);
+        tracing::debug!(target: "transport", peer = %label, unadmitted, ?closed,
+            "iroh: whether the peer closes this computer's connection as not admitted");
+        unadmitted
+    }
 }
+
+/// The reason the acceptor closes a connection it does not admit with,
+/// which [`IrohTransport::closes_unadmitted`] reads: the one answer a
+/// stranger is given, at the connection and never in HTTP.
+pub const NOT_ADMITTED: &[u8] = b"not admitted";
+
+/// How long [`IrohTransport::closes_unadmitted`] waits for the close: the
+/// acceptor closes as soon as the handshake is done.
+const CLOSED_WITHIN: Duration = Duration::from_secs(1);
 
 /// The loopback port a peer's bridge prefers, from its key and the ALPN —
 /// identity from essence (ARCH §7.5), never a counter or whatever the kernel
@@ -452,7 +488,7 @@ impl IrohAcceptor {
                                 dialer = %dialer.actor(),
                                 "iroh acceptor: dialer not admitted — closing connection"
                             );
-                            conn.close(0u32.into(), b"not admitted");
+                            conn.close(0u32.into(), NOT_ADMITTED);
                             return;
                         }
                         Admit::Blobs(blobs) => {
