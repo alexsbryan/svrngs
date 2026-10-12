@@ -109,7 +109,8 @@ svrngs — keep what your group shares on your own computers.
       Make a group called <name> and print its link: send it to the people
       you want in it. It works for a day, while this computer is on. The
       group's folder is put at ~/svrngs/<name>.
-      --as is the name the group knows you by; else this computer's user name.
+      --as is the name the group knows you by; else your full name as this
+      computer shows it, or its user name.
       --origin also prints its links on a page address, from now on, for
       people who open them in a browser. On a phone each app then opens at
       an address of its own under that page's host, which must serve the
@@ -117,8 +118,8 @@ svrngs — keep what your group shares on your own computers.
 
   svrngs join <link> [--as <your name>] [--no-run]
       Join the group a link you were sent is for. The computer that sent it
-      must be on. --as is the name the group knows you by; else this
-      computer's user name. The group's folder is put at ~/svrngs/<group>.
+      must be on. --as is the name the group knows you by; else your full
+      name as this computer shows it, or its user name. The group's folder is put at ~/svrngs/<group>.
       --no-run stops once you are in, rather than
       run: for a computer where svrngs runs at login, as install.sh keeps it.
 
@@ -1395,13 +1396,36 @@ fn not_let_in(e: RedeemError) -> Refusal {
     }
 }
 
-/// This computer's user name, as the name a group knows its founder or a
-/// joiner by when `--as` names none. `new` and `join` print it, so it is
-/// never silent.
+/// The name a group knows its founder or a joiner by when `--as` names
+/// none: the full name of the account `$USER` names, as the system shows it
+/// on its own screens, else `$USER` itself (bash-person (e); the login was
+/// what people read of each other, Demo C's dry run, finding 4). `new` and
+/// `join` print it, so it is never silent.
 fn user_name() -> Option<Name> {
-    let raw = std::env::var("USER").ok()?;
-    tracing::debug!(target: "cli", user = %raw, "cli: the founder's name from $USER");
-    Name::parse(&raw).ok()
+    let user = std::env::var("USER").ok()?;
+    let full = full_name(&user);
+    tracing::debug!(target: "cli", %user, ?full, "cli: the name with no --as — the account's full name, else $USER");
+    (full.and_then(|f| Name::parse(&f).ok())).or_else(|| Name::parse(&user).ok())
+}
+
+/// The full name the system shows for the account `user`, if it shows
+/// one: macOS's (`id -F`), or Linux's GECOS up to its first comma
+/// (`getent passwd`).
+fn full_name(user: &str) -> Option<String> {
+    let mac = cfg!(target_os = "macos");
+    let (cmd, args) = if mac {
+        ("id", ["-F", user])
+    } else {
+        ("getent", ["passwd", user])
+    };
+    let out = std::process::Command::new(cmd).args(args).output().ok();
+    let text = String::from_utf8(out.filter(|o| o.status.success())?.stdout).ok()?;
+    let name = if mac {
+        text.trim()
+    } else {
+        text.split(':').nth(4)?.split(',').next()?.trim()
+    };
+    (!name.is_empty()).then(|| name.to_string())
 }
 
 /// `svrngs new`: a seed drawn for `name`, founded by this computer's key

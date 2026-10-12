@@ -20,9 +20,14 @@ a chat.
 
 **For developers:** *anything you can run on localhost, you can share with your
 group.* The group is the platform. An app gets three things and needs nothing
-else: the person asking, verified, in a request header; a shared record that
+else: the person asking, verified, in request headers; a shared record that
 outlives the computer it runs on; and reach to every member's computer. No
-login, no SDK, no bundle.
+login, no SDK, no bundle. The headers are three, each with one use: who
+asks is `X-Svrngs-Key`, their key; the name to show is `X-Svrngs-Person`,
+which two people may share, so nothing is keyed on it; an account's name
+is `X-Svrngs-User`, their name and the start of their key, so it never
+collides. A key is who someone is and a name is a claim — canon's rule for
+its own ledger too (`~/dev/canon` `a6960fc`, `docs/SIGNING_DESIGN.md`).
 
 **And the apps already exist.** Everything people self-host is a web app on a
 port: Jellyfin and Navidrome for the library, Immich for photos,
@@ -119,8 +124,14 @@ lend declaration, kept as data: a secret the door injects and never lets out, th
 paths it refuses, how many people may use it at once.
 
 **What an app gets — the whole surface, for our apps and a stranger's alike:**
-- the person asking, verified, in a header the door sets, and the app
-  asking in another (`x-svrngs-app`), read only from a pass (sup-1): on a
+- the person asking, verified, in three headers the door sets
+  (`crates/svrngs-node/src/door.rs`, `Identity`): `x-svrngs-key`, who
+  asks, the key the connection verified; `x-svrngs-person`, the name to
+  show, their name in the register, never unique; `x-svrngs-user`, the
+  name of their account in an app that makes accounts, their name kept to
+  ASCII letters, digits, `-` and `.` and the first 16 hex of their key
+  (`user_name`; bash-person, so a second `ana` is never Ana's account) —
+  and the app asking in another (`x-svrngs-app`), read only from a pass (sup-1): on a
   phone the pass's `app`, the lend whose pages the group's page handed it
   to; on a computer the app its origin names from what the browser says
   of the page ("Lent apps", call 6), carried to another computer's door
@@ -1354,9 +1365,10 @@ refuses a mismatch; installs into `~/.local/bin`, never with `sudo`;
 joins the link as `svrngs join` does; keeps svrngs running at login as
 the person (a LaunchAgent on macOS, a `systemd --user` unit on Linux);
 and opens the home page. Run again, it updates in place and joins
-nothing twice. The person is named by their computer's login (`join`
-takes `$USER`, `crates/svrngs/src/cli.rs:1369`), since the line gives no
-name. Measured once, on this host over loopback, nobody reading the page:
+nothing twice. The line gives no name, so the person is named as their
+computer shows them: the full name of the account `$USER` names (macOS's
+`id -F`, Linux's GECOS), else `$USER` (bash-person (e), `cli.rs`
+`user_name`; it was the login, "alexsbryan", onboarding's finding 1). Measured once, on this host over loopback, nobody reading the page:
 from the paste to the home page listing the group and its folder, 6,029
 ms, and to a member's photo in that folder, 6,489 ms; the four tarballs
 built cold in 11:31; the Linux two never run, could-not-judge
