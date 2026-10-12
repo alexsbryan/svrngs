@@ -140,7 +140,10 @@ fn a_kind_keeps_its_own_accounts_only_if_the_table_says_how() {
 /// chose (bash-limit (a); the operator, 2026-10-12). Planted: the limit
 /// given, else three.
 #[test]
-#[expect(clippy::disallowed_methods, reason = "the time is the counts' argument")]
+#[expect(
+    clippy::disallowed_methods,
+    reason = "the time is the counts' argument"
+)]
 fn a_lend_shared_with_no_limit_lets_a_fourth_in_at_once() {
     use std::time::Instant;
     use svrngs_node::door::limit::{Counts, Verdict, Whereabouts};
