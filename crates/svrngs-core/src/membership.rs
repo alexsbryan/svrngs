@@ -190,10 +190,6 @@ pub struct Invited {
     pub device_of: Option<String>,
 }
 
-/// An `Invite` as a redemption is judged against it: its signer, its
-/// `until`, and the person a device link adds a device of.
-type Link<'a> = (&'a str, i64, Option<&'a str>);
-
 /// A redemption judged on what it alone says: the `Invite` it redeems and
 /// that `Invite`'s person, or why it does not count.
 type Redeemed<'a> = Result<(&'a OpId, Option<&'a str>), InviteFault>;
@@ -265,12 +261,22 @@ pub fn membership<'a>(
     ops.sort_by_key(|(id, op)| (op.ts_unix, op.actor.clone(), op.kind.seq, *id));
 
     // ── the link: each redemption judged once on what it alone says ───
-    let invites: BTreeMap<&OpId, Link> = ops
+    let invites: BTreeMap<OpId, Invited> = ops
         .iter()
         .filter_map(|(id, op)| match &op.kind.act {
             RailAct::Invite {
-                until, device_of, ..
-            } => Some((*id, (op.actor.as_str(), *until, device_of.as_deref()))),
+                key,
+                until,
+                device_of,
+            } => Some((
+                (*id).clone(),
+                Invited {
+                    issuer: op.actor.clone(),
+                    key: key.clone(),
+                    until: *until,
+                    device_of: device_of.clone(),
+                },
+            )),
             _ => None,
         })
         .collect();
@@ -352,25 +358,7 @@ pub fn membership<'a>(
     }
     let voided = m.voided.clone();
     m.counted.retain(|id| !voided.contains(id));
-    m.invites = ops
-        .iter()
-        .filter_map(|(id, op)| match &op.kind.act {
-            RailAct::Invite {
-                key,
-                until,
-                device_of,
-            } => Some((
-                (*id).clone(),
-                Invited {
-                    issuer: op.actor.clone(),
-                    key: key.clone(),
-                    until: *until,
-                    device_of: device_of.clone(),
-                },
-            )),
-            _ => None,
-        })
-        .collect();
+    m.invites = invites;
     m
 }
 
@@ -632,15 +620,15 @@ fn redemption<'a>(
     person: &Person,
     key: &str,
     r: &'a Redemption,
-    invites: &BTreeMap<&OpId, Link<'a>>,
+    invites: &'a BTreeMap<OpId, Invited>,
     namespace: &str,
 ) -> Redeemed<'a> {
     let verdict = match invites.get(&r.id) {
         None => Err(InviteFault::Unheld),
-        Some((issuer, ..)) if *issuer != op.actor => Err(InviteFault::NotIssuer),
-        Some((_, until, _)) if op.ts_unix >= *until => Err(InviteFault::Lapsed),
+        Some(i) if i.issuer != op.actor => Err(InviteFault::NotIssuer),
+        Some(i) if op.ts_unix >= i.until => Err(InviteFault::Lapsed),
         Some(_) if !r.verifies(namespace, person, key) => Err(InviteFault::BadCosignature),
-        Some((.., of)) => Ok((&r.id, *of)),
+        Some(i) => Ok((&r.id, i.device_of.as_deref())),
     };
     tracing::debug!(
         target: "rail:membership",
