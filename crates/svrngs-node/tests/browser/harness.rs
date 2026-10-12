@@ -76,8 +76,30 @@ pub fn relay_url(relay: &Server) -> String {
     )
 }
 
+/// The relay's, the doors' and the nodes' debug lines, every test's that
+/// this binary runs, kept in `target/traces/<binary>.log`, so a miss in a
+/// full check can be read after (bash-film-load): which ranges reached a
+/// door, and whether the relay dropped a browser's socket.
+fn traced() {
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(|| {
+        let kept = repo().join("target/traces");
+        std::fs::create_dir_all(&kept).unwrap();
+        let log =
+            std::fs::File::create(kept.join(format!("{}.log", env!("CARGO_CRATE_NAME")))).unwrap();
+        tracing_subscriber::fmt()
+            .with_env_filter(tracing_subscriber::EnvFilter::new(
+                "door=debug,carriage=debug,lend=debug,transport=debug,iroh_relay=debug",
+            ))
+            .with_writer(std::sync::Mutex::new(log))
+            .with_ansi(false)
+            .init();
+    });
+}
+
 /// iroh's relay server on 127.0.0.1, plain HTTP: no TLS, no QUIC.
 pub async fn relay() -> Server {
+    traced();
     let mut config = ServerConfig::default();
     config.relay = Some(RelayServer::new(([127, 0, 0, 1], 0)));
     Server::spawn(config)
