@@ -1335,7 +1335,10 @@ in_both_engines!(
 async fn the_home_page_tells_a_removed_person(engine: Engine) {
     let relay = relay().await;
     let (ada_dir, bo_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let ada = node(ada_dir.path(), &relay, &signing(9)).await;
+    // Bo's computer's key is the one ada's node admits as bo: two keys
+    // admitted as `bo` by hand are two people since bash-devices (b), and
+    // a removal of `bo` would be refused `shared` (it admitted `signing(9)`).
+    let ada = node(ada_dir.path(), &relay, &signing(2)).await;
     let bo = joined(bo_dir.path(), &relay, &ada, 2, "bo").await;
     assert_eq!(
         removal(&ada, "bo").await,
