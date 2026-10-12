@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! The sign-in's answer to svrngs's door (DESIGN §3, "The room", call 6,
 //! the contract; crates/svrngs-node/src/door/sign_in.rs, its asker): asked
-//! `POST /` with the person's `x-svrngs-key` and `x-svrngs-person` and
-//! nothing else, it answers `200` and `{secret, headers, script}` — the
+//! `POST /` with the person's `x-svrngs-key`, `x-svrngs-person` and
+//! `x-svrngs-user` and nothing else, it answers `200` and `{secret, headers, script}` — the
 //! person's Jellyfin token, the `authorization` signing each of their
 //! requests in on their own device, and the script writing jellyfin-web's
 //! stored sign-in. Anything else it refuses, and the door refuses the
@@ -72,6 +72,7 @@ fn who(req: &Request<hyper::body::Incoming>, plant: Option<Plant>) -> Result<Who
     let everyone = || Who {
         key: PersonKey::parse(&"e".repeat(64)).expect("64 hex"),
         name: "everyone".into(),
+        user: "everyone".into(),
     };
     match (Who::of(req.headers()), plant) {
         (Ok(_), Some(Plant::OneUser | Plant::OneDevice)) => Ok(everyone()),

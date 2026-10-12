@@ -3,10 +3,12 @@
 //! validate), and the device of theirs Jellyfin signs them in on.
 //!
 //! The person is what svrngs's door sends its sign-in: `x-svrngs-key`, the
-//! verified dialer's key as lowercase hex, and `x-svrngs-person`, their
-//! name in the register (crates/svrngs-node/src/door/sign_in.rs, `ask_of`);
-//! and `x-svrngs-stand-in`, what a browser holds in place of a token, which
-//! the door swaps for the person's token in what it carries in, and back in
+//! verified dialer's key as lowercase hex; `x-svrngs-person`, their name
+//! in the register, to show and never to key on; `x-svrngs-user`, the name
+//! of their account, unique by their key and decided by the door alone
+//! (crates/svrngs-node/src/door.rs, `user_name`; bash-person (b)); and
+//! `x-svrngs-stand-in`, what a browser holds in place of a token, which the
+//! door swaps for the person's token in what it carries in, and back in
 //! every answer: read from the ask, not spelled here, so the door is its
 //! one home (DESIGN §3, call 6).
 
@@ -16,6 +18,8 @@ use hyper::http::HeaderMap;
 pub(crate) const KEY_HEADER: &str = "x-svrngs-key";
 /// The door's header naming the person.
 pub(crate) const PERSON_HEADER: &str = "x-svrngs-person";
+/// The door's header naming the person's account.
+pub(crate) const USER_HEADER: &str = "x-svrngs-user";
 /// The door's header naming its stand-in.
 pub(crate) const STAND_IN_HEADER: &str = "x-svrngs-stand-in";
 
@@ -39,6 +43,8 @@ impl PersonKey {
 pub(crate) struct Who {
     pub(crate) key: PersonKey,
     pub(crate) name: String,
+    /// Their account's name, as the door made it.
+    pub(crate) user: String,
 }
 
 /// Why an ask is not one the door made.
@@ -47,6 +53,7 @@ pub(crate) enum NotTheDoors {
     NoKey,
     NotAKey,
     NoPerson,
+    NoUser,
 }
 
 impl std::fmt::Display for NotTheDoors {
@@ -55,6 +62,7 @@ impl std::fmt::Display for NotTheDoors {
             NotTheDoors::NoKey => "the ask names no person: it carries no x-svrngs-key",
             NotTheDoors::NotAKey => "its x-svrngs-key is not a key as svrngs's door spells one",
             NotTheDoors::NoPerson => "it carries no x-svrngs-person",
+            NotTheDoors::NoUser => "it carries no x-svrngs-user",
         })
     }
 }
@@ -67,11 +75,14 @@ impl Who {
             .ok()
             .and_then(PersonKey::parse)
             .ok_or(NotTheDoors::NotAKey)?;
-        let name = headers
-            .get(PERSON_HEADER)
-            .map(|v| String::from_utf8_lossy(v.as_bytes()).into_owned())
-            .ok_or(NotTheDoors::NoPerson)?;
-        Ok(Who { key, name })
+        let text = |h, no| {
+            (headers.get(h))
+                .map(|v: &hyper::http::HeaderValue| String::from_utf8_lossy(v.as_bytes()).into_owned())
+                .ok_or(no)
+        };
+        let name = text(PERSON_HEADER, NotTheDoors::NoPerson)?;
+        let user = text(USER_HEADER, NotTheDoors::NoUser)?;
+        Ok(Who { key, name, user })
     }
 }
 
@@ -148,9 +159,15 @@ mod tests {
 
     #[test]
     fn the_door_s_headers_name_the_person() {
-        let who = Who::of(&headers(&[(KEY_HEADER, &key()), (PERSON_HEADER, "Ana")])).unwrap();
+        let who = Who::of(&headers(&[
+            (KEY_HEADER, &key()),
+            (PERSON_HEADER, "Ana"),
+            (USER_HEADER, "Ana-0123456789abcdef"),
+        ]))
+        .unwrap();
         assert_eq!(who.key.as_str(), key());
         assert_eq!(who.name, "Ana");
+        assert_eq!(who.user, "Ana-0123456789abcdef", "the door's, as it came");
     }
 
     #[test]
@@ -168,11 +185,20 @@ mod tests {
             Who::of(&headers(&[(KEY_HEADER, &key())])).unwrap_err(),
             NotTheDoors::NoPerson
         );
+        assert_eq!(
+            Who::of(&headers(&[(KEY_HEADER, &key()), (PERSON_HEADER, "Ana")])).unwrap_err(),
+            NotTheDoors::NoUser
+        );
     }
 
     #[test]
     fn each_person_s_device_is_named_from_their_key() {
-        let who = Who::of(&headers(&[(KEY_HEADER, &key()), (PERSON_HEADER, "Ana \"x\"")])).unwrap();
+        let who = Who::of(&headers(&[
+            (KEY_HEADER, &key()),
+            (PERSON_HEADER, "Ana \"x\""),
+            (USER_HEADER, "Anax-0123456789abcdef"),
+        ]))
+        .unwrap();
         let d = Device::of(&who);
         assert_eq!(d.id, "svrngs-0123456789abcdef");
         assert_eq!(d.name, "Ana x via svrngs");

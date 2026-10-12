@@ -92,10 +92,9 @@ async fn signed(
     plant: Option<Plant>,
 ) -> Result<Signed, String> {
     if !known.contains_key(&who.key) {
-        let name = viewer::user_name(&who.name, who.key.as_str());
-        tracing::info!(key = %who.key.as_str(), person = %who.name, user = %name,
-            "mw: a key not seen by this process — finding or making its person's account");
-        let viewer = viewer::provision(jellyfin, elevated, &name, keep_back).await?;
+        tracing::info!(key = %who.key.as_str(), person = %who.name, user = %who.user,
+            "mw: a key not seen by this process — finding or making the account the door names");
+        let viewer = viewer::provision(jellyfin, elevated, &who.user, keep_back).await?;
         known.insert(who.key.clone(), viewer);
     }
     let viewer = known.get(&who.key).expect("inserted above when absent");

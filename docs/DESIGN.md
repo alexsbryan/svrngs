@@ -666,7 +666,8 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
    app's nouns live in middleware, never the infra. Its spike, after Demo
    B, did Jellyfin's zero sign-in so ("Lent apps", call 4) with no diff
    under `crates/` or `web/` and no header the door does not already set:
-   `x-svrngs-key` and `x-svrngs-person` name the person, the client's own
+   `x-svrngs-key` and `x-svrngs-person` named the person (since
+   bash-person, `x-svrngs-user` names their account), the client's own
    `authorization` its device (`demo/runs/mw/2026-10-08/`, its rule
    judged by its spirit, §6, and its follow-ups, §7). Past the door, the
    middleware's port believes loopback: a process on the lender's computer
@@ -708,8 +709,9 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
      door byte for byte, held by an existing door test unchanged.
    - *What the door sends.* On a person's first request through the
      lend, before carrying it, the door asks the sign-in with that
-     request's identity headers, `x-svrngs-person` and `x-svrngs-key`
-     (`door.rs:103-111`), set as it sets them for the service, and
+     request's identity headers, `x-svrngs-key`, `x-svrngs-person` and
+     `x-svrngs-user` (`door.rs`, `Identity`), set as it sets them for the
+     service, and
      `x-svrngs-stand-in`, the stand-in (below), so an answer's script
      stores it as the door names it and no app spells it (#90, si-1);
      nothing else: no client header, no body. One owner the door holds,

@@ -15,7 +15,7 @@ fn map(pairs: &[(&str, &str)]) -> HeaderMap {
     h
 }
 
-fn identity() -> [(HeaderName, HeaderValue); 2] {
+fn identity() -> Identity {
     [
         (
             HeaderName::from_static(PERSON_HEADER),
@@ -24,6 +24,10 @@ fn identity() -> [(HeaderName, HeaderValue); 2] {
         (
             HeaderName::from_static(KEY_HEADER),
             HeaderValue::from_static("0b0b"),
+        ),
+        (
+            HeaderName::from_static(USER_HEADER),
+            HeaderValue::from_static("bo-0b0b"),
         ),
     ]
 }
@@ -54,6 +58,7 @@ fn the_client_s_identity_and_secret_names_are_displaced() {
     let mut h = map(&[
         ("x-svrngs-person", "forged"),
         ("X-SVRNGS-KEY", "forged"),
+        ("x-svrngs-user", "ana"),
         ("x-svrngs-anything", "nope"),
         ("authorization", "the-viewers"),
         ("range", "bytes=0-9"),
@@ -64,13 +69,39 @@ fn the_client_s_identity_and_secret_names_are_displaced() {
         HeaderValue::from_static("the-holders"),
     )];
     let displaced = rewrite_headers(&mut h, identity(), &secret);
-    assert_eq!(displaced, 4);
+    assert_eq!(displaced, 5);
     assert_eq!(values(&h, PERSON_HEADER), ["bo"]);
     assert_eq!(values(&h, KEY_HEADER), ["0b0b"]);
+    assert_eq!(values(&h, USER_HEADER), ["bo-0b0b"]);
     assert!(values(&h, "x-svrngs-anything").is_empty());
     assert_eq!(values(&h, "authorization"), ["the-holders"]);
     assert_eq!(values(&h, "range"), ["bytes=0-9"]);
     assert_eq!(values(&h, "cookie"), ["c"]);
+}
+
+/// Two keys are two accounts though their people share a name; an app's
+/// own `ana` is never one of them; what a header-sign-in app may refuse,
+/// or read as a pattern, is left out (moved from the Jellyfin middleware's
+/// `viewer.rs`, bash-person (b)).
+#[test]
+fn each_key_names_an_account_of_its_own() {
+    let name = |raw: &str, key: &str| user_name(&Person::parse(raw).unwrap(), key);
+    let (a, b) = (name("Ana", &"ab".repeat(32)), name("Ana", &"cd".repeat(32)));
+    assert_eq!(a, "Ana-abababababababab");
+    assert_ne!(a, b);
+    assert_ne!(name("ana", &"ab".repeat(32)), "ana");
+    assert_eq!(
+        name("Ana/<Ben>_%", &"ab".repeat(32)),
+        "AnaBen-abababababababab"
+    );
+    assert_eq!(
+        name("Zoë O'Neil.2", &"ab".repeat(32)),
+        "ZoONeil.2-abababababababab"
+    );
+    assert_eq!(
+        name("イチロー", &"ab".repeat(32)),
+        "person-abababababababab"
+    );
 }
 
 /// Hop-by-hop headers stop at the door, with any `Connection` names.

@@ -25,9 +25,10 @@
 //! learned by being refused (2026-09-19, run under `RING_ROOM_TOPOLOGY=room`):
 //! `POST /Users/{id}/Policy` REPLACES a policy rather than patching it, so
 //! what is sent must be the origin's own document with this verb's keys
-//! written over it ([`merge_read_only`]); and a user's name is fixed
-//! ([`user_name`]), so `POST /Users/New` collides on the second provision and
-//! the account must be looked up first ([`viewer_id_in`]).
+//! written over it ([`merge_read_only`]); and a user's name is fixed — the
+//! door's `x-svrngs-user` ([`crate::person::Who`]), unique by the person's
+//! key — so `POST /Users/New` collides on the second provision and the
+//! account must be looked up first ([`viewer_id_in`]).
 //!
 //! # What the person types
 //!
@@ -60,26 +61,11 @@ use std::time::Duration;
 pub(crate) struct Viewer {
     /// The account's id in the origin's own user space.
     pub(crate) id: String,
-    /// The name it was made under, [`user_name`]'s.
+    /// The name it was made under: the door's `x-svrngs-user`.
     pub(crate) name: String,
     /// The password this process invented: kept in memory only, so each
     /// device the person comes on can be signed in without a reset.
     pub(crate) password: String,
-}
-
-/// The name a person's account is made under: the name the door gives them,
-/// kept to the characters Jellyfin takes in a user name, and the first 16
-/// hex of their key, so two people of one name are two accounts, a second
-/// provision after a restart finds the same one, and no account the lender
-/// made by hand is ever taken for a person's.
-pub(crate) fn user_name(person: &str, key: &str) -> String {
-    let kept: String = person
-        .chars()
-        .filter(|c| c.is_alphanumeric() || " -'._@+".contains(*c))
-        .collect();
-    let kept = kept.trim();
-    let kept = if kept.is_empty() { "person" } else { kept };
-    format!("{kept}-{}", &key[..key.len().min(16)])
 }
 
 /// Every policy key a viewer must not have. Read back after the write and
@@ -671,19 +657,6 @@ mod tests {
         .err()
         .expect("an account opening what is kept back is refused");
         assert!(got.contains("EnableAllFolders"), "{got}");
-    }
-
-    /// Two keys are two accounts though their people share a name; the
-    /// lender's own `sam` is never one of them; what Jellyfin refuses in a
-    /// name is left out.
-    #[test]
-    fn each_key_names_an_account_of_its_own() {
-        let a = user_name("Ana", &"ab".repeat(32));
-        let b = user_name("Ana", &"cd".repeat(32));
-        assert_eq!(a, "Ana-abababababababab");
-        assert_ne!(a, b);
-        assert_eq!(user_name("Ana/<Ben>", &"ab".repeat(32)), "AnaBen-abababababababab");
-        assert_eq!(user_name("  ", &"ab".repeat(32)), "person-abababababababab");
     }
 
     /// Positive: the policy this verb writes says false to every key the

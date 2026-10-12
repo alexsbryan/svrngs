@@ -746,8 +746,9 @@ in_both_engines!(
     /// (mwp-4; DESIGN §3, "The room", call 6, bar 4). Sam lends the canary
     /// with accounts as `accounts`, its sign-in `answer.mjs`; Alex opens it
     /// from Alex's phone and Bo from Bo's computer. Each is signed in as
-    /// themselves with nothing typed: the canary's page names its person by
-    /// the token the sign-in's script stored, by the door's bearer and by a
+    /// themselves with nothing typed: the canary's page names its person's
+    /// account — the door's `x-svrngs-user`, unique by their key — by the
+    /// token the sign-in's script stored, by the door's bearer and by a
     /// redirect; every request the canary took through the door is signed
     /// as the person who asked; and no byte either browser receives holds
     /// either person's token or the lender's key. Its plant,
@@ -767,7 +768,11 @@ async fn two_people_signed_in(engine: Engine) {
     // either browser receives may hold.
     let http = reqwest::Client::builder().no_proxy().build().unwrap();
     let mut secrets = vec![LENDERS.to_string()];
-    for name in ["alex", "bo"] {
+    let user = |name: &str, key: u8| {
+        svrngs_node::door::user_name(&Person::parse(name).unwrap(), &actor_of(&signing(key)))
+    };
+    let users = [user("alex", PHONE), user("bo", BO)];
+    for name in &users {
         let made: Value = http
             .post(format!("http://127.0.0.1:{}/accounts", accounts.port))
             .bearer_auth(LENDERS)
@@ -783,10 +788,13 @@ async fn two_people_signed_in(engine: Engine) {
     let label = Label::of(g.sam.endpoint().id().as_bytes(), "accounts").to_string();
     let mut table = String::new();
     let mut failed = Vec::new();
-    for (who, way, node) in [
+    for ((who, way, node), user) in [
         ("alex", Way::Wildcard, &g.alex),
         ("bo", Way::Computer, &g.bo),
-    ] {
+    ]
+    .into_iter()
+    .zip(&users)
+    {
         let mut args = browser_args(way, engine, &g, &relay).await;
         let api = node.api_addr();
         if way == Way::Computer {
@@ -799,7 +807,7 @@ async fn two_people_signed_in(engine: Engine) {
         let ran = browse(&args).await;
         let account = &ran["lends"]["accounts"]["account"];
         let ok = account["ok"] == json!(true)
-            && account["who"] == json!(who)
+            && account["who"] == json!(user)
             && ran["leaked"] == json!([]);
         println!("{who}'s page saw {}", account["saw"]);
         let verdict = if ok { "passed" } else { "failed" };
@@ -829,7 +837,7 @@ async fn two_people_signed_in(engine: Engine) {
         failed.join("\n")
     );
     // Every request the canary took through the door, signed in as the
-    // person the door names.
+    // account the door names.
     let mut asked = seen(&accounts).await;
     asked.retain(|s| s["key"] != json!(""));
     for who in ["alex", "bo"] {
@@ -838,10 +846,7 @@ async fn two_people_signed_in(engine: Engine) {
             "{who} asked nothing: {asked:?}"
         );
     }
-    let unsigned: Vec<&Value> = asked
-        .iter()
-        .filter(|s| s["signed"] != s["person"])
-        .collect();
+    let unsigned: Vec<&Value> = asked.iter().filter(|s| s["signed"] != s["user"]).collect();
     assert!(
         unsigned.is_empty(),
         "requests signed in as another: {unsigned:?}"

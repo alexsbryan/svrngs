@@ -166,6 +166,7 @@ def main():
     alex_key = next((k for k, n in keys.items() if n == "Alex"), None)
     if alex_key:
         s, h, b = ask(MW, f"localhost:{MW[1]}", "POST", "/", {"x-svrngs-key": alex_key, "x-svrngs-person": "Alex",
+                                                          "x-svrngs-user": f"Alex-{alex_key[:16]}",
                                                           "x-svrngs-stand-in": "svrngs-stand-in"})
         run["anothers_key"] = {"status": s, "answered_a_secret": s == 200 and "secret" in json.loads(b)}
     else:

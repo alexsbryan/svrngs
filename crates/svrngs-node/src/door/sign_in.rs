@@ -5,8 +5,8 @@
 //!
 //! **Asked** on a person's first request through the lend, before it is
 //! carried: `POST /` at `127.0.0.1:<its port>`, with the request's
-//! [`super::PERSON_HEADER`] and [`super::KEY_HEADER`] as the door sets them
-//! for the service, and [`STAND_IN`] in [`STAND_IN_HEADER`], for a script
+//! [`super::Identity`] as the door sets it for the service — the person's
+//! key, the name to show and their account's name — and [`STAND_IN`] in [`STAND_IN_HEADER`], for a script
 //! to store, and nothing else. **Answered** `200` and a JSON object, every
 //! field required and none other ([`Answer`]): the person's `secret`, the
 //! `headers` set on each of their requests, and a `script` or `null` (mwp-2
@@ -265,7 +265,7 @@ type Whose = (LendName, NonZeroU16, super::PersonKey);
 type Waiter = oneshot::Sender<Result<Signed, Refusal>>;
 
 enum Ask {
-    Of(Whose, [(HeaderName, HeaderValue); 2], Waiter),
+    Of(Whose, super::Identity, Waiter),
     /// A sign-in's answer for a person, asked off the task.
     Asked(Whose, Result<Answer, Refusal>),
     Forget(Whose, Secret),
@@ -339,7 +339,7 @@ impl SignIns {
         lend: &LendName,
         port: NonZeroU16,
         actor: &super::PersonKey,
-        identity: [(HeaderName, HeaderValue); 2],
+        identity: super::Identity,
     ) -> Result<Signed, Refusal> {
         let (answer, told) = oneshot::channel();
         let whose = (lend.clone(), port, actor.clone());
@@ -373,7 +373,7 @@ fn signed(kept: &HashMap<Whose, Answer>, lend: &LendName, answer: Answer) -> Sig
 /// Ask the sign-in at `port` for the person `identity` names.
 async fn ask_of(
     port: NonZeroU16,
-    identity: [(HeaderName, HeaderValue); 2],
+    identity: super::Identity,
     lend: &LendName,
 ) -> Result<Answer, Refusal> {
     let mut request = axum::http::Request::post("/")

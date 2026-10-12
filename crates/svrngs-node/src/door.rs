@@ -113,13 +113,38 @@ use sign_in::Signing;
 /// the door is the door's. A client's is stripped whole.
 pub const IDENTITY_PREFIX: &str = "x-svrngs-";
 
-/// The person asking, as the register names them: their name in the first
-/// group this computer holds, in the groups' order, that they stand in.
+/// The name to show for the person asking, as the register names them:
+/// their name in the first group this computer holds, in the groups'
+/// order, that they stand in. A name is a claim (bash-person): two people
+/// may share one, so nothing is keyed on it — an account is
+/// [`USER_HEADER`]'s.
 pub const PERSON_HEADER: &str = "x-svrngs-person";
 
 /// The key the connection verified, as the record spells an actor: its
-/// lowercase hex.
+/// lowercase hex. Who asks.
 pub const KEY_HEADER: &str = "x-svrngs-key";
+
+/// The name of the account an app makes for the person asking:
+/// [`user_name`]'s, unique by their key.
+pub const USER_HEADER: &str = "x-svrngs-user";
+
+/// What the door tells a lend, and its sign-in, of who asks.
+pub type Identity = [(HeaderName, HeaderValue); 3];
+
+/// The account name for `person` asking with `key`: their name kept to
+/// ASCII letters, digits, `-` and `.`, or `person` if none is left, then
+/// `-` and the first 16 hex of the key. So two people of one name are two
+/// accounts, an app's own accounts (its lender's `ana`) are never a
+/// person's, and the same key finds the same account after any restart.
+/// The characters are ones Jellyfin, Navidrome and Calibre-Web each take
+/// in a user name and none reads as a pattern (`_` and `%` are SQL `LIKE`'s).
+pub fn user_name(person: &Person, key: &str) -> String {
+    let kept: String = (person.as_str().chars())
+        .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '.')
+        .collect();
+    let kept = if kept.is_empty() { "person" } else { &kept };
+    format!("{kept}-{}", &key[..key.len().min(16)])
+}
 
 /// The app asking: the label of the pass's `app`, the lend whose pages
 /// hold it, under the person's signature (sup-1) — the lend the person's
@@ -586,7 +611,7 @@ pub(crate) fn splice<H: Send + 'static>(
 /// client typed that the door displaced.
 fn rewrite_headers(
     headers: &mut HeaderMap,
-    identity: [(HeaderName, HeaderValue); 2],
+    identity: Identity,
     secret: &[(HeaderName, HeaderValue)],
 ) -> usize {
     strip_hop_by_hop(headers);
@@ -1187,9 +1212,10 @@ async fn forward(
     let asker_side = upgrade.as_ref().map(|_| hyper::upgrade::on(&mut req));
     let (mut parts, body) = req.into_parts();
     let get = parts.method == axum::http::Method::GET;
-    let (Ok(person_value), Ok(key_value)) = (
+    let (Ok(person_value), Ok(key_value), Ok(user_value)) = (
         HeaderValue::from_bytes(person.as_str().as_bytes()),
         HeaderValue::from_str(actor),
+        HeaderValue::from_str(&user_name(person, actor)),
     ) else {
         tracing::warn!(target: "door", actor, "door: refused — the person's name cannot be a header");
         return Err(LendRefusal::Fault.say(
@@ -1200,7 +1226,9 @@ async fn forward(
     let identity = [
         (HeaderName::from_static(PERSON_HEADER), person_value),
         (HeaderName::from_static(KEY_HEADER), key_value),
+        (HeaderName::from_static(USER_HEADER), user_value),
     ];
+    tracing::debug!(target: "door", actor, user = ?identity[2].1, "door: the account the lend is told");
     let signing = match lend.sign_in {
         None => Signing::Secret(secret_headers(door, &lend.name)),
         Some(port) => match door

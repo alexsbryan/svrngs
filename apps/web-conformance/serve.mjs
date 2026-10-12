@@ -34,7 +34,7 @@
 //   POST /guarded     refused unless its `Origin` is its own address, as
 //                     an app checking a post's origin against its Host does
 //   GET  /me          the cookies it was sent
-//   GET  /seen        every request it took: path, cookies, person, key and
+//   GET  /seen        every request it took: path, cookies, person, user, key and
 //                     the account it was signed in as
 //   POST /accounts    `{"name"}`, by the lender's key as a bearer: that
 //                     account's token, the account made if it is new
@@ -57,7 +57,7 @@ const SIZE = 64 * 1024 * 1024;
 const byte = (i) => (i * 7 + (i >> 10)) & 255;
 const seen = [];
 // What `/seen` gives of a request, a page's or a WebSocket's, read one way.
-const saw = (req, path) => seen.push({ path, cookie: req.headers.cookie ?? '', person: req.headers['x-svrngs-person'] ?? '', key: req.headers['x-svrngs-key'] ?? '', secret: Boolean(req.headers.authorization), signed: nameOf(tokenOf(req)) });
+const saw = (req, path) => seen.push({ path, cookie: req.headers.cookie ?? '', person: req.headers['x-svrngs-person'] ?? '', user: req.headers['x-svrngs-user'] ?? '', key: req.headers['x-svrngs-key'] ?? '', secret: Boolean(req.headers.authorization), signed: nameOf(tokenOf(req)) });
 const SAME = { 'cross-origin-resource-policy': 'same-origin', 'cache-control': 'no-store' };
 const checks = readFileSync(new URL('./checks.js', import.meta.url));
 // Under `script-src 'nonce-…' 'strict-dynamic'`, as Nextcloud's pages are:
