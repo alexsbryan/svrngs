@@ -137,8 +137,9 @@ pub(crate) fn register_in(
 }
 
 /// Every `Remove` among `ops` that counts in `m`, by time: the cut when it
-/// is the one `m` cut its key by, an ask otherwise. One naming a key bound
-/// to nobody names no one, said at debug and left out.
+/// is the one `m` cut its key by, an ask otherwise. One that does not
+/// count, or whose signer or named key is bound to nobody, is said at
+/// debug and left out.
 fn removals_in(ops: &[Op<SignedOp>], m: &Membership, namespace: &str) -> Vec<Removing> {
     let mut out: Vec<Removing> = ops
         .iter()
@@ -148,10 +149,11 @@ fn removals_in(ops: &[Op<SignedOp>], m: &Membership, namespace: &str) -> Vec<Rem
             };
             let id = crate::derive_id(op, namespace);
             if !m.counts(&id) {
+                tracing::debug!(target: "register", namespace, id = %id, key, "register: a removal the fold does not count is not shown");
                 return None;
             }
             let (Some(by), Some(of)) = (m.bindings.get(&op.actor), m.bindings.get(key)) else {
-                tracing::debug!(target: "register", namespace, id = %id, key, "register: a removal names a key bound to nobody, so it is not shown");
+                tracing::debug!(target: "register", namespace, id = %id, actor = %op.actor, key, "register: a removal whose signer or named key is bound to nobody is not shown");
                 return None;
             };
             let said = if m.cut.get(key).is_some_and(|c| c.by == id) { RemovalSaid::Removed } else { RemovalSaid::Asked };
