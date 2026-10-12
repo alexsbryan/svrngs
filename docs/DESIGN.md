@@ -1335,8 +1335,17 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   `membership.rs`'s module docs; canon's rule that only a key bound to a
   name adds a key to it, `~/dev/canon` `docs/SIGNING_DESIGN.md` §2). The
   register answers each key's person (`Membership::person_of`); removal
-  and hand-on take the one person a name names, refusing one two people
-  hold. Only a computer makes a device link; a phone making one, and one
+  and hand-on take the one person a name names. Two people still come to
+  one name — a race at two computers, a member's hand, a group from before
+  device links where a person's second device joined under their own name
+  — and of two, svrngs never guesses which is meant: the refusal says when
+  each joined, the time on the `Admit` that made them a person or that they
+  started the group (`Membership::joined`), `--joined` names one, the core
+  deciding (`Membership::one_named`), and the home page lists each person
+  once, two of one name each with when they joined (bash-same-name,
+  landed; `crates/svrngs/tests/remove.rs`). Two let in the same second
+  cannot be told apart this way; joining two such people into one waits
+  in §9. Only a computer makes a device link; a phone making one, and one
   device removed apart from its person, wait in §9. A computer's one key
   for every group it holds (`crates/svrngs/src/identity.rs`) still departs
   from "per group", a separate question.
@@ -2015,6 +2024,7 @@ that build, the last two the operator's.
 | skipping a round's members known offline. Dialling them at once landed (asleep-1, `ring_sync::run_one_round`), so an asleep one holds only its own dial; the round still ends when that dial gives up, about 10 s, and a door's ask begun meanwhile waits for the next round (§3, "Joining") | a round's measured time nears its interval, or a newcomer is refused while a round waits on an asleep computer, counted |
 | a phone making a device link (phase 2 of svrn-docs `rings/current/ONE_PERSON_MANY_DEVICES.md` §3). Since bash-devices a computer makes one (`svrngs link <group> --device`), and a phone or another computer opening it joins as that computer's person, asked no name (§3, "Joining"); a phone cannot make one, since only a computer redeems a link (the row "any member's node redeeming a link", below), so a person whose only device in a group is a phone adds no second one as themselves | a person whose devices in a group are phones alone asks to add another as themselves, counted; or any member's node redeeming a link lands |
 | a device link apart from its issuer's one open link: a computer has one open link (§8, "A new link closes the old one"), so making a link for its person's devices closes the link they sent a friend, and the other way about; the command says so as it does for any link (bash-devices; `demo/runs/devices/2026-10-12/README.md`, finding 3, not measured) | a person's link to a friend is closed by their device link, or the other way, counted |
+| joining two people of one name into one person: a group from before bash-devices where a person's second device joined under their own name holds them as two people, not migrated (svrn-docs `rings/current/ONE_PERSON_MANY_DEVICES.md` §3), and a race or a member's hand can give two people one name; since bash-same-name the keeper removes either by when they joined (§6), but making one a device of the other is a change to who a person is beyond phase 1, the operator's (ralph/next/bash/CHARTER.md, "Leave for the operator"), never built by that row | a person standing as two people of their own name in a group asks to be one, counted |
 | removing one lost device of a person: a `Remove` is per key already, and the person's other devices keep standing (svrn-docs `rings/current/ONE_PERSON_MANY_DEVICES.md` §3, "Removal"), but `svrngs remove` names a person and takes every device of theirs (bash-devices); naming one device — by the person from another of theirs, or by the keeper — is a change to who a person is beyond phase 1, the operator's (ralph/next/bash/CHARTER.md). Until then a lost phone's key stands as its person until the keeper removes the person | a person loses a device that stands in a group, counted |
 | the wire published for a second implementation | someone sets out to write one |
 | local discovery on one WiFi | Apple's multicast entitlement is granted |
