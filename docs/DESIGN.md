@@ -1035,7 +1035,7 @@ never learns what a film, an expense or a crush is. And the canaries of §8,
 Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
-**Lean, and kept lean.** `svrngs-core` stays under 3,000 lines of code and the
+**Lean, and kept lean.** `svrngs-core` stays under 3,080 lines of code and the
 repository under 15,350 (`scripts/lean_check.py`), the branch `folders`
 too since main merged into it at syp-5, counting 13,778 and `svrngs-core`
 2,719 there; a raise is the operator's, with the reason in the commit. The budget counts the product:
@@ -1090,7 +1090,13 @@ the record, and the command, by the seat's estimate; the spike counted
 543, its index the record's, not iroh-docs
 (`demo/runs/sy/2026-10-09/README.md` §1, §7). The branch keeps its cap,
 16,500 at most while it merges main in, and takes main's with the last
-merge (§10).
+merge (§10). And `svrngs-core`'s from 3,000, at 2,981, on 2026-10-12, for
+one person, many devices (bash-devices; the operator, "yes to both";
+svrn-docs `rings/current/ONE_PERSON_MANY_DEVICES.md` §6, "the core: about
++80"): a device link's person on an `Invite`, the fold's person by their
+first key and `person_of`, removal and hand-on resolving a name to one
+person — 3,051 with them, and no function of the core without a caller
+outside the tests to make room from.
 `ARCHITECTURE.md` maps what exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file
