@@ -1,0 +1,14 @@
+Made lake-trip, with you as Sam.
+Send this link to the people you want in it. It works for a day, while this computer is on:
+
+  svrngs://join/<the token>
+
+or, to open it in a browser:
+
+  http://localhost:56384/#<the token>
+
+On a phone, each app opens at an address of its own under localhost:56384, which can see which app is opened.
+
+lake-trip's folder is /tmp/c-rerun/sam/svrngs/lake-trip: what anyone in lake-trip puts there reaches this computer, and what you put there reaches theirs.
+
+Leave this running; Ctrl-C stops it.

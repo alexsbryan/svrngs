@@ -1,0 +1,9 @@
+Getting svrngs for this computer from http://localhost:56384/get/svrngs-darwin-aarch64.tar.gz
+Checked: svrngs-darwin-aarch64.tar.gz matches SHA256SUMS.
+Updated svrngs in /tmp/c-rerun/ana/.local/bin.
+/tmp/c-rerun/ana/.local/bin is not on your PATH, so to run svrngs yourself type /tmp/c-rerun/ana/.local/bin/svrngs; nothing else needs it.
+You're in lake-trip, as ana.
+lake-trip's folder is /tmp/c-rerun/ana/svrngs/lake-trip: what anyone in lake-trip puts there reaches this computer, and what you put there reaches theirs.
+
+svrngs runs now, and whenever you log in (/tmp/c-rerun/ana/Library/LaunchAgents/sh.svrnme.svrngs.plist).
+Your home page: http://svrngs.localhost:56565/
