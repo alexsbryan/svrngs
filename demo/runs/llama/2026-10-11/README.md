@@ -53,3 +53,49 @@ before any data. One host, one run of each: not a rate (AGENTS.md 7).
 6. **The person on each request**: not read here — llama-server shows no
    request headers, so whether `X-Svrngs-Person` reached it is never-ran in
    this run (svrngs's own tests hold the door's header).
+
+## 3. What the run gave
+
+`W=<scratch> python3 demo/runs/llama/2026-10-11/run.py` at `5e4c1c6`, exit
+0, its data in `run/` (`events.jsonl`, `summary.json`, `sam.log`, `bo.log`,
+`llama.log`); the host's 1-minute load 14.4 at its start and 11.3 at its
+end, on 12 cores (`events.jsonl`, `start` and `end`), the queue v1's
+`scripts/check.sh` having just ended. Each prediction, by AGENTS.md 6's
+verdicts:
+
+1. **The page: passed.** Bo's Chromium opened the lend's address 200 in
+   976 ms, titled `llama-ui`, its words "Hello there … Type a message or
+   upload files to get started"; its script's `/props` (three times) and
+   `/v1/models` answered 200 through the lend, its bundle and styles too,
+   and no page error (`summary.json`, `page`). One request answered 403:
+   `/tools`, by llama-server itself — the door's log carries it and says
+   "the lend's service answered … status=403" (`run/sam.log:35-37`);
+   llama-server's tools are off unless started with them.
+2. **The API, whole: passed.** Five each way, every one 200: straight
+   72.9 ms at the median, through the lend 75.8 ms — 2.9 ms more, inside
+   30 ms (`summary.json`, `whole`). The answer through the lend is an
+   OpenAI-shaped `chat.completion`. Its words name the Garonne, which is in
+   France: a 0.5B model's quality, not judged here.
+3. **The API, streamed: passed.** 23 events each, every run, both ways; the
+   first event at 6.4 ms straight and 9.5 ms through the lend at the
+   median, 3.1 ms more, inside 50 ms; the span from first to last 65.4 ms
+   straight and 66.2 ms through the lend, 101% of it, so the lend carried
+   each event as it was made, held none to the end (`summary.json`,
+   `streamed`).
+4. **What the lend keeps back: passed.** `GET /slots` straight 200; through
+   the lend 403, svrngs's own refusal, `{"error": "llama is lent without
+   /slots", "kind": "path"}`, in 2.5 ms (`summary.json`, `slots`).
+5. **Nothing typed, no account, no key: passed.** Nothing asked for any:
+   llama-server keeps none, and the lend asked none (the page's words above;
+   no `401` or sign-in in `asked`).
+6. **The person on each request: never-ran at llama-server**, as
+   predicted — it shows no request headers. svrngs's side says it: the
+   door's line for each request it carried names `person="Bo"`
+   (`run/sam.log:35`).
+
+**So at its simplest, shared inference is a lend.** A stock llama-server,
+one `svrngs share` with two `--refuse`s, and another member's computer has
+its chat page and its API, streamed, 3 ms from straight on one host.
+Unmeasured here: two computers on two networks and a relay (Demo C's two
+homes, DESIGN §8); a phone, through the group's page; several members at
+once against `--limit 4` and `--parallel 2`.

@@ -1,0 +1,29 @@
+{"t": 1791770800.707, "event": "start", "host": {"load": [14.35888671875, 18.7431640625, 20.48779296875], "cores": 12}, "head": "5e4c1c6", "svrngs": "/Users/alexsbryan/dev/svrngs/target/debug/svrngs"}
+{"t": 1791770822.814, "event": "llama", "up": true}
+{"t": 1791770823.636, "event": "up", "who": "sam", "args": ["new", "Lab", "--as", "Sam"]}
+{"t": 1791770824.257, "event": "up", "who": "bo", "args": ["join", "<the link>", "--as", "Bo"]}
+{"t": 1791770825.077, "event": "command", "who": "sam", "args": ["share", "18089", "--name", "llama", "--kind", "llama", "--limit", "4", "--refuse", "/slots", "--refuse", "/lora-adapters"], "exit": 0, "said": "Lent llama (port 18089) to everyone in your groups, up to 4 people at once.\nThey cannot open /slots.\nThey cannot open /lora-adapters.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare llama` stops lending it.\nIf llama takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):"}
+{"t": 1791770825.08, "event": "lend", "origin": "http://sapa781hzuf5zhchllgvpkg34l2b1v2a3xzbqrc34cf74z47ga8tra1jd432f8.localhost:64205/"}
+{"t": 1791770826.674, "event": "page", "origin": "http://sapa781hzuf5zhchllgvpkg34l2b1v2a3xzbqrc34cf74z47ga8tra1jd432f8.localhost:64205/", "opened": {"status": 200, "ms": 976}, "title": "llama-ui", "text": "Hello there\n\nType a message or upload files to get started\n\nOpen prompt picker\nOpen resource picker\nAdd files, prompts, tools or MCP Servers\nQwen/Qwen2.5\n0.5B\nInstruct\nSend", "asked": [{"path": "/", "status": 200}, {"path": "/_app/immutable/assets/bundle.D7LDmMTE.css", "status": 200}, {"path": "/_app/immutable/bundle.CtedIcFq.js", "status": 200}, {"path": "/tools", "status": 403}, {"path": "/_app/version.json", "status": 200}, {"path": "/build.json", "status": 200}, {"path": "/props", "status": 200}, {"path": "/props", "status": 200}, {"path": "/v1/models", "status": 200}, {"path": "/props", "status": 200}], "errors": []}
+{"t": 1791770826.968, "event": "whole", "way": "straight", "status": 200, "ms": 294.0}
+{"t": 1791770827.044, "event": "whole", "way": "lent", "status": 200, "ms": 75.3}
+{"t": 1791770827.117, "event": "whole", "way": "straight", "status": 200, "ms": 72.9}
+{"t": 1791770827.193, "event": "whole", "way": "lent", "status": 200, "ms": 75.9}
+{"t": 1791770827.267, "event": "whole", "way": "straight", "status": 200, "ms": 73.5}
+{"t": 1791770827.344, "event": "whole", "way": "lent", "status": 200, "ms": 76.8}
+{"t": 1791770827.417, "event": "whole", "way": "straight", "status": 200, "ms": 72.7}
+{"t": 1791770827.493, "event": "whole", "way": "lent", "status": 200, "ms": 75.8}
+{"t": 1791770827.566, "event": "whole", "way": "straight", "status": 200, "ms": 72.6}
+{"t": 1791770827.641, "event": "whole", "way": "lent", "status": 200, "ms": 74.6}
+{"t": 1791770827.713, "event": "streamed", "way": "straight", "status": 200, "events": 23, "first_ms": 6.4, "last_ms": 71.8, "span_ms": 65.4}
+{"t": 1791770827.789, "event": "streamed", "way": "lent", "status": 200, "events": 23, "first_ms": 9.6, "last_ms": 75.6, "span_ms": 66.0}
+{"t": 1791770827.861, "event": "streamed", "way": "straight", "status": 200, "events": 23, "first_ms": 6.2, "last_ms": 71.6, "span_ms": 65.4}
+{"t": 1791770827.937, "event": "streamed", "way": "lent", "status": 200, "events": 23, "first_ms": 9.5, "last_ms": 75.4, "span_ms": 65.9}
+{"t": 1791770828.01, "event": "streamed", "way": "straight", "status": 200, "events": 23, "first_ms": 6.4, "last_ms": 72.4, "span_ms": 66.0}
+{"t": 1791770828.086, "event": "streamed", "way": "lent", "status": 200, "events": 23, "first_ms": 9.4, "last_ms": 75.6, "span_ms": 66.2}
+{"t": 1791770828.158, "event": "streamed", "way": "straight", "status": 200, "events": 23, "first_ms": 6.3, "last_ms": 71.5, "span_ms": 65.2}
+{"t": 1791770828.234, "event": "streamed", "way": "lent", "status": 200, "events": 23, "first_ms": 9.5, "last_ms": 75.7, "span_ms": 66.2}
+{"t": 1791770828.318, "event": "streamed", "way": "straight", "status": 200, "events": 23, "first_ms": 6.4, "last_ms": 83.9, "span_ms": 77.5}
+{"t": 1791770828.395, "event": "streamed", "way": "lent", "status": 200, "events": 23, "first_ms": 9.3, "last_ms": 76.2, "span_ms": 66.9}
+{"t": 1791770828.398, "event": "slots", "straight": 200, "lent": {"status": 403, "ms": 2.5, "body": {"error": "llama is lent without /slots", "kind": "path"}}}
+{"t": 1791770828.636, "event": "end", "host": {"load": [11.26416015625, 17.55908203125, 19.9970703125], "cores": 12}}
