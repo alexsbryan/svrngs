@@ -9,7 +9,7 @@
 //! svrngs                                   run for every group this computer holds
 //! svrngs new <name> [--as N] [--origin U]
 //!                                          make a group, print its link, run
-//! svrngs join <link> [--as N]              join a group by its link, run
+//! svrngs join <link> [--as N] [--no-run]   join a group by its link, run
 //! svrngs link <group> [--origin U]
 //!                                          a new link to a group, print it, run
 //! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--sign-in S] [--ask W]
@@ -112,10 +112,11 @@ svrngs — keep what your group shares on your own computers.
       an address of its own under that page's host, which must serve the
       page at every name under it, as group.svrnme.sh does.
 
-  svrngs join <link> [--as <your name>]
+  svrngs join <link> [--as <your name>] [--no-run]
       Join the group a link you were sent is for. The computer that sent it
       must be on. --as is the name the group knows you by; else this
-      computer's user name.
+      computer's user name. --no-run stops once you are in, rather than
+      run: for a computer where svrngs runs at login, as install.sh keeps it.
 
   svrngs link <group> [--origin <url>]
       Print a new link to <group>. Any link you sent before stops letting
@@ -199,6 +200,9 @@ pub enum Verb {
     Join {
         link: Box<Link>,
         person: Option<Name>,
+        /// `--no-run` makes it false: stop once in, for svrngs kept
+        /// running at login (install.sh; DESIGN §7).
+        run: bool,
     },
     Link {
         group: String,
@@ -246,6 +250,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let mut sign_in = None;
     let (mut folder, mut group) = (None, None);
     let mut asks = None;
+    let mut run = true;
     let mut more = Vec::new();
     while let Some(arg) = it.next() {
         let mut value = |flag: &str| it.next().ok_or_else(|| format!("{flag} wants a value"));
@@ -312,6 +317,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 }
                 asks = Some(raw);
             }
+            "--no-run" if verb == "join" => run = false,
             "-h" | "--help" => return Ok(Verb::Help),
             other if other.starts_with('-') => return Err(format!("unknown argument `{other}`")),
             other if positional.is_none() => positional = Some(other.to_string()),
@@ -384,6 +390,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             Ok(Verb::Join {
                 link: Box::new(link),
                 person,
+                run,
             })
         }
         "link" => Ok(Verb::Link {
@@ -1139,6 +1146,7 @@ async fn serve(
     relay: &RelayConfig,
 ) -> Result<(), Refusal> {
     let _room;
+    let stays = !matches!(command, Verb::Join { run: false, .. });
     let said = match command {
         Verb::New {
             name,
@@ -1156,7 +1164,7 @@ async fn serve(
             let (seed, link) = new_group(node, name, person, page.as_ref(), relay).await?;
             Said::Made { seed, link }
         }
-        Verb::Join { link, person } => {
+        Verb::Join { link, person, .. } => {
             let person = match person {
                 Some(p) => p,
                 None => user_name().ok_or(Refusal::NoNameToJoin)?,
@@ -1189,6 +1197,10 @@ async fn serve(
     };
     print!("{said}");
     println!();
+    if !stays {
+        tracing::debug!(target: "cli", "cli: join --no-run — stopping once in");
+        return Ok(());
+    }
     println!("Leave this running; Ctrl-C stops it.");
     svrngs_node::node::asked_to_stop().await;
     tracing::debug!(target: "cli", "cli: stopping");

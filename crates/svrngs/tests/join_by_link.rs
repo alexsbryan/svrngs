@@ -752,6 +752,7 @@ fn join_parses_its_link() {
                     origin,
                 }),
                 person: Some(name("Alex")),
+                run: true,
             },
             "{raw}"
         );
@@ -759,6 +760,11 @@ fn join_parses_its_link() {
         assert!(cli::parse(argv(&["join", cut])).is_err(), "{cut}");
     }
     let url = client_link(&token);
+    assert!(matches!(
+        cli::parse(argv(&["join", &url, "--no-run"])),
+        Ok(Verb::Join { run: false, .. })
+    ));
+    assert!(cli::parse(argv(&["new", "x", "--no-run"])).is_err());
     assert!(cli::parse(argv(&["join"])).is_err());
     assert!(cli::parse(argv(&["join", &url, "--origin", "https://x.example/"])).is_err());
 }
