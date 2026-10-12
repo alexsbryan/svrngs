@@ -505,11 +505,11 @@ is U5's inventory (§8).
    lends and opt-in, a spike on the branch `folders`
    (`demo/runs/sy/2026-10-09/README.md`), a mesh Dropbox: `share --folder
    <dir> --group <group>` keeps a directory the same on the disk of each
-   member of that one group (syp-4), and `join` keeps one at
-   `~/svrngs/<the group's name>` for a person who joined, said where
-   beside the join and on the home page (v1-onboarding (d); cli.rs
-   `folder_place`), every joiner's name for it alike, so their folders
-   are one; each scan's changes are one act in
+   member of that one group (syp-4), and `new` and `join` keep one at
+   `~/svrngs/<the group's name>` for its founder and each person who
+   joined, said where beside the `new` or the join and on the home page
+   (v1-onboarding (d); bash-first-minute (d); cli.rs `folder_place`),
+   everyone's name for it alike, so their folders are one; each scan's changes are one act in
    that group's record alone, each naming a path, its
    bytes by hash, and the entry it replaces; an entry no other replaces is a
    head, a path's second head written beside it named as a conflict with

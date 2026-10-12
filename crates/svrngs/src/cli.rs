@@ -105,7 +105,8 @@ svrngs — keep what your group shares on your own computers.
 
   svrngs new <name> [--as <your name>] [--origin <url>]
       Make a group called <name> and print its link: send it to the people
-      you want in it. It works for a day, while this computer is on.
+      you want in it. It works for a day, while this computer is on. The
+      group's folder is put at ~/svrngs/<name>.
       --as is the name the group knows you by; else this computer's user name.
       --origin also prints its links on a page address, from now on, for
       people who open them in a browser. On a phone each app then opens at
@@ -1195,7 +1196,17 @@ async fn serve(
                 None => None,
             };
             let (seed, link) = new_group(node, name, person, page.as_ref(), relay).await?;
-            Said::Made { seed, link }
+            println!(
+                "{}",
+                Said::Made {
+                    seed: seed.clone(),
+                    link
+                }
+            );
+            // The founder's folder, where every joiner's is, so what the
+            // founder puts in it is shared with no `share --folder` (Demo
+            // C's dry run, finding 7).
+            folder_at_join(root, &seed).await
         }
         Verb::Join { link, person, .. } => {
             let person = match person {
@@ -1314,7 +1325,8 @@ pub async fn join_group(
     })
 }
 
-/// Where joining puts a group's folder (v1-onboarding (d)): `~/svrngs/`
+/// Where `new` and joining put a group's folder (v1-onboarding (d);
+/// bash-first-minute (d)): `~/svrngs/`
 /// and the group's name, which every member who joined derives alike, so
 /// their folders are one; `/`, `\` and `:` read as `-` and leading dots
 /// dropped, so the name stays one directory under it, else the id's start.
@@ -1330,7 +1342,7 @@ fn folder_place(seed: &Seed) -> Option<PathBuf> {
 
 /// The group's folder kept the same at [`folder_place`] as everyone's,
 /// asked of this node's own API as `share --folder` asks it; or why not,
-/// said beside the join, which stands either way.
+/// said beside the join or the `new`, which stands either way.
 async fn folder_at_join(root: &Path, seed: &Seed) -> Said {
     let group = seed.name().clone();
     let Some(dir) = folder_place(seed) else {

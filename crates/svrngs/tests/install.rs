@@ -342,6 +342,69 @@ async fn the_line_run_twice_installs_runs_at_login_opens_home_and_joins_once() {
     sam.endpoint().close().await;
 }
 
+/// The founder has the group's folder from `new` (bash-first-minute (d);
+/// Demo C's dry run, finding 7): `svrngs new trip`, this build's, in a
+/// `HOME` of its own, says where the folder is and makes it at
+/// `~/svrngs/trip`, where `join` puts everyone's; and `/v1/groups` — what
+/// the home page says it from — names the place, so a photo put there is
+/// shared with no `share --folder`. Watched failing: `new` before it
+/// placed the folder.
+#[tokio::test(flavor = "multi_thread")]
+async fn new_places_the_groups_folder() {
+    use tokio::io::AsyncBufReadExt;
+    let home = tempfile::tempdir().unwrap();
+    let mut new = tokio::process::Command::new(env!("CARGO_BIN_EXE_svrngs"))
+        .args(["new", "trip", "--as", "Sam"])
+        .env_clear()
+        .env("HOME", home.path())
+        .stdout(std::process::Stdio::piped())
+        .kill_on_drop(true)
+        .spawn()
+        .unwrap();
+    let mut out = tokio::io::BufReader::new(new.stdout.take().unwrap()).lines();
+    let mut said = String::new();
+    let printed = tokio::time::timeout(std::time::Duration::from_secs(60), async {
+        while let Ok(Some(line)) = out.next_line().await {
+            said.push_str(&line);
+            said.push('\n');
+            if line.starts_with("Leave this running") {
+                return true;
+            }
+        }
+        false
+    })
+    .await;
+    eprintln!("{said}");
+    assert_eq!(printed, Ok(true), "new printed all it says: {said}");
+    let place = home.path().join("svrngs/trip");
+    assert!(
+        said.contains(&format!(
+            "trip's folder is {}: what anyone in trip puts there reaches this computer",
+            place.display()
+        )),
+        "{said}"
+    );
+    assert!(place.is_dir(), "{} not made", place.display());
+    let api = std::fs::read_to_string(home.path().join(".svrngs/api")).unwrap();
+    let groups: serde_json::Value = reqwest::Client::builder()
+        .no_proxy()
+        .build()
+        .unwrap()
+        .get(format!("{}/v1/groups", api.trim()))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        groups["groups"][0]["folders"],
+        serde_json::json!([place]),
+        "{groups:#}"
+    );
+    new.kill().await.unwrap();
+}
+
 /// Joining puts the group's folder at `~/svrngs/<group>` (v1-onboarding
 /// (d)), kept the same as everyone's: `svrngs join --no-run`, this build's,
 /// in a `HOME` of its own, says where and makes it; svrngs then run there
