@@ -183,6 +183,13 @@ async fn three_streaming_are_told_a_third_and_a_fourth_waits_for_one_to_stop() {
         "{}",
         refused.text
     );
+    assert!(
+        refused.text.contains(
+            "That number is the choice of the person who lends it, and they can change it."
+        ),
+        "the lender's choice, said as theirs: {}",
+        refused.text
+    );
     assert!(share_in(&refused.text).is_empty(), "{}", refused.text);
 
     let (cy, _) = streams.remove(1);

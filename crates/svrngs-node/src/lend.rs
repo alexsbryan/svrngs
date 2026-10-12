@@ -408,8 +408,38 @@ pub fn declare(
         crate::declared::write_declared_in(&secrets, header, value)
             .map_err(unwritable(&secrets))?;
     }
+    write(data_dir, lend)?;
+    tracing::debug!(target: "lend", lend = %lend.name, port = lend.port, kind = %lend.kind,
+        limit = ?lend.limit, refused = lend.refused.len(), upload = ?lend.upload.map(Upload::bps),
+        secret = secret.is_some(), sign_in = ?lend.sign_in, asks = lend.asks.is_some(),
+        "lend: declared");
+    Ok(())
+}
+
+/// Let in `limit` people at once to the lend `name`, none for everyone in
+/// its groups (bash-limit; the home page's `/lent`): its declaration
+/// rewritten whole, its secret and choices kept, so the door takes it at
+/// its next request. `false` when this computer lends nothing by that name.
+pub fn limit(
+    data_dir: &Path,
+    name: &LendName,
+    limit: Option<NonZeroU16>,
+) -> Result<bool, LendError> {
+    let Some(mut lend) = read(data_dir, name)? else {
+        return Ok(false);
+    };
+    tracing::debug!(target: "lend", lend = %name, was = ?lend.limit, now = ?limit, "lend: its limit changed");
+    lend.limit = limit;
+    write(data_dir, &lend).map(|()| true)
+}
+
+/// `lend`'s declaration, through a file renamed into place.
+fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
     let dir = lends_dir(data_dir);
-    std::fs::create_dir_all(&dir).map_err(unwritable(&dir))?;
+    std::fs::create_dir_all(&dir).map_err(|source| LendError::Unwritable {
+        path: dir.clone(),
+        source,
+    })?;
     let file = LendFile {
         port: lend.port,
         kind: lend.kind.clone(),
@@ -422,12 +452,7 @@ pub fn declare(
     };
     let text = serde_json::to_string_pretty(&file).expect("a declaration always serializes");
     crate::declared::write_whole(&dir.join(format!("{}.json", lend.name)), &text)
-        .map_err(|(path, source)| LendError::Unwritable { path, source })?;
-    tracing::debug!(target: "lend", lend = %lend.name, port = lend.port, kind = %lend.kind,
-        limit = ?lend.limit, refused = lend.refused.len(), upload = ?lend.upload.map(Upload::bps),
-        secret = secret.is_some(), sign_in = ?lend.sign_in, asks = lend.asks.is_some(),
-        "lend: declared");
-    Ok(())
+        .map_err(|(path, source)| LendError::Unwritable { path, source })
 }
 
 /// Take back the lend `name`: its declaration, then its choices, then its

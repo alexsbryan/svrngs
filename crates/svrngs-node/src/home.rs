@@ -18,8 +18,13 @@
 //! **What it shows** is what `/v1/groups`, `/v1/lends` and
 //! `/v1/rail/people` answer, from the same functions ([`crate::surface`],
 //! [`crate::rail`]; one decider): the person's groups, the people in each,
-//! what each lends opened at its origin, and whose computer did not answer.
-//! **Its only writes are the person's yes and stop** (`POST /choices`):
+//! what each lends opened at its origin, and whose computer did not answer;
+//! and, at `GET /lent`, what this computer lends, as a member is told it.
+//! **Its only writes are the person's yes and stop** (`POST /choices`), and
+//! **their change to what this computer lends** (`POST /lent`, bash-limit):
+//! how many it lets in at once, a number or everyone, or no longer lent —
+//! written to its declaration, which the door reads at its next request.
+//! The person's yes and stop are
 //! kept by this computer's door for its own lend, else dialled to the
 //! lender's door on the members' protocol as this computer's key
 //! ([`at_door`]). `GET /choices?lend=` asks that door, when the person
@@ -33,10 +38,12 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Json, Router};
 use serde::Deserialize;
+use std::num::NonZeroU16;
 use svrngs_core::pass::Label;
 
 use crate::door::choices::{own_choices, own_choose, Said, Saying};
 use crate::door::{LendRefusal, PASS_HEADER, REFUSED_HEADER};
+use crate::lend::{self, LendName};
 use crate::node::Asking;
 
 /// The home page's host, before its port.
@@ -92,6 +99,7 @@ pub(crate) fn router(
         .route("/question.js", get(|| async { QUESTION }))
         .route("/home.css", get(|| async { LOOK }))
         .route("/choices", get(choices).post(choose))
+        .route("/lent", get(lent).post(change))
         .with_state(at.clone())
         .merge(
             Router::new()
@@ -153,6 +161,56 @@ struct Choosing {
 /// `POST /choices`: the person's yes or stop, kept by the lend's door.
 async fn choose(State(at): State<Asking>, Json(c): Json<Choosing>) -> Response {
     say(&at, &c.lend, c.app, c.said, None).await
+}
+
+/// What the person changes of a lend this computer lends.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Changing {
+    lend: LendName,
+    to: Change,
+}
+
+/// A closed set (AGENTS 9): let in this many at once, none for everyone in
+/// its groups; or lend it no longer.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum Change {
+    Limit(Option<NonZeroU16>),
+    Stop,
+}
+
+/// `GET /lent`: what this computer lends, each with how many it lets in at
+/// once and how many use it now, as a member asking is told it.
+async fn lent(State(at): State<Asking>) -> Response {
+    match crate::door::offered(at.door()).await {
+        Ok(lent) => Json(serde_json::json!({ "lent": lent })).into_response(),
+        Err(refused) => refused,
+    }
+}
+
+/// `POST /lent`: the person's change, written to the lend's declaration.
+async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
+    let dir = &at.door().data_dir;
+    let done = match c.to {
+        Change::Limit(limit) => lend::limit(dir, &c.lend, limit),
+        Change::Stop => lend::withdraw(dir, &c.lend),
+    };
+    tracing::debug!(target: "home", lend = %c.lend, to = ?c.to, done = ?done.as_ref().ok(), "home: the person changed a lend");
+    match done {
+        Ok(true) => StatusCode::NO_CONTENT.into_response(),
+        Ok(false) => LendRefusal::Unlent.say(
+            StatusCode::NOT_FOUND,
+            "this computer lends nothing by that name",
+        ),
+        Err(e) => {
+            tracing::warn!(target: "home", lend = %c.lend, error = %e, "home: refused — the lend's declaration cannot be changed");
+            LendRefusal::Fault.say(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "that cannot be changed on this computer",
+            )
+        }
+    }
 }
 
 #[derive(Deserialize)]

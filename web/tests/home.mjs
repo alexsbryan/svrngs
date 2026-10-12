@@ -3,7 +3,7 @@
 // `args.ask`, its `/ask?lend=<label>&app=<label>`, it is read for its
 // heading, which the test holds to the one source (question.js).
 //
-//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "read"?: "<selector>", "all"?: "<selector>"}'
+//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>?], ...]}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
@@ -25,7 +25,21 @@ try {
   // (v1-keeper-office (b): the removals).
   if (args.all) await page.locator('#home section').first().waitFor({ timeout: 30_000 });
   const all = args.all ? await page.locator(args.all).allTextContents() : null;
-  console.log(JSON.stringify({ heading, read, all, logs }));
+  // With `do`, each [selector, value?] in turn: filled with the value, else
+  // clicked, and `all`'s words read once the page it reloads has listed
+  // what this computer lends (bash-limit (b)).
+  const after = [];
+  for (const [selector, value] of args.do ?? []) {
+    if (value !== undefined) {
+      await page.locator(selector).first().fill(value);
+      continue;
+    }
+    await Promise.all([page.waitForEvent('load'), page.locator(selector).first().click()]);
+    await page.locator('#lent h2').waitFor({ timeout: 30_000 });
+    await page.locator('#lent li, #lent p').first().waitFor({ timeout: 30_000 });
+    after.push(await page.locator(args.all).allTextContents());
+  }
+  console.log(JSON.stringify({ heading, read, all, after, logs }));
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;

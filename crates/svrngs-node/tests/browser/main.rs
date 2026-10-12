@@ -1233,6 +1233,64 @@ async fn the_home_page_asks_in_the_one_wording(engine: Engine) {
 }
 
 in_both_engines!(
+    /// **The home page changes how many a lend lets in at once, in place**
+    /// (bash-limit (b)). Ada lends `shelf` to one person at once; her home
+    /// page lists it so, and she sets four, then everyone, then stops
+    /// lending it, each a button on the page, each read back from what the
+    /// door reads. Planted, watched failing: home.js without its list of
+    /// what this computer lends.
+    the_home_page_changes_a_lend_s_limit_in_place
+);
+async fn the_home_page_changes_a_lend_s_limit_in_place(engine: Engine) {
+    let relay = relay().await;
+    let ada_dir = tempfile::tempdir().unwrap();
+    let ada = node(ada_dir.path(), &relay, &signing(7)).await;
+    let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
+    let body = json!({ "port": shelf.port(), "kind": "books", "limit": 1 });
+    let lends = svrngs_node::lend::lends_dir(ada_dir.path());
+    std::fs::create_dir_all(&lends).unwrap();
+    std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
+    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
+    let press = |words: &str| json!([format!("#lent button:has-text('{words}')")]);
+    let seen = drive(
+        engine,
+        "home.mjs",
+        json!({
+            "ask": home,
+            "read": "#lent li",
+            "all": "#lent li, #lent p",
+            "do": [["#lent input", "4"], press("Let in this many"), press("Let everyone in"), press("Stop lending")],
+        }),
+        None,
+    )
+    .await;
+    let first = |v: &Value| v[0].as_str().unwrap_or_default().to_string();
+    assert!(
+        first(&seen["all"]).starts_with("shelf: up to 1 person at once, 0 using it now."),
+        "{seen:#}"
+    );
+    let after = &seen["after"];
+    assert!(
+        first(&after[0]).starts_with("shelf: up to 4 people at once"),
+        "{seen:#}"
+    );
+    assert!(
+        first(&after[1]).starts_with("shelf: everyone in your groups at once"),
+        "{seen:#}"
+    );
+    assert_eq!(
+        after[2],
+        json!(["This computer lends nothing."]),
+        "{seen:#}"
+    );
+    let name = svrngs_node::lend::LendName::parse("shelf").unwrap();
+    assert!(svrngs_node::lend::read(ada_dir.path(), &name)
+        .unwrap()
+        .is_none());
+    drop(ada);
+}
+
+in_both_engines!(
     /// **A removed person's phone is told so in a person's words** (U7
     /// (e); DESIGN §6). Ada removes bo through her computer's
     /// `/v1/removals`; the page holding bo's key opens the group's link,

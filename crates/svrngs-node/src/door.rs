@@ -1056,13 +1056,15 @@ struct Told {
 }
 
 /// The refusal of a newcomer past `lend`'s `limit`, `using` people counted:
-/// the reason, in a person's words, and the figures, for an app to turn
-/// into a choice (DESIGN §8, "Too many at once").
+/// the reason, in a person's words — the number its lender's choice, which
+/// they can change (bash-limit) — and the figures, for an app to turn into
+/// a choice (DESIGN §8, "Too many at once").
 fn busy(lend: &Lend, using: u32, limit: std::num::NonZeroU16) -> Response {
     let people = |n: u32| if n == 1 { "person" } else { "people" };
     let limit = limit.get();
     let reason = format!(
-        "{} is lent to {limit} {} at once, and {using} {} using it now: try again when one stops",
+        "{} is lent to {limit} {} at once, and {using} {} using it now: try again when one stops. \
+        That number is the choice of the person who lends it, and they can change it.",
         lend.name,
         people(u32::from(limit)),
         if using == 1 { "is" } else { "are" },

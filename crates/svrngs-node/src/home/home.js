@@ -3,8 +3,10 @@
 // people in each and what each lends, from the routes that answer this
 // computer's apps (/v1/groups, /v1/lends, /v1/rail/people), and who was
 // removed or asked to be, from /v1/groups (v1-keeper-office (b)); the ask at
-// /ask; and what apps use, each with Stop. Its only writes are the
-// person's yes and stop, to its own origin's /choices. Its words are
+// /ask; what apps use, each with Stop; and what this computer lends, each
+// with how many it lets in at once, to set, clear or stop (bash-limit). Its
+// only writes are the person's yes and stop, to its own origin's /choices,
+// and their change to what this computer lends, to its /lent. Its words are
 // DESIGN §1's: groups, people, what they lend, computer; its question and
 // what apps use and its removals are question.js's, the group's page's too.
 import { named, question, removal, unasked, uses as used } from './question.js';
@@ -25,11 +27,12 @@ async function get(path) {
   return body;
 }
 
-const said = (lend, app, what) => fetch('/choices', {
+const post = (path, body) => fetch(path, {
   method: 'POST',
   headers: { 'content-type': 'application/json' },
-  body: JSON.stringify({ lend, app, said: what }),
+  body: JSON.stringify(body),
 }).then(async (r) => r.ok || Promise.reject(new Error((await r.json().catch(() => ({}))).error || `answered ${r.status}`)));
+const said = (lend, app, what) => post('/choices', { lend, app, said: what });
 
 // The lend's label, the first name of its origin here.
 const label = (l) => new URL(l.origin).hostname.split('.')[0];
@@ -96,6 +99,32 @@ async function uses(lent) {
   }
 }
 
+// What this computer lends, each with how many it lets in at once — its
+// person's choice, a number or everyone in their groups — to set, clear or
+// stop here, taken by the door at its next request.
+async function lending() {
+  const s = Object.assign(el('section', '', el('h2', 'What this computer lends')), { id: 'lent' });
+  main.append(s);
+  let lent;
+  try {
+    ({ lent } = await get('/lent'));
+  } catch (e) {
+    return s.append(el('p', `What this computer lends cannot be read on it: ${e.message}`));
+  }
+  if (!lent.length) s.append(el('p', 'This computer lends nothing.'));
+  const ul = s.appendChild(el('ul'));
+  for (const l of lent) {
+    const n = l.limit;
+    const li = el('li', `${l.name}: ${n ? `up to ${n} ${n === 1 ? 'person' : 'people'}` : 'everyone in your groups'} at once, ${l.using} using it now. `);
+    const change = (to) => post('/lent', { lend: l.name, to }).then(() => location.reload(), (e) => li.append(e.message));
+    const many = Object.assign(el('input'), { type: 'number', min: 1, value: n ?? '', ariaLabel: 'How many at once' });
+    li.append(many, button('Let in this many', () => (/^[1-9][0-9]*$/.test(many.value) ? change({ limit: Number(many.value) }) : li.append('Say how many: 1 or more. '))));
+    if (n) li.append(button('Let everyone in', () => change({ limit: null })));
+    li.append(button('Stop lending', () => change('stop')));
+    ul.append(li);
+  }
+}
+
 // The ask: in svrngs's words around the lender's, then back to the app.
 function ask(lent, q) {
   const [lend, app] = [q.get('lend'), q.get('app')].map((x) => lent.find((l) => label(l) === x));
@@ -114,6 +143,7 @@ try {
   if (location.pathname === '/ask') ask(lent, new URLSearchParams(location.search));
   else {
     list(all);
+    await lending();
     await uses(lent);
   }
 } catch (e) {

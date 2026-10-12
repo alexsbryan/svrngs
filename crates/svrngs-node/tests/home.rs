@@ -403,6 +403,154 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
     alex.endpoint().close().await;
 }
 
+/// **A lend's limit is changed on the home page, and the door takes it with
+/// no restart** (bash-limit (b)). Sam lends `shelf` to one person at once.
+/// Sam opens it at his own computer and is let in; Alex, through hers, is
+/// refused `full`, told the number is Sam's choice and his to change. A
+/// change posted from anywhere but the home page's own origin is refused
+/// `closed` and changes nothing; Sam's own, everyone, lets Alex in at the
+/// door's next request; a number is kept; `GET /lent` says each; a lend
+/// not lent is `unlent`; a stop withdraws it. Planted, watched failing:
+/// `/lent` routed outside the home page's guard.
+#[tokio::test]
+async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
+    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let alex = start(1, alex_dir.path()).await;
+    let sam = start(2, sam_dir.path()).await;
+    let seed = Roster::new(
+        [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
+            .into_iter()
+            .collect(),
+    );
+    for node in [&alex, &sam] {
+        node.rail().set_seed(NS, &seed).unwrap();
+    }
+    let admit = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse("sam").unwrap(),
+            key: actor_of(&signing(2)),
+            invite: None,
+        },
+        on_behalf_of: None,
+    };
+    alex.rail().commit(NS, &admit).unwrap().unwrap();
+    alex.transport()
+        .add_known_peer(sam.endpoint().id(), loopback_sockets(sam.endpoint()));
+    sam.transport()
+        .add_known_peer(alex.endpoint().id(), loopback_sockets(alex.endpoint()));
+    tokio::time::timeout(Duration::from_secs(30), sam.round())
+        .await
+        .expect("Sam's computer hears it lets Sam in");
+    let (shelf_at, _kept) = origins::head_origin().await;
+    let at = lend::lends_dir(sam_dir.path());
+    std::fs::create_dir_all(&at).unwrap();
+    let body = serde_json::json!({ "port": shelf_at.port(), "kind": "books", "limit": 1 });
+    std::fs::write(at.join("shelf.json"), body.to_string()).unwrap();
+    let shelf = Label::of(&signing(2).verifying_key().to_bytes(), "shelf");
+    let name = lend::LendName::parse("shelf").unwrap();
+    let limit = || {
+        lend::read(sam_dir.path(), &name)
+            .unwrap()
+            .map(|l| l.limit.map(|n| n.get()))
+    };
+    let typed = "Sec-Fetch-Site: none\r\nSec-Fetch-Mode: navigate\r\n";
+    let open = |node: &Node| {
+        let api = node.api_addr();
+        let host = format!("{shelf}.localhost:{}", api.port());
+        async move { ask(api, "GET", &host, "/x", typed, "").await }
+    };
+    let (api, home) = (
+        sam.api_addr(),
+        format!("svrngs.localhost:{}", sam.api_addr().port()),
+    );
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
+
+    let sams = open(&sam).await;
+    assert_eq!(sams.status, 200, "Sam, the first: {}", sams.body);
+    let alexs = open(&alex).await;
+    assert_eq!(
+        (alexs.status, alexs.header("x-svrngs-refused")),
+        (503, Some("full")),
+        "Alex, past the one: {}",
+        alexs.body
+    );
+    assert!(
+        alexs.json()["error"].as_str().unwrap().ends_with(
+            "That number is the choice of the person who lends it, and they can change it."
+        ),
+        "{}",
+        alexs.body
+    );
+
+    let everyone = r#"{"lend":"shelf","to":{"limit":null}}"#;
+    for (row, extra) in [
+        (
+            "shelf's page",
+            format!("Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{shelf}.localhost:{}\r\n", api.port()),
+        ),
+        (
+            "the home page's Origin, from another site",
+            format!("Sec-Fetch-Site: same-site\r\nOrigin: http://{home}\r\n"),
+        ),
+        ("its own origin with no Origin", "Sec-Fetch-Site: same-origin\r\n".into()),
+        ("a program", String::new()),
+    ] {
+        let posted = ask(api, "POST", &home, "/lent", &extra, everyone).await;
+        assert_eq!(
+            (posted.status, posted.header("x-svrngs-refused")),
+            (403, Some("closed")),
+            "{row}'s change: {}",
+            posted.body
+        );
+    }
+    assert_eq!(limit(), Some(Some(1)), "no refused change was kept");
+
+    let changed = ask(api, "POST", &home, "/lent", &own, everyone).await;
+    assert_eq!(changed.status, 204, "Sam's own change: {}", changed.body);
+    let listed = ask(api, "GET", &home, "/lent", &own, "").await.json();
+    assert_eq!(listed["lent"][0]["name"], "shelf", "{listed:#}");
+    assert_eq!(
+        listed["lent"][0]["limit"],
+        serde_json::Value::Null,
+        "{listed:#}"
+    );
+    let alexs = open(&alex).await;
+    assert_eq!(alexs.status, 200, "Alex, with no restart: {}", alexs.body);
+
+    let two = r#"{"lend":"shelf","to":{"limit":2}}"#;
+    assert_eq!(
+        ask(api, "POST", &home, "/lent", &own, two).await.status,
+        204
+    );
+    assert_eq!(limit(), Some(Some(2)));
+    let none = ask(
+        api,
+        "POST",
+        &home,
+        "/lent",
+        &own,
+        r#"{"lend":"pad","to":"stop"}"#,
+    )
+    .await;
+    assert_eq!(
+        (none.status, none.header("x-svrngs-refused")),
+        (404, Some("unlent")),
+        "{}",
+        none.body
+    );
+    let stop = r#"{"lend":"shelf","to":"stop"}"#;
+    assert_eq!(
+        ask(api, "POST", &home, "/lent", &own, stop).await.status,
+        204
+    );
+    assert_eq!(limit(), None, "no longer lent");
+    let listed = ask(api, "GET", &home, "/lent", &own, "").await.json();
+    assert_eq!(listed["lent"], serde_json::json!([]), "{listed:#}");
+    sam.endpoint().close().await;
+    alex.endpoint().close().await;
+}
+
 /// **Groups that cannot be read are said so** (ralph/REVIEW_FINDINGS.md
 /// #103): with Alex's groups unlistable, a lent page's `/svrngs-reads` is
 /// svrngs's `fault`, never "nothing is lent here". Watched failing first,

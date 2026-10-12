@@ -999,7 +999,7 @@ impl std::fmt::Display for Said {
                     Some(n) => writeln!(f, "Lent {name} (port {port}) to everyone in your groups, up to {n} {} at once.",
                         if n.get() == 1 { "person" } else { "people" })?,
                     None => writeln!(f, "Lent {name} (port {port}) to everyone in your groups, as many at once as want it. \
-                        To let fewer in at once: `svrngs share {port} --limit <number>`.")?,
+                        To let fewer in at once, change it on your home page, or `svrngs share {port} --limit <number>`.")?,
                 }
                 if let Some(how) = accounts {
                     writeln!(
