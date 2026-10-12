@@ -1,0 +1,785 @@
+2026-10-12T15:06:48.257658Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/tmp/fm-w/alex/.svrngs"
+2026-10-12T15:06:48.258492Z DEBUG cli: cli: data dir claimed lock=/tmp/fm-w/alex/.svrngs/lock
+2026-10-12T15:06:48.267209Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:06:48.358865Z  INFO folder: folder: the store is open untagged=0
+2026-10-12T15:06:48.359873Z  INFO rails: api: serving the record to this computer's apps addr=127.0.0.1:53457
+2026-10-12T15:06:48.360481Z  INFO node: node: endpoint bound with the signing key actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35" data_dir=/tmp/fm-w/alex/.svrngs dial=Some("0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35@192.168.1.4:55341") api=127.0.0.1:53457
+2026-10-12T15:06:48.361000Z  INFO svrngs_node::ring_sync: ring sync: loop started interval_secs=60
+2026-10-12T15:06:48.361205Z DEBUG redeem: redeem: dialling the issuer by key url="http://127.0.0.1:53461/ask"
+2026-10-12T15:06:48.676458Z  INFO endpoint{id=0f87c1aaa7}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was None
+2026-10-12T15:06:48.911840Z DEBUG redeem: redeem: the issuer answered route="/ask" status=200
+2026-10-12T15:06:48.913368Z DEBUG redeem: redeem: dialling the issuer by key url="http://127.0.0.1:53481/redeem"
+2026-10-12T15:06:48.948801Z DEBUG redeem: redeem: the issuer answered route="/redeem" status=200
+2026-10-12T15:06:48.948875Z DEBUG cli: cli: join — let in group=2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641 redeemed=Admitted(OpId(ContentHash(98ada46dfe273e60)))
+2026-10-12T15:06:48.949571Z DEBUG cli: cli: join — a client's link, so no origin is kept group=2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641
+2026-10-12T15:06:48.949658Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=22619 peer=23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963 error=Address already in use (os error 48)
+2026-10-12T15:06:48.960068Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" url="http://127.0.0.1:53483/internal/ring/sync" chunk=1 pulled=3 pushed=0 peer_sent=3 offered=0 more_for_peer=false
+2026-10-12T15:06:48.960873Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" url="http://127.0.0.1:53483/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-12T15:06:48.960896Z DEBUG node: node: sync_with — one exchange with the peer namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" pulled=3 pushed=0 stop=None
+2026-10-12T15:06:48.960910Z DEBUG cli: cli: join — synced once from the issuer group=2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641 pulled=3
+2026-10-12T15:06:48.962468Z  INFO folder: synced: the directory kept in step with the group's folder namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" folder="trip" dir=/tmp/fm-w/alex/svrngs/trip
+2026-10-12T15:06:48.962630Z DEBUG cli: cli: svrngs running here answered route="/v1/folders" ok=true
+2026-10-12T15:06:48.962661Z DEBUG cli: cli: join — the group's folder placed, or why not group=2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641 dir=/tmp/fm-w/alex/svrngs/trip placed=Ok(())
+2026-10-12T15:06:49.067424Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:49.067569Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:49.067895Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=29246 peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 error=Address already in use (os error 48)
+2026-10-12T15:06:49.069824Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:06:49.424596Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:06:49.424620Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:06:49.424750Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:06:49.425421Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:06:49.795254Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:49.795328Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:49.797570Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:06:49.977815Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:06:49.977995Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:06:49.978127Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:06:49.978422Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:06:50.356921Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:50.366389Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:50.380370Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:06:50.520503Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:06:50.520652Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:06:50.520801Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:06:50.521275Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:06:50.606270Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:50.898027Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:50.898139Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:50.900182Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:06:51.058176Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:06:51.058287Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:06:51.058410Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:06:51.058643Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:06:51.461582Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:51.461632Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:51.470051Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:06:51.622857Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:06:51.622969Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:06:51.623093Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:06:51.623385Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:06:51.692882Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:52.026097Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:52.026179Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:52.028123Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:06:52.203749Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:06:52.206581Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:06:52.206776Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:06:52.203793Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:06:52.604907Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:52.604952Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:52.606342Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:06:52.753454Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:52.791690Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:06:52.791817Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:06:52.791950Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:06:52.792343Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:06:53.170287Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:53.170360Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:53.172378Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:06:53.345943Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:06:53.346054Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:06:53.345943Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:06:53.346178Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:06:53.735180Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:53.735308Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:53.737209Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:06:53.879993Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:53.911880Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:06:53.912114Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:06:53.912245Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:06:53.912463Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:06:54.270424Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:54.270541Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:54.277468Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:06:54.426478Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:06:54.426778Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:06:54.427186Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:06:54.427564Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:06:54.819886Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:54.820585Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:54.823877Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:06:54.961957Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:54.969245Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:06:54.969358Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:06:54.969486Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:06:54.969775Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:06:55.373066Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:55.373147Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:55.377760Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:06:55.536264Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:06:55.548240Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:06:55.548870Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:06:55.536312Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:06:55.941077Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:55.941167Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:55.943477Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:06:56.063197Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:56.110465Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:06:56.110660Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:06:56.110467Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:06:56.110791Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:06:56.585535Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:56.586991Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:56.590813Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:06:56.988508Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:06:56.988600Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:06:56.988931Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:06:56.989435Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:06:57.222533Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:57.304240Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:57.304659Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:57.308966Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:06:57.469870Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:06:57.470085Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:06:57.470303Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:06:57.470876Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:06:57.850838Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:57.850864Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:57.851963Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:06:58.266370Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:58.307306Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:06:58.307445Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:06:58.307579Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:06:58.307890Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:06:58.638499Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:58.638590Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:58.641591Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:06:58.891067Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:06:58.891067Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:06:58.891242Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:06:58.891371Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:06:59.260245Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:59.260282Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:59.262079Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:06:59.314723Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:59.544255Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:06:59.544429Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:06:59.544505Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:06:59.544638Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:06:59.810039Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:59.815260Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:59.828488Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:00.078706Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:00.090052Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:00.090253Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:00.090878Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:00.323134Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:00.429425Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:00.433133Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:00.445575Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:00.742206Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:00.742303Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:00.742395Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:00.742648Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:01.013558Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:01.013663Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:01.027409Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:01.251408Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:01.251435Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:01.257921Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:01.258080Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:01.359679Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:01.592740Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:01.593768Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:01.596677Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:01.780724Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:01.780840Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:01.781041Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:01.781173Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:02.113804Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:02.122784Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:02.136277Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:02.362553Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:02.362569Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:02.366009Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:02.370361Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:02.377805Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:02.710685Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:02.716931Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:02.770636Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:03.013315Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:03.013570Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:03.013950Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:03.014444Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:03.333759Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:03.340639Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:03.352825Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:03.401080Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:03.599931Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:03.600916Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:03.601044Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:03.601317Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:03.929574Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:03.937736Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:03.949527Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:04.259177Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:04.259215Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:04.259333Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:04.259463Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:04.415451Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:04.594018Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:04.594125Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:04.597894Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:04.860075Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:04.860075Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:04.863888Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:04.869009Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:05.191627Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:05.191700Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:05.195101Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:05.456277Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:05.491247Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:05.491253Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:05.507745Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:05.509045Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:05.832916Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:05.832993Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:05.835547Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:05.996626Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:06.002301Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:06.002953Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:06.003267Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:06.337885Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:06.338000Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:06.347719Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:06.460124Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:06.656012Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:06.663511Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:06.663665Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:06.664525Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:06.998216Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:06.998295Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:07.011312Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:07.282875Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:07.282935Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:07.283027Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:07.296613Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:07.493203Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:07.650851Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:07.650926Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:07.654296Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:08.063811Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:08.063922Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:08.070343Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:08.074475Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:08.409427Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:08.409499Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:08.411413Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:08.517081Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:08.561605Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:08.565049Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:08.565189Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:08.565801Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:08.870871Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:08.870932Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:08.872758Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:09.089373Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:09.091556Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:09.091708Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:09.091999Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:09.391874Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:09.391941Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:09.395449Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:09.540153Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:09.623214Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:09.623529Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:09.623696Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:09.623958Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:09.951309Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:09.951399Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:09.953818Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:10.183178Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:10.183233Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:10.184221Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:10.184624Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:10.546529Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:10.546628Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:10.550005Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:10.550154Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:10.721955Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:10.729579Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:10.718601Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:10.729752Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:11.038416Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:11.038568Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:11.043795Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:11.200363Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:11.200533Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:11.200681Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:11.200943Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:11.529414Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:11.537138Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:11.548796Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:11.561836Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:11.810865Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:11.810985Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:11.826774Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:11.827103Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:12.144819Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:12.144909Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:12.149964Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:12.315390Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:12.320814Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:12.325941Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:12.326328Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:12.620738Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:12.620764Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:12.620903Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:12.623909Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:12.837255Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:12.843022Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:12.843434Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:12.843737Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:13.150602Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:13.155952Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:13.202763Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:13.347642Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:13.352775Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:13.354852Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:13.357635Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:13.648721Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:13.672235Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:13.674022Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:13.686939Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:13.889266Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:13.889295Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:13.889473Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:13.889636Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:14.223483Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:14.223554Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:14.225954Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:14.411625Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:14.411762Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:14.420379Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:14.420540Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:14.687520Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:14.736308Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:14.736348Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:14.737456Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:14.911402Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:14.911423Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:14.911565Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:14.911696Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:15.238753Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:15.239568Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:15.252745Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:15.425089Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:15.425360Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:15.425553Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:15.426150Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:15.708094Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:15.708177Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:15.718301Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:15.748813Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:15.959969Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:15.959966Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:15.960107Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:15.960235Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:16.308137Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:16.308482Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:16.328200Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:16.512272Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:16.512403Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:16.512574Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:16.512865Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:16.799046Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:16.851125Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:16.851617Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:16.855781Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:17.145843Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:17.145863Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:17.152731Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:17.153064Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:17.488699Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:17.497027Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:17.513338Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:17.790545Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:17.792411Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:17.792488Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:17.792642Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:17.878059Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:18.104288Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:18.104810Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:18.113718Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:18.457205Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:18.457451Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:18.457747Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:18.460276Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:18.758919Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:18.759526Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:18.766960Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:18.895498Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:19.012430Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:19.012426Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:19.012600Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:19.012743Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:19.322267Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:19.328533Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:19.338803Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:19.593780Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:19.594369Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:19.594799Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:19.596145Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:19.945953Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:19.946027Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:19.953190Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:19.962045Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:20.138170Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:20.138670Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:20.138796Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:20.139161Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:20.428024Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:20.443586Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:20.463218Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:20.659081Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:20.659222Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:20.659097Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:20.659508Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:20.953181Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:20.953278Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:20.956532Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:21.013998Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:21.171610Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:21.171750Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:21.172534Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:21.172928Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:21.494418Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:21.494494Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:21.496704Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:21.670270Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:21.670398Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:21.670523Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:21.670757Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:21.996637Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:21.996741Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:21.998385Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:22.035228Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:22.198759Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:22.198788Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:22.198938Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:22.199059Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:22.527783Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:22.527860Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:22.529725Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:22.722517Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:22.722635Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:22.722759Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:22.723093Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:23.041303Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:23.041395Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:23.043049Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:23.050785Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:23.260342Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:23.260338Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:23.260502Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:23.260635Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:23.583326Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:23.583412Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:23.585059Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:23.771226Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:23.771345Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:23.771540Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:23.772032Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:24.055139Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:24.055217Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:24.057023Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:24.068532Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:24.263552Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:24.263668Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:24.263791Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:24.264052Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:24.539602Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:24.539677Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:24.541464Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:24.752148Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:24.752277Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:24.752412Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:24.752671Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:25.065938Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:25.066021Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:25.067830Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:25.078997Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:25.278242Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:25.278344Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:25.278464Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:25.278698Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:25.594091Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:25.594156Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:25.595822Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:25.804978Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:25.805097Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:25.805233Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:25.805533Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:26.067686Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:26.067746Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:26.069542Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:26.127275Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:26.293775Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:26.293885Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:26.294007Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:26.294279Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:26.619981Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:26.620045Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:26.621719Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:26.848930Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:26.849032Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:26.849167Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:26.849403Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:27.134617Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:27.164838Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:27.164911Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:27.167134Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:27.378947Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:27.379050Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:27.379204Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:27.379478Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:27.699116Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:27.699185Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:27.700856Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:27.897504Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:27.897624Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:27.897756Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:27.898267Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:28.140825Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:28.224397Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:28.224460Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:28.226116Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:28.454185Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:28.454287Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:28.454409Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:28.454647Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:28.778795Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:28.778860Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:28.780449Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:29.017831Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:29.017852Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:29.017980Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:29.018184Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:29.201856Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:29.338158Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:29.338212Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:29.339952Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:29.599900Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:29.599900Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:29.600047Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:29.600167Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:29.924930Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:29.924984Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:29.926669Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:30.085700Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:30.085822Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:30.085949Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:30.086183Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:30.226288Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:30.412045Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:30.412111Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:30.413451Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:30.593761Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:30.593901Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:30.594036Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:30.594288Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:30.901598Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:30.901673Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:30.903267Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:31.113557Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:31.113672Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:31.113791Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:31.114036Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:31.245053Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:31.434993Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:31.435072Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:31.436822Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:31.642135Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:31.642252Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:31.642389Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:31.642620Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:31.923709Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:31.923815Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:31.925460Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:32.144693Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:32.144817Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:32.144943Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:32.145181Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:32.259606Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:32.468403Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:32.468489Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:32.470280Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:32.678545Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:32.678545Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:32.678669Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:32.678820Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:32.992891Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:32.992968Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:32.994380Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:33.194821Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:33.194934Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:33.195053Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:33.195284Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:33.291507Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:33.495622Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:33.495705Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:33.497213Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:33.693422Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:33.693422Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:33.693575Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:33.693712Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:34.002399Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:34.002482Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:34.004511Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:34.226808Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:34.226799Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:34.226936Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:34.227072Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:34.293502Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:34.539922Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:34.540000Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:34.541494Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:34.794702Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:34.794822Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:34.794941Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:34.795179Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:35.101440Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:35.101513Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:35.102877Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:35.300122Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:35.300244Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:35.300369Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:35.300612Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:35.326906Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:35.618185Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:35.618264Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:35.619840Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:35.824587Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:35.824710Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:35.824841Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:35.825087Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:36.144658Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:36.144737Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:36.146199Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:36.353267Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:36.353390Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:36.353562Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:36.353899Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:36.369650Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:36.677291Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:36.677395Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:36.679088Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:36.882056Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:36.882189Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:36.882326Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:36.882582Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:37.191655Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:37.191735Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:37.193331Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:37.383741Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:37.398624Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:37.398624Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:37.398747Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:37.398870Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:37.652886Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:37.652966Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:37.654406Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:37.858309Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:37.858432Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:37.858556Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:37.858795Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:38.178355Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:38.178436Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:38.179993Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:38.387952Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:38.387963Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:38.388126Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:38.388249Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:38.458757Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:38.706631Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:38.706729Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:38.708670Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:38.909244Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:38.909390Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:38.909521Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:38.909773Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:39.229010Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:39.229082Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:39.230487Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:39.430591Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:39.430723Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:39.430847Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:39.431081Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:39.505804Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:39.748311Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:39.748397Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:39.750083Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:39.958078Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:39.958201Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:39.958330Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:39.958566Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:40.273678Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:40.273759Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:40.275314Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:40.495187Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:40.495364Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:40.495602Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:40.496028Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:40.568686Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:40.813052Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:40.813122Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:40.814635Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:41.037176Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:41.037188Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:41.037294Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:41.037418Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:41.347663Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:41.347731Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:41.349211Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:41.572928Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:41.572926Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:41.573037Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:41.573160Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:41.619187Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:41.888997Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:41.889066Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:41.890600Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:42.566093Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:42.566208Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:42.566330Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:42.566574Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:42.640189Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:42.874238Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:42.874307Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:42.876146Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:43.112760Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:43.112754Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:43.112880Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:43.113001Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:43.438071Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:43.438125Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:43.439559Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:43.641669Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:43.671758Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:43.671871Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:43.671995Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:43.672247Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:43.978146Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:43.978212Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:43.979723Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:44.207071Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:44.207226Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:44.207359Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:44.207736Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:44.516772Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:44.516841Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:44.518340Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:44.688933Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:44.747310Z DEBUG node: node: lends — the computer did not answer actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" error=error sending request for url (http://127.0.0.1:53489/lends)
+2026-10-12T15:07:44.747407Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=1
+2026-10-12T15:07:44.747528Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=1 unanswered=1
+2026-10-12T15:07:44.747770Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 alpn=cwth/http/0 request_bytes=59
+2026-10-12T15:07:44.826439Z DEBUG node: node: admitted — the dialer stands in a group held here actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641"
+2026-10-12T15:07:45.067619Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:07:45.067696Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:45.069384Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:07:45.274290Z DEBUG node: node: lends — the computer answered actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" lends=1
+2026-10-12T15:07:45.274429Z DEBUG node: node: lends — asked every computer of the groups lent=2 unanswered=0
+2026-10-12T15:07:45.274579Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=2 unanswered=0
+2026-10-12T15:07:45.276232Z DEBUG node: node: asked to stop by SIGTERM
+2026-10-12T15:07:45.276272Z DEBUG cli: cli: stopping

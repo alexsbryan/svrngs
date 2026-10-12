@@ -1,0 +1,93 @@
+2026-10-12T15:06:44.705714Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/tmp/fm-w/sam/.svrngs"
+2026-10-12T15:06:44.706377Z DEBUG cli: cli: data dir claimed lock=/tmp/fm-w/sam/.svrngs/lock
+2026-10-12T15:06:44.718950Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963
+2026-10-12T15:06:44.815450Z  INFO folder: folder: the store is open untagged=0
+2026-10-12T15:06:44.817634Z  INFO rails: api: serving the record to this computer's apps addr=127.0.0.1:53381
+2026-10-12T15:06:44.818242Z  INFO node: node: endpoint bound with the signing key actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" data_dir=/tmp/fm-w/sam/.svrngs dial=Some("23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963@192.168.1.4:58352") api=127.0.0.1:53381
+2026-10-12T15:06:44.819177Z  INFO svrngs_node::ring_sync: ring sync: loop started interval_secs=60
+2026-10-12T15:06:44.820937Z DEBUG cli: cli: group made group=2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641 name=trip page=None
+2026-10-12T15:06:45.162491Z  INFO endpoint{id=23976f6a3e}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was None
+2026-10-12T15:06:45.297080Z DEBUG cli: cli: waited for a relay before printing the link online=true
+2026-10-12T15:06:45.297288Z DEBUG cli: cli: the link carries the key alone — lookup finds this computer
+2026-10-12T15:06:45.307280Z DEBUG cli: cli: link minted group=2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641 invite=1b0d6017e641c89ae4e6e2cba84aee7c196e1459aed228c76982b406b72afb03 until=1791904005
+2026-10-12T15:06:45.396705Z DEBUG surface: surface: groups — a group held namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" name=Some("trip") person=Some(Person(Name("Sam"))) removed=Some(false) removals=Some(0) folders=Some([])
+2026-10-12T15:06:46.021978Z DEBUG node: node: admitted to redeem a link — any dialer may actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87"
+2026-10-12T15:06:46.071456Z DEBUG redeem: redeem: asked — the link's key is named by this node's Invite; answering its group's seed group="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" key=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 invite=1b0d6017e641c89ae4e6e2cba84aee7c196e1459aed228c76982b406b72afb03
+2026-10-12T15:06:46.120668Z DEBUG node: node: admitted to redeem a link — any dialer may actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87"
+2026-10-12T15:06:46.139561Z DEBUG redeem: redeem: admitted — the Admit is written, naming the device the request named group="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" key=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87 admit=68ab369319d949c7434b853e97dbed8ce209040d7b24563cfca5943a082abbf4 device=Computer
+2026-10-12T15:06:46.151990Z DEBUG node: node: admitted — the dialer stands in a group held here actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641"
+2026-10-12T15:06:46.194908Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:06:46.200392Z DEBUG node: node: lends — the computer answered actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" lends=1
+2026-10-12T15:06:46.200523Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=0
+2026-10-12T15:06:46.200683Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=2 unanswered=0
+2026-10-12T15:06:47.003206Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:48.025040Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:48.857475Z DEBUG node: node: admitted to redeem a link — any dialer may actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:48.909003Z DEBUG redeem: redeem: asked — the link's key is named by this node's Invite; answering its group's seed group="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" key=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35 invite=1b0d6017e641c89ae4e6e2cba84aee7c196e1459aed228c76982b406b72afb03
+2026-10-12T15:06:48.928839Z DEBUG node: node: admitted to redeem a link — any dialer may actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:48.948393Z DEBUG redeem: redeem: admitted — the Admit is written, naming the device the request named group="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" key=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35 admit=98ada46dfe273e6072d34dec5051aaa00bcfc0699a301bd8cbcea565b6f4e050 device=Computer
+2026-10-12T15:06:48.951992Z DEBUG node: node: admitted — the dialer stands in a group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35" namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641"
+2026-10-12T15:06:49.179866Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:50.309770Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:51.460944Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:52.586384Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:53.722312Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:54.763164Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:55.896725Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:56.991223Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:58.086725Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:59.145840Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:00.220973Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:01.297070Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:02.345435Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:03.380161Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:04.401499Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:05.415598Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:06.447278Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:07.500287Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:08.534997Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:09.588074Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:10.602983Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:11.633174Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:12.642771Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:13.671175Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:14.687593Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:15.720984Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:16.745249Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:17.790357Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:18.825408Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:19.879021Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:20.909065Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:21.910968Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:22.960978Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:23.981626Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:25.007942Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:26.015781Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:27.057008Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:28.062113Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:29.069324Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:30.119697Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:31.143372Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:32.169863Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:33.184559Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:34.196663Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:35.230518Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:36.246258Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:37.294769Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:38.309626Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:39.333283Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:40.347480Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:41.367965Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:42.404023Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:43.435662Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:44.461537Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:44.822277Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=alex/0f87c1aa
+2026-10-12T15:07:44.822369Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=ana/774cbcf2
+2026-10-12T15:07:44.822444Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["alex/0f87c1aa", "ana/774cbcf2"] skipped_offline=[]
+2026-10-12T15:07:44.822585Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" offered_to=["alex/0f87c1aa", "ana/774cbcf2"] skipped_not_standing=[]
+2026-10-12T15:07:44.827930Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" url="http://127.0.0.1:32652/internal/ring/sync" chunk=1 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-12T15:07:44.834628Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" url="http://127.0.0.1:29246/internal/ring/sync" chunk=1 pulled=0 pushed=1 peer_sent=2 offered=1 more_for_peer=false
+2026-10-12T15:07:44.836646Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" url="http://127.0.0.1:29246/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-12T15:07:44.836716Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=2 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=14
+2026-10-12T15:07:45.276269Z DEBUG node: node: asked to stop by SIGTERM
+2026-10-12T15:07:45.276296Z DEBUG cli: cli: stopping

@@ -1,0 +1,6 @@
+{"t": 1791817604.691, "event": "start", "load": 20.34765625, "cores": 12}
+{"t": 1791817605.416, "event": "share", "who": "sam", "port": 18601, "exit": 0}
+{"t": 1791817606.193, "event": "share", "who": "ana", "port": 18602, "exit": 0}
+{"t": 1791817606.205, "event": "settled", "ok": true}
+{"t": 1791817608.235, "event": "alex-join"}
+{"t": 1791817665.275, "event": "alex-done", "looks": 101}
