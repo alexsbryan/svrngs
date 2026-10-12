@@ -586,7 +586,7 @@ pub fn admit(
     let mut seqs: BTreeMap<&str, BTreeMap<u64, Vec<OpId>>> = BTreeMap::new();
     for (id, op) in authentic
         .iter()
-        .filter(|(_, op)| m.person_for(&op.actor).is_some())
+        .filter(|(_, op)| m.person_of(&op.actor).is_some())
     {
         let op: &Op<SignedOp> = op;
         seqs.entry(op.actor.as_str())
@@ -597,7 +597,7 @@ pub fn admit(
     }
     let mut admitted: BTreeMap<OpId, Candidate<'_>> = BTreeMap::new();
     for (id, op) in authentic {
-        let Some(person) = m.person_for(&op.actor) else {
+        let Some((_, person)) = m.person_of(&op.actor) else {
             gaps.push(RailGap::UnknownSigner {
                 id,
                 actor: op.actor.clone(),

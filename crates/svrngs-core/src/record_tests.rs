@@ -41,6 +41,7 @@ fn an_app_cannot_write_the_registers_acts_or_a_seal() {
     let invite = RailAct::Invite {
         key: actor_of(&key(9)),
         until: 2_000,
+        device_of: None,
     };
     let admit = RailAct::Admit {
         person: p("hal"),

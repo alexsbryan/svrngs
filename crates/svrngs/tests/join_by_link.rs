@@ -392,6 +392,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     let mint = svrngs_node::MintInvite {
         key: actor_of(&lapsed_link.token.key()),
         until: now() - 1,
+        device_of: None,
     };
     let lapsed = sam
         .node

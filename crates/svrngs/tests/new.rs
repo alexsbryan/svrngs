@@ -64,7 +64,7 @@ fn invites(node: &Node, id: &str) -> Vec<(String, i64, OpId)> {
     let ops = lines(node, id);
     ops.into_iter()
         .filter_map(|op| match &op.kind.act {
-            RailAct::Invite { key, until } => Some((key.clone(), *until, derive_id(&op, id))),
+            RailAct::Invite { key, until, .. } => Some((key.clone(), *until, derive_id(&op, id))),
             _ => None,
         })
         .collect()

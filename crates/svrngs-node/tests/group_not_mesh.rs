@@ -209,6 +209,7 @@ async fn a_round_dials_a_computer_and_never_a_browser() {
         RailAct::Invite {
             key: actor_of(&link),
             until: i64::MAX,
+            device_of: None,
         },
     );
     let pia = Person::parse("pia").unwrap();

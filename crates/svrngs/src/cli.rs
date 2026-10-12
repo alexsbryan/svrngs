@@ -1086,6 +1086,7 @@ impl std::fmt::Display for Said {
                     }
                     Outcome::Handed => writeln!(f, "{person} now decides who is removed from {group}, instead of you."),
                     Outcome::NotInGroup => writeln!(f, "Nobody called {person} is in {group}."),
+                    Outcome::Shared => writeln!(f, "More than one person in {group} is called {person}, so svrngs cannot tell which you mean. Nothing changed."),
                     Outcome::Decides => writeln!(f, "{person} decides who is removed from {group}, so cannot be removed: hand that to someone else first, with `svrngs handover <name> --group {group}`."),
                     Outcome::NotDecider { decides: who } => writeln!(f, "Only {} can let someone else decide who is removed from {group}.", decides(who)),
                     Outcome::NotDeciderUnread => writeln!(f, "You do not decide who is removed from {group}, and this computer could not read who is in the group, so cannot say who does (RUST_LOG=debug says why)."),
@@ -1524,6 +1525,7 @@ async fn mint(node: &Node, seed: &Seed, relay: &RelayConfig) -> Result<Token, Re
     let mint = MintInvite {
         key: actor_of(&token.key()),
         until: now + LINK_LIFE_SECS,
+        device_of: None,
     };
     let group = seed.id();
     let recorded = match node.rail().commit(&group, &mint) {

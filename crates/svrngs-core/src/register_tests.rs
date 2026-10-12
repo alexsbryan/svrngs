@@ -23,6 +23,7 @@ fn invite_by(by: &SigningKey, names: &SigningKey, until: i64) -> Op<SignedOp> {
         RailAct::Invite {
             key: actor_of(names),
             until,
+            device_of: None,
         },
     )
 }
@@ -173,15 +174,33 @@ fn alexs_group() -> (Roster, Memory) {
         key: actor_of(&key(k)),
         invite: None,
     };
-    let ins = run(
-        &key(1),
-        100,
-        [admit("bo", 2), admit("bo", 5), admit("cy", 3)],
-    );
-    let bo_writes = signed(&key(2), 110, 0, record("bo-writes"));
+    let ins = run(&key(1), 100, [admit("bo", 2), admit("cy", 3)]);
+    // Bo's second computer joins by a device link of bo's (bash-devices):
+    // before, alex admitted it as `bo` by hand, which now makes another
+    // person of that name.
+    let (link, second) = device_link(&key(2), &key(5), 105);
     let bo_again = signed(&key(5), 111, 0, record("bo-again"));
-    let store = Memory::holding(&[ins, vec![bo_writes, bo_again]].concat());
+    let store = Memory::holding(&[ins, vec![link, second, bo_again]].concat());
     (seed, store)
+}
+
+/// `of`'s device link, made at `ts`, and the `Admit` redeeming it for
+/// `new`, a computer, as `of`'s computer writes them.
+fn device_link(of: &SigningKey, new: &SigningKey, ts: i64) -> (Op<SignedOp>, Op<SignedOp>) {
+    let act = RailAct::Invite {
+        key: actor_of(&key(8)),
+        until: 10_000,
+        device_of: Some(actor_of(of)),
+    };
+    let link = signed(of, ts, 0, act);
+    let id = derive_id(&link, NS);
+    let admit = RailAct::Admit {
+        person: p("bo"),
+        key: actor_of(new),
+        invite: Some(Redemption::sign(new, NS, &id, &p("bo"), Device::Computer)),
+    };
+    let redeemed = after(of, &link, ts + 1, admit);
+    (link, redeemed)
 }
 
 fn register(store: &Memory, seed: &Roster) -> Membership {
@@ -438,7 +457,10 @@ fn a_removed_persons_name_is_free_again() {
         .unwrap();
     let m = register(&store, &seed);
     assert!(m.standing.contains(&actor_of(&joining())));
-    assert_eq!(m.person_for(&actor_of(&joining())), Some(&p("Cy")));
+    assert_eq!(
+        m.person_of(&actor_of(&joining())).map(|(_, n)| n),
+        Some(&p("Cy"))
+    );
 }
 
 // ── a person is their first key (bash-devices) ──────────────────────
@@ -477,28 +499,46 @@ fn two_people_a_race_gave_one_name_are_not_taken_as_one() {
 }
 
 /// **A person's second device stands as them by a link of theirs, never by
-/// typing their name.** Cy's computer makes a link and a new key redeems it
-/// as cy: it stands as cy, and the keeper's removal of cy takes both. Red
-/// at bash-devices' base: no link says "as me", and the name is refused
-/// `NameTaken` (bash-person), so a second device has no way in as cy.
+/// typing their name.** Cy's computer makes a device link and a new key
+/// redeems it under another name: it stands as cy, by cy's first key and
+/// cy's name, and the keeper's removal of cy takes both. Red at
+/// bash-devices' base: no link said "as me", and the name was refused
+/// `NameTaken` (bash-person), so a second device had no way in as cy. (The
+/// link is a device link and the name another since (b): at (a) neither
+/// could be written.)
 #[test]
 fn a_persons_second_device_stands_as_them_by_a_link_of_theirs() {
     let (seed, store) = alexs_group();
     let cy = key(3);
-    let invite = invite_by(&cy, &link(), 10_000);
+    let invite = signed(
+        &cy,
+        200,
+        0,
+        RailAct::Invite {
+            key: actor_of(&link()),
+            until: 10_000,
+            device_of: Some(actor_of(&cy)),
+        },
+    );
+    assert_eq!(invite.kind.line_version(), DEVICE_LINE_VERSION);
     store.0.borrow_mut().insert(invite.clone());
     let id = derive_id(&invite, NS);
     let asked = Redeem {
         invite: id.clone(),
-        person: p("cy"),
+        person: p("whoever"),
         key: actor_of(&joining()),
-        cosig: Redemption::sign(&joining(), NS, &id, &p("cy"), Device::Computer).sig,
+        cosig: Redemption::sign(&joining(), NS, &id, &p("whoever"), Device::Computer).sig,
         device: Device::Computer,
         link: actor_of(&link()),
         issuer: actor_of(&cy),
     };
     let redeemed = commit(&store, &asked, &author(&cy, &seed, 1_000)).unwrap();
     assert!(redeemed.is_ok(), "cy's second device let in: {redeemed:?}");
+    let (cys, joins) = (actor_of(&cy), actor_of(&joining()));
+    assert_eq!(
+        register(&store, &seed).person_of(&joins),
+        Some((cys.as_str(), &p("cy")))
+    );
     commit(
         &store,
         &Removal { person: p("cy") },
@@ -508,7 +548,94 @@ fn a_persons_second_device_stands_as_them_by_a_link_of_theirs() {
     .unwrap();
     let m = register(&store, &seed);
     assert!(
-        !m.standing.contains(&actor_of(&cy)) && !m.standing.contains(&actor_of(&joining())),
+        !m.standing.contains(&cys) && !m.standing.contains(&joins),
         "cy's two devices go together"
+    );
+}
+
+/// **A device link counts only from a key standing as its person.** Cy's
+/// computer makes a link adding a device of bo's; its redemption is refused
+/// and the key does not stand, as bo's or anyone's. Planted: the fold's
+/// check out (membership.rs, `theirs` always true) — the key stands as bo.
+#[test]
+fn a_device_link_counts_only_from_a_key_standing_as_its_person() {
+    let (seed, store) = alexs_group();
+    let (forged, _) = device_link(&key(2), &joining(), 100);
+    let RailAct::Invite { device_of, .. } = &forged.kind.act else {
+        panic!("an Invite")
+    };
+    let cy = key(3);
+    let act = RailAct::Invite {
+        key: actor_of(&link()),
+        until: 10_000,
+        device_of: device_of.clone(),
+    };
+    let invite = signed(&cy, 200, 0, act);
+    store.0.borrow_mut().insert(invite.clone());
+    let id = derive_id(&invite, NS);
+    let asked = Redeem {
+        invite: id.clone(),
+        person: p("bo"),
+        key: actor_of(&joining()),
+        cosig: Redemption::sign(&joining(), NS, &id, &p("bo"), Device::Computer).sig,
+        device: Device::Computer,
+        link: actor_of(&link()),
+        issuer: actor_of(&cy),
+    };
+    let redeemed = commit(&store, &asked, &author(&cy, &seed, 1_000)).unwrap();
+    let m = register(&store, &seed);
+    assert_eq!(
+        (redeemed, m.standing.contains(&actor_of(&joining()))),
+        (
+            Err(Refused::Command(RedeemRefusal::Fault(
+                InviteFault::Uncounted
+            ))),
+            false
+        ),
+        "(the redemption, the key stands)"
+    );
+}
+
+/// **A plain redemption of a name is a new person, never a merge.** A
+/// stranger joins as `dee` through alex's link while no dee stands, then
+/// the keeper's hand lets another key in as `dee`: two people, each their
+/// own first key, and removal by the name is refused `Shared` in the
+/// fold's words, cutting neither.
+#[test]
+fn a_plain_redemption_is_a_new_person_keyed_by_its_own_key() {
+    let (seed, store) = alexs_group();
+    redeem_in_alexs_group(&store, &seed, "dee", &joining());
+    let by_hand = RailAct::Admit {
+        person: p("dee"),
+        key: actor_of(&key(6)),
+        invite: None,
+    };
+    let alexs = (store.0.borrow().iter())
+        .filter(|o| o.actor == actor_of(&key(1)))
+        .max_by_key(|o| o.kind.seq)
+        .cloned()
+        .unwrap();
+    store
+        .0
+        .borrow_mut()
+        .insert(after(&key(1), &alexs, 1_002, by_hand));
+    let m = register(&store, &seed);
+    let firsts = [actor_of(&joining()), actor_of(&key(6))]
+        .map(|k| m.person_of(&k).map(|(f, n)| (f.to_string(), n.clone())));
+    assert_eq!(
+        firsts,
+        [
+            Some((actor_of(&joining()), p("dee"))),
+            Some((actor_of(&key(6)), p("dee")))
+        ]
+    );
+    assert_eq!(
+        commit(
+            &store,
+            &Removal { person: p("dee") },
+            &author(&key(1), &seed, 1_003)
+        )
+        .unwrap(),
+        Err(Refused::Command(RemovalRefusal::Shared))
     );
 }

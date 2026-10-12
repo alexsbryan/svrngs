@@ -66,6 +66,7 @@ fn standing_from_the_membership_acts_alone_is_the_journals() {
         RailAct::Invite {
             key: actor_of(&key(9)),
             until: 200,
+            device_of: None,
         },
     );
     let eve = Person::parse("eve").unwrap();

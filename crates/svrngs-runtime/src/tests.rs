@@ -260,7 +260,7 @@ fn an_admit_naming_no_person_is_a_gap_on_every_copy() {
     assert!(f.gaps().is_empty(), "{:?}", f.gaps());
     let m = f.project::<Membership>();
     assert!(m.standing.contains(&actor_of(&joining)));
-    assert_eq!(m.person_for(&actor_of(&joining)), Some(&p("Zoë Ann")));
+    assert_eq!(m.person_of(&actor_of(&joining)).map(|(_, n)| n), Some(&p("Zoë Ann")));
 }
 
 /// **Held means the act, not the id a line claims** (svrngs, U2; DESIGN §6).

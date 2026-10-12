@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! The register's commands: minting an invite, and redeeming one.
+//! The register's commands: minting an invite, and redeeming one; removing
+//! a person, and handing the group's keeping on to one, each named as the
+//! fold names them ([`crate::Membership::named`]).
 
 use alloc::string::String;
 use alloc::vec;
@@ -66,9 +68,14 @@ impl Command for Redeem {
                 "redeem: the key stands already, so nothing is written");
             return Ok(Vec::new());
         }
+        if let Some(of) = &invite.device_of {
+            tracing::debug!(target: "redeem", key = %self.key, device_of = %of,
+                "redeem: a device link, so the key joins as its person and no name is weighed");
+        }
         let folded = self.person.as_str().to_lowercase();
         let holder = (register.standing.iter())
-            .filter_map(|k| register.person_for(k))
+            .filter(|_| invite.device_of.is_none())
+            .filter_map(|k| Some(register.person_of(k)?.1))
             .find(|p| p.as_str().to_lowercase() == folded);
         if let Some(holder) = holder {
             tracing::debug!(target: "redeem", key = %self.key, person = %self.person, %holder,
@@ -99,11 +106,14 @@ impl Command for Redeem {
     }
 }
 
-/// A member mints a link: an `Invite` naming the link's key until `until`.
+/// A member mints a link: an `Invite` naming the link's key until `until`;
+/// a device link when it names the person, by their first key, whose device
+/// it adds — the minting key's own person, or the fold counts it nowhere.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MintInvite {
     pub key: String,
     pub until: i64,
+    pub device_of: Option<String>,
 }
 
 impl Command for MintInvite {
@@ -114,14 +124,16 @@ impl Command for MintInvite {
         Ok(vec![RailAct::Invite {
             key: self.key.clone(),
             until: self.until,
+            device_of: self.device_of.clone(),
         }])
     }
 }
 
 /// A member asks that `person` leave the group (U7; DESIGN §6 "Removal has
-/// one decider"): a `Remove` of each key standing as them, naming each key's
-/// newest acts this node holds. From the keeper it is the cut; from anyone
-/// else an ask, which the keeper sequences by asking the same.
+/// one decider"): a `Remove` of each key standing as the one person of that
+/// name, every device of theirs, naming each key's newest acts this node
+/// holds. From the keeper it is the cut; from anyone else an ask, which the
+/// keeper sequences by asking the same.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Removal {
     pub person: Person,
@@ -131,6 +143,9 @@ pub struct Removal {
 pub enum RemovalRefusal {
     /// No key stands as that person.
     NotInGroup,
+    /// More than one person stands under the name (bash-devices), so it
+    /// names no one person.
+    Shared,
     /// The person keeps the group, and the keeper cannot be removed: they
     /// hand it on first.
     Keeps,
@@ -142,8 +157,13 @@ impl Command for Removal {
 
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, RemovalRefusal> {
         let m = before.membership();
-        let keys: Vec<&String> = m.keys_of(&self.person).collect();
+        let people = m.named(&self.person);
+        let keys: Vec<&String> = match people[..] {
+            [first] => m.devices_of(first).collect(),
+            _ => Vec::new(),
+        };
         let verdict = match keys.iter().any(|k| m.keeper.as_ref() == Some(*k)) {
+            _ if people.len() > 1 => Err(RemovalRefusal::Shared),
             _ if keys.is_empty() => Err(RemovalRefusal::NotInGroup),
             true => Err(RemovalRefusal::Keeps),
             false => Ok(keys
@@ -170,15 +190,24 @@ pub struct HandOnTo {
 pub enum HandOnRefusal {
     /// No computer's key stands as that person.
     NotInGroup,
+    /// More than one person stands under the name (bash-devices).
+    Shared,
     /// The signer does not keep the group, so the hand-on would move
     /// nothing.
     NotKeeper,
 }
 
 impl HandOnTo {
-    fn key<'a>(&self, m: &'a crate::Membership) -> Option<&'a String> {
-        m.keys_of(&self.person)
-            .find(|k| m.device(k) == Some(Device::Computer))
+    /// A computer of the one person of that name.
+    fn key<'a>(&self, m: &'a crate::Membership) -> Result<&'a String, HandOnRefusal> {
+        match m.named(&self.person)[..] {
+            [first] => (m
+                .devices_of(first)
+                .find(|k| m.device(k) == Some(Device::Computer)))
+            .ok_or(HandOnRefusal::NotInGroup),
+            [] => Err(HandOnRefusal::NotInGroup),
+            _ => Err(HandOnRefusal::Shared),
+        }
     }
 }
 
@@ -189,13 +218,12 @@ impl Command for HandOnTo {
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, HandOnRefusal> {
         let key = self.key(before.membership());
         tracing::debug!(target: "register", person = %self.person, ?key, "hand-on: the computer it goes to");
-        let key = key.ok_or(HandOnRefusal::NotInGroup)?;
-        Ok(vec![RailAct::HandOn { key: key.clone() }])
+        Ok(vec![RailAct::HandOn { key: key?.clone() }])
     }
 
     fn confirm(&self, after: &Admission, _written: &[OpId]) -> Result<(), HandOnRefusal> {
         let m = after.membership();
-        let moved = self.key(m).is_some_and(|k| m.keeper.as_ref() == Some(k));
+        let moved = self.key(m).is_ok_and(|k| m.keeper.as_ref() == Some(k));
         tracing::debug!(target: "register", person = %self.person, moved, "hand-on: the fold's verdict");
         moved.then_some(()).ok_or(HandOnRefusal::NotKeeper)
     }

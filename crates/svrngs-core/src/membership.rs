@@ -64,6 +64,16 @@
 //! redeemed a link naming a browser, a computer's otherwise: a seed key, an
 //! `Admit` naming no `Invite`, and every redemption before line version 4.
 //! [`Membership::device`] answers it.
+//!
+//! svrngs (bash-devices, DESIGN §6 "A key per device per group, bound to
+//! the person"): a person is their first key in the group — a seed row's
+//! first, or the key a plain `Admit` binds — and their name is what that
+//! key was bound as. An `Invite` naming a person, a device link, counts only
+//! when its signer stands as that person at its place in the walk; a key an
+//! `Admit` under it binds is that person's, under their name, whatever name
+//! the `Admit` carries. Any other `Admit` makes its key a new person, so two
+//! people of one name are two people, never merged.
+//! [`Membership::person_of`] answers it.
 
 use alloc::collections::{BTreeMap, BTreeSet};
 use alloc::string::String;
@@ -113,6 +123,12 @@ pub struct Membership {
     /// cut key keeps its binding — names stay stable and every past act keeps
     /// the person it always had (leg 4) — it only leaves [`Self::standing`].
     pub bindings: BTreeMap<String, Person>,
+    /// key → the person's first key, for each key a seed row or a device
+    /// link bound to a person it is not the first key of (bash-devices).
+    /// Cumulative as [`Self::bindings`] is; ask [`Self::person_of`]. Skipped
+    /// when empty, so a fold with none serialises as before.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub devices: BTreeMap<String, String>,
     /// Who holds standing NOW: the seed plus counting `Admit`s, minus the
     /// keys the keeper cut.
     pub standing: BTreeSet<String>,
@@ -169,7 +185,18 @@ pub struct Invited {
     pub issuer: String,
     pub key: String,
     pub until: i64,
+    /// A device link's person, by their first key (bash-devices).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub device_of: Option<String>,
 }
+
+/// An `Invite` as a redemption is judged against it: its signer, its
+/// `until`, and the person a device link adds a device of.
+type Link<'a> = (&'a str, i64, Option<&'a str>);
+
+/// A redemption judged on what it alone says: the `Invite` it redeems and
+/// that `Invite`'s person, or why it does not count.
+type Redeemed<'a> = Result<(&'a OpId, Option<&'a str>), InviteFault>;
 
 impl Membership {
     /// Whether the act with this derived id counts.
@@ -177,12 +204,31 @@ impl Membership {
         self.counted.contains(id)
     }
 
-    /// The person an act's actor resolves to, through the record.
-    pub fn person_for(&self, actor: &str) -> Option<&Person> {
-        self.bindings.get(actor)
+    /// The person `key`, an act's actor, resolves to through the record, cut
+    /// or standing: their first key and their name (bash-devices).
+    pub fn person_of<'a>(&'a self, key: &'a str) -> Option<(&'a str, &'a Person)> {
+        let first = self.devices.get(key).map_or(key, String::as_str);
+        Some((first, self.bindings.get(first)?))
     }
 
-    /// The keys standing now as `person`.
+    /// The keys standing now as the person whose first key is `first`.
+    pub fn devices_of<'a>(&'a self, first: &'a str) -> impl Iterator<Item = &'a String> {
+        (self.standing.iter()).filter(move |k| self.person_of(k).is_some_and(|(f, _)| f == first))
+    }
+
+    /// The people standing now under `name`, by their first keys: one, or
+    /// none, or more than one when a race or a member's hand gave two
+    /// people one name.
+    pub fn named(&self, name: &Person) -> Vec<&str> {
+        let people: BTreeSet<&str> = (self.keys_of(name))
+            .filter_map(|k| Some(self.person_of(k)?.0))
+            .collect();
+        tracing::debug!(target: "rail:membership", %name, people = people.len(),
+            "membership: the people standing under a name");
+        people.into_iter().collect()
+    }
+
+    /// The keys standing now under the name `person`.
     pub fn keys_of<'a, 'p>(
         &'a self,
         person: &'p Person,
@@ -219,14 +265,16 @@ pub fn membership<'a>(
     ops.sort_by_key(|(id, op)| (op.ts_unix, op.actor.clone(), op.kind.seq, *id));
 
     // ── the link: each redemption judged once on what it alone says ───
-    let invites: BTreeMap<&OpId, (&str, i64)> = ops
+    let invites: BTreeMap<&OpId, Link> = ops
         .iter()
         .filter_map(|(id, op)| match &op.kind.act {
-            RailAct::Invite { until, .. } => Some((*id, (op.actor.as_str(), *until))),
+            RailAct::Invite {
+                until, device_of, ..
+            } => Some((*id, (op.actor.as_str(), *until, device_of.as_deref()))),
             _ => None,
         })
         .collect();
-    let redeems: BTreeMap<&OpId, Result<&OpId, InviteFault>> = ops
+    let redeems: BTreeMap<&OpId, Redeemed> = ops
         .iter()
         .filter_map(|(id, op)| match &op.kind.act {
             RailAct::Admit {
@@ -307,12 +355,17 @@ pub fn membership<'a>(
     m.invites = ops
         .iter()
         .filter_map(|(id, op)| match &op.kind.act {
-            RailAct::Invite { key, until } => Some((
+            RailAct::Invite {
+                key,
+                until,
+                device_of,
+            } => Some((
                 (*id).clone(),
                 Invited {
                     issuer: op.actor.clone(),
                     key: key.clone(),
                     until: *until,
+                    device_of: device_of.clone(),
                 },
             )),
             _ => None,
@@ -366,7 +419,7 @@ fn covered(
 fn walk(
     order: &[(&OpId, &Op<SignedOp>)],
     seed: &Roster,
-    redeems: &BTreeMap<&OpId, Result<&OpId, InviteFault>>,
+    redeems: &BTreeMap<&OpId, Redeemed>,
     covers: &BTreeMap<String, BTreeSet<OpId>>,
     kept: &BTreeSet<&OpId>,
 ) -> Membership {
@@ -378,6 +431,9 @@ fn walk(
                 .map(move |k| (k.clone(), person.clone()))
                 .collect::<Vec<_>>()
         })
+        .collect();
+    let mut devices: BTreeMap<String, String> = (seed.members.values())
+        .flat_map(|keys| keys.iter().skip(1).map(|k| (k.clone(), keys[0].clone())))
         .collect();
     let mut live: BTreeMap<String, Person> = bindings.clone();
     let mut keeper: Option<String> = seed.members.values().flatten().next().cloned();
@@ -401,10 +457,10 @@ fn walk(
         let fault = match redeems.get(id) {
             None => None,
             Some(Err(fault)) => Some(fault.clone()),
-            Some(Ok(invite)) if !counted.contains(*invite) => Some(InviteFault::Uncounted),
+            Some(Ok((invite, _))) if !counted.contains(*invite) => Some(InviteFault::Uncounted),
             // Counted, so it opened: the issuer (the signer, past NotIssuer)
             // has an open link, and it is this one or a newer one.
-            Some(Ok(invite)) => open
+            Some(Ok((invite, _))) => open
                 .get(op.actor.as_str())
                 .filter(|newest| **newest != *invite)
                 .map(|newest| InviteFault::Closed {
@@ -422,6 +478,18 @@ fn walk(
             refused.insert(id.clone(), fault);
             continue;
         }
+        if let RailAct::Invite {
+            device_of: Some(of),
+            ..
+        } = &op.kind.act
+        {
+            let theirs = devices.get(&op.actor).unwrap_or(&op.actor) == of;
+            tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, device_of = %of, theirs,
+                "membership: a device link counts only when its signer stands as its person");
+            if !theirs {
+                continue;
+            }
+        }
         counted.insert(id.clone());
         let keeps = keeper.as_deref() == Some(op.actor.as_str()) && kept.contains(id);
         match &op.kind.act {
@@ -433,10 +501,19 @@ fn walk(
                 // An `Admit` naming no `Invite` admits a computer: before a
                 // redemption could name a browser, only a computer joined.
                 let device = invite.as_ref().map_or(Device::Computer, |r| r.device);
+                // Under a device link the key is its person's, under their
+                // name; else it is a new person, its own first key.
+                let of = redeems.get(id).and_then(|r| r.as_ref().ok()?.1);
+                let person = of.and_then(|f| bindings.get(f)).unwrap_or(person).clone();
+                match of {
+                    Some(f) => devices.insert(key.clone(), String::from(f)),
+                    None => devices.remove(key),
+                };
                 tracing::debug!(
                     target: "rail:membership",
                     key = %key,
                     person = %person,
+                    device_of = ?of,
                     ?device,
                     "membership: standing gained"
                 );
@@ -445,7 +522,7 @@ fn walk(
                     Device::Computer => browsers.remove(key),
                 };
                 bindings.insert(key.clone(), person.clone());
-                live.insert(key.clone(), person.clone());
+                live.insert(key.clone(), person);
             }
             RailAct::Remove { key, .. } => {
                 let cuts = keeps && *key != op.actor && live.contains_key(key);
@@ -492,6 +569,7 @@ fn walk(
     }
     Membership {
         bindings,
+        devices,
         standing: live.into_keys().collect(),
         counted,
         voided: BTreeSet::new(),
@@ -554,15 +632,15 @@ fn redemption<'a>(
     person: &Person,
     key: &str,
     r: &'a Redemption,
-    invites: &BTreeMap<&OpId, (&str, i64)>,
+    invites: &BTreeMap<&OpId, Link<'a>>,
     namespace: &str,
-) -> Result<&'a OpId, InviteFault> {
+) -> Redeemed<'a> {
     let verdict = match invites.get(&r.id) {
         None => Err(InviteFault::Unheld),
-        Some((issuer, _)) if *issuer != op.actor => Err(InviteFault::NotIssuer),
-        Some((_, until)) if op.ts_unix >= *until => Err(InviteFault::Lapsed),
+        Some((issuer, ..)) if *issuer != op.actor => Err(InviteFault::NotIssuer),
+        Some((_, until, _)) if op.ts_unix >= *until => Err(InviteFault::Lapsed),
         Some(_) if !r.verifies(namespace, person, key) => Err(InviteFault::BadCosignature),
-        Some(_) => Ok(&r.id),
+        Some((.., of)) => Ok((&r.id, *of)),
     };
     tracing::debug!(
         target: "rail:membership",

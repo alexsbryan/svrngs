@@ -19,6 +19,7 @@ fn invite_for(link: u8, until: i64) -> RailAct {
     RailAct::Invite {
         key: actor_of(&key(link)),
         until,
+        device_of: None,
     }
 }
 

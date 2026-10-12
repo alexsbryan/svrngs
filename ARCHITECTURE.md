@@ -57,7 +57,14 @@ An issuer's newer `Invite` closes their older one from its place in the
 order, so what the older link admitted keeps standing. A redemption names
 what holds the new key (`Device`, u4-1): a browser's ships at line version
 4, and `Membership::device` answers each standing key, a computer's unless
-the counting `Admit` that last bound it named a browser. Forks void nothing
+the counting `Admit` that last bound it named a browser. A person is their
+first key in the group (bash-devices): a seed row's first, or the key an
+`Admit` binds, so two people of one name are two people; a device link — an
+`Invite` naming that person (`device_of`, line version 8) — counts only from
+a key standing as them, and a key it admits is theirs, under their name.
+`Membership::person_of` answers each key's first key and name, `named` the
+people standing under a name, and `Removal` and `HandOnTo` take the one
+person a name names, refusing one two people hold (`Shared`). Forks void nothing
 (U7): both branches count, the fork named a `SequenceFork` beside a complete
 answer. Removal has one decider (U7, `membership.rs`'s module docs): the
 group's keeper — the seed's key, moved only by its own `HandOn` — cuts by

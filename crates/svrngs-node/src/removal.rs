@@ -59,6 +59,9 @@ pub enum Outcome {
     Handed,
     /// Nobody of that name is in the group.
     NotInGroup,
+    /// More than one person in the group goes by that name, so it names no
+    /// one person (bash-devices): nothing is written.
+    Shared,
     /// The person decides removals, so is not removed: they hand that on
     /// first.
     Decides,
@@ -124,6 +127,7 @@ async fn remove(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outc
                 Refused::NoStanding => Outcome::NotIn,
                 Refused::Unsettled => Outcome::Fault,
                 Refused::Command(RemovalRefusal::NotInGroup) => Outcome::NotInGroup,
+                Refused::Command(RemovalRefusal::Shared) => Outcome::Shared,
                 Refused::Command(RemovalRefusal::Keeps) => Outcome::Decides,
             };
         }
@@ -220,6 +224,7 @@ async fn hand_over(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> O
         Ok(Err(Refused::NoStanding)) => Outcome::NotIn,
         Ok(Err(Refused::Unsettled)) => Outcome::Fault,
         Ok(Err(Refused::Command(HandOnRefusal::NotInGroup))) => Outcome::NotInGroup,
+        Ok(Err(Refused::Command(HandOnRefusal::Shared))) => Outcome::Shared,
         Ok(Err(Refused::Command(HandOnRefusal::NotKeeper))) => match rail.register(group) {
             Ok(register) => Outcome::NotDecider {
                 decides: decides(&register),

@@ -424,6 +424,13 @@ pub enum RailAct {
         key: String,
         /// Unix seconds; a redeeming `Admit` counts only when timed before it.
         until: i64,
+        /// A device link's (bash-devices; DESIGN §6): the person whose
+        /// device it adds, by their first key. It counts only when its
+        /// signer stands as that person, and a key it admits is that
+        /// person's. Skipped when absent, so any other link keeps its
+        /// bytes, its id and its meaning.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        device_of: Option<String>,
     },
     /// A member says: these files of my folder `folder`, synced both ways,
     /// changed, each naming the entry it replaces (sy-1, [`synced`]).
@@ -662,14 +669,21 @@ pub const SYNCED_LINE_VERSION: u32 = 6;
 /// this version it names the line `NewerVersionLine` instead.
 pub const REMOVAL_LINE_VERSION: u32 = 7;
 
+/// The line format version a device link ships at (bash-devices): an
+/// [`RailAct::Invite`] naming the person it adds a device of. A build at
+/// [`REMOVAL_LINE_VERSION`] would drop the field, read it as any link and
+/// derive another id; at this version it names the line `NewerVersionLine`
+/// instead, so it holds no device link and counts no `Admit` under one.
+pub const DEVICE_LINE_VERSION: u32 = 8;
+
 impl Journaled for SignedOp {
     const FILE: &'static str = "ring_oplog.jsonl";
     const ID_PREFIX: &'static str = "ring";
     const LABEL: &'static str = "ring_rail";
     /// This build reads the membership cohort's, the link's, a browser's
-    /// redemption's, a folder's and removal's lines too (see
+    /// redemption's, a folder's, removal's and a device link's lines too (see
     /// [`Self::line_version`]).
-    const UNDERSTANDS: u32 = REMOVAL_LINE_VERSION;
+    const UNDERSTANDS: u32 = DEVICE_LINE_VERSION;
     /// The membership acts — [`RailAct::Admit`] and [`RailAct::Remove`] —
     /// ship at the bumped line version and the original three keep the bytes
     /// they always had, so an un-upgraded node names exactly the acts it
@@ -686,6 +700,9 @@ impl Journaled for SignedOp {
                     }),
                 ..
             } => BROWSER_LINE_VERSION,
+            RailAct::Invite {
+                device_of: Some(_), ..
+            } => DEVICE_LINE_VERSION,
             RailAct::Invite { .. }
             | RailAct::Admit {
                 invite: Some(_), ..

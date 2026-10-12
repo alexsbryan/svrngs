@@ -12,6 +12,7 @@ fn the_newest_invite_is_the_last_in_the_records_order() {
     let invite = || RailAct::Invite {
         key: link.clone(),
         until: 1_000,
+        device_of: None,
     };
     let first = signed(&key(1), 100, 0, invite());
     let second = after(&key(1), &first, 101, invite());

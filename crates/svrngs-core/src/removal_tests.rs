@@ -139,6 +139,7 @@ fn an_act_refused_inside_its_authors_chain_is_not_a_hole() {
         RailAct::Invite {
             key: actor_of(&key(9)),
             until: 500,
+            device_of: None,
         },
     );
     let person = Person::parse("dee").unwrap();
