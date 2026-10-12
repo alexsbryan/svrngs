@@ -26,11 +26,16 @@
 //!    counts nowhere, wherever its timestamp puts it. Which cuts count turns
 //!    on the walk, and the walk on which acts the cuts cover, so the walk
 //!    runs again with the cuts it found until they are the cuts it was
-//!    given. It is bounded, and a function of the set, but need not
-//!    settle: a keeper's cut that does not cover the hand-on that made
-//!    them keeper undoes itself on the next walk, and that walk redoes it
-//!    (#124). Past `ops.len() + 1` walks the answer is the last walk,
-//!    [`Membership::unsettled`]: who stands is not judged on it.
+//!    given. A cut never voids a hand-on that made a keeper (the operator,
+//!    2026-10-12): it covers each of the cut key's hand-ons that moved the
+//!    keeper before it in the walk as though `through` named it, so a
+//!    keeper's cut of whoever handed on to them stands (before, it did not
+//!    cover that hand-on, undid itself on the next walk and that walk redid
+//!    it, #124). The walk is bounded, and a function of the set, but need
+//!    not settle: a keeper whose standing rests on an act of the cut key
+//!    its cut does not cover still cycles. Past `ops.len() + 1` walks the
+//!    answer is the last walk, [`Membership::unsettled`]: who stands is not
+//!    judged on it.
 //! 3. **Then the void set**: the targets of counting [`RailAct::Correct`]s,
 //!    except an act that moves membership, which nothing undoes. Voids
 //!    never resurrect, and they cannot reach standing, so they come after
@@ -146,13 +151,16 @@ pub struct Membership {
     pub unsettled: bool,
 }
 
-/// One counting cut: the keeper's `Remove`, and the acts it names in
-/// `through` that this copy does not hold, so cannot yet cover.
+/// One counting cut: the keeper's `Remove`, the acts it names in
+/// `through` that this copy does not hold, so cannot yet cover, and the cut
+/// key's hand-ons that made a keeper, which it covers as though named.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Cut {
     pub by: OpId,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub unheld: Vec<OpId>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub handed_on: Vec<OpId>,
 }
 
 /// An `Invite` as the register holds it.
@@ -314,8 +322,8 @@ pub fn membership<'a>(
 }
 
 /// For each cut, the acts it covers: the acts of the cut key its `through`
-/// names and every act they descend from by `prev`, among `ops`. A name
-/// this copy does not hold goes in the cut's `unheld`.
+/// or its `handed_on` names and every act they descend from by `prev`,
+/// among `ops`. A name this copy does not hold goes in the cut's `unheld`.
 fn covered(
     ops: &[(&OpId, &Op<SignedOp>)],
     cuts: &mut BTreeMap<String, Cut>,
@@ -336,7 +344,7 @@ fn covered(
         };
         let mut seen = BTreeSet::new();
         cut.unheld.clear();
-        for tip in through {
+        for tip in through.iter().chain(&cut.handed_on) {
             if !chain.contains_key(tip) {
                 cut.unheld.push(tip.clone());
             }
@@ -379,6 +387,8 @@ fn walk(
     let mut browsers: BTreeSet<String> = BTreeSet::new();
     // Each issuer's newest counting `Invite` so far: their one open link.
     let mut open: BTreeMap<&str, &OpId> = BTreeMap::new();
+    // Each key's hand-ons that moved the keeper so far, which a cut keeps.
+    let mut made: BTreeMap<&str, Vec<OpId>> = BTreeMap::new();
     for (id, op) in order.iter().copied() {
         if !live.contains_key(&op.actor) {
             continue;
@@ -443,12 +453,16 @@ fn walk(
                     keeper = ?keeper, cuts,
                     "membership: a Remove — the keeper's cuts; anyone else's is an ask and cuts nobody");
                 if cuts {
+                    let handed_on = made.get(key.as_str()).cloned().unwrap_or_default();
+                    tracing::debug!(target: "rail:membership", id = %id, key = %key, kept = handed_on.len(),
+                        "membership: the cut keeps the cut key's hand-ons that made a keeper");
                     live.remove(key);
                     cut.insert(
                         key.clone(),
                         Cut {
                             by: id.clone(),
                             unheld: Vec::new(),
+                            handed_on,
                         },
                     );
                 }
@@ -460,6 +474,7 @@ fn walk(
                     "membership: a HandOn — only the keeper's, to a standing key, moves the keeper");
                 if hands {
                     keeper = Some(key.clone());
+                    made.entry(op.actor.as_str()).or_default().push(id.clone());
                 }
             }
             RailAct::Invite { .. } => {

@@ -408,35 +408,93 @@ fn every_arrival_of_a_removal_folds_identically() {
     }
 }
 
-/// **Cuts can cycle, and the fold says it did not settle** (#124; DESIGN
-/// §6). Alex hands on to bo; bo, the keeper, removes alex naming only
-/// alex's act before the hand-on. With no cut, the hand-on counts, bo
-/// keeps and the cut counts; with it, the hand-on is an act of a cut key
-/// its cut does not cover, so it counts nowhere, alex keeps and bo's
-/// `Remove` is an ask that cuts nobody: each walk gives the other's cuts.
-/// The fold stopped at its cap with whichever walk the count of acts left
-/// last, so one unrelated act of bo's turned who stands — said only by a
-/// debug line. Now each answer says it did not settle, an `Unsettled` gap,
-/// and reads incomplete, and a commit on it is refused, writing nothing.
-/// Red at 233daf0, which read both as settled.
+/// **A hand-on survives the removal of the one who handed on** (DESIGN §6,
+/// "Removal has one decider"; the operator, 2026-10-12). Alex hands on to
+/// bo; bo, the keeper, removes alex naming only alex's act before the
+/// hand-on. A cut never voids a hand-on that made a keeper, so the cut
+/// keeps it as though its `through` named it: bo keeps and alex is cut at
+/// the first walk, the next walk only confirming it, with an unrelated act
+/// of bo's held and without. Red at 21934d5, where the hand-on was an act
+/// of a cut key its cut did not cover, each walk gave the other's cuts
+/// (#124), and the fold said it did not settle.
 #[test]
-fn cuts_that_cycle_are_said_unsettled() {
+fn a_hand_on_survives_its_givers_removal() {
     let bo_in = signed(&key(1), 100, 0, admit_of("bo", 2));
     let hands = after(&key(1), &bo_in, 101, hand_on(2));
     let cut = signed(&key(2), 102, 0, remove_of(1, &[&bo_in]));
     let more = after(&key(2), &cut, 103, record("more"));
-    let cycled = [bo_in.clone(), hands.clone(), cut.clone()];
-    let three = admitted_under(&alex_alone(), &cycled);
-    let four = admitted_under(&alex_alone(), &[bo_in, hands, cut, more]);
-    assert_ne!(
-        (three.membership().keeper.clone(), standing(&three, 1)),
-        (four.membership().keeper.clone(), standing(&four, 1)),
-        "the cycle: the walk the cap left turns on how many acts are held"
+    let three = [bo_in.clone(), hands.clone(), cut.clone()];
+    let four = [bo_in, hands.clone(), cut.clone(), more];
+    for ops in [&three[..], &four[..]] {
+        let a = admitted_under(&alex_alone(), ops);
+        assert!(!a.membership().unsettled, "the fold settles");
+        assert_eq!(a.membership().keeper, Some(actor_of(&key(2))), "bo keeps");
+        assert!(
+            !standing(&a, 1) && standing(&a, 2),
+            "alex is cut, bo stands"
+        );
+        assert_eq!(a.membership().cut[&actor_of(&key(1))].by, cut.id);
+        assert!(a.membership().counts(&hands.id), "the hand-on counts");
+        assert!(a.is_complete(), "{:?}", a.gaps());
+    }
+}
+
+/// **A cut of someone whose hand-on made no keeper cuts as before** (the
+/// operator, 2026-10-12). Cy, never the keeper, hands on to bo, which moves
+/// nothing; alex removes cy naming cy's act before it. The hand-on is an
+/// act of a cut key its cut does not cover, so it counts nowhere, and nor
+/// does cy's act after it: only a hand-on that made a keeper is kept.
+#[test]
+fn a_hand_on_that_made_no_keeper_is_cut_as_before() {
+    let bo_in = signed(&key(1), 100, 0, admit_of("bo", 2));
+    let cy_in = after(&key(1), &bo_in, 101, admit_of("cy", 3));
+    let seen = signed(&key(3), 102, 0, record("seen"));
+    let cy_hands = after(&key(3), &seen, 103, hand_on(2));
+    let later = after(&key(3), &cy_hands, 104, record("later"));
+    let cut = after(&key(1), &cy_in, 105, remove_of(3, &[&seen]));
+    let a = admitted_under(
+        &alex_alone(),
+        &[bo_in, cy_in, seen, cy_hands.clone(), later, cut],
     );
-    for a in [&three, &four] {
+    assert_eq!(a.membership().keeper, Some(actor_of(&key(1))), "alex keeps");
+    assert!(!standing(&a, 3), "cy is out");
+    assert!(
+        !a.membership().counts(&cy_hands.id),
+        "cy's hand-on counts nowhere"
+    );
+    assert_eq!(applied(&a), vec!["seen"]);
+    assert!(!a.membership().unsettled);
+}
+
+/// **Cuts that still cycle are said unsettled** (#124; DESIGN §6). A cut
+/// keeps the cut key's hand-ons that made a keeper, so the cycle 7e54170
+/// built settles (`a_hand_on_survives_its_givers_removal`); one is left: a
+/// keeper whose standing rests on an act of the cut key its cut does not
+/// cover. Alex admits cy, cy admits bo, alex hands on to bo, and bo removes
+/// cy naming none of cy's acts. With no cut bo stands, keeps and the cut
+/// counts; with it cy's `Admit` of bo counts nowhere, so bo never stood,
+/// the hand-on moves nothing and the cut is no one's: each walk gives the
+/// other's cuts. The fold says it did not settle, an `Unsettled` gap, and
+/// reads incomplete, and a commit on it is refused, writing nothing. A
+/// `Removal` names every act it holds of the removed, so only a hand-made
+/// `Remove` names too few to cover its own signer's standing.
+#[test]
+fn cuts_that_cycle_are_said_unsettled() {
+    let cy_in = signed(&key(1), 100, 0, admit_of("cy", 3));
+    let bo_in = signed(&key(3), 101, 0, admit_of("bo", 2));
+    let hands = after(&key(1), &cy_in, 102, hand_on(2));
+    let cut = signed(&key(2), 103, 0, remove_of(3, &[]));
+    let more = after(&key(2), &cut, 104, record("more"));
+    let cycled = [cy_in, bo_in, hands, cut];
+    let mut more_held = cycled.to_vec();
+    more_held.push(more);
+    for a in [
+        admitted_under(&alex_alone(), &cycled),
+        admitted_under(&alex_alone(), &more_held),
+    ] {
         assert!(a.membership().unsettled, "the fold says it did not settle");
         assert_eq!(
-            gaps_named(a, |g| matches!(g, RailGap::Unsettled)),
+            gaps_named(&a, |g| matches!(g, RailGap::Unsettled)),
             1,
             "{:?}",
             a.gaps()
@@ -452,7 +510,7 @@ fn cuts_that_cycle_are_said_unsettled() {
     };
     let store = crate::tests_support::Memory::holding(&cycled);
     let removal = crate::Removal {
-        person: Person::parse("alex").unwrap(),
+        person: Person::parse("cy").unwrap(),
     };
     assert_eq!(
         crate::commit(&store, &removal, &as_bo).unwrap(),

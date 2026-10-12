@@ -1100,7 +1100,16 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   name sorts first), moved only by the keeper's own `HandOn` to a standing
   key; an act that follows its author's own `HandOn` by `prev` carries no
   keeper's authority, so an ex-keeper's backdated second hand-on moves
-  nothing. The keeper's `Remove` of a standing key not its own is the cut;
+  nothing. The office isn't the person: a hand-on that made a keeper
+  survives its giver's removal, since a cut covers each of the cut key's
+  hand-ons that moved the keeper before it in the walk as though its
+  `through` named it (v1-keeper-office (a); §10, 2026-10-12). Before, a
+  keeper's cut of whoever handed on to them that named acts only before
+  the hand-on undid itself on the next walk and that walk redid it, and
+  the fold said it did not settle (#124). A cut whose own signer stands by
+  an act of the cut key it does not cover still cycles; the fold says so
+  (`Membership::unsettled`), and nothing is decided on it. The keeper's
+  `Remove` of a standing key not its own is the cut;
   anyone else's is an ask, counted as an act, cutting nobody. A cut key's
   later acts count nowhere (`RailGap::Removed`), so it cannot remove, ask
   or hand on. A `Correct` voids nothing that moves membership — before,
@@ -1877,6 +1886,14 @@ By the operator, 2026-10-10 and 2026-10-11, on the scene v1 answers to
   want the most general purpose solutions possible"; and of Demo C's gate,
   "Pasting one line in the terminal is fine" — a computer's newcomer pastes
   one line the group's page gives, and types nothing else (§8, "Demo C").
+
+By the operator, 2026-10-12, "Yes that sounds good", on the seat's reading
+of Ostrom: the hand-on is a collective-choice act, a removal operational
+enforcement, and enforcement never unmakes an office already given — "the
+office isn't the person". So a hand-on survives the removal of the one who
+handed on (§6, "Removal has one decider"); every removal and every ask to
+remove is shown to everyone in the group (§8); and a keeper the group
+chooses, and a ladder of sanctions, are written to wait (§9).
 
 By the operator, 2026-10-10, on perf-1's candidates for a fast synced
 folder (`demo/runs/perf/2026-10-10/README.md` §10):

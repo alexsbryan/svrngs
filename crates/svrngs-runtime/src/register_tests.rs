@@ -244,11 +244,14 @@ fn a_cut_keys_earlier_acts_join_the_kept_register() {
 
 /// **Cuts that do not settle are no standing** (#124): a journal holding
 /// cuts that cycle (svrngs-core's `cuts_that_cycle_are_said_unsettled`:
-/// alex hands on to bo, and bo's cut of alex does not cover the hand-on)
-/// answers `Unsettled` to `standing` and to `register`, so the round, the
+/// alex admits cy, cy admits bo, alex hands on to bo, and bo's cut of cy
+/// covers none of cy's acts, so not the `Admit` bo stands by) answers
+/// `Unsettled` to `standing` and to `register`, so the round, the
 /// acceptor, the sync route and the door each read it as they read an
 /// unreadable register, vouching for nobody. Red with register_in's
-/// `unsettled` check out: bo stood as keeper, alex out.
+/// `unsettled` check out: alex and cy stood, bo did not. Its first
+/// scenario, bo's cut of alex not covering alex's hand-on, settles since
+/// v1-keeper-office (a): a cut keeps a hand-on that made a keeper.
 #[test]
 fn cuts_that_do_not_settle_are_no_standing() {
     use std::sync::Arc;
@@ -260,18 +263,19 @@ fn cuts_that_do_not_settle_are_no_standing() {
             .collect(),
     );
     rail.set_seed(NS, &alex).unwrap();
-    let bo_in = signed(&key(1), 100, 0, admit_act("bo", 2));
-    let hands = after(&key(1), &bo_in, 101, RailAct::HandOn { key: actor_of(&key(2)) });
+    let cy_in = signed(&key(1), 100, 0, admit_act("cy", 3));
+    let bo_in = signed(&key(3), 101, 0, admit_act("bo", 2));
+    let hands = after(&key(1), &cy_in, 102, RailAct::HandOn { key: actor_of(&key(2)) });
     let cut = signed(
         &key(2),
-        102,
+        103,
         0,
         RailAct::Remove {
-            key: actor_of(&key(1)),
-            through: vec![bo_in.id.clone()],
+            key: actor_of(&key(3)),
+            through: vec![],
         },
     );
-    rail.ingest_all(NS, &[bo_in, hands, cut]).unwrap();
+    rail.ingest_all(NS, &[cy_in, bo_in, hands, cut]).unwrap();
     let unsettled = |e: RailError| matches!(e, RailError::Unsettled(ref ns) if ns == NS);
     assert!(rail.standing(NS).is_err_and(unsettled), "{:?}", rail.standing(NS));
     assert!(rail.register(NS).is_err_and(unsettled), "{:?}", rail.register(NS));
