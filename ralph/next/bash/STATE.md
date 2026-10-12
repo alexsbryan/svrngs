@@ -7,7 +7,9 @@ not make access limits arbitrary AND hard to update. If someone wants to
 allow more concurrent users we shouldn't add dumb footgun configs that
 people can't update easily through UIs". Five rows: the newcomer's first
 minute, the limit, the person, a person's devices (the operator, 2026-10-12,
-"yes to both"), and the dry run again on what landed. The
+"yes to both"), and the dry run again on what landed; then two found
+watching them land, a keeper's way to name one of two people of one name
+and the film test under load. The
 name's decision is in `CHARTER.md`; finding 5, the phone's typed name, is
 the operator's.
 
