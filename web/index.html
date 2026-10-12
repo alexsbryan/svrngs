@@ -25,6 +25,12 @@
   reach nothing on the internet, and loopback is no third party. Nothing
   here is allowed to phone a third party. Every word a person reads here is DESIGN
   §1's: the group, people's names, computer, phone.
+
+  A chat previews the link from this file alone, its title and description
+  (DESIGN §3, "A chat's door is the group's link"): a preview never sees
+  the `#` part, so they name no group and carry no token. On a computer
+  the page offers the line that gets svrngs (DESIGN §7), composed by
+  app.js from the `#` part, beside joining here as a phone does.
 -->
 <html lang="en">
 <head>
@@ -32,7 +38,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' wss: https: ws://127.0.0.1:* http://127.0.0.1:*; img-src 'none'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'">
-<title>Your group</title>
+<title>You’re invited to a group</title>
+<meta name="description" content="Open the link to join: on a phone right here, on a computer by one line pasted in a terminal. What the group shares stays on its people’s own computers.">
+<meta property="og:title" content="You’re invited to a group">
+<meta property="og:description" content="Open the link to join: on a phone right here, on a computer by one line pasted in a terminal. What the group shares stays on its people’s own computers.">
+<meta property="og:type" content="website">
 <style>
   :root { color-scheme: light dark; }
   body { font: 16px/1.5 system-ui, sans-serif; margin: 1.5rem auto; max-width: 46rem; padding: 0 1rem; }
@@ -45,10 +55,16 @@
   #lent { list-style: none; padding: 0; display: grid; gap: .5rem; }
   #lent button { width: 100%; text-align: left; }
   .good { color: #2a2; }
+  #line { user-select: all; }
 </style>
 </head>
 <body>
 <h1 id="status">Opening…</h1>
+<section id="computer" hidden>
+  <p>On this computer, paste this line in a terminal: it gets svrngs, joins you, and opens your home page, with the group’s folder on your disk.</p>
+  <pre id="line"></pre>
+  <button id="copy">Copy</button>
+</section>
 <form id="join" hidden>
   <label for="name">What’s your name? Everyone in <span id="group"></span> sees it.</label>
   <input id="name" name="name" autocomplete="name" maxlength="64" required>

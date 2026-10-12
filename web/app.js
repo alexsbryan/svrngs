@@ -324,6 +324,31 @@ async function enter(group, asked) {
   if (asked?.has('ask')) asking(group, key, lent, unanswered, dialler, asked);
 }
 
+// On a computer, the one line that gets svrngs and joins it by this link
+// (v1-onboarding (c); DESIGN §7), with a button that copies it: composed
+// here from the `#` part, which no request carries. A phone's pointer is
+// coarse, and it has no terminal: no line there.
+function offer(token) {
+  if (!matchMedia('(pointer: fine)').matches || !/^[A-Za-z0-9_-]+$/.test(token)) {
+    trace('PAGE: no line offered: not a computer, or not a token');
+    return;
+  }
+  const page = `${location.origin}${location.pathname}`;
+  const line = `curl -fsSL ${page}install.sh | sh -s -- '${page}#${token}'`;
+  document.getElementById('line').textContent = line;
+  const copy = document.getElementById('copy');
+  copy.onclick = () =>
+    navigator.clipboard.writeText(line).then(
+      () => (copy.textContent = 'Copied'),
+      (e) => {
+        trace(`PAGE: the line was not copied: ${e}`);
+        copy.textContent = 'Select the line and copy it';
+      },
+    );
+  document.getElementById('computer').hidden = false;
+  trace('PAGE: the line offered, for a computer');
+}
+
 // The service worker: the runtime that serves what the group's people lend
 // (u4-6, sw.js), and the app shell's cache after first load, so a repeat
 // visit needs no origin traffic at all (upstream's
@@ -359,6 +384,7 @@ async function opening(fragment) {
     await init({ module_or_path: store.runtime() });
     const asked = /^(open|ask)=/.test(fragment) ? new URLSearchParams(fragment) : null;
     const token = asked ? '' : fragment;
+    if (token) offer(token);
     const kept = await store.groups();
     let group = token ? kept.find((g) => g.token === token) : kept[0];
     if (token && !group) group = await join(token, kept);

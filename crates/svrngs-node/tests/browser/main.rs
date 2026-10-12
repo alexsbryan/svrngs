@@ -1480,3 +1480,66 @@ async fn removal(ada: &Node, who: &str) -> svrngs_node::removal::Outcome {
         .await
         .unwrap()
 }
+
+in_both_engines!(
+    /// The group's link on a computer (v1-onboarding (c); DESIGN §7): the
+    /// page offers the one line that gets svrngs, composed from the
+    /// link's `#` part, and a button that copies it; on a phone it offers
+    /// none. No request either page makes, the worker's and the relay's
+    /// included, carries the token, and the page host's answer to `/`
+    /// previews the link as an invitation, naming no group. The link here
+    /// lets nobody in, so each page settles on its refusal. Watched
+    /// failing: the page before the offer, and the line sent in a request.
+    the_page_offers_a_computer_one_line_and_sends_the_token_nowhere
+);
+async fn the_page_offers_a_computer_one_line_and_sends_the_token_nowhere(engine: Engine) {
+    let site = site();
+    let dir = tempfile::tempdir().unwrap();
+    let relay = relay().await;
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let token = token(&signing(1), &relay);
+    let seen = drive(
+        engine,
+        "computer.mjs",
+        json!({ "site": site, "token": token }),
+        None,
+    )
+    .await;
+    let origin = seen["origin"].as_str().unwrap();
+    let line = format!("curl -fsSL {origin}install.sh | sh -s -- '{origin}#{token}'");
+    let computer = &seen["computer"];
+    assert_eq!(computer["offered"], true, "{computer:#}");
+    assert_eq!(computer["line"], line, "{computer:#}");
+    assert_eq!(computer["button"], "Copied", "{computer:#}");
+    assert_eq!(computer["written"], line, "{computer:#}");
+    // WebKit refuses a test's read of the clipboard (computer.mjs).
+    if engine.as_str() == "chromium" {
+        assert_eq!(computer["copied"], line, "{computer:#}");
+    }
+    assert_eq!(seen["phone"]["offered"], false, "{:#}", seen["phone"]);
+    let requests = seen["requests"].as_array().unwrap();
+    eprintln!(
+        "offered on a computer: {computer:#}; on a phone: {}; {} requests from the pages, {} at the host",
+        seen["phone"]["offered"],
+        requests.len(),
+        seen["asked"].as_array().unwrap().len()
+    );
+    assert!(!requests.is_empty(), "no request was seen: {seen:#}");
+    for r in requests.iter().chain(seen["asked"].as_array().unwrap()) {
+        assert!(
+            !r.to_string().contains(&token),
+            "the token left the page: {r:#}"
+        );
+    }
+    let served = seen["served"].as_str().unwrap();
+    for meta in [
+        "<title>You’re invited to a group</title>",
+        r#"<meta property="og:title" content="You’re invited to a group">"#,
+        r#"<meta name="description" content="#,
+        r#"<meta property="og:description" content="#,
+    ] {
+        assert!(served.contains(meta), "the preview lacks {meta}");
+    }
+    assert!(!served.contains("house") && !served.contains(&token));
+    drop(ada);
+}
