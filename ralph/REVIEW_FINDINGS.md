@@ -6328,3 +6328,218 @@ converge's lines are still one early (I1: `Said` :855 for :856, :39 for
 | I1 | 7 | `code converge noun` lines | Still present: one line early. |
 | I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)"; web/'s and apps/jellyfin's exact tiers say could-not-judge, which they are. |
 | I19 | 6 | dry-report, `tests/` scopes | Still present, and said: "could-not-judge". The line-window pass stood in. |
+
+## REVIEW-audit-bash-auto-1 (2026-10-12, range b91134f..feba150)
+
+No earlier `REVIEW-audit-` row exists in this queue, so the range starts
+at b91134f, the commit that made the queue (ralph/next/bash/STATE.md),
+and ends at feba150, the commit that made this row. `git rev-list --count
+b91134f..feba150` is 31, no merge among them (`--merges`: 0), all on
+main. Four units: bash-first-minute, bash-limit, bash-person and
+bash-devices. Between REVIEW-audit-v1-auto-2's last commit and b91134f
+are only b1d8f40 and 9d95533, Demo C's dry run, which touch `demo/` alone.
+The audit's own commits: 8849ea0 (the row's two paths), 7b0a59b and
+ee4792c (moves in the product, behaviour kept), 4f221f7 and a85a146
+(test moves) and 635b782 (a trace, decisions unchanged). It opens #125,
+grows and shrinks #31, and closes none.
+
+The instrument is ~/dev/commonwealth-ai/target/debug/sovereign-cli,
+sha256 585edd51… (`shasum -a 256`). That is not the last audit's binary
+(b604bcb6…), so its exact tier was checked against a plant first (below).
+The embedder was the daemon on :9741, which served qwen-embedding-0.6b,
+the model the last audit used through llama-server (/tmp/bashaudit1/index.out:
+"embeddings via http://localhost:9741/v1/embeddings, model
+`qwen-embedding-0.6b`, 1024-d"). The corpus is feba150's tree, `git
+archive` into /tmp/bashaudit1/tree-feba150: `code index . --corpus-id
+tree-feba150` gave 3408 chunks in 429 s. `project refresh` gave rust
+13860 symbols, with typescript and python "skipped (export failed)" (I4;
+/tmp/bashaudit1/refresh.out).
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+b91134f..feba150`, summed by /tmp/bashaudit1/ledger.py — the last
+audit's, its unit pattern changed to `bash-` (/tmp/bashaudit1/ledger.out).
+A commit that names no unit counts toward the next `done`'s, so
+b4ec55f, a state commit with no product lines, counts toward
+bash-first-minute.
+
+| unit | commits | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| bash-first-minute | 9 | 181 | 62 | 119 | 297 | 3 | 294 |
+| bash-limit | 4 | 176 | 59 | 117 | 310 | 19 | 291 |
+| bash-person | 6 | 273 | 111 | 162 | 455 | 21 | 434 |
+| bash-devices | 11 | 394 | 135 | 259 | 591 | 30 | 561 |
+| this row's own commit | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 31 | 1024 | 367 | 657 | 1653 | 73 | 1580 |
+
+By file, the largest src nets: cli.rs +128 (bash-devices: `link --device`,
+`own_person`, `mint`) and +81 (bash-person), core membership.rs +112
+(a1d0ba9, the person as their first key), node.rs +103
+(bash-first-minute, `Unlisted` and `ask_lends`), lend.rs and home.rs +62
+each (bash-limit), core register.rs +54 (bash-devices).
+
+The size budget, measured by scripts/lean_check.py at HEAD over a `git
+archive` tree of each commit (/tmp/bashaudit1/lean-points.out):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| b91134f, range start | 2971 / 3080 | 14835 / 15350 |
+| 42f6adc, bash-first-minute's last | 2971 | 14907 |
+| d55ece3, bash-limit's last | 2971 | 14986 |
+| 83e4153, bash-person's last | 2981 | 15079 |
+| 7187d67, svrngs-core's cap to 3,080 (the operator, 2026-10-12) | 2981 | 15079 |
+| a1d0ba9, a person is their first key | 3051 | 15154 |
+| 3078eab, the register and the door key on the person | 3051 | 15164 |
+| c2e074a, `link --device` | 3055 | 15247 |
+| feba150, range end | 3055 | 15247 |
+| 635b782, this audit's last | **3046 / 3080** | **15240 / 15350** |
+
+The range nets +412 by the budget's count, +84 of it in svrngs-core.
+This audit takes back 7: 9 in the core (7b0a59b), +2 for a trace
+(635b782). **34 lines are left in svrngs-core and 110 in the repository**
+(#80).
+
+### (2) Clones (`code dry-report`)
+
+**The exact tier was checked against a plant.** The plant was a verbatim
+copy of 8558ebe's `change` (home.rs:192-214, its doc line included),
+appended to rail.rs in the indexed tree, followed by `refresh`. The scoped
+report gave **1 new group**: `change — home.rs:193 == rail.rs:626`
+(/tmp/bashaudit1/plant-node.md). With the plant removed and `refresh` run
+again, that group was **gone** (/tmp/bashaudit1/unplant-node.md). Both
+lines are the `fn`'s own, so the exact tier's off-by-one (I1) is fixed in
+this binary. `converge noun` still has it.
+
+Each dir the range touched was run scoped at 0.95
+(/tmp/bashaudit1/clean-*_0.95.md). Every side was blamed against the
+range's commits (/tmp/bashaudit1/clusters-scoped.out):
+
+| scope | locations | exact | near | with a side added in the range |
+|---|---:|---:|---:|---|
+| crates/svrngs-core/ | 449 | 5 | 0 | none |
+| crates/svrngs-node/ | 474 | 1 | 0 | none |
+| crates/svrngs-runtime/ | 135 | 1 | 0 | none |
+| crates/svrngs/ | 79 | 0 | 0 | none |
+| apps/jellyfin/mw/ | 59 | could-not-judge (I4) | 0 | none |
+| apps/jellyfin/check/ | 57 | could-not-judge | 2 | none |
+| apps/web-conformance/ | 11 | could-not-judge | 0 | none |
+| web/ | 97 | could-not-judge (I4) | 0 | none |
+| scripts/ | 15 | could-not-judge | 0 | none |
+| crates/svrngs-node/tests/, crates/svrngs/tests/ | 0 | could-not-judge (I19) | could-not-judge | — |
+
+**No exact or near clone at the instrument's threshold has a side the
+range added.**
+
+Below the threshold, over the whole tree (/tmp/bashaudit1/clusters.py →
+clusters.out), 12 groups at 0.90 have a side in the range. The six with
+`demo/runs/` sides are recorded runs, each kept as run (#61). The rest,
+each read:
+
+- origin.rs `kept_to_reads` (:114-150) ~ surface.rs `reads` (:234-271),
+  0.912. The range touched only `reads`' `Unlisted` read (f3d0c18). Both
+  ask the one decider, `Offered::reads_one`, so this is not one rule written
+  twice.
+- home.js `uses` (:83-103) ~ web/app.js `uses` (:275-298), 0.925. The two
+  pages each reach their lender their own way: the home page through its
+  own route, the phone by an iroh dial. Both render through the one `used`.
+- sign_in.rs `of` ~ `forget` and redeem.rs `router` ~ `ask_route`. These
+  are neighbours whose spans overlap (I9), not clones.
+- register_tests.rs :384-405 ~ :407-429. Two tests, each stating a case.
+
+At 0.80, the groups with a range side are topic clusters (53 symbols of
+redemption and register tests, 39 of seal and sync tests), and none of
+them is one behaviour written twice.
+
+The tests scopes are could-not-judge (I19), so a line-window pass stood
+in for them: 6 non-trivial lines, whitespace stripped, over test code,
+each span blamed against the range (/tmp/bashaudit1/windows.py →
+windows.out: 181 hits, 80 spans, 20 new). Two of the 20 were fixed here:
+
+- crates/svrngs-node/tests/home.rs :160-178 == :420-438 == :610-628 ==
+  lend_origin.rs:134-152 (the second home.rs copy is 8558ebe's). In
+  home.rs this is now one `alex_lets_sam_in`, byte for byte lend_origin's
+  (4f221f7).
+- crates/svrngs/tests/join_page.rs :92-108 == :265-281 (the second copy is
+  c2e074a's), install.rs's `sams_computer` written out. The function is now
+  in crates/svrngs/tests/common/mod.rs and used by both binaries (a85a146).
+
+The rest of the 20 are each test stating its own case: the phone's
+spawn and read in join_page.rs (:126-135 == :286-295, :179-188 ==
+:336-344), the browser main.rs drives (:1505-1514 == :1743-1752), a
+six-line `.send().await.unwrap().json()` chain in five binaries,
+join_by_link.rs's new-group set-up, and install.rs's two folder asserts
+(:379-387 == :446-454).
+
+### Reading the range
+
+- **Never silently substitute** (AGENTS.md 6). Each `.ok()`,
+  `unwrap_or`, `unwrap_or_default` and `??` the range added to product
+  code (/tmp/bashaudit1/range-src.diff) carries its absence:
+  - redeem.rs:378-379: a 409 body this build cannot read becomes "a name
+    this build cannot read", `NoAnswer`, never a name.
+  - core membership.rs: a refused redemption names no device person; a key
+    with no device binding is its own first key.
+  - cli.rs `full_name`: a system with no full name falls to `$USER`.
+  - iroh.rs `closes_unadmitted`: a connection still open is "not that",
+    traced.
+- **Glassbox** (AGENTS.md 1). cli.rs `user_name` chose between the full
+  name and `$USER` with no trace of which it took. Fixed in 635b782.
+- **A person's words** (fence 5). The range's quoted strings in cli.rs,
+  share.rs, home/, home.rs, surface.rs, redeem.rs, door.rs, door/limit.rs,
+  web/app.js, web/index.html and web/install.sh use none of key, member,
+  keeper, ring, act or journal as a word outside a trace (`grep -iwE`
+  over the added lines: one hit, a `tracing::debug!` in redeem.rs).
+- **One decider** (AGENTS.md 8). bash-person moved the account name to
+  the door, and it is decided only there (door.rs:143 `user_name`): no other
+  product file slices a key to 16 hex for a name. The mw's
+  `Device::of` (person.rs:113) slices it for a Jellyfin device id, which
+  is another thing; it is #125.
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges b91134f..feba150 -- crates
+apps web bridge scripts` matching `\b(struct|enum|trait|type)\s+[A-Z]\w*`
+are: `Asked`, `Change`, `Signs`, `Bos`, `Changing`, `Unlisted`,
+`Identity`, `Link` and `Redeemed`. `PersonKey`'s line moved, but the type
+was already there at b91134f (door.rs:731). Each name was run through
+`converge noun <Name> --corpus-id tree-feba150` (/tmp/bashaudit1/nouns.out):
+
+| noun | converge (production) | read |
+|---|---|---|
+| Link | 2: core link.rs:194, core membership.rs:195 | a1d0ba9's alias was a second projection of the fold's `Invite`s, beside `Membership::invites`, built from the same ops at the end of the same function. **One map now, 7b0a59b**; the alias is gone. |
+| Asked | 2: core joining.rs:72, node.rs:630 | Two meanings: the issuer's answer to a joiner, and f3d0c18's account of how a computer answered what it lends. **Renamed `Answered`, ee4792c.** |
+| Change | 2: core synced.rs:101, home.rs:178 | Two meanings: one file's change, and 8558ebe's change a person makes to a lend. **Renamed `LendChange`, ee4792c**; its variants' wire is unchanged. |
+| Redeemed | 2: node redeem.rs:88, core membership.rs:199 | Two meanings: what a redemption did, and a1d0ba9's alias for a redemption judged on what it alone says. **Renamed `Judged`, ee4792c.** |
+
+`Signs`, `Changing`, `Unlisted` and `Identity` have one definition each.
+`Bos` belongs to a test (door/main.rs:279) and has 0 in production.
+converge's lines are still one early (I1: `Asked` :71 for :72, :629 for
+:630, and so on).
+
+### Fixed here
+
+- 7b0a59b: the fold reads its `Invite`s once. svrngs-core 3055 → 3046;
+  167 + 16 core tests unmodified.
+- ee4792c: `Answered`, `LendChange` and `Judged`, renames only.
+- 4f221f7: home.rs's `alex_lets_sam_in`, tests only.
+- a85a146: `sams_computer` in crates/svrngs/tests/common, tests only.
+- 635b782: `user_name`'s choice said at debug; decisions unchanged.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 125 | 7, 6 | apps/jellyfin/mw/src/person.rs:113 (`Device::of`, `svrngs-<16 hex of x-svrngs-key>`); crates/svrngs-node/src/door/sign_in.rs:262 (`Whose`, keyed by `PersonKey`) | not fixed: a run's question | Since bash-devices, `x-svrngs-key` is the person's key, and the sign-in keeps one answer per person by design (bash-devices (c)). So a person's computer, laptop and phone are one Jellyfin token and one Jellyfin device id. What Jellyfin does with two of them playing at once under one session is unmeasured: demo/runs/devices/2026-10-12/README.md asks about accounts, the sign-in and the limit, never two at once. A run with two of one person's devices playing at once says whether this holds. |
+| 31 | 8 | crates/svrngs-node/tests/home.rs `alex_lets_sam_in` ~ lend_origin.rs:131-154, with `signing`, `no_seed` and `start` (home.rs:30-54 ~ lend_origin.rs:31-54) across the two binaries, and removal.rs:19-49 ~ canaries.rs:22-54 ~ group_not_mesh.rs:26-59 ~ record_api.rs:27-53 as before; crates/svrngs/tests/common/mod.rs `sams_computer` ~ phone_dry.rs:48-68 | not fixed | Grown by 8558ebe and c2e074a. Within each file it is now one function: home.rs (4f221f7), and join_page.rs with install.rs through crates/svrngs/tests/common (a85a146). Across svrngs-node's test binaries it is still copies. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 34 lines left in svrngs-core (3046 / 3080) and 110 in the repository (15240 / 15350). Three rows follow: bash-rerun, which adds to product only its driver's fixes, and 5a15d49's bash-same-name and bash-film-load. |
+| 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99, 100, 103, 104, 113, 117 | as recorded | as recorded | not fixed | Not touched by this range's decisions. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code dry-report` exact tier; `code converge noun` | **The dry-report half is fixed** in sha256 585edd51…: the plant was reported at the planted `fn`'s own line (rail.rs:626) and the original at its own (home.rs:193). converge is still one line early. |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". The exact tiers of web/, apps/ and scripts/ say could-not-judge, which they are. |
+| I9 | 6, 7 | dry-report near tier | Still present: neighbours' spans overlap (sign_in.rs `of` :334-353 and `forget` :351-366; redeem.rs `router` :124-135 and `ask_route` :131-144), and the neighbours pair at 0.91-0.93. |
+| I19 | 6 | dry-report, `tests/` scopes | Still present, and said: "could-not-judge". The line-window pass stood in. |
