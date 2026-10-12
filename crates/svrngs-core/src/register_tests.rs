@@ -309,3 +309,99 @@ fn the_keeper_hands_on_and_is_removed_only_after() {
         "alex is out"
     );
 }
+
+// ── a name binds once (bash-person; the charter's "The name") ───────
+
+/// `name`, redeemed by `joiner` through the keeper's link in
+/// [`alexs_group`], as the keeper's computer writes it.
+fn redeem_in_alexs_group(store: &Memory, seed: &Roster, name: &str, joiner: &SigningKey) -> bool {
+    let invite = invite_by(&key(1), &link(), 10_000);
+    store.0.borrow_mut().insert(invite.clone());
+    let id = derive_id(&invite, NS);
+    let asked = Redeem {
+        invite: id.clone(),
+        person: p(name),
+        key: actor_of(joiner),
+        cosig: Redemption::sign(joiner, NS, &id, &p(name), Device::Computer).sig,
+        device: Device::Computer,
+        link: actor_of(&link()),
+        issuer: actor_of(&key(1)),
+    };
+    commit(store, &asked, &author(&key(1), seed, 1_000))
+        .unwrap()
+        .is_ok()
+}
+
+/// **A link does not let a stranger in under a name a standing person
+/// holds**, as written or in another case: cy stands, and a new key
+/// redeeming the keeper's link as `cy`, then as `CY`, is refused and
+/// nothing is written. Red at bash-person's base: both admitted
+/// (register.rs `Redeem::decide` never reads the name).
+#[test]
+fn a_link_refuses_a_name_a_standing_person_holds_in_any_case() {
+    let let_in: Vec<(&str, bool, usize)> = ["cy", "CY"]
+        .into_iter()
+        .map(|name| {
+            let (seed, store) = alexs_group();
+            redeem_in_alexs_group(&store, &seed, name, &joining());
+            let stands = register(&store, &seed)
+                .standing
+                .contains(&actor_of(&joining()));
+            let held = store.0.borrow().len();
+            (name, stands, held)
+        })
+        .collect();
+    assert_eq!(
+        let_in,
+        [("cy", false, 6), ("CY", false, 6)],
+        "(name, the stranger stands, acts held): nothing past the Invite"
+    );
+}
+
+/// **No key the keeper cannot remove stands under the keeper's name.** A
+/// new key redeems the keeper's link as `alex`; the keeper then asks to
+/// remove `alex`'s other keys, as `svrngs remove alex` would: whatever the
+/// verdicts, the stranger's key does not stand. Red at bash-person's base:
+/// the stranger is admitted as alex and the removal refused `Keeps`
+/// (register.rs `Removal::decide`).
+#[test]
+fn a_stranger_under_the_keepers_name_does_not_stand() {
+    let (seed, store) = alexs_group();
+    redeem_in_alexs_group(&store, &seed, "alex", &joining());
+    let _ = commit(
+        &store,
+        &Removal { person: p("alex") },
+        &author(&key(1), &seed, 1_001),
+    )
+    .unwrap();
+    assert!(
+        !register(&store, &seed)
+            .standing
+            .contains(&actor_of(&joining())),
+        "the stranger stands as alex"
+    );
+}
+
+/// **A hand-on to a person reaches that person's computer, never a
+/// stranger's of the same name.** A new computer key that sorts before bo's
+/// two redeems the keeper's link as `bo`; the keeper hands on to bo, and
+/// one of bo's computers keeps. Red at bash-person's base: the stranger
+/// keeps (register.rs `HandOnTo::key`, the first computer key of the name).
+#[test]
+fn a_hand_on_to_a_name_never_reaches_a_strangers_computer() {
+    let (seed, store) = alexs_group();
+    let bos = [actor_of(&key(2)), actor_of(&key(5))];
+    let stranger = (10..=60)
+        .map(key)
+        .find(|k| bos.iter().all(|b| actor_of(k) < *b))
+        .expect("a key sorting before bo's");
+    redeem_in_alexs_group(&store, &seed, "bo", &stranger);
+    let _ = commit(
+        &store,
+        &HandOnTo { person: p("bo") },
+        &author(&key(1), &seed, 1_001),
+    )
+    .unwrap();
+    let keeper = register(&store, &seed).keeper.unwrap();
+    assert!(bos.contains(&keeper), "a stranger keeps: {keeper}");
+}

@@ -240,6 +240,39 @@ async fn a_forged_identity_header_is_replaced_by_the_verified_one() {
     pair.close().await;
 }
 
+/// Two keys of one name, told apart (bash-person; the charter's "The
+/// name"): a second computer admitted as `bo` asks the same lend as B, and
+/// each request carries an `x-svrngs-user` of its own, so an app that makes
+/// an account from it makes two. Red at bash-person's base: no
+/// `x-svrngs-user`, and both told `x-svrngs-person: bo`, the one header an
+/// app could key an account on (`demo/runs/c/dry-2026-10-12/data/name.json`).
+#[tokio::test]
+async fn two_keys_of_one_name_are_two_accounts_to_a_lend() {
+    use svrngs_core::alpn::Alpn;
+    let (pair, heads) = lending_heads().await;
+    let (second, _dir) = beside(&pair, NS, 3, "bo").await;
+    let ask = "GET /lend/shelf/whoami HTTP/1.1\r\nHost: local\r\nConnection: close\r\n\r\n";
+    let mut users = Vec::new();
+    for bridge in [
+        pair.bridge,
+        bridge_as(&signing(3), &pair.a, Alpn::Member)
+            .await
+            .local_addr(),
+    ] {
+        let reply = raw_to(bridge, ask.into()).await;
+        assert_eq!(reply.status, 200, "{}", reply.text);
+        let head = last(&heads);
+        assert_eq!(header_values(&head, "x-svrngs-person"), vec!["bo"]);
+        users.push(header_values(&head, "x-svrngs-user").join(","));
+    }
+    assert!(
+        users.iter().all(|u| !u.is_empty()) && users[0] != users[1],
+        "each key its own account: {users:?}"
+    );
+    second.endpoint().close().await;
+    pair.close().await;
+}
+
 /// :601 and :689 — the request line and every header the door does not set
 /// pass byte for byte: `Range` is a seek, `If-Range` its condition, and a
 /// cookie is the client's business. Planted: `Range` dropped.
