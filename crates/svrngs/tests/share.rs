@@ -479,7 +479,10 @@ fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
     );
     running.until("Leave this running");
     assert!(
-        running.seen.iter().any(|l| l.starts_with("Lent pad (port")),
+        running
+            .seen
+            .iter()
+            .any(|l| l.starts_with("Lent pad (port") && l.contains("as many at once as want it")),
         "{:?}",
         running.seen
     );
@@ -499,7 +502,8 @@ fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
         "{said:?}"
     );
     assert!(
-        said.iter().any(|l| l.starts_with("Lent box (port")),
+        said.iter()
+            .any(|l| l.starts_with("Lent box (port") && l.ends_with("up to 2 people at once.")),
         "{said:?}"
     );
     assert!(

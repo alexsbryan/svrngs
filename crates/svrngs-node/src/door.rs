@@ -1013,10 +1013,10 @@ pub(crate) async fn lend_for(
         )
     });
     let share = match verdict {
-        Verdict::Full { using } => {
-            tracing::info!(target: "door", person = person.as_str(), lend = %lend.name, using, limit = lend.limit,
+        Verdict::Full { using, limit } => {
+            tracing::info!(target: "door", person = person.as_str(), lend = %lend.name, using, limit,
                 "door: refused — as many people as the lend's limit are using it");
-            return Err(busy(&lend, using));
+            return Err(busy(&lend, using, limit));
         }
         Verdict::Home => {
             tracing::info!(target: "door", person = person.as_str(), lend = %lend.name, addr = ?observed.and_then(|o| o.addr),
@@ -1055,12 +1055,12 @@ struct Told {
     held: Option<InFlight>,
 }
 
-/// The refusal of a newcomer past `lend`'s limit, `using` people counted:
+/// The refusal of a newcomer past `lend`'s `limit`, `using` people counted:
 /// the reason, in a person's words, and the figures, for an app to turn
 /// into a choice (DESIGN §8, "Too many at once").
-fn busy(lend: &Lend, using: u32) -> Response {
+fn busy(lend: &Lend, using: u32, limit: std::num::NonZeroU16) -> Response {
     let people = |n: u32| if n == 1 { "person" } else { "people" };
-    let limit = lend.limit.get();
+    let limit = limit.get();
     let reason = format!(
         "{} is lent to {limit} {} at once, and {using} {} using it now: try again when one stops",
         lend.name,

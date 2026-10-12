@@ -70,7 +70,7 @@ async fn sam_through_a_relay_on_this_computer() {
         name: LendName::parse("film").unwrap(),
         port,
         kind: Kind::parse("film").unwrap(),
-        limit,
+        limit: Some(limit),
         refused: Vec::new(),
         upload: None,
         reads: Vec::new(),

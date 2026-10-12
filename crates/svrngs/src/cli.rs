@@ -135,7 +135,7 @@ svrngs — keep what your group shares on your own computers.
       each person an account there: each signs in once. --name is what
       they see it as; else its kind. --kind says what it is, when svrngs
       does not know the port. --limit is how many people may use it at
-      once; else 3. --refuse keeps a path of it from them; say it again
+      once; else everyone in your groups. --refuse keeps a path of it from them; say it again
       for more. --upload is this computer's upload, in Mbit/s, as a speed
       test states it: each person using it is told their share of it.
       --reads lets it open, as whoever opens it, what your groups lend of
@@ -994,18 +994,13 @@ impl std::fmt::Display for Said {
                 accounts,
                 running,
             } => {
-                writeln!(
-                    f,
-                    "Lent {} (port {}) to everyone in your groups, up to {} {} at once.",
-                    lend.name,
-                    lend.port,
-                    lend.limit,
-                    if lend.limit.get() == 1 {
-                        "person"
-                    } else {
-                        "people"
-                    }
-                )?;
+                let (name, port) = (&lend.name, lend.port);
+                match lend.limit {
+                    Some(n) => writeln!(f, "Lent {name} (port {port}) to everyone in your groups, up to {n} {} at once.",
+                        if n.get() == 1 { "person" } else { "people" })?,
+                    None => writeln!(f, "Lent {name} (port {port}) to everyone in your groups, as many at once as want it. \
+                        To let fewer in at once: `svrngs share {port} --limit <number>`.")?,
+                }
                 if let Some(how) = accounts {
                     writeln!(
                         f,

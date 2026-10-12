@@ -112,7 +112,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         name: LendName::parse("shelf").unwrap(),
         port: NonZeroU16::new(service().await).unwrap(),
         kind: Kind::parse("shelf").unwrap(),
-        limit: NonZeroU16::new(3).unwrap(),
+        limit: NonZeroU16::new(3),
         refused: Vec::new(),
         upload: None,
         reads: Vec::new(),

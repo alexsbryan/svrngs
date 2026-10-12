@@ -63,14 +63,13 @@ fn a_declaration_is_read_strictly() {
     assert!(read(root.path(), &name).is_err(), "port 0 is no port");
     for unsaid in [
         r#"{"port": 8096, "limit": 3}"#,
-        r#"{"port": 8096, "kind": "k"}"#,
         r#"{"port": 8096, "kind": "k", "limit": 0}"#,
         r#"{"port": 8096, "kind": "a/b", "limit": 3}"#,
     ] {
         std::fs::write(&file, unsaid).unwrap();
         assert!(
             read(root.path(), &name).is_err(),
-            "a kind or limit absent or not one is refused, never defaulted: {unsaid}"
+            "a kind absent, or a kind or limit not one, is refused, never defaulted: {unsaid}"
         );
     }
     std::fs::write(
@@ -91,7 +90,7 @@ fn lend(name: &str, port: u16) -> Lend {
         name: LendName::parse(name).unwrap(),
         port: NonZeroU16::new(port).unwrap(),
         kind: Kind::parse("k").unwrap(),
-        limit: NonZeroU16::new(3).unwrap(),
+        limit: NonZeroU16::new(3),
         refused: vec![refused("/admin")],
         upload: None,
         reads: Vec::new(),
@@ -187,4 +186,35 @@ fn an_upload_is_declared_or_absent_never_defaulted() {
         Upload(NonZeroU64::new(1_500_000).unwrap()).to_string(),
         "1500000 bit/s"
     );
+}
+
+/// A declaration written before bash-limit is read as it was — its limit
+/// of three still lets in three, and refuses a fourth — and one that names
+/// no limit, which was refused, now lets in everyone at once: the absence
+/// held as itself, never as a number.
+#[test]
+fn a_limit_declared_is_kept_and_one_absent_is_none() {
+    use crate::door::limit::{Counts, Verdict, Whereabouts};
+    #[expect(
+        clippy::disallowed_methods,
+        reason = "the time is the counts' argument"
+    )]
+    let now = std::time::Instant::now();
+    let root = tempfile::tempdir().unwrap();
+    let name = LendName::parse("shelf").unwrap();
+    std::fs::create_dir_all(lends_dir(root.path())).unwrap();
+    let file = lends_dir(root.path()).join("shelf.json");
+    let fourth = |text: &str| {
+        std::fs::write(&file, text).unwrap();
+        let lend = read(root.path(), &name).unwrap().unwrap();
+        let mut counts = Counts::default();
+        for who in ["ana", "bo", "cy"] {
+            counts.ask(&lend, who, Whereabouts::Away, now);
+        }
+        counts.ask(&lend, "dee", Whereabouts::Away, now)
+    };
+    let before = "{\n  \"port\": 8096,\n  \"kind\": \"k\",\n  \"limit\": 3,\n  \"refused\": []\n}";
+    assert!(matches!(fourth(before), Verdict::Full { using: 3, .. }));
+    let unnamed = r#"{"port": 8096, "kind": "k", "refused": []}"#;
+    assert!(matches!(fourth(unnamed), Verdict::In { .. }));
 }

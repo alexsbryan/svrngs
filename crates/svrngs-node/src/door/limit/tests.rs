@@ -19,7 +19,7 @@ fn shelf(upload: Option<u64>) -> Lend {
         name: LendName::parse("shelf").unwrap(),
         port: NonZeroU16::new(8096).unwrap(),
         kind: Kind::parse("k").unwrap(),
-        limit: NonZeroU16::new(3).unwrap(),
+        limit: NonZeroU16::new(3),
         refused: Vec::new(),
         // Read as a declaration's `upload_bps` is.
         upload: upload.map(|b| serde_json::from_value(serde_json::json!(b)).unwrap()),
@@ -71,7 +71,10 @@ fn a_fourth_is_refused_naming_three() {
     let mut counts = three_streaming(&lend, t0);
     assert_eq!(
         counts.ask(&lend, "dee", AWAY, t0),
-        Verdict::Full { using: 3 }
+        Verdict::Full {
+            using: 3,
+            limit: NonZeroU16::new(3).unwrap()
+        }
     );
     assert_eq!(counts.people(&lend.name, t0), 3, "a refusal counts no one");
 }
@@ -88,7 +91,10 @@ fn one_stops_and_after_the_window_the_fourth_is_let_in() {
     let inside = stopped + WINDOW - Duration::from_millis(1);
     assert_eq!(
         counts.ask(&lend, "dee", AWAY, inside),
-        Verdict::Full { using: 3 },
+        Verdict::Full {
+            using: 3,
+            limit: NonZeroU16::new(3).unwrap()
+        },
         "cy stopped within the window, so is still counted"
     );
     let after = stopped + WINDOW;
@@ -99,7 +105,10 @@ fn one_stops_and_after_the_window_the_fourth_is_let_in() {
     }
     assert_eq!(
         counts.ask(&lend, "cy", AWAY, after),
-        Verdict::Full { using: 3 },
+        Verdict::Full {
+            using: 3,
+            limit: NonZeroU16::new(3).unwrap()
+        },
         "cy, gone past the window, is a newcomer again"
     );
 }

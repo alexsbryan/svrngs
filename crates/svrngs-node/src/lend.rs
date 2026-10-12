@@ -13,7 +13,7 @@
 //! ```
 //!
 //! The declaration holds the port, the kind, how many people may use it at
-//! once, the paths the door refuses and, when its lender states one, the
+//! once if its lender names a number, the paths the door refuses and, when its lender states one, the
 //! upload it may use (u3-6); the secret is apart, in
 //! [`crate::declared`]'s store, so the file a person may show someone
 //! carries none of it. Neither enters the record: what a computer lends is
@@ -180,8 +180,10 @@ pub struct Lend {
     /// The service's port on 127.0.0.1.
     pub port: NonZeroU16,
     pub kind: Kind,
-    /// How many people may use it at once (DESIGN §8, "Too many at once").
-    pub limit: NonZeroU16,
+    /// How many people may use it at once (DESIGN §8, "Too many at once"):
+    /// none when its lender names no number, and then everyone in its groups
+    /// (bash-limit; the operator, 2026-10-12).
+    pub limit: Option<NonZeroU16>,
     pub refused: Vec<RefusedPath>,
     /// None when its lender declares none: then no request through the
     /// door is told a share, rather than one of a figure nobody stated.
@@ -210,14 +212,16 @@ impl Lend {
 
 /// The declaration's form on disk. A field it does not know is refused, not
 /// ignored: a misspelt `refused` read as no refusals would open what the
-/// lender closed (ARCH 6). A kind or limit absent is refused too, never
-/// taken as a default nobody declared. An upload absent is none declared.
+/// lender closed (ARCH 6). A kind absent is refused too, never taken as a
+/// default nobody declared. A limit absent is none — everyone at once,
+/// never a number nobody chose — and an upload absent is none declared.
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct LendFile {
     port: NonZeroU16,
     kind: Kind,
-    limit: NonZeroU16,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    limit: Option<NonZeroU16>,
     #[serde(default)]
     refused: Vec<String>,
     #[serde(
@@ -242,7 +246,10 @@ struct LendFile {
 pub struct Offered {
     pub name: LendName,
     pub kind: Kind,
-    pub limit: NonZeroU16,
+    /// None when its lender names no number: everyone at once. On the wire
+    /// `null` then, and required on read, as `upload_bps` is.
+    #[serde(deserialize_with = "Option::deserialize")]
+    pub limit: Option<NonZeroU16>,
     /// The people the door counts on it now (`door::limit`): a request in
     /// flight, or one within its window.
     pub using: u32,
@@ -417,7 +424,7 @@ pub fn declare(
     crate::declared::write_whole(&dir.join(format!("{}.json", lend.name)), &text)
         .map_err(|(path, source)| LendError::Unwritable { path, source })?;
     tracing::debug!(target: "lend", lend = %lend.name, port = lend.port, kind = %lend.kind,
-        limit = lend.limit, refused = lend.refused.len(), upload = ?lend.upload.map(Upload::bps),
+        limit = ?lend.limit, refused = lend.refused.len(), upload = ?lend.upload.map(Upload::bps),
         secret = secret.is_some(), sign_in = ?lend.sign_in, asks = lend.asks.is_some(),
         "lend: declared");
     Ok(())

@@ -30,11 +30,6 @@ use std::time::Duration;
 
 use svrngs_node::lend::{Kind, Lend, LendName, RefusedPath, Upload};
 
-/// How many people may use a lend at once when its lender names no limit:
-/// Demo A's three homes on Sam's one library (DESIGN §8). `share` prints
-/// it, so it is never silent.
-pub const DEFAULT_LIMIT: NonZeroU16 = NonZeroU16::new(3).expect("3 is not 0");
-
 /// The well-known ports and the kind of service that listens on each, one
 /// `<port> <kind>` a line, then how its lender makes a person an account
 /// in it if it keeps its own, `#` for a comment: data, not code, since a
@@ -134,7 +129,8 @@ pub fn listens(port: NonZeroU16) -> bool {
 /// The lend `share` declares, given what `listens` says of its port and
 /// its sign-in's, and the kind the port is well known for: the kind given,
 /// else the port's; the name given, else the kind; the limit given, else
-/// [`DEFAULT_LIMIT`].
+/// none, which lets in everyone in its groups at once (bash-limit: no
+/// number nobody chose; `share` says so).
 pub fn lend_of(
     share: &Share,
     listens: impl Fn(NonZeroU16) -> bool,
@@ -156,8 +152,8 @@ pub fn lend_of(
         Some(n) => n.clone(),
         None => LendName::parse(kind.as_str()).expect("a kind is a lend's name, by one rule"),
     };
-    let limit = share.limit.unwrap_or(DEFAULT_LIMIT);
-    tracing::debug!(target: "share", lend = %name, kind = %kind, port = share.port, limit,
+    let limit = share.limit;
+    tracing::debug!(target: "share", lend = %name, kind = %kind, port = share.port, ?limit,
         named = share.name.is_some(), kind_given = share.kind.is_some(), limit_given = share.limit.is_some(),
         "share: the lend decided");
     Ok(Lend {
