@@ -10,7 +10,9 @@
 Gate: four of five newcomers, each at home, get from the link in the group's
 chat to a film of Sam's playing, an album of Ana's playing and, on a
 computer, a photo from the trip opened from their own disk — within five
-minutes on a computer, getting svrngs from the link included, and two on a
+minutes on a computer, getting svrngs from the link included — one line the
+group's page gives, pasted in a terminal, the only thing typed (the operator,
+2026-10-11: "Pasting one line in the terminal is fine") — and two on a
 phone — unassisted; and on the phone the group opens within ten seconds of
 the link (NORTH_STAR §1's test). Nobody made an account but by a program a
 lender runs, and nothing asked anyone for a key.
@@ -41,7 +43,7 @@ parts in order and `scripts/check.sh` once at its close (operator,
 | The scene needs | Today | Built by |
 |---|---|---|
 | the group's link in the channel | `svrngs new <name> --origin <page>` prints it on the page's address, for a phone and a computer alike (Demo B's steps, `b.md`); pasted, it shows as a bare address titled "Your group" | **onboarding** (below): the link previews as an invitation, its title and description on the group's page; the token stays in the link's `#` part, which no chat's preview fetches, so the preview names no group and leaks no token |
-| a newcomer's computer in from the link, nothing typed, the group's folder on their disk | `svrngs join <link>` in a terminal on a computer that built svrngs (README, "Run it"); each member's `share --folder <dir>` (branch `folders`, syp-4 a) | **onboarding**, with the middleware's P1 follow-ups (DESIGN §8, "Then"): svrngs got from the link on a computer, the link handed to it, the group's folder placed for the person |
+| a newcomer's computer in from the link by one line pasted in a terminal, nothing else typed, the group's folder on their disk | `svrngs join <link>` in a terminal on a computer that built svrngs (README, "Run it"); each member's `share --folder <dir>` (branch `folders`, syp-4 a) | **onboarding**, with the middleware's P1 follow-ups (DESIGN §8, "Then"): svrngs got from the link on a computer, the link handed to it, the group's folder placed for the person |
 | Sam removing Bo, and only Sam | landed, U7 (u7-removal; DESIGN §6): `svrngs remove Bo --group <name>` on Sam's computer is the cut, anyone else's an ask; every lender refused the removed person 0.048 s after, on one host (`runs/u7/2026-10-11/`) | — |
 | every person in their own home | every number so far on one host, every path direct (the branch `folders`' `demo/runs/perf/2026-10-10/README.md` §9 and `…/2026-10-10-make-it-fast/README.md`) | **two homes**: the library, the folder and a join measured between computers on two networks, through a relay |
 | the trip's photos on every computer, kept while their author sleeps | landed on the branch `folders` (syp-1 to syp-4, perf-2; S2, a file whose author is asleep reaching a member who starts: 4.47 s at sy-1, 4.27 s at syp-1) | the operator's merge of `folders` |
@@ -90,7 +92,8 @@ before the first run.
    the group's folder on Ana's disk (onboarding); Ana puts the thirty
    photos in it.
 3. **The newcomers, one at a time, each timed.** Alex, Bo and Dee open the
-   link on their computers: svrngs comes from the link, takes it and opens
+   link on their computers: the group's page gives one line, pasted in a
+   terminal; svrngs comes from it, takes the link and opens
    the person's home page (onboarding; the home page, DESIGN §7); there
    they see the group, Sam's jellyfin and Ana's music, and the group's
    folder is on their disk with the trip in it. Each plays a film from

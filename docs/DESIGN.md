@@ -1814,13 +1814,14 @@ album of Ana's — Navidrome taking the person from svrngs's header — and, on
 a computer, open a photo from their own disk; Sam removes Bo; Ana's laptop
 closes, and the last newcomer still gets the trip from the others. Gate:
 four of five within five minutes on a computer, svrngs got from the link
-included, and two on a phone, the phone in the group within ten seconds of
+included — one line the group's page gives, pasted in a terminal (operator,
+2026-10-11), and two on a phone, the phone in the group within ten seconds of
 the link; no account but one a lender's program makes, no key asked for.
 
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
 | U7 removal | landed, u7-removal: one keeper, the group's maker at first, sequences removals, handed on only by its own act; anyone's `svrngs remove <name> --group <group>` is an ask until the keeper's is the cut, by hash; a removed key cannot remove, ask or hand on; forks void nothing; a removal or hand-on wakes the round (§6, §10) | within 30 s of the keeper's removal every lender refuses the removed person in a person's words, and nothing new in a folder reaches them; their own `Remove` counts nowhere; what they held stays theirs. Watched failing: take 1, a lender not the keeper refused at 43.3 s, at its next round; passed at take 2, 0.048 s, on one host (`demo/runs/u7/2026-10-11/`) |
-| onboarding | on a computer, svrngs got from the group's link, the link handed to it, the home page opened and the group's folder on the person's disk; the link previewing as an invitation in any chat; the middleware's P1 follow-ups, above | a newcomer's computer from the link to the group's three things within five minutes, unassisted, nothing typed |
+| onboarding | on a computer, svrngs got from the group's link, the link handed to it, the home page opened and the group's folder on the person's disk; the link previewing as an invitation in any chat; the middleware's P1 follow-ups, above | a newcomer's computer from the link to the group's three things within five minutes, unassisted, one line pasted in a terminal and nothing else typed |
 | two homes | the library, the folder and a join measured between computers on two networks, through a relay, each path as iroh selected it | measured, not judged: the numbers Demo C's bars are read against |
 
 ## 9. Later, each with the trigger that brings it back
@@ -1871,6 +1872,11 @@ By the operator, 2026-10-10 and 2026-10-11, on the scene v1 answers to
   but wanna keep it on the back burner" (§9).
 - S3's two holes, "Queue it now", fixed before the merge (syp-6); the
   branch `folders` merged into main by the operator, 2026-10-11 (`4475a89`).
+- onboarding by a download script: "it's the most cross platform and
+  requires the least machinery. We're a lazy but brilliant dev team; we
+  want the most general purpose solutions possible"; and of Demo C's gate,
+  "Pasting one line in the terminal is fine" — a computer's newcomer pastes
+  one line the group's page gives, and types nothing else (§8, "Demo C").
 
 By the operator, 2026-10-10, on perf-1's candidates for a fast synced
 folder (`demo/runs/perf/2026-10-10/README.md` §10):
