@@ -55,13 +55,13 @@ pub struct Removing {
     pub by: Person,
     pub of: Person,
     pub at: i64,
-    pub said: Said,
+    pub said: RemovalSaid,
 }
 
 /// What a counting `Remove` was (DESIGN §6, "Removal has one decider").
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Said {
+pub enum RemovalSaid {
     /// The keeper's: the cut.
     Removed,
     /// Anyone else's, or one that cut nobody: an ask.
@@ -154,7 +154,7 @@ fn removals_in(ops: &[Op<SignedOp>], m: &Membership, namespace: &str) -> Vec<Rem
                 tracing::debug!(target: "register", namespace, id = %id, key, "register: a removal names a key bound to nobody, so it is not shown");
                 return None;
             };
-            let said = if m.cut.get(key).is_some_and(|c| c.by == id) { Said::Removed } else { Said::Asked };
+            let said = if m.cut.get(key).is_some_and(|c| c.by == id) { RemovalSaid::Removed } else { RemovalSaid::Asked };
             tracing::debug!(target: "register", namespace, id = %id, by = %by, of = %of, ?said, "register: a removal shown to the group");
             Some(Removing { by: by.clone(), of: of.clone(), at: op.ts_unix, said })
         })
