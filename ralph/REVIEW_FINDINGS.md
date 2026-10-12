@@ -6169,3 +6169,162 @@ Every other noun has one definition. `Folded` has none: a type alias
 | I19 | 6 | dry-report, `tests/` scopes | Still present, and said: "could-not-judge". |
 | I24 | 6, 7 | `code dry-report` exact tier | Still present on b604bcb6…, and narrowed by this plant: a 35-line verbatim copy under its own name, in another file, is an exact group; the same copy renamed is in none. The tier keys on the name with the body, so "0 exact" is no evidence against a renamed copy. |
 | I9 | 6, 7 | `code dry-report` near tier | Still present: the renamed verbatim copy reaches cosine 0.933, and the same-named one 0.954, against their original. |
+
+## REVIEW-audit-v1-auto-2 (2026-10-11, range 53a5bd4..39d1c9b)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-v1-auto-1, its hash
+53a5bd4 (ralph/next/v1/STATE.md:14); the range ends at 39d1c9b, the
+commit that made this row. `git rev-list --count 53a5bd4..39d1c9b` is
+32, no merge among them (`--merges`: 0), all on main. Three units:
+v1-said-not-substituted, v1-keeper-office and v1-onboarding. The audit's
+own commits: ebdc110 (the row's two paths), 0b42088 (a move, behaviour
+kept), 70c4ed7 (a trace, decisions unchanged) and 5bfcc40 (a test move).
+It closes #123 and #124, grows #31, and opens none.
+
+The instrument is ~/dev/commonwealth-ai/target/debug/sovereign-cli,
+sha256 b604bcb6… (`shasum -a 256`), the binary the last audit used. The
+embedder was `llama-server` on qwen-embedding-0.6b.gguf on :8080
+(/tmp/v1audit2/llama.out). The corpus is 39d1c9b's tree, `git archive`
+into /tmp/v1audit2/tree-39d1c9b: `code index . --corpus-id tree-39d1c9b`,
+3248 chunks in 544 s (/tmp/v1audit2/index.out); `refresh` gave rust
+13224 symbols and "typescript: skipped (export failed)", "python: skipped
+(export failed)" (I4; /tmp/v1audit2/refresh.out). The scripts are the
+last audit's, copied to /tmp/v1audit2.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+53a5bd4..39d1c9b`, summed by /tmp/v1audit2/ledger.py
+(/tmp/v1audit2/ledger.out), counted as the last audit counted them.
+
+| unit | commits | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| v1-said-not-substituted | 10 | 107 | 33 | 74 | 244 | 13 | 231 |
+| v1-keeper-office | 6 | 137 | 27 | 110 | 220 | 37 | 183 |
+| v1-onboarding | 14 | 512 | 24 | 488 | 719 | 32 | 687 |
+| REVIEW-audit-v1-auto-1's done, this row's own commit | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 32 | 756 | 84 | 672 | 1183 | 82 | 1101 |
+
+By file, the most: web/install.sh +129 (090d9e1), apps/jellyfin/mw
+viewer.rs +180 net (e877024, its tests in the same file), cli.rs +91 net
+(e1bf5e0, 20ede44), runtime register.rs +52 net (01393a7, `removals_in`),
+core membership.rs +28 net (7e54170, 441db92).
+
+The size budget, scripts/lean_check.py at HEAD over a `git archive` tree
+of each commit (/tmp/v1audit2/lean-points.out):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 53a5bd4, range start | 2937 / 3000 | 14463 / 15350 |
+| 7e54170, cuts that cycle said unsettled (#124) | 2964 | 14510 |
+| 441db92, a hand-on survives its giver's removal | 2971 | 14517 |
+| 01393a7, every removal shown to the group | 2971 | 14579 |
+| e1bf5e0, `join --no-run` | 2971 | 14630 |
+| 090d9e1, install.sh | 2971 | 14730 |
+| 20ede44, the group's folder at ~/svrngs/<group> | 2971 | 14834 |
+| 39d1c9b, range end | 2971 | 14834 |
+| 5bfcc40, this audit's last | **2971 / 3000** | **14835 / 15350** |
+
+The range nets +371 by the budget's count, svrngs-core +34 of it. **29
+lines are left in svrngs-core and 515 in the repository** (#80).
+
+### (2) Clones (`code dry-report`)
+
+Scoped, at 0.95, for each dir the range touched
+(/tmp/v1audit2/clean-*_0.95.md; every side blamed against the range's
+commits, /tmp/v1audit2/clusters-scoped.out):
+
+| scope | locations | exact | near | with a side added in the range |
+|---|---:|---:|---:|---|
+| crates/svrngs-core/ | 435 | 5 | 0 | none |
+| crates/svrngs-node/ | 464 | 1 | 0 | none |
+| crates/svrngs-runtime/ | 135 | 1 | 0 | none |
+| crates/svrngs/ | 74 | 0 | 0 | none |
+| apps/jellyfin/mw/ | 61 | could-not-judge (I4's kin: no SCIP symbols) | 0 | none |
+| apps/jellyfin/check/ | 57 | could-not-judge | 2 | none |
+| web/ | 94 | could-not-judge (I4) | 0 | none |
+| crates/svrngs-node/tests/, crates/svrngs/tests/ | 0 | could-not-judge (I19) | could-not-judge | — |
+
+**No exact or near clone at the instrument's threshold has a side the
+range added.** Below it, whole tree (/tmp/v1audit2/clusters.out): at
+0.90, two groups — removal_tests.rs's
+`a_hand_on_survives_its_givers_removal` (:418-443) ~
+`a_hand_on_that_made_no_keeper_is_cut_as_before` (:445-470), cosine
+0.902, two tests stating two cases; and the llama run's `up`
+(demo/runs/llama/2026-10-11/run.py:47-58) ~ u7's (run.py:29-40), 0.937,
+two recorded runs, each kept as run. At 0.80, 21 groups have a range side,
+none past 0.937; read, none is one behaviour twice.
+
+The tests scopes are could-not-judge (I19), so a line-window pass stood in
+for them (/tmp/v1audit2/windows.out: 867 hits, 180 spans, 13 new). Of the
+13, one was fixed here — crates/svrngs/tests/install.rs:241-259 ==
+:348-366 at 39d1c9b, 090d9e1's and 20ede44's starts of Sam's computer,
+now `sams_computer` (5bfcc40) — and the rest are the same block across
+binaries (join_page.rs:93-110, phone_dry.rs:49-68: #31), test fixtures
+stating each test's origin (apps/jellyfin/mw/src/viewer.rs:561-568 ==
+:658-663, the browser main.rs spans) or register_tests.rs:201-209 ==
+:257-265, two tests' set-up of one group.
+
+### Reading the range
+
+- **Never silently substitute** (AGENTS.md 6): the `.ok()`s, `??` and
+  `unwrap_or_default` the range added (`git log -p 53a5bd4..39d1c9b --
+  crates/*/src apps/*/mw/src web/app.js web/install.sh`) each carry their
+  absence: surface.rs's `folders` and node.rs `people_lends`' `removals`
+  are `null` after a warn, read by home.js and app.js as "cannot be read
+  just now"; membership.rs's `made.get(..).unwrap_or_default()` is "no
+  hand-on made a keeper", traced with its count. install.sh's wait is
+  bounded at 30 tries and says the log on running out (web/install.sh:120-124).
+- **Glassbox** (AGENTS.md 1): runtime register.rs `removals_in` left out
+  an uncounted `Remove` with no trace — fixed, 70c4ed7.
+- **A person's words** (fence 5): the range's quoted strings in cli.rs,
+  home/, surface.rs, removal.rs, web/app.js, web/index.html and
+  web/install.sh hold none of key, member, keeper, ring, act or journal as
+  a word (`grep -iwE` over them: no line).
+- **#123 and #124 are closed** by v1-said-not-substituted: the hand-on's
+  refusal has `Outcome::NotDeciderUnread` (cli.rs:1069), the home page
+  `removed: null` (surface.rs:93, home.js:57), and the fold
+  `Membership::unsettled` (core membership.rs:151, :279).
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges 53a5bd4..39d1c9b -- crates apps
+web bridge` matching `\b(struct|enum|trait|type)\s+[A-Z]\w*` are:
+`Started`, `Removing`, `Said`, `Unreadable` twice and `Message`. Each was
+run through `converge noun <Name>` on tree-39d1c9b
+(/tmp/v1audit2/nouns.out):
+
+| noun | converge (production) | read |
+|---|---|---|
+| Said | 3: cli.rs:855, svrngs-node door/choices.rs:39, svrngs-runtime register.rs:63 | Three meanings: the command's words, a person's yes or stop of an app, and 01393a7's whether a removal was the cut or an ask. **Renamed, 0b42088**: the range's is `RemovalSaid`; the wire unchanged. |
+
+`Removing` has one definition. `Started` (install.rs), `Unreadable` and
+`Message` (svrngs-node tests/removal.rs) are tests' own, 0 in production;
+09e1484's `Unreadable(PathBuf)` was replaced inside the range (47c48fa).
+converge's lines are still one early (I1: `Said` :855 for :856, :39 for
+:40, :63 for :64; `Removing` :53 for :54).
+
+### Fixed here
+
+- 0b42088: runtime `Said` is `RemovalSaid`. A rename; the wire unchanged.
+- 70c4ed7: `removals_in`'s silent branch said at debug. Decisions
+  unchanged; the repository 14834 → 14835.
+- 5bfcc40: install.rs's two starts of Sam's computer, once. Tests only.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 124 | 6, 1 | crates/svrngs-core/src/membership.rs:151, :279 | closed (7e54170, 3c1374c) | An unsettled fixpoint is `Membership::unsettled`, and no caller reads it as standing. |
+| 123 | 6 | crates/svrngs/src/cli.rs:1069; crates/svrngs-node/src/surface.rs:93 | closed (09e1484, 233daf0) | An unreadable register is said as itself in the hand-on's refusal and on the home page. |
+| 31 | 8 | crates/svrngs-node/tests/removal.rs:19-49 ~ canaries.rs:22-54 ~ group_not_mesh.rs:26-59 ~ record_api.rs:27-53; crates/svrngs/tests/install.rs:35-57 ~ join_page.rs:93-110 ~ phone_dry.rs:49-68 | not fixed | Grown by 090d9e1 and 20ede44: the node-start block in the command's test binaries too, install.rs's two copies now one (5bfcc40). |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 29 lines left in svrngs-core (2971 / 3000), 515 in the repository (14835 / 15350). |
+| 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99, 100, 103, 104, 113, 117 | as recorded | as recorded | not fixed | Not touched by this range's decisions. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` lines | Still present: one line early. |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)"; web/'s and apps/jellyfin's exact tiers say could-not-judge, which they are. |
+| I19 | 6 | dry-report, `tests/` scopes | Still present, and said: "could-not-judge". The line-window pass stood in. |
