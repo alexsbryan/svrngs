@@ -349,7 +349,14 @@ opens it joins as that person, so the command says to send it to nobody
 else. A computer or phone already in the group on its own stays as it
 joined — the command says so once — and a phone that lost its key joins
 again by a device link. Only a computer makes one, as only a computer
-redeems a link (§9). U4 builds
+redeems a link (§9). Measured on this host (`demo/runs/devices/2026-10-12/`):
+Ana's laptop in as Ana 1,015 ms after its `join`, her phone 5,184 ms after
+opening the link, neither asked a name; every lend told one
+`x-svrngs-key` and `x-svrngs-user` from her three devices, Jellyfin and
+Navidrome each one account, the sign-in asked once; Sam's removal of Ana
+refused all three within 1.23 s. That a lend's limit counts her once was
+could-not-judge there — the door guessed every computer on one host in
+Sam's home and counted only the phone — and stays the door test's. U4 builds
 the rest, by five calls (the seat, 2026-10-05, from its survey of upstream;
 the evidence is U4's inventory, §8):
 1. *The page holds the key's bytes, sealed.* The person's key is 32 bytes,
@@ -1315,8 +1322,24 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   new key that sorts first. Before, at the wall clock, that test failed 8
   runs in 10 without the wait it then carried. Writes faster than one a
   second run the stamps ahead of the clock, one second per write.
-- **A signing key per person per group**, so a cut in one group touches no
-  other; an endpoint key per device.
+- **A key per device per group, bound to the person** (the operator,
+  2026-10-12, "yes to both", amending "a signing key per person per group":
+  a key shared by a person's devices would fork their chain, so each device
+  keeps its own; `ralph/next/bash/CHARTER.md`, "Device links are this
+  queue's"), so a cut in one group touches no other; an endpoint key per
+  device. A person is their first key in the group — a seed row's first,
+  or the key a plain `Admit` binds — so two people of one name are two
+  people, never merged; a device link, an `Invite` naming the person
+  (`device_of`), counts only from a key standing as them, and a key it
+  admits is theirs, under their name, asked none (bash-devices, landed;
+  `membership.rs`'s module docs; canon's rule that only a key bound to a
+  name adds a key to it, `~/dev/canon` `docs/SIGNING_DESIGN.md` §2). The
+  register answers each key's person (`Membership::person_of`); removal
+  and hand-on take the one person a name names, refusing one two people
+  hold. Only a computer makes a device link; a phone making one, and one
+  device removed apart from its person, wait in §9. A computer's one key
+  for every group it holds (`crates/svrngs/src/identity.rs`) still departs
+  from "per group", a separate question.
 
 ## 7. Packaging and reach
 
@@ -1486,9 +1509,10 @@ crate.
 
 Four facts follow. *One key signs and dials:* upstream signs a ring's acts
 with the key its endpoint proves (`lib.rs:400-402`), so a member's actor is
-its iroh id and the register names every node the round may dial; when §6's
-signing key per person per group lands, the register carries each device's
-endpoint key beside it. *A bare key is dialled:* upstream dials the relay and
+its iroh id and the register names every node the round may dial; since
+§6's key per device per group, bound to the person (bash-devices), the
+register carries each device's key with its person's first key beside it
+(`Member::person_key`). *A bare key is dialled:* upstream dials the relay and
 addresses the mesh gossiped, and refuses a bare key
 (`commonwealth/crates/commonwealth-transport/src/iroh.rs:182-237`); with no
 gossip, iroh's address lookup, upstream's default
@@ -1892,8 +1916,9 @@ before the yes and `refused-stopped` after a stop in Chromium and WebKit,
 asleep computer from holding anyone's answer
 (`demo/runs/mnp/2026-10-09/README.md`, "What no prediction named" 1 and
 2). The fourth, a lend its lender's person
-alone reaches on any device of theirs, waits on another device for the
-same person (§9; `rings/current/ONE_PERSON_MANY_DEVICES.md`, deferred);
+alone reaches on any device of theirs, waited on another device for the
+same person, which bash-devices landed (§6, "A key per device per group";
+`demo/runs/devices/2026-10-12/`), and is not yet queued;
 group folders (§3, call 7 of "Lent apps"; §9), synced onto each member's
 disk and not streamed (operator, 2026-10-10, after the mesh-Dropbox
 spike's four bars on one host, `demo/runs/sy/2026-10-09/`; §10), made
@@ -1981,6 +2006,7 @@ the link; no account but one a lender's program makes, no key asked for.
 | the endpoint's self-heal (upstream's `self_heal.rs`, `iroh_watchdog.rs`) | a node's endpoint wedges in a recorded run |
 | skipping a round's members known offline. Dialling them at once landed (asleep-1, `ring_sync::run_one_round`), so an asleep one holds only its own dial; the round still ends when that dial gives up, about 10 s, and a door's ask begun meanwhile waits for the next round (§3, "Joining") | a round's measured time nears its interval, or a newcomer is refused while a round waits on an asleep computer, counted |
 | a phone making a device link (phase 2 of svrn-docs `rings/current/ONE_PERSON_MANY_DEVICES.md` §3). Since bash-devices a computer makes one (`svrngs link <group> --device`), and a phone or another computer opening it joins as that computer's person, asked no name (§3, "Joining"); a phone cannot make one, since only a computer redeems a link (the row "any member's node redeeming a link", below), so a person whose only device in a group is a phone adds no second one as themselves | a person whose devices in a group are phones alone asks to add another as themselves, counted; or any member's node redeeming a link lands |
+| a device link apart from its issuer's one open link: a computer has one open link (§8, "A new link closes the old one"), so making a link for its person's devices closes the link they sent a friend, and the other way about; the command says so as it does for any link (bash-devices; `demo/runs/devices/2026-10-12/README.md`, finding 3, not measured) | a person's link to a friend is closed by their device link, or the other way, counted |
 | removing one lost device of a person: a `Remove` is per key already, and the person's other devices keep standing (svrn-docs `rings/current/ONE_PERSON_MANY_DEVICES.md` §3, "Removal"), but `svrngs remove` names a person and takes every device of theirs (bash-devices); naming one device — by the person from another of theirs, or by the keeper — is a change to who a person is beyond phase 1, the operator's (ralph/next/bash/CHARTER.md). Until then a lost phone's key stands as its person until the keeper removes the person | a person loses a device that stands in a group, counted |
 | the wire published for a second implementation | someone sets out to write one |
 | local discovery on one WiFi | Apple's multicast entitlement is granted |
