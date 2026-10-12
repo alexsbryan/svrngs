@@ -1,0 +1,86 @@
+2026-10-12T13:37:57.719572Z  INFO folder: folder: the store is open untagged=0
+2026-10-12T13:37:57.719609Z  INFO folder: synced: the directory kept in step with the group's folder namespace="41b29f090d85ce9a4b7ba55ab9203fe3f2fde02d805bc4daaba0290761d0be4b" folder="lake-trip" dir=/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/6e09329f-0b30-4ff7-a272-bbdfce91c9c7/scratchpad/c-dry/dee/svrngs/lake-trip
+2026-10-12T13:37:57.721474Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/06e6ba82", "ana/259c8b03", "alex/427b3ad9", "bo/6d6a59d1"] skipped_offline=[]
+2026-10-12T13:37:57.721547Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=31015 peer=06e6ba82b57dc114471f4cbc098309f46d6a966cb4ae8c3ec7304fb257f17704 error=Address already in use (os error 48)
+2026-10-12T13:37:57.721727Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=26696 peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd error=Address already in use (os error 48)
+2026-10-12T13:37:57.721831Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=27764 peer=427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5 error=Address already in use (os error 48)
+2026-10-12T13:37:57.721923Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=22195 peer=6d6a59d16a609ee28396759ded6315682f73c3a329ddcfaecbb892b5c7942c49 error=Address already in use (os error 48)
+2026-10-12T13:38:04.338335Z DEBUG door: door: lends — answered what this computer lends actor="06e6ba82b57dc114471f4cbc098309f46d6a966cb4ae8c3ec7304fb257f17704" lends=0
+2026-10-12T13:38:28.562316Z DEBUG door: door: lends — answered what this computer lends actor="06e6ba82b57dc114471f4cbc098309f46d6a966cb4ae8c3ec7304fb257f17704" lends=0
+2026-10-12T13:38:37.628470Z DEBUG door: door: lends — answered what this computer lends actor="6d6a59d16a609ee28396759ded6315682f73c3a329ddcfaecbb892b5c7942c49" lends=0
+2026-10-12T13:38:58.352486Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/06e6ba82", "ana/259c8b03", "alex/427b3ad9"] skipped_offline=[]
+2026-10-12T13:39:38.511473Z  INFO folder: folder: fetched, verified hash=d7dcf839644e5d7f2015b6c470541a7d135edae1a6963c3f61029e1ab38f8e09 holder=06e6ba82b57dc114471f4cbc098309f46d6a966cb4ae8c3ec7304fb257f17704 payload=4821352 other=18824 ms=307
+2026-10-12T13:39:38.512827Z  INFO folder: synced: written into the directory folder="lake-trip" path=after.jpg hash=d7dcf839644e5d7f2015b6c470541a7d135edae1a6963c3f61029e1ab38f8e09 from="06e6ba82b57dc114471f4cbc098309f46d6a966cb4ae8c3ec7304fb257f17704" seq=7 beside=false fetch_ms=307 export_ms=1
+2026-10-12T13:39:58.358483Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/06e6ba82", "ana/259c8b03", "alex/427b3ad9"] skipped_offline=[]
+2026-10-12T13:40:48.305086Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2
+2026-10-12T13:40:48.307480Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2
+2026-10-12T13:40:49.308638Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2
+2026-10-12T13:40:58.362487Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/06e6ba82", "ana/259c8b03", "alex/427b3ad9"] skipped_offline=[]
+2026-10-12T13:40:58.371394Z  WARN svrngs_core::admit: ring rail: this answer covers a subset — the rail could not account for every op namespace="41b29f090d85ce9a4b7ba55ab9203fe3f2fde02d805bc4daaba0290761d0be4b" gaps=1 first=Some(SequenceHole { actor: "06e6ba82b57dc114471f4cbc098309f46d6a966cb4ae8c3ec7304fb257f17704", missing: 7 })
+2026-10-12T13:41:01.259790Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:01.511687Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:06.344789Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:11.369181Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:13.142404Z  WARN connect{me=b34b1dab1d alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=LastOpenPath
+2026-10-12T13:41:14.847765Z  WARN connect{me=b34b1dab1d alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=LastOpenPath
+2026-10-12T13:41:16.393877Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:17.247273Z  WARN noq_proto::connection: failed closing path err=LastOpenPath
+2026-10-12T13:41:21.419751Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:26.454539Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:31.489508Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:36.516845Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:41.544828Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:46.571255Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:51.600235Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:56.632872Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:01.664415Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:06.694799Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:08.367232Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/06e6ba82", "ana/259c8b03", "alex/427b3ad9", "eve/5ce58834"] skipped_offline=[]
+2026-10-12T13:42:08.367693Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=28797 peer=5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2 error=Address already in use (os error 48)
+2026-10-12T13:42:11.714635Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:16.740740Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:21.767605Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:23.370711Z  WARN connect{me=b34b1dab1d alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:42:26.794668Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:31.813992Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:36.838556Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:38.370653Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:42:41.859117Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:46.887275Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:51.912816Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:56.935772Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:43:01.960297Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:43:05.394439Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:43:10.431523Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:43:15.453837Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:43:18.372362Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/06e6ba82", "ana/259c8b03", "alex/427b3ad9", "eve/5ce58834"] skipped_offline=[]
+2026-10-12T13:43:20.477002Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:43:25.498653Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:43:30.525198Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:43:33.548002Z  WARN connect{me=b34b1dab1d alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:43:35.542699Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:43:40.564668Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:43:45.593009Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:43:48.548640Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:43:50.624327Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:43:55.650486Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:44:00.680785Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:44:05.709169Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:44:10.741459Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:44:15.765173Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:44:20.787661Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:44:25.819518Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:44:28.376863Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/06e6ba82", "ana/259c8b03", "alex/427b3ad9", "eve/5ce58834"] skipped_offline=[]
+2026-10-12T13:44:30.843336Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:44:35.870501Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:44:40.892945Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:44:43.607724Z  WARN connect{me=b34b1dab1d alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:44:45.922730Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:44:50.950983Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:44:55.968668Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:44:58.607657Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:45:00.994120Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:45:06.022897Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:45:09.070579Z DEBUG door: door: lends — answered what this computer lends actor="427b3ad9f64baa4e6ce232699a3930e31d8ee35bca96ecd43e08e3f43ecaa4b5" lends=0
+2026-10-12T13:45:15.114379Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:45:18.154759Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 request_bytes=59

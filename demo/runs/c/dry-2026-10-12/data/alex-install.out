@@ -1,0 +1,9 @@
+Getting svrngs for this computer from https://group.svrnme.sh/get/svrngs-darwin-aarch64.tar.gz
+Checked: svrngs-darwin-aarch64.tar.gz matches SHA256SUMS.
+Installed svrngs in /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/6e09329f-0b30-4ff7-a272-bbdfce91c9c7/scratchpad/c-dry/alex/.local/bin.
+/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/6e09329f-0b30-4ff7-a272-bbdfce91c9c7/scratchpad/c-dry/alex/.local/bin is not on your PATH, so to run svrngs yourself type /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/6e09329f-0b30-4ff7-a272-bbdfce91c9c7/scratchpad/c-dry/alex/.local/bin/svrngs; nothing else needs it.
+You're in lake-trip, as alex.
+lake-trip's folder is /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/6e09329f-0b30-4ff7-a272-bbdfce91c9c7/scratchpad/c-dry/alex/svrngs/lake-trip: what anyone in lake-trip puts there reaches this computer, and what you put there reaches theirs.
+
+svrngs runs now, and whenever you log in (/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/6e09329f-0b30-4ff7-a272-bbdfce91c9c7/scratchpad/c-dry/alex/Library/LaunchAgents/sh.svrnme.svrngs.plist).
+Your home page: http://svrngs.localhost:55613/

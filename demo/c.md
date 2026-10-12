@@ -48,7 +48,7 @@ parts in order and `scripts/check.sh` once at its close (operator,
 | every person in their own home | every number so far on one host, every path direct (the branch `folders`' `demo/runs/perf/2026-10-10/README.md` §9 and `…/2026-10-10-make-it-fast/README.md`) | **two homes**: the library, the folder and a join measured between computers on two networks, through a relay |
 | the trip's photos on every computer, kept while their author sleeps | landed on the branch `folders` (syp-1 to syp-4, perf-2; S2, a file whose author is asleep reaching a member who starts: 4.47 s at sy-1, 4.27 s at syp-1) | the operator's merge of `folders` |
 | Sam's library, each person signed in with nothing typed | landed (`apps/jellyfin/`, `demo/runs/mw/2026-10-08/`, mwp) | — |
-| Ana's music as each person, nothing typed | Navidrome takes the person from a header by its docs, `ND_EXTAUTH_USERHEADER=X-Svrngs-Person` (`runs/catalogue/2026-10-05/CENSUS.md:53`); never run through a lend, and v1-onboarding's row named no run of it | not yet a row: a dry run reads it before Demo C's; if Navidrome does not, the scene names another app the census marks "yes", and says so |
+| Ana's music as each person, nothing typed | run through a lend in the dry run (`runs/c/dry-2026-10-12/`): Navidrome 0.64.2 signed each person in as their name from `X-Svrngs-Person`, nothing typed, on a computer and on a phone; but a second member joined as `ana` was signed in as Ana, its admin (its finding 1) | the operator's call on that finding, before Demo C |
 | a phone in the group within ten seconds | Chromium through n0 joined in 5.4 s (`runs/u4/2026-10-05/README.md`, its finding 4) | — |
 | a person's words for each refusal and each asleep computer | landed ("Cy's computer did not answer, so what they lend is not listed", `runs/supf/2026-10-10/`); the removed person's, landed with U7 ("You are no longer in <group>. …", on the home page and the group's page) | — |
 
@@ -73,9 +73,10 @@ films, lent as `svrngs share` tells Sam, with the program Sam runs in front
 of it (`apps/jellyfin/`); Jellyfin's list of users exported.
 
 **Ana**, at home: svrngs on a computer, likewise; Navidrome with at least
-three albums, lent as `svrngs share` tells Ana, with
-`ND_EXTAUTH_USERHEADER=X-Svrngs-Person` and `ND_EXTAUTH_TRUSTEDSOURCES` as
-`svrngs share` prints them; Navidrome's list of users exported; thirty
+three albums, run with `ND_EXTAUTH_USERHEADER=X-Svrngs-Person` and
+`ND_EXTAUTH_TRUSTEDSOURCES=127.0.0.1/32` — named here, since `svrngs share`
+prints neither — and lent as `svrngs share 4533 --kind navidrome`, Enter
+alone at its password (the dry run's finding 2); Navidrome's list of users exported; thirty
 photos from a trip, about 150 MB, in a folder on Ana's computer.
 
 **The five** — Alex, Bo, Dee and Eve on their own computers (macOS), Cy on
