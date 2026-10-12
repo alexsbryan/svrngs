@@ -9,7 +9,7 @@ use svrngs::group::Name;
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::Node;
 use svrngs_node::removal::Outcome;
-use svrngs_node::{actor_of, Person, RailAct, SigningKey};
+use svrngs_node::{actor_of, Joined, Person, RailAct, SigningKey};
 
 fn no_relay() -> RelayConfig {
     RelayConfig {
@@ -36,15 +36,57 @@ fn remove_and_handover_parse() {
         cli::parse(argv(&["remove", "Bo", "--group", "trip"])),
         Ok(Verb::Remove {
             person: name("Bo"),
-            group: "trip".into()
+            group: "trip".into(),
+            joined: None,
         })
     );
     assert_eq!(
         cli::parse(argv(&["handover", "Ana", "--group", "trip"])),
         Ok(Verb::Handover {
             person: name("Ana"),
-            group: "trip".into()
+            group: "trip".into(),
+            joined: None,
         })
+    );
+    assert_eq!(
+        cli::parse(argv(&[
+            "remove", "Bo", "--group", "trip", "--joined", "started"
+        ])),
+        Ok(Verb::Remove {
+            person: name("Bo"),
+            group: "trip".into(),
+            joined: Some(Joined::Started),
+        })
+    );
+    assert!(
+        matches!(
+            cli::parse(argv(&[
+                "remove",
+                "Bo",
+                "--group",
+                "trip",
+                "--joined",
+                "2026-10-12 14:03:22"
+            ])),
+            Ok(Verb::Remove {
+                joined: Some(Joined::At(_)),
+                ..
+            })
+        ),
+        "a time on this computer's clock"
+    );
+    for wrong in ["yesterday", "2026-10-12", "1791840217"] {
+        assert!(
+            cli::parse(argv(&[
+                "remove", "Bo", "--group", "trip", "--joined", wrong
+            ]))
+            .is_err(),
+            "--joined {wrong}"
+        );
+    }
+    assert!(
+        cli::parse(argv(&["link", "trip", "--joined", "started"])).is_err(),
+        "--joined is remove's and handover's"
     );
     assert!(
         cli::parse(argv(&["remove", "Bo"])).is_err(),
@@ -72,6 +114,9 @@ fn every_outcome_is_said_in_a_persons_words() {
         Outcome::Asked { decides: None },
         Outcome::Handed,
         Outcome::NotInGroup,
+        Outcome::Which {
+            joined: vec![Joined::Started, Joined::At(1_791_840_217)],
+        },
         Outcome::Decides,
         Outcome::NotDecider { decides: sam },
         Outcome::NotDeciderUnread,
@@ -119,6 +164,7 @@ async fn the_keepers_remove_is_the_cut() {
     let remove = |who: &str| Verb::Remove {
         person: name(who),
         group: "trip".into(),
+        joined: None,
     };
     let node = Node::start(
         dir.path().to_path_buf(),

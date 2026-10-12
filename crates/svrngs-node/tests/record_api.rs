@@ -238,9 +238,16 @@ async fn the_people_read_lists_a_and_b_with_their_keys() {
         .json()
         .await
         .unwrap();
+    // When bo joined: the time on the `Admit` (bash-same-name); ada
+    // started the group.
+    let bo_joined = (out["people"].as_array().unwrap().iter())
+        .find(|p| p["person"] == "bo")
+        .map(|p| p["joined"].clone())
+        .unwrap();
+    assert!(bo_joined["at"].is_i64(), "{out}");
     let mut want = vec![
-        serde_json::json!({ "person": "ada", "key": actor_of(&signing(1)), "person_key": actor_of(&signing(1)) }),
-        serde_json::json!({ "person": "bo", "key": actor_of(&signing(2)), "person_key": actor_of(&signing(2)) }),
+        serde_json::json!({ "person": "ada", "key": actor_of(&signing(1)), "person_key": actor_of(&signing(1)), "joined": "started" }),
+        serde_json::json!({ "person": "bo", "key": actor_of(&signing(2)), "person_key": actor_of(&signing(2)), "joined": bo_joined }),
     ];
     want.sort_by_key(|p| p["key"].as_str().unwrap().to_string());
     assert_eq!(out["people"], serde_json::Value::from(want), "{out}");

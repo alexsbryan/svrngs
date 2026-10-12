@@ -54,6 +54,15 @@ async function groups() {
   }));
 }
 
+// Each person once, of the rows /v1/rail/people gives a key each; two of
+// one name told apart by when each joined, in the form `svrngs remove
+// --joined` takes, which the `sv-SE` locale writes (bash-same-name).
+function people(rows) {
+  const each = [...new Map(rows.map((r) => [r.person_key, r])).values()];
+  const when = (j) => (j === 'started' ? 'started the group' : `joined ${new Date(j.at * 1000).toLocaleString('sv-SE')}`);
+  return each.map((p) => (each.filter((q) => q.person === p.person).length > 1 ? `${p.person} (${when(p.joined)})` : p.person)).join(', ');
+}
+
 function list(all) {
   for (const g of all) {
     const s = el('section', '', el('h2', g.name ?? 'A group whose name this computer cannot read'));
@@ -61,7 +70,7 @@ function list(all) {
     else if (g.removed) s.append(el('p', `You are no longer in ${g.name ?? 'this group'}. What you already have stays on this computer; nothing new reaches it.`));
     else if (g.unread) s.append(el('p', `What this group lends cannot be read on this computer: ${g.unread}`));
     else {
-      s.append(el('p', `People: ${g.people.map((p) => p.person).join(', ')}`));
+      s.append(el('p', `People: ${people(g.people)}`));
       // Where the group's folder is on this disk (v1-onboarding (d)).
       const its = g.name ? `${g.name}’s folder` : 'The group’s folder';
       if (g.folders === null) s.append(el('p', `Where ${its} is cannot be read on this computer.`));

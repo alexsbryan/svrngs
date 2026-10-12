@@ -18,9 +18,11 @@
 //! svrngs share --folder <dir> --group <group> keep a folder the same on every member's disk,
 //!                                          asked of svrngs running here
 //! svrngs room <name>...                    serve lends to this computer's network, run
-//! svrngs remove <name> --group <group>     remove someone from a group, or ask it,
+//! svrngs remove <name> --group <group> [--joined W]
+//!                                          remove someone from a group, or ask it,
 //!                                          asked of svrngs running here
-//! svrngs handover <name> --group <group>   let someone else decide who is removed,
+//! svrngs handover <name> --group <group> [--joined W]
+//!                                          let someone else decide who is removed,
 //!                                          asked of svrngs running here
 //! ```
 //!
@@ -29,7 +31,9 @@
 //! `svrngs_node::removal` commits them and answers what happened, worded
 //! here. One person in a group decides who is removed from it — its maker
 //! at first, until they hand that on — and anyone else's `remove` asks
-//! them; the words name them.
+//! them; the words name them. Of two people of one name, svrngs never
+//! guesses which is meant: it says when each joined, which `--joined`
+//! takes, as the home page lists them (bash-same-name).
 //!
 //! `share` and `unshare` write a lend's declaration and its secret into the
 //! data dir (`svrngs_node::lend`), which the door reads on every request,
@@ -90,7 +94,7 @@ use svrngs_node::node::{Lends, Lent, Node, NodeError};
 use svrngs_node::redeem::{ask, redeem, AskRequest, RedeemError, RedeemRequest, Redeemed};
 use svrngs_node::removal::{Outcome, RemovalAsk, HANDOVERS_ROUTE, REMOVALS_ROUTE};
 use svrngs_node::room;
-use svrngs_node::{actor_of, Device, Person, SigningKey};
+use svrngs_node::{actor_of, Device, Joined, Person, SigningKey};
 use svrngs_node::{MintInvite, Refused as CommitRefused};
 
 use crate::group::{self, Name, Seed, SeedError};
@@ -167,16 +171,17 @@ svrngs — keep what your group shares on your own computers.
       Let anyone on this computer's network (its WiFi) open what your groups
       lend as <name>, as you, while this runs.
 
-  svrngs remove <name> --group <group>
+  svrngs remove <name> --group <group> [--joined <when>]
       Remove <name> from <group>: every computer and phone of theirs. One
       person decides who is removed — whoever made the group, until they
       hand that on — so from anyone else this asks them, and says who.
       What <name> already has stays with them; nothing new reaches them.
-      Asked of svrngs running here.
+      Asked of svrngs running here. --joined says which of two people
+      called <name> you mean: when they joined, as svrngs says it.
 
-  svrngs handover <name> --group <group>
+  svrngs handover <name> --group <group> [--joined <when>]
       Let <name> decide who is removed from <group> from now on, instead
-      of you. Asked of svrngs running here.
+      of you. Asked of svrngs running here. --joined as for remove.
 
 Data:    $SVRNGS_DIR, else ~/.svrngs.
 Logging: RUST_LOG, default `error`.";
@@ -232,16 +237,19 @@ pub enum Verb {
     },
     /// The lends named, served to this computer's network.
     Room(Vec<LendName>),
-    /// `remove` (U7), asked of svrngs running here: the person, and the
-    /// group as typed.
+    /// `remove` (U7), asked of svrngs running here: the person, the
+    /// group as typed, and of two people of one name, when the one meant
+    /// joined (bash-same-name).
     Remove {
         person: Name,
         group: String,
+        joined: Option<Joined>,
     },
     /// `handover` (U7), likewise.
     Handover {
         person: Name,
         group: String,
+        joined: Option<Joined>,
     },
     Help,
 }
@@ -264,6 +272,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let mut asks = None;
     let mut run = true;
     let mut device = false;
+    let mut joined = None;
     let mut more = Vec::new();
     while let Some(arg) = it.next() {
         let mut value = |flag: &str| it.next().ok_or_else(|| format!("{flag} wants a value"));
@@ -330,6 +339,9 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 }
                 asks = Some(raw);
             }
+            "--joined" if matches!(verb.as_str(), "remove" | "handover") => {
+                joined = Some(joined_of(&value("--joined")?)?);
+            }
             "--no-run" if verb == "join" => run = false,
             "--device" if verb == "link" => device = true,
             "-h" | "--help" => return Ok(Verb::Help),
@@ -370,8 +382,16 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "{verb} wants --group: `svrngs {verb} <name> --group <group>`"
         ))?;
         return Ok(match verb.as_str() {
-            "remove" => Verb::Remove { person, group },
-            _ => Verb::Handover { person, group },
+            "remove" => Verb::Remove {
+                person,
+                group,
+                joined,
+            },
+            _ => Verb::Handover {
+                person,
+                group,
+                joined,
+            },
         });
     }
     match (verb.as_str(), folder, group) {
@@ -607,12 +627,22 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             println!("{}", folder(&root, dir, &group).await?);
             return Ok(());
         }
-        Verb::Remove { person, group } => {
-            print!("{}", removal(&root, REMOVALS_ROUTE, person, &group).await?);
+        Verb::Remove {
+            person,
+            group,
+            joined,
+        } => {
+            let said = removal(&root, REMOVALS_ROUTE, person, joined, &group).await?;
+            print!("{said}");
             return Ok(());
         }
-        Verb::Handover { person, group } => {
-            print!("{}", removal(&root, HANDOVERS_ROUTE, person, &group).await?);
+        Verb::Handover {
+            person,
+            group,
+            joined,
+        } => {
+            let said = removal(&root, HANDOVERS_ROUTE, person, joined, &group).await?;
+            print!("{said}");
             return Ok(());
         }
         Verb::Share(asked) => {
@@ -677,11 +707,18 @@ async fn folder(root: &Path, dir: PathBuf, reference: &str) -> Result<String, Re
 /// `remove` and `handover` (U7), asked of svrngs running here at `route`
 /// for the group `reference` names, as `link` names it: what happened, in
 /// a person's words, or the refusal.
-async fn removal(root: &Path, route: &str, person: Name, reference: &str) -> Result<Said, Refusal> {
+async fn removal(
+    root: &Path,
+    route: &str,
+    person: Name,
+    joined: Option<Joined>,
+    reference: &str,
+) -> Result<Said, Refusal> {
     let seed = group_named(root, reference)?;
     let asked = RemovalAsk {
         group: seed.id(),
         person: person.as_str().to_string(),
+        joined,
     };
     let (_, text) = ask_running(root, route, &asked).await?;
     let outcome: Outcome = serde_json::from_str(&text).map_err(|e| {
@@ -1102,7 +1139,10 @@ impl std::fmt::Display for Said {
                     }
                     Outcome::Handed => writeln!(f, "{person} now decides who is removed from {group}, instead of you."),
                     Outcome::NotInGroup => writeln!(f, "Nobody called {person} is in {group}."),
-                    Outcome::Shared => writeln!(f, "More than one person in {group} is called {person}, so svrngs cannot tell which you mean. Nothing changed."),
+                    Outcome::Which { joined } => {
+                        let each: Vec<String> = joined.iter().map(|j| format!("`--joined {}`", joined_said(j))).collect();
+                        writeln!(f, "svrngs cannot tell which person called {person} in {group} you mean, so nothing changed. Say which by when they joined, adding one of these to the command: {}.", each.join(", "))
+                    }
                     Outcome::Decides => writeln!(f, "{person} decides who is removed from {group}, so cannot be removed: hand that to someone else first, with `svrngs handover <name> --group {group}`."),
                     Outcome::NotDecider { decides: who } => writeln!(f, "Only {} can let someone else decide who is removed from {group}.", decides(who)),
                     Outcome::NotDeciderUnread => writeln!(f, "You do not decide who is removed from {group}, and this computer could not read who is in the group, so cannot say who does (RUST_LOG=debug says why)."),
@@ -1118,6 +1158,34 @@ impl std::fmt::Display for Said {
                 Ok(())
             }
         }
+    }
+}
+
+/// How `--joined` takes when a person joined and a refusal says it, in
+/// this computer's time to the second: the home page's form too (home.js
+/// `people`, whose `sv-SE` locale writes it).
+const WHEN: &str = "%Y-%m-%d %H:%M:%S";
+
+/// `--joined`: `started`, for whoever started the group, or a time in
+/// [`WHEN`]'s form on this computer's clock, as [`joined_said`] says it.
+fn joined_of(raw: &str) -> Result<Joined, String> {
+    if raw == "started" {
+        return Ok(Joined::Started);
+    }
+    (chrono::NaiveDateTime::parse_from_str(raw, WHEN).ok())
+        .and_then(|t| t.and_local_timezone(chrono::Local).single())
+        .map(|t| Joined::At(t.timestamp()))
+        .ok_or_else(|| format!("--joined `{raw}` is not when someone joined: `started`, or a time as svrngs says it, such as \"2026-10-12 14:03:22\""))
+}
+
+/// When a person joined, as a person adds it to the command.
+fn joined_said(joined: &Joined) -> String {
+    match joined {
+        Joined::Started => "started".into(),
+        Joined::At(t) => chrono::DateTime::from_timestamp(*t, 0).map_or_else(
+            || "at a time this computer cannot write".into(),
+            |t| format!("\"{}\"", t.with_timezone(&chrono::Local).format(WHEN)),
+        ),
     }
 }
 

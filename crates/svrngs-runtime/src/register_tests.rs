@@ -90,6 +90,7 @@ fn standing_from_the_membership_acts_alone_is_the_journals() {
                 person: whole.bindings[k].clone(),
                 device: Device::Computer,
                 person_key: k.clone(),
+                joined: whole.joined(k),
             };
             (k.clone(), member)
         })

@@ -81,6 +81,7 @@ async fn ask(node: &Node, route: &str, person: &str) -> (u16, Outcome) {
         .json(&RemovalAsk {
             group: NS.into(),
             person: person.into(),
+            joined: None,
         })
         .send()
         .await

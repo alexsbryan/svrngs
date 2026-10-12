@@ -1410,8 +1410,9 @@ in_both_engines!(
     /// (bash-same-name (a)). Ada lets two people into house as cy, a
     /// second apart, each by hand (bash-devices made them two people,
     /// `a1d0ba9`); her home page's people line names each person once,
-    /// and no two alike, in a person's words. Planted: two people of one
-    /// name, listed by home.js as "cy, cy".
+    /// and no two alike, in a person's words — each cy by when they
+    /// joined, as `svrngs remove --joined` takes it. Planted: two people
+    /// of one name, listed by home.js as "cy, cy".
     the_home_page_tells_two_people_of_one_name_apart
 );
 async fn the_home_page_tells_two_people_of_one_name_apart(engine: Engine) {
@@ -1454,6 +1455,19 @@ async fn the_home_page_tells_two_people_of_one_name_apart(engine: Engine) {
         2,
         "{line}"
     );
+    // Each cy by when they joined, in the form `svrngs remove --joined`
+    // takes (crates/svrngs/src/cli.rs `WHEN`): 2026-10-12 14:03:22.
+    for cy in people.iter().filter(|p| p.starts_with("cy")) {
+        let when = (cy
+            .strip_prefix("cy (joined ")
+            .and_then(|w| w.strip_suffix(')')))
+        .unwrap_or_else(|| panic!("{cy} says no time: {line}"));
+        let shape: String = when
+            .chars()
+            .map(|c| if c.is_ascii_digit() { '9' } else { c })
+            .collect();
+        assert_eq!(shape, "9999-99-99 99:99:99", "{cy}: {line}");
+    }
     for kept in ["key", "member", "keeper", "ring", " act", "journal"] {
         assert!(!line.to_lowercase().contains(kept), "says {kept}: {line}");
     }
@@ -1588,6 +1602,7 @@ async fn removal(ada: &Node, who: &str) -> svrngs_node::removal::Outcome {
         .json(&svrngs_node::removal::RemovalAsk {
             group: NS.into(),
             person: who.into(),
+            joined: None,
         })
         .send()
         .await

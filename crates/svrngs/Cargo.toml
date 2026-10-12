@@ -11,6 +11,10 @@ description = "The svrngs command: a computer's device key, a group's link, and 
 svrngs-node = { workspace = true }
 base64 = "0.22"
 blake3 = { workspace = true }
+# `--joined` and the refusal that names it say a time on this computer's
+# clock (bash-same-name): the chrono, with its clock, iroh-blobs and
+# tokio-rustls-acme already build.
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
 ed25519-dalek = { workspace = true }
 getrandom = "0.3"
 hex = { workspace = true }

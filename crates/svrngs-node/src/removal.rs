@@ -31,7 +31,8 @@ use crate::iroh::{actor_key, Contact};
 use crate::node::Asking;
 use crate::peer_wire::RingSyncRequest;
 use crate::{
-    register::Register, Device, HandOnRefusal, HandOnTo, Person, Refused, Removal, RemovalRefusal,
+    register::Register, Device, HandOnRefusal, HandOnTo, Joined, Person, Refused, Removal,
+    RemovalRefusal,
 };
 
 /// Where the command asks a removal.
@@ -40,11 +41,14 @@ pub const REMOVALS_ROUTE: &str = "/v1/removals";
 /// Where the command asks a hand-on.
 pub const HANDOVERS_ROUTE: &str = "/v1/handovers";
 
-/// What the command asks: the group by its id, and a person by name.
+/// What the command asks: the group by its id, and a person by name and,
+/// of two people of one name, by when they joined (bash-same-name).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RemovalAsk {
     pub group: String,
     pub person: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub joined: Option<Joined>,
 }
 
 /// What happened, for the command to say.
@@ -59,9 +63,11 @@ pub enum Outcome {
     Handed,
     /// Nobody of that name is in the group.
     NotInGroup,
-    /// More than one person in the group goes by that name, so it names no
-    /// one person (bash-devices): nothing is written.
-    Shared,
+    /// The ask names no one person — more than one in the group goes by
+    /// the name (bash-devices), or none of them joined when it says — so
+    /// nothing is written: when each of them joined, which names one
+    /// (bash-same-name).
+    Which { joined: Vec<Joined> },
     /// The person decides removals, so is not removed: they hand that on
     /// first.
     Decides,
@@ -119,13 +125,8 @@ async fn remove(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outc
         tracing::warn!(target: "removal", group, "removal: the group's register cannot be read");
         return Outcome::Fault;
     };
-    let recorded = match rail.commit(
-        group,
-        &Removal {
-            person,
-            joined: None,
-        },
-    ) {
+    let joined = asked.joined;
+    let recorded = match rail.commit(group, &Removal { person, joined }) {
         Ok(Ok(recorded)) => recorded,
         Ok(Err(refused)) => {
             tracing::debug!(target: "removal", group, ?refused, "removal: refused");
@@ -133,7 +134,7 @@ async fn remove(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outc
                 Refused::NoStanding => Outcome::NotIn,
                 Refused::Unsettled => Outcome::Fault,
                 Refused::Command(RemovalRefusal::NotInGroup) => Outcome::NotInGroup,
-                Refused::Command(RemovalRefusal::Which(_)) => Outcome::Shared,
+                Refused::Command(RemovalRefusal::Which(joined)) => Outcome::Which { joined },
                 Refused::Command(RemovalRefusal::Keeps) => Outcome::Decides,
             };
         }
@@ -222,13 +223,8 @@ async fn hand_over(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> O
     };
     let rail = at.host.rail();
     let group = asked.group.as_str();
-    let outcome = match rail.commit(
-        group,
-        &HandOnTo {
-            person,
-            joined: None,
-        },
-    ) {
+    let joined = asked.joined;
+    let outcome = match rail.commit(group, &HandOnTo { person, joined }) {
         Ok(Ok(_)) => {
             at.door().ring.wake();
             Outcome::Handed
@@ -236,7 +232,7 @@ async fn hand_over(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> O
         Ok(Err(Refused::NoStanding)) => Outcome::NotIn,
         Ok(Err(Refused::Unsettled)) => Outcome::Fault,
         Ok(Err(Refused::Command(HandOnRefusal::NotInGroup))) => Outcome::NotInGroup,
-        Ok(Err(Refused::Command(HandOnRefusal::Which(_)))) => Outcome::Shared,
+        Ok(Err(Refused::Command(HandOnRefusal::Which(joined)))) => Outcome::Which { joined },
         Ok(Err(Refused::Command(HandOnRefusal::NotKeeper))) => match rail.register(group) {
             Ok(register) => Outcome::NotDecider {
                 decides: decides(&register),

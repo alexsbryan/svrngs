@@ -17,8 +17,8 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use crate::{
-    admit, is_local_only, ring_dir, valid_namespace, Device, Membership, Op, Person, RailAct, RailError, RingJournal,
-    RingRail, RingVerifier, Roster, SignedOp,
+    admit, is_local_only, ring_dir, valid_namespace, Device, Joined, Membership, Op, Person, RailAct, RailError,
+    RingJournal, RingRail, RingVerifier, Roster, SignedOp,
 };
 
 /// Who stands in one group, on this node.
@@ -69,14 +69,16 @@ pub enum RemovalSaid {
 }
 
 /// One key standing in a group: the person it is bound to, by name and by
-/// their first key in the group (bash-devices), and what holds it
-/// ([`Device`], u4-1), as `membership` answers them.
+/// their first key in the group (bash-devices), what holds it ([`Device`],
+/// u4-1), and when the person joined (bash-same-name), as `membership`
+/// answers them.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Member {
     pub person: Person,
     pub device: Device,
     /// The person's first key: the same for every device of theirs.
     pub person_key: String,
+    pub joined: Joined,
 }
 
 impl Standing {
@@ -127,6 +129,7 @@ pub(crate) fn register_in(
                 Member {
                     person,
                     device: m.device(key)?,
+                    joined: m.joined(&person_key),
                     person_key,
                 },
             ))

@@ -212,7 +212,7 @@ async fn log_ships_admitted_ops_gaps_and_the_roster() {
     assert_eq!(out["gaps"].as_array().unwrap().len(), 0);
     assert_eq!(
         out["people"],
-        serde_json::json!([{ "person": "alex", "key": actor_of(&key(7)), "person_key": actor_of(&key(7)) }]),
+        serde_json::json!([{ "person": "alex", "key": actor_of(&key(7)), "person_key": actor_of(&key(7)), "joined": "started" }]),
         "the answer carries the people standing after the ops (svrngs: \
          upstream's carried the roster they were admitted against)"
     );
@@ -266,10 +266,17 @@ async fn the_people_door_answers_the_register_with_keys() {
     };
     rail.commit(journal, &fixture).unwrap().unwrap();
     let out = body_of(super::people_answer(&rail, "ledger")).await;
+    // When bo joined: the time on the `Admit` this computer stamped
+    // (bash-same-name); alex started the group.
+    let bo_joined = (out["people"].as_array().unwrap().iter())
+        .find(|p| p["person"] == "bo")
+        .map(|p| p["joined"].clone())
+        .unwrap();
+    assert!(bo_joined["at"].is_i64(), "{out}");
     // In the order of their keys, as the register holds them.
     let mut want = vec![
-        serde_json::json!({ "person": "alex", "key": actor_of(&key(7)), "person_key": actor_of(&key(7)) }),
-        serde_json::json!({ "person": "bo", "key": actor_of(&key(3)), "person_key": actor_of(&key(3)) }),
+        serde_json::json!({ "person": "alex", "key": actor_of(&key(7)), "person_key": actor_of(&key(7)), "joined": "started" }),
+        serde_json::json!({ "person": "bo", "key": actor_of(&key(3)), "person_key": actor_of(&key(3)), "joined": bo_joined }),
     ];
     want.sort_by_key(|p| p["key"].as_str().unwrap().to_string());
     assert_eq!(out["people"], serde_json::Value::from(want));
@@ -356,6 +363,7 @@ fn the_live_fan_out_never_offers_a_browser() {
         person: Person::parse(name).unwrap(),
         device,
         person_key: name.to_string(),
+        joined: crate::Joined::Started,
     };
     let standing = [
         (7, member("ada", Device::Computer)),
