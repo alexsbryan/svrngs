@@ -440,3 +440,75 @@ fn a_removed_persons_name_is_free_again() {
     assert!(m.standing.contains(&actor_of(&joining())));
     assert_eq!(m.person_for(&actor_of(&joining())), Some(&p("Cy")));
 }
+
+// ── a person is their first key (bash-devices) ──────────────────────
+
+/// **Two people a race gave one name are two people.** Alex lets dee in
+/// on one computer and bo lets another dee in on theirs, each by hand,
+/// neither having seen the other; the keeper's removal of `dee` is refused,
+/// since two people hold the name, and both stand; so is a hand-on to
+/// `dee`, and alex keeps. Red at bash-devices' base: the fold binds a key to a
+/// name (membership.rs, `bindings`), so both keys are one dee: the removal
+/// cuts both (register.rs `Removal::decide`, `keys_of`), and the hand-on
+/// goes to the first of them (`HandOnTo::key`).
+#[test]
+fn two_people_a_race_gave_one_name_are_not_taken_as_one() {
+    let seed = Roster::new([(p("alex"), vec![actor_of(&key(1))])].into_iter().collect());
+    let admit = |person: &str, k: u8| RailAct::Admit {
+        person: p(person),
+        key: actor_of(&key(k)),
+        invite: None,
+    };
+    let alexs = run(&key(1), 100, [admit("bo", 2), admit("dee", 6)]);
+    let bos = run(&key(2), 120, [admit("dee", 8)]);
+    let raced = || Memory::holding(&[alexs.clone(), bos.clone()].concat());
+    let alex = key(1);
+    let as_alex = author(&alex, &seed, 200);
+    let (removing, handing) = (raced(), raced());
+    let removed = commit(&removing, &Removal { person: p("dee") }, &as_alex).unwrap();
+    let handed = commit(&handing, &HandOnTo { person: p("dee") }, &as_alex).unwrap();
+    let (r, h) = (register(&removing, &seed), register(&handing, &seed));
+    let stand = [6, 8].map(|k| r.standing.contains(&actor_of(&key(k))));
+    assert_eq!(
+        (removed.is_err(), handed.is_err(), stand, h.keeper),
+        (true, true, [true, true], Some(actor_of(&key(1)))),
+        "(removal refused, hand-on refused, each dee stands, the keeper)"
+    );
+}
+
+/// **A person's second device stands as them by a link of theirs, never by
+/// typing their name.** Cy's computer makes a link and a new key redeems it
+/// as cy: it stands as cy, and the keeper's removal of cy takes both. Red
+/// at bash-devices' base: no link says "as me", and the name is refused
+/// `NameTaken` (bash-person), so a second device has no way in as cy.
+#[test]
+fn a_persons_second_device_stands_as_them_by_a_link_of_theirs() {
+    let (seed, store) = alexs_group();
+    let cy = key(3);
+    let invite = invite_by(&cy, &link(), 10_000);
+    store.0.borrow_mut().insert(invite.clone());
+    let id = derive_id(&invite, NS);
+    let asked = Redeem {
+        invite: id.clone(),
+        person: p("cy"),
+        key: actor_of(&joining()),
+        cosig: Redemption::sign(&joining(), NS, &id, &p("cy"), Device::Computer).sig,
+        device: Device::Computer,
+        link: actor_of(&link()),
+        issuer: actor_of(&cy),
+    };
+    let redeemed = commit(&store, &asked, &author(&cy, &seed, 1_000)).unwrap();
+    assert!(redeemed.is_ok(), "cy's second device let in: {redeemed:?}");
+    commit(
+        &store,
+        &Removal { person: p("cy") },
+        &author(&key(1), &seed, 1_001),
+    )
+    .unwrap()
+    .unwrap();
+    let m = register(&store, &seed);
+    assert!(
+        !m.standing.contains(&actor_of(&cy)) && !m.standing.contains(&actor_of(&joining())),
+        "cy's two devices go together"
+    );
+}

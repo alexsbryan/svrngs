@@ -529,3 +529,25 @@ async fn one_person_s_slow_sign_in_holds_nobody_else_s() {
     drop(cy);
     pair.close().await;
 }
+
+/// **One person is asked for once, from any device of theirs**
+/// (bash-devices (c)): bo asks a lend with a sign-in from one device, then
+/// from the other; the answerer is asked once. Red at bash-devices' base:
+/// the sign-in keeps its answer per key (door/sign_in.rs, `Whose`), so bo
+/// is asked for twice.
+#[tokio::test]
+async fn one_person_is_asked_for_once_from_any_device() {
+    let bos = Bos::new().await;
+    let (origin, _heads) = service().await;
+    let (hook, asked) = answerer(Answers::Each).await;
+    bos.lend(
+        "signed",
+        serde_json::json!({ "port": origin.port(), "kind": "k", "sign_in": hook.port() }),
+    );
+    for i in 0..2 {
+        let reply = raw_to(bos.devices[i].local_addr(), asks("echo")).await;
+        assert_eq!(reply.status, 200, "{}", reply.text);
+    }
+    assert_eq!(asked.lock().unwrap().len(), 1, "the answerer asked once");
+    bos.a.endpoint().close().await;
+}

@@ -273,6 +273,83 @@ async fn two_keys_of_one_name_are_two_accounts_to_a_lend() {
     pair.close().await;
 }
 
+/// A lending as ada, and bo's two devices — keys 2 and 6, one row of the
+/// seed, so one person to the fold before device links and after — each a
+/// bridge dialling A on the members' protocol (bash-devices).
+struct Bos {
+    a: Node,
+    dir: tempfile::TempDir,
+    devices: [svrngs_node::iroh::HttpBridge; 2],
+}
+
+impl Bos {
+    async fn new() -> Self {
+        use svrngs_core::alpn::Alpn;
+        let dir = tempfile::tempdir().unwrap();
+        let a = start(1, dir.path()).await;
+        let seed = Roster::new(
+            [
+                (Person::parse("ada").unwrap(), vec![actor_of(&signing(1))]),
+                (
+                    Person::parse("bo").unwrap(),
+                    vec![actor_of(&signing(2)), actor_of(&signing(6))],
+                ),
+            ]
+            .into_iter()
+            .collect(),
+        );
+        a.rail().set_seed(NS, &seed).unwrap();
+        let devices = [
+            bridge_as(&signing(2), &a, Alpn::Member).await,
+            bridge_as(&signing(6), &a, Alpn::Member).await,
+        ];
+        Bos { a, dir, devices }
+    }
+
+    /// A lends `name` as `body` says.
+    fn lend(&self, name: &str, body: serde_json::Value) {
+        let dir = lend::lends_dir(self.dir.path());
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join(format!("{name}.json")), body.to_string()).unwrap();
+    }
+
+    /// Bo's device `i` asks `path` through A's door, `headers` added.
+    async fn get(&self, i: usize, path: &str, headers: &str) -> Reply {
+        let ask =
+            format!("GET {path} HTTP/1.1\r\nHost: local\r\n{headers}Connection: close\r\n\r\n");
+        raw_to(self.devices[i].local_addr(), ask).await
+    }
+}
+
+/// **One person's two devices are one account to a lend** (bash-devices
+/// (c)): bo asks from each, and the service is told one `x-svrngs-key`,
+/// bo's first, and one `x-svrngs-user` both times, so an app keyed on
+/// either gives bo one account. Red at bash-devices' base: each device
+/// told its own key and its own account name (door.rs, `PersonKey::resolved`
+/// is the key itself).
+#[tokio::test]
+async fn one_persons_two_devices_are_one_account_to_a_lend() {
+    let bos = Bos::new().await;
+    let (origin, heads) = origins::head_origin().await;
+    bos.lend(
+        "shelf",
+        serde_json::json!({ "port": origin.port(), "kind": "k" }),
+    );
+    let mut told = Vec::new();
+    for i in 0..2 {
+        let reply = bos.get(i, "/lend/shelf/whoami", "").await;
+        assert_eq!(reply.status, 200, "{}", reply.text);
+        let head = last(&heads);
+        told.push((
+            header_values(&head, "x-svrngs-key").join(","),
+            header_values(&head, "x-svrngs-user").join(","),
+        ));
+    }
+    assert_eq!(told[0].0, actor_of(&signing(2)), "bo's first key");
+    assert_eq!(told[0], told[1], "(key, account) from each device");
+    bos.a.endpoint().close().await;
+}
+
 /// :601 and :689 — the request line and every header the door does not set
 /// pass byte for byte: `Range` is a seek, `If-Range` its condition, and a
 /// cookie is the client's business. Planted: `Range` dropped.

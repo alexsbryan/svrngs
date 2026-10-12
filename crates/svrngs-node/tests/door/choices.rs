@@ -194,3 +194,39 @@ async fn a_lend_that_asks_lets_in_only_the_app_its_person_said_yes_to() {
     );
     pair.close().await;
 }
+
+/// **A person's yes on one device is their yes on every device**
+/// (bash-devices (c)): a lend that asks, and bo says yes to `night` from
+/// one device; bo's other device, its own pass naming `night`, is let in.
+/// Red at bash-devices' base: choices are kept per key (door/choices.rs,
+/// `member`), so the other device is refused `unasked`.
+#[tokio::test]
+async fn a_persons_yes_on_one_device_holds_on_another() {
+    let bos = Bos::new().await;
+    let (at, _taste_heads) = origins::head_origin().await;
+    bos.lend(
+        "taste",
+        serde_json::json!({ "port": at.port(), "kind": "taste", "asks": WORDS }),
+    );
+    let a = *bos.a.endpoint().id().as_bytes();
+    let (taste, night) = (Label::of(&a, "taste"), Label::of(&a, "night"));
+    let yes = format!(r#"{{"app":"{night}","said":"yes"}}"#);
+    let said = post(bos.devices[0].local_addr(), "/choices/taste", "", &yes).await;
+    assert_eq!(said.status, 200, "bo's yes: {}", said.text);
+    let other = signing(6);
+    let pass = Pass::sign(
+        &other,
+        &actor_of(&other),
+        (night.clone(), vec![taste.clone()]),
+        unix_now() + 300,
+    );
+    let header = format!("x-svrngs-pass: {}\r\n", pass.encode());
+    let carried = bos.get(1, "/lend/taste/x", &header).await;
+    assert_eq!(
+        (carried.status, kind(&carried)),
+        (200, None),
+        "bo's other device: {}",
+        carried.text
+    );
+    bos.a.endpoint().close().await;
+}

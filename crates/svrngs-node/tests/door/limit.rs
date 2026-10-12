@@ -208,3 +208,24 @@ async fn three_streaming_are_told_a_third_and_a_fourth_waits_for_one_to_stop() {
     drop(streams);
     crowd.a.endpoint().close().await;
 }
+
+/// **One person on two devices is one person to a lend's limit**
+/// (bash-devices (c)): a lend of one person at once, and bo asks from one
+/// device, then, within the window, from the other: let in. Red at
+/// bash-devices' base: the door counts each device's key (door.rs,
+/// `PersonKey::resolved`), so bo's second device is refused as a second
+/// person.
+#[tokio::test]
+async fn one_person_on_two_devices_is_counted_once() {
+    let bos = super::Bos::new().await;
+    let (origin, _heads) = origins::head_origin().await;
+    bos.lend(
+        "shelf",
+        serde_json::json!({ "port": origin.port(), "kind": "k", "limit": 1 }),
+    );
+    let first = bos.get(0, "/lend/shelf/x", "").await;
+    assert_eq!(first.status, 200, "{}", first.text);
+    let second = bos.get(1, "/lend/shelf/x", "").await;
+    assert_eq!(second.status, 200, "bo's other device: {}", second.text);
+    bos.a.endpoint().close().await;
+}
