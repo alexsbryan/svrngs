@@ -306,8 +306,8 @@ The register stands where the roster stood: `journal_of` asks
 computer does not hold (`not_held`, 404) and one held with no seed
 (`no_seed`, 409); the door's own fold refuses a computer that does not
 stand (`not_in_roster`, in DESIGN §1's words); and the log answers the
-people standing after its one read (`people_json`: each person and their
-key), where upstream's answered the roster. `GET /v1/rail/people` is new:
+people standing after its one read (`people_json`: each key, its person
+and the person's first key), where upstream's answered the roster. `GET /v1/rail/people` is new:
 the same people, through the same gate (`standing_of`), so an app needs no
 second source for who is in its group or a key to seal to (DESIGN §3).
 
@@ -332,7 +332,8 @@ headers both ways, every client header under `x-svrngs-` and every one the
 lend's secret names (compared as `rewrite_head` compared,
 `iroh_identity_forward.rs:297-328`), then sets `x-svrngs-person` — the
 dialer's name in the first group held that they stand in — and
-`x-svrngs-key` from the `Dialer`, then the secret; every other header,
+`x-svrngs-key`, that person's first key there (`Member::person_key`,
+bash-devices), then the secret; every other header,
 `Range`, `If-Range` and `Content-Range` among them, passes untouched. A
 response header holding the secret is dropped. It refuses, by name, a
 request off the stream, a dialer standing in no group held, a path with a
@@ -407,8 +408,9 @@ lend asking nobody and its own pages, and refuses `unasked` or `stopped`.
 `POST /choices/<lend>` on the members' protocol takes the dialler's person's
 `{app, said}`; with a pass, on either protocol, only `{said: "stop"}` (the
 type `Stopping`). `GET /choices/<lend>` answers the dialler's own. Every
-choice and sign-in answer is keyed by `door::PersonKey`, which only the
-door makes. `lend::withdraw` removes them with the lend.
+choice, sign-in answer and count of who uses a lend is keyed by
+`door::PersonKey`, which only the door makes, from the register's person
+key, so a person's devices are one person to each. `lend::withdraw` removes them with the lend.
 
 The home page (`home.rs`, sup-2), `http://svrngs.localhost:<api port>/`, is
 routed by its `Host` (`api::to_a_lend`) beside the lends' origins and

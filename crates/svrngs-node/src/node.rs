@@ -607,7 +607,7 @@ pub(crate) fn dialled<'a>(
     standing: &'a BTreeMap<String, Member>,
 ) -> Vec<(&'a String, &'a Person, PublicKey)> {
     let mut out = Vec::new();
-    for (actor, Member { person, device }) in standing {
+    for (actor, Member { person, device, .. }) in standing {
         if actor == this {
             continue;
         }

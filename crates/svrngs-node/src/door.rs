@@ -120,8 +120,10 @@ pub const IDENTITY_PREFIX: &str = "x-svrngs-";
 /// [`USER_HEADER`]'s.
 pub const PERSON_HEADER: &str = "x-svrngs-person";
 
-/// The key the connection verified, as the record spells an actor: its
-/// lowercase hex. Who asks.
+/// The person asking, by their first key in the group, as the record
+/// spells an actor: its lowercase hex. The same from every device of
+/// theirs (bash-devices), so an app keys a person on it; an id, not a key
+/// to seal to — `/v1/rail/people` lists every key of each person.
 pub const KEY_HEADER: &str = "x-svrngs-key";
 
 /// The name of the account an app makes for the person asking:
@@ -745,10 +747,11 @@ pub(crate) enum Who {
 }
 
 /// The person the door resolves a request to (ONE_PERSON_MANY_DEVICES.md
-/// §4): today the one key they have, a member's dialler or a pass's signer.
-/// Made only here ([`PersonKey::resolved`]), so nothing kept about a person
-/// — a sign-in's answer, a choice — is keyed by the raw key a request came
-/// with, and another device for the same person changes that one function.
+/// §4): their first key in the group the register finds the key in, the
+/// same from every device of theirs (bash-devices), whether a member's
+/// dialler or a pass's signer asks. Made only here ([`PersonKey::resolved`]),
+/// so nothing kept about a person — a lend's count, a sign-in's answer, a
+/// choice — is keyed by the raw key a request came with.
 #[derive(
     Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize, serde::Deserialize,
 )]
@@ -756,10 +759,12 @@ pub(crate) enum Who {
 pub struct PersonKey(String);
 
 impl PersonKey {
-    /// The person `key`, actor hex, is: the key itself, until a person
-    /// spans devices.
-    fn resolved(key: String) -> Self {
-        Self(key)
+    /// The group `key`, actor hex, stands in here, and who they are there:
+    /// their name and person; `None` when they stand in no group held here.
+    fn resolved(door: &Door, key: &str) -> Option<(String, Person, Self)> {
+        let (group, member) = door.rail.standing_anywhere(key)?;
+        tracing::debug!(target: "door", key, person_key = member.person_key, "door: the person the key is");
+        Some((group, member.person, Self(member.person_key)))
     }
 }
 svrngs_core::text_newtype!(PersonKey);
@@ -861,7 +866,7 @@ async fn holder_of(
     if let Err(fault) = pass.check(&key, &label, unix_now()) {
         return Err(refused(&fault.to_string()));
     }
-    let mut standing = door.rail.standing_anywhere(&pass.person);
+    let mut standing = PersonKey::resolved(door, &pass.person);
     // A key the keeper cut never stands again (U7), so it is told so at once
     // rather than after the ring is asked.
     if standing.is_none() && door.rail.removed_anywhere(&pass.person).is_some() {
@@ -874,18 +879,18 @@ async fn holder_of(
             "door: the pass's signer stands in no group held here, so the group's ring is asked once first");
         let known = || door.rail.standing_anywhere(&pass.person).is_some();
         let in_time = door.ring.until(ASK_WITHIN, known).await;
-        standing = door.rail.standing_anywhere(&pass.person);
+        standing = PersonKey::resolved(door, &pass.person);
         tracing::debug!(target: "door", signer = pass.person, in_time, known = standing.is_some(),
             "door: the ring asked — whether a member that knows the signer answered, or a round ended, in time, and whether the signer stands now");
     }
-    let Some((group, person)) = standing else {
+    let Some((group, person, actor)) = standing else {
         return Err(refused("its signer stands in no group held here"));
     };
     tracing::debug!(target: "door", holder = key, person = person.as_str(), lend = %lend.name, until = pass.until,
         "door: a pass opens this lend, so its holder asks as the person who signed it");
     Ok(Asker {
         app: Some(pass.app),
-        actor: PersonKey::resolved(pass.person),
+        actor,
         group,
         person,
     })
@@ -975,13 +980,13 @@ pub(crate) async fn lend_for(
     };
     let pending = match &who {
         Who::Member(_) | Who::Own(_) => {
-            let Some((group, person)) = door.rail.standing_anywhere(&actor) else {
+            let Some((group, person, whose)) = PersonKey::resolved(door, &actor) else {
                 tracing::debug!(target: "door", actor, "door: refused — the dialer stands in no group held here");
                 return Err(LendRefusal::Closed
                     .say(StatusCode::FORBIDDEN, "this computer lends nothing to you"));
             };
             Pending::Known(Asker {
-                actor: PersonKey::resolved(actor.clone()),
+                actor: whose,
                 group,
                 person,
                 app: match &who {

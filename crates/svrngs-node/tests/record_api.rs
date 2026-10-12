@@ -239,8 +239,8 @@ async fn the_people_read_lists_a_and_b_with_their_keys() {
         .await
         .unwrap();
     let mut want = vec![
-        serde_json::json!({ "person": "ada", "key": actor_of(&signing(1)) }),
-        serde_json::json!({ "person": "bo", "key": actor_of(&signing(2)) }),
+        serde_json::json!({ "person": "ada", "key": actor_of(&signing(1)), "person_key": actor_of(&signing(1)) }),
+        serde_json::json!({ "person": "bo", "key": actor_of(&signing(2)), "person_key": actor_of(&signing(2)) }),
     ];
     want.sort_by_key(|p| p["key"].as_str().unwrap().to_string());
     assert_eq!(out["people"], serde_json::Value::from(want), "{out}");

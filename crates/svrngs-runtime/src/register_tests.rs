@@ -89,6 +89,7 @@ fn standing_from_the_membership_acts_alone_is_the_journals() {
             let member = Member {
                 person: whole.bindings[k].clone(),
                 device: Device::Computer,
+                person_key: k.clone(),
             };
             (k.clone(), member)
         })

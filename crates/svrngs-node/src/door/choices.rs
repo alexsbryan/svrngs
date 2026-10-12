@@ -254,11 +254,11 @@ fn member(
         || LendRefusal::Closed.say(StatusCode::FORBIDDEN, "this computer lends nothing to you");
     let Extension(dialer) = dialer.ok_or_else(closed)?;
     let key = dialer.actor();
-    if door.rail.standing_anywhere(&key).is_none() {
+    let Some((_, _, person)) = PersonKey::resolved(door, &key) else {
         tracing::debug!(target: "door", actor = key, "door: choices refused — the dialer stands in no group held here");
         return Err(closed());
-    }
-    Ok((dialer, PersonKey::resolved(key), found(door, raw)?))
+    };
+    Ok((dialer, person, found(door, raw)?))
 }
 
 /// `POST /choices/<lend>` on the members' protocol: the person's yes or
@@ -319,27 +319,28 @@ pub(super) async fn choices_of(
 /// This computer's person's `said` of `app` on its own lend `label`, with
 /// no dial: the home page's and its origin's ([`crate::home`]).
 pub(crate) async fn own_choose(door: &Door, label: &Label, app: Label, said: Said) -> Response {
-    match found(door, label.as_str()) {
-        Ok(lend) => {
-            keep(
-                door,
-                &lend,
-                PersonKey::resolved(hex::encode(door.key)),
-                app,
-                said,
-            )
-            .await
-        }
+    match found(door, label.as_str()).and_then(|lend| Ok((own(door)?, lend))) {
+        Ok((person, lend)) => keep(door, &lend, person, app, said).await,
         Err(refused) => refused,
     }
 }
 
 /// This computer's person's choices on its own lend `label`.
 pub(crate) fn own_choices(door: &Door, label: &Label) -> Response {
-    match found(door, label.as_str()) {
-        Ok(lend) => kept(door, &lend, &PersonKey::resolved(hex::encode(door.key))),
+    match found(door, label.as_str()).and_then(|lend| Ok((own(door)?, lend))) {
+        Ok((person, lend)) => kept(door, &lend, &person),
         Err(refused) => refused,
     }
+}
+
+/// This computer's own person, as the register names them; refused when
+/// it stands in no group held here, so it has no person to keep for.
+fn own(door: &Door) -> Result<PersonKey, Response> {
+    let own = PersonKey::resolved(door, &hex::encode(door.key));
+    own.map(|(_, _, person)| person).ok_or_else(|| {
+        tracing::debug!(target: "door", "door: choices refused — this computer stands in no group held here");
+        LendRefusal::Closed.say(StatusCode::FORBIDDEN, "this computer stands in no group")
+    })
 }
 
 #[cfg(test)]

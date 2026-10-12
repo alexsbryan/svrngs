@@ -68,12 +68,15 @@ pub enum RemovalSaid {
     Asked,
 }
 
-/// One key standing in a group: the person it is bound to, and what holds
-/// it ([`Device`], u4-1), as `membership` answers both.
+/// One key standing in a group: the person it is bound to, by name and by
+/// their first key in the group (bash-devices), and what holds it
+/// ([`Device`], u4-1), as `membership` answers them.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Member {
     pub person: Person,
     pub device: Device,
+    /// The person's first key: the same for every device of theirs.
+    pub person_key: String,
 }
 
 impl Standing {
@@ -117,9 +120,16 @@ pub(crate) fn register_in(
         .standing
         .iter()
         .filter_map(|key| {
-            let person = m.bindings.get(key)?.clone();
-            let device = m.device(key)?;
-            Some((key.clone(), Member { person, device }))
+            let (first, person) = m.person_of(key)?;
+            let (person, person_key) = (person.clone(), first.to_string());
+            Some((
+                key.clone(),
+                Member {
+                    person,
+                    device: m.device(key)?,
+                    person_key,
+                },
+            ))
         })
         .collect();
     let removed = m
@@ -253,12 +263,12 @@ impl RingRail {
     }
 
     /// The first group this node holds, in [`RingRail::namespaces`]' order,
-    /// that `actor` stands in, and the person they stand as there; `None`
-    /// when they stand in none. The one answer the acceptor
+    /// that `actor` stands in, and the [`Member`] they stand as there, their
+    /// person by name and first key; `None` when they stand in none. The one answer the acceptor
     /// (`node::admit_dialer`) and the member door (`door::through`) ask. A
     /// group whose register is unreadable vouches for nobody, and groups
     /// that cannot be listed vouch for nobody at all.
-    pub fn standing_anywhere(&self, actor: &str) -> Option<(String, Person)> {
+    pub fn standing_anywhere(&self, actor: &str) -> Option<(String, Member)> {
         let namespaces = match self.namespaces() {
             Ok(n) => n,
             Err(e) => {
@@ -270,10 +280,11 @@ impl RingRail {
         for namespace in &namespaces {
             match self.standing(namespace) {
                 Ok(Standing::Members(m)) => {
-                    if let Some(Member { person, device }) = m.get(actor) {
-                        tracing::debug!(target: "register", actor, namespace, %person, ?device,
+                    if let Some(member) = m.get(actor) {
+                        tracing::debug!(target: "register", actor, namespace, person = %member.person,
+                            person_key = member.person_key, device = ?member.device,
                             "register: the key stands in a group held here");
-                        return Some((namespace.clone(), person.clone()));
+                        return Some((namespace.clone(), member.clone()));
                     }
                 }
                 Ok(_) => {}

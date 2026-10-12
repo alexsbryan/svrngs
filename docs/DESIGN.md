@@ -126,18 +126,22 @@ paths it refuses, how many people may use it at once.
 **What an app gets — the whole surface, for our apps and a stranger's alike:**
 - the person asking, verified, in three headers the door sets
   (`crates/svrngs-node/src/door.rs`, `Identity`): `x-svrngs-key`, who
-  asks, the key the connection verified; `x-svrngs-person`, the name to
+  asks, the person the connection's key stands as, by their first key in
+  the group — the same from every device of theirs (bash-devices), an id
+  and not a key to seal to; `x-svrngs-person`, the name to
   show, their name in the register, never unique; `x-svrngs-user`, the
   name of their account in an app that makes accounts, their name kept to
-  ASCII letters, digits, `-` and `.` and the first 16 hex of their key
-  (`user_name`; bash-person, so a second `ana` is never Ana's account) —
+  ASCII letters, digits, `-` and `.` and the first 16 hex of their person
+  key (`user_name`; bash-person, so a second `ana` is never Ana's account,
+  and Ana's devices are one account) —
   and the app asking in another (`x-svrngs-app`), read only from a pass (sup-1): on a
   phone the pass's `app`, the lend whose pages the group's page handed it
   to; on a computer the app its origin names from what the browser says
   of the page ("Lent apps", call 6), carried to another computer's door
   in a pass that computer signs for itself; none for a key of the group's
   asking with no pass;
-- the people in the group, each with a public key the app may seal to;
+- the people in the group, one row per key, each key one an app may seal
+  to, with its person's first key, which every key of theirs shares;
 - the record, over a loopback API on the member's own node: append, read, live;
 - the services the group's members lend, each by name and an opaque kind the
   app interprets (`jellyfin`), and how many people are using each now;
@@ -167,8 +171,8 @@ paths it refuses, how many people may use it at once.
   has no yes. `GET /choices/<lend>` answers the dialler's own. A stop
   refuses every request after it; one already carried, a live socket
   included, runs to its end. Each choice is keyed by the person the door
-  resolves (`door::PersonKey`), today the one key they have, so a yes said
-  on a computer holds there, and one said on a phone holds for that phone;
+  resolves (`door::PersonKey`), their first key in the group, so a yes
+  said on one device of theirs holds on every one (bash-devices);
   `svrngs unshare` takes the choices with the lend;
 - the home page, `http://svrngs.localhost:<port>/`, where a person says
   their yes on a computer, and sees their groups, the people in each,
