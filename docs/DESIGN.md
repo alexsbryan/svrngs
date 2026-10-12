@@ -32,10 +32,18 @@ in a container on any member's computer, `svrngs share <port> --kind <name>`,
 and everyone in the group can open it — no port opened, no tunnel, nothing
 for them to install. An app that takes the signed-in person from a request
 header lets each of them straight in once its lender names ours,
-`X-Svrngs-Person`, in its settings (Navidrome's `ND_EXTAUTH_USERHEADER` and
-`ND_EXTAUTH_TRUSTEDSOURCES`, Calibre-Web's "Allow Reverse Proxy
-Authentication"); one that keeps its own accounts asks them once; Actual
-asks for the one password its lender set. Each serves its pages from its
+`X-Svrngs-User`, in its settings, and `svrngs share` knows two by their
+ports and prints what to set: `svrngs share 4533` lends Navidrome, asks no
+password and says `ND_EXTAUTH_USERHEADER=X-Svrngs-User` and
+`ND_EXTAUTH_TRUSTEDSOURCES=127.0.0.1/32`; `svrngs share 8083`, Calibre-Web,
+its "Allow Reverse Proxy Authentication" and header name
+(`crates/svrngs/src/well_known.txt`; whether Calibre-Web signs in a name it
+holds no account for is read from its settings, not run). That header is
+an account's name unique by the person's key, so two people of one name
+are two accounts and the lender's own are never theirs (bash-person; Demo
+C's dry run signed a second `ana` in as Ana, Navidrome's admin, by the
+name, `demo/runs/c/dry-2026-10-12/data/name.json`). One that keeps its own
+accounts asks them once; Actual asks for the one password its lender set. Each serves its pages from its
 own root, so on a phone it needs a page host that gives every app an
 address of its own (ours does); where every app shares one, none of them
 opens. Stock Jellyfin plays and seeks through the door for two people at
@@ -401,7 +409,10 @@ is U5's inventory (§8).
    (Landed, u5-4: `svrngs share` asks no password for a kind its
    well-known table says keeps its own accounts, keeps none though one is
    typed, and prints how to make each person one, the table's words for
-   it (`crates/svrngs/src/well_known.txt`, `share::accounts_of`). Its
+   it (`crates/svrngs/src/well_known.txt`, `share::accounts_of`; since
+   bash-person (d) a row says `accounts:` or `header:`, the second for a
+   kind that takes the person from `x-svrngs-user` — Navidrome on 4533,
+   Calibre-Web on 8083 — whose lender is told what to set in it). Its
    check, `apps/jellyfin/check/`, has the lender make the accounts in
    Jellyfin's own pages by those words; then two people at once, from a
    computer and a phone in both engines, sign in, play and seek, each left
@@ -1511,7 +1522,7 @@ controller (Cubic) reports no bandwidth estimate.
 
 | Upstream | What it does there | Becomes |
 |---|---|---|
-| `sovereign/crates/sovereign-cli-mesh/src/publish_cmd.rs` (`svrn publish <name> <port>`) and `mesh_media/offer.rs` (`probe_origin`, Jellyfin's well-known ports) | writes a lend into `config.toml`; probes a port for a known service | the verb's shape and the probe, with edits: `svrngs share <port>` writes a lend declaration into the data dir, and works whether or not svrngs is already running (a running node reads the declarations; one per data dir, `crates/svrngs/src/cli.rs` `claim`). Landed (u3-5): `crates/svrngs/src/share.rs`; a port alone, on 127.0.0.1; the kind the given one, else the port's from a table kept as data (`well_known.txt`, 8096 alone: the door speaks plain HTTP, so upstream's TLS port 8920 is not shared by number), else refused; the name the given one, else the kind; the limit the given one, else none, which lets in everyone in its groups at once, printed (bash-limit: the 3 that stood here was a number nobody chose, and a declaration naming none, once refused, now holds none); the secret read from a prompt, unechoed on a terminal, sent as `authorization`; `share` runs the node unless svrngs already runs, and `svrngs unshare <name>` withdraws a lend |
+| `sovereign/crates/sovereign-cli-mesh/src/publish_cmd.rs` (`svrn publish <name> <port>`) and `mesh_media/offer.rs` (`probe_origin`, Jellyfin's well-known ports) | writes a lend into `config.toml`; probes a port for a known service | the verb's shape and the probe, with edits: `svrngs share <port>` writes a lend declaration into the data dir, and works whether or not svrngs is already running (a running node reads the declarations; one per data dir, `crates/svrngs/src/cli.rs` `claim`). Landed (u3-5): `crates/svrngs/src/share.rs`; a port alone, on 127.0.0.1; the kind the given one, else the port's from a table kept as data (`well_known.txt`, 8096 — the door speaks plain HTTP, so upstream's TLS port 8920 is not shared by number — and since bash-person 4533 and 8083), else refused; the name the given one, else the kind; the limit the given one, else none, which lets in everyone in its groups at once, printed (bash-limit: the 3 that stood here was a number nobody chose, and a declaration naming none, once refused, now holds none); the secret read from a prompt, unechoed on a terminal, sent as `authorization`; `share` runs the node unless svrngs already runs, and `svrngs unshare <name>` withdraws a lend |
 | `commonwealth/crates/commonwealth-media/src/declared.rs:51-77, 169-229` | the lender's secret: a header value in a 0600 file under a 0700 dir, named by its header, never logged, never in anything shared | forked with edits: the lend's secret stays in the data dir and never enters the record. A lend's public part (name, kind, limit) is answered by its lender's node, never stored: the list of what members lend is computed by asking each standing member, as upstream's offers were (`commonwealth-media/src/reach.rs:131-168`), so an offline computer's lends are absent rather than stale. Landed (u3-4): `crates/svrngs-node/src/declared.rs`, the store under `<data dir>/secrets/lends/<lend>/`, a failed hardening failing the write; the declaration `<data dir>/lends/<lend>.json` (`lend.rs`), read per request. Landed (u3-5): the declaration holds the port, the kind, the limit and the refused paths, written and withdrawn only by `lend::declare` and `lend::withdraw`, and its limit changed only by `lend::limit` (bash-limit, the home page's `/lent`); `GET /lends` on the member ALPN answers a dialer standing in a group held what this computer lends now and how many people use each (the door's count of the people with a request in flight, `door::Using`; since u3-6, the people its limit counts); `Node::lends` asks every standing key at once and answers each lend with whose it is and an address on this computer's loopback, the dialler's bridge then `/lend/<name>/`, naming a computer that did not answer |
 | `commonwealth-media/src/identity.rs:118-165` (`admit_spliced_origin`) and `commonwealth-transport/src/iroh_identity_forward.rs:297-328` (`rewrite_head`), with its tests at `:620-702` | refuse a non-member and a member outside the allow list; strip every client identity header and every header about to be declared, compared case-, padding- and control-byte-blind; then set identity, then the declared secret | the rules forked into the door's handler, the code not (§8, U1's inventory): the person and key come from the `Dialer` extension and the register, and one prefix of svrngs's own is stripped whole. The tests come over as tests. Landed (u3-4): `crates/svrngs-node/src/door.rs`, `/lend/<lend>/<path>` on the member ALPN; `x-svrngs-person` and `x-svrngs-key` set, every client header under `x-svrngs-` stripped; a client's padded or control-byte header name never reaches the door, since hyper refuses the request (400) |
 | `sovereign/crates/sovereign-daemon/src/serve_client.rs:616-655` (`forward_stream`), the strip lists of `sovereign-pods/src/worker_inference_proxy.rs`, and `commonwealth-transport/src/iroh_routed_forward.rs:318` (`route_by_prefix`, its traversal guard) | a GET proxy that streams a response and passes `Range`; hop-by-hop strips; refusing `..`, `%2e`, `%2f` | with edits: every method, a streamed request body, `If-Range`, and the lend's refused paths matched as `route_by_prefix` matches a prefix. Upstream streams no request body anywhere. Landed (u3-4): one hyper connection per request, both bodies streamed; a refused path compared percent-decoded, case-blind and with repeated slashes as one; a response header holding the secret dropped |

@@ -521,7 +521,9 @@ and an address on this computer. `share.rs` is `svrn publish`'s
 `resolve_target` and `svrn mesh media offer`'s `probe_origin` at
 `e1a43bcd2`, then changed (u3-5): `share <port>` takes a port alone,
 probes it, names its kind from `well_known.txt` (data, so the infra holds
-no app's noun) or `--kind`, its name from `--name` or the kind, its limit
+no app's noun; each row may say how the kind signs a person in, `Signs`:
+with accounts its lender makes, or from the door's `x-svrngs-user`, and
+then no password is asked) or `--kind`, its name from `--name` or the kind, its limit
 from `--limit` or 3, its upload from `--upload` in Mbit/s or none (u3-6),
 and decides the lend in `lend_of`, which touches
 nothing; `cli` reads the password from a prompt, never argv, declares the

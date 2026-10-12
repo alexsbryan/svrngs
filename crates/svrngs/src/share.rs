@@ -20,6 +20,8 @@
 //! u5-4: a kind the table says keeps its own accounts ([`accounts_of`]) is
 //! lent with no password, and its lender told how to make each person an
 //! account in it (DESIGN §3, "Lent apps", call 4: sign in once).
+//! bash-person (d): so is a kind that takes the person from the door's
+//! header, its lender told what to set in it ([`Signs::Header`]).
 //!
 //! mwp-1: `--sign-in <port>` names the lender's program that signs each
 //! person in (`svrngs_node::door::sign_in`), refused as a lend's port is
@@ -36,6 +38,18 @@ use svrngs_node::lend::{Kind, Lend, LendName, RefusedPath, Upload};
 /// kind is an app's word the infra does not hold (DESIGN §5, the nouns
 /// gate).
 pub const WELL_KNOWN: &str = include_str!("well_known.txt");
+
+/// How a kind [`WELL_KNOWN`] names signs each person in, and what its
+/// lender does for it, in their words: either way it is lent with no
+/// password, since one sent on each request makes everyone one person to it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Signs {
+    /// It keeps its own accounts: how its lender makes a person one.
+    Accounts(&'static str),
+    /// It takes the person from the door's `x-svrngs-user`: what its
+    /// lender sets in it.
+    Header(&'static str),
+}
 
 /// [`WELL_KNOWN`]'s rows: the port as written, the kind, parsed once for
 /// both readers (REVIEW_FINDINGS #64), and the rest of the line, empty when
@@ -104,17 +118,23 @@ pub fn well_known_kind(port: NonZeroU16) -> Option<Kind> {
     rows().find_map(|(p, kind, _)| (p.parse::<u16>().ok()? == port.get()).then_some(kind))
 }
 
-/// How a lender makes a person an account in a service of `kind`, if
-/// [`WELL_KNOWN`] says it keeps its own. Such a service asks each person
-/// to sign in once, with an account its lender made, and is lent with no
-/// password: one sent on each request makes everyone one person to it, so
-/// one person's sign-in ended everyone's, and its token reached their
-/// browsers (`demo/runs/a/dry-2026-10-04/README.md:39-50`;
-/// `demo/runs/u5/2026-10-05-jellyfin/README.md`, finding 3).
-pub fn accounts_of(kind: &Kind) -> Option<&'static str> {
-    let how = rows().find_map(|(_, k, how)| (k == *kind && !how.is_empty()).then_some(how));
-    tracing::debug!(target: "share", kind = %kind, own_accounts = how.is_some(), "share: whether the kind keeps its own accounts");
-    how
+/// How a service of `kind` signs each person in, if [`WELL_KNOWN`] says:
+/// with accounts of its own, each signing in once with one its lender made,
+/// or from the door's header. Either is lent with no password: one sent on
+/// each request makes everyone one person to it, so one person's sign-in
+/// ended everyone's, and its token reached their browsers
+/// (`demo/runs/a/dry-2026-10-04/README.md:39-50`;
+/// `demo/runs/u5/2026-10-05-jellyfin/README.md`, finding 3). A row saying
+/// neither `accounts:` nor `header:` says nothing.
+pub fn accounts_of(kind: &Kind) -> Option<Signs> {
+    let how = rows().find(|(_, k, _)| k == kind).map(|(_, _, how)| how);
+    let signs = match how.and_then(|h| h.split_once(':')) {
+        Some(("accounts", how)) => Some(Signs::Accounts(how.trim())),
+        Some(("header", what)) => Some(Signs::Header(what.trim())),
+        _ => None,
+    };
+    tracing::debug!(target: "share", kind = %kind, ?signs, "share: how the kind signs each person in, if the table says");
+    signs
 }
 
 /// Whether something on this computer accepts a TCP connection on `port`.

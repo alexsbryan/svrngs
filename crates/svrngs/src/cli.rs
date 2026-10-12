@@ -38,8 +38,10 @@
 //! is read from a prompt, never from the command line, where any program on
 //! this computer may read it (`ps`); a service that keeps its own accounts
 //! is lent with none, and its lender told how to make each person one
-//! (u5-4, [`share::accounts_of`]); one with a sign-in, none either, each
-//! person signed in by it (mwp-1). The bare command prints what the people
+//! (u5-4, [`share::accounts_of`]); one that takes each person from the
+//! door's header, none, and its lender told what to set in it
+//! (bash-person (d)); one with a sign-in, none either, each person signed
+//! in by it (mwp-1). The bare command prints what the people
 //! of this computer's groups lend, asked of their computers as it starts.
 //!
 //! `room` serves the lends it names to this computer's own network while
@@ -132,7 +134,9 @@ svrngs — keep what your group shares on your own computers.
       password the service takes on each request, if any; that stays on
       this computer, and nobody you lend it to receives it. For a service
       it knows keeps its own accounts it asks none, and says how to make
-      each person an account there: each signs in once. --name is what
+      each person an account there: each signs in once. For one it knows
+      takes each person from svrngs (Navidrome on 4533, Calibre-Web on
+      8083) it asks none, and says what to set in it. --name is what
       they see it as; else its kind. --kind says what it is, when svrngs
       does not know the port. --limit is how many people may use it at
       once; else everyone in your groups. --refuse keeps a path of it from them; say it again
@@ -610,8 +614,12 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
                     tracing::debug!(target: "cli", lend = %lend.name, "cli: share — no password asked: its sign-in signs each person in");
                     None
                 }
-                Some(_) => {
+                Some(share::Signs::Accounts(_)) => {
                     tracing::debug!(target: "cli", lend = %lend.name, "cli: share — no password asked: its people sign in to it once, with accounts its lender makes");
+                    None
+                }
+                Some(share::Signs::Header(_)) => {
+                    tracing::debug!(target: "cli", lend = %lend.name, "cli: share — no password asked: it takes each person from the door's header");
                     None
                 }
                 None => prompt_secret(&lend.name)?,
@@ -880,13 +888,14 @@ pub enum Said {
         api: SocketAddr,
         lends: Lends,
     },
-    /// `share`: `lend` declared, with a secret or none; `accounts`, how its
-    /// lender makes each person an account in it, when it keeps its own;
+    /// `share`: `lend` declared, with a secret or none; `accounts`, how it
+    /// signs each person in and what its lender does for that, when the
+    /// table of well-known ports says;
     /// `running` when svrngs runs here already, so it is lent now.
     Shared {
         lend: Lend,
         secret: bool,
-        accounts: Option<&'static str>,
+        accounts: Option<share::Signs>,
         running: bool,
     },
     /// `unshare`: no longer lent.
@@ -1004,12 +1013,18 @@ impl std::fmt::Display for Said {
                     None => writeln!(f, "Lent {name} (port {port}) to everyone in your groups, as many at once as want it. \
                         To let fewer in at once, change it on your home page, or `svrngs share {port} --limit <number>`.")?,
                 }
-                if let Some(how) = accounts {
-                    writeln!(
+                match accounts {
+                    Some(share::Signs::Accounts(how)) => writeln!(
                         f,
                         "{} asks each person to sign in once, with an account you make them. In {}: {how}. Then tell each person theirs.",
                         lend.name, lend.kind
-                    )?;
+                    )?,
+                    Some(share::Signs::Header(what)) => writeln!(
+                        f,
+                        "{} signs each person in as themselves, with nothing typed, once it takes them from svrngs: in {}, {what}.",
+                        lend.name, lend.kind
+                    )?,
+                    None => {}
                 }
                 if let Some(port) = lend.sign_in {
                     writeln!(

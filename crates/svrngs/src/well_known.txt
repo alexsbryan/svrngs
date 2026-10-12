@@ -1,8 +1,13 @@
 # Well-known ports, and the kind of service that listens on each, for
 # `svrngs share <port>` to name a lend it recognises (crates/svrngs/src/share.rs,
-# WELL_KNOWN). One `<port> <kind>` a line, then, for a service that keeps its
-# own accounts, how its lender makes a person one, in DESIGN §1's words:
-# `share` lends it with no password and prints that (share.rs, accounts_of).
+# WELL_KNOWN). One `<port> <kind>` a line, then how it signs each person in,
+# if svrngs knows (share.rs, `Signs`), and `share` lends it with no password
+# and prints the rest of the line, in DESIGN §1's words:
+#   accounts: <how>  it keeps its own accounts; how its lender makes one.
+#   header: <what>   it takes the person from the header svrngs's door sets,
+#                    `x-svrngs-user` (crates/svrngs-node/src/door.rs,
+#                    USER_HEADER, an account's name unique by the person's
+#                    key); what its lender sets in it for that.
 #
 # Jellyfin's HTTP port (commonwealth-ai
 # sovereign/crates/sovereign-cli-mesh/src/mesh_media/offer.rs:94-97 at
@@ -12,4 +17,15 @@
 # Jellyfin 12.0.0's own pages, as apps/jellyfin/check/lender.mjs follows them:
 # the user menu, Dashboard, Users, the + titled "Add User"; its name and
 # password, and its libraries, none ticked until the lender ticks them.
-8096 jellyfin your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save
+8096 jellyfin accounts: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save
+
+# Navidrome's port (its default, `ND_PORT`). ExtAuth's two settings, as
+# Navidrome 0.64.2 took them in Demo C's dry run (demo/runs/c/dry-2026-10-12/,
+# run.py) and as its binary names them (`ExtAuth.UserHeader`,
+# `ExtAuth.TrustedSources`): the door asks it from 127.0.0.1.
+4533 navidrome header: ND_EXTAUTH_USERHEADER=X-Svrngs-User and ND_EXTAUTH_TRUSTEDSOURCES=127.0.0.1/32 in its environment, then start it again
+#
+# Calibre-Web's port (its default). Its reverse-proxy sign-in, by the names
+# its settings page gives them; read, not run here: whether it signs in a
+# name it holds no account for is not judged (DESIGN §1).
+8083 calibre-web header: Admin, Edit Basic Configuration, Feature Configuration; tick Allow Reverse Proxy Authentication, set Reverse Proxy Header Name to X-Svrngs-User, and Save

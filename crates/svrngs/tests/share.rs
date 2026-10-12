@@ -616,6 +616,54 @@ fn a_service_with_its_own_accounts_is_lent_with_no_password() {
     drop(stand_in);
 }
 
+/// **Navidrome by its port alone** (bash-person (d); Demo C's dry run,
+/// finding 2): `share 4533`, a stand-in listening there, lends it as
+/// navidrome, asks no password and keeps none though one is typed, and
+/// prints both settings its lender sets in it so it takes each person
+/// from the header svrngs sets. Red at bash-person's base: refused, "say
+/// what is on port 4533". It binds port 4533, so a Navidrome running on
+/// this computer fails it by name rather than passing unjudged.
+#[cfg(unix)]
+#[test]
+fn share_4533_alone_lends_navidrome_asking_nothing_and_says_what_to_set() {
+    let dir = tempfile::tempdir().unwrap();
+    let logs = tempfile::tempdir().unwrap();
+    let stand_in = std::net::TcpListener::bind("127.0.0.1:4533")
+        .expect("port 4533 is free on this computer: something listening there cannot be judged");
+    let log = logs.path().join("share");
+    let mut running = Program::start(dir.path(), &log, &["share", "4533"], &format!("{SECRET}\n"));
+    running.until("Leave this running");
+    let _ = running.child.kill();
+    let (_, seen) = running.ends();
+
+    assert!(
+        seen.iter()
+            .any(|l| l.starts_with("Lent navidrome (port 4533)")),
+        "{seen:?}"
+    );
+    let set = seen
+        .iter()
+        .find(|l| l.contains("ND_EXTAUTH_USERHEADER=X-Svrngs-User"))
+        .unwrap_or_else(|| panic!("the lender is not told what to set: {seen:?}"));
+    assert!(
+        set.contains("ND_EXTAUTH_TRUSTEDSOURCES=127.0.0.1/32"),
+        "{set}"
+    );
+    assert!(
+        !seen.iter().any(|l| l.contains("Its password stays")),
+        "{seen:?}"
+    );
+    assert!(dir.path().join("lends/navidrome.json").exists());
+    assert!(!dir.path().join("secrets/lends/navidrome").exists());
+    let log = std::fs::read_to_string(&log).unwrap();
+    assert!(
+        !log.contains("takes a password"),
+        "a password was asked: {log}"
+    );
+    plain(&seen);
+    drop(stand_in);
+}
+
 /// **A folder is synced by asking svrngs running here, in one group**
 /// (gf-1, sy-1, syp-4): `share --folder <dir> --group <group>` takes the
 /// folder's absolute path and the group as typed, and only `share` takes
