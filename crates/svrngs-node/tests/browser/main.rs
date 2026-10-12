@@ -1405,6 +1405,61 @@ async fn the_home_page_says_an_unreadable_register(engine: Engine) {
     drop(ada);
 }
 
+in_both_engines!(
+    /// **The home page tells two people of one name apart**
+    /// (bash-same-name (a)). Ada lets two people into house as cy, a
+    /// second apart, each by hand (bash-devices made them two people,
+    /// `a1d0ba9`); her home page's people line names each person once,
+    /// and no two alike, in a person's words. Planted: two people of one
+    /// name, listed by home.js as "cy, cy".
+    the_home_page_tells_two_people_of_one_name_apart
+);
+async fn the_home_page_tells_two_people_of_one_name_apart(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    for me in [3, 4] {
+        let fixture = svrngs_core::tests_support::Fixture {
+            act: RailAct::Admit {
+                person: Person::parse("cy").unwrap(),
+                key: actor_of(&signing(me)),
+                invite: None,
+            },
+            on_behalf_of: None,
+        };
+        ada.rail().commit(NS, &fixture).unwrap().unwrap();
+        tokio::time::sleep(Duration::from_millis(1_100)).await;
+    }
+    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
+    let seen = drive(
+        engine,
+        "home.mjs",
+        json!({ "ask": home, "read": "#home section p" }),
+        None,
+    )
+    .await;
+    eprintln!("the home page's run: {seen:#}");
+    let line = seen["read"].as_str().unwrap_or_default();
+    let people: Vec<&str> = (line.strip_prefix("People: "))
+        .unwrap_or_else(|| panic!("no people line: {seen:#}"))
+        .split(", ")
+        .collect();
+    let alike = people
+        .iter()
+        .filter(|p| people.iter().filter(|q| q == p).count() > 1);
+    assert_eq!(alike.count(), 0, "two people listed alike: {line}");
+    assert_eq!(people.len(), 4, "ada, bo and each cy, once: {line}");
+    assert_eq!(
+        people.iter().filter(|p| p.starts_with("cy")).count(),
+        2,
+        "{line}"
+    );
+    for kept in ["key", "member", "keeper", "ring", " act", "journal"] {
+        assert!(!line.to_lowercase().contains(kept), "says {kept}: {line}");
+    }
+    drop(ada);
+}
+
 /// House's removals, held on ada's computer: cy and dee admitted, cy's
 /// ask to remove dee signed on cy's own key and taken in, then ada's cut
 /// of dee through `/v1/removals`.

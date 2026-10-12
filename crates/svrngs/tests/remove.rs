@@ -174,3 +174,100 @@ async fn the_keepers_remove_is_the_cut() {
     assert!(matches!(away, Err(Refusal::NotRunning)), "{away:?}");
     assert_eq!(away.unwrap_err().exit_code(), 3);
 }
+
+/// What a refusal's words say to add to the command, between backticks,
+/// as a shell would split it: each `"…"` one argument.
+fn ways(words: &str) -> Vec<Vec<String>> {
+    (words.split('`').skip(1).step_by(2))
+        .map(|way| {
+            (way.split('"').enumerate())
+                .flat_map(|(i, part)| match i % 2 {
+                    0 => part.split_whitespace().map(str::to_string).collect(),
+                    _ => vec![part.to_string()],
+                })
+                .collect()
+        })
+        .collect()
+}
+
+/// **The keeper removes one of two people of one name** (bash-same-name
+/// (a)). Sam lets two people into trip as Bo, a second apart, each by
+/// hand, as a member's hand or a race at two computers gives them
+/// (bash-devices made them two people, `a1d0ba9`). Sam's `remove Bo` and
+/// `handover Bo` are refused — svrngs never guesses which Bo — in words
+/// that name, between backticks, what to add to the command to name one;
+/// following the first, one Bo is out and the other stands, and following
+/// the second, the other is out. Planted: two people of one name, the
+/// keeper unable to remove either by any means the command offers.
+#[tokio::test]
+async fn the_keeper_removes_one_of_two_people_of_one_name() {
+    let dir = tempfile::tempdir().unwrap();
+    let relay = no_relay();
+    let ask = |verb: Verb| cli::run(verb, dir.path().to_path_buf(), &relay);
+    let node = Node::start(
+        dir.path().to_path_buf(),
+        SigningKey::from_bytes(&[5; 32]),
+        &no_relay(),
+        svrngs::group::seed_text,
+        cli::API,
+    )
+    .await
+    .unwrap();
+    let (seed, _) = cli::new_group(&node, name("trip"), name("Sam"), None, &no_relay())
+        .await
+        .unwrap();
+    let bos = [6u8, 7].map(|b| SigningKey::from_bytes(&[b; 32]));
+    for bo in &bos {
+        let admit = RailAct::Admit {
+            person: Person::parse("Bo").unwrap(),
+            key: actor_of(bo),
+            invite: None,
+        };
+        node.rail()
+            .commit(&seed.id(), &svrngs_core::tests_support::Batch(vec![admit]))
+            .unwrap()
+            .unwrap();
+        tokio::time::sleep(std::time::Duration::from_millis(1_100)).await;
+    }
+    let stand = || {
+        let members = node.rail().register(&seed.id()).unwrap().members;
+        bos.each_ref().map(|bo| members.contains_key(&actor_of(bo)))
+    };
+    assert_eq!(stand(), [true, true], "control: both Bos are in");
+
+    let verb = |v: &str, more: &[String]| {
+        let mut args = argv(&[v, "Bo", "--group", "trip"]);
+        args.extend(more.iter().cloned());
+        cli::parse(args)
+    };
+    for v in ["handover", "remove"] {
+        let refused = ask(verb(v, &[]).unwrap()).await;
+        let Err(Refusal::Removal(words)) = &refused else {
+            panic!("{v} Bo: {refused:?}")
+        };
+        eprintln!("{v} Bo: {words}");
+        for kept in ["key", "member", "keeper", "ring", " act", "journal"] {
+            assert!(
+                !words.to_lowercase().contains(kept),
+                "{v} says {kept}: {words}"
+            );
+        }
+        assert_eq!(stand(), [true, true], "{v} Bo changed nothing");
+        assert_eq!(
+            ways(words).len(),
+            2,
+            "{v} Bo: the refusal names a way to name each Bo: {words}"
+        );
+    }
+    let Err(Refusal::Removal(words)) = ask(verb("remove", &[]).unwrap()).await else {
+        unreachable!("refused above")
+    };
+    let [first, second] = <[Vec<String>; 2]>::try_from(ways(&words)).unwrap();
+    let out = ask(verb("remove", &first).unwrap()).await;
+    assert!(out.is_ok(), "remove Bo {first:?}: {out:?}");
+    assert_eq!(stand(), [false, true], "the first Bo out, the other stands");
+    let out = ask(verb("remove", &second).unwrap()).await;
+    assert!(out.is_ok(), "remove Bo {second:?}: {out:?}");
+    assert_eq!(stand(), [false, false], "the second Bo out");
+    node.endpoint().close().await;
+}
