@@ -17,9 +17,9 @@ Fences the rows keep:
 4. *Every decision traces* (AGENTS.md 1), at debug, each refusal included.
 5. *A person's words* (DESIGN §1): a person reads names, the group, computer
    and phone — never key, member, keeper, ring, act or journal.
-6. *The budget is 15,350*, svrngs-core's 3,000: each row puts
-   `scripts/lean_check.py` before and after in its commit; past either is
-   the operator's.
+6. *The budget is 15,350*, svrngs-core's 3,000, or 3,080 for bash-devices
+   (the operator, 2026-10-12): each row puts `scripts/lean_check.py` before
+   and after in its commit; past either is the operator's.
 7. *Nothing outward-facing*: the published page is not redeployed; a run
    serves the page from `scripts/build-web.sh`'s output on this host.
 

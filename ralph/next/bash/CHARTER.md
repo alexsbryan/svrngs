@@ -61,15 +61,25 @@ verified" — only a key is verified. So:
   The command stops the stranger; the header makes an app account safe even
   when two keys share a name by race or by a member's hand.
 
-What it costs until device links (`~/dev/svrn-docs/rings/current/ONE_PERSON_MANY_DEVICES.md`,
-phase 1, the operator's to queue): a person's second device under the exact
+What it costs until device links: a person's second device under the exact
 same name is refused, and so is a phone whose key was lost (Safari clears a
 site's storage after seven days unused) rejoining as itself; each is told how
 to join under another name, and a removed person's name is free again.
-That design's §8 question 2 ("leave the homonym merge until device links")
-is answered by the dry run: not leaving it. Squatting a name before its
-person joins stays possible, as in canon; the keeper can remove the squatter,
-which defect 2's fix is what makes possible.
+`~/dev/svrn-docs/rings/current/ONE_PERSON_MANY_DEVICES.md`'s §8 question 2
+("leave the homonym merge until device links") is answered by the dry run:
+not leaving it. Squatting a name before its person joins stays possible, as
+in canon; the keeper can remove the squatter, which defect 2's fix is what
+makes possible.
+
+**Device links are this queue's** (the operator, 2026-10-12, "yes to both",
+to amending DESIGN §6 and raising svrngs-core's cap by about 80 lines):
+row bash-devices builds that design's phase 1. A person's own device signs the
+link that adds another — canon's rule that only a key bound to a name adds a
+key to it (`SIGNING_DESIGN.md` §2) — and the fold's person becomes their
+first key, so a name merges no one even when two people share it. DESIGN
+§6's "A signing key per person per group" (`docs/DESIGN.md:1242-1243`)
+becomes a key per device per group, bound to the person, in that row, with
+the operator's words.
 
 ## Decide
 
@@ -93,11 +103,14 @@ stop.
 Write `NEEDS_HUMAN.md` and stop for:
 
 - the phone's typed name (finding 5);
-- device links, or any change to who a person is in the fold;
+- any change to who a person is in the fold beyond bash-devices' phase 1
+  (a phone making a device link, a person removing their own device);
 - changing a rule in DESIGN §6 or a decision in §10 but those this queue's
   rows name;
-- raising the budget past 15,350, or svrngs-core's past 3,000 (say the lines
-  needed and why, with the count);
+- raising the budget past 15,350, or svrngs-core's past 3,000 — but for
+  bash-devices, which may take svrngs-core to 3,080 (the operator,
+  2026-10-12, "yes to both"), in its own commit with the reason (say the
+  lines needed and why, with the count);
 - Demo C's bars (`demo/c.md`, the operator's to set);
 - deploying the page host (`scripts/deploy-page.sh`) or anything else
   outward-facing — the rerun serves the page locally;
