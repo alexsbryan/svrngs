@@ -1,0 +1,20 @@
+# svrngs onair — ON_AIR §7, the proof of concept: three primitives an app gets (bytes by hash with a lifetime, a signature for an app checkable anywhere, the live lane naming who spoke), proved by apps/on-air on one host (operator, 2026-10-13). Launch, from anywhere, once the start queue is done (one loop per tree):
+#
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py supervise --workdir ~/dev/svrngs \
+#     --queue onair --install-launchd -- python3 ~/dev/commonwealth-ai/scripts/ralph.py \
+#     run --workdir ~/dev/svrngs --queue onair --max-stall 3
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py start --workdir ~/dev/svrngs --queue onair
+#
+# The plist the first command writes carries no CARGO_INCREMENTAL=0; add it
+# under EnvironmentVariables after any reinstall (the host's disk is shared).
+label = "svrngs-onair"
+session_timeout = 5400
+audit_every = 4
+worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
+settings = "ralph/claude-settings.json"
+
+[models]
+worker = "claude-opus-5-5"
+review = "claude-opus-5-5"
+resolve = "claude-opus-5-5"
+variant = "high"
