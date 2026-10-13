@@ -10,7 +10,7 @@
    `Rc<RefCell<` in a crate (ownership is a tree); no `async` in svrngs-core
    (the core is synchronous).
 4. Lines of code — not blank, not a comment, not a test — stay under budget:
-   svrngs-core under 3,130, the whole repository under 15,950 — scripts
+   svrngs-core under 3,130, the whole repository under 16,000 — scripts
    included. The budget counts the product: apps/, installed packages (any
    node_modules/) and demo/runs/ apart. A recorded run's driver is what ran,
    kept byte for byte so its data reads against it (ralph/REVIEW_FINDINGS.md
@@ -26,7 +26,7 @@ ROOT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().pare
 FOREIGN = re.compile(r'^name = "(commonwealth-[\w-]+|sovereign-[\w-]+|oicp-[\w-]+|kernel-types|oplog(-types)?|corpus-engine|host-kit|mesh-[\w-]+)"$', re.M)
 IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "tower",
            "rusqlite", "sqlx", "notify", "mio"}
-BUDGET = {"crates/svrngs-core": 3130, ".": 15950}
+BUDGET = {"crates/svrngs-core": 3130, ".": 16000}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
