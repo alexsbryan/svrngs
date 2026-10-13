@@ -1,0 +1,1982 @@
+{
+ "jellyfin": {
+  "server": "2cf8560cce454de9acd6e9be90e1ce16",
+  "version": "12.0.0",
+  "films": {
+   "laptop": "cabebc6ec4342a17f1cfd106348ed8ab",
+   "phone": "129e6d853f9bc85f8c3bb9bf1467561c"
+  },
+  "users_before": [
+   "sam"
+  ]
+ },
+ "sam_share": {
+  "who": "sam",
+  "args": [
+   "share",
+   "8096",
+   "--sign-in",
+   "8097"
+  ],
+  "exit": 0,
+  "said": "Lent jellyfin (port 8096) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 8096 --limit <number>`.\nEach person is signed in to it as themselves by what answers on port 8097, with nothing typed.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare jellyfin` stops lending it.",
+  "ms": 10
+ },
+ "ana_join": {
+  "who": "ana",
+  "args": [
+   "join",
+   "http://localhost:50196/#<the token>",
+   "--as",
+   "Ana",
+   "--no-run"
+  ],
+  "exit": 0,
+  "said": "You're in two, as Ana.\ntwo's folder is /tmp/two-run/ana/svrngs/two: what anyone in two puts there reaches this computer, and what you put there reaches theirs.",
+  "ms": 2314
+ },
+ "ana_device_link_said": "A link that adds another computer or phone of yours to two: open it there, and it joins as you, Ana, asked no name. Send it to nobody else: whoever opens it joins as you. Any link you sent before stops letting anyone new in; everyone it let in stays.\nA computer or phone already in two on its own stays as it joined.\nIt works for a day, while this computer is on:\n\n  svrngs://join/<the token>\n\nor, to open it in a browser:\n\n  http://localhost:50196/#<the token>\n\nOn a phone, each app opens at an address of its own under localhost:50196, which can see which app is opened.\n\nLeave this running; Ctrl-C stops it.",
+ "laptop_join": {
+  "said": "You're in two, as Ana.",
+  "ms": 1345,
+  "user": "analaptop",
+  "as_given": null
+ },
+ "two": {
+  "window_s": 180,
+  "films": {
+   "laptop": "cabebc6ec4342a17f1cfd106348ed8ab",
+   "phone": "129e6d853f9bc85f8c3bb9bf1467561c"
+  },
+  "devices": {
+   "laptop": {
+    "engine": "chromium",
+    "reports": {
+     "start": [
+      {
+       "at": 4587,
+       "item": "cabebc6ec4342a17f1cfd106348ed8ab",
+       "pos_s": 0,
+       "play_session": "42b86898b5944d8bb45bab382de9a08c"
+      }
+     ],
+     "progress": 22,
+     "stopped": [
+      {
+       "at": 203215,
+       "item": "cabebc6ec4342a17f1cfd106348ed8ab",
+       "pos_s": 935.7,
+       "play_session": "42b86898b5944d8bb45bab382de9a08c"
+      }
+     ]
+    },
+    "logs": [],
+    "open_ms": 758,
+    "shown_ms": 1055,
+    "asked_sign_in": false,
+    "stored": {
+     "user": "2a644de894ed408cb2d63ae6fd82fa52",
+     "token": "the stand-in"
+    },
+    "device": "svrngs-bf5cb6a9597af715",
+    "play_ms": 1986,
+    "playing": {
+     "ct": 0.52,
+     "paused": false,
+     "rs": 4,
+     "item": null,
+     "error": null
+    },
+    "seeks": [
+     {
+      "pct": 20,
+      "ms": 466,
+      "at": 240.3,
+      "target": 240,
+      "at_s": 36
+     },
+     {
+      "pct": 60,
+      "ms": 514,
+      "at": 720.33,
+      "target": 720,
+      "at_s": 73
+     },
+     {
+      "pct": 35,
+      "ms": 491,
+      "at": 420.36,
+      "target": 420,
+      "at_s": 108
+     },
+     {
+      "pct": 75,
+      "ms": 433,
+      "at": 900.34,
+      "target": 900,
+      "at_s": 144
+     }
+    ],
+    "window": {
+     "samples": 900,
+     "played_s": 179.6,
+     "stills_5s": [],
+     "outside_own_seeks": {
+      "emptied": 0,
+      "loadstart": 0,
+      "element": 0,
+      "waiting": 0,
+      "stalled": 0,
+      "error": 0,
+      "ended": 0
+     }
+    },
+    "at_window_end": {
+     "ct": 935.91,
+     "paused": false,
+     "rs": 4,
+     "item": null,
+     "error": null
+    },
+    "stop": {
+     "at": 203183,
+     "before": {
+      "ct": 935.92,
+      "paused": false,
+      "rs": 4,
+      "item": null,
+      "error": null
+     },
+     "gone_ms": 39,
+     "stop_reported": {
+      "at": 203215,
+      "item": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 935.7,
+      "play_session": "42b86898b5944d8bb45bab382de9a08c"
+     }
+    }
+   },
+   "phone": {
+    "engine": "webkit",
+    "reports": {
+     "start": [
+      {
+       "at": 21282,
+       "item": "129e6d853f9bc85f8c3bb9bf1467561c",
+       "pos_s": 0,
+       "play_session": ""
+      }
+     ],
+     "progress": 22,
+     "stopped": [
+      {
+       "at": 223262,
+       "item": "129e6d853f9bc85f8c3bb9bf1467561c",
+       "pos_s": 215.3,
+       "play_session": ""
+      }
+     ]
+    },
+    "logs": [],
+    "joined": {
+     "asked_name": false,
+     "status": "You’re in two, as Ana"
+    },
+    "joined_ms": 5491,
+    "open_ms": 10741,
+    "shown_ms": 12244,
+    "asked_sign_in": false,
+    "stored": {
+     "user": "2a644de894ed408cb2d63ae6fd82fa52",
+     "token": "the stand-in"
+    },
+    "device": "svrngs-bf5cb6a9597af715",
+    "play_ms": 8402,
+    "playing": {
+     "ct": 0.75,
+     "paused": false,
+     "rs": 4,
+     "item": "129e6d853f9bc85f8c3bb9bf1467561c",
+     "error": null
+    },
+    "seeks": [
+     {
+      "pct": 70,
+      "ms": 1054,
+      "at": 840.33,
+      "target": 840,
+      "at_s": 55
+     },
+     {
+      "pct": 30,
+      "ms": 1316,
+      "at": 360.32,
+      "target": 360,
+      "at_s": 91
+     },
+     {
+      "pct": 55,
+      "ms": 2131,
+      "at": 660.32,
+      "target": 660,
+      "at_s": 128
+     },
+     {
+      "pct": 15,
+      "ms": 2924,
+      "at": 180.33,
+      "target": 180,
+      "at_s": 165
+     }
+    ],
+    "window": {
+     "samples": 882,
+     "played_s": 174,
+     "stills_5s": [],
+     "outside_own_seeks": {
+      "emptied": 0,
+      "loadstart": 0,
+      "element": 0,
+      "waiting": 0,
+      "stalled": 1,
+      "error": 0,
+      "ended": 0
+     }
+    },
+    "at_window_end": {
+     "ct": 195.41,
+     "paused": false,
+     "rs": 4,
+     "item": "129e6d853f9bc85f8c3bb9bf1467561c",
+     "error": null
+    },
+    "alone": {
+     "samples": 98,
+     "played_s": 19.8,
+     "stills_5s": [],
+     "outside_own_seeks": {
+      "emptied": 0,
+      "loadstart": 0,
+      "element": 0,
+      "waiting": 0,
+      "stalled": 0,
+      "error": 0,
+      "ended": 0
+     },
+     "at_end": {
+      "ct": 215.46,
+      "paused": false,
+      "rs": 4,
+      "item": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "error": null
+     }
+    },
+    "stop": {
+     "at": 223233,
+     "before": {
+      "ct": 215.46,
+      "paused": false,
+      "rs": 4,
+      "item": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "error": null
+     },
+     "gone_ms": 41,
+     "stop_reported": {
+      "at": 223262,
+      "item": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 215.3,
+      "play_session": ""
+     }
+    }
+   }
+  },
+  "sessions": [
+   {
+    "at": 25419,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 20.2,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 27200,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 22.2,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 29200,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 24.2,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 31204,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 26.2,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 33225,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 9.9,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 35259,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 30.1,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 37244,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 32.1,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 39224,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 34.1,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 41219,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 36.1,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 43294,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 19.9,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 45263,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 40.1,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 47279,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 42.1,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 49240,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 44.1,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 51292,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 46.1,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 53245,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 29.9,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 55242,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 50.4,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 57282,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 52.4,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 59282,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 54.4,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 61263,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 241,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 63277,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 40,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 65306,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 42,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 67284,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 44,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 69258,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 46,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 71266,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 250.9,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 73284,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 50,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 75273,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 52,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 77337,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 840,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 79277,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 841,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 81275,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 260.7,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 83285,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 262.7,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 85282,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 264.7,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 87293,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 266.7,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 89336,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 850.2,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 91329,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 270.8,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 93307,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 272.8,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 95319,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 274.8,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 97313,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 859.3,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 99322,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 861.3,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 101319,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 863.3,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 103318,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 864.3,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 105323,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 867.3,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 107326,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 869.1,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 109312,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 870.1,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 111312,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 873.1,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 113314,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 360,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 115315,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 361,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 117321,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 740.7,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 119316,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 742.7,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 121315,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 744.7,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 123320,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 369,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 125321,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 370,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 127325,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 750.9,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 129317,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 752.9,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 131318,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 420,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 133318,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 379,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 135318,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 381,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 137319,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 383,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 139326,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 384,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 141321,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 386,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 143322,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 389.1,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 145321,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 390.1,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 147320,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 393.1,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 149321,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 394.1,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 151322,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 661,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 153322,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 441,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 155324,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 443,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 157327,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 445,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 159324,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 447,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 161325,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 669.2,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 163326,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 451,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 165326,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 453,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 167328,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 900,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 169329,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 678,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 171332,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 679,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 173335,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 681,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 175332,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 684,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 177334,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 909.8,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 179334,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 688,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 181338,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 690,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 183336,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 691,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 185335,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 693,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 187336,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 919.9,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 189340,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 920.9,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 191338,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 922.9,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 193344,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 925.9,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 195342,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 927.9,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 197340,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 929.7,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 199341,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 930.7,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 201342,
+    "phase": "window",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 933.7,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 203342,
+    "phase": "laptop stopped",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "cabebc6ec4342a17f1cfd106348ed8ab",
+      "pos_s": 935.7,
+      "paused": false,
+      "method": "Transcode"
+     }
+    ]
+   },
+   {
+    "at": 205346,
+    "phase": "laptop stopped",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": null,
+      "pos_s": null,
+      "paused": false,
+      "method": null
+     }
+    ]
+   },
+   {
+    "at": 207344,
+    "phase": "laptop stopped",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 198.5,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 209345,
+    "phase": "laptop stopped",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 200.5,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 211347,
+    "phase": "laptop stopped",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 202.5,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 213345,
+    "phase": "laptop stopped",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 204.5,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 215346,
+    "phase": "laptop stopped",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 206.5,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 217352,
+    "phase": "laptop stopped",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 208.3,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 219348,
+    "phase": "laptop stopped",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 210.3,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 221349,
+    "phase": "laptop stopped",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": "129e6d853f9bc85f8c3bb9bf1467561c",
+      "pos_s": 212.3,
+      "paused": false,
+      "method": "DirectPlay"
+     }
+    ]
+   },
+   {
+    "at": 223350,
+    "phase": "phone stopped",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": null,
+      "pos_s": null,
+      "paused": false,
+      "method": null
+     }
+    ]
+   },
+   {
+    "at": 225354,
+    "phase": "phone stopped",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": null,
+      "pos_s": null,
+      "paused": false,
+      "method": null
+     }
+    ]
+   },
+   {
+    "at": 226287,
+    "phase": "after",
+    "hers": [
+     {
+      "id": "c73c58d4d9a4dffe18eea88fb977dbcb",
+      "device": "svrngs-bf5cb6a9597af715",
+      "client": "svrngs",
+      "name": "Ana via svrngs",
+      "now": null,
+      "pos_s": null,
+      "paused": false,
+      "method": null
+     }
+    ]
+   }
+  ],
+  "from": "2026-10-13T01:28:17.429Z",
+  "both_playing": true,
+  "phase": "phone stopped",
+  "window_from": 23169,
+  "kept": {
+   "laptop": {
+    "asked": "/UserItems/<id>/UserData",
+    "pos_s": 935.7,
+    "played": false
+   },
+   "phone": {
+    "asked": "/UserItems/<id>/UserData",
+    "pos_s": 215.3,
+    "played": false
+   }
+  },
+  "ana_user": "2a644de894ed408cb2d63ae6fd82fa52",
+  "until": "2026-10-13T01:32:03.834Z"
+ },
+ "people": [
+  [
+   "Ana",
+   "6d0330a37dc33d6131452f5a7bf6897bf3ca5cf0e3fb22b6b11cd2bce3c592b3",
+   "bf5cb6a9597af715f36f7d76d7c17ff79529cc4363a7111fd308ea7c16ba3b0f"
+  ],
+  [
+   "Ana",
+   "bf5cb6a9597af715f36f7d76d7c17ff79529cc4363a7111fd308ea7c16ba3b0f",
+   "bf5cb6a9597af715f36f7d76d7c17ff79529cc4363a7111fd308ea7c16ba3b0f"
+  ],
+  [
+   "Ana",
+   "fa93870c7e2f2d98d9493d61c78118af1bd036f9740ac9dbf213dac8a72e540c",
+   "bf5cb6a9597af715f36f7d76d7c17ff79529cc4363a7111fd308ea7c16ba3b0f"
+  ],
+  [
+   "Sam",
+   "6572de018ac98fe211c4562675c558c58a2d25ac9736ab5ed77f95bb32a70137",
+   "6572de018ac98fe211c4562675c558c58a2d25ac9736ab5ed77f95bb32a70137"
+  ]
+ ],
+ "accounts": [
+  "Ana-bf5cb6a9597af715",
+  "sam"
+ ],
+ "sign_in_asks": [
+  "bf5cb6a9597af715f36f7d76d7c17ff79529cc4363a7111fd308ea7c16ba3b0f"
+ ],
+ "door_sign_in": {
+  "the person's kept answer": 581,
+  "the person's ask is out": 0,
+  "door: sign-in — asked for the person": 1,
+  "refused a kept answer": 0
+ },
+ "end_load": 22.5
+}

@@ -1,0 +1,9 @@
+2026-10-13T01:28:11.188015Z DEBUG jellyfin_mw::viewer: mw: folders — no library kept back, every one open
+2026-10-13T01:28:18.016102Z  INFO jellyfin_mw::answer: mw: the door asks who a person is to Jellyfin key=bf5cb6a9597af715f36f7d76d7c17ff79529cc4363a7111fd308ea7c16ba3b0f person=Ana
+2026-10-13T01:28:18.016164Z  INFO jellyfin_mw::people: mw: a key not seen by this process — finding or making the account the door names key=bf5cb6a9597af715f36f7d76d7c17ff79529cc4363a7111fd308ea7c16ba3b0f person=Ana user=Ana-bf5cb6a9597af715
+2026-10-13T01:28:18.126048Z DEBUG jellyfin_mw::viewer: mw: provision — no account for this person on this origin, created one viewer_user=2a644de894ed408cb2d63ae6fd82fa52 name="Ana-bf5cb6a9597af715"
+2026-10-13T01:28:18.135340Z DEBUG jellyfin_mw::viewer: mw: folders — no library kept back, every one open
+2026-10-13T01:28:18.178509Z  INFO jellyfin_mw::viewer: mw: provision — the person's read-only account made and its policy read back origin=127.0.0.1:8096 viewer_user=2a644de894ed408cb2d63ae6fd82fa52 name="Ana-bf5cb6a9597af715"
+2026-10-13T01:28:18.178621Z  INFO jellyfin_mw::people: mw: signing the person's device in key=bf5cb6a9597af715f36f7d76d7c17ff79529cc4363a7111fd308ea7c16ba3b0f user=Ana-bf5cb6a9597af715 device=svrngs-bf5cb6a9597af715
+2026-10-13T01:28:18.276345Z DEBUG jellyfin_mw::viewer: mw: sign in — a device signed in for the person origin=127.0.0.1:8096 viewer_user=2a644de894ed408cb2d63ae6fd82fa52
+2026-10-13T01:28:18.276449Z  INFO jellyfin_mw::answer: mw: answered the door — the person's token, its authorization and the stored sign-in key=bf5cb6a9597af715f36f7d76d7c17ff79529cc4363a7111fd308ea7c16ba3b0f user=2a644de894ed408cb2d63ae6fd82fa52 device=svrngs-bf5cb6a9597af715
