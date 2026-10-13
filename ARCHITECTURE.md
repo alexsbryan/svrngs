@@ -683,11 +683,11 @@ renders over `ralph/PROMPT.base.md`; E0's queue at tag `e0-bot`
 (`ralph/next/e0/`) is a working example. The driver is commonwealth-ai's
 `scripts/ralph.py`, run as `python3 ~/dev/commonwealth-ai/scripts/ralph.py run
 --workdir ~/dev/svrngs --queue <queue>` — process tooling, not code svrngs
-links; `scripts/ralph-mark.sh` expects to run under it. U1's queue is
+links; it marks a row done itself, when a session reports it. U1's queue is
 `ralph/next/u1/`.
 
 **`scripts/`**: `check.sh` is the definition of done; `lean_check.py` keeps the
 repository standalone and within budget; `vocab_check.py` keeps every app's
 nouns (`apps/<app>/nouns.txt`) out of infra code; `ports.py` lists the fork's pairs;
-`principles_check.py` keeps `docs/principles/` pinned; `ralph-mark.sh` marks a
-queue row done; `build-web.sh` builds and lints the page (`web/`).
+`principles_check.py` keeps `docs/principles/` pinned; `build-web.sh` builds
+and lints the page (`web/`).
