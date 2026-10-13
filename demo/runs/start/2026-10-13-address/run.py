@@ -186,7 +186,11 @@ def main():
         # A port held: another program on Bo's port as Bo's svrngs starts.
         stop("bo")
         port = int(base("bo").rsplit(":", 1)[1])
-        held = socket.socket(); held.bind(("127.0.0.1", port)); held.listen()
+        # SO_REUSEADDR, as Rust's std and tokio set it: Bo's svrngs just
+        # closed the port, its connections in TIME_WAIT, which refuse a bind
+        # without it (the first run, at c10b914: Errno 48).
+        held = socket.socket(); held.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        held.bind(("127.0.0.1", port)); held.listen()
         run = subprocess.run([W / "svrngs"], env={**env("bo"), "RUST_LOG": "error"}, capture_output=True, text=True,
                              stdin=subprocess.DEVNULL, timeout=60)
         held.close()
