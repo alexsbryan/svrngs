@@ -159,15 +159,17 @@ def main():
         # One group with lends: Bo's page, each act tried on it by name.
         walk("lends-bo", home("bo"), click="Sam’s llama")
         walk("invite-bo", home("bo"), click="invite someone")
+        # The link the page made, if it made one, joined by Eve: WebKit's,
+        # walked last, since each link made closes the one before it
+        # (invite.rs `Host::mint`), the device link's walk too.
+        made = re.search(r"svrngs://join/\S+", summary["walk"]["invite-bo"]["webkit"].get("after", {}).get("text", "") or "")
+        summary["eve_join"] = command("eve", "join", made[0], "--as", "Eve", "--no-run") if made else None
+        say("eve", joined=summary["eve_join"])
         walk("device-bo", home("bo"), click="phone or another computer")
         walk("folder-bo", home("bo"), click="folder")
         walk("copy-bo", home("bo"), click="Copy")
         summary["opened"] = (W / "opened.txt").read_text() if (W / "opened.txt").exists() else None
         say("opened", said=summary["opened"])
-        # The link the page made, if it made one, joined by Eve.
-        made = re.search(r"svrngs://join/\S+", summary["walk"]["invite-bo"]["chromium"].get("after", {}).get("text", "") or "")
-        summary["eve_join"] = command("eve", "join", made[0], "--as", "Eve", "--no-run") if made else None
-        say("eve", joined=summary["eve_join"])
         walk("lends-sam", home("sam"))
 
         # What the page lacks, at a terminal on Bo's computer while its
