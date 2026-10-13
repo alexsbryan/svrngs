@@ -154,6 +154,9 @@ try {
   const lent = all.flatMap((g) => g.lent ?? []);
   if (location.pathname === '/ask') ask(lent, new URLSearchParams(location.search));
   else {
+    // With no group, how to make one or join one: the command's, refused
+    // while svrngs runs (cli.rs `claim`), so stopped first (start-home).
+    if (!all.length) main.append(Object.assign(el('p', 'This computer is in no group yet. Where svrngs runs in a terminal, stop it with Ctrl-C, then type svrngs new <a name for your group> to make one, or svrngs join <the link you were sent> to join one.'), { className: 'none' }));
     list(all);
     await lending();
     await uses(lent);

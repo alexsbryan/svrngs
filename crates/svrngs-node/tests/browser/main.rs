@@ -2108,3 +2108,52 @@ async fn the_group_s_page_says_a_refusal_apart_from_no_answer(engine: Engine) {
     );
     drop((ada, others));
 }
+
+/// A computer in no group: a node with no seed and nothing in its record.
+async fn alone(dir: &Path, relay: &Server) -> Node {
+    Node::start(
+        dir.to_path_buf(),
+        signing(3),
+        &RelayConfig {
+            relay_urls: vec![relay_url(relay)],
+            n0_services: false,
+            loopback_only: false,
+        }
+        .on_loopback_only(),
+        no_seed,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("a node starts")
+}
+
+in_both_engines!(
+    /// **The home page says at its top what it is for** (start-home, from
+    /// start-measure's ranked row 4: with no group, "This computer lends
+    /// nothing." and an empty "What apps use" were all it said,
+    /// `demo/runs/start/2026-10-13/README.md` §3 (c) 13): on ada's
+    /// computer, what can be done on it, in DESIGN §1's words; on a
+    /// computer in no group, how to make one or join one, with the line to
+    /// type. Planted, watched failing: index.html and home.js as c6c2212
+    /// left them.
+    the_home_page_says_what_it_is_for
+);
+async fn the_home_page_says_what_it_is_for(engine: Engine) {
+    let relay = relay().await;
+    let dirs = [(); 2].map(|_| tempfile::tempdir().unwrap());
+    let ada = node(dirs[0].path(), &relay, &signing(7)).await;
+    let seen = home_page(engine, &ada, json!({ "read": "#intro p" })).await;
+    let intro = seen["read"].as_str().unwrap_or_default();
+    assert!(
+        intro.starts_with("This page is yours, on this computer alone."),
+        "{seen:#}"
+    );
+    let dee = alone(dirs[1].path(), &relay).await;
+    let seen = home_page(engine, &dee, json!({ "read": "#home > p.none" })).await;
+    assert_eq!(
+        seen["read"],
+        "This computer is in no group yet. Where svrngs runs in a terminal, stop it with Ctrl-C, then type svrngs new <a name for your group> to make one, or svrngs join <the link you were sent> to join one.",
+        "{seen:#}"
+    );
+    drop((ada, dee));
+}
