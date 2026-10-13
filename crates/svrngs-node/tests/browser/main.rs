@@ -2157,3 +2157,29 @@ async fn the_home_page_says_what_it_is_for(engine: Engine) {
     );
     drop((ada, dee));
 }
+
+in_both_engines!(
+    /// **What the page cannot do is named on it, with the one line to
+    /// type** (start-home, from start-measure's ranked row 5: no state's
+    /// words named a line, `demo/runs/start/2026-10-13/README.md` §3 (c)
+    /// 12): lending something and removing someone, which the command does
+    /// while svrngs runs; and leaving a group, said as not possible yet
+    /// (`ralph/next/start/CHARTER.md`). Planted, watched failing: the page
+    /// as 1b9575d left it.
+    the_home_page_names_what_the_terminal_does
+);
+async fn the_home_page_names_what_the_terminal_does(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let seen = home_page(engine, &ada, json!({ "all": "#terminal li, #terminal p" })).await;
+    let said = seen["all"].to_string();
+    for line in [
+        "svrngs share <the number after the colon in its address>",
+        "svrngs remove <their name> --group <the group’s name>",
+        "Leaving a group is not possible yet",
+    ] {
+        assert!(said.contains(line), "{line}: {seen:#}");
+    }
+    drop(ada);
+}
