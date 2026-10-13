@@ -69,12 +69,16 @@ fn at(host: &str) -> Option<(Label, Option<String>)> {
 /// or a request from the lend's own origin is its own page's; one from
 /// another lend's page is that page's, by its `Origin` at this listener's
 /// port; one from another page with no `Origin` (an `<img>`) is nobody's,
-/// `None`. A request with no `Sec-Fetch-*` is a program's, not a page's, and
-/// is the lend's own, as loopback is trusted (DESIGN §9).
+/// `None`. A request with no `Sec-Fetch-Site` is a program's, not a page's
+/// — a browser that sends any `Sec-Fetch-*` sends it, and Node's `fetch`
+/// sends a mode alone (start-measure, `demo/runs/start/2026-10-13/` §3 (a)
+/// 4), as the record reads a page by it too (`crate::api`'s
+/// `not_from_a_page`) — and is the lend's own, as loopback is trusted
+/// (DESIGN §9).
 fn app_of(headers: &HeaderMap, host: &Label) -> Option<Label> {
     let ([site, mode, origin, at_host], own) = fetch(headers);
-    if site.is_none() && mode.is_none() {
-        tracing::debug!(target: "origin", %host, "origin: no Sec-Fetch-*, a program on this computer, so the lend's own");
+    if site.is_none() {
+        tracing::debug!(target: "origin", %host, ?mode, "origin: no Sec-Fetch-Site, a program on this computer, so the lend's own");
         return Some(host.clone());
     }
     if own {

@@ -438,9 +438,13 @@ async fn judged(
 /// `closed`, its service never asked: `night`'s page at `diary` and at
 /// Sam's `notes`, which it does not read; a request from another page with
 /// no `Origin` (an `<img>`); an `Origin` at another port; a site's.
+/// Node's `fetch` says `Sec-Fetch-Mode: cors` and no `Sec-Fetch-Site`,
+/// which a browser never leaves out (start-address (b); start-measure,
+/// `demo/runs/start/2026-10-13/README.md` §3 (a) 4): a program's.
 /// Planted, each watched failing: the origin taking the `Host` for a
 /// cross-origin `fetch`; a page reaching a lend it does not read; Alex's
-/// computer presenting no pass of its own to Sam's door.
+/// computer presenting no pass of its own to Sam's door; a program with a
+/// mode and no site refused (`app_of` as at a39c8d4).
 #[tokio::test]
 async fn a_computer_s_origin_names_the_app_and_keeps_a_page_to_its_reads() {
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
@@ -467,6 +471,13 @@ async fn a_computer_s_origin_names_the_app_and_keeps_a_page_to_its_reads() {
     let closed = (403, Some("closed".to_string()), None);
     let rows = [
         ("a program", 1, "night", String::new(), told(&night)),
+        (
+            "Node's fetch, a program saying a mode and no site",
+            1,
+            "night",
+            "Sec-Fetch-Mode: cors\r\n".into(),
+            told(&night),
+        ),
         (
             "a typed address",
             1,
