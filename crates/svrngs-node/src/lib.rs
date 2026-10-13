@@ -89,6 +89,8 @@ pub mod lend;
 // The node, U1's (docs/DESIGN.md §8): the rail, the endpoint, the accept loop
 // serving the sync route and the round, in place of upstream's `RailsDaemon`.
 pub mod folder;
+// A group's seed kept on this computer, and the group kept (start-group).
+pub mod group;
 pub mod invite;
 pub mod node;
 // Removal as this computer's person asks it (U7, DESIGN §6).

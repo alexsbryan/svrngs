@@ -4,7 +4,10 @@
 //! group's directory — and the belief in a seed an issuer answers are
 //! svrngs-core's since u4-5 (`svrngs_core::seed`), so a browser's page
 //! reads a seed with the command's body; drawing a seed's salt and keeping
-//! it on disk are this module's.
+//! it on disk are this module's. Moved from the command (svrngs's group.rs
+//! and cli.rs `keep_group`, now [`crate::node::Host::keep_group`]) into the
+//! node, behaviour kept, so a running svrngs makes a group for the home page
+//! as `svrngs new` does (start-group).
 //!
 //! The seed is written beside the group's record as `seed.json`, and the
 //! register's seed, `roster.json`, is written from it by [`Seed::roster`]
@@ -23,28 +26,28 @@
 //! --relay` writes it, `join` the one its link carried. It is this
 //! computer's choice, as the origin is; the group's record says where each
 //! computer is reached, by its `Relay` act (relay-in-record). A group that
-//! keeps none is met where the build meets its groups (`cli::SHIPPED`):
+//! keeps none is met where the build meets its groups (svrngs's `cli::SHIPPED`):
 //! n0's relays until the operator's switch, then svrngs's own.
 
 use std::path::{Path, PathBuf};
 
-use ed25519_dalek::VerifyingKey;
-use svrngs_node::namespaces_in;
+use crate::namespaces_in;
 /// The seed, its id and the belief in an issuer's answer are svrngs-core's
 /// since u4-5, so a browser's page reads a seed with this body.
-pub use svrngs_node::seed::{answered, Seed};
+pub use crate::seed::{answered, Seed};
 /// A group's name and a person's share the core's one rule (u2-9).
-pub use svrngs_node::Name;
+pub use crate::Name;
+use ed25519_dalek::VerifyingKey;
 
-use svrngs_node::iroh::RelayUrl;
-use svrngs_node::link::Origin;
+use crate::iroh::RelayUrl;
+use crate::link::Origin;
 
 /// The one spelling of the seed's file name in a group's directory.
 const SEED_FILE: &str = "seed.json";
 
 // The one spelling of the kept origin's file name in a group's directory:
 // the node's, which reads it for the home page too.
-use svrngs_node::invite::ORIGIN_FILE;
+use crate::invite::ORIGIN_FILE;
 
 /// The one spelling of the kept relay's file name in a group's directory.
 const RELAY_FILE: &str = "relay";
@@ -92,7 +95,7 @@ pub fn read_seed(dir: &Path) -> Result<Option<Seed>, SeedError> {
 
 /// The seed in `dir` as written, or `None` when the directory holds none:
 /// what the issuer's node answers a link's ask with
-/// (`svrngs_node::redeem::SeedText`).
+/// (`crate::redeem::SeedText`).
 pub fn seed_text(dir: &Path) -> Result<Option<String>, String> {
     kept(&dir.join(SEED_FILE)).map_err(|e| e.to_string())
 }
@@ -106,9 +109,9 @@ pub fn write_origin(dir: &Path, origin: &Origin) -> Result<(), SeedError> {
 }
 
 /// The origin kept in `dir`, or `None` when the directory keeps none, as
-/// the node reads it for the home page too ([`svrngs_node::invite::kept_page`]).
+/// the node reads it for the home page too ([`crate::invite::kept_page`]).
 pub fn read_origin(dir: &Path) -> Result<Option<Origin>, SeedError> {
-    svrngs_node::invite::kept_page(dir).map_err(|why| SeedError::Read {
+    crate::invite::kept_page(dir).map_err(|why| SeedError::Read {
         path: dir.join(ORIGIN_FILE),
         why,
     })
@@ -128,7 +131,7 @@ pub fn read_relay(dir: &Path) -> Result<Option<RelayUrl>, SeedError> {
     let Some(raw) = kept(&path)? else {
         return Ok(None);
     };
-    svrngs_node::relay::parse(&raw)
+    crate::relay::parse(&raw)
         .map(Some)
         .map_err(|e| SeedError::Read {
             path,
@@ -158,6 +161,32 @@ fn kept(path: &Path) -> Result<Option<String>, SeedError> {
     }
 }
 
+impl crate::node::Host {
+    /// Keep `seed`'s group on this computer: its journal, the seed beside it,
+    /// `origin` and `relay` when given — the relay `new --relay` names or a
+    /// joined link carried, where the group is met (svrngs's `cli::reach`) —
+    /// and the roster the seed founds. What `new` and `join` both write, in
+    /// one order, so a group kept by either is the same.
+    pub fn keep_group(
+        &self,
+        seed: &Seed,
+        origin: Option<&Origin>,
+        relay: Option<&RelayUrl>,
+    ) -> Result<(), String> {
+        let rail = &self.rail;
+        let dir = rail.group_dir(&seed.id()).map_err(|e| e.to_string())?;
+        write_seed(&dir, seed)
+            .and_then(|()| match origin {
+                Some(origin) => write_origin(&dir, origin),
+                None => Ok(()),
+            })
+            .and_then(|()| relay.map_or(Ok(()), |relay| write_relay(&dir, relay)))
+            .map_err(|e: SeedError| e.to_string())?;
+        rail.set_seed(&seed.id(), &seed.roster())
+            .map_err(|e| e.to_string())
+    }
+}
+
 /// Every group this computer holds a seed for under `root`, the data dir.
 /// A directory whose seed does not hash to its name is left out, at warn:
 /// its record is not the group its seed names.
@@ -173,7 +202,7 @@ pub fn groups(root: &Path) -> Vec<Seed> {
     for ns in namespaces {
         // `namespaces_in` lists only names a journal opens, and opening
         // creates nothing: this is the rail's spelling of the directory.
-        let dir = match svrngs_node::group_dir_in(root, &ns) {
+        let dir = match crate::group_dir_in(root, &ns) {
             Ok(dir) => dir,
             Err(e) => {
                 tracing::warn!(target: "group", namespace = %ns, error = %e, "group: a directory the rail will not open, left out");

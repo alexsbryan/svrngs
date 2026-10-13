@@ -102,7 +102,7 @@ use svrngs_node::removal::{Outcome, RemovalAsk, HANDOVERS_ROUTE, REMOVALS_ROUTE}
 use svrngs_node::room;
 use svrngs_node::{Device, Joined, Person, SigningKey};
 
-use crate::group::{self, Name, Seed, SeedError};
+use crate::group::{self, Name, Seed};
 use crate::identity::{self, KeyError};
 use crate::issuer;
 use crate::relay::{self, Relay};
@@ -1566,7 +1566,11 @@ pub async fn join_group(
     // guest.rs `relayed_endpoint_builder`): this computer meets its groups at n0's.
     let n0 = svrngs_node::iroh::has_lookup(node.endpoint());
     let relay = kept_relay(link.token.relay.clone().map(RelayUrl::from), n0);
-    keep_group(node, &seed, link.origin.as_ref(), relay.as_ref())?;
+    // Kept as the node keeps a group, as `new` keeps it (Host::keep_group).
+    let kept = node
+        .host()
+        .keep_group(&seed, link.origin.as_ref(), relay.as_ref());
+    kept.map_err(|why| keep_refused(&seed, &why))?;
     if link.origin.is_none() {
         tracing::debug!(target: "cli", group = %id, "cli: join — a client's link, so no origin is kept");
     }
@@ -1705,7 +1709,8 @@ pub async fn new_group(
         .expect("an iroh endpoint id is an Ed25519 key");
     let seed = group::draw(name, person, founder);
     let id = seed.id();
-    keep_group(node, &seed, page, kept.as_ref())?;
+    let keep = node.host().keep_group(&seed, page, kept.as_ref());
+    keep.map_err(|why| keep_refused(&seed, &why))?;
     tracing::debug!(target: "cli", group = %id, name = %seed.name(), page = ?page.map(Origin::as_str), "cli: group made");
     let token = mint(node, &seed, relay, None).await?;
     Ok((seed, Printed::of(&token, page)))
@@ -1858,32 +1863,6 @@ pub fn kept_relay(carried: Option<RelayUrl>, n0: bool) -> Option<RelayUrl> {
     let n0 = n0 && carried.as_ref().is_some_and(|r| n0_relays().contains(r));
     tracing::debug!(target: "cli", ?carried, n0, "cli: join — the link's relay kept, unless it is one of n0's at n0's");
     carried.filter(|_| !n0)
-}
-
-/// Keep `seed`'s group on this computer: its journal, the seed beside it,
-/// `origin` and `relay` when given — the relay `new --relay` names or a
-/// joined link carried, where the group is met ([`reach`]) — and the
-/// roster the seed founds. What `new` and `join` both write, in one order,
-/// so a group kept by either is the same.
-fn keep_group(
-    node: &Node,
-    seed: &Seed,
-    origin: Option<&Origin>,
-    relay: Option<&RelayUrl>,
-) -> Result<(), Refusal> {
-    let rail = node.rail();
-    let dir = rail
-        .group_dir(&seed.id())
-        .map_err(|e| keep_refused(seed, &e.to_string()))?;
-    group::write_seed(&dir, seed)
-        .and_then(|()| match origin {
-            Some(origin) => group::write_origin(&dir, origin),
-            None => Ok(()),
-        })
-        .and_then(|()| relay.map_or(Ok(()), |relay| group::write_relay(&dir, relay)))
-        .map_err(|e: SeedError| keep_refused(seed, &e.to_string()))?;
-    rail.set_seed(&seed.id(), &seed.roster())
-        .map_err(|e| keep_refused(seed, &e.to_string()))
 }
 
 fn keep_refused(seed: &Seed, why: &str) -> Refusal {

@@ -520,7 +520,10 @@ seed an issuer answers only when it hashes to the group named. u4-5 moved
 the `Seed`, its id, its text and `answered` into svrngs-core
 (`svrngs_core::seed`), so a browser's page believes an issuer's answer with
 the command's body; `group.rs` keeps drawing a seed's salt (`group::draw`)
-and keeping it on disk, and re-exports the rest. `cli.rs` is new, in the shape of
+and keeping it on disk, and re-exports the rest; start-group moved it
+into the node (`crates/svrngs-node/src/group.rs`), with `cli::keep_group`
+as `Host::keep_group`, so a running svrngs makes a group for the home page,
+and the command re-exports it as `svrngs::group`. `cli.rs` is new, in the shape of
 commonwealth-rails' `cli.rs` and `main.rs`: verbs parsed by hand (`svrngs`,
 `new <name> [--as] [--origin]`, `join <link> [--as]`, `link <group>
 [--origin]`, `share <port> [--name] [--kind] [--limit] [--refuse]...
