@@ -26,6 +26,11 @@
 //! mwp-1: `--sign-in <port>` names the lender's program that signs each
 //! person in (`svrngs_node::door::sign_in`), refused as a lend's port is
 //! when nothing listens there.
+//!
+//! start-llama: a kind the table says keeps paths back ([`kept_of`]) is lent
+//! without them, its lender typing none; and a kind known by its lender's
+//! word alone has no port in the table, since one service's default port is
+//! often another's.
 
 use std::num::NonZeroU16;
 use std::time::Duration;
@@ -51,9 +56,9 @@ pub enum Signs {
     Header(&'static str),
 }
 
-/// [`WELL_KNOWN`]'s rows: the port as written, the kind, parsed once for
-/// both readers (REVIEW_FINDINGS #64), and the rest of the line, empty when
-/// there is none. A row whose kind does not parse is none.
+/// [`WELL_KNOWN`]'s rows: the port as written (`-` for none), the kind,
+/// parsed once for every reader (REVIEW_FINDINGS #64), and the rest of the
+/// line, empty when there is none. A row whose kind does not parse is none.
 fn rows() -> impl Iterator<Item = (&'static str, Kind, &'static str)> {
     WELL_KNOWN
         .lines()
@@ -91,7 +96,7 @@ pub struct Share {
 pub enum ShareRefusal {
     #[error("nothing answers on port {0} on this computer: start it, then share it")]
     NothingListens(NonZeroU16),
-    #[error("say what is on port {0}: `svrngs share {0} --kind <kind>`")]
+    #[error("say what is on port {0}: `svrngs share {0} --kind <kind>`, its own name if it is one svrngs knows: {kinds}", kinds = known_kinds())]
     NoKind(NonZeroU16),
     #[error("nothing answers on port {0}, its sign-in, on this computer: start it, then share")]
     NoSignIn(NonZeroU16),
@@ -118,6 +123,39 @@ pub fn well_known_kind(port: NonZeroU16) -> Option<Kind> {
     rows().find_map(|(p, kind, _)| (p.parse::<u16>().ok()? == port.get()).then_some(kind))
 }
 
+/// The kinds [`WELL_KNOWN`] names, for a lender asked to say which.
+fn known_kinds() -> String {
+    rows()
+        .map(|(_, kind, _)| kind.to_string())
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+/// What [`WELL_KNOWN`]'s row for `kind` says past it: the word before its
+/// first `:` and the rest — the one reader of that clause, for
+/// [`accounts_of`] and [`kept_of`].
+fn says(kind: &Kind) -> Option<(&'static str, &'static str)> {
+    let (_, _, how) = rows().find(|(_, k, _)| k == kind)?;
+    how.split_once(':').map(|(what, rest)| (what, rest.trim()))
+}
+
+/// The paths [`WELL_KNOWN`] keeps back of every lend of `kind`, its lender
+/// typing none; none when its row says no `keeps:`. Why each is kept back
+/// is the table's, beside its row.
+pub fn kept_of(kind: &Kind) -> Vec<RefusedPath> {
+    let kept: Vec<RefusedPath> = match says(kind) {
+        Some(("keeps", paths)) => paths
+            .split_whitespace()
+            .map(|p| {
+                RefusedPath::parse(p).expect("the table's paths start with /, as its test holds")
+            })
+            .collect(),
+        _ => Vec::new(),
+    };
+    tracing::debug!(target: "share", kind = %kind, kept = kept.len(), "share: the paths the table keeps back of the kind");
+    kept
+}
+
 /// How a service of `kind` signs each person in, if [`WELL_KNOWN`] says:
 /// with accounts of its own, each signing in once with one its lender made,
 /// or from the door's header. Either is lent with no password: one sent on
@@ -127,10 +165,9 @@ pub fn well_known_kind(port: NonZeroU16) -> Option<Kind> {
 /// `demo/runs/u5/2026-10-05-jellyfin/README.md`, finding 3). A row saying
 /// neither `accounts:` nor `header:` says nothing.
 pub fn accounts_of(kind: &Kind) -> Option<Signs> {
-    let how = rows().find(|(_, k, _)| k == kind).map(|(_, _, how)| how);
-    let signs = match how.and_then(|h| h.split_once(':')) {
-        Some(("accounts", how)) => Some(Signs::Accounts(how.trim())),
-        Some(("header", what)) => Some(Signs::Header(what.trim())),
+    let signs = match says(kind) {
+        Some(("accounts", how)) => Some(Signs::Accounts(how)),
+        Some(("header", what)) => Some(Signs::Header(what)),
         _ => None,
     };
     tracing::debug!(target: "share", kind = %kind, ?signs, "share: how the kind signs each person in, if the table says");
@@ -150,7 +187,8 @@ pub fn listens(port: NonZeroU16) -> bool {
 /// its sign-in's, and the kind the port is well known for: the kind given,
 /// else the port's; the name given, else the kind; the limit given, else
 /// none, which lets in everyone in its groups at once (bash-limit: no
-/// number nobody chose; `share` says so).
+/// number nobody chose; `share` says so); the paths refused, those given and
+/// those the table keeps back of the kind.
 pub fn lend_of(
     share: &Share,
     listens: impl Fn(NonZeroU16) -> bool,
@@ -173,7 +211,13 @@ pub fn lend_of(
         None => LendName::parse(kind.as_str()).expect("a kind is a lend's name, by one rule"),
     };
     let limit = share.limit;
-    tracing::debug!(target: "share", lend = %name, kind = %kind, port = share.port, ?limit,
+    let mut refused = share.refused.clone();
+    for path in kept_of(&kind) {
+        if !refused.contains(&path) {
+            refused.push(path);
+        }
+    }
+    tracing::debug!(target: "share", lend = %name, kind = %kind, port = share.port, ?limit, refused = refused.len(),
         named = share.name.is_some(), kind_given = share.kind.is_some(), limit_given = share.limit.is_some(),
         "share: the lend decided");
     Ok(Lend {
@@ -181,7 +225,7 @@ pub fn lend_of(
         port: share.port,
         kind,
         limit,
-        refused: share.refused.clone(),
+        refused,
         upload: share.upload,
         reads: share.reads.clone(),
         sign_in: share.sign_in,

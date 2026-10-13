@@ -51,8 +51,9 @@ fn share(p: u16) -> Share {
     }
 }
 
-/// Every line of the table is a port and a kind, and the one listed is
-/// found by its port.
+/// Every line of the table is a port, or `-` for none, and a kind; the one
+/// listed by a port is found by it, and every row's kind is read, its kept
+/// paths each a path (`kept_of` panics on one that is not).
 #[test]
 fn the_well_known_table_reads_whole() {
     let rows: Vec<&str> = WELL_KNOWN
@@ -62,9 +63,16 @@ fn the_well_known_table_reads_whole() {
         .collect();
     assert!(!rows.is_empty());
     for row in rows {
-        let (p, _) = row.split_once(' ').expect(row);
-        let p = port(p.parse().expect(row));
-        assert!(well_known_kind(p).is_some(), "{row}");
+        let (p, rest) = row.split_once(' ').expect(row);
+        let kind = Kind::parse(rest.split_whitespace().next().unwrap()).expect(row);
+        assert!(super::rows().any(|(_, k, _)| k == kind), "{row}");
+        let _ = kept_of(&kind);
+        if p != "-" {
+            assert!(
+                well_known_kind(port(p.parse().expect(row))).is_some(),
+                "{row}"
+            );
+        }
     }
     assert_eq!(well_known_kind(port(8096)).unwrap().as_str(), "jellyfin");
     assert_eq!(
@@ -183,4 +191,44 @@ fn a_lend_shared_with_no_limit_lets_a_fourth_in_at_once() {
         let verdict = counts.ask(&lend, who, Whereabouts::Away, now);
         assert!(matches!(verdict, Verdict::In { .. }), "{who}: {verdict:?}");
     }
+}
+
+/// llama-server is known by its lender's word, never by a port (8080 is
+/// Open WebUI's too): `share 8080` alone is refused, naming the kinds svrngs
+/// knows, llama-server among them; a lend of it keeps back the table's
+/// paths, a path its lender also typed once, and one they typed besides
+/// (start-llama (a)). Planted: the table's `keeps:` row given port 8080 —
+/// `well_known_kind(8080)` then names it.
+#[test]
+fn llama_server_is_known_by_its_name_and_lent_without_the_table_s_paths() {
+    assert_eq!(well_known_kind(port(8080)), None);
+    let said = ShareRefusal::NoKind(port(8080)).to_string();
+    assert!(
+        said.ends_with("jellyfin, navidrome, calibre-web, llama-server"),
+        "{said}"
+    );
+    let mut typed = share(8080);
+    typed.kind = Some(Kind::parse("llama-server").unwrap());
+    typed.refused = ["/slots", "/admin"]
+        .map(|p| RefusedPath::parse(p).unwrap())
+        .to_vec();
+    let lend = lend_of(&typed, |_| true, None).unwrap();
+    let refused: Vec<&str> = lend.refused.iter().map(RefusedPath::as_str).collect();
+    assert_eq!(
+        refused,
+        [
+            "/slots",
+            "/admin",
+            "/v1/stream",
+            "/v1/streams",
+            "/v1/chat/completions/control",
+            "/lora-adapters",
+            "/metrics",
+            "/tools",
+            "/cors-proxy",
+            "/models"
+        ]
+    );
+    assert_eq!(lend.name.as_str(), "llama-server");
+    assert!(kept_of(&Kind::parse("jellyfin").unwrap()).is_empty());
 }

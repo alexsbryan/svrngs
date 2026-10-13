@@ -154,8 +154,10 @@ svrngs — keep what your group shares on your own computers.
       takes each person from svrngs (Navidrome on 4533, Calibre-Web on
       8083) it asks none, and says what to set in it. --name is what
       they see it as; else its kind. --kind says what it is, when svrngs
-      does not know the port. --limit is how many people may use it at
-      once; else everyone in your groups. --refuse keeps a path of it from them; say it again
+      does not know the port; without it, svrngs says the kinds it knows.
+      Of a kind it knows, it keeps back, and says, what shows one person's
+      use of it to the others or changes it for everyone. --limit is how
+      many people may use it at once; else everyone in your groups. --refuse keeps a path of it from them; say it again
       for more. --upload is this computer's upload, in Mbit/s, as a speed
       test states it: each person using it is told their share of it.
       --reads lets it open, as whoever opens it, what your groups lend of
@@ -1229,8 +1231,15 @@ impl std::fmt::Display for Said {
                         "Each person is signed in to it as themselves by what answers on port {port}, with nothing typed."
                     )?;
                 }
-                for path in &lend.refused {
+                let table = share::kept_of(&lend.kind);
+                let (kept, typed): (Vec<_>, Vec<_>) = lend.refused.iter().partition(|p| table.contains(p));
+                for path in typed {
                     writeln!(f, "They cannot open {}.", path.as_str())?;
+                }
+                if !kept.is_empty() {
+                    let paths: Vec<&str> = kept.iter().map(|p| p.as_str()).collect();
+                    writeln!(f, "They cannot open {}: svrngs keeps these back whenever a {} is lent, since they show one person's use of it to the others or change it for everyone.",
+                        paths.join(", "), lend.kind)?;
                 }
                 if let Some(words) = &lend.asks {
                     writeln!(

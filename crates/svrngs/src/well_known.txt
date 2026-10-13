@@ -8,6 +8,10 @@
 #                    `x-svrngs-user` (crates/svrngs-node/src/door.rs,
 #                    USER_HEADER, an account's name unique by the person's
 #                    key); what its lender sets in it for that.
+#   keeps: <path>... the paths of it svrngs keeps from everyone it is lent
+#                    to, its lender typing none (`share` adds them to its
+#                    --refuse paths and says so): why, in the comment above it.
+# A kind known by its lender's word alone, no port, has `-` for its port.
 #
 # Jellyfin's HTTP port (commonwealth-ai
 # sovereign/crates/sovereign-cli-mesh/src/mesh_media/offer.rs:94-97 at
@@ -29,3 +33,26 @@
 # its settings page gives them; read, not run here: whether it signs in a
 # name it holds no account for is not judged (DESIGN §1).
 8083 calibre-web header: Admin, Edit Basic Configuration, Feature Configuration; tick Allow Reverse Proxy Authentication, set Reverse Proxy Header Name to X-Svrngs-User, and Save
+
+# llama-server, llama.cpp's own server (start-llama). Its default port, 8080,
+# is Open WebUI's and many dev servers' too, so svrngs does not take a port for
+# it: its lender says `--kind llama-server`, the program's own name, and types
+# nothing else. Kept back, as start-measure (b) read llama.cpp 11b068d06 and
+# asked each route (demo/runs/start/2026-10-13/README.md §3 (b) 6-10):
+#   /slots           when each person's chat runs, how long, with what
+#                    settings; /slots/<id> saves and erases them on the disk
+#   /v1/stream, /v1/streams, /v1/chat/completions/control
+#                    another person's chat read from its start, stopped, or
+#                    its reasoning ended, given its id (the run read Cy's)
+#   /lora-adapters   changes the model for everyone
+#   /metrics         the server's load (on only with --metrics)
+#   /tools           runs a shell on the lender's computer (with --tools)
+#   /cors-proxy      fetches any address from it (with --webui-mcp-proxy)
+#   /models          loads and removes models (router mode); GET /models is
+#                    /v1/models's twin, which stays
+# Not kept back: /props. Its chat page reads GET /props, and svrngs keeps a
+# path back for every method alike (svrngs-node lend.rs, RefusedPath::covers);
+# POST /props answers only with --props. Its `model_path` shows everyone the
+# model's file on the lender's disk, the account's name in it: svrngs does not
+# change an answer (DESIGN §3, "Lent apps, as they come").
+- llama-server keeps: /slots /v1/stream /v1/streams /v1/chat/completions/control /lora-adapters /metrics /tools /cors-proxy /models

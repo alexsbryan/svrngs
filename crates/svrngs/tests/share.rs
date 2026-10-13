@@ -266,6 +266,146 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
     alex.node.endpoint().close().await;
 }
 
+/// **A friend's llama-server, lent by its kind alone** (start-llama (a)):
+/// Sam types `--kind llama-server` and no path, and Alex's request to each
+/// route start-measure (b) found shows one person's chats to the others or
+/// changes the server for everyone (`demo/runs/start/2026-10-13/README.md`
+/// §3 (b) 6 and §4) is refused in svrngs's words, never reaching it; every
+/// other route a chat page or a program asks reaches it. The routes are
+/// written here from the run, not read from the table, so a table that
+/// drops one fails. Red at start-llama's base: nothing kept back, `GET
+/// /slots` answered 200.
+#[tokio::test(flavor = "multi_thread")]
+async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats() {
+    let sam = computer(3).await;
+    let (_, printed) = cli::new_group(&sam.node, name("Lab"), name("Sam"), None, None, &no_relay())
+        .await
+        .expect("Sam makes Lab");
+    let alex = computer(4).await;
+    knows(&alex, &sam.node);
+    let link = Link::parse(&printed.client).unwrap();
+    cli::join_group(&alex.node, &alex.key, &link, &name("Alex"))
+        .await
+        .expect("Alex is let in");
+
+    let (origin, heads) = service().await;
+    let asked = Share {
+        port: std::num::NonZeroU16::new(origin.port()).unwrap(),
+        name: None,
+        kind: Some(Kind::parse("llama-server").unwrap()),
+        limit: None,
+        refused: Vec::new(),
+        upload: None,
+        reads: Vec::new(),
+        sign_in: None,
+        asks: None,
+    };
+    let lend = share::lend_of(&asked, share::listens, share::well_known_kind(asked.port))
+        .expect("something listens there, and its kind is given");
+    cli::share_lend(sam.dir.path(), &lend, None).unwrap();
+    let shared = Said::Shared {
+        lend: lend.clone(),
+        secret: false,
+        accounts: None,
+        running: true,
+    }
+    .to_string();
+
+    let running = cli::running(alex.dir.path(), &alex.node).await.to_string();
+    let address = running
+        .lines()
+        .find(|l| l.starts_with("Sam's llama-server"))
+        .and_then(address_in)
+        .unwrap_or_else(|| panic!("Alex is not told of Sam's llama-server: {running:?}"));
+    let host = address
+        .strip_prefix("http://")
+        .and_then(|a| a.split_once(':'))
+        .map(|(h, _)| h.to_string())
+        .unwrap();
+    let http = reqwest::Client::builder()
+        .no_proxy()
+        .resolve(&host, alex.node.api_addr())
+        .build()
+        .unwrap();
+    let ask = |method: &str, path: &str| {
+        let method = reqwest::Method::from_bytes(method.as_bytes()).unwrap();
+        http.request(method, format!("{}{}", address.trim_end_matches('/'), path))
+            .send()
+    };
+
+    let kept = [
+        ("GET", "/slots", "/slots"),
+        ("POST", "/slots/0?action=save", "/slots"),
+        ("GET", "/v1/stream?conv_id=cy-conv-1", "/v1/stream"),
+        ("DELETE", "/v1/stream?conv_id=cy-conv-2", "/v1/stream"),
+        ("POST", "/v1/streams/lookup", "/v1/streams"),
+        (
+            "POST",
+            "/v1/chat/completions/control",
+            "/v1/chat/completions/control",
+        ),
+        ("GET", "/lora-adapters", "/lora-adapters"),
+        ("POST", "/lora-adapters", "/lora-adapters"),
+        ("GET", "/metrics", "/metrics"),
+        ("GET", "/tools", "/tools"),
+        ("POST", "/tools", "/tools"),
+        ("GET", "/cors-proxy?url=http://example.com/", "/cors-proxy"),
+        ("POST", "/models/load", "/models"),
+        ("POST", "/models/unload", "/models"),
+        ("GET", "/models/sse", "/models"),
+    ];
+    for (method, path, under) in kept {
+        let answer = ask(method, path).await.unwrap();
+        let (status, why) = (
+            answer.status(),
+            answer.headers().get("x-svrngs-refused").cloned(),
+        );
+        let body = answer.text().await.unwrap();
+        assert_eq!(
+            (status.as_u16(), why.as_ref().and_then(|v| v.to_str().ok())),
+            (403, Some("path")),
+            "{method} {path} was not kept back: {body}"
+        );
+        assert!(
+            body.contains(&format!("llama-server is lent without {under}")),
+            "{method} {path}: {body}"
+        );
+    }
+    assert!(
+        heads.lock().unwrap().is_empty(),
+        "a route kept back reached llama-server"
+    );
+
+    let answered = [
+        ("GET", "/"),
+        ("GET", "/props"),
+        ("GET", "/health"),
+        ("GET", "/v1/models"),
+        ("POST", "/v1/chat/completions"),
+        ("POST", "/chat/completions"),
+        ("POST", "/completion"),
+        ("POST", "/v1/completions"),
+        ("POST", "/v1/chat/completions/input_tokens"),
+        ("POST", "/v1/responses"),
+        ("POST", "/v1/embeddings"),
+        ("POST", "/tokenize"),
+        ("POST", "/apply-template"),
+    ];
+    for (method, path) in answered {
+        let answer = ask(method, path).await.unwrap();
+        assert_eq!(answer.status(), 200, "{method} {path} was refused");
+        assert_eq!(answer.text().await.unwrap(), "ok", "{method} {path}");
+    }
+    assert_eq!(heads.lock().unwrap().len(), answered.len());
+    assert!(
+        shared.contains("They cannot open /slots, "),
+        "Sam is not told what is kept back: {shared}"
+    );
+    plain(&[shared, running]);
+    sam.node.endpoint().close().await;
+    alex.node.endpoint().close().await;
+}
+
 /// The password has no flag: `share` refuses one, whatever it is called.
 #[test]
 fn share_takes_no_password_on_the_command_line() {
