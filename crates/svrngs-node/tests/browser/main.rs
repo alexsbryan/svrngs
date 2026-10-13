@@ -1962,6 +1962,36 @@ async fn the_page_offers_a_computer_one_line_and_sends_the_token_nowhere(engine:
 }
 
 in_both_engines!(
+    /// **A founder's one line** (start-group (d); DESIGN §7): the group's
+    /// page opened with no link, on a computer that holds no group, offers
+    /// the line with the page's address where the link goes, saying it
+    /// gets svrngs and opens the home page, where a group is made; and a
+    /// button that copies it. On a phone it offers none. Planted, watched
+    /// failing: the page as a136f60 left it, "Open this page from your
+    /// group’s link." alone.
+    the_page_opened_with_no_link_offers_a_founder_s_line
+);
+async fn the_page_opened_with_no_link_offers_a_founder_s_line(engine: Engine) {
+    let seen = drive(
+        engine,
+        "computer.mjs",
+        json!({ "site": site(), "token": "" }),
+        None,
+    )
+    .await;
+    let origin = seen["origin"].as_str().unwrap();
+    let line = format!("curl -fsSL {origin}install.sh | sh -s -- '{origin}'");
+    let computer = &seen["computer"];
+    eprintln!("offered on a computer: {computer:#}");
+    assert_eq!(computer["offered"], true, "{computer:#}");
+    assert_eq!(computer["line"], line, "{computer:#}");
+    assert_eq!(computer["written"], line, "{computer:#}");
+    let words = computer["words"].as_str().unwrap_or_default();
+    assert!(words.contains("make your group"), "{computer:#}");
+    assert_eq!(seen["phone"]["offered"], false, "{:#}", seen["phone"]);
+}
+
+in_both_engines!(
     /// The home page says where the group's folder is on this computer
     /// (v1-onboarding (d)), from `/v1/groups`' `folders`; this node keeps
     /// no seed, so the group is named as the page names a group whose name

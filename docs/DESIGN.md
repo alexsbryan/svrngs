@@ -1658,7 +1658,10 @@ and opens the home page. Run again, it updates in place and joins
 nothing twice. **A founder's one line** (start-group): someone with no
 link yet pastes `curl -fsSL <page>install.sh | sh -s -- '<page>'`, the
 page's address where the link goes, which the group's page opened with
-no link gives; it does all of the above but join, and the home page it
+no link gives on a computer holding no group there, saying it gets svrngs
+and opens the home page where they make their group (`web/app.js`
+`offer`; `the_page_opened_with_no_link_offers_a_founder_s_line`); it does
+all of the above but join, and the home page it
 opens is where they make their group, with no terminal after
 (`crates/svrngs/tests/install.rs`
 `a_founder_s_line_installs_keeps_svrngs_at_login_and_opens_the_home_page`,

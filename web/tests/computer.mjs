@@ -5,7 +5,8 @@
 // gets svrngs (DESIGN §7), composed from the link's `#` part, and a button
 // that copies it; on the phone it offers none. Every request either page
 // makes, the service worker's included, is kept, and the page host's own
-// answer to `/` as a chat's preview reads it.
+// answer to `/` as a chat's preview reads it. With an empty token, the
+// page opened with no link, which offers a founder's line (start-group).
 //
 //   node web/tests/computer.mjs '{"engine": "chromium"|"webkit", "site": "<dir>", "token": "<token>"}'
 //
@@ -34,10 +35,12 @@ async function opened(device) {
     await page.goto(link);
     await page.waitForSelector('#status.good, #status.bad, #join:not([hidden])', { timeout: 90_000 });
     const offered = await page.locator('#computer').isVisible();
-    let line = null;
+    let [line, words] = [null, null];
     let [copied, written, button] = [null, null, null];
     if (offered) {
       line = await page.locator('#line').textContent();
+      // What the page says the line does, a joiner's or a founder's (start-group).
+      words = await page.locator('#computer p:not([hidden])').textContent();
       // What the page hands the clipboard, kept as it passes: WebKit
       // refuses a test's read of the clipboard (NotAllowedError), so there
       // the copy is read from this and the button's word alone.
@@ -51,7 +54,7 @@ async function opened(device) {
       written = await page.evaluate(() => window.__written);
       copied = await page.evaluate(() => navigator.clipboard.readText()).catch((e) => `unread: ${e}`);
     }
-    return { offered, line, written, copied, button, status: await page.locator('#status').textContent() };
+    return { offered, line, words, written, copied, button, status: await page.locator('#status').textContent() };
   } finally {
     await close();
   }

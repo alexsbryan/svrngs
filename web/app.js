@@ -372,15 +372,18 @@ async function enter(group, asked) {
 
 // On a computer, the one line that gets svrngs and joins it by this link
 // (v1-onboarding (c); DESIGN §7), with a button that copies it: composed
-// here from the `#` part, which no request carries. A phone's pointer is
-// coarse, and it has no terminal: no line there.
+// here from the `#` part, which no request carries. With no token, a
+// founder's line, the page's address in the link's place, which joins
+// nothing and opens the home page, where a group is made (start-group).
+// A phone's pointer is coarse, and it has no terminal: no line there.
 function offer(token) {
-  if (!matchMedia('(pointer: fine)').matches || !/^[A-Za-z0-9_-]+$/.test(token)) {
+  if (!matchMedia('(pointer: fine)').matches || !/^[A-Za-z0-9_-]*$/.test(token)) {
     trace('PAGE: no line offered: not a computer, or not a token');
     return;
   }
   const page = `${location.origin}${location.pathname}`;
-  const line = `curl -fsSL ${page}install.sh | sh -s -- '${page}#${token}'`;
+  const line = `curl -fsSL ${page}install.sh | sh -s -- '${page}${token && `#${token}`}'`;
+  document.getElementById(token ? 'joins' : 'founds').hidden = false;
   document.getElementById('line').textContent = line;
   const copy = document.getElementById('copy');
   copy.onclick = () =>
@@ -434,6 +437,7 @@ async function opening(fragment) {
     const kept = await store.groups();
     let group = token ? kept.find((g) => g.token === token) : kept[0];
     if (token && !group) group = await join(token, kept);
+    if (!group && !asked) offer('');
     if (!group) throw new Said('Open this page from your group’s link.');
     await enter(group, asked);
   } catch (e) {
