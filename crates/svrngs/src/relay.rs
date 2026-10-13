@@ -99,13 +99,22 @@ impl AccessControl for Admits {
 }
 
 /// Whether `key` is let through, by the read of where it stands, made off
-/// the relay's own tasks.
+/// the relay's own tasks. A read that failed — it panicked, or was
+/// cancelled — refuses, traced as that, never as the key standing in no
+/// group (#129).
 fn verdict(key: &str, read: Result<Option<(String, Member)>, JoinError>) -> Access {
-    if let Some((group, member)) = read.ok().flatten() {
-        tracing::debug!(target: "relay", key, group, person = %member.person, "relay: admitted — the key stands in a group held here");
-        return Access::Allow;
+    match read {
+        Ok(Some((group, member))) => {
+            tracing::debug!(target: "relay", key, group, person = %member.person, "relay: admitted — the key stands in a group held here");
+            return Access::Allow;
+        }
+        Ok(None) => {
+            tracing::debug!(target: "relay", key, "relay: refused — the key stands in no group held here")
+        }
+        Err(e) => {
+            tracing::warn!(target: "relay", key, error = %e, "relay: refused — the record could not be read")
+        }
     }
-    tracing::debug!(target: "relay", key, "relay: refused — the key stands in no group held here");
     Access::Deny { reason: None }
 }
 
@@ -192,3 +201,7 @@ pub async fn run(relay: Relay, root: &Path) -> Result<(), Refusal> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+#[path = "relay_tests.rs"]
+mod tests;
