@@ -167,6 +167,12 @@ fn token(issuer: &SigningKey, relay: &Server) -> String {
     .encode()
 }
 
+/// Drive `home.mjs` in `engine` at `at`'s home page, as `args` say.
+async fn home_page(engine: Engine, at: &Node, mut args: Value) -> Value {
+    args["ask"] = json!(format!("http://svrngs.localhost:{}/", at.api_addr().port()));
+    drive(engine, "home.mjs", args, None).await
+}
+
 /// Run the browser half `web/tests/<script>` in `engine` on `args`, and
 /// read the JSON line it printed. When `release` fires, the browser half is told `go`
 /// (its upload's tail, u4-4).
@@ -1371,18 +1377,15 @@ async fn the_home_page_changes_a_lend_s_limit_in_place(engine: Engine) {
     let lends = svrngs_node::lend::lends_dir(ada_dir.path());
     std::fs::create_dir_all(&lends).unwrap();
     std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
-    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
     let press = |words: &str| json!([format!("#lent button:has-text('{words}')")]);
-    let seen = drive(
+    let seen = home_page(
         engine,
-        "home.mjs",
+        &ada,
         json!({
-            "ask": home,
             "read": "#lent li",
             "all": "#lent li, #lent p",
             "do": [["#lent input", "4"], press("Let in this many"), press("Let everyone in"), press("Stop lending")],
         }),
-        None,
     )
     .await;
     let first = |v: &Value| v[0].as_str().unwrap_or_default().to_string();
@@ -1478,14 +1481,7 @@ async fn the_home_page_tells_a_removed_person(engine: Engine) {
     })
     .await;
     assert!(told.is_ok(), "bo's computer is told its cut");
-    let home = format!("http://svrngs.localhost:{}/", bo.api_addr().port());
-    let seen = drive(
-        engine,
-        "home.mjs",
-        json!({ "ask": home, "read": "#home section p" }),
-        None,
-    )
-    .await;
+    let seen = home_page(engine, &bo, json!({ "read": "#home section p" })).await;
     assert_eq!(
         seen["read"],
         "You are no longer in this group. What you already have stays on this computer; nothing new reaches it.",
@@ -1510,14 +1506,7 @@ async fn the_home_page_says_an_unreadable_register(engine: Engine) {
     let ada = node(dir.path(), &relay, &signing(2)).await;
     let roster = ada.rail().group_dir(NS).unwrap().join("roster.json");
     std::fs::set_permissions(&roster, std::fs::Permissions::from_mode(0o000)).unwrap();
-    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
-    let seen = drive(
-        engine,
-        "home.mjs",
-        json!({ "ask": home, "read": "#home section p" }),
-        None,
-    )
-    .await;
+    let seen = home_page(engine, &ada, json!({ "read": "#home section p" })).await;
     std::fs::set_permissions(&roster, std::fs::Permissions::from_mode(0o644)).unwrap();
     assert_eq!(
         seen["read"], "This computer could not read who is in this group.",
@@ -1552,14 +1541,7 @@ async fn the_home_page_tells_two_people_of_one_name_apart(engine: Engine) {
         ada.rail().commit(NS, &fixture).unwrap().unwrap();
         tokio::time::sleep(Duration::from_millis(1_100)).await;
     }
-    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
-    let seen = drive(
-        engine,
-        "home.mjs",
-        json!({ "ask": home, "read": "#home section p" }),
-        None,
-    )
-    .await;
+    let seen = home_page(engine, &ada, json!({ "read": "#home section p" })).await;
     eprintln!("the home page's run: {seen:#}");
     let line = seen["read"].as_str().unwrap_or_default();
     let people: Vec<&str> = (line.strip_prefix("People: "))
@@ -1657,14 +1639,7 @@ async fn the_home_page_shows_every_removal_and_ask(engine: Engine) {
     let dir = tempfile::tempdir().unwrap();
     let ada = node(dir.path(), &relay, &signing(7)).await;
     removals_held(&ada).await;
-    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
-    let seen = drive(
-        engine,
-        "home.mjs",
-        json!({ "ask": home, "all": "#home .removals li" }),
-        None,
-    )
-    .await;
+    let seen = home_page(engine, &ada, json!({ "all": "#home .removals li" })).await;
     eprintln!("the home page's run: {seen:#}");
     assert_eq!(
         removals_said(&json!({ "removals": seen["all"] })),
@@ -1823,14 +1798,7 @@ async fn the_home_page_says_where_the_groups_folder_is(engine: Engine) {
         .await
         .unwrap();
     assert!(kept.status().is_success(), "{:?}", kept.text().await);
-    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
-    let seen = drive(
-        engine,
-        "home.mjs",
-        json!({ "ask": home, "read": ".folder" }),
-        None,
-    )
-    .await;
+    let seen = home_page(engine, &ada, json!({ "read": ".folder" })).await;
     assert_eq!(
         seen["read"],
         format!(
@@ -1889,12 +1857,10 @@ async fn the_home_page_says_a_refusal_apart_from_no_answer(engine: Engine) {
     let relay = relay().await;
     let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
     let (ada, others) = unlisted_held(&relay, &signing(7), &dirs).await;
-    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
-    let seen = drive(
+    let seen = home_page(
         engine,
-        "home.mjs",
-        json!({ "ask": home, "all": "#home section > ul:not(.removals) li" }),
-        None,
+        &ada,
+        json!({ "all": "#home section > ul:not(.removals) li" }),
     )
     .await;
     eprintln!("the home page's run: {seen:#}");
