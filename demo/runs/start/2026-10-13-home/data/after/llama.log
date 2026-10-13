@@ -1,0 +1,12 @@
+0.01.005.680 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.01.008.364 W srv  llama_server: -----------------
+0.01.008.367 W srv  llama_server: CORS is set to allow all origins ('*') and no API key is set
+0.01.008.367 W srv  llama_server: this can be a security risk (cross-origin attacks)
+0.01.008.367 W srv  llama_server: more info: https://github.com/ggml-org/llama.cpp/pull/25655
+0.01.008.367 W srv  llama_server: -----------------
+0.01.013.522 I srv    load_model: loading model 'Qwen/Qwen2.5-0.5B-Instruct-GGUF:Q4_K_M'
+0.01.744.826 W load: control-looking token: 128247 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.02.227.178 I srv    load_model: initializing, n_slots = 2, n_ctx_slot = 2048, kv_unified = 'false'
+0.02.259.031 I srv  llama_server: model loaded
+0.02.259.039 I srv  llama_server: listening on http://127.0.0.1:18089
+3.59.081.325 I srv    operator(): operator(): cleaning up before exit...
