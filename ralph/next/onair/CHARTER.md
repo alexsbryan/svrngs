@@ -18,8 +18,9 @@ decision says so.
   to 16,340, and svrngs-core's from 3,130 to 3,190 (asked as 15,950 to
   16,250; both moved up 50, then 40, with the start queue's raises to
   16,040, the operator, 2026-10-13). The start queue's economizing row
-  then lowers its cap to where its cuts land, and this queue's +300 and +60
-  stand over that lowered cap: its figures are restated when it lands.
+  then lowered the caps to where its cuts landed, 15,987 and 3,122
+  (start-economize, 0b5bccf), and this queue's +300 and +60 stand over
+  them: **16,287 and 3,182**.
   Every raise follows an economizing pass of this queue's own (the
   operator's standing rule, 2026-10-13: "Every raise needs a pass
   first"). Each raise goes in its

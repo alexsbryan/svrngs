@@ -104,8 +104,9 @@ stop.
 
 Write `NEEDS_HUMAN.md` and stop for any of these:
 
-- the budget past 16,040, or svrngs-core's past 3,130, and a raise asked
-  before an economizing pass;
+- the budget past 15,987, or svrngs-core's past 3,122 (the caps
+  start-economize lowered, 0b5bccf), and a raise asked before an
+  economizing pass;
 - a cut that would change what a person sees or a test asserts. A home-page change
   that does not fit is written there with its line estimate, and the rows
   that fit go on;

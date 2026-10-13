@@ -4,7 +4,8 @@ The operator, 2026-10-12, on a radio show from a member's computer: "what's
 the minimal primitives we would want to have in svrngs to allow someone
 else to realize a vision like this? This is largely just a test of the
 infra"; then, 2026-10-13, "Add the on air spike too", with the budget
-raised to 16,340 and svrngs-core 3,190. Five rows, in ON_AIR §7's order:
+raised by 300 and svrngs-core's by 60: 16,287 and 3,182 over the caps
+start-economize lowered (0b5bccf). Five rows, in ON_AIR §7's order:
 the app and its harness, red on svrngs as it is; the live lane naming who
 spoke; a signature for an app, checkable anywhere; bytes by hash, for an
 app, with a lifetime; the whole run. The decisions are in `CHARTER.md`;
