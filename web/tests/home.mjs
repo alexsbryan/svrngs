@@ -53,7 +53,9 @@ try {
     await page.locator('#lent li, #lent p').first().waitFor({ timeout: 30_000 });
     after.push(await page.locator(args.all).allTextContents());
   }
-  console.log(JSON.stringify({ heading, read, all, after, clipboard, logs }));
+  // Every link on the page, its words and where it opens (start-home).
+  const links = await page.locator('a').evaluateAll((as) => as.map((a) => ({ text: a.textContent, target: a.target })));
+  console.log(JSON.stringify({ heading, read, all, after, clipboard, links, logs }));
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;

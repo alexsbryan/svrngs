@@ -2223,3 +2223,23 @@ async fn the_home_page_copies_a_lend_s_address_for_a_program(engine: Engine) {
     }
     drop(ada);
 }
+
+in_both_engines!(
+    /// **Each thing lent opens by a link saying what it opens and whose**
+    /// (start-home, from start-measure's ranked row 7: "Sam’s llama" read
+    /// as a riddle, `demo/runs/start/2026-10-13/README.md` §3 (c)). Ada
+    /// lends `shelf`, of kind `k`; her page's link to it reads "Open ada’s
+    /// shelf (k)", the lend named as question.js names it. Planted,
+    /// watched failing: the page as aac2340 left it, "ada’s shelf (k)".
+    the_home_page_s_links_say_what_they_open
+);
+async fn the_home_page_s_links_say_what_they_open(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
+    lend(dir.path(), "shelf", shelf.port());
+    let seen = home_page(engine, &ada, json!({ "read": "#home section li a" })).await;
+    assert_eq!(seen["read"], "Open ada’s shelf (k)", "{seen:#}");
+    drop(ada);
+}
