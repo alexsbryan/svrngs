@@ -7393,3 +7393,223 @@ definition.**
 | I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". web/ and scripts/ exact tiers are could-not-judge. |
 | I19 | 6 | dry-report, `tests/` scopes | Still present, and said as could-not-judge. The line-window pass stood in. |
 | I28 | 6 | `code index` resume | New. When the embedder stopped mid-index, it said "Committed chunks are preserved — re-install to resume" (/tmp/relayaudit3/index.out). Run again, it said "Partial index … could not be opened (… Missing metadata …/_corpus_meta.json); starting fresh" (index2.out). The resume it promised did not happen. The rerun's own words say so, so nothing was silently lost, but the first message is wrong. |
+
+## REVIEW-audit-start-auto-1 (2026-10-13, range eaa401e..308be1a)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-relay-auto-3, whose
+`done` is eaa401e (ralph/next/relay/STATE.md); the start queue began on
+the commit after it (63f24ce), so both readings of the row give one range.
+It ends at 308be1a, the commit that made this row. `git rev-list --count
+eaa401e..308be1a` is 29, with no merge among them (`--merges`: 0), all on
+main: start-findings, start-measure, start-address and start-llama, each
+with its `done`, two commits that queue other work (d959a3c, 0728e14;
+ralph/ and docs alone) and the row's own commit.
+
+This audit's own commits before this one are 81bc336 (the row's two paths,
+as 3195b7b corrected the last audit's) and 891c050 (one `share_of` in
+crates/svrngs/tests/share.rs, behaviour kept). It opens #136 and #137,
+updates #80, and closes none.
+
+The instrument is ~/dev/commonwealth-ai/target/debug/sovereign-cli,
+sha256 68746bcf…, the last audits' binary (`shasum -a 256`). The embedder
+was the daemon on :9741 (`/health`: ok). The corpus is 308be1a's product:
+crates/, apps/, web/, scripts/, Cargo.toml and Cargo.lock, put into
+/tmp/startaudit1/prod-308be1a by `git archive` (271 files). demo/ is left
+out: the range's demo/ is two recorded runs. `code index . --corpus-id
+prod-308be1a` gave 3256 chunks in 982 s (/tmp/startaudit1/index.out).
+`refresh` gave rust 14837 symbols, typescript and python "skipped (export
+failed)" (I4), and "Daemon nudge failed: 404 … prod-308be1a is not
+registered" (I29; /tmp/startaudit1/refresh.out).
+
+### (1) Net lines per unit, product code
+
+The counts come from `git log --reverse -M --numstat --format='@@%h %s'
+--no-merges eaa401e..308be1a`, summed by /tmp/startaudit1/scripts/ledger.py
+(/tmp/startaudit1/ledger.out), written again since /tmp/relayaudit3/ was
+gone, to the last audit's rules: product is crates/, apps/, web/ and
+bridge/; a file under `tests/`, or named as `scripts/lean_check.py`'s
+`TEST_FILE` names one (relay_tests.rs, share/tests.rs, tests_support.rs),
+is a test; a commit that names no unit counts toward the next one that
+does, so d959a3c and 0728e14 fall to start-address, adding no product
+line. Everything else is counted apart:
+
+- demo/runs/start +6693 −1: start-measure's run and start-address's
+  restart step, predictions, drivers, data and READMEs
+- docs/DESIGN.md +79 −19, ARCHITECTURE.md +4 −2, scripts/lean_check.py
+  +2 −2 (c27521f's raise), Cargo.lock +1
+- ralph/next/start +23 −11, ralph/next/onair +12 −10,
+  ralph/REVIEW_FINDINGS.md +5 −5
+
+| unit | commits | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| start-findings | 11 | 121 | 59 | 62 | 333 | 21 | 312 |
+| start-measure | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
+| start-address | 10 | 79 | 21 | 58 | 297 | 1 | 296 |
+| start-llama | 3 | 94 | 14 | 80 | 193 | 5 | 188 |
+| this row's own commit | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 29 | 294 | 94 | 200 | 823 | 27 | 796 |
+
+The src lines, by file:
+
+- start-findings: svrngs-node node.rs +37 −16 (`relay_of`, `dialled`
+  given the relay, `say_relay`'s unread groups traced), svrngs relay.rs
+  +43 −17 (`verdict`, `spawn`'s `GroupsUnread`), cli.rs +8 −10 (`WHEN`
+  moved to home.rs, `GroupsUnread`), home.rs +7, home.js +6 −3, svrngs-node
+  relay.rs +5 −4, svrngs-core relay.rs +8 −6, link.rs +1 −1 and
+  membership.rs +1 −1 (#131: no line added there, as fence 6 has it),
+  rail.rs +2 −1, svrngs-node Cargo.toml +3 (chrono, a dev-dependency)
+- start-address: svrngs-node api.rs +34 −6 (`kept_address`, `Taken`,
+  `NoAddress`), cli.rs +26 −8 (`Refusal::Taken`, `Api`, `start` listening
+  where it last did), origin.rs +8 −4, home.rs +7 −1 (`address`), home.js
+  +2, web/install.sh +2 −2
+- start-llama: share.rs +55 −11 (`known_kinds`, `says`, `kept_of`,
+  `lend_of` adding the table's paths), well_known.txt +27 (llama-server's
+  row and why each path is kept), cli.rs +12 −3 (`Said::Shared` saying
+  what the table keeps back)
+
+The size budget, measured by scripts/lean_check.py at HEAD over a `git
+archive` tree of each end (/tmp/startaudit1/lean-eaa401e.out,
+lean-308be1a.out), and over the working tree after this audit's move:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| eaa401e, range start (its own cap 15,800) | 3121 | 15797 |
+| 308be1a, range end | 3121 | 15898 |
+| 891c050, this audit's move (tests alone) | **3121 / 3130** | **15898 / 15950** |
+
+The range adds 101 counted lines. **9 lines are left in svrngs-core and
+52 in the repository** (#80), before start-home's +50 to 16,000.
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs, crates/svrngs-node and crates/svrngs-core
+(src and tests) and web/ (`git diff --stat eaa401e 308be1a -- crates apps
+web scripts`); scripts/ was run too, for lean_check.py.
+
+**The exact tier was checked against a plant.** 308be1a's `kept_of`
+(share.rs:142-157, its doc lines included), added in the range by
+f900454, was appended to crates/svrngs/src/cli.rs in the indexed tree,
+followed by `refresh` (+5 symbols). The scoped report gave **1 group**:
+`kept_of — crates/svrngs/src/cli.rs:1950 == crates/svrngs/src/share.rs:145`,
+2 copies × 13 lines (/tmp/startaudit1/plant.md). With cli.rs restored
+(`diff` against `git show 308be1a:` is empty) and `refresh` run again
+(−5), each scope was run at 0.95 and 0.90
+(/tmp/startaudit1/clean-*.md):
+
+| scope | locations | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---:|---:|---:|---:|---|
+| crates/svrngs/ | 98 | 0 | 0 | 0 | none |
+| crates/svrngs-core/ | 457 | 5 | 0 | 12 | none |
+| crates/svrngs-node/ | 489 | 1 | 0 | 8 | none |
+| web/ | 98 | could-not-judge (I4) | 0 | 1 | none |
+| scripts/ | 15 | could-not-judge (I4) | 0 | 0 | none |
+| crates/svrngs/tests/ | 0 | could-not-judge (I19) | could-not-judge | could-not-judge | — |
+
+The six exact groups are the earlier audits' three-line ones (`is_empty`,
+`key`, `lines`, `signed_by_link`, `as_str`, api.rs `addr`). Every
+location the reports name, 55, was blamed at 308be1a against the range's
+29 commits: none has a line from them. **No exact or near clone at 0.95
+or 0.90 has a side the range added.**
+
+The tests scope is could-not-judge (I19), so a line-window pass stood in:
+/tmp/startaudit1/scripts/windows.py, written again to the last audit's
+rule (8 lines of code, blanks, comments and lone brackets dropped, over
+every test file of crates/; a span new when a side overlaps a line the
+range added, by `git diff -U0`). At 308be1a it found **94 window hits,
+54 spans, 7 new** (/tmp/startaudit1/windows.out); after 891c050, 87, 50
+and 4 (windows-after.out):
+
+- crates/svrngs/tests/share.rs :159-169 == :285-294 and :171-179 ==
+  :296-304, and address.rs :172-179 == share.rs :169-176: a `Share`
+  literal, field for field, which f900454 wrote again for llama-server.
+  Fixed in 891c050 (`share_of`); address.rs's is a separate binary (#137).
+- svrngs-node src/relay_tests.rs :150-161 == svrngs src/relay_tests.rs
+  :9-20 == svrngs tests/relay.rs :103-113: a test's trace sink, `TRACES`
+  and `struct Kept`, written three times in the range (c97b9e3, 9bb6df8,
+  bf67398) beside default_relay.rs :31-43's, before it (#137).
+- crates/svrngs/tests/address.rs :41-54 == share.rs :531-544: `Program`,
+  the command run as a process with its output read by line, copied by
+  82c7dd1 from share.rs (334c4b8) and changed (`HOME`, `RUST_LOG=debug`,
+  no standard input) (#137).
+
+### Reading the range
+
+- **One decider** (AGENTS.md 8). Each of the range's rules has one home:
+  when a person joined, `home::WHEN` (svrngs-node home.rs:59), read by the
+  command's `joined_of` and written by home.js `people` by hand, which the
+  browser test pins (start-findings (a)); which group's relay a key is
+  dialled by, `relay_of` (node.rs:686), asked by the round, the asks and
+  `contact`; a relay as written, svrngs-core's `relay::parse`, the node's
+  wrapping it (#131); the home page's address, `home::address` (home.rs:91),
+  the command's two sentences and `ask_address` asking it, install.sh
+  spelling it in shell (:156) as tests/install.rs:295 pins; what a kind
+  keeps back, `kept_of` (share.rs:145), through `says` (:137), the one
+  reader of a row's clause, which `accounts_of` asks too. One reader is
+  left beside its rule: the API's address file is read by `kept_address`
+  (api.rs:58), refusing one that names no address, and still by hand in
+  `ask_running` (cli.rs:891), an unreadable file taken as empty (#136).
+- **Never silently substitute** (AGENTS.md 6; fence 2). Each `.ok()`,
+  `unwrap_or`, `unwrap_or_default` the range added to product code was
+  read (/tmp/startaudit1/range-src.diff). svrngs-core link.rs:140 and
+  membership.rs:289 keep the `Option` they had, the refusal traced inside
+  `parse`; api.rs's `a.parse().ok()` becomes `NoAddress`, refused; node.rs
+  `say_relay`'s `unwrap_or_default` comes after the warn #128 asked for;
+  cli.rs `kept_address(..)?.unwrap_or(API)` is `None` only before the
+  first start, traced; `joined_of`'s `.ok()` becomes its refusal's words.
+  A port another program holds is said with the address and the file to
+  delete (`Refusal::Taken`), never moved.
+- **Glassbox** (AGENTS.md 1). Each new branch traces: `kept_address`'s
+  read, `relay_of`'s group, `verdict`'s three arms (a failed read at
+  warn), `spawn`'s unread groups, `kept_of`'s count, `lend_of`'s refused
+  count, `app_of`'s mode.
+- **A person's words** (fence 3). The range's added quoted strings in
+  product code use none of key, member, keeper, ring, act, journal, port,
+  namespace or origin as a word a person reads (`grep -iwE` over the added
+  lines): the hits are format strings, a trace target and trace fields.
+  The command's own words keep "port", as `share <port>` takes one.
+- **The nouns gate** (fence 6). Outside well_known.txt, llama-server is
+  named in product code only in share.rs:30, a module doc citing the row
+  (`git grep -i llama 308be1a -- crates apps web scripts`, tests apart).
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges eaa401e..308be1a -- crates apps
+web scripts demo` match `\b(struct|enum|trait|type|class)\s+[A-Z]\w*`
+four times: `struct Kept` three times and `struct Program` once
+(/tmp/startaudit1/new-types.out), all in test code. Each was run through
+`converge noun <Name> --corpus-id prod-308be1a`
+(/tmp/startaudit1/nouns.out), with `git grep` over every path beside it,
+since converge leaves tests out (nouns-grep.out):
+
+| noun | converge (production) | git grep (all) | read |
+|---|---|---|---|
+| Kept | 1: svrngs-node door/choices.rs:59 | 5: choices.rs:60 (`type Kept`, the choices kept on disk); svrngs-node relay_tests.rs:153, svrngs relay_tests.rs:12, tests/relay.rs:105, tests/default_relay.rs:33 (`struct Kept`, a test's trace sink) | Two concepts. The production alias is one; the four sinks are one concept written four times (#137). |
+| Program | 0 | 2: tests/share.rs:507, tests/address.rs:22 | One concept, written twice (#137). |
+
+converge's lines are still one early (I1). **No noun has more than one
+definition in production code.** In test code, `Kept` and `Program` each
+do (#137).
+
+### Fixed here
+
+- 891c050: crates/svrngs/tests/share.rs's two `Share` literals one
+  `share_of(origin, kind)`. `cargo test -p svrngs --test share`: 8 passed
+  before and after (/tmp/startaudit1/share-before.out, share-after.out).
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 136 | 8, 6 | crates/svrngs/src/cli.rs:891 (`ask_running`: `read_to_string(root.join(API_FILE)).unwrap_or_default()`); crates/svrngs-node/src/api.rs:58-70 (`kept_address`, start-address's reader of the same file) | not fixed: a change in what a person is told | Two readers of where svrngs listens. start-address made `kept_address` the reader that refuses a file naming no address (`NoAddress`, "delete it"). `ask_running`, which a folder's sync and `svrngs remove` ask through (cli.rs:839, :860, :1629), still reads the file by hand: one it cannot read is taken as empty, and one naming no address is pasted before the route as written. Either is refused as `NotRunning`, "svrngs is not running on this computer", so a file svrngs cannot read is said as svrngs not running. A fix has `ask_running` ask `kept_address`: `None` is `NotRunning`, an error `Refusal::Api` in its words, with a test, red first, of a file naming no address said as that. |
+| 137 | 8 | the trace sink `TRACES` + `struct Kept`: crates/svrngs-node/src/relay_tests.rs:150-163 (c97b9e3), crates/svrngs/src/relay_tests.rs:9-21 (9bb6df8), crates/svrngs/tests/relay.rs:103-115 (bf67398), crates/svrngs/tests/default_relay.rs:31-43 (before the range); `Program`: crates/svrngs/tests/address.rs:22-75 (82c7dd1) and crates/svrngs/tests/share.rs:507-566; the `Share` literal: address.rs:170-180 and share.rs:43-55 (`share_of`) | not fixed: across two crates and separate test binaries, the copies differing | Test code (no budget line), but the drive is copied: four trace sinks, two `Program`s, two `Share` literals, and `address_in` in address.rs:78 beside share.rs:145. tests/common cannot hold them, since it brings the browser harness with it (common/mod.rs:13). A fix gives the command's tests one support module without the harness, `Program::start` taking its environment and input, and the sinks one file each crate's tests include, each test run before and after. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 9 lines left in svrngs-core (3121 / 3130) and 52 in the repository (15898 / 15950), after the range's +101. start-home's row takes the operator's +50 to 16,000 when it first passes 15,950. |
+| 130, 132, 133, 134, 135 | as recorded | as recorded | not fixed | Not touched by this range's decisions. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still one line early (choices.rs:59 for :60). The dry-report half reported the plant at its own `fn` line (cli.rs:1950). |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". web/ and scripts/ exact tiers are could-not-judge. |
+| I19 | 6 | dry-report, `tests/` scopes | Still present, and said as could-not-judge. The line-window pass stood in. |
+| I29 | 6 | `refresh` over a corpus `code index` made | New: "⚠ Daemon nudge failed: 404 Not Found: … prod-308be1a is not registered; run `sovereign project register` first", then "✓ 14837 symbols" and exit 0 (/tmp/startaudit1/refresh.out). The symbols were exported in process, as the plant's +5 and −5 show, so nothing was lost; the warning names a step the index never asked for. |
