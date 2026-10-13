@@ -1,8 +1,10 @@
-//! svrngs's relay the command's default, n0 none of its path
-//! (relay-default (a); DESIGN §10, the operator, 2026-10-12). A computer
-//! built as the command builds it (`cli::reach`, which `src/main.rs` calls)
-//! meets its groups at svrngs's relay, or at the one a group keeps, with no
-//! address lookup — n0's or any. A group made with `new --relay` keeps it,
+//! svrngs's relay, where a computer meets its groups once the build ships
+//! `MeetAt::Svrngs`, n0 none of its path (relay-default (a); DESIGN §10,
+//! the operator, 2026-10-12; parked at the gate by relay-park, 2026-10-13,
+//! the build shipping n0's until the switch, `tests/shipped.rs`). A
+//! computer built as the command builds it there (`cli::reach`, which
+//! `src/main.rs` calls) meets its groups at svrngs's relay, or at the one a
+//! group keeps, with no address lookup — n0's or any. A group made with `new --relay` keeps it,
 //! every computer its link lets in meets the group there too, and each
 //! reaches each by key and that relay alone; no trace of any names an n0
 //! host. Planted: `cli::reach` answering the command's old posture,
@@ -14,7 +16,7 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use iroh_relay::server::{RelayConfig as RelayServer, Server, ServerConfig};
-use svrngs::cli::{self, Verb};
+use svrngs::cli::{self, MeetAt, Verb};
 use svrngs::group;
 use svrngs_node::iroh::{EndpointAddr, RelayConfig, RelayUrl};
 use svrngs_node::link::Link;
@@ -83,11 +85,11 @@ async fn home(node: &Node) -> String {
 #[test]
 fn the_command_meets_svrngs_s_relay_and_never_n0_s() {
     let dir = tempfile::tempdir().unwrap();
-    let ours = cli::reach(dir.path(), &Verb::Run).unwrap();
+    let ours = cli::reach(dir.path(), &Verb::Run, MeetAt::Svrngs).unwrap();
     assert!(!ours.n0_services, "n0's relays and lookup are off");
     assert_eq!(ours.relay_urls, ["https://relay.svrnme.sh/"]);
     let asked = cli::parse(argv("new house --relay relay.example.org")).unwrap();
-    let theirs = cli::reach(dir.path(), &asked).unwrap();
+    let theirs = cli::reach(dir.path(), &asked, MeetAt::Svrngs).unwrap();
     assert!(!theirs.n0_services, "n0's relays and lookup are off");
     assert_eq!(theirs.relay_urls, ["https://relay.example.org/"]);
 }
@@ -102,7 +104,7 @@ async fn a_group_s_own_relay_meets_every_member_and_n0_never() {
     let dirs = [(); 3].map(|()| tempfile::tempdir().unwrap());
 
     let made = cli::parse(argv(&format!("new house --as Sam --relay {url}"))).unwrap();
-    let ours = cli::reach(dirs[0].path(), &made).unwrap();
+    let ours = cli::reach(dirs[0].path(), &made, MeetAt::Svrngs).unwrap();
     let sam = computer(dirs[0].path(), 41, &ours).await;
     assert!(
         sam.endpoint().address_lookup().unwrap().is_empty(),
@@ -131,7 +133,7 @@ async fn a_group_s_own_relay_meets_every_member_and_n0_never() {
     let mut people = vec![sam];
     for (dir, (seed_byte, who)) in dirs[1..].iter().zip([(42, "Alex"), (43, "Bo")]) {
         let join = cli::parse(argv(&format!("join {} --as {who}", printed.client))).unwrap();
-        let theirs = cli::reach(dir.path(), &join).unwrap();
+        let theirs = cli::reach(dir.path(), &join, MeetAt::Svrngs).unwrap();
         assert_eq!(theirs.relay_urls, [url.clone()], "{who} meets it there");
         let node = computer(dir.path(), seed_byte, &theirs).await;
         assert!(node.endpoint().address_lookup().unwrap().is_empty());
@@ -146,7 +148,7 @@ async fn a_group_s_own_relay_meets_every_member_and_n0_never() {
     }
     for (node, dir) in people.iter().zip(&dirs) {
         assert_eq!(home(node).await, url, "every computer is reached there");
-        let next = cli::reach(dir.path(), &Verb::Run).unwrap();
+        let next = cli::reach(dir.path(), &Verb::Run, MeetAt::Svrngs).unwrap();
         assert_eq!(next.relay_urls, [url.clone()], "and meets it there again");
     }
     // Each reaches each by its key and the group's relay alone: Alex hears

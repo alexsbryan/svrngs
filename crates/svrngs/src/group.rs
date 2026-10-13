@@ -23,7 +23,8 @@
 //! --relay` writes it, `join` the one its link carried. It is this
 //! computer's choice, as the origin is; the group's record says where each
 //! computer is reached, by its `Relay` act (relay-in-record). A group that
-//! keeps none is met at svrngs's own (`cli::DEFAULT_RELAY`).
+//! keeps none is met where the build meets its groups (`cli::SHIPPED`):
+//! n0's relays until the operator's switch, then svrngs's own.
 
 use std::path::{Path, PathBuf};
 

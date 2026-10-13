@@ -42,7 +42,7 @@ fn main() -> ExitCode {
             return ExitCode::from(3);
         }
     };
-    let relay = match cli::reach(&root, &command) {
+    let relay = match cli::reach(&root, &command, cli::SHIPPED) {
         Ok(r) => r,
         Err(e) => return refuse(e),
     };

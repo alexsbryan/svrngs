@@ -123,7 +123,7 @@ svrngs — keep what your group shares on your own computers.
       an address of its own under that page's host, which must serve the
       page at every name under it, as group.svrnme.sh does.
       --relay meets the group at your own relay, `svrngs relay <name> --open`
-      (else newcomers are refused it), in place of svrngs's: every computer
+      (else newcomers are refused it), in place of the one svrngs uses: every computer
       its links let in meets it there too.
 
   svrngs join <link> [--as <your name>] [--no-run]
@@ -218,10 +218,28 @@ pub const LINK_LIFE_SECS: i64 = 24 * 60 * 60;
 pub const API: SocketAddr = SocketAddr::new(std::net::IpAddr::V4(Ipv4Addr::LOCALHOST), 0);
 
 /// svrngs's own relay, where a computer meets each group it holds that
-/// keeps none of its own; n0's relays and address lookup are none of its
-/// path (DESIGN §10, the operator, 2026-10-12). It answers before any build
-/// naming it is published (DESIGN §7, `scripts/deploy-relay.sh`).
+/// keeps none of its own once the build ships [`MeetAt::Svrngs`], with no
+/// address lookup (DESIGN §10, the operator, 2026-10-12). It answers before
+/// any build meeting its groups there is published (DESIGN §7,
+/// `scripts/deploy-relay.sh`, `scripts/deploy-page.sh`).
 pub const DEFAULT_RELAY: &str = "https://relay.svrnme.sh/";
+
+/// Where a computer meets each group it holds that keeps no relay of its
+/// own: the switch the operator flips for production (DESIGN §9, §10, the
+/// operator, 2026-10-13).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MeetAt {
+    /// n0's relays, its address lookup beside them.
+    N0,
+    /// svrngs's own, [`DEFAULT_RELAY`], and no lookup.
+    Svrngs,
+}
+
+/// Where this build meets its groups: n0's, chosen, until the operator
+/// starts paying for svrngs's. Flipping it, then `scripts/deploy-relay.sh`,
+/// then `scripts/deploy-page.sh`, which reads this line, is theirs, in that
+/// order (DESIGN §7, §9).
+pub const SHIPPED: MeetAt = MeetAt::N0;
 
 /// How long `new` and `link` wait for this computer's address before
 /// printing a link, when it has a relay to reach.
@@ -236,7 +254,8 @@ pub enum Verb {
         person: Option<Name>,
         /// `None` prints the client's link alone.
         origin: Option<Origin>,
-        /// `--relay`: where this group is met, in place of [`DEFAULT_RELAY`].
+        /// `--relay`: where this group is met, in place of where the build
+        /// meets its groups ([`SHIPPED`]).
         relay: Option<RelayUrl>,
     },
     Join {
@@ -663,31 +682,49 @@ pub fn claim(root: &Path) -> Result<File, Refusal> {
 
 /// How this computer reaches the network to do `command` over `root`: at
 /// the relay `new --relay` names or a link it joins carries, and each
-/// group's it holds — the one the group keeps, else [`DEFAULT_RELAY`] —
-/// never n0's relays nor its lookup. A kept relay unread is refused.
-pub fn reach(root: &Path, command: &Verb) -> Result<RelayConfig, Refusal> {
+/// group's it holds — the one the group keeps, else where `at` meets the
+/// groups that keep none: at [`MeetAt::N0`], n0's relays with n0's lookup
+/// on, beside any kept, since a non-empty list replaces n0's
+/// (`svrngs_node::guest::RelayConfig`); at [`MeetAt::Svrngs`],
+/// [`DEFAULT_RELAY`] and no lookup, n0 none of the path. A computer
+/// holding only groups that keep their own relays meets them there alone,
+/// as iroh makes the nearest of its relays its home. A kept relay unread
+/// is refused.
+pub fn reach(root: &Path, command: &Verb, at: MeetAt) -> Result<RelayConfig, Refusal> {
     let asked = match command {
         Verb::New { relay, .. } => relay.clone(),
         Verb::Join { link, .. } => link.token.relay.clone().map(RelayUrl::from),
         _ => None,
     };
     let mut relay_urls: Vec<String> = asked.iter().map(ToString::to_string).collect();
+    let mut unkept = false;
     for seed in group::groups(root) {
         let unread = |e: &dyn std::fmt::Display| keep_refused(&seed, &e.to_string());
         let dir = svrngs_node::group_dir_in(root, &seed.id()).map_err(|e| unread(&e))?;
-        let url = group::read_relay(&dir).map_err(|e| unread(&e))?;
-        let url = url.map_or(DEFAULT_RELAY.to_string(), |u| u.to_string());
-        if !relay_urls.contains(&url) {
-            relay_urls.push(url);
-        }
+        let Some(kept) = group::read_relay(&dir).map_err(|e| unread(&e))? else {
+            tracing::debug!(target: "cli", group = %seed.id(), ?at, "cli: the group keeps no relay — met where the build meets its groups");
+            unkept = true;
+            continue;
+        };
+        relay_urls.push(kept.to_string());
     }
-    if relay_urls.is_empty() {
-        relay_urls.push(DEFAULT_RELAY.to_string());
+    if unkept || relay_urls.is_empty() {
+        relay_urls.extend(match at {
+            MeetAt::N0 => svrngs_node::relay::n0_relays()
+                .urls::<Vec<RelayUrl>>()
+                .iter()
+                .map(ToString::to_string)
+                .collect(),
+            MeetAt::Svrngs => vec![DEFAULT_RELAY.to_string()],
+        });
     }
-    tracing::debug!(target: "cli", ?relay_urls, "cli: the relays this computer meets its groups at, n0's none of them");
+    let mut seen = std::collections::BTreeSet::new();
+    relay_urls.retain(|url| seen.insert(url.clone()));
+    let n0_services = at == MeetAt::N0;
+    tracing::debug!(target: "cli", ?at, unkept, n0_services, ?relay_urls, "cli: the relays this computer meets its groups at");
     Ok(RelayConfig {
         relay_urls,
-        n0_services: false,
+        n0_services,
         loopback_only: false,
     })
 }

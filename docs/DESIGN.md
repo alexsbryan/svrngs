@@ -1021,25 +1021,42 @@ is `svrngs relay <name> --staging` on a server `<name>` leads to, then
 who runs a relay reads its flags and its words; a person in a group never
 sees the word.
 
-**Where a computer meets its groups** (relay-default (a); §10). At
-svrngs's relay, `https://relay.svrnme.sh/` (`cli::DEFAULT_RELAY`), with
-n0's relays and its address lookup none of the path: `cli::reach`, which
-`main.rs` calls, builds the computer's `RelayConfig` with `n0_services`
-off, so no lookup is built and a key is dialled only at the relay its
-group's record names (§6). A group that runs its own relay is made with
+**Where a computer meets its groups** (relay-default (a), relay-park (b);
+§10). Where a group that keeps no relay of its own is met is a closed set,
+`cli::MeetAt`: n0's relays with n0's address lookup, or svrngs's relay,
+`https://relay.svrnme.sh/` (`cli::DEFAULT_RELAY`), with no lookup and n0
+none of the path. The build ships one, `cli::SHIPPED`: n0's, chosen,
+until the operator flips it for production (§9; §10, 2026-10-13).
+`cli::reach`, which `main.rs` calls with it, builds the computer's
+`RelayConfig`: at svrngs's, `n0_services` off, so no lookup is built and a
+key is dialled only at the relay its group's record names (§6); at n0's,
+`n0_services` on, and n0's relays named beside the relays the computer's
+groups keep whenever one of its groups keeps none, since a list replaces
+n0's set (`crates/svrngs-node/src/guest.rs:86-94`). A group that runs its own relay is made with
 `svrngs new <name> --relay <name or url>`: the computer keeps it beside the
 group's seed (`group.rs`, `relay`), as `join` keeps the relay its link
 carried, so every computer the group's links let in meets the group there,
 and each says so in the record by its `Relay` act. A computer meets each
-group it holds at the relay that group keeps, svrngs's own where it keeps
+group it holds at the relay that group keeps, the build's where it keeps
 none; iroh makes the nearest its home, so a computer in two groups with
-two relays is reached at one, where the other group's computers dial it. A
+two relays is reached at one, where the other group's computers dial it.
+At n0's, a computer holding only a group with its own relay is met there,
+n0's lookup on and no n0 relay named; holding a second group that keeps
+none, it names the group's relay and n0's four, and iroh chose: in two runs on
+this host, the group's relay on 127.0.0.1 over plain HTTP, which answers no
+QUIC address discovery as `svrngs relay` does, gave way to n0's
+`usw1-1` at once in one and after 25.7 s in the other (relay-park (b),
+the commit's body). A
 group's own relay lets a newcomer in before its `Admit` only with `--open`
 (§9). A computer that reaches none of its relays in 10 s says which it
-tried, and goes on trying. Tested by three computers made, joined and
+tried, and goes on trying. Tested at svrngs's by three computers made, joined and
 syncing through one relay on 127.0.0.1, each built by `cli::reach`, none
 with a lookup and none tracing an n0 host, planted with the old posture
-(`crates/svrngs/tests/default_relay.rs`).
+(`crates/svrngs/tests/default_relay.rs`); as shipped, by a computer with
+no group met at n0's relays and lookup, and one holding a group with its
+own relay on 127.0.0.1 homed there, n0's named beside it once it holds a
+group that keeps none, planted with `SHIPPED` at svrngs's
+(`crates/svrngs/tests/shipped.rs`).
 
 ## 4. Domains, and the fork
 
