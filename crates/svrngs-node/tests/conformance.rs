@@ -423,23 +423,6 @@ async fn uplink(relay: &str) -> String {
     format!("http://{at}/")
 }
 
-/// Every door's `carriage` lines (u5-11), kept in
-/// `target/conformance/carriage.log` for every test this binary runs: each
-/// range asked, answered, sent whole or cut off, beside the worker's trace.
-fn carriage() {
-    static ONCE: std::sync::Once = std::sync::Once::new();
-    ONCE.call_once(|| {
-        let kept = repo().join("target/conformance");
-        std::fs::create_dir_all(&kept).unwrap();
-        let log = std::fs::File::create(kept.join("carriage.log")).unwrap();
-        tracing_subscriber::fmt()
-            .with_env_filter(tracing_subscriber::EnvFilter::new("carriage=debug"))
-            .with_writer(std::sync::Mutex::new(log))
-            .with_ansi(false)
-            .init();
-    });
-}
-
 /// WebKit's seeks back to back (`a_rate`), beside the same seeks straight
 /// at a canary over the same link (`web/tests/control.mjs`), a try for
 /// each lend, with the host's load from `began` to now: printed, kept in
@@ -550,7 +533,9 @@ async fn browse(args: &Value) -> Value {
 }
 
 async fn conformance(way: Way, engine: Engine) {
-    carriage();
+    // Every door's `carriage` lines (u5-11) are kept with the relay's, in
+    // `target/traces/conformance.log`, by the harness's `relay()`: one
+    // subscriber a binary, so this binary sets none of its own.
     let began = load::load().await;
     let relay = relay().await;
     let g = group(&relay).await;
