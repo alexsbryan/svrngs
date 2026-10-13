@@ -55,9 +55,12 @@ def wait(cond, bound, every=0.2):
     return None
 
 
-def http(method, url, host=None, timeout=10):
-    """(status, headers, body as JSON or text) of one request, or (None, {}, why)."""
-    req = urllib.request.Request(url, method=method, headers={"Host": host} if host else {})
+def http(method, url, host=None, timeout=10, typed=False):
+    """(status, headers, body as JSON or text) of one request, or (None, {}, why).
+    `typed`: as a browser asks for an address typed into it, the one read
+    the home page answers other than its own (home.rs `only_itself`)."""
+    hd = {**({"Host": host} if host else {}), **({"Sec-Fetch-Site": "none", "Sec-Fetch-Mode": "navigate"} if typed else {})}
+    req = urllib.request.Request(url, method=method, headers=hd)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r: status, hd, blob = r.status, dict(r.headers), r.read()
     except urllib.error.HTTPError as e: status, hd, blob = e.code, dict(e.headers), e.read()
@@ -120,6 +123,7 @@ def browser(mode, args, timeout=900):
                          capture_output=True, text=True, timeout=timeout)
     try: got = json.loads(run.stdout.strip().splitlines()[-1])
     except Exception: got = {"stopped": f"story.mjs printed nothing: {run.stderr[-400:]}"}
+    hidden.extend(re.findall(r"#([A-Za-z0-9_-]{40,})", json.dumps(got)))
     say(f"browser-{mode}", **{k: v for k, v in got.items() if k != "mode"})
     return got
 
@@ -207,6 +211,9 @@ def main():
         if not (page.get("line") or "").startswith("curl "): sys.exit(f"the page with no link offered no line: {page}")
         sam_line = line("sam", page["line"])
         sam_home = sam_line["open_asked"] or home_page("sam")
+        st, _, _ = http("GET", sam_home, typed=True)
+        summary["sam_launchd_home_status"] = st
+        take_over("sam")
         make = browser("make", {"home": sam_home, "group": GROUP, "person": "Sam", "t0": T})
         link = make.get("link") or ""
         m = re.search(r"#([A-Za-z0-9_-]+)$", link)
@@ -220,7 +227,6 @@ def main():
                                    command("sam", "share", str(PORT), "--kind", "llama-server")]
         summary["sam"]["home"] = sam_home
         say("sam", **{k: summary["sam"][k] for k in ("groups", "folder_is_dir", "link_on_page", "origin_kept")})
-        take_over("sam")
 
         # 3. Bo, by the link and the one line.
         t0 = time.time(); T = round(t0 * 1000)
@@ -241,11 +247,12 @@ def main():
         summary["program"] = {"copy": copy, "lends": lends, "first": program(address, "first")}
         t = time.time()
         kick = subprocess.run(["launchctl", "kickstart", "-k", f"gui/{UID}/{LABEL}"], capture_output=True, text=True)
-        up = wait(lambda: http("GET", bo_home, timeout=2)[0] == 200 and api("bo", "/v1/groups"), 60)
+        up = wait(lambda: http("GET", bo_home, timeout=2, typed=True)[0] == 200 and api("bo", "/v1/groups"), 60)
         up_ms = ms(t) if up else None
         lends_after = {f"{l['person']}/{l['name']}": l["origin"] for l in (api("bo", "/v1/lends?namespace=" + groups[0]["id"]) or {}).get("lent", [])}
         again = program(address, "once")
-        st, _, body = http("GET", bo_home)
+        st, _, body = http("GET", bo_home, typed=True)
+        body = body if isinstance(body, str) else json.dumps(body)
         summary["restart"] = {"kickstart": {"exit": kick.returncode, "said": (kick.stdout + kick.stderr).strip()},
                               "home_answers_ms": up_ms, "home_before": bo_home, "home_after": home_page("bo"),
                               "home_status": st, "home_title": (re.search(r"<title>([^<]*)", body or "") or [None, None])[1],

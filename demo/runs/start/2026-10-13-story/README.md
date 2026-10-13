@@ -43,11 +43,15 @@ refuses a site built from another commit than its own.
 - **One LaunchAgent label on one host.** install.sh keeps svrngs at login
   as the LaunchAgent `sh.svrnme.svrngs`, one per login; Sam's line and
   Bo's both make it here. The run refuses to start if one of that label is
-  loaded already. Once Sam has lent, Sam's svrngs is booted out of launchd
-  and run by the driver as the LaunchAgent runs it — the bare command, the
-  same data dir, so the same address — which frees the label for Bo's line
-  (the rerun's `take_over`). Bo's stays in launchd; it is booted out at the
-  end.
+  loaded already. Once Sam's line has run and Sam's home page answered,
+  Sam's svrngs is booted out of launchd and run by the driver as the
+  LaunchAgent runs it — the bare command, the same data dir, so the same
+  address — which frees the label for Bo's line (the rerun's `take_over`).
+  It is taken over before the group is made, not after Sam lends (as this
+  file first had it): launchd starts its programs with the login's own
+  `HOME`, not the run's, so the first attempt's launchd-run svrngs put
+  Lab's folder in this host's own home (§3). Bo's stays in launchd; it
+  makes no folder of its own, and is booted out at the end.
 - **Sam, with no link, by the founder's line.** The group's page opened
   with no link, in Chromium as a computer; the line it offers run in `sh`
   with Sam's `HOME`, as pasted. Then Sam's home page, at the address the

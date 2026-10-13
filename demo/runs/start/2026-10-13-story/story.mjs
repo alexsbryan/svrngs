@@ -27,7 +27,7 @@ const a = JSON.parse(raw ?? '{}');
 const T0 = a.t0 ?? Date.now();
 const at = () => Date.now() - T0;
 const out = { mode };
-const words = (page) => page.evaluate(() => document.body?.innerText.slice(0, 600).replace(/\s+/g, ' ') ?? '').catch(() => '?');
+const words = (page) => page.evaluate(() => document.body?.innerText.slice(0, 4000).replace(/\s+/g, ' ') ?? '').catch(() => '?');
 const shot = (page, name) => (a.shots ? page.screenshot({ path: `${a.shots}/${name}.png`, fullPage: true }).catch(() => {}) : null);
 const browsers = [];
 
