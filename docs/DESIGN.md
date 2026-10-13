@@ -1203,7 +1203,7 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,130 lines of code and the
-repository under 16,000 (`scripts/lean_check.py`), the branch `folders`
+repository under 16,040 (`scripts/lean_check.py`), the branch `folders`
 too since main merged into it at syp-5, counting 13,778 and `svrngs-core`
 2,719 there; a raise is the operator's, with the reason in the commit. The budget counts the product:
 tests, `apps/` and `demo/runs/` apart. A recorded run's driver is what ran,
@@ -1285,7 +1285,12 @@ first change past 15,800. Then, from 15,950, at 15,921, the same day,
 list (`demo/runs/start/2026-10-13/README.md` §5), +50 to 16,000 "so the
 home page can make an invite link and open the group's folder"
 (`ralph/next/start/CHARTER.md`); taken by start-home, whose link made on
-the home page was the first change past 15,950.
+the home page was the first change past 15,950. Then, from 16,000, at
+15,994, the same day, `svrngs-core`'s kept at 3,130: the operator, after
+start-home found that a computer set up by the one line cannot make a
+group (`demo/runs/start/2026-10-13-home/NEEDS_HUMAN.md`), "+40 now, before
+start-run", to 16,040, for making a group on the home page and a founder's
+one line (`ralph/next/start/CHARTER.md`); taken by start-group.
 `ARCHITECTURE.md` maps what exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file
