@@ -145,9 +145,16 @@ fn plain(said: &[String]) {
 #[tokio::test(flavor = "multi_thread")]
 async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
     let sam = computer(1).await;
-    let (seed, printed) = cli::new_group(&sam.node, name("house"), name("Sam"), None, &no_relay())
-        .await
-        .expect("Sam makes house");
+    let (seed, printed) = cli::new_group(
+        &sam.node,
+        name("house"),
+        name("Sam"),
+        None,
+        None,
+        &no_relay(),
+    )
+    .await
+    .expect("Sam makes house");
     let alex = computer(2).await;
     knows(&alex, &sam.node);
     let link = Link::parse(&printed.client).unwrap();
@@ -712,7 +719,7 @@ async fn a_folder_is_synced_by_asking_svrngs_running_here() {
     )
     .await
     .unwrap();
-    cli::new_group(&node, name("house"), name("Sam"), None, &no_relay())
+    cli::new_group(&node, name("house"), name("Sam"), None, None, &no_relay())
         .await
         .unwrap();
     let nope = ask("nope").await;

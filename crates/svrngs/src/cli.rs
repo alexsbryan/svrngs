@@ -7,7 +7,7 @@
 //!
 //! ```text
 //! svrngs                                   run for every group this computer holds
-//! svrngs new <name> [--as N] [--origin U]
+//! svrngs new <name> [--as N] [--origin U] [--relay R]
 //!                                          make a group, print its link, run
 //! svrngs join <link> [--as N] [--no-run]   join a group by its link, run
 //! svrngs link <group> [--origin U]
@@ -112,7 +112,7 @@ svrngs — keep what your group shares on your own computers.
   svrngs
       Run for every group this computer is in. Leave it running.
 
-  svrngs new <name> [--as <your name>] [--origin <url>]
+  svrngs new <name> [--as <your name>] [--origin <url>] [--relay <name>]
       Make a group called <name> and print its link: send it to the people
       you want in it. It works for a day, while this computer is on. The
       group's folder is put at ~/svrngs/<name>.
@@ -122,6 +122,9 @@ svrngs — keep what your group shares on your own computers.
       people who open them in a browser. On a phone each app then opens at
       an address of its own under that page's host, which must serve the
       page at every name under it, as group.svrnme.sh does.
+      --relay meets the group at your own relay, `svrngs relay <name> --open`
+      (else newcomers are refused it), in place of svrngs's: every computer
+      its links let in meets it there too.
 
   svrngs join <link> [--as <your name>] [--no-run]
       Join the group a link you were sent is for. The computer that sent it
@@ -214,6 +217,12 @@ pub const LINK_LIFE_SECS: i64 = 24 * 60 * 60;
 /// where an app svrngs did not start finds it.
 pub const API: SocketAddr = SocketAddr::new(std::net::IpAddr::V4(Ipv4Addr::LOCALHOST), 0);
 
+/// svrngs's own relay, where a computer meets each group it holds that
+/// keeps none of its own; n0's relays and address lookup are none of its
+/// path (DESIGN §10, the operator, 2026-10-12). It answers before any build
+/// naming it is published (DESIGN §7, `scripts/deploy-relay.sh`).
+pub const DEFAULT_RELAY: &str = "https://relay.svrnme.sh/";
+
 /// How long `new` and `link` wait for this computer's address before
 /// printing a link, when it has a relay to reach.
 const ONLINE_WAIT: Duration = Duration::from_secs(10);
@@ -227,6 +236,8 @@ pub enum Verb {
         person: Option<Name>,
         /// `None` prints the client's link alone.
         origin: Option<Origin>,
+        /// `--relay`: where this group is met, in place of [`DEFAULT_RELAY`].
+        relay: Option<RelayUrl>,
     },
     Join {
         link: Box<Link>,
@@ -281,7 +292,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     };
     let mut positional: Option<String> = None;
     let mut person = None;
-    let mut origin = None;
+    let (mut origin, mut relay) = (None, None);
     let (mut name, mut kind, mut limit, mut refused) = (None, None, None, Vec::new());
     let mut upload = None;
     let mut reads = Vec::new();
@@ -308,6 +319,12 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 origin = Some(Origin::parse(&raw).ok_or_else(|| {
                     format!("--origin `{raw}` is not an http(s) address without a '#'")
                 })?);
+            }
+            "--relay" if verb == "new" => {
+                let raw = value("--relay")?;
+                let url = format!("{}{raw}", if raw.contains("://") { "" } else { "https://" });
+                let url = svrngs_node::relay::parse(&url);
+                relay = Some(url.map_err(|_| format!("--relay `{raw}` is not a relay's address"))?);
             }
             "--name" => {
                 let raw = value("--name")?;
@@ -435,6 +452,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 name,
                 person,
                 origin,
+                relay,
             })
         }
         "join" => {
@@ -643,10 +661,35 @@ pub fn claim(root: &Path) -> Result<File, Refusal> {
     }
 }
 
-/// How this computer reaches the network to do `command` over `root`:
-/// n0's relays and lookup, `RelayConfig::default()`, as the command has.
-pub fn reach(_root: &Path, _command: &Verb) -> Result<RelayConfig, Refusal> {
-    Ok(RelayConfig::default())
+/// How this computer reaches the network to do `command` over `root`: at
+/// the relay `new --relay` names or a link it joins carries, and each
+/// group's it holds — the one the group keeps, else [`DEFAULT_RELAY`] —
+/// never n0's relays nor its lookup. A kept relay unread is refused.
+pub fn reach(root: &Path, command: &Verb) -> Result<RelayConfig, Refusal> {
+    let asked = match command {
+        Verb::New { relay, .. } => relay.clone(),
+        Verb::Join { link, .. } => link.token.relay.clone().map(RelayUrl::from),
+        _ => None,
+    };
+    let mut relay_urls: Vec<String> = asked.iter().map(ToString::to_string).collect();
+    for seed in group::groups(root) {
+        let unread = |e: &dyn std::fmt::Display| keep_refused(&seed, &e.to_string());
+        let dir = svrngs_node::group_dir_in(root, &seed.id()).map_err(|e| unread(&e))?;
+        let url = group::read_relay(&dir).map_err(|e| unread(&e))?;
+        let url = url.map_or(DEFAULT_RELAY.to_string(), |u| u.to_string());
+        if !relay_urls.contains(&url) {
+            relay_urls.push(url);
+        }
+    }
+    if relay_urls.is_empty() {
+        relay_urls.push(DEFAULT_RELAY.to_string());
+    }
+    tracing::debug!(target: "cli", ?relay_urls, "cli: the relays this computer meets its groups at, n0's none of them");
+    Ok(RelayConfig {
+        relay_urls,
+        n0_services: false,
+        loopback_only: false,
+    })
 }
 
 /// The whole program, `Help` apart: claim the data dir, load this
@@ -1326,6 +1369,7 @@ async fn serve(
             name,
             person,
             origin,
+            relay: kept,
         } => {
             let person = match person {
                 Some(p) => p,
@@ -1335,7 +1379,7 @@ async fn serve(
                 Some(page) => Some(checked_page(page).await?),
                 None => None,
             };
-            let (seed, link) = new_group(node, name, person, page.as_ref(), relay).await?;
+            let (seed, link) = new_group(node, name, person, page.as_ref(), kept, relay).await?;
             println!(
                 "{}",
                 Said::Made {
@@ -1417,6 +1461,12 @@ pub async fn join_group(
 ) -> Result<Said, Refusal> {
     let issuer = issuer::addr(&link.token);
     let link_key = link.token.key();
+    // Its home relay reached before the exchange, so the joiner says it
+    // there and the issuer can dial it back; else not before its first
+    // round (demo/runs/relay-in-record/2026-10-12/: 60 s). Before the ask,
+    // so a relay that does not answer is named before the issuer is dialled.
+    let carried: Vec<String> = link.token.relay.iter().map(ToString::to_string).collect();
+    wait_online(node, &carried).await;
     let asked = ask(
         node.endpoint(),
         issuer.clone(),
@@ -1452,14 +1502,11 @@ pub async fn join_group(
         .await
         .map_err(|e| not_let_in(e, Some(seed.name())))?;
     tracing::debug!(target: "cli", group = %id, redeemed = ?redeemed, "cli: join — let in");
-    keep_group(node, &seed, link.origin.as_ref())?;
+    let relay = link.token.relay.clone().map(RelayUrl::from);
+    keep_group(node, &seed, link.origin.as_ref(), relay.as_ref())?;
     if link.origin.is_none() {
         tracing::debug!(target: "cli", group = %id, "cli: join — a client's link, so no origin is kept");
     }
-    // Its home relay reached before the exchange, so the joiner says it
-    // there and the issuer can dial it back; else not before its first
-    // round (demo/runs/relay-in-record/2026-10-12/: 60 s).
-    wait_online(node, "joining").await;
     let synced = node.sync_with(&id, &issuer).await;
     match &synced.stop {
         None => {
@@ -1579,12 +1626,14 @@ fn full_name(user: &str) -> Option<String> {
 
 /// `svrngs new`: a seed drawn for `name`, founded by this computer's key
 /// as `person`, written beside the group's record with `page`, when
-/// given, kept as its https links' page, and its first link.
+/// given, kept as its https links' page, and `kept`, when given, as where
+/// it is met (`new --relay`), and its first link.
 pub async fn new_group(
     node: &Node,
     name: Name,
     person: Name,
     page: Option<&Origin>,
+    kept: Option<RelayUrl>,
     relay: &RelayConfig,
 ) -> Result<(Seed, Printed), Refusal> {
     // The founder is the key this computer signs and dials with (DESIGN
@@ -1593,7 +1642,7 @@ pub async fn new_group(
         .expect("an iroh endpoint id is an Ed25519 key");
     let seed = group::draw(name, person, founder);
     let id = seed.id();
-    keep_group(node, &seed, page)?;
+    keep_group(node, &seed, page, kept.as_ref())?;
     tracing::debug!(target: "cli", group = %id, name = %seed.name(), page = ?page.map(Origin::as_str), "cli: group made");
     let token = mint(node, &seed, relay, None).await?;
     Ok((seed, Printed::of(&token, page)))
@@ -1746,18 +1795,22 @@ async fn mint(
 /// which finds it by key; else its home relay, waiting up to
 /// [`ONLINE_WAIT`] for one when it has relays to reach.
 async fn issuer_relay(node: &Node, relay: &RelayConfig) -> Option<RelayUrl> {
-    wait_online(node, "printing the link").await;
+    wait_online(node, &relay.relay_urls).await;
     link_relay(relay, node.endpoint().addr().relay_urls().next().cloned())
 }
 
 /// Wait up to [`ONLINE_WAIT`] for a home relay, when this computer has
-/// relays to reach, before `what`.
-async fn wait_online(node: &Node, what: &str) {
+/// relays to reach, saying which it `tried` when it reached none.
+async fn wait_online(node: &Node, tried: &[String]) {
     if node.relayed() {
         let online = tokio::time::timeout(ONLINE_WAIT, node.endpoint().online())
             .await
             .is_ok();
-        tracing::debug!(target: "cli", online, what, "cli: waited for a relay");
+        tracing::debug!(target: "cli", online, ?tried, "cli: waited for a relay");
+        if !online && !tried.is_empty() {
+            let secs = ONLINE_WAIT.as_secs();
+            eprintln!("svrngs: this computer has not reached {} in {secs} s, where its group reaches it; it goes on, and keeps trying.", tried.join(" or "));
+        }
     }
 }
 
@@ -1788,9 +1841,16 @@ pub fn link_relay(relay: &RelayConfig, home: Option<RelayUrl>) -> Option<RelayUr
 }
 
 /// Keep `seed`'s group on this computer: its journal, the seed beside it,
-/// `origin` when given, and the roster the seed founds. What `new` and
-/// `join` both write, in one order, so a group kept by either is the same.
-fn keep_group(node: &Node, seed: &Seed, origin: Option<&Origin>) -> Result<(), Refusal> {
+/// `origin` and `relay` when given — the relay `new --relay` names or a
+/// joined link carried, where the group is met ([`reach`]) — and the
+/// roster the seed founds. What `new` and `join` both write, in one order,
+/// so a group kept by either is the same.
+fn keep_group(
+    node: &Node,
+    seed: &Seed,
+    origin: Option<&Origin>,
+    relay: Option<&RelayUrl>,
+) -> Result<(), Refusal> {
     let rail = node.rail();
     let dir = rail
         .group_dir(&seed.id())
@@ -1800,6 +1860,7 @@ fn keep_group(node: &Node, seed: &Seed, origin: Option<&Origin>) -> Result<(), R
             Some(origin) => group::write_origin(&dir, origin),
             None => Ok(()),
         })
+        .and_then(|()| relay.map_or(Ok(()), |relay| group::write_relay(&dir, relay)))
         .map_err(|e: SeedError| keep_refused(seed, &e.to_string()))?;
     rail.set_seed(&seed.id(), &seed.roster())
         .map_err(|e| keep_refused(seed, &e.to_string()))

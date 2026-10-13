@@ -18,6 +18,12 @@
 //! computer's setting, outside the seed and its id; a group that keeps
 //! none prints the client's link alone (u2-8), so nothing depends on a
 //! hosted page unless the group names one.
+//!
+//! And `relay`, where this computer meets the group (relay-default): `new
+//! --relay` writes it, `join` the one its link carried. It is this
+//! computer's choice, as the origin is; the group's record says where each
+//! computer is reached, by its `Relay` act (relay-in-record). A group that
+//! keeps none is met at svrngs's own (`cli::DEFAULT_RELAY`).
 
 use std::path::{Path, PathBuf};
 
@@ -29,6 +35,7 @@ pub use svrngs_node::seed::{answered, Seed};
 /// A group's name and a person's share the core's one rule (u2-9).
 pub use svrngs_node::Name;
 
+use svrngs_node::iroh::RelayUrl;
 use svrngs_node::link::Origin;
 
 /// The one spelling of the seed's file name in a group's directory.
@@ -36,6 +43,9 @@ const SEED_FILE: &str = "seed.json";
 
 /// The one spelling of the kept origin's file name in a group's directory.
 const ORIGIN_FILE: &str = "origin";
+
+/// The one spelling of the kept relay's file name in a group's directory.
+const RELAY_FILE: &str = "relay";
 
 /// A new group's seed: `founder` names the person holding `key`, and 16
 /// bytes are drawn so that a second group of the same name by the same
@@ -105,6 +115,28 @@ pub fn read_origin(dir: &Path) -> Result<Option<Origin>, SeedError> {
         .ok_or_else(|| SeedError::Read {
             path,
             why: "not an http(s) address without a '#'".into(),
+        })
+}
+
+/// Keep `relay` in `dir`, the group's directory, as where this computer
+/// meets the group.
+pub fn write_relay(dir: &Path, relay: &RelayUrl) -> Result<(), SeedError> {
+    let path = dir.join(RELAY_FILE);
+    tracing::debug!(target: "group", path = %path.display(), %relay, "group: relay kept");
+    keep(dir, path, &relay.to_string())
+}
+
+/// The relay kept in `dir`, read dotless, or `None` when it keeps none.
+pub fn read_relay(dir: &Path) -> Result<Option<RelayUrl>, SeedError> {
+    let path = dir.join(RELAY_FILE);
+    let Some(raw) = kept(&path)? else {
+        return Ok(None);
+    };
+    svrngs_node::relay::parse(&raw)
+        .map(Some)
+        .map_err(|e| SeedError::Read {
+            path,
+            why: e.to_string(),
         })
 }
 

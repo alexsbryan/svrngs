@@ -34,7 +34,7 @@ async fn sams_trip(dir: &std::path::Path) -> (Node, Seed) {
     )
     .await
     .unwrap();
-    let (seed, _) = cli::new_group(&node, name("trip"), name("Sam"), None, &no_relay())
+    let (seed, _) = cli::new_group(&node, name("trip"), name("Sam"), None, None, &no_relay())
         .await
         .unwrap();
     (node, seed)

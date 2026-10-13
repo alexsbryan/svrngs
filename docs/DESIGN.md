@@ -72,7 +72,8 @@ sees their group's name, people's names, apps' names, and *computer*, *phone*,
 *the chat* — never ring, member, key, sync, journal, node or relay. Whoever
 runs a relay is the one reader of that word: `svrngs relay` and its
 flags speak to them of a name, ports and a certificate, and of the
-computers and phones it lets through (§3, "A relay anyone runs"). And the
+computers and phones it lets through (§3, "A relay anyone runs"); so does
+`new --relay`, which names one. And the
 most general surface with the fewest features: the system learns by adding
 apps, never by adding platform.
 
@@ -1019,6 +1020,26 @@ is `svrngs relay <name> --staging` on a server `<name>` leads to, then
 `curl -kv https://<name>/` naming Let's Encrypt's staging issuer. The one
 who runs a relay reads its flags and its words; a person in a group never
 sees the word.
+
+**Where a computer meets its groups** (relay-default (a); §10). At
+svrngs's relay, `https://relay.svrnme.sh/` (`cli::DEFAULT_RELAY`), with
+n0's relays and its address lookup none of the path: `cli::reach`, which
+`main.rs` calls, builds the computer's `RelayConfig` with `n0_services`
+off, so no lookup is built and a key is dialled only at the relay its
+group's record names (§6). A group that runs its own relay is made with
+`svrngs new <name> --relay <name or url>`: the computer keeps it beside the
+group's seed (`group.rs`, `relay`), as `join` keeps the relay its link
+carried, so every computer the group's links let in meets the group there,
+and each says so in the record by its `Relay` act. A computer meets each
+group it holds at the relay that group keeps, svrngs's own where it keeps
+none; iroh makes the nearest its home, so a computer in two groups with
+two relays is reached at one, where the other group's computers dial it. A
+group's own relay lets a newcomer in before its `Admit` only with `--open`
+(§9). A computer that reaches none of its relays in 10 s says which it
+tried, and goes on trying. Tested by three computers made, joined and
+syncing through one relay on 127.0.0.1, each built by `cli::reach`, none
+with a lookup and none tracing an n0 host, planted with the old posture
+(`crates/svrngs/tests/default_relay.rs`).
 
 ## 4. Domains, and the fork
 
@@ -2099,7 +2120,7 @@ name and publishing that build, the last two the operator's.
 | AirPlay and Cast from a page, and DLNA: a screen handed a lend's address by a phone, for an app with no client of its own on it. In the reads (`demo/runs/u6/2026-10-05-screen/reads.json`) AirPlay from Safari on an iPhone showed the LG no video three ways — the page's address, which only the phone's worker answers; jellyfin-web, whose hls.js sets `disableRemotePlayback`; a plain LAN file, which the TV never fetched — and iOS has no Cast sender. Until 2026-10-05 this was U6 (§3, "The room", call 1) | an app with no client of its own for a screen is asked for on one, counted |
 | a public address per lend, for a room with no member's computer in it: a relay that forwards bytes it cannot read to the lender, who holds a certificate per lend — a new service, and Let's Encrypt's per-domain limit (§3, "The room", call 2) | a group with no computer in the room asks, counted |
 | a relay at a bare address, no name needed (svrn-docs `rings/current/GROUP_RELAYS.md` §4.4): a six-day Let's Encrypt certificate for the address, its `shortlived` profile, which tokio-rustls-acme 0.9.1, iroh-relay's ACME client, cannot ask — its `Identifier` is `Dns` alone and its order names no profile (`acme.rs:129-130`, `:301-303`); no second ACME client beside it (`ralph/next/relay/CHARTER.md`) | iroh-relay's ACME client asks for an address, or a member who would relay has no name to give it, counted |
-| a relay for a group's own refusing a newcomer whose key does not yet stand (`GROUP_RELAYS.md` §4.3): a link's issuer whose relay is `svrngs relay` without `--open` would refuse the joiner dialling it there before its `Admit` is written — read from `relay.rs`'s admission, not run | a group runs its own relay and names it in its links, counted |
+| a relay for a group's own refusing a newcomer whose key does not yet stand (`GROUP_RELAYS.md` §4.3): a link's issuer whose relay is `svrngs relay` without `--open` would refuse the joiner dialling it there before its `Admit` is written — read from `relay.rs`'s admission, not run; since relay-default `new --relay` names a group's own in its links, so that relay runs `--open` until this lands (`svrngs help`) | a group runs its own relay and names it in its links, counted |
 | watching together from different homes: one transcode, shared, in step | a group asks to watch the same film apart at the same time |
 | sealing in the infra | two apps need the same seal |
 | group compute: asks leased by members' computers and answered as acts; and peer inference, a source's excerpts released to another member's computer for a job (`rings/current/ACL_AND_SCOPED_USE.md` §5), out of scoped use's spike (`demo/runs/su/2026-10-09/` §7) | Ask is next, or an owner's operation needs inference their own computer cannot run |
@@ -2163,9 +2184,9 @@ leaves §9 for §8's order of work, before v1: svrngs's at `relay.svrnme.sh`
 the default (DigitalOcean, US West, the operator's inclination since
 2026-10-05; deploying it the operator's), a group's own by `svrngs new
 --relay <url>`, and n0 none of the path (§8, §11 risk 5; `ralph/next/relay/`).
-Until it lands a computer uses n0's relays and lookup,
-`RelayConfig::default()` (`crates/svrngs-node/src/guest.rs:62-74`;
-`crates/svrngs/src/main.rs:46`).
+A computer has met its groups there since relay-default (a) (`cli::reach`,
+§3, "Where a computer meets its groups"); until then it used n0's relays
+and lookup, `RelayConfig::default()` (`crates/svrngs-node/src/guest.rs:62-74`).
 
 By the operator, 2026-10-12, after Demo C's dry run (its finding 3): "let's
 not make access limits arbitrary AND hard to update. If someone wants to

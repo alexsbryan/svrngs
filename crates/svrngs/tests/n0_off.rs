@@ -2,8 +2,8 @@
 //! (`demo/runs/n0-off/2026-10-12/run.py`). `the_command` is what
 //! `src/main.rs` runs — `cli::parse`, `cli::data_dir`, `cli::run`, its
 //! exit codes and its tracing — save its relay: `RelayConfig { relay_urls:
-//! [$N0OFF_RELAY], n0_services: false }`, the posture the command cannot
-//! yet be pointed at (main.rs builds `RelayConfig::default()`, n0's).
+//! [$N0OFF_RELAY], n0_services: false }`, the command's own posture since
+//! relay-default (`cli::reach`), its relay this run's on 127.0.0.1.
 //! `the_relay` is iroh's relay on 127.0.0.1, plain HTTP, as the browser
 //! tests' harness starts it. Ignored: `scripts/check.sh` never runs them;
 //! run.py does, each a process of its own, by name:

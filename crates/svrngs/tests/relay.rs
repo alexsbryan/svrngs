@@ -58,7 +58,7 @@ async fn admits(server: &iroh_relay::server::Server, seed: u8) -> bool {
 async fn a_relay_lets_through_its_groups_alone_and_open_everyone() {
     let (_relay, ours, dir, sam) = common::sams_computer(SAM).await;
     let house = Name::parse("house").unwrap();
-    cli::new_group(&sam, house, Name::parse("Sam").unwrap(), None, &ours)
+    cli::new_group(&sam, house, Name::parse("Sam").unwrap(), None, None, &ours)
         .await
         .expect("Sam makes house");
 

@@ -130,6 +130,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         Name::parse("house").unwrap(),
         Name::parse("Sam").unwrap(),
         Some(&page),
+        None,
         &ours,
     )
     .await
@@ -267,6 +268,7 @@ async fn a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name(engine: 
         Name::parse("house").unwrap(),
         Name::parse("Sam").unwrap(),
         Some(&page),
+        None,
         &ours,
     )
     .await

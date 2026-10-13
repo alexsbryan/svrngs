@@ -84,9 +84,10 @@ async fn new_twice_with_one_name_makes_two_groups_with_two_ids() {
         .as_secs() as i64;
     let mut ids = Vec::new();
     for _ in 0..2 {
-        let (seed, printed) = cli::new_group(&node, name("house"), name("Sam"), None, &no_relay())
-            .await
-            .expect("new makes a group");
+        let (seed, printed) =
+            cli::new_group(&node, name("house"), name("Sam"), None, None, &no_relay())
+                .await
+                .expect("new makes a group");
         let id = seed.id();
         eprintln!(
             "new: a client's link, {} characters: {}",
@@ -139,7 +140,7 @@ async fn new_twice_with_one_name_makes_two_groups_with_two_ids() {
 async fn link_mints_a_new_link_to_the_group_it_names() {
     let dir = tempfile::tempdir().unwrap();
     let node = start(&dir).await;
-    let (house, first) = cli::new_group(&node, name("House"), name("Sam"), None, &no_relay())
+    let (house, first) = cli::new_group(&node, name("House"), name("Sam"), None, None, &no_relay())
         .await
         .unwrap();
     let (again, second) = cli::new_link(&node, "house", None, &no_relay())
@@ -157,7 +158,7 @@ async fn link_mints_a_new_link_to_the_group_it_names() {
         cli::new_link(&node, "work", None, &no_relay()).await,
         Err(Refusal::NoGroup(_))
     ));
-    let (other, _) = cli::new_group(&node, name("house"), name("Sam"), None, &no_relay())
+    let (other, _) = cli::new_group(&node, name("house"), name("Sam"), None, None, &no_relay())
         .await
         .unwrap();
     assert!(matches!(
@@ -184,9 +185,16 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
         p.https.clone().unwrap_or_default()
     };
     let x = Origin::parse("https://x.example/").unwrap();
-    let (house, first) = cli::new_group(&node, name("house"), name("Sam"), Some(&x), &no_relay())
-        .await
-        .unwrap();
+    let (house, first) = cli::new_group(
+        &node,
+        name("house"),
+        name("Sam"),
+        Some(&x),
+        None,
+        &no_relay(),
+    )
+    .await
+    .unwrap();
     assert!(https(&first).starts_with("https://x.example/#"), "{first}");
     let (_, later) = cli::new_link(&node, "house", None, &no_relay())
         .await
@@ -209,7 +217,7 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
         "{after}"
     );
 
-    let (work, plain) = cli::new_group(&node, name("work"), name("Sam"), None, &no_relay())
+    let (work, plain) = cli::new_group(&node, name("work"), name("Sam"), None, None, &no_relay())
         .await
         .unwrap();
     assert_eq!(https(&plain), "", "no origin, no https link: {plain}");
@@ -302,8 +310,29 @@ fn the_verbs_parse() {
             name: name("house"),
             person: Some(name("Sam")),
             origin: None,
+            relay: None,
         }
     );
+    // --relay: the group's own, a name read as its https address
+    // (relay-default (a)).
+    for (typed, url) in [
+        ("relay.example.org", "https://relay.example.org/"),
+        ("https://relay.example.org./", "https://relay.example.org/"),
+        ("http://127.0.0.1:3340", "http://127.0.0.1:3340/"),
+    ] {
+        let Verb::New { relay, .. } =
+            cli::parse(argv(&format!("new house --relay {typed}"))).unwrap()
+        else {
+            panic!("new");
+        };
+        assert_eq!(
+            relay.map(|r| r.to_string()).as_deref(),
+            Some(url),
+            "{typed}"
+        );
+    }
+    assert!(cli::parse(argv("new house --relay ::")).is_err());
+    assert!(cli::parse(argv("join x --relay relay.example.org")).is_err());
     assert_eq!(
         cli::parse(argv("link house --origin https://links.example.org/")).unwrap(),
         Verb::Link {
@@ -524,9 +553,16 @@ async fn a_page_origin_says_where_its_apps_open_or_is_refused() {
 
     let dir = tempfile::tempdir().unwrap();
     let node = start(&dir).await;
-    let (_, own) = cli::new_group(&node, name("house"), name("Sam"), Some(&ours), &no_relay())
-        .await
-        .unwrap();
+    let (_, own) = cli::new_group(
+        &node,
+        name("house"),
+        name("Sam"),
+        Some(&ours),
+        None,
+        &no_relay(),
+    )
+    .await
+    .unwrap();
     let https = own.https.clone().unwrap();
     assert!(
         https.starts_with(&format!("{}#", ours.as_str())) && !https.contains('~'),
