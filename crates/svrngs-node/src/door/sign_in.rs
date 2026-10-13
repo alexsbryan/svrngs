@@ -266,7 +266,8 @@ type Whose = (LendName, NonZeroU16, super::DeviceKey);
 type Waiter = oneshot::Sender<Result<Signed, Refusal>>;
 
 enum Ask {
-    Of(Whose, super::Identity, Waiter),
+    /// The identity boxed: four headers make the variant the enum's bulk.
+    Of(Whose, Box<super::Identity>, Waiter),
     /// A sign-in's answer for a person, asked off the task.
     Asked(Whose, Result<Answer, Refusal>),
     Forget(Whose, Secret),
@@ -301,7 +302,7 @@ impl SignIns {
                             let (port, lend, back) = (*port, lend.clone(), back.clone());
                             out.insert(whose.clone(), vec![told]);
                             tokio::spawn(async move {
-                                let found = ask_of(port, identity, &lend).await;
+                                let found = ask_of(port, *identity, &lend).await;
                                 if let Some(tx) = back.upgrade() {
                                     let _ = tx.send(Ask::Asked(whose, found));
                                 }
@@ -345,7 +346,7 @@ impl SignIns {
         let (answer, told) = oneshot::channel();
         let whose = (lend.clone(), port, actor.clone());
         self.0
-            .send(Ask::Of(whose, identity, answer))
+            .send(Ask::Of(whose, Box::new(identity), answer))
             .map_err(|_| Refusal::Gone)?;
         told.await.map_err(|_| Refusal::Gone)?
     }
