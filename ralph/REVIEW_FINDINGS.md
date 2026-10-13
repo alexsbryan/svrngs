@@ -7189,3 +7189,207 @@ span. #132 and #133 each change what a person sees.
 |---|---|---|---|
 | I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". web/ and scripts/ exact tiers are could-not-judge. |
 | I19 | 6 | dry-report, `tests/` scopes | Still present, and said as could-not-judge. The line-window pass stood in. |
+
+## REVIEW-audit-relay-auto-3 (2026-10-13, range fc1d7a2..2605549)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-relay-auto-2, fc1d7a203
+(ralph/next/relay/STATE.md). The range starts there and ends at 2605549,
+the commit that made this row. `git rev-list --count fc1d7a2..2605549` is
+15, with no merge among them (`--merges`: 0), all on main. It covers one
+unit, relay-park, the last audit's own `done` (f22d34a), and two commits
+that queue other work (11eb3d6, ralph/next/start/; b36a4f4,
+ralph/next/onair/), which touch only ralph/.
+
+This audit's own commits before this one are 3195b7b (the row's two paths,
+corrected as 41808f5 and 78cde59 corrected the earlier rows') and d11355b
+(one `has_lookup`, behaviour kept). It opens #134 and #135, and closes none.
+
+The instrument is ~/dev/commonwealth-ai/target/debug/sovereign-cli,
+sha256 68746bcf…, the last audits' binary (`shasum -a 256`). The embedder
+was the daemon on :9741 serving qwen-embedding-0.6b, 1024-d. The daemon
+stopped twice during this audit, a rebuild and then its switch to another
+chat model. Its operator, another session, measured embeddings across the
+switch at cosine 1.000000 against the local-mode vector for the same text.
+The corpus is 2605549's product: crates/, apps/, web/, scripts/,
+Cargo.toml and Cargo.lock, put into /tmp/relayaudit3/prod-2605549 by
+`git archive` (268 files). The first `code index` broke at 2560 of the
+chunks when the daemon stopped (/tmp/relayaudit3/index.out). The second
+found the partial index unopenable and started fresh, then broke on the
+second stop (index2.out; I28). `refresh`, with no index left, built it: 3210 chunks, rust
+14533 symbols, typescript and python "skipped (export failed)" (I4;
+/tmp/relayaudit3/refresh.out).
+
+### (1) Net lines per unit, product code
+
+The counts come from `git log --reverse -M --numstat --format='@@%h %s'
+--no-merges fc1d7a2..2605549`, summed by /tmp/relayaudit3/ledger.py, the
+last audit's script unchanged (/tmp/relayaudit3/ledger.out). A commit
+that names no unit counts toward the next `done`, so 11eb3d6 and b36a4f4
+fall to relay-park, adding no product line. Product is crates/, apps/,
+web/ and bridge/. Everything else is counted apart:
+
+- demo/runs/park/2026-10-13 +946: predictions, the driver, its data and
+  README
+- docs/DESIGN.md +102 −49 and scripts/ +23 −13 (deploy-page.sh's guard,
+  deploy-relay.sh's header)
+- ralph/next/start +187, ralph/next/onair +172, ralph/next/relay +37 −4
+  and ralph/REVIEW_FINDINGS.md +1 −1
+
+| unit | commits | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| REVIEW-audit-relay-auto-2 (its `done`) | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| relay-park | 13 | 99 | 46 | 53 | 175 | 32 | 143 |
+| this row's own commit | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 15 | 99 | 46 | 53 | 175 | 32 | 143 |
+
+The src lines, by file:
+
+- crates/svrngs/src/cli.rs +81 −32 (e24d60b: `MeetAt`, `SHIPPED`,
+  `reach` given it; c2e2c33: `link_relay`'s lookup branch gone,
+  `kept_relay`, `join_group` keeping by it)
+- core link.rs +9 −8, web/app.js +3 −2, web/src/lib.rs +3 −2, group.rs
+  +2 −1: docs and comments, which the budget does not count
+- main.rs +1 −1: `cli::SHIPPED` passed to `reach`
+
+The tests are tests/shipped.rs +117 −1 (new), new.rs +43 −19 (the
+`link_relay` cases, `kept_relay`'s), default_relay.rs +13 −11 (`reach`
+given `MeetAt::Svrngs`) and relay.rs +2 −1.
+
+The size budget, measured by scripts/lean_check.py over a `git archive`
+tree of each end (/tmp/relayaudit3/lean-fc1d7a2, lean-2605549), and over
+the working tree for this audit's move:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| fc1d7a2, range start | 3121 | 15776 |
+| 2605549, range end | 3121 | 15798 |
+| d11355b, this audit's move | **3121 / 3130** | **15797 / 15800** |
+
+relay-park adds 22 counted lines. **9 lines are left in svrngs-core and 3
+in the repository** (#80).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs (src and tests), crates/svrngs-core
+(docs alone), web/ and scripts/ (`git diff --stat fc1d7a2 2605549 --
+crates apps web scripts`). crates/svrngs-node/ was run too, since
+d11355b touches it.
+
+**The exact tier was checked against a plant.** 2605549's `reach`
+(cli.rs:684-730, its doc lines included) was appended to
+crates/svrngs/src/share.rs in the indexed tree, followed by `refresh`
+(+18 symbols). The scoped report gave **1 group**: `reach —
+crates/svrngs/src/cli.rs:694 == crates/svrngs/src/share.rs:205`, 2
+copies × 37 lines (/tmp/relayaudit3/plant.md). With share.rs restored
+(`diff` against `git show 2605549:` is empty) and `refresh` run again
+(−18), each scope was run at 0.95 (/tmp/relayaudit3/clean-*_0.95.md):
+
+| scope | locations | exact | near | with a side added in the range |
+|---|---:|---:|---:|---|
+| crates/svrngs/ | 90 | 0 | 0 | none |
+| crates/svrngs-core/ | 457 | 5 | 0 | none |
+| crates/svrngs-node/ | 481 | 1 | 0 | none |
+| web/ | 98 | could-not-judge (I4) | 0 | none |
+| scripts/ | 15 | could-not-judge (I4) | 0 | none |
+| crates/svrngs/tests/ | 0 | could-not-judge (I19) | could-not-judge | — |
+
+The six exact groups are the earlier audits' three-line ones (`is_empty`,
+`key`, `lines`, `signed_by_link`, `as_str`, api.rs `addr`); `git blame`
+puts none in the range (link.rs `as_str` :186-188 is b92e6fe9). crates/svrngs/
+at 0.90 also gave 0 and 0 (clean-crates_svrngs_0.90.md). **No exact or
+near clone at the instrument's threshold has a side the range added.**
+
+The instrument judges whole symbols of eight lines or more. What it
+cannot see, the read found: `join_group`'s two lines asking whether the
+endpoint has an address lookup (e24d60b, cli.rs:1544-1545) were the
+bare-key dial's question in svrngs-node iroh.rs:218-221, spelled again.
+Fixed here (d11355b).
+
+The tests scope is could-not-judge (I19), so the line-window pass stood
+in for it: the last audit's script with the range and the blamed commit
+changed (/tmp/relayaudit3/windows.py → windows.out). It found **179
+window hits, 82 spans, 1 new**:
+
+- crates/svrngs/tests/default_relay.rs :113-120 == shipped.rs :69-76:
+  a parsed `new` taken apart and handed to `cli::new_group`. The two are
+  separate test binaries, and neither includes tests/common (whose
+  `sams_computer` brings the browser harness with it). Each test also
+  starts its computer its own way, so no change.
+
+### Reading the range
+
+- **One decider** (AGENTS.md 8). Where a build meets its groups is
+  decided once, `cli::SHIPPED` (cli.rs:243, `MeetAt`, a closed set,
+  principle 9). `reach` carries it into `RelayConfig::n0_services`
+  (:727). But `join_group` does not take it. It infers the posture from
+  whether the endpoint has an address lookup (:1544), and a test's
+  `MemoryLookup` trips that as n0's does (#135). deploy-page.sh reads
+  `SHIPPED` by `sed`, as it read `DEFAULT_RELAY` before. A spelling it
+  cannot read is refused with its words (`*)`, deploy-page.sh:33), never
+  taken as n0's.
+- **Never silently substitute** (AGENTS.md 6; fence 2). Each `.ok()`,
+  `unwrap_or`, `map_or`, `??` and `.flatten()` the range added to product
+  code was read (/tmp/relayaudit3/range-src.diff). The one, `join_group`'s
+  `address_lookup().ok()`, takes a closed endpoint as no lookup. It is
+  read just after a redeem through the same endpoint succeeded, so it is
+  kept in `has_lookup` as it was and named in #135. The parked relay
+  leaves one gap, which DESIGN §3 says (docs/DESIGN.md:1044-1046) but no
+  row or finding held: after the switch, a joiner keeps n0's relay from a
+  link minted before it, and meets that group at n0's (#134).
+- **Glassbox** (AGENTS.md 1). Each new branch traces at debug: `reach`'s
+  group with no relay and its list with `at` and `unkept`, `link_relay`'s
+  relay with `n0`, `kept_relay`'s verdict. deploy-page.sh says which
+  posture it publishes.
+- **A person's words** (fence 5). The range's added quoted strings in
+  product code use none of key, member, keeper, ring, act or journal as
+  a word outside a trace (`grep -iwE` over the added lines). The one hit
+  is `link_relay`'s `warn!` trace, "the link carries the key alone".
+  deploy-page.sh's lines are the operator's.
+- **Cite, don't recall** (AGENTS.md 4). The park run's README quotes the
+  constant as its data holds it (`data/summary.json`, `data/n0.json`:
+  `"pub const SHIPPED: MeetAt = MeetAt::N0;"`), and says its first,
+  could-not-judge attempt and why (46b3b59).
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges fc1d7a2..2605549 -- crates
+apps web scripts demo` match `\b(struct|enum|trait|type|class)\s+[A-Z]\w*`
+once: `pub enum MeetAt` (/tmp/relayaudit3/new-types.out). It was run
+through `converge noun MeetAt --corpus-id prod-2605549`
+(/tmp/relayaudit3/nouns.out):
+
+| noun | converge (production) | git grep | read |
+|---|---|---|---|
+| MeetAt | 1: crates/svrngs/src/cli.rs:231 | 1: :232 | One. No other enum in crates/, apps/ or web/ names where a computer meets the network (`git grep -nE "enum \w*(Meet\|Posture)\w*"`: only it). |
+
+converge's lines are still one early (I1). **No noun has more than one
+definition.**
+
+### Fixed here
+
+- d11355b: `svrngs_node::iroh::has_lookup`, the one answer to whether an
+  endpoint resolves a bare key, called by the bare-key dial (iroh.rs:225)
+  and `join_group` (cli.rs:1544). `cargo test -p svrngs --test shipped
+  --test default_relay` (2 and 2 passed) and `cargo test -p svrngs-node
+  --lib bare_key` (1 passed) before and after
+  (/tmp/relayaudit3/lookup-before.out, lookup-after.out). The repository
+  count went 15798 → 15797.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 134 | 6 (fence 2) | crates/svrngs/src/cli.rs:1885-1889 (`kept_relay`: at svrngs's, `n0` false, so every carried relay is kept, n0's included); crates/svrngs/tests/new.rs:286-287 (pinned: `kept_relay(Some(n0's), false) == Some(n0's)`); docs/DESIGN.md:1044-1046 ("One gap is left open") | not fixed: a change in behaviour, and its moment is the operator's switch | After the switch, n0 can come back as a group's own relay. A link minted by a computer at n0's carries one of n0's relays (`link_relay`, either posture; the park run's link carried `usw1-1`, demo/runs/park/2026-10-13/README.md). A computer built at svrngs's that opens it within the link's day keeps that relay beside the group's seed (`join_group`, `keep_group`). It then meets that group at n0's relay for as long as it holds it, says it there in the record by its `Relay` act, and the group's other computers dial it there. This is traced only at debug (`kept_relay`'s line). DESIGN says the gap but holds no row for it, so the switch would flip with it open. A fix tells n0's relays apart at svrngs's too, since `n0_relays()` is a pure list and needs no lookup built (`svrngs_node::relay::n0_relays`): it refuses or drops them, says so in a person's words, and has a test, red first, that a joiner at svrngs's keeps none of n0's. It lands before the operator flips `SHIPPED`. |
+| 135 | 8, 6 | crates/svrngs/src/cli.rs:1542-1545 (`join_group`: the posture inferred, `n0 = has_lookup(node.endpoint())`); crates/svrngs/src/cli.rs:243, :727 (`SHIPPED`, carried by `reach` as `n0_services: at == MeetAt::N0`); crates/svrngs/tests/join_by_link.rs:132, share.rs:82 (a `MemoryLookup` added to an endpoint with `n0_services` off) | not fixed: a change of signature (`join_group`'s 17 callers) | Where a build meets its groups is decided by `SHIPPED`, and `join_group` decides it a second time from a proxy: any address lookup on the endpoint counts as n0's. A test's `MemoryLookup` makes `has_lookup` true with n0 off, so a link carrying one of n0's relays would be dropped there as if at n0's. Today no such test carries n0's relay; their links name 127.0.0.1, and `kept_relay` keeps them. A closed endpoint reads as no lookup (iroh 1.0.2 endpoint.rs:1490-1493, `EndpointError::Closed`), untraced apart from `kept_relay`'s `n0 = false`. A fix passes `join_group` the `MeetAt` (or the `RelayConfig`) the command was built with, so `kept_relay` reads the one decision, with a test, red first: a computer at svrngs's with a `MemoryLookup` keeps a link's relay. |
+| 130 | 12, 6 | as recorded | not fixed | Not grown by this range. relay-park updated it (3a474d5). |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 9 lines left in svrngs-core (3121 / 3130) and **3** in the repository (15797 / 15800), after relay-park's +22 and this audit's −1. The next row that adds product code meets the cap. |
+| 127, 128, 129, 131, 132, 133 | as recorded | as recorded | not fixed | Not touched by this range's decisions. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still one line early (cli.rs:231 for :232). The dry-report half reported the plant at its own `fn` line (share.rs:205). |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". web/ and scripts/ exact tiers are could-not-judge. |
+| I19 | 6 | dry-report, `tests/` scopes | Still present, and said as could-not-judge. The line-window pass stood in. |
+| I28 | 6 | `code index` resume | New. When the embedder stopped mid-index, it said "Committed chunks are preserved — re-install to resume" (/tmp/relayaudit3/index.out). Run again, it said "Partial index … could not be opened (… Missing metadata …/_corpus_meta.json); starting fresh" (index2.out). The resume it promised did not happen. The rerun's own words say so, so nothing was silently lost, but the first message is wrong. |
