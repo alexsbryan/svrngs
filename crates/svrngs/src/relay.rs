@@ -31,7 +31,9 @@ use iroh_relay::server::{
     Access, AccessControl, AcmeConfig, CertConfig, ClientRateLimit, ClientRequest, QuicConfig,
     RelayConfig, Server, ServerConfig, TlsConfig,
 };
+use svrngs_node::register::Member;
 use svrngs_node::{namespaces_in, RailError, RingRail, SigningKey};
+use tokio::task::JoinError;
 
 use crate::cli::Refusal;
 use crate::identity;
@@ -92,13 +94,19 @@ impl AccessControl for Admits {
         let stands = tokio::task::spawn_blocking(move || {
             RingRail::new(root, signer).standing_anywhere(&asked)
         });
-        if let Some((group, member)) = stands.await.ok().flatten() {
-            tracing::debug!(target: "relay", key, group, person = %member.person, "relay: admitted — the key stands in a group held here");
-            return Access::Allow;
-        }
-        tracing::debug!(target: "relay", key, "relay: refused — the key stands in no group held here");
-        Access::Deny { reason: None }
+        verdict(&key, stands.await)
     }
+}
+
+/// Whether `key` is let through, by the read of where it stands, made off
+/// the relay's own tasks.
+fn verdict(key: &str, read: Result<Option<(String, Member)>, JoinError>) -> Access {
+    if let Some((group, member)) = read.ok().flatten() {
+        tracing::debug!(target: "relay", key, group, person = %member.person, "relay: admitted — the key stands in a group held here");
+        return Access::Allow;
+    }
+    tracing::debug!(target: "relay", key, "relay: refused — the key stands in no group held here");
+    Access::Deny { reason: None }
 }
 
 /// The relay `relay` asks for, serving over the data dir `root`, until the
