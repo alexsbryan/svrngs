@@ -29,6 +29,10 @@ fn identity() -> Identity {
             HeaderName::from_static(USER_HEADER),
             HeaderValue::from_static("bo-0b0b"),
         ),
+        (
+            HeaderName::from_static(DEVICE_HEADER),
+            HeaderValue::from_static("0b0c"),
+        ),
     ]
 }
 

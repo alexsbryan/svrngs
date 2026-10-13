@@ -17,7 +17,7 @@ use tokio::net::TcpListener;
 
 use crate::page::{self, Server};
 use crate::people::People;
-use crate::person::{NotTheDoors, PersonKey, Who, STAND_IN_HEADER};
+use crate::person::{DeviceKey, NotTheDoors, PersonKey, Who, STAND_IN_HEADER};
 use crate::Plant;
 
 /// What every answer holds: the server the stored sign-in names, the owner
@@ -73,6 +73,7 @@ fn who(req: &Request<hyper::body::Incoming>, plant: Option<Plant>) -> Result<Who
         key: PersonKey::parse(&"e".repeat(64)).expect("64 hex"),
         name: "everyone".into(),
         user: "everyone".into(),
+        device: DeviceKey::parse(&"e".repeat(64)).expect("64 hex"),
     };
     match (Who::of(req.headers()), plant) {
         (Ok(_), Some(Plant::OneUser | Plant::OneDevice)) => Ok(everyone()),
@@ -111,7 +112,7 @@ async fn answer(at: At, req: Request<hyper::body::Incoming>) -> Response<Full<By
         );
     };
     let page_token = at.page_token.clone().unwrap_or(stand_in.to_string());
-    tracing::info!(key = %who.key.as_str(), person = %who.name, "mw: the door asks who a person is to Jellyfin");
+    tracing::info!(key = %who.key.as_str(), device = %who.device.as_str(), person = %who.name, "mw: the door asks who a person is to Jellyfin");
     let signed = match at.people.signed(who.clone()).await {
         Ok(s) => s,
         Err(e) => {

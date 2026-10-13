@@ -126,12 +126,20 @@ pub const PERSON_HEADER: &str = "x-svrngs-person";
 /// to seal to — `/v1/rail/people` lists every key of each person.
 pub const KEY_HEADER: &str = "x-svrngs-key";
 
+/// The device asking: the key it stands in the group by, as the record
+/// spells an actor — one of the keys `/v1/rail/people` lists for the
+/// person, on the device they joined first the same as [`KEY_HEADER`]
+/// (bash-two-at-once). An app that holds something to a device, as
+/// Jellyfin holds a session to the device a token was signed in under,
+/// keys it on this; what is a person's, on [`KEY_HEADER`].
+pub const DEVICE_HEADER: &str = "x-svrngs-device";
+
 /// The name of the account an app makes for the person asking:
 /// [`user_name`]'s, unique by their key.
 pub const USER_HEADER: &str = "x-svrngs-user";
 
 /// What the door tells a lend, and its sign-in, of who asks.
-pub type Identity = [(HeaderName, HeaderValue); 3];
+pub type Identity = [(HeaderName, HeaderValue); 4];
 
 /// The account name for `person` asking with `key`: their name kept to
 /// ASCII letters, digits, `-` and `.`, or `person` if none is left, then
@@ -750,8 +758,9 @@ pub(crate) enum Who {
 /// §4): their first key in the group the register finds the key in, the
 /// same from every device of theirs (bash-devices), whether a member's
 /// dialler or a pass's signer asks. Made only here ([`PersonKey::resolved`]),
-/// so nothing kept about a person — a lend's count, a sign-in's answer, a
-/// choice — is keyed by the raw key a request came with.
+/// so nothing kept about a person — a lend's count, a choice — is keyed by
+/// the raw key a request came with; a sign-in's answer is kept a
+/// [`DeviceKey`].
 #[derive(
     Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize, serde::Deserialize,
 )]
@@ -769,9 +778,19 @@ impl PersonKey {
 }
 svrngs_core::text_newtype!(PersonKey);
 
+/// The device a request for a lend comes from ([`DEVICE_HEADER`]): the key
+/// that stands in a group held here — a member's dialler's, a pass's
+/// signer's, this computer's at its own origin. A sign-in's answer is kept
+/// a device ([`sign_in`]), as an app may hold what it signs in to one
+/// (demo/runs/two-at-once/2026-10-12/README.md, finding 1).
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct DeviceKey(String);
+svrngs_core::text_newtype!(DeviceKey);
+
 /// The person a request for a lend is carried as.
 struct Asker {
     actor: PersonKey,
+    device: DeviceKey,
     group: String,
     person: Person,
     /// The pass's app; none for a key of the group's with no pass.
@@ -890,6 +909,7 @@ async fn holder_of(
         "door: a pass opens this lend, so its holder asks as the person who signed it");
     Ok(Asker {
         app: Some(pass.app),
+        device: DeviceKey(pass.person),
         actor,
         group,
         person,
@@ -987,6 +1007,7 @@ pub(crate) async fn lend_for(
             };
             Pending::Known(Asker {
                 actor: whose,
+                device: DeviceKey(actor.clone()),
                 group,
                 person,
                 app: match &who {
@@ -1000,6 +1021,7 @@ pub(crate) async fn lend_for(
     let lend = choices::found(door, raw_name)?;
     let Asker {
         actor: whose,
+        device,
         group,
         person,
         mut app,
@@ -1069,7 +1091,7 @@ pub(crate) async fn lend_for(
     forward(
         door,
         &lend,
-        (&whose, &person, app.as_ref()),
+        (&whose, &device, &person, app.as_ref()),
         service_path,
         req,
         told,
@@ -1197,7 +1219,7 @@ fn tell_share(headers: &mut HeaderMap, share: Option<u64>) {
 async fn forward(
     door: &Door,
     lend: &Lend,
-    (whose, person, app): (&PersonKey, &Person, Option<&Label>),
+    (whose, device, person, app): (&PersonKey, &DeviceKey, &Person, Option<&Label>),
     path: String,
     req: Request,
     Told { share, held }: Told,
@@ -1217,10 +1239,11 @@ async fn forward(
     let asker_side = upgrade.as_ref().map(|_| hyper::upgrade::on(&mut req));
     let (mut parts, body) = req.into_parts();
     let get = parts.method == axum::http::Method::GET;
-    let (Ok(person_value), Ok(key_value), Ok(user_value)) = (
+    let (Ok(person_value), Ok(key_value), Ok(user_value), Ok(device_value)) = (
         HeaderValue::from_bytes(person.as_str().as_bytes()),
         HeaderValue::from_str(actor),
         HeaderValue::from_str(&user_name(person, actor)),
+        HeaderValue::from_str(device.as_str()),
     ) else {
         tracing::warn!(target: "door", actor, "door: refused — the person's name cannot be a header");
         return Err(LendRefusal::Fault.say(
@@ -1232,13 +1255,14 @@ async fn forward(
         (HeaderName::from_static(PERSON_HEADER), person_value),
         (HeaderName::from_static(KEY_HEADER), key_value),
         (HeaderName::from_static(USER_HEADER), user_value),
+        (HeaderName::from_static(DEVICE_HEADER), device_value),
     ];
     tracing::debug!(target: "door", actor, user = ?identity[2].1, "door: the account the lend is told");
     let signing = match lend.sign_in {
         None => Signing::Secret(secret_headers(door, &lend.name)),
         Some(port) => match door
             .sign_ins
-            .of(&lend.name, port, whose, identity.clone())
+            .of(&lend.name, port, device, identity.clone())
             .await
         {
             Ok(signed) => Signing::Person(port, signed),
@@ -1344,7 +1368,7 @@ async fn forward(
         .headers
         .get(header::CONTENT_LENGTH)
         .and_then(|l| l.to_str().ok()?.parse().ok());
-    let swapping = signing.outward(&mut parts, get, &door.sign_ins, (&lend.name, whose))?;
+    let swapping = signing.outward(&mut parts, get, &door.sign_ins, (&lend.name, device))?;
     carriage.answered = Some((parts.status.as_u16(), length));
     tracing::debug!(target: "carriage", lend = %lend.name, range = ?carriage.range, status = parts.status.as_u16(),
         content_range = ?parts.headers.get(header::CONTENT_RANGE), ms = carriage.began.elapsed().as_millis(), "door: answered");

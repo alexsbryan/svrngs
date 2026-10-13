@@ -124,7 +124,7 @@ lend declaration, kept as data: a secret the door injects and never lets out, th
 paths it refuses, how many people may use it at once.
 
 **What an app gets — the whole surface, for our apps and a stranger's alike:**
-- the person asking, verified, in three headers the door sets
+- the person asking, verified, in four headers the door sets
   (`crates/svrngs-node/src/door.rs`, `Identity`): `x-svrngs-key`, who
   asks, the person the connection's key stands as, by their first key in
   the group — the same from every device of theirs (bash-devices), an id
@@ -133,7 +133,12 @@ paths it refuses, how many people may use it at once.
   name of their account in an app that makes accounts, their name kept to
   ASCII letters, digits, `-` and `.` and the first 16 hex of their person
   key (`user_name`; bash-person, so a second `ana` is never Ana's account,
-  and Ana's devices are one account) —
+  and Ana's devices are one account); `x-svrngs-device`, the device
+  asking, by the key it stands in the group by — one of the person's keys,
+  so an app that holds something to a device tells a person's devices
+  apart under the one account (bash-two-at-once: Jellyfin listed Ana's
+  laptop and phone as one device, its film overwritten, while each
+  played its own, `demo/runs/two-at-once/2026-10-12/`) —
   and the app asking in another (`x-svrngs-app`), read only from a pass (sup-1): on a
   phone the pass's `app`, the lend whose pages the group's page handed it
   to; on a computer the app its origin names from what the browser says
@@ -773,16 +778,18 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
      door byte for byte, held by an existing door test unchanged.
    - *What the door sends.* On a person's first request through the
      lend, before carrying it, the door asks the sign-in with that
-     request's identity headers, `x-svrngs-key`, `x-svrngs-person` and
-     `x-svrngs-user` (`door.rs`, `Identity`), set as it sets them for the
+     request's identity headers, `x-svrngs-key`, `x-svrngs-person`,
+     `x-svrngs-user` and `x-svrngs-device` (`door.rs`, `Identity`), set as it sets them for the
      service, and
      `x-svrngs-stand-in`, the stand-in (below), so an answer's script
      stores it as the door names it and no app spells it (#90, si-1);
      nothing else: no client header, no body. One owner the door holds,
-     as it holds `Using` (`door.rs:187`), asks for each person apart, so
-     one person's slow sign-in holds nobody else's request, and a person's
+     as it holds `Using` (`door.rs:187`), asks for each device apart, so
+     one device's slow sign-in holds nobody else's request, and a device's
      first requests at once wait on one ask (#88, si-1: until then it
-     asked one person at a time, and one slow ask held every lend's).
+     asked one person at a time, and one slow ask held every lend's;
+     bash-devices kept one answer a person, bash-two-at-once one a device,
+     as Jellyfin holds a token's session to the device it signed in).
    - *What comes back.* `200` and a JSON object, every field required and
      an unknown one refused: `secret`, the person's secret, 16 to 512
      bytes of letters, digits, `-`, `_`, `.` and `~` — what a query, a

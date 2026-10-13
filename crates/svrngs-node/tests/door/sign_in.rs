@@ -530,13 +530,16 @@ async fn one_person_s_slow_sign_in_holds_nobody_else_s() {
     pair.close().await;
 }
 
-/// **One person is asked for once, from any device of theirs**
-/// (bash-devices (c)): bo asks a lend with a sign-in from one device, then
-/// from the other; the answerer is asked once. Red at bash-devices' base:
-/// the sign-in keeps its answer per key (door/sign_in.rs, `Whose`), so bo
-/// is asked for twice.
+/// **Each device of one person is asked for as itself** (bash-two-at-once
+/// (b); demo/runs/two-at-once/2026-10-12/README.md, finding 1): bo asks a
+/// lend with a sign-in from one device, then the other, then the first
+/// again; the answerer is asked once a device, each ask told bo's one
+/// `x-svrngs-key` and the asking device's own key in `x-svrngs-device`, so
+/// an app signs each of a person's devices in apart under one account.
+/// Red at the row's base: asked once, the answer kept a person
+/// (bash-devices (c)), and no device told.
 #[tokio::test]
-async fn one_person_is_asked_for_once_from_any_device() {
+async fn each_device_of_one_person_is_asked_for_as_itself() {
     let bos = Bos::new().await;
     let (origin, _heads) = service().await;
     let (hook, asked) = answerer(Answers::Each).await;
@@ -544,10 +547,22 @@ async fn one_person_is_asked_for_once_from_any_device() {
         "signed",
         serde_json::json!({ "port": origin.port(), "kind": "k", "sign_in": hook.port() }),
     );
-    for i in 0..2 {
+    for i in [0, 1, 0] {
         let reply = raw_to(bos.devices[i].local_addr(), asks("echo")).await;
         assert_eq!(reply.status, 200, "{}", reply.text);
     }
-    assert_eq!(asked.lock().unwrap().len(), 1, "the answerer asked once");
+    let asked = asked.lock().unwrap().clone();
+    let told = |name| (asked.iter().map(|h| header_values(h, name).join(","))).collect::<Vec<_>>();
+    let (bo, bos_other) = (actor_of(&signing(2)), actor_of(&signing(6)));
+    assert_eq!(
+        told("x-svrngs-key"),
+        [bo.clone(), bo.clone()],
+        "bo, asked once a device"
+    );
+    assert_eq!(
+        told("x-svrngs-device"),
+        [bo, bos_other],
+        "each device by its own key"
+    );
     bos.a.endpoint().close().await;
 }

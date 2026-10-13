@@ -324,9 +324,11 @@ impl Bos {
 /// **One person's two devices are one account to a lend** (bash-devices
 /// (c)): bo asks from each, and the service is told one `x-svrngs-key`,
 /// bo's first, and one `x-svrngs-user` both times, so an app keyed on
-/// either gives bo one account. Red at bash-devices' base: each device
-/// told its own key and its own account name (door.rs, `PersonKey::resolved`
-/// is the key itself).
+/// either gives bo one account; and each device's own key in
+/// `x-svrngs-device`, so an app tells bo's devices apart (bash-two-at-once
+/// (b)). Red at bash-devices' base: each device told its own key and its
+/// own account name (door.rs, `PersonKey::resolved` is the key itself);
+/// red at bash-two-at-once's: no device told.
 #[tokio::test]
 async fn one_persons_two_devices_are_one_account_to_a_lend() {
     let bos = Bos::new().await;
@@ -335,7 +337,7 @@ async fn one_persons_two_devices_are_one_account_to_a_lend() {
         "shelf",
         serde_json::json!({ "port": origin.port(), "kind": "k" }),
     );
-    let mut told = Vec::new();
+    let (mut told, mut devices) = (Vec::new(), Vec::new());
     for i in 0..2 {
         let reply = bos.get(i, "/lend/shelf/whoami", "").await;
         assert_eq!(reply.status, 200, "{}", reply.text);
@@ -344,9 +346,12 @@ async fn one_persons_two_devices_are_one_account_to_a_lend() {
             header_values(&head, "x-svrngs-key").join(","),
             header_values(&head, "x-svrngs-user").join(","),
         ));
+        devices.push(header_values(&head, "x-svrngs-device").join(","));
     }
     assert_eq!(told[0].0, actor_of(&signing(2)), "bo's first key");
     assert_eq!(told[0], told[1], "(key, account) from each device");
+    let each = [actor_of(&signing(2)), actor_of(&signing(6))];
+    assert_eq!(devices, each, "each device by its own key");
     bos.a.endpoint().close().await;
 }
 

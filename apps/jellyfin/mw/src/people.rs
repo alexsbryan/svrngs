@@ -4,11 +4,13 @@
 //! are answered one at a time, so two asks for one person make one
 //! account, not two.
 //!
-//! Each ask signs the person's device in afresh. The door asks again only
-//! after its own restart, or after Jellyfin answered `401` to the token it
-//! kept (crates/svrngs-node/src/door/sign_in.rs, `forget`): either way the
+//! Each ask signs the person's device in afresh: the door asks once for
+//! each device of theirs (bash-two-at-once), and again only after its own
+//! restart, or after Jellyfin answered `401` to the token it kept
+//! (crates/svrngs-node/src/door/sign_in.rs, `forget`): either way the
 //! token answered before is lost to it or revoked, and a sign-in on the
-//! same device puts a new one in its place.
+//! same device puts a new one in its place. One account a person, by
+//! their key; one Jellyfin device and token each device of theirs.
 
 use std::collections::HashMap;
 use std::net::SocketAddr;
@@ -102,7 +104,7 @@ async fn signed(
         Some(Plant::OneDevice) => Device::one(),
         _ => Device::of(who),
     };
-    tracing::info!(key = %who.key.as_str(), user = %viewer.name, device = %device.id,
+    tracing::info!(key = %who.key.as_str(), user = %viewer.name, device = %device.id, from = %who.device.as_str(),
         "mw: signing the person's device in");
     let token = viewer::sign_in(jellyfin, viewer, &device.header()).await?;
     Ok(Signed {

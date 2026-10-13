@@ -6,7 +6,7 @@
 //! **Asked** on a person's first request through the lend, before it is
 //! carried: `POST /` at `127.0.0.1:<its port>`, with the request's
 //! [`super::Identity`] as the door sets it for the service — the person's
-//! key, the name to show and their account's name — and [`STAND_IN`] in [`STAND_IN_HEADER`], for a script
+//! key, the name to show, their account's name and the device's key — and [`STAND_IN`] in [`STAND_IN_HEADER`], for a script
 //! to store, and nothing else. **Answered** `200` and a JSON object, every
 //! field required and none other ([`Answer`]): the person's `secret`, the
 //! `headers` set on each of their requests, and a `script` or `null` (mwp-2
@@ -15,9 +15,10 @@
 //!
 //! **Kept** by [`SignIns`], one task that owns every answer, in memory for
 //! this run of the node — never logged, never on disk, never on the wire
-//! but to the service — which asks for each person apart, so one person's
-//! slow sign-in holds nobody else's request, and a person's first requests
-//! at once wait on one ask. A `401` from the service to a request signed
+//! but to the service — which asks for each device apart (an app may hold
+//! what it signs in to a device: bash-two-at-once), so one device's slow
+//! sign-in holds nobody else's request, and a device's first requests at
+//! once wait on one ask. A `401` from the service to a request signed
 //! with a kept answer forgets it, and the next request asks again.
 //!
 //! **Swapped** ([`STAND_IN`]): in what the door carries in, the stand-in
@@ -204,7 +205,7 @@ impl Signing {
         parts: &mut axum::http::response::Parts,
         get: bool,
         sign_ins: &SignIns,
-        (lend, actor): (&LendName, &super::PersonKey),
+        (lend, actor): (&LendName, &super::DeviceKey),
     ) -> Result<Option<Read>, axum::response::Response> {
         let (port, s) = match self {
             Self::Secret(secret) => {
@@ -258,8 +259,8 @@ impl Signing {
     }
 }
 
-/// Which answer: a lend, its sign-in's port, and a person's key.
-type Whose = (LendName, NonZeroU16, super::PersonKey);
+/// Which answer: a lend, its sign-in's port, and a device's key.
+type Whose = (LendName, NonZeroU16, super::DeviceKey);
 
 /// Who waits on a person's signed-in self.
 type Waiter = oneshot::Sender<Result<Signed, Refusal>>;
@@ -291,10 +292,10 @@ impl SignIns {
                     Ask::Of(whose, identity, told) => {
                         let (lend, port, actor) = &whose;
                         if let Some(a) = kept.get(&whose) {
-                            tracing::debug!(target: "door", lend = %lend, %actor, "door: sign-in — the person's kept answer");
+                            tracing::debug!(target: "door", lend = %lend, %actor, "door: sign-in — the device's kept answer");
                             let _ = told.send(Ok(signed(&kept, lend, a.clone())));
                         } else if let Some(waiting) = out.get_mut(&whose) {
-                            tracing::debug!(target: "door", lend = %lend, %actor, "door: sign-in — the person's ask is out, so this request waits on it");
+                            tracing::debug!(target: "door", lend = %lend, %actor, "door: sign-in — the device's ask is out, so this request waits on it");
                             waiting.push(told);
                         } else {
                             let (port, lend, back) = (*port, lend.clone(), back.clone());
@@ -312,7 +313,7 @@ impl SignIns {
                         let waiting = out.remove(&whose).unwrap_or_default();
                         if let Ok(a) = &found {
                             tracing::info!(target: "door", lend = %lend, %actor, requests = waiting.len(),
-                                "door: sign-in — asked for the person on their first request, and kept");
+                                "door: sign-in — asked for the device on its first request, and kept");
                             kept.insert(whose.clone(), a.clone());
                         }
                         for told in waiting {
@@ -332,13 +333,13 @@ impl SignIns {
         Self(tx)
     }
 
-    /// The person `identity` names signed in to `lend`: kept, or asked of
-    /// its sign-in at `port` now.
+    /// The person `identity` names signed in to `lend` on the device
+    /// `actor`: kept, or asked of its sign-in at `port` now.
     pub(crate) async fn of(
         &self,
         lend: &LendName,
         port: NonZeroU16,
-        actor: &super::PersonKey,
+        actor: &super::DeviceKey,
         identity: super::Identity,
     ) -> Result<Signed, Refusal> {
         let (answer, told) = oneshot::channel();
@@ -355,7 +356,7 @@ impl SignIns {
         &self,
         lend: &LendName,
         port: NonZeroU16,
-        actor: &super::PersonKey,
+        actor: &super::DeviceKey,
         secret: &Secret,
     ) {
         let whose = (lend.clone(), port, actor.clone());
