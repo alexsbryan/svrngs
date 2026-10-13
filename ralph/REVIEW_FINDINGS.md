@@ -6777,3 +6777,254 @@ instrument's threshold, and #126 is a change in behaviour.
 | I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". |
 | I9 | 6, 7 | dry-report near tier | Still present: sign_in.rs `of` :336-355 and `forget` :353-368 overlap and pair at 0.924. |
 | I19 | 6 | dry-report, `tests/` scopes; converge and the exact tier in apps/jellyfin/mw | Still present, and said as could-not-judge. converge gives `DeviceKey` 1 where git grep finds 2. The line-window pass stood in for the tests scopes. |
+
+## REVIEW-audit-relay-auto-1 (2026-10-13, range 6cc26d0..f3d25cf)
+
+No earlier `REVIEW-audit-` row exists in ralph/next/relay/STATE.md, so the
+range starts where this queue does. The queue's first commit, 50643fd,
+comes before REVIEW-audit-bash-auto-2's own four commits
+(`git log --oneline 50643fd..6cc26d0`: 633b755, f4eb063, 6e0c2cf, 6cc26d0).
+That audit already read them, so the range starts after its `done`,
+6cc26d0, and ends at f3d25cf, the commit that made this row.
+`git rev-list --count 6cc26d0..f3d25cf` is 31, with no merge among them
+(`--merges`: 0), all on main. It covers four units: relay-n0-off,
+relay-in-record, relay-verb and relay-default.
+
+This audit's own commits are 41808f5 (the row's two paths, as 70c0d83
+corrected them for the last audit) and 0551e2d (a test move, behaviour
+kept). It opens #127-#131, updates #80, and closes none.
+
+The instrument is ~/dev/commonwealth-ai/target/debug/sovereign-cli,
+sha256 68746bcf…, the last audit's binary (`shasum -a 256`). Its exact
+tier was still checked against a plant (below). The embedder was the
+daemon on :9741 serving qwen-embedding-0.6b, 1024-d. The corpus is
+f3d25cf's tree, put into /tmp/relayaudit1/tree-f3d25cf by `git archive`.
+`code index . --corpus-id tree-f3d25cf` gave 3677 chunks in 501 s
+(/tmp/relayaudit1/index.out). `refresh` gave rust 14470 symbols, with
+typescript and python "skipped (export failed)" (I4;
+/tmp/relayaudit1/refresh.out).
+
+### (1) Net lines per unit, product code
+
+The counts come from `git log --reverse -M --numstat --format='@@%h %s'
+--no-merges 6cc26d0..f3d25cf`, summed by /tmp/relayaudit1/ledger.py.
+That is the last audit's script with its unit pattern changed from
+`bash-` to `relay-` (/tmp/relayaudit1/ledger.out). A commit that names no
+unit counts toward the next `done`. Product is crates/, apps/, web/ and
+bridge/. Everything else is counted apart:
+
+- demo/runs/n0-off +1112, demo/runs/relay-in-record +2250 and
+  demo/runs/relay-rate +62
+- docs/ +177 −34, scripts/ +90 −3, ARCHITECTURE.md +5 −2, ralph/ +5 −4
+  and Cargo.lock +1
+
+| unit | commits | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| relay-n0-off | 7 | 0 | 0 | 0 | 84 | 0 | 84 |
+| relay-in-record | 12 | 314 | 87 | 227 | 194 | 18 | 176 |
+| relay-verb | 6 | 270 | 19 | 251 | 379 | 3 | 376 |
+| relay-default | 5 | 168 | 74 | 94 | 425 | 45 | 380 |
+| this row's own commit | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 31 | 752 | 180 | 572 | 1082 | 66 | 1016 |
+
+relay-n0-off added nothing to product, as its row says: a run, and the
+`n0_off` test binary its harness drives. The largest src nets, by file:
+
+- crates/svrngs/src/relay.rs +181 (ba93f15, `svrngs relay`)
+- cli.rs +115 over three units (`reach`, `DEFAULT_RELAY`, `new --relay`,
+  `wait_online`, the relay verb's parse)
+- node.rs +82 (42e36ca, e16d52e, 6cd1727, f3ec329: `say_relay`,
+  `contact`, each dial by `Contact`)
+- web/install.sh +29, group.rs +32 (`write_relay`, `read_relay`)
+- core membership.rs +26, register.rs +26 (`RelayAt`), lib.rs +16
+  (`RailAct::Relay`, `RELAY_LINE_VERSION`) and relay.rs +12 (`parse`)
+
+web/src/lib.rs nets −2: ab99c34 took the page's n0 path out. The
+command's Cargo.toml +7 −3 is iroh-relay's `server` feature and rustls
+(db4f8ca, ba93f15).
+
+The size budget, measured by scripts/lean_check.py over a `git archive`
+tree of each commit (/tmp/relayaudit1/lean-points.out):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 6cc26d0, range start | 3072 | 15343 |
+| d0300f8, relay-n0-off done | 3072 | 15343 |
+| bb6652e, relay-in-record done | 3121 | 15486 |
+| f2da6c7, relay-verb done | 3121 | 15663 |
+| b4e17ed, relay-default done | 3121 | 15776 |
+| f3d25cf, range end | 3121 | 15776 |
+| 0551e2d, this audit's last | **3121 / 3130** | **15776 / 15800** |
+
+The caps moved from 3,080 and 15,350 to 3,130 and 15,800 in e05883e, the
+operator's raise for this queue. Over the range the budget's count nets
++433, +49 of it in svrngs-core. This audit's move is in tests, which the
+budget does not count. **9 lines are left in svrngs-core and 24 in the
+repository** (#80). The queue's last row, relay-run, adds nothing to
+product but the driver's own fixes.
+
+### (2) Clones (`code dry-report`)
+
+**The exact tier was checked against a plant.** The plant was a verbatim
+copy of 9a4f755's `reach` (cli.rs:664-693, its doc lines included),
+appended to crates/svrngs/src/share.rs in the indexed tree, followed by
+`refresh` (+16 symbols). The scoped report gave **1 group**: `reach —
+crates/svrngs/src/cli.rs:668 == crates/svrngs/src/share.rs:199`, 2 copies
+× 26 lines (/tmp/relayaudit1/plant-cli.md). With share.rs restored
+(`diff` against `git show f3d25cf:` is empty) and `refresh` run again
+(−16), the tier found **0** (/tmp/relayaudit1/unplant-cli.md).
+
+Each dir the range touched was run scoped at 0.95
+(/tmp/relayaudit1/clean-*_0.95.md). Every side was blamed against the
+range's commits by /tmp/relayaudit1/clusters.py, the last audit's with
+the range changed (clusters-scoped.out):
+
+| scope | locations | exact | near | with a side added in the range |
+|---|---:|---:|---:|---|
+| crates/svrngs-core/ | 457 | 5 | 0 | none |
+| crates/svrngs-node/ | 481 | 1 | 0 | none |
+| crates/svrngs-runtime/ | 135 | 1 | 0 | none |
+| crates/svrngs/ | 89 | 0 | 0 | none |
+| web/ | 98 | could-not-judge (I4) | 0 | none |
+| scripts/ | 15 | could-not-judge (I4) | 0 | none |
+| crates/svrngs-node/tests/, crates/svrngs/tests/ | 0 | could-not-judge (I19) | could-not-judge | — |
+
+The seven exact groups are the last audit's, each three lines (api.rs
+`addr`, core `is_empty`, `lines`, `signed_by_link`, `as_str`, and two
+test helpers). **No exact or near clone at the instrument's threshold
+has a side the range added.**
+
+Below the threshold, the whole tree was run at 0.90
+(/tmp/relayaudit1/clean-all-0.9.md → clusters.out). It gave 149 groups,
+15 with a side in the range. 14 of those are recorded runs: relay-in-record's
+driver is relay-n0-off's, copied unchanged before it ran (32785ec), and
+each run is kept as it ran (#61). The 15th is home.js `uses` (:92-112)
+~ web/app.js `uses` (:284-310) at 0.922. The range touched only
+app.js's (42e36ca: the lender's relay passed to `dial`). As the last
+audit read it, the two pages reach their lender their own ways. The home
+page asks its own computer `/choices?lend=`, and that computer dials
+through `Host::contact`. Both render through the one `used`.
+
+The tests scopes are could-not-judge (I19), so the line-window pass
+stood in for them, the last audit's script with the range changed
+(/tmp/relayaudit1/windows.py → windows.out: 183 hits, 85 spans, 13 new).
+One of the 13 was fixed here:
+
+- crates/svrngs/tests/join_by_link.rs :235-244 == :520-529 == :599-608
+  == :655-664 == :702-711 == :777-786: Sam makes house with no page and
+  no relay. 9a4f755 gave `new_group` a tenth line (`kept`), and rustfmt
+  spread each call over ten lines. It is now one function in the file,
+  `sams_house` (0551e2d). share.rs :147-157 is the same call in another
+  binary, which shares no module with join_by_link.rs.
+
+The other new spans:
+
+- install.rs :18-23 == relay.rs :7-12: each binary's `mod harness`
+  header.
+- install.rs :256-265 == join_page.rs :128-136, :267-275, and install.rs
+  :477-483 == :538-544: each test's own paste and its asserts.
+- core membership_tests.rs :84-89 == :269-274: two folds each checked
+  over every arrival order.
+- browser main.rs :817-822 == :1027-1032: two films, each its own
+  `drive`.
+- join_by_link.rs :837-843 == new.rs :190-196: a page's group made in two
+  binaries.
+
+### Reading the range
+
+- **Never silently substitute** (AGENTS.md 6). Each `.ok()`,
+  `unwrap_or`, `map_or`, `??` and `.flatten()` the range added to
+  product code was read (/tmp/relayaudit1/range-src.diff):
+  - core `relay::parse` traces its refusal before `.ok()`.
+  - cli.rs `reach` meets a group that keeps no relay at `DEFAULT_RELAY`,
+    which group.rs's header says is the choice.
+  - The page's `?? null` and `reach`'s `unwrap_or_else` dial through the
+    link's relay when the group names none, and say so
+    (`t!("LAYER parse: the group names no relay for …")`).
+  - **Two do not hold.** First, #128: `Host::say_relay` lists the groups
+    with `.unwrap_or_default()`, and `relay::spawn` asks
+    `namespaces_in(..).is_ok_and(..)`. A groups directory that cannot be
+    read is then "no groups": nothing is said, untraced, and the relay
+    refuses as "this computer is in no group".
+  - Second, #129: the relay's `Admits::on_connect` takes `.ok().flatten()`
+    of the blocking read. A read that panicked is refused and traced as
+    "the key stands in no group held here".
+- **Glassbox** (AGENTS.md 1). Each new decision is traced at debug:
+  - the fold's `Relay` act and `Membership::relay`
+  - `RelayAt::decide` with `writes`
+  - `say_relay`'s skip, commit and refusal
+  - `Contact::named` with no relay
+  - ring sync's wake on the asker's own relay
+  - `reach`'s relays and `wait_online`
+  - the relay's admit, refuse, start and stop
+  - group.rs's kept relay
+
+  `wait_online` also says in a person's words which relay it did not
+  reach.
+- **A person's words** (fence 5). The range's added quoted strings in
+  product code use none of key, member, keeper, ring, act or journal as
+  a word outside a trace. The only other hits are an `expect` ("ring's
+  protocols", the crypto provider) and deploy-relay.sh's `--ssh-key`,
+  which the operator reads (`grep -iwE` over the added lines).
+- **One decider** (AGENTS.md 8). Where a computer is reached is folded in
+  svrngs-core alone (`RailAct::Relay`, `Membership::relay`, `RelayAt`).
+  The node and the page carry the register's `Member::relay`. But
+  which group's answer names a key held in several groups is decided
+  twice (#127). And a relay as written is read dotless by two functions,
+  core's and the node's (#131).
+- **Draw the line by what each owns** (principle 12). Since 9a4f755 the
+  command never builds n0's path, but svrngs-node still defaults to it,
+  and the page compiles it unused (#130).
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges 6cc26d0..f3d25cf -- crates
+apps web bridge scripts` that match `\b(struct|enum|trait|type)\s+[A-Z]\w*`
+are `Relay`, `At`, `Admits` (crates/svrngs/src/relay.rs), `RelayAt`
+(core register.rs), `Kept` (crates/svrngs/tests/default_relay.rs) and
+`type Refusal` (`RelayAt`'s `Command` impl). Each was run through
+`converge noun <Name> --corpus-id tree-f3d25cf`
+(/tmp/relayaudit1/nouns.out):
+
+| noun | converge (production) | git grep | read |
+|---|---|---|---|
+| Relay | 1: crates/svrngs/src/relay.rs:46 | 1: :47 | One. Its kin `RelayConfig` (svrngs-node guest.rs:39) is how a node reaches the network; `Relay` is what `svrngs relay` was asked. |
+| RelayAt | 1: core register.rs:244 | 1: :245 | One. |
+| At | 1: crates/svrngs/src/relay.rs:54 | 2: :55, apps/jellyfin/mw/src/answer.rs:28 | converge does not see the mw (I19). These are two private names in two programs for two things: where a relay is reached, and what every mw answer holds. No change. |
+| Admits | 1: crates/svrngs/src/relay.rs:80 | 1: :81 | One. |
+| Kept | 1: svrngs-node door/choices.rs:59 | 2: choices.rs:60 (`type`, the kept choices), crates/svrngs/tests/default_relay.rs:31 (the test's trace sink) | converge leaves tests out. These are two private names for two things. The other trace sink, folders.rs:1053 `Said`, is in a test binary that shares no module with this one. No change. |
+| Refusal | 2: cli.rs:513, door/sign_in.rs:132 | 2: :514, :133 | Neither is the range's. The range's is `type Refusal = Infallible`, the `Command` trait's associated type, which is no noun (as judged at this file's U7 and v1 audits). |
+
+converge's lines are still one early (I1).
+
+### Fixed here
+
+- 0551e2d: join_by_link.rs's `sams_house`, tests only. `cargo test -p
+  svrngs --test join_by_link` gave 10 passed before and after
+  (/tmp/relayaudit1/jbl-before.out, jbl-after.out).
+
+No product code was moved. The range's product clones are none at the
+instrument's threshold, and #127-#131 each change behaviour, even if
+only in a trace.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 127 | 8 | crates/svrngs-node/src/node.rs:595-613 (`standing_peers`: the first group naming the key) and :489-492 (`Host::contact`, by svrngs-runtime register.rs:278 `standing_anywhere`, the first group naming the key); node.rs:872-876 (`Asking`'s `relay`: the first group naming a *relay* for the key) | not fixed: a change in behaviour | Two rules decide which group's relay a key held in several groups is dialled by. The round, the lend asks, a folder's fetch and the origin take the first group that names the key, even when that group names no relay for it. The people answer, which the phone dials by, takes the first group that names a relay. Suppose group A (first) has not yet heard key K's `Relay` act, or holds an older one, and group B names K's relay. Then this computer dials K blind, or through the old relay, while it tells the phone the new one. With n0 off, a blind dial is not made (`Contact::named`'s trace). `say_relay` writes in every group, so the two agree once each group has synced. A fix gives the choice one home, for example in the register beside `standing_anywhere`, with a test of two groups that disagree, red first. |
+| 128 | 6, 1 | crates/svrngs-node/src/node.rs:462 (`say_relay`: `self.rail.namespaces().unwrap_or_default()`); crates/svrngs/src/relay.rs:110 (`spawn`: `namespaces_in(root).is_ok_and(..)`) | not fixed: a change in behaviour | A groups directory that cannot be read (svrngs-runtime lib.rs:147, `RailError::Io`) is taken as no groups. `say_relay` then says nothing, with no trace. `svrngs relay` refuses `RelayForNobody`, "this computer is in no group … join one first", which misdirects whoever runs it. A fix traces and says the read's error, with a test over an unreadable directory, red first. |
+| 129 | 6, 1 | crates/svrngs/src/relay.rs:92-99 (`Admits::on_connect`: `stands.await.ok().flatten()`) | not fixed: a change in behaviour (a trace) | A blocking read that panicked (`JoinError`) is refused, and traced as "relay: refused — the key stands in no group held here". The verdict is the safe one. The reason is not: a relay whose record read fails refuses everyone, and says each is in no group. A fix traces the join error apart from the read's `None`. |
+| 130 | 12, 6 | crates/svrngs-node/src/guest.rs:63-72 (`RelayConfig::default()`, `n0_services: true`, "the bootstrap default"); crates/svrngs/src/cli.rs:1820-1824 (`link_relay`'s n0 branch); web/src/lib.rs:27-32 (n0's relays and `DotlessLookup` compiled into the page under `#[allow(dead_code)]`); crates/svrngs/src/cli.rs:688-692 (`reach`, `n0_services: false`, the command's only build) | not fixed: a change in behaviour; deciding where n0's path still lives is relay-run's to show | Since 9a4f755 the command never builds n0's path (main.rs asks `cli::reach`). svrngs-node still defaults to it, though, and only tests reach that default: svrngs-node tests/common/member.rs:78 `"n0"`, sy_dee.rs:43, and crates/svrngs/tests/new.rs:250-254. The default is now one nobody chose (DESIGN §10, the operator, 2026-10-12: n0 none of the path). The page compiles code it never calls. "You drew it wrong when the uses go to zero and the ability stays." A fix makes `RelayConfig` have no n0 default, so a caller says which relays it uses, and keeps n0 only where a test or run names it. That could follow relay-run, whose samples show whether anything still reaches n0. |
+| 131 | 8, 3 | crates/svrngs-core/src/relay.rs:22-31 (`parse`, b18f187: `raw.parse::<Url>().map(dotless)`, `Option`, its doc "The one reading of a relay a person or a peer wrote"); crates/svrngs-node/src/relay.rs:29-32 (`parse`, ea651e0: `raw.parse::<RelayUrl>().map(dotless)`, `Result`) | not fixed: a change of signature in two crates | A relay as written is read dotless by two functions. They agree today: iroh-base 1.0.2's `RelayUrl::from_str` is `Url::from_str` wrapped (relay_url.rs:38-45), and both drop the dot by core's `dotless`. Core's doc claims to be the one reading, but the command (`--relay`, group.rs `read_relay`, `link_relay`), the node (iroh.rs:188, guest.rs:233) and the page call the node's. A fix has core's return the `url::ParseError`, and the node's wrap it. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 9 lines left in svrngs-core (3121 / 3130) and 24 in the repository (15776 / 15800), the operator's raise for this queue (e05883e). relay-run, the queue's last row, adds nothing to product but its driver's fixes. |
+| 31 | 8 | as recorded | not fixed | Not grown by this range. |
+| 57, 68, 70, 71, 75, 77, 79, 81, 89, 91, 95, 97, 99, 100, 103, 104, 113, 117, 126 | as recorded | as recorded | not fixed | Not touched by this range's decisions. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | The dry-report half is still fixed in sha256 68746bcf…: the plant was reported at the planted `fn`'s own line (share.rs:199). converge is still one line early (relay.rs:46 for :47, register.rs:244 for :245). |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". web/ and scripts/ exact tiers are could-not-judge. |
+| I9 | 6, 7 | dry-report near tier | Still present: sign_in.rs `of` :336-355 and `forget` :353-368 overlap and pair at 0.924. |
+| I19 | 6 | dry-report, `tests/` scopes; converge and the exact tier in apps/jellyfin/mw | Still present, and said as could-not-judge. converge gives `At` 1 where git grep finds 2. The line-window pass stood in for the tests scopes. |
