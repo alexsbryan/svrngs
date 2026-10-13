@@ -25,6 +25,8 @@ mod common;
 // joining test (crates/svrngs/tests/join_page.rs).
 #[macro_use]
 mod harness;
+// The host's load and the seek bar's, the conformance canary's too.
+mod load;
 
 use std::path::Path;
 use std::time::Duration;
@@ -613,6 +615,97 @@ fn stopped_and_ran_again(seen: &Value, shown: &Value) {
     );
 }
 
+/// Demo A's seek bar on the film's seeks, each playing again within five
+/// seconds, judged as the conformance canary judges it (`load`): `Ok(None)`
+/// when each did; when one missed, on a host whose load at the run's start
+/// was past `load::BUSY` a core, `Ok(Some(could-not-judge …))`, never a
+/// pass; and on a host under it, `Err` naming the misses, which fails.
+fn seeks_judged(seeks: &[Value], load: &str, cores: usize) -> Result<Option<String>, String> {
+    let missed: Vec<String> = seeks
+        .iter()
+        .filter(|s| s["ms"].as_u64().is_none_or(|ms| ms > 5_000))
+        .map(Value::to_string)
+        .collect();
+    if missed.is_empty() {
+        return Ok(None);
+    }
+    load::past_busy(load, cores)
+        .map(Some)
+        .ok_or_else(|| missed.join(", "))
+}
+
+/// A check this test could not judge, said on its output and added to
+/// `target/could-not-judge/browser.txt`, which scripts/check.sh prints apart:
+/// never a pass (AGENTS.md 6).
+fn could_not_judge(line: &str) {
+    use std::io::Write;
+    eprintln!("could-not-judge: {line}");
+    let kept = repo().join("target/could-not-judge");
+    std::fs::create_dir_all(&kept).unwrap();
+    let mut file = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(kept.join("browser.txt"))
+        .unwrap();
+    writeln!(file, "{line}").unwrap();
+}
+
+/// The film's seeks judged by `seeks_judged`, from `load()`'s lines as
+/// macOS and Linux print them, on 12 cores: the bar is 36. The misses are
+/// bash-first-minute-1's, the third seek again at 11,424 ms after the
+/// worker's stop (ralph/next/bash/ctl/log/sessions/bash-first-minute-1.await.log).
+mod film_seeks_by_load {
+    use super::*;
+    const QUIET: &str =
+        "2026-10-12T05:00:00Z 22:00  up 3 days, 2 users, load averages: 35.9 20.1 12.0";
+    const BUSY_MAC: &str =
+        "2026-10-12T05:00:00Z 22:00  up 3 days, 2 users, load averages: 62.1 40.3 30.1";
+    const BUSY_LINUX: &str =
+        "2026-10-12T05:00:00Z 05:00:00 up 3 days, 2 users, load average: 62.10, 40.30, 30.10";
+    const UNREAD: &str = "2026-10-12T05:00:00Z";
+
+    fn seeks(ms: [Value; 3]) -> Vec<Value> {
+        ms.into_iter().map(|ms| json!({ "ms": ms })).collect()
+    }
+
+    #[test]
+    fn a_seek_missed_at_low_load_fails() {
+        let missed = seeks([json!(1853), json!(2701), json!(11424)]);
+        let never = seeks([json!(null), json!(null), json!(531)]);
+        for load in [QUIET, UNREAD] {
+            assert_eq!(
+                seeks_judged(&missed, load, 12),
+                Err(r#"{"ms":11424}"#.to_string())
+            );
+            assert_eq!(
+                seeks_judged(&never, load, 12),
+                Err(r#"{"ms":null}, {"ms":null}"#.to_string())
+            );
+        }
+    }
+
+    #[test]
+    fn a_seek_missed_past_the_bar_could_not_judge() {
+        let missed = seeks([json!(1853), json!(2701), json!(11424)]);
+        for load in [BUSY_MAC, BUSY_LINUX] {
+            assert_eq!(
+                seeks_judged(&missed, load, 12),
+                Ok(Some(
+                    "could-not-judge, load 62.1 on 12 cores, past 3 a core".to_string()
+                ))
+            );
+        }
+    }
+
+    #[test]
+    fn seeks_held_passed_at_any_load() {
+        let held = seeks([json!(1853), json!(2701), json!(5000)]);
+        for load in [QUIET, BUSY_MAC, UNREAD] {
+            assert_eq!(seeks_judged(&held, load, 12), Ok(None));
+        }
+    }
+}
+
 in_both_engines!(
     /// The runtime (u4-6; DESIGN §3, "Joining", calls 3 and 4): ada's computer
     /// lends a page and a film, an H.264 mp4 from upstream's Range origin, and
@@ -621,7 +714,8 @@ in_both_engines!(
     /// origin of its own, `<label>.localhost`, apart from the page that
     /// holds bo's key, and that origin's worker serves it, its `<video>` and
     /// every byte range from ada's door, with the pass the page signed. The film plays and seeks three times,
-    /// each playing again within five seconds (Demo A's seek bar); the browser
+    /// each playing again within five seconds (Demo A's seek bar), a miss on
+    /// a host past `load::BUSY` a core could-not-judge (`seeks_judged`); the browser
     /// stops the worker before the third, and the next ranges still answer:
     /// Chromium stops it through DevTools, the page left playing, and WebKit,
     /// whose worker Playwright cannot reach, is closed and opened again on its
@@ -674,6 +768,8 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
     std::fs::write(lends.join("strict.json"), body.to_string()).unwrap();
 
     let (from, to) = (1_000_000, 1_000_000 + 4 * MIB - 1);
+    // The host's load as the film starts, which its seeks are judged at.
+    let began = load::load().await;
     let seen = drive(
         engine,
         "runtime.mjs",
@@ -707,11 +803,18 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
     );
     let seeks = seen["seeks"].as_array().unwrap();
     assert_eq!(seeks.len(), 3, "{shown:#}");
-    for seek in seeks {
-        assert!(
-            seek["ms"].as_u64().is_some_and(|ms| ms <= 5_000),
-            "each seek must play again within five seconds:\n{seen:#}"
-        );
+    match seeks_judged(seeks, &began, load::cores()) {
+        Ok(None) => {}
+        Ok(Some(busy)) => could_not_judge(&format!(
+            "a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself::{} \
+             each seek within five seconds: {busy}, the host at {began}; the seeks played again in {} ms",
+            engine.as_str(),
+            seeks.iter().map(|s| s["ms"].to_string()).collect::<Vec<_>>().join(", ")
+        )),
+        Err(missed) => panic!(
+            "each seek must play again within five seconds, the host at {began}; \
+             missed {missed}:\n{seen:#}"
+        ),
     }
     match engine {
         Engine::Chromium => stopped_and_ran_again(&seen, &shown),

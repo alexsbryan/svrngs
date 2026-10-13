@@ -24,6 +24,9 @@ step "app nouns"        python3 scripts/vocab_check.py
 if [ -f Cargo.toml ]; then
   step "rustfmt"  cargo fmt --all --check
   step "clippy"   cargo clippy --quiet --all-targets -- -D warnings
+  # What the browser tests could not judge, either run's (the tests' and the
+  # browser's below), printed after the browser's: kept from this check alone.
+  rm -rf target/could-not-judge
   step "tests"    cargo test --quiet
   # The canaries (DESIGN §8) again, by name: the apps that keep the infra general.
   step "canaries" cargo test --quiet -p svrngs-node --test canaries
@@ -40,6 +43,10 @@ if [ -f Cargo.toml ]; then
   # WebKit as an iPhone, each test in both (u4-7). Without Playwright or its
   # browsers it fails naming the install command; it never skips.
   step "browser" cargo test --quiet -p svrngs-node --test browser
+  # The film's seeks on a host past the seek bar's load bar (bash-film-load;
+  # crates/svrngs-node/tests/browser/load.rs, conformance's too): said apart,
+  # never a pass.
+  sed 's/^/could-not-judge /' target/could-not-judge/browser.txt 2>/dev/null
   # A phone joining by the link `svrngs new --origin` prints (u4-5), in
   # both engines.
   step "joining in a browser" cargo test --quiet -p svrngs --test join_page
@@ -51,7 +58,7 @@ if [ -f Cargo.toml ]; then
   rm -rf target/conformance
   step "conformance canary" cargo test --quiet -p svrngs-node --test conformance
   cat target/conformance/*.txt 2>/dev/null | grep -v could-not-judge | cut -c1-10,25- | sort -u | sed 's/^/           /'
-  # Chromium's seeks on a host past its load bar (chk-1): said apart, never a pass.
+  # Chromium's seeks on a host past its load bar (chk-1; tests/browser/load.rs): said apart, never a pass.
   grep -h could-not-judge target/conformance/*.txt 2>/dev/null | sed 's/^/could-not-judge /'
   # WebKit's seeks back to back, a rate and not a gate (u5-11): this run's,
   # beside the same seeks straight at the canary, then every run's here.
