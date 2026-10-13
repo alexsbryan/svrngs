@@ -203,6 +203,28 @@ pub fn folder_place(seed: &Seed) -> Option<PathBuf> {
     Some(PathBuf::from(home).join("svrngs").join(name))
 }
 
+impl crate::folder::Folders {
+    /// The group's folder kept the same at [`folder_place`] as everyone's,
+    /// as `share --folder` keeps one; or why not, said beside the join or
+    /// the `new`, which stands either way. Moved from svrngs's cli.rs
+    /// `folder_at_join`, which asked it of this node's own API.
+    pub fn place(&self, seed: &Seed) -> (PathBuf, Result<(), String>) {
+        let Some(dir) = folder_place(seed) else {
+            tracing::debug!(target: "group", group = %seed.id(), "group: no $HOME, so no folder placed");
+            let why = "this computer names no home folder ($HOME)".to_string();
+            return (PathBuf::from("~/svrngs"), Err(why));
+        };
+        let placed = std::fs::create_dir_all(&dir).map_err(|e| e.to_string());
+        let kept = |()| {
+            self.both_ways(dir.clone(), seed.id())
+                .map_err(|e| e.to_string())
+        };
+        let placed = placed.and_then(kept).map(drop);
+        tracing::debug!(target: "group", group = %seed.id(), dir = %dir.display(), ?placed, "group: the group's folder placed, or why not");
+        (dir, placed)
+    }
+}
+
 /// The relay a joiner keeps from its link's `carried`, where it meets the
 /// group from then on: at n0's (`n0`), none when it is one of n0's relays —
 /// where the issuer's build met its groups, not the group's own, which kept

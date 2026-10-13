@@ -1452,7 +1452,7 @@ async fn serve(
             // The founder's folder, where every joiner's is, so what the
             // founder puts in it is shared with no `share --folder` (Demo
             // C's dry run, finding 7).
-            folder_at_join(root, &seed).await
+            folder_at_join(node, &seed)
         }
         Verb::Join { link, person, .. } => {
             let person = match person {
@@ -1464,7 +1464,7 @@ async fn serve(
             let (Said::Joined { seed, .. } | Said::AlreadyIn(seed)) = joined else {
                 unreachable!("join_group says joined or in already")
             };
-            folder_at_join(root, &seed).await
+            folder_at_join(node, &seed)
         }
         Verb::Link {
             group,
@@ -1594,35 +1594,12 @@ pub async fn join_group(
     })
 }
 
-/// The group's folder kept the same at [`group::folder_place`] as everyone's,
-/// asked of this node's own API as `share --folder` asks it; or why not,
-/// said beside the join or the `new`, which stands either way.
-async fn folder_at_join(root: &Path, seed: &Seed) -> Said {
+/// The group's folder placed as everyone's, by the node
+/// ([`svrngs_node::folder::Folders::place`]); or why not, said beside the
+/// join or the `new`, which stands either way.
+fn folder_at_join(node: &Node, seed: &Seed) -> Said {
+    let (dir, placed) = node.folders().place(seed);
     let group = seed.name().clone();
-    let Some(dir) = group::folder_place(seed) else {
-        tracing::debug!(target: "cli", group = %seed.id(), "cli: join — no $HOME, so no folder placed");
-        let why = "this computer names no home folder ($HOME)".to_string();
-        return Said::Folder {
-            group,
-            dir: PathBuf::from("~/svrngs"),
-            placed: Err(why),
-        };
-    };
-    let placed = match std::fs::create_dir_all(&dir) {
-        Err(e) => Err(e.to_string()),
-        Ok(()) => {
-            let asked = FolderAsk {
-                dir: dir.clone(),
-                group: seed.id(),
-            };
-            match ask_running(root, "/v1/folders", &asked).await {
-                Ok((true, _)) => Ok(()),
-                Ok((false, why)) => Err(why),
-                Err(e) => Err(e.to_string()),
-            }
-        }
-    };
-    tracing::debug!(target: "cli", group = %seed.id(), dir = %dir.display(), ?placed, "cli: join — the group's folder placed, or why not");
     Said::Folder { group, dir, placed }
 }
 

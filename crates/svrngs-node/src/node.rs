@@ -299,6 +299,7 @@ impl Node {
             host: host.clone(),
             door,
             key,
+            folders: folders.clone(),
         };
         // The record, and beside it what an app asks of this computer (u5-1).
         let rail_api = RailApi {
@@ -384,6 +385,11 @@ impl Node {
     /// The endpoint this node dials and is dialled on.
     pub fn endpoint(&self) -> &Endpoint {
         &self.host.endpoint
+    }
+
+    /// This computer's folders, where `new` and `join` place a group's.
+    pub fn folders(&self) -> &crate::folder::Folders {
+        &self.asking.folders
     }
 
     /// What the round reads, and what makes a link ([`crate::invite`]).
@@ -811,6 +817,8 @@ pub(crate) struct Asking {
     pub(crate) host: Arc<Host>,
     door: crate::door::Door,
     pub(crate) key: Arc<SigningKey>,
+    /// Where a group's folder is placed ([`crate::folder::Folders::place`]).
+    pub(crate) folders: crate::folder::Folders,
 }
 
 impl Asking {
