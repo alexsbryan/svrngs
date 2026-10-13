@@ -92,6 +92,15 @@ function show(words, good) {
   heading.className = good ? 'good' : 'bad';
 }
 
+// The host a link's computer is reached through, for a person's words; a
+// link naming none, made where n0's lookup found its computer, is refused,
+// as the page asks n0 for nothing (relay-default (b)).
+function through(token) {
+  const relay = relay_of(token);
+  if (!relay) throw new Said('This link was made by an older svrngs. Ask whoever sent it for a new one.');
+  return new URL(relay).host;
+}
+
 async function reach(dialling, away) {
   const timeout = new Promise((_, no) => setTimeout(() => no(new Error('no answer')), PATIENCE));
   try {
@@ -145,7 +154,7 @@ function askName(group, why) {
 // Join by `token`, a link no group kept was joined by: the group joined,
 // kept, or one kept already, which the link lets into.
 async function join(token, kept) {
-  const away = 'The computer that sent this link did not answer. Try again later.';
+  const away = `The computer that sent this link did not answer through ${through(token)}. Try again later.`;
   const key = crypto.getRandomValues(new Uint8Array(32));
   heading.textContent = 'Opening your link…';
   let issuer = await reach(connect_to_join(key, token), away);
@@ -305,7 +314,7 @@ async function enter(group, asked) {
   document.title = group.name;
   const key = await store.unseal(group);
   heading.textContent = `Reaching ${group.name}…`;
-  const d = await reach(connect(key, group.token), `Your group’s computer did not answer. Try again later.`);
+  const d = await reach(connect(key, group.token), `Your group’s computer did not answer through ${through(group.token)}. Try again later.`);
   const res = await d.fetch('GET', PEOPLE_LENDS, [['accept', 'application/json']], null);
   if (!res.ok) {
     const why = res.headers.get('x-svrngs-refused');

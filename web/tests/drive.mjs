@@ -14,10 +14,13 @@
 // its upload's tail until a line `go` arrives on stdin: the Rust half sends
 // it when the service has the upload's first byte.
 //
+// Every address off this computer is refused it, and listed as `away`
+// (relay-default (b)): n0 unreachable, as a phone's page must not need it.
+//
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent — the browser step fails then, never skips; 1 on
 // anything else.
-import { hold, launch, serve } from './page.mjs';
+import { hold, launch, offline, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 
@@ -120,6 +123,7 @@ async function httpChecks(a) {
 const server = await serve(args.site);
 const origin = `http://127.0.0.1:${server.address().port}/`;
 const { context, close } = await launch(args.engine);
+const away = await offline(context);
 const logs = [];
 try {
   const page = await context.newPage();
@@ -155,9 +159,9 @@ try {
     result.http = await page.evaluate(httpChecks, { key: args.key, token: args.token, ...args.http });
     result.lines = await page.evaluate(() => window.__lines);
   }
-  console.log(JSON.stringify({ ...result, logs }));
+  console.log(JSON.stringify({ ...result, away, logs }));
 } catch (e) {
-  console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
+  console.error(`the page did not finish: ${e}\naway: ${away.join(' ')}\n${logs.join('\n')}`);
   process.exitCode = 1;
 } finally {
   await close();

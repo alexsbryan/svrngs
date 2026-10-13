@@ -9,8 +9,9 @@
 //! svrngs-core's token. This computer's own relay is one of n0's or the
 //! operator's, so the address it advertises is dotless too. The page
 //! compiles this same file (`web/src/lib.rs`, by `#[path]`), so a phone
-//! reads n0's relays and a lookup's answers as this computer does; it uses
-//! only iroh, n0-future and svrngs-core, which both builds have.
+//! reads a relay as this computer does, and asks n0 for none
+//! (relay-default); it uses only iroh, n0-future and svrngs-core, which
+//! both builds have.
 
 use iroh::address_lookup::{
     AddressLookup, AddressLookupBuilder, AddressLookupBuilderError, EndpointData, EndpointInfo,

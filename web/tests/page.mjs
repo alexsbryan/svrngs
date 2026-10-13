@@ -92,6 +92,18 @@ export async function launch(engine, { profile, device: as } = {}) {
   }
 }
 
+// Every address off this computer refused, as with n0 unreachable
+// (relay-default (b)): each request and socket the context opens elsewhere —
+// n0's lookup, n0's relays, any host — aborted, and its URL kept in the
+// list answered. Ours run on 127.0.0.1 and names under localhost.
+export async function offline(context) {
+  const away = [];
+  const off = (url) => /^(https?|wss?):$/.test(url.protocol) && !/^(127\.0\.0\.1|\[::1\]|(.+\.)?localhost)$/.test(url.hostname);
+  await context.route(off, (route) => (away.push(route.request().url()), route.abort()));
+  await context.routeWebSocket(off, (ws) => (away.push(ws.url()), ws.close()));
+  return away;
+}
+
 // In the page: its store holding a group joined by `token`, as joining
 // keeps one (web/store.js, u4-5): the person's key sealed, the group's
 // name, and the person's — a phone that joined. Imported as app.js

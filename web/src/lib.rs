@@ -24,9 +24,11 @@ mod http;
 mod join;
 // The node's relay adapter, compiled here too: every relay URL the page
 // makes or reads without the DNS root's dot, which WebKit refuses (u4-9).
-// Formatted by its own crate's rustfmt.toml, not by this one's.
+// Formatted by its own crate's rustfmt.toml, not by this one's. Its n0
+// relays and lookup go unused: the page dials none of n0's (relay-default).
 #[path = "../../crates/svrngs-node/src/relay.rs"]
 #[rustfmt::skip]
+#[allow(dead_code)]
 mod relay;
 
 use svrngs_core::alpn::Alpn;
@@ -65,11 +67,12 @@ macro_rules! t {
 struct Bound {
     ep: iroh::Endpoint,
     issuer: Option<iroh::PublicKey>,
-    relay: Option<iroh::RelayUrl>,
+    relay: iroh::RelayUrl,
 }
 
 /// [`bind`] for the group whose link's token is `token`: its issuer, and
-/// its relay when it carries one.
+/// its relay, refused when it carries none — from a computer that had n0's
+/// lookup, which the page never asks (relay-default).
 async fn bind_for(key: Vec<u8>, token: &str) -> Result<Bound, JsError> {
     let Some(link) = Token::decode(token) else {
         refuse!("LAYER parse: REFUSED — the fragment is not a link's token: {token}")
@@ -81,12 +84,14 @@ async fn bind_for(key: Vec<u8>, token: &str) -> Result<Bound, JsError> {
         }
     };
     t!("LAYER parse: ok — issuer {issuer}");
-    bind(key, Some(issuer), link.relay.map(iroh::RelayUrl::from)).await
+    let Some(relay) = link.relay else {
+        refuse!("LAYER parse: REFUSED — the link names no relay, and the page asks n0's lookup for none")
+    };
+    bind(key, Some(issuer), relay.into()).await
 }
 
 /// Bind an endpoint as the person whose key is `key` — or a pass's holder —
-/// reaching the network through `relay`, else n0's lookup and relays, and
-/// wait until it is online. `issuer` is whom it dials when no other
+/// reaching the network through `relay` alone, and wait until it is online. `issuer` is whom it dials when no other
 /// computer is named.
 ///
 /// `key` is the person's key, the 32 bytes the page's store holds (DESIGN
@@ -95,7 +100,7 @@ async fn bind_for(key: Vec<u8>, token: &str) -> Result<Bound, JsError> {
 /// token's, the fragment of `<origin>#<token>`, parsed by svrngs-core as
 /// the command parses it (call 5). No bearer rides a request: the node
 /// knows the person by the key that dialled, or the pass its holder shows.
-async fn bind(key: Vec<u8>, issuer: Option<iroh::PublicKey>, relay: Option<iroh::RelayUrl>) -> Result<Bound, JsError> {
+async fn bind(key: Vec<u8>, issuer: Option<iroh::PublicKey>, relay: iroh::RelayUrl) -> Result<Bound, JsError> {
     t!("LAYER page: wasm module loaded and dial entered (iroh =1.0.2)");
 
     // ── LAYER 1: the person's key, then the link's token ───────────────────
@@ -109,34 +114,14 @@ async fn bind(key: Vec<u8>, issuer: Option<iroh::PublicKey>, relay: Option<iroh:
         }
     };
     t!("LAYER key: ok — the key {}", secret.public());
-    // The relay the token carries, from an issuer run without address
-    // lookup; else iroh's lookup, the resolver the N0 preset adds in a
-    // browser (iroh-1.0.2/src/endpoint/presets.rs:122-128), with n0's
-    // relays. Upstream refused a dial string with no relay
-    // (ring-runtime/src/lib.rs:91-99); a bare key is a link's usual form.
-    // Every relay here is dotless, as WebKit reaches it: the token's as
-    // svrngs-core decodes it, n0's and the lookup's answers by `relay`.
-    let builder = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal).secret_key(secret);
-    let (builder, relay) = match relay {
-        Some(relay) => {
-            t!("LAYER parse: ok — relay {relay}");
-            (
-                builder.relay_mode(iroh::RelayMode::Custom(relay.clone().into())),
-                Some(relay),
-            )
-        }
-        None => {
-            let relays = relay::n0_relays();
-            t!("LAYER parse: ok — a bare key: found by n0's address lookup; n0's relays {relays}");
-            let lookup = relay::DotlessLookup(iroh::address_lookup::PkarrResolver::n0_dns());
-            (
-                builder
-                    .relay_mode(iroh::RelayMode::Custom(relays))
-                    .address_lookup(lookup),
-                None,
-            )
-        }
-    };
+    // The relay the link carries, or a pass's holder is handed, and no
+    // address lookup: n0's relays and lookup are none of a phone's path
+    // (relay-default), as upstream refused a dial string with no relay
+    // (ring-runtime/src/lib.rs:91-99). Dotless, as WebKit reaches it.
+    t!("LAYER parse: ok — relay {relay}");
+    let builder = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal)
+        .secret_key(secret)
+        .relay_mode(iroh::RelayMode::Custom(relay.clone().into()));
 
     // ── LAYER 2: wasm bindgen / iroh endpoint construction ─────────────────
     t!("LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only)…");
@@ -161,8 +146,7 @@ async fn bind(key: Vec<u8>, issuer: Option<iroh::PublicKey>, relay: Option<iroh:
 
 /// Dial `to`, a computer's key in 64 hex, else the token's issuer, from
 /// `bound` on `alpn`: through `via`, the relay its group names for it
-/// (relay-in-record), else the relay the token carries, said, else
-/// wherever iroh's lookup finds it.
+/// (relay-in-record), else the relay the token carries, said.
 async fn reach(
     bound: &Bound,
     to: Option<String>,
@@ -191,12 +175,10 @@ async fn reach(
     };
     match &named {
         Some(relay) => t!("LAYER parse: ok — {node_id}'s group names its relay {relay}"),
-        None => t!("LAYER parse: the group names no relay for {node_id}, so it is dialled through the link's, else found by lookup"),
+        None => t!("LAYER parse: the group names no relay for {node_id}, so it is dialled through the link's"),
     }
-    let addr = match named.as_ref().or(bound.relay.as_ref()) {
-        Some(relay) => iroh::EndpointAddr::from_parts(node_id, [iroh::TransportAddr::Relay(relay.clone())]),
-        None => iroh::EndpointAddr::from_parts(node_id, []),
-    };
+    let relay = named.unwrap_or_else(|| bound.relay.clone());
+    let addr = iroh::EndpointAddr::from_parts(node_id, [iroh::TransportAddr::Relay(relay)]);
 
     t!("LAYER tls/alpn+relay-hop: dialing {node_id} on the {alpn:?} protocol through a relay…");
     let conn = match bound.ep.connect(addr, alpn.bytes()).await {
@@ -322,14 +304,14 @@ pub async fn endpoint(key: Vec<u8>, token: String) -> Result<Endpoint, JsError> 
 }
 
 /// Bind one endpoint as a pass's holder, whose key is `key`, reaching the
-/// group through `relay` — the one the group's link carries — else n0's
-/// lookup: a lend's origin's worker (u5-2; DESIGN §3, "Lent apps", call 6).
+/// group through `relay` — the one the group's link carries — refused
+/// with none: a lend's origin's worker (u5-2; DESIGN §3, "Lent apps", call 6).
 /// It is handed no link's token, which would let it join the group.
 #[wasm_bindgen]
 pub async fn holder_endpoint(key: Vec<u8>, relay: Option<String>) -> Result<Endpoint, JsError> {
     let relay = match relay.as_deref().map(relay::parse) {
-        None => None,
-        Some(Ok(url)) => Some(url),
+        None => refuse!("LAYER parse: REFUSED — no relay handed, and the page asks n0's lookup for none"),
+        Some(Ok(url)) => url,
         Some(Err(e)) => refuse!("LAYER parse: REFUSED — {relay:?} is not a relay: {e}"),
     };
     Ok(Endpoint {

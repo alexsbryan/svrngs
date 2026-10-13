@@ -274,6 +274,42 @@ async fn a_page_holding_a_standing_key_dials_the_node_and_gets_its_lends(engine:
         seen["answer"], "Nobody in house lends anything yet.",
         "{seen:#}"
     );
+    // Every address off this computer refused it: n0 unreachable, and
+    // never asked (relay-default (b)).
+    assert_eq!(seen["away"], json!([]), "{seen:#}");
+    drop(node);
+}
+
+in_both_engines!(
+    /// A link naming no relay — from a computer that had n0's address
+    /// lookup — is refused in a person's words, and the page reaches for
+    /// no address off this computer, n0's lookup and relays among them,
+    /// each refused it (relay-default (b)). Planted, watched failing: the
+    /// page before it, which bound with n0's lookup and relays.
+    a_link_naming_no_relay_is_refused_and_n0_never_reached
+);
+async fn a_link_naming_no_relay_is_refused_and_n0_never_reached(engine: Engine) {
+    let dir = tempfile::tempdir().unwrap();
+    let relay = relay().await;
+    let bo = signing(7);
+    let node = node(dir.path(), &relay, &bo).await;
+    let bare = Token {
+        issuer: signing(1).verifying_key(),
+        secret: [0; 16],
+        relay: None,
+    };
+    let seen = drive(
+        engine,
+        "drive.mjs",
+        json!({ "site": site(), "key": hex::encode(bo.to_bytes()), "token": bare.encode() }),
+        None,
+    )
+    .await;
+    assert_eq!(seen["away"], json!([]), "n0 never asked:\n{seen:#}");
+    assert_eq!(
+        seen["status"], "This link was made by an older svrngs. Ask whoever sent it for a new one.",
+        "{seen:#}"
+    );
     drop(node);
 }
 
