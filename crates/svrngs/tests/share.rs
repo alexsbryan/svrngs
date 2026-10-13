@@ -38,6 +38,22 @@ fn no_relay() -> RelayConfig {
     }
 }
 
+/// What `svrngs share <port> --kind <kind>` asks of the service at
+/// `origin`, nothing else said.
+fn share_of(origin: SocketAddr, kind: &str) -> Share {
+    Share {
+        port: std::num::NonZeroU16::new(origin.port()).unwrap(),
+        name: None,
+        kind: Some(Kind::parse(kind).unwrap()),
+        limit: None,
+        refused: Vec::new(),
+        upload: None,
+        reads: Vec::new(),
+        sign_in: None,
+        asks: None,
+    }
+}
+
 fn name(s: &str) -> Name {
     Name::parse(s).unwrap()
 }
@@ -164,17 +180,7 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
 
     // ── Sam shares the service on its port, as `svrngs share <port> --kind pad`.
     let (origin, heads) = service().await;
-    let asked = Share {
-        port: std::num::NonZeroU16::new(origin.port()).unwrap(),
-        name: None,
-        kind: Some(Kind::parse("pad").unwrap()),
-        limit: None,
-        refused: Vec::new(),
-        upload: None,
-        reads: Vec::new(),
-        sign_in: None,
-        asks: None,
-    };
+    let asked = share_of(origin, "pad");
     let lend = share::lend_of(&asked, share::listens, share::well_known_kind(asked.port))
         .expect("something listens there, and its kind is given");
     cli::share_lend(sam.dir.path(), &lend, Some(SECRET)).unwrap();
@@ -289,17 +295,7 @@ async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats(
         .expect("Alex is let in");
 
     let (origin, heads) = service().await;
-    let asked = Share {
-        port: std::num::NonZeroU16::new(origin.port()).unwrap(),
-        name: None,
-        kind: Some(Kind::parse("llama-server").unwrap()),
-        limit: None,
-        refused: Vec::new(),
-        upload: None,
-        reads: Vec::new(),
-        sign_in: None,
-        asks: None,
-    };
+    let asked = share_of(origin, "llama-server");
     let lend = share::lend_of(&asked, share::listens, share::well_known_kind(asked.port))
         .expect("something listens there, and its kind is given");
     cli::share_lend(sam.dir.path(), &lend, None).unwrap();
