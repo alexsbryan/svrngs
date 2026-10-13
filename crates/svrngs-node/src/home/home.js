@@ -37,22 +37,10 @@ const said = (lend, app, what) => post('/choices', { lend, app, said: what });
 // The lend's label, the first name of its origin here.
 const label = (l) => new URL(l.origin).hostname.split('.')[0];
 
-// Each group with its people and what they lend, or why it cannot be read.
-// `removed` is null when who is in the group cannot be read here: never
-// read as not removed (ralph/REVIEW_FINDINGS.md #123).
-async function groups() {
-  const { groups } = await get('/v1/groups');
-  return Promise.all(groups.map(async (g) => {
-    if (g.removed !== false) return g;
-    try {
-      const ns = encodeURIComponent(g.id);
-      const [lends, people] = await Promise.all([get(`/v1/lends?namespace=${ns}`), get(`/v1/rail/people?namespace=${ns}`)]);
-      return { ...g, ...lends, people: people.people };
-    } catch (e) {
-      return { ...g, unread: e.message };
-    }
-  }));
-}
+// What the people of group `g` lend, for the ask; none when it cannot be
+// read. `removed` is null when who is in the group cannot be read here:
+// never read as not removed (ralph/REVIEW_FINDINGS.md #123).
+const lentIn = (g) => (g.removed === false ? get(`/v1/lends?namespace=${encodeURIComponent(g.id)}`).then((l) => l.lent, () => []) : []);
 
 // Each person once, of the rows /v1/rail/people gives a key each; two of
 // one name told apart by when each joined (bash-same-name), in the form
@@ -66,35 +54,39 @@ function people(rows) {
   return each.map((p) => (each.filter((q) => q.person === p.person).length > 1 ? `${p.person} (${when(p.joined)})` : p.person)).join(', ');
 }
 
-function list(all) {
-  for (const g of all) {
-    const s = el('section', '', el('h2', g.name ?? 'A group whose name this computer cannot read'));
-    if (g.removed === null) s.append(el('p', `This computer could not read who is in ${g.name ?? 'this group'}.`));
-    else if (g.removed) s.append(el('p', `You are no longer in ${g.name ?? 'this group'}. What you already have stays on this computer; nothing new reaches it.`));
-    else if (g.unread) s.append(el('p', `What this group lends cannot be read on this computer: ${g.unread}`));
-    else {
-      s.append(el('p', `People: ${people(g.people)}`));
-      // Where the group's folder is on this disk (v1-onboarding (d)).
-      const its = g.name ? `${g.name}’s folder` : 'The group’s folder';
-      if (g.folders === null) s.append(el('p', `Where ${its} is cannot be read on this computer.`));
-      for (const dir of g.folders ?? []) s.append(Object.assign(el('p', `${its} is on this computer at ${dir}`), { className: 'folder' }));
-      if (g.removals.length) s.append(Object.assign(el('ul', '', ...g.removals.map((r) => el('li', removal(r)))), { className: 'removals' }));
-      const ul = el('ul');
-      // Each with its address for a program, copied by a button that says
-      // so, then said (start-home): the clipboard may refuse a page.
-      for (const l of g.lent) {
-        const li = ul.appendChild(el('li', '', Object.assign(el('a', `Open ${named(l)}`), { href: l.origin, target: '_blank' }), ' '));
-        li.append(button('Copy its address for a program', () => Promise.resolve().then(() => navigator.clipboard.writeText(l.origin)).then(() => li.append(` Copied: ${l.origin}`), () => li.append(` Copy it from here: ${l.origin}`))));
-      }
-      // Each computer that did not say by how (bash-first-minute (c)):
-      // one that answered is never said not to have.
-      for (const p of g.unanswered) ul.append(el('li', `${p}'s computer did not answer, so what they lend is not listed.`));
-      for (const p of g.unheard) ul.append(el('li', `${p}'s computer has not heard of this computer yet, so what they lend is not listed yet.`));
-      for (const p of g.refused) ul.append(el('li', `${p}'s computer answered without saying what they lend, so it is not listed.`));
-      if (!ul.children.length) ul.append(el('li', 'Nobody lends anything here yet.'));
-      s.append(ul);
+// Group `g` in its section `s`: its people and folder as soon as they are
+// read, then what its people lend once each computer has answered or not,
+// so a computer that does not answer holds back that list alone
+// (start-home). Answers what they lend.
+async function show(g, s) {
+  if (g.removed === null) return s.append(el('p', `This computer could not read who is in ${g.name ?? 'this group'}.`));
+  if (g.removed) return s.append(el('p', `You are no longer in ${g.name ?? 'this group'}. What you already have stays on this computer; nothing new reaches it.`));
+  const ns = encodeURIComponent(g.id);
+  try {
+    s.append(el('p', `People: ${people((await get(`/v1/rail/people?namespace=${ns}`)).people)}`));
+    // Where the group's folder is on this disk (v1-onboarding (d)).
+    const its = g.name ? `${g.name}’s folder` : 'The group’s folder';
+    if (g.folders === null) s.append(el('p', `Where ${its} is cannot be read on this computer.`));
+    for (const dir of g.folders ?? []) s.append(Object.assign(el('p', `${its} is on this computer at ${dir}`), { className: 'folder' }));
+    if (g.removals.length) s.append(Object.assign(el('ul', '', ...g.removals.map((r) => el('li', removal(r)))), { className: 'removals' }));
+    const ul = s.appendChild(el('ul', '', el('li', 'Asking each computer in the group what it lends…')));
+    const lends = await get(`/v1/lends?namespace=${ns}`);
+    ul.replaceChildren();
+    // Each with its address for a program, copied by a button that says
+    // so, then said (start-home): the clipboard may refuse a page.
+    for (const l of lends.lent) {
+      const li = ul.appendChild(el('li', '', Object.assign(el('a', `Open ${named(l)}`), { href: l.origin, target: '_blank' }), ' '));
+      li.append(button('Copy its address for a program', () => Promise.resolve().then(() => navigator.clipboard.writeText(l.origin)).then(() => li.append(` Copied: ${l.origin}`), () => li.append(` Copy it from here: ${l.origin}`))));
     }
-    main.append(s);
+    // Each computer that did not say by how (bash-first-minute (c)):
+    // one that answered is never said not to have.
+    for (const p of lends.unanswered) ul.append(el('li', `${p}'s computer did not answer, so what they lend is not listed.`));
+    for (const p of lends.unheard) ul.append(el('li', `${p}'s computer has not heard of this computer yet, so what they lend is not listed yet.`));
+    for (const p of lends.refused) ul.append(el('li', `${p}'s computer answered without saying what they lend, so it is not listed.`));
+    if (!ul.children.length) ul.append(el('li', 'Nobody lends anything here yet.'));
+    return lends.lent;
+  } catch (e) {
+    s.append(el('p', `What this group lends cannot be read on this computer: ${e.message}`));
   }
 }
 
@@ -155,17 +147,16 @@ function ask(lent, q) {
 }
 
 try {
-  const all = await groups();
+  const { groups } = await get('/v1/groups');
   main.replaceChildren();
-  const lent = all.flatMap((g) => g.lent ?? []);
-  if (location.pathname === '/ask') ask(lent, new URLSearchParams(location.search));
+  if (location.pathname === '/ask') ask((await Promise.all(groups.map(lentIn))).flat(), new URLSearchParams(location.search));
   else {
     // With no group, how to make one or join one: the command's, refused
     // while svrngs runs (cli.rs `claim`), so stopped first (start-home).
-    if (!all.length) main.append(Object.assign(el('p', 'This computer is in no group yet. Where svrngs runs in a terminal, stop it with Ctrl-C, then type svrngs new <a name for your group> to make one, or svrngs join <the link you were sent> to join one.'), { className: 'none' }));
-    list(all);
+    if (!groups.length) main.append(Object.assign(el('p', 'This computer is in no group yet. Where svrngs runs in a terminal, stop it with Ctrl-C, then type svrngs new <a name for your group> to make one, or svrngs join <the link you were sent> to join one.'), { className: 'none' }));
+    const lent = Promise.all(groups.map((g) => show(g, main.appendChild(el('section', '', el('h2', g.name ?? 'A group whose name this computer cannot read'))))));
     await lending();
-    await uses(lent);
+    await uses((await lent).flatMap((l) => l ?? []));
     // Said as the command and install.sh say it: it is kept (start-address).
     main.append(Object.assign(el('p', `Your home page, the same address each time svrngs starts: ${location.origin}/`), { className: 'address' }));
   }

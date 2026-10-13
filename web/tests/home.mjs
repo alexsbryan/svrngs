@@ -3,7 +3,7 @@
 // `args.ask`, its `/ask?lend=<label>&app=<label>`, it is read for its
 // heading, which the test holds to the one source (question.js).
 //
-//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>?, <stays>?], ...]}'
+//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>?, <stays>?], ...], "timed"?: [<selector>, ...]}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
@@ -19,6 +19,10 @@ context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
 try {
   const page = await context.newPage();
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
+  // With `timed`, selectors: how long after the page was asked for each
+  // first showed (start-home: a group shown before its slowest computer).
+  const t0 = Date.now();
+  const timing = Promise.all((args.timed ?? []).map((s) => page.locator(s).first().waitFor({ timeout: 30_000 }).then(() => [s, Date.now() - t0])));
   await page.goto(args.ask);
   const heading = await page.locator('#home h2').first().textContent({ timeout: 30_000 });
   // With `read`, a selector, its first match's words too (U7: a removed
@@ -55,7 +59,8 @@ try {
   }
   // Every link on the page, its words and where it opens (start-home).
   const links = await page.locator('a').evaluateAll((as) => as.map((a) => ({ text: a.textContent, target: a.target })));
-  console.log(JSON.stringify({ heading, read, all, after, clipboard, links, logs }));
+  const timed = Object.fromEntries(await timing);
+  console.log(JSON.stringify({ heading, read, all, after, clipboard, links, timed, logs }));
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;

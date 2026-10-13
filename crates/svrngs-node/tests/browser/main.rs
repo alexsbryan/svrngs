@@ -2277,6 +2277,41 @@ async fn the_home_page_shows_less_to_puzzle_over(engine: Engine) {
         .unwrap()
         .iter()
         .find(|l| l["text"] == "Open ada’s shelf (k)");
-    assert_eq!(lent.map(|l| &l["target"]), Some(&json!("_blank")), "{seen:#}");
+    assert_eq!(
+        lent.map(|l| &l["target"]),
+        Some(&json!("_blank")),
+        "{seen:#}"
+    );
     drop(ada);
+}
+
+in_both_engines!(
+    /// **A group is shown as it answers, not held for its slowest
+    /// computer** (start-home, from start-measure's ranked row 9: 3.6 s of
+    /// "Reading your groups…" with one computer stopped,
+    /// `demo/runs/start/2026-10-13/README.md` §3 (c) 16). Ada knows bo's
+    /// computer at an address that takes and never answers: her page
+    /// shows the group's people at once, and that bo's computer did not
+    /// answer only once it has not, more than a second later. Planted,
+    /// watched failing: the page as 11190e3 left it, both shown together.
+    the_home_page_shows_a_group_before_its_slowest_computer
+);
+async fn the_home_page_shows_a_group_before_its_slowest_computer(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let silent = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
+    let bo =
+        svrngs_node::iroh::PublicKey::from_bytes(signing(7).verifying_key().as_bytes()).unwrap();
+    ada.transport()
+        .add_known_peer(bo, vec![silent.local_addr().unwrap()]);
+    let (people, unanswered) = (
+        "#home section p",
+        "#home section li:has-text('bo\\'s computer did not answer')",
+    );
+    let seen = home_page(engine, &ada, json!({ "timed": [people, unanswered] })).await;
+    eprintln!("the home page's run: {seen:#}");
+    let ms = |s: &str| seen["timed"][s].as_u64().expect("shown");
+    assert!(ms(people) + 1000 < ms(unanswered), "{seen:#}");
+    drop((ada, silent));
 }
