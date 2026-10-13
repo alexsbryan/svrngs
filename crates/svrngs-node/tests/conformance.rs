@@ -10,7 +10,7 @@
 //! `scripts/check.sh`, and every route passes. WebKit's seeks back to back are
 //! a rate, not a gate (`a_rate`): kept beside the same seeks straight at a
 //! canary, and counted by scripts/check.sh; Chromium's, missed on a host
-//! whose load is past `BUSY` a core, are could-not-judge (`verdict`). Neither lend's cookie reaches the
+//! whose load is past `load::BUSY` a core, are could-not-judge (`verdict`). Neither lend's cookie reaches the
 //! other's requests; Bo's door names Alex's key; no byte Alex receives
 //! holds either secret; a lent page finds no group whose key it could
 //! unseal; and on a computer a lent page's post to the record API writes
@@ -25,6 +25,9 @@
 #[path = "browser/harness.rs"]
 #[macro_use]
 mod harness;
+// The host's load and the seek bar's, the browser tests' too.
+#[path = "browser/load.rs"]
+mod load;
 
 use std::path::Path;
 use std::process::Stdio;
@@ -238,34 +241,18 @@ fn a_rate(engine: Engine, check: &str) -> bool {
     matches!(engine, Engine::Webkit) && check == "seeks"
 }
 
-/// The load per core past which Chromium's seeks back to back are not
-/// judged (chk-1; operator, 2026-10-10, "Could-not-judge above a load
-/// bar"): sup-4's check, sy-1's three on the branch `folders` and
-/// REVIEW-audit-sup-auto-2's each failed only
-/// `on_a_phone_with_the_wildcard::chromium`'s seeks, at load averages of
-/// about 40-130 on this host's 12 cores, while the code they ran changed
-/// nothing near it and passed alone or at a quieter moment.
-const BUSY: f64 = 3.0;
-
 /// One route's verdict, from whether it held, the engine and `load()`'s
 /// reading at the run's start: `passed` or `failed`; a rate's with `, a
 /// rate` after it; and Chromium's seeks missed while uptime's first average
-/// was past `BUSY` times `cores`, `could-not-judge` with that load. A load
-/// that does not read is never past the bar: the miss fails, as before chk-1.
+/// was past `load::BUSY` times `cores`, `could-not-judge` with that load
+/// (`load::past_busy`).
 fn verdict(engine: Engine, check: &str, ok: bool, load: &str, cores: usize) -> String {
     let held = if ok { "passed" } else { "failed" };
     if a_rate(engine, check) {
         return format!("{held}, a rate");
     }
-    // `load averages: 1.5 1.2 1.0` on macOS, `load average: 1.5, 1.2, 1.0` on Linux.
-    let first = load
-        .split_once("average: ")
-        .or_else(|| load.split_once("averages: "))
-        .and_then(|(_, a)| a.split([' ', ',']).next()?.parse::<f64>().ok());
-    match first {
-        Some(l) if !ok && check == "seeks" && l > BUSY * cores as f64 => {
-            format!("could-not-judge, load {l} on {cores} cores, past {BUSY} a core")
-        }
+    match load::past_busy(load, cores) {
+        Some(busy) if !ok && check == "seeks" => busy,
         _ => held.to_string(),
     }
 }
@@ -453,18 +440,6 @@ fn carriage() {
     });
 }
 
-/// The clock and this host's load, `uptime`'s line after the UTC time:
-/// every run that times seeks records it at its start and end (the u5
-/// queue's rule; u5-4's one miss came at a load of 33.6 on 12 cores).
-async fn load() -> String {
-    let out = tokio::process::Command::new("sh")
-        .args(["-c", "echo $(date -u +%FT%TZ) $(uptime)"])
-        .output()
-        .await
-        .expect("sh runs date and uptime");
-    String::from_utf8_lossy(&out.stdout).trim().to_string()
-}
-
 /// WebKit's seeks back to back (`a_rate`), beside the same seeks straight
 /// at a canary over the same link (`web/tests/control.mjs`), a try for
 /// each lend, with the host's load from `began` to now: printed, kept in
@@ -498,7 +473,7 @@ async fn rate(way: Way, ran: &Value, began: &str) {
         };
         format!("{again}\t{ok}")
     };
-    let ended = load().await;
+    let ended = load::load().await;
     let mut lines = String::new();
     for (i, who) in ["sam", "bo"].into_iter().enumerate() {
         lines.push_str(&format!(
@@ -576,7 +551,7 @@ async fn browse(args: &Value) -> Value {
 
 async fn conformance(way: Way, engine: Engine) {
     carriage();
-    let began = load().await;
+    let began = load::load().await;
     let relay = relay().await;
     let g = group(&relay).await;
     let api = g.alex.api_addr();
@@ -614,9 +589,7 @@ async fn conformance(way: Way, engine: Engine) {
     // Each route's verdict, printed and kept for scripts/check.sh.
     let mut table = String::new();
     let mut failed = Vec::new();
-    let cores = std::thread::available_parallelism()
-        .expect("this host's cores")
-        .get();
+    let cores = load::cores();
     for (who, other) in [("sam", "bo"), ("bo", "sam")] {
         let (lend, other) = (&ran["lends"][who], &ran["lends"][other]);
         for (route, verdict, saw) in verdicts(engine, lend, other, &began, cores) {
