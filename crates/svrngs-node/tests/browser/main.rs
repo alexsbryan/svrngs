@@ -2178,6 +2178,10 @@ async fn the_home_page_names_what_the_terminal_does(engine: Engine) {
         "svrngs share <the number after the colon in its address>",
         "svrngs remove <their name> --group <the group’s name>",
         "Leaving a group is not possible yet",
+        // The walk after: `svrngs new` refused while svrngs runs, as it
+        // runs from login after install.sh, where no Ctrl-C reaches it
+        // (demo/runs/start/2026-10-13-home/README.md §3).
+        "Where svrngs starts by itself when you log in, a group cannot be made yet",
     ] {
         assert!(said.contains(line), "{line}: {seen:#}");
     }
