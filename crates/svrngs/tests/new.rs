@@ -237,31 +237,55 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
     assert_eq!(invites(&node, &work.id()).len(), 2);
 }
 
-/// A link carries a relay only from a computer without address lookup,
-/// which finds a bare key otherwise: its home relay, or the first one
-/// configured while it reports none, read without the root's dot (u4-9,
-/// svrngs_node::relay); with neither, the key alone.
+/// A link carries its issuer's home relay, with address lookup or without
+/// it (relay-park (c)), so a phone's page, which asks no lookup, opens it:
+/// its home relay, or the first one configured while it reports none, read
+/// without the root's dot (u4-9, svrngs_node::relay); with neither, the key
+/// alone. Planted: the key alone from a computer with lookup, as before.
 #[test]
-fn a_link_carries_the_relay_only_without_lookup() {
+fn a_link_carries_its_issuer_s_relay_with_lookup_or_without() {
     let ours: RelayUrl = "https://relay.example./".parse().unwrap();
     let home: RelayUrl = "https://home.example./".parse().unwrap();
-    let lookup = RelayConfig {
-        relay_urls: vec![ours.to_string()],
-        n0_services: true,
-        loopback_only: false,
-    };
-    assert_eq!(cli::link_relay(&lookup, Some(home.clone())), None);
-    assert_eq!(cli::link_relay(&RelayConfig::default(), None), None);
-    let without = RelayConfig {
-        relay_urls: vec![ours.to_string()],
-        n0_services: false,
-        loopback_only: false,
-    };
-    assert_eq!(cli::link_relay(&without, Some(home.clone())), Some(home));
     let dotless: RelayUrl = "https://relay.example/".parse().unwrap();
     assert_ne!(ours, dotless, "control: the operator wrote the dot");
-    assert_eq!(cli::link_relay(&without, None), Some(dotless));
+    for n0_services in [true, false] {
+        let relay = RelayConfig {
+            relay_urls: vec![ours.to_string()],
+            n0_services,
+            loopback_only: false,
+        };
+        let said = format!("n0_services {n0_services}");
+        let carried = cli::link_relay(&relay, Some(home.clone()));
+        assert_eq!(carried, Some(home.clone()), "{said}: its home relay");
+        let carried = cli::link_relay(&relay, None);
+        assert_eq!(
+            carried,
+            Some(dotless.clone()),
+            "{said}: the first configured"
+        );
+    }
+    assert_eq!(cli::link_relay(&RelayConfig::default(), None), None);
     assert_eq!(cli::link_relay(&no_relay(), None), None);
+}
+
+/// A joiner keeps the relay its link carried, where it meets the group —
+/// at n0's, unless it is one of n0's, where the issuer's build met its
+/// groups and not the group's own, so none outlasts the operator's switch
+/// (relay-park (c)). At svrngs's every relay is kept, as before. Planted:
+/// every relay kept.
+#[test]
+fn a_joiner_at_n0_s_keeps_its_link_s_relay_unless_it_is_n0_s() {
+    let own: RelayUrl = "https://relay.example/".parse().unwrap();
+    let n0: Vec<RelayUrl> = svrngs_node::relay::n0_relays().urls();
+    assert_eq!(n0.len(), 4, "control: n0's four, {n0:?}");
+    for at_n0 in [true, false] {
+        assert_eq!(cli::kept_relay(Some(own.clone()), at_n0), Some(own.clone()));
+        assert_eq!(cli::kept_relay(None, at_n0), None);
+    }
+    for url in n0 {
+        assert_eq!(cli::kept_relay(Some(url.clone()), true), None, "{url}");
+        assert_eq!(cli::kept_relay(Some(url.clone()), false), Some(url));
+    }
 }
 
 /// One svrngs per data dir: a second claim is refused while the first is

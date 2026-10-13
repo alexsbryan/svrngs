@@ -75,7 +75,7 @@ async fn a_group_that_keeps_its_own_relay_is_met_there_with_n0_s_beside_it() {
     else {
         unreachable!("new parses as new")
     };
-    cli::new_group(&sam, name, person.unwrap(), None, kept, &ours)
+    let (_, printed) = cli::new_group(&sam, name, person.unwrap(), None, kept, &ours)
         .await
         .expect("Sam makes house");
     let home = sam.endpoint().addr().relay_urls().next().cloned();
@@ -83,6 +83,13 @@ async fn a_group_that_keeps_its_own_relay_is_met_there_with_n0_s_beside_it() {
         home.map(|h| h.to_string()).as_deref(),
         Some(url.as_str()),
         "Sam's computer is met at house's relay"
+    );
+    let link = svrngs_node::link::Link::parse(&printed.client).unwrap();
+    let carried = link.token.relay.map(|r| RelayUrl::from(r).to_string());
+    assert_eq!(
+        carried.as_deref(),
+        Some(url.as_str()),
+        "its link, lookup on, says so"
     );
     let next = cli::reach(dir.path(), &Verb::Run, cli::SHIPPED).unwrap();
     assert_eq!(

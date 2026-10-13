@@ -94,6 +94,7 @@ use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath, Upload};
 use svrngs_node::node::{Lends, Lent, Node, NodeError};
 use svrngs_node::redeem::{ask, redeem, AskRequest, RedeemError, RedeemRequest, Redeemed};
+use svrngs_node::relay::n0_relays;
 use svrngs_node::removal::{Outcome, RemovalAsk, HANDOVERS_ROUTE, REMOVALS_ROUTE};
 use svrngs_node::room;
 use svrngs_node::{actor_of, Device, Joined, Person, SigningKey};
@@ -710,7 +711,7 @@ pub fn reach(root: &Path, command: &Verb, at: MeetAt) -> Result<RelayConfig, Ref
     }
     if unkept || relay_urls.is_empty() {
         relay_urls.extend(match at {
-            MeetAt::N0 => svrngs_node::relay::n0_relays()
+            MeetAt::N0 => n0_relays()
                 .urls::<Vec<RelayUrl>>()
                 .iter()
                 .map(ToString::to_string)
@@ -720,11 +721,10 @@ pub fn reach(root: &Path, command: &Verb, at: MeetAt) -> Result<RelayConfig, Ref
     }
     let mut seen = std::collections::BTreeSet::new();
     relay_urls.retain(|url| seen.insert(url.clone()));
-    let n0_services = at == MeetAt::N0;
-    tracing::debug!(target: "cli", ?at, unkept, n0_services, ?relay_urls, "cli: the relays this computer meets its groups at");
+    tracing::debug!(target: "cli", ?at, unkept, ?relay_urls, "cli: the relays this computer meets its groups at");
     Ok(RelayConfig {
         relay_urls,
-        n0_services,
+        n0_services: at == MeetAt::N0,
         loopback_only: false,
     })
 }
@@ -1539,7 +1539,11 @@ pub async fn join_group(
         .await
         .map_err(|e| not_let_in(e, Some(seed.name())))?;
     tracing::debug!(target: "cli", group = %id, redeemed = ?redeemed, "cli: join — let in");
-    let relay = link.token.relay.clone().map(RelayUrl::from);
+    // An address lookup is n0's, built only with `n0_services` (svrngs-node
+    // guest.rs `relayed_endpoint_builder`): this computer meets its groups at n0's.
+    let n0 = node.endpoint().address_lookup().ok();
+    let n0 = n0.is_some_and(|l| !l.is_empty());
+    let relay = kept_relay(link.token.relay.clone().map(RelayUrl::from), n0);
     keep_group(node, &seed, link.origin.as_ref(), relay.as_ref())?;
     if link.origin.is_none() {
         tracing::debug!(target: "cli", group = %id, "cli: join — a client's link, so no origin is kept");
@@ -1828,8 +1832,9 @@ async fn mint(
     Ok(token)
 }
 
-/// The relay a link carries: none from a computer with address lookup,
-/// which finds it by key; else its home relay, waiting up to
+/// The relay a link carries: its issuer's home relay, with n0's lookup or
+/// without it, so a phone's page dials only the relays its link and its
+/// group name and asks no lookup (DESIGN §10, 2026-10-13); waiting up to
 /// [`ONLINE_WAIT`] for one when it has relays to reach.
 async fn issuer_relay(node: &Node, relay: &RelayConfig) -> Option<RelayUrl> {
     wait_online(node, &relay.relay_urls).await;
@@ -1852,13 +1857,9 @@ async fn wait_online(node: &Node, tried: &[String]) {
 }
 
 /// The relay a link carries, given how this computer reaches the network
-/// and the home relay its endpoint reports: none with lookup on; else
-/// `home`, or the first relay configured while the endpoint reports none.
+/// and the home relay its endpoint reports: `home`, or the first relay
+/// configured while the endpoint reports none, in either posture.
 pub fn link_relay(relay: &RelayConfig, home: Option<RelayUrl>) -> Option<RelayUrl> {
-    if relay.n0_services {
-        tracing::debug!(target: "cli", "cli: the link carries the key alone — lookup finds this computer");
-        return None;
-    }
     let configured = || {
         relay
             .relay_urls
@@ -1868,13 +1869,24 @@ pub fn link_relay(relay: &RelayConfig, home: Option<RelayUrl>) -> Option<RelayUr
     let carried = home.or_else(configured);
     match &carried {
         Some(url) => {
-            tracing::debug!(target: "cli", relay = %url, "cli: no lookup, so the link carries the relay")
+            tracing::debug!(target: "cli", relay = %url, n0 = relay.n0_services, "cli: the link carries this computer's relay")
         }
         None => {
-            tracing::warn!(target: "cli", "cli: no lookup and no relay — the link carries the key alone, and only a computer told this one's address can open it")
+            tracing::warn!(target: "cli", n0 = relay.n0_services, "cli: no relay — the link carries the key alone, and no phone's page can open it")
         }
     }
     carried
+}
+
+/// The relay a joiner keeps from its link's `carried`, where it meets the
+/// group from then on: at n0's (`n0`), none when it is one of n0's relays —
+/// where the issuer's build met its groups, not the group's own, which kept
+/// would outlast the operator's switch (DESIGN §10, 2026-10-13). At
+/// svrngs's every relay is kept, n0's list never built there.
+pub fn kept_relay(carried: Option<RelayUrl>, n0: bool) -> Option<RelayUrl> {
+    let n0 = n0 && carried.as_ref().is_some_and(|r| n0_relays().contains(r));
+    tracing::debug!(target: "cli", ?carried, n0, "cli: join — the link's relay kept, unless it is one of n0's at n0's");
+    carried.filter(|_| !n0)
 }
 
 /// Keep `seed`'s group on this computer: its journal, the seed beside it,

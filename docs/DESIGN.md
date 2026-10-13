@@ -1036,7 +1036,14 @@ n0's set (`crates/svrngs-node/src/guest.rs:86-94`). A group that runs its own re
 `svrngs new <name> --relay <name or url>`: the computer keeps it beside the
 group's seed (`group.rs`, `relay`), as `join` keeps the relay its link
 carried, so every computer the group's links let in meets the group there,
-and each says so in the record by its `Relay` act. A computer meets each
+and each says so in the record by its `Relay` act. A link carries its
+issuer's home relay in either posture (`cli::link_relay`, relay-park
+(c)), so a phone's page dials it and asks no lookup; a joiner at n0's
+keeps none of n0's relays a link carries (`cli::kept_relay`), which are
+where its issuer's build met its groups, not the group's own, and kept
+would outlast the switch. One gap is left open: a link minted before the
+switch and opened by a computer after it, within the link's day, is kept,
+since at svrngs's n0's relays are never listed to be told apart. A computer meets each
 group it holds at the relay that group keeps, the build's where it keeps
 none; iroh makes the nearest its home, so a computer in two groups with
 two relays is reached at one, where the other group's computers dial it.
@@ -1901,7 +1908,7 @@ repository stands at 13,826 of 14,000 lines (`scripts/lean_check.py` at
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
 | U1 a group is not a mesh | ring sync, its route and the dial-by-key tunnel forked into `svrngs-node`, the node's router served on each accepted stream; the register decides who may connect and who is synced, where upstream asked the mesh (`commonwealth/crates/commonwealth-rails/src/` at `e1a43bcd2`: `acceptor.rs:47-61`, `ring_sync/journal.rs:153-164`, the default roster at `lib.rs:404`) | a node in the group but no mesh syncs; a node outside the group is refused |
-| U2 join by link | `svrngs new <name>`, `svrngs join <link>` and `svrngs link <group>` on a computer, and `svrngs` alone running the node; the link is one short token — the issuer's key and the link's secret, and the issuer's relay only when it runs without lookup — and the issuer answers the group's seed and its `Invite`'s id to the link's key; redeeming at the issuer's node writes one `Admit`, co-signed by the new key; ids over everything signed, the previous act among it; the door signing after everything it holds (§6) | three people open one link and each is admitted once; opening it again admits nobody twice; a lapsed or closed link admits no one; a dialer without the link's key is closed with no answer; nothing the command prints uses a word §1 keeps from people |
+| U2 join by link | `svrngs new <name>`, `svrngs join <link>` and `svrngs link <group>` on a computer, and `svrngs` alone running the node; the link is one short token — the issuer's key and the link's secret, and the issuer's relay, with lookup or without it since relay-park (c) — and the issuer answers the group's seed and its `Invite`'s id to the link's key; redeeming at the issuer's node writes one `Admit`, co-signed by the new key; ids over everything signed, the previous act among it; the door signing after everything it holds (§6) | three people open one link and each is admitted once; opening it again admits nobody twice; a lapsed or closed link admits no one; a dialer without the link's key is closed with no answer; nothing the command prints uses a word §1 keeps from people |
 | U3 lend a service | the member door: a route that proxies to a lent service, the verified person set from the connection; `svrngs share <port>` with its lend declaration; streaming and byte ranges through the door; each request's share of the lender's upload; the people-at-once limit; the loopback record API (the rail routes and the live lane, forked); the list of what members lend | the app sees the verified person; a header the client typed is stripped; the lender's secret appears in no byte a member receives; with three streams, each is told a third of the declared upload, and a fourth person is refused with a reason |
 
 **Demo A — Sam's films, three homes at once** (after U5; operator,

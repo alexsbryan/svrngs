@@ -71,8 +71,9 @@ struct Bound {
 }
 
 /// [`bind`] for the group whose link's token is `token`: its issuer, and
-/// its relay, refused when it carries none — from a computer that had n0's
-/// lookup, which the page never asks (relay-default).
+/// its relay, refused when it carries none — from a computer that reached
+/// no relay, with n0's lookup or without it (`cli::link_relay`, relay-park
+/// (c)): the page asks no lookup (relay-default).
 async fn bind_for(key: Vec<u8>, token: &str) -> Result<Bound, JsError> {
     let Some(link) = Token::decode(token) else {
         refuse!("LAYER parse: REFUSED — the fragment is not a link's token: {token}")
