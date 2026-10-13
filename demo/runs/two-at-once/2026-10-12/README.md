@@ -52,7 +52,8 @@ users after: `Ana-bf5cb6a9597af715` and `sam` (`accounts`).
    and the door keeps one token a person (`crates/svrngs-node/src/door/sign_in.rs:262`).
    By `PREDICTIONS.md`'s rule, written before the data, prediction 4
    holding sends the row to (b): each device its own Jellyfin device under
-   the one account.
+   the one account. (b) landed in `0e04c99`; these steps after it are
+   `../2026-10-12-b/`.
 2. **One host is not every path.** The laptop's path to Sam's door is this
    host's loopback, the phone's a relay; neither stalled for 5 s at loads
    to 30 on 12 cores. One run, one host: not a rate.

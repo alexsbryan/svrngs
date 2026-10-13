@@ -1,0 +1,14 @@
+Made two, with you as Sam.
+Send this link to the people you want in it. It works for a day, while this computer is on:
+
+  svrngs://join/<the token>
+
+or, to open it in a browser:
+
+  http://localhost:63771/#<the token>
+
+On a phone, each app opens at an address of its own under localhost:63771, which can see which app is opened.
+
+two's folder is /tmp/two-run-b/sam/svrngs/two: what anyone in two puts there reaches this computer, and what you put there reaches theirs.
+
+Leave this running; Ctrl-C stops it.
