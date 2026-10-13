@@ -5,6 +5,7 @@
 // message...", Enter to send, each answer a `.chat-message-assistant`.
 //
 //   node story.mjs page   <json>   a page's words once it has settled
+//   node story.mjs make   <json>   Sam's home page: a group made, then a link to invite
 //   node story.mjs line   <json>   the group's page on a computer: the line it shows
 //   node story.mjs chat   <json>   a home page until it lists `lend`; it clicked; the
 //                                  question asked in the tab it opens
@@ -166,6 +167,30 @@ try {
     out.said = await words(page);
     out.line = await page.locator('#line').textContent().catch(() => null);
     await shot(page, a.name);
+  } else if (mode === 'make') {
+    // Sam's home page: what it says with no group; "Make a group" with the
+    // group's name and Sam's; what it says then; a link to invite someone.
+    const context = await computer('chromium');
+    const page = await context.newPage();
+    out.seen = watched(page);
+    await page.goto(a.home);
+    await page.locator('#make button').waitFor({ timeout: 30_000 });
+    out.before = { at: at(), said: await words(page) };
+    await shot(page, 'sam-home-none');
+    await page.fill('#make input[name=name]', a.group);
+    await page.fill('#make input[name=person]', a.person);
+    out.pressed = at();
+    await page.getByRole('button', { name: 'Make a group' }).click();
+    out.made = await until(async () => /You made/.test(await words(page)) && at(), 30_000);
+    await page.getByRole('button', { name: `Make a link to invite someone to ${a.group}` }).waitFor({ timeout: 30_000 }).catch(() => {});
+    out.after = { at: at(), said: await words(page), folder: await page.locator('.folder').first().textContent().catch(() => null) };
+    await shot(page, 'sam-home-made');
+    out.linked = at();
+    await page.getByRole('button', { name: `Make a link to invite someone to ${a.group}` }).click();
+    out.link_at = await until(async () => (await page.locator('.link code').count()) && at(), 30_000);
+    out.link = await page.locator('.link code').textContent().catch(() => null);
+    out.link_said = await page.locator('.link').innerText().catch(() => null);
+    await shot(page, 'sam-home-link');
   } else if (mode === 'line') {
     const page = await (await computer('chromium')).newPage();
     await page.goto(a.link);
