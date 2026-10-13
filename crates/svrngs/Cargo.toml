@@ -42,6 +42,9 @@ reqwest = { version = "0.12", default-features = false }
 svrngs-core = { workspace = true, features = ["test-support"] }
 svrngs-node = { workspace = true, features = ["test-support"] }
 tokio = { version = "1", features = ["process", "io-util", "net"] }
+# relay.rs dials the verb's relay as iroh's relay client does, which asks a
+# resolver: iroh's, at the version svrngs-node pins.
+iroh = "=1.0.2"
 
 # Upstream's posture, as svrngs-core and svrngs-node carry it.
 [lints.clippy]

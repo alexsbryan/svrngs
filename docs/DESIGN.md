@@ -987,6 +987,36 @@ Discord user id, 517 code lines (`bridge/*.mjs` and `crates/svrngs/src/bridge.rs
 at tag `e0-bot`), is the failure this answers; a chat's own door waits in
 §9. The core never knows a chat exists.
 
+**A relay anyone runs** (relay-verb; the operator, 2026-10-12, §10). A
+phone's every byte crosses a relay, a browser's iroh being relay-only, so
+a group need not lean on anyone's: `svrngs relay <name>` serves iroh's own
+relay server, iroh-relay 1.0.2, from the svrngs binary — the one the
+computers that dial it are built with — at `https://<name>/`, on the ports
+every iroh dials a relay at: TCP 443 and 80, and QUIC address discovery on
+UDP 7842 (`crates/svrngs/src/relay.rs`). Its certificate is Let's
+Encrypt's, asked and renewed by the relay itself and kept in
+`<data dir>/relay`; `--staging` asks Let's Encrypt's staging service
+instead, to try a name first. A name, never a bare address: an address's
+certificate needs Let's Encrypt's `shortlived` profile, which iroh-relay's
+ACME client, tokio-rustls-acme 0.9.1, cannot ask — it orders DNS names
+alone and names no profile (`acme.rs:129-130`, `:301-303`); the bare
+address waits in §9. By default it lets through only the computers and
+phones that stand in a group its computer holds — the register's one
+answer, `standing_anywhere`, read from the record on disk as svrngs beside
+it writes it, each connection asked again, each refusal traced; a computer
+in no group is refused the verb, which would let nobody through. `--open`
+lets everyone through, for a relay like svrngs's own, each computer or
+phone sending it at most `OPEN_RATE`, set from a film played through a
+relay at Demo A's bitrate: the most it drew in a second, 8,799,728 bytes
+of three takes, rounded up to 8,800,000 (`demo/runs/relay-rate/2026-10-12/`).
+A test starts it on 127.0.0.1 over a computer's data and dials it as
+iroh's client does (`crates/svrngs/tests/relay.rs`). Its certificate is
+not judged here, this host having no public address: the operator's run
+is `svrngs relay <name> --staging` on a server `<name>` leads to, then
+`curl -kv https://<name>/` naming Let's Encrypt's staging issuer. The one
+who runs a relay reads its flags and its words; a person in a group never
+sees the word.
+
 ## 4. Domains, and the fork
 
 | Domain | What it owns | Meets svrngs by |
@@ -2056,6 +2086,8 @@ name and publishing that build, the last two the operator's.
 | Windows | a group asks |
 | AirPlay and Cast from a page, and DLNA: a screen handed a lend's address by a phone, for an app with no client of its own on it. In the reads (`demo/runs/u6/2026-10-05-screen/reads.json`) AirPlay from Safari on an iPhone showed the LG no video three ways — the page's address, which only the phone's worker answers; jellyfin-web, whose hls.js sets `disableRemotePlayback`; a plain LAN file, which the TV never fetched — and iOS has no Cast sender. Until 2026-10-05 this was U6 (§3, "The room", call 1) | an app with no client of its own for a screen is asked for on one, counted |
 | a public address per lend, for a room with no member's computer in it: a relay that forwards bytes it cannot read to the lender, who holds a certificate per lend — a new service, and Let's Encrypt's per-domain limit (§3, "The room", call 2) | a group with no computer in the room asks, counted |
+| a relay at a bare address, no name needed (svrn-docs `rings/current/GROUP_RELAYS.md` §4.4): a six-day Let's Encrypt certificate for the address, its `shortlived` profile, which tokio-rustls-acme 0.9.1, iroh-relay's ACME client, cannot ask — its `Identifier` is `Dns` alone and its order names no profile (`acme.rs:129-130`, `:301-303`); no second ACME client beside it (`ralph/next/relay/CHARTER.md`) | iroh-relay's ACME client asks for an address, or a member who would relay has no name to give it, counted |
+| a relay for a group's own refusing a newcomer whose key does not yet stand (`GROUP_RELAYS.md` §4.3): a link's issuer whose relay is `svrngs relay` without `--open` would refuse the joiner dialling it there before its `Admit` is written — read from `relay.rs`'s admission, not run | a group runs its own relay and names it in its links, counted |
 | watching together from different homes: one transcode, shared, in step | a group asks to watch the same film apart at the same time |
 | sealing in the infra | two apps need the same seal |
 | group compute: asks leased by members' computers and answered as acts; and peer inference, a source's excerpts released to another member's computer for a job (`rings/current/ACL_AND_SCOPED_USE.md` §5), out of scoped use's spike (`demo/runs/su/2026-10-09/` §7) | Ask is next, or an owner's operation needs inference their own computer cannot run |

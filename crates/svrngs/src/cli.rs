@@ -24,6 +24,8 @@
 //! svrngs handover <name> --group <group> [--joined W]
 //!                                          let someone else decide who is removed,
 //!                                          asked of svrngs running here
+//! svrngs relay <name> [--open] [--staging] a relay, for the groups this computer is in
+//!                                          or everyone ([`crate::relay`])
 //! ```
 //!
 //! `remove` and `handover` ask the node running here, as `share --folder`
@@ -100,6 +102,7 @@ use svrngs_node::{MintInvite, Refused as CommitRefused};
 use crate::group::{self, Name, Seed, SeedError};
 use crate::identity::{self, KeyError};
 use crate::issuer;
+use crate::relay::{self, Relay};
 use crate::share::{self, Share, ShareRefusal};
 use svrngs_node::link::{client_link, https_link, Link, Origin, Token};
 
@@ -183,6 +186,18 @@ svrngs — keep what your group shares on your own computers.
       Let <name> decide who is removed from <group> from now on, instead
       of you. Asked of svrngs running here. --joined as for remove.
 
+  svrngs relay <name> [--open] [--staging]
+      Relay at https://<name>/ for the computers and phones of the groups
+      this computer is in, beside svrngs: a phone reaches a computer only
+      through a relay. <name> must lead to this computer, which must take
+      connections on TCP ports 80 and 443 and UDP port 7842. Its
+      certificate is asked of Let's Encrypt, and kept in the data below.
+      --open relays for every computer and phone that reaches it, as
+      svrngs's own relay does, each held to what a phone's film drew
+      through a relay at its most, measured; it says how much as it starts.
+      --staging asks Let's Encrypt's trial service, whose certificates no
+      browser trusts: to try <name> first.
+
 Data:    $SVRNGS_DIR, else ~/.svrngs.
 Logging: RUST_LOG, default `error`.";
 
@@ -251,6 +266,7 @@ pub enum Verb {
         group: String,
         joined: Option<Joined>,
     },
+    Relay(Relay),
     Help,
 }
 
@@ -272,6 +288,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let mut asks = None;
     let mut run = true;
     let mut device = false;
+    let (mut open, mut staging) = (false, false);
     let mut joined = None;
     let mut more = Vec::new();
     while let Some(arg) = it.next() {
@@ -344,6 +361,8 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             }
             "--no-run" if verb == "join" => run = false,
             "--device" if verb == "link" => device = true,
+            "--open" if verb == "relay" => open = true,
+            "--staging" if verb == "relay" => staging = true,
             "-h" | "--help" => return Ok(Verb::Help),
             other if other.starts_with('-') => return Err(format!("unknown argument `{other}`")),
             other if positional.is_none() => positional = Some(other.to_string()),
@@ -457,6 +476,13 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 .map(|raw| lend_name(&raw));
             Ok(Verb::Room(names.collect::<Result<_, _>>()?))
         }
+        "relay" => {
+            let raw =
+                positional.ok_or("relay wants the name it is reached at: `svrngs relay <name>`")?;
+            let name = relay::name(&raw)?;
+            let at = relay::At::Name { name, staging };
+            Ok(Verb::Relay(Relay { at, open }))
+        }
         "help" | "-h" | "--help" => Ok(Verb::Help),
         other => Err(format!("unknown command `{other}`")),
     }
@@ -525,6 +551,10 @@ pub enum Refusal {
     Removal(String),
     #[error("{0} cannot be changed on this computer (RUST_LOG=debug says why)")]
     Unchanged(Name),
+    #[error("this computer is in no group, so a relay for its groups would let nobody through: join one first, or say --open to relay for everyone")]
+    RelayForNobody,
+    #[error("the relay did not start: {0}")]
+    RelayStart(String),
 }
 
 /// `raw` as a lend's name, or the one refusal every verb that takes one
@@ -560,6 +590,7 @@ impl Refusal {
             | Refusal::Room(_)
             | Refusal::Folder(_)
             | Refusal::Removal(_)
+            | Refusal::RelayForNobody
             | Refusal::Busy(_) => 1,
             Refusal::NoDataDir
             | Refusal::DataDir(..)
@@ -573,6 +604,7 @@ impl Refusal {
             | Refusal::NotRunning
             | Refusal::NoClient(_)
             | Refusal::Unchanged(_)
+            | Refusal::RelayStart(_)
             | Refusal::Keep(_) => 3,
         }
     }
@@ -619,6 +651,7 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             println!("{USAGE}");
             return Ok(());
         }
+        Verb::Relay(asked) => return relay::run(asked, &root).await,
         Verb::Unshare(name) => {
             print!("{}", unshare(&root, &name)?);
             return Ok(());
@@ -1341,6 +1374,7 @@ async fn serve(
         Verb::Help
         | Verb::Share(_)
         | Verb::Unshare(_)
+        | Verb::Relay(_)
         | Verb::Folder { .. }
         | Verb::Remove { .. }
         | Verb::Handover { .. } => {

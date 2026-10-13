@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! The `svrngs` command (DESIGN §5; §8, U2's inventory): a computer's device
 //! key ([`identity`]), a group's seed and id ([`group`]), its link's
-//! secret and issuer ([`issuer`]; the token is `svrngs_core::link`'s), and
-//! the verbs ([`cli`]).
+//! secret and issuer ([`issuer`]; the token is `svrngs_core::link`'s), the
+//! relay anyone runs ([`relay`]), and the verbs ([`cli`]).
 
 pub mod cli;
 pub mod group;
 pub mod identity;
 pub mod issuer;
+pub mod relay;
 pub mod share;
