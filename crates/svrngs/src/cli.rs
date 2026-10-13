@@ -1414,6 +1414,10 @@ pub async fn join_group(
     if link.origin.is_none() {
         tracing::debug!(target: "cli", group = %id, "cli: join — a client's link, so no origin is kept");
     }
+    // Its home relay reached before the exchange, so the joiner says it
+    // there and the issuer can dial it back; else not before its first
+    // round (demo/runs/relay-in-record/2026-10-12/: 60 s).
+    wait_online(node, "joining").await;
     let synced = node.sync_with(&id, &issuer).await;
     match &synced.stop {
         None => {
@@ -1700,14 +1704,19 @@ async fn mint(
 /// which finds it by key; else its home relay, waiting up to
 /// [`ONLINE_WAIT`] for one when it has relays to reach.
 async fn issuer_relay(node: &Node, relay: &RelayConfig) -> Option<RelayUrl> {
-    let endpoint = node.endpoint();
-    if relay.n0_services || !relay.relay_urls.is_empty() {
-        let online = tokio::time::timeout(ONLINE_WAIT, endpoint.online())
+    wait_online(node, "printing the link").await;
+    link_relay(relay, node.endpoint().addr().relay_urls().next().cloned())
+}
+
+/// Wait up to [`ONLINE_WAIT`] for a home relay, when this computer has
+/// relays to reach, before `what`.
+async fn wait_online(node: &Node, what: &str) {
+    if node.relayed() {
+        let online = tokio::time::timeout(ONLINE_WAIT, node.endpoint().online())
             .await
             .is_ok();
-        tracing::debug!(target: "cli", online, "cli: waited for a relay before printing the link");
+        tracing::debug!(target: "cli", online, what, "cli: waited for a relay");
     }
-    link_relay(relay, endpoint.addr().relay_urls().next().cloned())
 }
 
 /// The relay a link carries, given how this computer reaches the network

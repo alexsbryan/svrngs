@@ -428,6 +428,11 @@ impl Node {
         out
     }
 
+    /// Whether this computer reaches the network through a relay at all.
+    pub fn relayed(&self) -> bool {
+        self.host.relayed
+    }
+
     /// Say in each group held where this computer is reached ([`Host::say_relay`]):
     /// before a link is printed, so a joiner can dial back its issuer.
     pub fn say_relay(&self) -> bool {
