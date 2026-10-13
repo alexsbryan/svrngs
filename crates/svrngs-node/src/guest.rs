@@ -72,17 +72,6 @@ impl Default for RelayConfig {
     }
 }
 
-impl RelayConfig {
-    /// The same posture, listening on 127.0.0.1 alone
-    /// ([`RelayConfig::loopback_only`]).
-    pub fn on_loopback_only(self) -> Self {
-        Self {
-            loopback_only: true,
-            ..self
-        }
-    }
-}
-
 /// Build an iroh endpoint from a node identity, serving `alpns`, per a
 /// [`RelayConfig`]. With `n0_services` it starts from `presets::N0`
 /// (n0 relays + n0 DNS/pkarr lookup); without it, from `presets::Minimal`

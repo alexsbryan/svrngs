@@ -49,9 +49,8 @@ async fn sam_through_a_relay_on_this_computer() {
     let ours = RelayConfig {
         relay_urls: vec![harness::relay_url(&relay)],
         n0_services: false,
-        loopback_only: false,
-    }
-    .on_loopback_only();
+        loopback_only: true,
+    };
     let sam_dir = dir.join("sam");
     std::fs::create_dir_all(&sam_dir).unwrap();
     let sam = Node::start(

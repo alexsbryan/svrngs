@@ -19,9 +19,8 @@ pub async fn sams_computer(seed: u8) -> (Server, RelayConfig, tempfile::TempDir,
     let ours = RelayConfig {
         relay_urls: vec![harness::relay_url(&relay)],
         n0_services: false,
-        loopback_only: false,
-    }
-    .on_loopback_only();
+        loopback_only: true,
+    };
     let dir = tempfile::tempdir().unwrap();
     let sam = Node::start(
         dir.path().to_path_buf(),

@@ -39,9 +39,8 @@ async fn start(seed: u8, dir: &std::path::Path) -> Node {
     let relay = RelayConfig {
         relay_urls: Vec::new(),
         n0_services: false,
-        loopback_only: false,
-    }
-    .on_loopback_only();
+        loopback_only: true,
+    };
     Node::start(
         dir.to_path_buf(),
         signing(seed),

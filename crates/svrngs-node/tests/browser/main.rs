@@ -76,9 +76,8 @@ async fn computer(
         &RelayConfig {
             relay_urls: vec![relay_url(relay)],
             n0_services: false,
-            loopback_only: false,
-        }
-        .on_loopback_only(),
+            loopback_only: true,
+        },
         no_seed,
         "127.0.0.1:0".parse().unwrap(),
     )
@@ -128,9 +127,8 @@ async fn joined(dir: &Path, relay: &Server, ada: &Node, me: u8, person: &str) ->
         &RelayConfig {
             relay_urls: vec![relay_url(relay)],
             n0_services: false,
-            loopback_only: false,
-        }
-        .on_loopback_only(),
+            loopback_only: true,
+        },
         no_seed,
         "127.0.0.1:0".parse().unwrap(),
     )
@@ -2147,9 +2145,8 @@ async fn alone(dir: &Path, relay: &Server) -> Node {
         &RelayConfig {
             relay_urls: vec![relay_url(relay)],
             n0_services: false,
-            loopback_only: false,
-        }
-        .on_loopback_only(),
+            loopback_only: true,
+        },
         no_seed,
         "127.0.0.1:0".parse().unwrap(),
     )

@@ -69,9 +69,8 @@ async fn start(dir: &Path, relay: &Server, me: u8) -> Node {
         &RelayConfig {
             relay_urls: vec![relay_url(relay)],
             n0_services: false,
-            loopback_only: false,
-        }
-        .on_loopback_only(),
+            loopback_only: true,
+        },
         no_seed,
         "127.0.0.1:0".parse().unwrap(),
     )

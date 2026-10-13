@@ -94,9 +94,8 @@ async fn a_loopback_only_endpoint_binds_loopback_alone() {
         &RelayConfig {
             relay_urls: Vec::new(),
             n0_services: false,
-            loopback_only: false,
-        }
-        .on_loopback_only(),
+            loopback_only: true,
+        },
     )
     .await
     .expect("a loopback-only endpoint binds");
