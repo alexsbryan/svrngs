@@ -188,13 +188,45 @@ paths it refuses, how many people may use it at once.
   said on one device of theirs holds on every one (bash-devices);
   `svrngs unshare` takes the choices with the lend;
 - the home page, `http://svrngs.localhost:<port>/`, at the same address
-  each time svrngs starts (§7, start-address), where a person says
-  their yes on a computer, and sees their groups, the people in each,
-  what each lends, opened at its origin, whose computer did not answer and
-  what apps use, each with Stop — shown from the routes that answer an app
-  (`/v1/groups`, `/v1/lends`, `/v1/rail/people`), groups that cannot be
-  read said so (sup-2, `crates/svrngs-node/src/home.rs`). An app sends its
-  person there: `/svrngs-reads` gives each lend that asks its words,
+  each time svrngs starts (§7, start-address): the person's own page on
+  their computer, written for someone a bit afraid technically
+  (start-home, `demo/runs/start/2026-10-13-home/`), in §1's words. At its
+  top it says what it is for and what can be done on it. With no group
+  yet, it gives the two lines that make one or join one. Each group is
+  shown as soon as its people are read, and what its people lend is added
+  once each computer has answered or not, so a computer asleep holds back
+  only that list (sup-2, `crates/svrngs-node/src/home.rs`; read from the
+  routes that answer an app, `/v1/groups`, `/v1/lends`,
+  `/v1/rail/people`). A group that cannot be read is said so, and so is
+  whose computer did not answer. On it a person:
+  - opens each thing lent by a link that says what it is and whose ("Open
+    Sam’s llama-server"), in a tab of its own beside the page;
+  - copies the address to give a program for it, such as a chat program
+    pointed at a friend's model, by a button that says so;
+  - makes a link to invite someone, or to add their phone or another
+    computer, made by the node as `svrngs link` makes it (`invite.rs`
+    `Host::link`). The page shows the link, with a button to copy it, and
+    says for how long it works and that it closes the last one;
+  - opens the group's folder, one `/v1/groups` lists, in the computer's
+    file browser (`open`, else `xdg-open`);
+  - changes how many people at once may use what their computer lends, a
+    number or everyone, or stops lending it (bash-limit, §10). This is
+    written to the lend's declaration, which the door reads at its next
+    request;
+  - says yes to an app, or stops it; what apps use is listed only when
+    there is something in it.
+
+  What the page cannot do it names under "Done in a terminal", each with
+  the one line to type: lending something (`svrngs share <port>`),
+  removing someone (`svrngs remove`) and making another group (`svrngs
+  new`). That last is refused while svrngs runs, which install.sh keeps it
+  doing from login, and the page says so
+  (`demo/runs/start/2026-10-13-home/NEEDS_HUMAN.md`). Leaving a group is
+  said as not possible yet; its design comes after the start queue.
+  The page answers only itself, from its own origin, and never runs an
+  app's code: its only writes are the yes and stop, the change to a lend,
+  the link and the folder opened. An app sends its person there:
+  `/svrngs-reads` gives each lend that asks its words,
   `asks`, `ask`, to which it adds `&back=<its path>`, and `stop`, the
   address at its own origin it posts its own stop to (lean-4 (d)) — on a computer
   `…svrngs.localhost:<port>/ask?lend=<label>&app=<label>`, on a phone
@@ -212,16 +244,7 @@ paths it refuses, how many people may use it at once.
   `/svrngs-reads/<label>/svrngs-stop` at its own origin; on a phone its
   worker sends that to the lend's door with the pass. The group's page
   lists what apps use too, asked of each lender when the person opens it,
-  each yes with Stop. Neither page is ever framed, and neither runs an
-  app's code; the home page answers only itself, and its only writes are
-  the person's yes and stop and their change to what their computer lends —
-  how many each lets in at once, a number or everyone, or no longer lent
-  (bash-limit, §10) — written to the lend's declaration, which the door
-  reads at its next request — and a link to a group, to invite someone or
-  add a device of the person's, made by the node as `svrngs link` makes
-  it (start-home, `invite.rs` `Host::link`); and it opens a group's
-  folder, one `/v1/groups` lists, in the computer's file browser (`open`,
-  else `xdg-open`); every other act stays in the command;
+  each yes with Stop. Neither page is ever framed;
 - reach for the devices in a room: a member's computer serves the lends its
   person names to the network it is on while the command runs, so a device
   there — a TV, through the app's own client for it — opens a lend at an
