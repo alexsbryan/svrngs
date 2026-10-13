@@ -80,7 +80,12 @@ function list(all) {
       for (const dir of g.folders ?? []) s.append(Object.assign(el('p', `${its} is on this computer at ${dir}`), { className: 'folder' }));
       if (g.removals.length) s.append(Object.assign(el('ul', '', ...g.removals.map((r) => el('li', removal(r)))), { className: 'removals' }));
       const ul = el('ul');
-      for (const l of g.lent) ul.append(el('li', '', Object.assign(el('a', named(l)), { href: l.origin })));
+      // Each with its address for a program, copied by a button that says
+      // so, then said (start-home): the clipboard may refuse a page.
+      for (const l of g.lent) {
+        const li = ul.appendChild(el('li', '', Object.assign(el('a', named(l)), { href: l.origin }), ' '));
+        li.append(button('Copy its address for a program', () => Promise.resolve().then(() => navigator.clipboard.writeText(l.origin)).then(() => li.append(` Copied: ${l.origin}`), () => li.append(` Copy it from here: ${l.origin}`))));
+      }
       // Each computer that did not say by how (bash-first-minute (c)):
       // one that answered is never said not to have.
       for (const p of g.unanswered) ul.append(el('li', `${p}'s computer did not answer, so what they lend is not listed.`));

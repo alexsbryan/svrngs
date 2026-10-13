@@ -2183,3 +2183,43 @@ async fn the_home_page_names_what_the_terminal_does(engine: Engine) {
     }
     drop(ada);
 }
+
+in_both_engines!(
+    /// **For a program, the address of each thing lent, with a Copy
+    /// button** (start-home, from start-measure's ranked row 6: Bo's tools
+    /// reached a friend's model only at the address `/v1/lends` gave,
+    /// `demo/runs/start/2026-10-13/README.md` §3 (a) 1-3, which the page
+    /// never showed). Ada lends `shelf`; her page's button beside it says
+    /// what it copies, and once pressed the page says the address it
+    /// copied, which Chromium's clipboard then holds. Planted, watched
+    /// failing: the page as f898bfd left it, with no such button.
+    the_home_page_copies_a_lend_s_address_for_a_program
+);
+async fn the_home_page_copies_a_lend_s_address_for_a_program(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
+    lend(dir.path(), "shelf", shelf.port());
+    let origin = format!(
+        "http://{}.localhost:{}/",
+        label(1, "shelf"),
+        ada.api_addr().port()
+    );
+    let seen = home_page(
+        engine,
+        &ada,
+        json!({
+            "all": "#home section li",
+            "do": [["#home section li button:has-text('Copy its address for a program')", null, true]],
+        }),
+    )
+    .await;
+    eprintln!("the home page's run: {seen:#}");
+    let said = seen["after"][0].to_string();
+    assert!(said.contains(&format!("Copied: {origin}")), "{seen:#}");
+    if matches!(engine, Engine::Chromium) {
+        assert_eq!(seen["clipboard"], origin, "{seen:#}");
+    }
+    drop(ada);
+}
