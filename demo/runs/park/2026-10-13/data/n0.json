@@ -1,0 +1,32 @@
+{
+ "rev": "46b3b59",
+ "shipped": [
+  "pub const SHIPPED: MeetAt = MeetAt::N0;"
+ ],
+ "relays": [
+  "https://aps1-1.relay.n0.iroh.link/",
+  "https://euc1-1.relay.n0.iroh.link/",
+  "https://use1-1.relay.n0.iroh.link/",
+  "https://usw1-1.relay.n0.iroh.link/"
+ ],
+ "answered": {
+  "https://aps1-1.relay.n0.iroh.link/": true,
+  "https://euc1-1.relay.n0.iroh.link/": true,
+  "https://use1-1.relay.n0.iroh.link/": true,
+  "https://usw1-1.relay.n0.iroh.link/": true
+ },
+ "resolved": {
+  "aps1-1.relay.n0.iroh.link": [
+   "5.223.65.62"
+  ],
+  "euc1-1.relay.n0.iroh.link": [
+   "91.99.237.97"
+  ],
+  "use1-1.relay.n0.iroh.link": [
+   "87.99.151.110"
+  ],
+  "usw1-1.relay.n0.iroh.link": [
+   "5.78.69.43"
+  ]
+ }
+}

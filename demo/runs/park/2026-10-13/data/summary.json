@@ -1,0 +1,59 @@
+{
+ "rev": "46b3b59",
+ "shipped": [
+  "pub const SHIPPED: MeetAt = MeetAt::N0;"
+ ],
+ "chromium": {
+  "carried": "https://usw1-1.relay.n0.iroh.link/",
+  "carried_is_n0": true,
+  "link_ms": 1191,
+  "page_ms": 5256,
+  "first_status": "You’re in house, as Bo",
+  "alone_status": "You’re in house, as Bo",
+  "said": [
+   "Opening…",
+   "Opening your link…",
+   "Join house",
+   "Joining house…",
+   "Reaching house…",
+   "You’re in house, as Bo"
+  ],
+  "samples": 5,
+  "remote": [
+   "49.13.207.244:443",
+   "5.78.69.43:443"
+  ],
+  "n0_hits": [
+   "5.78.69.43:443"
+  ],
+  "verdict": "passed",
+  "stopped": null
+ },
+ "webkit": {
+  "carried": "https://usw1-1.relay.n0.iroh.link/",
+  "carried_is_n0": true,
+  "link_ms": 1003,
+  "page_ms": 5608,
+  "first_status": "You’re in house, as Bo",
+  "alone_status": "You’re in house, as Bo",
+  "said": [
+   "Opening…",
+   "Opening your link…",
+   "Join house",
+   "Joining house…",
+   "Reaching house…",
+   "You’re in house, as Bo"
+  ],
+  "samples": 5,
+  "remote": [
+   "49.13.207.244:443",
+   "5.78.69.43:443"
+  ],
+  "n0_hits": [
+   "5.78.69.43:443"
+  ],
+  "verdict": "passed",
+  "stopped": null
+ },
+ "verdict": "passed"
+}
