@@ -37,7 +37,6 @@ use axum::Router;
 use svrngs_core::pass::{Label, Pass};
 
 use crate::door::{self, Door, LendRefusal, Who, LEND_ROUTE, PASS_HEADER, REFUSED_HEADER};
-use crate::iroh::{Contact, PublicKey};
 use crate::lend::Offered;
 use crate::node::Asking;
 use crate::surface::STOP_SUFFIX;
@@ -289,13 +288,10 @@ fn uri_of(target: &str) -> Result<Uri, Response> {
 /// no page makes this computer dial a stranger, and `away` with no path.
 pub(crate) async fn dialled(at: &Asking, label: &Label) -> Result<String, Response> {
     let actor = hex::encode(label.lender());
-    let key = PublicKey::from_bytes(&label.lender()).ok();
-    let stands = at.door().rail.standing_anywhere(&actor).is_some();
-    let Some(key) = key.filter(|_| stands) else {
+    let Some(contact) = at.host.contact(&actor) else {
         tracing::debug!(target: "origin", %label, actor, "origin: refused — the label names no computer standing in a group held here");
         return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
     };
-    let contact = Contact::by_key(key);
     let Some(base) = at.host.transport().base_url(&contact).await else {
         tracing::debug!(target: "origin", %label, actor, "origin: no dialable path to the lender's computer");
         return Err(away());

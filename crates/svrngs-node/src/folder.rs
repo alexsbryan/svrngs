@@ -45,7 +45,7 @@ use std::convert::Infallible;
 use svrngs_core::{Command, ContentHash, Digest, Placed, Recorded};
 use tokio::sync::{mpsc, oneshot, watch, Notify};
 
-use crate::iroh::{actor_key, key_actor, Alpn};
+use crate::iroh::{key_actor, Alpn};
 use crate::node::{Host, ANSWER_WITHIN};
 
 #[path = "synced.rs"]
@@ -547,17 +547,22 @@ impl Folders {
         let conn = match open {
             Some(c) => c,
             None => {
-                let peer = actor_key(key).ok_or(Nothing::Said("not a key".into()))?;
+                // By its key and the relay its group names (relay-in-record).
+                let peer = (self.host.contact(key))
+                    .ok_or(Nothing::Said("not a computer of the group".into()))?;
                 // Which of the key's addresses iroh dials: one in use is
                 // the only one it sends to (syp-6 b).
-                let known = self.host.endpoint().remote_info(peer).await;
+                let known = self.host.endpoint().remote_info(peer.key).await;
                 let known: Vec<String> = known
                     .iter()
                     .flat_map(|i| i.addrs())
                     .map(|a| format!("{:?} {:?}", a.addr(), a.usage()))
                     .collect();
                 tracing::debug!(target: "folder", holder = %key, ?known, "folder: dialled by key, iroh holding these addresses for it");
-                let dial = self.host.endpoint().connect(peer, Alpn::Blobs.bytes());
+                let at = (self.host.transport().endpoint_addr_for(&peer)).ok_or(Nothing::Said(
+                    "no relay named for it, and no address lookup".into(),
+                ))?;
+                let dial = self.host.endpoint().connect(at, Alpn::Blobs.bytes());
                 let c = tokio::time::timeout(ANSWER_WITHIN, dial)
                     .await
                     .map_err(|_| Nothing::Silent)?

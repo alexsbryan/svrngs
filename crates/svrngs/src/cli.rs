@@ -1664,6 +1664,9 @@ async fn mint(
     device_of: Option<String>,
 ) -> Result<Token, Refusal> {
     let token = issuer::mint(node.endpoint().id(), issuer_relay(node, relay).await);
+    // Where this computer is reached, in the record before a joiner pulls
+    // it, so the joiner can dial it back (relay-in-record).
+    node.say_relay();
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_secs() as i64)

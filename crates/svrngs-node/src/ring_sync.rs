@@ -297,6 +297,9 @@ pub async fn run_one_round(host: &Host, answered: &(impl Fn() + Sync)) -> RoundO
     if namespaces.is_empty() {
         return outcome;
     }
+    // Where this computer is reached, said before it dials, so a move goes
+    // out in this round (relay-in-record).
+    host.say_relay();
     let http = match host.http() {
         Ok(c) => c,
         Err(e) => {

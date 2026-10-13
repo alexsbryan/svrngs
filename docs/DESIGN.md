@@ -398,8 +398,10 @@ the evidence is U4's inventory, §8):
    pass its worker cannot and hands it over.)
 4. *The phone dials whoever lends a service*, directly by key, since it
    stands in the group. The issuer, the node the link names, only redeems and
-   answers what the group's people lend, each with its lender's key. No node
-   proxies another's lend.
+   answers what the group's people lend, each with its lender's key and the
+   relay its group's record names for it (`relay`, `null` when it names
+   none; relay-in-record), and the page dials the lender through that relay,
+   else the link's. No node proxies another's lend.
 5. *One body for the link.* The command and the page parse a token and sign
    the ask and the redemption with the same code, in svrngs-core: bytes and
    keys in, bytes out.
@@ -1375,6 +1377,16 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   the register carries it beside each key (`Member::relay`). svrngs-core's
   `RelayAt` writes it only when the record says otherwise. Like the acts
   that move membership, a `Correct` voids none: a newer one replaces it.
+  A computer says its home relay at each round's start, before it prints a
+  link, and once a join's exchange brings its admission, taking it to the
+  issuer in a second exchange — until one member holds it none can dial
+  the joiner (`Host::say_relay`, node.rs); with relays and none reached yet
+  it says nothing, so starting never withdraws it. Every dial of a member
+  carries the relay its group names (`Host::contact`, `Contact::named`):
+  the round, the lends' list, the member door's asks, a folder's fetch,
+  the lend door's dial and a removed computer told its cut (relay-in-record
+  (c), landed). A key with none named is traced; with no address lookup
+  the transport refuses it before iroh is asked, never dialling it blind.
 
 ## 7. Packaging and reach
 

@@ -198,6 +198,9 @@ pub struct Host {
     endpoint: Endpoint,
     transport: Arc<IrohTransport>,
     actor: String,
+    /// Whether this computer reaches the network through a relay at all
+    /// ([`RelayConfig`]): with none, it says so in the record.
+    relayed: bool,
     /// The record API's port, where each lend has its origin (u5-2).
     pub(crate) api_port: u16,
     /// Each lend the room door serves, and where (u6-1, [`crate::room`]):
@@ -269,6 +272,7 @@ impl Node {
             rail: rail.clone(),
             endpoint: endpoint.clone(),
             actor: actor.clone(),
+            relayed: relay.n0_services || !relay.relay_urls.is_empty(),
             api_port: api.addr().port(),
             room: tokio::sync::watch::Sender::new(BTreeMap::new()),
         });
@@ -410,14 +414,67 @@ impl Node {
             Err(e) => return stopped(e.to_string()),
         };
         let url = format!("{base}/internal/ring/sync");
-        let out = exchange(http, &url, &self.host.rail, namespace).await;
+        let mut out = exchange(http, &url, &self.host.rail, namespace).await;
         tracing::debug!(target: "node", namespace, pulled = out.pulled, pushed = out.pushed, stop = ?out.stop,
             "node: sync_with — one exchange with the peer");
+        // A joiner says its relay once the exchange brought its admission,
+        // and takes it to the peer in a second: until one member holds it,
+        // no member can dial this computer (relay-in-record).
+        if out.stop.is_none() && self.host.say_relay() {
+            out.pushed += exchange(http, &url, &self.host.rail, namespace)
+                .await
+                .pushed;
+        }
         out
+    }
+
+    /// Say in each group held where this computer is reached ([`Host::say_relay`]):
+    /// before a link is printed, so a joiner can dial back its issuer.
+    pub fn say_relay(&self) -> bool {
+        self.host.say_relay()
     }
 }
 
 impl Host {
+    /// Say in each group held where this computer is reached — its home
+    /// relay, or none when it reaches the network through none — by
+    /// svrngs-core's `RelayAt`, which writes only when the record says
+    /// otherwise (relay-in-record). With relays and none reached yet it
+    /// says nothing, so a computer starting never withdraws its relay.
+    /// Whether anything was written.
+    pub(crate) fn say_relay(&self) -> bool {
+        let home = self.endpoint.addr().relay_urls().next().cloned();
+        if home.is_none() && self.relayed {
+            tracing::debug!(target: "node", "node: no relay reached yet, so the record keeps what it says of this computer");
+            return false;
+        }
+        let at = svrngs_core::RelayAt {
+            key: self.actor.clone(),
+            url: home.map(Into::into),
+        };
+        let mut wrote = false;
+        for namespace in self.rail.namespaces().unwrap_or_default() {
+            match self.rail.commit(&namespace, &at) {
+                Ok(Ok(said)) => wrote |= !said.is_empty(),
+                Ok(Err(why)) => {
+                    tracing::debug!(target: "node", namespace, ?why, "node: this computer's relay not said in the group")
+                }
+                Err(e) => {
+                    tracing::warn!(target: "node", namespace, error = %e, "node: this computer's relay could not be said in the group")
+                }
+            }
+        }
+        wrote
+    }
+
+    /// The contact the computer `actor` is dialled by: its key and the
+    /// relay the first group held here naming it names; `None` when it
+    /// stands in none, or its key is no iroh key.
+    pub(crate) fn contact(&self, actor: &str) -> Option<Contact> {
+        let (_, member) = self.rail.standing_anywhere(actor)?;
+        Some(Contact::named(actor_key(actor)?, member.relay.as_ref()))
+    }
+
     /// This node's journals.
     pub(crate) fn rail(&self) -> &RingRail {
         &self.rail
@@ -467,7 +524,7 @@ impl Host {
         Some(RoundMembers::of(
             peers
                 .into_iter()
-                .map(|(actor, person, key)| (format!("{person}/{}", &actor[..8]), key))
+                .map(|(actor, person, contact)| (format!("{person}/{}", &actor[..8]), contact))
                 .collect(),
         ))
     }
@@ -522,8 +579,8 @@ impl Host {
     fn standing_peers(
         &self,
         groups: &[(String, BTreeMap<String, Member>)],
-    ) -> Vec<(String, Person, PublicKey)> {
-        let mut keys: BTreeMap<String, (Person, PublicKey)> = BTreeMap::new();
+    ) -> Vec<(String, Person, Contact)> {
+        let mut keys: BTreeMap<String, (Person, Contact)> = BTreeMap::new();
         for (namespace, standing) in groups {
             for (actor, person, key) in dialled(&self.actor, namespace, standing) {
                 if keys.contains_key(actor) {
@@ -551,10 +608,10 @@ impl Host {
         let mut peers = self.standing_peers(groups);
         peers.retain(|(actor, _, _)| Some(actor.as_str()) != asker);
         let mut asks = Vec::with_capacity(peers.len());
-        for (actor, person, key) in peers {
+        for (actor, person, contact) in peers {
             let transport = self.transport.clone();
             asks.push(tokio::spawn(async move {
-                let asked = tokio::time::timeout(ANSWER_WITHIN, ask_lends(&transport, &actor, key));
+                let asked = tokio::time::timeout(ANSWER_WITHIN, ask_lends(&transport, &actor, contact));
                 let answer = asked.await.unwrap_or_else(|_| {
                     tracing::debug!(target: "node", actor, within_ms = ANSWER_WITHIN.as_millis() as u64,
                         "node: lends — the computer did not answer in time, so it is named unanswered");
@@ -605,9 +662,10 @@ pub(crate) fn dialled<'a>(
     this: &str,
     namespace: &str,
     standing: &'a BTreeMap<String, Member>,
-) -> Vec<(&'a String, &'a Person, PublicKey)> {
+) -> Vec<(&'a String, &'a Person, Contact)> {
     let mut out = Vec::new();
-    for (actor, Member { person, device, .. }) in standing {
+    for (actor, m) in standing {
+        let (person, device) = (&m.person, m.device);
         if actor == this {
             continue;
         }
@@ -620,7 +678,7 @@ pub(crate) fn dialled<'a>(
             tracing::warn!(target: "node", namespace, actor, "node: a standing key is not an iroh key, so it is not dialled");
             continue;
         };
-        out.push((actor, person, key));
+        out.push((actor, person, Contact::named(key, m.relay.as_ref())));
     }
     out
 }
@@ -637,12 +695,11 @@ enum Answered {
 /// Ask the computer `key` what it lends. A request that fails is asked
 /// again at the connection, where a computer that has not heard of this
 /// one closes it as not admitted (`demo/runs/first-minute/2026-10-12/`).
-async fn ask_lends(transport: &IrohTransport, actor: &str, key: PublicKey) -> Answered {
+async fn ask_lends(transport: &IrohTransport, actor: &str, contact: Contact) -> Answered {
     #[derive(serde::Deserialize)]
     struct Answer {
         lends: Vec<Offered>,
     }
-    let contact = Contact::by_key(key);
     let Some(base) = transport.base_url(&contact).await else {
         tracing::debug!(target: "node", actor, "node: lends — no dialable path to the computer");
         return Answered::Unanswered;
@@ -682,12 +739,15 @@ async fn ask_lends(transport: &IrohTransport, actor: &str, key: PublicKey) -> An
 pub const PEOPLE_LENDS_ROUTE: &str = "/people/lends";
 
 /// A lend as a member is told it when asking what the people of its
-/// groups lend: whose it is, the key their computer is dialled by, and
-/// the lend (DESIGN §3, call 4: the asker dials the lender itself).
+/// groups lend: whose it is, the key their computer is dialled by and the
+/// relay its group names for it, `null` when it names none
+/// (relay-in-record), and the lend (DESIGN §3, call 4: the asker dials the
+/// lender itself).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Lending {
     pub person: Person,
     pub key: String,
+    pub relay: Option<String>,
     #[serde(flatten)]
     pub offered: Offered,
 }
@@ -716,9 +776,8 @@ impl Asking {
         if actor == self.host.actor {
             return crate::door::offered(&self.door).await.ok();
         }
-        let key = actor_key(actor)?;
-        match tokio::time::timeout(ANSWER_WITHIN, ask_lends(&self.host.transport, actor, key)).await
-        {
+        let asked = ask_lends(&self.host.transport, actor, self.host.contact(actor)?);
+        match tokio::time::timeout(ANSWER_WITHIN, asked).await {
             Ok(Answered::Lends(lends)) => Some(lends),
             _ => None,
         }
@@ -794,15 +853,22 @@ impl Asking {
     ) -> Result<(Vec<Lending>, Unlisted), Response> {
         let offered = crate::door::offered(&self.door).await?;
         let others = self.host.lends_in(groups, asker).await;
+        let relay = |key: &str| {
+            groups
+                .iter()
+                .find_map(|(_, m)| Some(m.get(key)?.relay.as_ref()?.to_string()))
+        };
         let mut lent: Vec<Lending> = offered
             .into_iter()
             .map(|offered| Lending {
                 person: own.clone(),
+                relay: relay(&self.host.actor),
                 key: self.host.actor.clone(),
                 offered,
             })
             .chain(others.lent.into_iter().map(|l| Lending {
                 person: l.person,
+                relay: relay(&l.key),
                 key: l.key,
                 offered: l.offered,
             }))

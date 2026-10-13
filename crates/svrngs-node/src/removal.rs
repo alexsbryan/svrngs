@@ -164,13 +164,12 @@ async fn remove(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outc
             decides: decides(&after),
         };
     }
+    // Each with the relay the record named before the cut (relay-in-record).
     let computers = cut
         .into_iter()
-        .filter(|k| {
-            before
-                .members
-                .get(k)
-                .is_some_and(|m| m.device == Device::Computer)
+        .filter_map(|k| {
+            let m = before.members.get(&k)?;
+            (m.device == Device::Computer).then(|| (k, m.relay.clone()))
         })
         .collect();
     tokio::spawn(tell(
@@ -187,19 +186,19 @@ async fn remove(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outc
 async fn tell(
     at: Asking,
     group: String,
-    computers: Vec<String>,
+    computers: Vec<(String, Option<svrngs_core::relay::Url>)>,
     lines: Vec<crate::Op<crate::SignedOp>>,
 ) {
     let (Ok(http), Ok(digest)) = (at.host.http(), at.host.rail().digest(&group)) else {
         tracing::warn!(target: "removal", group, "removal: no client or digest, so the removed computers are not told");
         return;
     };
-    for actor in computers {
+    for (actor, relay) in computers {
         let Some(key) = actor_key(&actor) else {
             tracing::debug!(target: "removal", group, actor, "removal: the removed key is no computer's address, so it is not told");
             continue;
         };
-        let contact = Contact::by_key(key);
+        let contact = Contact::named(key, relay.as_ref());
         let Some(base) = at.host.transport().base_url(&contact).await else {
             tracing::debug!(target: "removal", group, actor, "removal: no path to the removed computer, so it is not told");
             continue;

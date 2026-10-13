@@ -160,9 +160,15 @@ async fn bind(key: Vec<u8>, issuer: Option<iroh::PublicKey>, relay: Option<iroh:
 }
 
 /// Dial `to`, a computer's key in 64 hex, else the token's issuer, from
-/// `bound` on `alpn`: through the relay the token carries, else wherever
-/// iroh's lookup finds it.
-async fn reach(bound: &Bound, to: Option<String>, alpn: Alpn) -> Result<iroh::endpoint::Connection, JsError> {
+/// `bound` on `alpn`: through `via`, the relay its group names for it
+/// (relay-in-record), else the relay the token carries, said, else
+/// wherever iroh's lookup finds it.
+async fn reach(
+    bound: &Bound,
+    to: Option<String>,
+    via: Option<String>,
+    alpn: Alpn,
+) -> Result<iroh::endpoint::Connection, JsError> {
     let node_id = match to {
         None => match bound.issuer {
             Some(issuer) => issuer,
@@ -178,7 +184,16 @@ async fn reach(bound: &Bound, to: Option<String>, alpn: Alpn) -> Result<iroh::en
             Err(_) => refuse!("LAYER parse: REFUSED — {to:?} is not a computer's key"),
         },
     };
-    let addr = match &bound.relay {
+    let named = match via.as_deref().map(relay::parse) {
+        None => None,
+        Some(Ok(url)) => Some(url),
+        Some(Err(e)) => refuse!("LAYER parse: REFUSED — {via:?} is not a relay: {e}"),
+    };
+    match &named {
+        Some(relay) => t!("LAYER parse: ok — {node_id}'s group names its relay {relay}"),
+        None => t!("LAYER parse: the group names no relay for {node_id}, so it is dialled through the link's, else found by lookup"),
+    }
+    let addr = match named.as_ref().or(bound.relay.as_ref()) {
         Some(relay) => iroh::EndpointAddr::from_parts(node_id, [iroh::TransportAddr::Relay(relay.clone())]),
         None => iroh::EndpointAddr::from_parts(node_id, []),
     };
@@ -286,7 +301,7 @@ pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsE
 /// endpoint of its own: the dial's [`Dialled::close`] closes it.
 async fn dial(key: Vec<u8>, token: String, to: Option<String>, alpn: Alpn) -> Result<Dialled, JsError> {
     let bound = bind_for(key, &token).await?;
-    let conn = reach(&bound, to, alpn).await?;
+    let conn = reach(&bound, to, None, alpn).await?;
     Ok(Dialled {
         ep: Some(bound.ep),
         conn,
@@ -364,19 +379,20 @@ pub struct Endpoint {
 
 #[wasm_bindgen]
 impl Endpoint {
-    /// Dial the computer whose key is `lender`, 64 hex, on the members'
-    /// protocol: a phone dials whoever lends a service itself (DESIGN §3,
-    /// call 4). The dial's [`Dialled::close`] closes only its connection.
-    pub async fn dial(&self, lender: String) -> Result<Dialled, JsError> {
-        let conn = reach(&self.bound, Some(lender), Alpn::Member).await?;
+    /// Dial the computer whose key is `lender`, 64 hex, through `relay`,
+    /// the one its group names, on the members' protocol: a phone dials
+    /// whoever lends a service itself (DESIGN §3, call 4). The dial's
+    /// [`Dialled::close`] closes only its connection.
+    pub async fn dial(&self, lender: String, relay: Option<String>) -> Result<Dialled, JsError> {
+        let conn = reach(&self.bound, Some(lender), relay, Alpn::Member).await?;
         Ok(Dialled { ep: None, conn })
     }
 
-    /// Dial the computer whose key is `lender` on the pass holders'
-    /// protocol, as a pass's holder: every request presents the pass
-    /// (u5-2).
-    pub async fn dial_lend(&self, lender: String) -> Result<Dialled, JsError> {
-        let conn = reach(&self.bound, Some(lender), Alpn::Lend).await?;
+    /// Dial the computer whose key is `lender` through `relay`, as
+    /// [`Self::dial`], on the pass holders' protocol, as a pass's holder:
+    /// every request presents the pass (u5-2).
+    pub async fn dial_lend(&self, lender: String, relay: Option<String>) -> Result<Dialled, JsError> {
+        let conn = reach(&self.bound, Some(lender), relay, Alpn::Lend).await?;
         Ok(Dialled { ep: None, conn })
     }
 

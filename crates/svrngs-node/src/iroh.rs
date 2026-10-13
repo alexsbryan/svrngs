@@ -100,6 +100,20 @@ impl Contact {
             iroh_direct_addrs: Vec::new(),
         }
     }
+
+    /// A member by its key and the relay its group's record names for it
+    /// (relay-in-record; DESIGN §6). With none named its key alone, said:
+    /// only an address lookup finds it then, and with none it is not dialled.
+    pub fn named(key: PublicKey, relay: Option<&svrngs_core::relay::Url>) -> Self {
+        if relay.is_none() {
+            tracing::debug!(target: "transport", peer = %key.fmt_short(),
+                "transport: the group names no relay for this computer — its key alone, which only an address lookup finds");
+        }
+        Self {
+            relay_url: relay.map(ToString::to_string),
+            ..Self::by_key(key)
+        }
+    }
 }
 
 /// Client half: resolves a peer's key to a localhost base
@@ -164,10 +178,10 @@ impl IrohTransport {
     /// `None` when there's no usable path (no relay AND no address) and the
     /// endpoint has no address lookup to resolve the key. (svrngs: upstream
     /// refused every bare key, since its mesh gossiped addresses; with no
-    /// gossip a member is dialled by key, and the endpoint's own lookup —
-    /// n0's DNS under `RelayConfig::n0_services` — finds it, DESIGN §8,
-    /// "Four facts".)
-    fn endpoint_addr_for(&self, peer: &Contact) -> Option<iroh::EndpointAddr> {
+    /// gossip a member is dialled by key and the relay its group names,
+    /// relay-in-record, else the endpoint's own lookup — n0's DNS under
+    /// `RelayConfig::n0_services` — finds it, DESIGN §8, "Four facts".)
+    pub(crate) fn endpoint_addr_for(&self, peer: &Contact) -> Option<iroh::EndpointAddr> {
         let mut ea = iroh::EndpointAddr::new(peer.key);
         let mut has_path = false;
         if let Some(relay) = peer.relay_url.as_deref() {

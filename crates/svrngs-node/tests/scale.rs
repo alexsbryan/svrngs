@@ -871,7 +871,9 @@ async fn the_account_matches_a_hand_count() {
     //   (`ingest_all`); each reached member catches up before and after
     //   landing the two (`ingest_all`, `Held::after_write`): 23 + 2 + 2 x 2
     //   = 29; and every register read below catches up first
-    //   (journal.rs `RingJournal::standing`), 10: 39.
+    //   (journal.rs `RingJournal::standing`), 10; and node 0 saying where
+    //   it is reached before it dials (ring_sync.rs `run_one_round`,
+    //   `Host::say_relay`), a `RelayAt` that writes nothing, 1: 40.
     // - register: node 0 lists its members (node.rs `standings`) and then
     //   offers the group to them (`run_one_round`); each member admits node
     //   0's one connection (node.rs `admit_dialer`) and checks each of 3
@@ -884,7 +886,7 @@ async fn the_account_matches_a_hand_count() {
         "acts_moved": 4,
         "cpu_s": null, "wall_s": null,
         "folds": {
-            "write_index": {"kept": 39, "rebuilt": 0},
+            "write_index": {"kept": 40, "rebuilt": 0},
             "digest": {"kept": 23, "rebuilt": 0},
             "offer": {"kept": 6, "rebuilt": 4},
             "register": {"kept": 7, "rebuilt": 3},

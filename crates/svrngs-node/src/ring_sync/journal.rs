@@ -26,16 +26,17 @@ pub struct RoundMembers {
 }
 
 impl RoundMembers {
-    /// The members a round dials, each a `(name, key)`, dialled by its key
-    /// alone. With no presence (DESIGN §8, "Four facts") none is skipped as
-    /// offline: an offline member costs its dial.
-    pub fn of(members: Vec<(String, PublicKey)>) -> Self {
+    /// The members a round dials, each a `(name, contact)`: its key and
+    /// the relay its group names (relay-in-record). With no presence
+    /// (DESIGN §8, "Four facts") none is skipped as offline: an offline
+    /// member costs its dial.
+    pub fn of(members: Vec<(String, Contact)>) -> Self {
         let exchanged_with = members.iter().map(|(name, _)| name.clone()).collect();
         let peers = members
             .into_iter()
-            .map(|(name, key)| OnlinePeer {
-                contact: Contact::by_key(key),
-                pubkey: Some(key),
+            .map(|(name, contact)| OnlinePeer {
+                pubkey: Some(contact.key),
+                contact,
                 name,
             })
             .collect();

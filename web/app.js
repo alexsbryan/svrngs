@@ -210,7 +210,7 @@ function open(group, key, lent, unanswered, l, at) {
   }
   said.textContent = `Opening ${named(l)}…`;
   const reads = lent.filter((o) => o !== l && (l.reads ?? []).includes(o.kind));
-  const lends = [l, ...reads].map((o) => ({ label: label(o.key, o.name), key: o.key, name: o.name, kind: o.kind, person: o.person, asks: o.asks }));
+  const lends = [l, ...reads].map((o) => ({ label: label(o.key, o.name), key: o.key, relay: o.relay ?? null, name: o.name, kind: o.kind, person: o.person, asks: o.asks }));
   const holder = crypto.getRandomValues(new Uint8Array(32));
   const until = Math.floor(Date.now() / 1000) + PASS_LIFE;
   // Each app at an address of its own under this page's host (DESIGN §7),
@@ -236,7 +236,7 @@ function open(group, key, lent, unanswered, l, at) {
 // its lender's door, dialled as the person from `dialler`'s endpoint.
 async function choose(dialler, l, app, said) {
   const away = `${l.person}’s computer did not answer. Try again later.`;
-  const d = await reach((await dialler()).dial(l.key), away);
+  const d = await reach((await dialler()).dial(l.key, l.relay ?? null), away);
   try {
     await post(d, `/choices/${label(l.key, l.name)}`, JSON.stringify({ app, said }), () => `${l.person}’s computer did not keep your answer.`);
   } finally {
@@ -280,7 +280,7 @@ async function uses(lent, dialler, shown) {
   for (const l of lent.filter((o) => o.asks)) {
     const line = (words) => shown.appendChild(Object.assign(document.createElement('li'), { textContent: words }));
     try {
-      const d = await reach((await dialler()).dial(l.key), '');
+      const d = await reach((await dialler()).dial(l.key, l.relay ?? null), '');
       const res = await d.fetch('GET', `/choices/${label(l.key, l.name)}`, [['accept', 'application/json']], null);
       // The body is read off the dial, so read whole before it closes: a
       // body that comes after its head is cut off by the close (bash-film-load).

@@ -136,7 +136,8 @@ function dialFor(lender) {
       if (!endpoint) trace(`RUNTIME: opening the endpoint as the pass's holder`);
       endpoint ??= holder_endpoint(holder, handed.relay);
       trace(`RUNTIME: dialling ${lender} as the pass's holder`);
-      return (await endpoint).dial_lend(lender);
+      // Through the relay its group names for the lender (relay-in-record).
+      return (await endpoint).dial_lend(lender, handed.lends.find((l) => l.key === lender)?.relay ?? null);
     })();
     dials.set(lender, opening);
     opening.catch(() => dials.delete(lender));

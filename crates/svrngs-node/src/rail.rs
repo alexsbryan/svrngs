@@ -51,7 +51,7 @@ use axum::Json;
 use serde::Deserialize;
 
 // rail.rs's refusal body came over with the sync route (u1-3), so there is one.
-use crate::iroh::{Contact, IrohTransport};
+use crate::iroh::IrohTransport;
 use crate::live::{push_ephemeral, LivePeer};
 use crate::node::dialled;
 use crate::register::{Member, Standing};
@@ -567,18 +567,18 @@ async fn push_answer(api: &RailApi, namespace: &str, body: axum::body::Bytes) ->
 }
 
 /// The peers a live payload in `namespace` is offered to: every key
-/// standing in it but `this` node's, each by its key alone, named by its
-/// person: the keys the round dials ([`crate::node::dialled`]), so neither
+/// standing in it but `this` node's, each by its key and the relay its
+/// group names (relay-in-record), named by its person: the keys the round dials ([`crate::node::dialled`]), so neither
 /// a browser's key (u4-1) nor one that is not an iroh key is offered it.
 /// New (u3-3): upstream walked the mesh's Online members.
 fn live_peers(this: &str, namespace: &str, standing: &BTreeMap<String, Member>) -> Vec<LivePeer> {
     let mut peers = Vec::new();
-    for (actor, person, key) in dialled(this, namespace, standing) {
+    for (actor, person, contact) in dialled(this, namespace, standing) {
         tracing::debug!(target: "rails", namespace, actor, %person, "rail live: a person stands in the group, to offer the payload");
         peers.push(LivePeer {
             node: actor.clone(),
             name: Some(person.to_string()),
-            contact: Contact::by_key(key),
+            contact,
         });
     }
     peers
