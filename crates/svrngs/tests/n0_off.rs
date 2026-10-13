@@ -5,19 +5,28 @@
 //! [$N0OFF_RELAY], n0_services: false }`, the command's own posture since
 //! relay-default (`cli::reach`), its relay this run's on 127.0.0.1.
 //! `the_relay` is iroh's relay on 127.0.0.1, plain HTTP, as the browser
-//! tests' harness starts it. Ignored: `scripts/check.sh` never runs them;
-//! run.py does, each a process of its own, by name:
+//! tests' harness starts it. `the_verbs_relay` is `svrngs relay`'s own
+//! `relay::run` over `$SVRNGS_DIR`, at an address of this host's, plain
+//! HTTP (`relay::At::Here`), for relay-run's run
+//! (`demo/runs/c/no-n0-2026-10-13/run.py`): the verb as typed takes a name
+//! and serves TCP 80 and 443 and UDP 7842 on every interface with Let's
+//! Encrypt's certificate (`src/relay.rs`, `spawn`), which this host cannot
+//! be given and must not open. Ignored: `scripts/check.sh` never runs
+//! them; a run's driver does, each a process of its own, by name:
 //!
 //! ```text
 //! N0OFF_RELAY_AT=<file> <test binary> --ignored --exact the_relay
 //! N0OFF_RELAY=<url> N0OFF_ARGS=<the args, a line each> HOME=<home> \
 //!   <test binary> --ignored --exact the_command --nocapture
+//! SVRNGS_DIR=<data> RELAY_AT=<127.0.0.1:port> [RELAY_OPEN=1] \
+//!   <test binary> --ignored --exact the_verbs_relay --nocapture
 //! ```
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 
 use iroh_relay::server::{RelayConfig as RelayServer, Server, ServerConfig};
 use svrngs::cli;
+use svrngs::relay::{self, At, Relay};
 use svrngs_node::iroh::RelayConfig;
 
 fn var(name: &str) -> String {
@@ -81,4 +90,17 @@ async fn the_relay() {
     std::fs::write(var("N0OFF_RELAY_AT"), &url).unwrap();
     eprintln!("relay at {url}");
     svrngs_node::node::asked_to_stop().await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "relay-run's run, run by demo/runs/c/no-n0-2026-10-13/run.py"]
+async fn the_verbs_relay() {
+    traced();
+    let at = At::Here(var("RELAY_AT").parse().expect("RELAY_AT is an address"));
+    let open = std::env::var_os("RELAY_OPEN").is_some();
+    let root = cli::data_dir().expect("a data dir");
+    if let Err(e) = relay::run(Relay { at, open }, &root).await {
+        eprintln!("svrngs: {e}");
+        std::process::exit(i32::from(e.exit_code()));
+    }
 }
