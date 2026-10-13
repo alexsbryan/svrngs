@@ -102,6 +102,8 @@ use svrngs_node::removal::{Outcome, RemovalAsk, HANDOVERS_ROUTE, REMOVALS_ROUTE}
 use svrngs_node::room;
 use svrngs_node::{Device, Joined, Person, SigningKey};
 
+/// Where a joiner meets its group (the node's, start-group).
+pub use crate::group::kept_relay;
 use crate::group::{self, Name, Seed};
 use crate::identity::{self, KeyError};
 use crate::issuer;
@@ -1592,27 +1594,12 @@ pub async fn join_group(
     })
 }
 
-/// Where `new` and joining put a group's folder (v1-onboarding (d);
-/// bash-first-minute (d)): `~/svrngs/`
-/// and the group's name, which every member who joined derives alike, so
-/// their folders are one; `/`, `\` and `:` read as `-` and leading dots
-/// dropped, so the name stays one directory under it, else the id's start.
-fn folder_place(seed: &Seed) -> Option<PathBuf> {
-    let home = std::env::var_os("HOME").filter(|h| !h.is_empty())?;
-    let name = seed.name().as_str().replace(['/', '\\', ':'], "-");
-    let name = match name.trim_start_matches('.') {
-        "" => seed.id()[..8].to_string(),
-        name => name.to_string(),
-    };
-    Some(PathBuf::from(home).join("svrngs").join(name))
-}
-
-/// The group's folder kept the same at [`folder_place`] as everyone's,
+/// The group's folder kept the same at [`group::folder_place`] as everyone's,
 /// asked of this node's own API as `share --folder` asks it; or why not,
 /// said beside the join or the `new`, which stands either way.
 async fn folder_at_join(root: &Path, seed: &Seed) -> Said {
     let group = seed.name().clone();
-    let Some(dir) = folder_place(seed) else {
+    let Some(dir) = group::folder_place(seed) else {
         tracing::debug!(target: "cli", group = %seed.id(), "cli: join — no $HOME, so no folder placed");
         let why = "this computer names no home folder ($HOME)".to_string();
         return Said::Folder {
@@ -1852,17 +1839,6 @@ async fn wait_online(node: &Node, tried: &[String]) {
             eprintln!("svrngs: this computer has not reached {} in {secs} s, where its group reaches it; it goes on, and keeps trying.", tried.join(" or "));
         }
     }
-}
-
-/// The relay a joiner keeps from its link's `carried`, where it meets the
-/// group from then on: at n0's (`n0`), none when it is one of n0's relays —
-/// where the issuer's build met its groups, not the group's own, which kept
-/// would outlast the operator's switch (DESIGN §10, 2026-10-13). At
-/// svrngs's every relay is kept, n0's list never built there.
-pub fn kept_relay(carried: Option<RelayUrl>, n0: bool) -> Option<RelayUrl> {
-    let n0 = n0 && carried.as_ref().is_some_and(|r| n0_relays().contains(r));
-    tracing::debug!(target: "cli", ?carried, n0, "cli: join — the link's relay kept, unless it is one of n0's at n0's");
-    carried.filter(|_| !n0)
 }
 
 fn keep_refused(seed: &Seed, why: &str) -> Refusal {

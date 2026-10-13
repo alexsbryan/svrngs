@@ -41,6 +41,7 @@ use ed25519_dalek::VerifyingKey;
 
 use crate::iroh::RelayUrl;
 use crate::link::Origin;
+use crate::relay::n0_relays;
 
 /// The one spelling of the seed's file name in a group's directory.
 const SEED_FILE: &str = "seed.json";
@@ -185,6 +186,32 @@ impl crate::node::Host {
         rail.set_seed(&seed.id(), &seed.roster())
             .map_err(|e| e.to_string())
     }
+}
+
+/// Where `new` and joining put a group's folder (v1-onboarding (d);
+/// bash-first-minute (d)): `~/svrngs/`
+/// and the group's name, which every member who joined derives alike, so
+/// their folders are one; `/`, `\` and `:` read as `-` and leading dots
+/// dropped, so the name stays one directory under it, else the id's start.
+pub fn folder_place(seed: &Seed) -> Option<PathBuf> {
+    let home = std::env::var_os("HOME").filter(|h| !h.is_empty())?;
+    let name = seed.name().as_str().replace(['/', '\\', ':'], "-");
+    let name = match name.trim_start_matches('.') {
+        "" => seed.id()[..8].to_string(),
+        name => name.to_string(),
+    };
+    Some(PathBuf::from(home).join("svrngs").join(name))
+}
+
+/// The relay a joiner keeps from its link's `carried`, where it meets the
+/// group from then on: at n0's (`n0`), none when it is one of n0's relays —
+/// where the issuer's build met its groups, not the group's own, which kept
+/// would outlast the operator's switch (DESIGN §10, 2026-10-13). At
+/// svrngs's every relay is kept, n0's list never built there.
+pub fn kept_relay(carried: Option<RelayUrl>, n0: bool) -> Option<RelayUrl> {
+    let n0 = n0 && carried.as_ref().is_some_and(|r| n0_relays().contains(r));
+    tracing::debug!(target: "group", ?carried, n0, "group: join — the link's relay kept, unless it is one of n0's at n0's");
+    carried.filter(|_| !n0)
 }
 
 /// Every group this computer holds a seed for under `root`, the data dir.
