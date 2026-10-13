@@ -449,12 +449,6 @@ impl Node {
     pub fn relayed(&self) -> bool {
         self.host.relayed
     }
-
-    /// Say in each group held where this computer is reached ([`Host::say_relay`]):
-    /// before a link is printed, so a joiner can dial back its issuer.
-    pub fn say_relay(&self) -> bool {
-        self.host.say_relay()
-    }
 }
 
 impl Host {
@@ -464,7 +458,7 @@ impl Host {
     /// otherwise (relay-in-record). With relays and none reached yet it
     /// says nothing, so a computer starting never withdraws its relay.
     /// Whether anything was written.
-    pub(crate) fn say_relay(&self) -> bool {
+    pub fn say_relay(&self) -> bool {
         let home = self.endpoint.addr().relay_urls().next().cloned();
         if home.is_none() && self.relayed {
             tracing::debug!(target: "node", "node: no relay reached yet, so the record keeps what it says of this computer");

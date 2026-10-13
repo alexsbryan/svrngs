@@ -139,7 +139,7 @@ async fn groups_that_cannot_be_read_are_said_so_never_taken_as_none() {
     let rings = dir.path().join("rings");
     std::fs::set_permissions(&rings, std::fs::Permissions::from_mode(0o000)).unwrap();
 
-    assert!(!sam.say_relay(), "nothing is written in groups not read");
+    assert!(!sam.host().say_relay(), "nothing is written in groups not read");
     let refused = relay_over(dir.path(), false).await.map(|_| ());
     std::fs::set_permissions(&rings, std::fs::Permissions::from_mode(0o755)).unwrap();
     let traced = String::from_utf8_lossy(&TRACES.lock().unwrap()).into_owned();
