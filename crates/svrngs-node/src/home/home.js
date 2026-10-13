@@ -83,7 +83,7 @@ function list(all) {
       // Each with its address for a program, copied by a button that says
       // so, then said (start-home): the clipboard may refuse a page.
       for (const l of g.lent) {
-        const li = ul.appendChild(el('li', '', Object.assign(el('a', `Open ${named(l)}`), { href: l.origin }), ' '));
+        const li = ul.appendChild(el('li', '', Object.assign(el('a', `Open ${named(l)}`), { href: l.origin, target: '_blank' }), ' '));
         li.append(button('Copy its address for a program', () => Promise.resolve().then(() => navigator.clipboard.writeText(l.origin)).then(() => li.append(` Copied: ${l.origin}`), () => li.append(` Copy it from here: ${l.origin}`))));
       }
       // Each computer that did not say by how (bash-first-minute (c)):
@@ -102,7 +102,6 @@ function list(all) {
 // lender now, each with Stop.
 async function uses(lent) {
   const s = el('section', '', el('h2', 'What apps use'));
-  main.append(s);
   for (const l of lent.filter((l) => l.asks)) {
     const at = label(l);
     try {
@@ -114,6 +113,8 @@ async function uses(lent) {
       s.append(el('p', `${unasked(l)} ${e.message}`));
     }
   }
+  // Shown only when there is something to say (start-home).
+  if (s.children.length > 1) main.append(s);
 }
 
 // What this computer lends, each with how many it lets in at once — its
@@ -134,8 +135,8 @@ async function lending() {
     const n = l.limit;
     const li = el('li', `${l.name}: ${n ? `up to ${n} ${n === 1 ? 'person' : 'people'}` : 'everyone in your groups'} at once, ${l.using} using it now. `);
     const change = (to) => post('/lent', { lend: l.name, to }).then(() => location.reload(), (e) => li.append(e.message));
-    const many = Object.assign(el('input'), { type: 'number', min: 1, value: n ?? '', ariaLabel: 'How many at once' });
-    li.append(many, button('Let in this many', () => (/^[1-9][0-9]*$/.test(many.value) ? change({ limit: Number(many.value) }) : li.append('Say how many: 1 or more. '))));
+    const many = Object.assign(el('input'), { type: 'number', min: 1, value: n ?? '' });
+    li.append(el('label', 'How many people at once: ', many), button('Let in this many', () => (/^[1-9][0-9]*$/.test(many.value) ? change({ limit: Number(many.value) }) : li.append('Say how many: 1 or more. '))));
     if (n) li.append(button('Let everyone in', () => change({ limit: null })));
     li.append(button('Stop lending', () => change('stop')));
     ul.append(li);

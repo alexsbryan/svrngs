@@ -2243,3 +2243,40 @@ async fn the_home_page_s_links_say_what_they_open(engine: Engine) {
     assert_eq!(seen["read"], "Open ada’s shelf (k)", "{seen:#}");
     drop(ada);
 }
+
+in_both_engines!(
+    /// **Fewer things to puzzle over** (start-home, from start-measure's
+    /// ranked row 8, `demo/runs/start/2026-10-13/README.md` §3 (c) 14 and
+    /// the words to look up): "What apps use" shown only when an app uses
+    /// something; the box's words, what its number is, shown beside it;
+    /// and a thing lent opened in a tab of its own, beside the home page,
+    /// never in its place. Ada lends `shelf`, nothing asking. Planted,
+    /// watched failing: the page as 535e213 left it.
+    the_home_page_shows_less_to_puzzle_over
+);
+async fn the_home_page_shows_less_to_puzzle_over(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
+    lend(dir.path(), "shelf", shelf.port());
+    let seen = home_page(
+        engine,
+        &ada,
+        json!({ "read": "#lent label", "all": "#home h2" }),
+    )
+    .await;
+    eprintln!("the home page's run: {seen:#}");
+    assert_eq!(seen["read"], "How many people at once: ", "{seen:#}");
+    assert!(
+        !seen["all"].to_string().contains("What apps use"),
+        "{seen:#}"
+    );
+    let lent = seen["links"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|l| l["text"] == "Open ada’s shelf (k)");
+    assert_eq!(lent.map(|l| &l["target"]), Some(&json!("_blank")), "{seen:#}");
+    drop(ada);
+}
