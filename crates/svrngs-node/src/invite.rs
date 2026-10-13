@@ -4,10 +4,13 @@
 //! written in the group's record. Moved from the command, behaviour kept:
 //! [`draw`] was svrngs's `issuer::mint`, [`carried`] its `cli::link_relay`,
 //! [`Host::mint`] and [`Host::own_person`] its `cli::mint` and
-//! `cli::own_person`, asked through [`crate::node::Node::host`]. The command keeps what is its own: the clock, the
+//! `cli::own_person`, asked through [`crate::node::Node::host`], and
+//! [`kept_page`] its group.rs `read_origin`. The command keeps what is its own: the clock, the
 //! wait for a relay, and its words.
 
-use svrngs_core::link::{Token, SECRET_LEN};
+use std::path::Path;
+
+use svrngs_core::link::{Origin, Token, SECRET_LEN};
 
 use crate::iroh::{PublicKey, RelayConfig, RelayUrl};
 use crate::node::Host;
@@ -23,6 +26,26 @@ pub const LINK_LIFE_SECS: i64 = 24 * 60 * 60;
 /// a kept word: the issuer's key is fixed, so its part may spell one that
 /// no secret changes.
 const DRAWS: usize = 256;
+
+/// The one spelling of the file in a group's directory that keeps the page
+/// its https links print on (u2-7; svrngs's group.rs writes it).
+pub const ORIGIN_FILE: &str = "origin";
+
+/// The page `dir`, a group's directory, keeps for its https links, or
+/// `None` when it keeps none; why it cannot be read, never an absence
+/// (ARCH 6). Moved from svrngs's group.rs `read_origin`.
+pub fn kept_page(dir: &Path) -> Result<Option<Origin>, String> {
+    match std::fs::read_to_string(dir.join(ORIGIN_FILE)) {
+        Ok(raw) => Origin::parse(&raw)
+            .map(Some)
+            .ok_or_else(|| "not an http(s) address without a '#'".into()),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            tracing::debug!(target: "group", dir = %dir.display(), "group: no origin kept");
+            Ok(None)
+        }
+        Err(e) => Err(e.to_string()),
+    }
+}
 
 /// Why no link was made.
 #[derive(Debug, thiserror::Error)]

@@ -42,8 +42,9 @@ use svrngs_node::link::Origin;
 /// The one spelling of the seed's file name in a group's directory.
 const SEED_FILE: &str = "seed.json";
 
-/// The one spelling of the kept origin's file name in a group's directory.
-const ORIGIN_FILE: &str = "origin";
+// The one spelling of the kept origin's file name in a group's directory:
+// the node's, which reads it for the home page too.
+use svrngs_node::invite::ORIGIN_FILE;
 
 /// The one spelling of the kept relay's file name in a group's directory.
 const RELAY_FILE: &str = "relay";
@@ -104,19 +105,13 @@ pub fn write_origin(dir: &Path, origin: &Origin) -> Result<(), SeedError> {
     keep(dir, path, origin.as_str())
 }
 
-/// The origin kept in `dir`, or `None` when the directory keeps none.
+/// The origin kept in `dir`, or `None` when the directory keeps none, as
+/// the node reads it for the home page too ([`svrngs_node::invite::kept_page`]).
 pub fn read_origin(dir: &Path) -> Result<Option<Origin>, SeedError> {
-    let path = dir.join(ORIGIN_FILE);
-    let Some(raw) = kept(&path)? else {
-        tracing::debug!(target: "group", path = %path.display(), "group: no origin kept");
-        return Ok(None);
-    };
-    Origin::parse(&raw)
-        .map(Some)
-        .ok_or_else(|| SeedError::Read {
-            path,
-            why: "not an http(s) address without a '#'".into(),
-        })
+    svrngs_node::invite::kept_page(dir).map_err(|why| SeedError::Read {
+        path: dir.join(ORIGIN_FILE),
+        why,
+    })
 }
 
 /// Keep `relay` in `dir`, the group's directory, as where this computer
