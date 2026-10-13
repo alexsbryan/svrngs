@@ -1,0 +1,12 @@
+-- no Accept-Encoding:
+HTTP/1.1 415 Unsupported Media Type
+Connection: close
+Content-Type: text/plain
+Server: llama.cpp
+Access-Control-Allow-Origin: 
+Content-Length: 44
+-- Accept-Encoding: gzip:
+200 text/html; charset=utf-8
+stopped
+
+[exited with code 0]

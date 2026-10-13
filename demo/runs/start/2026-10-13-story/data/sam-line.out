@@ -1,0 +1,6 @@
+Getting svrngs for this computer from http://localhost:63714/get/svrngs-darwin-aarch64.tar.gz
+Checked: svrngs-darwin-aarch64.tar.gz matches SHA256SUMS.
+Installed svrngs in /tmp/start-story/sam/.local/bin.
+/tmp/start-story/sam/.local/bin is not on your PATH, so to run svrngs yourself type /tmp/start-story/sam/.local/bin/svrngs; nothing else needs it.
+svrngs runs now, and whenever you log in (/tmp/start-story/sam/Library/LaunchAgents/sh.svrnme.svrngs.plist).
+Your home page, the same address each time svrngs starts: http://svrngs.localhost:63742/
