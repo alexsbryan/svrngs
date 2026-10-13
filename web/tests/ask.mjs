@@ -76,7 +76,8 @@ try {
   await page.waitForSelector('#used li', { timeout: 90_000 });
   out.used = await page.locator('#used').innerText();
   await page.locator('#used button', { hasText: 'Stop' }).click();
-  await page.waitForFunction(() => /stopped/.test(document.getElementById('used').innerText), null, { timeout: 90_000 }).catch(() => {});
+  // Stopped once no yes is left to stop: the list may say "stopped" of other apps before.
+  await page.waitForFunction(() => document.querySelector('#used li') && !document.querySelector('#used button'), null, { timeout: 90_000 }).catch(() => {});
   out.unused = await page.locator('#used').innerText();
   out.pageStopped = await probe();
 

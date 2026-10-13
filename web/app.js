@@ -282,11 +282,14 @@ async function uses(lent, dialler, shown) {
     try {
       const d = await reach((await dialler()).dial(l.key), '');
       const res = await d.fetch('GET', `/choices/${label(l.key, l.name)}`, [['accept', 'application/json']], null);
+      // The body is read off the dial, so read whole before it closes: a
+      // body that comes after its head is cut off by the close (bash-film-load).
+      const answer = res.ok ? await res.json() : null;
       await d.close();
       if (!res.ok) throw new Error(`answered ${res.status}`);
       const appOf = (app) => lent.find((o) => label(o.key, o.name) === app);
       const stop = (app, item) => choose(dialler, l, app, 'stop').then(() => uses(lent, dialler, shown), (e) => item.append(e.message));
-      used(l, (await res.json()).choices, appOf, line, stop);
+      used(l, answer.choices, appOf, line, stop);
     } catch (e) {
       trace(`PAGE: what apps use of ${l.name} not asked: ${e}`);
       line(unasked(l));
