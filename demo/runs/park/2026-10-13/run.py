@@ -23,6 +23,7 @@ summary.json. Exit 0 whatever the verdict; the verdict is in summary.json.
 import base64
 import json
 import os
+import re
 import signal
 import socket
 import subprocess
@@ -44,9 +45,14 @@ def say(event, **kw):
     print(json.dumps({"t": time.strftime("%H:%M:%S"), "event": event, **kw}), flush=True)
 
 
+def plain(text):
+    """`text` without the colours the binary's traces carry."""
+    return re.sub(r"\x1b\[[0-9;]*m", "", text)
+
+
 def n0_relays(err_text):
     """n0's relays as the binary listed them: its `reach` trace's relay_urls."""
-    for line in err_text.splitlines():
+    for line in plain(err_text).splitlines():
         if "the relays this computer meets its groups at" in line and "relay_urls=" in line:
             raw = line.split("relay_urls=", 1)[1].split("]", 1)[0].lstrip("[")
             return [u.strip().strip('"') for u in raw.split(",") if u.strip()]
@@ -137,7 +143,7 @@ def engine_run(engine, binary, site):
     r["page"]["lines"] = page.get("lines")
     r["page_err"] = phone_err[-4000:]
     r["samples"] = samples
-    err = err_path.read_text()
+    err = plain(err_path.read_text())
     r["relays"] = n0_relays(err)
     r["link_trace"] = [l for l in err.splitlines() if "the link carries" in l or "no relay — the link" in l]
     r["reach_trace"] = [l for l in err.splitlines() if "the relays this computer meets its groups at" in l]
