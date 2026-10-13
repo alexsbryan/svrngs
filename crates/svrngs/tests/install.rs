@@ -135,10 +135,27 @@ case "$1" in
 esac
 "#;
     let open = "#!/bin/sh\necho \"$*\" >>\"$HOME/stubs/opened\"\n";
-    let systemctl = "#!/bin/sh\necho \"systemctl $*\" >>\"$HOME/stubs/said\"\n";
+    // As systemd --user would: its unit's ExecStart run on `enable --now`,
+    // stopped on `stop`, active while it runs (start-group (d)).
+    let systemctl = r#"#!/bin/sh
+echo "systemctl $*" >>"$HOME/stubs/said"
+unit="$HOME/.config/systemd/user/svrngs.service"
+case "$*" in
+  "--user enable --now svrngs.service")
+    run=$(sed -n 's/^ExecStart=//p' "$unit")
+    dir=$(sed -n 's/^Environment=SVRNGS_DIR=//p' "$unit")
+    SVRNGS_DIR="$dir" $run >>"$dir/svrngs.log" 2>&1 &
+    echo $! >"$HOME/stubs/pid" ;;
+  "--user is-active --quiet svrngs.service") [ -f "$HOME/stubs/pid" ] ;;
+  "--user stop svrngs.service")
+    pid=$(cat "$HOME/stubs/pid"); rm "$HOME/stubs/pid"; kill "$pid"
+    while kill -0 "$pid" 2>/dev/null; do sleep 0.1; done ;;
+esac
+"#;
     let mut files = vec![
         ("launchctl", launchctl.to_string()),
         ("open", open.into()),
+        ("xdg-open", open.into()),
         ("systemctl", systemctl.into()),
     ];
     if let Some(u) = uname {
@@ -337,6 +354,77 @@ async fn the_line_run_twice_installs_runs_at_login_opens_home_and_joins_once() {
     sam.endpoint().close().await;
 }
 
+/// This build's binary under Linux's name too, beside this computer's, for
+/// a run whose `uname` says Linux: the Linux path is run with it here.
+fn as_linux(site: &Path) {
+    let get = site.join("get");
+    std::fs::copy(get.join(tarball()), get.join("svrngs-linux-x86_64.tar.gz")).unwrap();
+    let sums = std::process::Command::new("shasum")
+        .args(["-a", "256", &tarball(), "svrngs-linux-x86_64.tar.gz"])
+        .current_dir(&get)
+        .output()
+        .unwrap();
+    std::fs::write(get.join("SHA256SUMS"), sums.stdout).unwrap();
+}
+
+/// **A founder's one line** (start-group (d)): someone with no link yet
+/// pastes the line the group's page gives with no link, the page's address
+/// in the link's place, `curl -fsSL <page>install.sh | sh -s -- '<page>'`.
+/// It installs svrngs, joins nothing, keeps it running at login — on
+/// macOS by the stand-in for launchctl, on Linux by the one for systemctl,
+/// each starting it as the system would — keeps the page svrngs came from
+/// in the data dir, where a group made on the home page keeps it, and
+/// names and opens the home page, where "Make a group" is. Planted,
+/// watched failing: install.sh as a136f60 left it, joining the page's
+/// address as a link and refusing.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_founder_s_line_installs_keeps_svrngs_at_login_and_opens_the_home_page() {
+    let site = site(None);
+    as_linux(site.path());
+    let port = host(site.path().to_path_buf()).await;
+    let page = format!("http://127.0.0.1:{port}/");
+    let mac = cfg!(target_os = "macos").then_some(None);
+    for uname in mac.into_iter().chain([Some("Linux x86_64")]) {
+        let home = tempfile::tempdir().unwrap();
+        let _started = Started(home.path().to_path_buf());
+        let out = paste(port, &page, home.path(), uname).await;
+        let said = String::from_utf8_lossy(&out.stdout);
+        let err = String::from_utf8_lossy(&out.stderr);
+        assert!(out.status.success(), "{uname:?}: {said}{err}");
+        let bin = home.path().join(".local/bin");
+        assert!(
+            said.contains(&format!("Installed svrngs in {}.", bin.display())),
+            "{said}"
+        );
+        assert!(
+            !said.contains("You're in"),
+            "a founder joins nothing: {said}"
+        );
+        assert!(
+            said.contains("svrngs runs now, and whenever you log in"),
+            "{said}"
+        );
+        let launched = std::fs::read_to_string(home.path().join("stubs/said")).unwrap();
+        let kept = match uname {
+            None => "launchctl bootstrap",
+            Some(_) => "systemctl --user enable --now svrngs.service",
+        };
+        assert_eq!(launched.matches(kept).count(), 1, "{launched}");
+        let data = home.path().join(".svrngs");
+        let api = std::fs::read_to_string(data.join("api")).unwrap();
+        let address = format!(
+            "http://svrngs.localhost:{}/",
+            api.trim().rsplit(':').next().unwrap()
+        );
+        let named = format!("Your home page, the same address each time svrngs starts: {address}");
+        assert!(said.contains(&named), "{said}");
+        let opened = std::fs::read_to_string(home.path().join("stubs/opened")).unwrap();
+        assert_eq!(opened, format!("{address}\n"));
+        let origin = std::fs::read_to_string(data.join("origin")).unwrap();
+        assert_eq!(origin, page, "the page svrngs came from, kept");
+    }
+}
+
 /// The founder has the group's folder from `new` (bash-first-minute (d);
 /// Demo C's dry run, finding 7): `svrngs new trip`, this build's, in a
 /// `HOME` of its own, says where the folder is and makes it at
@@ -520,16 +608,8 @@ async fn a_relay_is_kept_running_beside_svrngs_on_a_mac() {
 #[tokio::test(flavor = "multi_thread")]
 async fn a_relay_on_linux_prints_its_system_unit_and_installs_none() {
     let site = site(None);
-    // This build's binary under Linux's name too: the Linux path is read,
-    // never run, here.
-    let get = site.path().join("get");
-    std::fs::copy(get.join(tarball()), get.join("svrngs-linux-x86_64.tar.gz")).unwrap();
-    let sums = std::process::Command::new("shasum")
-        .args(["-a", "256", &tarball(), "svrngs-linux-x86_64.tar.gz"])
-        .current_dir(&get)
-        .output()
-        .unwrap();
-    std::fs::write(get.join("SHA256SUMS"), sums.stdout).unwrap();
+    // The Linux path is read, never run, here.
+    as_linux(site.path());
     let port = host(site.path().to_path_buf()).await;
     let home = tempfile::tempdir().unwrap();
     let page = format!("http://127.0.0.1:{port}/");

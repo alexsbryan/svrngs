@@ -5,6 +5,11 @@
 #
 #   curl -fsSL <page>install.sh | sh -s -- '<link>' [--as '<your name>']
 #
+# or, for someone with no link yet, who makes a group on their home page
+# (start-group), the page's address where the link goes:
+#
+#   curl -fsSL <page>install.sh | sh -s -- '<page>'
+#
 # or, for a relay (`svrngs relay`; DESIGN §3, "A relay anyone runs"), the
 # page's address where the link goes:
 #
@@ -12,8 +17,10 @@
 #
 # It gets svrngs for this computer from the page's address the link names
 # (else $SVRNGS_FROM), refuses it unless it matches SHA256SUMS there, puts
-# it in ~/.local/bin with no sudo, joins the link as `svrngs join` does,
-# keeps svrngs running whenever this person logs in (a LaunchAgent on
+# it in ~/.local/bin with no sudo, joins the link as `svrngs join` does
+# when there is one, keeps the page it came from in the data dir (where a
+# group made on the home page keeps it, for its https links), keeps
+# svrngs running whenever this person logs in (a LaunchAgent on
 # macOS, a systemd --user unit on Linux), and opens their home page. Run
 # again, it updates in place, and svrngs joins nothing twice. With
 # --relay it joins nothing and keeps `svrngs relay` running instead, beside
@@ -90,6 +97,7 @@ fi
 if [ -f "$kept" ] && stop; then say "Stopped $unit, to update it."; fi
 
 mkdir -p "$bin" "$dir"
+printf '%s' "$from" >"$dir/origin"
 tar -xzf "$tmp/$tarball" -C "$tmp" svrngs
 chmod 755 "$tmp/svrngs"
 if [ -e "$bin/svrngs" ]; then done="Updated"; else done="Installed"; fi
@@ -107,7 +115,8 @@ if [ -n "$relay" ] && [ "$os" = linux ]; then
     "AmbientCapabilities=CAP_NET_BIND_SERVICE" "Restart=on-failure" "[Install]" "WantedBy=multi-user.target"
   exit 0
 fi
-if [ -n "$link" ] && [ -z "$relay" ]; then
+# A link has its token after a `#`; the page's address alone joins nothing.
+if [ "${link#*#}" != "$link" ] && [ -z "$relay" ]; then
   SVRNGS_DIR="$dir" "$bin/svrngs" join "$link" --no-run "$@" ||
     no "svrngs is in $bin, and did not join the group: it said why above."
 fi

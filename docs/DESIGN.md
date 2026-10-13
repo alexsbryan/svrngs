@@ -1650,10 +1650,20 @@ anywhere else: the repository is private and has no releases.
 `install.sh`, POSIX `sh`, names the platform and refuses any other;
 fetches the tarball and the sums from the address the link names and
 refuses a mismatch; installs into `~/.local/bin`, never with `sudo`;
-joins the link as `svrngs join` does; keeps svrngs running at login as
+joins the link as `svrngs join` does; keeps the page it came from in the
+data dir (`<data dir>/origin`), which a group made on the home page keeps
+for its https links (§3, "the home page"); keeps svrngs running at login as
 the person (a LaunchAgent on macOS, a `systemd --user` unit on Linux);
 and opens the home page. Run again, it updates in place and joins
-nothing twice. With the page's address in the link's place and `--relay
+nothing twice. **A founder's one line** (start-group): someone with no
+link yet pastes `curl -fsSL <page>install.sh | sh -s -- '<page>'`, the
+page's address where the link goes, which the group's page opened with
+no link gives; it does all of the above but join, and the home page it
+opens is where they make their group, with no terminal after
+(`crates/svrngs/tests/install.rs`
+`a_founder_s_line_installs_keeps_svrngs_at_login_and_opens_the_home_page`,
+on macOS by its launchctl stand-in and on Linux by its systemctl one,
+each starting svrngs as the system would). With the page's address in the link's place and `--relay
 <name> [--open]` after it, it joins nothing and keeps `svrngs relay`
 running instead (relay-verb (c); §3, "A relay anyone runs"): beside any
 svrngs kept already, a LaunchAgent of its own on macOS, which since 10.14
