@@ -7028,3 +7028,164 @@ only in a trace.
 | I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". web/ and scripts/ exact tiers are could-not-judge. |
 | I9 | 6, 7 | dry-report near tier | Still present: sign_in.rs `of` :336-355 and `forget` :353-368 overlap and pair at 0.924. |
 | I19 | 6 | dry-report, `tests/` scopes; converge and the exact tier in apps/jellyfin/mw | Still present, and said as could-not-judge. converge gives `At` 1 where git grep finds 2. The line-window pass stood in for the tests scopes. |
+
+## REVIEW-audit-relay-auto-2 (2026-10-13, range 778fd4b..8974e7b)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-relay-auto-1, 778fd4ba4
+(ralph/next/relay/STATE.md). The range starts there and ends at 8974e7b,
+the commit that made this row. `git rev-list --count 778fd4b..8974e7b` is
+10, with no merge among them (`--merges`: 0), all on main. It covers one
+unit, relay-run, and the last audit's own `done` (98b32c0).
+
+This audit's own commit before this one is 78cde59: the row's two paths,
+corrected as 41808f5 corrected the last audit's. It opens #132 and #133,
+updates #130, and closes none.
+
+The instrument is ~/dev/commonwealth-ai/target/debug/sovereign-cli,
+sha256 68746bcf…, the last audit's binary (`shasum -a 256`). The embedder
+was the daemon on :9741 serving qwen-embedding-0.6b. The corpus is
+8974e7b's product: crates/, apps/, web/, scripts/, Cargo.toml and
+Cargo.lock, put into /tmp/relayaudit2/prod-8974e7b by `git archive` (267
+files). demo/ is left out because the range's demo/ is one recorded run.
+`code index . --corpus-id prod-8974e7b` gave 3202 chunks in 426 s
+(/tmp/relayaudit2/index.out). `project refresh` gave rust 14477 symbols,
+with typescript and python "skipped (export failed)" (I4;
+/tmp/relayaudit2/refresh.out).
+
+### (1) Net lines per unit, product code
+
+The counts come from `git log --reverse -M --numstat --format='@@%h %s'
+--no-merges 778fd4b..8974e7b`, summed by /tmp/relayaudit2/ledger.py, the
+last audit's script unchanged (/tmp/relayaudit2/ledger.out). Product is
+crates/, apps/, web/ and bridge/. Everything else is counted apart:
+
+- demo/runs/c/no-n0-2026-10-13 +9186: predictions, the driver (run.py,
+  c.mjs, media.sh, copied from dry-2026-10-12-rerun/ and changed as
+  PREDICTIONS.md says, 82b21f5), its data and README
+- docs/DESIGN.md +22 −9 and ralph/next/relay/STATE.md +4 −3
+
+| unit | commits | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| REVIEW-audit-relay-auto-1 (its `done`) | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| relay-run | 8 | 0 | 0 | 0 | 24 | 2 | 22 |
+| this row's own commit | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 10 | 0 | 0 | 0 | 24 | 2 | 22 |
+
+relay-run added nothing to product, as its row says. Its one test change
+is ee76d6d: crates/svrngs/tests/n0_off.rs +24 −2, the ignored
+`the_verbs_relay`, which the run's driver started and `scripts/check.sh`
+never runs.
+
+The size budget, measured by scripts/lean_check.py over a `git archive`
+tree of each end (/tmp/relayaudit2/lean-778fd4b, lean-8974e7b):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 778fd4b, range start | 3121 | 15776 |
+| 8974e7b, range end | **3121 / 3130** | **15776 / 15800** |
+
+The range and this audit move no counted line. **9 lines are left in
+svrngs-core and 24 in the repository** (#80), and relay-run was the
+queue's last row.
+
+### (2) Clones (`code dry-report`)
+
+The only crate dir the range touched is crates/svrngs, in its tests
+alone (`git diff --stat 778fd4b 8974e7b -- crates apps web scripts`:
+crates/svrngs/tests/n0_off.rs only).
+
+**The exact tier was checked against a plant**, in the indexed tree,
+with `project refresh` after each change:
+
+- relay.rs `run` (:157-180) appended to crates/svrngs/src/share.rs was
+  **not** found (0 groups, /tmp/relayaudit2/plant.md). The plant was
+  mine and malformed: relay.rs has 181 lines, and `run`'s closing brace is
+  :181, so the copy did not parse. This is not the instrument's miss.
+- 9a4f755's `reach` (cli.rs:664-693, the last audit's plant) gave **1
+  group**: `reach — crates/svrngs/src/cli.rs:668 == crates/svrngs/src/share.rs:199`,
+  2 copies × 26 lines (/tmp/relayaudit2/plant2.md).
+- relay.rs `spawn` (:106-155, an async fn) gave **1 group**: `spawn —
+  crates/svrngs/src/relay.rs:107 == crates/svrngs/src/share.rs:196`,
+  2 copies × 49 lines (/tmp/relayaudit2/plant3.md).
+- With share.rs restored (`diff` against `git show 8974e7b:` is empty)
+  and `refresh` run again (14477 symbols, −20), the tier found **0**
+  (/tmp/relayaudit2/unplant.md).
+
+Scoped at 0.95 (/tmp/relayaudit2/clean-*_0.95.md):
+
+| scope | locations | exact | near | with a side added in the range |
+|---|---:|---:|---:|---|
+| crates/svrngs/ | 89 | 0 | 0 | none |
+| crates/svrngs/tests/ | 0 | could-not-judge (I19) | could-not-judge | — |
+
+**No exact or near clone has a side the range added**, and the range
+added no product symbol for one to have. The whole-tree pass at 0.90 was
+not run: with no product line added, no group could have a side in the
+range.
+
+The tests scope is could-not-judge (I19), so the line-window pass stood
+in for it: 6 non-trivial lines, whitespace stripped, over test code at
+8974e7b. It is the last audit's script with the range and the blamed
+commit changed (/tmp/relayaudit2/windows.py → windows.out): **177 window
+hits, 81 spans, 0 new.** `the_verbs_relay` repeats no window of
+`the_relay` or `the_command` beside it.
+
+The driver repeats the rerun's. `diff` counts 205 changed lines of
+run.py's 622, 13 of c.mjs's 229 and 7 of media.sh's. A recorded run is
+kept as it ran (#61), so no change.
+
+### Reading the range
+
+- **Never silently substitute** (AGENTS.md 6). relay-run's README names
+  two failures, and neither is a row anywhere (`git grep -n
+  no-n0-2026-10-13 8974e7b -- ralph/`: none). Both are opened here. #132: a phone shown the group's join page in a lend's place when
+  the relay refused the lend's key. #133: a newcomer the relay refused,
+  told that the sender's computer did not answer.
+- **Cite, don't recall** (AGENTS.md 4). Five of the README's numbers
+  were read in its `data/summary.json`, and each matched:
+  - `lsof.sampled` 561, with `lsof.n0_hits` and `ours_hits` `[]`
+  - `n0_in_traces` empty for all eight
+  - `newcomers.*.done` 20548, 18519 and 17933
+  - `cy.film.playing` 3200
+  - `group.cy.film.stopped`, the join page's words
+
+  ce7aaaf's DESIGN §8 and §11 change rewrites rows in place. It adds no
+  section.
+- **Draw the line by ownership** (principle 12). relay-run's samples are
+  the evidence #130 waited for. Nothing the command builds reached n0: 561
+  samples, `n0_hits` empty. Yet svrngs-node's `RelayConfig::default()` is
+  still n0's (guest.rs:63-72), reached only by tests (below).
+- **Glassbox** (AGENTS.md 1). `the_verbs_relay` traces as the verb does
+  (`traced()`) and says its refusal's words before it exits with the
+  verb's exit code (n0_off.rs:95-106).
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges 778fd4b..8974e7b -- crates
+apps web scripts demo` match `\b(struct|enum|trait|type|class)\s+[A-Z]\w*`
+**0 times** (/tmp/relayaudit2/new-types.out). The range defines no type,
+so there is no noun to converge. `the_verbs_relay` uses relay.rs's
+`Relay` and `At`, which the last audit ran (one definition each, with
+`At`'s second in apps/jellyfin/mw a different thing).
+
+### Fixed here
+
+Nothing. The range has no product line, and its test adds no repeated
+span. #132 and #133 each change what a person sees.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 132 | 6, 1 | web/app.js:21-30 (a lend opened from a fresh key holding the person's pass, not their key; web/lend.js:9) and crates/svrngs/src/relay.rs:83-100 (`Admits::on_connect`: a key standing in no group refused, `Access::Deny { reason: None }`) | not fixed: a change in behaviour (who a relay admits, and what the phone says) | A relay that admits only its group lets a phone in and plays it nothing. relay-run saw it (demo/runs/c/no-n0-2026-10-13/README.md, finding 1; DESIGN §11 risk 5). Cy's key `70d8…` was admitted, while the lend's fresh key `2b0c…` was refused 14 times. The film's address showed the join page, "What’s your name? … Join", in the film's place, and the music stopped at "Opening…" (`group.cy.film.stopped`, `music.stopped`). The phone is not told that the relay refused it. svrngs's own relay is `--open`, so a group on the default is untouched. A fix has two parts. The relay admits a key holding a pass signed by a key standing in a group, read from the relay's request if iroh-relay carries one; otherwise how the pass is shown is a decision of its own. And the page says a refusal at the relay as that. Each part needs a test, red first: the browser test with a relay for the group alone. |
+| 133 | 6 | crates/svrngs/src/cli.rs:536 ("the computer that sent this link cannot be reached; it may be off, so try again later") and web/app.js:157 ("The computer that sent this link did not answer through …"); crates/svrngs/src/relay.rs:100 (`Access::Deny { reason: None }`: the refusal carries no reason to the client) | not fixed: a change in behaviour (a person's words) | A newcomer refused at the group's relay is told the sender is off. relay-run saw it (README finding 2; `group.fay.said`, `group.gus`). Fay's key `bfd6…` was refused 11 times and Gus's `d892…` 17 times, each traced at the relay. Yet Fay's line said Sam's computer "cannot be reached; it may be off", and Gus's page said it "did not answer", while Sam's computer was up throughout. A person would wait for Sam. A fix first finds whether iroh-relay 1.0.2 hands the client a deny's reason. If it does, the line and the page say that the group's relay refused this computer or phone. If it does not, they say both causes, not just the one. Each needs a test, red first. |
+| 130 | 12, 6 | crates/svrngs-node/src/guest.rs:63-72 (`RelayConfig::default()`, `n0_services: true`); reached by crates/svrngs-node/tests/common/member.rs, sy_dee.rs, guest/tests.rs, crates/svrngs/tests/new.rs and default_relay.rs | not fixed: a change in behaviour | Updated from relay-run. With the command's own posture, no process opened an address of n0's or `relay.svrnme.sh`'s in 561 samples, and no trace named n0 (`summary.json`, `lsof`, `n0_in_traces`). The n0 default is reached only by tests, so the fix #130 names (no n0 default in `RelayConfig`, n0 kept only where a test names it) waits on nothing the run left open. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | Unchanged by this range: 9 lines left in svrngs-core (3121 / 3130), 24 in the repository (15776 / 15800). |
+| 127, 128, 129, 131 | as recorded | as recorded | not fixed | Not touched by this range. The range has no product line. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". web/ and scripts/ exact tiers are could-not-judge. |
+| I19 | 6 | dry-report, `tests/` scopes | Still present, and said as could-not-judge. The line-window pass stood in. |
