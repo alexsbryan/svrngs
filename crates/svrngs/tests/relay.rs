@@ -143,7 +143,8 @@ async fn answers(url: String) -> bool {
 }
 
 /// `scripts/relay-answers.sh`, which deploy-relay.sh waits on and
-/// deploy-page.sh publishes nothing without (relay-default (c); DESIGN §7):
+/// deploy-page.sh publishes no build meeting its groups at svrngs's without
+/// (relay-default (c), relay-park (d); DESIGN §7):
 /// a relay the verb starts answers; a page answering 200 at its `/ping`, as
 /// a host's wildcard may at the name, does not, nor an address nothing
 /// listens at. Planted: the script taking any 200 as a relay.

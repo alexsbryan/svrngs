@@ -5,9 +5,11 @@
 # no rewrite. Ours (the operator, 2026-10-06) is the Vercel project
 # svrngs-page, its domains group.svrnme.sh and *.group.svrnme.sh, apart from
 # the svrnme.sh landing site. Beside the page, what a computer downloads
-# from it (scripts/build-release.sh; DESIGN §7), once the relay its build
-# meets its groups at answers (scripts/relay-answers.sh). Needs the vercel CLI,
-# logged in to the scope, and build-release.sh's toolchain.
+# from it (scripts/build-release.sh; DESIGN §7): at once for a build that
+# meets its groups at n0's relays, and for one at svrngs's only once that
+# relay answers (scripts/relay-answers.sh) — the switch, `SHIPPED` in
+# crates/svrngs/src/cli.rs, read here. Needs the vercel CLI, logged in to
+# the scope, and build-release.sh's toolchain.
 #
 #   scripts/deploy-page.sh [--project svrngs-page] [--scope svrnmesh]
 set -euo pipefail
@@ -21,11 +23,15 @@ while [ $# -gt 0 ]; do
   esac
 done
 cd "$(dirname "$0")/.."
-# Its computers meet their groups at the build's default relay, so that
-# relay answers before the build is published (DESIGN §7).
-RELAY="$(sed -n 's/^pub const DEFAULT_RELAY: &str = "\(.*\)";$/\1/p' crates/svrngs/src/cli.rs)"
-scripts/relay-answers.sh "$RELAY" ||
-  { echo "deploy-page: ${RELAY:-no relay} does not answer, and this build meets its groups there: run scripts/deploy-relay.sh first" >&2; exit 1; }
+# Where its computers meet their groups, the switch (DESIGN §9): at n0's
+# relays, chosen until the operator flips it; at svrngs's, whose relay
+# answers before the build is published (DESIGN §7); unread, refused.
+case "$(sed -n 's/^pub const SHIPPED: MeetAt = MeetAt::\(.*\);$/\1/p' crates/svrngs/src/cli.rs)" in
+  N0) echo "deploy-page: this build meets its groups at n0's relays, until the switch to svrngs's (DESIGN §9)" ;;
+  Svrngs) RELAY="$(sed -n 's/^pub const DEFAULT_RELAY: &str = "\(.*\)";$/\1/p' crates/svrngs/src/cli.rs)"
+    scripts/relay-answers.sh "$RELAY" || { echo "deploy-page: ${RELAY:-no relay} does not answer, and this build meets its groups there: run scripts/deploy-relay.sh first" >&2; exit 1; } ;;
+  *) echo "deploy-page: cannot read where this build meets its groups (SHIPPED, crates/svrngs/src/cli.rs)" >&2; exit 1 ;;
+esac
 OUT="$(mktemp -d)/site"
 scripts/build-web.sh --out "$OUT"
 scripts/build-release.sh --out "$OUT"

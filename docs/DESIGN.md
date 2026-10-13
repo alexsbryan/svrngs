@@ -1557,18 +1557,22 @@ built cold in 11:31; the Linux two never run, could-not-judge
 (`demo/runs/onboarding/2026-10-11/`). Publishing the binaries with the
 page is the operator's (`scripts/deploy-page.sh`, which builds both into
 one site); until it runs, group.svrnme.sh serves no `install.sh` (404,
-2026-10-11). A build meets its groups at its default relay (§3, "Where a
-computer meets its groups"), so the relay is published first:
-`scripts/deploy-relay.sh` puts up `relay.svrnme.sh` — a DigitalOcean
-droplet in US West, a firewall letting in TCP 80 and 443 and UDP 7842,
-`svrngs relay relay.svrnme.sh --open` from this build as the system unit
-install.sh prints, the name's records at Vercel, svrnme.sh's DNS — and
-waits until it answers; `deploy-page.sh` then refuses to publish while the
-relay `DEFAULT_RELAY` names does not answer (`scripts/relay-answers.sh`:
-its `/ping` 200 and empty, as iroh-relay answers, never a page at the
-name — relay.svrnme.sh answered Vercel's 404, 2026-10-12;
-`crates/svrngs/tests/relay.rs`). Both are the operator's, neither run
-here (relay-default (c)).
+2026-10-11). A build meets its groups where `cli::SHIPPED` says (§3,
+"Where a computer meets its groups"), and `deploy-page.sh` reads it: a
+build at n0's relays, the chosen default until the switch, it publishes
+and says so; a build at svrngs's it refuses to publish while the relay
+`DEFAULT_RELAY` names does not answer (`scripts/relay-answers.sh`: its
+`/ping` 200 and empty, as iroh-relay answers, never a page at the name —
+relay.svrnme.sh answered Vercel's 404, 2026-10-12;
+`crates/svrngs/tests/relay.rs`); a switch it cannot read it refuses. The
+switch is the operator's, in order (§9; §10, 2026-10-13): flip
+`SHIPPED` to `MeetAt::Svrngs`; run `scripts/deploy-relay.sh`, which puts
+up `relay.svrnme.sh` — a DigitalOcean droplet in US West, a firewall
+letting in TCP 80 and 443 and UDP 7842, `svrngs relay relay.svrnme.sh
+--open` from this build as the system unit install.sh prints, the name's
+records at Vercel, svrnme.sh's DNS — and waits until it answers; then
+`deploy-page.sh`. None of it is run here (relay-default (c), relay-park
+(d)).
 
 **A room's devices reach a lend through a member's computer there** (u6-1
 landed it; §3, "The room", calls 2 and 3). A TV takes no link and runs no

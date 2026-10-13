@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 # deploy-relay.sh — put up svrngs's own relay, where every computer's svrngs
-# meets its groups unless a group keeps its own (`DEFAULT_RELAY`,
-# crates/svrngs/src/cli.rs; DESIGN §3, "Where a computer meets its
-# groups"). The operator's, as deploy-page.sh is: written by relay-default
+# meets its groups unless a group keeps its own, once the build ships it
+# (`DEFAULT_RELAY` and `SHIPPED`, crates/svrngs/src/cli.rs; DESIGN §3,
+# "Where a computer meets its groups"). Parked at the gate until the
+# operator starts paying for it (DESIGN §9; the operator, 2026-10-13); the
+# switch, theirs, in order: `SHIPPED` flipped to `MeetAt::Svrngs`, this
+# script, then scripts/deploy-page.sh, which publishes a build meeting its
+# groups at svrngs's only once this relay answers. Written by relay-default
 # (c), never run there. In order:
 #  1. this commit's svrngs for Linux, built here (scripts/build-release.sh);
 #  2. a DigitalOcean droplet in US West (DESIGN §10), a cloud firewall
@@ -15,8 +19,8 @@
 #     its wildcard's answer;
 #  5. a wait until the relay answers (scripts/relay-answers.sh), Let's
 #     Encrypt's certificate asked by the relay once the name leads there.
-# Only then may a build whose default it is be published: deploy-page.sh
-# refuses before. Needs doctl and vercel logged in, an SSH key on the
+# Only then may a build that meets its groups there be published:
+# deploy-page.sh refuses before. Needs doctl and vercel logged in, an SSH key on the
 # DigitalOcean account, and build-release.sh's toolchain. Run again, it
 # makes a second droplet: delete the first.
 #
