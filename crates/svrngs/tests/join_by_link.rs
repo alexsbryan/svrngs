@@ -87,6 +87,21 @@ async fn computer_on(seed: u8, relay: &RelayConfig) -> Computer {
     }
 }
 
+/// Sam's computer makes the group house, as Sam: no page, no `--relay`,
+/// and no relay reached ([`no_relay`]).
+async fn sams_house(sam: &Computer) -> (Seed, Printed) {
+    cli::new_group(
+        &sam.node,
+        name("house"),
+        name("Sam"),
+        None,
+        None,
+        &no_relay(),
+    )
+    .await
+    .expect("Sam makes house")
+}
+
 /// iroh binds the wildcard; a dial in one process needs loopback.
 fn loopback(node: &Node) -> Vec<SocketAddr> {
     node.endpoint()
@@ -232,16 +247,7 @@ fn now() -> i64 {
 #[tokio::test(flavor = "multi_thread")]
 async fn three_people_open_one_link_and_each_is_let_in_once() {
     let sam = computer(1).await;
-    let (seed, printed) = cli::new_group(
-        &sam.node,
-        name("house"),
-        name("Sam"),
-        None,
-        None,
-        &no_relay(),
-    )
-    .await
-    .expect("Sam makes house");
+    let (seed, printed) = sams_house(&sam).await;
     let group = seed.id();
     let mut said = vec![Said::Made {
         seed: seed.clone(),
@@ -517,16 +523,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
 #[tokio::test(flavor = "multi_thread")]
 async fn a_name_that_is_not_one_is_refused_and_nothing_is_written() {
     let sam = computer(1).await;
-    let (seed, printed) = cli::new_group(
-        &sam.node,
-        name("house"),
-        name("Sam"),
-        None,
-        None,
-        &no_relay(),
-    )
-    .await
-    .expect("Sam makes house");
+    let (seed, printed) = sams_house(&sam).await;
     let group = seed.id();
     let link = parsed(&printed, &sam.node);
     let invite = invite_of(&sam.node, &group, &link);
@@ -596,16 +593,7 @@ async fn a_name_that_is_not_one_is_refused_and_nothing_is_written() {
 #[tokio::test(flavor = "multi_thread")]
 async fn a_name_someone_in_the_group_goes_by_is_refused_with_how_to_join() {
     let sam = computer(1).await;
-    let (seed, printed) = cli::new_group(
-        &sam.node,
-        name("house"),
-        name("Sam"),
-        None,
-        None,
-        &no_relay(),
-    )
-    .await
-    .expect("Sam makes house");
+    let (seed, printed) = sams_house(&sam).await;
     let group = seed.id();
     let link = parsed(&printed, &sam.node);
     let file = sam
@@ -652,16 +640,7 @@ async fn a_name_someone_in_the_group_goes_by_is_refused_with_how_to_join() {
 #[tokio::test]
 async fn another_computer_of_sams_joins_as_sam_by_a_link_for_sams_devices() {
     let sam = computer(1).await;
-    let (seed, _) = cli::new_group(
-        &sam.node,
-        name("house"),
-        name("Sam"),
-        None,
-        None,
-        &no_relay(),
-    )
-    .await
-    .expect("Sam makes house");
+    let (seed, _) = sams_house(&sam).await;
     let (_, printed, device) = cli::link_to(&sam.node, "house", None, &no_relay(), true)
         .await
         .expect("Sam's computer makes a link for Sam's devices");
@@ -699,16 +678,7 @@ async fn another_computer_of_sams_joins_as_sam_by_a_link_for_sams_devices() {
 #[tokio::test(flavor = "multi_thread")]
 async fn the_redeem_route_writes_the_device_the_request_names() {
     let sam = computer(1).await;
-    let (seed, printed) = cli::new_group(
-        &sam.node,
-        name("house"),
-        name("Sam"),
-        None,
-        None,
-        &no_relay(),
-    )
-    .await
-    .expect("Sam makes house");
+    let (seed, printed) = sams_house(&sam).await;
     let group = seed.id();
     let link = parsed(&printed, &sam.node);
     let invite = invite_of(&sam.node, &group, &link);
@@ -774,16 +744,7 @@ const HEARD_WITHIN: Duration = Duration::from_secs(5);
 #[tokio::test(flavor = "multi_thread")]
 async fn a_newcomer_lists_what_every_computer_lends_within_seconds() {
     let sam = computer(1).await;
-    let (_, printed) = cli::new_group(
-        &sam.node,
-        name("house"),
-        name("Sam"),
-        None,
-        None,
-        &no_relay(),
-    )
-    .await
-    .expect("Sam makes house");
+    let (_, printed) = sams_house(&sam).await;
     let link = parsed(&printed, &sam.node);
     let ana = computer(2).await;
     knows(&ana, &sam.node);
