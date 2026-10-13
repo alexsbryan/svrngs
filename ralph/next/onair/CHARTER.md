@@ -14,8 +14,10 @@ decision says so.
   primitives?", which ON_AIR §7 answers.
 - 2026-10-13: "Add the on air spike too". It is queued after the start
   queue (`ralph/next/start/`).
-- **The budget is raised for this queue**: the repository's cap from 15,950
-  to 16,250, and svrngs-core's from 3,130 to 3,190. Each raise goes in its
+- **The budget is raised for this queue**: the repository's cap from 16,000
+  to 16,300, and svrngs-core's from 3,130 to 3,190 (asked as 15,950 to
+  16,250; both moved up 50 with the start queue's raise to 16,000, the
+  operator, 2026-10-13). Each raise goes in its
   own commit, with the operator's words and the counts, made by the first
   row that needs it.
 - **Which key signs for an app: the computer's own**, the one that signs its
@@ -73,7 +75,7 @@ stop.
 
 Write `NEEDS_HUMAN.md` and stop for any of these:
 
-- the budget past 16,250, or svrngs-core's past 3,190;
+- the budget past 16,300, or svrngs-core's past 3,190;
 - a real CDN, a bucket, an account, or a public address; 10,000 listeners
   (ON_AIR §5's arithmetic);
 - a second computer, a phone, Safari or HLS (ON_AIR §7, "Left out on

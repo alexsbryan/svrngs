@@ -28,6 +28,14 @@ decision says so.
   technically". The dashboard is the home page, `http://svrngs.localhost:<port>/`
   (`crates/svrngs-node/src/home.rs`, `home/`).
 - "And sure we can queue #126–#129 and #131" (`ralph/REVIEW_FINDINGS.md`).
+- After start-measure (`demo/runs/start/2026-10-13/README.md` §5), asked,
+  the operator chose:
+  - **+50, to 16,000**, so the home page can make a link to invite someone
+    and open the group's folder (the ranked list's rows 10 and 12);
+  - **leaving a group is designed after this queue**, not built in it. No
+    command for it exists, and who may remove whom is the core's
+    (DESIGN §6). Until then the home page says plainly that leaving is
+    not possible yet.
 
 ## Why
 
@@ -80,7 +88,7 @@ stop.
 
 Write `NEEDS_HUMAN.md` and stop for any of these:
 
-- the budget past 15,950, or svrngs-core's past 3,130. A home-page change
+- the budget past 16,000, or svrngs-core's past 3,130. A home-page change
   that does not fit is written there with its line estimate, and the rows
   that fit go on;
 - a second computer or network (two homes), or a real phone on cellular

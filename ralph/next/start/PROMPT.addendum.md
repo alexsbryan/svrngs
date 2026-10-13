@@ -32,9 +32,10 @@ Fences the rows keep:
    svrngs-core and adds no lines there. Nothing of llama-server's is named
    in svrngs's code outside the well-known table (DESIGN §5, the nouns
    gate).
-7. *The budget is 15,950*, and svrngs-core's stays at 3,130 (the operator,
-   2026-10-13, for this queue). The first row past 15,800 raises the cap in
-   its own commit. Each row puts `scripts/lean_check.py` before and after
+7. *The budget is 16,000*, and svrngs-core's stays at 3,130 (the operator,
+   2026-10-13, for this queue: 15,950, raised in c27521f, then +50 after
+   start-measure for the home page). The first part past 15,950 raises the
+   cap to 16,000 in its own commit. Each row puts `scripts/lean_check.py` before and after
    in its commit. Going past either cap is the operator's call.
 8. *Nothing outward-facing.* No server is deployed, no DNS is changed, no
    port is opened on this host's network, and no `sudo` is used.
