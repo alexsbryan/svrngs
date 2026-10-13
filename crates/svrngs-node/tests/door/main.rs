@@ -949,6 +949,61 @@ async fn a_member_asks_what_the_group_s_people_lend_each_with_its_lender_s_key()
     pair.close().await;
 }
 
+/// **A key held in two groups is dialled and told by one relay** (#127):
+/// cy stands in house, which names no relay for cy, and in work, which
+/// names one, and bo stands in both. A dials cy through work's relay for a
+/// folder's fetch and a lend's origin, for the round and the lend asks,
+/// and tells bo that relay beside cy's pad. Planted: house's member taken,
+/// the first group naming the key, which names no relay.
+#[tokio::test]
+async fn a_key_in_two_groups_that_disagree_is_dialled_and_told_by_one_relay() {
+    let (pair, _heads) = lending_heads().await;
+    let (cy, cy_dir) = beside(&pair, NS, 3, "cy").await;
+    lends_on(cy_dir.path(), "pad", 1);
+    let roster = Roster::new(
+        [(Person::parse("ada").unwrap(), vec![actor_of(&signing(1))])]
+            .into_iter()
+            .collect(),
+    );
+    pair.a.rail().set_seed("work", &roster).unwrap();
+    for (person, me) in [("bo", 2), ("cy", 3)] {
+        let admit = svrngs_core::tests_support::Fixture {
+            act: RailAct::Admit {
+                person: Person::parse(person).unwrap(),
+                key: actor_of(&signing(me)),
+                invite: None,
+            },
+            on_behalf_of: None,
+        };
+        pair.a.rail().commit("work", &admit).unwrap().unwrap();
+    }
+    let relay = "https://relay.work.example/";
+    let said = RailAct::Relay {
+        url: Some(relay.into()),
+    };
+    // After cy's `Admit`, in order, as cy's own computer would say it.
+    let said = svrngs_core::tests_support::signed_in("work", &signing(3), unix_now() + 5, 0, said);
+    pair.a.rail().ingest_all("work", &[said]).unwrap();
+
+    let cy_key = actor_of(&signing(3));
+    let want = Some(relay.to_string());
+    let reply = pair.get(svrngs_node::node::PEOPLE_LENDS_ROUTE, "").await;
+    assert_eq!(reply.status, 200, "{}", reply.text);
+    let body = reply.text.split("\r\n\r\n").nth(1).unwrap();
+    let doc: serde_json::Value = serde_json::from_str(body).unwrap();
+    let told = (doc["lent"].as_array().unwrap().iter())
+        .find(|l| l["key"] == cy_key.as_str())
+        .unwrap_or_else(|| panic!("cy's pad not told: {doc:#}"));
+    assert_eq!(told["relay"], serde_json::json!(relay), "{doc:#}");
+    assert_eq!(
+        pair.a.relays_dialled(&cy_key),
+        [want.clone(), want],
+        "bo is told {relay}; a folder's fetch and the origin, then the round and the lend asks"
+    );
+    cy.endpoint().close().await;
+    pair.close().await;
+}
+
 /// A computer whose declarations cannot be read says so to a member who
 /// asks what it lends, on either route (`GET /lends`, u3-5; the people's
 /// lends, u4-5), with one refusal: a 500 in words, never an empty list.

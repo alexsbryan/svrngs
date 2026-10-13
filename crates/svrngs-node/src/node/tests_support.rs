@@ -18,6 +18,16 @@ impl Node {
         &self.host.transport
     }
 
+    /// The relay this computer dials `actor` through, each way it dials:
+    /// a folder's fetch and a lend's origin ([`Host::contact`]), then the
+    /// round and the lend asks ([`Host::standing_peers`]) (#127).
+    pub fn relays_dialled(&self, actor: &str) -> [Option<String>; 2] {
+        let groups = self.host.standings().unwrap_or_default();
+        let round = (self.host.standing_peers(&groups).into_iter())
+            .find_map(|(a, _, contact)| (a == actor).then_some(contact.relay_url)?);
+        [self.host.contact(actor).and_then(|c| c.relay_url), round]
+    }
+
     /// Run one round now, beside the interval's, and say what it moved.
     pub async fn round(&self) -> crate::ring_sync::RoundOutcome {
         crate::ring_sync::run_one_round(self.host.as_ref(), &|| {}).await

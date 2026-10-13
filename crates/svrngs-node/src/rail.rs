@@ -573,7 +573,8 @@ async fn push_answer(api: &RailApi, namespace: &str, body: axum::body::Bytes) ->
 /// New (u3-3): upstream walked the mesh's Online members.
 fn live_peers(this: &str, namespace: &str, standing: &BTreeMap<String, Member>) -> Vec<LivePeer> {
     let mut peers = Vec::new();
-    for (actor, person, contact) in dialled(this, namespace, standing) {
+    let relay = |a: &str| standing.get(a)?.relay.as_ref();
+    for (actor, person, contact) in dialled(this, namespace, standing, relay) {
         tracing::debug!(target: "rails", namespace, actor, %person, "rail live: a person stands in the group, to offer the payload");
         peers.push(LivePeer {
             node: actor.clone(),

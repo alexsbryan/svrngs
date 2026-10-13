@@ -61,6 +61,7 @@ use axum::routing::get;
 use axum::{Extension, Json};
 use serde::{Deserialize, Serialize};
 use svrngs_core::pass::Label;
+use svrngs_core::relay::Url;
 
 use crate::door::LENDS_ROUTE;
 use crate::iroh::{
@@ -484,11 +485,12 @@ impl Host {
     }
 
     /// The contact the computer `actor` is dialled by: its key and the
-    /// relay the first group held here naming it names; `None` when it
+    /// relay the groups held name for it ([`relay_of`]); `None` when it
     /// stands in none, or its key is no iroh key.
     pub(crate) fn contact(&self, actor: &str) -> Option<Contact> {
-        let (_, member) = self.rail.standing_anywhere(actor)?;
-        Some(Contact::named(actor_key(actor)?, member.relay.as_ref()))
+        self.rail.standing_anywhere(actor)?;
+        let groups = self.standings()?;
+        Some(Contact::named(actor_key(actor)?, relay_of(&groups, actor)))
     }
 
     /// This node's journals.
@@ -591,14 +593,16 @@ impl Host {
 
     /// Every key standing in `groups` that is dialled — a computer's,
     /// never a browser's (u4-1) — but this node's, once each, by its
-    /// actor, with the person the first group naming it names.
+    /// actor, with the person the first group naming it names and the
+    /// relay `groups` name for it ([`relay_of`]).
     fn standing_peers(
         &self,
         groups: &[(String, BTreeMap<String, Member>)],
     ) -> Vec<(String, Person, Contact)> {
         let mut keys: BTreeMap<String, (Person, Contact)> = BTreeMap::new();
+        let relay = |a: &str| relay_of(groups, a);
         for (namespace, standing) in groups {
-            for (actor, person, key) in dialled(&self.actor, namespace, standing) {
+            for (actor, person, key) in dialled(&self.actor, namespace, standing, relay) {
                 if keys.contains_key(actor) {
                     continue;
                 }
@@ -669,15 +673,34 @@ impl Host {
     }
 }
 
+/// The relay `key` is dialled through: the first of `groups`, in the order
+/// they are listed, that names one for it. The one rule the round, the lend
+/// asks, a folder's fetch, a lend's origin and the people answer ask
+/// (ralph/REVIEW_FINDINGS.md #127), so a group that has not yet heard where
+/// `key` is reached never stands for one that has. Two that name different
+/// relays are not told apart by age; `say_relay` writes in every group, so
+/// they agree once each has synced.
+pub(crate) fn relay_of<'a>(
+    groups: &'a [(String, BTreeMap<String, Member>)],
+    key: &str,
+) -> Option<&'a Url> {
+    let named = (groups.iter()).find_map(|(ns, m)| Some((ns, m.get(key)?.relay.as_ref()?)));
+    tracing::debug!(target: "node", key, group = named.map(|(ns, _)| ns.as_str()), "node: the relay a key is dialled through, from the first group naming one");
+    named.map(|(_, url)| url)
+}
+
 /// The keys standing in `namespace` that this node, `this`, dials: each a
 /// computer's ([`crate::Device::dialled`], u4-1) and an iroh key, with its
-/// person. The one decider the round, [`Node::lends`] and the live fan-out
+/// person and the relay `relay` gives it — [`relay_of`] the groups held for
+/// the round and [`Node::lends`], the group's own for the live fan-out. The
+/// one decider the round, [`Node::lends`] and the live fan-out
 /// (`rail.rs`'s `live_peers`) ask, so a browser's key is skipped by all
 /// three or by none.
-pub(crate) fn dialled<'a>(
+pub(crate) fn dialled<'a, 'r>(
     this: &str,
     namespace: &str,
     standing: &'a BTreeMap<String, Member>,
+    relay: impl Fn(&str) -> Option<&'r Url>,
 ) -> Vec<(&'a String, &'a Person, Contact)> {
     let mut out = Vec::new();
     for (actor, m) in standing {
@@ -694,7 +717,7 @@ pub(crate) fn dialled<'a>(
             tracing::warn!(target: "node", namespace, actor, "node: a standing key is not an iroh key, so it is not dialled");
             continue;
         };
-        out.push((actor, person, Contact::named(key, m.relay.as_ref())));
+        out.push((actor, person, Contact::named(key, relay(actor))));
     }
     out
 }
@@ -869,22 +892,17 @@ impl Asking {
     ) -> Result<(Vec<Lending>, Unlisted), Response> {
         let offered = crate::door::offered(&self.door).await?;
         let others = self.host.lends_in(groups, asker).await;
-        let relay = |key: &str| {
-            groups
-                .iter()
-                .find_map(|(_, m)| Some(m.get(key)?.relay.as_ref()?.to_string()))
-        };
         let mut lent: Vec<Lending> = offered
             .into_iter()
             .map(|offered| Lending {
                 person: own.clone(),
-                relay: relay(&self.host.actor),
+                relay: relay_of(groups, &self.host.actor).map(ToString::to_string),
                 key: self.host.actor.clone(),
                 offered,
             })
             .chain(others.lent.into_iter().map(|l| Lending {
                 person: l.person,
-                relay: relay(&l.key),
+                relay: relay_of(groups, &l.key).map(ToString::to_string),
                 key: l.key,
                 offered: l.offered,
             }))

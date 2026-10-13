@@ -1481,7 +1481,11 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   carries the relay its group names (`Host::contact`, `Contact::named`):
   the round, the lends' list, the member door's asks, a folder's fetch,
   the lend door's dial and a removed computer told its cut (relay-in-record
-  (c), landed). A key with none named is traced; with no address lookup
+  (c), landed). A key held in several groups is dialled, and told to a
+  phone in the people answer, by the first group naming a relay for it,
+  one rule (`node::relay_of`; start-findings (b), #127), so a group that
+  has not yet heard the key's relay never stands for one that has; the
+  live lane dials by the group it offers to. A key with none named is traced; with no address lookup
   the transport refuses it before iroh is asked, never dialling it blind.
 
 ## 7. Packaging and reach
