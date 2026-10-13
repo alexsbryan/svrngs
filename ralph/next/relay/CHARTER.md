@@ -25,6 +25,24 @@ decision says so.
   commit, with the operator's words and the counts, taken by the first row
   that needs it.
 
+## What the operator decided, 2026-10-13
+
+- Asked what DigitalOcean account `scripts/deploy-relay.sh` needs: "Can we
+  actually just park this here right at the gate and keep using n0 until
+  I'm actually ready to start paying / flip the switch for production?"
+- So **svrngs's relay is built and parked at the gate**: n0's relays and
+  address lookup are the command's default again, chosen, until the
+  operator flips the switch. Nothing this queue built goes: `svrngs relay`,
+  each computer's relay in its group's record, `new --relay`, the deploy
+  scripts and the guard all stay, and a group that keeps its own relay is
+  still met there.
+- **The switch is one constant**, a closed set (n0's, or svrngs's at
+  `relay.svrnme.sh`). Flipping it, then `deploy-relay.sh`, then
+  `deploy-page.sh`, is the operator's, in that order.
+- **A link carries its issuer's relay in either posture**, so the phone's
+  page dials only the relays its link and its group name, and never asks
+  n0's lookup, before the switch or after it.
+
 ## Why
 
 A browser's iroh is relay-only (`docs/DESIGN.md:298`), so every byte a phone
@@ -80,6 +98,7 @@ Write `NEEDS_HUMAN.md` and stop for:
 
 - deploying `relay.svrnme.sh` or any server, its DNS, its account, its
   cost — the queue writes `scripts/deploy-relay.sh` and never runs it;
+- flipping the switch to svrngs's relay (the operator, 2026-10-13);
 - publishing a build whose default relay is one not yet answering;
 - `sudo`, a system service installed on this host, or opening a port on
   this host's network;
