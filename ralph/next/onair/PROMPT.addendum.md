@@ -30,7 +30,8 @@ Fences the rows keep:
    2026-10-13, for this queue). The first row past each old cap (16,040
    and 3,130) raises it in its own commit. Each row puts
    `scripts/lean_check.py` before and after in its commit. Going past
-   either is the operator's. `apps/` is not counted
+   either is the operator's. A raise comes only after an economizing pass,
+   its commit naming what the pass cut (the operator, 2026-10-13). `apps/` is not counted
    (`scripts/lean_check.py:14-16`).
 8. *Nothing outward-facing.* There is no CDN, no bucket and no public
    door: "the public" is a directory served by `python3 -m http.server` on

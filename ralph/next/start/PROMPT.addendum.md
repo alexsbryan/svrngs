@@ -36,7 +36,9 @@ Fences the rows keep:
    2026-10-13, for this queue: 15,950, raised in c27521f; +50 after
    start-measure for the home page, raised in 4b81e4b; +40 after start-home
    for making a group, start-group's). The first part past 16,000 raises the
-   cap to 16,040 in its own commit. Each row puts `scripts/lean_check.py` before and after
+   cap to 16,040 in its own commit. start-economize takes it back under
+   15,800 and lowers the cap to where it lands (the operator, 2026-10-13),
+   and from then on a raise is asked only after an economizing pass. Each row puts `scripts/lean_check.py` before and after
    in its commit. Going past either cap is the operator's call.
 8. *Nothing outward-facing.* No server is deployed, no DNS is changed, no
    port is opened on this host's network, and no `sudo` is used.

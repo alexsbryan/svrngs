@@ -17,7 +17,12 @@ decision says so.
 - **The budget is raised for this queue**: the repository's cap from 16,040
   to 16,340, and svrngs-core's from 3,130 to 3,190 (asked as 15,950 to
   16,250; both moved up 50, then 40, with the start queue's raises to
-  16,040, the operator, 2026-10-13). Each raise goes in its
+  16,040, the operator, 2026-10-13). The start queue's economizing row
+  then lowers its cap to where its cuts land, and this queue's +300 and +60
+  stand over that lowered cap: its figures are restated when it lands.
+  Every raise follows an economizing pass of this queue's own (the
+  operator's standing rule, 2026-10-13: "Every raise needs a pass
+  first"). Each raise goes in its
   own commit, with the operator's words and the counts, made by the first
   row that needs it.
 - **Which key signs for an app: the computer's own**, the one that signs its

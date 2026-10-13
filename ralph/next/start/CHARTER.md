@@ -44,6 +44,14 @@ decision says so.
   group on the home page (start-group). start-run had found the founder's
   half too: with no link there is no one line (a136f60), so start-group
   carries that as well, within the same cap if it fits.
+- "I think we need to schedule an 'economizing' row. We keep just raising
+  the bar without considering how we could lower the floor". Asked, the
+  operator chose **"Back under 15,800, then ratchet"**: cut at least what
+  2026-10-13's raises added, then lower the cap to where the cuts land, so
+  the room freed is never spent silently. And **"Every raise needs a pass
+  first"**, a standing rule: a raise is asked only after an economizing
+  pass, its commit naming what the pass cut (start-economize writes it
+  into AGENTS.md and DESIGN §5).
 
 ## Why
 
@@ -96,7 +104,9 @@ stop.
 
 Write `NEEDS_HUMAN.md` and stop for any of these:
 
-- the budget past 16,040, or svrngs-core's past 3,130. A home-page change
+- the budget past 16,040, or svrngs-core's past 3,130, and a raise asked
+  before an economizing pass;
+- a cut that would change what a person sees or a test asserts. A home-page change
   that does not fit is written there with its line estimate, and the rows
   that fit go on;
 - a second computer or network (two homes), or a real phone on cellular
