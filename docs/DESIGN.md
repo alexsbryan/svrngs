@@ -183,7 +183,8 @@ paths it refuses, how many people may use it at once.
   resolves (`door::PersonKey`), their first key in the group, so a yes
   said on one device of theirs holds on every one (bash-devices);
   `svrngs unshare` takes the choices with the lend;
-- the home page, `http://svrngs.localhost:<port>/`, where a person says
+- the home page, `http://svrngs.localhost:<port>/`, at the same address
+  each time svrngs starts (§7, start-address), where a person says
   their yes on a computer, and sees their groups, the people in each,
   what each lends, opened at its origin, whose computer did not answer and
   what apps use, each with Stop — shown from the routes that answer an app
@@ -254,7 +255,8 @@ u5-0):
   shared the loopback port of the bridge to that lender. Since u5-2 each
   lend opens at an origin of its own: on a computer
   `http://<label>.localhost:<port>/` (`crates/svrngs-node/src/origin.rs`),
-  which `/v1/lends` answers as each lend's `origin`; on a phone as §7 says,
+  the home page's port, kept as it is (§7), which `/v1/lends` answers as
+  each lend's `origin`; on a phone as §7 says,
   its worker (`web/lend.js`) dialling with a pass, never the key.
 - *A live socket* (u5-2). The door stripped `Upgrade` as hop-by-hop, so
   Jellyfin's `/socket` answered 404 through it and 101 on the lender's
@@ -1120,7 +1122,7 @@ piece comes over:
 | `svrngs-runtime` | the only owner of each group's journal on disk, its projections and its writes: the journal and its write index, the open-journal map, the register's standing | the journals |
 | `svrngs-node` | the adapters: sync and its route over iroh, redemption, the loopback record API with its live lane (landed, u3-2 and u3-3), the member door (landed, u3-4), the list of what members lend, asked of each (landed, u3-5), each for at most 3 s (landed, asleep-1, `node::ANSWER_WITHIN`), and answered to a member by the computer it dials, each with its lender's key (landed, u4-5), and the door's limit and shares, a pure decision the door's task owns (landed, u3-6); a WebSocket's upgrade carried, and the pass holders' protocol, which any key may speak, where a request presenting a person's pass for the lend it names, by name or label, is that person's (landed, u5-2), and its service told the pass's first lend, the app the page opened, as `x-svrngs-app`, none with no pass (the scoped-use spike's one header, su-1, `demo/runs/su/2026-10-09/` §5); every relay URL it makes or reads dotless where it enters — n0's relays, a relay it is told, a lookup's answers — in `relay.rs`, which the page compiles too (landed, u4-9); the room door, the lends a person names served to this computer's network at its private address while the command runs, one body with the origins (landed, u6-1); a lend's sign-in, asked of the lender's program on a person's first request, its credential set on each of their requests, a stand-in swapped for its secret both ways (landed, mwp-1, `door/sign_in.rs`), its script first in the lend's pages (landed, mwp-2, the same file; §3, "The room", call 6); every answer it makes in a lend's place marked as its own, `x-svrngs-refused` and its kind, a service's own dropped (landed, mnp-1, `door::LendRefusal`), and a pass whose signer it does not know asked of the group's ring once, within 10 s, until a member that knows them answers, before it is refused (landed, mnp-1, `ring_sync::AskRound`; the members dialled at once, asleep-1); a lend's pages on this computer told, at its origin's `/svrngs-reads`, the lends they read, from the record (landed, mnp-2, `surface::reads`); each person's yes and stop to an app kept by the lend's door and decided there, by the person the door resolves (landed, sup-2, `door/choices.rs`, `door::PersonKey`); the home page at `svrngs.localhost`, answering only itself, never framed, its writes the person's yes and stop (landed, sup-2, `home.rs`) and the person's change to what this computer lends, how many at once or a stop (landed, bash-limit, `home.rs` `/lent`) | each lend's declaration and secret, and each person's choices for it; who is using each lend now; each person's sign-in answer, in memory |
 | `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell and a workspace of its own: a browser's endpoint, bound with the person's key, dialling a group's computer by key over a relay on the members' protocol (landed, u4-3); HTTP over the dial (landed, u4-4); joining — the ask and the redemption by svrngs-core's bodies, the key sealed in the page's store, and the list of what the group's people lend (landed, u4-5); the runtime, a service worker serving every request at a lend's address from the lender's door (landed, u4-6), a range that runs on — open-ended, or a `<video>`'s longer than a part — asked of the door in parts of 2 MiB (landed, u4-9), an open-ended one's first part at a new place 256 KiB and doubling as the reading runs on (u5-11), handed what it dials with in memory, and a page for a worker that holds nothing (landed, u4-10); since u5-2 at each lend's own origin, not the page's (`lend.js`, its start page `open.js`): the page signs a pass to a fresh key for the lend it opens and the lends it reads, the worker dials on the pass holders' protocol, keeps each lend's cookies, reads a redirect to a path under the lend, and with a shim in each lent page (`shim.js`) carries `WebSocket` and an app's own worker; its own answers in a lend's place marked as the door marks its own (mnp-1); its pages told the lends they read at `/svrngs-reads`, each at an address under their own origin that opens that lend at a path through the group's page (landed, mnp-2); a lend that asks told with its lender's words and an `ask` address that opens the group's page at `#ask=`, where the person's yes is posted to the lender's door as them, an app's stop sent by the worker with the pass, and what apps use listed there with Stop, the page never framed on its host (landed, sup-3); an adapter | none: the page's store holds the key, sealed; a lend's origin's store holds its pass and its cookies |
-| `svrngs` | the command and the process: `new`, `join`, `link`, `share`, `unshare` and `room` (landed), and `share --sign-in` (landed, mwp-1), and `share --ask "<words>"`, its lender's words for what an app receives, carried in `asks` on every list of lends and never read by svrngs (landed, sup-2); the bare command prints where the record API listens, where the home page opens (sup-2), and what the people of its groups lend | a device's keys; each group's seed |
+| `svrngs` | the command and the process: `new`, `join`, `link`, `share`, `unshare` and `room` (landed), and `share --sign-in` (landed, mwp-1), and `share --ask "<words>"`, its lender's words for what an app receives, carried in `asks` on every list of lends and never read by svrngs (landed, sup-2); the bare command prints where the record API listens, where the home page opens (sup-2), at the address it took at its first start (start-address, `api::kept_address`), and what the people of its groups lend | a device's keys; each group's seed |
 
 Held to `docs/principles/RUST_ARCH.md`: types encode the domain, ownership
 encodes the architecture, I/O lives at the edge. Parse, don't validate; closed
@@ -1527,7 +1529,16 @@ does not give the page — its host unreachable, or no page there — is not
 judged (exit 3). On a computer each app opens at
 `http://<label>.localhost:<port>/` on its own loopback
 (`crates/svrngs-node/src/origin.rs`), which every browser measured resolves
-(`demo/runs/u5/2026-10-05-localhost/`); there the origin names the app
+(`demo/runs/u5/2026-10-05-localhost/`), and curl, Python's `openai` and
+Node's `fetch` too, on macOS (`demo/runs/start/2026-10-13/` §3 (a) 2-4; on
+Linux, where it rests on the system's resolver, could-not-judge). Its port
+is the record API's, taken at the first start and kept in the data dir
+(`<data dir>/api`, `svrngs_node::api::kept_address`), so a bookmark and a
+program's address survive a restart, as a port svrngs named would not
+across two data dirs on one host; another program holding it is said by
+the command, exit 3, with what to do, never a new port taken in silence
+(start-address). The command, install.sh and the home page say the page's
+address in one sentence (`svrngs_node::home::address`). There the origin names the app
 asking from what the browser says of its page, and keeps the page to its
 own lend and the lends it reads (sup-1; §3, "Lent apps", call 6). Beside
 them, at `http://svrngs.localhost:<port>/`, the home page: the person's
