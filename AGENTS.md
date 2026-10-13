@@ -57,7 +57,9 @@ there moves the demo that follows it, and work that moves no demo waits.
 `scripts/check.sh` exits 0. It runs the principle pins, the lean check
 (standalone, no I/O in the core, the RUST_ARCH rules a program can
 decide, the size budget), rustfmt, clippy and the tests. A size-budget raise is
-the operator's, with the reason in the commit.
+the operator's, and is asked only after an economizing pass: its commit gives
+the reason, names what that pass cut, and says why the rest could not be found
+in the code there is. A pass's cuts lower the cap to where they land.
 
 Ship code, not prose. Commit freely; never push without the operator. Commit
 messages carry no assistant attribution.

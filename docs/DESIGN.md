@@ -1223,7 +1223,12 @@ serves Jellyfin and breaks one fails the build.
 **Lean, and kept lean.** `svrngs-core` stays under 3,122 lines of code and the
 repository under 15,987 (`scripts/lean_check.py`), the branch `folders`
 too since main merged into it at syp-5, counting 13,778 and `svrngs-core`
-2,719 there; a raise is the operator's, with the reason in the commit. The budget counts the product:
+2,719 there. A raise is the operator's, and is asked only after an
+economizing pass (the operator, 2026-10-13: "Every raise needs a pass
+first"): its commit gives the reason, names what the pass cut, and says why
+the rest could not be found in the code there is; the pass's cuts lower the
+cap to where they land, so room freed is never spent but by the operator's
+choice. The budget counts the product:
 tests, `apps/` and `demo/runs/` apart. A recorded run's driver is what ran,
 kept byte for byte so its data reads against it (`ralph/REVIEW_FINDINGS.md`
 #61), and no check runs one; a helper a check runs lives outside it
