@@ -24,8 +24,9 @@
 //! **their change to what this computer lends** (`POST /lent`, bash-limit):
 //! how many it lets in at once, a number or everyone, or no longer lent —
 //! written to its declaration, which the door reads at its next request;
-//! and **a link to a group** (`POST /link`, start-home), made as `svrngs
-//! link` makes it, in the group's record.
+//! **a link to a group** (`POST /link`, start-home), made as `svrngs
+//! link` makes it, in the group's record; and **a group's folder opened**
+//! in this computer's file browser (`POST /folder`, start-home).
 //! The person's yes and stop are
 //! kept by this computer's door for its own lend, else dialled to the
 //! lender's door on the members' protocol as this computer's key
@@ -41,6 +42,7 @@ use axum::routing::get;
 use axum::{Json, Router};
 use serde::Deserialize;
 use std::num::NonZeroU16;
+use std::process::Command;
 use svrngs_core::pass::Label;
 
 use crate::door::choices::{own_choices, own_choose, Said, Saying};
@@ -116,6 +118,7 @@ pub(crate) fn router(
         .route("/choices", get(choices).post(choose))
         .route("/lent", get(lent).post(change))
         .route("/link", axum::routing::post(link))
+        .route("/folder", axum::routing::post(open))
         .with_state(at.clone())
         .merge(
             Router::new()
@@ -255,6 +258,26 @@ async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
                 format!("no link can be made on this computer: {e}"),
             )
         }
+    }
+}
+
+/// The programs that open a folder in its file browser, in turn: macOS's,
+/// then the freedesktop one Linux desktops answer.
+const OPENERS: [&str; 2] = ["open", "xdg-open"];
+
+/// `POST /folder`: the folder `dir` opened, asked as `/v1/folders` is asked
+/// to keep it, and only one `/v1/groups` lists for the group
+/// ([`crate::folder::dirs_of`]), so the page opens nothing else.
+async fn open(State(at): State<Asking>, Json(o): Json<crate::folder::FolderAsk>) -> Response {
+    let listed =
+        crate::folder::dirs_of(&at.door().data_dir, &o.group).is_ok_and(|d| d.contains(&o.dir));
+    let opens = |p: &&str| matches!(Command::new(p).arg(&o.dir).status(), Ok(s) if s.success());
+    let by = OPENERS.iter().find(|p| listed && opens(p));
+    tracing::debug!(target: "home", group = o.group, dir = %o.dir.display(), listed, ?by, "home: a folder asked opened");
+    match (listed, by) {
+        (true, Some(_)) => StatusCode::NO_CONTENT.into_response(),
+        (false, _) => LendRefusal::Closed.say(StatusCode::FORBIDDEN, "not this group's folder"),
+        _ => LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, "no program opens it"),
     }
 }
 

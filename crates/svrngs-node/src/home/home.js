@@ -67,7 +67,11 @@ async function show(g, s) {
     // Where the group's folder is on this disk (v1-onboarding (d)).
     const its = g.name ? `${g.name}’s folder` : 'The group’s folder';
     if (g.folders === null) s.append(el('p', `Where ${its} is cannot be read on this computer.`));
-    for (const dir of g.folders ?? []) s.append(Object.assign(el('p', `${its} is on this computer at ${dir}`), { className: 'folder' }));
+    // Each opened from here in this computer's file browser (start-home).
+    for (const dir of g.folders ?? []) {
+      const p = el('p', '', button('Open this folder', () => post('/folder', { group: g.id, dir }).then(() => p.append(' Opened, in a window of its own.'), (e) => p.append(` It could not be opened: ${e.message}.`))));
+      s.append(Object.assign(el('p', `${its} is on this computer at ${dir}`), { className: 'folder' }), p);
+    }
     // A link made here, as `svrngs link` makes it (start-home), each
     // button saying what it makes; then the link, said in its words.
     const made = (device, words) => button(words, () => post('/link', { group: g.id, device }).then(({ client, https }) => s.querySelector('.link').replaceChildren(device ? 'Open this link on your other computer or phone; it joins as you, so send it to nobody else: ' : 'Send this link to the person you are inviting: ', el('code', https ?? client), https ? ' It opens in a browser, which says how to join from there.' : ' They join with svrngs join and this link.', ' It works for a day, while this computer is on.'), (e) => s.querySelector('.link').replaceChildren(e.message)));

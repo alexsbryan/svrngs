@@ -2367,3 +2367,71 @@ async fn the_home_page_makes_a_link_to_invite_someone(engine: Engine) {
     }
     drop(ada);
 }
+
+in_both_engines!(
+    /// **The group's folder opened from the page** (start-home, from
+    /// start-measure's ranked row 12: the folder was a path read as words,
+    /// `demo/runs/start/2026-10-13/README.md` §3 (c) 14). Ada keeps house's
+    /// folder; her page's "Open this folder" asks this computer's file
+    /// browser to open it, and says so. The browser is a planted `open`
+    /// and `xdg-open`, first on the test's `PATH`, writing what it was
+    /// asked to open beside it, so no window opens. Planted, watched
+    /// failing: the page as ab6ef1f left it, with no such button.
+    the_home_page_opens_the_group_s_folder
+);
+async fn the_home_page_opens_the_group_s_folder(engine: Engine) {
+    use std::os::unix::fs::PermissionsExt;
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let (folder, bin) = (dir.path().join("house"), dir.path().join("bin"));
+    std::fs::create_dir(&folder).unwrap();
+    std::fs::create_dir(&bin).unwrap();
+    // Written beside what it opens, so whichever engine's bin is found
+    // first, each test reads its own: both run at once in this process.
+    let opened = dir.path().join("house.opened");
+    for opener in ["open", "xdg-open"] {
+        let at = bin.join(opener);
+        std::fs::write(&at, "#!/bin/sh\necho \"$1\" >> \"$1.opened\"\n").unwrap();
+        std::fs::set_permissions(&at, std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    // The planted bin first: every other program is found as before.
+    let path = std::env::var_os("PATH").unwrap_or_default();
+    let paths = std::iter::once(bin.clone()).chain(std::env::split_paths(&path));
+    std::env::set_var("PATH", std::env::join_paths(paths).unwrap());
+    let kept = reqwest::Client::builder()
+        .no_proxy()
+        .build()
+        .unwrap()
+        .post(format!("http://{}/v1/folders", ada.api_addr()))
+        .json(&svrngs_node::folder::FolderAsk {
+            dir: folder.clone(),
+            group: NS.into(),
+        })
+        .send()
+        .await
+        .unwrap();
+    assert!(kept.status().is_success(), "{:?}", kept.text().await);
+    let seen = home_page(
+        engine,
+        &ada,
+        json!({
+            "all": "#home section p",
+            "do": [["#home section button:has-text('Open this folder')", null, true]],
+        }),
+    )
+    .await;
+    eprintln!("the home page's run: {seen:#}");
+    assert!(
+        seen["after"][0]
+            .to_string()
+            .contains("Open this folder Opened, in a window of its own."),
+        "{seen:#}"
+    );
+    let asked = std::fs::read_to_string(&opened).unwrap_or_default();
+    assert!(
+        asked.lines().any(|l| l == folder.display().to_string()),
+        "{asked:?}"
+    );
+    drop(ada);
+}
