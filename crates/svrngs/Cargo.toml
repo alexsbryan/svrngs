@@ -22,6 +22,10 @@ hex = { workspace = true }
 # (u5-10), and `share --folder` the node running here (gf-1): the reqwest,
 # rustls and verifier iroh's tree already builds.
 reqwest13 = { package = "reqwest", version = "0.13", default-features = false, features = ["rustls-no-provider"] }
+# `svrngs relay` (relay-verb): iroh's own relay server, at the version
+# iroh =1.0.2 resolves, so the relay anyone runs is the one the computers
+# that dial it were built with; the tests run it on 127.0.0.1 too.
+iroh-relay = { version = "=1.0.2", features = ["server"] }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 rustls-platform-verifier = "0.7"
 serde = { workspace = true }
@@ -37,9 +41,6 @@ tempfile = "3"
 reqwest = { version = "0.12", default-features = false }
 svrngs-core = { workspace = true, features = ["test-support"] }
 svrngs-node = { workspace = true, features = ["test-support"] }
-# join_page.rs drives a phone's page (web/tests/join.mjs) through a relay on
-# 127.0.0.1, as svrngs-node's browser tests do, whose harness it includes.
-iroh-relay = { version = "=1.0.2", features = ["server"] }
 tokio = { version = "1", features = ["process", "io-util", "net"] }
 
 # Upstream's posture, as svrngs-core and svrngs-node carry it.
