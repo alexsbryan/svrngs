@@ -195,8 +195,8 @@ svrngs — keep what your group shares on your own computers.
       The group's page's install line, with --relay <name> after the
       page's address, keeps it running.
       --open relays for every computer and phone that reaches it, as
-      svrngs's own relay does, each held to what a phone's film drew
-      through a relay at its most, measured; it says how much as it starts.
+      svrngs's own relay does, each held to the most a phone was measured
+      drawing through a relay in a second; it says how much as it starts.
       --staging asks Let's Encrypt's trial service, whose certificates no
       browser trusts: to try <name> first.
 
