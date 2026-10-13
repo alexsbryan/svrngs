@@ -129,3 +129,53 @@ fn the_verb_takes_a_name_never_an_address() {
     assert!(parse(&["localhost"]).is_err());
     assert!(cli::parse(["svrngs", "new", "x", "--open"].map(String::from)).is_err());
 }
+
+/// What `scripts/relay-answers.sh` says of `url`: whether it exited 0.
+async fn answers(url: String) -> bool {
+    let script = harness::repo().join("scripts/relay-answers.sh");
+    let ran = tokio::process::Command::new("sh")
+        .arg(script)
+        .arg(url)
+        .output()
+        .await
+        .expect("sh runs");
+    ran.status.success()
+}
+
+/// `scripts/relay-answers.sh`, which deploy-relay.sh waits on and
+/// deploy-page.sh publishes nothing without (relay-default (c); DESIGN §7):
+/// a relay the verb starts answers; a page answering 200 at its `/ping`, as
+/// a host's wildcard may at the name, does not, nor an address nothing
+/// listens at. Planted: the script taking any 200 as a relay.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_relay_answers_and_a_page_at_its_name_does_not() {
+    let empty = tempfile::tempdir().unwrap();
+    let relay = relay_over(empty.path(), true)
+        .await
+        .expect("a relay starts");
+    let at = format!("http://{}", relay.http_addr().unwrap());
+    assert!(answers(at.clone()).await, "the relay at {at} answers");
+
+    let page = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let page_at = format!("http://{}/", page.local_addr().unwrap());
+    tokio::spawn(async move {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+        while let Ok((mut stream, _)) = page.accept().await {
+            let _ = stream.read(&mut [0; 1024]).await;
+            let page = "HTTP/1.1 200 OK\r\ncontent-length: 9\r\nconnection: close\r\n\r\nnot here.";
+            let _ = stream.write_all(page.as_bytes()).await;
+        }
+    });
+    assert!(
+        !answers(page_at.clone()).await,
+        "a page at {page_at} is no relay"
+    );
+
+    let nothing = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let nothing_at = format!("http://{}/", nothing.local_addr().unwrap());
+    drop(nothing);
+    assert!(
+        !answers(nothing_at).await,
+        "nothing listening answers nothing"
+    );
+}
