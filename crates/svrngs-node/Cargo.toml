@@ -76,6 +76,9 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # The scale instrument (tests/scale.rs) reads its own processor time with
 # `getrusage`, which std does not offer; libc is already in the lock.
 libc = "0.2"
+# The home page's browser test reads when someone joined back by the form
+# the command takes (home.rs `WHEN`), as the command reads it.
+chrono = { version = "0.4", default-features = false }
 # A door test writes a pass of the shape before sup-1 as a page then would.
 base64 = "0.22"
 

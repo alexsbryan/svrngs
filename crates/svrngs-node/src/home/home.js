@@ -55,11 +55,14 @@ async function groups() {
 }
 
 // Each person once, of the rows /v1/rail/people gives a key each; two of
-// one name told apart by when each joined, in the form `svrngs remove
-// --joined` takes, which the `sv-SE` locale writes (bash-same-name).
+// one name told apart by when each joined (bash-same-name), in the form
+// `svrngs remove --joined` takes (home.rs `WHEN`): this computer's time as
+// the `sv-SE` locale writes it, then its offset as ±hhmm, so a fall-back
+// night's repeated hour reads back to one instant (#126).
 function people(rows) {
   const each = [...new Map(rows.map((r) => [r.person_key, r])).values()];
-  const when = (j) => (j === 'started' ? 'started the group' : `joined ${new Date(j.at * 1000).toLocaleString('sv-SE')}`);
+  const at = (d, m = -d.getTimezoneOffset()) => `${d.toLocaleString('sv-SE')} ${m < 0 ? '-' : '+'}${String(Math.trunc(Math.abs(m) / 60) * 100 + (Math.abs(m) % 60)).padStart(4, '0')}`;
+  const when = (j) => (j === 'started' ? 'started the group' : `joined ${at(new Date(j.at * 1000))}`);
   return each.map((p) => (each.filter((q) => q.person === p.person).length > 1 ? `${p.person} (${when(p.joined)})` : p.person)).join(', ');
 }
 

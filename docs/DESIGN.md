@@ -1437,7 +1437,11 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   started the group (`Membership::joined`), `--joined` names one, the core
   deciding (`Membership::one_named`), and the home page lists each person
   once, two of one name each with when they joined (bash-same-name,
-  landed; `crates/svrngs/tests/remove.rs`). Two let in the same second
+  landed; `crates/svrngs/tests/remove.rs`). That time is this computer's
+  to the second with its offset, one form the refusal and the page write
+  and `--joined` reads (home.rs `WHEN`), so the hour a fall-back night
+  repeats reads back to one instant (start-findings (a),
+  `crates/svrngs/tests/joined.rs`). Two let in the same second
   cannot be told apart this way; joining two such people into one waits
   in §9. Only a computer makes a device link; a phone making one, and one
   device removed apart from its person, wait in §9. A computer's one key

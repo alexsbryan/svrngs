@@ -51,6 +51,13 @@ const HOST: &str = "svrngs.localhost";
 
 const POLICY: &str = "default-src 'self'; frame-ancestors 'none'";
 
+/// When a person joined, as the page says it (home.js `people`) and
+/// `svrngs remove --joined` takes it: this computer's time to the second
+/// with its offset, so the hour a fall-back night repeats reads back to one
+/// instant (ralph/REVIEW_FINDINGS.md #126). chrono's form; the page writes
+/// it by hand.
+pub const WHEN: &str = "%Y-%m-%d %H:%M:%S %z";
+
 /// The home page's one module.
 const MODULE: ([(header::HeaderName, &str); 1], &str) = (
     [(header::CONTENT_TYPE, "text/javascript")],

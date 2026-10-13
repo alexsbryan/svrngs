@@ -90,6 +90,7 @@ use ed25519_dalek::VerifyingKey;
 use std::num::{NonZeroU16, NonZeroU32};
 
 use svrngs_node::folder::FolderAsk;
+use svrngs_node::home::WHEN;
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath, Upload};
 use svrngs_node::node::{Lends, Lent, Node, NodeError};
@@ -1282,21 +1283,15 @@ impl std::fmt::Display for Said {
     }
 }
 
-/// How `--joined` takes when a person joined and a refusal says it, in
-/// this computer's time to the second: the home page's form too (home.js
-/// `people`, whose `sv-SE` locale writes it).
-const WHEN: &str = "%Y-%m-%d %H:%M:%S";
-
-/// `--joined`: `started`, for whoever started the group, or a time in
-/// [`WHEN`]'s form on this computer's clock, as [`joined_said`] says it.
+/// `--joined`: `started`, for whoever started the group, or a time in the
+/// home page's form ([`WHEN`]), as [`joined_said`] says it.
 fn joined_of(raw: &str) -> Result<Joined, String> {
     if raw == "started" {
         return Ok(Joined::Started);
     }
-    (chrono::NaiveDateTime::parse_from_str(raw, WHEN).ok())
-        .and_then(|t| t.and_local_timezone(chrono::Local).single())
+    (chrono::DateTime::parse_from_str(raw, WHEN).ok())
         .map(|t| Joined::At(t.timestamp()))
-        .ok_or_else(|| format!("--joined `{raw}` is not when someone joined: `started`, or a time as svrngs says it, such as \"2026-10-12 14:03:22\""))
+        .ok_or_else(|| format!("--joined `{raw}` is not when someone joined: `started`, or a time as svrngs says it, such as \"2026-10-12 14:03:22 -0700\""))
 }
 
 /// When a person joined, as a person adds it to the command.

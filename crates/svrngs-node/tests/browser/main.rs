@@ -28,6 +28,7 @@ mod harness;
 // The host's load and the seek bar's, the conformance canary's too.
 mod load;
 
+use std::collections::BTreeSet;
 use std::path::Path;
 use std::time::Duration;
 
@@ -39,7 +40,7 @@ use sha2::{Digest, Sha256};
 use svrngs_core::link::Token;
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::Node;
-use svrngs_node::{actor_of, Person, RailAct, Roster, SigningKey};
+use svrngs_node::{actor_of, Joined, Person, RailAct, Roster, SigningKey};
 use tokio::io::AsyncWriteExt;
 
 const NS: &str = "house";
@@ -1677,8 +1678,9 @@ in_both_engines!(
     /// second apart, each by hand (bash-devices made them two people,
     /// `a1d0ba9`); her home page's people line names each person once,
     /// and no two alike, in a person's words — each cy by when they
-    /// joined, as `svrngs remove --joined` takes it. Planted: two people
-    /// of one name, listed by home.js as "cy, cy".
+    /// joined, as `svrngs remove --joined` takes it, to the instant.
+    /// Planted: two people of one name, listed by home.js as "cy, cy"; a
+    /// time with no offset (#126).
     the_home_page_tells_two_people_of_one_name_apart
 );
 async fn the_home_page_tells_two_people_of_one_name_apart(engine: Engine) {
@@ -1715,18 +1717,27 @@ async fn the_home_page_tells_two_people_of_one_name_apart(engine: Engine) {
         "{line}"
     );
     // Each cy by when they joined, in the form `svrngs remove --joined`
-    // takes (crates/svrngs/src/cli.rs `WHEN`): 2026-10-12 14:03:22.
-    for cy in people.iter().filter(|p| p.starts_with("cy")) {
-        let when = (cy
-            .strip_prefix("cy (joined ")
-            .and_then(|w| w.strip_suffix(')')))
-        .unwrap_or_else(|| panic!("{cy} says no time: {line}"));
-        let shape: String = when
-            .chars()
-            .map(|c| if c.is_ascii_digit() { '9' } else { c })
-            .collect();
-        assert_eq!(shape, "9999-99-99 99:99:99", "{cy}: {line}");
-    }
+    // takes (home.rs `WHEN`), read back to the instant each was let in
+    // (#126): 2026-10-12 14:03:22 -0700.
+    let admitted: BTreeSet<i64> = (ada.rail().register(NS).unwrap().members.values())
+        .filter(|m| m.person.as_str() == "cy")
+        .filter_map(|m| match m.joined {
+            Joined::At(t) => Some(t),
+            Joined::Started => None,
+        })
+        .collect();
+    let read: BTreeSet<i64> = (people.iter().filter(|p| p.starts_with("cy")))
+        .map(|cy| {
+            let when = (cy
+                .strip_prefix("cy (joined ")
+                .and_then(|w| w.strip_suffix(')')))
+            .unwrap_or_else(|| panic!("{cy} says no time: {line}"));
+            chrono::DateTime::parse_from_str(when, svrngs_node::home::WHEN)
+                .unwrap_or_else(|e| panic!("{cy}: not in `--joined`'s form ({e}): {line}"))
+                .timestamp()
+        })
+        .collect();
+    assert_eq!((read.len(), &read), (2, &admitted), "{line}");
     for kept in ["key", "member", "keeper", "ring", " act", "journal"] {
         assert!(!line.to_lowercase().contains(kept), "says {kept}: {line}");
     }

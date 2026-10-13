@@ -96,16 +96,21 @@ fn remove_and_handover_parse() {
                 "--group",
                 "trip",
                 "--joined",
-                "2026-10-12 14:03:22"
+                "2026-10-12 14:03:22 -0700"
             ])),
             Ok(Verb::Remove {
                 joined: Some(Joined::At(_)),
                 ..
             })
         ),
-        "a time on this computer's clock"
+        "a time with its offset"
     );
-    for wrong in ["yesterday", "2026-10-12", "1791840217"] {
+    for wrong in [
+        "yesterday",
+        "2026-10-12",
+        "1791840217",
+        "2026-10-12 14:03:22",
+    ] {
         assert!(
             cli::parse(argv(&[
                 "remove", "Bo", "--group", "trip", "--joined", wrong
