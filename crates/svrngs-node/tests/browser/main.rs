@@ -921,6 +921,126 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
     drop((ada, cy));
 }
 
+/// The measurement an open relay's per-client rate is set from (relay-verb
+/// (b); `demo/runs/relay-rate/`): ada's computer lends a film at Demo A's
+/// bitrate, 3,730,555 bit/s (Jellyfin's conversion for WebKit,
+/// `demo/runs/a/2026-10-11/README.md:38`), and a phone's page in Chromium
+/// plays it through a relay on 127.0.0.1 and seeks three times, as Demo A's
+/// people do. The relay's bytes received from its clients
+/// (`iroh-relay` `bytes_recv`) are sampled every 50 ms; their most in any
+/// one second bounds the most any one client sent in it. Written to
+/// `$RELAY_RATE_OUT`; a measurement, so ignored by `cargo test`:
+///   RELAY_RATE_OUT=<file> cargo test -p svrngs-node --test browser -- --ignored a_films_peak_through_a_relay
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "relay-verb's measurement, run by demo/runs/relay-rate/"]
+async fn a_films_peak_through_a_relay() {
+    let out = std::env::var("RELAY_RATE_OUT").expect("RELAY_RATE_OUT names where it is written");
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let ada_dir = tempfile::tempdir().unwrap();
+    let ada = node(ada_dir.path(), &relay, &bo).await;
+    let mp4 = ada_dir.path().join("title.mp4");
+    let made = std::process::Command::new("ffmpeg")
+        .args(["-v", "error", "-y", "-f", "lavfi"])
+        .args(["-i", "testsrc2=duration=120:size=1280x720:rate=24"])
+        .args([
+            "-vf",
+            "noise=alls=12:allf=t",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "ultrafast",
+        ])
+        .args(["-b:v", "3730k", "-maxrate", "3730k", "-bufsize", "3730k"])
+        .args(["-pix_fmt", "yuv420p", "-g", "24", "-movflags", "+faststart"])
+        .arg(&mp4)
+        .output()
+        .unwrap();
+    assert!(
+        made.status.success(),
+        "{}",
+        String::from_utf8_lossy(&made.stderr)
+    );
+    let size = std::fs::metadata(&mp4).unwrap().len();
+    let (film_origin, _) = origins::kept_range_origin(mp4, size).await;
+    let html = "<!doctype html><title>a page</title>\
+                <video src=\"title.mp4\" playsinline preload=\"auto\"></video>";
+    let page = one_origin(page_origin(html).await, film_origin).await;
+    lend_reading(ada_dir.path(), "page", page.port(), &["k"]);
+
+    let metrics = relay.metrics().server.clone();
+    let (stop, mut stopped) = tokio::sync::oneshot::channel::<()>();
+    let sampler = tokio::spawn(async move {
+        let t0 = std::time::Instant::now();
+        let mut samples = Vec::new();
+        loop {
+            samples.push(json!([
+                t0.elapsed().as_millis() as u64,
+                metrics.bytes_recv.get(),
+                metrics.bytes_sent.get()
+            ]));
+            tokio::select! {
+                _ = &mut stopped => return samples,
+                _ = tokio::time::sleep(Duration::from_millis(50)) => {}
+            }
+        }
+    });
+    let seen = drive(
+        Engine::Chromium,
+        "runtime.mjs",
+        json!({
+            "site": site,
+            "key": hex::encode(bo.to_bytes()),
+            "token": token(&signing(1), &relay),
+            "open": "page",
+            "seeks": [40.0, 20.0, 100.0],
+            "other": { "lend": label(1, "page"), "path": "title.mp4", "range": "bytes=0-1023" },
+        }),
+        None,
+    )
+    .await;
+    stop.send(()).unwrap();
+    let samples = sampler.await.unwrap();
+    let at = |i: usize, k: usize| samples[i][k].as_u64().unwrap();
+    // The most received in any window of 1,000 ms, from each sample on.
+    let (mut peak, mut peak_at) = (0, 0);
+    for i in 0..samples.len() {
+        if let Some(j) = (i..samples.len()).find(|&j| at(j, 0) >= at(i, 0) + 1000) {
+            let got = at(j, 1) - at(i, 1);
+            if got > peak {
+                (peak, peak_at) = (got, at(i, 0));
+            }
+        }
+    }
+    let last = samples.len() - 1;
+    let written = json!({
+        "film_bytes": size,
+        "film_seconds": 120,
+        "ms": at(last, 0),
+        "bytes_recv": at(last, 1),
+        "bytes_sent": at(last, 2),
+        "peak_bytes_in_a_second": peak,
+        "peak_from_ms": peak_at,
+        "first": seen["first"],
+        "seeks": seen["seeks"],
+        "samples": samples,
+    });
+    std::fs::write(&out, written.to_string()).unwrap();
+    eprintln!(
+        "the film {size} bytes; the relay received {} in {} ms, at most {peak} in one second (from {peak_at} ms); first play {}, seeks {}",
+        at(last, 1),
+        at(last, 0),
+        seen["first"],
+        seen["seeks"]
+    );
+    assert!(
+        seen["first"]["ms"].is_u64(),
+        "the film must play:\n{seen:#}"
+    );
+    drop(ada);
+}
+
 /// What the worker traced, read at `/trace` by the browser half.
 fn trace_of<'a>(seen: &'a Value, key: &str) -> &'a str {
     seen[key].as_str().unwrap_or_default()
