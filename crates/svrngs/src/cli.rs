@@ -89,6 +89,7 @@ use std::time::Duration;
 use ed25519_dalek::VerifyingKey;
 use std::num::{NonZeroU16, NonZeroU32};
 
+use svrngs_node::api::{ApiError, API_FILE};
 use svrngs_node::folder::FolderAsk;
 use svrngs_node::home::WHEN;
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
@@ -213,10 +214,12 @@ Logging: RUST_LOG, default `error`.";
 /// DESIGN §8, U2's inventory).
 pub const LINK_LIFE_SECS: i64 = 24 * 60 * 60;
 
-/// Where the record is served to this computer's apps: loopback, any free
-/// port, which the bare command prints (DESIGN §3; the u3-2 row) and the
-/// node writes to `<data dir>/api` (`svrngs_node::api::API_FILE`, u5-1),
-/// where an app svrngs did not start finds it.
+/// Where the record is served to this computer's apps the first time
+/// svrngs starts over a data dir: loopback, any free port, which the bare
+/// command prints (DESIGN §3; the u3-2 row) and the node writes to
+/// `<data dir>/api` (`svrngs_node::api::API_FILE`, u5-1), where an app
+/// svrngs did not start finds it, and every start after listens again
+/// (start-address, [`svrngs_node::api::kept_address`]).
 pub const API: SocketAddr = SocketAddr::new(std::net::IpAddr::V4(Ipv4Addr::LOCALHOST), 0);
 
 /// svrngs's own relay, where a computer meets each group it holds that
@@ -545,6 +548,11 @@ pub enum Refusal {
     Key(#[from] KeyError),
     #[error("this computer cannot be reached from here yet (RUST_LOG=debug says why)")]
     Start,
+    #[error("Another program on this computer holds {0}, where svrngs keeps your home page, {home}, and what your groups lend: stop that program, then start svrngs again. Or delete {file}, and svrngs takes a new address as it starts, which bookmarks and programs set to this one do not reach",
+        file = .1.display(), home = svrngs_node::home::address(.0.port()))]
+    Taken(SocketAddr, PathBuf),
+    #[error(transparent)]
+    Api(#[from] ApiError),
     #[error("who are you in {0}? say `svrngs new {0} --as <your name>`")]
     NoName(Name),
     #[error("who are you? open the link again with `svrngs join <link> --as <your name>`")]
@@ -639,6 +647,8 @@ impl Refusal {
             | Refusal::DataDir(..)
             | Refusal::Key(_)
             | Refusal::Start
+            | Refusal::Taken(..)
+            | Refusal::Api(_)
             | Refusal::IssuerAway
             | Refusal::Prompt(_)
             | Refusal::KeepLend(_)
@@ -919,11 +929,19 @@ async fn start(
     _claimed: File,
 ) -> Result<(), Refusal> {
     let key = identity::load_or_generate_node_key(&root)?;
-    let node = Node::start(root.clone(), key.clone(), relay, group::seed_text, API)
+    // Where the API, the home page and each lend's address here listened
+    // last, so a bookmark and a program's address survive a restart
+    // (start-address, demo/runs/start/2026-10-13/README.md §4).
+    let api = svrngs_node::api::kept_address(&root)?.unwrap_or(API);
+    let node = Node::start(root.clone(), key.clone(), relay, group::seed_text, api)
         .await
         .map_err(|e: NodeError| {
             tracing::debug!(target: "cli", error = %e, "cli: refused — the node did not start");
-            Refusal::Start
+            match e {
+                NodeError::Api(ApiError::Taken(at)) => Refusal::Taken(at, root.join(API_FILE)),
+                NodeError::Api(e) => Refusal::Api(e),
+                _ => Refusal::Start,
+            }
         })?;
     let ran = serve(command, &root, &node, &key, relay).await;
     // iroh says at error when an endpoint is dropped open, so it is closed
@@ -1148,8 +1166,8 @@ impl std::fmt::Display for Said {
                 )?;
                 writeln!(
                     f,
-                    "Your groups, and what apps use of them, open at http://svrngs.localhost:{}/.",
-                    api.port()
+                    "Your home page, the same address each time svrngs starts: {}",
+                    svrngs_node::home::address(api.port())
                 )?;
                 for lent in &lends.lent {
                     let (name, kind) = (&lent.offered.name, &lent.offered.kind);

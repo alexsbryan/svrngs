@@ -86,9 +86,15 @@ pub(crate) fn named(host: Option<&HeaderValue>) -> bool {
         .is_some_and(|h| h.eq_ignore_ascii_case(HOST))
 }
 
+/// The home page's address, with the record API listening on `port`: the
+/// one form the command and the node say it in.
+pub fn address(port: u16) -> String {
+    format!("http://{HOST}:{port}/")
+}
+
 /// Where the page of the lend `app` sends its person to say yes to `lend`.
 pub(crate) fn ask_address(port: u16, lend: &Label, app: &Label) -> String {
-    format!("http://{HOST}:{port}/ask?lend={lend}&app={app}")
+    format!("{}ask?lend={lend}&app={app}", address(port))
 }
 
 /// The home page's routes, beside the lends' origins: a request naming it

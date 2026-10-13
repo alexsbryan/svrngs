@@ -34,16 +34,40 @@ pub enum ApiError {
     NotLoopback(SocketAddr),
     #[error("cannot listen on {0}: {1}")]
     Listen(SocketAddr, std::io::Error),
-    #[error("cannot write where the API listens to {0}: {1}")]
+    #[error("another program on this computer holds {0}")]
+    Taken(SocketAddr),
+    #[error("cannot read or write where the API listens, {0}: {1}")]
     AddressFile(std::path::PathBuf, std::io::Error),
+    #[error("{0} names no address svrngs listens at: delete it, and svrngs takes a new one as it starts")]
+    NoAddress(std::path::PathBuf),
 }
 
 /// The file in the data dir naming where the API listens, as a URL and a
 /// newline (`http://127.0.0.1:<port>`), so an app the node did not start
-/// finds it (u5-1; the API binds any free port, `svrngs::cli::API`).
-/// Written at each start; a node that has stopped leaves it naming a port
-/// that refuses, which is what an app asking it then hears.
+/// finds it (u5-1), and the command listens there again at its next start
+/// ([`kept_address`]; the first takes any free port, `svrngs::cli::API`).
+/// A node that has stopped leaves it naming a port that refuses, which is
+/// what an app asking it then hears.
 pub const API_FILE: &str = "api";
+
+/// Where [`write_address`] last said the API listens in `data_dir`, so it
+/// listens there again (start-address: a bookmark and a program's address
+/// survive a restart, `demo/runs/start/2026-10-13/README.md` §4); `None`
+/// before the first start. A file naming no address is refused, never read
+/// as none, which would move the address in silence.
+pub fn kept_address(data_dir: &std::path::Path) -> Result<Option<SocketAddr>, ApiError> {
+    let path = data_dir.join(API_FILE);
+    let text = match std::fs::read_to_string(&path) {
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        read => read.map_err(|e| ApiError::AddressFile(path.clone(), e))?,
+    };
+    let kept = text
+        .trim()
+        .strip_prefix("http://")
+        .and_then(|a| a.parse().ok());
+    tracing::debug!(target: "rails", path = %path.display(), ?kept, "api: read where it listened, to listen there again");
+    kept.map(Some).ok_or(ApiError::NoAddress(path))
+}
 
 /// Write `addr` to [`API_FILE`] in `data_dir`, through a file renamed into
 /// place, so an app never reads half an address.
@@ -206,12 +230,16 @@ impl Bound {
     }
 }
 
-/// Bind. Refuses a non-loopback address by name.
+/// Bind. Refuses a non-loopback address by name, and one another program
+/// holds as that.
 pub async fn bind(listen: SocketAddr) -> Result<Bound, ApiError> {
     check_loopback(listen)?;
     let listener = tokio::net::TcpListener::bind(listen)
         .await
-        .map_err(|e| ApiError::Listen(listen, e))?;
+        .map_err(|e| match e.kind() {
+            std::io::ErrorKind::AddrInUse => ApiError::Taken(listen),
+            _ => ApiError::Listen(listen, e),
+        })?;
     let addr = listener
         .local_addr()
         .map_err(|e| ApiError::Listen(listen, e))?;
