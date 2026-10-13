@@ -36,6 +36,14 @@ decision says so.
     command for it exists, and who may remove whom is the core's
     (DESIGN §6). Until then the home page says plainly that leaving is
     not possible yet.
+- After start-home, which found that a computer set up by the one line
+  cannot make a group (`svrngs new` is refused while svrngs runs from
+  login, and the page had no way to do it;
+  `demo/runs/start/2026-10-13-home/NEEDS_HUMAN.md`), asked, the operator
+  chose **"+40 now, before start-run"**: the cap to 16,040, for making a
+  group on the home page (start-group). start-run had found the founder's
+  half too: with no link there is no one line (a136f60), so start-group
+  carries that as well, within the same cap if it fits.
 
 ## Why
 
@@ -88,7 +96,7 @@ stop.
 
 Write `NEEDS_HUMAN.md` and stop for any of these:
 
-- the budget past 16,000, or svrngs-core's past 3,130. A home-page change
+- the budget past 16,040, or svrngs-core's past 3,130. A home-page change
   that does not fit is written there with its line estimate, and the rows
   that fit go on;
 - a second computer or network (two homes), or a real phone on cellular

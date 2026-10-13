@@ -26,8 +26,8 @@ Fences the rows keep:
 6. *The nouns gate* (DESIGN §5; `scripts/vocab_check.py`). The app lists
    its nouns in `apps/on-air/nouns.txt`, and svrngs's code uses none of
    them: no station, show, radio or broadcast outside `apps/on-air/`.
-7. *The budget is 16,300*, and svrngs-core's 3,190 (the operator,
-   2026-10-13, for this queue). The first row past each old cap (16,000
+7. *The budget is 16,340*, and svrngs-core's 3,190 (the operator,
+   2026-10-13, for this queue). The first row past each old cap (16,040
    and 3,130) raises it in its own commit. Each row puts
    `scripts/lean_check.py` before and after in its commit. Going past
    either is the operator's. `apps/` is not counted
