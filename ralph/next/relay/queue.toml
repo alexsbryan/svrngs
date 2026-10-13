@@ -1,0 +1,20 @@
+# svrngs relay — our own relay before v1, and no n0 in the path: each computer's relay in its group's record, `svrngs relay` for anyone to run, svrngs's relay the default (operator, 2026-10-12). Launch, from anywhere, once the bash queue is done (one loop per tree):
+#
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py supervise --workdir ~/dev/svrngs \
+#     --queue relay --install-launchd -- python3 ~/dev/commonwealth-ai/scripts/ralph.py \
+#     run --workdir ~/dev/svrngs --queue relay --max-stall 3
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py start --workdir ~/dev/svrngs --queue relay
+#
+# The plist the first command writes carries no CARGO_INCREMENTAL=0; add it
+# under EnvironmentVariables after any reinstall (the host's disk is shared).
+label = "svrngs-relay"
+session_timeout = 5400
+audit_every = 4
+worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
+settings = "ralph/claude-settings.json"
+
+[models]
+worker = "claude-opus-5-5"
+review = "claude-opus-5-5"
+resolve = "claude-opus-5-5"
+variant = "high"
