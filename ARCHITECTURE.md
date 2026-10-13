@@ -540,8 +540,10 @@ and an address on this computer. `share.rs` is `svrn publish`'s
 probes it, names its kind from `well_known.txt` (data, so the infra holds
 no app's noun; each row may say how the kind signs a person in, `Signs`:
 with accounts its lender makes, or from the door's `x-svrngs-user`, and
-then no password is asked) or `--kind`, its name from `--name` or the kind, its limit
-from `--limit` or 3, its upload from `--upload` in Mbit/s or none (u3-6),
+then no password is asked; or the paths every lend of it keeps back,
+`kept_of`, added to `--refuse`'s; a row with `-` for its port is a kind
+known by `--kind` alone, as llama-server is) or `--kind`, its name from
+`--name` or the kind, its limit from `--limit` or none, its upload from `--upload` in Mbit/s or none (u3-6),
 and decides the lend in `lend_of`, which touches
 nothing; `cli` reads the password from a prompt, never argv, declares the
 lend through `svrngs_node::lend::declare`, and runs the node unless the

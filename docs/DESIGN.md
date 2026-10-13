@@ -32,10 +32,14 @@ its own ledger too (`~/dev/canon` `a6960fc`, `docs/SIGNING_DESIGN.md`).
 **And the apps already exist.** Everything people self-host is a web app on a
 port: Jellyfin and Navidrome for the library, Immich for photos,
 Audiobookshelf and Calibre-Web for books, Nextcloud and Paperless-ngx for
-files, Actual for money, Mealie and Grocy for plans, Home Assistant. Run one
-in a container on any member's computer, `svrngs share <port> --kind <name>`,
-and everyone in the group can open it — no port opened, no tunnel, nothing
-for them to install. An app that takes the signed-in person from a request
+files, Actual for money, Mealie and Grocy for plans, Home Assistant, and
+llama-server for a model. Run one in a container on any member's computer,
+`svrngs share <port> --kind <name>`, and everyone in the group can open it —
+no port opened, no tunnel, nothing for them to install. A friend's model is
+lent as any app is: `svrngs share <port> --kind llama-server`, the
+program's own name, and everyone opens its chat page or gives a program its
+address, while svrngs keeps back, with nothing typed, what would show one
+person's chats to the others (§3, "Lent apps, as they come"). An app that takes the signed-in person from a request
 header lets each of them straight in once its lender names ours,
 `X-Svrngs-User`, in its settings, and `svrngs share` knows two by their
 ports and prints what to set: `svrngs share 4533` lends Navidrome, asks no
@@ -415,8 +419,27 @@ the evidence is U4's inventory, §8):
 **Lent apps, as they come** (operator, 2026-10-05). North star 2 holds for
 the apps people already self-host: `svrngs share 8096` lends Jellyfin as it
 comes, and someone who never used it opens it from the list, plays and
-seeks, on a computer or a phone. U5 builds that by seven calls; the evidence
-is U5's inventory (§8).
+seeks, on a computer or a phone. A friend's model is lent the same way
+(start-llama): `svrngs share <port> --kind llama-server` lends llama.cpp's
+own server as it comes, its chat page opened from the list and its
+OpenAI-compatible API given to a program, answered whole and streamed 3 ms
+from straight (`demo/runs/llama/2026-10-11/`, one host). Its kind is its
+lender's word, never its port: 8080 is Open WebUI's and many dev servers'
+too, so the well-known table gives it none, and `share` on a port it does
+not know names the kinds it does. What a lend of it keeps back is the
+table's, its lender typing none (`keeps:`, `share::kept_of`; `share` says
+them and why): the routes that show one person's chats to the others or
+change the server for everyone — `/slots`, `/v1/stream`, `/v1/streams`,
+`/v1/chat/completions/control`, `/lora-adapters`, `/metrics`, `/tools`,
+`/cors-proxy`, `/models` — as start-measure read llama.cpp and asked each
+route, Bo reading Cy's whole answer by its id through a lend that kept
+back only `/lora-adapters` (`demo/runs/start/2026-10-13/` §3 (b)). It
+keeps back no `/props`, which its chat page reads, so everyone it is lent
+to sees where its model's file is on the lender's disk: the door refuses
+a path for every method alike, and never changes an answer. Held by
+`crates/svrngs/tests/share.rs`, each route refused and the rest answered.
+U5 builds the apps' part by seven calls; the evidence is U5's inventory
+(§8).
 1. *Lends off the key's origin, each at an origin of its own.* A computer
    serves every lend at an origin of its own on loopback, `<id>.localhost`,
    or a port per lend where a browser does not resolve `*.localhost`. On a
@@ -440,6 +463,8 @@ is U5's inventory (§8).
 3. *The infra learns no Jellyfin.* Anything that knows Jellyfin's API lives
    in `apps/jellyfin/`, whose nouns `scripts/vocab_check.py` keeps out of
    the infra (§5), and what the door gains for it is general: any app.
+   So for llama-server: its words, its paths and why, are the well-known
+   table's alone (`crates/svrngs/src/well_known.txt`).
 4. *Sign in once, or none through a program the lender runs.* Lent as it
    comes, the lend carries no secret and each person signs in once with an
    account the lender made: **decided** (u5-3,
