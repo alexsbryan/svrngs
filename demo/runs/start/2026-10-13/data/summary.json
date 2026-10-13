@@ -1,0 +1,2229 @@
+{
+ "bo_join": [
+  0,
+  "You're in Lab, as Bo.\nLab's folder is /tmp/sm-w/bo/svrngs/Lab: what anyone in Lab puts there reaches this computer, and what you put there reaches theirs."
+ ],
+ "shares": {
+  "llama": [
+   0,
+   "Lent llama (port 18089) to everyone in your groups, up to 4 people at once.\nThey cannot open /lora-adapters.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare llama` stops lending it.\nIf llama takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):"
+  ],
+  "night": [
+   0,
+   "Lent night (port 18091) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 18091 --limit <number>`.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare night` stops lending it.\nIf night takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):"
+  ],
+  "taste": [
+   0,
+   "Lent taste (port 18092) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 18092 --limit <number>`.\nAn app uses it only once the person it acts for says yes to: \"the films you have marked\".\nsvrngs is running here already, so they can open it now.\n`svrngs unshare taste` stops lending it.\nIf taste takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):"
+  ]
+ },
+ "before": {
+  "api": "http://127.0.0.1:64525",
+  "home": "http://svrngs.localhost:64525/",
+  "llama": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:64525/",
+  "said": "Running for Lab.\nApps on this computer reach your groups at http://127.0.0.1:64525.\nYour groups, and what apps use of them, open at http://svrngs.localhost:64525/.\n\nLeave this running; Ctrl-C stops it.\n"
+ },
+ "clients_before": {
+  "curl": {
+   "origin": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:64525/",
+   "whole": {
+    "reached": true,
+    "exit": 0,
+    "error": null,
+    "status": "200",
+    "remote_ip": "127.0.0.1"
+   },
+   "streamed": {
+    "reached": true,
+    "exit": 0,
+    "error": null,
+    "status": "200",
+    "remote_ip": "127.0.0.1",
+    "events": 23
+   },
+   "resolved": [
+    "127.0.0.1"
+   ]
+  },
+  "python": {
+   "origin": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:64525/",
+   "openai": "3.29.0",
+   "resolved": [
+    "127.0.0.1",
+    "::1"
+   ],
+   "whole": {
+    "reached": true,
+    "ms": 153.6,
+    "object": "chat.completion",
+    "words": "Three rivers in Spain are the Garonne, the Garza, and the Guadalquivir."
+   },
+   "streamed": {
+    "reached": true,
+    "events": 22,
+    "ms": 92.1
+   }
+  },
+  "node": {
+   "origin": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:64525/",
+   "node": "v20.20.2",
+   "resolved": [
+    "::1",
+    "127.0.0.1"
+   ],
+   "whole": {
+    "reached": true,
+    "status": 403,
+    "ms": 49,
+    "refused": "closed",
+    "said": {
+     "error": "a page reaches another lend only by fetch, which says where it is from",
+     "kind": "closed"
+    }
+   },
+   "streamed": {
+    "reached": true,
+    "status": 403,
+    "events": 0,
+    "ms": 3,
+    "refused": "closed",
+    "said": "{\"error\":\"a page reaches another lend only by fetch, which says where it is from\",\"kind\":\"closed\"}"
+   }
+  }
+ },
+ "walk": {
+  "lends-bo": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:64525/",
+    "opened": {
+     "status": 200,
+     "ms": 565
+    },
+    "at": "http://svrngs.localhost:64525/",
+    "title": "Your groups",
+    "text": "Lab\n\nPeople: Bo, Cy, Sam\n\nLab\u2019s folder is on this computer at /tmp/sm-w/bo/svrngs/Lab\n\nCy\u2019s taste\nSam\u2019s llama\nSam\u2019s night\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+    "headings": [
+     "Lab",
+     "What this computer lends",
+     "What apps use"
+    ],
+    "buttons": [],
+    "links": [
+     {
+      "text": "Cy\u2019s taste",
+      "href": "http://2rnxsvn1m8d78cbf6ww9fqv66t48fc5f2jzvcahxk63utrpfdugtq9s0vcjzzq.localhost:64525/"
+     },
+     {
+      "text": "Sam\u2019s llama",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:64525/"
+     },
+     {
+      "text": "Sam\u2019s night",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b.localhost:64525/"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lends": 2,
+     "apps": 1,
+     "svrngs": 1,
+     "computer": 3,
+     "folder": 1
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13/data/shots/lends-bo-chromium.png",
+    "errors": [],
+    "after": {
+     "at": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:64525/",
+     "title": "llama-ui",
+     "text": "Hello there\n\nType a message or upload files to get started\n\nOpen prompt picker\nOpen resource picker\nAdd files, prompts, tools or MCP Servers\nQwen/Qwen2.5\n0.5B\nInstruct\nSend",
+     "headings": [
+      "Hello there"
+     ],
+     "buttons": [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "Open prompt picker",
+      "Open resource picker",
+      "Add files, prompts, tools or MCP Servers",
+      "Qwen/Qwen2.5\n0.5B\nInstruct",
+      "Send"
+     ],
+     "links": [],
+     "boxes": [
+      {
+       "type": "file",
+       "label": null,
+       "value": ""
+      }
+     ],
+     "fence": {},
+     "watch": {}
+    }
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:64525/",
+    "opened": {
+     "status": 200,
+     "ms": 565
+    },
+    "at": "http://svrngs.localhost:64525/",
+    "title": "Your groups",
+    "text": "Lab\n\nPeople: Bo, Cy, Sam\n\nLab\u2019s folder is on this computer at /tmp/sm-w/bo/svrngs/Lab\n\nCy\u2019s taste\nSam\u2019s llama\nSam\u2019s night\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+    "headings": [
+     "Lab",
+     "What this computer lends",
+     "What apps use"
+    ],
+    "buttons": [],
+    "links": [
+     {
+      "text": "Cy\u2019s taste",
+      "href": "http://2rnxsvn1m8d78cbf6ww9fqv66t48fc5f2jzvcahxk63utrpfdugtq9s0vcjzzq.localhost:64525/"
+     },
+     {
+      "text": "Sam\u2019s llama",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:64525/"
+     },
+     {
+      "text": "Sam\u2019s night",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b.localhost:64525/"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lends": 2,
+     "apps": 1,
+     "svrngs": 1,
+     "computer": 3,
+     "folder": 1
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13/data/shots/lends-bo-webkit.png",
+    "errors": [],
+    "after": {
+     "at": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:64525/",
+     "title": "llama-ui",
+     "text": "\n\n\n\n\nHello there\nType a message or upload files to get started\nOpen prompt pickerOpen resource picker\n\nAdd files, prompts, tools or MCP Servers\n\nQwen/Qwen2.5\n0.5B\nInstruct\nSend\n",
+     "headings": [
+      "Hello there"
+     ],
+     "buttons": [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "Open prompt picker",
+      "Open resource picker",
+      "Add files, prompts, tools or MCP Servers",
+      "Qwen/Qwen2.5\n0.5B\nInstruct\n",
+      "Send"
+     ],
+     "links": [],
+     "boxes": [
+      {
+       "type": "file",
+       "label": null,
+       "value": ""
+      }
+     ],
+     "fence": {},
+     "watch": {}
+    }
+   }
+  },
+  "lends-sam": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:64434/",
+    "opened": {
+     "status": 200,
+     "ms": 559
+    },
+    "at": "http://svrngs.localhost:64434/",
+    "title": "Your groups",
+    "text": "Lab\n\nPeople: Bo, Cy, Sam\n\nLab\u2019s folder is on this computer at /tmp/sm-w/sam/svrngs/Lab\n\nCy\u2019s taste\nSam\u2019s llama\nSam\u2019s night\nWhat this computer lends\nllama: up to 4 people at once, 0 using it now. Let in this manyLet everyone inStop lending\nnight: everyone in your groups at once, 0 using it now. Let in this manyStop lending\nWhat apps use",
+    "headings": [
+     "Lab",
+     "What this computer lends",
+     "What apps use"
+    ],
+    "buttons": [
+     "Let in this many",
+     "Let everyone in",
+     "Stop lending",
+     "Let in this many",
+     "Stop lending"
+    ],
+    "links": [
+     {
+      "text": "Cy\u2019s taste",
+      "href": "http://2rnxsvn1m8d78cbf6ww9fqv66t48fc5f2jzvcahxk63utrpfdugtq9s0vcjzzq.localhost:64434/"
+     },
+     {
+      "text": "Sam\u2019s llama",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:64434/"
+     },
+     {
+      "text": "Sam\u2019s night",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b.localhost:64434/"
+     }
+    ],
+    "boxes": [
+     {
+      "type": "number",
+      "label": "How many at once",
+      "value": "4"
+     },
+     {
+      "type": "number",
+      "label": "How many at once",
+      "value": ""
+     }
+    ],
+    "fence": {},
+    "watch": {
+     "lends": 1,
+     "lending": 2,
+     "apps": 1,
+     "svrngs": 1,
+     "computer": 2,
+     "folder": 1
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13/data/shots/lends-sam-chromium.png",
+    "errors": []
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:64434/",
+    "opened": {
+     "status": 200,
+     "ms": 541
+    },
+    "at": "http://svrngs.localhost:64434/",
+    "title": "Your groups",
+    "text": "Lab\n\nPeople: Bo, Cy, Sam\n\nLab\u2019s folder is on this computer at /tmp/sm-w/sam/svrngs/Lab\n\nCy\u2019s taste\nSam\u2019s llama\nSam\u2019s night\nWhat this computer lends\n\nllama: up to 4 people at once, 0 using it now. Let in this manyLet everyone inStop lending\nnight: everyone in your groups at once, 0 using it now. Let in this manyStop lending\nWhat apps use",
+    "headings": [
+     "Lab",
+     "What this computer lends",
+     "What apps use"
+    ],
+    "buttons": [
+     "Let in this many",
+     "Let everyone in",
+     "Stop lending",
+     "Let in this many",
+     "Stop lending"
+    ],
+    "links": [
+     {
+      "text": "Cy\u2019s taste",
+      "href": "http://2rnxsvn1m8d78cbf6ww9fqv66t48fc5f2jzvcahxk63utrpfdugtq9s0vcjzzq.localhost:64434/"
+     },
+     {
+      "text": "Sam\u2019s llama",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:64434/"
+     },
+     {
+      "text": "Sam\u2019s night",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b.localhost:64434/"
+     }
+    ],
+    "boxes": [
+     {
+      "type": "number",
+      "label": "How many at once",
+      "value": "4"
+     },
+     {
+      "type": "number",
+      "label": "How many at once",
+      "value": ""
+     }
+    ],
+    "fence": {},
+    "watch": {
+     "lends": 1,
+     "lending": 2,
+     "apps": 1,
+     "svrngs": 1,
+     "computer": 2,
+     "folder": 1
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13/data/shots/lends-sam-webkit.png",
+    "errors": []
+   }
+  },
+  "asking-bo": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:64525/ask?lend=2rnxsvn1m8d78cbf6ww9fqv66t48fc5f2jzvcahxk63utrpfdugtq9s0vcjzzq&app=97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b&back=/",
+    "opened": {
+     "status": 200,
+     "ms": 530
+    },
+    "at": "http://svrngs.localhost:64525/ask?lend=2rnxsvn1m8d78cbf6ww9fqv66t48fc5f2jzvcahxk63utrpfdugtq9s0vcjzzq&app=97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b&back=/",
+    "title": "Your groups",
+    "text": "Let Sam\u2019s night use Cy\u2019s taste?\nthe films you have marked\nYesNot now",
+    "headings": [
+     "Let Sam\u2019s night use Cy\u2019s taste?"
+    ],
+    "buttons": [
+     "Yes",
+     "Not now"
+    ],
+    "links": [],
+    "boxes": [],
+    "fence": {},
+    "watch": {},
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13/data/shots/asking-bo-chromium.png",
+    "errors": [],
+    "after": {
+     "at": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b.localhost:64525/",
+     "title": "night",
+     "text": "night",
+     "headings": [
+      "night"
+     ],
+     "buttons": [],
+     "links": [],
+     "boxes": [],
+     "fence": {},
+     "watch": {}
+    }
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:64525/ask?lend=2rnxsvn1m8d78cbf6ww9fqv66t48fc5f2jzvcahxk63utrpfdugtq9s0vcjzzq&app=97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b&back=/",
+    "opened": {
+     "status": 200,
+     "ms": 540
+    },
+    "at": "http://svrngs.localhost:64525/ask?lend=2rnxsvn1m8d78cbf6ww9fqv66t48fc5f2jzvcahxk63utrpfdugtq9s0vcjzzq&app=97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b&back=/",
+    "title": "Your groups",
+    "text": "Let Sam\u2019s night use Cy\u2019s taste?\n\nthe films you have marked\nYesNot now",
+    "headings": [
+     "Let Sam\u2019s night use Cy\u2019s taste?"
+    ],
+    "buttons": [
+     "Yes",
+     "Not now"
+    ],
+    "links": [],
+    "boxes": [],
+    "fence": {},
+    "watch": {},
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13/data/shots/asking-bo-webkit.png",
+    "errors": [],
+    "after": {
+     "at": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b.localhost:64525/",
+     "title": "night",
+     "text": "night",
+     "headings": [
+      "night"
+     ],
+     "buttons": [],
+     "links": [],
+     "boxes": [],
+     "fence": {},
+     "watch": {}
+    }
+   }
+  },
+  "after-yes-bo": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:64525/",
+    "opened": {
+     "status": 200,
+     "ms": 545
+    },
+    "at": "http://svrngs.localhost:64525/",
+    "title": "Your groups",
+    "text": "Lab\n\nPeople: Bo, Cy, Sam\n\nLab\u2019s folder is on this computer at /tmp/sm-w/bo/svrngs/Lab\n\nCy\u2019s taste\nSam\u2019s llama\nSam\u2019s night\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use\n\nSam\u2019s night uses Cy\u2019s taste. Stop",
+    "headings": [
+     "Lab",
+     "What this computer lends",
+     "What apps use"
+    ],
+    "buttons": [
+     "Stop"
+    ],
+    "links": [
+     {
+      "text": "Cy\u2019s taste",
+      "href": "http://2rnxsvn1m8d78cbf6ww9fqv66t48fc5f2jzvcahxk63utrpfdugtq9s0vcjzzq.localhost:64525/"
+     },
+     {
+      "text": "Sam\u2019s llama",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:64525/"
+     },
+     {
+      "text": "Sam\u2019s night",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b.localhost:64525/"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lends": 2,
+     "apps": 1,
+     "svrngs": 1,
+     "computer": 3,
+     "folder": 1
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13/data/shots/after-yes-bo-chromium.png",
+    "errors": []
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:64525/",
+    "opened": {
+     "status": 200,
+     "ms": 541
+    },
+    "at": "http://svrngs.localhost:64525/",
+    "title": "Your groups",
+    "text": "Lab\n\nPeople: Bo, Cy, Sam\n\nLab\u2019s folder is on this computer at /tmp/sm-w/bo/svrngs/Lab\n\nCy\u2019s taste\nSam\u2019s llama\nSam\u2019s night\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use\n\nSam\u2019s night uses Cy\u2019s taste. Stop",
+    "headings": [
+     "Lab",
+     "What this computer lends",
+     "What apps use"
+    ],
+    "buttons": [
+     "Stop"
+    ],
+    "links": [
+     {
+      "text": "Cy\u2019s taste",
+      "href": "http://2rnxsvn1m8d78cbf6ww9fqv66t48fc5f2jzvcahxk63utrpfdugtq9s0vcjzzq.localhost:64525/"
+     },
+     {
+      "text": "Sam\u2019s llama",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:64525/"
+     },
+     {
+      "text": "Sam\u2019s night",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b.localhost:64525/"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lends": 2,
+     "apps": 1,
+     "svrngs": 1,
+     "computer": 3,
+     "folder": 1
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13/data/shots/after-yes-bo-webkit.png",
+    "errors": []
+   }
+  },
+  "asleep-bo": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:64525/",
+    "opened": {
+     "status": 200,
+     "ms": 3571
+    },
+    "at": "http://svrngs.localhost:64525/",
+    "title": "Your groups",
+    "text": "Lab\n\nPeople: Bo, Cy, Sam\n\nLab\u2019s folder is on this computer at /tmp/sm-w/bo/svrngs/Lab\n\nSam\u2019s llama\nSam\u2019s night\nCy's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+    "headings": [
+     "Lab",
+     "What this computer lends",
+     "What apps use"
+    ],
+    "buttons": [],
+    "links": [
+     {
+      "text": "Sam\u2019s llama",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:64525/"
+     },
+     {
+      "text": "Sam\u2019s night",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b.localhost:64525/"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 1,
+     "lends": 2,
+     "apps": 1,
+     "svrngs": 1,
+     "computer": 4,
+     "folder": 1
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13/data/shots/asleep-bo-chromium.png",
+    "errors": []
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:64525/",
+    "opened": {
+     "status": 200,
+     "ms": 3610
+    },
+    "at": "http://svrngs.localhost:64525/",
+    "title": "Your groups",
+    "text": "Lab\n\nPeople: Bo, Cy, Sam\n\nLab\u2019s folder is on this computer at /tmp/sm-w/bo/svrngs/Lab\n\nSam\u2019s llama\nSam\u2019s night\nCy's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+    "headings": [
+     "Lab",
+     "What this computer lends",
+     "What apps use"
+    ],
+    "buttons": [],
+    "links": [
+     {
+      "text": "Sam\u2019s llama",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:64525/"
+     },
+     {
+      "text": "Sam\u2019s night",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b.localhost:64525/"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 1,
+     "lends": 2,
+     "apps": 1,
+     "svrngs": 1,
+     "computer": 4,
+     "folder": 1
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13/data/shots/asleep-bo-webkit.png",
+    "errors": []
+   }
+  },
+  "restart-old-home-bo": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:64525/",
+    "opened": {
+     "status": null,
+     "why": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://svrngs.localhost:64525/",
+     "ms": 5
+    },
+    "at": "chrome-error://chromewebdata/",
+    "title": "",
+    "text": "",
+    "headings": [],
+    "buttons": [],
+    "links": [],
+    "boxes": [],
+    "fence": {},
+    "watch": {},
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13/data/shots/restart-old-home-bo-chromium.png",
+    "errors": []
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:64525/",
+    "opened": {
+     "status": null,
+     "why": "Error: page.goto: Could not connect to the server.",
+     "ms": 95
+    },
+    "at": "about:blank",
+    "title": "",
+    "text": "",
+    "headings": [],
+    "buttons": [],
+    "links": [],
+    "boxes": [],
+    "fence": {},
+    "watch": {},
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13/data/shots/restart-old-home-bo-webkit.png",
+    "errors": []
+   }
+  },
+  "restart-new-home-bo": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:49821/",
+    "opened": {
+     "status": 200,
+     "ms": 3536
+    },
+    "at": "http://svrngs.localhost:49821/",
+    "title": "Your groups",
+    "text": "Lab\n\nPeople: Bo, Cy, Sam\n\nLab\u2019s folder is on this computer at /tmp/sm-w/bo/svrngs/Lab\n\nSam\u2019s llama\nSam\u2019s night\nCy's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+    "headings": [
+     "Lab",
+     "What this computer lends",
+     "What apps use"
+    ],
+    "buttons": [],
+    "links": [
+     {
+      "text": "Sam\u2019s llama",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:49821/"
+     },
+     {
+      "text": "Sam\u2019s night",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b.localhost:49821/"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 1,
+     "lends": 2,
+     "apps": 1,
+     "svrngs": 1,
+     "computer": 4,
+     "folder": 1
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13/data/shots/restart-new-home-bo-chromium.png",
+    "errors": []
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:49821/",
+    "opened": {
+     "status": 200,
+     "ms": 3612
+    },
+    "at": "http://svrngs.localhost:49821/",
+    "title": "Your groups",
+    "text": "Lab\n\nPeople: Bo, Cy, Sam\n\nLab\u2019s folder is on this computer at /tmp/sm-w/bo/svrngs/Lab\n\nSam\u2019s llama\nSam\u2019s night\nCy's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+    "headings": [
+     "Lab",
+     "What this computer lends",
+     "What apps use"
+    ],
+    "buttons": [],
+    "links": [
+     {
+      "text": "Sam\u2019s llama",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:49821/"
+     },
+     {
+      "text": "Sam\u2019s night",
+      "href": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b.localhost:49821/"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 1,
+     "lends": 2,
+     "apps": 1,
+     "svrngs": 1,
+     "computer": 4,
+     "folder": 1
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13/data/shots/restart-new-home-bo-webkit.png",
+    "errors": []
+   }
+  },
+  "removed-bo": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:49821/",
+    "opened": {
+     "status": 200,
+     "ms": 572
+    },
+    "at": "http://svrngs.localhost:49821/",
+    "title": "Your groups",
+    "text": "Lab\n\nYou are no longer in Lab. What you already have stays on this computer; nothing new reaches it.\n\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+    "headings": [
+     "Lab",
+     "What this computer lends",
+     "What apps use"
+    ],
+    "buttons": [],
+    "links": [],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lends": 2,
+     "apps": 1,
+     "computer": 3
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13/data/shots/removed-bo-chromium.png",
+    "errors": []
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:49821/",
+    "opened": {
+     "status": 200,
+     "ms": 582
+    },
+    "at": "http://svrngs.localhost:49821/",
+    "title": "Your groups",
+    "text": "Lab\n\nYou are no longer in Lab. What you already have stays on this computer; nothing new reaches it.\n\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+    "headings": [
+     "Lab",
+     "What this computer lends",
+     "What apps use"
+    ],
+    "buttons": [],
+    "links": [],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lends": 2,
+     "apps": 1,
+     "computer": 3
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13/data/shots/removed-bo-webkit.png",
+    "errors": []
+   }
+  },
+  "no-group-dee": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:50669/",
+    "opened": {
+     "status": 200,
+     "ms": 516
+    },
+    "at": "http://svrngs.localhost:50669/",
+    "title": "Your groups",
+    "text": "What this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+    "headings": [
+     "What this computer lends",
+     "What apps use"
+    ],
+    "buttons": [],
+    "links": [],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lends": 2,
+     "apps": 1,
+     "computer": 2
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13/data/shots/no-group-dee-chromium.png",
+    "errors": []
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:50669/",
+    "opened": {
+     "status": 200,
+     "ms": 608
+    },
+    "at": "http://svrngs.localhost:50669/",
+    "title": "Your groups",
+    "text": "What this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+    "headings": [
+     "What this computer lends",
+     "What apps use"
+    ],
+    "buttons": [],
+    "links": [],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lends": 2,
+     "apps": 1,
+     "computer": 2
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13/data/shots/no-group-dee-webkit.png",
+    "errors": []
+   }
+  }
+ },
+ "routes": [
+  {
+   "method": "GET",
+   "path": "/health",
+   "straight": {
+    "status": 200,
+    "refused": null,
+    "body": {
+     "status": "ok"
+    }
+   },
+   "lent": {
+    "status": 200,
+    "refused": null,
+    "body": {
+     "status": "ok"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/props",
+   "straight": {
+    "status": 200,
+    "refused": null,
+    "body": {
+     "default_generation_settings": {
+      "params": {
+       "seed": 4294967295,
+       "temperature": 0.800000011920929,
+       "dynatemp_range": 0.0,
+       "dynatemp_exponent": 1.0,
+       "top_k": 40,
+       "top_p": 0.949999988079071,
+       "min_p": 0.05000000074505806,
+       "top_n_sigma": -1.0,
+       "xtc_probability": 0.0,
+       "xtc_threshold": 0.10000000149011612,
+       "typical_p": 1.0,
+       "repeat_last_n": 64,
+       "repeat_penalty": 1.0,
+       "presence_penalty": 0.0,
+       "frequency_penalty": 0.0,
+       "dry_multiplier": 0.0,
+       "dry_base": 1.75,
+       "dry_allowed_length": 2,
+       "dry_penalty_last_n": -1,
+       "mirostat": 0,
+       "mirostat_tau": 5.0,
+       "mirostat_eta": 0.10000000149011612,
+       "adaptive_target": -1.0,
+       "adaptive_decay": 0.8999999761581421,
+       "max_tokens": -1,
+       "n_predict": -1,
+       "n_keep": 0,
+       "n_discard": 0,
+       "ignore_eos": false,
+       "stream": false,
+       "n_probs": 0,
+       "min_keep": 0,
+       "chat_format": "Content-only",
+       "reasoning_format": "none",
+       "reasoning_in_content": false,
+       "generation_prompt": "",
+       "samplers": [
+        "penalties",
+        "dry",
+        "top_n_sigma",
+        "top_k",
+        "typ_p",
+        "top_p",
+        "min_p",
+        "xtc",
+        "temperature"
+       ],
+       "speculative.types": "none",
+       "timings_per_token": false,
+       "post_sampling_probs": false,
+       "backend_sampling": false,
+       "lora": []
+      },
+      "n_ctx": 2048
+     },
+     "total_slots": 2,
+     "model_alias": "Qwen/Qwen2.5-0.5B-Instruct-GGUF:Q4_K_M",
+     "model_ftype": "Q4_K - Medium",
+     "model_path": "/Users/alexsbryan/.cache/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct-GGUF/snapshots/9217f5db79a29953eb74d5343926648285ec7e67/qwen2.5-0.5b-instruct-q4_k_m.gguf",
+     "modalities": {
+      "vision": false,
+      "video": false,
+      "audio": false
+     },
+     "media_marker": "<__media_7ANpPmvzJpvv6UAGG9uS4z45xvbTHnir__>",
+     "endpoint_slots": true,
+     "endpoint_props": false,
+     "endpoint_metrics": false,
+     "ui": true,
+     "ui_settings": {},
+     "chat_template": "{%- if tools %}\n    {{- '<|im_start|>system\\n' }}\n    {%- if messages[0]['role'] == 'system' %}\n        {{- messages[0]['content'] }}\n    {%- else %}\n        {{- 'You are Qwen, created by Alibaba Cloud. You are a helpful assistant.' }}\n    {%- endif %}\n    {{- \"\\n\\n# Tools\\n\\nYou may call one or more functions to assist with the user query.\\n\\nYou are provided with function signatures within <tools></tools> XML tags:\\n<tools>\" }}\n    {%- for tool in tools %}\n        {{- \"\\n\" }}\n        {{- tool | tojson }}\n    {%- endfor %}\n    {{- \"\\n</tools>\\n\\nFor each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:\\n<tool_call>\\n{{\\\"name\\\": <function-name>, \\\"arguments\\\": <args-json-object>}}\\n</tool_call><|im_end|>\\n\" }}\n{%- else %}\n    {%- if messages[0]['role'] == 'system' %}\n        {{- '<|im_start|>system\\n' + messages[0]['content'] + '<|im_end|>\\n' }}\n    {%- else %}\n        {{- '<|im_start|>system\\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\\n' }}\n    {%- endif %}\n{%- endif %}\n{%- for message in messages %}\n    {%- if (message.role == \"user\") or (message.role == \"system\" and not loop.first) or (message.role == \"assistant\" and not message.tool_calls) %}\n        {{- '<|im_start|>' + message.role + '\\n' + message.content + '<|im_end|>' + '\\n' }}\n    {%- elif message.role == \"assistant\" %}\n        {{- '<|im_start|>' + message.role }}\n        {%- if message.content %}\n            {{- '\\n' + message.content }}\n        {%- endif %}\n        {%- for tool_call in message.tool_calls %}\n            {%- if tool_call.function is defined %}\n                {%- set tool_call = tool_call.function %}\n            {%- endif %}\n            {{- '\\n<tool_call>\\n{\"name\": \"' }}\n            {{- tool_call.name }}\n            {{- '\", \"arguments\": ' }}\n            {{- tool_call.arguments | tojson }}\n            {{- '}\\n</tool_call>' }}\n        {%- endfor %}\n        {{- '<|im_end|>\\n' }}\n    {%- elif message.role == \"tool\" %}\n        {%- if (loop.index0 == 0) or (messages[loop.index0 - 1].role != \"tool\") %}\n            {{- '<|im_start|>user' }}\n        {%- endif %}\n        {{- '\\n<tool_response>\\n' }}\n        {{- message.content }}\n        {{- '\\n</tool_response>' }}\n        {%- if loop.last or (messages[loop.index0 + 1].role != \"tool\") %}\n            {{- '<|im_end|>\\n' }}\n        {%- endif %}\n    {%- endif %}\n{%- endfor %}\n{%- if add_generation_prompt %}\n    {{- '<|im_start|>assistant\\n' }}\n{%- endif %}",
+     "chat_template_caps": {
+      "supports_object_arguments": true,
+      "supports_parallel_tool_calls": true,
+      "supports_preserve_reasoning": false,
+      "supports_string_content": true,
+      "supports_system_role": true,
+      "supports_tool_calls": true,
+      "supports_tools": true,
+      "supports_typed_content": false
+     },
+     "bos_token": "<|endoftext|>",
+     "eos_token": "<|im_end|>",
+     "build_info": "b10180-11b068d06",
+     "is_sleeping": false,
+     "cors_proxy_enabled": false
+    }
+   },
+   "lent": {
+    "status": 200,
+    "refused": null,
+    "body": {
+     "default_generation_settings": {
+      "params": {
+       "seed": 4294967295,
+       "temperature": 0.800000011920929,
+       "dynatemp_range": 0.0,
+       "dynatemp_exponent": 1.0,
+       "top_k": 40,
+       "top_p": 0.949999988079071,
+       "min_p": 0.05000000074505806,
+       "top_n_sigma": -1.0,
+       "xtc_probability": 0.0,
+       "xtc_threshold": 0.10000000149011612,
+       "typical_p": 1.0,
+       "repeat_last_n": 64,
+       "repeat_penalty": 1.0,
+       "presence_penalty": 0.0,
+       "frequency_penalty": 0.0,
+       "dry_multiplier": 0.0,
+       "dry_base": 1.75,
+       "dry_allowed_length": 2,
+       "dry_penalty_last_n": -1,
+       "mirostat": 0,
+       "mirostat_tau": 5.0,
+       "mirostat_eta": 0.10000000149011612,
+       "adaptive_target": -1.0,
+       "adaptive_decay": 0.8999999761581421,
+       "max_tokens": -1,
+       "n_predict": -1,
+       "n_keep": 0,
+       "n_discard": 0,
+       "ignore_eos": false,
+       "stream": false,
+       "n_probs": 0,
+       "min_keep": 0,
+       "chat_format": "Content-only",
+       "reasoning_format": "none",
+       "reasoning_in_content": false,
+       "generation_prompt": "",
+       "samplers": [
+        "penalties",
+        "dry",
+        "top_n_sigma",
+        "top_k",
+        "typ_p",
+        "top_p",
+        "min_p",
+        "xtc",
+        "temperature"
+       ],
+       "speculative.types": "none",
+       "timings_per_token": false,
+       "post_sampling_probs": false,
+       "backend_sampling": false,
+       "lora": []
+      },
+      "n_ctx": 2048
+     },
+     "total_slots": 2,
+     "model_alias": "Qwen/Qwen2.5-0.5B-Instruct-GGUF:Q4_K_M",
+     "model_ftype": "Q4_K - Medium",
+     "model_path": "/Users/alexsbryan/.cache/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct-GGUF/snapshots/9217f5db79a29953eb74d5343926648285ec7e67/qwen2.5-0.5b-instruct-q4_k_m.gguf",
+     "modalities": {
+      "vision": false,
+      "video": false,
+      "audio": false
+     },
+     "media_marker": "<__media_7ANpPmvzJpvv6UAGG9uS4z45xvbTHnir__>",
+     "endpoint_slots": true,
+     "endpoint_props": false,
+     "endpoint_metrics": false,
+     "ui": true,
+     "ui_settings": {},
+     "chat_template": "{%- if tools %}\n    {{- '<|im_start|>system\\n' }}\n    {%- if messages[0]['role'] == 'system' %}\n        {{- messages[0]['content'] }}\n    {%- else %}\n        {{- 'You are Qwen, created by Alibaba Cloud. You are a helpful assistant.' }}\n    {%- endif %}\n    {{- \"\\n\\n# Tools\\n\\nYou may call one or more functions to assist with the user query.\\n\\nYou are provided with function signatures within <tools></tools> XML tags:\\n<tools>\" }}\n    {%- for tool in tools %}\n        {{- \"\\n\" }}\n        {{- tool | tojson }}\n    {%- endfor %}\n    {{- \"\\n</tools>\\n\\nFor each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:\\n<tool_call>\\n{{\\\"name\\\": <function-name>, \\\"arguments\\\": <args-json-object>}}\\n</tool_call><|im_end|>\\n\" }}\n{%- else %}\n    {%- if messages[0]['role'] == 'system' %}\n        {{- '<|im_start|>system\\n' + messages[0]['content'] + '<|im_end|>\\n' }}\n    {%- else %}\n        {{- '<|im_start|>system\\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\\n' }}\n    {%- endif %}\n{%- endif %}\n{%- for message in messages %}\n    {%- if (message.role == \"user\") or (message.role == \"system\" and not loop.first) or (message.role == \"assistant\" and not message.tool_calls) %}\n        {{- '<|im_start|>' + message.role + '\\n' + message.content + '<|im_end|>' + '\\n' }}\n    {%- elif message.role == \"assistant\" %}\n        {{- '<|im_start|>' + message.role }}\n        {%- if message.content %}\n            {{- '\\n' + message.content }}\n        {%- endif %}\n        {%- for tool_call in message.tool_calls %}\n            {%- if tool_call.function is defined %}\n                {%- set tool_call = tool_call.function %}\n            {%- endif %}\n            {{- '\\n<tool_call>\\n{\"name\": \"' }}\n            {{- tool_call.name }}\n            {{- '\", \"arguments\": ' }}\n            {{- tool_call.arguments | tojson }}\n            {{- '}\\n</tool_call>' }}\n        {%- endfor %}\n        {{- '<|im_end|>\\n' }}\n    {%- elif message.role == \"tool\" %}\n        {%- if (loop.index0 == 0) or (messages[loop.index0 - 1].role != \"tool\") %}\n            {{- '<|im_start|>user' }}\n        {%- endif %}\n        {{- '\\n<tool_response>\\n' }}\n        {{- message.content }}\n        {{- '\\n</tool_response>' }}\n        {%- if loop.last or (messages[loop.index0 + 1].role != \"tool\") %}\n            {{- '<|im_end|>\\n' }}\n        {%- endif %}\n    {%- endif %}\n{%- endfor %}\n{%- if add_generation_prompt %}\n    {{- '<|im_start|>assistant\\n' }}\n{%- endif %}",
+     "chat_template_caps": {
+      "supports_object_arguments": true,
+      "supports_parallel_tool_calls": true,
+      "supports_preserve_reasoning": false,
+      "supports_string_content": true,
+      "supports_system_role": true,
+      "supports_tool_calls": true,
+      "supports_tools": true,
+      "supports_typed_content": false
+     },
+     "bos_token": "<|endoftext|>",
+     "eos_token": "<|im_end|>",
+     "build_info": "b10180-11b068d06",
+     "is_sleeping": false,
+     "cors_proxy_enabled": false
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/props",
+   "straight": {
+    "status": 501,
+    "refused": null,
+    "body": {
+     "error": {
+      "code": 501,
+      "message": "This server does not support changing global properties. Start it with `--props`",
+      "type": "not_supported_error"
+     }
+    }
+   },
+   "lent": {
+    "status": 501,
+    "refused": null,
+    "body": {
+     "error": {
+      "code": 501,
+      "message": "This server does not support changing global properties. Start it with `--props`",
+      "type": "not_supported_error"
+     }
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/metrics",
+   "straight": {
+    "status": 501,
+    "refused": null,
+    "body": {
+     "error": {
+      "code": 501,
+      "message": "This server does not support metrics endpoint. Start it with `--metrics`",
+      "type": "not_supported_error"
+     }
+    }
+   },
+   "lent": {
+    "status": 501,
+    "refused": null,
+    "body": {
+     "error": {
+      "code": 501,
+      "message": "This server does not support metrics endpoint. Start it with `--metrics`",
+      "type": "not_supported_error"
+     }
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/slots",
+   "straight": {
+    "status": 200,
+    "refused": null,
+    "body": [
+     {
+      "id": 0,
+      "n_ctx": 2048,
+      "speculative": false,
+      "is_processing": false
+     },
+     {
+      "id": 1,
+      "n_ctx": 2048,
+      "speculative": false,
+      "is_processing": false,
+      "id_task": 66,
+      "n_prompt_tokens": 55,
+      "n_prompt_tokens_processed": 1,
+      "n_prompt_tokens_cache": 0,
+      "params": {
+       "seed": 1,
+       "temperature": 0.0,
+       "dynatemp_range": 0.0,
+       "dynatemp_exponent": 1.0,
+       "top_k": 40,
+       "top_p": 0.949999988079071,
+       "min_p": 0.05000000074505806,
+       "top_n_sigma": -1.0,
+       "xtc_probability": 0.0,
+       "xtc_threshold": 0.10000000149011612,
+       "typical_p": 1.0,
+       "repeat_last_n": 64,
+       "repeat_penalty": 1.0,
+       "presence_penalty": 0.0,
+       "frequency_penalty": 0.0,
+       "dry_multiplier": 0.0,
+       "dry_base": 1.75,
+       "dry_allowed_length": 2,
+       "dry_penalty_last_n": 2048,
+       "mirostat": 0,
+       "mirostat_tau": 5.0,
+       "mirostat_eta": 0.10000000149011612,
+       "adaptive_target": -1.0,
+       "adaptive_decay": 0.8999999761581421,
+       "max_tokens": 32,
+       "n_predict": 32,
+       "n_keep": 0,
+       "n_discard": 0,
+       "ignore_eos": false,
+       "stream": true,
+       "n_probs": 0,
+       "min_keep": 0,
+       "chat_format": "peg-native",
+       "reasoning_format": "deepseek",
+       "reasoning_in_content": false,
+       "generation_prompt": "<|im_start|>assistant\n",
+       "samplers": [
+        "penalties",
+        "dry",
+        "top_n_sigma",
+        "top_k",
+        "typ_p",
+        "top_p",
+        "min_p",
+        "xtc",
+        "temperature"
+       ],
+       "speculative.types": "none",
+       "timings_per_token": false,
+       "post_sampling_probs": false,
+       "backend_sampling": false,
+       "lora": []
+      },
+      "next_token": [
+       {
+        "has_next_token": false,
+        "has_new_line": false,
+        "n_remain": 11,
+        "n_decoded": 21
+       }
+      ]
+     }
+    ]
+   },
+   "lent": {
+    "status": 200,
+    "refused": null,
+    "body": [
+     {
+      "id": 0,
+      "n_ctx": 2048,
+      "speculative": false,
+      "is_processing": false
+     },
+     {
+      "id": 1,
+      "n_ctx": 2048,
+      "speculative": false,
+      "is_processing": false,
+      "id_task": 66,
+      "n_prompt_tokens": 55,
+      "n_prompt_tokens_processed": 1,
+      "n_prompt_tokens_cache": 0,
+      "params": {
+       "seed": 1,
+       "temperature": 0.0,
+       "dynatemp_range": 0.0,
+       "dynatemp_exponent": 1.0,
+       "top_k": 40,
+       "top_p": 0.949999988079071,
+       "min_p": 0.05000000074505806,
+       "top_n_sigma": -1.0,
+       "xtc_probability": 0.0,
+       "xtc_threshold": 0.10000000149011612,
+       "typical_p": 1.0,
+       "repeat_last_n": 64,
+       "repeat_penalty": 1.0,
+       "presence_penalty": 0.0,
+       "frequency_penalty": 0.0,
+       "dry_multiplier": 0.0,
+       "dry_base": 1.75,
+       "dry_allowed_length": 2,
+       "dry_penalty_last_n": 2048,
+       "mirostat": 0,
+       "mirostat_tau": 5.0,
+       "mirostat_eta": 0.10000000149011612,
+       "adaptive_target": -1.0,
+       "adaptive_decay": 0.8999999761581421,
+       "max_tokens": 32,
+       "n_predict": 32,
+       "n_keep": 0,
+       "n_discard": 0,
+       "ignore_eos": false,
+       "stream": true,
+       "n_probs": 0,
+       "min_keep": 0,
+       "chat_format": "peg-native",
+       "reasoning_format": "deepseek",
+       "reasoning_in_content": false,
+       "generation_prompt": "<|im_start|>assistant\n",
+       "samplers": [
+        "penalties",
+        "dry",
+        "top_n_sigma",
+        "top_k",
+        "typ_p",
+        "top_p",
+        "min_p",
+        "xtc",
+        "temperature"
+       ],
+       "speculative.types": "none",
+       "timings_per_token": false,
+       "post_sampling_probs": false,
+       "backend_sampling": false,
+       "lora": []
+      },
+      "next_token": [
+       {
+        "has_next_token": false,
+        "has_new_line": false,
+        "n_remain": 11,
+        "n_decoded": 21
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/slots/0?action=save",
+   "straight": {
+    "status": 501,
+    "refused": null,
+    "body": {
+     "error": {
+      "code": 501,
+      "message": "This server does not support slots action. Start it with `--slot-save-path`",
+      "type": "not_supported_error"
+     }
+    }
+   },
+   "lent": {
+    "status": 501,
+    "refused": null,
+    "body": {
+     "error": {
+      "code": 501,
+      "message": "This server does not support slots action. Start it with `--slot-save-path`",
+      "type": "not_supported_error"
+     }
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/lora-adapters",
+   "straight": {
+    "status": 200,
+    "refused": null,
+    "body": []
+   },
+   "lent": {
+    "status": 403,
+    "refused": "path",
+    "body": {
+     "error": "llama is lent without /lora-adapters",
+     "kind": "path"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/lora-adapters",
+   "straight": {
+    "status": 200,
+    "refused": null,
+    "body": {
+     "success": true
+    }
+   },
+   "lent": {
+    "status": 403,
+    "refused": "path",
+    "body": {
+     "error": "llama is lent without /lora-adapters",
+     "kind": "path"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/tools",
+   "straight": {
+    "status": 403,
+    "refused": null,
+    "body": {
+     "error": {
+      "message": "this feature is disabled",
+      "type": "feature_disabled"
+     }
+    }
+   },
+   "lent": {
+    "status": 403,
+    "refused": null,
+    "body": {
+     "error": {
+      "message": "this feature is disabled",
+      "type": "feature_disabled"
+     }
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/cors-proxy",
+   "straight": {
+    "status": 403,
+    "refused": null,
+    "body": {
+     "error": {
+      "message": "this feature is disabled",
+      "type": "feature_disabled"
+     }
+    }
+   },
+   "lent": {
+    "status": 403,
+    "refused": null,
+    "body": {
+     "error": {
+      "message": "this feature is disabled",
+      "type": "feature_disabled"
+     }
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v1/models",
+   "straight": {
+    "status": 200,
+    "refused": null,
+    "body": {
+     "models": [
+      {
+       "name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF:Q4_K_M",
+       "model": "Qwen/Qwen2.5-0.5B-Instruct-GGUF:Q4_K_M",
+       "modified_at": "",
+       "size": "",
+       "digest": "",
+       "type": "model",
+       "description": "",
+       "tags": [
+        ""
+       ],
+       "capabilities": [
+        "completion"
+       ],
+       "parameters": "",
+       "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "",
+        "families": [
+         ""
+        ],
+        "parameter_size": "",
+        "quantization_level": ""
+       }
+      }
+     ],
+     "object": "list",
+     "data": [
+      {
+       "id": "Qwen/Qwen2.5-0.5B-Instruct-GGUF:Q4_K_M",
+       "aliases": [
+        "Qwen/Qwen2.5-0.5B-Instruct-GGUF:Q4_K_M"
+       ],
+       "tags": [],
+       "object": "model",
+       "created": 1791910005,
+       "owned_by": "llamacpp",
+       "meta": {
+        "vocab_type": 2,
+        "n_vocab": 151936,
+        "n_ctx": 2048,
+        "n_ctx_train": 32768,
+        "n_embd": 896,
+        "n_params": 630167424,
+        "size": 485452288,
+        "ftype": "Q4_K - Medium"
+       }
+      }
+     ]
+    }
+   },
+   "lent": {
+    "status": 200,
+    "refused": null,
+    "body": {
+     "models": [
+      {
+       "name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF:Q4_K_M",
+       "model": "Qwen/Qwen2.5-0.5B-Instruct-GGUF:Q4_K_M",
+       "modified_at": "",
+       "size": "",
+       "digest": "",
+       "type": "model",
+       "description": "",
+       "tags": [
+        ""
+       ],
+       "capabilities": [
+        "completion"
+       ],
+       "parameters": "",
+       "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "",
+        "families": [
+         ""
+        ],
+        "parameter_size": "",
+        "quantization_level": ""
+       }
+      }
+     ],
+     "object": "list",
+     "data": [
+      {
+       "id": "Qwen/Qwen2.5-0.5B-Instruct-GGUF:Q4_K_M",
+       "aliases": [
+        "Qwen/Qwen2.5-0.5B-Instruct-GGUF:Q4_K_M"
+       ],
+       "tags": [],
+       "object": "model",
+       "created": 1791910005,
+       "owned_by": "llamacpp",
+       "meta": {
+        "vocab_type": 2,
+        "n_vocab": 151936,
+        "n_ctx": 2048,
+        "n_ctx_train": 32768,
+        "n_embd": 896,
+        "n_params": 630167424,
+        "size": 485452288,
+        "ftype": "Q4_K - Medium"
+       }
+      }
+     ]
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v1/streams/lookup",
+   "straight": {
+    "status": 200,
+    "refused": null,
+    "body": []
+   },
+   "lent": {
+    "status": 200,
+    "refused": null,
+    "body": []
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions/control",
+   "straight": {
+    "status": 200,
+    "refused": null,
+    "body": {
+     "success": false,
+     "message": "no active completion for this id"
+    }
+   },
+   "lent": {
+    "status": 200,
+    "refused": null,
+    "body": {
+     "success": false,
+     "message": "no active completion for this id"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/models/load",
+   "straight": {
+    "status": 404,
+    "refused": null,
+    "body": {
+     "error": {
+      "message": "File Not Found",
+      "type": "not_found_error",
+      "code": 404
+     }
+    }
+   },
+   "lent": {
+    "status": 404,
+    "refused": null,
+    "body": {
+     "error": {
+      "message": "File Not Found",
+      "type": "not_found_error",
+      "code": 404
+     }
+    }
+   }
+  }
+ ],
+ "cy_chat": {
+  "cy": {
+   "status": 200,
+   "events": 302,
+   "first_s": 0.045,
+   "s": 1.793,
+   "words": "In the ancient land of Zhenjiang, there was a river that flowed through the heart of the city. The river was known for its gentle flow and its ability to carry away the waste and debris left behind by the people who lived in the city. The river was also known for its ability to provide water for the people who lived in the city, and for its ability to provide a source of food for the people who lived in the city.\n\nOne day, a mill was built in the city, and the millers were tasked with building a mill that would be able to produce enough food to feed the people who lived in the city. The millers were faced with a difficult decision, as they had to choose between building a mill that would be able to produce enough food to feed the people who lived in the city, or building a mill that would be able to produce enough food to feed the people who lived in the city, but also provide water for the people who lived in the city.\n\nThe millers were faced with a difficult decision, as they had to choose between building a mill that would be able to produce enough food to feed the people who lived in the city, or building a mill that would be able to produce enough food to feed the people who lived in the city, but also provide water for the people who lived in the city.\n\nThe millers were faced with a difficult decision, as they had to choose between building a mill that would be able to produce enough food"
+  },
+  "bo_slots": [
+   {
+    "t": 0.007,
+    "status": 200,
+    "slots": [
+     {
+      "id": 0,
+      "n_ctx": 2048,
+      "speculative": false,
+      "is_processing": false
+     },
+     {
+      "id": 1,
+      "n_ctx": 2048,
+      "speculative": false,
+      "is_processing": false,
+      "id_task": 66,
+      "n_prompt_tokens": 55,
+      "n_prompt_tokens_processed": 1,
+      "n_prompt_tokens_cache": 0,
+      "params": {
+       "seed": 1,
+       "temperature": 0.0,
+       "dynatemp_range": 0.0,
+       "dynatemp_exponent": 1.0,
+       "top_k": 40,
+       "top_p": 0.949999988079071,
+       "min_p": 0.05000000074505806,
+       "top_n_sigma": -1.0,
+       "xtc_probability": 0.0,
+       "xtc_threshold": 0.10000000149011612,
+       "typical_p": 1.0,
+       "repeat_last_n": 64,
+       "repeat_penalty": 1.0,
+       "presence_penalty": 0.0,
+       "frequency_penalty": 0.0,
+       "dry_multiplier": 0.0,
+       "dry_base": 1.75,
+       "dry_allowed_length": 2,
+       "dry_penalty_last_n": 2048,
+       "mirostat": 0,
+       "mirostat_tau": 5.0,
+       "mirostat_eta": 0.10000000149011612,
+       "adaptive_target": -1.0,
+       "adaptive_decay": 0.8999999761581421,
+       "max_tokens": 32,
+       "n_predict": 32,
+       "n_keep": 0,
+       "n_discard": 0,
+       "ignore_eos": false,
+       "stream": true,
+       "n_probs": 0,
+       "min_keep": 0,
+       "chat_format": "peg-native",
+       "reasoning_format": "deepseek",
+       "reasoning_in_content": false,
+       "generation_prompt": "<|im_start|>assistant\n",
+       "samplers": [
+        "penalties",
+        "dry",
+        "top_n_sigma",
+        "top_k",
+        "typ_p",
+        "top_p",
+        "min_p",
+        "xtc",
+        "temperature"
+       ],
+       "speculative.types": "none",
+       "timings_per_token": false,
+       "post_sampling_probs": false,
+       "backend_sampling": false,
+       "lora": []
+      },
+      "next_token": [
+       {
+        "has_next_token": false,
+        "has_new_line": false,
+        "n_remain": 11,
+        "n_decoded": 21
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "t": 0.181,
+    "status": 200,
+    "slots": [
+     {
+      "id": 0,
+      "n_ctx": 2048,
+      "speculative": false,
+      "is_processing": false
+     },
+     {
+      "id": 1,
+      "n_ctx": 2048,
+      "speculative": false,
+      "is_processing": true,
+      "id_task": 95,
+      "n_prompt_tokens": 65,
+      "n_prompt_tokens_processed": 16,
+      "n_prompt_tokens_cache": 24,
+      "params": {
+       "seed": 7,
+       "temperature": 0.0,
+       "dynatemp_range": 0.0,
+       "dynatemp_exponent": 1.0,
+       "top_k": 40,
+       "top_p": 0.949999988079071,
+       "min_p": 0.05000000074505806,
+       "top_n_sigma": -1.0,
+       "xtc_probability": 0.0,
+       "xtc_threshold": 0.10000000149011612,
+       "typical_p": 1.0,
+       "repeat_last_n": 64,
+       "repeat_penalty": 1.0,
+       "presence_penalty": 0.0,
+       "frequency_penalty": 0.0,
+       "dry_multiplier": 0.0,
+       "dry_base": 1.75,
+       "dry_allowed_length": 2,
+       "dry_penalty_last_n": 2048,
+       "mirostat": 0,
+       "mirostat_tau": 5.0,
+       "mirostat_eta": 0.10000000149011612,
+       "adaptive_target": -1.0,
+       "adaptive_decay": 0.8999999761581421,
+       "max_tokens": 300,
+       "n_predict": 300,
+       "n_keep": 0,
+       "n_discard": 0,
+       "ignore_eos": false,
+       "stream": true,
+       "n_probs": 0,
+       "min_keep": 0,
+       "chat_format": "peg-native",
+       "reasoning_format": "deepseek",
+       "reasoning_in_content": false,
+       "generation_prompt": "<|im_start|>assistant\n",
+       "samplers": [
+        "penalties",
+        "dry",
+        "top_n_sigma",
+        "top_k",
+        "typ_p",
+        "top_p",
+        "min_p",
+        "xtc",
+        "temperature"
+       ],
+       "speculative.types": "none",
+       "timings_per_token": false,
+       "post_sampling_probs": false,
+       "backend_sampling": false,
+       "lora": []
+      },
+      "next_token": [
+       {
+        "has_next_token": true,
+        "has_new_line": false,
+        "n_remain": 274,
+        "n_decoded": 26
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "t": 0.358,
+    "status": 200,
+    "slots": [
+     {
+      "id": 0,
+      "n_ctx": 2048,
+      "speculative": false,
+      "is_processing": false
+     },
+     {
+      "id": 1,
+      "n_ctx": 2048,
+      "speculative": false,
+      "is_processing": true,
+      "id_task": 95,
+      "n_prompt_tokens": 100,
+      "n_prompt_tokens_processed": 16,
+      "n_prompt_tokens_cache": 24,
+      "params": {
+       "seed": 7,
+       "temperature": 0.0,
+       "dynatemp_range": 0.0,
+       "dynatemp_exponent": 1.0,
+       "top_k": 40,
+       "top_p": 0.949999988079071,
+       "min_p": 0.05000000074505806,
+       "top_n_sigma": -1.0,
+       "xtc_probability": 0.0,
+       "xtc_threshold": 0.10000000149011612,
+       "typical_p": 1.0,
+       "repeat_last_n": 64,
+       "repeat_penalty": 1.0,
+       "presence_penalty": 0.0,
+       "frequency_penalty": 0.0,
+       "dry_multiplier": 0.0,
+       "dry_base": 1.75,
+       "dry_allowed_length": 2,
+       "dry_penalty_last_n": 2048,
+       "mirostat": 0,
+       "mirostat_tau": 5.0,
+       "mirostat_eta": 0.10000000149011612,
+       "adaptive_target": -1.0,
+       "adaptive_decay": 0.8999999761581421,
+       "max_tokens": 300,
+       "n_predict": 300,
+       "n_keep": 0,
+       "n_discard": 0,
+       "ignore_eos": false,
+       "stream": true,
+       "n_probs": 0,
+       "min_keep": 0,
+       "chat_format": "peg-native",
+       "reasoning_format": "deepseek",
+       "reasoning_in_content": false,
+       "generation_prompt": "<|im_start|>assistant\n",
+       "samplers": [
+        "penalties",
+        "dry",
+        "top_n_sigma",
+        "top_k",
+        "typ_p",
+        "top_p",
+        "min_p",
+        "xtc",
+        "temperature"
+       ],
+       "speculative.types": "none",
+       "timings_per_token": false,
+       "post_sampling_probs": false,
+       "backend_sampling": false,
+       "lora": []
+      },
+      "next_token": [
+       {
+        "has_next_token": true,
+        "has_new_line": false,
+        "n_remain": 239,
+        "n_decoded": 61
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "t": 0.541,
+    "status": 200,
+    "slots": [
+     {
+      "id": 0,
+      "n_ctx": 2048,
+      "speculative": false,
+      "is_processing": false
+     },
+     {
+      "id": 1,
+      "n_ctx": 2048,
+      "speculative": false,
+      "is_processing": true,
+      "id_task": 95,
+      "n_prompt_tokens": 132,
+      "n_prompt_tokens_processed": 16,
+      "n_prompt_tokens_cache": 24,
+      "params": {
+       "seed": 7,
+       "temperature": 0.0,
+       "dynatemp_range": 0.0,
+       "dynatemp_exponent": 1.0,
+       "top_k": 40,
+       "top_p": 0.949999988079071,
+       "min_p": 0.05000000074505806,
+       "top_n_sigma": -1.0,
+       "xtc_probability": 0.0,
+       "xtc_threshold": 0.10000000149011612,
+       "typical_p": 1.0,
+       "repeat_last_n": 64,
+       "repeat_penalty": 1.0,
+       "presence_penalty": 0.0,
+       "frequency_penalty": 0.0,
+       "dry_multiplier": 0.0,
+       "dry_base": 1.75,
+       "dry_allowed_length": 2,
+       "dry_penalty_last_n": 2048,
+       "mirostat": 0,
+       "mirostat_tau": 5.0,
+       "mirostat_eta": 0.10000000149011612,
+       "adaptive_target": -1.0,
+       "adaptive_decay": 0.8999999761581421,
+       "max_tokens": 300,
+       "n_predict": 300,
+       "n_keep": 0,
+       "n_discard": 0,
+       "ignore_eos": false,
+       "stream": true,
+       "n_probs": 0,
+       "min_keep": 0,
+       "chat_format": "peg-native",
+       "reasoning_format": "deepseek",
+       "reasoning_in_content": false,
+       "generation_prompt": "<|im_start|>assistant\n",
+       "samplers": [
+        "penalties",
+        "dry",
+        "top_n_sigma",
+        "top_k",
+        "typ_p",
+        "top_p",
+        "min_p",
+        "xtc",
+        "temperature"
+       ],
+       "speculative.types": "none",
+       "timings_per_token": false,
+       "post_sampling_probs": false,
+       "backend_sampling": false,
+       "lora": []
+      },
+      "next_token": [
+       {
+        "has_next_token": true,
+        "has_new_line": true,
+        "n_remain": 207,
+        "n_decoded": 93
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "t": 0.687,
+    "status": 200,
+    "slots": [
+     {
+      "id": 0,
+      "n_ctx": 2048,
+      "speculative": false,
+      "is_processing": false
+     },
+     {
+      "id": 1,
+      "n_ctx": 2048,
+      "speculative": false,
+      "is_processing": true,
+      "id_task": 95,
+      "n_prompt_tokens": 161,
+      "n_prompt_tokens_processed": 16,
+      "n_prompt_tokens_cache": 24,
+      "params": {
+       "seed": 7,
+       "temperature": 0.0,
+       "dynatemp_range": 0.0,
+       "dynatemp_exponent": 1.0,
+       "top_k": 40,
+       "top_p": 0.949999988079071,
+       "min_p": 0.05000000074505806,
+       "top_n_sigma": -1.0,
+       "xtc_probability": 0.0,
+       "xtc_threshold": 0.10000000149011612,
+       "typical_p": 1.0,
+       "repeat_last_n": 64,
+       "repeat_penalty": 1.0,
+       "presence_penalty": 0.0,
+       "frequency_penalty": 0.0,
+       "dry_multiplier": 0.0,
+       "dry_base": 1.75,
+       "dry_allowed_length": 2,
+       "dry_penalty_last_n": 2048,
+       "mirostat": 0,
+       "mirostat_tau": 5.0,
+       "mirostat_eta": 0.10000000149011612,
+       "adaptive_target": -1.0,
+       "adaptive_decay": 0.8999999761581421,
+       "max_tokens": 300,
+       "n_predict": 300,
+       "n_keep": 0,
+       "n_discard": 0,
+       "ignore_eos": false,
+       "stream": true,
+       "n_probs": 0,
+       "min_keep": 0,
+       "chat_format": "peg-native",
+       "reasoning_format": "deepseek",
+       "reasoning_in_content": false,
+       "generation_prompt": "<|im_start|>assistant\n",
+       "samplers": [
+        "penalties",
+        "dry",
+        "top_n_sigma",
+        "top_k",
+        "typ_p",
+        "top_p",
+        "min_p",
+        "xtc",
+        "temperature"
+       ],
+       "speculative.types": "none",
+       "timings_per_token": false,
+       "post_sampling_probs": false,
+       "backend_sampling": false,
+       "lora": []
+      },
+      "next_token": [
+       {
+        "has_next_token": true,
+        "has_new_line": true,
+        "n_remain": 178,
+        "n_decoded": 122
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "bo_lookup": {
+   "status": 200,
+   "refused": null,
+   "body": [
+    {
+     "conversation_id": "cy-conv-1",
+     "is_done": false,
+     "total_bytes": 33945,
+     "started_at": 1791910005,
+     "completed_at": 0
+    }
+   ]
+  },
+  "bo_stream": {
+   "status": 200,
+   "refused": null,
+   "events": 303,
+   "words": "In the ancient land of Zhenjiang, there was a river that flowed through the heart of the city. The river was known for its gentle flow and its ability to carry away the waste and debris left behind by the people who lived in the city. The river was also known for its ability to provide water for the people who lived in the city, and for its ability to provide a source of food for the people who lived in the city.\n\nOne day, a mill was built in the city, and the millers were tasked with building a mill that would be able to produce enough food to feed the people who lived in the city. The millers were faced with a difficult decision, as they had to choose between building a mill that would be able to produce enough food to feed the people who lived in the city, or building a mill that would be able to produce enough food to feed the people who lived in the city, but also provide water for the people who lived in the city.\n\nThe millers were faced with a difficult decision, as they had to choose between building a mill that would be able to produce enough food to feed the people who lived in the city, or building a mill that would be able to produce enough food to feed the people who lived in the city, but also provide water for the people who lived in the city.\n\nThe millers were faced with a difficult decision, as they had to choose between building a mill that would be able to produce enough food"
+  }
+ },
+ "cy_stopped": {
+  "cy": {
+   "status": 200,
+   "events": 14,
+   "first_s": 0.023,
+   "s": 0.133,
+   "words": "In the ancient land of Zhenjiang, there was a river"
+  },
+  "bo_delete": {
+   "status": 204,
+   "refused": null,
+   "body": ""
+  },
+  "baseline_events": 302
+ },
+ "asleep_lends": {
+  "lent": [
+   {
+    "key": "ff504fd4b5edcb7b3e404a5d35a8636e74219ea53794d160508c1ba48d00f459",
+    "kind": "llama",
+    "limit": 4,
+    "name": "llama",
+    "origin": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:64525/",
+    "person": "Sam",
+    "reads": [],
+    "relay": "https://usw1-1.relay.n0.iroh.link/",
+    "upload_bps": null,
+    "using": 0
+   },
+   {
+    "key": "ff504fd4b5edcb7b3e404a5d35a8636e74219ea53794d160508c1ba48d00f459",
+    "kind": "night",
+    "limit": null,
+    "name": "night",
+    "origin": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b.localhost:64525/",
+    "person": "Sam",
+    "reads": [],
+    "relay": "https://usw1-1.relay.n0.iroh.link/",
+    "upload_bps": null,
+    "using": 0
+   }
+  ],
+  "namespace": "1c5199f5df21257589438a075113a99c9c23458074655b8155d0d3ab8b260e9b",
+  "refused": [],
+  "unanswered": [
+   "Cy"
+  ],
+  "unheard": []
+ },
+ "after": {
+  "api": "http://127.0.0.1:49821",
+  "home": "http://svrngs.localhost:49821/",
+  "llama": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:49821/",
+  "said": "Running for Lab.\nApps on this computer reach your groups at http://127.0.0.1:49821.\nYour groups, and what apps use of them, open at http://svrngs.localhost:49821/.\nSam's llama, in your browser: http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:49821/\nSam's night, in your browser: http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b.localhost:49821/\nCy's computer did not answer, so what they lend is not listed.\n\nLeave this running; Ctrl-C stops it.\n"
+ },
+ "clients_old_address": {
+  "curl": {
+   "origin": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:64525/",
+   "whole": {
+    "reached": false,
+    "exit": 7,
+    "error": "curl: (7) Failed to connect to 97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost port 64525 after 0 ms: Couldn't connect to server",
+    "status": "000",
+    "remote_ip": null
+   },
+   "streamed": {
+    "reached": false,
+    "exit": 7,
+    "error": "curl: (7) Failed to connect to 97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost port 64525 after 0 ms: Couldn't connect to server",
+    "status": "000",
+    "remote_ip": null,
+    "events": 0
+   },
+   "resolved": null
+  },
+  "python": {
+   "origin": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:64525/",
+   "openai": "3.29.0",
+   "resolved": [
+    "127.0.0.1",
+    "::1"
+   ],
+   "whole": {
+    "reached": false,
+    "error": "APIConnectionError: Connection error.",
+    "cause": "ConnectError('[Errno 61] Connection refused')"
+   },
+   "streamed": {
+    "reached": false,
+    "error": "APIConnectionError: Connection error.",
+    "cause": "ConnectError('[Errno 61] Connection refused')"
+   }
+  },
+  "node": {
+   "origin": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:64525/",
+   "node": "v20.20.2",
+   "resolved": [
+    "::1",
+    "127.0.0.1"
+   ],
+   "whole": {
+    "reached": false,
+    "error": "TypeError: fetch failed",
+    "cause": "ECONNREFUSED "
+   },
+   "streamed": {
+    "reached": false,
+    "error": "TypeError: fetch failed",
+    "cause": "ECONNREFUSED "
+   }
+  }
+ },
+ "clients_new_address": {
+  "curl": {
+   "origin": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:49821/",
+   "whole": {
+    "reached": true,
+    "exit": 0,
+    "error": null,
+    "status": "200",
+    "remote_ip": "127.0.0.1"
+   },
+   "streamed": {
+    "reached": true,
+    "exit": 0,
+    "error": null,
+    "status": "200",
+    "remote_ip": "127.0.0.1",
+    "events": 23
+   },
+   "resolved": [
+    "127.0.0.1"
+   ]
+  },
+  "python": {
+   "origin": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:49821/",
+   "openai": "3.29.0",
+   "resolved": [
+    "127.0.0.1",
+    "::1"
+   ],
+   "whole": {
+    "reached": true,
+    "ms": 171.5,
+    "object": "chat.completion",
+    "words": "Three rivers in Spain are the Garonne, the Garza, and the Guadalquivir."
+   },
+   "streamed": {
+    "reached": true,
+    "events": 22,
+    "ms": 94.7
+   }
+  },
+  "node": {
+   "origin": "http://97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8.localhost:49821/",
+   "node": "v20.20.2",
+   "resolved": [
+    "::1",
+    "127.0.0.1"
+   ],
+   "whole": {
+    "reached": true,
+    "status": 403,
+    "ms": 32,
+    "refused": "closed",
+    "said": {
+     "error": "a page reaches another lend only by fetch, which says where it is from",
+     "kind": "closed"
+    }
+   },
+   "streamed": {
+    "reached": true,
+    "status": 403,
+    "events": 0,
+    "ms": 3,
+    "refused": "closed",
+    "said": "{\"error\":\"a page reaches another lend only by fetch, which says where it is from\",\"kind\":\"closed\"}"
+   }
+  }
+ },
+ "remove": [
+  0,
+  "Bo is no longer in Lab. What Bo already has stays with them; nothing new reaches them."
+ ],
+ "removed_groups": {
+  "groups": [
+   {
+    "folders": [
+     "/tmp/sm-w/bo/svrngs/Lab"
+    ],
+    "id": "1c5199f5df21257589438a075113a99c9c23458074655b8155d0d3ab8b260e9b",
+    "name": "Lab",
+    "person": null,
+    "removals": [
+     {
+      "at": 1791910048,
+      "by": "Sam",
+      "of": "Bo",
+      "said": "removed"
+     }
+    ],
+    "removed": true
+   }
+  ]
+ },
+ "end": {
+  "load": [
+   14.908203125,
+   19.69384765625,
+   27.6103515625
+  ],
+  "cores": 12
+ }
+}
