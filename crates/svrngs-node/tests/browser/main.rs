@@ -2133,9 +2133,9 @@ in_both_engines!(
     /// nothing." and an empty "What apps use" were all it said,
     /// `demo/runs/start/2026-10-13/README.md` §3 (c) 13): on ada's
     /// computer, what can be done on it, in DESIGN §1's words; on a
-    /// computer in no group, how to make one or join one, with the line to
-    /// type. Planted, watched failing: index.html and home.js as c6c2212
-    /// left them.
+    /// computer in no group, how to make one (on the page since
+    /// start-group) or join one. Planted, watched failing: index.html and
+    /// home.js as c6c2212 left them.
     the_home_page_says_what_it_is_for
 );
 async fn the_home_page_says_what_it_is_for(engine: Engine) {
@@ -2152,7 +2152,7 @@ async fn the_home_page_says_what_it_is_for(engine: Engine) {
     let seen = home_page(engine, &dee, json!({ "read": "#home > p.none" })).await;
     assert_eq!(
         seen["read"],
-        "This computer is in no group yet. Where svrngs runs in a terminal, stop it with Ctrl-C, then type svrngs new <a name for your group> to make one, or svrngs join <the link you were sent> to join one.",
+        "This computer is in no group yet. Make one below, or join one by the line the page of the link you were sent gives.",
         "{seen:#}"
     );
     drop((ada, dee));
@@ -2178,13 +2178,13 @@ async fn the_home_page_names_what_the_terminal_does(engine: Engine) {
         "svrngs share <the number after the colon in its address>",
         "svrngs remove <their name> --group <the group’s name>",
         "Leaving a group is not possible yet",
-        // The walk after: `svrngs new` refused while svrngs runs, as it
-        // runs from login after install.sh, where no Ctrl-C reaches it
-        // (demo/runs/start/2026-10-13-home/README.md §3).
-        "Where svrngs starts by itself when you log in, a group cannot be made yet",
     ] {
         assert!(said.contains(line), "{line}: {seen:#}");
     }
+    // Making a group is the page's own since start-group: the walk after
+    // found `svrngs new` refused while svrngs runs from login
+    // (demo/runs/start/2026-10-13-home/README.md §3).
+    assert!(!said.contains("svrngs new"), "{seen:#}");
     drop(ada);
 }
 

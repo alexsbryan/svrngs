@@ -48,7 +48,7 @@ const SEED_FILE: &str = "seed.json";
 
 // The one spelling of the kept origin's file name in a group's directory:
 // the node's, which reads it for the home page too.
-use crate::invite::ORIGIN_FILE;
+use crate::invite::{carried, kept_page, ORIGIN_FILE};
 
 /// The one spelling of the kept relay's file name in a group's directory.
 const RELAY_FILE: &str = "relay";
@@ -224,6 +224,38 @@ impl crate::folder::Folders {
         (dir, placed)
     }
 }
+
+impl crate::node::Asking {
+    /// A group made where svrngs runs, for the home page, as `svrngs new`
+    /// makes one (start-group): `name`, founded by this computer's key as
+    /// `person`, refused when one of its groups is called so already. It
+    /// keeps the page this computer's svrngs came from, the data dir's
+    /// `origin`, which install.sh writes, so the page's links to it are
+    /// https links whose page gives the one line; and the relay its links
+    /// carry, kept as a joiner keeps it ([`kept_relay`]): where this
+    /// computer is met now, so the group is met with no restart, and after
+    /// one alike. Its folder is placed as a joiner's is.
+    pub(crate) fn found(&self, name: &str, person: &str) -> Result<Made, String> {
+        let parse = |n: &str| Name::parse(n).map_err(|e| e.to_string());
+        let (name, person, root) = (parse(name)?, parse(person)?, self.host.rail.root());
+        let held = |n: &&Name| n.as_str().eq_ignore_ascii_case(name.as_str());
+        if let Some(n) = groups(root).iter().map(Seed::name).find(held) {
+            let why = format!("You are in {n} already: give this group another name.");
+            return Err(why);
+        }
+        // The founder is the key this computer signs and dials with.
+        let seed = draw(name, person, self.key.verifying_key());
+        let page = kept_page(root)?;
+        let home = self.host.endpoint.addr().relay_urls().next().cloned();
+        let relay = kept_relay(carried(&self.host.relay, home), self.host.relay.n0_services);
+        self.host.keep_group(&seed, page.as_ref(), relay.as_ref())?;
+        tracing::debug!(target: "group", group = %seed.id(), ?page, ?relay, "group: made for the home page");
+        Ok((self.folders.place(&seed), seed))
+    }
+}
+
+/// A group made, after where its folder is and whether it was placed.
+type Made = ((PathBuf, Result<(), String>), Seed);
 
 /// The relay a joiner keeps from its link's `carried`, where it meets the
 /// group from then on: at n0's (`n0`), none when it is one of n0's relays —

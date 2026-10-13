@@ -25,8 +25,10 @@
 //! how many it lets in at once, a number or everyone, or no longer lent —
 //! written to its declaration, which the door reads at its next request;
 //! **a link to a group** (`POST /link`, start-home), made as `svrngs
-//! link` makes it, in the group's record; and **a group's folder opened**
-//! in this computer's file browser (`POST /folder`, start-home).
+//! link` makes it, in the group's record; **a group's folder opened**
+//! in this computer's file browser (`POST /folder`, start-home); and **a
+//! group made** by the svrngs running here, as `svrngs new` makes one
+//! (`POST /group`, start-group; the node's group.rs `Asking::found`).
 //! The person's yes and stop are
 //! kept by this computer's door for its own lend, else dialled to the
 //! lender's door on the members' protocol as this computer's key
@@ -119,6 +121,7 @@ pub(crate) fn router(
         .route("/lent", get(lent).post(change))
         .route("/link", axum::routing::post(link))
         .route("/folder", axum::routing::post(open))
+        .route("/group", axum::routing::post(found))
         .with_state(at.clone())
         .merge(
             Router::new()
@@ -258,6 +261,17 @@ async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
                 format!("no link can be made on this computer: {e}"),
             )
         }
+    }
+}
+
+/// `POST /group`, `[name, person]`: a group made, as `svrngs new` makes
+/// one ([`Asking::found`]): its name, and why its folder was not placed.
+async fn found(State(at): State<Asking>, Json([name, person]): Json<[String; 2]>) -> Response {
+    let made = at.found(&name, &person);
+    tracing::debug!(target: "home", ?made, "home: a group made, or why not");
+    match made {
+        Ok(((_, placed), seed)) => Json((seed.name().as_str(), placed.err())).into_response(),
+        Err(why) => LendRefusal::Closed.say(StatusCode::CONFLICT, why),
     }
 }
 

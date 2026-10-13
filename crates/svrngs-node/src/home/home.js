@@ -6,7 +6,8 @@
 // /ask; what apps use, each with Stop; and what this computer lends, each
 // with how many it lets in at once, to set, clear or stop (bash-limit). Its
 // only writes are the person's yes and stop, to its own origin's /choices,
-// and their change to what this computer lends, to its /lent. Its words are
+// their change to what this computer lends, to its /lent, a link (/link),
+// a folder opened (/folder) and a group made (/group, start-group). Its words are
 // DESIGN §1's: groups, people, what they lend, computer; its question and
 // what apps use and its removals are question.js's, the group's page's too.
 import { named, question, removal, unasked, uses as used } from './question.js';
@@ -162,10 +163,19 @@ try {
   main.replaceChildren();
   if (location.pathname === '/ask') ask((await Promise.all(groups.map(lentIn))).flat(), new URLSearchParams(location.search));
   else {
-    // With no group, how to make one or join one: the command's, refused
-    // while svrngs runs (cli.rs `claim`), so stopped first (start-home).
-    if (!groups.length) main.append(Object.assign(el('p', 'This computer is in no group yet. Where svrngs runs in a terminal, stop it with Ctrl-C, then type svrngs new <a name for your group> to make one, or svrngs join <the link you were sent> to join one.'), { className: 'none' }));
+    // Said after a group is made here (start-group), with where its folder
+    // could not be made, if it could not.
+    const q = new URLSearchParams(location.search);
+    if (q.has('made')) main.append(el('p', `You made ${q.get('made')}. ${q.has('unplaced') ? `Its folder could not be made: ${q.get('unplaced')}. ` : ''}Make a link below to invite someone to it.`));
+    // With no group, how to make one or join one (start-home; start-group).
+    if (!groups.length) main.append(Object.assign(el('p', 'This computer is in no group yet. Make one below, or join one by the line the page of the link you were sent gives.'), { className: 'none' }));
     const lent = Promise.all(groups.map((g) => show(g, main.appendChild(el('section', '', el('h2', g.name ?? 'A group whose name this computer cannot read'))))));
+    // A group made here as `svrngs new` makes one, by the svrngs running
+    // here (start-group): its name and the person's, then the page again,
+    // saying so; a refusal said beside the button.
+    const [name, person] = [['name', 'A name for the group: '], ['person', 'Your name in it: ']].map(([n, w]) => el('label', w, Object.assign(el('input'), { name: n })));
+    const make = el('p', '', name, person, button('Make a group', () => post('/group', [name, person].map((l) => l.lastChild.value)).then(([made, unplaced]) => location.assign(`/?${new URLSearchParams({ made, ...(unplaced && { unplaced }) })}`), (e) => make.append(` ${e.message}`))));
+    main.append(Object.assign(el('section', '', el('h2', 'Make a group'), make), { id: 'make' }));
     await lending();
     await uses((await lent).flatMap((l) => l ?? []));
     // Said as the command and install.sh say it: it is kept (start-address).
