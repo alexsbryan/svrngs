@@ -51,11 +51,13 @@ pub(crate) fn err(status: StatusCode, msg: impl Into<String>) -> Response {
 
 /// What the ring routes read: the journals and the live lane's buffer.
 /// (Upstream's also held the origin registry, whose registrations named the
-/// live namespaces; it did not come over.)
+/// live namespaces; it did not come over.) And the round's nudge, which a
+/// push landing its asker's own relay wakes (relay-in-record).
 #[derive(Clone)]
 pub struct RingInbound {
     pub rail: Arc<RingRail>,
     pub live: Arc<LiveBuffer>,
+    pub wake: Arc<tokio::sync::Notify>,
 }
 
 /// The sync and live routes, as a router (upstream's was a `RouteBundle`
@@ -132,6 +134,7 @@ pub async fn ring_sync(
         Err(e) => return err(StatusCode::BAD_REQUEST, format!("malformed body: {e}")),
     };
     let dialer = dialer.map(|Extension(d)| d);
+    let asker = dialer.map(|d| d.actor());
     if let Some(refusal) = standing_refusal(&state.rail, dialer, "sync", &req.namespace) {
         return err(StatusCode::FORBIDDEN, refusal);
     }
@@ -154,6 +157,17 @@ pub async fn ring_sync(
         payload_bytes = bytes.len(),
         "ring sync: exchange"
     );
+    // A newcomer says where it is reached in its join's second exchange,
+    // after the redemption's wake has told the others of it: wake the round
+    // again, so they hear its relay now, not at their next interval
+    // (demo/runs/relay-in-record/2026-10-12/, take 2: 57 s).
+    let own_relay = |op: &&crate::Op<crate::SignedOp>| {
+        Some(&op.actor) == asker.as_ref() && matches!(op.kind.act, crate::RailAct::Relay { .. })
+    };
+    if response.ingested > 0 && req.ops.iter().any(|op| own_relay(&op)) {
+        tracing::debug!(target: "rails", namespace = %req.namespace, asker, "ring sync: the asker's own relay landed, so the round is woken");
+        state.wake.notify_one();
+    }
     if request_bytes >= RING_SYNC_OPS_BUDGET_BYTES {
         tracing::warn!(
             target: "rails",

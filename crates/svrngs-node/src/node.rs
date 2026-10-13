@@ -330,6 +330,7 @@ impl Node {
         let members = ring_routes::router(RingInbound {
             rail: rail.clone(),
             live,
+            wake: nudge.clone(),
         })
         .merge(crate::door::router(asking.door.clone()))
         .merge(people_router(asking));

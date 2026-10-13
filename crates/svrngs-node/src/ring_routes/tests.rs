@@ -46,7 +46,11 @@ async fn serve(
     live: Arc<LiveBuffer>,
 ) -> (String, crate::iroh::tests::OnStream) {
     serve_on_stream(
-        router(RingInbound { rail, live }),
+        router(RingInbound {
+            rail,
+            live,
+            wake: Default::default(),
+        }),
         SecretKey::from_bytes(&key().to_bytes()),
     )
     .await
@@ -90,6 +94,7 @@ async fn the_asker_is_the_verified_dialer_and_no_header_names_one() {
     let addr = serve_at(router(RingInbound {
         rail: rail.clone(),
         live: Arc::new(LiveBuffer::default()),
+        wake: Default::default(),
     }))
     .await;
     let off_stream = ask(&format!("http://{addr}/internal/ring/sync"), Some(&ada)).await;
@@ -104,6 +109,7 @@ async fn the_asker_is_the_verified_dialer_and_no_header_names_one() {
         router(RingInbound {
             rail: rail.clone(),
             live: Arc::new(LiveBuffer::default()),
+            wake: Default::default(),
         }),
         SecretKey::from_bytes(&key().to_bytes()),
     )
@@ -115,6 +121,7 @@ async fn the_asker_is_the_verified_dialer_and_no_header_names_one() {
         router(RingInbound {
             rail,
             live: Arc::new(LiveBuffer::default()),
+            wake: Default::default(),
         }),
         SecretKey::from_bytes(&[12u8; 32]),
     )
@@ -260,6 +267,7 @@ async fn a_dialer_not_standing_in_the_group_named_is_refused() {
         router(RingInbound {
             rail: rail.clone(),
             live: live.clone(),
+            wake: Default::default(),
         }),
         SecretKey::from_bytes(&bo.to_bytes()),
     )
@@ -277,6 +285,7 @@ async fn a_dialer_not_standing_in_the_group_named_is_refused() {
     let addr = serve_at(router(RingInbound {
         rail,
         live: live.clone(),
+        wake: Default::default(),
     }))
     .await;
     let off_stream = push(&format!("http://{addr}"), LIVE_NS, "AQID").await;
@@ -286,4 +295,62 @@ async fn a_dialer_not_standing_in_the_group_named_is_refused() {
         "a request off the stream is refused"
     );
     assert_eq!(live.drain(LIVE_NS), (Vec::new(), 0));
+}
+
+/// A push landing the asker's own `Relay` wakes the round, so the group
+/// hears where a newcomer is reached now (relay-in-record): Ada says hers
+/// and pushes it to a computer holding the group, whose nudge then holds a
+/// permit; pushed again, nothing lands and nothing wakes. The failing
+/// input: a route that never wakes, as before.
+#[tokio::test]
+async fn a_push_landing_the_askers_own_relay_wakes_the_round() {
+    let (a, b) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ada = rail_with_roster(a.path());
+    let url = svrngs_core::relay::parse("http://127.0.0.1:1/");
+    let said = ada.commit(
+        NS,
+        &svrngs_core::RelayAt {
+            key: crate::actor_of(&key()),
+            url,
+        },
+    );
+    assert!(
+        matches!(said, Ok(Ok(ref s)) if !s.is_empty()),
+        "control: Ada's relay is written"
+    );
+    let issuer = Arc::new(RingRail::new(
+        b.path(),
+        Arc::new(SigningKey::from_bytes(&[13u8; 32])),
+    ));
+    let mut members = std::collections::BTreeMap::new();
+    members.insert(Person::parse("Ada").unwrap(), vec![crate::actor_of(&key())]);
+    issuer.set_seed(NS, &Roster::new(members)).unwrap();
+    let wake = Arc::new(tokio::sync::Notify::new());
+    let inbound = RingInbound {
+        rail: issuer,
+        live: Default::default(),
+        wake: wake.clone(),
+    };
+    let (base, _ada) =
+        serve_on_stream(router(inbound), SecretKey::from_bytes(&key().to_bytes())).await;
+    let body = serde_json::json!({
+        "namespace": NS,
+        "digest": ada.digest(NS).unwrap(),
+        "ops": ada.ops_missing_from_within(NS, &Digest::default(), usize::MAX).unwrap().0,
+    });
+    let push = || {
+        reqwest::Client::new()
+            .post(format!("{base}/internal/ring/sync"))
+            .json(&body)
+            .send()
+    };
+    assert_eq!(push().await.unwrap().status(), 200);
+    let woken = tokio::time::timeout(std::time::Duration::from_secs(1), wake.notified()).await;
+    assert!(
+        woken.is_ok(),
+        "the asker's own relay landed, and the round was not woken"
+    );
+    assert_eq!(push().await.unwrap().status(), 200);
+    let again = tokio::time::timeout(std::time::Duration::from_millis(200), wake.notified()).await;
+    assert!(again.is_err(), "nothing landed, and the round was woken");
 }

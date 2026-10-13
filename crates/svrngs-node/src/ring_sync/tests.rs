@@ -174,6 +174,7 @@ pub(super) fn ring_router(rail: Arc<RingRail>) -> axum::Router {
     router(RingInbound {
         rail,
         live: Default::default(),
+        wake: Default::default(),
     })
 }
 
