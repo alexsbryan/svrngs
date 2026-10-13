@@ -4,7 +4,9 @@
 
 use super::*;
 
-/// Every line the test traces on its own thread.
+/// Every line the test traces on its own thread: a test's sink, which a
+/// subscriber's writer needs `Sync`.
+#[expect(clippy::disallowed_types, reason = "a test's trace sink")]
 static TRACES: std::sync::Mutex<Vec<u8>> = std::sync::Mutex::new(Vec::new());
 
 struct Kept;
