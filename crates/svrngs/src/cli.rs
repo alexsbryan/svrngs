@@ -1703,20 +1703,9 @@ fn group_named(root: &Path, reference: &str) -> Result<Seed, Refusal> {
 
 /// `svrngs link`: a new link to the group `reference` names: the client's
 /// link, and the https one on `page`, kept from now on, when given, else
-/// on the group's kept origin, if it keeps one.
-pub async fn new_link(
-    node: &Node,
-    reference: &str,
-    page: Option<&Origin>,
-    relay: &RelayConfig,
-) -> Result<(Seed, Printed), Refusal> {
-    let (seed, printed, _) = link_to(node, reference, page, relay, false).await?;
-    Ok((seed, printed))
-}
-
-/// [`new_link`], or with `device` a device link (`svrngs link --device`;
-/// bash-devices): one this computer's person's other computer or phone
-/// joins as them by, and that person.
+/// on the group's kept origin, if it keeps one. With `device` a device link
+/// (`svrngs link --device`; bash-devices): one this computer's person's
+/// other computer or phone joins as them by, and that person.
 pub async fn link_to(
     node: &Node,
     reference: &str,

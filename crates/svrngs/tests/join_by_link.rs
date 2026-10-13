@@ -326,7 +326,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     assert_eq!(admitted(&sam.node, &group), three, "no second Admit");
 
     // ── Sam sends a new link: Dee, with the old one, is refused.
-    let (linked, printed2) = cli::new_link(&sam.node, "house", None, &no_relay())
+    let (linked, printed2, _) = cli::link_to(&sam.node, "house", None, &no_relay(), false)
         .await
         .unwrap();
     said.push(
@@ -812,12 +812,12 @@ async fn a_member_prints_links_on_the_page_the_founders_opened() {
             .await
             .unwrap_or_else(|e| panic!("{n} is let in: {e}"));
     }
-    let (_, theirs) = cli::new_link(&alex.node, "house", None, &no_relay())
+    let (_, theirs, _) = cli::link_to(&alex.node, "house", None, &no_relay(), false)
         .await
         .expect("Alex, in house, prints a link");
     let on = theirs.https.unwrap_or_default();
     assert!(on.starts_with("https://x.example/#"), "{on}");
-    let (_, cys) = cli::new_link(&cy.node, "house", None, &no_relay())
+    let (_, cys, _) = cli::link_to(&cy.node, "house", None, &no_relay(), false)
         .await
         .expect("Cy, in house, prints a link");
     assert_eq!(cys.https, None, "{cys}");
