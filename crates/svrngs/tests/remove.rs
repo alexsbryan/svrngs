@@ -5,7 +5,7 @@
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 
 use svrngs::cli::{self, Refusal, Said, Verb};
-use svrngs::group::Name;
+use svrngs::group::{Name, Seed};
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::Node;
 use svrngs_node::removal::Outcome;
@@ -21,6 +21,36 @@ fn no_relay() -> RelayConfig {
 
 fn name(s: &str) -> Name {
     Name::parse(s).unwrap()
+}
+
+/// Sam's computer, running here in `dir`, and the group trip it made.
+async fn sams_trip(dir: &std::path::Path) -> (Node, Seed) {
+    let node = Node::start(
+        dir.to_path_buf(),
+        SigningKey::from_bytes(&[5; 32]),
+        &no_relay(),
+        svrngs::group::seed_text,
+        cli::API,
+    )
+    .await
+    .unwrap();
+    let (seed, _) = cli::new_group(&node, name("trip"), name("Sam"), None, &no_relay())
+        .await
+        .unwrap();
+    (node, seed)
+}
+
+/// Bo let into trip as `bo` by hand, with no link.
+fn let_bo_in(node: &Node, seed: &Seed, bo: &SigningKey) {
+    let admit = RailAct::Admit {
+        person: Person::parse("Bo").unwrap(),
+        key: actor_of(bo),
+        invite: None,
+    };
+    node.rail()
+        .commit(&seed.id(), &svrngs_core::tests_support::Batch(vec![admit]))
+        .unwrap()
+        .unwrap();
 }
 
 fn argv(rest: &[&str]) -> Vec<String> {
@@ -166,28 +196,9 @@ async fn the_keepers_remove_is_the_cut() {
         group: "trip".into(),
         joined: None,
     };
-    let node = Node::start(
-        dir.path().to_path_buf(),
-        SigningKey::from_bytes(&[5; 32]),
-        &no_relay(),
-        svrngs::group::seed_text,
-        cli::API,
-    )
-    .await
-    .unwrap();
-    let (seed, _) = cli::new_group(&node, name("trip"), name("Sam"), None, &no_relay())
-        .await
-        .unwrap();
+    let (node, seed) = sams_trip(dir.path()).await;
     let bo = SigningKey::from_bytes(&[6; 32]);
-    let admit = RailAct::Admit {
-        person: Person::parse("Bo").unwrap(),
-        key: actor_of(&bo),
-        invite: None,
-    };
-    node.rail()
-        .commit(&seed.id(), &svrngs_core::tests_support::Batch(vec![admit]))
-        .unwrap()
-        .unwrap();
+    let_bo_in(&node, &seed, &bo);
     let stands = || {
         node.rail()
             .register(&seed.id())
@@ -250,29 +261,10 @@ async fn the_keeper_removes_one_of_two_people_of_one_name() {
     let dir = tempfile::tempdir().unwrap();
     let relay = no_relay();
     let ask = |verb: Verb| cli::run(verb, dir.path().to_path_buf(), &relay);
-    let node = Node::start(
-        dir.path().to_path_buf(),
-        SigningKey::from_bytes(&[5; 32]),
-        &no_relay(),
-        svrngs::group::seed_text,
-        cli::API,
-    )
-    .await
-    .unwrap();
-    let (seed, _) = cli::new_group(&node, name("trip"), name("Sam"), None, &no_relay())
-        .await
-        .unwrap();
+    let (node, seed) = sams_trip(dir.path()).await;
     let bos = [6u8, 7].map(|b| SigningKey::from_bytes(&[b; 32]));
     for bo in &bos {
-        let admit = RailAct::Admit {
-            person: Person::parse("Bo").unwrap(),
-            key: actor_of(bo),
-            invite: None,
-        };
-        node.rail()
-            .commit(&seed.id(), &svrngs_core::tests_support::Batch(vec![admit]))
-            .unwrap()
-            .unwrap();
+        let_bo_in(&node, &seed, bo);
         tokio::time::sleep(std::time::Duration::from_millis(1_100)).await;
     }
     let stand = || {
