@@ -1220,8 +1220,8 @@ never learns what a film, an expense or a crush is. And the canaries of §8,
 Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
-**Lean, and kept lean.** `svrngs-core` stays under 3,130 lines of code and the
-repository under 16,040 (`scripts/lean_check.py`), the branch `folders`
+**Lean, and kept lean.** `svrngs-core` stays under 3,122 lines of code and the
+repository under 15,987 (`scripts/lean_check.py`), the branch `folders`
 too since main merged into it at syp-5, counting 13,778 and `svrngs-core`
 2,719 there; a raise is the operator's, with the reason in the commit. The budget counts the product:
 tests, `apps/` and `demo/runs/` apart. A recorded run's driver is what ran,
@@ -1309,6 +1309,16 @@ start-home found that a computer set up by the one line cannot make a
 group (`demo/runs/start/2026-10-13-home/NEEDS_HUMAN.md`), "+40 now, before
 start-run", to 16,040, for making a group on the home page and a founder's
 one line (`ralph/next/start/CHARTER.md`); taken by start-group.
+Then down, the same day: the operator, "We keep just raising the bar
+without considering how we could lower the floor", asked back under
+15,800 and the caps lowered to where the cuts land. start-economize's
+survey (`demo/runs/economize/2026-10-13/SURVEY.md`) found 50 lines the
+product did not need, by the compiler (every `pub` demoted, the product
+and the page rebuilt), the clone report and the open findings: five items
+only tests reached and a script nothing ran. Cut, the repository went
+from 16,036 to 15,986 and `svrngs-core` stayed at 3,121, so the caps are
+15,987 and 3,122, one past each count; what the survey could not reach
+without a change in behaviour is its `NEEDS_HUMAN.md`.
 `ARCHITECTURE.md` maps what exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file
