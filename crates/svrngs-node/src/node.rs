@@ -195,8 +195,8 @@ pub struct Node {
 /// `RingSyncHost` trait, which `RailsDaemon` implemented; with one host the
 /// trait went, and the round calls this (RUST_ARCH 7).
 pub struct Host {
-    rail: Arc<RingRail>,
-    endpoint: Endpoint,
+    pub(crate) rail: Arc<RingRail>,
+    pub(crate) endpoint: Endpoint,
     transport: Arc<IrohTransport>,
     actor: String,
     /// Whether this computer reaches the network through a relay at all
@@ -380,6 +380,11 @@ impl Node {
     /// The endpoint this node dials and is dialled on.
     pub fn endpoint(&self) -> &Endpoint {
         &self.host.endpoint
+    }
+
+    /// What the round reads, and what makes a link ([`crate::invite`]).
+    pub fn host(&self) -> &Host {
+        &self.host
     }
 
     /// What every other computer's key standing in a group this node holds

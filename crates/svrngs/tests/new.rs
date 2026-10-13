@@ -255,17 +255,20 @@ fn a_link_carries_its_issuer_s_relay_with_lookup_or_without() {
             loopback_only: false,
         };
         let said = format!("n0_services {n0_services}");
-        let carried = cli::link_relay(&relay, Some(home.clone()));
+        let carried = svrngs_node::invite::carried(&relay, Some(home.clone()));
         assert_eq!(carried, Some(home.clone()), "{said}: its home relay");
-        let carried = cli::link_relay(&relay, None);
+        let carried = svrngs_node::invite::carried(&relay, None);
         assert_eq!(
             carried,
             Some(dotless.clone()),
             "{said}: the first configured"
         );
     }
-    assert_eq!(cli::link_relay(&RelayConfig::default(), None), None);
-    assert_eq!(cli::link_relay(&no_relay(), None), None);
+    assert_eq!(
+        svrngs_node::invite::carried(&RelayConfig::default(), None),
+        None
+    );
+    assert_eq!(svrngs_node::invite::carried(&no_relay(), None), None);
 }
 
 /// A joiner keeps the relay its link carried, where it meets the group —

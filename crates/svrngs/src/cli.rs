@@ -92,6 +92,7 @@ use std::num::{NonZeroU16, NonZeroU32};
 use svrngs_node::api::{ApiError, API_FILE};
 use svrngs_node::folder::FolderAsk;
 use svrngs_node::home::WHEN;
+use svrngs_node::invite::Unminted;
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath, Upload};
 use svrngs_node::node::{Lends, Lent, Node, NodeError};
@@ -99,8 +100,7 @@ use svrngs_node::redeem::{ask, redeem, AskRequest, RedeemError, RedeemRequest, R
 use svrngs_node::relay::n0_relays;
 use svrngs_node::removal::{Outcome, RemovalAsk, HANDOVERS_ROUTE, REMOVALS_ROUTE};
 use svrngs_node::room;
-use svrngs_node::{actor_of, Device, Joined, Person, SigningKey};
-use svrngs_node::{MintInvite, Refused as CommitRefused};
+use svrngs_node::{Device, Joined, Person, SigningKey};
 
 use crate::group::{self, Name, Seed, SeedError};
 use crate::identity::{self, KeyError};
@@ -211,10 +211,8 @@ svrngs — keep what your group shares on your own computers.
 Data:    $SVRNGS_DIR, else ~/.svrngs.
 Logging: RUST_LOG, default `error`.";
 
-/// How long a link lets people in: upstream's one invite lapse
-/// (`commonwealth-discovery/src/membership.rs:53` at `e1a43bcd2`, a day;
-/// DESIGN §8, U2's inventory).
-pub const LINK_LIFE_SECS: i64 = 24 * 60 * 60;
+/// How long a link lets people in: the node's ([`svrngs_node::invite`]).
+pub use svrngs_node::invite::LINK_LIFE_SECS;
 
 /// Where the record is served to this computer's apps the first time
 /// svrngs starts over a data dir: loopback, any free port, which the bare
@@ -1781,7 +1779,12 @@ pub async fn link_to(
         },
     };
     let person = match device {
-        true => Some(own_person(node, &seed)?),
+        // This computer's person (bash-devices): whom it adds a device of.
+        true => Some(
+            node.host()
+                .own_person(&seed.id())
+                .map_err(|e| unminted(&seed, e))?,
+        ),
         false => None,
     };
     let token = mint(node, &seed, relay, person.as_ref().map(|(k, _)| k.clone())).await?;
@@ -1792,27 +1795,16 @@ pub async fn link_to(
     ))
 }
 
-/// This computer's person in `seed`'s group, by their first key and name,
-/// as the register names them (bash-devices): whom a device link adds a
-/// device of. A computer that stands there as nobody makes none.
-fn own_person(node: &Node, seed: &Seed) -> Result<(String, Person), Refusal> {
-    let me = node.rail().signer().actor();
-    let standing =
-        (node.rail().standing(&seed.id())).map_err(|e| keep_refused(seed, &e.to_string()))?;
-    let own = match standing {
-        svrngs_node::register::Standing::Members(m) => {
-            m.get(&me).map(|m| (m.person_key.clone(), m.person.clone()))
-        }
-        _ => None,
-    };
-    tracing::debug!(target: "cli", group = %seed.id(), ?own, "cli: link --device — this computer's person");
-    own.ok_or_else(|| Refusal::NotIn(seed.name().clone()))
+/// Why the node made no link, in the command's refusals.
+fn unminted(seed: &Seed, e: Unminted) -> Refusal {
+    match e {
+        Unminted::NotIn => Refusal::NotIn(seed.name().clone()),
+        Unminted::Unkept(why) => keep_refused(seed, &why),
+    }
 }
 
-/// Append an `Invite` for a fresh link's key that lapses in
-/// [`LINK_LIFE_SECS`], signed by this computer through the group's door,
-/// and answer the link's token. The issuer's newer `Invite` closes their
-/// last one from its place in the order (u2-4b, `membership`).
+/// A link to `seed`'s group, made by the node ([`svrngs_node::invite`]) carrying
+/// this computer's relay, its life starting now.
 #[expect(
     clippy::disallowed_methods,
     reason = "the command's clock: a link's life starts now"
@@ -1823,37 +1815,14 @@ async fn mint(
     relay: &RelayConfig,
     device_of: Option<String>,
 ) -> Result<Token, Refusal> {
-    let token = issuer::mint(node.endpoint().id(), issuer_relay(node, relay).await);
-    // Where this computer is reached, in the record before a joiner pulls
-    // it, so the joiner can dial it back (relay-in-record).
-    node.say_relay();
+    let carried = issuer_relay(node, relay).await;
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_secs() as i64)
         .map_err(|_| keep_refused(seed, "the wall clock is before 1970"))?;
-    let mint = MintInvite {
-        key: actor_of(&token.key()),
-        until: now + LINK_LIFE_SECS,
-        device_of,
-    };
-    let group = seed.id();
-    let recorded = match node.rail().commit(&group, &mint) {
-        Ok(Ok(recorded)) => recorded,
-        Ok(Err(CommitRefused::NoStanding)) => {
-            tracing::debug!(target: "cli", group = %group, "cli: refused — this computer does not stand in the group");
-            return Err(Refusal::NotIn(seed.name().clone()));
-        }
-        Ok(Err(CommitRefused::Unsettled)) => {
-            return Err(keep_refused(
-                seed,
-                &svrngs_node::RailError::Unsettled(group).to_string(),
-            ))
-        }
-        Ok(Err(CommitRefused::Command(never))) => match never {},
-        Err(e) => return Err(keep_refused(seed, &e.to_string())),
-    };
-    tracing::debug!(target: "cli", group = %group, invite = %recorded.lines()[0].id, until = mint.until, "cli: link minted");
-    Ok(token)
+    node.host()
+        .mint(&seed.id(), carried, device_of, now)
+        .map_err(|e| unminted(seed, e))
 }
 
 /// The relay a link carries: its issuer's home relay, with n0's lookup or
@@ -1862,7 +1831,7 @@ async fn mint(
 /// [`ONLINE_WAIT`] for one when it has relays to reach.
 async fn issuer_relay(node: &Node, relay: &RelayConfig) -> Option<RelayUrl> {
     wait_online(node, &relay.relay_urls).await;
-    link_relay(relay, node.endpoint().addr().relay_urls().next().cloned())
+    svrngs_node::invite::carried(relay, node.endpoint().addr().relay_urls().next().cloned())
 }
 
 /// Wait up to [`ONLINE_WAIT`] for a home relay, when this computer has
@@ -1878,28 +1847,6 @@ async fn wait_online(node: &Node, tried: &[String]) {
             eprintln!("svrngs: this computer has not reached {} in {secs} s, where its group reaches it; it goes on, and keeps trying.", tried.join(" or "));
         }
     }
-}
-
-/// The relay a link carries, given how this computer reaches the network
-/// and the home relay its endpoint reports: `home`, or the first relay
-/// configured while the endpoint reports none, in either posture.
-pub fn link_relay(relay: &RelayConfig, home: Option<RelayUrl>) -> Option<RelayUrl> {
-    let configured = || {
-        relay
-            .relay_urls
-            .first()
-            .and_then(|r| svrngs_node::relay::parse(r).ok())
-    };
-    let carried = home.or_else(configured);
-    match &carried {
-        Some(url) => {
-            tracing::debug!(target: "cli", relay = %url, n0 = relay.n0_services, "cli: the link carries this computer's relay")
-        }
-        None => {
-            tracing::warn!(target: "cli", n0 = relay.n0_services, "cli: no relay — the link carries the key alone, and no phone's page can open it")
-        }
-    }
-    carried
 }
 
 /// The relay a joiner keeps from its link's `carried`, where it meets the
