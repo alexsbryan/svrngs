@@ -213,9 +213,6 @@ svrngs — keep what your group shares on your own computers.
 Data:    $SVRNGS_DIR, else ~/.svrngs.
 Logging: RUST_LOG, default `error`.";
 
-/// How long a link lets people in: the node's ([`svrngs_node::invite`]).
-pub use svrngs_node::invite::LINK_LIFE_SECS;
-
 /// Where the record is served to this computer's apps the first time
 /// svrngs starts over a data dir: loopback, any free port, which the bare
 /// command prints (DESIGN §3; the u3-2 row) and the node writes to

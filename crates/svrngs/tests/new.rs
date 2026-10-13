@@ -4,9 +4,10 @@
 //! process, no relay.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
-use svrngs::cli::{self, Printed, Refusal, Verb, LINK_LIFE_SECS};
+use svrngs::cli::{self, Printed, Refusal, Verb};
 use svrngs::group::{self, Name};
 use svrngs::issuer;
+use svrngs_node::invite::LINK_LIFE_SECS;
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::link::{Link, Origin, CLIENT_PREFIX};
 use svrngs_node::node::Node;
