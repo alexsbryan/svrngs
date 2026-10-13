@@ -1145,7 +1145,7 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,130 lines of code and the
-repository under 15,800 (`scripts/lean_check.py`), the branch `folders`
+repository under 15,950 (`scripts/lean_check.py`), the branch `folders`
 too since main merged into it at syp-5, counting 13,778 and `svrngs-core`
 2,719 there; a raise is the operator's, with the reason in the commit. The budget counts the product:
 tests, `apps/` and `demo/runs/` apart. A recorded run's driver is what ran,
@@ -1212,7 +1212,17 @@ repository's from 15,350, at 15,343, and `svrngs-core`'s from 3,080, at
 rely on n0) before our v1 ship", the budget raised for that queue to
 15,800 and `svrngs-core` 3,130: each computer's relay in its group's
 record, folded in the core, and every dial of a member through it;
-`svrngs relay`, a relay anyone runs; svrngs's relay the default.
+`svrngs relay`, a relay anyone runs; svrngs's relay the default. And the
+repository's from 15,800, at 15,798, on 2026-10-13, `svrngs-core`'s kept
+at 3,130, for svrngs easy to start with before v1 (`ralph/next/start/`):
+the operator, "nail down the svrn / llama-server on svrngs story and make
+it part of an early demo document for anyone getting started", "making
+sure our localhost dashboard really makes the system easy to navigate for
+someone who is a bit afraid technically", and "#126–#129 and #131", the
+budget raised for that queue to 15,950: those five findings, an address
+that stays put, llama-server lent with nothing to look up, and the home
+page leading its reader; taken by start-findings, whose #127 was the
+first change past 15,800.
 `ARCHITECTURE.md` maps what exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file
