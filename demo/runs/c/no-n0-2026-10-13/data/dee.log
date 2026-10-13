@@ -1,0 +1,46 @@
+2026-10-13T08:04:06.120233Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/tmp/c-relay/dee/.svrngs"
+2026-10-13T08:04:06.120841Z DEBUG cli: cli: the relays this computer meets its groups at, n0's none of them relay_urls=["http://127.0.0.1:57771/"]
+2026-10-13T08:04:06.120921Z DEBUG cli: cli: data dir claimed lock=/tmp/c-relay/dee/.svrngs/lock
+2026-10-13T08:04:06.185214Z  INFO folder: folder: the store is open untagged=0
+2026-10-13T08:04:06.185259Z  INFO folder: synced: the directory kept in step with the group's folder namespace="c476d0becae3421c94efeac38a669303f16e0b4e82c5433a97e6ed580bc1142f" folder="lake-trip" dir=/tmp/c-relay/dee/svrngs/lake-trip
+2026-10-13T08:04:06.187526Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["ana/0310cf21", "Sam/61135efa", "alex/8affec18", "bo/d525d65a"] skipped_offline=[]
+2026-10-13T08:04:06.187569Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=21785 peer=0310cf212ada502d861a9e870bf010caa2dc60a80820e58679c80b018e4fa770 error=Address already in use (os error 48)
+2026-10-13T08:04:06.187758Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=22546 peer=61135efa27dd94e911fabcbc32551a278d7e1a53145587cd2e150614ddbe31fd error=Address already in use (os error 48)
+2026-10-13T08:04:06.187847Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=31289 peer=8affec18aa20812847ccb0905c2c377f6151a541859ce0e36001dca5955baa4f error=Address already in use (os error 48)
+2026-10-13T08:04:06.187935Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=29934 peer=d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f error=Address already in use (os error 48)
+2026-10-13T08:04:09.143874Z DEBUG door: door: lends — answered what this computer lends actor="61135efa27dd94e911fabcbc32551a278d7e1a53145587cd2e150614ddbe31fd" lends=0
+2026-10-13T08:04:16.542574Z DEBUG door: door: lends — answered what this computer lends actor="61135efa27dd94e911fabcbc32551a278d7e1a53145587cd2e150614ddbe31fd" lends=0
+2026-10-13T08:04:20.892426Z DEBUG door: door: lends — answered what this computer lends actor="d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f" lends=0
+2026-10-13T08:05:06.198362Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["ana/0310cf21", "Sam/61135efa", "alex/8affec18"] skipped_offline=[]
+2026-10-13T08:05:21.610456Z  INFO folder: folder: fetched, verified hash=dee495eb4c87729013a3fd52bac691a32d9f900f162fb88746b4aa9c6d112487 holder=61135efa27dd94e911fabcbc32551a278d7e1a53145587cd2e150614ddbe31fd payload=4893247 other=19080 ms=320
+2026-10-13T08:05:21.611557Z  INFO folder: synced: written into the directory folder="lake-trip" path=after.jpg hash=dee495eb4c87729013a3fd52bac691a32d9f900f162fb88746b4aa9c6d112487 from="61135efa27dd94e911fabcbc32551a278d7e1a53145587cd2e150614ddbe31fd" seq=8 beside=false fetch_ms=320 export_ms=1
+2026-10-13T08:06:06.204289Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["ana/0310cf21", "Sam/61135efa", "alex/8affec18"] skipped_offline=[]
+2026-10-13T08:06:30.845527Z  WARN svrngs_core::admit: ring rail: this answer covers a subset — the rail could not account for every op namespace="c476d0becae3421c94efeac38a669303f16e0b4e82c5433a97e6ed580bc1142f" gaps=1 first=Some(SequenceHole { actor: "61135efa27dd94e911fabcbc32551a278d7e1a53145587cd2e150614ddbe31fd", missing: 8 })
+2026-10-13T08:06:31.931960Z DEBUG door: door: lends — answered what this computer lends actor="a1ec174da05c4dce2c970c96e110825fc4ab2b3abbf2122bc64b90ac1b7743a1" lends=0
+2026-10-13T08:06:31.941156Z  WARN svrngs_core::admit: ring rail: this answer covers a subset — the rail could not account for every op namespace="c476d0becae3421c94efeac38a669303f16e0b4e82c5433a97e6ed580bc1142f" gaps=1 first=Some(SequenceHole { actor: "61135efa27dd94e911fabcbc32551a278d7e1a53145587cd2e150614ddbe31fd", missing: 8 })
+2026-10-13T08:06:31.947888Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["ana/0310cf21", "Sam/61135efa", "alex/8affec18", "eve/a1ec174d"] skipped_offline=[]
+2026-10-13T08:06:33.286513Z DEBUG door: door: lends — answered what this computer lends actor="a1ec174da05c4dce2c970c96e110825fc4ab2b3abbf2122bc64b90ac1b7743a1" lends=0
+2026-10-13T08:06:46.036781Z DEBUG door: door: lends — answered what this computer lends actor="a1ec174da05c4dce2c970c96e110825fc4ab2b3abbf2122bc64b90ac1b7743a1" lends=0
+2026-10-13T08:06:46.657120Z DEBUG door: door: lends — answered what this computer lends actor="a1ec174da05c4dce2c970c96e110825fc4ab2b3abbf2122bc64b90ac1b7743a1" lends=0
+2026-10-13T08:06:50.248198Z DEBUG door: door: lends — answered what this computer lends actor="8affec18aa20812847ccb0905c2c377f6151a541859ce0e36001dca5955baa4f" lends=0
+2026-10-13T08:06:53.341841Z DEBUG door: door: lends — answered what this computer lends actor="8affec18aa20812847ccb0905c2c377f6151a541859ce0e36001dca5955baa4f" lends=0
+2026-10-13T08:06:59.023865Z  WARN noq_proto::connection: failed closing path err=LastOpenPath
+2026-10-13T08:06:59.374032Z DEBUG door: door: lends — answered what this computer lends actor="a1ec174da05c4dce2c970c96e110825fc4ab2b3abbf2122bc64b90ac1b7743a1" lends=0
+2026-10-13T08:07:01.278750Z  WARN connect{me=9f37154dba alpn=cwth/http/0 remote=0310cf212a}: noq_proto::connection: failed closing path err=LastOpenPath
+2026-10-13T08:07:02.423510Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=0310cf212ada502d861a9e870bf010caa2dc60a80820e58679c80b018e4fa770 alpn=cwth/http/0 request_bytes=59
+2026-10-13T08:07:02.433888Z  WARN endpoint{id=9f37154dba}:relay-actor:active-relay{url=http://127.0.0.1:57771/}: iroh::socket::transports::relay::actor: Lost connection to relay server: Stream closed by server.
+2026-10-13T08:07:02.434066Z  WARN endpoint{id=9f37154dba}:relay-actor:active-relay{url=http://127.0.0.1:57771/}: iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: Connection refused (os error 61)
+2026-10-13T08:07:02.446833Z  WARN endpoint{id=9f37154dba}:relay-actor:active-relay{url=http://127.0.0.1:57771/}: iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: Connection refused (os error 61)
+2026-10-13T08:07:03.388235Z  INFO folder: folder: fetched, verified hash=a61f2e7ec162919be3b2a9ac60289d7e32296a8eff3f9298d1d1b4579ad2ee8f holder=61135efa27dd94e911fabcbc32551a278d7e1a53145587cd2e150614ddbe31fd payload=4876326 other=19016 ms=486
+2026-10-13T08:07:03.392529Z  INFO folder: synced: written into the directory folder="lake-trip" path=after2.jpg hash=a61f2e7ec162919be3b2a9ac60289d7e32296a8eff3f9298d1d1b4579ad2ee8f from="61135efa27dd94e911fabcbc32551a278d7e1a53145587cd2e150614ddbe31fd" seq=10 beside=false fetch_ms=486 export_ms=4
+2026-10-13T08:07:41.958065Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["ana/0310cf21", "Sam/61135efa", "alex/8affec18", "eve/a1ec174d"] skipped_offline=[]
+2026-10-13T08:08:03.596681Z DEBUG door: door: lends — answered what this computer lends actor="8affec18aa20812847ccb0905c2c377f6151a541859ce0e36001dca5955baa4f" lends=0
+2026-10-13T08:08:05.945319Z DEBUG door: door: lends — answered what this computer lends actor="61135efa27dd94e911fabcbc32551a278d7e1a53145587cd2e150614ddbe31fd" lends=0
+2026-10-13T08:08:41.964626Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["ana/0310cf21", "Sam/61135efa", "alex/8affec18", "eve/a1ec174d"] skipped_offline=[]
+2026-10-13T08:09:41.969990Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["ana/0310cf21", "Sam/61135efa", "alex/8affec18", "eve/a1ec174d"] skipped_offline=[]
+2026-10-13T08:10:36.716727Z DEBUG door: door: lends — answered what this computer lends actor="61135efa27dd94e911fabcbc32551a278d7e1a53145587cd2e150614ddbe31fd" lends=0
+2026-10-13T08:10:41.977062Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["ana/0310cf21", "Sam/61135efa", "alex/8affec18", "eve/a1ec174d"] skipped_offline=[]
+2026-10-13T08:11:41.984236Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["ana/0310cf21", "Sam/61135efa", "alex/8affec18", "eve/a1ec174d"] skipped_offline=[]
+2026-10-13T08:12:41.991555Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["ana/0310cf21", "Sam/61135efa", "alex/8affec18", "eve/a1ec174d"] skipped_offline=[]
+2026-10-13T08:13:41.997256Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["ana/0310cf21", "Sam/61135efa", "alex/8affec18", "eve/a1ec174d"] skipped_offline=[]
+2026-10-13T08:14:34.166631Z DEBUG cli: cli: stopping

@@ -1,0 +1,9 @@
+Getting svrngs for this computer from http://localhost:57849/get/svrngs-darwin-aarch64.tar.gz
+Checked: svrngs-darwin-aarch64.tar.gz matches SHA256SUMS.
+Installed svrngs in /tmp/c-relay/dee/.local/bin.
+/tmp/c-relay/dee/.local/bin is not on your PATH, so to run svrngs yourself type /tmp/c-relay/dee/.local/bin/svrngs; nothing else needs it.
+You're in lake-trip, as dee.
+lake-trip's folder is /tmp/c-relay/dee/svrngs/lake-trip: what anyone in lake-trip puts there reaches this computer, and what you put there reaches theirs.
+
+svrngs runs now, and whenever you log in (/tmp/c-relay/dee/Library/LaunchAgents/sh.svrnme.svrngs.plist).
+Your home page: http://svrngs.localhost:50955/

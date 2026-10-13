@@ -1,0 +1,7 @@
+Getting svrngs for this computer from http://localhost:57849/get/svrngs-darwin-aarch64.tar.gz
+Checked: svrngs-darwin-aarch64.tar.gz matches SHA256SUMS.
+Installed svrngs in /tmp/c-relay/fay/.local/bin.
+/tmp/c-relay/fay/.local/bin is not on your PATH, so to run svrngs yourself type /tmp/c-relay/fay/.local/bin/svrngs; nothing else needs it.
+svrngs: this computer has not reached http://127.0.0.1:57771/ in 10 s, where its group reaches it; it goes on, and keeps trying.
+svrngs: the computer that sent this link cannot be reached; it may be off, so try again later
+svrngs: svrngs is in /tmp/c-relay/fay/.local/bin, and did not join the group: it said why above.
