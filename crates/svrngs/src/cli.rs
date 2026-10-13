@@ -1541,8 +1541,7 @@ pub async fn join_group(
     tracing::debug!(target: "cli", group = %id, redeemed = ?redeemed, "cli: join — let in");
     // An address lookup is n0's, built only with `n0_services` (svrngs-node
     // guest.rs `relayed_endpoint_builder`): this computer meets its groups at n0's.
-    let n0 = node.endpoint().address_lookup().ok();
-    let n0 = n0.is_some_and(|l| !l.is_empty());
+    let n0 = svrngs_node::iroh::has_lookup(node.endpoint());
     let relay = kept_relay(link.token.relay.clone().map(RelayUrl::from), n0);
     keep_group(node, &seed, link.origin.as_ref(), relay.as_ref())?;
     if link.origin.is_none() {

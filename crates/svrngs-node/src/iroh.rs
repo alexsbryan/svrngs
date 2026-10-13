@@ -77,6 +77,13 @@ pub fn format_dial_string(addr: &EndpointAddr) -> Option<String> {
     ))
 }
 
+/// Whether `endpoint` resolves a bare key by an address lookup: built only
+/// with `n0_services` (`guest::relayed_endpoint_builder`) or one a test adds.
+/// A closed endpoint has none.
+pub fn has_lookup(endpoint: &Endpoint) -> bool {
+    endpoint.address_lookup().is_ok_and(|l| !l.is_empty())
+}
+
 /// A peer to dial: its key, and whatever dial hints are known. Upstream's
 /// `PeerContact` was the mesh's gossiped record — a `NodeId`, IP addresses
 /// and an optional key; here the key is the peer and the hints are optional.
@@ -215,10 +222,7 @@ impl IrohTransport {
         if has_path {
             return Some(ea);
         }
-        let lookup = self
-            .endpoint
-            .address_lookup()
-            .is_ok_and(|services| !services.is_empty());
+        let lookup = has_lookup(&self.endpoint);
         tracing::debug!(
             target: "transport",
             transport = "iroh",
