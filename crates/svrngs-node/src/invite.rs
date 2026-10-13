@@ -10,7 +10,7 @@
 
 use std::path::Path;
 
-use svrngs_core::link::{Origin, Token, SECRET_LEN};
+use svrngs_core::link::{client_link, https_link, Origin, Token, SECRET_LEN};
 
 use crate::iroh::{PublicKey, RelayConfig, RelayUrl};
 use crate::node::Host;
@@ -139,6 +139,34 @@ impl Host {
         };
         tracing::debug!(target: "link", group, invite = %recorded.lines()[0].id, until = mint.until, "link: minted");
         Ok(token)
+    }
+
+    /// A link to `group` made where its svrngs runs, for the home page
+    /// (start-home), as `svrngs link` makes one (`cli::link_to`): the
+    /// client's link, and the https one on the group's kept page; with
+    /// `device`, a device link. Its relay is the one reached now, with no
+    /// wait: a running computer has reached it, or [`carried`] says why.
+    #[expect(
+        clippy::disallowed_methods,
+        reason = "the page's clock: a link's life starts now"
+    )]
+    pub fn link(&self, group: &str, device: bool) -> Result<(String, Option<String>), Unminted> {
+        let unkept = |e: &dyn std::fmt::Display| Unminted::Unkept(e.to_string());
+        // Held first, so no journal is opened for a group it does not hold.
+        let held = self.rail.namespaces().map_err(|e| unkept(&e))?;
+        if !held.iter().any(|g| g == group) {
+            return Err(Unminted::NotIn);
+        }
+        let dir = self.rail.group_dir(group).map_err(|e| unkept(&e))?;
+        let page = kept_page(&dir).map_err(|e| unkept(&e))?;
+        let device_of = device.then(|| self.own_person(group)).transpose()?;
+        let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
+        let now = now.map_err(|e| unkept(&e))?.as_secs() as i64;
+        let home = self.endpoint.addr().relay_urls().next().cloned();
+        let relay = carried(&self.relay, home);
+        let token = self.mint(group, relay, device_of.map(|p| p.0), now)?;
+        tracing::debug!(target: "link", group, device, page = ?page.as_ref().map(Origin::as_str), "link: made for the home page");
+        Ok((client_link(&token), page.map(|p| https_link(&p, &token))))
     }
 
     /// This computer's person in `group`, by their first key and name, as

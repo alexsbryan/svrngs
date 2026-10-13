@@ -23,7 +23,9 @@
 //! **Its only writes are the person's yes and stop** (`POST /choices`), and
 //! **their change to what this computer lends** (`POST /lent`, bash-limit):
 //! how many it lets in at once, a number or everyone, or no longer lent —
-//! written to its declaration, which the door reads at its next request.
+//! written to its declaration, which the door reads at its next request;
+//! and **a link to a group** (`POST /link`, start-home), made as `svrngs
+//! link` makes it, in the group's record.
 //! The person's yes and stop are
 //! kept by this computer's door for its own lend, else dialled to the
 //! lender's door on the members' protocol as this computer's key
@@ -113,6 +115,7 @@ pub(crate) fn router(
         .route("/home.css", get(|| async { LOOK }))
         .route("/choices", get(choices).post(choose))
         .route("/lent", get(lent).post(change))
+        .route("/link", axum::routing::post(link))
         .with_state(at.clone())
         .merge(
             Router::new()
@@ -221,6 +224,35 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
             LendRefusal::Fault.say(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "that cannot be changed on this computer",
+            )
+        }
+    }
+}
+
+/// What the person asks a link for: to invite someone to `group`, or,
+/// with `device`, to add a computer or phone of their own.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Linking {
+    group: String,
+    device: bool,
+}
+
+/// `POST /link`: a link to the group, as `svrngs link` makes it
+/// ([`crate::node::Host::link`]).
+async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
+    match at.host.link(&l.group, l.device) {
+        Ok((client, https)) => {
+            Json(serde_json::json!({ "client": client, "https": https })).into_response()
+        }
+        Err(crate::invite::Unminted::NotIn) => {
+            LendRefusal::Closed.say(StatusCode::FORBIDDEN, "this computer is not in that group")
+        }
+        Err(e) => {
+            tracing::warn!(target: "home", group = l.group, error = %e, "home: refused — no link made");
+            LendRefusal::Fault.say(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("no link can be made on this computer: {e}"),
             )
         }
     }

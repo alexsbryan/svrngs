@@ -202,6 +202,9 @@ pub struct Host {
     /// Whether this computer reaches the network through a relay at all
     /// ([`RelayConfig`]): with none, it says so in the record.
     relayed: bool,
+    /// How it reaches the network: the relay a link made on the home page
+    /// carries when none is reached yet ([`crate::invite::carried`]).
+    pub(crate) relay: RelayConfig,
     /// The record API's port, where each lend has its origin (u5-2).
     pub(crate) api_port: u16,
     /// Each lend the room door serves, and where (u6-1, [`crate::room`]):
@@ -274,6 +277,7 @@ impl Node {
             endpoint: endpoint.clone(),
             actor: actor.clone(),
             relayed: relay.n0_services || !relay.relay_urls.is_empty(),
+            relay: relay.clone(),
             api_port: api.addr().port(),
             room: tokio::sync::watch::Sender::new(BTreeMap::new()),
         });

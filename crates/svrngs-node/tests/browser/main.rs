@@ -2315,3 +2315,55 @@ async fn the_home_page_shows_a_group_before_its_slowest_computer(engine: Engine)
     assert!(ms(people) + 1000 < ms(unanswered), "{seen:#}");
     drop((ada, silent));
 }
+
+in_both_engines!(
+    /// **A link to invite someone, made on the page as `svrngs link` makes
+    /// it** (start-home, from start-measure's ranked row 10: the act most
+    /// asked of a newcomer's page was a terminal command, refused while
+    /// svrngs runs — `demo/runs/start/2026-10-13-home/data/before/`,
+    /// `svrngs link Lab` exit 1). On ada's page each button says what it
+    /// makes; pressed, the page shows the link, which names ada's computer
+    /// as its issuer, and says who it is for and for how long. Planted,
+    /// watched failing: the page as caafae7 left it, with no such button.
+    the_home_page_makes_a_link_to_invite_someone
+);
+async fn the_home_page_makes_a_link_to_invite_someone(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let seen = home_page(
+        engine,
+        &ada,
+        json!({
+            "all": "#home section p.link",
+            "do": [
+                ["#home section button:has-text('Make a link to invite someone to')", null, true],
+                ["#home section button:has-text('Make a link to add your phone or another computer of yours')", null, true],
+            ],
+        }),
+    )
+    .await;
+    eprintln!("the home page's run: {seen:#}");
+    for (said, starts) in [
+        (
+            &seen["after"][0][0],
+            "Send this link to the person you are inviting: svrngs://join/",
+        ),
+        (
+            &seen["after"][1][0],
+            "Open this link on your other computer or phone; it joins as you",
+        ),
+    ] {
+        let said = said.as_str().unwrap_or_default();
+        assert!(said.starts_with(starts), "{seen:#}");
+        assert!(
+            said.ends_with("It works for a day, while this computer is on."),
+            "{seen:#}"
+        );
+        let at = said.find("svrngs://join/").expect("the link is shown");
+        let link = svrngs_core::link::Link::parse(said[at..].split(' ').next().unwrap())
+            .expect("the link shown is a link");
+        assert_eq!(link.token.issuer, signing(1).verifying_key(), "{seen:#}");
+    }
+    drop(ada);
+}
