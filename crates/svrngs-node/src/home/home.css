@@ -5,3 +5,4 @@ section { border-top: 1px solid #ccc; padding: .5rem 0 1rem; }
 blockquote { border-left: 3px solid #999; margin: 1rem 0; padding: .25rem 1rem; }
 button { font: inherit; margin-right: .5rem; }
 .said { color: #555; }
+code { overflow-wrap: anywhere; }

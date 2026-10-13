@@ -2323,8 +2323,9 @@ in_both_engines!(
     /// svrngs runs — `demo/runs/start/2026-10-13-home/data/before/`,
     /// `svrngs link Lab` exit 1). On ada's page each button says what it
     /// makes; pressed, the page shows the link, which names ada's computer
-    /// as its issuer, and says who it is for and for how long. Planted,
-    /// watched failing: the page as caafae7 left it, with no such button.
+    /// as its issuer, and says who it is for and for how long; and copies
+    /// it by a button saying so. Planted, watched failing: the page as
+    /// caafae7 left it, with no such button; the copy, as 4f8aeb7 left it.
     the_home_page_makes_a_link_to_invite_someone
 );
 async fn the_home_page_makes_a_link_to_invite_someone(engine: Engine) {
@@ -2339,6 +2340,7 @@ async fn the_home_page_makes_a_link_to_invite_someone(engine: Engine) {
             "do": [
                 ["#home section button:has-text('Make a link to invite someone to')", null, true],
                 ["#home section button:has-text('Make a link to add your phone or another computer of yours')", null, true],
+                ["#home section p.link button:has-text('Copy the link')", null, true],
             ],
         }),
     )
@@ -2357,13 +2359,26 @@ async fn the_home_page_makes_a_link_to_invite_someone(engine: Engine) {
         let said = said.as_str().unwrap_or_default();
         assert!(said.starts_with(starts), "{seen:#}");
         assert!(
-            said.ends_with("It works for a day, while this computer is on."),
+            said.ends_with("It works for a day, while this computer is on. Copy the link"),
             "{seen:#}"
         );
         let at = said.find("svrngs://join/").expect("the link is shown");
         let link = svrngs_core::link::Link::parse(said[at..].split(' ').next().unwrap())
             .expect("the link shown is a link");
         assert_eq!(link.token.issuer, signing(1).verifying_key(), "{seen:#}");
+    }
+    // The link copied by a button that says so, the walk after finding a
+    // 130-character link given no other way off the page
+    // (demo/runs/start/2026-10-13-home/README.md §3).
+    let copied = seen["after"][2][0].as_str().unwrap_or_default();
+    assert!(copied.ends_with("Copy the link Copied."), "{seen:#}");
+    if matches!(engine, Engine::Chromium) {
+        let shown = seen["after"][1][0].as_str().unwrap_or_default();
+        let link = seen["clipboard"].as_str().unwrap_or("none");
+        assert!(
+            link.starts_with("svrngs://join/") && shown.contains(link),
+            "{seen:#}"
+        );
     }
     drop(ada);
 }

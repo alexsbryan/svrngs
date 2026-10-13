@@ -73,8 +73,11 @@ async function show(g, s) {
       s.append(Object.assign(el('p', `${its} is on this computer at ${dir}`), { className: 'folder' }), p);
     }
     // A link made here, as `svrngs link` makes it (start-home), each
-    // button saying what it makes; then the link, said in its words.
-    const made = (device, words) => button(words, () => post('/link', { group: g.id, device }).then(({ client, https }) => s.querySelector('.link').replaceChildren(device ? 'Open this link on your other computer or phone; it joins as you, so send it to nobody else: ' : 'Send this link to the person you are inviting: ', el('code', https ?? client), https ? ' It opens in a browser, which says how to join from there.' : ' They join with svrngs join and this link.', ' It works for a day, while this computer is on.'), (e) => s.querySelector('.link').replaceChildren(e.message)));
+    // button saying what it makes; then the link, said in its words, with
+    // a button that copies it.
+    const shown = (...words) => s.querySelector('.link').replaceChildren(...words);
+    const copy = (link, p) => button('Copy the link', () => Promise.resolve().then(() => navigator.clipboard.writeText(link)).then(() => p.append(' Copied.'), () => p.append(' Select it above to copy it.')));
+    const made = (device, words) => button(words, () => post('/link', { group: g.id, device }).then(({ client, https }) => shown(device ? 'Open this link on your other computer or phone; it joins as you, so send it to nobody else: ' : 'Send this link to the person you are inviting: ', el('code', https ?? client), https ? ' It opens in a browser, which says how to join from there.' : ' They join with svrngs join and this link.', ' It works for a day, while this computer is on. ', copy(https ?? client, s.querySelector('.link'))), (e) => shown(e.message)));
     s.append(el('p', '', made(false, `Make a link to invite someone to ${g.name ?? 'this group'}`), made(true, 'Make a link to add your phone or another computer of yours')), Object.assign(el('p'), { className: 'link' }));
     if (g.removals.length) s.append(Object.assign(el('ul', '', ...g.removals.map((r) => el('li', removal(r)))), { className: 'removals' }));
     const ul = s.appendChild(el('ul', '', el('li', 'Asking each computer in the group what it lends…')));
