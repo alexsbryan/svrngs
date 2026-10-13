@@ -643,6 +643,12 @@ pub fn claim(root: &Path) -> Result<File, Refusal> {
     }
 }
 
+/// How this computer reaches the network to do `command` over `root`:
+/// n0's relays and lookup, `RelayConfig::default()`, as the command has.
+pub fn reach(_root: &Path, _command: &Verb) -> Result<RelayConfig, Refusal> {
+    Ok(RelayConfig::default())
+}
+
 /// The whole program, `Help` apart: claim the data dir, load this
 /// computer's key, start the node, do the verb, and run until Ctrl-C.
 /// `share` declares its lend first, and runs only when svrngs is not

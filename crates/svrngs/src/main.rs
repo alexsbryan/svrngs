@@ -6,7 +6,6 @@
 use std::process::ExitCode;
 
 use svrngs::cli;
-use svrngs_node::iroh::RelayConfig;
 
 fn main() -> ExitCode {
     // `error` by default: what a person reads is the command's own words,
@@ -43,7 +42,11 @@ fn main() -> ExitCode {
             return ExitCode::from(3);
         }
     };
-    match runtime.block_on(cli::run(command, root, &RelayConfig::default())) {
+    let relay = match cli::reach(&root, &command) {
+        Ok(r) => r,
+        Err(e) => return refuse(e),
+    };
+    match runtime.block_on(cli::run(command, root, &relay)) {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => refuse(e),
     }
