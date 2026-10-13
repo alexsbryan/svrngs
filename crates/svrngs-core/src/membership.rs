@@ -286,7 +286,7 @@ impl Membership {
     pub fn relay(&self, key: &str) -> Option<crate::relay::Url> {
         let said = self.relays.get(key).filter(|_| self.standing.contains(key));
         tracing::debug!(target: "rail:membership", key, ?said, "membership: the relay the record names for a standing key");
-        crate::relay::parse(said?)
+        crate::relay::parse(said?).ok()
     }
 
     /// What holds `key`, if it stands now; `None` if it does not.

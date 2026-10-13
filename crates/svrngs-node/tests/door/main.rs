@@ -900,7 +900,7 @@ async fn a_member_asks_what_the_group_s_people_lend_each_with_its_lender_s_key()
     // Ada's relay in the record, with the root's dot (relay-in-record).
     let at = svrngs_core::RelayAt {
         key: actor_of(&signing(1)),
-        url: svrngs_core::relay::parse("https://relay.example./"),
+        url: svrngs_core::relay::parse("https://relay.example./").ok(),
     };
     pair.a.rail().commit(NS, &at).unwrap().unwrap();
 

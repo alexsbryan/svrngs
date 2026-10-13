@@ -17,7 +17,7 @@ use iroh::address_lookup::{
     AddressLookup, AddressLookupBuilder, AddressLookupBuilderError, EndpointData, EndpointInfo,
     Error, Item,
 };
-use iroh::{Endpoint, EndpointId, RelayMap, RelayUrl, RelayUrlParseError};
+use iroh::{Endpoint, EndpointId, RelayMap, RelayUrl};
 use n0_future::boxed::BoxStream;
 use n0_future::StreamExt as _;
 
@@ -26,9 +26,10 @@ pub fn dotless(url: RelayUrl) -> RelayUrl {
     RelayUrl::from(svrngs_core::relay::dotless(url.into()))
 }
 
-/// A relay's URL as written, read dotless.
-pub fn parse(raw: &str) -> Result<RelayUrl, RelayUrlParseError> {
-    raw.parse().map(dotless)
+/// A relay's URL as written, read dotless: svrngs-core's one reading
+/// ([`svrngs_core::relay::parse`], which says a refusal), as iroh's URL.
+pub fn parse(raw: &str) -> Result<RelayUrl, svrngs_core::relay::ParseError> {
+    svrngs_core::relay::parse(raw).map(RelayUrl::from)
 }
 
 /// n0's relays, each as iroh configures it, dotless: the relays a computer

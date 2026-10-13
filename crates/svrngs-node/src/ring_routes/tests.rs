@@ -306,7 +306,7 @@ async fn a_dialer_not_standing_in_the_group_named_is_refused() {
 async fn a_push_landing_the_askers_own_relay_wakes_the_round() {
     let (a, b) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let ada = rail_with_roster(a.path());
-    let url = svrngs_core::relay::parse("http://127.0.0.1:1/");
+    let url = svrngs_core::relay::parse("http://127.0.0.1:1/").ok();
     let said = ada.commit(
         NS,
         &svrngs_core::RelayAt {

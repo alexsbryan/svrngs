@@ -1467,7 +1467,9 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   once, and a computer's relay moves with it; so the computer says it,
   and says it again when it moves. The fold keeps each key's
   (`Membership::relay`, read dotless by `relay::parse`, the one reading
-  of a relay a link or the record names), and only for a standing key;
+  of a relay a link, the record, a person or a peer names, which
+  svrngs-node's `relay::parse` wraps as iroh's URL; start-findings (e),
+  #131), and only for a standing key;
   the register carries it beside each key (`Member::relay`). svrngs-core's
   `RelayAt` writes it only when the record says otherwise. Like the acts
   that move membership, a `Correct` voids none: a newer one replaces it.
