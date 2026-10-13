@@ -1,0 +1,165 @@
+{
+ "people": {
+  "27821c4258b67d48131a99f6d29214ac7d6648041e24f58c66d68e260dbb0719": "Cy",
+  "90ea4ab7ded3bb32997174a31c93cc42f30e015c9eb7d040d94846048ba10b86": "alex",
+  "9771e727dd24802fedd165088de965d5fe076f20adfe6711d2fb2dddba2b098e": "Sam",
+  "b68f69ce9b684c45561282b031260a6f6ba0874096dee85bc2de29910e6a7162": "ana"
+ },
+ "sam": {
+  "lines": 1364,
+  "no_address": 2,
+  "no_address_first": [
+   "2026-10-13T04:44:35.216058Z DEBUG transport: iroh: no dialable path in contact (no relay_url / iroh_direct_addrs) and no address lookup \u2014 not dialable transport=\"iroh\" peer=b68f69ce",
+   "2026-10-13T04:44:38.615659Z DEBUG transport: iroh: no dialable path in contact (no relay_url / iroh_direct_addrs) and no address lookup \u2014 not dialable transport=\"iroh\" peer=90ea4ab7"
+  ],
+  "no_address_to": {
+   "ana": 1,
+   "alex": 1
+  },
+  "rounds": {
+   "peers_reached=0 peers_unreachable=1": 1,
+   "peers_reached=1 peers_unreachable=0": 1,
+   "peers_reached=1 peers_unreachable=1": 1,
+   "peers_reached=2 peers_unreachable=0": 2
+  },
+  "asked_by": {
+   "ana": 11,
+   "alex": 5
+  },
+  "fetched": [
+   [
+    "ana",
+    "2026-10-13T04:44:41.995438Z  INFO folder: folder: fetched, verified hash=00906321883b2f858c89fee20b5541165cd2a32be4b68314d4225442e98635bb holder=b68f69ce9b684c45561282b031260a6f6ba0874096dee85bc2de29910e6a7162 payload=2000000 other=7816 ms=116"
+   ]
+  ],
+  "gave_nothing": [
+   "2026-10-13T04:44:50.600110Z  WARN folder: folder: a holder gave nothing of what the store lacks hash=8f801a30d7032487c506863b96198bcd91f902204d5313eeb091ce2e2fdb87ff holder=b68f69ce9b684c45561282b031260a6f6ba0874096dee85bc2de29910e6a7162 why=the dial: Unable to connect to remote",
+   "2026-10-13T04:44:50.600604Z  WARN folder: folder: a holder gave nothing of what the store lacks hash=8f801a30d7032487c506863b96198bcd91f902204d5313eeb091ce2e2fdb87ff holder=27821c4258b67d48131a99f6d29214ac7d6648041e24f58c66d68e260dbb0719 why=no relay named for it, and no address lookup",
+   "2026-10-13T04:44:50.601130Z  WARN folder: folder: a holder gave nothing of what the store lacks hash=8f801a30d7032487c506863b96198bcd91f902204d5313eeb091ce2e2fdb87ff holder=90ea4ab7ded3bb32997174a31c93cc42f30e015c9eb7d040d94846048ba10b86 why=the dial: Unable to connect to remote",
+   "2026-10-13T04:44:51.604930Z  WARN folder: folder: a holder gave nothing of what the store lacks hash=8f801a30d7032487c506863b96198bcd91f902204d5313eeb091ce2e2fdb87ff holder=b68f69ce9b684c45561282b031260a6f6ba0874096dee85bc2de29910e6a7162 why=the dial: Unable to connect to remote",
+   "2026-10-13T04:44:51.605516Z  WARN folder: folder: a holder gave nothing of what the store lacks hash=8f801a30d7032487c506863b96198bcd91f902204d5313eeb091ce2e2fdb87ff holder=27821c4258b67d48131a99f6d29214ac7d6648041e24f58c66d68e260dbb0719 why=no relay named for it, and no address lookup"
+  ],
+  "asks": [],
+  "n0_lines": [],
+  "n0_count": 0
+ },
+ "ana": {
+  "lines": 1076,
+  "no_address": 0,
+  "no_address_first": [],
+  "no_address_to": {},
+  "rounds": {
+   "peers_reached=2 peers_unreachable=0": 2
+  },
+  "asked_by": {
+   "Sam": 10
+  },
+  "fetched": [],
+  "gave_nothing": [],
+  "asks": [],
+  "n0_lines": [],
+  "n0_count": 0
+ },
+ "alex": {
+  "lines": 755,
+  "no_address": 0,
+  "no_address_first": [],
+  "no_address_to": {},
+  "rounds": {},
+  "asked_by": {
+   "Sam": 4,
+   "ana": 6
+  },
+  "fetched": [
+   [
+    "ana",
+    "2026-10-13T04:44:42.002258Z  INFO folder: folder: fetched, verified hash=00906321883b2f858c89fee20b5541165cd2a32be4b68314d4225442e98635bb holder=b68f69ce9b684c45561282b031260a6f6ba0874096dee85bc2de29910e6a7162 payload=2000000 other=7816 ms=119"
+   ],
+   [
+    "ana",
+    "2026-10-13T04:44:50.194335Z  INFO folder: folder: fetched, verified hash=8f801a30d7032487c506863b96198bcd91f902204d5313eeb091ce2e2fdb87ff holder=b68f69ce9b684c45561282b031260a6f6ba0874096dee85bc2de29910e6a7162 payload=2000000 other=7816 ms=49"
+   ]
+  ],
+  "gave_nothing": [],
+  "asks": [],
+  "n0_lines": [],
+  "n0_count": 0
+ },
+ "relay": {
+  "lines": 63,
+  "no_address": 0,
+  "no_address_first": [],
+  "no_address_to": {},
+  "rounds": {},
+  "asked_by": {},
+  "fetched": [],
+  "gave_nothing": [],
+  "asks": [],
+  "n0_lines": [],
+  "n0_count": 0
+ },
+ "lsof": {
+  "samples_kept": 52,
+  "remote_hosts_by_process": [
+   [
+    "alex",
+    "127.0.0.1",
+    7
+   ],
+   [
+    "alex",
+    "192.168.1.1",
+    1
+   ],
+   [
+    "ana",
+    "127.0.0.1",
+    7
+   ],
+   [
+    "ana",
+    "192.168.1.1",
+    1
+   ],
+   [
+    "film",
+    "127.0.0.1",
+    1
+   ],
+   [
+    "page",
+    "127.0.0.1",
+    7
+   ],
+   [
+    "relay",
+    "127.0.0.1",
+    6
+   ],
+   [
+    "sam",
+    "127.0.0.1",
+    3
+   ]
+  ],
+  "n0_hits": [],
+  "n0_ips": [
+   "178.105.170.157",
+   "178.156.173.73",
+   "2a01:4f8:1c19:39b4::1",
+   "2a01:4f8:1c1a:bff8::1",
+   "2a01:4f8:1c1c:75e2::1",
+   "2a01:4f8:c2c:7216::1",
+   "2a01:4ff:1f0:e599::1",
+   "2a01:4ff:2f0:29c1::1",
+   "2a01:4ff:f0:b1b3::1",
+   "2a01:4ff:f0:f255::1",
+   "49.13.207.244",
+   "49.13.237.105",
+   "5.223.65.62",
+   "5.78.69.43",
+   "87.99.151.110",
+   "91.99.237.97"
+  ]
+ }
+}
