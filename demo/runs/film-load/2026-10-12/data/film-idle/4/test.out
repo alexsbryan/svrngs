@@ -1,0 +1,11 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.29s
+     Running tests/browser/main.rs (target/debug/deps/browser-78ee271d255dd1a7)
+
+running 2 tests
+the runtime's run: {"first":{"at":0.2503049583668895,"ms":837},"listed":["ada’s page (k)","cy’s shelf (k)","cy’s strict (k)"],"logs":"23 lines","openEnded":{"bytes":262144,"contentRange":"bytes 1000000-1262143/16777216","sha":"a39cd544ac0701601e5e02097fd1fd81afd42f8f3b41c391a45dd1c6e7b598ab","status":206},"opened":"http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.localhost:62860/","other":{"bytes":4194304,"contentRange":"bytes 1000000-5194303/16777216","sha":"d7713cc9f6ebc3a72b5261f6c7310dbe4dd9f0e69bb750ae1bb570da7a215ee9","status":206},"refusals":[{"path":"x","refused":null,"status":403},{"path":"private/x","refused":"path","status":403}],"reopened":"http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.localhost:62860/","replayed":{"at":0.26625329199672176,"ms":594},"runs":[],"runsAtStop":[],"seeks":[{"at":40.31742891731773,"ms":855},{"at":20.25087287432975,"ms":255},{"at":52.25469351722625,"ms":302}]}
+test a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself::webkit ... ok
+the runtime's run: {"first":{"at":0.311289,"ms":316},"listed":["ada’s page (k)","cy’s shelf (k)","cy’s strict (k)"],"logs":"174 lines","openEnded":{"bytes":262144,"contentRange":"bytes 1000000-1262143/16777216","sha":"a39cd544ac0701601e5e02097fd1fd81afd42f8f3b41c391a45dd1c6e7b598ab","status":206},"opened":"http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.localhost:62857/","other":{"bytes":4194304,"contentRange":"bytes 1000000-5194303/16777216","sha":"d7713cc9f6ebc3a72b5261f6c7310dbe4dd9f0e69bb750ae1bb570da7a215ee9","status":206},"refusals":[{"path":"x","refused":null,"status":403},{"path":"private/x","refused":"path","status":403}],"reopened":null,"replayed":null,"runs":["running","stopping","stopped","starting","running"],"runsAtStop":["running","stopping","stopped"],"seeks":[{"at":40.268981,"ms":294},{"at":20.269802,"ms":462},{"at":52.276363,"ms":598}]}
+test a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself::chromium ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 34 filtered out; finished in 17.96s
+
