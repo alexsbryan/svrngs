@@ -146,7 +146,7 @@ say "$unit runs now, and whenever you log in ($kept)."
 [ -z "$relay" ] || exit 0
 
 # Where its home page is: the port svrngs writes to its data, once it
-# answers there.
+# answers there, and keeps at each start after (start-address).
 tries=0
 until api="$(cat "$dir/api" 2>/dev/null)" && curl -fsS -o /dev/null "$api/v1/groups" 2>/dev/null; do
   tries=$((tries + 1))
@@ -154,6 +154,6 @@ until api="$(cat "$dir/api" 2>/dev/null)" && curl -fsS -o /dev/null "$api/v1/gro
   sleep 1
 done
 home="http://svrngs.localhost:${api##*:}/"
-say "Your home page: $home"
+say "Your home page, the same address each time svrngs starts: $home"
 if [ "$os" = darwin ]; then opener=open; else opener=xdg-open; fi
 "$opener" "$home" 2>/dev/null || say "Open it in your browser: $opener did not."

@@ -157,6 +157,8 @@ try {
     list(all);
     await lending();
     await uses(lent);
+    // Said as the command and install.sh say it: it is kept (start-address).
+    main.append(Object.assign(el('p', `Your home page, the same address each time svrngs starts: ${location.origin}/`), { className: 'address' }));
   }
 } catch (e) {
   main.replaceChildren(el('p', `Your groups cannot be read on this computer: ${e.message}`));

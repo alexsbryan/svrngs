@@ -1673,6 +1673,29 @@ async fn the_home_page_says_an_unreadable_register(engine: Engine) {
 }
 
 in_both_engines!(
+    /// **The home page says its own address, as the command and install.sh
+    /// say it** (start-address (b)): the same each time svrngs starts, since
+    /// it is kept (`api::kept_address`). Planted, watched failing: home.js
+    /// as at 82c7dd1, which said no address.
+    the_home_page_says_its_address_as_the_command_does
+);
+async fn the_home_page_says_its_address_as_the_command_does(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(2)).await;
+    let seen = home_page(engine, &ada, json!({ "read": "#home > p.address" })).await;
+    assert_eq!(
+        seen["read"],
+        format!(
+            "Your home page, the same address each time svrngs starts: {}",
+            svrngs_node::home::address(ada.api_addr().port())
+        ),
+        "{seen:#}"
+    );
+    drop(ada);
+}
+
+in_both_engines!(
     /// **The home page tells two people of one name apart**
     /// (bash-same-name (a)). Ada lets two people into house as cy, a
     /// second apart, each by hand (bash-devices made them two people,

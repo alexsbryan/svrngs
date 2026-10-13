@@ -293,6 +293,12 @@ async fn the_line_run_twice_installs_runs_at_login_opens_home_and_joins_once() {
     let port_home = api.trim().rsplit(':').next().unwrap().to_string();
     let opened = std::fs::read_to_string(home.path().join("stubs/opened")).unwrap();
     assert_eq!(opened, format!("http://svrngs.localhost:{port_home}/\n"));
+    // As the command and the home page say it, and the same the second time
+    // (start-address (b)).
+    let address = format!(
+        "Your home page, the same address each time svrngs starts: http://svrngs.localhost:{port_home}/"
+    );
+    assert!(said.contains(&address), "not said: {address}\n{said}");
 
     let again = paste(port, &link, home.path(), None).await;
     let said = String::from_utf8_lossy(&again.stdout);
@@ -305,6 +311,7 @@ async fn the_line_run_twice_installs_runs_at_login_opens_home_and_joins_once() {
         "Stopped svrngs, to update it.".to_string(),
         format!("Updated svrngs in {}.", bin.display()),
         "You're in house already, on this computer.".to_string(),
+        address,
     ] {
         assert!(said.contains(&line), "not said again: {line}\n{said}");
     }
