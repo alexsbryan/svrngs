@@ -877,8 +877,10 @@ async fn beside(pair: &Pair, ns: &str, seed: u8, person: &str) -> (Node, tempfil
 /// key, and cy's pad, asked of cy's computer now, with cy's key — so the
 /// asker dials each lender itself — and dan, whose computer is nowhere, as
 /// not answering. Eve stands with ada in another group bo is not in, and
-/// what eve lends is not bo's to see. Planted: A's own lends left out; the
-/// groups the asker does not stand in asked too.
+/// what eve lends is not bo's to see. Each lend carries the relay its
+/// group names for its lender (relay-in-record), `null` for none. Planted:
+/// A's own lends left out; the groups the asker does not stand in asked
+/// too; no relay given.
 #[tokio::test]
 async fn a_member_asks_what_the_group_s_people_lend_each_with_its_lender_s_key() {
     let (pair, _heads) = lending_heads().await;
@@ -895,6 +897,12 @@ async fn a_member_asks_what_the_group_s_people_lend_each_with_its_lender_s_key()
         on_behalf_of: None,
     };
     pair.a.rail().commit(NS, &ghost).unwrap().unwrap();
+    // Ada's relay in the record, with the root's dot (relay-in-record).
+    let at = svrngs_core::RelayAt {
+        key: actor_of(&signing(1)),
+        url: svrngs_core::relay::parse("https://relay.example./"),
+    };
+    pair.a.rail().commit(NS, &at).unwrap().unwrap();
 
     let reply = pair.get(svrngs_node::node::PEOPLE_LENDS_ROUTE, "").await;
     assert_eq!(reply.status, 200, "{}", reply.text);
@@ -922,6 +930,19 @@ async fn a_member_asks_what_the_group_s_people_lend_each_with_its_lender_s_key()
         "{doc:#}"
     );
     assert_eq!(doc["unanswered"], serde_json::json!(["dan"]), "{doc:#}");
+    // Each lend with the relay its group names for its lender, dotless;
+    // `null`, said, for cy's, whose computer names none.
+    let relays: Vec<&serde_json::Value> = doc["lent"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|l| &l["relay"])
+        .collect();
+    let want = [
+        serde_json::json!("https://relay.example/"),
+        serde_json::Value::Null,
+    ];
+    assert_eq!(relays, want.iter().collect::<Vec<_>>(), "{doc:#}");
     for node in [cy, eve] {
         node.endpoint().close().await;
     }
