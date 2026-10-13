@@ -122,7 +122,7 @@ pub use process::{Compact, Due, ProcessManager, Retire, Uncaused};
 pub use project::{Invites, Projection, Wire};
 pub use record::{Append, AppendRefusal, Seal};
 pub use register::{
-    HandOnRefusal, HandOnTo, MintInvite, Redeem, RedeemRefusal, Removal, RemovalRefusal,
+    HandOnRefusal, HandOnTo, MintInvite, Redeem, RedeemRefusal, RelayAt, Removal, RemovalRefusal,
 };
 pub use sig::{
     act_id, actor_of, derive_id, field, redemption_message, ring_op_message, sign_act,
@@ -443,6 +443,16 @@ pub enum RailAct {
         folder: String,
         changes: Vec<Change>,
     },
+    /// A computer says: reach me through this relay, or, with none, through
+    /// no relay the record names (relay-in-record; DESIGN §6). Signed by
+    /// the key it speaks for, so nobody says where another is reached; its
+    /// newest counting one wins, and the register carries it beside the
+    /// key ([`Membership::relay`]). As written: the fold reads it, dotless
+    /// ([`relay::parse`]). Carries no [`Payload`].
+    Relay {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        url: Option<String>,
+    },
 }
 
 /// What a redeeming [`RailAct::Admit`] carries: the [`RailAct::Invite`] it
@@ -680,14 +690,19 @@ pub const REMOVAL_LINE_VERSION: u32 = 7;
 /// instead, so it holds no device link and counts no `Admit` under one.
 pub const DEVICE_LINE_VERSION: u32 = 8;
 
+/// The line format version a computer's relay ships at (relay-in-record):
+/// a [`RailAct::Relay`]. A build at [`DEVICE_LINE_VERSION`] names it
+/// `NewerVersionLine`, so it dials that computer as it did before.
+pub const RELAY_LINE_VERSION: u32 = 9;
+
 impl Journaled for SignedOp {
     const FILE: &'static str = "ring_oplog.jsonl";
     const ID_PREFIX: &'static str = "ring";
     const LABEL: &'static str = "ring_rail";
     /// This build reads the membership cohort's, the link's, a browser's
-    /// redemption's, a folder's, removal's and a device link's lines too (see
-    /// [`Self::line_version`]).
-    const UNDERSTANDS: u32 = DEVICE_LINE_VERSION;
+    /// redemption's, a folder's, removal's, a device link's and a relay's
+    /// lines too (see [`Self::line_version`]).
+    const UNDERSTANDS: u32 = RELAY_LINE_VERSION;
     /// The membership acts — [`RailAct::Admit`] and [`RailAct::Remove`] —
     /// ship at the bumped line version and the original three keep the bytes
     /// they always had, so an un-upgraded node names exactly the acts it
@@ -714,6 +729,7 @@ impl Journaled for SignedOp {
             RailAct::Admit { .. } => MEMBERSHIP_LINE_VERSION,
             RailAct::Remove { .. } | RailAct::HandOn { .. } => REMOVAL_LINE_VERSION,
             RailAct::Synced { .. } => SYNCED_LINE_VERSION,
+            RailAct::Relay { .. } => RELAY_LINE_VERSION,
             _ => Self::VERSION,
         }
     }

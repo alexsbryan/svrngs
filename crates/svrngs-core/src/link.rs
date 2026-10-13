@@ -136,8 +136,7 @@ impl Token {
                 // n0's relay as iroh spells it.
                 let parsed = core::str::from_utf8(rest)
                     .ok()
-                    .and_then(|s| s.parse::<RelayUrl>().ok())
-                    .map(crate::relay::dotless);
+                    .and_then(crate::relay::parse);
                 if parsed.is_none() {
                     tracing::debug!(target: "link", "link: refused — the relay is not a URL");
                     return None;

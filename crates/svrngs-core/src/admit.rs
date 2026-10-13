@@ -764,7 +764,8 @@ pub fn admit(
                 | RailAct::Remove { .. }
                 | RailAct::HandOn { .. }
                 | RailAct::Invite { .. }
-                | RailAct::Synced { .. } => (None, None),
+                | RailAct::Synced { .. }
+                | RailAct::Relay { .. } => (None, None),
             };
             AdmittedOp {
                 id: a.id.clone(),

@@ -1363,6 +1363,18 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   device removed apart from its person, wait in §9. A computer's one key
   for every group it holds (`crates/svrngs/src/identity.rs`) still departs
   from "per group", a separate question.
+- **Each computer's relay is in the record** (relay-in-record (b), landed;
+  §8's relay row): a `Relay{url}` act, signed by the key it speaks for, so
+  nobody says where another is reached; its newest counting one wins, and
+  one naming no relay withdraws it (line version 9). An act of its own
+  rather than a field of the `Admit`: an `Admit` is its issuer's, written
+  once, and a computer's relay moves with it; so the computer says it,
+  and says it again when it moves. The fold keeps each key's
+  (`Membership::relay`, read dotless by `relay::parse`, the one reading
+  of a relay a link or the record names), and only for a standing key;
+  the register carries it beside each key (`Member::relay`). svrngs-core's
+  `RelayAt` writes it only when the record says otherwise. Like the acts
+  that move membership, a `Correct` voids none: a newer one replaces it.
 
 ## 7. Packaging and reach
 

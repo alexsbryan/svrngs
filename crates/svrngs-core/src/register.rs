@@ -4,7 +4,7 @@
 //! fold names them, by name and, of two people of one name, by when they
 //! joined ([`crate::Membership::one_named`]).
 
-use alloc::string::String;
+use alloc::string::{String, ToString};
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -235,6 +235,32 @@ impl Command for HandOnTo {
         let moved = self.key(m).is_ok_and(|k| m.keeper.as_ref() == Some(k));
         tracing::debug!(target: "register", person = %self.person, moved, "hand-on: the fold's verdict");
         moved.then_some(()).ok_or(HandOnRefusal::NotKeeper)
+    }
+}
+
+/// This computer, `key`, is reached through `url`, or through no relay
+/// (relay-in-record): written only when the record says otherwise, so a
+/// round that asks each time writes once per move.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RelayAt {
+    pub key: String,
+    pub url: Option<crate::relay::Url>,
+}
+
+impl Command for RelayAt {
+    type Refusal = Infallible;
+    const READS: Reads = Reads::Membership;
+
+    fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, Infallible> {
+        let said = before.membership().relay(&self.key);
+        let writes = said != self.url;
+        tracing::debug!(target: "register", key = %self.key, ?said, url = ?self.url, writes,
+            "relay: the record's relay for this computer against the one it is reached through");
+        let url = self.url.as_ref().map(ToString::to_string);
+        Ok(writes
+            .then_some(RailAct::Relay { url })
+            .into_iter()
+            .collect())
     }
 }
 

@@ -224,3 +224,55 @@ fn every_interleaving_of_a_membership_set_folds_identically() {
         );
     }
 }
+
+fn relay_act(by: u8, ts: i64, seq: u64, url: Option<&str>) -> Op<SignedOp> {
+    signed(
+        &key(by),
+        ts,
+        seq,
+        RailAct::Relay {
+            url: url.map(String::from),
+        },
+    )
+}
+
+/// relay-in-record (b): the fold answers each key's relay from the record —
+/// its own newest `Relay` winning, in any arrival order, read dotless — and
+/// a relay withdrawn, never said, unreadable, or of a key standing nowhere,
+/// said as absent. Watched red against a fold that answers none.
+#[test]
+fn the_fold_answers_each_keys_relay_its_newest_winning() {
+    let seed = seed_of(&[(1, "alex")]);
+    let ops = vec![
+        admit_act(1, 100, 0, "bo", 2),
+        admit_act(1, 100, 1, "cy", 3),
+        admit_act(1, 100, 2, "dee", 4),
+        relay_act(1, 101, 3, Some("https://old.example/")),
+        relay_act(2, 101, 0, Some("https://bo.example/")),
+        relay_act(4, 101, 0, Some("https://dee.example/")),
+        relay_act(9, 101, 0, Some("https://stranger.example/")),
+        // alex's moved, spelled with the root's dot; bo's withdrawn; dee's
+        // newest is no URL.
+        relay_act(1, 102, 4, Some("https://new.example./")),
+        relay_act(2, 103, 1, None),
+        relay_act(4, 103, 1, Some("not a url")),
+    ];
+    let actor = |k: u8| actor_of(&key(k));
+    let base = membership(with_ids(ops.iter()), &seed, NS);
+    assert_eq!(
+        base.relay(&actor(1)).map(|u| u.to_string()).as_deref(),
+        Some("https://new.example/")
+    );
+    for k in [2, 3, 4, 9] {
+        assert_eq!(base.relay(&actor(k)), None, "key {k}'s relay is absent");
+    }
+    for rotation in 1..ops.len() {
+        let mut rotated: Vec<&Op<SignedOp>> = ops.iter().collect();
+        rotated.rotate_left(rotation);
+        assert_eq!(
+            membership(with_ids(rotated), &seed, NS),
+            base,
+            "rotation {rotation}"
+        );
+    }
+}

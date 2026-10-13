@@ -364,6 +364,7 @@ fn the_live_fan_out_never_offers_a_browser() {
         device,
         person_key: name.to_string(),
         joined: crate::Joined::Started,
+        relay: None,
     };
     let standing = [
         (7, member("ada", Device::Computer)),

@@ -792,3 +792,33 @@ fn the_keeper_names_one_of_two_people_of_one_name_by_when_they_joined() {
         .is_ok());
     assert_eq!(register(&store, &seed).keeper, Some(actor_of(&joining())));
 }
+
+/// relay-in-record (b): a computer's relay is written when the record
+/// says otherwise — moved, then withdrawn — and nothing when it says the
+/// same, so a round asking each time writes once per move.
+#[test]
+fn a_computers_relay_is_written_once_per_move() {
+    let (seed, store) = alexs_group();
+    let url = |u: &str| Some(relay::Url::parse(u).unwrap());
+    let at = |u: Option<relay::Url>| RelayAt {
+        key: actor_of(&key(3)),
+        url: u,
+    };
+    for (now, asked, writes) in [
+        (1_000, url("https://cy.example/"), 1),
+        (1_001, url("https://cy.example/"), 0),
+        (1_002, url("https://moved.example/"), 1),
+        (1_003, None, 1),
+        (1_004, None, 0),
+    ] {
+        let done = commit(&store, &at(asked.clone()), &author(&key(3), &seed, now))
+            .unwrap()
+            .unwrap();
+        assert_eq!(done.lines().len(), writes, "at {now}");
+        assert_eq!(
+            register(&store, &seed).relay(&actor_of(&key(3))),
+            asked,
+            "at {now}"
+        );
+    }
+}

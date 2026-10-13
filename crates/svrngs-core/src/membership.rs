@@ -188,6 +188,11 @@ pub struct Membership {
     /// stands cannot be judged, and this answer is only the last walk.
     #[serde(default, skip_serializing_if = "core::ops::Not::not")]
     pub unsettled: bool,
+    /// key → the relay its newest counting [`RailAct::Relay`] names, as
+    /// written; a key whose newest names none is absent (relay-in-record).
+    /// Cumulative as [`Self::bindings`] is; ask [`Self::relay`].
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub relays: BTreeMap<String, String>,
 }
 
 /// One counting cut: the keeper's `Remove`, the acts it names in
@@ -274,6 +279,14 @@ impl Membership {
         self.standing
             .iter()
             .filter(move |k| self.bindings.get(*k) == Some(person))
+    }
+
+    /// The relay `key` is reached through, if it stands now and the
+    /// record names one that reads as a URL; `None`, said, otherwise.
+    pub fn relay(&self, key: &str) -> Option<crate::relay::Url> {
+        let said = self.relays.get(key).filter(|_| self.standing.contains(key));
+        tracing::debug!(target: "rail:membership", key, ?said, "membership: the relay the record names for a standing key");
+        crate::relay::parse(said?)
     }
 
     /// What holds `key`, if it stands now; `None` if it does not.
@@ -472,6 +485,7 @@ fn walk(
     let mut counted: BTreeSet<OpId> = BTreeSet::new();
     let mut refused: BTreeMap<OpId, InviteFault> = BTreeMap::new();
     let mut browsers: BTreeSet<String> = BTreeSet::new();
+    let mut relays: BTreeMap<String, String> = BTreeMap::new();
     // Each issuer's newest counting `Invite` so far: their one open link.
     let mut open: BTreeMap<&str, &OpId> = BTreeMap::new();
     // Each key's hand-ons that moved the keeper so far, which a cut keeps.
@@ -598,6 +612,14 @@ fn walk(
                     "membership: a link opens, closing its issuer's older one"
                 );
             }
+            RailAct::Relay { url } => {
+                tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, ?url,
+                    "membership: a key says which relay it is reached through, none withdrawing it");
+                match url {
+                    Some(url) => relays.insert(op.actor.clone(), url.clone()),
+                    None => relays.remove(&op.actor),
+                };
+            }
             _ => {}
         }
     }
@@ -614,6 +636,7 @@ fn walk(
         keeper,
         cut,
         unsettled: false,
+        relays,
     }
 }
 
@@ -628,7 +651,9 @@ impl RailAct {
 
     /// Whether this act moves membership: it binds (`Admit`), cuts or asks
     /// (`Remove`), hands the keeper on (`HandOn`) or opens a link
-    /// (`Invite`). A `Correct` does not, since U7: it voids nothing that
+    /// (`Invite`); or says where its signer is reached (`Relay`), which the
+    /// register carries beside each key, and which only a newer one
+    /// replaces. A `Correct` does not, since U7: it voids nothing that
     /// moves membership. [`standing_reads`] keeps these, and the acts
     /// of every key a `Remove` names, so the list has one home beside the
     /// fold that reads it, and the match has no wildcard: a new kind of act
@@ -638,7 +663,8 @@ impl RailAct {
             RailAct::Admit { .. }
             | RailAct::Remove { .. }
             | RailAct::HandOn { .. }
-            | RailAct::Invite { .. } => true,
+            | RailAct::Invite { .. }
+            | RailAct::Relay { .. } => true,
             RailAct::Record { .. }
             | RailAct::Correct { .. }
             | RailAct::Seal

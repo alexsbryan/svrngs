@@ -70,8 +70,8 @@ pub enum RemovalSaid {
 
 /// One key standing in a group: the person it is bound to, by name and by
 /// their first key in the group (bash-devices), what holds it ([`Device`],
-/// u4-1), and when the person joined (bash-same-name), as `membership`
-/// answers them.
+/// u4-1), when the person joined (bash-same-name), and the relay it is
+/// reached through (relay-in-record), as `membership` answers them.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Member {
     pub person: Person,
@@ -79,6 +79,9 @@ pub struct Member {
     /// The person's first key: the same for every device of theirs.
     pub person_key: String,
     pub joined: Joined,
+    /// The relay the group's record names for this key; `None` when it
+    /// names none.
+    pub relay: Option<svrngs_core::relay::Url>,
 }
 
 impl Standing {
@@ -130,6 +133,7 @@ pub(crate) fn register_in(
                     person,
                     device: m.device(key)?,
                     joined: m.joined(&person_key),
+                    relay: m.relay(key),
                     person_key,
                 },
             ))

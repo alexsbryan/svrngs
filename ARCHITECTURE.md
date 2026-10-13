@@ -18,7 +18,7 @@ joining by that link is next (U2).
 ## Code map
 
 **`crates/svrngs-core`**: the group's record — signed acts (`Record`,
-`Correct`, `Seal`, `Admit`, `Remove`, `HandOn`, `Invite`), the lines a computer holds as
+`Correct`, `Seal`, `Admit`, `Remove`, `HandOn`, `Invite`, `Synced`, `Relay`), the lines a computer holds as
 a set (`ActSet`, `act_set.rs`), admission of that set into one total order
 (`admit.rs`; only `admit` makes an `Admission`), whose state leaves the core
 only as a projection (`project.rs`: the sealed `Projection`, folded for
@@ -75,7 +75,10 @@ its `Remove`; anyone else's is an ask that cuts nobody. The cut names the
 removed key's acts by id (`Remove::through`) and covers them and their
 ancestors by `prev`; any other act of the key is `Removed`, and a cut naming
 an act a copy lacks is `UnheldCut`. A `Correct` voids nothing that moves
-membership, so nothing undoes a cut; voids fold after the walk.
+membership, so nothing undoes a cut; voids fold after the walk. Each
+key's relay is its own newest `Relay` act (relay-in-record): the fold
+answers it for a standing key (`Membership::relay`, read by `relay::parse`),
+and `RelayAt` writes it only when the record says otherwise.
 
 **`crates/svrngs-runtime`**: the journal, its write index, the open-journal map
 (`RingRail`) and the register's standing (`register.rs`), split out of
