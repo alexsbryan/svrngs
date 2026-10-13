@@ -1,0 +1,93 @@
+2026-10-13T17:55:27.640355Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/tmp/sa-w/bo/.svrngs"
+2026-10-13T17:55:27.640920Z DEBUG cli: cli: the group keeps no relay — met where the build meets its groups group=eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa at=N0
+2026-10-13T17:55:27.641152Z DEBUG cli: cli: the relays this computer meets its groups at at=N0 unkept=true relay_urls=["https://aps1-1.relay.n0.iroh.link/", "https://euc1-1.relay.n0.iroh.link/", "https://use1-1.relay.n0.iroh.link/", "https://usw1-1.relay.n0.iroh.link/"]
+2026-10-13T17:55:27.641241Z DEBUG cli: cli: data dir claimed lock=/tmp/sa-w/bo/.svrngs/lock
+2026-10-13T17:55:27.641341Z DEBUG rails: api: read where it listened, to listen there again path=/tmp/sa-w/bo/.svrngs/api kept=Some(127.0.0.1:56398)
+2026-10-13T17:55:27.678374Z  INFO folder: folder: the store is open untagged=0
+2026-10-13T17:55:27.678424Z  INFO folder: synced: the directory kept in step with the group's folder namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" folder="Lab" dir=/tmp/sa-w/bo/svrngs/Lab
+2026-10-13T17:55:27.678838Z  INFO rails: api: serving the record to this computer's apps addr=127.0.0.1:56398
+2026-10-13T17:55:27.679183Z DEBUG rails: api: wrote where it listens, for apps it did not start path=/tmp/sa-w/bo/.svrngs/api addr=127.0.0.1:56398
+2026-10-13T17:55:27.679213Z  INFO node: node: endpoint bound with the signing key actor="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791" data_dir=/tmp/sa-w/bo/.svrngs dial=Some("6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791@192.168.1.4:58250") api=127.0.0.1:56398
+2026-10-13T17:55:27.679369Z  INFO svrngs_node::ring_sync: ring sync: loop started interval_secs=60
+2026-10-13T17:55:27.680458Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/9c6b3eb6"] skipped_offline=[]
+2026-10-13T17:55:27.954913Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56434 path=/v1/groups
+2026-10-13T17:55:27.955525Z DEBUG surface: surface: groups — a group held namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" name=Some("Lab") person=Some(Person(Name("Bo"))) removed=Some(false) removals=Some(0) folders=Some(["/tmp/sa-w/bo/svrngs/Lab"])
+2026-10-13T17:55:27.974990Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56441 path=/v1/groups
+2026-10-13T17:55:27.975668Z DEBUG surface: surface: groups — a group held namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" name=Some("Lab") person=Some(Person(Name("Bo"))) removed=Some(false) removals=Some(0) folders=Some(["/tmp/sa-w/bo/svrngs/Lab"])
+2026-10-13T17:55:27.976558Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56442 path=/v1/lends
+2026-10-13T17:55:27.976789Z DEBUG rails: rail: the group is held here, and its register read namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" people=2
+2026-10-13T17:55:28.105120Z  INFO endpoint{id=6a2ea951a3}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was None
+2026-10-13T17:55:28.146664Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" lent=1 unlisted=Unlisted { unanswered: [], unheard: [], refused: [] }
+2026-10-13T17:55:28.148063Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56449 path=/v1/groups
+2026-10-13T17:55:28.148651Z DEBUG surface: surface: groups — a group held namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" name=Some("Lab") person=Some(Person(Name("Bo"))) removed=Some(false) removals=Some(0) folders=Some(["/tmp/sa-w/bo/svrngs/Lab"])
+2026-10-13T17:55:28.149549Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56450 path=/v1/lends
+2026-10-13T17:55:28.149810Z DEBUG rails: rail: the group is held here, and its register read namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" people=2
+2026-10-13T17:55:28.151540Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" lent=1 unlisted=Unlisted { unanswered: [], unheard: [], refused: [] }
+2026-10-13T17:55:28.153400Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56451 path=/
+2026-10-13T17:55:28.153588Z DEBUG home: home: answered only from itself, a typed address or, to read, a navigation path=/ method=GET at_own=true site=Some("none") mode=Some("navigate") origin=None answers=true
+2026-10-13T17:55:28.174308Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56453 path=/v1/chat/completions
+2026-10-13T17:55:28.174481Z DEBUG origin: origin: no Sec-Fetch-Site, a program on this computer, so the lend's own host=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 mode=None
+2026-10-13T17:55:28.175158Z DEBUG origin: origin: another computer's lend, through the dial to its door, the app in this computer's own pass label=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 app=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 lender="9c6b3eb674b650b97c03c744e1699182af2125079bfda91bd11af83b98d842c6" bridge=127.0.0.1:24948
+2026-10-13T17:55:28.291313Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56458 path=/v1/chat/completions
+2026-10-13T17:55:28.291399Z DEBUG origin: origin: no Sec-Fetch-Site, a program on this computer, so the lend's own host=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 mode=None
+2026-10-13T17:55:28.291737Z DEBUG origin: origin: another computer's lend, through the dial to its door, the app in this computer's own pass label=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 app=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 lender="9c6b3eb674b650b97c03c744e1699182af2125079bfda91bd11af83b98d842c6" bridge=127.0.0.1:24948
+2026-10-13T17:55:28.698813Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56463 path=/v1/chat/completions
+2026-10-13T17:55:28.698903Z DEBUG origin: origin: no Sec-Fetch-Site, a program on this computer, so the lend's own host=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 mode=None
+2026-10-13T17:55:28.699229Z DEBUG origin: origin: another computer's lend, through the dial to its door, the app in this computer's own pass label=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 app=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 lender="9c6b3eb674b650b97c03c744e1699182af2125079bfda91bd11af83b98d842c6" bridge=127.0.0.1:24948
+2026-10-13T17:55:28.789267Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56463 path=/v1/chat/completions
+2026-10-13T17:55:28.789338Z DEBUG origin: origin: no Sec-Fetch-Site, a program on this computer, so the lend's own host=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 mode=None
+2026-10-13T17:55:28.789685Z DEBUG origin: origin: another computer's lend, through the dial to its door, the app in this computer's own pass label=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 app=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 lender="9c6b3eb674b650b97c03c744e1699182af2125079bfda91bd11af83b98d842c6" bridge=127.0.0.1:24948
+2026-10-13T17:55:28.951895Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56469 path=/v1/chat/completions
+2026-10-13T17:55:28.951984Z DEBUG origin: origin: no Sec-Fetch-Site, a program on this computer, so the lend's own host=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 mode=Some("cors")
+2026-10-13T17:55:28.952360Z DEBUG origin: origin: another computer's lend, through the dial to its door, the app in this computer's own pass label=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 app=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 lender="9c6b3eb674b650b97c03c744e1699182af2125079bfda91bd11af83b98d842c6" bridge=127.0.0.1:24948
+2026-10-13T17:55:29.036328Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56473 path=/v1/chat/completions
+2026-10-13T17:55:29.036435Z DEBUG origin: origin: no Sec-Fetch-Site, a program on this computer, so the lend's own host=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 mode=Some("cors")
+2026-10-13T17:55:29.036834Z DEBUG origin: origin: another computer's lend, through the dial to its door, the app in this computer's own pass label=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 app=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 lender="9c6b3eb674b650b97c03c744e1699182af2125079bfda91bd11af83b98d842c6" bridge=127.0.0.1:24948
+2026-10-13T17:55:29.116579Z DEBUG cli: cli: stopping
+2026-10-13T17:55:29.767023Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T17:55:29.947601Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/tmp/sa-w/bo/.svrngs"
+2026-10-13T17:55:29.948494Z DEBUG cli: cli: the group keeps no relay — met where the build meets its groups group=eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa at=N0
+2026-10-13T17:55:29.948867Z DEBUG cli: cli: the relays this computer meets its groups at at=N0 unkept=true relay_urls=["https://aps1-1.relay.n0.iroh.link/", "https://euc1-1.relay.n0.iroh.link/", "https://use1-1.relay.n0.iroh.link/", "https://usw1-1.relay.n0.iroh.link/"]
+2026-10-13T17:55:29.949024Z DEBUG cli: cli: data dir claimed lock=/tmp/sa-w/bo/.svrngs/lock
+2026-10-13T17:55:29.949205Z DEBUG rails: api: read where it listened, to listen there again path=/tmp/sa-w/bo/.svrngs/api kept=Some(127.0.0.1:56398)
+2026-10-13T17:55:29.999340Z  INFO folder: folder: the store is open untagged=0
+2026-10-13T17:55:29.999394Z  INFO folder: synced: the directory kept in step with the group's folder namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" folder="Lab" dir=/tmp/sa-w/bo/svrngs/Lab
+2026-10-13T17:55:29.999799Z  INFO rails: api: serving the record to this computer's apps addr=127.0.0.1:56398
+2026-10-13T17:55:30.000259Z DEBUG rails: api: wrote where it listens, for apps it did not start path=/tmp/sa-w/bo/.svrngs/api addr=127.0.0.1:56398
+2026-10-13T17:55:30.000392Z  INFO node: node: endpoint bound with the signing key actor="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791" data_dir=/tmp/sa-w/bo/.svrngs dial=Some("6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791@192.168.1.4:54643") api=127.0.0.1:56398
+2026-10-13T17:55:30.002106Z  INFO svrngs_node::ring_sync: ring sync: loop started interval_secs=60
+2026-10-13T17:55:30.004575Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/9c6b3eb6"] skipped_offline=[]
+2026-10-13T17:55:30.263315Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56489 path=/v1/groups
+2026-10-13T17:55:30.263901Z DEBUG surface: surface: groups — a group held namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" name=Some("Lab") person=Some(Person(Name("Bo"))) removed=Some(false) removals=Some(0) folders=Some(["/tmp/sa-w/bo/svrngs/Lab"])
+2026-10-13T17:55:30.265688Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56490 path=/v1/groups
+2026-10-13T17:55:30.266187Z DEBUG surface: surface: groups — a group held namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" name=Some("Lab") person=Some(Person(Name("Bo"))) removed=Some(false) removals=Some(0) folders=Some(["/tmp/sa-w/bo/svrngs/Lab"])
+2026-10-13T17:55:30.267465Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56491 path=/v1/lends
+2026-10-13T17:55:30.267804Z DEBUG rails: rail: the group is held here, and its register read namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" people=2
+2026-10-13T17:55:30.271860Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" lent=1 unlisted=Unlisted { unanswered: [], unheard: [], refused: [] }
+2026-10-13T17:55:30.273064Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56497 path=/v1/groups
+2026-10-13T17:55:30.273583Z DEBUG surface: surface: groups — a group held namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" name=Some("Lab") person=Some(Person(Name("Bo"))) removed=Some(false) removals=Some(0) folders=Some(["/tmp/sa-w/bo/svrngs/Lab"])
+2026-10-13T17:55:30.274339Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56498 path=/v1/lends
+2026-10-13T17:55:30.274551Z DEBUG rails: rail: the group is held here, and its register read namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" people=2
+2026-10-13T17:55:30.275945Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" lent=1 unlisted=Unlisted { unanswered: [], unheard: [], refused: [] }
+2026-10-13T17:55:30.277340Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56499 path=/
+2026-10-13T17:55:30.277455Z DEBUG home: home: answered only from itself, a typed address or, to read, a navigation path=/ method=GET at_own=true site=Some("none") mode=Some("navigate") origin=None answers=true
+2026-10-13T17:55:30.294226Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56501 path=/v1/chat/completions
+2026-10-13T17:55:30.294299Z DEBUG origin: origin: no Sec-Fetch-Site, a program on this computer, so the lend's own host=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 mode=None
+2026-10-13T17:55:30.294600Z DEBUG origin: origin: another computer's lend, through the dial to its door, the app in this computer's own pass label=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 app=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 lender="9c6b3eb674b650b97c03c744e1699182af2125079bfda91bd11af83b98d842c6" bridge=127.0.0.1:24948
+2026-10-13T17:55:30.348366Z  INFO endpoint{id=6a2ea951a3}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was None
+2026-10-13T17:55:30.428015Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56506 path=/v1/chat/completions
+2026-10-13T17:55:30.428120Z DEBUG origin: origin: no Sec-Fetch-Site, a program on this computer, so the lend's own host=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 mode=None
+2026-10-13T17:55:30.428466Z DEBUG origin: origin: another computer's lend, through the dial to its door, the app in this computer's own pass label=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 app=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 lender="9c6b3eb674b650b97c03c744e1699182af2125079bfda91bd11af83b98d842c6" bridge=127.0.0.1:24948
+2026-10-13T17:55:30.808638Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56513 path=/v1/chat/completions
+2026-10-13T17:55:30.808722Z DEBUG origin: origin: no Sec-Fetch-Site, a program on this computer, so the lend's own host=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 mode=None
+2026-10-13T17:55:30.809039Z DEBUG origin: origin: another computer's lend, through the dial to its door, the app in this computer's own pass label=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 app=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 lender="9c6b3eb674b650b97c03c744e1699182af2125079bfda91bd11af83b98d842c6" bridge=127.0.0.1:24948
+2026-10-13T17:55:30.891368Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56513 path=/v1/chat/completions
+2026-10-13T17:55:30.891443Z DEBUG origin: origin: no Sec-Fetch-Site, a program on this computer, so the lend's own host=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 mode=None
+2026-10-13T17:55:30.891835Z DEBUG origin: origin: another computer's lend, through the dial to its door, the app in this computer's own pass label=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 app=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 lender="9c6b3eb674b650b97c03c744e1699182af2125079bfda91bd11af83b98d842c6" bridge=127.0.0.1:24948
+2026-10-13T17:55:31.063182Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56521 path=/v1/chat/completions
+2026-10-13T17:55:31.063267Z DEBUG origin: origin: no Sec-Fetch-Site, a program on this computer, so the lend's own host=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 mode=Some("cors")
+2026-10-13T17:55:31.063655Z DEBUG origin: origin: another computer's lend, through the dial to its door, the app in this computer's own pass label=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 app=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 lender="9c6b3eb674b650b97c03c744e1699182af2125079bfda91bd11af83b98d842c6" bridge=127.0.0.1:24948
+2026-10-13T17:55:31.149616Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56525 path=/v1/chat/completions
+2026-10-13T17:55:31.149699Z DEBUG origin: origin: no Sec-Fetch-Site, a program on this computer, so the lend's own host=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 mode=Some("cors")
+2026-10-13T17:55:31.150084Z DEBUG origin: origin: another computer's lend, through the dial to its door, the app in this computer's own pass label=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 app=wuzw7qwx03knv9ad27crc4putm1vclkjws84vh8udn6d1hh2kndara1jd432f8 lender="9c6b3eb674b650b97c03c744e1699182af2125079bfda91bd11af83b98d842c6" bridge=127.0.0.1:24948
+2026-10-13T17:55:31.230920Z DEBUG cli: cli: stopping

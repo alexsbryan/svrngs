@@ -1,0 +1,66 @@
+2026-10-13T17:55:26.094628Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/tmp/sa-w/sam/.svrngs"
+2026-10-13T17:55:26.098908Z DEBUG cli: cli: the relays this computer meets its groups at at=N0 unkept=false relay_urls=["https://aps1-1.relay.n0.iroh.link/", "https://euc1-1.relay.n0.iroh.link/", "https://use1-1.relay.n0.iroh.link/", "https://usw1-1.relay.n0.iroh.link/"]
+2026-10-13T17:55:26.099510Z DEBUG cli: cli: data dir claimed lock=/tmp/sa-w/sam/.svrngs/lock
+2026-10-13T17:55:26.107604Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=9c6b3eb674b650b97c03c744e1699182af2125079bfda91bd11af83b98d842c6
+2026-10-13T17:55:26.158947Z  INFO folder: folder: the store is open untagged=0
+2026-10-13T17:55:26.160116Z  INFO rails: api: serving the record to this computer's apps addr=127.0.0.1:56377
+2026-10-13T17:55:26.160371Z DEBUG rails: api: wrote where it listens, for apps it did not start path=/tmp/sa-w/sam/.svrngs/api addr=127.0.0.1:56377
+2026-10-13T17:55:26.160454Z  INFO node: node: endpoint bound with the signing key actor="9c6b3eb674b650b97c03c744e1699182af2125079bfda91bd11af83b98d842c6" data_dir=/tmp/sa-w/sam/.svrngs dial=Some("9c6b3eb674b650b97c03c744e1699182af2125079bfda91bd11af83b98d842c6@192.168.1.4:56222") api=127.0.0.1:56377
+2026-10-13T17:55:26.160735Z  INFO svrngs_node::ring_sync: ring sync: loop started interval_secs=60
+2026-10-13T17:55:26.161417Z DEBUG cli: cli: group made group=eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa name=Lab page=None
+2026-10-13T17:55:26.507017Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56390 path=/v1/groups
+2026-10-13T17:55:26.507594Z DEBUG surface: surface: groups — a group held namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" name=Some("Lab") person=Some(Person(Name("Sam"))) removed=Some(false) removals=Some(0) folders=Some([])
+2026-10-13T17:55:26.529402Z  INFO endpoint{id=9c6b3eb674}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was None
+2026-10-13T17:55:26.719556Z DEBUG cli: cli: waited for a relay online=true tried=["https://aps1-1.relay.n0.iroh.link/", "https://euc1-1.relay.n0.iroh.link/", "https://use1-1.relay.n0.iroh.link/", "https://usw1-1.relay.n0.iroh.link/"]
+2026-10-13T17:55:26.719773Z DEBUG cli: cli: the link carries this computer's relay relay=https://usw1-1.relay.n0.iroh.link/ n0=true
+2026-10-13T17:55:26.738804Z DEBUG cli: cli: link minted group=eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa invite=699c4a0a17963e7659f5998e4e3d8c7d4a46802faaef050ede6cd47165e5e3c2 until=1792000526
+2026-10-13T17:55:26.741274Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:56397 path=/v1/folders
+2026-10-13T17:55:26.743811Z  INFO folder: synced: the directory kept in step with the group's folder namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" folder="Lab" dir=/tmp/sa-w/sam/svrngs/Lab
+2026-10-13T17:55:26.744136Z DEBUG cli: cli: svrngs running here answered route="/v1/folders" ok=true
+2026-10-13T17:55:26.744204Z DEBUG cli: cli: join — the group's folder placed, or why not group=eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa dir=/tmp/sa-w/sam/svrngs/Lab placed=Ok(())
+2026-10-13T17:55:27.508069Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Bo/6a2ea951"] skipped_offline=[]
+2026-10-13T17:55:27.513771Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" asker="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791"
+2026-10-13T17:55:27.515003Z DEBUG rails: ring sync: exchange namespace=eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa request_bytes=119 offered=0 ingested=0 sending=3 more_for_caller=false payload_bytes=2288
+2026-10-13T17:55:27.524275Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" asker="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791"
+2026-10-13T17:55:27.524634Z DEBUG rails: ring sync: exchange namespace=eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa request_bytes=279 offered=0 ingested=0 sending=0 more_for_caller=false payload_bytes=292
+2026-10-13T17:55:27.536287Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" asker="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791"
+2026-10-13T17:55:27.537332Z DEBUG rails: ring sync: exchange namespace=eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa request_bytes=440 offered=0 ingested=0 sending=0 more_for_caller=false payload_bytes=292
+2026-10-13T17:55:27.540049Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" asker="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791"
+2026-10-13T17:55:27.545072Z DEBUG rails: ring sync: exchange namespace=eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa request_bytes=1004 offered=1 ingested=1 sending=0 more_for_caller=false payload_bytes=453
+2026-10-13T17:55:27.545134Z DEBUG rails: ring sync: the asker's own relay landed, so the round is woken namespace=eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa asker="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791"
+2026-10-13T17:55:27.546523Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" asker="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791"
+2026-10-13T17:55:27.547166Z DEBUG rails: ring sync: exchange namespace=eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa request_bytes=440 offered=0 ingested=0 sending=0 more_for_caller=false payload_bytes=453
+2026-10-13T17:55:27.547269Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Bo/6a2ea951"] skipped_offline=[]
+2026-10-13T17:55:28.004217Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" asker="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791"
+2026-10-13T17:55:28.004467Z DEBUG rails: ring sync: exchange namespace=eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa request_bytes=440 offered=0 ingested=0 sending=0 more_for_caller=false payload_bytes=453
+2026-10-13T17:55:28.178236Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=llama addr=Some(192.168.1.4)
+2026-10-13T17:55:28.178351Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791" lend=llama displaced=1
+2026-10-13T17:55:28.247785Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T17:55:28.293628Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=llama addr=Some(192.168.1.4)
+2026-10-13T17:55:28.293685Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791" lend=llama displaced=1
+2026-10-13T17:55:28.701182Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=llama addr=Some(192.168.1.4)
+2026-10-13T17:55:28.701263Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791" lend=llama displaced=1
+2026-10-13T17:55:28.791509Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=llama addr=Some(192.168.1.4)
+2026-10-13T17:55:28.791590Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791" lend=llama displaced=1
+2026-10-13T17:55:28.954519Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=llama addr=Some(192.168.1.4)
+2026-10-13T17:55:28.954590Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791" lend=llama displaced=1
+2026-10-13T17:55:29.038713Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=llama addr=Some(192.168.1.4)
+2026-10-13T17:55:29.038777Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791" lend=llama displaced=1
+2026-10-13T17:55:29.273256Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T17:55:30.229100Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa" asker="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791"
+2026-10-13T17:55:30.229598Z DEBUG rails: ring sync: exchange namespace=eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa request_bytes=440 offered=0 ingested=0 sending=0 more_for_caller=false payload_bytes=453
+2026-10-13T17:55:30.284470Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T17:55:30.296507Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=llama addr=Some(192.168.1.4)
+2026-10-13T17:55:30.296570Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791" lend=llama displaced=1
+2026-10-13T17:55:30.430166Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=llama addr=Some(192.168.1.4)
+2026-10-13T17:55:30.430232Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791" lend=llama displaced=1
+2026-10-13T17:55:30.811164Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=llama addr=Some(192.168.1.4)
+2026-10-13T17:55:30.811248Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791" lend=llama displaced=1
+2026-10-13T17:55:30.893724Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=llama addr=Some(192.168.1.4)
+2026-10-13T17:55:30.893801Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791" lend=llama displaced=1
+2026-10-13T17:55:31.065580Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=llama addr=Some(192.168.1.4)
+2026-10-13T17:55:31.065653Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791" lend=llama displaced=1
+2026-10-13T17:55:31.151958Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=llama addr=Some(192.168.1.4)
+2026-10-13T17:55:31.152047Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="6a2ea951a3e26fe1762ca5139a97070231e302e1083539a18b2d7af32a6cf791" lend=llama displaced=1
+2026-10-13T17:55:31.313689Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T17:55:32.128295Z DEBUG cli: cli: stopping
