@@ -93,8 +93,9 @@ function show(words, good) {
 }
 
 // The host a link's computer is reached through, for a person's words; a
-// link naming none, made where n0's lookup found its computer, is refused,
-// as the page asks n0 for nothing (relay-default (b)).
+// link naming none — made by a computer that reached no relay, or before
+// relay-park (c) by one with n0's lookup — is refused, as the page asks
+// n0 for nothing (relay-default (b)).
 function through(token) {
   const relay = relay_of(token);
   if (!relay) throw new Said('This link was made by an older svrngs. Ask whoever sent it for a new one.');

@@ -5,9 +5,10 @@
 //! cannot ask the issuer for, as one base64url [`Token`]: a [`Format`]
 //! byte, the issuer's key — the computer that redeems the link, dialled by
 //! key — and 16 secret bytes the link's signing key is derived from
-//! ([`Token::key`]); and, from a computer run without address lookup, the
-//! issuer's relay (DESIGN §11, risk 5), since a bare key is dialled through
-//! lookup otherwise (§8, "A bare key is dialled"). The group's seed and the
+//! ([`Token::key`]); and the issuer's relay (DESIGN §11, risk 5), from a
+//! computer with address lookup or without it since relay-park (c), so a
+//! phone's page, which asks no lookup, dials it (§3, "Where a computer
+//! meets its groups"). The group's seed and the
 //! `Invite`'s id are the issuer's answer to the link's key
 //! (`svrngs_node::redeem::ask`).
 //!
@@ -58,10 +59,10 @@ pub const SECRET_LEN: usize = 16;
 /// What a token's bytes after its format byte hold: a closed set.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Format {
-    /// The issuer's key and the secret: the issuer is found by lookup.
+    /// The issuer's key and the secret: from an issuer that reached no
+    /// relay, or, before relay-park (c), one run with address lookup.
     Bare,
-    /// The issuer's key, the secret and its relay's URL, for an issuer run
-    /// without address lookup.
+    /// The issuer's key, the secret and its relay's URL.
     Relayed,
 }
 
@@ -87,8 +88,8 @@ pub struct Token {
     pub issuer: PublicKey,
     /// The secret the link's signing key is derived from.
     pub secret: [u8; SECRET_LEN],
-    /// The issuer's relay, carried only from a computer without lookup;
-    /// as decoded, without its host's trailing dot ([`crate::relay`]).
+    /// The issuer's relay, carried with lookup or without it; as decoded,
+    /// without its host's trailing dot ([`crate::relay`]).
     pub relay: Option<RelayUrl>,
 }
 
