@@ -99,6 +99,72 @@ async fn a_computer_in_no_group_is_refused_a_relay_for_its_groups() {
     );
 }
 
+/// Every line the test below traces on its own thread.
+static TRACES: std::sync::Mutex<Vec<u8>> = std::sync::Mutex::new(Vec::new());
+
+struct Kept;
+
+impl std::io::Write for Kept {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        TRACES.lock().unwrap().extend_from_slice(buf);
+        Ok(buf.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+/// **Groups that cannot be read are said so, never taken as none**
+/// (ralph/REVIEW_FINDINGS.md #128): Sam makes house, and then the
+/// directory holding Sam's groups cannot be read. Saying where Sam's
+/// computer is reached traces that it could not list them, and a relay for
+/// Sam's groups is refused as their not being readable, not as Sam being in
+/// none. Planted: the directory's error read as no groups, as before.
+#[tokio::test(flavor = "multi_thread")]
+async fn groups_that_cannot_be_read_are_said_so_never_taken_as_none() {
+    use std::os::unix::fs::PermissionsExt;
+    // This thread's own, beside the harness's file, which keeps neither
+    // target: say_relay and spawn's refusal run on it.
+    let kept = tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::new("node=debug,relay=debug"))
+        .with_writer(|| Kept)
+        .with_ansi(false)
+        .finish();
+    let _kept = tracing::subscriber::set_default(kept);
+    let (_relay, ours, dir, sam) = common::sams_computer(SAM).await;
+    let house = Name::parse("house").unwrap();
+    cli::new_group(&sam, house, Name::parse("Sam").unwrap(), None, None, &ours)
+        .await
+        .expect("Sam makes house");
+    let rings = dir.path().join("rings");
+    std::fs::set_permissions(&rings, std::fs::Permissions::from_mode(0o000)).unwrap();
+
+    assert!(!sam.say_relay(), "nothing is written in groups not read");
+    let refused = relay_over(dir.path(), false).await.map(|_| ());
+    std::fs::set_permissions(&rings, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let traced = String::from_utf8_lossy(&TRACES.lock().unwrap()).into_owned();
+    for said in [
+        "node: cannot list the groups held, so this computer's relay is said in none",
+        "relay: refused — the groups this computer holds cannot be read",
+    ] {
+        let of_groups: Vec<&str> = traced.lines().filter(|l| l.contains("group")).collect();
+        assert!(
+            traced.contains(said),
+            "not traced: {said}; of groups: {of_groups:#?}"
+        );
+    }
+    let refused = refused.expect_err("a relay over groups it cannot read is refused");
+    assert!(
+        matches!(refused, Refusal::GroupsUnread(_)),
+        "{refused:?}: {refused}"
+    );
+    assert!(
+        refused.to_string().contains("cannot be read") && !refused.to_string().contains("no group"),
+        "{refused}"
+    );
+    sam.endpoint().close().await;
+}
+
 #[test]
 fn the_verb_takes_a_name_never_an_address() {
     let parse = |args: &[&str]| {

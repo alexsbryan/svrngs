@@ -460,7 +460,10 @@ impl Host {
             url: home.map(Into::into),
         };
         let mut wrote = false;
-        for namespace in self.rail.namespaces().unwrap_or_default() {
+        let held = self.rail.namespaces().inspect_err(|e| {
+            tracing::warn!(target: "node", error = %e, "node: cannot list the groups held, so this computer's relay is said in none");
+        });
+        for namespace in held.unwrap_or_default() {
             // The kept register first: a commit reads the whole journal under
             // its lock, which every idle round paid (scale.rs's ceiling, 0.59 s
             // at 42e36ca against 0.02 s before). The core still decides a move.

@@ -594,6 +594,8 @@ pub enum Refusal {
     Unchanged(Name),
     #[error("this computer is in no group, so a relay for its groups would let nobody through: join one first, or say --open to relay for everyone")]
     RelayForNobody,
+    #[error("the groups this computer is in cannot be read on it ({0}), so a relay for them could not tell whom to let through")]
+    GroupsUnread(String),
     #[error("the relay did not start: {0}")]
     RelayStart(String),
 }
@@ -646,6 +648,7 @@ impl Refusal {
             | Refusal::NoClient(_)
             | Refusal::Unchanged(_)
             | Refusal::RelayStart(_)
+            | Refusal::GroupsUnread(_)
             | Refusal::Keep(_) => 3,
         }
     }

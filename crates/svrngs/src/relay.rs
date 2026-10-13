@@ -31,7 +31,7 @@ use iroh_relay::server::{
     Access, AccessControl, AcmeConfig, CertConfig, ClientRateLimit, ClientRequest, QuicConfig,
     RelayConfig, Server, ServerConfig, TlsConfig,
 };
-use svrngs_node::{namespaces_in, RingRail, SigningKey};
+use svrngs_node::{namespaces_in, RailError, RingRail, SigningKey};
 
 use crate::cli::Refusal;
 use crate::identity;
@@ -103,16 +103,21 @@ impl AccessControl for Admits {
 
 /// The relay `relay` asks for, serving over the data dir `root`, until the
 /// [`Server`] is shut down. Refused for its groups when this computer is in
-/// none, so it would let nobody through.
+/// none, so it would let nobody through, and when they cannot be read,
+/// said as that, never as none (#128).
 pub async fn spawn(relay: &Relay, root: &Path) -> Result<Server, Refusal> {
+    let unread = |e: RailError| {
+        tracing::debug!(target: "relay", root = %root.display(), error = %e, "relay: refused — the groups this computer holds cannot be read");
+        Refusal::GroupsUnread(e.to_string())
+    };
     let admits = if relay.open {
         Admits(None)
-    } else if namespaces_in(root).is_ok_and(|n| !n.is_empty()) {
-        let key = identity::load_or_generate_node_key(root)?;
-        Admits(Some((root.to_path_buf(), Arc::new(key))))
-    } else {
+    } else if namespaces_in(root).map_err(unread)?.is_empty() {
         tracing::debug!(target: "relay", root = %root.display(), "relay: refused — this computer holds no group");
         return Err(Refusal::RelayForNobody);
+    } else {
+        let key = identity::load_or_generate_node_key(root)?;
+        Admits(Some((root.to_path_buf(), Arc::new(key))))
     };
     let any = |port| SocketAddr::from((Ipv6Addr::UNSPECIFIED, port));
     let (http, tls, quic) = match &relay.at {

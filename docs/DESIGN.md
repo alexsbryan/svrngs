@@ -1008,7 +1008,9 @@ address waits in §9. By default it lets through only the computers and
 phones that stand in a group its computer holds — the register's one
 answer, `standing_anywhere`, read from the record on disk as svrngs beside
 it writes it, each connection asked again, each refusal traced; a computer
-in no group is refused the verb, which would let nobody through. `--open`
+in no group is refused the verb, which would let nobody through, and one
+whose groups cannot be read is refused as that, never as in none
+(start-findings (c), #128). `--open`
 lets everyone through, for a relay like svrngs's own, each computer or
 phone sending it at most `OPEN_RATE`, set from a film played through a
 relay at Demo A's bitrate: the most it drew in a second, 8,799,728 bytes
