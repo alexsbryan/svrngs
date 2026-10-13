@@ -192,6 +192,8 @@ svrngs — keep what your group shares on your own computers.
       through a relay. <name> must lead to this computer, which must take
       connections on TCP ports 80 and 443 and UDP port 7842. Its
       certificate is asked of Let's Encrypt, and kept in the data below.
+      The group's page's install line, with --relay <name> after the
+      page's address, keeps it running.
       --open relays for every computer and phone that reaches it, as
       svrngs's own relay does, each held to what a phone's film drew
       through a relay at its most, measured; it says how much as it starts.

@@ -5,13 +5,22 @@
 #
 #   curl -fsSL <page>install.sh | sh -s -- '<link>' [--as '<your name>']
 #
+# or, for a relay (`svrngs relay`; DESIGN §3, "A relay anyone runs"), the
+# page's address where the link goes:
+#
+#   curl -fsSL <page>install.sh | sh -s -- '<page>' --relay <name> [--open]
+#
 # It gets svrngs for this computer from the page's address the link names
 # (else $SVRNGS_FROM), refuses it unless it matches SHA256SUMS there, puts
 # it in ~/.local/bin with no sudo, joins the link as `svrngs join` does,
 # keeps svrngs running whenever this person logs in (a LaunchAgent on
 # macOS, a systemd --user unit on Linux), and opens their home page. Run
-# again, it updates in place, and svrngs joins nothing twice. Every step is
-# said; a refusal says what was refused and why (AGENTS.md 1, 6).
+# again, it updates in place, and svrngs joins nothing twice. With
+# --relay it joins nothing and keeps `svrngs relay` running instead, beside
+# any svrngs kept already: a LaunchAgent on macOS; on Linux, where only the
+# system lets a program take ports 80 and 443, the system unit printed for
+# whoever runs the server to install as root — never installed here. Every
+# step is said; a refusal says what was refused and why (AGENTS.md 1, 6).
 set -eu
 
 say() { printf '%s\n' "$*"; }
@@ -22,6 +31,13 @@ no() {
 
 link="${1:-}"
 if [ $# -gt 0 ]; then shift; fi # what follows the link, `--as <name>`, is join's
+relay=""
+if [ "${1:-}" = --relay ]; then
+  relay="${2:-}"
+  [ -n "$relay" ] || no "--relay wants the name the relay is reached at, as relay.example.org is."
+  shift 2
+  for a in "$@"; do [ "$a" = --open ] || no "a relay takes --open and nothing else, not $a."; done
+fi
 from="${SVRNGS_FROM:-${link%%#*}}"
 case "$from" in
   http://* | https://*) ;;
@@ -57,16 +73,21 @@ say "Checked: $tarball matches SHA256SUMS."
 dir="${SVRNGS_DIR:-$HOME/.svrngs}"
 bin="$HOME/.local/bin"
 label="sh.svrnme.svrngs"
+unit=svrngs
+run="$bin/svrngs"
+if [ -n "$relay" ]; then
+  label="$label.relay" unit=svrngs-relay run="$run relay $relay $*"
+fi
 if [ "$os" = darwin ]; then
   kept="$HOME/Library/LaunchAgents/$label.plist"
   stop() { launchctl bootout "gui/$(id -u)/$label" 2>/dev/null; }
 else
-  kept="$HOME/.config/systemd/user/svrngs.service"
-  stop() { systemctl --user is-active --quiet svrngs.service && systemctl --user stop svrngs.service; }
+  kept="$HOME/.config/systemd/user/$unit.service"
+  stop() { systemctl --user is-active --quiet $unit.service && systemctl --user stop $unit.service; }
 fi
 # A svrngs kept running holds its data, which joining needs: stopped
 # first, started again below on the new one.
-if [ -f "$kept" ] && stop; then say "Stopped svrngs, to update it."; fi
+if [ -f "$kept" ] && stop; then say "Stopped $unit, to update it."; fi
 
 mkdir -p "$bin" "$dir"
 tar -xzf "$tmp/$tarball" -C "$tmp" svrngs
@@ -79,7 +100,14 @@ case ":$PATH:" in
   *) say "$bin is not on your PATH, so to run svrngs yourself type $bin/svrngs; nothing else needs it." ;;
 esac
 
-if [ -n "$link" ]; then
+if [ -n "$relay" ] && [ "$os" = linux ]; then
+  say "A relay takes ports 80 and 443, which on Linux only the system gives a program. As root, put this in /etc/systemd/system/svrngs-relay.service, then run systemctl enable --now svrngs-relay:"
+  printf '%s\n' "" "[Unit]" "Description=svrngs relay" "After=network-online.target" "[Service]" \
+    "ExecStart=$run" "Environment=SVRNGS_DIR=$dir" "User=$(id -un)" \
+    "AmbientCapabilities=CAP_NET_BIND_SERVICE" "Restart=on-failure" "[Install]" "WantedBy=multi-user.target"
+  exit 0
+fi
+if [ -n "$link" ] && [ -z "$relay" ]; then
   SVRNGS_DIR="$dir" "$bin/svrngs" join "$link" --no-run "$@" ||
     no "svrngs is in $bin, and did not join the group: it said why above."
 fi
@@ -91,12 +119,12 @@ if [ "$os" = darwin ]; then
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
   <key>Label</key><string>$label</string>
-  <key>ProgramArguments</key><array><string>$bin/svrngs</string></array>
+  <key>ProgramArguments</key><array>$(for a in $run; do printf '<string>%s</string>' "$a"; done)</array>
   <key>EnvironmentVariables</key><dict><key>SVRNGS_DIR</key><string>$dir</string></dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
-  <key>StandardOutPath</key><string>$dir/svrngs.log</string>
-  <key>StandardErrorPath</key><string>$dir/svrngs.log</string>
+  <key>StandardOutPath</key><string>$dir/$unit.log</string>
+  <key>StandardErrorPath</key><string>$dir/$unit.log</string>
 </dict></plist>
 EOF
   launchctl bootstrap "gui/$(id -u)" "$kept" || no "svrngs could not be kept running at login: launchctl refused $kept."
@@ -105,16 +133,17 @@ else
 [Unit]
 Description=svrngs
 [Service]
-ExecStart=$bin/svrngs
+ExecStart=$run
 Environment=SVRNGS_DIR=$dir
 Restart=on-failure
 [Install]
 WantedBy=default.target
 EOF
-  { systemctl --user daemon-reload && systemctl --user enable --now svrngs.service; } ||
+  { systemctl --user daemon-reload && systemctl --user enable --now $unit.service; } ||
     no "svrngs could not be kept running at login: systemd refused $kept."
 fi
-say "svrngs runs now, and whenever you log in ($kept)."
+say "$unit runs now, and whenever you log in ($kept)."
+[ -z "$relay" ] || exit 0
 
 # Where its home page is: the port svrngs writes to its data, once it
 # answers there.

@@ -9,7 +9,11 @@
 //! open — so nothing of this computer's own login or browser is touched.
 //! Sam's computer is reached through a relay on 127.0.0.1 that the link
 //! names. Refused: a tarball that does not match its sum, by name, and a
-//! platform svrngs is not built for; run twice, it joins once.
+//! platform svrngs is not built for; run twice, it joins once. With
+//! `--relay` (relay-verb (c)) it keeps `svrngs relay` running beside
+//! svrngs on macOS, and on Linux prints the system unit, installing none;
+//! a relay's agent is recorded by the stub, never run, since it would take
+//! this computer's ports 80 and 443.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 #[path = "../../svrngs-node/tests/browser/harness.rs"]
@@ -119,6 +123,7 @@ fn stubs(home: &Path, uname: Option<&str>) -> PathBuf {
 echo "launchctl $*" >>"$HOME/stubs/said"
 case "$1" in
   bootstrap)
+    grep -q '<string>relay</string>' "$3" && exit 0
     run=$(sed -n 's:.*<array><string>\(.*\)</string></array>.*:\1:p' "$3")
     dir=$(sed -n 's:.*<key>SVRNGS_DIR</key><string>\(.*\)</string>.*:\1:p' "$3")
     SVRNGS_DIR="$dir" "$run" >>"$dir/svrngs.log" 2>&1 &
@@ -130,7 +135,12 @@ case "$1" in
 esac
 "#;
     let open = "#!/bin/sh\necho \"$*\" >>\"$HOME/stubs/opened\"\n";
-    let mut files = vec![("launchctl", launchctl.to_string()), ("open", open.into())];
+    let systemctl = "#!/bin/sh\necho \"systemctl $*\" >>\"$HOME/stubs/said\"\n";
+    let mut files = vec![
+        ("launchctl", launchctl.to_string()),
+        ("open", open.into()),
+        ("systemctl", systemctl.into()),
+    ];
     if let Some(u) = uname {
         let (s, m) = u.split_once(' ').unwrap();
         files.push((
@@ -152,7 +162,12 @@ esac
 
 /// The page's line, as a person pastes it, run in `home`.
 async fn paste(port: u16, link: &str, home: &Path, uname: Option<&str>) -> Output {
-    let line = format!("curl -fsSL http://127.0.0.1:{port}/install.sh | sh -s -- '{link}'");
+    paste_more(port, link, "", home, uname).await
+}
+
+/// The line with `more` after the link.
+async fn paste_more(port: u16, link: &str, more: &str, home: &Path, uname: Option<&str>) -> Output {
+    let line = format!("curl -fsSL http://127.0.0.1:{port}/install.sh | sh -s -- '{link}'{more}");
     let path = format!(
         "{}:/usr/bin:/bin:/usr/sbin:/sbin",
         stubs(home, uname).display()
@@ -446,4 +461,114 @@ async fn joining_places_the_groups_folder() {
     );
     running.kill().await.unwrap();
     sam.endpoint().close().await;
+}
+
+#[cfg(target_os = "macos")]
+#[tokio::test(flavor = "multi_thread")]
+async fn a_relay_is_kept_running_beside_svrngs_on_a_mac() {
+    let site = site(None);
+    let port = host(site.path().to_path_buf()).await;
+    let home = tempfile::tempdir().unwrap();
+    let page = format!("http://127.0.0.1:{port}/");
+    let more = " --relay relay.example.org --open";
+    let out = paste_more(port, &page, more, home.path(), None).await;
+    let said = String::from_utf8_lossy(&out.stdout);
+    assert!(
+        out.status.success(),
+        "{said}{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let bin = home.path().join(".local/bin");
+    assert!(
+        said.contains(&format!("Installed svrngs in {}.", bin.display())),
+        "{said}"
+    );
+    assert!(
+        said.contains("svrngs-relay runs now, and whenever you log in"),
+        "{said}"
+    );
+    assert!(!said.contains("You're in"), "a relay joins nothing: {said}");
+    let agents = home.path().join("Library/LaunchAgents");
+    let plist = std::fs::read_to_string(agents.join("sh.svrnme.svrngs.relay.plist")).unwrap();
+    let run = format!(
+        "<array><string>{}/svrngs</string><string>relay</string><string>relay.example.org</string><string>--open</string></array>",
+        bin.display()
+    );
+    assert!(plist.contains(&run), "{plist}");
+    assert!(plist.contains("svrngs-relay.log"), "{plist}");
+    assert!(
+        !agents.join("sh.svrnme.svrngs.plist").exists(),
+        "svrngs's own agent is not touched"
+    );
+    let launched = std::fs::read_to_string(home.path().join("stubs/said")).unwrap();
+    assert_eq!(
+        launched.matches("launchctl bootstrap").count(),
+        1,
+        "{launched}"
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn a_relay_on_linux_prints_its_system_unit_and_installs_none() {
+    let site = site(None);
+    // This build's binary under Linux's name too: the Linux path is read,
+    // never run, here.
+    let get = site.path().join("get");
+    std::fs::copy(get.join(tarball()), get.join("svrngs-linux-x86_64.tar.gz")).unwrap();
+    let sums = std::process::Command::new("shasum")
+        .args(["-a", "256", &tarball(), "svrngs-linux-x86_64.tar.gz"])
+        .current_dir(&get)
+        .output()
+        .unwrap();
+    std::fs::write(get.join("SHA256SUMS"), sums.stdout).unwrap();
+    let port = host(site.path().to_path_buf()).await;
+    let home = tempfile::tempdir().unwrap();
+    let page = format!("http://127.0.0.1:{port}/");
+    let linux = Some("Linux x86_64");
+    let out = paste_more(
+        port,
+        &page,
+        " --relay relay.example.org",
+        home.path(),
+        linux,
+    )
+    .await;
+    let said = String::from_utf8_lossy(&out.stdout);
+    assert!(
+        out.status.success(),
+        "{said}{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let bin = home.path().join(".local/bin");
+    for line in [
+        "As root, put this in /etc/systemd/system/svrngs-relay.service, then run systemctl enable --now svrngs-relay:".to_string(),
+        format!("ExecStart={}/svrngs relay relay.example.org", bin.display()),
+        "AmbientCapabilities=CAP_NET_BIND_SERVICE".to_string(),
+        "WantedBy=multi-user.target".to_string(),
+    ] {
+        assert!(said.contains(&line), "not said: {line}\n{said}");
+    }
+    assert!(
+        !home.path().join("stubs/said").exists(),
+        "nothing asked of systemd"
+    );
+    assert!(
+        !home.path().join(".config/systemd").exists(),
+        "no unit installed"
+    );
+
+    let wrong = paste_more(
+        port,
+        &page,
+        " --relay relay.example.org --as x",
+        home.path(),
+        linux,
+    )
+    .await;
+    let err = String::from_utf8_lossy(&wrong.stderr);
+    assert_eq!(wrong.status.code(), Some(1), "{err}");
+    assert!(
+        err.contains("a relay takes --open and nothing else, not --as."),
+        "{err}"
+    );
 }
