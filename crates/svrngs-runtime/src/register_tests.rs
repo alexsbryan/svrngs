@@ -3,6 +3,18 @@ use super::*;
 use crate::{actor_of, Device, Ed25519Verifier, OpId, RailAct, Redemption};
 use svrngs_core::tests_support::{after, key, record, ring, signed, NS};
 
+/// The keys standing in `namespace` after `ops`, from `seed`: [`register_in`]'s
+/// first answer, which the tests hold the kept fold to. (Moved from
+/// register.rs, where only these tests read it: start-economize.)
+fn standing_in(
+    ops: &[Op<SignedOp>],
+    seed: &Roster,
+    namespace: &str,
+    verifier: &dyn RingVerifier,
+) -> Result<BTreeMap<String, Member>, RailError> {
+    Ok(register_in(ops, seed, namespace, verifier)?.members)
+}
+
 fn admit_act(person: &str, joining: u8) -> RailAct {
     RailAct::Admit {
         person: Person::parse(person).unwrap(),

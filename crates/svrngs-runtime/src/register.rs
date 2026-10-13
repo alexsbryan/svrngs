@@ -92,18 +92,6 @@ impl Standing {
     }
 }
 
-/// The keys standing in `namespace` after `ops`, from `seed`: [`register_in`]'s
-/// first answer, which the tests hold the kept fold to.
-#[cfg(test)]
-pub(crate) fn standing_in(
-    ops: &[Op<SignedOp>],
-    seed: &Roster,
-    namespace: &str,
-    verifier: &dyn RingVerifier,
-) -> Result<BTreeMap<String, Member>, RailError> {
-    Ok(register_in(ops, seed, namespace, verifier)?.members)
-}
-
 /// The keys standing in `namespace` after `ops`, from `seed`: membership
 /// over the acts admission authenticates, each with its person and device;
 /// and beside them each key the group's keeper cut, with the person it was
