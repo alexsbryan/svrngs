@@ -1065,6 +1065,24 @@ async fn a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped(eng
         json!({ "port": shelf.port(), "kind": "k", "limit": 3, "refused": [], "asks": WORDS });
     std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
     let (page_label, shelf_label) = (label(1, "page"), label(2, "shelf"));
+    // Bo stopped 200 other apps on the shelf before: what apps use is then
+    // about 19 KB, past the page's first read of an answer (hyper's 8 KiB),
+    // so its body comes after its head on every run, as a lost or late
+    // packet makes it come on a busy host or a phone's link
+    // (bash-film-load).
+    let stopped: serde_json::Map<String, Value> = (0..200)
+        .map(|i| {
+            (
+                label(9, &format!("app-{i}")),
+                json!({ "said": "stop", "at": 1 }),
+            )
+        })
+        .collect();
+    let shelf_name = svrngs_node::lend::LendName::try_from("shelf".to_string()).unwrap();
+    let choices = svrngs_node::lend::choices_path(cy_dir.path(), &shelf_name);
+    std::fs::create_dir_all(choices.parent().unwrap()).unwrap();
+    let kept = json!({ actor_of(&bo): stopped });
+    std::fs::write(&choices, kept.to_string()).unwrap();
 
     let seen = drive(
         engine,
