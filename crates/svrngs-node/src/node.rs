@@ -460,6 +460,16 @@ impl Host {
         };
         let mut wrote = false;
         for namespace in self.rail.namespaces().unwrap_or_default() {
+            // The kept register first: a commit reads the whole journal under
+            // its lock, which every idle round paid (scale.rs's ceiling, 0.59 s
+            // at 42e36ca against 0.02 s before). The core still decides a move.
+            if let Ok(Standing::Members(m)) = self.rail.standing(&namespace) {
+                if m.get(&self.actor).is_some_and(|me| me.relay == at.url) {
+                    tracing::debug!(target: "node", namespace, url = ?at.url,
+                        "node: the group already names this computer's relay, so nothing is committed");
+                    continue;
+                }
+            }
             match self.rail.commit(&namespace, &at) {
                 Ok(Ok(said)) => wrote |= !said.is_empty(),
                 Ok(Err(why)) => {

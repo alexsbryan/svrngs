@@ -871,16 +871,17 @@ async fn the_account_matches_a_hand_count() {
     //   (`ingest_all`); each reached member catches up before and after
     //   landing the two (`ingest_all`, `Held::after_write`): 23 + 2 + 2 x 2
     //   = 29; and every register read below catches up first
-    //   (journal.rs `RingJournal::standing`), 10; and node 0 saying where
-    //   it is reached before it dials (ring_sync.rs `run_one_round`,
-    //   `Host::say_relay`), a `RelayAt` that writes nothing, 1: 40.
-    // - register: node 0 lists its members (node.rs `standings`) and then
-    //   offers the group to them (`run_one_round`); each member admits node
-    //   0's one connection (node.rs `admit_dialer`) and checks each of 3
-    //   posts (ring_routes.rs `standing_refusal`): 2 + (1 + 3) x 2 = 10.
-    //   Each node's first read folds (nothing asked its register before
-    //   the round) and the rest are kept: the two acts node 0 pushes are
-    //   records, which move no membership: kept 1 + 3 x 2, rebuilt 3.
+    //   (journal.rs `RingJournal::standing`), 11: 40.
+    // - register: node 0 asks whether its group already names its relay
+    //   before it dials (ring_sync.rs `run_one_round`, `Host::say_relay`:
+    //   it does, so no `RelayAt` is committed), lists its members (node.rs
+    //   `standings`) and then offers the group to them (`run_one_round`);
+    //   each member admits node 0's one connection (node.rs `admit_dialer`)
+    //   and checks each of 3 posts (ring_routes.rs `standing_refusal`):
+    //   3 + (1 + 3) x 2 = 11. Each node's first read folds (nothing asked
+    //   its register before the round) and the rest are kept: the two acts
+    //   node 0 pushes are records, which move no membership: kept 2 + 3 x
+    //   2, rebuilt 3.
     let hand = serde_json::json!({
         "dialled": 3, "reached": 2, "asleep": 1, "refused": 0,
         "acts_moved": 4,
@@ -889,7 +890,7 @@ async fn the_account_matches_a_hand_count() {
             "write_index": {"kept": 40, "rebuilt": 0},
             "digest": {"kept": 23, "rebuilt": 0},
             "offer": {"kept": 6, "rebuilt": 4},
-            "register": {"kept": 7, "rebuilt": 3},
+            "register": {"kept": 8, "rebuilt": 3},
         },
     });
     assert_eq!(account, hand, "the round's account against the hand count");
