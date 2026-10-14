@@ -2322,6 +2322,37 @@ asks for gzip. Whether a reader given only the document reaches an answer is
 start-doc's reader run, `demo/runs/start/2026-10-13-reader/`. What stands before its first run
 with people is publishing that build (the operator's) and the phone's gzip.
 
+**On air — three primitives an app gets, proved by an app** (after the
+start queue; operator, 2026-10-12: "what's the minimal primitives we would
+want to have in svrngs to allow someone else to realize a vision like
+this? This is largely just a test of the infra"; 2026-10-13: "Add the on
+air spike too"; its design svrn-docs `rings/current/ON_AIR.md`, its queue
+`ralph/next/onair/`). A stranger's app, in `apps/on-air/`, airs an MP3
+from one member's computer to the others in its group and to a page anyone
+opens, and asks svrngs for three things it lacks: bytes by hash, for an
+app, with a lifetime; a signature for an app, checked anywhere with the key
+alone; the live lane naming who spoke. svrngs runs no public door for it:
+signed, hash-named bytes need no trusted carrier. Its harness runs first on
+svrngs as it is, red, and that run is the reproduction
+(`demo/runs/onair/`); each primitive then lands as a row of its own, proved
+by that app's bars alone, and none is made general — for a second app or
+another kind of bytes — before the app has proved it; then the three run
+together on one host. What 10,000 listeners would need — a CDN, a second
+machine, HLS and phones — is the operator's.
+
+**Events — the primitive event and its reference app** (after onair;
+operator, 2026-10-13: "I want the run after onair to be our event
+primitives + reference app (we can layer on this taps concept later)";
+svrn-docs `rings/current/EVENTS.md` §9). The primitive event is three acts
+in a group's record and nothing new in svrngs: an event posted to each
+group it draws from, each record holding only its own people's answers,
+and guests as names a member brings. Its reference app lives in
+`apps/events/`, in the shape of `apps/expenses/`, and runs on one host
+with its predictions written first; whatever that run finds svrngs lacking
+becomes a row of its own, said as svrngs's. A secret two people share, for
+the question after the party, comes later, and so do taps, layered on the
+event.
+
 ## 9. Later, each with the trigger that brings it back
 
 | Waits | Trigger |
