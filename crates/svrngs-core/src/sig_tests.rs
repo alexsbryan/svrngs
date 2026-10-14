@@ -162,7 +162,10 @@ fn domains_live_here_and_none_begins_another() {
             domains.push((name.into(), spelled.into_bytes()));
         }
     }
-    assert!(domains.len() >= 9, "the domains were not found: {domains:?}");
+    assert!(
+        domains.len() >= 9,
+        "the domains were not found: {domains:?}"
+    );
     for (a, da) in &domains {
         for (b, db) in &domains {
             assert!(a == b || !db.starts_with(da), "{a} begins {b}");
