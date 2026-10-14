@@ -206,6 +206,7 @@ pub(super) async fn get(
         Err(refusal) => return refusal,
     };
     let lapsed = (StatusCode::GONE, "lapsed", "it lapsed");
+    let unanswered = (StatusCode::BAD_GATEWAY, "unanswered", "no holder answered");
     match f.held(hash, &group, Instant::now()) {
         Holds::Lapsed => return refused(hash, lapsed, json!({})),
         Holds::For { .. } if matches!(f.lacks(hash).await, Ok(None)) => {
@@ -230,7 +231,7 @@ pub(super) async fn get(
         let never = (StatusCode::NOT_FOUND, "never_held", "no computer holds it");
         let kind = match (said(Holds::Lapsed), said(Holds::NeverHeld)) {
             (0, n) if n == answers.len() => never,
-            (0, _) => (StatusCode::BAD_GATEWAY, "unanswered", "no holder answered"),
+            (0, _) => unanswered,
             _ => lapsed,
         };
         return refused(hash, kind, asked.into());
@@ -247,7 +248,6 @@ pub(super) async fn get(
         Err(why) => {
             f.carry(hash, &group, None);
             asked.extend(why.into_iter().map(|(k, w)| (k, w.into())));
-            let unanswered = (StatusCode::BAD_GATEWAY, "unanswered", "no holder answered");
             refused(hash, unanswered, asked.into())
         }
     }
