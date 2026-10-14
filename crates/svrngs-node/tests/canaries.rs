@@ -62,9 +62,9 @@ fn founded_by_sam() -> Roster {
     )
 }
 
-/// Sam's computer lets `person`'s key in, as a test admits a member by
-/// hand (DESIGN §8, U1).
-fn admit(sam: &Node, person: &str, joining: u8) {
+/// Sam's computer lets `person`'s key in to `group`, as a test admits a
+/// member by hand (DESIGN §8, U1).
+fn admit(sam: &Node, group: &str, person: &str, joining: u8) {
     let fixture = svrngs_core::tests_support::Fixture {
         act: RailAct::Admit {
             person: Person::parse(person).unwrap(),
@@ -73,7 +73,7 @@ fn admit(sam: &Node, person: &str, joining: u8) {
         },
         on_behalf_of: None,
     };
-    sam.rail().commit(GROUP, &fixture).unwrap().unwrap();
+    sam.rail().commit(group, &fixture).unwrap().unwrap();
 }
 
 /// Sam's computer and Alex's, one group: Sam founds it and lets in Alex,
@@ -85,7 +85,7 @@ async fn two_computers(ds: &tempfile::TempDir, da: &tempfile::TempDir) -> (Node,
     let (sam, alex) = (start(1, ds).await, start(2, da).await);
     sam.rail().set_seed(GROUP, &founded_by_sam()).unwrap();
     for (person, seed) in [("alex", 2), ("bo", 3), ("cy", 4)] {
-        admit(&sam, person, seed);
+        admit(&sam, GROUP, person, seed);
     }
     alex.rail().set_seed(GROUP, &founded_by_sam()).unwrap();
     sam.transport()
@@ -139,6 +139,30 @@ async fn expenses() {
     let (sam, alex) = two_computers(&ds, &da).await;
     let at = |n: &Node| format!("http://{}", n.api_addr());
     canary("expenses", &[GROUP.to_string(), at(&sam), at(&alex)]).await;
+    for n in [&sam, &alex] {
+        n.endpoint().close().await;
+    }
+}
+
+/// **Events** (events-app (c)): the same two computers, and a second group
+/// on Sam's alone, Sam and Di in it. Apps on both write — for their own
+/// person, and for Bo and Cy by name — a correction voids on both copies,
+/// another's correction counts for nothing, and both copies fold to the same
+/// event, who is coming and who came; the second group's record holds the
+/// event and none of the first's answers (`apps/events/canary.mjs`).
+#[tokio::test]
+async fn events() {
+    const SECOND: &str = "dweb";
+    let (ds, da) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (sam, alex) = two_computers(&ds, &da).await;
+    sam.rail().set_seed(SECOND, &founded_by_sam()).unwrap();
+    admit(&sam, SECOND, "di", 5);
+    let at = |n: &Node| format!("http://{}", n.api_addr());
+    canary(
+        "events",
+        &[GROUP.to_string(), SECOND.to_string(), at(&sam), at(&alex)],
+    )
+    .await;
     for n in [&sam, &alex] {
         n.endpoint().close().await;
     }
