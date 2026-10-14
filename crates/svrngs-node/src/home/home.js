@@ -11,14 +11,9 @@
 // a folder opened (/folder) and a group made (/group, start-group). Its words are
 // DESIGN §1's: groups, people, what they lend, computer; its question and
 // what apps use and its removals are question.js's, the group's page's too.
-import { named, question, removal, unlent, uses as used } from './question.js';
+import { door, el, named, question, removal, row, unlent, uses as used, whose } from './question.js';
 
 const main = document.getElementById('home');
-const el = (tag, text, ...kids) => {
-  const e = document.createElement(tag);
-  e.append(text ?? '', ...kids);
-  return e;
-};
 const button = (text, act) => Object.assign(el('button', text), { onclick: act });
 
 // A route's answer, or its words when it refuses: never read as empty.
@@ -44,44 +39,10 @@ const label = (l) => new URL(l.origin).hostname.split('.')[0];
 // never read as not removed (ralph/REVIEW_FINDINGS.md #123).
 const lentIn = (g) => (g.removed === false ? get(`/v1/lends?namespace=${encodeURIComponent(g.id)}`).then((l) => l.lent, () => []) : []);
 
-// Each person once, of the rows /v1/rail/people gives a key each; two of
-// one name told apart by when each joined (bash-same-name), in the form
-// `svrngs remove --joined` takes (home.rs `WHEN`): this computer's time as
-// the `sv-SE` locale writes it, then its offset as ±hhmm, so a fall-back
-// night's repeated hour reads back to one instant (#126).
-// Each with what holds their keys, `device` (v1ui-door (c)).
-function people(rows) {
-  const each = [...new Map(rows.map((r) => [r.person_key, r])).values()];
-  const at = (d, m = -d.getTimezoneOffset()) => `${d.toLocaleString('sv-SE')} ${m < 0 ? '-' : '+'}${String(Math.trunc(Math.abs(m) / 60) * 100 + (Math.abs(m) % 60)).padStart(4, '0')}`;
-  const when = (j) => (j === 'started' ? 'started the group' : `joined ${at(new Date(j.at * 1000))}`);
-  return each.map((p) => [p, each.filter((q) => q.person === p.person).length > 1 ? `${p.person} (${when(p.joined)})` : p.person, rows.filter((r) => r.person_key === p.person_key).map((r) => r.device)]);
-}
-
-// The door (V1_UI_BUILD §3.1): each person once, a cell in a grid, unjudged
-// until the group's computers have answered or not, within one round
-// (/v1/lends, `judge`): then lit, "on now", while their computer answers;
-// drawn off when it did not, never lit and never left out; and one in only
-// from a phone, which nobody asks, marked so with no presence claimed.
-// Presence is only "on now", never when last seen.
-function door(rows) {
-  const cells = people(rows).map(([p, name, devices]) => [p, devices, el('li', '', el('strong', name), ' ', el('small', 'asking…'))]);
-  const judge = (lends) => cells.forEach(([p, devices, li]) => {
-    const phone = devices.includes('browser') ? (devices.includes('computer') ? ', a phone too' : 'in from a phone') : '';
-    const [drawn, words] = !devices.includes('computer') ? ['phone', ''] : !lends ? ['', 'not known now'] : lends.unanswered.includes(p.person) ? ['off', 'did not answer'] : ['on', 'on now'];
-    [li.className, li.lastChild.textContent] = [drawn, words + phone];
-  });
-  return [Object.assign(el('ul', '', ...cells.map((c) => c[2])), { className: 'door' }), judge];
-}
-
-// A row of the index; `tag` th for its head.
-const row = (cells, tag = 'td') => el('tr', '', ...cells.map((c) => el(tag, '', c)));
 
 // The groups a new one shares its name with (/group, the node's one rule;
-// #138), each with who made it and since when this computer has held it,
-// in the command's words (cli.rs `namesakes_said`): `verb` says it before
-// the group is made or after.
-const day = (t) => new Date(t * 1000).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-const whose = (g) => `${g.maker ? `${g.maker}’s` : 'yours'}${g.since ? `, since ${day(g.since)}` : ''}`;
+// #138), each said as question.js's `whose`, in the command's words (cli.rs
+// `namesakes_said`): `verb` says it before the group is made or after.
 const namesakes = (n, name, verb) => (n.length ? `You’re already in ${n.map((g) => `${g.name} (${whose(g)})`).join(' and ')}. ${verb} ${n.length > 1 ? 'another' : 'a second'} group called ${name}.` : '');
 
 // Each group's section, headed by its name and, so two of one name are
