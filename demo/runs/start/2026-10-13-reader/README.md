@@ -39,7 +39,10 @@ document or written as a follow-up. One reader, one host: not a rate
 ## 3. What the run gave
 
 `W=/tmp/start-reader PY=/tmp/sm-py/bin/python sh run.sh` at f000fcb,
-exit 0 in 241 s (`data/end.json`). The reader's last line: `REACHED: yes`
+241 s (`data/end.json`). run.sh's own exit says nothing of the session's,
+which it runs `|| true` (`run.sh:41`); the session's result record, the
+last line of `data/transcript.jsonl.gz`, is `"subtype":"success"`,
+`"is_error":false`, 39 turns in 239,282 ms. The reader's last line: `REACHED: yes`
 (`data/NOTES.md`). From llama-server started (19:08:08) to Bo's program
 answered (19:10:45), about 2.6 minutes at a program's pace; Sam's part,
 from the page opened to the lend listed, about a minute; Bo's, from the
