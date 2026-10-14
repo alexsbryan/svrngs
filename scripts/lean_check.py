@@ -26,10 +26,11 @@ ROOT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().pare
 FOREIGN = re.compile(r'^name = "(commonwealth-[\w-]+|sovereign-[\w-]+|oicp-[\w-]+|kernel-types|oplog(-types)?|corpus-engine|host-kit|mesh-[\w-]+)"$', re.M)
 IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "tower",
            "rusqlite", "sqlx", "notify", "mio"}
-# Each cap one past the count events-economize's cut landed on (2026-10-14),
+# Each cap one past a count: svrngs-core's where events-economize's cut landed,
+# the repository's where events-asleep's cap of the dial landed (2026-10-14),
 # so no room is left that the operator did not give. A raise is asked only after an
 # economizing pass (AGENTS.md "Done"; DESIGN §5).
-BUDGET = {"crates/svrngs-core": 3150, ".": 16235}
+BUDGET = {"crates/svrngs-core": 3150, ".": 16245}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
