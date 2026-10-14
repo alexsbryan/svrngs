@@ -1279,7 +1279,7 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,150 lines of code and the
-repository under 16,237 (`scripts/lean_check.py`), the branch `folders`
+repository under 16,235 (`scripts/lean_check.py`), the branch `folders`
 too since main merged into it at syp-5, counting 13,778 and `svrngs-core`
 2,719 there. A raise is the operator's, and is asked only after an
 economizing pass (the operator, 2026-10-13: "Every raise needs a pass
@@ -1402,7 +1402,15 @@ repository's from 16,015, at 16,014, `svrngs-core`'s kept at 3,150: to
 16,237, for bytes by hash, for an app, with a lifetime (onair-blob; ON_AIR
 §4.1), which counted 16,236 with it — its first draft's 16,301, past the
 operator's 16,287, cut by 65 in the row — after onair-economize's cuts
-above.
+above. Then down, 2026-10-14, before the events queue's follow-ups raise:
+events-economize's survey (`demo/runs/economize/2026-10-14/SURVEY.md`), by
+the same instruments over onair's +286, found nothing unreached and
+nothing written twice but synced.rs's own writer of a file kept whole,
+beside declared.rs's. Cut, the repository went from 16,236 to 16,234 and
+`svrngs-core` stayed at 3,149, so the caps are 16,235 and 3,150. The events
+queue's rows raise from there, each only as far as it needs, within +80, to
+16,315; `svrngs-core`'s stays (the operator, 2026-10-14, "+80 ceiling,
+fixes included"; `ralph/next/events/CHARTER.md`).
 `ARCHITECTURE.md` maps what exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file
