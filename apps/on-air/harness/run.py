@@ -112,6 +112,23 @@ def node(script, *args, **kw):
     return subprocess.Popen(["node", APP / script, *map(str, args)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, **kw)
 
 
+def field(o, key):
+    """The first `key` in an op as /v1/rail/log gives it, at any depth."""
+    if isinstance(o, dict):
+        if key in o: return o[key]
+        for v in o.values():
+            got = field(v, key)
+            if got is not None: return got
+    return None
+
+
+def blake3(data):
+    """The bytes' BLAKE3, by the page's own vendored copy (page/air.mjs)."""
+    js = (f"await import({json.dumps(str(APP / 'vendored.mjs'))}); const a = await import({json.dumps(str(APP / 'page/air.mjs'))});"
+          "const c = []; for await (const x of process.stdin) c.push(x); console.log(a.blake3hex(new Uint8Array(Buffer.concat(c))))")
+    return subprocess.run(["node", "--input-type=module", "-e", js], input=data, capture_output=True, check=True).stdout.decode().strip()
+
+
 def jsonl(path):
     return [json.loads(l) for l in Path(path).read_text().splitlines() if l.strip()] if Path(path).exists() else []
 
@@ -135,7 +152,7 @@ def read_strangers(p, bound):
 
 # --- the run -------------------------------------------------------------
 def main():
-    W.mkdir(parents=True, exist_ok=True)
+    shutil.rmtree(W, ignore_errors=True); W.mkdir(parents=True)
     OUT.mkdir(parents=True, exist_ok=True)
     for f in OUT.iterdir():
         if f.is_file(): f.unlink()
@@ -167,6 +184,10 @@ def main():
     ev["people_joined"] = wait(lambda: (lambda p: len(p) >= 4 and p)(people()), 60)
     ev["remove_dee"] = command("ana", "remove", "Dee", "--group", GROUP)
     ev["people"] = wait(lambda: (lambda p: "Dee" not in p and len(p) == 3 and p)(people()), 60) or people()
+    # Each member's own record must hold the removal too, or its live push
+    # still offers Dee the payload (the debug run: Bo's note `delivered: 3`).
+    ev["removal_seen"] = {w: wait(lambda: "Dee" not in {r["person"] for r in (api(w, f"/v1/rail/people?namespace={ev['group']}") or {}).get("people", [{"person": "Dee"}])}, 60) is not None
+                          for w in ("bo", "cy")}
     keys = ev["people"]
     if not all(k in keys for k in ("Ana", "Bo", "Cy")): raise SystemExit(f"the group is not Ana, Bo and Cy: {keys}")
     ana_key = keys["Ana"]["key"]
@@ -184,7 +205,7 @@ def main():
     # The show.
     t0 = time.time()
     run = subprocess.run(["node", APP / "station.mjs", "--api", base("ana"), "--group", ev["group"], "--mp3", mp3, "--show", SHOW,
-                          "--public", public, "--keep", KEEP, "--piece", PIECE, "--out", W / "station.jsonl"],
+                          "--public", public, "--keep", str(KEEP), "--piece", str(PIECE), "--out", W / "station.jsonl"],
                          capture_output=True, text=True, timeout=SECONDS + 60)
     ev["station"] = {"exit": run.returncode, "stderr": run.stderr[-800:], "s": round(time.time() - t0, 1)}
     say("station", **ev["station"])
@@ -198,18 +219,12 @@ def main():
 
     # 4.1, carried, before Ana stops: two blobs on Ana, Y got by Bo.
     Y, Z = b"onair carried Y " + os.urandom(4096), b"onair carried Z " + os.urandom(4096)
-    hy = subprocess.run(["node", "--input-type=module", "-e",
-                         f"await import({json.dumps(str(APP / 'vendored.mjs'))}); const a = await import({json.dumps(str(APP / 'page/air.mjs'))});"
-                         "const c=[]; for await (const x of process.stdin) c.push(x); console.log(a.blake3hex(new Uint8Array(Buffer.concat(c))))"],
-                        input=Y, capture_output=True).stdout.decode().strip()
+    hy, hz = blake3(Y), blake3(Z)
     ev["carried"] = {"hash_Y": hy,
                      "put_Y": shown(http("PUT", f"{base('ana')}/v1/blob?group={ev['group']}&keep={KEEP}", Y)),
                      "put_Z": shown(http("PUT", f"{base('ana')}/v1/blob?group={ev['group']}&keep={KEEP}", Z))}
     last_put = time.time()
     ev["carried"]["bo_get_Y"] = shown(http("GET", f"{base('bo')}/v1/blob/{hy}?group={ev['group']}"))
-    hz = ev["carried"]["put_Z"]["said"]
-    try: hz = json.loads(hz)["hash"]
-    except Exception: hz = None
     ev["carried"]["hash_Z"] = hz
 
     # 4.2's plants: no end, Bo's signature, a byte flipped, an act's signature.
@@ -227,16 +242,23 @@ def main():
     piece = bytearray((air / "flipped/pieces" / h1).read_bytes()); piece[1000] ^= 0x01
     (air / "flipped/pieces" / h1).write_bytes(bytes(piece))
     plants["flipped"] = {"piece": 1, "hash": h1, "byte": 1000}
-    ops = [o for o in (api("ana", f"/v1/rail/log?namespace={ev['group']}") or {}).get("ops", []) if o.get("actor") == ana_key]
+    # An act's signature offered as an app's. /v1/rail/log gives admitted acts
+    # without their signatures (crates/svrngs-core/src/admit.rs:309,
+    # AdmittedOp), so the act and its signature are read from Ana's journal,
+    # as written: one of her acts, signed by the key that signs for the app.
+    journal = W / "ana/.svrngs/rings" / ev["group"] / "ring_oplog.jsonl"
+    acts = [a for a in jsonl(journal) if a.get("actor") == ana_key and a.get("sig")]
+    logged = (api("ana", f"/v1/rail/log?namespace={ev['group']}") or {}).get("ops", [])
     shutil.copytree(air / SHOW, air / "act-sig")
-    if ops:
-        act = ops[0]
+    if acts:
+        act = acts[0]
         line0 = json.loads((air / SHOW / "lines/0.json").read_text())["line"]
         (air / "act-sig/lines/0.json").write_text(json.dumps({"line": act["id"], "key": ana_key, "sig": act["sig"]}))
         (air / "act-sig/lines/1.json").write_text(json.dumps({"line": line0, "key": ana_key, "sig": act["sig"]}))
-        plants["act-sig"] = {"act": act["id"], "seq": act.get("seq"), "lines": [0, 1]}
+        plants["act-sig"] = {"act": act["id"], "seq": act.get("seq"), "from": str(journal.relative_to(W)), "lines": [0, 1],
+                             "log_op_fields": sorted(logged[0]) if logged else None}
     else:
-        plants["act-sig"] = {"act": None, "why": "Ana's log named no act of hers"}
+        plants["act-sig"] = {"act": None, "why": f"Ana's journal {journal.relative_to(W)} holds no signed act of hers"}
     ev["plants"] = plants
     tabs = strangers([f"{page}#key={ana_key}&show={s}" for s in ("no-ended", "bo-signed", "flipped", "act-sig")], 60)
     ev["plant_pages"] = read_strangers(tabs, 60)
@@ -246,8 +268,7 @@ def main():
     t = time.time()
     ev["carried"]["cy_get_Y"] = shown(http("GET", f"{base('cy')}/v1/blob/{hy}?group={ev['group']}", timeout=60))
     ev["carried"]["cy_got_Y_bytes"] = http("GET", f"{base('cy')}/v1/blob/{hy}?group={ev['group']}", timeout=60)["bytes"] == Y
-    if hz: ev["carried"]["cy_get_Z"] = shown(http("GET", f"{base('cy')}/v1/blob/{hz}?group={ev['group']}", timeout=60))
-    else: ev["carried"]["cy_get_Z"] = {"status": None, "said": "Z has no hash from Ana's put: nothing to ask"}
+    ev["carried"]["cy_get_Z"] = shown(http("GET", f"{base('cy')}/v1/blob/{hz}?group={ev['group']}", timeout=60))
     ev["carried"]["s"] = round(time.time() - t, 1)
 
     # 4.1, scoped: Dee, outside the group, asks Y.
@@ -287,7 +308,7 @@ def judge():
             held_ms=held, station_puts=puts, bo_refusals=refusals)
 
     c = ev.get("carried")
-    if not c: bar("4.1, carried", "never-ran", "the run stopped before it")
+    if not c or "cy_get_Y" not in c: bar("4.1, carried", "never-ran", "the run stopped before it")
     else:
         y, z = c.get("cy_get_Y", {}), c.get("cy_get_Z", {})
         trace = [l for l in log_lines("cy") if c["hash_Y"][:12] in l and keys.get("Bo", {}).get("key", "-")[:12] in l]
@@ -322,6 +343,7 @@ def judge():
             provider_refusals=refused[:5])
 
     pages = (ev.get("page") or {}).get("tabs") or []
+    if not ev.get("plant_pages"): pages = []  # 4.2 is judged with its plants, or not at all
     plant_tabs = {re.search(r"show=([\w-]+)", t["link"])[1]: t for t in (ev.get("plant_pages") or {}).get("tabs") or []}
     if not pages: bar("4.2", "could-not-judge", "the stranger read no tab", page=ev.get("page"))
     else:
