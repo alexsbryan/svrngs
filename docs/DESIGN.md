@@ -2444,7 +2444,20 @@ and guests as names a member brings. Its reference app lives in
 with its predictions written first; whatever that run finds svrngs lacking
 becomes a row of its own, said as svrngs's. A secret two people share, for
 the question after the party, comes later, and so do taps, layered on the
-event.
+event. Its demo, the launch story (operator, 2026-10-13: "so many stories
+start with an event, who was invited and who actually came"; its
+run-of-show `demo/events.md`, its bars the seat's proposal and the
+operator's to set): Sam posts a dinner once to The House and dWeb; Bo,
+Fay and Di answer from computers and Cy and Eve from phones, each seeing
+only their own group's answers; Bo brings Maya by name and alone says she
+came; the next morning Sam's page says, per group, who was invited (who
+is in the group now, so Fay, who joined after the post) and who came,
+with nothing shown as a refusal. Its story ran on one host, every person a
+program (`demo/runs/events/2026-10-14/`): every bar held but one, a person
+told the host's computer is asleep only after 30 s. What stands before its
+first run with people is svrngs's two (that run's `NEEDS_HUMAN.md`): a
+shorter wait to be told, and a link that opens the event; and starting the
+app, which takes a terminal and a copy of svrngs.
 
 ## 9. Later, each with the trigger that brings it back
 
