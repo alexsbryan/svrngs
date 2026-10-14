@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 
 const air = await import('./page/air.mjs');
 const { ed25519 } = await import('@noble/curves/ed25519.js');
-const { bytesToHex, utf8ToBytes } = await import('@noble/hashes/utils.js');
+const { bytesToHex, hexToBytes, utf8ToBytes } = await import('@noble/hashes/utils.js');
 
 // One MPEG-1 Layer III frame at 128 kbit/s and 44.1 kHz, no padding: 417
 // bytes, 1152 samples.
@@ -57,4 +57,14 @@ test("a line is the station's only under its key and the app's domain", () => {
   assert.match(air.checkLine({ line, key, sig: null, unsigned: 'POST /v1/sign answered 404' }, key).why, /^unsigned: POST/);
   const ended = air.endedLine('evening', 9, 2);
   assert.equal(air.checkLine({ line: ended, key, sig: sign(station, air.signedBytes(air.APP, ended)) }, key).line.ended, true);
+});
+
+// svrngs-core's frozen vector (crates/svrngs-core/src/app_tests.rs,
+// `a_frozen_vector_for_a_stranger`): what a node signs for an app is what
+// this page checks, byte for byte.
+test("svrngs-core's signature for an app checks here", () => {
+  const key = '8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c';
+  const sig = '6296480dc80a73a3f3872dac92fb777835e837829b20c7f818ab7ea922abdf401452e404d04f7a39cf613161bdb80a89ba55bfc43700b0a678f63b5c4110440f';
+  assert.equal(ed25519.verify(hexToBytes(sig), air.signedBytes('notes', 'line 812'), hexToBytes(key)), true);
+  assert.equal(ed25519.verify(hexToBytes(sig), air.signedBytes('notes', 'line 813'), hexToBytes(key)), false);
 });

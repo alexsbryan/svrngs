@@ -163,7 +163,7 @@ fn domains_live_here_and_none_begins_another() {
         }
     }
     assert!(
-        domains.len() >= 9,
+        domains.len() >= 10,
         "the domains were not found: {domains:?}"
     );
     for (a, da) in &domains {

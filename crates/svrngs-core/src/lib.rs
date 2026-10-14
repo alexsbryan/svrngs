@@ -84,6 +84,7 @@ extern crate alloc;
 mod act_set;
 mod admit;
 pub mod alpn;
+pub mod app;
 mod command;
 mod hash;
 pub mod joining;

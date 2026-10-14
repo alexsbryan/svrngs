@@ -61,7 +61,7 @@ use crate::SignedOp;
 /// and from the join proof-of-possession, so no signature is valid in two
 /// contexts; and from upstream's `cwth-ring-op-binding:`, whose message was
 /// the fields rather than the id.
-const RING_OP_DOMAIN: &[u8] = b"svrngs-act-id-binding:";
+pub(crate) const RING_OP_DOMAIN: &[u8] = b"svrngs-act-id-binding:";
 
 /// Domain separator for the id's hash, so an act id is never the hash of
 /// anything else the record hashes (a view head, a payload).
@@ -70,7 +70,7 @@ const ACT_ID_DOMAIN: &[u8] = b"svrngs/act/v1\0";
 /// Domain separator for a redemption's co-signature (svrngs, U2), so the
 /// admitted key's consent is never valid as an act's signature, nor one as
 /// the other.
-const REDEMPTION_DOMAIN: &[u8] = b"svrngs-redemption-binding:";
+pub(crate) const REDEMPTION_DOMAIN: &[u8] = b"svrngs-redemption-binding:";
 
 /// Domain separator for the link key's signature over a request
 /// ([`crate::joining`]), so it is never valid as an act's signature or a
@@ -86,6 +86,11 @@ pub(crate) const LABEL_DOMAIN: &[u8] = b"svrngs-lend-label:";
 /// Domain separator for a person's signature over a pass, so it is never
 /// valid as an act's, a link's or a consent.
 pub(crate) const PASS_DOMAIN: &[u8] = b"svrngs-pass:";
+
+/// Domain separator for what a computer's key signs for an app
+/// ([`crate::app`]): bytes the app chose, never an act's, a link's, a
+/// pass's or a consent.
+pub(crate) const APP_DOMAIN: &[u8] = b"svrngs-app:";
 
 /// Domain separator for a group id's hash ([`crate::seed`]), so an id is
 /// never the hash of anything else svrngs hashes (an act id is

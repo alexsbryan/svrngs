@@ -8,10 +8,10 @@ import { bytesToHex, hexToBytes, utf8ToBytes, concatBytes } from '@noble/hashes/
 
 // The app's label, as the station asks `POST /v1/sign?app=on-air`.
 export const APP = 'on-air';
-// The domain a node signs an app's bytes under, ON_AIR §4.2's sketch:
-// "svrngs-app:" || app || bytes. onair-sign makes it in svrngs-core; this
-// is the one place the app spells it, to change with it.
-export const appDomain = (app) => utf8ToBytes(`svrngs-app:${app}`);
+// What a node signs for an app: "svrngs-app:" || app || ":" || bytes
+// (svrngs-core's app.rs; DESIGN §3, "What an app gets"). The `:` after the
+// app's name ends it. The one place the app spells it.
+export const appDomain = (app) => utf8ToBytes(`svrngs-app:${app}:`);
 export const signedBytes = (app, text) => concatBytes(appDomain(app), utf8ToBytes(text));
 
 // The line's own text, its keys in one order, so what was signed is what is
