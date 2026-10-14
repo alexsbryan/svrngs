@@ -113,23 +113,34 @@ impl Folders {
     async fn ask_group(&self, hash: Hash, group: &str, people: &People) -> Replies {
         let relay = |a: &str| people.get(a)?.relay.as_ref();
         let path = format!("{}?group={group}", ASKED.replace("{hash}", &hash.to_hex()));
-        let mut asks = Vec::new();
+        let (mut actors, mut asks) = (Vec::new(), Vec::new());
         for (actor, _, contact) in crate::node::dialled(self.host.actor(), group, people, relay) {
-            let (host, path, actor) = (self.host.clone(), path.clone(), actor.clone());
+            let (host, path) = (self.host.clone(), path.clone());
+            actors.push(actor.clone());
             asks.push(tokio::spawn(async move {
                 let asked = tokio::time::timeout(ANSWER_WITHIN, ask(&host, contact, &path));
                 let silent = format!("did not answer within {ANSWER_WITHIN:?}");
-                (actor, asked.await.unwrap_or(Err(silent)))
+                asked.await.unwrap_or(Err(silent))
             }));
         }
-        let mut answers = Vec::new();
-        for (actor, said) in n0_future::join_all(asks).await.into_iter().flatten() {
-            tracing::debug!(target: "blob", %hash, group, holder = actor, ?said, "blob: a computer of the group asked what it holds");
-            answers.push((actor, said));
-        }
-        answers
+        let joined = actors.into_iter().zip(n0_future::join_all(asks).await);
+        heard(hash, group, joined)
     }
 }
+
+/// Each computer asked, by its key, with its ask's answer: one whose task
+/// failed is said as that, never dropped (#148).
+fn heard(hash: Hash, group: &str, joined: impl Iterator<Item = (String, Joined)>) -> Replies {
+    let mut answers = Vec::new();
+    for (actor, said) in joined {
+        let said = said.unwrap_or_else(|e| Err(format!("its ask failed: {e}")));
+        tracing::debug!(target: "blob", %hash, group, holder = actor, ?said, "blob: a computer of the group asked what it holds");
+        answers.push((actor, said));
+    }
+    answers
+}
+
+type Joined = Result<Result<Holds, String>, tokio::task::JoinError>;
 
 type People = BTreeMap<String, Member>;
 
@@ -207,14 +218,16 @@ pub(super) async fn get(
     };
     let lapsed = (StatusCode::GONE, "lapsed", "it lapsed");
     let unanswered = (StatusCode::BAD_GATEWAY, "unanswered", "no holder answered");
-    match f.held(hash, &group, Instant::now()) {
+    // Whether this computer was given a lapse here before this get, which a
+    // failed fetch then keeps (#148).
+    let given = match f.held(hash, &group, Instant::now()) {
         Holds::Lapsed => return refused(hash, lapsed, json!({})),
         Holds::For { .. } if matches!(f.lacks(hash).await, Ok(None)) => {
             tracing::debug!(target: "blob", %hash, group, "blob: held here, not lapsed");
             return f.answer(hash, f.host.actor()).await;
         }
-        _ => {}
-    }
+        held => held != Holds::NeverHeld,
+    };
     let answers = f.ask_group(hash, &group, &people).await;
     let (mut asked, mut holders, mut left) = (Map::new(), Vec::new(), u64::MAX);
     for (key, said) in &answers {
@@ -246,7 +259,9 @@ pub(super) async fn get(
             f.answer(hash, from).await
         }
         Err(why) => {
-            f.carry(hash, &group, None);
+            if !given {
+                f.carry(hash, &group, None);
+            }
             asked.extend(why.into_iter().map(|(k, w)| (k, w.into())));
             refused(hash, unanswered, asked.into())
         }
@@ -274,3 +289,7 @@ pub(super) async fn asked(
     tracing::debug!(target: "blob", %hash, group, ?held, "blob: a member asked what this computer holds");
     Json(held).into_response()
 }
+
+#[cfg(test)]
+#[path = "blob_tests.rs"]
+mod tests;
