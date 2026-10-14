@@ -137,6 +137,9 @@ async function write(group, act, name) {
 
 const named = (groups, id) => groups.find((g) => g.id === id)?.name ?? id;
 
+/** That some of a group's `what` may not be here yet, when its record knows of acts this computer has not received (`complete`). */
+const partly = (complete, what) => (complete ? '' : `<p class="unread">Some ${what} may not have reached this computer yet.</p>`);
+
 async function home(id) {
   const groups = await myGroups(id);
   const mine = groups.filter((g) => g.me);
@@ -146,11 +149,14 @@ async function home(id) {
   for (const g of mine) {
     body += `<section><h2>${esc(g.name ?? g.id)}</h2>`;
     try {
-      const { events } = (await folded(g.id)).answers;
+      const { answers: { events }, complete } = await folded(g.id);
       const list = Object.entries(events).sort(([, a], [, b]) => b.at - a.at);
+      // Nothing posted is said only of a group this computer holds whole (#151).
+      trace('a group\'s events', { group: g.id, events: list.length, complete });
+      body += partly(complete, 'posts');
       body += list.length
         ? `<ul>${list.map(([e, x]) => `<li><a href="/g/${encodeURIComponent(g.id)}/e/${encodeURIComponent(e)}">${esc(x.what)}</a> <span class="quiet">${esc(x.when)}</span></li>`).join('')}</ul>`
-        : '<p class="quiet">Nothing posted yet.</p>';
+        : complete ? '<p class="quiet">Nothing posted yet.</p>' : '';
     } catch (e) {
       trace('a group could not be read', { group: g.id, error: e.message });
       body += `<p class="unread">This group's events can't be read on this computer right now.</p>`;
@@ -242,7 +248,6 @@ async function eventPage(id, group, event, lent) {
   const e = here.answers.events[event];
   if (!e) throw new Said(404, `This event isn't in ${named(groups, group)}.`);
   let body = `<h1>${esc(e.what)}</h1><p>${[e.when, e.where].filter(Boolean).map(esc).join(' · ')}</p><p class="quiet">${esc(e.host)} is hosting.</p>`;
-  if (!here.complete) body += '<p class="unread">Some answers may not have reached this computer yet.</p>';
   if (e.host === me) {
     // The host's view: each group this computer holds where they host it.
     const all = [];
@@ -252,20 +257,23 @@ async function eventPage(id, group, event, lent) {
         continue;
       }
       try {
-        all.push({ group: g.id, answers: g.id === group ? here.answers : (await folded(g.id)).answers, me: g.me });
+        const f = g.id === group ? here : await folded(g.id);
+        all.push({ group: g.id, answers: f.answers, me: g.me, complete: f.complete });
       } catch (err) {
         all.push({ group: g.id, unread: err.message });
       }
     }
     for (const g of hosted(event, all)) {
       body += `<section data-group="${esc(g.group)}"><h2>${esc(named(groups, g.group))}</h2>`;
-      body += g.unread ? `<p class="unread">This group's answers can't be read on this computer right now.</p>` : said(g.event, groups.find((x) => x.id === g.group).people) + linkTo(lent, g.group, event, named(groups, g.group));
+      // Each group's answers said whole or not, never only the path's (#151).
+      const complete = all.find((x) => x.group === g.group).complete;
+      body += g.unread ? `<p class="unread">This group's answers can't be read on this computer right now.</p>` : partly(complete, 'answers') + said(g.event, groups.find((x) => x.id === g.group).people) + linkTo(lent, g.group, event, named(groups, g.group));
       body += '</section>';
     }
-    trace('the host\'s view', { event, asker: me, groups: all.map((g) => g.group) });
+    trace('the host\'s view', { event, asker: me, groups: all.map((g) => g.group), partly: all.filter((g) => g.complete === false).map((g) => g.group) });
   } else {
-    body += `<section data-group="${esc(group)}"><h2>${esc(named(groups, group))}</h2>${said(e, groups.find((x) => x.id === group).people)}</section>`;
-    trace('a member\'s view', { event, asker: me, group });
+    body += `<section data-group="${esc(group)}"><h2>${esc(named(groups, group))}</h2>${partly(here.complete, 'answers')}${said(e, groups.find((x) => x.id === group).people)}</section>`;
+    trace('a member\'s view', { event, asker: me, group, complete: here.complete });
   }
   const at = `/g/${encodeURIComponent(group)}/e/${encodeURIComponent(event)}`;
   const guests = e.coming[me];
