@@ -8498,3 +8498,200 @@ fixes.
 | I19 | 6 | dry-report, `tests/` scopes; converge in apps/jellyfin/mw | Still present, said as could-not-judge; the line-window pass stood in. |
 | I29 | 6 | `refresh` over a corpus `code index` made | Still present: "prod-969d8c9 is not registered", then the in-process rebuild and exit 0. |
 | I31 | 6, 7 | `code index`'s endpoint probe | New: its first run found no embedder, :9741 "unavailable" by a GET to /v1/models, while `curl` of the same URL answered moments after; run again, it indexed. A probe that fails once says "unavailable" with no retry and no time; one run, not a rate. |
+
+## REVIEW-audit-events-auto-1 (2026-10-14, range 2843760..43c0552)
+
+The events queue has no earlier `REVIEW-audit-` row (ralph/next/events/
+STATE.md), so the range starts where the queue did, 2843760 (its three
+rows), and ends at 43c0552, the commit that made this row. `git rev-list
+--count 2843760..43c0552` is 29, none a merge (`--merges`: 0): onair-run's
+close and `done`, REVIEW-audit-onair-auto-2 whole (its own fixes, 0213ebb,
+5bf3db5 and 036a456, audited by no row before this one), events-app,
+events-run and events-doc, each with its `done`, and this row's own commit.
+
+This audit's own commits before this section: fb7db91 (the row's two
+paths, as cd0e89d corrected onair-auto-2's) and 370eec8 (the page's word
+limit read from the fold). It opens #150 and #151, and closes none.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+2843760..43c0552` (/tmp/eventsaudit1/ledger.raw), summed by
+/tmp/eventsaudit1/scripts/ledger.py (ledger.out) to the earlier audits'
+rules: product is crates/, web/ and bridge/; apps/ apart, which
+`scripts/lean_check.py:14-16` does not count, split the same way; a test as
+lean_check names one, and `*.test.mjs`; a commit that names no unit counts
+toward the next one that does (276fff3 to events-run).
+
+| unit | commits | src + | src − | src net | test + | test − | test net | apps src + | apps src − | apps test + | apps test − |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| onair-run | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| REVIEW-audit-onair-auto-2 | 8 | 4 | 4 | 0 | 17 | 1 | 16 | 0 | 0 | 0 | 0 |
+| events-app | 4 | 0 | 0 | 0 | 29 | 5 | 24 | 815 | 0 | 412 | 0 |
+| events-run | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 29 | 10 | 9 | 7 |
+| events-doc | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| this row's own commit | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 29 | 4 | 4 | 0 | 46 | 6 | 40 | 844 | 10 | 421 | 7 |
+
+The src lines, all auto-2's: svrngs-node blob.rs +4 −4 (0213ebb `Asked`
+named `Replies`, 5bf3db5 `unanswered` one `let`). The tests: auto-2's
+folders.rs +17 −1 (036a456), and events-app's canaries.rs +29 −5 (f1df40f:
+`admit` given a group, and `events`). **The events queue added no line of
+svrngs's product**, as its rows say (fence 3). apps/events: events.js 243,
+server.mjs 316 (+3 −3 in a22edd0), store.mjs 103, canary.mjs 131,
+nouns.txt 11, README.md, and its three test files.
+
+Counted apart: demo/runs +17,360 −13 (events-run's two takes, 37 pictures
+binary), demo/events.md +286; docs/DESIGN.md +14 −1; ralph/next +8 −6;
+ralph/REVIEW_FINDINGS.md +203 −4 (auto-2's section).
+
+The size budget, by scripts/lean_check.py over a `git archive` tree of
+each end (lean-2843760.out, lean-43c0552.out) and over the working tree
+after this audit's commits:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 2843760, range start | 3149 / 3150 | 16236 / 16237 |
+| 43c0552, range end | 3149 / 3150 | 16236 / 16237 |
+| 370eec8, this audit's last change | **3149 / 3150** | **16236 / 16237** |
+
+Unchanged across the range: auto-2's moves net 0, and apps/ uncounted.
+Still **no line left in the repository, 1 in svrngs-core** (#80).
+
+### The instrument
+
+~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256 67e46f63…
+(`shasum -a 256`), the binary onair-auto-2 ran and planted.
+
+The corpus is 43c0552's crates/, apps/, web/, scripts/, Cargo.toml and
+Cargo.lock by `git archive` into /tmp/eventsaudit1/prod-43c0552 (296
+files), apps/on-air/page/vendor left out (upstream's). `code index .
+--corpus-id prod-43c0552` gave 3483 chunks in 332 s, its first run
+(index.out; I31 not seen this time, one run). `refresh` gave rust 15467
+symbols, typescript and python "skipped (export failed)" (I4), and
+"prod-43c0552 is not registered" before its in-process rebuild (I29)
+(refresh.out).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-node and apps/events (`git diff --stat
+2843760 43c0552 -- crates apps web scripts bridge`), each reported at 0.95
+and 0.90, with crates/svrngs-node/tests; and apps/ whole, since events was
+made in expenses' shape and a clone across the two apps is outside either
+app's scope (/tmp/eventsaudit1/clean-*.md).
+
+| scope | locations | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---:|---:|---:|---:|---|
+| crates/svrngs-node/ | 531 | 1 | 0 | 7 | none |
+| apps/events/ | 55 | could-not-judge (I4) | 0 | 2 | 2, both store.mjs |
+| apps/ | 385 | could-not-judge (I4) | 9 | 22 | 7 at 0.95, 13 at 0.90 |
+| crates/svrngs-node/tests/ | 0 | could-not-judge (I19) | could-not-judge | could-not-judge | — |
+
+The node's groups are auto-2's, the same eight (api.rs `addr` ×2; near
+pairs in door/sign_in.rs, synced.rs, redeem.rs, door/choices.rs, rail.rs,
+ring_sync/tests.rs, lend.rs): none in blob.rs, the one src file the range
+changed, so no side was added in the range.
+
+Every cluster with a side the range added, apps/ at 0.90 (the 0.95 ones
+marked •):
+
+| cosine | apps/events | its other side | read |
+|---:|---|---|---|
+| 1.000 • | laws.test.mjs:58–66 `constructor` | expenses/laws.test.mjs:48–56 | The five laws' scaffolding, copied (#150). |
+| 1.000 • | laws.test.mjs:61–69 `now` | expenses/laws.test.mjs:51–59 | The same (#150). |
+| 0.996 • | canary.mjs:52–66 `unheld` | expenses/canary.mjs:54–68 | The canary's wait, copied with WAIT_MS (#150). |
+| 0.992 • | laws.test.mjs:53–82 `elsewhere` | expenses/laws.test.mjs:43–72 | #150. |
+| 0.984 • | laws.test.mjs:80–90 `determinism` | expenses/laws.test.mjs:70–80 | #150. |
+| 0.974 • | laws.test.mjs:46–55 `said` | expenses/laws.test.mjs:37–45 `answers` | #150; events' also folds `answers`. |
+| 0.962 • | canary.mjs:42–52 `append` | expenses/canary.mjs:43–53 | #150; events' names the group. |
+| 0.949 | canary.mjs:31–44 `call` | expenses/canary.mjs:32–45 | #150; events' names the group. |
+| 0.927 | store.mjs:49–58 `log` | store.mjs:53–61 `append` | Not a clone: `record`'s two methods, four and three lines (:52-55, :56-58), padded to the window (I32). |
+| 0.920 | laws.test.mjs:110–134 `totality` | expenses/laws.test.mjs:98–120 | Each its own app's hostile acts; the loop around them #150's. |
+| 0.917 | store.mjs:81–89 `people` | store.mjs:84–93 `log` | Not a clone: `file`'s (:84-86, :87-90), as above (I32). |
+| 0.904 | events.js:116–127 `actsOf` | expenses/expenses.js:125–136 | Not one decider twice: events keeps voided ops and decides whose correction counts (events.js:111-118), expenses drops them (expenses.js:120-127). Both read an op's person as `on_behalf_of ?? person` (:123, :132), which is the record's (DESIGN §3), said in each app. |
+| 0.903 | laws.test.mjs:100–114 `idempotence` | expenses/laws.test.mjs:88–102 | #150; events skips an answer a correction names (:100-102). |
+
+The line-window pass (/tmp/eventsaudit1/scripts/windows.py, onair-auto-2's
+unchanged, its plant there) over apps/events, apps/expenses and
+crates/svrngs-node/tests at 43c0552: **185 window hits, 52 spans, 2 new**
+(windows.out): `apps/events/canary.mjs:54-67 == apps/expenses/canary.mjs:56-69`
+and `apps/events/laws.test.mjs:53-81 == apps/expenses/laws.test.mjs:43-71`,
+both #150. None in the node's tests: canaries.rs's `events` is its own.
+(Its first run read 0 hits: zsh passed the 37 paths as one word; split by
+`xargs`, run again.)
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges 2843760..43c0552 -- crates apps
+web scripts bridge ':!apps/on-air/page/vendor'` match
+`(struct|enum|trait|type|class)\s+[A-Z]\w*` twice (new-types.out): `Said`
+(server.mjs:55, `class Said extends Error`) and `Replies` (blob.rs:137).
+Each through `converge noun <Name> --corpus-id prod-43c0552` (nouns.out),
+with `git grep -nP` beside it (nouns-grep.out):
+
+| noun | converge (production) | git grep (demo/ apart) | read |
+|---|---|---|---|
+| Said | **2**: svrngs cli.rs:1042; svrngs-node door/choices.rs:39 | 5: cli.rs:1043, choices.rs:40, tests/folders.rs:1051, web/app.js:83, apps/events/server.mjs:55 | The two Rust ones as :4459 above read them, three concepts, no change. events' is web/app.js's concept, a page's refusal in a person's words with its status, on the far side of the app's line: the app runs alone (EVENTS.md §5) and lends no svrngs code, so it is a fork across two systems, not two deciders in one (AGENTS.md 8). Its arguments run `(status, words)`, app.js's `(words, status)`; nothing passes one to the other. No change. converge does not see either JS class (I4). |
+| Replies | 1: blob.rs:136 | 1: blob.rs:137 | One (auto-2's rename). |
+
+converge's lines are still one early (I1).
+
+### Reading the range
+
+Every hunk of product code and of apps/events the range changed was read
+(`git diff 2843760 43c0552 -- crates apps`, events.js and server.mjs
+whole).
+
+- **One decider** (AGENTS.md 8). The words an event may hold were limited
+  in two homes: events.js `MAX_WORDS` (:46), which `validate` holds an
+  event to (:95-99), and the page's `maxlength="200"`, three times
+  (server.mjs:160-162). **Fixed in 370eec8**: the page reads `MAX_WORDS`.
+  The five laws' judge is in two apps' tests, and the canary's wait in two
+  canaries (#150). Who stands in a group is `store.people` alone, read by
+  `standing` (server.mjs:82-93) and `myGroups` (:99-113).
+- **Never silently substitute** (AGENTS.md 6; fence 2). A group that
+  cannot be read is said as that on the home page (:143, :155), on its
+  event page (:88) and in the host's view (:231). A group read in part is
+  not: the record says `complete: false` when it knows of acts it does not
+  hold (rail.rs:384, admit.rs:423), and the page says so only for the
+  path's group (:214); the home page's list and the host's other groups
+  drop it (#151).
+- **Glassbox** (AGENTS.md 1). Every refusal goes through the one catch's
+  `answered` trace (:310-312), with its status and words; standing, each
+  write, each change of mind and each view trace at their branch. When
+  `EVENTS_DEBUG` is unset nothing is traced; it is the app's switch.
+- **Machines build, people speak** (fence 4). `write` (:123-135) writes
+  every act as the person asking, `name` from `standing`; no route takes
+  another person's name. A guest's `came` is keyed by its writer
+  (events.js:180).
+- **Closed sets** (AGENTS.md 9). The three kinds are `EVENT`, `COMING`,
+  `CAME` and `FIELDS` (events.js:43-54); the routes' three verbs a list
+  (server.mjs:296). JS, so constants, as expenses keeps them.
+- **The nouns gate** (fence 3). `python3 scripts/vocab_check.py`: "53 app
+  nouns, 0 in infra code".
+- **The run's driver** (demo/runs/events, not counted) is kept byte for
+  byte as it ran (#61) and was not reviewed as product.
+
+### Fixed here
+
+- 370eec8: the page's word limit is events.js `MAX_WORDS`; the page byte
+  for byte the same, and moving with a plant of 150.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 150 | 8 | apps/events/laws.test.mjs:53-81 (`elsewhere`, `determinism`) and :159 (`broken`) == apps/expenses/laws.test.mjs:43-71 and :129; apps/events/canary.mjs:32 (`WAIT_MS = 10_000`) and :54-67 (`unheld`, `arrived`) == apps/expenses/canary.mjs:33 and :56-69 | not fixed: a move across two apps, not small | RING_APP_LIBRARY §4's five laws and the sixth are judged by two copies of one harness, events' citing expenses' as its source (events laws.test.mjs:1); a law tightened in one stays loose in the other with nothing red. The canary's wait is copied too, and its bound twice: events' cites expenses' WAIT_MS (:31) and spells 10_000 again, and only expenses' says why 10 s (:30-32). One home for both, e.g. `apps/laws.mjs` that each app's tests import with its own journal and plants, is a move each test re-proves red on its plants; apps/, so no counted line. A third app with laws makes it three. |
+| 151 | 6 | apps/events/server.mjs:224 (`(await folded(g.id)).answers`, `complete` dropped) and :148-152 (the home list, "Nothing posted yet." without `complete`); beside :214, which says it for the path's group alone | not fixed: a change in behaviour | A group whose record knows of acts it does not hold (rail.rs:384 `complete`, admit.rs:423) is shown in the host's view, or on the home page, as if it held them all: the home page can say "Nothing posted yet." of a group that has posts this computer has not received, and the host's other groups show their answers with no "Some answers may not have reached this computer yet." Fence 2 says an absence is said; carrying `complete` with each group's answers and saying it per section is about +4 lines in apps/, uncounted. |
+| 80 | — | scripts/lean_check.py:32 BUDGET, :99 `n >= cap` | not fixed (operator's) | Unchanged: 1 line left in svrngs-core (3149 / 3150), **none** in the repository (16236 / 16237). The events queue added none. |
+| 130, 132-149 | as recorded | as recorded | not fixed | Not touched by this range but for auto-2's own commits, read in its section. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still one line early (cli.rs:1042 for :1043, choices.rs:39 for :40, blob.rs:136 for :137). |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)"; apps/events' and apps/'s exact tier could-not-judge, and converge blind to JS classes. |
+| I19 | 6 | dry-report, `tests/` scopes | Still present, said as could-not-judge; the line-window pass stood in. |
+| I29 | 6 | `refresh` over a corpus `code index` made | Still present: "prod-43c0552 is not registered", then the in-process rebuild and exit 0. |
+| I32 | 7 | dry-report's JS near tier | New: a JS object's methods are named over spans padded three lines each side, so two short neighbours overlap and read as a clone: `log` "store.mjs:49–58" for :52-55 and `append` "53–61" for :56-58, cosine 0.927; `people` "81–89" for :84-86, `log` "84–93" for :87-90. A cluster whose two spans overlap in one file is the window, not the code. |
