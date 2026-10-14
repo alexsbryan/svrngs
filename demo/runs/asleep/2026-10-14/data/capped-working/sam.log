@@ -1,0 +1,183 @@
+2026-10-14T14:22:32.548922Z  INFO node: node: endpoint bound with the signing key actor="277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be" data_dir=/tmp/asleep-run/sam/.svrngs dial=Some("277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be@192.168.1.10:50060") api=127.0.0.1:65231
+2026-10-14T14:22:33.766561Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/redeem/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:33.808098Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/redeem/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:33.830592Z DEBUG transport: iroh: a bare key — dialled through the endpoint's address lookup when it has one transport="iroh" peer=f6ccada6 lookup=true
+2026-10-14T14:22:33.835496Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:34.686354Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/redeem/0 dialer=d8cfdb4d3e258a5b7f3be868f9b7c8db707792c85638a6458f4b0ca1fd25a112
+2026-10-14T14:22:35.477555Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/redeem/0 dialer=d8cfdb4d3e258a5b7f3be868f9b7c8db707792c85638a6458f4b0ca1fd25a112
+2026-10-14T14:22:35.518819Z  INFO transport: iroh bridge: peer dial info changed — retargeted in place (port held) peer=f6ccada6 bridge=127.0.0.1:32231
+2026-10-14T14:22:36.174847Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=d8cfdb4d3e258a5b7f3be868f9b7c8db707792c85638a6458f4b0ca1fd25a112
+2026-10-14T14:22:37.386189Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=d8cfdb4d3e258a5b7f3be868f9b7c8db707792c85638a6458f4b0ca1fd25a112
+2026-10-14T14:22:38.381126Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/lend/0 dialer=4b9647dd434932e0dc80d9ffc845ff59585ec4ede90b1f9cbfb3998b7fe99171
+2026-10-14T14:22:38.399818Z  INFO door: door: let in, and told their share of the declared upload person="Cy" lend=probe people=1 share_bps=Some(100000000) declared_bps=Some(100000000) relayed=Some(true) rtt_ms=Some(80) sent=Some(4044) received=Some(4501)
+2026-10-14T14:22:38.586889Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:38.587810Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:38.681075Z DEBUG transport: iroh bridge: dropped — its local port stops answering now addr=127.0.0.1:32231
+2026-10-14T14:22:38.769234Z  INFO node: node: endpoint bound with the signing key actor="277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be" data_dir=/tmp/asleep-run/sam/.svrngs dial=Some("277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be@192.168.1.10:50248") api=127.0.0.1:65231
+2026-10-14T14:22:39.104635Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:39.105961Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:39.112929Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:39.113760Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:39.118310Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:39.119410Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:39.123783Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:39.125137Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:39.128963Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:39.129456Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:39.251865Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/lend/0 dialer=4b9647dd434932e0dc80d9ffc845ff59585ec4ede90b1f9cbfb3998b7fe99171
+2026-10-14T14:22:39.264796Z  INFO door: door: let in, and told their share of the declared upload person="Cy" lend=probe people=1 share_bps=Some(100000000) declared_bps=Some(100000000) relayed=Some(true) rtt_ms=Some(73) sent=Some(3982) received=Some(4508)
+2026-10-14T14:22:40.917742Z DEBUG transport: iroh bridge: dropped — its local port stops answering now addr=127.0.0.1:32231
+2026-10-14T14:22:41.080399Z  INFO node: node: endpoint bound with the signing key actor="277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be" data_dir=/tmp/asleep-run/sam/.svrngs dial=Some("277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be@192.168.1.10:64091") api=127.0.0.1:65231
+2026-10-14T14:22:41.409041Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:41.411034Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:41.419015Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:41.419749Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:41.422437Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:41.422804Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:41.424973Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:41.425298Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:41.427418Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:41.427758Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:41.536127Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/lend/0 dialer=4b9647dd434932e0dc80d9ffc845ff59585ec4ede90b1f9cbfb3998b7fe99171
+2026-10-14T14:22:41.558691Z  INFO door: door: let in, and told their share of the declared upload person="Cy" lend=probe people=1 share_bps=Some(100000000) declared_bps=Some(100000000) relayed=Some(true) rtt_ms=Some(65) sent=Some(4044) received=Some(4508)
+2026-10-14T14:22:43.182041Z DEBUG transport: iroh bridge: dropped — its local port stops answering now addr=127.0.0.1:32231
+2026-10-14T14:22:43.404356Z  INFO node: node: endpoint bound with the signing key actor="277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be" data_dir=/tmp/asleep-run/sam/.svrngs dial=Some("277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be@192.168.1.10:63430") api=127.0.0.1:65231
+2026-10-14T14:22:44.715194Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:44.717500Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:44.724776Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:44.726129Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:44.731337Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:44.732248Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:44.736756Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:44.737384Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:44.740983Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:44.741448Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:44.866041Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/lend/0 dialer=4b9647dd434932e0dc80d9ffc845ff59585ec4ede90b1f9cbfb3998b7fe99171
+2026-10-14T14:22:44.867243Z  INFO door: door: let in, and told their share of the declared upload person="Cy" lend=probe people=1 share_bps=Some(100000000) declared_bps=Some(100000000) relayed=Some(true) rtt_ms=Some(84) sent=Some(2883) received=Some(4508)
+2026-10-14T14:22:45.730202Z DEBUG transport: iroh bridge: dropped — its local port stops answering now addr=127.0.0.1:32231
+2026-10-14T14:22:45.995496Z  INFO node: node: endpoint bound with the signing key actor="277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be" data_dir=/tmp/asleep-run/sam/.svrngs dial=Some("277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be@192.168.1.10:62105") api=127.0.0.1:65231
+2026-10-14T14:22:46.314674Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:46.315773Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:46.321189Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:46.322203Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:46.327568Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:46.329108Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:46.335198Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:46.338209Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:46.343984Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:46.344888Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:46.463202Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/lend/0 dialer=4b9647dd434932e0dc80d9ffc845ff59585ec4ede90b1f9cbfb3998b7fe99171
+2026-10-14T14:22:46.474847Z  INFO door: door: let in, and told their share of the declared upload person="Cy" lend=probe people=1 share_bps=Some(100000000) declared_bps=Some(100000000) relayed=Some(true) rtt_ms=Some(71) sent=Some(3986) received=Some(4508)
+2026-10-14T14:22:48.271101Z DEBUG transport: iroh bridge: dropped — its local port stops answering now addr=127.0.0.1:32231
+2026-10-14T14:22:48.500510Z  INFO node: node: endpoint bound with the signing key actor="277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be" data_dir=/tmp/asleep-run/sam/.svrngs dial=Some("277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be@192.168.1.10:62983") api=127.0.0.1:65231
+2026-10-14T14:22:48.818216Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:48.819806Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:48.826370Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:48.827300Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:48.833469Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:48.834631Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:48.841362Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:48.842521Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:48.853894Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:48.860627Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:48.999090Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/lend/0 dialer=4b9647dd434932e0dc80d9ffc845ff59585ec4ede90b1f9cbfb3998b7fe99171
+2026-10-14T14:22:49.011595Z  INFO door: door: let in, and told their share of the declared upload person="Cy" lend=probe people=1 share_bps=Some(100000000) declared_bps=Some(100000000) relayed=Some(true) rtt_ms=Some(80) sent=Some(3985) received=Some(4508)
+2026-10-14T14:22:50.806960Z DEBUG transport: iroh bridge: dropped — its local port stops answering now addr=127.0.0.1:32231
+2026-10-14T14:22:51.089069Z  INFO node: node: endpoint bound with the signing key actor="277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be" data_dir=/tmp/asleep-run/sam/.svrngs dial=Some("277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be@192.168.1.10:57831") api=127.0.0.1:65231
+2026-10-14T14:22:51.405467Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:51.406927Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:51.413333Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:51.414728Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:51.421634Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:51.422807Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:51.426896Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:51.427410Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:51.430147Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:51.430541Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:51.546961Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/lend/0 dialer=4b9647dd434932e0dc80d9ffc845ff59585ec4ede90b1f9cbfb3998b7fe99171
+2026-10-14T14:22:51.561927Z  INFO door: door: let in, and told their share of the declared upload person="Cy" lend=probe people=1 share_bps=Some(100000000) declared_bps=Some(100000000) relayed=Some(true) rtt_ms=Some(70) sent=Some(3986) received=Some(4508)
+2026-10-14T14:22:53.307078Z DEBUG transport: iroh bridge: dropped — its local port stops answering now addr=127.0.0.1:32231
+2026-10-14T14:22:53.408578Z  INFO node: node: endpoint bound with the signing key actor="277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be" data_dir=/tmp/asleep-run/sam/.svrngs dial=Some("277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be@192.168.1.10:64671") api=127.0.0.1:65231
+2026-10-14T14:22:53.853627Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:53.869446Z  INFO door: door: let in, and told their share of the declared upload person="Bo" lend=probe people=1 share_bps=Some(100000000) declared_bps=Some(100000000) relayed=None rtt_ms=None sent=None received=None
+2026-10-14T14:22:53.914399Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:53.916048Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:53.923105Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:53.923992Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:53.929042Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:53.929872Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:53.933823Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:53.934531Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:54.063303Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/lend/0 dialer=4b9647dd434932e0dc80d9ffc845ff59585ec4ede90b1f9cbfb3998b7fe99171
+2026-10-14T14:22:54.068746Z  INFO door: door: let in, and told their share of the declared upload person="Cy" lend=probe people=2 share_bps=Some(50000000) declared_bps=Some(100000000) relayed=Some(true) rtt_ms=Some(77) sent=Some(2879) received=Some(4508)
+2026-10-14T14:22:54.852061Z DEBUG transport: iroh bridge: dropped — its local port stops answering now addr=127.0.0.1:32231
+2026-10-14T14:22:54.979994Z  INFO node: node: endpoint bound with the signing key actor="277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be" data_dir=/tmp/asleep-run/sam/.svrngs dial=Some("277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be@192.168.1.10:58175") api=127.0.0.1:65231
+2026-10-14T14:22:55.305472Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:55.308039Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:55.314714Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:55.315642Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:55.321008Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:55.321578Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:55.324822Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:55.325305Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:55.327911Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:55.328426Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:55.464346Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/lend/0 dialer=4b9647dd434932e0dc80d9ffc845ff59585ec4ede90b1f9cbfb3998b7fe99171
+2026-10-14T14:22:55.475808Z  INFO door: door: let in, and told their share of the declared upload person="Cy" lend=probe people=1 share_bps=Some(100000000) declared_bps=Some(100000000) relayed=Some(true) rtt_ms=Some(79) sent=Some(3986) received=Some(4508)
+2026-10-14T14:22:57.171579Z DEBUG transport: iroh bridge: dropped — its local port stops answering now addr=127.0.0.1:32231
+2026-10-14T14:22:57.364486Z  INFO node: node: endpoint bound with the signing key actor="277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be" data_dir=/tmp/asleep-run/sam/.svrngs dial=Some("277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be@192.168.1.10:55318") api=127.0.0.1:65231
+2026-10-14T14:22:57.705885Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:57.707173Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:57.714723Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:57.715865Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:57.722256Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:57.723186Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:57.726485Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:57.726905Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:57.729509Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:22:57.729909Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:22:57.848119Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/lend/0 dialer=4b9647dd434932e0dc80d9ffc845ff59585ec4ede90b1f9cbfb3998b7fe99171
+2026-10-14T14:22:57.867076Z  INFO door: door: let in, and told their share of the declared upload person="Cy" lend=probe people=1 share_bps=Some(100000000) declared_bps=Some(100000000) relayed=Some(true) rtt_ms=Some(73) sent=Some(4044) received=Some(4508)
+2026-10-14T14:22:59.520867Z DEBUG transport: iroh bridge: dropped — its local port stops answering now addr=127.0.0.1:32231
+2026-10-14T14:22:59.732082Z  INFO node: node: endpoint bound with the signing key actor="277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be" data_dir=/tmp/asleep-run/sam/.svrngs dial=Some("277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be@192.168.1.10:55483") api=127.0.0.1:65231
+2026-10-14T14:23:00.055116Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:23:00.056286Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:23:00.062529Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:23:00.063471Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:23:00.068963Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:23:00.070228Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:23:00.075468Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:23:00.076553Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:23:00.080629Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:23:00.081041Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:23:00.260302Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/lend/0 dialer=4b9647dd434932e0dc80d9ffc845ff59585ec4ede90b1f9cbfb3998b7fe99171
+2026-10-14T14:23:00.294473Z  INFO door: door: let in, and told their share of the declared upload person="Cy" lend=probe people=1 share_bps=Some(100000000) declared_bps=Some(100000000) relayed=Some(true) rtt_ms=Some(136) sent=Some(3986) received=Some(4542)
+2026-10-14T14:23:02.012405Z DEBUG transport: iroh bridge: dropped — its local port stops answering now addr=127.0.0.1:32231
+2026-10-14T14:23:02.192823Z  INFO node: node: endpoint bound with the signing key actor="277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be" data_dir=/tmp/asleep-run/sam/.svrngs dial=Some("277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be@192.168.1.10:57419") api=127.0.0.1:65231
+2026-10-14T14:23:02.626156Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:23:02.660175Z  INFO door: door: let in, and told their share of the declared upload person="Bo" lend=probe people=1 share_bps=Some(100000000) declared_bps=Some(100000000) relayed=None rtt_ms=None sent=None received=None
+2026-10-14T14:23:02.701561Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:23:02.702633Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:23:02.708564Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:23:02.709595Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:23:02.714222Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:23:02.715034Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:23:02.720194Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:23:02.721021Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:23:02.871599Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/lend/0 dialer=4b9647dd434932e0dc80d9ffc845ff59585ec4ede90b1f9cbfb3998b7fe99171
+2026-10-14T14:23:02.890415Z  INFO door: door: let in, and told their share of the declared upload person="Cy" lend=probe people=2 share_bps=Some(50000000) declared_bps=Some(100000000) relayed=Some(true) rtt_ms=Some(88) sent=Some(4017) received=Some(4509)
+2026-10-14T14:23:03.299264Z DEBUG transport: iroh bridge: dropped — its local port stops answering now addr=127.0.0.1:32231
+2026-10-14T14:23:03.403976Z  INFO node: node: endpoint bound with the signing key actor="277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be" data_dir=/tmp/asleep-run/sam/.svrngs dial=Some("277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be@192.168.1.10:64735") api=127.0.0.1:65231
+2026-10-14T14:23:03.716699Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:23:03.718729Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:23:03.724638Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:23:03.725524Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:23:03.730059Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:23:03.730966Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:23:03.735029Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:23:03.735613Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:23:03.738613Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=f6ccada655c5a74cb23d62330bf89f2193399a8970aba3d766cdb5745ddf1cf9
+2026-10-14T14:23:03.739090Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Bo" lend=probe addr=Some(192.168.1.10)
+2026-10-14T14:23:03.875246Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/lend/0 dialer=4b9647dd434932e0dc80d9ffc845ff59585ec4ede90b1f9cbfb3998b7fe99171
+2026-10-14T14:23:03.909592Z  INFO door: door: let in, and told their share of the declared upload person="Cy" lend=probe people=1 share_bps=Some(100000000) declared_bps=Some(100000000) relayed=Some(true) rtt_ms=Some(76) sent=Some(4044) received=Some(4509)
+2026-10-14T14:23:05.756478Z DEBUG transport: iroh bridge: dropped — its local port stops answering now addr=127.0.0.1:32231

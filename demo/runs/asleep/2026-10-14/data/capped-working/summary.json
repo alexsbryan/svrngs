@@ -1,0 +1,700 @@
+{
+ "n0": {
+  "https://usw1-1.relay.n0.iroh.link/": true,
+  "https://use1-1.relay.n0.iroh.link/": true,
+  "https://euc1-1.relay.n0.iroh.link/": true,
+  "https://aps1-1.relay.n0.iroh.link/": true
+ },
+ "cy_join": {
+  "ms": 2859,
+  "status": "You’re in house, as Cy"
+ },
+ "setup": {
+  "label": "f78925ul27h8qnp3bvm24qd5cvfzvak399u0wtrsd0urzan5a09a7chbcckjpb",
+  "phone_first": {
+   "ms": 1762,
+   "answered_ms": 850,
+   "status": null,
+   "refused": null,
+   "url": "http://f78925ul27h8qnp3bvm24qd5cvfzvak399u0wtrsd0urzan5a09a7chbcckjpb.localhost:65228/",
+   "text": "probe here",
+   "shown": true
+  },
+  "bo_first": 200
+ },
+ "rounds": [
+  {
+   "round": 1,
+   "bo": [
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 9,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 6,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 6,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 6,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 4,
+     "shown": true,
+     "said": null
+    }
+   ],
+   "cy": {
+    "ms": 232,
+    "answered_ms": 216,
+    "status": 200,
+    "refused": null,
+    "url": "http://f78925ul27h8qnp3bvm24qd5cvfzvak399u0wtrsd0urzan5a09a7chbcckjpb.localhost:65228/?open=1",
+    "text": "probe here",
+    "shown": true,
+    "dials": [
+     {
+      "ms": 78,
+      "ok": true,
+      "line": "LAYER tls/alpn+relay-hop: ok — QUIC connection established to 277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be on the Lend protocol"
+     }
+    ]
+   }
+  },
+  {
+   "round": 2,
+   "bo": [
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 13,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 6,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 3,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 2,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 3,
+     "shown": true,
+     "said": null
+    }
+   ],
+   "cy": {
+    "ms": 212,
+    "answered_ms": 197,
+    "status": 200,
+    "refused": null,
+    "url": "http://f78925ul27h8qnp3bvm24qd5cvfzvak399u0wtrsd0urzan5a09a7chbcckjpb.localhost:65228/?open=2",
+    "text": "probe here",
+    "shown": true,
+    "dials": [
+     {
+      "ms": 70,
+      "ok": true,
+      "line": "LAYER tls/alpn+relay-hop: ok — QUIC connection established to 277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be on the Lend protocol"
+     }
+    ]
+   }
+  },
+  {
+   "round": 3,
+   "bo": [
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 1013,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 8,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 6,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 5,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 4,
+     "shown": true,
+     "said": null
+    }
+   ],
+   "cy": {
+    "ms": 207,
+    "answered_ms": 189,
+    "status": 200,
+    "refused": null,
+    "url": "http://f78925ul27h8qnp3bvm24qd5cvfzvak399u0wtrsd0urzan5a09a7chbcckjpb.localhost:65228/?open=3",
+    "text": "probe here",
+    "shown": true,
+    "dials": [
+     {
+      "ms": 69,
+      "ok": true,
+      "line": "LAYER tls/alpn+relay-hop: ok — QUIC connection established to 277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be on the Lend protocol"
+     }
+    ]
+   }
+  },
+  {
+   "round": 4,
+   "bo": [
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 7,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 6,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 7,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 9,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 7,
+     "shown": true,
+     "said": null
+    }
+   ],
+   "cy": {
+    "ms": 198,
+    "answered_ms": 180,
+    "status": 200,
+    "refused": null,
+    "url": "http://f78925ul27h8qnp3bvm24qd5cvfzvak399u0wtrsd0urzan5a09a7chbcckjpb.localhost:65228/?open=4",
+    "text": "probe here",
+    "shown": true,
+    "dials": [
+     {
+      "ms": 72,
+      "ok": true,
+      "line": "LAYER tls/alpn+relay-hop: ok — QUIC connection established to 277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be on the Lend protocol"
+     }
+    ]
+   }
+  },
+  {
+   "round": 5,
+   "bo": [
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 9,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 7,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 8,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 7,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 19,
+     "shown": true,
+     "said": null
+    }
+   ],
+   "cy": {
+    "ms": 218,
+    "answered_ms": 201,
+    "status": 200,
+    "refused": null,
+    "url": "http://f78925ul27h8qnp3bvm24qd5cvfzvak399u0wtrsd0urzan5a09a7chbcckjpb.localhost:65228/?open=5",
+    "text": "probe here",
+    "shown": true,
+    "dials": [
+     {
+      "ms": 88,
+      "ok": true,
+      "line": "LAYER tls/alpn+relay-hop: ok — QUIC connection established to 277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be on the Lend protocol"
+     }
+    ]
+   }
+  },
+  {
+   "round": 6,
+   "bo": [
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 8,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 8,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 8,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 3,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 3,
+     "shown": true,
+     "said": null
+    }
+   ],
+   "cy": {
+    "ms": 198,
+    "answered_ms": 180,
+    "status": 200,
+    "refused": null,
+    "url": "http://f78925ul27h8qnp3bvm24qd5cvfzvak399u0wtrsd0urzan5a09a7chbcckjpb.localhost:65228/?open=6",
+    "text": "probe here",
+    "shown": true,
+    "dials": [
+     {
+      "ms": 79,
+      "ok": true,
+      "line": "LAYER tls/alpn+relay-hop: ok — QUIC connection established to 277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be on the Lend protocol"
+     }
+    ]
+   }
+  },
+  {
+   "round": 7,
+   "bo": [
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 182,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 12,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 7,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 6,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 4,
+     "shown": true,
+     "said": null
+    }
+   ],
+   "cy": {
+    "ms": 204,
+    "answered_ms": 188,
+    "status": 200,
+    "refused": null,
+    "url": "http://f78925ul27h8qnp3bvm24qd5cvfzvak399u0wtrsd0urzan5a09a7chbcckjpb.localhost:65228/?open=7",
+    "text": "probe here",
+    "shown": true,
+    "dials": [
+     {
+      "ms": 78,
+      "ok": true,
+      "line": "LAYER tls/alpn+relay-hop: ok — QUIC connection established to 277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be on the Lend protocol"
+     }
+    ]
+   }
+  },
+  {
+   "round": 8,
+   "bo": [
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 12,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 7,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 5,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 3,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 3,
+     "shown": true,
+     "said": null
+    }
+   ],
+   "cy": {
+    "ms": 216,
+    "answered_ms": 201,
+    "status": 200,
+    "refused": null,
+    "url": "http://f78925ul27h8qnp3bvm24qd5cvfzvak399u0wtrsd0urzan5a09a7chbcckjpb.localhost:65228/?open=8",
+    "text": "probe here",
+    "shown": true,
+    "dials": [
+     {
+      "ms": 91,
+      "ok": true,
+      "line": "LAYER tls/alpn+relay-hop: ok — QUIC connection established to 277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be on the Lend protocol"
+     }
+    ]
+   }
+  },
+  {
+   "round": 9,
+   "bo": [
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 10,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 7,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 6,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 3,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 3,
+     "shown": true,
+     "said": null
+    }
+   ],
+   "cy": {
+    "ms": 232,
+    "answered_ms": 215,
+    "status": 200,
+    "refused": null,
+    "url": "http://f78925ul27h8qnp3bvm24qd5cvfzvak399u0wtrsd0urzan5a09a7chbcckjpb.localhost:65228/?open=9",
+    "text": "probe here",
+    "shown": true,
+    "dials": [
+     {
+      "ms": 82,
+      "ok": true,
+      "line": "LAYER tls/alpn+relay-hop: ok — QUIC connection established to 277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be on the Lend protocol"
+     }
+    ]
+   }
+  },
+  {
+   "round": 10,
+   "bo": [
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 8,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 7,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 7,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 6,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 4,
+     "shown": true,
+     "said": null
+    }
+   ],
+   "cy": {
+    "ms": 275,
+    "answered_ms": 259,
+    "status": 200,
+    "refused": null,
+    "url": "http://f78925ul27h8qnp3bvm24qd5cvfzvak399u0wtrsd0urzan5a09a7chbcckjpb.localhost:65228/?open=10",
+    "text": "probe here",
+    "shown": true,
+    "dials": [
+     {
+      "ms": 73,
+      "ok": true,
+      "line": "LAYER tls/alpn+relay-hop: ok — QUIC connection established to 277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be on the Lend protocol"
+     }
+    ]
+   }
+  },
+  {
+   "round": 11,
+   "bo": [
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 206,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 8,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 6,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 6,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 6,
+     "shown": true,
+     "said": null
+    }
+   ],
+   "cy": {
+    "ms": 264,
+    "answered_ms": 247,
+    "status": 200,
+    "refused": null,
+    "url": "http://f78925ul27h8qnp3bvm24qd5cvfzvak399u0wtrsd0urzan5a09a7chbcckjpb.localhost:65228/?open=11",
+    "text": "probe here",
+    "shown": true,
+    "dials": [
+     {
+      "ms": 101,
+      "ok": true,
+      "line": "LAYER tls/alpn+relay-hop: ok — QUIC connection established to 277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be on the Lend protocol"
+     }
+    ]
+   }
+  },
+  {
+   "round": 12,
+   "bo": [
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 12,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 6,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 5,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 4,
+     "shown": true,
+     "said": null
+    },
+    {
+     "status": 200,
+     "refused": null,
+     "ms": 3,
+     "shown": true,
+     "said": null
+    }
+   ],
+   "cy": {
+    "ms": 235,
+    "answered_ms": 220,
+    "status": 200,
+    "refused": null,
+    "url": "http://f78925ul27h8qnp3bvm24qd5cvfzvak399u0wtrsd0urzan5a09a7chbcckjpb.localhost:65228/?open=12",
+    "text": "probe here",
+    "shown": true,
+    "dials": [
+     {
+      "ms": 94,
+      "ok": true,
+      "line": "LAYER tls/alpn+relay-hop: ok — QUIC connection established to 277dfc6e29c74de6ad990c958d347b1489590119ffe369c1cf1da2ea817b05be on the Lend protocol"
+     }
+    ]
+   }
+  }
+ ],
+ "end_load": 13.6
+}

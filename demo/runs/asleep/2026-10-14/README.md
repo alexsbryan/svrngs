@@ -65,3 +65,49 @@ in 1 and 2, times 3, rounded up to a whole second.
   operator's (CHARTER.md).
 - **A release build.** The debug build's dials are the slower of the two,
   if either.
+
+## The capped take — events-run's step 10b again
+
+At 883fca8, which gives every dial up after `dial::DIAL_WITHIN`, 2 s. Its
+predictions are `CAPPED.md`, committed (e18090e) before the take; the
+driver as above with `TAKE=capped` (d0cb319). Data in
+`data/capped-working/` and `data/capped-asleep/`.
+
+```
+TAKE=capped PART=working W=/tmp/asleep-run python3 demo/runs/asleep/2026-10-14/run.py
+TAKE=capped PART=asleep  W=/tmp/asleep-run python3 demo/runs/asleep/2026-10-14/run.py
+```
+
+- **working** at d0cb319, nothing dirty, 14:21:36 to 14:23:05 UTC, the
+  1-minute load 12.0 at the start and 13.6 at the end on 12 cores.
+- **asleep** at d0cb319, its only dirt `capped-working`'s data, 14:23:09
+  to 14:25:14 UTC, the load 12.7 and 2.9.
+
+| | predicted | as it ran | verdict |
+|---|---|---|---|
+| C1 | a working dial never said away | all four n0 relays answered. Bo's 60 requests all 200: cold 7–1,013 ms, median 11 ms; warm 2–19 ms, median 6 ms. Cy's 12 opens all shown, 198–275 ms; the dials 69–101 ms, each established. No `away` (`data/capped-working/summary.json`) | passed |
+| C2 | stopped: Bo and Cy told within 3 s | Bo **2,008–2,010 ms**, 502 `away`, his log "iroh bridge: the dial was not answered in time, so the computer is taken as asleep … within=2s" at debug (`data/capped-asleep/bo.log`). Cy **2,051–2,058 ms**, 502 `away`, "The computer lending this did not answer. Try again later."; the worker's dial "REFUSED — not answered in 2s: asleep" after 2,005–2,011 ms | passed |
+| C3 | frozen: Bo within 3 s; Cy about 32 s, not within 3 s nor past 35 s | Bo **2,005–2,008 ms**. Cy **32,228–32,288 ms**: the request on the open dial given up after iroh's 30 s, then the new dial at 2,007–2,011 ms | passed |
+
+Step 10b, events-run's one failed bar, said within 30 s and measured at
+30,019 ms and 30,024 ms: told within the cap here, 2,008–2,010 ms on a
+computer and 2,051–2,058 ms on a phone, for a computer stopped as
+events-run stopped Sam's. One host, one take: not a rate.
+
+## What the capped take found
+
+1. **A just-started computer's first dial took 1,013 ms**, half the cap.
+   Round 3: Sam's svrngs bound its endpoint at 14:22:43.40 and answered
+   the record API, Bo asked at 43.71, and Sam admitted Bo's dial at 44.72
+   (`data/capped-working/sam.log`, `bo.log`), under a load of 12–13.6 on
+   12 cores. The measurement's slowest, 347 ms, was the same kind of dial
+   (README above, 1). The cap held it, with a margin of 2 where the rule
+   asked 3. A computer waking under a heavier load, or a slower path, could
+   come past 2 s and be said away; a second host or a release take would
+   say whether the rule's input moves.
+2. **A phone with an open dial to a computer that sleeps without a
+   goodbye still waits 30 s** (C3). The cap bounds a dial; the worker's
+   open connection is given up only by iroh's own timeout. A lid closing
+   sends nothing, as SIGSTOP sends nothing, so on a phone this is the
+   common case when the phone opened the lend shortly before.
+   svrngs's, written in `NEEDS_HUMAN.md` here.
