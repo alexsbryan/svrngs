@@ -58,7 +58,7 @@ await say('listening', { station: o.station, key, person_key });
 // onair-live, a bare string before it, kept as the drain named it.
 function unwrap(p) {
   if (typeof p === 'string') return { text: p, sender: null };
-  return { text: p?.payload ?? p?.text ?? null, sender: { key: p?.key ?? p?.sender ?? null, person_key: p?.person_key ?? null } };
+  return { text: p?.payload ?? null, sender: { key: p?.key ?? null, person_key: p?.person_key ?? null } };
 }
 
 const until = Date.now() + Number(o.for) * 1000;
