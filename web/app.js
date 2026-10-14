@@ -45,6 +45,7 @@ import init, {
   connect,
   connect_to_join,
   endpoint,
+  issuer_of,
   label,
   pass,
   redemption,
@@ -303,6 +304,27 @@ async function uses(lent, dialler, shown) {
   await used(lent, (o) => label(o.key, o.name), traced, line, stop);
 }
 
+// `group` dialled as the person whose key is `key`: the computer that
+// made its link first, and when it does not answer within the cap
+// (dial.rs `LINK_WITHIN`), whichever computer the group's last answer
+// named as lending answers first, each dialled from `dialler`'s one
+// endpoint, as a relay keeps one per key (v1ui-reach (c)). The dial, and
+// whose computer it is when not the link's.
+async function reachGroup(group, key, dialler, away) {
+  try {
+    return [await reach(connect(key, group.token), away)];
+  } catch (e) {
+    const others = (group.computers ?? []).filter((c) => c.key !== issuer_of(group.token));
+    trace(`PAGE: the link's computer did not answer, so ${others.length} other computer(s) are dialled`);
+    if (!others.length) throw e;
+    heading.textContent = `Reaching ${group.name} through someone else’s computer…`;
+    const tries = others.map((c) => dialler().then((ep) => ep.dial(c.key, c.relay)).then((d) => [d, c]));
+    const [d, c] = await reach(Promise.any(tries), away);
+    tries.forEach((t) => t.then(([o]) => o !== d && o.close(), () => {}));
+    return [d, c];
+  }
+}
+
 // In `group`: list what its people lend, and open the one `asked` names
 // at once, at its path, when a lend's origin asked for it; or ask whether
 // an app may use a lend.
@@ -311,7 +333,12 @@ async function enter(group, asked) {
   document.title = group.name;
   const key = await store.unseal(group);
   heading.textContent = `Reaching ${group.name}…`;
-  const d = await reach(connect(key, group.token), `Your group’s computer did not answer through ${through(group.token)}. Try again later.`);
+  // One endpoint as the person, bound when first asked: a relay keeps one
+  // per key (web/src/lib.rs `endpoint`).
+  let bound;
+  const dialler = () => (bound ??= endpoint(key, group.token));
+  const away = `Your group’s computer did not answer through ${through(group.token)}. Try again later.`;
+  const [d, via] = await reachGroup(group, key, dialler, away);
   const res = await d.fetch('GET', PEOPLE_LENDS, [['accept', 'application/json']], null);
   if (!res.ok) {
     const why = res.headers.get('x-svrngs-refused');
@@ -323,6 +350,9 @@ async function enter(group, asked) {
   // A computer before bash-first-minute (c) answers neither unheard nor refused.
   const { lent, unanswered, unheard = [], refused = [], removals } = await res.json();
   await d.close();
+  // The computers that lend, kept to reach the group through next time.
+  const computers = new Map(lent.map((l) => [l.key, { key: l.key, relay: l.relay ?? null, person: l.person }]));
+  group = await store.opened({ ...group, computers: [...computers.values()] });
   // Who was removed or asked to be, shown to everyone in the group
   // (v1-keeper-office (b)); `null` when the computer could not read it.
   document.getElementById('removals').replaceChildren(
@@ -330,7 +360,7 @@ async function enter(group, asked) {
       Object.assign(document.createElement('li'), { textContent: r ? removal(r) : `Who was removed from ${group.name} cannot be read just now.` }),
     ),
   );
-  show(`You’re in ${group.name}, as ${group.person}`, true);
+  show(`You’re in ${group.name}, as ${group.person}${via ? `, through ${via.person}’s computer` : ''}`, true);
   list.replaceChildren(
     ...lent.map((l) => {
       const item = document.createElement('li');
@@ -341,10 +371,6 @@ async function enter(group, asked) {
       return item;
     }),
   );
-  // One endpoint as the person, bound when first asked: a relay keeps one
-  // per key (web/src/lib.rs `endpoint`).
-  let bound;
-  const dialler = () => (bound ??= endpoint(key, group.token));
   const again = asked?.get('open') && lent.find((l) => label(l.key, l.name) === asked.get('open'));
   if (again) open(group, key, lent, unanswered, again, asked.get('at') ?? '/');
   const using = document.getElementById('uses');

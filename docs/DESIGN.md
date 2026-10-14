@@ -532,7 +532,13 @@ the evidence is U4's inventory, §8):
    answers what the group's people lend, each with its lender's key and the
    relay its group's record names for it (`relay`, `null` when it names
    none; relay-in-record), and the page dials the lender through that relay,
-   else the link's. No node proxies another's lend.
+   else the link's. No node proxies another's lend. The page keeps those
+   lenders' computers, and when the issuer does not answer its dial within
+   10 s (`dial::LINK_WITHIN`, three times the slowest working dial measured,
+   `demo/runs/reach/2026-10-14/`), the first of them to answer is asked in
+   its place, and the page says through whose computer it reached the group
+   (v1ui-reach (c)). A member who lends nothing is not among them: the
+   answer names no key of theirs.
 5. *One body for the link.* The command and the page parse a token and sign
    the ask and the redemption with the same code, in svrngs-core: bytes and
    keys in, bytes out.
@@ -1303,7 +1309,7 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,150 lines of code and the
-repository under 16,316 (`scripts/lean_check.py`; events-asleep raised it from 16,235 by 20, events-links by 33, events-principles by 17 and events-wait by 10, the operator's +80 for the events follow-ups all spent; v1ui-economize cut nothing, and of the operator's +650 for the v1 UI over 16,315, v1ui-reach raised it by 1), the branch `folders`
+repository under 16,338 (`scripts/lean_check.py`; events-asleep raised it from 16,235 by 20, events-links by 33, events-principles by 17 and events-wait by 10, the operator's +80 for the events follow-ups all spent; v1ui-economize cut nothing, and of the operator's +650 for the v1 UI over 16,315, v1ui-reach raised it by 23), the branch `folders`
 too since main merged into it at syp-5, counting 13,778 and `svrngs-core`
 2,719 there. A raise is the operator's, and is asked only after an
 economizing pass (the operator, 2026-10-13: "Every raise needs a pass

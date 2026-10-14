@@ -9,7 +9,10 @@
 //            token it was joined by, when it was last opened, and the
 //            person's key — 32 bytes — sealed: `iv` and `sealed`,
 //            with the group's id as the seal's additional data, so a sealed
-//            key opens only as the key of the group it was kept for.
+//            key opens only as the key of the group it was kept for; and
+//            once opened, `computers`, whose each lending computer of the
+//            last answer is, its key and relay, which the page reaches the
+//            group through when its link's does not answer (v1ui-reach (c)).
 //
 // A lend's origin keeps a store of its own, `svrngs-lend` (below): what its
 // worker dials with, never the person's key, which no lend's origin holds
@@ -97,8 +100,8 @@ export async function groups() {
   return all.sort((a, b) => b.opened - a.opened);
 }
 
-// The group was opened now: it is the one the page opens without a link.
-// Answers the group as kept.
+// The group was opened now, as `group` says it: it is the one the page
+// opens without a link. Answers the group as kept.
 export async function opened(group) {
   const now = { ...group, opened: Date.now() };
   await run('groups', 'readwrite', (s) => s.put(now));

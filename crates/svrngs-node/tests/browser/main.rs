@@ -2667,3 +2667,92 @@ async fn the_home_page_opens_the_group_s_folder(engine: Engine) {
     );
     drop(ada);
 }
+
+/// V1_UI_BUILD §7's 3.3 bar: how long the phone may take, with its link's
+/// computer stopped, to list the group's things and open one through
+/// another person's computer. Missed on a host past `load::BUSY`, it is
+/// could-not-judge, as the film's seeks are: the page's cap is 10 s of it
+/// and cy's ask of ada's computer 3 s more (`node::ANSWER_WITHIN`), so the
+/// open has the rest.
+const REACHED_WITHIN: u64 = 15_000;
+
+in_both_engines!(
+    /// The phone reaches whoever's awake (v1ui-reach (b)-(c); V1_UI_BUILD
+    /// §3.3). Ada's computer made bo's link; cy's lends a shelf. Bo's phone
+    /// opens the group while ada's answers, then again once ada's is
+    /// stopped: within the bar it lists cy's shelf through cy's computer,
+    /// says so and says ada's did not answer, and opens the shelf; past the
+    /// bar on a busy host, could-not-judge, never a pass. Planted:
+    /// the page dialling only the link's computer, as before this row,
+    /// which waits as iroh does, 30 s, then says it did not answer.
+    the_phone_reaches_whoever_s_awake
+);
+async fn the_phone_reaches_whoever_s_awake(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let (ada_dir, cy_dir, kept) = (
+        tempfile::tempdir().unwrap(),
+        tempfile::tempdir().unwrap(),
+        tempfile::tempdir().unwrap(),
+    );
+    let ada = node(ada_dir.path(), &relay, &bo).await;
+    let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
+    let shelf = page_origin("<!doctype html><title>cy's shelf</title>").await;
+    lend(cy_dir.path(), "shelf", shelf.port());
+    let ready = kept.path().join("ready");
+    let (go, release) = tokio::sync::oneshot::channel();
+    let args = json!({
+        "site": site,
+        "key": hex::encode(bo.to_bytes()),
+        "token": token(&signing(1), &relay),
+        "ready": ready,
+        "open": "shelf",
+        "title": "cy's shelf",
+    });
+    let start = load::load().await;
+    let phone = tokio::spawn(drive(engine, "reach.mjs", args, Some(release)));
+    tokio::time::timeout(Duration::from_secs(120), async {
+        while !ready.exists() {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+    })
+    .await
+    .expect("the phone opens the group while ada's computer answers");
+    ada.endpoint().close().await;
+    drop(ada);
+    go.send(()).unwrap();
+    let seen = phone.await.unwrap();
+    eprintln!("the phone's run: {seen:#}");
+
+    assert_eq!(
+        seen["first"]["status"], "You’re in house, as bo",
+        "{seen:#}"
+    );
+    let listed = &seen["listed"];
+    assert_eq!(
+        listed["status"], "You’re in house, as bo, through cy’s computer",
+        "the page says whose computer it reached the group through:\n{seen:#}"
+    );
+    assert!(
+        listed["said"]
+            .as_str()
+            .is_some_and(|s| s.contains("ada’s computer did not answer")),
+        "{seen:#}"
+    );
+    let opened = &seen["opened"];
+    assert_eq!(opened["title"], "cy's shelf", "{seen:#}");
+    let ms = opened["ms"].as_u64().unwrap_or(u64::MAX);
+    if ms > REACHED_WITHIN {
+        let missed = format!("cy's shelf opened in {ms} ms, past the bar's {REACHED_WITHIN}");
+        match load::past_busy(&start, load::cores()) {
+            Some(why) => could_not_judge(&format!(
+                "the_phone_reaches_whoever_s_awake::{}: {missed}; {why}; {start} … {}",
+                engine.as_str(),
+                load::load().await
+            )),
+            None => panic!("{missed}, at {start}:\n{seen:#}"),
+        }
+    }
+    drop(cy);
+}

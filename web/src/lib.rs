@@ -306,11 +306,11 @@ pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsE
 }
 
 /// Dial the computer that issued `token`, on `alpn`, from an endpoint of
-/// its own, given up when not answered `within`: the dial's
+/// its own, given up when not answered within `cap`: the dial's
 /// [`Dialled::close`] closes it.
-async fn dial(key: Vec<u8>, token: String, alpn: Alpn, within: Option<std::time::Duration>) -> Result<Dialled, JsError> {
+async fn dial(key: Vec<u8>, token: String, alpn: Alpn, cap: Option<std::time::Duration>) -> Result<Dialled, JsError> {
     let bound = bind_for(key, &token, false).await?;
-    let conn = reach(&bound, None, None, alpn, within).await?;
+    let conn = reach(&bound, None, None, alpn, cap).await?;
     Ok(Dialled {
         ep: Some(bound.ep),
         conn,
@@ -352,6 +352,14 @@ pub async fn holder_endpoint(key: Vec<u8>, relay: Option<String>) -> Result<Endp
 pub fn relay_of(token: String) -> Result<Option<String>, JsError> {
     let link = Token::decode(&token).ok_or_else(|| JsError::new("not a link's token"))?;
     Ok(link.relay.map(|r| RelayUrl::from(r).to_string()))
+}
+
+/// The key of the computer that made the link `token`, 64 hex: the one
+/// [`connect`] dials (v1ui-reach (c)).
+#[wasm_bindgen]
+pub fn issuer_of(token: String) -> Result<String, JsError> {
+    let link = Token::decode(&token).ok_or_else(|| JsError::new("not a link's token"))?;
+    Ok(hex::encode(link.issuer.as_bytes()))
 }
 
 /// The label of the lend `name` lent by the computer whose key is
