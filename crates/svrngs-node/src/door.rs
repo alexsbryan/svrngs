@@ -1223,7 +1223,7 @@ fn pages(door: &Door, device: &DeviceKey) -> Option<HeaderValue> {
     let stands = |group: &String| {
         let standing = door.rail.standing(group);
         tracing::debug!(target: "door", group, read = standing.is_ok(), "door: whether the device stands in a group, for its page; an unreadable register tells none");
-        matches!(standing, Ok(crate::register::Standing::Members(m)) if m.contains_key(device.as_str()))
+        standing.is_ok_and(|s| s.names(device.as_str()))
     };
     let held = door.rail.namespaces().inspect_err(|e| tracing::warn!(target: "door", error = %e, "door: the groups held cannot be listed, so no page is told"));
     let told: Vec<String> = (held.ok()?.into_iter().filter(stands)).map(|group| {
