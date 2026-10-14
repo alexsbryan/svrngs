@@ -7903,3 +7903,127 @@ apps web ':!*tests*'`).
 | I28 | 6 | `code index` resume | Still present: the index this audit's first session started, stopped mid-way, was "could not be opened (… Missing metadata …); starting fresh" when run again (/tmp/startaudit2/index2.out). |
 | I29 | 6 | `refresh` over a corpus `code index` made | Still present, under its new name `svrn refresh`: "⚠ Daemon nudge failed: 404 Not Found: … prod-1ea033b is not registered", then the in-process rebuild and exit 0 (/tmp/startaudit2/refresh.out). |
 | I30 | 7 | the binary at ~/dev/commonwealth-ai/target/debug/sovereign-cli | New: the path these rows name is a build product another session may empty and rebuild at any time; between this audit's index and its reports the binary went from sha256 68746bcf… to 67e46f63…, and `code refresh` with it. A row's instrument named by path alone is not one instrument across a run; this audit checked the new one against a plant. |
+
+## REVIEW-audit-start-auto-3 (2026-10-13, range d7cf438..88d60e2)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-start-auto-2, whose
+`done` is d7cf438 (ralph/next/start/STATE.md: its hash a6ab719, the loop's
+"ralph: REVIEW-audit-start-auto-2 done" d7cf438 after it). The range ends
+at 88d60e2, the commit that made this row. `git rev-list --count
+d7cf438..88d60e2` is 9, with no merge among them (`--merges`: 0), all on
+main: start-doc's seven commits, its `done` (c63fb6a) and the row's own.
+
+This audit's own commits before this section are 3696cdc (the row's two
+paths, as a12fd81 corrected the last audit's) and 9c6f5ce (the reader
+run's success cited to its session's result record). It opens #141-#145,
+updates #80, and closes none.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+d7cf438..88d60e2` (/tmp/startaudit3/ledger.raw), to the last audits'
+rules (product is crates/, apps/, web/ and bridge/; tests by
+`scripts/lean_check.py`'s `TEST_FILE`). No line of product is in it:
+`git diff --stat d7cf438 88d60e2 -- crates apps web bridge scripts
+Cargo.toml Cargo.lock` is empty. Counted apart:
+
+- demo/start.md +295 −11 (d6ed674, 099221d), the newcomer's document
+- demo/runs/start/2026-10-13-reader +396 −4 and a 1.4 MB gzipped
+  transcript (b7a1825, f000fcb, c287f3e, 990ec26, 522719a): PROMPT.md,
+  run.sh, README.md and data/
+- README.md +8 −6, docs/DESIGN.md +24 (d6ed674)
+- ralph/next/start/STATE.md +2 −1 (c63fb6a, 88d60e2)
+
+| unit | commits | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| start-doc | 8 | 0 | 0 | 0 | 0 | 0 | 0 |
+| this row's own commit | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
+
+The size budget, by scripts/lean_check.py over a `git archive` tree of
+each end (/tmp/startaudit3/lean-d7cf438.out, lean-88d60e2.out) and over
+the working tree after this audit's commits:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| d7cf438, range start | 3121 / 3122 | 15986 / 15987 |
+| 88d60e2, range end | 3121 / 3122 | 15986 / 15987 |
+| 9c6f5ce, this audit's last change (a run's README) | **3121 / 3122** | **15986 / 15987** |
+
+### (2) Clones (`code dry-report`)
+
+The range touched no crate dir and no `web/` (the empty `git diff --stat`
+above), so no scope is owed a report and none was run: not a
+could-not-judge, there is no added symbol for a clone to have a side in.
+The one program the range added is a run's harness, demo/runs/start/
+2026-10-13-reader/run.sh (52 lines of sh, b7a1825), outside every scope
+the row names; it was read whole (below). The binary at
+~/dev/commonwealth-ai/target/debug/sovereign-cli is the one the last audit
+checked against a plant (sha256 67e46f63…, linked 18:14, `shasum -a 256`,
+`ls -la`).
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges d7cf438..88d60e2` match
+`\b(struct|enum|trait|type|class)\s+[A-Z]\w*` no times, demo/ included.
+**No new noun, so none to converge.**
+
+### Reading the range
+
+Every line the range added outside the recorded transcript was read:
+demo/start.md, the reader's PROMPT.md, run.sh, README.md and NOTES.md,
+README.md's "Run it", DESIGN §8's Start entry.
+
+- **Cite, don't recall** (AGENTS.md 4). Every markdown link and
+  backticked path in demo/start.md, the reader's README and PROMPT.md and
+  README.md resolves (/tmp/startaudit3/cites.out: 33 ok, 0 missing), and
+  the four line citations say what is claimed of them: cli.rs:798
+  (`prompt_secret`) before :808 (`print!` of `Said::Shared`), cli.rs:1626
+  (`user_name`), the story's run.py:78 (`"USER": who.capitalize()`),
+  index.html:24 (the `svrngs share` line). One claim was cited to a file
+  that does not hold it: the reader README's "exit 0 … (`data/end.json`)",
+  where end.json holds seconds only and run.sh's exit holds nothing of
+  the session's. Fixed in 9c6f5ce; #145 for the harness.
+- **Never silently substitute** (AGENTS.md 6). run.sh refuses to start
+  over a svrngs kept at login or an existing /tmp/try, each said
+  (run.sh:15-19). The group's token is redacted from what is committed:
+  `#<the token>` 14 times in the transcript, no `#` and 40 or more token
+  characters left in it or NOTES.md (`gzcat … | grep -oE
+  '#[A-Za-z0-9_-]{40,}'`: none); one 8-character prefix the session wrote
+  itself, elided (`#AtaAp54K…`), a scratch group's. run.sh's session
+  runs `|| true` (#145).
+- **Follow-ups that nothing holds** (AGENTS.md 10). The reader's README
+  leaves four doubts "follow-ups, not fixed here"
+  (demo/runs/start/2026-10-13-reader/README.md:81-102), in no row and no
+  finding (`grep -rln` over ralph/ and docs/: only session logs). Each is
+  opened below, #141-#144, with its sites, so a later row reads them.
+- **The nouns gate** (fence 6). Outside well_known.txt, product code names
+  llama-server once at each end, the same line (`git grep -in llama` over
+  crates, apps, web and scripts, tests and well_known apart: 1 and 1).
+  The range names it only in docs and its run.
+- **The core untouched** (fence 6). `git diff --stat d7cf438 88d60e2 --
+  crates/svrngs-core` is empty.
+
+### Fixed here
+
+- 9c6f5ce: demo/runs/start/2026-10-13-reader/README.md §3 cites the
+  session's success to its result record, the transcript's last line
+  (`subtype` success, `is_error` false, 39 turns, 239,282 ms), not to
+  end.json, and says run.sh's exit holds nothing of the session's.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 141 | fence 3 | crates/svrngs-node/src/home/index.html:24 (the page's line, `svrngs share <the number after the colon in its address>`, `svrngs share 8080`); crates/svrngs/src/cli.rs:783 (`share::lend_of(…, share::well_known_kind(asked.port))`, refusing a port the table does not know); demo/start.md step 5 (`--kind llama-server`, which the document adds) | not fixed: a change in what a person is told | The one line the home page gives for lending is refused for llama-server on 18089: exit 1, "say what is on port 18089: `svrngs share 18089 --kind <kind>` …" (demo/runs/start/2026-10-13-story/README.md:215-218); start-run and start-doc's reader both met it (reader README:83-88). The refusal says what to type, so nothing is silent, but fence 3 asks the page for the line that works. A fix gives the page a line for a lend of a kind svrngs knows, `--kind` included, or lends from the page itself, with a browser test reading the page's line and running it, red first on today's. |
+| 142 | 6 | crates/svrngs/src/cli.rs:1164 (`svrngs` run in a terminal: "Apps on this computer reach your groups at http://{api}", `node.api_addr()`, cli.rs:1411); demo/start.md:184-186 ("A program gets `{"error":"this page answers only itself"}`. It was given the home page's address"); crates/svrngs-node/src/home.rs:165 | not fixed: unread | The reader saw svrngs print an address for apps (http://127.0.0.1:64333) that a newcomer might give a program in place of the one **Copy its address for a program** copies; whether a program given it is answered, refused in a person's words, or answered "this page answers only itself" was not tried (reader README:89-92). Could-not-judge. A fix is a test giving a program each address svrngs prints, and the document's troubleshooting saying what each is for. |
+| 143 | 7 | crates/svrngs-node/src/home/home.js:91 (the button copies `l.origin`, no `/v1`); demo/start.md step 9 | not fixed: unread | Python's `openai` answered at the copied address as it is (the story run, the reader's run); whether programs that want a base URL ending in `/v1` are answered there is unread (reader README:93-95). One program, one host: not a claim about programs. A run with a second client, or the document saying to add `/v1` where a program asks for it, waits for a row. |
+| 144 | 3, 6 | demo/start.md:15 ("Neither makes an account anywhere"), :260; docs/DESIGN.md §8, the relay-park row (n0's relays the shipped default) | not fixed: the operator's, with the relay switch | Bo's page reached `usw1-1.relay.n0.iroh.link` to ask Sam's computer what the link is for (reader README:96-102); the document says no account is made and says nothing of what leaves the computer. What a link's page reaches is the operator's to decide (own-relay parked, DESIGN §8); once decided, the document says it. |
+| 145 | 6 | demo/runs/start/2026-10-13-reader/run.sh:41 (`claude -p … >"$W/transcript.jsonl" 2>"$W/claude.err" \|\| true`) and :42 (end.json, `{"seconds":…}` only) | not fixed: the harness as it ran | The reader's session's exit is dropped: run.sh exits 0 whatever the session did, and end.json keeps only its seconds, so a session that died after writing part of NOTES.md reads as one that ended. This run's success stands on the transcript's result record (9c6f5ce). A fix, at the harness's next run, keeps the session's exit in end.json and says a nonzero one. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | Unchanged by the range: 1 line left in svrngs-core (3121 / 3122) and 1 in the repository (15986 / 15987), strict. |
+| 130, 132-140 | as recorded | as recorded | not fixed | Not touched by this range: it changed no product code. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+None new: the range gave the instrument nothing to read. I1, I4, I19,
+I28, I29 and I30 stand as REVIEW-audit-start-auto-2 recorded them.
