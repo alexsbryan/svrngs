@@ -1388,7 +1388,9 @@ async fn get_blob(node: &Node, group: &str, hash: &str) -> (u16, Option<String>,
 /// Ana's computer stops, and Cy holds it from Ben, his answer naming Ben.
 /// Red with Ben's provider serving no hash an app placed (the plant "Bo not
 /// serving"): Cy is told no holder answered, each named, never empty
-/// bytes.
+/// bytes. And a hash only Ana's stopped computer holds is said unanswered
+/// to Cy, Ana named, never "never held" because the one who answered, Ben,
+/// never held it (REVIEW-audit-onair-auto-2).
 #[tokio::test]
 async fn bytes_an_app_put_are_held_by_a_member_who_asks_and_carried_to_the_next() {
     let group = Group::new().await;
@@ -1411,12 +1413,26 @@ async fn bytes_an_app_put_are_held_by_a_member_who_asks_and_carried_to_the_next(
         Some(50_000)
     );
 
+    let only_ana = noise(20_000, b"only Ana's bytes");
+    assert_eq!(put_blob(&group.ana, &films, 60, &only_ana).await.0, 200);
+
     group.ana.endpoint().close().await;
     let (status, holder, got) = get_blob(&group.cy, &films, &hash).await;
     let text = String::from_utf8_lossy(&got);
     assert_eq!(status, 200, "Cy holds it with Ana stopped: {text}");
     assert!(got == bytes, "byte for byte");
     assert_eq!(holder, Some(actor_of(&signing(2))), "from Ben");
+
+    let only_ana = blake3::hash(&only_ana).to_hex();
+    let (status, _, said) = get_blob(&group.cy, &films, &only_ana).await;
+    let said: serde_json::Value = serde_json::from_slice(&said).unwrap();
+    let kind = said["kind"].as_str();
+    assert_eq!((status, kind), (502, Some("unanswered")), "{said}");
+    let ana = &said["asked"][actor_of(&signing(1))];
+    assert!(
+        ana.is_string(),
+        "Ana named, with why she said nothing: {said}"
+    );
     for node in [&group.ben, &group.cy] {
         node.endpoint().close().await;
     }
