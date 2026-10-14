@@ -8922,3 +8922,180 @@ Every hunk of product code and of apps/events the range changed was read
 | I19 | 6 | dry-report, `tests/` scopes | Still present, said as could-not-judge; the line-window pass stood in. |
 | I29 | 6 | `refresh` over a corpus `code index` made | Still present: "prod-b1d04bc is not registered", then the in-process rebuild and exit 0. |
 | I32 | 7 | dry-report's JS near tier | Still present, and seen in web/ now: app.js `uses` :285-307 over `choicesOf` :288-303, lend.js `cookieFor` :174-181 over `keepJar` :177-185. |
+
+## REVIEW-audit-events-auto-3 (2026-10-14, range a6476cc..8e97b27)
+
+The previous `REVIEW-audit-` row of this queue is REVIEW-audit-events-auto-2,
+its hash a6476cc (ralph/next/events/STATE.md), so the range starts there
+and ends at 8e97b27, the commit that made this row. `git rev-list --count
+a6476cc..8e97b27` is 21, none a merge (`--merges`: 0): auto-2's `done`,
+events-wait's eleven, events-doc-link's eight, and this row's own commit.
+
+This audit's own commit before this section: 42b7c92 (the row's two paths,
+as ba1124d corrected auto-2's). It opens #155-#156, and closes none.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+a6476cc..8e97b27` (/tmp/eventsaudit3/ledger.raw), summed by
+/tmp/eventsaudit3/scripts/ledger.py (auto-2's, its unit list this range's;
+ledger.out, each commit's unit in ledger.commits) to the earlier audits'
+rules: product is crates/, web/ and bridge/; apps/ apart, split the same
+way; scripts/ apart; a test as lean_check names one, and `*.test.mjs`; a
+commit that names no unit counts toward the next one that does (6d225a3
+and a924a0e, docs, to events-doc-link). Raw lines, comments and blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net | apps src net | apps test net | scripts net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| REVIEW-audit-events-auto-2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| events-wait | 11 | 53 | 22 | **+31** | 6 | 6 | 0 | 0 | 0 | 0 (+3 −3) |
+| events-doc-link | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| this row's own commit | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 21 | 53 | 22 | **+31** | 6 | 6 | 0 | 0 | 0 | 0 |
+
+Where the src lines went: dial.rs +27 −8 (the cap's doc rewritten for 4 s,
+cb71f8e; `held`, a07a9cc), web/src/lib.rs +23 −13 (`held` threaded through
+`bind_for` and `bind`, and a held dial's silence said `asleep`, a07a9cc),
+web/lend.js +3 −1 (`asleep` not dialled again, a07a9cc). The test lines are
+lend_origin.rs's slow path, 175 → 750 ms, and its plant, 300 ms → 1 s
+(cb71f8e); scripts/ is lean_check.py's cap and its comment (98e6d87).
+events-doc-link changed demo/ and docs only.
+
+What the budget counts, by scripts/lean_check.py over a `git archive` tree
+of each end and of each unit's `done` (/tmp/eventsaudit3/lean-<hash>.out;
+each tree's own lean_check.py, so the cap is its own):
+
+| at | svrngs-core | repository | its cap | counted net |
+|---|---:|---:|---:|---:|
+| a6476cc, range start | 3149 | 16304 | 16305 | |
+| cf6a0cf, events-wait done | 3149 | 16314 | 16315 | +10 |
+| e251035, events-doc-link done | 3149 | 16314 | 16315 | 0 |
+| 8e97b27, range end | **3149 / 3150** | **16314 / 16315** | | **+10** |
+
+events-wait raised once, 16,305 → 16,315 (98e6d87), and its lines ended at
+16,314, the cap one past them; svrngs-core's cap stayed at 3150. Of the +80
+the operator gave over the economizing pass's 16,235 (fence 7), **all 80 are
+now raised**: the ceiling, 16,315, is the cap. **No line left in the
+repository or in svrngs-core** (#80): each cap is one past its count, and
+lean_check.py:100 refuses `n >= cap`, so one more line breaks either. This audit changed no counted line.
+
+### The instrument
+
+~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256 67e46f63…
+(`shasum -a 256`), the binary auto-1 and auto-2 ran.
+
+The corpus is 8e97b27's crates/, apps/, web/, scripts/, Cargo.toml and
+Cargo.lock by `git archive` into /tmp/eventsaudit3/prod-8e97b27 (301
+files; `diff -rq` against auto-2's prod-b1d04bc: dial.rs, door.rs, the
+node's tests' common/mod.rs, folders.rs, home.rs and lend_origin.rs,
+lean_check.py, web/lend.js and web/src/lib.rs, auto-2's own fixes and this
+range's), apps/on-air/page/vendor moved out (upstream's). `code index .
+--corpus-id prod-8e97b27` gave 3529 chunks in 790 s under a load of 48-60
+(index.out). `refresh` gave rust 15734 symbols, typescript and python
+"skipped (export failed)" (I4), after "prod-8e97b27 is not registered" and
+its in-process rebuild (I29) (refresh.out).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-node (src/dial.rs, tests/lend_origin.rs)
+and web (src/lib.rs, lend.js) (`git diff --stat a6476cc 8e97b27 -- crates
+apps web scripts bridge`), each reported at 0.95 and 0.90, with
+crates/svrngs-node/tests (/tmp/eventsaudit3/clean-*.md). Whether a side was
+added in the range is `git blame` at 8e97b27 over each side's lines against
+a6476cc.
+
+| scope | locations | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---:|---:|---:|---:|---|
+| crates/svrngs-node/ | 543 | 2 | 0 | 7 | none |
+| web/ | 100 | could-not-judge (I4) | 0 | 2 | none |
+| crates/svrngs-node/tests/ | 0 | could-not-judge (I19) | could-not-judge | could-not-judge | — |
+
+**No clone has a side the range added.** The node's are auto-2's table
+again: blob_tests.rs `flush` == relay_tests.rs (exact, test code, I8,
+#152), api.rs `addr` ×2, and the seven near pairs in sign_in.rs, synced.rs,
+redeem.rs, choices.rs, rail.rs, ring_sync/tests.rs and lend.rs, none of
+whose files the range changed (`git log a6476cc..8e97b27 --` them: 0
+commits). web's two are each one span inside another (I32): app.js
+`uses`/`choicesOf` :285-307 over :288-303, unchanged in the range, and
+lend.js `cookieFor`/`keepJar` :174-181 over :177-185, which the range's
+lend.js change (:343-345) does not reach (blame over :174-185: e502de9 alone,
+before a6476cc).
+
+The line-window pass (/tmp/eventsaudit3/scripts/windows.py, auto-2's) over
+auto-2's 84 files with the node's and the page's src (crates/svrngs-node/src,
+web/src, web/lend.js), 118 files at 8e97b27: **159 window hits, 50 spans,
+0 new** (windows.out). auto-2's six new spans read old now, three fewer
+after its 3844bc2.
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges a6476cc..8e97b27 -- crates apps
+web scripts bridge ':!apps/on-air/page/vendor'` match
+`(struct|enum|trait|type|class)\s+[A-Z]\w*` **zero times**
+(new-types.out, empty), and demo/'s drivers add none either: the range
+added no `struct`, `enum` or `trait`, so no noun to converge. converge
+answers on this corpus as before (`converge noun Said --corpus-id
+prod-8e97b27`: cli.rs:1040 and choices.rs:39, one line early, I1;
+nouns.out).
+
+### Reading the range
+
+Every hunk of product code the range changed was read (`git diff a6476cc
+8e97b27 -- crates web scripts`); events-doc-link's driver and data are
+kept as they ran (#61) and were not reviewed as product.
+
+- **One decider** (AGENTS.md 8). The dial cap is `dial::DIAL_WITHIN` alone,
+  and the page's idle timeout and keep-alive are derived from it in
+  `dial::held` (dial.rs:39-43), which the page reaches by
+  web/src/lib.rs:36's `#[path]`, as events-wait asked. svrngs-node compiles
+  `held` and calls it nowhere (`git grep -n "held()" -- crates web`: dial.rs
+  and lib.rs:133 only); its doc says it is the page's alone, so no finding.
+  **What "asleep" means crosses from the page's wasm to its worker as a word
+  in an error's text** (#155): lib.rs:203 ends its message `: asleep`,
+  lib.rs:249 begins its `asleep: `, and lend.js:345 decides not to dial
+  again by `/asleep/.test(e)`.
+- **Closed sets** (AGENTS.md 9). `bind_for` and `bind` take `held: bool`
+  (lib.rs:83, :111), passed as a bare `false`/`true` at :308, :325 and :341
+  (#156).
+- **Never silently substitute** (AGENTS.md 6; fence 2). A held dial given
+  up while asked is said asleep (lib.rs:247-249) and the worker answers 502
+  `away` without a second dial; one given up before it was asked is dialled
+  again, and both are traced (`HTTP: … REFUSED — …`, then lend.js's
+  `RUNTIME: … failed (try n)`). Nothing is shown as no answer.
+- **Glassbox** (AGENTS.md 1). The page traces whether its endpoint is held
+  (lib.rs:136) and each refusal with its reason; lend.js's three reasons to
+  stop (a body, a second try, asleep) share one `say` after one trace that
+  carries the error, so which of them decided is read from that line, not
+  said — part of #155.
+- **Validate the instrument** (AGENTS.md 7). lend_origin.rs's cap test moved
+  its slow path past the new slowest measured dial, 1,013 ms, to 1.5 s, and
+  its plant to 1 s (cb71f8e), so it still separates the two; the wait runs'
+  verdicts are their README's, not re-judged here.
+- **The nouns gate** (fence 3). `python3 scripts/vocab_check.py`: run in
+  scripts/check.sh at the close.
+
+### Fixed here
+
+Nothing: the range's two findings are in the page's wasm and worker, a
+change each the page's tests in both engines re-prove, and #155's fix is
+a change of behaviour the budget has no line left to pay for (#80).
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 155 | 8, 9, 1 | web/src/lib.rs:203 (`refuse!(".. not answered in {within:?}: asleep")`) and :249 (`format!("asleep: {e}")`); web/lend.js:345 (`/asleep/.test(e)`) | not fixed: a change across the wasm boundary, red first in both engines, and no line left (#80) | Whether a dial's computer is asleep is decided in Rust and read in JS by matching a word in the error's prose, written two ways (a suffix at :203, a prefix at :249). A reworded message silently makes the worker dial again and wait the cap a second time; an error from iroh or a relay whose text holds "asleep" stops a dial that should be tried again. One decider is the verdict carried as data — a `JsError` whose `name` is `Asleep`, set in one helper both sites call, and lend.js reading `e.name` — with lend.js's `say` traced per reason (a body, a second try, asleep). Red on a refusal whose text says "asleep" but is not one. |
+| 156 | 9 | web/src/lib.rs:83 and :111 (`held: bool`), :133 (`if held { dial::held() } else { Default::default() }`); callers :308 (`false`), :325 and :341 (`true`) | not fixed: small, but each form costs a counted line or changes the trace at :136 | A two-valued choice passed as a bare bool: `bind_for(key, &token, false)` does not say what `false` is. Passing the transport config itself (`dial::held()` or iroh's default) removes the bool and the branch, at the cost of the trace's `held: {held}`; a two-variant enum keeps the trace and costs its declaration. |
+| 80 | — | scripts/lean_check.py:33 BUDGET, :100 `n >= cap` | not fixed (operator's) | No line left in svrngs-core (3149 / 3150) or the repository (16314 / 16315), :100 refusing `n >= cap`; the follow-up's +80 all raised (16,315). |
+| 130, 132-145, 150, 152-154 | as recorded | as recorded | not fixed | Not touched by this range: blob_tests.rs, the node's tests, home.js and browser/main.rs are unchanged in it (`git log a6476cc..8e97b27 --` them: 0 commits). |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still one line early (cli.rs:1040 for :1041, choices.rs:39 for :40). |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)"; web/'s exact tier could-not-judge. |
+| I8 | 6 | dry-report scope | Still present: blob_tests.rs's `flush` reported as a production exact clone of relay_tests.rs's. |
+| I19 | 6 | dry-report, `tests/` scopes | Still present, said as could-not-judge; the line-window pass stood in. |
+| I29 | 6 | `refresh` over a corpus `code index` made | Still present: "prod-8e97b27 is not registered", then the in-process rebuild and exit 0. |
+| I32 | 7 | dry-report's JS near tier | Still present: app.js `uses` :285-307 over `choicesOf` :288-303, lend.js `cookieFor` :174-181 over `keepJar` :177-185. |
