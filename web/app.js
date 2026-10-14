@@ -51,7 +51,7 @@ import init, {
   relay_of,
 } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
-import { named, question, removal, unasked, uses as used } from './question.js?v=__VERSION__';
+import { named, question, removal, unlent, uses as used } from './question.js?v=__VERSION__';
 
 const heading = document.getElementById('status');
 const said = document.getElementById('response');
@@ -260,7 +260,7 @@ function asking(group, key, lent, unanswered, dialler, q) {
   const [lend, app] = [q.get('ask'), q.get('app')].map((x) => lent.find((l) => label(l.key, l.name) === x));
   if (!lend?.asks || !app) {
     trace(`PAGE: asked whether ${q.get('app')} may use ${q.get('ask')}, not both lent here or not asking`);
-    said.textContent = 'That app, or what it asks to use, is not lent in your group now.';
+    said.textContent = unlent;
     return;
   }
   trace(`PAGE: asking whether ${q.get('app')} may use ${q.get('ask')}`);
@@ -287,24 +287,20 @@ function asking(group, key, lent, unanswered, dialler, q) {
 // with Stop.
 async function uses(lent, dialler, shown) {
   shown.replaceChildren();
-  for (const l of lent.filter((o) => o.asks)) {
-    const line = (words) => shown.appendChild(Object.assign(document.createElement('li'), { textContent: words }));
-    try {
-      const d = await reach((await dialler()).dial(l.key, l.relay ?? null), '');
-      const res = await d.fetch('GET', `/choices/${label(l.key, l.name)}`, [['accept', 'application/json']], null);
-      // The body is read off the dial, so read whole before it closes: a
-      // body that comes after its head is cut off by the close (bash-film-load).
-      const answer = res.ok ? await res.json() : null;
-      await d.close();
-      if (!res.ok) throw new Error(`answered ${res.status}`);
-      const appOf = (app) => lent.find((o) => label(o.key, o.name) === app);
-      const stop = (app, item) => choose(dialler, l, app, 'stop').then(() => uses(lent, dialler, shown), (e) => item.append(e.message));
-      used(l, answer.choices, appOf, line, stop);
-    } catch (e) {
-      trace(`PAGE: what apps use of ${l.name} not asked: ${e}`);
-      line(unasked(l));
-    }
-  }
+  const line = (words) => shown.appendChild(Object.assign(document.createElement('li'), { textContent: words }));
+  const choicesOf = async (l) => {
+    const d = await reach((await dialler()).dial(l.key, l.relay ?? null), `${l.person}’s computer did not answer.`);
+    const res = await d.fetch('GET', `/choices/${label(l.key, l.name)}`, [['accept', 'application/json']], null);
+    // The body is read off the dial, so read whole before it closes: a
+    // body that comes after its head is cut off by the close (bash-film-load).
+    const answer = res.ok ? await res.json() : null;
+    await d.close();
+    if (!res.ok) throw new Error(`answered ${res.status}`);
+    return answer.choices;
+  };
+  const traced = (l) => choicesOf(l).catch((e) => (trace(`PAGE: what apps use of ${l.name} not asked: ${e}`), Promise.reject(e)));
+  const stop = (l, app, item) => choose(dialler, l, app, 'stop').then(() => uses(lent, dialler, shown), (e) => item.append(e.message));
+  await used(lent, (o) => label(o.key, o.name), traced, line, stop);
 }
 
 // In `group`: list what its people lend, and open the one `asked` names

@@ -383,6 +383,12 @@ fn question(app: [&str; 3], lend: [&str; 3]) -> String {
     String::from_utf8_lossy(&out.stdout).trim().to_string()
 }
 
+/// What the home page and the group's page say of an ask naming an app or
+/// a lend not lent there, or not asking: one wording for both, chosen in
+/// onair-economize (d) (ralph/REVIEW_FINDINGS.md #113), where the home page
+/// said "groups" and the group's page "group".
+const UNLENT: &str = "That app, or what it asks to use, is not lent here now.";
+
 /// Where the phone opens `name`, lent by the computer whose key is `seed`'s:
 /// an origin of its own, `http://<label>.localhost:<port>/` (u5-2).
 fn label(seed: u8, name: &str) -> String {
@@ -1324,9 +1330,11 @@ in_both_engines!(
     /// worker with the pass, refuses it again. The group's page framed by
     /// the lent page is not shown in the frame, and the page's own yes, on
     /// a dial of its own with the pass its origin keeps, is refused and
-    /// keeps nothing. Planted, each watched failing: a holder's yes accepted
-    /// at the door; the group's page framed (no `frame-ancestors`); the
-    /// ask's `back` dropped.
+    /// keeps nothing. Asked of an app and a lend not lent, the group's page
+    /// says [`UNLENT`], as the home page does (onair-economize (d); red at
+    /// a20ed46: "... in your group now."). Planted, each watched failing: a
+    /// holder's yes accepted at the door; the group's page framed (no
+    /// `frame-ancestors`); the ask's `back` dropped.
     a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped
 );
 async fn a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped(engine: Engine) {
@@ -1442,6 +1450,7 @@ async fn a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped(eng
             "{stopped}: {seen:#}"
         );
     }
+    assert_eq!(seen["unlent"], UNLENT, "{seen:#}");
     assert_eq!(
         seen["framed"],
         json!([]),
@@ -1499,7 +1508,9 @@ in_both_engines!(
     /// page's `/ask?lend=<shelf>&app=<page>` heads its question as
     /// `question.js` words it: the shelf named with its kind, as the bare
     /// command names a lend. Planted, watched failing: the home page with
-    /// words of its own (the kind dropped, as before).
+    /// words of its own (the kind dropped, as before). Asked of an app
+    /// and a lend not lent, it says [`UNLENT`], as the group's page does
+    /// (onair-economize (d); red at a20ed46: "... in your groups now.").
     the_home_page_asks_in_the_one_wording
 );
 async fn the_home_page_asks_in_the_one_wording(engine: Engine) {
@@ -1528,6 +1539,13 @@ async fn the_home_page_asks_in_the_one_wording(engine: Engine) {
         question(["ada", "page", "k"], ["ada", "shelf", "books"]),
         "{seen:#}"
     );
+    let ask = format!(
+        "http://svrngs.localhost:{}/ask?lend=x&app=y",
+        ada.api_addr().port()
+    );
+    let args = json!({ "ask": ask, "heading": false, "read": "#home p:not(.said)" });
+    let seen = drive(engine, "home.mjs", args, None).await;
+    assert_eq!(seen["read"], UNLENT, "{seen:#}");
     drop(ada);
 }
 

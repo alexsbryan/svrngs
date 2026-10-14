@@ -3,7 +3,7 @@
 // `args.ask`, its `/ask?lend=<label>&app=<label>`, it is read for its
 // heading, which the test holds to the one source (question.js).
 //
-//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>?, <stays>?], ...], "timed"?: [<selector>, ...]}'
+//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>?, <stays>?], ...], "timed"?: [<selector>, ...]}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
@@ -24,7 +24,8 @@ try {
   const t0 = Date.now();
   const timing = Promise.all((args.timed ?? []).map((s) => page.locator(s).first().waitFor({ timeout: 30_000 }).then(() => [s, Date.now() - t0])));
   await page.goto(args.ask);
-  const heading = await page.locator('#home h2').first().textContent({ timeout: 30_000 });
+  // With `heading: false`, a page heading none (an ask not lent).
+  const heading = args.heading === false ? null : await page.locator('#home h2').first().textContent({ timeout: 30_000 });
   // With `read`, a selector, its first match's words too (U7: a removed
   // person's line).
   const read = args.read ? await page.locator(args.read).first().textContent({ timeout: 30_000 }) : null;

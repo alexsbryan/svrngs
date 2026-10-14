@@ -254,7 +254,10 @@ paths it refuses, how many people may use it at once.
   Ana’s taste?" around the lender's words, and lists what apps use, in
   one wording both load, a lend named as the bare command names it, with
   its kind when that differs from its name (lean-4 (c),
-  `crates/svrngs-node/src/home/question.js`). On a computer a yes is kept by
+  `crates/svrngs-node/src/home/question.js`); that file walks the lends
+  that ask too, each page fetching their choices by its own transport, and
+  says an ask naming what is not lent there in one line, "That app, or
+  what it asks to use, is not lent here now." (onair-economize (d)). On a computer a yes is kept by
   this computer's door for its own lend, else posted to the lender's door
   as this computer's key; on a phone the group's page posts it to the
   lender's door, dialled as the person; then the person goes back to the

@@ -5,7 +5,8 @@
 // home.rs) and the group's page on a phone (web/app.js, which
 // scripts/build-web.sh gives this file). Its words are DESIGN §1's, a lend
 // named as the bare command names it (svrngs cli.rs `lends`); each page
-// keeps only how it posts a yes or a stop (REVIEW_FINDINGS #110).
+// keeps only how it asks a lend's choices and posts a yes or a stop
+// (REVIEW_FINDINGS #110, #113).
 
 // A lend as a person reads it: "Ana’s taste", and "Sam’s tonights-picks
 // (movie-night)" when its name and kind differ.
@@ -23,16 +24,32 @@ export const removal = (r) =>
 // The line said when what apps use of `lend` cannot be asked.
 export const unasked = (lend) => `What apps use of ${named(lend)} cannot be asked now.`;
 
-// What apps use of `lend`, from its lender's `choices`: a line each, made
-// by `line(words)`, the app named by `appOf(label)` when it is listed, each
-// yes with Stop, which calls `stop(app, line)`.
-export function uses(lend, choices, appOf, line, stop) {
-  for (const [app, c] of Object.entries(choices)) {
-    const by = appOf(app);
-    const item = line(`${by ? named(by) : 'An app'} ${c.said === 'yes' ? 'uses' : 'was stopped using'} ${named(lend)}. `);
-    if (c.said !== 'yes') continue;
-    const button = Object.assign(document.createElement('button'), { textContent: 'Stop' });
-    button.onclick = () => stop(app, item);
-    item.append(button);
+// The line said when an ask names an app or a lend not lent, or not
+// asking, on the page asked: the home page all your groups', the group's
+// page its group's (onair-economize (d), REVIEW_FINDINGS #113).
+export const unlent = 'That app, or what it asks to use, is not lent here now.';
+
+// What apps use of each lend of `lent` that asks, from its lender's
+// choices, `choicesOf(l)`, each page asking by its own transport: a line
+// each, made by `line(words)`, the app named when `lent` lists it by
+// `labelOf`, each yes with Stop, which calls `stop(l, app, line)`; a lend
+// whose choices cannot be asked said so, with why.
+export async function uses(lent, labelOf, choicesOf, line, stop) {
+  for (const l of lent.filter((o) => o.asks)) {
+    let choices;
+    try {
+      choices = await choicesOf(l);
+    } catch (e) {
+      line(`${unasked(l)} ${e.message ?? ''}`.trim());
+      continue;
+    }
+    for (const [app, c] of Object.entries(choices)) {
+      const by = lent.find((o) => labelOf(o) === app);
+      const item = line(`${by ? named(by) : 'An app'} ${c.said === 'yes' ? 'uses' : 'was stopped using'} ${named(l)}. `);
+      if (c.said !== 'yes') continue;
+      const button = Object.assign(document.createElement('button'), { textContent: 'Stop' });
+      button.onclick = () => stop(l, app, item);
+      item.append(button);
+    }
   }
 }

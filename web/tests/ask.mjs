@@ -9,6 +9,8 @@
 //   2. the group's page, opened again: "What apps use", then its Stop;
 //   3. asked and said yes again, the page stops its app itself, `POST` at
 //      the `stop` address it was told, `…/svrngs-reads/<label>/svrngs-stop`;
+//   then the group's page asked of an app and a lend it does not lend,
+//      its line read;
 //   4. the page frames the group's page at `#ask=`, and the test reads
 //      whether the group's page is in the frame;
 //   5. what an app at the page's origin can read there, its pass and its
@@ -87,6 +89,12 @@ try {
   await at();
   out.appStop = await read(shelf.stop, { method: 'POST' });
   out.appStopped = await probe();
+
+  // The group's page asked of an app and a lend it does not lend
+  // (onair-economize (d)): its line, read once it says one.
+  await page.goto(`${origin}#ask=x&app=y&at=/`);
+  await page.waitForFunction(() => document.getElementById('response')?.textContent, null, { timeout: 90_000 });
+  out.unlent = await page.locator('#response').textContent();
 
   // 4. The group's page, framed by the lent page.
   await page.goto(`${lendOrigin}/`, { waitUntil: 'load' });

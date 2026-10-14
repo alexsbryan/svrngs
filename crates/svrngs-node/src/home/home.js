@@ -10,7 +10,7 @@
 // a folder opened (/folder) and a group made (/group, start-group). Its words are
 // DESIGN §1's: groups, people, what they lend, computer; its question and
 // what apps use and its removals are question.js's, the group's page's too.
-import { named, question, removal, unasked, uses as used } from './question.js';
+import { named, question, removal, unlent, uses as used } from './question.js';
 
 const main = document.getElementById('home');
 const el = (tag, text, ...kids) => {
@@ -106,17 +106,8 @@ async function show(g, s) {
 // lender now, each with Stop.
 async function uses(lent) {
   const s = el('section', '', el('h2', 'What apps use'));
-  for (const l of lent.filter((l) => l.asks)) {
-    const at = label(l);
-    try {
-      const { choices } = await get(`/choices?lend=${at}`);
-      const appOf = (app) => lent.find((o) => label(o) === app);
-      const stop = (app, line) => said(at, app, 'stop').then(() => location.reload(), (e) => line.append(e.message));
-      used(l, choices, appOf, (words) => s.appendChild(el('p', words)), stop);
-    } catch (e) {
-      s.append(el('p', `${unasked(l)} ${e.message}`));
-    }
-  }
+  const stop = (l, app, line) => said(label(l), app, 'stop').then(() => location.reload(), (e) => line.append(e.message));
+  await used(lent, label, async (l) => (await get(`/choices?lend=${label(l)}`)).choices, (words) => s.appendChild(el('p', words)), stop);
   // Shown only when there is something to say (start-home).
   if (s.children.length > 1) main.append(s);
 }
@@ -150,7 +141,7 @@ async function lending() {
 // The ask: in svrngs's words around the lender's, then back to the app.
 function ask(lent, q) {
   const [lend, app] = [q.get('lend'), q.get('app')].map((x) => lent.find((l) => label(l) === x));
-  if (!lend || !app || !lend.asks) return main.append(el('p', 'That app, or what it asks to use, is not lent in your groups now.'));
+  if (!lend || !app || !lend.asks) return main.append(el('p', unlent));
   const back = q.get('back')?.startsWith('/') && !q.get('back').startsWith('//') ? q.get('back') : '/';
   const go = () => location.assign(new URL(back, app.origin));
   const s = el('section', '', el('h2', question(app, lend)), el('blockquote', lend.asks));
