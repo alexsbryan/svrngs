@@ -8338,7 +8338,7 @@ The src lines, by file, all onair-blob's db6ba51: svrngs-node blob.rs
 +1 −1 (`standing_asker` made `pub(crate)` for blob.rs's ask route).
 apps/on-air: harness/run.py alone (429525c, 1b281c6, 6440fc3).
 
-Counted apart: demo/runs/onair +11,856 (two runs and four plants);
+Counted apart: demo/runs/onair +11,923 (two runs and four plants);
 docs/DESIGN.md +50 −5, ARCHITECTURE.md +9 −1; scripts/lean_check.py +3 −3
 (d0347ae's raise); ralph/next +191 −3.
 
@@ -8440,7 +8440,7 @@ Every hunk of product code the range changed was read
 fixes.
 
 - **One decider** (AGENTS.md 8; fence 4). Who receives a group's bytes is
-  still folder.rs `serves` alone, taught `held` (folder.rs:460-468);
+  still folder.rs `serves` alone, taught `held` (folder.rs:463);
   nothing in blob.rs serves bytes beside it, and its ask route asks
   ring_routes.rs `standing_asker` rather than writing a dialer's standing
   again. The store, its sweep and the verified fetch are folder.rs's,
@@ -8455,7 +8455,7 @@ fixes.
   still be lost (#148).
 - **Glassbox** (AGENTS.md 1). `get`'s refusals trace through `refused`
   (:154-158), each computer's answer at debug (:127), the provider's
-  blob branch (folder.rs:463). `put`'s two refusals do not (#149).
+  blob branch (folder.rs:464). `put`'s two refusals do not (#149).
 - **Closed sets are enums** (AGENTS.md 9). `Holds` is one, the wire form
   of the ask. A refused get's `kind` is a `&str` of three values, two of
   which are `Holds`'s serde names; one closed set kept partly as text,
@@ -8465,7 +8465,7 @@ fixes.
   -- blob.rs folder.rs`: nothing.
 - **The harness** (apps/, not counted). 429525c reads "4.1, scoped"
   passed on Dee's own computer refusing as well as on Bo's provider, and
-  says why in run.py (:356-359): the provider's group check is
+  says why in run.py (:357-360): the provider's group check is
   tests/folders.rs's (`bytes_an_app_put_in_one_group_are_refused_to_a_member_of_another`),
   red on the group-check-out plant (demo/runs/onair/2026-10-13/plants/
   group-check-out/red.txt). Said, not substituted.
