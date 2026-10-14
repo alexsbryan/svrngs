@@ -301,11 +301,6 @@ pub enum Verb {
     Help,
 }
 
-/// The flags taking a value, but `--relay` and `--joined`, which take one
-/// only after the verbs they belong to.
-const VALUED: &str =
-    "--as --origin --name --kind --limit --refuse --upload --reads --sign-in --folder --group --ask";
-
 /// What `--kind` and `--reads` want, said alike.
 const A_KIND: &str = "a kind: letters, digits, - and _ only";
 
@@ -343,11 +338,14 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     while let Some(arg) = it.next() {
         // Every flag taking a value reads it here, and each refusal of
         // one is said the one way, `not`: `--relay` and `--joined` only
-        // where they are flags, so elsewhere they stay unknown.
+        // where they are flags, so elsewhere they stay unknown. The rest
+        // are a pattern the compiler holds, never text split (#147).
         let valued = match arg.as_str() {
             "--relay" => verb == "new",
             "--joined" => matches!(verb.as_str(), "remove" | "handover"),
-            a => VALUED.split(' ').any(|f| f == a),
+            "--as" | "--origin" | "--name" | "--kind" | "--limit" | "--refuse" | "--upload"
+            | "--reads" | "--sign-in" | "--folder" | "--group" | "--ask" => true,
+            _ => false,
         };
         let raw = match valued {
             true => it.next().ok_or_else(|| format!("{arg} wants a value"))?,
