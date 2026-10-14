@@ -110,7 +110,7 @@ impl Folders {
     /// Each other computer standing in `group` asked at once, for at most
     /// [`ANSWER_WITHIN`], what it holds of `hash`: its key, and its answer
     /// or why there is none.
-    async fn ask_group(&self, hash: Hash, group: &str, people: &People) -> Asked {
+    async fn ask_group(&self, hash: Hash, group: &str, people: &People) -> Replies {
         let relay = |a: &str| people.get(a)?.relay.as_ref();
         let path = format!("{}?group={group}", ASKED.replace("{hash}", &hash.to_hex()));
         let mut asks = Vec::new();
@@ -134,7 +134,7 @@ impl Folders {
 type People = BTreeMap<String, Member>;
 
 /// Each computer asked, and what it holds or why it did not say.
-type Asked = Vec<(String, Result<Holds, String>)>;
+type Replies = Vec<(String, Result<Holds, String>)>;
 
 /// `path` asked of the computer at `contact`: what it holds, or why
 /// there is no answer.
