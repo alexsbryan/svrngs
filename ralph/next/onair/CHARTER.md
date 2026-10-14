@@ -20,7 +20,12 @@ decision says so.
   16,040, the operator, 2026-10-13). The start queue's economizing row
   then lowered the caps to where its cuts landed, 15,987 and 3,122
   (start-economize, 0b5bccf), and this queue's +300 and +60 stand over
-  them: **16,287 and 3,182**.
+  them: **16,287 and 3,182**. Those are ceilings, not targets. Then the
+  operator, 2026-10-13, after start-economize fell 187 short of 15,800
+  (`demo/runs/economize/2026-10-13/NEEDS_HUMAN.md`): "Accept 15,987; fold
+  follow-ups into onair". onair-economize makes the four follow-ups that
+  file lists and lowers the cap to where they land. Each row after it
+  raises from there only as far as it needs, within the ceilings.
   Every raise follows an economizing pass of this queue's own (the
   operator's standing rule, 2026-10-13: "Every raise needs a pass
   first"). Each raise goes in its
