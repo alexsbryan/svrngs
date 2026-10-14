@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 use super::*;
-
-fn key(seed: u8) -> SigningKey {
-    SigningKey::from_bytes(&[seed; 32])
-}
+use crate::tests_support::key;
 
 fn lender(seed: u8) -> [u8; 32] {
     key(seed).verifying_key().to_bytes()

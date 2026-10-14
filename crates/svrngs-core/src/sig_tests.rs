@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai commonwealth/crates/commonwealth-rail-core/src/sig.rs@e1a43bcd2
 use super::*;
-use crate::tests_support::{admitted, after, record, signed, NS};
-
-fn key(seed: u8) -> SigningKey {
-    SigningKey::from_bytes(&[seed; 32])
-}
+use crate::tests_support::{admitted, after, key, record, signed, NS};
 
 const BODY: &str = r#"{"op":"record"}"#;
 

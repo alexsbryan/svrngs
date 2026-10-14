@@ -4,11 +4,8 @@ use crate::sig::{
     verify_ring_op, ASK_DOMAIN, LABEL_DOMAIN, PASS_DOMAIN, REDEMPTION_DOMAIN, REQUEST_DOMAIN,
     RING_OP_DOMAIN,
 };
+use crate::tests_support::key;
 use crate::{act_id, actor_of, sign_ring_op};
-
-fn key(seed: u8) -> SigningKey {
-    SigningKey::from_bytes(&[seed; 32])
-}
 
 fn app(name: &str) -> App {
     App::parse(name).unwrap()
