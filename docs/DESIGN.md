@@ -1229,7 +1229,7 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,122 lines of code and the
-repository under 15,987 (`scripts/lean_check.py`), the branch `folders`
+repository under 15,951 (`scripts/lean_check.py`), the branch `folders`
 too since main merged into it at syp-5, counting 13,778 and `svrngs-core`
 2,719 there. A raise is the operator's, and is asked only after an
 economizing pass (the operator, 2026-10-13: "Every raise needs a pass
@@ -1329,9 +1329,17 @@ survey (`demo/runs/economize/2026-10-13/SURVEY.md`) found 50 lines the
 product did not need, by the compiler (every `pub` demoted, the product
 and the page rebuilt), the clone report and the open findings: five items
 only tests reached and a script nothing ran. Cut, the repository went
-from 16,036 to 15,986 and `svrngs-core` stayed at 3,121, so the caps are
-15,987 and 3,122, one past each count; what the survey could not reach
-without a change in behaviour is its `NEEDS_HUMAN.md`.
+from 16,036 to 15,986 and `svrngs-core` stayed at 3,121, so the caps were
+15,987 and 3,122, one past each count. What the survey could not reach
+without a change in behaviour is its `NEEDS_HUMAN.md`; the operator, "Accept
+15,987; fold follow-ups into onair", and onair-economize made its four
+follow-ups, each a change said and tested: one decider of what a lent page
+reads, `svrngs`'s value flags read in one place, `remove` and `handover`
+one `Verb`, and both pages' walk of what apps use in `question.js`. The
+repository went to 15,950 and `svrngs-core` stayed at 3,121, so the caps
+are 15,951 and 3,122; the onair queue's rows raise from there, each only as
+far as it needs, within the operator's 16,287 and 3,182 for that queue
+(`ralph/next/onair/CHARTER.md`).
 `ARCHITECTURE.md` maps what exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file
