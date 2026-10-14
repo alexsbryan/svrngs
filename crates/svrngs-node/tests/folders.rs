@@ -5,7 +5,7 @@
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
-use common::{loopback_sockets, noise};
+use common::{loopback_sockets, noise, Said};
 
 use std::path::Path;
 use std::time::Duration;
@@ -1045,20 +1045,6 @@ async fn one_directory_keeps_one_group_s_folder() {
 }
 
 // ── A holder that sends wrong bytes (syp-4 f; gf's row 6) ─────────────
-
-/// What the tests' subscriber writes, kept to be read.
-#[derive(Clone, Default)]
-struct Said(std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
-
-impl std::io::Write for Said {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        self.0.lock().unwrap().extend_from_slice(buf);
-        Ok(buf.len())
-    }
-    fn flush(&mut self) -> std::io::Result<()> {
-        Ok(())
-    }
-}
 
 /// The encoding of `bytes` a holder sends for a get of them whole, and
 /// their hash.

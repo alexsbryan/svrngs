@@ -15,7 +15,7 @@ mod origins;
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use common::loopback_sockets;
+use common::{loopback_sockets, Said};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 use svrngs_core::pass::Label;
@@ -737,20 +737,6 @@ async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_
     );
     sam.endpoint().close().await;
     alex.endpoint().close().await;
-}
-
-/// What the test's subscriber writes, kept to be read.
-#[derive(Clone, Default)]
-struct Said(std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
-
-impl std::io::Write for Said {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        self.0.lock().unwrap().extend_from_slice(buf);
-        Ok(buf.len())
-    }
-    fn flush(&mut self) -> std::io::Result<()> {
-        Ok(())
-    }
 }
 
 /// **The page's link for a group this computer does not hold is refused,

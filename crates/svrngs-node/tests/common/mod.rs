@@ -77,3 +77,23 @@ pub fn noise(len: usize, salt: &[u8]) -> Vec<u8> {
         .fill(&mut out);
     out
 }
+
+/// What a test's subscriber writes, kept to be read: one copy, where
+/// folders.rs and home.rs each wrote it out (REVIEW-audit-events-auto-2).
+#[derive(Clone, Default)]
+#[allow(
+    dead_code,
+    clippy::disallowed_types,
+    reason = "a test's trace sink; each test binary compiles this file, only some read their trace"
+)]
+pub struct Said(pub std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
+
+impl std::io::Write for Said {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.0.lock().unwrap().extend_from_slice(buf);
+        Ok(buf.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
