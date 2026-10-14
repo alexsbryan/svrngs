@@ -1,0 +1,24 @@
+$ ls -l /tmp/onair-blob-w/bo/.svrngs/blobs/data   # after the run
+total 80
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:24 04025ab3f30e14c0ca292f805bf16ee1b5bd04f9f17b75da9572b7f630226d1d.obao4
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:24 331d859f20cdcd7f302ad5493e2ab0a05215a58a7d2b419b163800784ed716e8.obao4
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:23 43e3307d1f5bebff444501f3407fee6d30771fc10e1868607de5a252a2a58740.obao4
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:24 6a638506ce8f63990f2e9dd876b7b5f425556f05edcfcd755a72c9e5b3ca6cab.obao4
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:23 7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9.obao4
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:24 b220f944274e724e1cfab60fbbbc21f250409df688288ca3a284a64d4565b272.obao4
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:23 c225526d54ffddb89b45096ba6a14b86a747a43e693a25b88c9fb88c5d494aee.obao4
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:24 d3b5beac33062bc7481caafaec81455fed0922820a9e2e0c2a1ceb8801fdab17.obao4
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:24 f3b72ae551f6b845528acd5f248a3f3d4e9d157747c3f63833c780ee862fbf38.obao4
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:24 f9c74a3a0ea2b045eca52e6614f9158a55880c370bb60aad0b755d37c8ab9afb.obao4
+$ ls -l /tmp/onair-blob-w/cy/.svrngs/blobs/data   # after the run
+total 80
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:24 04025ab3f30e14c0ca292f805bf16ee1b5bd04f9f17b75da9572b7f630226d1d.obao4
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:24 331d859f20cdcd7f302ad5493e2ab0a05215a58a7d2b419b163800784ed716e8.obao4
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:23 43e3307d1f5bebff444501f3407fee6d30771fc10e1868607de5a252a2a58740.obao4
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:24 6a638506ce8f63990f2e9dd876b7b5f425556f05edcfcd755a72c9e5b3ca6cab.obao4
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:23 7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9.obao4
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:24 b220f944274e724e1cfab60fbbbc21f250409df688288ca3a284a64d4565b272.obao4
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:23 c225526d54ffddb89b45096ba6a14b86a747a43e693a25b88c9fb88c5d494aee.obao4
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:24 d3b5beac33062bc7481caafaec81455fed0922820a9e2e0c2a1ceb8801fdab17.obao4
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:24 f3b72ae551f6b845528acd5f248a3f3d4e9d157747c3f63833c780ee862fbf38.obao4
+-rw-r--r--@ 1 -  wheel  192 Oct 13 23:24 f9c74a3a0ea2b045eca52e6614f9158a55880c370bb60aad0b755d37c8ab9afb.obao4
