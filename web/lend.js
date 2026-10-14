@@ -340,7 +340,9 @@ async function lent(request, url, where) {
     } catch (e) {
       dials.delete(lend.key);
       trace(`RUNTIME: ${request.method} ${path} failed (try ${tries + 1}): ${e}`);
-      if (body || tries) return say(502, 'The computer lending this did not answer. Try again later.', 'away');
+      // A dial that heard nothing from the computer within the cap, new or
+      // held, is not tried again: a second would wait the cap again.
+      if (body || tries || /asleep/.test(e)) return say(502, 'The computer lending this did not answer. Try again later.', 'away');
     }
   }
   said?.(`answered ${res.status} ${res.headers.get('content-range') ?? ''}${request.signal?.aborted ? ', after the browser let go of it' : ''}`);

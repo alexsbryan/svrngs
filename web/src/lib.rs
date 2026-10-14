@@ -36,6 +36,7 @@ mod relay;
 #[path = "../../crates/svrngs-node/src/dial.rs"]
 mod dial;
 
+use iroh::RelayUrl;
 use svrngs_core::alpn::Alpn;
 use svrngs_core::link::Token;
 use svrngs_core::pass::{Label, Pass};
@@ -72,14 +73,14 @@ macro_rules! t {
 struct Bound {
     ep: iroh::Endpoint,
     issuer: Option<iroh::PublicKey>,
-    relay: iroh::RelayUrl,
+    relay: RelayUrl,
 }
 
 /// [`bind`] for the group whose link's token is `token`: its issuer, and
 /// its relay, refused when it carries none — from a computer that reached
 /// no relay, with n0's lookup or without it (`cli::link_relay`, relay-park
 /// (c)): the page asks no lookup (relay-default).
-async fn bind_for(key: Vec<u8>, token: &str) -> Result<Bound, JsError> {
+async fn bind_for(key: Vec<u8>, token: &str, held: bool) -> Result<Bound, JsError> {
     let Some(link) = Token::decode(token) else {
         refuse!("LAYER parse: REFUSED — the fragment is not a link's token: {token}")
     };
@@ -93,12 +94,13 @@ async fn bind_for(key: Vec<u8>, token: &str) -> Result<Bound, JsError> {
     let Some(relay) = link.relay else {
         refuse!("LAYER parse: REFUSED — the link names no relay, and the page asks n0's lookup for none")
     };
-    bind(key, Some(issuer), relay.into()).await
+    bind(key, Some(issuer), relay.into(), held).await
 }
 
 /// Bind an endpoint as the person whose key is `key` — or a pass's holder —
 /// reaching the network through `relay` alone, and wait until it is online. `issuer` is whom it dials when no other
-/// computer is named.
+/// computer is named. One that dials lenders is `held` as [`dial::held`]
+/// says; the one a link's dial binds for itself waits as iroh does.
 ///
 /// `key` is the person's key, the 32 bytes the page's store holds (DESIGN
 /// §3, call 1): iroh signs its handshake with it synchronously, so it is
@@ -106,7 +108,7 @@ async fn bind_for(key: Vec<u8>, token: &str) -> Result<Bound, JsError> {
 /// token's, the fragment of `<origin>#<token>`, parsed by svrngs-core as
 /// the command parses it (call 5). No bearer rides a request: the node
 /// knows the person by the key that dialled, or the pass its holder shows.
-async fn bind(key: Vec<u8>, issuer: Option<iroh::PublicKey>, relay: iroh::RelayUrl) -> Result<Bound, JsError> {
+async fn bind(key: Vec<u8>, issuer: Option<iroh::PublicKey>, relay: RelayUrl, held: bool) -> Result<Bound, JsError> {
     t!("LAYER page: wasm module loaded and dial entered (iroh =1.0.2)");
 
     // ── LAYER 1: the person's key, then the link's token ───────────────────
@@ -127,10 +129,11 @@ async fn bind(key: Vec<u8>, issuer: Option<iroh::PublicKey>, relay: iroh::RelayU
     t!("LAYER parse: ok — relay {relay}");
     let builder = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal)
         .secret_key(secret)
-        .relay_mode(iroh::RelayMode::Custom(relay.clone().into()));
+        .relay_mode(iroh::RelayMode::Custom(relay.clone().into()))
+        .transport_config(if held { dial::held() } else { Default::default() });
 
     // ── LAYER 2: wasm bindgen / iroh endpoint construction ─────────────────
-    t!("LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only)…");
+    t!("LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: {held})…");
     // It offers no protocol: a browser is never dialled (DESIGN §3, call 2).
     let ep = match builder.bind().await {
         Ok(e) => e,
@@ -233,12 +236,19 @@ impl Dialled {
         body: Option<web_sys::ReadableStream>,
     ) -> js_sys::Promise {
         let conn = self.conn.clone();
+        let open = conn.close_reason().is_none();
         wasm_bindgen_futures::future_to_promise(async move {
-            match http::fetch(conn, method.clone(), path.clone(), headers, body).await {
+            match http::fetch(conn.clone(), method.clone(), path.clone(), headers, body).await {
                 Ok(response) => Ok(response.into()),
                 Err(e) => {
+                    // Given up while asked, its computer silent for the whole
+                    // idle timeout (`dial::held`): asleep, which the worker
+                    // says without dialling again. One given up before it
+                    // was asked is dialled again.
+                    let silent = open && matches!(conn.close_reason(), Some(iroh::endpoint::ConnectionError::TimedOut));
+                    let e = if silent { format!("asleep: {e}") } else { e.to_string() };
                     emit(&format!("HTTP: {method} {path} — REFUSED — {e}"));
-                    Err(js_sys::Error::new(&e.to_string()).into())
+                    Err(js_sys::Error::new(&e).into())
                 }
             }
         })
@@ -295,7 +305,7 @@ pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsE
 /// Dial `to`, else the computer that issued `token`, on `alpn`, from an
 /// endpoint of its own: the dial's [`Dialled::close`] closes it.
 async fn dial(key: Vec<u8>, token: String, to: Option<String>, alpn: Alpn) -> Result<Dialled, JsError> {
-    let bound = bind_for(key, &token).await?;
+    let bound = bind_for(key, &token, false).await?;
     let conn = reach(&bound, to, None, alpn, None).await?;
     Ok(Dialled {
         ep: Some(bound.ep),
@@ -312,7 +322,7 @@ async fn dial(key: Vec<u8>, token: String, to: Option<String>, alpn: Alpn) -> Re
 #[wasm_bindgen]
 pub async fn endpoint(key: Vec<u8>, token: String) -> Result<Endpoint, JsError> {
     Ok(Endpoint {
-        bound: bind_for(key, &token).await?,
+        bound: bind_for(key, &token, true).await?,
     })
 }
 
@@ -328,7 +338,7 @@ pub async fn holder_endpoint(key: Vec<u8>, relay: Option<String>) -> Result<Endp
         Some(Err(e)) => refuse!("LAYER parse: REFUSED — {relay:?} is not a relay: {e}"),
     };
     Ok(Endpoint {
-        bound: bind(key, None, relay).await?,
+        bound: bind(key, None, relay, true).await?,
     })
 }
 
@@ -337,7 +347,7 @@ pub async fn holder_endpoint(key: Vec<u8>, relay: Option<String>) -> Result<Endp
 #[wasm_bindgen]
 pub fn relay_of(token: String) -> Result<Option<String>, JsError> {
     let link = Token::decode(&token).ok_or_else(|| JsError::new("not a link's token"))?;
-    Ok(link.relay.map(|r| iroh::RelayUrl::from(r).to_string()))
+    Ok(link.relay.map(|r| RelayUrl::from(r).to_string()))
 }
 
 /// The label of the lend `name` lent by the computer whose key is
