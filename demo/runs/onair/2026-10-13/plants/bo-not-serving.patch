@@ -1,0 +1,12 @@
+diff --git a/crates/svrngs-node/src/blob.rs b/crates/svrngs-node/src/blob.rs
+index f7eff5a..1190457 100644
+--- a/crates/svrngs-node/src/blob.rs
++++ b/crates/svrngs-node/src/blob.rs
+@@ -240,6 +240,7 @@ pub(super) async fn get(
+     f.carry(hash, &group, Some(until));
+     match f.hold(hash, &holders).await {
+         Ok(from) => {
++            f.carry(hash, &group, None); // PLANT: a computer that fetched serves none of it
+             let from = from.as_deref().unwrap_or(f.host.actor());
+             tracing::info!(target: "blob", %hash, group, holder = from, left_ms = left, "blob: held from a computer of the group, carried until it lapses there");
+             f.answer(hash, from).await
