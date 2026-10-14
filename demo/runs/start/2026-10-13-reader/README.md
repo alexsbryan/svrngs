@@ -92,9 +92,10 @@ link opened to the chat's answer, about 40 s.
   a base URL ending in `/v1` do is unread.
 - Bo's page reached an outside relay (`usw1-1.relay.n0.iroh.link`) to ask
   Sam's computer what the link is for; the document says no account is
-  made, and says nothing of what leaves the computer. The own relay is
-  built and parked until the operator flips it (memory: own relay,
-  parked); the document should say what a link's page reaches once that
+  made, and says nothing of what leaves the computer. n0's relays are
+  the shipped default until the operator flips the switch to svrngs's
+  own (`docs/DESIGN.md`, §8's relay-park row and the parked row after
+  it); the document should say what a link's page reaches once that
   is decided.
 
 One reader, one host, a program and not a person: no people bar is
