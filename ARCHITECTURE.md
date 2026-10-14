@@ -454,7 +454,9 @@ An app on this computer asks the same of one group on the record API,
 body (`node::Asking::lent`), with no asker left out; beside it `GET
 /v1/groups` answers each group held, its name from the seed the command
 keeps (the `SeedText` the redeem routes read) and this computer's person
-from the register. Removal as the command asks it (`removal.rs`, U7):
+from the register; and `POST /v1/sign?app=` (onair-sign) has this
+computer's key sign an app's bytes, the bytes and their checking
+svrngs-core's (`app.rs`, `App`). Removal as the command asks it (`removal.rs`, U7):
 `POST /v1/removals` commits svrngs-core's `Removal` and `POST
 /v1/handovers` its `HandOnTo`, each answering an `Outcome` the command
 words; each written wakes the round (`AskRound::wake`), so every

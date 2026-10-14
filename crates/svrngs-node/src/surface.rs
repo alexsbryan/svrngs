@@ -28,13 +28,18 @@
 //!   [`reads`]): the lends of each kind its lender declared it reads, as a
 //!   phone's lend worker answers it from what the group's page handed
 //!   (`web/lend.js`, `told`).
+//! - `POST /v1/sign?app=<app>` — the body's bytes signed for the app by
+//!   this computer's own key, the one that signs its acts, answered as that
+//!   key and the signature, each in hex (onair-sign, [`sign`]). The core
+//!   says what is signed and how one is checked ([`svrngs_core::app`]).
 
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use axum::routing::get;
+use axum::routing::{get, post};
 use axum::{Json, Router};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use svrngs_core::app::App;
 use svrngs_core::pass::Label;
 
 use crate::door::LendRefusal;
@@ -50,6 +55,9 @@ pub const GROUPS_ROUTE: &str = "/v1/groups";
 
 /// Where an app asks what a group's people lend.
 pub const LENDS_ROUTE: &str = "/v1/lends";
+
+/// Where an app has this computer's key sign bytes for it.
+pub const SIGN_ROUTE: &str = "/v1/sign";
 
 /// Where a lent page asks, at its own origin, the lends it reads: the one
 /// path svrngs answers there in the lend's place (DESIGN §3, "Lent apps",
@@ -74,6 +82,7 @@ pub(crate) fn router(asking: Asking, seeds: SeedText) -> Router {
     Router::new()
         .route(GROUPS_ROUTE, get(groups))
         .route(LENDS_ROUTE, get(lends))
+        .route(SIGN_ROUTE, post(sign))
         .with_state(Surface { asking, seeds })
 }
 
@@ -147,6 +156,38 @@ async fn groups(State(at): State<Surface>) -> Response {
         });
     }
     Json(serde_json::json!({ "groups": held })).into_response()
+}
+
+/// `POST /v1/sign?app=<app>`'s query: an app's name, refused unless it is
+/// one ([`App::parse`]); none is the empty name, refused as that.
+#[derive(Debug, Deserialize)]
+struct SignQuery {
+    #[serde(default)]
+    app: String,
+}
+
+/// `POST /v1/sign?app=<app>`: `bytes`, as they came, signed for the app by
+/// this computer's own key; `{key, sig}` in hex. Served to this computer's
+/// apps alone, as the record is ([`crate::api::router`]): a page in a
+/// browser is refused before it, so no lent page has the key sign.
+async fn sign(
+    State(at): State<Surface>,
+    Query(q): Query<SignQuery>,
+    bytes: axum::body::Bytes,
+) -> Response {
+    let app = match App::parse(&q.app) {
+        Ok(app) => app,
+        Err(why) => {
+            tracing::debug!(target: "sign", app = q.app, %why, "sign: refused — not an app's name");
+            return err(StatusCode::BAD_REQUEST, why.to_string());
+        }
+    };
+    let (key, sig) = (
+        crate::actor_of(&at.asking.key),
+        app.sign(&at.asking.key, &bytes),
+    );
+    tracing::debug!(target: "sign", %app, bytes = bytes.len(), key, "sign: signed for the app with this computer's key");
+    Json(serde_json::json!({ "key": key, "sig": sig })).into_response()
 }
 
 /// The name in the seed this computer keeps for `id`, or `None`, at warn,

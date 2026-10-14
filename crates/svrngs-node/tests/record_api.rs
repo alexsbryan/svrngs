@@ -566,3 +566,44 @@ async fn a_dialer_standing_in_another_group_a_holds_is_refused() {
         n.endpoint().close().await;
     }
 }
+
+/// **An app has this computer's key sign bytes for it** (onair-sign (c);
+/// svrn-docs `rings/current/ON_AIR.md` §4.2): `POST /v1/sign?app=notes`
+/// answers the key that signs this computer's acts and a signature that
+/// checks for `notes` over those bytes alone, with the key, the app and the
+/// bytes; a name that is not an app's, or none, is refused 400, saying so;
+/// and a page in a browser is refused 403 before the route, as it is
+/// before the record's.
+#[tokio::test]
+async fn an_app_has_this_computers_key_sign_its_bytes() {
+    let dir = tempfile::tempdir().unwrap();
+    let node = start(1, &dir).await;
+    let sign = |name: &str| {
+        app()
+            .post(format!("http://{}/v1/sign?app={name}", node.api_addr()))
+            .body("line 812")
+    };
+    let answer = sign("notes").send().await.unwrap();
+    assert_eq!(answer.status(), 200);
+    let out: serde_json::Value = answer.json().await.unwrap();
+    let (key, sig) = (out["key"].as_str().unwrap(), out["sig"].as_str().unwrap());
+    assert_eq!(key, actor_of(&signing(1)), "the key that signs its acts");
+    let notes = svrngs_core::app::App::parse("notes").unwrap();
+    assert!(notes.check(key, b"line 812", sig), "{out}");
+    assert!(!notes.check(key, b"line 813", sig));
+    for not in ["Notes", "no:tes", ""] {
+        let answer = sign(not).send().await.unwrap();
+        assert_eq!(answer.status(), 400, "{not:?}");
+        let out: serde_json::Value = answer.json().await.unwrap();
+        assert!(
+            out["error"].as_str().unwrap().contains("not an app's name"),
+            "{out}"
+        );
+    }
+    let page = sign("notes").header("origin", "http://elsewhere.example");
+    assert_eq!(
+        page.send().await.unwrap().status(),
+        403,
+        "a page is refused"
+    );
+}

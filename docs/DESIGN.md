@@ -161,6 +161,26 @@ paths it refuses, how many people may use it at once.
   acts on who spoke without signing every payload (onair-live; svrn-docs
   `rings/current/ON_AIR.md` §4.3); still offered by the sender to each
   member online now, and kept nowhere;
+- a signature for an app, checkable anywhere (onair-sign; svrn-docs
+  `rings/current/ON_AIR.md` §4.2): `POST /v1/sign?app=<app>` on the same
+  loopback API has the computer's own key, the one that signs its acts,
+  sign the body's bytes, and answers `{key, sig}` in hex. Nothing says the
+  key is a person's: to someone outside the group it is the computer's. What
+  is signed is `"svrngs-app:" || app || ":" || bytes`, the app's name 1 to
+  64 of `a`-`z`, `0`-`9` and `-`, so the `:` ends it
+  (`crates/svrngs-core/src/app.rs`). That domain begins no other the core
+  signs or hashes under (`sig.rs`), so an app's signature is never an act's,
+  a link's, a pass's or another app's. A stranger checks one with the key,
+  the app's name and the bytes alone, as the on-air page does
+  (`apps/on-air/page/air.mjs`, `signedBytes` and `checkLine`, with
+  `@noble/curves`):
+
+  ```js
+  const signed = concatBytes(utf8ToBytes(`svrngs-app:${app}:`), bytes);
+  const ok = ed25519.verify(hexToBytes(sig), signed, hexToBytes(key));
+  ```
+
+  A page in a browser is refused it, as it is the record;
 - the services the group's members lend, each by name and an opaque kind the
   app interprets (`jellyfin`), and how many people are using each now;
 - on each request through the door, the share of the lender's upload it may
