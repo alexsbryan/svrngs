@@ -43,3 +43,12 @@ device, key 6, drains named key 6 and person key 2 — not by this run.
 
 The sound is the red run's: 40 s generated here by ffmpeg's `aevalsrc`,
 nobody's rights, heard by nobody.
+
+## scripts/check.sh at the close
+
+Once, at b129b60, exit 0 in 11 min 21 s, every step passed: principles
+pinned, lean and RUST_ARCH, app nouns gate, app nouns, rustfmt, clippy,
+tests, canaries, ceiling canary, web rustfmt and clippy, browser, joining
+in a browser, conformance canary, app laws; WebKit's seeks a rate, each
+passed. `scripts/lean_check.py`: crates/svrngs-core 3121 / 3122, the
+repository 15961 / 15962.
