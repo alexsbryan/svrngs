@@ -228,7 +228,10 @@ def copies(groups):
 def main():
     global browser
     shutil.rmtree(W, ignore_errors=True); W.mkdir(parents=True)
-    shutil.rmtree(OUT, ignore_errors=True); OUT.mkdir(parents=True)
+    # A run clears its own data alone: a clean run's never the plants'.
+    for f in OUT.glob("*") if OUT.exists() else []:
+        if f.name != "plants": shutil.rmtree(f) if f.is_dir() else f.unlink()
+    OUT.mkdir(parents=True, exist_ok=True)
     say("start", head=head(), plant=PLANT, load=round(os.getloadavg()[0], 1), cores=os.cpu_count(),
         dirty=subprocess.run(["git", "-C", REPO, "status", "--short"], capture_output=True, text=True).stdout.splitlines())
     try:
