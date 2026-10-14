@@ -130,7 +130,7 @@ impl Folders {
 
 /// Each computer asked, by its key, with its ask's answer: one whose task
 /// failed is said as that, never dropped (#148).
-fn heard(hash: Hash, group: &str, joined: impl Iterator<Item = (String, Joined)>) -> Replies {
+fn heard(hash: Hash, group: &str, joined: impl Iterator<Item = (String, Ended)>) -> Replies {
     let mut answers = Vec::new();
     for (actor, said) in joined {
         let said = said.unwrap_or_else(|e| Err(format!("its ask failed: {e}")));
@@ -140,7 +140,8 @@ fn heard(hash: Hash, group: &str, joined: impl Iterator<Item = (String, Joined)>
     answers
 }
 
-type Joined = Result<Result<Holds, String>, tokio::task::JoinError>;
+/// An ask's task as it ended: its answer, or how the task failed.
+type Ended = Result<Result<Holds, String>, tokio::task::JoinError>;
 
 type People = BTreeMap<String, Member>;
 

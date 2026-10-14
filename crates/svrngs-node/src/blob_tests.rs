@@ -90,8 +90,8 @@ async fn ana_and_ben(dirs: [&FsPath; 2]) -> (Node, Node, String) {
 /// (the `.flatten()` the ask's join had): one reply, Ben's.
 #[tokio::test]
 async fn an_ask_whose_task_panicked_is_said_never_dropped() {
-    let never: Asking = tokio::spawn(async { Ok(Holds::NeverHeld) });
-    let panicked: Asking = tokio::spawn(async { panic!("a planted panic in Cy's ask") });
+    let never: Spawned = tokio::spawn(async { Ok(Holds::NeverHeld) });
+    let panicked: Spawned = tokio::spawn(async { panic!("a planted panic in Cy's ask") });
     let actors = ["ben".to_string(), "cy".to_string()];
     let joined = actors
         .into_iter()
@@ -111,7 +111,7 @@ async fn an_ask_whose_task_panicked_is_said_never_dropped() {
     );
 }
 
-type Asking = tokio::task::JoinHandle<Result<Holds, String>>;
+type Spawned = tokio::task::JoinHandle<Result<Holds, String>>;
 
 /// **A lapse this computer was given outlasts a fetch that failed** (#148
 /// b): Ana and Ben each carry a hash for a minute, and neither store holds
