@@ -1418,7 +1418,10 @@ async fn a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone(engine: Engi
     let computer = &seen["computer"];
     assert_eq!(
         (&computer["said"], &computer["shown"]),
-        (&json!("This link opens in svrngs on your computer."), &seen["link"]),
+        (
+            &json!("This link opens in svrngs on your computer."),
+            &seen["link"]
+        ),
         "a computer keeping no group is told where the link opens, and shown it to copy:\n{seen:#}"
     );
     let opened = &computer["opened"];
