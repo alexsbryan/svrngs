@@ -12,6 +12,13 @@
 //   {"do": "press", "who", "button", "fill"} fill the fields `fill` names,
 //                                            press the button named so;
 //                                            `absent` when there is none
+//   {"do": "follow", "who", "link"}          follow the link named so, in
+//                                            this tab (SHOTS.md, the way in)
+//   {"do": "lend", "who", "button"}          on a phone's group page, press
+//                                            the lend named so; wait for it
+//
+// `wait` on a goto waits for those words on the page; `shot` saves the
+// page as SHOTS/<shot>.png when SHOTS names a directory (SHOTS.md).
 //
 // Every answer about a page is `view`: its status, address, the words on
 // it, each group's section as lists, and the buttons it offers.
@@ -52,6 +59,19 @@ const shown = () => {
   return Boolean(document.querySelector('h1, p.unread')) || (t.length > 0 && !/^Opening/.test(t) && !document.getElementById('status'));
 };
 
+// The page as a person sees it, whole, when the take keeps pictures.
+async function shoot(c) {
+  if (process.env.SHOTS && c.shot && people[c.who]) {
+    await people[c.who].page.screenshot({ path: `${process.env.SHOTS}/${c.shot}.png`, fullPage: true }).catch(() => {});
+  }
+}
+
+// The lend's page shown, on a lend's origin, not the group's page.
+async function landed(page, home) {
+  await page.waitForURL((u) => u.hostname.endsWith('.localhost') && u.host !== home, { timeout: 90_000 });
+  await page.waitForFunction(shown, null, { timeout: 90_000 });
+}
+
 async function act(c) {
   const t0 = Date.now();
   if (c.do === 'open') {
@@ -82,13 +102,30 @@ async function act(c) {
       const home = new URL(c.url).host;
       await page.goto('about:blank');
       await page.goto(c.url);
-      await page.waitForURL((u) => u.hostname.endsWith('.localhost') && u.host !== home, { timeout: 90_000 });
-      await page.waitForFunction(shown, null, { timeout: 90_000 });
+      await landed(page, home);
       return view(c.who, null, t0);
     }
+    if (c.wait) await page.goto('about:blank');
     const res = await page.goto(c.url, { timeout: 90_000 });
-    if (people[c.who].engine === 'webkit') await page.waitForFunction(shown, null, { timeout: 90_000 }).catch(() => {});
+    if (c.wait) await page.waitForFunction((w) => document.body?.innerText.includes(w), c.wait, { timeout: 90_000 });
+    else if (people[c.who].engine === 'webkit') await page.waitForFunction(shown, null, { timeout: 90_000 }).catch(() => {});
     return view(c.who, res, t0);
+  }
+  if (c.do === 'follow') {
+    const link = page.getByRole('link', { name: c.link, exact: true });
+    if (!(await link.count())) return { absent: true, ms: Date.now() - t0, url: page.url() };
+    const href = new URL(await link.first().getAttribute('href'), page.url()).href;
+    const res = await page.goto(href, { timeout: 90_000 });
+    if (people[c.who].engine === 'webkit') await page.waitForFunction(shown, null, { timeout: 90_000 }).catch(() => {});
+    return { href, ...(await view(c.who, res, t0)) };
+  }
+  if (c.do === 'lend') {
+    const home = new URL(page.url()).host;
+    const button = page.getByRole('button', { name: c.button, exact: true });
+    if (!(await button.count())) return { absent: true, ms: Date.now() - t0, buttons: await page.$$eval('button', (bs) => bs.map((b) => b.textContent)) };
+    await button.first().click();
+    await landed(page, home);
+    return view(c.who, null, t0);
   }
   if (c.do === 'press') {
     for (const [sel, value] of Object.entries(c.fill ?? {})) await page.fill(sel, value);
@@ -110,6 +147,7 @@ for await (const line of input) {
   const c = JSON.parse(line);
   try {
     answer = await act(c);
+    await shoot(c);
   } catch (e) {
     answer = { error: String(e).slice(0, 600), logs: (people[c.who]?.logs ?? []).slice(-15) };
   }

@@ -8,6 +8,10 @@ computer's copy of each group's record folded by the app's fold (fold.mjs).
 
     W=<scratch> python3 demo/runs/events/2026-10-14/run.py
     PLANT=<cross|guest|no> W=<scratch> python3 demo/runs/events/2026-10-14/run.py
+    SHOTS=1 W=<scratch> python3 demo/runs/events/2026-10-14/run.py
+
+With SHOTS (SHOTS.md here), every page saved as a picture in data/shots/
+and the way in walked: Bo's home page to the event, and Cy's phone's.
 
 A plant runs the same story against a copy of the app with one change
 (PLANTS), data in data/plants/<plant>/. judge.py reads the summary. Data in
@@ -17,8 +21,8 @@ import html, json, os, re, shutil, signal, subprocess, sys, threading, time, url
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent; REPO = HERE.parents[3]
-PLANT = os.environ.get("PLANT")
-OUT = HERE / "data" / ("plants/" + PLANT if PLANT else ""); W = Path(os.environ["W"]); BIN = REPO / "target/debug/svrngs"
+PLANT = os.environ.get("PLANT"); SHOTS = bool(os.environ.get("SHOTS"))
+OUT = HERE / "data" / ("plants/" + PLANT if PLANT else "shots" if SHOTS else ""); W = Path(os.environ["W"]); BIN = REPO / "target/debug/svrngs"
 HOUSE, DWEB = "The House", "dWeb"
 LOG = "info,door=debug,origin=debug,cli=debug,redeem=debug"
 DINNER = {"what": "Dinner", "when": "Friday 7", "where": "the house"}
@@ -50,6 +54,7 @@ PLANTS = {
 }
 
 procs, outs, summary, hidden, presses, views = {}, {}, {}, [], [], []
+shots = [0]
 
 
 def head(): return subprocess.run(["git", "-C", str(REPO), "rev-parse", "--short", "HEAD"], capture_output=True, text=True).stdout.strip()
@@ -91,7 +96,7 @@ def http(method, url, headers=None, timeout=15):
 
 # --- each computer: a data dir and HOME of its own --------------------------
 def env(who):
-    return {**{k: v for k, v in os.environ.items() if k != "PLANT"}, "HOME": str(W / who), "USER": who,
+    return {**{k: v for k, v in os.environ.items() if k not in ("PLANT", "SHOTS")}, "HOME": str(W / who), "USER": who,
             "SVRNGS_DIR": str(W / who / ".svrngs"), "NO_COLOR": "1", "RUST_LOG": LOG}
 
 
@@ -171,6 +176,8 @@ browser = None
 
 
 def tell(**c):
+    if SHOTS and c.get("shot"): shots[0] += 1; c["shot"] = f"{shots[0]:02d}-{c['shot']}"
+    else: c.pop("shot", None)
     browser.stdin.write(json.dumps(c) + "\n"); browser.stdin.flush()
     line = browser.stdout.readline()
     got = json.loads(line) if line else {"error": "people.mjs stopped"}
@@ -180,13 +187,13 @@ def tell(**c):
 
 
 def look(who, url, step):
-    got = tell(**{"do": "goto", "who": who, "url": url})
+    got = tell(**{"do": "goto", "who": who, "url": url, "shot": f"{who}-{step}"})
     views.append({"step": step, "who": who, **got})
     return got
 
 
 def press(who, gid, button, step, fill=None, check=None):
-    got = tell(**{"do": "press", "who": who, "button": button, **({"fill": fill} if fill else {}), **({"check": check} if check else {})})
+    got = tell(**{"do": "press", "who": who, "button": button, "shot": f"{who}-{step}", **({"fill": fill} if fill else {}), **({"check": check} if check else {})})
     presses.append({"step": step, "who": who, "group": gid, "button": button, "fill": fill, "check": check,
                     "absent": bool(got.get("absent")), "status": got.get("status"), "ms": got.get("ms"), "error": got.get("error")})
     if not got.get("absent"): views.append({"step": step, "who": who, **got})
@@ -228,11 +235,11 @@ def copies(groups):
 def main():
     global browser
     shutil.rmtree(W, ignore_errors=True); W.mkdir(parents=True)
-    # A run clears its own data alone: a clean run's never the plants'.
+    # A run clears its own data alone: a clean run's never the plants' nor the shots'.
     for f in OUT.glob("*") if OUT.exists() else []:
-        if f.name != "plants": shutil.rmtree(f) if f.is_dir() else f.unlink()
+        if f.name not in ("plants", "shots"): shutil.rmtree(f) if f.is_dir() else f.unlink()
     OUT.mkdir(parents=True, exist_ok=True)
-    say("start", head=head(), plant=PLANT, load=round(os.getloadavg()[0], 1), cores=os.cpu_count(),
+    say("start", head=head(), plant=PLANT, shots=SHOTS, load=round(os.getloadavg()[0], 1), cores=os.cpu_count(),
         dirty=subprocess.run(["git", "-C", REPO, "status", "--short"], capture_output=True, text=True).stdout.splitlines())
     try:
         t = time.time()
@@ -244,7 +251,7 @@ def main():
         PAGE = f"http://localhost:{port}/"
         say("built", s=round(time.time() - t), page=PAGE)
         browser = subprocess.Popen(["node", HERE / "people.mjs"], cwd=HERE, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                   stderr=open(W / "people.err", "w"), text=True)
+                                   stderr=open(W / "people.err", "w"), text=True, env={**os.environ, "SHOTS": str(OUT) if SHOTS else ""})
         if not json.loads(browser.stdout.readline()).get("ready"): sys.exit("people.mjs did not start")
         for who, engine in (("sam", "chromium"), ("bo", "chromium"), ("di", "chromium"), ("fay", "chromium"),
                             ("cy", "webkit"), ("eve", "webkit")):
@@ -286,6 +293,18 @@ def main():
         path = {H: f"/g/{H}/e/{E}", D: f"/g/{D}/e/{E}"}
         phone_at = lambda gid: f"{PAGE}#open={label}&at={urllib.parse.quote(path[gid], safe='')}"
         summary["event"] = {"id": E, "landed": posted.get("url"), "ms": posted.get("ms")}
+
+        # 2w, 3w (SHOTS.md): the way in, Bo's from his home page, Cy's from her phone's page.
+        if SHOTS:
+            home = "http://svrngs.localhost:" + urllib.parse.urlsplit((W / "bo/.svrngs/api").read_text().strip()).netloc.split(":")[-1] + "/"
+            way = summary["way_in"] = {"bo": [], "cy": []}
+            way["bo"].append(tell(do="goto", who="bo", url=home, wait="Open Sam’s events", shot="bo-2w"))
+            way["bo"].append(tell(do="follow", who="bo", link="Open Sam’s events", shot="bo-2w"))
+            way["bo"].append(tell(do="follow", who="bo", link="Dinner", shot="bo-2w"))
+            way["cy"].append(tell(do="goto", who="cy", url=PAGE, wait="Sam’s events", shot="cy-3w"))
+            way["cy"].append(tell(do="lend", who="cy", button="Sam’s events", shot="cy-3w"))
+            way["cy"].append(tell(do="follow", who="cy", link="Dinner", shot="cy-3w"))
+            way["path"] = path[H]
 
         # 2-3. Bo, changing his mind to bring Maya; Cy's phone; Di; Eve's phone.
         look("bo", origin["bo"] + path[H], "2")
