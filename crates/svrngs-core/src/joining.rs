@@ -18,13 +18,6 @@ use crate::{
     actor_of, field, sign_message, verify_hex, Device, OpId, Person, Redemption, SigningKey,
 };
 
-/// Domain separator for the link key's signature over a request, so it is
-/// never valid as an act's signature or a consent, nor either as it.
-const REQUEST_DOMAIN: &[u8] = b"svrngs-redeem-request:";
-
-/// Domain separator for the link key's signature over an ask.
-const ASK_DOMAIN: &[u8] = b"svrngs-redeem-ask:";
-
 /// What a joiner holding only a link asks its issuer: the link's public
 /// key and the joiner's, actor hex, signed by the link's secret key.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -52,7 +45,7 @@ impl AskRequest {
 
     /// `DOMAIN || link || key`, each preceded by its `u32` big-endian length.
     fn message(&self) -> Vec<u8> {
-        let mut msg = ASK_DOMAIN.to_vec();
+        let mut msg = crate::sig::ASK_DOMAIN.to_vec();
         field(&mut msg, self.link.as_bytes());
         field(&mut msg, self.key.as_bytes());
         msg
@@ -139,7 +132,7 @@ impl RedeemRequest {
     /// request naming a person no `Person` holds, as a hand-built client
     /// could.
     pub fn message(&self) -> Vec<u8> {
-        let mut msg = REQUEST_DOMAIN.to_vec();
+        let mut msg = crate::sig::REQUEST_DOMAIN.to_vec();
         field(&mut msg, self.group.as_bytes());
         field(&mut msg, self.invite.as_bytes());
         field(&mut msg, self.person.as_bytes());

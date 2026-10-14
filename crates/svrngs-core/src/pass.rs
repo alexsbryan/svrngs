@@ -28,13 +28,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::{actor_of, field, sign_message, verify_hex, SigningKey};
 
-/// Domain separator for a lend name's hash in its label.
-const LABEL_DOMAIN: &[u8] = b"svrngs-lend-label:";
-
-/// Domain separator for a person's signature over a pass, so it is never
-/// valid as an act's, a link's or a consent.
-const PASS_DOMAIN: &[u8] = b"svrngs-pass:";
-
 /// Base32's alphabet for a label: 22 lowercase letters and the ten digits,
 /// each a letter a DNS label takes. Not RFC 4648's: `e`, `i`, `o` and `y`
 /// are left out, and every word DESIGN §1 keeps from people
@@ -90,7 +83,7 @@ impl Label {
     /// The label of the lend `name` lent by the computer whose key is
     /// `lender`.
     pub fn of(lender: &[u8; 32], name: &str) -> Self {
-        let mut hashed = LABEL_DOMAIN.to_vec();
+        let mut hashed = crate::sig::LABEL_DOMAIN.to_vec();
         hashed.extend_from_slice(name.as_bytes());
         let mut label = base32(lender);
         label.push_str(&base32(blake3::hash(&hashed).as_bytes())[..NAME_LETTERS]);
@@ -193,7 +186,7 @@ impl Pass {
     /// bytes a pass naming `[app, ...reads]` as its lends signed before the
     /// app had a field of its own (sup-1).
     fn message(&self) -> Vec<u8> {
-        let mut msg = PASS_DOMAIN.to_vec();
+        let mut msg = crate::sig::PASS_DOMAIN.to_vec();
         field(&mut msg, self.person.as_bytes());
         field(&mut msg, self.holder.as_bytes());
         msg.extend_from_slice(&self.until.to_be_bytes());

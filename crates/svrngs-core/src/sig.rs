@@ -50,6 +50,13 @@ use crate::hash::ContentHash;
 use crate::op::{Journaled, Op, OpId};
 use crate::SignedOp;
 
+// ── Every domain svrngs signs or hashes under, in this one home ──────────
+//
+// svrngs (onair-sign): each was beside the one thing it separates; gathered
+// here so a new one is written beside every other, and `sig_tests.rs`
+// (`domains_live_here_and_none_begins_another`) holds that none begins
+// another and that no core file outside this one spells one.
+
 /// Domain separator for the signature. Distinct from `cwth-dial-info-binding:`
 /// and from the join proof-of-possession, so no signature is valid in two
 /// contexts; and from upstream's `cwth-ring-op-binding:`, whose message was
@@ -59,6 +66,36 @@ const RING_OP_DOMAIN: &[u8] = b"svrngs-act-id-binding:";
 /// Domain separator for the id's hash, so an act id is never the hash of
 /// anything else the record hashes (a view head, a payload).
 const ACT_ID_DOMAIN: &[u8] = b"svrngs/act/v1\0";
+
+/// Domain separator for a redemption's co-signature (svrngs, U2), so the
+/// admitted key's consent is never valid as an act's signature, nor one as
+/// the other.
+const REDEMPTION_DOMAIN: &[u8] = b"svrngs-redemption-binding:";
+
+/// Domain separator for the link key's signature over a request
+/// ([`crate::joining`]), so it is never valid as an act's signature or a
+/// consent, nor either as it.
+pub(crate) const REQUEST_DOMAIN: &[u8] = b"svrngs-redeem-request:";
+
+/// Domain separator for the link key's signature over an ask.
+pub(crate) const ASK_DOMAIN: &[u8] = b"svrngs-redeem-ask:";
+
+/// Domain separator for a lend name's hash in its label ([`crate::pass`]).
+pub(crate) const LABEL_DOMAIN: &[u8] = b"svrngs-lend-label:";
+
+/// Domain separator for a person's signature over a pass, so it is never
+/// valid as an act's, a link's or a consent.
+pub(crate) const PASS_DOMAIN: &[u8] = b"svrngs-pass:";
+
+/// Domain separator for a group id's hash ([`crate::seed`]), so an id is
+/// never the hash of anything else svrngs hashes (an act id is
+/// `svrngs/act/v1`).
+pub(crate) const GROUP_ID_DOMAIN: &[u8] = b"svrngs/group/v1\0";
+
+/// Domain separation and definition version for a view's fold
+/// ([`crate::view`]). A second definition gets a second label; old heads
+/// stay meaningful.
+pub(crate) const VIEW_DOMAIN: &[u8] = b"cwth/view/1";
 
 /// The hex form of a node's public key, which is how a ring op names its
 /// signer. 64 lowercase hex characters.
@@ -145,11 +182,6 @@ pub fn derive_id(op: &Op<SignedOp>, namespace: &str) -> OpId {
 pub fn ring_op_message(id: &OpId) -> Vec<u8> {
     [RING_OP_DOMAIN, id.as_bytes().as_slice()].concat()
 }
-
-/// Domain separator for a redemption's co-signature (svrngs, U2), so the
-/// admitted key's consent is never valid as an act's signature, nor one as
-/// the other.
-const REDEMPTION_DOMAIN: &[u8] = b"svrngs-redemption-binding:";
 
 /// The bytes a redeeming `Admit`'s new key signs:
 /// `DOMAIN || ns || invite[32] || person || key`, every variable field

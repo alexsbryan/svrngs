@@ -29,10 +29,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::SignedOp;
 
-/// Domain separation and definition version for the fold. A second
-/// definition gets a second label; old heads stay meaningful.
-const VIEW_DOMAIN: &[u8] = b"cwth/view/1";
-
 /// One actor's commitment: the contiguous run `[from, mark]` being claimed
 /// (`from` is the sealed floor, `mark` the contiguous high-water — the same
 /// run the mark alone describes) and `head`, the fold of everything held in
@@ -80,7 +76,7 @@ impl View {
                 by_seq.entry(*seq).or_default().insert(id.clone());
             }
         }
-        let mut h = ContentHash::of(&[VIEW_DOMAIN, b"\0", actor.as_bytes()].concat());
+        let mut h = ContentHash::of(&[crate::sig::VIEW_DOMAIN, b"\0", actor.as_bytes()].concat());
         for (seq, ids) in &by_seq {
             for id in ids {
                 let mut step = Vec::with_capacity(32 + 8 + 2 + id.len());

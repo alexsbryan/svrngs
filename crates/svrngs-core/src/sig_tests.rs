@@ -137,3 +137,35 @@ fn one_act_carrying_two_valid_signatures_has_one_id() {
     assert_eq!(a.ops().len(), 2);
     assert_eq!(a.ops()[1].id, one.id);
 }
+
+/// svrngs (onair-sign): every domain the core signs or hashes under is
+/// written in `sig.rs`, and none begins another, so a message under one is
+/// never a message under any other — however the bytes after it are
+/// chosen. Read from the sources, so a domain written anywhere else, or one
+/// that begins another, fails here without anyone listing it.
+#[test]
+fn domains_live_here_and_none_begins_another() {
+    let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+    let mut domains: Vec<(String, Vec<u8>)> = Vec::new();
+    for entry in std::fs::read_dir(&src).unwrap() {
+        let path = entry.unwrap().path();
+        let file = path.file_name().unwrap().to_string_lossy().into_owned();
+        if !file.ends_with(".rs") || file.contains("test") {
+            continue;
+        }
+        for line in std::fs::read_to_string(&path).unwrap().lines() {
+            let Some((name, spelled)) = line.split_once("_DOMAIN: &[u8] = b\"") else {
+                continue;
+            };
+            assert_eq!(file, "sig.rs", "{name}_DOMAIN is written outside sig.rs");
+            let spelled = spelled.trim_end_matches("\";").replace("\\0", "\0");
+            domains.push((name.into(), spelled.into_bytes()));
+        }
+    }
+    assert!(domains.len() >= 9, "the domains were not found: {domains:?}");
+    for (a, da) in &domains {
+        for (b, db) in &domains {
+            assert!(a == b || !db.starts_with(da), "{a} begins {b}");
+        }
+    }
+}

@@ -46,7 +46,9 @@ signed"): an act's id is the whole BLAKE3 hash, 64 hex, of its namespace,
 actor, seq, previous act, timestamp and body (`sig.rs`'s `act_id`), and the
 signature is over the id, where upstream signed the fields and kept 64 bits
 of a hash of the line, signature included; `OpId` holds the whole hash, so a
-line whose id is not 64 hex does not parse. Each act names its author's act
+line whose id is not 64 hex does not parse. Every domain the core signs or
+hashes under is written in `sig.rs`, and none begins another, which
+`sig_tests.rs` reads from the sources (onair-sign). Each act names its author's act
 at seq − 1 (`SignedOp::prev`), and admission names one that does not a
 `WrongPrevious` gap and admits it not. Membership, the view and sync take the
 id admission derived (`derive_id`), never the line's. A link is in the record
