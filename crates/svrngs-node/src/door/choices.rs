@@ -72,7 +72,7 @@ pub(crate) struct Saying {
 /// An app's body, with its pass.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct App {
+struct AppBody {
     #[expect(dead_code, reason = "its one variant is the whole of what it says")]
     said: Stopping,
 }
@@ -222,7 +222,7 @@ async fn keep(door: &Door, lend: &Lend, person: PersonKey, app: Label, said: Sai
 
 /// An app's stop, the only thing its body may say.
 async fn stop(door: &Door, lend: &Lend, person: PersonKey, app: Label, body: &[u8]) -> Response {
-    if let Err(e) = serde_json::from_slice::<App>(body) {
+    if let Err(e) = serde_json::from_slice::<AppBody>(body) {
         tracing::debug!(target: "door", lend = %lend.name, %app, error = %e, "door: refused — an app's pass says only stop");
         return LendRefusal::Closed.say(
             StatusCode::FORBIDDEN,
