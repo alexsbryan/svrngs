@@ -56,8 +56,10 @@ Leave them: they are for a phone with a link, and show here by mistake
 run) it says:
 
 ```
+Getting svrngs for this computer from https://group.svrnme.sh/get/svrngs-darwin-aarch64.tar.gz
 Checked: svrngs-darwin-aarch64.tar.gz matches SHA256SUMS.
 Installed svrngs in /Users/sam/.local/bin.
+/Users/sam/.local/bin is not on your PATH, so to run svrngs yourself type /Users/sam/.local/bin/svrngs; nothing else needs it.
 svrngs runs now, and whenever you log in (…/sh.svrnme.svrngs.plist).
 Your home page, the same address each time svrngs starts: http://svrngs.localhost:63742/
 ```
@@ -91,18 +93,23 @@ In a terminal, type, with the number from step 1:
 ```
 
 `--kind llama-server` tells svrngs what is at that number, so it knows
-what to keep back. It says:
+what to keep back. It asks first:
+
+```
+If llama-server takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):
+```
+
+Press **Enter**. (Only if Sam started llama-server with `--api-key`, paste
+that key first.) Then it says:
 
 ```
 Lent llama-server (port 18089) to everyone in your groups, as many at once as want it. …
 They cannot open /slots, /v1/stream, … : svrngs keeps these back whenever a llama-server is lent, since they show one person's use of it to the others or change it for everyone.
 svrngs is running here already, so they can open it now.
 `svrngs unshare llama-server` stops lending it.
-If llama-server takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):
 ```
 
-Press **Enter**. (Only if Sam started llama-server with `--api-key`, paste
-that key first.) The home page now lists it under **What this computer
+Reload the home page: it lists it under **What this computer
 lends**.
 
 Sam is done. Sam's computer has to be on, and llama-server running, for
@@ -165,8 +172,8 @@ do.
   <kind>`** after `svrngs share 18089` alone. svrngs cannot tell
   llama-server by its number. Type the line again with `--kind
   llama-server` at its end.
-- **The terminal waits after "Lent llama-server …"**, its last line
-  asking about a password. Press Enter.
+- **The terminal waits after `svrngs share`**, its last line asking
+  about a password. Press Enter.
 - **On a phone, Sam's llama-server opens to "Error: gzip is not supported
   by this browser."** A phone cannot open llama-server's chat page through
   svrngs yet (the run's finding: llama-server answers a phone's page with
@@ -221,8 +228,8 @@ their own. One computer keeps one svrngs running at login, so Sam's is
 moved into a terminal of its own before Bo's line runs (and before Sam
 makes the group, so Lab's folder is put in Sam's home folder, not yours).
 
-1. Terminal window 1, Sam's: `export HOME=/tmp/try/sam; mkdir -p $HOME;
-   cd $HOME`, then steps 2 and 3. Then, still in window 1:
+1. Terminal window 1, Sam's: `export HOME=/tmp/try/sam USER=Sam; mkdir -p
+   $HOME; cd $HOME`, then steps 2 and 3. Then, still in window 1:
 
    ```
    launchctl bootout gui/$(id -u)/sh.svrnme.svrngs
@@ -231,9 +238,13 @@ makes the group, so Lab's folder is put in Sam's home folder, not yours).
 
    That stops the svrngs kept at login and runs Sam's here, at the same
    home page address. Leave the window open.
-2. Steps 4 and 5, step 5 in window 2 after `export HOME=/tmp/try/sam`.
-3. Terminal window 3, Bo's: `export HOME=/tmp/try/bo; mkdir -p $HOME; cd
-   $HOME`, then steps 6 to 9.
+2. Steps 4 and 5, step 5 in window 2 after `export HOME=/tmp/try/sam
+   USER=Sam`.
+3. Terminal window 3, Bo's: `export HOME=/tmp/try/bo USER=Bo; mkdir -p
+   $HOME; cd $HOME`, then steps 6 to 9. `USER=Bo` is what makes step 7
+   say *"You're in Lab, as Bo."*: svrngs names a person by the computer
+   account's name, and here both friends share yours. Without it, step 7
+   names Bo with your name; nothing else changes.
 4. When done: `launchctl bootout gui/$(id -u)/sh.svrnme.svrngs` (Bo's),
    Control-C in window 1 (Sam's), and `rm -rf /tmp/try`.
 
