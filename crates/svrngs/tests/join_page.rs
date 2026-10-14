@@ -78,6 +78,16 @@ fn admits(sam: &Node, group: &str) -> Vec<(String, String, Option<Device>)> {
         .collect()
 }
 
+/// Whether the page's heading says the phone is in Sam's house as
+/// `person`: who made the group and since when this phone has held it, as
+/// it kept them when it joined (v1ui-door (d)), the day in the browser's
+/// own words.
+fn in_house(status: &Value, person: &str) -> bool {
+    let status = status.as_str().unwrap_or_default();
+    status.starts_with("You’re in house (Sam’s, since ")
+        && status.ends_with(&format!("), as {person}"))
+}
+
 in_both_engines!(
     /// Planted: the key stored unsealed beside its seal (store.js `keep`
     /// writing `raw: key`); a second `Admit` on reopening (app.js joining
@@ -174,7 +184,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         first["why"], "Someone in house already goes by Sam. If that’s you, add this phone from your computer: `svrngs link house --device` there makes a link for it. Else join under another name.",
         "a name someone goes by is refused, and another asked (bash-person):\n{seen:#}"
     );
-    assert_eq!(first["status"], "You’re in house, as Pia", "{seen:#}");
+    assert!(in_house(&first["status"], "Pia"), "{seen:#}");
     assert_eq!(first["lent"], json!(["Sam’s shelf"]), "{seen:#}");
 
     // The issuer's journal: one Admit naming a browser's key and that name,
@@ -209,7 +219,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     for again in ["again", "alone"] {
         let o = &seen[again];
         assert_eq!(o["asked"], false, "{again}: asked again:\n{seen:#}");
-        assert_eq!(o["status"], "You’re in house, as Pia", "{again}:\n{seen:#}");
+        assert!(in_house(&o["status"], "Pia"), "{again}:\n{seen:#}");
         assert_eq!(o["lent"], json!(["Sam’s shelf"]), "{again}:\n{seen:#}");
     }
 
@@ -313,7 +323,7 @@ async fn a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name(engine: 
             .contains(&json!("Adding this phone to house as Sam’s…")),
         "the phone reads whose it is being added as:\n{seen:#}"
     );
-    assert_eq!(first["status"], "You’re in house, as Sam", "{seen:#}");
+    assert!(in_house(&first["status"], "Sam"), "{seen:#}");
 
     let key: [u8; 32] = hex::decode(seen["stored"]["key"].as_str().unwrap())
         .unwrap()

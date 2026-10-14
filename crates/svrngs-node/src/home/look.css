@@ -106,9 +106,7 @@ p.bad { padding: 0.25rem 0.5rem; }
 p.bad:empty { display: none; }
 
 /* The group's page (web/index.html): its forms one field under another, and
-   what its people lend as one stack of buttons, a rule between each. */
+   each thing in its index opened by a button as wide as its cell. */
 form { display: grid; gap: 0.5rem; justify-items: start; }
-ul#lent { display: grid; }
-ul#lent li { padding: 0; border: 0; }
-ul#lent button { width: 100%; margin: 0 0 -3px; text-align: left; }
+#lent button { width: 100%; text-align: left; }
 #line { user-select: all; }

@@ -836,7 +836,9 @@ fn people_router(asking: Asking) -> axum::Router {
 /// dials, which answers what it can see and proxies no lend (DESIGN §3,
 /// call 4). A group the dialer does not stand in adds nothing. Beside them,
 /// every removal and ask to remove in those groups, from each register
-/// (v1-keeper-office (b)): `null` when one cannot be read here.
+/// (v1-keeper-office (b)): `null` when one cannot be read here; and the
+/// people standing in them, as `/v1/rail/people` answers them, for the
+/// door (v1ui-door (d)).
 async fn people_lends(
     State(at): State<Asking>,
     dialer: Option<Extension<Dialer>>,
@@ -874,6 +876,8 @@ async fn people_lends(
     let mut body = serde_json::json!(unlisted);
     body["lent"] = serde_json::json!(lent);
     body["removals"] = serde_json::json!(removals);
+    let people: BTreeMap<_, _> = groups.iter().flat_map(|(_, s)| s.clone()).collect();
+    body["people"] = crate::rail::standing_json(&people);
     Ok(Json(body).into_response())
 }
 

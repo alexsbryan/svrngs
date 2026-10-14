@@ -12,7 +12,9 @@
 //            key opens only as the key of the group it was kept for; and
 //            once opened, `computers`, whose each lending computer of the
 //            last answer is, its key and relay, which the page reaches the
-//            group through when its link's does not answer (v1ui-reach (c)).
+//            group through when its link's does not answer (v1ui-reach (c));
+//            and since v1ui-door (d), `maker`, who made the group, and
+//            `since`, when this phone joined it, absent on one kept before.
 //
 // A lend's origin keeps a store of its own, `svrngs-lend` (below): what its
 // worker dials with, never the person's key, which no lend's origin holds
@@ -87,11 +89,13 @@ async function sealingKey(make) {
 
 const bound = (id, iv) => ({ name: 'AES-GCM', iv, additionalData: new TextEncoder().encode(id) });
 
-// Keep a group joined: `key` is the person's 32 bytes, kept sealed alone.
-export async function keep({ id, name, person, token, key }) {
+// Keep a group joined: `key` is the person's 32 bytes, kept sealed alone;
+// `maker`, who made the group, and `since`, when this phone joined it, in
+// seconds, so two of one name are told apart (v1ui-door (d)).
+export async function keep({ id, name, person, token, key, maker, since }) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const sealed = new Uint8Array(await crypto.subtle.encrypt(bound(id, iv), await sealingKey(true), key));
-  await run('groups', 'readwrite', (s) => s.put({ id, name, person, token, iv, sealed, opened: Date.now() }));
+  await run('groups', 'readwrite', (s) => s.put({ id, name, person, token, iv, sealed, opened: Date.now(), maker, since }));
 }
 
 // Every group kept, the last opened first. Their keys stay sealed.

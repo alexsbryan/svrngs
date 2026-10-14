@@ -52,7 +52,7 @@ import init, {
   relay_of,
 } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
-import { named, question, removal, unlent, uses as used } from './question.js?v=__VERSION__';
+import { door, el, named, question, removal, row, unlent, uses as used, whose } from './question.js?v=__VERSION__';
 
 const heading = document.getElementById('status');
 const said = document.getElementById('response');
@@ -204,7 +204,7 @@ async function join(token, kept) {
       await issuer.close();
     }
     const person = JSON.parse(body).person;
-    await store.keep({ id: group.id, name: group.name, person, token, key });
+    await store.keep({ id: group.id, name: group.name, person, token, key, maker: group.maker, since: Math.floor(Date.now() / 1000) });
     trace(`PAGE: joined ${group.id} as ${person}; the key is kept sealed`);
     return (await store.groups()).find((g) => g.id === group.id);
   }
@@ -352,7 +352,7 @@ async function enter(group, asked) {
     throw new Said('Your group’s computer said no.');
   }
   // A computer before bash-first-minute (c) answers neither unheard nor refused.
-  const { lent, unanswered, unheard = [], refused = [], removals } = await res.json();
+  const { lent, unanswered, unheard = [], refused = [], removals, people } = await res.json();
   await d.close();
   // The computers that lend, kept to reach the group through next time.
   const computers = new Map(lent.map((l) => [l.key, { key: l.key, relay: l.relay ?? null, person: l.person }]));
@@ -364,15 +364,22 @@ async function enter(group, asked) {
       Object.assign(document.createElement('li'), { textContent: r ? removal(r) : `Who was removed from ${group.name} cannot be read just now.` }),
     ),
   );
-  show(`You’re in ${group.name}, as ${group.person}${via ? `, through ${via.person}’s computer` : ''}`, true);
+  // Who made the group and since when this phone has held it, so two of
+  // one name are told apart (#138); nothing for a group kept before.
+  const made = group.maker ? ` (${whose(group)})` : '';
+  show(`You’re in ${group.name}${made}, as ${group.person}${via ? `, through ${via.person}’s computer` : ''}`, true);
+  // The door and the index as the home page draws them (question.js;
+  // V1_UI_BUILD §3.1), judged by the answer this computer gave: whose
+  // computer did not answer it is drawn off. A computer before v1ui-door
+  // (d) names nobody, so no door is drawn, never an empty one.
+  const [drawn, judge] = people ? door(people) : [el('p'), () => {}];
+  judge({ unanswered });
+  document.getElementById('door').replaceChildren(drawn);
   list.replaceChildren(
+    row(['What', 'What it is', 'Whose', 'How it opens', 'Now'], 'th'),
     ...lent.map((l) => {
-      const item = document.createElement('li');
-      const button = document.createElement('button');
-      button.textContent = named(l);
-      button.onclick = () => open(group, key, lent, unanswered, l);
-      item.append(button);
-      return item;
+      const opens = Object.assign(el('button', named(l)), { onclick: () => open(group, key, lent, unanswered, l) });
+      return row([opens, l.kind, l.person, `Here, in this tab${l.signs_in ? ', signing you in once' : ''}`, l.limit && l.using >= l.limit ? 'full' : 'on']);
     }),
   );
   const again = asked?.get('open') && lent.find((l) => label(l.key, l.name) === asked.get('open'));

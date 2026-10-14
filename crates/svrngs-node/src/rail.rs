@@ -192,6 +192,14 @@ pub(crate) fn people_json<'a>(
         .collect()
 }
 
+/// The people standing, the register's rows, in [`people_json`]'s shape:
+/// the people door's, and the members' `/people/lends` beside what they
+/// lend, so a phone's page draws the door (v1ui-door (d)).
+pub(crate) fn standing_json(s: &BTreeMap<String, Member>) -> serde_json::Value {
+    let rows = s.iter();
+    people_json(rows.map(|(k, m)| (k, &m.person, m.person_key.as_str(), m.joined, m.device)))
+}
+
 /// POST /v1/rail/append — sign and append one act to the named namespace.
 ///
 /// The body is the act alone. `seq`, the signature, the timestamp and the id
@@ -397,7 +405,7 @@ fn people_answer(rail: &RingRail, namespace: &str) -> Response {
     match standing_of(rail, namespace) {
         Ok(people) => Json(serde_json::json!({
             "namespace": namespace,
-            "people": people_json(people.iter().map(|(key, m)| (key, &m.person, m.person_key.as_str(), m.joined, m.device))),
+            "people": standing_json(&people),
         }))
         .into_response(),
         Err(refusal) => refusal,

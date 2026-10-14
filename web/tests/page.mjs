@@ -107,13 +107,14 @@ export async function offline(context) {
 
 // In the page: its store holding a group joined by `token`, as joining
 // keeps one (web/store.js, u4-5): the person's key sealed, the group's
-// name, and the person's — a phone that joined. Imported as app.js
-// imports it.
-export async function hold({ hex, token, person = 'bo' }) {
+// name, and the person's — a phone that joined; with `maker` and `since`,
+// who made the group and when the phone joined it (v1ui-door (d)).
+// Imported as app.js imports it.
+export async function hold({ hex, token, person = 'bo', maker, since }) {
   const app = document.querySelector('script[type=module]').src;
   const store = await import(new URL(`./store.js${new URL(app).search}`, app).href);
   const key = Uint8Array.from(hex.match(/../g), (h) => parseInt(h, 16));
-  await store.keep({ id: 'held', name: 'house', person, token, key });
+  await store.keep({ id: 'held', name: 'house', person, token, key, maker, since });
 }
 
 // The group's page at `origin`, opened by the person `args.key` names in

@@ -2704,6 +2704,67 @@ async fn the_home_page_tells_two_groups_of_one_name_apart(engine: Engine) {
 }
 
 in_both_engines!(
+    /// **The door and the index on the group's page** (v1ui-door (d);
+    /// V1_UI_BUILD §3.1), as on the computer's: pia's phone opens ada's
+    /// group, joined from sam's link a day it keeps. Through ada's
+    /// computer it draws ada and cy "on now", bo, whose computer never
+    /// answers, off, and pia herself in from a phone; lists cy's shelf in
+    /// one table with what it is, whose, how it opens and whether it is
+    /// full; and heads the group with who made it and since when, so two
+    /// of one name are told apart. Planted, watched failing: the page as
+    /// before this part, a list of buttons and the group by its name.
+    the_group_s_page_draws_the_door_and_the_index
+);
+async fn the_group_s_page_draws_the_door_and_the_index(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let (ada_dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ada = node(ada_dir.path(), &relay, &signing(8)).await;
+    let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
+    lend(
+        cy_dir.path(),
+        "shelf",
+        page_origin("<!doctype html>").await.port(),
+    );
+    from_a_phone(&ada, "pia", 7);
+    let joined_at = 1_791_000_000;
+    let args = json!({
+        "site": site,
+        "key": hex::encode(signing(7).to_bytes()),
+        "token": token(&signing(1), &relay),
+        "person": "pia",
+        "maker": "sam",
+        "since": joined_at,
+    });
+    let seen = drive(engine, "drive.mjs", args, None).await;
+    eprintln!("the group's page's run: {seen:#}");
+    let status = seen["status"].as_str().unwrap_or_default();
+    assert!(
+        status.starts_with("You’re in house (sam’s, since ") && status.ends_with("), as pia"),
+        "{seen:#}"
+    );
+    let mut drawn: Vec<(String, String)> = serde_json::from_value(seen["drawn"].clone()).unwrap();
+    drawn.sort_by(|a, b| a.1.cmp(&b.1));
+    let want = [
+        ("on", "ada on now"),
+        ("off", "bo did not answer"),
+        ("on", "cy on now"),
+        ("phone", "pia in from a phone"),
+    ];
+    let want: Vec<(String, String)> = want.map(|(c, w)| (c.into(), w.into())).into();
+    assert_eq!(drawn, want, "{seen:#}");
+    assert_eq!(
+        seen["index"],
+        json!([
+            ["What", "What it is", "Whose", "How it opens", "Now"],
+            ["cy’s shelf (k)", "k", "cy", "Here, in this tab", "on"]
+        ]),
+        "{seen:#}"
+    );
+    drop((ada, cy));
+}
+
+in_both_engines!(
     /// **A link to invite someone, made on the page as `svrngs link` makes
     /// it** (start-home, from start-measure's ranked row 10: the act most
     /// asked of a newcomer's page was a terminal command, refused while

@@ -284,6 +284,15 @@ paths it refuses, how many people may use it at once.
     full now. Each computer that did not say what it lends is a row of
     its own, by how, so nothing is stale and nobody is left out.
 
+  The group's page on a phone draws the same door and index from the same
+  lines (`question.js`; v1ui-door (d)), judged by the answer of the
+  computer it reached: `/people/lends` answers the people standing beside
+  what they lend, and whose computer did not answer that one is drawn
+  off. Each thing opens by its button, here, in the phone's tab; and the
+  group is headed by who made it and since when the phone joined it,
+  `maker` and `since`, kept at the join (`web/store.js`), nothing for a
+  group kept before.
+
   On it a person:
   - opens each thing lent by a link that says what it is and whose ("Open
     Sam’s llama-server"), in a tab of its own beside the page;

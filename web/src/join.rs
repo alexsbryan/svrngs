@@ -45,13 +45,15 @@ pub fn ask(key: Vec<u8>, token: String) -> Result<String, JsError> {
     Ok(serde_json::to_string(&req).expect("an ask serializes"))
 }
 
-/// A group the issuer answered, believed: its id and its name, and a
-/// device link's person, whom the phone joins as (bash-devices).
+/// A group the issuer answered, believed: its id and its name, a device
+/// link's person, whom the phone joins as (bash-devices), and who made it,
+/// so two of one name are told apart (v1ui-door (d)).
 #[wasm_bindgen]
 pub struct Group {
     id: String,
     name: String,
     person: Option<String>,
+    maker: String,
 }
 
 #[wasm_bindgen]
@@ -69,6 +71,11 @@ impl Group {
     #[wasm_bindgen(getter)]
     pub fn person(&self) -> Option<String> {
         self.person.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn maker(&self) -> String {
+        self.maker.clone()
     }
 }
 
@@ -89,6 +96,7 @@ pub fn believe(asked: String) -> Result<Group, JsError> {
         id: asked.group,
         name: seed.name().to_string(),
         person: asked.person.map(|p| p.to_string()),
+        maker: seed.founder().to_string(),
     })
 }
 
