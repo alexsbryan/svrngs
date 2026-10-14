@@ -3,7 +3,7 @@
 // `args.ask`, its `/ask?lend=<label>&app=<label>`, it is read for its
 // heading, which the test holds to the one source (question.js).
 //
-//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>?, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true}'
+//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>?, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true, "open"?: "<a link's words>"}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
@@ -64,12 +64,20 @@ try {
   // With `drawn`, a selector: each match's class and words, as the page
   // drew them once loaded (v1ui-door (c): the door).
   const drawn = args.drawn ? await page.locator(args.drawn).evaluateAll((es) => es.map((e) => [e.className, e.textContent])) : null;
+  // With `open`, a link's words: the tab it opens, once loaded, its
+  // address and title (v1ui-lend (b): bo opening what ada lent).
+  let opened = null;
+  if (args.open) {
+    const [tab] = await Promise.all([context.waitForEvent('page'), page.locator('a', { hasText: args.open }).first().click({ timeout: 30_000 })]);
+    await tab.waitForLoadState();
+    opened = { url: tab.url(), title: await tab.title() };
+  }
   // With `text`, the page's words as a person reads them, each cell apart.
   const text = args.text ? await page.locator('body').innerText() : null;
   // Every link on the page, its words and where it opens (start-home).
   const links = await page.locator('a').evaluateAll((as) => as.map((a) => ({ text: a.textContent, target: a.target })));
   const timed = Object.fromEntries(await timing);
-  console.log(JSON.stringify({ heading, read, all, after, clipboard, links, timed, drawn, text, logs }));
+  console.log(JSON.stringify({ heading, read, all, after, clipboard, links, timed, drawn, text, opened, logs }));
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;

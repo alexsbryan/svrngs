@@ -7,7 +7,8 @@
 // Stop; and what this computer lends, each
 // with how many it lets in at once, to set, clear or stop (bash-limit). Its
 // only writes are the person's yes and stop, to its own origin's /choices,
-// their change to what this computer lends, to its /lent, a link (/link),
+// their change to what this computer lends, to its /lent, what runs here
+// lent (/running, v1ui-lend (b)), a link (/link),
 // a folder opened (/folder) and a group made (/group, start-group). Its words are
 // DESIGN §1's: groups, people, what they lend, computer; its question and
 // what apps use and its removals are question.js's, the group's page's too.
@@ -126,12 +127,41 @@ async function uses(lent) {
   if (s.children.length > 1) main.append(s);
 }
 
+// What a lend needs first, as /running says from svrngs's table, in a
+// sentence each: its own accounts, a setting, or what svrngs keeps back.
+const needs = (r) => [r.signs?.accounts && `It keeps its own accounts, so make each person one in it: ${r.signs.accounts}.`, r.signs?.header && `Before it knows who is who, set this in it: ${r.signs.header}.`, r.keeps?.length && `svrngs keeps these parts of it from everyone: ${r.keeps.join(', ')}.`].filter(Boolean).join(' ');
+
+// What runs on this computer and is not lent yet (/running, v1ui-lend
+// (b)), each at its address: a kind svrngs knows named with what it needs
+// first, any other lent only once the person names it and says what it
+// is. One button lends it; the row then says what happened, or why not.
+async function running() {
+  const said = el('p', 'Asking this computer what is running on it…');
+  main.append(Object.assign(el('section', '', el('h2', 'Already running here'), said), { id: 'running' }));
+  let found, named;
+  try {
+    ({ running: found, named } = await get('/running'));
+  } catch (e) {
+    return said.replaceChildren(`What runs on this computer cannot be read: ${e.message}`);
+  }
+  said.replaceChildren(found.length ? 'The programs running on this computer, each at its address. Lend one, and everyone in your groups opens it in their browser, as themselves, while this computer is on. You can stop lending it below at any time.' : 'Nothing else on this computer is running at an address. Start a program, then open this page again.');
+  const ul = said.parentNode.appendChild(el('ul'));
+  for (const r of found) {
+    const at = `http://localhost:${r.port}`;
+    const li = ul.appendChild(el('li', r.kind ? `${r.kind}, at ${at}. ${needs(r)} ` : `Something at ${at}. To lend it, give it a name and say what it is, each one word${named.length ? `; if it is ${named.join(' or ')}, say that` : ''}. `));
+    const [name, kind] = r.kind ? [] : [['name', 'Its name: '], ['kind', 'What it is: ']].map(([n, w]) => li.appendChild(el('label', w, Object.assign(el('input'), { name: n }))));
+    const typed = (l) => l?.lastChild.value.trim() || null;
+    li.append(button(`Lend ${r.kind ?? 'it'} to everyone in your groups`, () => post('/running', { port: r.port, name: typed(name), kind: typed(kind) }).then((l) => { li.replaceChildren(`You lent ${l.name}, at ${at}: everyone in your groups can open it now. ${needs(l)}`); return lending(); }, (e) => li.append(` ${e.message}`))));
+  }
+}
+
 // What this computer lends, each with how many it lets in at once — its
 // person's choice, a number or everyone in their groups — to set, clear or
-// stop here, taken by the door at its next request.
+// stop here, taken by the door at its next request; drawn again in place
+// once something running here is lent.
 async function lending() {
-  const s = Object.assign(el('section', '', el('h2', 'What this computer lends')), { id: 'lent' });
-  main.append(s);
+  const s = document.getElementById('lent') ?? main.appendChild(Object.assign(el('section'), { id: 'lent' }));
+  s.replaceChildren(el('h2', 'What this computer lends'));
   let lent;
   try {
     ({ lent } = await get('/lent'));
@@ -195,6 +225,7 @@ try {
     typed.oninput = () => ((n) => get(`/group?${new URLSearchParams({ name: n })}`).then((b) => namesakes(b, n, 'This makes'), (e) => (n ? e.message : '')).then((w) => n === typed.value && before.replaceChildren(w)))(typed.value);
     const make = el('p', '', name, person, button('Make a group', () => post('/group', [name, person].map((l) => l.lastChild.value)).then(([made, unplaced, beside]) => location.assign(`/?${new URLSearchParams({ made, also: namesakes(beside, made, 'This is'), ...(unplaced && { unplaced }) })}`), (e) => make.append(` ${e.message}`))));
     main.append(Object.assign(el('section', '', el('h2', 'Make a group'), make, before), { id: 'make' }));
+    await running();
     await lending();
     await uses((await lent).flatMap((l) => l ?? []));
     // Said as the command and install.sh say it: it is kept (start-address).

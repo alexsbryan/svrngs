@@ -46,7 +46,8 @@ pub const WELL_KNOWN: &str = include_str!("well_known.txt");
 /// How a kind [`WELL_KNOWN`] names signs each person in, and what its
 /// lender does for it, in their words: either way it is lent with no
 /// password, since one sent on each request makes everyone one person to it.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum Signs {
     /// It keeps its own accounts: how its lender makes a person one.
     Accounts(&'static str),
@@ -160,10 +161,36 @@ pub fn accounts_of(kind: &Kind) -> Option<Signs> {
 /// Whether something on this computer accepts a TCP connection on `port`.
 /// (svrngs: upstream's `probe_origin` over the one port given.)
 pub fn listens(port: NonZeroU16) -> bool {
-    let addr = std::net::SocketAddr::from(([127, 0, 0, 1], port.get()));
-    let up = std::net::TcpStream::connect_timeout(&addr, Duration::from_millis(500)).is_ok();
-    tracing::debug!(target: "share", %addr, up, "share: probed the port");
+    let up = answers(&port);
+    tracing::debug!(target: "share", port, up, "share: probed the port");
     up
+}
+
+/// [`listens`], untraced, for [`listening`]'s thousands.
+fn answers(port: &NonZeroU16) -> bool {
+    let addr = std::net::SocketAddr::from(([127, 0, 0, 1], port.get()));
+    std::net::TcpStream::connect_timeout(&addr, Duration::from_millis(500)).is_ok()
+}
+
+/// The ports something on this computer listens on, each probed as
+/// [`listens`] probes one, a thread to each thousand (v1ui-lend (b): the
+/// home page's "Already running here"). From 1024, below which only the
+/// system's own services listen unless it is told otherwise, to 49151,
+/// past which it hands ports to its own connections (IANA's dynamic
+/// range, RFC 6335 §6), so what is offered is what a person started.
+pub fn listening() -> Vec<NonZeroU16> {
+    let ports: Vec<NonZeroU16> = (1024..=49151).filter_map(NonZeroU16::new).collect();
+    let found: Vec<NonZeroU16> = std::thread::scope(|s| {
+        let asked: Vec<_> = (ports.chunks(1000))
+            .map(|c| s.spawn(|| c.iter().copied().filter(answers).collect::<Vec<_>>()))
+            .collect();
+        asked
+            .into_iter()
+            .flat_map(|h| h.join().expect("a probe does not panic"))
+            .collect()
+    });
+    tracing::debug!(target: "share", probed = ports.len(), ?found, "share: what listens on this computer");
+    found
 }
 
 /// The lend `share` declares, given what `listens` says of its port and

@@ -76,7 +76,7 @@ header_named!(LendName: NotAName, "lend: not a lend's name"; Kind: NotAKind, "le
 /// A path the door refuses for one lend, and every path under it at a
 /// segment boundary. Kept as the lender wrote it, compared as
 /// [`Self::covers`] says.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct RefusedPath(String);
 
 impl RefusedPath {

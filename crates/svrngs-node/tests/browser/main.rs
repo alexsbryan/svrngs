@@ -121,6 +121,12 @@ async fn joined(dir: &Path, relay: &Server, ada: &Node, me: u8, person: &str) ->
         on_behalf_of: None,
     };
     ada.rail().commit(NS, &fixture).unwrap().unwrap();
+    standing(dir, relay, ada, me, person).await
+}
+
+/// The computer of `person`, whose key `signing(me)` ada's group already
+/// holds: started, and ada's record synced to it once, as [`joined`] does.
+async fn standing(dir: &Path, relay: &Server, ada: &Node, me: u8, person: &str) -> Node {
     let node = Node::start(
         dir.to_path_buf(),
         signing(me),
@@ -537,6 +543,14 @@ async fn page_origin(html: &'static str) -> std::net::SocketAddr {
 /// A lent page, `html` for every request, each request's head kept.
 async fn kept_page(html: &'static str) -> (std::net::SocketAddr, KeptHeads) {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    kept_at(listener, html)
+}
+
+/// [`kept_page`] on `listener`, wherever it listens.
+fn kept_at(
+    listener: tokio::net::TcpListener,
+    html: &'static str,
+) -> (std::net::SocketAddr, KeptHeads) {
     let addr = listener.local_addr().unwrap();
     let heads = KeptHeads::default();
     let kept = heads.clone();
@@ -2401,7 +2415,6 @@ async fn the_home_page_names_what_the_terminal_does(engine: Engine) {
     let seen = home_page(engine, &ada, json!({ "all": "#terminal li, #terminal p" })).await;
     let said = seen["all"].to_string();
     for line in [
-        "svrngs share <the number after the colon in its address>",
         "svrngs remove <their name> --group <the group’s name>",
         "Leaving a group is not possible yet",
     ] {
@@ -2411,6 +2424,8 @@ async fn the_home_page_names_what_the_terminal_does(engine: Engine) {
     // found `svrngs new` refused while svrngs runs from login
     // (demo/runs/start/2026-10-13-home/README.md §3).
     assert!(!said.contains("svrngs new"), "{seen:#}");
+    // Nor lending what runs here, the page's own since v1ui-lend (b).
+    assert!(!said.contains("svrngs share"), "{seen:#}");
     drop(ada);
 }
 
@@ -3021,4 +3036,158 @@ async fn a_computer_that_did_not_answer_is_named_by_its_person(engine: Engine) {
         !text.contains(&host) && !text.contains("127.0.0.1"),
         "no word on the page names the relay, {host}:\n{seen:#}"
     );
+}
+
+/// One test at a time holds 8096, Jellyfin's, on this host: the bar's
+/// port in both engines' runs of [`the_home_page_lends_what_runs_here`].
+static JELLYFIN: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
+/// A port from 20000 up that nothing on this host holds now, inside the
+/// probe's span and below the system's own (Linux's from 32768), with its
+/// listener: dropped, nothing listens there.
+async fn free_here(from: u16) -> tokio::net::TcpListener {
+    for port in from..30000 {
+        if let Ok(l) = tokio::net::TcpListener::bind(("127.0.0.1", port)).await {
+            return l;
+        }
+    }
+    panic!("no port free from {from} on this host");
+}
+
+in_both_engines!(
+    /// **Lend from the page** (v1ui-lend (b); V1_UI_BUILD §3.2 and §7's
+    /// 3.2 bar). On ada's computer a stand-in for Jellyfin listens on
+    /// 8096 and something svrngs does not know on a port of its own. Her
+    /// home page, under "Already running here", names the first by the
+    /// table with what it needs first (its own accounts, and how to make
+    /// one) and lends it in one tap; the second it lends only once she has
+    /// given it a name and said what it is, refusing it before. No
+    /// terminal: each is declared through the page's `/running`, and the
+    /// share line under "Done in a terminal" is gone. Then bo, on his own
+    /// computer, opens ada's jellyfin from his home page in a tab. Nothing
+    /// is offered where nobody listens: neither a port gone before the
+    /// page asked nor the table's Navidrome and Calibre-Web unless they
+    /// run on this host. Planted, watched failing: the page offering the
+    /// table's ports whether or not anything answers on them.
+    the_home_page_lends_what_runs_here
+);
+async fn the_home_page_lends_what_runs_here(engine: Engine) {
+    let _held = JELLYFIN.lock().await;
+    // The other engine's run lets 8096 go as its runtime ends, after the lock.
+    let mut bound = tokio::net::TcpListener::bind("127.0.0.1:8096").await;
+    for _ in 0..50 {
+        if bound.is_ok() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+        bound = tokio::net::TcpListener::bind("127.0.0.1:8096").await;
+    }
+    let Ok(jellyfin) = bound else {
+        return could_not_judge(&format!(
+            "the_home_page_lends_what_runs_here::{}: something on this host holds 8096, Jellyfin's",
+            engine.as_str()
+        ));
+    };
+    kept_at(jellyfin, "<!doctype html><title>Jellyfin</title>");
+    let (chores, _) = kept_at(
+        free_here(20000).await,
+        "<!doctype html><title>chores</title>",
+    );
+    let gone = free_here(chores.port() + 1)
+        .await
+        .local_addr()
+        .unwrap()
+        .port();
+    let relay = relay().await;
+    let (ada_dir, bo_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ada = node(ada_dir.path(), &relay, &signing(7)).await;
+    let bo = standing(bo_dir.path(), &relay, &ada, 7, "bo").await;
+    let row = |port: u16| format!("#running li:has-text('localhost:{port}')");
+    let press = |port: u16| json!([format!("{} button", row(port)), null, true]);
+    let fill = |port: u16, n: &str, v: &str| json!([format!("{} input[name={n}]", row(port)), v]);
+    let seen = home_page(
+        engine,
+        &ada,
+        json!({
+            "read": "#running li",
+            "timed": ["#running li"],
+            "all": "#running li, #running p",
+            "do": [press(8096), press(chores.port()), fill(chores.port(), "name", "chores"),
+                fill(chores.port(), "kind", "chore-wheel"), press(chores.port())],
+            "text": true,
+        }),
+    )
+    .await;
+    eprintln!("ada's home page: {seen:#}");
+    let said = |v: &Value, port: u16| -> String {
+        let at = format!("localhost:{port}");
+        let lines = v.as_array().cloned().unwrap_or_default();
+        lines
+            .iter()
+            .filter_map(Value::as_str)
+            .find(|l| {
+                (l.match_indices(&at))
+                    .any(|(i, _)| !l[i + at.len()..].starts_with(|c: char| c.is_ascii_digit()))
+            })
+            .unwrap_or("")
+            .into()
+    };
+    let first = said(&seen["all"], 8096);
+    assert!(
+        first.contains("jellyfin") && first.contains("Dashboard, Users"),
+        "jellyfin named, with how to make each person an account first:\n{seen:#}"
+    );
+    assert!(
+        said(&seen["all"], chores.port()).contains("Its name"),
+        "{seen:#}"
+    );
+    let quiet = |p: u16| std::net::TcpStream::connect(("127.0.0.1", p)).is_err();
+    for port in [gone, ada.api_addr().port()]
+        .into_iter()
+        .chain([4533, 8083].into_iter().filter(|p| quiet(*p)))
+    {
+        assert_eq!(
+            said(&seen["all"], port),
+            "",
+            "offered where nobody listens, or svrngs's own: {port}\n{seen:#}"
+        );
+    }
+    let after = &seen["after"];
+    let lent = |i: usize, words: &str| {
+        let line = after[i].to_string();
+        assert!(line.contains(words), "{words}: {seen:#}");
+    };
+    lent(0, "You lent jellyfin");
+    lent(1, "Give it a name and say what it is first");
+    lent(2, "You lent chores");
+    let page = seen["text"].as_str().unwrap_or_default();
+    assert!(
+        !page.contains("svrngs share"),
+        "the terminal's line is gone:\n{page}"
+    );
+    for lent in ["jellyfin", "chores"] {
+        assert!(
+            page.contains(&format!("{lent}: everyone in your groups at once")),
+            "what this computer lends, drawn again in place: {lent}\n{page}"
+        );
+    }
+    let read = |name: &str| {
+        svrngs_node::lend::read(
+            ada_dir.path(),
+            &svrngs_node::lend::LendName::parse(name).unwrap(),
+        )
+        .unwrap()
+        .map(|l| (l.port.get(), l.kind.to_string()))
+    };
+    assert_eq!(read("jellyfin"), Some((8096, "jellyfin".into())));
+    assert_eq!(read("chores"), Some((chores.port(), "chore-wheel".into())));
+
+    let opened = home_page(engine, &bo, json!({ "open": "Open ada’s jellyfin" })).await;
+    eprintln!("bo's home page: {opened:#}");
+    let tab = &opened["opened"];
+    assert!(
+        at_origin(&tab["url"], &label(1, "jellyfin")) && tab["title"] == "Jellyfin",
+        "bo opens ada's jellyfin in a tab:\n{opened:#}"
+    );
+    drop((ada, bo));
 }

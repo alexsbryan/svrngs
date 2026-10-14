@@ -28,14 +28,17 @@
 //! link` makes it, in the group's record; **a group's folder opened**
 //! in this computer's file browser (`POST /folder`, start-home); and **a
 //! group made** by the svrngs running here, as `svrngs new` makes one
-//! (`POST /group`, start-group; the node's group.rs `Asking::found`).
+//! (`POST /group`, start-group; the node's group.rs `Asking::found`); and
+//! **what runs on this computer lent** (`POST /running`, v1ui-lend (b)),
+//! decided as `svrngs share` decides a lend ([`crate::share`]) from what
+//! `GET /running` offers, every port that answers here and is not lent.
 //! The person's yes and stop are
 //! kept by this computer's door for its own lend, else dialled to the
 //! lender's door on the members' protocol as this computer's key
 //! ([`at_door`]). `GET /choices?lend=` asks that door, when the person
 //! opens the list, what apps use. It asks at `/ask?lend=&app=&back=`.
 
-use axum::extract::{Query, Request, State};
+use axum::extract::{rejection::JsonRejection, Query, Request, State};
 use axum::http::header::{self, HeaderValue};
 use axum::http::{Method, StatusCode};
 use axum::middleware::Next;
@@ -49,8 +52,9 @@ use svrngs_core::pass::Label;
 
 use crate::door::choices::{own_choices, own_choose, Said, Saying};
 use crate::door::{LendRefusal, PASS_HEADER, REFUSED_HEADER};
-use crate::lend::{self, LendName};
+use crate::lend::{self, Kind, LendName};
 use crate::node::Asking;
+use crate::share::{self, Share};
 
 /// The home page's host, before its port.
 const HOST: &str = "svrngs.localhost";
@@ -120,6 +124,7 @@ pub(crate) fn router(
         .route("/look.css", get(|| async { LOOK }))
         .route("/choices", get(choices).post(choose))
         .route("/lent", get(lent).post(change))
+        .route("/running", get(running).post(lend_one))
         .route("/link", axum::routing::post(link))
         .route("/folder", axum::routing::post(open))
         .route("/group", get(namesakes).post(found))
@@ -232,6 +237,102 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "that cannot be changed on this computer",
             )
+        }
+    }
+}
+
+/// A port as the page shows it ([`share::listening`]): the kind the table
+/// knows, how that kind signs each person in and the paths svrngs keeps
+/// back of it, and its name once lent.
+fn shown(port: NonZeroU16, kind: Option<&Kind>, name: Option<&LendName>) -> serde_json::Value {
+    let (signs, keeps) = (kind.and_then(share::accounts_of), kind.map(share::kept_of));
+    serde_json::json!({ "port": port, "kind": kind, "name": name, "signs": signs, "keeps": keeps })
+}
+
+/// `GET /running`: what answers on this computer, less svrngs's own
+/// listener and what it lends already, each [`shown`]; and the kinds the
+/// table knows by their name alone, for the person to say.
+async fn running(State(at): State<Asking>) -> Response {
+    let found = tokio::task::spawn_blocking(share::listening).await;
+    let (Ok(all), Ok(found)) = (lend::all(&at.door().data_dir), found) else {
+        tracing::warn!(target: "home", "home: refused — what this computer lends, or what runs on it, cannot be read");
+        return LendRefusal::Fault.say(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "this computer could not be asked",
+        );
+    };
+    let lent: Vec<_> = all.into_iter().flatten().collect();
+    let taken = |p: &NonZeroU16| {
+        p.get() == at.host.api_port || lent.iter().any(|l| l.port == *p || l.sign_in == Some(*p))
+    };
+    let rows: Vec<_> = (found.into_iter().filter(|p| !taken(p)))
+        .map(|p| shown(p, share::well_known_kind(p).as_ref(), None))
+        .collect();
+    let named: Vec<Kind> = (share::rows().filter(|(port, ..)| *port == "-"))
+        .map(|(_, kind, _)| kind)
+        .collect();
+    tracing::debug!(target: "home", offered = rows.len(), lent = lent.len(), "home: what runs here, offered to lend");
+    Json(serde_json::json!({ "running": rows, "named": named })).into_response()
+}
+
+/// What the person lends from the page: a port, and for one the table
+/// does not know, its name and what it is in their words.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Lending {
+    port: NonZeroU16,
+    name: Option<LendName>,
+    kind: Option<Kind>,
+}
+
+/// `POST /running`: the lend decided as `svrngs share` decides one
+/// ([`share::lend_of`]: the table's kind and kept paths), lent only with a
+/// name and what it is unless the table knows its port, never in place of
+/// a lend of its name, then declared ([`lend::declare`]) and [`shown`].
+async fn lend_one(
+    State(at): State<Asking>,
+    asked: Result<Json<Lending>, JsonRejection>,
+) -> Response {
+    let refused = |why: &str| LendRefusal::Closed.say(StatusCode::BAD_REQUEST, why);
+    let Ok(Json(Lending { port, name, kind })) = asked else {
+        return refused(
+            "Its name and what it is are each one word: letters and digits, with - or _ between.",
+        );
+    };
+    let (known, dir) = (share::well_known_kind(port), &at.door().data_dir);
+    tracing::debug!(target: "home", port, ?known, ?name, ?kind, "home: asked to lend what runs here");
+    if known.is_none() && (name.is_none() || kind.is_none()) {
+        return refused(
+            "Give it a name and say what it is first: svrngs does not know what runs there.",
+        );
+    }
+    let asked = Share {
+        port,
+        name,
+        kind,
+        limit: None,
+        refused: Vec::new(),
+        upload: None,
+        reads: Vec::new(),
+        sign_in: None,
+        asks: None,
+    };
+    // Its one refusal left: a kind is known or given above, and no sign-in.
+    let Ok(lend) = share::lend_of(&asked, share::listens, known) else {
+        return refused(&format!(
+            "Nothing answers at http://localhost:{port} now: start it, then lend it."
+        ));
+    };
+    let stands = lend::read(dir, &lend.name).map(|had| had.is_some());
+    tracing::debug!(target: "home", lend = %lend.name, ?stands, "home: lent from the page unless a lend of its name stands");
+    match stands.map(|stands| (!stands).then(|| lend::declare(dir, &lend, None))) {
+        Ok(Some(Ok(()))) => Json(shown(port, Some(&lend.kind), Some(&lend.name))).into_response(),
+        Ok(None) => refused(&format!(
+            "You already lend something called {}: give it another name.",
+            lend.name
+        )),
+        Err(e) | Ok(Some(Err(e))) => {
+            LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
         }
     }
 }
