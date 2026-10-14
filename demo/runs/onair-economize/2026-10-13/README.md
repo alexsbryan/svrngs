@@ -27,4 +27,29 @@ home.js `uses` and `ask`, which run after `show`). A follow-up, if it
 recurs: home.mjs waiting for the list to leave its placeholder, its plant
 the read made at once.
 
-check.sh is run again, whole, by the loop (`ralph-result await`).
+## The second run
+
+`scripts/check.sh` at 78099c6, run whole by the loop (`ralph-result await`),
+exited 0 after 10m17s. Its verdicts, from the log
+(`ralph/next/onair/ctl/log/sessions/onair-economize-1.await.log`):
+
+```
+note       open files: 256, raised to 10240
+passed     principles pinned
+passed     lean and RUST_ARCH
+passed     app nouns gate
+passed     app nouns
+passed     rustfmt
+passed     clippy
+passed     tests
+passed     canaries
+passed     ceiling canary
+passed     web rustfmt and clippy
+passed     browser
+passed     joining in a browser
+passed     conformance canary
+passed     app laws
+```
+
+The test that failed in the first run passed here, under `tests` and
+`browser` both: two runs of check.sh, one failure, still not a rate.
