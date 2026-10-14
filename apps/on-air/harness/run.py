@@ -336,11 +336,16 @@ def judge():
     else:
         d = s["dee_get_Y"]
         dee_key = (ev.get("people_joined") or {}).get("Dee", {}).get("key", "-")
+        # Refused where it is decided: by Bo's provider or endpoint, naming
+        # Dee's key, or by Dee's own computer, which stands in the group no
+        # longer and asks no one. The provider's group check, with a dialer
+        # it admits from another group, is svrngs-node tests/folders.rs's.
         refused = [l for w in ("bo",) for l in log_lines(w) if "refused" in l and dee_key[:12] in l]
-        ok = d["status"] not in (200, None) and refused
+        own = [l for l in log_lines("dee") if "blob: refused" in l]
+        ok = d["status"] not in (200, None) and (refused or own)
         bar("4.1, scoped", "passed" if ok else "failed",
-            f"Dee's get of Y: {d['status']} {d['said']!r}; a provider's refusal of Dee in Bo's trace: {bool(refused)}",
-            provider_refusals=refused[:5])
+            f"Dee's get of Y: {d['status']} {d['said']!r}; a refusal of Dee in Bo's trace: {bool(refused)}, "
+            f"in Dee's own: {bool(own)}", provider_refusals=refused[:5], own_refusals=own[:5])
 
     pages = (ev.get("page") or {}).get("tabs") or []
     if not ev.get("plant_pages"): pages = []  # 4.2 is judged with its plants, or not at all
