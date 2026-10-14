@@ -10,7 +10,7 @@
    `Rc<RefCell<` in a crate (ownership is a tree); no `async` in svrngs-core
    (the core is synchronous).
 4. Lines of code — not blank, not a comment, not a test — stay under budget:
-   svrngs-core under 3,150, the whole repository under 16,315 — scripts
+   svrngs-core under 3,150, the whole repository under 16,316 — scripts
    included. The budget counts the product: apps/, installed packages (any
    node_modules/) and demo/runs/ apart. A recorded run's driver is what ran,
    kept byte for byte so its data reads against it (ralph/REVIEW_FINDINGS.md
@@ -30,8 +30,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # the repository's where events-wait's held dial to a lender landed (2026-10-14),
 # so no room is left that the operator did not give. v1ui-economize found nothing
 # to cut and left both (demo/runs/economize/2026-10-14-v1ui/SURVEY.md). A raise is
-# asked only after an economizing pass (AGENTS.md "Done"; DESIGN §5).
-BUDGET = {"crates/svrngs-core": 3150, ".": 16315}
+# asked only after an economizing pass (AGENTS.md "Done"; DESIGN §5). After that
+# pass the operator gave v1ui +650 over 16,315, core unchanged (2026-10-14), each
+# row raising only as far as it needs: the repository's cap is one past where
+# v1ui-reach's last part landed.
+BUDGET = {"crates/svrngs-core": 3150, ".": 16316}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
