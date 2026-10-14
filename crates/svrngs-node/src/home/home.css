@@ -1,8 +1,0 @@
-/* SPDX-License-Identifier: AGPL-3.0-or-later */
-/* The home page's look (crates/svrngs-node/src/home.rs), a file of its own: its policy runs no inline style. */
-body { font: 16px/1.5 system-ui, sans-serif; max-width: 40rem; margin: 2rem auto; padding: 0 1rem; }
-section { border-top: 1px solid #ccc; padding: .5rem 0 1rem; }
-blockquote { border-left: 3px solid #999; margin: 1rem 0; padding: .25rem 1rem; }
-button { font: inherit; margin-right: .5rem; }
-.said { color: #555; }
-code { overflow-wrap: anywhere; }

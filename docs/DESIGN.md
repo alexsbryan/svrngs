@@ -71,7 +71,7 @@ community builds those (operator, 2026-10-03). "The iOS of groups" is an
 analogy for being the thing others build on, not a plan to ship an iPhone app
 first.
 
-**Two rules for anything a person reads.** No universe to explain: a person
+**Three rules for anything a person reads.** No universe to explain: a person
 sees their group's name, people's names, apps' names, and *computer*, *phone*,
 *the chat* — never ring, member, key, sync, journal, node or relay. Whoever
 runs a relay is the one reader of that word: `svrngs relay` and its
@@ -79,7 +79,12 @@ flags speak to them of a name, ports and a certificate, and of the
 computers and phones it lets through (§3, "A relay anyone runs"); so does
 `new --relay`, which names one. And the
 most general surface with the fewest features: the system learns by adding
-apps, never by adding platform.
+apps, never by adding platform. And nothing imitates anything else (the
+operator, 2026-10-14): a page brings what a browser does best — the
+system's own fonts and colours, its own elements, plain rules — and its
+warmth is colour, by the names the browser knows, never paper, a hand or
+a stamp. Both pages wear one look, `crates/svrngs-node/src/home/look.css`,
+which the group's page is given as it is given `question.js`.
 
 ## 2. How we build — and the missteps that taught it
 
