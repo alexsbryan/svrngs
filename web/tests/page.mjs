@@ -10,7 +10,8 @@ import { extname, join, normalize, resolve } from 'node:path';
 export const INSTALL = 'npm ci --prefix web && npx --prefix web playwright install chromium webkit';
 
 // The page as an origin serves it: its directory at the root, with the
-// trailing slash, and the wasm by its type so the browser streams it.
+// trailing slash, and the wasm by its type so the browser streams it,
+// on `port` when given, as a page a group keeps is at one address.
 // With `worker`, script run in a lend's worker before its own: the
 // browser alone fetches lend.js, as it registers and updates the worker,
 // so the pages and what they import never see it (u4-10's plant, u5-2's
@@ -29,7 +30,7 @@ const TYPES = {
 // (web/vercel.json, sup-3), each `source` read as a pattern of the path:
 // its `frame-ancestors` is the one guard a `<meta>` policy cannot be.
 const HOST = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8')).headers;
-export function serve(dir, { worker } = {}) {
+export function serve(dir, { worker, port = 0 } = {}) {
   const root = resolve(dir);
   const asked = [];
   const server = http.createServer(async (req, res) => {
@@ -50,7 +51,7 @@ export function serve(dir, { worker } = {}) {
     }
   });
   server.asked = asked;
-  return new Promise((done) => server.listen(0, '127.0.0.1', () => done(server)));
+  return new Promise((done) => server.listen(port, '127.0.0.1', () => done(server)));
 }
 
 // The engines every browser test runs in (u4-7): Chromium as a desktop

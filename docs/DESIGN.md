@@ -153,6 +153,17 @@ paths it refuses, how many people may use it at once.
   of the page ("Lent apps", call 6), carried to another computer's door
   in a pass that computer signs for itself; none for a key of the group's
   asking with no pass;
+- where it is lent, in two headers more (events-links): `x-svrngs-label`,
+  the lend's label, and `x-svrngs-pages`, the page of each group held on
+  the lender's computer that the key asking stands in, `<group>=<page>`
+  apart by a space, the page `none` when the group keeps none and `unread`
+  when it cannot be read. Every such group, as no request says which it is
+  for: a lend is lent to every group its lender's computer holds, and that
+  computer's key stands in each, a phone's in one. From them an app writes
+  a link into itself, `<page>#open=<label>&at=<path>`, which the group's
+  page opens on a phone kept in a group of the lender's (`web/app.js`) and
+  in no other browser; that it opens for the group's people alone is the
+  app's check of who asks, as on any request;
 - the people in the group, one row per key, each key one an app may seal
   to, with its person's first key, which every key of theirs shares;
 - the record, over a loopback API on the member's own node: append, read,

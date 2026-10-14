@@ -163,6 +163,20 @@ pub fn user_name(person: &Person, key: &str) -> String {
 /// service reads its absence as no app named (su-1, the scoped-use spike).
 pub const APP_HEADER: &str = "x-svrngs-app";
 
+/// The lend's own label (events-links): the first name of its origin on a
+/// computer, and the `<label>` of `<page>#open=<label>&at=<path>`, the
+/// address at which a group's page opens the lend at a path on a phone
+/// (`web/app.js`), so an app writes a link into itself.
+pub const LABEL_HEADER: &str = "x-svrngs-label";
+
+/// The page of each group held here that the device asking stands in,
+/// `<group>=<page>` apart by a space: the `<page>` of [`LABEL_HEADER`]'s
+/// address, the group's kept page ([`crate::invite::kept_page`]), `none`
+/// when it keeps none and `unread` when that cannot be read. Every group,
+/// as no request says which it is for: a lend is lent to every group held
+/// here, and a computer's key stands in each of them; a phone's, in one.
+pub const PAGES_HEADER: &str = "x-svrngs-pages";
+
 /// A person's share of the upload a lend declares, in bits a second, on
 /// each request through the door and its answer: a declared figure, as the
 /// name says (DESIGN §8, "The upload is declared"), never a measured one.
@@ -1203,6 +1217,28 @@ impl Drop for Carriage {
     }
 }
 
+/// [`PAGES_HEADER`]'s value for `device`; `None`, named at warn, when the
+/// groups held cannot be listed, and at debug when a page cannot be a header.
+fn pages(door: &Door, device: &DeviceKey) -> Option<HeaderValue> {
+    let stands = |group: &String| {
+        let standing = door.rail.standing(group);
+        tracing::debug!(target: "door", group, read = standing.is_ok(), "door: whether the device stands in a group, for its page; an unreadable register tells none");
+        matches!(standing, Ok(crate::register::Standing::Members(m)) if m.contains_key(device.as_str()))
+    };
+    let held = door.rail.namespaces().inspect_err(|e| tracing::warn!(target: "door", error = %e, "door: the groups held cannot be listed, so no page is told"));
+    let told: Vec<String> = (held.ok()?.into_iter().filter(stands)).map(|group| {
+        let dir = door.rail.group_dir(&group).map_err(|e| e.to_string());
+        let page: String = dir.and_then(|d| crate::invite::kept_page(&d)).map_or_else(|why| {
+            tracing::warn!(target: "door", group, why, "door: a group's page cannot be read, so it is told unread");
+            "unread".into()
+        }, |page| page.map_or("none".into(), |p| p.as_str().into()));
+        format!("{group}={page}")
+    }).collect();
+    let value = HeaderValue::from_str(&told.join(" ")).ok();
+    tracing::debug!(target: "door", device = device.as_str(), ?told, header = value.is_some(), "door: the pages of the groups the device stands in, none told when one cannot be a header");
+    value
+}
+
 /// The share, when the door tells one, on the head of a request carried to
 /// the service and of its answer ([`SHARE_HEADER`]).
 fn tell_share(headers: &mut HeaderMap, share: Option<u64>) {
@@ -1284,16 +1320,17 @@ async fn forward(
             .headers
             .insert(HeaderName::from_static(APP_HEADER), app);
     }
+    let label = Label::of(&door.key, lend.name.as_str());
+    let named = HeaderValue::from_str(label.as_str()).expect("a label is base32, so a header");
+    let pages = pages(door, device).map(|p| (HeaderName::from_static(PAGES_HEADER), p));
+    let told = [(HeaderName::from_static(LABEL_HEADER), named)];
+    parts.headers.extend(told.into_iter().chain(pages));
     if displaced > 0 {
         tracing::info!(target: "door", actor, lend = %lend.name, displaced,
             "door: dropped headers the client typed in the door's or the secret's name before setting them");
     }
     parts.headers.insert(header::HOST, own_address(lend));
-    own_origin(
-        &mut parts.headers,
-        &Label::of(&door.key, lend.name.as_str()),
-        lend,
-    );
+    own_origin(&mut parts.headers, &label, lend);
     if let Some(protocol) = upgrade.clone() {
         tracing::debug!(target: "door", actor, lend = %lend.name, ?protocol, "door: the request asks to switch protocols, carried");
         keep_upgrade(&mut parts.headers, protocol);

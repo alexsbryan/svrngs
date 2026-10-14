@@ -37,7 +37,7 @@ use harness::{relay, relay_url, repo, site, Engine};
 use iroh_relay::server::Server;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
-use svrngs_core::link::Token;
+use svrngs_core::link::{Origin, Token};
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::Node;
 use svrngs_node::{actor_of, Joined, Person, RailAct, Roster, SigningKey};
@@ -1314,6 +1314,158 @@ async fn a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path(engine: 
         "one Back returns to ada's page:\n{seen:#}"
     );
     drop((ada, cy));
+}
+
+in_both_engines!(
+    /// A lent app writes a link into itself that opens on a phone
+    /// (events-links (a); DESIGN §3, "What an app gets"). The door tells
+    /// the app its label in `x-svrngs-label` and, in `x-svrngs-pages`, the
+    /// page of each group held here that the key asking stands in: bo's
+    /// phone the house's alone; ada's computer, at the app's origin on its
+    /// loopback, the house's and dweb's, which keeps none. The app writes
+    /// `<page>#open=<label>&at=<path>` from them (web/app.js), and the
+    /// link, opened in a new tab of bo's phone, lands on the app at that
+    /// path. Planted: no headers, as before this test.
+    a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone
+);
+async fn a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &bo).await;
+    let alone = Roster::new(
+        [(Person::parse("ada").unwrap(), vec![actor_of(&signing(1))])]
+            .into_iter()
+            .collect(),
+    );
+    ada.rail().set_seed("dweb", &alone).unwrap();
+    // The group's page, served by the browser half on a port chosen here.
+    let port = std::net::TcpListener::bind("127.0.0.1:0")
+        .unwrap()
+        .local_addr()
+        .unwrap()
+        .port();
+    let page = format!("http://localhost:{port}/");
+    let house = ada.rail().group_dir(NS).unwrap();
+    svrngs_node::group::write_origin(&house, &Origin::parse(&page).unwrap()).unwrap();
+    let (app, heads) = linking_app().await;
+    lend(dir.path(), "app", app.port());
+    let label = label(1, "app");
+
+    let own = reqwest::Client::builder()
+        .no_proxy()
+        .build()
+        .unwrap()
+        .get(format!("http://{}/", ada.api_addr()))
+        .header(
+            "host",
+            format!("{label}.localhost:{}", ada.api_addr().port()),
+        )
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(own.status(), 200, "{:?}", own.text().await);
+    let told = |name: &str| {
+        let heads = heads.lock().unwrap();
+        heads
+            .iter()
+            .map(|h| told_in(h, name).unwrap_or_default())
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(told("x-svrngs-label"), [label.clone()]);
+    assert_eq!(told("x-svrngs-pages"), [format!("dweb=none {NS}={page}")]);
+
+    let seen = drive(
+        engine,
+        "links.mjs",
+        json!({
+            "site": site,
+            "port": port,
+            "key": hex::encode(bo.to_bytes()),
+            "token": token(&signing(1), &relay),
+            "open": "app",
+        }),
+        None,
+    )
+    .await;
+    eprintln!("the link's run: {seen:#}");
+    let pages = told("x-svrngs-pages");
+    assert_eq!(
+        pages[1],
+        format!("{NS}={page}"),
+        "bo's phone stands in the house alone: {pages:?}"
+    );
+    assert_eq!(
+        seen["link"],
+        format!("{page}#open={label}&at=/at/a/path?n=1"),
+        "the app writes its link from the door's headers:\n{seen:#}"
+    );
+    let landed = &seen["landed"];
+    assert!(
+        at_origin(&landed["url"], &label)
+            && landed["url"].as_str().unwrap().ends_with("/at/a/path?n=1")
+            && landed["title"] == "the app at a path",
+        "the link opens the app at its path on bo's phone:\n{seen:#}"
+    );
+    drop(ada);
+}
+
+/// The value of the header `name` in the request head `head`, if told.
+fn told_in(head: &str, name: &str) -> Option<String> {
+    head.lines().find_map(|l| {
+        let (n, v) = l.split_once(':')?;
+        n.eq_ignore_ascii_case(name).then(|| v.trim().to_string())
+    })
+}
+
+/// A lent app that writes a link into itself (events-links (a)): `/`
+/// answers a page holding `<page>#open=<label>&at=/at/a/path?n=1`, its
+/// page the house's in `x-svrngs-pages` and its label `x-svrngs-label`, or
+/// no link when either is not told; any other path a page titled "the app
+/// at a path". Each request's head kept.
+async fn linking_app() -> (std::net::SocketAddr, KeptHeads) {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    let heads = KeptHeads::default();
+    let kept = heads.clone();
+    tokio::spawn(async move {
+        while let Ok((mut sock, _)) = listener.accept().await {
+            let kept = kept.clone();
+            tokio::spawn(async move {
+                let mut head = [0u8; 8192];
+                let n = tokio::io::AsyncReadExt::read(&mut sock, &mut head)
+                    .await
+                    .unwrap_or(0);
+                let head = String::from_utf8_lossy(&head[..n]).into_owned();
+                let html = if head.starts_with("GET / ") {
+                    kept.lock().unwrap().push(head.clone());
+                    let page = told_in(&head, "x-svrngs-pages").and_then(|p| {
+                        let house = p
+                            .split(' ')
+                            .find_map(|g| g.strip_prefix(&format!("{NS}=")))?;
+                        Some(house.to_string())
+                    });
+                    let link = page
+                        .zip(told_in(&head, "x-svrngs-label"))
+                        .map(|(page, label)| format!("{page}#open={label}&at=/at/a/path?n=1"));
+                    let a = link.map_or(String::new(), |l| {
+                        format!("<a id=link href=\"{l}\">the link</a>")
+                    });
+                    format!("<!doctype html><title>the app</title>{a}")
+                } else {
+                    "<!doctype html><title>the app at a path</title>".into()
+                };
+                let answer = format!(
+                    "HTTP/1.1 200 OK\r\ncontent-type: text/html; charset=utf-8\r\n\
+                     content-length: {}\r\nconnection: close\r\n\r\n{html}",
+                    html.len()
+                );
+                let _ = sock.write_all(answer.as_bytes()).await;
+            });
+        }
+    });
+    (addr, heads)
 }
 
 in_both_engines!(
