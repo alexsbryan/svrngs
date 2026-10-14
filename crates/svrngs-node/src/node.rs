@@ -820,21 +820,6 @@ impl Asking {
     pub(crate) fn door(&self) -> &crate::door::Door {
         &self.door
     }
-
-    /// What the computer whose key is `actor` lends now: this computer's
-    /// from its declarations, another's asked as [`Node::lends`] asks it,
-    /// within [`ANSWER_WITHIN`]; `None` when it did not answer, or this
-    /// computer cannot read its own.
-    pub(crate) async fn offered_by(&self, actor: &str) -> Option<Vec<Offered>> {
-        if actor == self.host.actor {
-            return crate::door::offered(&self.door).await.ok();
-        }
-        let asked = ask_lends(&self.host.transport, actor, self.host.contact(actor)?);
-        match tokio::time::timeout(ANSWER_WITHIN, asked).await {
-            Ok(Answered::Lends(lends)) => Some(lends),
-            _ => None,
-        }
-    }
 }
 
 fn people_router(asking: Asking) -> axum::Router {

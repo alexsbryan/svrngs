@@ -463,3 +463,91 @@ async fn a_lent_page_is_not_held_by_a_computer_that_never_answers() {
     );
     house.close().await;
 }
+
+/// **A silent lender is could-not-judge, on both paths** (onair-economize
+/// (a)): one decider of what a lent page reads, and one reading of a lender
+/// whose computer did not say what it lends. Alex lends a page, `night`,
+/// reading `media`, and a `telly`; Sam a page, `reel`, reading `media`, and
+/// a `films`. Sam's computer gone, at Alex's: `/svrngs-reads` at `reel`'s
+/// origin, `night`'s fetch at Sam's `films` and `reel`'s fetch at Alex's
+/// `telly` are each refused `away`, 502 — never "nothing is lent here", nor
+/// "this page does not read that". Red at a20ed46: the reads answered 404
+/// `unlent` for `reel`, as if Sam had answered that it is not lent.
+#[tokio::test]
+async fn a_silent_lender_is_could_not_judge_on_the_page_s_reads_and_at_the_origin() {
+    use tower::ServiceExt;
+    let mut house = House::new().await;
+    let declare = |dir: &std::path::Path, name: &str, port: u16, kind: &str, reads: &[&str]| {
+        let at = lend::lends_dir(dir);
+        std::fs::create_dir_all(&at).unwrap();
+        let body = serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads });
+        std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+    };
+    declare(house.alex_dir.path(), "night", 8596, "night", &["media"]);
+    declare(house.alex_dir.path(), "telly", 8096, "media", &[]);
+    declare(house.sam_dir.path(), "reel", 8597, "night", &["media"]);
+    declare(house.sam_dir.path(), "films", 8097, "media", &[]);
+    let port = house.alex.api_addr().port();
+    let label = |seed: u8, name: &str| {
+        svrngs_core::pass::Label::of(signing(seed).verifying_key().as_bytes(), name)
+    };
+    let ask = |alex: &Node, at: svrngs_core::pass::Label, path: &str, from: Option<&str>| {
+        let mut request =
+            axum::http::Request::get(path).header("host", format!("{at}.localhost:{port}"));
+        if let Some(page) = from {
+            request = request
+                .header("sec-fetch-site", "same-site")
+                .header("sec-fetch-mode", "cors")
+                .header("origin", format!("http://{page}.localhost:{port}"));
+        }
+        let mut request = request.body(axum::body::Body::empty()).unwrap();
+        let caller: SocketAddr = "127.0.0.1:50000".parse().unwrap();
+        request
+            .extensions_mut()
+            .insert(axum::extract::ConnectInfo(caller));
+        let routes = alex.api_routes();
+        async move {
+            let answer = tokio::time::timeout(Duration::from_secs(30), routes.oneshot(request))
+                .await
+                .expect("the ask finishes")
+                .unwrap();
+            let status = answer.status().as_u16();
+            let body = axum::body::to_bytes(answer.into_body(), usize::MAX)
+                .await
+                .unwrap();
+            let body: serde_json::Value = serde_json::from_slice(&body).unwrap();
+            (status, body["kind"].as_str().map(str::to_string))
+        }
+    };
+    let (night, reel) = (label(1, "night").to_string(), label(2, "reel").to_string());
+    let (status, body) = ask(&house.alex, label(2, "reel"), "/svrngs-reads", None).await;
+    assert_eq!(
+        status, 200,
+        "Sam's computer up, reel's reads answered: {body:?}"
+    );
+
+    let gone = house.sam.take().unwrap();
+    gone.endpoint().close().await;
+    drop(gone);
+    let away = (502, Some("away".to_string()));
+    for (row, at, path, from) in [
+        ("reel's reads", label(2, "reel"), "/svrngs-reads", None),
+        (
+            "night's fetch at Sam's films",
+            label(2, "films"),
+            "/x",
+            Some(night.as_str()),
+        ),
+        (
+            "reel's fetch at Alex's telly",
+            label(1, "telly"),
+            "/x",
+            Some(reel.as_str()),
+        ),
+    ] {
+        let got = ask(&house.alex, at, path, from).await;
+        eprintln!("{row}: {got:?}");
+        assert_eq!(got, away, "{row}: Sam's computer silent, could-not-judge");
+    }
+    house.close().await;
+}

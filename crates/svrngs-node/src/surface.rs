@@ -38,7 +38,7 @@ use serde::Serialize;
 use svrngs_core::pass::Label;
 
 use crate::door::LendRefusal;
-use crate::node::{Asking, Unlisted};
+use crate::node::{Asking, Lending, Unlisted};
 use crate::rail::{namespace_of, standing_of, RailQuery};
 use crate::redeem::SeedText;
 use crate::ring_routes::err;
@@ -225,33 +225,94 @@ async fn lends(
     Ok(Json(body).into_response())
 }
 
-/// `GET /svrngs-reads` at the origin of the lend `label` (mnp-2): each lend
-/// of a kind its lender declared it reads, in the groups its lender and this
-/// computer stand in — its kind, name, lender's person and the origin this
-/// computer's browser asks it at; for a lend that asks, its lender's words,
-/// `asks`, `ask`, where the page sends its person to say yes, on the
-/// home page ([`crate::home`]; the page adds `&back=<its path>`), and
-/// `stop`, where the page posts its own stop at its origin
-/// ([`crate::origin`]) — and whose computer did not answer. No
-/// key: a page needs none to ask, and the address is all it builds on.
-pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Response> {
-    let reader = hex::encode(label.lender());
+/// What the page of the lend `app` reads now: each lend of a kind its
+/// lender declared it reads ([`crate::lend::Offered::reads_one`]), in the
+/// groups its lender and this computer stand in, and whose computer did not
+/// say what it lends. The one decider of what `/svrngs-reads` tells a page
+/// ([`reads`]) and what it reaches at another lend's origin ([`reaches`]).
+/// A lender whose computer did not say — [`Unlisted`]'s three lists — is
+/// could-not-judge, never read as lending nothing: refused `away` where the
+/// answer hangs on it, named where it is one of many (onair-economize (a)).
+/// Known by person, so a lend not found whose person has a computer that
+/// did not say is `away`, never "not lent".
+async fn read_by(
+    at: &Asking,
+    app: &Label,
+) -> Result<(Vec<Lending>, Unlisted, Vec<String>), Response> {
+    let reader = hex::encode(app.lender());
     let host = &at.host;
     let (mut groups, own) = host.shared_with(&reader)?;
     groups.retain(|(_, s)| s.contains_key(host.actor()));
     let Some(own) = own else {
-        tracing::debug!(target: "surface", %label, "surface: reads refused — its lender and this computer share no group");
+        tracing::debug!(target: "surface", %app, "surface: reads refused — its lender and this computer share no group");
         return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
     };
-    let (lent, Unlisted { unanswered, .. }) = at.lent(&groups, &own, None).await?;
-    let named = |l: &crate::node::Lending| Label::of_hex(&l.key, l.offered.name.as_str());
-    let Some(reading) = lent.iter().find(|l| named(l).as_ref() == Some(label)) else {
-        tracing::debug!(target: "surface", %label, unanswered = unanswered.len(), "surface: reads refused — the lend is not lent now");
+    let (lent, unlisted) = at.lent(&groups, &own, None).await?;
+    let Unlisted {
+        unanswered,
+        unheard,
+        refused,
+    } = &unlisted;
+    let silent: Vec<String> = (groups.iter().flat_map(|(_, s)| s.iter()))
+        .filter(|(_, m)| {
+            [unanswered, unheard, refused]
+                .iter()
+                .any(|l| l.contains(&m.person))
+        })
+        .map(|(actor, _)| actor.clone())
+        .collect();
+    let Some(reading) = lent.iter().find(|l| named(l).as_ref() == Some(app)) else {
+        if silent.contains(&reader) {
+            tracing::debug!(target: "surface", %app, ?unlisted, "surface: reads refused — the page's lender did not say what it lends, so what it reads cannot be judged");
+            return Err(crate::origin::away());
+        }
+        tracing::debug!(target: "surface", %app, "surface: reads refused — the lend is not lent now");
         return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
     };
-    let read: Vec<serde_json::Value> = lent
-        .iter()
-        .filter(|l| named(l).as_ref() != Some(label) && reading.offered.reads_one(&l.offered))
+    let read = (lent.iter())
+        .filter(|l| named(l).as_ref() != Some(app) && reading.offered.reads_one(&l.offered))
+        .cloned()
+        .collect();
+    Ok((read, unlisted, silent))
+}
+
+/// A lend's label, from its lender's key and its name.
+fn named(l: &Lending) -> Option<Label> {
+    Label::of_hex(&l.key, l.offered.name.as_str())
+}
+
+/// Whether the page of the lend `app` may reach the lend `label`
+/// ([`crate::origin`]): `label` among what it reads ([`read_by`]); a lend
+/// whose lender did not say is could-not-judge, refused `away`.
+pub(crate) async fn reaches(at: &Asking, app: &Label, label: &Label) -> Result<(), Response> {
+    let (read, unlisted, silent) = read_by(at, app).await?;
+    if read.iter().any(|l| named(l).as_ref() == Some(label)) {
+        tracing::debug!(target: "surface", %app, %label, "surface: the page reads the lend's kind, so it reaches it");
+        return Ok(());
+    }
+    if silent.contains(&hex::encode(label.lender())) {
+        tracing::debug!(target: "surface", %app, %label, ?unlisted, "surface: refused — the lend's lender did not say what it lends, so whether the page reads it cannot be judged");
+        return Err(crate::origin::away());
+    }
+    tracing::debug!(target: "surface", %app, %label, "surface: refused — the page does not read the lend, or it is not lent now");
+    Err(LendRefusal::Closed.say(
+        StatusCode::FORBIDDEN,
+        "this page does not read that; only what its lender declared it reads",
+    ))
+}
+
+/// `GET /svrngs-reads` at the origin of the lend `label` (mnp-2): what it
+/// reads ([`read_by`]), each lend's kind, name, lender's person and the
+/// origin this computer's browser asks it at; for a lend that asks, its
+/// lender's words, `asks`, `ask`, where the page sends its person to say
+/// yes, on the home page ([`crate::home`]; the page adds `&back=<its
+/// path>`), and `stop`, where the page posts its own stop at its origin
+/// ([`crate::origin`]) — and whose computer did not answer. No key: a page
+/// needs none to ask, and the address is all it builds on.
+pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Response> {
+    let host = &at.host;
+    let (lent, Unlisted { unanswered, .. }, _) = read_by(at, label).await?;
+    let read: Vec<serde_json::Value> = (lent.iter())
         .filter_map(|l| {
             let address = host.origin(&l.key, l.offered.name.as_str())?;
             let mut read = serde_json::json!({ "kind": l.offered.kind, "name": l.offered.name, "lender": l.person, "address": address });
@@ -265,7 +326,7 @@ pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Respon
             Some(read)
         })
         .collect();
-    tracing::debug!(target: "surface", %label, reads = ?reading.offered.reads, read = read.len(), unanswered = unanswered.len(),
+    tracing::debug!(target: "surface", %label, read = read.len(), unanswered = unanswered.len(),
         "surface: reads — answered a lent page the lends of the kinds it reads, each at its origin here");
     Ok(Json(serde_json::json!({ "lends": read, "unanswered": unanswered })).into_response())
 }

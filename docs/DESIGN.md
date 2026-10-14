@@ -615,7 +615,8 @@ U5 builds the apps' part by seven calls; the evidence is U5's inventory
    answers from the record, each address the lend's own origin
    (`crates/svrngs-node/src/surface.rs`, `reads`). Since sup-1 the answer
    is also what a page reaches on a computer, one decider
-   (`lend::Offered::reads_one`), and the app is named there as on a phone.
+   (`surface.rs`, `read_by`, its kinds `lend::Offered::reads_one`), and
+   the app is named there as on a phone.
    A pass names its app apart from the lends it reads, `Pass { app, reads
    }`, signing the bytes `[app, ...reads]` signed before, and the door
    tells a service the app from it alone. A computer's origin names the
@@ -631,8 +632,12 @@ U5 builds the apps' part by seven calls; the evidence is U5's inventory
    `demo/runs/start/2026-10-13/` §3 (a) 4), is a program's, and the lend's
    own, as loopback is trusted (§9) and as the record reads a page. A page reaches its own lend and those of
    the kinds its lender declared it reads, in a group both lenders and
-   this computer stand in, else `closed`; a lender that did not answer is
-   `away`, never a lend not read (`kept_to_reads`). The app is carried as
+   this computer stand in, else `closed`. A lender whose computer did not
+   say what it lends is could-not-judge on both paths (onair-economize
+   (a)): the page whose own lender is silent is refused its reads `away`,
+   never "nothing is lent here"; a lend whose lender is silent is `away`
+   where a page reaches it, never a lend not read; among the reads, its
+   person is named `unanswered`. The app is carried as
    the door's `Who::Own` to this computer's own lend, and to another's in
    a pass this computer signs for its page, its own key the person and
    the holder, five minutes long and signed for each request, so none is

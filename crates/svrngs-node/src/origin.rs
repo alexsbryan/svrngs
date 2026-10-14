@@ -20,7 +20,7 @@
 //! **Which app asks** (sup-1; DESIGN §3, "Lent apps", call 6) is read from
 //! what the browser says of the page asking, which no page's script can set
 //! ([`app_of`]), and the page is kept to its own lend and the lends of the
-//! kinds its lender declared it reads ([`kept_to_reads`]), as a phone's pass
+//! kinds its lender declared it reads ([`crate::surface::reaches`]), as a phone's pass
 //! keeps it. The app is carried as the door's [`Who::Own`] to this
 //! computer's own lend, and to another computer's in a pass this computer
 //! signs for itself ([`own_pass`]), so the far door reads it from the one
@@ -37,7 +37,6 @@ use axum::Router;
 use svrngs_core::pass::{Label, Pass};
 
 use crate::door::{self, Door, LendRefusal, Who, LEND_ROUTE, PASS_HEADER, REFUSED_HEADER};
-use crate::lend::Offered;
 use crate::node::Asking;
 use crate::surface::STOP_SUFFIX;
 
@@ -108,55 +107,6 @@ pub(crate) fn fetch(headers: &HeaderMap) -> ([Option<&str>; 4], bool) {
     ([site, mode, origin, host], own)
 }
 
-/// Whether the page of the lend `app` may reach the lend `label`: both
-/// lent by people of a group this computer stands in, `label`'s of a kind
-/// `app`'s lender declared it reads ([`Offered::reads_one`]), as
-/// `/svrngs-reads` answers it ([`crate::surface::reads`]). Each lender is
-/// asked what it lends now; one that did not answer is could-not-judge,
-/// refused `away`, never read as lending nothing.
-async fn kept_to_reads(at: &Asking, app: &Label, label: &Label) -> Result<(), Response> {
-    let (reader, read) = (hex::encode(app.lender()), hex::encode(label.lender()));
-    let this = at.host.actor();
-    let (groups, _) = at.host.shared_with(&reader)?;
-    if !groups
-        .iter()
-        .any(|(_, s)| s.contains_key(this) && s.contains_key(&read))
-    {
-        tracing::debug!(target: "origin", %app, %label, "origin: refused — the page's lender and the lend's share no group with this computer");
-        return Err(not_read());
-    }
-    let named = |offered: Option<Vec<Offered>>, l: &Label| {
-        offered.map(|o| {
-            o.into_iter()
-                .find(|o| Label::of(&l.lender(), o.name.as_str()) == *l)
-        })
-    };
-    let (reading, lent) = tokio::join!(at.offered_by(&reader), at.offered_by(&read));
-    match (named(reading, app), named(lent, label)) {
-        (Some(Some(reading)), Some(Some(lent))) if reading.reads_one(&lent) => {
-            tracing::debug!(target: "origin", %app, %label, kind = %lent.kind, "origin: the page reads the lend's kind, so it reaches it");
-            Ok(())
-        }
-        (None, _) | (_, None) => {
-            tracing::debug!(target: "origin", %app, %label, "origin: refused — a lender did not answer, so what the page reads cannot be judged");
-            Err(away())
-        }
-        (reading, lent) => {
-            tracing::debug!(target: "origin", %app, %label, reads = ?reading.flatten().map(|r| r.reads), kind = ?lent.flatten().map(|l| l.kind),
-                "origin: refused — the page does not read the lend, or one of them is not lent now");
-            Err(not_read())
-        }
-    }
-}
-
-/// A page reaching a lend it does not read.
-fn not_read() -> Response {
-    LendRefusal::Closed.say(
-        StatusCode::FORBIDDEN,
-        "this page does not read that; only what its lender declared it reads",
-    )
-}
-
 /// A pass this computer signs for its own page of `app` to reach `label`
 /// at another computer's door: its key the person and the holder, so that
 /// door, dialled as this key, reads the app from it (`door.rs`'s `own_app`).
@@ -210,7 +160,7 @@ async fn lent(State(at): State<Asking>, req: Request) -> Result<Response, Respon
         return Ok(crate::home::say(&at, &lend, app, crate::door::choices::Said::Stop, pass).await);
     }
     if app != label {
-        kept_to_reads(&at, &app, &label).await?;
+        crate::surface::reaches(&at, &app, &label).await?;
         let page = req.headers().get(header::ORIGIN).cloned();
         return Ok(readable(reach(&at, label, app, req).await, page));
     }
