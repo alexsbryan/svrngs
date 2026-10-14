@@ -124,12 +124,11 @@ pub(super) fn syncing_in(data_dir: &Path) -> Syncing {
     Ok(kept.collect())
 }
 
-/// `bytes` at `path` whole or not at all: a stop mid-write leaves the last
-/// whole one, never a torn file the next start would refuse.
+/// `bytes` at `path` whole or not at all ([`crate::declared::write_whole`]):
+/// a stop mid-write leaves the last whole one, never a torn file the next
+/// start would refuse.
 fn write_whole(path: &Path, bytes: &[u8]) -> Result<(), FolderError> {
-    let part = path.with_extension("part");
-    std::fs::write(&part, bytes).map_err(io(&part))?;
-    std::fs::rename(&part, path).map_err(io(path))
+    crate::declared::write_whole(path, bytes).map_err(|(at, e)| FolderError::Read(at, e))
 }
 
 /// What this computer last took or wrote at a path: the record's entry, and

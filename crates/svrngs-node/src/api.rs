@@ -73,7 +73,7 @@ pub fn kept_address(data_dir: &std::path::Path) -> Result<Option<SocketAddr>, Ap
 /// place, so an app never reads half an address.
 pub fn write_address(data_dir: &std::path::Path, addr: SocketAddr) -> Result<(), ApiError> {
     let path = data_dir.join(API_FILE);
-    crate::declared::write_whole(&path, &format!("http://{addr}\n"))
+    crate::declared::write_whole(&path, format!("http://{addr}\n").as_bytes())
         .map_err(|(_, e)| ApiError::AddressFile(path.clone(), e))?;
     tracing::debug!(target: "rails", path = %path.display(), %addr, "api: wrote where it listens, for apps it did not start");
     Ok(())

@@ -125,15 +125,16 @@ fn write_owner_only(path: &Path, value: &str) -> std::io::Result<()> {
     open.open(path)?.write_all(value.as_bytes())
 }
 
-/// `text` at `path`, whole: written to `.<its name>.partial` beside it and
+/// `bytes` at `path`, whole: written to `.<its name>.partial` beside it and
 /// renamed into place, so no reader sees half of it — the one way this node
 /// writes a file whole (REVIEW_FINDINGS #107: the API's address, a lend's
-/// declaration, its choices). An error names the file that failed, the
-/// partial or `path`.
-pub(crate) fn write_whole(path: &Path, text: &str) -> Result<(), (PathBuf, std::io::Error)> {
+/// declaration, its choices, and a synced folder's kept state,
+/// events-economize). An error names the file that failed, the partial or
+/// `path`.
+pub(crate) fn write_whole(path: &Path, bytes: &[u8]) -> Result<(), (PathBuf, std::io::Error)> {
     let name = path.file_name().unwrap_or_default().to_string_lossy();
     let partial = path.with_file_name(format!(".{name}.partial"));
-    std::fs::write(&partial, text).map_err(|e| (partial.clone(), e))?;
+    std::fs::write(&partial, bytes).map_err(|e| (partial.clone(), e))?;
     std::fs::rename(&partial, path).map_err(|e| (path.to_path_buf(), e))
 }
 

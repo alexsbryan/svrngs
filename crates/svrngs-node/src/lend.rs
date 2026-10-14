@@ -451,7 +451,7 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
         asks: lend.asks.clone(),
     };
     let text = serde_json::to_string_pretty(&file).expect("a declaration always serializes");
-    crate::declared::write_whole(&dir.join(format!("{}.json", lend.name)), &text)
+    crate::declared::write_whole(&dir.join(format!("{}.json", lend.name)), text.as_bytes())
         .map_err(|(path, source)| LendError::Unwritable { path, source })
 }
 
