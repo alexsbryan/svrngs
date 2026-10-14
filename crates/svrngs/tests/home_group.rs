@@ -6,7 +6,8 @@
 //! a group by its name and the person's; its folder is placed at
 //! `~/svrngs/<name>`, where `join` puts everyone's; a link the page makes
 //! for it is redeemed by another computer, which then stands in it; and a
-//! name already held is refused in a person's words. The group keeps the
+//! name already held makes a second group, said as it is typed and once
+//! made, by the one rule `svrngs new` asks too (#138). The group keeps the
 //! page this computer's svrngs came from, as install.sh keeps it, so the
 //! link is an https link on it. Neither computer is
 //! restarted. Dee's computer holds a first group, Lab, made by `svrngs new
@@ -33,16 +34,63 @@ use svrngs_node::{actor_of, SigningKey};
 use tokio::io::AsyncBufReadExt;
 
 /// `svrngs <args>`, this build's, with `home` its `HOME` and nothing else
-/// of this computer's environment but its `PATH`.
+/// of this computer's environment but its `PATH`, and the group's traces
+/// at debug on its stderr: a name's one rule (#138).
 fn svrngs(home: &Path, args: &[&str]) -> tokio::process::Command {
     let mut c = tokio::process::Command::new(env!("CARGO_BIN_EXE_svrngs"));
     c.args(args)
         .env_clear()
         .env("HOME", home)
         .env("PATH", std::env::var_os("PATH").unwrap_or_default())
+        .env("RUST_LOG", "group=debug")
+        .env("NO_COLOR", "1")
         .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
         .kill_on_drop(true);
     c
+}
+
+/// `svrngs new <name> --as Dee --relay <at>` in `home`, run until it says
+/// all it says, as a terminal's Ctrl-C then stops it: what it printed, and
+/// what it traced.
+async fn new(home: &Path, name: &str, at: &str) -> (Vec<String>, String) {
+    let mut new = svrngs(home, &["new", name, "--as", "Dee", "--relay", at])
+        .spawn()
+        .unwrap();
+    let mut out = tokio::io::BufReader::new(new.stdout.take().unwrap()).lines();
+    let said = tokio::time::timeout(Duration::from_secs(60), async {
+        let mut said = Vec::new();
+        while let Ok(Some(line)) = out.next_line().await {
+            let all = line.starts_with("Leave this running");
+            said.push(line);
+            if all {
+                break;
+            }
+        }
+        said
+    })
+    .await
+    .expect("svrngs new printed all it says");
+    new.kill().await.unwrap();
+    (said, traced_by(new).await)
+}
+
+/// What `child`, stopped, traced on its stderr.
+async fn traced_by(mut child: tokio::process::Child) -> String {
+    use tokio::io::AsyncReadExt;
+    let mut traced = String::new();
+    let err = child.stderr.as_mut().unwrap();
+    err.read_to_string(&mut traced).await.unwrap();
+    traced
+}
+
+/// The rule's one trace for a name held `held` times already.
+fn ruled(traced: &str, name: &str, held: usize) -> bool {
+    traced.lines().any(|l| {
+        l.contains("group: a name's one rule")
+            && l.contains(&format!("name={name}"))
+            && l.contains(&format!("held={held}"))
+    })
 }
 
 /// Drive `web/tests/home.mjs` in `engine` at `page`, as `args` say.
@@ -78,23 +126,30 @@ async fn the_home_page_makes_a_group_another_computer_joins_with_no_restart(
     let home = tempfile::tempdir().unwrap();
     let at = harness::relay_url(&relay);
 
-    // Lab, Dee's first group, met at the relay here: `new` runs until it
-    // is stopped, as a terminal's Ctrl-C stops it.
-    let mut new = svrngs(home.path(), &["new", "Lab", "--as", "Dee", "--relay", &at])
-        .spawn()
-        .unwrap();
-    let mut out = tokio::io::BufReader::new(new.stdout.take().unwrap()).lines();
-    let made = tokio::time::timeout(Duration::from_secs(60), async {
-        while let Ok(Some(line)) = out.next_line().await {
-            if line.starts_with("Leave this running") {
-                return true;
-            }
-        }
-        false
-    })
-    .await;
-    assert_eq!(made, Ok(true), "svrngs new Lab printed all it says");
-    new.kill().await.unwrap();
+    // Lab, Dee's first group, met at the relay here; then another called
+    // lab, said beside the first by whose it is and since when, by the
+    // name's one rule (#138).
+    let (said, traced) = new(home.path(), "Lab", &at).await;
+    assert!(ruled(&traced, "Lab", 0), "{said:#?}\n{traced}");
+    let (said, traced) = new(home.path(), "lab", &at).await;
+    let today = chrono::Local::now().format("%-d %b");
+    let second =
+        format!("You're already in Lab (yours, since {today}). This is a second group called lab.");
+    assert!(said.contains(&second), "{said:#?}");
+    // Its folder its own: this disk may ignore case, so lab beside Lab is
+    // the place's name and its id's start.
+    let held = svrngs::group::groups(&home.path().join(".svrngs"));
+    let lab = held
+        .iter()
+        .find(|s| s.name().as_str() == "lab")
+        .expect("lab held");
+    let id = &lab.id()[..8];
+    let apart = home.path().join(format!("svrngs/lab-{id}"));
+    assert!(
+        (said.iter()).any(|l| l.starts_with(&format!("lab's folder is {}: ", apart.display()))),
+        "{said:#?}"
+    );
+    assert!(ruled(&traced, "lab", 1), "{traced}");
 
     // The page this computer's svrngs came from, as install.sh keeps it
     // in the data dir: a group made on the home page keeps it, so its
@@ -132,9 +187,9 @@ async fn the_home_page_makes_a_group_another_computer_joins_with_no_restart(
                 ["#make input[name=person]", "Dee"],
                 ["#make button:has-text('Make a group')", null],
                 ["#home section button:has-text('Make a link to invite someone to Trip')", null, true],
-                ["#make input[name=name]", "trip"],
+                ["#make input[name=name]", "trip", true],
                 ["#make input[name=person]", "Dee"],
-                ["#make button:has-text('Make a group')", null, true],
+                ["#make button:has-text('Make a group')", null],
             ],
         }),
     )
@@ -171,12 +226,32 @@ async fn the_home_page_makes_a_group_another_computer_joins_with_no_restart(
     let standing = bo.rail().standing(&seed.id()).unwrap();
     assert!(standing.names(&actor_of(&bo_key)), "Bo stands in Trip");
 
-    // A name already held, refused in a person's words.
-    let refused = seen["after"][2].to_string();
+    // A name already held: said as it is typed, then made, and said again,
+    // by the rule `svrngs new` asks (#138). The day is the browser's own
+    // words for it, so only whose is pinned.
+    let before = seen["after"][2].to_string();
     assert!(
-        refused.contains("You are in Trip already: give this group another name."),
+        before.contains("You’re already in Trip (yours, since "),
+        "{seen:#}"
+    );
+    assert!(
+        before.contains("). This makes a second group called trip."),
+        "{seen:#}"
+    );
+    let after = seen["after"][3].to_string();
+    assert!(
+        after.contains("You made trip. You’re already in Trip (yours, since "),
+        "{seen:#}"
+    );
+    assert!(
+        after.contains("). This is a second group called trip."),
         "{seen:#}"
     );
     running.kill().await.unwrap();
+    let traced = traced_by(running).await;
+    assert!(
+        ruled(&traced, "trip", 1),
+        "the page's make, by the one rule: {traced}"
+    );
     bo.endpoint().close().await;
 }

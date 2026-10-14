@@ -1039,8 +1039,13 @@ impl std::fmt::Display for Printed {
 /// What a verb tells the person, in DESIGN §1's words alone.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Said {
-    /// `new`: the group made, and its first link.
-    Made { seed: Seed, link: Printed },
+    /// `new`: the group made, its first link, and the groups called so
+    /// already (#138).
+    Made {
+        seed: Seed,
+        link: Printed,
+        beside: Vec<group::Namesake>,
+    },
     /// `link`: a new link to a group.
     /// A new link; a device link's person when it is one (bash-devices).
     Linked {
@@ -1091,8 +1096,12 @@ pub enum Said {
 impl std::fmt::Display for Said {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Said::Made { seed, link } => {
+            Said::Made { seed, link, beside } => {
                 writeln!(f, "Made {}, with you as {}.", seed.name(), seed.founder())?;
+                if !beside.is_empty() {
+                    let another = if beside.len() > 1 { "another" } else { "a second" };
+                    writeln!(f, "You're already in {}. This is {another} group called {}.", namesakes_said(beside), seed.name())?;
+                }
                 writeln!(f, "Send this link to the people you want in it. It works for a day, while this computer is on:")?;
                 writeln!(f)?;
                 write!(f, "{link}")
@@ -1306,6 +1315,19 @@ fn joined_of(raw: &str) -> Result<Joined, String> {
         .ok_or_else(|| format!("--joined `{raw}` is not when someone joined: `started`, or a time as svrngs says it, such as \"2026-10-12 14:03:22 -0700\""))
 }
 
+/// The groups a new one shares its name with, each with who made it and
+/// since when this computer has held it (#138), as the home page says them
+/// (home.js `namesakes`): "Trip (Sam's, since 3 Oct)".
+fn namesakes_said(beside: &[group::Namesake]) -> String {
+    let at = |t| chrono::DateTime::from_timestamp(t, 0).map(|t| t.with_timezone(&chrono::Local));
+    let said = |g: &group::Namesake| {
+        let whose = (g.maker.as_ref()).map_or("yours".into(), |m| format!("{m}'s"));
+        let since = (g.since.and_then(at)).map(|t| t.format(", since %-d %b").to_string());
+        format!("{} ({whose}{})", g.name, since.unwrap_or_default())
+    };
+    beside.iter().map(said).collect::<Vec<_>>().join(" and ")
+}
+
 /// When a person joined, as a person adds it to the command.
 fn joined_said(joined: &Joined) -> String {
     match joined {
@@ -1423,12 +1445,15 @@ async fn serve(
                 Some(page) => Some(checked_page(page).await?),
                 None => None,
             };
+            // The one rule for a name, asked before the group is kept (#138).
+            let beside = group::namesakes(node.rail().root(), &name, &svrngs_node::actor_of(key));
             let (seed, link) = new_group(node, name, person, page.as_ref(), kept, relay).await?;
             println!(
                 "{}",
                 Said::Made {
                     seed: seed.clone(),
-                    link
+                    link,
+                    beside
                 }
             );
             // The founder's folder, where every joiner's is, so what the

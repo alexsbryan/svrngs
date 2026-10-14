@@ -56,6 +56,13 @@ function people(rows) {
   return each.map((p) => (each.filter((q) => q.person === p.person).length > 1 ? `${p.person} (${when(p.joined)})` : p.person)).join(', ');
 }
 
+// The groups a new one shares its name with (/group, the node's one rule;
+// #138), each with who made it and since when this computer has held it,
+// in the command's words (cli.rs `namesakes_said`): `verb` says it before
+// the group is made or after.
+const day = (t) => new Date(t * 1000).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+const namesakes = (n, name, verb) => (n.length ? `You’re already in ${n.map((g) => `${g.name} (${g.maker ? `${g.maker}’s` : 'yours'}${g.since ? `, since ${day(g.since)}` : ''})`).join(' and ')}. ${verb} ${n.length > 1 ? 'another' : 'a second'} group called ${name}.` : '');
+
 // Group `g` in its section `s`: its people and folder as soon as they are
 // read, then what its people lend once each computer has answered or not,
 // so a computer that does not answer holds back that list alone
@@ -158,7 +165,7 @@ try {
     // Said after a group is made here (start-group), with where its folder
     // could not be made, if it could not.
     const q = new URLSearchParams(location.search);
-    if (q.has('made')) main.append(el('p', `You made ${q.get('made')}. ${q.has('unplaced') ? `Its folder could not be made: ${q.get('unplaced')}. ` : ''}Make a link below to invite someone to it.`));
+    if (q.has('made')) main.append(el('p', `You made ${q.get('made')}. ${q.get('also') ? `${q.get('also')} ` : ''}${q.has('unplaced') ? `Its folder could not be made: ${q.get('unplaced')}. ` : ''}Make a link below to invite someone to it.`));
     // With no group, how to make one or join one (start-home; start-group).
     if (!groups.length) main.append(Object.assign(el('p', 'This computer is in no group yet. Make one below, or join one by the line the page of the link you were sent gives.'), { className: 'none' }));
     const lent = Promise.all(groups.map((g) => show(g, main.appendChild(el('section', '', el('h2', g.name ?? 'A group whose name this computer cannot read'))))));
@@ -175,10 +182,13 @@ try {
     main.append(Object.assign(el('section', '', el('h2', 'Open a link from your group'), open), { id: 'open' }));
     // A group made here as `svrngs new` makes one, by the svrngs running
     // here (start-group): its name and the person's, then the page again,
-    // saying so; a refusal said beside the button.
+    // saying so; a refusal said beside the button. A name a group here has
+    // already is said as it is typed, and again once made (#138).
     const [name, person] = [['name', 'A name for the group: '], ['person', 'Your name in it: ']].map(([n, w]) => el('label', w, Object.assign(el('input'), { name: n })));
-    const make = el('p', '', name, person, button('Make a group', () => post('/group', [name, person].map((l) => l.lastChild.value)).then(([made, unplaced]) => location.assign(`/?${new URLSearchParams({ made, ...(unplaced && { unplaced }) })}`), (e) => make.append(` ${e.message}`))));
-    main.append(Object.assign(el('section', '', el('h2', 'Make a group'), make), { id: 'make' }));
+    const [typed, before] = [name.lastChild, el('p')];
+    typed.oninput = () => ((n) => get(`/group?${new URLSearchParams({ name: n })}`).then((b) => namesakes(b, n, 'This makes'), (e) => (n ? e.message : '')).then((w) => n === typed.value && before.replaceChildren(w)))(typed.value);
+    const make = el('p', '', name, person, button('Make a group', () => post('/group', [name, person].map((l) => l.lastChild.value)).then(([made, unplaced, beside]) => location.assign(`/?${new URLSearchParams({ made, also: namesakes(beside, made, 'This is'), ...(unplaced && { unplaced }) })}`), (e) => make.append(` ${e.message}`))));
+    main.append(Object.assign(el('section', '', el('h2', 'Make a group'), make, before), { id: 'make' }));
     await lending();
     await uses((await lent).flatMap((l) => l ?? []));
     // Said as the command and install.sh say it: it is kept (start-address).

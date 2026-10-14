@@ -214,13 +214,21 @@ impl crate::folder::Folders {
             let why = "this computer names no home folder ($HOME)".to_string();
             return (PathBuf::from("~/svrngs"), Err(why));
         };
+        // A place another group's folder holds already — one of the same
+        // name, or of a name differing only in case on a disk that ignores
+        // it — stays its: this group's goes beside it, its id's start after
+        // its name, so no two groups ever share one (#138).
+        let ours = crate::folder::dirs_of(&self.data_dir, &seed.id());
+        let taken = dir.exists() && !ours.is_ok_and(|d| d.contains(&dir));
+        let apart = PathBuf::from(format!("{}-{}", dir.display(), &seed.id()[..8]));
+        let dir = if taken { apart } else { dir };
         let placed = std::fs::create_dir_all(&dir).map_err(|e| e.to_string());
         let kept = |()| {
             self.both_ways(dir.clone(), seed.id())
                 .map_err(|e| e.to_string())
         };
         let placed = placed.and_then(kept).map(drop);
-        tracing::debug!(target: "group", group = %seed.id(), dir = %dir.display(), ?placed, "group: the group's folder placed, or why not");
+        tracing::debug!(target: "group", group = %seed.id(), dir = %dir.display(), taken, ?placed, "group: the group's folder placed, beside another's if its place was taken, or why not");
         (dir, placed)
     }
 }
@@ -228,7 +236,7 @@ impl crate::folder::Folders {
 impl crate::node::Asking {
     /// A group made where svrngs runs, for the home page, as `svrngs new`
     /// makes one (start-group): `name`, founded by this computer's key as
-    /// `person`, refused when one of its groups is called so already. It
+    /// `person`, beside the groups called so already ([`namesakes`]). It
     /// keeps the page this computer's svrngs came from, the data dir's
     /// `origin`, which install.sh writes, so the page's links to it are
     /// https links whose page gives the one line; and the relay its links
@@ -238,11 +246,7 @@ impl crate::node::Asking {
     pub(crate) fn found(&self, name: &str, person: &str) -> Result<Made, String> {
         let parse = |n: &str| Name::parse(n).map_err(|e| e.to_string());
         let (name, person, root) = (parse(name)?, parse(person)?, self.host.rail.root());
-        let held = |n: &&Name| n.as_str().eq_ignore_ascii_case(name.as_str());
-        if let Some(n) = groups(root).iter().map(Seed::name).find(held) {
-            let why = format!("You are in {n} already: give this group another name.");
-            return Err(why);
-        }
+        let beside = namesakes(root, &name, self.host.actor());
         // The founder is the key this computer signs and dials with.
         let seed = draw(name, person, self.key.verifying_key());
         let page = kept_page(root)?;
@@ -250,12 +254,58 @@ impl crate::node::Asking {
         let relay = kept_relay(carried(&self.host.relay, home), self.host.relay.n0_services);
         self.host.keep_group(&seed, page.as_ref(), relay.as_ref())?;
         tracing::debug!(target: "group", group = %seed.id(), ?page, ?relay, "group: made for the home page");
-        Ok((self.folders.place(&seed), seed))
+        Ok((self.folders.place(&seed), seed, beside))
     }
 }
 
-/// A group made, after where its folder is and whether it was placed.
-type Made = ((PathBuf, Result<(), String>), Seed);
+/// A group made, after where its folder is and whether it was placed, and
+/// the groups called so already.
+type Made = ((PathBuf, Result<(), String>), Seed, Vec<Namesake>);
+
+/// A group this computer is in, as two of one name are told apart (#138;
+/// the operator, "Allow; tell them apart"): its name, who made it — `None`
+/// when this computer's key did — and since when this computer has held
+/// it: the time its seed was written, once, by `new` or `join`
+/// ([`crate::node::Host::keep_group`]); `None` when that cannot be read.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct Namesake {
+    pub name: String,
+    pub maker: Option<String>,
+    pub since: Option<i64>,
+}
+
+impl Namesake {
+    /// `seed`'s group as this computer, `me`, holds it under `root`.
+    pub fn of(root: &Path, seed: &Seed, me: &str) -> Self {
+        let file = crate::group_dir_in(root, &seed.id()).map(|d| d.join(SEED_FILE));
+        let at = file
+            .ok()
+            .and_then(|f| std::fs::metadata(f).ok()?.modified().ok());
+        let at = at.and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok());
+        let since = at.and_then(|d| i64::try_from(d.as_secs()).ok());
+        tracing::debug!(target: "group", group = %seed.id(), ?since, "group: since when this computer holds it, by its seed's time");
+        let name = seed.name().as_str().into();
+        let maker = (seed.founder_actor() != me).then(|| seed.founder().as_str().into());
+        Self { name, maker, since }
+    }
+}
+
+/// The one rule for a group's name, which `svrngs new` and the home page's
+/// "Make a group" both ask (#138): a name one of this computer's groups is
+/// called already ([`called`]) makes another group all the same, never
+/// refused; each held is answered, for the maker to say before and after.
+pub fn namesakes(root: &Path, name: &Name, me: &str) -> Vec<Namesake> {
+    let mut held = groups(root);
+    held.retain(|s| called(s, name.as_str()));
+    tracing::debug!(target: "group", %name, held = held.len(), "group: a name's one rule — allowed, with the groups called so already");
+    held.iter().map(|s| Namesake::of(root, s, me)).collect()
+}
+
+/// Whether `seed`'s group is called `name`, case aside: as [`named`] finds
+/// a group by its name, and [`namesakes`] those a new one shares it with.
+fn called(seed: &Seed, name: &str) -> bool {
+    seed.name().as_str().to_lowercase() == name.trim().to_lowercase()
+}
 
 /// The relay a joiner keeps from its link's `carried`, where it meets the
 /// group from then on: at n0's (`n0`), none when it is one of n0's relays —
@@ -316,8 +366,7 @@ pub fn named<'a>(groups: &'a [Seed], reference: &str) -> Vec<&'a Seed> {
         .iter()
         .filter(|s| {
             !needle.is_empty()
-                && (s.name().as_str().to_lowercase() == needle
-                    || (needle.len() >= 8 && s.id().starts_with(&needle)))
+                && (called(s, &needle) || (needle.len() >= 8 && s.id().starts_with(&needle)))
         })
         .collect()
 }

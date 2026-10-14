@@ -280,9 +280,20 @@ paths it refuses, how many people may use it at once.
     there as `svrngs new` makes one (start-group, the node's `group.rs`
     `Asking::found`), so a computer whose svrngs runs from login, where
     `svrngs new` is refused, makes one with no terminal. A name one of
-    their groups has already is refused in a person's words; the page
-    then says it was made, and places the group's folder where a joiner's
-    is (`Folders::place`, one home for `new`, `join` and the page). The
+    their groups has already makes another group all the same, by the
+    one rule `svrngs new` asks too (`group::namesakes`, #138; the
+    operator, "Allow; tell them apart"): the page says so as the name is
+    typed (`GET /group?name=`) and again once it is made, as the command
+    says it when it makes one — "You’re already in Trip (Sam’s, since 3
+    Oct). This makes a second group called Trip." — each held group named
+    by who made it, "yours" when this computer did, and since when this
+    computer has held it, the time its seed was written. The page then
+    says it was made, and places the group's folder where a joiner's
+    is (`Folders::place`, one home for `new`, `join` and the page); a
+    place another group's folder holds already, one of the same name or,
+    on a disk that ignores case, of a name differing only in case, stays
+    its, and this group's goes beside it with its id's start after its
+    name, so no two groups share one. The
     group keeps the page this computer's svrngs came from, the data dir's
     `origin`, which install.sh writes, so the links made for it are https
     links whose page gives the one line; a computer set up by hand keeps

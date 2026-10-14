@@ -252,6 +252,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     let mut said = vec![Said::Made {
         seed: seed.clone(),
         link: printed.clone(),
+        beside: Vec::new(),
     }
     .to_string()];
     let link = parsed(&printed, &sam.node);

@@ -122,7 +122,7 @@ pub(crate) fn router(
         .route("/lent", get(lent).post(change))
         .route("/link", axum::routing::post(link))
         .route("/folder", axum::routing::post(open))
-        .route("/group", axum::routing::post(found))
+        .route("/group", get(namesakes).post(found))
         .with_state(at.clone())
         .merge(
             Router::new()
@@ -267,13 +267,32 @@ async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
 }
 
 /// `POST /group`, `[name, person]`: a group made, as `svrngs new` makes
-/// one ([`Asking::found`]): its name, and why its folder was not placed.
+/// one ([`Asking::found`]): its name, why its folder was not placed, and
+/// the groups called so already.
 async fn found(State(at): State<Asking>, Json([name, person]): Json<[String; 2]>) -> Response {
     let made = at.found(&name, &person);
     tracing::debug!(target: "home", ?made, "home: a group made, or why not");
     match made {
-        Ok(((_, placed), seed)) => Json((seed.name().as_str(), placed.err())).into_response(),
+        Ok(((_, placed), seed, beside)) => {
+            Json((seed.name().as_str(), placed.err(), beside)).into_response()
+        }
         Err(why) => LendRefusal::Closed.say(StatusCode::CONFLICT, why),
+    }
+}
+
+#[derive(Deserialize)]
+struct Naming {
+    name: String,
+}
+
+/// `GET /group?name=`: the groups called so already, for the page to say
+/// before a group is made ([`crate::group::namesakes`]); a name that is
+/// not one refused in its words.
+async fn namesakes(State(at): State<Asking>, Query(n): Query<Naming>) -> Response {
+    let root = at.host.rail.root();
+    match crate::group::Name::parse(&n.name) {
+        Ok(name) => Json(crate::group::namesakes(root, &name, at.host.actor())).into_response(),
+        Err(why) => LendRefusal::Closed.say(StatusCode::BAD_REQUEST, why.to_string()),
     }
 }
 

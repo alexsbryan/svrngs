@@ -41,13 +41,16 @@ try {
   const after = [];
   let clipboard = null;
   for (const [selector, value, stays] of args.do ?? []) {
-    if (value !== undefined && value !== null) {
+    const filled = value !== undefined && value !== null;
+    if (filled && !stays) {
       await page.locator(selector).first().fill(value);
       continue;
     }
+    // A fill with `stays` is read as a click that stays is: once the page
+    // has said what it says as the words are typed (#138).
     if (stays) {
       const before = (await page.locator(args.all).allTextContents()).join('\n');
-      await page.locator(selector).first().click();
+      await (filled ? page.locator(selector).first().fill(value) : page.locator(selector).first().click());
       await page.waitForFunction(([s, b]) => [...document.querySelectorAll(s)].map((e) => e.textContent).join('\n') !== b, [args.all, before], { timeout: 30_000 });
       after.push(await page.locator(args.all).allTextContents());
       if (args.engine === 'chromium') clipboard = await page.evaluate(() => navigator.clipboard.readText()).catch((e) => `unread: ${e}`);
