@@ -212,7 +212,7 @@ async fn log_ships_admitted_ops_gaps_and_the_roster() {
     assert_eq!(out["gaps"].as_array().unwrap().len(), 0);
     assert_eq!(
         out["people"],
-        serde_json::json!([{ "person": "alex", "key": actor_of(&key(7)), "person_key": actor_of(&key(7)), "joined": "started" }]),
+        serde_json::json!([{ "person": "alex", "key": actor_of(&key(7)), "person_key": actor_of(&key(7)), "joined": "started", "device": "computer" }]),
         "the answer carries the people standing after the ops (svrngs: \
          upstream's carried the roster they were admitted against)"
     );
@@ -247,9 +247,11 @@ async fn a_seal_renders_its_prune() {
 
 /// The people door answers who stands in the group from the register — the
 /// seed's founder and everyone an `Admit` let in — each with their key's hex,
-/// and refuses a group this computer does not hold (svrngs, DESIGN §3). The
-/// failing input: the people read from the seed alone, which knows only the
-/// founder.
+/// and refuses a group this computer does not hold (svrngs, DESIGN §3). Each
+/// row says what holds its key (v1ui-door (a)): cy, in from a phone's page,
+/// is a browser's. The failing inputs: the people read from the seed alone,
+/// which knows only the founder; a row with no `device`, so a page cannot
+/// draw a phone as one.
 #[tokio::test]
 async fn the_people_door_answers_the_register_with_keys() {
     let (_dir, rail) = rail_with(&[("alex", 7)]);
@@ -265,6 +267,34 @@ async fn the_people_door_answers_the_register_with_keys() {
         on_behalf_of: None,
     };
     rail.commit(journal, &fixture).unwrap().unwrap();
+    let invite = svrngs_core::tests_support::Fixture {
+        act: crate::RailAct::Invite {
+            key: actor_of(&key(9)),
+            until: i64::MAX,
+            device_of: None,
+        },
+        on_behalf_of: None,
+    };
+    let invite = rail.commit(journal, &invite).unwrap().unwrap().lines()[0]
+        .id
+        .clone();
+    let cy = Person::parse("cy").unwrap();
+    let admit_cy = crate::RailAct::Admit {
+        invite: Some(crate::Redemption::sign(
+            &key(4),
+            journal,
+            &invite,
+            &cy,
+            crate::Device::Browser,
+        )),
+        person: cy,
+        key: actor_of(&key(4)),
+    };
+    let fixture = svrngs_core::tests_support::Fixture {
+        act: admit_cy,
+        on_behalf_of: None,
+    };
+    rail.commit(journal, &fixture).unwrap().unwrap();
     let out = body_of(super::people_answer(&rail, "ledger")).await;
     // When bo joined: the time on the `Admit` this computer stamped
     // (bash-same-name); alex started the group.
@@ -273,10 +303,15 @@ async fn the_people_door_answers_the_register_with_keys() {
         .map(|p| p["joined"].clone())
         .unwrap();
     assert!(bo_joined["at"].is_i64(), "{out}");
+    let cy_joined = (out["people"].as_array().unwrap().iter())
+        .find(|p| p["person"] == "cy")
+        .map(|p| p["joined"].clone())
+        .unwrap();
     // In the order of their keys, as the register holds them.
     let mut want = vec![
-        serde_json::json!({ "person": "alex", "key": actor_of(&key(7)), "person_key": actor_of(&key(7)), "joined": "started" }),
-        serde_json::json!({ "person": "bo", "key": actor_of(&key(3)), "person_key": actor_of(&key(3)), "joined": bo_joined }),
+        serde_json::json!({ "person": "alex", "key": actor_of(&key(7)), "person_key": actor_of(&key(7)), "joined": "started", "device": "computer" }),
+        serde_json::json!({ "person": "bo", "key": actor_of(&key(3)), "person_key": actor_of(&key(3)), "joined": bo_joined, "device": "computer" }),
+        serde_json::json!({ "person": "cy", "key": actor_of(&key(4)), "person_key": actor_of(&key(4)), "joined": cy_joined, "device": "browser" }),
     ];
     want.sort_by_key(|p| p["key"].as_str().unwrap().to_string());
     assert_eq!(out["people"], serde_json::Value::from(want));

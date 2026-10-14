@@ -56,7 +56,7 @@ use crate::live::{push_ephemeral, LivePeer};
 use crate::node::dialled;
 use crate::register::{Member, Standing};
 use crate::ring_routes::err;
-use crate::{Compaction, Joined, Membership, Person, RailAct, RailError, RingRail};
+use crate::{Compaction, Device, Joined, Membership, Person, RailAct, RailError, RingRail};
 use svrngs_core::{Append, AppendRefusal, Refused as CommitRefused};
 
 /// What the doors read: the journals, the nudge that wakes the round
@@ -181,13 +181,14 @@ pub(crate) fn standing_of(
 /// to (DESIGN §3) — the person's first key, which every key of theirs
 /// shares and the door tells a lend as `x-svrngs-key` (bash-devices), and
 /// when the person joined, which tells two of one name apart
-/// (bash-same-name). The one shape every door that names the people
-/// answers.
+/// (bash-same-name), and what holds the key — `computer` or `browser`, so a
+/// page draws a phone as one (v1ui-door (a)). The one shape every door that
+/// names the people answers.
 pub(crate) fn people_json<'a>(
-    standing: impl IntoIterator<Item = (&'a String, &'a Person, &'a str, Joined)>,
+    standing: impl IntoIterator<Item = (&'a String, &'a Person, &'a str, Joined, Device)>,
 ) -> serde_json::Value {
     (standing.into_iter())
-        .map(|(key, person, first, joined)| serde_json::json!({ "person": person, "key": key, "person_key": first, "joined": joined }))
+        .map(|(key, person, first, joined, device)| serde_json::json!({ "person": person, "key": key, "person_key": first, "joined": joined, "device": device }))
         .collect()
 }
 
@@ -369,11 +370,10 @@ async fn log_answer(rail: &RingRail, namespace: &str) -> Response {
         })
         .collect();
     let register = admission.project::<Membership>();
-    let people: Vec<(&String, &Person, &str, Joined)> = (register.standing.iter())
+    let people: Vec<(&String, &Person, &str, Joined, Device)> = (register.standing.iter())
         .filter_map(|key| {
-            register
-                .person_of(key)
-                .map(|(first, person)| (key, person, first, register.joined(first)))
+            let ((first, person), device) = register.person_of(key).zip(register.device(key))?;
+            Some((key, person, first, register.joined(first), device))
         })
         .collect();
     Json(serde_json::json!({
@@ -397,7 +397,7 @@ fn people_answer(rail: &RingRail, namespace: &str) -> Response {
     match standing_of(rail, namespace) {
         Ok(people) => Json(serde_json::json!({
             "namespace": namespace,
-            "people": people_json(people.iter().map(|(key, m)| (key, &m.person, m.person_key.as_str(), m.joined))),
+            "people": people_json(people.iter().map(|(key, m)| (key, &m.person, m.person_key.as_str(), m.joined, m.device))),
         }))
         .into_response(),
         Err(refusal) => refusal,
