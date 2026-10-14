@@ -37,6 +37,25 @@ The design is svrn-docs `rings/current/EVENTS.md`:
 - §9, this queue;
 - §7 and §8, what waits.
 
+## What the operator decided, 2026-10-14
+
+After events-run (`demo/runs/events/2026-10-14/NEEDS_HUMAN.md`), asked:
+
+- **The 30 s wait before a person is told a lender's computer is asleep**:
+  "Measure first, then cap". A row measures how long a working dial to a
+  lend's computer takes, then caps the dial just above that, the
+  measurement cited. It is never a number nobody chose. Cellular stays the
+  operator's.
+- **A link to an event**: "Yes, two headers". svrngs tells a lend its own
+  label and the group's page address, so an app can write a link into
+  itself that only the group's people can open.
+- **The follow-up's budget**: "+80 ceiling, fixes included". There is one
+  economizing pass first (AGENTS.md "Done"). Then the two features, and
+  the principle findings the strict cap kept out (#140, #146, #147, #148,
+  #149; #151 is the app's), raise only as far as each needs, within +80
+  over the cap the pass leaves. `demo/events.md` is updated to show the
+  real link.
+
 ## Why
 
 **An event is a post in a group, and people answer it**, as three acts in

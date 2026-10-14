@@ -15,13 +15,17 @@ Fences the rows keep:
      nobody answering;
    - a computer that did not answer is said as that;
    - nothing records "no", so nothing is ever shown as a refusal.
-3. *svrngs is unchanged.*
-   - Everything event-shaped lives in `apps/events/`, its nouns in
+3. *svrngs changes only where a row says so.*
+   - events-app, events-run and events-doc left it unchanged.
+   - The follow-up rows (operator, 2026-10-14) change it for the asleep
+     cap, the two headers and the principle fixes they name, each its own
+     commit with its behaviour said.
+   - Everything event-shaped still lives in `apps/events/`, its nouns in
      `apps/events/nouns.txt`, and svrngs's code uses none of them
      (`scripts/vocab_check.py`; DESIGN §5).
-   - Where the app needs what svrngs does not give, that goes in
-     NEEDS_HUMAN.md as svrngs's, with its lines estimated. It is never
-     worked around in the app.
+   - Anything else the app needs from svrngs goes in NEEDS_HUMAN.md as
+     svrngs's, with its lines estimated. It is never worked around in the
+     app.
 4. *Machines build, people speak.*
    - The app never answers, sends or invites in anyone's name.
    - "+ Maya" is the member's own word.
@@ -34,9 +38,16 @@ Fences the rows keep:
      the app.
 6. *A person's words* (DESIGN §1). The page uses names, the group, coming
    and came. It never says key, member, record, act, namespace or origin.
-7. *No raise.* `apps/` is not counted (`scripts/lean_check.py`), and
-   svrngs's code is unchanged. Each row puts `scripts/lean_check.py`
-   before and after in its commit, unchanged.
+7. *The budget.*
+   - events-app, events-run and events-doc raised nothing.
+   - The follow-up starts with events-economize, the economizing pass
+     (AGENTS.md "Done").
+   - After it, each row raises only as far as it needs, in its own commit
+     naming what the pass cut, within +80 over the cap the pass leaves
+     (the operator, 2026-10-14).
+   - svrngs-core's cap stays where it is. A fix that needs it goes to
+     NEEDS_HUMAN.md.
+   - `apps/` is not counted.
 8. *Nothing outward-facing.* Every computer and phone runs on this host.
 
 One host, one run of each: not a rate (AGENTS.md 7). A run that could not
