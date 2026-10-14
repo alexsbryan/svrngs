@@ -1298,7 +1298,7 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,150 lines of code and the
-repository under 16,305 (`scripts/lean_check.py`; events-asleep raised it from 16,235 by 20, events-links by 33 and events-principles by 17, within the operator's +80 for the events follow-ups), the branch `folders`
+repository under 16,315 (`scripts/lean_check.py`; events-asleep raised it from 16,235 by 20, events-links by 33, events-principles by 17 and events-wait by 10, the operator's +80 for the events follow-ups all spent), the branch `folders`
 too since main merged into it at syp-5, counting 13,778 and `svrngs-core`
 2,719 there. A raise is the operator's, and is asked only after an
 economizing pass (the operator, 2026-10-13: "Every raise needs a pass
