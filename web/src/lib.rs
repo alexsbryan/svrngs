@@ -30,8 +30,8 @@ mod join;
 #[rustfmt::skip]
 #[allow(dead_code)]
 mod relay;
-// How long a dial to a computer waits to be answered, the node's one
-// constant, so a phone and a computer are told an asleep one alike
+// How long a dial to a lender's computer waits to be answered, the node's
+// one constant, so a phone and a computer are told an asleep one alike
 // (events-asleep).
 #[path = "../../crates/svrngs-node/src/dial.rs"]
 mod dial;
@@ -152,12 +152,15 @@ async fn bind(key: Vec<u8>, issuer: Option<iroh::PublicKey>, relay: iroh::RelayU
 
 /// Dial `to`, a computer's key in 64 hex, else the token's issuer, from
 /// `bound` on `alpn`: through `via`, the relay its group names for it
-/// (relay-in-record), else the relay the token carries, said.
+/// (relay-in-record), else the relay the token carries, said. A dial to a
+/// lender is given up when not answered `within` (events-asleep); the
+/// dial to the computer a link names waits as long as iroh does.
 async fn reach(
     bound: &Bound,
     to: Option<String>,
     via: Option<String>,
     alpn: Alpn,
+    within: Option<std::time::Duration>,
 ) -> Result<iroh::endpoint::Connection, JsError> {
     let node_id = match to {
         None => match bound.issuer {
@@ -187,8 +190,12 @@ async fn reach(
     let addr = iroh::EndpointAddr::from_parts(node_id, [iroh::TransportAddr::Relay(relay)]);
 
     t!("LAYER tls/alpn+relay-hop: dialing {node_id} on the {alpn:?} protocol through a relay…");
-    let within = dial::DIAL_WITHIN;
-    let conn = match n0_future::time::timeout(within, bound.ep.connect(addr, alpn.bytes())).await {
+    let connect = bound.ep.connect(addr, alpn.bytes());
+    let dialled = match within {
+        Some(within) => n0_future::time::timeout(within, connect).await,
+        None => Ok(connect.await),
+    };
+    let conn = match dialled {
         Ok(Ok(c)) => c,
         Err(_) => refuse!("LAYER tls/alpn+relay-hop: REFUSED — not answered in {within:?}: asleep"),
         Ok(Err(e)) => refuse!("LAYER tls/alpn+relay-hop: REFUSED — connect() failed: {e}"),
@@ -289,7 +296,7 @@ pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsE
 /// endpoint of its own: the dial's [`Dialled::close`] closes it.
 async fn dial(key: Vec<u8>, token: String, to: Option<String>, alpn: Alpn) -> Result<Dialled, JsError> {
     let bound = bind_for(key, &token).await?;
-    let conn = reach(&bound, to, None, alpn).await?;
+    let conn = reach(&bound, to, None, alpn, None).await?;
     Ok(Dialled {
         ep: Some(bound.ep),
         conn,
@@ -372,7 +379,7 @@ impl Endpoint {
     /// whoever lends a service itself (DESIGN §3, call 4). The dial's
     /// [`Dialled::close`] closes only its connection.
     pub async fn dial(&self, lender: String, relay: Option<String>) -> Result<Dialled, JsError> {
-        let conn = reach(&self.bound, Some(lender), relay, Alpn::Member).await?;
+        let conn = reach(&self.bound, Some(lender), relay, Alpn::Member, Some(dial::DIAL_WITHIN)).await?;
         Ok(Dialled { ep: None, conn })
     }
 
@@ -380,7 +387,7 @@ impl Endpoint {
     /// [`Self::dial`], on the pass holders' protocol, as a pass's holder:
     /// every request presents the pass (u5-2).
     pub async fn dial_lend(&self, lender: String, relay: Option<String>) -> Result<Dialled, JsError> {
-        let conn = reach(&self.bound, Some(lender), relay, Alpn::Lend).await?;
+        let conn = reach(&self.bound, Some(lender), relay, Alpn::Lend, Some(dial::DIAL_WITHIN)).await?;
         Ok(Dialled { ep: None, conn })
     }
 

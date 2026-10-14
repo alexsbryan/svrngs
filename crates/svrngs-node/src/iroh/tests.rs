@@ -104,7 +104,7 @@ async fn a_taken_derived_port_falls_back_to_an_ephemeral_one_and_still_serves() 
     for sock in loopback_sockets(&server_ep) {
         target = target.with_ip_addr(sock);
     }
-    let bridge = HttpBridge::spawn_preferring(client_ep, target, ALPN, Some(port))
+    let bridge = HttpBridge::spawn_preferring(client_ep, target, ALPN, Some(port), None)
         .await
         .expect("a taken preferred port is not a failed bridge");
     assert_ne!(bridge.local_addr().port(), port);

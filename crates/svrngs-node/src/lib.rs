@@ -39,7 +39,7 @@ pub use svrngs_runtime::*;
 // The ALPNs are svrngs-core's since u4-2, so a browser's page spells each as
 // the node does; re-exported, so `crate::alpn` reads as before.
 pub use svrngs_core::alpn;
-// How long a dial to another computer waits (events-asleep); the page
+// How long a dial to a lend's computer waits (events-asleep); the page
 // compiles it too.
 pub mod dial;
 pub mod guest;

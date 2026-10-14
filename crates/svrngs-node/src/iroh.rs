@@ -276,6 +276,7 @@ impl IrohTransport {
             target,
             ALPN,
             Some(preferred_bridge_port(&peer.key, ALPN)),
+            Some(crate::dial::DIAL_WITHIN),
         )
         .await
         .ok()?;

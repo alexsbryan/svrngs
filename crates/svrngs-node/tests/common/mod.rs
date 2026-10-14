@@ -59,7 +59,7 @@ pub async fn bridge_as(
     for sock in loopback_sockets(to.endpoint()) {
         target = target.with_ip_addr(sock);
     }
-    HttpBridge::spawn_preferring(dialling, target, alpn.bytes(), None)
+    HttpBridge::spawn_preferring(dialling, target, alpn.bytes(), None, None)
         .await
         .unwrap()
 }

@@ -18,7 +18,6 @@ use iroh::endpoint::presets;
 use iroh::endpoint::Builder as EndpointBuilder;
 use iroh::{Endpoint, EndpointAddr, RelayUrl, SecretKey};
 
-use crate::dial::DIAL_WITHIN;
 use crate::relay::{self, DotlessLookup};
 
 #[cfg(test)]
@@ -284,15 +283,15 @@ impl HttpBridge {
     /// Bind the localhost listener and start tunneling to `target`
     /// over `alpn`. Dialing is lazy (per accepted TCP connection) and
     /// IS key verification — the QUIC handshake fails unless the
-    /// responder holds the private key for `target.id`. A dial not
-    /// answered within [`DIAL_WITHIN`] is given up, and its connection
-    /// closed, so the caller is told at once (svrngs, events-asleep).
+    /// responder holds the private key for `target.id`. Each dial waits
+    /// as long as iroh does: a joiner's first dial, the one this serves,
+    /// was answered after 3 s (svrngs, events-asleep).
     pub async fn spawn(
         endpoint: Endpoint,
         target: EndpointAddr,
         alpn: &'static [u8],
     ) -> std::io::Result<Self> {
-        Self::spawn_preferring(endpoint, target, alpn, None).await
+        Self::spawn_preferring(endpoint, target, alpn, None, None).await
     }
 
     /// [`spawn`](Self::spawn), asking for `preferred` first. A bridge the
@@ -301,12 +300,16 @@ impl HttpBridge {
     /// player or a shim can hold it with no mesh state of its own. When that
     /// port is taken the bind falls back to an ephemeral one and SAYS so —
     /// a substitution named at warn, never a silent different URL (§18.3).
+    /// A dial not answered `within`, when given, is given up and its
+    /// connection closed, so the caller is told at once (svrngs,
+    /// events-asleep: the transport's, [`crate::dial::DIAL_WITHIN`]).
     #[expect(clippy::disallowed_types, reason = "the bridge's retarget point")]
     pub async fn spawn_preferring(
         endpoint: Endpoint,
         target: EndpointAddr,
         alpn: &'static [u8],
         preferred: Option<u16>,
+        within: Option<std::time::Duration>,
     ) -> std::io::Result<Self> {
         let listener = match preferred {
             None => tokio::net::TcpListener::bind("127.0.0.1:0").await?,
@@ -396,13 +399,17 @@ impl HttpBridge {
                     .clone();
                 let peer_label = peer_label.clone();
                 tokio::spawn(async move {
-                    let dialled = tokio::time::timeout(DIAL_WITHIN, endpoint.connect(target, alpn));
-                    let conn = match dialled.await {
+                    let connect = endpoint.connect(target, alpn);
+                    let dialled = match within {
+                        Some(within) => tokio::time::timeout(within, connect).await,
+                        None => Ok(connect.await),
+                    };
+                    let conn = match dialled {
                         Ok(Ok(c)) => c,
                         Err(_) => {
                             // svrngs (events-asleep): an asleep computer never
                             // answers, and iroh gave up only after 30 s.
-                            tracing::debug!(target: "transport", peer = %peer_label, within = ?DIAL_WITHIN,
+                            tracing::debug!(target: "transport", peer = %peer_label, ?within,
                                 "iroh bridge: the dial was not answered in time, so the computer is taken as asleep");
                             return;
                         }
