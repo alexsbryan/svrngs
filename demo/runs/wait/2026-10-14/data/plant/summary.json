@@ -1,0 +1,271 @@
+{
+ "n0": {
+  "https://usw1-1.relay.n0.iroh.link/": true,
+  "https://use1-1.relay.n0.iroh.link/": true,
+  "https://euc1-1.relay.n0.iroh.link/": true,
+  "https://aps1-1.relay.n0.iroh.link/": true
+ },
+ "cy_join": {
+  "ms": 3129,
+  "status": "You’re in house, as Cy"
+ },
+ "setup": {
+  "label": "lc6d0x1ucuc7t4458druw6m4c0dwjdfl2tq7u6x0w916u6577pjt7chbcckjpb",
+  "phone_first": {
+   "ms": 2058,
+   "answered_ms": 888,
+   "status": null,
+   "refused": null,
+   "url": "http://lc6d0x1ucuc7t4458druw6m4c0dwjdfl2tq7u6x0w916u6577pjt7chbcckjpb.localhost:57982/",
+   "text": "probe here",
+   "shown": true
+  },
+  "bo_first": 200
+ },
+ "sit": {
+  "s": 60.2,
+  "network_pid": 34982,
+  "before": {
+   "ms": 112,
+   "answered_ms": 96,
+   "status": 200,
+   "refused": null,
+   "url": "http://lc6d0x1ucuc7t4458druw6m4c0dwjdfl2tq7u6x0w916u6577pjt7chbcckjpb.localhost:57982/?open=1",
+   "text": "probe here",
+   "shown": true
+  },
+  "after": {
+   "ms": 183,
+   "answered_ms": 165,
+   "status": 200,
+   "refused": null,
+   "url": "http://lc6d0x1ucuc7t4458druw6m4c0dwjdfl2tq7u6x0w916u6577pjt7chbcckjpb.localhost:57982/?open=2",
+   "text": "probe here",
+   "shown": true
+  },
+  "moved": {
+   "phone": {
+    "flows": [
+     "tcp4 192.168.1.10:62399<->5.78.69.43:443"
+    ],
+    "others": [
+     "tcp4 192.168.1.10:62390<->5.78.69.43:443",
+     "tcp4 192.168.1.10:62396<->5.78.69.43:443",
+     "tcp4 192.168.1.10:62397<->5.78.69.43:443",
+     "tcp4 192.168.1.10:62400<->5.78.69.43:443"
+    ],
+    "in": 2318,
+    "out": 4103,
+    "per_s": 106.7
+   },
+   "sam": {
+    "flows": [
+     "tcp4 192.168.1.10:58001<->49.13.207.244:443",
+     "tcp4 192.168.1.10:58017<->5.78.69.43:443"
+    ],
+    "others": [],
+    "in": 7554,
+    "out": 5810,
+    "per_s": 222.0
+   }
+  }
+ },
+ "rounds": [
+  {
+   "mode": "frozen",
+   "round": 1,
+   "ready": {
+    "bo": {
+     "status": 200,
+     "refused": null,
+     "ms": 12,
+     "shown": true,
+     "said": null
+    },
+    "cy": {
+     "ms": 105,
+     "answered_ms": 93,
+     "status": 200,
+     "refused": null,
+     "url": "http://lc6d0x1ucuc7t4458druw6m4c0dwjdfl2tq7u6x0w916u6577pjt7chbcckjpb.localhost:57982/?open=3",
+     "text": "probe here",
+     "shown": true
+    }
+   },
+   "bo": {
+    "status": 502,
+    "refused": "away",
+    "ms": 4008,
+    "shown": false,
+    "said": "{\"error\":\"the computer that lends this did not answer; try again later\",\"kind\":\"away\"}"
+   },
+   "cy": {
+    "ms": 34068,
+    "answered_ms": 34032,
+    "status": 502,
+    "refused": "away",
+    "url": "http://lc6d0x1ucuc7t4458druw6m4c0dwjdfl2tq7u6x0w916u6577pjt7chbcckjpb.localhost:57982/?open=4",
+    "text": "The computer lending this did not answer. Try again later.",
+    "shown": false,
+    "dials": [
+     {
+      "ms": 4006,
+      "ok": false,
+      "line": "LAYER tls/alpn+relay-hop: REFUSED — not answered in Some(4s): asleep"
+     }
+    ]
+   },
+   "both_s": 34.1,
+   "woke_ms": 34078,
+   "after": {
+    "bo": {
+     "status": 200,
+     "refused": null,
+     "ms": 259,
+     "shown": true,
+     "said": null
+    },
+    "cy": {
+     "ms": 260,
+     "answered_ms": 244,
+     "status": 200,
+     "refused": null,
+     "url": "http://lc6d0x1ucuc7t4458druw6m4c0dwjdfl2tq7u6x0w916u6577pjt7chbcckjpb.localhost:57982/?open=5",
+     "text": "probe here",
+     "shown": true
+    }
+   }
+  },
+  {
+   "mode": "frozen",
+   "round": 2,
+   "ready": {
+    "bo": {
+     "status": 200,
+     "refused": null,
+     "ms": 255,
+     "shown": true,
+     "said": null
+    },
+    "cy": {
+     "ms": 123,
+     "answered_ms": 103,
+     "status": 200,
+     "refused": null,
+     "url": "http://lc6d0x1ucuc7t4458druw6m4c0dwjdfl2tq7u6x0w916u6577pjt7chbcckjpb.localhost:57982/?open=6",
+     "text": "probe here",
+     "shown": true
+    }
+   },
+   "bo": {
+    "status": 502,
+    "refused": "away",
+    "ms": 4013,
+    "shown": false,
+    "said": "{\"error\":\"the computer that lends this did not answer; try again later\",\"kind\":\"away\"}"
+   },
+   "cy": {
+    "ms": 34042,
+    "answered_ms": 34022,
+    "status": 502,
+    "refused": "away",
+    "url": "http://lc6d0x1ucuc7t4458druw6m4c0dwjdfl2tq7u6x0w916u6577pjt7chbcckjpb.localhost:57982/?open=7",
+    "text": "The computer lending this did not answer. Try again later.",
+    "shown": false,
+    "dials": [
+     {
+      "ms": 4001,
+      "ok": false,
+      "line": "LAYER tls/alpn+relay-hop: REFUSED — not answered in Some(4s): asleep"
+     }
+    ]
+   },
+   "both_s": 34.0,
+   "woke_ms": 34049,
+   "after": {
+    "bo": {
+     "status": 200,
+     "refused": null,
+     "ms": 19,
+     "shown": true,
+     "said": null
+    },
+    "cy": {
+     "ms": 1259,
+     "answered_ms": 1241,
+     "status": 200,
+     "refused": null,
+     "url": "http://lc6d0x1ucuc7t4458druw6m4c0dwjdfl2tq7u6x0w916u6577pjt7chbcckjpb.localhost:57982/?open=8",
+     "text": "probe here",
+     "shown": true
+    }
+   }
+  },
+  {
+   "mode": "frozen",
+   "round": 3,
+   "ready": {
+    "bo": {
+     "status": 200,
+     "refused": null,
+     "ms": 8,
+     "shown": true,
+     "said": null
+    },
+    "cy": {
+     "ms": 202,
+     "answered_ms": 185,
+     "status": 200,
+     "refused": null,
+     "url": "http://lc6d0x1ucuc7t4458druw6m4c0dwjdfl2tq7u6x0w916u6577pjt7chbcckjpb.localhost:57982/?open=9",
+     "text": "probe here",
+     "shown": true
+    }
+   },
+   "bo": {
+    "status": 502,
+    "refused": "away",
+    "ms": 4010,
+    "shown": false,
+    "said": "{\"error\":\"the computer that lends this did not answer; try again later\",\"kind\":\"away\"}"
+   },
+   "cy": {
+    "ms": 34067,
+    "answered_ms": 34043,
+    "status": 502,
+    "refused": "away",
+    "url": "http://lc6d0x1ucuc7t4458druw6m4c0dwjdfl2tq7u6x0w916u6577pjt7chbcckjpb.localhost:57982/?open=10",
+    "text": "The computer lending this did not answer. Try again later.",
+    "shown": false,
+    "dials": [
+     {
+      "ms": 4002,
+      "ok": false,
+      "line": "LAYER tls/alpn+relay-hop: REFUSED — not answered in Some(4s): asleep"
+     }
+    ]
+   },
+   "both_s": 34.1,
+   "woke_ms": 34081,
+   "after": {
+    "bo": {
+     "status": 200,
+     "refused": null,
+     "ms": 6,
+     "shown": true,
+     "said": null
+    },
+    "cy": {
+     "ms": 1278,
+     "answered_ms": 1256,
+     "status": 200,
+     "refused": null,
+     "url": "http://lc6d0x1ucuc7t4458druw6m4c0dwjdfl2tq7u6x0w916u6577pjt7chbcckjpb.localhost:57982/?open=11",
+     "text": "probe here",
+     "shown": true
+    }
+   }
+  }
+ ],
+ "end_load": 46.4
+}
