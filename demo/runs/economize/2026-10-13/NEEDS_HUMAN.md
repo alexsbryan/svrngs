@@ -58,3 +58,10 @@ above queued as follow-ups wherever they fit? Or do you want a cut that
 changes behaviour to reach 15,800, and if so, which one? Until you say,
 the caps stand where the cuts landed, and every raise is asked only after
 a pass of its own (AGENTS.md "Done"; DESIGN §5).
+
+## The answer
+
+The operator, 2026-10-13: "Accept 15,987; fold follow-ups into onair".
+The caps stand at 15,987 and 3,122 (0b5bccf). The first four rows of the
+table above became onair-economize, the onair queue's pass before any
+raise (491936f, `ralph/next/onair/STATE.md`); the parked relay stays.
