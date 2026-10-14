@@ -1229,7 +1229,7 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,122 lines of code and the
-repository under 15,951 (`scripts/lean_check.py`), the branch `folders`
+repository under 15,962 (`scripts/lean_check.py`), the branch `folders`
 too since main merged into it at syp-5, counting 13,778 and `svrngs-core`
 2,719 there. A raise is the operator's, and is asked only after an
 economizing pass (the operator, 2026-10-13: "Every raise needs a pass
@@ -1337,9 +1337,12 @@ follow-ups, each a change said and tested: one decider of what a lent page
 reads, `svrngs`'s value flags read in one place, `remove` and `handover`
 one `Verb`, and both pages' walk of what apps use in `question.js`. The
 repository went to 15,950 and `svrngs-core` stayed at 3,121, so the caps
-are 15,951 and 3,122; the onair queue's rows raise from there, each only as
-far as it needs, within the operator's 16,287 and 3,182 for that queue
-(`ralph/next/onair/CHARTER.md`).
+were 15,951 and 3,122; the onair queue's rows raise from there, each only
+as far as it needs, within the operator's 16,287 and 3,182 for that queue
+(`ralph/next/onair/CHARTER.md`). The repository's from 15,951, at 15,950,
+the same day, `svrngs-core`'s kept at 3,122: to 15,962, for the live lane
+naming who spoke (onair-live; svrn-docs `rings/current/ON_AIR.md` §4.3),
+which counted 15,961 with it, after onair-economize's cuts above.
 `ARCHITECTURE.md` maps what exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file
