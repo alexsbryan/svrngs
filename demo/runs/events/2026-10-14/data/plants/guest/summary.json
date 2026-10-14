@@ -1,0 +1,1833 @@
+{
+ "bo_join": {
+  "said": "You're in The House, as Bo.",
+  "ms": 784
+ },
+ "cy_join": {
+  "ms": 2199,
+  "asked": true,
+  "status": "You’re in The House, as Cy"
+ },
+ "di_join": {
+  "said": "You're in dWeb, as Di.",
+  "ms": 764
+ },
+ "eve_join": {
+  "ms": 2184,
+  "asked": true,
+  "status": "You’re in dWeb, as Eve"
+ },
+ "groups": {
+  "dWeb": "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32",
+  "The House": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f"
+ },
+ "app": {
+  "port": 50645,
+  "plant": "guest",
+  "share": {
+   "who": "sam",
+   "args": [
+    "share",
+    "50645",
+    "--kind",
+    "events",
+    "--name",
+    "events"
+   ],
+   "exit": 0,
+   "said": "Lent events (port 50645) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 50645 --limit <number>`.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare events` stops lending it.\nIf events takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):",
+   "ms": 9
+  }
+ },
+ "origins": {
+  "sam": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50532",
+  "bo": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50551",
+  "di": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50616",
+  "label": "n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh"
+ },
+ "event": {
+  "id": "61c4b88aa0c27fbf",
+  "landed": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50532/g/aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32/e/61c4b88aa0c27fbf",
+  "ms": 145
+ },
+ "cy_maya": {
+  "ms": 201,
+  "status": 200,
+  "refused": null,
+  "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50529/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+  "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nBo + Maya\nCy\nCame\nMaya, Bo's guest\nYou\nBringing anyone?  Save\nTake my name off\nI came\nAll events",
+  "title": "Dinner",
+  "sections": [
+   {
+    "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+    "name": "The House",
+    "invited": [
+     "Bo",
+     "Cy"
+    ],
+    "coming": [
+     "Bo + Maya",
+     "Cy"
+    ],
+    "came": [
+     "Maya, Bo's guest"
+    ],
+    "unread": null
+   }
+  ],
+  "buttons": [
+   "Save",
+   "Take my name off",
+   "I came"
+  ]
+ },
+ "di_asleep_s": 0.7,
+ "di_woke": {
+  "caught_up_ms": 394,
+  "ops_missed": 9
+ },
+ "fay_join": {
+  "said": "You're in The House, as Fay.",
+  "ms": 742
+ },
+ "cross": {
+  "cy": {
+   "ms": 88,
+   "status": 403,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50529/g/aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32/e/61c4b88aa0c27fbf",
+   "text": "You're not in dWeb, so this event isn't yours to see.\n\nAll events",
+   "title": "Events",
+   "sections": [],
+   "buttons": []
+  },
+  "di": {
+   "ms": 11,
+   "status": 403,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50616/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "You're not in The House, so this event isn't yours to see.\n\nAll events",
+   "title": "Events",
+   "sections": [],
+   "buttons": []
+  }
+ },
+ "copies": {
+  "held": {
+   "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f": {
+    "same_ms": 19
+   },
+   "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32": {
+    "same_ms": 8
+   }
+  },
+  "folded": [
+   {
+    "computer": "sam",
+    "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+    "complete": true,
+    "ops": 16,
+    "acts": [
+     {
+      "id": "4275b9f6169b38f989fd745a1055c77efde8b377411169fb38cbc87aa6180a5b",
+      "ts": 1791967266,
+      "by": "Sam",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "event",
+       "what": "Dinner",
+       "when": "Friday 7",
+       "where": "the house"
+      },
+      "corrects": null
+     },
+     {
+      "id": "e4f7200c39449ceb9a184ef4e141dcc5bd966c158e57565029477b0e64be3d3a",
+      "ts": 1791967267,
+      "by": "Bo",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "coming"
+      },
+      "corrects": null
+     },
+     {
+      "id": "0edc9f6f5ccda7e4a90e2739c991dbace88e55aee3bc9e15ed4f1329a6e27f28",
+      "ts": 1791967268,
+      "by": "Bo",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "guests": [
+        "Maya"
+       ],
+       "kind": "coming"
+      },
+      "corrects": "e4f7200c39449ceb9a184ef4e141dcc5bd966c158e57565029477b0e64be3d3a"
+     },
+     {
+      "id": "25b3310e28fbfa07ee104b52142c78cf366670e67aa3b598041df1ddbae55a8e",
+      "ts": 1791967269,
+      "by": "Cy",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "coming"
+      },
+      "corrects": null
+     },
+     {
+      "id": "0060074ade6a345206236909f4b1bad5e6d82119d9a80358dd5514912605e08a",
+      "ts": 1791967270,
+      "by": "Bo",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "guest": "Maya",
+       "kind": "came"
+      },
+      "corrects": null
+     },
+     {
+      "id": "d075c446aab9e06225da8155f876f2a0893f1d09b7e26abbc7798e6927f6c289",
+      "ts": 1791967271,
+      "by": "Bo",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "came"
+      },
+      "corrects": null
+     },
+     {
+      "id": "3c606424d839e9dfb1e4c98c37bbb8b8b155393b38f78d3bf72e7f4176da9479",
+      "ts": 1791967272,
+      "by": "Cy",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "came"
+      },
+      "corrects": null
+     },
+     {
+      "id": "2b68e07092bbf765d670f0087513bc2b3b70995d8f2168abed43b96a609c17f3",
+      "ts": 1791967276,
+      "by": "Fay",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "coming"
+      },
+      "corrects": null
+     }
+    ],
+    "events": {
+     "61c4b88aa0c27fbf": {
+      "host": "Sam",
+      "what": "Dinner",
+      "when": "Friday 7",
+      "where": "the house",
+      "at": 1791967266,
+      "coming": {
+       "Bo": [
+        "Maya"
+       ],
+       "Cy": [],
+       "Fay": []
+      },
+      "came": [
+       "Bo",
+       "Cy"
+      ],
+      "guests_came": {
+       "Bo": [
+        "Maya"
+       ]
+      }
+     }
+    },
+    "gaps": []
+   },
+   {
+    "computer": "bo",
+    "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+    "complete": true,
+    "ops": 16,
+    "acts": [
+     {
+      "id": "4275b9f6169b38f989fd745a1055c77efde8b377411169fb38cbc87aa6180a5b",
+      "ts": 1791967266,
+      "by": "Sam",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "event",
+       "what": "Dinner",
+       "when": "Friday 7",
+       "where": "the house"
+      },
+      "corrects": null
+     },
+     {
+      "id": "e4f7200c39449ceb9a184ef4e141dcc5bd966c158e57565029477b0e64be3d3a",
+      "ts": 1791967267,
+      "by": "Bo",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "coming"
+      },
+      "corrects": null
+     },
+     {
+      "id": "0edc9f6f5ccda7e4a90e2739c991dbace88e55aee3bc9e15ed4f1329a6e27f28",
+      "ts": 1791967268,
+      "by": "Bo",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "guests": [
+        "Maya"
+       ],
+       "kind": "coming"
+      },
+      "corrects": "e4f7200c39449ceb9a184ef4e141dcc5bd966c158e57565029477b0e64be3d3a"
+     },
+     {
+      "id": "25b3310e28fbfa07ee104b52142c78cf366670e67aa3b598041df1ddbae55a8e",
+      "ts": 1791967269,
+      "by": "Cy",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "coming"
+      },
+      "corrects": null
+     },
+     {
+      "id": "0060074ade6a345206236909f4b1bad5e6d82119d9a80358dd5514912605e08a",
+      "ts": 1791967270,
+      "by": "Bo",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "guest": "Maya",
+       "kind": "came"
+      },
+      "corrects": null
+     },
+     {
+      "id": "d075c446aab9e06225da8155f876f2a0893f1d09b7e26abbc7798e6927f6c289",
+      "ts": 1791967271,
+      "by": "Bo",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "came"
+      },
+      "corrects": null
+     },
+     {
+      "id": "3c606424d839e9dfb1e4c98c37bbb8b8b155393b38f78d3bf72e7f4176da9479",
+      "ts": 1791967272,
+      "by": "Cy",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "came"
+      },
+      "corrects": null
+     },
+     {
+      "id": "2b68e07092bbf765d670f0087513bc2b3b70995d8f2168abed43b96a609c17f3",
+      "ts": 1791967276,
+      "by": "Fay",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "coming"
+      },
+      "corrects": null
+     }
+    ],
+    "events": {
+     "61c4b88aa0c27fbf": {
+      "host": "Sam",
+      "what": "Dinner",
+      "when": "Friday 7",
+      "where": "the house",
+      "at": 1791967266,
+      "coming": {
+       "Bo": [
+        "Maya"
+       ],
+       "Cy": [],
+       "Fay": []
+      },
+      "came": [
+       "Bo",
+       "Cy"
+      ],
+      "guests_came": {
+       "Bo": [
+        "Maya"
+       ]
+      }
+     }
+    },
+    "gaps": []
+   },
+   {
+    "computer": "fay",
+    "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+    "complete": true,
+    "ops": 16,
+    "acts": [
+     {
+      "id": "4275b9f6169b38f989fd745a1055c77efde8b377411169fb38cbc87aa6180a5b",
+      "ts": 1791967266,
+      "by": "Sam",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "event",
+       "what": "Dinner",
+       "when": "Friday 7",
+       "where": "the house"
+      },
+      "corrects": null
+     },
+     {
+      "id": "e4f7200c39449ceb9a184ef4e141dcc5bd966c158e57565029477b0e64be3d3a",
+      "ts": 1791967267,
+      "by": "Bo",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "coming"
+      },
+      "corrects": null
+     },
+     {
+      "id": "0edc9f6f5ccda7e4a90e2739c991dbace88e55aee3bc9e15ed4f1329a6e27f28",
+      "ts": 1791967268,
+      "by": "Bo",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "guests": [
+        "Maya"
+       ],
+       "kind": "coming"
+      },
+      "corrects": "e4f7200c39449ceb9a184ef4e141dcc5bd966c158e57565029477b0e64be3d3a"
+     },
+     {
+      "id": "25b3310e28fbfa07ee104b52142c78cf366670e67aa3b598041df1ddbae55a8e",
+      "ts": 1791967269,
+      "by": "Cy",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "coming"
+      },
+      "corrects": null
+     },
+     {
+      "id": "0060074ade6a345206236909f4b1bad5e6d82119d9a80358dd5514912605e08a",
+      "ts": 1791967270,
+      "by": "Bo",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "guest": "Maya",
+       "kind": "came"
+      },
+      "corrects": null
+     },
+     {
+      "id": "d075c446aab9e06225da8155f876f2a0893f1d09b7e26abbc7798e6927f6c289",
+      "ts": 1791967271,
+      "by": "Bo",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "came"
+      },
+      "corrects": null
+     },
+     {
+      "id": "3c606424d839e9dfb1e4c98c37bbb8b8b155393b38f78d3bf72e7f4176da9479",
+      "ts": 1791967272,
+      "by": "Cy",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "came"
+      },
+      "corrects": null
+     },
+     {
+      "id": "2b68e07092bbf765d670f0087513bc2b3b70995d8f2168abed43b96a609c17f3",
+      "ts": 1791967276,
+      "by": "Fay",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "coming"
+      },
+      "corrects": null
+     }
+    ],
+    "events": {
+     "61c4b88aa0c27fbf": {
+      "host": "Sam",
+      "what": "Dinner",
+      "when": "Friday 7",
+      "where": "the house",
+      "at": 1791967266,
+      "coming": {
+       "Bo": [
+        "Maya"
+       ],
+       "Cy": [],
+       "Fay": []
+      },
+      "came": [
+       "Bo",
+       "Cy"
+      ],
+      "guests_came": {
+       "Bo": [
+        "Maya"
+       ]
+      }
+     }
+    },
+    "gaps": []
+   },
+   {
+    "computer": "sam",
+    "group": "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32",
+    "complete": true,
+    "ops": 10,
+    "acts": [
+     {
+      "id": "269cb75ef093d40ffd2f8046a046ca4f1097c06970a7d5f721bd622a29c2af67",
+      "ts": 1791967267,
+      "by": "Sam",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "event",
+       "what": "Dinner",
+       "when": "Friday 7",
+       "where": "the house"
+      },
+      "corrects": null
+     },
+     {
+      "id": "7026366b369dfac1397e6543bfd845a5b02d561f3075c46b17c683e345be6e93",
+      "ts": 1791967268,
+      "by": "Di",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "coming"
+      },
+      "corrects": null
+     },
+     {
+      "id": "f69b590f307da65b5e093639b0f51af78f36e8ac7caff6a1b2dc1ea155c6d4be",
+      "ts": 1791967270,
+      "by": "Eve",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "coming"
+      },
+      "corrects": null
+     },
+     {
+      "id": "9e167d6aaffc25af4db1b28df4a105938072901a101ce167e4753d9172b70859",
+      "ts": 1791967271,
+      "by": "Eve",
+      "op": null,
+      "corrects": "f69b590f307da65b5e093639b0f51af78f36e8ac7caff6a1b2dc1ea155c6d4be"
+     },
+     {
+      "id": "cc90e88fdd70b500f14a8d7fc2605bbb0a5898aa71e3a03aebae6d2fda9c679f",
+      "ts": 1791967272,
+      "by": "Di",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "came"
+      },
+      "corrects": null
+     }
+    ],
+    "events": {
+     "61c4b88aa0c27fbf": {
+      "host": "Sam",
+      "what": "Dinner",
+      "when": "Friday 7",
+      "where": "the house",
+      "at": 1791967267,
+      "coming": {
+       "Di": []
+      },
+      "came": [
+       "Di"
+      ],
+      "guests_came": {}
+     }
+    },
+    "gaps": []
+   },
+   {
+    "computer": "di",
+    "group": "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32",
+    "complete": true,
+    "ops": 10,
+    "acts": [
+     {
+      "id": "269cb75ef093d40ffd2f8046a046ca4f1097c06970a7d5f721bd622a29c2af67",
+      "ts": 1791967267,
+      "by": "Sam",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "event",
+       "what": "Dinner",
+       "when": "Friday 7",
+       "where": "the house"
+      },
+      "corrects": null
+     },
+     {
+      "id": "7026366b369dfac1397e6543bfd845a5b02d561f3075c46b17c683e345be6e93",
+      "ts": 1791967268,
+      "by": "Di",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "coming"
+      },
+      "corrects": null
+     },
+     {
+      "id": "f69b590f307da65b5e093639b0f51af78f36e8ac7caff6a1b2dc1ea155c6d4be",
+      "ts": 1791967270,
+      "by": "Eve",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "coming"
+      },
+      "corrects": null
+     },
+     {
+      "id": "9e167d6aaffc25af4db1b28df4a105938072901a101ce167e4753d9172b70859",
+      "ts": 1791967271,
+      "by": "Eve",
+      "op": null,
+      "corrects": "f69b590f307da65b5e093639b0f51af78f36e8ac7caff6a1b2dc1ea155c6d4be"
+     },
+     {
+      "id": "cc90e88fdd70b500f14a8d7fc2605bbb0a5898aa71e3a03aebae6d2fda9c679f",
+      "ts": 1791967272,
+      "by": "Di",
+      "op": {
+       "event": "61c4b88aa0c27fbf",
+       "kind": "came"
+      },
+      "corrects": null
+     }
+    ],
+    "events": {
+     "61c4b88aa0c27fbf": {
+      "host": "Sam",
+      "what": "Dinner",
+      "when": "Friday 7",
+      "where": "the house",
+      "at": 1791967267,
+      "coming": {
+       "Di": []
+      },
+      "came": [
+       "Di"
+      ],
+      "guests_came": {}
+     }
+    },
+    "gaps": []
+   }
+  ]
+ },
+ "people": {
+  "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f": [
+   {
+    "joined": {
+     "at": 1791967261
+    },
+    "key": "0b6286dd93261c603e20dfe7d4d2d32579260a653fa859dd933fe5613cff36cd",
+    "person": "Bo",
+    "person_key": "0b6286dd93261c603e20dfe7d4d2d32579260a653fa859dd933fe5613cff36cd"
+   },
+   {
+    "joined": {
+     "at": 1791967263
+    },
+    "key": "5afb7c76405cdb19ceff16e9adc8c252e764c09abb3c9d387b5ae5a316dcd66d",
+    "person": "Cy",
+    "person_key": "5afb7c76405cdb19ceff16e9adc8c252e764c09abb3c9d387b5ae5a316dcd66d"
+   },
+   {
+    "joined": "started",
+    "key": "5df36afb2d04f69e673f113d6eb0b06688839f40a8ee2e22dc9222623801da5e",
+    "person": "Sam",
+    "person_key": "5df36afb2d04f69e673f113d6eb0b06688839f40a8ee2e22dc9222623801da5e"
+   },
+   {
+    "joined": {
+     "at": 1791967274
+    },
+    "key": "e5a651952670e3200393f5f3fb58baaffa5f99fc4fa0f17acac85971bdf1cdaf",
+    "person": "Fay",
+    "person_key": "e5a651952670e3200393f5f3fb58baaffa5f99fc4fa0f17acac85971bdf1cdaf"
+   }
+  ],
+  "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32": [
+   {
+    "joined": {
+     "at": 1791967266
+    },
+    "key": "3b4b8751d8fb529499a3e9ca6755e654e9faa78ac96727414f22764d6e3316d5",
+    "person": "Eve",
+    "person_key": "3b4b8751d8fb529499a3e9ca6755e654e9faa78ac96727414f22764d6e3316d5"
+   },
+   {
+    "joined": "started",
+    "key": "5df36afb2d04f69e673f113d6eb0b06688839f40a8ee2e22dc9222623801da5e",
+    "person": "Sam",
+    "person_key": "5df36afb2d04f69e673f113d6eb0b06688839f40a8ee2e22dc9222623801da5e"
+   },
+   {
+    "joined": {
+     "at": 1791967264
+    },
+    "key": "b0e7a560b449c43ae0adf1d47be78ea041ed431db549d9b24e514cefe3818cb1",
+    "person": "Di",
+    "person_key": "b0e7a560b449c43ae0adf1d47be78ea041ed431db549d9b24e514cefe3818cb1"
+   }
+  ]
+ },
+ "asleep": {
+  "bo": {
+   "ms": 30020,
+   "status": 502,
+   "refused": "away",
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50551/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "{\"error\":\"the computer that lends this did not answer; try again later\",\"kind\":\"away\"}",
+   "title": "",
+   "sections": [],
+   "buttons": []
+  },
+  "cy": {
+   "ms": 30030,
+   "status": 502,
+   "refused": "away",
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50529/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "The computer lending this did not answer. Try again later.",
+   "title": "",
+   "sections": [],
+   "buttons": []
+  },
+  "app": {
+   "status": 502,
+   "said": "Events This group can't be read on this computer right now. All events"
+  },
+  "s": 60.1,
+  "woke": {
+   "ms": 357,
+   "bo": {
+    "ms": 16,
+    "status": 200,
+    "refused": null,
+    "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50551/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+    "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nFay\nComing\nBo + Maya\nCy\nFay\nCame\nBo\nCy\nMaya, Bo's guest\nYou\nBringing anyone?  Save\nTake my name off\n\nAll events",
+    "title": "Dinner",
+    "sections": [
+     {
+      "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+      "name": "The House",
+      "invited": [
+       "Bo",
+       "Cy",
+       "Fay"
+      ],
+      "coming": [
+       "Bo + Maya",
+       "Cy",
+       "Fay"
+      ],
+      "came": [
+       "Bo",
+       "Cy",
+       "Maya, Bo's guest"
+      ],
+      "unread": null
+     }
+    ],
+    "buttons": [
+     "Save",
+     "Take my name off"
+    ]
+   }
+  }
+ },
+ "presses": [
+  {
+   "step": "1",
+   "who": "sam",
+   "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f,aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32",
+   "button": "Post",
+   "fill": {
+    "input[name=what]": "Dinner",
+    "input[name=when]": "Friday 7",
+    "input[name=where]": "the house"
+   },
+   "check": [
+    "input[value='e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f']",
+    "input[value='aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32']"
+   ],
+   "absent": false,
+   "status": 200,
+   "ms": 145,
+   "error": null
+  },
+  {
+   "step": "2",
+   "who": "bo",
+   "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+   "button": "I'm coming",
+   "fill": null,
+   "check": null,
+   "absent": false,
+   "status": 200,
+   "ms": 88,
+   "error": null
+  },
+  {
+   "step": "2",
+   "who": "bo",
+   "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+   "button": "Save",
+   "fill": {
+    "input[name=guests]": "Maya"
+   },
+   "check": null,
+   "absent": false,
+   "status": 200,
+   "ms": 70,
+   "error": null
+  },
+  {
+   "step": "3",
+   "who": "cy",
+   "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+   "button": "I'm coming",
+   "fill": null,
+   "check": null,
+   "absent": false,
+   "status": 200,
+   "ms": 208,
+   "error": null
+  },
+  {
+   "step": "3",
+   "who": "di",
+   "group": "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32",
+   "button": "I'm coming",
+   "fill": null,
+   "check": null,
+   "absent": false,
+   "status": 200,
+   "ms": 76,
+   "error": null
+  },
+  {
+   "step": "3",
+   "who": "eve",
+   "group": "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32",
+   "button": "I'm coming",
+   "fill": null,
+   "check": null,
+   "absent": false,
+   "status": 200,
+   "ms": 197,
+   "error": null
+  },
+  {
+   "step": "5",
+   "who": "eve",
+   "group": "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32",
+   "button": "Take my name off",
+   "fill": null,
+   "check": null,
+   "absent": false,
+   "status": 200,
+   "ms": 218,
+   "error": null
+  },
+  {
+   "step": "6",
+   "who": "cy",
+   "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+   "button": "Maya came",
+   "fill": null,
+   "check": null,
+   "absent": false,
+   "status": 200,
+   "ms": 201,
+   "error": null
+  },
+  {
+   "step": "7",
+   "who": "bo",
+   "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+   "button": "I came",
+   "fill": null,
+   "check": null,
+   "absent": false,
+   "status": 200,
+   "ms": 72,
+   "error": null
+  },
+  {
+   "step": "7",
+   "who": "bo",
+   "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+   "button": "Maya came",
+   "fill": null,
+   "check": null,
+   "absent": true,
+   "status": null,
+   "ms": 5,
+   "error": null
+  },
+  {
+   "step": "7",
+   "who": "cy",
+   "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+   "button": "I came",
+   "fill": null,
+   "check": null,
+   "absent": false,
+   "status": 200,
+   "ms": 199,
+   "error": null
+  },
+  {
+   "step": "8",
+   "who": "di",
+   "group": "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32",
+   "button": "I came",
+   "fill": null,
+   "check": null,
+   "absent": false,
+   "status": 200,
+   "ms": 66,
+   "error": null
+  },
+  {
+   "step": "9",
+   "who": "fay",
+   "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+   "button": "I'm coming",
+   "fill": null,
+   "check": null,
+   "absent": false,
+   "status": 200,
+   "ms": 86,
+   "error": null
+  }
+ ],
+ "views": [
+  {
+   "step": "1",
+   "who": "sam",
+   "ms": 40,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50532/",
+   "text": "Events\ndWeb\n\nNothing posted yet.\n\nThe House\n\nNothing posted yet.\n\nPost an event\nWhat  When  Where \n\nTo  dWeb  The House\n\nPost",
+   "title": "Events",
+   "sections": [],
+   "buttons": [
+    "Post"
+   ]
+  },
+  {
+   "step": "1",
+   "who": "sam",
+   "ms": 145,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50532/g/aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32/e/61c4b88aa0c27fbf",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\ndWeb\nInvited\nDi\nEve\nComing\n\nNo one has said yet.\n\nCame\n\nNo one yet.\n\nThe House\nInvited\nBo\nCy\nComing\n\nNo one has said yet.\n\nCame\n\nNo one yet.\n\nYou\nBringing anyone?  I'm coming\nI came\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32",
+     "name": "dWeb",
+     "invited": [
+      "Di",
+      "Eve"
+     ],
+     "coming": [],
+     "came": [],
+     "unread": null
+    },
+    {
+     "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [],
+     "came": [],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "I'm coming",
+    "I came"
+   ]
+  },
+  {
+   "step": "2",
+   "who": "bo",
+   "ms": 20,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50551/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\n\nNo one has said yet.\n\nCame\n\nNo one yet.\n\nYou\nBringing anyone?  I'm coming\nI came\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [],
+     "came": [],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "I'm coming",
+    "I came"
+   ]
+  },
+  {
+   "step": "2",
+   "who": "bo",
+   "ms": 88,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50551/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nBo\nCame\n\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [
+      "Bo"
+     ],
+     "came": [],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off",
+    "I came"
+   ]
+  },
+  {
+   "step": "2",
+   "who": "bo",
+   "ms": 70,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50551/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nBo + Maya\nCame\n\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\nMaya came\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [
+      "Bo + Maya"
+     ],
+     "came": [],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off",
+    "I came",
+    "Maya came"
+   ]
+  },
+  {
+   "step": "3",
+   "who": "cy",
+   "ms": 1712,
+   "status": null,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50529/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nBo + Maya\nCame\nNo one yet.\n\nYou\nBringing anyone?  I'm coming\nI came\nMaya came\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [
+      "Bo + Maya"
+     ],
+     "came": [],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "I'm coming",
+    "I came",
+    "Maya came"
+   ]
+  },
+  {
+   "step": "3",
+   "who": "cy",
+   "ms": 208,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50529/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nBo + Maya\nCy\nCame\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\nMaya came\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [
+      "Bo + Maya",
+      "Cy"
+     ],
+     "came": [],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off",
+    "I came",
+    "Maya came"
+   ]
+  },
+  {
+   "step": "3",
+   "who": "di",
+   "ms": 19,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50616/g/aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32/e/61c4b88aa0c27fbf",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\ndWeb\nInvited\nDi\nEve\nComing\n\nNo one has said yet.\n\nCame\n\nNo one yet.\n\nYou\nBringing anyone?  I'm coming\nI came\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32",
+     "name": "dWeb",
+     "invited": [
+      "Di",
+      "Eve"
+     ],
+     "coming": [],
+     "came": [],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "I'm coming",
+    "I came"
+   ]
+  },
+  {
+   "step": "3",
+   "who": "di",
+   "ms": 76,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50616/g/aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32/e/61c4b88aa0c27fbf",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\ndWeb\nInvited\nDi\nEve\nComing\nDi\nCame\n\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32",
+     "name": "dWeb",
+     "invited": [
+      "Di",
+      "Eve"
+     ],
+     "coming": [
+      "Di"
+     ],
+     "came": [],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off",
+    "I came"
+   ]
+  },
+  {
+   "step": "3",
+   "who": "eve",
+   "ms": 1667,
+   "status": null,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50529/g/aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32/e/61c4b88aa0c27fbf",
+   "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\ndWeb\nInvited\nDi\nEve\nComing\nDi\nCame\nNo one yet.\n\nYou\nBringing anyone?  I'm coming\nI came\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32",
+     "name": "dWeb",
+     "invited": [
+      "Di",
+      "Eve"
+     ],
+     "coming": [
+      "Di"
+     ],
+     "came": [],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "I'm coming",
+    "I came"
+   ]
+  },
+  {
+   "step": "3",
+   "who": "eve",
+   "ms": 197,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50529/g/aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32/e/61c4b88aa0c27fbf",
+   "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\ndWeb\nInvited\nDi\nEve\nComing\nDi\nEve\nCame\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32",
+     "name": "dWeb",
+     "invited": [
+      "Di",
+      "Eve"
+     ],
+     "coming": [
+      "Di",
+      "Eve"
+     ],
+     "came": [],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off",
+    "I came"
+   ]
+  },
+  {
+   "step": "5",
+   "who": "eve",
+   "ms": 218,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50529/g/aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32/e/61c4b88aa0c27fbf",
+   "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\ndWeb\nInvited\nDi\nEve\nComing\nDi\nCame\nNo one yet.\n\nYou\nBringing anyone?  I'm coming\nI came\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32",
+     "name": "dWeb",
+     "invited": [
+      "Di",
+      "Eve"
+     ],
+     "coming": [
+      "Di"
+     ],
+     "came": [],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "I'm coming",
+    "I came"
+   ]
+  },
+  {
+   "step": "6",
+   "who": "cy",
+   "ms": 201,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50529/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nBo + Maya\nCy\nCame\nMaya, Bo's guest\nYou\nBringing anyone?  Save\nTake my name off\nI came\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [
+      "Bo + Maya",
+      "Cy"
+     ],
+     "came": [
+      "Maya, Bo's guest"
+     ],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off",
+    "I came"
+   ]
+  },
+  {
+   "step": "7",
+   "who": "bo",
+   "ms": 72,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50551/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nBo + Maya\nCy\nCame\nBo\nMaya, Bo's guest\nYou\nBringing anyone?  Save\nTake my name off\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [
+      "Bo + Maya",
+      "Cy"
+     ],
+     "came": [
+      "Bo",
+      "Maya, Bo's guest"
+     ],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off"
+   ]
+  },
+  {
+   "step": "7",
+   "who": "cy",
+   "ms": 199,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50529/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nBo + Maya\nCy\nCame\nBo\nCy\nMaya, Bo's guest\nYou\nBringing anyone?  Save\nTake my name off\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [
+      "Bo + Maya",
+      "Cy"
+     ],
+     "came": [
+      "Bo",
+      "Cy",
+      "Maya, Bo's guest"
+     ],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off"
+   ]
+  },
+  {
+   "step": "8",
+   "who": "di",
+   "ms": 14,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50616/g/aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32/e/61c4b88aa0c27fbf",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\ndWeb\nInvited\nDi\nEve\nComing\nDi\nCame\n\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32",
+     "name": "dWeb",
+     "invited": [
+      "Di",
+      "Eve"
+     ],
+     "coming": [
+      "Di"
+     ],
+     "came": [],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off",
+    "I came"
+   ]
+  },
+  {
+   "step": "8",
+   "who": "di",
+   "ms": 66,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50616/g/aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32/e/61c4b88aa0c27fbf",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\ndWeb\nInvited\nDi\nEve\nComing\nDi\nCame\nDi\nYou\nBringing anyone?  Save\nTake my name off\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32",
+     "name": "dWeb",
+     "invited": [
+      "Di",
+      "Eve"
+     ],
+     "coming": [
+      "Di"
+     ],
+     "came": [
+      "Di"
+     ],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off"
+   ]
+  },
+  {
+   "step": "9",
+   "who": "fay",
+   "ms": 23,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50764/",
+   "text": "Events\nThe House\nDinner Friday 7\nPost an event\nWhat  When  Where \n\nTo  The House\n\nPost",
+   "title": "Events",
+   "sections": [],
+   "buttons": [
+    "Post"
+   ]
+  },
+  {
+   "step": "9",
+   "who": "fay",
+   "ms": 15,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50764/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nFay\nComing\nBo + Maya\nCy\nCame\nBo\nCy\nMaya, Bo's guest\nYou\nBringing anyone?  I'm coming\nI came\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy",
+      "Fay"
+     ],
+     "coming": [
+      "Bo + Maya",
+      "Cy"
+     ],
+     "came": [
+      "Bo",
+      "Cy",
+      "Maya, Bo's guest"
+     ],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "I'm coming",
+    "I came"
+   ]
+  },
+  {
+   "step": "9",
+   "who": "fay",
+   "ms": 86,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50764/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nFay\nComing\nBo + Maya\nCy\nFay\nCame\nBo\nCy\nMaya, Bo's guest\nYou\nBringing anyone?  Save\nTake my name off\nI came\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy",
+      "Fay"
+     ],
+     "coming": [
+      "Bo + Maya",
+      "Cy",
+      "Fay"
+     ],
+     "came": [
+      "Bo",
+      "Cy",
+      "Maya, Bo's guest"
+     ],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off",
+    "I came"
+   ]
+  },
+  {
+   "step": "10",
+   "who": "sam",
+   "ms": 13,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50532/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\ndWeb\nInvited\nDi\nEve\nComing\nDi\nCame\nDi\nThe House\nInvited\nBo\nCy\nFay\nComing\nBo + Maya\nCy\nFay\nCame\nBo\nCy\nMaya, Bo's guest\nYou\nBringing anyone?  I'm coming\nI came\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32",
+     "name": "dWeb",
+     "invited": [
+      "Di",
+      "Eve"
+     ],
+     "coming": [
+      "Di"
+     ],
+     "came": [
+      "Di"
+     ],
+     "unread": null
+    },
+    {
+     "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy",
+      "Fay"
+     ],
+     "coming": [
+      "Bo + Maya",
+      "Cy",
+      "Fay"
+     ],
+     "came": [
+      "Bo",
+      "Cy",
+      "Maya, Bo's guest"
+     ],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "I'm coming",
+    "I came"
+   ]
+  },
+  {
+   "step": "10",
+   "who": "bo",
+   "ms": 13,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50551/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nFay\nComing\nBo + Maya\nCy\nFay\nCame\nBo\nCy\nMaya, Bo's guest\nYou\nBringing anyone?  Save\nTake my name off\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy",
+      "Fay"
+     ],
+     "coming": [
+      "Bo + Maya",
+      "Cy",
+      "Fay"
+     ],
+     "came": [
+      "Bo",
+      "Cy",
+      "Maya, Bo's guest"
+     ],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off"
+   ]
+  },
+  {
+   "step": "10",
+   "who": "cy",
+   "ms": 1410,
+   "status": null,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50529/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nFay\nComing\nBo + Maya\nCy\nFay\nCame\nBo\nCy\nMaya, Bo's guest\nYou\nBringing anyone?  Save\nTake my name off\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy",
+      "Fay"
+     ],
+     "coming": [
+      "Bo + Maya",
+      "Cy",
+      "Fay"
+     ],
+     "came": [
+      "Bo",
+      "Cy",
+      "Maya, Bo's guest"
+     ],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off"
+   ]
+  },
+  {
+   "step": "10",
+   "who": "di",
+   "ms": 14,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50616/g/aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32/e/61c4b88aa0c27fbf",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\ndWeb\nInvited\nDi\nEve\nComing\nDi\nCame\nDi\nYou\nBringing anyone?  Save\nTake my name off\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32",
+     "name": "dWeb",
+     "invited": [
+      "Di",
+      "Eve"
+     ],
+     "coming": [
+      "Di"
+     ],
+     "came": [
+      "Di"
+     ],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off"
+   ]
+  },
+  {
+   "step": "10",
+   "who": "eve",
+   "ms": 1386,
+   "status": null,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50529/g/aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32/e/61c4b88aa0c27fbf",
+   "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\ndWeb\nInvited\nDi\nEve\nComing\nDi\nCame\nDi\nYou\nBringing anyone?  I'm coming\nI came\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32",
+     "name": "dWeb",
+     "invited": [
+      "Di",
+      "Eve"
+     ],
+     "coming": [
+      "Di"
+     ],
+     "came": [
+      "Di"
+     ],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "I'm coming",
+    "I came"
+   ]
+  },
+  {
+   "step": "10",
+   "who": "fay",
+   "ms": 16,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50764/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nFay\nComing\nBo + Maya\nCy\nFay\nCame\nBo\nCy\nMaya, Bo's guest\nYou\nBringing anyone?  Save\nTake my name off\nI came\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy",
+      "Fay"
+     ],
+     "coming": [
+      "Bo + Maya",
+      "Cy",
+      "Fay"
+     ],
+     "came": [
+      "Bo",
+      "Cy",
+      "Maya, Bo's guest"
+     ],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off",
+    "I came"
+   ]
+  },
+  {
+   "step": "10x",
+   "who": "cy",
+   "ms": 88,
+   "status": 403,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50529/g/aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32/e/61c4b88aa0c27fbf",
+   "text": "You're not in dWeb, so this event isn't yours to see.\n\nAll events",
+   "title": "Events",
+   "sections": [],
+   "buttons": []
+  },
+  {
+   "step": "10x",
+   "who": "di",
+   "ms": 11,
+   "status": 403,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50616/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "You're not in The House, so this event isn't yours to see.\n\nAll events",
+   "title": "Events",
+   "sections": [],
+   "buttons": []
+  },
+  {
+   "step": "12",
+   "who": "bo",
+   "ms": 30020,
+   "status": 502,
+   "refused": "away",
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50551/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "{\"error\":\"the computer that lends this did not answer; try again later\",\"kind\":\"away\"}",
+   "title": "",
+   "sections": [],
+   "buttons": []
+  },
+  {
+   "step": "12",
+   "who": "cy",
+   "ms": 30030,
+   "status": 502,
+   "refused": "away",
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50529/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "The computer lending this did not answer. Try again later.",
+   "title": "",
+   "sections": [],
+   "buttons": []
+  },
+  {
+   "step": "12w",
+   "who": "bo",
+   "ms": 16,
+   "status": 200,
+   "refused": null,
+   "url": "http://n130z83qaw5l6339cf807pgtp4fkjj4azd1c6k06vkuhfrab5lsal6h4a6fbfh.localhost:50551/g/e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f/e/61c4b88aa0c27fbf",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nFay\nComing\nBo + Maya\nCy\nFay\nCame\nBo\nCy\nMaya, Bo's guest\nYou\nBringing anyone?  Save\nTake my name off\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy",
+      "Fay"
+     ],
+     "coming": [
+      "Bo + Maya",
+      "Cy",
+      "Fay"
+     ],
+     "came": [
+      "Bo",
+      "Cy",
+      "Maya, Bo's guest"
+     ],
+     "unread": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off"
+   ]
+  }
+ ],
+ "end_load": 3.5
+}
