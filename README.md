@@ -15,12 +15,14 @@ exists today: `ARCHITECTURE.md`. How agents work here: `AGENTS.md`.
 
 ## Run it
 
-On a computer: `svrngs new <name>` makes a group and prints its link,
-`svrngs join <link>` joins it from another, `svrngs share <port>` lends what
-listens there, and `svrngs` alone keeps it running (DESIGN §8, U1-U3). A
-phone joins from the link in its browser (U4, landing). E0 — the first
-experiment, a Discord bot that settled expenses in the chat — ran before the
-fork and is at tag `e0-bot`.
+Start with `demo/start.md`: a friend lends their model and the group uses
+it, every line to type and every button to press, what each step looks like
+when it works and what to do when it does not, as its run did them on one
+computer (`demo/runs/start/2026-10-13-story/`). Two friends, one line pasted
+each, and the friend's chat page open on the other's computer; it also says
+how to try both friends on one computer. E0 — the first experiment, a
+Discord bot that settled expenses in the chat — ran before the fork and is
+at tag `e0-bot`.
 
 ## Set up
 
