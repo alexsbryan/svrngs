@@ -610,15 +610,15 @@ async fn slow_path(to: SocketAddr, delay: Duration) -> SocketAddr {
 /// **A lend's computer asleep is said away within the cap; one that answers
 /// as late as the slowest dial measured is not** (events-asleep (b)). Alex
 /// lets Sam and Cy in. Sam's computer is reached only through a path that
-/// holds each datagram 175 ms each way, so its dial is answered no sooner
-/// than the slowest working dial `demo/runs/asleep/2026-10-14/` measured,
-/// 347 ms: Sam's pad, at its origin on Alex's computer, answers 200. Cy's
-/// computer is asleep, a socket nobody reads (`common::never_answers`):
+/// holds each datagram 750 ms each way, so its dial is answered no sooner
+/// than 1.5 s, past the slowest working dial `demo/runs/asleep/2026-10-14/`
+/// measured, 1,013 ms: Sam's pad, at its origin on Alex's computer, answers
+/// 200. Cy's computer is asleep, a socket nobody reads (`common::never_answers`):
 /// Cy's lend at its origin is answered 502 `away` within
 /// [`svrngs_node::dial::DIAL_WITHIN`] and a second. Planted, each watched
 /// failing: the dial uncapped, as before this row (`guest.rs`'s bridge
 /// awaiting `connect` to its own end), which Cy's lend waits out; and the
-/// cap below the slow path's dial, 300 ms, which says Sam's lend away.
+/// cap below the slow path's dial, 1 s, which says Sam's lend away.
 #[tokio::test]
 async fn a_lend_s_computer_asleep_is_said_away_within_the_cap() {
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
@@ -632,7 +632,7 @@ async fn a_lend_s_computer_asleep_is_said_away_within_the_cap() {
     for node in [&alex, &sam] {
         node.rail().set_seed(NS, &seed).unwrap();
     }
-    let delay = Duration::from_millis(175);
+    let delay = Duration::from_millis(750);
     let slow = slow_path(loopback_sockets(sam.endpoint())[0], delay).await;
     alex.transport()
         .add_known_peer(sam.endpoint().id(), vec![slow]);
