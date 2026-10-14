@@ -68,7 +68,11 @@ in 1 and 2, times 3, rounded up to a whole second.
 
 ## The capped take — events-run's step 10b again
 
-At 883fca8, which gives every dial up after `dial::DIAL_WITHIN`, 2 s. Its
+At 883fca8, which gives every dial up after `dial::DIAL_WITHIN`, 2 s.
+5c097eb narrowed the cap after this take to the dials to a lend's
+computer, the transport's and the page's to a lender, a joiner's dial
+waiting as iroh does again (its body: the cap broke a working join, 3.03
+s). Every dial this take timed is a lend's, so its numbers stand. Its
 predictions are `CAPPED.md`, committed (e18090e) before the take; the
 driver as above with `TAKE=capped` (d0cb319). Data in
 `data/capped-working/` and `data/capped-asleep/`.
