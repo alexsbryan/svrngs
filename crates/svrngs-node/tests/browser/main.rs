@@ -1907,11 +1907,11 @@ in_both_engines!(
     /// **The home page tells two people of one name apart**
     /// (bash-same-name (a)). Ada lets two people into house as cy, a
     /// second apart, each by hand (bash-devices made them two people,
-    /// `a1d0ba9`); her home page's people line names each person once,
-    /// and no two alike, in a person's words — each cy by when they
-    /// joined, as `svrngs remove --joined` takes it, to the instant.
-    /// Planted: two people of one name, listed by home.js as "cy, cy"; a
-    /// time with no offset (#126).
+    /// `a1d0ba9`); her home page's door names each person once, and no two
+    /// alike, in a person's words — each cy by when they joined, as
+    /// `svrngs remove --joined` takes it, to the instant. Planted: two
+    /// people of one name, listed by home.js as "cy, cy"; a time with no
+    /// offset (#126).
     the_home_page_tells_two_people_of_one_name_apart
 );
 async fn the_home_page_tells_two_people_of_one_name_apart(engine: Engine) {
@@ -1930,13 +1930,14 @@ async fn the_home_page_tells_two_people_of_one_name_apart(engine: Engine) {
         ada.rail().commit(NS, &fixture).unwrap().unwrap();
         tokio::time::sleep(Duration::from_millis(1_100)).await;
     }
-    let seen = home_page(engine, &ada, json!({ "read": "#home section p" })).await;
+    let seen = home_page(engine, &ada, json!({ "all": "#home .door strong" })).await;
     eprintln!("the home page's run: {seen:#}");
-    let line = seen["read"].as_str().unwrap_or_default();
-    let people: Vec<&str> = (line.strip_prefix("People: "))
-        .unwrap_or_else(|| panic!("no people line: {seen:#}"))
-        .split(", ")
+    let people: Vec<&str> = (seen["all"].as_array())
+        .unwrap_or_else(|| panic!("no door: {seen:#}"))
+        .iter()
+        .filter_map(Value::as_str)
         .collect();
+    let line = people.join(", ");
     let alike = people
         .iter()
         .filter(|p| people.iter().filter(|q| q == p).count() > 1);
@@ -2276,7 +2277,7 @@ async fn the_home_page_says_a_refusal_apart_from_no_answer(engine: Engine) {
     let seen = home_page(
         engine,
         &ada,
-        json!({ "all": "#home section > ul:not(.removals) li" }),
+        json!({ "all": "#home table.index td[colspan]" }),
     )
     .await;
     eprintln!("the home page's run: {seen:#}");
@@ -2439,8 +2440,8 @@ async fn the_home_page_copies_a_lend_s_address_for_a_program(engine: Engine) {
         engine,
         &ada,
         json!({
-            "all": "#home section li",
-            "do": [["#home section li button:has-text('Copy its address for a program')", null, true]],
+            "all": "#home table.index td",
+            "do": [["#home table.index td button:has-text('Copy its address for a program')", null, true]],
         }),
     )
     .await;
@@ -2468,7 +2469,7 @@ async fn the_home_page_s_links_say_what_they_open(engine: Engine) {
     let ada = node(dir.path(), &relay, &signing(7)).await;
     let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
     lend(dir.path(), "shelf", shelf.port());
-    let seen = home_page(engine, &ada, json!({ "read": "#home section li a" })).await;
+    let seen = home_page(engine, &ada, json!({ "read": "#home table.index td a" })).await;
     assert_eq!(seen["read"], "Open ada’s shelf (k)", "{seen:#}");
     drop(ada);
 }
@@ -2534,15 +2535,172 @@ async fn the_home_page_shows_a_group_before_its_slowest_computer(engine: Engine)
         svrngs_node::iroh::PublicKey::from_bytes(signing(7).verifying_key().as_bytes()).unwrap();
     ada.transport()
         .add_known_peer(bo, vec![silent.local_addr().unwrap()]);
-    let (people, unanswered) = (
-        "#home section p",
-        "#home section li:has-text('bo\\'s computer did not answer')",
-    );
+    let (people, unanswered) = ("#home .door li", "#home .door li.off:has-text('bo')");
     let seen = home_page(engine, &ada, json!({ "timed": [people, unanswered] })).await;
     eprintln!("the home page's run: {seen:#}");
     let ms = |s: &str| seen["timed"][s].as_u64().expect("shown");
     assert!(ms(people) + 1000 < ms(unanswered), "{seen:#}");
     drop((ada, silent));
+}
+
+/// `person` let into ada's group from a phone's page as `signing(joining)`:
+/// a link's `Invite`, then its redemption naming a browser (u4-1).
+fn from_a_phone(ada: &Node, person: &str, joining: u8) {
+    let commit = |act| {
+        let fixture = svrngs_core::tests_support::Fixture {
+            act,
+            on_behalf_of: None,
+        };
+        ada.rail().commit(NS, &fixture).unwrap().unwrap().lines()[0].clone()
+    };
+    let invite = commit(RailAct::Invite {
+        key: actor_of(&signing(9)),
+        until: i64::MAX,
+        device_of: None,
+    });
+    let person = Person::parse(person).unwrap();
+    let signed = svrngs_node::Redemption::sign(
+        &signing(joining),
+        NS,
+        &invite.id,
+        &person,
+        svrngs_node::Device::Browser,
+    );
+    commit(RailAct::Admit {
+        invite: Some(signed),
+        person,
+        key: actor_of(&signing(joining)),
+    });
+}
+
+/// How long after the home page is asked its door may draw off a computer
+/// that did not answer: its round is `node::ANSWER_WITHIN`, 3 s, and the
+/// rest is this host's. Past it on a host past `load::BUSY`,
+/// could-not-judge, never a pass.
+const DRAWN_WITHIN: u64 = 10_000;
+
+in_both_engines!(
+    /// **The door: who is on now** (v1ui-door (c); V1_UI_BUILD §3.1 and
+    /// §7). On ada's computer, cy's computer answers, bo's never does, and
+    /// pia is in from a phone: ada's door lights ada and cy, "on now";
+    /// draws bo off, "did not answer", within the round and never lit; and
+    /// marks pia as in from a phone, claiming nothing of when. Nobody is
+    /// left out, and no word on the page is one a reader must look up.
+    /// Planted, watched failing: the door drawing a computer that did not
+    /// answer lit, as the page drew every name before this row.
+    the_door_draws_who_is_on_now
+);
+async fn the_door_draws_who_is_on_now(engine: Engine) {
+    let relay = relay().await;
+    let (ada_dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ada = node(ada_dir.path(), &relay, &signing(7)).await;
+    let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
+    from_a_phone(&ada, "pia", 3);
+    let off = "#home .door li.off";
+    let start = load::load().await;
+    let args = json!({ "drawn": "#home .door li", "timed": [off], "text": true });
+    let seen = home_page(engine, &ada, args).await;
+    eprintln!("the home page's run: {seen:#}");
+    let mut drawn: Vec<(String, String)> = serde_json::from_value(seen["drawn"].clone()).unwrap();
+    drawn.sort_by(|a, b| a.1.cmp(&b.1));
+    let want = [
+        ("on", "ada on now"),
+        ("off", "bo did not answer"),
+        ("on", "cy on now"),
+        ("phone", "pia in from a phone"),
+    ];
+    let want: Vec<(String, String)> = want.map(|(c, w)| (c.into(), w.into())).into();
+    assert_eq!(drawn, want, "{seen:#}");
+    let ms = seen["timed"][off].as_u64().unwrap_or(u64::MAX);
+    if ms > DRAWN_WITHIN {
+        let missed = format!("bo drawn off at {ms} ms, past {DRAWN_WITHIN}");
+        match load::past_busy(&start, load::cores()) {
+            Some(why) => could_not_judge(&format!(
+                "the_door_draws_who_is_on_now::{}: {missed}; {why}",
+                engine.as_str()
+            )),
+            None => panic!("{missed}, at {start}:\n{seen:#}"),
+        }
+    }
+    let page = seen["text"].as_str().unwrap_or_default().to_lowercase();
+    let looked_up = words_said(
+        &page,
+        &[
+            "key", "member", "record", "act", "hash", "origin", "port", "relay",
+        ],
+    );
+    assert!(
+        looked_up.is_empty(),
+        "the page says {looked_up:?}:\n{seen:#}"
+    );
+    drop((ada, cy));
+}
+
+/// Each of `words`, or its plural, that `text` holds as a whole word.
+fn words_said<'a>(text: &str, words: &[&'a str]) -> Vec<&'a str> {
+    let said: BTreeSet<&str> = text
+        .split(|c: char| !c.is_alphanumeric())
+        .filter(|w| !w.is_empty())
+        .collect();
+    (words.iter().copied())
+        .filter(|w| said.contains(w) || said.contains(format!("{w}s").as_str()))
+        .collect()
+}
+
+in_both_engines!(
+    /// **Two groups of one name told apart** (v1ui-door (c); #138, the
+    /// operator's "Allow; tell them apart"). Ada's computer holds two
+    /// groups called Trip, one ada made and one sam made: each is headed
+    /// by its name, who made it and since when this computer has held it,
+    /// in the browser's own words for the day. Planted, watched failing:
+    /// the page heading a group by its name alone, as before this row.
+    the_home_page_tells_two_groups_of_one_name_apart
+);
+async fn the_home_page_tells_two_groups_of_one_name_apart(engine: Engine) {
+    use svrngs_node::group::{draw, Name};
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = Node::start(
+        dir.path().to_path_buf(),
+        signing(1),
+        &RelayConfig {
+            relay_urls: vec![relay_url(&relay)],
+            n0_services: false,
+            loopback_only: true,
+        },
+        svrngs_node::group::seed_text,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("a node starts");
+    let trip = || Name::parse("Trip").unwrap();
+    for (founder, key) in [("ada", 1), ("sam", 5)] {
+        let seed = draw(
+            trip(),
+            Name::parse(founder).unwrap(),
+            signing(key).verifying_key(),
+        );
+        ada.host().keep_group(&seed, None, None).unwrap();
+    }
+    let seen = home_page(
+        engine,
+        &ada,
+        json!({ "all": "#home section[data-colour] > h2" }),
+    )
+    .await;
+    eprintln!("the home page's run: {seen:#}");
+    let mut heads: Vec<String> = serde_json::from_value(seen["all"].clone()).unwrap();
+    heads.sort();
+    let (sams, yours) = (&heads[0], &heads[1]);
+    assert!(
+        sams.starts_with("Trip (sam’s, since ") && sams.ends_with(')'),
+        "{seen:#}"
+    );
+    assert!(
+        yours.starts_with("Trip (yours, since ") && yours.ends_with(')'),
+        "{seen:#}"
+    );
+    drop(ada);
 }
 
 in_both_engines!(

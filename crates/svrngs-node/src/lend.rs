@@ -267,6 +267,11 @@ pub struct Offered {
     /// from a list when it asks nobody.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub asks: Option<String>,
+    /// Whether its lender's program signs each person in, once (mwp-1,
+    /// `sign_in`): the pages say so of how it opens (v1ui-door (c)). Absent
+    /// from a computer before, read as no.
+    #[serde(default)]
+    pub signs_in: bool,
 }
 
 impl Offered {

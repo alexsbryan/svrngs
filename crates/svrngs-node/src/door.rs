@@ -515,6 +515,7 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
             upload: lend.upload,
             reads: lend.reads,
             asks: lend.asks,
+            signs_in: lend.sign_in.is_some(),
         });
     }
     Ok(offered)

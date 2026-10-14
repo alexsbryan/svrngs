@@ -3,7 +3,7 @@
 // `args.ask`, its `/ask?lend=<label>&app=<label>`, it is read for its
 // heading, which the test holds to the one source (question.js).
 //
-//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>?, <stays>?], ...], "timed"?: [<selector>, ...]}'
+//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>?, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
@@ -61,10 +61,15 @@ try {
     await page.locator('#lent li, #lent p').first().waitFor({ timeout: 30_000 });
     after.push(await page.locator(args.all).allTextContents());
   }
+  // With `drawn`, a selector: each match's class and words, as the page
+  // drew them once loaded (v1ui-door (c): the door).
+  const drawn = args.drawn ? await page.locator(args.drawn).evaluateAll((es) => es.map((e) => [e.className, e.textContent])) : null;
+  // With `text`, the page's words as a person reads them, each cell apart.
+  const text = args.text ? await page.locator('body').innerText() : null;
   // Every link on the page, its words and where it opens (start-home).
   const links = await page.locator('a').evaluateAll((as) => as.map((a) => ({ text: a.textContent, target: a.target })));
   const timed = Object.fromEntries(await timing);
-  console.log(JSON.stringify({ heading, read, all, after, clipboard, links, timed, logs }));
+  console.log(JSON.stringify({ heading, read, all, after, clipboard, links, timed, drawn, text, logs }));
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;

@@ -264,7 +264,27 @@ paths it refuses, how many people may use it at once.
   only that list (sup-2, `crates/svrngs-node/src/home.rs`; read from the
   routes that answer an app, `/v1/groups`, `/v1/lends`,
   `/v1/rail/people`). A group that cannot be read is said so, and so is
-  whose computer did not answer. On it a person:
+  whose computer did not answer. Each group is headed by its name, who
+  made it and since when this computer has held it, so two of one name
+  are told apart (#138), in a colour derived from its id, nothing to
+  choose (look.css; the operator, "Derived from the group"). Under it
+  (v1ui-door (c), V1_UI_BUILD §3.1):
+  - **the door**, each person once, a cell in a grid: lit, "on now",
+    while their computer answers; drawn off, "did not answer", when it
+    did not, judged within the one round that asks what each lends and
+    never lit before; and "in from a phone" when their only keys are a
+    browser's (`device`, `/v1/rail/people`), whose presence nobody asks.
+    Presence is only "on now", never when last seen;
+  - **the index**, one table of what is in the group, on any port: each
+    thing by its link; what it is, in its lender's word, its kind, never
+    one of svrngs's own (`scripts/vocab_check.py` reads the pages'
+    scripts too); whose; how it opens — in a tab, signing you in once
+    when its lender's program does (`signs_in`), its address for a
+    program, and on the TV too while the room door serves it; and on or
+    full now. Each computer that did not say what it lends is a row of
+    its own, by how, so nothing is stale and nobody is left out.
+
+  On it a person:
   - opens each thing lent by a link that says what it is and whose ("Open
     Sam’s llama-server"), in a tab of its own beside the page;
   - copies the address to give a program for it, such as a chat program

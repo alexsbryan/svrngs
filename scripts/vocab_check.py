@@ -5,8 +5,10 @@ Every app lists its nouns in apps/<app>/nouns.txt, one per line, `#` for a
 comment. Each is refused, as a whole word in any case, in infra code: every
 .rs file under crates/, with comments and tests apart — test files by name,
 and a file's inline tests from its first `#[cfg(test)]` on — since an example
-in a comment or a test is fine. `--self-test` plants a noun and watches it
-caught.
+in a comment or a test is fine; and the pages' own scripts, the home page's
+under crates/ and the group's page, web/app.js, so neither types a kind's
+noun of its own (v1ui-door (c)). `--self-test` plants a noun in each and
+watches it caught.
 """
 import re
 import sys
@@ -42,7 +44,8 @@ def check(root):
         return [], 0
     pattern = re.compile(r"\b(" + "|".join(map(re.escape, words)) + r")\b", re.I)
     found = []
-    for f in sorted((root / "crates").glob("*/src/**/*.rs")):
+    pages = [*(root / "crates").glob("*/src/**/*.js"), *(root / "web").glob("app.js")]
+    for f in sorted([*(root / "crates").glob("*/src/**/*.rs"), *pages]):
         rel = f.relative_to(root).as_posix()
         if "/tests/" in f"/{rel}" or TEST_FILE.search(rel):
             continue
@@ -63,8 +66,9 @@ def self_test():
         (src / "tests_x.rs").write_text("const FILM: u8 = 1;\n")
         clean, _ = check(root)
         (src / "door.rs").write_text("pub struct Film; // planted\n")
+        (src / "home.js").write_text("// planted\nconst what = { k: 'film' };\n")
         caught, _ = check(root)
-    ok = clean == [] and len(caught) == 1 and caught[0].startswith("crates/x/src/door.rs:1:")
+    ok = clean == [] and [c.split(" ")[0] for c in caught] == ["crates/x/src/door.rs:1:", "crates/x/src/home.js:2:"]
     print(f"self-test: clean tree {clean}, planted tree {caught} -> {'holds' if ok else 'BROKEN'}")
     return 0 if ok else 1
 

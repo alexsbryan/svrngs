@@ -261,7 +261,9 @@ async fn an_app_asks_what_the_group_s_people_lend_its_own_included_and_none_stal
 /// **An app asks which groups this computer holds, and finds the API by
 /// itself** (the u5-1 row): `/v1/groups` answers the group's id, its name,
 /// Alex as this computer's person, that Alex was not removed (U7) and that
-/// nobody was removed or asked to be (v1-keeper-office (b)); the data dir's `api` file names the
+/// nobody was removed or asked to be (v1-keeper-office (b)); who made it,
+/// Alex's own computer, and since when it holds it, the time its seed was
+/// written (v1ui-door (c)); the data dir's `api` file names the
 /// address the app asked at. Planted: the file not written.
 #[tokio::test]
 async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
@@ -272,11 +274,20 @@ async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
 
     let (status, body) = house.ask(svrngs_node::surface::GROUPS_ROUTE).await;
     assert_eq!(status, 200, "{body:#}");
+    let made = made_by_alex(&body);
     assert_eq!(
         body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "person": "alex", "removed": false, "removals": [], "folders": [] }] }),
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": "alex", "removed": false, "removals": [], "folders": [] }] }),
     );
     house.close().await;
+}
+
+/// The first group's `made`, as `/v1/groups` answers it on Alex's
+/// computer: house, made by this computer (no `maker`), held since a time.
+fn made_by_alex(body: &serde_json::Value) -> serde_json::Value {
+    let made = &body["groups"][0]["made"];
+    assert!(made["since"].is_i64(), "{body:#}");
+    serde_json::json!({ "name": "house", "maker": null, "since": made["since"] })
 }
 
 /// **A register that cannot be read is said as itself** (REVIEW_FINDINGS
@@ -301,9 +312,10 @@ async fn an_unreadable_register_is_not_read_as_not_removed() {
     std::fs::set_permissions(&roster, std::fs::Permissions::from_mode(0o644)).unwrap();
     assert!(unread, "the plant: Alex's register cannot be read");
     assert_eq!(status, 200, "{body:#}");
+    let made = made_by_alex(&body);
     assert_eq!(
         body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "person": null, "removed": null, "removals": null, "folders": [] }] }),
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": null, "removed": null, "removals": null, "folders": [] }] }),
     );
     house.close().await;
 }

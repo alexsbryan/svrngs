@@ -49,19 +49,50 @@ const lentIn = (g) => (g.removed === false ? get(`/v1/lends?namespace=${encodeUR
 // `svrngs remove --joined` takes (home.rs `WHEN`): this computer's time as
 // the `sv-SE` locale writes it, then its offset as ±hhmm, so a fall-back
 // night's repeated hour reads back to one instant (#126).
+// Each with what holds their keys, `device` (v1ui-door (c)).
 function people(rows) {
   const each = [...new Map(rows.map((r) => [r.person_key, r])).values()];
   const at = (d, m = -d.getTimezoneOffset()) => `${d.toLocaleString('sv-SE')} ${m < 0 ? '-' : '+'}${String(Math.trunc(Math.abs(m) / 60) * 100 + (Math.abs(m) % 60)).padStart(4, '0')}`;
   const when = (j) => (j === 'started' ? 'started the group' : `joined ${at(new Date(j.at * 1000))}`);
-  return each.map((p) => (each.filter((q) => q.person === p.person).length > 1 ? `${p.person} (${when(p.joined)})` : p.person)).join(', ');
+  return each.map((p) => [p, each.filter((q) => q.person === p.person).length > 1 ? `${p.person} (${when(p.joined)})` : p.person, rows.filter((r) => r.person_key === p.person_key).map((r) => r.device)]);
 }
+
+// The door (V1_UI_BUILD §3.1): each person once, a cell in a grid, unjudged
+// until the group's computers have answered or not, within one round
+// (/v1/lends, `judge`): then lit, "on now", while their computer answers;
+// drawn off when it did not, never lit and never left out; and one in only
+// from a phone, which nobody asks, marked so with no presence claimed.
+// Presence is only "on now", never when last seen.
+function door(rows) {
+  const cells = people(rows).map(([p, name, devices]) => [p, devices, el('li', '', el('strong', name), ' ', el('small', 'asking…'))]);
+  const judge = (lends) => cells.forEach(([p, devices, li]) => {
+    const phone = devices.includes('browser') ? (devices.includes('computer') ? ', a phone too' : 'in from a phone') : '';
+    const [drawn, words] = !devices.includes('computer') ? ['phone', ''] : !lends ? ['', 'not known now'] : lends.unanswered.includes(p.person) ? ['off', 'did not answer'] : ['on', 'on now'];
+    [li.className, li.lastChild.textContent] = [drawn, words + phone];
+  });
+  return [Object.assign(el('ul', '', ...cells.map((c) => c[2])), { className: 'door' }), judge];
+}
+
+// A row of the index; `tag` th for its head.
+const row = (cells, tag = 'td') => el('tr', '', ...cells.map((c) => el(tag, '', c)));
 
 // The groups a new one shares its name with (/group, the node's one rule;
 // #138), each with who made it and since when this computer has held it,
 // in the command's words (cli.rs `namesakes_said`): `verb` says it before
 // the group is made or after.
 const day = (t) => new Date(t * 1000).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-const namesakes = (n, name, verb) => (n.length ? `You’re already in ${n.map((g) => `${g.name} (${g.maker ? `${g.maker}’s` : 'yours'}${g.since ? `, since ${day(g.since)}` : ''})`).join(' and ')}. ${verb} ${n.length > 1 ? 'another' : 'a second'} group called ${name}.` : '');
+const whose = (g) => `${g.maker ? `${g.maker}’s` : 'yours'}${g.since ? `, since ${day(g.since)}` : ''}`;
+const namesakes = (n, name, verb) => (n.length ? `You’re already in ${n.map((g) => `${g.name} (${whose(g)})`).join(' and ')}. ${verb} ${n.length > 1 ? 'another' : 'a second'} group called ${name}.` : '');
+
+// Each group's section, headed by its name and, so two of one name are
+// told apart, who made it and since when (#138); in its colour, derived
+// from its id (look.css `data-colour`; the operator, "Derived from the
+// group"): nothing to choose, and a group looks the same each time.
+function section(g) {
+  const s = el('section', '', el('h2', g.name ?? 'A group whose name this computer cannot read', g.made ? el('small', ` (${whose(g.made)})`) : ''));
+  s.dataset.colour = [...g.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 12, 0);
+  return main.appendChild(s);
+}
 
 // Group `g` in its section `s`: its people and folder as soon as they are
 // read, then what its people lend once each computer has answered or not,
@@ -72,7 +103,8 @@ async function show(g, s) {
   if (g.removed) return s.append(el('p', `You are no longer in ${g.name ?? 'this group'}. What you already have stays on this computer; nothing new reaches it.`));
   const ns = encodeURIComponent(g.id);
   try {
-    s.append(el('p', `People: ${people((await get(`/v1/rail/people?namespace=${ns}`)).people)}`));
+    const [people, judge] = door((await get(`/v1/rail/people?namespace=${ns}`)).people);
+    s.append(people);
     // Where the group's folder is on this disk (v1-onboarding (d)).
     const its = g.name ? `${g.name}’s folder` : 'The group’s folder';
     if (g.folders === null) s.append(el('p', `Where ${its} is cannot be read on this computer.`));
@@ -89,21 +121,34 @@ async function show(g, s) {
     const made = (device, words) => button(words, () => post('/link', { group: g.id, device }).then(({ client, https }) => shown(device ? 'Open this link on your other computer or phone; it joins as you, so send it to nobody else: ' : 'Send this link to the person you are inviting: ', el('code', https ?? client), https ? ' It opens in a browser, which says how to join from there.' : ' They join with svrngs join and this link.', ' It works for a day, while this computer is on. ', copy(https ?? client, s.querySelector('.link'))), (e) => shown(e.message)));
     s.append(el('p', '', made(false, `Make a link to invite someone to ${g.name ?? 'this group'}`), made(true, 'Make a link to add your phone or another computer of yours')), Object.assign(el('p'), { className: 'link' }));
     if (g.removals.length) s.append(Object.assign(el('ul', '', ...g.removals.map((r) => el('li', removal(r)))), { className: 'removals' }));
-    const ul = s.appendChild(el('ul', '', el('li', 'Asking each computer in the group what it lends…')));
-    const lends = await get(`/v1/lends?namespace=${ns}`);
-    ul.replaceChildren();
+    // The index (V1_UI_BUILD §3.1): one table of what is in the group, on
+    // any port — each thing by a link that opens it in a tab and says what
+    // and whose (question.js `named`); what it is, its lender's word, never
+    // a word of svrngs's own (scripts/vocab_check.py); whose; how it opens;
+    // and whether it is full now.
+    const body = el('tbody', '', row(['Asking each computer in the group what it lends…']));
+    s.append(Object.assign(el('table', '', el('thead', '', row(['What', 'What it is', 'Whose', 'How it opens', 'Now'], 'th')), body), { className: 'index' }));
+    const lends = await get(`/v1/lends?namespace=${ns}`).catch((e) => {
+      judge();
+      throw e;
+    });
+    judge(lends);
+    body.replaceChildren();
     // Each with its address for a program, copied by a button that says
     // so, then said (start-home): the clipboard may refuse a page.
     for (const l of lends.lent) {
-      const li = ul.appendChild(el('li', '', Object.assign(el('a', `Open ${named(l)}`), { href: l.origin, target: '_blank' }), ' '));
-      li.append(button('Copy its address for a program', () => Promise.resolve().then(() => navigator.clipboard.writeText(l.origin)).then(() => li.append(` Copied: ${l.origin}`), () => li.append(` Copy it from here: ${l.origin}`))));
+      const how = el('td', `In a tab${l.signs_in ? ', signing you in once' : ''}. `, button('Copy its address for a program', () => Promise.resolve().then(() => navigator.clipboard.writeText(l.origin)).then(() => how.append(` Copied: ${l.origin}`), () => how.append(` Copy it from here: ${l.origin}`))));
+      if (l.room) how.append(` On your TV too, at ${l.room}`);
+      body.append(el('tr', '', el('td', '', Object.assign(el('a', `Open ${named(l)}`), { href: l.origin, target: '_blank' })), el('td', l.kind), el('td', l.person), how, el('td', l.limit && l.using >= l.limit ? 'full' : 'on')));
     }
-    // Each computer that did not say by how (bash-first-minute (c)):
-    // one that answered is never said not to have.
-    for (const p of lends.unanswered) ul.append(el('li', `${p}'s computer did not answer, so what they lend is not listed.`));
-    for (const p of lends.unheard) ul.append(el('li', `${p}'s computer has not heard of this computer yet, so what they lend is not listed yet.`));
-    for (const p of lends.refused) ul.append(el('li', `${p}'s computer answered without saying what they lend, so it is not listed.`));
-    if (!ul.children.length) ul.append(el('li', 'Nobody lends anything here yet.'));
+    // Each computer that did not say, by how (bash-first-minute (c)), a row
+    // of its own: what it lends never stale, and never nobody's. One that
+    // answered is never said not to have.
+    const said = (words) => body.append(el('tr', '', Object.assign(el('td', words), { colSpan: 5 })));
+    for (const p of lends.unanswered) said(`${p}'s computer did not answer, so what they lend is not listed.`);
+    for (const p of lends.unheard) said(`${p}'s computer has not heard of this computer yet, so what they lend is not listed yet.`);
+    for (const p of lends.refused) said(`${p}'s computer answered without saying what they lend, so it is not listed.`);
+    if (!body.children.length) said('Nobody lends anything here yet.');
     return lends.lent;
   } catch (e) {
     s.append(el('p', `What this group lends cannot be read on this computer: ${e.message}`));
@@ -168,7 +213,7 @@ try {
     if (q.has('made')) main.append(el('p', `You made ${q.get('made')}. ${q.get('also') ? `${q.get('also')} ` : ''}${q.has('unplaced') ? `Its folder could not be made: ${q.get('unplaced')}. ` : ''}Make a link below to invite someone to it.`));
     // With no group, how to make one or join one (start-home; start-group).
     if (!groups.length) main.append(Object.assign(el('p', 'This computer is in no group yet. Make one below, or join one by the line the page of the link you were sent gives.'), { className: 'none' }));
-    const lent = Promise.all(groups.map((g) => show(g, main.appendChild(el('section', '', el('h2', g.name ?? 'A group whose name this computer cannot read'))))));
+    const lent = Promise.all(groups.map((g) => show(g, section(g))));
     // A link from a group's page, `<page>#open=<label>&at=<path>`, pasted
     // (events-links (c)): the lend it names opened at its path in a tab of
     // its own, as the group's page opens it on a phone; the lend's origin

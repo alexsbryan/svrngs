@@ -43,6 +43,7 @@ use svrngs_core::app::App;
 use svrngs_core::pass::Label;
 
 use crate::door::LendRefusal;
+use crate::group::Namesake;
 use crate::node::{Asking, Lending, Unlisted};
 use crate::rail::{namespace_of, standing_of, RailQuery};
 use crate::redeem::SeedText;
@@ -105,6 +106,10 @@ struct Held {
     /// home page shows them to everyone in the group. `null` beside
     /// `removed`'s.
     removals: Option<Vec<svrngs_runtime::register::Removing>>,
+    /// Who made it and since when this computer has held it, as two
+    /// groups of one name are told apart (#138; [`Namesake`]); `null` with
+    /// `name`.
+    made: Option<Namesake>,
     /// Where this computer keeps the group's folders (v1-onboarding (d)):
     /// the home page says so. `null` when the list cannot be read here,
     /// said at warn, never read as none.
@@ -125,11 +130,13 @@ async fn groups(State(at): State<Surface>) -> Response {
         }
     };
     let mut held = Vec::with_capacity(namespaces.len());
+    let me = at.asking.host.actor();
     for id in namespaces {
-        let name = name_of(&at, &id);
+        let seed = seed_of(&at, &id);
+        let name = seed.as_ref().map(|s| s.name().as_str().to_string());
+        let made = seed.map(|s| Namesake::of(rail.root(), &s, me));
         // One read for both: a group not held or with no seed is the empty
         // register, said by the rail (`RingRail::register`).
-        let me = at.asking.host.actor();
         let (person, removed, removals) = match rail.register(&id) {
             Ok(r) => (
                 r.members.get(me).map(|m| m.person.clone()),
@@ -149,6 +156,7 @@ async fn groups(State(at): State<Surface>) -> Response {
         held.push(Held {
             id,
             name,
+            made,
             person,
             removed,
             removals,
@@ -190,9 +198,9 @@ async fn sign(
     Json(serde_json::json!({ "key": key, "sig": sig })).into_response()
 }
 
-/// The name in the seed this computer keeps for `id`, or `None`, at warn,
-/// when it keeps none, it cannot be read, or it is another group's.
-fn name_of(at: &Surface, id: &str) -> Option<String> {
+/// The seed this computer keeps for `id`, or `None`, at warn, when it
+/// keeps none, it cannot be read, or it is another group's.
+fn seed_of(at: &Surface, id: &str) -> Option<Seed> {
     let text = at
         .asking
         .host
@@ -215,7 +223,7 @@ fn name_of(at: &Surface, id: &str) -> Option<String> {
         tracing::warn!(target: "surface", namespace = id, seed = seed.id(), "surface: groups — its seed is another group's, so its name is not known");
         return None;
     }
-    Some(seed.name().as_str().to_string())
+    Some(seed)
 }
 
 /// `GET /v1/lends?namespace=<id>`. A group not held, or held with no seed,

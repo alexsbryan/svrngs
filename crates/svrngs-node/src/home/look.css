@@ -68,6 +68,38 @@ blockquote { margin: 1rem 0; padding: 0.5rem 1rem; border-left: 0.5rem solid var
 
 details > summary { font-weight: 700; cursor: pointer; }
 
+/* A group's colour, derived from its id by the page (home.js `section`; the
+   operator, "Derived from the group"): no setting, nothing to choose. Each a
+   name the browser knows, read in black. */
+section[data-colour="0"] { --group: salmon; }
+section[data-colour="1"] { --group: gold; }
+section[data-colour="2"] { --group: lightgreen; }
+section[data-colour="3"] { --group: skyblue; }
+section[data-colour="4"] { --group: plum; }
+section[data-colour="5"] { --group: orange; }
+section[data-colour="6"] { --group: aquamarine; }
+section[data-colour="7"] { --group: pink; }
+section[data-colour="8"] { --group: khaki; }
+section[data-colour="9"] { --group: lightsalmon; }
+section[data-colour="10"] { --group: palegreen; }
+section[data-colour="11"] { --group: lightskyblue; }
+section[data-colour] > h2 { padding: 0.25rem 0.5rem; border: var(--rule); background: var(--group); color: var(--on-colour); }
+h2 small { font-size: 1rem; font-weight: 600; letter-spacing: 0; }
+
+/* The door: each person a cell, lit while their computer answers, drawn off
+   when it did not, a phone's marked; the words say each, not the colour. */
+ul.door { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 0.5rem; border: 0; }
+ul.door li { padding: 0.5rem; border: var(--hair); font-weight: 700; }
+ul.door li small { display: block; font-weight: 400; }
+ul.door li.on { border: var(--rule); background: var(--lit); color: var(--on-colour); }
+ul.door li.off { border-style: dashed; color: GrayText; }
+ul.door li.phone { border-style: dotted; }
+
+/* The index: one table of what is in the group, a rule under each row. */
+table { width: 100%; margin: 0.5rem 0; border-collapse: collapse; }
+th, td { padding: 0.4rem 0.5rem 0.4rem 0; border-bottom: var(--hair); text-align: left; vertical-align: top; }
+thead th { border-bottom: var(--rule); }
+
 /* What went wrong. */
 .bad { background: var(--warn); color: var(--on-colour); }
 p.bad { padding: 0.25rem 0.5rem; }
