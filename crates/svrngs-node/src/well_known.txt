@@ -1,5 +1,5 @@
 # Well-known ports, and the kind of service that listens on each, for
-# `svrngs share <port>` to name a lend it recognises (crates/svrngs/src/share.rs,
+# `svrngs share <port>` and the home page to name a lend (crates/svrngs-node/src/share.rs,
 # WELL_KNOWN). One `<port> <kind>` a line, then how it signs each person in,
 # if svrngs knows (share.rs, `Signs`), and `share` lends it with no password
 # and prints the rest of the line, in DESIGN §1's words:

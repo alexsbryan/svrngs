@@ -80,6 +80,8 @@ pub mod origin;
 // The room door, u6-1's (docs/DESIGN.md §3, "The room"): the lends a
 // person names, served to this computer's network while the command runs.
 pub mod room;
+// What a lend is decided from: the probe, the well-known table (v1ui-lend (a)).
+pub mod share;
 
 // The member door, U3's (docs/DESIGN.md §8, U3's inventory): the route that
 // carries a member's request to a lend's service, the lend's declaration,
