@@ -37,7 +37,6 @@ use svrngs_core::{Change, ContentHash, Placed, SyncFolder, SyncPath};
 use tokio::sync::mpsc;
 
 use super::{FolderAsk, FolderError, Folders};
-use crate::register::Standing;
 
 /// The keys standing in the group a step syncs with.
 type Holders = BTreeSet<String>;
@@ -162,7 +161,7 @@ impl Folders {
         let folder = folder_of(&dir);
         let standing = self.host.rail().standing(&group);
         let standing = standing.map_err(|e| FolderError::Unread(group.clone(), e.to_string()))?;
-        if !matches!(&standing, Standing::Members(m) if m.contains_key(self.host.actor())) {
+        if !standing.names(self.host.actor()) {
             tracing::debug!(target: "folder", namespace = group, folder, "synced: refused — this computer does not stand in the group");
             return Err(FolderError::NotStanding(group));
         }

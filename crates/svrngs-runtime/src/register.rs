@@ -85,10 +85,17 @@ pub struct Member {
 }
 
 impl Standing {
-    /// Whether `actor` — a key's lowercase hex, as the record spells a
-    /// signer — stands in the group.
+    /// `actor`'s row — a key's lowercase hex, as the record spells a
+    /// signer — if it stands in the group: the one place that says who
+    /// stands, which every other asks (#146).
+    pub fn member(&self, actor: &str) -> Option<&Member> {
+        let Standing::Members(m) = self else { return None };
+        m.get(actor)
+    }
+
+    /// Whether `actor` stands in the group, as [`Standing::member`] says.
     pub fn names(&self, actor: &str) -> bool {
-        matches!(self, Standing::Members(m) if m.contains_key(actor))
+        self.member(actor).is_some()
     }
 }
 

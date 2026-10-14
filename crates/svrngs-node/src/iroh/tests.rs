@@ -341,3 +341,9 @@ fn dial_key_normalizes_addr_order_and_dupes() {
         super::dial_key_for(&mk(vec![a, b2]))
     );
 }
+
+/// The dialer an iroh stream from `key`'s holder is verified as, for a
+/// test that asks a route's decision with no stream (#146).
+pub(crate) fn dialer(key: &crate::SigningKey) -> Dialer {
+    Dialer(SecretKey::from_bytes(&key.to_bytes()).public())
+}

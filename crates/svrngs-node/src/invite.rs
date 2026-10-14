@@ -14,7 +14,6 @@ use svrngs_core::link::{client_link, https_link, Origin, Token, SECRET_LEN};
 
 use crate::iroh::{PublicKey, RelayConfig, RelayUrl};
 use crate::node::Host;
-use crate::register::Standing;
 use crate::{actor_of, MintInvite, Person, RailError, Refused};
 
 /// How long a link lets people in: upstream's one invite lapse
@@ -175,10 +174,9 @@ impl Host {
     pub fn own_person(&self, group: &str) -> Result<(String, Person), Unminted> {
         let me = self.rail.signer().actor();
         let standing = (self.rail.standing(group)).map_err(|e| Unminted::Unkept(e.to_string()))?;
-        let own = match standing {
-            Standing::Members(m) => m.get(&me).map(|m| (m.person_key.clone(), m.person.clone())),
-            _ => None,
-        };
+        let own = standing
+            .member(&me)
+            .map(|m| (m.person_key.clone(), m.person.clone()));
         tracing::debug!(target: "link", group, ?own, "link: a device link — this computer's person");
         own.ok_or(Unminted::NotIn)
     }

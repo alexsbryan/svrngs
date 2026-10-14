@@ -361,3 +361,29 @@ async fn a_push_landing_the_askers_own_relay_wakes_the_round() {
     let again = tokio::time::timeout(std::time::Duration::from_millis(200), wake.notified()).await;
     assert!(again.is_err(), "nothing landed, and the round was woken");
 }
+
+/// **Whether a key stands in a group is decided in one place** (#146):
+/// the ring's routes serve exactly the keys the register's `names` names
+/// (Ada's here, never a stranger's, nobody in a group not held), each with
+/// the row `member` answers. Red on the plant the finding names, a change
+/// to who stands made in one place: `names` refusing a key with no relay
+/// named, which `standing_asker`, deciding inline, did not follow.
+#[test]
+fn the_routes_serve_the_keys_the_register_names() {
+    let dir = tempfile::tempdir().unwrap();
+    let rail = rail_with_roster(dir.path());
+    let stranger = SigningKey::from_bytes(&[12u8; 32]);
+    for ns in [NS, "not-held"] {
+        let standing = rail.standing(ns).unwrap();
+        for key in [key(), stranger.clone()] {
+            let actor = crate::actor_of(&key);
+            let dialer = crate::iroh::tests::dialer(&key);
+            let served = standing_asker(&rail, Some(dialer), "test", ns);
+            assert_eq!(
+                served.is_ok(),
+                standing.names(&actor),
+                "{ns}: served {actor} as the register names it: {served:?}"
+            );
+        }
+    }
+}

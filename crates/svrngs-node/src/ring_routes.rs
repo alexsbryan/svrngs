@@ -102,11 +102,12 @@ pub(crate) fn standing_asker(
     // One sentence for every refusal below, so the answer never says whether
     // this node holds the ring; the log says which it was.
     let refusal = format!("{namespace} is not served to {asker} here");
-    match rail.standing(namespace) {
-        Ok(Standing::Members(mut standing)) if standing.contains_key(&asker) => {
-            tracing::debug!(target: "rails", route, namespace, asker, "ring: the asker stands in the ring");
-            standing.remove_entry(&asker).ok_or(refusal)
-        }
+    let standing = rail.standing(namespace);
+    if let Some(row) = standing.as_ref().ok().and_then(|s| s.member(&asker)) {
+        tracing::debug!(target: "rails", route, namespace, asker, "ring: the asker stands in the ring");
+        return Ok((asker, row.clone()));
+    }
+    match standing {
         Ok(Standing::NotHeld) => {
             tracing::debug!(target: "rails", route, namespace, asker,
                 "ring: refused — this node holds no such ring, answered as a stranger is");
