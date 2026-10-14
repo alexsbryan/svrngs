@@ -4,7 +4,7 @@
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 
-use svrngs::cli::{self, Refusal, Said, Verb};
+use svrngs::cli::{self, Refusal, Removal, Said, Verb};
 use svrngs::group::{Name, Seed};
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::Node;
@@ -65,6 +65,7 @@ fn remove_and_handover_parse() {
     assert_eq!(
         cli::parse(argv(&["remove", "Bo", "--group", "trip"])),
         Ok(Verb::Remove {
+            kind: Removal::Remove,
             person: name("Bo"),
             group: "trip".into(),
             joined: None,
@@ -72,7 +73,8 @@ fn remove_and_handover_parse() {
     );
     assert_eq!(
         cli::parse(argv(&["handover", "Ana", "--group", "trip"])),
-        Ok(Verb::Handover {
+        Ok(Verb::Remove {
+            kind: Removal::Handover,
             person: name("Ana"),
             group: "trip".into(),
             joined: None,
@@ -83,6 +85,7 @@ fn remove_and_handover_parse() {
             "remove", "Bo", "--group", "trip", "--joined", "started"
         ])),
         Ok(Verb::Remove {
+            kind: Removal::Remove,
             person: name("Bo"),
             group: "trip".into(),
             joined: Some(Joined::Started),
@@ -99,6 +102,7 @@ fn remove_and_handover_parse() {
                 "2026-10-12 14:03:22 -0700"
             ])),
             Ok(Verb::Remove {
+                kind: Removal::Remove,
                 joined: Some(Joined::At(_)),
                 ..
             })
@@ -197,6 +201,7 @@ async fn the_keepers_remove_is_the_cut() {
     let relay = no_relay();
     let ask = |verb: Verb| cli::run(verb, dir.path().to_path_buf(), &relay);
     let remove = |who: &str| Verb::Remove {
+        kind: Removal::Remove,
         person: name(who),
         group: "trip".into(),
         joined: None,

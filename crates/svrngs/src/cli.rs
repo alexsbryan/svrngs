@@ -288,16 +288,11 @@ pub enum Verb {
     },
     /// The lends named, served to this computer's network.
     Room(Vec<LendName>),
-    /// `remove` (U7), asked of svrngs running here: the person, the
-    /// group as typed, and of two people of one name, when the one meant
-    /// joined (bash-same-name).
+    /// `remove` or `handover` (U7), asked of svrngs running here: which,
+    /// the person, the group as typed, and of two people of one name, when
+    /// the one meant joined (bash-same-name).
     Remove {
-        person: Name,
-        group: String,
-        joined: Option<Joined>,
-    },
-    /// `handover` (U7), likewise.
-    Handover {
+        kind: Removal,
         person: Name,
         group: String,
         joined: Option<Joined>,
@@ -313,6 +308,16 @@ const VALUED: &str =
 
 /// What `--kind` and `--reads` want, said alike.
 const A_KIND: &str = "a kind: letters, digits, - and _ only";
+
+/// Which of a keeper's two asks of a person in a group (U7): a closed set
+/// (AGENTS 9), each posted to its own route on svrngs running here.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Removal {
+    /// `remove`: the person out of the group.
+    Remove,
+    /// `handover`: the keeper's office to the person.
+    Handover,
+}
 
 /// Parse `std::env::args()`. A wrong argument is an error string the caller
 /// prints, never a guess at what was meant.
@@ -431,17 +436,15 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         let group = group.ok_or(format!(
             "{verb} wants --group: `svrngs {verb} <name> --group <group>`"
         ))?;
-        return Ok(match verb.as_str() {
-            "remove" => Verb::Remove {
-                person,
-                group,
-                joined,
-            },
-            _ => Verb::Handover {
-                person,
-                group,
-                joined,
-            },
+        let kind = match verb.as_str() {
+            "remove" => Removal::Remove,
+            _ => Removal::Handover,
+        };
+        return Ok(Verb::Remove {
+            kind,
+            person,
+            group,
+            joined,
         });
     }
     match (verb.as_str(), folder, group) {
@@ -751,21 +754,16 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             return Ok(());
         }
         Verb::Remove {
+            kind,
             person,
             group,
             joined,
         } => {
-            let said = removal(&root, REMOVALS_ROUTE, person, joined, &group).await?;
-            print!("{said}");
-            return Ok(());
-        }
-        Verb::Handover {
-            person,
-            group,
-            joined,
-        } => {
-            let said = removal(&root, HANDOVERS_ROUTE, person, joined, &group).await?;
-            print!("{said}");
+            let route = match kind {
+                Removal::Remove => REMOVALS_ROUTE,
+                Removal::Handover => HANDOVERS_ROUTE,
+            };
+            print!("{}", removal(&root, route, person, joined, &group).await?);
             return Ok(());
         }
         Verb::Share(asked) => {
@@ -1476,8 +1474,7 @@ async fn serve(
         | Verb::Unshare(_)
         | Verb::Relay(_)
         | Verb::Folder { .. }
-        | Verb::Remove { .. }
-        | Verb::Handover { .. } => {
+        | Verb::Remove { .. } => {
             unreachable!("answered in `run`")
         }
     };

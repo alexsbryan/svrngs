@@ -5,7 +5,7 @@
 //! `--joined` takes each as offered. A binary of its own: it sets `TZ`
 //! before any clock is read, which no other test of the process may race.
 
-use svrngs::cli::{self, Said, Verb};
+use svrngs::cli::{self, Removal, Said, Verb};
 use svrngs::group::Name;
 use svrngs_node::removal::Outcome;
 use svrngs_node::Joined;
@@ -46,6 +46,7 @@ fn two_of_one_name_an_hour_apart_on_a_fall_back_night_are_told_apart() {
         assert_eq!(
             cli::parse(argv.map(String::from).to_vec()),
             Ok(Verb::Remove {
+                kind: Removal::Remove,
                 person: name("Bo"),
                 group: "trip".into(),
                 joined: Some(Joined::At(at)),
