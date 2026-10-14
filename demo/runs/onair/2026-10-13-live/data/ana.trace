@@ -1,0 +1,250 @@
+2026-10-14T04:46:09.108658Z  INFO folder: folder: the store is open untagged=0
+2026-10-14T04:46:09.625195Z  INFO folder: synced: the directory kept in step with the group's folder namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" folder="onair" dir=/private/tmp/onair-live-w/ana/svrngs/onair
+2026-10-14T04:46:09.630653Z DEBUG folder: synced: the OS's file events watched, the directory walked whole each 600s namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" folder="onair"
+2026-10-14T04:46:09.632783Z DEBUG folder: folder: the layout read again, the record having moved namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" placed=0
+2026-10-14T04:46:09.632903Z DEBUG folder: synced: the layout read folder="onair" placed=0 holders=1 ms=2
+2026-10-14T04:46:09.633239Z DEBUG folder: synced: the layout to write folder="onair" placed=0
+2026-10-14T04:46:09.633320Z DEBUG folder: synced: a step folder="onair" files=0 sent=0 unwritten=0 read_ms=2 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=2
+2026-10-14T04:46:09.685649Z DEBUG folder: synced: the step woken, the OS saying files changed namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" folder="onair" paths=1
+2026-10-14T04:46:09.686469Z DEBUG folder: synced: the layout read folder="onair" placed=0 holders=1 ms=0
+2026-10-14T04:46:09.686732Z DEBUG folder: synced: the layout to write folder="onair" placed=0
+2026-10-14T04:46:09.686807Z DEBUG folder: synced: a step folder="onair" files=0 sent=0 unwritten=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=1
+2026-10-14T04:46:10.111324Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=0
+2026-10-14T04:46:10.608877Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" folder="onair"
+2026-10-14T04:46:10.613178Z DEBUG folder: folder: the layout read again, the record having moved namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" placed=0
+2026-10-14T04:46:10.613274Z DEBUG folder: synced: the layout read folder="onair" placed=0 holders=2 ms=4
+2026-10-14T04:46:10.613424Z DEBUG folder: synced: the layout to write folder="onair" placed=0
+2026-10-14T04:46:10.613521Z DEBUG folder: synced: a step folder="onair" files=0 sent=0 unwritten=0 read_ms=4 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=4
+2026-10-14T04:46:10.645727Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" folder="onair"
+2026-10-14T04:46:10.649037Z DEBUG folder: folder: the layout read again, the record having moved namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" placed=0
+2026-10-14T04:46:10.649073Z DEBUG folder: synced: the layout read folder="onair" placed=0 holders=2 ms=3
+2026-10-14T04:46:10.649147Z DEBUG folder: synced: the layout to write folder="onair" placed=0
+2026-10-14T04:46:10.649183Z DEBUG folder: synced: a step folder="onair" files=0 sent=0 unwritten=0 read_ms=3 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=3
+2026-10-14T04:46:11.124113Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:11.675466Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" folder="onair"
+2026-10-14T04:46:11.680141Z DEBUG folder: folder: the layout read again, the record having moved namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" placed=0
+2026-10-14T04:46:11.680187Z DEBUG folder: synced: the layout read folder="onair" placed=0 holders=3 ms=4
+2026-10-14T04:46:11.680283Z DEBUG folder: synced: the layout to write folder="onair" placed=0
+2026-10-14T04:46:11.680334Z DEBUG folder: synced: a step folder="onair" files=0 sent=0 unwritten=0 read_ms=4 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=4
+2026-10-14T04:46:11.710501Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" folder="onair"
+2026-10-14T04:46:11.711588Z DEBUG folder: folder: the layout read again, the record having moved namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" placed=0
+2026-10-14T04:46:11.711601Z DEBUG folder: synced: the layout read folder="onair" placed=0 holders=3 ms=1
+2026-10-14T04:46:11.711633Z DEBUG folder: synced: the layout to write folder="onair" placed=0
+2026-10-14T04:46:11.711648Z DEBUG folder: synced: a step folder="onair" files=0 sent=0 unwritten=0 read_ms=1 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=1
+2026-10-14T04:46:12.156643Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:12.675878Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" folder="onair"
+2026-10-14T04:46:12.681698Z DEBUG folder: folder: the layout read again, the record having moved namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" placed=0
+2026-10-14T04:46:12.681739Z DEBUG folder: synced: the layout read folder="onair" placed=0 holders=4 ms=5
+2026-10-14T04:46:12.681823Z DEBUG folder: synced: the layout to write folder="onair" placed=0
+2026-10-14T04:46:12.681880Z DEBUG folder: synced: a step folder="onair" files=0 sent=0 unwritten=0 read_ms=5 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=5
+2026-10-14T04:46:12.711083Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" folder="onair"
+2026-10-14T04:46:12.716810Z DEBUG folder: folder: the layout read again, the record having moved namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" placed=0
+2026-10-14T04:46:12.716826Z DEBUG folder: synced: the layout read folder="onair" placed=0 holders=4 ms=5
+2026-10-14T04:46:12.716856Z DEBUG folder: synced: the layout to write folder="onair" placed=0
+2026-10-14T04:46:12.716878Z DEBUG folder: synced: a step folder="onair" files=0 sent=0 unwritten=0 read_ms=5 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=5
+2026-10-14T04:46:12.802485Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:53599 path=/v1/removals
+2026-10-14T04:46:12.816041Z DEBUG removal: removal: written — the cut when this computer decides, else an ask; the round woken group="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" written=1 cut=["aaa19fde78a61c2d0565d3bb1f510c162784c088c517dcb5b088a91533eccaa5"]
+2026-10-14T04:46:12.816180Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" folder="onair"
+2026-10-14T04:46:12.819428Z DEBUG folder: folder: the layout read again, the record having moved namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" placed=0
+2026-10-14T04:46:12.821970Z DEBUG folder: synced: the layout read folder="onair" placed=0 holders=3 ms=5
+2026-10-14T04:46:12.822028Z DEBUG folder: synced: the layout to write folder="onair" placed=0
+2026-10-14T04:46:12.822054Z DEBUG folder: synced: a step folder="onair" files=0 sent=0 unwritten=0 read_ms=5 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=5
+2026-10-14T04:46:12.823537Z DEBUG removal: removal: the removed computer told its cut group="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="aaa19fde78a61c2d0565d3bb1f510c162784c088c517dcb5b088a91533eccaa5" told=true
+2026-10-14T04:46:13.232804Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:14.156240Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:53625 path=/v1/blob
+2026-10-14T04:46:14.162572Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:53626 path=/v1/sign
+2026-10-14T04:46:14.164135Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="4a508238528fef98c6c2f9224aaffbb65f85f65b782dbcbf0226d831b6c2f96a" person=Bo
+2026-10-14T04:46:14.164146Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="962fb4c5e5deba0eafce9ba2c7142110d2aeb8248c0bfc304472eb925dbf5252" person=Cy
+2026-10-14T04:46:14.166574Z DEBUG rails: rail live: fanned out one payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" bytes=202 peers=2 delivered=2
+2026-10-14T04:46:14.269283Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:14.269325Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:15.332173Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:15.332265Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:16.369377Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:16.369449Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:17.439878Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:17.440005Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:18.171026Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:53626 path=/v1/blob
+2026-10-14T04:46:18.173512Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:53723 path=/v1/sign
+2026-10-14T04:46:18.174908Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="4a508238528fef98c6c2f9224aaffbb65f85f65b782dbcbf0226d831b6c2f96a" person=Bo
+2026-10-14T04:46:18.174918Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="962fb4c5e5deba0eafce9ba2c7142110d2aeb8248c0bfc304472eb925dbf5252" person=Cy
+2026-10-14T04:46:18.177497Z DEBUG rails: rail live: fanned out one payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" bytes=202 peers=2 delivered=2
+2026-10-14T04:46:18.494629Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:18.495730Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:19.516369Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:19.516454Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:20.560392Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:20.560483Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:21.619726Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:21.619824Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:22.187158Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:53782 path=/v1/blob
+2026-10-14T04:46:22.190250Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:53783 path=/v1/sign
+2026-10-14T04:46:22.191682Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="4a508238528fef98c6c2f9224aaffbb65f85f65b782dbcbf0226d831b6c2f96a" person=Bo
+2026-10-14T04:46:22.191706Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="962fb4c5e5deba0eafce9ba2c7142110d2aeb8248c0bfc304472eb925dbf5252" person=Cy
+2026-10-14T04:46:22.193998Z DEBUG rails: rail live: fanned out one payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" bytes=202 peers=2 delivered=2
+2026-10-14T04:46:22.627592Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:22.627764Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:23.656023Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:23.656159Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:24.703109Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:24.703221Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:25.717263Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:25.717357Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:26.207307Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:53849 path=/v1/blob
+2026-10-14T04:46:26.209192Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:53850 path=/v1/sign
+2026-10-14T04:46:26.210395Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="4a508238528fef98c6c2f9224aaffbb65f85f65b782dbcbf0226d831b6c2f96a" person=Bo
+2026-10-14T04:46:26.210404Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="962fb4c5e5deba0eafce9ba2c7142110d2aeb8248c0bfc304472eb925dbf5252" person=Cy
+2026-10-14T04:46:26.212802Z DEBUG rails: rail live: fanned out one payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" bytes=202 peers=2 delivered=2
+2026-10-14T04:46:26.722361Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:26.722472Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:27.766961Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:27.767082Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:28.785598Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:28.785699Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:29.820789Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:29.820924Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:30.232979Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:53916 path=/v1/blob
+2026-10-14T04:46:30.235050Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:53917 path=/v1/sign
+2026-10-14T04:46:30.236101Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="4a508238528fef98c6c2f9224aaffbb65f85f65b782dbcbf0226d831b6c2f96a" person=Bo
+2026-10-14T04:46:30.236112Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="962fb4c5e5deba0eafce9ba2c7142110d2aeb8248c0bfc304472eb925dbf5252" person=Cy
+2026-10-14T04:46:30.238821Z DEBUG rails: rail live: fanned out one payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" bytes=202 peers=2 delivered=2
+2026-10-14T04:46:30.833494Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:30.833571Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:31.860397Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:31.860491Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:32.864125Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:32.864252Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:33.919282Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:33.919368Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:34.257487Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:53994 path=/v1/blob
+2026-10-14T04:46:34.259369Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:53995 path=/v1/sign
+2026-10-14T04:46:34.260445Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="4a508238528fef98c6c2f9224aaffbb65f85f65b782dbcbf0226d831b6c2f96a" person=Bo
+2026-10-14T04:46:34.260454Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="962fb4c5e5deba0eafce9ba2c7142110d2aeb8248c0bfc304472eb925dbf5252" person=Cy
+2026-10-14T04:46:34.262587Z DEBUG rails: rail live: fanned out one payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" bytes=202 peers=2 delivered=2
+2026-10-14T04:46:34.935363Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:34.935452Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:35.962478Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:35.962619Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:36.966547Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:36.966705Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:38.005125Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:38.005275Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:38.283986Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:54083 path=/v1/blob
+2026-10-14T04:46:38.286599Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:54084 path=/v1/sign
+2026-10-14T04:46:38.287845Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="4a508238528fef98c6c2f9224aaffbb65f85f65b782dbcbf0226d831b6c2f96a" person=Bo
+2026-10-14T04:46:38.287862Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="962fb4c5e5deba0eafce9ba2c7142110d2aeb8248c0bfc304472eb925dbf5252" person=Cy
+2026-10-14T04:46:38.291196Z DEBUG rails: rail live: fanned out one payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" bytes=202 peers=2 delivered=2
+2026-10-14T04:46:39.038609Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:39.038759Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:40.056983Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:40.057069Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:41.085238Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:41.085374Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:42.109666Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:42.109768Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:42.302093Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:54158 path=/v1/blob
+2026-10-14T04:46:42.304191Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:54159 path=/v1/sign
+2026-10-14T04:46:42.305657Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="4a508238528fef98c6c2f9224aaffbb65f85f65b782dbcbf0226d831b6c2f96a" person=Bo
+2026-10-14T04:46:42.305671Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="962fb4c5e5deba0eafce9ba2c7142110d2aeb8248c0bfc304472eb925dbf5252" person=Cy
+2026-10-14T04:46:42.308301Z DEBUG rails: rail live: fanned out one payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" bytes=202 peers=2 delivered=2
+2026-10-14T04:46:43.130666Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:43.130813Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:44.134029Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:44.134104Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:45.176574Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:45.176692Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:46.194712Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:46.194851Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:46.325750Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:54215 path=/v1/blob
+2026-10-14T04:46:46.328203Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:54216 path=/v1/sign
+2026-10-14T04:46:46.330298Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="4a508238528fef98c6c2f9224aaffbb65f85f65b782dbcbf0226d831b6c2f96a" person=Bo
+2026-10-14T04:46:46.330312Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="962fb4c5e5deba0eafce9ba2c7142110d2aeb8248c0bfc304472eb925dbf5252" person=Cy
+2026-10-14T04:46:46.333922Z DEBUG rails: rail live: fanned out one payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" bytes=202 peers=2 delivered=2
+2026-10-14T04:46:47.214228Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:47.214368Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:48.237266Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:48.237351Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:49.278140Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:49.278223Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:50.295959Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:50.296030Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:50.346798Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:54256 path=/v1/blob
+2026-10-14T04:46:50.349840Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:54257 path=/v1/sign
+2026-10-14T04:46:50.353005Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="4a508238528fef98c6c2f9224aaffbb65f85f65b782dbcbf0226d831b6c2f96a" person=Bo
+2026-10-14T04:46:50.353028Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="962fb4c5e5deba0eafce9ba2c7142110d2aeb8248c0bfc304472eb925dbf5252" person=Cy
+2026-10-14T04:46:50.358124Z DEBUG rails: rail live: fanned out one payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" bytes=202 peers=2 delivered=2
+2026-10-14T04:46:51.327165Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:51.327240Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:52.348244Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:52.348414Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:53.371966Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:53.372075Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:54.183269Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:54257 path=/v1/sign
+2026-10-14T04:46:54.184989Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="4a508238528fef98c6c2f9224aaffbb65f85f65b782dbcbf0226d831b6c2f96a" person=Bo
+2026-10-14T04:46:54.185018Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="962fb4c5e5deba0eafce9ba2c7142110d2aeb8248c0bfc304472eb925dbf5252" person=Cy
+2026-10-14T04:46:54.188925Z DEBUG rails: rail live: fanned out one payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" bytes=140 peers=2 delivered=2
+2026-10-14T04:46:54.389561Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:54.389645Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:55.407881Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:55.407967Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:56.439270Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:56.439339Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:57.468761Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:57.468844Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:58.506687Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:58.506778Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:46:59.574834Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:46:59.574948Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:00.631235Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:00.631320Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:01.695381Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:01.695463Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:02.709416Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:02.709538Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:03.715432Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:03.715523Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:04.763821Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:04.763901Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:05.787529Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:05.787677Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:06.808281Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:06.808354Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:07.454530Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:54538 path=/v1/blob
+2026-10-14T04:47:07.455292Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:54539 path=/v1/blob
+2026-10-14T04:47:07.571029Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:54544 path=/v1/blob
+2026-10-14T04:47:07.579236Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:54545 path=/v1/sign
+2026-10-14T04:47:07.581203Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="4a508238528fef98c6c2f9224aaffbb65f85f65b782dbcbf0226d831b6c2f96a" person=Bo
+2026-10-14T04:47:07.581218Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="962fb4c5e5deba0eafce9ba2c7142110d2aeb8248c0bfc304472eb925dbf5252" person=Cy
+2026-10-14T04:47:07.584460Z DEBUG rails: rail live: fanned out one payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" bytes=203 peers=2 delivered=2
+2026-10-14T04:47:07.594667Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:54545 path=/v1/blob
+2026-10-14T04:47:07.597197Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:54550 path=/v1/sign
+2026-10-14T04:47:07.598980Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="4a508238528fef98c6c2f9224aaffbb65f85f65b782dbcbf0226d831b6c2f96a" person=Bo
+2026-10-14T04:47:07.598995Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" actor="962fb4c5e5deba0eafce9ba2c7142110d2aeb8248c0bfc304472eb925dbf5252" person=Cy
+2026-10-14T04:47:07.601817Z DEBUG rails: rail live: fanned out one payload namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" bytes=203 peers=2 delivered=2
+2026-10-14T04:47:07.833114Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:07.833180Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:08.861313Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:08.861442Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:09.865150Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:09.865243Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:10.899461Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:10.899562Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:11.929043Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:11.929123Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:12.040568Z DEBUG rails: ring: refused — the asker holds no standing in this ring route="sync" namespace="176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89" asker="aaa19fde78a61c2d0565d3bb1f510c162784c088c517dcb5b088a91533eccaa5"
+2026-10-14T04:47:12.950536Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:12.950611Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:13.966715Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:13.966799Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:15.024773Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:15.024868Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:16.094652Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:16.094763Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:17.115854Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:17.115940Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:18.139251Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:18.139333Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:19.149438Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:19.149527Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T04:47:20.179394Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T04:47:20.179473Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
