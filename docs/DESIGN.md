@@ -161,9 +161,9 @@ paths it refuses, how many people may use it at once.
   for: a lend is lent to every group its lender's computer holds, and that
   computer's key stands in each, a phone's in one. From them an app writes
   a link into itself, `<page>#open=<label>&at=<path>`, which the group's
-  page opens on a phone kept in a group of the lender's (`web/app.js`) and
-  in no other browser; that it opens for the group's people alone is the
-  app's check of who asks, as on any request;
+  page opens on a phone kept in a group of the lender's (`web/app.js`),
+  and a computer's home page opens pasted (below); that it opens for the
+  group's people alone is the app's check of who asks, as on any request;
 - the people in the group, one row per key, each key one an app may seal
   to, with its person's first key, which every key of theirs shares;
 - the record, over a loopback API on the member's own node: append, read,
@@ -264,6 +264,13 @@ paths it refuses, how many people may use it at once.
     Sam’s llama-server"), in a tab of its own beside the page;
   - copies the address to give a program for it, such as a chat program
     pointed at a friend's model, by a button that says so;
+  - opens a link to a lent app someone sent in a group's chat,
+    `<page>#open=<label>&at=<path>`, pasted under "Open a link from your
+    group": the lend it names opens at that path in a tab of its own, as
+    the group's page opens it on a phone (events-links (c)). The group's
+    page itself, opened with such a link in a computer's browser that
+    keeps no group, says the link opens in svrngs there and shows it to
+    copy, since it cannot know the computer's port;
   - makes a group, by its name and theirs, made by the svrngs running
     there as `svrngs new` makes one (start-group, the node's `group.rs`
     `Asking::found`), so a computer whose svrngs runs from login, where

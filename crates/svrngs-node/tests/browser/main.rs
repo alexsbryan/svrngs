@@ -1325,7 +1325,13 @@ in_both_engines!(
     /// loopback, the house's and dweb's, which keeps none. The app writes
     /// `<page>#open=<label>&at=<path>` from them (web/app.js), and the
     /// link, opened in a new tab of bo's phone, lands on the app at that
-    /// path. Planted: no headers, as before this test.
+    /// path. On a computer whose browser keeps no group (events-links (c)),
+    /// the group's page says the link opens in svrngs there and shows it to
+    /// copy; pasted on the computer's home page under "Open a link from
+    /// your group", it opens the app at that path in a tab of its own.
+    /// Planted: no headers, as before this test; for the computer, the
+    /// page's and the home page's as they were, which said "Open this page
+    /// from your group's link." and had no box.
     a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone
 );
 async fn a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone(engine: Engine) {
@@ -1385,6 +1391,7 @@ async fn a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone(engine: Engi
             "key": hex::encode(bo.to_bytes()),
             "token": token(&signing(1), &relay),
             "open": "app",
+            "home": format!("http://svrngs.localhost:{}/", ada.api_addr().port()),
         }),
         None,
     )
@@ -1407,6 +1414,19 @@ async fn a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone(engine: Engi
             && landed["url"].as_str().unwrap().ends_with("/at/a/path?n=1")
             && landed["title"] == "the app at a path",
         "the link opens the app at its path on bo's phone:\n{seen:#}"
+    );
+    let computer = &seen["computer"];
+    assert_eq!(
+        (&computer["said"], &computer["shown"]),
+        (&json!("This link opens in svrngs on your computer."), &seen["link"]),
+        "a computer keeping no group is told where the link opens, and shown it to copy:\n{seen:#}"
+    );
+    let opened = &computer["opened"];
+    assert!(
+        at_origin(&opened["url"], &label)
+            && opened["url"].as_str().unwrap().ends_with("/at/a/path?n=1")
+            && opened["title"] == "the app at a path",
+        "pasted on the computer's home page, the link opens the app at its path there:\n{seen:#}"
     );
     drop(ada);
 }

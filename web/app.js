@@ -372,18 +372,24 @@ async function enter(group, asked) {
 // founder's line, the page's address in the link's place, which joins
 // nothing and opens the home page, where a group is made (start-group).
 // A phone's pointer is coarse, and it has no terminal: no line there.
+const computer = () => matchMedia('(pointer: fine)').matches;
 function offer(token) {
-  if (!matchMedia('(pointer: fine)').matches || !/^[A-Za-z0-9_-]*$/.test(token)) {
+  if (!computer() || !/^[A-Za-z0-9_-]*$/.test(token)) {
     trace('PAGE: no line offered: not a computer, or not a token');
     return;
   }
   const page = `${location.origin}${location.pathname}`;
-  const line = `curl -fsSL ${page}install.sh | sh -s -- '${page}${token && `#${token}`}'`;
-  document.getElementById(token ? 'joins' : 'founds').hidden = false;
-  document.getElementById('line').textContent = line;
+  line(token ? 'joins' : 'founds', `curl -fsSL ${page}install.sh | sh -s -- '${page}${token && `#${token}`}'`);
+}
+
+// The paragraph `words` shown on a computer, and `text` beneath it with a
+// button that copies it.
+function line(words, text) {
+  document.getElementById(words).hidden = false;
+  document.getElementById('line').textContent = text;
   const copy = document.getElementById('copy');
   copy.onclick = () =>
-    navigator.clipboard.writeText(line).then(
+    navigator.clipboard.writeText(text).then(
       () => (copy.textContent = 'Copied'),
       (e) => {
         trace(`PAGE: the line was not copied: ${e}`);
@@ -391,7 +397,7 @@ function offer(token) {
       },
     );
   document.getElementById('computer').hidden = false;
-  trace('PAGE: the line offered, for a computer');
+  trace(`PAGE: the line offered, for a computer: ${words}`);
 }
 
 // The service worker: the runtime that serves what the group's people lend
@@ -434,6 +440,9 @@ async function opening(fragment) {
     let group = token ? kept.find((g) => g.token === token) : kept[0];
     if (token && !group) group = await join(token, kept);
     if (!group && !asked) offer('');
+    // A link into a lend on a computer keeping no group here, its person's
+    // svrngs elsewhere on it: opened from its home page (events-links (c)).
+    if (!group && asked.has('open') && computer()) return (line('opens', location.href), show('This link opens in svrngs on your computer.', true));
     if (!group) throw new Said('Open this page from your group’s link.');
     await enter(group, asked);
   } catch (e) {

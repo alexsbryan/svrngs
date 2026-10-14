@@ -3,7 +3,8 @@
 // people in each and what each lends, from the routes that answer this
 // computer's apps (/v1/groups, /v1/lends, /v1/rail/people), and who was
 // removed or asked to be, from /v1/groups (v1-keeper-office (b)); the ask at
-// /ask; what apps use, each with Stop; and what this computer lends, each
+// /ask; a link from a group's page opened here; what apps use, each with
+// Stop; and what this computer lends, each
 // with how many it lets in at once, to set, clear or stop (bash-limit). Its
 // only writes are the person's yes and stop, to its own origin's /choices,
 // their change to what this computer lends, to its /lent, a link (/link),
@@ -161,6 +162,17 @@ try {
     // With no group, how to make one or join one (start-home; start-group).
     if (!groups.length) main.append(Object.assign(el('p', 'This computer is in no group yet. Make one below, or join one by the line the page of the link you were sent gives.'), { className: 'none' }));
     const lent = Promise.all(groups.map((g) => show(g, main.appendChild(el('section', '', el('h2', g.name ?? 'A group whose name this computer cannot read'))))));
+    // A link from a group's page, `<page>#open=<label>&at=<path>`, pasted
+    // (events-links (c)): the lend it names opened at its path in a tab of
+    // its own, as the group's page opens it on a phone; the lend's origin
+    // says so when the label names nothing lent here.
+    const open = el('p', '', el('label', 'The link: ', el('input')), button('Open it', () => {
+      const q = new URLSearchParams(open.querySelector('input').value.split('#')[1] ?? '');
+      const [lend, at] = [q.get('open') ?? '', q.get('at') ?? '/'];
+      if (!/^[a-z0-9]+$/.test(lend) || !at.startsWith('/') || at.startsWith('//')) return open.append(' That is not a link to something lent in your groups.');
+      window.open(new URL(at, `http://${lend}.localhost:${location.port}`), '_blank');
+    }));
+    main.append(Object.assign(el('section', '', el('h2', 'Open a link from your group'), open), { id: 'open' }));
     // A group made here as `svrngs new` makes one, by the svrngs running
     // here (start-group): its name and the person's, then the page again,
     // saying so; a refusal said beside the button.

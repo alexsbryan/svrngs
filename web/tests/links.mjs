@@ -36,7 +36,35 @@ try {
     await tab.waitForFunction(() => document.title === 'the app at a path', null, { timeout: 90_000 }).catch(() => {});
     landed = { url: tab.url(), title: await tab.title() };
   }
-  console.log(JSON.stringify({ opened: page.url(), link, landed, logs }));
+  // The same link on a computer whose browser keeps no group: its person
+  // joined with svrngs, not in this browser (events-links (c)). What the
+  // group's page says and the link it shows to copy; then, as the person,
+  // that link pasted on the computer's home page, `args.home`, under "Open
+  // a link from your group", and where the tab it opens lands.
+  let computer = null;
+  if (link && args.home) {
+    const desk = await launch('chromium');
+    try {
+      const tab = await desk.context.newPage();
+      await tab.goto(link);
+      await tab.waitForSelector('#status.good, #status.bad', { timeout: 90_000 }).catch(() => {});
+      const said = await tab.evaluate(() => document.getElementById('status').textContent);
+      const shown = await tab.evaluate(() => (document.getElementById('computer').hidden ? null : document.getElementById('line').textContent));
+      await tab.goto(args.home);
+      const box = tab.locator('#open input');
+      let opened = null;
+      if (shown && (await box.waitFor({ timeout: 30_000 }).then(() => true, () => false))) {
+        await box.fill(shown);
+        const [lent] = await Promise.all([desk.context.waitForEvent('page'), tab.locator('#open button').click()]);
+        await lent.waitForFunction(() => document.title === 'the app at a path', null, { timeout: 90_000 }).catch(() => {});
+        opened = { url: lent.url(), title: await lent.title() };
+      }
+      computer = { said, shown, opened };
+    } finally {
+      await desk.close();
+    }
+  }
+  console.log(JSON.stringify({ opened: page.url(), link, landed, computer, logs }));
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;
