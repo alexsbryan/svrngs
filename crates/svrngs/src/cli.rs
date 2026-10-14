@@ -292,7 +292,7 @@ pub enum Verb {
     /// the person, the group as typed, and of two people of one name, when
     /// the one meant joined (bash-same-name).
     Remove {
-        kind: Removal,
+        kind: RemoveKind,
         person: Name,
         group: String,
         joined: Option<Joined>,
@@ -312,7 +312,7 @@ const A_KIND: &str = "a kind: letters, digits, - and _ only";
 /// Which of a keeper's two asks of a person in a group (U7): a closed set
 /// (AGENTS 9), each posted to its own route on svrngs running here.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Removal {
+pub enum RemoveKind {
     /// `remove`: the person out of the group.
     Remove,
     /// `handover`: the keeper's office to the person.
@@ -437,8 +437,8 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "{verb} wants --group: `svrngs {verb} <name> --group <group>`"
         ))?;
         let kind = match verb.as_str() {
-            "remove" => Removal::Remove,
-            _ => Removal::Handover,
+            "remove" => RemoveKind::Remove,
+            _ => RemoveKind::Handover,
         };
         return Ok(Verb::Remove {
             kind,
@@ -760,8 +760,8 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             joined,
         } => {
             let route = match kind {
-                Removal::Remove => REMOVALS_ROUTE,
-                Removal::Handover => HANDOVERS_ROUTE,
+                RemoveKind::Remove => REMOVALS_ROUTE,
+                RemoveKind::Handover => HANDOVERS_ROUTE,
             };
             print!("{}", removal(&root, route, person, joined, &group).await?);
             return Ok(());
