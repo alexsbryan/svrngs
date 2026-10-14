@@ -1254,7 +1254,7 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,150 lines of code and the
-repository under 16,015 (`scripts/lean_check.py`), the branch `folders`
+repository under 16,237 (`scripts/lean_check.py`), the branch `folders`
 too since main merged into it at syp-5, counting 13,778 and `svrngs-core`
 2,719 there. A raise is the operator's, and is asked only after an
 economizing pass (the operator, 2026-10-13: "Every raise needs a pass
@@ -1372,7 +1372,12 @@ both, the same day: `svrngs-core`'s from 3,122, at 3,121, to 3,150, and the
 repository's from 15,962, at 15,961, to 16,015, for a signature for an app
 (onair-sign; ON_AIR §4.2), which counted 3,149 and 16,014 with it — 28
 lines of the core's for the app's name and what is signed, 25 of the
-node's for its route — after onair-economize's cuts above.
+node's for its route — after onair-economize's cuts above. Then the
+repository's from 16,015, at 16,014, `svrngs-core`'s kept at 3,150: to
+16,237, for bytes by hash, for an app, with a lifetime (onair-blob; ON_AIR
+§4.1), which counted 16,236 with it — its first draft's 16,301, past the
+operator's 16,287, cut by 65 in the row — after onair-economize's cuts
+above.
 `ARCHITECTURE.md` maps what exists and changes in the commit that changes it.
 
 **Words.** The *record* is a group's signed acts; its *journal* is the file
