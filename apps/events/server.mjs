@@ -33,7 +33,8 @@
 //   GET  /                          your groups' events, and the form to post one
 //   POST /post                      what, when, where, group (one per group): one
 //                                   id minted here, the event posted in each
-//   GET  /g/<group>/e/<event>       the event, as its group's people see it
+//   GET  /g/<group>/e/<event>       the event, as its group's people see it; to
+//                                   its host, a link to send in each group's chat
 //   POST /g/<group>/e/<event>/coming      guests: "Maya, Jo"
 //   POST /g/<group>/e/<event>/not-coming  your coming taken back
 //   POST /g/<group>/e/<event>/came        guest: one you brought, or none for you
@@ -203,7 +204,37 @@ function said(e, invited) {
   return `<h3>Invited</h3>${list}<h3>Coming</h3>${coming}<h3>Came</h3>${came.length ? `<ul class="came">${came.map((c) => `<li>${c}</li>`).join('')}</ul>` : '<p class="quiet">No one yet.</p>'}`;
 }
 
-async function eventPage(id, group, event) {
+/**
+ * Where svrngs lends this app, as its door tells it (crates/svrngs-node/src/
+ * door.rs, `LABEL_HEADER` and `PAGES_HEADER`): its label, and the page of
+ * each group the asker stands in by the group's id, `none` or `unread`;
+ * null when not told, as when the app runs alone.
+ */
+function lentAt(req) {
+  const [label, pages] = [req.headers['x-svrngs-label'], req.headers['x-svrngs-pages']];
+  if (!label || typeof pages !== 'string') return null;
+  const at = (p) => p.indexOf('=');
+  return { label, pages: Object.fromEntries(pages.split(' ').filter((p) => at(p) > 0).map((p) => [p.slice(0, at(p)), p.slice(at(p) + 1)])) };
+}
+
+/**
+ * The link to `event` for `group`'s own chat, which its group's page opens
+ * on a phone of the group's (web/app.js, `#open=`) and this page then
+ * checks, as every request; or why there is none, said.
+ */
+function linkTo(lent, group, event, name) {
+  const page = lent?.pages[group];
+  trace('a link', { group, event, told: Boolean(lent), page: page ?? null });
+  const none = (why, quiet = 'quiet') => `<p class="nolink ${quiet}">${esc(why)}</p>`;
+  if (page === undefined) return none(`This computer didn't say where ${name}'s page is, so there's no link to send.`);
+  if (page === 'none') return none(`${name} keeps no page for links, so there's no link to send.`);
+  if (page === 'unread') return none(`${name}'s page can't be read on this computer right now, so there's no link to send.`, 'unread');
+  const link = `${page}#open=${lent.label}&at=/g/${encodeURIComponent(group)}/e/${encodeURIComponent(event)}`;
+  const copy = "const box=this.previousElementSibling;(navigator.clipboard?.writeText(box.value)??Promise.reject()).then(()=>{this.textContent='Copied'},()=>{box.select();this.textContent='Copy it from the box'})";
+  return `<p>To send in ${esc(name)}'s chat: <input type="text" class="link" readonly value="${esc(link)}"> <button type="button" onclick="${copy}">Copy the link to this event</button></p>`;
+}
+
+async function eventPage(id, group, event, lent) {
   const me = await standing(group, id);
   const groups = await myGroups(id);
   if (!me) throw new Said(403, `You're not in ${named(groups, group)}, so this event isn't yours to see.`);
@@ -228,7 +259,7 @@ async function eventPage(id, group, event) {
     }
     for (const g of hosted(event, all)) {
       body += `<section data-group="${esc(g.group)}"><h2>${esc(named(groups, g.group))}</h2>`;
-      body += g.unread ? `<p class="unread">This group's answers can't be read on this computer right now.</p>` : said(g.event, groups.find((x) => x.id === g.group).people);
+      body += g.unread ? `<p class="unread">This group's answers can't be read on this computer right now.</p>` : said(g.event, groups.find((x) => x.id === g.group).people) + linkTo(lent, g.group, event, named(groups, g.group));
       body += '</section>';
     }
     trace('the host\'s view', { event, asker: me, groups: all.map((g) => g.group) });
@@ -292,7 +323,7 @@ async function route(req) {
   if (req.method === 'GET' && req.url === '/') return { html: await home(id) };
   if (req.method === 'POST' && path[1] === 'post' && path.length === 2) return { to: await post(id, await body(req)) };
   if (path[1] === 'g' && path[3] === 'e' && path[2] && path[4]) {
-    if (req.method === 'GET' && path.length === 5) return { html: await eventPage(id, path[2], path[4]) };
+    if (req.method === 'GET' && path.length === 5) return { html: await eventPage(id, path[2], path[4], lentAt(req)) };
     if (req.method === 'POST' && path.length === 6 && ['coming', 'not-coming', 'came'].includes(path[5])) {
       return { to: await answer(id, path[2], path[4], path[5], await body(req)) };
     }

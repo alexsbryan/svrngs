@@ -6,7 +6,10 @@
 // coming. Each group's people but its host are said as invited, Ama, who
 // took hers back, there and nowhere else. Each member's page holds only
 // their own group's answers, the host's holds both, and a member of one
-// group opening the other's event page is refused. Without Playwright or its browser this fails naming the
+// group opening the other's event page is refused. Told its label and its
+// groups' pages as svrngs's door tells them (events-links (b)), Sam's page
+// offers a link to send in each group's chat, or says why there is none;
+// no one else's does. Without Playwright or its browser this fails naming the
 // install (`launch` exits 3); it never skips.
 
 import assert from 'node:assert/strict';
@@ -40,11 +43,12 @@ for (const engine of ['chromium', 'webkit']) {
   test(`each group's people see only their own group's answers, the host every group's (${engine})`, async () => {
     const server = await serve();
     const { context, close } = await launch(engine);
+    if (engine === 'chromium') await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     try {
       const page = await context.newPage();
       const said = [];
-      const as = async (person, path) => {
-        await context.setExtraHTTPHeaders({ [WHO]: person });
+      const as = async (person, path, told = {}) => {
+        await context.setExtraHTTPHeaders({ [WHO]: person, ...told });
         const res = await page.goto(`${server.at}${path}`);
         said.push(await page.innerText('body'));
         return res;
@@ -88,11 +92,33 @@ for (const engine of ['chromium', 'webkit']) {
       const refused = await as('cy', house);
       assert.equal(refused.status(), 403);
       assert.match(await page.innerText('body'), /You're not in The House/);
-      await as('sam', house);
+      // What svrngs's door tells the app (events-links (a)): its label, and
+      // the page of each of Sam's groups, dWeb keeping none.
+      await as('sam', house, { 'x-svrngs-label': 'lbl', 'x-svrngs-pages': 'house=https://group.example/ dweb=none' });
       assert.deepEqual(await lists(), [
         { group: 'house', invited: ['ama', 'bo'], coming: ['bo + Maya'], came: ['bo', "Maya, bo's guest"] },
         { group: 'dweb', invited: ['cy'], coming: ['cy'], came: [] },
       ], "Sam's page: both groups' answers");
+      const links = await page.$$eval('section[data-group]', (ss) => ss.map((s) => ({
+        group: s.dataset.group,
+        link: s.querySelector('input.link')?.value ?? null,
+        said: s.querySelector('.nolink')?.textContent ?? null,
+      })));
+      assert.deepEqual(links, [
+        { group: 'house', link: `https://group.example/#open=lbl&at=${house}`, said: null },
+        { group: 'dweb', link: null, said: "dWeb keeps no page for links, so there's no link to send." },
+      ], "Sam's page: a link to send in each group's chat, or why not");
+      const copy = page.locator('section[data-group=house] input.link + button');
+      assert.equal(await copy.textContent(), 'Copy the link to this event');
+      await copy.click();
+      await page.waitForFunction(() => document.querySelector('section[data-group=house] input.link + button').textContent !== 'Copy the link to this event');
+      const told = await copy.textContent();
+      assert.ok(['Copied', 'Copy it from the box'].includes(told), `the Copy button says what it did: ${told}`);
+      if (engine === 'chromium') assert.equal(await page.evaluate(() => navigator.clipboard.readText()), links[0].link);
+      for (const [person, path] of [['bo', house], ['cy', dweb]]) {
+        await as(person, path, { 'x-svrngs-label': 'lbl', 'x-svrngs-pages': 'house=https://group.example/' });
+        assert.equal(await page.locator('input.link, .nolink').count(), 0, `${person} is not offered the host's link`);
+      }
       for (const text of said) assert.doesNotMatch(text, NOT_SAID);
     } finally {
       await close();
