@@ -8299,3 +8299,202 @@ them (/tmp/onairaudit1/check.out).
 | I19 | 6 | dry-report, `tests/` scopes; converge in apps/jellyfin/mw | Still present, and said as could-not-judge. The line-window pass stood in for the tests scopes; converge gives `Server` 0 where page.rs:22 defines one. |
 | I29 | 6 | `refresh` over a corpus `code index` made | Still present: "prod-44b1cbc is not registered", then the in-process rebuild and exit 0. |
 | I30 | 7 | the binary by path | Not met this time: 67e46f63… at this audit's start and close. |
+
+## REVIEW-audit-onair-auto-2 (2026-10-14, range 88b2595..969d8c9)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-onair-auto-1, its hash
+88b2595 (ralph/next/onair/STATE.md). The range ends at 969d8c9, the
+commit that made this row. `git rev-list --count 88b2595..969d8c9` is 17,
+none a merge (`--merges`: 0): onair-blob and onair-run, each with its
+`done`, auto-1's `done` (6e55692), the events queue's rows (2843760) and
+this row's own commit.
+
+This audit's own commits before this section: cd0e89d (the row's two
+paths, as d829cdc corrected auto-1's), 0213ebb (blob.rs's private `Asked`
+named `Replies`), 5bf3db5 (a get's `unanswered` refusal written once) and
+036a456 (a test of it, red first). It opens #148 and #149, updates #146
+and #80, and closes none.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+88b2595..969d8c9` (/tmp/onairaudit2/ledger.raw), summed by
+/tmp/onairaudit2/scripts/ledger.py (ledger.out) to auto-1's rules:
+product is crates/, web/ and bridge/; apps/ apart, which
+`scripts/lean_check.py:14-16` does not count; a test as lean_check names
+one; a commit that names no unit counts toward the next one that does
+(6e55692 to onair-blob, 2843760 to onair-run).
+
+| unit | commits | src + | src − | src net | test + | test − | test net | apps + | apps − |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| onair-blob | 8 | 335 | 26 | 309 | 132 | 0 | 132 | 8 | 3 |
+| onair-run | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 22 | 4 |
+| this row's own commit | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 17 | 335 | 26 | 309 | 132 | 0 | 132 | 30 | 7 |
+
+The src lines, by file, all onair-blob's db6ba51: svrngs-node blob.rs
++276 (new), folder.rs +55 −23 (`carried`, `serves`/`keep`/`read_at` taught
+`now`, the routes), node.rs +3 −2 (the members' route), ring_routes.rs
++1 −1 (`standing_asker` made `pub(crate)` for blob.rs's ask route).
+apps/on-air: harness/run.py alone (429525c, 1b281c6, 6440fc3).
+
+Counted apart: demo/runs/onair +11,856 (two runs and four plants);
+docs/DESIGN.md +50 −5, ARCHITECTURE.md +9 −1; scripts/lean_check.py +3 −3
+(d0347ae's raise); ralph/next +191 −3.
+
+The size budget, by scripts/lean_check.py over a `git archive` tree of
+each end (lean-88b2595.out, lean-969d8c9.out) and over the working tree
+after this audit's commits:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 88b2595, range start | 3149 / 3150 | 16014 / 16015 |
+| 969d8c9, range end | 3149 / 3150 | 16236 / 16237 |
+| 036a456, this audit's last change | **3149 / 3150** | **16236 / 16237** |
+
+onair-blob's +222 counted lines under its raise to 16,237 (d0347ae).
+lean_check fails at `n >= cap` (scripts/lean_check.py:99): **no line is
+left in the repository, 1 in svrngs-core** (#80), within the queue's
+16,287 and 3,182.
+
+### The instrument
+
+~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256 67e46f63…
+(`shasum -a 256`), the binary auto-1 ran, the same at this audit's start
+and close.
+
+The corpus is 969d8c9's crates/, apps/, web/, scripts/, Cargo.toml and
+Cargo.lock by `git archive` into /tmp/onairaudit2/prod-969d8c9 (287
+files), apps/on-air/page/vendor left out (upstream's) and demo/ left out
+(recorded runs). The first `code index . --corpus-id prod-969d8c9` exited
+1, "no embedder" (index.out's first run, overwritten): every endpoint
+"unavailable", :9741 among them, though `curl localhost:9741/v1/models`
+answered a moment after. Run again it gave 3402 chunks in 394 s. `refresh`
+gave rust 15450 symbols, typescript and python "skipped (export failed)"
+(I4), and "prod-969d8c9 is not registered" before its in-process rebuild
+(I29) (refresh.out).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-node and apps/on-air (`git diff --stat
+88b2595 969d8c9 -- crates apps web scripts`), each reported at 0.95 and
+0.90, with crates/svrngs-node/tests (/tmp/onairaudit2/clean-*.md).
+
+**The exact tier was checked against a plant.** blob.rs `ask` (:139-150,
+db6ba51) was appended to the indexed tree's rail.rs and `refresh` run (+10
+symbols, refresh-plant.out). The node's report at 0.95 gave `ask —
+crates/svrngs-node/src/blob.rs:141 == crates/svrngs-node/src/rail.rs:641`,
+2 copies × 10 lines, beside api.rs `addr` (plant.md); :641 is the planted
+`fn`'s line (rail.rs was 637 lines, then a blank and two doc lines).
+rail.rs was restored (`diff` against `git show 969d8c9:` empty) and
+refreshed (−10, refresh-restored.out).
+
+| scope | locations | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---:|---:|---:|---:|---|
+| crates/svrngs-node/ | 531 | 1 | 0 | 7 | none |
+| apps/on-air/ | 38 | could-not-judge (I4) | 0 | 0 | none |
+| crates/svrngs-node/tests/ | 0 | could-not-judge (I19) | could-not-judge | could-not-judge | — |
+
+The node's groups are api.rs `addr` ×2, and near pairs in door/sign_in.rs,
+synced.rs, redeem.rs, door/choices.rs, rail.rs, ring_sync/tests.rs and
+lend.rs: none in a file the range changed (blob.rs, folder.rs, node.rs,
+ring_routes.rs), so no side was added in the range. The report counts 45
+files where auto-1's counted 44: blob.rs is read.
+
+The tests scope is could-not-judge (I19), so a line-window pass stood in:
+/tmp/onairaudit2/scripts/windows.py, 8 whitespace-normalized lines,
+blanks and lone braces dropped, a span new when `git blame` at the end
+puts any of its lines in the range. Over crates/svrngs-node/tests at
+969d8c9: **145 window hits, 50 spans, 0 new** (windows.out). Its plant: a
+commit no ref names (9e455fc, `commit-tree` over 969d8c9) adding
+tests/plant.rs, a copy of folders.rs :1362-1385 (`put_blob` and
+`get_blob`): 167 hits, 51 spans, **1 new**, `folders.rs:1362-1385 ==
+plant.rs:1-24` (windows-plant.out).
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges 88b2595..969d8c9 -- crates apps
+web scripts ':!apps/on-air/page/vendor'` match
+`(struct|enum|trait|type|class)\s+[A-Z]\w*` five times, all blob.rs
+(new-types.out): `Holds`, `BlobQuery`, `Asked`, `Carried`, `People`. Each
+through `converge noun <Name> --corpus-id prod-969d8c9` (nouns.out), with
+`git grep -nP` beside it (nouns-grep.out):
+
+| noun | converge (production) | git grep (demo/ and vendor/ apart) | read |
+|---|---|---|---|
+| Holds | 1: blob.rs:44 | 1: blob.rs:45 | One. |
+| BlobQuery | 1: blob.rs:52 | 1: blob.rs:53 | One. |
+| Asked | **2**: svrngs-core joining.rs:64; svrngs-node blob.rs:136 | 2: joining.rs:65, blob.rs:137 | The core's is a link redeemed, re-exported into the node (redeem.rs:65, `pub use svrngs_core::joining::{…, Asked, …}`); blob.rs's is a private alias for what the group's computers said of a hash. **Fixed in 0213ebb**: it is `Replies`. |
+| Carried | 1: blob.rs:38 | 1: blob.rs:39 | One. |
+| People | 1: blob.rs:133 | 2: blob.rs:134, apps/jellyfin/mw/src/people.rs:26 | One in svrngs; jellyfin's is its own app's (I19: converge does not see that workspace). |
+
+After the rename, blob.rs put into the indexed tree and `refresh` run
+(refresh-renamed.out), converge gives `Asked` 1 (joining.rs) and
+`Replies` 1 (blob.rs) (nouns-after.out). converge's lines are still one
+early (I1). **No noun has more than one definition now.**
+
+### Reading the range
+
+Every hunk of product code the range changed was read
+(/tmp/onairaudit2/range-src.diff, blob.rs whole), and run.py's three
+fixes.
+
+- **One decider** (AGENTS.md 8; fence 4). Who receives a group's bytes is
+  still folder.rs `serves` alone, taught `held` (folder.rs:460-468);
+  nothing in blob.rs serves bytes beside it, and its ask route asks
+  ring_routes.rs `standing_asker` rather than writing a dialer's standing
+  again. The store, its sweep and the verified fetch are folder.rs's,
+  reused (`keep`, `hold`, `lacks`). A get's refusal `unanswered` was
+  written twice (:233, :250): **fixed in 5bf3db5**. "This computer stands
+  in the group" is written once more, blob.rs `standing_in` (:89-97),
+  beside synced.rs:166 and surface.rs:229-234 (#146).
+- **Never silently substitute** (AGENTS.md 6; fence 2). Lapsed, never held
+  and unanswered are three kinds, three statuses (410, 404, 502), and
+  "never held" only when every computer asked said so (:233); 036a456
+  holds that last, red on its plant. Two ways a computer's silence can
+  still be lost (#148).
+- **Glassbox** (AGENTS.md 1). `get`'s refusals trace through `refused`
+  (:154-158), each computer's answer at debug (:127), the provider's
+  blob branch (folder.rs:463). `put`'s two refusals do not (#149).
+- **Closed sets are enums** (AGENTS.md 9). `Holds` is one, the wire form
+  of the ask. A refused get's `kind` is a `&str` of three values, two of
+  which are `Holds`'s serde names; one closed set kept partly as text,
+  left with #149's lines.
+- **The nouns gate** (fence 6). `scripts/vocab_check.py`: "47 app nouns,
+  0 in infra code". `git grep -niwE 'station|show|radio|broadcast' HEAD
+  -- blob.rs folder.rs`: nothing.
+- **The harness** (apps/, not counted). 429525c reads "4.1, scoped"
+  passed on Dee's own computer refusing as well as on Bo's provider, and
+  says why in run.py (:356-359): the provider's group check is
+  tests/folders.rs's (`bytes_an_app_put_in_one_group_are_refused_to_a_member_of_another`),
+  red on the group-check-out plant (demo/runs/onair/2026-10-13/plants/
+  group-check-out/red.txt). Said, not substituted.
+
+### Fixed here
+
+- 0213ebb: blob.rs's private `Asked` is `Replies`; converge's `Asked` 2 → 1.
+- 5bf3db5: a get's `unanswered` refusal one `let`, beside `lapsed`;
+  0 counted lines.
+- 036a456: tests/folders.rs's carried test asks a hash only Ana's
+  stopped computer holds, and is told `unanswered`, Ana named; red on
+  the plant `(0, n) if n >= 1 => never`.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 148 | 6 | crates/svrngs-node/src/blob.rs:126 (`join_all(asks).await.into_iter().flatten()`) and :233; blob.rs:249 (`f.carry(hash, &group, None)`) | not fixed: lines the cap does not have (#80) | Two silences lost in a get. (a) An ask whose task panicked is a `JoinError`, which `.flatten()` drops: the computer is not in `answers`, so if every other one said never held, :233's `n == answers.len()` says "never held" with one computer unheard. Spawning with the actor kept outside the task and its `JoinError` said as its answer is about +3 lines. (b) When this computer carries a hash not lapsed but its store lacks the bytes (:211 falls through), and fetching from the holders fails, :249 removes its own entry, so asked again it says never held of a hash it was given a lapse for. Only a store that lost what the sweep keeps reaches it; forgetting only an entry `get` itself made is about +2. |
+| 149 | 1 | crates/svrngs-node/src/blob.rs:175-177 (a put with no `keep`) and :180-181 (the store refusing the bytes); :216 (`_ => {}`: held here, the store lacking it); crates/svrngs-node/src/ring_routes.rs:48 (`err`, which traces nothing) | not fixed: no line is left (#80) | Two of `put`'s refusals and one of `get`'s branches leave no trace, so a person reading the trace of an app whose put was refused finds nothing (AGENTS.md 1, "each refusal included"). A `tracing::debug!` at each is +1 to +3 lines at 16236 / 16237. With it, a refused get's `kind` could become an enum beside `Holds` (AGENTS.md 9). |
+| 146 | 8 | as recorded; and now crates/svrngs-node/src/blob.rs:89-97 (`standing_in`: `standing_of` then `people.contains_key(self.host.actor())`), beside synced.rs:166 and surface.rs:229-234 | not fixed: lines (#80) | Updated. Whether this computer's own key stands in a group is now written a third time in the node, each after `standing_of` or the register. The accessor #146 names, `Standing::member`, would serve all three. |
+| 80 | — | scripts/lean_check.py:32 BUDGET, :99 `n >= cap` | not fixed (operator's) | 1 line left in svrngs-core (3149 / 3150) and **none** in the repository (16236 / 16237) after onair-blob's +222. The events queue adds nothing to svrngs (2843760); any row that does raises first, after an economizing pass. |
+| 130, 132-145, 147 | as recorded | as recorded | not fixed | Not touched by this range. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still one line early (blob.rs:44 for :45, :52 for :53, :136 for :137, :38 for :39, :133 for :134; joining.rs:64 for :65). dry-report named the plant at its own `fn` line (rail.rs:641). |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)"; apps/on-air's exact tier could-not-judge. |
+| I19 | 6 | dry-report, `tests/` scopes; converge in apps/jellyfin/mw | Still present, said as could-not-judge; the line-window pass stood in. |
+| I29 | 6 | `refresh` over a corpus `code index` made | Still present: "prod-969d8c9 is not registered", then the in-process rebuild and exit 0. |
+| I31 | 6, 7 | `code index`'s endpoint probe | New: its first run found no embedder, :9741 "unavailable" by a GET to /v1/models, while `curl` of the same URL answered moments after; run again, it indexed. A probe that fails once says "unavailable" with no retry and no time; one run, not a rate. |
