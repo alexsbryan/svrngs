@@ -8027,3 +8027,271 @@ README.md's "Run it", DESIGN §8's Start entry.
 
 None new: the range gave the instrument nothing to read. I1, I4, I19,
 I28, I29 and I30 stand as REVIEW-audit-start-auto-2 recorded them.
+
+## REVIEW-audit-onair-auto-1 (2026-10-13, range 5c38557..44b1cbc)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-start-auto-3, whose
+`done` is 5c38557 (ralph/next/start/STATE.md: its hash 3766145, the loop's
+"ralph: REVIEW-audit-start-auto-3 done" 5c38557 after it); this queue has
+none before this one, and its first commit, 506ad71 (onair-red (a)), is
+5c38557's child. The range ends at 44b1cbc, the commit that made this
+row. `git rev-list --count 5c38557..44b1cbc` is 34, with no merge among
+them (`--merges`: 0), all on main: onair-red, onair-economize, onair-live
+and onair-sign, each with its `done`, and the row's own commit.
+
+This audit's own commits before this section: d829cdc (the row's two
+paths, as 3696cdc corrected the last audit's), 6e278f3 (the door's
+private `App` named `AppBody`), e3c6a1e (the cli's `Removal` named
+`RemoveKind`), d7f0eef (one `declare` and one `at_origin` in
+tests/surface.rs), 44576a8 (three core test files ask
+`tests_support::key`) and 5d8faef (the listener's guessed payload
+fields cut). It opens #146 and #147, updates #137 and #80, and closes
+none.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+5c38557..44b1cbc`, summed by /tmp/onairaudit1/scripts/ledger.py
+(/tmp/onairaudit1/ledger.raw, ledger.out), to the last audits' rules:
+product is crates/, apps/, web/ and bridge/; a test as
+`scripts/lean_check.py` names one (`/tests/`, `*_tests.rs`, `tests.rs`,
+`tests_support.rs`, `*.test.mjs`); a commit that names no unit counts
+toward the next one that does (3c43877 to onair-red, 389ffe3 to
+onair-sign). New here: apps/ is put apart from crates/ and web/, since
+`scripts/lean_check.py:14-16` does not count it, and the vendored
+`@noble` code (56e636d, 47 files, +19,793, unchanged from upstream) apart
+from both.
+
+crates/ and web/:
+
+| unit | commits | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| onair-red | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
+| onair-economize | 8 | 204 | 218 | −14 | 130 | 9 | 121 |
+| onair-live | 7 | 43 | 24 | 19 | 90 | 35 | 55 |
+| onair-sign | 9 | 154 | 37 | 117 | 184 | 2 | 182 |
+| this row's own commit | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 34 | 401 | 279 | 122 | 404 | 46 | 358 |
+
+apps/on-air, not counted: onair-red src +980 −17 and test +60
+(laws.test.mjs), onair-live src +2 −2 (listen.mjs reading the sender),
+onair-sign src +4 −4 (air.mjs's domain with its `:`) and test +11 −1
+(the frozen vector).
+
+The src lines, by file:
+
+- onair-economize: svrngs-node surface.rs +82 −21 (`read_by`, `reaches`,
+  `named`), origin.rs +2 −52 (`kept_to_reads` and `not_read` gone),
+  node.rs −15 (`Asking::offered_by`), home/question.js +29 −12, home.js
+  +4 −13; svrngs cli.rs +71 −85 (`VALUED`, `A_KIND`, `Removal`); web/app.js
+  +16 −20
+- onair-live: svrngs-node rail.rs +15 −4 (`Live`), ring_routes.rs +28 −20
+  (`standing_asker`)
+- onair-sign: svrngs-core app.rs +60, sig.rs +44 −7 (the domains moved in
+  from joining.rs −7, pass.rs −7, seed.rs −4, view.rs −4), lib.rs +1;
+  svrngs-node surface.rs +43 −2 (`SignQuery`, `sign`)
+
+Counted apart: demo/runs/onair +6338 −1 and demo/runs/onair-economize
++102 −1 (predictions, harness runs, check.sh logs); docs/DESIGN.md +98
+−19, ARCHITECTURE.md +15 −5; scripts/lean_check.py +15 −15 (a0c3f78's
+ratchet, 38ab822's and f61b252's raises); ralph/next/onair +5 −4.
+
+The size budget, by scripts/lean_check.py over a `git archive` tree of
+each end (/tmp/onairaudit1/lean-5c38557.out, lean-44b1cbc.out) and over
+the working tree after this audit's commits:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 5c38557, range start | 3121 / 3122 | 15986 / 15987 |
+| 44b1cbc, range end | 3149 / 3150 | 16014 / 16015 |
+| 5d8faef, this audit's last change (tests, an app, renames) | **3149 / 3150** | **16014 / 16015** |
+
+The range adds 28 counted lines to each: onair-economize's −36 and its
+ratchet to 15,951 (a0c3f78), onair-live's +11 under its raise to 15,962
+(38ab822), onair-sign's +53 under 16,015 and svrngs-core's +28 under
+3,150 (f61b252). **1 line is left in each** (#80), within the queue's
+ceilings of 16,287 and 3,182.
+
+### The instrument
+
+~/dev/commonwealth-ai/target/debug/sovereign-cli is the binary
+REVIEW-audit-start-auto-2 checked against a plant: sha256 67e46f63…,
+linked 18:14 (`shasum -a 256`, `ls -la`), the same at this audit's start
+and close. Its exact tier was checked again here anyway, on this corpus.
+
+The corpus is 44b1cbc's product: crates/, apps/, web/, scripts/,
+Cargo.toml and Cargo.lock, by `git archive` into
+/tmp/onairaudit1/prod-44b1cbc (286 files), with
+apps/on-air/page/vendor left out (upstream's code, unchanged) and demo/
+left out (recorded runs). `code index . --corpus-id prod-44b1cbc` gave
+3377 chunks in 458 s, the embedder the daemon on :9741,
+`qwen-embedding-0.6b` (/tmp/onairaudit1/index.out). `refresh` gave rust
+15266 symbols, typescript and python "skipped (export failed)" (I4), and
+"prod-44b1cbc is not registered" before its in-process rebuild (I29)
+(refresh.out).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-core, crates/svrngs-node, crates/svrngs,
+web/ and apps/on-air (`git diff --stat 5c38557 44b1cbc -- crates apps web`),
+each reported at 0.95 and 0.90 (/tmp/onairaudit1/clean-*.md).
+
+**The exact tier was checked against a plant.** 44b1cbc's `sign`
+(surface.rs:173-191, added by c03b6db) was appended to
+crates/svrngs-node/src/rail.rs in the indexed tree, then `refresh` (+9
+symbols, refresh-plant.out). The node's report gave **2 groups**: `sign —
+crates/svrngs-node/src/rail.rs:639 == crates/svrngs-node/src/surface.rs:173`,
+2 copies × 19 lines, beside api.rs `addr` (plant.md); :639 is the
+planted `fn`'s own line (rail.rs was 637 lines, then a blank). rail.rs
+was restored (`diff` against `git show 44b1cbc:` empty) and refreshed
+(−9, refresh-restored.out).
+
+| scope | locations | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---:|---:|---:|---:|---|
+| crates/svrngs-core/ | 469 | 5 | 0 | 12 | `key`, app_tests.rs:9 (exact) |
+| crates/svrngs-node/ | 519 | 1 | 0 | 7 | none |
+| crates/svrngs/ | 77 | 0 | 0 | 0 | none |
+| web/ | 99 | could-not-judge (I4) | 0 | 2 | `uses` ~ `choicesOf`, web/app.js (I9) |
+| apps/on-air/ | 38 | could-not-judge (I4) | 0 | 0 | none |
+| crates/svrngs-node/tests/, crates/svrngs/tests/ | 0 | could-not-judge (I19) | could-not-judge | could-not-judge | — |
+
+Every location the reports name, 56 (/tmp/onairaudit1/locs.txt), was
+blamed at 44b1cbc against the range's 34 commits (blame.out); the filter
+finds 16 of 16 in surface.rs :175-190, `sign`. Three have a line from
+the range:
+
+- `key` — crates/svrngs-core/src/app_tests.rs:9 (57dbade, 3 of 3) ==
+  pass_tests.rs:4 == sig_tests.rs:6, an exact group: each is
+  `tests_support::key` (tests_support.rs:24) written again. Fixed in
+  44576a8: the three ask the one.
+- `uses` web/app.js:285-307 (14 of 23) ~ `choicesOf` :288-303 (14 of 16),
+  0.903: `choicesOf` is a closure inside `uses`, two spans of one
+  function (I9). No clone.
+
+The tests scopes are could-not-judge (I19), so the line-window pass stood
+in: /tmp/onairaudit1/scripts/windows.py, the last audits' rule. At
+44b1cbc it found **101 window hits, 54 spans, 3 new** (windows.out):
+
+- crates/svrngs-node/tests/surface.rs :312-322 == :478-487 and :333-346
+  == :504-517: cd80ad1's test (onair-economize (a)) copied mnp-2's
+  `declare` closure and its request at a lend's origin; a third copy of
+  each in `a_lent_page_is_not_held…` predates the range. Fixed in
+  d7f0eef: one `declare` and one `at_origin`, the silent lender's test
+  red on its plant after the move.
+- crates/svrngs-node/tests/door/main.rs :289-298 (aa052a1, before the
+  range) == crates/svrngs-node/tests/record_api.rs :424-433 (b3bfc0f,
+  onair-live): the ada-and-bo `Roster` literal, in two test binaries
+  (#137).
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges 5c38557..44b1cbc -- crates
+apps web scripts ':!apps/on-air/page/vendor'` match
+`(struct|enum|trait|type|class)\s+[A-Z]\w*` seven times
+(/tmp/onairaudit1/new-types.out): `SignQuery` (surface.rs, c03b6db),
+`App` and `NotAnApp` (app.rs, 57dbade), `Live` (rail.rs, b3bfc0f),
+`Removal` (cli.rs, bd25915), and `Server` and `Quiet` (the harness's
+public.py, 2a37770). The vendored code's 15 classes are upstream's.
+Each was run through `converge noun <Name> --corpus-id prod-44b1cbc`
+(nouns.out), with `git grep -nP` over every path beside it
+(nouns-grep.out):
+
+| noun | converge (production) | git grep (all, demo/ and vendor/ apart) | read |
+|---|---|---|---|
+| SignQuery | 1: surface.rs:163 | 1: surface.rs:164 | One. |
+| App | **2**: svrngs-core app.rs:21; svrngs-node door/choices.rs:74 | 2: app.rs:22, choices.rs:75 | Two things of one name in the node's reach: the core's, an app's name as it is signed under, which surface.rs imports; and choices.rs's private body an app posts to stop. **Fixed in 6e278f3**: the private one is `AppBody`. |
+| NotAnApp | 1: app.rs:27 | 1: app.rs:28 | One. |
+| Live | 1: rail.rs:452 | 1: rail.rs:453 | One. |
+| Removal | **2**: svrngs cli.rs:314; svrngs-core register.rs:139 | 2: cli.rs:315, register.rs:140 | The core's is the command asking a person out, `svrngs_node::Removal`, and a handover is not one (`HandOnTo`); the cli's is "remove or handover". **Fixed in e3c6a1e**: the cli's is `RemoveKind`, the kind of `Verb::Remove`. |
+| Server | 0 | 2: apps/jellyfin/mw/src/page.rs:22, apps/on-air/harness/public.py:13 | Two apps, two languages, each its own; converge sees neither (I4 for Python, I19 for jellyfin's workspace). |
+| Quiet | 0 | 1: public.py:17 | One; converge cannot see it (I4). |
+
+After the two renames, the renamed files put into the indexed tree and
+`refresh` run again (refresh-renamed.out), converge gives `App` 1
+(app.rs), `Removal` 1 (register.rs), `AppBody` 1 and `RemoveKind` 1
+(nouns-after.out). converge's lines are still one early (I1). **No noun
+has more than one definition now.**
+
+### Reading the range
+
+Every hunk of product code the range changed in crates/ and web/ was read
+(/tmp/onairaudit1/range-src.diff), and the app's own files: station.mjs,
+listen.mjs, page/air.mjs, page/page.js, harness/stranger.mjs, public.py
+and run.py's judging.
+
+- **A move is its own commit** (AGENTS.md 2). 79b8301 moved every domain
+  into sig.rs before 57dbade added the app's; 5058650's parse helper
+  landed apart from bd25915's variant; each with its tests named.
+- **The core is pure** (fence 3). app.rs signs and checks with the key
+  and the bytes as arguments, no I/O; its domain, `APP_DOMAIN`, lives
+  beside every other in sig.rs (:53-103), and `sig_tests.rs`'s
+  `domains_live_here_and_none_begins_another` holds that no core file
+  outside sig.rs spells one. The node only carries it (surface.rs
+  `sign`).
+- **One decider** (AGENTS.md 8). What a lent page reads and reaches is
+  one function, surface.rs `read_by`, which `reads` and `reaches` ask
+  (cd80ad1). The app's domain is spelled twice, across two languages:
+  svrngs-core's sig.rs `APP_DOMAIN` with app.rs `message`, and the
+  page's air.mjs `appDomain`; laws.test.mjs checks the core's frozen
+  vector (app_tests.rs `a_frozen_vector_for_a_stranger`), byte for byte,
+  the golden equivalence ARCH_PRINCIPLES 8 asks of two that must exist.
+  One decision is spelled twice: whether a key stands in a group,
+  `Standing::names` (svrngs-runtime register.rs:90) and ring_routes.rs
+  `standing_asker`'s own match (:102), which b3bfc0f wrote to take the
+  member's row with the answer (#146).
+- **Never silently substitute** (AGENTS.md 6; fence 2). A silent lender
+  is could-not-judge, `away`, on both paths (surface.rs `read_by`,
+  `reaches`). The listener refused what it could not check, said why,
+  but read a payload's text and sender under two field names no svrngs
+  drain has given (`p.text`, `p.sender`), a guess that would be taken
+  as the sender if ever met. Fixed in 5d8faef. `/v1/sign` with no `app`
+  is read as the empty name and refused as not a name; nothing is signed.
+  The harness says never-ran for a bar whose step did not run, and
+  could-not-judge is never a pass (run.py `judge`).
+- **Glassbox** (AGENTS.md 1). `sign`'s refusal and its signing trace
+  (target `sign`), `read_by`'s three refusals and `reaches`' three
+  outcomes trace (target `surface`), and the live route traces its
+  buffering with the sender's two keys (ring_routes.rs `ring_live`).
+- **Closed sets are enums** (AGENTS.md 9). `RemoveKind` (then `Removal`)
+  is an enum. The flags that take a value are a space-joined `&str`
+  split at each argument (cli.rs `VALUED`, :306-307, read at :350), a
+  closed set kept as text (#147).
+- **The nouns gate** (fence 6). `scripts/vocab_check.py` (check.sh
+  :22-23) says "47 app nouns, 0 in infra code", exit 0. `git grep -niwE
+  'station|show|radio|broadcast' 44b1cbc -- crates web scripts`, tests
+  apart, finds `show` as a verb and choices.rs:5's "a private grant is
+  not broadcast" (d9cb3c4, before the range); none names the app's.
+
+### Fixed here
+
+- 6e278f3: the door's private `App` (choices.rs:75) is `AppBody`;
+  converge's `App` 2 → 1.
+- e3c6a1e: the cli's `Removal` (cli.rs:315) is `RemoveKind`; converge's
+  `Removal` 2 → 1.
+- d7f0eef: tests/surface.rs's three `declare` closures and three origin
+  requests are one fn each; red on its plant after the move.
+- 44576a8: app_tests, pass_tests and sig_tests ask `tests_support::key`;
+  the core's exact group with a side in the range, 3 copies → 0.
+- 5d8faef: listen.mjs reads a drained payload under the fields svrngs
+  gives, `payload`, `key`, `person_key`, and a bare string as before.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 146 | 8 | crates/svrngs-node/src/ring_routes.rs:102 (`standing_asker`: `Ok(Standing::Members(mut standing)) if standing.contains_key(&asker)`); crates/svrngs-runtime/src/register.rs:90 (`Standing::names`, `matches!(self, Standing::Members(m) if m.contains_key(actor))`), which ring_sync.rs:366 asks | not fixed: the accessor is lines the cap does not have (#80) | Whether a key stands in a group is decided in two places. b3bfc0f (onair-live) needed the member's row with the answer, so it wrote `names`'s rule again inline in place of asking it. They agree today, word for word; a change to who stands (a key standing while its person is being removed, say) made in one would leave the other answering. A fix gives `Standing` one accessor, `member(&self, actor) -> Option<&Member>`, which `names` asks and `standing_asker` takes the row from; about +4 counted lines, at 16014 / 16015. |
+| 147 | 9 | crates/svrngs/src/cli.rs:306-307 (`const VALUED: &str = "--as --origin --name …"`) and :350 (`VALUED.split(' ').any(\|f\| f == a)`) | not fixed: rustfmt writes the slice on more lines than the cap has left | 5058650 (onair-economize (b)) kept the flags that take a value as one space-joined string, split on every argument. A closed set kept as text, which no compiler or test reads as a set: a doubled space puts the empty string among the flags, so an empty argument would take the next as its value before it is refused; a flag misspelled there is a flag that takes no value, and its value is then read as the next argument. A `&[&str]`, or each flag's arm saying it takes a value, is the idiom; rustfmt puts the twelve on lines of their own. Waits for lines freed, or the operator's raise. |
+| 137 | 8 | as recorded; and now crates/svrngs-node/tests/door/main.rs:289-298 (aa052a1, `Bos::new`) == crates/svrngs-node/tests/record_api.rs:424-433 (b3bfc0f, `a_payload_drained_names_its_sender_and_their_person`) | not fixed: two test binaries | Updated. onair-live's test writes the ada-and-bo `Roster` literal (ada by key 1, bo by keys 2 and 6) the door's tests already had. The two binaries share no support module for a seed; tests/common, which both include, is where a `two_people(…)` would go. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 1 line left in svrngs-core (3149 / 3150) and 1 in the repository (16014 / 16015), strict, after the range's +28 each. onair-blob raises from there, within the queue's 16,287 and 3,182. |
+| 130, 132-145 | as recorded | as recorded | not fixed | Not touched by this range's decisions. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still one line early (app.rs:21 for :22, choices.rs:74 for :75, cli.rs:314 for :315, register.rs:139 for :140, rail.rs:452 for :453). The dry-report half reported the plant at its own `fn` line (rail.rs:639). |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". web/'s and apps/on-air's exact tiers are could-not-judge; converge gives public.py's `Server` and `Quiet` 0 definitions. |
+| I9 | 6, 7 | `code dry-report` near tier | Still present: `uses` ~ `choicesOf` (web/app.js :285-307, :288-303), a closure and the function it sits in. |
+| I19 | 6 | dry-report, `tests/` scopes; converge in apps/jellyfin/mw | Still present, and said as could-not-judge. The line-window pass stood in for the tests scopes; converge gives `Server` 0 where page.rs:22 defines one. |
+| I29 | 6 | `refresh` over a corpus `code index` made | Still present: "prod-44b1cbc is not registered", then the in-process rebuild and exit 0. |
+| I30 | 7 | the binary by path | Not met this time: 67e46f63… at this audit's start and close. |
