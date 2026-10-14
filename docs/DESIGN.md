@@ -181,6 +181,30 @@ paths it refuses, how many people may use it at once.
   ```
 
   A page in a browser is refused it, as it is the record;
+- bytes by hash, for an app, with a lifetime (onair-blob; svrn-docs
+  `rings/current/ON_AIR.md` §4.1), on the same loopback API: `PUT
+  /v1/blob?group=<id>&keep=<seconds>` puts the body in this computer's
+  store and answers `{hash}`, its BLAKE3 in hex; `GET
+  /v1/blob/<hash>?group=<id>` answers the bytes from that store, else
+  fetched, verified, from a computer of the group holding them, and names
+  the computer they came from in `x-svrngs-holder`. They move as a
+  group's folder's do (below, the group's folder): one store, one
+  provider whose one rule serves a hash to a dialer standing in a group a
+  synced folder or an app placed it in, one verified fetch (`folder.rs`,
+  `blob.rs`). Each hash lapses `keep` seconds after its put, on every
+  computer holding it: a computer asked for one first asks the group's
+  other computers what each holds of it and for how long yet, fetches it
+  from those, holds it no longer than they do, and serves it to the group
+  meanwhile, so each member that asked is a carrier for the rest. A get
+  refused says which: `lapsed` (410) if any computer asked says so,
+  `never_held` (404) only if every one does, else `unanswered` (502),
+  with each computer asked and what it said — never empty bytes. Bytes an
+  app places are not the record and not a folder (§6). Carrying spends
+  the carrier's upload, uncapped: in the run, a station's computer sent
+  about one and a half times its show for two listeners, and a listener
+  up to half of it again (`demo/runs/onair/2026-10-13-blob/README.md`,
+  "Carrying"); a cap, on the home page beside a lend's limit, is a row
+  only when a run shows one needed;
 - the services the group's members lend, each by name and an opaque kind the
   app interprets (`jellyfin`), and how many people are using each now;
 - on each request through the door, the share of the lender's upload it may
@@ -706,7 +730,8 @@ U5 builds the apps' part by seven calls; the evidence is U5's inventory
    head, a path's second head written beside it named as a conflict with
    its writer's person. The bytes move by iroh-blobs: a member's node
    serves a hash only while a synced folder of a group the dialer stands
-   in places it, and refuses every other, and fetches what it lacks by
+   in places it, or an app placed it there and it has not lapsed (§3,
+   "What an app gets"; onair-blob), and refuses every other, and fetches what it lacks by
    verified range from the group's members, a holder that does not answer
    within 3 s named and passed over. Who stands where is the round's
    (`Host::standings`), and a group whose record cannot be read stops its
@@ -1493,6 +1518,19 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
 - **Leaving is cheap.** A group's whole state is a directory every member's
   computer holds. A group that goes wrong refounds from any copy, within
   hours, without whoever it leaves out (operator: "with dotfile elegance").
+- **What an app places by hash is not kept** (onair-blob; §3, "What an
+  app gets"). Its bytes are in no act and no folder; which hashes a
+  computer carries for which group, and until when, is in its running
+  process alone, each kept past its lapse so a get says `lapsed`, not
+  `never_held`. The store's sweep, each second, drops a hash `keep`
+  seconds after its put, on every computer that holds it. A computer
+  stopped before then keeps the bytes on its disk until it starts again,
+  and its first sweep drops them, since a restart carries nothing over:
+  Ana's computer, stopped 25 s into a 60 s lapse, held its 10 pieces on
+  disk and dropped all 10 in its first second started again
+  (`demo/runs/onair/2026-10-13-blob/`, `ana-restart.txt`). A computer
+  restarted says `never_held` of what it carried before. What lapses is
+  the bytes; a fetched hash's tree of hashes can stay (§9).
 - **A link admits each person once** (U2; operator, 2026-10-04, over one
   person per link, which neither demo nor a chat door could use: Sam sends one
   link to three friends, a door posts one per channel). A link carries a
@@ -2384,8 +2422,9 @@ air spike too"; its design svrn-docs `rings/current/ON_AIR.md`, its queue
 `ralph/next/onair/`). A stranger's app, in `apps/on-air/`, airs an MP3
 from one member's computer to the others in its group and to a page anyone
 opens, and asks svrngs for three things it lacks: bytes by hash, for an
-app, with a lifetime; a signature for an app, checked anywhere with the key
-alone; the live lane naming who spoke (landed, onair-live). svrngs runs no public door for it:
+app, with a lifetime (landed, onair-blob); a signature for an app, checked
+anywhere with the key alone (landed, onair-sign); the live lane naming who
+spoke (landed, onair-live). svrngs runs no public door for it:
 signed, hash-named bytes need no trusted carrier. Its harness runs first on
 svrngs as it is, red, and that run is the reproduction
 (`demo/runs/onair/`); each primitive then lands as a row of its own, proved
@@ -2442,6 +2481,7 @@ event.
 | measuring a lender's upload rather than taking the figure they declare (BBR3's pacing estimate, or a timed saturating pull) | a declared figure is wrong by enough to stall a viewer in a recorded run |
 | a per-process tie between a node and the services it lends (upstream's `mint_tie`). A middleware believes loopback: a process on the lender's computer naming a person's key at its port was answered as them (`demo/runs/mw/2026-10-08/mw-1/`), which is the lender's own (§3, "The room", call 6); and a request at a lend's origin with no `Sec-Fetch-Site` is taken for that lend's own page (sup-1, `origin.rs` `app_of`), which neither widens nor narrows what a process could reach before | an app's act is written under a person by a process the lender did not run, or one computer is shared by people who do not trust each other |
 | a synced folder's later parts, each with its trigger. A mounted folder: every file of a group's folder listed from the record's layout and fetched on open, by verified range, as group folders' streamed spike fetched (`demo/runs/gf/2026-10-09/`, its endpoint dropped at syp-1; `demo/runs/sy/2026-10-09/README.md` §9, "A mounted folder") — a file system of svrngs's (macFUSE, or Apple's File Provider), a dependency and a process apart. Its streamed spike's rows that only a folder not on the viewer's disk needs — a stub that reaches its viewer, who the endpoint answers, stubs in step with the record (that README's §9, rows 1, 3 and 4) — wait with it. A version as its blocks: a file a hash sequence of its 1 MiB blocks (iroh-blobs' `HashSeq`), the record's entry naming the sequence, so an edit moves only the blocks it changed — a 1 MiB edit inside 100 MiB moved all 104,857,600 bytes to each member on every path, before perf-2 and after it, in 1.9 s on loopback, and again on production in 7.04 s through n0's (syp-5, `demo/runs/syp/2026-10-10/rerun/README.md` §5), and what an entry's hash names would change in the record and in what a store keeps (perf-1, `demo/runs/perf/2026-10-10/README.md` §9 T4, §10 candidate 8; perf-2, `demo/runs/perf/2026-10-10-make-it-fast/README.md` §3 T4; the operator, "Wait, revisit after the rerun", §10). A file past one holder's upload: a 100 MiB file reached each of two members at 83 MB/s at once, about 167 MB/s from its one holder, where one member alone took it at 139 MB/s, a bare iroh-blobs get's rate (that README §4) — a member fetching from another that holds the file is unmeasured. A joining member's wait to stand: its share refused until the round admits it, 54-58 s of the round's 60 s, where its every file then arrived in 1.7 s of 10,000 and 61.5 s of 100,000 (that README §5) — perf-2's harness's, members started apart; a member joining by `join` stood before its share, and held 1,000 files 0.53 s after it (syp-5's rerun, §5). Dialling direct before a relay: no gain measured, iroh having moved every connection on all three paths direct before its first fetch, in perf-1 and perf-2 alike (perf-1's README §9; perf-2's §3) | the mounted folder: a member whose disk cannot hold the group's folder, counted. The blocks: a member waiting on a large file moved whole for a small edit, counted, or the operator queues T4. A file past one holder: a member waiting on a large file several fetch at once, counted between computers. The wait to stand: a newcomer's folder waiting on the round past a bar the operator sets. The dial: a fetch measured through a relay between two members a direct path reaches |
+| a fetched hash's tree of hashes left on disk after its bytes are dropped: iroh-blobs 0.103 writes a fetched blob's tree (`<hash>.obao4`) while the blob is partial, and when it completes with a tree small enough to keep inline (a blob over 16 KiB and up to about 4 MiB) copies it into its database and leaves the file (`store/fs/bao_file.rs:215-224`); a drop of the entry then removes the database's row alone (`store/fs/meta.rs:594-596`). No byte of the content stays, but the file's name is the hash: each of the 10 pieces Bo and Cy carried left 192 bytes after its lapse (`demo/runs/onair/2026-10-13-blob/`, `stores-after.txt`), and a group's folder's fetches leave the same. Not fixed beside the store: the file is the store's, and only iroh-blobs knows when it is free | a person asks that what lapsed or was dropped leave no name on their disk, or a store's directory is counted to grow by it past what matters, or iroh-blobs removes it upstream |
 | a person who only searches counted apart from one who watches: the door counts each on a lend for `WINDOW`, 30 s, after their last request (`crates/svrngs-node/src/door/limit.rs:17-19`), a search as a film — Movie Night's searcher was counted on both Jellyfins 26.3 and 26.5 s after one search and not at 36.2 and 36.4 s, the most at once 2, nobody refused (`demo/runs/mn/2026-10-08/doors.json`, `limit`) | a lend at its limit refuses someone while those it counts only searched, counted |
 | budgets on an owner's operation: how often an app may ask it, so asks cannot rebuild what it keeps back (`rings/current/ACL_AND_SCOPED_USE.md` §4, §6). Ana's taste ranks whatever films it is given, and ranked an app's two that sent her yes itself (`demo/runs/su/2026-10-09/verdicts.json`, "the unasked yes") | an operation's answers rebuild what its owner kept back, shown in a run, or an owner asks for a limit on one |
 | WebKit's closed-range seeking through a lend: its seeks back to back, taken in serial 64 KiB reads of each short part, a round trip each, missed 5 s in 1 of 8 tries after u5-11, where straight at the canary over the same link they missed in none (`demo/runs/u5/2026-10-06-seek-stall/`; §11 risk 4); a rate in `scripts/check.sh`, not a gate. And Chromium's on a loaded host: its seeks are a gate, but sup-4's check, sy-1's three on the branch `folders` and REVIEW-audit-sup-auto-2's each missed only them, at load averages of about 40-130 on this host's 12 cores, with nothing near them changed, and passed alone; since chk-1 a miss past 3 a core is could-not-judge, never passed (operator, 2026-10-10), the bar's one home `crates/svrngs-node/tests/browser/load.rs` (`BUSY`), which the browser tests' film reads too since bash-film-load — its Chromium seek, after the worker's stop, missed at 11.4 s in one check and stayed under 3 s in 29 runs at loads to 19 a core (`demo/runs/film-load/2026-10-12/`) | Demo A's real-phone sessions miss the seek bar in Safari more often than WebKit straight at the server on the same link; or Chromium's seeks are could-not-judge in more `scripts/check.sh` runs than they are judged, counted |
