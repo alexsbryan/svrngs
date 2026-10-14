@@ -16,7 +16,8 @@
   by key over a relay (web/src/lib.rs).
 
   The CSP is deliberately strict: no inline script (app.js is external), no
-  remote code. It is never framed: `frame-ancestors` cannot ride a
+  inline style (its look is svrngs's one look.css, the home page's file,
+  which scripts/build-web.sh puts beside it), no remote code. It is never framed: `frame-ancestors` cannot ride a
   `<meta>`, so the page host sends it (vercel.json). `wasm-unsafe-eval` is required to instantiate WebAssembly;
   `connect-src` must allow the relay's WebSocket (wss://*.relay.n0.iroh.link
   by default, plus any self-hosted relay a link carries), and iroh's latency
@@ -37,26 +38,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' wss: https: ws://127.0.0.1:* http://127.0.0.1:*; img-src 'none'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' wss: https: ws://127.0.0.1:* http://127.0.0.1:*; img-src 'none'; style-src 'self'; base-uri 'none'; form-action 'none'">
 <title>You’re invited to a group</title>
 <meta name="description" content="Open the link to join: on a phone right here, on a computer by one line pasted in a terminal. What the group shares stays on its people’s own computers.">
 <meta property="og:title" content="You’re invited to a group">
 <meta property="og:description" content="Open the link to join: on a phone right here, on a computer by one line pasted in a terminal. What the group shares stays on its people’s own computers.">
 <meta property="og:type" content="website">
-<style>
-  :root { color-scheme: light dark; }
-  body { font: 16px/1.5 system-ui, sans-serif; margin: 1.5rem auto; max-width: 46rem; padding: 0 1rem; }
-  h1 { font-size: 1.2rem; }
-  #status { font-weight: 600; }
-  pre { background: #8881; padding: .75rem; border-radius: .5rem; overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
-  .bad { color: #c22; }
-  form { display: grid; gap: .5rem; }
-  input, button { font: inherit; padding: .5rem .75rem; }
-  #lent { list-style: none; padding: 0; display: grid; gap: .5rem; }
-  #lent button { width: 100%; text-align: left; }
-  .good { color: #2a2; }
-  #line { user-select: all; }
-</style>
+<link rel="stylesheet" href="./look.css?v=__VERSION__">
 </head>
 <body>
 <h1 id="status">Opening…</h1>

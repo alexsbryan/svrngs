@@ -648,7 +648,9 @@ host is told to send `frame-ancestors 'none'` (`web/vercel.json`), which
 a `<meta>` policy cannot, and the tests' server sends `vercel.json`'s
 headers (`web/tests/page.mjs`). With no pass in memory and
 none it can read, it sends a navigation to `open.html?for=<label>`, which
-reads the pass and hands it over again. The shell's paths are relative, and
+reads the pass and hands it over again. Its look is the home page's
+`look.css`, which `build-web.sh` copies beside it as it copies
+`question.js`. The shell's paths are relative, and
 the CSP admits a relay on 127.0.0.1. `scripts/build-web.sh` (upstream's
 `build-ring-runtime.sh`) builds it into `target/web/site` with Homebrew's
 LLVM on a Mac, and `--lint` holds it to rustfmt and clippy for wasm32.

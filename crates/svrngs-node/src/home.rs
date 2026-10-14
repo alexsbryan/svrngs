@@ -77,7 +77,8 @@ const QUESTION: ([(header::HeaderName, &str); 1], &str) = (
     include_str!("home/question.js"),
 );
 
-/// Its look, a file of its own, since its policy runs no inline style.
+/// Its look, svrngs's one look, a file of its own since its policy runs no
+/// inline style; the group's page is given the same file (`scripts/build-web.sh`).
 const LOOK: ([(header::HeaderName, &str); 1], &str) = (
     [(header::CONTENT_TYPE, "text/css")],
     include_str!("home/look.css"),
