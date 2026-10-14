@@ -211,7 +211,7 @@ def main():
         summary["cy_join"] = tell(do="join", link=house_page, name="Cy")
         gid = api("sam", "/v1/groups")["groups"][0]["id"]
         share = subprocess.run([BIN, "share", probe_port, "--kind", "probe", "--name", "probe", "--upload", "100"],
-                               env={**env("sam"), "RUST_LOG": "error"}, capture_output=True, text=True)
+                               env={**env("sam"), "RUST_LOG": "error"}, stdin=subprocess.DEVNULL, capture_output=True, text=True)
         say("share", exit=share.returncode, said=(share.stdout + share.stderr).strip()[:300])
         lent = lambda: {(l["person"], l["name"]): l["origin"] for l in (api("bo", f"/v1/lends?namespace={gid}") or {}).get("lent", [])}
         if not wait(lambda: ("Sam", "probe") in lent(), 120, 0.5): sys.exit("Bo lists no probe")
