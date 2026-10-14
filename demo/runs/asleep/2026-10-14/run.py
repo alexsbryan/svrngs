@@ -7,6 +7,7 @@ phone, WebKit as an iPhone (phone.mjs), opening it at its own.
 
     PART=working W=<scratch> python3 demo/runs/asleep/2026-10-14/run.py   # data/working/
     PART=asleep  W=<scratch> python3 demo/runs/asleep/2026-10-14/run.py   # data/asleep/
+    TAKE=capped PART=<part> ...                                            # data/capped-<part>/ (CAPPED.md)
 
 working: ROUNDS rounds, each Sam's svrngs restarted, then Bo asks once
 (cold) and WARM times more, and Cy's phone opens the probe, its dial timed
@@ -18,7 +19,7 @@ from datetime import datetime
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent; REPO = HERE.parents[3]
-PART = os.environ["PART"]; W = Path(os.environ["W"]); OUT = HERE / "data" / PART; BIN = REPO / "target/debug/svrngs"
+PART = os.environ["PART"]; W = Path(os.environ["W"]); OUT = HERE / "data" / ((os.environ.get("TAKE", "") and os.environ["TAKE"] + "-") + PART); BIN = REPO / "target/debug/svrngs"
 ROUNDS, WARM, ASLEEP = int(os.environ.get("ROUNDS", 12)), 4, int(os.environ.get("ASLEEP", 3))
 LOG = "info,door=debug,origin=debug,transport=debug,cli=debug"
 WORDS = "probe here"
