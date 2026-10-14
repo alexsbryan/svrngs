@@ -1,7 +1,8 @@
 // Events' own small server and page (EVENTS.md §1-§5): post an event to one
 // or more of your groups, say you're coming (with guests by name), say you
-// came, and see who is coming and who came. Lent by the host's computer
-// under svrngs, or run alone behind a proxy that signs people in.
+// came, and see who was invited, who is coming and who came. Lent by the
+// host's computer under svrngs, or run alone behind a proxy that signs
+// people in.
 //
 //   node apps/events/server.mjs <config.json>
 //
@@ -91,12 +92,18 @@ async function standing(group, id) {
   return me ? me.name : null;
 }
 
-/** The groups there are and each one's name in the asker's: [{id, name, me}], `me` null outside it, or `unread`. */
+/**
+ * The groups there are, each with the asker's name in it and who stands in
+ * it now: [{id, name, me, people}], `me` null outside it, or `unread`.
+ */
 async function myGroups(id) {
   const out = [];
   for (const g of await store.groups()) {
     try {
-      out.push({ ...g, me: await standing(g.id, id) });
+      const people = await store.people(g.id);
+      const me = people.find((p) => p.id === id)?.name ?? null;
+      trace('standing', { group: g.id, asker: id, in: Boolean(me) });
+      out.push({ ...g, me, people: people.map((p) => p.name) });
     } catch (e) {
       trace('a group could not be read', { group: g.id, error: e.message });
       out.push({ ...g, me: null, unread: e.message });
@@ -175,15 +182,22 @@ async function post(id, form) {
   return `/g/${encodeURIComponent(chosen[0])}/e/${event}`;
 }
 
-/** One group's answers to `e`, said: who is coming and who came. */
-function said(e) {
+/**
+ * One group's answers to `e`, said: who was invited, who is coming and who
+ * came. Invited is whoever stands in the group now, its host aside
+ * (EVENTS.md §1): no one keeps a list, and no one is said as anything but
+ * invited until they say so themselves.
+ */
+function said(e, invited) {
+  const asked = [...new Set(invited)].filter((p) => p !== e.host).sort();
   const people = Object.keys(e.coming).sort();
   const coming = people.length
     ? `<ul class="coming">${people.map((p) => `<li>${esc(p)}${e.coming[p].map((g) => ` + ${esc(g)}`).join('')}</li>`).join('')}</ul>`
     : '<p class="quiet">No one has said yet.</p>';
   const guests = Object.entries(e.guests_came).flatMap(([p, gs]) => gs.map((g) => `${esc(g)}, ${esc(p)}'s guest`));
   const came = [...e.came.map(esc), ...guests];
-  return `<h3>Coming</h3>${coming}<h3>Came</h3>${came.length ? `<ul class="came">${came.map((c) => `<li>${c}</li>`).join('')}</ul>` : '<p class="quiet">No one yet.</p>'}`;
+  const list = asked.length ? `<ul class="invited">${asked.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : '<p class="quiet">No one else is in this group.</p>';
+  return `<h3>Invited</h3>${list}<h3>Coming</h3>${coming}<h3>Came</h3>${came.length ? `<ul class="came">${came.map((c) => `<li>${c}</li>`).join('')}</ul>` : '<p class="quiet">No one yet.</p>'}`;
 }
 
 async function eventPage(id, group, event) {
@@ -211,12 +225,12 @@ async function eventPage(id, group, event) {
     }
     for (const g of hosted(event, all)) {
       body += `<section data-group="${esc(g.group)}"><h2>${esc(named(groups, g.group))}</h2>`;
-      body += g.unread ? `<p class="unread">This group's answers can't be read on this computer right now.</p>` : said(g.event);
+      body += g.unread ? `<p class="unread">This group's answers can't be read on this computer right now.</p>` : said(g.event, groups.find((x) => x.id === g.group).people);
       body += '</section>';
     }
     trace('the host\'s view', { event, asker: me, groups: all.map((g) => g.group) });
   } else {
-    body += `<section data-group="${esc(group)}"><h2>${esc(named(groups, group))}</h2>${said(e)}</section>`;
+    body += `<section data-group="${esc(group)}"><h2>${esc(named(groups, group))}</h2>${said(e, groups.find((x) => x.id === group).people)}</section>`;
     trace('a member\'s view', { event, asker: me, group });
   }
   const at = `/g/${encodeURIComponent(group)}/e/${encodeURIComponent(event)}`;

@@ -3,9 +3,10 @@
 // a file of its own, each person named by the header a proxy would set.
 // Sam posts a dinner to The House and dWeb; Bo is coming with Maya, came, and
 // says Maya came; Ama says she's coming and takes it back; Cy, in dWeb, is
-// coming. Each member's page holds only their own group's answers, the
-// host's holds both, and a member of one group opening the other's event
-// page is refused. Without Playwright or its browser this fails naming the
+// coming. Each group's people but its host are said as invited, Ama, who
+// took hers back, there and nowhere else. Each member's page holds only
+// their own group's answers, the host's holds both, and a member of one
+// group opening the other's event page is refused. Without Playwright or its browser this fails naming the
 // install (`launch` exits 3); it never skips.
 
 import assert from 'node:assert/strict';
@@ -54,6 +55,7 @@ for (const engine of ['chromium', 'webkit']) {
       };
       const lists = async () => page.$$eval('section[data-group]', (ss) => ss.map((s) => ({
         group: s.dataset.group,
+        invited: [...s.querySelectorAll('.invited li')].map((l) => l.textContent),
         coming: [...s.querySelectorAll('.coming li')].map((l) => l.textContent),
         came: [...s.querySelectorAll('.came li')].map((l) => l.textContent),
       })));
@@ -80,16 +82,16 @@ for (const engine of ['chromium', 'webkit']) {
       await as('cy', dweb);
       await press("I'm coming");
 
-      assert.deepEqual(await lists(), [{ group: 'dweb', coming: ['cy'], came: [] }], "Cy's page: dWeb's answers alone");
+      assert.deepEqual(await lists(), [{ group: 'dweb', invited: ['cy'], coming: ['cy'], came: [] }], "Cy's page: dWeb's answers alone");
       await as('bo', house);
-      assert.deepEqual(await lists(), [{ group: 'house', coming: ['bo + Maya'], came: ['bo', "Maya, bo's guest"] }], "Bo's page: The House's answers alone");
+      assert.deepEqual(await lists(), [{ group: 'house', invited: ['ama', 'bo'], coming: ['bo + Maya'], came: ['bo', "Maya, bo's guest"] }], "Bo's page: The House's answers alone");
       const refused = await as('cy', house);
       assert.equal(refused.status(), 403);
       assert.match(await page.innerText('body'), /You're not in The House/);
       await as('sam', house);
       assert.deepEqual(await lists(), [
-        { group: 'house', coming: ['bo + Maya'], came: ['bo', "Maya, bo's guest"] },
-        { group: 'dweb', coming: ['cy'], came: [] },
+        { group: 'house', invited: ['ama', 'bo'], coming: ['bo + Maya'], came: ['bo', "Maya, bo's guest"] },
+        { group: 'dweb', invited: ['cy'], coming: ['cy'], came: [] },
       ], "Sam's page: both groups' answers");
       for (const text of said) assert.doesNotMatch(text, NOT_SAID);
     } finally {
