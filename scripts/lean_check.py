@@ -28,8 +28,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
            "rusqlite", "sqlx", "notify", "mio"}
 # Each cap one past a count: svrngs-core's where events-economize's cut landed,
 # the repository's where events-wait's held dial to a lender landed (2026-10-14),
-# so no room is left that the operator did not give. A raise is asked only after an
-# economizing pass (AGENTS.md "Done"; DESIGN §5).
+# so no room is left that the operator did not give. v1ui-economize found nothing
+# to cut and left both (demo/runs/economize/2026-10-14-v1ui/SURVEY.md). A raise is
+# asked only after an economizing pass (AGENTS.md "Done"; DESIGN §5).
 BUDGET = {"crates/svrngs-core": 3150, ".": 16315}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
