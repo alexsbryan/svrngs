@@ -185,3 +185,13 @@ This queue commits only in svrngs. What those sections should now say:
      each line against the key the link carries. "This key is Ana's"
      stays with people inside her groups. Publishing the group's binding
      so a stranger could check it too is still open, and the operator's.
+
+## check.sh, at the close
+
+`scripts/check.sh`, once, at `5cd62bb`: exit 0. All 14 steps passed, from
+its own summary lines: principles pinned, lean and RUST_ARCH, app nouns
+gate, app nouns, rustfmt, clippy, tests, canaries, ceiling canary, web
+rustfmt and clippy, browser, joining in a browser, conformance canary,
+app laws. None failed. Lean at `5cd62bb`: crates/svrngs-core 3149 / 3150,
+the repository 16236 / 16237 (`scripts/lean_check.py`), the same as before
+this row, which changed no product code.
