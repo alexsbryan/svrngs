@@ -160,11 +160,15 @@ def network():
 
 
 def nettop(pid):
-    """(bytes in, bytes out) of `pid` since it started, or None."""
-    rows = subprocess.run(["nettop", "-p", str(pid), "-P", "-L", "1", "-x", "-J", "bytes_in,bytes_out"],
-                          capture_output=True, text=True).stdout.splitlines()
-    got = [r.split(",") for r in rows[1:] if r.strip()]
-    return (int(got[0][1]), int(got[0][2])) if got else None
+    """{flow: (bytes in, bytes out)} of `pid`'s TCP flows to a port 443, each
+    since it opened, or None. Per flow, not per process: a process's sum is of
+    the flows open now, and fell when the page's loopback flows closed (this
+    driver's first plant take)."""
+    rows = subprocess.run(["nettop", "-p", str(pid), "-L", "1", "-x", "-n", "-J", "bytes_in,bytes_out"],
+                          stdin=subprocess.DEVNULL, capture_output=True, text=True).stdout.splitlines()
+    flows = {r.split(",")[0]: (int(r.split(",")[1]), int(r.split(",")[2])) for r in rows[1:]
+             if r.startswith("tcp") and r.split(",")[0].endswith(":443")}
+    return flows or None
 
 
 def lend_url(phone_url): return "{0.scheme}://{0.netloc}/".format(urllib.parse.urlsplit(phone_url))
@@ -220,13 +224,21 @@ def main():
         # The sit: the page open, nothing asked.
         before = tell(do="open", url=fresh(at), words=WORDS)
         net, sam_pid = network(), procs["sam"].pid
-        read = lambda: {"phone": nettop(net) if net else None, "sam": nettop(sam_pid)}
-        t, start_bytes = time.time(), read()
-        time.sleep(SIT)
-        end_bytes, took = read(), time.time() - t
-        moved = {who: None if not (start_bytes[who] and end_bytes[who]) else
-                 {"in": end_bytes[who][0] - start_bytes[who][0], "out": end_bytes[who][1] - start_bytes[who][1],
-                  "per_s": round((sum(end_bytes[who]) - sum(start_bytes[who])) / took, 1)} for who in ("phone", "sam")}
+        def read():
+            t0 = time.time(); got = {"phone": nettop(net) if net else None, "sam": nettop(sam_pid)}
+            return got, (t0 + time.time()) / 2
+        (start_bytes, t0), _ = read(), time.sleep(SIT)
+        end_bytes, t1 = read()
+        took = t1 - t0
+        # The flows open the whole sit, the relay's WebSocket among them; one
+        # opened or closed meanwhile is listed, never summed.
+        kept = lambda who: sorted(set(start_bytes[who] or {}) & set(end_bytes[who] or {}))
+        moved = {who: None if not kept(who) else
+                 {"flows": kept(who), "others": sorted(set(start_bytes[who] or {}) ^ set(end_bytes[who] or {})),
+                  "in": sum(end_bytes[who][f][0] - start_bytes[who][f][0] for f in kept(who)),
+                  "out": sum(end_bytes[who][f][1] - start_bytes[who][f][1] for f in kept(who))} for who in ("phone", "sam")}
+        for m in moved.values():
+            if m: m["per_s"] = round((m["in"] + m["out"]) / took, 1)
         after = tell(do="open", url=fresh(at), words=WORDS)
         summary["sit"] = {"s": round(took, 1), "network_pid": net, "before": before, "after": after, "moved": moved}
         say("sit", **summary["sit"])
