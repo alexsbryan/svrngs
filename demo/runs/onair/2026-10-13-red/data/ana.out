@@ -1,0 +1,8 @@
+Made onair, with you as Ana.
+Send this link to the people you want in it. It works for a day, while this computer is on:
+
+  svrngs://join/<the token>
+
+onair's folder is /private/tmp/onair-red-w/ana/svrngs/onair: what anyone in onair puts there reaches this computer, and what you put there reaches theirs.
+
+Leave this running; Ctrl-C stops it.

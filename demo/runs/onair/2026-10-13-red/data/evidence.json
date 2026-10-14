@@ -1,0 +1,736 @@
+{
+ "sound": {
+  "made_by": "ffmpeg aevalsrc, 40 s, mono, 128 kbit/s: generated here, nobody's rights",
+  "bytes": 640731
+ },
+ "group": "30da3959493f04350dce4bcf8526ed1205bb26e0ce9a681d5b0386cceb368f7f",
+ "people_joined": {
+  "Bo": {
+   "key": "026c5122c5a4779c4ee142369634db646f9f36de4efb744f75206dad0c07f3f1",
+   "person_key": "026c5122c5a4779c4ee142369634db646f9f36de4efb744f75206dad0c07f3f1"
+  },
+  "Dee": {
+   "key": "7752df2e4c2e6dbb357bca7a4330e3afe6034e77d5cd68d33601dcd7a86753f7",
+   "person_key": "7752df2e4c2e6dbb357bca7a4330e3afe6034e77d5cd68d33601dcd7a86753f7"
+  },
+  "Cy": {
+   "key": "933b31c20cb71ee7346ef67e164af3af85bd212a4ce9270c7543a6c6d2ec5e63",
+   "person_key": "933b31c20cb71ee7346ef67e164af3af85bd212a4ce9270c7543a6c6d2ec5e63"
+  },
+  "Ana": {
+   "key": "fbeae5a9f656d6a1882cbba52f67cf0f62136e2d4fc8e351e819b469880f7528",
+   "person_key": "fbeae5a9f656d6a1882cbba52f67cf0f62136e2d4fc8e351e819b469880f7528"
+  }
+ },
+ "remove_dee": {
+  "who": "ana",
+  "args": [
+   "remove",
+   "Dee",
+   "--group",
+   "onair"
+  ],
+  "exit": 0,
+  "said": "Dee is no longer in onair. What Dee already has stays with them; nothing new reaches them."
+ },
+ "people": {
+  "Bo": {
+   "key": "026c5122c5a4779c4ee142369634db646f9f36de4efb744f75206dad0c07f3f1",
+   "person_key": "026c5122c5a4779c4ee142369634db646f9f36de4efb744f75206dad0c07f3f1"
+  },
+  "Cy": {
+   "key": "933b31c20cb71ee7346ef67e164af3af85bd212a4ce9270c7543a6c6d2ec5e63",
+   "person_key": "933b31c20cb71ee7346ef67e164af3af85bd212a4ce9270c7543a6c6d2ec5e63"
+  },
+  "Ana": {
+   "key": "fbeae5a9f656d6a1882cbba52f67cf0f62136e2d4fc8e351e819b469880f7528",
+   "person_key": "fbeae5a9f656d6a1882cbba52f67cf0f62136e2d4fc8e351e819b469880f7528"
+  }
+ },
+ "removal_seen": {
+  "bo": true,
+  "cy": true
+ },
+ "bo_note": {
+  "status": 200,
+  "said": "{\"bytes\":27,\"delivered\":2,\"peers\":[{\"delivered\":true,\"name\":\"Cy\",\"node\":\"933b31c20cb71ee7346ef67e164af3af85bd212a4ce9270c7543a6c6d2ec5e63\"},{\"delivered\":true,\"name\":\"Ana\",\"node\":\"fbeae5a9f656d6a1882cbba52f67cf0f62136e2d4fc8e351e819b469880f7528\"}]}",
+  "ms": 180,
+  "length": 247
+ },
+ "station": {
+  "exit": 0,
+  "stderr": "",
+  "s": 40.2
+ },
+ "bo_listen_exit": 0,
+ "cy_listen_exit": 0,
+ "page": {
+  "exit": 0,
+  "tabs": [
+   {
+    "link": "http://127.0.0.1:62645/page/#key=fbeae5a9f656d6a1882cbba52f67cf0f62136e2d4fc8e351e819b469880f7528&show=evening",
+    "opened": 1791947469344,
+    "stopped": "cannot reach",
+    "said_at": 1791947522205,
+    "air": {
+     "key": "fbeae5a9f656d6a1882cbba52f67cf0f62136e2d4fc8e351e819b469880f7528",
+     "show": "evening",
+     "status": "cannot reach",
+     "played": [],
+     "refused": [
+      {
+       "n": 0,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 1,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 2,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 3,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 4,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 5,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 6,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 7,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 8,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 9,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 10,
+       "why": "unsigned: POST /v1/sign answered 404"
+      }
+     ],
+     "log": [
+      {
+       "t": 1791947469410,
+       "n": 0,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947473514,
+       "n": 1,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947477654,
+       "n": 2,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947481298,
+       "n": 3,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947485428,
+       "n": 4,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947489540,
+       "n": 5,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947493670,
+       "n": 6,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947497273,
+       "n": 7,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947501372,
+       "n": 8,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947505504,
+       "n": 9,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947509621,
+       "n": 10,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947521947,
+       "event": "cannot reach",
+       "why": "no line 11 in 12 s"
+      }
+     ],
+     "why": "no line 11 in 12 s",
+     "currentTime": 0
+    },
+    "errors": [],
+    "waited_404s": 103
+   }
+  ],
+  "stderr": ""
+ },
+ "carried": {
+  "hash_Y": "26df716ceabdb588febff7af8bbf0d8ad90620d5eb038d29280aacc69c471798",
+  "put_Y": {
+   "status": 404,
+   "said": "",
+   "ms": 1,
+   "length": 0
+  },
+  "put_Z": {
+   "status": 404,
+   "said": "",
+   "ms": 0,
+   "length": 0
+  },
+  "bo_get_Y": {
+   "status": 404,
+   "said": "",
+   "ms": 0,
+   "length": 0
+  },
+  "hash_Z": "241544c48a25f0230e3f2ac74a5955efab282f90015eb1e5a86fb1632d429361",
+  "ana_stopped": 0,
+  "cy_get_Y": {
+   "status": 404,
+   "said": "",
+   "ms": 1,
+   "length": 0
+  },
+  "cy_got_Y_bytes": false,
+  "cy_get_Z": {
+   "status": 404,
+   "said": "",
+   "ms": 0,
+   "length": 0
+  },
+  "s": 0.0
+ },
+ "plants": {
+  "no-ended": {
+   "exit": 0,
+   "stderr": "",
+   "lines": [
+    {
+     "status": 404,
+     "said": "",
+     "ms": 2,
+     "signed": false
+    },
+    {
+     "status": 404,
+     "said": "",
+     "ms": 1,
+     "signed": false
+    }
+   ]
+  },
+  "bo-signed": {
+   "exit": 0,
+   "stderr": "",
+   "lines": [
+    {
+     "status": 404,
+     "said": "",
+     "ms": 2,
+     "signed": false
+    },
+    {
+     "status": 404,
+     "said": "",
+     "ms": 1,
+     "signed": false
+    },
+    {
+     "status": 404,
+     "said": "",
+     "ms": 1,
+     "signed": false
+    }
+   ]
+  },
+  "flipped": {
+   "piece": 1,
+   "hash": "c225526d54ffddb89b45096ba6a14b86a747a43e693a25b88c9fb88c5d494aee",
+   "byte": 1000
+  },
+  "act-sig": {
+   "act": "7277a208c1ae9104e5e218fe0de9c20f2337a9ac3b9391bb715f23b998349a41",
+   "seq": 0,
+   "from": "ana/.svrngs/rings/30da3959493f04350dce4bcf8526ed1205bb26e0ce9a681d5b0386cceb368f7f/ring_oplog.jsonl",
+   "lines": [
+    0,
+    1
+   ],
+   "log_op_fields": [
+    "actor",
+    "id",
+    "person",
+    "seq",
+    "ts_unix",
+    "voided"
+   ]
+  }
+ },
+ "plant_pages": {
+  "exit": 0,
+  "tabs": [
+   {
+    "link": "http://127.0.0.1:62645/page/#key=fbeae5a9f656d6a1882cbba52f67cf0f62136e2d4fc8e351e819b469880f7528&show=bo-signed",
+    "opened": 1791947548642,
+    "stopped": "cannot reach",
+    "said_at": 1791947561415,
+    "air": {
+     "key": "fbeae5a9f656d6a1882cbba52f67cf0f62136e2d4fc8e351e819b469880f7528",
+     "show": "bo-signed",
+     "status": "cannot reach",
+     "played": [],
+     "refused": [
+      {
+       "n": 0,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 1,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 2,
+       "why": "unsigned: POST /v1/sign answered 404"
+      }
+     ],
+     "log": [
+      {
+       "t": 1791947548697,
+       "n": 0,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548699,
+       "n": 1,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548700,
+       "n": 2,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947561143,
+       "event": "cannot reach",
+       "why": "no line 3 in 12 s"
+      }
+     ],
+     "why": "no line 3 in 12 s",
+     "currentTime": 0
+    },
+    "errors": [],
+    "waited_404s": 25
+   },
+   {
+    "link": "http://127.0.0.1:62645/page/#key=fbeae5a9f656d6a1882cbba52f67cf0f62136e2d4fc8e351e819b469880f7528&show=no-ended",
+    "opened": 1791947548643,
+    "stopped": "cannot reach",
+    "said_at": 1791947561417,
+    "air": {
+     "key": "fbeae5a9f656d6a1882cbba52f67cf0f62136e2d4fc8e351e819b469880f7528",
+     "show": "no-ended",
+     "status": "cannot reach",
+     "played": [],
+     "refused": [
+      {
+       "n": 0,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 1,
+       "why": "unsigned: POST /v1/sign answered 404"
+      }
+     ],
+     "log": [
+      {
+       "t": 1791947548697,
+       "n": 0,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548699,
+       "n": 1,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947561144,
+       "event": "cannot reach",
+       "why": "no line 2 in 12 s"
+      }
+     ],
+     "why": "no line 2 in 12 s",
+     "currentTime": 0
+    },
+    "errors": [],
+    "waited_404s": 25
+   },
+   {
+    "link": "http://127.0.0.1:62645/page/#key=fbeae5a9f656d6a1882cbba52f67cf0f62136e2d4fc8e351e819b469880f7528&show=flipped",
+    "opened": 1791947548643,
+    "stopped": "cannot reach",
+    "said_at": 1791947561418,
+    "air": {
+     "key": "fbeae5a9f656d6a1882cbba52f67cf0f62136e2d4fc8e351e819b469880f7528",
+     "show": "flipped",
+     "status": "cannot reach",
+     "played": [],
+     "refused": [
+      {
+       "n": 0,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 1,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 2,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 3,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 4,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 5,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 6,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 7,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 8,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 9,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 10,
+       "why": "unsigned: POST /v1/sign answered 404"
+      }
+     ],
+     "log": [
+      {
+       "t": 1791947548697,
+       "n": 0,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548699,
+       "n": 1,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548700,
+       "n": 2,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548703,
+       "n": 3,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548704,
+       "n": 4,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548705,
+       "n": 5,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548706,
+       "n": 6,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548707,
+       "n": 7,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548708,
+       "n": 8,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548709,
+       "n": 9,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548710,
+       "n": 10,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947561145,
+       "event": "cannot reach",
+       "why": "no line 11 in 12 s"
+      }
+     ],
+     "why": "no line 11 in 12 s",
+     "currentTime": 0
+    },
+    "errors": [],
+    "waited_404s": 25
+   },
+   {
+    "link": "http://127.0.0.1:62645/page/#key=fbeae5a9f656d6a1882cbba52f67cf0f62136e2d4fc8e351e819b469880f7528&show=act-sig",
+    "opened": 1791947548643,
+    "stopped": "cannot reach",
+    "said_at": 1791947561418,
+    "air": {
+     "key": "fbeae5a9f656d6a1882cbba52f67cf0f62136e2d4fc8e351e819b469880f7528",
+     "show": "act-sig",
+     "status": "cannot reach",
+     "played": [],
+     "refused": [
+      {
+       "n": 0,
+       "why": "its signature does not check under the station's key fbeae5a9…"
+      },
+      {
+       "n": 1,
+       "why": "its signature does not check under the station's key fbeae5a9…"
+      },
+      {
+       "n": 2,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 3,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 4,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 5,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 6,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 7,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 8,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 9,
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "n": 10,
+       "why": "unsigned: POST /v1/sign answered 404"
+      }
+     ],
+     "log": [
+      {
+       "t": 1791947548706,
+       "n": 0,
+       "event": "refused",
+       "why": "its signature does not check under the station's key fbeae5a9…"
+      },
+      {
+       "t": 1791947548709,
+       "n": 1,
+       "event": "refused",
+       "why": "its signature does not check under the station's key fbeae5a9…"
+      },
+      {
+       "t": 1791947548709,
+       "n": 2,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548712,
+       "n": 3,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548712,
+       "n": 4,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548713,
+       "n": 5,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548714,
+       "n": 6,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548714,
+       "n": 7,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548715,
+       "n": 8,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548716,
+       "n": 9,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947548717,
+       "n": 10,
+       "event": "refused",
+       "why": "unsigned: POST /v1/sign answered 404"
+      },
+      {
+       "t": 1791947561146,
+       "event": "cannot reach",
+       "why": "no line 11 in 12 s"
+      }
+     ],
+     "why": "no line 11 in 12 s",
+     "currentTime": 0
+    },
+    "errors": [],
+    "waited_404s": 25
+   }
+  ],
+  "stderr": ""
+ },
+ "scoped": {
+  "dee_get_Y": {
+   "status": 404,
+   "said": "",
+   "ms": 1,
+   "length": 0
+  }
+ },
+ "lapses": {
+  "s_after_last_put": 65.1,
+  "never_held": "7076f4a97599e49110dd8fc36d2b0bc7ffc5f2544e8d57d2e1c9bb94be424c53",
+  "piece0": "7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9",
+  "bo_piece0": {
+   "status": 404,
+   "said": "",
+   "ms": 1,
+   "length": 0
+  },
+  "bo_Y": {
+   "status": 404,
+   "said": "",
+   "ms": 1,
+   "length": 0
+  },
+  "bo_never": {
+   "status": 404,
+   "said": "",
+   "ms": 1,
+   "length": 0
+  },
+  "cy_piece0": {
+   "status": 404,
+   "said": "",
+   "ms": 1,
+   "length": 0
+  },
+  "cy_Y": {
+   "status": 404,
+   "said": "",
+   "ms": 1,
+   "length": 0
+  },
+  "cy_never": {
+   "status": 404,
+   "said": "",
+   "ms": 1,
+   "length": 0
+  }
+ }
+}

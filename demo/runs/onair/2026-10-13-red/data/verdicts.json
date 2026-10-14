@@ -1,0 +1,108 @@
+{
+ "4.1": {
+  "verdict": "failed",
+  "why": "Bo held 0 of 10 pieces, 0 past 4000 ms",
+  "bound_ms": 4000,
+  "held_ms": {},
+  "station_puts": [
+   "404"
+  ],
+  "bo_refusals": [
+   "unsigned: POST /v1/sign answered 404; and the drain names no sender"
+  ]
+ },
+ "4.1, carried": {
+  "verdict": "failed",
+  "why": "Cy's get of Y with Ana stopped: 404 (0 bytes), Bo named in Cy's trace: False; the plant Z: 404 ''",
+  "ana_put_Y": 404,
+  "bo_get_Y": 404,
+  "cy_trace": []
+ },
+ "4.1, lapses": {
+  "verdict": "failed",
+  "why": "65.1 s after the last put: still held []; said lapsed []; lapsed told apart from never held: False",
+  "answers": {
+   "bo_piece0": [
+    404,
+    ""
+   ],
+   "bo_Y": [
+    404,
+    ""
+   ],
+   "bo_never": [
+    404,
+    ""
+   ],
+   "cy_piece0": [
+    404,
+    ""
+   ],
+   "cy_Y": [
+    404,
+    ""
+   ],
+   "cy_never": [
+    404,
+    ""
+   ]
+  }
+ },
+ "4.1, scoped": {
+  "verdict": "failed",
+  "why": "Dee's get of Y: 404 ''; a provider's refusal of Dee in Bo's trace: False",
+  "provider_refusals": []
+ },
+ "4.2": {
+  "verdict": "failed",
+  "why": "the page on evening played 0 of 10; plants played {'bo-signed': [], 'no-ended': [], 'flipped': [], 'act-sig': []}",
+  "signs": [
+   "404"
+  ],
+  "page_refused": [
+   "unsigned: POST /v1/sign answered 404"
+  ],
+  "page_said": [
+   "cannot reach",
+   "no line 11 in 12 s"
+  ],
+  "plant_refusals": {
+   "bo-signed": [
+    "unsigned: POST /v1/sign answered 404"
+   ],
+   "no-ended": [
+    "unsigned: POST /v1/sign answered 404"
+   ],
+   "flipped": [
+    "unsigned: POST /v1/sign answered 404"
+   ],
+   "act-sig": [
+    "its signature does not check under the station's key fbeae5a9…",
+    "unsigned: POST /v1/sign answered 404"
+   ]
+  }
+ },
+ "4.3": {
+  "verdict": "failed",
+  "why": "Bo drained 11, Cy 12; senders named: ['\"the drain names no sender\"']; Bo's note in Cy's drain: the drain names no sender",
+  "live_delivered": [
+   "2"
+  ],
+  "bo_note": {
+   "status": 200,
+   "said": "{\"bytes\":27,\"delivered\":2,\"peers\":[{\"delivered\":true,\"name\":\"Cy\",\"node\":\"933b31c20cb71ee7346ef67e164af3af85bd212a4ce9270c7543a6c6d2ec5e63\"},{\"delivered\":true,\"name\":\"Ana\",\"node\":\"fbeae5a9f656d6a1882cbba52f67cf0f62136e2d4fc8e351e819b469880f7528\"}]}",
+   "ms": 180,
+   "length": 247
+  }
+ },
+ "off air": {
+  "verdict": "failed",
+  "why": "ended said within 4 s: Bo False, Cy False, page False (it said 'cannot reach'); the plant no-ended: 'cannot reach'",
+  "listeners_stopped": {
+   "bo": "no ended from the station in 80 s",
+   "cy": "no ended from the station in 80 s"
+  },
+  "page_why": "no line 11 in 12 s",
+  "plant_why": "no line 2 in 12 s"
+ }
+}
