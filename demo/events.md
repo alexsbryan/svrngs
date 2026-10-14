@@ -125,10 +125,10 @@ theirs (step 7). The link carries no password.
 
 **5. Bo, on a computer.** Bo opens the link from The House's chat. His
 browser says *"This link opens in svrngs on your computer."* and shows
-the link again, with **Copy**. He presses **Copy**, opens his svrngs home
-page, pastes the link under **Open a link from your group**, and presses
-**Open it**: the dinner opens in a tab of its own (36 ms in the link
-take). The page that says it opens in svrngs also shows a name box, Join,
+the link again, with **Copy**. He copies it, opens his svrngs home page,
+pastes it under **Open a link from your group**, and presses **Open it**
+(the link take pasted the link that page showed): the dinner opens in a
+tab of its own (36 ms there). The page that says it opens in svrngs also shows a name box, Join,
 Yes and Not now; Bo leaves them ("When something does not work").
 
 ![Bo's browser: the link opens in svrngs](runs/events/2026-10-14-links/data/shots/11-bo-L3.png)
