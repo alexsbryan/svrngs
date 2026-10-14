@@ -97,6 +97,8 @@ fi
 if [ -f "$kept" ] && stop; then say "Stopped $unit, to update it."; fi
 
 mkdir -p "$bin" "$dir"
+# The page it came from, by the name the node reads (svrngs-node invite.rs
+# `ORIGIN_FILE`; tests/install.rs reads it by that constant).
 printf '%s' "$from" >"$dir/origin"
 tar -xzf "$tmp/$tarball" -C "$tmp" svrngs
 chmod 755 "$tmp/svrngs"

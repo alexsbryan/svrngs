@@ -28,6 +28,7 @@ use std::time::Duration;
 
 use svrngs::cli;
 use svrngs::group::Name;
+use svrngs_node::invite::ORIGIN_FILE;
 use svrngs_node::link::Origin;
 use svrngs_node::RailAct;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -420,7 +421,9 @@ async fn a_founder_s_line_installs_keeps_svrngs_at_login_and_opens_the_home_page
         assert!(said.contains(&named), "{said}");
         let opened = std::fs::read_to_string(home.path().join("stubs/opened")).unwrap();
         assert_eq!(opened, format!("{address}\n"));
-        let origin = std::fs::read_to_string(data.join("origin")).unwrap();
+        // Where the node reads it for a group made on the home page:
+        // install.sh spells the file in shell, so it is pinned here.
+        let origin = std::fs::read_to_string(data.join(ORIGIN_FILE)).unwrap();
         assert_eq!(origin, page, "the page svrngs came from, kept");
     }
 }
