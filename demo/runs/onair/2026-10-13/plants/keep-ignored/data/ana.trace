@@ -1,0 +1,335 @@
+2026-10-14T06:50:12.353323Z  INFO folder: folder: the store is open untagged=0
+2026-10-14T06:50:12.837901Z  INFO folder: synced: the directory kept in step with the group's folder namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" folder="onair" dir=/private/tmp/onair-run-keep-ignored-w/ana/svrngs/onair
+2026-10-14T06:50:12.843185Z DEBUG folder: synced: the OS's file events watched, the directory walked whole each 600s namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" folder="onair"
+2026-10-14T06:50:12.845716Z DEBUG folder: folder: the layout read again, the record having moved namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" placed=0
+2026-10-14T06:50:12.845941Z DEBUG folder: synced: the layout read folder="onair" placed=0 holders=1 ms=2
+2026-10-14T06:50:12.846562Z DEBUG folder: synced: the layout to write folder="onair" placed=0
+2026-10-14T06:50:12.846759Z DEBUG folder: synced: a step folder="onair" files=0 sent=0 unwritten=0 read_ms=2 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=3
+2026-10-14T06:50:12.897717Z DEBUG folder: synced: the step woken, the OS saying files changed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" folder="onair" paths=1
+2026-10-14T06:50:12.898723Z DEBUG folder: synced: the layout read folder="onair" placed=0 holders=1 ms=0
+2026-10-14T06:50:12.899198Z DEBUG folder: synced: the layout to write folder="onair" placed=0
+2026-10-14T06:50:12.899310Z DEBUG folder: synced: a step folder="onair" files=0 sent=0 unwritten=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=1
+2026-10-14T06:50:13.481314Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=0
+2026-10-14T06:50:13.903316Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" folder="onair"
+2026-10-14T06:50:13.907836Z DEBUG folder: folder: the layout read again, the record having moved namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" placed=0
+2026-10-14T06:50:13.907953Z DEBUG folder: synced: the layout read folder="onair" placed=0 holders=2 ms=4
+2026-10-14T06:50:13.908184Z DEBUG folder: synced: the layout to write folder="onair" placed=0
+2026-10-14T06:50:13.908279Z DEBUG folder: synced: a step folder="onair" files=0 sent=0 unwritten=0 read_ms=4 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=4
+2026-10-14T06:50:13.944103Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" folder="onair"
+2026-10-14T06:50:13.947115Z DEBUG folder: folder: the layout read again, the record having moved namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" placed=0
+2026-10-14T06:50:13.947168Z DEBUG folder: synced: the layout read folder="onair" placed=0 holders=2 ms=3
+2026-10-14T06:50:13.947267Z DEBUG folder: synced: the layout to write folder="onair" placed=0
+2026-10-14T06:50:13.947313Z DEBUG folder: synced: a step folder="onair" files=0 sent=0 unwritten=0 read_ms=3 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=3
+2026-10-14T06:50:14.623135Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:14.878315Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" folder="onair"
+2026-10-14T06:50:14.886570Z DEBUG folder: folder: the layout read again, the record having moved namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" placed=0
+2026-10-14T06:50:14.886690Z DEBUG folder: synced: the layout read folder="onair" placed=0 holders=3 ms=8
+2026-10-14T06:50:14.886894Z DEBUG folder: synced: the layout to write folder="onair" placed=0
+2026-10-14T06:50:14.886976Z DEBUG folder: synced: a step folder="onair" files=0 sent=0 unwritten=0 read_ms=8 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=8
+2026-10-14T06:50:14.921531Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" folder="onair"
+2026-10-14T06:50:14.925001Z DEBUG folder: folder: the layout read again, the record having moved namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" placed=0
+2026-10-14T06:50:14.925031Z DEBUG folder: synced: the layout read folder="onair" placed=0 holders=3 ms=3
+2026-10-14T06:50:14.925099Z DEBUG folder: synced: the layout to write folder="onair" placed=0
+2026-10-14T06:50:14.925129Z DEBUG folder: synced: a step folder="onair" files=0 sent=0 unwritten=0 read_ms=3 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=3
+2026-10-14T06:50:15.721730Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:15.941184Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" folder="onair"
+2026-10-14T06:50:15.948816Z DEBUG folder: folder: the layout read again, the record having moved namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" placed=0
+2026-10-14T06:50:15.950352Z DEBUG folder: synced: the layout read folder="onair" placed=0 holders=4 ms=8
+2026-10-14T06:50:15.950521Z DEBUG folder: synced: the layout to write folder="onair" placed=0
+2026-10-14T06:50:15.950595Z DEBUG folder: synced: a step folder="onair" files=0 sent=0 unwritten=0 read_ms=9 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=9
+2026-10-14T06:50:15.989635Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" folder="onair"
+2026-10-14T06:50:15.993052Z DEBUG folder: folder: the layout read again, the record having moved namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" placed=0
+2026-10-14T06:50:15.993070Z DEBUG folder: synced: the layout read folder="onair" placed=0 holders=4 ms=3
+2026-10-14T06:50:15.993117Z DEBUG folder: synced: the layout to write folder="onair" placed=0
+2026-10-14T06:50:15.993137Z DEBUG folder: synced: a step folder="onair" files=0 sent=0 unwritten=0 read_ms=3 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=3
+2026-10-14T06:50:16.253908Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62486 path=/v1/removals
+2026-10-14T06:50:16.269883Z DEBUG removal: removal: written — the cut when this computer decides, else an ask; the round woken group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" written=1 cut=["2136ebda24f8b19589e4d5da70e7bc0ad295c6d2546361b06f7bc780a5b6c3d2"]
+2026-10-14T06:50:16.269962Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" folder="onair"
+2026-10-14T06:50:16.274191Z DEBUG folder: folder: the layout read again, the record having moved namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" placed=0
+2026-10-14T06:50:16.276354Z DEBUG folder: synced: the layout read folder="onair" placed=0 holders=3 ms=6
+2026-10-14T06:50:16.276482Z DEBUG folder: synced: the layout to write folder="onair" placed=0
+2026-10-14T06:50:16.276537Z DEBUG folder: synced: a step folder="onair" files=0 sent=0 unwritten=0 read_ms=6 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=6
+2026-10-14T06:50:16.278201Z DEBUG removal: removal: the removed computer told its cut group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="2136ebda24f8b19589e4d5da70e7bc0ad295c6d2546361b06f7bc780a5b6c3d2" told=true
+2026-10-14T06:50:16.867497Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:17.943710Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:17.943750Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:18.014082Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62508 path=/v1/blob
+2026-10-14T06:50:18.015245Z DEBUG blob: blob: put, placed in the group until it lapses hash=7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" keep=60
+2026-10-14T06:50:18.020301Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62508 path=/v1/sign
+2026-10-14T06:50:18.022529Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06" person=Cy
+2026-10-14T06:50:18.022541Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca" person=Bo
+2026-10-14T06:50:18.025291Z DEBUG rails: rail live: fanned out one payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" bytes=350 peers=2 delivered=2
+2026-10-14T06:50:18.172889Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:18.172918Z DEBUG blob: blob: a member asked what this computer holds hash=7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399841 }
+2026-10-14T06:50:18.174339Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:18.174357Z DEBUG blob: blob: a member asked what this computer holds hash=7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399840 }
+2026-10-14T06:50:18.176796Z DEBUG folder: folder: the dialer stands in a group an app placed the hash in, not lapsed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" dialer="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:18.176812Z  INFO folder: folder: serving — a synced folder or app of a group the dialer stands in places the hash hash=7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9 conn=517125707344 request=0 dialer=Some("c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca") ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])" record_ms=0.119
+2026-10-14T06:50:18.177253Z  INFO folder: folder: sent hash=7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9 conn=517125707344 request=0 done=true last=64365 payload=64365 other=200
+2026-10-14T06:50:18.178346Z DEBUG folder: folder: the dialer stands in a group an app placed the hash in, not lapsed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" dialer="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:18.178472Z  INFO folder: folder: serving — a synced folder or app of a group the dialer stands in places the hash hash=7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9 conn=517125712912 request=0 dialer=Some("6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06") ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])" record_ms=0.233
+2026-10-14T06:50:18.179860Z  INFO folder: folder: sent hash=7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9 conn=517125712912 request=0 done=true last=64365 payload=64365 other=200
+2026-10-14T06:50:19.028452Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=1
+2026-10-14T06:50:20.120325Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:20.120491Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:21.223551Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:21.223693Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:22.031115Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62508 path=/v1/blob
+2026-10-14T06:50:22.033452Z DEBUG blob: blob: put, placed in the group until it lapses hash=c225526d54ffddb89b45096ba6a14b86a747a43e693a25b88c9fb88c5d494aee group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" keep=60
+2026-10-14T06:50:22.036363Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62508 path=/v1/sign
+2026-10-14T06:50:22.040353Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06" person=Cy
+2026-10-14T06:50:22.040372Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca" person=Bo
+2026-10-14T06:50:22.043842Z DEBUG rails: rail live: fanned out one payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" bytes=350 peers=2 delivered=2
+2026-10-14T06:50:22.131907Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:22.131950Z DEBUG blob: blob: a member asked what this computer holds hash=c225526d54ffddb89b45096ba6a14b86a747a43e693a25b88c9fb88c5d494aee group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399899 }
+2026-10-14T06:50:22.132253Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:22.132285Z DEBUG blob: blob: a member asked what this computer holds hash=c225526d54ffddb89b45096ba6a14b86a747a43e693a25b88c9fb88c5d494aee group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399899 }
+2026-10-14T06:50:22.133322Z DEBUG folder: folder: the dialer stands in a group an app placed the hash in, not lapsed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" dialer="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:22.133350Z  INFO folder: folder: serving — a synced folder or app of a group the dialer stands in places the hash hash=c225526d54ffddb89b45096ba6a14b86a747a43e693a25b88c9fb88c5d494aee conn=517125707344 request=1 dialer=Some("c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca") ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])" record_ms=0.261
+2026-10-14T06:50:22.133378Z DEBUG folder: folder: the dialer stands in a group an app placed the hash in, not lapsed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" dialer="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:22.133402Z  INFO folder: folder: serving — a synced folder or app of a group the dialer stands in places the hash hash=c225526d54ffddb89b45096ba6a14b86a747a43e693a25b88c9fb88c5d494aee conn=517125712912 request=1 dialer=Some("6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06") ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])" record_ms=0.259
+2026-10-14T06:50:22.136474Z  INFO folder: folder: sent hash=c225526d54ffddb89b45096ba6a14b86a747a43e693a25b88c9fb88c5d494aee conn=517125712912 request=1 done=true last=64366 payload=64366 other=200
+2026-10-14T06:50:22.138153Z  INFO folder: folder: sent hash=c225526d54ffddb89b45096ba6a14b86a747a43e693a25b88c9fb88c5d494aee conn=517125707344 request=1 done=true last=64366 payload=64366 other=200
+2026-10-14T06:50:22.241150Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=2
+2026-10-14T06:50:23.321104Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:23.321189Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:24.391911Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:24.392132Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:25.483935Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:25.484046Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:26.042749Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62508 path=/v1/blob
+2026-10-14T06:50:26.044685Z DEBUG blob: blob: put, placed in the group until it lapses hash=43e3307d1f5bebff444501f3407fee6d30771fc10e1868607de5a252a2a58740 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" keep=60
+2026-10-14T06:50:26.046422Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62508 path=/v1/sign
+2026-10-14T06:50:26.048632Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06" person=Cy
+2026-10-14T06:50:26.048645Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca" person=Bo
+2026-10-14T06:50:26.052039Z DEBUG rails: rail live: fanned out one payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" bytes=350 peers=2 delivered=2
+2026-10-14T06:50:26.120729Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:26.120768Z DEBUG blob: blob: a member asked what this computer holds hash=43e3307d1f5bebff444501f3407fee6d30771fc10e1868607de5a252a2a58740 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399922 }
+2026-10-14T06:50:26.121477Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:26.121529Z DEBUG blob: blob: a member asked what this computer holds hash=43e3307d1f5bebff444501f3407fee6d30771fc10e1868607de5a252a2a58740 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399921 }
+2026-10-14T06:50:26.122062Z DEBUG folder: folder: the dialer stands in a group an app placed the hash in, not lapsed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" dialer="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:26.122085Z  INFO folder: folder: serving — a synced folder or app of a group the dialer stands in places the hash hash=43e3307d1f5bebff444501f3407fee6d30771fc10e1868607de5a252a2a58740 conn=517125712912 request=2 dialer=Some("6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06") ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])" record_ms=0.223
+2026-10-14T06:50:26.124110Z  INFO folder: folder: sent hash=43e3307d1f5bebff444501f3407fee6d30771fc10e1868607de5a252a2a58740 conn=517125712912 request=2 done=true last=64366 payload=64366 other=200
+2026-10-14T06:50:26.596497Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=3
+2026-10-14T06:50:27.776051Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:27.776127Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:28.893367Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:28.893508Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:29.979461Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:29.979551Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:30.069553Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62658 path=/v1/blob
+2026-10-14T06:50:30.070448Z DEBUG blob: blob: put, placed in the group until it lapses hash=f3b72ae551f6b845528acd5f248a3f3d4e9d157747c3f63833c780ee862fbf38 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" keep=60
+2026-10-14T06:50:30.071758Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62658 path=/v1/sign
+2026-10-14T06:50:30.073076Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06" person=Cy
+2026-10-14T06:50:30.073087Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca" person=Bo
+2026-10-14T06:50:30.075287Z DEBUG rails: rail live: fanned out one payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" bytes=350 peers=2 delivered=2
+2026-10-14T06:50:30.274747Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:30.274763Z DEBUG blob: blob: a member asked what this computer holds hash=f3b72ae551f6b845528acd5f248a3f3d4e9d157747c3f63833c780ee862fbf38 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399795 }
+2026-10-14T06:50:30.274797Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:30.274814Z DEBUG blob: blob: a member asked what this computer holds hash=f3b72ae551f6b845528acd5f248a3f3d4e9d157747c3f63833c780ee862fbf38 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399794 }
+2026-10-14T06:50:30.275531Z DEBUG folder: folder: the dialer stands in a group an app placed the hash in, not lapsed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" dialer="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:30.275544Z  INFO folder: folder: serving — a synced folder or app of a group the dialer stands in places the hash hash=f3b72ae551f6b845528acd5f248a3f3d4e9d157747c3f63833c780ee862fbf38 conn=517125707344 request=2 dialer=Some("c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca") ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])" record_ms=0.146
+2026-10-14T06:50:30.275561Z DEBUG folder: folder: the dialer stands in a group an app placed the hash in, not lapsed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" dialer="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:30.275570Z  INFO folder: folder: serving — a synced folder or app of a group the dialer stands in places the hash hash=f3b72ae551f6b845528acd5f248a3f3d4e9d157747c3f63833c780ee862fbf38 conn=517125712912 request=3 dialer=Some("6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06") ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])" record_ms=0.163
+2026-10-14T06:50:30.277136Z  INFO folder: folder: sent hash=f3b72ae551f6b845528acd5f248a3f3d4e9d157747c3f63833c780ee862fbf38 conn=517125712912 request=3 done=true last=64365 payload=64365 other=200
+2026-10-14T06:50:30.278141Z  INFO folder: folder: sent hash=f3b72ae551f6b845528acd5f248a3f3d4e9d157747c3f63833c780ee862fbf38 conn=517125707344 request=2 done=true last=64365 payload=64365 other=200
+2026-10-14T06:50:31.071808Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=4
+2026-10-14T06:50:32.160144Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:32.160233Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:33.235648Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:33.235733Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:34.093203Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62676 path=/v1/blob
+2026-10-14T06:50:34.094330Z DEBUG blob: blob: put, placed in the group until it lapses hash=331d859f20cdcd7f302ad5493e2ab0a05215a58a7d2b419b163800784ed716e8 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" keep=60
+2026-10-14T06:50:34.096070Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62676 path=/v1/sign
+2026-10-14T06:50:34.097295Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06" person=Cy
+2026-10-14T06:50:34.097306Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca" person=Bo
+2026-10-14T06:50:34.099653Z DEBUG rails: rail live: fanned out one payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" bytes=350 peers=2 delivered=2
+2026-10-14T06:50:34.195001Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:34.195018Z DEBUG blob: blob: a member asked what this computer holds hash=331d859f20cdcd7f302ad5493e2ab0a05215a58a7d2b419b163800784ed716e8 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399898 }
+2026-10-14T06:50:34.195164Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:34.195196Z DEBUG blob: blob: a member asked what this computer holds hash=331d859f20cdcd7f302ad5493e2ab0a05215a58a7d2b419b163800784ed716e8 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399898 }
+2026-10-14T06:50:34.195710Z DEBUG folder: folder: the dialer stands in a group an app placed the hash in, not lapsed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" dialer="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:34.195734Z  INFO folder: folder: serving — a synced folder or app of a group the dialer stands in places the hash hash=331d859f20cdcd7f302ad5493e2ab0a05215a58a7d2b419b163800784ed716e8 conn=517125707344 request=3 dialer=Some("c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca") ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])" record_ms=0.139
+2026-10-14T06:50:34.195761Z DEBUG folder: folder: the dialer stands in a group an app placed the hash in, not lapsed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" dialer="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:34.195774Z  INFO folder: folder: serving — a synced folder or app of a group the dialer stands in places the hash hash=331d859f20cdcd7f302ad5493e2ab0a05215a58a7d2b419b163800784ed716e8 conn=517125712912 request=4 dialer=Some("6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06") ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])" record_ms=0.112
+2026-10-14T06:50:34.196552Z  INFO folder: folder: sent hash=331d859f20cdcd7f302ad5493e2ab0a05215a58a7d2b419b163800784ed716e8 conn=517125712912 request=4 done=true last=64366 payload=64366 other=200
+2026-10-14T06:50:34.198052Z  INFO folder: folder: sent hash=331d859f20cdcd7f302ad5493e2ab0a05215a58a7d2b419b163800784ed716e8 conn=517125707344 request=3 done=true last=64366 payload=64366 other=200
+2026-10-14T06:50:34.333178Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=5
+2026-10-14T06:50:35.413387Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:35.413481Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:36.519935Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:36.520004Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:37.594273Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:37.594409Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:38.110612Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62713 path=/v1/blob
+2026-10-14T06:50:38.111594Z DEBUG blob: blob: put, placed in the group until it lapses hash=6a638506ce8f63990f2e9dd876b7b5f425556f05edcfcd755a72c9e5b3ca6cab group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" keep=60
+2026-10-14T06:50:38.112723Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62713 path=/v1/sign
+2026-10-14T06:50:38.113835Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06" person=Cy
+2026-10-14T06:50:38.113844Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca" person=Bo
+2026-10-14T06:50:38.116210Z DEBUG rails: rail live: fanned out one payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" bytes=350 peers=2 delivered=2
+2026-10-14T06:50:38.305469Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:38.305492Z DEBUG blob: blob: a member asked what this computer holds hash=6a638506ce8f63990f2e9dd876b7b5f425556f05edcfcd755a72c9e5b3ca6cab group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399805 }
+2026-10-14T06:50:38.305502Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:38.305581Z DEBUG blob: blob: a member asked what this computer holds hash=6a638506ce8f63990f2e9dd876b7b5f425556f05edcfcd755a72c9e5b3ca6cab group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399805 }
+2026-10-14T06:50:38.306294Z DEBUG folder: folder: the dialer stands in a group an app placed the hash in, not lapsed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" dialer="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:38.306310Z  INFO folder: folder: serving — a synced folder or app of a group the dialer stands in places the hash hash=6a638506ce8f63990f2e9dd876b7b5f425556f05edcfcd755a72c9e5b3ca6cab conn=517125707344 request=4 dialer=Some("c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca") ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])" record_ms=0.131
+2026-10-14T06:50:38.306323Z DEBUG folder: folder: the dialer stands in a group an app placed the hash in, not lapsed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" dialer="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:38.306334Z  INFO folder: folder: serving — a synced folder or app of a group the dialer stands in places the hash hash=6a638506ce8f63990f2e9dd876b7b5f425556f05edcfcd755a72c9e5b3ca6cab conn=517125712912 request=5 dialer=Some("6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06") ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])" record_ms=0.175
+2026-10-14T06:50:38.306963Z  INFO folder: folder: sent hash=6a638506ce8f63990f2e9dd876b7b5f425556f05edcfcd755a72c9e5b3ca6cab conn=517125707344 request=4 done=true last=64366 payload=64366 other=200
+2026-10-14T06:50:38.309215Z  INFO folder: folder: sent hash=6a638506ce8f63990f2e9dd876b7b5f425556f05edcfcd755a72c9e5b3ca6cab conn=517125712912 request=5 done=true last=64366 payload=64366 other=200
+2026-10-14T06:50:38.742179Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=6
+2026-10-14T06:50:39.840637Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:39.840728Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:40.932044Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:40.932092Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:42.024064Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:42.024360Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:42.137437Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62737 path=/v1/blob
+2026-10-14T06:50:42.139196Z DEBUG blob: blob: put, placed in the group until it lapses hash=f9c74a3a0ea2b045eca52e6614f9158a55880c370bb60aad0b755d37c8ab9afb group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" keep=60
+2026-10-14T06:50:42.140896Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62737 path=/v1/sign
+2026-10-14T06:50:42.142266Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06" person=Cy
+2026-10-14T06:50:42.142288Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca" person=Bo
+2026-10-14T06:50:42.145279Z DEBUG rails: rail live: fanned out one payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" bytes=350 peers=2 delivered=2
+2026-10-14T06:50:42.243240Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:42.243269Z DEBUG blob: blob: a member asked what this computer holds hash=f9c74a3a0ea2b045eca52e6614f9158a55880c370bb60aad0b755d37c8ab9afb group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399894 }
+2026-10-14T06:50:42.243498Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:42.243545Z DEBUG blob: blob: a member asked what this computer holds hash=f9c74a3a0ea2b045eca52e6614f9158a55880c370bb60aad0b755d37c8ab9afb group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399894 }
+2026-10-14T06:50:42.244177Z DEBUG folder: folder: the dialer stands in a group an app placed the hash in, not lapsed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" dialer="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:42.244191Z  INFO folder: folder: serving — a synced folder or app of a group the dialer stands in places the hash hash=f9c74a3a0ea2b045eca52e6614f9158a55880c370bb60aad0b755d37c8ab9afb conn=517125707344 request=5 dialer=Some("c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca") ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])" record_ms=0.139
+2026-10-14T06:50:42.244209Z DEBUG folder: folder: the dialer stands in a group an app placed the hash in, not lapsed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" dialer="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:42.244223Z  INFO folder: folder: serving — a synced folder or app of a group the dialer stands in places the hash hash=f9c74a3a0ea2b045eca52e6614f9158a55880c370bb60aad0b755d37c8ab9afb conn=517125712912 request=6 dialer=Some("6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06") ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])" record_ms=0.107
+2026-10-14T06:50:42.246349Z  INFO folder: folder: sent hash=f9c74a3a0ea2b045eca52e6614f9158a55880c370bb60aad0b755d37c8ab9afb conn=517125712912 request=6 done=true last=64366 payload=64366 other=200
+2026-10-14T06:50:42.246694Z  INFO folder: folder: sent hash=f9c74a3a0ea2b045eca52e6614f9158a55880c370bb60aad0b755d37c8ab9afb conn=517125707344 request=5 done=true last=64366 payload=64366 other=200
+2026-10-14T06:50:43.105665Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=7
+2026-10-14T06:50:44.177579Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:44.177729Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:45.200672Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:45.200803Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:46.159419Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62757 path=/v1/blob
+2026-10-14T06:50:46.160415Z DEBUG blob: blob: put, placed in the group until it lapses hash=b220f944274e724e1cfab60fbbbc21f250409df688288ca3a284a64d4565b272 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" keep=60
+2026-10-14T06:50:46.161595Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62757 path=/v1/sign
+2026-10-14T06:50:46.162514Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06" person=Cy
+2026-10-14T06:50:46.162522Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca" person=Bo
+2026-10-14T06:50:46.164831Z DEBUG rails: rail live: fanned out one payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" bytes=350 peers=2 delivered=2
+2026-10-14T06:50:46.216800Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=8
+2026-10-14T06:50:46.352153Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:46.352214Z DEBUG blob: blob: a member asked what this computer holds hash=b220f944274e724e1cfab60fbbbc21f250409df688288ca3a284a64d4565b272 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399807 }
+2026-10-14T06:50:46.352528Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:46.352566Z DEBUG blob: blob: a member asked what this computer holds hash=b220f944274e724e1cfab60fbbbc21f250409df688288ca3a284a64d4565b272 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399807 }
+2026-10-14T06:50:46.353548Z DEBUG folder: folder: the dialer stands in a group an app placed the hash in, not lapsed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" dialer="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:46.353588Z  INFO folder: folder: serving — a synced folder or app of a group the dialer stands in places the hash hash=b220f944274e724e1cfab60fbbbc21f250409df688288ca3a284a64d4565b272 conn=517125712912 request=7 dialer=Some("6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06") ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])" record_ms=0.35
+2026-10-14T06:50:46.353618Z DEBUG folder: folder: the dialer stands in a group an app placed the hash in, not lapsed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" dialer="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:46.353643Z  INFO folder: folder: serving — a synced folder or app of a group the dialer stands in places the hash hash=b220f944274e724e1cfab60fbbbc21f250409df688288ca3a284a64d4565b272 conn=517125707344 request=6 dialer=Some("c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca") ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])" record_ms=0.402
+2026-10-14T06:50:46.355829Z  INFO folder: folder: sent hash=b220f944274e724e1cfab60fbbbc21f250409df688288ca3a284a64d4565b272 conn=517125707344 request=6 done=true last=64365 payload=64365 other=200
+2026-10-14T06:50:46.356747Z  INFO folder: folder: sent hash=b220f944274e724e1cfab60fbbbc21f250409df688288ca3a284a64d4565b272 conn=517125712912 request=7 done=true last=64365 payload=64365 other=200
+2026-10-14T06:50:47.269774Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:47.269874Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:48.346201Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:48.346285Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:49.689110Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:49.689242Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:50.183325Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62779 path=/v1/blob
+2026-10-14T06:50:50.184279Z DEBUG blob: blob: put, placed in the group until it lapses hash=d3b5beac33062bc7481caafaec81455fed0922820a9e2e0c2a1ceb8801fdab17 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" keep=60
+2026-10-14T06:50:50.185336Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62779 path=/v1/sign
+2026-10-14T06:50:50.186477Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06" person=Cy
+2026-10-14T06:50:50.186488Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca" person=Bo
+2026-10-14T06:50:50.188909Z DEBUG rails: rail live: fanned out one payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" bytes=350 peers=2 delivered=2
+2026-10-14T06:50:50.305146Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:50.305179Z DEBUG blob: blob: a member asked what this computer holds hash=d3b5beac33062bc7481caafaec81455fed0922820a9e2e0c2a1ceb8801fdab17 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399878 }
+2026-10-14T06:50:50.306427Z DEBUG folder: folder: the dialer stands in a group an app placed the hash in, not lapsed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" dialer="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:50.306459Z  INFO folder: folder: serving — a synced folder or app of a group the dialer stands in places the hash hash=d3b5beac33062bc7481caafaec81455fed0922820a9e2e0c2a1ceb8801fdab17 conn=517125707344 request=7 dialer=Some("c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca") ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])" record_ms=0.201
+2026-10-14T06:50:50.307208Z  INFO folder: folder: sent hash=d3b5beac33062bc7481caafaec81455fed0922820a9e2e0c2a1ceb8801fdab17 conn=517125707344 request=7 done=true last=64366 payload=64366 other=200
+2026-10-14T06:50:50.329939Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:50.329968Z DEBUG blob: blob: a member asked what this computer holds hash=d3b5beac33062bc7481caafaec81455fed0922820a9e2e0c2a1ceb8801fdab17 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399853 }
+2026-10-14T06:50:50.330994Z DEBUG folder: folder: the dialer stands in a group an app placed the hash in, not lapsed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" dialer="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:50.331010Z  INFO folder: folder: serving — a synced folder or app of a group the dialer stands in places the hash hash=d3b5beac33062bc7481caafaec81455fed0922820a9e2e0c2a1ceb8801fdab17 conn=517125712912 request=8 dialer=Some("6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06") ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])" record_ms=0.161
+2026-10-14T06:50:50.331520Z  INFO folder: folder: sent hash=d3b5beac33062bc7481caafaec81455fed0922820a9e2e0c2a1ceb8801fdab17 conn=517125712912 request=8 done=true last=64366 payload=64366 other=200
+2026-10-14T06:50:50.717555Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=9
+2026-10-14T06:50:51.745537Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:51.745646Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:52.754473Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:52.754579Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:53.859104Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:53.859167Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:54.202474Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62798 path=/v1/blob
+2026-10-14T06:50:54.204144Z DEBUG blob: blob: put, placed in the group until it lapses hash=04025ab3f30e14c0ca292f805bf16ee1b5bd04f9f17b75da9572b7f630226d1d group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" keep=60
+2026-10-14T06:50:54.205195Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62798 path=/v1/sign
+2026-10-14T06:50:54.206178Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06" person=Cy
+2026-10-14T06:50:54.206190Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca" person=Bo
+2026-10-14T06:50:54.208496Z DEBUG rails: rail live: fanned out one payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" bytes=350 peers=2 delivered=2
+2026-10-14T06:50:54.244122Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:54.244149Z DEBUG blob: blob: a member asked what this computer holds hash=04025ab3f30e14c0ca292f805bf16ee1b5bd04f9f17b75da9572b7f630226d1d group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399958 }
+2026-10-14T06:50:54.244982Z DEBUG folder: folder: the dialer stands in a group an app placed the hash in, not lapsed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" dialer="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06"
+2026-10-14T06:50:54.245007Z  INFO folder: folder: serving — a synced folder or app of a group the dialer stands in places the hash hash=04025ab3f30e14c0ca292f805bf16ee1b5bd04f9f17b75da9572b7f630226d1d conn=517125712912 request=9 dialer=Some("6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06") ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])" record_ms=0.168
+2026-10-14T06:50:54.245915Z  INFO folder: folder: sent hash=04025ab3f30e14c0ca292f805bf16ee1b5bd04f9f17b75da9572b7f630226d1d conn=517125712912 request=9 done=true last=61440 payload=61440 other=200
+2026-10-14T06:50:54.294272Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:54.294320Z DEBUG blob: blob: a member asked what this computer holds hash=04025ab3f30e14c0ca292f805bf16ee1b5bd04f9f17b75da9572b7f630226d1d group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399908 }
+2026-10-14T06:50:54.906663Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=10
+2026-10-14T06:50:56.007077Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:56.007235Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:57.066291Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:57.066377Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:58.038969Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62798 path=/v1/sign
+2026-10-14T06:50:58.040749Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06" person=Cy
+2026-10-14T06:50:58.040759Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca" person=Bo
+2026-10-14T06:50:58.042879Z DEBUG rails: rail live: fanned out one payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" bytes=288 peers=2 delivered=2
+2026-10-14T06:50:58.204246Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:50:58.204321Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:50:58.567396Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62833 path=/v1/blob
+2026-10-14T06:50:58.567896Z DEBUG blob: blob: put, placed in the group until it lapses hash=4cb1d4e7c90fd4af36882a2493f465d32583d1475034f6b792ba95ca9daa6901 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" keep=60
+2026-10-14T06:50:58.568398Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62834 path=/v1/blob
+2026-10-14T06:50:58.568648Z DEBUG blob: blob: put, placed in the group until it lapses hash=3183db5d62211437aa26e8b9046629dea85ce42645724e1d860b6cc7ff796b07 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" keep=60
+2026-10-14T06:50:58.569675Z DEBUG rails: ring: the asker stands in the ring route="blob" namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" asker="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:58.569708Z DEBUG blob: blob: a member asked what this computer holds hash=4cb1d4e7c90fd4af36882a2493f465d32583d1475034f6b792ba95ca9daa6901 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" held=For { left_ms: 86399997 }
+2026-10-14T06:50:58.570471Z DEBUG folder: folder: the dialer stands in a group an app placed the hash in, not lapsed namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" dialer="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca"
+2026-10-14T06:50:58.570485Z  INFO folder: folder: serving — a synced folder or app of a group the dialer stands in places the hash hash=4cb1d4e7c90fd4af36882a2493f465d32583d1475034f6b792ba95ca9daa6901 conn=517125707344 request=8 dialer=Some("c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca") ranges="ChunkRangesSeq([(0, RangeSet{0..}), (1, RangeSet{})])" record_ms=0.159
+2026-10-14T06:50:58.570604Z  INFO folder: folder: sent hash=4cb1d4e7c90fd4af36882a2493f465d32583d1475034f6b792ba95ca9daa6901 conn=517125707344 request=8 done=true last=4112 payload=4112 other=8
+2026-10-14T06:50:58.661096Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62836 path=/v1/blob
+2026-10-14T06:50:58.662348Z DEBUG blob: blob: put, placed in the group until it lapses hash=7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9 group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" keep=60
+2026-10-14T06:50:58.667350Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62836 path=/v1/sign
+2026-10-14T06:50:58.669137Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06" person=Cy
+2026-10-14T06:50:58.669144Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca" person=Bo
+2026-10-14T06:50:58.671223Z DEBUG rails: rail live: fanned out one payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" bytes=351 peers=2 delivered=2
+2026-10-14T06:50:58.678028Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62836 path=/v1/blob
+2026-10-14T06:50:58.678988Z DEBUG blob: blob: put, placed in the group until it lapses hash=c225526d54ffddb89b45096ba6a14b86a747a43e693a25b88c9fb88c5d494aee group="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" keep=60
+2026-10-14T06:50:58.680426Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:62836 path=/v1/sign
+2026-10-14T06:50:58.681498Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="6c19edf7dc7b3157a68654202bffa4bd0e6b6c8e95b64b64d2cc7c082ea1be06" person=Cy
+2026-10-14T06:50:58.681506Z DEBUG rails: rail live: a person stands in the group, to offer the payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" actor="c6851029727077a38519186e44ad396005ddcbc3f2ef19adb0b3c6d604d5ecca" person=Bo
+2026-10-14T06:50:58.683376Z DEBUG rails: rail live: fanned out one payload namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" bytes=351 peers=2 delivered=2
+2026-10-14T06:50:59.302403Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=12
+2026-10-14T06:51:00.436307Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:51:00.436393Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:51:01.873044Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:51:01.876141Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:51:02.926446Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:51:02.926557Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:51:04.028128Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:51:04.028775Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:51:05.117990Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:51:05.118076Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:51:06.164341Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:51:06.164493Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:51:07.196228Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:51:07.196320Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:51:08.325700Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:51:08.325847Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:51:09.416882Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:51:09.417019Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:51:10.505547Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:51:10.505648Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:51:11.551482Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:51:11.551569Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:52:09.813041Z  INFO folder: folder: the store is open untagged=0
+2026-10-14T06:52:09.813145Z  INFO folder: synced: the directory kept in step with the group's folder namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" folder="onair" dir=/private/tmp/onair-run-keep-ignored-w/ana/svrngs/onair
+2026-10-14T06:52:09.816069Z DEBUG folder: synced: the OS's file events watched, the directory walked whole each 600s namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" folder="onair"
+2026-10-14T06:52:09.829858Z DEBUG folder: folder: the layout read again, the record having moved namespace="21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71" placed=0
+2026-10-14T06:52:09.829950Z DEBUG folder: synced: the layout read folder="onair" placed=0 holders=3 ms=13
+2026-10-14T06:52:09.830163Z DEBUG folder: synced: the layout to write folder="onair" placed=0
+2026-10-14T06:52:09.830219Z DEBUG folder: synced: a step folder="onair" files=0 sent=0 unwritten=0 read_ms=13 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=14
+2026-10-14T06:52:10.888020Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=0
+2026-10-14T06:52:11.987435Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:52:11.987604Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:52:13.093422Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:52:13.093572Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-14T06:52:14.191874Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-14T06:52:14.191964Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort

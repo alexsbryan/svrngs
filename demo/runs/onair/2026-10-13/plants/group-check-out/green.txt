@@ -1,0 +1,10 @@
+$ git apply -R plants/group-check-out.patch; CARGO_INCREMENTAL=0 cargo test -p svrngs-node --test folders bytes_an_app_put_in_one_group_are_refused_to_a_member_of_another
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 12.06s
+     Running tests/folders.rs (target/debug/deps/folders-46ee3e7c5ae6f3fb)
+
+running 1 test
+test bytes_an_app_put_in_one_group_are_refused_to_a_member_of_another ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 22 filtered out; finished in 0.36s
+
+exit 0

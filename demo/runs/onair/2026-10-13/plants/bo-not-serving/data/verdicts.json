@@ -1,0 +1,156 @@
+{
+ "4.1": {
+  "verdict": "passed",
+  "why": "Bo held 10 of 10 pieces, 0 past 4000 ms",
+  "bound_ms": 4000,
+  "held_ms": {
+   "0": 53,
+   "1": 31,
+   "2": 22,
+   "3": 41,
+   "4": 36,
+   "5": 37,
+   "6": 26,
+   "7": 40,
+   "8": 53,
+   "9": 34
+  },
+  "station_puts": [
+   "200"
+  ],
+  "bo_refusals": []
+ },
+ "4.1, carried": {
+  "verdict": "failed",
+  "why": "Cy's get of Y with Ana stopped: 502 (309 bytes), Bo named in Cy's trace: True; the plant Z: 502 '{\"asked\":{\"4addb5e07c66e9b724805445a23e9b88e64f563522fc67f8fd4cf710f6104a96\":{\"held\":\"never_held\"},\"fbc4668db6b388fc4b7e2c3eca5f67c78b682b4128a7e3ec41491879f64e2f66\":\"did not answer within 3s\"},\"error\":\"7fcf07e0719f5e35690a065f854ff33ab5cdd79adc82639cbbd138ac1ca0fe98: no holder answered\",\"kind\":\"una'",
+  "ana_put_Y": 200,
+  "bo_get_Y": 200,
+  "cy_trace": [
+   "2026-10-14T06:53:38.477130Z DEBUG blob: blob: a computer of the group asked what it holds hash=4f012238c811a7f51e92d21d8c8cd0f8b8f81bd938647e3d725d9f77942306de group=\"94bb1a05c672e89d93a7436b65eafe5a32918dc719842f3d715b1f2d2dfca228\" holder=\"4addb5e07c66e9b724805445a23e9b88e64f563522fc67f8fd4cf710f6104a96\" said=Ok(NeverHeld)",
+   "2026-10-14T06:53:38.477349Z DEBUG blob: blob: refused — no holder answered hash=4f012238c811a7f51e92d21d8c8cd0f8b8f81bd938647e3d725d9f77942306de kind=\"unanswered\" asked={\"4addb5e07c66e9b724805445a23e9b88e64f563522fc67f8fd4cf710f6104a96\":{\"held\":\"never_held\"},\"fbc4668db6b388fc4b7e2c3eca5f67c78b682b4128a7e3ec41491879f64e2f66\":\"did not answer within 3s\"}",
+   "2026-10-14T06:53:41.482852Z DEBUG blob: blob: a computer of the group asked what it holds hash=4f012238c811a7f51e92d21d8c8cd0f8b8f81bd938647e3d725d9f77942306de group=\"94bb1a05c672e89d93a7436b65eafe5a32918dc719842f3d715b1f2d2dfca228\" holder=\"4addb5e07c66e9b724805445a23e9b88e64f563522fc67f8fd4cf710f6104a96\" said=Ok(NeverHeld)",
+   "2026-10-14T06:53:41.483066Z DEBUG blob: blob: refused — no holder answered hash=4f012238c811a7f51e92d21d8c8cd0f8b8f81bd938647e3d725d9f77942306de kind=\"unanswered\" asked={\"4addb5e07c66e9b724805445a23e9b88e64f563522fc67f8fd4cf710f6104a96\":{\"held\":\"never_held\"},\"fbc4668db6b388fc4b7e2c3eca5f67c78b682b4128a7e3ec41491879f64e2f66\":\"did not answer within 3s\"}",
+   "2026-10-14T06:54:39.299622Z DEBUG blob: blob: a computer of the group asked what it holds hash=4f012238c811a7f51e92d21d8c8cd0f8b8f81bd938647e3d725d9f77942306de group=\"94bb1a05c672e89d93a7436b65eafe5a32918dc719842f3d715b1f2d2dfca228\" holder=\"4addb5e07c66e9b724805445a23e9b88e64f563522fc67f8fd4cf710f6104a96\" said=Ok(NeverHeld)"
+  ]
+ },
+ "4.1, lapses": {
+  "verdict": "failed",
+  "why": "65.1 s after the last put: still held []; said lapsed ['bo_piece0', 'cy_piece0']; lapsed told apart from never held: True; pieces in a store: {'cy': 10} (Ana's, stopped: 10, then restarted: [])",
+  "answers": {
+   "bo_piece0": [
+    410,
+    "{\"asked\":{},\"error\":\"7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9: it lapsed\",\"kind\":\"lapsed\"}"
+   ],
+   "bo_Y": [
+    502,
+    "{\"asked\":{\"af585af5163309099e954d07640ecf5cfa6d9176a1f1f460fc403ab758920aee\":{\"held\":\"never_held\"},\"fbc4668db6b388fc4b7e2c3eca5f67c78b682b4128a7e3ec41491879f64e2f66\":\"did not answer within 3s\"},\"error\":\"4f012238c811a7f51e92d21d8c8cd0f8b8f81bd938647e3d725d9f77942306de: no holder answered\",\"kind\":\"una"
+   ],
+   "bo_never": [
+    502,
+    "{\"asked\":{\"af585af5163309099e954d07640ecf5cfa6d9176a1f1f460fc403ab758920aee\":{\"held\":\"never_held\"},\"fbc4668db6b388fc4b7e2c3eca5f67c78b682b4128a7e3ec41491879f64e2f66\":\"did not answer within 3s\"},\"error\":\"d092ad3265ab1edf58a9733b626626f43a34442a22d35668cac1bbfa15af3d2c: no holder answered\",\"kind\":\"una"
+   ],
+   "cy_piece0": [
+    410,
+    "{\"asked\":{\"4addb5e07c66e9b724805445a23e9b88e64f563522fc67f8fd4cf710f6104a96\":{\"held\":\"lapsed\"},\"fbc4668db6b388fc4b7e2c3eca5f67c78b682b4128a7e3ec41491879f64e2f66\":\"did not answer within 3s\"},\"error\":\"7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9: it lapsed\",\"kind\":\"lapsed\"}"
+   ],
+   "cy_Y": [
+    502,
+    "{\"asked\":{\"4addb5e07c66e9b724805445a23e9b88e64f563522fc67f8fd4cf710f6104a96\":{\"held\":\"never_held\"},\"fbc4668db6b388fc4b7e2c3eca5f67c78b682b4128a7e3ec41491879f64e2f66\":\"did not answer within 3s\"},\"error\":\"4f012238c811a7f51e92d21d8c8cd0f8b8f81bd938647e3d725d9f77942306de: no holder answered\",\"kind\":\"una"
+   ],
+   "cy_never": [
+    502,
+    "{\"asked\":{\"4addb5e07c66e9b724805445a23e9b88e64f563522fc67f8fd4cf710f6104a96\":{\"held\":\"never_held\"},\"fbc4668db6b388fc4b7e2c3eca5f67c78b682b4128a7e3ec41491879f64e2f66\":\"did not answer within 3s\"},\"error\":\"d092ad3265ab1edf58a9733b626626f43a34442a22d35668cac1bbfa15af3d2c: no holder answered\",\"kind\":\"una"
+   ]
+  },
+  "stores": {
+   "bo": [],
+   "cy": [
+    "04025ab3f30e14c0ca292f805bf16ee1b5bd04f9f17b75da9572b7f630226d1d.data",
+    "331d859f20cdcd7f302ad5493e2ab0a05215a58a7d2b419b163800784ed716e8.data",
+    "43e3307d1f5bebff444501f3407fee6d30771fc10e1868607de5a252a2a58740.data",
+    "6a638506ce8f63990f2e9dd876b7b5f425556f05edcfcd755a72c9e5b3ca6cab.data",
+    "7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9.data",
+    "b220f944274e724e1cfab60fbbbc21f250409df688288ca3a284a64d4565b272.data",
+    "c225526d54ffddb89b45096ba6a14b86a747a43e693a25b88c9fb88c5d494aee.data",
+    "d3b5beac33062bc7481caafaec81455fed0922820a9e2e0c2a1ceb8801fdab17.data",
+    "f3b72ae551f6b845528acd5f248a3f3d4e9d157747c3f63833c780ee862fbf38.data",
+    "f9c74a3a0ea2b045eca52e6614f9158a55880c370bb60aad0b755d37c8ab9afb.data"
+   ],
+   "ana_stopped": [
+    "04025ab3f30e14c0ca292f805bf16ee1b5bd04f9f17b75da9572b7f630226d1d.data",
+    "331d859f20cdcd7f302ad5493e2ab0a05215a58a7d2b419b163800784ed716e8.data",
+    "43e3307d1f5bebff444501f3407fee6d30771fc10e1868607de5a252a2a58740.data",
+    "6a638506ce8f63990f2e9dd876b7b5f425556f05edcfcd755a72c9e5b3ca6cab.data",
+    "7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9.data",
+    "b220f944274e724e1cfab60fbbbc21f250409df688288ca3a284a64d4565b272.data",
+    "c225526d54ffddb89b45096ba6a14b86a747a43e693a25b88c9fb88c5d494aee.data",
+    "d3b5beac33062bc7481caafaec81455fed0922820a9e2e0c2a1ceb8801fdab17.data",
+    "f3b72ae551f6b845528acd5f248a3f3d4e9d157747c3f63833c780ee862fbf38.data",
+    "f9c74a3a0ea2b045eca52e6614f9158a55880c370bb60aad0b755d37c8ab9afb.data"
+   ],
+   "ana_restarted": []
+  },
+  "ana_restart": {
+   "s": 1.4,
+   "running": true,
+   "said": [
+    "2026-10-14T06:54:42.368842Z  INFO folder: folder: the store is open untagged=0"
+   ]
+  }
+ },
+ "4.1, scoped": {
+  "verdict": "passed",
+  "why": "Dee's get of Y: 403 '{\"error\":\"this computer does not stand in 94bb1a05c672e89d93a7436b65eafe5a32918dc719842f3d715b1f2d2dfca228\"}'; a refusal of Dee in Bo's trace: False, in Dee's own: True",
+  "provider_refusals": [],
+  "own_refusals": [
+   "2026-10-14T06:53:44.492029Z DEBUG blob: blob: refused — this computer does not stand in the group group=\"94bb1a05c672e89d93a7436b65eafe5a32918dc719842f3d715b1f2d2dfca228\""
+  ]
+ },
+ "4.2": {
+  "verdict": "passed",
+  "why": "the page on evening played 10 of 10; plants played {'flipped': [0, 2, 3, 4, 5, 6, 7, 8, 9], 'act-sig': [2, 3, 4, 5, 6, 7, 8, 9], 'no-ended': [0, 1], 'bo-signed': []}",
+  "signs": [
+   "200"
+  ],
+  "page_refused": [],
+  "page_said": [
+   "ended",
+   "after 10 pieces"
+  ],
+  "plant_refusals": {
+   "flipped": [
+    "its BLAKE3 is afdedf6b6058…, not the line's c225526d54ff…"
+   ],
+   "act-sig": [
+    "its signature does not check under the station's key fbc4668d…"
+   ],
+   "no-ended": [],
+   "bo-signed": [
+    "its signature does not check under the station's key fbc4668d…; it names 4addb5e0…"
+   ]
+  }
+ },
+ "4.3": {
+  "verdict": "passed",
+  "why": "Bo drained 11, Cy 12; senders named: ['{\"key\": \"4addb5e07c66e9b724805445a23e9b88e64f563522fc67f8fd4cf710f6104a96\", \"person_key\": \"4addb5e07c66e9b724805445a23e9b88e64f563522fc67f8fd4cf710f6104a96\"}', '{\"key\": \"fbc4668db6b388fc4b7e2c3eca5f67c78b682b4128a7e3ec41491879f64e2f66\", \"person_key\": \"fbc4668db6b388fc4b7e2c3eca5f67c78b682b4128a7e3ec41491879f64e2f66\"}']; Bo's note in Cy's drain: {'key': '4addb5e07c66e9b724805445a23e9b88e64f563522fc67f8fd4cf710f6104a96', 'person_key': '4addb5e07c66e9b724805445a23e9b88e64f563522fc67f8fd4cf710f6104a96'}",
+  "live_delivered": [
+   "2"
+  ],
+  "bo_note": {
+   "status": 200,
+   "said": "{\"bytes\":27,\"delivered\":2,\"peers\":[{\"delivered\":true,\"name\":\"Cy\",\"node\":\"af585af5163309099e954d07640ecf5cfa6d9176a1f1f460fc403ab758920aee\"},{\"delivered\":true,\"name\":\"Ana\",\"node\":\"fbc4668db6b388fc4b7e2c3eca5f67c78b682b4128a7e3ec41491879f64e2f66\"}]}",
+   "ms": 142,
+   "length": 247
+  }
+ },
+ "off air": {
+  "verdict": "passed",
+  "why": "ended said within 4 s: Bo True, Cy True, page True (it said 'ended'); the plant no-ended: 'cannot reach'",
+  "listeners_stopped": {
+   "bo": null,
+   "cy": null
+  },
+  "page_why": "after 10 pieces",
+  "plant_why": "no line 2 in 12 s"
+ }
+}

@@ -1,0 +1,13 @@
+Made onair, with you as Ana.
+Send this link to the people you want in it. It works for a day, while this computer is on:
+
+  svrngs://join/<the token>
+
+onair's folder is /private/tmp/onair-run-keep-ignored-w/ana/svrngs/onair: what anyone in onair puts there reaches this computer, and what you put there reaches theirs.
+
+Leave this running; Ctrl-C stops it.
+Running for onair.
+Apps on this computer reach your groups at http://127.0.0.1:62402.
+Your home page, the same address each time svrngs starts: http://svrngs.localhost:62402/
+
+Leave this running; Ctrl-C stops it.
