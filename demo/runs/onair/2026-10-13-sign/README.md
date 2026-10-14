@@ -55,3 +55,12 @@ reads the act from Ana's journal, as onair-red wrote it.
 
 The sound is the red run's: 40 s generated here by ffmpeg's `aevalsrc`,
 nobody's rights, heard by nobody.
+
+## scripts/check.sh at the close
+
+Once, at 1d4f31a, exit 0 in 12 min 56 s, every step passed: principles
+pinned, lean and RUST_ARCH, app nouns gate, app nouns, rustfmt, clippy,
+tests, canaries, ceiling canary, web rustfmt and clippy, browser, joining
+in a browser, conformance canary, app laws; WebKit's seeks a rate, each
+passed. `scripts/lean_check.py`: crates/svrngs-core 3149 / 3150, the
+repository 16014 / 16015.
