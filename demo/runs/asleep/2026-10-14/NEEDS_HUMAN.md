@@ -22,6 +22,11 @@ so it is told within the cap.
   `web/lend.js`. The cost: a slow app's first byte read as asleep.
 - **The operator's call**: whether the phone's wait is worth either cost.
 
+**Decided, 2026-10-14**: the operator chose "Idle timeout + keep-alive",
+done in events-wait (b): told within about the cap, 4,010–4,271 ms, for
+217.5 bytes a second more on the phone's relay flow
+(`demo/runs/wait/2026-10-14/README.md`).
+
 ## 2. Cellular, a second host, a release build
 
 The cap is 2 s from this host's dials (`dial.rs`'s doc). A phone on
@@ -29,3 +34,7 @@ cellular, a relay farther than n0's `usw1-1`, and a release build were
 not run: could-not-judge. The capped take used half the cap once, on a
 computer just started (`README.md`, "What the capped take found", 1).
 Whether 2 s holds on cellular is the operator's (CHARTER.md).
+
+Since events-wait (a), the cap is 4 s, by the same rule over the capped
+take's 1,013 ms (the operator, 2026-10-14). Cellular, a second host and a
+release build are still not run.
