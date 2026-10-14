@@ -2,13 +2,20 @@
 
 > **Written 2026-10-14 for the launch story** (the operator: "so many
 > stories start with an event, who was invited and who actually came").
-> Every button below is one the run pressed, on one computer, every person
-> a program (`runs/events/2026-10-14/README.md`, "the run" below). Its
-> numbers are the clean take's (`data/summary.json`); its pictures are the
-> shots take's, the same story again with every page saved and the way to
-> the event walked from the home page and the phone's page
-> (`data/shots/`, README "The shots take"). The bars at the end are the
-> seat's proposal and the operator's to set. DESIGN §8 names this demo.
+> Every button below is one a run pressed, on one computer, every person
+> a program. Two runs:
+>
+> - **the run**, `runs/events/2026-10-14/README.md`: the whole story. Its
+>   numbers are the clean take's (`data/summary.json`); its pictures the
+>   shots take's (`data/shots/`, README "The shots take"), taken before
+>   the app offered a link, so Sam's page there has none.
+> - **the link take**, `runs/events/2026-10-14-links/README.md`: the
+>   dinner's link copied and opened on phones and computers, and Sam's
+>   computer asleep, stopped and frozen (`data/summary.json` and
+>   `data/shots/` there).
+>
+> The bars at the end are the seat's proposal and the operator's to set.
+> DESIGN §8 names this demo.
 
 **Sam** hosts a dinner for people from two of Sam's groups: **The House**,
 Sam's roommates, and **dWeb**, Sam's colleagues. Sam posts it once, to
@@ -100,22 +107,38 @@ and **Where** (the run: `Dinner`, `Friday 7`, `the house`), tick both
 groups beside **To**, and press **Post**. The dinner's page opens (145 ms
 in the run): *"Sam is hosting."*, then each group with its people under
 **Invited**, *"No one has said yet."* under **Coming** and *"No one yet."*
-under **Came**. Sam sees both groups; no one else will.
+under **Came**, and at the end of each group's part *"To send in <the
+group>'s chat:"*, the dinner's link for that group. Sam sees both groups;
+no one else will.
 
-![The dinner, just posted, as Sam sees it](runs/events/2026-10-14/data/shots/02-sam-1.png)
+**4. Send each group its link.** In The House's part press **Copy the
+link to this event**: it says **Copied** (in the link take, both times),
+and the link is ready to paste. Paste it in The House's own chat, however
+your roommates talk. Then the same in dWeb's part, for dWeb's chat. Each
+group gets its own link, and it opens the dinner only for that group's
+people: someone in dWeb who opens The House's is told the dinner is not
+theirs (step 7). The link carries no password.
 
-**4. Tell people where it is.** There is no link to send for the dinner
-yet (the run's finding 3, "What svrngs lacked" below). Tell them however
-you talk: *"It's under Sam's events."*
+![The dinner as Sam sees it, The House's link copied](runs/events/2026-10-14-links/data/shots/05-sam-L1.png)
 
 ## Everyone else: say you're coming
 
-**5. Bo, on a computer.** On Bo's home page, under The House, press
-**Open Sam’s events**. The app lists **Dinner**, *Friday 7*, under The
-House. Press **Dinner**.
+**5. Bo, on a computer.** Bo opens the link from The House's chat. His
+browser says *"This link opens in svrngs on your computer."* and shows
+the link again, with **Copy**. He presses **Copy**, opens his svrngs home
+page, pastes the link under **Open a link from your group**, and presses
+**Open it**: the dinner opens in a tab of its own (36 ms in the link
+take). The page that says it opens in svrngs also shows a name box, Join,
+Yes and Not now; Bo leaves them ("When something does not work").
+
+![Bo's browser: the link opens in svrngs](runs/events/2026-10-14-links/data/shots/11-bo-L3.png)
+![The dinner, opened from Bo's home page](runs/events/2026-10-14-links/data/shots/12-bo-L3.png)
+
+The other way, with no link: on the home page, under The House, press
+**Open Sam’s events**, and in the app's list, **Dinner** (the run's shots
+take).
 
 ![Bo's home page, Sam's events under The House](runs/events/2026-10-14/data/shots/03-bo-2w.png)
-![The app's list, as Bo sees it](runs/events/2026-10-14/data/shots/04-bo-2w.png)
 
 Bo sees The House alone: its people, who is coming and who came. dWeb's
 are not on his page.
@@ -129,19 +152,25 @@ takes it back.
 ![Bo coming](runs/events/2026-10-14/data/shots/10-bo-2.png)
 ![Bo + Maya](runs/events/2026-10-14/data/shots/11-bo-2.png)
 
-**7. Cy, on a phone.** Cy opens the group's page in the browser she
-joined with, with no link: it says *"You’re in The House, as Cy"* and
-lists **Sam’s events** (0.7 s in the shots take). Tap it: the app's list
-opens (1.0 s there), then tap **Dinner**, then **I'm coming** (198 ms).
+**7. Cy, on a phone.** Cy taps the link in The House's chat, on the
+phone she joined with: the dinner opens (1.8 s in the link take), then
+she taps **I'm coming** (198 ms in the run).
 
-![Cy's phone: the group's page](runs/events/2026-10-14/data/shots/06-cy-3w.png)
-![Cy's phone: the dinner](runs/events/2026-10-14/data/shots/08-cy-3w.png)
+![Cy's phone: the dinner, from the link](runs/events/2026-10-14-links/data/shots/07-cy-L2.png)
 
-**8. Di and Eve, in dWeb.** The same, on Di's computer and Eve's phone:
-their page shows dWeb alone, Di and Eve under Invited. Each presses **I'm
-coming** (70 ms and 208 ms).
+Had she tapped dWeb's link, her phone would say *"You're not in dWeb, so
+this event isn't yours to see."*, and nothing of dWeb's.
 
-![Eve's phone: dWeb's side of the dinner](runs/events/2026-10-14/data/shots/17-eve-3.png)
+![Cy's phone at dWeb's link](runs/events/2026-10-14-links/data/shots/17-cy-L4.png)
+
+The other way, with no link: open the group's page, tap **Sam’s events**,
+then **Dinner** (the run's shots take, 0.7 s and 1.0 s).
+
+**8. Di and Eve, in dWeb.** The same with dWeb's link, on Di's computer
+and Eve's phone: their page shows dWeb alone, Di and Eve under Invited.
+Each presses **I'm coming** (70 ms and 208 ms in the run).
+
+![Eve's phone: dWeb's side of the dinner](runs/events/2026-10-14-links/data/shots/09-eve-L2.png)
 
 **9. Eve changes her mind.** She presses **Take my name off**. Her name
 leaves Coming, and she is back to only Invited. Nothing on any page says
@@ -184,32 +213,70 @@ Bo, Cy and Fay see The House's part alone; Di and Eve see dWeb's alone.
 
 ![Bo's page the next morning](runs/events/2026-10-14/data/shots/29-bo-10.png)
 
+## When Sam's computer is asleep
+
+The app runs on Sam's computer, so while it is asleep or off, no one
+reaches the dinner, though Bo's and Fay's computers hold every answer.
+What each person sees (the link take, Sam's svrngs stopped, then frozen as
+a lid closing):
+
+- **Bo, on a computer**, pasting the link on his home page: after about
+  4 seconds (4,036 and 4,038 ms), a tab that says
+  `{"error":"the computer that lends this did not answer; try again later","kind":"away"}`.
+  His home page says, under The House, *"Sam's computer did not answer,
+  so what they lend is not listed."* (about 3 seconds).
+
+  ![Bo's home page, Sam's computer asleep](runs/events/2026-10-14-links/data/shots/21-bo-L5.png)
+- **Cy, on a phone, with the dinner open**: opening it again, after about
+  4 seconds (4,018 and 4,221 ms), *"The computer lending this did not
+  answer. Try again later."*
+
+  ![Cy's phone, the dinner again, Sam's computer asleep](runs/events/2026-10-14-links/data/shots/22-cy-L5.png)
+- **Cy, on a phone, tapping the link again**: after **30 seconds**
+  (30,497 and 30,522 ms), *"Your group’s computer did not answer through
+  usw1-1.relay.n0.iroh.link. Try again later."*, with a name box, Join,
+  Yes and Not now below it. The phone asks Sam's computer, whose link Cy
+  joined by, before it opens anything ("What svrngs lacked").
+
+  ![Cy's phone, the link again, Sam's computer asleep](runs/events/2026-10-14-links/data/shots/23-cy-L5.png)
+
+Nothing anyone said is lost. When Sam's computer is on again, the same
+link opens the dinner with every answer: within 0.5–1.4 s of Sam's svrngs
+starting on Bo's computer, 2.4–3.4 s on Cy's phone, in the link take.
+
 ## When something does not work
 
 Each of these is something the run met, or words the app or svrngs says,
 with what to do.
 
-- **A page that says nothing for 30 seconds, then
-  `{"error":"the computer that lends this did not answer; try again later","kind":"away"}`**
+- **`{"error":"the computer that lends this did not answer; try again later","kind":"away"}`**
   on a computer, or *"The computer lending this did not answer. Try again
-  later."* on a phone (30,019 ms and 30,024 ms in the run). Sam's computer
-  is asleep or off, and the app runs there. Try again when it is on: in the
-  run Bo's page held every answer 420 ms after Sam's svrngs started again.
-  Nothing anyone said is lost; Bo's and Fay's computers hold it too.
-
-  ![Bo, while Sam's computer is asleep](runs/events/2026-10-14/data/shots/36-bo-12.png)
+  later."* on a phone, after about 4 seconds. Sam's computer is asleep or
+  off, and the app runs there. Try again when it is on ("When Sam's
+  computer is asleep").
+- **"Your group’s computer did not answer through …"** on a phone, after
+  30 seconds, when you tap the link. The computer whose link you joined by
+  is asleep or off; when it is Sam's, the dinner is out of reach too. Try
+  again when it is on.
+- **"This link opens in svrngs on your computer."** You opened the link
+  in a browser on a computer. Copy it, open your svrngs home page, and
+  paste it under **Open a link from your group** (step 5). If svrngs is
+  not on this computer, open the link on your phone.
+- **"<the group> keeps no page for links, so there's no link to send."**
+  on Sam's page. The group was made without a page for links. Tell its
+  people the dinner is under **Sam’s events**; not met in the runs (the
+  app's words, `apps/events/server.mjs:236`).
 - **"This group can't be read on this computer right now."** The app,
   on Sam's computer, could not read the group: svrngs is not running there
   while the app is. Start svrngs on Sam's computer (`start.md`, "The home
   page does not open").
 - **"You're not in dWeb, so this event isn't yours to see."** (or The
-  House). You opened the other group's address of the dinner. Open it from
-  **Sam’s events** in your own group.
-
-  ![Cy at dWeb's address](runs/events/2026-10-14/data/shots/34-cy-10x.png)
-- **On a phone, a name box, Join, Yes and Not now above Sam’s events**,
-  after you joined. A mistake of the group's page (`web/index.html:53`,
-  start-run's finding). Leave them; tap **Sam’s events**.
+  House). You opened the other group's link to the dinner. Open the one
+  sent in your own group's chat, or the dinner from **Sam’s events** there.
+- **A name box, Join, Yes and Not now** on the group's page, after you
+  joined, or under *"This link opens in svrngs on your computer."* A
+  mistake of the group's page (`web/index.html:53`, start-run's finding).
+  Leave them.
 - **No "Maya came" button.** Only the person who brought a guest says
   they came. Ask them.
 - **The dinner opens on dWeb's part first**, after Sam presses Post. The
@@ -218,22 +285,36 @@ with what to do.
 - **Sam’s events is not listed** on a home page or a phone's page. Sam's
   computer is asleep, or the app is not lent. A home page says it as
   *"Sam's computer did not answer, so what they lend is not listed."*
-  (`crates/svrngs-node/src/home/home.js:95`); not met in the run.
+  (`crates/svrngs-node/src/home/home.js:95`; met in the link take, Bo's
+  home page while Sam's computer slept).
 
 ## What svrngs lacked
 
-Two things, svrngs's, each written for the operator in the run's
-`NEEDS_HUMAN.md`; the app works around neither:
+The run found two things svrngs lacked, each written for the operator in
+its `NEEDS_HUMAN.md`; the app worked around neither. svrngs gives both
+now, and the link take found one more:
 
-1. **A person waits 30 s to be told Sam's computer is asleep.** svrngs
-   gives up dialling after 30 s; a shorter wait would say it sooner.
-2. **No link for the dinner.** The app is not told the address it is lent
-   at, so it cannot hand anyone a link that opens the dinner. People reach
-   it through Sam’s events and the app's list, as steps 5 and 7 do.
+1. **A person waited 30 s to be told Sam's computer is asleep** (the run,
+   30,019 ms). Now svrngs gives up a dial to the computer lending
+   something after 4 s, three times the slowest working dial measured on
+   this host (events-asleep, events-wait; `crates/svrngs-node/src/dial.rs`):
+   told in 4.0–4.2 s in the link take, on a computer and a phone, Sam's
+   computer stopped or frozen.
+2. **There was no link for the dinner.** Now svrngs tells the app where it
+   is lent and each group's page (events-links), and the app writes each
+   group's link for Sam to copy (step 4). On a computer it opens by one
+   paste on the home page (step 5); a browser there cannot find the
+   computer's own svrngs by itself.
+3. **Still lacking: a phone tapping the link while the computer it joined
+   through is asleep waits 30 s**, and is told so in a relay's name
+   (30,497 and 30,522 ms, the link take). The phone's page asks that
+   computer first, and that wait was left as iroh's when the dial to a
+   lend was capped. Written for the operator, with its lines estimated, in
+   `runs/events/2026-10-14-links/NEEDS_HUMAN.md`.
 
 And while Sam's computer sleeps no one reaches the dinner, though Bo's and
 Fay's computers hold every answer: a second computer lending the app would
-keep it up (README, finding 4); not run.
+keep it up (the run's README, finding 4); not run.
 
 ## The demo: bars, proposed
 
@@ -245,23 +326,27 @@ guest's name; the next morning Sam reads, on one page, each group's
 invited, coming and came, a guest by name beside the person who brought
 them; no one reads another group's answers; no page shows anyone
 declining or not coming; a guest's "came" said only by the person who
-brought them; a person told Sam's computer is asleep within a time the
-operator sets (`NEEDS_HUMAN.md` §1). Two things stand before a run with
-people: a link to the dinner (`NEEDS_HUMAN.md` §2), and Sam's step 1,
-which takes two terminals and a copy of svrngs, with nothing yet on the
-home page to start the app.
+brought them; each person reaches the dinner from the link sent in their
+group's chat; a person told Sam's computer is asleep within about the
+operator's 4 s cap. Two things stand before a run with people: Sam's step
+1, which takes two terminals and a copy of svrngs, with nothing yet on the
+home page to start the app; and a phone tapping the link while Sam's
+computer sleeps, told only after 30 s (`runs/events/2026-10-14-links/NEEDS_HUMAN.md`).
 
-The run, every person a program, one host, not a rate (AGENTS.md 7): the
+The runs, every person a program, one host, not a rate (AGENTS.md 7): the
 post landed 145 ms after the press; computers' answers 64–89 ms, phones'
-196–208 ms; a phone's dinner open 1,604 ms and 1,627 ms after its group's
-page was opened at the dinner's address; Di's computer held what it missed 854 ms after waking;
-told Sam's computer was asleep after 30,019 ms (failed, README 10b). The
-machine's floor under each bar, never the bar.
+196–208 ms; Di's computer held what it missed 854 ms after waking (the
+run). The link: a phone on the dinner 1,753 ms and 1,801 ms after tapping
+it, a computer 36 ms after the paste; told Sam's computer was asleep in
+4,018–4,221 ms on the dinner's address, and 30,497–30,522 ms when a phone
+tapped the link anew (the link take). The machine's floor under each bar,
+never the bar.
 
 **What each person is told, and nothing else.** Sam: "Post a dinner for
-The House and dWeb, and see who came the next morning" and this document.
-Everyone else: "Sam posted a dinner under Sam's events; say whether you're
-coming, and that you came" and this document.
+The House and dWeb, send each group its link, and see who came the next
+morning" and this document. Everyone else: "Sam sent a dinner's link in
+your group's chat; say whether you're coming, and that you came" and this
+document.
 
 **What is watched.** A clock per person, from their first click to their
 answer shown on their page; every place a person stopped, asked or typed
@@ -284,3 +369,9 @@ python3 demo/runs/events/2026-10-14/judge.py demo/runs/events/2026-10-14/data/su
 ```
 
 `SHOTS=1` before the first saves every page in `data/shots/`.
+
+The link take, its own driver, every page saved in its `data/shots/`:
+
+```
+W=/tmp/doclink-run python3 demo/runs/events/2026-10-14-links/run.py < /dev/null
+```

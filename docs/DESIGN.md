@@ -2495,9 +2495,16 @@ computer sends within the cap, a keep-alive each second: told in
 4,010–4,271 ms where it was 34,042–34,068, the keep-alive costing the
 phone's relay flow 217.5 bytes a second while the page holds the dial
 (`demo/runs/wait/2026-10-14/`).
-What stands before its first run with people is svrngs's link that opens
-the event (that run's `NEEDS_HUMAN.md`, 2); and starting the app, which
-takes a terminal and a copy of svrngs.
+events-links gave the app the link that opens the event, which the host
+copies per group and sends in that group's chat; the demo's link take
+(`demo/runs/events/2026-10-14-links/`) opened it on a phone in 1,753 and
+1,801 ms and on a computer by one paste on its home page, and told a
+person the host's computer was asleep in 4,018–4,221 ms on the event's
+address, stopped or frozen. What stands before its first run with people
+is starting the app, which takes a terminal and a copy of svrngs; and a
+phone tapping the link while the computer it joined through sleeps, told
+only after 30 s, the page's dial to that computer left as iroh's (that
+take's `NEEDS_HUMAN.md`).
 
 ## 9. Later, each with the trigger that brings it back
 
