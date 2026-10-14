@@ -434,7 +434,7 @@ served only at its exact host and port: a read only from its own origin, a
 typed address or a navigation, a write only from its own origin with its
 exact `Origin` (`only_itself`), every answer `default-src 'self';
 frame-ancestors 'none'`. It serves `home/index.html`, `home/home.js` and
-`home/home.css`, the record API's `/v1/groups`, `/v1/lends` and
+`home/look.css`, the record API's `/v1/groups`, `/v1/lends` and
 `/v1/rail/people` from the same routers, and `/choices`, kept by this
 computer's door for its own lends and dialled to the lender's otherwise
 (`origin::dialled`). A lend's page stops itself at its origin, `POST

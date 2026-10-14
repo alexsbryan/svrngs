@@ -80,7 +80,7 @@ const QUESTION: ([(header::HeaderName, &str); 1], &str) = (
 /// Its look, a file of its own, since its policy runs no inline style.
 const LOOK: ([(header::HeaderName, &str); 1], &str) = (
     [(header::CONTENT_TYPE, "text/css")],
-    include_str!("home/home.css"),
+    include_str!("home/look.css"),
 );
 
 /// Whether `host` names the home page, at any port: [`only_itself`] holds
@@ -116,7 +116,7 @@ pub(crate) fn router(
         .route("/ask", get(page))
         .route("/home.js", get(|| async { MODULE }))
         .route("/question.js", get(|| async { QUESTION }))
-        .route("/home.css", get(|| async { LOOK }))
+        .route("/look.css", get(|| async { LOOK }))
         .route("/choices", get(choices).post(choose))
         .route("/lent", get(lent).post(change))
         .route("/link", axum::routing::post(link))
