@@ -568,3 +568,138 @@ async fn a_computer_s_origin_names_the_app_and_keeps_a_page_to_its_reads() {
     sam.endpoint().close().await;
     alex.endpoint().close().await;
 }
+
+/// A path on loopback to `to` that holds every datagram `delay` each way,
+/// so a computer reached through it answers its dial as late as the
+/// slowest dial measured (`demo/runs/asleep/2026-10-14/README.md`, 1).
+async fn slow_path(to: SocketAddr, delay: Duration) -> SocketAddr {
+    use std::sync::{Arc, Mutex};
+    use tokio::net::UdpSocket;
+    let front = Arc::new(UdpSocket::bind("127.0.0.1:0").await.unwrap());
+    let back = Arc::new(UdpSocket::bind("127.0.0.1:0").await.unwrap());
+    let at = front.local_addr().unwrap();
+    let dialler = Arc::new(Mutex::new(None::<SocketAddr>));
+    let (f, b, d) = (front.clone(), back.clone(), dialler.clone());
+    tokio::spawn(async move {
+        let mut buf = vec![0u8; 65536];
+        while let Ok((n, from)) = f.recv_from(&mut buf).await {
+            *d.lock().unwrap() = Some(from);
+            let (b, bytes) = (b.clone(), buf[..n].to_vec());
+            tokio::spawn(async move {
+                tokio::time::sleep(delay).await;
+                let _ = b.send_to(&bytes, to).await;
+            });
+        }
+    });
+    tokio::spawn(async move {
+        let mut buf = vec![0u8; 65536];
+        while let Ok((n, _)) = back.recv_from(&mut buf).await {
+            let Some(dialler) = *dialler.lock().unwrap() else {
+                continue;
+            };
+            let (f, bytes) = (front.clone(), buf[..n].to_vec());
+            tokio::spawn(async move {
+                tokio::time::sleep(delay).await;
+                let _ = f.send_to(&bytes, dialler).await;
+            });
+        }
+    });
+    at
+}
+
+/// **A lend's computer asleep is said away within the cap; one that answers
+/// as late as the slowest dial measured is not** (events-asleep (b)). Alex
+/// lets Sam and Cy in. Sam's computer is reached only through a path that
+/// holds each datagram 175 ms each way, so its dial is answered no sooner
+/// than the slowest working dial `demo/runs/asleep/2026-10-14/` measured,
+/// 347 ms: Sam's pad, at its origin on Alex's computer, answers 200. Cy's
+/// computer is asleep, a socket nobody reads (`common::never_answers`):
+/// Cy's lend at its origin is answered 502 `away` within
+/// [`svrngs_node::dial::DIAL_WITHIN`] and a second. Planted, each watched
+/// failing: the dial uncapped, as before this row (`guest.rs`'s bridge
+/// awaiting `connect` to its own end), which Cy's lend waits out; and the
+/// cap below the slow path's dial, 300 ms, which says Sam's lend away.
+#[tokio::test]
+async fn a_lend_s_computer_asleep_is_said_away_within_the_cap() {
+    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let alex = start(1, alex_dir.path()).await;
+    let sam = start(2, sam_dir.path()).await;
+    let seed = Roster::new(
+        [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
+            .into_iter()
+            .collect(),
+    );
+    for node in [&alex, &sam] {
+        node.rail().set_seed(NS, &seed).unwrap();
+    }
+    let delay = Duration::from_millis(175);
+    let slow = slow_path(loopback_sockets(sam.endpoint())[0], delay).await;
+    alex.transport()
+        .add_known_peer(sam.endpoint().id(), vec![slow]);
+    let (_asleep, at_cy) = common::never_answers();
+    let cy =
+        svrngs_node::iroh::PublicKey::from_bytes(signing(3).verifying_key().as_bytes()).unwrap();
+    alex.transport().add_known_peer(cy, at_cy);
+    for (person, seed) in [("sam", 2), ("cy", 3)] {
+        let admit = svrngs_core::tests_support::Fixture {
+            act: RailAct::Admit {
+                person: Person::parse(person).unwrap(),
+                key: actor_of(&signing(seed)),
+                invite: None,
+            },
+            on_behalf_of: None,
+        };
+        alex.rail().commit(NS, &admit).unwrap().unwrap();
+    }
+    let (pad, _) = origins::head_origin().await;
+    lends(sam_dir.path(), "pad", pad.port(), SAMS);
+    let api = alex.api_addr();
+    let host =
+        |key: &[u8; 32], name: &str| format!("{}.localhost:{}", Label::of(key, name), api.port());
+    let within = svrngs_node::dial::DIAL_WITHIN + Duration::from_secs(1);
+
+    let asked = std::time::Instant::now();
+    let (head, sock) = ask(
+        api,
+        &host(sam.endpoint().id().as_bytes(), "pad"),
+        "GET / HTTP/1.1\r\nConnection: close\r\n",
+    )
+    .await;
+    let took = asked.elapsed();
+    eprintln!("Sam's pad, through the slow path, answered in {took:?}: {head}");
+    assert!(
+        head.starts_with("HTTP/1.1 200"),
+        "a lend that answers is never said away: {head}{}",
+        body(sock).await
+    );
+    assert!(
+        took >= 2 * delay,
+        "the dial went through the slow path, at least a round trip: {took:?}"
+    );
+
+    let asked = std::time::Instant::now();
+    let (head, sock) = ask(
+        api,
+        &host(&signing(3).verifying_key().to_bytes(), "pad"),
+        "GET / HTTP/1.1\r\nConnection: close\r\n",
+    )
+    .await;
+    let took = asked.elapsed();
+    eprintln!("Cy's pad, Cy's computer asleep, answered in {took:?}: {head}");
+    assert!(
+        head.starts_with("HTTP/1.1 502"),
+        "{head}{}",
+        body(sock).await
+    );
+    assert_eq!(
+        header_values(&head, "x-svrngs-refused"),
+        vec!["away"],
+        "{head}"
+    );
+    assert!(
+        took < within,
+        "told Cy's computer is asleep in {took:?}, past the cap and a second, {within:?}"
+    );
+    sam.endpoint().close().await;
+    alex.endpoint().close().await;
+}

@@ -30,6 +30,11 @@ mod join;
 #[rustfmt::skip]
 #[allow(dead_code)]
 mod relay;
+// How long a dial to a computer waits to be answered, the node's one
+// constant, so a phone and a computer are told an asleep one alike
+// (events-asleep).
+#[path = "../../crates/svrngs-node/src/dial.rs"]
+mod dial;
 
 use svrngs_core::alpn::Alpn;
 use svrngs_core::link::Token;
@@ -182,11 +187,11 @@ async fn reach(
     let addr = iroh::EndpointAddr::from_parts(node_id, [iroh::TransportAddr::Relay(relay)]);
 
     t!("LAYER tls/alpn+relay-hop: dialing {node_id} on the {alpn:?} protocol through a relay…");
-    let conn = match bound.ep.connect(addr, alpn.bytes()).await {
-        Ok(c) => c,
-        Err(e) => {
-            refuse!("LAYER tls/alpn+relay-hop: REFUSED — connect() failed: {e}")
-        }
+    let within = dial::DIAL_WITHIN;
+    let conn = match n0_future::time::timeout(within, bound.ep.connect(addr, alpn.bytes())).await {
+        Ok(Ok(c)) => c,
+        Err(_) => refuse!("LAYER tls/alpn+relay-hop: REFUSED — not answered in {within:?}: asleep"),
+        Ok(Err(e)) => refuse!("LAYER tls/alpn+relay-hop: REFUSED — connect() failed: {e}"),
     };
     t!("LAYER tls/alpn+relay-hop: ok — QUIC connection established to {node_id} on the {alpn:?} protocol");
 

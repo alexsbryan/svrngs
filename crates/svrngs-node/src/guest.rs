@@ -18,6 +18,7 @@ use iroh::endpoint::presets;
 use iroh::endpoint::Builder as EndpointBuilder;
 use iroh::{Endpoint, EndpointAddr, RelayUrl, SecretKey};
 
+use crate::dial::DIAL_WITHIN;
 use crate::relay::{self, DotlessLookup};
 
 #[cfg(test)]
@@ -283,7 +284,9 @@ impl HttpBridge {
     /// Bind the localhost listener and start tunneling to `target`
     /// over `alpn`. Dialing is lazy (per accepted TCP connection) and
     /// IS key verification — the QUIC handshake fails unless the
-    /// responder holds the private key for `target.id`.
+    /// responder holds the private key for `target.id`. A dial not
+    /// answered within [`DIAL_WITHIN`] is given up, and its connection
+    /// closed, so the caller is told at once (svrngs, events-asleep).
     pub async fn spawn(
         endpoint: Endpoint,
         target: EndpointAddr,
@@ -393,9 +396,17 @@ impl HttpBridge {
                     .clone();
                 let peer_label = peer_label.clone();
                 tokio::spawn(async move {
-                    let conn = match endpoint.connect(target, alpn).await {
-                        Ok(c) => c,
-                        Err(e) => {
+                    let dialled = tokio::time::timeout(DIAL_WITHIN, endpoint.connect(target, alpn));
+                    let conn = match dialled.await {
+                        Ok(Ok(c)) => c,
+                        Err(_) => {
+                            // svrngs (events-asleep): an asleep computer never
+                            // answers, and iroh gave up only after 30 s.
+                            tracing::debug!(target: "transport", peer = %peer_label, within = ?DIAL_WITHIN,
+                                "iroh bridge: the dial was not answered in time, so the computer is taken as asleep");
+                            return;
+                        }
+                        Ok(Err(e)) => {
                             // The ALPN is the whole diagnosis for an "error 120:
                             // peer doesn't support any known protocol" reject —
                             // without it you cannot tell a peer that lacks a
