@@ -335,7 +335,7 @@ def judge():
     l = ev.get("lapses")
     if not l: bar("4.1, lapses", "never-ran", "the run stopped before it")
     else:
-        answers = {k: (a["status"], a["said"]) for k, a in l.items() if isinstance(a, dict)}
+        answers = {k: (a["status"], a["said"]) for k, a in l.items() if isinstance(a, dict) and "status" in a}
         lapsed = [k for k, (s, w) in answers.items() if "never" not in k and s != 200 and "lapse" in w.lower()]
         told = all(answers[k] != answers[f"{k.split('_')[0]}_never"] for k in answers if "never" not in k)
         held_still = [k for k, (s, _) in answers.items() if s == 200]
