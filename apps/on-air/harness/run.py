@@ -88,7 +88,7 @@ def command(who, *args):
 def start(who, *args):
     (W / who).mkdir(parents=True, exist_ok=True)
     procs[who] = subprocess.Popen([BIN, *args], env=env(who), stdin=subprocess.DEVNULL,
-                                  stdout=open(W / f"{who}.out", "w"), stderr=open(W / f"{who}.log", "w"))
+                                  stdout=open(W / f"{who}.out", "a"), stderr=open(W / f"{who}.log", "a"))
 
 
 def said(who): return (W / f"{who}.out").read_text() if (W / f"{who}.out").exists() else ""
@@ -283,6 +283,19 @@ def main():
     ev["lapses"] = {"s_after_last_put": round(time.time() - last_put, 1), "never_held": never, "piece0": piece0,
                     **{f"{w}_{name}": shown(http("GET", f"{base(w)}/v1/blob/{h}?group={ev['group']}", timeout=60))
                        for w in ("bo", "cy") for name, h in (("piece0", piece0), ("Y", hy), ("never", never)) if h}}
+    # "No store holds a piece": each store's files of the show's pieces, Bo's
+    # and Cy's running; Ana's stopped since the carried step, so started
+    # again and read after its first sweep. Y and Z, 4 kB, sit inside the
+    # store's database, not as files, and are read by the gets above alone.
+    hashes = {r["hash"] for r in station if r["event"] == "piece"}
+    held = lambda w: sorted(f.name for f in (W / w / ".svrngs/blobs/data").glob("*.data") if f.stem in hashes)
+    ev["lapses"]["stores"] = {w: held(w) for w in ("bo", "cy")}
+    ev["lapses"]["stores"]["ana_stopped"] = held("ana")
+    start("ana"); t = time.time()
+    wait(lambda: not held("ana"), 30)
+    ev["lapses"]["stores"]["ana_restarted"] = held("ana")
+    ev["lapses"]["ana_restart"] = {"s": round(time.time() - t, 1), "running": procs["ana"].poll() is None,
+                                   "said": [l for l in log_lines("ana") if "the store is open" in l][-1:]}
 
 
 # --- the bars, judged from what was kept ------------------------------------
@@ -326,10 +339,15 @@ def judge():
         lapsed = [k for k, (s, w) in answers.items() if "never" not in k and s != 200 and "lapse" in w.lower()]
         told = all(answers[k] != answers[f"{k.split('_')[0]}_never"] for k in answers if "never" not in k)
         held_still = [k for k, (s, _) in answers.items() if s == 200]
-        ok = not held_still and told and len(lapsed) == len([k for k in answers if "never" not in k])
+        stores = l.get("stores") or {}
+        kept = {w: len(f) for w, f in stores.items() if w != "ana_stopped" and f}
+        ok = (not held_still and told and len(lapsed) == len([k for k in answers if "never" not in k])
+              and "ana_restarted" in stores and not kept)
         bar("4.1, lapses", "passed" if ok else "failed",
             f"{l['s_after_last_put']} s after the last put: still held {held_still}; said lapsed {lapsed}; "
-            f"lapsed told apart from never held: {told}", answers=answers)
+            f"lapsed told apart from never held: {told}; pieces in a store: {kept or 'none'} "
+            f"(Ana's, stopped: {len(stores.get('ana_stopped', []))}, then restarted: {stores.get('ana_restarted', 'never read')})",
+            answers=answers, stores=stores, ana_restart=l.get("ana_restart"))
 
     s = ev.get("scoped")
     if not s: bar("4.1, scoped", "never-ran", "the run stopped before it")
