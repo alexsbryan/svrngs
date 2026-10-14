@@ -156,8 +156,9 @@ async fn bind(key: Vec<u8>, issuer: Option<iroh::PublicKey>, relay: RelayUrl, he
 /// Dial `to`, a computer's key in 64 hex, else the token's issuer, from
 /// `bound` on `alpn`: through `via`, the relay its group names for it
 /// (relay-in-record), else the relay the token carries, said. A dial to a
-/// lender is given up when not answered `within` (events-asleep); the
-/// dial to the computer a link names waits as long as iroh does.
+/// lender is given up when not answered `within` (events-asleep), a
+/// member's to the computer its link names as [`connect`] says; a joiner's
+/// to it waits as long as iroh does.
 async fn reach(
     bound: &Bound,
     to: Option<String>,
@@ -289,9 +290,11 @@ impl Dialled {
 /// key is `key`, on the members' protocol: the dialled computer, which
 /// answers HTTP on a bi-stream per request ([`Dialled::fetch`]), or the
 /// layer that refused, every layer emitted as it happens.
+/// Given up when not answered within [`dial::LINK_WITHIN`], so the page
+/// reaches the group through another person's computer.
 #[wasm_bindgen]
 pub async fn connect(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
-    dial(key, token, None, Alpn::Member).await
+    dial(key, token, Alpn::Member, Some(dial::LINK_WITHIN)).await
 }
 
 /// Dial the computer that issued `token` on the redeem protocol, the one a
@@ -299,14 +302,15 @@ pub async fn connect(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
 /// redeem it ([`join`]'s bodies).
 #[wasm_bindgen]
 pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
-    dial(key, token, None, Alpn::Redeem).await
+    dial(key, token, Alpn::Redeem, None).await
 }
 
-/// Dial `to`, else the computer that issued `token`, on `alpn`, from an
-/// endpoint of its own: the dial's [`Dialled::close`] closes it.
-async fn dial(key: Vec<u8>, token: String, to: Option<String>, alpn: Alpn) -> Result<Dialled, JsError> {
+/// Dial the computer that issued `token`, on `alpn`, from an endpoint of
+/// its own, given up when not answered `within`: the dial's
+/// [`Dialled::close`] closes it.
+async fn dial(key: Vec<u8>, token: String, alpn: Alpn, within: Option<std::time::Duration>) -> Result<Dialled, JsError> {
     let bound = bind_for(key, &token, false).await?;
-    let conn = reach(&bound, to, None, alpn, None).await?;
+    let conn = reach(&bound, None, None, alpn, within).await?;
     Ok(Dialled {
         ep: Some(bound.ep),
         conn,

@@ -9,6 +9,7 @@
 //! 3 and 4). A joiner's dial to the computer its link names is not capped:
 //! the measurement did not cover it, and a computer just started answered
 //! its first in 3.03 s (`crates/svrngs/tests/home_group.rs`, at 883fca8).
+//! A member's page's dial to that computer is, by [`LINK_WITHIN`].
 //!
 //! **4 s, from the measurements, by a rule written before them**
 //! (`demo/runs/asleep/2026-10-14/PREDICTIONS.md`, "The cap"): the slowest
@@ -27,6 +28,20 @@
 /// How long a dial to a lend's computer waits for its handshake before the
 /// computer is taken as asleep.
 pub const DIAL_WITHIN: std::time::Duration = std::time::Duration::from_secs(4);
+
+/// How long a phone's page waits for the computer that made its link to
+/// answer its dial as a member (v1ui-reach (b); `web/src/lib.rs`
+/// `connect`), before it reaches the group through another person's.
+/// **10 s, by [`DIAL_WITHIN`]'s rule, written before the measurement**
+/// (`demo/runs/reach/2026-10-14/`, PREDICTIONS.md, "The cap"): the slowest
+/// working dial, 3,057 ms, times 3, rounded up to a whole second; the
+/// constant above did not fit. That dial was to a computer just woken,
+/// through a relay on this host: all five such took 3,047-3,057 ms, where a
+/// warm one took 9-24 ms there and 73-187 ms through n0's; asleep, iroh gave
+/// one up at 30 s (that README). Cellular, a second host and a release build
+/// were not measured, and are the operator's. The joiner's redeem dial stays
+/// uncapped (5c097eb).
+pub const LINK_WITHIN: std::time::Duration = std::time::Duration::from_secs(10);
 
 /// How a phone's page holds its dial to a lender (events-wait (b)): given up
 /// once the computer has sent nothing for [`DIAL_WITHIN`], as a dial it does
