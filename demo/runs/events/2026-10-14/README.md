@@ -106,3 +106,33 @@ the event is posted, or now.
 5. **The post lands on the first group by id** (How it ran). The app's own
    choice, harmless. A follow-up for the app if the host should land
    where they began.
+
+## The shots take
+
+events-doc asked for the run's pictures and a way in, and the clean take
+had neither (finding 3). `SHOTS.md` holds its setup and predictions,
+committed (f474069) before its driver (d7c39ba) and its data (a984c1b,
+whose subject names its commit wrongly: it ran at f474069 with the driver
+d7c39ba commits as its only dirt, `data/shots/events.jsonl`, `start`).
+106.9 s from start to end, the 1-minute load 5.0 at the start and 7.6 at
+the end on 12 cores. Its numbers are this take's; the run's are the clean
+take's, above.
+
+| | predicted | as it ran | verdict |
+|---|---|---|---|
+| S1 | Bo's home page lists "Open Sam’s events" under The House within 30 s | listed under The House, beside "Copy its address for a program", 31 ms after the address was asked (`way_in.bo[0]`, `03-bo-2w.png`) | passed |
+| S2 | it opens the app's list; Dinner lands on The House's event within 5 s | the app's list, "The House", "Dinner Friday 7", 45 ms; Dinner on The House's address of the event, `way_in.path`, 17 ms (`way_in.bo[1-2]`, `04`, `05`) | passed |
+| S3 | Cy's phone, no link, lists Sam’s events; the app's list within 30 s; Dinner lands on The House's | "You’re in The House, as Cy" and "Sam’s events", 667 ms; the app's list 1,046 ms after the press; Dinner on The House's address, 91 ms (`way_in.cy`, `06`-`08`) | passed |
+| S4 | every bar as the clean take's, 10b included | the same verdict on every bar; 10b failed again, Bo 30,019 ms, Cy 30,026 ms (`data/shots/verdicts.json`) | passed |
+| S5 | no picture shows a link's token | no step shot shows a link; the home page's "Make a link" was not pressed (`03-bo-2w.png`) | passed |
+
+Two things the pictures show:
+
+- **The phone's group page shows its hidden forms** to someone already
+  in: a name box, "Join", "Yes" and "Not now" above "Sam’s events"
+  (`06-cy-3w.png`). The same cause start-run found on a computer,
+  `web/index.html:53`, `form { display: grid; }` over `hidden`; svrngs's,
+  and known.
+- **The post landed on dWeb's event** this take (`summary.json`,
+  `event.landed`; `02-sam-1.png`), The House's in the clean take: finding
+  5, by which group's id sorts first.
