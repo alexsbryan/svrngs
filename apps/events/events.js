@@ -43,7 +43,7 @@
 export const EVENT = 'event';
 export const COMING = 'coming';
 export const CAME = 'came';
-const MAX_WORDS = 200;
+export const MAX_WORDS = 200;
 const MAX_NAME = 60;
 const MAX_GUESTS = 20;
 /** What each kind may say: a field beyond these is a word this fold cannot read. */

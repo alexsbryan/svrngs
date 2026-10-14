@@ -42,7 +42,7 @@ import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import http from 'node:http';
 
-import { CAME, COMING, EVENT, actsOf, answers, guestName, hosted, init, ownActs, reduce, validate } from './events.js';
+import { CAME, COMING, EVENT, MAX_WORDS, actsOf, answers, guestName, hosted, init, ownActs, reduce, validate } from './events.js';
 import { file, record } from './store.mjs';
 
 const config = JSON.parse(readFileSync(process.argv[2], 'utf8'));
@@ -157,9 +157,9 @@ async function home(id) {
     body += '</section>';
   }
   body += `<section><h2>Post an event</h2><form method="post" action="/post">
-<label>What <input type="text" name="what" required maxlength="200"></label>
-<label>When <input type="text" name="when" maxlength="200"></label>
-<label>Where <input type="text" name="where" maxlength="200"></label>
+<label>What <input type="text" name="what" required maxlength="${MAX_WORDS}"></label>
+<label>When <input type="text" name="when" maxlength="${MAX_WORDS}"></label>
+<label>Where <input type="text" name="where" maxlength="${MAX_WORDS}"></label>
 <p>To ${mine.map((g) => `<label><input type="checkbox" name="group" value="${esc(g.id)}"> ${esc(g.name ?? g.id)}</label>`).join(' ')}</p>
 <button>Post</button></form></section>`;
   return page('Events', body);
