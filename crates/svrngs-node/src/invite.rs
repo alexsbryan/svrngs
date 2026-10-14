@@ -28,7 +28,7 @@ pub const LINK_LIFE_SECS: i64 = 24 * 60 * 60;
 const DRAWS: usize = 256;
 
 /// The one spelling of the file in a group's directory that keeps the page
-/// its https links print on (u2-7; svrngs's group.rs writes it).
+/// its https links print on (u2-7; group.rs `write_origin` writes it).
 pub const ORIGIN_FILE: &str = "origin";
 
 /// The page `dir`, a group's directory, keeps for its https links, or
