@@ -56,6 +56,16 @@ async fn serve(
     .await
 }
 
+/// `payload` as it is drained when [`key`], Ada's only key, sent it.
+fn from_ada(payload: &str) -> Live {
+    let ada = crate::actor_of(&key());
+    Live {
+        payload: payload.into(),
+        key: ada.clone(),
+        person_key: ada,
+    }
+}
+
 fn fresh(dir: &tempfile::TempDir) -> (Arc<RingRail>, Arc<LiveBuffer>) {
     let rail = rail_with_roster(dir.path());
     let mut members = std::collections::BTreeMap::new();
@@ -186,10 +196,7 @@ async fn a_live_payload_touches_nothing_on_disk() {
         let sent = push(&addr, LIVE_NS, p).await;
         assert_eq!(sent.status(), 200, "{}", sent.text().await.unwrap());
     }
-    assert_eq!(
-        live.drain(LIVE_NS),
-        (payloads.map(String::from).to_vec(), 0)
-    );
+    assert_eq!(live.drain(LIVE_NS), (payloads.map(from_ada).to_vec(), 0));
     assert_eq!(snapshot(dir.path()), before, "the live lane wrote to disk");
 }
 
@@ -206,7 +213,7 @@ async fn a_restart_empties_the_buffer() {
     assert_eq!(restarted.drain(LIVE_NS), (Vec::new(), 0));
     assert_eq!(
         live.drain(LIVE_NS),
-        (vec!["AQID".to_string()], 0),
+        (vec![from_ada("AQID")], 0),
         "control: the first process held it"
     );
 }
@@ -225,7 +232,7 @@ async fn a_drain_takes_only_its_own_namespace() {
     assert_eq!(live.drain(OTHER_LIVE_NS), (Vec::new(), 0));
     assert_eq!(
         live.drain(LIVE_NS),
-        (vec!["AQID".to_string(), "BAUG".to_string()], 0)
+        (vec![from_ada("AQID"), from_ada("BAUG")], 0)
     );
 }
 

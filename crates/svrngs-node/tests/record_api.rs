@@ -366,6 +366,15 @@ async fn drain(node: &Node, ns: &str) -> serde_json::Value {
         .unwrap()
 }
 
+/// What `node`'s app drains from `ns`, each payload's text alone.
+async fn drained(node: &Node, ns: &str) -> Vec<String> {
+    let got = drain(node, ns).await;
+    assert_eq!(got["dropped"], 0, "{got}");
+    let each = got["payloads"].as_array().unwrap().iter();
+    each.map(|p| p["payload"].as_str().unwrap().to_string())
+        .collect()
+}
+
 /// A founds `ns` and admits B as bo by an act, so B stands by the register
 /// and not by the seed; B holds `ns` too, and A can reach B.
 async fn a_and_b_in(ns: &str, a: &Node, b: &Node) {
@@ -394,19 +403,57 @@ async fn a_pushes_on_loopback_and_b_drains_the_payload() {
     assert_eq!(out["peers"][0]["node"], actor_of(&signing(2)), "{out}");
     assert_eq!(out["peers"][0]["name"], "bo", "{out}");
 
-    let got = drain(&b, NS).await;
-    assert_eq!(got["payloads"], serde_json::json!(["AQID"]), "{got}");
-    assert_eq!(got["dropped"], 0);
-    assert_eq!(
-        drain(&b, NS).await["payloads"],
-        serde_json::json!([]),
-        "a drain empties"
+    assert_eq!(drained(&b, NS).await, ["AQID"]);
+    assert!(drained(&b, NS).await.is_empty(), "a drain empties");
+    assert!(drained(&a, NS).await.is_empty(), "A does not hear itself");
+    for n in [&a, &b] {
+        n.endpoint().close().await;
+    }
+}
+
+/// **A payload drained names who sent it** (onair-live; ON_AIR §4.3): the
+/// group's seed names ada by key 1 and bo by keys 2 and 6, so bo's first
+/// key is 2; B is bo's second device, key 6. A's payload drained on B names
+/// key 1 and person key 1; B's drained on A names key 6 and bo's first, 2,
+/// as `/v1/rail/people` names them. The failing input: the drain without
+/// its sender (the payload alone, as u3-3 left it).
+#[tokio::test]
+async fn a_payload_drained_names_its_sender_and_their_person() {
+    let (da, db) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (a, b) = (start(1, &da).await, start(6, &db).await);
+    let seed = Roster::new(
+        [
+            (Person::parse("ada").unwrap(), vec![actor_of(&signing(1))]),
+            (
+                Person::parse("bo").unwrap(),
+                vec![actor_of(&signing(2)), actor_of(&signing(6))],
+            ),
+        ]
+        .into_iter()
+        .collect(),
     );
-    assert_eq!(
-        drain(&a, NS).await["payloads"],
-        serde_json::json!([]),
-        "A does not hear itself"
-    );
+    for n in [&a, &b] {
+        n.rail().set_seed(NS, &seed).unwrap();
+    }
+    a.transport()
+        .add_known_peer(key(6), loopback_sockets(b.endpoint()));
+    b.transport()
+        .add_known_peer(key(1), loopback_sockets(a.endpoint()));
+
+    let (ada, bo) = (actor_of(&signing(1)), actor_of(&signing(2)));
+    let bos_device = actor_of(&signing(6));
+    for (from, to, payload, sender, person) in [
+        (&a, &b, "AQID", &ada, &ada),
+        (&b, &a, "BAUG", &bos_device, &bo),
+    ] {
+        let (status, out) = push(from, NS, payload.into()).await;
+        assert_eq!(status, 200, "{out}");
+        assert_eq!(
+            drain(to, NS).await["payloads"],
+            serde_json::json!([{ "payload": payload, "key": sender, "person_key": person }]),
+            "{payload} names who sent it"
+        );
+    }
     for n in [&a, &b] {
         n.endpoint().close().await;
     }
@@ -425,7 +472,7 @@ async fn a_live_payload_over_4096_bytes_is_refused() {
     let (status, out) = push(&a, NS, vec![b'x'; 4097]).await;
     assert_eq!(status, 413, "{out}");
     assert!(out["error"].as_str().unwrap().contains("4096"), "{out}");
-    assert_eq!(drain(&b, NS).await["payloads"], serde_json::json!([]));
+    assert!(drained(&b, NS).await.is_empty());
 
     let (status, out) = push(&a, NS, vec![b'x'; 4096]).await;
     assert_eq!(
@@ -433,8 +480,7 @@ async fn a_live_payload_over_4096_bytes_is_refused() {
         (200, &serde_json::json!(1)),
         "{out}"
     );
-    let got = drain(&b, NS).await;
-    assert_eq!(got["payloads"][0].as_str().unwrap().len(), 4096, "{got}");
+    assert_eq!(drained(&b, NS).await[0].len(), 4096);
     for n in [&a, &b] {
         n.endpoint().close().await;
     }
@@ -460,11 +506,8 @@ async fn a_drain_takes_only_its_own_groups_payloads() {
             "{ns}: {out}"
         );
     }
-    assert_eq!(
-        drain(&b, "yard").await["payloads"],
-        serde_json::json!(["WQ"])
-    );
-    assert_eq!(drain(&b, NS).await["payloads"], serde_json::json!(["SA"]));
+    assert_eq!(drained(&b, "yard").await, ["WQ"]);
+    assert_eq!(drained(&b, NS).await, ["SA"]);
     for n in [&a, &b] {
         n.endpoint().close().await;
     }
@@ -510,7 +553,7 @@ async fn a_dialer_standing_in_another_group_a_holds_is_refused() {
     assert_eq!(out["peers"][0]["node"], actor_of(&signing(1)), "{out}");
     let why = out["peers"][0]["error"].as_str().unwrap();
     assert!(why.contains("403"), "A refused it: {why}");
-    assert_eq!(drain(&a, NS).await["payloads"], serde_json::json!([]));
+    assert!(drained(&a, NS).await.is_empty());
 
     let (status, out) = push(&c, "yard", b"BAUG".to_vec()).await;
     assert_eq!(
@@ -518,10 +561,7 @@ async fn a_dialer_standing_in_another_group_a_holds_is_refused() {
         (200, &serde_json::json!(1)),
         "control: {out}"
     );
-    assert_eq!(
-        drain(&a, "yard").await["payloads"],
-        serde_json::json!(["BAUG"])
-    );
+    assert_eq!(drained(&a, "yard").await, ["BAUG"]);
     for n in [&a, &c] {
         n.endpoint().close().await;
     }

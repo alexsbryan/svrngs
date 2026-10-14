@@ -289,20 +289,28 @@ async fn the_people_door_answers_the_register_with_keys() {
 #[test]
 fn the_live_buffer_evicts_the_oldest_and_reports_it() {
     let live = LiveBuffer::default();
+    let said = |payload: String| super::Live {
+        payload,
+        key: "k".into(),
+        person_key: "k".into(),
+    };
     for i in 0..257 {
-        live.push("room", format!("p{i}"));
+        live.push("room", said(format!("p{i}")));
     }
     let (payloads, dropped) = live.drain("room");
     assert_eq!(payloads.len(), 256);
     assert_eq!(dropped, 1);
-    assert_eq!(payloads[0], "p1", "the OLDEST payload is the one evicted");
+    assert_eq!(
+        payloads[0].payload, "p1",
+        "the OLDEST payload is the one evicted"
+    );
     let (again, dropped) = live.drain("room");
     assert!(
         again.is_empty() && dropped == 0,
         "a drain empties the buffer"
     );
     // Another namespace's buffer is untouched.
-    live.push("other", "x".into());
+    live.push("other", said("x".into()));
     let (mine, _) = live.drain("room");
     assert!(mine.is_empty());
 }

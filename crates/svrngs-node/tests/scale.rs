@@ -877,7 +877,7 @@ async fn the_account_matches_a_hand_count() {
     //   it does, so no `RelayAt` is committed), lists its members (node.rs
     //   `standings`) and then offers the group to them (`run_one_round`);
     //   each member admits node 0's one connection (node.rs `admit_dialer`)
-    //   and checks each of 3 posts (ring_routes.rs `standing_refusal`):
+    //   and checks each of 3 posts (ring_routes.rs `standing_asker`):
     //   3 + (1 + 3) x 2 = 11. Each node's first read folds (nothing asked
     //   its register before the round) and the rest are kept: the two acts
     //   node 0 pushes are records, which move no membership: kept 2 + 3 x

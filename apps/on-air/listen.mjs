@@ -54,8 +54,8 @@ if (station.length !== 1) {
 const { key, person_key } = station[0];
 await say('listening', { station: o.station, key, person_key });
 
-// A payload as the drain gives it: today a string; a sender, if the drain
-// names one, is kept as it is named.
+// A payload as the drain gives it: `{payload, key, person_key}` since
+// onair-live, a bare string before it, kept as the drain named it.
 function unwrap(p) {
   if (typeof p === 'string') return { text: p, sender: null };
   return { text: p?.payload ?? p?.text ?? null, sender: { key: p?.key ?? p?.sender ?? null, person_key: p?.person_key ?? null } };

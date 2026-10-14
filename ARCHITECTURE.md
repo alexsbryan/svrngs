@@ -170,7 +170,7 @@ record API, which routes the append door through it. The live route
 (`ring_live`) came over in U3, with `RingInbound`'s live buffer; it refused
 an envelope for a group the rail does not hold, where upstream asked the
 origin registry's live registrations, which did not come over. Then it
-changed: it asks the sync route's question (`standing_refusal`), so a dialer
+changed: it asks the sync route's question (`standing_asker`), so a dialer
 not standing in the group its envelope names — one the acceptor admitted
 for another group — is refused 403, as is a request off the stream. The
 checkpoint route stays behind; the routes are an `axum::Router` where
@@ -300,7 +300,11 @@ names the peers (`LivePeer`), each dialled at its one `base_url`. Then it
 changed: the push door, which buffered locally and answered `peers: []`,
 offers the payload to every computer's key standing in the group but this
 node's (`live_peers`, from the register; u4-1 skips a browser's), over the node's `IrohTransport`, held
-by `RailApi`, and answers each peer and whether it took it. The sync
+by `RailApi`, and answers each peer and whether it took it. Then it
+changed (onair-live): the live route keeps the key that dialled in and its
+person's first key with each payload (`Live`), from the register row the
+standing check hands back (`standing_asker`), and the drain answers them
+with it. The sync
 doors and `attest` stay behind, and with them the other routes beside them
 in upstream's `api.rs`. Then it changed: the append door's
 attestation branch went with `attest`, and `GuestAttestation` from the

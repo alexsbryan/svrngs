@@ -446,6 +446,16 @@ const LIVE_BUFFER_CAPACITY: usize = 256;
 /// keeps.
 pub(crate) const LIVE_PAYLOAD_MAX_BYTES: usize = 4096;
 
+/// One arrived payload and who sent it: the dialer's key, verified by the
+/// acceptor, and their person's first key, as `/v1/rail/people` names them
+/// (ON_AIR §4.3), so an app knows who spoke without signing every payload.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct Live {
+    pub payload: String,
+    pub key: String,
+    pub person_key: String,
+}
+
 /// The arrived-payload buffer: bounded, in memory, and the only place a
 /// live payload ever sits. Keyed by namespace, the way append and log are.
 #[derive(Debug, Default)]
@@ -459,7 +469,7 @@ pub struct LiveBuffer {
 
 #[derive(Debug, Default)]
 struct LiveBufferInner {
-    payloads: VecDeque<String>,
+    payloads: VecDeque<Live>,
     /// Payloads evicted because the buffer was full, since the last drain.
     /// Eviction is a real loss and it is REPORTED, never silent.
     dropped: usize,
@@ -468,7 +478,7 @@ struct LiveBufferInner {
 impl LiveBuffer {
     /// Take one arrived payload for `namespace`. Evicts that namespace's
     /// oldest when full.
-    pub fn push(&self, namespace: &str, payload: String) {
+    pub fn push(&self, namespace: &str, payload: Live) {
         let mut buffers = self
             .inner
             .lock()
@@ -491,7 +501,7 @@ impl LiveBuffer {
 
     /// Empty `namespace`'s buffer, returning what was in it and how many
     /// were lost. Every other namespace's buffer is untouched.
-    pub(crate) fn drain(&self, namespace: &str) -> (Vec<String>, usize) {
+    pub(crate) fn drain(&self, namespace: &str) -> (Vec<Live>, usize) {
         let mut buffers = self
             .inner
             .lock()
@@ -585,7 +595,8 @@ fn live_peers(this: &str, namespace: &str, standing: &BTreeMap<String, Member>) 
     peers
 }
 
-/// GET /v1/rail/live — drain the caller's namespace since the last call.
+/// GET /v1/rail/live — drain the caller's namespace since the last call,
+/// each payload with its sender ([`Live`]): `{payload, key, person_key}`.
 fn drain_answer(live: &LiveBuffer, namespace: &str) -> Response {
     let (payloads, dropped) = live.drain(namespace);
     if dropped > 0 {
