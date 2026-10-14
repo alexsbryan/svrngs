@@ -59,6 +59,50 @@ fn lends(dir: &std::path::Path, name: &str, port: u16, upload_bps: Option<u64>) 
     std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
 }
 
+/// `dir`'s computer lends `name` on `port`, of `kind`, declaring the kinds
+/// it `reads`.
+fn declare(dir: &std::path::Path, name: &str, port: u16, kind: &str, reads: &[&str]) {
+    let at = lend::lends_dir(dir);
+    std::fs::create_dir_all(&at).unwrap();
+    let body = serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads });
+    std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+}
+
+/// `path` asked of `node`'s API at the origin of the lend `at`, by a
+/// caller on loopback; from the page at `from`'s origin, with its
+/// browser's fetch headers, when one is named. Its status and JSON body.
+async fn at_origin(
+    node: &Node,
+    at: &svrngs_core::pass::Label,
+    path: &str,
+    from: Option<&str>,
+) -> (u16, serde_json::Value) {
+    use tower::ServiceExt;
+    let port = node.api_addr().port();
+    let mut request =
+        axum::http::Request::get(path).header("host", format!("{at}.localhost:{port}"));
+    if let Some(page) = from {
+        request = request
+            .header("sec-fetch-site", "same-site")
+            .header("sec-fetch-mode", "cors")
+            .header("origin", format!("http://{page}.localhost:{port}"));
+    }
+    let mut request = request.body(axum::body::Body::empty()).unwrap();
+    let caller: SocketAddr = "127.0.0.1:50000".parse().unwrap();
+    request
+        .extensions_mut()
+        .insert(axum::extract::ConnectInfo(caller));
+    let answer = tokio::time::timeout(Duration::from_secs(30), node.api_routes().oneshot(request))
+        .await
+        .expect("the ask finishes")
+        .unwrap();
+    let status = answer.status().as_u16();
+    let body = axum::body::to_bytes(answer.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    (status, serde_json::from_slice(&body).unwrap())
+}
+
 /// Alex's group "house" and Sam in it, each computer holding its seed, and
 /// Alex knowing where Sam listens.
 struct House {
@@ -309,14 +353,7 @@ async fn a_caller_off_loopback_is_refused_the_groups_and_the_lends() {
 /// the unanswered answered none.
 #[tokio::test]
 async fn a_lent_page_asks_at_its_own_origin_the_lends_it_reads() {
-    use tower::ServiceExt;
     let mut house = House::new().await;
-    let declare = |dir: &std::path::Path, name: &str, port: u16, kind: &str, reads: &[&str]| {
-        let at = lend::lends_dir(dir);
-        std::fs::create_dir_all(&at).unwrap();
-        let body = serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads });
-        std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
-    };
     declare(house.alex_dir.path(), "night", 8596, "night", &["media"]);
     declare(house.alex_dir.path(), "telly", 8096, "media", &[]);
     declare(house.sam_dir.path(), "films", 8097, "media", &[]);
@@ -325,34 +362,10 @@ async fn a_lent_page_asks_at_its_own_origin_the_lends_it_reads() {
         svrngs_core::pass::Label::of(signing(seed).verifying_key().as_bytes(), name)
     };
     let at = |seed: u8, name: &str| svrngs_node::origin::origin(&label(seed, name), port);
-    let ask = |alex: &Node| {
-        let mut request = axum::http::Request::get(svrngs_node::surface::READS_PATH)
-            .header("host", format!("{}.localhost:{port}", label(1, "night")))
-            .body(axum::body::Body::empty())
-            .unwrap();
-        let caller: SocketAddr = "127.0.0.1:50000".parse().unwrap();
-        request
-            .extensions_mut()
-            .insert(axum::extract::ConnectInfo(caller));
-        let routes = alex.api_routes();
-        async move {
-            let answer = tokio::time::timeout(Duration::from_secs(30), routes.oneshot(request))
-                .await
-                .expect("the ask finishes")
-                .unwrap();
-            let status = answer.status().as_u16();
-            let body = axum::body::to_bytes(answer.into_body(), usize::MAX)
-                .await
-                .unwrap();
-            (
-                status,
-                serde_json::from_slice::<serde_json::Value>(&body).unwrap(),
-            )
-        }
-    };
+    let (night, reads) = (label(1, "night"), svrngs_node::surface::READS_PATH);
     let telly = serde_json::json!({ "kind": "media", "name": "telly", "lender": "alex", "address": at(1, "telly") });
 
-    let (status, body) = ask(&house.alex).await;
+    let (status, body) = at_origin(&house.alex, &night, reads, None).await;
     assert_eq!(status, 200, "{body:#}");
     assert_eq!(
         body,
@@ -365,7 +378,7 @@ async fn a_lent_page_asks_at_its_own_origin_the_lends_it_reads() {
     let gone = house.sam.take().unwrap();
     gone.endpoint().close().await;
     drop(gone);
-    let (status, body) = ask(&house.alex).await;
+    let (status, body) = at_origin(&house.alex, &night, reads, None).await;
     assert_eq!(status, 200, "{body:#}");
     assert_eq!(
         body,
@@ -386,14 +399,7 @@ async fn a_lent_page_asks_at_its_own_origin_the_lends_it_reads() {
 /// asleep dial's timeout.
 #[tokio::test]
 async fn a_lent_page_is_not_held_by_a_computer_that_never_answers() {
-    use tower::ServiceExt;
     let house = House::new().await;
-    let declare = |dir: &std::path::Path, name: &str, port: u16, kind: &str, reads: &[&str]| {
-        let at = lend::lends_dir(dir);
-        std::fs::create_dir_all(&at).unwrap();
-        let body = serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads });
-        std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
-    };
     declare(house.alex_dir.path(), "night", 8596, "night", &["media"]);
     declare(house.alex_dir.path(), "telly", 8096, "media", &[]);
     declare(house.sam_dir.path(), "films", 8097, "media", &[]);
@@ -420,29 +426,11 @@ async fn a_lent_page_is_not_held_by_a_computer_that_never_answers() {
         svrngs_core::pass::Label::of(signing(seed).verifying_key().as_bytes(), name)
     };
     let at = |seed: u8, name: &str| svrngs_node::origin::origin(&label(seed, name), port);
-    let mut request = axum::http::Request::get(svrngs_node::surface::READS_PATH)
-        .header("host", format!("{}.localhost:{port}", label(1, "night")))
-        .body(axum::body::Body::empty())
-        .unwrap();
-    let caller: SocketAddr = "127.0.0.1:50000".parse().unwrap();
-    request
-        .extensions_mut()
-        .insert(axum::extract::ConnectInfo(caller));
+    let reads = svrngs_node::surface::READS_PATH;
 
     let asked = std::time::Instant::now();
-    let answer = tokio::time::timeout(
-        Duration::from_secs(30),
-        house.alex.api_routes().oneshot(request),
-    )
-    .await
-    .expect("the ask finishes")
-    .unwrap();
+    let (status, body) = at_origin(&house.alex, &label(1, "night"), reads, None).await;
     let took = asked.elapsed();
-    let status = answer.status().as_u16();
-    let body = axum::body::to_bytes(answer.into_body(), usize::MAX)
-        .await
-        .unwrap();
-    let body: serde_json::Value = serde_json::from_slice(&body).unwrap();
     eprintln!("the reads answered in {took:?}: {body}");
     assert_eq!(status, 200, "{body:#}");
     assert_eq!(
@@ -475,52 +463,21 @@ async fn a_lent_page_is_not_held_by_a_computer_that_never_answers() {
 /// `unlent` for `reel`, as if Sam had answered that it is not lent.
 #[tokio::test]
 async fn a_silent_lender_is_could_not_judge_on_the_page_s_reads_and_at_the_origin() {
-    use tower::ServiceExt;
     let mut house = House::new().await;
-    let declare = |dir: &std::path::Path, name: &str, port: u16, kind: &str, reads: &[&str]| {
-        let at = lend::lends_dir(dir);
-        std::fs::create_dir_all(&at).unwrap();
-        let body = serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads });
-        std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
-    };
     declare(house.alex_dir.path(), "night", 8596, "night", &["media"]);
     declare(house.alex_dir.path(), "telly", 8096, "media", &[]);
     declare(house.sam_dir.path(), "reel", 8597, "night", &["media"]);
     declare(house.sam_dir.path(), "films", 8097, "media", &[]);
-    let port = house.alex.api_addr().port();
     let label = |seed: u8, name: &str| {
         svrngs_core::pass::Label::of(signing(seed).verifying_key().as_bytes(), name)
     };
-    let ask = |alex: &Node, at: svrngs_core::pass::Label, path: &str, from: Option<&str>| {
-        let mut request =
-            axum::http::Request::get(path).header("host", format!("{at}.localhost:{port}"));
-        if let Some(page) = from {
-            request = request
-                .header("sec-fetch-site", "same-site")
-                .header("sec-fetch-mode", "cors")
-                .header("origin", format!("http://{page}.localhost:{port}"));
-        }
-        let mut request = request.body(axum::body::Body::empty()).unwrap();
-        let caller: SocketAddr = "127.0.0.1:50000".parse().unwrap();
-        request
-            .extensions_mut()
-            .insert(axum::extract::ConnectInfo(caller));
-        let routes = alex.api_routes();
-        async move {
-            let answer = tokio::time::timeout(Duration::from_secs(30), routes.oneshot(request))
-                .await
-                .expect("the ask finishes")
-                .unwrap();
-            let status = answer.status().as_u16();
-            let body = axum::body::to_bytes(answer.into_body(), usize::MAX)
-                .await
-                .unwrap();
-            let body: serde_json::Value = serde_json::from_slice(&body).unwrap();
-            (status, body["kind"].as_str().map(str::to_string))
-        }
+    let alex = &house.alex;
+    let ask = |at, path, from| async move {
+        let (status, body) = at_origin(alex, &at, path, from).await;
+        (status, body["kind"].as_str().map(str::to_string))
     };
     let (night, reel) = (label(1, "night").to_string(), label(2, "reel").to_string());
-    let (status, body) = ask(&house.alex, label(2, "reel"), "/svrngs-reads", None).await;
+    let (status, body) = ask(label(2, "reel"), "/svrngs-reads", None).await;
     assert_eq!(
         status, 200,
         "Sam's computer up, reel's reads answered: {body:?}"
@@ -545,7 +502,7 @@ async fn a_silent_lender_is_could_not_judge_on_the_page_s_reads_and_at_the_origi
             Some(reel.as_str()),
         ),
     ] {
-        let got = ask(&house.alex, at, path, from).await;
+        let got = ask(at, path, from).await;
         eprintln!("{row}: {got:?}");
         assert_eq!(got, away, "{row}: Sam's computer silent, could-not-judge");
     }
