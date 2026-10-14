@@ -172,6 +172,23 @@ async fn home_page(engine: Engine, at: &Node, mut args: Value) -> Value {
     drive(engine, "home.mjs", args, None).await
 }
 
+/// `folder` kept as group `NS`'s on `at`, as `share --folder` asks it.
+async fn keep_folder(at: &Node, folder: &Path) {
+    let kept = reqwest::Client::builder()
+        .no_proxy()
+        .build()
+        .unwrap()
+        .post(format!("http://{}/v1/folders", at.api_addr()))
+        .json(&svrngs_node::folder::FolderAsk {
+            dir: folder.to_path_buf(),
+            group: NS.into(),
+        })
+        .send()
+        .await
+        .unwrap();
+    assert!(kept.status().is_success(), "{:?}", kept.text().await);
+}
+
 /// Run the browser half `web/tests/<script>` in `engine` on `args`, and
 /// read the JSON line it printed. When `release` fires, the browser half is told `go`
 /// (its upload's tail, u4-4).
@@ -2003,19 +2020,7 @@ async fn the_home_page_says_where_the_groups_folder_is(engine: Engine) {
     let ada = node(dir.path(), &relay, &signing(7)).await;
     let folder = dir.path().join("house");
     std::fs::create_dir(&folder).unwrap();
-    let kept = reqwest::Client::builder()
-        .no_proxy()
-        .build()
-        .unwrap()
-        .post(format!("http://{}/v1/folders", ada.api_addr()))
-        .json(&svrngs_node::folder::FolderAsk {
-            dir: folder.clone(),
-            group: NS.into(),
-        })
-        .send()
-        .await
-        .unwrap();
-    assert!(kept.status().is_success(), "{:?}", kept.text().await);
+    keep_folder(&ada, &folder).await;
     let seen = home_page(engine, &ada, json!({ "read": ".folder" })).await;
     assert_eq!(
         seen["read"],
@@ -2445,19 +2450,7 @@ async fn the_home_page_opens_the_group_s_folder(engine: Engine) {
     let path = std::env::var_os("PATH").unwrap_or_default();
     let paths = std::iter::once(bin.clone()).chain(std::env::split_paths(&path));
     std::env::set_var("PATH", std::env::join_paths(paths).unwrap());
-    let kept = reqwest::Client::builder()
-        .no_proxy()
-        .build()
-        .unwrap()
-        .post(format!("http://{}/v1/folders", ada.api_addr()))
-        .json(&svrngs_node::folder::FolderAsk {
-            dir: folder.clone(),
-            group: NS.into(),
-        })
-        .send()
-        .await
-        .unwrap();
-    assert!(kept.status().is_success(), "{:?}", kept.text().await);
+    keep_folder(&ada, &folder).await;
     let seen = home_page(
         engine,
         &ada,
