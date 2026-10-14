@@ -44,9 +44,13 @@ use crate::register::{Member, Standing};
 use crate::ring_sync::answer;
 use crate::RingRail;
 
-// rail.rs's refusal body, forked with the route (DESIGN §8, U1's inventory).
+// rail.rs's refusal body, forked with the route (DESIGN §8, U1's inventory);
+// each one traced, so a refusal its route does not trace still leaves one
+// (#149).
 pub(crate) fn err(status: StatusCode, msg: impl Into<String>) -> Response {
-    (status, Json(serde_json::json!({ "error": msg.into() }))).into_response()
+    let msg = msg.into();
+    tracing::debug!(target: "rails", %status, msg, "refused");
+    (status, Json(serde_json::json!({ "error": msg }))).into_response()
 }
 
 /// What the ring routes read: the journals and the live lane's buffer.

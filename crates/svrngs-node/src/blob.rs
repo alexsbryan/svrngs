@@ -228,6 +228,7 @@ pub(super) async fn get(
         }
         held => held != Holds::NeverHeld,
     };
+    tracing::debug!(target: "blob", %hash, group, given, "blob: not held here whole, so the group is asked");
     let answers = f.ask_group(hash, &group, &people).await;
     let (mut asked, mut holders, mut left) = (Map::new(), Vec::new(), u64::MAX);
     for (key, said) in &answers {

@@ -148,3 +148,80 @@ async fn a_lapse_this_computer_was_given_outlasts_a_fetch_that_failed() {
         node.endpoint().close().await;
     }
 }
+
+/// What the test's subscriber writes, kept to be read.
+#[derive(Clone, Default)]
+struct Said(std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
+
+impl std::io::Write for Said {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.0.lock().unwrap().extend_from_slice(buf);
+        Ok(buf.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+/// **A refused put, and a get that asks the group, are traced** (#149):
+/// Ana puts bytes naming no `keep`, and is refused; then she gets a hash
+/// she carries but her store lacks, and her computer asks the group. A
+/// person reading her trace finds each: the refusal and its words, and the
+/// get asking with her lapse given. Red with the plant the finding names,
+/// the refusal and the branch untraced (`err` and the get as they were):
+/// neither in the trace.
+#[tokio::test]
+async fn a_refused_put_and_a_get_that_asks_the_group_are_traced() {
+    let said = Said::default();
+    let writer = said.clone();
+    let subscriber = tracing_subscriber::fmt()
+        .with_env_filter("rails=debug,blob=debug")
+        .with_ansi(false)
+        .with_writer(move || writer.clone())
+        .finish();
+    let _said = tracing::subscriber::set_default(subscriber);
+    // A second dispatcher kept alive: with one, tracing-core 0.1.36
+    // (callsite.rs:545, `has_just_one`) asks only the registering thread's,
+    // so a callsite another test's thread reaches first is cached unheard.
+    let _two = tracing::Dispatch::new(tracing::subscriber::NoSubscriber::default());
+    let dirs = [tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap()];
+    let (ana, ben, films) = ana_and_ben([dirs[0].path(), dirs[1].path()]).await;
+
+    let unkept = BlobQuery {
+        group: films.clone(),
+        keep: None,
+    };
+    let bytes = axum::body::Bytes::from_static(b"kept for how long?");
+    let answer = put(State(ana.folders().clone()), Query(unkept), bytes).await;
+    assert_eq!(answer.status(), StatusCode::BAD_REQUEST);
+
+    let hash = Hash::new(b"carried, not in the store");
+    let until = Instant::now() + Duration::from_secs(60);
+    ana.folders().carry(hash, &films, Some(until));
+    let asked = BlobQuery {
+        group: films.clone(),
+        keep: None,
+    };
+    get(State(ana.folders().clone()), Path(hash), Query(asked)).await;
+
+    let log = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    let line = |words: &str| {
+        log.lines()
+            .find(|l| l.contains(words))
+            .unwrap_or_default()
+            .to_string()
+    };
+    let refused = line("&keep=<seconds>");
+    assert!(
+        refused.contains("refused") && refused.contains("400"),
+        "the put's refusal traced: {log}"
+    );
+    let asking = line("blob: not held here whole");
+    assert!(
+        asking.contains("given=true") && asking.contains(&hash.to_string()),
+        "the get asking the group traced, Ana's lapse given: {log}"
+    );
+    for node in [ana, ben] {
+        node.endpoint().close().await;
+    }
+}
