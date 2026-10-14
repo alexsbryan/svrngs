@@ -13,7 +13,11 @@
 //! layout places and a synced directory holds, and drops every other
 //! version once what it keeps changes (syp-4 b). Streaming a folder by range on loopback,
 //! and the one-way share it served, were dropped at syp-1 (operator,
-//! 2026-10-10): a group's folder is synced onto its members' disks.
+//! 2026-10-10): a group's folder is synced onto its members' disks. Bytes
+//! an app places in a group by hash ride the same store, provider and
+//! fetch, held until they lapse (blob.rs, onair-blob): the provider's one
+//! rule serves a dialer a hash a synced folder or an app placed in a group
+//! it stands in.
 
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::fs::Metadata;
@@ -48,6 +52,8 @@ use tokio::sync::{mpsc, oneshot, watch, Notify};
 use crate::iroh::{key_actor, Alpn};
 use crate::node::{Host, ANSWER_WITHIN};
 
+#[path = "blob.rs"]
+mod blob;
 #[path = "synced.rs"]
 mod synced;
 
@@ -110,6 +116,8 @@ pub struct Folders {
     /// rail's teller: a synced directory's loop waits on its group's
     /// (perf-2 d).
     woken: watch::Sender<BTreeMap<String, u64>>,
+    /// What apps placed, by hash and group, and when each lapses (blob.rs).
+    carried: watch::Sender<blob::Carried>,
 }
 
 /// A group's synced folders' files where its record places them, the set
@@ -129,11 +137,13 @@ struct Layout {
 /// and its metadata then.
 type Found = (String, PathBuf, std::fs::Metadata);
 
-/// What the store's keep is read from: each synced group's digest, and
-/// each synced directory's kept state by its size and mtime.
+/// What the store's keep is read from: each synced group's digest, each
+/// synced directory's kept state by its size and mtime, and what apps
+/// placed that has not lapsed.
 type ReadAt = (
     Vec<(String, Digest)>,
     Vec<(PathBuf, u64, std::time::SystemTime)>,
+    BTreeSet<Hash>,
 );
 
 impl Folders {
@@ -183,6 +193,7 @@ impl Folders {
             unanswered: watch::Sender::new(BTreeMap::new()),
             layouts: watch::Sender::new(BTreeMap::new()),
             woken: watch::Sender::new(BTreeMap::new()),
+            carried: watch::Sender::new(BTreeMap::new()),
         };
         let woken = folders.woken.clone();
         folders.host.rail().on_write(move |ns| {
@@ -196,13 +207,18 @@ impl Folders {
                 // Each sweep reading every group's layout cost each node a
                 // whole record's admission a second: 25 nodes of 10,000 acts
                 // reached none of 24 in the ceiling's canary (syp-4).
-                let at = keeper.read_at();
+                #[expect(
+                    clippy::disallowed_methods,
+                    reason = "the sweep's adapter reads when it asks, so a lapse is read against it"
+                )]
+                let now = Instant::now();
+                let at = keeper.read_at(now);
                 if at.is_some() && at == read_at {
                     tracing::debug!(target: "folder", "folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read");
                     answer.send(None).ok();
                     continue;
                 }
-                let keep = keeper.keep();
+                let keep = keeper.keep(now);
                 read_at = at.filter(|_| keep.is_some());
                 let sweep = keep.is_some() && keep != last;
                 if sweep {
@@ -375,27 +391,28 @@ impl Folders {
     /// digest, since equal digests hold equal acts (svrngs-core view.rs,
     /// `View`), and each kept state's size and mtime, since a step writes
     /// its kept state whenever it changes (perf-2 f), not each kept state
-    /// read whole each second. `None` when any cannot be read, so `keep` is
-    /// read and says why.
-    fn read_at(&self) -> Option<ReadAt> {
+    /// read whole each second; and what apps placed that has not lapsed at
+    /// `now`. `None` when any cannot be read, so `keep` is read and says why.
+    fn read_at(&self, now: Instant) -> Option<ReadAt> {
         let groups = self.synced_groups().ok()?;
         let rail = self.host.rail();
         let digests = groups
             .into_iter()
             .map(|ns| rail.digest(&ns).ok().map(|d| (ns, d)));
-        Some((digests.collect::<Option<_>>()?, self.kept_at().ok()?))
+        let kept = self.kept_at().ok()?;
+        Some((digests.collect::<Option<_>>()?, kept, self.carrying(now)))
     }
 
     /// What the store keeps: every version a synced folder's layout places
     /// in a group a directory here syncs, a conflict's other side among
     /// them, and every version a synced directory holds as last taken or
-    /// written;
+    /// written, and every hash an app placed that has not lapsed at `now`;
     /// `None`, said, when any of it cannot be read, so nothing is dropped
     /// on a guess.
-    fn keep(&self) -> Option<HashSet<Hash>> {
+    fn keep(&self, now: Instant) -> Option<HashSet<Hash>> {
         let groups = self.synced_groups();
         let groups = groups.inspect_err(|e| tracing::warn!(target: "folder", error = %e, "folder: the store keeps everything — the directories synced here cannot be listed")).ok()?;
-        let (mut keep, mut why) = (HashSet::new(), None);
+        let (mut keep, mut why) = (HashSet::from_iter(self.carrying(now)), None);
         for ns in groups {
             match self.layout(&ns) {
                 Ok(read) => keep.extend(read.hashes.iter().map(|h| Hash::from(*h.as_bytes()))),
@@ -436,15 +453,19 @@ impl Folders {
     }
 
     /// Whether a synced folder of a group `dialer` stands in places `hash`,
-    /// whoever wrote it: who stands where is [`Host::standings`]'s, and a
-    /// group whose record cannot be read places nothing it serves, said by
-    /// its name.
-    fn serves(&self, hash: Hash, dialer: &str) -> bool {
-        let hash = &ContentHash::from_bytes(hash.into());
+    /// whoever wrote it, or an app placed it in that group and it has not
+    /// lapsed at `now` (blob.rs): the one rule of who receives a group's
+    /// bytes. Who stands where is [`Host::standings`]'s, and a group whose
+    /// record cannot be read places nothing it serves, said by its name.
+    fn serves(&self, hash: Hash, dialer: &str, now: Instant) -> bool {
         let groups = self.host.standings().unwrap_or_default();
         for (ns, _) in groups.iter().filter(|(_, m)| m.contains_key(dialer)) {
+            if matches!(self.held(hash, ns, now), blob::Holds::For { .. }) {
+                tracing::debug!(target: "folder", namespace = ns, dialer, "folder: the dialer stands in a group an app placed the hash in, not lapsed");
+                return true;
+            }
             match self.layout(ns) {
-                Ok(read) if read.hashes.contains(hash) => {
+                Ok(read) if read.hashes.contains(&ContentHash::from_bytes(hash.into())) => {
                     tracing::debug!(target: "folder", namespace = ns, dialer, "folder: the dialer stands in a group whose synced folder places the hash");
                     return true;
                 }
@@ -656,14 +677,14 @@ fn provider(store: &Store, folders: Folders) -> BlobsProtocol {
             let (dialer, folders) = (dialers.get(&conn).cloned(), folders.clone());
             tokio::spawn(async move {
                 let t0 = Instant::now();
-                let shares = dialer.as_ref().is_some_and(|d| folders.serves(hash, d));
+                let shares = dialer.as_ref().is_some_and(|d| folders.serves(hash, d, t0));
                 let record_ms = t0.elapsed().as_micros() as f64 / 1000.0;
                 if !shares {
-                    tracing::info!(target: "folder", %hash, conn, request, ?dialer, ranges, record_ms, "folder: refused — no synced folder of a group the dialer stands in places the hash");
+                    tracing::info!(target: "folder", %hash, conn, request, ?dialer, ranges, record_ms, "folder: refused — no synced folder or app of a group the dialer stands in places the hash, or it lapsed");
                     asked.tx.send(Err(AbortReason::Permission)).await.ok();
                     return;
                 }
-                tracing::info!(target: "folder", %hash, conn, request, ?dialer, ranges, record_ms, "folder: serving — a synced folder of a group the dialer stands in places the hash");
+                tracing::info!(target: "folder", %hash, conn, request, ?dialer, ranges, record_ms, "folder: serving — a synced folder or app of a group the dialer stands in places the hash");
                 asked.tx.send(Ok(())).await.ok();
                 let (mut updates, mut last) = (asked.rx, 0);
                 while let Ok(Some(update)) = updates.recv().await {
@@ -697,12 +718,23 @@ pub(crate) fn dirs_of(data_dir: &Path, group: &str) -> Result<Vec<PathBuf>, Stri
         .collect())
 }
 
-/// The record API's folder route: what this computer's apps ask. POST
-/// keeps a directory in step with its folder.
+/// The record API's folder and blob routes: what this computer's apps
+/// ask. POST keeps a directory in step with its folder; a blob is put and
+/// got by hash (blob.rs), a put's body as large as the app sends.
 pub(crate) fn router(folders: Folders) -> Router {
+    let put = axum::routing::put(blob::put).layer(axum::extract::DefaultBodyLimit::disable());
     Router::new()
         .route("/v1/folders", post(ask))
+        .route("/v1/blob", put)
+        .route("/v1/blob/{hash}", axum::routing::get(blob::get))
         .with_state(folders)
+}
+
+/// The members' route a computer asks of another what it holds of a hash
+/// an app placed (blob.rs).
+pub(crate) fn members_router(folders: Folders) -> Router {
+    let asked = axum::routing::get(blob::asked);
+    Router::new().route(blob::ASKED, asked).with_state(folders)
 }
 
 /// What `svrngs share --folder <dir> --group <group>` asks of the running

@@ -1354,3 +1354,135 @@ async fn a_removed_member_gets_nothing_new_from_the_folder_and_keeps_what_they_h
     assert!(cy_has_old(), "what Cy had stays");
     group.close().await;
 }
+
+// ── Bytes an app placed, by hash, with a lifetime (onair-blob) ────────
+
+/// `node`'s `PUT /v1/blob` of `bytes` in `group`, kept `keep` seconds: its
+/// status and its answer's text.
+async fn put_blob(node: &Node, group: &str, keep: u64, bytes: &[u8]) -> (u16, String) {
+    let url = format!(
+        "http://{}/v1/blob?group={group}&keep={keep}",
+        node.api_addr()
+    );
+    let answer = http().put(url).body(bytes.to_vec()).send().await.unwrap();
+    (answer.status().as_u16(), answer.text().await.unwrap())
+}
+
+/// `node`'s `GET /v1/blob/<hash>` in `group`: its status, the holder its
+/// answer names, and its body.
+async fn get_blob(node: &Node, group: &str, hash: &str) -> (u16, Option<String>, Vec<u8>) {
+    let url = format!("http://{}/v1/blob/{hash}?group={group}", node.api_addr());
+    let answer = http().get(url).send().await.unwrap();
+    let holder = answer.headers().get("x-svrngs-holder");
+    let holder = holder.map(|h| h.to_str().unwrap().to_string());
+    (
+        answer.status().as_u16(),
+        holder,
+        answer.bytes().await.unwrap().to_vec(),
+    )
+}
+
+/// **Bytes an app put are held by a member who asks, and carried to the
+/// next** (ON_AIR §4.1 and §7, "4.1, carried"): Ana puts 50 kB in `films`;
+/// Ben asks its hash and holds it from her, his answer naming her; then
+/// Ana's computer stops, and Cy holds it from Ben, his answer naming Ben.
+/// Red with Ben's provider serving no hash an app placed (the plant "Bo not
+/// serving"): Cy is told no holder answered, each named, never empty
+/// bytes.
+#[tokio::test]
+async fn bytes_an_app_put_are_held_by_a_member_who_asks_and_carried_to_the_next() {
+    let group = Group::new().await;
+    let films = seed("films", 9).id();
+    let bytes = noise(50_000, b"an app's bytes");
+    let (put, said) = put_blob(&group.ana, &films, 60, &bytes).await;
+    assert_eq!(put, 200, "{said}");
+    let hash = blake3::hash(&bytes).to_hex().to_string();
+    assert!(
+        said.contains(&hash),
+        "the put answers the bytes' hash: {said}"
+    );
+
+    let (status, holder, got) = get_blob(&group.ben, &films, &hash).await;
+    assert_eq!((status, got.len()), (200, 50_000), "Ben holds Ana's bytes");
+    assert!(got == bytes, "byte for byte");
+    assert_eq!(holder, Some(actor_of(&signing(1))), "from Ana");
+    assert_eq!(
+        stored(&group.ben, blake3::hash(&bytes).as_bytes()),
+        Some(50_000)
+    );
+
+    group.ana.endpoint().close().await;
+    let (status, holder, got) = get_blob(&group.cy, &films, &hash).await;
+    let text = String::from_utf8_lossy(&got);
+    assert_eq!(status, 200, "Cy holds it with Ana stopped: {text}");
+    assert!(got == bytes, "byte for byte");
+    assert_eq!(holder, Some(actor_of(&signing(2))), "from Ben");
+    for node in [&group.ben, &group.cy] {
+        node.endpoint().close().await;
+    }
+}
+
+/// **Bytes an app put lapse from every store, and are said lapsed**
+/// (ON_AIR §7, "4.1, lapses"): Ana puts 50 kB kept 3 s and Ben holds it;
+/// then neither store holds it, and Ana, Ben and Cy, who never held it,
+/// each say it lapsed; a hash nobody put is said never held, apart from
+/// it. Red with `keep` ignored: the bytes still in both stores.
+#[tokio::test]
+async fn bytes_an_app_put_lapse_from_every_store_and_are_said_lapsed() {
+    let group = Group::new().await;
+    let films = seed("films", 9).id();
+    let bytes = noise(50_000, b"lapsing bytes");
+    let (put, said) = put_blob(&group.ana, &films, 3, &bytes).await;
+    assert_eq!(put, 200, "{said}");
+    let hash = blake3::hash(&bytes);
+    let (status, _, _) = get_blob(&group.ben, &films, &hash.to_hex()).await;
+    assert_eq!(status, 200, "Ben holds it");
+
+    let held = || [&group.ana, &group.ben].map(|n| stored(n, hash.as_bytes()));
+    let t0 = std::time::Instant::now();
+    while held() != [None, None] && t0.elapsed() < Duration::from_secs(10) {
+        tokio::time::sleep(Duration::from_millis(200)).await;
+    }
+    assert_eq!(held(), [None, None], "no store holds it 10 s after its 3");
+    for (who, node) in [("Ana", &group.ana), ("Ben", &group.ben), ("Cy", &group.cy)] {
+        let (status, _, got) = get_blob(node, &films, &hash.to_hex()).await;
+        let text = String::from_utf8_lossy(&got);
+        assert_eq!(status, 410, "{who}: {text}");
+        assert!(text.contains("\"lapsed\""), "{who} says it lapsed: {text}");
+    }
+    let never = blake3::hash(b"nobody put this").to_hex();
+    let (status, _, got) = get_blob(&group.cy, &films, &never).await;
+    let text = String::from_utf8_lossy(&got);
+    assert_eq!(status, 404, "{text}");
+    assert!(
+        text.contains("\"never_held\""),
+        "Cy says never held: {text}"
+    );
+    group.close().await;
+}
+
+/// **Bytes an app put in one group are refused to a member of another**
+/// (ON_AIR §7, "4.1, scoped"), as folders refuse them: Ana stands in
+/// `films` with Ben and in `house` with Cy, and puts 50 kB in `films`; her
+/// provider serves Ben and refuses Cy, and Cy's own computer refuses his
+/// ask in `films`, a group it is not in. Red with the provider's group
+/// check out: Ana serves Cy.
+#[tokio::test]
+async fn bytes_an_app_put_in_one_group_are_refused_to_a_member_of_another() {
+    let group = Group::computers().await;
+    let films = found("films", 9, &group.ana, &[(&group.ben, 2)]);
+    found("house", 7, &group.ana, &[(&group.cy, 3)]);
+    group.settle().await;
+    let bytes = noise(50_000, b"films only");
+    let (put, said) = put_blob(&group.ana, &films, 60, &bytes).await;
+    assert_eq!(put, 200, "{said}");
+    let hash = iroh_blobs::Hash::from_bytes(*blake3::hash(&bytes).as_bytes());
+    let asked = tempfile::tempdir().unwrap();
+    let to_cy = get(&group.cy, &group.ana, hash, &asked.path().join("cy")).await;
+    assert!(to_cy.is_err(), "Ana refuses Cy her films bytes: {to_cy:?}");
+    let to_ben = get(&group.ben, &group.ana, hash, &asked.path().join("ben")).await;
+    assert_eq!(to_ben, Ok(50_000), "Ana serves Ben her films bytes");
+    let (status, _, got) = get_blob(&group.cy, &films, &hash.to_hex()).await;
+    assert_eq!(status, 404, "{}", String::from_utf8_lossy(&got));
+    group.close().await;
+}

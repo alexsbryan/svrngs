@@ -76,7 +76,7 @@ pub fn router(state: RingInbound) -> axum::Router {
 /// The asker's key and its row of the register, to serve it; or why it may
 /// not have this namespace. Asked by the sync route and (svrngs, u3-3) the
 /// live route, named by `route` in the trace.
-fn standing_asker(
+pub(crate) fn standing_asker(
     rail: &RingRail,
     dialer: Option<Dialer>,
     route: &'static str,

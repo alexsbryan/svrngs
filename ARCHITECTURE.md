@@ -456,7 +456,15 @@ body (`node::Asking::lent`), with no asker left out; beside it `GET
 keeps (the `SeedText` the redeem routes read) and this computer's person
 from the register; and `POST /v1/sign?app=` (onair-sign) has this
 computer's key sign an app's bytes, the bytes and their checking
-svrngs-core's (`app.rs`, `App`). Removal as the command asks it (`removal.rs`, U7):
+svrngs-core's (`app.rs`, `App`); and `PUT /v1/blob?group=&keep=` and
+`GET /v1/blob/<hash>?group=` (onair-blob, `blob.rs`, a module of
+`folder.rs`) put an app's bytes in the folders' iroh-blobs store and get
+them from it or, verified, from a computer of the group holding them,
+each hash held on every computer only until `keep` seconds after its put:
+a getter first asks the group's other computers on the members' protocol
+(`GET /internal/ring/blob/<hash>`) who holds it and for how long yet, and
+the provider's one rule (`Folders::serves`) serves a dialer a hash a
+synced folder or an app placed in a group it stands in. Removal as the command asks it (`removal.rs`, U7):
 `POST /v1/removals` commits svrngs-core's `Removal` and `POST
 /v1/handovers` its `HandOnTo`, each answering an `Outcome` the command
 words; each written wakes the round (`AskRound::wake`), so every

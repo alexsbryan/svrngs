@@ -311,7 +311,7 @@ impl Node {
         let routes = crate::api::router(
             rail_api.clone(),
             crate::surface::router(asking.clone(), seeds)
-                .merge(crate::folder::router(folders))
+                .merge(crate::folder::router(folders.clone()))
                 .merge(crate::removal::router(asking.clone())),
             crate::home::router(asking.clone(), seeds, rail_api),
         );
@@ -339,7 +339,8 @@ impl Node {
             wake: nudge.clone(),
         })
         .merge(crate::door::router(asking.door.clone()))
-        .merge(people_router(asking));
+        .merge(people_router(asking))
+        .merge(crate::folder::members_router(folders));
         let redeem = crate::redeem::router(rail, seeds, AskRound::new(nudge.clone(), &rounds));
         // A dialer the keeper cut, on the members' protocol, is told so in
         // words on every route, and served nothing else (U7).
