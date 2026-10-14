@@ -1,0 +1,252 @@
+{
+ "n0": {
+  "https://usw1-1.relay.n0.iroh.link/": true,
+  "https://use1-1.relay.n0.iroh.link/": true,
+  "https://euc1-1.relay.n0.iroh.link/": true,
+  "https://aps1-1.relay.n0.iroh.link/": true
+ },
+ "cy_join": {
+  "ms": 3041,
+  "status": "You’re in house, as Cy"
+ },
+ "setup": {
+  "label": "b250ducsf6sftnxsjmwhu9tg1unk7xf8gad09f5b4nnp5200u23a7chbcckjpb",
+  "phone_first": {
+   "ms": 2020,
+   "answered_ms": 998,
+   "status": null,
+   "refused": null,
+   "url": "http://b250ducsf6sftnxsjmwhu9tg1unk7xf8gad09f5b4nnp5200u23a7chbcckjpb.localhost:56150/",
+   "text": "probe here",
+   "shown": true
+  },
+  "bo_first": 200
+ },
+ "sit": {
+  "s": 60.1,
+  "network_pid": 50935,
+  "before": {
+   "ms": 167,
+   "answered_ms": 149,
+   "status": 200,
+   "refused": null,
+   "url": "http://b250ducsf6sftnxsjmwhu9tg1unk7xf8gad09f5b4nnp5200u23a7chbcckjpb.localhost:56150/?open=1",
+   "text": "probe here",
+   "shown": true
+  },
+  "after": {
+   "ms": 95,
+   "answered_ms": 85,
+   "status": 200,
+   "refused": null,
+   "url": "http://b250ducsf6sftnxsjmwhu9tg1unk7xf8gad09f5b4nnp5200u23a7chbcckjpb.localhost:56150/?open=2",
+   "text": "probe here",
+   "shown": true
+  },
+  "moved": {
+   "phone": {
+    "flows": [
+     "tcp4 192.168.1.10:62416<->5.78.69.43:443"
+    ],
+    "others": [
+     "tcp4 192.168.1.10:62407<->5.78.69.43:443",
+     "tcp4 192.168.1.10:62414<->5.78.69.43:443",
+     "tcp4 192.168.1.10:62417<->5.78.69.43:443"
+    ],
+    "in": 7146,
+    "out": 12339,
+    "per_s": 324.2
+   },
+   "sam": {
+    "flows": [
+     "tcp4 192.168.1.10:56156<->49.13.207.244:443",
+     "tcp4 192.168.1.10:56181<->5.78.69.43:443"
+    ],
+    "others": [],
+    "in": 11489,
+    "out": 9905,
+    "per_s": 355.9
+   }
+  }
+ },
+ "rounds": [
+  {
+   "mode": "frozen",
+   "round": 1,
+   "ready": {
+    "bo": {
+     "status": 200,
+     "refused": null,
+     "ms": 5,
+     "shown": true,
+     "said": null
+    },
+    "cy": {
+     "ms": 106,
+     "answered_ms": 95,
+     "status": 200,
+     "refused": null,
+     "url": "http://b250ducsf6sftnxsjmwhu9tg1unk7xf8gad09f5b4nnp5200u23a7chbcckjpb.localhost:56150/?open=3",
+     "text": "probe here",
+     "shown": true
+    }
+   },
+   "bo": {
+    "status": 502,
+    "refused": "away",
+    "ms": 4003,
+    "shown": false,
+    "said": "{\"error\":\"the computer that lends this did not answer; try again later\",\"kind\":\"away\"}"
+   },
+   "cy": {
+    "ms": 4010,
+    "answered_ms": 3990,
+    "status": 502,
+    "refused": "away",
+    "url": "http://b250ducsf6sftnxsjmwhu9tg1unk7xf8gad09f5b4nnp5200u23a7chbcckjpb.localhost:56150/?open=4",
+    "text": "The computer lending this did not answer. Try again later.",
+    "shown": false,
+    "dials": []
+   },
+   "both_s": 4.0,
+   "woke_ms": 4014,
+   "after": {
+    "bo": {
+     "status": 200,
+     "refused": null,
+     "ms": 4,
+     "shown": true,
+     "said": null
+    },
+    "cy": {
+     "ms": 197,
+     "answered_ms": 173,
+     "status": 200,
+     "refused": null,
+     "url": "http://b250ducsf6sftnxsjmwhu9tg1unk7xf8gad09f5b4nnp5200u23a7chbcckjpb.localhost:56150/?open=5",
+     "text": "probe here",
+     "shown": true
+    }
+   }
+  },
+  {
+   "mode": "frozen",
+   "round": 2,
+   "ready": {
+    "bo": {
+     "status": 200,
+     "refused": null,
+     "ms": 8,
+     "shown": true,
+     "said": null
+    },
+    "cy": {
+     "ms": 111,
+     "answered_ms": 92,
+     "status": 200,
+     "refused": null,
+     "url": "http://b250ducsf6sftnxsjmwhu9tg1unk7xf8gad09f5b4nnp5200u23a7chbcckjpb.localhost:56150/?open=6",
+     "text": "probe here",
+     "shown": true
+    }
+   },
+   "bo": {
+    "status": 502,
+    "refused": "away",
+    "ms": 4005,
+    "shown": false,
+    "said": "{\"error\":\"the computer that lends this did not answer; try again later\",\"kind\":\"away\"}"
+   },
+   "cy": {
+    "ms": 4036,
+    "answered_ms": 4019,
+    "status": 502,
+    "refused": "away",
+    "url": "http://b250ducsf6sftnxsjmwhu9tg1unk7xf8gad09f5b4nnp5200u23a7chbcckjpb.localhost:56150/?open=7",
+    "text": "The computer lending this did not answer. Try again later.",
+    "shown": false,
+    "dials": []
+   },
+   "both_s": 4.0,
+   "woke_ms": 4043,
+   "after": {
+    "bo": {
+     "status": 200,
+     "refused": null,
+     "ms": 7,
+     "shown": true,
+     "said": null
+    },
+    "cy": {
+     "ms": 287,
+     "answered_ms": 267,
+     "status": 200,
+     "refused": null,
+     "url": "http://b250ducsf6sftnxsjmwhu9tg1unk7xf8gad09f5b4nnp5200u23a7chbcckjpb.localhost:56150/?open=8",
+     "text": "probe here",
+     "shown": true
+    }
+   }
+  },
+  {
+   "mode": "frozen",
+   "round": 3,
+   "ready": {
+    "bo": {
+     "status": 200,
+     "refused": null,
+     "ms": 9,
+     "shown": true,
+     "said": null
+    },
+    "cy": {
+     "ms": 96,
+     "answered_ms": 83,
+     "status": 200,
+     "refused": null,
+     "url": "http://b250ducsf6sftnxsjmwhu9tg1unk7xf8gad09f5b4nnp5200u23a7chbcckjpb.localhost:56150/?open=9",
+     "text": "probe here",
+     "shown": true
+    }
+   },
+   "bo": {
+    "status": 502,
+    "refused": "away",
+    "ms": 4006,
+    "shown": false,
+    "said": "{\"error\":\"the computer that lends this did not answer; try again later\",\"kind\":\"away\"}"
+   },
+   "cy": {
+    "ms": 4271,
+    "answered_ms": 4254,
+    "status": 502,
+    "refused": "away",
+    "url": "http://b250ducsf6sftnxsjmwhu9tg1unk7xf8gad09f5b4nnp5200u23a7chbcckjpb.localhost:56150/?open=10",
+    "text": "The computer lending this did not answer. Try again later.",
+    "shown": false,
+    "dials": []
+   },
+   "both_s": 4.3,
+   "woke_ms": 4280,
+   "after": {
+    "bo": {
+     "status": 200,
+     "refused": null,
+     "ms": 7,
+     "shown": true,
+     "said": null
+    },
+    "cy": {
+     "ms": 191,
+     "answered_ms": 173,
+     "status": 200,
+     "refused": null,
+     "url": "http://b250ducsf6sftnxsjmwhu9tg1unk7xf8gad09f5b4nnp5200u23a7chbcckjpb.localhost:56150/?open=11",
+     "text": "probe here",
+     "shown": true
+    }
+   }
+  }
+ ],
+ "end_load": 39.5
+}
