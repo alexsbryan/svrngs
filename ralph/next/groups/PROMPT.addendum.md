@@ -38,5 +38,23 @@ Fences the rows keep:
    Dialling n0's public relays, as svrngs does by default, is not
    outward-facing.
 
+9. *The house voice* (svrn-docs `VOICE.md`, the operator, 2026-10-14: "Can we
+   make sure the copy reflects the house voice?").
+   - Every word a person reads follows the task register: on a page, from
+     the command, from `install.sh`, and in a document a newcomer follows.
+     That register is second person, active and present ("You lend
+     nothing yet", not "This computer lends nothing").
+   - It passes VOICE.md's checklist:
+     - lead with what it does;
+     - name the trade-off;
+     - cut internal vocabulary;
+     - state the privacy line plainly;
+     - prose over scaffolding;
+     - explain, don't sell.
+   - VOICE.md's name, positioning sentence and canonical facts are
+     Sovereign's. svrngs's own are its README and DESIGN §1.
+   - Where VOICE.md and fence 6 meet, both hold: no word a reader must look
+     up, and every sentence in the task register.
+
 One host, one run of each: not a rate (AGENTS.md 7). A run that could not
 finish is could-not-judge, never a pass (AGENTS.md 6).

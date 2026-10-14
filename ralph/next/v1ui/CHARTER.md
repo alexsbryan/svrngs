@@ -31,6 +31,9 @@ decision says so.
 - **A group's colour**: "Derived from the group". It comes from the
   group's id, so different groups look different, with no setting and
   nothing to choose.
+- **The house voice**: "Can we make sure the copy reflects the house voice?"
+  (svrn-docs `VOICE.md`). New copy follows it (fence 9), and v1ui-voice
+  rewrites what came before.
 - **The look is merged** (`efadec2`, from the branch `look`): every page
   wears `crates/svrngs-node/src/home/look.css`, by DESIGN §1's rule that
   nothing imitates anything else.
