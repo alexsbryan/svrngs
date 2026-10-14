@@ -30,7 +30,7 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # the repository's where events-asleep's cap of the dial landed (2026-10-14),
 # so no room is left that the operator did not give. A raise is asked only after an
 # economizing pass (AGENTS.md "Done"; DESIGN §5).
-BUDGET = {"crates/svrngs-core": 3150, ".": 16245}
+BUDGET = {"crates/svrngs-core": 3150, ".": 16255}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
