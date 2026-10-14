@@ -87,7 +87,7 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use ed25519_dalek::VerifyingKey;
-use std::num::{NonZeroU16, NonZeroU32};
+use std::num::NonZeroU16;
 
 use svrngs_node::api::{ApiError, API_FILE};
 use svrngs_node::folder::FolderAsk;
@@ -306,6 +306,14 @@ pub enum Verb {
     Help,
 }
 
+/// The flags taking a value, but `--relay` and `--joined`, which take one
+/// only after the verbs they belong to.
+const VALUED: &str =
+    "--as --origin --name --kind --limit --refuse --upload --reads --sign-in --folder --group --ask";
+
+/// What `--kind` and `--reads` want, said alike.
+const A_KIND: &str = "a kind: letters, digits, - and _ only";
+
 /// Parse `std::env::args()`. A wrong argument is an error string the caller
 /// prints, never a guess at what was meant.
 pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
@@ -328,79 +336,60 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let mut joined = None;
     let mut more = Vec::new();
     while let Some(arg) = it.next() {
-        let mut value = |flag: &str| it.next().ok_or_else(|| format!("{flag} wants a value"));
+        // Every flag taking a value reads it here, and each refusal of
+        // one is said the one way, `not`: `--relay` and `--joined` only
+        // where they are flags, so elsewhere they stay unknown.
+        let valued = match arg.as_str() {
+            "--relay" => verb == "new",
+            "--joined" => matches!(verb.as_str(), "remove" | "handover"),
+            a => VALUED.split(' ').any(|f| f == a),
+        };
+        let raw = match valued {
+            true => it.next().ok_or_else(|| format!("{arg} wants a value"))?,
+            false => String::new(),
+        };
+        let not = |what: &str| format!("{arg} `{raw}` is not {what}");
         match arg.as_str() {
             "--as" => {
-                let raw = value("--as")?;
-                person = Some(
-                    Name::parse(&raw)
-                        .map_err(|why| format!("--as `{raw}` is not a name: {why}"))?,
-                );
+                person = Some(Name::parse(&raw).map_err(|why| not(&format!("a name: {why}")))?)
             }
             "--origin" => {
-                let raw = value("--origin")?;
-                origin = Some(Origin::parse(&raw).ok_or_else(|| {
-                    format!("--origin `{raw}` is not an http(s) address without a '#'")
-                })?);
+                origin = Some(
+                    Origin::parse(&raw).ok_or_else(|| not("an http(s) address without a '#'"))?,
+                )
             }
-            "--relay" if verb == "new" => {
-                let raw = value("--relay")?;
+            "--relay" if valued => {
                 let url = format!("{}{raw}", if raw.contains("://") { "" } else { "https://" });
-                let url = svrngs_node::relay::parse(&url);
-                relay = Some(url.map_err(|_| format!("--relay `{raw}` is not a relay's address"))?);
+                relay =
+                    Some(svrngs_node::relay::parse(&url).map_err(|_| not("a relay's address"))?);
             }
-            "--name" => {
-                let raw = value("--name")?;
-                name = Some(lend_name(&raw).map_err(|why| format!("--name {why}"))?);
-            }
-            "--kind" => {
-                let raw = value("--kind")?;
-                kind = Some(Kind::parse(&raw).map_err(|_| {
-                    format!("--kind `{raw}` is not a kind: letters, digits, - and _ only")
-                })?);
-            }
+            "--name" => name = Some(lend_name(&raw).map_err(|why| format!("--name {why}"))?),
+            "--kind" => kind = Some(Kind::parse(&raw).map_err(|_| not(A_KIND))?),
             "--limit" => {
-                let raw = value("--limit")?;
-                limit = Some(raw.parse::<NonZeroU16>().map_err(|_| {
-                    format!("--limit `{raw}` is not a number of people: 1 or more")
-                })?);
+                let what = "a number of people: 1 or more";
+                limit = Some(raw.parse::<NonZeroU16>().map_err(|_| not(what))?);
             }
             "--refuse" => {
-                let raw = value("--refuse")?;
-                refused
-                    .push(RefusedPath::parse(&raw).map_err(|_| {
-                        format!("--refuse `{raw}` is not a path: it starts with /")
-                    })?);
+                refused.push(RefusedPath::parse(&raw).map_err(|_| not("a path: it starts with /"))?)
             }
             "--upload" => {
-                let raw = value("--upload")?;
-                upload = Some(Upload::from_mbit(raw.parse::<NonZeroU32>().map_err(|_| {
-                    format!("--upload `{raw}` is not an upload: a whole number of Mbit/s, 1 or more")
-                })?));
+                let what = "an upload: a whole number of Mbit/s, 1 or more";
+                upload = Some(Upload::from_mbit(raw.parse().map_err(|_| not(what))?));
             }
-            "--reads" => {
-                let raw = value("--reads")?;
-                reads.push(Kind::parse(&raw).map_err(|_| {
-                    format!("--reads `{raw}` is not a kind: letters, digits, - and _ only")
-                })?);
-            }
+            "--reads" => reads.push(Kind::parse(&raw).map_err(|_| not(A_KIND))?),
             "--sign-in" => {
-                let raw = value("--sign-in")?;
                 sign_in =
-                    Some(share::resolve_target(&raw).map_err(|why| format!("--sign-in {why}"))?);
+                    Some(share::resolve_target(&raw).map_err(|why| format!("--sign-in {why}"))?)
             }
-            "--folder" => folder = Some(value("--folder")?),
-            "--group" => group = Some(value("--group")?),
+            "--folder" => folder = Some(raw),
+            "--group" => group = Some(raw),
             "--ask" => {
-                let raw = value("--ask")?;
                 if raw.trim().is_empty() || raw.chars().any(char::is_control) {
                     return Err("--ask wants words: what an app receives from it".into());
                 }
                 asks = Some(raw);
             }
-            "--joined" if matches!(verb.as_str(), "remove" | "handover") => {
-                joined = Some(joined_of(&value("--joined")?)?);
-            }
+            "--joined" if valued => joined = Some(joined_of(&raw)?),
             "--no-run" if verb == "join" => run = false,
             "--device" if verb == "link" => device = true,
             "--open" if verb == "relay" => open = true,
