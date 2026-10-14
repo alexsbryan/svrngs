@@ -93,15 +93,17 @@ function show(words, good) {
   heading.className = good ? 'good' : 'bad';
 }
 
-// The host a link's computer is reached through, for a person's words; a
-// link naming none — made by a computer that reached no relay, or before
-// relay-park (c) by one with n0's lookup — is refused, as the page asks
-// n0 for nothing (relay-default (b)).
-function through(token) {
-  const relay = relay_of(token);
-  if (!relay) throw new Said('This link was made by an older svrngs. Ask whoever sent it for a new one.');
-  return new URL(relay).host;
+// A link naming no relay — made by a computer that reached no relay, or
+// before relay-park (c) by one with n0's lookup — is refused, as the page
+// asks n0 for nothing (relay-default (b)). The relay is never in a
+// person's words: they cannot act on its host (v1ui-reach (d)).
+function relayed(token) {
+  if (!relay_of(token)) throw new Said('This link was made by an older svrngs. Ask whoever sent it for a new one.');
 }
+
+// Each of `computers` that did not answer, by whose it is, the link's
+// computer by what it did when its person is not known (v1ui-reach (d)).
+const unanswered = (computers) => `${computers.map((c) => `${c ? `${c.person}’s computer` : 'The computer that sent your link'} did not answer.`).join(' ')} Try again later.`;
 
 async function reach(dialling, away) {
   const timeout = new Promise((_, no) => setTimeout(() => no(new Error('no answer')), PATIENCE));
@@ -156,7 +158,8 @@ function askName(group, why) {
 // Join by `token`, a link no group kept was joined by: the group joined,
 // kept, or one kept already, which the link lets into.
 async function join(token, kept) {
-  const away = `The computer that sent this link did not answer through ${through(token)}. Try again later.`;
+  relayed(token);
+  const away = 'The computer that sent this link did not answer. Try again later.';
   const key = crypto.getRandomValues(new Uint8Array(32));
   heading.textContent = 'Opening your link…';
   let issuer = await reach(connect_to_join(key, token), away);
@@ -310,16 +313,18 @@ async function uses(lent, dialler, shown) {
 // named as lending answers first, each dialled from `dialler`'s one
 // endpoint, as a relay keeps one per key (v1ui-reach (c)). The dial, and
 // whose computer it is when not the link's.
-async function reachGroup(group, key, dialler, away) {
+async function reachGroup(group, key, dialler) {
+  relayed(group.token);
+  const link = (group.computers ?? []).find((c) => c.key === issuer_of(group.token));
   try {
-    return [await reach(connect(key, group.token), away)];
+    return [await reach(connect(key, group.token), unanswered([link]))];
   } catch (e) {
-    const others = (group.computers ?? []).filter((c) => c.key !== issuer_of(group.token));
+    const others = (group.computers ?? []).filter((c) => c !== link);
     trace(`PAGE: the link's computer did not answer, so ${others.length} other computer(s) are dialled`);
     if (!others.length) throw e;
     heading.textContent = `Reaching ${group.name} through someone else’s computer…`;
     const tries = others.map((c) => dialler().then((ep) => ep.dial(c.key, c.relay)).then((d) => [d, c]));
-    const [d, c] = await reach(Promise.any(tries), away);
+    const [d, c] = await reach(Promise.any(tries), unanswered([link, ...others]));
     tries.forEach((t) => t.then(([o]) => o !== d && o.close(), () => {}));
     return [d, c];
   }
@@ -337,8 +342,7 @@ async function enter(group, asked) {
   // per key (web/src/lib.rs `endpoint`).
   let bound;
   const dialler = () => (bound ??= endpoint(key, group.token));
-  const away = `Your group’s computer did not answer through ${through(group.token)}. Try again later.`;
-  const [d, via] = await reachGroup(group, key, dialler, away);
+  const [d, via] = await reachGroup(group, key, dialler);
   const res = await d.fetch('GET', PEOPLE_LENDS, [['accept', 'application/json']], null);
   if (!res.ok) {
     const why = res.headers.get('x-svrngs-refused');

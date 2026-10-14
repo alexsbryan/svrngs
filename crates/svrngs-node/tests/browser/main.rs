@@ -2676,18 +2676,11 @@ async fn the_home_page_opens_the_group_s_folder(engine: Engine) {
 /// open has the rest.
 const REACHED_WITHIN: u64 = 15_000;
 
-in_both_engines!(
-    /// The phone reaches whoever's awake (v1ui-reach (b)-(c); V1_UI_BUILD
-    /// §3.3). Ada's computer made bo's link; cy's lends a shelf. Bo's phone
-    /// opens the group while ada's answers, then again once ada's is
-    /// stopped: within the bar it lists cy's shelf through cy's computer,
-    /// says so and says ada's did not answer, and opens the shelf; past the
-    /// bar on a busy host, could-not-judge, never a pass. Planted:
-    /// the page dialling only the link's computer, as before this row,
-    /// which waits as iroh does, 30 s, then says it did not answer.
-    the_phone_reaches_whoever_s_awake
-);
-async fn the_phone_reaches_whoever_s_awake(engine: Engine) {
+/// Bo's phone opens ada's group while every computer answers, then again
+/// once ada's is stopped, and cy's too when `cy_too`: reach.mjs's run, with
+/// the host's load at its start and the relay's host. Ada's computer made
+/// bo's link and lends a pad when `ada_lends`; cy's lends a shelf.
+async fn with_stopped(engine: Engine, ada_lends: bool, cy_too: bool) -> (Value, String, String) {
     let site = site();
     let relay = relay().await;
     let bo = signing(7);
@@ -2700,6 +2693,13 @@ async fn the_phone_reaches_whoever_s_awake(engine: Engine) {
     let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
     let shelf = page_origin("<!doctype html><title>cy's shelf</title>").await;
     lend(cy_dir.path(), "shelf", shelf.port());
+    if ada_lends {
+        lend(
+            ada_dir.path(),
+            "pad",
+            page_origin("<!doctype html>").await.port(),
+        );
+    }
     let ready = kept.path().join("ready");
     let (go, release) = tokio::sync::oneshot::channel();
     let args = json!({
@@ -2719,12 +2719,36 @@ async fn the_phone_reaches_whoever_s_awake(engine: Engine) {
     })
     .await
     .expect("the phone opens the group while ada's computer answers");
-    ada.endpoint().close().await;
-    drop(ada);
+    let mut stopped = vec![ada];
+    if cy_too {
+        stopped.push(cy);
+    }
+    for computer in &stopped {
+        computer.endpoint().close().await;
+    }
+    drop(stopped);
     go.send(()).unwrap();
     let seen = phone.await.unwrap();
     eprintln!("the phone's run: {seen:#}");
+    let host = relay_url(&relay)["http://".len()..]
+        .trim_end_matches('/')
+        .to_string();
+    (seen, start, host)
+}
 
+in_both_engines!(
+    /// The phone reaches whoever's awake (v1ui-reach (b)-(c); V1_UI_BUILD
+    /// §3.3). Ada's computer made bo's link; cy's lends a shelf. Bo's phone
+    /// opens the group while ada's answers, then again once ada's is
+    /// stopped: within the bar it lists cy's shelf through cy's computer,
+    /// says so and says ada's did not answer, and opens the shelf; past the
+    /// bar on a busy host, could-not-judge, never a pass. Planted:
+    /// the page dialling only the link's computer, as before this row,
+    /// which waits as iroh does, 30 s, then says it did not answer.
+    the_phone_reaches_whoever_s_awake
+);
+async fn the_phone_reaches_whoever_s_awake(engine: Engine) {
+    let (seen, start, _) = with_stopped(engine, false, false).await;
     assert_eq!(
         seen["first"]["status"], "You’re in house, as bo",
         "{seen:#}"
@@ -2754,5 +2778,28 @@ async fn the_phone_reaches_whoever_s_awake(engine: Engine) {
             None => panic!("{missed}, at {start}:\n{seen:#}"),
         }
     }
-    drop(cy);
+}
+
+in_both_engines!(
+    /// A computer that did not answer is named by its person, never by a
+    /// relay's host (v1ui-reach (d)): ada's computer made bo's link and
+    /// lends a pad, cy's a shelf, and with both stopped bo's phone says
+    /// each did not answer, by whose it is, and no word on the page names
+    /// the relay. Planted: the page as before this part, which said "Your
+    /// group’s computer did not answer through 127.0.0.1:<port>".
+    a_computer_that_did_not_answer_is_named_by_its_person
+);
+async fn a_computer_that_did_not_answer_is_named_by_its_person(engine: Engine) {
+    let (seen, _, host) = with_stopped(engine, true, true).await;
+    let listed = &seen["listed"];
+    assert_eq!(
+        listed["status"],
+        "ada’s computer did not answer. cy’s computer did not answer. Try again later.",
+        "{seen:#}"
+    );
+    let text = listed["text"].as_str().unwrap_or_default();
+    assert!(
+        !text.contains(&host) && !text.contains("127.0.0.1"),
+        "no word on the page names the relay, {host}:\n{seen:#}"
+    );
 }
