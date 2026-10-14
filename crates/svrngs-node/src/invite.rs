@@ -154,6 +154,7 @@ impl Host {
         // Held first, so no journal is opened for a group it does not hold.
         let held = self.rail.namespaces().map_err(|e| unkept(&e))?;
         if !held.iter().any(|g| g == group) {
+            tracing::debug!(target: "link", group, "link: refused — this computer does not hold the group");
             return Err(Unminted::NotIn);
         }
         let dir = self.rail.group_dir(group).map_err(|e| unkept(&e))?;

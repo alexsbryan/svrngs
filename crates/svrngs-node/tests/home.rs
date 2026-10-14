@@ -738,3 +738,66 @@ async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_
     sam.endpoint().close().await;
     alex.endpoint().close().await;
 }
+
+/// What the test's subscriber writes, kept to be read.
+#[derive(Clone, Default)]
+struct Said(std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
+
+impl std::io::Write for Said {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.0.lock().unwrap().extend_from_slice(buf);
+        Ok(buf.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+/// **The page's link for a group this computer does not hold is refused,
+/// and traced on both sides** (#140): Alex's home page asks a link to
+/// `elsewhere`, which Alex's computer does not hold, and is told 403; the
+/// trace says the link refused it (invite.rs `Host::link`) and the page
+/// said so (home.rs `link`), as `svrngs link` traces its own refusal. Red
+/// on the plant the finding names, both branches untraced: neither line.
+#[tokio::test]
+async fn the_page_s_link_for_a_group_not_held_is_refused_and_traced() {
+    let said = Said::default();
+    let writer = said.clone();
+    let subscriber = tracing_subscriber::fmt()
+        .with_env_filter("link=debug,home=debug")
+        .with_ansi(false)
+        .with_writer(move || writer.clone())
+        .finish();
+    let _said = tracing::subscriber::set_default(subscriber);
+    // A second dispatcher kept alive: with one, tracing-core 0.1.36
+    // (callsite.rs:545, `has_just_one`) asks only the registering thread's,
+    // so a callsite another test's thread reaches first is cached unheard.
+    let _two = tracing::Dispatch::new(tracing::subscriber::NoSubscriber::default());
+    let dir = tempfile::tempdir().unwrap();
+    let alex = start(1, dir.path()).await;
+    let home = format!("svrngs.localhost:{}", alex.api_addr().port());
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
+    let body = r#"{"group":"elsewhere","device":false}"#;
+    let got = ask(alex.api_addr(), "POST", &home, "/link", &own, body).await;
+    assert_eq!(
+        (got.status, got.header("x-svrngs-refused")),
+        (403, Some("closed")),
+        "{}",
+        got.body
+    );
+    let log = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    let traced = |target: &str| {
+        log.lines()
+            .any(|l| l.contains(target) && l.contains("elsewhere"))
+    };
+    assert!(
+        traced(" link: link: refused"),
+        "the link's refusal traced: {log}"
+    );
+    assert!(
+        traced(" home: home: refused"),
+        "the page's refusal traced: {log}"
+    );
+    alex.endpoint().close().await;
+}

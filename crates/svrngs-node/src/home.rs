@@ -252,6 +252,7 @@ async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
             Json(serde_json::json!({ "client": client, "https": https })).into_response()
         }
         Err(crate::invite::Unminted::NotIn) => {
+            tracing::debug!(target: "home", group = l.group, "home: refused — no link, this computer is not in that group");
             LendRefusal::Closed.say(StatusCode::FORBIDDEN, "this computer is not in that group")
         }
         Err(e) => {
