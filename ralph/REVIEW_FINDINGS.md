@@ -8275,6 +8275,10 @@ and run.py's judging.
 - 5d8faef: listen.mjs reads a drained payload under the fields svrngs
   gives, `payload`, `key`, `person_key`, and a bare string as before.
 
+`scripts/check.sh` at c51450f, once, at the close: exit 0 in 661 s,
+every step passed, LINT (rustfmt, clippy, web rustfmt and clippy) among
+them (/tmp/onairaudit1/check.out).
+
 ### Findings
 
 | # | principle | path:line | fixed in | finding |
