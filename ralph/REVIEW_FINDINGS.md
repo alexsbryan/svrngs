@@ -7613,3 +7613,293 @@ do (#137).
 | I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". web/ and scripts/ exact tiers are could-not-judge. |
 | I19 | 6 | dry-report, `tests/` scopes | Still present, and said as could-not-judge. The line-window pass stood in. |
 | I29 | 6 | `refresh` over a corpus `code index` made | New: "⚠ Daemon nudge failed: 404 Not Found: … prod-308be1a is not registered; run `sovereign project register` first", then "✓ 14837 symbols" and exit 0 (/tmp/startaudit1/refresh.out). The symbols were exported in process, as the plant's +5 and −5 show, so nothing was lost; the warning names a step the index never asked for. |
+
+## REVIEW-audit-start-auto-2 (2026-10-13, range c6c2212..1ea033b)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-start-auto-1, whose
+`done` is c6c2212 (ralph/next/start/STATE.md: its hash f9b41a5, the loop's
+"ralph: REVIEW-audit-start-auto-1 done" c6c2212 after it). The range ends
+at 1ea033b, the commit that made this row. `git rev-list --count
+c6c2212..1ea033b` is 55, with no merge among them (`--merges`: 0), all on
+main: start-home, start-group, start-run and start-economize, each with its
+`done`, and the row's own commit.
+
+This audit's own commits before this section are a12fd81 (the row's two
+paths, as 81bc336 corrected the last audit's), 13aff25 (one `keep_folder`
+in the home page's browser tests, behaviour kept), 1dee396 (`ORIGIN_FILE`'s
+comment naming its writer where it now is) and b860db4 (the data dir's
+`origin` read by `ORIGIN_FILE` in tests/install.rs, so install.sh's
+spelling is pinned). It opens #138-#140, updates #137 and #80, and closes
+none.
+
+### (1) Net lines per unit, product code
+
+The counts come from `git log --reverse -M --numstat --format='@@%h %s'
+--no-merges c6c2212..1ea033b`, summed by /tmp/startaudit2/scripts/ledger.py
+(/tmp/startaudit2/ledger.out), to the last audit's rules: product is
+crates/, apps/, web/ and bridge/; a file under `tests/`, or named as
+`scripts/lean_check.py`'s `TEST_FILE` names one (`*_tests.rs`,
+`tests.rs`, `tests_support.rs`), is a test; a commit that names no unit
+counts toward the next one that does. Everything else is counted apart:
+
+- demo/runs/start +12870 −76: start-home's walk before and after,
+  start-run's story, predictions, drivers, data and READMEs;
+  demo/runs/economize +3917: start-economize's survey and its data
+- docs/DESIGN.md +129 −46, ARCHITECTURE.md +8 −5, AGENTS.md +3 −1,
+  scripts/lean_check.py +9 −6 (4b81e4b's and 54e5e79's raises, 0b5bccf's
+  ratchet), scripts/ralph-mark.sh −29 (250b17e), Cargo.lock +2
+- ralph/next/start +47 −19, ralph/next/onair +41 −25,
+  ralph/claude-settings.json −1
+
+| unit | commits | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| start-home | 20 | 399 | 203 | 196 | 392 | 22 | 370 |
+| start-group | 9 | 209 | 120 | 89 | 317 | 22 | 295 |
+| start-run | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
+| start-economize | 16 | 4 | 47 | −43 | 56 | 52 | 4 |
+| this row's own commit | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 55 | 612 | 370 | 242 | 765 | 96 | 669 |
+
+The src lines, by file:
+
+- start-home: svrngs-node invite.rs +192 −3 (5a0ffed moving `draw`,
+  `carried`, `Host::mint` and `own_person` from svrngs's issuer.rs and
+  cli.rs, which lose +7 −39 and +23 −76; then `Host::link` and
+  `kept_page`), home.rs +58 −3 (`POST /link`, `/folder`, `Linking`,
+  `OPENERS`), home.js +71 −60, index.html +22 −6, home.css +1, node.rs
+  +11 −2 (`Node::host`, `relay` kept), svrngs group.rs +9 −14 (caafae7's
+  `read_origin` asking `kept_page`), svrngs-node Cargo.toml +4
+  (ed25519-dalek and getrandom, both in Cargo.lock already), lib.rs +1
+- start-group: svrngs-node group.rs +125 −15 (318599c, 31522ac and 51583e7
+  moving the seed's keeping, `folder_place`, `kept_relay` and the folder's
+  placing from svrngs; then 63dcaee's `Asking::found` and `Made`), cli.rs
+  +19 −87, home.rs +16 −2 (`POST /group`), home.js +14 −4, index.html
+  +1 −2, node.rs +8, lib.rs +2 and svrngs lib.rs +2 −2 (`pub use
+  svrngs_node::group`), web/app.js +8 −4 and index.html +2 −1 (the
+  founder's line, 2b2a751), web/install.sh +12 −3 (0f468a3)
+- start-economize: cli.rs +3 −17 (`new_link`, `LINK_LIFE_SECS`'s
+  re-export), runtime register.rs −12 (`standing_in` into its tests),
+  guest.rs −11 (`on_loopback_only`), node.rs +1 −7 (`Node::say_relay`)
+
+The size budget, by scripts/lean_check.py over a `git archive` tree of
+each end (/tmp/startaudit2/lean-c6c2212.out, lean-1ea033b.out), and over
+the working tree after this audit's commits:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| c6c2212, range start (its cap 15,950, then) | 3121 | 15898 |
+| 1ea033b, range end (caps 3,122 and 15,987 since 0b5bccf) | 3121 | 15986 |
+| b860db4, this audit's last change (tests and a comment) | **3121 / 3122** | **15986 / 15987** |
+
+The range adds 88 counted lines (the ledger's 242 src lines net, less
+comments, blanks and the pages' markup): start-home's and start-group's,
+under the raises to 16,000 (4b81e4b) and 16,040 (54e5e79), less what
+start-economize cut before its ratchet to where it landed (0b5bccf). **1 line is
+left in svrngs-core and 1 in the repository** (#80), and the cap is
+strict: a 15,987th line is refused (`lean_check.py`: "BROKEN . has 15987
+lines of code, budget 15987"), as this audit found when it tried the trace
+#140 asks for.
+
+### The instrument
+
+~/dev/commonwealth-ai/target/debug/sovereign-cli is not the last audits'
+binary. While this audit ran, commonwealth-ai's `target/` was emptied and
+rebuilt by another session (`ls target/debug` at 18:09: no binaries; its
+`cargo build -p sovereign-cli …` started 18:10); the binary this audit
+used was linked at 18:14, sha256 67e46f63… (`shasum -a 256`), not
+68746bcf…. In it `code refresh` is gone ("Unknown code subcommand:
+refresh"); `svrn refresh` does that work. So its exact tier was checked
+again against a plant before any clean report was taken as clean (below).
+
+The corpus is 1ea033b's product: crates/, apps/, web/, scripts/,
+Cargo.toml and Cargo.lock, put into /tmp/startaudit2/prod-1ea033b by `git
+archive` (272 files); demo/ is left out, the range's demo/ being recorded
+runs. `code index . --corpus-id prod-1ea033b`, by the old binary before it
+was removed, gave 3290 chunks in 1144 s, after the first attempt, stopped
+with the session that started it, left a partial index that "could not be
+opened (… Missing metadata …); starting fresh" (/tmp/startaudit2/index.out,
+index2.out; I28, still present). The embedder was the daemon on :9741,
+`qwen-embedding-0.6b`. `refresh` gave rust 15105 symbols, typescript and
+python "skipped (export failed)" (I4), "⚠ SCIP DB schema v0 is stale
+(current: v3); resetting", and "LanceDB index current — skipping", so the
+embeddings the near tier reads are the index's own
+(/tmp/startaudit2/refresh.out).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs, crates/svrngs-node and crates/svrngs-runtime
+(src and tests) and web/ (`git diff --stat c6c2212 1ea033b -- crates apps
+web scripts`); svrngs-core not at all, so it was not run.
+
+**The exact tier was checked against a plant.** 1ea033b's `kept_page`
+(invite.rs:34-48, its doc lines included), added in the range by caafae7,
+was appended to crates/svrngs-node/src/home.rs in the indexed tree, then
+`refresh` (+5 symbols, /tmp/startaudit2/refresh-plant.out). The scoped
+report gave **2 groups**: `kept_page — crates/svrngs-node/src/home.rs:378
+== crates/svrngs-node/src/invite.rs:37`, 2 copies × 12 lines, beside api.rs
+`addr` (/tmp/startaudit2/plant.md). home.rs was then restored (`diff`
+against `git show 1ea033b:` empty) and refreshed again
+(refresh-restored.out). The clean reports were taken before the plant, at
+0.95 and 0.90 (/tmp/startaudit2/clean-*.md):
+
+| scope | locations | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---:|---:|---:|---:|---|
+| crates/svrngs/ | 77 | 0 | 0 | 0 | none |
+| crates/svrngs-node/ | 517 | 1 | 0 | 8 | none |
+| crates/svrngs-runtime/ | 135 | 1 | 0 | 0 | none |
+| web/ | 98 | could-not-judge (I4) | 0 | 1 | none |
+| crates/svrngs/tests/, crates/svrngs-node/tests/ | 0 | could-not-judge (I19) | could-not-judge | could-not-judge | — |
+
+The two exact groups are the earlier audits' three-line ones (api.rs
+`addr`; runtime tests.rs and tests_write_index.rs `open`). Every location
+the reports name, 22 (/tmp/startaudit2/locs.txt), was blamed at 1ea033b
+against the range's 55 commits: none has a line from them
+(/tmp/startaudit2/blame.out; the same filter finds 8 of 8 in invite.rs
+:153-160, `Host::link`). **No exact or near clone at 0.95 or 0.90 has a
+side the range added.**
+
+The tests scopes are could-not-judge (I19), so the line-window pass stood
+in: /tmp/startaudit2/scripts/windows.py, to the last audit's rule (8 lines
+of code, blanks, comments and lone brackets dropped, over every test file
+of crates/; a span new when a side overlaps a line the range added, by
+`git diff -U0`). At 1ea033b it found **95 window hits, 53 spans, 12 new**
+(/tmp/startaudit2/windows.out):
+
+- crates/svrngs-node/tests/browser/main.rs :2006-2018 == :2448-2460: a
+  folder kept as the group's, `POST /v1/folders`, which bece124 (start-home)
+  wrote again from 20ede44. Fixed in 13aff25 (`keep_folder`).
+- crates/svrngs-node/tests/conformance.rs :520-530 == crates/svrngs/tests/
+  home_group.rs :54-64: a `web/tests/` script run under node and its last
+  line read, which 63dcaee (start-group) copied from conformance.rs's
+  `browse` (51ac1a7) (#137).
+- The other ten are a node started in a test with a `RelayConfig` literal,
+  across tests/door/main.rs, lend_origin.rs, room.rs, surface.rs, home.rs,
+  folders.rs, browser/main.rs and conformance.rs. Each predates the range
+  (`git blame`); afdaa6f (start-economize) changed one or two lines in
+  each when it cut `on_loopback_only`, which the rule counts as new (#137).
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges c6c2212..1ea033b -- crates apps
+web scripts` match `\b(struct|enum|trait|type|class)\s+[A-Z]\w*` three
+times: `enum Unminted` (invite.rs:52, 5a0ffed), `struct Linking` (home.rs
+:242, ab6ef1f) and `type Made` (group.rs:258, 63dcaee). (The previous
+session's /tmp/startaudit2/new-types.out counted demo/ too, where
+start-economize's demoted.diff repeats every type; with demo/ left out
+there are these three.) Each was run through `converge noun <Name>
+--corpus-id prod-1ea033b` (/tmp/startaudit2/nouns.out), with `git grep`
+over every path beside it, since converge leaves tests out
+(nouns-grep.out):
+
+| noun | converge (production) | git grep (all) | read |
+|---|---|---|---|
+| Unminted | 1: svrngs-node invite.rs:51 | 1: invite.rs:52 (and its line in demo/runs/economize/…/demoted.diff, a recorded diff) | One. |
+| Linking | 1: svrngs-node home.rs:241 | 1: home.rs:242 | One. |
+| Made | 1: svrngs-node group.rs:257 | 1: group.rs:258 (`Said::Made`, cli.rs:1058, is a variant) | One. |
+
+converge's lines are still one early (I1). **No noun has more than one
+definition.**
+
+### Reading the range
+
+Every hunk of product code the range changed was read
+(/tmp/startaudit2/range-src.diff, `git diff c6c2212 1ea033b -- crates
+apps web ':!*tests*'`).
+
+- **A move is its own commit** (AGENTS.md 2). Each of start-home's and
+  start-group's moves into the node landed apart from the change it made
+  room for, its tests named in its body: 5a0ffed (a link), caafae7 (the
+  kept page), 318599c, 31522ac and 51583e7 (a group's seed, its folder's
+  place, the relay a joiner keeps, the folder placed), each before
+  ab6ef1f, bece124 and 63dcaee used it. start-economize's cuts are each
+  their own commit with lean_check before and after.
+- **One decider** (AGENTS.md 8). A link is made in one place,
+  `Host::mint` (crates/svrngs-node/src/invite.rs:110), which `svrngs
+  link`, `svrngs new` and the page's `Host::link` all ask; the relay it
+  carries, `carried` (:85); a group kept, `Host::keep_group`
+  (group.rs:171), which `new`, `join` and the page ask; a folder's place,
+  `folder_place` (group.rs:196) through `Folders::place`, which `new`,
+  `join` and the page ask; the page a group's https links print on,
+  `kept_page` (invite.rs:37), which svrngs's `read_origin`, the page's
+  link and `Asking::found` ask. Two things are decided twice:
+  - whether a name a group of this computer's has already founds another
+    one: `Asking::found` refuses it (group.rs:241-245), `svrngs new` makes
+    a second group of that name (cli.rs:1659, `new_group`; pinned by
+    crates/svrngs/tests/new.rs:74-79, `new_twice_with_one_name_makes_two_groups_with_two_ids`)
+    (#138);
+  - the data dir's `origin` file's name: `ORIGIN_FILE`
+    (invite.rs:32) and install.sh's `"$dir/origin"` (web/install.sh:102, after b860db4's comment),
+    which shell cannot import. Its test read it back by a literal of its
+    own, so a change to the constant left a group made on the page keeping
+    no page, every test green. Fixed in b860db4: the test reads it by the
+    constant, red on a plant.
+- **Never silently substitute** (AGENTS.md 6; fence 2). Each `.ok()`,
+  `unwrap_or`, `unwrap_or_default` and `catch` the range added to product
+  code was read. `carried`'s `relay::parse(r).ok()` (invite.rs:90) moved
+  unchanged from cli.rs `link_relay` (5a0ffed), the refusal traced inside
+  `parse` (svrngs-core relay.rs:29-31). `kept_page` says a file it cannot
+  read as that, never as no page (invite.rs:37-48). `open`'s
+  `dirs_of(..).is_ok_and(..)` takes a folder list it cannot read as the
+  folder not being the group's, refused in a person's words and traced
+  with `listed`. home.js's `show` says a group whose lends cannot be read
+  as that. One substitution stays from before the range, rewritten by
+  4830603: the page's `/ask` takes a group whose lends cannot be read as
+  lending nothing (home.js:44, `lentIn`'s `() => []`; c6c2212's
+  `g.lent ?? []`), and says "That app, or what it asks to use, is not lent
+  in your groups now" (home.js:153) (#139).
+- **Glassbox** (AGENTS.md 1). Each new branch traces — `found`'s made or
+  refused (home.rs `found`, `?made`), `open`'s `listed` and opener,
+  `Folders::place`'s outcome, `kept_relay`, `carried`, `draw`'s draws,
+  `own_person`, `mint`'s refusals, `link`'s made — but one: `Host::link`
+  refusing a group this computer does not hold (invite.rs:157-159)
+  returns `NotIn`, and home.rs's `link` answers it 403 with no trace
+  (home.rs:254-256). The trace is one line, and the repository is at
+  15,986 of a strict 15,987 (#140, #80).
+- **A person's words** (fence 3). The range's added quoted strings in
+  product code use none of key, member, keeper, ring, act, journal, port,
+  namespace or origin as a word a person reads (`grep -iwE` over the added
+  lines): the hits are routes (`/v1/lends?namespace=`), a file name
+  (`ORIGIN_FILE`), trace text and `l.origin`, a URL shown as "its address
+  for a program".
+- **The nouns gate** (fence 6). Outside well_known.txt, llama-server is
+  named in product code only in share.rs:30, a module doc citing the row
+  (`git grep -in llama 1ea033b -- crates apps web scripts`, tests apart).
+- **The core untouched** (fence 6). `git diff --stat c6c2212 1ea033b --
+  crates/svrngs-core` is empty; svrngs-core stays at 3121.
+
+### Fixed here
+
+- 13aff25: crates/svrngs-node/tests/browser/main.rs's two `POST
+  /v1/folders` (:2006-2018 == :2448-2460, 20ede44 and bece124) one
+  `keep_folder(at, folder)`. `cargo test -p svrngs-node --test browser --
+  groups_folder group_s_folder`: 4 passed before and after
+  (/tmp/startaudit2/folder-before.out, folder-after.out).
+- 1dee396: invite.rs's `ORIGIN_FILE` comment names its writer where
+  318599c moved it, the node's group.rs `write_origin`.
+- b860db4: tests/install.rs reads the data dir's `origin` by `ORIGIN_FILE`,
+  so install.sh's spelling of it is pinned; red on the plant
+  `ORIGIN_FILE = "origin-planted"` ("panicked at crates/svrngs/tests/
+  install.rs:426:70 … NotFound", /tmp/startaudit2/origin-red.out), green
+  without it (origin-green.out).
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 138 | 8 | crates/svrngs-node/src/group.rs:241-245 (`Asking::found`: a name one of this computer's groups holds, any case, refused: "You are in Trip already: give this group another name."); crates/svrngs/src/cli.rs:1659 (`new_group`, which asks no such thing) and crates/svrngs/tests/new.rs:74-79 (`new_twice_with_one_name_makes_two_groups_with_two_ids`, which pins two groups of one name) | not fixed: a change in what `svrngs new` does, which a test pins the other way | Two makers of a group decide differently whether a held name founds another. 63dcaee (start-group (c)) made the page refuse it, as its row asked ("a name already held among them"); `svrngs new`, which DESIGN §3 says the page makes groups "as" (docs/DESIGN.md:208), makes a second group of the name, and `link`, `share --folder` and `svrngs remove` then refuse that name as ambiguous (cli.rs `group_named`, `Refusal::Ambiguous`). Which is right is the design's: a fix gives the rule one home both ask — `new_group` asking `found`'s check, and new.rs:74 rewritten to the refusal, red first — or the page's refusal dropped, and DESIGN §3 says which. |
+| 139 | 6 | crates/svrngs-node/src/home/home.js:44 (`lentIn`: `get('/v1/lends?…').then((l) => l.lent, () => [])`) and :153 ("That app, or what it asks to use, is not lent in your groups now."); c6c2212's home.js:154 (`all.flatMap((g) => g.lent ?? [])`, before the range) | not fixed: a change in what a person is told | The page's `/ask`, where an app sends a person to say yes, takes a group whose lends cannot be read (its people's computers asleep, the API refusing) as lending nothing, and tells the person the app is not lent in their groups now. Before the range the same substitution was `g.lent ?? []` over `groups()`'s `unread`; 4830603 (start-home) rewrote it as `lentIn`. The main page says the same failure as "What this group lends cannot be read on this computer" (home.js:101). A fix keeps the groups `lentIn` could not read and, when the asked lend is not found among the rest, says that what some group lends could not be read, with a browser test, red first, of an `/ask` against a lend whose group's read fails. |
+| 140 | 1 | crates/svrngs-node/src/invite.rs:157-159 (`Host::link`: a group this computer does not hold, `return Err(Unminted::NotIn)`, untraced); crates/svrngs-node/src/home.rs:254-256 (the page's `link` answering it 403, untraced) | not fixed: the trace is the repository's 15,987th line, and the cap is strict (#80) | ab6ef1f (start-home) added the page's link with every branch traced but this one: a link asked for a group this computer does not hold is refused with no trace on either side. `svrngs link` refuses the same in `group_named` with a trace (cli.rs, "cli: refused — no group by that name"). A fix is one `tracing::debug!(target: "link", group, …)` before the return; tried here, `scripts/lean_check.py` said "BROKEN . has 15987 lines of code, budget 15987", and rustfmt would not take the line back from `link`'s `home`/`relay` pair (`carried(…)` wrapped to four lines). It waits for a line freed (onair-economize) or the operator's raise. |
+| 137 | 8 | as recorded; and now crates/svrngs/tests/home_group.rs:49-65 (63dcaee, `home_page`) == crates/svrngs-node/tests/conformance.rs:517-531 (`browse`) | not fixed: two test binaries, the copies differing | Updated. start-group's `home_page` runs a `web/tests/` script under node and reads its last line, as conformance.rs's `browse` does, word for word but the script and its `expect` texts; both binaries include browser/harness.rs, the one home a `browse(script, args)` would have, `#[allow(dead_code)]` in the binaries that do not call it. The node starts copied across tests/door/main.rs :43-66, lend_origin.rs :31-52, room.rs :37-58, surface.rs :35-42, home.rs :39-47, folders.rs :31-39, browser/main.rs :73-86 and :124-137 and conformance.rs :66-79 predate the range (`git blame`: 4f6037d, a16aeb8, bf6276d, 57592a3, 1c61b37, 50ecc20, 05eee01, 48ec52c, e502de9, 51ac1a7); afdaa6f's cut of `on_loopback_only` changed one or two lines in each, the line-window pass's "new" spans. |
+| 80 | — | scripts/lean_check.py BUDGET | not fixed (operator's) | 1 line left in svrngs-core (3121 / 3122) and 1 in the repository (15986 / 15987), strict, after the range's +88 and start-economize's ratchet (0b5bccf). onair-economize is queued before any raise (491936f). |
+| 130, 132, 133, 134, 135, 136 | as recorded | as recorded | not fixed | Not touched by this range's decisions; #136 named by start-economize's NEEDS_HUMAN.md as a change in what a person is told, folded into onair-economize. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still one line early (invite.rs:51 for :52, home.rs:241 for :242, group.rs:257 for :258). The dry-report half reported the plant at its own `fn` line (home.rs:378). |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". web/ and scripts/ exact tiers are could-not-judge. |
+| I19 | 6 | dry-report, `tests/` scopes | Still present, and said as could-not-judge. The line-window pass stood in. |
+| I28 | 6 | `code index` resume | Still present: the index this audit's first session started, stopped mid-way, was "could not be opened (… Missing metadata …); starting fresh" when run again (/tmp/startaudit2/index2.out). |
+| I29 | 6 | `refresh` over a corpus `code index` made | Still present, under its new name `svrn refresh`: "⚠ Daemon nudge failed: 404 Not Found: … prod-1ea033b is not registered", then the in-process rebuild and exit 0 (/tmp/startaudit2/refresh.out). |
+| I30 | 7 | the binary at ~/dev/commonwealth-ai/target/debug/sovereign-cli | New: the path these rows name is a build product another session may empty and rebuild at any time; between this audit's index and its reports the binary went from sha256 68746bcf… to 67e46f63…, and `code refresh` with it. A row's instrument named by path alone is not one instrument across a run; this audit checked the new one against a plant. |
