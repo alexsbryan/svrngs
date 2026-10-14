@@ -8695,3 +8695,230 @@ whole).
 | I19 | 6 | dry-report, `tests/` scopes | Still present, said as could-not-judge; the line-window pass stood in. |
 | I29 | 6 | `refresh` over a corpus `code index` made | Still present: "prod-43c0552 is not registered", then the in-process rebuild and exit 0. |
 | I32 | 7 | dry-report's JS near tier | New: a JS object's methods are named over spans padded three lines each side, so two short neighbours overlap and read as a clone: `log` "store.mjs:49–58" for :52-55 and `append` "53–61" for :56-58, cosine 0.927; `people` "81–89" for :84-86, `log` "84–93" for :87-90. A cluster whose two spans overlap in one file is the window, not the code. |
+
+## REVIEW-audit-events-auto-2 (2026-10-14, range 28af323..b1d04bc)
+
+The previous `REVIEW-audit-` row of this queue is REVIEW-audit-events-auto-1,
+its hash 28af323 (ralph/next/events/STATE.md), so the range starts there
+and ends at b1d04bc, the commit that made this row. `git rev-list --count
+28af323..b1d04bc` is 45, none a merge (`--merges`: 0): auto-1's `done`, the
+five rows' state commit, events-economize, events-asleep, events-links and
+events-principles, each with its `done`, and this row's own commit.
+
+This audit's own commits before this section: ba1124d (the row's two paths,
+as fb7db91 corrected auto-1's), 389094a (`Joined` names one thing in the
+node), 3844bc2 (the node's tests' trace sink, one copy for two) and 0e5818d
+(the door asks `Standing::names`). It opens #152-#154, and closes none.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+28af323..b1d04bc` (/tmp/eventsaudit2/ledger.raw), summed by
+/tmp/eventsaudit2/scripts/ledger.py (ledger.out; each commit's unit in
+ledger.commits) to the earlier audits' rules: product is crates/, web/ and
+bridge/; apps/ apart, which `scripts/lean_check.py:14-16` does not count,
+split the same way; scripts/ apart; a test as lean_check names one, and
+`*.test.mjs`; a commit that names no unit counts toward the next one that
+does (460898b to events-economize). Raw lines, comments and blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net | apps src net | apps test net | scripts net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| REVIEW-audit-events-auto-1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| events-economize | 5 | 13 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 (+4 −4) |
+| events-asleep | 12 | 91 | 33 | +58 | 137 | 2 | +135 | 0 | 0 | +1 (+4 −3) |
+| events-wait (its state commit, 089096c) | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| events-links | 7 | 70 | 12 | +58 | 257 | 7 | +250 | +31 (+35 −4) | +26 (+30 −4) | 0 (+6 −6) |
+| events-principles | 18 | 66 | 37 | +29 | 364 | 0 | +364 | +8 (+16 −8) | +88 | 0 (+12 −12) |
+| this row's own commit | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 45 | 240 | 95 | **+145** | 758 | 9 | +749 | +39 | +114 | +1 |
+
+Where the src lines went: dial.rs +24 (new, 883fca8, 5c097eb; mostly its
+doc), guest.rs +30 −12 and web/src/lib.rs +25 −13 (the cap given to the
+lend's dials), door.rs +42 −5 (the two headers, 12d6331), blob.rs +33 −13
+(#148, #149), web/app.js +15 −6 and home/home.js +13 −1 (events-links (c)),
+ring_routes.rs +12 −7, register.rs +10 −3, cli.rs +5 −7, synced.rs +5 −7
+and declared.rs +6 −5 (the economizing cut), the rest a line or two each.
+scripts/ is lean_check.py's caps and its comment.
+
+What the budget counts, by scripts/lean_check.py over a `git archive` tree
+of each end and of each unit's `done` (lean-<hash>.out; the caps printed
+are HEAD's, so the cap column is each commit's own lean_check.py):
+
+| at | svrngs-core | repository | its cap | counted net |
+|---|---:|---:|---:|---:|
+| 28af323, range start | 3149 | 16236 | 16237 | |
+| 9ac4a4c, events-economize done | 3149 | 16234 | 16235 | −2 |
+| 9c2d2cf, events-asleep done | 3149 | 16254 | 16255 | +20 |
+| dab41b0, events-links done | 3149 | 16287 | 16288 | +33 |
+| e0f0bae, events-principles done | 3149 | 16304 | 16305 | +17 |
+| b1d04bc, range end | 3149 | 16304 | 16305 | **+68** |
+| 0e5818d, this audit's last change | **3149 / 3150** | **16304 / 16305** | | 0 |
+
+Each unit's raises ended where its lines did, the cap one past the count at its `done`, none left over (dbdf8fe,
+2aeb961, b47f2dc, d54ad83, aa51c1b, 4250682, 611a0b3, 2d55aa2), and
+svrngs-core's cap stayed at 3150. Of the +80 the operator gave over the
+economizing pass's 16,235 (fence 7), **70 are spent, 10 left**: 16,315 is
+the ceiling events-wait raises within. Still **no line left in the
+repository, 1 in svrngs-core** (#80). This audit's changes counted 0: two
+renames, a test move, and one line for one in door.rs.
+
+### The instrument
+
+~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256 67e46f63…
+(`shasum -a 256`), the binary auto-1 ran.
+
+The corpus is b1d04bc's crates/, apps/, web/, scripts/, Cargo.toml and
+Cargo.lock by `git archive` into /tmp/eventsaudit2/prod-b1d04bc (301
+files), apps/on-air/page/vendor moved out (upstream's). `code index .
+--corpus-id prod-b1d04bc` gave 3532 chunks in 538 s, its first run
+(index.out). `refresh` gave rust 15742 symbols, typescript and python
+"skipped (export failed)" (I4), after "prod-b1d04bc is not registered" and
+its in-process rebuild (I29) (refresh.out).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-node, crates/svrngs-runtime, crates/svrngs,
+web and apps/events (`git diff --stat 28af323 b1d04bc -- crates apps web
+scripts bridge`), each reported at 0.95 and 0.90, with
+crates/svrngs-node/tests, and apps/ whole as auto-1 did
+(/tmp/eventsaudit2/clean-*.md). Whether a side was added in the range is
+`git blame` at b1d04bc over each side's lines against 28af323.
+
+| scope | locations | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---:|---:|---:|---:|---|
+| crates/svrngs-node/ | 542 | 2 | 0 | 7 | 1: exact, `flush`, blob_tests.rs |
+| crates/svrngs-runtime/ | 136 | 1 | 0 | 0 | none |
+| crates/svrngs/ | 77 | 0 | 0 | 0 | — |
+| web/ | 100 | could-not-judge (I4) | 0 | 2 | none |
+| apps/events/ | 60 | could-not-judge (I4) | 0 | 2 | none |
+| apps/ | 390 | could-not-judge (I4) | 9 | 22 | none |
+| crates/svrngs-node/tests/ | 0 | could-not-judge (I19) | could-not-judge | could-not-judge | — |
+
+The one cluster with a side the range added:
+
+| tier | its side | its other side | read |
+|---|---|---|---|
+| exact, 2 × 3 lines | `flush` — blob_tests.rs:161 (4bd7fdf, events-principles (b)) | `flush` — relay_tests.rs:160 | Test code counted as production (I8). The three lines are the tail of a test's trace sink, `Said`, copied whole from folders.rs; with home.rs's copy (0db97c8) the line-window pass below finds all three. Two of them **moved to one in 3844bc2**; the rest #152. |
+
+The rest, none with a side in the range: the node's api.rs `addr` ×2 and
+seven near pairs (sign_in.rs, synced.rs, redeem.rs, choices.rs, rail.rs,
+ring_sync/tests.rs, lend.rs) are auto-1's, blame putting no line of theirs
+in the range, synced.rs's `kept_files`/`kept_at` (:334-361) and choices.rs's
+`load`/`read` (:79-99) included though their files changed; runtime's
+tests.rs:19 == tests_write_index.rs:12 `open`, before the range; web's two
+(app.js `uses`/`choicesOf` :285-307 over :288-303, lend.js
+`cookieFor`/`keepJar` :174-181 over :177-185) and store.mjs's two are each
+one span inside another (I32); apps/'s 13 with an events side are auto-1's
+table again, none in server.mjs, page.test.mjs or partial.test.mjs, the
+three the range changed (#150).
+
+The line-window pass (/tmp/eventsaudit2/scripts/windows.py: 8
+whitespace-normalized lines, blanks and lone closers dropped, overlapping
+hits merged to spans, a span new when blame at b1d04bc puts a line of
+either side in the range) over the node's and the command's tests,
+svrngs-runtime's tests.rs, web/tests and apps/events and apps/expenses'
+.mjs, 84 files at b1d04bc: **165 window hits, 53 spans, 6 new**
+(windows.out). Both verdicts are seen: auto-1's #150 spans (events against
+expenses) read old, and the range's copies new.
+
+| new span | read |
+|---|---|
+| blob_tests.rs:153-162 == folders.rs:1050-1059; blob_tests.rs:152-162 == home.rs:742-752; folders.rs:1050-1059 == home.rs:743-752 | The trace sink `Said`, three copies. folders.rs's and home.rs's moved to tests/common/mod.rs in 3844bc2; blob_tests.rs's cannot import it (#152). |
+| blob_tests.rs:179-186 == home.rs:768-775 (at b1d04bc) | The subscriber and the second dispatcher with tracing-core's `has_just_one` reason, written twice in the range; folders.rs's two subscribers (:392, :1193) have neither (#152). |
+| browser/main.rs:539-550 == :1451-1462 | `linking_app` (12d6331) writes `kept_page`'s accept loop again, to choose its answer by the request's head (#154). |
+| web/tests/links.mjs:19-26 == reads.mjs:21-28 | The drivers' preamble (serve, launch, a page, its log, `held`), as ask.mjs:22-32 == reads.mjs:14-24 and handover.mjs == runtime.mjs had before the range. Each driver is a script node runs alone; a shared preamble is page.mjs's to grow, not this audit's. No finding. |
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges 28af323..b1d04bc -- crates apps
+web scripts bridge ':!apps/on-air/page/vendor'` match
+`(struct|enum|trait|type|class)\s+[A-Z]\w*` four times (new-types.out):
+`Said` twice (home.rs, blob_tests.rs), `Joined` (blob.rs) and `Asking`
+(blob_tests.rs). Each through `converge noun <Name> --corpus-id
+prod-b1d04bc` (nouns.out), with `git grep -nP` beside it (nouns-grep.out):
+
+| noun | converge (production) | git grep (demo/ and vendor/ apart) | read |
+|---|---|---|---|
+| Said | **2**: svrngs cli.rs:1040; svrngs-node door/choices.rs:39 | 7: cli.rs:1041, choices.rs:40, blob_tests.rs:154, tests/folders.rs:1051, tests/home.rs:744, web/app.js:83, apps/events/server.mjs:56 | The two production ones as :4459 read them, no change. The range's two are the tests' trace sink, folders.rs's copied (#152); after 3844bc2 the node's tests hold it once in common/mod.rs:89, and blob_tests.rs's stays. |
+| Joined | **2**: svrngs-core membership.rs:131; svrngs-node blob.rs:142 | 2: membership.rs:132, blob.rs:143 | The core's is when and how a person joined, read in the node through lib.rs:33 (`pub use svrngs_runtime::*`) at rail.rs:59 and removal.rs:34; blob.rs's a private alias for an ask's task as it ended (0c55dc6). Two things of one name in the node's reach, as 0213ebb found of `Asked`. **Fixed in 389094a**: it is `Ended`. |
+| Asking | 1: node.rs:810 | 3: node.rs:811, blob_tests.rs:114, tests/folders.rs:1080 | node.rs's is the people route's state; blob_tests.rs's (0c55dc6) a spawned ask's handle, unseen by converge; folders.rs's a test harness (I18). blob_tests.rs's **renamed `Spawned` in 389094a**, beside `Ended`. folders.rs's is before the range. |
+
+After the renames, blob.rs and blob_tests.rs put into the indexed tree and
+`refresh` run (refresh-renamed.out, +0 symbols), converge gives `Joined` 1
+(membership.rs), `Ended` 1 (blob.rs:143), `Asking` 1 (node.rs), `Spawned`
+0, test code (nouns-after.out). converge's lines are still one early (I1).
+**No noun the range added has more than one definition now.**
+
+### Reading the range
+
+Every hunk of product code and of apps/events the range changed was read
+(`git diff 28af323 b1d04bc -- crates web apps/events`).
+
+- **One decider** (AGENTS.md 8). Who stands in a group: aff607b gave it one
+  home, `Standing::member`, but door.rs `pages` (12d6331, events-links,
+  landed before it) wrote the rule a fifth time,
+  `matches!(.., Ok(Standing::Members(m)) if m.contains_key(device))`.
+  **Fixed in 0e5818d**, red on #146's own plant (a change in `member` the
+  door did not follow), green after. #146's note on blob.rs `standing_in`
+  and surface.rs stands: they read `standing_of`'s map, not a `Standing`.
+  The dial cap is `dial::DIAL_WITHIN` alone, read by the bridges
+  (iroh.rs:279) and the page (web/src/lib.rs, by `#path`), as events-wait
+  will keep it. **A link's path is judged by two rules** that disagree
+  (#153): on a phone open.js:55-56 takes `at` only when it resolves to the
+  lend's own origin; on a computer's home page home.js:172 takes any `at`
+  that starts with `/` and not `//`, so `/\evil.example/x` passes there and
+  opens `http://evil.example/x` (`node -e`, new URL with the lend's origin
+  as base: "home.js passes: true -> http://evil.example/x | open.js same
+  origin: false").
+- **Never silently substitute** (AGENTS.md 6; fence 2). A dial not answered
+  within the cap is said as asleep on both sides (guest.rs, "the dial was
+  not answered in time"; web/src/lib.rs, "not answered in …: asleep"), apart
+  from a refused dial. A get's panicked ask is said, never dropped (blob.rs
+  `heard`). The door's `x-svrngs-pages` says `none` and `unread` apart, and
+  the app says each in a person's words (server.mjs `linkTo`). A group read
+  in part is said per group (6919521, #151).
+- **Glassbox** (AGENTS.md 1). Each new branch in the node traces at debug:
+  the dial given up, the door's standing per group and the header told,
+  the page's link refused (home.rs, invite.rs), every ring-route refusal
+  (ring_routes.rs `err`), a get asking the group with `given`. The home
+  page's new "Open it" refuses in words beside the box and traces nothing,
+  as home.js traces nothing anywhere; #153 says so.
+- **Closed sets** (AGENTS.md 9). The CLI's valued flags are a match arm the
+  compiler holds (13dbdbe, #147), no longer a space-joined string.
+- **Machines build, people speak** (fence 4). The app writes a link for the
+  host to copy and send in the group's own chat; nothing is sent in anyone's
+  name (server.mjs `linkTo`, a button that copies).
+- **The nouns gate** (fence 3). `python3 scripts/vocab_check.py`: run in
+  scripts/check.sh at the close.
+- The runs' drivers (demo/runs/asleep) are kept as they ran (#61) and were
+  not reviewed as product.
+
+### Fixed here
+
+- 389094a: blob.rs's alias `Joined` is `Ended`, blob_tests.rs's `Asking`
+  `Spawned`; converge gives each one.
+- 3844bc2: the node's tests' trace sink `Said` once, in tests/common/mod.rs,
+  for folders.rs and home.rs; the three tests that read one pass.
+- 0e5818d: the door's `pages` asks `Standing::names`; red on #146's plant,
+  green without it, both engines.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 152 | 8 | crates/svrngs-node/src/blob_tests.rs:152-164 (`Said`) and :175-186 (the subscriber and `_two`, tracing-core's `has_just_one` reason) == crates/svrngs-node/tests/common/mod.rs:81-99 (`Said`, since 3844bc2) and tests/home.rs:750-761 (the subscriber and `_two`); beside crates/svrngs-node/src/relay_tests.rs:150-163, crates/svrngs/src/relay_tests.rs:12, crates/svrngs/tests/default_relay.rs:33 and crates/svrngs/tests/relay.rs:105 (`Kept`, a static sink each) | not fixed: a test-support home across a crate's library and its integration tests, not small | A test that reads its own trace builds its sink and subscriber by hand, six times over two crates, and the range added two. The reason a second dispatcher is kept alive is written twice (blob_tests.rs:183-186, home.rs:758-761), and folders.rs's two subscribers of the same shape (:387-394, :1188-1195) have neither the dispatcher nor the reason; whether they need it is not judged here. One home is a small test-support crate or a `#[cfg(test)]` module both the library's tests and tests/common reach (`traced(filter) -> (Said, guards)`); tests, so no counted line. |
+| 153 | 8, 6 | crates/svrngs-node/src/home/home.js:170-173 (`at.startsWith('/') && !at.startsWith('//')`, then `new URL(at, <lend's origin>)`); beside web/open.js:55-56 (`new URL(back, location.href)`, taken only at its own origin) | not fixed: a change of behaviour, so red first and the operator's budget (1 line left) | What makes `at` a path within the lend is decided twice, and the two disagree: `/\evil.example/x` passes the home page's rule and opens `http://evil.example/x` in a new tab, where the phone's open.js refuses it to `/`. A pasted link from a group's chat can so send a person to any site from their own svrngs home page. The fix is open.js's rule on the home page — resolve, and refuse unless the URL's origin is the lend's — about +1 counted line with the refusal traced; home.js traces none of its own branches, the refusal said only in words beside the box. Red on a link whose `at` is `/\` and another host, through links.mjs's home-page step. |
+| 154 | 8 | crates/svrngs-node/tests/browser/main.rs:538-564 (`kept_page`) and :1450-1492 (`linking_app`, 12d6331) | not fixed: test code, a change each browser test re-proves | `linking_app` writes `kept_page`'s listener, accept loop, head read and answer again, to choose its page by the request's head and keep only `GET /`'s. One server taking `fn(&str) -> Option<String>` (the page for a head, kept when `Some`) serves both and `page_origin`. |
+| 80 | — | scripts/lean_check.py:33 BUDGET, :100 `n >= cap` | not fixed (operator's) | Unchanged: 1 line left in svrngs-core (3149 / 3150), **none** in the repository (16304 / 16305), 10 of the follow-up's +80 left (16,315). |
+| 130, 132-145, 150 | as recorded | as recorded | not fixed | Not touched by this range. #146-#149 and #151 are events-principles', marked fixed with their commits; #140 likewise. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still one line early (membership.rs:131 for :132, blob.rs:142 for :143, node.rs:810 for :811, cli.rs:1040 for :1041). |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)"; web/'s, apps/events' and apps/'s exact tier could-not-judge, and converge blind to JS classes. |
+| I8 | 6 | dry-report scope | Still present: blob_tests.rs's `flush` reported as a production exact clone of relay_tests.rs's. |
+| I19 | 6 | dry-report, `tests/` scopes | Still present, said as could-not-judge; the line-window pass stood in. |
+| I29 | 6 | `refresh` over a corpus `code index` made | Still present: "prod-b1d04bc is not registered", then the in-process rebuild and exit 0. |
+| I32 | 7 | dry-report's JS near tier | Still present, and seen in web/ now: app.js `uses` :285-307 over `choicesOf` :288-303, lend.js `cookieFor` :174-181 over `keepJar` :177-185. |
