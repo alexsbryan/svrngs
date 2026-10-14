@@ -1,0 +1,28 @@
+# Events
+
+The reference app for the primitive event (svrn-docs
+`rings/current/EVENTS.md` §1-§5): an event is a post in a group, and people
+answer it, as three acts in the group's record. svrngs's code knows none of
+it (`nouns.txt`, `scripts/vocab_check.py`); `apps/` is outside the size
+budget (`scripts/lean_check.py`).
+
+- `events.js`: the fold: `event`, `coming` and `came`, a correction counted
+  only from its own person, nothing that records "no", and the host's view
+  of several groups (`hosted`).
+- `events.test.mjs`, `laws.test.mjs`: what the acts come to, and the laws,
+  each caught on a planted fold. Run by `scripts/check.sh`.
+- `store.mjs`: the group's record through this computer's loopback API, or
+  a file of the app's own for running alone, behind one interface.
+- `server.mjs`: its own small server and page. The group is the path's,
+  checked against who stands in it; the person is the header its config
+  names, `x-svrngs-key` under svrngs, or what the proxy in front sets.
+- `page.test.mjs`: the page in Chromium and in WebKit as an iPhone, run
+  alone on its file. Run by `scripts/check.sh`.
+- `canary.mjs`: two computers' copies of one group's record fold the same
+  (`crates/svrngs-node/tests/canaries.rs`).
+
+Run alone: `node apps/events/server.mjs config.json`, with
+`{"file": "events.json", "who": "remote-user"}` and `events.json` holding
+`{"groups": {"house": {"name": "The House", "people": ["sam", "bo"]}}}`.
+Under svrngs: `{"record": "<the data dir's api file>", "who": "x-svrngs-key"}`,
+lent with `svrngs share`.
