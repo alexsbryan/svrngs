@@ -186,7 +186,10 @@ async function post(id, form) {
  * One group's answers to `e`, said: who was invited, who is coming and who
  * came. Invited is whoever stands in the group now, its host aside
  * (EVENTS.md §1): no one keeps a list, and no one is said as anything but
- * invited until they say so themselves.
+ * invited until they say so themselves. Now, not at posting: the same read
+ * decides who may see, answer and be invited, so someone who joins after
+ * the post and answers is never shown coming but not invited
+ * (demo/runs/events/2026-10-14/README.md, "What invited means").
  */
 function said(e, invited) {
   const asked = [...new Set(invited)].filter((p) => p !== e.host).sort();

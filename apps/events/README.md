@@ -16,6 +16,8 @@ budget (`scripts/lean_check.py`).
 - `server.mjs`: its own small server and page. The group is the path's,
   checked against who stands in it; the person is the header its config
   names, `x-svrngs-key` under svrngs, or what the proxy in front sets.
+  Invited is whoever is in the group now, decided by events-run
+  (`demo/runs/events/2026-10-14/README.md`).
 - `page.test.mjs`: the page in Chromium and in WebKit as an iPhone, run
   alone on its file. Run by `scripts/check.sh`.
 - `canary.mjs`: two computers' copies of one group's record fold the same
