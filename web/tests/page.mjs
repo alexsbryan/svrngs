@@ -129,6 +129,32 @@ export async function held(page, origin, args) {
   await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
 }
 
+// A driver of the group's page, its preamble written once (#168): the
+// page served from `args.site` (at `args.port` when given), `args.engine`
+// launched, each console line and page error kept, and `drive({ page,
+// context, origin, logs })` run on a page holding the group `args` names; what it
+// answers printed as the JSON line with the log, or the page's failure and
+// its log, exit 1. Closed after, either way.
+export async function driving(args, drive) {
+  const server = await serve(args.site, { port: args.port });
+  const origin = `http://localhost:${server.address().port}/`;
+  const { context, close } = await launch(args.engine);
+  const logs = [];
+  context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
+  try {
+    const page = await context.newPage();
+    page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
+    await held(page, origin, args);
+    console.log(JSON.stringify({ ...(await drive({ page, context, origin, logs })), logs }));
+  } catch (e) {
+    console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
+    process.exitCode = 1;
+  } finally {
+    await close();
+    server.close();
+  }
+}
+
 // In the lend's page: play its `<video>`, or seek it to `at`, and answer
 // how long until it plays on from there — `ms`, or `null` past `within` —
 // with where it stood then, or what the page says when it holds no video.
