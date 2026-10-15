@@ -258,6 +258,7 @@ fn shown(port: NonZeroU16, kind: Option<&Kind>, name: Option<&LendName>) -> serd
 async fn steps(axum::extract::Path(kind): axum::extract::Path<String>) -> Response {
     let none = || LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "svrngs knows no helper for that");
     let steps = share::HELPERS.iter().find(|(k, _)| *k == kind);
+    tracing::debug!(target: "home", kind, found = steps.is_some(), "home: a kind's helper's steps asked, refused where svrngs knows none");
     steps.map_or_else(none, |(_, s)| s.into_response())
 }
 

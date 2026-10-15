@@ -1348,6 +1348,7 @@ async fn forward(
     tracing::debug!(target: "door", actor, user = ?identity[2].1, "door: the account the lend is told");
     let (me, name) = (hex::encode(door.key), &lend.name);
     let lender = door.rail.standing_anywhere(&me).map(|(_, m)| m.person);
+    tracing::debug!(target: "door", actor, lender = ?lender.as_ref().map(|p| p.as_str()), "door: the lend's lender, by whom a refusal names it; none here names this computer, so \"Its lender\"");
     let lender = lender.as_ref().map_or("Its lender", |p| p.as_str());
     let away = format!("{lender}’s {name} is not answering now: try again later");
     let unanswered = || LendRefusal::Away.say(StatusCode::BAD_GATEWAY, away.clone());

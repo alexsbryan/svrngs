@@ -877,9 +877,12 @@ async fn looking_for_what_runs_here_says_which_read_failed_and_traces_why() {
 /// the helper does not answer, and is given its steps. With a stand-in
 /// helper listening there, it is lent signed in by it, as `svrngs share
 /// <port> --sign-in 8097` lends it, and the page is told so. Planted:
-/// HEAD, the page lending with no sign-in beside the helper.
+/// HEAD, the page lending with no sign-in beside the helper. Its steps
+/// asked, and a kind with none refused, each traced (#173; red at 9543e52,
+/// untraced).
 #[tokio::test]
 async fn the_page_lends_a_kind_beside_its_helper_signed_in_by_it() {
+    let (said, _heard) = heard("home=debug");
     let dir = tempfile::tempdir().unwrap();
     let alex = start(1, dir.path()).await;
     let home = format!("svrngs.localhost:{}", alex.api_addr().port());
@@ -926,6 +929,16 @@ async fn the_page_lends_a_kind_beside_its_helper_signed_in_by_it() {
     assert_eq!(steps.status, 200, "{}", steps.body);
     let words = "--listen 127.0.0.1:8097";
     assert!(steps.body.contains(words), "its steps: {}", steps.body);
+    let none = ask(alex.api_addr(), "GET", &home, "/helper/navidrome", &own, "").await;
+    assert_eq!(none.status, 404, "{}", none.body);
+    let log = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    let traced = |what: &str| {
+        (log.lines()).any(|l| l.contains("home: a kind's helper's steps asked") && l.contains(what))
+    };
+    assert!(
+        traced("kind=\"jellyfin\" found=true") && traced("kind=\"navidrome\" found=false"),
+        "{log}"
+    );
     drop(service);
     alex.endpoint().close().await;
 }

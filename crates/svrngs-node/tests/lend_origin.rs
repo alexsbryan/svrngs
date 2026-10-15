@@ -711,9 +711,11 @@ async fn a_lend_s_computer_asleep_is_said_away_within_the_cap() {
 /// lender and the lend, never a brace or the port; a program is given the
 /// JSON, `away`. Sam's computer here holds only Alex's founding, so it
 /// names its lender by none of its own (`Its lender`), never a host.
-/// Planted: HEAD before it, which answered both in braces.
+/// Planted: HEAD before it, which answered both in braces. Each lender
+/// found, or none, is traced (#173; red at 9543e52, untraced).
 #[tokio::test]
 async fn a_stopped_lend_is_said_by_its_lender_as_a_page_to_a_tab_and_json_to_a_program() {
+    let (said, _heard) = common::heard("door=debug");
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
     let stopped = common::stopped();
@@ -747,4 +749,12 @@ async fn a_stopped_lend_is_said_by_its_lender_as_a_page_to_a_tab_and_json_to_a_p
         let program = format!("{head}{}", body(sock).await);
         assert!(program.contains(r#""kind":"away""#), "{program}");
     }
+    let log = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    let traced = |lender: &str| {
+        (log.lines()).any(|l| l.contains("door: the lend's lender") && l.contains(lender))
+    };
+    assert!(
+        traced("lender=Some(\"alex\")") && traced("lender=None"),
+        "{log}"
+    );
 }
