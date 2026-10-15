@@ -130,13 +130,13 @@ scripts/check.sh runs none of this.
     Jellyfin then holds one account for each of the five, each named by
     the middleware (`<name>-<16 hex>`), none made by a person. Eve types
     one thing, her name; no computer newcomer types anything.
-12. **The door after everyone.** On each of the six computers still on,
+12. **The door after everyone.** On each of the five computers still on,
     Sam drawn off ("did not answer"), Priya, Ann, Bo, Cy and Di lit "on
     now", Eve "in from a phone".
 13. **Money agrees everywhere.** Each newcomer settles before the next
     says they were in, so each later share is owed only by its newcomer:
     the last Gas bill split six ways, $10 each. After everyone, Money on
-    each of the six computers says "You’re square with everyone." and
+    each of the five computers still on says "You’re square with everyone." and
     "Nobody owes anybody."; each computer's copy of the record holds the
     same Money acts, each matched to its person's press, none unpressed.
 14. **Words.** No svrngs page any newcomer reads (the link's, the home
