@@ -55,10 +55,10 @@ use axum::{Extension, Json};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
-use crate::iroh::{Alpn, Dialer, Endpoint, EndpointAddr, HttpBridge};
+use crate::iroh::{Alpn, Dialer, Endpoint, EndpointAddr};
 use crate::register::Standing;
 use crate::ring_routes::err;
-use crate::ring_sync::{peer_client, AskRound};
+use crate::ring_sync::AskRound;
 use crate::{Name, NotAName, OpId, Person, RailError, RingRail};
 use svrngs_core::{RedeemRefusal, Refused as CommitRefused};
 
@@ -345,37 +345,44 @@ pub async fn redeem(
     call(endpoint, issuer, ROUTE, req).await
 }
 
-/// Post `body` to `route` on the issuer's node, and read its answer.
+/// Post `body` to `route` on the issuer's node, and read its answer: on a
+/// connection dialled for it alone on [`Alpn::Redeem`], uncapped, the whole
+/// within [`crate::iroh::ANSWERED_WITHIN`] (arch-peer (c), where a bridge
+/// and the round's reqwest client carried it, with the same 10 s).
 async fn call<T: DeserializeOwned>(
     endpoint: &Endpoint,
     issuer: EndpointAddr,
     route: &str,
     body: &impl Serialize,
 ) -> Result<T, RedeemError> {
-    let bridge = HttpBridge::spawn(endpoint.clone(), issuer, Alpn::Redeem.bytes())
+    use crate::iroh::{dialled, on_stream, whole};
+    let no_answer = |e: String| RedeemError::NoAnswer(e);
+    let body = serde_json::to_vec(body).map_err(|e| no_answer(e.to_string()))?;
+    let ask = axum::http::Request::post(route)
+        .header(axum::http::header::CONTENT_TYPE, "application/json");
+    let ask = ask
+        .body(body.into())
+        .map_err(|e| no_answer(e.to_string()))?;
+    tracing::debug!(target: "redeem", route, issuer = %issuer.id.fmt_short(), "redeem: dialling the issuer by key");
+    let answered = whole(async {
+        on_stream(
+            &dialled(endpoint, issuer, Alpn::Redeem.bytes(), None).await?,
+            ask,
+        )
         .await
-        .map_err(|e| RedeemError::NoAnswer(format!("no bridge: {e}")))?;
-    let http = peer_client().map_err(|e| RedeemError::NoAnswer(e.to_string()))?;
-    let url = format!("http://{}{route}", bridge.local_addr());
-    tracing::debug!(target: "redeem", url, "redeem: dialling the issuer by key");
-    let response = http
-        .post(&url)
-        .json(body)
-        .send()
-        .await
-        .map_err(|e| RedeemError::NoAnswer(e.to_string()))?;
-    let status = response.status();
+    });
+    let answer = answered.await.map_err(|e| no_answer(e.to_string()))?;
+    let status = answer.status();
     tracing::debug!(target: "redeem", route, status = status.as_u16(), "redeem: the issuer answered");
+    let said = answer.body();
     match status {
-        StatusCode::OK => response
-            .json()
-            .await
+        StatusCode::OK => serde_json::from_slice(said)
             .map_err(|e| RedeemError::NoAnswer(format!("an answer this build cannot read: {e}"))),
         StatusCode::FORBIDDEN => Err(RedeemError::Refused(
-            response.text().await.unwrap_or_default(),
+            String::from_utf8_lossy(said).into_owned(),
         )),
         StatusCode::CONFLICT => {
-            let said: serde_json::Value = response.json().await.unwrap_or_default();
+            let said: serde_json::Value = serde_json::from_slice(said).unwrap_or_default();
             let holder = said["error"].as_str().unwrap_or_default().to_string();
             Err(Name::kept(holder).map_or_else(
                 |e| RedeemError::NoAnswer(format!("a name this build cannot read: {e}")),
