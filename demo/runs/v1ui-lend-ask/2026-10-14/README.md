@@ -29,3 +29,6 @@ but not much more than one slow run's worth. With the sweep removed, nothing
 here traces the earlier failures to it rather than to load: those runs had
 no time line, so how near 60 s the passing ones came is not known. One
 host, one run each: not a rate (AGENTS.md 7).
+
+At the close, `scripts/check.sh` at 028a687 exited 0 after 10m48s, every
+step passed, the browser step among them: `check.out`.
