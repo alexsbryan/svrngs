@@ -184,6 +184,15 @@ document.title = `Money: ${ops.length} by ${ops.map((o) => o.on_behalf_of).join(
         listed["status"], "You’re in house, as bo, through cy’s computer",
         "{seen:#}"
     );
+    // The index draws Money by its own name and as the group's, never by
+    // its lend name or as one person's (v1ui-polish (b)).
+    assert_eq!(listed["lent"], json!(["Money"]), "{seen:#}");
+    let text = listed["text"].as_str().unwrap_or_default();
+    assert!(text.contains("Money\tMoney\thouse\t"), "{seen:#}");
+    assert!(
+        !text.contains("Money-") && !text.contains("ada’s Money"),
+        "{seen:#}"
+    );
     let opened = &seen["opened"];
     assert_eq!(opened["title"], title, "Money opens and writes:\n{seen:#}");
     let ms = opened["ms"].as_u64().unwrap_or(u64::MAX);
@@ -275,7 +284,11 @@ in_both_engines!(
     /// V1_UI_BUILD §3.4): ada's home page offers Money and Events, both
     /// ticked; one tap brings them, the page says so, and her computer
     /// lists each as house's. House keeps no seed here, so the page calls
-    /// it "your group". Red before (c): no shelf on the page.
+    /// it "your group". Red before (c): no shelf on the page. Then the
+    /// index, the page opened again, draws each by its kind's own name and
+    /// as the group's, no word holding its lend name, `<kind>-<the group's
+    /// id>` (v1ui-polish (b); `demo/runs/v1ui/2026-10-15/README.md` finding
+    /// 4). Planted: the lend name drawn, and its first lender's, as before.
     the_home_page_brings_things_to_the_table
 );
 async fn the_home_page_brings_things_to_the_table(engine: Engine) {
@@ -306,6 +319,19 @@ async fn the_home_page_brings_things_to_the_table(engine: Engine) {
         carried_at(&ada, app).await;
         assert!(folder.join("apps").join(app).join("look.css").exists());
     }
+    let index = home_page(engine, &ada, json!({ "all": "#home table.index tr" })).await;
+    let rows = index["all"].to_string();
+    for app in ["Money", "Events"] {
+        let drawn = format!("Open {app}{app}your groupIn a tab");
+        assert!(
+            rows.contains(&drawn),
+            "{app} the group's, by its name: {index:#}"
+        );
+    }
+    assert!(
+        !rows.contains(&format!("-{NS}")) && !rows.contains("ada"),
+        "{index:#}"
+    );
     drop(ada);
 }
 
