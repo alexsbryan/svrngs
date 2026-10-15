@@ -152,14 +152,14 @@ type Replies = Vec<(String, Result<Holds, String>)>;
 /// `path` asked of the computer at `contact`: what it holds, or why
 /// there is no answer.
 async fn ask(host: &Host, contact: Contact, path: &str) -> Result<Holds, String> {
-    let base = host.transport().base_url(&contact).await;
-    let base = base.ok_or("no dialable path to it")?;
-    let answer = host.http()?.get(format!("{base}{path}")).send().await;
+    let asked = axum::http::Request::get(path).body(axum::body::Body::empty());
+    let asked = asked.map_err(|e| format!("the ask: {e}"))?;
+    let answer = host.transport().fetch(&contact, asked).await;
     let answer = answer.map_err(|e| format!("the ask: {e}"))?;
     if !answer.status().is_success() {
         return Err(format!("refused the ask: {}", answer.status()));
     }
-    answer.json().await.map_err(|e| format!("its answer: {e}"))
+    serde_json::from_slice(answer.body()).map_err(|e| format!("its answer: {e}"))
 }
 
 /// A refused get, said by its kind — `lapsed`, `never_held` or
