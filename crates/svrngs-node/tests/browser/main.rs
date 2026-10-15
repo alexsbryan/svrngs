@@ -3321,6 +3321,9 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
         first.contains("jellyfin") && first.contains("Dashboard, Users"),
         "jellyfin named, with how to make each person an account first:\n{seen:#}"
     );
+    // Its helper not running here, the page offers its steps (v1ui-polish (d)).
+    let helps = "Or start its helper first, and nobody needs an account: here is how.";
+    assert!(first.contains(helps), "{seen:#}");
     assert!(said(found, chores.port()).contains("Its name"), "{seen:#}");
     let quiet = |p: u16| std::net::TcpStream::connect(("127.0.0.1", p)).is_err();
     for port in [gone, ada.api_addr().port()]

@@ -38,7 +38,11 @@ jellyfin` first:
     svrngs share 8096 --sign-in 8097
 
 `share` asks you no password and says each person is signed in by what
-answers on port 8097, with nothing typed. Each person's account is named
+answers on port 8097, with nothing typed. With the program running, `svrngs
+share 8096` alone does the same, and so does lending Jellyfin from your
+home page, under "Already running here": the page says everyone is let in
+as themselves before it lends, and, the program not running, links these
+steps. Each person's account is named
 for them, can watch every library you do not keep back (below), and is no administrator and can delete
 nothing; they are in Dashboard, Users.
 

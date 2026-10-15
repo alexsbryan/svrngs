@@ -1054,7 +1054,14 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
      by that port's answer with nothing typed, and prints no kind's words
      for making accounts — the spike's follow-up 1 (its README §7),
      answered without
-     `share` learning middleware. A lend that declares no sign-in keeps
+     `share` learning middleware. A kind whose sign-in helper svrngs
+     knows (`well_known.txt`, a `helper <kind> <port> <steps>` row;
+     Jellyfin's apps/jellyfin/mw on 8097) is lent signed in by it when it
+     answers and its lender names none, from the home page and by `share`
+     alike (`share.rs`, `helper_of`, in `lend_of`; v1ui-polish (d)): the
+     page says so before it lends, and, the helper not answering, offers
+     its steps, embedded at build and served at `/helper/<kind>`. svrngs
+     builds, starts and stops it never. A lend that declares no sign-in keeps
      its one secret (`declared.rs`; `door.rs:497-516`, `secret_headers`,
      displacing the client's header in `rewrite_headers`, `:468`) and its
      door byte for byte, held by an existing door test unchanged.

@@ -110,6 +110,7 @@ pub fn well_known_kind(port: NonZeroU16) -> Option<Kind> {
 /// The kinds [`WELL_KNOWN`] names, for a lender asked to say which.
 fn known_kinds() -> String {
     rows()
+        .filter(|(port, ..)| *port != "helper")
         .map(|(_, kind, _)| kind.to_string())
         .collect::<Vec<_>>()
         .join(", ")
@@ -119,7 +120,7 @@ fn known_kinds() -> String {
 /// first `:` and the rest — the one reader of that clause, for
 /// [`accounts_of`] and [`kept_of`].
 fn says(kind: &Kind) -> Option<(&'static str, &'static str)> {
-    let (_, _, how) = rows().find(|(_, k, _)| k == kind)?;
+    let (_, _, how) = rows().find(|(p, k, _)| k == kind && *p != "helper")?;
     how.split_once(':').map(|(what, rest)| (what, rest.trim()))
 }
 
@@ -157,6 +158,18 @@ pub fn accounts_of(kind: &Kind) -> Option<Signs> {
     tracing::debug!(target: "share", kind = %kind, ?signs, "share: how the kind signs each person in, if the table says");
     signs
 }
+
+/// The port of `kind`'s sign-in helper, as [`WELL_KNOWN`]'s `helper` row
+/// names it (v1ui-polish (d)): [`lend_of`] signs each person in by it when
+/// it answers and its lender names no sign-in of their own.
+pub fn helper_of(kind: &Kind) -> Option<NonZeroU16> {
+    let (_, _, how) = rows().find(|(p, k, _)| *p == "helper" && k == kind)?;
+    how.split_whitespace().next()?.parse().ok()
+}
+
+/// Each helper's steps, by its kind, the file its `helper` row names, as
+/// build.rs embeds them for the home page (`/helper/<kind>`).
+pub const HELPERS: &[(&str, &str)] = include!(concat!(env!("OUT_DIR"), "/helpers.rs"));
 
 /// Whether something on this computer accepts a TCP connection on `port`.
 /// (svrngs: upstream's `probe_origin` over the one port given.)
@@ -198,7 +211,8 @@ pub fn listening() -> Vec<NonZeroU16> {
 /// else the port's; the name given, else the kind; the limit given, else
 /// none, which lets in everyone in its groups at once (bash-limit: no
 /// number nobody chose; `share` says so); the paths refused, those given and
-/// those the table keeps back of the kind.
+/// those the table keeps back of the kind; its sign-in the one given, else
+/// the kind's helper when it answers ([`helper_of`]).
 pub fn lend_of(
     share: &Share,
     listens: impl Fn(NonZeroU16) -> bool,
@@ -220,14 +234,15 @@ pub fn lend_of(
         Some(n) => n.clone(),
         None => LendName::parse(kind.as_str()).expect("a kind is a lend's name, by one rule"),
     };
-    let limit = share.limit;
+    let (limit, helper) = (share.limit, helper_of(&kind).filter(|p| listens(*p)));
+    let sign_in = share.sign_in.or(helper);
     let mut refused = share.refused.clone();
     for path in kept_of(&kind) {
         if !refused.contains(&path) {
             refused.push(path);
         }
     }
-    tracing::debug!(target: "share", lend = %name, kind = %kind, port = share.port, ?limit, refused = refused.len(),
+    tracing::debug!(target: "share", lend = %name, kind = %kind, port = share.port, ?limit, refused = refused.len(), ?helper, ?sign_in,
         named = share.name.is_some(), kind_given = share.kind.is_some(), limit_given = share.limit.is_some(),
         "share: the lend decided");
     Ok(Lend {
@@ -238,7 +253,7 @@ pub fn lend_of(
         refused,
         upload: share.upload,
         reads: share.reads.clone(),
-        sign_in: share.sign_in,
+        sign_in,
         asks: share.asks.clone(),
     })
 }

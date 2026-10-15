@@ -125,6 +125,7 @@ pub(crate) fn router(
         .route("/choices", get(choices).post(choose))
         .route("/lent", get(lent).post(change))
         .route("/running", get(running).post(lend_one))
+        .route("/helper/{kind}", get(steps))
         .route("/link", axum::routing::post(link))
         .route("/folder", axum::routing::post(open))
         .route("/shelf", axum::routing::post(crate::folder::bring))
@@ -243,10 +244,20 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
 
 /// A port as the page shows it ([`share::listening`]): the kind the table
 /// knows, how that kind signs each person in and the paths svrngs keeps
-/// back of it, and its name once lent.
+/// back of it, whether its helper answers, if it has one, and its name
+/// once lent.
 fn shown(port: NonZeroU16, kind: Option<&Kind>, name: Option<&LendName>) -> serde_json::Value {
     let (signs, keeps) = (kind.and_then(share::accounts_of), kind.map(share::kept_of));
-    serde_json::json!({ "port": port, "kind": kind, "name": name, "signs": signs, "keeps": keeps })
+    let helper = kind.and_then(share::helper_of).map(share::listens); // whether it answers
+    serde_json::json!({ "port": port, "kind": kind, "name": name, "signs": signs, "keeps": keeps, "helper": helper })
+}
+
+/// `GET /helper/<kind>`: the steps to start the kind's sign-in helper, as
+/// the table names them ([`share::HELPERS`]), for the page to link.
+async fn steps(axum::extract::Path(kind): axum::extract::Path<String>) -> Response {
+    let none = || LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "svrngs knows no helper for that");
+    let steps = share::HELPERS.iter().find(|(k, _)| *k == kind);
+    steps.map_or_else(none, |(_, s)| s.into_response())
 }
 
 /// `GET /running`: what answers on this computer, less svrngs's own
