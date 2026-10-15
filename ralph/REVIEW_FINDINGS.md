@@ -9664,12 +9664,12 @@ both engines can witness.
 
 | # | principle | path:line | fixed in | finding |
 |---|---|---|---|---|
-| 163 | 6, 1 | crates/svrngs-node/src/carried.rs:215 (`held.map_err(\|_\| NOT_YET)`); :196 and :210 (`UNREAD`); the trace at :198 | not fixed | A carried app's file answers "this computer does not hold it yet" (503) for every error of the store's `get_bytes`, and "its group cannot be read" for every error of the rail or the layout. The trace carries the words alone. A blob absent and a store that fails are opposite responses, so it is answered:no said as did-not-answer. Red on a store whose read fails. |
-| 164 | 1 | crates/svrngs-node/src/carried.rs:139 (`dirs_of(…).map_err(\|_\| NO_FOLDER)`) and :148 (`wrote.map_err(\|_\| UNWRITTEN)`); `bring`'s trace :128 | not fixed | Bringing an app from the shelf drops the `io::Error` of finding the group's folder and of writing the app's files. The page is told the right words, but the trace says the status only, so why a write failed cannot be read at debug. |
-| 165 | 6 | crates/svrngs-node/src/carried.rs:246 (`body.remove("op").unwrap_or(Value::Null)`), against its docs :20-21; :244 (`to_bytes(…, WRITE_MOST).map_err(\|_\| NOT_AN_ACT)`) | not fixed | A carried app's `POST {corrects: id}` with no `op` voids that act: the absence is read as `null`, which the docs give as the void. A body past `WRITE_MOST` (:59) is told "an act is JSON, {op} or {corrects, op}", which is not why it was refused. Red on `{corrects}` alone voiding an act. |
-| 166 | 8 | crates/svrngs-node/src/door.rs:482 (`offered.retain(… is_none_or(stands))`, by the rail's standing) and crates/svrngs-node/src/node.rs:918 (`lent.retain(… is_none_or(carries))`, by the groups passed) | not fixed | One rule, a carried app listed only in its own group, written twice in two ways. `Folders::open` (carried.rs:196) is the gate. A change to who sees a carried app lands on one list. One function of the group and the asker, which both ask. |
-| 167 | 1 | crates/svrngs-node/src/carried.rs:178 (`filter_map(\|kind\| Lend::carried(kind, group))`) over crates/svrngs-node/src/lend.rs:229 and :233 (`.ok()?`) | not fixed | A folder `apps/<x>/index.html` whose `x` is not a lend name or a kind is left out of what a computer carries, and no trace names it. carried.rs:181 lists only what was found. |
-| 168 | 8 | web/tests/shelf.mjs:13-22; web/tests/reads.mjs:17-28; web/tests/links.mjs:19-26 | not fixed | A browser driver's preamble (the server, the context, the console log, the page, `held`) is written a third time beside page.mjs's `held`, `launch` and `serve`. Test code; one export from page.mjs would collapse it, witnessed by the browser suite in both engines. |
+| 163 | 6, 1 | crates/svrngs-node/src/carried.rs:215 (`held.map_err(\|_\| NOT_YET)`); :196 and :210 (`UNREAD`); the trace at :198 | fixed: 2841e97 (v1ui-polish (c)): `UNSTORED` apart from `NOT_YET` by the store's `has`, every unread cause traced (`traced`); tests/carried.rs red first in 542e683 | A carried app's file answers "this computer does not hold it yet" (503) for every error of the store's `get_bytes`, and "its group cannot be read" for every error of the rail or the layout. The trace carries the words alone. A blob absent and a store that fails are opposite responses, so it is answered:no said as did-not-answer. Red on a store whose read fails. |
+| 164 | 1 | crates/svrngs-node/src/carried.rs:139 (`dirs_of(…).map_err(\|_\| NO_FOLDER)`) and :148 (`wrote.map_err(\|_\| UNWRITTEN)`); `bring`'s trace :128 | fixed: 495288a (v1ui-polish (c)): both `io::Error`s traced by `traced`; red first in 0b99bc0 | Bringing an app from the shelf drops the `io::Error` of finding the group's folder and of writing the app's files. The page is told the right words, but the trace says the status only, so why a write failed cannot be read at debug. |
+| 165 | 6 | crates/svrngs-node/src/carried.rs:246 (`body.remove("op").unwrap_or(Value::Null)`), against its docs :20-21; :244 (`to_bytes(…, WRITE_MOST).map_err(\|_\| NOT_AN_ACT)`) | fixed: 7759231 (v1ui-polish (c)): an absent `op` is `NOT_AN_ACT`, a body past `WRITE_MOST` `TOO_LARGE` (413), the docs :20-21 saying so; red first in 7859c32 | A carried app's `POST {corrects: id}` with no `op` voids that act: the absence is read as `null`, which the docs give as the void. A body past `WRITE_MOST` (:59) is told "an act is JSON, {op} or {corrects, op}", which is not why it was refused. Red on `{corrects}` alone voiding an act. |
+| 166 | 8 | crates/svrngs-node/src/door.rs:482 (`offered.retain(… is_none_or(stands))`, by the rail's standing) and crates/svrngs-node/src/node.rs:918 (`lent.retain(… is_none_or(carries))`, by the groups passed) | fixed: 9516673 (v1ui-polish (c)): lend.rs `Offered::listed`, asked by door.rs `lends` and node.rs's list, behaviour kept | One rule, a carried app listed only in its own group, written twice in two ways. `Folders::open` (carried.rs:196) is the gate. A change to who sees a carried app lands on one list. One function of the group and the asker, which both ask. |
+| 167 | 1 | crates/svrngs-node/src/carried.rs:178 (`filter_map(\|kind\| Lend::carried(kind, group))`) over crates/svrngs-node/src/lend.rs:229 and :233 (`.ok()?`) | fixed: 8e78475 (v1ui-polish (c)): lend.rs `Lend::carried` traces the folder left out; red first in fae4b2b | A folder `apps/<x>/index.html` whose `x` is not a lend name or a kind is left out of what a computer carries, and no trace names it. carried.rs:181 lists only what was found. |
+| 168 | 8 | web/tests/shelf.mjs:13-22; web/tests/reads.mjs:17-28; web/tests/links.mjs:19-26 | fixed: bbd99f1 (v1ui-polish (c)): page.mjs `driving`, the three drivers' preambles made one, tests only | A browser driver's preamble (the server, the context, the console log, the page, `held`) is written a third time beside page.mjs's `held`, `launch` and `serve`. Test code; one export from page.mjs would collapse it, witnessed by the browser suite in both engines. |
 | 80 | — | scripts/lean_check.py:36 BUDGET, :100 `n >= cap` | not fixed (operator's) | 16869 / 16870 after this audit, and 3149 / 3150 in svrngs-core. Of the +650, 555 are raised and 95 left (ceiling 16,965, fence 7). |
 | 130, 132-145, 150, 152-156 | as recorded | as recorded | not fixed | Not reached by this range's findings. |
 
@@ -9684,3 +9684,256 @@ both engines can witness.
 | I29 | 6 | `refresh` over a corpus `code index` made | Still present: the daemon nudge refused, then the in-process rebuild and exit 0. |
 | I32 | 7 | dry-report's near tier, nested spans | Still present: question.js `door` over its returned `judge`, home.js `running` over its nested `look`. |
 | I33 | 6 | SCIP over web/src | New: web/ is a Cargo workspace of its own (the root's `members`, Cargo.toml:3, leaves it out), so `refresh` exports none of web/src's Rust. `converge noun Refused` lists core's and carried.rs's and not web/src/http.rs:47, and web/'s exact tier says "no SCIP function symbols in scope", which auto-1 read as I4 alone. |
+
+## REVIEW-audit-v1ui-auto-3 (2026-10-15, range cbe994c..469394e)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-v1ui-auto-2, its hash
+cbe994c (ralph/next/v1ui/STATE.md:22). The range ends at 469394e, the
+commit that made this row. `git rev-list --count cbe994c..469394e` is 53,
+none a merge (`--merges`: 0). They are: auto-2's `done`; v1ui-race;
+v1ui-run; v1ui-polish; the operator's arch queue commit f8beba7, made
+between v1ui-polish's (c) and (d); and this row's own commit.
+
+This audit's own commits before this section:
+- d90994a, the row's two paths, as 835fc08 corrected auto-2's;
+- 28884ce, "a port nothing listens on" made once, tests/common `stopped`.
+
+It closes #163-#168, which v1ui-polish (c) fixed (their rows above now
+say with which commit), and opens #169-#173.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+cbe994c..469394e` (/tmp/v1uiaudit3/ledger.raw) is summed by auto-2's
+ledger.py, its unit list this range's (/tmp/v1uiaudit3/ledger.out; each
+commit's unit in ledger.commits). The rules are auto-1's. Every commit
+names its unit; f8beba7 names `arch`. 30acc6a, v1ui-run's state commit,
+names v1ui-polish and is counted there (0 lines). The lines are raw,
+comments and blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net | markup net | apps src net | apps test net | scripts net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| REVIEW-audit-v1ui-auto-2 (its `done`) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| v1ui-race | 8 | 41 | 24 | **+17** | 81 | 20 | +61 | 0 | 0 | 0 | +0 (+3 −3) |
+| v1ui-run | 10 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| v1ui-polish | 32 | 162 | 59 | **+103** | 436 | 113 | +323 | 0 | 0 | 0 | +0 (+21 −21) |
+| arch (f8beba7, the queue) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| this row's own commit | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 53 | 203 | 83 | **+120** | 517 | 133 | +384 | 0 | 0 | 0 | +0 (+24 −24) |
+
+v1ui-run's driver, judge and data are under demo/runs/, which no column
+counts. Where the src lines went (`git diff --numstat cbe994c 469394e --
+crates web`, tests apart):
+- door.rs +49 −21: `paged` and `Words`, svrngs's refusal drawn as a page
+  to a tab (v1ui-polish (a)); a stopped lend said by its lender; `lends`
+  asking `Offered::listed` (#166);
+- carried.rs +23 −10: `traced`, `UNSTORED`, `TOO_LARGE`, an absent `op`
+  refused (#163-#165);
+- share.rs +20 −5, build.rs +13 −1, home.rs +13 −2, well_known.txt +9:
+  the `helper` row, `helper_of`, `HELPERS`, `/helper/<kind>` (v1ui-polish
+  (d));
+- web/app.js +20 −22, web/src/lib.rs +20 −3: the page dials every computer
+  at once, `Endpoint::dial_link` (v1ui-race);
+- lend.rs +16 −3: `Offered::listed`, `Lend::carried` traced (#166, #167);
+- home.js +9 −5, question.js +8 −2: `owner`, `named` by kind, the helper's
+  link (v1ui-polish (b), (d)).
+
+The tests are mostly tests/carried.rs (+157), tests/browser/main.rs (+84
+−20), tests/home.rs (+61 −19) and door/sign_in.rs (+59 −8). The web
+drivers shrank by #168's `driving` (links, reads, shelf, reach: −73 +17).
+apps/ changed only apps/jellyfin/README.md, the helper's steps (+8 −4).
+
+What the budget counts, by scripts/lean_check.py over a `git archive` tree
+of each end and of each unit's `done` (/tmp/v1uiaudit3/lean-<hash>.out;
+each tree's own lean_check.py, so the cap is its own):
+
+| at | svrngs-core | repository | its cap | counted net |
+|---|---:|---:|---:|---:|
+| cbe994c, range start | 3149 | 16869 | 16870 | |
+| 4806ec6, v1ui-race done | 3149 | 16875 | 16876 | +6 |
+| 5bf9941, v1ui-run done | 3149 | 16875 | 16876 | 0 |
+| f6f8af1, v1ui-polish done | 3149 | 16933 | 16934 | +58 |
+| 469394e, range end | **3149 / 3150** | **16933 / 16934** | | **+64** |
+
+There were eight raises, each naming the pass (`git log cbe994c..469394e
+-- scripts/lean_check.py`):
+
+| raise | from | to | for |
+|---|---:|---:|---:|
+| f76cb20, v1ui-race (a) | 16,870 | 16,876 | +6 |
+| 145672c, v1ui-polish (a) | 16,876 | 16,894 | +18 |
+| e9ad1ca, v1ui-polish (b) | 16,894 | 16,895 | +1 |
+| 026ce2b, v1ui-polish (c) #165 | 16,895 | 16,896 | +1 |
+| 4461db3, v1ui-polish (c) #163 | 16,896 | 16,904 | +8 |
+| e7d604d, v1ui-polish (c) #167 | 16,904 | 16,907 | +3 |
+| 6ea0180, v1ui-polish (c) #166 | 16,907 | 16,910 | +3 |
+| 20644ee, v1ui-polish (d) | 16,910 | 16,934 | +24 |
+
+That is +64, the counted net. f76cb20 and 145672c each say "and one past";
+4461db3 says "the 7 lines" and raised 8, and 20644ee "the 23 lines" and
+raised 24, each landing one past its count as the cap is. With auto-1's
+and auto-2's, **619 of the +650 are raised by 469394e, 31 left** under the
+ceiling of 16,965 (fence 7). No line is left under the repository's cap
+(16933 / 16934: lean_check fails at `n >= cap`). svrngs-core stayed at
+3149 / 3150. This audit's one cut (28884ce) is test code and counts
+nothing, so the cap stands.
+
+### The instrument
+
+The binary is ~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256
+c95165c5… (`shasum -a 256`): rebuilt since auto-2's 67e46f63…. It found
+what auto-2's found where the code did not change (the clusters below), so
+the rebuild moved nothing this audit reads.
+
+The corpus is 469394e's crates/, web/, scripts/, apps/, Cargo.toml and
+Cargo.lock, by `git archive` into /tmp/v1uiaudit3/prod-469394e (362 files).
+- `code index . --corpus-id prod-469394e`: 4784 chunks in 658 s
+  (index.out).
+- `refresh`, run in the corpus: rust, 16834 symbols and 97833 references;
+  typescript and python "skipped (export failed)" (I4); the daemon nudge
+  refused and the in-process rebuild ran (I29) (refresh.out).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-node, crates/svrngs (its share tests
+alone) and web (`git diff --stat cbe994c 469394e -- crates apps web
+scripts bridge`); apps/ only in a README. Each was reported at 0.95 and
+0.90 (/tmp/v1uiaudit3/clean-*.md). Whether a side was added in the range
+is `git blame` at 469394e over each side's lines against cbe994c
+(scripts/blame.sh; blame-clusters.out).
+
+| scope | locations | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---:|---:|---:|---:|---|
+| crates/svrngs-node/ | 584 | 2 | 0 | 9 | 1, one span inside another (I32) |
+| crates/svrngs/ | 70 | 0 | 0 | 0 | — |
+| web/ | 105 | could-not-judge (I4, I33) | 0 | 3 | 2 |
+
+The clusters with a side the range added:
+
+| tier | its side | its other side | read |
+|---|---|---|---|
+| near 0.946 | `running` — home/home.js:140-164 (2 lines of a754531) | `look` — home.js:143-163 | `look` is nested in `running` (I32), as auto-2 read it. a754531's two lines are the helper's link in each `li`. Not a clone. |
+| near 0.920 | `uses` — web/app.js:290-312 (2 lines of 855caa3) | `choicesOf` — app.js:293-308 | 855caa3's two lines are :311-312, the doc of `reachGroup` below, which the span reaches by its line skew (I1). The pair is auto-1's, before the range. |
+| near 0.902 | `dial_link` — web/src/lib.rs:417-426 (8 lines of 855caa3) | `dial` — lib.rs:409-418 | Two of `Endpoint`'s three two-line wrappers over `reach` (`dial`, `dial_link`, `dial_lend`, :412-431): each one wasm export, its arguments the whole of it; the decisions are in `reach`. No finding for the pair; that `dial_link` is a second way to dial what `connect` dials is #172. |
+
+The other clusters, none with a side in the range, are auto-2's again:
+api.rs `addr` ×2; blob_tests.rs `flush` == relay_tests.rs (test code,
+I8); question.js `door`/`judge` (I32); sign_in.rs `of`/`forget`;
+synced.rs `kept_files`/`kept_at`; redeem.rs `router`/`ask_route`;
+choices.rs `load`/`read`; rail.rs `live_push`/`live_drain`;
+ring_sync/tests.rs `admit`/`ingest`; lend.rs `from_mbit`/`bps`; web's
+lend.js `cookieFor`/`keepJar`. Web's lib.rs `connect`/`connect_to_join`
+no longer clusters at 0.90.
+
+**The line-window pass.** auto-2's windows.py over the same set, at
+469394e: 147 files (windows.files; build.rs and tests/common/computers.rs
+added). **154 window hits, 48 spans, 0 new** (windows.out,
+windows.verdicts: every span "old"). That newspans.sh can say NEW at all
+was seen on a plant: lend_origin.rs:744-754, written in ea888b4, against
+home.rs:1-5 gave "NEW … [ea888b4bf]" (plant.spans, plant.verdicts).
+
+Reading the range's test hunks found what the 8-line window cannot: "a
+port nothing listens on", five lines, written in door/sign_in.rs:392
+(1addb0d) and lend_origin.rs:719 (ea888b4) beside door/sign_in.rs:347 and
+home.rs:596, which were there before. **Made one in 28884ce**,
+tests/common `stopped`; the four tests that use it passed, as at HEAD
+(stopped-tests.out).
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges cbe994c..469394e -- crates apps
+web scripts bridge`, matched against `(struct|enum|trait|type|class)\s+[A-Z]\w*`
+(new-types.out), give one noun: `Words` (door.rs:276, ea888b4). None was
+removed (removed-types.out).
+
+`converge noun Words --corpus-id prod-469394e` (nouns.out): **one
+definition**, crates/svrngs-node/src/door.rs:275 (:276, I1). No noun the
+range added has more than one. That the tool lists more than one where
+there are was seen on `Answer`: door/sign_in.rs:71 and node.rs:752
+(nouns-plant.out).
+
+### Reading the range
+
+Every hunk of product src the range changed was read (`git diff cbe994c
+469394e -- crates/svrngs-node/src crates/svrngs-node/build.rs web/app.js
+web/src`). The tests were read for clones.
+
+- **Never silently substitute** (AGENTS.md 6).
+  - A lend now signs in by its kind's helper when the helper answers and
+    its lender named none (share.rs:237-238). That is said: on the home
+    page (home.js `needs`, "Its helper is running on this computer…"),
+    by `svrngs share` (cli.rs:1221, "signed in to it as themselves by
+    what answers on port …"), and traced (share.rs `lend_of`, `?helper,
+    ?sign_in`). Not a substitution.
+  - `shown`'s `helper` (home.rs:251) is three states, none, not answering
+    and answering, each drawn apart (home.js `needs`, `helps`).
+  - A carried file the store fails to read is `UNSTORED`, and one whose
+    `has` itself fails is too, never "not held yet" (carried.rs:223-226).
+  - A stopped lend's lender, when this computer stands in no group that
+    names it, is "Its lender" (door.rs:1351): no one named, never a wrong
+    one or a host, and pinned by lend_origin.rs's new test. It is not
+    traced (#173).
+- **Glassbox** (AGENTS.md 1).
+  - **`GET /helper/<kind>` answers or refuses untraced** (#173), and so is
+    door.rs:1351's fallback.
+  - The door's refusal for a stopped lend traces `up` and the sign-in's
+    `why` (door.rs:1365); the page's dials trace each computer reached and
+    each closed late (app.js `reachGroup`).
+- **One decider** (AGENTS.md 8).
+  - **"A browser's tab asking for a page", by `Accept`, is decided twice**
+    (#170): door.rs:282 (`paged`, ea888b4) and door/sign_in.rs:190.
+  - **Whether a lend's port takes a connection is asked twice** (#171):
+    door.rs:1363-1364 (ea888b4) beside `send_to`'s connect, :1203, with the
+    same `CONNECT_WITHIN` and address; the probe's own error is dropped.
+  - **The link's computer is dialled two ways** (#172): wasm `connect`
+    (web/src/lib.rs:305), which 855caa3 left with web/tests/drive.mjs:35 its
+    only caller, and `Endpoint::dial_link` (:420), the page's.
+  - #166 and #168 are one decider now (`Offered::listed`, `driving`).
+- **Closed sets** (AGENTS.md 9). **well_known.txt's first column is one
+  of three things, a port, `-` or `helper`, and is read as a string in
+  five places** (#169): share.rs:113, :123 and :166 and build.rs:38 (all
+  a754531's), and home.rs:286 (before the range).
+- **Forked code** (AGENTS.md 11). The range forked nothing (`git log
+  --grep "ported from" cbe994c..469394e`: none); `scripts/ports.py` lists
+  243 ports.
+- **Validate the instrument** (AGENTS.md 7). v1ui-run kept both takes
+  (take 1 three of five, Jellyfin stopped; take 2 five of five) and the
+  planted one, each as it ran (18dd74f); v1ui-polish (d) ran its plant
+  `nohelper` before its clean take (ad5e75b). Those verdicts are those
+  commits', not judged again here.
+
+### Fixed here
+
+- d90994a: the row's two paths.
+- 28884ce: tests/common `stopped`, four copies made one (−21 +17 test
+  lines, none counted).
+
+The rest are not fixed here. No line is left under the cap, and each of
+#169-#171 and #173 adds counted lines (an enum, a function, a trace).
+#172 changes the browser driver's dial, which binds unlike the page's
+(`bind_for`'s `held`, lib.rs:83), and only the browser suite in both
+engines can witness it.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 169 | 9, 8 | crates/svrngs-node/src/share.rs:113 (`*port != "helper"`), :123 (`*p != "helper"`), :166 (`*p == "helper"`); crates/svrngs-node/build.rs:38 (`["helper", kind, _, steps]`); crates/svrngs-node/src/home.rs:286 (`*port == "-"`) | not fixed (budget, #80) | `share::rows()` (share.rs:62) yields a row's first column as a `&str`, and every reader decides for itself whether it is a port, `-` (a kind with no port) or `helper`. `known_kinds` and `says` must each remember to leave `helper` rows out: without it `known_kinds` names jellyfin twice, and `says` finds Jellyfin's sentence only because its port row comes before its helper row in the file. A fix parses the column once into an enum in `rows()`, the readers matching it; build.rs, the build's own reader of the table, pinned against `helper_of` by crates/svrngs/src/share/tests.rs:72 as it is now. |
+| 170 | 8 | crates/svrngs-node/src/door.rs:282 (`paged`: `sign_in::said(…, ACCEPT).contains("text/html")`) and crates/svrngs-node/src/door/sign_in.rs:190 (the same, for the copy kept before a person's script) | not fixed (budget, #80) | One rule, a browser's tab asking for a page, written twice. A change (say, to `Sec-Fetch-Dest: document`) lands on one. One function in sign_in.rs both ask. |
+| 171 | 8, 1 | crates/svrngs-node/src/door.rs:1363-1364 (`forward`'s probe, ea888b4) and :1203 (`send_to`'s connect) | not fixed (budget, #80) | Whether a lend's port takes a connection within `CONNECT_WITHIN` is asked by two pieces of code, and the probe keeps only `up`, dropping its error, where `send_to` traces each. One `connected(to, lend)` both ask, its two warns kept. |
+| 172 | 8 | web/src/lib.rs:305 (`connect`, its only caller web/tests/drive.mjs:35) and :420 (`Endpoint::dial_link`, web/app.js `reachGroup`) | not fixed: the browser driver's dial | Since 855caa3 the page dials the link's computer by `dial_link`, from the endpoint it dials lenders from (held, `bind_for(…, true)`), and the product's wasm keeps `connect` (its own endpoint, `held` false) for the test driver alone. The driver tests a dial the page no longer makes. A fix drives `endpoint(…).dial_link()` as the page does and drops `connect` (four counted lines), the browser suite in both engines before and after. |
+| 173 | 1 | crates/svrngs-node/src/home.rs:257-261 (`steps`); crates/svrngs-node/src/door.rs:1350-1351 (the lender, or "Its lender") | not fixed (budget, #80) | `GET /helper/<kind>` answers the steps or refuses with no trace, and `forward`'s refusal for a stopped lend traces neither the lender it found nor that it found none. Each a debug line, red first by `heard`. |
+| 80 | — | scripts/lean_check.py:37 BUDGET, :104 `n >= cap` | not fixed (operator's) | 16933 / 16934 after this audit, and 3149 / 3150 in svrngs-core. Of the +650, 619 are raised and 31 left (ceiling 16,965, fence 7). |
+| 130, 132-145, 150, 152-156 | as recorded | as recorded | not fixed | Not reached by this range's findings. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun`, dry-report spans | Still one line early: door.rs:275 for :276, sign_in.rs:71 for :72. A dry-report span (app.js `uses`, :290-312) reaches into the next function's doc. |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". The JS exact tier (web/) could not judge. |
+| I8 | 6 | dry-report scope | Still present: blob_tests.rs's `flush` reported as a production exact clone of relay_tests.rs's. |
+| I19 | 6 | dry-report, `tests/` scopes | Still present. The line-window pass stood in, and reading found the one span under its window (28884ce). |
+| I29 | 6 | `refresh` over a corpus `code index` made | Still present: the daemon nudge refused, then the in-process rebuild and exit 0. |
+| I32 | 7 | dry-report's near tier, nested spans | Still present: home.js `running` over `look`, question.js `door` over `judge`. |
+| I33 | 6 | SCIP over web/src | Still present: web/'s exact tier says "no SCIP function symbols in scope". |
