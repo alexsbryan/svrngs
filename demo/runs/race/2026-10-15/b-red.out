@@ -1,0 +1,62 @@
+
+running 2 tests
+the_page_opened_with_no_link_offers_a_founder_s_line::chromium --- FAILED
+the_page_opened_with_no_link_offers_a_founder_s_line::webkit --- FAILED
+
+failures:
+
+---- the_page_opened_with_no_link_offers_a_founder_s_line::chromium stdout ----
+offered on a computer: {
+  "button": "Copied",
+  "copied": "curl -fsSL http://localhost:65275/install.sh | sh -s -- 'http://localhost:65275/'",
+  "line": "curl -fsSL http://localhost:65275/install.sh | sh -s -- 'http://localhost:65275/'",
+  "offered": true,
+  "status": "This browser could not open the page.",
+  "words": "To make your group, paste this line in a terminal on your computer: it gets svrngs and opens your home page, where you make your group and invite people to it.",
+  "written": "curl -fsSL http://localhost:65275/install.sh | sh -s -- 'http://localhost:65275/'"
+}
+
+thread 'the_page_opened_with_no_link_offers_a_founder_s_line::chromium' (47931661) panicked at crates/svrngs-node/tests/browser/main.rs:2260:9:
+assertion `left == right` failed: [
+  "Desktop Chrome error: Refused to apply style from 'http://localhost:65275/look.css?v=01d94cc92e18' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+  "Desktop Chrome debug: PAGE: the line offered, for a computer: founds",
+  "Desktop Chrome error: TypeError: Cannot read properties of null (reading 'has')\n    at opening (http://localhost:65275/app.js?v=01d94cc92e18:494:25)",
+  "iPhone 15 error: Refused to apply style from 'http://localhost:65275/look.css?v=01d94cc92e18' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+  "iPhone 15 debug: PAGE: no line offered: not a computer, or not a token",
+  "iPhone 15 error: TypeError: Cannot read properties of null (reading 'has')\n    at opening (http://localhost:65275/app.js?v=01d94cc92e18:494:25)"
+]
+  left: String("This browser could not open the page.")
+ right: "Open this page from your group’s link."
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- the_page_opened_with_no_link_offers_a_founder_s_line::webkit stdout ----
+offered on a computer: {
+  "button": "Copied",
+  "copied": "unread: Error: page.evaluate: NotAllowedError: The request is not allowed by the user agent or the platform in the current context, possibly because the user denied permission.",
+  "line": "curl -fsSL http://localhost:65274/install.sh | sh -s -- 'http://localhost:65274/'",
+  "offered": true,
+  "status": "This browser could not open the page.",
+  "words": "To make your group, paste this line in a terminal on your computer: it gets svrngs and opens your home page, where you make your group and invite people to it.",
+  "written": "curl -fsSL http://localhost:65274/install.sh | sh -s -- 'http://localhost:65274/'"
+}
+
+thread 'the_page_opened_with_no_link_offers_a_founder_s_line::webkit' (47931662) panicked at crates/svrngs-node/tests/browser/main.rs:2260:9:
+assertion `left == right` failed: [
+  "Desktop Safari error: Did not parse stylesheet at 'http://localhost:65274/look.css?v=01d94cc92e18' because non CSS MIME types are not allowed in strict mode.",
+  "Desktop Safari debug: PAGE: the line offered, for a computer: founds",
+  "Desktop Safari error: TypeError: null is not an object (evaluating 'asked.has')",
+  "iPhone 15 error: Did not parse stylesheet at 'http://localhost:65274/look.css?v=01d94cc92e18' because non CSS MIME types are not allowed in strict mode.",
+  "iPhone 15 debug: PAGE: no line offered: not a computer, or not a token",
+  "iPhone 15 error: TypeError: null is not an object (evaluating 'asked.has')"
+]
+  left: String("This browser could not open the page.")
+ right: "Open this page from your group’s link."
+
+
+failures:
+    the_page_opened_with_no_link_offers_a_founder_s_line::chromium
+    the_page_opened_with_no_link_offers_a_founder_s_line::webkit
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 90 filtered out; finished in 3.32s
+
+error: test failed, to rerun pass `-p svrngs-node --test browser`

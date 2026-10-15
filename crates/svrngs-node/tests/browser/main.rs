@@ -2232,7 +2232,9 @@ in_both_engines!(
     /// gets svrngs and opens the home page, where a group is made; and a
     /// button that copies it. On a phone it offers none. Planted, watched
     /// failing: the page as a136f60 left it, "Open this page from your
-    /// group’s link." alone.
+    /// group’s link." alone. Each says that above, not a fault's words:
+    /// red at db36fec-e3cdb97, which read `asked.has` with nothing asked
+    /// (v1ui-race (b)).
     the_page_opened_with_no_link_offers_a_founder_s_line
 );
 async fn the_page_opened_with_no_link_offers_a_founder_s_line(engine: Engine) {
@@ -2253,6 +2255,10 @@ async fn the_page_opened_with_no_link_offers_a_founder_s_line(engine: Engine) {
     let words = computer["words"].as_str().unwrap_or_default();
     assert!(words.contains("make your group"), "{computer:#}");
     assert_eq!(seen["phone"]["offered"], false, "{:#}", seen["phone"]);
+    for opened in [computer, &seen["phone"]] {
+        let status = "Open this page from your group’s link.";
+        assert_eq!(opened["status"], status, "{:#}", seen["logs"]);
+    }
 }
 
 in_both_engines!(
