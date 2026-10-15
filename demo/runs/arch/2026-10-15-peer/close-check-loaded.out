@@ -1,0 +1,28 @@
+# scripts/check.sh at 3a3f3fce (the row's close), its verdicts
+passed     principles pinned
+passed     lean and RUST_ARCH
+passed     app nouns gate
+passed     app nouns
+passed     rustfmt
+passed     clippy
+passed     tests
+passed     canaries
+passed     ceiling canary
+passed     web rustfmt and clippy
+failed     browser
+passed     joining in a browser
+passed     conformance canary
+passed     app laws
+
+# its browser step's failures
+           a_page_speaks_http_through_the_door_streaming_both_ways::webkit --- FAILED
+           a_page_speaks_http_through_the_door_streaming_both_ways::chromium --- FAILED
+               "error": "Error: no stream could be opened to the computer: timed out",
+               "error": "Error: asleep: the computer's answer is not HTTP: connection error",
+               "error": "Error: Error: no stream could be opened to the computer: timed out",
+               "error": "Error: no answer within 60 s",
+               "error": "Error: no stream could be opened to the computer: timed out",
+               "error": "Error: asleep: the computer's answer is not HTTP: connection error",
+               "error": "Error: Error: no stream could be opened to the computer: timed out",
+               "error": "Error: no answer within 60 s",
+           test result: FAILED. 90 passed; 2 failed; 2 ignored; 0 measured; 0 filtered out; finished in 158.39s

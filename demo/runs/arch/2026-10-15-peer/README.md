@@ -68,3 +68,15 @@ cargo test -p svrngs-node --test peer     # d-green.out
 
 All four green, none ignored: no port on this computer reached Sam's door,
 by a program or a page, in Chromium or WebKit. One run: not a rate.
+
+## The close's check, on a loaded host
+
+`scripts/check.sh` at 3a3f3fce failed one step, "browser":
+`a_page_speaks_http_through_the_door_streaming_both_ways` in both engines,
+the page finding no stream to the computer within its wait
+(`close-check-loaded.out`). The same binary passed in that check's "tests"
+step, and alone. Run at 965b52b, the row's start, in a worktree that hour,
+it failed the same way (`start-browser-loaded.out`), the host's load
+average then 30 (other loops building). That test is a phone's page
+dialling the computer's acceptor, which the cut did not touch. Not this
+row's: a test that reads load, said here, not a pass. One run each.
