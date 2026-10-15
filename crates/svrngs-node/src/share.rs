@@ -100,6 +100,8 @@ pub enum ShareRefusal {
     NoKind(NonZeroU16),
     #[error("nothing answers on port {0}, its sign-in, on this computer: start it, then share")]
     NoSignIn(NonZeroU16),
+    #[error("port {0} signs people in to something you lend, and only svrngs on this computer asks it: lend what it signs them in to instead")]
+    SignsIn(NonZeroU16),
 }
 
 /// The kind [`WELL_KNOWN`] names for `port`, if any.
@@ -167,6 +169,17 @@ pub fn helper_of(kind: &Kind) -> Option<NonZeroU16> {
     how.split_whitespace().next()?.parse().ok()
 }
 
+/// Whether `port` signs people in to a lend, and so is never offered nor
+/// lent (arch-helper (b); REVIEW_FINDINGS #174): a lend in `lent` names it
+/// its sign-in, or [`WELL_KNOWN`] names it a kind's helper. Only svrngs on
+/// this computer asks it; lent, it would answer each person as a lend.
+pub fn signs_in(port: NonZeroU16, lent: &[Lend]) -> bool {
+    let lend = lent.iter().find(|l| l.sign_in == Some(port));
+    let helper = rows().find(|(p, k, _)| *p == "helper" && helper_of(k) == Some(port));
+    tracing::debug!(target: "share", port, lend = ?lend.map(|l| &l.name), helper = ?helper.as_ref().map(|r| &r.1), "share: whether the port signs people in to a lend, so is never offered nor lent: refused where it does");
+    lend.is_some() || helper.is_some()
+}
+
 /// Each helper's steps, by its kind, the file its `helper` row names, as
 /// build.rs embeds them for the home page (`/helper/<kind>`).
 pub const HELPERS: &[(&str, &str)] = include!(concat!(env!("OUT_DIR"), "/helpers.rs"));
@@ -212,12 +225,17 @@ pub fn listening() -> Vec<NonZeroU16> {
 /// none, which lets in everyone in its groups at once (bash-limit: no
 /// number nobody chose; `share` says so); the paths refused, those given and
 /// those the table keeps back of the kind; its sign-in the one given, else
-/// the kind's helper when it answers ([`helper_of`]).
+/// the kind's helper when it answers ([`helper_of`]). A port that signs
+/// people in to a lend in `lent` is refused ([`signs_in`]).
 pub fn lend_of(
     share: &Share,
     listens: impl Fn(NonZeroU16) -> bool,
     well_known: Option<Kind>,
+    lent: &[Lend],
 ) -> Result<Lend, ShareRefusal> {
+    if signs_in(share.port, lent) {
+        return Err(ShareRefusal::SignsIn(share.port));
+    }
     if let Some(port) = share.sign_in.filter(|p| !listens(*p)) {
         tracing::debug!(target: "share", port, "share: refused — nothing listens on the sign-in's port");
         return Err(ShareRefusal::NoSignIn(port));

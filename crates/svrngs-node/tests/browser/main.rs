@@ -3379,3 +3379,57 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
     );
     drop((ada, bo));
 }
+
+in_both_engines!(
+    /// **The page never offers a sign-in helper** (arch-helper (b);
+    /// REVIEW_FINDINGS #174). A stand-in answers on 8097, the port the
+    /// table names jellyfin's helper at. Ada's page looks for what runs
+    /// here: no row offers it, and the page says once why, in a person's
+    /// words. Planted, watched failing: the page as at 2ab2522, offering it
+    /// as something to lend.
+    the_home_page_never_offers_a_sign_in_helper
+);
+async fn the_home_page_never_offers_a_sign_in_helper(engine: Engine) {
+    let _held = JELLYFIN.lock().await;
+    // The other engine's run lets 8097 go as its runtime ends, after the lock.
+    let mut bound = tokio::net::TcpListener::bind("127.0.0.1:8097").await;
+    for _ in 0..50 {
+        if bound.is_ok() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+        bound = tokio::net::TcpListener::bind("127.0.0.1:8097").await;
+    }
+    let Ok(helper) = bound else {
+        return could_not_judge(&format!(
+            "the_home_page_never_offers_a_sign_in_helper::{}: something on this host holds 8097, jellyfin's helper's",
+            engine.as_str()
+        ));
+    };
+    kept_at(helper, "<!doctype html><title>helper</title>");
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let look = json!(["#running button:has-text('Look for programs')", null, true]);
+    let seen = home_page(
+        engine,
+        &ada,
+        json!({ "read": "#running h2", "all": "#running li, #running p", "do": [look] }),
+    )
+    .await;
+    let found = seen["after"][0].as_array().cloned().unwrap_or_default();
+    let found: Vec<&str> = found.iter().filter_map(Value::as_str).collect();
+    let why = "What runs at http://localhost:8097 is not listed: it signs people in to something you lend, and only svrngs on this computer asks it.";
+    assert_eq!(
+        (
+            found
+                .iter()
+                .filter(|l| l.contains("Something at http://localhost:8097."))
+                .count(),
+            found.iter().map(|l| l.matches(why).count()).sum::<usize>(),
+        ),
+        (0, 1),
+        "the helper offered, or not said once why:\n{seen:#}"
+    );
+    drop(ada);
+}

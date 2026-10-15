@@ -148,8 +148,10 @@ function running() {
     ul.replaceChildren();
     const answer = await get('/running').catch((e) => e);
     if (answer instanceof Error) return said.replaceChildren(`You looked, and what runs on this computer cannot be read: ${answer.message}`);
-    const { running: found, named } = answer;
-    said.replaceChildren(found.length ? 'You looked just now: the programs running on this computer, each at its address. Lend one, and everyone in your groups opens it in their browser, as themselves, while this computer is on. You can stop lending it below at any time.' : 'You looked just now: nothing else on this computer is running at an address. Start a program, then look again.');
+    const { running: found, named, signing } = answer;
+    // A sign-in is never offered, and said once (arch-helper (b)).
+    const left = signing.length ? ` What runs at ${signing.map((p) => `http://localhost:${p}`).join(' and ')} is not listed: it signs people in to something you lend, and only svrngs on this computer asks it.` : '';
+    said.replaceChildren((found.length ? 'You looked just now: the programs running on this computer, each at its address. Lend one, and everyone in your groups opens it in their browser, as themselves, while this computer is on. You can stop lending it below at any time.' : 'You looked just now: nothing else on this computer is running at an address. Start a program, then look again.') + left);
     for (const r of found) {
       const at = `http://localhost:${r.port}`;
       const li = ul.appendChild(el('li', r.kind ? `${r.kind}, at ${at}. ${needs(r)} ` : `Something at ${at}. To lend it, give it a name and say what it is, each one word${named.length ? `; if it is ${named.join(' or ')}, say that` : ''}. `, ...helps(r)));

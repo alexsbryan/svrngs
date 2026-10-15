@@ -391,7 +391,11 @@ the route, and reading another app's acts.
     computer's work): every port from 1024 to 49151 that
     answers on 127.0.0.1, probed as `svrngs share` probes one
     (`share::listening`), less svrngs's own and what it lends already,
-    each by its address; when what it lends, or the look, cannot be
+    each by its address, and less what signs people in to a lend — a port a
+    lend here names its sign-in, or a kind's helper the table names — which
+    only svrngs here asks, the page saying once why (arch-helper (b),
+    `share::signs_in`, REVIEW_FINDINGS #174; lending one, from the page or
+    by `share`, is refused); when what it lends, or the look, cannot be
     read, the page says which, and the trace its error (#160). A kind the well-known table knows is named, with
     what it needs first — its own accounts and how to make each person
     one, the one setting that tells it who is who, or the paths svrngs
@@ -1061,7 +1065,9 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
      alike (`share.rs`, `helper_of`, in `lend_of`; v1ui-polish (d)): the
      page says so before it lends, and, the helper not answering, offers
      its steps, embedded at build and served at `/helper/<kind>`. svrngs
-     builds, starts and stops it never. A lend that declares no sign-in keeps
+     builds, starts and stops it never, and never lends it: a port the
+     table names a helper, or a lend names its sign-in, is refused as a
+     lend's port (`share.rs`, `signs_in`; arch-helper (b)). A lend that declares no sign-in keeps
      its one secret (`declared.rs`; `door.rs:497-516`, `secret_headers`,
      displacing the client's header in `rewrite_headers`, `:468`) and its
      door byte for byte, held by an existing door test unchanged.

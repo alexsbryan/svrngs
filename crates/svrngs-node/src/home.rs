@@ -31,7 +31,8 @@
 //! (`POST /group`, start-group; the node's group.rs `Asking::found`); and
 //! **what runs on this computer lent** (`POST /running`, v1ui-lend (b)),
 //! decided as `svrngs share` decides a lend ([`crate::share`]) from what
-//! `GET /running` offers, every port that answers here and is not lent.
+//! `GET /running` offers, every port that answers here and is not lent,
+//! nor signs people in to a lend ([`share::signs_in`], said once why).
 //! The person's yes and stop are
 //! kept by this computer's door for its own lend, else dialled to the
 //! lender's door on the members' protocol as this computer's key
@@ -260,34 +261,36 @@ async fn steps(axum::extract::Path(kind): axum::extract::Path<String>) -> Respon
     steps.map_or_else(none, |(_, s)| s.into_response())
 }
 
+/// Which read failed, said, and traced with its error (#160).
+fn unread(why: &str, error: &dyn std::fmt::Display) -> Response {
+    tracing::warn!(target: "home", why, %error, "home: refused — what runs here not offered, nor lent");
+    LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, why)
+}
+
 /// `GET /running`: what answers on this computer, less svrngs's own
 /// listener and what it lends already, each [`shown`]; and the kinds the
 /// table knows by their name alone, for the person to say.
 async fn running(State(at): State<Asking>) -> Response {
     let found = tokio::task::spawn_blocking(share::listening).await;
-    // Which read failed, said, and traced with its error (#160).
-    let unread = |why: &str, error: &dyn std::fmt::Display| {
-        tracing::warn!(target: "home", why, %error, "home: refused — what runs here not offered");
-        LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, why)
-    };
     let (all, found) = match (lend::all(&at.door().data_dir), found) {
         (Ok(all), Ok(found)) => (all, found),
         (Err(e), _) => return unread("it cannot read what you lend already", &e),
         (_, Err(e)) => return unread("the look stopped before it finished", &e),
     };
     let lent: Vec<_> = all.into_iter().flatten().collect();
-    let taken = |p: &NonZeroU16| {
-        let ours = |l: &lend::Lend| l.source == Port(*p) || l.sign_in == Some(*p);
-        p.get() == at.host.api_port || lent.iter().any(ours)
-    };
-    let rows: Vec<_> = (found.into_iter().filter(|p| !taken(p)))
+    let taken =
+        |p: &NonZeroU16| p.get() == at.host.api_port || lent.iter().any(|l| l.source == Port(*p));
+    // A sign-in is left out, the page saying once why (arch-helper (b)).
+    let (signing, found): (Vec<_>, Vec<_>) =
+        (found.into_iter().filter(|p| !taken(p))).partition(|p| share::signs_in(*p, &lent));
+    let rows: Vec<_> = (found.into_iter())
         .map(|p| shown(p, share::well_known_kind(p).as_ref(), None))
         .collect();
     let named: Vec<Kind> = (share::rows().filter(|(port, ..)| *port == "-"))
         .map(|(_, kind, _)| kind)
         .collect();
-    tracing::debug!(target: "home", offered = rows.len(), lent = lent.len(), "home: what runs here, offered to lend");
-    Json(serde_json::json!({ "running": rows, "named": named })).into_response()
+    tracing::debug!(target: "home", offered = rows.len(), lent = lent.len(), ?signing, "home: what runs here, offered to lend, sign-ins left out");
+    Json(serde_json::json!({ "running": rows, "named": named, "signing": signing })).into_response()
 }
 
 /// What the person lends from the page: a port, and for one the table
@@ -327,6 +330,8 @@ async fn lend_one(
     let kind = kind.as_deref().map(Kind::parse).transpose();
     let kind = kind.map_err(|e| refused(&format!("Say what it is in {one}"), &e))?;
     let (known, dir) = (share::well_known_kind(port), &at.door().data_dir);
+    let lent = lend::all(dir).map_err(|e| unread("it cannot read what you lend already", &e))?;
+    let lent: Vec<_> = lent.into_iter().flatten().collect();
     tracing::debug!(target: "home", port, ?known, ?name, ?kind, "home: asked to lend what runs here");
     let unknown = "Give it a name and say what it is first: svrngs does not know what runs there.";
     if known.is_none() && (name.is_none() || kind.is_none()) {
@@ -344,10 +349,12 @@ async fn lend_one(
         asks: None,
     };
     // Each of the lend's refusals in a person's words: a kind is known or
-    // given above, and no sign-in asked, so only the first is met here.
+    // given above, and no sign-in asked, so `NoKind` and `NoSignIn` are not met here.
     let silent = format!("Nothing answers at http://localhost:{port} now: start it, then lend it.");
     let no_sign_in = "Nothing answers at its sign-in now: start it, then lend it.";
-    let lend = share::lend_of(&asked, share::listens, known).map_err(|e| match e {
+    let signs = "It signs people in to something you lend, and only svrngs on this computer asks it: lend what it signs them in to instead.";
+    let lend = share::lend_of(&asked, share::listens, known, &lent).map_err(|e| match e {
+        ShareRefusal::SignsIn(_) => refused(signs, &e),
         ShareRefusal::NothingListens(_) => refused(&silent, &e),
         ShareRefusal::NoKind(_) => refused(unknown, &e),
         ShareRefusal::NoSignIn(_) => refused(no_sign_in, &e),

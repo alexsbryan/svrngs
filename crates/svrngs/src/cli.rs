@@ -568,6 +568,8 @@ pub enum Refusal {
     Prompt(std::io::Error),
     #[error("cannot keep {0} on this computer (RUST_LOG=debug says why)")]
     KeepLend(LendName),
+    #[error("cannot read what you lend on this computer: {0}")]
+    Lends(lend::LendError),
     #[error("you lend nothing called {name} from this computer{}", lent_now(.lent))]
     NotLent { name: LendName, lent: Vec<LendName> },
     #[error("{0} gives each app no address of its own, so on a phone every app would open where your group's page keeps who each person is. Use a host that serves your page at every name under it, as group.svrnme.sh does")]
@@ -641,6 +643,7 @@ impl Refusal {
             | Refusal::IssuerAway
             | Refusal::Prompt(_)
             | Refusal::KeepLend(_)
+            | Refusal::Lends(_)
             | Refusal::CannotCheck(_)
             | Refusal::NoRoomAddress
             | Refusal::NotRunning
@@ -765,7 +768,10 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             return Ok(());
         }
         Verb::Share(asked) => {
-            let lend = share::lend_of(&asked, share::listens, share::well_known_kind(asked.port))?;
+            let lent = lend::all(&root).map_err(Refusal::Lends)?;
+            let (known, lent) = (share::well_known_kind(asked.port), lent.into_iter());
+            let lent: Vec<_> = lent.flatten().collect();
+            let lend = share::lend_of(&asked, share::listens, known, &lent)?;
             let accounts = share::accounts_of(&lend.kind).filter(|_| lend.sign_in.is_none());
             let secret = match accounts {
                 _ if lend.sign_in.is_some() => {

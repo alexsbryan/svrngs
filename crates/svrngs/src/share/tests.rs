@@ -92,7 +92,7 @@ fn the_well_known_table_reads_whole() {
 #[test]
 fn a_lend_is_decided_from_what_was_typed_and_what_listens() {
     let jf = Kind::parse("jellyfin").unwrap();
-    let lend = lend_of(&share(8096), |_| true, Some(jf.clone())).unwrap();
+    let lend = lend_of(&share(8096), |_| true, Some(jf.clone()), &[]).unwrap();
     assert_eq!(
         (lend.name.as_str(), lend.kind.as_str(), lend.limit),
         ("jellyfin", "jellyfin", None)
@@ -101,30 +101,30 @@ fn a_lend_is_decided_from_what_was_typed_and_what_listens() {
     typed.kind = Some(Kind::parse("notes").unwrap());
     typed.name = Some(LendName::parse("pad").unwrap());
     typed.limit = Some(port(7));
-    let lend = lend_of(&typed, |_| true, None).unwrap();
+    let lend = lend_of(&typed, |_| true, None, &[]).unwrap();
     assert_eq!(
         (lend.name.as_str(), lend.kind.as_str(), lend.limit),
         ("pad", "notes", Some(port(7)))
     );
     assert_eq!(
-        lend_of(&share(5000), |_| true, None),
+        lend_of(&share(5000), |_| true, None, &[]),
         Err(ShareRefusal::NoKind(port(5000)))
     );
     assert_eq!(
-        lend_of(&share(8096), |_| false, Some(jf.clone())),
+        lend_of(&share(8096), |_| false, Some(jf.clone()), &[]),
         Err(ShareRefusal::NothingListens(port(8096)))
     );
     // A sign-in named is kept, and refused when nothing listens there.
     let mut signed = share(8096);
     signed.sign_in = Some(port(9000));
     assert_eq!(
-        lend_of(&signed, |_| true, Some(jf.clone()))
+        lend_of(&signed, |_| true, Some(jf.clone()), &[])
             .unwrap()
             .sign_in,
         Some(port(9000))
     );
     assert_eq!(
-        lend_of(&signed, |p| p != port(9000), Some(jf)),
+        lend_of(&signed, |p| p != port(9000), Some(jf), &[]),
         Err(ShareRefusal::NoSignIn(port(9000)))
     );
 }
@@ -188,7 +188,7 @@ fn a_lend_shared_with_no_limit_lets_a_fourth_in_at_once() {
     use std::time::Instant;
     use svrngs_node::door::limit::{Counts, Verdict, Whereabouts};
     let jf = Kind::parse("jellyfin").unwrap();
-    let lend = lend_of(&share(8096), |_| true, Some(jf)).unwrap();
+    let lend = lend_of(&share(8096), |_| true, Some(jf), &[]).unwrap();
     let (mut counts, now) = (Counts::default(), Instant::now());
     for who in ["ana", "bo", "cy", "dee"] {
         let verdict = counts.ask(&lend, who, Whereabouts::Away, now);
@@ -215,7 +215,7 @@ fn llama_server_is_known_by_its_name_and_lent_without_the_table_s_paths() {
     typed.refused = ["/slots", "/admin"]
         .map(|p| RefusedPath::parse(p).unwrap())
         .to_vec();
-    let lend = lend_of(&typed, |_| true, None).unwrap();
+    let lend = lend_of(&typed, |_| true, None, &[]).unwrap();
     let refused: Vec<&str> = lend.refused.iter().map(RefusedPath::as_str).collect();
     assert_eq!(
         refused,

@@ -1,0 +1,8 @@
+# after (b): share_refuses_a_port; browser the_home_page_ (both engines); door; home; svrngs --lib; svrngs --test address; svrngs --test share (its 8097 bind dropped, which raced a_service_with_its_own_accounts)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 1.05s
+test result: ok. 42 passed; 0 failed; 0 ignored; 0 measured; 52 filtered out; finished in 24.72s
+test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 33.90s
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.90s
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.00s
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.60s
