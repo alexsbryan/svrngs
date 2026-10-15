@@ -1,4 +1,4 @@
-# svrngs arch — the architectural audit's cuts: the localhost bridge gone, the seal retired, the core's single-use traits folded, the view no longer signed, the command asking the running node, one version check (operator, 2026-10-15; AUDIT.md here). It runs after the v1ui queue and before groups. Launch, from anywhere, once v1ui is done (one loop per tree):
+# svrngs arch — the page no longer offering a sign-in helper as a lend, then the architectural audit's cuts: the localhost bridge gone, the seal retired, the core's single-use traits folded, the view no longer signed, the command asking the running node, one version check (operator, 2026-10-15; AUDIT.md here). It runs after the v1ui queue and before groups. Launch, from anywhere, once v1ui is done (one loop per tree):
 #
 #   python3 ~/dev/commonwealth-ai/scripts/ralph.py supervise --workdir ~/dev/svrngs \
 #     --queue arch --install-launchd -- python3 ~/dev/commonwealth-ai/scripts/ralph.py \

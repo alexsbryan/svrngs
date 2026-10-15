@@ -27,7 +27,8 @@ Fences the rows keep:
    - A seal line on disk is read as an act that does nothing, and said so,
      never dropped unread.
 7. *The budget* (the operator, 2026-10-15: "Up to +60 inside a row").
-   - No raise.
+   - No raise, except arch-helper: it may raise within the 31 lines v1ui's
+     +650 left unspent, up to 16,965, in its own commit.
    - Between its own commits, a row may sit up to 60 code lines over the
      count it started at (`scripts/lean_check.py`), and it closes below
      that count.

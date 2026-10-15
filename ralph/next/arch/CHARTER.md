@@ -46,6 +46,15 @@ charter disagree, they win, and the decision says so.
     svrngs-core's, to where it closes, in its own commit with the counts
     before and after.
 
+- **The helper, first** (the operator, 2026-10-15). The answer was "First row of
+  arch, v1ui's 31 lines". After Priya lent Jellyfin beside its helper, her
+  page offered the helper itself, on 8097, as something to lend
+  (`demo/runs/v1ui/2026-10-15-helper/README.md` finding 2). That row is
+  arch-helper.
+  - It is the one row that may raise, within the 31 lines v1ui's +650 left
+    unspent, up to 16,965.
+  - The rest of the queue keeps the no-raise rule.
+
 ## Why
 
 The bar is AGENTS.md "Done": a raise is asked only after an economizing
@@ -70,7 +79,7 @@ asks +40.
 ## Decide
 
 - Row order and splitting, within this order:
-  1. arch-peer first.
+  1. arch-helper, then arch-peer.
   2. arch-command before the queue closes.
 - The shape of the request helper on the stream: one module, or the server
   side's.
