@@ -279,7 +279,7 @@ async fn running(State(at): State<Asking>) -> Response {
 /// does not know, its name and what it is in their words.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Lending {
+struct ToLend {
     port: NonZeroU16,
     name: Option<LendName>,
     kind: Option<Kind>,
@@ -291,10 +291,10 @@ struct Lending {
 /// a lend of its name, then declared ([`lend::declare`]) and [`shown`].
 async fn lend_one(
     State(at): State<Asking>,
-    asked: Result<Json<Lending>, JsonRejection>,
+    asked: Result<Json<ToLend>, JsonRejection>,
 ) -> Response {
     let refused = |why: &str| LendRefusal::Closed.say(StatusCode::BAD_REQUEST, why);
-    let Ok(Json(Lending { port, name, kind })) = asked else {
+    let Ok(Json(ToLend { port, name, kind })) = asked else {
         return refused(
             "Its name and what it is are each one word: letters and digits, with - or _ between.",
         );
