@@ -1,0 +1,419 @@
+note       open files: 256, raised to 10240
+passed     principles pinned
+passed     lean and RUST_ARCH
+passed     app nouns gate
+passed     app nouns
+passed     rustfmt
+passed     clippy
+failed     tests
+           
+           running 13 tests
+           .............
+           test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+           
+           
+           running 0 tests
+           
+           test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.20s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.32s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 18.23s
+           
+           
+           running 8 tests
+           ......Running for trip.
+           Apps on this computer reach your groups at http://127.0.0.1:62503.
+           Your home page, the same address each time svrngs starts: http://svrngs.localhost:62503/
+           
+           Leave this running; Ctrl-C stops it.
+           ..
+           test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 18.21s
+           
+           
+           running 10 tests
+           ..........
+           test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.36s
+           
+           
+           running 4 tests
+           ....
+           test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 42.89s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 3 tests
+           iii
+           test result: ok. 0 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.40s
+           
+           
+           running 14 tests
+           ..............
+           test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s
+           
+           
+           running 1 test
+           i
+           test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           test: sam_through_a_relay_on_this_computer, ignore_message: U4's dry run, run by demo/runs/u4/2026-10-05/dry.sh
+           
+           
+           running 5 tests
+           .....
+           test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.16s
+           
+           
+           running 4 tests
+           ....
+           test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.47s
+           
+           
+           running 8 tests
+           ........
+           test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.56s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.11s
+           
+           
+           running 179 tests
+           ..............i........................................................................ 87/179
+           .........................................................................i....i........ 174/179
+           .....
+           test result: ok. 176 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 4.83s
+           
+           
+           running 95 tests
+           ....................................................................................... 87/95
+           ........
+           test result: ok. 95 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 41.42s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+           
+           
+           running 76 tests
+           itest a_computer_that_did_not_answer_is_named_by_its_person::chromium has been running for over 60 seconds
+           test a_computer_that_did_not_answer_is_named_by_its_person::webkit has been running for over 60 seconds
+           test a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::chromium has been running for over 60 seconds
+           test a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::webkit has been running for over 60 seconds
+           test a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone::chromium has been running for over 60 seconds
+           test a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone::webkit has been running for over 60 seconds
+           test a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself::chromium has been running for over 60 seconds
+           test a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself::webkit has been running for over 60 seconds
+           test a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::chromium has been running for over 60 seconds
+           test a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::webkit has been running for over 60 seconds
+           test a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::chromium has been running for over 60 seconds
+           test a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::webkit has been running for over 60 seconds
+           ...................................... 39/76
+           the_home_page_opens_the_group_s_folder::chromium --- FAILED
+           ...test a_page_speaks_http_through_the_door_streaming_both_ways::chromium has been running for over 60 seconds
+           test a_page_speaks_http_through_the_door_streaming_both_ways::webkit has been running for over 60 seconds
+           ........test the_home_page_lends_what_runs_here::webkit has been running for over 60 seconds
+           ................... 70/76
+           a_page_speaks_http_through_the_door_streaming_both_ways::webkit --- FAILED
+           . 72/76
+           a_page_speaks_http_through_the_door_streaming_both_ways::chromium --- FAILED
+           ...
+           failures:
+           
+           ---- the_home_page_opens_the_group_s_folder::chromium stdout ----
+           the home page's run: {
+             "after": [
+               [
+                 "The group’s folder is on this computer at /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/.tmp1ou1mV/house",
+                 "Open this folder",
+                 "Make a link to invite someone to this groupMake a link to add your phone or another computer of yours",
+                 "",
+                 "The link: Open it",
+                 "A name for the group: Your name in it: Make a group",
+                 "",
+                 "The programs running on this computer, each at its address. Lend one, and everyone in your groups opens it in their browser, as themselves, while this computer is on. You can stop lending it below at any time.",
+                 "This computer lends nothing."
+               ]
+             ],
+             "all": [
+               "The group’s folder is on this computer at /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/.tmp1ou1mV/house",
+               "Open this folder",
+               "Make a link to invite someone to this groupMake a link to add your phone or another computer of yours",
+               "",
+               "The link: Open it",
+               "A name for the group: Your name in it: Make a group",
+               "",
+               "Asking this computer what is running on it…"
+             ],
+             "clipboard": "",
+             "drawn": null,
+             "heading": "A group whose name this computer cannot read",
+             "links": [],
+             "logs": [],
+             "opened": null,
+             "read": null,
+             "text": null,
+             "timed": {}
+           }
+           
+           thread 'the_home_page_opens_the_group_s_folder::chromium' (44600395) panicked at crates/svrngs-node/tests/browser/main.rs:2891:5:
+           {
+             "after": [
+               [
+                 "The group’s folder is on this computer at /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/.tmp1ou1mV/house",
+                 "Open this folder",
+                 "Make a link to invite someone to this groupMake a link to add your phone or another computer of yours",
+                 "",
+                 "The link: Open it",
+                 "A name for the group: Your name in it: Make a group",
+                 "",
+                 "The programs running on this computer, each at its address. Lend one, and everyone in your groups opens it in their browser, as themselves, while this computer is on. You can stop lending it below at any time.",
+                 "This computer lends nothing."
+               ]
+             ],
+             "all": [
+               "The group’s folder is on this computer at /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/.tmp1ou1mV/house",
+               "Open this folder",
+               "Make a link to invite someone to this groupMake a link to add your phone or another computer of yours",
+               "",
+               "The link: Open it",
+               "A name for the group: Your name in it: Make a group",
+               "",
+               "Asking this computer what is running on it…"
+             ],
+             "clipboard": "",
+             "drawn": null,
+             "heading": "A group whose name this computer cannot read",
+             "links": [],
+             "logs": [],
+             "opened": null,
+             "read": null,
+             "text": null,
+             "timed": {}
+           }
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           ---- a_page_speaks_http_through_the_door_streaming_both_ways::webkit stdout ----
+           
+           thread 'a_page_speaks_http_through_the_door_streaming_both_ways::webkit' (44594749) panicked at crates/svrngs-node/tests/browser/main.rs:464:5:
+           assertion `left == right` failed: the range must come back 206:
+           {
+             "chunked": {
+               "status": 200,
+               "text": "hellohellohello"
+             },
+             "past": {
+               "bytes": 0,
+               "chunks": 0,
+               "contentRange": "bytes */67108864",
+               "largest": 0,
+               "sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+               "status": 416
+             },
+             "post": {
+               "held": 1048576,
+               "status": 200,
+               "text": "8388608 48a95d92f5743545b6aab82415c4e48b029b02700a4735a7501497b071c18706"
+             },
+             "range": {
+               "error": "Error: no answer within 60 s"
+             }
+           }
+             left: Null
+            right: 206
+           
+           ---- a_page_speaks_http_through_the_door_streaming_both_ways::chromium stdout ----
+           
+           thread 'a_page_speaks_http_through_the_door_streaming_both_ways::chromium' (44594625) panicked at crates/svrngs-node/tests/browser/main.rs:464:5:
+           assertion `left == right` failed: the range must come back 206:
+           {
+             "chunked": {
+               "status": 200,
+               "text": "hellohellohello"
+             },
+             "past": {
+               "bytes": 0,
+               "chunks": 0,
+               "contentRange": "bytes */67108864",
+               "largest": 0,
+               "sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+               "status": 416
+             },
+             "post": {
+               "held": 1048576,
+               "status": 200,
+               "text": "8388608 48a95d92f5743545b6aab82415c4e48b029b02700a4735a7501497b071c18706"
+             },
+             "range": {
+               "error": "Error: no answer within 60 s"
+             }
+           }
+             left: Null
+            right: 206
+           
+           
+           failures:
+               a_page_speaks_http_through_the_door_streaming_both_ways::chromium
+               a_page_speaks_http_through_the_door_streaming_both_ways::webkit
+               the_home_page_opens_the_group_s_folder::chromium
+           
+           test result: FAILED. 72 passed; 3 failed; 1 ignored; 0 measured; 0 filtered out; finished in 220.60s
+           
+           error: test failed, to rerun pass `-p svrngs-node --test browser`
+passed     canaries
+passed     ceiling canary
+           CEILING idle round at 25 x 10,000: 0.0475 s of processor, the median of [0.16491600000000517, 0.047483000000006825, 0.02546999999999855], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.02546999999999855,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":123,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.009544583}
+passed     web rustfmt and clippy
+failed     browser
+           
+           running 76 tests
+           itest a_computer_that_did_not_answer_is_named_by_its_person::chromium has been running for over 60 seconds
+           test a_computer_that_did_not_answer_is_named_by_its_person::webkit has been running for over 60 seconds
+           test a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::chromium has been running for over 60 seconds
+           test a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::webkit has been running for over 60 seconds
+           test a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone::chromium has been running for over 60 seconds
+           test a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone::webkit has been running for over 60 seconds
+           test a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself::chromium has been running for over 60 seconds
+           test a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself::webkit has been running for over 60 seconds
+           test a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::chromium has been running for over 60 seconds
+           test a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::webkit has been running for over 60 seconds
+           test a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::chromium has been running for over 60 seconds
+           test a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::webkit has been running for over 60 seconds
+           ...............................................test a_page_speaks_http_through_the_door_streaming_both_ways::chromium has been running for over 60 seconds
+           .test a_page_speaks_http_through_the_door_streaming_both_ways::webkit has been running for over 60 seconds
+           .......test the_home_page_lends_what_runs_here::webkit has been running for over 60 seconds
+           ................ 72/76
+           a_page_speaks_http_through_the_door_streaming_both_ways::chromium --- FAILED
+           a_page_speaks_http_through_the_door_streaming_both_ways::webkit --- FAILED
+           ..
+           failures:
+           
+           ---- a_page_speaks_http_through_the_door_streaming_both_ways::chromium stdout ----
+           
+           thread 'a_page_speaks_http_through_the_door_streaming_both_ways::chromium' (44622736) panicked at crates/svrngs-node/tests/browser/main.rs:464:5:
+           assertion `left == right` failed: the range must come back 206:
+           {
+             "chunked": {
+               "status": 200,
+               "text": "hellohellohello"
+             },
+             "past": {
+               "bytes": 0,
+               "chunks": 0,
+               "contentRange": "bytes */67108864",
+               "largest": 0,
+               "sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+               "status": 416
+             },
+             "post": {
+               "held": 1048576,
+               "status": 200,
+               "text": "8388608 48a95d92f5743545b6aab82415c4e48b029b02700a4735a7501497b071c18706"
+             },
+             "range": {
+               "error": "Error: no answer within 60 s"
+             }
+           }
+             left: Null
+            right: 206
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           ---- a_page_speaks_http_through_the_door_streaming_both_ways::webkit stdout ----
+           
+           thread 'a_page_speaks_http_through_the_door_streaming_both_ways::webkit' (44623024) panicked at crates/svrngs-node/tests/browser/main.rs:464:5:
+           assertion `left == right` failed: the range must come back 206:
+           {
+             "chunked": {
+               "status": 200,
+               "text": "hellohellohello"
+             },
+             "past": {
+               "bytes": 0,
+               "chunks": 0,
+               "contentRange": "bytes */67108864",
+               "largest": 0,
+               "sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+               "status": 416
+             },
+             "post": {
+               "held": 1048576,
+               "status": 200,
+               "text": "8388608 48a95d92f5743545b6aab82415c4e48b029b02700a4735a7501497b071c18706"
+             },
+             "range": {
+               "error": "Error: no answer within 60 s"
+             }
+           }
+             left: Null
+            right: 206
+           
+           
+           failures:
+               a_page_speaks_http_through_the_door_streaming_both_ways::chromium
+               a_page_speaks_http_through_the_door_streaming_both_ways::webkit
+           
+           test result: FAILED. 73 passed; 2 failed; 1 ignored; 0 measured; 0 filtered out; finished in 200.99s
+           
+           error: test failed, to rerun pass `-p svrngs-node --test browser`
+passed     joining in a browser
+passed     conformance canary
+           computer  /-absolute paths                   passed
+           computer  64 MiB read by Range               passed
+           computer  64 MiB uploaded, its length told   passed
+           computer  Host check, absolute redirect      passed
+           computer  SharedArrayBuffer under COOP/COEP  passed
+           computer  WebSocket echo, OPEN read          passed
+           computer  cookie sign-in, read unreloaded    passed
+           computer  its own service worker             passed
+           computer  local storage                      passed
+           computer  post, Origin checked               passed
+           computer  seeks back to back                 passed
+           computer  seeks back to back                 passed, a rate
+           computer  signed in by the lend, as themselves passed
+           wildcard  /-absolute paths                   passed
+           wildcard  64 MiB read by Range               passed
+           wildcard  64 MiB uploaded, its length told   passed
+           wildcard  Host check, absolute redirect      passed
+           wildcard  SharedArrayBuffer under COOP/COEP  passed
+           wildcard  WebSocket echo, OPEN read          passed
+           wildcard  cookie sign-in, read unreloaded    passed
+           wildcard  its own service worker             passed
+           wildcard  local storage                      passed
+           wildcard  post, Origin checked               passed
+           wildcard  seeks back to back                 passed
+           wildcard  seeks back to back                 passed, a rate
+           wildcard  signed in by the lend, as themselves passed
+rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict
+           computer	sam	383	passed	9887	failed
+           computer	bo	409	passed	2192	passed
+           wildcard	sam	290	passed	3359	passed
+           wildcard	bo	408	passed	4416	passed
+           of 1298 here since 2026-10-07T01:30:06Z: 181 missed 5 s through a lend, 198 straight; 1034 ended at a load above 12 cores
+passed     app laws
