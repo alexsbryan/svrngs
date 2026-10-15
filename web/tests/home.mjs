@@ -29,9 +29,11 @@ try {
   // With `read`, a selector, its first match's words too (U7: a removed
   // person's line).
   const read = args.read ? await page.locator(args.read).first().textContent({ timeout: 30_000 }) : null;
-  // With `all`, every match's words, once the page has listed its groups
-  // (v1-keeper-office (b): the removals).
-  if (args.all) await page.locator('#home section').first().waitFor({ timeout: 30_000 });
+  // With `all`, every match's words, once the page has drawn all it draws
+  // as it loads, its address last (home.js), each group's index with it
+  // (v1-keeper-office (b): the removals; REVIEW-audit-v1ui-auto-1: a group's
+  // section is drawn before its index, which a loaded host read empty).
+  if (args.all) await page.locator('#home p.address').waitFor({ timeout: 30_000 });
   const all = args.all ? await page.locator(args.all).allTextContents() : null;
   // With `do`, each [selector, value?, stays?] in turn: filled with the
   // value, else clicked, and `all`'s words read once the page it reloads
@@ -73,7 +75,10 @@ try {
     await tab.waitForLoadState();
     opened = { url: tab.url(), title: await tab.title() };
   }
-  // With `text`, the page's words as a person reads them, each cell apart.
+  // With `text`, the page's words as a person reads them, each cell apart,
+  // once what this computer lends is drawn below its heading: a lend made
+  // by `do` draws it again (REVIEW-audit-v1ui-auto-1: read loaded, between).
+  if (args.text) await page.locator('#lent h2 ~ *').first().waitFor({ timeout: 30_000 });
   const text = args.text ? await page.locator('body').innerText() : null;
   // Every link on the page, its words and where it opens (start-home).
   const links = await page.locator('a').evaluateAll((as) => as.map((a) => ({ text: a.textContent, target: a.target })));
