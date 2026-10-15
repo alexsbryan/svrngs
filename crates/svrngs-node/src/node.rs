@@ -915,7 +915,7 @@ impl Asking {
         // 3), each computer's copy listed, so a phone knows every computer
         // to reach the group through; the pages show one (question.js `once`).
         let carries = |g: &String| groups.iter().any(|(ns, _)| ns == g);
-        lent.retain(|l| l.offered.group.as_ref().is_none_or(carries));
+        lent.retain(|l| l.offered.listed(carries));
         lent.sort_by(|a, b| {
             (a.person.as_str(), &a.offered.name).cmp(&(b.person.as_str(), &b.offered.name))
         });

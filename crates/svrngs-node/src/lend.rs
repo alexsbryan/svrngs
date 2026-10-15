@@ -327,6 +327,15 @@ impl Offered {
     pub(crate) fn reads_one(&self, other: &Offered) -> bool {
         self.reads.contains(&other.kind)
     }
+
+    /// Whether this lend is listed to an asker in the groups `stands`
+    /// answers yes to: a carried app only in its own group (COMMUNITY_APPS
+    /// §7, found 3), any other everywhere. The one rule the door's `/lends`
+    /// and a computer's own list ask, each by its own `stands` (#166);
+    /// `Folders::open` is the gate it shadows.
+    pub(crate) fn listed(&self, stands: impl Fn(&String) -> bool) -> bool {
+        self.group.as_ref().is_none_or(stands)
+    }
 }
 
 /// Why a lend could not be read.

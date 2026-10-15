@@ -508,7 +508,7 @@ async fn lends(
     }
     let mut offered = offered(&door).await?;
     let stands = |g: &String| door.rail.standing(g).is_ok_and(|s| s.names(&actor));
-    offered.retain(|o| o.group.as_ref().is_none_or(stands));
+    offered.retain(|o| o.listed(stands));
     tracing::debug!(target: "door", actor, lends = offered.len(), "door: lends — answered what this computer lends, each carried app only to its own group");
     Ok(Json(serde_json::json!({ "lends": offered })).into_response())
 }
