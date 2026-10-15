@@ -11,18 +11,17 @@ Home Assistant. Run it in a container on one computer, `svrngs share <port> --ki
 
 What we answer to: `NORTH_STAR.md`. What it is, how we build it and the order
 of work: `docs/DESIGN.md`. What
-exists today: `ARCHITECTURE.md`. How agents work here: `AGENTS.md`.
+exists today: `ARCHITECTURE.md`. How agents work here: `AGENTS.md`. E0, the
+first experiment, a Discord bot that settled expenses in the chat, ran
+before the fork and is at tag `e0-bot`.
 
 ## Run it
 
-Start with `demo/start.md`: a friend lends their model and the group uses
-it, every line to type and every button to press, what each step looks like
-when it works and what to do when it does not, as its run did them on one
-computer (`demo/runs/start/2026-10-13-story/`). Two friends, one line pasted
-each, and the friend's chat page open on the other's computer; it also says
-how to try both friends on one computer. E0 — the first experiment, a
-Discord bot that settled expenses in the chat — ran before the fork and is
-at tag `e0-bot`.
+Start with `demo/start.md`. In it, a friend lends their model and the group
+uses it: you paste one line on each computer, and the friend's chat page
+opens on the other's. It gives every line to type and every button to
+press, what each step looks like when it works, and what to do when it
+does not. It also says how to try both friends on one computer.
 
 ## Set up
 

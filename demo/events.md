@@ -1,22 +1,5 @@
 # Events — Sam's dinner: who was invited, and who came
 
-> **Written 2026-10-14 for the launch story** (the operator: "so many
-> stories start with an event, who was invited and who actually came").
-> Every button below is one a run pressed, on one computer, every person
-> a program. Two runs:
->
-> - **the run**, `runs/events/2026-10-14/README.md`: the whole story. Its
->   numbers are the clean take's (`data/summary.json`); its pictures the
->   shots take's (`data/shots/`, README "The shots take"), taken before
->   the app offered a link, so Sam's page there has none.
-> - **the link take**, `runs/events/2026-10-14-links/README.md`: the
->   dinner's link copied and opened on phones and computers, and Sam's
->   computer asleep, stopped and frozen (`data/summary.json` and
->   `data/shots/` there).
->
-> The bars at the end are the seat's proposal and the operator's to set.
-> DESIGN §8 names this demo.
-
 **Sam** hosts a dinner for people from two of Sam's groups: **The House**,
 Sam's roommates, and **dWeb**, Sam's colleagues. Sam posts it once, to
 both. **Bo** and **Fay** answer from their computers, **Cy** from her
@@ -33,6 +16,16 @@ link once. Where a step says *paste this line in a terminal*: open
 Terminal (in Applications, then Utilities), paste the line, and press
 Enter.
 
+Every button below is one a recorded run pressed, on one computer, with a
+program playing each person. **The run**,
+`runs/events/2026-10-14/README.md`, is the whole story. Its numbers are
+its clean take's (`data/summary.json`), and its pictures its shots take's
+(`data/shots/`, README "The shots take"), taken before the app offered a
+link, so Sam's page there has none. **The link take**,
+`runs/events/2026-10-14-links/README.md`, copies the dinner's link and
+opens it on phones and computers, with Sam's computer asleep, stopped and
+frozen (`data/summary.json` and `data/shots/` there).
+
 ## What this is
 
 **Events is an app, not svrngs.** It is the reference app for an event
@@ -40,25 +33,28 @@ Enter.
 to do it, with its makers' opinions, and someone else may build another
 on the same pieces.
 
-- **An event is a post in a group, and people answer it.** Three things
-  are written in the group's shared history: the post, by whoever hosts;
-  "I'm coming", optionally with guests' names, by each person for
-  themselves; and "I came", by each person for themselves, or by the
-  person who brought a guest, for that guest.
-- **Who was invited is whoever is in the group.** No one keeps a list.
-  The run decided "in the group now", not "in the group when it was
-  posted": Fay joined after the post, and she could see it and answer
-  (README, "What invited means").
-- **Nothing records "no."** "Take my name off" takes back your own "I'm
-  coming". No page says that anyone is not coming or did not come.
-- **Events live in lasting groups.** No event makes a group. A dinner
-  drawn from two groups is posted in each, and each group's history holds
-  only its own people's answers. Only Sam, who hosts, sees both.
+An event is a post in a group, and people answer it. Three things are
+written in the group's shared history: the post, by whoever hosts; "I'm
+coming", optionally with guests' names, by each person for themselves;
+and "I came", by each person for themselves, or by the person who brought
+a guest, for that guest.
 
-**What svrngs gives it, all built before it** (EVENTS.md §2): who is
+Who was invited is whoever is in the group, so no one keeps a list. The
+run decided "in the group now", not "in the group when it was posted":
+Fay joined after the post, and she could see it and answer (README, "What
+invited means").
+
+Nothing records "no". "Take my name off" takes back your own "I'm
+coming", and no page says that anyone is not coming or did not come.
+
+Events live in lasting groups, and no event makes a group. A dinner drawn
+from two groups is posted in each, and each group's history holds only its
+own people's answers. Only Sam, who hosts, sees both.
+
+svrngs had built all the app uses before the app (EVENTS.md §2): who is
 asking, on every request, so the app needs no sign-in; the group's
 history, which the app writes to and reads back on Sam's computer; who is
-in each group; a lend, so Sam's computer offers the app to Sam's groups;
+in each group; lending, so Sam's computer offers the app to Sam's groups;
 and a way to change your own answer later. svrngs's code holds no word of
 the app's (`apps/events/nouns.txt`, `scripts/vocab_check.py`).
 
@@ -317,6 +313,10 @@ Fay's computers hold every answer: a second computer lending the app would
 keep it up (the run's README, finding 4); not run.
 
 ## The demo: bars, proposed
+
+Written 2026-10-14 for the launch story (the operator: "so many stories
+start with an event, who was invited and who actually came"). DESIGN §8
+names this demo.
 
 Gate (the seat's proposal, the operator's to set): **Sam**, with the app
 lent, posts a dinner to two groups in one form within two minutes, typing

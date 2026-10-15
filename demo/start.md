@@ -1,13 +1,5 @@
 # Start — a friend lends their model, and the group uses it
 
-> **Written 2026-10-13 for anyone getting started** (the operator: "nail
-> down the svrn / llama-server on svrngs story and make it part of an early
-> demo document for anyone getting started"). Every line to type and every
-> button below is one the story's run typed or pressed, on one computer,
-> every person a program (`runs/start/2026-10-13-story/README.md`, "the
-> run" below); each picture is that run's. The bars at the end are the
-> seat's proposal and the operator's to set. DESIGN §8 names this demo.
-
 Two friends. **Sam** runs a model on their computer — llama-server, the
 program that comes with llama.cpp — and wants their friends to use it.
 **Bo** is one of those friends. At the end, Bo chats with Sam's model in a
@@ -21,6 +13,12 @@ terminal*: open Terminal, paste the line, and press Enter. Nothing here
 needs your password, and nothing here changes your computer's settings.
 What svrngs puts on a computer stays in your own folder: the program in
 `~/.local/bin`, its data in `~/.svrngs`, the group's folder in `~/svrngs`.
+
+Every line and every button below is one a recorded run typed or pressed,
+on one computer, with a program playing each person
+(`runs/start/2026-10-13-story/README.md`, "the run" below), except
+lending from the page in step 5, which came after it. Each picture is from
+that run.
 
 ## Sam: make a group and lend the model
 
@@ -84,9 +82,18 @@ day, while Sam's computer is on.
 
 ![The link to send](runs/start/2026-10-13-story/data/shots/sam-home-link.png)
 
-**5. Lend the model.** At the bottom of the home page, **Done in a
-terminal** says what is not done on the page yet. Lending is one of them.
-In a terminal, type, with the number from step 1:
+**5. Lend the model.** On the home page, under **Already running here**,
+press **Look for programs running on this computer**. Looking takes a few
+seconds. The page lists *"llama-server, at http://localhost:18089. svrngs
+keeps these parts of it from everyone: /slots, …"*, with **Lend
+llama-server to everyone in your groups**. Press it. The row then says
+*"You lent llama-server, at http://localhost:18089: everyone in your groups
+can open it now."*, and the page lists it under **What you lend**.
+
+The page asks no password. If Sam started llama-server with `--api-key`,
+lend it from a terminal instead, which asks for that key. The run lent it
+from a terminal, before the page could. In a terminal, type, with the
+number from step 1:
 
 ```
 ~/.local/bin/svrngs share 18089 --kind llama-server
@@ -248,6 +255,10 @@ makes the group, so Lab's folder is put in Sam's home folder, not yours).
    Control-C in window 1 (Sam's), and `rm -rf /tmp/try`.
 
 ## The demo: bars, proposed
+
+Written 2026-10-13 for anyone getting started (the operator: "nail down
+the svrn / llama-server on svrngs story and make it part of an early demo
+document for anyone getting started"). DESIGN §8 names this demo.
 
 Gate (the seat's proposal, the operator's to set): **Sam**, with no link,
 from the group's page to the model lent within five minutes, the founder's
