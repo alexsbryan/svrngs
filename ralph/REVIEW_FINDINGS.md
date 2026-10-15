@@ -9099,3 +9099,291 @@ a change of behaviour the budget has no line left to pay for (#80).
 | I19 | 6 | dry-report, `tests/` scopes | Still present, said as could-not-judge; the line-window pass stood in. |
 | I29 | 6 | `refresh` over a corpus `code index` made | Still present: "prod-8e97b27 is not registered", then the in-process rebuild and exit 0. |
 | I32 | 7 | dry-report's JS near tier | Still present: app.js `uses` :285-307 over `choicesOf` :288-303, lend.js `cookieFor` :174-181 over `keepJar` :177-185. |
+
+## REVIEW-audit-v1ui-auto-1 (2026-10-14, range 8d8beb2..8d62b0a)
+
+This queue has no earlier `REVIEW-audit-` row. The previous one anywhere is
+REVIEW-audit-events-auto-3, its hash 8d8beb2 (ralph/next/events/STATE.md:24),
+so the range starts there rather than at this queue's first commit, 4a2e8a7,
+and so the look merged between them (efadec2) is audited too. It ends at
+8d62b0a, the commit that made this row. `git rev-list --count
+8d8beb2..8d62b0a` is 43, one a merge (`--merges`: efadec2, the look). The
+other 42 are: the look's two, events-auto-3's `done`, v1ui-economize,
+v1ui-reach, v1ui-door and v1ui-lend, each with its `done`, v1ui-lend-ask's
+state commit and its part (a), and this row's own commit.
+
+This audit's own commits before this section:
+- dce6747, the row's two paths, as 42b7c92 corrected events-auto-3's;
+- 89224c8, the page's lend body named `ToLend`, apart from node.rs's
+  `Lending`;
+- 9d2d904, the door's four cells said once in the browser tests,
+  `drew_the_door`.
+
+It opens #157-#162 and closes none.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+8d8beb2..8d62b0a` (/tmp/v1uiaudit1/ledger.raw) is summed by
+/tmp/v1uiaudit1/scripts/ledger.py (ledger.out; each commit's unit is in
+ledger.commits). The rules are the earlier audits':
+- a commit's unit is the longest unit id its subject names;
+- product is crates/, web/ and bridge/, in lean_check.py's code suffixes;
+- .css and .html are counted apart as markup, which lean_check.py does not
+  count (:39 `CODE`);
+- apps/ and scripts/ are counted apart;
+- a test is what lean_check names one, and `*.test.mjs`;
+- a commit that names no unit counts toward the next one that does:
+  4a2e8a7 to v1ui-economize, 1152254 to v1ui-reach.
+
+e2f6b30 names both v1ui-lend-ask (a) and v1ui-lend, and it counts as
+v1ui-lend-ask's: that is the row whose part it is. It was made to close
+v1ui-lend, and v1ui-lend-ask's row is still `[ ]`
+(ralph/next/v1ui/STATE.md:18). The lines are raw, comments and blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net | markup net | apps src net | apps test net | scripts net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| look (merged efadec2) | 2 | 5 | 4 | **+1** | 0 | 0 | 0 | +62 (+86 −24) | 0 | 0 | 0 (+6 −6) |
+| REVIEW-audit-events-auto-3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| v1ui-economize | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | +1 (+3 −2) |
+| v1ui-reach | 12 | 95 | 35 | **+60** | 210 | 15 | +195 | 0 | 0 | 0 | +3 (+10 −7) |
+| v1ui-door | 11 | 317 | 116 | **+201** | 430 | 65 | +365 | +31 (+36 −5) | 0 | 0 | +4 (+17 −13) |
+| v1ui-lend | 8 | 400 | 225 | **+175** | 180 | 3 | +177 | −1 (+2 −3) | 0 | 0 | 0 (+6 −6) |
+| v1ui-lend-ask (its state commit and (a)) | 2 | 25 | 21 | **+4** | 29 | 18 | +11 | 0 | 0 | 0 | 0 |
+| this row's own commit | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 42 | 842 | 401 | **+441** | 849 | 101 | +748 | +92 | 0 | 0 | +8 |
+
+Where the src lines went (`git diff --stat 8d8beb2 8d62b0a -- crates web`):
+- share.rs moved from the command into the node: +244 in the node, −223 in
+  the command (586e32d, v1ui-lend (a));
+- home.rs +139 −8: `/running` and `/group?name=` (719150d, 6acfdd6);
+- home.js +125 −40 and question.js +49: the door, the index and "Already
+  running here";
+- web/app.js +85 −24: reaching whoever's awake, and the door on the phone;
+- group.rs +73 −8: the one rule for a name, `Namesake` (#138);
+- cli.rs +33 −2 and rail.rs +28 −8: `device` in the people answer;
+- web/src/lib.rs +28 −8 and dial.rs +15: `LINK_WITHIN`;
+- surface.rs +20 −8: each group's `made`.
+
+The test lines are mostly tests/browser/main.rs, +572. scripts/ is
+lean_check.py's caps, vocab_check.py and build-web.sh's look.css.
+
+What the budget counts, by scripts/lean_check.py over a `git archive` tree
+of each end and of each unit's `done` (/tmp/v1uiaudit1/lean-<hash>.out;
+each tree's own lean_check.py, so the cap is its own):
+
+| at | svrngs-core | repository | its cap | counted net |
+|---|---:|---:|---:|---:|
+| 8d8beb2, range start | 3149 | 16314 | 16315 | |
+| efadec2, the look merged | 3149 | 16314 | 16315 | 0 |
+| aae56f8, v1ui-economize done | 3149 | 16314 | 16315 | 0 |
+| 860d247, v1ui-reach done | 3149 | 16338 | 16339 | +24 |
+| 57872c6, v1ui-door done | 3149 | 16446 | 16447 | +108 |
+| 55dc4d6, v1ui-lend done (with lend-ask (a), e2f6b30: 16567, 0 of its own) | 3149 | 16567 | 16568 | +121 |
+| 8d62b0a, range end | **3149 / 3150** | **16567 / 16568** | | **+253** |
+
+There were eight raises, each one past its part's count and each naming the
+pass (`git show <h> -- scripts/lean_check.py`):
+
+| raise | from | to | for |
+|---|---:|---:|---:|
+| fe5feb2 | 16,315 | 16,316 | +1 |
+| b409b49 | 16,316 | 16,338 | +22 |
+| 371c7c5 | 16,338 | 16,339 | +1 |
+| e3b8d2d | 16,339 | 16,400 | +61 |
+| 5ad6d96 | 16,400 | 16,435 | +35 |
+| 738bbb3 | 16,435 | 16,447 | +12 |
+| 6d536c4 | 16,447 | 16,451 | +4 |
+| 8d62784 | 16,451 | 16,568 | +117 |
+
+That is +253 in all. The pass cut nothing (f3abffa), so the ceiling is
+16,315 + 650 = 16,965 (fence 7). **253 are raised and 397 are left** for
+v1ui-shelf and v1ui-voice. svrngs-core's cap stayed at 3150, with 1 line
+left. The repository has **no line left under its cap** (#80):
+lean_check.py:100 refuses `n >= cap`. This audit's changes counted 0: a
+rename in home.rs, and a move within test code.
+
+### The instrument
+
+The binary is ~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256
+67e46f63… (`shasum -a 256`), the one events-auto-3 ran.
+
+The corpus is 8d62b0a's crates/, web/, scripts/, Cargo.toml and Cargo.lock,
+by `git archive` into /tmp/v1uiaudit1/prod-8d62b0a (214 files). apps/ is
+left out: the range changed nothing there (`git diff --stat 8d8beb2 8d62b0a
+-- apps`: empty), and a scoped dry-report compares within its scope alone
+(I12).
+- `code index . --corpus-id prod-8d62b0a`: 3031 chunks in 528 s, under a
+  load of 35-52 (index.out).
+- `refresh`: rust, 16083 symbols and 93699 references; typescript and python
+  "skipped (export failed)" (I4). It first said "prod-8d62b0a is not
+  registered", then rebuilt in-process (I29) (refresh.out).
+
+### (2) Clones (`code dry-report`)
+
+The range touched three crate dirs: crates/svrngs-node, crates/svrngs and
+web (`git diff --stat 8d8beb2 8d62b0a -- crates apps web scripts bridge`).
+Each was reported at 0.95 and 0.90, with the two crates' tests/
+(/tmp/v1uiaudit1/clean-*.md). Whether a side was added in the range is `git
+blame` at 8d62b0a over each side's lines against 8d8beb2
+(scripts/blame.sh; blame-clusters.out).
+
+| scope | locations | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---:|---:|---:|---:|---|
+| crates/svrngs-node/ | 566 | 2 | 0 | 9 | 2, both one span inside another (I32) |
+| crates/svrngs/ | 70 | 0 | 0 | 0 | — |
+| web/ | 103 | could-not-judge (I4) | 0 | 3 | 1, two thin wrappers over one `dial` |
+| crates/svrngs-node/tests/ | 0 | could-not-judge (I19) | could-not-judge | could-not-judge | — |
+| crates/svrngs/tests/ | 0 | could-not-judge (I19) | could-not-judge | could-not-judge | — |
+
+The clusters with a side the range added:
+
+| tier | its side | its other side | read |
+|---|---|---|---|
+| near 0.950 | `running` — home/home.js:139-163 (e2f6b30, 719150d) | `look` — home.js:142-162 | `look` is the function nested in `running`, so the tool scored a span against the span it holds (I32). Not a clone. |
+| near 0.944 | `door` — home/question.js:88-102 (8bf344c) | `judge` — question.js:90-100 | `judge` is the closure `door` returns, nested in it (I32). Not a clone. |
+| near 0.906 | `connect` — web/src/lib.rs:293-301 (b1c330b, 6b40abb) | `connect_to_join` — lib.rs:301-309 | Two exported wrappers of one line each over `dial` (lib.rs:311), differing in protocol and cap. The spans overlap at :301 and take in each one's doc. The shared body is already one function. No finding. |
+
+The other clusters, none with a side in the range, are events-auto-3's
+again: blob_tests.rs `flush` == relay_tests.rs (test code, I8, #152);
+api.rs `addr` ×2; the seven near pairs in sign_in.rs, synced.rs, redeem.rs,
+choices.rs, rail.rs, ring_sync/tests.rs and lend.rs; and web's app.js
+`uses`/`choicesOf` (:289-311, 2 lines of 6b40abb inside, the pair as before,
+I32) and lend.js `cookieFor`/`keepJar` (blame: e502de9 alone).
+
+**The line-window pass.** It is /tmp/v1uiaudit1/scripts/windows.py:
+- 8 whitespace-normalized lines, with blanks, lone closers and `//` lines
+  dropped;
+- overlapping hits merged to spans;
+- a span counts as new when blame at 8d62b0a puts a line of either side in
+  the range (scripts/newspans.sh).
+
+It ran over the node's and the command's src and tests, web/src, web/tests
+and web/*.js: 126 files at 8d62b0a. The result: **136 window hits, 46
+spans, 1 new** (windows.out). Both verdicts were seen: 45 spans read old.
+
+| new span | read |
+|---|---|
+| tests/browser/main.rs:2619-2628 == :2761-2770 (9c2817d, 7835c25) | The door's four cells read, sorted and asserted twice, once for the home page and once for the group's page, which draw it in one wording (question.js `door`). **Moved to one, `drew_the_door` (main.rs:2600), in 9d2d904.** Both tests were green in both engines, and a planted wrong cell failed all four. |
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges 8d8beb2..8d62b0a -- crates apps
+web scripts bridge` were matched against `(struct|enum|trait|type|class)\s+[A-Z]\w*`
+(new-types.out). They give:
+- `Lending`, `Namesake` and `Naming`, new;
+- `Signs`, `Share` and `ShareRefusal`, moved from the command to the node in
+  586e32d: their removed lines are in removed-types.out;
+- the alias `Made`, given a third field.
+
+`converge noun` was run for each (nouns.out). One noun has more than one
+definition:
+
+| noun | definitions | read |
+|---|---|---|
+| `Lending` | crates/svrngs-node/src/node.rs:798 (`pub struct Lending`, a lend as a member is told it: person, key, relay, the offer; before the range); home.rs:281 (private, the `POST /running` body: port, name, kind; 719150d). Both are a line early (I1): :799 and :282. | Two things under one name in one crate (AGENTS.md 8). **The page's one was renamed `ToLend` in 89224c8.** serde reads fields, so the body taken is the same. the_home_page_lends_what_runs_here was green in both engines. |
+
+`Signs`, `Share`, `ShareRefusal`, `Namesake`, `Naming` and `Made` each have
+one definition. The command keeps no copy of the three it moved, so the
+move left no fork.
+
+### Reading the range
+
+Every hunk of product src the range changed was read (`git diff 8d8beb2
+8d62b0a -- crates web`). The look's CSS and the browser tests were read only
+for clones.
+
+- **One decider** (AGENTS.md 8).
+  - **A group sharing a name is written twice, in two languages** (#157):
+    - the command, cli.rs:1103 and `namesakes_said` :1321;
+    - the home page, home.js:46-47 over question.js `whose` :70 and `day`
+      :66.
+
+    Each cites the other as its source, and they already differ. The command
+    prints "Sam's" with a straight apostrophe and the date by chrono's "%-d
+    %b". The page prints "Sam’s" with a curly one and the date by the
+    browser's locale.
+  - **The index's "Now" and how a lend opens are written once per page**
+    (#158): home.js:102 and :104, and app.js:382, each with `l.limit &&
+    l.using >= l.limit ? 'full' : 'on'` and `signs_in ? ', signing you in
+    once'`. 8bf344c moved the door's pieces into question.js so both pages
+    draw it in one wording; the index rows stayed apart.
+  - The rest is fine. The name rule is `group::called` alone (group.rs:306),
+    which `named` and `namesakes` both ask, and the command asks
+    `group::namesakes` as the page does (cli.rs:1449). The probe and the
+    table are in the node only (share.rs), and the command asks them there.
+    `LINK_WITHIN` has one home (dial.rs:44), which the page reaches.
+- **Never silently substitute** (AGENTS.md 6; fence 2).
+  - **`Offered::signs_in` reads an absence as no** (#159). lend.rs:271-274
+    has `#[serde(default)]`, "Absent from a computer before, read as no", and
+    door.rs:518 writes it. Two pages then say how a lend opens without its
+    sign-in, though the lender's computer never said so. Twelve lines above,
+    lend.rs:258-259 holds `upload` to the rule this breaks: "an answer that
+    leaves it out is not one, never read as none".
+  - **The phone draws no door, and says nothing, when its answer names
+    nobody** (#162). This is web/app.js:375, `people ? door(people) :
+    [el('p'), () => {}]`, for a computer before v1ui-door (d). The page
+    neither lights nor draws anyone off, which is better than drawing an
+    empty door. But who is on now is not known, and the page does not say
+    so.
+  - A computer that did not answer is drawn off by its person
+    (question.js:95), and the phone says whose computer it reached the group
+    through (app.js:370). Both are as fence 2 asks.
+- **Glassbox** (AGENTS.md 1).
+  - **`GET /running` refuses without saying which read failed, or why**
+    (#160). home.rs:257-258 drops both errors, `lend::all`'s and
+    `spawn_blocking`'s, behind `let (Ok(all), Ok(found)) = … else`, and
+    warns "what this computer lends, or what runs on it, cannot be read".
+  - `Namesake::of`, `namesakes`, `place`'s `taken` (group.rs) and
+    `lend_one`'s two decisions are each traced.
+- **Closed sets** (AGENTS.md 9). **`POST /running` says one wording for
+  every failure of a closed set** (#161).
+  - home.rs:297's `let Ok(Json(ToLend { … })) = asked else` tells every
+    `JsonRejection` that "Its name and what it is are each one word": a body
+    that is not JSON, a missing port, and a port of 0, which `NonZeroU16`
+    refuses. None of these is traced.
+  - home.rs:321's `let Ok(lend) = share::lend_of(…) else` says every
+    `ShareRefusal` as `NothingListens`, by the invariant in the comment at
+    :320, and drops the refusal itself. `lend_of` traces each one
+    (share.rs), so the trace is right where the person's words might not be.
+- **Validate the instrument** (AGENTS.md 7). v1ui-lend's two failed checks
+  were kept as they ran (7007bb1, 0255842), and the next ran after the sweep
+  was moved behind a button (51ef36e). Their verdicts are those commits',
+  and are not judged again here. v1ui-lend-ask (b), its five runs, has not
+  run yet.
+- **The nouns gate** (fence 3). `python3 scripts/vocab_check.py` runs in
+  scripts/check.sh at the close.
+
+### Fixed here
+
+- 89224c8: `Lending` (home.rs) renamed `ToLend`.
+- 9d2d904: the doubled door assertion, now `drew_the_door`.
+
+Both keep behaviour and cost no counted line. The rest are not fixed here.
+Each of #157-#159 and #161-#162 changes what a person reads or what a
+refusal says, red first, and #158 and #160 each cost at least one counted
+line, and none is left (#80).
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 157 | 8 | crates/svrngs/src/cli.rs:1103 and `namesakes_said` :1321; crates/svrngs-node/src/home/home.js:46-47 (`namesakes`) over question.js:66 (`day`) and :70 (`whose`) | not fixed: either side moving changes words a person reads, and the command and the page are two languages | One sentence ("You're already in Trip (Sam's, since 3 Oct). This is a second group called Trip.") has two deciders, one in Rust and one in JS, each citing the other. They already disagree: the apostrophe (' and ’), and the date (chrono "%-d %b" and the browser's locale). One home would be the node answering the sentence, or its parts, with `/group` and `namesakes`, and both printing that. Red on the two outputs compared for one `Namesake`. |
+| 158 | 8 | crates/svrngs-node/src/home/home.js:102 and :104; web/app.js:382 | not fixed: one helper in question.js costs a counted line, and none is left (#80) | The index row's judgement of "full" or "on" (`l.limit && l.using >= l.limit`) and its "signing you in once" are written once per page. A change to when a lend is full lands on one page and not the other. One export from question.js, beside `door` and `row`, which both pages import already. |
+| 159 | 6 | crates/svrngs-node/src/lend.rs:271-274 (`#[serde(default)] pub signs_in: bool`, "read as no"); written at door.rs:518; read at home.js:102 and app.js:382 | not fixed: a change to the wire's shape, red first in both engines | An absence is defaulted. A lender's computer from before v1ui-door that does not say whether its program signs people in is read as saying it does not, and both pages say how it opens without the sign-in. lend.rs:258-259 holds `upload` to the opposite rule. `Option<bool>`, with the pages saying "may ask you to sign in" for `null`, would report it. |
+| 160 | 1, 6 | crates/svrngs-node/src/home.rs:257-258 | not fixed: one more trace field costs a counted line (#80) | `GET /running` refuses with a warn that says "what this computer lends, or what runs on it, cannot be read". It does not say which of the two failed, or the error: `lend::all`'s `io::Error` and the sweep's `JoinError` are both dropped by the let-else. |
+| 161 | 9, 6 | crates/svrngs-node/src/home.rs:297 (`let Ok(Json(ToLend { … })) = asked else`) and :320-321 (`let Ok(lend) = share::lend_of(…) else`) | not fixed: changes what a refusal says, red first | Two closed sets, each said in one wording. Every `JsonRejection` (a body that is not JSON, no port, a port of 0) is told that a name and kind must each be one word, and none is traced. Every `ShareRefusal` is said as nothing answering, by an invariant held in a comment, and its own words are dropped. A `match` on each, its refusals in a person's words, would make the invariant structural (AGENTS.md 10). Red on a port of 0. |
+| 162 | 6 | web/app.js:375 (`people ? door(people) : [el('p'), () => {}]`) | not fixed: words a person reads, red first in both engines | A phone answered by a computer from before v1ui-door (d) gets no `people`. It draws no door and says nothing of who is on now, so the absence is not reported. One line in the door's place would say that this computer cannot say who is on now. |
+| 80 | — | scripts/lean_check.py:33 BUDGET, :100 `n >= cap` | not fixed (operator's) | No line is left under the repository's cap (16567 / 16568), and 1 is left in svrngs-core (3149 / 3150). Of the +650, 253 are raised and 397 left: the ceiling is 16,965 (fence 7). |
+| 130, 132-145, 150, 152-156 | as recorded | as recorded | not fixed | Not reached by this range's findings. #155-#156 (web/src/lib.rs, lend.js) stand: the range's lib.rs change is `LINK_WITHIN` and `issuer_of` (:290-364), not :83-:249. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still one line early: node.rs:798 for :799, home.rs:281 for :282. |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)", so web/'s exact tier could not judge. |
+| I8 | 6 | dry-report scope | Still present: blob_tests.rs's `flush` reported as a production exact clone of relay_tests.rs's. |
+| I19 | 6 | dry-report, `tests/` scopes | Still present, said as could-not-judge. The line-window pass stood in, and found the range's one new span there. |
+| I29 | 6 | `refresh` over a corpus `code index` made | Still present: "prod-8d62b0a is not registered", then the in-process rebuild and exit 0. |
+| I32 | 7 | dry-report's near tier, JS and nested spans | Still present, and two more: home.js `running` over its nested `look`, and question.js `door` over its returned `judge`. |
