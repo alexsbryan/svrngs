@@ -2594,6 +2594,22 @@ fn from_a_phone(ada: &Node, person: &str, joining: u8) {
 /// could-not-judge, never a pass.
 const DRAWN_WITHIN: u64 = 10_000;
 
+/// The door as both pages draw it of one group, in one wording (v1ui-door
+/// (c), (d)): ada and cy on now, bo off, pia in from a phone, each cell's
+/// class and words, sorted by its words.
+fn drew_the_door(seen: &Value) {
+    let mut drawn: Vec<(String, String)> = serde_json::from_value(seen["drawn"].clone()).unwrap();
+    drawn.sort_by(|a, b| a.1.cmp(&b.1));
+    let want = [
+        ("on", "ada on now"),
+        ("off", "bo did not answer"),
+        ("on", "cy on now"),
+        ("phone", "pia in from a phone"),
+    ];
+    let want: Vec<(String, String)> = want.map(|(c, w)| (c.into(), w.into())).into();
+    assert_eq!(drawn, want, "{seen:#}");
+}
+
 in_both_engines!(
     /// **The door: who is on now** (v1ui-door (c); V1_UI_BUILD §3.1 and
     /// §7). On ada's computer, cy's computer answers, bo's never does, and
@@ -2616,16 +2632,7 @@ async fn the_door_draws_who_is_on_now(engine: Engine) {
     let args = json!({ "drawn": "#home .door li", "timed": [off], "text": true });
     let seen = home_page(engine, &ada, args).await;
     eprintln!("the home page's run: {seen:#}");
-    let mut drawn: Vec<(String, String)> = serde_json::from_value(seen["drawn"].clone()).unwrap();
-    drawn.sort_by(|a, b| a.1.cmp(&b.1));
-    let want = [
-        ("on", "ada on now"),
-        ("off", "bo did not answer"),
-        ("on", "cy on now"),
-        ("phone", "pia in from a phone"),
-    ];
-    let want: Vec<(String, String)> = want.map(|(c, w)| (c.into(), w.into())).into();
-    assert_eq!(drawn, want, "{seen:#}");
+    drew_the_door(&seen);
     let ms = seen["timed"][off].as_u64().unwrap_or(u64::MAX);
     if ms > DRAWN_WITHIN {
         let missed = format!("bo drawn off at {ms} ms, past {DRAWN_WITHIN}");
@@ -2758,16 +2765,7 @@ async fn the_group_s_page_draws_the_door_and_the_index(engine: Engine) {
         status.starts_with("You’re in house (sam’s, since ") && status.ends_with("), as pia"),
         "{seen:#}"
     );
-    let mut drawn: Vec<(String, String)> = serde_json::from_value(seen["drawn"].clone()).unwrap();
-    drawn.sort_by(|a, b| a.1.cmp(&b.1));
-    let want = [
-        ("on", "ada on now"),
-        ("off", "bo did not answer"),
-        ("on", "cy on now"),
-        ("phone", "pia in from a phone"),
-    ];
-    let want: Vec<(String, String)> = want.map(|(c, w)| (c.into(), w.into())).into();
-    assert_eq!(drawn, want, "{seen:#}");
+    drew_the_door(&seen);
     assert_eq!(
         seen["index"],
         json!([
