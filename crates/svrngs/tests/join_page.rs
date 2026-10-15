@@ -181,7 +181,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         "the page asks a newcomer's name:\n{seen:#}"
     );
     assert_eq!(
-        first["why"], "Someone in house already goes by Sam. If that’s you, add this phone from your computer: `svrngs link house --device` there makes a link for it. Else join under another name.",
+        first["why"], "Someone in house already goes by Sam. If that’s you, open your home page on your computer, press “Make a link to add your phone or another computer of yours”, and open that link here. Else join under another name.",
         "a name someone goes by is refused, and another asked (bash-person):\n{seen:#}"
     );
     assert!(in_house(&first["status"], "Pia"), "{seen:#}");

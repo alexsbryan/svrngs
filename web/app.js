@@ -103,7 +103,9 @@ function relayed(token) {
 
 // Each of `computers` that did not answer, by whose it is, the link's
 // computer by what it did when its person is not known (v1ui-reach (d)).
-const unanswered = (computers) => `${computers.map((c) => `${c ? `${c.person}’s computer` : 'The computer that sent your link'} did not answer.`).join(' ')} Try again later.`;
+// Whose computer the page reached or dialled, by its person when known.
+const whoseComputer = (c) => (c ? `${c.person}’s computer` : 'The computer that sent your link');
+const unanswered = (computers) => `${computers.map((c) => `${whoseComputer(c)} did not answer.`).join(' ')} Try again later.`;
 
 async function reach(dialling, away) {
   const timeout = new Promise((_, no) => setTimeout(() => no(new Error('no answer')), PATIENCE));
@@ -192,7 +194,7 @@ async function join(token, kept) {
     // is asked, saying whose it is and how to add this phone if it is theirs.
     const taken = (status, text) =>
       status === 409
-        ? `Someone in ${group.name} already goes by ${JSON.parse(text).error}. If that’s you, add this phone from your computer: \`svrngs link ${group.name} --device\` there makes a link for it. Else join under another name.`
+        ? `Someone in ${group.name} already goes by ${JSON.parse(text).error}. If that’s you, open your home page on your computer, press “Make a link to add your phone or another computer of yours”, and open that link here. Else join under another name.`
         : joining(status);
     try {
       await post(issuer, '/redeem', body, taken);
@@ -349,7 +351,7 @@ async function enter(group, asked) {
     trace(`PAGE: ${PEOPLE_LENDS} answered ${res.status}, refused ${why}`);
     await d.close();
     if (why === 'removed') throw new Said(`You are no longer in ${group.name}.`);
-    throw new Said('Your group’s computer said no.');
+    throw new Said(`${whoseComputer(via ?? (group.computers ?? []).find((c) => c.key === issuer_of(group.token)))} said no when you asked what ${group.name} lends.`);
   }
   // A computer before bash-first-minute (c) answers neither unheard nor refused.
   const { lent, unanswered, unheard = [], refused = [], removals, people, shelf } = await res.json();
@@ -360,8 +362,7 @@ async function enter(group, asked) {
   // A computer before v1ui-door names nobody and says nothing of signing
   // in: said so, by whose computer the page reached, never drawn as nobody
   // nor read as no (#159, #162).
-  const reached = via ?? computers.get(issuer_of(group.token));
-  const older = people ? undefined : reached ? `${reached.person}’s computer` : 'The computer that sent your link';
+  const older = people ? undefined : whoseComputer(via ?? computers.get(issuer_of(group.token)));
   // Who was removed or asked to be, shown to everyone in the group
   // (v1-keeper-office (b)); `null` when the computer could not read it.
   document.getElementById('removals').replaceChildren(
@@ -404,7 +405,7 @@ async function enter(group, asked) {
   // nobody lending said only when every computer did.
   const unlisted = [
     ...unanswered.map((p) => `${p}’s computer did not answer, so what they lend is not listed.`),
-    ...unheard.map((p) => `${p}’s computer has not heard of your group’s computer yet, so what they lend is not listed yet.`),
+    ...unheard.map((p) => `${p}’s computer has not heard of the computer you reached yet, so what they lend is not listed yet.`),
     ...refused.map((p) => `${p}’s computer answered without saying what they lend, so it is not listed.`),
   ];
   said.textContent = [

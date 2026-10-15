@@ -2386,7 +2386,7 @@ async fn the_group_s_page_says_a_refusal_apart_from_no_answer(engine: Engine) {
         seen["answer"],
         [
             "dee’s computer did not answer, so what they lend is not listed.",
-            "eve’s computer has not heard of your group’s computer yet, so what they lend is not listed yet.",
+            "eve’s computer has not heard of the computer you reached yet, so what they lend is not listed yet.",
             "cy’s computer answered without saying what they lend, so it is not listed.",
         ]
         .join("\n"),
