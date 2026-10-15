@@ -304,10 +304,11 @@ pub struct Offered {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub asks: Option<String>,
     /// Whether its lender's program signs each person in, once (mwp-1,
-    /// `sign_in`): the pages say so of how it opens (v1ui-door (c)). Absent
-    /// from a computer before, read as no.
+    /// `sign_in`): the pages say so of how it opens (v1ui-door (c)). None
+    /// from a computer before, which does not say, `null` on the wire then
+    /// and said so on the pages, never read as no (#159).
     #[serde(default)]
-    pub signs_in: bool,
+    pub signs_in: Option<bool>,
     /// The group that carries it, when its group's folder does (v1ui-shelf
     /// (a)): lent to that group alone, and one copy of it shown, whichever
     /// computer answers. Absent for a port's.

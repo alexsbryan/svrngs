@@ -123,8 +123,11 @@ export function table(g, lends, bring) {
 }
 
 // How lend `l` opens, `where`, and whether it is full now: the index's row
-// as both pages judge it, so a change to either lands on both (#158).
-export const opens = (l, where) => [`${where}${l.signs_in ? ', signing you in once' : ''}`, l.limit && l.using >= l.limit ? 'full' : 'on'];
+// as both pages judge it, so a change to either lands on both (#158). One
+// whose computer does not say whether it signs you in, a computer before
+// v1ui-door, is said so, never read as no (#159): `older`, whose computer
+// that is, its lender's unless the page knows it is another's.
+export const opens = (l, where, older = `${l.person}’s computer`) => [`${where}${l.signs_in ? ', signing you in once' : l.signs_in === false ? '' : `. ${older} runs an older svrngs, so this may ask you to sign in`}`, l.limit && l.using >= l.limit ? 'full' : 'on'];
 
 // A row of the index; `tag` th for its head.
 export const row = (cells, tag = 'td') => el('tr', '', ...cells.map((c) => el(tag, '', c)));

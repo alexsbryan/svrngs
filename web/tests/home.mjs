@@ -3,7 +3,7 @@
 // `args.ask`, its `/ask?lend=<label>&app=<label>`, it is read for its
 // heading, which the test holds to the one source (question.js).
 //
-//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>?, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true, "open"?: "<a link's words>"}'
+//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>?, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true, "open"?: "<a link's words>", "older"?: true}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
@@ -14,6 +14,21 @@ const { context, close } = await launch(args.engine);
 // Chromium reads its clipboard only when granted it (start-home: a lend's
 // address copied for a program).
 if (args.engine === 'chromium') await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+// With `older`, every lend in the group's answer as its lender's computer
+// said it before v1ui-door: not saying whether it signs you in, which this
+// computer passes on as `null` (lend.rs `Offered`; v1ui-findings (a)).
+// Planted where the page reads the answer: a route's own fetch would lose
+// the page's Sec-Fetch headers, which the home page answers only with.
+if (args.older) {
+  await context.addInitScript(() => {
+    const json = Response.prototype.json;
+    Response.prototype.json = async function () {
+      const body = await json.call(this);
+      if (body?.lent && body.unanswered) body.lent.forEach((l) => (l.signs_in = null));
+      return body;
+    };
+  });
+}
 const logs = [];
 context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
 try {

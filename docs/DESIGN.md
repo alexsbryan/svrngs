@@ -312,7 +312,10 @@ the route, and reading another app's acts.
     thing by its link; what it is, in its lender's word, its kind, never
     one of svrngs's own (`scripts/vocab_check.py` reads the pages'
     scripts too); whose; how it opens — in a tab, signing you in once
-    when its lender's program does (`signs_in`), its address for a
+    when its lender's program does (`signs_in`), or, when its lender's
+    computer is one before v1ui-door, which does not say (`null`, never
+    read as no; #159), that it runs an older svrngs, so this may ask
+    you to sign in — its address for a
     program, and on the TV too while the room door serves it; and on or
     full now, how it opens and whether it is full judged once for both
     pages (`question.js`, `opens`; #158). Each computer that did not say what it lends is a row of
@@ -322,7 +325,9 @@ the route, and reading another app's acts.
   lines (`question.js`; v1ui-door (d)), judged by the answer of the
   computer it reached: `/people/lends` answers the people standing beside
   what they lend, and whose computer did not answer that one is drawn
-  off. Each thing opens by its button, here, in the phone's tab; and the
+  off. A computer before v1ui-door answers no people: the door's place
+  says that computer runs an older svrngs, so it cannot say who is on
+  now, never an empty door (#162). Each thing opens by its button, here, in the phone's tab; and the
   group is headed by who made it and since when the phone joined it,
   `maker` and `since`, kept at the join (`web/store.js`), nothing for a
   group kept before.
@@ -1411,7 +1416,7 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,150 lines of code and the
-repository under 16,856 (`scripts/lean_check.py`; events-asleep raised it from 16,235 by 20, events-links by 33, events-principles by 17 and events-wait by 10, the operator's +80 for the events follow-ups all spent; v1ui-economize cut nothing, and of the operator's +650 for the v1 UI over 16,315, v1ui-reach raised it by 24, v1ui-door by 108, v1ui-lend by 121, v1ui-shelf by 286 and v1ui-findings by 2), the branch `folders`
+repository under 16,858 (`scripts/lean_check.py`; events-asleep raised it from 16,235 by 20, events-links by 33, events-principles by 17 and events-wait by 10, the operator's +80 for the events follow-ups all spent; v1ui-economize cut nothing, and of the operator's +650 for the v1 UI over 16,315, v1ui-reach raised it by 24, v1ui-door by 108, v1ui-lend by 121, v1ui-shelf by 286 and v1ui-findings by 4), the branch `folders`
 too since main merged into it at syp-5, counting 13,778 and `svrngs-core`
 2,719 there. A raise is the operator's, and is asked only after an
 economizing pass (the operator, 2026-10-13: "Every raise needs a pass

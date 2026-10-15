@@ -5,7 +5,7 @@
 // computer.
 //
 //   node web/tests/drive.mjs '{"engine": "chromium"|"webkit", "site": "<dir>",
-//     "key": "<64 hex>", "token": "<token>"}'
+//     "key": "<64 hex>", "token": "<token>", "older"?: true}'
 //
 // First it leaves the page while it loads, and opens it again.
 //
@@ -125,6 +125,23 @@ const server = await serve(args.site);
 const origin = `http://127.0.0.1:${server.address().port}/`;
 const { context, close } = await launch(args.engine);
 const away = await offline(context);
+// With `older`, the computer the page reaches answers as one before
+// v1ui-door does (v1ui-findings (a)): its people's lends with no `people`
+// and no lend's `signs_in`. Planted where the page reads the answer, as
+// the dial's Response is the page's own.
+if (args.older) {
+  await context.addInitScript(() => {
+    const json = Response.prototype.json;
+    Response.prototype.json = async function () {
+      const body = await json.call(this);
+      if (body?.lent && body.unanswered) {
+        delete body.people;
+        body.lent.forEach((l) => delete l.signs_in);
+      }
+      return body;
+    };
+  });
+}
 const logs = [];
 try {
   const page = await context.newPage();
@@ -154,6 +171,7 @@ try {
     // The door, each cell's class and words, and the index's rows, each
     // cell's words (v1ui-door (d)).
     drawn: [...document.querySelectorAll('.door li')].map((e) => [e.className, e.textContent]),
+    door: document.getElementById('door').textContent,
     index: [...document.querySelectorAll('#lent tr')].map((r) => [...r.cells].map((c) => c.textContent)),
     lines: window.__lines,
   }));

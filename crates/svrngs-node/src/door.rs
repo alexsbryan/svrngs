@@ -522,7 +522,7 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
             upload: lend.upload,
             reads: lend.reads,
             asks: lend.asks,
-            signs_in: lend.sign_in.is_some(),
+            signs_in: Some(lend.sign_in.is_some()),
             group: match lend.source {
                 Source::Carried(group) => Some(group),
                 Source::Port(_) => None,

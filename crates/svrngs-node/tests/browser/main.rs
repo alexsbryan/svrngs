@@ -2823,6 +2823,68 @@ async fn the_group_s_page_draws_the_door_and_the_index(engine: Engine) {
 }
 
 in_both_engines!(
+    /// **A computer from before v1ui-door, said as that on both pages**
+    /// (v1ui-findings (a); #159, #162). Cy lends a shelf in ada's group.
+    /// On ada's home page, cy's computer answers its lend as one before
+    /// v1ui-door does, not saying whether it signs you in, which ada's
+    /// computer passes on as `null`: the index says cy's computer runs an
+    /// older svrngs, so this may ask you to sign in. On pia's phone, the
+    /// computer that sent her link answers as one before, with no people
+    /// and no lend saying: the door's place says that computer cannot say
+    /// who is on now, and the index says the same of the sign-in. Planted,
+    /// watched failing: both pages as v1ui-findings (c) left them, the
+    /// absence read as no — "In a tab. Copy its address…" — and the
+    /// phone's door an empty paragraph.
+    an_older_computer_is_said_as_that_on_both_pages
+);
+async fn an_older_computer_is_said_as_that_on_both_pages(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let (ada_dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ada = node(ada_dir.path(), &relay, &signing(8)).await;
+    let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
+    lend(
+        cy_dir.path(),
+        "shelf",
+        page_origin("<!doctype html>").await.port(),
+    );
+    let args = json!({ "all": "#home table.index td", "older": true });
+    let seen = home_page(engine, &ada, args).await;
+    eprintln!("the home page's run: {seen:#}");
+    let cells: Vec<String> = serde_json::from_value(seen["all"].clone()).unwrap();
+    let how = "In a tab. cy’s computer runs an older svrngs, so this may ask you to sign in. Copy its address for a program";
+    assert!(cells.iter().any(|c| c == how), "{seen:#}");
+    from_a_phone(&ada, "pia", 7);
+    let args = json!({
+        "site": site,
+        "key": hex::encode(signing(7).to_bytes()),
+        "token": token(&signing(1), &relay),
+        "person": "pia",
+        "older": true,
+    });
+    let seen = drive(engine, "drive.mjs", args, None).await;
+    eprintln!("the group's page's run: {seen:#}");
+    let older = "The computer that sent your link runs an older svrngs";
+    assert_eq!(
+        seen["door"],
+        format!("{older}, so it cannot say who is on now."),
+        "{seen:#}"
+    );
+    assert_eq!(
+        seen["index"][1],
+        json!([
+            "cy’s shelf (k)",
+            "k",
+            "cy",
+            format!("Here, in this tab. {older}, so this may ask you to sign in"),
+            "on"
+        ]),
+        "{seen:#}"
+    );
+    drop((ada, cy));
+}
+
+in_both_engines!(
     /// **A link to invite someone, made on the page as `svrngs link` makes
     /// it** (start-home, from start-measure's ranked row 10: the act most
     /// asked of a newcomer's page was a terminal command, refused while

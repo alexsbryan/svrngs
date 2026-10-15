@@ -357,6 +357,11 @@ async function enter(group, asked) {
   // The computers that lend, kept to reach the group through next time.
   const computers = new Map(lent.map((l) => [l.key, { key: l.key, relay: l.relay ?? null, person: l.person }]));
   group = await store.opened({ ...group, computers: [...computers.values()] });
+  // A computer before v1ui-door names nobody and says nothing of signing
+  // in: said so, by whose computer the page reached, never drawn as nobody
+  // nor read as no (#159, #162).
+  const reached = via ?? computers.get(issuer_of(group.token));
+  const older = people ? undefined : reached ? `${reached.person}’s computer` : 'The computer that sent your link';
   // Who was removed or asked to be, shown to everyone in the group
   // (v1-keeper-office (b)); `null` when the computer could not read it.
   document.getElementById('removals').replaceChildren(
@@ -371,8 +376,9 @@ async function enter(group, asked) {
   // The door and the index as the home page draws them (question.js;
   // V1_UI_BUILD §3.1), judged by the answer this computer gave: whose
   // computer did not answer it is drawn off. A computer before v1ui-door
-  // (d) names nobody, so no door is drawn, never an empty one.
-  const [drawn, judge] = people ? door(people) : [el('p'), () => {}];
+  // (d) names nobody, so no door is drawn, never an empty one: the page
+  // says why instead.
+  const [drawn, judge] = people ? door(people) : [el('p', `${older} runs an older svrngs, so it cannot say who is on now.`), () => {}];
   judge({ unanswered });
   document.getElementById('door').replaceChildren(drawn);
   // The shelf, brought through the computer the page reaches (v1ui-shelf
@@ -386,7 +392,7 @@ async function enter(group, asked) {
     row(['What', 'What it is', 'Whose', 'How it opens', 'Now'], 'th'),
     ...once(lent).map((l) => {
       const button = Object.assign(el('button', named(l)), { onclick: () => open(group, key, lent, unanswered, l) });
-      return row([button, l.kind, l.person, ...opens(l, 'Here, in this tab')]);
+      return row([button, l.kind, l.person, ...opens(l, 'Here, in this tab', older)]);
     }),
   );
   const again = asked?.get('open') && lent.find((l) => label(l.key, l.name) === asked.get('open'));
