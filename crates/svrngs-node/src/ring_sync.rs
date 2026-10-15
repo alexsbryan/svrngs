@@ -731,25 +731,6 @@ pub fn answer(
     ))
 }
 
-/// cw-rails' peer client for the round: the same ten-second bound its gossip
-/// round dials with, built once. The build is deterministic, so caching a
-/// failure is correct rather than a lost retry. (svrngs: `pub`, for the node
-/// that hosts the round; upstream's one caller, `RailsDaemon`, did not come
-/// over.)
-pub fn peer_client() -> Result<&'static reqwest::Client, &'static str> {
-    static CLIENT: std::sync::OnceLock<Result<reqwest::Client, String>> =
-        std::sync::OnceLock::new();
-    CLIENT
-        .get_or_init(|| {
-            reqwest::Client::builder()
-                .timeout(Duration::from_secs(10))
-                .build()
-                .map_err(|e| e.to_string())
-        })
-        .as_ref()
-        .map_err(String::as_str)
-}
-
 /// `POST /v1/rail/append`, then wake the round: an act this node just signed
 /// is the one that most needs to go, and sixty seconds is the cadence for
 /// anti-entropy, not for a write (the daemon's `ring_write_nudge`, here).

@@ -166,11 +166,6 @@ impl Dialled {
         reached
     }
 
-    /// The port Alex's bridge to Sam prefers, as HEAD's `iroh.rs` derives it.
-    fn bridge(&self) -> u16 {
-        svrngs_node::iroh::preferred_bridge_port(&self.sam.endpoint().id(), svrngs_node::iroh::ALPN)
-    }
-
     async fn close(self) {
         self.sam.endpoint().close().await;
         self.alex.endpoint().close().await;
@@ -231,11 +226,11 @@ async fn plain(port: u16, host: &str, head: &str, body: &str) -> Option<String> 
 /// /lend/pad/probe-<port>`, `GET /choices/book`, and `POST /choices/book`
 /// saying yes for an app nobody named. None reaches Sam's door: Sam's pad is
 /// told no probe, no port answers Alex's choices, and no yes is kept.
-/// Planted: the bridge as it is (`guest.rs` `HttpBridge`, at `iroh.rs`
-/// `preferred_bridge_port`), which carries all three as Alex — so this is
-/// ignored, and read red, until arch-peer (d) takes it out.
+/// Planted: the bridge as it was at 965b52b (`guest.rs` `HttpBridge`, at
+/// `iroh.rs` `preferred_bridge_port`), which carried all three as Alex
+/// through port 30029 (`demo/runs/arch/2026-10-15-peer/a-red.out`), until
+/// arch-peer (d) took it out.
 #[tokio::test]
-#[ignore = "red until arch-peer (d): the bridge carries a keyless program to Sam's door as Alex"]
 async fn no_loopback_port_reaches_a_friends_door() {
     let _one = ONE_AT_A_TIME.lock().await;
     let two = Dialled::new().await;
@@ -272,9 +267,7 @@ async fn no_loopback_port_reaches_a_friends_door() {
     let reached = [two.reached(&ports), answered].concat();
     assert!(
         reached.is_empty(),
-        "a program holding no key reached Sam's door through a port on this computer \
-         (the port Alex's bridge to Sam prefers is {}):\n{}",
-        two.bridge(),
+        "a program holding no key reached Sam's door through a port on this computer:\n{}",
         reached.join("\n")
     );
     two.close().await;
@@ -299,10 +292,10 @@ enum Browser {
 /// /lend/pad/probe-<port>`, read if the browser lets it be, and `POST
 /// /choices/book` saying yes for an app nobody named, sent as a form posts
 /// so no preflight asks first — and none reaches Sam's door, read at the
-/// far end. Planted: the bridge as it is, which Chromium and WebKit both
-/// let a loopback page's requests through to, unread, and Chromium a page
-/// on the internet's once the person allows it — so ignored, and read red,
-/// until arch-peer (d).
+/// far end. Planted: the bridge as it was at 965b52b, which Chromium and
+/// WebKit both let a loopback page's requests through to, unread, and
+/// Chromium a page on the internet's once the person allows it
+/// (`demo/runs/arch/2026-10-15-peer/a-red.out`), until arch-peer (d).
 async fn no_page_reaches_a_friends_door(browser: Browser) {
     let _one = ONE_AT_A_TIME.lock().await;
     let two = Dialled::new().await;
@@ -330,22 +323,20 @@ async fn no_page_reaches_a_friends_door(browser: Browser) {
     let page: serde_json::Value =
         serde_json::from_slice(&out.stdout).expect("the browser half's JSON line");
     let reached = two.reached(&ports);
-    let bridge = two.bridge();
     let seen: Vec<_> = page["asked"]
         .as_array()
         .expect("the ports asked")
         .iter()
         .filter(|a| {
-            a["port"] == bridge
-                || reached
-                    .iter()
-                    .any(|r| r.starts_with(&format!("{}:", a["port"])))
+            reached
+                .iter()
+                .any(|r| r.starts_with(&format!("{}:", a["port"])))
         })
         .collect();
     assert!(
         reached.is_empty(),
-        "a page at {} in {browser:?} reached Sam's door through a port on this computer \
-         (the port Alex's bridge to Sam prefers is {bridge}):\n{}\nwhat the page was let see there: {}",
+        "a page at {} in {browser:?} reached Sam's door through a port on this computer:\n{}\n\
+         what the page was let see there: {}",
         page["page"],
         reached.join("\n"),
         serde_json::to_string(&seen).unwrap()
@@ -354,19 +345,16 @@ async fn no_page_reaches_a_friends_door(browser: Browser) {
 }
 
 #[tokio::test]
-#[ignore = "red until arch-peer (d): the bridge carries a page's requests to Sam's door as Alex"]
 async fn no_page_in_chromium_reaches_a_friends_door() {
     no_page_reaches_a_friends_door(Browser::Chromium).await
 }
 
 #[tokio::test]
-#[ignore = "red until arch-peer (d): the bridge carries a page's requests to Sam's door as Alex"]
 async fn no_page_from_the_internet_in_chromium_reaches_a_friends_door() {
     no_page_reaches_a_friends_door(Browser::ChromiumPublic).await
 }
 
 #[tokio::test]
-#[ignore = "red until arch-peer (d): the bridge carries a page's requests to Sam's door as Alex"]
 async fn no_page_in_webkit_reaches_a_friends_door() {
     no_page_reaches_a_friends_door(Browser::Webkit).await
 }

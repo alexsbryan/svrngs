@@ -4,29 +4,22 @@
 //! key, hole-punching, optional relays). Upstream feature-gated it behind
 //! `iroh`; in svrngs it is the only transport, so nothing gates it.
 //!
-//! ## Shape: a localhost byte-tunnel to dial, hyper on the stream to serve
+//! ## Shape: hyper on the stream, both ways
 //!
-//! [`IrohTransport::base_url`] resolves a base URL, and every call
-//! site keeps its existing `reqwest` client — so the dialling half
-//! terminates iroh QUIC locally and hands HTTP a plain TCP socket:
-//!
-//! - Client side ([`IrohTransport`]): per-peer localhost
-//!   `TcpListener`; each accepted TCP connection opens one iroh
-//!   bi-stream to the peer (dialed by its Ed25519 key — the
-//!   [`Contact`]'s `key`) and copies bytes both ways.
+//! - Client side ([`IrohTransport::send`]): a request on a bi-stream of the
+//!   connection kept to a member, dialled by its Ed25519 key — the
+//!   [`Contact`]'s `key` — and read with hyper's HTTP/1 client, as the
+//!   phone's page reads one (`web/src/http.rs`).
 //! - Server side ([`IrohAcceptor`]): admits or closes each iroh
 //!   connection on its ALPN and the dialer's verified key, and serves
 //!   every bi-stream of an admitted one with hyper's HTTP/1 server and
 //!   the axum router its admit decision names — no loopback listener, and the dialer
 //!   reaches handlers as a [`Dialer`] request extension, never a header.
 //!
-//! Known upgrade path (deliberately NOT in the spike): serve hyper
-//! directly on iroh streams (drop the double-copy), carry the
-//! traffic class in the ALPN or a stream header so one acceptor can
-//! route to both daemon ports, and a tunnel-proxy sidecar for the
-//! raw-TCP `rpc-server` tensor traffic that this transport
-//! intentionally does not cover. (Upstream's words. The server side
-//! has taken the first; svrngs has one ALPN and no tensor traffic.)
+//! (svrngs, arch-peer: upstream's dialling half was a loopback port per
+//! peer, every call site's reqwest client pointed at it, and its "known
+//! upgrade path" was this. The port accepted any program on the computer
+//! and carried it to the peer as this computer's key, `tests/peer.rs`.)
 //!
 //! Upstream's `PeerTransport` port, `PeerContact`, `PeerEndpoint` and
 //! `TrafficClass` did not come over: there is one transport, so it is a
@@ -52,10 +45,10 @@ use std::sync::Arc;
 use std::time::Duration;
 
 pub use crate::alpn::{Alpn, ALPN};
-// The guest dialer and the one HTTP bridge live in `crate::guest`, as they
-// lived in `mesh_reach::guest` upstream (pb-reach-guest, phase-b-35);
-// re-exported so callers spell them `svrngs_node::iroh::`.
-pub use crate::guest::{build_relayed_endpoint, HttpBridge, RelayConfig};
+// The guest dialer lives in `crate::guest`, as it lived in
+// `mesh_reach::guest` upstream (pb-reach-guest, phase-b-35); re-exported so
+// callers spell it `svrngs_node::iroh::`.
+pub use crate::guest::{build_relayed_endpoint, RelayConfig};
 
 // Re-exported so callers build endpoints without declaring their own iroh
 // dependency — keeps the version pin in exactly one place.
@@ -127,8 +120,7 @@ impl Contact {
     }
 }
 
-/// Client half: resolves a peer's key to a localhost base
-/// URL bridged over iroh.
+/// Client half: a request to a member, dialled by its key.
 #[derive(Debug)]
 pub struct IrohTransport {
     endpoint: iroh::Endpoint,
@@ -139,38 +131,15 @@ pub struct IrohTransport {
     /// contact carries its own addrs, both are merged.
     #[expect(clippy::disallowed_types, reason = "the transport's address cache")]
     known_addrs: std::sync::Mutex<HashMap<[u8; 32], Vec<SocketAddr>>>,
-    /// One localhost bridge per peer, on the one [`ALPN`]. Each entry
-    /// remembers the dial info it was built with (`dial_key`) so a
-    /// dial-info change RETARGETS the bridge — a frozen target
-    /// kept dialing a restarted peer's dead ephemeral port forever
-    /// (the 2026-07-19 dual-restart heal deadlock's transport half).
-    #[expect(clippy::disallowed_types, reason = "the transport's bridge cache")]
-    bridges: tokio::sync::Mutex<HashMap<[u8; 32], CachedBridge>>,
     /// One connection per member a request is sent to ([`Self::send`]),
     /// kept while it stays open: each request is a bi-stream of it, as the
     /// phone's page sends one (`web/src/http.rs`), so a round dials a member
     /// once, not once a request (the ceiling's first round, every member
-    /// dialled, cost 0.19 s of processor at 965b52b, the next 0.024 s).
+    /// dialled, cost 0.19 s of processor at 965b52b, the next 0.024 s). One
+    /// that closes is let go, so a member that restarted at another
+    /// address is dialled anew where its contact says.
     #[expect(clippy::disallowed_types, reason = "the transport's connection cache")]
     conns: std::sync::Mutex<HashMap<[u8; 32], iroh::endpoint::Connection>>,
-}
-
-/// A cached bridge plus the normalized contact dial-info it targets.
-#[derive(Debug)]
-struct CachedBridge {
-    bridge: Arc<HttpBridge>,
-    dial_key: DialKey,
-}
-
-/// Normalized (relay_url, sorted direct addrs) — the parts of a
-/// [`Contact`] that determine where a bridge's iroh dials go.
-type DialKey = (Option<String>, Vec<SocketAddr>);
-
-fn dial_key_for(peer: &Contact) -> DialKey {
-    let mut addrs = peer.iroh_direct_addrs.clone();
-    addrs.sort();
-    addrs.dedup();
-    (peer.relay_url.clone(), addrs)
 }
 
 impl IrohTransport {
@@ -179,7 +148,6 @@ impl IrohTransport {
         Self {
             endpoint,
             known_addrs: std::sync::Mutex::new(HashMap::new()),
-            bridges: tokio::sync::Mutex::new(HashMap::new()),
             conns: std::sync::Mutex::new(HashMap::new()),
         }
     }
@@ -249,89 +217,6 @@ impl IrohTransport {
         );
         lookup.then_some(ea)
     }
-
-    /// Get or create the localhost TCP bridge for the peer,
-    /// dialing the target resolved from `peer`.
-    async fn bridge_for(&self, peer: &Contact) -> Option<SocketAddr> {
-        let key = *peer.key.as_bytes();
-        let dial_key = dial_key_for(peer);
-        let mut bridges = self.bridges.lock().await;
-        if let Some(cached) = bridges.get(&key) {
-            if cached.dial_key == dial_key {
-                return Some(cached.bridge.local_addr());
-            }
-        }
-        let Some(target) = self.endpoint_addr_for(peer) else {
-            // The fresh contact has no dialable path at all (no relay, no
-            // direct addrs). Nothing to retarget TO — drop any stale bridge
-            // rather than keep tunneling at an address the peer has left.
-            bridges.remove(&key);
-            return None;
-        };
-        if let Some(cached) = bridges.get_mut(&key) {
-            // The peer's dial info changed (typical: it
-            // restarted and its ephemeral iroh port moved). A frozen
-            // bridge would keep dialing the dead target forever — point
-            // this one at the fresh contact instead. Retargeting rather
-            // than rebuilding keeps the loopback port stable, which is
-            // what plain-TCP clients holding that address depend on (see
-            // `HttpBridge::retarget`); in-flight tunnels to the stale
-            // target were doomed either way.
-            cached.bridge.retarget(target);
-            cached.dial_key = dial_key;
-            let local_addr = cached.bridge.local_addr();
-            tracing::info!(
-                target: "transport",
-                peer = %hex::encode(&key[..4]),
-                bridge = %local_addr,
-                "iroh bridge: peer dial info changed — retargeted in place (port held)"
-            );
-            return Some(local_addr);
-        }
-        let bridge = HttpBridge::spawn_preferring(
-            self.endpoint.clone(),
-            target,
-            ALPN,
-            Some(preferred_bridge_port(&peer.key, ALPN)),
-            Some(crate::dial::DIAL_WITHIN),
-        )
-        .await
-        .ok()?;
-        let local_addr = bridge.local_addr();
-        bridges.insert(
-            key,
-            CachedBridge {
-                bridge: Arc::new(bridge),
-                dial_key,
-            },
-        );
-        Some(local_addr)
-    }
-
-    /// The peer's loopback base URL, bridged over iroh — upstream's
-    /// `PeerTransport::endpoints`, which answered at most one candidate on
-    /// this transport. `None` when the contact has no dialable path.
-    pub async fn base_url(&self, peer: &Contact) -> Option<String> {
-        let label = &peer.key.to_string()[..8];
-        let Some(local) = self.bridge_for(peer).await else {
-            tracing::debug!(
-                target: "transport",
-                transport = "iroh",
-                peer = %label,
-                "iroh: no dialable path in contact (no relay_url / iroh_direct_addrs) \
-                 and no address lookup — not dialable"
-            );
-            return None;
-        };
-        tracing::debug!(
-            target: "transport",
-            transport = "iroh",
-            peer = %label,
-            first = %format!("iroh:{local}→{label}"),
-            "transport: resolved"
-        );
-        Some(format!("http://{local}"))
-    }
 }
 
 impl IrohTransport {
@@ -367,7 +252,7 @@ impl IrohTransport {
 
 /// How long a request read whole waits for its answer, the dial included:
 /// the ten seconds the round's reqwest client was built with
-/// (`ring_sync.rs` `peer_client`), kept.
+/// (`ring_sync.rs` `peer_client` at 965b52b, cut with the bridge), kept.
 pub const ANSWERED_WITHIN: Duration = Duration::from_secs(10);
 
 /// A request on the stream: axum's, as the door and the origin carry one.
@@ -479,23 +364,6 @@ pub const NOT_ADMITTED: &[u8] = b"not admitted";
 /// How long a request with no answer waits for its connection's close: the
 /// acceptor closes as soon as the handshake is done.
 const CLOSED_WITHIN: Duration = Duration::from_secs(1);
-
-/// The loopback port a peer's bridge prefers, from its key and the ALPN —
-/// identity from essence (ARCH §7.5), never a counter or whatever the kernel
-/// handed out last time. 20000..=32767 sits below Linux's default ephemeral
-/// range (32768–60999), so a derived port is never one an unrelated socket
-/// was just given; a collision between two peers is a 1-in-12768 event per
-/// pair and is handled by the named fallback in
-/// [`HttpBridge::spawn_preferring`].
-pub fn preferred_bridge_port(pubkey: &PublicKey, alpn: &[u8]) -> u16 {
-    // FNV-1a: spread, not secrecy. The inputs are public.
-    let mut h: u64 = 0xcbf2_9ce4_8422_2325;
-    for b in pubkey.as_bytes().iter().chain(alpn.iter()) {
-        h ^= u64::from(*b);
-        h = h.wrapping_mul(0x0100_0000_01b3);
-    }
-    20_000 + (h % 12_768) as u16
-}
 
 /// The acceptor's answer to a connection, decided once per connection on its
 /// negotiated ALPN and the key its handshake verified.

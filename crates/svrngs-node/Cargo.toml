@@ -46,10 +46,8 @@ http-body-util = "0.1"
 tower = { version = "0.5", features = ["util"] }
 # The member door (U3) is hyper's HTTP/1 client to a lend's service, one
 # connection per request, so nothing between member and service is pooled,
-# retried or rewritten but what the door names ("client").
-# Ring sync (U1): the round posts each exchange with reqwest through the
-# loopback bridge; "json" reads the answer, as upstream's workspace enabled it.
-reqwest = { version = "0.12", default-features = false, features = ["json"] }
+# retried or rewritten but what the door names ("client"); and to a member,
+# a request on a bi-stream of the iroh connection (arch-peer).
 # A group's folders (gf-1, sy-1): the store, its provider and verified range
 # fetch, without the rpc default, over the lock's iroh 1.0.2.
 iroh-blobs = { version = "=0.103.0", default-features = false, features = ["fs-store"] }
@@ -65,6 +63,9 @@ svrngs-core = { workspace = true, features = ["test-support"] }
 # turn its test support on here.
 svrngs-node = { path = ".", features = ["test-support"] }
 tempfile = "3"
+# The tests' own HTTP client, to a node's record API and through a splice
+# (src/node/tests_support.rs); the product asks on the stream (arch-peer).
+reqwest = { version = "0.12", default-features = false, features = ["json"] }
 # The folders' tests (tests/folders.rs) hash and fill files with BLAKE3.
 blake3 = { workspace = true }
 tokio = { version = "1", features = ["full"] }

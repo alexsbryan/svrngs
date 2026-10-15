@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! How long a dial to a lend's computer waits to be answered (events-asleep):
-//! one constant for both dials, the transport's bridges a running computer
-//! dials every member's through (`iroh.rs`, `IrohTransport::base_url`) and a
+//! one constant for both dials, a running computer's to each member
+//! (`iroh.rs`, `IrohTransport::send`) and a
 //! phone's page's dial to a lender (`web/src/lib.rs` `Endpoint::dial` and
 //! `dial_lend`; the page compiles this file by `#[path]`). An asleep
 //! computer answers no dial, and iroh gave one up after 30 s on both sides,
@@ -51,8 +51,9 @@ pub const LINK_WITHIN: std::time::Duration = std::time::Duration::from_secs(10);
 /// answers is never that silent: three keep-alives may go unanswered and the
 /// fourth still keep it. iroh's own are 30 s and 5 s, so a phone holding a
 /// dial to a computer that froze, as a lid closing, was told only after 30 s
-/// (`demo/runs/wait/2026-10-14/`, the plant take). The page's alone: a
-/// computer's bridge dials anew for each request, so the cap bounds it.
+/// (`demo/runs/wait/2026-10-14/`, the plant take). A computer's connection
+/// to a member is held so too, since it is kept across requests
+/// (arch-peer, `iroh.rs` `dialled`).
 pub fn held() -> iroh::endpoint::QuicTransportConfig {
     let idle = iroh::endpoint::VarInt::from_u32(DIAL_WITHIN.as_millis() as u32);
     let held = iroh::endpoint::QuicTransportConfig::builder().max_idle_timeout(Some(idle.into()));

@@ -34,7 +34,7 @@ pub use svrngs_runtime::*;
 
 // The dialling half of sync, forked in U1 (docs/DESIGN.md §8, U1's
 // inventory): the sync bodies (`sovereign-peer-wire`), the one ALPN, the
-// relayed endpoint and the loopback bridge (`mesh-reach::guest`), and the
+// relayed endpoint (`mesh-reach::guest`; its loopback bridge cut, arch-peer), and the
 // client side of the dial-by-key transport (`commonwealth-transport::iroh`).
 // The ALPNs are svrngs-core's since u4-2, so a browser's page spells each as
 // the node does; re-exported, so `crate::alpn` reads as before.

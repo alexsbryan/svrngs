@@ -1,0 +1,5 @@
+test no_page_in_chromium_reaches_a_friends_door ... ok
+test no_page_from_the_internet_in_chromium_reaches_a_friends_door ... ok
+test no_page_in_webkit_reaches_a_friends_door ... ok
+test no_loopback_port_reaches_a_friends_door ... ok
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.86s

@@ -59,3 +59,12 @@ and every lend that asks nobody is opened as Alex with no app named, past
 the per-app scoping a lend's origin keeps (`origin.rs:20-28`). Finding #175
 in `ralph/REVIEW_FINDINGS.md`. arch-peer (d) takes the bridge out, and the
 four tests go green there.
+
+## After the cut (arch-peer (d))
+
+```
+cargo test -p svrngs-node --test peer     # d-green.out
+```
+
+All four green, none ignored: no port on this computer reached Sam's door,
+by a program or a page, in Chromium or WebKit. One run: not a rate.

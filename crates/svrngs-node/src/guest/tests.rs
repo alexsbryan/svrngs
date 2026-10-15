@@ -143,15 +143,13 @@ async fn a_loopback_only_endpoint_binds_loopback_alone() {
     );
 }
 
-/// There is ONE iroh HTTP bridge: `HttpBridge`'s accept loop is the only
-/// place in this leaf that opens a stream to a peer, and `pump` is defined
-/// once, so a dial rides the bridge instead of keeping a loop of its
-/// own. The needles are split so this file does not match itself.
-/// (svrngs, arch-peer (b): beside it, the request on the stream that
-/// replaces it, `iroh.rs` `on_stream`, until (d) takes the bridge out; and
-/// the tests' splice, `node/tests_support.rs`, behind `test-support`.)
+/// One place in the product opens a stream to a peer: a request on the
+/// stream, `iroh.rs` `on_stream` (arch-peer (d); upstream's was the
+/// bridge's accept loop, gone with it). Beside it the tests' splice,
+/// `node/tests_support.rs`, behind `test-support`. The needle is split so
+/// this file does not match itself.
 #[test]
-fn there_is_one_bridge_loop_and_one_pump() {
+fn one_place_opens_a_stream_to_a_peer() {
     fn rs_files(dir: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
         for entry in std::fs::read_dir(dir).unwrap() {
             let path = entry.unwrap().path();
@@ -181,21 +179,15 @@ fn there_is_one_bridge_loop_and_one_pump() {
             })
             .collect()
     };
-    let bridges = sites(concat!("open_bi", "()"));
+    let opened = sites(concat!("open_bi", "()"));
     assert_eq!(
-        bridges.len(),
-        3,
-        "one bridge loop, one request on the stream, one tests' splice: {bridges:?}"
+        opened.len(),
+        2,
+        "the request on the stream and the tests' splice: {opened:?}"
     );
+    assert!(opened.iter().any(|b| b.contains("iroh.rs")), "{opened:?}");
     assert!(
-        bridges.iter().any(|b| b.contains("tests_support.rs")),
-        "{bridges:?}"
+        opened.iter().any(|b| b.contains("tests_support.rs")),
+        "{opened:?}"
     );
-    assert!(
-        bridges.iter().any(|b| b.contains("guest.rs")),
-        "{bridges:?}"
-    );
-    assert!(bridges.iter().any(|b| b.contains("iroh.rs")), "{bridges:?}");
-    let pumps = sites(concat!("fn ", "pump("));
-    assert_eq!(pumps.len(), 1, "one pump, found {pumps:?}");
 }

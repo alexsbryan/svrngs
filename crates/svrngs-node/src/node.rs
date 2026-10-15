@@ -22,9 +22,9 @@
 //! **What the people of its groups lend is asked, not stored** (DESIGN §8,
 //! U3; u3-5): [`Node::lends`] asks every computer's key standing in a
 //! group the node holds, now, what its computer lends ([`crate::door`]'s `GET /lends`),
-//! and answers each lend with whose it is and the address on this
-//! computer's loopback that reaches it, through the dialler's bridge to its
-//! lender. A computer that does not say is named, its lends absent
+//! and answers each lend with whose it is and its origin on this
+//! computer's loopback ([`crate::origin`]), which reaches it on a request
+//! on the stream to its lender. A computer that does not say is named, its lends absent
 //! rather than stale, and by how ([`Unlisted`]): it did not answer, it
 //! closed the connection as not admitted — it has not heard this computer
 //! is in its group — or it answered with a refusal. A member asks the same of the computer it dials,
