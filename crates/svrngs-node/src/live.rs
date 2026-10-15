@@ -74,124 +74,53 @@ pub struct PeerDelivery {
 /// `PeerTransport` seam, and try them in order until one answers. Direct
 /// fan-out rather than iroh-gossip because at ring scale every pair already
 /// holds an authenticated connection (`ring-apps-shelf.md` §gossip, "default
-/// impl").
+/// impl"). (svrngs, arch-peer (c): a request on the stream to each, by its
+/// key, [`IrohTransport::fetch`], where upstream tried each address a
+/// loopback bridge answered with a reqwest client of its own.)
 pub async fn push_ephemeral(
     transport: &IrohTransport,
     peers: Vec<LivePeer>,
     namespace: &str,
     payload: &str,
 ) -> Vec<PeerDelivery> {
-    if peers.is_empty() {
-        return Vec::new();
-    }
-
-    let client = match reqwest::Client::builder()
-        .timeout(LIVE_PUSH_TIMEOUT)
-        .build()
-    {
-        Ok(c) => c,
-        Err(e) => {
-            tracing::warn!(error = %e, "rail live: reqwest build failed");
-            return peers
-                .into_iter()
-                .map(|m| PeerDelivery {
-                    node: m.node.clone(),
-                    name: m.name.clone(),
-                    delivered: false,
-                    error: Some(format!("local reqwest build failed: {e}")),
-                })
-                .collect();
-        }
-    };
-
     let envelope = serde_json::to_string(&LiveEnvelope {
         namespace: namespace.to_string(),
         payload: payload.to_string(),
     })
     .expect("a struct of two Strings always serializes");
-    let mut handles = Vec::with_capacity(peers.len());
-    for peer in peers {
-        let client = client.clone();
-        let envelope = envelope.clone();
-        let node = peer.node.clone();
-        let name = peer.name.clone();
-        // svrngs: `base_url` answers at most one, as ring_sync's round reads it.
-        let endpoints: Vec<String> = transport
-            .base_url(&peer.contact)
-            .await
-            .into_iter()
-            .collect();
-        handles.push(tokio::spawn(async move {
-            offer_peer(&client, &envelope, node, name, &endpoints).await
-        }));
-    }
-
-    let mut out = Vec::with_capacity(handles.len());
-    for h in handles {
-        match h.await {
-            Ok(result) => out.push(result),
-            Err(join_err) => {
-                tracing::warn!(error = %join_err, "rail live: peer task panicked");
-            }
-        }
-    }
-    out
+    let offers = peers
+        .into_iter()
+        .map(|peer| offer_peer(transport, &envelope, peer));
+    n0_future::join_all(offers).await
 }
 
-/// Try each transport-resolved endpoint for one peer; the first that answers
-/// wins. Candidate ordering is the `PeerTransport` seam's, so live traffic
-/// routes the way every other peer call on this daemon does.
-async fn offer_peer(
-    client: &reqwest::Client,
-    envelope: &str,
-    node: String,
-    name: Option<String>,
-    endpoints: &[String],
-) -> PeerDelivery {
-    let mut last_error = "no addresses advertised by peer".to_string();
-    for ep in endpoints {
-        let url = format!("{ep}/internal/ring/live");
-        let request = client
-            .post(&url)
-            .header(reqwest::header::CONTENT_TYPE, "application/json")
-            .body(envelope.to_string());
-        match request.send().await {
-            Ok(resp) if resp.status().is_success() => {
-                return PeerDelivery {
-                    node,
-                    name,
-                    delivered: true,
-                    error: None,
-                };
-            }
-            Ok(resp) if resp.status() == StatusCode::NOT_FOUND => {
-                last_error = format!(
-                    "{url}: 404 — peer is running an older daemon without \
-                     /internal/ring/live; rebuild + restart it to see cursors"
-                );
-                // Terminal for this peer: no other address routes differently.
-                break;
-            }
-            Ok(resp) => {
-                last_error = format!("{url}: {}", resp.status());
-                continue;
-            }
-            Err(e) => {
-                last_error = format!("{url}: {e}");
-                continue;
-            }
-        }
+/// Offer `envelope` to one peer, which has [`LIVE_PUSH_TIMEOUT`] to take it.
+async fn offer_peer(transport: &IrohTransport, envelope: &str, peer: LivePeer) -> PeerDelivery {
+    let offer = axum::http::Request::post("/internal/ring/live")
+        .header(axum::http::header::CONTENT_TYPE, "application/json")
+        .body(axum::body::Body::from(envelope.to_string()))
+        .expect("a fixed route and header");
+    let taken =
+        tokio::time::timeout(LIVE_PUSH_TIMEOUT, transport.fetch(&peer.contact, offer)).await;
+    let error = match taken {
+        Ok(Ok(a)) if a.status().is_success() => None,
+        // Terminal for this peer: no other address routes differently.
+        Ok(Ok(a)) if a.status() == StatusCode::NOT_FOUND => Some(
+            "404 — peer is running an older daemon without /internal/ring/live; \
+             rebuild + restart it to see cursors"
+                .to_string(),
+        ),
+        Ok(Ok(a)) => Some(a.status().to_string()),
+        Ok(Err(e)) => Some(e.to_string()),
+        Err(_) => Some(format!("not taken within {LIVE_PUSH_TIMEOUT:?}")),
+    };
+    if let Some(error) = &error {
+        tracing::debug!(node = peer.node, error, "rail live: peer not reached");
     }
-    tracing::debug!(
-        node,
-        endpoints = endpoints.len(),
-        error = %last_error,
-        "rail live: peer not reached"
-    );
     PeerDelivery {
-        node,
-        name,
-        delivered: false,
-        error: Some(last_error),
+        node: peer.node,
+        name: peer.name,
+        delivered: error.is_none(),
+        error,
     }
 }
