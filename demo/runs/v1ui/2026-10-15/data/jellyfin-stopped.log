@@ -1,0 +1,41 @@
+[10:37:25.278] [INF] [24] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user Ann-d4444e6114261e7f: 0/0
+[10:37:25.278] [INF] [24] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user c605f92f-f9d9-4424-853f-62f2cb1b3dbe
+[10:37:25.808] [INF] [24] Emby.Server.Implementations.HttpServer.WebSocketManager: WS 127.0.0.1 request
+[10:37:28.229] [INF] [16] Jellyfin.Api.Helpers.MediaInfoHelper: User policy for Ann-d4444e6114261e7f. EnablePlaybackRemuxing: True EnableVideoPlaybackTranscoding: True EnableAudioPlaybackTranscoding: True
+[10:37:28.665] [INF] [6] Emby.Server.Implementations.Session.SessionManager: User Ann-d4444e6114261e7f started playback of 'Test Pattern One' (svrngs 1)
+[10:37:29.120] [INF] [10] Emby.Server.Implementations.HttpServer.WebSocketManager: WS 127.0.0.1 closed
+[10:37:38.085] [INF] [24] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for Bo-b35ac75ed677e5e6 has succeeded.
+[10:37:38.085] [INF] [24] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user Bo-b35ac75ed677e5e6: 0/0
+[10:37:38.085] [INF] [24] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user 91629eb8-3464-4f76-8838-bb5a6534fbdb
+[10:37:38.554] [INF] [18] Emby.Server.Implementations.HttpServer.WebSocketManager: WS 127.0.0.1 request
+[10:37:40.918] [INF] [4] Jellyfin.Api.Helpers.MediaInfoHelper: User policy for Bo-b35ac75ed677e5e6. EnablePlaybackRemuxing: True EnableVideoPlaybackTranscoding: True EnableAudioPlaybackTranscoding: True
+[10:37:41.253] [INF] [20] Emby.Server.Implementations.Session.SessionManager: User Bo-b35ac75ed677e5e6 started playback of 'Test Pattern Two' (svrngs 1)
+[10:37:41.747] [INF] [6] Emby.Server.Implementations.HttpServer.WebSocketManager: WS 127.0.0.1 closed
+[10:37:48.267] [INF] [6] Jellyfin.Server.Implementations.Users.UserManager: Authentication request for Cy-dc27830ab51d0e87 has succeeded.
+[10:37:48.267] [INF] [6] Emby.Server.Implementations.Session.SessionManager: Current/Max sessions for user Cy-dc27830ab51d0e87: 0/0
+[10:37:48.267] [INF] [6] Emby.Server.Implementations.Session.SessionManager: Creating new access token for user a6459fb6-4324-4a1b-a146-f8f0d89b638d
+[10:37:48.776] [INF] [6] Emby.Server.Implementations.HttpServer.WebSocketManager: WS 127.0.0.1 request
+[10:37:51.049] [INF] [20] Jellyfin.Api.Helpers.MediaInfoHelper: User policy for Cy-dc27830ab51d0e87. EnablePlaybackRemuxing: True EnableVideoPlaybackTranscoding: True EnableAudioPlaybackTranscoding: True
+[10:37:51.362] [INF] [25] Emby.Server.Implementations.Session.SessionManager: User Cy-dc27830ab51d0e87 started playback of 'Test Pattern Three' (svrngs 1)
+[10:37:51.925] [INF] [22] Emby.Server.Implementations.HttpServer.WebSocketManager: WS 127.0.0.1 closed
+[10:37:51.925] [FTL] [25] Main: Unhandled Exception
+System.ObjectDisposedException: Cannot access a disposed object.
+Object name: 'Emby.Server.Implementations.Session.WebSocketController'.
+   at Emby.Server.Implementations.Session.WebSocketController.SendMessage[T](SessionMessageType name, Guid messageId, T data, CancellationToken cancellationToken)
+   at Emby.Server.Implementations.Session.SessionManager.<>c__DisplayClass85_0`1.<<SendMessageToSessions>g__GetTasks|0>d.MoveNext()
+   at System.Threading.Tasks.Task.WhenAll(IEnumerable`1 tasks)
+   at Emby.Server.Implementations.Session.SessionManager.SendMessageToSessions[T](IEnumerable`1 sessions, SessionMessageType name, T data, CancellationToken cancellationToken)
+   at Emby.Server.Implementations.Session.SessionManager.SendMessageToUserSessions[T](List`1 userIds, SessionMessageType name, Func`1 dataFn, CancellationToken cancellationToken)
+   at Emby.Server.Implementations.EntryPoints.UserDataChangeNotifier.UpdateTimerCallback(Object state)
+   at System.Threading.Tasks.Task.<>c.<ThrowAsync>b__124_1(Object state)
+   at System.Threading.QueueUserWorkItemCallback.Execute()
+   at System.Threading.ThreadPoolWorkQueue.Dispatch()
+   at System.Threading.PortableThreadPool.WorkerThread.WorkerThreadStart()
+   at System.Threading.Thread.StartCallback()
+Unhandled exception. System.ObjectDisposedException: Cannot access a disposed object.
+Object name: 'Emby.Server.Implementations.Session.WebSocketController'.
+   at Emby.Server.Implementations.Session.WebSocketController.SendMessage[T](SessionMessageType name, Guid messageId, T data, CancellationToken cancellationToken)
+   at Emby.Server.Implementations.Session.SessionManager.<>c__DisplayClass85_0`1.<<SendMessageToSessions>g__GetTasks|0>d.MoveNext()
+   at System.Threading.Tasks.Task.WhenAll(IEnumerable`1 tasks)
+   at Emby.Server.Implementations.Session.SessionManager.SendMessageToSessions[T](IEnumerable`1 sessions, SessionMessageType name, T data, CancellationToken cancellationToken)
+   at Emby.Server.Implementations.Session.SessionManager.SendMessageToUserSessions[T](List`1 userIds, SessionMessageType name, Func`1 dataFn, CancellationToken cancellationToken)
