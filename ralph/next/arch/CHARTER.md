@@ -58,6 +58,17 @@ charter disagree, they win, and the decision says so.
     (REVIEW-audit-v1ui-auto-3): all five are v1ui's code, so they come out
     of v1ui's unspent lines too.
 
+- **arch-peer's close, and the streaming test** (the operator, 2026-10-15).
+  The answer was "Close it, arch-stream owns it".
+  - arch-peer may close on a `scripts/check.sh` whose only red is
+    `a_page_speaks_http_through_the_door_streaming_both_ways`, provided
+    that test is red the same at the row's start (965b52b).
+  - Its `done` names the test and both reds, and every other step must have
+    passed. Never-ran is never accepted.
+  - arch-stream, the next row, owns the test.
+  - From arch-stream's close on, every row closes on check.sh at exit 0
+    again.
+
 ## Why
 
 The bar is AGENTS.md "Done": a raise is asked only after an economizing
