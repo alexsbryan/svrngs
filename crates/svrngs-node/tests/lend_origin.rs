@@ -716,11 +716,7 @@ async fn a_lend_s_computer_asleep_is_said_away_within_the_cap() {
 async fn a_stopped_lend_is_said_by_its_lender_as_a_page_to_a_tab_and_json_to_a_program() {
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
-    let stopped = tokio::net::TcpListener::bind("127.0.0.1:0")
-        .await
-        .unwrap()
-        .local_addr()
-        .unwrap();
+    let stopped = common::stopped();
     lends(alex_dir.path(), "telly", stopped.port(), ALEXS);
     lends(sam_dir.path(), "pad", stopped.port(), SAMS);
     let api = alex.api_addr();

@@ -592,12 +592,7 @@ async fn groups_that_cannot_be_read_are_said_so() {
 async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_other() {
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
-    // A port nothing listens on: bound, read and let go.
-    let silent = std::net::TcpListener::bind("127.0.0.1:0")
-        .unwrap()
-        .local_addr()
-        .unwrap()
-        .port();
+    let silent = common::stopped().port();
     for (dir, name, kind, reads, asks) in [
         (alex_dir.path(), "night", "night", &["media"][..], None),
         (alex_dir.path(), "telly", "media", &[], Some(WORDS)),

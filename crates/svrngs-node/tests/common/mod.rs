@@ -35,6 +35,19 @@ pub fn never_answers() -> (std::net::UdpSocket, Vec<SocketAddr>) {
     (socket, vec![at])
 }
 
+/// A port nothing listens on, as a stopped program's: bound, read and let
+/// go, so a connection to it is refused. One copy, where home.rs, door's
+/// sign_in.rs (twice) and lend_origin.rs each wrote it out
+/// (REVIEW-audit-v1ui-auto-3).
+#[allow(
+    dead_code,
+    reason = "each test binary compiles this file; only some stop a program"
+)]
+pub fn stopped() -> SocketAddr {
+    let free = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    free.local_addr().unwrap()
+}
+
 /// A bridge on this computer's loopback to `to`'s door on `alpn`,
 /// dialling as `key`: a member's, or a pass holder's.
 #[allow(

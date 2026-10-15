@@ -344,11 +344,7 @@ async fn two_people_are_each_signed_in_as_themselves_and_neither_receives_a_secr
 async fn a_sign_in_that_fails_or_answers_nonsense_refuses_the_request_never_carries_it() {
     let pair = Pair::new().await;
     let (origin, heads) = service().await;
-    let closed = TcpListener::bind("127.0.0.1:0")
-        .await
-        .unwrap()
-        .local_addr()
-        .unwrap();
+    let closed = common::stopped();
     for answers in [Some(Answers::Fails), Some(Answers::Nonsense), None] {
         let (hook, asked) = match answers {
             Some(a) => answerer(a).await,
@@ -389,11 +385,7 @@ async fn a_sign_in_that_fails_or_answers_nonsense_refuses_the_request_never_carr
 async fn a_stopped_lend_behind_its_sign_in_is_said_as_not_answering_by_its_lender_on_a_page() {
     let pair = Pair::new().await;
     let (up, _) = service().await;
-    let stopped = TcpListener::bind("127.0.0.1:0")
-        .await
-        .unwrap()
-        .local_addr()
-        .unwrap();
+    let stopped = common::stopped();
     let (no, _) = answerer(Answers::Fails).await;
     for (service, helper, kind) in [
         (up, stopped, "away"),
