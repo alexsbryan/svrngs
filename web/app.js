@@ -52,7 +52,7 @@ import init, {
   relay_of,
 } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
-import { door, el, named, once, question, removal, row, table, unlent, uses as used, whose } from './question.js?v=__VERSION__';
+import { door, el, named, once, opens, question, removal, row, table, unlent, uses as used, whose } from './question.js?v=__VERSION__';
 
 const heading = document.getElementById('status');
 const said = document.getElementById('response');
@@ -385,8 +385,8 @@ async function enter(group, asked) {
   list.replaceChildren(
     row(['What', 'What it is', 'Whose', 'How it opens', 'Now'], 'th'),
     ...once(lent).map((l) => {
-      const opens = Object.assign(el('button', named(l)), { onclick: () => open(group, key, lent, unanswered, l) });
-      return row([opens, l.kind, l.person, `Here, in this tab${l.signs_in ? ', signing you in once' : ''}`, l.limit && l.using >= l.limit ? 'full' : 'on']);
+      const button = Object.assign(el('button', named(l)), { onclick: () => open(group, key, lent, unanswered, l) });
+      return row([button, l.kind, l.person, ...opens(l, 'Here, in this tab')]);
     }),
   );
   const again = asked?.get('open') && lent.find((l) => label(l.key, l.name) === asked.get('open'));

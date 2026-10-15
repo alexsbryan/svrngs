@@ -371,16 +371,23 @@ fn lend_reading(dir: &Path, name: &str, port: u16, reads: &[&str]) {
 /// (`crates/svrngs-node/src/home/question.js`, which the home page and
 /// the group's page both load), asked of node (lean-4 (c)).
 fn question(app: [&str; 3], lend: [&str; 3]) -> String {
-    let source = repo().join("crates/svrngs-node/src/home/question.js");
-    let script = format!(
-        "const q = await import({:?}); const [a, l] = JSON.parse(process.argv[1]); console.log(q.question(a, l));",
-        format!("file://{}", source.display())
-    );
     let as_lend =
         |[person, name, kind]: [&str; 3]| json!({ "person": person, "name": name, "kind": kind });
+    let said = in_question("q.question(...args)", json!([as_lend(app), as_lend(lend)]));
+    said.as_str().unwrap_or_default().to_string()
+}
+
+/// `call`, an expression of question.js as `q` and of `args`, answered by
+/// node as JSON: the one source both pages draw their words from.
+fn in_question(call: &str, args: Value) -> Value {
+    let source = repo().join("crates/svrngs-node/src/home/question.js");
+    let script = format!(
+        "const q = await import({:?}); const args = JSON.parse(process.argv[1]); console.log(JSON.stringify({call}));",
+        format!("file://{}", source.display())
+    );
     let out = std::process::Command::new("node")
         .args(["--input-type=module", "-e", &script])
-        .arg(json!([as_lend(app), as_lend(lend)]).to_string())
+        .arg(args.to_string())
         .output()
         .expect("node runs");
     assert!(
@@ -388,7 +395,30 @@ fn question(app: [&str; 3], lend: [&str; 3]) -> String {
         "{}",
         String::from_utf8_lossy(&out.stderr)
     );
-    String::from_utf8_lossy(&out.stdout).trim().to_string()
+    serde_json::from_slice(&out.stdout).expect("node answers JSON")
+}
+
+/// **The index's row judged in one place** (v1ui-findings (c); #158): how
+/// a lend opens and whether it is full now are question.js's `opens`,
+/// which both pages draw the index from, so a change to either lands on
+/// both; neither page judges them itself. Planted, watched failing: the
+/// pages as v1ui-door left them, each with its own `l.using >= l.limit`
+/// and "signing you in once".
+#[test]
+fn the_index_s_row_is_judged_once_for_both_pages() {
+    for page in ["crates/svrngs-node/src/home/home.js", "web/app.js"] {
+        let text = std::fs::read_to_string(repo().join(page)).unwrap();
+        for judged in ["using >=", "signing you in"] {
+            assert!(!text.contains(judged), "{page} judges {judged:?} itself");
+        }
+        assert!(text.contains("opens(l, "), "{page} draws no row by `opens`");
+    }
+    let full = json!({ "person": "cy", "limit": 1, "using": 1, "signs_in": true });
+    let open = json!({ "person": "cy", "limit": null, "using": 4, "signs_in": false });
+    assert_eq!(
+        in_question("args.map((l) => q.opens(l, 'In a tab'))", json!([full, open])),
+        json!([["In a tab, signing you in once", "full"], ["In a tab", "on"]])
+    );
 }
 
 /// What the home page and the group's page say of an ask naming an app or

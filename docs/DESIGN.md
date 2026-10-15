@@ -314,7 +314,8 @@ the route, and reading another app's acts.
     scripts too); whose; how it opens — in a tab, signing you in once
     when its lender's program does (`signs_in`), its address for a
     program, and on the TV too while the room door serves it; and on or
-    full now. Each computer that did not say what it lends is a row of
+    full now, how it opens and whether it is full judged once for both
+    pages (`question.js`, `opens`; #158). Each computer that did not say what it lends is a row of
     its own, by how, so nothing is stale and nobody is left out.
 
   The group's page on a phone draws the same door and index from the same
@@ -1410,7 +1411,7 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,150 lines of code and the
-repository under 16,764 (`scripts/lean_check.py`; events-asleep raised it from 16,235 by 20, events-links by 33, events-principles by 17 and events-wait by 10, the operator's +80 for the events follow-ups all spent; v1ui-economize cut nothing, and of the operator's +650 for the v1 UI over 16,315, v1ui-reach raised it by 24, v1ui-door by 108, v1ui-lend by 121 and v1ui-shelf (a) and (b) by 196), the branch `folders`
+repository under 16,856 (`scripts/lean_check.py`; events-asleep raised it from 16,235 by 20, events-links by 33, events-principles by 17 and events-wait by 10, the operator's +80 for the events follow-ups all spent; v1ui-economize cut nothing, and of the operator's +650 for the v1 UI over 16,315, v1ui-reach raised it by 24, v1ui-door by 108, v1ui-lend by 121, v1ui-shelf by 286 and v1ui-findings by 2), the branch `folders`
 too since main merged into it at syp-5, counting 13,778 and `svrngs-core`
 2,719 there. A raise is the operator's, and is asked only after an
 economizing pass (the operator, 2026-10-13: "Every raise needs a pass
