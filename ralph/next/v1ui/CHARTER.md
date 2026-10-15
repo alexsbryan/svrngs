@@ -5,7 +5,7 @@ waiting on the operator. `NORTH_STAR.md` and `docs/principles/ARCH_PRINCIPLES.md
 are the compass; where they and this charter disagree, they win and the
 decision says so.
 
-## What the operator decided, 2026-10-14
+## What the operator decided, 2026-10-14 and 15
 
 - **The design.** "Based on the marketing copy -- what would you propose is
   the UI build that hits 80% of the use cases with 20% of the effort?",
@@ -34,6 +34,17 @@ decision says so.
 - **The house voice**: "Can we make sure the copy reflects the house voice?"
   (svrn-docs `VOICE.md`). New copy follows it (fence 9), and v1ui-voice
   rewrites what came before.
+- **The phone dials everyone at once** (2026-10-15): "Dial in parallel",
+  after v1ui-voice's check missed the 3.3 bar waiting out the link's asleep
+  computer. It is v1ui-race.
+- **What the run found, polished** (2026-10-15): "Yes, within the 89
+  left". v1ui-polish takes the run's findings 2 and 4 and the audit's
+  #163-#168 inside the +650, and stops at NEEDS_HUMAN.md if it needs more.
+- **Jellyfin from the page** (2026-10-15): "Page offers the helper". When
+  the table names a kind's sign-in helper and it answers, the page lends
+  that kind as `svrngs share --sign-in` does. Building and starting the
+  helper stays `apps/jellyfin/README.md`'s; svrngs starts and stops it
+  neither.
 - **The look is merged** (`efadec2`, from the branch `look`): every page
   wears `crates/svrngs-node/src/home/look.css`, by DESIGN §1's rule that
   nothing imitates anything else.
