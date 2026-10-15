@@ -416,8 +416,14 @@ fn the_index_s_row_is_judged_once_for_both_pages() {
     let full = json!({ "person": "cy", "limit": 1, "using": 1, "signs_in": true });
     let open = json!({ "person": "cy", "limit": null, "using": 4, "signs_in": false });
     assert_eq!(
-        in_question("args.map((l) => q.opens(l, 'In a tab'))", json!([full, open])),
-        json!([["In a tab, signing you in once", "full"], ["In a tab", "on"]])
+        in_question(
+            "args.map((l) => q.opens(l, 'In a tab'))",
+            json!([full, open])
+        ),
+        json!([
+            ["In a tab, signing you in once", "full"],
+            ["In a tab", "on"]
+        ])
     );
 }
 
