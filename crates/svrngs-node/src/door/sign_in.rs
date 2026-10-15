@@ -187,7 +187,7 @@ impl Signing {
         swap_headers(headers, &[STAND_IN.as_bytes()], own.as_bytes());
         headers.remove(header::ACCEPT_ENCODING);
         // No copy kept from before the person's script, or for another's.
-        if s.answer.script.is_some() && said(headers, header::ACCEPT).contains("text/html") {
+        if s.answer.script.is_some() && a_tab(headers) {
             headers.remove(header::IF_NONE_MATCH);
             headers.remove(header::IF_MODIFIED_SINCE);
         }
@@ -502,6 +502,13 @@ pub(crate) fn textual(headers: &HeaderMap) -> bool {
         || ["json", "xml", "mpegurl", "javascript"]
             .iter()
             .any(|e| t.ends_with(e))
+}
+
+/// Whether `headers` are a browser's tab asking for a page, by `Accept`:
+/// the one rule for svrngs's answer drawn as a page (door.rs `paged`) and
+/// for no copy kept from before a person's script (REVIEW_FINDINGS #170).
+pub(crate) fn a_tab(headers: &HeaderMap) -> bool {
+    said(headers, header::ACCEPT).contains("text/html")
 }
 
 /// What `headers` say as `name`, the first of it; empty when they say none.

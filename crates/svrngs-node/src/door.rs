@@ -279,7 +279,7 @@ struct Words(String);
 /// `Accept`; a program asking anything else is given its JSON (v1ui-polish
 /// (a)): the routes a person's tab reaches a lend by are layered by it.
 pub(crate) async fn paged(req: Request, next: axum::middleware::Next) -> Response {
-    let tab = sign_in::said(req.headers(), header::ACCEPT).contains("text/html");
+    let tab = sign_in::a_tab(req.headers());
     let mut answer = next.run(req).await;
     let Some(Words(words)) = answer.extensions_mut().remove::<Words>().filter(|_| tab) else {
         return answer;

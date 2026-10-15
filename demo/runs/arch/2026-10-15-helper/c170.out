@@ -1,0 +1,3 @@
+# #170, a move: `cargo test -p svrngs-node --test door`, then `--test lend_origin` (the tab's page and the sign-in's kept copy), tests unchanged
+test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 34.00s
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.46s
