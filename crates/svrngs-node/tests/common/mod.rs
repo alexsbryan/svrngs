@@ -97,3 +97,26 @@ impl std::io::Write for Said {
         Ok(())
     }
 }
+
+/// What `filter` traces while the guards live, kept to be read: one
+/// copy, where three tests in home.rs each wrote it out
+/// (REVIEW-audit-v1ui-auto-2), moved here for carried.rs's (v1ui-polish (c)).
+/// A second dispatcher kept alive: with one, tracing-core 0.1.36
+/// (callsite.rs:545, `has_just_one`) asks only the registering thread's,
+/// so a callsite another test's thread reaches first is cached unheard.
+#[allow(
+    dead_code,
+    reason = "each test binary compiles this file, only some read their trace"
+)]
+pub fn heard(filter: &str) -> (Said, (tracing::subscriber::DefaultGuard, tracing::Dispatch)) {
+    let said = Said::default();
+    let writer = said.clone();
+    let subscriber = tracing_subscriber::fmt()
+        .with_env_filter(filter)
+        .with_ansi(false)
+        .with_writer(move || writer.clone())
+        .finish();
+    let guard = tracing::subscriber::set_default(subscriber);
+    let two = tracing::Dispatch::new(tracing::subscriber::NoSubscriber::default());
+    (said, (guard, two))
+}

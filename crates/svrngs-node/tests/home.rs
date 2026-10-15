@@ -15,7 +15,7 @@ mod origins;
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use common::{loopback_sockets, Said};
+use common::{heard, loopback_sockets};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 use svrngs_core::pass::Label;
@@ -737,24 +737,6 @@ async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_
     );
     sam.endpoint().close().await;
     alex.endpoint().close().await;
-}
-
-/// What `filter` traces while the guards live, kept to be read: one
-/// copy, where three tests here each wrote it out (REVIEW-audit-v1ui-auto-2).
-/// A second dispatcher kept alive: with one, tracing-core 0.1.36
-/// (callsite.rs:545, `has_just_one`) asks only the registering thread's,
-/// so a callsite another test's thread reaches first is cached unheard.
-fn heard(filter: &str) -> (Said, (tracing::subscriber::DefaultGuard, tracing::Dispatch)) {
-    let said = Said::default();
-    let writer = said.clone();
-    let subscriber = tracing_subscriber::fmt()
-        .with_env_filter(filter)
-        .with_ansi(false)
-        .with_writer(move || writer.clone())
-        .finish();
-    let guard = tracing::subscriber::set_default(subscriber);
-    let two = tracing::Dispatch::new(tracing::subscriber::NoSubscriber::default());
-    (said, (guard, two))
 }
 
 /// **The page's link for a group this computer does not hold is refused,
