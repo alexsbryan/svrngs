@@ -491,7 +491,7 @@ async function opening(fragment) {
     if (!group && !asked) offer('');
     // A link into a lend on a computer keeping no group here, its person's
     // svrngs elsewhere on it: opened from its home page (events-links (c)).
-    if (!group && asked.has('open') && computer()) return (line('opens', location.href), show('This link opens in svrngs on your computer.', true));
+    if (!group && asked?.has('open') && computer()) return (line('opens', location.href), show('This link opens in svrngs on your computer.', true));
     if (!group) throw new Said('Open this page from your group’s link.');
     await enter(group, asked);
   } catch (e) {
