@@ -54,7 +54,7 @@ use crate::door::choices::{own_choices, own_choose, Said, Saying};
 use crate::door::{LendRefusal, PASS_HEADER, REFUSED_HEADER};
 use crate::lend::{self, Kind, LendName, Source::Port};
 use crate::node::Asking;
-use crate::share::{self, Share};
+use crate::share::{self, Share, ShareRefusal};
 
 /// The home page's host, before its port.
 const HOST: &str = "svrngs.localhost";
@@ -278,13 +278,14 @@ async fn running(State(at): State<Asking>) -> Response {
 }
 
 /// What the person lends from the page: a port, and for one the table
-/// does not know, its name and what it is in their words.
+/// does not know, its name and what it is in their words, each parsed
+/// apart so each is refused in its own (#161).
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct ToLend {
     port: NonZeroU16,
-    name: Option<LendName>,
-    kind: Option<Kind>,
+    name: Option<String>,
+    kind: Option<String>,
 }
 
 /// `POST /running`: the lend decided as `svrngs share` decides one
@@ -294,19 +295,29 @@ struct ToLend {
 async fn lend_one(
     State(at): State<Asking>,
     asked: Result<Json<ToLend>, JsonRejection>,
-) -> Response {
-    let refused = |why: &str| LendRefusal::Closed.say(StatusCode::BAD_REQUEST, why);
-    let Ok(Json(ToLend { port, name, kind })) = asked else {
-        return refused(
-            "Its name and what it is are each one word: letters and digits, with - or _ between.",
-        );
+) -> Result<Response, Response> {
+    // Each refusal in the person's words, traced with what refused it, the
+    // two closed sets met here each said apart (#161).
+    let refused = |why: &str, error: &dyn std::fmt::Display| {
+        tracing::debug!(target: "home", why, %error, "home: refused — not lent from the page");
+        LendRefusal::Closed.say(StatusCode::BAD_REQUEST, why)
     };
+    // What the page sent: a port that is none, 0 or past 65535, else a
+    // body the page never sends.
+    let Json(ToLend { port, name, kind }) = asked.map_err(|e| match e {
+        JsonRejection::JsonDataError(_) => refused("That is not something running on this computer: look again, then lend it from the list.", &e),
+        _ => refused("This computer could not read what the page sent: reload the page, then try again.", &e),
+    })?;
+    let one = "one word: letters and digits, with - or _ between.";
+    let name = name.as_deref().map(LendName::parse).transpose();
+    let name = name.map_err(|e| refused(&format!("Give it a name of {one}"), &e))?;
+    let kind = kind.as_deref().map(Kind::parse).transpose();
+    let kind = kind.map_err(|e| refused(&format!("Say what it is in {one}"), &e))?;
     let (known, dir) = (share::well_known_kind(port), &at.door().data_dir);
     tracing::debug!(target: "home", port, ?known, ?name, ?kind, "home: asked to lend what runs here");
+    let unknown = "Give it a name and say what it is first: svrngs does not know what runs there.";
     if known.is_none() && (name.is_none() || kind.is_none()) {
-        return refused(
-            "Give it a name and say what it is first: svrngs does not know what runs there.",
-        );
+        return Err(refused(unknown, &port));
     }
     let asked = Share {
         port,
@@ -319,24 +330,29 @@ async fn lend_one(
         sign_in: None,
         asks: None,
     };
-    // Its one refusal left: a kind is known or given above, and no sign-in.
-    let Ok(lend) = share::lend_of(&asked, share::listens, known) else {
-        return refused(&format!(
-            "Nothing answers at http://localhost:{port} now: start it, then lend it."
-        ));
-    };
+    // Each of the lend's refusals in a person's words: a kind is known or
+    // given above, and no sign-in asked, so only the first is met here.
+    let silent = format!("Nothing answers at http://localhost:{port} now: start it, then lend it.");
+    let no_sign_in = "Nothing answers at its sign-in now: start it, then lend it.";
+    let lend = share::lend_of(&asked, share::listens, known).map_err(|e| match e {
+        ShareRefusal::NothingListens(_) => refused(&silent, &e),
+        ShareRefusal::NoKind(_) => refused(unknown, &e),
+        ShareRefusal::NoSignIn(_) => refused(no_sign_in, &e),
+    })?;
     let stands = lend::read(dir, &lend.name).map(|had| had.is_some());
     tracing::debug!(target: "home", lend = %lend.name, ?stands, "home: lent from the page unless a lend of its name stands");
-    match stands.map(|stands| (!stands).then(|| lend::declare(dir, &lend, None))) {
-        Ok(Some(Ok(()))) => Json(shown(port, Some(&lend.kind), Some(&lend.name))).into_response(),
-        Ok(None) => refused(&format!(
-            "You already lend something called {}: give it another name.",
-            lend.name
-        )),
+    let declared = stands.map(|stands| (!stands).then(|| lend::declare(dir, &lend, None)));
+    let name = &lend.name;
+    Ok(match declared {
+        Ok(Some(Ok(()))) => Json(shown(port, Some(&lend.kind), Some(name))).into_response(),
+        Ok(None) => refused(
+            &format!("You already lend something called {name}: give it another name."),
+            name,
+        ),
         Err(e) | Ok(Some(Err(e))) => {
             LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
         }
-    }
+    })
 }
 
 /// What the person asks a link for: to invite someone to `group`, or,

@@ -787,3 +787,76 @@ async fn the_page_s_link_for_a_group_not_held_is_refused_and_traced() {
     );
     alex.endpoint().close().await;
 }
+
+/// **Lending from the page, each refusal said apart and traced**
+/// (v1ui-findings (b); #161): `POST /running`'s two closed sets, what the
+/// page sent (axum's `JsonRejection`) and the lend's own refusal
+/// (`ShareRefusal`), each said in its own words: a port of 0, which is
+/// nothing running here; a name that is not one word; what it is, not
+/// one word; a body that is not JSON; and nothing answering at a port.
+/// Each is traced with what was refused. Red on the plant the finding
+/// names: a port of 0, told as before that a name and what it is are
+/// each one word, and untraced.
+#[tokio::test]
+async fn lending_from_the_page_says_each_refusal_apart_and_traces_it() {
+    let said = Said::default();
+    let writer = said.clone();
+    let subscriber = tracing_subscriber::fmt()
+        .with_env_filter("home=debug")
+        .with_ansi(false)
+        .with_writer(move || writer.clone())
+        .finish();
+    let _said = tracing::subscriber::set_default(subscriber);
+    // A second dispatcher kept alive, as the #140 test's.
+    let _two = tracing::Dispatch::new(tracing::subscriber::NoSubscriber::default());
+    let dir = tempfile::tempdir().unwrap();
+    let alex = start(1, dir.path()).await;
+    let home = format!("svrngs.localhost:{}", alex.api_addr().port());
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
+    // A port nothing answers at: bound, then let go.
+    let free = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = free.local_addr().unwrap().port();
+    drop(free);
+    let asked = [
+        (
+            r#"{"port":0,"name":"pad","kind":"pad"}"#.to_string(),
+            "That is not something running on this computer: look again, then lend it from the list.",
+        ),
+        (
+            format!(r#"{{"port":{port},"name":"my pad","kind":"pad"}}"#),
+            "Give it a name of one word: letters and digits, with - or _ between.",
+        ),
+        (
+            format!(r#"{{"port":{port},"name":"pad","kind":"a pad"}}"#),
+            "Say what it is in one word: letters and digits, with - or _ between.",
+        ),
+        (
+            "port=8080".to_string(),
+            "This computer could not read what the page sent: reload the page, then try again.",
+        ),
+        (
+            format!(r#"{{"port":{port},"name":"pad","kind":"pad"}}"#),
+            &*format!("Nothing answers at http://localhost:{port} now: start it, then lend it."),
+        ),
+    ];
+    for (body, words) in &asked {
+        let got = ask(alex.api_addr(), "POST", &home, "/running", &own, body).await;
+        assert_eq!(
+            (got.status, got.json()["error"].as_str()),
+            (400, Some(*words)),
+            "{body}"
+        );
+    }
+    let log = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    let refused: Vec<&str> = (log.lines())
+        .filter(|l| l.contains("home: refused — "))
+        .collect();
+    assert_eq!(refused.len(), asked.len(), "each refusal traced: {log}");
+    assert!(
+        refused.iter().all(|l| l.contains(" error=")),
+        "each with what refused it: {log}"
+    );
+    assert!(refused[0].contains("expected a nonzero u16"), "{log}");
+    alex.endpoint().close().await;
+}
