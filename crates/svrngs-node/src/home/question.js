@@ -74,6 +74,11 @@ const day = (t) => new Date(t * 1000).toLocaleDateString(undefined, { day: 'nume
 // two of one name are told apart (#138): "sam’s, since Oct 14".
 export const whose = (g) => `${g.maker ? `${g.maker}’s` : 'yours'}${g.since ? `, since ${day(g.since)}` : ''}`;
 
+// The groups a new one shares its name with (/group, the node's one rule;
+// #138), each said as `whose`, in the command's words (cli.rs
+// `namesakes_said`): `verb` says it before the group is made or after.
+export const namesakes = (n, name, verb) => (n.length ? `You’re already in ${n.map((g) => `${g.name} (${whose(g)})`).join(' and ')}. ${verb} ${n.length > 1 ? 'another' : 'a second'} group called ${name}.` : '');
+
 // Each person once, of the rows /v1/rail/people gives a key each; two of
 // one name told apart by when each joined (bash-same-name), in the form
 // `svrngs remove --joined` takes (home.rs `WHEN`): this computer's time as

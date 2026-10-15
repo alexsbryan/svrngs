@@ -12,7 +12,7 @@
 // a folder opened (/folder) and a group made (/group, start-group). Its words are
 // DESIGN §1's: groups, people, what they lend, computer; its question and
 // what apps use and its removals are question.js's, the group's page's too.
-import { door, el, named, once, opens, question, removal, row, table, unlent, uses as used, whose } from './question.js';
+import { door, el, named, namesakes, once, opens, question, removal, row, table, unlent, uses as used, whose } from './question.js';
 
 const main = document.getElementById('home');
 const button = (text, act) => Object.assign(el('button', text), { onclick: act });
@@ -40,11 +40,6 @@ const label = (l) => new URL(l.origin).hostname.split('.')[0];
 // never read as not removed (ralph/REVIEW_FINDINGS.md #123).
 const lentIn = (g) => (g.removed === false ? get(`/v1/lends?namespace=${encodeURIComponent(g.id)}`).then((l) => l.lent, () => []) : []);
 
-
-// The groups a new one shares its name with (/group, the node's one rule;
-// #138), each said as question.js's `whose`, in the command's words (cli.rs
-// `namesakes_said`): `verb` says it before the group is made or after.
-const namesakes = (n, name, verb) => (n.length ? `You’re already in ${n.map((g) => `${g.name} (${whose(g)})`).join(' and ')}. ${verb} ${n.length > 1 ? 'another' : 'a second'} group called ${name}.` : '');
 
 // Each group's section, headed by its name and, so two of one name are
 // told apart, who made it and since when (#138); in its colour, derived

@@ -1320,7 +1320,7 @@ fn joined_of(raw: &str) -> Result<Joined, String> {
 
 /// The groups a new one shares its name with, each with who made it and
 /// since when this computer has held it (#138), as the home page says them
-/// (home.js `namesakes`): "Trip (Sam's, since 3 Oct)".
+/// (question.js `namesakes`): "Trip (Sam's, since 3 Oct)".
 fn namesakes_said(beside: &[group::Namesake]) -> String {
     let at = |t| chrono::DateTime::from_timestamp(t, 0).map(|t| t.with_timezone(&chrono::Local));
     let said = |g: &group::Namesake| {
