@@ -103,7 +103,7 @@ Press **Enter**. (Only if Sam started llama-server with `--api-key`, paste
 that key first.) Then it says:
 
 ```
-Lent llama-server (port 18089) to everyone in your groups, as many at once as want it. …
+You lend llama-server (port 18089) to everyone in your groups, as many at once as want it. …
 They cannot open /slots, /v1/stream, … : svrngs keeps these back whenever a llama-server is lent, since they show one person's use of it to the others or change it for everyone.
 svrngs is running here already, so they can open it now.
 `svrngs unshare llama-server` stops lending it.

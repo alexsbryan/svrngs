@@ -86,7 +86,7 @@ in its Authorization header, then press Enter (Enter alone for none)"*.
 Press **Enter**. It says:
 
 ```
-Lent events (port 65216) to everyone in your groups, as many at once as want it. …
+You lend events (port 65216) to everyone in your groups, as many at once as want it. …
 svrngs is running here already, so they can open it now.
 `svrngs unshare events` stops lending it.
 ```

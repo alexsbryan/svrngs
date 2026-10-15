@@ -115,7 +115,7 @@ pub const USAGE: &str = "\
 svrngs — keep what your group shares on your own computers.
 
   svrngs
-      Run for every group this computer is in. Leave it running.
+      Run for every group you are in. Leave it running.
 
   svrngs new <name> [--as <your name>] [--origin <url>] [--relay <name>]
       Make a group called <name> and print its link: send it to the people
@@ -556,7 +556,7 @@ pub enum Refusal {
     IssuerAway,
     #[error("cannot keep {0} on this computer (RUST_LOG=debug says why)")]
     Keep(Name),
-    #[error("this computer is in no group called {0}")]
+    #[error("you are in no group called {0} on this computer")]
     NoGroup(String),
     #[error("more than one group here is called {name}; say which by the start of its id: {}", ids.join(", "))]
     Ambiguous { name: String, ids: Vec<String> },
@@ -589,7 +589,7 @@ pub enum Refusal {
     Removal(String),
     #[error("{0} cannot be changed on this computer (RUST_LOG=debug says why)")]
     Unchanged(Name),
-    #[error("this computer is in no group, so a relay for its groups would let nobody through: join one first, or say --open to relay for everyone")]
+    #[error("you are in no group on this computer, so a relay for your groups would let nobody through: join one first, or say --open to relay for everyone")]
     RelayForNobody,
     #[error("the groups this computer is in cannot be read on it ({0}), so a relay for them could not tell whom to let through")]
     GroupsUnread(String),
@@ -1146,7 +1146,7 @@ impl std::fmt::Display for Said {
                 if groups.is_empty() {
                     writeln!(
                         f,
-                        "This computer is in no group yet: make one with `svrngs new <name>`."
+                        "You are in no group yet: make one on your home page, at the address below, or with `svrngs new <name>`."
                     )?;
                 } else {
                     let names: Vec<&str> = groups.iter().map(Name::as_str).collect();
@@ -1182,7 +1182,7 @@ impl std::fmt::Display for Said {
                     )?;
                 }
                 for person in &unlisted.unheard {
-                    writeln!(f, "{person}'s computer has not heard of this computer yet, so what they lend is not listed yet.")?;
+                    writeln!(f, "{person}'s computer has not heard of yours yet, so what they lend is not listed yet.")?;
                 }
                 for person in &unlisted.refused {
                     writeln!(f, "{person}'s computer answered without saying what they lend, so it is not listed.")?;
@@ -1200,9 +1200,9 @@ impl std::fmt::Display for Said {
                     return writeln!(f, "{} is carried in its group's folder.", lend.name);
                 };
                 match lend.limit {
-                    Some(n) => writeln!(f, "Lent {name} (port {port}) to everyone in your groups, up to {n} {} at once.",
+                    Some(n) => writeln!(f, "You lend {name} (port {port}) to everyone in your groups, up to {n} {} at once.",
                         if n.get() == 1 { "person" } else { "people" })?,
-                    None => writeln!(f, "Lent {name} (port {port}) to everyone in your groups, as many at once as want it. \
+                    None => writeln!(f, "You lend {name} (port {port}) to everyone in your groups, as many at once as want it. \
                         To let fewer in at once, change it on your home page, or `svrngs share {port} --limit <number>`.")?,
                 }
                 match accounts {
@@ -1266,7 +1266,7 @@ impl std::fmt::Display for Said {
                 }
                 writeln!(f, "`svrngs unshare {}` stops lending it.", lend.name)
             }
-            Said::Unshared(name) => writeln!(f, "Stopped lending {name}."),
+            Said::Unshared(name) => writeln!(f, "You no longer lend {name}."),
             Said::Removal {
                 group,
                 person,
@@ -1815,7 +1815,7 @@ async fn wait_online(node: &Node, tried: &[String]) {
         tracing::debug!(target: "cli", online, ?tried, "cli: waited for a relay");
         if !online && !tried.is_empty() {
             let secs = ONLINE_WAIT.as_secs();
-            eprintln!("svrngs: this computer has not reached {} in {secs} s, where its group reaches it; it goes on, and keeps trying.", tried.join(" or "));
+            eprintln!("svrngs: after {secs} s, this computer has not yet reached the server your groups find it through. It goes on, and keeps trying; until it does, they may not reach you (RUST_LOG=debug names the server).");
         }
     }
 }

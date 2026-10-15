@@ -78,7 +78,7 @@ lent() {
     no-ask) ana share $TASTE_PORT --name taste --kind taste --refuse /diary --limit 8 ;;
   esac
   touch "$R/ana/lent-taste"
-  say "taste lent ($how), no choice kept: $(grep Lent "$R/ana/share.out" | tail -1)"
+  say "taste lent ($how), no choice kept: $(grep 'You lend' "$R/ana/share.out" | tail -1)"
 }
 
 # Tonight's Picks as the check serves it: its links copied as files, and
@@ -136,7 +136,7 @@ up() {
   sleep 1
   sam share $PICKS_PORT --name tonights-picks --kind movie-night --reads jellyfin --reads taste --limit 8
   sam share $OTHER_PORT --name other --kind other --reads taste --limit 8
-  say "sam: $(grep Lent "$R/sam/share.out" | tail -2 | tr '\n' ' ')"
+  say "sam: $(grep 'You lend' "$R/sam/share.out" | tail -2 | tr '\n' ' ')"
   cp "$R/ana/share.out" "$OUT/ana-share.out"; cp "$R/sam/share.out" "$OUT/sam-share.out"
   # Ana's computer learns of those who joined before it by its ring round.
   for _ in $(seq 1 150); do

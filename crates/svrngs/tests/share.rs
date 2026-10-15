@@ -622,10 +622,9 @@ fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
     );
     running.until("Leave this running");
     assert!(
-        running
-            .seen
-            .iter()
-            .any(|l| l.starts_with("Lent pad (port") && l.contains("as many at once as want it")),
+        running.seen.iter().any(
+            |l| l.starts_with("You lend pad (port") && l.contains("as many at once as want it")
+        ),
         "{:?}",
         running.seen
     );
@@ -646,7 +645,7 @@ fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
     );
     assert!(
         said.iter()
-            .any(|l| l.starts_with("Lent box (port") && l.ends_with("up to 2 people at once.")),
+            .any(|l| l.starts_with("You lend box (port") && l.ends_with("up to 2 people at once.")),
         "{said:?}"
     );
     assert!(
@@ -781,7 +780,7 @@ fn share_4533_alone_lends_navidrome_asking_nothing_and_says_what_to_set() {
 
     assert!(
         seen.iter()
-            .any(|l| l.starts_with("Lent navidrome (port 4533)")),
+            .any(|l| l.starts_with("You lend navidrome (port 4533)")),
         "{seen:?}"
     );
     let set = seen
