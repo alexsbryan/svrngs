@@ -1,0 +1,4173 @@
+{
+ "people": {
+  "Ann": {
+   "as": "computer",
+   "film": "One",
+   "t0": 1792090097.655809,
+   "link": {
+    "ms": 61,
+    "line": "curl -fsSL http://localhost:61450/install.sh | sh -s -- 'http://localhost:61450/#<hidden>'",
+    "stopped": null,
+    "seen": {
+     "url": "http://localhost:61450/#<hidden>",
+     "words": "Opening your link…\n\nOn this computer, paste this line in a terminal: it gets svrngs, joins you, and opens your home page, with the group’s folder on your disk.\n\ncurl -fsSL http://localhost:61450/install.sh | sh -s -- 'http://localhost:61450/#<hidden>'\nCopy",
+     "password": 0,
+     "sign_in": 0
+    }
+   },
+   "line": {
+    "exit": 0,
+    "ms": 6318,
+    "said": [
+     "Getting svrngs for this computer from http://localhost:61450/get/svrngs-darwin-aarch64.tar.gz",
+     "Checked: svrngs-darwin-aarch64.tar.gz is the one the release lists, unchanged on its way here.",
+     "Installed svrngs in /tmp/v1ui-helper/ann/.local/bin.",
+     "To run svrngs yourself, type /tmp/v1ui-helper/ann/.local/bin/svrngs: your terminal does not look in /tmp/v1ui-helper/ann/.local/bin. Nothing else needs it.",
+     "You're in Elm Street, as Ann.",
+     "Elm Street's folder is /tmp/v1ui-helper/ann/svrngs/Elm Street: what anyone in Elm Street puts there reaches this computer, and what you put there reaches theirs.",
+     "",
+     "svrngs runs now, and whenever you log in (/tmp/v1ui-helper/ann/Library/LaunchAgents/sh.svrnme.svrngs.plist).",
+     "Your home page, the same address each time svrngs starts: http://svrngs.localhost:60858/"
+    ],
+    "open_asked": "http://svrngs.localhost:60858/",
+    "at": 6406
+   },
+   "home": {
+    "at": 6406,
+    "ms": 817,
+    "door": [
+     {
+      "name": "Priya",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Sam",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Ann",
+      "drawn": "on",
+      "says": "on now"
+     }
+    ],
+    "index": [
+     [
+      "What",
+      "What it is",
+      "Whose",
+      "How it opens",
+      "Now"
+     ],
+     [
+      "Open Events",
+      "Events",
+      "Elm Street",
+      "In a tab. Copy its address for a program",
+      "on"
+     ],
+     [
+      "Open Money",
+      "Money",
+      "Elm Street",
+      "In a tab. Copy its address for a program",
+      "on"
+     ],
+     [
+      "Open Priya’s jellyfin",
+      "jellyfin",
+      "Priya",
+      "In a tab. Copy its address for a program",
+      "on"
+     ]
+    ],
+    "seen": {
+     "url": "http://svrngs.localhost:60858/",
+     "words": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nElm Street (Sam’s, since 15 Oct)\nPriya\non now\nSam\non now\nAnn\non now\n\nElm Street’s folder is on this computer at /tmp/v1ui-helper/ann/svrngs/Elm Street\n\nOpen this folder\n\nMake a link to invite someone to Elm StreetMake a link to add your phone or another computer of yours\n\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Events\tEvents\tElm Street\tIn a tab. Copy its address for a program\ton\nOpen Money\tMoney\tElm Street\tIn a tab. Copy its address for a program\ton\nOpen Priya’s jellyfin\tjellyfin\tPriya\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nMoney is on the table.\n\nEvents is on the table.\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:60858/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>\n\nYou cannot leave a group yet: svrngs has no way to do it.",
+     "password": 0,
+     "sign_in": 0
+    }
+   },
+   "money": {
+    "at": 7288,
+    "presses": [
+     {
+      "pressed": "Say you were in on it",
+      "ms": 61,
+      "at": 29
+     },
+     {
+      "pressed": "Say you paid Priya $30.00",
+      "ms": 34,
+      "at": 96
+     }
+    ],
+    "shown": [
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:60858/",
+      "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\n\nNobody owes anybody.\n\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Priya. Say you were in on it\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:60858/",
+      "words": "Money\n\nYou owe $30.00.\n\nWho pays whom\nYou pay Priya $30.00. Say you paid Priya $30.00\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:60858/",
+      "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\n\nNobody owes anybody.\n\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     }
+    ],
+    "open": {
+     "ms": 109
+    },
+    "square": {
+     "ms": 132
+    },
+    "seen": {
+     "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:60858/",
+     "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\n\nNobody owes anybody.\n\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+     "password": 0,
+     "sign_in": 0
+    },
+    "done_at": 7552
+   },
+   "library": {
+    "at": 7552,
+    "open": {
+     "ms": 2864
+    },
+    "shown": {
+     "url": "http://jxjxtj87mhuxnmdgcntq298cqa6wh66taafasa01t9ql6pddflgtbbq3n1prdr.localhost:60858/web/#/login?serverid=1dc9c520744b4009818cbfe58ec7e335&url=%2Fhome",
+     "words": "Please sign in\nUser\nPassword\nRemember Me\nSign In\nUse Quick Connect\nForgot Password",
+     "password": 1,
+     "sign_in": 2
+    },
+    "stopped": "asked to sign in, with nothing of theirs to type",
+    "seen": {
+     "url": "http://jxjxtj87mhuxnmdgcntq298cqa6wh66taafasa01t9ql6pddflgtbbq3n1prdr.localhost:60858/web/#/login?serverid=1dc9c520744b4009818cbfe58ec7e335&url=%2Fhome",
+     "words": "Please sign in\nUser\nPassword\nRemember Me\nSign In\nUse Quick Connect\nForgot Password",
+     "password": 1,
+     "sign_in": 2
+    },
+    "done_at": 10523
+   }
+  },
+  "Bo": {
+   "as": "computer",
+   "film": "Two",
+   "t0": 1792090109.095883,
+   "link": {
+    "ms": 67,
+    "line": "curl -fsSL http://localhost:61450/install.sh | sh -s -- 'http://localhost:61450/#<hidden>'",
+    "stopped": null,
+    "seen": {
+     "url": "http://localhost:61450/#<hidden>",
+     "words": "Opening your link…\n\nOn this computer, paste this line in a terminal: it gets svrngs, joins you, and opens your home page, with the group’s folder on your disk.\n\ncurl -fsSL http://localhost:61450/install.sh | sh -s -- 'http://localhost:61450/#<hidden>'\nCopy",
+     "password": 0,
+     "sign_in": 0
+    }
+   },
+   "line": {
+    "exit": 0,
+    "ms": 5705,
+    "said": [
+     "Getting svrngs for this computer from http://localhost:61450/get/svrngs-darwin-aarch64.tar.gz",
+     "Checked: svrngs-darwin-aarch64.tar.gz is the one the release lists, unchanged on its way here.",
+     "Installed svrngs in /tmp/v1ui-helper/bo/.local/bin.",
+     "To run svrngs yourself, type /tmp/v1ui-helper/bo/.local/bin/svrngs: your terminal does not look in /tmp/v1ui-helper/bo/.local/bin. Nothing else needs it.",
+     "You're in Elm Street, as Bo.",
+     "Elm Street's folder is /tmp/v1ui-helper/bo/svrngs/Elm Street: what anyone in Elm Street puts there reaches this computer, and what you put there reaches theirs.",
+     "",
+     "svrngs runs now, and whenever you log in (/tmp/v1ui-helper/bo/Library/LaunchAgents/sh.svrnme.svrngs.plist).",
+     "Your home page, the same address each time svrngs starts: http://svrngs.localhost:61289/"
+    ],
+    "open_asked": "http://svrngs.localhost:61289/",
+    "at": 5793
+   },
+   "home": {
+    "at": 5793,
+    "ms": 88,
+    "door": [
+     {
+      "name": "Priya",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Sam",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Ann",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Bo",
+      "drawn": "on",
+      "says": "on now"
+     }
+    ],
+    "index": [
+     [
+      "What",
+      "What it is",
+      "Whose",
+      "How it opens",
+      "Now"
+     ],
+     [
+      "Open Events",
+      "Events",
+      "Elm Street",
+      "In a tab. Copy its address for a program",
+      "on"
+     ],
+     [
+      "Open Money",
+      "Money",
+      "Elm Street",
+      "In a tab. Copy its address for a program",
+      "on"
+     ],
+     [
+      "Open Priya’s jellyfin",
+      "jellyfin",
+      "Priya",
+      "In a tab. Copy its address for a program",
+      "on"
+     ]
+    ],
+    "seen": {
+     "url": "http://svrngs.localhost:61289/",
+     "words": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nElm Street (Sam’s, since 15 Oct)\nPriya\non now\nSam\non now\nAnn\non now\nBo\non now\n\nElm Street’s folder is on this computer at /tmp/v1ui-helper/bo/svrngs/Elm Street\n\nOpen this folder\n\nMake a link to invite someone to Elm StreetMake a link to add your phone or another computer of yours\n\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Events\tEvents\tElm Street\tIn a tab. Copy its address for a program\ton\nOpen Money\tMoney\tElm Street\tIn a tab. Copy its address for a program\ton\nOpen Priya’s jellyfin\tjellyfin\tPriya\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nMoney is on the table.\n\nEvents is on the table.\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61289/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>\n\nYou cannot leave a group yet: svrngs has no way to do it.",
+     "password": 0,
+     "sign_in": 0
+    }
+   },
+   "money": {
+    "at": 5925,
+    "presses": [
+     {
+      "pressed": "Say you were in on it",
+      "ms": 67,
+      "at": 46
+     },
+     {
+      "pressed": "Say you paid Ann $10.00",
+      "ms": 44,
+      "at": 118
+     },
+     {
+      "pressed": "Say you paid Priya $10.00",
+      "ms": 73,
+      "at": 172
+     }
+    ],
+    "shown": [
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61289/",
+      "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\n\nNobody owes anybody.\n\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Priya. Say you were in on it\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61289/",
+      "words": "Money\n\nYou owe $20.00.\n\nWho pays whom\nYou pay Ann $10.00. Say you paid Ann $10.00\nYou pay Priya $10.00. Say you paid Priya $10.00\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61289/",
+      "words": "Money\n\nYou owe $10.00.\n\nWho pays whom\nYou pay Priya $10.00. Say you paid Priya $10.00\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61289/",
+      "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\n\nNobody owes anybody.\n\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     }
+    ],
+    "open": {
+     "ms": 116
+    },
+    "square": {
+     "ms": 248
+    },
+    "seen": {
+     "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61289/",
+     "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\n\nNobody owes anybody.\n\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+     "password": 0,
+     "sign_in": 0
+    },
+    "done_at": 6314
+   },
+   "library": {
+    "at": 6314,
+    "open": {
+     "ms": 2629
+    },
+    "shown": {
+     "url": "http://jxjxtj87mhuxnmdgcntq298cqa6wh66taafasa01t9ql6pddflgtbbq3n1prdr.localhost:61289/web/#/login?serverid=1dc9c520744b4009818cbfe58ec7e335&url=%2Fhome",
+     "words": "Please sign in\nUser\nPassword\nRemember Me\nSign In\nUse Quick Connect\nForgot Password",
+     "password": 1,
+     "sign_in": 2
+    },
+    "stopped": "asked to sign in, with nothing of theirs to type",
+    "seen": {
+     "url": "http://jxjxtj87mhuxnmdgcntq298cqa6wh66taafasa01t9ql6pddflgtbbq3n1prdr.localhost:61289/web/#/login?serverid=1dc9c520744b4009818cbfe58ec7e335&url=%2Fhome",
+     "words": "Please sign in\nUser\nPassword\nRemember Me\nSign In\nUse Quick Connect\nForgot Password",
+     "password": 1,
+     "sign_in": 2
+    },
+    "done_at": 8985
+   }
+  },
+  "Cy": {
+   "as": "computer",
+   "film": "Three",
+   "t0": 1792090118.24142,
+   "link": {
+    "ms": 59,
+    "line": "curl -fsSL http://localhost:61450/install.sh | sh -s -- 'http://localhost:61450/#<hidden>'",
+    "stopped": null,
+    "seen": {
+     "url": "http://localhost:61450/#<hidden>",
+     "words": "Opening your link…\n\nOn this computer, paste this line in a terminal: it gets svrngs, joins you, and opens your home page, with the group’s folder on your disk.\n\ncurl -fsSL http://localhost:61450/install.sh | sh -s -- 'http://localhost:61450/#<hidden>'\nCopy",
+     "password": 0,
+     "sign_in": 0
+    }
+   },
+   "line": {
+    "exit": 0,
+    "ms": 5716,
+    "said": [
+     "Getting svrngs for this computer from http://localhost:61450/get/svrngs-darwin-aarch64.tar.gz",
+     "Checked: svrngs-darwin-aarch64.tar.gz is the one the release lists, unchanged on its way here.",
+     "Installed svrngs in /tmp/v1ui-helper/cy/.local/bin.",
+     "To run svrngs yourself, type /tmp/v1ui-helper/cy/.local/bin/svrngs: your terminal does not look in /tmp/v1ui-helper/cy/.local/bin. Nothing else needs it.",
+     "You're in Elm Street, as Cy.",
+     "Elm Street's folder is /tmp/v1ui-helper/cy/svrngs/Elm Street: what anyone in Elm Street puts there reaches this computer, and what you put there reaches theirs.",
+     "",
+     "svrngs runs now, and whenever you log in (/tmp/v1ui-helper/cy/Library/LaunchAgents/sh.svrnme.svrngs.plist).",
+     "Your home page, the same address each time svrngs starts: http://svrngs.localhost:61782/"
+    ],
+    "open_asked": "http://svrngs.localhost:61782/",
+    "at": 5791
+   },
+   "home": {
+    "at": 5791,
+    "ms": 132,
+    "door": [
+     {
+      "name": "Cy",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Priya",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Sam",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Ann",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Bo",
+      "drawn": "on",
+      "says": "on now"
+     }
+    ],
+    "index": [
+     [
+      "What",
+      "What it is",
+      "Whose",
+      "How it opens",
+      "Now"
+     ],
+     [
+      "Open Events",
+      "Events",
+      "Elm Street",
+      "In a tab. Copy its address for a program",
+      "on"
+     ],
+     [
+      "Open Money",
+      "Money",
+      "Elm Street",
+      "In a tab. Copy its address for a program",
+      "on"
+     ],
+     [
+      "Open Priya’s jellyfin",
+      "jellyfin",
+      "Priya",
+      "In a tab. Copy its address for a program",
+      "on"
+     ]
+    ],
+    "seen": {
+     "url": "http://svrngs.localhost:61782/",
+     "words": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nElm Street (Sam’s, since 15 Oct)\nCy\non now\nPriya\non now\nSam\non now\nAnn\non now\nBo\non now\n\nElm Street’s folder is on this computer at /tmp/v1ui-helper/cy/svrngs/Elm Street\n\nOpen this folder\n\nMake a link to invite someone to Elm StreetMake a link to add your phone or another computer of yours\n\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Events\tEvents\tElm Street\tIn a tab. Copy its address for a program\ton\nOpen Money\tMoney\tElm Street\tIn a tab. Copy its address for a program\ton\nOpen Priya’s jellyfin\tjellyfin\tPriya\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nMoney is on the table.\n\nEvents is on the table.\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61782/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>\n\nYou cannot leave a group yet: svrngs has no way to do it.",
+     "password": 0,
+     "sign_in": 0
+    }
+   },
+   "money": {
+    "at": 5963,
+    "presses": [
+     {
+      "pressed": "Say you were in on it",
+      "ms": 103,
+      "at": 33
+     },
+     {
+      "pressed": "Say you paid Ann $5.00",
+      "ms": 265,
+      "at": 145
+     },
+     {
+      "pressed": "Say you paid Bo $5.00",
+      "ms": 78,
+      "at": 422
+     },
+     {
+      "pressed": "Say you paid Priya $5.00",
+      "ms": 77,
+      "at": 508
+     }
+    ],
+    "shown": [
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61782/",
+      "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\n\nNobody owes anybody.\n\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Priya. Say you were in on it\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61782/",
+      "words": "Money\n\nYou owe $15.00.\n\nWho pays whom\nYou pay Ann $5.00. Say you paid Ann $5.00\nYou pay Bo $5.00. Say you paid Bo $5.00\nYou pay Priya $5.00. Say you paid Priya $5.00\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61782/",
+      "words": "Money\n\nYou owe $10.00.\n\nWho pays whom\nYou pay Bo $5.00. Say you paid Bo $5.00\nYou pay Priya $5.00. Say you paid Priya $5.00\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61782/",
+      "words": "Money\n\nYou owe $5.00.\n\nWho pays whom\nYou pay Priya $5.00. Say you paid Priya $5.00\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61782/",
+      "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\n\nNobody owes anybody.\n\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     }
+    ],
+    "open": {
+     "ms": 235
+    },
+    "square": {
+     "ms": 593
+    },
+    "seen": {
+     "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61782/",
+     "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\n\nNobody owes anybody.\n\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+     "password": 0,
+     "sign_in": 0
+    },
+    "done_at": 6833
+   },
+   "library": {
+    "at": 6833,
+    "open": {
+     "ms": 3291
+    },
+    "shown": {
+     "url": "http://jxjxtj87mhuxnmdgcntq298cqa6wh66taafasa01t9ql6pddflgtbbq3n1prdr.localhost:61782/web/#/login?serverid=1dc9c520744b4009818cbfe58ec7e335&url=%2Fhome",
+     "words": "Please sign in\nUser\nPassword\nRemember Me\nSign In\nUse Quick Connect\nForgot Password",
+     "password": 1,
+     "sign_in": 2
+    },
+    "stopped": "asked to sign in, with nothing of theirs to type",
+    "seen": {
+     "url": "http://jxjxtj87mhuxnmdgcntq298cqa6wh66taafasa01t9ql6pddflgtbbq3n1prdr.localhost:61782/web/#/login?serverid=1dc9c520744b4009818cbfe58ec7e335&url=%2Fhome",
+     "words": "Please sign in\nUser\nPassword\nRemember Me\nSign In\nUse Quick Connect\nForgot Password",
+     "password": 1,
+     "sign_in": 2
+    },
+    "done_at": 10398
+   }
+  },
+  "Di": {
+   "as": "computer",
+   "film": "One",
+   "t0": 1792090129.0140522,
+   "link": {
+    "ms": 323,
+    "line": "curl -fsSL http://localhost:61450/install.sh | sh -s -- 'http://localhost:61450/#<hidden>'",
+    "stopped": null,
+    "seen": {
+     "url": "http://localhost:61450/#<hidden>",
+     "words": "Opening your link…\n\nOn this computer, paste this line in a terminal: it gets svrngs, joins you, and opens your home page, with the group’s folder on your disk.\n\ncurl -fsSL http://localhost:61450/install.sh | sh -s -- 'http://localhost:61450/#<hidden>'\nCopy",
+     "password": 0,
+     "sign_in": 0
+    }
+   },
+   "line": {
+    "exit": 0,
+    "ms": 14601,
+    "said": [
+     "Getting svrngs for this computer from http://localhost:61450/get/svrngs-darwin-aarch64.tar.gz",
+     "Checked: svrngs-darwin-aarch64.tar.gz is the one the release lists, unchanged on its way here.",
+     "Installed svrngs in /tmp/v1ui-helper/di/.local/bin.",
+     "To run svrngs yourself, type /tmp/v1ui-helper/di/.local/bin/svrngs: your terminal does not look in /tmp/v1ui-helper/di/.local/bin. Nothing else needs it.",
+     "You're in Elm Street, as Di.",
+     "Elm Street's folder is /tmp/v1ui-helper/di/svrngs/Elm Street: what anyone in Elm Street puts there reaches this computer, and what you put there reaches theirs.",
+     "",
+     "svrngs runs now, and whenever you log in (/tmp/v1ui-helper/di/Library/LaunchAgents/sh.svrnme.svrngs.plist).",
+     "Your home page, the same address each time svrngs starts: http://svrngs.localhost:62262/"
+    ],
+    "open_asked": "http://svrngs.localhost:62262/",
+    "at": 14976
+   },
+   "home": {
+    "at": 44582,
+    "ms": 3092,
+    "door": [
+     {
+      "name": "Cy",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Priya",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Sam",
+      "drawn": "off",
+      "says": "did not answer"
+     },
+     {
+      "name": "Ann",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Bo",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Di",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Eve",
+      "drawn": "phone",
+      "says": "in from a phone"
+     }
+    ],
+    "index": [
+     [
+      "What",
+      "What it is",
+      "Whose",
+      "How it opens",
+      "Now"
+     ],
+     [
+      "Open Events",
+      "Events",
+      "Elm Street",
+      "In a tab. Copy its address for a program",
+      "on"
+     ],
+     [
+      "Open Money",
+      "Money",
+      "Elm Street",
+      "In a tab. Copy its address for a program",
+      "on"
+     ],
+     [
+      "Open Priya’s jellyfin",
+      "jellyfin",
+      "Priya",
+      "In a tab. Copy its address for a program",
+      "on"
+     ],
+     [
+      "Sam's computer did not answer, so what they lend is not listed."
+     ]
+    ],
+    "seen": {
+     "url": "http://svrngs.localhost:62262/",
+     "words": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nElm Street (Sam’s, since 15 Oct)\nCy\non now\nPriya\non now\nSam\ndid not answer\nAnn\non now\nBo\non now\nDi\non now\nEve\nin from a phone\n\nElm Street’s folder is on this computer at /tmp/v1ui-helper/di/svrngs/Elm Street\n\nOpen this folder\n\nMake a link to invite someone to Elm StreetMake a link to add your phone or another computer of yours\n\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Events\tEvents\tElm Street\tIn a tab. Copy its address for a program\ton\nOpen Money\tMoney\tElm Street\tIn a tab. Copy its address for a program\ton\nOpen Priya’s jellyfin\tjellyfin\tPriya\tIn a tab. Copy its address for a program\ton\nSam's computer did not answer, so what they lend is not listed.\nBring things to the table\n\nMoney is on the table.\n\nEvents is on the table.\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:62262/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>\n\nYou cannot leave a group yet: svrngs has no way to do it.",
+     "password": 0,
+     "sign_in": 0
+    }
+   },
+   "money": {
+    "at": 47706,
+    "presses": [
+     {
+      "pressed": "Say you were in on it",
+      "ms": 182,
+      "at": 31
+     },
+     {
+      "pressed": "Say you paid Ann $3.00",
+      "ms": 87,
+      "at": 217
+     },
+     {
+      "pressed": "Say you paid Bo $3.00",
+      "ms": 89,
+      "at": 307
+     },
+     {
+      "pressed": "Say you paid Cy $3.00",
+      "ms": 81,
+      "at": 398
+     },
+     {
+      "pressed": "Say you paid Priya $3.00",
+      "ms": 80,
+      "at": 483
+     }
+    ],
+    "shown": [
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:62262/",
+      "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\n\nNobody owes anybody.\n\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Priya. Say you were in on it\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:62262/",
+      "words": "Money\n\nYou owe $12.00.\n\nWho pays whom\nYou pay Ann $3.00. Say you paid Ann $3.00\nYou pay Bo $3.00. Say you paid Bo $3.00\nYou pay Cy $3.00. Say you paid Cy $3.00\nYou pay Priya $3.00. Say you paid Priya $3.00\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Di, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:62262/",
+      "words": "Money\n\nYou owe $9.00.\n\nWho pays whom\nYou pay Bo $3.00. Say you paid Bo $3.00\nYou pay Cy $3.00. Say you paid Cy $3.00\nYou pay Priya $3.00. Say you paid Priya $3.00\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Di, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:62262/",
+      "words": "Money\n\nYou owe $6.00.\n\nWho pays whom\nYou pay Cy $3.00. Say you paid Cy $3.00\nYou pay Priya $3.00. Say you paid Priya $3.00\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Di, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:62262/",
+      "words": "Money\n\nYou owe $3.00.\n\nWho pays whom\nYou pay Priya $3.00. Say you paid Priya $3.00\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Di, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:62262/",
+      "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\n\nNobody owes anybody.\n\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Di, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     }
+    ],
+    "open": {
+     "ms": 201
+    },
+    "square": {
+     "ms": 565
+    },
+    "seen": {
+     "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:62262/",
+     "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\n\nNobody owes anybody.\n\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Di, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+     "password": 0,
+     "sign_in": 0
+    },
+    "done_at": 48494
+   },
+   "library": {
+    "at": 48494,
+    "open": {
+     "ms": 3362
+    },
+    "shown": {
+     "url": "http://jxjxtj87mhuxnmdgcntq298cqa6wh66taafasa01t9ql6pddflgtbbq3n1prdr.localhost:62262/web/#/login?serverid=1dc9c520744b4009818cbfe58ec7e335&url=%2Fhome",
+     "words": "Please sign in\nUser\nPassword\nRemember Me\nSign In\nUse Quick Connect\nForgot Password",
+     "password": 1,
+     "sign_in": 2
+    },
+    "stopped": "asked to sign in, with nothing of theirs to type",
+    "seen": {
+     "url": "http://jxjxtj87mhuxnmdgcntq298cqa6wh66taafasa01t9ql6pddflgtbbq3n1prdr.localhost:62262/web/#/login?serverid=1dc9c520744b4009818cbfe58ec7e335&url=%2Fhome",
+     "words": "Please sign in\nUser\nPassword\nRemember Me\nSign In\nUse Quick Connect\nForgot Password",
+     "password": 1,
+     "sign_in": 2
+    },
+    "done_at": 51883
+   }
+  },
+  "Eve": {
+   "as": "phone",
+   "film": "Two",
+   "t0": 1792090162.2552562,
+   "join": {
+    "asked": {
+     "ms": 3597
+    },
+    "shown": {
+     "url": "http://localhost:61450/#<hidden>",
+     "words": "Join Elm Street\n\nWhat’s your name? Everyone in Elm Street sees it. \nJoin",
+     "password": 0,
+     "sign_in": 0
+    },
+    "joined": {
+     "ms": 4618
+    },
+    "status": "You’re in Elm Street (Sam’s, since 15 Oct), as Eve",
+    "seen": {
+     "url": "http://localhost:61450/#<hidden>",
+     "words": "You’re in Elm Street (Sam’s, since 15 Oct), as Eve\n\nCy on now\nPriya on now\nSam on now\nAnn on now\nBo on now\nDi on now\nEve in from a phone\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nEvents\tEvents\tElm Street\tHere, in this tab\ton\nMoney\tMoney\tElm Street\tHere, in this tab\ton\nPriya’s jellyfin\tjellyfin\tPriya\tHere, in this tab\ton\nBring things to the table\n\nMoney is on the table.\n\nEvents is on the table.",
+     "password": 0,
+     "sign_in": 0
+    }
+   },
+   "group": {
+    "at": 18646,
+    "ms": 3903,
+    "status": "You’re in Elm Street (Sam’s, since 15 Oct), as Eve, through Di’s computer",
+    "good": true,
+    "door": [
+     {
+      "name": "Cy",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Priya",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Sam",
+      "drawn": "off",
+      "says": "did not answer"
+     },
+     {
+      "name": "Ann",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Bo",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Di",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Eve",
+      "drawn": "phone",
+      "says": "in from a phone"
+     }
+    ],
+    "index": [
+     [
+      "What",
+      "What it is",
+      "Whose",
+      "How it opens",
+      "Now"
+     ],
+     [
+      "Events",
+      "Events",
+      "Elm Street",
+      "Here, in this tab",
+      "on"
+     ],
+     [
+      "Money",
+      "Money",
+      "Elm Street",
+      "Here, in this tab",
+      "on"
+     ],
+     [
+      "Priya’s jellyfin",
+      "jellyfin",
+      "Priya",
+      "Here, in this tab",
+      "on"
+     ]
+    ],
+    "seen": {
+     "url": "http://localhost:61450/",
+     "words": "You’re in Elm Street (Sam’s, since 15 Oct), as Eve, through Di’s computer\n\nCy on now\nPriya on now\nSam did not answer\nAnn on now\nBo on now\nDi on now\nEve in from a phone\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nEvents\tEvents\tElm Street\tHere, in this tab\ton\nMoney\tMoney\tElm Street\tHere, in this tab\ton\nPriya’s jellyfin\tjellyfin\tPriya\tHere, in this tab\ton\nBring things to the table\n\nMoney is on the table.\n\nEvents is on the table.\n\nSam’s computer did not answer, so what they lend is not listed.",
+     "password": 0,
+     "sign_in": 0
+    }
+   },
+   "money": {
+    "at": 22577,
+    "presses": [
+     {
+      "pressed": "Say you were in on it",
+      "ms": 227,
+      "at": 20
+     },
+     {
+      "pressed": "Say you paid Ann $2.00",
+      "ms": 310,
+      "at": 255
+     },
+     {
+      "pressed": "Say you paid Bo $2.00",
+      "ms": 210,
+      "at": 571
+     },
+     {
+      "pressed": "Say you paid Cy $2.00",
+      "ms": 312,
+      "at": 785
+     },
+     {
+      "pressed": "Say you paid Di $2.00",
+      "ms": 246,
+      "at": 1101
+     },
+     {
+      "pressed": "Say you paid Priya $2.00",
+      "ms": 278,
+      "at": 1354
+     }
+    ],
+    "shown": [
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61450/",
+      "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\nNobody owes anybody.\n\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Di, Priya. Say you were in on it\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\nWhat it was for: How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61450/",
+      "words": "Money\n\nYou owe $10.00.\n\nWho pays whom\nYou pay Ann $2.00. Say you paid Ann $2.00\nYou pay Bo $2.00. Say you paid Bo $2.00\nYou pay Cy $2.00. Say you paid Cy $2.00\nYou pay Di $2.00. Say you paid Di $2.00\nYou pay Priya $2.00. Say you paid Priya $2.00\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Di, Eve, Priya.\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\nWhat it was for: How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61450/",
+      "words": "Money\n\nYou owe $8.00.\n\nWho pays whom\nYou pay Bo $2.00. Say you paid Bo $2.00\nYou pay Cy $2.00. Say you paid Cy $2.00\nYou pay Di $2.00. Say you paid Di $2.00\nYou pay Priya $2.00. Say you paid Priya $2.00\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Di, Eve, Priya.\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\nWhat it was for: How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61450/",
+      "words": "Money\n\nYou owe $6.00.\n\nWho pays whom\nYou pay Cy $2.00. Say you paid Cy $2.00\nYou pay Di $2.00. Say you paid Di $2.00\nYou pay Priya $2.00. Say you paid Priya $2.00\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Di, Eve, Priya.\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\nWhat it was for: How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61450/",
+      "words": "Money\n\nYou owe $4.00.\n\nWho pays whom\nYou pay Di $2.00. Say you paid Di $2.00\nYou pay Priya $2.00. Say you paid Priya $2.00\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Di, Eve, Priya.\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\nWhat it was for: How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61450/",
+      "words": "Money\n\nYou owe $2.00.\n\nWho pays whom\nYou pay Priya $2.00. Say you paid Priya $2.00\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Di, Eve, Priya.\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\nWhat it was for: How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     },
+     {
+      "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61450/",
+      "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\nNobody owes anybody.\n\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Di, Eve, Priya.\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\nWhat it was for: How much:  Add it, paid by you",
+      "password": 0,
+      "sign_in": 0
+     }
+    ],
+    "open": {
+     "ms": 1337
+    },
+    "square": {
+     "ms": 1636
+    },
+    "seen": {
+     "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61450/",
+     "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\nNobody owes anybody.\n\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Di, Eve, Priya.\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\nWhat it was for: How much:  Add it, paid by you",
+     "password": 0,
+     "sign_in": 0
+    },
+    "done_at": 25579
+   },
+   "group_again": {
+    "at": 25579,
+    "ms": 3961,
+    "status": "You’re in Elm Street (Sam’s, since 15 Oct), as Eve, through Ann’s computer",
+    "good": true,
+    "door": [
+     {
+      "name": "Cy",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Priya",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Sam",
+      "drawn": "off",
+      "says": "did not answer"
+     },
+     {
+      "name": "Ann",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Bo",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Di",
+      "drawn": "on",
+      "says": "on now"
+     },
+     {
+      "name": "Eve",
+      "drawn": "phone",
+      "says": "in from a phone"
+     }
+    ],
+    "index": [
+     [
+      "What",
+      "What it is",
+      "Whose",
+      "How it opens",
+      "Now"
+     ],
+     [
+      "Events",
+      "Events",
+      "Elm Street",
+      "Here, in this tab",
+      "on"
+     ],
+     [
+      "Money",
+      "Money",
+      "Elm Street",
+      "Here, in this tab",
+      "on"
+     ],
+     [
+      "Priya’s jellyfin",
+      "jellyfin",
+      "Priya",
+      "Here, in this tab",
+      "on"
+     ]
+    ],
+    "seen": {
+     "url": "http://localhost:61450/",
+     "words": "You’re in Elm Street (Sam’s, since 15 Oct), as Eve, through Ann’s computer\n\nCy on now\nPriya on now\nSam did not answer\nAnn on now\nBo on now\nDi on now\nEve in from a phone\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nEvents\tEvents\tElm Street\tHere, in this tab\ton\nMoney\tMoney\tElm Street\tHere, in this tab\ton\nPriya’s jellyfin\tjellyfin\tPriya\tHere, in this tab\ton\nBring things to the table\n\nMoney is on the table.\n\nEvents is on the table.\n\nSam’s computer did not answer, so what they lend is not listed.",
+     "password": 0,
+     "sign_in": 0
+    }
+   },
+   "library": {
+    "at": 29544,
+    "open": {
+     "ms": 6386
+    },
+    "shown": {
+     "url": "http://jxjxtj87mhuxnmdgcntq298cqa6wh66taafasa01t9ql6pddflgtbbq3n1prdr.localhost:61450/web/#/login?serverid=1dc9c520744b4009818cbfe58ec7e335&url=%2Fhome",
+     "words": "Please sign in\n\nUser\nPassword\n\nRemember Me\nSign In\nUse Quick Connect\nForgot Password",
+     "password": 1,
+     "sign_in": 2
+    },
+    "stopped": "asked to sign in, with nothing of theirs to type",
+    "seen": {
+     "url": "http://jxjxtj87mhuxnmdgcntq298cqa6wh66taafasa01t9ql6pddflgtbbq3n1prdr.localhost:61450/web/#/login?serverid=1dc9c520744b4009818cbfe58ec7e335&url=%2Fhome",
+     "words": "Please sign in\n\nUser\nPassword\n\nRemember Me\nSign In\nUse Quick Connect\nForgot Password",
+     "password": 1,
+     "sign_in": 2
+    },
+    "done_at": 35977
+   }
+  }
+ },
+ "plant": "nohelper",
+ "tarball_sha256": "1eceb6b9947075c413f269dc9637ecd0bec41706b292b8e7567d84d448251c6a",
+ "group": "264897f995d40dd7eccc8a5fbe0c7997d308345949220a635d2cbf9ed09f19f7",
+ "lent": {
+  "ms": 895,
+  "before": "jellyfin, at http://localhost:8096. It keeps its own accounts, so make each person one in it: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save. Or start its helper first, and nobody needs an account: here is how. Lend jellyfin to everyone in your groups",
+  "seen": {
+   "url": "http://svrngs.localhost:61521/",
+   "words": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nElm Street (Sam’s, since 15 Oct)\nPriya\non now\nSam\non now\n\nElm Street’s folder is on this computer at /tmp/v1ui-helper/priya/svrngs/Elm Street\n\nOpen this folder\n\nMake a link to invite someone to Elm StreetMake a link to add your phone or another computer of yours\n\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nNobody lends anything here yet.\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Elm Street opens it on their own computer or phone, while any computer in Elm Street is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Elm Street\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nAlready running here\n\nYou looked just now: the programs running on this computer, each at its address. Lend one, and everyone in your groups opens it in their browser, as themselves, while this computer is on. You can stop lending it below at any time.\n\nLook for programs running on this computer\n\nSomething at http://localhost:2222. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:2223. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:4226. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:5000. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:7000. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nYou lent jellyfin, at http://localhost:8096: everyone in your groups can open it now. It keeps its own accounts, so make each person one in it: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save. Or start its helper first, and nobody needs an account: here is how.\nSomething at http://localhost:9741. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:9742. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:9743. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:9748. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:9799. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:22653. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:27850. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:35677. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:44774. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nWhat you lend\njellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61521/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>\n\nYou cannot leave a group yet: svrngs has no way to do it.",
+   "password": 0,
+   "sign_in": 0
+  }
+ },
+ "declared": {
+  "port": 8096,
+  "kind": "jellyfin",
+  "refused": []
+ },
+ "brought": {
+  "ms": 30,
+  "seen": {
+   "url": "http://svrngs.localhost:61521/",
+   "words": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nElm Street (Sam’s, since 15 Oct)\nPriya\non now\nSam\non now\n\nElm Street’s folder is on this computer at /tmp/v1ui-helper/priya/svrngs/Elm Street\n\nOpen this folder\n\nMake a link to invite someone to Elm StreetMake a link to add your phone or another computer of yours\n\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nNobody lends anything here yet.\nBring things to the table\n\nYou brought Money to Elm Street: everyone in it can open it in a few seconds. You brought Events to Elm Street: everyone in it can open it in a few seconds.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Elm Street\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nAlready running here\n\nYou looked just now: the programs running on this computer, each at its address. Lend one, and everyone in your groups opens it in their browser, as themselves, while this computer is on. You can stop lending it below at any time.\n\nLook for programs running on this computer\n\nSomething at http://localhost:2222. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:2223. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:4226. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:5000. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:7000. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nYou lent jellyfin, at http://localhost:8096: everyone in your groups can open it now. It keeps its own accounts, so make each person one in it: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save. Or start its helper first, and nobody needs an account: here is how.\nSomething at http://localhost:9741. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:9742. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:9743. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:9748. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:9799. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:22653. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:27850. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:35677. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:44774. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nWhat you lend\njellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61521/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>\n\nYou cannot leave a group yet: svrngs has no way to do it.",
+   "password": 0,
+   "sign_in": 0
+  }
+ },
+ "gas_bill": {
+  "presses": [],
+  "shown": [
+   {
+    "url": "http://jxjxtj87mhuxnmdgcntq298cqa6wh66taafasa01t9ql6pddflgtpp09plhpgs.localhost:61521/",
+    "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\n\nNobody owes anybody.\n\nWhat people paid for\n\nNobody has added anything yet.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+    "password": 0,
+    "sign_in": 0
+   },
+   {
+    "url": "http://jxjxtj87mhuxnmdgcntq298cqa6wh66taafasa01t9ql6pddflgtpp09plhpgs.localhost:61521/",
+    "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\n\nNobody owes anybody.\n\nWhat people paid for\nYou paid $60.00 for Gas bill, split between Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+    "password": 0,
+    "sign_in": 0
+   }
+  ],
+  "open": {
+   "ms": 153
+  },
+  "added": {
+   "ms": 84
+  }
+ },
+ "issuer_stopped_at": 1792090173.3585868,
+ "after": {
+  "Priya": {
+   "door": [
+    {
+     "name": "Cy",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Priya",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Sam",
+     "drawn": "off",
+     "says": "did not answer"
+    },
+    {
+     "name": "Ann",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Bo",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Di",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Eve",
+     "drawn": "phone",
+     "says": "in from a phone"
+    }
+   ],
+   "index": [
+    [
+     "What",
+     "What it is",
+     "Whose",
+     "How it opens",
+     "Now"
+    ],
+    [
+     "Open Events",
+     "Events",
+     "Elm Street",
+     "In a tab. Copy its address for a program",
+     "on"
+    ],
+    [
+     "Open Money",
+     "Money",
+     "Elm Street",
+     "In a tab. Copy its address for a program",
+     "on"
+    ],
+    [
+     "Open Priya’s jellyfin",
+     "jellyfin",
+     "Priya",
+     "In a tab. Copy its address for a program",
+     "on"
+    ],
+    [
+     "Sam's computer did not answer, so what they lend is not listed."
+    ]
+   ],
+   "money": {
+    "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61521/",
+    "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\n\nNobody owes anybody.\n\nWhat people paid for\nYou paid $60.00 for Gas bill, split between Ann, Bo, Cy, Di, Eve, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+    "password": 0,
+    "sign_in": 0
+   },
+   "log": {
+    "complete": true,
+    "gaps": [],
+    "held": 35,
+    "namespace": "264897f995d40dd7eccc8a5fbe0c7997d308345949220a635d2cbf9ed09f19f7",
+    "ops": [
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "67e47bdd4bef8eebc54a506372f8cf92a50f153e1ab942d24149f0d558667e6b",
+      "person": "Sam",
+      "seq": 0,
+      "ts_unix": 1792090090,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "88621a5e05c3e0cfc563233c53b312fec4dac7a7f9c54dcd99fc967c91f2ec47",
+      "person": "Sam",
+      "seq": 1,
+      "ts_unix": 1792090091,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "edde160620379c9bb34ffb5c97affec5fa2bdaef7225a10eb347f069ea9e4dec",
+      "person": "Sam",
+      "seq": 2,
+      "ts_unix": 1792090094,
+      "voided": false
+     },
+     {
+      "actor": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "id": "1073b0c37b6766521290096dbbe280f479caa0e4b25445fb166377bc7f8ea082",
+      "person": "Priya",
+      "seq": 0,
+      "ts_unix": 1792090095,
+      "voided": false
+     },
+     {
+      "actor": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "id": "77dda6099c42ad24df6bb1b96f6894cd64d0c873b3750281365ca339bd95608c",
+      "person": "Priya",
+      "seq": 1,
+      "ts_unix": 1792090096,
+      "voided": false
+     },
+     {
+      "actor": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "id": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+      "on_behalf_of": "Priya",
+      "payload": {
+       "amount_cents": 6000,
+       "description": "Gas bill",
+       "kind": "Money/expense"
+      },
+      "person": "Priya",
+      "seq": 2,
+      "ts_unix": 1792090097,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "3084376403105a0ce490f87bee7cedc5577089c9b19651c8c294cbddefcfe4ae",
+      "person": "Sam",
+      "seq": 3,
+      "ts_unix": 1792090101,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "65506319b3459f874a2f4b343ec4c61bd67ecf46ce8441fd7929b3ff1e04c296",
+      "person": "Ann",
+      "seq": 0,
+      "ts_unix": 1792090102,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "e743452bc338336cc46876224e8f7ea9b17c4e9360651721fc4304e1da8aa404",
+      "on_behalf_of": "Ann",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 1,
+      "ts_unix": 1792090105,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "b1ee25a4e059ad7f7024be5c8efb51f239c7d5be34ec46ac7d629ffe1ae3bf88",
+      "on_behalf_of": "Ann",
+      "payload": {
+       "amount_cents": 3000,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 2,
+      "ts_unix": 1792090106,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "120ac0c117720870f9d331c494e236a079258b1b8993425c4968b015b9b3d774",
+      "person": "Sam",
+      "seq": 4,
+      "ts_unix": 1792090112,
+      "voided": false
+     },
+     {
+      "actor": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776",
+      "id": "93849e5a4e832b9110e258c46db33e40d9bd8b402caece935449077b45066fcc",
+      "person": "Bo",
+      "seq": 0,
+      "ts_unix": 1792090113,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "ba52abe0f457590342de9deabb9c5afe606390d09ddebb79dfbb7618d0ba36b8",
+      "on_behalf_of": "Bo",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 3,
+      "ts_unix": 1792090115,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "f1de926fcd7addb9bae6f758b05986d5a52460d57d765cc6ebb4a52d3d68a643",
+      "on_behalf_of": "Bo",
+      "payload": {
+       "amount_cents": 1000,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 4,
+      "ts_unix": 1792090116,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "e38844ff7119e4514b2f812ba1e24106e86ca82dc4db3ae1ddf5a73b2e274013",
+      "on_behalf_of": "Bo",
+      "payload": {
+       "amount_cents": 1000,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 5,
+      "ts_unix": 1792090117,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "e6007701dc2782869b510fbd365f3c2c747cf11e668af067d0cb8e29451cd7fa",
+      "person": "Sam",
+      "seq": 5,
+      "ts_unix": 1792090122,
+      "voided": false
+     },
+     {
+      "actor": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15",
+      "id": "6b1f7acf8009a8f5f681f858ae8b158ddd8f059744e3bfc5f0275bd34b05bbe4",
+      "person": "Cy",
+      "seq": 0,
+      "ts_unix": 1792090123,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "29fb3dfcdb848ade783b0f90626b32dcc4cfeb612ee7ca25f079f63128e9ee7d",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 6,
+      "ts_unix": 1792090124,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "0106fc9707b543094b6c4d8b153513f292381794d95bf508b816a047cc792461",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "amount_cents": 500,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 7,
+      "ts_unix": 1792090125,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "7a1db6192503311bf41d34e75db4244f2d393bb00d52cceb01d3cbc85488d135",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "amount_cents": 500,
+       "kind": "Money/settle",
+       "to": "Bo"
+      },
+      "person": "Ann",
+      "seq": 8,
+      "ts_unix": 1792090126,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "eab2392df53f6b0040d574a5b9ec752008c5ce1d2ab1451b74dc1e714358faab",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "amount_cents": 500,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 9,
+      "ts_unix": 1792090127,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "6924cc4b6d4543ed71783d3605bbd0ce835035849d396112aa55eaeec47038c7",
+      "person": "Sam",
+      "seq": 6,
+      "ts_unix": 1792090134,
+      "voided": false
+     },
+     {
+      "actor": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256",
+      "id": "d869a6c8e936f07c6829fa62cbe09d818f19270789058a5d8dcaf132fdf5b575",
+      "person": "Di",
+      "seq": 0,
+      "ts_unix": 1792090135,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "9d60746272f639c872dc42934d23d8d6c90bffc68867e4c7e7d5eac1ed3e3e48",
+      "person": "Sam",
+      "seq": 7,
+      "ts_unix": 1792090169,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "155d5a6c69f88d5311255c3362e439588fc73b281199d18967228bb7e0af3839",
+      "on_behalf_of": "Di",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 10,
+      "ts_unix": 1792090176,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "1891b37f5e9d01792e2c23f77c725035082f792e893a729ae4c67555316722ab",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 11,
+      "ts_unix": 1792090177,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "882bcc9c4673af552c3b01b4b6d58c88ac1396bb1c9b9b141f7c5c9978b294e6",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Bo"
+      },
+      "person": "Ann",
+      "seq": 12,
+      "ts_unix": 1792090178,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "264bd1ac3dde478e8815cc9cedd2960001051ff0eacf99db735323e744ca566c",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Cy"
+      },
+      "person": "Ann",
+      "seq": 13,
+      "ts_unix": 1792090179,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "baf033b12f105d29046224eaadf50b990f95b2e187f0d8df1a174fb8f7be1537",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 14,
+      "ts_unix": 1792090180,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "fa7a18d6e21ab74877d5e34faf549a832d9eb7fa3fdec1e9e30fbc905914a933",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 15,
+      "ts_unix": 1792090186,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "bd0da700c3a5bc5ff582205a4cda207e8a14e63061f2aa43e2e596631cd8f61a",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 16,
+      "ts_unix": 1792090187,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "887adf288748a79bddd0c73981e5b3670977ba3061ca863f6f039e30ae354bea",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Bo"
+      },
+      "person": "Ann",
+      "seq": 17,
+      "ts_unix": 1792090188,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "dd2337a1fc27c9a402d17fc2c24a466231d829b9bf73cceeaea2afdfe58fcda6",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Cy"
+      },
+      "person": "Ann",
+      "seq": 18,
+      "ts_unix": 1792090189,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "724b20473c75ebf62be5eb922a19e2e101103e31d59388db44123d734b8bcc86",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Di"
+      },
+      "person": "Ann",
+      "seq": 19,
+      "ts_unix": 1792090190,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "959c6e4f6f95b0600864412e654336995df213dab21bb8f41b2cf96838d403c4",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 20,
+      "ts_unix": 1792090191,
+      "voided": false
+     }
+    ],
+    "people": [
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090122
+      },
+      "key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15",
+      "person": "Cy",
+      "person_key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090094
+      },
+      "key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "person": "Priya",
+      "person_key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b"
+     },
+     {
+      "device": "computer",
+      "joined": "started",
+      "key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "person": "Sam",
+      "person_key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090101
+      },
+      "key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "person": "Ann",
+      "person_key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090112
+      },
+      "key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776",
+      "person": "Bo",
+      "person_key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090134
+      },
+      "key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256",
+      "person": "Di",
+      "person_key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256"
+     },
+     {
+      "device": "browser",
+      "joined": {
+       "at": 1792090169
+      },
+      "key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7",
+      "person": "Eve",
+      "person_key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7"
+     }
+    ]
+   },
+   "people": {
+    "namespace": "264897f995d40dd7eccc8a5fbe0c7997d308345949220a635d2cbf9ed09f19f7",
+    "people": [
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090122
+      },
+      "key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15",
+      "person": "Cy",
+      "person_key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090094
+      },
+      "key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "person": "Priya",
+      "person_key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b"
+     },
+     {
+      "device": "computer",
+      "joined": "started",
+      "key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "person": "Sam",
+      "person_key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090101
+      },
+      "key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "person": "Ann",
+      "person_key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090112
+      },
+      "key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776",
+      "person": "Bo",
+      "person_key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090134
+      },
+      "key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256",
+      "person": "Di",
+      "person_key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256"
+     },
+     {
+      "device": "browser",
+      "joined": {
+       "at": 1792090169
+      },
+      "key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7",
+      "person": "Eve",
+      "person_key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7"
+     }
+    ]
+   }
+  },
+  "Ann": {
+   "door": [
+    {
+     "name": "Cy",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Priya",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Sam",
+     "drawn": "off",
+     "says": "did not answer"
+    },
+    {
+     "name": "Ann",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Bo",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Di",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Eve",
+     "drawn": "phone",
+     "says": "in from a phone"
+    }
+   ],
+   "index": [
+    [
+     "What",
+     "What it is",
+     "Whose",
+     "How it opens",
+     "Now"
+    ],
+    [
+     "Open Events",
+     "Events",
+     "Elm Street",
+     "In a tab. Copy its address for a program",
+     "on"
+    ],
+    [
+     "Open Money",
+     "Money",
+     "Elm Street",
+     "In a tab. Copy its address for a program",
+     "on"
+    ],
+    [
+     "Open Priya’s jellyfin",
+     "jellyfin",
+     "Priya",
+     "In a tab. Copy its address for a program",
+     "on"
+    ],
+    [
+     "Sam's computer did not answer, so what they lend is not listed."
+    ]
+   ],
+   "money": {
+    "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:60858/",
+    "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\n\nNobody owes anybody.\n\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Di, Eve, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+    "password": 0,
+    "sign_in": 0
+   },
+   "log": {
+    "complete": true,
+    "gaps": [],
+    "held": 35,
+    "namespace": "264897f995d40dd7eccc8a5fbe0c7997d308345949220a635d2cbf9ed09f19f7",
+    "ops": [
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "67e47bdd4bef8eebc54a506372f8cf92a50f153e1ab942d24149f0d558667e6b",
+      "person": "Sam",
+      "seq": 0,
+      "ts_unix": 1792090090,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "88621a5e05c3e0cfc563233c53b312fec4dac7a7f9c54dcd99fc967c91f2ec47",
+      "person": "Sam",
+      "seq": 1,
+      "ts_unix": 1792090091,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "edde160620379c9bb34ffb5c97affec5fa2bdaef7225a10eb347f069ea9e4dec",
+      "person": "Sam",
+      "seq": 2,
+      "ts_unix": 1792090094,
+      "voided": false
+     },
+     {
+      "actor": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "id": "1073b0c37b6766521290096dbbe280f479caa0e4b25445fb166377bc7f8ea082",
+      "person": "Priya",
+      "seq": 0,
+      "ts_unix": 1792090095,
+      "voided": false
+     },
+     {
+      "actor": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "id": "77dda6099c42ad24df6bb1b96f6894cd64d0c873b3750281365ca339bd95608c",
+      "person": "Priya",
+      "seq": 1,
+      "ts_unix": 1792090096,
+      "voided": false
+     },
+     {
+      "actor": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "id": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+      "on_behalf_of": "Priya",
+      "payload": {
+       "amount_cents": 6000,
+       "description": "Gas bill",
+       "kind": "Money/expense"
+      },
+      "person": "Priya",
+      "seq": 2,
+      "ts_unix": 1792090097,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "3084376403105a0ce490f87bee7cedc5577089c9b19651c8c294cbddefcfe4ae",
+      "person": "Sam",
+      "seq": 3,
+      "ts_unix": 1792090101,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "65506319b3459f874a2f4b343ec4c61bd67ecf46ce8441fd7929b3ff1e04c296",
+      "person": "Ann",
+      "seq": 0,
+      "ts_unix": 1792090102,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "e743452bc338336cc46876224e8f7ea9b17c4e9360651721fc4304e1da8aa404",
+      "on_behalf_of": "Ann",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 1,
+      "ts_unix": 1792090105,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "b1ee25a4e059ad7f7024be5c8efb51f239c7d5be34ec46ac7d629ffe1ae3bf88",
+      "on_behalf_of": "Ann",
+      "payload": {
+       "amount_cents": 3000,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 2,
+      "ts_unix": 1792090106,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "120ac0c117720870f9d331c494e236a079258b1b8993425c4968b015b9b3d774",
+      "person": "Sam",
+      "seq": 4,
+      "ts_unix": 1792090112,
+      "voided": false
+     },
+     {
+      "actor": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776",
+      "id": "93849e5a4e832b9110e258c46db33e40d9bd8b402caece935449077b45066fcc",
+      "person": "Bo",
+      "seq": 0,
+      "ts_unix": 1792090113,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "ba52abe0f457590342de9deabb9c5afe606390d09ddebb79dfbb7618d0ba36b8",
+      "on_behalf_of": "Bo",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 3,
+      "ts_unix": 1792090115,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "f1de926fcd7addb9bae6f758b05986d5a52460d57d765cc6ebb4a52d3d68a643",
+      "on_behalf_of": "Bo",
+      "payload": {
+       "amount_cents": 1000,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 4,
+      "ts_unix": 1792090116,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "e38844ff7119e4514b2f812ba1e24106e86ca82dc4db3ae1ddf5a73b2e274013",
+      "on_behalf_of": "Bo",
+      "payload": {
+       "amount_cents": 1000,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 5,
+      "ts_unix": 1792090117,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "e6007701dc2782869b510fbd365f3c2c747cf11e668af067d0cb8e29451cd7fa",
+      "person": "Sam",
+      "seq": 5,
+      "ts_unix": 1792090122,
+      "voided": false
+     },
+     {
+      "actor": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15",
+      "id": "6b1f7acf8009a8f5f681f858ae8b158ddd8f059744e3bfc5f0275bd34b05bbe4",
+      "person": "Cy",
+      "seq": 0,
+      "ts_unix": 1792090123,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "29fb3dfcdb848ade783b0f90626b32dcc4cfeb612ee7ca25f079f63128e9ee7d",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 6,
+      "ts_unix": 1792090124,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "0106fc9707b543094b6c4d8b153513f292381794d95bf508b816a047cc792461",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "amount_cents": 500,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 7,
+      "ts_unix": 1792090125,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "7a1db6192503311bf41d34e75db4244f2d393bb00d52cceb01d3cbc85488d135",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "amount_cents": 500,
+       "kind": "Money/settle",
+       "to": "Bo"
+      },
+      "person": "Ann",
+      "seq": 8,
+      "ts_unix": 1792090126,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "eab2392df53f6b0040d574a5b9ec752008c5ce1d2ab1451b74dc1e714358faab",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "amount_cents": 500,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 9,
+      "ts_unix": 1792090127,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "6924cc4b6d4543ed71783d3605bbd0ce835035849d396112aa55eaeec47038c7",
+      "person": "Sam",
+      "seq": 6,
+      "ts_unix": 1792090134,
+      "voided": false
+     },
+     {
+      "actor": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256",
+      "id": "d869a6c8e936f07c6829fa62cbe09d818f19270789058a5d8dcaf132fdf5b575",
+      "person": "Di",
+      "seq": 0,
+      "ts_unix": 1792090135,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "9d60746272f639c872dc42934d23d8d6c90bffc68867e4c7e7d5eac1ed3e3e48",
+      "person": "Sam",
+      "seq": 7,
+      "ts_unix": 1792090169,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "155d5a6c69f88d5311255c3362e439588fc73b281199d18967228bb7e0af3839",
+      "on_behalf_of": "Di",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 10,
+      "ts_unix": 1792090176,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "1891b37f5e9d01792e2c23f77c725035082f792e893a729ae4c67555316722ab",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 11,
+      "ts_unix": 1792090177,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "882bcc9c4673af552c3b01b4b6d58c88ac1396bb1c9b9b141f7c5c9978b294e6",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Bo"
+      },
+      "person": "Ann",
+      "seq": 12,
+      "ts_unix": 1792090178,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "264bd1ac3dde478e8815cc9cedd2960001051ff0eacf99db735323e744ca566c",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Cy"
+      },
+      "person": "Ann",
+      "seq": 13,
+      "ts_unix": 1792090179,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "baf033b12f105d29046224eaadf50b990f95b2e187f0d8df1a174fb8f7be1537",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 14,
+      "ts_unix": 1792090180,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "fa7a18d6e21ab74877d5e34faf549a832d9eb7fa3fdec1e9e30fbc905914a933",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 15,
+      "ts_unix": 1792090186,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "bd0da700c3a5bc5ff582205a4cda207e8a14e63061f2aa43e2e596631cd8f61a",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 16,
+      "ts_unix": 1792090187,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "887adf288748a79bddd0c73981e5b3670977ba3061ca863f6f039e30ae354bea",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Bo"
+      },
+      "person": "Ann",
+      "seq": 17,
+      "ts_unix": 1792090188,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "dd2337a1fc27c9a402d17fc2c24a466231d829b9bf73cceeaea2afdfe58fcda6",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Cy"
+      },
+      "person": "Ann",
+      "seq": 18,
+      "ts_unix": 1792090189,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "724b20473c75ebf62be5eb922a19e2e101103e31d59388db44123d734b8bcc86",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Di"
+      },
+      "person": "Ann",
+      "seq": 19,
+      "ts_unix": 1792090190,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "959c6e4f6f95b0600864412e654336995df213dab21bb8f41b2cf96838d403c4",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 20,
+      "ts_unix": 1792090191,
+      "voided": false
+     }
+    ],
+    "people": [
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090122
+      },
+      "key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15",
+      "person": "Cy",
+      "person_key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090094
+      },
+      "key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "person": "Priya",
+      "person_key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b"
+     },
+     {
+      "device": "computer",
+      "joined": "started",
+      "key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "person": "Sam",
+      "person_key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090101
+      },
+      "key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "person": "Ann",
+      "person_key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090112
+      },
+      "key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776",
+      "person": "Bo",
+      "person_key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090134
+      },
+      "key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256",
+      "person": "Di",
+      "person_key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256"
+     },
+     {
+      "device": "browser",
+      "joined": {
+       "at": 1792090169
+      },
+      "key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7",
+      "person": "Eve",
+      "person_key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7"
+     }
+    ]
+   },
+   "people": {
+    "namespace": "264897f995d40dd7eccc8a5fbe0c7997d308345949220a635d2cbf9ed09f19f7",
+    "people": [
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090122
+      },
+      "key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15",
+      "person": "Cy",
+      "person_key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090094
+      },
+      "key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "person": "Priya",
+      "person_key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b"
+     },
+     {
+      "device": "computer",
+      "joined": "started",
+      "key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "person": "Sam",
+      "person_key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090101
+      },
+      "key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "person": "Ann",
+      "person_key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090112
+      },
+      "key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776",
+      "person": "Bo",
+      "person_key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090134
+      },
+      "key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256",
+      "person": "Di",
+      "person_key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256"
+     },
+     {
+      "device": "browser",
+      "joined": {
+       "at": 1792090169
+      },
+      "key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7",
+      "person": "Eve",
+      "person_key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7"
+     }
+    ]
+   }
+  },
+  "Bo": {
+   "door": [
+    {
+     "name": "Cy",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Priya",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Sam",
+     "drawn": "off",
+     "says": "did not answer"
+    },
+    {
+     "name": "Ann",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Bo",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Di",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Eve",
+     "drawn": "phone",
+     "says": "in from a phone"
+    }
+   ],
+   "index": [
+    [
+     "What",
+     "What it is",
+     "Whose",
+     "How it opens",
+     "Now"
+    ],
+    [
+     "Open Events",
+     "Events",
+     "Elm Street",
+     "In a tab. Copy its address for a program",
+     "on"
+    ],
+    [
+     "Open Money",
+     "Money",
+     "Elm Street",
+     "In a tab. Copy its address for a program",
+     "on"
+    ],
+    [
+     "Open Priya’s jellyfin",
+     "jellyfin",
+     "Priya",
+     "In a tab. Copy its address for a program",
+     "on"
+    ],
+    [
+     "Sam's computer did not answer, so what they lend is not listed."
+    ]
+   ],
+   "money": {
+    "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61289/",
+    "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\n\nNobody owes anybody.\n\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Di, Eve, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+    "password": 0,
+    "sign_in": 0
+   },
+   "log": {
+    "complete": true,
+    "gaps": [],
+    "held": 35,
+    "namespace": "264897f995d40dd7eccc8a5fbe0c7997d308345949220a635d2cbf9ed09f19f7",
+    "ops": [
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "67e47bdd4bef8eebc54a506372f8cf92a50f153e1ab942d24149f0d558667e6b",
+      "person": "Sam",
+      "seq": 0,
+      "ts_unix": 1792090090,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "88621a5e05c3e0cfc563233c53b312fec4dac7a7f9c54dcd99fc967c91f2ec47",
+      "person": "Sam",
+      "seq": 1,
+      "ts_unix": 1792090091,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "edde160620379c9bb34ffb5c97affec5fa2bdaef7225a10eb347f069ea9e4dec",
+      "person": "Sam",
+      "seq": 2,
+      "ts_unix": 1792090094,
+      "voided": false
+     },
+     {
+      "actor": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "id": "1073b0c37b6766521290096dbbe280f479caa0e4b25445fb166377bc7f8ea082",
+      "person": "Priya",
+      "seq": 0,
+      "ts_unix": 1792090095,
+      "voided": false
+     },
+     {
+      "actor": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "id": "77dda6099c42ad24df6bb1b96f6894cd64d0c873b3750281365ca339bd95608c",
+      "person": "Priya",
+      "seq": 1,
+      "ts_unix": 1792090096,
+      "voided": false
+     },
+     {
+      "actor": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "id": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+      "on_behalf_of": "Priya",
+      "payload": {
+       "amount_cents": 6000,
+       "description": "Gas bill",
+       "kind": "Money/expense"
+      },
+      "person": "Priya",
+      "seq": 2,
+      "ts_unix": 1792090097,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "3084376403105a0ce490f87bee7cedc5577089c9b19651c8c294cbddefcfe4ae",
+      "person": "Sam",
+      "seq": 3,
+      "ts_unix": 1792090101,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "65506319b3459f874a2f4b343ec4c61bd67ecf46ce8441fd7929b3ff1e04c296",
+      "person": "Ann",
+      "seq": 0,
+      "ts_unix": 1792090102,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "e743452bc338336cc46876224e8f7ea9b17c4e9360651721fc4304e1da8aa404",
+      "on_behalf_of": "Ann",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 1,
+      "ts_unix": 1792090105,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "b1ee25a4e059ad7f7024be5c8efb51f239c7d5be34ec46ac7d629ffe1ae3bf88",
+      "on_behalf_of": "Ann",
+      "payload": {
+       "amount_cents": 3000,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 2,
+      "ts_unix": 1792090106,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "120ac0c117720870f9d331c494e236a079258b1b8993425c4968b015b9b3d774",
+      "person": "Sam",
+      "seq": 4,
+      "ts_unix": 1792090112,
+      "voided": false
+     },
+     {
+      "actor": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776",
+      "id": "93849e5a4e832b9110e258c46db33e40d9bd8b402caece935449077b45066fcc",
+      "person": "Bo",
+      "seq": 0,
+      "ts_unix": 1792090113,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "ba52abe0f457590342de9deabb9c5afe606390d09ddebb79dfbb7618d0ba36b8",
+      "on_behalf_of": "Bo",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 3,
+      "ts_unix": 1792090115,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "f1de926fcd7addb9bae6f758b05986d5a52460d57d765cc6ebb4a52d3d68a643",
+      "on_behalf_of": "Bo",
+      "payload": {
+       "amount_cents": 1000,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 4,
+      "ts_unix": 1792090116,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "e38844ff7119e4514b2f812ba1e24106e86ca82dc4db3ae1ddf5a73b2e274013",
+      "on_behalf_of": "Bo",
+      "payload": {
+       "amount_cents": 1000,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 5,
+      "ts_unix": 1792090117,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "e6007701dc2782869b510fbd365f3c2c747cf11e668af067d0cb8e29451cd7fa",
+      "person": "Sam",
+      "seq": 5,
+      "ts_unix": 1792090122,
+      "voided": false
+     },
+     {
+      "actor": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15",
+      "id": "6b1f7acf8009a8f5f681f858ae8b158ddd8f059744e3bfc5f0275bd34b05bbe4",
+      "person": "Cy",
+      "seq": 0,
+      "ts_unix": 1792090123,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "29fb3dfcdb848ade783b0f90626b32dcc4cfeb612ee7ca25f079f63128e9ee7d",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 6,
+      "ts_unix": 1792090124,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "0106fc9707b543094b6c4d8b153513f292381794d95bf508b816a047cc792461",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "amount_cents": 500,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 7,
+      "ts_unix": 1792090125,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "7a1db6192503311bf41d34e75db4244f2d393bb00d52cceb01d3cbc85488d135",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "amount_cents": 500,
+       "kind": "Money/settle",
+       "to": "Bo"
+      },
+      "person": "Ann",
+      "seq": 8,
+      "ts_unix": 1792090126,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "eab2392df53f6b0040d574a5b9ec752008c5ce1d2ab1451b74dc1e714358faab",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "amount_cents": 500,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 9,
+      "ts_unix": 1792090127,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "6924cc4b6d4543ed71783d3605bbd0ce835035849d396112aa55eaeec47038c7",
+      "person": "Sam",
+      "seq": 6,
+      "ts_unix": 1792090134,
+      "voided": false
+     },
+     {
+      "actor": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256",
+      "id": "d869a6c8e936f07c6829fa62cbe09d818f19270789058a5d8dcaf132fdf5b575",
+      "person": "Di",
+      "seq": 0,
+      "ts_unix": 1792090135,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "9d60746272f639c872dc42934d23d8d6c90bffc68867e4c7e7d5eac1ed3e3e48",
+      "person": "Sam",
+      "seq": 7,
+      "ts_unix": 1792090169,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "155d5a6c69f88d5311255c3362e439588fc73b281199d18967228bb7e0af3839",
+      "on_behalf_of": "Di",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 10,
+      "ts_unix": 1792090176,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "1891b37f5e9d01792e2c23f77c725035082f792e893a729ae4c67555316722ab",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 11,
+      "ts_unix": 1792090177,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "882bcc9c4673af552c3b01b4b6d58c88ac1396bb1c9b9b141f7c5c9978b294e6",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Bo"
+      },
+      "person": "Ann",
+      "seq": 12,
+      "ts_unix": 1792090178,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "264bd1ac3dde478e8815cc9cedd2960001051ff0eacf99db735323e744ca566c",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Cy"
+      },
+      "person": "Ann",
+      "seq": 13,
+      "ts_unix": 1792090179,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "baf033b12f105d29046224eaadf50b990f95b2e187f0d8df1a174fb8f7be1537",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 14,
+      "ts_unix": 1792090180,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "fa7a18d6e21ab74877d5e34faf549a832d9eb7fa3fdec1e9e30fbc905914a933",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 15,
+      "ts_unix": 1792090186,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "bd0da700c3a5bc5ff582205a4cda207e8a14e63061f2aa43e2e596631cd8f61a",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 16,
+      "ts_unix": 1792090187,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "887adf288748a79bddd0c73981e5b3670977ba3061ca863f6f039e30ae354bea",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Bo"
+      },
+      "person": "Ann",
+      "seq": 17,
+      "ts_unix": 1792090188,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "dd2337a1fc27c9a402d17fc2c24a466231d829b9bf73cceeaea2afdfe58fcda6",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Cy"
+      },
+      "person": "Ann",
+      "seq": 18,
+      "ts_unix": 1792090189,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "724b20473c75ebf62be5eb922a19e2e101103e31d59388db44123d734b8bcc86",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Di"
+      },
+      "person": "Ann",
+      "seq": 19,
+      "ts_unix": 1792090190,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "959c6e4f6f95b0600864412e654336995df213dab21bb8f41b2cf96838d403c4",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 20,
+      "ts_unix": 1792090191,
+      "voided": false
+     }
+    ],
+    "people": [
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090122
+      },
+      "key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15",
+      "person": "Cy",
+      "person_key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090094
+      },
+      "key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "person": "Priya",
+      "person_key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b"
+     },
+     {
+      "device": "computer",
+      "joined": "started",
+      "key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "person": "Sam",
+      "person_key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090101
+      },
+      "key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "person": "Ann",
+      "person_key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090112
+      },
+      "key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776",
+      "person": "Bo",
+      "person_key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090134
+      },
+      "key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256",
+      "person": "Di",
+      "person_key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256"
+     },
+     {
+      "device": "browser",
+      "joined": {
+       "at": 1792090169
+      },
+      "key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7",
+      "person": "Eve",
+      "person_key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7"
+     }
+    ]
+   },
+   "people": {
+    "namespace": "264897f995d40dd7eccc8a5fbe0c7997d308345949220a635d2cbf9ed09f19f7",
+    "people": [
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090122
+      },
+      "key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15",
+      "person": "Cy",
+      "person_key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090094
+      },
+      "key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "person": "Priya",
+      "person_key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b"
+     },
+     {
+      "device": "computer",
+      "joined": "started",
+      "key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "person": "Sam",
+      "person_key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090101
+      },
+      "key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "person": "Ann",
+      "person_key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090112
+      },
+      "key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776",
+      "person": "Bo",
+      "person_key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090134
+      },
+      "key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256",
+      "person": "Di",
+      "person_key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256"
+     },
+     {
+      "device": "browser",
+      "joined": {
+       "at": 1792090169
+      },
+      "key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7",
+      "person": "Eve",
+      "person_key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7"
+     }
+    ]
+   }
+  },
+  "Cy": {
+   "door": [
+    {
+     "name": "Cy",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Priya",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Sam",
+     "drawn": "off",
+     "says": "did not answer"
+    },
+    {
+     "name": "Ann",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Bo",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Di",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Eve",
+     "drawn": "phone",
+     "says": "in from a phone"
+    }
+   ],
+   "index": [
+    [
+     "What",
+     "What it is",
+     "Whose",
+     "How it opens",
+     "Now"
+    ],
+    [
+     "Open Events",
+     "Events",
+     "Elm Street",
+     "In a tab. Copy its address for a program",
+     "on"
+    ],
+    [
+     "Open Money",
+     "Money",
+     "Elm Street",
+     "In a tab. Copy its address for a program",
+     "on"
+    ],
+    [
+     "Open Priya’s jellyfin",
+     "jellyfin",
+     "Priya",
+     "In a tab. Copy its address for a program",
+     "on"
+    ],
+    [
+     "Sam's computer did not answer, so what they lend is not listed."
+    ]
+   ],
+   "money": {
+    "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:61782/",
+    "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\n\nNobody owes anybody.\n\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Di, Eve, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+    "password": 0,
+    "sign_in": 0
+   },
+   "log": {
+    "complete": true,
+    "gaps": [],
+    "held": 35,
+    "namespace": "264897f995d40dd7eccc8a5fbe0c7997d308345949220a635d2cbf9ed09f19f7",
+    "ops": [
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "67e47bdd4bef8eebc54a506372f8cf92a50f153e1ab942d24149f0d558667e6b",
+      "person": "Sam",
+      "seq": 0,
+      "ts_unix": 1792090090,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "88621a5e05c3e0cfc563233c53b312fec4dac7a7f9c54dcd99fc967c91f2ec47",
+      "person": "Sam",
+      "seq": 1,
+      "ts_unix": 1792090091,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "edde160620379c9bb34ffb5c97affec5fa2bdaef7225a10eb347f069ea9e4dec",
+      "person": "Sam",
+      "seq": 2,
+      "ts_unix": 1792090094,
+      "voided": false
+     },
+     {
+      "actor": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "id": "1073b0c37b6766521290096dbbe280f479caa0e4b25445fb166377bc7f8ea082",
+      "person": "Priya",
+      "seq": 0,
+      "ts_unix": 1792090095,
+      "voided": false
+     },
+     {
+      "actor": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "id": "77dda6099c42ad24df6bb1b96f6894cd64d0c873b3750281365ca339bd95608c",
+      "person": "Priya",
+      "seq": 1,
+      "ts_unix": 1792090096,
+      "voided": false
+     },
+     {
+      "actor": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "id": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+      "on_behalf_of": "Priya",
+      "payload": {
+       "amount_cents": 6000,
+       "description": "Gas bill",
+       "kind": "Money/expense"
+      },
+      "person": "Priya",
+      "seq": 2,
+      "ts_unix": 1792090097,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "3084376403105a0ce490f87bee7cedc5577089c9b19651c8c294cbddefcfe4ae",
+      "person": "Sam",
+      "seq": 3,
+      "ts_unix": 1792090101,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "65506319b3459f874a2f4b343ec4c61bd67ecf46ce8441fd7929b3ff1e04c296",
+      "person": "Ann",
+      "seq": 0,
+      "ts_unix": 1792090102,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "e743452bc338336cc46876224e8f7ea9b17c4e9360651721fc4304e1da8aa404",
+      "on_behalf_of": "Ann",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 1,
+      "ts_unix": 1792090105,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "b1ee25a4e059ad7f7024be5c8efb51f239c7d5be34ec46ac7d629ffe1ae3bf88",
+      "on_behalf_of": "Ann",
+      "payload": {
+       "amount_cents": 3000,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 2,
+      "ts_unix": 1792090106,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "120ac0c117720870f9d331c494e236a079258b1b8993425c4968b015b9b3d774",
+      "person": "Sam",
+      "seq": 4,
+      "ts_unix": 1792090112,
+      "voided": false
+     },
+     {
+      "actor": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776",
+      "id": "93849e5a4e832b9110e258c46db33e40d9bd8b402caece935449077b45066fcc",
+      "person": "Bo",
+      "seq": 0,
+      "ts_unix": 1792090113,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "ba52abe0f457590342de9deabb9c5afe606390d09ddebb79dfbb7618d0ba36b8",
+      "on_behalf_of": "Bo",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 3,
+      "ts_unix": 1792090115,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "f1de926fcd7addb9bae6f758b05986d5a52460d57d765cc6ebb4a52d3d68a643",
+      "on_behalf_of": "Bo",
+      "payload": {
+       "amount_cents": 1000,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 4,
+      "ts_unix": 1792090116,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "e38844ff7119e4514b2f812ba1e24106e86ca82dc4db3ae1ddf5a73b2e274013",
+      "on_behalf_of": "Bo",
+      "payload": {
+       "amount_cents": 1000,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 5,
+      "ts_unix": 1792090117,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "e6007701dc2782869b510fbd365f3c2c747cf11e668af067d0cb8e29451cd7fa",
+      "person": "Sam",
+      "seq": 5,
+      "ts_unix": 1792090122,
+      "voided": false
+     },
+     {
+      "actor": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15",
+      "id": "6b1f7acf8009a8f5f681f858ae8b158ddd8f059744e3bfc5f0275bd34b05bbe4",
+      "person": "Cy",
+      "seq": 0,
+      "ts_unix": 1792090123,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "29fb3dfcdb848ade783b0f90626b32dcc4cfeb612ee7ca25f079f63128e9ee7d",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 6,
+      "ts_unix": 1792090124,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "0106fc9707b543094b6c4d8b153513f292381794d95bf508b816a047cc792461",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "amount_cents": 500,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 7,
+      "ts_unix": 1792090125,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "7a1db6192503311bf41d34e75db4244f2d393bb00d52cceb01d3cbc85488d135",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "amount_cents": 500,
+       "kind": "Money/settle",
+       "to": "Bo"
+      },
+      "person": "Ann",
+      "seq": 8,
+      "ts_unix": 1792090126,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "eab2392df53f6b0040d574a5b9ec752008c5ce1d2ab1451b74dc1e714358faab",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "amount_cents": 500,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 9,
+      "ts_unix": 1792090127,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "6924cc4b6d4543ed71783d3605bbd0ce835035849d396112aa55eaeec47038c7",
+      "person": "Sam",
+      "seq": 6,
+      "ts_unix": 1792090134,
+      "voided": false
+     },
+     {
+      "actor": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256",
+      "id": "d869a6c8e936f07c6829fa62cbe09d818f19270789058a5d8dcaf132fdf5b575",
+      "person": "Di",
+      "seq": 0,
+      "ts_unix": 1792090135,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "9d60746272f639c872dc42934d23d8d6c90bffc68867e4c7e7d5eac1ed3e3e48",
+      "person": "Sam",
+      "seq": 7,
+      "ts_unix": 1792090169,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "155d5a6c69f88d5311255c3362e439588fc73b281199d18967228bb7e0af3839",
+      "on_behalf_of": "Di",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 10,
+      "ts_unix": 1792090176,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "1891b37f5e9d01792e2c23f77c725035082f792e893a729ae4c67555316722ab",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 11,
+      "ts_unix": 1792090177,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "882bcc9c4673af552c3b01b4b6d58c88ac1396bb1c9b9b141f7c5c9978b294e6",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Bo"
+      },
+      "person": "Ann",
+      "seq": 12,
+      "ts_unix": 1792090178,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "264bd1ac3dde478e8815cc9cedd2960001051ff0eacf99db735323e744ca566c",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Cy"
+      },
+      "person": "Ann",
+      "seq": 13,
+      "ts_unix": 1792090179,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "baf033b12f105d29046224eaadf50b990f95b2e187f0d8df1a174fb8f7be1537",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 14,
+      "ts_unix": 1792090180,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "fa7a18d6e21ab74877d5e34faf549a832d9eb7fa3fdec1e9e30fbc905914a933",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 15,
+      "ts_unix": 1792090186,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "bd0da700c3a5bc5ff582205a4cda207e8a14e63061f2aa43e2e596631cd8f61a",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 16,
+      "ts_unix": 1792090187,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "887adf288748a79bddd0c73981e5b3670977ba3061ca863f6f039e30ae354bea",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Bo"
+      },
+      "person": "Ann",
+      "seq": 17,
+      "ts_unix": 1792090188,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "dd2337a1fc27c9a402d17fc2c24a466231d829b9bf73cceeaea2afdfe58fcda6",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Cy"
+      },
+      "person": "Ann",
+      "seq": 18,
+      "ts_unix": 1792090189,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "724b20473c75ebf62be5eb922a19e2e101103e31d59388db44123d734b8bcc86",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Di"
+      },
+      "person": "Ann",
+      "seq": 19,
+      "ts_unix": 1792090190,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "959c6e4f6f95b0600864412e654336995df213dab21bb8f41b2cf96838d403c4",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 20,
+      "ts_unix": 1792090191,
+      "voided": false
+     }
+    ],
+    "people": [
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090122
+      },
+      "key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15",
+      "person": "Cy",
+      "person_key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090094
+      },
+      "key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "person": "Priya",
+      "person_key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b"
+     },
+     {
+      "device": "computer",
+      "joined": "started",
+      "key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "person": "Sam",
+      "person_key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090101
+      },
+      "key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "person": "Ann",
+      "person_key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090112
+      },
+      "key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776",
+      "person": "Bo",
+      "person_key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090134
+      },
+      "key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256",
+      "person": "Di",
+      "person_key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256"
+     },
+     {
+      "device": "browser",
+      "joined": {
+       "at": 1792090169
+      },
+      "key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7",
+      "person": "Eve",
+      "person_key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7"
+     }
+    ]
+   },
+   "people": {
+    "namespace": "264897f995d40dd7eccc8a5fbe0c7997d308345949220a635d2cbf9ed09f19f7",
+    "people": [
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090122
+      },
+      "key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15",
+      "person": "Cy",
+      "person_key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090094
+      },
+      "key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "person": "Priya",
+      "person_key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b"
+     },
+     {
+      "device": "computer",
+      "joined": "started",
+      "key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "person": "Sam",
+      "person_key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090101
+      },
+      "key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "person": "Ann",
+      "person_key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090112
+      },
+      "key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776",
+      "person": "Bo",
+      "person_key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090134
+      },
+      "key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256",
+      "person": "Di",
+      "person_key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256"
+     },
+     {
+      "device": "browser",
+      "joined": {
+       "at": 1792090169
+      },
+      "key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7",
+      "person": "Eve",
+      "person_key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7"
+     }
+    ]
+   }
+  },
+  "Di": {
+   "door": [
+    {
+     "name": "Cy",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Priya",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Sam",
+     "drawn": "off",
+     "says": "did not answer"
+    },
+    {
+     "name": "Ann",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Bo",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Di",
+     "drawn": "on",
+     "says": "on now"
+    },
+    {
+     "name": "Eve",
+     "drawn": "phone",
+     "says": "in from a phone"
+    }
+   ],
+   "index": [
+    [
+     "What",
+     "What it is",
+     "Whose",
+     "How it opens",
+     "Now"
+    ],
+    [
+     "Open Events",
+     "Events",
+     "Elm Street",
+     "In a tab. Copy its address for a program",
+     "on"
+    ],
+    [
+     "Open Money",
+     "Money",
+     "Elm Street",
+     "In a tab. Copy its address for a program",
+     "on"
+    ],
+    [
+     "Open Priya’s jellyfin",
+     "jellyfin",
+     "Priya",
+     "In a tab. Copy its address for a program",
+     "on"
+    ],
+    [
+     "Sam's computer did not answer, so what they lend is not listed."
+    ]
+   ],
+   "money": {
+    "url": "http://pwvz6kj1uu8m0gknffqndkrvaxmtbha0a68lp92krbj393j5askapp09plhpgs.localhost:62262/",
+    "words": "Money\n\nYou’re square with everyone.\n\nWho pays whom\n\nNobody owes anybody.\n\nWhat people paid for\nPriya paid $60.00 for Gas bill, split between Ann, Bo, Cy, Di, Eve, Priya.\n\nWhen someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — Ann, Bo, Cy, Di, Eve, Priya, Sam — sees it.\n\nAdd what you paid\n\nWhat it was for:  How much:  Add it, paid by you",
+    "password": 0,
+    "sign_in": 0
+   },
+   "log": {
+    "complete": true,
+    "gaps": [],
+    "held": 35,
+    "namespace": "264897f995d40dd7eccc8a5fbe0c7997d308345949220a635d2cbf9ed09f19f7",
+    "ops": [
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "67e47bdd4bef8eebc54a506372f8cf92a50f153e1ab942d24149f0d558667e6b",
+      "person": "Sam",
+      "seq": 0,
+      "ts_unix": 1792090090,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "88621a5e05c3e0cfc563233c53b312fec4dac7a7f9c54dcd99fc967c91f2ec47",
+      "person": "Sam",
+      "seq": 1,
+      "ts_unix": 1792090091,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "edde160620379c9bb34ffb5c97affec5fa2bdaef7225a10eb347f069ea9e4dec",
+      "person": "Sam",
+      "seq": 2,
+      "ts_unix": 1792090094,
+      "voided": false
+     },
+     {
+      "actor": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "id": "1073b0c37b6766521290096dbbe280f479caa0e4b25445fb166377bc7f8ea082",
+      "person": "Priya",
+      "seq": 0,
+      "ts_unix": 1792090095,
+      "voided": false
+     },
+     {
+      "actor": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "id": "77dda6099c42ad24df6bb1b96f6894cd64d0c873b3750281365ca339bd95608c",
+      "person": "Priya",
+      "seq": 1,
+      "ts_unix": 1792090096,
+      "voided": false
+     },
+     {
+      "actor": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "id": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+      "on_behalf_of": "Priya",
+      "payload": {
+       "amount_cents": 6000,
+       "description": "Gas bill",
+       "kind": "Money/expense"
+      },
+      "person": "Priya",
+      "seq": 2,
+      "ts_unix": 1792090097,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "3084376403105a0ce490f87bee7cedc5577089c9b19651c8c294cbddefcfe4ae",
+      "person": "Sam",
+      "seq": 3,
+      "ts_unix": 1792090101,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "65506319b3459f874a2f4b343ec4c61bd67ecf46ce8441fd7929b3ff1e04c296",
+      "person": "Ann",
+      "seq": 0,
+      "ts_unix": 1792090102,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "e743452bc338336cc46876224e8f7ea9b17c4e9360651721fc4304e1da8aa404",
+      "on_behalf_of": "Ann",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 1,
+      "ts_unix": 1792090105,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "b1ee25a4e059ad7f7024be5c8efb51f239c7d5be34ec46ac7d629ffe1ae3bf88",
+      "on_behalf_of": "Ann",
+      "payload": {
+       "amount_cents": 3000,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 2,
+      "ts_unix": 1792090106,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "120ac0c117720870f9d331c494e236a079258b1b8993425c4968b015b9b3d774",
+      "person": "Sam",
+      "seq": 4,
+      "ts_unix": 1792090112,
+      "voided": false
+     },
+     {
+      "actor": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776",
+      "id": "93849e5a4e832b9110e258c46db33e40d9bd8b402caece935449077b45066fcc",
+      "person": "Bo",
+      "seq": 0,
+      "ts_unix": 1792090113,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "ba52abe0f457590342de9deabb9c5afe606390d09ddebb79dfbb7618d0ba36b8",
+      "on_behalf_of": "Bo",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 3,
+      "ts_unix": 1792090115,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "f1de926fcd7addb9bae6f758b05986d5a52460d57d765cc6ebb4a52d3d68a643",
+      "on_behalf_of": "Bo",
+      "payload": {
+       "amount_cents": 1000,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 4,
+      "ts_unix": 1792090116,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "e38844ff7119e4514b2f812ba1e24106e86ca82dc4db3ae1ddf5a73b2e274013",
+      "on_behalf_of": "Bo",
+      "payload": {
+       "amount_cents": 1000,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 5,
+      "ts_unix": 1792090117,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "e6007701dc2782869b510fbd365f3c2c747cf11e668af067d0cb8e29451cd7fa",
+      "person": "Sam",
+      "seq": 5,
+      "ts_unix": 1792090122,
+      "voided": false
+     },
+     {
+      "actor": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15",
+      "id": "6b1f7acf8009a8f5f681f858ae8b158ddd8f059744e3bfc5f0275bd34b05bbe4",
+      "person": "Cy",
+      "seq": 0,
+      "ts_unix": 1792090123,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "29fb3dfcdb848ade783b0f90626b32dcc4cfeb612ee7ca25f079f63128e9ee7d",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 6,
+      "ts_unix": 1792090124,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "0106fc9707b543094b6c4d8b153513f292381794d95bf508b816a047cc792461",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "amount_cents": 500,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 7,
+      "ts_unix": 1792090125,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "7a1db6192503311bf41d34e75db4244f2d393bb00d52cceb01d3cbc85488d135",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "amount_cents": 500,
+       "kind": "Money/settle",
+       "to": "Bo"
+      },
+      "person": "Ann",
+      "seq": 8,
+      "ts_unix": 1792090126,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "eab2392df53f6b0040d574a5b9ec752008c5ce1d2ab1451b74dc1e714358faab",
+      "on_behalf_of": "Cy",
+      "payload": {
+       "amount_cents": 500,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 9,
+      "ts_unix": 1792090127,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "6924cc4b6d4543ed71783d3605bbd0ce835035849d396112aa55eaeec47038c7",
+      "person": "Sam",
+      "seq": 6,
+      "ts_unix": 1792090134,
+      "voided": false
+     },
+     {
+      "actor": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256",
+      "id": "d869a6c8e936f07c6829fa62cbe09d818f19270789058a5d8dcaf132fdf5b575",
+      "person": "Di",
+      "seq": 0,
+      "ts_unix": 1792090135,
+      "voided": false
+     },
+     {
+      "actor": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "id": "9d60746272f639c872dc42934d23d8d6c90bffc68867e4c7e7d5eac1ed3e3e48",
+      "person": "Sam",
+      "seq": 7,
+      "ts_unix": 1792090169,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "155d5a6c69f88d5311255c3362e439588fc73b281199d18967228bb7e0af3839",
+      "on_behalf_of": "Di",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 10,
+      "ts_unix": 1792090176,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "1891b37f5e9d01792e2c23f77c725035082f792e893a729ae4c67555316722ab",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 11,
+      "ts_unix": 1792090177,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "882bcc9c4673af552c3b01b4b6d58c88ac1396bb1c9b9b141f7c5c9978b294e6",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Bo"
+      },
+      "person": "Ann",
+      "seq": 12,
+      "ts_unix": 1792090178,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "264bd1ac3dde478e8815cc9cedd2960001051ff0eacf99db735323e744ca566c",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Cy"
+      },
+      "person": "Ann",
+      "seq": 13,
+      "ts_unix": 1792090179,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "baf033b12f105d29046224eaadf50b990f95b2e187f0d8df1a174fb8f7be1537",
+      "on_behalf_of": "Di",
+      "payload": {
+       "amount_cents": 300,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 14,
+      "ts_unix": 1792090180,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "fa7a18d6e21ab74877d5e34faf549a832d9eb7fa3fdec1e9e30fbc905914a933",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "expense": "640856c3c8fddaa3f9387e0631a0049617a762c4f1556b9954dda2438eb6ad34",
+       "kind": "Money/share"
+      },
+      "person": "Ann",
+      "seq": 15,
+      "ts_unix": 1792090186,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "bd0da700c3a5bc5ff582205a4cda207e8a14e63061f2aa43e2e596631cd8f61a",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Ann"
+      },
+      "person": "Ann",
+      "seq": 16,
+      "ts_unix": 1792090187,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "887adf288748a79bddd0c73981e5b3670977ba3061ca863f6f039e30ae354bea",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Bo"
+      },
+      "person": "Ann",
+      "seq": 17,
+      "ts_unix": 1792090188,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "dd2337a1fc27c9a402d17fc2c24a466231d829b9bf73cceeaea2afdfe58fcda6",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Cy"
+      },
+      "person": "Ann",
+      "seq": 18,
+      "ts_unix": 1792090189,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "724b20473c75ebf62be5eb922a19e2e101103e31d59388db44123d734b8bcc86",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Di"
+      },
+      "person": "Ann",
+      "seq": 19,
+      "ts_unix": 1792090190,
+      "voided": false
+     },
+     {
+      "actor": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "id": "959c6e4f6f95b0600864412e654336995df213dab21bb8f41b2cf96838d403c4",
+      "on_behalf_of": "Eve",
+      "payload": {
+       "amount_cents": 200,
+       "kind": "Money/settle",
+       "to": "Priya"
+      },
+      "person": "Ann",
+      "seq": 20,
+      "ts_unix": 1792090191,
+      "voided": false
+     }
+    ],
+    "people": [
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090122
+      },
+      "key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15",
+      "person": "Cy",
+      "person_key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090094
+      },
+      "key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "person": "Priya",
+      "person_key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b"
+     },
+     {
+      "device": "computer",
+      "joined": "started",
+      "key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "person": "Sam",
+      "person_key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090101
+      },
+      "key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "person": "Ann",
+      "person_key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090112
+      },
+      "key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776",
+      "person": "Bo",
+      "person_key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090134
+      },
+      "key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256",
+      "person": "Di",
+      "person_key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256"
+     },
+     {
+      "device": "browser",
+      "joined": {
+       "at": 1792090169
+      },
+      "key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7",
+      "person": "Eve",
+      "person_key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7"
+     }
+    ]
+   },
+   "people": {
+    "namespace": "264897f995d40dd7eccc8a5fbe0c7997d308345949220a635d2cbf9ed09f19f7",
+    "people": [
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090122
+      },
+      "key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15",
+      "person": "Cy",
+      "person_key": "012b3fbee6fe965ae143e15ebb6ec80a9b915302a240979f1c17581f667f3d15"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090094
+      },
+      "key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b",
+      "person": "Priya",
+      "person_key": "3d0f481fdd51a345a86512e0dc7fc2683933739000080782d787da9e3063224b"
+     },
+     {
+      "device": "computer",
+      "joined": "started",
+      "key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad",
+      "person": "Sam",
+      "person_key": "4a2273391e57f2dd30ece3b2d284d2b539c41855035aaadf5a0ee1f949468cad"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090101
+      },
+      "key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0",
+      "person": "Ann",
+      "person_key": "64e55e20f78c7cab150b211ab1a1d20515009816073c967f08704f9fe4fb03d0"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090112
+      },
+      "key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776",
+      "person": "Bo",
+      "person_key": "8a5ce4adbbe7b09022750d182e12dbf3007f87b26d424d696840dfe6e9687776"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792090134
+      },
+      "key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256",
+      "person": "Di",
+      "person_key": "91a3b1018a106dba49c86d8d4b67a435766a2f68e232ea3a73019ed6e8c94256"
+     },
+     {
+      "device": "browser",
+      "joined": {
+       "at": 1792090169
+      },
+      "key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7",
+      "person": "Eve",
+      "person_key": "bd356585c382ca83f6c14f80cd37430e083358b88453ec1feb1a97d0909132d7"
+     }
+    ]
+   }
+  }
+ },
+ "jellyfin_users": [
+  "priya"
+ ],
+ "end_load": 52.2
+}
