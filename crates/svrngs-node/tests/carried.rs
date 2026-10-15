@@ -517,3 +517,36 @@ async fn bringing_from_the_shelf_traces_why_it_could_not_write() {
     );
     ana.endpoint().close().await;
 }
+
+/// **A folder under apps/ no lend can be named by is traced as left out**
+/// (#167): Ana's folder holds Money and `apps/no kind!/`, whose name is no
+/// kind; Money is carried, and the trace names the other as left out.
+/// Planted: HEAD before #167's fix, which dropped it untraced.
+#[tokio::test]
+async fn a_folder_under_apps_no_lend_can_be_named_by_is_traced_as_left_out() {
+    let (said, _heard) = heard("folder=debug");
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 9, ana, &[]);
+    round(ana).await;
+    let root = tempfile::tempdir().unwrap();
+    let folder = synced_in(ana, root.path(), &group).await;
+    carry(&folder, "Money");
+    carry(&folder, "no kind!");
+    let mut seen = lends(ana, &group).await;
+    for _ in 0..30 {
+        if !of_kind(&seen, "Money").is_empty() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        seen = lends(ana, &group).await;
+    }
+    assert_eq!(of_kind(&seen, "Money").len(), 1, "{seen:#}");
+    let traced = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    let left = |l: &str| l.contains("no kind!") && l.contains("left out");
+    assert!(
+        traced.lines().any(left),
+        "the folder left out is named:\n{traced}"
+    );
+    ana.endpoint().close().await;
+}
