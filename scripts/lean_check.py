@@ -35,8 +35,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # row raising only as far as it needs. arch-helper, the one arch row that may
 # raise, spends the 31 lines v1ui left (operator, 2026-10-15; ceiling 16,965):
 # the repository's cap is one past where its (c)'s last, #169, the table's
-# first column an enum, landed.
-BUDGET = {"crates/svrngs-core": 3150, ".": 16964}
+# first column an enum, landed. arch-peer's cut of the loopback bridge lowered it
+# to one past where its (d) landed (2026-10-15).
+BUDGET = {"crates/svrngs-core": 3150, ".": 16576}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
