@@ -505,31 +505,40 @@ async fn at_door(
     body: Option<serde_json::Value>,
     pass: Option<HeaderValue>,
 ) -> Response {
-    let (base, http) = match (
-        crate::origin::dialled(at, lend).await,
-        crate::ring_sync::peer_client(),
-    ) {
-        (Ok(base), Ok(http)) => (base, http),
-        (Err(refused), _) => return refused,
-        (_, Err(_)) => return crate::origin::away(),
+    let contact = match crate::origin::dialled(at, lend) {
+        Ok(contact) => contact,
+        Err(refused) => return refused,
     };
-    let url = format!("{base}/choices/{lend}");
-    let ask = match &body {
-        Some(body) => http.post(url).json(body),
-        None => http.get(url),
-    };
-    let Ok(answer) = pass
+    let method = body.as_ref().map_or(Method::GET, |_| Method::POST);
+    let ask = pass
         .into_iter()
-        .fold(ask, |a, p| a.header(PASS_HEADER, p))
-        .send()
-        .await
-    else {
-        return crate::origin::away();
+        .fold(axum::http::Request::builder(), |a, p| {
+            a.header(PASS_HEADER, p)
+        });
+    let ask = ask.method(method).uri(format!("/choices/{lend}"));
+    let ask = ask.header(header::CONTENT_TYPE, "application/json");
+    let ask = ask.body(body.map_or_else(axum::body::Body::empty, |b| b.to_string().into()));
+    let answer = match ask {
+        Ok(ask) => at
+            .host
+            .transport()
+            .fetch(&contact, ask)
+            .await
+            .map_err(|e| e.to_string()),
+        Err(e) => Err(e.to_string()),
     };
-    let (status, heads) = (answer.status(), answer.headers().clone());
-    tracing::debug!(target: "home", %lend, status = status.as_u16(), refused = ?heads.get(REFUSED_HEADER), "home: the lender's door answered");
-    let mut said = (status, answer.bytes().await.unwrap_or_default()).into_response();
-    for (name, value) in heads
+    let answer = match answer {
+        Ok(answer) => answer,
+        Err(error) => {
+            tracing::debug!(target: "home", %lend, error, "home: the lender's door did not answer");
+            return crate::origin::away();
+        }
+    };
+    let (head, bytes) = answer.into_parts();
+    tracing::debug!(target: "home", %lend, status = head.status.as_u16(), refused = ?head.headers.get(REFUSED_HEADER), "home: the lender's door answered");
+    let mut said = (head.status, bytes).into_response();
+    for (name, value) in head
+        .headers
         .iter()
         .filter(|(n, _)| [header::CONTENT_TYPE.as_str(), REFUSED_HEADER].contains(&n.as_str()))
     {

@@ -37,6 +37,7 @@ use axum::Router;
 use svrngs_core::pass::{Label, Pass};
 
 use crate::door::{self, Door, LendRefusal, Who, LEND_ROUTE, PASS_HEADER, REFUSED_HEADER};
+use crate::iroh::Contact;
 use crate::node::Asking;
 use crate::surface::STOP_SUFFIX;
 
@@ -210,13 +211,7 @@ pub(crate) async fn reach(
         parts.uri = uri_of(&target)?;
         return door::lend_for(door, Who::Own(app), None, Request::from_parts(parts, body)).await;
     }
-    let base = dialled(at, &label).await?;
-    let Some(bridge) = base
-        .strip_prefix("http://")
-        .and_then(|a| a.parse::<std::net::SocketAddr>().ok())
-    else {
-        return Err(away());
-    };
+    let contact = dialled(at, &label)?;
     let Some(pass) = own_pass(at, &app, &label) else {
         return Err(LendRefusal::Fault.say(
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -224,8 +219,8 @@ pub(crate) async fn reach(
         ));
     };
     req.headers_mut().insert(PASS_HEADER, pass);
-    tracing::debug!(target: "origin", %label, %app, lender = hex::encode(lender), %bridge, "origin: another computer's lend, through the dial to its door, the app in this computer's own pass");
-    carried(req, bridge, &target, label.as_str()).await
+    tracing::debug!(target: "origin", %label, %app, lender = hex::encode(lender), "origin: another computer's lend, through the dial to its door, the app in this computer's own pass");
+    carried(at, req, &contact, &target, label.as_str()).await
 }
 
 /// `target` as the address a lend is asked at, or refused as no path.
@@ -238,20 +233,15 @@ fn uri_of(target: &str) -> Result<Uri, Response> {
     })
 }
 
-/// The bridge to the door of the computer lending `label`, dialled as this
-/// computer's key; refused for a lender standing in no group held here, so
-/// no page makes this computer dial a stranger, and `away` with no path.
-pub(crate) async fn dialled(at: &Asking, label: &Label) -> Result<String, Response> {
+/// The computer lending `label`, to be dialled as this computer's key;
+/// refused for a lender standing in no group held here, so no page makes
+/// this computer dial a stranger.
+pub(crate) fn dialled(at: &Asking, label: &Label) -> Result<Contact, Response> {
     let actor = hex::encode(label.lender());
-    let Some(contact) = at.host.contact(&actor) else {
+    at.host.contact(&actor).ok_or_else(|| {
         tracing::debug!(target: "origin", %label, actor, "origin: refused — the label names no computer standing in a group held here");
-        return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
-    };
-    let Some(base) = at.host.transport().base_url(&contact).await else {
-        tracing::debug!(target: "origin", %label, actor, "origin: no dialable path to the lender's computer");
-        return Err(away());
-    };
-    Ok(base)
+        LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here")
+    })
 }
 
 /// The lender's computer could not be reached.
@@ -262,11 +252,13 @@ pub(crate) fn away() -> Response {
     )
 }
 
-/// `req` carried to the door at `bridge` as `target`, its answer back
-/// whole, a WebSocket spliced once both sides switch.
+/// `req` carried to the door of the computer at `contact` as `target`, on
+/// a request on the stream, its answer back whole, a WebSocket spliced once
+/// both sides switch; `away` when it has no answer.
 async fn carried(
+    at: &Asking,
     mut req: Request,
-    bridge: std::net::SocketAddr,
+    contact: &Contact,
     target: &str,
     label: &str,
 ) -> Result<Response, Response> {
@@ -281,9 +273,10 @@ async fn carried(
     *request.uri_mut() = uri_of(target)?;
     *request.method_mut() = parts.method;
     *request.headers_mut() = parts.headers;
-    let Some(mut answer) = door::send_to(bridge, request, label).await else {
-        return Err(away());
-    };
+    let mut answer = at.host.transport().send(contact, request).await.map_err(|e| {
+        tracing::debug!(target: "origin", label, error = %e, "origin: the lender's computer did not answer");
+        away()
+    })?;
     let switched = door::upgrade_of(answer.headers())
         .filter(|_| answer.status() == StatusCode::SWITCHING_PROTOCOLS);
     let service = switched.as_ref().map(|_| hyper::upgrade::on(&mut answer));

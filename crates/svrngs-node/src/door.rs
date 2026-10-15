@@ -1212,7 +1212,7 @@ async fn connected(to: std::net::SocketAddr, lend: &str) -> Option<tokio::net::T
 /// Send `request` on a new HTTP/1 connection to `to`, driven with
 /// upgrades, and answer the response; `None`, named at warn by `lend`,
 /// when nothing there takes the connection ([`connected`]) or answers.
-pub(crate) async fn send_to(
+async fn send_to(
     to: std::net::SocketAddr,
     request: axum::http::Request<Body>,
     lend: &str,
