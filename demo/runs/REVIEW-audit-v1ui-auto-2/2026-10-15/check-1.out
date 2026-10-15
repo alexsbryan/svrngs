@@ -1,0 +1,26 @@
+# scripts/check.sh at 2ce7beb, started by the loop's ralph-result await; exited 1 after 12m21s
+# step verdicts, as the script printed them (log: ralph/next/v1ui/ctl/log/sessions/REVIEW-audit-v1ui-auto-2-1.await.log, gitignored)
+note       open files: 256, raised to 10240
+passed     principles pinned
+passed     lean and RUST_ARCH
+passed     app nouns gate
+passed     app nouns
+passed     rustfmt
+passed     clippy
+failed     tests
+passed     canaries
+passed     ceiling canary
+passed     web rustfmt and clippy
+passed     browser
+passed     joining in a browser
+passed     conformance canary
+rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict
+passed     app laws
+
+# the one failed step failed on one test, the bar v1ui-race is queued for, nothing else:
+           carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::webkit --- FAILED
+           Money opened and wrote in 15009 ms, past the bar's 15000, at 2026-10-15T16:05:53Z 9:05 up 5 days, 21:48, 6 users, load averages: 31.37 19.70 16.81:
+           test result: FAILED. 87 passed; 1 failed; 1 ignored; 0 measured; 0 filtered out; finished in 126.43s
+
+# the same test alone at 2ce7beb, after the run (load 12-15 on 12 cores): both engines ok
+# chromium: opened 14387 ms; webkit: opened 14550 ms (cargo test -p svrngs-node --test browser -- carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s --nocapture)
