@@ -54,6 +54,9 @@ charter disagree, they win, and the decision says so.
   - It is the one row that may raise, within the 31 lines v1ui's +650 left
     unspent, up to 16,965.
   - The rest of the queue keeps the no-raise rule.
+  - It also takes v1ui's closing audit's findings, #169–#173
+    (REVIEW-audit-v1ui-auto-3): all five are v1ui's code, so they come out
+    of v1ui's unspent lines too.
 
 ## Why
 
