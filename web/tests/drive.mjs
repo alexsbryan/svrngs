@@ -25,14 +25,16 @@ import { hold, launch, offline, serve } from './page.mjs';
 const args = JSON.parse(process.argv[2]);
 
 // In the page: HTTP over the dial through the node's door, by the page's own
-// `connect` and `fetch` (web/src/lib.rs), imported as app.js imports them.
+// `endpoint`, `dial_link` and `fetch` (web/src/lib.rs), imported and dialled
+// as app.js `reachGroup` dials the link's computer (#172).
 // Each answer is read as a page reads one, chunk by chunk.
 async function httpChecks(a) {
   const app = document.querySelector('script[type=module]').src;
   const m = await import(new URL(`./wasm/svrngs_web.js${new URL(app).search}`, app).href);
   await m.default();
   const key = Uint8Array.from(a.key.match(/../g), (h) => parseInt(h, 16));
-  const d = await m.connect(key, a.token);
+  const ep = await m.endpoint(key, a.token);
+  const d = await ep.dial_link();
   const hex = (b) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
   // A body to its end: how many chunks, the largest, the bytes, the SHA-256.
   async function drain(res) {
@@ -118,6 +120,7 @@ async function httpChecks(a) {
     return { status: posted.status, text: await posted.text(), held };
   });
   await d.close();
+  await ep.close();
   return out;
 }
 

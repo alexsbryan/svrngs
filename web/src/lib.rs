@@ -157,7 +157,8 @@ async fn bind(key: Vec<u8>, issuer: Option<iroh::PublicKey>, relay: RelayUrl, he
 /// `bound` on `alpn`: through `via`, the relay its group names for it
 /// (relay-in-record), else the relay the token carries, said. A dial to a
 /// lender is given up when not answered `within` (events-asleep), a
-/// member's to the computer its link names as [`connect`] says; a joiner's
+/// member's to the computer its link names within [`dial::LINK_WITHIN`]
+/// ([`Endpoint::dial_link`]); a joiner's
 /// to it waits as long as iroh does.
 async fn reach(
     bound: &Bound,
@@ -294,36 +295,17 @@ impl Dialled {
     }
 }
 
-/// Dial the computer that issued `token`, by its key, as the person whose
-/// key is `key`, on the members' protocol: the dialled computer, which
-/// answers HTTP on a bi-stream per request ([`Dialled::fetch`]), or the
-/// layer that refused, every layer emitted as it happens.
-/// Given up when not answered within [`dial::LINK_WITHIN`], as the page's
-/// [`Endpoint::dial_link`] is; the browser tests' driver dials by it
-/// (`web/tests/drive.mjs`).
-#[wasm_bindgen]
-pub async fn connect(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
-    dial(key, token, Alpn::Member, Some(dial::LINK_WITHIN)).await
-}
-
 /// Dial the computer that issued `token` on the redeem protocol, the one a
 /// key standing in no group may speak, to ask what the link is for and
-/// redeem it ([`join`]'s bodies).
+/// redeem it ([`join`]'s bodies), from an endpoint of its own, waiting as
+/// iroh does: the dial's [`Dialled::close`] closes it. (A member dials the
+/// link's computer by [`Endpoint::dial_link`]; #172 took the second way.)
 #[wasm_bindgen]
 pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
-    dial(key, token, Alpn::Redeem, None).await
-}
-
-/// Dial the computer that issued `token`, on `alpn`, from an endpoint of
-/// its own, given up when not answered within `cap`: the dial's
-/// [`Dialled::close`] closes it.
-async fn dial(key: Vec<u8>, token: String, alpn: Alpn, cap: Option<std::time::Duration>) -> Result<Dialled, JsError> {
     let bound = bind_for(key, &token, false).await?;
-    let conn = reach(&bound, None, None, alpn, cap).await?;
-    Ok(Dialled {
-        ep: Some(bound.ep),
-        conn,
-    })
+    let conn = reach(&bound, None, None, Alpn::Redeem, None).await?;
+    let ep = Some(bound.ep);
+    Ok(Dialled { ep, conn })
 }
 
 /// Bind one endpoint as the person whose key is `key`, in the group whose
@@ -364,7 +346,7 @@ pub fn relay_of(token: String) -> Result<Option<String>, JsError> {
 }
 
 /// The key of the computer that made the link `token`, 64 hex: the one
-/// [`connect`] dials (v1ui-reach (c)).
+/// [`Endpoint::dial_link`] dials (v1ui-reach (c)).
 #[wasm_bindgen]
 pub fn issuer_of(token: String) -> Result<String, JsError> {
     let link = Token::decode(&token).ok_or_else(|| JsError::new("not a link's token"))?;
@@ -414,7 +396,8 @@ impl Endpoint {
         Ok(Dialled { ep: None, conn })
     }
 
-    /// Dial the computer that made the group's link, as [`connect`] does,
+    /// Dial the computer that made the group's link, on the members'
+    /// protocol, given up when not answered within [`dial::LINK_WITHIN`],
     /// from this endpoint, so the page dials it and the lenders at once
     /// from the one endpoint a relay keeps per key (v1ui-race (a)).
     pub async fn dial_link(&self) -> Result<Dialled, JsError> {
