@@ -9,6 +9,7 @@
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
+use common::heard;
 #[path = "common/computers.rs"]
 mod computers;
 use computers::{found, http, known, round, signing, start, until_on as until};
@@ -468,6 +469,54 @@ async fn a_file_the_store_cannot_read_is_said_so_never_as_not_held_yet() {
     assert!(
         said.contains(r#""kind":"fault""#) && !said.contains("does not hold it yet"),
         "{said}"
+    );
+    ana.endpoint().close().await;
+}
+
+/// **Bringing from the shelf traces why it could not write** (#164): Ana's
+/// folder of the group made unwritable, her home page brings Money; it is
+/// refused 500 in the page's words, and the trace names the write's own
+/// error, which the page is not told. Planted: HEAD before #164's fix,
+/// whose trace said the status alone.
+#[cfg(unix)]
+#[tokio::test]
+async fn bringing_from_the_shelf_traces_why_it_could_not_write() {
+    use std::os::unix::fs::PermissionsExt;
+    let (said, _heard) = heard("folder=debug");
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 9, ana, &[]);
+    round(ana).await;
+    let root = tempfile::tempdir().unwrap();
+    let folder = synced_in(ana, root.path(), &group).await;
+    std::fs::set_permissions(&folder, std::fs::Permissions::from_mode(0o555)).unwrap();
+    let home = format!("svrngs.localhost:{}", ana.api_addr().port());
+    let answer = http()
+        .post(format!("http://{}/shelf", ana.api_addr()))
+        .header("host", &home)
+        .header("sec-fetch-site", "same-origin")
+        .header("sec-fetch-mode", "cors")
+        .header("origin", format!("http://{home}"))
+        .json(&json!([group, ["Money"]]))
+        .send()
+        .await
+        .unwrap();
+    std::fs::set_permissions(&folder, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let status = answer.status();
+    let words = answer.text().await.unwrap();
+    assert_eq!(status, 500, "{words}");
+    assert!(
+        words.contains("can’t be written") && !words.contains("denied"),
+        "{words}"
+    );
+    let traced = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    let line = traced
+        .lines()
+        .find(|l| l.contains("shelf:"))
+        .unwrap_or_default();
+    assert!(
+        line.contains("Permission denied"),
+        "the write's error traced:\n{traced}"
     );
     ana.endpoint().close().await;
 }
