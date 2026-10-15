@@ -56,10 +56,21 @@ pub enum Signs {
     Header(&'static str),
 }
 
-/// [`WELL_KNOWN`]'s rows: the port as written (`-` for none), the kind,
-/// parsed once for every reader (REVIEW_FINDINGS #64), and the rest of the
-/// line, empty when there is none. A row whose kind does not parse is none.
-pub fn rows() -> impl Iterator<Item = (&'static str, Kind, &'static str)> {
+/// What [`WELL_KNOWN`]'s first column says a row is (REVIEW_FINDINGS #169):
+/// a kind at its well-known port; a kind known by its lender's word alone
+/// (`-`); or a kind's sign-in helper (`helper`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum At {
+    Port(NonZeroU16),
+    Named,
+    Helper,
+}
+
+/// [`WELL_KNOWN`]'s rows: the first column ([`At`]) and the kind, each
+/// parsed once for every reader (REVIEW_FINDINGS #64, #169), and the rest
+/// of the line, empty when there is none. A row whose port or kind does
+/// not parse is none.
+pub fn rows() -> impl Iterator<Item = (At, Kind, &'static str)> {
     WELL_KNOWN
         .lines()
         .map(|l| l.split('#').next().unwrap_or("").trim())
@@ -68,7 +79,12 @@ pub fn rows() -> impl Iterator<Item = (&'static str, Kind, &'static str)> {
             let (port, rest) = l.split_once(char::is_whitespace)?;
             let rest = rest.trim_start();
             let (kind, how) = rest.split_once(char::is_whitespace).unwrap_or((rest, ""));
-            Some((port, Kind::parse(kind).ok()?, how.trim()))
+            let at = match port {
+                "-" => At::Named,
+                "helper" => At::Helper,
+                p => At::Port(p.parse().ok()?),
+            };
+            Some((at, Kind::parse(kind).ok()?, how.trim()))
         })
 }
 
@@ -106,13 +122,13 @@ pub enum ShareRefusal {
 
 /// The kind [`WELL_KNOWN`] names for `port`, if any.
 pub fn well_known_kind(port: NonZeroU16) -> Option<Kind> {
-    rows().find_map(|(p, kind, _)| (p.parse::<u16>().ok()? == port.get()).then_some(kind))
+    rows().find_map(|(at, kind, _)| (at == At::Port(port)).then_some(kind))
 }
 
 /// The kinds [`WELL_KNOWN`] names, for a lender asked to say which.
 fn known_kinds() -> String {
     rows()
-        .filter(|(port, ..)| *port != "helper")
+        .filter(|(at, ..)| *at != At::Helper)
         .map(|(_, kind, _)| kind.to_string())
         .collect::<Vec<_>>()
         .join(", ")
@@ -122,7 +138,7 @@ fn known_kinds() -> String {
 /// first `:` and the rest — the one reader of that clause, for
 /// [`accounts_of`] and [`kept_of`].
 fn says(kind: &Kind) -> Option<(&'static str, &'static str)> {
-    let (_, _, how) = rows().find(|(p, k, _)| k == kind && *p != "helper")?;
+    let (_, _, how) = rows().find(|(at, k, _)| k == kind && *at != At::Helper)?;
     how.split_once(':').map(|(what, rest)| (what, rest.trim()))
 }
 
@@ -165,7 +181,7 @@ pub fn accounts_of(kind: &Kind) -> Option<Signs> {
 /// names it (v1ui-polish (d)): [`lend_of`] signs each person in by it when
 /// it answers and its lender names no sign-in of their own.
 pub fn helper_of(kind: &Kind) -> Option<NonZeroU16> {
-    let (_, _, how) = rows().find(|(p, k, _)| *p == "helper" && k == kind)?;
+    let (_, _, how) = rows().find(|(at, k, _)| *at == At::Helper && k == kind)?;
     how.split_whitespace().next()?.parse().ok()
 }
 
@@ -175,7 +191,7 @@ pub fn helper_of(kind: &Kind) -> Option<NonZeroU16> {
 /// this computer asks it; lent, it would answer each person as a lend.
 pub fn signs_in(port: NonZeroU16, lent: &[Lend]) -> bool {
     let lend = lent.iter().find(|l| l.sign_in == Some(port));
-    let helper = rows().find(|(p, k, _)| *p == "helper" && helper_of(k) == Some(port));
+    let helper = rows().find(|(at, k, _)| *at == At::Helper && helper_of(k) == Some(port));
     tracing::debug!(target: "share", port, lend = ?lend.map(|l| &l.name), helper = ?helper.as_ref().map(|r| &r.1), "share: whether the port signs people in to a lend, so is never offered nor lent: refused where it does");
     lend.is_some() || helper.is_some()
 }

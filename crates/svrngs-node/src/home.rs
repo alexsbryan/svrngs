@@ -287,7 +287,7 @@ async fn running(State(at): State<Asking>) -> Response {
     let rows: Vec<_> = (found.into_iter())
         .map(|p| shown(p, share::well_known_kind(p).as_ref(), None))
         .collect();
-    let named: Vec<Kind> = (share::rows().filter(|(port, ..)| *port == "-"))
+    let named: Vec<Kind> = (share::rows().filter(|(at, ..)| *at == share::At::Named))
         .map(|(_, kind, _)| kind)
         .collect();
     tracing::debug!(target: "home", offered = rows.len(), lent = lent.len(), ?signing, "home: what runs here, offered to lend, sign-ins left out");
