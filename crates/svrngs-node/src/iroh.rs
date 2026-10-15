@@ -41,7 +41,11 @@
 //!   which resolves it — DESIGN §8, "Four facts".)
 
 use std::collections::HashMap;
+use std::future::Future;
 use std::net::{IpAddr, SocketAddr};
+
+use iroh::endpoint::Connection;
+use tokio::time::timeout;
 
 use n0_future::task::AbortOnDropHandle;
 use std::sync::Arc;
@@ -142,6 +146,13 @@ pub struct IrohTransport {
     /// (the 2026-07-19 dual-restart heal deadlock's transport half).
     #[expect(clippy::disallowed_types, reason = "the transport's bridge cache")]
     bridges: tokio::sync::Mutex<HashMap<[u8; 32], CachedBridge>>,
+    /// One connection per member a request is sent to ([`Self::send`]),
+    /// kept while it stays open: each request is a bi-stream of it, as the
+    /// phone's page sends one (`web/src/http.rs`), so a round dials a member
+    /// once, not once a request (the ceiling's first round, every member
+    /// dialled, cost 0.19 s of processor at 965b52b, the next 0.024 s).
+    #[expect(clippy::disallowed_types, reason = "the transport's connection cache")]
+    conns: std::sync::Mutex<HashMap<[u8; 32], iroh::endpoint::Connection>>,
 }
 
 /// A cached bridge plus the normalized contact dial-info it targets.
@@ -169,6 +180,7 @@ impl IrohTransport {
             endpoint,
             known_addrs: std::sync::Mutex::new(HashMap::new()),
             bridges: tokio::sync::Mutex::new(HashMap::new()),
+            conns: std::sync::Mutex::new(HashMap::new()),
         }
     }
 
@@ -324,24 +336,154 @@ impl IrohTransport {
     /// a connection still open after [`CLOSED_WITHIN`], is not that.
     pub async fn closes_unadmitted(&self, peer: &Contact) -> bool {
         let label = &peer.key.to_string()[..8];
-        let closed = match self.endpoint_addr_for(peer) {
-            None => None,
+        match self.endpoint_addr_for(peer) {
+            None => false,
             Some(target) => match self.endpoint.connect(target, ALPN).await {
-                Ok(conn) => tokio::time::timeout(CLOSED_WITHIN, conn.closed())
-                    .await
-                    .ok(),
+                Ok(conn) => closed_unadmitted(&conn).await,
                 Err(e) => {
                     tracing::debug!(target: "transport", peer = %label, error = %e, "iroh: the peer did not answer a dial");
-                    None
+                    false
                 }
             },
-        };
-        let unadmitted = matches!(&closed, Some(iroh::endpoint::ConnectionError::ApplicationClosed(c))
-            if c.reason.as_ref() == NOT_ADMITTED);
-        tracing::debug!(target: "transport", peer = %label, unadmitted, ?closed,
-            "iroh: whether the peer closes this computer's connection as not admitted");
-        unadmitted
+        }
     }
+}
+
+impl IrohTransport {
+    /// `req` sent to the member `peer` names, on the members' protocol, on
+    /// a bi-stream of the connection kept to it, or of one dialled within
+    /// [`crate::dial::DIAL_WITHIN`]: its answer's head, its body still to
+    /// read, so a stream or a WebSocket is carried whole. A connection that
+    /// fails a request is let go, and the next request dials afresh.
+    pub async fn send(&self, peer: &Contact, req: Request) -> Result<Answered, Unsent> {
+        let key = *peer.key.as_bytes();
+        let kept = self.conns.lock().ok().and_then(|c| c.get(&key).cloned());
+        let conn = match kept.filter(|c| c.close_reason().is_none()) {
+            Some(conn) => conn,
+            None => {
+                let to = self.endpoint_addr_for(peer).ok_or(Unsent::NoPath)?;
+                dialled(&self.endpoint, to, ALPN, Some(crate::dial::DIAL_WITHIN)).await?
+            }
+        };
+        let answered = on_stream(&conn, req).await;
+        let mut conns = self.conns.lock().unwrap_or_else(|e| e.into_inner());
+        match answered.is_ok() {
+            true => conns.insert(key, conn),
+            false => conns.remove(&key),
+        };
+        answered
+    }
+
+    /// [`Self::send`], its answer read whole within [`ANSWERED_WITHIN`].
+    pub async fn fetch(&self, peer: &Contact, req: Request) -> Result<Whole, Unsent> {
+        whole(self.send(peer, req)).await
+    }
+}
+
+/// How long a request read whole waits for its answer, the dial included:
+/// the ten seconds the round's reqwest client was built with
+/// (`ring_sync.rs` `peer_client`), kept.
+pub const ANSWERED_WITHIN: Duration = Duration::from_secs(10);
+
+/// A request on the stream: axum's, as the door and the origin carry one.
+pub type Request = axum::http::Request<axum::body::Body>;
+/// An answer's head, its body read as it comes.
+pub type Answered = axum::http::Response<hyper::body::Incoming>;
+/// An answer read whole.
+pub type Whole = axum::http::Response<axum::body::Bytes>;
+
+/// Why a request to a computer has no answer, each traced at debug where
+/// it is decided.
+#[derive(Debug, thiserror::Error)]
+pub enum Unsent {
+    #[error("no dialable path: no relay, no address and no lookup")]
+    NoPath,
+    #[error("it answered, and does not know this computer stands in any group it holds")]
+    NotAdmitted,
+    #[error("{0}")]
+    Failed(String),
+}
+
+/// `answer` read whole, within [`ANSWERED_WITHIN`].
+pub(crate) async fn whole(
+    answer: impl Future<Output = Result<Answered, Unsent>>,
+) -> Result<Whole, Unsent> {
+    use http_body_util::BodyExt;
+    let read = async {
+        let (head, body) = answer.await?.into_parts();
+        let body = body.collect().await.map_err(|e| e.to_string());
+        Ok(Whole::from_parts(
+            head,
+            body.map_err(Unsent::Failed)?.to_bytes(),
+        ))
+    };
+    let slow = Unsent::Failed(format!("no whole answer within {ANSWERED_WITHIN:?}"));
+    timeout(ANSWERED_WITHIN, read).await.unwrap_or(Err(slow))
+}
+
+/// A connection to `to` on `alpn`, dialled within `within` when given, and
+/// then held as a phone's page holds its dial ([`crate::dial::held`]), so a
+/// computer that stops answering a connection kept to it is taken as asleep
+/// within the cap too, as a fresh dial would be.
+pub(crate) async fn dialled(
+    e: &Endpoint,
+    to: EndpointAddr,
+    alpn: &'static [u8],
+    within: Option<Duration>,
+) -> Result<Connection, Unsent> {
+    let (peer, cap) = (to.id.fmt_short(), within.unwrap_or(Duration::MAX));
+    // Held only when capped: held, iroh gives up a handshake silent for the
+    // cap too, and a joiner's dial is not capped (`crate::dial`).
+    let held = within.map_or_else(Default::default, |_| crate::dial::held());
+    let held = iroh::endpoint::ConnectOptions::new().with_transport_config(held);
+    let connect = async move {
+        let connecting = e.connect_with_opts(to, alpn, held).await;
+        connecting
+            .map_err(|e| e.to_string())?
+            .await
+            .map_err(|e| e.to_string())
+    };
+    let late = Err(format!("not answered within {cap:?}"));
+    let dialled = timeout(cap, connect).await.unwrap_or(late);
+    tracing::debug!(target: "transport", %peer, ?within, error = ?dialled.as_ref().err(), "iroh: a dial, answered or not; one not answered in time is a computer taken as asleep");
+    dialled.map_err(Unsent::Failed)
+}
+
+/// `req` on a new bi-stream of `conn`, one HTTP/1 connection driven with
+/// upgrades, a `Host` named when it names none, as the page names one
+/// (`web/src/http.rs`); a failure read as [`Unsent::NotAdmitted`] when the
+/// far end closed the connection as [`NOT_ADMITTED`].
+pub(crate) async fn on_stream(conn: &Connection, mut req: Request) -> Result<Answered, Unsent> {
+    let host = req.headers_mut().entry(axum::http::header::HOST);
+    host.or_insert(axum::http::HeaderValue::from_static("svrngs"));
+    let sent = async {
+        let (send, recv) = conn.open_bi().await.map_err(|e| e.to_string())?;
+        let io = hyper_util::rt::TokioIo::new(tokio::io::join(recv, send));
+        let shake = hyper::client::conn::http1::handshake(io).await;
+        let (mut sender, driver) = shake.map_err(|e| e.to_string())?;
+        tokio::spawn(driver.with_upgrades());
+        sender.send_request(req).await.map_err(|e| e.to_string())
+    };
+    let failed = match sent.await {
+        Ok(answer) => return Ok(answer),
+        Err(failed) => failed,
+    };
+    let unadmitted = closed_unadmitted(conn).await;
+    tracing::debug!(target: "transport", peer = %conn.remote_id().fmt_short(), unadmitted, failed, "iroh: a request had no answer");
+    if unadmitted {
+        return Err(Unsent::NotAdmitted);
+    }
+    Err(Unsent::Failed(failed))
+}
+
+/// Whether the far end of `conn` closes it as [`NOT_ADMITTED`] within
+/// [`CLOSED_WITHIN`]: it answered, and does not know this computer stands
+/// in any group it holds.
+async fn closed_unadmitted(conn: &Connection) -> bool {
+    let closed = timeout(CLOSED_WITHIN, conn.closed()).await.ok();
+    let unadmitted = matches!(&closed, Some(iroh::endpoint::ConnectionError::ApplicationClosed(c)) if c.reason.as_ref() == NOT_ADMITTED);
+    tracing::debug!(target: "transport", peer = %conn.remote_id().fmt_short(), unadmitted, ?closed, "iroh: whether the peer closes this computer's connection as not admitted");
+    unadmitted
 }
 
 /// The reason the acceptor closes a connection it does not admit with,

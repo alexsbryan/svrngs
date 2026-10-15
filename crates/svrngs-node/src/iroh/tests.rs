@@ -347,3 +347,130 @@ fn dial_key_normalizes_addr_order_and_dupes() {
 pub(crate) fn dialer(key: &crate::SigningKey) -> Dialer {
     Dialer(SecretKey::from_bytes(&key.to_bytes()).public())
 }
+
+/// A router answering `/who` with the key its request came from, and
+/// `/never` never, served on a hermetic endpoint that admits a dialer or
+/// refuses it as `admits` says; the endpoint, and how many connections it
+/// was asked to admit.
+async fn served(seed: u8, admits: bool) -> (Endpoint, Arc<std::sync::atomic::AtomicUsize>) {
+    use axum::routing::get;
+    let router = axum::Router::new()
+        .route(
+            "/who",
+            get(|axum::Extension(d): axum::Extension<Dialer>| async move { d.actor() }),
+        )
+        .route("/never", get(std::future::pending::<String>));
+    let endpoint = hermetic_endpoint(seed, vec![ALPN.to_vec()]).await;
+    let asked = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let counted = asked.clone();
+    let acceptor = IrohAcceptor::spawn(endpoint.clone(), move |_, _| {
+        counted.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        if admits {
+            Admit::Serve(router.clone())
+        } else {
+            Admit::Refuse
+        }
+    });
+    std::mem::forget(acceptor);
+    (endpoint, asked)
+}
+
+fn get(path: &str) -> Request {
+    axum::http::Request::get(path)
+        .body(axum::body::Body::empty())
+        .unwrap()
+}
+
+/// **A request on the stream** (arch-peer (b)): [`IrohTransport::fetch`]
+/// reaches the member's router as this computer's key, read whole, and a
+/// second request rides a stream of the same connection, so the member is
+/// dialled, and asked to admit, once. Planted: a fresh dial per request
+/// (the kept connection not read), which the member admits twice.
+#[tokio::test]
+async fn a_request_rides_a_stream_of_the_one_connection_kept_to_the_member() {
+    let (member, asked) = served(41, true).await;
+    let transport = IrohTransport::new(hermetic_endpoint(42, vec![]).await);
+    let contact = contact_for(&member, loopback_sockets(&member));
+    for _ in 0..2 {
+        let answer = transport
+            .fetch(&contact, get("/who"))
+            .await
+            .expect("an answer");
+        assert_eq!(answer.status(), axum::http::StatusCode::OK);
+        assert_eq!(
+            *answer.body(),
+            key_actor(&SecretKey::from_bytes(&[42; 32]).public())
+        );
+    }
+    assert_eq!(
+        asked.load(std::sync::atomic::Ordering::SeqCst),
+        1,
+        "one connection, two requests"
+    );
+}
+
+/// **Not admitted, from the first dial** (arch-peer (b)): a member that
+/// does not know this computer stands in any group it holds closes the
+/// connection as [`NOT_ADMITTED`], and the request is said
+/// [`Unsent::NotAdmitted`], the member dialled once. Planted: the close
+/// reason not read, which says [`Unsent::Failed`].
+#[tokio::test]
+async fn a_member_that_does_not_admit_this_computer_is_said_so_from_the_first_dial() {
+    let (member, asked) = served(43, false).await;
+    let transport = IrohTransport::new(hermetic_endpoint(44, vec![]).await);
+    let contact = contact_for(&member, loopback_sockets(&member));
+    let refused = transport.send(&contact, get("/who")).await;
+    assert!(matches!(refused, Err(Unsent::NotAdmitted)), "{refused:?}");
+    assert_eq!(
+        asked.load(std::sync::atomic::Ordering::SeqCst),
+        1,
+        "dialled once"
+    );
+}
+
+/// **Asleep within the cap** (arch-peer (b)): a computer that answers no
+/// dial is said not answered within [`crate::dial::DIAL_WITHIN`],
+/// and a bare key with no lookup is [`Unsent::NoPath`], never dialled.
+/// Planted: the dial uncapped, which iroh gives up only after 30 s.
+#[tokio::test]
+async fn a_computer_that_answers_no_dial_is_asleep_within_the_cap() {
+    let asleep = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
+    let key = SecretKey::from_bytes(&[45; 32]).public();
+    let transport = IrohTransport::new(hermetic_endpoint(46, vec![]).await);
+    let contact = Contact {
+        key,
+        relay_url: None,
+        iroh_direct_addrs: vec![asleep.local_addr().unwrap()],
+    };
+    let said = tokio::time::timeout(
+        crate::dial::DIAL_WITHIN * 2,
+        transport.send(&contact, get("/who")),
+    )
+    .await;
+    assert!(
+        matches!(&said, Ok(Err(Unsent::Failed(why))) if why.starts_with("not answered within 4s")),
+        "{said:?}"
+    );
+    let said = transport.send(&Contact::by_key(key), get("/who")).await;
+    assert!(matches!(said, Err(Unsent::NoPath)), "{said:?}");
+}
+
+/// **A whole answer within ten seconds** (arch-peer (b)): a member that
+/// takes the request and never answers it is said to have no whole answer at
+/// [`ANSWERED_WITHIN`], the round's reqwest client's bound, kept.
+/// Planted: no bound, which waits as long as the member does.
+#[tokio::test]
+async fn an_answer_not_read_whole_within_ten_seconds_is_slow() {
+    let (member, _) = served(47, true).await;
+    let transport = IrohTransport::new(hermetic_endpoint(48, vec![]).await);
+    let contact = contact_for(&member, loopback_sockets(&member));
+    let said = tokio::time::timeout(
+        ANSWERED_WITHIN * 2,
+        transport.fetch(&contact, get("/never")),
+    )
+    .await;
+    assert!(
+        matches!(&said, Ok(Err(Unsent::Failed(why))) if why.starts_with("no whole answer within 10s")),
+        "{said:?}"
+    );
+}

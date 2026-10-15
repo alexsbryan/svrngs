@@ -147,6 +147,8 @@ async fn a_loopback_only_endpoint_binds_loopback_alone() {
 /// place in this leaf that opens a stream to a peer, and `pump` is defined
 /// once, so a dial rides the bridge instead of keeping a loop of its
 /// own. The needles are split so this file does not match itself.
+/// (svrngs, arch-peer (b): beside it, the request on the stream that
+/// replaces it, `iroh.rs` `on_stream`, until (d) takes the bridge out.)
 #[test]
 fn there_is_one_bridge_loop_and_one_pump() {
     fn rs_files(dir: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
@@ -179,8 +181,16 @@ fn there_is_one_bridge_loop_and_one_pump() {
             .collect()
     };
     let bridges = sites(concat!("open_bi", "()"));
-    assert_eq!(bridges.len(), 1, "one bridge loop, found {bridges:?}");
-    assert!(bridges[0].contains("guest.rs"), "{bridges:?}");
+    assert_eq!(
+        bridges.len(),
+        2,
+        "one bridge loop and one request on the stream, found {bridges:?}"
+    );
+    assert!(
+        bridges[0].contains("guest.rs") || bridges[1].contains("guest.rs"),
+        "{bridges:?}"
+    );
+    assert!(bridges.iter().any(|b| b.contains("iroh.rs")), "{bridges:?}");
     let pumps = sites(concat!("fn ", "pump("));
     assert_eq!(pumps.len(), 1, "one pump, found {pumps:?}");
 }
