@@ -1,0 +1,7 @@
+run 2 at 2a95bc2, 19:32:03
+load before: { 50.79 39.46 42.22 }
+load after: { 51.23 45.53 44.43 }
+exit 0 after 105 s
+streaming::chromium: the 9 MB range in 25300 ms of its 60,000
+streaming::webkit: the 9 MB range in 31269 ms of its 60,000
+test result: ok. 75 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 104.67s
