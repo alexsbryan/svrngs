@@ -166,6 +166,7 @@ async fn reach(
     alpn: Alpn,
     within: Option<std::time::Duration>,
 ) -> Result<iroh::endpoint::Connection, JsError> {
+    let issuer = to.is_none();
     let node_id = match to {
         None => match bound.issuer {
             Some(issuer) => issuer,
@@ -194,7 +195,14 @@ async fn reach(
     let addr = iroh::EndpointAddr::from_parts(node_id, [iroh::TransportAddr::Relay(relay)]);
 
     t!("LAYER tls/alpn+relay-hop: dialing {node_id} on the {alpn:?} protocol through a relay…");
-    let connect = bound.ep.connect(addr, alpn.bytes());
+    // The issuer's dial is held as iroh holds one, a lender's as
+    // `dial::held` says, from whichever endpoint: a lender's 4 s of silence
+    // would end the issuer's before its cap did (v1ui-race (a)).
+    let held = if issuer { Default::default() } else { dial::held() };
+    let opts = iroh::endpoint::ConnectOptions::new().with_transport_config(held);
+    let connect = async {
+        Ok::<_, iroh::endpoint::ConnectError>(bound.ep.connect_with_opts(addr, alpn.bytes(), opts).await?.await?)
+    };
     let dialled = match within {
         Some(within) => n0_future::time::timeout(within, connect).await,
         None => Ok(connect.await),
@@ -290,8 +298,9 @@ impl Dialled {
 /// key is `key`, on the members' protocol: the dialled computer, which
 /// answers HTTP on a bi-stream per request ([`Dialled::fetch`]), or the
 /// layer that refused, every layer emitted as it happens.
-/// Given up when not answered within [`dial::LINK_WITHIN`], so the page
-/// reaches the group through another person's computer.
+/// Given up when not answered within [`dial::LINK_WITHIN`], as the page's
+/// [`Endpoint::dial_link`] is; the browser tests' driver dials by it
+/// (`web/tests/drive.mjs`).
 #[wasm_bindgen]
 pub async fn connect(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
     dial(key, token, Alpn::Member, Some(dial::LINK_WITHIN)).await
@@ -402,6 +411,14 @@ impl Endpoint {
     /// [`Dialled::close`] closes only its connection.
     pub async fn dial(&self, lender: String, relay: Option<String>) -> Result<Dialled, JsError> {
         let conn = reach(&self.bound, Some(lender), relay, Alpn::Member, Some(dial::DIAL_WITHIN)).await?;
+        Ok(Dialled { ep: None, conn })
+    }
+
+    /// Dial the computer that made the group's link, as [`connect`] does,
+    /// from this endpoint, so the page dials it and the lenders at once
+    /// from the one endpoint a relay keeps per key (v1ui-race (a)).
+    pub async fn dial_link(&self) -> Result<Dialled, JsError> {
+        let conn = reach(&self.bound, None, None, Alpn::Member, Some(dial::LINK_WITHIN)).await?;
         Ok(Dialled { ep: None, conn })
     }
 

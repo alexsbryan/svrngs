@@ -42,7 +42,6 @@
 import init, {
   ask,
   believe,
-  connect,
   connect_to_join,
   endpoint,
   issuer_of,
@@ -309,27 +308,26 @@ async function uses(lent, dialler, shown) {
   await used(lent, (o) => label(o.key, o.name), traced, line, stop);
 }
 
-// `group` dialled as the person whose key is `key`: the computer that
-// made its link first, and when it does not answer within the cap
-// (dial.rs `LINK_WITHIN`), whichever computer the group's last answer
-// named as lending answers first, each dialled from `dialler`'s one
-// endpoint, as a relay keeps one per key (v1ui-reach (c)). The dial, and
-// whose computer it is when not the link's.
+// `group` dialled as the person whose key is `key`, through the first to
+// answer of the computer that made its link and each the group's last
+// answer named as lending (v1ui-reach (c)), all dialled at once, each
+// within its cap (dial.rs `LINK_WITHIN`, `DIAL_WITHIN`), so none is waited
+// out before the next is asked; one answering late is closed (v1ui-race
+// (a)). Each from `dialler`'s one endpoint, as a relay keeps one per key.
+// The dial, and whose computer it is when not the link's.
 async function reachGroup(group, key, dialler) {
   relayed(group.token);
   const link = (group.computers ?? []).find((c) => c.key === issuer_of(group.token));
-  try {
-    return [await reach(connect(key, group.token), unanswered([link]))];
-  } catch (e) {
-    const others = (group.computers ?? []).filter((c) => c !== link);
-    trace(`PAGE: the link's computer did not answer, so ${others.length} other computer(s) are dialled`);
-    if (!others.length) throw e;
-    heading.textContent = `Reaching ${group.name} through someone else’s computer…`;
-    const tries = others.map((c) => dialler().then((ep) => ep.dial(c.key, c.relay)).then((d) => [d, c]));
-    const [d, c] = await reach(Promise.any(tries), unanswered([link, ...others]));
-    tries.forEach((t) => t.then(([o]) => o !== d && o.close(), () => {}));
-    return [d, c];
-  }
+  const others = (group.computers ?? []).filter((c) => c !== link);
+  trace(`PAGE: dialling the link's computer and ${others.length} other computer(s) at once`);
+  const tries = [
+    dialler().then((ep) => ep.dial_link()).then((d) => [d]),
+    ...others.map((c) => dialler().then((ep) => ep.dial(c.key, c.relay)).then((d) => [d, c])),
+  ];
+  const [d, c] = await reach(Promise.any(tries), unanswered([link, ...others]));
+  trace(`PAGE: reached ${group.name} through ${c ? `${c.person}'s` : "the link's"} computer`);
+  tries.forEach((t) => t.then(([o]) => o !== d && (trace('PAGE: a computer answered late, so closed'), o.close()), () => {}));
+  return [d, c];
 }
 
 // In `group`: list what its people lend, and open the one `asked` names

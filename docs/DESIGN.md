@@ -646,11 +646,12 @@ the evidence is U4's inventory, §8):
    relay its group's record names for it (`relay`, `null` when it names
    none; relay-in-record), and the page dials the lender through that relay,
    else the link's. No node proxies another's lend. The page keeps those
-   lenders' computers, and when the issuer does not answer its dial within
-   10 s (`dial::LINK_WITHIN`, three times the slowest working dial measured,
-   `demo/runs/reach/2026-10-14/`), the first of them to answer is asked in
-   its place, and the page says through whose computer it reached the group
-   (v1ui-reach (c)). A member who lends nothing is not among them: the
+   lenders' computers, and dials the issuer and them at once, the issuer
+   within 10 s (`dial::LINK_WITHIN`, three times the slowest working dial
+   measured, `demo/runs/reach/2026-10-14/`), each lender within its 4 s:
+   the first to answer is asked, the rest closed when they answer late, and
+   the page says through whose computer it reached the group (v1ui-reach
+   (c), v1ui-race (a)). A member who lends nothing is not among them: the
    answer names no key of theirs.
 5. *One body for the link.* The command and the page parse a token and sign
    the ask and the redemption with the same code, in svrngs-core: bytes and
