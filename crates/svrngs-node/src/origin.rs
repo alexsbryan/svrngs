@@ -232,7 +232,7 @@ fn uri_of(target: &str) -> Result<Uri, Response> {
     target.parse().map_err(|_| {
         LendRefusal::Path.say(
             StatusCode::BAD_REQUEST,
-            "this is not an address a lend can be asked",
+            "your computer cannot read that address",
         )
     })
 }

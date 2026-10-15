@@ -228,10 +228,9 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
     tracing::debug!(target: "home", lend = %c.lend, to = ?c.to, done = ?done.as_ref().ok(), "home: the person changed a lend");
     match done {
         Ok(true) => StatusCode::NO_CONTENT.into_response(),
-        Ok(false) => LendRefusal::Unlent.say(
-            StatusCode::NOT_FOUND,
-            "you lend nothing by that name",
-        ),
+        Ok(false) => {
+            LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "you lend nothing by that name")
+        }
         Err(e) => {
             tracing::warn!(target: "home", lend = %c.lend, error = %e, "home: refused — the lend's declaration cannot be changed");
             LendRefusal::Fault.say(
@@ -376,7 +375,10 @@ async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
         }
         Err(crate::invite::Unminted::NotIn) => {
             tracing::debug!(target: "home", group = l.group, "home: refused — no link, this computer is not in that group");
-            LendRefusal::Closed.say(StatusCode::FORBIDDEN, "you are not in that group on this computer")
+            LendRefusal::Closed.say(
+                StatusCode::FORBIDDEN,
+                "you are not in that group on this computer",
+            )
         }
         Err(e) => {
             tracing::warn!(target: "home", group = l.group, error = %e, "home: refused — no link made");
@@ -433,7 +435,9 @@ async fn open(State(at): State<Asking>, Json(o): Json<crate::folder::FolderAsk>)
     tracing::debug!(target: "home", group = o.group, dir = %o.dir.display(), listed, ?by, "home: a folder asked opened");
     match (listed, by) {
         (true, Some(_)) => StatusCode::NO_CONTENT.into_response(),
-        (false, _) => LendRefusal::Closed.say(StatusCode::FORBIDDEN, "that is not this group's folder"),
+        (false, _) => {
+            LendRefusal::Closed.say(StatusCode::FORBIDDEN, "that is not this group's folder")
+        }
         _ => LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, "no program opens it"),
     }
 }

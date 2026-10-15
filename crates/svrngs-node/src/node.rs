@@ -856,10 +856,7 @@ async fn people_lends(
     let (groups, own) = at.host.shared_with(&asker)?;
     let Some(own) = own else {
         tracing::debug!(target: "node", asker, "node: people's lends refused — the dialer stands in no group this computer stands in");
-        return Err(err(
-            StatusCode::FORBIDDEN,
-            "this computer lends nothing to you",
-        ));
+        return Err(err(StatusCode::FORBIDDEN, crate::door::LENDS_NOTHING));
     };
     let (lent, unlisted) = at.lent(&groups, &own, Some(&asker)).await?;
     let removals = groups

@@ -29,7 +29,10 @@ use axum::{Extension, Json};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, oneshot};
 
-use super::{find, holder_of, own_app, unix_now, Asker, Door, LendRefusal, PersonKey, PASS_HEADER};
+use super::{
+    find, holder_of, own_app, unix_now, Asker, Door, LendRefusal, PersonKey, LENDS_NOTHING,
+    PASS_HEADER,
+};
 use crate::iroh::Dialer;
 use crate::lend::{choices_path, Lend};
 use svrngs_core::pass::Label;
@@ -250,8 +253,7 @@ fn member(
     dialer: Option<Extension<Dialer>>,
     raw: &str,
 ) -> Result<(Dialer, PersonKey, Lend), Response> {
-    let closed =
-        || LendRefusal::Closed.say(StatusCode::FORBIDDEN, "this computer lends nothing to you");
+    let closed = || LendRefusal::Closed.say(StatusCode::FORBIDDEN, LENDS_NOTHING);
     let Extension(dialer) = dialer.ok_or_else(closed)?;
     let key = dialer.actor();
     let Some((_, _, person)) = PersonKey::resolved(door, &key) else {

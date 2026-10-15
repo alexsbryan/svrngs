@@ -1017,7 +1017,7 @@ async fn declarations_that_cannot_be_read_are_refused_on_both_routes_never_lent_
         assert!(
             reply
                 .text
-                .contains("what this computer lends cannot be read on it"),
+                .contains("the computer you reached cannot read what it lends"),
             "{route}: {}",
             reply.text
         );

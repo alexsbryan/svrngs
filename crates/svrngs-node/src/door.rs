@@ -194,6 +194,10 @@ pub const PASS_HEADER: &str = "x-svrngs-pass";
 /// that both use (mnp-1; `demo/runs/mn/2026-10-08/README.md` §9, 2).
 pub const REFUSED_HEADER: &str = "x-svrngs-refused";
 
+/// Said to a computer in none of this one's groups, by the door and the
+/// node alike, in the asker's words: this computer is the one they reached.
+pub const LENDS_NOTHING: &str = "the computer you reached lends nothing to you";
+
 /// Why svrngs answered rather than the lend: a closed set (AGENTS 9),
 /// each kind spelt once in [`REFUSED_HEADER`] and the body's `kind`, as the
 /// lend's worker spells it too (`web/lend.js`, `say`).
@@ -465,16 +469,13 @@ async fn lends(
         tracing::warn!(target: "door", "door: lends refused — no verified dialer, so the request did not come on an iroh stream");
         return Err(err(
             StatusCode::FORBIDDEN,
-            "what a computer lends is asked only from another computer of its group",
+            "you can ask what the computer you reached lends only from a computer in its group",
         ));
     };
     let actor = dialer.actor();
     if door.rail.standing_anywhere(&actor).is_none() {
         tracing::debug!(target: "door", actor, "door: lends refused — the dialer stands in no group held here");
-        return Err(err(
-            StatusCode::FORBIDDEN,
-            "this computer lends nothing to you",
-        ));
+        return Err(err(StatusCode::FORBIDDEN, LENDS_NOTHING));
     }
     let mut offered = offered(&door).await?;
     let stands = |g: &String| door.rail.standing(g).is_ok_and(|s| s.names(&actor));
@@ -496,7 +497,7 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
             tracing::warn!(target: "door", error = %e, "door: lends — the declarations cannot be read");
             return Err(err(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "what this computer lends cannot be read on it",
+                "the computer you reached cannot read what it lends",
             ));
         }
     };
@@ -840,7 +841,7 @@ async fn through_pass(
         tracing::warn!(target: "door", "door: refused — no verified dialer, so the request did not come on an iroh stream");
         return Err(LendRefusal::Closed.say(
             StatusCode::FORBIDDEN,
-            "a lend is reached only through its group",
+            "you can open this only through your group",
         ));
     };
     lend_for(&door, Who::Holder(dialer), via.map(|Extension(v)| v), req).await
@@ -995,7 +996,7 @@ async fn through(
         tracing::warn!(target: "door", "door: refused — no verified dialer, so the request did not come on an iroh stream");
         return Err(LendRefusal::Closed.say(
             StatusCode::FORBIDDEN,
-            "a lend is reached only from another computer of its group",
+            "you can open this only from a computer in its group",
         ));
     };
     lend_for(&door, Who::Member(dialer), via.map(|Extension(v)| v), req).await
@@ -1018,7 +1019,7 @@ pub(crate) async fn lend_for(
         tracing::debug!(target: "door", actor, path, "door: refused — a path that can step out of its lend");
         return Err(LendRefusal::Path.say(
             StatusCode::BAD_REQUEST,
-            "a path that can step outside a lend is refused",
+            "the computer you reached refuses an address that could step outside what it lends",
         ));
     }
     let Some((raw_name, service_path)) = split_lend(&path) else {
@@ -1031,8 +1032,7 @@ pub(crate) async fn lend_for(
         Who::Member(_) | Who::Own(_) => {
             let Some((group, person, whose)) = PersonKey::resolved(door, &actor) else {
                 tracing::debug!(target: "door", actor, "door: refused — the dialer stands in no group held here");
-                return Err(LendRefusal::Closed
-                    .say(StatusCode::FORBIDDEN, "this computer lends nothing to you"));
+                return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, LENDS_NOTHING));
             };
             Pending::Known(Asker {
                 actor: whose,
@@ -1090,7 +1090,7 @@ pub(crate) async fn lend_for(
         tracing::warn!(target: "door", lend = %lend.name, "door: refused — no count of who uses the lend, so none can be let in");
         return Err(LendRefusal::Fault.say(
             StatusCode::INTERNAL_SERVER_ERROR,
-            "who is using this lend cannot be counted on the computer that lends it",
+            "the computer that lends this cannot count who is using it now, so it lets nobody in",
         ));
     };
     let (relayed, rtt_ms, sent, received) = observed.map_or((None, None, None, None), |o| {
@@ -1307,7 +1307,7 @@ async fn forward(
         tracing::warn!(target: "door", actor, "door: refused — the person's name cannot be a header");
         return Err(LendRefusal::Fault.say(
             StatusCode::INTERNAL_SERVER_ERROR,
-            "who is asking cannot be told to this lend",
+            "the computer that lends this cannot tell it who you are",
         ));
     };
     let identity = [
@@ -1369,7 +1369,7 @@ async fn forward(
             tracing::debug!(target: "door", actor, error = %e, "door: refused — the request target is not a path");
             return Err(LendRefusal::Path.say(
                 StatusCode::BAD_REQUEST,
-                "the request is not one a lend can be asked",
+                "the computer that lends this cannot read that address",
             ));
         }
     };

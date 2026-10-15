@@ -1826,11 +1826,7 @@ async fn the_home_page_changes_a_lend_s_limit_in_place(engine: Engine) {
         first(&after[1]).starts_with("shelf: everyone in your groups at once"),
         "{seen:#}"
     );
-    assert_eq!(
-        after[2],
-        json!(["You lend nothing yet."]),
-        "{seen:#}"
-    );
+    assert_eq!(after[2], json!(["You lend nothing yet."]), "{seen:#}");
     let name = svrngs_node::lend::LendName::parse("shelf").unwrap();
     assert!(svrngs_node::lend::read(ada_dir.path(), &name)
         .unwrap()
@@ -2430,7 +2426,9 @@ async fn the_home_page_says_what_it_is_for(engine: Engine) {
     let seen = home_page(engine, &ada, json!({ "read": "#intro p" })).await;
     let intro = seen["read"].as_str().unwrap_or_default();
     assert!(
-        intro.starts_with("This page is yours, and only this computer opens it: nobody in your groups sees it."),
+        intro.starts_with(
+            "This page is yours, and only this computer opens it: nobody in your groups sees it."
+        ),
         "{seen:#}"
     );
     let dee = alone(dirs[1].path(), &relay).await;
