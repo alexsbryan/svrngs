@@ -136,11 +136,17 @@ judge(10, all(within(v, 180000) for v in done.values()) and within(max((v or 10*
 
 # 11. zero accounts and zero key prompts
 prompts = {w: sum((x.get("password") or 0) + (x.get("sign_in") or 0) for x in seen(P[w])) for w in ORDER}
-users = S.get("jellyfin_users") or []
-made = sorted(u for u in users if re.fullmatch(r"(Ann|Bo|Cy|Di|Eve)-[0-9a-f]{16}", u))
-judge(11, not any(prompts.values()) and all((P[w].get("line") or {}).get("exit") == 0 for w in COMPUTERS)
-      and [u.split("-")[0] for u in made] == sorted(ORDER) and set(users) == set(made) | {"priya"},
-      {"prompts_shown": prompts, "jellyfin_users": users})
+users = S.get("jellyfin_users")
+read = {"prompts_shown": prompts, "jellyfin_users": users}
+if any(prompts.values()) or not all((P[w].get("line") or {}).get("exit") == 0 for w in COMPUTERS):
+    judge(11, False, read)
+elif users is None:
+    # Jellyfin's accounts not read (it was not answering): no prompt was
+    # shown, and whose accounts there are is not known, never read as none.
+    verdicts[11] = {"verdict": "could-not-judge", "read": {**read, "why": "Jellyfin's accounts could not be read"}}
+else:
+    made = sorted(u for u in users if re.fullmatch(r"(Ann|Bo|Cy|Di|Eve)-[0-9a-f]{16}", u))
+    judge(11, [u.split("-")[0] for u in made] == sorted(ORDER) and set(users) == set(made) | {"priya"}, read)
 
 # 12. the door after everyone
 want = {"Sam": ("off", "did not answer"), "Eve": ("phone", "in from a phone"), **{n: ("on", "on now") for n in ["Priya", *COMPUTERS]}}
