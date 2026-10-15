@@ -9937,3 +9937,13 @@ engines can witness it.
 | I29 | 6 | `refresh` over a corpus `code index` made | Still present: the daemon nudge refused, then the in-process rebuild and exit 0. |
 | I32 | 7 | dry-report's near tier, nested spans | Still present: home.js `running` over `look`, question.js `door` over `judge`. |
 | I33 | 6 | SCIP over web/src | Still present: web/'s exact tier says "no SCIP function symbols in scope". |
+
+## arch-helper (a) (2026-10-15): what lending the sign-in helper lets in
+
+Opened by its row (`ralph/next/arch/STATE.md`), not a `REVIEW-audit-` row:
+the run is `demo/runs/arch/2026-10-15-helper/` (README.md, a-red.out,
+mw.out).
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 174 | 8, 6 | crates/svrngs-node/src/home.rs:279-282 (`taken`: a lend's sign-in left out, the table's helper not), :308-369 (`lend_one`); crates/svrngs-node/src/share.rs `lend_of`; crates/svrngs/src/cli.rs:768 | not yet (arch-helper (b)) | **Low.** The home page offers a kind's sign-in helper as something to lend until a lend names it, and lends it when asked; so does `svrngs share <its port>`. A member who opens it is told to it as themselves: their typed key and stand-in are displaced (door.rs:689), so no sign-in as another person. Jellyfin's own helper answers them 403 and 404, makes no account, and gives neither its API key nor a token (mw.out). A helper that did not ask for the door's stand-in would give a member their own token in plain (a-red.out), which the door keeps from every browser for a lend that signs in by it. |

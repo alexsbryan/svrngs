@@ -1,0 +1,28 @@
+
+running 1 test
+sign_in::a_sign_in_helper_is_never_offered_nor_lent_from_the_page --- FAILED
+
+failures:
+
+---- sign_in::a_sign_in_helper_is_never_offered_nor_lent_from_the_page stdout ----
+
+thread 'sign_in::a_sign_in_helper_is_never_offered_nor_lent_from_the_page' (49581207) panicked at crates/svrngs-node/tests/door/sign_in.rs:675:5:
+assertion `left == right` failed: offered before the lend, after it; the helper lent from the page: HTTP/1.1 200 OK
+content-type: application/json
+content-security-policy: default-src 'self'; frame-ancestors 'none'
+content-length: 83
+connection: close
+date: Thu, 15 Oct 2026 19:52:32 GMT
+
+{"helper":null,"keeps":[],"kind":"helper","name":"helper","port":8097,"signs":null}; what bo reached, and the helper was told
+  left: (true, false, 200, Some(("HTTP/1.1 200 OK\r\ncontent-length: 202\r\nconnection: close\r\ndate: Thu, 15 Oct 2026 19:52:32 GMT\r\n\r\n{\"headers\":{\"Authorization\":\"Bearer secret-8139770ea87d175f56a35466\"},\"script\":\"window.who='8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394'\",\"secret\":\"secret-8139770ea87d175f56a35466\"}", "x-svrngs-person: bo | x-svrngs-key: 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 | x-svrngs-user: bo-8139770ea87d175f | x-svrngs-device: 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 | x-svrngs-label: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra34qx2ccpnh | x-svrngs-pages: house=none")))
+ right: (false, false, 400, None)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    sign_in::a_sign_in_helper_is_never_offered_nor_lent_from_the_page
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 34 filtered out; finished in 1.09s
+
+error: test failed, to rerun pass `-p svrngs-node --test door`

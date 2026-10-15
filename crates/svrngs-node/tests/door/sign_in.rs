@@ -49,7 +49,13 @@ const HELD: Duration = Duration::from_secs(3);
 /// The sign-in answerer: each person their own secret, as `authorization`
 /// too; keeps the head of every ask, each ask answered on its own.
 async fn answerer(answers: Answers) -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
-    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    answerer_at("127.0.0.1:0", answers).await
+}
+
+/// [`answerer`], listening at `at`.
+async fn answerer_at(at: &str, answers: Answers) -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
+    let listener = (TcpListener::bind(at).await)
+        .unwrap_or_else(|e| panic!("{at} is free on this computer, else not judged: {e}"));
     let addr = listener.local_addr().unwrap();
     let asks = Arc::new(Mutex::new(Vec::new()));
     let kept = asks.clone();
@@ -608,4 +614,77 @@ async fn each_device_of_one_person_is_asked_for_as_itself() {
         "each device by its own key"
     );
     bos.a.endpoint().close().await;
+}
+
+/// **A sign-in helper is never offered nor lent** (arch-helper (a);
+/// `demo/runs/v1ui/2026-10-15-helper/README.md` finding 2). A stand-in
+/// helper answers on 8097, the port the table names jellyfin's helper at.
+/// Ada's page looks for what runs on A; then a jellyfin is lent beside the
+/// helper, as `svrngs share <port> --sign-in 8097` lends it and as the page
+/// lends it, and the page looks again; then the page is asked to lend the
+/// helper itself, as it offered it to Priya. The helper is offered by
+/// neither look, and lending it is refused. Red at HEAD, the plant: the
+/// first look offers it and the page lends it, and bo, opening it with
+/// ada's key and a stand-in typed in, is answered by it — what he reaches,
+/// and as whom, is in the failure.
+#[tokio::test]
+async fn a_sign_in_helper_is_never_offered_nor_lent_from_the_page() {
+    let pair = Pair::new().await;
+    let (_helper, asked) = answerer_at("127.0.0.1:8097", Answers::Each).await;
+    let (origin, _) = service().await;
+    let (api, port) = (pair.a.api_addr(), origin.port());
+    let page = |method: &str, path: &str, body: &str| {
+        let home = format!("svrngs.localhost:{}", api.port());
+        format!(
+            "{method} {path} HTTP/1.1\r\nHost: {home}\r\nSec-Fetch-Site: same-origin\r\n\
+             Sec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\nContent-Type: application/json\r\n\
+             Content-Length: {}\r\nConnection: close\r\n\r\n{body}",
+            body.len()
+        )
+    };
+    let offered = |r: &Reply| {
+        let body = r.text.split_once("\r\n\r\n").map_or("", |(_, b)| b);
+        let json: serde_json::Value = serde_json::from_str(body).expect(&r.text);
+        let ports = json["running"].as_array().expect(&r.text).iter();
+        ports.filter_map(|r| r["port"].as_u64()).any(|p| p == 8097)
+    };
+    let before = raw_to(api, page("GET", "/running", "")).await;
+    lend_signed(&pair, "shared", port, 8097);
+    let body = format!(r#"{{"port":{port},"name":"paged","kind":"jellyfin"}}"#);
+    let paged = raw_to(api, page("POST", "/running", &body)).await;
+    assert_eq!(paged.status, 200, "{}", paged.text);
+    let signed = |name| lend::read(pair.dir.path(), &LendName::parse(name).unwrap());
+    assert_eq!(
+        signed("paged").unwrap().unwrap().sign_in.map(|p| p.get()),
+        Some(8097)
+    );
+    let after = raw_to(api, page("GET", "/running", "")).await;
+    let body = r#"{"port":8097,"name":"helper","kind":"helper"}"#;
+    let lent = raw_to(api, page("POST", "/running", body)).await;
+    let reached = match lent.status {
+        200 => {
+            let ada = actor_of(&signing(1));
+            let typed = format!(
+                "POST /lend/helper/ HTTP/1.1\r\nHost: local\r\nX-Svrngs-Key: {ada}\r\n\
+                 X-Svrngs-Stand-In: {STAND_IN}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+            );
+            let reply = raw_to(pair.bridge, typed).await;
+            let head = asked.lock().unwrap().last().cloned().unwrap_or_default();
+            let told = head
+                .lines()
+                .filter(|l| l.to_ascii_lowercase().starts_with("x-svrngs-"));
+            Some((reply.text, told.collect::<Vec<_>>().join(" | ")))
+        }
+        _ => None,
+    };
+    assert_eq!(
+        (offered(&before), offered(&after), lent.status, reached),
+        (false, false, 400, None),
+        "offered before the lend, after it; the helper lent from the page: {}; \
+         what bo reached, and the helper was told",
+        lent.text
+    );
+    let refused = "It signs people in to something you lend, and only svrngs on this computer asks it: lend what it signs them in to instead.";
+    assert!(lent.text.contains(refused), "{}", lent.text);
+    pair.close().await;
 }
