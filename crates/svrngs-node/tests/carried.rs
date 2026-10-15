@@ -221,7 +221,10 @@ async fn an_app_one_computer_carried_opens_and_writes_on_another_with_it_stopped
 /// none of Money's acts; an act it writes naming another person, or
 /// another app's kind, is still its own and Cy's; it may not correct
 /// Money's act, and Money may. Planted: the stamp read from the
-/// request's body — Events' act is Ben's.
+/// request's body — Events' act is Ben's. A correction with no `op` is
+/// no act, never a void, and a write past an act's most is told so, not
+/// that it is no JSON (#165). Planted: HEAD before #165's fix, which voided
+/// Money's act on `{corrects}` alone.
 #[tokio::test]
 async fn an_app_reads_only_its_own_acts_and_writes_only_as_the_person() {
     let (nodes, _dirs) = computers().await;
@@ -302,6 +305,24 @@ async fn an_app_reads_only_its_own_acts_and_writes_only_as_the_person() {
         live(&money_read).len(),
         1,
         "an act Events wrote is never Money's, whatever its kind says:\n{money_read:#}"
+    );
+
+    let bare = json!({ "corrects": theirs });
+    let refused = at(cy, &money, "POST", "/svrngs/acts", Some(bare)).await;
+    assert_eq!(refused.status(), 422, "{{corrects}} alone is no act");
+    let read: Value = at(cy, &money, "GET", "/svrngs/acts", None)
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(live(&read).len(), 1, "and voids nothing:\n{read:#}");
+    let big = json!({ "op": { "kind": "note", "text": "x".repeat(70 * 1024) } });
+    let refused = at(cy, &money, "POST", "/svrngs/acts", Some(big)).await;
+    assert_eq!(refused.status(), 413);
+    let said = refused.text().await.unwrap();
+    assert!(
+        said.contains("too large") && !said.contains("{op}"),
+        "{said}"
     );
 
     let void = json!({ "corrects": theirs, "op": null });
