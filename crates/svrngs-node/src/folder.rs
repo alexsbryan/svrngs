@@ -54,10 +54,10 @@ use crate::node::{Host, ANSWER_WITHIN};
 
 #[path = "blob.rs"]
 mod blob;
-#[path = "synced.rs"]
-mod synced;
 #[path = "carried.rs"]
 mod carried;
+#[path = "synced.rs"]
+mod synced;
 
 /// How long a holder that did not answer within [`ANSWER_WITHIN`] is
 /// taken as asleep: asked last, after every other holder, for this long

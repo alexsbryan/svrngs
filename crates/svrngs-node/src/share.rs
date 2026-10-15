@@ -232,7 +232,7 @@ pub fn lend_of(
         "share: the lend decided");
     Ok(Lend {
         name,
-        port: share.port,
+        source: crate::lend::Source::Port(share.port),
         kind,
         limit,
         refused,

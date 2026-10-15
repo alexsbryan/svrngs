@@ -82,6 +82,7 @@
 //! limit. Each refusal, and the answer for a service that does not answer,
 //! is marked as svrngs's, which ([`LendRefusal`]); the service's own answers never are.
 
+use std::num::NonZeroU16;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -98,7 +99,7 @@ use tokio::sync::{mpsc, oneshot};
 
 use crate::declared::read_declared_in;
 use crate::iroh::{Dialer, Via};
-use crate::lend::{self, Lend, LendName, Offered};
+use crate::lend::{self, Lend, LendName, Offered, Source};
 use crate::ring_routes::err;
 use crate::{Person, RingRail};
 use limit::{Counts, Verdict, Whereabouts};
@@ -316,6 +317,8 @@ pub struct Door {
     pub sign_ins: sign_in::SignIns,
     /// Each person's yes and stop to an app, written through one task.
     pub choices: choices::Choices,
+    /// The groups' folders, which carry apps ([`Source::Carried`]).
+    pub folders: crate::folder::Folders,
 }
 
 /// The door's routes, for the members' protocol's router: a lend, every
@@ -473,13 +476,16 @@ async fn lends(
             "this computer lends nothing to you",
         ));
     }
-    let offered = offered(&door).await?;
-    tracing::debug!(target: "door", actor, lends = offered.len(), "door: lends — answered what this computer lends");
+    let mut offered = offered(&door).await?;
+    let stands = |g: &String| door.rail.standing(g).is_ok_and(|s| s.names(&actor));
+    offered.retain(|o| o.group.as_ref().is_none_or(stands));
+    tracing::debug!(target: "door", actor, lends = offered.len(), "door: lends — answered what this computer lends, each carried app only to its own group");
     Ok(Json(serde_json::json!({ "lends": offered })).into_response())
 }
 
-/// Every lend this computer declares now, each with how many people use
-/// it ([`Using`]); or, when the declarations cannot be read, the refusal
+/// Every lend this computer declares now, and every app its groups'
+/// folders carry here, each with how many people use it ([`Using`]); or,
+/// when the declarations cannot be read, the refusal
 /// every route listing lends answers, a 500 in words. A declaration that
 /// cannot be read is left out, named at warn; a lend whose count cannot be
 /// had is left out too, never answered as used by none.
@@ -495,7 +501,8 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
         }
     };
     let mut offered = Vec::new();
-    for lend in declared {
+    let carried = door.folders.carried().into_iter().map(Ok);
+    for lend in declared.into_iter().chain(carried) {
         let lend = match lend {
             Ok(l) => l,
             Err(e) => {
@@ -516,6 +523,10 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
             reads: lend.reads,
             asks: lend.asks,
             signs_in: lend.sign_in.is_some(),
+            group: match lend.source {
+                Source::Carried(group) => Some(group),
+                Source::Port(_) => None,
+            },
         });
     }
     Ok(offered)
@@ -683,9 +694,8 @@ fn secret_headers(door: &Door, lend: &LendName) -> Vec<(HeaderName, HeaderValue)
 /// u5-2 the door passed the browser's `Host`, so the service built its
 /// links for the address the browser used, one `<lender's bridge>/lend/<name>/`
 /// for every lend.
-fn own_address(lend: &Lend) -> HeaderValue {
-    HeaderValue::from_str(&format!("localhost:{}", lend.port))
-        .expect("a host and a port are a header")
+fn own_address(port: NonZeroU16) -> HeaderValue {
+    HeaderValue::from_str(&format!("localhost:{port}")).expect("a host and a port are a header")
 }
 
 /// An `Origin` that is the lend's own — its first name the lend's label, as
@@ -695,7 +705,7 @@ fn own_address(lend: &Lend) -> HeaderValue {
 /// (Paperless-ngx; u5-catalogue-dry), takes the lend's own pages' posts.
 /// Any other origin is left as it is, so the service still refuses a post
 /// from a page that is not the lend's.
-fn own_origin(headers: &mut HeaderMap, label: &Label, lend: &Lend) {
+fn own_origin(headers: &mut HeaderMap, label: &Label, (lend, port): (&Lend, NonZeroU16)) {
     let Some(origin) = headers.get(header::ORIGIN).and_then(|o| o.to_str().ok()) else {
         return;
     };
@@ -705,7 +715,7 @@ fn own_origin(headers: &mut HeaderMap, label: &Label, lend: &Lend) {
         tracing::debug!(target: "door", lend = %lend.name, origin, "door: the request's origin is not the lend's own; left as it is");
         return;
     }
-    let own = HeaderValue::from_bytes(&[b"http://", own_address(lend).as_bytes()].concat())
+    let own = HeaderValue::from_bytes(&[b"http://", own_address(port).as_bytes()].concat())
         .expect("a host and a port are a header");
     tracing::debug!(target: "door", lend = %lend.name, "door: the request's origin is the lend's own; told to the service as its own address");
     headers.insert(header::ORIGIN, own);
@@ -714,11 +724,11 @@ fn own_origin(headers: &mut HeaderMap, label: &Label, lend: &Lend) {
 /// `location` with the service's own address taken off, so `http://localhost:<port>/x`
 /// is `/x`, read on whatever origin the asker reached the lend at; `None`
 /// when it points anywhere else, which is left as it is.
-fn as_path(location: &str, lend: &Lend) -> Option<String> {
+fn as_path(location: &str, port: NonZeroU16) -> Option<String> {
     let rest = ["localhost", "127.0.0.1", "[::1]"]
         .iter()
         .find_map(|host| {
-            let own = format!("http://{host}:{}", lend.port);
+            let own = format!("http://{host}:{port}");
             let head = location.get(..own.len())?;
             head.eq_ignore_ascii_case(&own)
                 .then(|| &location[own.len()..])
@@ -839,16 +849,20 @@ async fn through_pass(
 /// The lend `raw` names here: by its name, or by its label when that names
 /// this computer's key (u5-2). `None` when this computer lends none so.
 fn find(door: &Door, raw: &str) -> Result<Option<Lend>, lend::LendError> {
+    let carried = || door.folders.carried().into_iter();
     if let Some(label) = Label::parse(raw).filter(|l| l.lender() == door.key) {
-        let found = lend::all(&door.data_dir)?
+        let found = (lend::all(&door.data_dir)?
             .into_iter()
-            .filter_map(Result::ok)
-            .find(|l| Label::of(&door.key, l.name.as_str()) == label);
+            .filter_map(Result::ok))
+        .chain(carried())
+        .find(|l| Label::of(&door.key, l.name.as_str()) == label);
         tracing::debug!(target: "door", label = raw, found = ?found.as_ref().map(|l| l.name.to_string()), "door: a lend named by its label");
         return Ok(found);
     }
     match LendName::parse(raw) {
-        Ok(name) => lend::read(&door.data_dir, &name),
+        Ok(name) => {
+            Ok(lend::read(&door.data_dir, &name)?.or_else(|| carried().find(|l| l.name == name)))
+        }
         Err(_) => Ok(None),
     }
 }
@@ -1045,6 +1059,14 @@ pub(crate) async fn lend_for(
         Pending::Pass(holder) => holder_of(door, &holder, req.headers(), &lend).await?,
     };
     let actor = whose.as_str();
+    let port = match &lend.source {
+        Source::Port(port) => *port,
+        Source::Carried(group) => {
+            tracing::debug!(target: "door", actor, lend = %lend.name, group, path = service_path, "door: a carried app, answered from this computer's store");
+            let opened = (door.folders).open(&lend, (group, device.as_str(), &service_path), req);
+            return Ok(opened.await);
+        }
+    };
     if let Who::Member(dialer) = &who {
         app = own_app(door, dialer, req.headers(), &lend)?;
     }
@@ -1105,7 +1127,7 @@ pub(crate) async fn lend_for(
     let told = Told { share, held };
     forward(
         door,
-        &lend,
+        (&lend, port),
         (&whose, &device, &person, app.as_ref()),
         service_path,
         req,
@@ -1255,7 +1277,7 @@ fn tell_share(headers: &mut HeaderMap, share: Option<u64>) {
 /// rewritten, and stream the answer back.
 async fn forward(
     door: &Door,
-    lend: &Lend,
+    (lend, port): (&Lend, NonZeroU16),
     (whose, device, person, app): (&PersonKey, &DeviceKey, &Person, Option<&Label>),
     path: String,
     req: Request,
@@ -1330,8 +1352,8 @@ async fn forward(
         tracing::info!(target: "door", actor, lend = %lend.name, displaced,
             "door: dropped headers the client typed in the door's or the secret's name before setting them");
     }
-    parts.headers.insert(header::HOST, own_address(lend));
-    own_origin(&mut parts.headers, &label, lend);
+    parts.headers.insert(header::HOST, own_address(port));
+    own_origin(&mut parts.headers, &label, (lend, port));
     if let Some(protocol) = upgrade.clone() {
         tracing::debug!(target: "door", actor, lend = %lend.name, ?protocol, "door: the request asks to switch protocols, carried");
         keep_upgrade(&mut parts.headers, protocol);
@@ -1365,7 +1387,7 @@ async fn forward(
             ),
         )
     };
-    let origin = std::net::SocketAddr::from(([127, 0, 0, 1], lend.port.get()));
+    let origin = std::net::SocketAddr::from(([127, 0, 0, 1], port.get()));
     let Some(answer) = send_to(origin, request, lend.name.as_str()).await else {
         let unanswered = unanswered();
         carriage.answered = Some((unanswered.status().as_u16(), None));
@@ -1390,7 +1412,7 @@ async fn forward(
         .headers
         .get(header::LOCATION)
         .and_then(|l| l.to_str().ok())
-        .and_then(|l| as_path(l, lend));
+        .and_then(|l| as_path(l, port));
     if let Some(path) = own.and_then(|p| HeaderValue::from_str(&p).ok()) {
         tracing::debug!(target: "door", lend = %lend.name, ?path, "door: a redirect to the service's own address, answered as a path");
         parts.headers.insert(header::LOCATION, path);

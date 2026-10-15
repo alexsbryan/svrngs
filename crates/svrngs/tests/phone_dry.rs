@@ -67,7 +67,7 @@ async fn sam_through_a_relay_on_this_computer() {
         .expect("Sam's computer reaches the relay on 127.0.0.1");
     let film = Lend {
         name: LendName::parse("film").unwrap(),
-        port,
+        source: svrngs_node::lend::Source::Port(port),
         kind: Kind::parse("film").unwrap(),
         limit: Some(limit),
         refused: Vec::new(),

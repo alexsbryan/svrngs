@@ -13,6 +13,11 @@
 // (movie-night)" when its name and kind differ.
 export const named = (l) => `${l.person}’s ${l.name === l.kind ? l.name : `${l.name} (${l.kind})`}`;
 
+// One copy of each app a group carries, the first listed, and every other
+// lend as it is: each computer holding the app lends its copy
+// (COMMUNITY_APPS §7, found 4; v1ui-shelf (a)).
+export const once = (lent) => lent.filter((l, i) => !l.group || lent.findIndex((o) => o.group === l.group && o.kind === l.kind) === i);
+
 // svrngs's question: may the app lent as `app` use the lend `lend`?
 export const question = (app, lend) => `Let ${named(app)} use ${named(lend)}?`;
 

@@ -27,6 +27,8 @@ mod common;
 mod harness;
 // The host's load and the seek bar's, the conformance canary's too.
 mod load;
+// An app the group carries (v1ui-shelf).
+mod carried;
 
 use std::collections::BTreeSet;
 use std::path::Path;
@@ -3198,10 +3200,14 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
             &svrngs_node::lend::LendName::parse(name).unwrap(),
         )
         .unwrap()
-        .map(|l| (l.port.get(), l.kind.to_string()))
+        .map(|l| (l.source, l.kind.to_string()))
     };
-    assert_eq!(read("jellyfin"), Some((8096, "jellyfin".into())));
-    assert_eq!(read("chores"), Some((chores.port(), "chore-wheel".into())));
+    let port = |p: u16| svrngs_node::lend::Source::Port(p.try_into().unwrap());
+    assert_eq!(read("jellyfin"), Some((port(8096), "jellyfin".into())));
+    assert_eq!(
+        read("chores"),
+        Some((port(chores.port()), "chore-wheel".into()))
+    );
 
     let opened = home_page(engine, &bo, json!({ "open": "Open ada’s jellyfin" })).await;
     eprintln!("bo's home page: {opened:#}");

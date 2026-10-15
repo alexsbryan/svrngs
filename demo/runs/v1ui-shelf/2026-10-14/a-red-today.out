@@ -1,0 +1,52 @@
+
+running 3 tests
+an_app_one_computer_carried_opens_and_writes_on_another_with_it_stopped --- FAILED
+an_app_reads_only_its_own_acts_and_writes_only_as_the_person --- FAILED
+a_carried_app_is_its_own_group_s_alone --- FAILED
+
+failures:
+
+---- an_app_one_computer_carried_opens_and_writes_on_another_with_it_stopped stdout ----
+
+thread 'an_app_one_computer_carried_opens_and_writes_on_another_with_it_stopped' (45887835) panicked at crates/svrngs-node/tests/carried.rs:230:5:
+assertion `left == right` failed: one Money, never one per computer:
+{
+  "lent": [],
+  "namespace": "a378339579ebbe135397c9edbeb17b3bb90b718a8148d1bd998233c6de6abd45",
+  "refused": [],
+  "unanswered": [
+    "ana"
+  ],
+  "unheard": []
+}
+  left: 0
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- an_app_reads_only_its_own_acts_and_writes_only_as_the_person stdout ----
+
+thread 'an_app_reads_only_its_own_acts_and_writes_only_as_the_person' (45887836) panicked at crates/svrngs-node/tests/carried.rs:288:51:
+index out of bounds: the len is 0 but the index is 0
+
+---- a_carried_app_is_its_own_group_s_alone stdout ----
+
+thread 'a_carried_app_is_its_own_group_s_alone' (45887834) panicked at crates/svrngs-node/tests/carried.rs:358:9:
+assertion `left == right` failed: one Money in each group:
+{
+  "lent": [],
+  "namespace": "3702503e8007af1f4460d8822c3d509e7d43f1dc23abedfccf25208b50632bbf",
+  "refused": [],
+  "unanswered": [],
+  "unheard": []
+}
+  left: 0
+ right: 1
+
+
+failures:
+    a_carried_app_is_its_own_group_s_alone
+    an_app_one_computer_carried_opens_and_writes_on_another_with_it_stopped
+    an_app_reads_only_its_own_acts_and_writes_only_as_the_person
+
+test result: FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 30.73s
+

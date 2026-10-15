@@ -52,7 +52,7 @@ use svrngs_core::pass::Label;
 
 use crate::door::choices::{own_choices, own_choose, Said, Saying};
 use crate::door::{LendRefusal, PASS_HEADER, REFUSED_HEADER};
-use crate::lend::{self, Kind, LendName};
+use crate::lend::{self, Kind, LendName, Source::Port};
 use crate::node::Asking;
 use crate::share::{self, Share};
 
@@ -263,7 +263,8 @@ async fn running(State(at): State<Asking>) -> Response {
     };
     let lent: Vec<_> = all.into_iter().flatten().collect();
     let taken = |p: &NonZeroU16| {
-        p.get() == at.host.api_port || lent.iter().any(|l| l.port == *p || l.sign_in == Some(*p))
+        let ours = |l: &lend::Lend| l.source == Port(*p) || l.sign_in == Some(*p);
+        p.get() == at.host.api_port || lent.iter().any(ours)
     };
     let rows: Vec<_> = (found.into_iter().filter(|p| !taken(p)))
         .map(|p| shown(p, share::well_known_kind(p).as_ref(), None))

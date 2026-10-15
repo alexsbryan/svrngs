@@ -294,6 +294,7 @@ impl Node {
             using: crate::door::Using::spawn(),
             sign_ins: crate::door::sign_in::SignIns::spawn(),
             choices: crate::door::choices::Choices::spawn(),
+            folders: folders.clone(),
         };
         let asking = Asking {
             host: host.clone(),
@@ -911,6 +912,11 @@ impl Asking {
                 offered: l.offered,
             }))
             .collect();
+        // A carried app only in its own group (COMMUNITY_APPS §7, found
+        // 3), each computer's copy listed, so a phone knows every computer
+        // to reach the group through; the pages show one (question.js `once`).
+        let carries = |g: &String| groups.iter().any(|(ns, _)| ns == g);
+        lent.retain(|l| l.offered.group.as_ref().is_none_or(carries));
         lent.sort_by(|a, b| {
             (a.person.as_str(), &a.offered.name).cmp(&(b.person.as_str(), &b.offered.name))
         });

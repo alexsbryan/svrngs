@@ -12,7 +12,7 @@
 // a folder opened (/folder) and a group made (/group, start-group). Its words are
 // DESIGN §1's: groups, people, what they lend, computer; its question and
 // what apps use and its removals are question.js's, the group's page's too.
-import { door, el, named, question, removal, row, unlent, uses as used, whose } from './question.js';
+import { door, el, named, once, question, removal, row, unlent, uses as used, whose } from './question.js';
 
 const main = document.getElementById('home');
 const button = (text, act) => Object.assign(el('button', text), { onclick: act });
@@ -98,7 +98,7 @@ async function show(g, s) {
     body.replaceChildren();
     // Each with its address for a program, copied by a button that says
     // so, then said (start-home): the clipboard may refuse a page.
-    for (const l of lends.lent) {
+    for (const l of once(lends.lent)) {
       const how = el('td', `In a tab${l.signs_in ? ', signing you in once' : ''}. `, button('Copy its address for a program', () => Promise.resolve().then(() => navigator.clipboard.writeText(l.origin)).then(() => how.append(` Copied: ${l.origin}`), () => how.append(` Copy it from here: ${l.origin}`))));
       if (l.room) how.append(` On your TV too, at ${l.room}`);
       body.append(el('tr', '', el('td', '', Object.assign(el('a', `Open ${named(l)}`), { href: l.origin, target: '_blank' })), el('td', l.kind), el('td', l.person), how, el('td', l.limit && l.using >= l.limit ? 'full' : 'on')));
@@ -168,7 +168,8 @@ async function lending() {
   s.replaceChildren(el('h2', 'What this computer lends'));
   let lent;
   try {
-    ({ lent } = await get('/lent'));
+    // An app a group carries is the group's, not this computer's to change.
+    lent = (await get('/lent')).lent.filter((l) => !l.group);
   } catch (e) {
     return s.append(el('p', `What this computer lends cannot be read on it: ${e.message}`));
   }

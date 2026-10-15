@@ -94,7 +94,7 @@ use svrngs_node::folder::FolderAsk;
 use svrngs_node::home::WHEN;
 use svrngs_node::invite::Unminted;
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
-use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath, Upload};
+use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath, Source, Upload};
 use svrngs_node::node::{Lends, Lent, Node, NodeError};
 use svrngs_node::redeem::{ask, redeem, AskRequest, RedeemError, RedeemRequest, Redeemed};
 use svrngs_node::relay::n0_relays;
@@ -1196,7 +1196,10 @@ impl std::fmt::Display for Said {
                 accounts,
                 running,
             } => {
-                let (name, port) = (&lend.name, lend.port);
+                // `share` lends a port; a group's folder carries an app.
+                let (name, Source::Port(port)) = (&lend.name, &lend.source) else {
+                    return writeln!(f, "{} is carried in its group's folder.", lend.name);
+                };
                 match lend.limit {
                     Some(n) => writeln!(f, "Lent {name} (port {port}) to everyone in your groups, up to {n} {} at once.",
                         if n.get() == 1 { "person" } else { "people" })?,

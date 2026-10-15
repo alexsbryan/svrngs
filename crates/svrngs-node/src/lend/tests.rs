@@ -78,7 +78,7 @@ fn a_declaration_is_read_strictly() {
     )
     .unwrap();
     let lend = read(root.path(), &name).unwrap().unwrap();
-    assert_eq!(lend.port.get(), 8096);
+    assert_eq!(lend.source, Source::Port(NonZeroU16::new(8096).unwrap()));
     assert_eq!(
         lend.refusing("/Admin/x").map(RefusedPath::as_str),
         Some("/admin")
@@ -88,7 +88,7 @@ fn a_declaration_is_read_strictly() {
 fn lend(name: &str, port: u16) -> Lend {
     Lend {
         name: LendName::parse(name).unwrap(),
-        port: NonZeroU16::new(port).unwrap(),
+        source: Source::Port(NonZeroU16::new(port).unwrap()),
         kind: Kind::parse("k").unwrap(),
         limit: NonZeroU16::new(3),
         refused: vec![refused("/admin")],

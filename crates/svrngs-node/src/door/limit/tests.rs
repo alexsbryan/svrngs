@@ -17,7 +17,7 @@ const AWAY: Whereabouts = Whereabouts::Away;
 fn shelf(upload: Option<u64>) -> Lend {
     Lend {
         name: LendName::parse("shelf").unwrap(),
-        port: NonZeroU16::new(8096).unwrap(),
+        source: crate::lend::Source::Port(NonZeroU16::new(8096).unwrap()),
         kind: Kind::parse("k").unwrap(),
         limit: NonZeroU16::new(3),
         refused: Vec::new(),

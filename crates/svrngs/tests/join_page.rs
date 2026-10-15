@@ -102,7 +102,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     let (_relay, ours, dir, sam) = common::sams_computer(1).await;
     let shelf = Lend {
         name: LendName::parse("shelf").unwrap(),
-        port: NonZeroU16::new(service().await).unwrap(),
+        source: svrngs_node::lend::Source::Port(NonZeroU16::new(service().await).unwrap()),
         kind: Kind::parse("shelf").unwrap(),
         limit: NonZeroU16::new(3),
         refused: Vec::new(),

@@ -137,6 +137,34 @@ daemon's web UI — is an app like any other; what the group may do with it is a
 lend declaration, kept as data: a secret the door injects and never lets out, the
 paths it refuses, how many people may use it at once.
 
+**Or a folder the group carries** (v1ui-shelf (a); svrn-docs
+`rings/current/COMMUNITY_APPS.md` §6-§7, as `V1_UI_BUILD.md` §3.4 narrows it).
+A lend goes with its lender; a carried app stays with the group. It is a
+folder `apps/<kind>/` holding an `index.html` in one of the group's synced
+folders, which already puts its files on every member's computer by hash. Each
+computer that keeps such a folder in step lends the app as its own, to that
+group alone, named `<kind>-<the group id's first 16 letters>` so two groups'
+apps of one name have two origins (`crates/svrngs-node/src/lend.rs`,
+`Source::Carried`); so it opens on any of them, and on a phone through any of
+them, while that one is on. Both pages show one copy of each
+(`question.js`, `once`); every copy is listed, so a phone knows each computer
+it can reach the group through. svrngs runs none of its code: the door answers
+it from the store (`crates/svrngs-node/src/carried.rs`) — a file by the hash
+the group's layout places at its path, `index.html` for a directory's — and
+from **its route**, `/svrngs/acts` at its own origin: `GET` answers its own
+acts, each whose `kind` begins `<kind>/`, the prefix taken off, as
+`{id, ts, by, op}` in the record's order, with `you` and the group's `people`;
+`POST {op}` records one and `{corrects, op}` corrects one of its own, `op`
+null to void it. svrngs puts the prefix on, and writes `on_behalf_of` as the
+person the door resolved, never a word of the request's body; a correction of
+another app's act is refused. The route answers every act each time, from no
+cursor, since a round may place an act before one already read and a
+correction voids one read before. Every answer carries the containment floor's
+headers (COMMUNITY_APPS §6.2): a policy that lets the page load and connect
+only to its own origin, no camera, microphone or location, no DNS prefetch.
+Not yet: an inline `<script>` (svrngs computes no hashes of them), bytes from
+the route, and reading another app's acts.
+
 **What an app gets — the whole surface, for our apps and a stranger's alike:**
 - the person asking, verified, in four headers the door sets
   (`crates/svrngs-node/src/door.rs`, `Identity`): `x-svrngs-key`, who
