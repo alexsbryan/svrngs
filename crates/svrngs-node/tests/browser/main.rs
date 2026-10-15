@@ -1828,7 +1828,7 @@ async fn the_home_page_changes_a_lend_s_limit_in_place(engine: Engine) {
     );
     assert_eq!(
         after[2],
-        json!(["This computer lends nothing."]),
+        json!(["You lend nothing yet."]),
         "{seen:#}"
     );
     let name = svrngs_node::lend::LendName::parse("shelf").unwrap();
@@ -2348,7 +2348,7 @@ async fn the_home_page_says_a_refusal_apart_from_no_answer(engine: Engine) {
             "bo's computer did not answer, so what they lend is not listed.",
             "cy's computer answered without saying what they lend, so it is not listed.",
             "dee's computer did not answer, so what they lend is not listed.",
-            "eve's computer has not heard of this computer yet, so what they lend is not listed yet.",
+            "eve's computer has not heard of yours yet, so what they lend is not listed yet.",
         ],
         "{seen:#}"
     );
@@ -2430,14 +2430,14 @@ async fn the_home_page_says_what_it_is_for(engine: Engine) {
     let seen = home_page(engine, &ada, json!({ "read": "#intro p" })).await;
     let intro = seen["read"].as_str().unwrap_or_default();
     assert!(
-        intro.starts_with("This page is yours, on this computer alone."),
+        intro.starts_with("This page is yours, and only this computer opens it: nobody in your groups sees it."),
         "{seen:#}"
     );
     let dee = alone(dirs[1].path(), &relay).await;
     let seen = home_page(engine, &dee, json!({ "read": "#home > p.none" })).await;
     assert_eq!(
         seen["read"],
-        "This computer is in no group yet. Make one below, or join one by the line the page of the link you were sent gives.",
+        "You’re in no group yet. Make one below, or open a link someone sent you and paste the line its page gives you in a terminal.",
         "{seen:#}"
     );
     drop((ada, dee));
@@ -2461,7 +2461,7 @@ async fn the_home_page_names_what_the_terminal_does(engine: Engine) {
     let said = seen["all"].to_string();
     for line in [
         "svrngs remove <their name> --group <the group’s name>",
-        "Leaving a group is not possible yet",
+        "You cannot leave a group yet",
     ] {
         assert!(said.contains(line), "{line}: {seen:#}");
     }

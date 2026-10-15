@@ -66,8 +66,8 @@ Your home page, the same address each time svrngs starts: http://svrngs.localhos
 
 and the browser opens that address, Sam's **home page**. The number in it
 is this computer's own, and it stays the same each time svrngs starts:
-bookmark it. With no group yet, it says *"This computer is in no group
-yet. Make one below, …"*.
+bookmark it. With no group yet, it says *"You’re in no group yet. Make
+one below, …"*.
 
 **4. Make the group, then a link.** Under **Make a group**, type a name
 for the group in *"A name for the group"* (the run: `Lab`) and your own
@@ -109,8 +109,7 @@ svrngs is running here already, so they can open it now.
 `svrngs unshare llama-server` stops lending it.
 ```
 
-Reload the home page: it lists it under **What this computer
-lends**.
+Reload the home page: it lists it under **What you lend**.
 
 Sam is done. Sam's computer has to be on, and llama-server running, for
 Bo to use it.
@@ -187,8 +186,8 @@ do.
 - **"llama-server is lent to 2 people at once, and 2 are using it now: try
   again when one stops. …"** Sam chose how many people may use it at
   once, on Sam's home page. Try again in a minute, or ask Sam to let more
-  in: Sam types a number beside llama-server under **What this computer
-  lends** and presses **Let in this many**, or **Let everyone in**.
+  in: Sam types a number beside llama-server under **What you lend**
+  and presses **Let in this many**, or **Let everyone in**.
   (`crates/svrngs-node/src/door.rs`, `busy`; the run set 2 and saw the page
   say *"llama-server: up to 2 people at once, 0 using it now."*, but met
   no one refused.)

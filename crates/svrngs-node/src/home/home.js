@@ -64,7 +64,7 @@ async function show(g, s) {
     s.append(people);
     // Where the group's folder is on this disk (v1-onboarding (d)).
     const its = g.name ? `${g.name}’s folder` : 'The group’s folder';
-    if (g.folders === null) s.append(el('p', `Where ${its} is cannot be read on this computer.`));
+    if (g.folders === null) s.append(el('p', `This computer cannot say where ${its} is.`));
     // Each opened from here in this computer's file browser (start-home).
     for (const dir of g.folders ?? []) {
       const p = el('p', '', button('Open this folder', () => post('/folder', { group: g.id, dir }).then(() => p.append(' Opened, in a window of its own.'), (e) => p.append(` It could not be opened: ${e.message}.`))));
@@ -104,13 +104,13 @@ async function show(g, s) {
     // answered is never said not to have.
     const said = (words) => body.append(el('tr', '', Object.assign(el('td', words), { colSpan: 5 })));
     for (const p of lends.unanswered) said(`${p}'s computer did not answer, so what they lend is not listed.`);
-    for (const p of lends.unheard) said(`${p}'s computer has not heard of this computer yet, so what they lend is not listed yet.`);
+    for (const p of lends.unheard) said(`${p}'s computer has not heard of yours yet, so what they lend is not listed yet.`);
     for (const p of lends.refused) said(`${p}'s computer answered without saying what they lend, so it is not listed.`);
     if (!body.children.length) said('Nobody lends anything here yet.');
     s.append(table(g, lends, (apps) => post('/shelf', [g.id, apps])));
     return lends.lent;
   } catch (e) {
-    s.append(el('p', `What this group lends cannot be read on this computer: ${e.message}`));
+    s.append(el('p', `This computer cannot read what ${g.name ?? 'this group'} lends: ${e.message}`));
   }
 }
 
@@ -162,15 +162,15 @@ function running() {
 // once something running here is lent.
 async function lending() {
   const s = document.getElementById('lent') ?? main.appendChild(Object.assign(el('section'), { id: 'lent' }));
-  s.replaceChildren(el('h2', 'What this computer lends'));
+  s.replaceChildren(el('h2', 'What you lend'));
   let lent;
   try {
     // An app a group carries is the group's, not this computer's to change.
     lent = (await get('/lent')).lent.filter((l) => !l.group);
   } catch (e) {
-    return s.append(el('p', `What this computer lends cannot be read on it: ${e.message}`));
+    return s.append(el('p', `This computer cannot read what you lend: ${e.message}`));
   }
-  if (!lent.length) s.append(el('p', 'This computer lends nothing.'));
+  if (!lent.length) s.append(el('p', 'You lend nothing yet.'));
   const ul = s.appendChild(el('ul'));
   for (const l of lent) {
     const n = l.limit;
@@ -205,7 +205,7 @@ try {
     const q = new URLSearchParams(location.search);
     if (q.has('made')) main.append(el('p', `You made ${q.get('made')}. ${q.get('also') ? `${q.get('also')} ` : ''}${q.has('unplaced') ? `Its folder could not be made: ${q.get('unplaced')}. ` : ''}Make a link below to invite someone to it.`));
     // With no group, how to make one or join one (start-home; start-group).
-    if (!groups.length) main.append(Object.assign(el('p', 'This computer is in no group yet. Make one below, or join one by the line the page of the link you were sent gives.'), { className: 'none' }));
+    if (!groups.length) main.append(Object.assign(el('p', 'You’re in no group yet. Make one below, or open a link someone sent you and paste the line its page gives you in a terminal.'), { className: 'none' }));
     const lent = Promise.all(groups.map((g) => show(g, section(g))));
     // A link from a group's page, `<page>#open=<label>&at=<path>`, pasted
     // (events-links (c)): the lend it names opened at its path in a tab of
@@ -234,5 +234,5 @@ try {
     main.append(Object.assign(el('p', `Your home page, the same address each time svrngs starts: ${location.origin}/`), { className: 'address' }));
   }
 } catch (e) {
-  main.replaceChildren(el('p', `Your groups cannot be read on this computer: ${e.message}`));
+  main.replaceChildren(el('p', `This computer cannot read your groups: ${e.message}`));
 }

@@ -27,8 +27,9 @@ export const question = (app, lend) => `Let ${named(app)} use ${named(lend)}?`;
 export const removal = (r) =>
   `${r.by} ${r.said === 'removed' ? 'removed' : 'asked to remove'} ${r.of} on ${new Date(r.at * 1000).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`;
 
-// The line said when what apps use of `lend` cannot be asked.
-export const unasked = (lend) => `What apps use of ${named(lend)} cannot be asked now.`;
+// The line said when what apps use of `lend` cannot be asked of its
+// lender's computer.
+export const unasked = (lend) => `${lend.person}’s computer cannot say now what apps use ${named(lend)}.`;
 
 // The line said when an ask names an app or a lend not lent, or not
 // asking, on the page asked: the home page all your groups', the group's
