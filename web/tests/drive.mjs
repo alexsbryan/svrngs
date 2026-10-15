@@ -50,12 +50,13 @@ async function httpChecks(a) {
     ...(await drain(res)),
   });
   // Each step's answer, or why it failed or hung: one step's failure never
-  // keeps the next from being judged.
-  const step = (run) =>
+  // keeps the next from being judged. Each with its time, `ms`, so a run
+  // shows how near its 60 s it came (v1ui-lend-ask (b)).
+  const step = (run, t = performance.now()) =>
     Promise.race([
       run(),
       new Promise((_, no) => setTimeout(() => no(new Error('no answer within 60 s')), 60_000)),
-    ]).catch((e) => ({ error: String(e) }));
+    ]).catch((e) => ({ error: String(e) })).then((r) => ({ ...r, ms: Math.round(performance.now() - t) }));
   const out = {};
   out.range = await step(async () => answer(await d.fetch('GET', a.range.path, [['range', a.range.header]], null)));
   out.past = await step(async () => answer(await d.fetch('GET', a.past.path, [['range', a.past.header]], null)));

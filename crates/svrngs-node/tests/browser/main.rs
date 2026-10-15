@@ -461,6 +461,13 @@ async fn a_page_speaks_http_through_the_door_streaming_both_ways(engine: Engine)
     let http = &seen["http"];
 
     let range = &http["range"];
+    // Its time against drive.mjs's 60 s, passed or failed, for a run to read
+    // (`-- --nocapture`; v1ui-lend-ask (b)).
+    eprintln!(
+        "streaming::{}: the 9 MB range in {} ms of its 60,000",
+        engine.as_str(),
+        range["ms"]
+    );
     assert_eq!(
         range["status"], 206,
         "the range must come back 206:\n{http:#}"
