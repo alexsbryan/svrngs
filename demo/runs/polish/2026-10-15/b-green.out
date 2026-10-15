@@ -1,0 +1,15 @@
+
+running 10 tests
+test carried::a_carried_page_reaches_no_other_host::chromium ... ok
+test carried::a_carried_page_reaches_no_other_host::webkit ... ok
+test carried::the_phone_brings_things_to_the_table::chromium ... ok
+test carried::the_home_page_brings_things_to_the_table::chromium ... ok
+test carried::money_and_events_open_and_write_at_their_origin::chromium ... ok
+test carried::the_phone_brings_things_to_the_table::webkit ... ok
+test carried::the_home_page_brings_things_to_the_table::webkit ... ok
+test carried::money_and_events_open_and_write_at_their_origin::webkit ... ok
+test carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::chromium ... ok
+test carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::webkit ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 82 filtered out; finished in 12.87s
+

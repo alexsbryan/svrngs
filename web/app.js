@@ -51,7 +51,7 @@ import init, {
   relay_of,
 } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
-import { door, el, named, once, opens, question, removal, row, table, unlent, uses as used, whose } from './question.js?v=__VERSION__';
+import { door, el, named, once, opens, owner, question, removal, row, table, unlent, uses as used, whose } from './question.js?v=__VERSION__';
 
 const heading = document.getElementById('status');
 const said = document.getElementById('response');
@@ -391,7 +391,7 @@ async function enter(group, asked) {
     row(['What', 'What it is', 'Whose', 'How it opens', 'Now'], 'th'),
     ...once(lent).map((l) => {
       const button = Object.assign(el('button', named(l)), { onclick: () => open(group, key, lent, unanswered, l) });
-      return row([button, l.kind, l.person, ...opens(l, 'Here, in this tab', older)]);
+      return row([button, l.kind, owner(l, group), ...opens(l, 'Here, in this tab', older)]);
     }),
   );
   const again = asked?.get('open') && lent.find((l) => label(l.key, l.name) === asked.get('open'));

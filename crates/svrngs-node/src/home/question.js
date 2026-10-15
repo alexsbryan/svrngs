@@ -10,8 +10,14 @@
 // (REVIEW_FINDINGS #110, #113).
 
 // A lend as a person reads it: "Ana’s taste", and "Sam’s tonights-picks
-// (movie-night)" when its name and kind differ.
-export const named = (l) => `${l.person}’s ${l.name === l.kind ? l.name : `${l.name} (${l.kind})`}`;
+// (movie-night)" when its name and kind differ; an app the group carries
+// by its kind alone, "Money", its lend name holding the group's id
+// (lend.rs `carried`) and its copies everyone's (v1ui-polish (b)).
+export const named = (l) => (l.group ? l.kind : `${l.person}’s ${l.name === l.kind ? l.name : `${l.name} (${l.kind})`}`);
+
+// Whose a lend is on group `g`'s index: its lender's, or the group's for an
+// app the group carries, whichever computer's copy is listed (`once`).
+export const owner = (l, g) => (l.group ? (g.name ?? 'your group') : l.person);
 
 // One copy of each app a group carries, the first listed, and every other
 // lend as it is: each computer holding the app lends its copy
