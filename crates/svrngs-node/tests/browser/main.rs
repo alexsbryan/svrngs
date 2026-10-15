@@ -3058,9 +3058,10 @@ in_both_engines!(
     /// **Lend from the page** (v1ui-lend (b); V1_UI_BUILD §3.2 and §7's
     /// 3.2 bar). On ada's computer a stand-in for Jellyfin listens on
     /// 8096 and something svrngs does not know on a port of its own. Her
-    /// home page, under "Already running here", names the first by the
-    /// table with what it needs first (its own accounts, and how to make
-    /// one) and lends it in one tap; the second it lends only once she has
+    /// home page looks for them only once she asks, its look knocking at
+    /// every address here; then, under "Already running here", it names
+    /// the first by the table with what it needs first (its own accounts,
+    /// and how to make one) and lends it in one tap; the second it lends only once she has
     /// given it a name and said what it is, refusing it before. No
     /// terminal: each is declared through the page's `/running`, and the
     /// share line under "Done in a terminal" is gone. Then bo, on his own
@@ -3068,7 +3069,8 @@ in_both_engines!(
     /// is offered where nobody listens: neither a port gone before the
     /// page asked nor the table's Navidrome and Calibre-Web unless they
     /// run on this host. Planted, watched failing: the page offering the
-    /// table's ports whether or not anything answers on them.
+    /// table's ports whether or not anything answers on them; the page
+    /// looking as it loads.
     the_home_page_lends_what_runs_here
 );
 async fn the_home_page_lends_what_runs_here(engine: Engine) {
@@ -3105,14 +3107,15 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
     let row = |port: u16| format!("#running li:has-text('localhost:{port}')");
     let press = |port: u16| json!([format!("{} button", row(port)), null, true]);
     let fill = |port: u16, n: &str, v: &str| json!([format!("{} input[name={n}]", row(port)), v]);
+    let look = json!(["#running button:has-text('Look for programs')", null, true]);
     let seen = home_page(
         engine,
         &ada,
         json!({
-            "read": "#running li",
-            "timed": ["#running li"],
+            "read": "#lent h2",
+            "timed": ["#lent h2", "#running li"],
             "all": "#running li, #running p",
-            "do": [press(8096), press(chores.port()), fill(chores.port(), "name", "chores"),
+            "do": [look, press(8096), press(chores.port()), fill(chores.port(), "name", "chores"),
                 fill(chores.port(), "kind", "chore-wheel"), press(chores.port())],
             "text": true,
         }),
@@ -3132,22 +3135,29 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
             .unwrap_or("")
             .into()
     };
-    let first = said(&seen["all"], 8096);
+    // Looked for only once asked: the look knocks at every address here.
+    let (unasked, found) = (&seen["all"], &seen["after"][0]);
+    assert!(
+        unasked.to_string().contains("only when you ask") && said(unasked, 8096).is_empty(),
+        "looked for before she asked:\n{seen:#}"
+    );
+    assert!(
+        found.to_string().contains("You looked just now"),
+        "that she looked, said:\n{seen:#}"
+    );
+    let first = said(found, 8096);
     assert!(
         first.contains("jellyfin") && first.contains("Dashboard, Users"),
         "jellyfin named, with how to make each person an account first:\n{seen:#}"
     );
-    assert!(
-        said(&seen["all"], chores.port()).contains("Its name"),
-        "{seen:#}"
-    );
+    assert!(said(found, chores.port()).contains("Its name"), "{seen:#}");
     let quiet = |p: u16| std::net::TcpStream::connect(("127.0.0.1", p)).is_err();
     for port in [gone, ada.api_addr().port()]
         .into_iter()
         .chain([4533, 8083].into_iter().filter(|p| quiet(*p)))
     {
         assert_eq!(
-            said(&seen["all"], port),
+            said(found, port),
             "",
             "offered where nobody listens, or svrngs's own: {port}\n{seen:#}"
         );
@@ -3157,9 +3167,9 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
         let line = after[i].to_string();
         assert!(line.contains(words), "{words}: {seen:#}");
     };
-    lent(0, "You lent jellyfin");
-    lent(1, "Give it a name and say what it is first");
-    lent(2, "You lent chores");
+    lent(1, "You lent jellyfin");
+    lent(2, "Give it a name and say what it is first");
+    lent(3, "You lent chores");
     let page = seen["text"].as_str().unwrap_or_default();
     assert!(
         !page.contains("svrngs share"),

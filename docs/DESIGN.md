@@ -344,7 +344,10 @@ paths it refuses, how many people may use it at once.
   - opens the group's folder, one `/v1/groups` lists, in the computer's
     file browser (`open`, else `xdg-open`);
   - lends what runs on their computer, under "Already running here"
-    (v1ui-lend (b), V1_UI_BUILD §3.2): every port from 1024 to 49151 that
+    (v1ui-lend (b), V1_UI_BUILD §3.2), only when they press "Look for
+    programs running on this computer", as often as they like, never as
+    the page loads (v1ui-lend-ask (a): a look is seconds of the
+    computer's work): every port from 1024 to 49151 that
     answers on 127.0.0.1, probed as `svrngs share` probes one
     (`share::listening`), less svrngs's own and what it lends already,
     each by its address. A kind the well-known table knows is named, with

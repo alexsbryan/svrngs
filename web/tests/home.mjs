@@ -37,7 +37,8 @@ try {
   // value, else clicked, and `all`'s words read once the page it reloads
   // has listed what this computer lends (bash-limit (b)); with `stays`, a
   // click that reloads nothing, read once the page has said what happened
-  // (start-home), and in Chromium the clipboard then.
+  // (start-home) — not while it says it is still asking, "…" (v1ui-lend
+  // (b): what runs here) — and in Chromium the clipboard then.
   const after = [];
   let clipboard = null;
   for (const [selector, value, stays] of args.do ?? []) {
@@ -51,7 +52,7 @@ try {
     if (stays) {
       const before = (await page.locator(args.all).allTextContents()).join('\n');
       await (filled ? page.locator(selector).first().fill(value) : page.locator(selector).first().click());
-      await page.waitForFunction(([s, b]) => [...document.querySelectorAll(s)].map((e) => e.textContent).join('\n') !== b, [args.all, before], { timeout: 30_000 });
+      await page.waitForFunction(([s, b]) => ((t) => t !== b && !t.includes('…'))([...document.querySelectorAll(s)].map((e) => e.textContent).join('\n')), [args.all, before], { timeout: 30_000 });
       after.push(await page.locator(args.all).allTextContents());
       if (args.engine === 'chromium') clipboard = await page.evaluate(() => navigator.clipboard.readText()).catch((e) => `unread: ${e}`);
       continue;

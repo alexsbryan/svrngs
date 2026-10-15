@@ -132,26 +132,30 @@ async function uses(lent) {
 const needs = (r) => [r.signs?.accounts && `It keeps its own accounts, so make each person one in it: ${r.signs.accounts}.`, r.signs?.header && `Before it knows who is who, set this in it: ${r.signs.header}.`, r.keeps?.length && `svrngs keeps these parts of it from everyone: ${r.keeps.join(', ')}.`].filter(Boolean).join(' ');
 
 // What runs on this computer and is not lent yet (/running, v1ui-lend
-// (b)), each at its address: a kind svrngs knows named with what it needs
-// first, any other lent only once the person names it and says what it
-// is. One button lends it; the row then says what happened, or why not.
-async function running() {
-  const said = el('p', 'Asking this computer what is running on it…');
-  main.append(Object.assign(el('section', '', el('h2', 'Already running here'), said), { id: 'running' }));
-  let found, named;
-  try {
-    ({ running: found, named } = await get('/running'));
-  } catch (e) {
-    return said.replaceChildren(`What runs on this computer cannot be read: ${e.message}`);
-  }
-  said.replaceChildren(found.length ? 'The programs running on this computer, each at its address. Lend one, and everyone in your groups opens it in their browser, as themselves, while this computer is on. You can stop lending it below at any time.' : 'Nothing else on this computer is running at an address. Start a program, then open this page again.');
-  const ul = said.parentNode.appendChild(el('ul'));
-  for (const r of found) {
-    const at = `http://localhost:${r.port}`;
-    const li = ul.appendChild(el('li', r.kind ? `${r.kind}, at ${at}. ${needs(r)} ` : `Something at ${at}. To lend it, give it a name and say what it is, each one word${named.length ? `; if it is ${named.join(' or ')}, say that` : ''}. `));
-    const [name, kind] = r.kind ? [] : [['name', 'Its name: '], ['kind', 'What it is: ']].map(([n, w]) => li.appendChild(el('label', w, Object.assign(el('input'), { name: n }))));
-    const typed = (l) => l?.lastChild.value.trim() || null;
-    li.append(button(`Lend ${r.kind ?? 'it'} to everyone in your groups`, () => post('/running', { port: r.port, name: typed(name), kind: typed(kind) }).then((l) => { li.replaceChildren(`You lent ${l.name}, at ${at}: everyone in your groups can open it now. ${needs(l)}`); return lending(); }, (e) => li.append(` ${e.message}`))));
+// (b)), looked for only when the person presses Look, as often as they
+// like: the look knocks at every address here, seconds of this computer's
+// work, so not at each load of the page (v1ui-lend-ask, the operator's
+// "On request, with a button"; demo/runs/v1ui-lend/2026-10-14/check-2.out). Each at its address: a
+// kind svrngs knows named with what it needs first, any other lent only
+// once the person names it and says what it is. One button lends it; the
+// row then says what happened, or why not.
+function running() {
+  const [said, ul] = [el('p', 'This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.'), el('ul')];
+  main.append(Object.assign(el('section', '', el('h2', 'Already running here'), said, el('p', '', button('Look for programs running on this computer', look)), ul), { id: 'running' }));
+  async function look() {
+    said.replaceChildren('Looking for programs running on this computer…');
+    ul.replaceChildren();
+    const answer = await get('/running').catch((e) => e);
+    if (answer instanceof Error) return said.replaceChildren(`You looked, and what runs on this computer cannot be read: ${answer.message}`);
+    const { running: found, named } = answer;
+    said.replaceChildren(found.length ? 'You looked just now: the programs running on this computer, each at its address. Lend one, and everyone in your groups opens it in their browser, as themselves, while this computer is on. You can stop lending it below at any time.' : 'You looked just now: nothing else on this computer is running at an address. Start a program, then look again.');
+    for (const r of found) {
+      const at = `http://localhost:${r.port}`;
+      const li = ul.appendChild(el('li', r.kind ? `${r.kind}, at ${at}. ${needs(r)} ` : `Something at ${at}. To lend it, give it a name and say what it is, each one word${named.length ? `; if it is ${named.join(' or ')}, say that` : ''}. `));
+      const [name, kind] = r.kind ? [] : [['name', 'Its name: '], ['kind', 'What it is: ']].map(([n, w]) => li.appendChild(el('label', w, Object.assign(el('input'), { name: n }))));
+      const typed = (l) => l?.lastChild.value.trim() || null;
+      li.append(button(`Lend ${r.kind ?? 'it'} to everyone in your groups`, () => post('/running', { port: r.port, name: typed(name), kind: typed(kind) }).then((l) => { li.replaceChildren(`You lent ${l.name}, at ${at}: everyone in your groups can open it now. ${needs(l)}`); return lending(); }, (e) => li.append(` ${e.message}`))));
+    }
   }
 }
 
@@ -225,7 +229,7 @@ try {
     typed.oninput = () => ((n) => get(`/group?${new URLSearchParams({ name: n })}`).then((b) => namesakes(b, n, 'This makes'), (e) => (n ? e.message : '')).then((w) => n === typed.value && before.replaceChildren(w)))(typed.value);
     const make = el('p', '', name, person, button('Make a group', () => post('/group', [name, person].map((l) => l.lastChild.value)).then(([made, unplaced, beside]) => location.assign(`/?${new URLSearchParams({ made, also: namesakes(beside, made, 'This is'), ...(unplaced && { unplaced }) })}`), (e) => make.append(` ${e.message}`))));
     main.append(Object.assign(el('section', '', el('h2', 'Make a group'), make, before), { id: 'make' }));
-    await running();
+    running();
     await lending();
     await uses((await lent).flatMap((l) => l ?? []));
     // Said as the command and install.sh say it: it is kept (start-address).
