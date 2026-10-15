@@ -96,10 +96,11 @@ fn said((kind, status, why): Withheld) -> Response {
     kind.say(StatusCode::from_u16(status).expect("a status"), why)
 }
 
-/// [`UNREAD`], for `group`, its cause traced (#163).
-fn unread(group: &str, why: &dyn std::fmt::Display) -> Withheld {
-    tracing::warn!(target: "folder", group, %why, "carried: the group cannot be read on this computer");
-    UNREAD
+/// `refused`, for `group`, its cause traced, which the asker is not told
+/// (#163, #164).
+fn traced(group: &str, refused: Withheld, why: &dyn std::fmt::Display) -> Withheld {
+    tracing::warn!(target: "folder", group, %why, said = refused.2, "carried: refused, and the cause");
+    refused
 }
 
 /// A carried app's answer, or why the door gives its own.
@@ -144,7 +145,7 @@ pub(crate) async fn bring(at: State<Asking>, by: Option<Extension<Dialer>>, a: T
 fn brought(at: &Asking, group: &str, asker: &str, apps: &[String]) -> Served {
     let stands = at.host.rail().standing(group).is_ok_and(|s| s.names(asker));
     stands.then_some(()).ok_or(NOT_IN)?;
-    let dirs = dirs_of(&at.folders.data_dir, group).map_err(|_| NO_FOLDER)?;
+    let dirs = dirs_of(&at.folders.data_dir, group).map_err(|e| traced(group, NO_FOLDER, &e))?;
     let dir = dirs.first().ok_or(NO_FOLDER)?;
     let mut said = Vec::new();
     for (name, _, files) in SHELF.iter().filter(|(n, ..)| apps.iter().any(|a| a == n)) {
@@ -153,7 +154,7 @@ fn brought(at: &Asking, group: &str, asker: &str, apps: &[String]) -> Served {
         let put =
             |(f, text): &(&str, &str)| create_dir_all(&at).and_then(|()| write(at.join(f), text));
         let wrote: Result<(), _> = files.iter().filter(|_| !there).try_for_each(put);
-        wrote.map_err(|_| UNWRITTEN)?;
+        wrote.map_err(|e| traced(group, UNWRITTEN, &e))?;
         said.push(json!({ "app": name, "already": there }));
     }
     Ok(Json(said).into_response())
@@ -201,7 +202,7 @@ impl Folders {
                 _ => self.file(group, &format!("apps/{}{path}", lend.kind)).await,
             },
             Ok(_) => Err(NOT_ITS_GROUP),
-            Err(e) => Err(unread(group, &e)),
+            Err(e) => Err(traced(group, UNREAD, &e)),
         };
         let refused = answered.as_ref().err().map(|r| r.2);
         tracing::debug!(target: "folder", lend = %lend.name, group, key, path, ?refused, "carried: answered, or refused and why");
@@ -215,7 +216,7 @@ impl Folders {
     /// directory's, from this computer's store.
     async fn file(&self, group: &str, path: &str) -> Served {
         let path = (path.strip_suffix('/')).map_or(path.into(), |dir| format!("{dir}/index.html"));
-        let read = self.layout(group).map_err(|e| unread(group, &e))?;
+        let read = self.layout(group).map_err(|e| traced(group, UNREAD, &e))?;
         let at = |p: &&Placed| !p.beside && p.path.as_str() == path;
         let hash = Hash::from(*read.placed.iter().find(at).ok_or(NOT_HERE)?.hash.as_bytes());
         let held = self.store.get_bytes(hash).await;

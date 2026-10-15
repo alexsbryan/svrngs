@@ -510,12 +510,9 @@ async fn bringing_from_the_shelf_traces_why_it_could_not_write() {
         "{words}"
     );
     let traced = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
-    let line = traced
-        .lines()
-        .find(|l| l.contains("shelf:"))
-        .unwrap_or_default();
+    let why = |l: &str| l.contains("Permission denied") && l.contains("can’t be written");
     assert!(
-        line.contains("Permission denied"),
+        traced.lines().any(why),
         "the write's error traced:\n{traced}"
     );
     ana.endpoint().close().await;
