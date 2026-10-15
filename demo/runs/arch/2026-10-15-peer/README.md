@@ -85,3 +85,11 @@ A second check at 1a60dd04 (`close-check-loaded.out`, its second part):
 the same one test red in both of its browser runs, every other step
 passed, the load average near 20 on 12 cores. The close's check is run
 again once the host's load falls below its cores.
+
+A third check at d735b3f7, started once the 5-minute load fell below 12
+(`close-check-loaded.out`, its third part): the same one test red in both
+engines, in "tests" and "browser" alike, every other step passed; the load
+climbed back near 20 while it ran (other projects' builds on this host).
+That test alone, twice, after it: one engine red, then green, each run
+on the same load. The load, not the cut: the check is run again once the
+1- and 15-minute loads are both below 8.
