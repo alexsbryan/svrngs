@@ -104,12 +104,17 @@ async function act(c) {
     return { ...r, seen: await look(p.page) };
   }
   if (c.do === 'lend') {
+    // The row's words before Lend is pressed (v1ui-polish (d)).
+    let before = null;
     const r = await timed(async () => {
       await p.page.getByRole('button', { name: 'Look for programs running on this computer' }).click();
-      await p.page.getByRole('button', { name: `Lend ${c.kind} to everyone in your groups` }).click({ timeout: 60_000 });
+      const lend = p.page.getByRole('button', { name: `Lend ${c.kind} to everyone in your groups` });
+      await lend.waitFor({ timeout: 60_000 });
+      before = await p.page.locator('#running li', { has: lend }).innerText();
+      await lend.click();
       await p.page.waitForFunction((k) => document.body.innerText.includes(`You lent ${k}`), c.kind, { timeout: 30_000 });
     });
-    return { ...r, seen: await look(p.page) };
+    return { ...r, before, seen: await look(p.page) };
   }
   if (c.do === 'join') {
     const asked = await timed(async () => {

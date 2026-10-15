@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""The N+1 bar's steps on one host (PREDICTIONS.md here; row v1ui-run):
-svrngs in release served as a newcomer gets it, the page served on this
-host, a scratch Jellyfin and its middleware; Sam makes Elm Street, Priya
-lends the library and brings Money with Gas bill on it; Ann, Bo and Cy
-join by the chat's link on computers and each settles Gas bill and plays a
-film; Di (a computer) and Eve (a phone) join; Sam's computer is stopped;
-Di's steps, then Eve's through another person's computer; then every
-computer's door, Money and record read. Browsers are people.mjs's.
+"""v1ui-run's driver (demo/runs/v1ui/2026-10-15/run.py), forked for
+v1ui-polish (d) (PREDICTIONS.md here): Priya lends Jellyfin from her home
+page, beside its middleware, and the plant `nohelper` starts none. All else
+is v1ui-run's: the N+1 bar's steps on one host, svrngs in release served
+as a newcomer gets it, the page served on this host, a scratch Jellyfin;
+Sam makes Elm Street, Priya lends the library and brings Money with Gas
+bill on it; Ann, Bo and Cy join by the chat's link on computers and each
+settles Gas bill and plays a film; Di (a computer) and Eve (a phone) join;
+Sam's computer is stopped; Di's steps, then Eve's through another person's
+computer; then every computer's door, Money and record read.
 
-    W=<scratch> python3 demo/runs/v1ui/2026-10-15/run.py                   # data/
-    PLANT=accounts W=<scratch> python3 demo/runs/v1ui/2026-10-15/run.py    # data/plants/accounts/
-    TAKE=2 W=<scratch> python3 demo/runs/v1ui/2026-10-15/run.py            # data/takes/2/, a take again
+    W=<scratch> python3 demo/runs/v1ui/2026-10-15-helper/run.py                    # data/
+    PLANT=nohelper W=<scratch> python3 demo/runs/v1ui/2026-10-15-helper/run.py     # data/plants/nohelper/
 
 FILMS=<dir> keeps the films between takes. The link's token, Jellyfin's
 keys and passwords are never in the data. scripts/check.sh runs none of
@@ -308,7 +309,7 @@ def main():
         threading.Thread(target=lambda: [None for _ in procs["page"].stdout], daemon=True).start()
         films()
         token, key = jellyfin()
-        middleware(key)
+        if PLANT != "nohelper": middleware(key)
         say("served", page=page)
         browsers = subprocess.Popen(["node", HERE / "people.mjs"], cwd=HERE, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                     stderr=open(W / "people.err", "w"), text=True, env={**os.environ, "SHOTS": str(SHOTS)})
@@ -326,13 +327,11 @@ def main():
         summary["group"] = group
         tell(do="open", who="Priya", **{"as": "computer"})
         tell(do="home", who="Priya", url=home_page("Priya"))
-        if PLANT == "accounts":
-            summary["lent"] = tell(do="lend", who="Priya", kind="jellyfin")
-        else:
-            lent = subprocess.run([RELEASE, "share", "8096", "--sign-in", "8097"], env={**env("Priya"), "SVRNGS_DIR": str(data("Priya"))},
-                                  stdin=subprocess.DEVNULL, capture_output=True, text=True)
-            summary["lent"] = {"exit": lent.returncode, "said": redact(lent.stdout + lent.stderr).strip().splitlines()}
-            say("share", who="Priya", **summary["lent"])
+        # From Priya's home page, always (v1ui-polish (d)); then what it declared.
+        summary["lent"] = tell(do="lend", who="Priya", kind="jellyfin")
+        declared = data("Priya") / "lends/jellyfin.json"
+        summary["declared"] = json.loads(declared.read_text()) if declared.exists() else None
+        say("declared", who="Priya", lend=summary["declared"])
         summary["brought"] = tell(do="bring", who="Priya")
         listed = lambda: any(r[1:2] == ["Money"] for r in tell(do="home", who="Priya", url=home_page("Priya")).get("index") or [])
         if not wait(listed, 60, 1): sys.exit("Money is never listed on Priya's home page")

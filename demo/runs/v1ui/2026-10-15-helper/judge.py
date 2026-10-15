@@ -4,10 +4,11 @@ summary.json, written to verdicts.json beside it: AGENTS.md 6's four
 verdicts, each with what it read. A step that never happened is failed
 when the take reached it, never-ran when it did not.
 
-    python3 demo/runs/v1ui/2026-10-15/judge.py <take's summary.json>
+    python3 demo/runs/v1ui/2026-10-15-helper/judge.py <take's summary.json>
 
-Prediction 15 reads the planted take's verdicts.json
-(data/plants/accounts/), never-ran without it."""
+v1ui-run's judge, forked for v1ui-polish (d): prediction 15 reads the
+planted take's verdicts.json (data/plants/nohelper/), never-ran without
+it; 17 judges the page's words before the lend and the declaration."""
 import json, re, sys
 from pathlib import Path
 
@@ -165,7 +166,7 @@ found = {w: sorted({m[0].lower() for x in svrngs_pages(P[w]) for m in WORDS.find
 judge(14, not any(found.values()), {"found": found, "pages": {w: len(svrngs_pages(P[w])) for w in ORDER}})
 
 # 15. the plant
-planted = HERE / "data/plants/accounts/verdicts.json"
+planted = HERE / "data/plants/nohelper/verdicts.json"
 if S.get("plant"):
     verdicts[15] = {"verdict": "never-ran", "read": "this is the planted take"}
 elif planted.exists():
@@ -173,6 +174,18 @@ elif planted.exists():
     judge(15, all(v[n] == "failed" for n in (5, 8, 10, 11)) and all(v[n] == "passed" for n in (4, 13)), {"planted": v})
 else:
     verdicts[15] = {"verdict": "never-ran", "read": "no planted take"}
+
+# 17. the page offers the helper
+lent = S.get("lent") or {}
+before, sign_in = lent.get("before") or "", (S.get("declared") or {}).get("sign_in")
+if lent.get("ms") is None:
+    verdicts[17] = {"verdict": "failed", "read": {"lent": lent}}
+elif S.get("plant"):
+    judge(17, "make each person one in it" in before and "Or start its helper first, and nobody needs an account: here is how" in before
+          and sign_in is None, {"before": before, "sign_in": sign_in})
+else:
+    judge(17, "Its helper is running on this computer, so everyone is let in as themselves, with no account to make." in before
+          and "make each person one" not in before and sign_in == 8097, {"before": before, "sign_in": sign_in})
 
 # 16. not run here
 verdicts[16] = {"verdict": "could-not-judge", "read": "real people, a phone on cellular, a second host: not run; the people bar never-ran"}
