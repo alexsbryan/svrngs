@@ -3012,19 +3012,28 @@ async fn the_home_page_opens_the_group_s_folder(engine: Engine) {
     drop(ada);
 }
 
-/// V1_UI_BUILD §7's 3.3 bar: how long the phone may take, with its link's
-/// computer stopped, to list the group's things and open one through
-/// another person's computer. Missed on a host past `load::BUSY`, it is
-/// could-not-judge, as the film's seeks are: the page's cap is 10 s of it
-/// and cy's ask of ada's computer 3 s more (`node::ANSWER_WITHIN`), so the
-/// open has the rest.
-const REACHED_WITHIN: u64 = 15_000;
+/// V1_UI_BUILD §7's 3.3 bar with margin (v1ui-race (a)): how long the
+/// phone may take, with its link's computer stopped, to list the group's
+/// things and open one through another person's computer. The bar is 15 s;
+/// this is the link's cap, `dial::LINK_WITHIN`, 10 s, as the page dials
+/// every computer it knows at once and so never waits that cap out, where
+/// dialling one after another it waited all of it before asking the next,
+/// and missed 15 s by 347 and 705 ms in a full check
+/// (`demo/runs/v1ui-voice/2026-10-15/check-1.out`). Missed on a host past
+/// `load::BUSY`, it is could-not-judge, as the film's seeks are.
+const REACHED_WITHIN: u64 = svrngs_node::dial::LINK_WITHIN.as_millis() as u64;
 
 /// Bo's phone opens ada's group while every computer answers, then again
-/// once ada's is stopped, and cy's too when `cy_too`: reach.mjs's run, with
-/// the host's load at its start and the relay's host. Ada's computer made
-/// bo's link and lends a pad when `ada_lends`; cy's lends a shelf.
-async fn with_stopped(engine: Engine, ada_lends: bool, cy_too: bool) -> (Value, String, String) {
+/// once each of ada's and cy's that `stops` names is stopped: reach.mjs's
+/// run, with the host's load at its start and the relay's host. Ada's
+/// computer made bo's link and lends a pad when `ada_lends`; cy's lends a
+/// shelf. What the relay carried over the second visit is said, the dials'
+/// cost (v1ui-race (a)).
+async fn with_stopped(
+    engine: Engine,
+    ada_lends: bool,
+    stops: [bool; 2],
+) -> (Value, String, String) {
     let site = site();
     let relay = relay().await;
     let bo = signing(7);
@@ -3063,17 +3072,33 @@ async fn with_stopped(engine: Engine, ada_lends: bool, cy_too: bool) -> (Value, 
     })
     .await
     .expect("the phone opens the group while ada's computer answers");
-    let mut stopped = vec![ada];
-    if cy_too {
-        stopped.push(cy);
-    }
-    for computer in &stopped {
+    let (stopped, awake): (Vec<_>, Vec<_>) =
+        [ada, cy].into_iter().zip(stops).partition(|(_, s)| *s);
+    for (computer, _) in &stopped {
         computer.endpoint().close().await;
     }
     drop(stopped);
+    let carried = || {
+        let m = &relay.metrics().server;
+        [
+            m.bytes_recv.get(),
+            m.send_packets_recv.get(),
+            m.send_packets_dropped.get(),
+        ]
+    };
+    let before = carried();
     go.send(()).unwrap();
     let seen = phone.await.unwrap();
+    let after = carried();
+    let [bytes, packets, dropped] = std::array::from_fn(|i| after[i] - before[i]);
     eprintln!("the phone's run: {seen:#}");
+    eprintln!(
+        "{}: the relay over the second visit, {stops:?} stopped, listed in {} ms as {}: {bytes} bytes, {packets} packets, {dropped} dropped",
+        engine.as_str(),
+        seen["listed"]["ms"],
+        seen["listed"]["status"]
+    );
+    drop(awake);
     let host = relay_url(&relay)["http://".len()..]
         .trim_end_matches('/')
         .to_string();
@@ -3088,11 +3113,13 @@ in_both_engines!(
     /// says so and says ada's did not answer, and opens the shelf; past the
     /// bar on a busy host, could-not-judge, never a pass. Planted:
     /// the page dialling only the link's computer, as before this row,
-    /// which waits as iroh does, 30 s, then says it did not answer.
+    /// which waits as iroh does, 30 s, then says it did not answer; and the
+    /// page dialling the others only once the link's cap ran out, as before
+    /// v1ui-race, past [`REACHED_WITHIN`].
     the_phone_reaches_whoever_s_awake
 );
 async fn the_phone_reaches_whoever_s_awake(engine: Engine) {
-    let (seen, start, _) = with_stopped(engine, false, false).await;
+    let (seen, start, _) = with_stopped(engine, false, [true, false]).await;
     assert_eq!(
         seen["first"]["status"], "You’re in house, as bo",
         "{seen:#}"
@@ -3125,6 +3152,34 @@ async fn the_phone_reaches_whoever_s_awake(engine: Engine) {
 }
 
 in_both_engines!(
+    /// With the link's computer awake, the phone goes through it (v1ui-race
+    /// (a)): bo's phone opens the group while every computer answers, then
+    /// again with cy's stopped, dialling ada's and cy's at once, and ada's
+    /// answers: the page names no one else's computer, and its time is said.
+    /// Planted: the page dialling only the lenders, never the link's
+    /// computer, which reaches nobody.
+    the_phone_goes_through_the_link_s_computer_while_it_answers
+);
+async fn the_phone_goes_through_the_link_s_computer_while_it_answers(engine: Engine) {
+    let (seen, _, _) = with_stopped(engine, false, [false, true]).await;
+    assert_eq!(
+        seen["listed"]["status"], "You’re in house, as bo",
+        "{seen:#}"
+    );
+}
+
+/// What the page's dials cost with every computer awake (v1ui-race (a)):
+/// [`with_stopped`]'s line on the relay over the second visit, stopping
+/// nobody, for `demo/runs/race/`. An instrument, not a check.
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "v1ui-race (a)'s measurement, run by name"]
+async fn the_dials_cost_with_everyone_awake() {
+    for engine in [Engine::Chromium, Engine::Webkit] {
+        with_stopped(engine, false, [false, false]).await;
+    }
+}
+
+in_both_engines!(
     /// A computer that did not answer is named by its person, never by a
     /// relay's host (v1ui-reach (d)): ada's computer made bo's link and
     /// lends a pad, cy's a shelf, and with both stopped bo's phone says
@@ -3134,7 +3189,7 @@ in_both_engines!(
     a_computer_that_did_not_answer_is_named_by_its_person
 );
 async fn a_computer_that_did_not_answer_is_named_by_its_person(engine: Engine) {
-    let (seen, _, host) = with_stopped(engine, true, true).await;
+    let (seen, _, host) = with_stopped(engine, true, [true, true]).await;
     let listed = &seen["listed"];
     assert_eq!(
         listed["status"],

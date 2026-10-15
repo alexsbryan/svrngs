@@ -1,0 +1,797 @@
+
+running 6 tests
+.. 2/6
+the_phone_reaches_whoever_s_awake::chromium --- FAILED
+the_phone_reaches_whoever_s_awake::webkit --- FAILED
+carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::chromium --- FAILED
+carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::webkit --- FAILED
+
+failures:
+
+---- the_phone_reaches_whoever_s_awake::chromium stdout ----
+the phone's run: {
+  "first": {
+    "lent": [
+      "cy’s shelf (k)"
+    ],
+    "said": "",
+    "status": "You’re in house, as bo",
+    "text": "You’re in house, as bo\n\nOn this computer, paste this line in a terminal: it gets svrngs, joins you, and opens your home page, with the group’s folder on your disk.\n\ncurl -fsSL http://localhost:64959/install.sh | sh -s -- 'http://localhost:64959/#AoqI4910CfGV_VLbLTy6XXLKZwm_HZQSG_N0iAG0D29cAAAAAAAAAAAAAAAAAAAAAGh0dHA6Ly8xMjcuMC4wLjE6NjQ4MjQv'\nCopy\ncy on now\nada on now\nbo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\ncy’s shelf (k)\tk\tcy\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to house"
+  },
+  "listed": {
+    "lent": [
+      "cy’s shelf (k)"
+    ],
+    "ms": 13959,
+    "said": "ada’s computer did not answer, so what they lend is not listed.",
+    "status": "You’re in house, as bo, through cy’s computer",
+    "text": "You’re in house, as bo, through cy’s computer\ncy on now\nada did not answer\nbo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\ncy’s shelf (k)\tk\tcy\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to house\n\nada’s computer did not answer, so what they lend is not listed."
+  },
+  "logs": [
+    "error: Refused to apply style from 'http://localhost:64959/look.css?v=27026b8dfa37' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: STORE: the sealing key absent: making one",
+    "error: Refused to apply style from 'http://localhost:64959/look.css?v=27026b8dfa37' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: PAGE: the line offered, for a computer: joins",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64824/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "error: Refused to apply style from 'http://localhost:64959/look.css?v=27026b8dfa37' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64824/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: REFUSED — not answered in Some(10s): asleep",
+    "debug: PAGE: the dial failed: Error: LAYER tls/alpn+relay-hop: REFUSED — not answered in Some(10s): asleep",
+    "debug: PAGE: the link's computer did not answer, so 1 other computer(s) are dialled",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64824/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:64824/",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: opening tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx at http://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx.localhost:64959/open.html?v=27026b8dfa37, a pass to 1 lend(s) until 1792125765",
+    "debug: RUNTIME: this run of the worker begins",
+    "debug: RUNTIME: the page handed over the pass for tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx, 1 lend(s)",
+    "debug: RUNTIME: opening the endpoint as the pass's holder",
+    "debug: RUNTIME: dialling 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 as the pass's holder",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key 849bef482a249701026ec031c696ccd007682c9bfa85b0335e88acec7deea850",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64824/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 849bef482a249701026ec031c696ccd007682c9bfa85b0335e88acec7deea850 bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:64824/",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Lend protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Lend protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"svrngs/lend/0\"",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx/ — a bi-stream opened",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx/ answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx/ — the stream is done"
+  ],
+  "opened": {
+    "ms": 14407,
+    "title": "cy's shelf",
+    "url": "http://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx.localhost:64959/"
+  }
+}
+the relay over the second visit, [true, false] stopped, listed in 13959 ms: 53225 bytes, 86 packets, 12 dropped
+
+thread 'the_phone_reaches_whoever_s_awake::chromium' (47832126) panicked at crates/svrngs-node/tests/browser/main.rs:3138:21:
+cy's shelf opened in 14407 ms, past the bar's 10000, at 2026-10-15T16:42:30Z 9:42 up 5 days, 22:25, 6 users, load averages: 3.72 7.02 12.65:
+{
+  "first": {
+    "lent": [
+      "cy’s shelf (k)"
+    ],
+    "said": "",
+    "status": "You’re in house, as bo",
+    "text": "You’re in house, as bo\n\nOn this computer, paste this line in a terminal: it gets svrngs, joins you, and opens your home page, with the group’s folder on your disk.\n\ncurl -fsSL http://localhost:64959/install.sh | sh -s -- 'http://localhost:64959/#AoqI4910CfGV_VLbLTy6XXLKZwm_HZQSG_N0iAG0D29cAAAAAAAAAAAAAAAAAAAAAGh0dHA6Ly8xMjcuMC4wLjE6NjQ4MjQv'\nCopy\ncy on now\nada on now\nbo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\ncy’s shelf (k)\tk\tcy\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to house"
+  },
+  "listed": {
+    "lent": [
+      "cy’s shelf (k)"
+    ],
+    "ms": 13959,
+    "said": "ada’s computer did not answer, so what they lend is not listed.",
+    "status": "You’re in house, as bo, through cy’s computer",
+    "text": "You’re in house, as bo, through cy’s computer\ncy on now\nada did not answer\nbo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\ncy’s shelf (k)\tk\tcy\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to house\n\nada’s computer did not answer, so what they lend is not listed."
+  },
+  "logs": [
+    "error: Refused to apply style from 'http://localhost:64959/look.css?v=27026b8dfa37' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: STORE: the sealing key absent: making one",
+    "error: Refused to apply style from 'http://localhost:64959/look.css?v=27026b8dfa37' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: PAGE: the line offered, for a computer: joins",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64824/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "error: Refused to apply style from 'http://localhost:64959/look.css?v=27026b8dfa37' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64824/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: REFUSED — not answered in Some(10s): asleep",
+    "debug: PAGE: the dial failed: Error: LAYER tls/alpn+relay-hop: REFUSED — not answered in Some(10s): asleep",
+    "debug: PAGE: the link's computer did not answer, so 1 other computer(s) are dialled",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64824/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:64824/",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: opening tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx at http://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx.localhost:64959/open.html?v=27026b8dfa37, a pass to 1 lend(s) until 1792125765",
+    "debug: RUNTIME: this run of the worker begins",
+    "debug: RUNTIME: the page handed over the pass for tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx, 1 lend(s)",
+    "debug: RUNTIME: opening the endpoint as the pass's holder",
+    "debug: RUNTIME: dialling 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 as the pass's holder",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key 849bef482a249701026ec031c696ccd007682c9bfa85b0335e88acec7deea850",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64824/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 849bef482a249701026ec031c696ccd007682c9bfa85b0335e88acec7deea850 bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:64824/",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Lend protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Lend protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"svrngs/lend/0\"",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx/ — a bi-stream opened",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx/ answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx/ — the stream is done"
+  ],
+  "opened": {
+    "ms": 14407,
+    "title": "cy's shelf",
+    "url": "http://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx.localhost:64959/"
+  }
+}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- the_phone_reaches_whoever_s_awake::webkit stdout ----
+the phone's run: {
+  "first": {
+    "lent": [
+      "cy’s shelf (k)"
+    ],
+    "said": "",
+    "status": "You’re in house, as bo",
+    "text": "You’re in house, as bo\n\ncy on now\nada on now\nbo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\ncy’s shelf (k)\tk\tcy\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to house\n\n"
+  },
+  "listed": {
+    "lent": [
+      "cy’s shelf (k)"
+    ],
+    "ms": 13992,
+    "said": "ada’s computer did not answer, so what they lend is not listed.",
+    "status": "You’re in house, as bo, through cy’s computer",
+    "text": "You’re in house, as bo, through cy’s computer\n\ncy on now\nada did not answer\nbo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\ncy’s shelf (k)\tk\tcy\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to house\n\nada’s computer did not answer, so what they lend is not listed."
+  },
+  "logs": [
+    "error: Did not parse stylesheet at 'http://localhost:64960/look.css?v=27026b8dfa37' because non CSS MIME types are not allowed in strict mode.",
+    "debug: STORE: the sealing key absent: making one",
+    "debug: PAGE: no line offered: not a computer, or not a token",
+    "error: TypeError: null is not an object (evaluating 'asked.has')",
+    "error: Did not parse stylesheet at 'http://localhost:64960/look.css?v=27026b8dfa37' because non CSS MIME types are not allowed in strict mode.",
+    "debug: PAGE: no line offered: not a computer, or not a token",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64827/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "error: Did not parse stylesheet at 'http://localhost:64960/look.css?v=27026b8dfa37' because non CSS MIME types are not allowed in strict mode.",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64827/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: REFUSED — not answered in Some(10s): asleep",
+    "debug: PAGE: the dial failed: Error: LAYER tls/alpn+relay-hop: REFUSED — not answered in Some(10s): asleep",
+    "debug: PAGE: the link's computer did not answer, so 1 other computer(s) are dialled",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64827/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "error: WebSocket connection to 'ws://127.0.0.1:64827/relay' failed: The operation couldn’t be completed. Socket is not connected",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:64827/",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: opening tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx at http://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx.localhost:64960/open.html?v=27026b8dfa37, a pass to 1 lend(s) until 1792125765"
+  ],
+  "opened": {
+    "ms": 14553,
+    "title": "cy's shelf",
+    "url": "http://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx.localhost:64960/"
+  }
+}
+the relay over the second visit, [true, false] stopped, listed in 13992 ms: 53980 bytes, 84 packets, 13 dropped
+
+thread 'the_phone_reaches_whoever_s_awake::webkit' (47832127) panicked at crates/svrngs-node/tests/browser/main.rs:3138:21:
+cy's shelf opened in 14553 ms, past the bar's 10000, at 2026-10-15T16:42:30Z 9:42 up 5 days, 22:25, 6 users, load averages: 3.72 7.02 12.65:
+{
+  "first": {
+    "lent": [
+      "cy’s shelf (k)"
+    ],
+    "said": "",
+    "status": "You’re in house, as bo",
+    "text": "You’re in house, as bo\n\ncy on now\nada on now\nbo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\ncy’s shelf (k)\tk\tcy\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to house\n\n"
+  },
+  "listed": {
+    "lent": [
+      "cy’s shelf (k)"
+    ],
+    "ms": 13992,
+    "said": "ada’s computer did not answer, so what they lend is not listed.",
+    "status": "You’re in house, as bo, through cy’s computer",
+    "text": "You’re in house, as bo, through cy’s computer\n\ncy on now\nada did not answer\nbo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\ncy’s shelf (k)\tk\tcy\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to house\n\nada’s computer did not answer, so what they lend is not listed."
+  },
+  "logs": [
+    "error: Did not parse stylesheet at 'http://localhost:64960/look.css?v=27026b8dfa37' because non CSS MIME types are not allowed in strict mode.",
+    "debug: STORE: the sealing key absent: making one",
+    "debug: PAGE: no line offered: not a computer, or not a token",
+    "error: TypeError: null is not an object (evaluating 'asked.has')",
+    "error: Did not parse stylesheet at 'http://localhost:64960/look.css?v=27026b8dfa37' because non CSS MIME types are not allowed in strict mode.",
+    "debug: PAGE: no line offered: not a computer, or not a token",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64827/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "error: Did not parse stylesheet at 'http://localhost:64960/look.css?v=27026b8dfa37' because non CSS MIME types are not allowed in strict mode.",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64827/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: REFUSED — not answered in Some(10s): asleep",
+    "debug: PAGE: the dial failed: Error: LAYER tls/alpn+relay-hop: REFUSED — not answered in Some(10s): asleep",
+    "debug: PAGE: the link's computer did not answer, so 1 other computer(s) are dialled",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64827/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "error: WebSocket connection to 'ws://127.0.0.1:64827/relay' failed: The operation couldn’t be completed. Socket is not connected",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:64827/",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: opening tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx at http://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx.localhost:64960/open.html?v=27026b8dfa37, a pass to 1 lend(s) until 1792125765"
+  ],
+  "opened": {
+    "ms": 14553,
+    "title": "cy's shelf",
+    "url": "http://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx.localhost:64960/"
+  }
+}
+
+---- carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::chromium stdout ----
+the phone's run: {
+  "first": {
+    "lent": [
+      "ada’s Money-house (Money)"
+    ],
+    "said": "",
+    "status": "You’re in house, as bo",
+    "text": "You’re in house, as bo\n\nOn this computer, paste this line in a terminal: it gets svrngs, joins you, and opens your home page, with the group’s folder on your disk.\n\ncurl -fsSL http://localhost:64982/install.sh | sh -s -- 'http://localhost:64982/#AoqI4910CfGV_VLbLTy6XXLKZwm_HZQSG_N0iAG0D29cAAAAAAAAAAAAAAAAAAAAAGh0dHA6Ly8xMjcuMC4wLjE6NjQ4MjUv'\nCopy\ncy on now\nada on now\nbo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nada’s Money-house (Money)\tMoney\tada\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to house"
+  },
+  "listed": {
+    "lent": [
+      "cy’s Money-house (Money)"
+    ],
+    "ms": 13947,
+    "said": "ada’s computer did not answer, so what they lend is not listed.",
+    "status": "You’re in house, as bo, through cy’s computer",
+    "text": "You’re in house, as bo, through cy’s computer\ncy on now\nada did not answer\nbo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\ncy’s Money-house (Money)\tMoney\tcy\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to house\n\nada’s computer did not answer, so what they lend is not listed."
+  },
+  "logs": [
+    "error: Refused to apply style from 'http://localhost:64982/look.css?v=27026b8dfa37' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: STORE: the sealing key absent: making one",
+    "debug: PAGE: the line offered, for a computer: founds",
+    "error: TypeError: Cannot read properties of null (reading 'has')\n    at opening (http://localhost:64982/app.js?v=27026b8dfa37:496:25)",
+    "error: Refused to apply style from 'http://localhost:64982/look.css?v=27026b8dfa37' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: PAGE: the line offered, for a computer: joins",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64825/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "error: Refused to apply style from 'http://localhost:64982/look.css?v=27026b8dfa37' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64825/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: REFUSED — not answered in Some(10s): asleep",
+    "debug: PAGE: the dial failed: Error: LAYER tls/alpn+relay-hop: REFUSED — not answered in Some(10s): asleep",
+    "debug: PAGE: the link's computer did not answer, so 1 other computer(s) are dialled",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64825/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:64825/",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: opening tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0 at http://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0.localhost:64982/open.html?v=27026b8dfa37, a pass to 1 lend(s) until 1792125765",
+    "debug: RUNTIME: this run of the worker begins",
+    "debug: RUNTIME: the page handed over the pass for tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0, 1 lend(s)",
+    "debug: RUNTIME: opening the endpoint as the pass's holder",
+    "debug: RUNTIME: dialling 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 as the pass's holder",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key b94b4f279c10a7de49ac4b84bee0e269174108d4315856e8c61c9becf8f36999",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64825/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint b94b4f279c10a7de49ac4b84bee0e269174108d4315856e8c61c9becf8f36999 bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:64825/",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Lend protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Lend protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"svrngs/lend/0\"",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/ — a bi-stream opened",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/ answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/ — the stream is done",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/money.js — a bi-stream opened",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/money.js answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/money.js — the stream is done",
+    "debug: RUNTIME: POST /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/svrngs/acts sends a body of 70 bytes",
+    "debug: HTTP: POST /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/svrngs/acts — a bi-stream opened",
+    "debug: RUNTIME: POST /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/svrngs/acts handed its body to the dial whole, 0 ms",
+    "debug: HTTP: POST /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/svrngs/acts answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: POST /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/svrngs/acts — the stream is done",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/svrngs/acts — a bi-stream opened",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/svrngs/acts answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/svrngs/acts — the stream is done"
+  ],
+  "opened": {
+    "ms": 14470,
+    "title": "Money: 1 by bo",
+    "url": "http://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0.localhost:64982/"
+  }
+}
+
+thread 'carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::chromium' (47832122) panicked at crates/svrngs-node/tests/browser/carried.rs:198:21:
+Money opened and wrote in 14470 ms, past the bar's 10000, at 2026-10-15T16:42:30Z 9:42 up 5 days, 22:25, 6 users, load averages: 3.72 7.02 12.65:
+{
+  "first": {
+    "lent": [
+      "ada’s Money-house (Money)"
+    ],
+    "said": "",
+    "status": "You’re in house, as bo",
+    "text": "You’re in house, as bo\n\nOn this computer, paste this line in a terminal: it gets svrngs, joins you, and opens your home page, with the group’s folder on your disk.\n\ncurl -fsSL http://localhost:64982/install.sh | sh -s -- 'http://localhost:64982/#AoqI4910CfGV_VLbLTy6XXLKZwm_HZQSG_N0iAG0D29cAAAAAAAAAAAAAAAAAAAAAGh0dHA6Ly8xMjcuMC4wLjE6NjQ4MjUv'\nCopy\ncy on now\nada on now\nbo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nada’s Money-house (Money)\tMoney\tada\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to house"
+  },
+  "listed": {
+    "lent": [
+      "cy’s Money-house (Money)"
+    ],
+    "ms": 13947,
+    "said": "ada’s computer did not answer, so what they lend is not listed.",
+    "status": "You’re in house, as bo, through cy’s computer",
+    "text": "You’re in house, as bo, through cy’s computer\ncy on now\nada did not answer\nbo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\ncy’s Money-house (Money)\tMoney\tcy\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to house\n\nada’s computer did not answer, so what they lend is not listed."
+  },
+  "logs": [
+    "error: Refused to apply style from 'http://localhost:64982/look.css?v=27026b8dfa37' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: STORE: the sealing key absent: making one",
+    "debug: PAGE: the line offered, for a computer: founds",
+    "error: TypeError: Cannot read properties of null (reading 'has')\n    at opening (http://localhost:64982/app.js?v=27026b8dfa37:496:25)",
+    "error: Refused to apply style from 'http://localhost:64982/look.css?v=27026b8dfa37' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: PAGE: the line offered, for a computer: joins",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64825/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "error: Refused to apply style from 'http://localhost:64982/look.css?v=27026b8dfa37' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64825/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: REFUSED — not answered in Some(10s): asleep",
+    "debug: PAGE: the dial failed: Error: LAYER tls/alpn+relay-hop: REFUSED — not answered in Some(10s): asleep",
+    "debug: PAGE: the link's computer did not answer, so 1 other computer(s) are dialled",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64825/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:64825/",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: opening tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0 at http://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0.localhost:64982/open.html?v=27026b8dfa37, a pass to 1 lend(s) until 1792125765",
+    "debug: RUNTIME: this run of the worker begins",
+    "debug: RUNTIME: the page handed over the pass for tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0, 1 lend(s)",
+    "debug: RUNTIME: opening the endpoint as the pass's holder",
+    "debug: RUNTIME: dialling 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 as the pass's holder",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key b94b4f279c10a7de49ac4b84bee0e269174108d4315856e8c61c9becf8f36999",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64825/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint b94b4f279c10a7de49ac4b84bee0e269174108d4315856e8c61c9becf8f36999 bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:64825/",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Lend protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Lend protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"svrngs/lend/0\"",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/ — a bi-stream opened",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/ answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/ — the stream is done",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/money.js — a bi-stream opened",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/money.js answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/money.js — the stream is done",
+    "debug: RUNTIME: POST /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/svrngs/acts sends a body of 70 bytes",
+    "debug: HTTP: POST /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/svrngs/acts — a bi-stream opened",
+    "debug: RUNTIME: POST /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/svrngs/acts handed its body to the dial whole, 0 ms",
+    "debug: HTTP: POST /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/svrngs/acts answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: POST /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/svrngs/acts — the stream is done",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/svrngs/acts — a bi-stream opened",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/svrngs/acts answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0/svrngs/acts — the stream is done"
+  ],
+  "opened": {
+    "ms": 14470,
+    "title": "Money: 1 by bo",
+    "url": "http://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0.localhost:64982/"
+  }
+}
+
+---- carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::webkit stdout ----
+the phone's run: {
+  "first": {
+    "lent": [
+      "ada’s Money-house (Money)"
+    ],
+    "said": "",
+    "status": "You’re in house, as bo",
+    "text": "You’re in house, as bo\n\ncy on now\nada on now\nbo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nada’s Money-house (Money)\tMoney\tada\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to house\n\n"
+  },
+  "listed": {
+    "lent": [
+      "cy’s Money-house (Money)"
+    ],
+    "ms": 14002,
+    "said": "ada’s computer did not answer, so what they lend is not listed.",
+    "status": "You’re in house, as bo, through cy’s computer",
+    "text": "You’re in house, as bo, through cy’s computer\n\ncy on now\nada did not answer\nbo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\ncy’s Money-house (Money)\tMoney\tcy\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to house\n\nada’s computer did not answer, so what they lend is not listed."
+  },
+  "logs": [
+    "error: Did not parse stylesheet at 'http://localhost:64981/look.css?v=27026b8dfa37' because non CSS MIME types are not allowed in strict mode.",
+    "debug: STORE: the sealing key absent: making one",
+    "debug: PAGE: no line offered: not a computer, or not a token",
+    "error: TypeError: null is not an object (evaluating 'asked.has')",
+    "error: Did not parse stylesheet at 'http://localhost:64981/look.css?v=27026b8dfa37' because non CSS MIME types are not allowed in strict mode.",
+    "debug: PAGE: no line offered: not a computer, or not a token",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64826/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "error: WebSocket connection to 'ws://127.0.0.1:64826/relay' failed: The operation couldn’t be completed. Socket is not connected",
+    "error: Did not parse stylesheet at 'http://localhost:64981/look.css?v=27026b8dfa37' because non CSS MIME types are not allowed in strict mode.",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64826/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: REFUSED — not answered in Some(10s): asleep",
+    "debug: PAGE: the dial failed: Error: LAYER tls/alpn+relay-hop: REFUSED — not answered in Some(10s): asleep",
+    "debug: PAGE: the link's computer did not answer, so 1 other computer(s) are dialled",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64826/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "error: WebSocket connection to 'ws://127.0.0.1:64826/relay' failed: The operation couldn’t be completed. Socket is not connected",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:64826/",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: opening tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0 at http://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0.localhost:64981/open.html?v=27026b8dfa37, a pass to 1 lend(s) until 1792125766"
+  ],
+  "opened": {
+    "ms": 14606,
+    "title": "Money: 1 by bo",
+    "url": "http://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0.localhost:64981/"
+  }
+}
+
+thread 'carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::webkit' (47832123) panicked at crates/svrngs-node/tests/browser/carried.rs:198:21:
+Money opened and wrote in 14606 ms, past the bar's 10000, at 2026-10-15T16:42:30Z 9:42 up 5 days, 22:25, 6 users, load averages: 3.72 7.02 12.65:
+{
+  "first": {
+    "lent": [
+      "ada’s Money-house (Money)"
+    ],
+    "said": "",
+    "status": "You’re in house, as bo",
+    "text": "You’re in house, as bo\n\ncy on now\nada on now\nbo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nada’s Money-house (Money)\tMoney\tada\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to house\n\n"
+  },
+  "listed": {
+    "lent": [
+      "cy’s Money-house (Money)"
+    ],
+    "ms": 14002,
+    "said": "ada’s computer did not answer, so what they lend is not listed.",
+    "status": "You’re in house, as bo, through cy’s computer",
+    "text": "You’re in house, as bo, through cy’s computer\n\ncy on now\nada did not answer\nbo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\ncy’s Money-house (Money)\tMoney\tcy\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to house\n\nada’s computer did not answer, so what they lend is not listed."
+  },
+  "logs": [
+    "error: Did not parse stylesheet at 'http://localhost:64981/look.css?v=27026b8dfa37' because non CSS MIME types are not allowed in strict mode.",
+    "debug: STORE: the sealing key absent: making one",
+    "debug: PAGE: no line offered: not a computer, or not a token",
+    "error: TypeError: null is not an object (evaluating 'asked.has')",
+    "error: Did not parse stylesheet at 'http://localhost:64981/look.css?v=27026b8dfa37' because non CSS MIME types are not allowed in strict mode.",
+    "debug: PAGE: no line offered: not a computer, or not a token",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64826/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "error: WebSocket connection to 'ws://127.0.0.1:64826/relay' failed: The operation couldn’t be completed. Socket is not connected",
+    "error: Did not parse stylesheet at 'http://localhost:64981/look.css?v=27026b8dfa37' because non CSS MIME types are not allowed in strict mode.",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64826/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: REFUSED — not answered in Some(10s): asleep",
+    "debug: PAGE: the dial failed: Error: LAYER tls/alpn+relay-hop: REFUSED — not answered in Some(10s): asleep",
+    "debug: PAGE: the link's computer did not answer, so 1 other computer(s) are dialled",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:64826/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "error: WebSocket connection to 'ws://127.0.0.1:64826/relay' failed: The operation couldn’t be completed. Socket is not connected",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:64826/",
+    "debug: LAYER tls/alpn+relay-hop: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: opening tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0 at http://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0.localhost:64981/open.html?v=27026b8dfa37, a pass to 1 lend(s) until 1792125766"
+  ],
+  "opened": {
+    "ms": 14606,
+    "title": "Money: 1 by bo",
+    "url": "http://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmawbqadkt3k0.localhost:64981/"
+  }
+}
+
+
+failures:
+    carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::chromium
+    carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::webkit
+    the_phone_reaches_whoever_s_awake::chromium
+    the_phone_reaches_whoever_s_awake::webkit
+
+test result: FAILED. 2 passed; 4 failed; 0 ignored; 0 measured; 85 filtered out; finished in 23.31s
+
+error: test failed, to rerun pass `-p svrngs-node --test browser`
