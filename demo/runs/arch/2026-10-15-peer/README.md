@@ -80,3 +80,8 @@ it failed the same way (`start-browser-loaded.out`), the host's load
 average then 30 (other loops building). That test is a phone's page
 dialling the computer's acceptor, which the cut did not touch. Not this
 row's: a test that reads load, said here, not a pass. One run each.
+
+A second check at 1a60dd04 (`close-check-loaded.out`, its second part):
+the same one test red in both of its browser runs, every other step
+passed, the load average near 20 on 12 cores. The close's check is run
+again once the host's load falls below its cores.

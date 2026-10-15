@@ -26,3 +26,26 @@ passed     app laws
                "error": "Error: Error: no stream could be opened to the computer: timed out",
                "error": "Error: no answer within 60 s",
            test result: FAILED. 90 passed; 2 failed; 2 ignored; 0 measured; 0 filtered out; finished in 158.39s
+
+# scripts/check.sh again at 1a60dd04, its second run, after svrngs-node's artifacts were cleaned
+passed     principles pinned
+passed     lean and RUST_ARCH
+passed     app nouns gate
+passed     app nouns
+passed     rustfmt
+passed     clippy
+failed     tests
+passed     canaries
+passed     ceiling canary
+passed     web rustfmt and clippy
+failed     browser
+passed     joining in a browser
+passed     conformance canary
+passed     app laws
+           a_page_speaks_http_through_the_door_streaming_both_ways::chromium --- FAILED
+           a_page_speaks_http_through_the_door_streaming_both_ways::webkit --- FAILED
+           test result: FAILED. 90 passed; 2 failed; 2 ignored; 0 measured; 0 filtered out; finished in 143.95s
+           a_page_speaks_http_through_the_door_streaming_both_ways::chromium --- FAILED
+           a_page_speaks_http_through_the_door_streaming_both_ways::webkit --- FAILED
+           test result: FAILED. 90 passed; 2 failed; 2 ignored; 0 measured; 0 filtered out; finished in 146.37s
+load averages at its end: 16.54 20.50 20.02
