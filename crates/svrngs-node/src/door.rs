@@ -41,7 +41,8 @@
 //! request, sets that person's headers on each of their requests, and swaps
 //! a stand-in for their secret both ways, and puts their script first in
 //! each page answered to them (mwp-2). A request it cannot sign in is
-//! refused, `502`, never carried unsigned.
+//! refused, `502`, never carried unsigned: as the lend not answering when
+//! the sign-in or the lend's port did not answer, else as a sign-in's no.
 //!
 //! **How many at once, and each one's share** (u3-6; DESIGN §8, "Many
 //! people, one library"): before a request is carried, the door asks
@@ -81,6 +82,7 @@
 //! ([`crate::lend::RefusedPath::covers`]); and a newcomer past the lend's
 //! limit. Each refusal, and the answer for a service that does not answer,
 //! is marked as svrngs's, which ([`LendRefusal`]); the service's own answers never are.
+//! A browser's tab asking for a page is shown svrngs's own answer as one ([`paged`]).
 
 use std::num::NonZeroU16;
 use std::path::PathBuf;
@@ -249,10 +251,13 @@ impl LendRefusal {
         self.said(status, serde_json::json!({ "error": words.into() }))
     }
 
-    /// svrngs's answer, `status` and `body`, its kind in the body and the header.
+    /// svrngs's answer, `status` and `body`, its kind in the body and the
+    /// header, its words kept for [`paged`].
     fn said(self, status: StatusCode, mut body: serde_json::Value) -> Response {
         body["kind"] = self.as_str().into();
+        let words = Words(body["error"].as_str().unwrap_or_default().to_string());
         let mut answer = (status, Json(body)).into_response();
+        answer.extensions_mut().insert(words);
         answer
             .headers_mut()
             .insert(REFUSED_HEADER, HeaderValue::from_static(self.as_str()));
@@ -265,6 +270,28 @@ impl LendRefusal {
 /// and ends the wait, whoever else is asleep (asleep-1-none-held); with
 /// none awake that knows them the pass is refused as before.
 const ASK_WITHIN: Duration = Duration::from_secs(10);
+
+/// The words of svrngs's own answer, kept on it for [`paged`].
+#[derive(Clone)]
+struct Words(String);
+
+/// svrngs's answer drawn as a page when a browser's tab asked for one, by
+/// `Accept`; a program asking anything else is given its JSON (v1ui-polish
+/// (a)): the routes a person's tab reaches a lend by are layered by it.
+pub(crate) async fn paged(req: Request, next: axum::middleware::Next) -> Response {
+    let tab = sign_in::said(req.headers(), header::ACCEPT).contains("text/html");
+    let mut answer = next.run(req).await;
+    let Some(Words(words)) = answer.extensions_mut().remove::<Words>().filter(|_| tab) else {
+        return answer;
+    };
+    tracing::debug!(target: "door", words, "door: svrngs's own answer to a browser's tab, drawn as a page");
+    // The words, a sentence begun lower-case, are drawn as one, with nothing in them markup.
+    let words = words.trim_end_matches('.').replace('<', "&lt;");
+    let page = format!("<!doctype html><meta charset=utf-8><meta name=viewport content=width=device-width><style>p::first-letter{{text-transform:uppercase}}</style><p>{words}.");
+    let (mut parts, _) = answer.into_parts();
+    parts.headers.remove(header::CONTENT_TYPE);
+    (parts, axum::response::Html(page)).into_response()
+}
 
 /// svrngs's answer to someone removed from the group (U7), in their words.
 pub(crate) fn gone() -> Response {
@@ -332,6 +359,7 @@ pub fn router(door: Door) -> axum::Router {
         .route("/lend/{*rest}", any(through))
         .route(LENDS_ROUTE, get(lends))
         .route(CHOICES, get(choices::choices_of).post(choices::choose))
+        .layer(axum::middleware::from_fn(paged))
         .with_state(door)
 }
 
@@ -341,6 +369,7 @@ pub fn holders_router(door: Door) -> axum::Router {
     axum::Router::new()
         .route("/lend/{*rest}", any(through_pass))
         .route(CHOICES, axum::routing::post(choices::stop_with_pass))
+        .layer(axum::middleware::from_fn(paged))
         .with_state(door)
 }
 
@@ -1317,21 +1346,29 @@ async fn forward(
         (HeaderName::from_static(DEVICE_HEADER), device_value),
     ];
     tracing::debug!(target: "door", actor, user = ?identity[2].1, "door: the account the lend is told");
+    let (me, name) = (hex::encode(door.key), &lend.name);
+    let lender = door.rail.standing_anywhere(&me).map(|(_, m)| m.person);
+    let lender = lender.as_ref().map_or("Its lender", |p| p.as_str());
+    let away = format!("{lender}’s {name} is not answering now: try again later");
+    let unanswered = || LendRefusal::Away.say(StatusCode::BAD_GATEWAY, away.clone());
     let signing = match lend.sign_in {
         None => Signing::Secret(secret_headers(door, &lend.name)),
-        Some(port) => match door
+        Some(helper) => match door
             .sign_ins
-            .of(&lend.name, port, device, identity.clone())
+            .of(&lend.name, helper, device, identity.clone())
             .await
         {
-            Ok(signed) => Signing::Person(port, signed),
+            Ok(signed) => Signing::Person(helper, signed),
             Err(why) => {
-                tracing::warn!(target: "door", actor, lend = %lend.name, %why,
-                    "door: refused — the lend's sign-in did not sign the person in, so the request is not carried");
-                return Err(LendRefusal::SignIn.say(
-                    StatusCode::BAD_GATEWAY,
-                    format!("{} could not sign you in", lend.name),
-                ));
+                let at = tokio::net::TcpStream::connect(("127.0.0.1", port.get()));
+                let up = matches!(tokio::time::timeout(CONNECT_WITHIN, at).await, Ok(Ok(_)));
+                tracing::warn!(target: "door", actor, lend = %lend.name, %why, up,
+                    "door: refused — the lend's sign-in did not sign the person in, so the request is not carried; away when it or the lend did not answer");
+                if matches!(why, sign_in::Refusal::Unanswered) || !up {
+                    return Err(unanswered());
+                }
+                let words = format!("{} could not sign you in", lend.name);
+                return Err(LendRefusal::SignIn.say(StatusCode::BAD_GATEWAY, words));
             }
         },
     };
@@ -1378,15 +1415,6 @@ async fn forward(
     // The use began when the person was let in, and lasts until the member
     // has the whole answer or leaves it: the answer's body holds it.
 
-    let unanswered = || {
-        LendRefusal::Away.say(
-            StatusCode::BAD_GATEWAY,
-            format!(
-                "{} is not answering on the computer that lends it",
-                lend.name
-            ),
-        )
-    };
     let origin = std::net::SocketAddr::from(([127, 0, 0, 1], port.get()));
     let Some(answer) = send_to(origin, request, lend.name.as_str()).await else {
         let unanswered = unanswered();

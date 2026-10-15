@@ -53,6 +53,6 @@ Jellyfin has no library by stops it as it starts, naming the ones it has.
 
 If your Jellyfin is not at port 8096, give `share` its port, and the
 program `--jellyfin 127.0.0.1:<its port>`. Someone opening Jellyfin for the
-first time while the program is stopped is told Jellyfin could not sign
-them in; start it again with the same code. A restart keeps each person's
-account.
+first time while the program or Jellyfin is stopped is told your Jellyfin
+is not answering now; start it again, with the same code. A restart keeps
+each person's account.

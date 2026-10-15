@@ -1,0 +1,13 @@
+test sign_in::a_stopped_lend_behind_its_sign_in_is_said_as_not_answering_by_its_lender_on_a_page ... ok
+test sign_in::a_sign_in_that_fails_or_answers_nonsense_refuses_the_request_never_carries_it ... ok
+test sign_in::each_device_of_one_person_is_asked_for_as_itself ... ok
+test sign_in::two_people_are_each_signed_in_as_themselves_and_neither_receives_a_secret ... ok
+test sign_in::each_person_s_script_goes_first_in_their_pages_and_never_in_another_s ... ok
+test sign_in::one_person_s_slow_sign_in_holds_nobody_else_s ... ok
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 28 filtered out; finished in 3.52s
+test the_record_answers_no_lend_s_origin_and_refuses_a_page ... ok
+test a_stopped_lend_is_said_by_its_lender_as_a_page_to_a_tab_and_json_to_a_program ... ok
+test each_lend_opens_at_an_origin_of_its_own_on_this_computer ... ok
+test a_computer_s_origin_names_the_app_and_keeps_a_page_to_its_reads ... ok
+test a_lend_s_computer_asleep_is_said_away_within_the_cap ... ok
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.39s

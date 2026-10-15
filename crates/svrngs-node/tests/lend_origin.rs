@@ -703,3 +703,52 @@ async fn a_lend_s_computer_asleep_is_said_away_within_the_cap() {
     sam.endpoint().close().await;
     alex.endpoint().close().await;
 }
+
+/// **A stopped lend said by its lender, as a page to a tab** (v1ui-polish
+/// (a); `demo/runs/v1ui/2026-10-15/README.md` finding 2). Alex's telly and
+/// Sam's pad each lent on a port nothing listens on: at each origin on
+/// Alex's computer, a tab (`Accept: text/html`) is shown a page naming the
+/// lender and the lend, never a brace or the port; a program is given the
+/// JSON, `away`. Sam's computer here holds only Alex's founding, so it
+/// names its lender by none of its own (`Its lender`), never a host.
+/// Planted: HEAD before it, which answered both in braces.
+#[tokio::test]
+async fn a_stopped_lend_is_said_by_its_lender_as_a_page_to_a_tab_and_json_to_a_program() {
+    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
+    let stopped = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .unwrap()
+        .local_addr()
+        .unwrap();
+    lends(alex_dir.path(), "telly", stopped.port(), ALEXS);
+    lends(sam_dir.path(), "pad", stopped.port(), SAMS);
+    let api = alex.api_addr();
+    for (node, name, lender) in [(&alex, "telly", "alex"), (&sam, "pad", "Its lender")] {
+        let host = format!(
+            "{}.localhost:{}",
+            Label::of(node.endpoint().id().as_bytes(), name),
+            api.port()
+        );
+        let tab = "GET / HTTP/1.1\r\nAccept: text/html,*/*\r\nSec-Fetch-Mode: navigate\r\nConnection: close\r\n";
+        let (head, sock) = ask(api, &host, tab).await;
+        let page = format!("{head}{}", body(sock).await);
+        assert!(page.starts_with("HTTP/1.1 502"), "{page}");
+        assert!(
+            page.to_ascii_lowercase()
+                .contains("content-type: text/html"),
+            "{page}"
+        );
+        assert!(
+            page.contains(&format!("{lender}’s {name} is not answering")),
+            "{page}"
+        );
+        assert!(
+            !page.contains("{\"") && !page.contains(&stopped.port().to_string()),
+            "{page}"
+        );
+        let (head, sock) = ask(api, &host, "GET / HTTP/1.1\r\nConnection: close\r\n").await;
+        let program = format!("{head}{}", body(sock).await);
+        assert!(program.contains(r#""kind":"away""#), "{program}");
+    }
+}

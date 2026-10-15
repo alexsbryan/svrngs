@@ -129,7 +129,8 @@ pub fn origin(label: &Label, port: u16) -> String {
 
 /// The routes every lend's origin is served by, for [`crate::api::router`].
 pub(crate) fn router(asking: Asking) -> Router {
-    Router::new().fallback(lent).with_state(asking)
+    let paged = axum::middleware::from_fn(door::paged);
+    Router::new().fallback(lent).layer(paged).with_state(asking)
 }
 
 /// A request at a lend's origin, carried to the lend.

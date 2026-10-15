@@ -1085,7 +1085,13 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
      `</script` — refuses the person's request, `502`, `{"error": "<lend>
      could not sign you in", "kind": "sign-in"}`, the reason traced at
      warn on the lender's side, never sent to the person; the next
-     request asks again. Never forwarded unsigned.
+     request asks again. Never forwarded unsigned. A sign-in that does
+     not answer, or answers while the lend's own port takes no
+     connection, is the lend not answering, not a no: `"kind": "away"`,
+     "<lender>’s <lend> is not answering now: try again later", the
+     lender named as this computer's person (v1ui-polish (a)). Any of
+     svrngs's refusals to a browser's tab, which asks `Accept: text/html`,
+     is drawn as a page of its words; a program is given the JSON.
    - *What it keeps, and when it asks again.* Each person's answer, by
      key, in the door's memory for this run of the node: never logged,
      never in the record, never on the wire but to the service, as

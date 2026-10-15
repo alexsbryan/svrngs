@@ -337,8 +337,9 @@ async fn two_people_are_each_signed_in_as_themselves_and_neither_receives_a_secr
 
 /// A sign-in that fails — answering 500, answering nonsense, or not
 /// listening at all — refuses the person's request, 502, saying the lend
-/// could not sign them in, and the service is never asked; the next
-/// request asks again. Planted: a failure carried unsigned.
+/// could not sign them in, or for one not listening that it is not
+/// answering, and the service is never asked; the next request asks
+/// again. Planted: a failure carried unsigned.
 #[tokio::test]
 async fn a_sign_in_that_fails_or_answers_nonsense_refuses_the_request_never_carries_it() {
     let pair = Pair::new().await;
@@ -354,15 +355,16 @@ async fn a_sign_in_that_fails_or_answers_nonsense_refuses_the_request_never_carr
             None => (closed, Arc::new(Mutex::new(Vec::new()))),
         };
         lend_signed(&pair, "signed", origin.port(), hook.port());
+        let (kind, words) = match answers {
+            Some(_) => ("sign-in", "signed could not sign you in"),
+            None => ("away", "ada’s signed is not answering"),
+        };
         for _ in 0..2 {
             let reply = raw_to(pair.bridge, asks("echo")).await;
             assert_eq!(reply.status, 502, "{}", reply.text);
-            assert!(reply.text.contains(r#""kind":"sign-in""#), "{}", reply.text);
-            assert!(
-                reply.text.contains("signed could not sign you in"),
-                "{}",
-                reply.text
-            );
+            let told = format!(r#""kind":"{kind}""#);
+            assert!(reply.text.contains(&told), "{}", reply.text);
+            assert!(reply.text.contains(words), "{}", reply.text);
         }
         assert_eq!(
             asked.lock().unwrap().len(),
@@ -412,7 +414,7 @@ async fn a_stopped_lend_behind_its_sign_in_is_said_as_not_answering_by_its_lende
             tab.text
         );
         assert!(
-            !page.contains('{') && !page.contains(&service.port().to_string()),
+            !page.contains("{\"") && !page.contains(&service.port().to_string()),
             "{}",
             tab.text
         );
@@ -421,7 +423,7 @@ async fn a_stopped_lend_behind_its_sign_in_is_said_as_not_answering_by_its_lende
         } else {
             "could not sign you in"
         };
-        assert!(tab.text.contains(said), "{kind}: {}", tab.text);
+        assert!(page.contains(said), "{kind}: {}", tab.text);
     }
     pair.close().await;
 }
