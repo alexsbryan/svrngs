@@ -29,6 +29,12 @@ const args = JSON.parse(process.argv[2]);
 // as app.js `reachGroup` dials the link's computer (#172).
 // Each answer is read as a page reads one, chunk by chunk.
 async function httpChecks(a) {
+  // Every line the page traces from here on, stamped with its time since the
+  // checks began, so a run shows where each step stopped (arch-stream (a)).
+  const began = performance.now();
+  const traced = [];
+  const trace = window.__trace;
+  window.__trace = (l) => (traced.push(`+${Math.round(performance.now() - began)} ms ${l}`), trace?.(l));
   const app = document.querySelector('script[type=module]').src;
   const m = await import(new URL(`./wasm/svrngs_web.js${new URL(app).search}`, app).href);
   await m.default();
@@ -121,6 +127,7 @@ async function httpChecks(a) {
   });
   await d.close();
   await ep.close();
+  out.lines = traced;
   return out;
 }
 

@@ -497,6 +497,9 @@ async fn a_page_speaks_http_through_the_door_streaming_both_ways(engine: Engine)
     )
     .await;
     let http = &seen["http"];
+    // Each step's answer and the page's lines with their times, for a run to
+    // read where it stopped (arch-stream (a)).
+    eprintln!("streaming::{}: {http}", engine.as_str());
 
     let range = &http["range"];
     // Its time against drive.mjs's 60 s, passed or failed, for a run to read
