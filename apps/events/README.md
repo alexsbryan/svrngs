@@ -22,6 +22,11 @@ budget (`scripts/lean_check.py`).
   door tells it (`x-svrngs-label`, `x-svrngs-pages`; DESIGN §3, "What an
   app gets"), or says why there is none. Running alone, nothing tells it a
   page, and it says so.
+- `index.html`, `index.js`: its page when a group carries it (svrngs
+  DESIGN §3, "Or a folder the group carries"; v1ui-shelf (b)): static
+  files beside `events.js`, reading and writing the group at its own
+  origin, `svrngs/acts`, where svrngs writes each answer as the person.
+  Its folder in a group is these three files.
 - `page.test.mjs`: the page in Chromium and in WebKit as an iPhone, run
   alone on its file. Run by `scripts/check.sh`.
 - `canary.mjs`: two computers' copies of one group's record fold the same

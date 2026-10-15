@@ -1,0 +1,37 @@
+
+running 2 tests
+carried::money_and_events_open_and_write_at_their_origin::chromium --- FAILED
+carried::money_and_events_open_and_write_at_their_origin::webkit --- FAILED
+
+failures:
+
+---- carried::money_and_events_open_and_write_at_their_origin::chromium stdout ----
+
+thread 'carried::money_and_events_open_and_write_at_their_origin::chromium' (46095252) panicked at crates/svrngs-node/tests/browser/main.rs:236:5:
+the browser half failed (exit status: 1):
+the page did not finish: TimeoutError: locator.fill: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('#what').first()
+
+
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- carried::money_and_events_open_and_write_at_their_origin::webkit stdout ----
+
+thread 'carried::money_and_events_open_and_write_at_their_origin::webkit' (46095253) panicked at crates/svrngs-node/tests/browser/main.rs:236:5:
+the browser half failed (exit status: 1):
+the page did not finish: TimeoutError: locator.fill: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('#what').first()
+
+
+
+
+
+failures:
+    carried::money_and_events_open_and_write_at_their_origin::chromium
+    carried::money_and_events_open_and_write_at_their_origin::webkit
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 80 filtered out; finished in 35.31s
+
