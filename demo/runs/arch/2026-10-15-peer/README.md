@@ -93,3 +93,12 @@ climbed back near 20 while it ran (other projects' builds on this host).
 That test alone, twice, after it: one engine red, then green, each run
 on the same load. The load, not the cut: the check is run again once the
 1- and 15-minute loads are both below 8.
+
+A fourth check at daa6444d, started with the 1- and 15-minute loads at
+2.96 and 7.75 (`close-check-loaded.out`, its fourth part): the same one
+test red in both engines, in "tests" and "browser" alike, each at
+main.rs:509 (the range not 206: no stream opened in time), every other
+step passed; the load climbed to 20.82 while it ran. The operator's
+charter (CHARTER.md, "arch-peer's close, and the streaming test") lets the
+row close on this red, the same as at 965b52b (`start-browser-loaded.out`);
+arch-stream owns the test.

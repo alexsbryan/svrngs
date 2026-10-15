@@ -82,3 +82,31 @@ load averages before: 11.98 21.67 21.21
 first:  chromium passed (the range in 8602 ms); webkit failed (main.rs:548, the upload's status)
 second: webkit alone passed
 load averages after: 11.42 19.36 20.38
+
+# scripts/check.sh a fourth time at daa6444d, started once the 1- and 15-minute loads were both below 8 (ralph/next/arch/ctl/log/sessions/arch-peer-3.await.log)
+start: 16:38  up 6 days,  5:20, 6 users, load averages: 2.96 3.86 7.75
+passed     principles pinned
+passed     lean and RUST_ARCH
+passed     app nouns gate
+passed     app nouns
+passed     rustfmt
+passed     clippy
+failed     tests
+passed     canaries
+passed     ceiling canary
+passed     web rustfmt and clippy
+failed     browser
+passed     joining in a browser
+passed     conformance canary
+passed     app laws
+           a_page_speaks_http_through_the_door_streaming_both_ways::chromium --- FAILED
+           a_page_speaks_http_through_the_door_streaming_both_ways::webkit --- FAILED
+           thread 'a_page_speaks_http_through_the_door_streaming_both_ways::chromium' (50921240) panicked at crates/svrngs-node/tests/browser/main.rs:509:5:
+           thread 'a_page_speaks_http_through_the_door_streaming_both_ways::webkit' (50921554) panicked at crates/svrngs-node/tests/browser/main.rs:509:5:
+           test result: FAILED. 90 passed; 2 failed; 2 ignored; 0 measured; 0 filtered out; finished in 153.92s
+           a_page_speaks_http_through_the_door_streaming_both_ways::chromium --- FAILED
+           a_page_speaks_http_through_the_door_streaming_both_ways::webkit --- FAILED
+           thread 'a_page_speaks_http_through_the_door_streaming_both_ways::chromium' (50942165) panicked at crates/svrngs-node/tests/browser/main.rs:509:5:
+           thread 'a_page_speaks_http_through_the_door_streaming_both_ways::webkit' (50942809) panicked at crates/svrngs-node/tests/browser/main.rs:509:5:
+           test result: FAILED. 90 passed; 2 failed; 2 ignored; 0 measured; 0 filtered out; finished in 133.91s
+end: 16:49  up 6 days,  5:31, 6 users, load averages: 15.06 20.82 16.37
