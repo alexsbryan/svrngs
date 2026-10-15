@@ -860,3 +860,46 @@ async fn lending_from_the_page_says_each_refusal_apart_and_traces_it() {
     assert!(refused[0].contains("expected a nonzero u16"), "{log}");
     alex.endpoint().close().await;
 }
+
+/// **Looking for what runs here, a failed read said and traced by which**
+/// (v1ui-findings (d); #160): Alex's computer cannot read what it lends —
+/// its lends' directory is a file — so `GET /running` refuses, saying
+/// that read is the one that failed, and its trace carries the error.
+/// Red on the plant: the refusal as before, "this computer could not be
+/// asked", its warn naming neither read nor error.
+#[tokio::test]
+async fn looking_for_what_runs_here_says_which_read_failed_and_traces_why() {
+    let said = Said::default();
+    let writer = said.clone();
+    let subscriber = tracing_subscriber::fmt()
+        .with_env_filter("home=debug")
+        .with_ansi(false)
+        .with_writer(move || writer.clone())
+        .finish();
+    let _said = tracing::subscriber::set_default(subscriber);
+    // A second dispatcher kept alive, as the #140 test's.
+    let _two = tracing::Dispatch::new(tracing::subscriber::NoSubscriber::default());
+    let dir = tempfile::tempdir().unwrap();
+    let alex = start(1, dir.path()).await;
+    let lends = lend::lends_dir(dir.path());
+    let _ = std::fs::remove_dir_all(&lends);
+    std::fs::write(&lends, "not a directory").unwrap();
+    let home = format!("svrngs.localhost:{}", alex.api_addr().port());
+    let own = "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n";
+    let got = ask(alex.api_addr(), "GET", &home, "/running", own, "").await;
+    assert_eq!(
+        (got.status, got.json()["error"].as_str()),
+        (500, Some("it cannot read what you lend already")),
+        "{}",
+        got.body
+    );
+    let log = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    let traced = (log.lines()).find(|l| l.contains("home: refused — "));
+    let traced = traced.unwrap_or_else(|| panic!("the refusal traced: {log}"));
+    assert!(
+        traced.contains("it cannot read what you lend already")
+            && traced.contains("cannot be read: Not a directory"),
+        "which read, and its error: {traced}"
+    );
+    alex.endpoint().close().await;
+}

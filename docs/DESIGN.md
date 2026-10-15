@@ -388,7 +388,8 @@ the route, and reading another app's acts.
     computer's work): every port from 1024 to 49151 that
     answers on 127.0.0.1, probed as `svrngs share` probes one
     (`share::listening`), less svrngs's own and what it lends already,
-    each by its address. A kind the well-known table knows is named, with
+    each by its address; when what it lends, or the look, cannot be
+    read, the page says which, and the trace its error (#160). A kind the well-known table knows is named, with
     what it needs first — its own accounts and how to make each person
     one, the one setting that tells it who is who, or the paths svrngs
     keeps back of it — and lent by one button. Any other is lent only
@@ -1418,7 +1419,7 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,150 lines of code and the
-repository under 16,868 (`scripts/lean_check.py`; events-asleep raised it from 16,235 by 20, events-links by 33, events-principles by 17 and events-wait by 10, the operator's +80 for the events follow-ups all spent; v1ui-economize cut nothing, and of the operator's +650 for the v1 UI over 16,315, v1ui-reach raised it by 24, v1ui-door by 108, v1ui-lend by 121, v1ui-shelf by 286 and v1ui-findings by 14), the branch `folders`
+repository under 16,870 (`scripts/lean_check.py`; events-asleep raised it from 16,235 by 20, events-links by 33, events-principles by 17 and events-wait by 10, the operator's +80 for the events follow-ups all spent; v1ui-economize cut nothing, and of the operator's +650 for the v1 UI over 16,315, v1ui-reach raised it by 24, v1ui-door by 108, v1ui-lend by 121, v1ui-shelf by 286 and v1ui-findings by 16), the branch `folders`
 too since main merged into it at syp-5, counting 13,778 and `svrngs-core`
 2,719 there. A raise is the operator's, and is asked only after an
 economizing pass (the operator, 2026-10-13: "Every raise needs a pass

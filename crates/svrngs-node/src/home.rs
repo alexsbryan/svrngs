@@ -255,12 +255,15 @@ fn shown(port: NonZeroU16, kind: Option<&Kind>, name: Option<&LendName>) -> serd
 /// table knows by their name alone, for the person to say.
 async fn running(State(at): State<Asking>) -> Response {
     let found = tokio::task::spawn_blocking(share::listening).await;
-    let (Ok(all), Ok(found)) = (lend::all(&at.door().data_dir), found) else {
-        tracing::warn!(target: "home", "home: refused — what this computer lends, or what runs on it, cannot be read");
-        return LendRefusal::Fault.say(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "this computer could not be asked",
-        );
+    // Which read failed, said, and traced with its error (#160).
+    let unread = |why: &str, error: &dyn std::fmt::Display| {
+        tracing::warn!(target: "home", why, %error, "home: refused — what runs here not offered");
+        LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, why)
+    };
+    let (all, found) = match (lend::all(&at.door().data_dir), found) {
+        (Ok(all), Ok(found)) => (all, found),
+        (Err(e), _) => return unread("it cannot read what you lend already", &e),
+        (_, Err(e)) => return unread("the look stopped before it finished", &e),
     };
     let lent: Vec<_> = all.into_iter().flatten().collect();
     let taken = |p: &NonZeroU16| {
