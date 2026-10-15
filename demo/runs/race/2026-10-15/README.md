@@ -81,3 +81,11 @@ person "This browser could not open the page.", on a computer and on a phone,
 in both engines. After the fix (`b-green.out`, at 58eb820), it says "Open
 this page from your group’s link." 58eb820's body cites the red commit as
 "85df…". That is wrong: the red commit is e23af90.
+
+# The close: scripts/check.sh
+
+`check-1.out`: `scripts/check.sh` at 0b61d06, both parts in, exit 0 after
+12m15s. Every step passed, the browser checks and the conformance canary
+with them. `python3 scripts/lean_check.py` beside it: 16,875 of 16,876 for
+the repository, 3,149 of 3,150 for svrngs-core. One host, one run: not a
+rate (AGENTS.md 7).
