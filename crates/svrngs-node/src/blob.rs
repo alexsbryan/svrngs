@@ -143,7 +143,8 @@ fn heard(hash: Hash, group: &str, joined: impl Iterator<Item = (String, Ended)>)
 /// An ask's task as it ended: its answer, or how the task failed.
 type Ended = Result<Result<Holds, String>, tokio::task::JoinError>;
 
-type People = BTreeMap<String, Member>;
+/// The people standing in a group, by key: here and in carried.rs.
+pub(super) type People = BTreeMap<String, Member>;
 
 /// Each computer asked, and what it holds or why it did not say.
 type Replies = Vec<(String, Result<Holds, String>)>;

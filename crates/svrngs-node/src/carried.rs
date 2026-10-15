@@ -44,12 +44,12 @@ use iroh_blobs::Hash;
 use serde_json::{json, Map, Value};
 use svrngs_core::Placed;
 
-use super::{dirs_of, Folders};
+use super::{blob::People, dirs_of, Folders};
 use crate::door::LendRefusal::{self, Away, Closed, Fault, Path as Malformed, Unlent};
 use crate::iroh::Dialer;
 use crate::lend::{Kind, Lend};
 use crate::node::Asking;
-use crate::register::{Member, Standing};
+use crate::register::Standing;
 
 /// Where a carried app's page asks its own acts, and writes one, at its
 /// own origin.
@@ -96,9 +96,6 @@ fn said((kind, status, why): Refused) -> Response {
 
 /// A carried app's answer, or why the door gives its own.
 type Answer = Result<Response, Refused>;
-
-/// The people standing in a group, by key.
-type People = BTreeMap<String, Member>;
 
 /// The shelf (V1_UI_BUILD §3.4; v1ui-shelf (c)): svrngs's own reference
 /// apps, which ship with it, and nothing else — nothing on it is a
