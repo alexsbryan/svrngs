@@ -739,6 +739,24 @@ async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_
     alex.endpoint().close().await;
 }
 
+/// What `filter` traces while the guards live, kept to be read: one
+/// copy, where three tests here each wrote it out (REVIEW-audit-v1ui-auto-2).
+/// A second dispatcher kept alive: with one, tracing-core 0.1.36
+/// (callsite.rs:545, `has_just_one`) asks only the registering thread's,
+/// so a callsite another test's thread reaches first is cached unheard.
+fn heard(filter: &str) -> (Said, (tracing::subscriber::DefaultGuard, tracing::Dispatch)) {
+    let said = Said::default();
+    let writer = said.clone();
+    let subscriber = tracing_subscriber::fmt()
+        .with_env_filter(filter)
+        .with_ansi(false)
+        .with_writer(move || writer.clone())
+        .finish();
+    let guard = tracing::subscriber::set_default(subscriber);
+    let two = tracing::Dispatch::new(tracing::subscriber::NoSubscriber::default());
+    (said, (guard, two))
+}
+
 /// **The page's link for a group this computer does not hold is refused,
 /// and traced on both sides** (#140): Alex's home page asks a link to
 /// `elsewhere`, which Alex's computer does not hold, and is told 403; the
@@ -747,18 +765,7 @@ async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_
 /// on the plant the finding names, both branches untraced: neither line.
 #[tokio::test]
 async fn the_page_s_link_for_a_group_not_held_is_refused_and_traced() {
-    let said = Said::default();
-    let writer = said.clone();
-    let subscriber = tracing_subscriber::fmt()
-        .with_env_filter("link=debug,home=debug")
-        .with_ansi(false)
-        .with_writer(move || writer.clone())
-        .finish();
-    let _said = tracing::subscriber::set_default(subscriber);
-    // A second dispatcher kept alive: with one, tracing-core 0.1.36
-    // (callsite.rs:545, `has_just_one`) asks only the registering thread's,
-    // so a callsite another test's thread reaches first is cached unheard.
-    let _two = tracing::Dispatch::new(tracing::subscriber::NoSubscriber::default());
+    let (said, _heard) = heard("link=debug,home=debug");
     let dir = tempfile::tempdir().unwrap();
     let alex = start(1, dir.path()).await;
     let home = format!("svrngs.localhost:{}", alex.api_addr().port());
@@ -799,16 +806,7 @@ async fn the_page_s_link_for_a_group_not_held_is_refused_and_traced() {
 /// each one word, and untraced.
 #[tokio::test]
 async fn lending_from_the_page_says_each_refusal_apart_and_traces_it() {
-    let said = Said::default();
-    let writer = said.clone();
-    let subscriber = tracing_subscriber::fmt()
-        .with_env_filter("home=debug")
-        .with_ansi(false)
-        .with_writer(move || writer.clone())
-        .finish();
-    let _said = tracing::subscriber::set_default(subscriber);
-    // A second dispatcher kept alive, as the #140 test's.
-    let _two = tracing::Dispatch::new(tracing::subscriber::NoSubscriber::default());
+    let (said, _heard) = heard("home=debug");
     let dir = tempfile::tempdir().unwrap();
     let alex = start(1, dir.path()).await;
     let home = format!("svrngs.localhost:{}", alex.api_addr().port());
@@ -869,16 +867,7 @@ async fn lending_from_the_page_says_each_refusal_apart_and_traces_it() {
 /// asked", its warn naming neither read nor error.
 #[tokio::test]
 async fn looking_for_what_runs_here_says_which_read_failed_and_traces_why() {
-    let said = Said::default();
-    let writer = said.clone();
-    let subscriber = tracing_subscriber::fmt()
-        .with_env_filter("home=debug")
-        .with_ansi(false)
-        .with_writer(move || writer.clone())
-        .finish();
-    let _said = tracing::subscriber::set_default(subscriber);
-    // A second dispatcher kept alive, as the #140 test's.
-    let _two = tracing::Dispatch::new(tracing::subscriber::NoSubscriber::default());
+    let (said, _heard) = heard("home=debug");
     let dir = tempfile::tempdir().unwrap();
     let alex = start(1, dir.path()).await;
     let lends = lend::lends_dir(dir.path());

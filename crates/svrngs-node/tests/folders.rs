@@ -5,44 +5,17 @@
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
+#[path = "common/computers.rs"]
+mod computers;
 use common::{loopback_sockets, noise, Said};
+use computers::{found, http, known, round, seed, signing, start, until_on};
 
 use std::path::Path;
 use std::time::Duration;
 
 use svrngs_node::iroh::{EndpointAddr, MemoryLookup, RelayConfig};
 use svrngs_node::node::Node;
-use svrngs_node::seed::Seed;
-use svrngs_node::{actor_of, Name, Person, RailAct, SigningKey};
-
-fn signing(seed: u8) -> SigningKey {
-    SigningKey::from_bytes(&[seed; 32])
-}
-
-fn seed_file(dir: &Path) -> Result<Option<String>, String> {
-    match std::fs::read_to_string(dir.join("seed.json")) {
-        Ok(t) => Ok(Some(t)),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
-        Err(e) => Err(e.to_string()),
-    }
-}
-
-async fn start(seed: u8, dir: &Path) -> Node {
-    let relay = RelayConfig {
-        relay_urls: Vec::new(),
-        n0_services: false,
-        loopback_only: true,
-    };
-    Node::start(
-        dir.to_path_buf(),
-        signing(seed),
-        &relay,
-        seed_file,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .expect("a node starts")
-}
+use svrngs_node::{actor_of, Person, RailAct};
 
 /// Ana's group `films`, Ben and Cy admitted, each computer knowing where
 /// the others listen, for the round and for a dial by key alike.
@@ -51,41 +24,6 @@ struct Group {
     ben: Node,
     cy: Node,
     _dirs: Vec<tempfile::TempDir>,
-}
-
-/// The seed of a group Ana founds, named `name`, salted by `salt`.
-fn seed(name: &str, salt: u8) -> Seed {
-    Seed::from_parts(
-        Name::parse(name).unwrap(),
-        Name::parse("ana").unwrap(),
-        signing(1).verifying_key(),
-        [salt; 16],
-    )
-}
-
-/// A group Ana founds, named `name`, salted by `salt`, with each of
-/// `others` (Ben 2, Cy 3) admitted: its id, on every node named.
-fn found(name: &str, salt: u8, ana: &Node, others: &[(&Node, u8)]) -> String {
-    let seed = seed(name, salt);
-    let id = seed.id();
-    for node in std::iter::once(ana).chain(others.iter().map(|(n, _)| *n)) {
-        node.rail().set_seed(&id, &seed.roster()).unwrap();
-        let dir = node.rail().group_dir(&id).unwrap();
-        std::fs::write(dir.join("seed.json"), seed.to_text()).unwrap();
-    }
-    for &(_, n) in others {
-        let person = ["", "", "ben", "cy"][n as usize];
-        let admit = svrngs_core::tests_support::Fixture {
-            act: RailAct::Admit {
-                person: Person::parse(person).unwrap(),
-                key: actor_of(&signing(n)),
-                invite: None,
-            },
-            on_behalf_of: None,
-        };
-        ana.rail().commit(&id, &admit).unwrap().unwrap();
-    }
-    id
 }
 
 impl Group {
@@ -110,19 +48,7 @@ impl Group {
         let ana = start(1, dirs[0].path()).await;
         let ben = start(2, dirs[1].path()).await;
         let cy = start(3, dirs[2].path()).await;
-        for who in [&ana, &ben, &cy] {
-            let book = MemoryLookup::new();
-            for other in [&ana, &ben, &cy] {
-                let mut addr = EndpointAddr::new(other.endpoint().id());
-                for a in loopback_sockets(other.endpoint()) {
-                    addr = addr.with_ip_addr(a);
-                }
-                book.add_endpoint_info(addr);
-                who.transport()
-                    .add_known_peer(other.endpoint().id(), loopback_sockets(other.endpoint()));
-            }
-            who.endpoint().address_lookup().unwrap().add(book);
-        }
+        known(&[&ana, &ben, &cy]);
         Group {
             ana,
             ben,
@@ -136,16 +62,6 @@ impl Group {
             node.endpoint().close().await;
         }
     }
-}
-
-async fn round(node: &Node) {
-    tokio::time::timeout(Duration::from_secs(30), node.round())
-        .await
-        .expect("a round finishes");
-}
-
-fn http() -> reqwest::Client {
-    reqwest::Client::builder().no_proxy().build().unwrap()
 }
 
 /// `node`'s record API asked what the command asks it: its status and
@@ -183,20 +99,6 @@ async fn synced_in(who: &Node, root: &Path, group: &str) -> std::path::PathBuf {
 /// Up to 30 s, rounds run on every node: whether `done` came true.
 async fn until(group: &Group, done: impl Fn() -> bool) -> bool {
     until_on(&[&group.ana, &group.ben, &group.cy], done).await
-}
-
-/// Up to 30 s, rounds run on `nodes`: whether `done` came true.
-async fn until_on(nodes: &[&Node], done: impl Fn() -> bool) -> bool {
-    for _ in 0..30 {
-        if done() {
-            return true;
-        }
-        for node in nodes {
-            round(node).await;
-        }
-        tokio::time::sleep(Duration::from_secs(1)).await;
-    }
-    done()
 }
 
 /// `from` asks `holder`'s provider for `hash` whole, into a store of its
