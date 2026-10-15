@@ -2719,8 +2719,9 @@ in_both_engines!(
     /// operator's "Allow; tell them apart"). Ada's computer holds two
     /// groups called Trip, one ada made and one sam made: each is headed
     /// by its name, who made it and since when this computer has held it,
-    /// in the browser's own words for the day. Planted, watched failing:
-    /// the page heading a group by its name alone, as before this row.
+    /// the day as the command says it (question.js `day`; #157). Planted,
+    /// watched failing: the page heading a group by its name alone, as
+    /// before this row.
     the_home_page_tells_two_groups_of_one_name_apart
 );
 async fn the_home_page_tells_two_groups_of_one_name_apart(engine: Engine) {

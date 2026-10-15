@@ -1099,8 +1099,7 @@ impl std::fmt::Display for Said {
             Said::Made { seed, link, beside } => {
                 writeln!(f, "Made {}, with you as {}.", seed.name(), seed.founder())?;
                 if !beside.is_empty() {
-                    let another = if beside.len() > 1 { "another" } else { "a second" };
-                    writeln!(f, "You're already in {}. This is {another} group called {}.", namesakes_said(beside), seed.name())?;
+                    writeln!(f, "{}", namesakes_said(beside, seed.name().as_str()))?;
                 }
                 writeln!(f, "Send this link to the people you want in it. It works for a day, while this computer is on:")?;
                 writeln!(f)?;
@@ -1318,17 +1317,22 @@ fn joined_of(raw: &str) -> Result<Joined, String> {
         .ok_or_else(|| format!("--joined `{raw}` is not when someone joined: `started`, or a time as svrngs says it, such as \"2026-10-12 14:03:22 -0700\""))
 }
 
-/// The groups a new one shares its name with, each with who made it and
-/// since when this computer has held it (#138), as the home page says them
-/// (question.js `namesakes`): "Trip (Sam's, since 3 Oct)".
-fn namesakes_said(beside: &[group::Namesake]) -> String {
+/// The groups a new one, `name`, shares its name with, each with who made
+/// it and since when this computer has held it (#138), in the home page's
+/// words to the letter (question.js `namesakes`, `whose` and `day`; #157,
+/// pinned by tests/home_group.rs): "You’re already in Trip (Sam’s, since
+/// 3 Oct). This is a second group called trip." — the page's apostrophe,
+/// and a day as its number and its month's first three letters.
+pub fn namesakes_said(beside: &[group::Namesake], name: &str) -> String {
     let at = |t| chrono::DateTime::from_timestamp(t, 0).map(|t| t.with_timezone(&chrono::Local));
     let said = |g: &group::Namesake| {
-        let whose = (g.maker.as_ref()).map_or("yours".into(), |m| format!("{m}'s"));
+        let whose = (g.maker.as_ref()).map_or("yours".into(), |m| format!("{m}’s"));
         let since = (g.since.and_then(at)).map(|t| t.format(", since %-d %b").to_string());
         format!("{} ({whose}{})", g.name, since.unwrap_or_default())
     };
-    beside.iter().map(said).collect::<Vec<_>>().join(" and ")
+    let another = ["a second", "another"][usize::from(beside.len() > 1)];
+    let all = beside.iter().map(said).collect::<Vec<_>>().join(" and ");
+    format!("You’re already in {all}. This is {another} group called {name}.")
 }
 
 /// When a person joined, as a person adds it to the command.

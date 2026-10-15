@@ -134,7 +134,7 @@ async fn the_home_page_makes_a_group_another_computer_joins_with_no_restart(
     let (said, traced) = new(home.path(), "lab", &at).await;
     let today = chrono::Local::now().format("%-d %b");
     let second =
-        format!("You're already in Lab (yours, since {today}). This is a second group called lab.");
+        format!("You’re already in Lab (yours, since {today}). This is a second group called lab.");
     assert!(said.contains(&second), "{said:#?}");
     // Its folder its own: this disk may ignore case, so lab beside Lab is
     // the place's name and its id's start.
@@ -227,8 +227,8 @@ async fn the_home_page_makes_a_group_another_computer_joins_with_no_restart(
     assert!(standing.names(&actor_of(&bo_key)), "Bo stands in Trip");
 
     // A name already held: said as it is typed, then made, and said again,
-    // by the rule `svrngs new` asks (#138). The day is the browser's own
-    // words for it, so only whose is pinned.
+    // by the rule `svrngs new` asks (#138); its words to the letter the
+    // command's, pinned apart (`the_command_and_the_page_say_…`, #157).
     let before = seen["after"][2].to_string();
     assert!(
         before.contains("You’re already in Trip (yours, since "),
@@ -254,4 +254,43 @@ async fn the_home_page_makes_a_group_another_computer_joins_with_no_restart(
         "the page's make, by the one rule: {traced}"
     );
     bo.endpoint().close().await;
+}
+
+/// **A group's namesakes, one wording for the command and the page**
+/// (v1ui-findings (e); #157): the sentence `svrngs new` prints when a
+/// name is held already (cli.rs `namesakes_said`) and the one the home
+/// page says (question.js `namesakes`, run by node), for one namesake and
+/// for two, one of them someone else's: the same words to the letter,
+/// the apostrophe and the day included. Planted, watched failing: the
+/// two as v1ui-door left them — "Sam's" and "Sam’s", chrono's "3 Oct"
+/// and the locale's "Oct 3".
+#[test]
+fn the_command_and_the_page_say_a_name_held_already_in_one_wording() {
+    use svrngs::group::Namesake;
+    let trip = |name: &str, maker: Option<&str>, since| Namesake {
+        name: name.into(),
+        maker: maker.map(Into::into),
+        since,
+    };
+    let source = harness::repo().join("crates/svrngs-node/src/home/question.js");
+    let script = format!(
+        "const q = await import({:?}); const [n, name] = JSON.parse(process.argv[1]); console.log(q.namesakes(n, name, 'This is'));",
+        format!("file://{}", source.display())
+    );
+    let one = vec![trip("Trip", Some("sam"), Some(1_791_000_000))];
+    let two = vec![one[0].clone(), trip("trip", None, Some(1_759_500_000))];
+    for beside in [one, two] {
+        let out = std::process::Command::new("node")
+            .args(["--input-type=module", "-e", &script])
+            .arg(json!([beside, "TRIP"]).to_string())
+            .output()
+            .expect("node runs");
+        assert!(
+            out.status.success(),
+            "{}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        let page = String::from_utf8_lossy(&out.stdout).trim().to_string();
+        assert_eq!(cli::namesakes_said(&beside, "TRIP"), page);
+    }
 }

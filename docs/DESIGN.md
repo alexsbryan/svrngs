@@ -355,7 +355,10 @@ the route, and reading another app's acts.
     says it when it makes one — "You’re already in Trip (Sam’s, since 3
     Oct). This makes a second group called Trip." — each held group named
     by who made it, "yours" when this computer did, and since when this
-    computer has held it, the time its seed was written. The page then
+    computer has held it, the time its seed was written: the sentence
+    `svrngs new` prints to the letter, its day as the command writes one
+    (question.js `namesakes`, cli.rs `namesakes_said`; #157, pinned by
+    crates/svrngs/tests/home_group.rs). The page then
     says it was made, and places the group's folder where a joiner's
     is (`Folders::place`, one home for `new`, `join` and the page); a
     place another group's folder holds already, one of the same name or,
@@ -1419,7 +1422,7 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,150 lines of code and the
-repository under 16,870 (`scripts/lean_check.py`; events-asleep raised it from 16,235 by 20, events-links by 33, events-principles by 17 and events-wait by 10, the operator's +80 for the events follow-ups all spent; v1ui-economize cut nothing, and of the operator's +650 for the v1 UI over 16,315, v1ui-reach raised it by 24, v1ui-door by 108, v1ui-lend by 121, v1ui-shelf by 286 and v1ui-findings by 16), the branch `folders`
+repository under 16,871 (`scripts/lean_check.py`; events-asleep raised it from 16,235 by 20, events-links by 33, events-principles by 17 and events-wait by 10, the operator's +80 for the events follow-ups all spent; v1ui-economize cut nothing, and of the operator's +650 for the v1 UI over 16,315, v1ui-reach raised it by 24, v1ui-door by 108, v1ui-lend by 121, v1ui-shelf by 286 and v1ui-findings by 17), the branch `folders`
 too since main merged into it at syp-5, counting 13,778 and `svrngs-core`
 2,719 there. A raise is the operator's, and is asked only after an
 economizing pass (the operator, 2026-10-13: "Every raise needs a pass

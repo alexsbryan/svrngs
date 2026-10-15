@@ -67,11 +67,14 @@ export const el = (tag, text, ...kids) => {
   return e;
 };
 
-// A day in the browser's own words, from seconds.
-const day = (t) => new Date(t * 1000).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+// A day, from seconds, in this computer's or phone's time: its number and
+// its month's first three letters, "3 Oct", as the command says it
+// (chrono's `%-d %b`, cli.rs `namesakes_said`), never the browser's
+// locale, which differs from it (#157).
+const day = (t, d = new Date(t * 1000)) => `${d.getDate()} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[d.getMonth()]}`;
 
 // Who made a group and since when this computer or phone has held it, so
-// two of one name are told apart (#138): "sam’s, since Oct 14".
+// two of one name are told apart (#138): "sam’s, since 14 Oct".
 export const whose = (g) => `${g.maker ? `${g.maker}’s` : 'yours'}${g.since ? `, since ${day(g.since)}` : ''}`;
 
 // The groups a new one shares its name with (/group, the node's one rule;
