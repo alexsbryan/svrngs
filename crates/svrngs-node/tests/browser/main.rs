@@ -2871,10 +2871,16 @@ async fn the_home_page_opens_the_group_s_folder(engine: Engine) {
         std::fs::write(&at, "#!/bin/sh\necho \"$1\" >> \"$1.opened\"\n").unwrap();
         std::fs::set_permissions(&at, std::fs::Permissions::from_mode(0o755)).unwrap();
     }
-    // The planted bin first: every other program is found as before.
+    // The planted bin first: every other program is found as before. Read
+    // and set under one lock, else both engines read the same `PATH` and
+    // the one set last drops the other's bin: once its own test ends, the
+    // other finds the real `open` (REVIEW-audit-v1ui-auto-1's check run).
+    static PATH_SET: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    let set = PATH_SET.lock().unwrap();
     let path = std::env::var_os("PATH").unwrap_or_default();
     let paths = std::iter::once(bin.clone()).chain(std::env::split_paths(&path));
     std::env::set_var("PATH", std::env::join_paths(paths).unwrap());
+    drop(set);
     keep_folder(&ada, &folder).await;
     let seen = home_page(
         engine,
