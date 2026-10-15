@@ -57,9 +57,9 @@ run) it says:
 
 ```
 Getting svrngs for this computer from https://group.svrnme.sh/get/svrngs-darwin-aarch64.tar.gz
-Checked: svrngs-darwin-aarch64.tar.gz matches SHA256SUMS.
+Checked: svrngs-darwin-aarch64.tar.gz is the one the release lists, unchanged on its way here.
 Installed svrngs in /Users/sam/.local/bin.
-/Users/sam/.local/bin is not on your PATH, so to run svrngs yourself type /Users/sam/.local/bin/svrngs; nothing else needs it.
+To run svrngs yourself, type /Users/sam/.local/bin/svrngs: your terminal does not look in /Users/sam/.local/bin. Nothing else needs it.
 svrngs runs now, and whenever you log in (…/sh.svrnme.svrngs.plist).
 Your home page, the same address each time svrngs starts: http://svrngs.localhost:63742/
 ```
@@ -164,8 +164,8 @@ do.
 - **"Open this page from your group’s link."**, in red, with a name box,
   **Join**, **Yes** and **Not now**, beside the line (steps 2 and 6). A
   mistake of the page's: the line is what you need. Copy it and go on.
-- **`svrngs: command not found`**, or *"… is not on your PATH, so to run
-  svrngs yourself type …"* after step 3 or 7. Type svrngs where it was put,
+- **`svrngs: command not found`**, or *"To run svrngs yourself, type …"*
+  after step 3 or 7. Type svrngs where it was put,
   `~/.local/bin/svrngs`, as in step 5.
 - **`svrngs: say what is on port 18089: svrngs share 18089 --kind
   <kind>`** after `svrngs share 18089` alone. svrngs cannot tell

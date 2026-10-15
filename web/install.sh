@@ -73,9 +73,9 @@ else
   got="$(shasum -a 256 "$tmp/$tarball" | cut -d' ' -f1)"
 fi
 if [ -z "$want" ] || [ "$got" != "$want" ]; then
-  no "$tarball does not match its sum in SHA256SUMS, so it was refused and nothing was installed."
+  no "$tarball is not the one the release lists, so it was refused and nothing was installed."
 fi
-say "Checked: $tarball matches SHA256SUMS."
+say "Checked: $tarball is the one the release lists, unchanged on its way here."
 
 dir="${SVRNGS_DIR:-$HOME/.svrngs}"
 bin="$HOME/.local/bin"
@@ -107,7 +107,7 @@ mv -f "$tmp/svrngs" "$bin/svrngs"
 say "$done svrngs in $bin."
 case ":$PATH:" in
   *":$bin:"*) ;;
-  *) say "$bin is not on your PATH, so to run svrngs yourself type $bin/svrngs; nothing else needs it." ;;
+  *) say "To run svrngs yourself, type $bin/svrngs: your terminal does not look in $bin. Nothing else needs it." ;;
 esac
 
 if [ -n "$relay" ] && [ "$os" = linux ]; then

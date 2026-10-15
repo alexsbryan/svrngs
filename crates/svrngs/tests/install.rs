@@ -237,7 +237,7 @@ async fn a_tarball_that_does_not_match_its_sum_is_refused_by_name() {
     assert_eq!(out.status.code(), Some(1), "{err}");
     assert!(
         err.contains(&format!(
-            "{} does not match its sum in SHA256SUMS, so it was refused",
+            "{} is not the one the release lists, so it was refused",
             tarball()
         )),
         "{err}"
@@ -294,9 +294,16 @@ async fn the_line_run_twice_installs_runs_at_login_opens_home_and_joins_once() {
     );
     let bin = home.path().join(".local/bin");
     for line in [
-        format!("Checked: {} matches SHA256SUMS.", tarball()),
+        format!(
+            "Checked: {} is the one the release lists, unchanged on its way here.",
+            tarball()
+        ),
         format!("Installed svrngs in {}.", bin.display()),
-        format!("{} is not on your PATH", bin.display()),
+        format!(
+            "To run svrngs yourself, type {}/svrngs: your terminal does not look in {}.",
+            bin.display(),
+            bin.display()
+        ),
         "You're in house, as Alex.".to_string(),
         "svrngs runs now, and whenever you log in".to_string(),
     ] {
