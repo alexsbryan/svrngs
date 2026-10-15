@@ -70,3 +70,14 @@ in that span is in both columns.
 
 Not measured: n0's relays, a phone on cellular, a group with many lenders
 (each one adds a handshake), a second host. Those are the operator's.
+
+# v1ui-race (b): a page opened with no link
+
+`cargo test -p svrngs-node --test browser --
+the_page_opened_with_no_link_offers_a_founder_s_line`. Before the fix
+(`b-red.out`, at e23af90), the page read `asked.has` with nothing asked
+(web/app.js `opening`, db36fec's line). It caught the TypeError and told the
+person "This browser could not open the page.", on a computer and on a phone,
+in both engines. After the fix (`b-green.out`, at 58eb820), it says "Open
+this page from your group’s link." 58eb820's body cites the red commit as
+"85df…". That is wrong: the red commit is e23af90.
