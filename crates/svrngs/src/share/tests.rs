@@ -51,9 +51,10 @@ fn share(p: u16) -> Share {
     }
 }
 
-/// Every line of the table is a port, or `-` for none, and a kind; the one
-/// listed by a port is found by it, and every row's kind is read, its kept
-/// paths each a path (`kept_of` panics on one that is not).
+/// Every line of the table is a port, or `-` for none, or `helper`, and a
+/// kind; the one listed by a port is found by it, a helper's by `helper_of`,
+/// and every row's kind is read, its kept paths each a path (`kept_of`
+/// panics on one that is not).
 #[test]
 fn the_well_known_table_reads_whole() {
     let rows: Vec<&str> = WELL_KNOWN
@@ -67,7 +68,9 @@ fn the_well_known_table_reads_whole() {
         let kind = Kind::parse(rest.split_whitespace().next().unwrap()).expect(row);
         assert!(super::rows().any(|(_, k, _)| k == kind), "{row}");
         let _ = kept_of(&kind);
-        if p != "-" {
+        if p == "helper" {
+            assert!(helper_of(&kind).is_some(), "{row}");
+        } else if p != "-" {
             assert!(
                 well_known_kind(port(p.parse().expect(row))).is_some(),
                 "{row}"
