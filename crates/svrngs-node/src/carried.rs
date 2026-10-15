@@ -18,7 +18,7 @@
 //!   them, voided ones too, so an app's fold reads them as it reads the
 //!   record; with who asks, `you`, and the people in the group;
 //!   `POST {op}` records an act, and `{corrects, op}` corrects one of its
-//!   own, `op` null to void it: the prefix put on its kind, and
+//!   own, `op` null to void it, and absent never (#165): the prefix put on its kind, and
 //!   `on_behalf_of` the person the door resolved, never a word of the
 //!   body's.
 //!
@@ -79,6 +79,7 @@ const UNREAD: Withheld = (Fault, 500, "its group cannot be read on this computer
 const NOT_HERE: Withheld = (Unlent, 404, "nothing is here by that name");
 const NOT_YET: Withheld = (Away, 503, "this computer does not hold it yet");
 const NOT_AN_ACT: Withheld = (Malformed, 422, "an act is JSON, {op} or {corrects, op}");
+const TOO_LARGE: Withheld = (Malformed, 413, "the act is too large, or came cut short");
 const NOT_ITS_OWN: Withheld = (Closed, 403, "an app corrects only its own acts");
 const NOT_ITS_GROUP: Withheld = (Closed, 403, "this is its own group's alone");
 const NOT_IN: Withheld = (
@@ -241,9 +242,9 @@ impl Folders {
                 (people.values().map(|m| &m.person).collect(), ops.collect());
             return Ok(Json(json!({ "you": person, "people": all, "ops": ops })).into_response());
         }
-        let body = (to_bytes(req.into_body(), WRITE_MOST).await).map_err(|_| NOT_AN_ACT)?;
+        let body = (to_bytes(req.into_body(), WRITE_MOST).await).map_err(|_| TOO_LARGE)?;
         let mut body: Map<String, Value> = serde_json::from_slice(&body).map_err(|_| NOT_AN_ACT)?;
-        let mut op = body.remove("op").unwrap_or(Value::Null);
+        let mut op = body.remove("op").ok_or(NOT_AN_ACT)?;
         if let Some(fields) = op.as_object_mut() {
             let own_kind = (fields.get("kind").and_then(Value::as_str)).ok_or(NOT_AN_ACT)?;
             fields.insert("kind".into(), format!("{prefix}{own_kind}").into());
