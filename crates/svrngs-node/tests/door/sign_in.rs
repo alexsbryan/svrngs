@@ -387,8 +387,11 @@ async fn a_sign_in_that_fails_or_answers_nonsense_refuses_the_request_never_carr
 /// (v1ui-polish (a); `demo/runs/v1ui/2026-10-15/README.md` finding 2). A
 /// browser's tab is shown either as a page, and a program given its JSON.
 /// Planted: the helper stopped, said as "could not sign you in", in braces.
+/// The lend found not answering is traced with why, as a carried request's
+/// connection is (#171; red at 91f9839, the probe's error dropped).
 #[tokio::test]
 async fn a_stopped_lend_behind_its_sign_in_is_said_as_not_answering_by_its_lender_on_a_page() {
+    let (said, _heard) = common::heard("door=debug");
     let pair = Pair::new().await;
     let (up, _) = service().await;
     let stopped = common::stopped();
@@ -423,6 +426,16 @@ async fn a_stopped_lend_behind_its_sign_in_is_said_as_not_answering_by_its_lende
         };
         assert!(page.contains(said), "{kind}: {}", tab.text);
     }
+    let log = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    let refused = format!(
+        "door: the lend's service refused a connection lend=\"signed\" to=127.0.0.1:{}",
+        stopped.port()
+    );
+    assert!(
+        log.lines()
+            .any(|l| l.contains(&refused) && l.contains("error=")),
+        "{log}"
+    );
     pair.close().await;
 }
 

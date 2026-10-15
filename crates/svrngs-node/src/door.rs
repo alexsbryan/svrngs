@@ -1191,26 +1191,33 @@ fn busy(lend: &Lend, using: u32, limit: std::num::NonZeroU16) -> Response {
     LendRefusal::Full.said(StatusCode::SERVICE_UNAVAILABLE, body)
 }
 
+/// A connection to `to`, `lend`'s service, when it takes one within
+/// [`CONNECT_WITHIN`]; `None`, named at warn with why, when it does not —
+/// what [`send_to`] carries a request on, and how `forward` tells a lend
+/// not answering behind its sign-in (REVIEW_FINDINGS #171).
+async fn connected(to: std::net::SocketAddr, lend: &str) -> Option<tokio::net::TcpStream> {
+    match tokio::time::timeout(CONNECT_WITHIN, tokio::net::TcpStream::connect(to)).await {
+        Ok(Ok(tcp)) => Some(tcp),
+        Ok(Err(e)) => {
+            tracing::warn!(target: "door", lend, %to, error = %e, "door: the lend's service refused a connection");
+            None
+        }
+        Err(_) => {
+            tracing::warn!(target: "door", lend, %to, within = ?CONNECT_WITHIN, "door: the lend's service took no connection in time");
+            None
+        }
+    }
+}
+
 /// Send `request` on a new HTTP/1 connection to `to`, driven with
 /// upgrades, and answer the response; `None`, named at warn by `lend`,
-/// when nothing there takes the connection in [`CONNECT_WITHIN`] or
-/// answers.
+/// when nothing there takes the connection ([`connected`]) or answers.
 pub(crate) async fn send_to(
     to: std::net::SocketAddr,
     request: axum::http::Request<Body>,
     lend: &str,
 ) -> Option<axum::http::Response<hyper::body::Incoming>> {
-    let tcp = match tokio::time::timeout(CONNECT_WITHIN, tokio::net::TcpStream::connect(to)).await {
-        Ok(Ok(tcp)) => tcp,
-        Ok(Err(e)) => {
-            tracing::warn!(target: "door", lend, %to, error = %e, "door: the lend's service refused a connection");
-            return None;
-        }
-        Err(_) => {
-            tracing::warn!(target: "door", lend, %to, within = ?CONNECT_WITHIN, "door: the lend's service took no connection in time");
-            return None;
-        }
-    };
+    let tcp = connected(to, lend).await?;
     let (mut sender, conn) = match hyper::client::conn::http1::handshake(
         hyper_util::rt::TokioIo::new(tcp),
     )
@@ -1352,6 +1359,7 @@ async fn forward(
     let lender = lender.as_ref().map_or("Its lender", |p| p.as_str());
     let away = format!("{lender}’s {name} is not answering now: try again later");
     let unanswered = || LendRefusal::Away.say(StatusCode::BAD_GATEWAY, away.clone());
+    let origin = std::net::SocketAddr::from(([127, 0, 0, 1], port.get()));
     let signing = match lend.sign_in {
         None => Signing::Secret(secret_headers(door, &lend.name)),
         Some(helper) => match door
@@ -1361,8 +1369,7 @@ async fn forward(
         {
             Ok(signed) => Signing::Person(helper, signed),
             Err(why) => {
-                let at = tokio::net::TcpStream::connect(("127.0.0.1", port.get()));
-                let up = matches!(tokio::time::timeout(CONNECT_WITHIN, at).await, Ok(Ok(_)));
+                let up = connected(origin, lend.name.as_str()).await.is_some();
                 tracing::warn!(target: "door", actor, lend = %lend.name, %why, up,
                     "door: refused — the lend's sign-in did not sign the person in, so the request is not carried; away when it or the lend did not answer");
                 if matches!(why, sign_in::Refusal::Unanswered) || !up {
@@ -1416,7 +1423,6 @@ async fn forward(
     // The use began when the person was let in, and lasts until the member
     // has the whole answer or leaves it: the answer's body holds it.
 
-    let origin = std::net::SocketAddr::from(([127, 0, 0, 1], port.get()));
     let Some(answer) = send_to(origin, request, lend.name.as_str()).await else {
         let unanswered = unanswered();
         carriage.answered = Some((unanswered.status().as_u16(), None));
