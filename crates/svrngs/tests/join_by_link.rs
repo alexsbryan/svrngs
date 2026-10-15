@@ -453,7 +453,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     // ── A stranger on the members' protocol: closed, no answer.
     let transport = dee.node.transport();
     let base = transport
-        .base_url(&Contact {
+        .spliced(&Contact {
             key: sam.node.endpoint().id(),
             relay_url: None,
             iroh_direct_addrs: loopback(&sam.node),

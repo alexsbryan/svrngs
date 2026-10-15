@@ -33,3 +33,57 @@ impl Node {
         crate::ring_sync::run_one_round(self.host.as_ref(), &|| {}).await
     }
 }
+
+/// A loopback port whose every connection is spliced to a new bi-stream to
+/// `to` on `alpn`, dialled from `endpoint` — so as its key: how a test
+/// drives raw HTTP, or a socket, at a door. The product has no such port
+/// (arch-peer (d): through one, any program on the computer reached a
+/// friend's door as its person, `tests/peer.rs`); a test's lives as long as
+/// its runtime.
+pub async fn splice(endpoint: Endpoint, to: EndpointAddr, alpn: &'static [u8]) -> SocketAddr {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("a loopback port");
+    let at = listener.local_addr().expect("a bound port");
+    tokio::spawn(async move {
+        while let Ok((tcp, _)) = listener.accept().await {
+            let (endpoint, to) = (endpoint.clone(), to.clone());
+            tokio::spawn(async move {
+                use tokio::io::AsyncWriteExt;
+                let Ok(conn) = endpoint.connect(to, alpn).await else {
+                    return;
+                };
+                let Ok((mut send, mut recv)) = conn.open_bi().await else {
+                    return;
+                };
+                let (mut from, mut to) = tcp.into_split();
+                // Each way on its own, as the bridge's pump copied: a door
+                // that answers 413 and stops reading still has its answer read.
+                let up = async {
+                    let _ = tokio::io::copy(&mut from, &mut send).await;
+                    let _ = send.shutdown().await;
+                };
+                let down = async {
+                    let _ = tokio::io::copy(&mut recv, &mut to).await;
+                    let _ = to.shutdown().await;
+                };
+                tokio::join!(up, down);
+            });
+        }
+    });
+    at
+}
+
+impl IrohTransport {
+    /// A [`splice`] to the member `peer` names on the members' protocol,
+    /// from this transport's endpoint, as `http://<port>`; `None` with no
+    /// path to it. What a test that drives raw HTTP at a member asks, where
+    /// it asked the bridge's `base_url` before arch-peer (d).
+    pub async fn spliced(&self, peer: &Contact) -> Option<String> {
+        let to = self.endpoint_addr_for(peer)?;
+        Some(format!(
+            "http://{}",
+            splice(self.endpoint().clone(), to, crate::iroh::ALPN).await
+        ))
+    }
+}

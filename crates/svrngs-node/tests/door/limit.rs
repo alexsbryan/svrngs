@@ -62,7 +62,7 @@ impl Crowd {
             let member = start(key, dirs[i + 1].path()).await;
             let base = member
                 .transport()
-                .base_url(&Contact {
+                .spliced(&Contact {
                     key: a.endpoint().id(),
                     relay_url: None,
                     iroh_direct_addrs: loopback_sockets(a.endpoint()),

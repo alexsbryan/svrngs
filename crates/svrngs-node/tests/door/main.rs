@@ -98,7 +98,7 @@ impl Pair {
         a.rail().commit(NS, &fixture).unwrap().unwrap();
         let base = b
             .transport()
-            .base_url(&Contact {
+            .spliced(&Contact {
                 key: a.endpoint().id(),
                 relay_url: None,
                 iroh_direct_addrs: loopback_sockets(a.endpoint()),
@@ -278,7 +278,7 @@ async fn two_keys_of_one_name_are_two_accounts_to_a_lend() {
 struct Bos {
     a: Node,
     dir: tempfile::TempDir,
-    devices: [svrngs_node::iroh::HttpBridge; 2],
+    devices: [common::Bridge; 2],
 }
 
 impl Bos {

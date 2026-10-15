@@ -107,11 +107,11 @@ fn digest(node: &Node, ns: &str) -> Digest {
     node.rail().digest(ns).unwrap()
 }
 
-/// `dialer`'s base URL for `served`, through its bridge.
+/// `dialer`'s base URL for `served`, through a splice ([`svrngs_node::node::splice`]).
 async fn base_url(dialer: &Node, served: &Node) -> String {
     dialer
         .transport()
-        .base_url(&Contact {
+        .spliced(&Contact {
             key: served.endpoint().id(),
             relay_url: None,
             iroh_direct_addrs: loopback_sockets(served.endpoint()),

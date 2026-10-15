@@ -43,7 +43,7 @@ pub(crate) async fn serve_on_stream(router: axum::Router, dialer: SecretKey) -> 
         iroh_direct_addrs: addrs,
     };
     let base = transport
-        .base_url(&contact)
+        .spliced(&contact)
         .await
         .expect("a contact with an address resolves");
     (

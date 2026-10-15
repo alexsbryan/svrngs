@@ -184,7 +184,7 @@ fn lend_signed(pair: &Pair, name: &str, port: u16, sign_in: u16) {
 
 /// cy, admitted to A's group, and a bridge dialling A on the members'
 /// protocol with cy's key, as the pass test dials (`main.rs`).
-async fn cy_dials_a(pair: &Pair) -> svrngs_node::iroh::HttpBridge {
+async fn cy_dials_a(pair: &Pair) -> crate::common::Bridge {
     use svrngs_core::alpn::Alpn;
     let admit = svrngs_core::tests_support::Fixture {
         act: RailAct::Admit {
@@ -337,7 +337,6 @@ async fn two_people_are_each_signed_in_as_themselves_and_neither_receives_a_secr
         "a 401 to a kept answer, asked again"
     );
     assert_eq!(keys(&asked)[&cy_key], 1);
-    drop(cy);
     pair.close().await;
 }
 
@@ -521,7 +520,6 @@ async fn each_person_s_script_goes_first_in_their_pages_and_never_in_another_s()
     );
     let asked = heads.lock().unwrap().last().cloned().unwrap();
     assert_eq!(header_values(&asked, "if-none-match"), vec!["\"v1\""]);
-    drop(cy);
     pair.close().await;
 }
 
@@ -588,7 +586,6 @@ async fn one_person_s_slow_sign_in_holds_nobody_else_s() {
         .filter(|h| header_values(h, "x-svrngs-key") == [bo_key.as_str()])
         .count();
     assert_eq!(bo_asked, 1, "bo's two first requests at once, asked once");
-    drop(cy);
     pair.close().await;
 }
 

@@ -184,6 +184,11 @@ impl IrohTransport {
         }
     }
 
+    /// The endpoint this transport dials from.
+    pub fn endpoint(&self) -> &Endpoint {
+        &self.endpoint
+    }
+
     /// Seed dial hints for a peer. Test/fallback surface — a caller with a
     /// [`Contact`] passes its hints there instead.
     pub fn add_known_peer(&self, pubkey: PublicKey, addrs: Vec<SocketAddr>) {

@@ -70,7 +70,7 @@ async fn dee_asks_a_member() {
         relay_url: None,
         iroh_direct_addrs: Vec::new(),
     };
-    let answer = match node.transport().base_url(&contact).await {
+    let answer = match node.transport().spliced(&contact).await {
         None => serde_json::json!({ "error": "no path to the member" }),
         Some(base) => {
             let ask = RingSyncRequest {

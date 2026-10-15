@@ -48,20 +48,21 @@ pub fn stopped() -> SocketAddr {
     free.local_addr().unwrap()
 }
 
-/// A bridge on this computer's loopback to `to`'s door on `alpn`,
-/// dialling as `key`: a member's, or a pass holder's.
+/// A port on this computer's loopback spliced to `to`'s door on `alpn`
+/// ([`svrngs_node::node::splice`]), dialling as `key`: a member's, or a pass
+/// holder's.
 #[allow(
     dead_code,
-    reason = "each test binary compiles this file; only some bridge to a door"
+    reason = "each test binary compiles this file; only some reach a door"
 )]
 pub async fn bridge_as(
     key: &svrngs_node::SigningKey,
     to: &svrngs_node::node::Node,
     alpn: svrngs_core::alpn::Alpn,
-) -> svrngs_node::iroh::HttpBridge {
+) -> Bridge {
     use iroh::endpoint::Builder as EndpointBuilder;
     use svrngs_node::guest::ring_crypto_provider;
-    use svrngs_node::iroh::{EndpointAddr, HttpBridge, SecretKey};
+    use svrngs_node::iroh::{EndpointAddr, SecretKey};
     let dialling = EndpointBuilder::empty()
         .crypto_provider(ring_crypto_provider())
         .secret_key(SecretKey::from_bytes(&key.to_bytes()))
@@ -72,9 +73,24 @@ pub async fn bridge_as(
     for sock in loopback_sockets(to.endpoint()) {
         target = target.with_ip_addr(sock);
     }
-    HttpBridge::spawn_preferring(dialling, target, alpn.bytes(), None, None)
-        .await
-        .unwrap()
+    Bridge(svrngs_node::node::splice(dialling, target, alpn.bytes()).await)
+}
+
+/// [`bridge_as`]'s port, read as the bridge's was.
+#[allow(
+    dead_code,
+    reason = "each test binary compiles this file; only some reach a door"
+)]
+pub struct Bridge(std::net::SocketAddr);
+
+#[allow(
+    dead_code,
+    reason = "each test binary compiles this file; only some reach a door"
+)]
+impl Bridge {
+    pub fn local_addr(&self) -> std::net::SocketAddr {
+        self.0
+    }
 }
 
 /// `len` bytes no two runs agree on by accident: BLAKE3's output stream.

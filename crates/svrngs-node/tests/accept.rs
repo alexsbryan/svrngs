@@ -57,12 +57,12 @@ async fn spawn_a(admitted: PublicKey) -> (Endpoint, IrohAcceptor, Arc<AtomicUsiz
     (a, acceptor, served)
 }
 
-/// `seed`'s base URL for A, through u1-1's bridge, which lives as long as the
-/// transport returned beside it.
+/// `seed`'s base URL for A, through a splice ([`svrngs_node::node::splice`]),
+/// from the transport returned beside it.
 async fn dial(seed: u8, a: &Endpoint) -> (IrohTransport, String) {
     let transport = IrohTransport::new(hermetic_endpoint(seed, vec![]).await);
     let base = transport
-        .base_url(&Contact {
+        .spliced(&Contact {
             key: a.id(),
             relay_url: None,
             iroh_direct_addrs: loopback_sockets(a),

@@ -148,7 +148,8 @@ async fn a_loopback_only_endpoint_binds_loopback_alone() {
 /// once, so a dial rides the bridge instead of keeping a loop of its
 /// own. The needles are split so this file does not match itself.
 /// (svrngs, arch-peer (b): beside it, the request on the stream that
-/// replaces it, `iroh.rs` `on_stream`, until (d) takes the bridge out.)
+/// replaces it, `iroh.rs` `on_stream`, until (d) takes the bridge out; and
+/// the tests' splice, `node/tests_support.rs`, behind `test-support`.)
 #[test]
 fn there_is_one_bridge_loop_and_one_pump() {
     fn rs_files(dir: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
@@ -183,11 +184,15 @@ fn there_is_one_bridge_loop_and_one_pump() {
     let bridges = sites(concat!("open_bi", "()"));
     assert_eq!(
         bridges.len(),
-        2,
-        "one bridge loop and one request on the stream, found {bridges:?}"
+        3,
+        "one bridge loop, one request on the stream, one tests' splice: {bridges:?}"
     );
     assert!(
-        bridges[0].contains("guest.rs") || bridges[1].contains("guest.rs"),
+        bridges.iter().any(|b| b.contains("tests_support.rs")),
+        "{bridges:?}"
+    );
+    assert!(
+        bridges.iter().any(|b| b.contains("guest.rs")),
         "{bridges:?}"
     );
     assert!(bridges.iter().any(|b| b.contains("iroh.rs")), "{bridges:?}");
