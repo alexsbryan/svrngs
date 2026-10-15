@@ -9947,3 +9947,13 @@ mw.out).
 | # | principle | path:line | fixed in | finding |
 |---|---|---|---|---|
 | 174 | 8, 6 | crates/svrngs-node/src/home.rs:279-282 (`taken`: a lend's sign-in left out, the table's helper not), :308-369 (`lend_one`); crates/svrngs-node/src/share.rs `lend_of`; crates/svrngs/src/cli.rs:768 | 1acbba2 (arch-helper (b), `share::signs_in`) | **Low.** The home page offers a kind's sign-in helper as something to lend until a lend names it, and lends it when asked; so does `svrngs share <its port>`. A member who opens it is told to it as themselves: their typed key and stand-in are displaced (door.rs:689), so no sign-in as another person. Jellyfin's own helper answers them 403 and 404, makes no account, and gives neither its API key nor a token (mw.out). A helper that did not ask for the door's stand-in would give a member their own token in plain (a-red.out), which the door keeps from every browser for a lend that signs in by it. |
+
+## arch-peer (a) (2026-10-15): what the bridge lets reach a friend's door
+
+Opened by its row (`ralph/next/arch/STATE.md`), not a `REVIEW-audit-` row:
+the run is `demo/runs/arch/2026-10-15-peer/` (README.md, a-red.out,
+chromium-public-unasked.out), the test `crates/svrngs-node/tests/peer.rs`.
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 175 | 6, 10 | crates/svrngs-node/src/guest.rs:245-480 (`HttpBridge`, a loopback listener that accepts anyone); crates/svrngs-node/src/iroh.rs:238-292 (`bridge_for`, at `preferred_bridge_port`, :363); crates/svrngs-node/src/door.rs:990-991 (`own_app`: no pass, no app), :1066-1076 (`Who::Member`, `app: None`); crates/svrngs-node/src/door/choices.rs:268-290 (`choose`) | not fixed (arch-peer (d)) | **High.** Each computer listens on 127.0.0.1 for each member it dials, and carries whatever connects there to that member's door as this computer's key. A program holding no key reaches every lend that asks nobody as this computer's person, reads their choices, and keeps a yes as them for any app on a lend that asks; a page on loopback does the last two in Chromium and WebKit, and a page on the internet in Chromium once the person allows it to reach the local network (in WebKit, could-not-judge). The answers are kept from a page (CORS), not the act. |

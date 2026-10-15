@@ -65,8 +65,9 @@ const ENGINES = { chromium: null, webkit: 'iPhone 15' };
 // launched again on it finds the page's store and worker as a phone's
 // does when it opens the browser again. With `device`, one of
 // Playwright's by name, the engine is that device in place of its own
-// (Demo B's Android phones: Chromium as a Pixel 7).
-export async function launch(engine, { profile, device: as } = {}) {
+// (Demo B's Android phones: Chromium as a Pixel 7). With `args`, the
+// browser's own flags (arch-peer (a): Chromium told a page is public).
+export async function launch(engine, { profile, device: as, args } = {}) {
   if (!(engine in ENGINES)) {
     console.error(`no engine ${JSON.stringify(engine)}: one of ${Object.keys(ENGINES).join(', ')}`);
     process.exit(1);
@@ -85,7 +86,7 @@ export async function launch(engine, { profile, device: as } = {}) {
       const context = await pw[engine].launchPersistentContext(profile, device);
       return { context, close: () => context.close() };
     }
-    const browser = await pw[engine].launch();
+    const browser = await pw[engine].launch({ args });
     return { context: await browser.newContext(device), close: () => browser.close() };
   } catch (e) {
     console.error(`Playwright's ${engine} cannot start — run: ${INSTALL}\n${e}`);

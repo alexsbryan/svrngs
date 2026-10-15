@@ -1,0 +1,2 @@
+{"chromium":"147.0.7727.15","page":"http://127.0.0.1:64415/","fetch":"TypeError: Failed to fetch","logs":["Access to fetch at 'http://127.0.0.1:30999/choices/book' from origin 'http://127.0.0.1:64415' has been blocked by CORS policy: Permission was denied for this request to access the `loopback` address space.","Failed to load resource: net::ERR_FAILED"]}
+listener saw: 
