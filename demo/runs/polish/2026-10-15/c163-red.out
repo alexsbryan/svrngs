@@ -1,0 +1,9 @@
+thread 'a_file_the_store_cannot_read_is_said_so_never_as_not_held_yet' (48607237) panicked at crates/svrngs-node/tests/carried.rs:467:5:
+assertion `left == right` failed: {"error":"this computer does not hold it yet","kind":"away"}
+  left: 503
+ right: 500
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+--
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 3 filtered out; finished in 1.40s
+
+error: test failed, to rerun pass `-p svrngs-node --test carried`

@@ -415,3 +415,59 @@ async fn a_carried_app_is_its_own_group_s_alone() {
         node.endpoint().close().await;
     }
 }
+
+/// **A file the store holds but cannot read is said so, not as not held
+/// yet** (#163): Ana carries an app with a 100 KiB file, which her store
+/// keeps outside its database, and it opens; then its data is cut to
+/// nothing under the store. The file is refused 500, `fault`, as unread
+/// from this computer's store, never 503 "does not hold it yet", which is
+/// a computer that has not been reached. Planted: HEAD before #163's fix,
+/// which said every failed read as not held yet.
+#[tokio::test]
+async fn a_file_the_store_cannot_read_is_said_so_never_as_not_held_yet() {
+    let (nodes, dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 9, ana, &[]);
+    round(ana).await;
+    let root = tempfile::tempdir().unwrap();
+    let folder = synced_in(ana, root.path(), &group).await;
+    carry(&folder, "Money");
+    let big = "x".repeat(100 * 1024);
+    std::fs::write(folder.join("apps/Money/big.js"), &big).unwrap();
+    let mut origin = None;
+    for _ in 0..30 {
+        let seen = lends(ana, &group).await;
+        origin = of_kind(&seen, "Money")
+            .first()
+            .map(|l| l["origin"].as_str().unwrap().to_string());
+        if let Some(o) = &origin {
+            if at(ana, o, "GET", "/big.js", None).await.status() == 200 {
+                break;
+            }
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    let origin = origin.expect("Money is listed");
+    assert_eq!(at(ana, &origin, "GET", "/big.js", None).await.status(), 200);
+    let data = dirs[0].path().join("blobs/data");
+    let held = std::fs::read_dir(&data).unwrap().map(|e| e.unwrap().path());
+    let held: Vec<_> = held
+        .filter(|p| std::fs::metadata(p).unwrap().len() == big.len() as u64)
+        .collect();
+    assert_eq!(held.len(), 1, "the file's data in {}", data.display());
+    std::fs::OpenOptions::new()
+        .write(true)
+        .open(&held[0])
+        .unwrap()
+        .set_len(0)
+        .unwrap();
+    let answer = at(ana, &origin, "GET", "/big.js", None).await;
+    let status = answer.status();
+    let said = answer.text().await.unwrap();
+    assert_eq!(status, 500, "{said}");
+    assert!(
+        said.contains(r#""kind":"fault""#) && !said.contains("does not hold it yet"),
+        "{said}"
+    );
+    ana.endpoint().close().await;
+}
