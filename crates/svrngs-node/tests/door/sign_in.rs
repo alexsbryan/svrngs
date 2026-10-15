@@ -377,6 +377,55 @@ async fn a_sign_in_that_fails_or_answers_nonsense_refuses_the_request_never_carr
     pair.close().await;
 }
 
+/// A sign-in that answers no is said as that; one that does not answer, or
+/// answers no while its lend does not answer, is said as the lend not
+/// answering, by its lender's name and its own, and never a port
+/// (v1ui-polish (a); `demo/runs/v1ui/2026-10-15/README.md` finding 2). A
+/// browser's tab is shown either as a page, and a program given its JSON.
+/// Planted: the helper stopped, said as "could not sign you in", in braces.
+#[tokio::test]
+async fn a_stopped_lend_behind_its_sign_in_is_said_as_not_answering_by_its_lender_on_a_page() {
+    let pair = Pair::new().await;
+    let (up, _) = service().await;
+    let stopped = TcpListener::bind("127.0.0.1:0")
+        .await
+        .unwrap()
+        .local_addr()
+        .unwrap();
+    let (no, _) = answerer(Answers::Fails).await;
+    for (service, helper, kind) in [
+        (up, stopped, "away"),
+        (stopped, no, "away"),
+        (up, no, "sign-in"),
+    ] {
+        lend_signed(&pair, "signed", service.port(), helper.port());
+        let program = raw_to(pair.bridge, asks("echo")).await;
+        assert_eq!(program.status, 502, "{}", program.text);
+        let told = format!(r#""kind":"{kind}""#);
+        assert!(program.text.contains(&told), "{kind}: {}", program.text);
+        let tab = raw_to(pair.bridge, asks_page("GET", "signed", "echo")).await;
+        assert_eq!(tab.status, 502, "{}", tab.text);
+        let page = tab.text.to_ascii_lowercase();
+        assert!(
+            page.contains("content-type: text/html"),
+            "{kind}: {}",
+            tab.text
+        );
+        assert!(
+            !page.contains('{') && !page.contains(&service.port().to_string()),
+            "{}",
+            tab.text
+        );
+        let said = if kind == "away" {
+            "ada’s signed is not answering"
+        } else {
+            "could not sign you in"
+        };
+        assert!(tab.text.contains(said), "{kind}: {}", tab.text);
+    }
+    pair.close().await;
+}
+
 /// A request for a page, as a browser asks one it holds a copy of.
 fn asks_page(method: &str, lend: &str, path: &str) -> String {
     format!(
