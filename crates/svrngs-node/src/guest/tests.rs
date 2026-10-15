@@ -44,19 +44,55 @@ fn parse_relay_mode_skips_bad_keeps_good() {
     );
 }
 
+/// Every line [`the_egress_posture_is_one_info_line_naming_no_proxy`] traces.
+#[expect(clippy::disallowed_types, reason = "a test's trace sink")]
+static TRACES: std::sync::Mutex<Vec<u8>> = std::sync::Mutex::new(Vec::new());
+
+struct Kept;
+
+impl std::io::Write for Kept {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        TRACES.lock().unwrap().extend_from_slice(buf);
+        Ok(buf.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+/// **The egress posture, one info line** (arch-peer (d), upstream's proxy
+/// and egress logging cut): building an endpoint says at info, once, its n0
+/// posture, whether it listens on loopback alone, and its relays — and
+/// nothing of a proxy, which nobody running svrngs sets. Planted:
+/// upstream's `log_egress_posture`, which read four environment variables
+/// for a proxy to say (`proxy="none"`).
 #[test]
-fn redact_userinfo_hides_credentials() {
-    assert_eq!(
-        redact_userinfo("https://user:secret@proxy.corp:443"),
-        "https://***@proxy.corp:443"
-    );
-    // No userinfo → unchanged.
-    assert_eq!(
-        redact_userinfo("https://proxy.corp:443"),
-        "https://proxy.corp:443"
-    );
-    // Non-URL → unchanged (don't mangle).
-    assert_eq!(redact_userinfo("proxy.corp:443"), "proxy.corp:443");
+fn the_egress_posture_is_one_info_line_naming_no_proxy() {
+    let kept = tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::new("transport=info"))
+        .with_writer(|| Kept)
+        .with_ansi(false)
+        .finish();
+    let cfg = RelayConfig {
+        relay_urls: vec![],
+        n0_services: false,
+        loopback_only: true,
+    };
+    let key = SecretKey::from_bytes(&[5; 32]);
+    let built = tracing::subscriber::with_default(kept, || {
+        relayed_endpoint_builder(key, vec![], &cfg).is_ok()
+    });
+    let traced = String::from_utf8_lossy(&TRACES.lock().unwrap()).into_owned();
+    let said: Vec<&str> = traced
+        .lines()
+        .filter(|l| l.contains("egress posture"))
+        .collect();
+    assert!(built, "{traced}");
+    assert_eq!(said.len(), 1, "{traced}");
+    for field in ["n0_services=false", "loopback_only=true", "relays=[]"] {
+        assert!(said[0].contains(field), "{field}: {traced}");
+    }
+    assert!(!said[0].contains("proxy="), "{traced}");
 }
 
 #[tokio::test]

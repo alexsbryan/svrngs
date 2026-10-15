@@ -128,10 +128,10 @@ fn relayed_endpoint_builder(
         // Honor corporate HTTP(S) proxies on the relay dial. No-op when
         // the env vars are unset, so it's safe on every deployment.
         .proxy_from_env();
-    // Glassbox the egress posture so netops can confirm — from the log,
-    // not by inference — which relays this node uses and whether a proxy
-    // is engaged. Credentials are redacted.
-    log_egress_posture(cfg);
+    // Glassbox the egress posture: which relays this node uses, from the log,
+    // not by inference. (svrngs: upstream's proxy reading went, arch-peer.)
+    tracing::info!(target: "transport", n0_services = cfg.n0_services, loopback_only = cfg.loopback_only, relays = ?cfg.relay_urls,
+        "iroh egress posture (no relay named is n0's with n0_services, none without it; n0_services=false severs all n0 contact)");
     match parse_relay_mode(&cfg.relay_urls) {
         Some(mode) => builder = builder.relay_mode(mode),
         None if !cfg.n0_services => {
@@ -153,58 +153,6 @@ fn relayed_endpoint_builder(
             .map_err(|e| format!("iroh loopback address refused: {e}"))?;
     }
     Ok(builder)
-}
-
-/// Read the HTTP(S) proxy from the environment iroh's `proxy_from_env`
-/// consults, with any `user:pass@` userinfo redacted. `None` when no
-/// proxy is set. Public so the daemon's `doctor` can report the same
-/// value it logs.
-pub fn configured_proxy_redacted() -> Option<String> {
-    // iroh checks HTTPS_PROXY then HTTP_PROXY (and lowercase). Mirror
-    // that precedence so what we log is what it will actually use.
-    for var in ["HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy"] {
-        if let Ok(v) = std::env::var(var) {
-            if !v.trim().is_empty() {
-                return Some(redact_userinfo(&v));
-            }
-        }
-    }
-    None
-}
-
-/// Replace a URL's `user:pass@` with `***@` for safe logging. Falls
-/// back to the raw string if there's no userinfo to redact.
-fn redact_userinfo(url: &str) -> String {
-    match (url.find("://"), url.find('@')) {
-        (Some(scheme_end), Some(at)) if at > scheme_end + 3 => {
-            format!("{}***@{}", &url[..scheme_end + 3], &url[at + 1..])
-        }
-        _ => url.to_string(),
-    }
-}
-
-/// One-line, info-level egress summary at endpoint construction:
-/// discovery posture, relay set, and proxy (redacted). This is the
-/// audit surface a netops team greps to confirm what the node touches.
-fn log_egress_posture(cfg: &RelayConfig) {
-    let relays = if cfg.relay_urls.is_empty() {
-        if cfg.n0_services {
-            "n0-default".to_string()
-        } else {
-            "none (direct-addr only)".to_string()
-        }
-    } else {
-        cfg.relay_urls.join(",")
-    };
-    tracing::info!(
-        target: "transport",
-        n0_services = cfg.n0_services,
-        loopback_only = cfg.loopback_only,
-        relays = %relays,
-        proxy = configured_proxy_redacted().as_deref().unwrap_or("none"),
-        "iroh egress posture (n0_services=false severs all n0 contact; \
-         proxy honored for relay TCP:443, Basic auth only)"
-    );
 }
 
 /// Turn operator-configured relay URL strings into a custom
