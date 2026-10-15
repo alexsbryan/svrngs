@@ -9387,3 +9387,300 @@ line, and none is left (#80).
 | I19 | 6 | dry-report, `tests/` scopes | Still present, said as could-not-judge. The line-window pass stood in, and found the range's one new span there. |
 | I29 | 6 | `refresh` over a corpus `code index` made | Still present: "prod-8d62b0a is not registered", then the in-process rebuild and exit 0. |
 | I32 | 7 | dry-report's near tier, JS and nested spans | Still present, and two more: home.js `running` over its nested `look`, and question.js `door` over its returned `judge`. |
+
+## REVIEW-audit-v1ui-auto-2 (2026-10-15, range 7dbfc37..ed8b2c6)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-v1ui-auto-1, its hash
+7dbfc37 (ralph/next/v1ui/STATE.md:17). The range ends at ed8b2c6, the
+commit that made this row. `git rev-list --count 7dbfc37..ed8b2c6` is 43,
+none a merge (`--merges`: 0). They are: auto-1's `done`; v1ui-lend-ask's
+state commit, its (b) and its close; v1ui-shelf; v1ui-findings; v1ui-voice,
+its failed check and its close; and v1ui-race's state commit 3bdbf29, made
+by the operator between v1ui-voice's two checks. Each unit's `done` is in
+the range, and so is this row's own commit.
+
+This audit's own commits before this section:
+- 835fc08, the row's two paths, as dce6747 corrected auto-1's;
+- 6795efa, carried.rs's second `People` alias dropped for blob.rs's;
+- 6592309, the test harness carried.rs copied from folders.rs made one
+  (tests/common/computers.rs), and home.rs's trace setup made one
+  (`heard`);
+- 31b6a28, the cap lowered to where 6795efa's cut landed, 16,870;
+- 47f80cb, carried.rs's other three aliases renamed apart from nouns owned
+  elsewhere.
+
+It opens #163-#168 and closes none.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+7dbfc37..ed8b2c6` (/tmp/v1uiaudit2/ledger.raw) is summed by
+/tmp/v1uiaudit2/scripts/ledger.py (ledger.out; each commit's unit is in
+ledger.commits). The rules are auto-1's:
+- a commit's unit is the longest unit id its subject names;
+- product is crates/, web/ and bridge/, in lean_check.py's code suffixes;
+- .css and .html are counted apart as markup;
+- apps/ and scripts/ are counted apart;
+- a test is what lean_check names one, and `*.test.mjs`.
+
+Every commit in the range names its unit. The lines are raw, comments and
+blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net | markup net | apps src net | apps test net | scripts net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| REVIEW-audit-v1ui-auto-1 (its `done`) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| v1ui-lend-ask (its state commit, (b), its close) | 5 | 0 | 0 | **0** | 11 | 3 | +8 | 0 | 0 | 0 | 0 |
+| v1ui-shelf | 11 | 542 | 112 | **+430** | 953 | 29 | +924 | +1 (+2 −1) | +141 | 0 | +0 (+9 −9) |
+| v1ui-findings | 14 | 106 | 65 | **+41** | 326 | 14 | +312 | 0 | 0 | 0 | +0 (+15 −15) |
+| v1ui-voice | 10 | 65 | 60 | **+5** | 27 | 23 | +4 | +0 (+4 −4) | +0 (+7 −7) | 0 | 0 |
+| v1ui-race (its state commit, 3bdbf29) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| this row's own commit | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 43 | 713 | 237 | **+476** | 1317 | 69 | +1248 | +1 (+6 −5) | +141 (+148 −7) | 0 | +0 (+24 −24) |
+
+Where the src lines went (`git diff --numstat 7dbfc37 ed8b2c6 -- crates
+web bridge`, tests apart):
+- carried.rs +281, new: the carried path (c98635a's port, 87d68ab, 67ffbba,
+  21bcbef);
+- home.rs +66 −41: `/shelf`, and #160's and #161's refusals said apart;
+- door.rs +60 −38: a lend's `Source`, carried apps in `offered` and `find`,
+  `LENDS_NOTHING`, and the door's words in the house voice;
+- lend.rs +59 −12: `Source`, `Lend::carried`, `signs_in: Option<bool>`
+  (#159), `Offered::group`;
+- question.js +45 −5: `once`, `table`, `opens` (#158) and `namesakes`
+  (#157);
+- build.rs +31, new: the shelf embedded from apps/;
+- cli.rs +26 −19, web/app.js +25 −11, home.js +16 −18: the shelf on the
+  phone, the findings and the house voice.
+
+The tests are mostly tests/carried.rs (+491) and tests/browser/carried.rs
+(+345). apps/ is Money's and Events' carried pages, index.js and
+index.html each (5558b28), outside the budget.
+
+What the budget counts, by scripts/lean_check.py over a `git archive` tree
+of each end and of each unit's `done` (/tmp/v1uiaudit2/lean-<hash>.out;
+each tree's own lean_check.py, so the cap is its own):
+
+| at | svrngs-core | repository | its cap | counted net |
+|---|---:|---:|---:|---:|
+| 7dbfc37, range start | 3149 | 16567 | 16568 | |
+| 3578b26, v1ui-lend-ask done | 3149 | 16567 | 16568 | 0 |
+| dc86e9f, v1ui-shelf done | 3149 | 16853 | 16854 | +286 |
+| 5bb4b6a, v1ui-findings done | 3149 | 16870 | 16871 | +17 |
+| e34f094, v1ui-voice done | 3149 | 16870 | 16871 | 0 |
+| ed8b2c6, range end | **3149 / 3150** | **16870 / 16871** | | **+303** |
+
+There were eight raises, each one past its part's count and each naming the
+pass (`git log 7dbfc37..ed8b2c6 -- scripts/lean_check.py`):
+
+| raise | from | to | for |
+|---|---:|---:|---:|
+| d6c7ff1, v1ui-shelf (a) | 16,568 | 16,759 | +191 |
+| 296693f, v1ui-shelf (b) | 16,759 | 16,764 | +5 |
+| c97ea64, v1ui-shelf (c) | 16,764 | 16,854 | +90 |
+| c2f5050, v1ui-findings (c) | 16,854 | 16,856 | +2 |
+| a6e62be, v1ui-findings (a) | 16,856 | 16,858 | +2 |
+| 16c5d60, v1ui-findings (b) | 16,858 | 16,868 | +10 |
+| 6486c2b, v1ui-findings (d) | 16,868 | 16,870 | +2 |
+| 678c82b, v1ui-findings (e) | 16,870 | 16,871 | +1 |
+
+That is +303 in all. c97ea64's subject says "the 89 lines", and it raised
+90: 16,764 + 89 is 16,853, its count, and the cap is one past it. With
+auto-1's +253, **556 of the +650 were raised by ed8b2c6**, against the
+ceiling of 16,965 (fence 7). This audit's cut (6795efa) took one counted
+line and lowered the cap with it (31b6a28): **16869 / 16870 now, 555
+raised and 95 left**. svrngs-core's cap stayed at 3150, with 1 line left.
+v1ui-voice rewrote words and counted 0 net.
+
+### The instrument
+
+The binary is ~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256
+67e46f63… (`shasum -a 256`), the one auto-1 ran.
+
+The corpus is ed8b2c6's crates/, web/, scripts/, apps/, Cargo.toml and
+Cargo.lock, by `git archive` into /tmp/v1uiaudit2/prod-ed8b2c6 (361
+files). apps/ is in it this time, because the range added Money's and
+Events' pages there.
+- `code index . --corpus-id prod-ed8b2c6`: 4767 chunks in 723 s
+  (index.out).
+- `refresh`: rust, 16674 symbols and 96890 references; typescript and
+  python "skipped (export failed)" (I4). It fell back to the in-process
+  rebuild (I29) (refresh.out).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-node, crates/svrngs, web, apps/expenses
+and apps/events (`git diff --stat 7dbfc37 ed8b2c6 -- crates apps web
+scripts bridge`; apps' check.sh files changed a word each). Each was
+reported at 0.95 and 0.90 (/tmp/v1uiaudit2/clean-*.md). Whether a side was
+added in the range is `git blame` at ed8b2c6 over each side's lines against
+7dbfc37 (scripts/blame.sh; blame-clusters.out).
+
+| scope | locations | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---:|---:|---:|---:|---|
+| crates/svrngs-node/ | 579 | 2 | 1 | 9 | 1, one span inside another (I32) |
+| crates/svrngs/ | 70 | 0 | 0 | 0 | — |
+| web/ | 104 | could-not-judge (I4, I33) | 0 | 3 | — |
+| apps/expenses/ | 28 | could-not-judge (I4) | 0 | 0 | — |
+| apps/events/ | 63 | could-not-judge (I4) | 0 | 2 | — |
+
+The one cluster with a side the range added:
+
+| tier | its side | its other side | read |
+|---|---|---|---|
+| near 0.917 | `door` — home/question.js:102-116 (2 lines of 21bcbef) | `judge` — question.js:104-114 | `judge` is the closure `door` returns, nested in it, as auto-1 read it (I32). 21bcbef's two lines are the shift `table` made below it. Not a clone. |
+
+The other clusters, none with a side in the range, are auto-1's again:
+api.rs `addr` ×2; blob_tests.rs `flush` == relay_tests.rs (test code, I8);
+home.js `running`/`look` (I32); the near pairs in sign_in.rs, synced.rs,
+redeem.rs, choices.rs, rail.rs, ring_sync/tests.rs and lend.rs; web's
+app.js `uses`/`choicesOf`, lib.rs `connect`/`connect_to_join` and lend.js
+`cookieFor`/`keepJar`. Events' two are store.mjs's `log` against `append`
+and `people`, each the span beside it (blame: before the range).
+carried.rs, the range's largest new file, has no cluster at either
+threshold.
+
+**The line-window pass.** It is auto-1's /tmp/v1uiaudit2/scripts/windows.py,
+over the node's and the command's src and tests, web/src, web/tests,
+web/*.js, and apps/expenses and apps/events: 145 files at ed8b2c6
+(windows.files). The result: **193 window hits, 56 spans, 9 new**
+(windows.out, windows.verdicts). Both verdicts were seen: 47 spans read
+old.
+
+| new span | read |
+|---|---|
+| tests/carried.rs:18-49 == tests/folders.rs:13-44, and :61-79 == :70-88 (87d68ab) | carried.rs wrote out folders.rs's harness: `signing`, `seed_file`, `start`, `found`, the address book, `round`, `until_on` and `http`. **Made one in 6592309**: tests/common/computers.rs, loaded by those two alone. carried 3 and folders 23 passed, as at HEAD. |
+| tests/carried.rs:36-44 == tests/home.rs:39-47 (87d68ab) | `start`'s `RelayConfig`. home.rs's `start` passes `no_seed`, not `seed_file`, so it is its own; it was there before the range. No finding. |
+| tests/home.rs:754-766 == :806-816, and :802-813 == :872-883 (686a4c2, 2d0c3f2) | The trace sink and the second dispatcher, written out in three tests. **Made one in 6592309**, `heard(filter)`. home's 7 passed, the three reading their trace. |
+| tests/browser/main.rs:2785-2793 == :2840-2848 (3aefde0) | Two tests' setup: ada, cy joined, cy lending a shelf. It is nine lines of fixture, not a decision, so no finding. |
+| web/tests/shelf.mjs:11-22 == reads.mjs:17-28, and :15-22 == links.mjs:19-26 (21bcbef) | A driver's preamble written a third time, beside page.mjs's `held`, `launch` and `serve`. **#168.** |
+| apps/events/index.js:13-21 == apps/expenses/index.js:12-20 (5558b28) | `el`, `button` and `field`, the two pages' DOM helpers. Each app is a folder of its own, carried by itself, its files listed in src/shelf.txt (build.rs). A helper shared across two apps would make one app's folder need another's. No finding. |
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges 7dbfc37..ed8b2c6 -- crates apps
+web scripts bridge` were matched against
+`(struct|enum|trait|type|class)\s+[A-Z]\w*` (new-types.out). They give:
+- `Source` (lend.rs:181), new;
+- `ConnectSrc`, ported in c98635a and dropped in 87d68ab (removed-types.out),
+  so it is not at HEAD;
+- carried.rs's private aliases `Refused`, `Answer`, `People`, `File` and
+  `Asked`.
+
+`converge noun <Name> --corpus-id prod-ed8b2c6` was run for each
+(nouns.out). Four nouns have more than one definition. Lines are at
+ed8b2c6, before this audit's commits, each one past the tool's (I1):
+
+| noun | definitions | read |
+|---|---|---|
+| `People` | blob.rs:146 and carried.rs:101, both `type People = BTreeMap<String, Member>`, in two modules of folder.rs | One alias written twice. **carried.rs names blob.rs's, made `pub(super)`, in 6795efa.** |
+| `Answer` | carried.rs:98 (an alias, 87d68ab); door/sign_in.rs:72 (`pub(crate) struct`); node.rs:753 (a fn's own struct) | Three things under one name in one crate. **carried.rs's is renamed `Served` in 47f80cb.** sign_in.rs's and node.rs's two were there before the range and stand: node.rs's is local to its function. |
+| `Asked` | carried.rs:122 (an alias); svrngs-core joining.rs:65 (`pub struct`) | **Renamed `Ticks` in 47f80cb**, five letters, so `bring`'s signature stays one line. |
+| `Refused` | carried.rs:77 (an alias); svrngs-core command.rs:67 (`pub enum Refused<R>`); and web/src/http.rs:47 (`pub enum Refused`), which converge does not list (I33) | **Renamed `Withheld` in 47f80cb.** core's and web's two are in different crates and were there before the range. |
+
+`Source` and `File` each have one definition, and `ConnectSrc` none. All
+five renames and the alias change no type: clippy is clean, carried 3
+passed, and scripts/lean_check.py reads 16869 as before the renames.
+
+### Reading the range
+
+Every hunk of product src the range changed was read (`git diff 7dbfc37
+ed8b2c6 -- crates web`). The tests and apps were read for clones only.
+v1ui-voice's hunks are words: I read them for what each refusal says
+being true still, and every one was. 0570d47's `LENDS_NOTHING` (door.rs:199) made
+one sentence of four copies: two in door.rs, one in choices.rs, one in
+node.rs.
+
+- **Never silently substitute** (AGENTS.md 6).
+  - **A carried app's file says "does not hold it yet" for any failure of
+    the store** (#163). carried.rs:215 is `held.map_err(|_| NOT_YET)`, and
+    :196 and :210 fold the rail's and the layout's errors into `UNREAD`.
+    The trace at :198 carries the words, not the error. A store that
+    cannot be read is not one that has not been reached yet ("answered: no"
+    is not "did not answer").
+  - **A write's absent `op` is read as `null`, which voids the act**
+    (#165). carried.rs:246 is `body.remove("op").unwrap_or(Value::Null)`,
+    and with `corrects` (:251) that is a void. The module's docs say a
+    void is `op` null (carried.rs:20-21), not `op` absent. The rail refuses
+    `{}` on its own: a null payload is not an object (svrngs-core
+    payload.rs:81). A body over `WRITE_MOST` (:59) is told it is not an
+    act (`NOT_AN_ACT`, :244).
+  - `Folders::carried`'s `standings().unwrap_or_default()` (:168) is not
+    one: `Host::standings` warns before its `None` (node.rs:571).
+- **Glassbox** (AGENTS.md 1).
+  - **Bringing from the shelf drops both its errors** (#164).
+    carried.rs:139 has `dirs_of(…).map_err(|_| NO_FOLDER)` and :148 has
+    `wrote.map_err(|_| UNWRITTEN)`. `bring`'s trace (:128) says the status
+    alone.
+  - **A folder under apps/ that is not an app's name is dropped untraced**
+    (#167). carried.rs:178 runs `filter_map(|kind| Lend::carried(kind,
+    group))`, and lend.rs:229 and :233 return `None` by `.ok()?` for a name
+    that is not one. The trace at :181 lists what was found, never what was
+    left out.
+  - Every refusal the carried route gives is traced once, at
+    carried.rs:198, and `bring`'s at :128. `lend_for`'s branch to a carried
+    app is traced (door.rs:1065).
+- **One decider** (AGENTS.md 8).
+  - **"A carried app only to its own group" is decided twice** (#166).
+    door.rs:482 keeps a carried app when the asker stands in its group by
+    the rail (`standing(g).names(actor)`). node.rs:918 keeps it when the
+    group is among the `groups` the caller passed. `Folders::open`
+    (carried.rs:196, `NOT_ITS_GROUP`) is the gate. The two lists are its
+    shadow, written two ways.
+  - #157 and #158 are one decider now (question.js `namesakes`, `opens`),
+    and cli.rs `namesakes_said` is pinned to the page's words by
+    tests/home_group.rs.
+- **Closed sets** (AGENTS.md 9). `Source` is an enum, and each `match` on
+  it is total (door.rs:527, :1062), and each let-else on it says the
+  other arm (lend.rs:487, cli.rs:1199). #161's
+  `ShareRefusal` match (home.rs:339-343) names each arm.
+- **Forked code** (AGENTS.md 11). carried.rs's two ports name their
+  sources on lines 2-3, and c98635a landed them unchanged
+  (`scripts/ports.py`: both "unchanged; here: changed in 5 commit(s)").
+- **Validate the instrument** (AGENTS.md 7). v1ui-voice's failed check
+  (25bd5f1: one browser bar missed by 347 and 705 ms) is kept as it ran.
+  The operator made v1ui-race of it (3bdbf29), and the passing check
+  (c7a5715) ran after. Those verdicts are those commits', and are not judged
+  again here.
+- Not a principle, but worth a line: `door.folders.carried()` reads each
+  group's layout on every `find` by label (door.rs:858, the chain is built
+  eagerly) and on every `/lends`. That is a cost per request, not a fault.
+
+### Fixed here
+
+- 6795efa: carried.rs's second `People` dropped for blob.rs's (−1 counted
+  line).
+- 6592309: tests/common/computers.rs, the harness carried.rs copied from
+  folders.rs (−210 +118 test lines), and `heard` in home.rs.
+- 31b6a28: the cap 16,871 → 16,870.
+- 47f80cb: `Served`, `Ticks`, `Withheld`.
+
+Each keeps behaviour, and none adds a counted line. The rest are not fixed
+here. #163-#165 and #167 each change a refusal or a trace, and so are
+behaviour, each red first. #166 needs one rule both lists ask, a move with
+a test. #168 changes three browser drivers, which only the browser suite in
+both engines can witness.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 163 | 6, 1 | crates/svrngs-node/src/carried.rs:215 (`held.map_err(\|_\| NOT_YET)`); :196 and :210 (`UNREAD`); the trace at :198 | not fixed | A carried app's file answers "this computer does not hold it yet" (503) for every error of the store's `get_bytes`, and "its group cannot be read" for every error of the rail or the layout. The trace carries the words alone. A blob absent and a store that fails are opposite responses, so it is answered:no said as did-not-answer. Red on a store whose read fails. |
+| 164 | 1 | crates/svrngs-node/src/carried.rs:139 (`dirs_of(…).map_err(\|_\| NO_FOLDER)`) and :148 (`wrote.map_err(\|_\| UNWRITTEN)`); `bring`'s trace :128 | not fixed | Bringing an app from the shelf drops the `io::Error` of finding the group's folder and of writing the app's files. The page is told the right words, but the trace says the status only, so why a write failed cannot be read at debug. |
+| 165 | 6 | crates/svrngs-node/src/carried.rs:246 (`body.remove("op").unwrap_or(Value::Null)`), against its docs :20-21; :244 (`to_bytes(…, WRITE_MOST).map_err(\|_\| NOT_AN_ACT)`) | not fixed | A carried app's `POST {corrects: id}` with no `op` voids that act: the absence is read as `null`, which the docs give as the void. A body past `WRITE_MOST` (:59) is told "an act is JSON, {op} or {corrects, op}", which is not why it was refused. Red on `{corrects}` alone voiding an act. |
+| 166 | 8 | crates/svrngs-node/src/door.rs:482 (`offered.retain(… is_none_or(stands))`, by the rail's standing) and crates/svrngs-node/src/node.rs:918 (`lent.retain(… is_none_or(carries))`, by the groups passed) | not fixed | One rule, a carried app listed only in its own group, written twice in two ways. `Folders::open` (carried.rs:196) is the gate. A change to who sees a carried app lands on one list. One function of the group and the asker, which both ask. |
+| 167 | 1 | crates/svrngs-node/src/carried.rs:178 (`filter_map(\|kind\| Lend::carried(kind, group))`) over crates/svrngs-node/src/lend.rs:229 and :233 (`.ok()?`) | not fixed | A folder `apps/<x>/index.html` whose `x` is not a lend name or a kind is left out of what a computer carries, and no trace names it. carried.rs:181 lists only what was found. |
+| 168 | 8 | web/tests/shelf.mjs:13-22; web/tests/reads.mjs:17-28; web/tests/links.mjs:19-26 | not fixed | A browser driver's preamble (the server, the context, the console log, the page, `held`) is written a third time beside page.mjs's `held`, `launch` and `serve`. Test code; one export from page.mjs would collapse it, witnessed by the browser suite in both engines. |
+| 80 | — | scripts/lean_check.py:36 BUDGET, :100 `n >= cap` | not fixed (operator's) | 16869 / 16870 after this audit, and 3149 / 3150 in svrngs-core. Of the +650, 555 are raised and 95 left (ceiling 16,965, fence 7). |
+| 130, 132-145, 150, 152-156 | as recorded | as recorded | not fixed | Not reached by this range's findings. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still one line early: lend.rs:180 for :181, carried.rs:97 for :98, blob.rs:145 for :146. |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". The JS exact tiers (web/, apps/) could not judge. |
+| I8 | 6 | dry-report scope | Still present: blob_tests.rs's `flush` reported as a production exact clone of relay_tests.rs's. |
+| I19 | 6 | dry-report, `tests/` scopes | Still present: the tool drops every path with a `tests` segment. The line-window pass stood in, and found the range's eight new test spans there. |
+| I29 | 6 | `refresh` over a corpus `code index` made | Still present: the daemon nudge refused, then the in-process rebuild and exit 0. |
+| I32 | 7 | dry-report's near tier, nested spans | Still present: question.js `door` over its returned `judge`, home.js `running` over its nested `look`. |
+| I33 | 6 | SCIP over web/src | New: web/ is a Cargo workspace of its own (the root's `members`, Cargo.toml:3, leaves it out), so `refresh` exports none of web/src's Rust. `converge noun Refused` lists core's and carried.rs's and not web/src/http.rs:47, and web/'s exact tier says "no SCIP function symbols in scope", which auto-1 read as I4 alone. |
