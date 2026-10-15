@@ -10,6 +10,7 @@ computer's door, Money and record read. Browsers are people.mjs's.
 
     W=<scratch> python3 demo/runs/v1ui/2026-10-15/run.py                   # data/
     PLANT=accounts W=<scratch> python3 demo/runs/v1ui/2026-10-15/run.py    # data/plants/accounts/
+    TAKE=2 W=<scratch> python3 demo/runs/v1ui/2026-10-15/run.py            # data/takes/2/, a take again
 
 FILMS=<dir> keeps the films between takes. The link's token, Jellyfin's
 keys and passwords are never in the data. scripts/check.sh runs none of
@@ -19,7 +20,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent; REPO = HERE.parents[3]
 W = Path(os.environ["W"]); PLANT = os.environ.get("PLANT")
-OUT = HERE / "data" / ("plants/" + PLANT if PLANT else ""); SHOTS = OUT / "shots"
+OUT = HERE / "data" / ("plants/" + PLANT if PLANT else "") / (f"takes/{os.environ['TAKE']}" if os.environ.get("TAKE") else ""); SHOTS = OUT / "shots"
 FILMS = Path(os.environ.get("FILMS") or W / "films")
 RELEASE = REPO / "target/release/svrngs"; MW = REPO / "apps/jellyfin/mw/target/debug/jellyfin-mw"
 JF_APP = Path("/Applications/Jellyfin.app/Contents"); JF = "http://127.0.0.1:8096"
@@ -292,7 +293,7 @@ def main():
     shutil.rmtree(W, ignore_errors=True); W.mkdir(parents=True)
     # A take clears its own data alone: the clean take keeps the planted's.
     for old in (OUT.iterdir() if OUT.exists() else []):
-        if old.name != "plants": shutil.rmtree(old) if old.is_dir() else old.unlink()
+        if old.name not in ("plants", "takes"): shutil.rmtree(old) if old.is_dir() else old.unlink()
     SHOTS.mkdir(parents=True)
     say("start", head=head(), plant=PLANT, load=round(os.getloadavg()[0], 1), cores=os.cpu_count(),
         dirty=subprocess.run(["git", "-C", REPO, "status", "--short"], capture_output=True, text=True).stdout.splitlines())
