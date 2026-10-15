@@ -827,6 +827,7 @@ impl Asking {
 fn people_router(asking: Asking) -> axum::Router {
     axum::Router::new()
         .route(PEOPLE_LENDS_ROUTE, get(people_lends))
+        .route("/shelf", axum::routing::post(crate::folder::bring))
         .with_state(asking)
 }
 
@@ -879,6 +880,7 @@ async fn people_lends(
     body["removals"] = serde_json::json!(removals);
     let people: BTreeMap<_, _> = groups.iter().flat_map(|(_, s)| s.clone()).collect();
     body["people"] = crate::rail::standing_json(&people);
+    body["shelf"] = crate::folder::shelf();
     Ok(Json(body).into_response())
 }
 

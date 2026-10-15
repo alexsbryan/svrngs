@@ -52,7 +52,7 @@ import init, {
   relay_of,
 } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
-import { door, el, named, once, question, removal, row, unlent, uses as used, whose } from './question.js?v=__VERSION__';
+import { door, el, named, once, question, removal, row, table, unlent, uses as used, whose } from './question.js?v=__VERSION__';
 
 const heading = document.getElementById('status');
 const said = document.getElementById('response');
@@ -352,7 +352,7 @@ async function enter(group, asked) {
     throw new Said('Your group’s computer said no.');
   }
   // A computer before bash-first-minute (c) answers neither unheard nor refused.
-  const { lent, unanswered, unheard = [], refused = [], removals, people } = await res.json();
+  const { lent, unanswered, unheard = [], refused = [], removals, people, shelf } = await res.json();
   await d.close();
   // The computers that lend, kept to reach the group through next time.
   const computers = new Map(lent.map((l) => [l.key, { key: l.key, relay: l.relay ?? null, person: l.person }]));
@@ -375,6 +375,13 @@ async function enter(group, asked) {
   const [drawn, judge] = people ? door(people) : [el('p'), () => {}];
   judge({ unanswered });
   document.getElementById('door').replaceChildren(drawn);
+  // The shelf, brought through the computer the page reaches (v1ui-shelf
+  // (c)); none from a computer before it, which keeps no shelf.
+  const bring = async (apps) => {
+    const [b] = await reachGroup(group, key, dialler);
+    return JSON.parse(await post(b, '/shelf', JSON.stringify([group.id, apps]), (_, text) => JSON.parse(text).error).finally(() => b.close()));
+  };
+  document.getElementById('shelf').replaceChildren(...(shelf ? [table(group, { lent, shelf }, bring)] : []));
   list.replaceChildren(
     row(['What', 'What it is', 'Whose', 'How it opens', 'Now'], 'th'),
     ...once(lent).map((l) => {

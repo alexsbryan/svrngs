@@ -108,13 +108,14 @@ export async function offline(context) {
 // In the page: its store holding a group joined by `token`, as joining
 // keeps one (web/store.js, u4-5): the person's key sealed, the group's
 // name, and the person's — a phone that joined; with `maker` and `since`,
-// who made the group and when the phone joined it (v1ui-door (d)).
+// who made the group and when the phone joined it (v1ui-door (d)); with
+// `id`, the group's own, as a phone that joined keeps it (v1ui-shelf (c)).
 // Imported as app.js imports it.
-export async function hold({ hex, token, person = 'bo', maker, since }) {
+export async function hold({ hex, token, person = 'bo', maker, since, id = 'held' }) {
   const app = document.querySelector('script[type=module]').src;
   const store = await import(new URL(`./store.js${new URL(app).search}`, app).href);
   const key = Uint8Array.from(hex.match(/../g), (h) => parseInt(h, 16));
-  await store.keep({ id: 'held', name: 'house', person, token, key, maker, since });
+  await store.keep({ id, name: 'house', person, token, key, maker, since });
 }
 
 // The group's page at `origin`, opened by the person `args.key` names in
@@ -122,7 +123,7 @@ export async function hold({ hex, token, person = 'bo', maker, since }) {
 // said, or its refusal.
 export async function held(page, origin, args) {
   await page.goto(origin);
-  await page.evaluate(hold, { hex: args.key, token: args.token });
+  await page.evaluate(hold, { hex: args.key, token: args.token, id: args.id });
   await page.goto('about:blank');
   await page.goto(`${origin}#${args.token}`);
   await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });

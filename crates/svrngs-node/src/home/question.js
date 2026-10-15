@@ -103,5 +103,24 @@ export function door(rows) {
   return [Object.assign(el('ul', '', ...cells.map((c) => c[2])), { className: 'door' }), judge];
 }
 
+// "Bring things to the table" (V1_UI_BUILD §3.4; v1ui-shelf (c)): the
+// shelf, svrngs's own apps as `lends.shelf` lists them, each not on group
+// `g`'s table yet ticked, and one button bringing the ticked ones, by
+// `bring(names)`, which answers each `{app, already}`; then what happened
+// said. One already on the table is said so. A group whose name cannot be
+// read is "your group".
+export function table(g, lends, bring) {
+  const name = g.name ?? 'your group';
+  const on = (a) => lends.lent.some((l) => l.group === g.id && l.kind === a.name);
+  const ticks = lends.shelf.filter((a) => !on(a)).map((a) => [a.name, Object.assign(el('input'), { type: 'checkbox', checked: true })]);
+  const said = el('p', ticks.length ? `These come with svrngs. Bring one, and everyone in ${name} opens it on their own computer or phone, while any computer in ${name} is on.` : '');
+  const s = el('section', '', el('h3', 'Bring things to the table'), ...lends.shelf.filter(on).map((a) => el('p', `${a.name} is on the table.`)), said);
+  for (const [name, tick] of ticks) s.append(el('p', '', el('label', '', tick, ` ${name}: ${lends.shelf.find((a) => a.name === name).words}`)));
+  const done = (r) => (r.already ? `${r.app} is on the table already.` : `You brought ${r.app} to ${name}: everyone in it can open it in a few seconds.`);
+  const go = () => bring(ticks.filter(([, t]) => t.checked).map(([n]) => n)).then((b) => said.replaceChildren(b.map(done).join(' ') || 'Tick something to bring first.'), (e) => said.replaceChildren(`Nothing was brought: ${e.message}`));
+  if (ticks.length) s.append(el('p', '', Object.assign(el('button', `Bring the ticked ones to ${name}`), { onclick: go })));
+  return s;
+}
+
 // A row of the index; `tag` th for its head.
 export const row = (cells, tag = 'td') => el('tr', '', ...cells.map((c) => el(tag, '', c)));

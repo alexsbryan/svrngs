@@ -271,6 +271,7 @@ async fn lends(
     let mut body = serde_json::json!(unlisted);
     body["namespace"] = namespace.into();
     body["lent"] = lent.into();
+    body["shelf"] = crate::folder::shelf();
     Ok(Json(body).into_response())
 }
 

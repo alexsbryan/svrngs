@@ -12,7 +12,7 @@
 // a folder opened (/folder) and a group made (/group, start-group). Its words are
 // DESIGN §1's: groups, people, what they lend, computer; its question and
 // what apps use and its removals are question.js's, the group's page's too.
-import { door, el, named, once, question, removal, row, unlent, uses as used, whose } from './question.js';
+import { door, el, named, once, question, removal, row, table, unlent, uses as used, whose } from './question.js';
 
 const main = document.getElementById('home');
 const button = (text, act) => Object.assign(el('button', text), { onclick: act });
@@ -111,6 +111,7 @@ async function show(g, s) {
     for (const p of lends.unheard) said(`${p}'s computer has not heard of this computer yet, so what they lend is not listed yet.`);
     for (const p of lends.refused) said(`${p}'s computer answered without saying what they lend, so it is not listed.`);
     if (!body.children.length) said('Nobody lends anything here yet.');
+    s.append(table(g, lends, (apps) => post('/shelf', [g.id, apps])));
     return lends.lent;
   } catch (e) {
     s.append(el('p', `What this group lends cannot be read on this computer: ${e.message}`));

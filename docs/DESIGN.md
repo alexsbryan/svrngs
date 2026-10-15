@@ -164,6 +164,8 @@ cursor, since a round may place an act before one already read and a
 correction voids one read before. Every answer carries the containment floor's
 headers (COMMUNITY_APPS §6.2): a policy that lets the page load and connect
 only to its own origin, no camera, microphone or location, no DNS prefetch.
+It comes to a group from the shelf (below, the home page's "brings things to
+the table") or as any folder dropped into the group's folder under `apps/`.
 Not yet: an inline `<script>` (svrngs computes no hashes of them), bytes from
 the route, and reading another app's acts.
 
@@ -390,6 +392,18 @@ the route, and reading another app's acts.
     when nothing answers there or a lend of its name stands, declared
     (`lend::declare`) through the page's `POST /running`, and the page
     then says what was lent and what it needs;
+  - brings things to the table (v1ui-shelf (c), V1_UI_BUILD §3.4): in each
+    group, the shelf — svrngs's own apps, Money and Events, listed as data
+    in `crates/svrngs-node/src/shelf.txt` and embedded at build
+    (`crates/svrngs-node/build.rs`), so svrngs's code names neither — each
+    not in the group yet ticked, and one button, "Bring the ticked ones to
+    <group>", writing each into the group's folder on this computer
+    (`POST /shelf`, carried.rs `bring`), never over one there already,
+    which then carries it as it carries any file; the page says what it
+    brought. The group's page on a phone draws the same shelf
+    (`question.js`, `table`) and brings through the computer it reaches,
+    on the members' protocol, whose door asks that the phone stands in the
+    group;
   - changes how many people at once may use what their computer lends, a
     number or everyone, or stops lending it (bash-limit, §10). This is
     written to the lend's declaration, which the door reads at its next
@@ -1396,7 +1410,7 @@ Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
 serves Jellyfin and breaks one fails the build.
 
 **Lean, and kept lean.** `svrngs-core` stays under 3,150 lines of code and the
-repository under 16,854 (`scripts/lean_check.py`; events-asleep raised it from 16,235 by 20, events-links by 33, events-principles by 17 and events-wait by 10, the operator's +80 for the events follow-ups all spent; v1ui-economize cut nothing, and of the operator's +650 for the v1 UI over 16,315, v1ui-reach raised it by 24, v1ui-door by 108, v1ui-lend by 121 and v1ui-shelf by 286), the branch `folders`
+repository under 16,764 (`scripts/lean_check.py`; events-asleep raised it from 16,235 by 20, events-links by 33, events-principles by 17 and events-wait by 10, the operator's +80 for the events follow-ups all spent; v1ui-economize cut nothing, and of the operator's +650 for the v1 UI over 16,315, v1ui-reach raised it by 24, v1ui-door by 108, v1ui-lend by 121 and v1ui-shelf (a) and (b) by 196), the branch `folders`
 too since main merged into it at syp-5, counting 13,778 and `svrngs-core`
 2,719 there. A raise is the operator's, and is asked only after an
 economizing pass (the operator, 2026-10-13: "Every raise needs a pass

@@ -127,6 +127,7 @@ pub(crate) fn router(
         .route("/running", get(running).post(lend_one))
         .route("/link", axum::routing::post(link))
         .route("/folder", axum::routing::post(open))
+        .route("/shelf", axum::routing::post(crate::folder::bring))
         .route("/group", get(namesakes).post(found))
         .with_state(at.clone())
         .merge(

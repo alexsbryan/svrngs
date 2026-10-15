@@ -269,3 +269,77 @@ async fn money_and_events_open_and_write_at_their_origin(engine: Engine) {
     assert!(coming.contains("Coming: you."), "{seen:#}");
     drop(ada);
 }
+
+in_both_engines!(
+    /// **Bring things to the table, on the home page** (v1ui-shelf (c);
+    /// V1_UI_BUILD §3.4): ada's home page offers Money and Events, both
+    /// ticked; one tap brings them, the page says so, and her computer
+    /// lists each as house's. House keeps no seed here, so the page calls
+    /// it "your group". Red before (c): no shelf on the page.
+    the_home_page_brings_things_to_the_table
+);
+async fn the_home_page_brings_things_to_the_table(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let folder = dir.path().join("house");
+    std::fs::create_dir(&folder).unwrap();
+    keep_folder(&ada, &folder).await;
+    let bring = json!([["text=Bring the ticked ones to your group", null, true]]);
+    let args = json!({ "all": "#home section h3 ~ p", "do": bring });
+    let seen = home_page(engine, &ada, args).await;
+    eprintln!("the home page's run: {seen:#}");
+    let before = seen["all"].to_string();
+    assert!(
+        before.contains("Money: who paid for what, and who owes whom."),
+        "{seen:#}"
+    );
+    assert!(before.contains("Events: post a get-together"), "{seen:#}");
+    let after = seen["after"][0].to_string();
+    assert!(
+        after.contains(
+            "You brought Money to your group: everyone in it can open it in a few seconds."
+        ) && after.contains("You brought Events to your group"),
+        "{seen:#}"
+    );
+    for app in ["Money", "Events"] {
+        carried_at(&ada, app).await;
+        assert!(folder.join("apps").join(app).join("look.css").exists());
+    }
+    drop(ada);
+}
+
+in_both_engines!(
+    /// **Bring things to the table, on a phone** (v1ui-shelf (c)): bo's
+    /// phone, in house through ada's computer, brings the shelf's two apps
+    /// by the one button; the page says so, and ada's computer lists each
+    /// as house's. Red before (c): the page has no shelf.
+    the_phone_brings_things_to_the_table
+);
+async fn the_phone_brings_things_to_the_table(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let bo = signing(7);
+    let ada = node(dir.path(), &relay, &bo).await;
+    let folder = dir.path().join("house");
+    std::fs::create_dir(&folder).unwrap();
+    keep_folder(&ada, &folder).await;
+    let args = json!({
+        "site": site(),
+        "key": hex::encode(bo.to_bytes()),
+        "token": token(&signing(1), &relay),
+        "id": NS,
+    });
+    let seen = drive(engine, "shelf.mjs", args, None).await;
+    eprintln!("the phone's run: {seen:#}");
+    let after = seen["after"].as_str().unwrap_or_default();
+    assert!(
+        after.contains("You brought Money to house: everyone in it can open it in a few seconds.")
+            && after.contains("You brought Events to house"),
+        "{seen:#}"
+    );
+    for app in ["Money", "Events"] {
+        carried_at(&ada, app).await;
+    }
+    drop(ada);
+}

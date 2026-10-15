@@ -31,21 +31,24 @@
 //! a frame and a worker load only there.
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::fs::{create_dir_all, write};
 use std::path::Path;
 
 use axum::body::to_bytes;
-use axum::extract::Request;
+use axum::extract::{Request, State};
 use axum::http::header::{self, HeaderName, HeaderValue};
 use axum::http::{Method, StatusCode};
 use axum::response::{IntoResponse, Response};
-use axum::Json;
+use axum::{Extension, Json};
 use iroh_blobs::Hash;
 use serde_json::{json, Map, Value};
 use svrngs_core::Placed;
 
-use super::Folders;
+use super::{dirs_of, Folders};
 use crate::door::LendRefusal::{self, Away, Closed, Fault, Path as Malformed, Unlent};
+use crate::iroh::Dialer;
 use crate::lend::{Kind, Lend};
+use crate::node::Asking;
 use crate::register::{Member, Standing};
 
 /// Where a carried app's page asks its own acts, and writes one, at its
@@ -78,12 +81,78 @@ const NOT_YET: Refused = (Away, 503, "this computer does not hold it yet");
 const NOT_AN_ACT: Refused = (Malformed, 422, "an act is JSON, {op} or {corrects, op}");
 const NOT_ITS_OWN: Refused = (Closed, 403, "an app corrects only its own acts");
 const NOT_ITS_GROUP: Refused = (Closed, 403, "this is its own group's alone");
+const NOT_IN: Refused = (
+    Closed,
+    403,
+    "you can bring things only to a group you’re in",
+);
+const NO_FOLDER: Refused = (Closed, 409, "this computer keeps no folder of that group");
+const UNWRITTEN: Refused = (Fault, 500, "your group’s folder can’t be written here");
+
+/// svrngs's own answer for `refused`.
+fn said((kind, status, why): Refused) -> Response {
+    kind.say(StatusCode::from_u16(status).expect("a status"), why)
+}
 
 /// A carried app's answer, or why the door gives its own.
 type Answer = Result<Response, Refused>;
 
 /// The people standing in a group, by key.
 type People = BTreeMap<String, Member>;
+
+/// The shelf (V1_UI_BUILD §3.4; v1ui-shelf (c)): svrngs's own reference
+/// apps, which ship with it, and nothing else — nothing on it is a
+/// stranger's (COMMUNITY_APPS §6.2). Each its name, what it is in a
+/// sentence, and its files, as `src/shelf.txt` lists them and build.rs
+/// embeds them.
+const SHELF: &[(&str, &str, [File; 4])] = include!(concat!(env!("OUT_DIR"), "/shelf.rs"));
+
+/// A file an app brings: its name in the app's folder, and its text.
+type File = (&'static str, &'static str);
+
+/// The shelf as the pages list it, beside what a group's people lend.
+pub(crate) fn shelf() -> Value {
+    (SHELF.iter())
+        .map(|(name, words, _)| json!({ "name": name, "words": words }))
+        .collect()
+}
+
+/// What a page asks brought to a group's table: the group's id, and the
+/// shelf's apps by name.
+type Asked = Json<(String, Vec<String>)>;
+
+/// `POST /shelf`: the shelf's apps a page names brought into its group's
+/// folder on this computer ([`brought`]), from the home page or from a
+/// phone of the group's dialling it (`by`).
+pub(crate) async fn bring(at: State<Asking>, by: Option<Extension<Dialer>>, a: Asked) -> Response {
+    let (State(at), Json((group, apps))) = (at, a);
+    let asker = by.map_or(at.host.actor().to_string(), |Extension(d)| d.actor());
+    let brought = brought(&at, &group, &asker, &apps);
+    tracing::debug!(target: "folder", group, asker, ?apps, status = ?brought.as_ref().map(|b| b.status()), "shelf: the apps asked brought to the group, or why none");
+    brought.unwrap_or_else(said)
+}
+
+/// Each of `apps` on the shelf brought into `group`'s folder here for
+/// `asker`, who stands in it: a folder `apps/<name>/` of its files, never
+/// over one there already, which the folder then carries to the group as
+/// it carries any file. Each said, and whether it was there already.
+fn brought(at: &Asking, group: &str, asker: &str, apps: &[String]) -> Answer {
+    let stands = at.host.rail().standing(group).is_ok_and(|s| s.names(asker));
+    stands.then_some(()).ok_or(NOT_IN)?;
+    let dirs = dirs_of(&at.folders.data_dir, group).map_err(|_| NO_FOLDER)?;
+    let dir = dirs.first().ok_or(NO_FOLDER)?;
+    let mut said = Vec::new();
+    for (name, _, files) in SHELF.iter().filter(|(n, ..)| apps.iter().any(|a| a == n)) {
+        let at = dir.join("apps").join(name);
+        let there = at.join("index.html").exists();
+        let put =
+            |(f, text): &(&str, &str)| create_dir_all(&at).and_then(|()| write(at.join(f), text));
+        let wrote: Result<(), _> = files.iter().filter(|_| !there).try_for_each(put);
+        wrote.map_err(|_| UNWRITTEN)?;
+        said.push(json!({ "app": name, "already": there }));
+    }
+    Ok(Json(said).into_response())
+}
 
 /// The kind of the app whose page `placed` is, `apps/<kind>/index.html`;
 /// none for any other file, or one beside it as a conflict.
@@ -131,9 +200,7 @@ impl Folders {
         };
         let refused = answered.as_ref().err().map(|r| r.2);
         tracing::debug!(target: "folder", lend = %lend.name, group, key, path, ?refused, "carried: answered, or refused and why");
-        let mut answer = answered.unwrap_or_else(|(kind, status, why)| {
-            kind.say(StatusCode::from_u16(status).expect("a status"), why)
-        });
+        let mut answer = answered.unwrap_or_else(said);
         let floor = FLOOR.map(|(n, v)| (HeaderName::from_static(n), HeaderValue::from_static(v)));
         answer.headers_mut().extend(floor);
         answer
