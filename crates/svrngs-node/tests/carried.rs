@@ -187,6 +187,18 @@ async fn at(
     ask.send().await.unwrap()
 }
 
+/// The ops of an app's route's answer that a fold counts, each `[by, op]`:
+/// not voided, and stating something.
+fn live(read: &Value) -> Vec<Value> {
+    let ops = read["ops"].as_array().expect("the route answers its ops");
+    let counted = ops
+        .iter()
+        .filter(|o| o["voided"] == false && !o["payload"].is_null());
+    counted
+        .map(|o| json!([o["on_behalf_of"], o["payload"]]))
+        .collect()
+}
+
 /// The containment floor's headers (COMMUNITY_APPS §6.2) on `answer`, or
 /// what of them is missing.
 fn floor(answer: &reqwest::Response) -> Result<(), String> {
@@ -288,12 +300,10 @@ async fn an_app_one_computer_carried_opens_and_writes_on_another_with_it_stopped
         .await
         .unwrap();
     assert_eq!(read["you"], "cy", "{read:#}");
-    let acts = read["acts"].as_array().unwrap();
-    assert_eq!(acts.len(), 1, "{read:#}");
-    assert_eq!(acts[0]["by"], "cy", "{read:#}");
     assert_eq!(
-        acts[0]["op"], op,
-        "the app reads its act as it wrote it:\n{read:#}"
+        live(&read),
+        [json!(["cy", op])],
+        "the app reads its act as it wrote it, Cy's:\n{read:#}"
     );
     for node in [ben, cy] {
         node.endpoint().close().await;
@@ -359,7 +369,7 @@ async fn an_app_reads_only_its_own_acts_and_writes_only_as_the_person() {
         .await
         .unwrap();
     assert_eq!(
-        read["acts"],
+        read["ops"],
         json!([]),
         "Events reads none of Money's acts:\n{read:#}"
     );
@@ -372,10 +382,10 @@ async fn an_app_reads_only_its_own_acts_and_writes_only_as_the_person() {
         .json()
         .await
         .unwrap();
-    let acts = read["acts"].as_array().unwrap();
+    let acts = live(&read);
     assert_eq!(acts.len(), 1, "{read:#}");
     assert_eq!(
-        acts[0]["by"], "cy",
+        acts[0][0], "cy",
         "the stamp is the person's, never the body's:\n{read:#}"
     );
     let money_read: Value = at(cy, &money, "GET", "/svrngs/acts", None)
@@ -384,7 +394,7 @@ async fn an_app_reads_only_its_own_acts_and_writes_only_as_the_person() {
         .await
         .unwrap();
     assert_eq!(
-        money_read["acts"].as_array().unwrap().len(),
+        live(&money_read).len(),
         1,
         "an act Events wrote is never Money's, whatever its kind says:\n{money_read:#}"
     );
@@ -401,9 +411,14 @@ async fn an_app_reads_only_its_own_acts_and_writes_only_as_the_person() {
         .await
         .unwrap();
     assert_eq!(
-        money_read["acts"],
-        json!([]),
+        live(&money_read),
+        Vec::<Value>::new(),
         "Money voided its own act:\n{money_read:#}"
+    );
+    let ops = money_read["ops"].as_array().unwrap();
+    assert!(
+        ops.iter().any(|o| o["corrects"] == theirs.as_str()),
+        "and reads the correction, as a fold that decides voids needs:\n{money_read:#}"
     );
     for node in [ana, ben, cy] {
         node.endpoint().close().await;

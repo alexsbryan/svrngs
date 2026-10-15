@@ -1,0 +1,37 @@
+
+running 3 tests
+an_app_reads_only_its_own_acts_and_writes_only_as_the_person --- FAILED
+. 2/3
+an_app_one_computer_carried_opens_and_writes_on_another_with_it_stopped --- FAILED
+
+failures:
+
+---- an_app_reads_only_its_own_acts_and_writes_only_as_the_person stdout ----
+
+thread 'an_app_reads_only_its_own_acts_and_writes_only_as_the_person' (46099785) panicked at crates/svrngs-node/tests/carried.rs:371:5:
+assertion `left == right` failed: Events reads none of Money's acts:
+{
+  "acts": [],
+  "people": [
+    "ana",
+    "ben",
+    "cy"
+  ],
+  "you": "cy"
+}
+  left: Null
+ right: Array []
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- an_app_one_computer_carried_opens_and_writes_on_another_with_it_stopped stdout ----
+
+thread 'an_app_one_computer_carried_opens_and_writes_on_another_with_it_stopped' (46099784) panicked at crates/svrngs-node/tests/carried.rs:193:38:
+the route answers its ops
+
+
+failures:
+    an_app_one_computer_carried_opens_and_writes_on_another_with_it_stopped
+    an_app_reads_only_its_own_acts_and_writes_only_as_the_person
+
+test result: FAILED. 1 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.53s
+

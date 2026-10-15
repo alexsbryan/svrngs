@@ -13,8 +13,10 @@
 //! - a file, from the store, by the hash the group's layout places at its
 //!   path, `index.html` for a directory's;
 //! - [`ACTS`], the app's route: `GET` its own acts — each whose `kind`
-//!   begins `<kind>/`, the prefix taken off — in the record's order, as
-//!   `{id, ts, by, op}`, with who asks, `you`, and the people in the group;
+//!   begins `<kind>/`, the prefix taken off, and each correction of one —
+//!   as `ops`, in the record's order and the shape `/v1/rail/log` gives
+//!   them, voided ones too, so an app's fold reads them as it reads the
+//!   record; with who asks, `you`, and the people in the group;
 //!   `POST {op}` records an act, and `{corrects, op}` corrects one of its
 //!   own, `op` null to void it: the prefix put on its kind, and
 //!   `on_behalf_of` the person the door resolved, never a word of the
@@ -160,15 +162,20 @@ impl Folders {
         let own =
             |o: &Value| Some((o["payload"]["kind"].as_str()?.strip_prefix(&prefix)?).to_string());
         if req.method() == Method::GET {
-            let acts = (ops.iter().filter(|o| o["voided"] == false)).filter_map(|o| {
-                let (mut op, by) = (o["payload"].clone(), o.get("on_behalf_of"));
-                op["kind"] = own(o)?.into();
-                let by = by.unwrap_or(&o["person"]);
-                Some(json!({ "id": o["id"], "ts": o["ts_unix"], "by": by, "op": op }))
+            let mine: BTreeSet<_> = (ops.iter().filter(|o| own(o).is_some()))
+                .filter_map(|o| o["id"].as_str())
+                .collect();
+            let voids_mine = |o: &Value| o["corrects"].as_str().is_some_and(|id| mine.contains(id));
+            let ops = (ops.iter().filter(|o| own(o).is_some() || voids_mine(o))).map(|o| {
+                let mut o = o.clone();
+                if let Some(kind) = own(&o) {
+                    o["payload"]["kind"] = kind.into();
+                }
+                o
             });
-            let all: BTreeSet<_> = people.values().map(|m| &m.person).collect();
-            let acts: Vec<Value> = acts.collect();
-            return Ok(Json(json!({ "you": person, "people": all, "acts": acts })).into_response());
+            let (all, ops): (BTreeSet<_>, Vec<_>) =
+                (people.values().map(|m| &m.person).collect(), ops.collect());
+            return Ok(Json(json!({ "you": person, "people": all, "ops": ops })).into_response());
         }
         let body = (to_bytes(req.into_body(), WRITE_MOST).await).map_err(|_| NOT_AN_ACT)?;
         let mut body: Map<String, Value> = serde_json::from_slice(&body).map_err(|_| NOT_AN_ACT)?;

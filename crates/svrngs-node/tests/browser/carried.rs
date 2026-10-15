@@ -87,7 +87,13 @@ Promise.all([
         &[("index.html", page.into()), ("probe.js", probe)],
     );
     let origin = carried_at(&ada, "Probe").await;
-    let seen = drive(engine, "carried.mjs", json!({ "url": origin }), None).await;
+    let seen = drive(
+        engine,
+        "carried.mjs",
+        json!({ "url": origin, "title": "tried" }),
+        None,
+    )
+    .await;
     eprintln!("the page's run: {seen:#}");
     assert_eq!(seen["title"], "tried", "{seen:#}");
     let reached = reached.lock().unwrap().clone();
@@ -126,8 +132,9 @@ async fn an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another
     let script = "const acts = 'svrngs/acts';
 const wrote = await fetch(acts, { method: 'POST', headers: { 'content-type': 'application/json' },
   body: JSON.stringify({ op: { kind: 'expense', amount_cents: 1200, description: 'the bins' } }) });
-const read = wrote.ok ? await (await fetch(acts)).json() : { acts: [] };
-document.title = `Money: ${read.acts.length} by ${read.acts.map((a) => a.by).join(', ')}`;
+const read = wrote.ok ? await (await fetch(acts)).json() : {};
+const ops = read.ops ?? [];
+document.title = `Money: ${ops.length} by ${ops.map((o) => o.on_behalf_of).join(', ')}`;
 ";
     let page = "<!doctype html><title>Money</title><script type=module src=money.js></script>";
     carry(
@@ -192,4 +199,73 @@ document.title = `Money: ${read.acts.length} by ${read.acts.map((a) => a.by).joi
         }
     }
     drop(cy);
+}
+
+/// The files of the app in `apps/<dir>/` its page needs: its page, its
+/// script and its fold.
+fn files_of<'a>(dir: &str, fold: &'a str) -> Vec<(&'a str, String)> {
+    let read = |f: &str| std::fs::read_to_string(repo().join("apps").join(dir).join(f));
+    let read = |f: &'a str| (f, read(f).unwrap_or_default());
+    ["index.html", "index.js", fold].map(read).to_vec()
+}
+
+in_both_engines!(
+    /// **Money and Events, static pages on the route, their folds
+    /// unchanged** (v1ui-shelf (b)): each carried in house from its files
+    /// in `apps/`, opened at its origin on ada's computer. On Money, ada
+    /// adds the gas bill and it is listed as hers; on Events, ada posts a
+    /// party, says she's coming, and it says so. Red before the pages:
+    /// `apps/expenses/` and `apps/events/` hold no page.
+    money_and_events_open_and_write_at_their_origin
+);
+async fn money_and_events_open_and_write_at_their_origin(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let folder = dir.path().join("house");
+    std::fs::create_dir(&folder).unwrap();
+    keep_folder(&ada, &folder).await;
+    carry(&folder, "Money", &files_of("expenses", "expenses.js"));
+    carry(&folder, "Events", &files_of("events", "events.js"));
+
+    let money = carried_at(&ada, "Money").await;
+    let steps = json!([["#what", "the gas bill"], ["#amount", "42"], ["#add"]]);
+    let seen = drive(
+        engine,
+        "carried.mjs",
+        json!({ "url": money, "do": steps }),
+        None,
+    )
+    .await;
+    eprintln!("Money's run: {seen:#}");
+    let after = seen["after"][0].as_str().unwrap_or_default();
+    assert!(
+        after.contains("You paid $42.00 for the gas bill, split between ada."),
+        "{seen:#}"
+    );
+
+    let events = carried_at(&ada, "Events").await;
+    let steps = json!([
+        ["#what", "a party"],
+        ["#when", "Saturday"],
+        ["#where", "Elm Street"],
+        ["#post"],
+        ["text=Say you’re coming"]
+    ]);
+    let seen = drive(
+        engine,
+        "carried.mjs",
+        json!({ "url": events, "do": steps }),
+        None,
+    )
+    .await;
+    eprintln!("Events' run: {seen:#}");
+    let posted = seen["after"][0].as_str().unwrap_or_default();
+    assert!(
+        posted.contains("Saturday, at Elm Street. You host it."),
+        "{seen:#}"
+    );
+    let coming = seen["after"][1].as_str().unwrap_or_default();
+    assert!(coming.contains("Coming: you."), "{seen:#}");
+    drop(ada);
 }

@@ -152,8 +152,10 @@ it can reach the group through. svrngs runs none of its code: the door answers
 it from the store (`crates/svrngs-node/src/carried.rs`) — a file by the hash
 the group's layout places at its path, `index.html` for a directory's — and
 from **its route**, `/svrngs/acts` at its own origin: `GET` answers its own
-acts, each whose `kind` begins `<kind>/`, the prefix taken off, as
-`{id, ts, by, op}` in the record's order, with `you` and the group's `people`;
+acts, each whose `kind` begins `<kind>/`, the prefix taken off, and each
+correction of one, as `ops` in the shape `/v1/rail/log` gives them, voided ones
+too, so an app's fold reads them as it reads the record (Events' decides whose
+correction counts), with `you` and the group's `people`;
 `POST {op}` records one and `{corrects, op}` corrects one of its own, `op`
 null to void it. svrngs puts the prefix on, and writes `on_behalf_of` as the
 person the door resolved, never a word of the request's body; a correction of
