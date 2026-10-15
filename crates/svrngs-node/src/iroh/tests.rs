@@ -9,7 +9,16 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 /// acceptor, and the dialer's transport, whose bridge the URL names.
 pub(crate) struct OnStream {
     _acceptor: IrohAcceptor,
-    _transport: IrohTransport,
+    transport: IrohTransport,
+    contact: Contact,
+}
+
+impl OnStream {
+    /// The served router as a member a request is sent to, from the
+    /// dialer's transport (arch-peer (c)).
+    pub(crate) fn to(&self) -> (&IrohTransport, &Contact) {
+        (&self.transport, &self.contact)
+    }
 }
 
 /// `router` served by an acceptor that admits every dialer, on a
@@ -28,19 +37,21 @@ pub(crate) async fn serve_on_stream(router: axum::Router, dialer: SecretKey) -> 
         .await
         .expect("hermetic endpoint bind");
     let transport = IrohTransport::new(dialling);
+    let contact = Contact {
+        key: served.id(),
+        relay_url: None,
+        iroh_direct_addrs: addrs,
+    };
     let base = transport
-        .base_url(&Contact {
-            key: served.id(),
-            relay_url: None,
-            iroh_direct_addrs: addrs,
-        })
+        .base_url(&contact)
         .await
         .expect("a contact with an address resolves");
     (
         base,
         OnStream {
             _acceptor: acceptor,
-            _transport: transport,
+            transport,
+            contact,
         },
     )
 }

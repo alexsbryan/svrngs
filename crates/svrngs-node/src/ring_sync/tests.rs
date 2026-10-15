@@ -219,8 +219,8 @@ async fn a_journal_past_the_one_exchange_ceiling_converges_onto_a_fresh_peer() {
     let (rail, journal) = node(sender_dir.path(), &key, N);
     let (peer_rail, peer_journal) = node(peer_dir.path(), &key, 0);
 
-    let (url, _served) = serve(peer_rail, &key).await;
-    let out = exchange(&reqwest::Client::new(), &url, rail.as_ref(), NS).await;
+    let (_, served) = serve(peer_rail, &key).await;
+    let out = exchange(served.to(), rail.as_ref(), NS).await;
 
     assert!(out.stop.is_none(), "the exchange failed: {:?}", out.stop);
     assert_eq!(out.pushed, N, "every op landed on the peer");
@@ -251,8 +251,8 @@ async fn a_peers_seal_prunes_this_nodes_disk_in_the_round_it_arrives() {
         .unwrap();
     assert_eq!(journal.read().unwrap().0.len(), 3, "control: we hold three");
 
-    let (url, _served) = serve(peer_rail, &key).await;
-    let out = exchange(&reqwest::Client::new(), &url, rail.as_ref(), NS).await;
+    let (_, served) = serve(peer_rail, &key).await;
+    let out = exchange(served.to(), rail.as_ref(), NS).await;
 
     assert!(out.stop.is_none(), "the exchange failed: {:?}", out.stop);
     assert_eq!(out.pulled, 1, "one op came over, and it was the seal");
@@ -286,8 +286,8 @@ async fn an_ordinary_op_arriving_prunes_nothing() {
         ))
         .unwrap();
 
-    let (url, _served) = serve(peer_rail, &key).await;
-    let out = exchange(&reqwest::Client::new(), &url, rail.as_ref(), NS).await;
+    let (_, served) = serve(peer_rail, &key).await;
+    let out = exchange(served.to(), rail.as_ref(), NS).await;
     assert_eq!(out.pulled, 1);
     assert_eq!(journal.read().unwrap().0.len(), 4, "nothing was retired");
 }
@@ -447,8 +447,8 @@ async fn a_seal_shortens_the_exchange_only_once_the_retired_lines_are_deleted() 
     async fn bootstrap(rail: &RingRail, key: &SigningKey) -> (usize, Journal, tempfile::TempDir) {
         let p = tempfile::tempdir().unwrap();
         let (peer, peer_journal) = node(p.path(), key, 0);
-        let (url, _served) = serve(peer, key).await;
-        let out = exchange(&reqwest::Client::new(), &url, rail, NS).await;
+        let (_, served) = serve(peer, key).await;
+        let out = exchange(served.to(), rail, NS).await;
         assert!(out.stop.is_none(), "{:?}", out.stop);
         (out.pushed, peer_journal, p)
     }
@@ -501,10 +501,11 @@ async fn a_seal_shortens_the_exchange_only_once_the_retired_lines_are_deleted() 
     );
 }
 
-/// A route answering `body` to every exchange, served; its URL.
+/// A route answering `body` to every exchange, served on the stream to
+/// any dialer.
 async fn stand_in(
     answer: impl Fn(RingSyncRequest) -> axum::response::Response + Clone + Send + Sync + 'static,
-) -> String {
+) -> crate::iroh::tests::OnStream {
     let app = axum::Router::new().route(
         "/internal/ring/sync",
         axum::routing::post(move |body: axum::body::Bytes| {
@@ -512,7 +513,8 @@ async fn stand_in(
             async move { answer(serde_json::from_slice(&body).unwrap()) }
         }),
     );
-    format!("http://{}/internal/ring/sync", serve_at(app).await)
+    let any = crate::iroh::SecretKey::from_bytes(&[1; 32]);
+    crate::iroh::tests::serve_on_stream(app, any).await.1
 }
 
 /// A real pull is not discarded by a later failure: call 1's ops are on
@@ -520,7 +522,7 @@ async fn stand_in(
 #[tokio::test]
 async fn a_second_call_that_fails_still_reports_what_the_first_call_pulled() {
     let gift = ops_in(NS, &SigningKey::from_bytes(&[9u8; 32]), 5);
-    let url = stand_in(move |req| {
+    let stood = stand_in(move |req| {
         if !req.ops.is_empty() {
             return axum::http::StatusCode::PAYLOAD_TOO_LARGE.into_response();
         }
@@ -536,7 +538,7 @@ async fn a_second_call_that_fails_still_reports_what_the_first_call_pulled() {
     let dir = tempfile::tempdir().unwrap();
     let (rail, journal) = node(dir.path(), &SigningKey::from_bytes(&[1u8; 32]), 3);
 
-    let out = exchange(&reqwest::Client::new(), &url, rail.as_ref(), NS).await;
+    let out = exchange(stood.to(), rail.as_ref(), NS).await;
     assert!(
         matches!(out.stop, Some(ExchangeStop::Refused { .. })),
         "a 413 is a refusal: {:?}",
@@ -552,13 +554,13 @@ async fn a_peer_that_answers_403_or_413_is_refused_rather_than_unreachable() {
     let dir = tempfile::tempdir().unwrap();
     let (rail, _journal) = node(dir.path(), &SigningKey::from_bytes(&[1u8; 32]), 3);
     for code in [403u16, 413] {
-        let url = stand_in(move |_| {
+        let stood = stand_in(move |_| {
             axum::http::StatusCode::from_u16(code)
                 .unwrap()
                 .into_response()
         })
         .await;
-        let out = exchange(&reqwest::Client::new(), &url, rail.as_ref(), NS).await;
+        let out = exchange(stood.to(), rail.as_ref(), NS).await;
         match out.stop {
             Some(ExchangeStop::Refused { sent_bytes, status }) => {
                 assert_eq!(status, code, "the status picks the sentence");
@@ -570,13 +572,14 @@ async fn a_peer_that_answers_403_or_413_is_refused_rather_than_unreachable() {
             other => panic!("{code}: expected Refused, got {other:?}"),
         }
     }
-    let out = exchange(
-        &reqwest::Client::new(),
-        "http://127.0.0.1:1/internal/ring/sync",
-        rail.as_ref(),
-        NS,
-    )
-    .await;
+    let nobody =
+        crate::iroh::IrohTransport::new(crate::iroh::tests::hermetic_endpoint(9, vec![]).await);
+    let dead = crate::iroh::Contact {
+        key: crate::iroh::SecretKey::from_bytes(&[8; 32]).public(),
+        relay_url: None,
+        iroh_direct_addrs: vec!["127.0.0.1:1".parse().unwrap()],
+    };
+    let out = exchange((&nobody, &dead), rail.as_ref(), NS).await;
     assert!(
         matches!(out.stop, Some(ExchangeStop::Failed(_))),
         "an unreachable address is not a refusal: {:?}",
@@ -590,7 +593,7 @@ async fn a_peer_that_answers_403_or_413_is_refused_rather_than_unreachable() {
 async fn a_peer_whose_digest_never_moves_stops_the_loop_instead_of_spinning() {
     let hits = Arc::new(std::sync::atomic::AtomicUsize::new(0));
     let counter = hits.clone();
-    let url = stand_in(move |req| {
+    let stood = stand_in(move |req| {
         counter.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         axum::Json(RingSyncResponse {
             namespace: req.namespace,
@@ -604,7 +607,7 @@ async fn a_peer_whose_digest_never_moves_stops_the_loop_instead_of_spinning() {
     let dir = tempfile::tempdir().unwrap();
     let (rail, _journal) = node(dir.path(), &SigningKey::from_bytes(&[1u8; 32]), 3);
 
-    let out = exchange(&reqwest::Client::new(), &url, rail.as_ref(), NS).await;
+    let out = exchange(stood.to(), rail.as_ref(), NS).await;
     assert!(out.stop.is_none());
     assert_eq!((out.pulled, out.pushed), (0, 0));
     let calls = hits.load(std::sync::atomic::Ordering::SeqCst);

@@ -70,7 +70,7 @@ pub struct RingInbound {
 pub fn router(state: RingInbound) -> axum::Router {
     axum::Router::new()
         .route(
-            "/internal/ring/sync",
+            crate::ring_sync::SYNC_ROUTE,
             post(ring_sync).layer(DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES)),
         )
         .route("/internal/ring/live", post(ring_live))

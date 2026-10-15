@@ -100,6 +100,7 @@ pub use journal::RoundMembers;
 
 use crate::iroh::key_actor;
 use crate::node::Host;
+use axum::http::StatusCode;
 
 /// Money does not need ten-second convergence, and the bandwidth argument in
 /// the module docs says it must not have it.
@@ -300,13 +301,6 @@ pub async fn run_one_round(host: &Host, answered: &(impl Fn() + Sync)) -> RoundO
     // Where this computer is reached, said before it dials, so a move goes
     // out in this round (relay-in-record).
     host.say_relay();
-    let http = match host.http() {
-        Ok(c) => c,
-        Err(e) => {
-            warn!(error = %e, "ring sync: no http client");
-            return outcome;
-        }
-    };
 
     let Some(RoundMembers {
         peers,
@@ -383,7 +377,7 @@ pub async fn run_one_round(host: &Host, answered: &(impl Fn() + Sync)) -> RoundO
 
         for OnlinePeer { contact, .. } in offered_to {
             dials.push(async move {
-                let ended = exchange_with(http, transport, rail, namespace, contact).await;
+                let ended = exchange_with((transport, contact), rail, namespace).await;
                 if matches!(ended.2, Reach::Reached) {
                     answered();
                 }
@@ -412,71 +406,41 @@ enum Reach {
     Unreachable,
 }
 
-/// One round's exchange of `namespace` with the member at `contact`, at each
-/// address the transport answers until one works: the ops pulled and pushed,
-/// and how it ended.
-async fn exchange_with(
-    http: &reqwest::Client,
-    transport: &crate::iroh::IrohTransport,
-    rail: &RingRail,
-    namespace: &str,
-    contact: &crate::iroh::Contact,
-) -> (usize, usize, Reach) {
-    let (mut pulled, mut pushed) = (0, 0);
-    // Upstream's transport answered a list of candidate addresses;
-    // `base_url` answers at most one, and the loop below keeps its shape.
-    let endpoints: Vec<String> = transport.base_url(contact).await.into_iter().collect();
-    let mut reached = false;
-    let mut refused = false;
-    for base_url in &endpoints {
-        let url = format!("{base_url}/internal/ring/sync");
-        let ex = exchange(http, &url, rail, namespace).await;
-        // Counted BEFORE the verdict is read. `ingest_all` has already
-        // written these lines to disk, so they are progress whether or
-        // not a later call in the same exchange failed — the old shape
-        // returned `Err` and threw the pulled count away, which made
-        // `ops_pulled` undercount exactly in the failure case.
-        pulled += ex.pulled;
-        pushed += ex.pushed;
-        match ex.stop {
-            None => {
-                reached = true;
-                break; // one working address is enough
-            }
-            Some(ExchangeStop::Refused { sent_bytes, status }) => {
-                refused = true;
-                warn!(
-                    peer = %contact.key,
-                    url = %url,
-                    sent_bytes,
-                    status,
-                    budget_bytes = RING_SYNC_OPS_BUDGET_BYTES,
-                    "ring sync: peer REFUSED — it answered, so this is \
-                     not an unreachable peer. 413: its body limit is \
-                     below this build's exchange budget. 403: it does \
-                     not serve this ring to us — we hold no standing \
-                     in its register there, or it holds no such ring"
-                );
-            }
-            Some(ExchangeStop::Failed(detail)) => {
-                debug!(
-                    peer = %contact.key,
-                    url = %url,
-                    detail,
-                    "ring sync: exchange failed, trying next address"
-                );
-            }
+/// One round's exchange of `namespace` with the member at `to`: the ops
+/// pulled and pushed, and how it ended. (svrngs, arch-peer (c): upstream
+/// tried each address its transport answered until one worked; a member is
+/// asked by its key now, so there is one.)
+async fn exchange_with(to: To<'_>, rail: &RingRail, namespace: &str) -> (usize, usize, Reach) {
+    let ex = exchange(to, rail, namespace).await;
+    // `ex.pulled` is progress whether or not a later call in the same
+    // exchange failed: `ingest_all` has already written those lines to disk.
+    let reach = match ex.stop {
+        None => Reach::Reached,
+        Some(ExchangeStop::Refused { sent_bytes, status }) => {
+            warn!(
+                peer = %to.1.key,
+                sent_bytes,
+                status,
+                budget_bytes = RING_SYNC_OPS_BUDGET_BYTES,
+                "ring sync: peer REFUSED — it answered, so this is \
+                 not an unreachable peer. 413: its body limit is \
+                 below this build's exchange budget. 403: it does \
+                 not serve this ring to us — we hold no standing \
+                 in its register there, or it holds no such ring"
+            );
+            Reach::Refused
         }
-    }
-    let reach = if reached {
-        Reach::Reached
-    } else if refused {
-        Reach::Refused
-    } else {
-        Reach::Unreachable
+        Some(ExchangeStop::Failed(detail)) => {
+            debug!(peer = %to.1.key, detail, "ring sync: exchange failed, so the member is unreachable this round");
+            Reach::Unreachable
+        }
     };
-    (pulled, pushed, reach)
+    (ex.pulled, ex.pushed, reach)
 }
+
+/// Where an exchange goes: a member, by its contact, through the
+/// transport that dials it.
+pub type To<'a> = (&'a crate::iroh::IrohTransport, &'a crate::iroh::Contact);
 
 /// Why an exchange with one peer address stopped.
 #[derive(Debug)]
@@ -580,7 +544,7 @@ fn prune_what_the_peer_retired(rail: &RingRail, namespace: &str) {
     }
 }
 
-/// The chunked exchange with one peer address: two calls per chunk, repeated
+/// The chunked exchange with one member: two calls per chunk, repeated
 /// until neither side moves or [`MAX_CHUNKS_PER_EXCHANGE`] is spent.
 ///
 /// See the module docs for why repeating terminates. The two stopping
@@ -588,12 +552,8 @@ fn prune_what_the_peer_retired(rail: &RingRail, namespace: &str) {
 /// (nothing came, nothing left to send) returns quietly, and *stalled*
 /// (something outstanding, nothing moved anywhere) warns — repeating that
 /// would repeat verbatim.
-pub async fn exchange(
-    http: &reqwest::Client,
-    url: &str,
-    rail: &RingRail,
-    namespace: &str,
-) -> ExchangeOutcome {
+pub async fn exchange(to: To<'_>, rail: &RingRail, namespace: &str) -> ExchangeOutcome {
+    let peer = to.1.key;
     let mut out = ExchangeOutcome::default();
     let mut last_peer_digest: Option<crate::Digest> = None;
 
@@ -604,8 +564,7 @@ pub async fn exchange(
             Err(e) => return out.stopped(ExchangeStop::Failed(format!("local journal: {e}"))),
         };
         let first = match post(
-            http,
-            url,
+            to,
             &RingSyncRequest {
                 namespace: namespace.to_string(),
                 digest: mine,
@@ -655,8 +614,7 @@ pub async fn exchange(
                 Err(e) => return out.stopped(ExchangeStop::Failed(format!("local journal: {e}"))),
             };
             match post(
-                http,
-                url,
+                to,
                 &RingSyncRequest {
                     namespace: namespace.to_string(),
                     digest: refreshed,
@@ -674,7 +632,7 @@ pub async fn exchange(
 
         debug!(
             namespace,
-            url,
+            %peer,
             chunk,
             pulled,
             pushed,
@@ -690,7 +648,7 @@ pub async fn exchange(
         if pulled == 0 && pushed == 0 && !peer_digest_moved {
             warn!(
                 namespace,
-                url,
+                %peer,
                 chunk,
                 offered,
                 "ring sync: exchange stalled — the peer's digest did not move \
@@ -702,7 +660,7 @@ pub async fn exchange(
     }
     warn!(
         namespace,
-        url,
+        %peer,
         chunks = MAX_CHUNKS_PER_EXCHANGE,
         pulled = out.pulled,
         pushed = out.pushed,
@@ -713,8 +671,7 @@ pub async fn exchange(
 }
 
 pub(crate) async fn post(
-    http: &reqwest::Client,
-    url: &str,
+    to: To<'_>,
     body: &RingSyncRequest,
 ) -> Result<RingSyncResponse, ExchangeStop> {
     // Serialised here rather than handed to `.json(body)` so the byte count
@@ -724,17 +681,14 @@ pub(crate) async fn post(
         Err(e) => return Err(ExchangeStop::Failed(format!("local encode: {e}"))),
     };
     let sent_bytes = payload.len();
-    let request = http
-        .post(url)
-        .header(reqwest::header::CONTENT_TYPE, "application/json")
-        .body(payload);
-    let resp = request
-        .send()
-        .await
-        .map_err(|e| ExchangeStop::Failed(e.to_string()))?;
+    let request = axum::http::Request::post(SYNC_ROUTE)
+        .header(axum::http::header::CONTENT_TYPE, "application/json")
+        .body(axum::body::Body::from(payload))
+        .expect("a fixed route and header");
+    let resp = to.0.fetch(to.1, request).await;
+    let resp = resp.map_err(|e| ExchangeStop::Failed(e.to_string()))?;
     let status = resp.status();
-    if status == reqwest::StatusCode::PAYLOAD_TOO_LARGE || status == reqwest::StatusCode::FORBIDDEN
-    {
+    if status == StatusCode::PAYLOAD_TOO_LARGE || status == StatusCode::FORBIDDEN {
         return Err(ExchangeStop::Refused {
             sent_bytes,
             status: status.as_u16(),
@@ -743,10 +697,11 @@ pub(crate) async fn post(
     if !status.is_success() {
         return Err(ExchangeStop::Failed(format!("HTTP {status}")));
     }
-    resp.json::<RingSyncResponse>()
-        .await
-        .map_err(|e| ExchangeStop::Failed(e.to_string()))
+    serde_json::from_slice(resp.body()).map_err(|e| ExchangeStop::Failed(e.to_string()))
 }
+
+/// Where a member's exchange is asked, and served (`ring_routes.rs`).
+pub const SYNC_ROUTE: &str = "/internal/ring/sync";
 
 /// The responder's half of one exchange: ingest what the caller offered,
 /// then answer with this node's digest and one budget of what the caller's

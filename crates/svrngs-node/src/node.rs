@@ -74,8 +74,8 @@ use crate::redeem::SeedText;
 use crate::register::{Member, Standing};
 use crate::ring_routes::{self, err, RingInbound};
 use crate::ring_sync::{
-    exchange, peer_client, spawn_ring_sync_loop, AskRound, ExchangeOutcome, ExchangeStop,
-    RingSyncHandle, RoundMembers, Rounds, DEFAULT_RING_SYNC_INTERVAL,
+    exchange, peer_client, spawn_ring_sync_loop, AskRound, ExchangeOutcome, RingSyncHandle,
+    RoundMembers, Rounds, DEFAULT_RING_SYNC_INTERVAL,
 };
 use crate::{actor_of, Person, RingRail, SigningKey};
 
@@ -420,29 +420,15 @@ impl Node {
             relay_url: peer.relay_urls().next().map(|r| r.to_string()),
             iroh_direct_addrs: addrs,
         };
-        let stopped = |why: String| ExchangeOutcome {
-            stop: Some(ExchangeStop::Failed(why)),
-            ..Default::default()
-        };
-        let Some(base) = self.host.transport.base_url(&contact).await else {
-            tracing::debug!(target: "node", namespace, "node: sync_with — the peer has no dialable path");
-            return stopped("no dialable path".into());
-        };
-        let http = match peer_client() {
-            Ok(h) => h,
-            Err(e) => return stopped(e.to_string()),
-        };
-        let url = format!("{base}/internal/ring/sync");
-        let mut out = exchange(http, &url, &self.host.rail, namespace).await;
+        let to = (self.host.transport(), &contact);
+        let mut out = exchange(to, &self.host.rail, namespace).await;
         tracing::debug!(target: "node", namespace, pulled = out.pulled, pushed = out.pushed, stop = ?out.stop,
             "node: sync_with — one exchange with the peer");
         // A joiner says its relay once the exchange brought its admission,
         // and takes it to the peer in a second: until one member holds it,
         // no member can dial this computer (relay-in-record).
         if out.stop.is_none() && self.host.say_relay() {
-            out.pushed += exchange(http, &url, &self.host.rail, namespace)
-                .await
-                .pushed;
+            out.pushed += exchange(to, &self.host.rail, namespace).await.pushed;
         }
         out
     }
@@ -510,11 +496,6 @@ impl Host {
     /// This node's journals.
     pub(crate) fn rail(&self) -> &RingRail {
         &self.rail
-    }
-
-    /// The one client every peer call rides — one pool, one timeout policy.
-    pub(crate) fn http(&self) -> Result<&'static reqwest::Client, &'static str> {
-        peer_client()
     }
 
     /// The key this node signs and dials with, as the record spells an actor.

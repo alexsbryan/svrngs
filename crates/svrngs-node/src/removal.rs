@@ -189,8 +189,8 @@ async fn tell(
     computers: Vec<(String, Option<svrngs_core::relay::Url>)>,
     lines: Vec<crate::Op<crate::SignedOp>>,
 ) {
-    let (Ok(http), Ok(digest)) = (at.host.http(), at.host.rail().digest(&group)) else {
-        tracing::warn!(target: "removal", group, "removal: no client or digest, so the removed computers are not told");
+    let Ok(digest) = at.host.rail().digest(&group) else {
+        tracing::warn!(target: "removal", group, "removal: no digest, so the removed computers are not told");
         return;
     };
     for (actor, relay) in computers {
@@ -199,19 +199,14 @@ async fn tell(
             continue;
         };
         let contact = Contact::named(key, relay.as_ref());
-        let Some(base) = at.host.transport().base_url(&contact).await else {
-            tracing::debug!(target: "removal", group, actor, "removal: no path to the removed computer, so it is not told");
-            continue;
-        };
         let request = RingSyncRequest {
             namespace: group.clone(),
             digest: digest.clone(),
             ops: lines.clone(),
         };
-        let told =
-            crate::ring_sync::post(http, &format!("{base}/internal/ring/sync"), &request).await;
-        tracing::debug!(target: "removal", group, actor, told = told.is_ok(),
-            "removal: the removed computer told its cut");
+        let told = crate::ring_sync::post((at.host.transport(), &contact), &request).await;
+        tracing::debug!(target: "removal", group, actor, told = told.is_ok(), error = ?told.err(),
+            "removal: the removed computer told its cut, or why not");
     }
 }
 
