@@ -223,14 +223,18 @@ impl Lend {
     /// The app `kind` carried in `group`: its name the kind's and the
     /// group id's first 16 letters, so a computer in two groups carrying an
     /// app of one name gives each a label of its own (COMMUNITY_APPS §7,
-    /// found 2); `None` for a folder's name that is not a kind's.
+    /// found 2); `None` for a folder's name that is not a kind's, traced
+    /// as left out (#167).
     pub fn carried(kind: &str, group: &str) -> Option<Self> {
         let name = format!("{kind}-{}", group.get(..16).unwrap_or(group));
-        let name = LendName::parse(&name).ok()?;
+        let (Ok(name), Ok(parsed)) = (LendName::parse(&name), Kind::parse(kind)) else {
+            tracing::debug!(target: "folder", kind, group, "carried: left out, a folder under apps/ whose name no app can have");
+            return None;
+        };
         Some(Self {
             name,
             source: Source::Carried(group.into()),
-            kind: Kind::parse(kind).ok()?,
+            kind: parsed,
             limit: None,
             refused: Vec::new(),
             upload: None,
