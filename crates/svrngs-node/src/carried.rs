@@ -78,6 +78,7 @@ type Withheld = (LendRefusal, u16, &'static str);
 const UNREAD: Withheld = (Fault, 500, "its group cannot be read on this computer");
 const NOT_HERE: Withheld = (Unlent, 404, "nothing is here by that name");
 const NOT_YET: Withheld = (Away, 503, "this computer does not hold it yet");
+const UNSTORED: Withheld = (Fault, 500, "this computer cannot read it from its store");
 const NOT_AN_ACT: Withheld = (Malformed, 422, "an act is JSON, {op} or {corrects, op}");
 const TOO_LARGE: Withheld = (Malformed, 413, "the act is too large, or came cut short");
 const NOT_ITS_OWN: Withheld = (Closed, 403, "an app corrects only its own acts");
@@ -93,6 +94,12 @@ const UNWRITTEN: Withheld = (Fault, 500, "your group’s folder can’t be writt
 /// svrngs's own answer for `refused`.
 fn said((kind, status, why): Withheld) -> Response {
     kind.say(StatusCode::from_u16(status).expect("a status"), why)
+}
+
+/// [`UNREAD`], for `group`, its cause traced (#163).
+fn unread(group: &str, why: &dyn std::fmt::Display) -> Withheld {
+    tracing::warn!(target: "folder", group, %why, "carried: the group cannot be read on this computer");
+    UNREAD
 }
 
 /// A carried app's answer, or why the door gives its own.
@@ -194,7 +201,7 @@ impl Folders {
                 _ => self.file(group, &format!("apps/{}{path}", lend.kind)).await,
             },
             Ok(_) => Err(NOT_ITS_GROUP),
-            Err(_) => Err(UNREAD),
+            Err(e) => Err(unread(group, &e)),
         };
         let refused = answered.as_ref().err().map(|r| r.2);
         tracing::debug!(target: "folder", lend = %lend.name, group, key, path, ?refused, "carried: answered, or refused and why");
@@ -208,12 +215,16 @@ impl Folders {
     /// directory's, from this computer's store.
     async fn file(&self, group: &str, path: &str) -> Served {
         let path = (path.strip_suffix('/')).map_or(path.into(), |dir| format!("{dir}/index.html"));
-        let read = self.layout(group).map_err(|_| UNREAD)?;
+        let read = self.layout(group).map_err(|e| unread(group, &e))?;
         let at = |p: &&Placed| !p.beside && p.path.as_str() == path;
-        let hash = read.placed.iter().find(at).ok_or(NOT_HERE)?.hash;
-        let held = (self.store.get_bytes(Hash::from(*hash.as_bytes()))).await;
+        let hash = Hash::from(*read.placed.iter().find(at).ok_or(NOT_HERE)?.hash.as_bytes());
+        let held = self.store.get_bytes(hash).await;
+        // Not held yet only when the store says it lacks the file; else it failed to read it.
+        let lacks = held.is_err() && matches!(self.store.has(hash).await, Ok(false));
+        tracing::debug!(target: "folder", path, lacks, why = ?held.as_ref().err(), "carried: the file from the store, or why not");
+        let held = held.map_err(|_| if lacks { NOT_YET } else { UNSTORED })?;
         let kind = content_type(Path::new(&path));
-        Ok(([(header::CONTENT_TYPE, kind)], held.map_err(|_| NOT_YET)?).into_response())
+        Ok(([(header::CONTENT_TYPE, kind)], held).into_response())
     }
 
     /// The app `kind`'s route in `group`, for the key `key` of `people`:
