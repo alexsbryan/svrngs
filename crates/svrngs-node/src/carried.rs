@@ -74,28 +74,28 @@ const POLICY: &str = "default-src 'self'; script-src 'self'; style-src 'self' 'u
 
 /// Why the door answers a carried app's request itself: its kind, status
 /// and words, said and traced once ([`Folders::open`]).
-type Refused = (LendRefusal, u16, &'static str);
-const UNREAD: Refused = (Fault, 500, "its group cannot be read on this computer");
-const NOT_HERE: Refused = (Unlent, 404, "nothing is here by that name");
-const NOT_YET: Refused = (Away, 503, "this computer does not hold it yet");
-const NOT_AN_ACT: Refused = (Malformed, 422, "an act is JSON, {op} or {corrects, op}");
-const NOT_ITS_OWN: Refused = (Closed, 403, "an app corrects only its own acts");
-const NOT_ITS_GROUP: Refused = (Closed, 403, "this is its own group's alone");
-const NOT_IN: Refused = (
+type Withheld = (LendRefusal, u16, &'static str);
+const UNREAD: Withheld = (Fault, 500, "its group cannot be read on this computer");
+const NOT_HERE: Withheld = (Unlent, 404, "nothing is here by that name");
+const NOT_YET: Withheld = (Away, 503, "this computer does not hold it yet");
+const NOT_AN_ACT: Withheld = (Malformed, 422, "an act is JSON, {op} or {corrects, op}");
+const NOT_ITS_OWN: Withheld = (Closed, 403, "an app corrects only its own acts");
+const NOT_ITS_GROUP: Withheld = (Closed, 403, "this is its own group's alone");
+const NOT_IN: Withheld = (
     Closed,
     403,
     "you can bring things only to a group you’re in",
 );
-const NO_FOLDER: Refused = (Closed, 409, "this computer keeps no folder of that group");
-const UNWRITTEN: Refused = (Fault, 500, "your group’s folder can’t be written here");
+const NO_FOLDER: Withheld = (Closed, 409, "this computer keeps no folder of that group");
+const UNWRITTEN: Withheld = (Fault, 500, "your group’s folder can’t be written here");
 
 /// svrngs's own answer for `refused`.
-fn said((kind, status, why): Refused) -> Response {
+fn said((kind, status, why): Withheld) -> Response {
     kind.say(StatusCode::from_u16(status).expect("a status"), why)
 }
 
 /// A carried app's answer, or why the door gives its own.
-type Answer = Result<Response, Refused>;
+type Served = Result<Response, Withheld>;
 
 /// The shelf (V1_UI_BUILD §3.4; v1ui-shelf (c)): svrngs's own reference
 /// apps, which ship with it, and nothing else — nothing on it is a
@@ -116,12 +116,12 @@ pub(crate) fn shelf() -> Value {
 
 /// What a page asks brought to a group's table: the group's id, and the
 /// shelf's apps by name.
-type Asked = Json<(String, Vec<String>)>;
+type Ticks = Json<(String, Vec<String>)>;
 
 /// `POST /shelf`: the shelf's apps a page names brought into its group's
 /// folder on this computer ([`brought`]), from the home page or from a
 /// phone of the group's dialling it (`by`).
-pub(crate) async fn bring(at: State<Asking>, by: Option<Extension<Dialer>>, a: Asked) -> Response {
+pub(crate) async fn bring(at: State<Asking>, by: Option<Extension<Dialer>>, a: Ticks) -> Response {
     let (State(at), Json((group, apps))) = (at, a);
     let asker = by.map_or(at.host.actor().to_string(), |Extension(d)| d.actor());
     let brought = brought(&at, &group, &asker, &apps);
@@ -133,7 +133,7 @@ pub(crate) async fn bring(at: State<Asking>, by: Option<Extension<Dialer>>, a: A
 /// `asker`, who stands in it: a folder `apps/<name>/` of its files, never
 /// over one there already, which the folder then carries to the group as
 /// it carries any file. Each said, and whether it was there already.
-fn brought(at: &Asking, group: &str, asker: &str, apps: &[String]) -> Answer {
+fn brought(at: &Asking, group: &str, asker: &str, apps: &[String]) -> Served {
     let stands = at.host.rail().standing(group).is_ok_and(|s| s.names(asker));
     stands.then_some(()).ok_or(NOT_IN)?;
     let dirs = dirs_of(&at.folders.data_dir, group).map_err(|_| NO_FOLDER)?;
@@ -205,7 +205,7 @@ impl Folders {
 
     /// The file the group's layout places at `path`, `index.html` for a
     /// directory's, from this computer's store.
-    async fn file(&self, group: &str, path: &str) -> Answer {
+    async fn file(&self, group: &str, path: &str) -> Served {
         let path = (path.strip_suffix('/')).map_or(path.into(), |dir| format!("{dir}/index.html"));
         let read = self.layout(group).map_err(|_| UNREAD)?;
         let at = |p: &&Placed| !p.beside && p.path.as_str() == path;
@@ -218,7 +218,7 @@ impl Folders {
     /// The app `kind`'s route in `group`, for the key `key` of `people`:
     /// its own acts read, or one written as that key's person (the module
     /// docs).
-    async fn acts(&self, app: (&Kind, &str), asker: (&People, &str), req: Request) -> Answer {
+    async fn acts(&self, app: (&Kind, &str), asker: (&People, &str), req: Request) -> Served {
         let ((kind, group), (people, key)) = (app, asker);
         let (prefix, rail, person) = (format!("{kind}/"), self.host.rail(), &people[key].person);
         let read = (rail.admission(group).ok()).and_then(|a| serde_json::to_value(a.wire()).ok());
