@@ -66,7 +66,7 @@ use svrngs_core::relay::Url;
 use crate::door::LENDS_ROUTE;
 use crate::iroh::{
     actor_key, build_relayed_endpoint, format_dial_string, key_actor, Admit, Alpn, Contact, Dialer,
-    Endpoint, EndpointAddr, IrohAcceptor, IrohTransport, PublicKey, RelayConfig, SecretKey,
+    Endpoint, EndpointAddr, IrohAcceptor, IrohTransport, PublicKey, RelayConfig, SecretKey, Unsent,
 };
 use crate::lend::Offered;
 use crate::rail::{LiveBuffer, RailApi};
@@ -74,8 +74,8 @@ use crate::redeem::SeedText;
 use crate::register::{Member, Standing};
 use crate::ring_routes::{self, err, RingInbound};
 use crate::ring_sync::{
-    exchange, peer_client, spawn_ring_sync_loop, AskRound, ExchangeOutcome, RingSyncHandle,
-    RoundMembers, Rounds, DEFAULT_RING_SYNC_INTERVAL,
+    exchange, spawn_ring_sync_loop, AskRound, ExchangeOutcome, RingSyncHandle, RoundMembers,
+    Rounds, DEFAULT_RING_SYNC_INTERVAL,
 };
 use crate::{actor_of, Person, RingRail, SigningKey};
 
@@ -726,30 +726,25 @@ enum Answered {
     Refused,
 }
 
-/// Ask the computer `key` what it lends. A request that fails is asked
-/// again at the connection, where a computer that has not heard of this
-/// one closes it as not admitted (`demo/runs/first-minute/2026-10-12/`).
+/// Ask the computer `key` what it lends. One that has not heard of this
+/// one closes the connection as not admitted, read from that same dial
+/// (`demo/runs/first-minute/2026-10-12/`; arch-peer (c), where a second
+/// dial asked it once a request through the bridge had failed).
 async fn ask_lends(transport: &IrohTransport, actor: &str, contact: Contact) -> Answered {
     #[derive(serde::Deserialize)]
     struct Answer {
         lends: Vec<Offered>,
     }
-    let Some(base) = transport.base_url(&contact).await else {
-        tracing::debug!(target: "node", actor, "node: lends — no dialable path to the computer");
-        return Answered::Unanswered;
-    };
-    let Ok(http) = peer_client() else {
-        tracing::warn!(target: "node", actor, "node: lends — no http client, so the computer is not asked");
-        return Answered::Unanswered;
-    };
-    let answer = match http.get(format!("{base}{LENDS_ROUTE}")).send().await {
-        Ok(r) if r.status().is_success() => r.json::<Answer>().await,
+    let asked = axum::http::Request::get(LENDS_ROUTE).body(axum::body::Body::empty());
+    let asked = asked.expect("a fixed route");
+    let answer = match transport.fetch(&contact, asked).await {
+        Ok(r) if r.status().is_success() => serde_json::from_slice::<Answer>(r.body()),
         Ok(r) => {
             tracing::debug!(target: "node", actor, status = r.status().as_u16(), "node: lends — the computer refused the ask");
             return Answered::Refused;
         }
-        Err(e) if transport.closes_unadmitted(&contact).await => {
-            tracing::debug!(target: "node", actor, error = %e, "node: lends — the computer has not heard this one is in its group");
+        Err(Unsent::NotAdmitted) => {
+            tracing::debug!(target: "node", actor, "node: lends — the computer has not heard this one is in its group");
             return Answered::Unheard;
         }
         Err(e) => {

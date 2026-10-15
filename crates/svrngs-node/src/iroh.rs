@@ -327,26 +327,6 @@ impl IrohTransport {
         );
         Some(format!("http://{local}"))
     }
-
-    /// Whether `peer`, dialled on the members' protocol now, closes the
-    /// connection as [`NOT_ADMITTED`]: it answered, and does not know this
-    /// computer stands in any group it holds. Asked once a request through
-    /// the bridge has failed, which reads that close as no answer
-    /// (`demo/runs/first-minute/2026-10-12/README.md`). A dial that fails, or
-    /// a connection still open after [`CLOSED_WITHIN`], is not that.
-    pub async fn closes_unadmitted(&self, peer: &Contact) -> bool {
-        let label = &peer.key.to_string()[..8];
-        match self.endpoint_addr_for(peer) {
-            None => false,
-            Some(target) => match self.endpoint.connect(target, ALPN).await {
-                Ok(conn) => closed_unadmitted(&conn).await,
-                Err(e) => {
-                    tracing::debug!(target: "transport", peer = %label, error = %e, "iroh: the peer did not answer a dial");
-                    false
-                }
-            },
-        }
-    }
 }
 
 impl IrohTransport {
@@ -487,11 +467,11 @@ async fn closed_unadmitted(conn: &Connection) -> bool {
 }
 
 /// The reason the acceptor closes a connection it does not admit with,
-/// which [`IrohTransport::closes_unadmitted`] reads: the one answer a
+/// which a request on the stream reads ([`Unsent::NotAdmitted`]): the one answer a
 /// stranger is given, at the connection and never in HTTP.
 pub const NOT_ADMITTED: &[u8] = b"not admitted";
 
-/// How long [`IrohTransport::closes_unadmitted`] waits for the close: the
+/// How long a request with no answer waits for its connection's close: the
 /// acceptor closes as soon as the handshake is done.
 const CLOSED_WITHIN: Duration = Duration::from_secs(1);
 
