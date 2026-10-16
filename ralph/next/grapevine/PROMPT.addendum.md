@@ -10,9 +10,10 @@ Fences the rows keep:
 1. *Instrument and reproduce first* (AGENTS.md 2 and 5). Each law fails
    first on its plant, as GRAPEVINE_DEMO §8 names them, and each commit
    names its plant.
-2. *Zero svrngs lines.* Everything lands under `apps/grapevine/`,
-   `demo/runs/grapevine/` and `demo/grapevine.md`. A svrngs line writes
-   NEEDS_HUMAN.md.
+2. *Zero svrngs lines,* except gv-leave (up to +30, core unchanged; the
+   CHARTER). Everything else lands under `apps/grapevine/`,
+   `demo/runs/grapevine/` and `demo/grapevine.md`. A svrngs line elsewhere
+   writes NEEDS_HUMAN.md.
 3. *The fold is the one decider* (AGENTS.md 8). The page and the loop read
    only the fold's four answers (`asks`, `carriable`, `threads`, `relay`).
    Neither decides anything of its own.

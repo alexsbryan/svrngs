@@ -26,6 +26,15 @@ charter disagree, they win, and the decision says so.
   There is no `/standing` route, no standing scope, and no GRAPEVINE bar 8.
   Stance 9 stays undecided.
 
+- **The leave's last fixes come first** (the operator, 2026-10-16: "One
+  row first in grapevine, +30"). gv-leave takes groups-run's #182 and #183
+  and the groups closing audit's #184. It is the one row here that may
+  change svrngs:
+  - up to +30 repository lines over groups' close, so at most 16,358;
+  - svrngs-core unchanged.
+
+  Every other row keeps zero svrngs lines.
+
 ## Why
 
 The grapevine is how an ask crosses rings through people
@@ -56,7 +65,7 @@ stop.
 
 Write `NEEDS_HUMAN.md` and stop for:
 
-- **any svrngs line**, in `crates/`, `web/`, `bridge/` or `scripts/`
+- **any svrngs line** outside gv-leave, in `crates/`, `web/`, `bridge/` or `scripts/`
   outside a new check's own test. This includes the per-group "me" of §13.3
   if no answer svrngs gives names this computer's key. `apps/`,
   `demo/runs/`, `demo/grapevine.md` and DESIGN's words are not svrngs
