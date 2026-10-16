@@ -64,8 +64,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # past where the row closes. groups-leave-others, within the 41 left (the
 # operator, 2026-10-16): its (b), a leave told to the leaver's other
 # computers and a computer cut told by the first it asks, raised the
+# repository's to one past where it landed; its (c) cut 1 and spent 0 of
+# svrngs-core's, and its (d), a cut key's refusal said and traced, raised the
 # repository's to one past where it landed.
-BUDGET = {"crates/svrngs-core": 2993, ".": 16316}
+BUDGET = {"crates/svrngs-core": 2993, ".": 16329}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
