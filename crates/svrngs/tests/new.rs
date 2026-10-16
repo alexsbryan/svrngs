@@ -283,12 +283,12 @@ fn a_joiner_at_n0_s_keeps_its_link_s_relay_unless_it_is_n0_s() {
     let n0: Vec<RelayUrl> = svrngs_node::relay::n0_relays().urls();
     assert_eq!(n0.len(), 4, "control: n0's four, {n0:?}");
     for at_n0 in [true, false] {
-        assert_eq!(cli::kept_relay(Some(own.clone()), at_n0), Some(own.clone()));
-        assert_eq!(cli::kept_relay(None, at_n0), None);
+        assert_eq!(group::kept_relay(Some(own.clone()), at_n0), Some(own.clone()));
+        assert_eq!(group::kept_relay(None, at_n0), None);
     }
     for url in n0 {
-        assert_eq!(cli::kept_relay(Some(url.clone()), true), None, "{url}");
-        assert_eq!(cli::kept_relay(Some(url.clone()), false), Some(url));
+        assert_eq!(group::kept_relay(Some(url.clone()), true), None, "{url}");
+        assert_eq!(group::kept_relay(Some(url.clone()), false), Some(url));
     }
 }
 

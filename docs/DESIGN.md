@@ -1355,7 +1355,7 @@ carried, so every computer the group's links let in meets the group there,
 and each says so in the record by its `Relay` act. A link carries its
 issuer's home relay in either posture (`svrngs_node::invite::carried`,
 relay-park (c); the command's until start-home), so a phone's page dials it and asks no lookup; a joiner at n0's
-keeps none of n0's relays a link carries (`cli::kept_relay`), which are
+keeps none of n0's relays a link carries (`group::kept_relay`), which are
 where its issuer's build met its groups, not the group's own, and kept
 would outlast the switch. One gap is left open: a link minted before the
 switch and opened by a computer after it, within the link's day, is kept,

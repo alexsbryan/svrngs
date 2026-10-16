@@ -102,8 +102,6 @@ use svrngs_node::removal::{Outcome, RemovalAsk, HANDOVERS_ROUTE, REMOVALS_ROUTE}
 use svrngs_node::room;
 use svrngs_node::{Joined, Person, SigningKey};
 
-/// Where a joiner meets its group (the node's, start-group).
-pub use crate::group::kept_relay;
 use crate::group::{self, Name, Seed};
 use crate::identity::{self, KeyError};
 use crate::relay::{self, Relay};
