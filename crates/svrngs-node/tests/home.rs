@@ -11,46 +11,22 @@ mod common;
 #[allow(dead_code)]
 #[path = "door/origins.rs"]
 mod origins;
+#[path = "common/pair.rs"]
+mod pair;
 
 use std::net::SocketAddr;
 use std::time::Duration;
 
 use common::{heard, loopback_sockets};
+use pair::{alex_lets_sam_in, signing, start, NS};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 use svrngs_core::pass::Label;
-use svrngs_node::iroh::RelayConfig;
 use svrngs_node::lend;
 use svrngs_node::node::Node;
-use svrngs_node::{actor_of, Person, RailAct, Roster, SigningKey};
+use svrngs_node::{actor_of, Person, Roster};
 
-const NS: &str = "house";
 const WORDS: &str = "the app receives ranked suggestions; your history stays where it is";
-
-fn signing(seed: u8) -> SigningKey {
-    SigningKey::from_bytes(&[seed; 32])
-}
-
-fn no_seed(_: &std::path::Path) -> Result<Option<String>, String> {
-    Ok(None)
-}
-
-async fn start(seed: u8, dir: &std::path::Path) -> Node {
-    let relay = RelayConfig {
-        relay_urls: Vec::new(),
-        n0_services: false,
-        loopback_only: true,
-    };
-    Node::start(
-        dir.to_path_buf(),
-        signing(seed),
-        &relay,
-        no_seed,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .expect("a node starts")
-}
 
 fn declare(
     dir: &std::path::Path,
@@ -122,33 +98,6 @@ async fn ask(
         head: head.to_string(),
         body,
     }
-}
-
-/// Alex's computer and Sam's: Alex founds a group and lets Sam in, and
-/// Alex's knows where Sam's listens.
-async fn alex_lets_sam_in(alex_dir: &std::path::Path, sam_dir: &std::path::Path) -> (Node, Node) {
-    let alex = start(1, alex_dir).await;
-    let sam = start(2, sam_dir).await;
-    let seed = Roster::new(
-        [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
-            .into_iter()
-            .collect(),
-    );
-    for node in [&alex, &sam] {
-        node.rail().set_seed(NS, &seed).unwrap();
-    }
-    let admit = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("sam").unwrap(),
-            key: actor_of(&signing(2)),
-            invite: None,
-        },
-        on_behalf_of: None,
-    };
-    alex.rail().commit(NS, &admit).unwrap().unwrap();
-    alex.transport()
-        .add_known_peer(sam.endpoint().id(), loopback_sockets(sam.endpoint()));
-    (alex, sam)
 }
 
 fn unchunk(mut rest: &str) -> String {

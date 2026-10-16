@@ -19,51 +19,24 @@ mod common;
 #[allow(dead_code)]
 #[path = "door/origins.rs"]
 mod origins;
+#[path = "common/pair.rs"]
+mod pair;
 
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use common::loopback_sockets;
+use pair::alex_lets_sam_in;
 use serde_json::json;
 use svrngs_core::pass::Label;
-use svrngs_node::iroh::RelayConfig;
 use svrngs_node::lend::{self, LendName};
 use svrngs_node::node::Node;
-use svrngs_node::{actor_of, Person, RailAct, Roster, SigningKey};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-
-const NS: &str = "house";
 
 /// Held by each test for its whole run: every test's Alex and Sam have the
 /// same keys, so two at once would ask each other's ports, and Sam's
 /// bridge port would be the first test's.
 static ONE_AT_A_TIME: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
-
-fn signing(seed: u8) -> SigningKey {
-    SigningKey::from_bytes(&[seed; 32])
-}
-
-fn no_seed(_: &Path) -> Result<Option<String>, String> {
-    Ok(None)
-}
-
-async fn start(seed: u8, dir: &Path) -> Node {
-    let relay = RelayConfig {
-        relay_urls: Vec::new(),
-        n0_services: false,
-        loopback_only: true,
-    };
-    Node::start(
-        dir.to_path_buf(),
-        signing(seed),
-        &relay,
-        no_seed,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .expect("a node starts")
-}
 
 /// `dir`'s computer lends `name` on `port`, asking before an app uses it
 /// when `asks`.
@@ -92,27 +65,7 @@ struct Dialled {
 impl Dialled {
     async fn new() -> Self {
         let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-        let alex = start(1, alex_dir.path()).await;
-        let sam = start(2, sam_dir.path()).await;
-        let seed = Roster::new(
-            [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
-                .into_iter()
-                .collect(),
-        );
-        for node in [&alex, &sam] {
-            node.rail().set_seed(NS, &seed).unwrap();
-        }
-        let admit = svrngs_core::tests_support::Fixture {
-            act: RailAct::Admit {
-                person: Person::parse("sam").unwrap(),
-                key: actor_of(&signing(2)),
-                invite: None,
-            },
-            on_behalf_of: None,
-        };
-        alex.rail().commit(NS, &admit).unwrap().unwrap();
-        alex.transport()
-            .add_known_peer(sam.endpoint().id(), loopback_sockets(sam.endpoint()));
+        let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
         let (pad, pad_heads) = origins::head_origin().await;
         lends(sam_dir.path(), "pad", pad.port(), None);
         let (book, _) = origins::head_origin().await;
