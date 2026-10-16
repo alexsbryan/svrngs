@@ -25,10 +25,12 @@ const WHO = 'remote-user';
 /** Words the page never says (DESIGN §1; the queue's fence 6). */
 const NOT_SAID = /\b(key|member|record|act|namespace|origin)\b/i;
 
-async function serve() {
+/** The server on a file of its own, holding `ops` ({<group>: [op]}) already written. */
+async function serve(ops = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'events-page-'));
   writeFileSync(join(dir, 'store.json'), JSON.stringify({
     groups: { house: { name: 'The House', people: ['sam', 'bo', 'ama'] }, dweb: { name: 'dWeb', people: ['sam', 'cy'] } },
+    ops,
   }));
   writeFileSync(join(dir, 'config.json'), JSON.stringify({ file: join(dir, 'store.json'), who: WHO }));
   const child = spawn(process.execPath, [new URL('./server.mjs', import.meta.url).pathname, join(dir, 'config.json')], { stdio: ['ignore', 'pipe', 'inherit'] });
@@ -120,6 +122,37 @@ for (const engine of ['chromium', 'webkit']) {
         assert.equal(await page.locator('input.link, .nolink').count(), 0, `${person} is not offered the host's link`);
       }
       for (const text of said) assert.doesNotMatch(text, NOT_SAID);
+    } finally {
+      await close();
+      server.stop();
+    }
+  });
+}
+
+for (const engine of ['chromium', 'webkit']) {
+  test(`an answer another person's computer wrote says whose (${engine})`, async () => {
+    // ralph/FINDING_ON_BEHALF_OF.md's scene: Sam's computer writes Bo's
+    // "coming" in Bo's name; Bo's "came" is his own computer's.
+    const event = { kind: 'event', event: '0123456789abcdef', what: 'dinner', when: 'Friday 7', where: 'the house' };
+    const server = await serve({
+      house: [
+        { id: 'a', ts_unix: 1000, person: 'sam', payload: event },
+        { id: 'b', ts_unix: 1100, person: 'sam', on_behalf_of: 'bo', payload: { kind: 'coming', event: event.event, guests: ['Maya'] } },
+        { id: 'c', ts_unix: 1200, person: 'bo', on_behalf_of: 'bo', payload: { kind: 'came', event: event.event } },
+      ],
+    });
+    const { context, close } = await launch(engine);
+    try {
+      const page = await context.newPage();
+      await context.setExtraHTTPHeaders({ [WHO]: 'bo' });
+      await page.goto(`${server.at}/g/house/e/${event.event}`);
+      const lists = await page.$$eval('section[data-group]', (ss) => ss.map((s) => ({
+        coming: [...s.querySelectorAll('.coming li')].map((l) => l.textContent),
+        came: [...s.querySelectorAll('.came li')].map((l) => l.textContent),
+      })));
+      assert.deepEqual(lists, [{ coming: ["bo + Maya, through sam's computer"], came: ['bo'] }]);
+      assert.match(await page.innerText('body'), /^sam is hosting\.$/m, "Sam's own post says nothing more");
+      assert.doesNotMatch(await page.innerText('body'), NOT_SAID);
     } finally {
       await close();
       server.stop();

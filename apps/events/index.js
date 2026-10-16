@@ -6,6 +6,8 @@
 // the group, and Events' own entries in the shape the group's record gives
 // them, changes of mind included, which events.js folds unchanged (`actsOf`,
 // `reduce`, `answers`) — and writes there; svrngs writes each entry as you.
+// A post or an answer another person's computer wrote in someone's name says
+// so: "bo, through cy’s computer" (gv-via; the phone's own words, web/app.js).
 // Each entry is checked by events.js's one validator before it is sent. An
 // event's id is made here, as the host's computer made one (server.mjs).
 import { CAME, COMING, EVENT, actsOf, answers, guestName, init, ownActs, reduce, validate } from './events.js';
@@ -21,6 +23,8 @@ const button = (text, id, act) => Object.assign(el('button', text), { id, onclic
 const field = (words, id) => el('label', words, Object.assign(el('input'), { id }));
 const value = (id) => document.getElementById(id).value.trim();
 const named = (who, you) => (who === you ? 'you' : who);
+/** The computers an answer came through, when they were someone else's: ", through cy’s computer". */
+const through = (vias, you) => (vias?.length ? `, through ${vias.map((v) => (v === you ? 'your' : `${v}’s`)).join(' and ')} computer${vias.length > 1 ? 's' : ''}` : '');
 
 async function show() {
   const r = await fetch(ACTS);
@@ -42,9 +46,11 @@ async function show() {
     return show();
   };
   const listed = Object.entries(events).map(([event, e]) => {
-    const coming = Object.entries(e.coming).map(([p, guests]) => [named(p, you), ...guests].join(' + '));
-    const came = [...e.came.map((p) => named(p, you)), ...Object.entries(e.guests_came).flatMap(([p, gs]) => gs.map((g) => `${g}, ${named(p, you)}’s guest`))];
-    const s = el('section', '', el('h2', e.what), el('p', `${e.when || 'Some time'}, ${e.where ? `at ${e.where}` : 'somewhere'}. ${e.host === you ? 'You host it.' : `${e.host} hosts it.`}`));
+    const coming = Object.entries(e.coming).map(([p, guests]) => [named(p, you), ...guests].join(' + ') + through(e.via.coming[p], you));
+    const guestsCame = Object.entries(e.guests_came).flatMap(([p, gs]) => gs.map((g) => `${g}, ${named(p, you)}’s guest${through(e.via.guests_came[p]?.[g], you)}`));
+    const came = [...e.came.map((p) => named(p, you) + through(e.via.came[p], you)), ...guestsCame];
+    const host = e.via.host ? `${e.host === you ? 'You' : e.host}${through([e.via.host], you)}, hosts it.` : e.host === you ? 'You host it.' : `${e.host} hosts it.`;
+    const s = el('section', '', el('h2', e.what), el('p', `${e.when || 'Some time'}, ${e.where ? `at ${e.where}` : 'somewhere'}. ${host}`));
     s.append(el('p', coming.length ? `Coming: ${coming.join(', ')}.` : 'Nobody has said they’re coming yet.'), el('p', came.length ? `Came: ${came.join(', ')}.` : 'Nobody has said they came yet.'));
     const yours = ownActs(state, you, event, COMING);
     if (yours.length) {

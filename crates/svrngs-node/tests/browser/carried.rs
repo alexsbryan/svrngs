@@ -280,6 +280,65 @@ async fn money_and_events_open_and_write_at_their_origin(engine: Engine) {
 }
 
 in_both_engines!(
+    /// **An entry another person's computer wrote says whose** (gv-via
+    /// (b); `ralph/FINDING_ON_BEHALF_OF.md`'s scene): a script on cy's
+    /// computer writes to its loopback API, in bo's name, "bo paid $400 for
+    /// the rent" in Money, and a dinner bo hosts with bo and Maya coming in
+    /// Events. Ada's computer takes cy's record, and on each page opened at
+    /// its origin there each reads as bo's, through cy's computer, in the
+    /// phone's words (web/app.js). Planted: the label left out, as before
+    /// gv-via, and each page says bo's alone.
+    an_entry_another_s_computer_wrote_says_whose
+);
+async fn an_entry_another_s_computer_wrote_says_whose(engine: Engine) {
+    let relay = relay().await;
+    let dirs: Vec<_> = (0..2).map(|_| tempfile::tempdir().unwrap()).collect();
+    let ada = node(dirs[0].path(), &relay, &signing(7)).await;
+    let cy = joined(dirs[1].path(), &relay, &ada, 2, "cy").await;
+    let folder = dirs[0].path().join("house");
+    std::fs::create_dir(&folder).unwrap();
+    keep_folder(&ada, &folder).await;
+    carry(&folder, "Money", &files_of("expenses", "expenses.js"));
+    carry(&folder, "Events", &files_of("events", "events.js"));
+    let http = reqwest::Client::builder().no_proxy().build().unwrap();
+    let event = "0123456789abcdef";
+    for payload in [
+        json!({ "kind": "Money/expense", "amount_cents": 40000, "description": "the rent" }),
+        json!({ "kind": "Events/event", "event": event, "what": "dinner", "when": "Friday 7", "where": "the house" }),
+        json!({ "kind": "Events/coming", "event": event, "guests": ["Maya"] }),
+    ] {
+        let act = json!({ "op": "record", "payload": payload, "on_behalf_of": "bo" });
+        let at = format!("http://{}/v1/rail/append?namespace={NS}", cy.api_addr());
+        let wrote = http.post(at).json(&act).send().await.unwrap();
+        assert!(wrote.status().is_success(), "{:?}", wrote.text().await);
+    }
+    let synced = ada.host().sync_with(NS, &cy.endpoint().addr()).await;
+    assert!(synced.stop.is_none(), "ada takes cy's record: {synced:?}");
+    for (app, says) in [
+        (
+            "Money",
+            vec!["bo, through cy’s computer, paid $400.00 for the rent, split between bo."],
+        ),
+        (
+            "Events",
+            vec![
+                "Friday 7, at the house. bo, through cy’s computer, hosts it.",
+                "Coming: bo + Maya, through cy’s computer.",
+            ],
+        ),
+    ] {
+        let url = carried_at(&ada, app).await;
+        let seen = drive(engine, "carried.mjs", json!({ "url": url, "do": [] }), None).await;
+        eprintln!("{app}'s run: {seen:#}");
+        let said = seen["said"].as_str().unwrap_or_default();
+        for words in says {
+            assert!(said.contains(words), "{app} says {words:?}:\n{seen:#}");
+        }
+    }
+    drop((ada, cy));
+}
+
+in_both_engines!(
     /// **Bring things to the table, on the home page** (v1ui-shelf (c);
     /// V1_UI_BUILD §3.4): ada's home page offers Money and Events, both
     /// ticked; one tap brings them, the page says so, and her computer

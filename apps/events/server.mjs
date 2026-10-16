@@ -190,6 +190,14 @@ async function post(id, form) {
 }
 
 /**
+ * The computers an answer came through, when they were someone else's, said
+ * as ", through cy's computer" (gv-via; the phone's own words, web/app.js).
+ * Lent by the host's computer, every answer written there for someone else
+ * says so: it is true, and it is what a forged one would not hide.
+ */
+const through = (vias) => (vias?.length ? `, through ${vias.map((v) => `${esc(v)}'s`).join(' and ')} computer${vias.length > 1 ? 's' : ''}` : '');
+
+/**
  * One group's answers to `e`, said: who was invited, who is coming and who
  * came. Invited is whoever stands in the group now, its host aside
  * (EVENTS.md §1): no one keeps a list, and no one is said as anything but
@@ -202,10 +210,10 @@ function said(e, invited) {
   const asked = [...new Set(invited)].filter((p) => p !== e.host).sort();
   const people = Object.keys(e.coming).sort();
   const coming = people.length
-    ? `<ul class="coming">${people.map((p) => `<li>${esc(p)}${e.coming[p].map((g) => ` + ${esc(g)}`).join('')}</li>`).join('')}</ul>`
+    ? `<ul class="coming">${people.map((p) => `<li>${esc(p)}${e.coming[p].map((g) => ` + ${esc(g)}`).join('')}${through(e.via.coming[p])}</li>`).join('')}</ul>`
     : '<p class="quiet">No one has said yet.</p>';
-  const guests = Object.entries(e.guests_came).flatMap(([p, gs]) => gs.map((g) => `${esc(g)}, ${esc(p)}'s guest`));
-  const came = [...e.came.map(esc), ...guests];
+  const guests = Object.entries(e.guests_came).flatMap(([p, gs]) => gs.map((g) => `${esc(g)}, ${esc(p)}'s guest${through(e.via.guests_came[p]?.[g])}`));
+  const came = [...e.came.map((p) => esc(p) + through(e.via.came[p])), ...guests];
   const list = asked.length ? `<ul class="invited">${asked.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : '<p class="quiet">No one else is in this group.</p>';
   return `<h3>Invited</h3>${list}<h3>Coming</h3>${coming}<h3>Came</h3>${came.length ? `<ul class="came">${came.map((c) => `<li>${c}</li>`).join('')}</ul>` : '<p class="quiet">No one yet.</p>'}`;
 }
@@ -247,7 +255,7 @@ async function eventPage(id, group, event, lent) {
   const here = await folded(group);
   const e = here.answers.events[event];
   if (!e) throw new Said(404, `This event isn't in ${named(groups, group)}.`);
-  let body = `<h1>${esc(e.what)}</h1><p>${[e.when, e.where].filter(Boolean).map(esc).join(' · ')}</p><p class="quiet">${esc(e.host)} is hosting.</p>`;
+  let body = `<h1>${esc(e.what)}</h1><p>${[e.when, e.where].filter(Boolean).map(esc).join(' · ')}</p><p class="quiet">${esc(e.host)}${e.via.host ? `${through([e.via.host])},` : ''} is hosting.</p>`;
   if (e.host === me) {
     // The host's view: each group this computer holds where they host it.
     const all = [];

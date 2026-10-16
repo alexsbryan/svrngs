@@ -5,8 +5,10 @@
 // origin, `svrngs/acts` — you, the people in the group, and Money's own
 // entries in the shape the group's record gives them, which expenses.js
 // folds unchanged (`actsOf`, `reduce`) — and writes there; svrngs writes each
-// entry as you, so nothing here names who wrote it. Each entry is checked by
-// expenses.js's one validator before it is sent.
+// entry as you, so nothing here names who wrote it. An entry another
+// person's computer wrote in someone's name says so: "bo, through cy’s
+// computer" (gv-via; the phone's own words, web/app.js). Each entry is
+// checked by expenses.js's one validator before it is sent.
 import { EXPENSE, SETTLE, SHARE, actsOf, init, money, parseCents, reduce, transfers, validate } from './expenses.js';
 
 const ACTS = 'svrngs/acts';
@@ -41,8 +43,12 @@ async function show() {
     if (t.from === you) li.append(button(`Say you paid ${t.to} ${money(t.cents)}`, null, () => send({ kind: SETTLE, to: t.to, amount_cents: t.cents })));
     return li;
   });
+  // A person's name, and whose computer wrote their part when it was someone else's.
+  const through = (name, via) => (via ? `${name}, through ${via === you ? 'your' : `${via}’s`} computer` : name);
   const spent = Object.entries(state.expenses).map(([id, e]) => {
-    const li = el('li', `${e.payer === you ? 'You' : e.payer} paid ${money(e.amount_cents)} for ${e.description}, split between ${e.participants.join(', ')}. `);
+    const payer = through(e.payer === you ? 'You' : e.payer, e.vias[e.payer]);
+    const split = e.participants.map((p) => (p === e.payer ? p : through(p, e.vias[p])));
+    const li = el('li', `${payer}${e.vias[e.payer] ? ',' : ''} paid ${money(e.amount_cents)} for ${e.description}, split between ${split.join(split.some((p) => p.includes(',')) ? '; ' : ', ')}. `);
     if (!e.participants.includes(you)) li.append(button('Say you were in on it', null, () => send({ kind: SHARE, expense: id })));
     return li;
   });
