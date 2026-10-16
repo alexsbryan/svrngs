@@ -310,23 +310,17 @@ impl RingJournal {
         Ok(log.held.digest.digest())
     }
 
-    /// Who stands in this group from `seed` ([`crate::register::register_in`]),
-    /// over the acts that move membership as [`Held`] caught them up, judged
-    /// by [`Checked`]; and true when it was answered from the standing kept
-    /// since the last call, false when folded now.
-    pub(crate) fn standing(
-        &self,
-        seed: &Roster,
-    ) -> Result<(BTreeMap<String, crate::register::Member>, bool), RailError> {
-        self.folded(seed).map(|(register, kept)| (register.members, kept))
-    }
-
-    /// The whole register, from the fold [`Self::standing`] keeps (U7).
+    /// The whole register, from the fold [`Self::folded`] keeps (U7).
     pub(crate) fn register(&self, seed: &Roster) -> Result<crate::register::Register, RailError> {
         self.folded(seed).map(|(register, _)| register)
     }
 
-    fn folded(&self, seed: &Roster) -> Result<(crate::register::Register, bool), RailError> {
+    /// The group's register from `seed` ([`crate::register::register_in`]),
+    /// who stands and who was cut, over the acts that move membership as
+    /// [`Held`] caught them up, judged by [`Checked`]; and true when it was
+    /// answered from the register kept since the last call, false when
+    /// folded now.
+    pub(crate) fn folded(&self, seed: &Roster) -> Result<(crate::register::Register, bool), RailError> {
         let mut guard = self.log();
         let log = &mut *guard;
         log.held.catch_up(&log.oplog, &self.namespace)?;

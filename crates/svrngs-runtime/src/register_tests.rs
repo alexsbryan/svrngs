@@ -156,7 +156,7 @@ fn the_kept_register_is_the_whole_files_and_folds_again_when_membership_moves() 
         assert_eq!(rail.standing(NS).unwrap(), Standing::Members(whole.clone()), "{why}");
         // `standing` above caught the fold up; this asks it again, unchanged.
         assert_eq!(
-            journal.standing(&seed).unwrap(),
+            journal.folded(&seed).map(|(r, kept)| (r.members, kept)).unwrap(),
             (whole.clone(), true),
             "{why}: kept after"
         );
@@ -164,7 +164,7 @@ fn the_kept_register_is_the_whole_files_and_folds_again_when_membership_moves() 
     };
     let kept_before = |why: &str, kept: bool| {
         let seed = other.seed().unwrap().unwrap();
-        assert_eq!(rail.journal(NS).unwrap().standing(&seed).unwrap().1, kept, "{why}");
+        assert_eq!(rail.journal(NS).unwrap().folded(&seed).unwrap().1, kept, "{why}");
     };
     assert_eq!(step("nothing written"), 1);
 

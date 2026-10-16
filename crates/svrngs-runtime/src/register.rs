@@ -228,7 +228,10 @@ impl RingRail {
             Ok(held) => held,
             Err(nobody) => return Ok(nobody),
         };
-        let (members, kept) = journal.standing(&seed)?;
+        // One read of the kept fold for both who stands and whether this
+        // computer was cut (scale.rs `the_account_matches_a_hand_count`).
+        let (register, kept) = journal.folded(&seed)?;
+        let members = register.members;
         let seeded = seed.members.values().flatten().count();
         if kept {
             tracing::debug!(target: "register", namespace, seeded, standing = members.len(),
@@ -237,7 +240,7 @@ impl RingRail {
             tracing::debug!(target: "register", namespace, seeded, standing = members.len(),
                 "register: standing read from the seed and the group's acts");
         }
-        if journal.register(&seed)?.removed.contains_key(&actor_of(&self.signer)) {
+        if register.removed.contains_key(&actor_of(&self.signer)) {
             tracing::debug!(target: "register", namespace,
                 "register: this computer's key was cut here, its person left or removed, so the group is held and read, and nobody stands in it here");
             return Ok(Standing::Left(members));
