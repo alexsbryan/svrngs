@@ -21,8 +21,8 @@ joining by that link is next (U2).
 `Correct`, `Seal`, `Admit`, `Remove`, `HandOn`, `Invite`, `Synced`, `Relay`), the lines a computer holds as
 a set (`ActSet`, `act_set.rs`), admission of that set into one total order
 (`admit.rs`; only `admit` makes an `Admission`), whose state leaves the core
-only as a projection (`project.rs`: the sealed `Projection`, folded for
-`Membership` and `Invites` and handed out by `Admission::project`) or as
+only as a fold made there (`Admission::membership`, `Admission::invites`
+in `project.rs`) or as
 `Wire`, the acts serialized for an app to fold, membership (`membership.rs`), the per-actor sync digest
 (`sync.rs`, `view.rs`), the write side (`command.rs`: `Command`, `commit`, the
 `Store` port, `Authored` and `Recorded`, which only `commit` makes), the
