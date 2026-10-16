@@ -224,8 +224,8 @@ impl RingRail {
             let (ops, _) = journal.read()?;
             let register = ActSet::of(ops.iter().filter(|op| op.kind.act.moves_membership()));
             let admission = admit(&register, &[], &journal.roster_file()?, &namespace, &Ed25519Verifier);
-            if let Some(id) = admission.project::<Invites>().newest(&me, link) {
-                let m = admission.project::<Membership>();
+            if let Some(id) = admission.invites().newest(&me, link) {
+                let m = admission.membership();
                 let of = m.invites.get(id).and_then(|i| i.device_of.as_deref());
                 let person = of.and_then(|f| m.person_of(f)).map(|(_, p)| p.clone());
                 tracing::debug!(target: "register", namespace, invite = %id, ?of, ?person,

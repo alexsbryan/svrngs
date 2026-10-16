@@ -388,7 +388,13 @@ impl Admission {
     }
 
     /// Who is in: the one membership walk admission made.
-    pub(crate) fn membership(&self) -> &crate::membership::Membership {
+    ///
+    /// ```
+    /// fn standing(a: &svrngs_core::Admission) -> usize {
+    ///     a.membership().standing.len()
+    /// }
+    /// ```
+    pub fn membership(&self) -> &crate::membership::Membership {
         &self.membership
     }
 

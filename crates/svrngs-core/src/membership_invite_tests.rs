@@ -338,7 +338,7 @@ fn the_register_answers_what_holds_each_standing_key() {
     ];
     for (given, admission, k, then) in rows {
         assert_eq!(
-            admission.project::<Membership>().device(&actor_of(&key(k))),
+            admission.membership().device(&actor_of(&key(k))),
             then,
             "given {given}"
         );
@@ -375,7 +375,7 @@ fn what_holds_each_key_is_a_function_of_the_set_of_acts() {
         },
     );
     let ops = vec![inv, dee, eve, fay, fay_again, gone];
-    let once = admitted(&ops).project::<Membership>();
+    let once = admitted(&ops).membership().clone();
     let devices = |m: &Membership| [4, 5, 6].map(|k| m.device(&actor_of(&key(k))));
     assert_eq!(
         devices(&once),
@@ -386,7 +386,7 @@ fn what_holds_each_key_is_a_function_of_the_set_of_acts() {
     crate::tests::permute(&mut (0..ops.len()).collect(), 0, &mut |order| {
         let shuffled: Vec<_> = order.iter().map(|&i| ops[i].clone()).collect();
         assert_eq!(
-            admitted(&shuffled).project::<Membership>(),
+            admitted(&shuffled).membership().clone(),
             once,
             "order {order:?}"
         );
@@ -395,10 +395,6 @@ fn what_holds_each_key_is_a_function_of_the_set_of_acts() {
     assert_eq!(seen, 720);
     for (i, op) in ops.iter().enumerate() {
         let twice = [ops.clone(), vec![op.clone()]].concat();
-        assert_eq!(
-            admitted(&twice).project::<Membership>(),
-            once,
-            "act {i} twice"
-        );
+        assert_eq!(admitted(&twice).membership().clone(), once, "act {i} twice");
     }
 }

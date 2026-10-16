@@ -248,7 +248,7 @@ fn an_admit_naming_no_person_is_a_gap_on_every_copy() {
                 f.gaps()
             );
             assert!(
-                !f.project::<Membership>().standing.contains(&actor_of(&joining)),
+                !f.membership().standing.contains(&actor_of(&joining)),
                 "{copy}'s copy, {bad:?}: the key stands"
             );
         }
@@ -258,7 +258,7 @@ fn an_admit_naming_no_person_is_a_gap_on_every_copy() {
     write_lines(&journal, &admit_line(&key(1), &joining, "Zoë Ann"));
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert!(f.gaps().is_empty(), "{:?}", f.gaps());
-    let m = f.project::<Membership>();
+    let m = f.membership();
     assert!(m.standing.contains(&actor_of(&joining)));
     assert_eq!(m.person_of(&actor_of(&joining)).map(|(_, n)| n), Some(&p("Zoë Ann")));
 }

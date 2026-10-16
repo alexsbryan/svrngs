@@ -56,7 +56,7 @@ use crate::live::{push_ephemeral, LivePeer};
 use crate::node::dialled;
 use crate::register::{Member, Standing};
 use crate::ring_routes::err;
-use crate::{Device, Joined, Membership, Person, RailAct, RailError, RingRail};
+use crate::{Device, Joined, Person, RailAct, RailError, RingRail};
 use svrngs_core::{Append, AppendRefusal, Refused as CommitRefused};
 
 /// What the doors read: the journals, the nudge that wakes the round
@@ -350,7 +350,7 @@ async fn log_answer(rail: &RingRail, namespace: &str) -> Response {
             v
         })
         .collect();
-    let register = admission.project::<Membership>();
+    let register = admission.membership();
     let people: Vec<(&String, &Person, &str, Joined, Device)> = (register.standing.iter())
         .filter_map(|key| {
             let ((first, person), device) = register.person_of(key).zip(register.device(key))?;

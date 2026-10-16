@@ -26,8 +26,8 @@ use svrngs_node::redeem::{
     ask, redeem, AskRequest, Asked, RedeemError, RedeemRequest, Redeemed, REFUSAL,
 };
 use svrngs_node::{
-    actor_of, derive_id, redemption_message, sign_message, Device, Membership, OpId, Person,
-    RailAct, SigningKey, BROWSER_LINE_VERSION, LINK_LINE_VERSION,
+    actor_of, derive_id, redemption_message, sign_message, Device, OpId, Person, RailAct,
+    SigningKey, BROWSER_LINE_VERSION, LINK_LINE_VERSION,
 };
 
 /// The lines a group's journal holds on disk, as written.
@@ -716,7 +716,8 @@ async fn the_redeem_route_writes_the_device_the_request_names() {
             .rail()
             .admission(&group)
             .unwrap()
-            .project::<Membership>();
+            .membership()
+            .clone();
         assert_eq!(
             register.device(&actor_of(&joiner.key)),
             Some(device),

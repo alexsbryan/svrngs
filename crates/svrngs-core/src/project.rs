@@ -1,45 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! The read side. A group's state leaves this crate only as a [`Projection`]
-//! folded here, where `no_std` refuses a clock, a socket and `HashMap`'s
-//! per-process order, or as [`Wire`], the admitted acts for an app to fold
-//! itself.
+//! The read side. A group's state leaves this crate only as a fold made
+//! here, [`Admission::membership`] or [`Admission::invites`], where `no_std`
+//! refuses a clock, a socket and `HashMap`'s per-process order, or as
+//! [`Wire`], the admitted acts for an app to fold itself. The folds were a
+//! sealed `Projection` trait until arch-core; the acts' privacy below already
+//! keeps a fold from being made outside this crate, so the seal guarded
+//! nothing more.
 
 use alloc::vec::Vec;
 
-use crate::{Admission, AdmittedOp, Invited, Membership, OpId};
-
-mod sealed {
-    #[diagnostic::on_unimplemented(
-        message = "`{Self}` is folded outside svrngs-core, where the compiler cannot hold it to the acts",
-        note = "move the fold into svrngs-core and `impl Projection for {Self}` there"
-    )]
-    pub trait Sealed {}
-}
-
-/// State that is a pure function of a group's admitted acts. Implemented only
-/// in this crate, the one place the acts can be read.
-///
-/// ```
-/// fn standing(a: &svrngs_core::Admission) -> usize {
-///     a.project::<svrngs_core::Membership>().standing.len()
-/// }
-/// ```
-/// ```compile_fail
-/// struct Mine;
-/// impl svrngs_core::Projection for Mine {
-///     fn fold(_: &svrngs_core::Admission) -> Self {
-///         Mine
-///     }
-/// }
-/// ```
-#[diagnostic::on_unimplemented(
-    message = "`{Self}` is not a Projection, so an Admission cannot hand it out",
-    label = "project takes a Projection",
-    note = "add `impl Projection for {Self}` in svrngs-core, folding the Admission's acts there"
-)]
-pub trait Projection: sealed::Sealed + Sized {
-    fn fold(admission: &Admission) -> Self;
-}
+use crate::{Admission, AdmittedOp, Invited, OpId};
 
 /// The admitted acts in their one order, voided ones marked, for the record
 /// API, where an app folds them itself. It only serializes: an adapter
@@ -60,22 +30,19 @@ pub trait Projection: sealed::Sealed + Sized {
 pub struct Wire<'a>(&'a [AdmittedOp]);
 
 impl Admission {
-    /// The state `P` folds from these acts.
-    pub fn project<P: Projection>(&self) -> P {
-        P::fold(self)
+    /// Every `Invite` held, in the record's order.
+    pub fn invites(&self) -> Invites {
+        let held = &self.membership().invites;
+        Invites(
+            self.ops()
+                .iter()
+                .filter_map(|op| Some((op.id.clone(), held.get(&op.id)?.clone())))
+                .collect(),
+        )
     }
 
     pub fn wire(&self) -> Wire<'_> {
         Wire(self.ops())
-    }
-}
-
-impl sealed::Sealed for Membership {}
-
-/// The walk admission made to decide who is in.
-impl Projection for Membership {
-    fn fold(admission: &Admission) -> Self {
-        admission.membership().clone()
     }
 }
 
@@ -91,21 +58,6 @@ impl Invites {
             .rev()
             .find(|(_, i)| i.issuer == issuer && i.key == key)
             .map(|(id, _)| id)
-    }
-}
-
-impl sealed::Sealed for Invites {}
-
-impl Projection for Invites {
-    fn fold(admission: &Admission) -> Self {
-        let held = &admission.membership().invites;
-        Self(
-            admission
-                .ops()
-                .iter()
-                .filter_map(|op| Some((op.id.clone(), held.get(&op.id)?.clone())))
-                .collect(),
-        )
     }
 }
 

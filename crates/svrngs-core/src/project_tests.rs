@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! Projections: state folded here, handed out by `project`.
+//! Projections: state folded here, handed out by `Admission`'s methods.
 
 use crate::tests_support::*;
 use crate::*;
@@ -17,7 +17,7 @@ fn the_newest_invite_is_the_last_in_the_records_order() {
     let first = signed(&key(1), 100, 0, invite());
     let second = after(&key(1), &first, 101, invite());
     let theirs = signed(&key(2), 102, 0, invite());
-    let invites = admitted(&[theirs, second.clone(), first]).project::<Invites>();
+    let invites = admitted(&[theirs, second.clone(), first]).invites();
     assert_eq!(invites.newest(&actor_of(&key(1)), &link), Some(&second.id));
     assert_eq!(invites.newest(&actor_of(&key(1)), &actor_of(&key(8))), None);
 }

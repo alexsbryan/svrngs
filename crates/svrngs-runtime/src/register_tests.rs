@@ -93,7 +93,9 @@ fn standing_from_the_membership_acts_alone_is_the_journals() {
         },
     );
     let ops = [ops, vec![inv, redeem_eve]].concat();
-    let whole = admit(&crate::ActSet::of(&ops), &[], &seed, NS, &Ed25519Verifier).project::<Membership>();
+    let whole = admit(&crate::ActSet::of(&ops), &[], &seed, NS, &Ed25519Verifier)
+        .membership()
+        .clone();
     let expected: BTreeMap<String, Member> = whole
         .standing
         .iter()

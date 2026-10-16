@@ -99,7 +99,9 @@ fn a_redemption_writes_the_device_it_names() {
         };
         assert_eq!(written, device, "the Admit names what the request named");
         let held = store.0.borrow();
-        let register = admit(&held, &[], &ring(), NS, &Ed25519Verifier).project::<Membership>();
+        let register = admit(&held, &[], &ring(), NS, &Ed25519Verifier)
+            .membership()
+            .clone();
         assert_eq!(register.device(&actor_of(&joining())), Some(device));
     }
 }
@@ -204,7 +206,9 @@ fn device_link(of: &SigningKey, new: &SigningKey, ts: i64) -> (Op<SignedOp>, Op<
 }
 
 fn register(store: &Memory, seed: &Roster) -> Membership {
-    admit(&store.0.borrow(), &[], seed, NS, &Ed25519Verifier).project::<Membership>()
+    admit(&store.0.borrow(), &[], seed, NS, &Ed25519Verifier)
+        .membership()
+        .clone()
 }
 
 /// **The keeper's removal cuts every key of the person, through what the

@@ -193,7 +193,9 @@ pub(crate) fn membership_in(
     // tens of thousands of acts (ring_sync's ceiling tests timed out
     // verifying them all).
     let acts: Vec<Op<SignedOp>> = svrngs_core::standing_reads(ops).cloned().collect();
-    Ok(admit(&crate::ActSet::of(&acts), &[], seed, namespace, verifier).project::<Membership>())
+    Ok(admit(&crate::ActSet::of(&acts), &[], seed, namespace, verifier)
+        .membership()
+        .clone())
 }
 
 impl RingRail {
