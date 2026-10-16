@@ -10551,3 +10551,13 @@ in behaviour wanting its red run first.
 | I29 | 6 | `refresh` over a corpus `code index` made | Still present: the daemon nudge refused, then the in-process rebuild and exit 0. |
 | I32 | 7 | dry-report's near tier, nested spans | Still present: home.js `running` over `look`, question.js `door` over `judge`. |
 | I33 | 6 | SCIP over web/src | Still present: web/'s exact tier says "no SCIP function symbols in scope". |
+
+## groups-run (2026-10-16): leaving a group on one host
+
+Opened by its row (`ralph/next/groups/STATE.md`), not a `REVIEW-audit-` row:
+the run is `demo/runs/groups/2026-10-16/` (README.md, "What it found").
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 182 | 6 | crates/svrngs-node/src/origin.rs:240-246 (`dialled`, `Unlent`); crates/svrngs-node/src/door.rs:297-302 (`gone`, the lenders' words for a cut computer) | not fixed (a run row: nothing to product) | **Run.** After Ana left, her computer answered every lend she had opened 404 `unlent`, "nothing is lent here" (the run's `summary.json`, `after`): the refusal for a lender standing in no group held here, not her leave. Nothing reached her, so the bar held; the words substitute for "you left". `dialled` could say the leave where this computer's register cut its own key in the group the label's lender stands in. |
+| 183 | 1 | crates/svrngs-node/src/node.rs:939 (the trace), :371-374 (the `gone` arm, untraced) | not fixed (a run row: nothing to product) | **Run.** A lender's acceptor, dialled by a computer it holds cut, traces "node: refused — the dialer stands in no group held here" and then serves it the `gone` router, which tells it its cut in words; that branch traces nothing (the run's `data/sam.log`:12-14, answered 403 `removed`). One debug line in the arm. |
