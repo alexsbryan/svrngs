@@ -2900,8 +2900,16 @@ async fn an_older_computer_is_said_as_that_on_both_pages(engine: Engine) {
          Installing svrngs again there updates it.",
         "{seen:#}"
     );
-    assert_eq!(older(seen["text"].as_str().unwrap_or_default()), 1, "{seen:#}");
-    assert_eq!(seen["index"], json!([]), "nothing of its answer drawn: {seen:#}");
+    assert_eq!(
+        older(seen["text"].as_str().unwrap_or_default()),
+        1,
+        "{seen:#}"
+    );
+    assert_eq!(
+        seen["index"],
+        json!([]),
+        "nothing of its answer drawn: {seen:#}"
+    );
     let seen = drive(engine, "drive.mjs", phone(json!("cy")), None).await;
     eprintln!("the group's page's run, cy's computer older: {seen:#}");
     let text = seen["text"].as_str().unwrap_or_default();
