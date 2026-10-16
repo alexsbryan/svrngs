@@ -22,9 +22,13 @@
 #[allow(unused_macros, dead_code)]
 mod harness;
 mod common;
+#[path = "common/home_page.rs"]
+mod home_page;
 
 use std::path::Path;
 use std::time::Duration;
+
+use home_page::home_page;
 
 use serde_json::{json, Value};
 use svrngs::cli;
@@ -112,26 +116,6 @@ async fn run(home: &Path) -> (tokio::process::Child, String) {
     .expect("svrngs answers at the API it wrote");
     let port = api.rsplit(':').next().unwrap();
     (running, format!("http://svrngs.localhost:{port}/"))
-}
-
-/// Drive `web/tests/home.mjs` in `engine` at `page`, as `args` say.
-async fn home_page(engine: harness::Engine, page: &str, mut args: Value) -> Value {
-    args["engine"] = json!(engine.as_str());
-    args["ask"] = json!(page);
-    let out = tokio::process::Command::new("node")
-        .arg(harness::repo().join("web/tests/home.mjs"))
-        .arg(args.to_string())
-        .output()
-        .await
-        .expect("node runs: the browser tests need Node 18 or later");
-    assert!(
-        out.status.success(),
-        "the browser half failed ({}):\n{}",
-        out.status,
-        String::from_utf8_lossy(&out.stderr)
-    );
-    let stdout = String::from_utf8_lossy(&out.stdout);
-    serde_json::from_str(stdout.lines().last().expect("printed")).expect("JSON")
 }
 
 in_both_engines!(
