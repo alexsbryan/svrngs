@@ -1,0 +1,1468 @@
+diff --git a/crates/svrngs-node/src/group.rs b/crates/svrngs-node/src/group.rs
+index 2f71fd56..05628abb 100644
+--- a/crates/svrngs-node/src/group.rs
++++ b/crates/svrngs-node/src/group.rs
+@@ -233,41 +233,45 @@ impl crate::folder::Folders {
+     }
+ }
+ 
+-impl crate::node::Asking {
+-    /// A group made where svrngs runs, for the home page, as `svrngs new`
+-    /// makes one (start-group): `name`, founded by this computer's key as
+-    /// `person`, beside the groups called so already ([`namesakes`]). It
+-    /// keeps the page this computer's svrngs came from, the data dir's
+-    /// `origin`, which install.sh writes, so the page's links to it are
+-    /// https links whose page gives the one line; and the relay its links
+-    /// carry, kept as a joiner keeps it ([`kept_relay`]): where this
+-    /// computer is met now, so the group is met with no restart, and after
+-    /// one alike. Its folder is placed as a joiner's is.
+-    pub(crate) fn found(&self, name: &str, person: &str) -> Result<Made, String> {
++impl crate::node::Host {
++    /// A group made where svrngs runs, for the home page and `svrngs new`
++    /// alike (start-group; arch-command (b)): `name`, founded by this
++    /// computer's key as `person`, beside the groups called so already
++    /// ([`namesakes`]). It keeps `page` when given (`new --origin`), else
++    /// the page this computer's svrngs came from, the data dir's `origin`,
++    /// which install.sh writes, so its links are https links whose page
++    /// gives the one line; and `relay` when given (`new --relay`), else the
++    /// relay its links carry, kept as a joiner keeps it ([`kept_relay`]):
++    /// where this computer is met now, so the group is met with no restart,
++    /// and after one alike. Its caller places its folder.
++    pub fn found(
++        &self,
++        name: &str,
++        person: &str,
++        page: Option<Origin>,
++        relay: Option<RelayUrl>,
++    ) -> Result<(Seed, Vec<Namesake>), String> {
+         let parse = |n: &str| Name::parse(n).map_err(|e| e.to_string());
+-        let (name, person, root) = (parse(name)?, parse(person)?, self.host.rail.root());
+-        let beside = namesakes(root, &name, self.host.actor());
++        let (name, person, root) = (parse(name)?, parse(person)?, self.rail.root());
++        let beside = namesakes(root, &name, self.actor());
+         // The founder is the key this computer signs and dials with.
+-        let seed = draw(name, person, self.key.verifying_key());
+-        let page = kept_page(root)?;
+-        let home = self.host.endpoint.addr().relay_urls().next().cloned();
+-        let relay = kept_relay(carried(&self.host.relay, home), self.host.relay.n0_services);
+-        self.host.keep_group(&seed, page.as_ref(), relay.as_ref())?;
+-        tracing::debug!(target: "group", group = %seed.id(), ?page, ?relay, "group: made for the home page");
+-        Ok((self.folders.place(&seed), seed, beside))
++        let seed = draw(name, person, self.rail.signer().verifying_key());
++        let page = page.map_or_else(|| kept_page(root), |p| Ok(Some(p)))?;
++        let home = self.endpoint.addr().relay_urls().next().cloned();
++        let ours = || kept_relay(carried(&self.relay, home), self.relay.n0_services);
++        let relay = relay.or_else(ours);
++        self.keep_group(&seed, page.as_ref(), relay.as_ref())?;
++        tracing::debug!(target: "group", group = %seed.id(), ?page, ?relay, "group: made, keeping the page and relay asked, else this computer's");
++        Ok((seed, beside))
+     }
+ }
+ 
+-/// A group made, after where its folder is and whether it was placed, and
+-/// the groups called so already.
+-type Made = ((PathBuf, Result<(), String>), Seed, Vec<Namesake>);
+-
+ /// A group this computer is in, as two of one name are told apart (#138;
+ /// the operator, "Allow; tell them apart"): its name, who made it — `None`
+ /// when this computer's key did — and since when this computer has held
+ /// it: the time its seed was written, once, by `new` or `join`
+ /// ([`crate::node::Host::keep_group`]); `None` when that cannot be read.
+-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
++#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+ pub struct Namesake {
+     pub name: String,
+     pub maker: Option<String>,
+diff --git a/crates/svrngs-node/src/home.rs b/crates/svrngs-node/src/home.rs
+index a0ae31ad..36be79fe 100644
+--- a/crates/svrngs-node/src/home.rs
++++ b/crates/svrngs-node/src/home.rs
+@@ -54,6 +54,7 @@ use svrngs_core::pass::Label;
+ use crate::door::choices::{own_choices, own_choose, Said, Saying};
+ use crate::door::{LendRefusal, PASS_HEADER, REFUSED_HEADER};
+ use crate::lend::{self, Kind, LendName, Source::Port};
++use crate::link::{Link, Origin};
+ use crate::node::Asking;
+ use crate::share::{self, Share, ShareRefusal};
+ 
+@@ -131,6 +132,7 @@ pub(crate) fn router(
+         .route("/folder", axum::routing::post(open))
+         .route("/shelf", axum::routing::post(crate::folder::bring))
+         .route("/group", get(namesakes).post(found))
++        .route("/join", axum::routing::post(join))
+         .with_state(at.clone())
+         .merge(
+             Router::new()
+@@ -383,15 +385,27 @@ async fn lend_one(
+ struct Linking {
+     group: String,
+     device: bool,
++    /// The page `svrngs link --origin` keeps from now on.
++    page: Option<String>,
+ }
+ 
+-/// `POST /link`: a link to the group, as `svrngs link` makes it
+-/// ([`crate::node::Host::link`]).
++/// A page asked, read as one, or refused in its words.
++fn page_of(page: Option<String>) -> Result<Option<Origin>, Response> {
++    let bad = |p| format!("{p} is not a page's address: http(s), and no '#'");
++    let read = |p: String| Origin::parse(&p).ok_or_else(|| bad(p));
++    let read = page.map(read).transpose();
++    read.map_err(|why| LendRefusal::Closed.say(StatusCode::BAD_REQUEST, why))
++}
++
++/// `POST /link`, and `/v1/link` for `svrngs link` ([`asked`]): a link to
++/// the group ([`crate::node::Host::link`]).
+ async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
+-    match at.host.link(&l.group, l.device) {
+-        Ok((client, https)) => {
+-            Json(serde_json::json!({ "client": client, "https": https })).into_response()
+-        }
++    let page = match page_of(l.page) {
++        Ok(page) => page,
++        Err(refused) => return refused,
++    };
++    match at.host.link(&l.group, l.device, page.as_ref()) {
++        Ok(linked) => Json(linked).into_response(),
+         Err(crate::invite::Unminted::NotIn) => {
+             tracing::debug!(target: "home", group = l.group, "home: refused — no link, this computer is not in that group");
+             LendRefusal::Closed.say(
+@@ -409,20 +423,97 @@ async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
+     }
+ }
+ 
+-/// `POST /group`, `[name, person]`: a group made, as `svrngs new` makes
+-/// one ([`Asking::found`]): its name, why its folder was not placed, and
+-/// the groups called so already.
+-async fn found(State(at): State<Asking>, Json([name, person]): Json<[String; 2]>) -> Response {
+-    let made = at.found(&name, &person);
++/// What a group is made of: as the page asks, its name and the person's;
++/// as `svrngs new` asks, the page and relay it keeps when given.
++#[derive(Deserialize)]
++#[serde(deny_unknown_fields)]
++struct Founding {
++    name: String,
++    person: String,
++    page: Option<String>,
++    relay: Option<String>,
++}
++
++/// `POST /group`, and `/v1/group` for `svrngs new` ([`asked`]): a group
++/// made ([`crate::node::Host::found`]), its folder placed: its name, seed
++/// and id, where its folder is or why not, and the groups called so already.
++async fn found(State(at): State<Asking>, Json(f): Json<Founding>) -> Response {
++    let page = match page_of(f.page) {
++        Ok(page) => page,
++        Err(refused) => return refused,
++    };
++    let relay = f
++        .relay
++        .map(|r| crate::relay::parse(&r).map_err(|e| e.to_string()));
++    let made = relay
++        .transpose()
++        .and_then(|r| at.host.found(&f.name, &f.person, page, r));
++    let made = made.map(|(seed, beside)| (at.folders.place(&seed), seed, beside));
+     tracing::debug!(target: "home", ?made, "home: a group made, or why not");
+     match made {
+-        Ok(((_, placed), seed, beside)) => {
+-            Json((seed.name().as_str(), placed.err(), beside)).into_response()
+-        }
++        Ok(((dir, placed), seed, beside)) => Json(serde_json::json!({
++            "name": seed.name().as_str(), "seed": seed.to_text(), "id": seed.id(),
++            "dir": dir, "unplaced": placed.err(), "beside": beside,
++        }))
++        .into_response(),
+         Err(why) => LendRefusal::Closed.say(StatusCode::CONFLICT, why),
+     }
+ }
+ 
++/// Whom a link lets in: as the page asks, and `svrngs join`.
++#[derive(Deserialize)]
++#[serde(deny_unknown_fields)]
++struct Joining {
++    link: String,
++    person: String,
++}
++
++/// `POST /join`, and `/v1/join` for `svrngs join` ([`asked`]): another
++/// group joined by its link ([`crate::node::Host::join`]), its folder
++/// placed: its name, seed, who joined — none when in already — and where
++/// its folder is or why not; or why not, in the page's words and as itself.
++async fn join(State(at): State<Asking>, Json(j): Json<Joining>) -> Response {
++    let (link, person) = (Link::parse(&j.link), crate::group::Name::parse(&j.person));
++    let (Some(link), Ok(person)) = (link, person) else {
++        tracing::debug!(target: "home", "home: refused — no whole link, or no name to join as");
++        let why = "Paste the whole link, to the end, and the name you go by in the group.";
++        return LendRefusal::Closed.say(StatusCode::BAD_REQUEST, why);
++    };
++    let entered = at.host.join(&link, &person).await;
++    tracing::debug!(target: "home", ?entered, "home: a group joined by its link, or why not");
++    match entered {
++        Ok(entered) => {
++            let (dir, placed) = at.folders.place(entered.seed());
++            let person = match &entered {
++                crate::join::Entered::In { person, .. } => Some(person.as_str()),
++                crate::join::Entered::AlreadyIn(_) => None,
++            };
++            let seed = entered.seed();
++            Json(serde_json::json!({
++                "name": seed.name().as_str(), "seed": seed.to_text(), "person": person,
++                "dir": dir, "unplaced": placed.err(),
++            }))
++            .into_response()
++        }
++        Err(e) => {
++            let body = serde_json::json!({ "error": e.to_string(), "refused": e });
++            (StatusCode::CONFLICT, Json(body)).into_response()
++        }
++    }
++}
++
++/// The routes the home page and `svrngs new`, `link` and `join` ask alike
++/// (arch-command (b)), at `/v1/`, behind the record API's check, so the
++/// command asks svrngs running here the page's one rule.
++pub(crate) fn asked(at: Asking) -> Router {
++    use axum::routing::post;
++    Router::new()
++        .route("/v1/group", post(found))
++        .route("/v1/link", post(link))
++        .route("/v1/join", post(join))
++        .with_state(at)
++}
++
+ #[derive(Deserialize)]
+ struct Naming {
+     name: String,
+diff --git a/crates/svrngs-node/src/home/home.js b/crates/svrngs-node/src/home/home.js
+index f3556004..15fd5441 100644
+--- a/crates/svrngs-node/src/home/home.js
++++ b/crates/svrngs-node/src/home/home.js
+@@ -231,7 +231,7 @@ try {
+     const [name, person] = [['name', 'A name for the group: '], ['person', 'Your name in it: ']].map(([n, w]) => el('label', w, Object.assign(el('input'), { name: n })));
+     const [typed, before] = [name.lastChild, el('p')];
+     typed.oninput = () => ((n) => get(`/group?${new URLSearchParams({ name: n })}`).then((b) => namesakes(b, n, 'This makes'), (e) => (n ? e.message : '')).then((w) => n === typed.value && before.replaceChildren(w)))(typed.value);
+-    const make = el('p', '', name, person, button('Make a group', () => post('/group', [name, person].map((l) => l.lastChild.value)).then(([made, unplaced, beside]) => location.assign(`/?${new URLSearchParams({ made, also: namesakes(beside, made, 'This is'), ...(unplaced && { unplaced }) })}`), (e) => make.append(` ${e.message}`))));
++    const make = el('p', '', name, person, button('Make a group', () => post('/group', { name: typed.value, person: person.lastChild.value }).then(({ name: made, unplaced, beside }) => location.assign(`/?${new URLSearchParams({ made, also: namesakes(beside, made, 'This is'), ...(unplaced && { unplaced }) })}`), (e) => make.append(` ${e.message}`))));
+     main.append(Object.assign(el('section', '', el('h2', 'Make a group'), make, before), { id: 'make' }));
+     running();
+     await lending();
+diff --git a/crates/svrngs-node/src/invite.rs b/crates/svrngs-node/src/invite.rs
+index 0f0e7c52..bc6fc0f0 100644
+--- a/crates/svrngs-node/src/invite.rs
++++ b/crates/svrngs-node/src/invite.rs
+@@ -5,8 +5,9 @@
+ //! [`draw`] was svrngs's `issuer::mint`, [`carried`] its `cli::link_relay`,
+ //! [`Host::mint`] and [`Host::own_person`] its `cli::mint` and
+ //! `cli::own_person`, asked through [`crate::node::Node::host`], and
+-//! [`kept_page`] its group.rs `read_origin`. The command keeps what is its own: the clock, the
+-//! wait for a relay, and its words.
++//! [`kept_page`] its group.rs `read_origin`; [`Host::link`] its `cli::link_to`
++//! (arch-command (b)). The command keeps what is its own: the wait for a
++//! relay, and its words.
+ 
+ use std::path::Path;
+ 
+@@ -46,8 +47,18 @@ pub fn kept_page(dir: &Path) -> Result<Option<Origin>, String> {
+     }
+ }
+ 
++/// A link made: the client's, the https one on the group's page when it
++/// keeps one, and that page; with a device link, whose it is.
++#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
++pub struct Linked {
++    pub client: String,
++    pub https: Option<String>,
++    pub page: Option<String>,
++    pub device: Option<Person>,
++}
++
+ /// Why no link was made.
+-#[derive(Debug, thiserror::Error)]
++#[derive(Debug, thiserror::Error, serde::Serialize, serde::Deserialize)]
+ pub enum Unminted {
+     #[error("this computer does not stand in the group")]
+     NotIn,
+@@ -141,15 +152,18 @@ impl Host {
+     }
+ 
+     /// A link to `group` made where its svrngs runs, for the home page
+-    /// (start-home), as `svrngs link` makes one (`cli::link_to`): the
+-    /// client's link, and the https one on the group's kept page; with
+-    /// `device`, a device link. Its relay is the one reached now, with no
+-    /// wait: a running computer has reached it, or [`carried`] says why.
+-    #[expect(
+-        clippy::disallowed_methods,
+-        reason = "the page's clock: a link's life starts now"
+-    )]
+-    pub fn link(&self, group: &str, device: bool) -> Result<(String, Option<String>), Unminted> {
++    /// (start-home) and `svrngs link` alike (arch-command (b)): the
++    /// client's link, and the https one on `page`, kept from now on, when
++    /// given, else on the group's kept page; with `device`, a device link
++    /// and whose. Its relay is the one reached now, with no wait: a running
++    /// computer has reached it, or [`carried`] says why.
++    #[expect(clippy::disallowed_methods, reason = "a link's life starts now")]
++    pub fn link(
++        &self,
++        group: &str,
++        device: bool,
++        page: Option<&Origin>,
++    ) -> Result<Linked, Unminted> {
+         let unkept = |e: &dyn std::fmt::Display| Unminted::Unkept(e.to_string());
+         // Held first, so no journal is opened for a group it does not hold.
+         let held = self.rail.namespaces().map_err(|e| unkept(&e))?;
+@@ -158,15 +172,24 @@ impl Host {
+             return Err(Unminted::NotIn);
+         }
+         let dir = self.rail.group_dir(group).map_err(|e| unkept(&e))?;
++        if let Some(page) = page {
++            crate::group::write_origin(&dir, page).map_err(|e| unkept(&e))?;
++        }
+         let page = kept_page(&dir).map_err(|e| unkept(&e))?;
+         let device_of = device.then(|| self.own_person(group)).transpose()?;
+         let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
+         let now = now.map_err(|e| unkept(&e))?.as_secs() as i64;
+         let home = self.endpoint.addr().relay_urls().next().cloned();
+         let relay = carried(&self.relay, home);
+-        let token = self.mint(group, relay, device_of.map(|p| p.0), now)?;
+-        tracing::debug!(target: "link", group, device, page = ?page.as_ref().map(Origin::as_str), "link: made for the home page");
+-        Ok((client_link(&token), page.map(|p| https_link(&p, &token))))
++        let (key, device) = device_of.unzip();
++        let token = self.mint(group, relay, key, now)?;
++        tracing::debug!(target: "link", group, ?device, page = ?page.as_ref().map(Origin::as_str), "link: made");
++        Ok(Linked {
++            client: client_link(&token),
++            https: page.as_ref().map(|p| https_link(p, &token)),
++            page: page.map(|p| p.as_str().to_string()),
++            device,
++        })
+     }
+ 
+     /// This computer's person in `group`, by their first key and name, as
+diff --git a/crates/svrngs-node/src/join.rs b/crates/svrngs-node/src/join.rs
+index b4a57344..6f81270e 100644
+--- a/crates/svrngs-node/src/join.rs
++++ b/crates/svrngs-node/src/join.rs
+@@ -1,14 +1,17 @@
+ // SPDX-License-Identifier: AGPL-3.0-or-later
+ //! Joining a group by its link, in one place for `svrngs join` and the
+ //! home page (arch-command (a)). Moved from the command, behaviour kept:
+-//! [`Asking::join`] was svrngs's cli.rs `join_group`, and [`key`] and
++//! [`Host::join`] was svrngs's cli.rs `join_group`, and [`key`] and
+ //! [`addr`] its issuer.rs, which iroh dials and the core cannot name. The
+-//! command keeps what is its own: the wait for a relay, and its words.
++//! command keeps its words; the home page's `/join` asks it for both
++//! (arch-command (b), (c)).
++
++use serde::{Deserialize, Deserializer, Serialize, Serializer};
+ 
+ use crate::group::{self, kept_relay, Name, Seed};
+ use crate::iroh::{EndpointAddr, PublicKey, RelayUrl};
+ use crate::link::{Link, Token};
+-use crate::node::{Asking, Node};
++use crate::node::Host;
+ use crate::redeem::{ask, redeem, AskRequest, RedeemError, RedeemRequest, Redeemed};
+ use crate::{Device, Person};
+ 
+@@ -37,27 +40,47 @@ pub enum Entered {
+     AlreadyIn(Seed),
+ }
+ 
+-/// Why a join did not let this computer in.
+-#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
++impl Entered {
++    /// The group joined, or held already.
++    pub fn seed(&self) -> &Seed {
++        let (Entered::In { seed, .. } | Entered::AlreadyIn(seed)) = self;
++        seed
++    }
++}
++
++/// Why a join did not let this computer in: answered to the command as
++/// itself, and to the home page in its words.
++#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error, Serialize, Deserialize)]
+ pub enum NotJoined {
+-    #[error("the link lets nobody new in")]
++    #[error("This link lets nobody new in: ask whoever sent it for a new one.")]
+     LinkRefused,
+-    #[error("someone in {group} already goes by {holder}")]
+-    NameTaken { holder: Name, group: Name },
+-    #[error("the computer that sent the link cannot be reached")]
++    #[error("Someone in {group} already goes by {holder}, so you were not let in as them. If that's you, make a link to add another computer of yours on one already in {group}. Else join under another name.")]
++    NameTaken {
++        #[serde(with = "name_text")]
++        holder: Name,
++        #[serde(with = "name_text")]
++        group: Name,
++    },
++    #[error(
++        "The computer that sent this link cannot be reached; it may be off, so try again later."
++    )]
+     IssuerAway,
+-    #[error("{0} cannot be kept on this computer")]
+-    Keep(Name),
++    #[error("This computer cannot keep {0} (RUST_LOG=debug says why).")]
++    Keep(#[serde(with = "name_text")] Name),
+ }
+ 
+-impl Node {
+-    /// [`Asking::join`], asked of this node.
+-    pub async fn join(&self, link: &Link, person: &Name) -> Result<Entered, NotJoined> {
+-        self.asking.join(link, person).await
++/// A name answered as written, read back by the core's one rule.
++mod name_text {
++    use super::*;
++    pub fn serialize<S: Serializer>(name: &Name, s: S) -> Result<S::Ok, S::Error> {
++        s.serialize_str(name.as_str())
++    }
++    pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Name, D::Error> {
++        Name::parse(&String::deserialize(d)?).map_err(serde::de::Error::custom)
+     }
+ }
+ 
+-impl Asking {
++impl Host {
+     /// Ask `link`'s issuer what it is for, proving the link's key; believe
+     /// the seed answered only when it hashes to the group named
+     /// (`group::answered`); redeem the link there as `person`, signing with
+@@ -66,12 +89,12 @@ impl Asking {
+     /// computer's copy of the register may not know yet (DESIGN §8, U2).
+     /// Nothing is written until the issuer has let this computer in, so a
+     /// refused link leaves nothing behind.
+-    pub(crate) async fn join(&self, link: &Link, person: &Name) -> Result<Entered, NotJoined> {
+-        let (host, key) = (&self.host, &*self.key);
++    pub async fn join(&self, link: &Link, person: &Name) -> Result<Entered, NotJoined> {
++        let key = self.rail.signer();
+         let issuer = addr(&link.token);
+         let link_key = link.token.key();
+         let asked = ask(
+-            &host.endpoint,
++            &self.endpoint,
+             issuer.clone(),
+             &AskRequest::sign(&link_key, key),
+         )
+@@ -82,7 +105,7 @@ impl Asking {
+             return Err(NotJoined::LinkRefused);
+         };
+         let id = seed.id();
+-        if group::groups(host.rail.root()).iter().any(|s| s.id() == id) {
++        if group::groups(self.rail.root()).iter().any(|s| s.id() == id) {
+             tracing::debug!(target: "join", group = %id, "join: this computer holds the group already, so nothing is redeemed");
+             return Ok(Entered::AlreadyIn(seed));
+         }
+@@ -98,16 +121,16 @@ impl Asking {
+             &person,
+             Device::Computer,
+         );
+-        let redeemed = redeem(&host.endpoint, issuer.clone(), &request)
++        let redeemed = redeem(&self.endpoint, issuer.clone(), &request)
+             .await
+             .map_err(|e| not_let_in(e, Some(seed.name())))?;
+         tracing::debug!(target: "join", group = %id, redeemed = ?redeemed, "join: let in");
+         // An address lookup is n0's, built only with `n0_services` (svrngs-node
+         // guest.rs `relayed_endpoint_builder`): this computer meets its groups at n0's.
+-        let n0 = crate::iroh::has_lookup(&host.endpoint);
++        let n0 = crate::iroh::has_lookup(&self.endpoint);
+         let relay = kept_relay(link.token.relay.clone().map(RelayUrl::from), n0);
+         // Kept as the node keeps a group, as `new` keeps it (Host::keep_group).
+-        let kept = host.keep_group(&seed, link.origin.as_ref(), relay.as_ref());
++        let kept = self.keep_group(&seed, link.origin.as_ref(), relay.as_ref());
+         kept.map_err(|why| {
+             tracing::debug!(target: "join", group = %id, why, "join: refused — the group cannot be kept here");
+             NotJoined::Keep(seed.name().clone())
+@@ -115,7 +138,7 @@ impl Asking {
+         if link.origin.is_none() {
+             tracing::debug!(target: "join", group = %id, "join: a client's link, so no origin is kept");
+         }
+-        let synced = host.sync_with(&id, &issuer).await;
++        let synced = self.sync_with(&id, &issuer).await;
+         match &synced.stop {
+             None => {
+                 tracing::debug!(target: "join", group = %id, pulled = synced.pulled, "join: synced once from the issuer")
+diff --git a/crates/svrngs-node/src/node.rs b/crates/svrngs-node/src/node.rs
+index e0ab08ad..18413bf1 100644
+--- a/crates/svrngs-node/src/node.rs
++++ b/crates/svrngs-node/src/node.rs
+@@ -83,7 +83,7 @@ use crate::{actor_of, Person, RingRail, SigningKey};
+ pub(crate) type Groups = Vec<(String, BTreeMap<String, Member>)>;
+ 
+ /// A lend another computer of this one's groups lends, as it answered.
+-#[derive(Debug, Clone, PartialEq, Eq)]
++#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+ pub struct Lent {
+     /// Whose it is: the person the first group naming their key names.
+     pub person: Person,
+@@ -313,7 +313,9 @@ impl Node {
+             rail_api.clone(),
+             crate::surface::router(asking.clone(), seeds)
+                 .merge(crate::folder::router(folders.clone()))
+-                .merge(crate::removal::router(asking.clone())),
++                .merge(crate::removal::router(asking.clone()))
++                .merge(crate::home::asked(asking.clone()))
++                .merge(crate::room::router(asking.clone())),
+             crate::home::router(asking.clone(), seeds, rail_api),
+         );
+         let api = crate::api::serve(routes.clone(), api);
+@@ -403,8 +405,7 @@ impl Node {
+     /// lends, each computer asked now and all at once, and where this computer reaches
+     /// each lend. Nothing is kept between asks.
+     pub async fn lends(&self) -> Lends {
+-        let groups = self.host.standings().unwrap_or_default();
+-        self.host.lends_in(&groups, None).await
++        self.host.lends().await
+     }
+ 
+     /// [`Host::sync_with`], asked of this node.
+@@ -419,6 +420,12 @@ impl Node {
+ }
+ 
+ impl Host {
++    /// [`Node::lends`], for the room door ([`crate::room`]).
++    pub(crate) async fn lends(&self) -> Lends {
++        let groups = self.standings().unwrap_or_default();
++        self.lends_in(&groups, None).await
++    }
++
+     /// One exchange of `namespace` with the node at `peer`, whatever this
+     /// node's register says of it: a joiner syncs once from the issuer that
+     /// admitted it, whom its own register may not know yet (DESIGN §8,
+diff --git a/crates/svrngs-node/src/room.rs b/crates/svrngs-node/src/room.rs
+index 950e56f4..67874aac 100644
+--- a/crates/svrngs-node/src/room.rs
++++ b/crates/svrngs-node/src/room.rs
+@@ -20,8 +20,9 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+ use axum::extract::{ConnectInfo, Request, State};
+ use axum::http::StatusCode;
+ use axum::middleware::Next;
+-use axum::response::Response;
+-use axum::Router;
++use axum::response::{IntoResponse, Response};
++use axum::{Json, Router};
++use n0_future::{stream, StreamExt};
+ use svrngs_core::pass::Label;
+ 
+ use crate::api::ApiError;
+@@ -91,6 +92,45 @@ impl Drop for Room {
+     }
+ }
+ 
++/// Where the command asks a room opened, for as long as it holds the
++/// answer open (arch-command (b)).
++pub const ROOM_ROUTE: &str = "/v1/room";
++
++/// Why a room asked of the API did not open: no private address to serve
++/// it on ([`pick`]), or [`RoomError`]'s words.
++#[derive(Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
++pub enum Unroomed {
++    NoAddress,
++    Refused(String),
++}
++
++/// The route, for [`crate::api::router`] to serve behind its check.
++pub(crate) fn router(asking: Asking) -> Router {
++    Router::new()
++        .route(ROOM_ROUTE, axum::routing::post(asked))
++        .with_state(asking)
++}
++
++/// `POST /v1/room`, the lends' names: each served on this computer's
++/// private address, answered on the body's first line, and served until
++/// the asker lets go of the answer, whose body holds the [`Room`].
++async fn asked(State(at): State<Asking>, Json(names): Json<Vec<LendName>>) -> Response {
++    let listed: Vec<_> = at.host.endpoint.addr().ip_addrs().map(|a| a.ip()).collect();
++    let opened = match pick(&listed, route()) {
++        Some(ip) => (open_at(&at, ip, &names).await).map_err(|e| Unroomed::Refused(e.to_string())),
++        None => Err(Unroomed::NoAddress),
++    };
++    let room = match opened {
++        Ok(room) => room,
++        Err(e) => return (StatusCode::CONFLICT, Json(Err::<(), _>(e))).into_response(),
++    };
++    let mut line = serde_json::to_vec(&Ok::<_, Unroomed>(&room.served)).expect("JSON");
++    line.push(b'\n');
++    let held = stream::unfold(room, |_room| std::future::pending::<Option<(_, Room)>>());
++    let body = stream::once(Ok::<_, std::convert::Infallible>(line)).chain(held);
++    axum::body::Body::from_stream(body).into_response()
++}
++
+ /// Why the room door did not open.
+ #[derive(Debug, thiserror::Error)]
+ pub enum RoomError {
+@@ -106,7 +146,11 @@ pub enum RoomError {
+ /// callers on this network ([`from_this_network`]), until the [`Room`] is
+ /// dropped. A name nobody lends opens nothing.
+ pub async fn open(node: &Node, at: Ipv4Addr, names: &[LendName]) -> Result<Room, RoomError> {
+-    let lent = node.lends().await.lent;
++    open_at(&node.asking, at, names).await
++}
++
++async fn open_at(asking: &Asking, at: Ipv4Addr, names: &[LendName]) -> Result<Room, RoomError> {
++    let lent = asking.host.lends().await.lent;
+     if let Some(none) = names
+         .iter()
+         .find(|n| !lent.iter().any(|l| &l.offered.name == *n))
+@@ -115,7 +159,7 @@ pub async fn open(node: &Node, at: Ipv4Addr, names: &[LendName]) -> Result<Room,
+         return Err(RoomError::NotLent(none.clone()));
+     }
+     let lent = lent.into_iter().filter(|l| names.contains(&l.offered.name));
+-    let asking = node.asking.clone();
++    let asking = asking.clone();
+     let (served, tasks) = (Vec::new(), Vec::new());
+     let mut room = Room {
+         served,
+diff --git a/crates/svrngs/src/cli.rs b/crates/svrngs/src/cli.rs
+index 9d0717ab..b0fed3e7 100644
+--- a/crates/svrngs/src/cli.rs
++++ b/crates/svrngs/src/cli.rs
+@@ -86,21 +86,21 @@ use std::net::{Ipv4Addr, SocketAddr};
+ use std::path::{Path, PathBuf};
+ use std::time::Duration;
+ 
+-use ed25519_dalek::VerifyingKey;
+ use std::num::NonZeroU16;
+ 
++use serde_json::json;
+ use svrngs_node::api::{ApiError, API_FILE};
+ use svrngs_node::folder::FolderAsk;
+ use svrngs_node::home::WHEN;
+-use svrngs_node::invite::Unminted;
++use svrngs_node::invite::{Linked, Unminted};
+ use svrngs_node::iroh::{RelayConfig, RelayUrl};
+-use svrngs_node::join::{Entered, NotJoined};
++use svrngs_node::join::NotJoined;
+ use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath, Source, Upload};
+ use svrngs_node::node::{Lends, Lent, Node, NodeError};
+ use svrngs_node::relay::n0_relays;
+ use svrngs_node::removal::{Outcome, RemovalAsk, HANDOVERS_ROUTE, REMOVALS_ROUTE};
+-use svrngs_node::room;
+-use svrngs_node::{Joined, Person, SigningKey};
++use svrngs_node::room::{Unroomed, ROOM_ROUTE};
++use svrngs_node::{Joined, Person};
+ 
+ /// Where a joiner meets its group (the node's, start-group).
+ pub use crate::group::kept_relay;
+@@ -108,7 +108,8 @@ use crate::group::{self, Name, Seed};
+ use crate::identity::{self, KeyError};
+ use crate::relay::{self, Relay};
+ use crate::share::{self, Share, ShareRefusal};
+-use svrngs_node::link::{client_link, https_link, Link, Origin, Token};
++use serde::de::DeserializeOwned;
++use svrngs_node::link::{client_link, https_link, Link, Origin};
+ 
+ pub const USAGE: &str = "\
+ svrngs — keep what your group shares on your own computers.
+@@ -575,8 +576,10 @@ pub enum Refusal {
+     NoAppAddress(String),
+     #[error("this computer has no address on a home network, so nothing near it can reach it: join its WiFi or plug it in, then run this again")]
+     NoRoomAddress,
+-    #[error(transparent)]
+-    Room(#[from] svrngs_node::room::RoomError),
++    #[error("{0}")]
++    Room(String),
++    #[error("svrngs running on this computer is another version than this command, so this was not done: restart it, then run this again (RUST_LOG=debug says what it answered)")]
++    Unread,
+     #[error("svrngs is not running on this computer, and only it syncs a folder: start it, then run this again")]
+     NotRunning,
+     #[error("the folder was refused: {0}")]
+@@ -649,6 +652,7 @@ impl Refusal {
+             | Refusal::NoClient(_)
+             | Refusal::Unchanged(_)
+             | Refusal::RelayStart(_)
++            | Refusal::Unread
+             | Refusal::GroupsUnread(_)
+             | Refusal::Keep(_) => 3,
+         }
+@@ -812,10 +816,27 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
+         }
+         other => other,
+     };
+-    let claimed = claim(&root)?;
++    let claimed = match claim(&root) {
++        // svrngs runs here already, so the verb is asked of it
++        // (arch-command (b)); but `new --relay`, which a running svrngs,
++        // started without that relay, would meet nobody at.
++        Err(Refusal::Busy(lock)) if asks(&command) => {
++            tracing::debug!(target: "cli", lock = %lock.display(), "cli: svrngs runs here already, so the verb is asked of it");
++            return serve(command, &root, None).await;
++        }
++        claimed => claimed?,
++    };
+     start(command, root, relay, claimed).await
+ }
+ 
++/// Whether `command` is asked of svrngs running here when one runs.
++fn asks(command: &Verb) -> bool {
++    matches!(
++        command,
++        Verb::New { relay: None, .. } | Verb::Link { .. } | Verb::Join { .. } | Verb::Room(_)
++    )
++}
++
+ /// `share --folder --group`, asked of the node running here
+ /// (`svrngs_node::folder::FolderAsk`): it alone writes this computer's acts,
+ /// the journal's next index being its process's (svrngs-node journal.rs:16-27).
+@@ -875,6 +896,47 @@ async fn ask_running(
+     route: &str,
+     body: &impl serde::Serialize,
+ ) -> Result<(bool, String), Refusal> {
++    let answer = post(root, route, body).await?;
++    let ok = answer.status().is_success();
++    let text = answer.text().await.unwrap_or_default();
++    tracing::debug!(target: "cli", route, ok, "cli: svrngs running here answered");
++    Ok((ok, text))
++}
++
++/// `body` asked of svrngs running here at `route`: its answer, read as
++/// this build reads one, or, refused, its status and body.
++async fn answer<T: DeserializeOwned>(
++    root: &Path,
++    route: &str,
++    body: serde_json::Value,
++) -> Result<Result<T, (reqwest13::StatusCode, serde_json::Value)>, Refusal> {
++    let answered = post(root, route, &body).await?;
++    let status = answered.status();
++    let text = answered.text().await.unwrap_or_default();
++    tracing::debug!(target: "cli", route, %status, "cli: svrngs running here answered");
++    if !status.is_success() {
++        return Ok(Err((
++            status,
++            serde_json::from_str(&text).unwrap_or_default(),
++        )));
++    }
++    serde_json::from_str(&text)
++        .map(Ok)
++        .map_err(|e| unread(route, &e, &text))
++}
++
++/// An answer from svrngs running here that this build cannot read.
++fn unread(route: &str, error: &dyn std::fmt::Display, text: &str) -> Refusal {
++    tracing::debug!(target: "cli", route, %error, text, "cli: refused — svrngs running here answered what this build cannot read");
++    Refusal::Unread
++}
++
++/// POST `body` to `route` of svrngs running here, at the API it wrote.
++async fn post(
++    root: &Path,
++    route: &str,
++    body: &impl serde::Serialize,
++) -> Result<reqwest13::Response, Refusal> {
+     let api = std::fs::read_to_string(root.join(svrngs_node::api::API_FILE)).unwrap_or_default();
+     let body = serde_json::to_string(body).expect("an ask is JSON");
+     let to = format!("{}{route}", api.trim());
+@@ -885,14 +947,10 @@ async fn ask_running(
+             Refusal::NoClient(error)
+         })?;
+     let sent = client.post(to).header("content-type", "application/json");
+-    let answer = sent.body(body).send().await.map_err(|e| {
++    sent.body(body).send().await.map_err(|e| {
+         tracing::debug!(target: "cli", api, error = %e, "cli: refused — no svrngs answers at the API it wrote");
+         Refusal::NotRunning
+-    })?;
+-    let ok = answer.status().is_success();
+-    let text = answer.text().await.unwrap_or_default();
+-    tracing::debug!(target: "cli", route, ok, "cli: svrngs running here answered");
+-    Ok((ok, text))
++    })
+ }
+ 
+ /// The command's one HTTP client, iroh's reqwest 0.13: its
+@@ -932,7 +990,7 @@ async fn start(
+                 _ => Refusal::Start,
+             }
+         })?;
+-    let ran = serve(command, &root, &node, &key, relay).await;
++    let ran = serve(command, &root, Some((&node, relay))).await;
+     // iroh says at error when an endpoint is dropped open, so it is closed
+     // first, on a refusal as on Ctrl-C.
+     node.endpoint().close().await;
+@@ -1014,12 +1072,12 @@ pub struct Printed {
+     pub page: Option<Origin>,
+ }
+ 
+-impl Printed {
+-    fn of(token: &Token, page: Option<&Origin>) -> Self {
++impl From<Linked> for Printed {
++    fn from(linked: Linked) -> Self {
+         Self {
+-            client: client_link(token),
+-            https: page.map(|p| https_link(p, token)),
+-            page: page.cloned(),
++            client: linked.client,
++            https: linked.https,
++            page: linked.page.as_deref().and_then(Origin::parse),
+         }
+     }
+ }
+@@ -1432,34 +1490,57 @@ pub async fn running(root: &Path, node: &Node) -> Said {
+     }
+ }
+ 
+-/// A verb on a started node, then the wait for Ctrl-C.
++/// A verb on the node this command `started`, reaching the network as
++/// its config says, then the wait for Ctrl-C; or, with none, asked of
++/// svrngs running here, and done but for `room` (arch-command (b)). Either
++/// way the verb is asked at the API, of the rule the home page asks, and
++/// said in the same words.
+ async fn serve(
+     command: Verb,
+     root: &Path,
+-    node: &Node,
+-    key: &SigningKey,
+-    relay: &RelayConfig,
++    started: Option<(&Node, &RelayConfig)>,
+ ) -> Result<(), Refusal> {
+     let _room;
+-    let stays = !matches!(command, Verb::Join { run: false, .. });
+-    let said = match command {
+-        Verb::New {
+-            name,
+-            person,
+-            origin,
+-            relay: kept,
+-        } => {
+-            let person = match person {
+-                Some(p) => p,
+-                None => user_name().ok_or_else(|| Refusal::NoName(name.clone()))?,
+-            };
+-            let page = match origin {
+-                Some(page) => Some(checked_page(page).await?),
+-                None => None,
+-            };
+-            // The one rule for a name, asked before the group is kept (#138).
+-            let beside = group::namesakes(node.rail().root(), &name, &svrngs_node::actor_of(key));
+-            let (seed, link) = new_group(node, name, person, page.as_ref(), kept, relay).await?;
++    let stays = match (&command, started) {
++        (Verb::Room(_), _) => true,
++        (Verb::Join { run: false, .. }, _) | (_, None) => false,
++        _ => true,
++    };
++    if let Some((node, relay)) = started.filter(|_| !matches!(command, Verb::Run | Verb::Room(_))) {
++        wait_online(node, &relay.relay_urls).await;
++    }
++    let said = match (command, started) {
++        (Verb::Run, Some((node, _))) => running(root, node).await,
++        (Verb::Room(names), _) => {
++            let (said, held) = room(root, &names).await?;
++            _room = held;
++            said
++        }
++        (
++            Verb::New {
++                name,
++                person,
++                origin,
++                relay: kept,
++            },
++            _,
++        ) => {
++            let person = person.or_else(user_name);
++            let person = person.ok_or_else(|| Refusal::NoName(name.clone()))?;
++            let page = checked(origin).await?;
++            let (page, relay) = (
++                page.as_ref().map(Origin::as_str),
++                kept.map(|r| r.to_string()),
++            );
++            let (named, person) = (name.as_str(), person.as_str());
++            let asked = json!({ "name": named, "person": person, "page": page, "relay": relay });
++            let made: Kept = answer(root, "/v1/group", asked).await?.map_err(|(_, why)| {
++                tracing::debug!(target: "cli", %name, %why, "cli: refused — the group cannot be made here");
++                Refusal::Keep(name.clone())
++            })?;
++            let seed = seed_from(&made)?;
++            let link = linked(root, &seed, false, None).await?.into();
++            let beside = made.beside;
+             println!(
+                 "{}",
+                 Said::Made {
+@@ -1471,52 +1552,69 @@ async fn serve(
+             // The founder's folder, where every joiner's is, so what the
+             // founder puts in it is shared with no `share --folder` (Demo
+             // C's dry run, finding 7).
+-            folder_at_join(node, &seed)
++            let (group, dir, placed) = (seed.name().clone(), made.dir, made.unplaced);
++            Said::Folder {
++                group,
++                dir,
++                placed: placed.map_or(Ok(()), Err),
++            }
+         }
+-        Verb::Join { link, person, .. } => {
+-            let person = match person {
+-                Some(p) => p,
+-                None => user_name().ok_or(Refusal::NoNameToJoin)?,
+-            };
+-            let joined = join_group(node, key, &link, &person).await?;
+-            print!("{joined}");
+-            let (Said::Joined { seed, .. } | Said::AlreadyIn(seed)) = joined else {
+-                unreachable!("join_group says joined or in already")
++        (Verb::Join { link, person, .. }, _) => {
++            let person = person.or_else(user_name).ok_or(Refusal::NoNameToJoin)?;
++            let raw = match &link.origin {
++                Some(page) => https_link(page, &link.token),
++                None => client_link(&link.token),
+             };
+-            folder_at_join(node, &seed)
+-        }
+-        Verb::Link {
+-            group,
+-            origin,
+-            device,
+-        } => {
+-            let page = match origin {
+-                Some(page) => Some(checked_page(page).await?),
+-                None => None,
++            let asked = json!({ "link": raw, "person": person.as_str() });
++            let joined: Kept = answer(root, "/v1/join", asked)
++                .await?
++                .map_err(|(_, body)| {
++                    let refused = serde_json::from_value(body["refused"].clone());
++                    refused.map_or_else(|e| unread("/v1/join", &e, &body.to_string()), not_joined)
++                })?;
++            let seed = seed_from(&joined)?;
++            let said = match joined.person.as_deref().map(Name::parse) {
++                Some(Ok(person)) => Said::Joined {
++                    seed: seed.clone(),
++                    person,
++                },
++                None => Said::AlreadyIn(seed.clone()),
++                Some(Err(e)) => {
++                    return Err(unread("/v1/join", &e, &format!("{:?}", joined.person)))
++                }
+             };
+-            let (seed, link, device) = link_to(node, &group, page.as_ref(), relay, device).await?;
+-            Said::Linked { seed, link, device }
+-        }
+-        Verb::Run => running(root, node).await,
+-        Verb::Room(names) => {
+-            let listed: Vec<_> = node.endpoint().addr().ip_addrs().map(|a| a.ip()).collect();
+-            let at = room::pick(&listed, room::route()).ok_or(Refusal::NoRoomAddress)?;
+-            _room = room::open(node, at, &names).await?;
+-            Said::Room(_room.served.clone())
++            print!("{said}");
++            let (group, dir, placed) = (seed.name().clone(), joined.dir, joined.unplaced);
++            Said::Folder {
++                group,
++                dir,
++                placed: placed.map_or(Ok(()), Err),
++            }
+         }
+-        Verb::Help
+-        | Verb::Share(_)
+-        | Verb::Unshare(_)
+-        | Verb::Relay(_)
+-        | Verb::Folder { .. }
+-        | Verb::Remove { .. } => {
+-            unreachable!("answered in `run`")
++        (
++            Verb::Link {
++                group,
++                origin,
++                device,
++            },
++            _,
++        ) => {
++            let page = checked(origin).await?;
++            let seed = group_named(root, &group)?;
++            let link = linked(root, &seed, device, page.as_ref()).await?;
++            let device = link.device.clone();
++            Said::Linked {
++                seed,
++                link: link.into(),
++                device,
++            }
+         }
++        _ => unreachable!("answered in `run`, or asked of svrngs running here only by `asks`"),
+     };
+     print!("{said}");
+     println!();
+     if !stays {
+-        tracing::debug!(target: "cli", "cli: join --no-run — stopping once in");
++        tracing::debug!(target: "cli", "cli: stopping once done — `join --no-run`, or a verb svrngs running here was asked");
+         return Ok(());
+     }
+     println!("Leave this running; Ctrl-C stops it.");
+@@ -1525,42 +1623,80 @@ async fn serve(
+     Ok(())
+ }
+ 
+-/// `svrngs join`: `link` redeemed as `person` by the node, which signs
+-/// with its own key, `key` ([`svrngs_node::join`]), once a relay the link
+-/// carries is waited for, in the command's words.
+-pub async fn join_group(
+-    node: &Node,
+-    key: &SigningKey,
+-    link: &Link,
+-    person: &Name,
+-) -> Result<Said, Refusal> {
+-    debug_assert_eq!(
+-        node.endpoint().id().as_bytes(),
+-        key.verifying_key().as_bytes()
+-    );
+-    // Its home relay reached before the exchange, so the joiner says it
+-    // there and the issuer can dial it back; else not before its first
+-    // round (demo/runs/relay-in-record/2026-10-12/: 60 s). Before the ask,
+-    // so a relay that does not answer is named before the issuer is dialled.
+-    let carried: Vec<String> = link.token.relay.iter().map(ToString::to_string).collect();
+-    wait_online(node, &carried).await;
+-    match node.join(link, person).await {
+-        Ok(Entered::In { seed, person }) => Ok(Said::Joined { seed, person }),
+-        Ok(Entered::AlreadyIn(seed)) => Ok(Said::AlreadyIn(seed)),
+-        Err(NotJoined::LinkRefused) => Err(Refusal::LinkRefused),
+-        Err(NotJoined::NameTaken { holder, group }) => Err(Refusal::NameTaken { holder, group }),
+-        Err(NotJoined::IssuerAway) => Err(Refusal::IssuerAway),
+-        Err(NotJoined::Keep(group)) => Err(Refusal::Keep(group)),
++/// A group made or joined, as svrngs running here answers it (svrngs-node
++/// home.rs `found` and `join`): its seed, who joined, none when in
++/// already, where its folder is or why not, and the groups called so.
++#[derive(serde::Deserialize)]
++struct Kept {
++    seed: String,
++    person: Option<String>,
++    dir: PathBuf,
++    unplaced: Option<String>,
++    #[serde(default)]
++    beside: Vec<group::Namesake>,
++}
++
++/// The seed svrngs running here answered.
++fn seed_from(kept: &Kept) -> Result<Seed, Refusal> {
++    Seed::from_text(&kept.seed).map_err(|e| unread("a seed", &e, &kept.seed))
++}
++
++/// A link to `seed`'s group made by svrngs running here: on `page`, kept
++/// from now on, when given; with `device`, a device link and whose.
++async fn linked(
++    root: &Path,
++    seed: &Seed,
++    device: bool,
++    page: Option<&Origin>,
++) -> Result<Linked, Refusal> {
++    let asked = json!({ "group": seed.id(), "device": device, "page": page.map(Origin::as_str) });
++    answer(root, "/v1/link", asked)
++        .await?
++        .map_err(|(status, body)| {
++            let not_in = status == reqwest13::StatusCode::FORBIDDEN;
++            let why = || Unminted::Unkept(body["error"].to_string());
++            unminted(seed, if not_in { Unminted::NotIn } else { why() })
++        })
++}
++
++/// `origin` as `new --origin` and `link --origin` keep it: a page whose
++/// host gives each app an address of its own ([`checked_page`]).
++async fn checked(origin: Option<Origin>) -> Result<Option<Origin>, Refusal> {
++    match origin {
++        Some(page) => Ok(Some(checked_page(page).await?)),
++        None => Ok(None),
+     }
+ }
+ 
+-/// The group's folder placed as everyone's, by the node
+-/// ([`svrngs_node::folder::Folders::place`]); or why not, said beside the
+-/// join or the `new`, which stands either way.
+-fn folder_at_join(node: &Node, seed: &Seed) -> Said {
+-    let (dir, placed) = node.folders().place(seed);
+-    let group = seed.name().clone();
+-    Said::Folder { group, dir, placed }
++/// `svrngs room`, asked of svrngs running here, whether this command
++/// started it or not: what it serves, and the answer, whose body holds
++/// the room open until this command stops (svrngs-node room.rs `asked`).
++async fn room(root: &Path, names: &[LendName]) -> Result<(Said, reqwest13::Response), Refusal> {
++    let mut answer = post(root, ROOM_ROUTE, &names).await?;
++    let mut line = Vec::new();
++    while !line.contains(&b'\n') {
++        match answer.chunk().await {
++            Ok(Some(chunk)) => line.extend_from_slice(&chunk),
++            _ => break,
++        }
++    }
++    let text = String::from_utf8_lossy(&line);
++    let served = serde_json::from_str(&text).map_err(|e| unread(ROOM_ROUTE, &e, &text))?;
++    match served {
++        Ok(served) => Ok((Said::Room(served), answer)),
++        Err(Unroomed::NoAddress) => Err(Refusal::NoRoomAddress),
++        Err(Unroomed::Refused(why)) => Err(Refusal::Room(why)),
++    }
++}
++
++/// Why a join did not let this computer in, in the command's refusals.
++pub fn not_joined(e: NotJoined) -> Refusal {
++    match e {
++        NotJoined::LinkRefused => Refusal::LinkRefused,
++        NotJoined::NameTaken { holder, group } => Refusal::NameTaken { holder, group },
++        NotJoined::IssuerAway => Refusal::IssuerAway,
++        NotJoined::Keep(group) => Refusal::Keep(group),
++    }
+ }
+ 
+ /// The name a group knows its founder or a joiner by when `--as` names
+@@ -1597,34 +1733,9 @@ fn full_name(user: &str) -> Option<String> {
+     (!name.is_empty()).then(|| name.to_string())
+ }
+ 
+-/// `svrngs new`: a seed drawn for `name`, founded by this computer's key
+-/// as `person`, written beside the group's record with `page`, when
+-/// given, kept as its https links' page, and `kept`, when given, as where
+-/// it is met (`new --relay`), and its first link.
+-pub async fn new_group(
+-    node: &Node,
+-    name: Name,
+-    person: Name,
+-    page: Option<&Origin>,
+-    kept: Option<RelayUrl>,
+-    relay: &RelayConfig,
+-) -> Result<(Seed, Printed), Refusal> {
+-    // The founder is the key this computer signs and dials with (DESIGN
+-    // §8, "One key signs and dials").
+-    let founder = VerifyingKey::from_bytes(node.endpoint().id().as_bytes())
+-        .expect("an iroh endpoint id is an Ed25519 key");
+-    let seed = group::draw(name, person, founder);
+-    let id = seed.id();
+-    let keep = node.host().keep_group(&seed, page, kept.as_ref());
+-    keep.map_err(|why| keep_refused(&seed, &why))?;
+-    tracing::debug!(target: "cli", group = %id, name = %seed.name(), page = ?page.map(Origin::as_str), "cli: group made");
+-    let token = mint(node, &seed, relay, None).await?;
+-    Ok((seed, Printed::of(&token, page)))
+-}
+-
+ /// The one group held under `root` that `reference` names, by its name or
+ /// the start of its id ([`group::named`]): `link`'s and `share --folder`'s.
+-fn group_named(root: &Path, reference: &str) -> Result<Seed, Refusal> {
++pub fn group_named(root: &Path, reference: &str) -> Result<Seed, Refusal> {
+     let held = group::groups(root);
+     match group::named(&held, reference).as_slice() {
+         [] => {
+@@ -1643,97 +1754,14 @@ fn group_named(root: &Path, reference: &str) -> Result<Seed, Refusal> {
+     }
+ }
+ 
+-/// `svrngs link`: a new link to the group `reference` names: the client's
+-/// link, and the https one on `page`, kept from now on, when given, else
+-/// on the group's kept origin, if it keeps one. With `device` a device link
+-/// (`svrngs link --device`; bash-devices): one this computer's person's
+-/// other computer or phone joins as them by, and that person.
+-pub async fn link_to(
+-    node: &Node,
+-    reference: &str,
+-    page: Option<&Origin>,
+-    relay: &RelayConfig,
+-    device: bool,
+-) -> Result<(Seed, Printed, Option<Person>), Refusal> {
+-    let seed = group_named(node.rail().root(), reference)?;
+-    let dir = node
+-        .rail()
+-        .group_dir(&seed.id())
+-        .map_err(|e| keep_refused(&seed, &e.to_string()))?;
+-    let refused = |e: group::SeedError| keep_refused(&seed, &e.to_string());
+-    let page = match page {
+-        Some(given) => {
+-            group::write_origin(&dir, given).map_err(refused)?;
+-            tracing::debug!(target: "cli", group = %seed.id(), origin = given.as_str(), "cli: link — the group's origin changed");
+-            Some(given.clone())
+-        }
+-        None => match group::read_origin(&dir).map_err(refused)? {
+-            Some(page) => {
+-                tracing::debug!(target: "cli", group = %seed.id(), origin = page.as_str(), "cli: link — on the group's kept origin too");
+-                Some(page)
+-            }
+-            None => {
+-                tracing::debug!(target: "cli", group = %seed.id(), "cli: link — the group keeps no origin, so the client's link alone");
+-                None
+-            }
+-        },
+-    };
+-    let person = match device {
+-        // This computer's person (bash-devices): whom it adds a device of.
+-        true => Some(
+-            node.host()
+-                .own_person(&seed.id())
+-                .map_err(|e| unminted(&seed, e))?,
+-        ),
+-        false => None,
+-    };
+-    let token = mint(node, &seed, relay, person.as_ref().map(|(k, _)| k.clone())).await?;
+-    Ok((
+-        seed,
+-        Printed::of(&token, page.as_ref()),
+-        person.map(|(_, p)| p),
+-    ))
+-}
+-
+ /// Why the node made no link, in the command's refusals.
+-fn unminted(seed: &Seed, e: Unminted) -> Refusal {
++pub fn unminted(seed: &Seed, e: Unminted) -> Refusal {
+     match e {
+         Unminted::NotIn => Refusal::NotIn(seed.name().clone()),
+         Unminted::Unkept(why) => keep_refused(seed, &why),
+     }
+ }
+ 
+-/// A link to `seed`'s group, made by the node ([`svrngs_node::invite`]) carrying
+-/// this computer's relay, its life starting now.
+-#[expect(
+-    clippy::disallowed_methods,
+-    reason = "the command's clock: a link's life starts now"
+-)]
+-async fn mint(
+-    node: &Node,
+-    seed: &Seed,
+-    relay: &RelayConfig,
+-    device_of: Option<String>,
+-) -> Result<Token, Refusal> {
+-    let carried = issuer_relay(node, relay).await;
+-    let now = std::time::SystemTime::now()
+-        .duration_since(std::time::UNIX_EPOCH)
+-        .map(|d| d.as_secs() as i64)
+-        .map_err(|_| keep_refused(seed, "the wall clock is before 1970"))?;
+-    node.host()
+-        .mint(&seed.id(), carried, device_of, now)
+-        .map_err(|e| unminted(seed, e))
+-}
+-
+-/// The relay a link carries: its issuer's home relay, with n0's lookup or
+-/// without it, so a phone's page dials only the relays its link and its
+-/// group name and asks no lookup (DESIGN §10, 2026-10-13); waiting up to
+-/// [`ONLINE_WAIT`] for one when it has relays to reach.
+-async fn issuer_relay(node: &Node, relay: &RelayConfig) -> Option<RelayUrl> {
+-    wait_online(node, &relay.relay_urls).await;
+-    svrngs_node::invite::carried(relay, node.endpoint().addr().relay_urls().next().cloned())
+-}
+-
+ /// Wait up to [`ONLINE_WAIT`] for a home relay, when this computer has
+ /// relays to reach, saying which it `tried` when it reached none.
+ async fn wait_online(node: &Node, tried: &[String]) {
+diff --git a/crates/svrngs/tests/asks.rs b/crates/svrngs/tests/asks.rs
+new file mode 100644
+index 00000000..62461575
+--- /dev/null
++++ b/crates/svrngs/tests/asks.rs
+@@ -0,0 +1,186 @@
++//! The command asks the node (arch-command (b); AUDIT §2.3): `svrngs new`,
++//! `link` and `join`, this build's, in a `HOME` of their own, do their verb
++//! by asking svrngs running there when one runs, as install.sh keeps it,
++//! and start one only when none does. A group `svrngs new` makes keeps the
++//! relay a group made on the home page keeps, by the node's one rule
++//! (group.rs `Asking::found`). Bo's computer, in this process, makes the
++//! links Dee's joins by; every computer meets at a relay on 127.0.0.1, so
++//! nothing leaves this computer. Planted, watched failing: the command
++//! claiming the data dir as at 0e4684ca, which refused each verb while
++//! svrngs ran ("svrngs is already running on this computer").
++
++#![allow(clippy::disallowed_methods, clippy::disallowed_types)]
++#[path = "../../svrngs-node/tests/browser/harness.rs"]
++#[macro_use]
++#[allow(unused_macros, dead_code)]
++mod harness;
++mod common;
++
++use std::path::Path;
++use std::time::Duration;
++
++use svrngs::group;
++use svrngs_node::node::Node;
++use tokio::io::AsyncBufReadExt;
++
++/// `svrngs <args>`, this build's, with `home` its `HOME` and nothing else
++/// of this computer's environment but its `PATH`.
++fn svrngs(home: &Path, args: &[&str]) -> tokio::process::Command {
++    let mut c = tokio::process::Command::new(env!("CARGO_BIN_EXE_svrngs"));
++    c.args(args)
++        .env_clear()
++        .env("HOME", home)
++        .env("PATH", std::env::var_os("PATH").unwrap_or_default())
++        .env("RUST_LOG", "cli=debug,group=debug")
++        .env("NO_COLOR", "1")
++        .stdout(std::process::Stdio::piped())
++        .stderr(std::process::Stdio::piped())
++        .kill_on_drop(true);
++    c
++}
++
++/// What `svrngs <args>` printed: all of it when it stops by itself, or up
++/// to "Leave this running" when it starts svrngs, which is then stopped,
++/// as a terminal's Ctrl-C stops it. Whether it started svrngs, and its
++/// traces.
++async fn said(home: &Path, args: &[&str]) -> (String, bool, String) {
++    let mut child = svrngs(home, args).spawn().unwrap();
++    let mut out = tokio::io::BufReader::new(child.stdout.take().unwrap()).lines();
++    let (said, started) = tokio::time::timeout(Duration::from_secs(60), async {
++        let mut said = String::new();
++        while let Ok(Some(line)) = out.next_line().await {
++            if line.starts_with("Leave this running") {
++                return (said, true);
++            }
++            said += &line;
++            said += "\n";
++        }
++        (said, false)
++    })
++    .await
++    .unwrap_or_else(|_| panic!("svrngs {args:?} said all it says within 60 s"));
++    let _ = child.start_kill();
++    let output = child.wait_with_output().await.unwrap();
++    let traced = String::from_utf8_lossy(&output.stderr).into_owned();
++    (said, started, traced)
++}
++
++/// A link to a new group of Bo's, `name`, made on Bo's computer by the
++/// node's own methods, as the home page makes one.
++async fn bos_link(bo: &Node, name: &str) -> String {
++    let (seed, _) = bo
++        .host()
++        .found(name, "Bo", None, None)
++        .expect("Bo makes a group");
++    bo.host()
++        .link(&seed.id(), false, None)
++        .expect("and a link")
++        .client
++}
++
++/// The relay the group `name` keeps in `home`'s data dir, if any.
++fn kept_relay_of(home: &Path, name: &str) -> Option<String> {
++    let data = home.join(".svrngs");
++    let held = group::groups(&data);
++    let seed = held.iter().find(|s| s.name().as_str() == name);
++    let seed = seed.unwrap_or_else(|| panic!("{name} is held"));
++    let dir = svrngs_node::group_dir_in(&data, &seed.id()).unwrap();
++    group::read_relay(&dir).unwrap().map(|r| r.to_string())
++}
++
++#[tokio::test(flavor = "multi_thread")]
++async fn new_link_and_join_ask_svrngs_running_here_and_start_it_when_none_runs() {
++    let (relay, _ours, _bo_dir, bo) = common::sams_computer(4).await;
++    let at = harness::relay_url(&relay);
++    let home = tempfile::tempdir().unwrap();
++    let home = home.path();
++
++    // Dee's first group, met at the relay here, so every start after it
++    // meets there alone; svrngs started by the command, none running.
++    let (made, started, _) = said(home, &["new", "Lab", "--as", "Dee", "--relay", &at]).await;
++    assert!(started && made.contains("Made Lab"), "{made}");
++
++    // svrngs as login keeps it: the bare command, left running.
++    let mut running = svrngs(home, &[]).spawn().unwrap();
++    let http = reqwest::Client::builder().no_proxy().build().unwrap();
++    let api = tokio::time::timeout(Duration::from_secs(30), async {
++        loop {
++            let api = std::fs::read_to_string(home.join(".svrngs/api")).unwrap_or_default();
++            let api = api.trim().to_string();
++            if http.get(format!("{api}/v1/groups")).send().await.is_ok() {
++                break api;
++            }
++            tokio::time::sleep(Duration::from_millis(100)).await;
++        }
++    })
++    .await
++    .expect("svrngs answers at the API it wrote");
++
++    // A group made on the home page: the relay it keeps is the rule's.
++    let port = api.rsplit(':').next().unwrap();
++    let page = format!("svrngs.localhost:{port}");
++    let addr = api.trim_start_matches("http://").parse().unwrap();
++    let browser = reqwest::Client::builder()
++        .no_proxy()
++        .resolve("svrngs.localhost", addr)
++        .build()
++        .unwrap();
++    let paged = browser
++        .post(format!("http://{page}/group"))
++        .header("origin", format!("http://{page}"))
++        .header("sec-fetch-site", "same-origin")
++        .json(&serde_json::json!({ "name": "Page", "person": "Dee" }))
++        .send()
++        .await
++        .unwrap();
++    assert!(paged.status().is_success(), "{:?}", paged.text().await);
++    let pages = kept_relay_of(home, "Page");
++    assert_eq!(
++        pages.as_deref(),
++        Some(at.as_str()),
++        "the page keeps the relay reached"
++    );
++
++    // With svrngs running: each verb asked of it, and none started.
++    let (made, started, traced) = said(home, &["new", "Trip", "--as", "Dee"]).await;
++    assert!(!started && made.contains("Made Trip"), "{made}\n{traced}");
++    assert!(made.contains("svrngs://join/"), "{made}");
++    assert_eq!(
++        kept_relay_of(home, "Trip"),
++        pages,
++        "new keeps the page's relay"
++    );
++    let (linked, started, traced) = said(home, &["link", "Lab"]).await;
++    assert!(
++        !started && linked.contains("svrngs://join/"),
++        "{linked}\n{traced}"
++    );
++    let link = bos_link(&bo, "Hike").await;
++    let (joined, started, traced) = said(home, &["join", &link, "--as", "Dee"]).await;
++    assert!(
++        !started && joined.contains("You're in Hike, as Dee."),
++        "{joined}\n{traced}"
++    );
++
++    // With none running: each verb started by the command, as before.
++    running.kill().await.unwrap();
++    let _ = running.wait().await;
++    let (made, started, traced) = said(home, &["new", "Walk", "--as", "Dee"]).await;
++    assert!(started && made.contains("Made Walk"), "{made}\n{traced}");
++    assert_eq!(
++        kept_relay_of(home, "Walk"),
++        pages,
++        "new keeps the page's relay"
++    );
++    let (linked, started, traced) = said(home, &["link", "Lab"]).await;
++    assert!(
++        started && linked.contains("svrngs://join/"),
++        "{linked}\n{traced}"
++    );
++    let link = bos_link(&bo, "Swim").await;
++    let (joined, started, traced) = said(home, &["join", &link, "--as", "Dee"]).await;
++    assert!(
++        started && joined.contains("You're in Swim, as Dee."),
++        "{joined}\n{traced}"
++    );
++}
+diff --git a/crates/svrngs/tests/new.rs b/crates/svrngs/tests/new.rs
+index 07c89c90..00733def 100644
+--- a/crates/svrngs/tests/new.rs
++++ b/crates/svrngs/tests/new.rs
+@@ -658,7 +658,8 @@ fn room_names_lends_and_says_who_can_open_them() {
+     println!("{said}");
+     let refusals = [
+         Refusal::NoRoomAddress,
+-        Refusal::Room(svrngs_node::room::RoomError::NotLent(lend("jellyfin"))),
++        Refusal::Room(svrngs_node::room::RoomError::NotLent(lend("jellyfin")).to_string()),
++        Refusal::Unread,
+     ];
+     for line in refusals.iter().map(ToString::to_string).chain([said]) {
+         let lower = line.to_lowercase();
+diff --git a/crates/svrngs/tests/shipped.rs b/crates/svrngs/tests/shipped.rs
+index a35c5ba2..8d351592 100644
+--- a/crates/svrngs/tests/shipped.rs
++++ b/crates/svrngs/tests/shipped.rs
+@@ -98,13 +98,19 @@ async fn a_group_that_keeps_its_own_relay_is_met_there_with_n0_s_beside_it() {
+         "and meets house there again"
+     );
+ 
+-    let work = cli::parse(argv("new work --as Sam")).unwrap();
+-    let Verb::New { name, person, .. } = work else {
+-        unreachable!("new parses as new")
+-    };
+-    cli::new_group(&sam, name, person.unwrap(), None, None, &ours)
+-        .await
+-        .expect("Sam makes work, which keeps no relay");
++    // `new` keeps the relay this computer is met at now, as the home page
++    // does (arch-command (b)): work kept here as a group met at n0's keeps
++    // it, none (`group::kept_relay`).
++    let (work, sam_) = (
++        group::Name::parse("work").unwrap(),
++        group::Name::parse("Sam"),
++    );
++    let work = group::draw(
++        work,
++        sam_.unwrap(),
++        SigningKey::from_bytes(&[51; 32]).verifying_key(),
++    );
++    (sam.host().keep_group(&work, None, None)).expect("Sam keeps work, which keeps no relay");
+     let both = cli::reach(dir.path(), &Verb::Run, cli::SHIPPED).unwrap();
+     let beside: Vec<String> = std::iter::once(url).chain(n0()).collect();
+     assert!(both.n0_services, "n0's lookup is on");
