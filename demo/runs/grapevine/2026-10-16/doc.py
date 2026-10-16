@@ -44,10 +44,13 @@ def blocks():
 
 
 class Window:
+    opened = []
+
     def __init__(self, who):
         self.who, self.log = who, OUT / f"{who}.out"
         self.p = subprocess.Popen(["bash", "-s"], cwd=REPO, stdin=subprocess.PIPE, stdout=open(self.log, "w"),
                                   stderr=subprocess.STDOUT, text=True, env={**os.environ, "CARGO_INCREMENTAL": "0"}, start_new_session=True)
+        Window.opened.append(self.p)
 
     def said(self): return self.log.read_text(errors="replace")
 
@@ -174,4 +177,9 @@ def scene(at):
 
 
 if __name__ == "__main__":
-    main()
+    try: main()
+    finally:
+        # A check that stops early stops every window it opened, and what runs in each (their own sessions).
+        for p in Window.opened:
+            try: os.killpg(p.pid, signal.SIGINT)
+            except ProcessLookupError: pass
