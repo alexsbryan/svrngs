@@ -299,24 +299,21 @@ pub struct Offered {
     /// an answer that leaves it out is not one, never read as none.
     #[serde(rename = "upload_bps", deserialize_with = "Option::deserialize")]
     pub upload: Option<Upload>,
-    /// The kinds of lend it reads (u5-2): none from a computer before u5-2.
-    #[serde(default)]
+    /// The kinds of lend it reads (u5-2).
     pub reads: Vec<Kind>,
     /// Its lender's words for what an app receives, when it asks (sup-2):
-    /// none from a computer before sup-2, which asks nobody, and absent
-    /// from a list when it asks nobody.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// absent when it asks nobody.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub asks: Option<String>,
     /// Whether its lender's program signs each person in, once (mwp-1,
-    /// `sign_in`): the pages say so of how it opens (v1ui-door (c)). None
-    /// from a computer before, which does not say, `null` on the wire then
-    /// and said so on the pages, never read as no (#159).
-    #[serde(default)]
-    pub signs_in: Option<bool>,
+    /// `sign_in`): the pages say so of how it opens (v1ui-door (c)). A
+    /// computer that does not say runs an older svrngs, and its lends are
+    /// not read at all ([`crate::version`]).
+    pub signs_in: bool,
     /// The group that carries it, when its group's folder does (v1ui-shelf
     /// (a)): lent to that group alone, and one copy of it shown, whichever
     /// computer answers. Absent for a port's.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub group: Option<String>,
 }
 

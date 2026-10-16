@@ -160,6 +160,9 @@ pub struct Unlisted {
     /// Whose computer answered with a refusal, or with what is not a list
     /// of lends.
     pub refused: Vec<Person>,
+    /// Whose computer runs an older svrngs ([`crate::version`]): what it
+    /// lends is not read.
+    pub older: Vec<Person>,
 }
 
 /// Why a node did not start.
@@ -640,6 +643,7 @@ impl Host {
                 Ok((person, _, Answered::Unanswered)) => lends.unlisted.unanswered.push(person),
                 Ok((person, _, Answered::Unheard)) => lends.unlisted.unheard.push(person),
                 Ok((person, _, Answered::Refused)) => lends.unlisted.refused.push(person),
+                Ok((person, _, Answered::Older)) => lends.unlisted.older.push(person),
                 Err(e) => {
                     tracing::warn!(target: "node", error = %e, "node: lends — an ask ended without an answer")
                 }
@@ -710,6 +714,7 @@ enum Answered {
     Unanswered,
     Unheard,
     Refused,
+    Older,
 }
 
 /// Ask the computer `key` what it lends. One that has not heard of this
@@ -717,31 +722,47 @@ enum Answered {
 /// (`demo/runs/first-minute/2026-10-12/`; arch-peer (c), where a second
 /// dial asked it once a request through the bridge had failed).
 async fn ask_lends(transport: &IrohTransport, actor: &str, contact: Contact) -> Answered {
-    #[derive(serde::Deserialize)]
-    struct Answer {
-        lends: Vec<Offered>,
-    }
     let asked = axum::http::Request::get(LENDS_ROUTE).body(axum::body::Body::empty());
     let asked = asked.expect("a fixed route");
-    let answer = match transport.fetch(&contact, asked).await {
-        Ok(r) if r.status().is_success() => serde_json::from_slice::<Answer>(r.body()),
+    match transport.fetch(&contact, asked).await {
+        Ok(r) if r.status().is_success() => answered(actor, r.body()),
         Ok(r) => {
             tracing::debug!(target: "node", actor, status = r.status().as_u16(), "node: lends — the computer refused the ask");
-            return Answered::Refused;
+            Answered::Refused
         }
         Err(Unsent::NotAdmitted) => {
             tracing::debug!(target: "node", actor, "node: lends — the computer has not heard this one is in its group");
-            return Answered::Unheard;
+            Answered::Unheard
         }
         Err(e) => {
             tracing::debug!(target: "node", actor, error = %e, "node: lends — the computer did not answer");
-            return Answered::Unanswered;
+            Answered::Unanswered
         }
+    }
+}
+
+/// Computer `actor`'s answer `body` of what it lends: read only when it
+/// carries this build's version or a later one ([`crate::version`]), so one
+/// running an older svrngs is named so, never read field by field.
+fn answered(actor: &str, body: &[u8]) -> Answered {
+    #[derive(serde::Deserialize)]
+    struct Answer {
+        version: Option<u32>,
+        lends: serde_json::Value,
+    }
+    let answer = serde_json::from_slice::<Answer>(body).map(|a| (a.version, a.lends));
+    let lends = match answer {
+        Ok((version, _)) if crate::version::older(version) => {
+            tracing::debug!(target: "node", actor, ?version, "node: lends — the computer runs an older svrngs, so what it lends is not read");
+            return Answered::Older;
+        }
+        Ok((_, lends)) => serde_json::from_value::<Vec<Offered>>(lends),
+        Err(e) => Err(e),
     };
-    match answer {
-        Ok(a) => {
-            tracing::debug!(target: "node", actor, lends = a.lends.len(), "node: lends — the computer answered");
-            Answered::Lends(a.lends)
+    match lends {
+        Ok(lends) => {
+            tracing::debug!(target: "node", actor, lends = lends.len(), "node: lends — the computer answered");
+            Answered::Lends(lends)
         }
         Err(e) => {
             tracing::debug!(target: "node", actor, error = %e, "node: lends — the answer is not a list of lends, so it is refused");
@@ -800,7 +821,8 @@ fn people_router(asking: Asking) -> axum::Router {
 /// every removal and ask to remove in those groups, from each register
 /// (v1-keeper-office (b)): `null` when one cannot be read here; and the
 /// people standing in them, as `/v1/rail/people` answers them, for the
-/// door (v1ui-door (d)).
+/// door (v1ui-door (d)); and this build's version, which the page checks
+/// once ([`crate::version`]).
 async fn people_lends(
     State(at): State<Asking>,
     dialer: Option<Extension<Dialer>>,
@@ -838,6 +860,7 @@ async fn people_lends(
     let people: BTreeMap<_, _> = groups.iter().flat_map(|(_, s)| s.clone()).collect();
     body["people"] = crate::rail::standing_json(&people);
     body["shelf"] = crate::folder::shelf();
+    body["version"] = crate::version::VERSION.into();
     Ok(Json(body).into_response())
 }
 
@@ -918,3 +941,6 @@ fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn
 mod tests_support;
 #[cfg(any(test, feature = "test-support"))]
 pub use tests_support::splice;
+
+#[cfg(test)]
+mod tests;

@@ -510,7 +510,8 @@ async fn lends(
     let stands = |g: &String| door.rail.standing(g).is_ok_and(|s| s.names(&actor));
     offered.retain(|o| o.listed(stands));
     tracing::debug!(target: "door", actor, lends = offered.len(), "door: lends — answered what this computer lends, each carried app only to its own group");
-    Ok(Json(serde_json::json!({ "lends": offered })).into_response())
+    let version = crate::version::VERSION;
+    Ok(Json(serde_json::json!({ "lends": offered, "version": version })).into_response())
 }
 
 /// Every lend this computer declares now, and every app its groups'
@@ -552,7 +553,7 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
             upload: lend.upload,
             reads: lend.reads,
             asks: lend.asks,
-            signs_in: Some(lend.sign_in.is_some()),
+            signs_in: lend.sign_in.is_some(),
             group: match lend.source {
                 Source::Carried(group) => Some(group),
                 Source::Port(_) => None,

@@ -1179,18 +1179,16 @@ impl std::fmt::Display for Said {
                         lent.person, lent.address
                     )?;
                 }
-                let unlisted = &lends.unlisted;
-                for person in &unlisted.unanswered {
-                    writeln!(
-                        f,
-                        "{person}'s computer did not answer, so what they lend is not listed."
-                    )?;
-                }
-                for person in &unlisted.unheard {
-                    writeln!(f, "{person}'s computer has not heard of yours yet, so what they lend is not listed yet.")?;
-                }
-                for person in &unlisted.refused {
-                    writeln!(f, "{person}'s computer answered without saying what they lend, so it is not listed.")?;
+                let u = &lends.unlisted;
+                for (people, why) in [
+                    (&u.unanswered, "did not answer, so what they lend is not listed"),
+                    (&u.unheard, "has not heard of yours yet, so what they lend is not listed yet"),
+                    (&u.refused, "answered without saying what they lend, so it is not listed"),
+                    (&u.older, "runs an older svrngs, so what they lend is not listed"),
+                ] {
+                    for person in people {
+                        writeln!(f, "{person}'s computer {why}.")?;
+                    }
                 }
                 Ok(())
             }

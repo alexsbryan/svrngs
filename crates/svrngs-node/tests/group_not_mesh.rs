@@ -315,6 +315,7 @@ async fn a_computer_that_refuses_is_said_apart_from_one_that_does_not_answer() {
             unanswered: names(&["dee"]),
             unheard: names(&["bo"]),
             refused: names(&["cy"]),
+            older: vec![],
         },
         "each computer named by how it did not say what it lends"
     );

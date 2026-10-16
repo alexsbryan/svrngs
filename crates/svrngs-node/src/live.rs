@@ -26,8 +26,6 @@
 //! names them, [`LivePeer`]: the push door, [`crate::rail`], names the keys
 //! standing in the group but this node's. DESIGN §8, U3's inventory.)
 
-use axum::http::StatusCode;
-
 use crate::iroh::{Contact, IrohTransport};
 
 // svrngs: `LIVE_PAYLOAD_MAX_BYTES` is rail.rs's, the same number, so the
@@ -104,12 +102,6 @@ async fn offer_peer(transport: &IrohTransport, envelope: &str, peer: LivePeer) -
         tokio::time::timeout(LIVE_PUSH_TIMEOUT, transport.fetch(&peer.contact, offer)).await;
     let error = match taken {
         Ok(Ok(a)) if a.status().is_success() => None,
-        // Terminal for this peer: no other address routes differently.
-        Ok(Ok(a)) if a.status() == StatusCode::NOT_FOUND => Some(
-            "404 — peer is running an older daemon without /internal/ring/live; \
-             rebuild + restart it to see cursors"
-                .to_string(),
-        ),
         Ok(Ok(a)) => Some(a.status().to_string()),
         Ok(Err(e)) => Some(e.to_string()),
         Err(_) => Some(format!("not taken within {LIVE_PUSH_TIMEOUT:?}")),

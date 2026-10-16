@@ -20,9 +20,9 @@
 //!   this computer's browser opens it, its `origin` (u5-2,
 //!   [`crate::origin`]), and its `room` address while the room door serves
 //!   it (u6-1, [`crate::room`]); and the people whose computer did not say
-//!   what they lend, named in [`crate::node::Unlisted`]'s three lists by how:
-//!   `unanswered` within [`crate::node::ANSWER_WITHIN`], `unheard` and
-//!   `refused` — their lends absent rather than stale. The body [`crate::node`]'s `GET /people/lends`
+//!   what they lend, named in [`crate::node::Unlisted`]'s four lists by how:
+//!   `unanswered` within [`crate::node::ANSWER_WITHIN`], `unheard`,
+//!   `refused` and `older` — their lends absent rather than stale. The body [`crate::node`]'s `GET /people/lends`
 //!   answers a member, for one group.
 //! - `GET /svrngs-reads`, at a lend's own origin and to its pages (mnp-2,
 //!   [`reads`]): the lends of each kind its lender declared it reads, as a
@@ -280,10 +280,11 @@ async fn read_by(
         unanswered,
         unheard,
         refused,
+        older,
     } = &unlisted;
     let silent: Vec<String> = (groups.iter().flat_map(|(_, s)| s.iter()))
         .filter(|(_, m)| {
-            [unanswered, unheard, refused]
+            [unanswered, unheard, refused, older]
                 .iter()
                 .any(|l| l.contains(&m.person))
         })

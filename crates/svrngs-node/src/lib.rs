@@ -102,3 +102,6 @@ pub mod join;
 pub mod node;
 // Removal as this computer's person asks it (U7, DESIGN §6).
 pub mod removal;
+// This build's version, which every answer a page reads carries, and the
+// one check made of it (arch-version); the page compiles it too.
+pub mod version;
