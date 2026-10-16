@@ -380,11 +380,11 @@ the route, and reading another app's acts.
     restarted;
   - joins another group from a link someone sent, pasted under "Join a
     group from a link", by the svrngs running there as `svrngs join`
-    joins (arch-command (c); the node's `join.rs` `Asking::join`, the
+    joins (arch-command (c); the node's `join.rs` `Host::join`, the
     one join both ask), so a computer whose svrngs runs from login, where
     `svrngs join` is refused, joins with no terminal. Before the button
     is pressed, the page asks the computer that sent the link what it is
-    for (`GET /join?link=`, `Asking::asked`) and the button says it:
+    for (`GET /join?link=`, `Host::asked`) and the button says it:
     "Join Trip as Ana", the name the one typed, or the person a link to
     add a computer of theirs names. Pressed (`POST /join`), the group's
     folder is placed as a joiner's, and the page says "You’re in Trip, as

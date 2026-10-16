@@ -186,17 +186,10 @@ fn answer<T: Serialize>(route: &str, key: &str, decided: Result<T, NotAdmitted>)
 /// as the command keeps it.
 fn serve_ask(at: &Asking, dialer: Option<String>, req: &AskRequest) -> Result<Asked, NotAdmitted> {
     parse_ask(dialer.as_deref(), req)?;
-    let (group, invite, person) = at
-        .host
-        .rail
-        .invite_for(&req.link)
-        .map_err(NotAdmitted::Unjudged)?
-        .ok_or(NotAdmitted::NoInvite)?;
-    let dir = at
-        .host
-        .rail
-        .group_dir(&group)
-        .map_err(NotAdmitted::Unjudged)?;
+    let rail = &at.host.rail;
+    let found = rail.invite_for(&req.link).map_err(NotAdmitted::Unjudged)?;
+    let (group, invite, person) = found.ok_or(NotAdmitted::NoInvite)?;
+    let dir = rail.group_dir(&group).map_err(NotAdmitted::Unjudged)?;
     let seed = (at.seeds)(&dir)
         .map_err(|e| NotAdmitted::Unjudged(RailError::Io(e)))?
         .ok_or(NotAdmitted::NotHeld)?;

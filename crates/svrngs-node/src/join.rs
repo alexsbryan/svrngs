@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Joining a group by its link, in one place for `svrngs join` and the
 //! home page (arch-command (a)). Moved from the command, behaviour kept:
-//! [`Asking::join`] was svrngs's cli.rs `join_group`, and [`key`] and
+//! [`Host::join`] was svrngs's cli.rs `join_group`, and [`key`] and
 //! [`addr`] its issuer.rs, which iroh dials and the core cannot name. The
 //! command keeps what is its own: the wait for a relay, and its words.
 
 use crate::group::{self, kept_relay, Name, Seed};
 use crate::iroh::{EndpointAddr, PublicKey, RelayUrl};
 use crate::link::{Link, Token};
-use crate::node::{Asking, Node};
+use crate::node::Host;
 use crate::redeem::{ask, redeem, AskRequest, Asked, RedeemError, RedeemRequest, Redeemed};
 use crate::{Device, Person};
 
@@ -51,21 +51,14 @@ pub enum NotJoined {
     Keep(Name),
 }
 
-impl Node {
-    /// [`Asking::join`], asked of this node.
-    pub async fn join(&self, link: &Link, person: &Name) -> Result<Entered, NotJoined> {
-        self.asking.join(link, person).await
-    }
-}
-
-impl Asking {
+impl Host {
     /// What `link` is for, asked of its issuer, proving the link's key: its
     /// answer, and the seed answered, believed only when it hashes to the
     /// group named (`group::answered`). The home page says it before it
     /// joins.
-    pub(crate) async fn asked(&self, link: &Link) -> Result<(Asked, Seed), NotJoined> {
-        let request = AskRequest::sign(&link.token.key(), self.host.rail.signer());
-        let asked = ask(&self.host.endpoint, addr(&link.token), &request).await;
+    pub async fn asked(&self, link: &Link) -> Result<(Asked, Seed), NotJoined> {
+        let request = AskRequest::sign(&link.token.key(), self.rail.signer());
+        let asked = ask(&self.endpoint, addr(&link.token), &request).await;
         let asked = asked.map_err(|e| not_let_in(e, None))?;
         let Some(seed) = group::answered(&asked.group, &asked.seed) else {
             tracing::debug!(target: "join", group = %asked.group, "join: the issuer's answer is not believed, so nothing is redeemed");
@@ -80,12 +73,12 @@ impl Asking {
     /// computer's copy of the register may not know yet (DESIGN §8, U2).
     /// Nothing is written until the issuer has let this computer in, so a
     /// refused link leaves nothing behind.
-    pub(crate) async fn join(&self, link: &Link, person: &Name) -> Result<Entered, NotJoined> {
-        let (host, key) = (&self.host, self.host.rail.signer());
+    pub async fn join(&self, link: &Link, person: &Name) -> Result<Entered, NotJoined> {
+        let key = self.rail.signer();
         let (issuer, link_key) = (addr(&link.token), link.token.key());
         let (asked, seed) = self.asked(link).await?;
         let id = seed.id();
-        if group::groups(host.rail.root()).iter().any(|s| s.id() == id) {
+        if group::groups(self.rail.root()).iter().any(|s| s.id() == id) {
             tracing::debug!(target: "join", group = %id, "join: this computer holds the group already, so nothing is redeemed");
             return Ok(Entered::AlreadyIn(seed));
         }
@@ -101,16 +94,16 @@ impl Asking {
             &person,
             Device::Computer,
         );
-        let redeemed = redeem(&host.endpoint, issuer.clone(), &request)
+        let redeemed = redeem(&self.endpoint, issuer.clone(), &request)
             .await
             .map_err(|e| not_let_in(e, Some(seed.name())))?;
         tracing::debug!(target: "join", group = %id, redeemed = ?redeemed, "join: let in");
         // An address lookup is n0's, built only with `n0_services` (svrngs-node
         // guest.rs `relayed_endpoint_builder`): this computer meets its groups at n0's.
-        let n0 = crate::iroh::has_lookup(&host.endpoint);
+        let n0 = crate::iroh::has_lookup(&self.endpoint);
         let relay = kept_relay(link.token.relay.clone().map(RelayUrl::from), n0);
         // Kept as the node keeps a group, as `new` keeps it (Host::keep_group).
-        let kept = host.keep_group(&seed, link.origin.as_ref(), relay.as_ref());
+        let kept = self.keep_group(&seed, link.origin.as_ref(), relay.as_ref());
         kept.map_err(|why| {
             tracing::debug!(target: "join", group = %id, why, "join: refused — the group cannot be kept here");
             NotJoined::Keep(seed.name().clone())
@@ -118,7 +111,7 @@ impl Asking {
         if link.origin.is_none() {
             tracing::debug!(target: "join", group = %id, "join: a client's link, so no origin is kept");
         }
-        let synced = host.sync_with(&id, &issuer).await;
+        let synced = self.sync_with(&id, &issuer).await;
         match &synced.stop {
             None => {
                 tracing::debug!(target: "join", group = %id, pulled = synced.pulled, "join: synced once from the issuer")

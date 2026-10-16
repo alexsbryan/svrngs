@@ -1544,7 +1544,7 @@ pub async fn join_group(
     // so a relay that does not answer is named before the issuer is dialled.
     let carried: Vec<String> = link.token.relay.iter().map(ToString::to_string).collect();
     wait_online(node, &carried).await;
-    match node.join(link, person).await {
+    match node.host().join(link, person).await {
         Ok(Entered::In { seed, person }) => Ok(Said::Joined { seed, person }),
         Ok(Entered::AlreadyIn(seed)) => Ok(Said::AlreadyIn(seed)),
         Err(NotJoined::LinkRefused) => Err(Refusal::LinkRefused),

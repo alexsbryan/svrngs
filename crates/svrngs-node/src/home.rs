@@ -453,17 +453,18 @@ fn not_joined(why: NotJoined) -> Response {
 }
 
 /// `GET /join?link=`: what a link someone sent is for, asked of the
-/// computer that sent it ([`Asking::asked`]), for the page to say on its
+/// computer that sent it ([`Host::asked`]), for the page to say on its
 /// button before it joins: the group's name, and the person a link to add
 /// a computer of theirs joins as, else none.
 async fn asked(State(at): State<Asking>, Query(j): Query<Joining>) -> Result<Response, Response> {
-    let (asked, seed) = at.asked(&link_of(&j.link)?).await.map_err(not_joined)?;
+    let asked = at.host.asked(&link_of(&j.link)?).await;
+    let (asked, seed) = asked.map_err(not_joined)?;
     tracing::debug!(target: "home", group = %seed.id(), person = ?asked.person, "home: what a link is for, asked");
     Ok(Json((seed.name().as_str(), asked.person)).into_response())
 }
 
 /// `POST /join`: the group a link is for joined by the svrngs running
-/// here, as `svrngs join` joins ([`Asking::join`], arch-command (c)), and
+/// here, as `svrngs join` joins ([`Host::join`], arch-command (c)), and
 /// its folder placed as a joiner's: its name, whom this computer joined
 /// as, none when it was in already, and why its folder was not placed.
 async fn join(State(at): State<Asking>, Json(j): Json<Joining>) -> Result<Response, Response> {
@@ -471,7 +472,7 @@ async fn join(State(at): State<Asking>, Json(j): Json<Joining>) -> Result<Respon
         tracing::debug!(target: "home", %why, "home: refused — no name to join as");
         LendRefusal::Closed.say(StatusCode::BAD_REQUEST, why.to_string())
     })?;
-    let entered = at.join(&link_of(&j.link)?, &name).await;
+    let entered = at.host.join(&link_of(&j.link)?, &name).await;
     tracing::debug!(target: "home", ?entered, "home: a group joined by its link, or why not");
     let (seed, person) = match entered.map_err(not_joined)? {
         Entered::In { seed, person } => (seed, Some(person.to_string())),
@@ -577,12 +578,7 @@ async fn at_door(
     let ask = ask.header(header::CONTENT_TYPE, "application/json");
     let ask = ask.body(body.map_or_else(axum::body::Body::empty, |b| b.to_string().into()));
     let answer = match ask {
-        Ok(ask) => at
-            .host
-            .transport
-            .fetch(&contact, ask)
-            .await
-            .map_err(|e| e.to_string()),
+        Ok(ask) => (at.host.transport.fetch(&contact, ask).await).map_err(|e| e.to_string()),
         Err(e) => Err(e.to_string()),
     };
     let answer = match answer {
