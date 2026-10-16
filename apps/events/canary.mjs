@@ -97,7 +97,10 @@ async function main() {
   // In the second group, Di is coming.
   await record(SAM, { kind: COMING, event }, 'di', second);
 
-  const want = { host: 'sam', what: 'dinner', when: 'Friday 7', where: 'the house', coming: { alex: [], bo: ['Maya'] }, came: ['bo'], guests_came: { bo: ['Maya'] } };
+  // `via`, whose computer wrote each answer for someone else (gv-via): Bo's
+  // coming Sam's, his came and Maya's Alex's; Alex's own and Sam's post none.
+  const via = { host: null, coming: { bo: ['sam'] }, came: { bo: ['alex'] }, guests_came: { bo: { Maya: ['alex'] } } };
+  const want = { host: 'sam', what: 'dinner', when: 'Friday 7', where: 'the house', coming: { alex: [], bo: ['Maya'] }, came: ['bo'], guests_came: { bo: ['Maya'] }, via };
   const copies = [];
   for (const computer of [SAM, ALEX]) {
     const missing = await unheld(computer, written);
