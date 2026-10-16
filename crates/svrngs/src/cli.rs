@@ -92,7 +92,7 @@ use std::num::NonZeroU16;
 use svrngs_node::api::{ApiError, API_FILE};
 use svrngs_node::folder::FolderAsk;
 use svrngs_node::home::WHEN;
-use svrngs_node::invite::Unminted;
+use svrngs_node::invite::{Linked, Unminted};
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath, Source, Upload};
 use svrngs_node::node::{Lends, Lent, Node, NodeError};
@@ -109,7 +109,7 @@ use crate::identity::{self, KeyError};
 use crate::issuer;
 use crate::relay::{self, Relay};
 use crate::share::{self, Share, ShareRefusal};
-use svrngs_node::link::{client_link, https_link, Link, Origin, Token};
+use svrngs_node::link::{client_link, https_link, Link, Origin};
 
 pub const USAGE: &str = "\
 svrngs — keep what your group shares on your own computers.
@@ -1016,11 +1016,11 @@ pub struct Printed {
 }
 
 impl Printed {
-    fn of(token: &Token, page: Option<&Origin>) -> Self {
+    fn of(made: &Linked) -> Self {
         Self {
-            client: client_link(token),
-            https: page.map(|p| https_link(p, token)),
-            page: page.cloned(),
+            client: client_link(&made.token),
+            https: made.page.as_ref().map(|p| https_link(p, &made.token)),
+            page: made.page.clone(),
         }
     }
 }
@@ -1702,7 +1702,7 @@ pub async fn new_group(
     tracing::debug!(target: "cli", group = %id, name = %seed.name(), page = ?page.map(Origin::as_str), ?kept, asked, "cli: group made, keeping the relay asked, else the one the home page's keeps");
     let made = node.host().link(&id, false, None);
     let made = made.map_err(|e| unminted(&seed, e))?;
-    Ok((seed, Printed::of(&made.token, made.page.as_ref())))
+    Ok((seed, Printed::of(&made)))
 }
 
 /// The one group held under `root` that `reference` names, by its name or
@@ -1744,8 +1744,7 @@ pub async fn link_to(
     wait_online(node, &relay.relay_urls).await;
     let made = node.host().link(&seed.id(), device, page);
     let made = made.map_err(|e| unminted(&seed, e))?;
-    let printed = Printed::of(&made.token, made.page.as_ref());
-    Ok((seed, printed, made.device))
+    Ok((seed, Printed::of(&made), made.device))
 }
 
 /// Why the node made no link, in the command's refusals.
