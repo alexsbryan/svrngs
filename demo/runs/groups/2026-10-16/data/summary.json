@@ -1,0 +1,781 @@
+{
+ "group": "e5191dc81c2c2d07a3396972f428fa18eef27454c75106a8f64e74ed3b941d06",
+ "computers": {
+  "Sam": "06323e890f73320e82ff2f3a2c62e70acbabc7c6cf9e8470fa98a483b75874bd",
+  "Ana": "3b11f2ac0932bcfffdaa5b527a81980c9f9295c3669a3029543b38d7ebb864ff",
+  "Bo": "e08f85e7cf2ca40caf695f693696b7abeacaed08d012d3f8bacef52893a50f16"
+ },
+ "origins": {
+  "notes": "http://a23d7cksrp3a7a19g67c221jbng41u8h38skk6j4wcvkjq42rv8tblvj4c3bdw.localhost:65319/",
+  "photos": "http://6cj2n38sgvva3n5ln7xwqgz1zszpz5kk4alqj8g4354vuf7gb6na4z7nztg1aj.localhost:65319/",
+  "list": "http://jpk9gnalhm8s99qmnqljzap2bvs3ggrdp4qdammxjp6qs472pw9tgwn07bwp30.localhost:65282/"
+ },
+ "before": {
+  "notes": {
+   "status": 200,
+   "refused": null,
+   "said": "<!doctype html><title>Sam's notes</title><h1>Sam's notes</h1>\n"
+  },
+  "photos": {
+   "status": 200,
+   "refused": null,
+   "said": "<!doctype html><title>Bo's photos</title><h1>Bo's photos</h1>\n"
+  },
+  "list": {
+   "status": 200,
+   "refused": null,
+   "said": "<!doctype html><title>Ana's list</title><h1>Ana's list</h1>\n"
+  }
+ },
+ "folders": {
+  "sam": "/tmp/groups-run/sam/svrngs/Trip",
+  "ana": "/tmp/groups-run/ana/svrngs/Trip",
+  "bo": "/tmp/groups-run/bo/svrngs/Trip"
+ },
+ "before_txt": {
+  "reached": true,
+  "ms": 576
+ },
+ "ana_ops_before": 8,
+ "ana_leave": {
+  "step": "3",
+  "who": "ana",
+  "computer": true,
+  "started": 1792169721.404,
+  "ms": 435,
+  "all": [
+   "Trip (Sam’s, since 16 Oct)",
+   "Trip’s folder is on this computer at /tmp/groups-run/ana/svrngs/Trip",
+   "Open this folder",
+   "Make a link to invite someone to TripMake a link to add your phone or another computer of yours",
+   "",
+   "Leaving Trip stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Trip",
+   "These come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.",
+   " Money: who paid for what, and who owes whom.",
+   " Events: post a get-together, and see who’s coming.",
+   "Bring the ticked ones to Trip",
+   "Open a link from your group",
+   "The link: Open it",
+   "Make a group",
+   "A name for the group: Your name in it: Make a group",
+   "",
+   "Join a group from a link",
+   "The link someone sent you: Your name in it: ",
+   "",
+   "Already running here",
+   "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+   "Look for programs running on this computer",
+   "What you lend",
+   "Your home page, the same address each time svrngs starts: http://svrngs.localhost:65319/"
+  ],
+  "after": [
+   [
+    "You left Trip. Rejoining needs a new invitation, and this computer can’t rejoin yet.",
+    "Groups you left",
+    "Trip (Sam’s, since 16 Oct): what you have of it stays on this computer, its folder at /tmp/groups-run/ana/svrngs/Trip, and nothing new of it reaches you.",
+    "Open a link from your group",
+    "The link: Open it",
+    "Make a group",
+    "A name for the group: Your name in it: Make a group",
+    "",
+    "Join a group from a link",
+    "The link someone sent you: Your name in it: ",
+    "",
+    "Already running here",
+    "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "Look for programs running on this computer",
+    "What you lend",
+    "Your home page, the same address each time svrngs starts: http://svrngs.localhost:65319/"
+   ]
+  ]
+ },
+ "held_out": {
+  "sam": {
+   "out": true,
+   "ms": 437,
+   "removals": [
+    {
+     "at": 1792169721,
+     "by": "Ana",
+     "of": "Ana",
+     "said": "left"
+    }
+   ],
+   "people": [
+    "Sam",
+    "Cy",
+    "Bo"
+   ]
+  },
+  "bo": {
+   "out": true,
+   "ms": 439,
+   "removals": [
+    {
+     "at": 1792169721,
+     "by": "Ana",
+     "of": "Ana",
+     "said": "left"
+    }
+   ],
+   "people": [
+    "Sam",
+    "Cy",
+    "Bo"
+   ]
+  }
+ },
+ "after": {
+  "notes": {
+   "status": 404,
+   "refused": "unlent",
+   "said": {
+    "error": "nothing is lent here",
+    "kind": "unlent"
+   }
+  },
+  "photos": {
+   "status": 404,
+   "refused": "unlent",
+   "said": {
+    "error": "nothing is lent here",
+    "kind": "unlent"
+   }
+  },
+  "list": {
+   "status": 404,
+   "refused": "unlent",
+   "said": {
+    "error": "nothing is lent here",
+    "kind": "unlent"
+   }
+  },
+  "sam_lists": [
+   [
+    "Bo",
+    "photos"
+   ],
+   [
+    "Sam",
+    "notes"
+   ]
+  ],
+  "ana_lists": []
+ },
+ "ana_copy": {
+  "before": 8,
+  "after": 9,
+  "kept": true,
+  "new": [
+   "3542e8d0f3b19f4e9e3a2f869b48685de1a7e1a825b1870af4cdc2ec392e2f1c"
+  ],
+  "folder": true,
+  "before_txt": true
+ },
+ "after_txt": {
+  "bo": true,
+  "bo_ms": 503,
+  "ana": false
+ },
+ "cy_ms": 22485,
+ "cy": {
+  "ms": 772,
+  "found": true,
+  "want": "/^Ana /",
+  "status": "You’re in Trip (Sam’s, since 16 Oct), as Cy",
+  "removals": [
+   "Ana left on Oct 16, 2026 at 9:55 AM"
+  ],
+  "text": "You’re in Trip (Sam’s, since 16 Oct), as Cy\n\nSam on now\nCy in from a phone\nBo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nBo’s photos\tphotos\tBo\tHere, in this tab\ton\nSam’s notes\tnotes\tSam\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Trip\n\nAna left on Oct 16, 2026 at 9:55 AM\n"
+ },
+ "copy": {
+  "up_ms": 313,
+  "notes": {
+   "status": 403,
+   "refused": "removed",
+   "said": {
+    "error": "You are no longer in this group, so nothing of it is open to you.",
+    "kind": "removed"
+   }
+  },
+  "photos": {
+   "status": 404,
+   "refused": "unlent",
+   "said": {
+    "error": "nothing is lent here",
+    "kind": "unlent"
+   }
+  },
+  "left": true,
+  "left_ms": 503
+ },
+ "rejoin_page": {
+  "step": "9",
+  "who": "ana",
+  "computer": true,
+  "started": 1792169750.089,
+  "ms": 599,
+  "all": [
+   "The link someone sent you: Your name in it: ",
+   ""
+  ],
+  "after": [
+   [
+    "The link someone sent you: Your name in it: ",
+    "You’re no longer in Trip on this computer, and you can’t join it again from here yet. Join from your phone or another computer instead."
+   ]
+  ]
+ },
+ "rejoin_command": {
+  "who": "ana",
+  "args": [
+   "join",
+   "<link>",
+   "--as",
+   "Ana"
+  ],
+  "exit": 1,
+  "said": "svrngs: you're no longer in Trip on this computer, and you can't join it again from here yet: join from your phone or another computer instead",
+  "ms": 4028
+ },
+ "sam_people_after_rejoin": [
+  [
+   "Sam",
+   "06323e890f73320e82ff2f3a2c62e70acbabc7c6cf9e8470fa98a483b75874bd",
+   "computer"
+  ],
+  [
+   "Cy",
+   "b158c94f33e614898140a7bcd4d4bef19d08a733ab603c325d578d09512b6fca",
+   "browser"
+  ],
+  [
+   "Bo",
+   "e08f85e7cf2ca40caf695f693696b7abeacaed08d012d3f8bacef52893a50f16",
+   "computer"
+  ]
+ ],
+ "ana_phone": {
+  "ms": 2807,
+  "asked": true,
+  "status": "You’re in Trip (Sam’s, since 16 Oct), as Ana",
+  "removals": [
+   "Ana left on Oct 16, 2026 at 9:55 AM"
+  ],
+  "text": "You’re in Trip (Sam’s, since 16 Oct), as Ana\n\nSam on now\nAna in from a phone\nCy in from a phone\nBo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nBo’s photos\tphotos\tBo\tHere, in this tab\ton\nSam’s notes\tnotes\tSam\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Trip\n\nAna left on Oct 16, 2026 at 9:55 AM\n"
+ },
+ "sam_people_after_phone": [
+  [
+   "Sam",
+   "06323e890f73320e82ff2f3a2c62e70acbabc7c6cf9e8470fa98a483b75874bd",
+   "computer"
+  ],
+  [
+   "Ana",
+   "afb5630e77e9f5a543f8aa96152790c208e0b3157073a1fed58513c58ca53bc7",
+   "browser"
+  ],
+  [
+   "Cy",
+   "b158c94f33e614898140a7bcd4d4bef19d08a733ab603c325d578d09512b6fca",
+   "browser"
+  ],
+  [
+   "Bo",
+   "e08f85e7cf2ca40caf695f693696b7abeacaed08d012d3f8bacef52893a50f16",
+   "computer"
+  ]
+ ],
+ "keeper": {
+  "page": {
+   "step": "11a",
+   "who": "sam",
+   "computer": true,
+   "started": 1792169760.343,
+   "ms": 380,
+   "all": [
+    "Trip’s folder is on this computer at /tmp/groups-run/sam/svrngs/Trip",
+    "Open this folder",
+    "Make a link to invite someone to TripMake a link to add your phone or another computer of yours",
+    "",
+    "You keep the order of removals in Trip. Choose who keeps it after you, then leave: BoHand it on",
+    "Leaving Trip stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Trip",
+    "These come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.",
+    " Money: who paid for what, and who owes whom.",
+    " Events: post a get-together, and see who’s coming.",
+    "Bring the ticked ones to Trip",
+    "The link: Open it",
+    "A name for the group: Your name in it: Make a group",
+    "",
+    "The link someone sent you: Your name in it: ",
+    "",
+    "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "Look for programs running on this computer"
+   ],
+   "after": [
+    [
+     "Trip’s folder is on this computer at /tmp/groups-run/sam/svrngs/Trip",
+     "Open this folder",
+     "Make a link to invite someone to TripMake a link to add your phone or another computer of yours",
+     "",
+     "You keep the order of removals in Trip. Choose who keeps it after you, then leave: BoHand it on",
+     "Leaving Trip stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Trip You keep the order of removals in Trip: choose who keeps it after you, then leave.",
+     "These come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.",
+     " Money: who paid for what, and who owes whom.",
+     " Events: post a get-together, and see who’s coming.",
+     "Bring the ticked ones to Trip",
+     "The link: Open it",
+     "A name for the group: Your name in it: Make a group",
+     "",
+     "The link someone sent you: Your name in it: ",
+     "",
+     "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+     "Look for programs running on this computer"
+    ]
+   ]
+  },
+  "left_after_press": false,
+  "command": {
+   "who": "sam",
+   "args": [
+    "leave",
+    "Trip"
+   ],
+   "exit": 1,
+   "said": "svrngs: You decide who is removed from Trip, so you cannot leave it yet: hand that to someone else first, with `svrngs handover <name> --group Trip`, then leave.",
+   "ms": 12
+  },
+  "left_after_command": false,
+  "hand": {
+   "step": "11b",
+   "who": "sam",
+   "computer": true,
+   "started": 1792169760.738,
+   "ms": 372,
+   "all": [
+    "Trip’s folder is on this computer at /tmp/groups-run/sam/svrngs/Trip",
+    "Open this folder",
+    "Make a link to invite someone to TripMake a link to add your phone or another computer of yours",
+    "",
+    "You keep the order of removals in Trip. Choose who keeps it after you, then leave: BoHand it on",
+    "Leaving Trip stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Trip",
+    "These come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.",
+    " Money: who paid for what, and who owes whom.",
+    " Events: post a get-together, and see who’s coming.",
+    "Bring the ticked ones to Trip",
+    "The link: Open it",
+    "A name for the group: Your name in it: Make a group",
+    "",
+    "The link someone sent you: Your name in it: ",
+    "",
+    "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "Look for programs running on this computer"
+   ],
+   "after": [
+    [
+     "Trip’s folder is on this computer at /tmp/groups-run/sam/svrngs/Trip",
+     "Open this folder",
+     "Make a link to invite someone to TripMake a link to add your phone or another computer of yours",
+     "",
+     "You keep the order of removals in Trip. Choose who keeps it after you, then leave: BoHand it on Bo keeps the order of removals in Trip now, so you can leave it.",
+     "Leaving Trip stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Trip",
+     "These come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.",
+     " Money: who paid for what, and who owes whom.",
+     " Events: post a get-together, and see who’s coming.",
+     "Bring the ticked ones to Trip",
+     "The link: Open it",
+     "A name for the group: Your name in it: Make a group",
+     "",
+     "The link someone sent you: Your name in it: ",
+     "",
+     "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+     "Look for programs running on this computer"
+    ]
+   ]
+  },
+  "leave": {
+   "step": "11c",
+   "who": "sam",
+   "computer": true,
+   "started": 1792169761.11,
+   "ms": 379,
+   "all": [
+    "Trip (yours, since 16 Oct)",
+    "Trip’s folder is on this computer at /tmp/groups-run/sam/svrngs/Trip",
+    "Open this folder",
+    "Make a link to invite someone to TripMake a link to add your phone or another computer of yours",
+    "",
+    "Leaving Trip stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Trip",
+    "These come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.",
+    " Money: who paid for what, and who owes whom.",
+    " Events: post a get-together, and see who’s coming.",
+    "Bring the ticked ones to Trip",
+    "Open a link from your group",
+    "The link: Open it",
+    "Make a group",
+    "A name for the group: Your name in it: Make a group",
+    "",
+    "Join a group from a link",
+    "The link someone sent you: Your name in it: ",
+    "",
+    "Already running here",
+    "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "Look for programs running on this computer",
+    "What you lend",
+    "Your home page, the same address each time svrngs starts: http://svrngs.localhost:65282/"
+   ],
+   "after": [
+    [
+     "You left Trip. Rejoining needs a new invitation, and this computer can’t rejoin yet.",
+     "Groups you left",
+     "Trip (yours, since 16 Oct): what you have of it stays on this computer, its folder at /tmp/groups-run/sam/svrngs/Trip, and nothing new of it reaches you.",
+     "Open a link from your group",
+     "The link: Open it",
+     "Make a group",
+     "A name for the group: Your name in it: Make a group",
+     "",
+     "Join a group from a link",
+     "The link someone sent you: Your name in it: ",
+     "",
+     "Already running here",
+     "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+     "Look for programs running on this computer",
+     "What you lend",
+     "Your home page, the same address each time svrngs starts: http://svrngs.localhost:65282/"
+    ]
+   ]
+  },
+  "bo": {
+   "sam_left": true,
+   "ms": 381,
+   "keeps": true,
+   "sam_left_flag": true
+  }
+ },
+ "pages": [
+  {
+   "step": "setup",
+   "who": "cy",
+   "computer": false,
+   "ms": 2946,
+   "asked": true,
+   "status": "You’re in Trip (Sam’s, since 16 Oct), as Cy",
+   "removals": [],
+   "text": "You’re in Trip (Sam’s, since 16 Oct), as Cy\n\nSam on now\nAna on now\nCy in from a phone\nBo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Trip\n\nNobody in Trip lends anything yet."
+  },
+  {
+   "step": "3",
+   "who": "ana",
+   "computer": true,
+   "started": 1792169721.404,
+   "ms": 435,
+   "all": [
+    "Trip (Sam’s, since 16 Oct)",
+    "Trip’s folder is on this computer at /tmp/groups-run/ana/svrngs/Trip",
+    "Open this folder",
+    "Make a link to invite someone to TripMake a link to add your phone or another computer of yours",
+    "",
+    "Leaving Trip stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Trip",
+    "These come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.",
+    " Money: who paid for what, and who owes whom.",
+    " Events: post a get-together, and see who’s coming.",
+    "Bring the ticked ones to Trip",
+    "Open a link from your group",
+    "The link: Open it",
+    "Make a group",
+    "A name for the group: Your name in it: Make a group",
+    "",
+    "Join a group from a link",
+    "The link someone sent you: Your name in it: ",
+    "",
+    "Already running here",
+    "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "Look for programs running on this computer",
+    "What you lend",
+    "Your home page, the same address each time svrngs starts: http://svrngs.localhost:65319/"
+   ],
+   "after": [
+    [
+     "You left Trip. Rejoining needs a new invitation, and this computer can’t rejoin yet.",
+     "Groups you left",
+     "Trip (Sam’s, since 16 Oct): what you have of it stays on this computer, its folder at /tmp/groups-run/ana/svrngs/Trip, and nothing new of it reaches you.",
+     "Open a link from your group",
+     "The link: Open it",
+     "Make a group",
+     "A name for the group: Your name in it: Make a group",
+     "",
+     "Join a group from a link",
+     "The link someone sent you: Your name in it: ",
+     "",
+     "Already running here",
+     "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+     "Look for programs running on this computer",
+     "What you lend",
+     "Your home page, the same address each time svrngs starts: http://svrngs.localhost:65319/"
+    ]
+   ]
+  },
+  {
+   "step": "7",
+   "who": "sam",
+   "computer": true,
+   "started": 1792169742.396,
+   "ms": 355,
+   "all": [
+    "Trip (yours, since 16 Oct)",
+    "Ana left on Oct 16, 2026, 9:55 AM",
+    "Open a link from your group",
+    "Make a group",
+    "Join a group from a link",
+    "Already running here",
+    "What you lend"
+   ],
+   "after": []
+  },
+  {
+   "step": "7",
+   "who": "bo",
+   "computer": true,
+   "started": 1792169742.751,
+   "ms": 364,
+   "all": [
+    "Trip (Sam’s, since 16 Oct)",
+    "Ana left on Oct 16, 2026, 9:55 AM",
+    "Open a link from your group",
+    "Make a group",
+    "Join a group from a link",
+    "Already running here",
+    "What you lend"
+   ],
+   "after": []
+  },
+  {
+   "step": "7",
+   "who": "cy",
+   "computer": false,
+   "ms": 772,
+   "found": true,
+   "want": "/^Ana /",
+   "status": "You’re in Trip (Sam’s, since 16 Oct), as Cy",
+   "removals": [
+    "Ana left on Oct 16, 2026 at 9:55 AM"
+   ],
+   "text": "You’re in Trip (Sam’s, since 16 Oct), as Cy\n\nSam on now\nCy in from a phone\nBo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nBo’s photos\tphotos\tBo\tHere, in this tab\ton\nSam’s notes\tnotes\tSam\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Trip\n\nAna left on Oct 16, 2026 at 9:55 AM\n"
+  },
+  {
+   "step": "9",
+   "who": "ana",
+   "computer": true,
+   "started": 1792169750.089,
+   "ms": 599,
+   "all": [
+    "The link someone sent you: Your name in it: ",
+    ""
+   ],
+   "after": [
+    [
+     "The link someone sent you: Your name in it: ",
+     "You’re no longer in Trip on this computer, and you can’t join it again from here yet. Join from your phone or another computer instead."
+    ]
+   ]
+  },
+  {
+   "step": "10",
+   "who": "ana-phone",
+   "computer": false,
+   "ms": 2807,
+   "asked": true,
+   "status": "You’re in Trip (Sam’s, since 16 Oct), as Ana",
+   "removals": [
+    "Ana left on Oct 16, 2026 at 9:55 AM"
+   ],
+   "text": "You’re in Trip (Sam’s, since 16 Oct), as Ana\n\nSam on now\nAna in from a phone\nCy in from a phone\nBo on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nBo’s photos\tphotos\tBo\tHere, in this tab\ton\nSam’s notes\tnotes\tSam\tHere, in this tab\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Trip\n\nAna left on Oct 16, 2026 at 9:55 AM\n"
+  },
+  {
+   "step": "10",
+   "who": "sam",
+   "computer": true,
+   "started": 1792169760.006,
+   "ms": 337,
+   "all": [
+    "Ana left on Oct 16, 2026, 9:55 AM"
+   ],
+   "after": []
+  },
+  {
+   "step": "11a",
+   "who": "sam",
+   "computer": true,
+   "started": 1792169760.343,
+   "ms": 380,
+   "all": [
+    "Trip’s folder is on this computer at /tmp/groups-run/sam/svrngs/Trip",
+    "Open this folder",
+    "Make a link to invite someone to TripMake a link to add your phone or another computer of yours",
+    "",
+    "You keep the order of removals in Trip. Choose who keeps it after you, then leave: BoHand it on",
+    "Leaving Trip stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Trip",
+    "These come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.",
+    " Money: who paid for what, and who owes whom.",
+    " Events: post a get-together, and see who’s coming.",
+    "Bring the ticked ones to Trip",
+    "The link: Open it",
+    "A name for the group: Your name in it: Make a group",
+    "",
+    "The link someone sent you: Your name in it: ",
+    "",
+    "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "Look for programs running on this computer"
+   ],
+   "after": [
+    [
+     "Trip’s folder is on this computer at /tmp/groups-run/sam/svrngs/Trip",
+     "Open this folder",
+     "Make a link to invite someone to TripMake a link to add your phone or another computer of yours",
+     "",
+     "You keep the order of removals in Trip. Choose who keeps it after you, then leave: BoHand it on",
+     "Leaving Trip stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Trip You keep the order of removals in Trip: choose who keeps it after you, then leave.",
+     "These come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.",
+     " Money: who paid for what, and who owes whom.",
+     " Events: post a get-together, and see who’s coming.",
+     "Bring the ticked ones to Trip",
+     "The link: Open it",
+     "A name for the group: Your name in it: Make a group",
+     "",
+     "The link someone sent you: Your name in it: ",
+     "",
+     "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+     "Look for programs running on this computer"
+    ]
+   ]
+  },
+  {
+   "step": "11b",
+   "who": "sam",
+   "computer": true,
+   "started": 1792169760.738,
+   "ms": 372,
+   "all": [
+    "Trip’s folder is on this computer at /tmp/groups-run/sam/svrngs/Trip",
+    "Open this folder",
+    "Make a link to invite someone to TripMake a link to add your phone or another computer of yours",
+    "",
+    "You keep the order of removals in Trip. Choose who keeps it after you, then leave: BoHand it on",
+    "Leaving Trip stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Trip",
+    "These come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.",
+    " Money: who paid for what, and who owes whom.",
+    " Events: post a get-together, and see who’s coming.",
+    "Bring the ticked ones to Trip",
+    "The link: Open it",
+    "A name for the group: Your name in it: Make a group",
+    "",
+    "The link someone sent you: Your name in it: ",
+    "",
+    "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "Look for programs running on this computer"
+   ],
+   "after": [
+    [
+     "Trip’s folder is on this computer at /tmp/groups-run/sam/svrngs/Trip",
+     "Open this folder",
+     "Make a link to invite someone to TripMake a link to add your phone or another computer of yours",
+     "",
+     "You keep the order of removals in Trip. Choose who keeps it after you, then leave: BoHand it on Bo keeps the order of removals in Trip now, so you can leave it.",
+     "Leaving Trip stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Trip",
+     "These come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.",
+     " Money: who paid for what, and who owes whom.",
+     " Events: post a get-together, and see who’s coming.",
+     "Bring the ticked ones to Trip",
+     "The link: Open it",
+     "A name for the group: Your name in it: Make a group",
+     "",
+     "The link someone sent you: Your name in it: ",
+     "",
+     "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+     "Look for programs running on this computer"
+    ]
+   ]
+  },
+  {
+   "step": "11c",
+   "who": "sam",
+   "computer": true,
+   "started": 1792169761.11,
+   "ms": 379,
+   "all": [
+    "Trip (yours, since 16 Oct)",
+    "Trip’s folder is on this computer at /tmp/groups-run/sam/svrngs/Trip",
+    "Open this folder",
+    "Make a link to invite someone to TripMake a link to add your phone or another computer of yours",
+    "",
+    "Leaving Trip stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Trip",
+    "These come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.",
+    " Money: who paid for what, and who owes whom.",
+    " Events: post a get-together, and see who’s coming.",
+    "Bring the ticked ones to Trip",
+    "Open a link from your group",
+    "The link: Open it",
+    "Make a group",
+    "A name for the group: Your name in it: Make a group",
+    "",
+    "Join a group from a link",
+    "The link someone sent you: Your name in it: ",
+    "",
+    "Already running here",
+    "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "Look for programs running on this computer",
+    "What you lend",
+    "Your home page, the same address each time svrngs starts: http://svrngs.localhost:65282/"
+   ],
+   "after": [
+    [
+     "You left Trip. Rejoining needs a new invitation, and this computer can’t rejoin yet.",
+     "Groups you left",
+     "Trip (yours, since 16 Oct): what you have of it stays on this computer, its folder at /tmp/groups-run/sam/svrngs/Trip, and nothing new of it reaches you.",
+     "Open a link from your group",
+     "The link: Open it",
+     "Make a group",
+     "A name for the group: Your name in it: Make a group",
+     "",
+     "Join a group from a link",
+     "The link someone sent you: Your name in it: ",
+     "",
+     "Already running here",
+     "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+     "Look for programs running on this computer",
+     "What you lend",
+     "Your home page, the same address each time svrngs starts: http://svrngs.localhost:65282/"
+    ]
+   ]
+  },
+  {
+   "step": "11d",
+   "who": "bo",
+   "computer": true,
+   "started": 1792169761.492,
+   "ms": 320,
+   "all": [
+    "Trip’s folder is on this computer at /tmp/groups-run/bo/svrngs/Trip",
+    "Open this folder",
+    "Make a link to invite someone to TripMake a link to add your phone or another computer of yours",
+    "",
+    "Leaving Trip stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Trip",
+    "Ana left on Oct 16, 2026, 9:55 AM",
+    "Sam left on Oct 16, 2026, 9:56 AM",
+    "These come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.",
+    " Money: who paid for what, and who owes whom.",
+    " Events: post a get-together, and see who’s coming.",
+    "Bring the ticked ones to Trip",
+    "The link: Open it",
+    "A name for the group: Your name in it: Make a group",
+    "",
+    "The link someone sent you: Your name in it: ",
+    "",
+    "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "Look for programs running on this computer"
+   ],
+   "after": []
+  }
+ ],
+ "end_load": 4.4
+}
