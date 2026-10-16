@@ -38,6 +38,9 @@
 //!   costs sitting idle, which a round's own reading includes for its wall
 //!   time.
 //! - `bytes_per_act`, `digest_pass_s`, `append_s`, and the journal's size.
+//! - `view_bytes`, the bytes the journal's lines give to their writers'
+//!   views, and `view_share`, their part of `oplog_bytes`, the journal
+//!   file's own length (arch-view (a)).
 //! - `rounds` — each measured round's own account of what it cost (`push`,
 //!   the last `idle`, `asleep`): members `dialled`, `reached`, `asleep`
 //!   (dialled and not reached) and `refused`; `acts_moved`, pulled and
@@ -304,6 +307,24 @@ fn dir_bytes(p: &std::path::Path) -> u64 {
         }
     }
     n
+}
+
+/// The bytes the journal's lines give to a writer's view (`SignedOp::view`):
+/// for each line holding one, its `,"view":` key and its value as written,
+/// counted from the file itself, beside the file's own length (arch-view (a)).
+fn view_bytes(group_dir: &std::path::Path) -> (u64, u64) {
+    let text = std::fs::read_to_string(group_dir.join("ring_oplog.jsonl")).unwrap();
+    let view = text
+        .lines()
+        .filter_map(|l| {
+            serde_json::from_str::<serde_json::Value>(l)
+                .ok()?
+                .get("view")
+                .cloned()
+        })
+        .map(|v| (",\"view\":".len() + serde_json::to_string(&v).unwrap().len()) as u64)
+        .sum();
+    (view, text.len() as u64)
 }
 
 /// An expense-sized act: about two hundred bytes of payload.
@@ -727,6 +748,7 @@ async fn scale() {
         .unwrap();
     let journal_acts = held.len();
     let journal_bytes = dir_bytes(&nodes[0].rail().group_dir(GROUP).unwrap());
+    let (view_bytes, oplog_bytes) = view_bytes(&nodes[0].rail().group_dir(GROUP).unwrap());
     let digest_bytes = serde_json::to_vec(&digest).unwrap().len();
     let digest_pass_s = median(
         (0..5)
@@ -783,6 +805,9 @@ async fn scale() {
             "journal_acts": journal_acts,
             "journal_bytes": journal_bytes,
             "bytes_per_act": journal_bytes as f64 / journal_acts as f64,
+            "oplog_bytes": oplog_bytes,
+            "view_bytes": view_bytes,
+            "view_share": view_bytes as f64 / oplog_bytes as f64,
             "digest_bytes": digest_bytes,
             "digest_pass_s": digest_pass_s,
             "append_s": append_s,
