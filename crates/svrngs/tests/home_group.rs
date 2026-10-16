@@ -93,6 +93,27 @@ fn ruled(traced: &str, name: &str, held: usize) -> bool {
     })
 }
 
+/// svrngs as login keeps it in `home`, the bare command left running,
+/// and its home page's address once it answers.
+async fn run(home: &Path) -> (tokio::process::Child, String) {
+    let running = svrngs(home, &[]).spawn().unwrap();
+    let http = reqwest::Client::builder().no_proxy().build().unwrap();
+    let api = tokio::time::timeout(Duration::from_secs(30), async {
+        loop {
+            let api = std::fs::read_to_string(home.join(".svrngs/api")).unwrap_or_default();
+            let api = api.trim().to_string();
+            if http.get(format!("{api}/v1/groups")).send().await.is_ok() {
+                break api;
+            }
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+    })
+    .await
+    .expect("svrngs answers at the API it wrote");
+    let port = api.rsplit(':').next().unwrap();
+    (running, format!("http://svrngs.localhost:{port}/"))
+}
+
 /// Drive `web/tests/home.mjs` in `engine` at `page`, as `args` say.
 async fn home_page(engine: harness::Engine, page: &str, mut args: Value) -> Value {
     args["engine"] = json!(engine.as_str());
@@ -158,23 +179,7 @@ async fn the_home_page_makes_a_group_another_computer_joins_with_no_restart(
     let came_from = "http://127.0.0.1:9/";
     std::fs::write(data.join("origin"), came_from).unwrap();
 
-    // svrngs as login keeps it: the bare command, left running.
-    let mut running = svrngs(home.path(), &[]).spawn().unwrap();
-    let http = reqwest::Client::builder().no_proxy().build().unwrap();
-    let api = tokio::time::timeout(Duration::from_secs(30), async {
-        loop {
-            let api = std::fs::read_to_string(data.join("api")).unwrap_or_default();
-            let api = api.trim().to_string();
-            if http.get(format!("{api}/v1/groups")).send().await.is_ok() {
-                break api;
-            }
-            tokio::time::sleep(Duration::from_millis(100)).await;
-        }
-    })
-    .await
-    .expect("svrngs answers at the API it wrote");
-    let port = api.rsplit(':').next().unwrap();
-    let page = format!("http://svrngs.localhost:{port}/");
+    let (mut running, page) = run(home.path()).await;
 
     let all = "#home section h2, #home section p, #home > p";
     let seen = home_page(
@@ -254,6 +259,90 @@ async fn the_home_page_makes_a_group_another_computer_joins_with_no_restart(
         "the page's make, by the one rule: {traced}"
     );
     bo.endpoint().close().await;
+}
+
+in_both_engines!(
+    /// **Another group joined from its link on the home page, while
+    /// svrngs runs** (arch-command (c)): Dee's computer, in Lab and its
+    /// svrngs running as login keeps it, where `svrngs join` is refused,
+    /// is sent a link to Sam's Trip. Pasted on the home page, the page asks
+    /// the computer that sent it what it is for and says so on the button,
+    /// "Join Trip as Dee", before it is pressed; pressed, the svrngs
+    /// running there joins as `svrngs join` joins (join.rs, the one join),
+    /// the page says so and draws Trip beside Lab, its folder placed where
+    /// a joiner's is, and Sam's computer has let Dee in. Planted, watched
+    /// failing: the page as 87d8e802 left it, with no join.
+    the_home_page_joins_another_group_from_its_link_while_svrngs_runs
+);
+async fn the_home_page_joins_another_group_from_its_link_while_svrngs_runs(
+    engine: harness::Engine,
+) {
+    let (relay, ours, _sam_dir, sam) = common::sams_computer(6).await;
+    let (trip, _) = cli::new_group(
+        &sam,
+        Name::parse("Trip").unwrap(),
+        Name::parse("Sam").unwrap(),
+        None,
+        None,
+        &ours,
+    )
+    .await
+    .expect("Sam makes Trip");
+    let made = (sam.host().link(&trip.id(), false, None)).expect("Sam makes a link to Trip");
+    let link = svrngs_node::link::client_link(&made.token);
+
+    let home = tempfile::tempdir().unwrap();
+    new(home.path(), "Lab", &harness::relay_url(&relay)).await;
+    let (mut running, page) = run(home.path()).await;
+    let all = "#home section h2, #home section p, #home > p";
+    let seen = home_page(
+        engine,
+        &page,
+        json!({
+            "all": all,
+            "do": [
+                ["#join input[name=link]", link, true],
+                ["#join input[name=person]", "Dee"],
+                ["#join button:has-text('Join Trip as Dee')", null],
+            ],
+        }),
+    )
+    .await;
+    eprintln!("the home page's run: {seen:#}");
+
+    // What the link is for, said on the button before it is pressed.
+    let asked = seen["after"][0].to_string();
+    assert!(asked.contains("Join Trip"), "{seen:#}");
+    // Joined, said so, and Trip drawn beside Lab, its folder placed.
+    let joined = seen["after"][1].to_string();
+    assert!(joined.contains("You’re in Trip, as Dee."), "{seen:#}");
+    let heads: Vec<_> = (seen["all"].as_array().into_iter().flatten())
+        .chain(seen["after"][1].as_array().into_iter().flatten())
+        .filter_map(Value::as_str)
+        .collect();
+    for group in ["Trip (Sam’s", "Lab (yours"] {
+        assert!(
+            heads.iter().any(|h| h.starts_with(group)),
+            "{group}: {seen:#}"
+        );
+    }
+    let place = home.path().join("svrngs/Trip");
+    assert!(
+        joined.contains(&format!(
+            "Trip’s folder is on this computer at {}",
+            place.display()
+        )),
+        "{seen:#}"
+    );
+    assert!(place.is_dir(), "{} not made", place.display());
+    // Sam's computer let Dee in.
+    let register = sam.rail().register(&trip.id()).unwrap();
+    assert!(
+        (register.members.values()).any(|m| m.person.as_str() == "Dee"),
+        "Dee stands in Trip on Sam's computer"
+    );
+    running.kill().await.unwrap();
+    sam.endpoint().close().await;
 }
 
 /// **A group's namesakes, one wording for the command and the page**

@@ -9,7 +9,7 @@ use crate::group::{self, kept_relay, Name, Seed};
 use crate::iroh::{EndpointAddr, PublicKey, RelayUrl};
 use crate::link::{Link, Token};
 use crate::node::{Asking, Node};
-use crate::redeem::{ask, redeem, AskRequest, RedeemError, RedeemRequest, Redeemed};
+use crate::redeem::{ask, redeem, AskRequest, Asked, RedeemError, RedeemRequest, Redeemed};
 use crate::{Device, Person};
 
 /// The issuer's computer, as iroh names it.
@@ -37,16 +37,17 @@ pub enum Entered {
     AlreadyIn(Seed),
 }
 
-/// Why a join did not let this computer in.
+/// Why a join did not let this computer in, in the home page's words
+/// (arch-command (c)); the command says each in its own (cli.rs `Refusal`).
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum NotJoined {
-    #[error("the link lets nobody new in")]
+    #[error("This link lets nobody new in: ask whoever sent it for a new one.")]
     LinkRefused,
-    #[error("someone in {group} already goes by {holder}")]
+    #[error("Someone in {group} already goes by {holder}, so you were not let in as them. If that’s you, press “Make a link to add your phone or another computer of yours” on a computer already in {group}, and paste that link here. Else join under another name.")]
     NameTaken { holder: Name, group: Name },
-    #[error("the computer that sent the link cannot be reached")]
+    #[error("The computer that sent this link cannot be reached. It may be off: try again later.")]
     IssuerAway,
-    #[error("{0} cannot be kept on this computer")]
+    #[error("This computer cannot keep {0} on its disk.")]
     Keep(Name),
 }
 
@@ -58,29 +59,31 @@ impl Node {
 }
 
 impl Asking {
-    /// Ask `link`'s issuer what it is for, proving the link's key; believe
-    /// the seed answered only when it hashes to the group named
-    /// (`group::answered`); redeem the link there as `person`, signing with
-    /// this computer's key; keep the group's seed once let in, and the
+    /// What `link` is for, asked of its issuer, proving the link's key: its
+    /// answer, and the seed answered, believed only when it hashes to the
+    /// group named (`group::answered`). The home page says it before it
+    /// joins.
+    pub(crate) async fn asked(&self, link: &Link) -> Result<(Asked, Seed), NotJoined> {
+        let request = AskRequest::sign(&link.token.key(), self.host.rail.signer());
+        let asked = ask(&self.host.endpoint, addr(&link.token), &request).await;
+        let asked = asked.map_err(|e| not_let_in(e, None))?;
+        let Some(seed) = group::answered(&asked.group, &asked.seed) else {
+            tracing::debug!(target: "join", group = %asked.group, "join: the issuer's answer is not believed, so nothing is redeemed");
+            return Err(NotJoined::LinkRefused);
+        };
+        Ok((asked, seed))
+    }
+
+    /// What `link` is for ([`Self::asked`]); redeem it there as `person`,
+    /// signing with this computer's key; keep the group's seed once let in, and the
     /// origin of an https link; sync once from the issuer, whom this
     /// computer's copy of the register may not know yet (DESIGN §8, U2).
     /// Nothing is written until the issuer has let this computer in, so a
     /// refused link leaves nothing behind.
     pub(crate) async fn join(&self, link: &Link, person: &Name) -> Result<Entered, NotJoined> {
         let (host, key) = (&self.host, self.host.rail.signer());
-        let issuer = addr(&link.token);
-        let link_key = link.token.key();
-        let asked = ask(
-            &host.endpoint,
-            issuer.clone(),
-            &AskRequest::sign(&link_key, key),
-        )
-        .await
-        .map_err(|e| not_let_in(e, None))?;
-        let Some(seed) = group::answered(&asked.group, &asked.seed) else {
-            tracing::debug!(target: "join", group = %asked.group, "join: the issuer's answer is not believed, so nothing is redeemed");
-            return Err(NotJoined::LinkRefused);
-        };
+        let (issuer, link_key) = (addr(&link.token), link.token.key());
+        let (asked, seed) = self.asked(link).await?;
         let id = seed.id();
         if group::groups(host.rail.root()).iter().any(|s| s.id() == id) {
             tracing::debug!(target: "join", group = %id, "join: this computer holds the group already, so nothing is redeemed");

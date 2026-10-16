@@ -28,7 +28,10 @@
 //! link` makes it, in the group's record; **a group's folder opened**
 //! in this computer's file browser (`POST /folder`, start-home); and **a
 //! group made** by the svrngs running here, as `svrngs new` makes one
-//! (`POST /group`, start-group; the node's group.rs `Asking::found`); and
+//! (`POST /group`, start-group; the node's group.rs `Asking::found`);
+//! **a group joined** from a link someone sent, as `svrngs join` joins
+//! (`POST /join`, once `GET /join?link=` has said what the link is for;
+//! arch-command (c), the node's join.rs); and
 //! **what runs on this computer lent** (`POST /running`, v1ui-lend (b)),
 //! decided as `svrngs share` decides a lend ([`crate::share`]) from what
 //! `GET /running` offers, every port that answers here and is not lent,
@@ -49,11 +52,12 @@ use axum::{Json, Router};
 use serde::Deserialize;
 use std::num::NonZeroU16;
 use std::process::Command;
-use svrngs_core::link::{client_link, https_link};
+use svrngs_core::link::{client_link, https_link, Link};
 use svrngs_core::pass::Label;
 
 use crate::door::choices::{own_choices, own_choose, Said, Saying};
 use crate::door::{LendRefusal, PASS_HEADER, REFUSED_HEADER};
+use crate::join::{Entered, NotJoined};
 use crate::lend::{self, Kind, LendName, Source::Port};
 use crate::node::Asking;
 use crate::share::{self, Share, ShareRefusal};
@@ -128,6 +132,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
         .route("/folder", axum::routing::post(open))
         .route("/shelf", axum::routing::post(crate::folder::bring))
         .route("/group", get(namesakes).post(found))
+        .route("/join", get(asked).post(join))
         .with_state(at.clone())
         .merge(
             Router::new()
@@ -420,6 +425,60 @@ async fn found(State(at): State<Asking>, Json([name, person]): Json<[String; 2]>
         }
         Err(why) => LendRefusal::Closed.say(StatusCode::CONFLICT, why),
     }
+}
+
+/// A link someone sent, and the name the person goes by in its group.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Joining {
+    link: String,
+    #[serde(default)]
+    person: String,
+}
+
+/// `link`, or the page's refusal of what is not a whole one.
+fn link_of(link: &str) -> Result<Link, Response> {
+    Link::parse(link).ok_or_else(|| {
+        tracing::debug!(target: "home", "home: refused — not a whole link");
+        LendRefusal::Closed.say(
+            StatusCode::BAD_REQUEST,
+            "That is not a whole link: paste all of it, to its end.",
+        )
+    })
+}
+
+/// Why a link let nobody in, in the page's words ([`NotJoined`]).
+fn not_joined(why: NotJoined) -> Response {
+    LendRefusal::Closed.say(StatusCode::CONFLICT, why.to_string())
+}
+
+/// `GET /join?link=`: what a link someone sent is for, asked of the
+/// computer that sent it ([`Asking::asked`]), for the page to say on its
+/// button before it joins: the group's name, and the person a link to add
+/// a computer of theirs joins as, else none.
+async fn asked(State(at): State<Asking>, Query(j): Query<Joining>) -> Result<Response, Response> {
+    let (asked, seed) = at.asked(&link_of(&j.link)?).await.map_err(not_joined)?;
+    tracing::debug!(target: "home", group = %seed.id(), person = ?asked.person, "home: what a link is for, asked");
+    Ok(Json((seed.name().as_str(), asked.person)).into_response())
+}
+
+/// `POST /join`: the group a link is for joined by the svrngs running
+/// here, as `svrngs join` joins ([`Asking::join`], arch-command (c)), and
+/// its folder placed as a joiner's: its name, whom this computer joined
+/// as, none when it was in already, and why its folder was not placed.
+async fn join(State(at): State<Asking>, Json(j): Json<Joining>) -> Result<Response, Response> {
+    let name = crate::group::Name::parse(&j.person).map_err(|why| {
+        tracing::debug!(target: "home", %why, "home: refused — no name to join as");
+        LendRefusal::Closed.say(StatusCode::BAD_REQUEST, why.to_string())
+    })?;
+    let entered = at.join(&link_of(&j.link)?, &name).await;
+    tracing::debug!(target: "home", ?entered, "home: a group joined by its link, or why not");
+    let (seed, person) = match entered.map_err(not_joined)? {
+        Entered::In { seed, person } => (seed, Some(person.to_string())),
+        Entered::AlreadyIn(seed) => (seed, None),
+    };
+    let (_, placed) = at.folders.place(&seed);
+    Ok(Json((seed.name().as_str(), person, placed.err())).into_response())
 }
 
 #[derive(Deserialize)]

@@ -17,7 +17,8 @@ What svrngs puts on a computer stays in your own folder: the program in
 Every line and every button below is one a recorded run typed or pressed,
 on one computer, with a program playing each person
 (`runs/start/2026-10-13-story/README.md`, "the run" below), except
-lending from the page in step 5, which came after it. Each picture is from
+lending from the page in step 5 and joining from the home page in step 6,
+which came after it. Each picture is from
 that run.
 
 ## Sam: make a group and lend the model
@@ -128,6 +129,15 @@ says *"On this computer, paste this line in a terminal: it gets svrngs,
 joins you, and opens your home page, with the group’s folder on your
 disk."*, with the line and **Copy**. (The same name box and buttons show
 below it as in step 2; leave them.)
+
+If svrngs is on Bo's computer already, from another group, Bo needs no
+terminal: on Bo's home page, under **Join a group from a link**, paste
+Sam's link in *"The link someone sent you"*. The button then says
+**Join Lab**; type your name in *"Your name in it"* (`Bo`), and it says
+**Join Lab as Bo**. Press it. The page says *"You’re in Lab, as Bo."*
+and shows Lab beside your other groups, with its folder. Then go to
+step 8. (Not in the run: `crates/svrngs/tests/home_group.rs` does this,
+in Chromium and WebKit, with Lab called Trip.)
 
 ![The page of Sam's link](runs/start/2026-10-13-story/data/shots/bo-line.png)
 

@@ -9,7 +9,8 @@
 // only writes are the person's yes and stop, to its own origin's /choices,
 // their change to what this computer lends, to its /lent, what runs here
 // lent (/running, v1ui-lend (b)), a link (/link),
-// a folder opened (/folder) and a group made (/group, start-group). Its words are
+// a folder opened (/folder), a group made (/group, start-group) and one
+// joined from a link (/join, arch-command (c)). Its words are
 // DESIGN §1's: groups, people, what they lend, computer; its question and
 // what apps use and its removals are question.js's, the group's page's too.
 import { door, el, named, namesakes, once, opens, owner, question, removal, row, table, unlent, uses as used, whose } from './question.js';
@@ -209,9 +210,12 @@ try {
     // Said after a group is made here (start-group), with where its folder
     // could not be made, if it could not.
     const q = new URLSearchParams(location.search);
-    if (q.has('made')) main.append(el('p', `You made ${q.get('made')}. ${q.get('also') ? `${q.get('also')} ` : ''}${q.has('unplaced') ? `Its folder could not be made: ${q.get('unplaced')}. ` : ''}Make a link below to invite someone to it.`));
+    const unplaced = q.has('unplaced') ? `Its folder could not be made: ${q.get('unplaced')}. ` : '';
+    if (q.has('made')) main.append(el('p', `You made ${q.get('made')}. ${q.get('also') ? `${q.get('also')} ` : ''}${unplaced}Make a link below to invite someone to it.`));
+    // Said after a group is joined here (arch-command (c)).
+    if (q.has('joined')) main.append(el('p', `You’re in ${q.get('joined')}${q.has('person') ? `, as ${q.get('person')}.` : ' already.'} ${unplaced}`));
     // With no group, how to make one or join one (start-home; start-group).
-    if (!groups.length) main.append(Object.assign(el('p', 'You’re in no group yet. Make one below, or open a link someone sent you and paste the line its page gives you in a terminal.'), { className: 'none' }));
+    if (!groups.length) main.append(Object.assign(el('p', 'You’re in no group yet. Make one below, or join one from a link someone sent you.'), { className: 'none' }));
     const lent = Promise.all(groups.map((g) => show(g, section(g))));
     // A link from a group's page, `<page>#open=<label>&at=<path>`, pasted
     // (events-links (c)): the lend it names opened at its path in a tab of
@@ -233,6 +237,19 @@ try {
     typed.oninput = () => ((n) => get(`/group?${new URLSearchParams({ name: n })}`).then((b) => namesakes(b, n, 'This makes'), (e) => (n ? e.message : '')).then((w) => n === typed.value && before.replaceChildren(w)))(typed.value);
     const make = el('p', '', name, person, button('Make a group', () => post('/group', [name, person].map((l) => l.lastChild.value)).then(([made, unplaced, beside]) => location.assign(`/?${new URLSearchParams({ made, also: namesakes(beside, made, 'This is'), ...(unplaced && { unplaced }) })}`), (e) => make.append(` ${e.message}`))));
     main.append(Object.assign(el('section', '', el('h2', 'Make a group'), make, before), { id: 'make' }));
+    // A group joined from a link someone sent, by the svrngs running here
+    // as `svrngs join` joins (arch-command (c)): pasted, what it is for
+    // asked of the computer that sent it and said on the button before it
+    // is pressed, then the page again, saying so; a refusal said below.
+    const [link, as] = [['link', 'The link someone sent you: '], ['person', 'Your name in it: ']].map(([n, w]) => el('label', w, Object.assign(el('input'), { name: n })));
+    const [join, why] = [el('p', '', link, as), el('p')];
+    let asked;
+    const who = () => asked[1] ?? as.lastChild.value.trim();
+    const go = button('', () => post('/join', { link: link.lastChild.value, person: who() }).then(([joined, person, unplaced]) => location.assign(`/?${new URLSearchParams({ joined, ...(person && { person }), ...(unplaced && { unplaced }) })}`), (e) => why.replaceChildren(e.message)));
+    const says = () => join.append(Object.assign(go, { textContent: `Join ${asked[0]}${who() ? ` as ${who()}` : ''}` }));
+    link.lastChild.oninput = () => ((l) => (why.replaceChildren('Asking the computer that sent it what it is for…'), get(`/join?${new URLSearchParams({ link: l })}`).then((a) => l === link.lastChild.value && ((asked = a), (as.hidden = Boolean(a[1])), why.replaceChildren(), says()), (e) => l === link.lastChild.value && (go.remove(), why.replaceChildren(e.message)))))(link.lastChild.value);
+    as.lastChild.oninput = () => asked && says();
+    main.append(Object.assign(el('section', '', el('h2', 'Join a group from a link'), join, why), { id: 'join' }));
     running();
     await lending();
     await uses((await lent).flatMap((l) => l ?? []));

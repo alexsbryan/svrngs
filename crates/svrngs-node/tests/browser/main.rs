@@ -2440,8 +2440,9 @@ in_both_engines!(
     /// `demo/runs/start/2026-10-13/README.md` §3 (c) 13): on ada's
     /// computer, what can be done on it, in DESIGN §1's words; on a
     /// computer in no group, how to make one (on the page since
-    /// start-group) or join one. Planted, watched failing: index.html and
-    /// home.js as c6c2212 left them.
+    /// start-group) or join one (on the page since arch-command (c)).
+    /// Planted, watched failing: index.html and home.js as c6c2212 left
+    /// them.
     the_home_page_says_what_it_is_for
 );
 async fn the_home_page_says_what_it_is_for(engine: Engine) {
@@ -2460,7 +2461,7 @@ async fn the_home_page_says_what_it_is_for(engine: Engine) {
     let seen = home_page(engine, &dee, json!({ "read": "#home > p.none" })).await;
     assert_eq!(
         seen["read"],
-        "You’re in no group yet. Make one below, or open a link someone sent you and paste the line its page gives you in a terminal.",
+        "You’re in no group yet. Make one below, or join one from a link someone sent you.",
         "{seen:#}"
     );
     drop((ada, dee));
