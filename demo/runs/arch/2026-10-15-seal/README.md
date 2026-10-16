@@ -41,3 +41,63 @@ the row: removing what a seal does changes no group's record on this host.
 One host, one survey: it says what this host holds, not what another
 computer holds. A seal on another computer is read as an act that does
 nothing once arch-seal (c) lands, and said so.
+
+# arch-seal (b) and (c): the reds, and the cut
+
+- (b) an app's `{"op":"seal"}`: `crates/svrngs-node/src/rail/tests.rs`
+  `an_apps_seal_is_refused_and_retires_nothing`, red at f903ea4 (200, the
+  route sealed), green at bd3ac65 (422, `not_an_app_act`). In the commit
+  body.
+- (c) a seal held: `c-red.out` and `c-red-core.out`, the two new tests
+  against bd3ac65, where copies honoured a seal (Ana's disk pruned to the
+  seal alone; no hole below a seal); `c-green.out`, the same at 9db9dd2.
+
+# arch-seal (c): a computer built at the row's start and one at its close
+
+```
+python3 mixed.py /tmp/arch-seal-bin/svrngs-start /tmp/arch-seal-bin/svrngs-close   # run/
+```
+
+`svrngs-start` is built at c9e4c12, the row's start, in a worktree;
+`svrngs-close` at 9db9dd2. Bo runs the close's build and makes the group;
+Ana runs the start's and joins by Bo's link. Each writes two records
+through its record API, then Ana's app seals (the start's route still
+took one) and Bo's tries to. Each writes one more record, and the run
+waits for both copies to hold every act, then 75 s more, so a round each
+way shows a prune or a resend. Links are redacted from `run/`. One host,
+one run: not a rate.
+
+| | Ana, the start's build | Bo, the close's build |
+|---|---|---|
+| an app's seal | taken: 200, retiring 3 of Ana's acts on her disk (her relay act and a1, a2; `retired` in `events.jsonl`) | refused: 422, `not_an_app_act` (WHO_KNOWS_WHOM bar 10, on the binary) |
+| lines held | 9 | 12 |
+| records counted | a3, b1, b2, b3 | a1, a2, a3, b1, b2, b3 |
+| the log's `complete`, gaps | true, none | true, none |
+| the seal, at debug | — | "a seal is held and retires nothing — an older build's act, read as one that does nothing", 3 times |
+| exchanges stalled, warned | 3 | 0 |
+
+**Agree on every act both hold: passed.** The 9 lines both hold are the
+same line on each disk, and each counts the same 9 the same way
+(`summary.json`: `both_hold_differently` and `counted_differently` empty).
+The acts written after the seal, a3 and b3, reached both copies 0.66 s
+after they were written.
+
+**The 3 only Bo holds** are Ana's acts below her seal: the start's build
+honoured its own seal and deleted them from Ana's disk, as every build
+before this row did. Bo's copy, the close's build, retires nothing, so
+Bo still counts a1 and a2. That difference is the operator's decision
+meeting a build already built ("A seal any copy holds retires nothing",
+CHARTER): this row cannot change what the start's build does. It needs a
+seal, which the close's build can no longer write and no app in `apps/`
+sends, and no svrngs group on this host holds one (the survey above).
+
+**What the start's build pays for it.** Ana's copy claims Ana's run from
+her floor (`from` 3); Bo's claims it from zero. The close's build keeps to
+the run Ana claims, so it never sends her the 3 she pruned
+(`an_older_copy_is_never_sent_below_the_floor_it_claims`). The start's
+build, asked by Bo's digest, finds Ana's window folding differently and
+offers 3 acts above her floor every round (`ana.log`, "ring sync: chunk
+… offered=3"), which Bo already holds; its exchange then stops itself as
+stalled and warns, as built (`ring_sync.rs` `exchange`). Bo's side
+converges quietly. Three acts' bytes a round, on a group whose older
+build sealed.

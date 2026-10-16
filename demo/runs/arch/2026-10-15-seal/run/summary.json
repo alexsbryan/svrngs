@@ -1,0 +1,212 @@
+{
+ "head": "9db9dd2d",
+ "start_bin": "/tmp/arch-seal-bin/svrngs-start",
+ "close_bin": "/tmp/arch-seal-bin/svrngs-close",
+ "ana_seal": {
+  "status": 200,
+  "retired": {
+   "floors": {
+    "f28c42919f1441db05da32c9f81c8b0750f47c2fc1ddfc029ca30fab8f1ed583": 3
+   },
+   "gaps_cleared": 0,
+   "kept": 6,
+   "removed": 3
+  }
+ },
+ "bo_seal": {
+  "status": 422,
+  "kind": "not_an_app_act"
+ },
+ "held": {
+  "ana": 9,
+  "bo": 12,
+  "both": 9
+ },
+ "both_hold_differently": [],
+ "counted_differently": [],
+ "only_bo": {
+  "1c038c3a4899183146dcc1033fe6398398175c85e5a50a6a0b48ed47c3a71940": {
+   "actor": "f28c4291",
+   "seq": 2,
+   "op": "record",
+   "what": "a2"
+  },
+  "32c65e612369a37768f56098ac34c3a77820440d5eb5e35a8d81db3bb41b4106": {
+   "actor": "f28c4291",
+   "seq": 0,
+   "op": "relay",
+   "what": null
+  },
+  "922131ce04d548f1e3992fc062942dda77d744eaaface86824f49920bb81eb9c": {
+   "actor": "f28c4291",
+   "seq": 1,
+   "op": "record",
+   "what": "a1"
+  }
+ },
+ "only_ana": {},
+ "complete": {
+  "ana": true,
+  "bo": true
+ },
+ "gaps": {
+  "ana": [],
+  "bo": []
+ },
+ "records_counted": {
+  "ana": [
+   "a3",
+   "b1",
+   "b2",
+   "b3"
+  ],
+  "bo": [
+   "a1",
+   "a2",
+   "a3",
+   "b1",
+   "b2",
+   "b3"
+  ]
+ },
+ "seal_said_at_debug": {
+  "ana": 0,
+  "bo": 3
+ },
+ "stalled_exchanges": {
+  "ana": 3,
+  "bo": 0
+ },
+ "journals": {
+  "ana": {
+   "a2241223db6e234d10c10f854fcbe8e7b64b2e86c78052254a7e9058ce05818a": {
+    "actor": "1645cc36",
+    "seq": 0,
+    "op": "relay",
+    "what": null
+   },
+   "6ca2647d645e7a355a674b7db644f8693c79d40d5205ed11e706322160dc5366": {
+    "actor": "1645cc36",
+    "seq": 1,
+    "op": "invite",
+    "what": null
+   },
+   "c1148cf2ff2404e2b9eaa298a08c8dd79916855dc27b51c8e31114cc33030b47": {
+    "actor": "1645cc36",
+    "seq": 2,
+    "op": "admit",
+    "what": null
+   },
+   "aaed1f67e645c7fc4f755d95b779e43fc30c8cf58c7b1cc27a1974d9f975361d": {
+    "actor": "1645cc36",
+    "seq": 3,
+    "op": "record",
+    "what": "b1"
+   },
+   "0f5fed038a9c48997edae7d5414e0a76133f95c5a7e478c3f93ef3a19605447f": {
+    "actor": "1645cc36",
+    "seq": 4,
+    "op": "record",
+    "what": "b2"
+   },
+   "eb5133a3f1d846c393eb5d487972270bdcc7e2e1a7ad12026abee95a296def17": {
+    "actor": "f28c4291",
+    "seq": 3,
+    "op": "seal",
+    "what": null
+   },
+   "11925f3dc098562d52a45683003b60afce4ad72437e5e09d227671e7493d0ecb": {
+    "actor": "f28c4291",
+    "seq": 4,
+    "op": "relay",
+    "what": null
+   },
+   "40ffb09a8050625a1f5e9243c22e2bf0ee2dea3e27ca0aad5835635f9432c8ae": {
+    "actor": "f28c4291",
+    "seq": 5,
+    "op": "record",
+    "what": "a3"
+   },
+   "584d413bef868cc942d19f0b9d02d2cc57a32facc6c11d2cbe31a35db0fe8706": {
+    "actor": "1645cc36",
+    "seq": 5,
+    "op": "record",
+    "what": "b3"
+   }
+  },
+  "bo": {
+   "a2241223db6e234d10c10f854fcbe8e7b64b2e86c78052254a7e9058ce05818a": {
+    "actor": "1645cc36",
+    "seq": 0,
+    "op": "relay",
+    "what": null
+   },
+   "6ca2647d645e7a355a674b7db644f8693c79d40d5205ed11e706322160dc5366": {
+    "actor": "1645cc36",
+    "seq": 1,
+    "op": "invite",
+    "what": null
+   },
+   "c1148cf2ff2404e2b9eaa298a08c8dd79916855dc27b51c8e31114cc33030b47": {
+    "actor": "1645cc36",
+    "seq": 2,
+    "op": "admit",
+    "what": null
+   },
+   "32c65e612369a37768f56098ac34c3a77820440d5eb5e35a8d81db3bb41b4106": {
+    "actor": "f28c4291",
+    "seq": 0,
+    "op": "relay",
+    "what": null
+   },
+   "aaed1f67e645c7fc4f755d95b779e43fc30c8cf58c7b1cc27a1974d9f975361d": {
+    "actor": "1645cc36",
+    "seq": 3,
+    "op": "record",
+    "what": "b1"
+   },
+   "922131ce04d548f1e3992fc062942dda77d744eaaface86824f49920bb81eb9c": {
+    "actor": "f28c4291",
+    "seq": 1,
+    "op": "record",
+    "what": "a1"
+   },
+   "1c038c3a4899183146dcc1033fe6398398175c85e5a50a6a0b48ed47c3a71940": {
+    "actor": "f28c4291",
+    "seq": 2,
+    "op": "record",
+    "what": "a2"
+   },
+   "0f5fed038a9c48997edae7d5414e0a76133f95c5a7e478c3f93ef3a19605447f": {
+    "actor": "1645cc36",
+    "seq": 4,
+    "op": "record",
+    "what": "b2"
+   },
+   "584d413bef868cc942d19f0b9d02d2cc57a32facc6c11d2cbe31a35db0fe8706": {
+    "actor": "1645cc36",
+    "seq": 5,
+    "op": "record",
+    "what": "b3"
+   },
+   "eb5133a3f1d846c393eb5d487972270bdcc7e2e1a7ad12026abee95a296def17": {
+    "actor": "f28c4291",
+    "seq": 3,
+    "op": "seal",
+    "what": null
+   },
+   "11925f3dc098562d52a45683003b60afce4ad72437e5e09d227671e7493d0ecb": {
+    "actor": "f28c4291",
+    "seq": 4,
+    "op": "relay",
+    "what": null
+   },
+   "40ffb09a8050625a1f5e9243c22e2bf0ee2dea3e27ca0aad5835635f9432c8ae": {
+    "actor": "f28c4291",
+    "seq": 5,
+    "op": "record",
+    "what": "a3"
+   }
+  }
+ }
+}
