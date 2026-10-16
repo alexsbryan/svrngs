@@ -90,3 +90,8 @@ the plant itself makes:
 
 None of this changes svrngs; this row carries nothing to product but the
 driver's own fixes.
+
+## The close
+
+`scripts/check.sh` ran once at 214aa196, after the README: it exited 0 in
+13m44s, fourteen gates passed, none failed, could-not-judge or never-ran.
