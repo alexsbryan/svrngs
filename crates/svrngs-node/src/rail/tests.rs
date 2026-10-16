@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 use axum::http::StatusCode;
 
-use crate::{actor_of, Person, RingRail, RingSigner, Roster, SigningKey};
+use crate::{actor_of, Person, RingRail, Roster, SigningKey};
 
 use super::{append_act, drain_answer, group_of, push_answer, LiveBuffer, RailApi};
 
@@ -67,7 +67,7 @@ async fn append_signs_as_the_node_and_assigns_the_fields() {
     assert_eq!(resp.status(), StatusCode::OK);
     let out = body_of(resp).await;
     assert_eq!(out["seq"], 0, "the door assigns the sequence, not the body");
-    assert_eq!(out["actor"], RingSigner::actor(&key(7)));
+    assert_eq!(out["actor"], actor_of(&key(7)));
     assert!(out["ts_unix"].as_i64().unwrap_or(0) > 0);
     assert!(out["id"].as_str().is_some());
     assert_eq!(out["namespace"], "ledger");
@@ -106,7 +106,7 @@ async fn an_append_names_the_person_an_app_serves() {
     assert_eq!(resp.status(), StatusCode::OK);
     assert_eq!(
         body_of(resp).await["actor"],
-        RingSigner::actor(&key(7)),
+        actor_of(&key(7)),
         "this computer signs"
     );
     let ops = svrngs_core::tests_support::wire_ops(&rail.admission(journal).unwrap());

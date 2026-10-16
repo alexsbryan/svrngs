@@ -109,7 +109,10 @@ use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec::Vec;
 
-/// The signing key the shipped [`RingSigner`] implementation is written for.
+/// The key an act is signed with ([`sign_act`]): the one signer. It was a
+/// `RingSigner` trait with this as its one shipped implementation until
+/// arch-core; the trait let the rail hold a signer without the key, and the
+/// rail holds the key all the same.
 pub use ed25519_dalek::SigningKey;
 use serde::{Deserialize, Serialize};
 
@@ -140,10 +143,10 @@ pub use hash::ContentHash;
 pub use op::{Journaled, Op, OpId, SkippedLine};
 
 // Until 2026-09-04 neither `SigningKey` (above) nor serde_json's `Value` was
-// exported — so the only shipped `RingSigner` impl was for a type the crate
-// refused to hand you, and the only `Payload` constructor took a type it never
-// named. A mismatch makes `impl RingSigner for SigningKey` silently not apply to
-// their key, a trait-resolution error a long way from its cause. Found by
+// exported — so the only signer was a type the crate refused to hand you, and
+// the only `Payload` constructor took a type it never named. A mismatch makes
+// another ed25519-dalek's key not the one `sign_act` takes, a type error a
+// long way from its cause. Found by
 // physically lifting the package (cw-lift). `Value`'s re-export went in lean-3:
 // svrngs's crates take serde_json from the workspace's one pin, and only a test
 // read it here.
@@ -792,44 +795,10 @@ pub fn short_id(id: &str) -> String {
     }
 }
 
-// ── Signing without holding key material ─────────────────────
-
-/// How the rail gets a signature, without ever seeing a private key.
-///
-/// The daemon owns the node's `SigningKey`; `AppState` installs one of these
-/// and so never holds raw key material, and `commonwealth-api` needs no
-/// crypto dependency. That is not a new seam — it is exactly the shape
-/// `AppState::self_dial_signer` already uses for the gossip self-stamp, and
-/// reusing it means there is one answer to "who may sign as this node"
-/// (ARCH §10.6) rather than two.
-pub trait RingSigner: Send + Sync {
-    /// The hex public key this signer signs as. Becomes the op's `actor`, and
-    /// is what the roster is looked up by.
-    fn actor(&self) -> String;
-    /// Hex Ed25519 signature over [`sig::ring_op_message`] of `id` — the id
-    /// [`act_id`] derived from everything the act says (svrngs, U2).
-    fn sign(&self, id: &OpId) -> String;
-}
-
-/// The direct implementation, for a caller that legitimately holds the key —
-/// the daemon at startup, and the tests.
-impl RingSigner for SigningKey {
-    fn actor(&self) -> String {
-        sig::actor_of(self)
-    }
-    fn sign(&self, id: &OpId) -> String {
-        sig::sign_ring_op(self, id)
-    }
-}
-
-/// The other half of [`RingSigner`], and it was missing.
-///
-/// Signing was a trait and verifying was a call to a free function. Both
-/// halves worked, which is exactly why the asymmetry was invisible: they are
-/// one scheme, and only one of them could be replaced. A node that installs a
-/// different `RingSigner` writes ops that admission — wired to ed25519 and
-/// nothing else — reports as `BadSignature` forever, and nothing in the type
-/// system says so. One question, one seam (ARCH §10.6).
+/// How admission asks whether a key signed an act's id. (It was the other
+/// half of a `RingSigner` trait, which went in arch-core: a signer is a
+/// [`SigningKey`], and this seam stays for the tests that pin what admission
+/// does with a refusal, `tests_sealing.rs`.)
 ///
 /// **Refusal is the only safe answer.** An implementation that cannot judge a
 /// signature returns `false`; [`admit`] turns that into a
@@ -850,8 +819,7 @@ pub trait RingVerifier: Send + Sync {
     fn verify(&self, actor: &str, id: &OpId, sig_hex: &str) -> bool;
 }
 
-/// The shipped verifier: Ed25519 over the exact bytes [`RingSigner`]'s own
-/// implementation signs. The one production answer, and the reason
+/// The shipped verifier: Ed25519 over the exact bytes [`sign_act`] signs. The one production answer, and the reason
 /// `sig::verify_ring_op` is no longer reachable from outside this crate —
 /// leaving it public would leave the hardcode next to the seam, which is how
 /// the asymmetry comes back (ARCH §7).

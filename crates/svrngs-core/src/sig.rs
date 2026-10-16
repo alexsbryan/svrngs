@@ -218,12 +218,12 @@ pub fn sign_ring_op(key: &SigningKey, id: &OpId) -> String {
     sign_message(key, &ring_op_message(id))
 }
 
-/// Sign one act under `signer`: derive its id, sign the id, and build the
+/// Sign one act with `signer`, as its actor: derive its id, sign the id, and build the
 /// line. The ONE place an act is made, for the journal's door and the
 /// fixtures alike, so the bytes signed have one definition (ARCH §10.6).
 #[allow(clippy::too_many_arguments)]
 pub fn sign_act(
-    signer: &dyn crate::RingSigner,
+    signer: &SigningKey,
     namespace: &str,
     ts_unix: i64,
     seq: u64,
@@ -232,13 +232,13 @@ pub fn sign_act(
     on_behalf_of: Option<&str>,
     view: Option<crate::Digest>,
 ) -> Op<SignedOp> {
-    let actor = signer.actor();
+    let actor = actor_of(signer);
     let body = crate::body_json(&act, on_behalf_of, view.as_ref());
     let id = act_id(namespace, &actor, seq, prev.as_ref(), ts_unix, &body);
     let kind = SignedOp {
         seq,
         prev,
-        sig: signer.sign(&id),
+        sig: sign_ring_op(signer, &id),
         act,
         on_behalf_of: on_behalf_of.map(str::to_string),
         view,

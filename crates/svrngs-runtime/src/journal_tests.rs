@@ -8,7 +8,7 @@ impl RingJournal {
     pub fn append(
         &self,
         act: RailAct,
-        signer: &dyn RingSigner,
+        signer: &SigningKey,
         roster: &Roster,
         on_behalf_of: Option<&str>,
         verifier: &dyn RingVerifier,
@@ -27,7 +27,7 @@ impl RingJournal {
         match svrngs_core::commit(self, &fixture, &author)? {
             Ok(recorded) => Ok(recorded.lines()[0].clone()),
             Err(_) => Err(RailError::NotInRoster {
-                actor: signer.actor(),
+                actor: actor_of(signer),
                 namespace: self.namespace.clone(),
             }),
         }

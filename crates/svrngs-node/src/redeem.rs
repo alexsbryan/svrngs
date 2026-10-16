@@ -59,7 +59,7 @@ use crate::iroh::{Alpn, Dialer, Endpoint, EndpointAddr};
 use crate::register::Standing;
 use crate::ring_routes::err;
 use crate::ring_sync::AskRound;
-use crate::{Name, NotAName, OpId, Person, RailError, RingRail};
+use crate::{actor_of, Name, NotAName, OpId, Person, RailError, RingRail};
 use svrngs_core::{RedeemRefusal, Refused as CommitRefused};
 
 pub use svrngs_core::joining::{AskRequest, Asked, RedeemRequest};
@@ -268,7 +268,7 @@ fn serve_redeem(
         cosig: req.cosig.clone(),
         device: req.device,
         link: req.link.clone(),
-        issuer: rail.signer().actor(),
+        issuer: actor_of(rail.signer()),
     };
     match rail
         .commit(group, &command)
@@ -286,7 +286,7 @@ fn serve_redeem(
             Ok(Redeemed::Admitted(admit))
         }
         Err(CommitRefused::NoStanding) => Err(NotAdmitted::Unjudged(RailError::NotInRoster {
-            actor: rail.signer().actor(),
+            actor: actor_of(rail.signer()),
             namespace: group.to_string(),
         })),
         Err(CommitRefused::Unsettled) => Err(NotAdmitted::Unjudged(RailError::Unsettled(

@@ -6,8 +6,8 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
+use crate::{actor_of, RingVerifier, Roster, SigningKey};
 use crate::{admit, digest, sign_act, ActSet, Admission, Op, OpId, RailAct, SignedOp};
-use crate::{RingSigner, RingVerifier, Roster};
 
 /// Which of the held acts a command's decision reads.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -55,7 +55,7 @@ pub trait Command {
 
 /// The adapter's facts: who signs, against which seed, in which group, when.
 pub struct Author<'a> {
-    pub signer: &'a dyn RingSigner,
+    pub signer: &'a SigningKey,
     pub roster: &'a Roster,
     pub namespace: &'a str,
     pub verifier: &'a dyn RingVerifier,
@@ -140,7 +140,7 @@ pub fn commit<C: Command, S: Store>(
     command: &C,
     author: &Author<'_>,
 ) -> Result<Result<Recorded, Refused<C::Refusal>>, S::Error> {
-    let actor = author.signer.actor();
+    let actor = actor_of(author.signer);
     store.append_with(&actor, |held, tip| {
         match authored(held, tip, command, author) {
             Ok(lines) => {
@@ -158,7 +158,7 @@ fn authored<C: Command>(
     command: &C,
     a: &Author<'_>,
 ) -> Result<Vec<Op<SignedOp>>, Refused<C::Refusal>> {
-    let actor = a.signer.actor();
+    let actor = actor_of(a.signer);
     let before = admit(&read::<C>(held), &[], a.roster, a.namespace, a.verifier);
     settled(&before, a.namespace)?;
     if !before.membership().standing.contains(&actor) {
@@ -213,7 +213,7 @@ fn sign_lines(
     on_behalf_of: Option<&str>,
     a: &Author<'_>,
 ) -> Vec<Op<SignedOp>> {
-    let actor = a.signer.actor();
+    let actor = actor_of(a.signer);
     let first_seq = tip.as_ref().map_or(0, |t| t.seq + 1);
     let mut prev = tip.and_then(|t| {
         t.lines

@@ -173,7 +173,7 @@ impl Host {
     /// the register names them (bash-devices): whom a device link adds a
     /// device of. A computer that stands there as nobody makes none.
     pub fn own_person(&self, group: &str) -> Result<(String, Person), Unminted> {
-        let me = self.rail.signer().actor();
+        let me = actor_of(self.rail.signer());
         let standing = (self.rail.standing(group)).map_err(|e| Unminted::Unkept(e.to_string()))?;
         let own = standing
             .member(&me)

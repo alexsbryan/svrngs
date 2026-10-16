@@ -144,23 +144,9 @@ pub fn forged(
     prev: Option<OpId>,
     act: RailAct,
 ) -> Op<SignedOp> {
-    struct Impostor<'a> {
-        signs: &'a SigningKey,
-        claims: String,
-    }
-    impl RingSigner for Impostor<'_> {
-        fn actor(&self) -> String {
-            self.claims.clone()
-        }
-        fn sign(&self, id: &OpId) -> String {
-            self.signs.sign(id)
-        }
-    }
-    let impostor = Impostor {
-        signs,
-        claims: actor_of(claims),
-    };
-    sign_act(&impostor, NS, ts, seq, prev, act, None, None)
+    let mut line = sign_act(claims, NS, ts, seq, prev, act, None, None);
+    line.kind.sig = sign_ring_op(signs, &line.id);
+    line
 }
 
 /// An id no act here derives: `fill` repeated over 32 bytes, read as a

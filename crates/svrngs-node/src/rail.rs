@@ -56,7 +56,7 @@ use crate::live::{push_ephemeral, LivePeer};
 use crate::node::dialled;
 use crate::register::{Member, Standing};
 use crate::ring_routes::err;
-use crate::{Device, Joined, Person, RailAct, RailError, RingRail};
+use crate::{actor_of, Device, Joined, Person, RailAct, RailError, RingRail};
 use svrngs_core::{Append, AppendRefusal, Refused as CommitRefused};
 
 /// What the doors read: the journals, the nudge that wakes the round
@@ -223,7 +223,7 @@ pub(crate) async fn append_act(
     let appended = match rail.commit(namespace, &append) {
         Ok(Ok(recorded)) => Ok(recorded.lines()[0].clone()),
         Ok(Err(CommitRefused::NoStanding)) => Err(RailError::NotInRoster {
-            actor: rail.signer().actor(),
+            actor: actor_of(rail.signer()),
             namespace: namespace.to_string(),
         }),
         Ok(Err(CommitRefused::Unsettled)) => Err(RailError::Unsettled(namespace.to_string())),
@@ -538,7 +538,7 @@ async fn push_answer(api: &RailApi, namespace: &str, body: axum::body::Bytes) ->
         Ok(people) => people,
         Err(refusal) => return refusal,
     };
-    let peers = live_peers(&api.rail.signer().actor(), namespace, &standing);
+    let peers = live_peers(&actor_of(api.rail.signer()), namespace, &standing);
     let peers = push_ephemeral(&api.transport, peers, namespace, payload).await;
     let delivered = peers.iter().filter(|p| p.delivered).count();
     tracing::debug!(

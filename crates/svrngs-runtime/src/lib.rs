@@ -55,7 +55,7 @@ fn ring_dir(root: &Path, namespace: &str) -> PathBuf {
 /// requests do.
 pub struct RingRail {
     root: PathBuf,
-    signer: Arc<dyn RingSigner>,
+    signer: Arc<SigningKey>,
     #[expect(
         clippy::disallowed_types,
         reason = "the open-journal map; an actor per journal replaces it (DESIGN §5)"
@@ -73,7 +73,7 @@ type Teller = Box<dyn Fn(&str) + Send + Sync>;
 
 impl RingRail {
     #[expect(clippy::disallowed_types, reason = "the open-journal map")]
-    pub fn new(root: impl Into<PathBuf>, signer: Arc<dyn RingSigner>) -> Self {
+    pub fn new(root: impl Into<PathBuf>, signer: Arc<SigningKey>) -> Self {
         Self {
             root: root.into(),
             signer,
@@ -96,7 +96,7 @@ impl RingRail {
         }
     }
 
-    pub fn signer(&self) -> &dyn RingSigner {
+    pub fn signer(&self) -> &SigningKey {
         self.signer.as_ref()
     }
 
@@ -218,7 +218,7 @@ impl RingRail {
     /// group it is in, and, for a device link, the person it adds a device
     /// of, by name (bash-devices).
     pub fn invite_for(&self, link: &str) -> Result<Option<(String, OpId, Option<Person>)>, RailError> {
-        let me = self.signer().actor();
+        let me = actor_of(self.signer());
         for namespace in self.namespaces()? {
             let journal = self.journal(&namespace)?;
             let (ops, _) = journal.read()?;
