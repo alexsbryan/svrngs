@@ -46,6 +46,7 @@ import init, {
   endpoint,
   issuer_of,
   label,
+  older,
   pass,
   redemption,
   relay_of,
@@ -343,24 +344,25 @@ async function enter(group, asked) {
   let bound;
   const dialler = () => (bound ??= endpoint(key, group.token));
   const [d, via] = await reachGroup(group, key, dialler);
+  const whom = whoseComputer(via ?? (group.computers ?? []).find((c) => c.key === issuer_of(group.token)));
   const res = await d.fetch('GET', PEOPLE_LENDS, [['accept', 'application/json']], null);
   if (!res.ok) {
     const why = res.headers.get('x-svrngs-refused');
     trace(`PAGE: ${PEOPLE_LENDS} answered ${res.status}, refused ${why}`);
     await d.close();
     if (why === 'removed') throw new Said(`You are no longer in ${group.name}.`);
-    throw new Said(`${whoseComputer(via ?? (group.computers ?? []).find((c) => c.key === issuer_of(group.token)))} said no when you asked what ${group.name} lends.`);
+    throw new Said(`${whom} said no when you asked what ${group.name} lends.`);
   }
-  // A computer before bash-first-minute (c) answers neither unheard nor refused.
-  const { lent, unanswered, unheard = [], refused = [], removals, people, shelf } = await res.json();
+  const { version, lent, unanswered, unheard, refused, older: behind, removals, people, shelf } = await res.json();
   await d.close();
+  // One version check (arch-version; the node's version.rs): a computer
+  // running an older svrngs is said so once, by whose it is, and nothing
+  // of its answer is read field by field.
+  trace(`PAGE: ${PEOPLE_LENDS} answered, at version ${version}`);
+  if (older(version)) throw new Said(`${whom} runs an older svrngs, so this page cannot show what ${group.name} lends. Installing svrngs again there updates it.`);
   // The computers that lend, kept to reach the group through next time.
   const computers = new Map(lent.map((l) => [l.key, { key: l.key, relay: l.relay ?? null, person: l.person }]));
   group = await store.opened({ ...group, computers: [...computers.values()] });
-  // A computer before v1ui-door names nobody and says nothing of signing
-  // in: said so, by whose computer the page reached, never drawn as nobody
-  // nor read as no (#159, #162).
-  const older = people ? undefined : whoseComputer(via ?? computers.get(issuer_of(group.token)));
   // Who was removed or asked to be, shown to everyone in the group
   // (v1-keeper-office (b)); `null` when the computer could not read it.
   document.getElementById('removals').replaceChildren(
@@ -374,24 +376,22 @@ async function enter(group, asked) {
   show(`You’re in ${group.name}${made}, as ${group.person}${via ? `, through ${via.person}’s computer` : ''}`, true);
   // The door and the index as the home page draws them (question.js;
   // V1_UI_BUILD §3.1), judged by the answer this computer gave: whose
-  // computer did not answer it is drawn off. A computer before v1ui-door
-  // (d) names nobody, so no door is drawn, never an empty one: the page
-  // says why instead.
-  const [drawn, judge] = people ? door(people) : [el('p', `${older} runs an older svrngs, so it cannot say who is on now.`), () => {}];
+  // computer did not answer it is drawn off.
+  const [drawn, judge] = door(people);
   judge({ unanswered });
   document.getElementById('door').replaceChildren(drawn);
   // The shelf, brought through the computer the page reaches (v1ui-shelf
-  // (c)); none from a computer before it, which keeps no shelf.
+  // (c)).
   const bring = async (apps) => {
     const [b] = await reachGroup(group, key, dialler);
     return JSON.parse(await post(b, '/shelf', JSON.stringify([group.id, apps]), (_, text) => JSON.parse(text).error).finally(() => b.close()));
   };
-  document.getElementById('shelf').replaceChildren(...(shelf ? [table(group, { lent, shelf }, bring)] : []));
+  document.getElementById('shelf').replaceChildren(table(group, { lent, shelf }, bring));
   list.replaceChildren(
     row(['What', 'What it is', 'Whose', 'How it opens', 'Now'], 'th'),
     ...once(lent).map((l) => {
       const button = Object.assign(el('button', named(l)), { onclick: () => open(group, key, lent, unanswered, l) });
-      return row([button, l.kind, owner(l, group), ...opens(l, 'Here, in this tab', older)]);
+      return row([button, l.kind, owner(l, group), ...opens(l, 'Here, in this tab')]);
     }),
   );
   const again = asked?.get('open') && lent.find((l) => label(l.key, l.name) === asked.get('open'));
@@ -405,6 +405,7 @@ async function enter(group, asked) {
     ...unanswered.map((p) => `${p}’s computer did not answer, so what they lend is not listed.`),
     ...unheard.map((p) => `${p}’s computer has not heard of the computer you reached yet, so what they lend is not listed yet.`),
     ...refused.map((p) => `${p}’s computer answered without saying what they lend, so it is not listed.`),
+    ...behind.map((p) => `${p}’s computer runs an older svrngs, so what they lend is not listed.`),
   ];
   said.textContent = [
     lent.length || unlisted.length ? '' : `Nobody in ${group.name} lends anything yet.`,

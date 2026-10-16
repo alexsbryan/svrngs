@@ -35,6 +35,9 @@ mod relay;
 // (events-asleep).
 #[path = "../../crates/svrngs-node/src/dial.rs"]
 mod dial;
+// This build's version, and the one check of it, the node's (arch-version).
+#[path = "../../crates/svrngs-node/src/version.rs"]
+mod version;
 
 use iroh::RelayUrl;
 use svrngs_core::alpn::Alpn;
@@ -351,6 +354,14 @@ pub fn relay_of(token: String) -> Result<Option<String>, JsError> {
 pub fn issuer_of(token: String) -> Result<String, JsError> {
     let link = Token::decode(&token).ok_or_else(|| JsError::new("not a link's token"))?;
     Ok(hex::encode(link.issuer.as_bytes()))
+}
+
+/// Whether a computer whose answer carries `version`, none when it carries
+/// none, runs an older svrngs than this page: the node's one rule
+/// ([`version::older`]), so a page and a computer judge it alike.
+#[wasm_bindgen]
+pub fn older(version: Option<u32>) -> bool {
+    version::older(version)
 }
 
 /// The label of the lend `name` lent by the computer whose key is

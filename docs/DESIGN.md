@@ -311,22 +311,24 @@ the route, and reading another app's acts.
     thing by its link; what it is, in its lender's word, its kind, never
     one of svrngs's own (`scripts/vocab_check.py` reads the pages'
     scripts too); whose; how it opens — in a tab, signing you in once
-    when its lender's program does (`signs_in`), or, when its lender's
-    computer is one before v1ui-door, which does not say (`null`, never
-    read as no; #159), that it runs an older svrngs, so this may ask
-    you to sign in — its address for a
+    when its lender's program does (`signs_in`) — its address for a
     program, and on the TV too while the room door serves it; and on or
     full now, how it opens and whether it is full judged once for both
     pages (`question.js`, `opens`; #158). Each computer that did not say what it lends is a row of
-    its own, by how, so nothing is stale and nobody is left out.
+    its own, by how, so nothing is stale and nobody is left out: one
+    running an older svrngs among them, whose answer carries an older
+    version or none, its lends not read field by field
+    (`crates/svrngs-node/src/version.rs`; arch-version).
 
   The group's page on a phone draws the same door and index from the same
   lines (`question.js`; v1ui-door (d)), judged by the answer of the
   computer it reached: `/people/lends` answers the people standing beside
   what they lend, and whose computer did not answer that one is drawn
-  off. A computer before v1ui-door answers no people: the door's place
-  says that computer runs an older svrngs, so it cannot say who is on
-  now, never an empty door (#162). Each thing opens by its button, here, in the phone's tab; and the
+  off. One version check, the node's `version.rs` compiled into the
+  page, stands for the per-field fallbacks before it (#159, #162;
+  arch-version): a computer the page reaches whose answer carries an
+  older version, or none, is said once to run an older svrngs, and
+  nothing of its answer is drawn. Each thing opens by its button, here, in the phone's tab; and the
   group is headed by who made it and since when the phone joined it,
   `maker` and `since`, kept at the join (`web/store.js`), nothing for a
   group kept before.

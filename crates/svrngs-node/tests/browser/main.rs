@@ -2848,18 +2848,19 @@ async fn the_group_s_page_draws_the_door_and_the_index(engine: Engine) {
 }
 
 in_both_engines!(
-    /// **A computer from before v1ui-door, said as that on both pages**
-    /// (v1ui-findings (a); #159, #162). Cy lends a shelf in ada's group.
-    /// On ada's home page, cy's computer answers its lend as one before
-    /// v1ui-door does, not saying whether it signs you in, which ada's
-    /// computer passes on as `null`: the index says cy's computer runs an
-    /// older svrngs, so this may ask you to sign in. On pia's phone, the
-    /// computer that sent her link answers as one before, with no people
-    /// and no lend saying: the door's place says that computer cannot say
-    /// who is on now, and the index says the same of the sign-in. Planted,
-    /// watched failing: both pages as v1ui-findings (c) left them, the
-    /// absence read as no — "In a tab. Copy its address…" — and the
-    /// phone's door an empty paragraph.
+    /// **A computer running an older svrngs, said once as that on both
+    /// pages** (arch-version (b); AUDIT §2.5; v1ui-findings (a), #159,
+    /// #162 before it). Cy lends a shelf in ada's group. On ada's home
+    /// page, ada's computer names cy's as one running an older svrngs, as
+    /// `node.rs` `answered` does of one whose answer carries an older
+    /// version: one row says so, and cy's shelf is not listed. On pia's
+    /// phone, the computer that sent her link answers with no version: the
+    /// page says once that it runs an older svrngs, and draws nothing of
+    /// its answer. Through a computer of this version naming cy's older,
+    /// the phone says so of cy's in one line. Planted, watched failing:
+    /// the pages as arch-version (b)'s answers left them, which read no
+    /// version, so the phone drew the answer and said nothing of an older
+    /// svrngs, and neither page named cy's in `older`.
     an_older_computer_is_said_as_that_on_both_pages
 );
 async fn an_older_computer_is_said_as_that_on_both_pages(engine: Engine) {
@@ -2873,39 +2874,42 @@ async fn an_older_computer_is_said_as_that_on_both_pages(engine: Engine) {
         "shelf",
         page_origin("<!doctype html>").await.port(),
     );
+    let older = |said: &str| said.matches("runs an older svrngs").count();
     let args = json!({ "all": "#home table.index td", "older": true });
     let seen = home_page(engine, &ada, args).await;
     eprintln!("the home page's run: {seen:#}");
     let cells: Vec<String> = serde_json::from_value(seen["all"].clone()).unwrap();
-    let how = "In a tab. cy’s computer runs an older svrngs, so this may ask you to sign in. Copy its address for a program";
-    assert!(cells.iter().any(|c| c == how), "{seen:#}");
+    let cy_s = "cy's computer runs an older svrngs, so what they lend is not listed.";
+    assert_eq!(cells.iter().filter(|c| *c == cy_s).count(), 1, "{seen:#}");
+    assert_eq!(older(&cells.concat()), 1, "{seen:#}");
     from_a_phone(&ada, "pia", 7);
-    let args = json!({
-        "site": site,
-        "key": hex::encode(signing(7).to_bytes()),
-        "token": token(&signing(1), &relay),
-        "person": "pia",
-        "older": true,
-    });
-    let seen = drive(engine, "drive.mjs", args, None).await;
-    eprintln!("the group's page's run: {seen:#}");
-    let older = "The computer that sent your link runs an older svrngs";
+    let phone = |older: serde_json::Value| {
+        json!({
+            "site": site,
+            "key": hex::encode(signing(7).to_bytes()),
+            "token": token(&signing(1), &relay),
+            "person": "pia",
+            "older": older,
+        })
+    };
+    let seen = drive(engine, "drive.mjs", phone(json!(true)), None).await;
+    eprintln!("the group's page's run, its computer older: {seen:#}");
     assert_eq!(
-        seen["door"],
-        format!("{older}, so it cannot say who is on now."),
+        seen["status"],
+        "The computer that sent your link runs an older svrngs, so this page cannot show what house lends. \
+         Installing svrngs again there updates it.",
         "{seen:#}"
     );
-    assert_eq!(
-        seen["index"][1],
-        json!([
-            "cy’s shelf (k)",
-            "k",
-            "cy",
-            format!("Here, in this tab. {older}, so this may ask you to sign in"),
-            "on"
-        ]),
+    assert_eq!(older(seen["text"].as_str().unwrap_or_default()), 1, "{seen:#}");
+    assert_eq!(seen["index"], json!([]), "nothing of its answer drawn: {seen:#}");
+    let seen = drive(engine, "drive.mjs", phone(json!("cy")), None).await;
+    eprintln!("the group's page's run, cy's computer older: {seen:#}");
+    let text = seen["text"].as_str().unwrap_or_default();
+    assert!(
+        text.contains("cy’s computer runs an older svrngs, so what they lend is not listed."),
         "{seen:#}"
     );
+    assert_eq!(older(text), 1, "{seen:#}");
     drop((ada, cy));
 }
 

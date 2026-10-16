@@ -107,6 +107,7 @@ async function show(g, s) {
     for (const p of lends.unanswered) said(`${p}'s computer did not answer, so what they lend is not listed.`);
     for (const p of lends.unheard) said(`${p}'s computer has not heard of yours yet, so what they lend is not listed yet.`);
     for (const p of lends.refused) said(`${p}'s computer answered without saying what they lend, so it is not listed.`);
+    for (const p of lends.older) said(`${p}'s computer runs an older svrngs, so what they lend is not listed.`);
     if (!body.children.length) said('Nobody lends anything here yet.');
     s.append(table(g, lends, (apps) => post('/shelf', [g.id, apps])));
     return lends.lent;
