@@ -10534,9 +10534,9 @@ in behaviour wanting its red run first.
 
 | # | principle | path:line | fixed in | finding |
 |---|---|---|---|---|
-| 179 | 6, 2 | crates/svrngs-node/src/removal.rs:195 (`left`), :210 (`left != cut.contains(k)`); crates/svrngs-node/src/ring_routes.rs:105-120 (a dialer not standing refused); crates/svrngs-node/src/ring_sync.rs:359 (the round offers keys standing); docs/DESIGN.md:1737 ("hears it from the others' rounds") | not fixed (read, not reproduced) | A leave cuts every key of the person, but the leaving computer tells only the computers it did not cut, and no other computer's round or sync route serves a cut key. A person who leaves from one of two computers leaves the other showing the group, every lender refusing it, never told it left. Red first: two computers of Ana, one leaving; the other's page within 30 s. Then the leaving computer tells its person's other computers too. |
-| 180 | 8 | crates/svrngs-core/src/membership.rs:584-588 (`leaves`), :208 (`Cut` keeps `by` only); crates/svrngs-runtime/src/register.rs:182-186 (`own`, `RemovalSaid::Left`); crates/svrngs-node/src/surface.rs:139-144 (`keeps`) | not fixed (svrngs-core at its cap) | Whether a cut is a person's leave is decided in the fold and again in `removals_in`, which disagree on a keeper's `Remove` of another key of theirs (the fold's keeper's cut; "left" on every page). No command writes one at HEAD. The fold says it once: `Cut` carries whether it was a leave, and `removals_in` reads it. |
-| 181 | 1, 6 | crates/svrngs-node/src/join.rs:71 (`if let Ok(Standing::Left(_))`); crates/svrngs-node/src/redeem.rs:171-174 (the shared refusal) | not fixed (no line under the cap) | This computer's standing, unreadable, is read as "not left" and untraced; the issuer then refuses the cut key as any refused link, so a computer that left is told its link was refused. One debug line for the `Err`. |
+| 179 | 6, 2 | crates/svrngs-node/src/removal.rs:195 (`left`), :210 (`left != cut.contains(k)`); crates/svrngs-node/src/ring_routes.rs:105-120 (a dialer not standing refused); crates/svrngs-node/src/ring_sync.rs:359 (the round offers keys standing); docs/DESIGN.md:1737 ("hears it from the others' rounds") | fixed (groups-leave-others): reproduced in 041e35f0, both engines, all three cases red; 3d3ad2d6, a leave told to every other computer, the leaver's own too, and `ring_routes::told_cut` answering a cut computer back on the `Remove` naming it; tests/leave_page.rs `a_leave_reaches_the_leavers_other_computer`, its three plants red (demo/runs/leave-others/2026-10-16/) | A leave cuts every key of the person, but the leaving computer tells only the computers it did not cut, and no other computer's round or sync route serves a cut key. A person who leaves from one of two computers leaves the other showing the group, every lender refusing it, never told it left. Red first: two computers of Ana, one leaving; the other's page within 30 s. Then the leaving computer tells its person's other computers too. |
+| 180 | 8 | crates/svrngs-core/src/membership.rs:584-588 (`leaves`), :208 (`Cut` keeps `by` only); crates/svrngs-runtime/src/register.rs:182-186 (`own`, `RemovalSaid::Left`); crates/svrngs-node/src/surface.rs:139-144 (`keeps`) | fixed (groups-leave-others (c)): f53e06f6, `Cut::left` decided by the fold's `leaves` and read by `removals_in`; svrngs-runtime register_tests.rs `a_keepers_remove_of_another_key_of_their_own_is_read_as_the_fold_reads_it` | Whether a cut is a person's leave is decided in the fold and again in `removals_in`, which disagree on a keeper's `Remove` of another key of theirs (the fold's keeper's cut; "left" on every page). No command writes one at HEAD. The fold says it once: `Cut` carries whether it was a leave, and `removals_in` reads it. |
+| 181 | 1, 6 | crates/svrngs-node/src/join.rs:71 (`if let Ok(Standing::Left(_))`); crates/svrngs-node/src/redeem.rs:171-174 (the shared refusal) | fixed (groups-leave-others (d)): 0c3b464d, join.rs's `Err` traced and the issuer's `RedeemRefusal::Cut` answered 410, said as `NotJoined::Left`; tests/join_by_link.rs `a_computer_the_group_cut_is_told_so_by_the_issuer`, red and its two trace plants (demo/runs/leave-others/2026-10-16/ d-*.out) | This computer's standing, unreadable, is read as "not left" and untraced; the issuer then refuses the cut key as any refused link, so a computer that left is told its link was refused. One debug line for the `Err`. |
 | 80 | — | scripts/lean_check.py:65 BUDGET, :132 `n >= cap` | not fixed (operator's) | 16295 / 16296 after this audit, and 2992 / 2993 in svrngs-core: +151 and +40 over the range, 160 of the queue's 200 and all 40 of svrngs-core's spent. groups-keys and groups-run remain. |
 | 130, 132-145, 150, 152-156 | as recorded | as recorded | not fixed | Not reached by this range's findings. |
 
@@ -10561,3 +10561,233 @@ the run is `demo/runs/groups/2026-10-16/` (README.md, "What it found").
 |---|---|---|---|---|
 | 182 | 6 | crates/svrngs-node/src/origin.rs:240-246 (`dialled`, `Unlent`); crates/svrngs-node/src/door.rs:297-302 (`gone`, the lenders' words for a cut computer) | not fixed (a run row: nothing to product) | **Run.** After Ana left, her computer answered every lend she had opened 404 `unlent`, "nothing is lent here" (the run's `summary.json`, `after`): the refusal for a lender standing in no group held here, not her leave. Nothing reached her, so the bar held; the words substitute for "you left". `dialled` could say the leave where this computer's register cut its own key in the group the label's lender stands in. |
 | 183 | 1 | crates/svrngs-node/src/node.rs:939 (the trace), :371-374 (the `gone` arm, untraced) | not fixed (a run row: nothing to product) | **Run.** A lender's acceptor, dialled by a computer it holds cut, traces "node: refused — the dialer stands in no group held here" and then serves it the `gone` router, which tells it its cut in words; that branch traces nothing (the run's `data/sam.log`:12-14, answered 403 `removed`). One debug line in the arm. |
+
+## REVIEW-audit-groups-auto-2 (2026-10-16, range 439319ec..572b3872)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-groups-auto-1, its hash
+439319ec (ralph/next/groups/STATE.md, its row). The range ends at
+572b3872, the commit that made this row. `git rev-list --count
+439319ec..572b3872` is 24, none a merge (`--merges`: 0). They are:
+groups-auto-1's `done`; groups-keys, groups-leave-others and groups-run;
+and this row's own commit. The row read `docs/ARCH_PRINCIPLES.md` and
+`target/debug/sovereign-cli`; both paths corrected in 8ac9ff95, as
+b869a523 corrected groups-auto-1's.
+
+This audit's own commits before this section:
+- 7e1ced4c, join_by_link.rs's `heard` and `Kept` read from svrngs-node's
+  tests/common.
+
+This section also marks #179, #180 and #181 fixed in their rows above,
+which groups-leave-others fixed and left "not fixed". It opens #184.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+439319ec..572b3872` (/tmp/groupsaudit2/ledger.raw) is summed by
+groups-auto-1's ledger.py, its unit list this range's
+(/tmp/groupsaudit2/ledger.out; each commit's unit in ledger.commits).
+a14f2dfb, the state commit that answered groups-keys, names
+groups-leave-others too and counts there; it touched STATE.md alone. The
+lines are raw, comments and blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net | markup net | apps src net | apps test net | scripts net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| REVIEW-audit-groups-auto-1 (its `done`) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| groups-keys | 4 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| groups-leave-others | 10 | 79 | 27 | **+52** | 359 | 10 | +349 | 0 | 0 | 0 | +5 (+8 −3) |
+| groups-run | 8 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| this row's own commit | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 24 | 79 | 27 | **+52** | 359 | 10 | +349 | 0 | 0 | 0 | +5 (+8 −3) |
+
+groups-keys was a survey and DESIGN alone (64ed421b, 6c185b15, 345db9dd);
+groups-run's driver, judge and data are under demo/runs/, which the
+ledger and the budget leave apart. Where groups-leave-others's src lines
+went (`git diff --numstat 439319ec 572b3872 -- crates web`, tests apart):
+- ring_routes.rs +27: `told_cut`, a cut computer back on told the
+  `Remove` naming it (#179; (b));
+- node.rs +9 −7, removal.rs +9 −6: the cut computer's router the ring
+  routes before `gone`; a leave told to every other computer (#179; (b));
+- svrngs-core membership.rs +7 −4, svrngs-runtime register.rs +6 −7:
+  `Cut::left`, decided by the fold and read by `removals_in` (#180; (c));
+- join.rs +11 −3, redeem.rs +10: the unread standing traced, the issuer's
+  `RedeemRefusal::Cut` answered 410 and said as the leave (#181; (d)).
+
+The tests grew by crates/svrngs/tests/leave_page.rs (+236),
+join_by_link.rs (+86) and svrngs-runtime's register_tests.rs (+27). The
+scripts' lines are lean_check.py's comment on each cap. apps/ and web/ did
+not change.
+
+What the budget counts, by HEAD's scripts/lean_check.py over a `git
+archive` tree of each end and of each unit's `done`
+(/tmp/groupsaudit2/lean-<hash>.out):
+
+| at | svrngs-core | repository | counted net |
+|---|---:|---:|---:|
+| 439319ec, range start | 2992 | 16295 | |
+| 1956f9bf, groups-keys done | 2992 | 16295 | 0 |
+| b522a8b0, groups-leave-others done | 2992 | 16328 | +33 |
+| 62170a32, groups-run done | 2992 | 16328 | 0 |
+| 572b3872, range end | **2992** | **16328** | **+33** |
+
+The caps moved twice (`git log 439319ec..572b3872 -- scripts/lean_check.py`):
+
+| commit | the repository's cap | svrngs-core's | for |
+|---|---|---|---|
+| d0d6ee01, groups-leave-others (b) | 16,296 → 16,316 | 2,993 | +20, a leave told to the leaver's other computers (#179) |
+| 6c7e7e5f, groups-leave-others (d) | 16,316 → 16,329 | 2,993 | +13, the unread standing traced and the issuer's cut said (#181) |
+
+The queue's ceilings are 16,336 and 2,993 (the groups-leave-others row).
+The range closes at 16,328 / 16,329, 193 of the 200 spent and 7 under the
+ceiling unraised, and at 2,992 / 2,993, svrngs-core's 40 all spent, as
+the range began. lean_check fails at `n >= cap` (lean_check.py:137), so
+no counted line is left under either cap. This audit's commits move no
+counted line (a test helper, and this file).
+
+### The instrument
+
+The binary is ~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256
+c95165c5… (`shasum -a 256`): groups-auto-1's, unchanged.
+
+The corpus is 572b3872's crates/, web/, scripts/, apps/, Cargo.toml and
+Cargo.lock, by `git archive` into /tmp/groupsaudit2/prod-572b3872 (371
+files).
+- `code index . --corpus-id prod-572b3872`: 4789 chunks in 545 s
+  (index.out).
+- `refresh`, run in the corpus: rust, 17243 symbols and 100100
+  references; typescript and python "skipped (export failed)" (I4); the
+  daemon nudge refused and the in-process rebuild ran (I29) (refresh.out).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-node, crates/svrngs-core,
+crates/svrngs-runtime, crates/svrngs (its tests alone) and scripts
+(`git diff --numstat 439319ec 572b3872 -- crates apps web scripts
+bridge`). Each was reported at 0.95 and 0.90 (/tmp/groupsaudit2/clean-*.md).
+Whether a side was added in the range is `git blame` at 572b3872 over
+each side's lines against 439319ec (the 52 sides, cluster-sides.txt;
+blame-clusters.out). Its plant: ring_routes.rs:120-140 blamed the same
+way says 3d3ad2d6, groups-leave-others (b), "IN-RANGE", so the blame
+tells the range's lines apart.
+
+| scope | locations | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---:|---:|---:|---:|---|
+| crates/svrngs-node/ | 589 | 1 | 1 | 10 | 0 |
+| crates/svrngs-core/ | 450 | 4 | 0 | 10 | 0 |
+| crates/svrngs-runtime/ | 122 | 1 | 0 | 0 | 0 |
+| crates/svrngs/ | 66 | 0 | 0 | 0 | — |
+| scripts/ | 15 | could-not-judge (I4) | 0 | 0 | 0 |
+
+**No cluster has a side the range added**: every one of the 52 sides
+blames to commits before 439319ec. They are groups-auto-1's, less web/,
+which the range did not touch.
+
+**The line-window pass.** groups-auto-1's windows.py over its file set at
+572b3872, the 209 files that still stand (windows.files). **133 window
+hits, 53 spans, 1 new** (windows.spans, windows.verdicts; 52 read old):
+
+| new span | read |
+|---|---|
+| svrngs-node tests/common/mod.rs:142-149 == crates/svrngs/tests/join_by_link.rs:954-961 | 0c3b464d (groups-leave-others (d)) wrote out the node's tests' `heard` and its `Said` sink a second time, the sink as `Kept`, to see #181's traces. **Made one in 7e1ced4c**: join_by_link.rs includes the node's tests/common by `#[path]`, as the command's browser tests include the node's harness. |
+
+After 7e1ced4c, over the working tree (windows-after.spans): 132 hits, 52
+spans; join_by_link.rs's only span left is its header beside new.rs's,
+old.
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges 439319ec..572b3872 -- crates
+apps web scripts bridge`, matched against `(struct|enum|trait|type|class)
++[A-Z]\w*` (new-types.out), give one: `Kept`, the test sink above. The
+range removed none (removed-types.out).
+
+`converge noun Kept --corpus-id prod-572b3872` (nouns.out): one
+first-party production definition, crates/svrngs-node/src/door/choices.rs:62
+(:63, I1); the noun leaves `tests` out (I8 is its dry-report twin), so
+the range's test `Kept` was not counted. It is gone with 7e1ced4c, so
+`Kept` names one thing in the repository again. No noun has more than one
+definition.
+
+### Reading the range
+
+Every hunk of product src the range changed was read (`git diff
+439319ec 572b3872 -- crates/svrngs-core/src crates/svrngs-node/src
+crates/svrngs-runtime/src/register.rs`). The added lines were searched for
+a silent default (`unwrap_or`, `.ok()`, `filter_map`, `??`), and each
+hit read: ring_routes.rs:139's `lacks.ok()?` (#184) and leave_page.rs's
+`unwrap_or_default` over a test's JSON.
+
+- **A cut computer is told only the signer's acts** (#184; principles 6,
+  2). `told_cut` (ring_routes.rs:136-151) answers a computer that does not
+  stand the first `Remove` naming it that its digest lacks, with the
+  acts before it of that `Remove`'s signer alone (:142). The asker's fold
+  counts the `Remove` only if it reads the signer as the keeper or as the
+  person cut (membership.rs:551 `keeps`, :590 `leaves`). A keeper made by
+  a `HandOn` another computer signed (:616) is not the keeper in a copy
+  that lacks that `HandOn`. So Ana's second computer, off while Sam hands
+  on to Bo and Bo removes Ana, is told Bo's `Remove`, reads it as an ask
+  that cuts nobody, and, asking again, lacks no `Remove` naming it: it is
+  refused 403 (:171) from then on, shows the group as hers, and is never
+  told. groups-leave-others's test leaves by the person's own `Remove`,
+  which the signer's own acts carry, and removes by the founder, whose
+  keeping is in the seed. **Read, not reproduced.** And a journal that
+  cannot answer what the asker lacks (:139, `lacks.ok()?`) is read as
+  nothing to tell, untraced, then refused as any asker not standing.
+- **Glassbox** (principle 1). Every other branch the range added traces
+  where it decides: `told_cut`'s answer, the fold's one Remove trace with
+  its `kept`, join.rs's unread standing, redeem.rs's `Cut`, `removals_in`'s
+  `said`. join.rs:160 maps a `Cut` with no group named to `IssuerAway`;
+  only the redemption, which names the group, can answer one
+  (svrngs-core register.rs:78; join.rs:66 is the ask), and `not_let_in`
+  traces the error first (:147). #183's untraced `gone` arm stands
+  (node.rs:363 now).
+- **Never silently substitute** (AGENTS.md 6). `Cut::left` is
+  `#[serde(default)]` (membership.rs:216); the fold is held in memory and
+  rebuilt from the journal (svrngs-runtime journal.rs:323-333), never read
+  back from disk, so no stored cut reads a leave as a removal.
+- **One decider** (AGENTS.md 8). Whether a cut was a leave is the fold's
+  alone (f53e06f6); one `heard` in the tests (7e1ced4c).
+- **Closed sets** (AGENTS.md 9). `RedeemError::Cut` is an enum arm,
+  answered by one status (410, redeem.rs:169, :382).
+- **The core is pure** (fence 3). The fold decides the leave; the node
+  carries `Cut::left` and the runtime reads it.
+- **Forked code** (AGENTS.md 11). The range forked nothing: 69 files carry
+  a `ported from` line at each end (`git grep -lE 'ported from
+  (commonwealth-ai|sovereign)' <rev> | wc -l`), and no added line is one.
+- **Validate the instrument** (AGENTS.md 7). groups-leave-others (a)
+  reproduced #179 in both engines before its fix (041e35f0); groups-run
+  predicted before its data (f407b7a4 before 1b6e4c85) and planted each
+  bar red (fd0a5179). Those verdicts are those commits', not judged again
+  here.
+- **Write for the next reader** (AGENTS.md 3). groups-leave-others fixed
+  #179-#181 and left their rows "not fixed"; corrected above, here.
+
+### Fixed here
+
+- 7e1ced4c: join_by_link.rs's `heard` and `Kept`, a copy of svrngs-node's
+  tests/common `heard` and `Said`, read from there (−33 +5; none
+  counted). join_by_link 11 passed before and after, the cut's two traces
+  asserted (/tmp/groupsaudit2/join-before.out, join-after.out).
+- #179, #180, #181 marked fixed, with their commits and tests.
+
+#184 is not fixed here: it changes what a cut computer is told, a change
+in behaviour wanting its red run first, and no counted line is left under
+the repository's cap.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 184 | 6, 2, 1 | crates/svrngs-node/src/ring_routes.rs:142 (`told_cut` keeps the signer's acts alone), :139 (`lacks.ok()?`, untraced); crates/svrngs-core/src/membership.rs:551 (`keeps`), :616 (a `HandOn` moves the keeper) | not fixed (read, not reproduced) | A computer off while its person is removed by a keeper made by a `HandOn` it never heard is told the `Remove` alone, reads it as an ask, and is refused from then on, never told, the group shown as its person's. Red first: Sam hands on to Bo while Ana's second computer is off, Bo removes Ana, the second comes back; its page within 90 s. Then `told_cut` tells the acts the fold reads the `Remove` by (the keeper's `HandOn` chain, the signer's `Admit`), or says plainly that this computer cannot tell. And the journal's `Err` traced. |
+| 80 | — | scripts/lean_check.py:70 BUDGET, :137 `n >= cap` | not fixed (operator's) | 16328 / 16329 after this audit, and 2992 / 2993 in svrngs-core: +33 and 0 over the range. 193 of the queue's 200 spent, 7 left under the ceiling unraised; all 40 of svrngs-core's spent. |
+| 182, 183 | as recorded | as recorded | not fixed | From groups-run; this range's code is theirs, not touched since. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun`, dry-report spans | Still one line early: choices.rs:62 for :63. |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". scripts/'s exact tier could not judge. |
+| I8 | 6 | dry-report scope | Still present: core's removal_tests.rs, register_tests.rs, membership_invite_tests.rs, tests_support.rs, ring_sync/tests.rs and runtime's tests.rs reported as production clones. `converge noun` leaves `tests` out, so a test's noun is not seen. |
+| I19 | 6 | dry-report, `tests/` scopes | Still present. The line-window pass stood in, and found the one fixed here. |
+| I29 | 6 | `refresh` over a corpus `code index` made | Still present. |
+| I32 | 7 | dry-report's near tier, nested spans | Still present: home.js `running` over `look`, question.js `door` over `judge`. |
