@@ -260,8 +260,9 @@ async fn an_app_asks_what_the_group_s_people_lend_its_own_included_and_none_stal
 
 /// **An app asks which groups this computer holds, and finds the API by
 /// itself** (the u5-1 row): `/v1/groups` answers the group's id, its name,
-/// Alex as this computer's person, that Alex was not removed (U7) and that
-/// nobody was removed or asked to be (v1-keeper-office (b)); who made it,
+/// Alex as this computer's person, that Alex was not removed (U7), that
+/// nobody was removed or asked to be (v1-keeper-office (b)), that Alex did
+/// not leave it and keeps the order of removals (groups-leave); who made it,
 /// Alex's own computer, and since when it holds it, the time its seed was
 /// written (v1ui-door (c)); the data dir's `api` file names the
 /// address the app asked at. Planted: the file not written.
@@ -277,7 +278,7 @@ async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
     let made = made_by_alex(&body);
     assert_eq!(
         body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": "alex", "removed": false, "removals": [], "folders": [] }] }),
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": "alex", "removed": false, "removals": [], "left": false, "keeps": true, "folders": [] }] }),
     );
     house.close().await;
 }
@@ -293,7 +294,8 @@ fn made_by_alex(body: &serde_json::Value) -> serde_json::Value {
 /// **A register that cannot be read is said as itself** (REVIEW_FINDINGS
 /// #123): with Alex's copy of the group's seed unreadable, `/v1/groups`
 /// answers `removed: null`, never "not removed", and `removals: null`,
-/// never none (v1-keeper-office (b)), so the home page can say
+/// never none (v1-keeper-office (b)), and `left` and `keeps` null beside
+/// them (groups-leave), so the home page can say
 /// this computer could not read who is in the group. Red at 09e1484,
 /// which read it `removed: false`.
 #[tokio::test]
@@ -315,7 +317,7 @@ async fn an_unreadable_register_is_not_read_as_not_removed() {
     let made = made_by_alex(&body);
     assert_eq!(
         body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": null, "removed": null, "removals": null, "folders": [] }] }),
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": null, "removed": null, "removals": null, "left": null, "keeps": null, "folders": [] }] }),
     );
     house.close().await;
 }
