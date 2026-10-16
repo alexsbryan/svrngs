@@ -1677,7 +1677,9 @@ fn full_name(user: &str) -> Option<String> {
 /// `svrngs new`: a seed drawn for `name`, founded by this computer's key
 /// as `person`, written beside the group's record with `page`, when
 /// given, kept as its https links' page, and `kept`, when given, as where
-/// it is met (`new --relay`), and its first link.
+/// it is met (`new --relay`), else the relay a group made on the home page
+/// keeps ([`svrngs_node::node::Host::made_relay`]), once this computer has
+/// reached one; and its first link.
 pub async fn new_group(
     node: &Node,
     name: Name,
@@ -1692,10 +1694,13 @@ pub async fn new_group(
         .expect("an iroh endpoint id is an Ed25519 key");
     let seed = group::draw(name, person, founder);
     let id = seed.id();
+    wait_online(node, &relay.relay_urls).await;
+    let asked = kept.is_some();
+    let kept = kept.or_else(|| node.host().made_relay());
     let keep = node.host().keep_group(&seed, page, kept.as_ref());
     keep.map_err(|why| keep_refused(&seed, &why))?;
-    tracing::debug!(target: "cli", group = %id, name = %seed.name(), page = ?page.map(Origin::as_str), "cli: group made");
-    let token = mint(node, &seed, relay, None).await?;
+    tracing::debug!(target: "cli", group = %id, name = %seed.name(), page = ?page.map(Origin::as_str), ?kept, asked, "cli: group made, keeping the relay asked, else the one the home page's keeps");
+    let token = mint(node, &seed, relay, None)?;
     Ok((seed, Printed::of(&token, page)))
 }
 
@@ -1764,7 +1769,8 @@ pub async fn link_to(
         ),
         false => None,
     };
-    let token = mint(node, &seed, relay, person.as_ref().map(|(k, _)| k.clone())).await?;
+    wait_online(node, &relay.relay_urls).await;
+    let token = mint(node, &seed, relay, person.as_ref().map(|(k, _)| k.clone()))?;
     Ok((
         seed,
         Printed::of(&token, page.as_ref()),
@@ -1781,18 +1787,22 @@ fn unminted(seed: &Seed, e: Unminted) -> Refusal {
 }
 
 /// A link to `seed`'s group, made by the node ([`svrngs_node::invite`]) carrying
-/// this computer's relay, its life starting now.
+/// this computer's home relay ([`svrngs_node::invite::carried`]), so a
+/// phone's page dials only the relays its link and its group name and asks
+/// no lookup (DESIGN §10, 2026-10-13), its life starting now. Its callers
+/// wait for a relay first ([`wait_online`]).
 #[expect(
     clippy::disallowed_methods,
     reason = "the command's clock: a link's life starts now"
 )]
-async fn mint(
+fn mint(
     node: &Node,
     seed: &Seed,
     relay: &RelayConfig,
     device_of: Option<String>,
 ) -> Result<Token, Refusal> {
-    let carried = issuer_relay(node, relay).await;
+    let home = node.endpoint().addr().relay_urls().next().cloned();
+    let carried = svrngs_node::invite::carried(relay, home);
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_secs() as i64)
@@ -1800,15 +1810,6 @@ async fn mint(
     node.host()
         .mint(&seed.id(), carried, device_of, now)
         .map_err(|e| unminted(seed, e))
-}
-
-/// The relay a link carries: its issuer's home relay, with n0's lookup or
-/// without it, so a phone's page dials only the relays its link and its
-/// group name and asks no lookup (DESIGN §10, 2026-10-13); waiting up to
-/// [`ONLINE_WAIT`] for one when it has relays to reach.
-async fn issuer_relay(node: &Node, relay: &RelayConfig) -> Option<RelayUrl> {
-    wait_online(node, &relay.relay_urls).await;
-    svrngs_node::invite::carried(relay, node.endpoint().addr().relay_urls().next().cloned())
 }
 
 /// Wait up to [`ONLINE_WAIT`] for a home relay, when this computer has

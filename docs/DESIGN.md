@@ -370,7 +370,8 @@ the route, and reading another app's acts.
     links whose page gives the one line; a computer set up by hand keeps
     none, and its links are `svrngs://join/…` alone, said beside them. It
     keeps the relay its links carry, as a joiner keeps it
-    (`group::kept_relay`): where this computer is met now, so a group made
+    (`Host::made_relay`, the one rule `svrngs new` with no `--relay` asks
+    too, `crates/svrngs/tests/new_relay.rs`): where this computer is met now, so a group made
     while svrngs runs is met with no restart, and after one at the same
     relay (`cli::reach` reads what it keeps; one of n0's, at n0's, is
     kept as none, met where the build meets its groups). Measured by

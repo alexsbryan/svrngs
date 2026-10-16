@@ -23,7 +23,8 @@
 //! hosted page unless the group names one.
 //!
 //! And `relay`, where this computer meets the group (relay-default): `new
-//! --relay` writes it, `join` the one its link carried. It is this
+//! --relay` writes it, `new` with none and the home page the one
+//! [`crate::node::Host::made_relay`] answers, `join` the one its link carried. It is this
 //! computer's choice, as the origin is; the group's record says where each
 //! computer is reached, by its `Relay` act (relay-in-record). A group that
 //! keeps none is met where the build meets its groups (svrngs's `cli::SHIPPED`):
@@ -186,6 +187,16 @@ impl crate::node::Host {
         rail.set_seed(&seed.id(), &seed.roster())
             .map_err(|e| e.to_string())
     }
+
+    /// The relay a group made here keeps, the one rule `svrngs new` with no
+    /// `--relay` and the home page's "Make a group" both ask
+    /// (arch-command-relay (a)): the relay its links carry, kept as a
+    /// joiner keeps it ([`kept_relay`]): where this computer is met now, so
+    /// the group is met with no restart, and after one alike.
+    pub fn made_relay(&self) -> Option<RelayUrl> {
+        let home = self.endpoint.addr().relay_urls().next().cloned();
+        kept_relay(carried(&self.relay, home), self.relay.n0_services)
+    }
 }
 
 /// Where `new` and joining put a group's folder (v1-onboarding (d);
@@ -239,10 +250,9 @@ impl crate::node::Asking {
     /// `person`, beside the groups called so already ([`namesakes`]). It
     /// keeps the page this computer's svrngs came from, the data dir's
     /// `origin`, which install.sh writes, so the page's links to it are
-    /// https links whose page gives the one line; and the relay its links
-    /// carry, kept as a joiner keeps it ([`kept_relay`]): where this
-    /// computer is met now, so the group is met with no restart, and after
-    /// one alike. Its folder is placed as a joiner's is.
+    /// https links whose page gives the one line; and the relay
+    /// [`crate::node::Host::made_relay`] answers. Its folder is placed as a
+    /// joiner's is.
     pub(crate) fn found(&self, name: &str, person: &str) -> Result<Made, String> {
         let parse = |n: &str| Name::parse(n).map_err(|e| e.to_string());
         let (name, person, root) = (parse(name)?, parse(person)?, self.host.rail.root());
@@ -250,8 +260,7 @@ impl crate::node::Asking {
         // The founder is the key this computer signs and dials with.
         let seed = draw(name, person, self.key.verifying_key());
         let page = kept_page(root)?;
-        let home = self.host.endpoint.addr().relay_urls().next().cloned();
-        let relay = kept_relay(carried(&self.host.relay, home), self.host.relay.n0_services);
+        let relay = self.host.made_relay();
         self.host.keep_group(&seed, page.as_ref(), relay.as_ref())?;
         tracing::debug!(target: "group", group = %seed.id(), ?page, ?relay, "group: made for the home page");
         Ok((self.folders.place(&seed), seed, beside))

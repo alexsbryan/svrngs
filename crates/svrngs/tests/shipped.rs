@@ -24,6 +24,10 @@ fn argv(s: &str) -> Vec<String> {
         .collect()
 }
 
+fn name_of(s: &str) -> group::Name {
+    group::Name::parse(s).unwrap()
+}
+
 /// n0's relays as the command writes them.
 fn n0() -> Vec<String> {
     let urls: Vec<RelayUrl> = svrngs_node::relay::n0_relays().urls();
@@ -98,13 +102,14 @@ async fn a_group_that_keeps_its_own_relay_is_met_there_with_n0_s_beside_it() {
         "and meets house there again"
     );
 
-    let work = cli::parse(argv("new work --as Sam")).unwrap();
-    let Verb::New { name, person, .. } = work else {
-        unreachable!("new parses as new")
-    };
-    cli::new_group(&sam, name, person.unwrap(), None, None, &ours)
-        .await
-        .expect("Sam makes work, which keeps no relay");
+    // A group that keeps no relay, as one joined from a link that carried
+    // one of n0's keeps none: `svrngs new` here keeps house's, the relay
+    // the home page's group keeps (arch-command-relay (a), tests/new_relay.rs).
+    let founder = ed25519_dalek::VerifyingKey::from_bytes(sam.endpoint().id().as_bytes()).unwrap();
+    let work = group::draw(name_of("work"), name_of("Sam"), founder);
+    sam.host()
+        .keep_group(&work, None, None)
+        .expect("Sam keeps work, which keeps no relay");
     let both = cli::reach(dir.path(), &Verb::Run, cli::SHIPPED).unwrap();
     let beside: Vec<String> = std::iter::once(url).chain(n0()).collect();
     assert!(both.n0_services, "n0's lookup is on");
