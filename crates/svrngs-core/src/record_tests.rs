@@ -74,3 +74,37 @@ fn on_behalf_of_someone_outside_the_group_writes_nothing() {
     );
     assert!(store.0.borrow().is_empty());
 }
+
+/// **Every act a commit signed with its view still verifies** (arch-view;
+/// fence 3). `fixtures/rail_ops_with_a_view.jsonl` is two lines `commit`
+/// wrote at c276c34f, the row's start, which stamped each signer's view:
+/// alex's record, then bo's, whose view names alex. They are held, admitted
+/// whole and counted, as every journal on disk holding them is.
+#[test]
+fn acts_signed_with_a_view_still_verify() {
+    let ops: Vec<Op<SignedOp>> = include_str!("fixtures/rail_ops_with_a_view.jsonl")
+        .lines()
+        .map(|l| serde_json::from_str(l).expect("the fixture is a journal line"))
+        .collect();
+    assert_eq!(ops.len(), 2);
+    assert!(
+        ops.iter().all(|o| o.kind.view.is_some()),
+        "each carries a view"
+    );
+    let bo = actor_of(&key(2));
+    let named = ops
+        .iter()
+        .find(|o| o.actor == bo)
+        .unwrap()
+        .kind
+        .view
+        .as_ref()
+        .unwrap();
+    assert!(
+        named.get(&actor_of(&key(1))).is_some(),
+        "bo's view names alex"
+    );
+    let f = admitted(&ops);
+    assert!(f.gaps().is_empty(), "{:?}", f.gaps());
+    assert_eq!(f.ops().len(), 2, "both counted");
+}
