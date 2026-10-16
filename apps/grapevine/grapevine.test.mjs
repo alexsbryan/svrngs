@@ -3,7 +3,7 @@
 
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { cpSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -210,6 +210,15 @@ test('the two kinds keep the interface, and one that breaks it is refused, sayin
   const readme = readFileSync(join(HERE, 'kinds/README.md'), 'utf8').replace(/\s+/g, ' ');
   assert.ok(readme.includes(`1 to ${MAX_FIELDS} fields`) && readme.includes(`up to ${MAX_TEXT.toLocaleString('en-US')} characters`), 'kinds/README.md says the limits grapevine.js keeps');
   assert.ok(readme.indexOf('What a kind cannot touch') < readme.indexOf('## '), 'kinds/README.md says what a kind cannot touch first');
+});
+
+test('every kind in kinds/ imports nothing: the routing, handles, sealing and carrying it could reach are the app\'s', () => {
+  const kinds = readdirSync(join(HERE, 'kinds')).filter((f) => f.endsWith('.js'));
+  assert.ok(kinds.length >= 2, `kinds/ holds ${kinds.length} kinds`);
+  for (const f of kinds) {
+    const reach = readFileSync(join(HERE, 'kinds', f), 'utf8').split('\n').map((l, n) => [n + 1, l]).filter(([, l]) => /^\s*import\b|\bimport\s*\(|\brequire\s*\(/.test(l));
+    assert.deepEqual(reach.map(([n, l]) => `kinds/${f}:${n}: ${l.trim()}`), [], `kinds/${f} imports: a kind is a plain object, and writes no routing, scope, handle, sealing, carrying or name (kinds/README.md)`);
+  }
 });
 
 test("a listing is a plain record in its owner's own group, never an ask, so never carried", () => {

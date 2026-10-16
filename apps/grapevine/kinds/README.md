@@ -9,7 +9,9 @@ sealing, carrying or names. The app does all of that, the same for every
 kind: who sees an ask, which groups it may go to, how replies find their
 way back, what is sealed so only the two ends can read it, and when names
 are shown. `kindsOf` in `grapevine.js` refuses a kind that sets anything
-beyond the words below, and says which.
+beyond the words below, and says which. A kind's file imports nothing, so
+it can't reach what the app does: `grapevine.test.mjs` fails on one that
+does, naming the line.
 
 ## The file
 
