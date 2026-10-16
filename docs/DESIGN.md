@@ -1750,14 +1750,17 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   <date>", in `question.js`'s one wording: `Register::removals` says a cut
   whose signer stands as the person it cuts `RemovalSaid::Left`, the
   keeper's `Removed` (the operator, 2026-10-14: "Record only"). Leaving is
-  final from that computer for now: a computer signs every group with one
-  key, and a cut key never stands again (the operator, 2026-10-14: "Final
-  for now; per-group keys as a row"). So the issuer refuses to redeem a
+  final from that computer through V1: a computer signs every group with
+  one key, and a cut key never stands again (the operator, 2026-10-14:
+  "Final for now; per-group keys as a row"; on that row's survey,
+  2026-10-16: "Final from this computer, through V1"; a key per group on
+  computers waits in §9). So the issuer refuses to redeem a
   link for a key cut in its group (svrngs-core `RedeemRefusal::Cut`), where
   the fold alone would count the later `Admit`; and a computer that left,
   sent a new link, is told at once, before anything is redeemed, that it
   cannot join again from there yet (`join.rs`, `NotJoined::Left`), as the
-  page and `svrngs join` say it; a phone, with a key per group, can rejoin.
+  page and `svrngs join` say it; a phone, with a key per group
+  (`web/store.js`), can rejoin.
 - **Leaving is cheap.** A group's whole state is a directory every member's
   computer holds. A group that goes wrong refounds from any copy, within
   hours, without whoever it leaves out (operator: "with dotfile elegance").
@@ -1892,7 +1895,7 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   in §9. Only a computer makes a device link; a phone making one, and one
   device removed apart from its person, wait in §9. A computer's one key
   for every group it holds (`crates/svrngs/src/identity.rs`) still departs
-  from "per group", a separate question.
+  from "per group" through V1; a key per group on computers waits in §9.
 - **Each computer's relay is in the record** (relay-in-record (b), landed;
   §8's relay row): a `Relay{url}` act, signed by the key it speaks for, so
   nobody says where another is reached; its newest counting one wins, and
@@ -2739,8 +2742,9 @@ v1ui queue made the home page and the phone's page what V1 shows (landed,
 - the arch queue, the architectural audit's cuts (`ralph/next/arch/`,
   its `AUDIT.md`; landed, and audited by REVIEW-audit-arch-auto-1);
 - the groups queue (`ralph/next/groups/`): its economizing pass first, then
-  the node's kept connections, leaving a group with nobody's yes, and a key
-  per group on a computer, then their run;
+  the node's kept connections, leaving a group with nobody's yes, a key
+  per group on a computer surveyed and left for after V1 (§9), a leave
+  told to the leaver's other computers, then their run;
 - the grapevine demo app (`ralph/next/grapevine/`, in `apps/grapevine/`):
   an ask crossing groups through people, taps only, nothing changed in
   svrngs, its recorded run on the identity model groups-keys leaves.
@@ -2771,6 +2775,7 @@ the grapevine's standing carries are a row after V1 too (GRAPEVINE_DEMO
 | files beside the record; the live channel beyond what U3 carries | the reference app that needs each |
 | a second chat adapter, and the trait it earns | a group on another chat asks |
 | forgetting from the journal, by meaning (svrn-docs `rings/current/A_RECORD_FOR_YEARS.md` §4). Upstream's seal forgot by author and sequence: it retired everything its signer wrote before it, on every copy it reached, so a member who sealed took their expenses out of everyone's book, and any app could set it off (that draft's §2). It went in arch-seal (the operator, 2026-10-15: "Remove it"): an app's seal is refused, and a seal an older build wrote retires nothing here, its acts below it still counting (`ring_sync/tests.rs` `a_seal_another_member_signs_retires_nothing_here`). A copy an older build pruned says what it misses, as holes; this build keeps to the run such a copy claims, so it is not sent what it pruned every round (`sync.rs` `ops_missing_from_within`) | a journal grows past a size measured to matter (that draft's §6, question 3) |
+| a key per group on a computer, so a person who left a group, or was removed from it, can rejoin it from that computer as someone new under the same name. A computer signs and dials every group with one key (`crates/svrngs/src/identity.rs`; `node.rs`, "One key signs and dials"), and a cut key never stands again (§6), so today that person rejoins only from a phone, which keeps a key per group (`web/store.js`). groups-keys' survey (`demo/runs/keys/2026-10-16/SURVEY.md`, 64ed421b) laid out five shapes: A, a signing key derived per group, which derives the cut key again unless an epoch is kept per group; B, an `Admit` naming a signing key and the dialled key, 30-45 svrngs-core lines and 150-225 in the repository; C, an endpoint per key the computer holds, as a phone has, 0 svrngs-core lines and 220-330 in the repository, every existing group's keys unchanged, one more relay connection per rejoined group; D, the cut key admitted again, which makes no one new and undoes a keeper's removal; E, a second svrngs on the computer, two home pages. C is the smallest safe shape; it did not fit the 41 lines the groups queue had left (`NEEDS_HUMAN.md` beside it), and the operator kept leaving final from the computer through V1 (2026-10-16: "Final from this computer, through V1"). The estimates are from the sites, not a spike; a spike of C's signer per group is the first step | after V1, or a person who left or was removed asks to rejoin from the same computer, counted |
 | a keeper the group chooses, or one that rotates (Ostrom's third principle, collective choice; §11 risk 2): today the keeper is the maker's key, moved only by the keeper's own hand-on (§6, "Removal has one decider"), and a hand-on survives its giver's removal (§10, 2026-10-12); a group's choice would be acts its people sign that the fold counts into one hand-on, or a turn the fold moves on its own — a new rule of §6, the operator's | a group asks to choose its keeper, or to take turns, counted |
 | a ladder of sanctions people can see, removal its last rung (Ostrom's fifth principle, graduated sanctions): the gentler steps are each owner's already and need no keeper — a yes stopped (`question.js`'s Stop, on both pages), a share stopped (`svrngs unshare`), a library kept back from everyone the middleware signs in (v1-onboarding (e), landed, `jellyfin-mw --keep-back`; from one person, not yet) — so the ladder is only those steps shown to the group beside its removals (§6, v1-keeper-office (b)) | a group removes someone for what a lesser step would have met, counted |
 | exporting a group as one document (upstream's checkpoint route), checking the asker is in that group | a group refounds from a copy, or someone asks to export one |
