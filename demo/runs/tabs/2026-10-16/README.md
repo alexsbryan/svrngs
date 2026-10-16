@@ -73,3 +73,12 @@ both tabs are read after (`tests/browser/tabs.rs`).
     opened again, said "You have house open in another tab".
   - The relay set no key aside in the run (no "deactivating old
     connection" in `target/traces/browser.log`).
+
+## The close
+
+`scripts/check.sh` at a4c70ef9 exited 0 in 11 min 55 s (`check.out`):
+every gate passed, from "principles pinned" through "app laws", the
+browser and joining-in-a-browser tests among them. Its WebKit seek rate
+(u5-11) is a rate, not a gate: one of its four rows, wildcard sam, failed
+its straight 5 s. `scripts/lean_check.py` after: 16,157 / 16,158,
+svrngs-core 2,952 / 2,953.
