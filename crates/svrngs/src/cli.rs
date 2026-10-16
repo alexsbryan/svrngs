@@ -1700,8 +1700,9 @@ pub async fn new_group(
     let keep = node.host().keep_group(&seed, page, kept.as_ref());
     keep.map_err(|why| keep_refused(&seed, &why))?;
     tracing::debug!(target: "cli", group = %id, name = %seed.name(), page = ?page.map(Origin::as_str), ?kept, asked, "cli: group made, keeping the relay asked, else the one the home page's keeps");
-    let token = mint(node, &seed, relay, None)?;
-    Ok((seed, Printed::of(&token, page)))
+    let made = node.host().link(&id, false, None);
+    let made = made.map_err(|e| unminted(&seed, e))?;
+    Ok((seed, Printed::of(&made.token, made.page.as_ref())))
 }
 
 /// The one group held under `root` that `reference` names, by its name or
@@ -1725,11 +1726,13 @@ fn group_named(root: &Path, reference: &str) -> Result<Seed, Refusal> {
     }
 }
 
-/// `svrngs link`: a new link to the group `reference` names: the client's
-/// link, and the https one on `page`, kept from now on, when given, else
-/// on the group's kept origin, if it keeps one. With `device` a device link
-/// (`svrngs link --device`; bash-devices): one this computer's person's
-/// other computer or phone joins as them by, and that person.
+/// `svrngs link`: a new link to the group `reference` names, made by the
+/// node ([`svrngs_node::node::Host::link`]) once this computer has reached
+/// a relay: the client's link, and the https one on `page`, kept from now
+/// on, when given, else on the group's kept origin, if it keeps one. With
+/// `device` a device link (`svrngs link --device`; bash-devices): one this
+/// computer's person's other computer or phone joins as them by, and that
+/// person.
 pub async fn link_to(
     node: &Node,
     reference: &str,
@@ -1738,44 +1741,11 @@ pub async fn link_to(
     device: bool,
 ) -> Result<(Seed, Printed, Option<Person>), Refusal> {
     let seed = group_named(node.rail().root(), reference)?;
-    let dir = node
-        .rail()
-        .group_dir(&seed.id())
-        .map_err(|e| keep_refused(&seed, &e.to_string()))?;
-    let refused = |e: group::SeedError| keep_refused(&seed, &e.to_string());
-    let page = match page {
-        Some(given) => {
-            group::write_origin(&dir, given).map_err(refused)?;
-            tracing::debug!(target: "cli", group = %seed.id(), origin = given.as_str(), "cli: link — the group's origin changed");
-            Some(given.clone())
-        }
-        None => match group::read_origin(&dir).map_err(refused)? {
-            Some(page) => {
-                tracing::debug!(target: "cli", group = %seed.id(), origin = page.as_str(), "cli: link — on the group's kept origin too");
-                Some(page)
-            }
-            None => {
-                tracing::debug!(target: "cli", group = %seed.id(), "cli: link — the group keeps no origin, so the client's link alone");
-                None
-            }
-        },
-    };
-    let person = match device {
-        // This computer's person (bash-devices): whom it adds a device of.
-        true => Some(
-            node.host()
-                .own_person(&seed.id())
-                .map_err(|e| unminted(&seed, e))?,
-        ),
-        false => None,
-    };
     wait_online(node, &relay.relay_urls).await;
-    let token = mint(node, &seed, relay, person.as_ref().map(|(k, _)| k.clone()))?;
-    Ok((
-        seed,
-        Printed::of(&token, page.as_ref()),
-        person.map(|(_, p)| p),
-    ))
+    let made = node.host().link(&seed.id(), device, page);
+    let made = made.map_err(|e| unminted(&seed, e))?;
+    let printed = Printed::of(&made.token, made.page.as_ref());
+    Ok((seed, printed, made.device))
 }
 
 /// Why the node made no link, in the command's refusals.
@@ -1784,32 +1754,6 @@ fn unminted(seed: &Seed, e: Unminted) -> Refusal {
         Unminted::NotIn => Refusal::NotIn(seed.name().clone()),
         Unminted::Unkept(why) => keep_refused(seed, &why),
     }
-}
-
-/// A link to `seed`'s group, made by the node ([`svrngs_node::invite`]) carrying
-/// this computer's home relay ([`svrngs_node::invite::carried`]), so a
-/// phone's page dials only the relays its link and its group name and asks
-/// no lookup (DESIGN §10, 2026-10-13), its life starting now. Its callers
-/// wait for a relay first ([`wait_online`]).
-#[expect(
-    clippy::disallowed_methods,
-    reason = "the command's clock: a link's life starts now"
-)]
-fn mint(
-    node: &Node,
-    seed: &Seed,
-    relay: &RelayConfig,
-    device_of: Option<String>,
-) -> Result<Token, Refusal> {
-    let home = node.endpoint().addr().relay_urls().next().cloned();
-    let carried = svrngs_node::invite::carried(relay, home);
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs() as i64)
-        .map_err(|_| keep_refused(seed, "the wall clock is before 1970"))?;
-    node.host()
-        .mint(&seed.id(), carried, device_of, now)
-        .map_err(|e| unminted(seed, e))
 }
 
 /// Wait up to [`ONLINE_WAIT`] for a home relay, when this computer has

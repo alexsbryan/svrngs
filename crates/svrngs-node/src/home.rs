@@ -49,6 +49,7 @@ use axum::{Json, Router};
 use serde::Deserialize;
 use std::num::NonZeroU16;
 use std::process::Command;
+use svrngs_core::link::{client_link, https_link};
 use svrngs_core::pass::Label;
 
 use crate::door::choices::{own_choices, own_choose, Said, Saying};
@@ -388,9 +389,11 @@ struct Linking {
 /// `POST /link`: a link to the group, as `svrngs link` makes it
 /// ([`crate::node::Host::link`]).
 async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
-    match at.host.link(&l.group, l.device) {
-        Ok((client, https)) => {
-            Json(serde_json::json!({ "client": client, "https": https })).into_response()
+    match at.host.link(&l.group, l.device, None) {
+        Ok(made) => {
+            let https = made.page.map(|p| https_link(&p, &made.token));
+            Json(serde_json::json!({ "client": client_link(&made.token), "https": https }))
+                .into_response()
         }
         Err(crate::invite::Unminted::NotIn) => {
             tracing::debug!(target: "home", group = l.group, "home: refused — no link, this computer is not in that group");

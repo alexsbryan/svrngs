@@ -5,12 +5,13 @@
 //! [`draw`] was svrngs's `issuer::mint`, [`carried`] its `cli::link_relay`,
 //! [`Host::mint`] and [`Host::own_person`] its `cli::mint` and
 //! `cli::own_person`, asked through [`crate::node::Node::host`], and
-//! [`kept_page`] its group.rs `read_origin`. The command keeps what is its own: the clock, the
-//! wait for a relay, and its words.
+//! [`kept_page`] its group.rs `read_origin`; [`Host::link`] its `cli::link_to`
+//! and `cli::mint` (arch-command-relay (b)). The command keeps what is its
+//! own: the group a name finds, the wait for a relay, and its words.
 
 use std::path::Path;
 
-use svrngs_core::link::{client_link, https_link, Origin, Token, SECRET_LEN};
+use svrngs_core::link::{Origin, Token, SECRET_LEN};
 
 use crate::iroh::{PublicKey, RelayConfig, RelayUrl};
 use crate::node::Host;
@@ -44,6 +45,15 @@ pub fn kept_page(dir: &Path) -> Result<Option<Origin>, String> {
         }
         Err(e) => Err(e.to_string()),
     }
+}
+
+/// A link made: its token, the page its https link is on when the group
+/// keeps one, and, a device link, whose computer or phone it adds.
+#[derive(Debug)]
+pub struct Linked {
+    pub token: Token,
+    pub page: Option<Origin>,
+    pub device: Option<Person>,
 }
 
 /// Why no link was made.
@@ -140,16 +150,19 @@ impl Host {
         Ok(token)
     }
 
-    /// A link to `group` made where its svrngs runs, for the home page
-    /// (start-home), as `svrngs link` makes one (`cli::link_to`): the
-    /// client's link, and the https one on the group's kept page; with
-    /// `device`, a device link. Its relay is the one reached now, with no
-    /// wait: a running computer has reached it, or [`carried`] says why.
-    #[expect(
-        clippy::disallowed_methods,
-        reason = "the page's clock: a link's life starts now"
-    )]
-    pub fn link(&self, group: &str, device: bool) -> Result<(String, Option<String>), Unminted> {
+    /// A link to `group`, for the home page (start-home) and `svrngs link`
+    /// and `new` alike: the https one on `page`, kept from now on, when
+    /// given (`link --origin`), else on the group's kept page; with
+    /// `device`, a device link, and whose. Its relay is the one reached
+    /// now, with no wait: a running computer has reached it, the command
+    /// waits first, or [`carried`] says why.
+    #[expect(clippy::disallowed_methods, reason = "a link's life starts now")]
+    pub fn link(
+        &self,
+        group: &str,
+        device: bool,
+        page: Option<&Origin>,
+    ) -> Result<Linked, Unminted> {
         let unkept = |e: &dyn std::fmt::Display| Unminted::Unkept(e.to_string());
         // Held first, so no journal is opened for a group it does not hold.
         let held = self.rail.namespaces().map_err(|e| unkept(&e))?;
@@ -158,15 +171,22 @@ impl Host {
             return Err(Unminted::NotIn);
         }
         let dir = self.rail.group_dir(group).map_err(|e| unkept(&e))?;
+        if let Some(given) = page {
+            crate::group::write_origin(&dir, given).map_err(|e| unkept(&e))?;
+            tracing::debug!(target: "link", group, origin = given.as_str(), "link: the group's origin changed");
+        }
         let page = kept_page(&dir).map_err(|e| unkept(&e))?;
-        let device_of = device.then(|| self.own_person(group)).transpose()?;
+        let (key, device) = device.then(|| self.own_person(group)).transpose()?.unzip();
         let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
         let now = now.map_err(|e| unkept(&e))?.as_secs() as i64;
         let home = self.endpoint.addr().relay_urls().next().cloned();
-        let relay = carried(&self.relay, home);
-        let token = self.mint(group, relay, device_of.map(|p| p.0), now)?;
-        tracing::debug!(target: "link", group, device, page = ?page.as_ref().map(Origin::as_str), "link: made for the home page");
-        Ok((client_link(&token), page.map(|p| https_link(&p, &token))))
+        let token = self.mint(group, carried(&self.relay, home), key, now)?;
+        tracing::debug!(target: "link", group, ?device, page = ?page.as_ref().map(Origin::as_str), "link: made, on the group's kept page too when it keeps one");
+        Ok(Linked {
+            token,
+            page,
+            device,
+        })
     }
 
     /// This computer's person in `group`, by their first key and name, as
