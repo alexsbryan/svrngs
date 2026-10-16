@@ -113,14 +113,16 @@ export function validate(act) {
  * every op that carries an app's act or a correction, in the record's
  * order, **voided ones included** — the record voids whoever corrects, and
  * this fold decides whose correction counts. `by` is `on_behalf_of` when
- * the op names one, else its `person`. A log with no list of ops is an
- * error, never a group with no answers.
+ * the op names one, else its `person`; `via` is the `person` when
+ * `on_behalf_of` names another — whose computer wrote it for them
+ * (ralph/FINDING_ON_BEHALF_OF.md) — else null. A log with no list of ops is
+ * an error, never a group with no answers.
  */
 export function actsOf(log) {
   if (!Array.isArray(log?.ops)) throw new Error(`the record answered no list of acts: ${JSON.stringify(log)}`);
   return log.ops
     .filter((o) => o.payload != null || o.corrects != null)
-    .map((o) => ({ id: o.id, ts: o.ts_unix, by: o.on_behalf_of ?? o.person, op: o.payload ?? null, corrects: o.corrects ?? null }));
+    .map((o) => ({ id: o.id, ts: o.ts_unix, by: o.on_behalf_of ?? o.person, via: o.on_behalf_of != null && o.on_behalf_of !== o.person ? o.person : null, op: o.payload ?? null, corrects: o.corrects ?? null }));
 }
 
 /** No acts yet. */
@@ -133,18 +135,25 @@ export function reduce(state, act) {
   const gaps = validate(act);
   for (const g of gaps) state.gaps.push({ ...g, id: isObject(act) && typeof act.id === 'string' ? act.id : null });
   if (gaps.length || has(state.acts, act.id)) return state;
-  state.acts[act.id] = { by: act.by, ts: act.ts, op: act.op ?? null, corrects: act.corrects ?? null };
+  state.acts[act.id] = { by: act.by, via: act.via ?? null, ts: act.ts, op: act.op ?? null, corrects: act.corrects ?? null };
   state.order.push(act.id);
   return state;
 }
 
 const add = (list, item) => (list.includes(item) ? list : [...list, item].sort());
+/** `via` added under `k` in `map`, when there is one: the computers an answer came through. */
+const through = (map, k, via) => {
+  if (via) map[k] = add(has(map, k) ? map[k] : [], via);
+};
 
 /**
  * What the acts come to: each event with its host, who is coming (with the
  * guests each brings) and who came (with the guests each says came), and
  * every act not counted, as a gap saying why. Only what someone said is
- * here: no one appears who did not answer.
+ * here: no one appears who did not answer. `via` says whose computer wrote
+ * the post (`host`) and each answer, where it was someone else's: under
+ * `coming`, `came` and `guests_came`, as they are keyed, the computers each
+ * came through.
  */
 export function answers(state) {
   const { voided, uncounted } = voids(state);
@@ -153,16 +162,17 @@ export function answers(state) {
   const events = {};
   const live = state.order.filter((id) => !has(voided, id) && !has(uncounted, id) && state.acts[id].op);
   for (const id of live) {
-    const { by, ts, op } = state.acts[id];
+    const { by, via, ts, op } = state.acts[id];
     if (op.kind !== EVENT) continue;
     if (!has(events, op.event)) {
-      events[op.event] = { host: by, what: op.what.trim(), when: op.when, where: op.where, at: ts, coming: {}, came: [], guests_came: {} };
+      const vias = { host: via, coming: {}, came: {}, guests_came: {} };
+      events[op.event] = { host: by, what: op.what.trim(), when: op.when, where: op.where, at: ts, coming: {}, came: [], guests_came: {}, via: vias };
     } else {
       gap(events[op.event].host === by ? 'posted_twice' : 'not_the_host', id, `${by} posted ${op.event} again; ${events[op.event].host} hosts it`);
     }
   }
   for (const id of live) {
-    const { by, op } = state.acts[id];
+    const { by, via, op } = state.acts[id];
     if (op.kind === EVENT) continue;
     if (!has(events, op.event)) {
       gap('no_event', id, `${by} answered an event this copy does not hold`);
@@ -174,10 +184,13 @@ export function answers(state) {
       let guests = has(e.coming, by) ? e.coming[by] : [];
       for (const g of op.guests ?? []) guests = add(guests, guestName(g));
       e.coming[by] = guests;
+      through(e.via.coming, by, via);
     } else if (op.guest === undefined) {
       e.came = add(e.came, by);
+      through(e.via.came, by, via);
     } else {
       e.guests_came[by] = add(has(e.guests_came, by) ? e.guests_came[by] : [], guestName(op.guest));
+      if (via) through((e.via.guests_came[by] ??= {}), guestName(op.guest), via);
     }
   }
   return { events, gaps };

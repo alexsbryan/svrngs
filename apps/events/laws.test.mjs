@@ -40,8 +40,8 @@ const JOURNAL = [
 const NOES = new Set(['a8', 'a9', 'a10']);
 /** Acts a duplicate of which must change nothing: the answers. */
 const KEYED = new Set(['coming', 'came']);
-/** Everything an event says, and nothing else. */
-const SAYS = ['at', 'came', 'coming', 'guests_came', 'host', 'what', 'when', 'where'];
+/** Everything an event says, and nothing else: `via`, whose computer wrote each part, records no "no" either. */
+const SAYS = ['at', 'came', 'coming', 'guests_came', 'host', 'via', 'what', 'when', 'where'];
 
 const clone = (v) => structuredClone(v);
 const fold = (app, acts) => acts.reduce((s, a) => app.reduce(s, clone(a)), app.init());

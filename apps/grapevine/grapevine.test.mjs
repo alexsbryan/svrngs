@@ -249,3 +249,31 @@ test("the largest a kind allows stays under an act's most: its sealed message an
   const ask = askAct({ kind: 'tool', fields: widest, hops: 3, expires: NOW, seal_to: sam.public, handle: 'A'.repeat(22) + '==' });
   assert.ok(Buffer.byteLength(JSON.stringify(ask)) <= ACT_MOST, `the largest ask is ${Buffer.byteLength(JSON.stringify(ask))} bytes`);
 });
+
+test('which computer wrote it is kept: `via` is its person when it wrote for another, else null; every answer unchanged', () => {
+  // ralph/FINDING_ON_BEHALF_OF.md's scene: Sam's ask written through Jo's
+  // computer, Jo's carry through Kim's; then Sam's withdrawal through Jo's.
+  const w = world(APP, KINDS, GROUPS);
+  const ask = w.ask('sam', 'page', 'tool', TILE_SAW);
+  Object.assign(w.logs.page.at(-1), { person: 'jo', on_behalf_of: 'sam' });
+  const carry = w.carry('jo', ask, 'waller');
+  Object.assign(w.logs.waller.at(-1), { person: 'kim', on_behalf_of: 'jo' });
+  const untold = (who) => {
+    const kept = structuredClone(w.logs);
+    for (const o of Object.values(w.logs).flat()) Object.assign(o, { person: o.on_behalf_of ?? o.person, on_behalf_of: undefined });
+    const v = w.view(who);
+    Object.assign(w.logs, kept);
+    return v;
+  };
+  const jo = w.view('jo');
+  assert.deepEqual(jo.asks[0].in.map((c) => [c.act, c.by, c.via]), [[ask, 'sam', 'jo'], [carry, 'jo', 'kim']]);
+  assert.deepEqual(jo.asks[0].carriers, ['jo']);
+  const strip = (v) => ({ ...v, asks: v.asks.map((a) => ({ ...a, in: a.in.map(({ via, ...c }) => c) })) });
+  for (const who of ['sam', 'jo', 'kim']) assert.deepEqual(strip(w.view(who)), strip(untold(who)), `${who}'s view: via changes no answer`);
+  assert.deepEqual(untold('jo').asks[0].in.map((c) => c.via), [null, null], 'written by the person\'s own computer, via is null');
+  const withdrawal = w.withdraw('sam', ask);
+  Object.assign(w.logs.page.at(-1), { person: 'jo', on_behalf_of: 'sam' });
+  assert.deepEqual(w.view('sam').asks, [], "Sam's withdrawal through Jo's computer counts, as Sam's");
+  assert.deepEqual(w.view('jo').relay, [{ do: 'correct', group: 'waller', corrects: carry }]);
+  assert.deepEqual(grapevine.actsOf(w.logs.page).map((a) => [a.id, a.by, a.via]), [[ask, 'sam', 'jo'], [withdrawal, 'sam', 'jo']]);
+});

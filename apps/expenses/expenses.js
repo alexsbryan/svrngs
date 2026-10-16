@@ -6,10 +6,12 @@
 // `reduce` folds this app's acts as the record orders them on every copy,
 // with voided ones gone: `actsOf` reads them from the record a member's node
 // serves over loopback (`GET /v1/rail/log`, DESIGN §3). Each act is
-// `{id, ts, by, op}`: `by` is the person the act speaks for — the person an
+// `{id, ts, by, via, op}`: `by` is the person the act speaks for — the person an
 // app named when it wrote for someone the door verified, else the person
 // whose computer wrote it (in E0, tag e0-bot, the chat speaker) — or null
-// when no one did. So a reducer cannot disagree with another copy about which
+// when no one did; `via` is the person whose computer wrote it when that is
+// someone else, else null, so a page can say whose computer it came through
+// (ralph/FINDING_ON_BEHALF_OF.md). It moves no money. So a reducer cannot disagree with another copy about which
 // acts it saw or in what order. What it CAN get wrong is the arithmetic, which
 // is why the arithmetic is here, in one file, with tests (`expenses.test.mjs`)
 // and the laws (`laws.test.mjs`); `canary.mjs` folds two computers' copies.
@@ -123,13 +125,14 @@ export function validate(state, act) {
  * that carries nothing for an app (the group's own acts, and a correction
  * that only voids). A correction's replacement is an act of its own, under
  * the correction's id. `by` is `on_behalf_of` when the op names one, else
- * its `person`. A log with no list of ops is an error, never an empty book.
+ * its `person`; `via` is the `person` when `on_behalf_of` names another,
+ * else null. A log with no list of ops is an error, never an empty book.
  */
 export function actsOf(log) {
   if (!Array.isArray(log?.ops)) throw new Error(`the record answered no list of acts: ${JSON.stringify(log)}`);
   return log.ops
     .filter((o) => !o.voided && o.payload != null)
-    .map((o) => ({ id: o.id, ts: o.ts_unix, by: o.on_behalf_of ?? o.person, op: o.payload }));
+    .map((o) => ({ id: o.id, ts: o.ts_unix, by: o.on_behalf_of ?? o.person, via: o.on_behalf_of != null && o.on_behalf_of !== o.person ? o.person : null, op: o.payload }));
 }
 
 /** The empty book. */
@@ -145,7 +148,7 @@ export function reduce(state, act) {
   const gaps = validate(state, act);
   for (const g of gaps) state.gaps.push({ ...g, id: isObject(act) && typeof act.id === 'string' ? act.id : null });
   if (gaps.length) return state;
-  const { op, by, ts, id } = act;
+  const { op, by, ts, id, via } = act;
   const move = (person, cents) => {
     state.balances[person] = (state.balances[person] || 0) + cents;
     state.since[person] = ts;
@@ -156,7 +159,8 @@ export function reduce(state, act) {
   };
 
   if (op.kind === EXPENSE) {
-    const e = { payer: by, amount_cents: op.amount_cents, description: op.description.trim(), participants: [by] };
+    // `vias`: whose computer wrote each person's part, where it was someone else's.
+    const e = { payer: by, amount_cents: op.amount_cents, description: op.description.trim(), participants: [by], vias: via ? { [by]: via } : {} };
     state.expenses[id] = e;
     split(e, 1);
   } else if (op.kind === SHARE) {
@@ -165,6 +169,7 @@ export function reduce(state, act) {
     if (e.participants.includes(by)) return state;
     split(e, -1);
     e.participants = [...e.participants, by].sort();
+    if (via) e.vias[by] = via;
     split(e, 1);
   } else if (op.kind === SETTLE) {
     const key = settleKey(by, op.to, op.amount_cents, ts);

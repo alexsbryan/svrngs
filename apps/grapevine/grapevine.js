@@ -20,7 +20,9 @@
 // their routes), the kinds there are, and the time, and answers:
 //
 //   asks       each live ask, folded by the original ask's id, with the
-//              groups holding it, its carriers, its kind's `show` and `notice`
+//              groups holding it, its carriers, its kind's `show` and `notice`;
+//              each copy's `by`, and `via`, whose computer wrote it when that
+//              was someone else's, for the page to say (ralph/FINDING_ON_BEHALF_OF.md)
 //   carriable  each live ask paired with each group, and each pairing left
 //              out with its reason (GRAPEVINE §4.2's decider)
 //   threads    each ask this person asked or answered, its messages opened
@@ -191,15 +193,16 @@ function bodyGaps(body, kind) {
 /**
  * The acts of a log, as GET /v1/rail/log answers it: every op carrying an
  * app's act or a correction, in the record's order, voided ones included.
- * `by` is `on_behalf_of` when the op names one, else its `person`. Null
- * when the log holds no list of acts.
+ * `by` is `on_behalf_of` when the op names one, else its `person`; `via` is
+ * the `person` when `on_behalf_of` names another, else null. Null when the
+ * log holds no list of acts.
  */
 export function actsOf(log) {
   const ops = Array.isArray(log) ? log : log?.ops;
   if (!Array.isArray(ops)) return null;
   return ops
     .filter((o) => isObject(o) && (o.payload != null || o.corrects != null))
-    .map((o) => ({ id: o.id, ts: o.ts_unix, by: o.on_behalf_of ?? o.person, op: o.payload ?? null, corrects: o.corrects ?? null }));
+    .map((o) => ({ id: o.id, ts: o.ts_unix, by: o.on_behalf_of ?? o.person, via: o.on_behalf_of != null && o.on_behalf_of !== o.person ? o.person : null, op: o.payload ?? null, corrects: o.corrects ?? null }));
 }
 
 /**
@@ -238,7 +241,7 @@ function readGroup(g, kinds, gap) {
   const msgs = [];
   const records = [];
   for (const id of order) {
-    const { ts, by, op } = acts[id];
+    const { ts, by, via, op } = acts[id];
     if (op == null) continue;
     if (!isObject(op) || op.app !== APP) {
       if (!voided[id] && by === g.me && isObject(op)) records.push(structuredClone(op));
@@ -249,7 +252,7 @@ function readGroup(g, kinds, gap) {
       gap(why[0].code, g, id, why[0].message);
       continue;
     }
-    const at = { id, group: g.id, by, ts, voided: Boolean(voided[id]) };
+    const at = { id, group: g.id, by, via, ts, voided: Boolean(voided[id]) };
     if (op.type === MSG) msgs.push({ ...at, op: structuredClone(op) });
     else copies.push({ ...at, type: op.type, of: op.type === ASK ? id : op.of, kind: op.kind, fields: structuredClone(op.fields), hops: op.hops, expires: op.expires, seal_to: op.seal_to, handle: op.handle });
   }
@@ -339,7 +342,7 @@ export function fold({ groups, state, kinds, now }) {
       seal_to: first.seal_to,
       hops: Math.max(...cs.map((c) => c.hops)),
       asked: has(keys, first.seal_to),
-      in: cs.map((c) => ({ group: c.group, name: groupName(c.group), act: c.id, by: c.by, handle: c.handle, hops: c.hops, carried: c.type === CARRY, live: c.expires > now })),
+      in: cs.map((c) => ({ group: c.group, name: groupName(c.group), act: c.id, by: c.by, via: c.via, handle: c.handle, hops: c.hops, carried: c.type === CARRY, live: c.expires > now })),
       carriers: [...new Set(cs.filter((c) => c.type === CARRY).map((c) => c.by))].sort(),
       live: live.length > 0,
     };

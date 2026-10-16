@@ -19,6 +19,7 @@ test('an event is its host\'s post, and who is coming is who said so, guests by 
   assert.deepEqual(e, {
     host: 'sam', what: 'dinner', when: 'Friday 7', where: 'the house', at: 1000,
     coming: { bo: ['Jo', 'Maya'], cy: [] }, came: [], guests_came: {},
+    via: { host: null, coming: {}, came: {}, guests_came: {} },
   });
 });
 
@@ -106,4 +107,28 @@ test('the host\'s view joins each group where they host the event; an unread gro
 
 test('an answer to another group\'s event is an answer to none here: each record holds its own', () => {
   assert.deepEqual(fold([coming('b', 'bo')]).gaps.map((g) => g.code), ['no_event']);
+});
+
+test('which computer wrote it is kept: `via` is its person when it wrote for another, else null; the answers unchanged', () => {
+  // ralph/FINDING_ON_BEHALF_OF.md's scene: Cy's computer writes Bo's answers in Bo's name.
+  const op = (id, extra) => ({ id, ts_unix: 1000, voided: false, ...extra });
+  const log = {
+    ops: [
+      op('a', { person: 'cy', on_behalf_of: 'sam', payload: dinner('a', 'sam').op }),
+      op('b', { person: 'cy', on_behalf_of: 'bo', payload: coming('b', 'bo', ['Maya']).op }),
+      op('c', { person: 'bo', on_behalf_of: 'bo', payload: came('c', 'bo').op }),
+      op('d', { person: 'cy', on_behalf_of: 'bo', payload: came('d', 'bo', 'Maya').op }),
+      op('e', { person: 'ama', payload: coming('e', 'ama').op }),
+      // Ama's change of mind through Cy's computer: counted, as hers, and kept with its own `via`.
+      op('f', { person: 'cy', on_behalf_of: 'ama', corrects: 'e' }),
+    ],
+  };
+  const acts = actsOf(log);
+  assert.deepEqual(acts.map((a) => [a.id, a.by, a.via]), [['a', 'sam', 'cy'], ['b', 'bo', 'cy'], ['c', 'bo', null], ['d', 'bo', 'cy'], ['e', 'ama', null], ['f', 'ama', 'cy']]);
+  const state = acts.reduce(reduce, init());
+  assert.equal(state.acts.f.via, 'cy');
+  const e = answers(state).events.e1;
+  const untold = fold(acts.map(({ via, ...a }) => a)).events.e1;
+  assert.deepEqual([e.host, e.coming, e.came, e.guests_came], [untold.host, untold.coming, untold.came, untold.guests_came], 'via changes no answer');
+  assert.deepEqual(e.via, { host: 'cy', coming: { bo: ['cy'] }, came: {}, guests_came: { bo: { Maya: ['cy'] } } });
 });

@@ -160,8 +160,29 @@ test('the record\'s log: `by` is whom an app wrote for, else the computer\'s per
     ],
   };
   assert.deepEqual(actsOf(log), [
-    { id: 'o2', ts: 7, by: 'sam', op: pizza },
-    { id: 'o3', ts: 7, by: 'bo', op: { kind: SHARE, expense: 'o2' } },
+    { id: 'o2', ts: 7, by: 'sam', via: null, op: pizza },
+    { id: 'o3', ts: 7, by: 'bo', via: 'sam', op: { kind: SHARE, expense: 'o2' } },
   ]);
   assert.throws(() => actsOf({ error: 'not held' }), /no list of acts/);
+});
+
+test('which computer wrote it is kept: `via` is its person when it wrote for another, else null; the sums unchanged', () => {
+  // ralph/FINDING_ON_BEHALF_OF.md's scene: Cy's computer writes "Bo paid $400" in Bo's name.
+  const op = (id, extra) => ({ id, actor: 'k1', seq: 0, ts_unix: 7, voided: false, ...extra });
+  const rent = { kind: EXPENSE, amount_cents: 40000, description: 'the rent' };
+  const log = {
+    ops: [
+      op('o1', { person: 'cy', on_behalf_of: 'bo', payload: rent }),
+      op('o2', { person: 'ama', on_behalf_of: 'ama', payload: { kind: SHARE, expense: 'o1' } }),
+      op('o3', { person: 'cy', payload: { kind: SHARE, expense: 'o1' } }),
+      // A correction's replacement, through another's computer: kept with its own `via`.
+      op('o4', { person: 'cy', on_behalf_of: 'ama', corrects: 'o9', payload: { kind: SETTLE, to: 'bo', amount_cents: 100 } }),
+    ],
+  };
+  const acts = actsOf(log);
+  assert.deepEqual(acts.map((a) => [a.id, a.by, a.via]), [['o1', 'bo', 'cy'], ['o2', 'ama', null], ['o3', 'cy', null], ['o4', 'ama', 'cy']]);
+  const state = fold(acts);
+  const untold = fold(acts.map(({ via, ...a }) => a));
+  assert.deepEqual([state.balances, state.counted], [untold.balances, untold.counted], 'via moves no money');
+  assert.deepEqual(state.expenses.o1.vias, { bo: 'cy' }, "the expense keeps whose computer wrote each person's part");
 });
