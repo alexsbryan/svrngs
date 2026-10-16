@@ -218,11 +218,12 @@ async fn log_ships_admitted_ops_gaps_and_the_roster() {
     );
 }
 
-/// A seal renders its prune in the append body: the seal is on disk either
-/// way, so a refused prune must never read as a failed seal — and a working
-/// one reports what it removed.
+/// An app's `{"op":"seal"}` is refused as not an app's to write, and retires
+/// nothing (arch-seal (b); WHO_KNOWS_WHOM §3, bar 10): the journal holds both
+/// records after it, and no seal. The failing input: the route seals, as it
+/// did, retiring both records.
 #[tokio::test]
-async fn a_seal_renders_its_prune() {
+async fn an_apps_seal_is_refused_and_retires_nothing() {
     let (_dir, rail) = rail_with(&[("alex", 7)]);
     group_of(&rail, "ledger").unwrap();
     let journal = "ledger";
@@ -234,15 +235,13 @@ async fn a_seal_renders_its_prune() {
         );
     }
     let resp = append_act(&rail, journal, serde_json::json!({ "op": "seal" })).await;
-    assert_eq!(resp.status(), StatusCode::OK);
-    let out = body_of(resp).await;
-    let retired = &out["retired"];
-    assert!(
-        retired.get("refused").is_none(),
-        "a prune this roster admits must not read as refused: {retired}"
-    );
-    assert_eq!(retired["removed"], 2, "both sealed-over acts retire");
-    assert_eq!(retired["kept"], 1, "the seal itself stays");
+    assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(body_of(resp).await["kind"], "not_an_app_act");
+    let ops = svrngs_core::tests_support::wire_ops(&rail.admission(journal).unwrap());
+    assert_eq!(ops.len(), 2, "both records still count: {ops:?}");
+    let held =
+        std::fs::read_to_string(rail.group_dir(journal).unwrap().join("ring_oplog.jsonl")).unwrap();
+    assert!(!held.contains("\"seal\""), "no seal on disk:\n{held}");
 }
 
 /// The people door answers who stands in the group from the register — the

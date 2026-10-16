@@ -9,7 +9,7 @@
 //! (`digest`, `missing`, `ingest`, `roster`, `read`, `admit`, `compact`,
 //! `namespaces`, `actor`), all rail-core-typed. The append and log
 //! bodies mirror the inference daemon's `routes_rail` door for door — same
-//! paths, same server-assigned fields, same retire rendering, same gap
+//! paths, same server-assigned fields, same gap
 //! sentences — so a page written against one daemon behaves the same against
 //! the other (ARCH §10.6). What is deliberately NOT mirrored is the guest
 //! half: there are no grants and no sessions here (loopback IS the auth),
@@ -56,7 +56,7 @@ use crate::live::{push_ephemeral, LivePeer};
 use crate::node::dialled;
 use crate::register::{Member, Standing};
 use crate::ring_routes::err;
-use crate::{Compaction, Device, Joined, Membership, Person, RailAct, RailError, RingRail};
+use crate::{Device, Joined, Membership, Person, RailAct, RailError, RingRail};
 use svrngs_core::{Append, AppendRefusal, Refused as CommitRefused};
 
 /// What the doors read: the journals, the nudge that wakes the round
@@ -81,22 +81,6 @@ pub struct RailApi {
 pub struct RailQuery {
     #[serde(default)]
     pub namespace: Option<String>,
-}
-
-/// Render what [`RingJournal::seal`]'s prune did, for the append body — the
-/// daemon's rendering verbatim: a seal and the prune it authorises are one
-/// act to the caller, and a refused prune is not a failed seal, so the
-/// outcome is reported in the body instead of a status code.
-fn retire(retired: &Result<Compaction, RailError>) -> serde_json::Value {
-    match retired {
-        Ok(done) => serde_json::json!({
-            "removed": done.removed,
-            "kept": done.kept,
-            "gaps_cleared": done.gaps_cleared,
-            "floors": done.floors,
-        }),
-        Err(e) => serde_json::json!({ "refused": e.to_string() }),
-    }
 }
 
 pub(crate) fn namespace_of(q: &RailQuery) -> Result<String, Response> {
@@ -230,54 +214,46 @@ pub(crate) async fn append_act(
         Ok(act) => act,
         Err(e) => return err(StatusCode::UNPROCESSABLE_ENTITY, e.to_string()),
     };
-    let sealed = matches!(act, RailAct::Seal);
-    let appended = if sealed {
-        // A seal takes no stamp: it is delivery, not words.
-        if let Some(person) = &stamp {
-            tracing::debug!(target: "rails", namespace, %person, "rail: a seal is signed as this computer alone, whoever was named");
+    // A seal is an act like any other here: `Append` refuses it as not an
+    // app's (arch-seal (b); WHO_KNOWS_WHOM §3).
+    let append = Append {
+        act,
+        on_behalf_of: stamp,
+    };
+    let appended = match rail.commit(namespace, &append) {
+        Ok(Ok(recorded)) => Ok(recorded.lines()[0].clone()),
+        Ok(Err(CommitRefused::NoStanding)) => Err(RailError::NotInRoster {
+            actor: rail.signer().actor(),
+            namespace: namespace.to_string(),
+        }),
+        Ok(Err(CommitRefused::Unsettled)) => Err(RailError::Unsettled(namespace.to_string())),
+        Ok(Err(CommitRefused::Command(AppendRefusal::NotInGroup(person)))) => {
+            tracing::debug!(target: "rails", namespace, %person, "rail: refused — on_behalf_of names nobody in the group");
+            return refused(
+                namespace,
+                "not_in_group",
+                format!("{person} is not in {namespace}"),
+            );
         }
-        rail.seal(namespace)
-            .map(|done| (done.op, Some(retire(&done.retired))))
-    } else {
-        let append = Append {
-            act,
-            on_behalf_of: stamp,
-        };
-        match rail.commit(namespace, &append) {
-            Ok(Ok(recorded)) => Ok((recorded.lines()[0].clone(), None)),
-            Ok(Err(CommitRefused::NoStanding)) => Err(RailError::NotInRoster {
-                actor: rail.signer().actor(),
-                namespace: namespace.to_string(),
-            }),
-            Ok(Err(CommitRefused::Unsettled)) => Err(RailError::Unsettled(namespace.to_string())),
-            Ok(Err(CommitRefused::Command(AppendRefusal::NotInGroup(person)))) => {
-                tracing::debug!(target: "rails", namespace, %person, "rail: refused — on_behalf_of names nobody in the group");
-                return refused(
-                    namespace,
-                    "not_in_group",
-                    format!("{person} is not in {namespace}"),
-                );
-            }
-            Ok(Err(CommitRefused::Command(AppendRefusal::NotAnAppAct))) => {
-                tracing::debug!(target: "rails", namespace, "rail: refused — the register's acts and the seal are not an app's to write");
-                return refused(
-                    namespace,
-                    "not_an_app_act",
-                    "an app writes records and corrections; admitting, removing and inviting are the group's own".into(),
-                );
-            }
-            Err(e) => Err(e),
+        Ok(Err(CommitRefused::Command(AppendRefusal::NotAnAppAct))) => {
+            tracing::debug!(target: "rails", namespace, "rail: refused — the register's acts and a seal are not an app's to write");
+            return refused(
+                namespace,
+                "not_an_app_act",
+                "an app writes records and corrections; admitting, removing, inviting and sealing are not an app's".into(),
+            );
         }
+        Err(e) => Err(e),
     };
     match appended {
-        Ok((op, retired)) => {
+        Ok(op) => {
             // The whole op rides beside the flat fields, so a dialing client
             // that speaks the rail's TYPES (the mesh round's port, since the
             // journals moved here) reads back an `Op<SignedOp>` instead of
             // re-deriving one from the render (ARCH §10.6). The flat fields
             // stay: they are what a page renders, and the daemon's append
             // door answers with exactly them.
-            let mut out = serde_json::json!({
+            let out = serde_json::json!({
                 "id": op.id,
                 "seq": op.kind.seq,
                 "actor": op.actor,
@@ -285,9 +261,6 @@ pub(crate) async fn append_act(
                 "namespace": namespace,
                 "op": op,
             });
-            if let Some(retired) = retired {
-                out["retired"] = retired;
-            }
             Json(out).into_response()
         }
         Err(e @ RailError::NotInRoster { .. }) => {
