@@ -1,0 +1,13 @@
+2026-10-16T17:05:33.914755Z  WARN endpoint{id=3782bce605}:actor:QADv6{relay_url=https://usw1-1.relay.n0.iroh.link/}:poll_send{network_path=Ip { remote: [2a01:4ff:1f0:e599::1]:7842, local: None } len=1200}: noq_udp: sendmsg error: Os { code: 65, kind: HostUnreachable, message: "No route to host" }, Transmit: { destination: [2a01:4ff:1f0:e599::1]:7842, src_ip: None, ecn: Some(Ect0), len: 1200, segment_size: None }
+2026-10-16T17:05:37.013581Z DEBUG redeem: redeem: dialling the issuer by key route="/ask" issuer=dce81b9db0
+2026-10-16T17:05:37.244020Z DEBUG redeem: redeem: the issuer answered route="/ask" status=200
+2026-10-16T17:05:37.244332Z DEBUG join: join: redeeming as this person group=dcc449afd31f0b93414fd45ba918f79807e248fc0ae39cd87191975a228ce486 person=Bo
+2026-10-16T17:05:37.244586Z DEBUG redeem: redeem: dialling the issuer by key route="/redeem" issuer=dce81b9db0
+2026-10-16T17:05:37.258892Z DEBUG redeem: redeem: the issuer answered route="/redeem" status=200
+2026-10-16T17:05:37.259003Z DEBUG join: join: let in group=dcc449afd31f0b93414fd45ba918f79807e248fc0ae39cd87191975a228ce486 redeemed=Admitted(OpId(ContentHash(a6e7ce66f05e3bde)))
+2026-10-16T17:05:37.260128Z DEBUG join: join: a client's link, so no origin is kept group=dcc449afd31f0b93414fd45ba918f79807e248fc0ae39cd87191975a228ce486
+2026-10-16T17:05:37.295487Z DEBUG join: join: synced once from the issuer group=dcc449afd31f0b93414fd45ba918f79807e248fc0ae39cd87191975a228ce486 pulled=5
+2026-10-16T17:06:05.660893Z DEBUG node: node: refused — the dialer stands in no group held here actor="30c7645908bee896d2b2051a93c9aaf823fc08b8f01fb3da787b6acbec1335d8"
+2026-10-16T17:06:05.661025Z DEBUG node: node: refused — the dialer stands in no group held here actor="30c7645908bee896d2b2051a93c9aaf823fc08b8f01fb3da787b6acbec1335d8"
+2026-10-16T17:06:17.332180Z  WARN svrngs_core::admit: ring rail: this answer covers a subset — the rail could not account for every op namespace="dcc449afd31f0b93414fd45ba918f79807e248fc0ae39cd87191975a228ce486" gaps=2 first=Some(SequenceHole { actor: "dce81b9db015b420956de6076d18622a4a15a13493f301f5baafa14bb8e811bf", missing: 5 })
+2026-10-16T17:06:51.533081Z  WARN endpoint{id=3782bce605}:actor:QADv6{relay_url=https://usw1-1.relay.n0.iroh.link/}:poll_send{network_path=Ip { remote: [2a01:4ff:1f0:e599::1]:7842, local: None } len=1200}: noq_udp: sendmsg error: Os { code: 65, kind: HostUnreachable, message: "No route to host" }, Transmit: { destination: [2a01:4ff:1f0:e599::1]:7842, src_ip: None, ecn: Some(Ect0), len: 1200, segment_size: None }

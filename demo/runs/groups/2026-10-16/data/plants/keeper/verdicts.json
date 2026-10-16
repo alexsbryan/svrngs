@@ -1,0 +1,156 @@
+{
+ "1": {
+  "verdict": "passed",
+  "ms": 381,
+  "after": [
+   "You left Trip. Rejoining needs a new invitation, and this computer can’t rejoin yet.",
+   "Groups you left",
+   "Trip (Sam’s, since 16 Oct): what you have of it stays on this computer, its folder at /tmp/groups-run/ana/svrngs/Trip, and nothing new of it reaches you."
+  ]
+ },
+ "2": {
+  "verdict": "passed",
+  "ms": {
+   "sam": 383,
+   "bo": 385
+  },
+  "out": {
+   "sam": true,
+   "bo": true
+  }
+ },
+ "3": {
+  "verdict": "passed",
+  "before": {
+   "notes": 200,
+   "photos": 200,
+   "list": 200
+  },
+  "after": {
+   "notes": [
+    404,
+    "unlent",
+    {
+     "error": "nothing is lent here",
+     "kind": "unlent"
+    }
+   ],
+   "photos": [
+    404,
+    "unlent",
+    {
+     "error": "nothing is lent here",
+     "kind": "unlent"
+    }
+   ],
+   "list": [
+    404,
+    "unlent",
+    {
+     "error": "nothing is lent here",
+     "kind": "unlent"
+    }
+   ]
+  }
+ },
+ "4": {
+  "verdict": "passed",
+  "asked": {
+   "notes": [
+    403,
+    "removed",
+    {
+     "error": "You are no longer in this group, so nothing of it is open to you.",
+     "kind": "removed"
+    }
+   ],
+   "photos": [
+    404,
+    "unlent",
+    {
+     "error": "nothing is lent here",
+     "kind": "unlent"
+    }
+   ]
+  },
+  "left": true,
+  "left_ms": 514
+ },
+ "5": {
+  "verdict": "passed",
+  "acts": [
+   8,
+   9
+  ],
+  "folder": true,
+  "before_txt": true,
+  "after_txt": {
+   "bo": true,
+   "bo_ms": 573,
+   "ana": false
+  }
+ },
+ "6": {
+  "verdict": "passed",
+  "said": {
+   "sam": [
+    "Ana left on Oct 16, 2026, 10:05 AM"
+   ],
+   "bo": [
+    "Ana left on Oct 16, 2026, 10:05 AM"
+   ],
+   "cy": [
+    "Ana left on Oct 16, 2026 at 10:05 AM"
+   ]
+  },
+  "bo_ms": 385,
+  "cy_ms": 22509
+ },
+ "7": {
+  "verdict": "failed",
+  "left_after_press": true,
+  "command": [
+   1,
+   "svrngs: You are no longer in Trip."
+  ],
+  "bo": {
+   "sam_left": true,
+   "ms": 30368,
+   "keeps": false,
+   "sam_left_flag": true
+  }
+ },
+ "8": {
+  "verdict": "passed",
+  "page": [
+   "You’re no longer in Trip on this computer, and you can’t join it again from here yet. Join from your phone or another computer instead."
+  ],
+  "command": [
+   1,
+   "svrngs: you're no longer in Trip on this computer, and you can't join it again from here yet: join from your phone or another computer instead"
+  ],
+  "anas_at_sam": []
+ },
+ "9": {
+  "verdict": "passed",
+  "status": "You’re in Trip (Sam’s, since 16 Oct), as Ana",
+  "ms": 3023,
+  "anas_at_sam": [
+   [
+    "Ana",
+    "7267034a59f6887dafe39156018ee4e178ed4b97f1ff1e4ecd5ad0fe2a050ece",
+    "browser"
+   ]
+  ]
+ },
+ "10": {
+  "verdict": "passed",
+  "read": 111,
+  "hits": []
+ },
+ "11": {
+  "verdict": "could-not-judge",
+  "people": "never-ran",
+  "why": "one host, programs for people (AGENTS.md 7)"
+ }
+}
