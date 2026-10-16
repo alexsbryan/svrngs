@@ -1,5 +1,65 @@
 # arch-command: the command asking the node costs lines; it saves none
 
+## The director, 2026-10-15: checked, split, and your call
+
+**What I checked.** In a worktree at 4a741668, `scripts/lean_check.py` says
+16,160. After `git cherry-pick 0e4684ca` it says 16,195. After `git apply
+b-wip.patch` it says 16,366 ("BROKEN . has 16366 lines of code, budget
+16161"). I read the patch's node side, and it is not padded: 200 lines can't
+come out of it. The charter leaves a row closing above its start to you
+("Leave for the operator: the budget"), so I have not raised, narrowed or
+parked anything you decided.
+
+**What goes ahead without you.** Every choice below except parking keeps one
+thing: one maker each of a group and of a link, the node's. It is also the
+part the audit counted as the saving. I split it out as the row
+`arch-command-relay`, and the loop runs it now:
+
+- `svrngs new` keeps the relay the home page keeps. Today the command keeps a
+  relay only for `--relay` (`crates/svrngs/src/cli.rs:1463`). The page keeps
+  `kept_relay(carried(..))` (`crates/svrngs-node/src/group.rs:253-254`).
+- `svrngs link` goes through `Host::link` (`invite.rs:152`) instead of its own
+  `link_to` (`cli.rs:1728`).
+- The command still claims the data dir, so nothing new is sent between the
+  command and the node. `svrngs new` already holds a node and mints through
+  `node.host()` (`cli.rs:1681-1803`).
+- It has to close below the count it starts at. If it can't, it stops for you
+  too.
+
+arch-version now depends on `arch-command-relay`. `arch-command` waits on
+you, and the queue can't close without it (CHARTER "Decide": "arch-command
+before the queue closes").
+
+**What stays yours.** Whether, and at what cost, the command asks svrngs
+running here, the home page joins another group, and install.sh stops
+stopping and starting svrngs.
+
+**My recommendation: the home page's join, (a) and (c), at a raise to where
+it closes after its economizing pass.** Drop the command's asks and (d).
+
+- The page's join is what someone a bit afraid of the terminal needs. Today a
+  second group's link can't be joined while svrngs runs without stopping it in
+  a terminal.
+- The asks are worth about +140 (~ estimated, from the table below: the
+  `/v1/` doors, the room's held answer, and the command's sending, reading and
+  refusing). They serve someone who already has a terminal.
+- (a) cost +35, measured. The page's `POST /join` was about +25 of home.rs's
+  +70 in the patch (~). So I expect (a) and (c) together at about +60 (~)
+  over where arch-command-relay closes.
+- With no raise, the only other source is the audit's unscheduled §2.7 (~10–20,
+  0.5) and §2.8 (~30–40, 0.4). Together they might pay for the join, but at
+  the audit's own confidence of 0.4–0.5.
+
+**What would show this wrong:** arch-command-relay closing above 16,160; or
+(a) and (c) built, measured past +100 after their pass.
+
+**To answer:** write the choice and its cap into arch-command's row, then
+delete `ralph/next/arch/ctl/parked/arch-command.md`, which unparks it
+(`ralph.py:1059`, `:637-643`). `b-wip.patch` was built on 0e4684ca. After
+arch-command-relay lands, it rebases onto that row's `Host::link` and relay
+function rather than applying as is.
+
+
 The row has to close below the count it started at, 16,160, and it may sit at
 most 60 over it between its commits (CHARTER "The budget"; fence 7). Built and
 measured, part (b) alone puts the repository at **16,366: 206 over the start
