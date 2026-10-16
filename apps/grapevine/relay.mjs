@@ -168,16 +168,16 @@ export function person({ id, store, held, kinds, state, trace = debug }) {
     if (act.payload?.app === 'grapevine') {
       const gaps = validate(act.payload, kinds);
       if (gaps.length) {
-        trace('refused: it would not read', { person: id, what, group, gap: gaps[0].code });
+        trace('refused: it would not read', { person: id, doing: what, group, gap: gaps[0].code });
         throw new Refused(gaps[0].message);
       }
     }
     try {
       const at = await store.append(group, act, me);
-      trace('written', { person: id, what, group, id: at });
+      trace('written', { person: id, doing: what, group, id: at });
       return at;
     } catch (e) {
-      trace('could not write', { person: id, what, group, error: e.message });
+      trace('could not write', { person: id, doing: what, group, error: e.message });
       throw new Refused("This computer didn't save that just now. Try again in a moment.", 502);
     }
   }
