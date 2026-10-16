@@ -10,7 +10,10 @@
 # shared.
 label = "svrngs-grapevine"
 session_timeout = 5400
-audit_every = 4
+# The operator, 2026-10-16, of groups' mid-queue audit: "Push it to the end",
+# as for arch on 2026-10-15. The queue has 5 units, so no cadence audit falls
+# inside it, and the closing audit still runs once the last row is done.
+audit_every = 9
 worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
 settings = "ralph/claude-settings.json"
 
