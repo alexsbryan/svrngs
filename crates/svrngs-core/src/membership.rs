@@ -587,12 +587,10 @@ fn walk(
                     && (keeper.as_deref().map(of) != Some(of(key)) || alone);
                 let cuts = (keeps && *key != op.actor || leaves) && live.contains_key(key);
                 tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, key = %key,
-                    keeper = ?keeper, leaves, alone, cuts,
-                    "membership: a Remove — the keeper's cuts, and a person's own leaves unless they keep and others stand; anyone else's is an ask and cuts nobody");
+                    keeper = ?keeper, leaves, alone, cuts, kept = made.get(key.as_str()).map_or(0, Vec::len),
+                    "membership: a Remove — the keeper's cuts, and a person's own leaves unless they keep and others stand; anyone else's is an ask and cuts nobody; a cut keeps the `kept` hand-ons of the cut key that made a keeper");
                 if cuts {
                     let handed_on = made.get(key.as_str()).cloned().unwrap_or_default();
-                    tracing::debug!(target: "rail:membership", id = %id, key = %key, kept = handed_on.len(),
-                        "membership: the cut keeps the cut key's hand-ons that made a keeper");
                     live.remove(key);
                     cut.insert(
                         key.clone(),
