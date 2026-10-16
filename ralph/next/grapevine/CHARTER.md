@@ -35,6 +35,15 @@ charter disagree, they win, and the decision says so.
 
   Every other row keeps zero svrngs lines.
 
+- **Which computer wrote it** (the operator, 2026-10-16, on
+  `ralph/FINDING_ON_BEHALF_OF.md`). For its parts 1–2: "A grapevine row
+  before gv-page". That row is gv-via, which is apps and tests only.
+  - Every fold keeps `via`, and every page says "Bo, through Cy's
+    computer".
+  - For part 3: "Not for V1; showing it is V1's answer". `append` keeps
+    accepting `on_behalf_of` from this computer.
+  - A phone signing its own writes goes to DESIGN §9.
+
 ## Why
 
 The grapevine is how an ask crosses rings through people
