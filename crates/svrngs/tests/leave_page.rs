@@ -23,7 +23,7 @@ use svrngs::group::{self, Name};
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::link::{client_link, Link};
 use svrngs_node::node::Node;
-use svrngs_node::{actor_of, SigningKey};
+use svrngs_node::{actor_of, Person, SigningKey};
 
 fn name(s: &str) -> Name {
     Name::parse(s).unwrap()
@@ -405,6 +405,123 @@ async fn a_leave_reaches_the_leavers_other_computer(engine: harness::Engine) {
         );
     }
     for n in [&two, &one, &sam] {
+        n.endpoint().close().await;
+    }
+}
+
+/// **A cut by a keeper made by a hand-on the cut computer never heard
+/// reaches it** (gv-leave (c), #184). Sam makes Trip; Bo and Ana join from
+/// his links, and Ana's second computer from her first's link for her
+/// devices. While her second is off, Sam hands the order of removals on to
+/// Bo and Bo removes Ana. Back on, within 90 s its copy holds her cut, as
+/// its home page reads it (`/v1/groups`' `removed`). Red at 7f2a8d1d, told
+/// Bo's `Remove` and Bo's acts alone (ring_routes.rs `told_cut`): its copy
+/// still named Sam the keeper, so read the cut as an ask, and was refused
+/// from then on, untold, for all 90 s.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_cut_by_a_handed_on_keeper_reaches_a_computer_off_as_it_landed() {
+    let (_relay, ours, _sam_dir, sam) = common::sams_computer(6).await;
+    let (seed, _) = cli::new_group(&sam, name("Trip"), name("Sam"), None, None, &ours)
+        .await
+        .expect("Sam makes Trip");
+    let trip = seed.id();
+    let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
+    let keys = [9, 7, 8].map(|b| SigningKey::from_bytes(&[b; 32]));
+    let bo = computer(dirs[0].path(), &keys[0], &ours).await;
+    let one = computer(dirs[1].path(), &keys[1], &ours).await;
+    let two = computer(dirs[2].path(), &keys[2], &ours).await;
+    for (who, as_) in [(&bo, "Bo"), (&one, "Ana")] {
+        let made = sam
+            .host()
+            .link(&trip, false, None)
+            .expect("Sam makes a link");
+        let sent = Link::parse(&client_link(&made.token)).unwrap();
+        who.host()
+            .join(&sent, &name(as_))
+            .await
+            .expect("joins Trip");
+    }
+    let made = one
+        .host()
+        .link(&trip, true, None)
+        .expect("Ana's link for her devices");
+    let sent = Link::parse(&client_link(&made.token)).unwrap();
+    two.host()
+        .join(&sent, &name("whoever"))
+        .await
+        .expect("Ana's second computer joins as Ana");
+    let [bo_actor, two_actor] = [&keys[0], &keys[2]].map(actor_of);
+    let all = [&sam, &bo, &one, &two];
+    let held = || {
+        all.iter().all(|n| {
+            let s = n.rail().standing(&trip).unwrap();
+            s.member(&two_actor)
+                .is_some_and(|m| m.person.as_str() == "Ana")
+                && s.names(&bo_actor)
+        })
+    };
+    let settled = tokio::time::timeout(Duration::from_secs(60), async {
+        while !held() {
+            for n in all {
+                let _ = tokio::time::timeout(Duration::from_secs(10), n.round()).await;
+            }
+        }
+    });
+    assert!(
+        settled.await.is_ok(),
+        "control: all four hold Bo, and Ana's second as Ana"
+    );
+
+    // Off as the hand-on and the cut land.
+    two.endpoint().close().await;
+    drop(two);
+    let to_bo = svrngs_core::HandOnTo {
+        person: Person::parse("Bo").unwrap(),
+        joined: None,
+    };
+    let handed = sam.rail().commit(&trip, &to_bo).unwrap();
+    assert!(handed.is_ok(), "control: Sam hands on to Bo: {handed:?}");
+    let keeps = || bo.rail().register(&trip).unwrap().keeper == Some(bo_actor.clone());
+    let kept = tokio::time::timeout(Duration::from_secs(30), async {
+        while !keeps() {
+            let _ = tokio::time::timeout(Duration::from_secs(10), bo.round()).await;
+        }
+    });
+    assert!(
+        kept.await.is_ok(),
+        "control: Bo's computer says Bo keeps it"
+    );
+    let ana = svrngs_node::Removal {
+        person: Person::parse("Ana").unwrap(),
+        joined: None,
+    };
+    let cut = bo.rail().commit(&trip, &ana).unwrap();
+    assert!(cut.is_ok(), "control: Bo cuts Ana: {cut:?}");
+    let _ = tokio::time::timeout(Duration::from_secs(10), bo.round()).await;
+    assert!(
+        out_of(&sam, &trip, &two_actor).await,
+        "control: Sam's computer holds Ana's second out of Trip within 30 s"
+    );
+
+    let again = tempfile::tempdir().unwrap();
+    held_again(dirs[2].path(), again.path());
+    let two = computer(again.path(), &keys[2], &ours).await;
+    let cut_here = || {
+        let r = two.rail().register(&trip).unwrap();
+        r.removed.contains_key(&two_actor)
+    };
+    let told = tokio::time::timeout(Duration::from_secs(90), async {
+        while !cut_here() {
+            let _ = tokio::time::timeout(Duration::from_secs(10), two.round()).await;
+            tokio::time::sleep(Duration::from_secs(1)).await;
+        }
+    });
+    let keeper = two.rail().register(&trip).unwrap().keeper;
+    assert!(
+        told.await.is_ok(),
+        "back on, Ana's second computer holds her cut; its copy's keeper {keeper:?}, Bo {bo_actor}"
+    );
+    for n in [&two, &one, &bo, &sam] {
         n.endpoint().close().await;
     }
 }

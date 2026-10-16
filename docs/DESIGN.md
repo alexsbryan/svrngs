@@ -1710,10 +1710,11 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   deletes nothing on their disk — the files a folder gave them, the copy
   of the record they hold. A removed computer that was off as the cut
   landed is told by the first computer it asks to sync the group, which
-  answers it the `Remove` naming it, with its signer's acts before it,
-  and nothing after it nor of anyone else (`ring_routes.rs` `told_cut`,
-  #179; served too where it stands in no group held there); every door
-  refuses it all the same.
+  answers it the `Remove` naming it, with its signer's acts before it
+  and every `HandOn` it lacks, so a keeper handed the order while it was
+  off is read as the keeper and the cut as the cut (#184), and nothing
+  else (`ring_routes.rs` `told_cut`, #179; served too where it stands in
+  no group held there); every door refuses it all the same.
   Everyone in the group sees every removal and every ask to remove — who
   of whom, and when — on a computer's home page and a phone's group page,
   read from the register and written nowhere new (v1-keeper-office (b);

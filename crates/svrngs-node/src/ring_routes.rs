@@ -42,7 +42,7 @@ use crate::peer_wire::{
 use crate::rail::{Live, LiveBuffer, LIVE_PAYLOAD_MAX_BYTES};
 use crate::register::{Member, Standing};
 use crate::ring_sync::answer;
-use crate::RingRail;
+use crate::{RailAct, RingRail};
 
 // rail.rs's refusal body, forked with the route (DESIGN §8, U1's inventory);
 // each one traced, so a refusal its route does not trace still leaves one
@@ -128,19 +128,26 @@ pub(crate) fn standing_asker(
 
 /// To an asker that does not stand in the group, the first `Remove` naming
 /// it which its digest says it lacks, with the acts before it of the
-/// computer that signed it, and nothing after it nor of anyone else; none of
-/// the asker's are taken (#179). So a computer off as its cut landed, by a
-/// leave or a removal, reads itself out once it asks, never shown the group
-/// while every lender refuses it. The digest answered is the asker's own,
-/// so it sends nothing back. `None` where it lacks no `Remove` naming it.
+/// computer that signed it and every `HandOn` it lacks, and nothing else;
+/// none of the asker's are taken (#179). The hand-ons are how the fold
+/// reads a keeper the seed did not name as keeping (membership.rs
+/// `HandOn`), so a cut by one made while the asker was off is read as the
+/// cut, not an ask (#184). So a computer off as its cut landed, by a leave
+/// or a removal, reads itself out once it asks, never shown the group while
+/// every lender refuses it. The digest answered is the asker's own, so it
+/// sends nothing back. `None` where it lacks no `Remove` naming it, or
+/// what it lacks cannot be read here, said at warn.
 fn told_cut(rail: &RingRail, req: &RingSyncRequest, asker: Option<&str>) -> Option<Response> {
     let (ns, digest, asker) = (req.namespace.clone(), req.digest.clone(), asker?);
     let lacks = rail.ops_missing_from_within(&ns, &digest, RING_SYNC_OPS_BUDGET_BYTES);
-    let mut ops = lacks.ok()?.0;
+    let (mut ops, _) = lacks
+        .inspect_err(|e| tracing::warn!(target: "rails", namespace = ns, asker, error = %e, "ring sync: what an asker not standing lacks cannot be read here, so no cut is told it"))
+        .ok()?;
     let cut = ops.iter().find(|op| op.kind.act.names() == Some(asker));
     let (by, seq) = cut.map(|op| (op.actor.clone(), op.kind.seq))?;
-    ops.retain(|op| op.actor == by && op.kind.seq <= seq);
-    tracing::debug!(target: "rails", namespace = ns, asker, by, seq, told = ops.len(), "ring sync: an asker not standing, told the Remove naming it and its signer's acts before it");
+    let keeping = |act: &RailAct| matches!(act, RailAct::HandOn { .. });
+    ops.retain(|op| op.actor == by && op.kind.seq <= seq || keeping(&op.kind.act));
+    tracing::debug!(target: "rails", namespace = ns, asker, by, seq, told = ops.len(), "ring sync: an asker not standing, told the Remove naming it, its signer's acts before it and the hand-ons it lacks");
     let told = crate::peer_wire::RingSyncResponse {
         namespace: ns,
         digest,

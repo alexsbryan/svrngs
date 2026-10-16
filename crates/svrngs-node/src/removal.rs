@@ -19,8 +19,9 @@
 //! A leave is told so to every other computer of the group, the leaver's
 //! own others among them (#179). A cut computer that is off as it lands is
 //! told by the first computer it asks to sync the group, which answers it
-//! the `Remove` naming it and nothing after (`ring_routes.rs`, `told_cut`);
-//! every lender's door refuses it all the same.
+//! the `Remove` naming it, with the hand-ons it lacks (#184), and nothing
+//! after (`ring_routes.rs`, `told_cut`); every lender's door refuses it all
+//! the same.
 
 use axum::extract::State;
 use axum::http::StatusCode;
