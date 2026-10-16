@@ -298,3 +298,30 @@ fn cuts_that_do_not_settle_are_no_standing() {
     assert!(rail.standing(NS).is_err_and(unsettled), "{:?}", rail.standing(NS));
     assert!(rail.register(NS).is_err_and(unsettled), "{:?}", rail.register(NS));
 }
+
+/// **A keeper's `Remove` of another key of their own is read as the fold
+/// reads it** (groups-leave-others (c), #180): alex keeps the group from
+/// the first of two keys and bo stands, so alex's `Remove` of the second
+/// is the keeper's cut and not a leave in svrngs-core's fold (its
+/// `leaves`, false while the keeper's person has others standing); the
+/// register says it `Removed`, never `Left`. Red at 3d3ad2d6, where
+/// `removals_in` decided the leave again by the signer's person and said
+/// `Left`.
+#[test]
+fn a_keepers_remove_of_another_key_of_their_own_is_read_as_the_fold_reads_it() {
+    let alex = vec![actor_of(&key(1)), actor_of(&key(5))];
+    let seed = Roster::new([(Person::parse("alex").unwrap(), alex)].into_iter().collect());
+    let admit_bo = signed(&key(1), 100, 0, admit_act("bo", 2));
+    let remove = RailAct::Remove {
+        key: actor_of(&key(5)),
+        through: Vec::new(),
+    };
+    let cut = after(&key(1), &admit_bo, 101, remove);
+    let register = register_in(&[admit_bo, cut], &seed, NS, &Ed25519Verifier).unwrap();
+    assert!(
+        register.removed.contains_key(&actor_of(&key(5))),
+        "control: the fold cuts alex's second key"
+    );
+    let said: Vec<_> = register.removals.iter().map(|r| r.said).collect();
+    assert_eq!(said, [RemovalSaid::Removed], "{:?}", register.removals);
+}

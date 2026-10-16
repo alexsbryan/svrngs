@@ -211,6 +211,10 @@ pub struct Cut {
     pub unheld: Vec<OpId>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub handed_on: Vec<OpId>,
+    /// Whether the cut was its person's own leave (groups-leave): decided
+    /// here once, by `leaves`, and read where a removal is said (#180).
+    #[serde(default, skip_serializing_if = "core::ops::Not::not")]
+    pub left: bool,
 }
 
 /// An `Invite` as the register holds it.
@@ -598,6 +602,7 @@ fn walk(
                             by: id.clone(),
                             unheld: Vec::new(),
                             handed_on,
+                            left: leaves,
                         },
                     );
                 }
