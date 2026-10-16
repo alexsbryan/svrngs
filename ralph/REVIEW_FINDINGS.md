@@ -10791,3 +10791,243 @@ the repository's cap.
 | I19 | 6 | dry-report, `tests/` scopes | Still present. The line-window pass stood in, and found the one fixed here. |
 | I29 | 6 | `refresh` over a corpus `code index` made | Still present. |
 | I32 | 7 | dry-report's near tier, nested spans | Still present: home.js `running` over `look`, question.js `door` over `judge`. |
+
+## REVIEW-audit-grapevine-auto-1 (2026-10-16, range 01b1cf97..95b24ac8)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-groups-auto-2, its hash
+01b1cf97 (ralph/next/groups/STATE.md, its row). The range ends at
+95b24ac8, the commit that made this row. `git rev-list --count
+01b1cf97..95b24ac8` is 50, none a merge (`--merges`: 0). They are:
+groups-auto-2's `done`; gv-leave, gv-fold, gv-via, gv-page and gv-run;
+the mid-queue audit's row and its removal (5aec7726, a163f48e); and this
+row's own commit. The row read `docs/ARCH_PRINCIPLES.md` and
+`target/debug/sovereign-cli`; both paths corrected in e040ffed, as
+8ac9ff95 corrected groups-auto-2's.
+
+This audit's own commits before this section:
+- bc6098ed, relay.mjs `heldBy`'s unread people traced.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+01b1cf97..95b24ac8` (/tmp/gvaudit/ledger.raw) is summed by groups-auto-2's
+ledger.py, its unit list this range's and `apps/*/vendor/` its own column
+(/tmp/gvaudit/ledger.out; each commit's unit in ledger.commits). A commit
+naming no unit counts toward the next that does: dbbf4ab4, the
+`on_behalf_of` finding, counts to gv-via, and a163f48e, the queue file, to
+gv-run. The lines are raw, comments and blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net | markup net | apps src net | apps test net | apps vendor | scripts net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| REVIEW-audit-groups-auto-2 (its `done`) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| gv-leave | 9 | 69 | 34 | **+35** | 137 | 3 | +134 | 0 | 0 | 0 | 0 | +5 (+10 −5) |
+| gv-fold | 8 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | +897 (+911 −14) | +503 (+505 −2) | +2391 | 0 |
+| gv-via | 8 | 0 | 0 | **0** | 59 | 0 | +59 | 0 | +44 (+76 −32) | +107 (+112 −5) | 0 | 0 |
+| gv-page | 6 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | +810 (+816 −6) | +495 (+502 −7) | 0 | 0 |
+| REVIEW-audit-grapevine-auto-1 (its rows) | 2 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| gv-run | 16 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | +46 (+70 −24) | +40 (+42 −2) | 0 | 0 |
+| total | 50 | 69 | 34 | **+35** | 196 | 3 | +193 | 0 | +1797 (+1873 −76) | +1145 (+1161 −16) | +2391 | +5 (+10 −5) |
+
+Where the src lines went (`git diff --numstat 01b1cf97 95b24ac8 -- crates
+web bridge scripts`, tests apart), gv-leave's alone, as the CHARTER allows:
+- origin.rs +34 −8: `refused`, the leaver's old lend address saying "You
+  left Trip on 16 Oct" (#182; (a));
+- node.rs +15 −14: the `gone` arm's trace, rustfmt reflowing the closure
+  around it (#183; (b));
+- ring_routes.rs +16 −9, removal.rs +3 −2: `told_cut` telling the
+  hand-ons with the cut, and its unread journal traced at warn (#184; (c));
+- surface.rs +1 −1: `seed_of` made `pub(crate)` for (a);
+- Cargo.toml +5 −3: chrono moved from dev-dependencies to dependencies,
+  with `clock`, for (a).
+
+svrngs-node's tests grew by tests/browser/carried.rs (+59, gv-via (b): the
+home page's carried line under svrngs, a check's own test, which the
+CHARTER's fence allows) and door/main.rs (+7 −1, #183's trace);
+crates/svrngs/tests/leave_page.rs by +130 −2 (#182, #184). The scripts'
+lines are lean_check.py's comment on each cap. web/, bridge/ and
+svrngs-core did not change.
+
+apps/: grapevine is new, 1,756 lines of source (grapevine.js 581,
+relay.mjs 367, server.mjs 330, canary.mjs 125, scene.mjs 121, store.mjs
+103, seal.mjs 70, kinds 59) and 1,066 of tests; Events' and Expenses'
+folds, pages and tests grew by gv-via's `via`. tweetnacl 1.0.3 is 2,391
+lines vendored whole (vendor/, pinned). demo/runs/grapevine/'s driver
+(run.py, people.mjs, judge.py) and demo/grapevine.md are what ran, which
+the ledger and the budget leave apart.
+
+What the budget counts, by HEAD's scripts/lean_check.py over a `git
+archive` tree of each end and of each unit's `done`
+(/tmp/gvaudit/lean-<hash>.out). apps/ is apart, so only gv-leave moves it:
+
+| at | svrngs-core | repository | counted net |
+|---|---:|---:|---:|
+| 01b1cf97, range start | 2992 | 16328 | |
+| a68d7fc7, gv-leave done | 2992 | 16350 | +22 |
+| 15b507f0, gv-fold done | 2992 | 16350 | 0 |
+| c247f415, gv-via done | 2992 | 16350 | 0 |
+| 40544fd5, gv-page done | 2992 | 16350 | 0 |
+| c70e0ba3, gv-run done | 2992 | 16350 | 0 |
+| 95b24ac8, range end | **2992** | **16350** | **+22** |
+
+The caps moved three times, gv-leave's alone (`git log 01b1cf97..95b24ac8
+-- scripts/lean_check.py`):
+
+| commit | the repository's cap | svrngs-core's | for |
+|---|---|---|---|
+| a5b386fc, gv-leave (a) | 16,329 → 16,347 | 2,993 | +18, the leaver told she left (#182) |
+| 6557eb42, gv-leave (b) | 16,347 → 16,348 | 2,993 | +1, the `gone` arm's trace (#183) |
+| 05bc8e2e, gv-leave (c) | 16,348 → 16,351 | 2,993 | +3, the hand-ons told with a cut (#184) |
+
+The CHARTER's ceiling was +30 over groups' close, at most 16,358, and
+svrngs-core unchanged. The range closes at 16,350 / 16,351, 22 of the 30
+spent and 8 under the ceiling unraised, and at 2,992 / 2,993, svrngs-core
+unchanged. lean_check fails at `n >= cap` (lean_check.py:142), so no
+counted line is left under either cap. This audit's commits move no
+counted line (apps/, and this file).
+
+### The instrument
+
+The binary is ~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256
+7230170e… (`shasum -a 256`), rebuilt since groups-auto-2's c95165c5….
+
+The corpus is 95b24ac8's crates/, web/, scripts/, apps/, Cargo.toml and
+Cargo.lock, every `vendor/` left out, by `git archive` into
+/tmp/gvaudit/gv-95b24ac8 (345 files).
+- `code index . --corpus-id gv-95b24ac8`: 3855 chunks in 493 s
+  (index.out).
+- `refresh`, run in the corpus: rust, 17324 symbols and 100636 edges;
+  typescript and python "skipped (export failed)" (I4) (refresh.out).
+- A first corpus of svrngs-node, apps/ and scripts/ alone could not be
+  refreshed: with svrngs-core and svrngs-runtime absent, rust's export
+  failed too, and the refresh named the directory, not the corpus. It was
+  not used.
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-node, crates/svrngs (its tests alone),
+scripts, apps/grapevine, apps/events and apps/expenses (`git diff
+--numstat 01b1cf97 95b24ac8 -- crates apps web scripts bridge`). Each was
+reported at 0.95 and 0.90, and apps/ whole, so a clone across two apps is
+seen (/tmp/gvaudit/clean-*.md). Whether a side was added in the range is
+`git blame` at 95b24ac8 over each side's lines against 01b1cf97 (the 94
+sides, cluster-sides.txt; blame-clusters.out). Its plant: origin.rs:252-262
+blamed the same way says 1eab7c0e, gv-leave (a), and api.rs's old `addr`
+pair says before (plant.verdicts), so the blame tells the range's lines
+apart.
+
+| scope | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---|---:|---:|---|
+| crates/svrngs-node/ | 1 | 1 | 10 | 0 |
+| crates/svrngs/ | 0 | 0 | 0 | — |
+| apps/ (grapevine, events, expenses within it) | could-not-judge (I4) | 23 | 33 | 19 sides, 15 clusters |
+| scripts/ | could-not-judge (I4) | 0 | 0 | 0 |
+
+The clusters with a side the range added:
+
+| cosine | range side | other side | read |
+|---|---|---|---|
+| 1.000 (×10 clusters) | apps/grapevine/store.mjs:23-103 (`record`, `call`, `groups`, `people`, `log`, `append`, `file`, `group`) | apps/events/store.mjs, the same lines | The copy, byte for byte (6d4ee6ff; `cmp` exits 0). GRAPEVINE_DEMO §2 chose it: "Events' store, copied unchanged; the second copy becomes a shared module if a third app needs it", and README.md:84 says so. Held to that, not a finding. Its header still reads "Where Events' acts are kept … (events.js)" (:1-4), left so the two stay identical. |
+| 1.000 (×2) | apps/grapevine/laws.test.mjs:31-42 (`constructor`, `now`) | apps/events/laws.test.mjs:58-69, apps/expenses/laws.test.mjs:48-59 | #150's `elsewhere`, now in a third app. See #150 below. |
+| 0.967 | relay.mjs:346-367 `loop` | relay.mjs:349-364 `turn` | Not a clone: `turn` is `loop`'s inner function (I32). |
+| 0.907 | grapevine.test.mjs:19-28 `pins` | grapevine.test.mjs:25-36 `unpinned` | Not a clone: two neighbours, padded to overlap (I32). |
+| 0.902 | apps/grapevine/page.test.mjs:52-63 `as` | apps/events/page.test.mjs:49-60 `as` | Not a clone: Events' sets the person's header, grapevine's opens `?as=`; one `goto` and one `innerText` each. |
+
+Every other cluster's sides blame to commits before 01b1cf97.
+
+**The line-window pass.** groups-auto-2's windows.py over its file set,
+with grapevine's files and lean_check.py added, at 95b24ac8 (226 files,
+windows.files). **222 window hits, 55 spans, 3 new** (windows.spans;
+windows.verdicts, by groups-auto-2's blame against 01b1cf97; 52 old):
+
+| new span | read |
+|---|---|
+| apps/events/store.mjs:17-100 == apps/grapevine/store.mjs:17-100 | The copy above. |
+| apps/events/laws.test.mjs:53-81 == apps/grapevine/laws.test.mjs:26-54 | `elsewhere`, #150. |
+| apps/expenses/laws.test.mjs:43-71 == apps/grapevine/laws.test.mjs:26-54 | The same. |
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges 01b1cf97..95b24ac8 -- crates
+apps web scripts bridge` (vendor/ apart), matched against
+`(struct|enum|trait|type|class) +[A-Z]\w*` (new-types.out), give one:
+`Refused`, the JS class at apps/grapevine/relay.mjs:49. The range removed
+none (removed-types.out).
+
+`converge noun Refused --corpus-id gv-95b24ac8` (nouns.out): one
+first-party production definition, crates/svrngs-core/src/command.rs:66
+(`enum Refused<R>`, :67, I1). It does not see grapevine's: rust alone was
+exported (I4). Its plant: `converge noun Said` lists cli.rs:1073 and
+choices.rs:42 (:1074, :43) and not Events' `class Said`
+(apps/events/server.mjs:56), which exists. By `git grep`, **`Refused`
+has two definitions**: svrngs-core's, why a commit wrote nothing; and
+grapevine's, a refusal said to the person in the page's words, which
+Events, the app grapevine takes its shape from, names `Said`. #186.
+
+### Reading the range
+
+Every hunk of gv-leave's src was read (`git diff 01b1cf97 95b24ac8 --
+crates/svrngs-node/src`), and grapevine's source whole for silent defaults
+(`catch`, `?? `, `|| []`), each hit read.
+
+- **An unread group's people, untraced** (principles 1, 6). relay.mjs
+  `heldBy` checked svrngs's `person` against the group's people, and where
+  those could not be read (`.catch(() => null)`, :109) it kept svrngs's
+  answer with nothing traced. **Traced in bc6098ed**, red first.
+- **The day said in two homes** (principle 8). gv-leave (a) says the day a
+  person left as `" on %-d %b"` in local time (origin.rs:268-270), citing
+  cli.rs `namesakes_said` (:1354-1357) as the form, which spells it again;
+  question.js:79 cites the same. #185.
+- **Never silently substitute** (AGENTS.md 6). origin.rs `refused` reads
+  groups that cannot be listed and an unreadable register as no cut
+  (:258-259); `Host::contact` has just asked `standing_anywhere`, which
+  warns on both (svrngs-runtime register.rs:298-320), as its comment says.
+  `told_cut`'s unread journal now warns (ring_routes.rs:144-145, #184's
+  untraced `ok()?`). grapevine's store failures, writes and loop turns each
+  trace and say (relay.mjs:153, :184, :249, :359, at HEAD); an
+  unopenable seal is a gap the fold names.
+- **Glassbox** (principle 1). #183's `gone` arm traces (node.rs:374).
+- **Sealed means sealed.** No trace bc6098ed adds holds a message: the
+  group's id and the store's error. relay.test.mjs's "no plaintext or
+  secret in any trace" law stays green on it.
+- **Forked code** (AGENTS.md 11). The range forked nothing from
+  commonwealth-ai: 69 files carry a `ported from` line at each end (`git
+  grep -lE 'ported from (commonwealth-ai|sovereign)' <rev> | wc -l`).
+  tweetnacl is vendored whole and pinned (grapevine.test.mjs, red on a
+  changed byte), not forked.
+- **Zero svrngs lines** (the CHARTER). Outside gv-leave the range's crates/
+  lines are gv-via's carried.rs, a check's own test. gv-leave spent 22 of
+  its 30, svrngs-core unchanged.
+- **Validate the instrument** (AGENTS.md 7). Each row's laws were planted
+  red as they landed, and gv-run predicted before its data (69d3171e before
+  485427fa). Those verdicts are those commits', not judged again here.
+
+### Fixed here
+
+- bc6098ed: relay.mjs `heldBy` traces a group whose people cannot be read.
+  relay.test.mjs's new test red on HEAD's line (`[{"what":"me",
+  "group":"page","standing":true}]`, no trace of the error), green after;
+  relay.test.mjs 3 pass, who.test.mjs 8 pass.
+
+Not fixed here: #150 and #186 are moves across apps, each test re-proved
+on its plants; #185 is svrngs lines, which this queue keeps at zero
+outside gv-leave, with no counted line left under the cap.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 185 | 8 | crates/svrngs-node/src/origin.rs:268-270 (`" on %-d %b"`, local); crates/svrngs/src/cli.rs:1354-1357 (`namesakes_said`, `", since %-d %b"`) | not fixed (svrngs lines; no counted line under the cap) | How a day is said to a person is spelled twice, in two crates, the second citing the first as its form. A change to one (a year when it is not this one, say) leaves the other. One function in svrngs-node, `day_said(unix) -> Option<String>`, which cli.rs reads; question.js:79's citation follows it. |
+| 186 | 8 | apps/grapevine/relay.mjs:49 (`class Refused`); apps/events/server.mjs:56 (`class Said`); crates/svrngs-core/src/command.rs:67 (`enum Refused<R>`) | not fixed (a rename across apps, with #150) | grapevine's refusal said to the person is Events' `Said` by another name, and `Refused` already names svrngs-core's commit refusal. Where #150's shared module lands, one class and one name for both apps. |
+| 150 | 8 | as recorded, and apps/grapevine/laws.test.mjs:26-54 (`elsewhere`) | not fixed: a move across three apps | **A third app with laws made it three**, as the row said: grapevine's `elsewhere` is Events' and Expenses' (line-window spans above; dry-report 1.000 on `constructor` and `now`). With grapevine's store.mjs (GRAPEVINE_DEMO §2: "a shared module if a third app needs it") and #186, one `apps/` module the apps' tests and servers import. |
+| 80 | — | scripts/lean_check.py:75 BUDGET, :142 `n >= cap` | not fixed (operator's) | 16350 / 16351 after this audit, and 2992 / 2993 in svrngs-core: +22 and 0 over the range. gv-leave spent 22 of its 30; no counted line left under either cap. |
+| 182, 183, 184 | as recorded | as recorded | fixed (gv-leave; d9052f4a) | Not reached by this range's findings. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun`, dry-report spans | Still one line early: command.rs:66 for :67, choices.rs:42 for :43, cli.rs:1073 for :1074. |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". apps/'s and scripts/'s exact tiers could not judge, and `converge noun` sees no JS class (`Refused`, `Said` above). |
+| I8 | 6 | dry-report scope | Still present: svrngs-node's ring_sync/tests.rs reported as production; `*.test.mjs` files too (grapevine.test.mjs `pins`). |
+| I32 | 7 | dry-report's near tier, nested spans | Still present: home.js `running` over `look`, question.js `door` over `judge`, and now relay.mjs `loop` over `turn`. |
+| I33 | 6 | `refresh` over a corpus whose Cargo workspace names absent crates | New: rust's export failed, the refresh used the directory's name, not `--corpus-id`'s, and said only "export produced 0 symbols". A corpus is the whole workspace or none. |
