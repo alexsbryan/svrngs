@@ -4,6 +4,23 @@ use super::*;
 use crate::guest::ring_crypto_provider;
 use iroh::endpoint::Builder as EndpointBuilder;
 
+/// What a test's subscriber writes, kept to be read: one copy, where
+/// blob_tests.rs, relay_tests.rs and guest/tests.rs each wrote out a sink
+/// (REVIEW-audit-arch-auto-1).
+#[derive(Clone, Default)]
+#[expect(clippy::disallowed_types, reason = "a test's trace sink")]
+pub(crate) struct Said(pub(crate) std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
+
+impl std::io::Write for Said {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.0.lock().unwrap().extend_from_slice(buf);
+        Ok(buf.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
 /// What keeps a router served on the stream: its acceptor, and the
 /// dialer's transport and the contact it reaches the router by.
 pub(crate) struct OnStream {

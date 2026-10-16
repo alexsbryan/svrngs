@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 use super::*;
+use crate::iroh::tests::Said;
 use iroh::address_lookup::MemoryLookup;
 use iroh::{EndpointAddr, SecretKey, TransportAddr};
 
@@ -146,22 +147,6 @@ fn a_relay_this_computer_is_told_is_read_dotless() {
     assert!(parse("not a url").is_err());
 }
 
-/// Every line [`one_reading_of_a_relay_as_written`] traces on its thread.
-#[expect(clippy::disallowed_types, reason = "a test's trace sink")]
-static TRACES: std::sync::Mutex<Vec<u8>> = std::sync::Mutex::new(Vec::new());
-
-struct Kept;
-
-impl std::io::Write for Kept {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        TRACES.lock().unwrap().extend_from_slice(buf);
-        Ok(buf.len())
-    }
-    fn flush(&mut self) -> std::io::Result<()> {
-        Ok(())
-    }
-}
-
 /// **One reading of a relay as written** (ralph/REVIEW_FINDINGS.md #131):
 /// this computer's [`parse`] is svrngs-core's, so a relay that is no URL
 /// is refused with the core's trace and its error, and one that is gives
@@ -169,13 +154,15 @@ impl std::io::Write for Kept {
 /// before, which refused untraced.
 #[test]
 fn one_reading_of_a_relay_as_written() {
+    let said = Said::default();
+    let writer = said.clone();
     let kept = tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::new("relay=debug"))
-        .with_writer(|| Kept)
+        .with_writer(move || writer.clone())
         .with_ansi(false)
         .finish();
     let refused = tracing::subscriber::with_default(kept, || parse("not a url"));
-    let traced = String::from_utf8_lossy(&TRACES.lock().unwrap()).into_owned();
+    let traced = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
     assert!(
         traced.contains("relay: refused — not a URL") && traced.contains("raw=\"not a url\""),
         "this computer's reading refused untraced: {refused:?}; traced: {traced}"

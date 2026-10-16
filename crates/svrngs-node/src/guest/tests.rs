@@ -6,6 +6,7 @@
 
 use super::*;
 use crate::alpn::ALPN;
+use crate::iroh::tests::Said;
 
 #[test]
 fn parse_relay_mode_empty_is_default() {
@@ -44,22 +45,6 @@ fn parse_relay_mode_skips_bad_keeps_good() {
     );
 }
 
-/// Every line [`the_egress_posture_is_one_info_line_naming_no_proxy`] traces.
-#[expect(clippy::disallowed_types, reason = "a test's trace sink")]
-static TRACES: std::sync::Mutex<Vec<u8>> = std::sync::Mutex::new(Vec::new());
-
-struct Kept;
-
-impl std::io::Write for Kept {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        TRACES.lock().unwrap().extend_from_slice(buf);
-        Ok(buf.len())
-    }
-    fn flush(&mut self) -> std::io::Result<()> {
-        Ok(())
-    }
-}
-
 /// **The egress posture, one info line** (arch-peer (d), upstream's proxy
 /// and egress logging cut): building an endpoint says at info, once, its n0
 /// posture, whether it listens on loopback alone, and its relays — and
@@ -68,9 +53,11 @@ impl std::io::Write for Kept {
 /// for a proxy to say (`proxy="none"`).
 #[test]
 fn the_egress_posture_is_one_info_line_naming_no_proxy() {
+    let said = Said::default();
+    let writer = said.clone();
     let kept = tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::new("transport=info"))
-        .with_writer(|| Kept)
+        .with_writer(move || writer.clone())
         .with_ansi(false)
         .finish();
     let cfg = RelayConfig {
@@ -82,17 +69,17 @@ fn the_egress_posture_is_one_info_line_naming_no_proxy() {
     let built = tracing::subscriber::with_default(kept, || {
         relayed_endpoint_builder(key, vec![], &cfg).is_ok()
     });
-    let traced = String::from_utf8_lossy(&TRACES.lock().unwrap()).into_owned();
-    let said: Vec<&str> = traced
+    let traced = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    let posture: Vec<&str> = traced
         .lines()
         .filter(|l| l.contains("egress posture"))
         .collect();
     assert!(built, "{traced}");
-    assert_eq!(said.len(), 1, "{traced}");
+    assert_eq!(posture.len(), 1, "{traced}");
     for field in ["n0_services=false", "loopback_only=true", "relays=[]"] {
-        assert!(said[0].contains(field), "{field}: {traced}");
+        assert!(posture[0].contains(field), "{field}: {traced}");
     }
-    assert!(!said[0].contains("proxy="), "{traced}");
+    assert!(!posture[0].contains("proxy="), "{traced}");
 }
 
 #[tokio::test]

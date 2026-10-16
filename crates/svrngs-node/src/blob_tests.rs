@@ -8,7 +8,7 @@
 use std::path::Path as FsPath;
 
 use super::*;
-use crate::iroh::tests::loopback_sockets;
+use crate::iroh::tests::{loopback_sockets, Said};
 use crate::iroh::{EndpointAddr, MemoryLookup, RelayConfig};
 use crate::node::Node;
 use crate::seed::Seed;
@@ -146,20 +146,6 @@ async fn a_lapse_this_computer_was_given_outlasts_a_fetch_that_failed() {
     );
     for node in [ana, ben] {
         node.endpoint().close().await;
-    }
-}
-
-/// What the test's subscriber writes, kept to be read.
-#[derive(Clone, Default)]
-struct Said(std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
-
-impl std::io::Write for Said {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        self.0.lock().unwrap().extend_from_slice(buf);
-        Ok(buf.len())
-    }
-    fn flush(&mut self) -> std::io::Result<()> {
-        Ok(())
     }
 }
 
