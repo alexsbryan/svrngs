@@ -446,8 +446,8 @@ fn at_origin(url: &Value, label: &str) -> bool {
 }
 
 in_both_engines!(
-    /// HTTP over the dial (u4-4): the page, holding bo's key, speaks hyper's
-    /// HTTP/1 through the node's door to the door's tests' services
+    /// HTTP over the dial (u4-4): bo's page speaks hyper's HTTP/1, as cy,
+    /// through the node's door to the door's tests' services
     /// (tests/door/origins.rs). A range of a 64 MiB file arrives sha-exact and
     /// in chunks, never whole; a 206 and a 416 come back whole, status and
     /// `Content-Range`; a chunked answer that never ends is decoded as it
@@ -462,6 +462,21 @@ async fn a_page_speaks_http_through_the_door_streaming_both_ways(engine: Engine)
     let relay = relay().await;
     let bo = signing(7);
     let node = node(dir.path(), &relay, &bo).await;
+    // The checks dial as cy, a second person of the group, under a key of
+    // their own: the page already holds an endpoint as bo (web/app.js
+    // `enter`), and a relay keeps one client per key, so a second as bo
+    // was cut when the page's took the key back, 16-24 s on (arch-stream
+    // (a), demo/runs/stream/2026-10-15/README.md, 1).
+    let cy = signing(2);
+    let fixture = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse("cy").unwrap(),
+            key: actor_of(&cy),
+            invite: None,
+        },
+        on_behalf_of: None,
+    };
+    node.rail().commit(NS, &fixture).unwrap().unwrap();
     let file = dir.path().join("title.bin");
     std::fs::write(
         &file,
@@ -487,6 +502,7 @@ async fn a_page_speaks_http_through_the_door_streaming_both_ways(engine: Engine)
             "key": hex::encode(bo.to_bytes()),
             "token": token(&signing(1), &relay),
             "http": {
+                "key": hex::encode(cy.to_bytes()),
                 "range": { "path": "/lend/shelf/title.bin", "header": format!("bytes={from}-{to}") },
                 "past": { "path": "/lend/shelf/title.bin", "header": format!("bytes={FILE_BYTES}-") },
                 "chunked": { "path": "/lend/tap/stream", "want": 15 },

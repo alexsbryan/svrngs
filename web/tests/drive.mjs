@@ -10,9 +10,10 @@
 // First it leaves the page while it loads, and opens it again.
 //
 // With `"http": {...}` in the args, once the page is in it also speaks HTTP
-// over the dial to the lends named there ([`httpChecks`], u4-4), and holds
-// its upload's tail until a line `go` arrives on stdin: the Rust half sends
-// it when the service has the upload's first byte.
+// over the dial to the lends named there ([`httpChecks`], u4-4), as the key
+// `http.key` when it names one, and holds its upload's tail until a line
+// `go` arrives on stdin: the Rust half sends it when the service has the
+// upload's first byte.
 //
 // Every address off this computer is refused it, and listed as `away`
 // (relay-default (b)): n0 unreachable, as a phone's page must not need it.
