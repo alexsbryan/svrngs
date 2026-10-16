@@ -138,3 +138,10 @@ read them.
 The cuts, largest first, would leave the repository at **16,135**, its
 cap one past at **16,136**, and the groups rows' ceiling **16,336**.
 svrngs-core stays **2,952 / 2,953**, its ceiling **2,993**.
+
+## The close
+
+`scripts/check.sh` at df996e3b, after the ratchet: exit 0 in 11 min 04 s,
+all fourteen gates passed, principles pinned through app laws
+(ralph/next/groups/ctl/log/sessions/groups-economize-1.await.log). The
+lean gate there read 16,135 / 16,136 and svrngs-core 2,952 / 2,953.
