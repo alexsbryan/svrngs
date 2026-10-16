@@ -258,7 +258,7 @@ async fn lends(State(at): State<Asking>, Query(q): Query<RailQuery>) -> Result<R
 /// groups its lender and this computer stand in, and whose computer did not
 /// say what it lends. The one decider of what `/svrngs-reads` tells a page
 /// ([`reads`]) and what it reaches at another lend's origin ([`reaches`]).
-/// A lender whose computer did not say — [`Unlisted`]'s three lists — is
+/// A lender whose computer did not say — [`Unlisted`]'s four lists — is
 /// could-not-judge, never read as lending nothing: refused `away` where the
 /// answer hangs on it, named where it is one of many (onair-economize (a)).
 /// Known by person, so a lend not found whose person has a computer that
@@ -276,18 +276,8 @@ async fn read_by(
         return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
     };
     let (lent, unlisted) = at.lent(&groups, &own, None).await?;
-    let Unlisted {
-        unanswered,
-        unheard,
-        refused,
-        older,
-    } = &unlisted;
     let silent: Vec<String> = (groups.iter().flat_map(|(_, s)| s.iter()))
-        .filter(|(_, m)| {
-            [unanswered, unheard, refused, older]
-                .iter()
-                .any(|l| l.contains(&m.person))
-        })
+        .filter(|(_, m)| unlisted.names(&m.person))
         .map(|(actor, _)| actor.clone())
         .collect();
     let Some(reading) = lent.iter().find(|l| named(l).as_ref() == Some(app)) else {

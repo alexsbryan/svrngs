@@ -165,6 +165,15 @@ pub struct Unlisted {
     pub older: Vec<Person>,
 }
 
+impl Unlisted {
+    /// Whether `person`'s computer did not say what they lend, by any of
+    /// the four.
+    pub(crate) fn names(&self, person: &Person) -> bool {
+        let lists = [&self.unanswered, &self.unheard, &self.refused, &self.older];
+        lists.iter().any(|l| l.contains(person))
+    }
+}
+
 /// Why a node did not start.
 #[derive(Debug, thiserror::Error)]
 pub enum NodeError {
@@ -750,16 +759,13 @@ fn answered(actor: &str, body: &[u8]) -> Answered {
         version: Option<u32>,
         lends: serde_json::Value,
     }
-    let answer = serde_json::from_slice::<Answer>(body).map(|a| (a.version, a.lends));
-    let lends = match answer {
-        Ok((version, _)) if crate::version::older(version) => {
-            tracing::debug!(target: "node", actor, ?version, "node: lends — the computer runs an older svrngs, so what it lends is not read");
-            return Answered::Older;
+    let read = serde_json::from_slice::<Answer>(body);
+    let version = read.as_ref().ok().map(|a| a.version);
+    match read.and_then(|a| serde_json::from_value::<Vec<Offered>>(a.lends)) {
+        _ if version.is_some_and(crate::version::older) => {
+            tracing::debug!(target: "node", actor, version = ?version.flatten(), "node: lends — the computer runs an older svrngs, so what it lends is not read");
+            Answered::Older
         }
-        Ok((_, lends)) => serde_json::from_value::<Vec<Offered>>(lends),
-        Err(e) => Err(e),
-    };
-    match lends {
         Ok(lends) => {
             tracing::debug!(target: "node", actor, lends = lends.len(), "node: lends — the computer answered");
             Answered::Lends(lends)

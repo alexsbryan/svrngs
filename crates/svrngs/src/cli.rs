@@ -1157,27 +1157,13 @@ impl std::fmt::Display for Said {
                     let names: Vec<&str> = groups.iter().map(Name::as_str).collect();
                     writeln!(f, "Running for {}.", names.join(", "))?;
                 }
-                writeln!(
-                    f,
-                    "Apps on this computer reach your groups at http://{api}."
-                )?;
-                writeln!(
-                    f,
-                    "Your home page, the same address each time svrngs starts: {}",
-                    svrngs_node::home::address(api.port())
-                )?;
+                writeln!(f, "Apps on this computer reach your groups at http://{api}.")?;
+                let home = svrngs_node::home::address(api.port());
+                writeln!(f, "Your home page, the same address each time svrngs starts: {home}")?;
                 for lent in &lends.lent {
-                    let (name, kind) = (&lent.offered.name, &lent.offered.kind);
-                    let what = if name.as_str() == kind.as_str() {
-                        name.to_string()
-                    } else {
-                        format!("{name} ({kind})")
-                    };
-                    writeln!(
-                        f,
-                        "{}'s {what}, in your browser: {}",
-                        lent.person, lent.address
-                    )?;
+                    let (name, kind, who, at) = (&lent.offered.name, &lent.offered.kind, &lent.person, &lent.address);
+                    let what = (name.as_str() != kind.as_str()).then(|| format!(" ({kind})"));
+                    writeln!(f, "{who}'s {name}{}, in your browser: {at}", what.unwrap_or_default())?;
                 }
                 let u = &lends.unlisted;
                 for (people, why) in [

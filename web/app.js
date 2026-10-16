@@ -365,11 +365,8 @@ async function enter(group, asked) {
   group = await store.opened({ ...group, computers: [...computers.values()] });
   // Who was removed or asked to be, shown to everyone in the group
   // (v1-keeper-office (b)); `null` when the computer could not read it.
-  document.getElementById('removals').replaceChildren(
-    ...(removals ?? [null]).map((r) =>
-      Object.assign(document.createElement('li'), { textContent: r ? removal(r) : `Who was removed from ${group.name} cannot be read just now.` }),
-    ),
-  );
+  const gone = (removals ?? [null]).map((r) => el('li', r ? removal(r) : `Who was removed from ${group.name} cannot be read just now.`));
+  document.getElementById('removals').replaceChildren(...gone);
   // Who made the group and since when this phone has held it, so two of
   // one name are told apart (#138); nothing for a group kept before.
   const made = group.maker ? ` (${whose(group)})` : '';
@@ -407,12 +404,7 @@ async function enter(group, asked) {
     ...refused.map((p) => `${p}’s computer answered without saying what they lend, so it is not listed.`),
     ...behind.map((p) => `${p}’s computer runs an older svrngs, so what they lend is not listed.`),
   ];
-  said.textContent = [
-    lent.length || unlisted.length ? '' : `Nobody in ${group.name} lends anything yet.`,
-    ...unlisted,
-  ]
-    .filter(Boolean)
-    .join('\n');
+  said.textContent = (lent.length || unlisted.length ? unlisted : [`Nobody in ${group.name} lends anything yet.`]).join('\n');
   if (asked?.has('ask')) asking(group, key, lent, unanswered, dialler, asked);
 }
 
