@@ -29,6 +29,8 @@ mod harness;
 mod load;
 // An app the group carries (v1ui-shelf).
 mod carried;
+// The group's page in two tabs (groups-tabs).
+mod tabs;
 
 use std::collections::BTreeSet;
 use std::path::Path;

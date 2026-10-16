@@ -1,0 +1,2 @@
+2026-10-16T09:25:06.807720Z DEBUG relay-http-serve:conn{peer=127.0.0.1:51651}:handler: iroh_relay::server::clients: multiple connections found, deactivating old connection remote_endpoint=ea4a6c63e2
+2026-10-16T09:26:13.554163Z DEBUG relay-http-serve:conn{peer=127.0.0.1:51844}:handler: iroh_relay::server::clients: multiple connections found, deactivating old connection remote_endpoint=ea4a6c63e2
