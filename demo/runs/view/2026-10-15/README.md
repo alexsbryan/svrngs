@@ -43,8 +43,8 @@ Against the predictions:
 4. **A commit's time**: 0.791 s at the start at 25 × 10,000 (0.55–0.95
    predicted), 0.064 s at the close (0.02–0.20 predicted), twelve times
    faster; at 1,000 acts five, five and seven times faster. Held. What a
-   commit still pays for at 10,000 acts is the copies of what is held
-   (`command.rs:176`, `:199`).
+   commit still does over everything held, read in the code and not timed
+   apart, is copy it (`command.rs:176`, `:199`).
 5. **The setup's time lower at every point**: falsified at 2 × 1,000, 0.20 s
    before and 0.22 s after. At 2 members the setup is two nodes starting and
    converging, where the commit is a few milliseconds of it; one reading
@@ -66,3 +66,11 @@ group, each wrote three records; both held the same ten lines, byte for
 byte, and counted all six records, complete, with no gaps, in step 0.67 s
 after the last write. The start's records carry a view; the close's carry
 none; each build admits the other's.
+
+## The lines the row cut
+
+Two, both in `svrngs-core`'s `command.rs` at c276c34f: `:234`, the copy of
+what is held made for the view, and `:235`, `sync::digest` over it.
+`scripts/lean_check.py`: 16,162 → 16,160, svrngs-core 2,954 → 2,952; the caps
+16,161 and 2,953 (cf08b1bf, whose body names the second line as the
+`digest` import's name: the import stays a line, `digest` only left it).
