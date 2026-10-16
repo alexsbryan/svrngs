@@ -145,25 +145,26 @@ export function fieldGaps(spec, values) {
  */
 export function validate(op, kinds) {
   const gap = (code, message) => [{ code, message }];
-  if (!isObject(op) || op.app !== APP || !has(KEYS, op.type)) return gap('not_grapevine', 'not one of grapevine\'s acts');
+  if (!isObject(op) || op.app !== APP || !has(KEYS, op.type)) return gap('not_grapevine', 'not something grapevine writes');
+  const a = { [ASK]: 'an ask', [CARRY]: 'a carry', [MSG]: 'a message' }[op.type];
   const extra = Object.keys(op).filter((k) => !KEYS[op.type].includes(k));
   const missing = KEYS[op.type].filter((k) => !has(op, k));
   if (extra.length || missing.length) {
-    return gap('unread_field', `a ${op.type} saying ${extra.length ? `more than this version reads (${extra.join(', ')})` : `too little (no ${missing.join(', ')})`}, so not counted`);
+    return gap('unread_field', `${a} saying ${extra.length ? `more than this version reads (${extra.join(', ')})` : `too little (no ${missing.join(', ')})`}, so not counted`);
   }
-  if (!isHandle(op.handle)) return gap('bad_handle', `a ${op.type} with no handle of 16 bytes`);
+  if (!isHandle(op.handle)) return gap('bad_handle', `${a} that replies could not find their way back to`);
   if (op.type === MSG) {
     if (op.dir !== 'up' && op.dir !== 'down') return gap('bad_dir', 'a message going neither up nor down');
-    if (!isPublic(op.from) || !isPublic(op.to)) return gap('bad_key', 'a message from or to no key');
+    if (!isPublic(op.from) || !isPublic(op.to)) return gap('bad_key', 'a message from no one or to no one');
     if (typeof op.nonce !== 'string' || !NONCE.test(op.nonce) || typeof op.box !== 'string' || !op.box || op.box.length > ACT_MOST) {
       return gap('bad_box', 'a message with nothing sealed in it');
     }
     return [];
   }
   if (!has(kinds, op.kind)) return gap('unknown_kind', `an ask of a kind this app does not have (${String(op.kind).slice(0, 40)})`);
-  if (!Number.isSafeInteger(op.hops) || op.hops < 0 || op.hops > MOST_HOPS) return gap('bad_hops', `a ${op.type} going a number of rings that is not 0 to ${MOST_HOPS}`);
-  if (!Number.isSafeInteger(op.expires)) return gap('bad_expires', `a ${op.type} with no end`);
-  if (!isPublic(op.seal_to)) return gap('bad_key', `a ${op.type} with no key to answer it to`);
+  if (!Number.isSafeInteger(op.hops) || op.hops < 0 || op.hops > MOST_HOPS) return gap('bad_hops', `${a} going a number of rings that is not 0 to ${MOST_HOPS}`);
+  if (!Number.isSafeInteger(op.expires)) return gap('bad_expires', `${a} with no end`);
+  if (!isPublic(op.seal_to)) return gap('bad_key', `${a} that no one could answer`);
   if (op.type === ASK && op.name !== 'withheld') {
     // GRAPEVINE.md §4.1 allows `shown`; here a carry never names its asker
     // and names wait for two yeses, so `shown` would mean nothing. It is
@@ -172,7 +173,7 @@ export function validate(op, kinds) {
   }
   if (op.type === CARRY && !isKey(op.of)) return gap('no_ask', 'a carry of no ask');
   const bad = fieldGaps(kinds[op.kind].ask.fields, op.fields);
-  return bad.length ? gap('bad_fields', `a ${op.type} whose fields do not read: ${bad.join('; ')}`) : [];
+  return bad.length ? gap('bad_fields', `${a} whose fields do not read: ${bad.join('; ')}`) : [];
 }
 
 /** What a sealed body says wrong for `kind`, or []. */
@@ -214,7 +215,7 @@ function readGroup(g, kinds, gap) {
   const acts = {};
   const order = [];
   const all = actsOf(g.ops);
-  if (all === null) gap('unread', g, null, `${g.name ?? g.id} answered no list of acts`);
+  if (all === null) gap('unread', g, null, `${g.name ?? g.id} answered with nothing this app can read`);
   for (const a of all ?? []) {
     if (!isKey(a.id) || !Number.isSafeInteger(a.ts) || !isKey(a.by) || has(acts, a.id)) {
       gap('not_an_act', g, a?.id, 'an entry with no one or nothing in it');
@@ -286,7 +287,7 @@ function stateOf(state, gap) {
   const keys = {};
   for (const [pub, secret] of Object.entries(isObject(state?.keys) ? state.keys : {})) {
     if (isPublic(pub) && typeof secret === 'string') keys[pub] = secret;
-    else gap('bad_state', null, null, 'a key in the state file that is not one');
+    else gap('bad_state', null, null, 'something in your saved grapevine file that does not read');
   }
   const routes = [];
   for (const r of Array.isArray(state?.routes) ? state.routes : []) {
@@ -411,7 +412,7 @@ export function fold({ groups, state, kinds, now }) {
     }
     const kind = kinds[ask.copy.kind];
     const body = open(op, them, keys[me]);
-    const bad = body === null ? ['it does not open with your key'] : bodyGaps(body, kind);
+    const bad = body === null ? ["it can't be opened on this computer"] : bodyGaps(body, kind);
     if (bad.length) {
       gap('unopened', { id: m.group }, m.id, `a message that does not read: ${bad.join('; ')}`);
       continue;

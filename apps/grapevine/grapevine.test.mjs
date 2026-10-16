@@ -286,3 +286,24 @@ test('which computer wrote it is kept: `via` is its person when it wrote for ano
   assert.deepEqual(w.view('jo').relay, [{ do: 'correct', group: 'waller', corrects: carry }]);
   assert.deepEqual(grapevine.actsOf(w.logs.page).map((a) => [a.id, a.by, a.via]), [[ask, 'sam', 'jo'], [withdrawal, 'sam', 'jo']]);
 });
+
+test("every gap a page may list, and every refusal it may say, is in the page's words (fence 9)", () => {
+  // The page lists the fold's gaps under "couldn't be read" and says the validator's first gap when it refuses a write.
+  const NOT_SAID = /\b(keys?|members?|records?|acts?|hash(es)?|handles?|hops?|seal)\b/i;
+  const w = world(APP, KINDS, GROUPS);
+  w.ask('sam', 'page', 'tool', TILE_SAW);
+  const good = w.logs.page[0].payload;
+  const other = keyPair();
+  const junk = [null, 'x', { app: 'grapevine', type: 'toString' }, { ...good, fields: null }, { ...good, kind: 'rooms' }, { ...good, hops: -1 }, { ...good, seal_to: 'x' },
+    { ...good, handle: 'x' }, { ...good, type: 'carry', of: null }, { ...good, expires: 'soon' },
+    { app: 'grapevine', type: 'msg', handle: good.handle, dir: 'sideways', from: 1, to: null, nonce: [], box: {} },
+    // A message to Sam's ask that does not open with what Sam keeps.
+    msgAct({ handle: good.handle, dir: 'up', from: other.public, to: good.seal_to }, seal(OFFER, other.public, other.secret))];
+  for (const payload of junk) w.logs.page.push({ id: `j${w.logs.page.length}`, ts_unix: 5, person: 'jo', payload });
+  w.logs.page.push({ id: 'k1', ts_unix: 5, person: 'jo', corrects: ['x'] }, { id: 'k2', ts_unix: 'now', person: null, payload: good }, { id: 'k3', ts_unix: 6, person: 'jo', corrects: 'a1' });
+  const odd = APP.fold({ groups: [{ id: 'page', name: '1400 Page', me: 'sam', ops: 'none' }], state: { keys: { x: 1 }, routes: [null] }, kinds: KINDS, now: NOW });
+  const said = [...w.view('sam').gaps, ...w.view('jo').gaps, ...odd.gaps].map((g) => g.message);
+  for (const p of junk) said.push(...grapevine.validate(p, KINDS).map((g) => g.message));
+  for (const code of ['unopened', 'bad_state', 'not_theirs']) assert.ok([...w.view('sam').gaps, ...odd.gaps].some((g) => g.code === code), `the gaps include ${code}`);
+  assert.deepEqual([...new Set(said.filter((m) => NOT_SAID.test(m)))], [], 'a gap or refusal says a word a reader must look up');
+});
