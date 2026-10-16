@@ -1756,18 +1756,23 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   `a_leave_stops_the_group_reaching_them_and_keeps_what_they_hold`).
   Everyone in the group sees a leave where removals show, "Ana left on
   <date>", in `question.js`'s one wording: `Register::removals` says a cut
-  whose signer stands as the person it cuts `RemovalSaid::Left`, the
-  keeper's `Removed` (the operator, 2026-10-14: "Record only"). Leaving is
+  the fold kept as a leave (`Cut::left`, decided once by the fold's
+  `leaves`, #180) `RemovalSaid::Left`, any other cut `Removed` (the
+  operator, 2026-10-14: "Record only"). Leaving is
   final from that computer through V1: a computer signs every group with
   one key, and a cut key never stands again (the operator, 2026-10-14:
   "Final for now; per-group keys as a row"; on that row's survey,
   2026-10-16: "Final from this computer, through V1"; a key per group on
   computers waits in §9). So the issuer refuses to redeem a
   link for a key cut in its group (svrngs-core `RedeemRefusal::Cut`), where
-  the fold alone would count the later `Admit`; and a computer that left,
-  sent a new link, is told at once, before anything is redeemed, that it
-  cannot join again from there yet (`join.rs`, `NotJoined::Left`), as the
-  page and `svrngs join` say it; a phone, with a key per group
+  the fold alone would count the later `Admit`, and answers that refusal
+  410, apart from every other, so the computer is told it as its cut
+  (#181); and a computer that left, sent a new link, is told at once,
+  before anything is redeemed, that it cannot join again from there yet
+  (`join.rs`, `NotJoined::Left`), as the page and `svrngs join` say it,
+  and told the same where its copy cannot say and the issuer refuses it
+  (`join_by_link.rs`, `a_computer_the_group_cut_is_told_so_by_the_issuer`);
+  a phone, with a key per group
   (`web/store.js`), can rejoin.
 - **Leaving is cheap.** A group's whole state is a directory every member's
   computer holds. A group that goes wrong refounds from any copy, within
