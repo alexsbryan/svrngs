@@ -35,9 +35,8 @@ page on Sam's computer. Remember the number after the last colon, 18089:
 step 5 needs it. (Started with no `--port`, llama-server uses 8080.)
 
 **2. Open the group's page, with no link.** In a browser, open
-`https://group.svrnme.sh/` (until the operator publishes this build, the
-page is served from a checkout: see "Before the page is published",
-below). It says *"To make your group, paste this line in a terminal on
+`https://group.svrnme.sh/` (to try a build of your own checkout instead,
+see "Serving the page from a checkout", below). It says *"To make your group, paste this line in a terminal on
 your computer"*, and shows the line with a **Copy** button:
 
 ```
@@ -220,12 +219,11 @@ do.
   Log out and in again, or type `~/.local/bin/svrngs` in a terminal and
   leave that window open.
 
-## Before the page is published
+## Serving the page from a checkout
 
-Until the operator publishes this build at `https://group.svrnme.sh/`,
-the page there has no line for someone with no link (step 2). Whoever runs
-this demo serves the page from a checkout of svrngs, on the computer Sam
-and Bo can reach, as the run did:
+`https://group.svrnme.sh/` serves the published build (V1, de8923f7, 16 Oct
+2026). To try a build of your own checkout instead, serve the page from it,
+on the computer Sam and Bo can reach, as the run did:
 
 ```
 scripts/build-web.sh --out /tmp/site && scripts/build-release.sh --out /tmp/site
