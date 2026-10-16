@@ -1,0 +1,5 @@
+You're in Waller block, as Kim.
+Waller block's folder is /tmp/grapevine/kim/svrngs/Waller block: what anyone in Waller block puts there reaches this computer, and what you put there reaches theirs.
+
+Leave this running; Ctrl-C stops it.
+{"port":64291,"at":"http://127.0.0.1:64291/","store":"record"}
