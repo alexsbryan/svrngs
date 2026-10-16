@@ -50,7 +50,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # repository's to one past where its cuts landed; svrngs-core's it left at one
 # past (demo/runs/economize/2026-10-16/SURVEY.md). The operator gave the groups
 # rows +200 over that cap and svrngs-core +40 over its own (2026-10-14).
-BUDGET = {"crates/svrngs-core": 2953, ".": 16136}
+# groups-tabs (b), one tab of the group's page at a time reaching it (#176),
+# raised the repository's to one past where it landed: 22 of the 200.
+BUDGET = {"crates/svrngs-core": 2953, ".": 16159}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
