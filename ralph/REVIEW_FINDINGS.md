@@ -9966,3 +9966,300 @@ the run is `demo/runs/stream/2026-10-15/` (README.md, finding 5).
 | # | principle | path:line | fixed in | finding |
 |---|---|---|---|---|
 | 176 | 6 | web/app.js `enter` (`dialler`, `bound`: one endpoint per page, never closed); iroh-relay-1.0.2/src/server/clients.rs:80-92 (one active client per key) | open | **Low, inferred, not run.** In the streaming test, a second endpoint of the page's own key lost its connection 16.0–23.9 s after it bound, when the page's first endpoint reconnected to the relay and took the key back, and its dial then failed at the idle timeout as "asleep" (the run's README, 1). A person who opens one group's page in two tabs of one browser holds two endpoints of one key, one per tab, and by the same mechanism a tab's dial may be cut and told "asleep" while the computer is awake. Not run with two tabs; a test opening two tabs would show it or not. |
+
+## REVIEW-audit-arch-auto-1 (2026-10-16, range fafd42d5..0a2e6b3a)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-v1ui-auto-3, its hash
+fafd42d5 (ralph/next/v1ui/STATE.md:26). The range ends at 0a2e6b3a, the
+commit that made this row. `git rev-list --count fafd42d5..0a2e6b3a` is
+94, none a merge (`--merges`: 0). They are: auto-3's `done`; arch-helper,
+arch-peer, arch-stream, arch-seal, arch-core, arch-view,
+arch-command-relay, arch-command and arch-version; the operator's and
+the director's commits between them (dda32b22 `arch`, f5fe02fa
+`grapevine`, d1c2a1c4 `groups`, 8ee132c0 and 75fd900d); and this row's
+own commit. The row reads `docs/ARCH_PRINCIPLES.md`; the file is
+`docs/principles/ARCH_PRINCIPLES.md` (AGENTS.md).
+
+This audit's own commits before this section:
+- 6ead9443, Alex's computer and Sam's made once, tests/common/pair.rs;
+- 684dade8, a test's trace sink made once, iroh/tests.rs `Said`;
+- 98fe181f, iroh.rs's `Answered` alias renamed `Streamed`.
+
+It opens #177 and #178.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+fafd42d5..0a2e6b3a` (/tmp/archaudit1/ledger.raw) is summed by auto-3's
+ledger.py, its unit list this range's (/tmp/archaudit1/ledger.out; each
+commit's unit in ledger.commits). The rules are auto-1's: a commit's unit
+is the longest unit id its subject names. So 75fd900d, "director(arch-command):
+… splits out as arch-command-relay", counts under arch-command-relay,
+and 98615583 and daa6444d, the state and charter commits naming
+arch-stream, under arch-stream; each touched no code. The lines are raw,
+comments and blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net | markup net | apps src net | apps test net | scripts net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| REVIEW-audit-v1ui-auto-3 (its `done`) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| arch-helper | 13 | 123 | 76 | **+47** | 250 | 19 | +231 | 0 | 0 | 0 | +2 (+10 −8) |
+| arch-peer | 19 | 395 | 910 | **−515** | 835 | 338 | +497 | 0 | 0 | 0 | +1 (+3 −2) |
+| arch-stream | 9 | 0 | 0 | **0** | 40 | 10 | +30 | 0 | 0 | 0 | 0 |
+| arch (dda32b22, the queue) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| grapevine (f5fe02fa, its queue) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| arch-seal | 6 | 94 | 874 | **−780** | 125 | 801 | −676 | 0 | 0 | 0 | +0 (+1 −1) |
+| arch-core | 5 | 65 | 137 | **−72** | 29 | 40 | −11 | 0 | 0 | 0 | +0 (+1 −1) |
+| arch-view | 11 | 22 | 22 | **+0** | 94 | 3 | +91 | 0 | 0 | 0 | +1 (+3 −2) |
+| arch-command | 12 | 756 | 697 | **+59** | 110 | 20 | +90 | +0 (+1 −1) | 0 | 0 | +4 (+8 −4) |
+| arch-command-relay | 6 | 99 | 123 | **−24** | 96 | 7 | +89 | 0 | 0 | 0 | +2 (+4 −2) |
+| arch-version | 8 | 149 | 122 | **+27** | 142 | 69 | +73 | 0 | 0 | 0 | +2 (+4 −2) |
+| groups (d1c2a1c4, its row) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| this row's own commit | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 94 | 1703 | 2961 | **−1258** | 1721 | 1307 | +414 | +0 (+1 −1) | 0 | 0 | +12 (+34 −22) |
+
+arch-command's src +756 −697 holds 0e4684ca (+189 −133, its first (a))
+and its revert 0c5df4aa (+133 −189), which cancel (`git show --numstat`).
+Where the src lines went (`git diff --numstat fafd42d5 0a2e6b3a -- crates
+web`, tests apart), the largest:
+- guest.rs +12 −370, iroh.rs +163 −168, ring_sync.rs +57 −180, live.rs
+  +27 −106, redeem.rs +43 −55, origin.rs +23 −29: the loopback bridge
+  cut, each caller's request carried on the stream (arch-peer);
+- svrngs-core sync.rs +28 −141, lib.rs +33 −82, project.rs +17 −65,
+  admit.rs +21 −47, svrngs-runtime journal.rs +1 −231, oplog.rs +3 −84
+  and lib.rs +8 −43, rail.rs +34 −61, and core's process.rs gone: the
+  seal and its compaction (arch-seal), the traits folded (arch-core);
+- cli.rs +66 −209, join.rs +147 (new), home.rs +129 −58, invite.rs
+  +39 −19, node.rs +101 −107, surface.rs +24 −55, svrngs's issuer.rs
+  gone: the join and the link made by the node, the home page's join, one
+  state for the routers (arch-command, arch-command-relay);
+- version.rs +25 (new), web/app.js +18 −25, web/src/lib.rs +22 −28:
+  one version check, wasm `connect` gone (arch-version; arch-helper
+  #172);
+- share.rs +44 −10, door.rs +28 −20, door/sign_in.rs +8 −1: a sign-in
+  never offered, `share::At`, `a_tab`, `connected` (arch-helper).
+
+The tests grew by tests/peer.rs (arch-peer (a)) and the browser suite's
+streaming test (arch-stream), and lost the seal's (core tests_sealing.rs
++25 −128, svrngs-runtime's +40 −420). apps/ did not change.
+
+What the budget counts, by scripts/lean_check.py over a `git archive` tree
+of each end and of each unit's `done` (/tmp/archaudit1/lean-<hash>.out;
+each tree's own lean_check.py, so the cap is its own):
+
+| at | svrngs-core | repository | its cap | counted net |
+|---|---:|---:|---:|---:|
+| fafd42d5, range start | 3149 / 3150 | 16933 | 16934 | |
+| 965b52b5, arch-helper done | 3149 / 3150 | 16963 | 16964 | +30 |
+| 472e06e2, arch-peer done | 3149 / 3150 | 16575 | 16576 | −388 |
+| c9e4c12a, arch-stream done | 3149 / 3150 | 16575 | 16576 | 0 |
+| 06913a33, arch-seal done | 2992 / 2993 | 16198 | 16199 | −377 |
+| c276c34f, arch-core done | 2954 / 2955 | 16162 | 16163 | −36 |
+| 4a741668, arch-view done | 2952 / 2953 | 16160 | 16161 | −2 |
+| 7bca97e6, arch-command-relay done | 2952 / 2953 | 16130 | 16131 | −30 |
+| ecd0b28a, arch-command done | 2952 / 2953 | 16148 | 16149 | +18 |
+| 23de662b, arch-version done | 2952 / 2953 | 16144 | 16145 | −4 |
+| 0a2e6b3a, range end | **2952 / 2953** | **16144** | **16145** | **−789** |
+
+The caps moved ten times (`git log fafd42d5..0a2e6b3a --
+scripts/lean_check.py`):
+
+| commit | the repository's cap | svrngs-core's | for |
+|---|---|---|---|
+| 8222c36d, arch-helper (b) | 16,934 → 16,955 | 3,150 | +21, a sign-in never offered nor lent |
+| 6f561772, arch-helper (c) | 16,955 → 16,964 | 3,150 | +9, #169's enum (its subject says "the 10 lines") |
+| 3a3f3fce, arch-peer | 16,964 → 16,576 | 3,150 | −388, the bridge cut |
+| 50783fc9, arch-seal | 16,576 → 16,199 | 3,150 → 2,993 | −377, −157 |
+| 5c6c8af9, arch-core | 16,199 → 16,163 | 2,993 → 2,955 | −36, −38 |
+| cf08b1bf, arch-view | 16,163 → 16,161 | 2,955 → 2,953 | −2, −2 |
+| 699e3d70, arch-command-relay | 16,161 → 16,131 | 2,953 | −30 |
+| d556c768, arch-command (a) | 16,131 → 16,091 | 2,953 | −40, (a)'s cuts |
+| e527da18, arch-command | 16,091 → 16,149 | 2,953 | +58, the page's join, within the row's 16,190 (the operator) |
+| c5a09854, arch-version | 16,149 → 16,145 | 2,953 | −4 |
+
+arch-helper raised +30 of the 31 v1ui left (fence 7's one exception, to
+16,964 under the ceiling of 16,965). arch-command's raise is the one its
+row gives (ralph/next/arch/STATE.md, "THE BUDGET (the operator) … at most
+at 16,190"), and the row closed at 16,148, 18 over where it started.
+Every other row closed below where it started and lowered both caps to
+one past its close. Over the range: **−789 counted lines, −197 of them
+svrngs-core's**. No line is left under either cap (16144 / 16145, 2952 /
+2953: lean_check fails at `n >= cap`, lean_check.py:116). This audit's
+three commits move no counted line (test code, and a rename), so the
+caps stand.
+
+### The instrument
+
+The binary is ~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256
+c95165c5… (`shasum -a 256`): auto-3's, unchanged.
+
+The corpus is 0a2e6b3a's crates/, web/, scripts/, apps/, Cargo.toml and
+Cargo.lock, by `git archive` into /tmp/archaudit1/prod-0a2e6b3a (366
+files).
+- `code index . --corpus-id prod-0a2e6b3a`: 4748 chunks in 448 s
+  (index.out).
+- `refresh`, run in the corpus: rust, 16832 symbols and 97502 references;
+  typescript and python "skipped (export failed)" (I4); the daemon nudge
+  refused and the in-process rebuild ran (I29) (refresh.out).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-node, crates/svrngs, crates/svrngs-core,
+crates/svrngs-runtime and web (`git diff --numstat fafd42d5 0a2e6b3a --
+crates apps web scripts bridge`); apps/ not at all. Each was reported at
+0.95 and 0.90 (/tmp/archaudit1/clean-*.md). Whether a side was added in
+the range is `git blame` at 0a2e6b3a over each side's lines against
+fafd42d5 (scripts/blame.sh over the 63 sides, cluster-sides.txt;
+blame-clusters.out, which saw both "before" and "IN RANGE").
+
+| scope | locations | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---:|---:|---:|---:|---|
+| crates/svrngs-node/ | 588 | 3 | 2 | 11 | 5 |
+| crates/svrngs/ | 65 | 0 | 0 | 0 | — |
+| crates/svrngs-core/ | 441 | 4 | 0 | 10 | 0 |
+| crates/svrngs-runtime/ | 122 | 1 | 0 | 0 | 0 |
+| web/ | 104 | could-not-judge (I4, I33) | 0 | 2 | 0 |
+
+The clusters with a side the range added:
+
+| tier | its side | its other side | read |
+|---|---|---|---|
+| exact ×3, ×2; near 1.000 | `flush`, `write` — guest/tests.rs:51-60 (a88c4b34) | relay_tests.rs:153-162, blob_tests.rs:161 | A test's trace sink written out a third time (test code, I8). **Made one in 684dade8.** |
+| near 0.928 | `signs_in` — share.rs:189-200 (1acbba28) | `helper_of` — share.rs:180-189 | `signs_in` asks `helper_of`; the spans overlap by a line (I1). Not a clone. |
+| near 0.914 | `router` — redeem.rs:114-125 (3 lines of d8c871a2) | `ask_route` — redeem.rs:121-134 | d8c871a2's lines are the state's type, `Asking`. The spans overlap (I1), as auto-1 read the pair. Not a clone. |
+| near 0.962 | `running` — home/home.js:142-168 (4 lines of 1acbba28) | `look` — home.js:145-167 | `look` is nested in `running` (I32), as auto-2 and auto-3 read it. 1acbba28's four lines say a sign-in left out. Not a clone. |
+
+The other clusters, none with a side in the range, are auto-3's again
+(api.rs `addr` ×2; sign_in.rs `of`/`forget`; synced.rs
+`kept_files`/`kept_at`; question.js `door`/`judge`; choices.rs
+`load`/`read`; rail.rs `live_push`/`live_drain`; ring_sync/tests.rs
+`admit`/`ingest`; lend.rs `from_mbit`/`bps`; app.js `uses`/`choicesOf`;
+lend.js `cookieFor`/`keepJar`), and svrngs-core's and svrngs-runtime's,
+which no audit since lean-auto-1 reported: three-line accessors
+(`is_empty`, `as_str`, `lines`, `signed_by_link`; runtime tests' `open`)
+and test bodies alike in shape (removal_tests.rs, register_tests.rs,
+membership_invite_tests.rs; I8). No side of them is the range's.
+
+**The line-window pass.** auto-3's windows.py over the crates' src and
+tests (core and runtime added, as the range touched them), web/src,
+web/tests, web/*.js, apps/events and apps/expenses: 204 files at
+0a2e6b3a (windows.files). **192 window hits, 64 spans, 13 new**
+(windows.spans, windows.verdicts; 51 read old). All 13 are test code:
+
+| new span | read |
+|---|---|
+| guest/tests.rs:48-69 == node's relay_tests.rs:150-170, == svrngs's src/relay_tests.rs:9-20, == svrngs's tests/relay.rs:103-113 (a88c4b34) | The trace sink. Node's three made one in 684dade8; svrngs's three are another crate's test binaries, each a static of its own. No finding. |
+| peer.rs:97-115 == home.rs:132-150 == lend_origin.rs:133-151; peer.rs:52-65 == home.rs:39-52; peer.rs:52-60 == tests/common/computers.rs:30-38 (d08a4cf1) | peer.rs wrote out `alex_lets_sam_in`, `start`, `no_seed`, `signing` and `NS` a third time. **Made one in 6ead9443**, tests/common/pair.rs; computers.rs's `start` keeps `seed_file`, so is its own. |
+| lend_origin.rs:624-633 == peer.rs:94-103 (d08a4cf1) | `a_lend_s_computer_asleep_is_said_away_within_the_cap` sets Alex and Sam up with a delay between, before the range. No finding. |
+| peer.rs:314-321 == conformance.rs:521-528 == svrngs's home_group.rs:124-131 (d08a4cf1) | Running a browser half under node and failing with its stderr, eight lines in five test binaries (`git grep "browser half failed"`), each its own script. Fixture, not a decision. No finding. |
+| svrngs's tests/common/mod.rs:28-36 == new_relay.rs:47-55 == phone_dry.rs:59-67 (a9897846) | Sam's computer started at a relay on 127.0.0.1. new_relay.rs starts its own relay because it loads neither the browser harness nor common (common/mod.rs:13, `use crate::harness`), as phone_dry.rs does. No finding. |
+| svrngs's home_group.rs:182-190 == :296-303 (0c2ced28) | Two browser tests' setup. No finding. |
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges fafd42d5..0a2e6b3a -- crates
+apps web scripts bridge`, matched against `(struct|enum|trait|type|class)
++[A-Z]\w*` (new-types.out), give 15 nouns: `At`, `Browser`, `Entered`,
+`NotJoined`, `Unsent`, `Answer`, `Bridge`, `Dialled`, `Joining`, `Kept`,
+`Linked`, `Answered`, `Request`, `To`, `Whole`. `Entered`, `NotJoined`
+and `Answer` were also removed (the join moved, reverted and moved again;
+node.rs's `Answer` rewritten in place by 533c6442). The range removed 25
+(removed-types.out), among them `Projection`, `RingSigner`,
+`ProcessManager`, `Seal`, `Compaction`, `HttpBridge`, `Surface` and
+`Issuer`.
+
+`converge noun <Name> --corpus-id prod-0a2e6b3a` for each (nouns.out).
+The nouns with more than one definition:
+
+| noun | definitions | read |
+|---|---|---|
+| `At` | crates/svrngs/src/relay.rs:56 (:57, I1), where a relay is reached; crates/svrngs-node/src/share.rs:62 (:63), well_known.txt's first column (8a3c0448) | Two concepts in two crates; svrngs never names `share::At` (`git grep "share::At" crates/svrngs`: none). No finding. |
+| `Answer` | door/sign_in.rs:71 (:72); node.rs:757 (:758, a struct inside `answered`) | Both before the range; auto-3 used this pair as its plant. Distinct, the second local to one function. No finding. |
+| `Answered` | iroh.rs:260 (:261, 07ae5d19: an answer's head, its body still to read); node.rs:720 (:721, how a computer asked what it lends answered, there at fafd42d5's node.rs:741) | One crate, one noun, two meanings. **Renamed in 98fe181f**: iroh's alias is `Streamed`, beside its `Whole`. |
+
+`Browser`, `Bridge` and `Dialled` (peer.rs, tests/common) are test code,
+and the instrument counts none (it found none for `Dialled`, though
+web/src/lib.rs:232 defines one, before the range: I33). The rest have one
+definition each.
+
+### Reading the range
+
+Every hunk of product src in join.rs, version.rs, home.rs, iroh.rs's
+request on the stream, node.rs's version check, and web/app.js and
+web/src/lib.rs was read (`git diff fafd42d5 0a2e6b3a -- …`); the rest's
+added lines were searched for a silent default (`unwrap_or`, `.ok()`,
+`filter_map`, `??`), and each hit read.
+
+- **One decider** (AGENTS.md 8).
+  - One version rule: version.rs, which the phone's page compiles by
+    `#[path]` (web/src/lib.rs `older`), and node.rs `answered`. A later
+    version is read, and an answer this build cannot read is refused,
+    traced (node.rs `answered`'s `Err` arm): never a substitute.
+  - One join (join.rs `Host::join`) for `svrngs join` and the home page;
+    one maker of a link (`Host::link`); one maker of a new group's relay
+    (`group::kept_relay`).
+  - **A connection kept to a computer is decided twice** (#177): the
+    blob fetch's cache, folder.rs:113 and :565-597, and the members'
+    protocol's, which 07ae5d19 added, iroh.rs:142 and :228-244. Each keeps
+    one connection per key while it stays open and dials afresh else, with
+    its own cap (`ANSWER_WITHIN`; `DIAL_WITHIN` through `dialled`'s held
+    transport) and its own owner: folder.rs's a `watch::Sender`, iroh.rs's
+    a `std::sync::Mutex` under `#[expect]`.
+- **Glassbox** (AGENTS.md 1).
+  - **Whether a request rode a kept connection is untraced** (#178,
+    iroh.rs:230-236). A dial traces in `dialled`, and a failure in
+    `on_stream`, but a request on a kept connection says nothing, and a
+    poisoned lock is read as "none kept" (`.lock().ok()`), unsaid.
+  - The join's refusals each trace where decided (join.rs `not_let_in`,
+    `asked`'s "not believed", `keep_group`'s refusal); the home page's
+    `link_of` and `join` trace theirs.
+- **Never silently substitute** (AGENTS.md 6). The hits read were
+  before the range or moved unchanged (`standings().unwrap_or_default()`,
+  each `None` said at warn in node.rs `standings`; redeem.rs:366, whose
+  empty name is refused as "a name this build cannot read"), or a cap
+  said in its error (iroh.rs `whole`, `dialled`). The seal on disk is
+  read as an act that does nothing (arch-seal (b), (c); f8ae1ee8's run).
+- **Closed sets** (AGENTS.md 9). `share::At` (#169), `Unsent`, `Entered`,
+  `NotJoined` and node.rs `Answered` are enums.
+- **Forked code** (AGENTS.md 11). The range forked nothing: 69 files
+  carry a `ported from` line at each end (`git grep -lE 'ported from
+  (commonwealth-ai|sovereign)' <rev> | wc -l`), and no added line is one.
+- **Validate the instrument** (AGENTS.md 7). arch-seal (c) and arch-view
+  (b) each ran a build from the row's start beside one from its close in
+  one group (f8ae1ee8, 53a35336); arch-stream ten runs in a row
+  (9e568a62). Those verdicts are those commits', not judged again here.
+
+### Fixed here
+
+- 6ead9443: tests/common/pair.rs, Alex's computer and Sam's, three copies
+  made one (−160 +12 in the three tests, +67 in pair.rs; none counted).
+  home 8, lend_origin 5 and peer 4 passed, as at HEAD (pair-before.out,
+  pair-after.out).
+- 684dade8: iroh/tests.rs `Said`, three sinks made one (−55 +32, none
+  counted); the three tests that read their trace passed, as at HEAD,
+  and the crate's 95 unit tests (said-before.out, said-after.out).
+- 98fe181f: `iroh::Streamed`, one noun one meaning in the node (0
+  counted).
+
+#177 and #178 are not fixed here. No line is left under the cap, and
+#178's trace is a counted line; #177 changes how a blob fetch dials.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 177 | 8, 10 | crates/svrngs-node/src/folder.rs:113 (`conns: watch::Sender<BTreeMap<String, Connection>>`), :565-597 (`fetch`: kept while `close_reason()` is none, else dialled within `ANSWER_WITHIN`); crates/svrngs-node/src/iroh.rs:142 (`conns: std::sync::Mutex<HashMap<…>>`, 07ae5d19), :228-244 (`send`: the same, dialled by `dialled` within `DIAL_WITHIN`) | open | One rule, a connection to a computer kept while it stays open and dialled afresh else, written twice, with two caps and two owners. The newer one holds a lock where the older is one owner and messages (clippy.toml's "one owner and messages (RUST_ARCH §3)", here under `#[expect]`). A change to how a kept connection is let go (say, on a member's restart at another address) lands on one. One cache on `IrohTransport`, keyed by key and protocol, both ask. |
+| 178 | 1, 6 | crates/svrngs-node/src/iroh.rs:230 (`self.conns.lock().ok()`), :231-237 (kept or dialled) | open | `send` says nothing when a request rides a kept connection: a trace shows a dial, or a failure, never which connection a request went on. And a poisoned lock is read as no connection kept, unsaid. One debug line naming kept or dialled, and the poison said. |
+| 80 | — | scripts/lean_check.py:49 BUDGET, :116 `n >= cap` | not fixed (operator's) | 16144 / 16145 after this audit, and 2952 / 2953 in svrngs-core: −789 and −197 over the range. arch-helper spent 30 of v1ui's 31. |
+| 130, 132-145, 150, 152-156, 176 | as recorded | as recorded | not fixed | Not reached by this range's findings; #176 is groups-tabs' (ralph/next/groups). |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun`, dry-report spans | Still one line early: share.rs:62 for :63, iroh.rs:260 for :261, node.rs:720 for :721, relay.rs:56 for :57. Spans overlap the next symbol (share.rs `helper_of`/`signs_in`, redeem.rs `router`/`ask_route`). |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". The JS exact tier (web/) could not judge. |
+| I8 | 6 | dry-report scope | Still present: test files reported as production clones (blob_tests.rs, guest/tests.rs, relay_tests.rs; core's removal_tests.rs, register_tests.rs, membership_invite_tests.rs; runtime's tests.rs, tests_write_index.rs). |
+| I19 | 6 | dry-report, `tests/` scopes | Still present. The line-window pass stood in, and found the two fixed here. |
+| I29 | 6 | `refresh` over a corpus `code index` made | Still present: the daemon nudge refused, then the in-process rebuild and exit 0. |
+| I32 | 7 | dry-report's near tier, nested spans | Still present: home.js `running` over `look`, question.js `door` over `judge`. |
+| I33 | 6 | SCIP over web/src | Still present: web/'s exact tier says "no SCIP function symbols in scope", and `converge noun Dialled` finds no definition though web/src/lib.rs:232 holds one. |
