@@ -17,9 +17,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 
-import { kindsOf } from './grapevine.js';
-import ask from './kinds/ask.js';
-import tool from './kinds/tool.js';
+import { KINDS as kinds } from './kinds.mjs';
 import { RELAY_EVERY, heldIn, person, stateFile } from './relay.mjs';
 import { file } from './store.mjs';
 
@@ -28,7 +26,6 @@ const dir = mkdtempSync(join(tmpdir(), 'grapevine-canary-'));
 const path = join(dir, 'demo.json');
 copyFileSync(demo, path);
 const store = file(path);
-const kinds = kindsOf([ask, tool]);
 const reads = [];
 const p = {};
 for (const id of ['Sam', 'Jo', 'Kim']) p[id] = person({ id, store, held: heldIn(store, id), kinds, state: stateFile(join(dir, `${id}.state.json`)), timed: (r) => reads.push(r) });

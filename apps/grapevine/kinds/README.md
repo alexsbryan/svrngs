@@ -29,8 +29,9 @@ export default {
 };
 ```
 
-Then add its file's name to the list of kinds in `server.mjs`. That one
-line is all you change outside this folder.
+Then add its file's name to the list in `kinds.mjs`, beside this folder.
+That one line is all you change outside this folder: the server and the
+canary both read that list.
 
 **Fields** are one of four types: `'text'`, `'date'` (as `2026-10-17`),
 `'number'` (a whole number) or `{choice: ['small', 'large']}`. A kind has 1

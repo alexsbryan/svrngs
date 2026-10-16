@@ -47,13 +47,10 @@ import { readFileSync } from 'node:fs';
 import http from 'node:http';
 import { join } from 'node:path';
 
-import { MAX_NAME, MAX_TEXT, kindsOf, typeOf } from './grapevine.js';
+import { MAX_NAME, MAX_TEXT, typeOf } from './grapevine.js';
+import { KINDS } from './kinds.mjs';
 import { Refused, debug as trace, heldBy, heldIn, loop, person, stateFile } from './relay.mjs';
 import { file, record } from './store.mjs';
-
-/** The kinds there are: a kind is one file in kinds/ and its name here (kinds/README.md). */
-const KIND_FILES = ['ask', 'tool'];
-const KINDS = kindsOf(await Promise.all(KIND_FILES.map(async (k) => (await import(`./kinds/${k}.js`)).default)));
 
 const config = JSON.parse(readFileSync(process.argv[2], 'utf8'));
 if (typeof config.data !== 'string') throw new Error('the config names no `data`, the folder each person\'s state file is kept in');
