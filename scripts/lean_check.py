@@ -56,8 +56,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # spent 2, and lowered it to one past where the row closed. groups-leave (a),
 # a person's own Remove their leave (svrngs-core's fold and `Leave`), raised
 # svrngs-core's to one past where it landed, 34 of its 40, and the
-# repository's with it.
-BUDGET = {"crates/svrngs-core": 2987, ".": 16195}
+# repository's with it. Its (b), `svrngs leave` and a left group held live no
+# more, raised the repository's to one past where it landed.
+BUDGET = {"crates/svrngs-core": 2987, ".": 16252}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
