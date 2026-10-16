@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai commonwealth/crates/commonwealth-rail-core/src/tests_sealing.rs@e1a43bcd2
-//! The verifier seam, seals, and acting on behalf of a guest.
+//! The verifier seam, a seal held, and acting on behalf of a guest.
 //!
 //! Split out of `tests.rs`, which the ring-rail work pushed into the
 //! 800-1200 approach band (ARCH §3.1). Same crate, same fixtures.
@@ -92,143 +92,40 @@ fn a_permissive_verifier_still_cannot_admit_a_stranger() {
     assert!(matches!(f.gaps(), [RailGap::UnknownSigner { .. }]));
 }
 
-// ── the sealed floor ─────────────────────────────────────────
+// ── a seal, held ─────────────────────────────────────────────
 
-/// A `Seal` whose author signed it, at `seq`, plus one act above it. The
-/// holding a node has after it compacts everything the seal retired.
+/// A `Seal` whose author signed it, at `seq`, plus one act above it: the
+/// holding an older build left after it pruned what the seal retired.
 fn sealed_then(seq: u64, what: &str) -> Vec<Op<SignedOp>> {
     let seal = signed(&key(1), 100 + seq as i64, seq, RailAct::Seal);
     let above = after(&key(1), &seal, 101 + seq as i64, record(what));
     vec![seal, above]
 }
 
-/// **Compaction must not look like breakage.** Before the floor existed,
-/// `admit` walked `0..=highest` and a node that had retired a sealed prefix
-/// reported one `SequenceHole` per retired op — permanently, and to every
-/// housemate, while being in perfect health.
-///
-/// The first assertion is the negative control: the same two ops WITHOUT the
-/// seal are three holes, so the second cannot pass on a holding that was
-/// never missing anything.
+/// **A seal held retires nothing, and claims nothing complete** (arch-seal
+/// (c); svrn-docs A_RECORD_FOR_YEARS §6 q2). A copy holding alex's seal at
+/// seq 3 and an act above it, and nothing below, is missing seqs 0..=2: three
+/// holes, and alex absent from its digest, so a peer sends the lot. The seal
+/// is held as an act that applies nothing. The failing input: the seal sets
+/// alex's floor, as at the row's start, and the copy reads as whole.
 #[test]
-fn a_sealed_prefix_is_retired_rather_than_reported_as_a_hole() {
-    let unsealed = vec![signed(&key(1), 104, 4, record("after"))];
-    assert_eq!(
-        admitted(&unsealed).gaps().len(),
-        4,
-        "control: with nothing sealed, seqs 0..=3 are four holes"
-    );
-
-    let f = admitted(&sealed_then(3, "after"));
-    assert!(
-        f.is_complete(),
-        "a compacted node is not a broken one: {:?}",
-        f.gaps()
-    );
-    assert_eq!(applied(&f), vec!["after"]);
-}
-
-/// **A refused seal retires nothing (ARCH §18.3).** A seal is the one act that
-/// makes the rail stop asking for history, so a seal the rail could not
-/// authenticate must be a refusal and never an absence. This one names `alex`
-/// as its actor and is signed with a key that is not alex's — the exact op a
-/// hostile peer would push at `/internal/ring/sync`, which ingests as-signed.
-///
-/// If the floor came from the seal ops a node HOLDS rather than the ones it
-/// ADMITS, one forged line would retire a member's whole history on every node
-/// that received it.
-#[test]
-fn a_seal_the_rail_refused_retires_nothing() {
-    // cy's key, over a line that claims to be alex's.
-    let forged = forged(
-        &key(3),
-        &key(1),
-        103,
-        3,
-        Some(absent_parent()),
-        RailAct::Seal,
-    );
-    let f = admitted(&[forged, signed(&key(1), 104, 4, record("after"))]);
-
-    assert!(
-        f.gaps().iter().any(
-            |g| matches!(g, RailGap::BadSignature { actor, .. } if *actor == actor_of(&key(1)))
-        ),
-        "the forged seal is refused, not silently ignored: {:?}",
-        f.gaps()
-    );
-    for missing in 0..=3 {
-        assert!(
-            f.gaps().contains(&RailGap::SequenceHole {
-                actor: actor_of(&key(1)),
-                missing,
-            }),
-            "seq {missing} is still missing — a refused seal did not retire it: {:?}",
-            f.gaps()
-        );
-    }
-    assert!(!f.is_complete());
-}
-
-/// **A seal the log itself calls wrong retires nothing.** `Correct` voids
-/// without erasure and the void set is commutative — but the floors were
-/// computed before the void set existed, so a voided seal kept suppressing
-/// its author's holes in `admit`, `digest` and `compact` alike. Seq 1 is
-/// missing here; it is a hole precisely because the seal that claimed to
-/// retire it is voided.
-#[test]
-fn a_corrected_seal_retires_nothing() {
-    let seal = signed(&key(1), 102, 2, RailAct::Seal);
-    let correct = after(
-        &key(1),
-        &seal,
-        103,
-        RailAct::Correct {
-            corrects: seal.id.clone(),
-            replacement: None,
-        },
-    );
-    let f = admitted(&[signed(&key(1), 100, 0, record("kept")), seal, correct]);
-
-    assert!(
-        !f.floors().contains_key(&actor_of(&key(1))),
-        "a voided seal raises no floor: {:?}",
-        f.floors()
-    );
-    assert!(
-        f.gaps().contains(&RailGap::SequenceHole {
-            actor: actor_of(&key(1)),
-            missing: 1,
-        }),
-        "seq 1 is a hole again — the retirement was itself corrected: {:?}",
-        f.gaps()
-    );
-}
-
-/// **A seal is bounded by the key that signed it.** `RailAct::Seal` carries no
-/// actor, so sealing somebody else's history is unwritable rather than
-/// refused — but the floor derivation still has to key on the signer and not,
-/// say, apply the highest seal in the journal to everyone.
-#[test]
-fn a_seal_retires_only_the_history_of_the_key_that_signed_it() {
-    let mut ops = sealed_then(3, "after");
-    // bo holds only their seq 2 — seqs 0 and 1 have not arrived, and alex's
-    // seal says nothing about that.
-    ops.push(signed(&key(2), 110, 2, record("bo-late")));
+fn a_seal_held_retires_nothing_and_claims_nothing_complete() {
+    let ops = sealed_then(3, "after");
     let f = admitted(&ops);
+    let holes = (0..3).map(|missing| RailGap::SequenceHole {
+        actor: actor_of(&key(1)),
+        missing,
+    });
     assert_eq!(
         f.gaps(),
-        vec![
-            RailGap::SequenceHole {
-                actor: actor_of(&key(2)),
-                missing: 0
-            },
-            RailGap::SequenceHole {
-                actor: actor_of(&key(2)),
-                missing: 1
-            },
-        ],
-        "alex is sealed, bo is not"
+        holes.collect::<Vec<_>>(),
+        "seqs 0..=2 are still missing"
+    );
+    assert_eq!(wire_ops(&f).len(), 2, "the seal is held as an act");
+    assert_eq!(applied(&f), vec!["after"]);
+    assert!(
+        marks(&crate::digest(&ops, NS, &Ed25519Verifier)).is_empty(),
+        "nothing from alex's first act on is held, so the digest claims none of theirs"
     );
 }
 
@@ -427,8 +324,8 @@ fn a_ring_with_no_membership_acts_admits_exactly_as_before() {
         .collect();
     let f = admitted(&ops);
     assert_eq!(
-        serde_json::to_string(&(&f.ops(), &f.gaps(), &f.floors())).unwrap(),
-        r#"[[{"id":"6efe8a46f81d82df03b43ed537f3d50b854c24f8810a4b4aac58c61629d2c840","actor":"8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c","person":"alex","seq":0,"ts_unix":1700000000,"voided":true,"payload":{"kind":"thing","what":"milk"}},{"id":"e754694b85150ea490f4c305099f4d26142f95c8a031134e172500abc1983fc4","actor":"8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394","person":"bo","seq":0,"ts_unix":1700000001,"corrects":"6efe8a46f81d82df03b43ed537f3d50b854c24f8810a4b4aac58c61629d2c840","voided":false},{"id":"0ce63175592c0b3b80fb1cff79983bbd42610fede6f73e3bb2610808f171a711","actor":"ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1","person":"cy","seq":0,"ts_unix":1700000002,"voided":false}],[],{"ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1":0}]"#,
+        serde_json::to_string(&(&f.ops(), &f.gaps())).unwrap(),
+        r#"[[{"id":"6efe8a46f81d82df03b43ed537f3d50b854c24f8810a4b4aac58c61629d2c840","actor":"8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c","person":"alex","seq":0,"ts_unix":1700000000,"voided":true,"payload":{"kind":"thing","what":"milk"}},{"id":"e754694b85150ea490f4c305099f4d26142f95c8a031134e172500abc1983fc4","actor":"8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394","person":"bo","seq":0,"ts_unix":1700000001,"corrects":"6efe8a46f81d82df03b43ed537f3d50b854c24f8810a4b4aac58c61629d2c840","voided":false},{"id":"0ce63175592c0b3b80fb1cff79983bbd42610fede6f73e3bb2610808f171a711","actor":"ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1","person":"cy","seq":0,"ts_unix":1700000002,"voided":false}],[]]"#,
         "a ring with no membership act folds byte-identically to the build before"
     );
 }

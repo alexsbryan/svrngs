@@ -93,7 +93,6 @@ mod membership;
 mod op;
 pub mod pass;
 mod payload;
-mod process;
 mod project;
 mod record;
 mod register;
@@ -119,9 +118,8 @@ pub use admit::{admit, body_json, Admission, AdmittedOp, GapClass, RailGap};
 pub use command::{commit, Author, Authored, Command, Reads, Recorded, Refused, Store, Tip};
 pub use membership::{membership, standing_reads, Cut, InviteFault, Invited, Joined, Membership};
 pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
-pub use process::{Compact, Due, ProcessManager, Retire, Uncaused};
 pub use project::{Invites, Projection, Wire};
-pub use record::{Append, AppendRefusal, Seal};
+pub use record::{Append, AppendRefusal};
 pub use register::{
     HandOnRefusal, HandOnTo, MintInvite, Redeem, RedeemRefusal, RelayAt, Removal, RemovalRefusal,
 };
@@ -129,7 +127,7 @@ pub use sig::{
     act_id, actor_of, derive_id, field, redemption_message, ring_op_message, sign_act,
     sign_message, sign_ring_op, verify_hex,
 };
-pub use sync::{digest, ops_missing_from_within, Compaction, DigestFold, Floors, NO_BUDGET};
+pub use sync::{digest, ops_missing_from_within, DigestFold, NO_BUDGET};
 pub use synced::{Change, Entry, NotASyncPath, Placed, SyncFolder, SyncPath};
 pub use view::{Digest, View, DIGEST_V};
 
@@ -349,23 +347,12 @@ pub enum RailAct {
         corrects: OpId,
         replacement: Option<Payload>,
     },
-    /// Everything this key wrote **before this op** is retired. The rail stops
-    /// asking for it, stops sending it, and stops calling its absence a hole.
-    ///
-    /// A seal carries no `actor` and no range, and both omissions are the
-    /// design (ARCH §7.1 — unrepresentable rather than checked):
-    ///
-    /// - **No actor**, so sealing someone else's history cannot be written.
-    ///   The floor a seal raises is the floor of whoever signed it, and the
-    ///   signature is the only field on the line a writer cannot forge for
-    ///   somebody else (ARCH §18.1).
-    /// - **No range**, so the floor is the seal's own `seq`. A seal cannot
-    ///   claim past what its author has actually reached, and a node that
-    ///   holds the seal necessarily holds the floor — which is what keeps the
-    ///   contiguous run in [`digest`] non-empty for a compacted actor.
-    ///
-    /// It carries no payload, so an app's reducer never sees it
-    /// ([`AdmittedOp::applies`] is false); it is delivery, not meaning.
+    /// An older build's seal: it retired everything its signer wrote before
+    /// it, on every copy it reached. Here it does nothing (arch-seal; svrn-docs
+    /// `rings/current/A_RECORD_FOR_YEARS.md` §2, §6 q2): a line on disk is read
+    /// and held as an act, [`admit`] says so at debug, and it retires, voids
+    /// and carries nothing. No command writes one: an app's is refused as
+    /// `NotAnAppAct`. The variant stays so an older journal still parses.
     Seal,
     /// A member says: this person and this key are in the ring. One of the
     /// two membership acts (`RING_APPLICATIONS.md` "Amendment 2026-09-18");

@@ -237,30 +237,51 @@ async fn a_journal_past_the_one_exchange_ceiling_converges_onto_a_fresh_peer() {
     );
 }
 
-/// **A peer's seal shortens THIS node's disk, in the round it arrives.** The
-/// assertion is on what is on disk afterwards: a prune that silently did
-/// nothing would leave every count identical.
+/// **A seal another member signs retires nothing here, and every act under
+/// it still counts** (arch-seal (c); svrn-docs A_RECORD_FOR_YEARS §6 q2).
+/// Bo, a member, writes three records and then a seal, as an older build's
+/// app route wrote one; Ana's computer pulls the seal and keeps all four
+/// lines, the seal held as an act that does nothing. The failing input:
+/// copies honour a seal, as at the row's start, and Ana's disk is pruned to
+/// the seal alone.
 #[tokio::test]
-async fn a_peers_seal_prunes_this_nodes_disk_in_the_round_it_arrives() {
-    let key = SigningKey::from_bytes(&[1u8; 32]);
+async fn a_seal_another_member_signs_retires_nothing_here() {
+    let (ana, bo) = (
+        SigningKey::from_bytes(&[1u8; 32]),
+        SigningKey::from_bytes(&[2u8; 32]),
+    );
+    let mut seed = solo_roster(&ana);
+    seed.members
+        .insert(Person::parse("bo").unwrap(), vec![actor_of(&bo)]);
     let (mine, theirs) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let (rail, journal) = node(mine.path(), &key, 3);
-    let (peer_rail, peer_journal) = node(theirs.path(), &key, 3);
+    let duo = |dir: &std::path::Path, key: &SigningKey| {
+        let rail = Arc::new(RingRail::new(dir, Arc::new(key.clone())));
+        rail.set_seed(NS, &seed).unwrap();
+        assert_eq!(rail.ingest_all(NS, &ops_in(NS, &bo, 3)).unwrap(), 3);
+        (rail.clone(), Journal(rail))
+    };
+    let (rail, journal) = duo(mine.path(), &ana);
+    let (peer_rail, peer_journal) = duo(theirs.path(), &bo);
     peer_journal
-        .ingest(&next_in(&peer_journal, &key, RailAct::Seal))
+        .ingest(&next_in(&peer_journal, &bo, RailAct::Seal))
         .unwrap();
-    assert_eq!(journal.read().unwrap().0.len(), 3, "control: we hold three");
 
-    let (_, served) = serve(peer_rail, &key).await;
+    let (_, served) = serve(peer_rail, &ana).await;
     let out = exchange(served.to(), rail.as_ref(), NS).await;
 
     assert!(out.stop.is_none(), "the exchange failed: {:?}", out.stop);
     assert_eq!(out.pulled, 1, "one op came over, and it was the seal");
     let held = journal.read().unwrap().0;
-    assert_eq!(held.len(), 1, "the retired prefix left our disk: {held:?}");
-    assert!(matches!(held[0].kind.act, RailAct::Seal));
-    let admitted = journal.admit(&solo_roster(&key), &Ed25519Verifier).unwrap();
+    assert_eq!(held.len(), 4, "the seal retired nothing: {held:?}");
+    let admitted = journal.admit(&seed, &Ed25519Verifier).unwrap();
     assert!(admitted.is_complete(), "gaps: {:?}", admitted.gaps());
+    let ops = svrngs_core::tests_support::wire_ops(&admitted);
+    assert_eq!(ops.len(), 4, "the seal is held as an act: {ops:?}");
+    assert_eq!(
+        ops.iter().filter(|o| o.applies()).count(),
+        3,
+        "every record under it still counts"
+    );
     assert_eq!(
         journal.digest(&crate::Ed25519Verifier).unwrap(),
         peer_journal.digest(&crate::Ed25519Verifier).unwrap(),
@@ -268,8 +289,8 @@ async fn a_peers_seal_prunes_this_nodes_disk_in_the_round_it_arrives() {
     );
 }
 
-/// The control for the seal tests: the identical exchange with an ordinary
-/// act pulls the same one op and deletes NOTHING.
+/// The control for the seal test above: the identical exchange with an
+/// ordinary act pulls the same one op and deletes nothing.
 #[tokio::test]
 async fn an_ordinary_op_arriving_prunes_nothing() {
     let key = SigningKey::from_bytes(&[1u8; 32]);
@@ -417,86 +438,6 @@ async fn the_pull_direction_is_budgeted_and_converges_by_repeating() {
     assert!(admitted.is_complete(), "gaps: {:?}", admitted.gaps());
     assert_eq!(
         fresh_journal.digest(&crate::Ed25519Verifier).unwrap(),
-        journal.digest(&crate::Ed25519Verifier).unwrap()
-    );
-}
-
-/// A seal is an op, not a delete: the exchange shortens only once the
-/// retired lines are gone from disk, and the compacted suffix bootstraps a
-/// fresh peer in one chunk, complete.
-#[tokio::test]
-async fn a_seal_shortens_the_exchange_only_once_the_retired_lines_are_deleted() {
-    const RETIRED: u64 = 10_000;
-    const KEPT: u64 = 500;
-    let key = SigningKey::from_bytes(&[1u8; 32]);
-    let dir = tempfile::tempdir().unwrap();
-    let (rail, journal) = node(dir.path(), &key, RETIRED as usize);
-    let payload = body_of_size(FIXTURE_BODY_BYTES);
-    let mut tail = vec![next_in(&journal, &key, RailAct::Seal)];
-    for _ in 0..KEPT {
-        let act = RailAct::Record {
-            payload: payload.clone(),
-        };
-        let next = after(&key, tail.last().unwrap(), act);
-        tail.push(next);
-    }
-    assert_eq!(journal.ingest_all(&tail).unwrap(), tail.len());
-
-    /// Bootstrap a fresh peer from `rail`: what it pushed, the peer's
-    /// journal, and the dir that holds it.
-    async fn bootstrap(rail: &RingRail, key: &SigningKey) -> (usize, Journal, tempfile::TempDir) {
-        let p = tempfile::tempdir().unwrap();
-        let (peer, peer_journal) = node(p.path(), key, 0);
-        let (_, served) = serve(peer, key).await;
-        let out = exchange(served.to(), rail, NS).await;
-        assert!(out.stop.is_none(), "{:?}", out.stop);
-        (out.pushed, peer_journal, p)
-    }
-    let (sealed_pushed, _, _p1) = bootstrap(&rail, &key).await;
-    assert_eq!(
-        sealed_pushed,
-        (RETIRED + KEPT + 1) as usize,
-        "a seal is an op, not a delete: everything still goes out"
-    );
-
-    let path = journal.0.group_dir(NS).unwrap().join("ring_oplog.jsonl");
-    let kept: String = std::fs::read_to_string(&path)
-        .unwrap()
-        .lines()
-        .filter(|l| {
-            serde_json::from_str::<Op<SignedOp>>(l)
-                .map(|o| o.kind.seq >= RETIRED)
-                .unwrap_or(true)
-        })
-        .map(|l| format!("{l}\n"))
-        .collect();
-    std::fs::write(&path, kept).unwrap();
-    assert_eq!(journal.read().unwrap().0.len(), (KEPT + 1) as usize);
-
-    let (ops, more) = journal
-        .ops_missing_from_within(
-            &crate::Ed25519Verifier,
-            &Digest::default(),
-            RING_SYNC_OPS_BUDGET_BYTES,
-        )
-        .unwrap();
-    assert!(!more, "the compacted suffix fits one chunk");
-    assert_eq!(ops.len(), (KEPT + 1) as usize);
-    let (compacted_pushed, peer_journal, _p2) = bootstrap(&rail, &key).await;
-    assert_eq!(compacted_pushed, (KEPT + 1) as usize, "the suffix lands");
-    let admitted = peer_journal
-        .admit(&solo_roster(&key), &Ed25519Verifier)
-        .unwrap();
-    assert!(admitted.is_complete(), "gaps: {:?}", admitted.gaps());
-    assert_eq!(
-        svrngs_core::tests_support::wire_ops(&admitted)
-            .iter()
-            .filter(|o| o.applies())
-            .count(),
-        KEPT as usize
-    );
-    assert_eq!(
-        peer_journal.digest(&crate::Ed25519Verifier).unwrap(),
         journal.digest(&crate::Ed25519Verifier).unwrap()
     );
 }

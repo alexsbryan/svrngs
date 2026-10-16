@@ -171,24 +171,8 @@ impl RingRail {
     }
 }
 
-// ── What a compaction did ────────────────────────────────────
-//
-// `Compaction` moved to `commonwealth-rail-core` beside the `Floors` map it
-// carries through: it is vocabulary, not storage, and the compact door's
-// answer crosses back to a dialing client as this type. The glob re-export
-// above keeps `commonwealth_rail::Compaction` resolving.
-
-/// One [`RingJournal::seal`]: the seal act, and the prune it authorises.
-///
-/// **A seal and its prune are one act, and they are not one result.** The seal
-/// is signed and on disk by the time the prune runs, so a refused prune is not
-/// a failed seal — reporting it as one would tell a caller its seal did not
-/// land when it did, and the retry would write a second one. So the pair is an
-/// `Ok` carrying a `Result`: the caller has to look at `retired` to say what
-/// happened, and cannot mistake "nothing was retired" for "the prune was
-/// refused" (ARCH §18.3).
-/// The runtime's whole surface for adapters: queries, `commit`, the seal, and
-/// the replication port. No adapter holds a journal.
+/// The runtime's whole surface for adapters: queries, `commit`, and the
+/// replication port. No adapter holds a journal.
 ///
 /// ```
 /// fn reads(r: &svrngs_runtime::RingRail) -> Result<svrngs_runtime::Admission, svrngs_runtime::RailError> {
@@ -228,12 +212,6 @@ impl RingRail {
             self.wrote(namespace);
         }
         done
-    }
-
-    /// The seal, then the prune it authorises.
-    pub fn seal(&self, namespace: &str) -> Result<Sealed, RailError> {
-        let journal = self.journal(namespace)?;
-        journal.seal(self.signer(), &journal.roster_file()?, &Ed25519Verifier)
     }
 
     /// This computer's newest `Invite` naming the link's key `link`, the
@@ -288,25 +266,12 @@ impl RingRail {
         }
         Ok(taken)
     }
-
-    /// Deletes what the group's admitted seals retire.
-    pub fn compact(&self, namespace: &str) -> Result<Compaction, RailError> {
-        let journal = self.journal(namespace)?;
-        journal.compact(&journal.roster_file()?, &Ed25519Verifier)
-    }
 }
 
 /// A group's directory under `root`, without a runtime: the command lists the
 /// groups a computer keeps before it starts one.
 pub fn group_dir_in(root: &Path, namespace: &str) -> Result<PathBuf, RailError> {
     Ok(RingJournal::open(root, namespace)?.dir().to_path_buf())
-}
-
-#[derive(Debug)]
-pub struct Sealed {
-    pub op: Op<SignedOp>,
-    /// What [`RingJournal::compact`] did, or why it would not.
-    pub retired: Result<Compaction, RailError>,
 }
 
 // ── The journal on disk ──────────────────────────────────────

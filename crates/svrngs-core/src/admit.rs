@@ -102,11 +102,8 @@ pub enum RailGap {
     TamperedId { claimed: OpId, derived: OpId },
     /// This actor's ops jump over a sequence number. Something they wrote has
     /// not reached us — the one condition that distinguishes "nothing
-    /// happened" from "it never arrived."
-    ///
-    /// Counted from that actor's sealed floor, so what a
-    /// [`Seal`](crate::RailAct::Seal) retired is absent by agreement rather
-    /// than missing.
+    /// happened" from "it never arrived." Counted from zero: a
+    /// [`Seal`](crate::RailAct::Seal) retires nothing (arch-seal).
     SequenceHole { actor: String, missing: u64 },
     /// One actor used one sequence number for two different ops. Equivocation
     /// or a lost counter after a restart. Both count, each weighed as itself:
@@ -365,8 +362,6 @@ pub struct Admission {
     ops: Vec<AdmittedOp>,
     gaps: Vec<RailGap>,
     held: usize,
-    floors: crate::sync::Floors,
-    seals: Vec<OpId>,
     membership: crate::membership::Membership,
     /// Every synced folder's change, in admission's order (sy-1).
     pub(crate) synced: crate::synced::Written,
@@ -390,16 +385,6 @@ impl Admission {
     /// The distinct lines admitted from; `held() - ops().len()` were refused.
     pub fn held(&self) -> usize {
         self.held
-    }
-
-    /// Where each actor's history starts, per the seals admission authenticated.
-    pub(crate) fn floors(&self) -> &crate::sync::Floors {
-        &self.floors
-    }
-
-    /// The seals that set a floor: the acts a compaction is due from.
-    pub(crate) fn seals(&self) -> &[OpId] {
-        &self.seals
     }
 
     /// Who is in: the one membership walk admission made.
@@ -671,35 +656,24 @@ pub fn admit(
         }
     }
 
-    // Holes are audited from each actor's SEALED FLOOR, not from zero, or a
-    // node that has retired what a seal covers reports one hole per retired
-    // op — permanently, to every housemate, while being in perfect health.
-    // That report is what made compaction indistinguishable from breakage.
-    //
-    // The floors come from ops that survived the signature/roster checks
-    // above, minus what the void set just retired: a seal the rail refused,
-    // or one the log itself corrected, retires nothing. A seal on either
-    // branch of a fork counts, as every forked act does (U7). Suppressing a hole is a claim
-    // of completeness, and a claim of completeness may only rest on an act the
-    // rail could actually authenticate (ARCH §18.3).
-    let floors = crate::sync::sealed_floors(admitted.values().map(|c| (&c.id, c.op)), &voided);
-    let seals: Vec<OpId> = admitted
+    // Holes are audited from zero. A seal is held as an act that does
+    // nothing (arch-seal; svrn-docs A_RECORD_FOR_YEARS §6 q2): an older
+    // build's seal set a floor that hid the holes below it, and here it
+    // hides none, so a copy an older build pruned says what it is missing.
+    let seals = admitted
         .values()
-        .filter(|c| {
-            matches!(c.op.kind.act, RailAct::Seal)
-                && !voided.contains(&c.id)
-                && floors.get(&c.op.actor) == Some(&c.op.kind.seq)
-        })
-        .map(|c| c.id.clone())
-        .collect();
+        .filter(|c| matches!(c.op.kind.act, RailAct::Seal));
+    for c in seals {
+        tracing::debug!(namespace, id = %c.id, actor = %crate::actor_prefix(&c.op.actor), seq = c.op.kind.seq,
+            "ring rail: a seal is held and retires nothing — an older build's act, read as one that does nothing");
+    }
     for (actor, by_seq) in &seqs {
-        let floor = floors.get(*actor).copied().unwrap_or(0);
         let highest = by_seq
             .keys()
             .copied()
             .next_back()
             .expect("seqs only holds actors that wrote");
-        for n in floor..=highest {
+        for n in 0..=highest {
             if !by_seq.contains_key(&n) {
                 gaps.push(RailGap::SequenceHole {
                     actor: (*actor).to_string(),
@@ -755,7 +729,7 @@ pub fn admit(
                     corrects,
                     replacement,
                 } => (Some(corrects.clone()), replacement.clone()),
-                // A seal is delivery, not meaning: it voids nothing and
+                // A seal does nothing (arch-seal): it voids nothing and
                 // carries nothing, so `applies()` is false and no reducer
                 // sees it. Admit/Remove carry meaning to the MEMBERSHIP
                 // function and never to an app (no-re-division).
@@ -789,10 +763,6 @@ pub fn admit(
         namespace,
         verifier = verifier.name(),
         held = acts.len(),
-        // The one input that stops a gap being REPORTED, so it belongs on the
-        // event a reader already looks at when asking why a node claims
-        // completeness (ARCH §9.1). `{}` when nothing is sealed.
-        sealed = ?floors,
         admitted = out.len(),
         applied,
         voided = voided.len(),
@@ -815,8 +785,6 @@ pub fn admit(
         ops: out,
         gaps,
         held: acts.len(),
-        floors,
-        seals,
         membership: m,
         synced,
         tips,

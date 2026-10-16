@@ -71,10 +71,6 @@ async fn append_signs_as_the_node_and_assigns_the_fields() {
     assert!(out["ts_unix"].as_i64().unwrap_or(0) > 0);
     assert!(out["id"].as_str().is_some());
     assert_eq!(out["namespace"], "ledger");
-    assert!(
-        out.get("retired").is_none(),
-        "a record has no prune to render"
-    );
 }
 
 const GUESTS: &[(&str, u8)] = &[("alex", 7), ("halo", 3)];

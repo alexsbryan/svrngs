@@ -27,6 +27,16 @@ impl<K: Journaled> Oplog<K> {
     pub fn read_all(&self) -> Result<Vec<Op<K>>> {
         self.read_all_with_skips().map(|(ops, _)| ops)
     }
+
+    /// Another file with exactly `ops` renamed over the log, as a restore
+    /// from a backup would. (svrngs: upstream's product method, which its
+    /// compaction called; it went with compaction in arch-seal, and only the
+    /// tests of a file replaced from outside still call it.)
+    pub fn replace_all(&self, ops: &[Op<K>]) -> Result<()> {
+        let tmp = self.path.with_extension("replacing");
+        fs::write(&tmp, Self::lines(ops)?).map_err(OplogError::Io)?;
+        fs::rename(&tmp, &self.path).map_err(OplogError::Io)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -99,41 +109,6 @@ fn the_prefix_is_hashed_so_two_tenants_cannot_collide() {
         a.id, b.id,
         "the hashed input must include the prefix, not only the body"
     );
-}
-
-/// **The one shrinking operation, and it leaves nothing behind.** The
-/// temp file is a sibling of the log, so a compaction that returned
-/// without cleaning up would leave a `.compacting` file in every ring
-/// directory — harmless, and exactly the kind of litter that later reads
-/// as a crashed run.
-#[test]
-fn replace_all_swaps_the_whole_log_and_leaves_no_temp_file() {
-    let dir = tempfile::tempdir().unwrap();
-    let log: Oplog<Probe> = Oplog::new(dir.path());
-    let ops: Vec<Op<Probe>> = ["a", "b", "c"]
-        .iter()
-        .map(|w| Op::new(touch(w), 7, "human:alex"))
-        .collect();
-    log.append_all(&ops).unwrap();
-
-    log.replace_all(&ops[2..]).unwrap();
-    assert_eq!(log.read_all().unwrap(), ops[2..].to_vec());
-    assert!(
-        !dir.path().join("probe_oplog.compacting").exists(),
-        "the temp file outlived the rename"
-    );
-
-    // Replacing with nothing is an EMPTY log, not a missing one: a
-    // namespace whose every line was retired still exists.
-    log.replace_all(&[]).unwrap();
-    assert!(log.path().exists(), "the file was unlinked, not emptied");
-    assert!(log.read_all().unwrap().is_empty());
-
-    // And it is still a journal afterwards — append picks up from the
-    // replaced file rather than from whatever was there before.
-    let next = Op::new(touch("d"), 8, "human:alex");
-    log.append(&next).unwrap();
-    assert_eq!(log.read_all().unwrap(), vec![next]);
 }
 
 #[test]

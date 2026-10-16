@@ -52,8 +52,8 @@ fn a_batch_append_continues_the_counter_contiguously() {
 /// (pc-rails-journal-linear): re-reading it per write made the kv drain cost
 /// rows x log lines a tick. Shown by overwriting a folded line in place —
 /// same length, same file — which a whole re-read would see as malformed and
-/// hand its seq out again. Lines another writer appended, and a compaction
-/// renamed over the log by another handle, are still seen.
+/// hand its seq out again. Lines another writer appended, and a file
+/// renamed over the log, are still seen.
 #[test]
 fn a_write_reads_only_what_the_log_gained_since_the_last_one() {
     use std::io::{Seek, SeekFrom, Write};
@@ -96,20 +96,23 @@ fn a_write_reads_only_what_the_log_gained_since_the_last_one() {
         4
     );
 
-    // A compaction by the other handle renames a new file over the log; this
-    // handle starts again from the top. On a fresh log: compaction refuses
-    // one holding the line overwritten above.
+    // A file renamed over the log, as a restore would; this handle starts
+    // again from the top. On a fresh log, so nothing overwritten above is in
+    // it. (svrngs: upstream's was the other handle's compaction, which went
+    // in arch-seal.)
     let fresh = tempfile::tempdir().unwrap();
-    let (a, b) = (open(fresh.path()), open(fresh.path()));
-    for _ in 0..3 {
+    let a = open(fresh.path());
+    for _ in 0..4 {
         a.append(record("x"), &key(1), &r, None, &Ed25519Verifier).unwrap();
     }
-    a.append(RailAct::Seal, &key(1), &r, None, &Ed25519Verifier).unwrap();
-    let dropped = a.read().unwrap().0.remove(0);
-    assert_eq!(b.compact(&r, &Ed25519Verifier).unwrap().removed, 3);
+    let mut lines = a.read().unwrap().0;
+    let dropped = lines.remove(0);
+    crate::oplog::Oplog::<SignedOp>::new(a.dir().to_path_buf())
+        .replace_all(&lines)
+        .unwrap();
     assert!(
         a.ingest(&dropped).unwrap(),
-        "a retired op is not held after the compaction, as before the index"
+        "an op not in the file renamed over the log is not held, as before the index"
     );
     assert_eq!(
         a.append(record("x"), &key(1), &r, None, &Ed25519Verifier)
@@ -124,8 +127,8 @@ fn a_write_reads_only_what_the_log_gained_since_the_last_one() {
 /// (ceiling-2): after each change below, one handle's digest and its offer
 /// to a peer in step are what the file read whole gives (svrngs-core
 /// `digest`, `ops_missing_from_within`) — through its own appends, lines
-/// another handle appended, a compaction another handle renamed over the
-/// log, a shorter log renamed over that, and an act past a hole, its actor absent from the digest, which
+/// another handle appended, a shorter log renamed over it, and an act past a
+/// hole, its actor absent from the digest, which
 /// an equal digest does not cover, so the offer reads the log and sends it.
 #[test]
 fn the_digest_is_caught_up_from_the_tail_and_restarts_on_a_replaced_log() {
@@ -149,9 +152,6 @@ fn the_digest_is_caught_up_from_the_tail_and_restarts_on_a_replaced_log() {
     assert_eq!(kept(&a), whole(&a), "its own appends");
     b.append(record("y"), &key(2), &r, None, &Ed25519Verifier).unwrap();
     assert_eq!(kept(&a), whole(&a), "another handle's append, from the tail");
-    a.append(RailAct::Seal, &key(1), &r, None, &Ed25519Verifier).unwrap();
-    assert_eq!(b.compact(&r, &Ed25519Verifier).unwrap().removed, 3);
-    assert_eq!(kept(&a), whole(&a), "a compaction renamed over the log");
     let first = a.read().unwrap().0.remove(0);
     crate::oplog::Oplog::<SignedOp>::new(a.dir().to_path_buf())
         .replace_all(&[first])

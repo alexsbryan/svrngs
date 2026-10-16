@@ -27,31 +27,19 @@
 //! An actor missing from the digest means "I hold nothing of theirs", so the
 //! peer sends everything. Absence is a request, never a default.
 //!
-//! # The run starts at the sealed FLOOR, and that is what lets the rail delete
+//! # The run starts at zero: a seal sets no floor
 //!
-//! "Contiguous from zero" is the same maximum problem one level down. A node
-//! that retires an old prefix holds no seq 0, so it could claim nothing at
-//! all — every peer read that as *I have none of theirs* and re-sent the whole
-//! holding, every sixty seconds, forever. **Compaction amplified traffic and
-//! then undid itself**, which is why the rail could not delete anything at any
-//! granularity.
+//! Upstream counted the run from the seq of the actor's own highest
+//! [`Seal`](crate::RailAct::Seal), so a copy could delete what the seal
+//! retired and still make a claim. svrngs removed that (arch-seal; svrn-docs
+//! `rings/current/A_RECORD_FOR_YEARS.md` §2, §6 q2): a seal retires nothing
+//! here, so every run counts from zero, and a copy missing an actor's first
+//! acts is absent from its digest for that actor and is sent them.
 //!
-//! So the run counts from a floor: the `seq` of the actor's own highest
-//! [`Seal`](crate::RailAct::Seal), by [`sealed_floors`]. Nothing below it is
-//! wanted, nothing below it is sent, and [`admit`](crate::admit) does not call
-//! it a hole.
-//!
-//! **The floor is authored, never configured.** A local truncation setting
-//! would put the disagreement back one layer up — two nodes with different
-//! floors, one re-sending forever. A seal is a signed op in the same total
-//! order as every other act, so peers agree about it by the mechanism they
-//! already have, and the seal itself is how the floor travels.
-//!
-//! **The wire type does not change, and that is deliberate.** A peer uses the
-//! digest for exactly one decision — which ops to send — and the answer is
-//! `(mark, ∞)` whether the run started at zero or at a floor. Putting the
-//! floor on the wire as well would add a second thing an old peer can fail to
-//! parse and buy nothing; see the compatibility note on [`Digest`].
+//! An older build still claims from its floor, in [`View::from`], and
+//! [`ops_missing_from_within`] keeps to the window a peer claims: an older
+//! copy that pruned below its floor is not sent what it pruned every round,
+//! to prune again.
 //!
 //! # Everyone republishes everything they hold
 //!
@@ -70,89 +58,7 @@ use alloc::vec::Vec;
 
 use crate::op::{Op, OpId};
 
-use crate::{Digest, RailAct, RingVerifier, SignedOp, View};
-
-/// Per-actor contiguous high-water marks, carried inside [`Digest`]'s
-/// [`View`] entries. `mark` means **"I need nothing at or below this"**,
-/// which is a strict generalisation of the old reading ("I hold every op
-/// `0..=n`"), identical whenever nothing is sealed.
-///
-/// It matters because this crosses the wire every sixty seconds between
-/// peers that may be on different builds (`sovereign-mesh/src/ring_sync.rs`),
-/// and disk and wire are different compatibility clocks — which is why the
-/// envelope is versioned and an unversioned marks-only digest is refused by
-/// name (see [`Digest`]'s own docs).
-
-/// Where each actor's history still starts. `{actor_pubkey_hex → seq}`.
-///
-/// Public because retention has a second reader: [`admit`](crate::admit)
-/// reports the floors it used on [`Admission`](crate::Admission), and
-/// `commonwealth_rail::RingJournal::compact` deletes from THAT map rather than
-/// deriving its own. A prune keyed on a second reading of the seals would be
-/// two answers to "what is retired" with the destructive one unwatched
-/// (ARCH §10.6).
-pub type Floors = BTreeMap<String, u64>;
-
-/// What one compaction removed, and the floors it removed by.
-///
-/// A count and not a `()` because "the journal is now shorter" and "there was
-/// nothing to shorten" are different facts, and a caller that cannot tell them
-/// apart cannot report either honestly. `removed: 0` is a normal, successful
-/// answer — it is what every ring that has never sealed gets.
-///
-/// Serde because the answer crosses the compact door in both directions: the
-/// serving side serialises what its prune did, and a dialing client reads the
-/// same struct back rather than a second spelling of it (ARCH §10.6). Lives
-/// here beside [`Floors`] — the map it carries through — rather than in the
-/// journal crate, so a caller that only names the vocabulary needs no storage.
-#[derive(Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
-pub struct Compaction {
-    /// Lines deleted from the journal.
-    pub removed: usize,
-    /// Lines still on it afterwards.
-    pub kept: usize,
-    /// Gaps the journal had before and does not have now — refused lines that
-    /// sat below a floor their claimed author authenticated. Reported because
-    /// a gap vanishing is a change to what this node claims completeness over,
-    /// and a destructive path may not make that change silently (ARCH §18.3).
-    pub gaps_cleared: usize,
-    /// The AUTHENTICATED floors this prune deleted below — [`admit`]'s own map,
-    /// carried through rather than re-derived, so the number above and the
-    /// reason for it cannot disagree.
-    pub floors: Floors,
-}
-
-/// The ONE reading of a [`Seal`](crate::RailAct::Seal) (ARCH §10.6).
-///
-/// An actor's floor is the `seq` of their own highest seal, because a seal
-/// retires everything its author wrote before it. Never having sealed is a
-/// floor of zero, which is exactly the behaviour this rail had before seals
-/// existed. A seal in `voided` contributes no floor: the retirement was itself
-/// corrected, and a correction voids without exception.
-///
-/// **Which ops you hand it is the whole safety question**, and both callers
-/// hand it only ops they authenticated: [`admit`](crate::admit) — ops that
-/// passed the signature and roster checks, either branch of a fork;
-/// [`digest`] — ops whose signature verified under their claimed actor. The
-/// `actor` field is just what the line claimed until a verifier says
-/// otherwise, and a seal is the one act that makes the rail stop asking for
-/// history: one unauthenticated seal line would raise the floor AND satisfy
-/// it, retiring a member's whole past on every node that received it
-/// (ARCH §18.3). That is why being wrong here is not "a round" — the peer
-/// never re-sends below a floor, so the loss does not heal.
-pub(crate) fn sealed_floors<'a>(
-    ops: impl IntoIterator<Item = (&'a OpId, &'a Op<SignedOp>)>,
-    voided: &BTreeSet<OpId>,
-) -> Floors {
-    let mut floors = Floors::new();
-    for (id, op) in ops {
-        if matches!(op.kind.act, RailAct::Seal) && !voided.contains(id) {
-            let floor = floors.entry(op.actor.clone()).or_insert(0);
-            *floor = (*floor).max(op.kind.seq);
-        }
-    }
-    floors
-}
+use crate::{Digest, RingVerifier, SignedOp, View};
 
 /// The ops whose signature verifies under their claimed actor — the ONE
 /// reading of "what this node honestly holds" (ARCH 8). [`digest`] folds a
@@ -163,8 +69,8 @@ pub(crate) fn sealed_floors<'a>(
 ///
 /// Each beside the id its content derives in `namespace` (svrngs, U2): the
 /// signature is over that id, so verifying derives it, and every reader of
-/// the set — the floors, the view's heads — takes it from here rather than
-/// from the line.
+/// the set — the view's heads — takes it from here rather than from the
+/// line.
 fn authentic<'a>(
     ops: &'a [Op<SignedOp>],
     namespace: &str,
@@ -182,14 +88,11 @@ fn authentic<'a>(
 /// not toward a floor, not toward a mark. Until verification the `actor`
 /// field is only what the line claimed, and a digest that believed it would
 /// advertise history its holder does not have: a forged line at the next
-/// contiguous seq silently loses the real op there, and a forged seal loses
-/// everything it claims to retire (see [`sealed_floors`]).
+/// contiguous seq silently loses the real op there.
 ///
 /// See the module docs: this is the **contiguous** mark, so a hole below the
 /// maximum lowers it and the peer re-sends from there. Healing a hole is
-/// therefore automatic rather than a separate repair path. The run counts from
-/// the actor's sealed floor, so a node that has compacted a retired prefix
-/// still makes a claim instead of falling silent.
+/// therefore automatic rather than a separate repair path.
 pub fn digest(ops: &[Op<SignedOp>], namespace: &str, verifier: &dyn RingVerifier) -> Digest {
     let mut fold = DigestFold::default();
     for (id, op) in authentic(ops, namespace, verifier) {
@@ -199,17 +102,14 @@ pub fn digest(ops: &[Op<SignedOp>], namespace: &str, verifier: &dyn RingVerifier
 }
 
 /// [`digest`]'s fold, kept: each authentic act's derived id by actor and
-/// seq, the seals and what the corrections void, folded in as acts arrive,
-/// so a journal that keeps one beside its cursor answers its digest for
-/// the acts appended since (svrngs-runtime journal.rs `Held`). An actor's
-/// view is folded again only when one of its acts arrives or its floor
-/// moves. [`digest`] is this over a whole journal, so the two cannot part.
+/// seq, folded in as acts arrive, so a journal that keeps one beside its
+/// cursor answers its digest for the acts appended since (svrngs-runtime
+/// journal.rs `Held`). An actor's view is folded again only when one of its
+/// acts arrives. [`digest`] is this over a whole journal, so the two cannot
+/// part.
 #[derive(Debug, Default)]
 pub struct DigestFold {
     runs: BTreeMap<String, BTreeMap<u64, BTreeSet<OpId>>>,
-    seals: Vec<(OpId, Op<SignedOp>)>,
-    voided: BTreeSet<OpId>,
-    floors: Floors,
     stale: BTreeSet<String>,
     views: BTreeMap<String, View>,
 }
@@ -218,11 +118,6 @@ impl DigestFold {
     /// Fold in one act already verified under its claimed actor, beside the
     /// id its content derives ([`authentic`]'s pairs).
     pub fn add(&mut self, id: OpId, op: &Op<SignedOp>) {
-        match &op.kind.act {
-            RailAct::Seal => self.seals.push((id.clone(), op.clone())),
-            RailAct::Correct { corrects, .. } => _ = self.voided.insert(corrects.clone()),
-            _ => {}
-        }
         let run = self.runs.entry(op.actor.clone()).or_default();
         run.entry(op.kind.seq).or_default().insert(id);
         self.stale.insert(op.actor.clone());
@@ -230,28 +125,20 @@ impl DigestFold {
 
     /// The digest of everything added: each stale actor's view folded again.
     pub fn digest(&mut self) -> Digest {
-        let floors = sealed_floors(self.seals.iter().map(|(id, op)| (id, op)), &self.voided);
-        if floors != self.floors {
-            self.stale.extend(self.runs.keys().cloned());
-            self.floors = floors;
-        }
         for actor in core::mem::take(&mut self.stale) {
             let seqs = &self.runs[&actor];
-            let from = self.floors.get(&actor).copied().unwrap_or(0);
-            // Absent from the digest is the honest answer when the floor
-            // itself is missing — "I have some of their ops but not from
-            // where their history starts" is indistinguishable from "I have
-            // none" for the purpose of asking. A sealed actor cannot reach
-            // this: the floor IS the seal's own seq, so holding the seal is
-            // holding the floor.
-            let Some(mark) = (from..).take_while(|n| seqs.contains_key(n)).last() else {
+            // Absent from the digest is the honest answer when the actor's
+            // first act is missing: "I have some of their ops but not from
+            // where their history starts" is "send me theirs" for the
+            // purpose of asking.
+            let Some(mark) = (0..).take_while(|n| seqs.contains_key(n)).last() else {
                 self.views.remove(&actor);
                 continue;
             };
             let ids = seqs
-                .range(from..=mark)
+                .range(0..=mark)
                 .flat_map(|(n, ids)| ids.iter().map(move |id| (*n, id.to_string())));
-            let view = View::fold_pairs(&actor, from, mark, &ids.collect::<Vec<_>>());
+            let view = View::fold_pairs(&actor, 0, mark, &ids.collect::<Vec<_>>());
             self.views.insert(actor, view);
         }
         self.views.clone().into()

@@ -25,13 +25,13 @@ only as a projection (`project.rs`: the sealed `Projection`, folded for
 `Membership` and `Invites` and handed out by `Admission::project`) or as
 `Wire`, the acts serialized for an app to fold, membership (`membership.rs`), the per-actor sync digest
 (`sync.rs`, `view.rs`), the write side (`command.rs`: `Command`, `commit`, the
-`Store` port, `Authored` and `Recorded`, which only `commit` makes), effects
-(`process.rs`: the sealed `ProcessManager`, the `Due` only `Admission::react`
-makes and only when every act it names as a cause stands, and `Compact`, a
-seal's retirement), the register's commands (`register.rs`: `MintInvite`, `Redeem`), the
-record's (`record.rs`: `Append`, `Seal`); upstream's guest attestation
+`Store` port, `Authored` and `Recorded`, which only `commit` makes), the
+register's commands (`register.rs`: `MintInvite`, `Redeem`), the
+record's (`record.rs`: `Append`); upstream's guest attestation
 (`attest.rs`) and roster warrant (`introduce.rs`, `Roster.vouches`, with
-`short_stamp`) were deleted in core-0, nothing of svrngs using them. `no_std`, so the
+`short_stamp`) were deleted in core-0, nothing of svrngs using them, and its
+seal, its compaction and the effects that ran it (`process.rs`) in arch-seal:
+a `Seal` an older build wrote is held as an act that does nothing. `no_std`, so the
 compiler refuses filesystem, clock, network, threads and `HashMap`; time and
 keys arrive as arguments. It is commonwealth-ai's
 `commonwealth-rail-core` at `e1a43bcd2`, with `oplog-types` (`op.rs`) and
@@ -88,8 +88,8 @@ and `RelayAt` writes it only when the record says otherwise.
 (`RingRail`) and the register's standing (`register.rs`), split out of
 svrngs-node. The journal is crate-private: an adapter reaches a group only
 through `RingRail`'s queries (`admission`, `standing`, `invite_for`,
-`group_dir`), its `commit` and `seal`, `set_seed`, and the replication port
-(`digest`, `ops_missing_from_within`, `ingest_all`, `compact`). What follows
+`group_dir`), its `commit`, `set_seed`, and the replication port
+(`digest`, `ops_missing_from_within`, `ingest_all`). What follows
 about the journal describes this crate.
 
 **`crates/svrngs-node`**: a group's journal on disk — one append-only JSONL
@@ -104,8 +104,7 @@ behind a `Mutex` (`lib.rs`), which an actor per journal replaces when the node
 becomes ours (DESIGN §5). Then it changed (U2): the write index holds the
 ids each act's content derives, so a line claiming a held act's id is not
 skipped as held; the door names, as the previous act, the line at its newest
-seq whose signature verifies under its own key; compaction keeps a cited
-act by its derived id; and the journal is the `Store` adapter `commit`
+seq whose signature verifies under its own key; and the journal is the `Store` adapter `commit`
 appends through: under the write lock it hands over the lines held and
 appends only the `Authored` lines `commit` returns. Then (ceiling-2) the
 write index keeps the digest's fold too (svrngs-core `DigestFold`, which
@@ -236,11 +235,8 @@ ask over each group's acts.
 
 Every write is a command through `commit`: an app's act is svrngs-core's
 `Append` (records and corrections only, and the person it speaks for must
-stand, decided under the lock), a seal is `Seal` followed by compaction, and
-`svrngs link` mints with `MintInvite`. Compaction is an effect: svrngs-core's
-`Compact` decides from the seals in the record which lines retire, and the
-journal deletes only from the `Due<Retire>` that `react` hands back, after
-this computer's seal and a peer's alike. The journal's own `append` exists only
+stand, decided under the lock; a seal, refused as `NotAnAppAct`), and
+`svrngs link` mints with `MintInvite`. The journal's own `append` exists only
 in tests, as a fixture that also goes through `commit`.
 Every refusal answers `REFUSAL`, one sentence naming no group, but a name
 that does not parse, answered with why, and a name a standing person goes by
@@ -279,8 +275,8 @@ traits went (RUST_ARCH 7). Upstream's other answers to who is in a ring —
 ring's roster be derived from the mesh, `RingRail::roster` and
 `roster_origin`, which chose between them and the file, the core's
 `RosterOrigin`, and `ring_sync::roster_names` — went once the register had
-taken their callers, and a peer's seal is pruned against the group's seed
-file.
+taken their callers. Compaction and the prune after a peer's seal went in
+arch-seal: nothing deletes a line from a journal.
 
 The record over loopback (DESIGN §8, U3's inventory, the rail.rs row) is
 `rail.rs` and `api.rs`, commonwealth-rails' `rail.rs` and `api.rs` at

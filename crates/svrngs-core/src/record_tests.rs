@@ -74,14 +74,3 @@ fn on_behalf_of_someone_outside_the_group_writes_nothing() {
     );
     assert!(store.0.borrow().is_empty());
 }
-
-#[test]
-fn a_seal_is_written_as_this_computers_own() {
-    let store = Memory::holding(&[]);
-    let (signer, roster) = (key(1), ring());
-    let recorded = commit(&store, &Seal, &author(&signer, &roster))
-        .unwrap()
-        .unwrap();
-    assert_eq!(recorded.lines()[0].kind.act, RailAct::Seal);
-    assert_eq!(recorded.lines()[0].kind.on_behalf_of, None);
-}

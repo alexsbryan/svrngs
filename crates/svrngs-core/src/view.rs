@@ -30,7 +30,8 @@ use serde::{Deserialize, Serialize};
 use crate::SignedOp;
 
 /// One actor's commitment: the contiguous run `[from, mark]` being claimed
-/// (`from` is the sealed floor, `mark` the contiguous high-water — the same
+/// (`from` is zero from this build, an older build's sealed floor from one
+/// that sealed, arch-seal; `mark` the contiguous high-water — the same
 /// run the mark alone describes) and `head`, the fold of everything held in
 /// it. Equal heads over an equal `(from, mark)` mean equal held sets; the
 /// preimage resistance of the hash is the whole argument.

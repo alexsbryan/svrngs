@@ -1,0 +1,16 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.07s
+     Running unittests src/lib.rs (target/debug/deps/svrngs_core-b505bcb9687c95d0)
+
+running 1 test
+test tests_sealing::a_seal_held_retires_nothing_and_claims_nothing_complete ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 170 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.17s
+     Running unittests src/lib.rs (target/debug/deps/svrngs_node-0f519cdd5486c66c)
+
+running 1 test
+test ring_sync::tests::a_seal_another_member_signs_retires_nothing_here ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 93 filtered out; finished in 0.09s
+

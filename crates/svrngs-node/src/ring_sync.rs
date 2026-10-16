@@ -339,8 +339,7 @@ pub async fn run_one_round(host: &Host, answered: &(impl Fn() + Sync)) -> RoundO
         // roster — its seed, or one derived from the mesh — DESIGN §8, U1.)
         //
         // A ring with no seed, or an UNREADABLE register, offers nothing for
-        // this namespace. Under-share, never over-share — the same posture
-        // `prune_what_the_peer_retired` takes when it cannot read a roster.
+        // this namespace. Under-share, never over-share.
         let standing = match rail.standing(namespace) {
             Ok(s) => s,
             Err(e) => {
@@ -494,56 +493,6 @@ impl ExchangeOutcome {
     }
 }
 
-/// Delete what a peer's seal just retired, on THIS node's disk.
-///
-/// **The half that actually bounds storage.** The author's own node prunes
-/// when it seals (`routes_rail::append`), but that bounds the writer's disk and
-/// nobody else's — every housemate would still keep a full copy of everyone's
-/// history forever, which is the growth this exists to stop. A seal is a signed
-/// statement in the one total order, so it binds whoever admits it, and
-/// `RingJournal::compact` is already author-blind.
-///
-/// **Only when a seal actually arrived**, and that gate is not frugality for
-/// its own sake: compaction re-admits, which is one Ed25519 verify per op
-/// (2a measured the fold at 38.4 µs/op, 94% of it that verify), and a floor
-/// cannot move without a seal. Running it every round would pay the journal's
-/// whole read cost every sixty seconds to discover nothing changed.
-///
-/// It sits INSIDE the chunk loop rather than after it, deliberately. The
-/// trigger is the seal and not the chunk, so a bootstrap pulling sixteen
-/// chunks pays this once per seal it actually meets — and compaction keeps
-/// that number at roughly one, since every seal but the highest is itself
-/// below the floor and goes. Hoisting it out would be cheaper only in a case
-/// the mechanism prevents, and would skip the prune entirely on every path
-/// where a later chunk fails after the seal has already landed.
-///
-/// **Fails closed, everywhere it can fail.** The floor comes from
-/// `Admission::floors`, so a seal this node cannot authenticate against the
-/// roster it holds retires nothing — a stale or partial roster under-prunes
-/// rather than over-prunes. (svrngs: the roster is the group's seed, its
-/// `roster.json`, from which admission folds the register, so a seal by a
-/// member the founder admitted authorises its prune; upstream read it through
-/// `RingRail::roster`, which could answer a roster derived from the mesh.)
-/// A refusal is logged and the exchange
-/// carries on: the ops are ingested and durable, and a journal that stayed
-/// long is a worse outcome than a stalled round, not a reason to make one.
-fn prune_what_the_peer_retired(rail: &RingRail, namespace: &str) {
-    match rail.compact(namespace) {
-        Ok(done) if done.removed > 0 => {
-            info!(
-                namespace,
-                removed = done.removed,
-                kept = done.kept,
-                "ring sync: a peer's seal retired lines on this node"
-            );
-        }
-        Ok(_) => {}
-        Err(e) => {
-            warn!(namespace, error = %e, "ring sync: the prune a peer's seal authorises was refused")
-        }
-    }
-}
-
 /// The chunked exchange with one member: two calls per chunk, repeated
 /// until neither side moves or [`MAX_CHUNKS_PER_EXCHANGE`] is spent.
 ///
@@ -581,14 +530,6 @@ pub async fn exchange(to: To<'_>, rail: &RingRail, namespace: &str) -> ExchangeO
             Err(e) => return out.stopped(ExchangeStop::Failed(format!("local journal: {e}"))),
         };
         out.pulled += pulled;
-        if pulled > 0
-            && first
-                .ops
-                .iter()
-                .any(|o| matches!(o.kind.act, crate::RailAct::Seal))
-        {
-            prune_what_the_peer_retired(rail, namespace);
-        }
 
         // The peer's OWN report of what it holds — the one progress signal
         // that cannot be faked by a count an older build did not send.

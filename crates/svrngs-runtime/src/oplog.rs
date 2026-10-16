@@ -142,8 +142,7 @@ impl<K: Journaled> Oplog<K> {
         }
     }
 
-    /// `ops` as the log's lines, each ending in a newline. (svrngs,
-    /// lean-4: `append_all` and `replace_all` each wrote this upstream.)
+    /// `ops` as the log's lines, each ending in a newline.
     fn lines(ops: &[Op<K>]) -> Result<String> {
         let mut buf = String::new();
         for op in ops {
@@ -189,86 +188,6 @@ impl<K: Journaled> Oplog<K> {
         Ok(())
     }
 
-    /// Replace the whole log with exactly `ops`, atomically.
-    ///
-    /// **The only shrinking operation this journal has**, and the reason it
-    /// exists is retention: an append-only file that can never lose a line
-    /// grows without bound, and "delete the old prefix" is not expressible as
-    /// an append. Every other method here adds; this one is how a tenant that
-    /// has *earned* the right to forget actually forgets. What earns it is the
-    /// tenant's business — the ring rail requires a signed seal
-    /// (`commonwealth_rail::RingJournal::compact`) — and this method takes no
-    /// opinion beyond writing the lines it was handed.
-    ///
-    /// # Atomic, because a half-written journal is worse than a long one
-    ///
-    /// The lines go to a sibling temp file, are fsynced, and are then renamed
-    /// over the log. `rename(2)` within a directory is atomic, so a reader
-    /// concurrent with this sees either the whole old log or the whole new
-    /// one, and a crash at any point leaves one of the two on disk rather than
-    /// a truncated file. The directory is fsynced afterwards so the rename
-    /// itself survives a power cut — without that the data is durable and the
-    /// name pointing at it is not, which on some filesystems leaves the log
-    /// missing entirely.
-    ///
-    /// The temp file is `<FILE>.compacting` in the same directory rather than
-    /// in a temp dir: `rename(2)` cannot cross a filesystem, and a data
-    /// directory on its own volume is the normal deployment here.
-    ///
-    /// # This does NOT serialise against [`Self::append`]
-    ///
-    /// `O_APPEND` makes concurrent appends safe against each other; it does
-    /// nothing for an append racing a rename, which would land the appended
-    /// line in the file that is about to be replaced and lose it. The caller
-    /// holds the writer lock for the read-decide-replace sequence — see
-    /// `RingJournal::compact`, which does exactly that.
-    pub fn replace_all(&self, ops: &[Op<K>]) -> Result<()> {
-        if let Some(parent) = self.path.parent() {
-            fs::create_dir_all(parent).map_err(OplogError::Io)?;
-        }
-        let buf = Self::lines(ops)?;
-        let tmp = self.path.with_extension("compacting");
-        {
-            let mut f = OpenOptions::new()
-                .create(true)
-                .write(true)
-                .truncate(true)
-                .open(&tmp)
-                .map_err(OplogError::Io)?;
-            f.write_all(buf.as_bytes()).map_err(OplogError::Io)?;
-            f.sync_data().map_err(OplogError::Io)?;
-        }
-        fs::rename(&tmp, &self.path).map_err(OplogError::Io)?;
-        // The rename is a directory change, and a directory change is not
-        // covered by the file's own fsync above.
-        if let Some(parent) = self.path.parent() {
-            // Not worth FAILING a compaction over: the replacement lines are
-            // already fsynced, so a lost rename leaves the pre-compaction log
-            // in place — long, and correct. But not worth swallowing either
-            // (ARCH §18.3): a host where this always fails is one where every
-            // compaction is provisional, and the only way anyone learns that
-            // is if it says so.
-            let flushed = fs::File::open(parent).and_then(|dir| dir.sync_all());
-            if let Err(e) = flushed {
-                tracing::warn!(
-                    log = K::LABEL,
-                    dir = %parent.display(),
-                    error = %e,
-                    "oplog: replaced, but the directory was not flushed — the \
-                     rename may not survive a power cut, in which case the \
-                     pre-compaction log comes back"
-                );
-            }
-        }
-        tracing::info!(
-            log = K::LABEL,
-            ops = ops.len(),
-            path = %self.path.display(),
-            "oplog: replaced"
-        );
-        Ok(())
-    }
-
     /// Every op in append order, **plus the lines this build could not use**.
     ///
     /// Two classes of line are skipped rather than defaulted (ARCH §18.3 —
@@ -309,8 +228,8 @@ impl<K: Journaled> Oplog<K> {
     /// whole read per write (the ring journal's next-seq and held-id index).
     /// Reads from the cursor's byte offset to the end of the last whole line,
     /// so a line another process is still writing is left for the next call.
-    /// When the file is not the one the cursor was taken on (a
-    /// [`Self::replace_all`] renamed a new one over it) or is shorter than the
+    /// When the file is not the one the cursor was taken on (another file
+    /// renamed over it, as a restore would) or is shorter than the
     /// offset, the read starts again from the top and the returned
     /// [`Tail::restarted`] says the caller's fold is void. Lines are judged by
     /// the same rules as [`Self::read_all_with_skips`]; skipped ones are warned

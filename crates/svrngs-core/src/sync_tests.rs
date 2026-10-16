@@ -83,63 +83,39 @@ fn a_node_republishes_ops_it_did_not_author() {
 
 /// Two nodes with the same holdings must produce the same bytes, or a
 /// captured payload diff means nothing.
-// ── the sealed floor ─────────────────────────────────
+// ── a seal, held ─────────────────────────────────────
 
 fn seal(seed: u8, seq: u64, ts: i64) -> Op<SignedOp> {
     signed(&key(seed), ts, seq, RailAct::Seal)
 }
 
-/// **Truncation must not undo itself.** Before the floor existed,
-/// `digest` early-returned `None` for any actor whose seq 0 it did not
-/// hold — so a node that compacted a sealed prefix advertised NOTHING for
-/// that actor, every peer read that as "I have none of theirs", and the
-/// whole holding came back on the next sixty-second round. Compaction
-/// amplified traffic and then reversed itself.
-///
-/// The first assertion is the negative control: the same holding with no
-/// seal in it really is unadvertisable, so the second cannot pass on a
-/// digest that was never empty.
+/// **An older copy is never sent what it pruned below the floor it claims.**
+/// An older build that honoured a seal pruned below it and claims its run
+/// from there, `from` its seal's seq (arch-seal). This build keeps every
+/// line and claims from zero, and it keeps to the window the older copy
+/// claims, or the older copy is sent the pruned prefix every round, to prune
+/// it again. And the seal still travels, as an op, to a copy lacking it.
 #[test]
-fn a_compacted_actor_is_advertised_from_its_seal_instead_of_not_at_all() {
-    let no_seal = vec![op(1, 3, 103), op(1, 4, 104)];
-    assert!(
-        digest_of(&no_seal) == Digest::default(),
-        "control: nothing sealed, nothing contiguous from 0, nothing to claim"
-    );
-
-    let compacted = vec![seal(1, 3, 103), op(1, 4, 104)];
-    assert_eq!(
-        marks(&digest_of(&compacted)),
-        BTreeMap::from([(actor(1), 4)]),
-        "the mark counts from the sealed floor, not from zero"
-    );
-}
-
-/// **A peer must not re-send a sealed prefix, ever.** This is the same
-/// defect seen from the other end: the responder holds the retired ops
-/// and, reading a digest that could not name a floor, shipped all of them
-/// every round.
-#[test]
-fn a_peer_never_re_sends_what_the_seal_retired() {
-    // The prefix the seal retires, and what is left after compaction. The
-    // peer is a node that never compacted, so it holds both.
+fn an_older_copy_is_never_sent_below_the_floor_it_claims() {
     let retired: Vec<_> = (0..3).map(|s| op(1, s, 100 + s as i64)).collect();
-    let compacted = vec![seal(1, 3, 103), op(1, 4, 104)];
-    let peer_holds: Vec<_> = retired.iter().chain(&compacted).cloned().collect();
+    let pruned = vec![seal(1, 3, 103), op(1, 4, 104)];
+    let holds: Vec<_> = retired.iter().chain(&pruned).cloned().collect();
+    let ids: Vec<_> = pruned
+        .iter()
+        .map(|o| (o.kind.seq, crate::derive_id(o, NS).to_string()))
+        .collect();
+    let older = BTreeMap::from([(actor(1), crate::View::fold_pairs(&actor(1), 3, 4, &ids))]);
     assert!(
-        ops_missing_from(&peer_holds, NS, &Ed25519Verifier, &digest_of(&compacted)).is_empty(),
-        "the retired prefix is not wanted and must not be sent"
+        ops_missing_from(&holds, NS, &Ed25519Verifier, &older.into()).is_empty(),
+        "the older copy's pruned prefix is not sent to it"
     );
-
-    // And the seal still travels to a peer that has not got it yet: a
-    // node cannot honour a floor it has never seen.
     assert_eq!(
-        ops_missing_from(&peer_holds, NS, &Ed25519Verifier, &digest_of(&retired))
+        ops_missing_from(&holds, NS, &Ed25519Verifier, &digest_of(&retired))
             .iter()
             .map(|o| o.kind.seq)
             .collect::<Vec<_>>(),
         vec![3, 4],
-        "the seal itself is an op, and it is how the floor propagates"
+        "the seal is an op, and travels as one"
     );
 }
 

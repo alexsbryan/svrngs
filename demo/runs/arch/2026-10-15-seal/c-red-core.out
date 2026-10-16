@@ -1,0 +1,14 @@
+
+thread 'tests_sealing::a_seal_held_retires_nothing_and_claims_nothing_complete' (51494670) panicked at crates/svrngs-core/src/tests_sealing.rs:119:5:
+assertion `left == right` failed: seqs 0..=2 are still missing
+  left: []
+ right: [SequenceHole { actor: "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c", missing: 0 }, SequenceHole { actor: "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c", missing: 1 }, SequenceHole { actor: "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c", missing: 2 }]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    tests_sealing::a_seal_held_retires_nothing_and_claims_nothing_complete
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 178 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p svrngs-core --lib`
