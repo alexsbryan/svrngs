@@ -92,20 +92,23 @@ async function httpChecks(a) {
   const released = new Promise((go) => {
     window.__release = go;
   });
+  // Cleared once the computer has the first byte, so a later failure is
+  // said in its own words, never the stall's (arch-stream (a), README 4).
   let stall = null;
+  let timer;
   const stalled = () =>
-    new Promise((_, no) =>
-      setTimeout(() => {
+    new Promise((_, no) => {
+      timer = setTimeout(() => {
         stall = `the computer had no byte of the upload while the page held ${made} bytes of it`;
         no(new Error(stall));
-      }, 30_000),
-    );
+      }, 30_000);
+    });
   const body = new ReadableStream(
     {
       async pull(c) {
         if (made >= size) return c.close();
         if (made >= ahead && held === null) {
-          await Promise.race([released, stalled()]);
+          await Promise.race([released, stalled()]).finally(() => clearTimeout(timer));
           held = made;
         }
         const n = Math.min(chunk, size - made);

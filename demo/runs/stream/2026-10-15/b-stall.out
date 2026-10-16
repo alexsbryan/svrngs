@@ -1,0 +1,6 @@
+# arch-stream (b), the stall timer: the plant, the page's upload body failing 31 s after the release (computer holding the first byte), in drive.mjs's pull, then
+# cargo test -p svrngs-node --test browser -- streaming_both_ways::chromium --nocapture | grep -o '"post":{[^}]*}'
+red, at f0ea8275 (the timer never cleared):
+"post":{"error":"Error: the computer had no byte of the upload while the page held 2097152 bytes of it","ms":31400}
+green, the timer cleared once released:
+"post":{"error":"Error: Error: the computer's answer is not HTTP: error from user's Body stream","ms":31327}
