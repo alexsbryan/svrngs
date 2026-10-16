@@ -1,35 +1,80 @@
 # svrngs
 
-Keep talking where you talk; keep what your group owns — money, plans, files,
-the library — on your own computers, not a platform's. And for developers:
-anything you can run on localhost, you can share with your group.
+Your group's things, on your group's computers. The money you split, the
+nights you plan, the films you own, a friend's model: kept where you
+already are, opened from a link in the chat you already use. No accounts.
+No passwords. No landlord.
 
-That includes the apps people already self-host — Jellyfin, Navidrome, Immich,
-Audiobookshelf, Calibre-Web, Nextcloud, Paperless-ngx, Actual, Mealie, Grocy,
-Home Assistant. Run it in a container on one computer, `svrngs share <port> --kind
-<name>`, and everyone in the group has it (DESIGN §1).
+## Start a group
 
-What we answer to: `NORTH_STAR.md`. What it is, how we build it and the order
-of work: `docs/DESIGN.md`. What
-exists today: `ARCHITECTURE.md`. How agents work here: `AGENTS.md`. E0, the
-first experiment, a Discord bot that settled expenses in the chat, ran
-before the fork and is at tag `e0-bot`.
+On a Mac or a Linux computer, paste this in Terminal:
 
-## Run it
+```
+curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- 'https://group.svrnme.sh/'
+```
 
-Start with `demo/start.md`. In it, a friend lends their model and the group
-uses it: you paste one line on each computer, and the friend's chat page
-opens on the other's. It gives every line to type and every button to
-press, what each step looks like when it works, and what to do when it
-does not. It also says how to try both friends on one computer.
+Your home page opens. Name the group, make a link, and drop it in the chat.
+Friends on a computer paste the line the link shows them. Friends on a
+phone type their name and tap **Join**. Nobody signs up, and nobody asks
+us.
 
-## Set up
+Every line and every button: [`demo/start.md`](demo/start.md).
 
-- Rust 1.91 or later (iroh 1.0.2's `rust-version`), with rustfmt and clippy.
-- Node.js 20 or later, for the apps' tests.
-- A checkout of commonwealth-ai at `~/dev/commonwealth-ai`, or its path in
-  `COMMONWEALTH_AI`: `scripts/ports.py` needs it to compare each forked file
-  with its original, and `scripts/principles_check.py` compares the pinned
-  principles with it when it is there.
+## Then
 
-Then `scripts/check.sh` — every step passes, or the tree is not done.
+- **Lend what you run.** Jellyfin, Navidrome, Immich, Actual, llama-server:
+  anything on a port. Your home page lists what's running, and one press
+  gives it to the group. If you'd rather type: `svrngs share <port> --kind <name>`.
+- **Split it, plan it.** Money and Events come with svrngs. Bring them to a
+  group in one tap. They keep going when you close your laptop.
+- **Ask a friend of a friend.** The grapevine carries an ask from one group
+  to another, through someone who's in both. See [`demo/grapevine.md`](demo/grapevine.md).
+- **Leave.** Whenever you like. What you already have stays yours.
+
+It's early. [`RELEASES.md`](RELEASES.md) says what works and what doesn't
+yet.
+
+## Where your things go
+
+On the group's computers, and nowhere else. We host a page and a download,
+both static. When two computers can't reach each other directly, n0's
+relays carry the bytes, encrypted. A relay sees that you're talking, never
+what you say.
+
+## Build on it
+
+If it runs on localhost, your group can use it. Your app gets three things:
+- the person asking, verified, in its headers;
+- a record the group keeps;
+- reach to every member's computer.
+
+There's no SDK and no login, and no app store to petition.
+[`docs/DESIGN.md`](docs/DESIGN.md) §3 is the whole surface. The reference
+apps are in [`apps/`](apps/).
+
+## Work on svrngs
+
+You need:
+- Rust 1.91 or later, with rustfmt and clippy;
+- Node.js 20 or later;
+- commonwealth-ai checked out at `~/dev/commonwealth-ai`, or its path in
+  `COMMONWEALTH_AI`. `scripts/ports.py` compares every forked file with its
+  original there.
+
+Then run:
+
+```
+scripts/check.sh
+```
+
+Every step passes, or it isn't done.
+
+The rest of the map:
+- [`NORTH_STAR.md`](NORTH_STAR.md): what we answer to.
+- [`docs/DESIGN.md`](docs/DESIGN.md): how we build, and in what order.
+- [`ARCHITECTURE.md`](ARCHITECTURE.md): what exists today.
+- [`AGENTS.md`](AGENTS.md): how agents work here.
+
+E0, a Discord bot that settled expenses in the chat, is at tag `e0-bot`.
+
+AGPL-3.0-or-later. Fork it; that's what it's for.
