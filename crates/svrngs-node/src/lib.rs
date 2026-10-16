@@ -97,8 +97,6 @@ pub mod folder;
 // A group's seed kept on this computer, and the group kept (start-group).
 pub mod group;
 pub mod invite;
-// Joining a group by its link (arch-command (a)).
-pub mod join;
 pub mod node;
 // Removal as this computer's person asks it (U7, DESIGN §6).
 pub mod removal;

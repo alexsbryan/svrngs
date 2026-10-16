@@ -94,18 +94,19 @@ use svrngs_node::folder::FolderAsk;
 use svrngs_node::home::WHEN;
 use svrngs_node::invite::Unminted;
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
-use svrngs_node::join::{Entered, NotJoined};
 use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath, Source, Upload};
 use svrngs_node::node::{Lends, Lent, Node, NodeError};
+use svrngs_node::redeem::{ask, redeem, AskRequest, RedeemError, RedeemRequest, Redeemed};
 use svrngs_node::relay::n0_relays;
 use svrngs_node::removal::{Outcome, RemovalAsk, HANDOVERS_ROUTE, REMOVALS_ROUTE};
 use svrngs_node::room;
-use svrngs_node::{Joined, Person, SigningKey};
+use svrngs_node::{Device, Joined, Person, SigningKey};
 
 /// Where a joiner meets its group (the node's, start-group).
 pub use crate::group::kept_relay;
 use crate::group::{self, Name, Seed};
 use crate::identity::{self, KeyError};
+use crate::issuer;
 use crate::relay::{self, Relay};
 use crate::share::{self, Share, ShareRefusal};
 use svrngs_node::link::{client_link, https_link, Link, Origin, Token};
@@ -1525,33 +1526,91 @@ async fn serve(
     Ok(())
 }
 
-/// `svrngs join`: `link` redeemed as `person` by the node, which signs
-/// with its own key, `key` ([`svrngs_node::join`]), once a relay the link
-/// carries is waited for, in the command's words.
+/// `svrngs join`: ask `link`'s issuer what it is for, proving the link's
+/// key; believe the seed answered only when it hashes to the group named
+/// (`group::answered`); redeem the link there as `person`, signing with
+/// `key`, this computer's; keep the group's seed once let in, and the
+/// origin of an https link; sync once from the issuer, whom this
+/// computer's copy of the register may not know yet (DESIGN §8, U2).
+/// Nothing is written until the issuer has let this computer in, so a
+/// refused link leaves nothing behind.
 pub async fn join_group(
     node: &Node,
     key: &SigningKey,
     link: &Link,
     person: &Name,
 ) -> Result<Said, Refusal> {
-    debug_assert_eq!(
-        node.endpoint().id().as_bytes(),
-        key.verifying_key().as_bytes()
-    );
+    let issuer = issuer::addr(&link.token);
+    let link_key = link.token.key();
     // Its home relay reached before the exchange, so the joiner says it
     // there and the issuer can dial it back; else not before its first
     // round (demo/runs/relay-in-record/2026-10-12/: 60 s). Before the ask,
     // so a relay that does not answer is named before the issuer is dialled.
     let carried: Vec<String> = link.token.relay.iter().map(ToString::to_string).collect();
     wait_online(node, &carried).await;
-    match node.join(link, person).await {
-        Ok(Entered::In { seed, person }) => Ok(Said::Joined { seed, person }),
-        Ok(Entered::AlreadyIn(seed)) => Ok(Said::AlreadyIn(seed)),
-        Err(NotJoined::LinkRefused) => Err(Refusal::LinkRefused),
-        Err(NotJoined::NameTaken { holder, group }) => Err(Refusal::NameTaken { holder, group }),
-        Err(NotJoined::IssuerAway) => Err(Refusal::IssuerAway),
-        Err(NotJoined::Keep(group)) => Err(Refusal::Keep(group)),
+    let asked = ask(
+        node.endpoint(),
+        issuer.clone(),
+        &AskRequest::sign(&link_key, key),
+    )
+    .await
+    .map_err(|e| not_let_in(e, None))?;
+    let Some(seed) = group::answered(&asked.group, &asked.seed) else {
+        tracing::debug!(target: "cli", group = %asked.group, "cli: join — the issuer's answer is not believed, so nothing is redeemed");
+        return Err(Refusal::LinkRefused);
+    };
+    let id = seed.id();
+    if group::groups(node.rail().root())
+        .iter()
+        .any(|s| s.id() == id)
+    {
+        tracing::debug!(target: "cli", group = %id, "cli: join — this computer holds the group already, so nothing is redeemed");
+        return Ok(Said::AlreadyIn(seed));
     }
+    // A device link's person is who this computer joins as, asked no name
+    // (bash-devices); else the name given.
+    let person = asked.person.unwrap_or_else(|| Person::from(person.clone()));
+    tracing::debug!(target: "cli", group = %id, %person, "cli: join — redeeming as this person");
+    let request = RedeemRequest::sign(
+        &link_key,
+        key,
+        &id,
+        &asked.invite,
+        &person,
+        Device::Computer,
+    );
+    let redeemed = redeem(node.endpoint(), issuer.clone(), &request)
+        .await
+        .map_err(|e| not_let_in(e, Some(seed.name())))?;
+    tracing::debug!(target: "cli", group = %id, redeemed = ?redeemed, "cli: join — let in");
+    // An address lookup is n0's, built only with `n0_services` (svrngs-node
+    // guest.rs `relayed_endpoint_builder`): this computer meets its groups at n0's.
+    let n0 = svrngs_node::iroh::has_lookup(node.endpoint());
+    let relay = kept_relay(link.token.relay.clone().map(RelayUrl::from), n0);
+    // Kept as the node keeps a group, as `new` keeps it (Host::keep_group).
+    let kept = node
+        .host()
+        .keep_group(&seed, link.origin.as_ref(), relay.as_ref());
+    kept.map_err(|why| keep_refused(&seed, &why))?;
+    if link.origin.is_none() {
+        tracing::debug!(target: "cli", group = %id, "cli: join — a client's link, so no origin is kept");
+    }
+    let synced = node.sync_with(&id, &issuer).await;
+    match &synced.stop {
+        None => {
+            tracing::debug!(target: "cli", group = %id, pulled = synced.pulled, "cli: join — synced once from the issuer")
+        }
+        Some(stop) => {
+            tracing::warn!(target: "cli", group = %id, stop = ?stop, pulled = synced.pulled, "cli: join — let in, and the first sync stopped; the round carries on")
+        }
+    }
+    if matches!(redeemed, Redeemed::AlreadyIn) {
+        tracing::debug!(target: "cli", group = %id, "cli: join — the issuer says this key stood already; this computer now keeps its copy");
+    }
+    Ok(Said::Joined {
+        seed,
+        person: person.name().clone(),
+    })
 }
 
 /// The group's folder placed as everyone's, by the node
@@ -1561,6 +1620,24 @@ fn folder_at_join(node: &Node, seed: &Seed) -> Said {
     let (dir, placed) = node.folders().place(seed);
     let group = seed.name().clone();
     Said::Folder { group, dir, placed }
+}
+
+/// The issuer did not let this computer in: it refused, or never answered.
+fn not_let_in(e: RedeemError, group: Option<&Name>) -> Refusal {
+    tracing::debug!(target: "cli", error = %e, "cli: join — not let in");
+    match e {
+        RedeemError::Refused(_) => Refusal::LinkRefused,
+        RedeemError::NameTaken(holder) => match group {
+            Some(group) => Refusal::NameTaken {
+                holder,
+                group: group.clone(),
+            },
+            // Only a redemption answers that a name is taken: to an ask
+            // it is an answer this build cannot read.
+            None => Refusal::IssuerAway,
+        },
+        RedeemError::Unjudged | RedeemError::NoAnswer(_) => Refusal::IssuerAway,
+    }
 }
 
 /// The name a group knows its founder or a joiner by when `--as` names
