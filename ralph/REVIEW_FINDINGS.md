@@ -10243,6 +10243,10 @@ added lines were searched for a silent default (`unwrap_or`, `.ok()`,
 #177 and #178 are not fixed here. No line is left under the cap, and
 #178's trace is a counted line; #177 changes how a blob fetch dials.
 
+`scripts/check.sh` at 18e1d998, the audit's close: exit 0 in 10 min 59 s,
+all fourteen gates passed (principles pinned through app laws;
+/tmp/archaudit1/check.out).
+
 ### Findings
 
 | # | principle | path:line | fixed in | finding |
