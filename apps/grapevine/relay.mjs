@@ -121,9 +121,10 @@ export function heldBy(api, store, trace = debug) {
 
 /**
  * One person: `id` names them to the process (the file's name, or `me`),
- * `held` answers their groups, `state` is their stateFile.
+ * `held` answers their groups, `state` is their stateFile, and `timed` is
+ * told each read of a group's log, {group, ms, ops}.
  */
-export function person({ id, store, held, kinds, state, trace = debug }) {
+export function person({ id, store, held, kinds, state, trace = debug, timed = () => {} }) {
   let busy = Promise.resolve();
   /** One thing at a time per person: the loop and the page never interleave. */
   const serial = (fn) => {
@@ -144,6 +145,7 @@ export function person({ id, store, held, kinds, state, trace = debug }) {
       try {
         const { ops, complete } = await store.log(g.id);
         reads.push({ group: g.id, ms: performance.now() - t0, ops: ops.length });
+        timed(reads.at(-1));
         groups.push({ ...g, ops, complete });
       } catch (e) {
         trace("a group's log could not be read", { person: id, group: g.id, error: e.message });

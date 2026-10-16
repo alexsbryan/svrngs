@@ -1,6 +1,6 @@
 // Grapevine's page in a browser (gv-page (b)): Chromium as a desktop and
 // WebKit as an iPhone (web/tests/page.mjs, `launch`), the server run alone on
-// a file of its own, a simulation acting for Sam, Jo and Kim, each played by
+// a copy of demo.json, a simulation acting for Sam, Jo and Kim, each played by
 // `?as=`. GRAPEVINE_DEMO §10's scene, pressed as the page shows it: Sam asks
 // in 1400 Page for a tile saw, one ring away; Jo carries it to Waller block;
 // Kim, who listed one, is told she might have it and offers; Sam reads the
@@ -14,7 +14,7 @@
 
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -27,13 +27,10 @@ const NOT_SAID = /\b(keys?|members?|records?|acts?|hash(es)?|handles?|hops?|seal
 /** What only Sam and Kim may ever read. */
 const SEALED = ['Waller and Pierce', 'Sam Reyes', 'Kim Okafor'];
 
-/** §10's town on a file of its own: Kim's tile saw listed in Waller block. */
+/** §10's town, demo.json, on a copy of its own: Kim's tile saw listed in Waller block. */
 async function serve() {
   const dir = mkdtempSync(join(tmpdir(), 'grapevine-page-'));
-  writeFileSync(join(dir, 'town.json'), JSON.stringify({
-    groups: { page: { name: '1400 Page', people: ['Sam', 'Jo'] }, waller: { name: 'Waller block', people: ['Jo', 'Kim'] } },
-    ops: { waller: [{ id: 'l1', ts_unix: 1_760_000_000, person: 'Kim', payload: { app: 'grapevine-listings', kind: 'tool', listing: { what: 'tile saw' } } }] },
-  }));
+  copyFileSync(new URL('./demo.json', import.meta.url).pathname, join(dir, 'town.json'));
   writeFileSync(join(dir, 'config.json'), JSON.stringify({ file: join(dir, 'town.json'), acting: ['Sam', 'Jo', 'Kim'], data: dir }));
   const child = spawn(process.execPath, [new URL('./server.mjs', import.meta.url).pathname, join(dir, 'config.json')], {
     stdio: ['ignore', 'pipe', 'pipe'],

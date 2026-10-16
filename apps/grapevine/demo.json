@@ -1,0 +1,11 @@
+{
+ "groups": {
+  "page": {"name": "1400 Page", "people": ["Sam", "Jo"]},
+  "waller": {"name": "Waller block", "people": ["Jo", "Kim"]}
+ },
+ "ops": {
+  "waller": [
+   {"id": "kim-lists-a-tile-saw", "ts_unix": 1760572800, "person": "Kim", "payload": {"app": "grapevine-listings", "kind": "tool", "listing": {"what": "tile saw"}}}
+  ]
+ }
+}
