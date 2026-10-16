@@ -66,7 +66,12 @@ real act from a phone, the rest by a census of their own docs
 Vikunja and Forgejo are not yet named).
 
 **What we build:** the platform, and one small reference app per class of app,
-for the next developer to copy and bend. Never the finished apps — the
+for the next developer to copy and bend: Money, a group's shared book
+(`apps/expenses/`); Events, a post and who came (`apps/events/`); and
+the grapevine, an ask carried from group to group by the people in both,
+one tap a group, its replies sealed to the two ends, where a developer
+adds a kind of ask in one file (`apps/grapevine/`, its kind
+`kinds/rooms.js`). Never the finished apps — the
 community builds those (operator, 2026-10-03). "The iOS of groups" is an
 analogy for being the thing others build on, not a plan to ship an iPhone app
 first.
@@ -2768,7 +2773,14 @@ v1ui queue made the home page and the phone's page what V1 shows (landed,
   told to the leaver's other computers, then their run;
 - the grapevine demo app (`ralph/next/grapevine/`, in `apps/grapevine/`):
   an ask crossing groups through people, taps only, nothing changed in
-  svrngs, its recorded run on the identity model groups-keys leaves.
+  svrngs but the leave's last fixes first (gv-leave, +30 lines); landed,
+  its scene run under svrngs on the identity model groups-keys leaves,
+  three computers on one host, every person a program
+  (`demo/runs/grapevine/2026-10-16/`): Sam's ask to the ask gone from
+  Kim's page in 20.4 s, every wait over a second a turn of Jo's 5 s loop,
+  and no sealed word in any file but a person's own. Its run-of-show is
+  `demo/grapevine.md`; GRAPEVINE §7's product bars and kill bar, runs
+  with real neighbours, are the operator's and never-ran.
 
 That is V1, and it meets its groups at n0's relays and lookup, as
 `cli::SHIPPED` names now. After V1 the operator flips `SHIPPED` to
