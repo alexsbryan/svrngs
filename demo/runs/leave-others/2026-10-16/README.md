@@ -53,3 +53,16 @@ runs one.
 | the leave told only to the computers it did not cut, as at 1956f9bf (removal.rs `left != cut.contains(k)`) | `b-plant-filter.out` | "on, Ana's second computer says she left Trip" (Films passed, told by `told_cut`) |
 | `told_cut` answering nothing (`return None` first) | `b-plant-told.out` | "back on, Ana's second computer says she left Films" |
 | the router for a computer cut everywhere as at 1956f9bf (`door::gone` alone) | `b-plant-gone.out` | "back on, Ana's second computer says she left Walk" (Films and Trip passed) |
+
+## (d) Glassbox (#181)
+
+`cargo test -p svrngs --test join_by_link a_computer_the_group_cut`:
+Hal's key, cut in house at Sam's, opens Sam's next link from a computer
+whose copy of house cannot be read.
+
+| run | what it says |
+|---|---|
+| red, join.rs and redeem.rs as at f53e06f6 (`d-red.out`) | `Err(LinkRefused)`: the link refused |
+| plant, join.rs's `Err` arm tracing nothing (`d-plant-trace.out`) | fails on "join: whether this computer was cut in the group cannot be read here" |
+| plant, the issuer's `Cut` arm tracing nothing (`d-plant-issuer-trace.out`) | fails on "redeem: refused — the group cut this key" |
+| green | `Refusal::Left(house)`, both traces; join_by_link 11 passed |

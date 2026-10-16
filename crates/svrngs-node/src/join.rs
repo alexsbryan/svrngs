@@ -68,9 +68,15 @@ impl Host {
             tracing::debug!(target: "join", group = %asked.group, "join: the issuer's answer is not believed, so nothing is redeemed");
             return Err(NotJoined::LinkRefused);
         };
-        if let Ok(Standing::Left(_)) = self.rail.standing(&seed.id()) {
-            tracing::debug!(target: "join", group = %seed.id(), "join: refused — this computer's key was cut in the group, so nothing is redeemed");
-            return Err(NotJoined::Left(seed.name().clone()));
+        match self.rail.standing(&seed.id()) {
+            Ok(Standing::Left(_)) => {
+                tracing::debug!(target: "join", group = %seed.id(), "join: refused — this computer's key was cut in the group, so nothing is redeemed");
+                return Err(NotJoined::Left(seed.name().clone()));
+            }
+            Err(e) => {
+                tracing::debug!(target: "join", group = %seed.id(), error = %e, "join: whether this computer was cut in the group cannot be read here, so the issuer judges it (#181)")
+            }
+            Ok(_) => {}
         }
         Ok((asked, seed))
     }
@@ -150,6 +156,8 @@ fn not_let_in(e: RedeemError, group: Option<&Name>) -> NotJoined {
             // it is an answer this build cannot read.
             None => NotJoined::IssuerAway,
         },
+        // Only a redemption answers that the key was cut (#181).
+        RedeemError::Cut => group.map_or(NotJoined::IssuerAway, |g| NotJoined::Left(g.clone())),
         RedeemError::Unjudged | RedeemError::NoAnswer(_) => NotJoined::IssuerAway,
     }
 }

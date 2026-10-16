@@ -163,6 +163,11 @@ fn answer<T: Serialize>(route: &str, key: &str, decided: Result<T, NotAdmitted>)
                 "redeem: refused — the name is not one; answered with why, naming no group");
             err(StatusCode::FORBIDDEN, why.to_string())
         }
+        Err(NotAdmitted::Decided(RedeemRefusal::Cut)) => {
+            tracing::debug!(target: "redeem", route, key,
+                "redeem: refused — the group cut this key, by its person's leave or a removal; answered 410, so it is said as that, never as a refused link (#181)");
+            err(StatusCode::GONE, REFUSAL)
+        }
         Err(NotAdmitted::Decided(RedeemRefusal::NameTaken(holder))) => {
             tracing::debug!(target: "redeem", route, key, %holder,
                 "redeem: refused — a standing person goes by the name; answered 409 with theirs");
@@ -298,6 +303,10 @@ pub enum RedeemError {
     /// by the name: theirs, as the group names them.
     #[error("someone in the group already goes by {0}")]
     NameTaken(Name),
+    /// The issuer's node answered that the group cut the key asking: its
+    /// person left or was removed, so it does not join from that computer.
+    #[error("the group cut this computer's key")]
+    Cut,
     /// The issuer's node answered that it could not judge: [`UNJUDGED`].
     #[error("the issuer could not judge")]
     Unjudged,
@@ -370,6 +379,7 @@ async fn call<T: DeserializeOwned>(
                 RedeemError::NameTaken,
             ))
         }
+        StatusCode::GONE => Err(RedeemError::Cut),
         StatusCode::SERVICE_UNAVAILABLE => Err(RedeemError::Unjudged),
         other => Err(RedeemError::NoAnswer(format!("HTTP {other}"))),
     }

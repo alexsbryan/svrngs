@@ -929,3 +929,89 @@ fn join_parses_its_link() {
     assert!(cli::parse(argv(&["join"])).is_err());
     assert!(cli::parse(argv(&["join", &url, "--origin", "https://x.example/"])).is_err());
 }
+
+/// What `filter` traces while the guards live, kept to be read, as
+/// svrngs-node's tests/common `heard` keeps it: a second dispatcher alive,
+/// so a callsite another thread reaches first is not cached unheard.
+fn heard(
+    filter: &str,
+) -> (
+    std::sync::Arc<std::sync::Mutex<Vec<u8>>>,
+    (tracing::subscriber::DefaultGuard, tracing::Dispatch),
+) {
+    #[derive(Clone)]
+    struct Kept(std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
+    impl std::io::Write for Kept {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            self.0.lock().unwrap().extend_from_slice(buf);
+            Ok(buf.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+    let said = Kept(Default::default());
+    let writer = said.clone();
+    let subscriber = tracing_subscriber::fmt()
+        .with_env_filter(filter)
+        .with_ansi(false)
+        .with_writer(move || writer.clone())
+        .finish();
+    let guard = tracing::subscriber::set_default(subscriber);
+    let two = tracing::Dispatch::new(tracing::subscriber::NoSubscriber::default());
+    (said.0, (guard, two))
+}
+
+/// **A computer the group cut is told so by the issuer, never that its
+/// link was refused** (groups-leave-others (d), #181). Hal joins house and
+/// Sam's computer cuts him. Hal's key, on a computer whose copy of house
+/// cannot be read (a roster that is no JSON), opens Sam's next link: the
+/// join traces that whether it was cut cannot be read here, Sam's computer
+/// traces its refusal as the cut, and Hal is told he is no longer in house
+/// on this computer, never that the link was refused. Red at f53e06f6: the
+/// link refused, and neither trace.
+#[tokio::test]
+async fn a_computer_the_group_cut_is_told_so_by_the_issuer() {
+    let (said, _heard) = heard("join=debug,redeem=debug");
+    let sam = computer(1).await;
+    let (seed, printed) = sams_house(&sam).await;
+    let group = seed.id();
+    let hal = computer(9).await;
+    knows(&hal, &sam.node);
+    let link = parsed(&printed, &sam.node);
+    cli::join_group(&hal.node, &hal.key, &link, &name("Hal"))
+        .await
+        .expect("Hal is let in");
+    let cut = svrngs_node::Removal {
+        person: Person::parse("Hal").unwrap(),
+        joined: None,
+    };
+    let cut = sam.node.rail().commit(&group, &cut).unwrap();
+    assert!(cut.is_ok(), "control: Sam's computer cuts Hal: {cut:?}");
+    hal.node.endpoint().close().await;
+
+    let again = computer(9).await;
+    knows(&again, &sam.node);
+    let dir = again.node.rail().group_dir(&group).unwrap();
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("roster.json"), "no roster").unwrap();
+    let (_, printed, _) = cli::link_to(&sam.node, "house", None, &no_relay(), false)
+        .await
+        .expect("Sam's computer makes its next link");
+    let link = parsed(&printed, &sam.node);
+    let refused = cli::join_group(&again.node, &again.key, &link, &name("Hal")).await;
+    assert!(
+        matches!(&refused, Err(Refusal::Left(g)) if *g == name("house")),
+        "{refused:?}"
+    );
+    let said = String::from_utf8(said.lock().unwrap().clone()).unwrap();
+    for trace in [
+        "join: whether this computer was cut in the group cannot be read here",
+        "redeem: refused — the group cut this key",
+    ] {
+        assert!(said.contains(trace), "{trace}: {said}");
+    }
+    for c in [&sam, &again] {
+        c.node.endpoint().close().await;
+    }
+}

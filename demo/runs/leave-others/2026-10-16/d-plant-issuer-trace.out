@@ -1,0 +1,5 @@
+thread 'a_computer_the_group_cut_is_told_so_by_the_issuer' (55140427) panicked at crates/svrngs/tests/join_by_link.rs:10
+redeem: refused — the group cut this key: 2026-10-16T16:22:59.233219Z DEBUG redeem: redeem: dialling the issuer by key r
+--
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.24s
+
