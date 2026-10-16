@@ -83,7 +83,7 @@ impl IrohTransport {
         let to = self.endpoint_addr_for(peer)?;
         Some(format!(
             "http://{}",
-            splice(self.endpoint().clone(), to, crate::iroh::ALPN).await
+            splice(self.endpoint.clone(), to, crate::iroh::ALPN).await
         ))
     }
 }

@@ -123,7 +123,7 @@ impl Contact {
 /// Client half: a request to a member, dialled by its key.
 #[derive(Debug)]
 pub struct IrohTransport {
-    endpoint: iroh::Endpoint,
+    pub(crate) endpoint: iroh::Endpoint,
     /// Out-of-band dial hints: pubkey → iroh UDP socket addresses.
     /// **Fallback only.** Dial info comes first from the [`Contact`] —
     /// relay URL + direct addrs.
@@ -150,11 +150,6 @@ impl IrohTransport {
             known_addrs: std::sync::Mutex::new(HashMap::new()),
             conns: std::sync::Mutex::new(HashMap::new()),
         }
-    }
-
-    /// The endpoint this transport dials from.
-    pub fn endpoint(&self) -> &Endpoint {
-        &self.endpoint
     }
 
     /// Seed dial hints for a peer. Test/fallback surface — a caller with a
