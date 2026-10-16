@@ -46,7 +46,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # one past where the row closed after its economizing pass. arch-version, one
 # version check in place of the fields' fallbacks, lowered the repository's to
 # one past where it closed after its own; svrngs-core's it left, unchanged.
-BUDGET = {"crates/svrngs-core": 2953, ".": 16145}
+# groups-economize cut five items only tests reached and lowered the
+# repository's to one past where its cuts landed; svrngs-core's it left at one
+# past (demo/runs/economize/2026-10-16/SURVEY.md). The operator gave the groups
+# rows +200 over that cap and svrngs-core +40 over its own (2026-10-14).
+BUDGET = {"crates/svrngs-core": 2953, ".": 16136}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
