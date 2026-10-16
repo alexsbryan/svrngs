@@ -10,9 +10,6 @@
 use std::num::NonZeroU16;
 
 pub use svrngs_node::share::*;
-// The lend's names its tests read, as they read them before the move.
-#[cfg(test)]
-use svrngs_node::lend::{Kind, LendName, RefusedPath};
 
 /// `5000` → port 5000 on this computer. (svrngs: a port alone, where
 /// upstream also took a loopback `host:port`; the door dials 127.0.0.1.)

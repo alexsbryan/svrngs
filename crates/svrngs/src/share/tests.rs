@@ -4,6 +4,8 @@
 //! alone, so a `host:port` is refused with the rest; then the lend's
 //! decision, `lend_of`, and the well-known table.)
 use super::*;
+// The lend's names, as these tests read them before the move.
+use svrngs_node::lend::{Kind, LendName, RefusedPath};
 
 fn port(p: u16) -> NonZeroU16 {
     NonZeroU16::new(p).unwrap()
