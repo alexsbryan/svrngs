@@ -1,3 +1,5 @@
+**Answered by the operator, 2026-10-15: "Let them go; V1's publish replaces them".** No build before v1ui-door is one a page must talk to. The published 27d5ff9a and Sam's 4b2cdfa are let go, each said once on the page as "runs an older svrngs". Republishing is the operator's.
+
 # arch-version: what is the oldest build a page still has to talk to?
 
 The row stops here by its own words ("if any has, NEEDS_HUMAN.md listing

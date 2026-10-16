@@ -1,3 +1,5 @@
+**Answered by the operator, 2026-10-15: "Page join; pay with cuts first".** AUDIT §2.7 and §2.8 are cut first, then the home page's join is built, the raise only what is left, the row closing at most at 16,190. The command's asks and install.sh's change are dropped. The row in `ralph/next/arch/STATE.md` says how.
+
 # arch-command: the command asking the node costs lines; it saves none
 
 ## The director, 2026-10-15: checked, split, and your call

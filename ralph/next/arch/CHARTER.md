@@ -69,6 +69,17 @@ charter disagree, they win, and the decision says so.
   - From arch-stream's close on, every row closes on check.sh at exit 0
     again.
 
+- **arch-command and arch-version, after their questions** (the operator,
+  2026-10-15).
+  - For arch-command: "Page join; pay with cuts first". AUDIT §2.7 and
+    §2.8 are cut first. Then the home page's join is built, and the raise
+    is only what's left, up to 16,190. The command's asks and install.sh's
+    change are dropped.
+  - For arch-version: "Let them go; V1's publish replaces them". No build
+    before v1ui-door is one a page must talk to.
+  - The published build (group.svrnme.sh, about 27d5ff9a) predates the
+    bridge's cut (#175). Republishing it is the operator's.
+
 ## Why
 
 The bar is AGENTS.md "Done": a raise is asked only after an economizing
