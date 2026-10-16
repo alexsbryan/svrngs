@@ -1,0 +1,33 @@
+crates/svrngs-core/src/command.rs:40: type `Reads` is more private than the item `Command::READS`
+crates/svrngs-core/src/lib.rs:130: unused import: `command::Reads`
+crates/svrngs-core/src/lib.rs:143: unused import: `payload::PayloadError`
+crates/svrngs-core/src/lib.rs:157: unused import: `sig::act_id`
+crates/svrngs-core/src/lib.rs:161: unused import: `sig::redemption_message`
+crates/svrngs-core/src/lib.rs:162: unused import: `sig::ring_op_message`
+crates/svrngs-core/src/lib.rs:165: unused import: `sig::sign_ring_op`
+crates/svrngs-core/src/lib.rs:170: unused import: `sync::NO_BUDGET`
+crates/svrngs-core/src/lib.rs:173: unused import: `synced::NotASyncPath`
+crates/svrngs-core/src/lib.rs:179: unused import: `view::DIGEST_V`
+crates/svrngs-core/src/lib.rs:389: type `Payload` is more private than the item `RailAct::Record::payload`
+crates/svrngs-core/src/lib.rs:398: type `Payload` is more private than the item `RailAct::Correct::replacement`
+crates/svrngs-core/src/lib.rs:433: type `Redemption` is more private than the item `RailAct::Admit::invite`
+crates/svrngs-core/src/record.rs:28: type `Reads` is more private than the item `<Append as Command>::READS`
+crates/svrngs-core/src/register.rs:122: type `Reads` is more private than the item `<MintInvite as Command>::READS`
+crates/svrngs-core/src/register.rs:162: type `Reads` is more private than the item `<Removal as Command>::READS`
+crates/svrngs-core/src/register.rs:225: type `Reads` is more private than the item `<HandOnTo as Command>::READS`
+crates/svrngs-core/src/register.rs:252: type `Reads` is more private than the item `<RelayAt as Command>::READS`
+crates/svrngs-core/src/register.rs:53: type `Reads` is more private than the item `<Redeem as Command>::READS`
+crates/svrngs-core/src/synced.rs:131: type `Reads` is more private than the item `<SyncFolder as Command>::READS`
+crates/svrngs-node/src/dial.rs:46: constant `LINK_WITHIN` is never used
+crates/svrngs-node/src/group.rs:116: function `read_origin` is never used
+crates/svrngs-node/src/iroh.rs:162: method `endpoint` is never used
+crates/svrngs-node/src/iroh.rs:64: unused import: `iroh::address_lookup::MemoryLookup`
+crates/svrngs-node/src/lib.rs:41: private item shadows public glob re-export
+crates/svrngs-node/src/node.rs:424: method `sync_with` is never used
+crates/svrngs/src/cli.rs:106: unused import: `crate::group::kept_relay`
+crates/svrngs/src/cli.rs:294: type `RemoveKind` is more private than the item `Verb::Remove::kind`
+crates/svrngs/src/cli.rs:299: type `relay::Relay` is more private than the item `Verb::Relay::0`
+crates/svrngs/src/cli.rs:536: type `KeyError` is more private than the item `Refusal::Key::0`
+crates/svrngs/src/lib.rs:11: unused import: `svrngs_node::join as issuer`
+crates/svrngs/src/relay.rs:63: variant `Here` is never constructed
+build-finished success: True
