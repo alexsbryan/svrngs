@@ -16,9 +16,11 @@
 //! A cut is told to the removed person's computers once, as it lands: one
 //! sync request carrying the cut and nothing else of the group, which their
 //! node takes since this computer stands in their copy of the register.
-//! From then on every computer of the group closes theirs at the connection
-//! (`node.rs`, `admit_dialer`), so a removed computer that is off as it
-//! lands is not told by svrngs; every lender's door refuses it all the same.
+//! A leave is told so to every other computer of the group, the leaver's
+//! own others among them (#179). A cut computer that is off as it lands is
+//! told by the first computer it asks to sync the group, which answers it
+//! the `Remove` naming it and nothing after (`ring_routes.rs`, `told_cut`);
+//! every lender's door refuses it all the same.
 
 use axum::extract::State;
 use axum::http::StatusCode;
@@ -152,8 +154,9 @@ async fn leave(State(at): State<Asking>, Json(asked): Json<LeaveAsk>) -> Outcome
 /// `command`, a removal or a leave, written in `group`, and what happened.
 /// A cut is told once, the cut alone, to the computers that would not hear
 /// of it by the round: a removal's to the removed person's, a leave's to
-/// everyone else's, since the leaver's round no longer reaches the group
-/// (the operator, 2026-10-14: "Record only").
+/// every other computer, the leaver's own others too (#179), since the
+/// leaver's round no longer reaches the group (the operator, 2026-10-14:
+/// "Record only").
 async fn cut<C: Command<Refusal = RemovalRefusal>>(
     at: Asking,
     group: &str,
@@ -207,7 +210,7 @@ async fn cut<C: Command<Refusal = RemovalRefusal>>(
     // Each with the relay the record named before the cut (relay-in-record).
     let computers = (before.members.into_iter())
         .filter(|(k, m)| {
-            m.device == Device::Computer && *k != at.host.actor && left != cut.contains(k)
+            m.device == Device::Computer && *k != at.host.actor && (left || cut.contains(k))
         })
         .map(|(k, m)| (k, m.relay))
         .collect();

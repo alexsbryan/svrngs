@@ -174,15 +174,17 @@ async fn left_on(node: &Node, group: &str) -> bool {
     groups.iter().any(|g| g["id"] == group && g["left"] == true)
 }
 
-/// Up to `within`, a round on `node` each second: whether its home page
-/// says it left `group`.
-async fn until_left(node: &Node, group: &str, within: Duration) -> bool {
+/// Up to `within`, with a round on `node` each second if `rounds`:
+/// whether its home page says it left `group`.
+async fn until_left(node: &Node, group: &str, within: Duration, rounds: bool) -> bool {
     let t0 = std::time::Instant::now();
     while t0.elapsed() < within {
         if left_on(node, group).await {
             return true;
         }
-        let _ = tokio::time::timeout(Duration::from_secs(10), node.round()).await;
+        if rounds {
+            let _ = tokio::time::timeout(Duration::from_secs(10), node.round()).await;
+        }
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
     left_on(node, group).await
@@ -223,14 +225,17 @@ fn held_again(from: &std::path::Path, to: &std::path::Path) {
     }
 }
 
-/// A computer of `key`'s in `dir`, online at the relay `ours` names.
+/// A computer of `key`'s in `dir`, online at the relay `ours` names. Its
+/// own round runs at its start and then only when a test asks one, as
+/// `tests/scale.rs` passes a day, so what reaches it between is told.
 async fn computer(dir: &std::path::Path, key: &SigningKey, ours: &RelayConfig) -> Node {
-    let node = Node::start(
+    let node = Node::start_every(
         dir.to_path_buf(),
         key.clone(),
         ours,
         group::seed_text,
         "127.0.0.1:0".parse().unwrap(),
+        Duration::from_secs(86_400),
     )
     .await
     .expect("a computer starts");
@@ -249,7 +254,8 @@ in_both_engines!(
     /// asks, while her second is off; it comes back on, still in Trip and
     /// Walk at Sam's, and within 90 s its home page says she left Films.
     /// She presses "Leave Trip" on her first computer's home page while
-    /// her second is on, and within 30 s its page says she left Trip.
+    /// her second is on, and within 30 s, no round of its own run, its
+    /// page says she left Trip: told by her first.
     /// She leaves Walk with her second off again, now in no group of
     /// Sam's there; back on, within 90 s its page says she left Walk, and
     /// lists all three under "Groups you left". Off is the node stopped
@@ -349,7 +355,7 @@ async fn a_leave_reaches_the_leavers_other_computer(engine: harness::Engine) {
     held_again(two_dir.path(), again.path());
     two = computer(again.path(), &two_key, &ours).await;
     assert!(
-        until_left(&two, &films, Duration::from_secs(90)).await,
+        until_left(&two, &films, Duration::from_secs(90), true).await,
         "back on, Ana's second computer says she left Films"
     );
 
@@ -358,7 +364,7 @@ async fn a_leave_reaches_the_leavers_other_computer(engine: harness::Engine) {
     let seen = home_of(engine, &one, press).await;
     eprintln!("Ana's first computer's page, leaving Trip: {seen:#}");
     assert!(
-        until_left(&two, &trip, Duration::from_secs(30)).await,
+        until_left(&two, &trip, Duration::from_secs(30), false).await,
         "on, Ana's second computer says she left Trip"
     );
 
@@ -374,7 +380,7 @@ async fn a_leave_reaches_the_leavers_other_computer(engine: harness::Engine) {
     held_again(again.path(), third.path());
     two = computer(third.path(), &two_key, &ours).await;
     assert!(
-        until_left(&two, &walk, Duration::from_secs(90)).await,
+        until_left(&two, &walk, Duration::from_secs(90), true).await,
         "back on, Ana's second computer says she left Walk"
     );
     let seen = home_of(engine, &two, json!({ "all": "#left p" })).await;

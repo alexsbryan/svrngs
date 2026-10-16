@@ -1,0 +1,335 @@
+   Compiling svrngs-node v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs-node)
+   Compiling svrngs v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 14.55s
+     Running tests/leave_page.rs (target/debug/deps/leave_page-cba783c1a51226bd)
+
+running 4 tests
+Sam's page, before: {
+  "after": [],
+  "all": [
+    "Make a link to invite someone to TripMake a link to add your phone or another computer of yours",
+    "",
+    "You keep the order of removals in Trip. Choose who keeps it after you, then leave: AnaHand it on",
+    "Leaving Trip stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Trip",
+    "These come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.",
+    " Money: who paid for what, and who owes whom.",
+    " Events: post a get-together, and see who’s coming.",
+    "Bring the ticked ones to Trip",
+    "The link: Open it",
+    "A name for the group: Your name in it: Make a group",
+    "",
+    "The link someone sent you: Your name in it: ",
+    "",
+    "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "Look for programs running on this computer",
+    "You lend nothing yet."
+  ],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "Trip (yours, since 16 Oct)",
+  "links": [],
+  "logs": [],
+  "opened": null,
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+Ana's page, leaving: {
+  "after": [
+    [
+      "You left Trip. Rejoining needs a new invitation, and this computer can’t rejoin yet.",
+      "Groups you left",
+      "Trip (Sam’s, since 16 Oct): what you have of it stays on this computer, and nothing new of it reaches you.",
+      "Open a link from your group",
+      "The link: Open it",
+      "Make a group",
+      "A name for the group: Your name in it: Make a group",
+      "",
+      "Join a group from a link",
+      "The link someone sent you: Your name in it: ",
+      "",
+      "Already running here",
+      "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+      "Look for programs running on this computer",
+      "What you lend",
+      "You lend nothing yet.",
+      "Your home page, the same address each time svrngs starts: http://svrngs.localhost:50889/"
+    ]
+  ],
+  "all": [
+    "Trip (Sam’s, since 16 Oct)",
+    "Make a link to invite someone to TripMake a link to add your phone or another computer of yours",
+    "",
+    "Leaving Trip stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Trip",
+    "These come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.",
+    " Money: who paid for what, and who owes whom.",
+    " Events: post a get-together, and see who’s coming.",
+    "Bring the ticked ones to Trip",
+    "Open a link from your group",
+    "The link: Open it",
+    "Make a group",
+    "A name for the group: Your name in it: Make a group",
+    "",
+    "Join a group from a link",
+    "The link someone sent you: Your name in it: ",
+    "",
+    "Already running here",
+    "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "Look for programs running on this computer",
+    "What you lend",
+    "You lend nothing yet.",
+    "Your home page, the same address each time svrngs starts: http://svrngs.localhost:50889/"
+  ],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "Trip (Sam’s, since 16 Oct)",
+  "links": [],
+  "logs": [],
+  "opened": null,
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+Sam's page, before: {
+  "after": [],
+  "all": [
+    "Make a link to invite someone to TripMake a link to add your phone or another computer of yours",
+    "",
+    "You keep the order of removals in Trip. Choose who keeps it after you, then leave: AnaHand it on",
+    "Leaving Trip stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Trip",
+    "These come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.",
+    " Money: who paid for what, and who owes whom.",
+    " Events: post a get-together, and see who’s coming.",
+    "Bring the ticked ones to Trip",
+    "The link: Open it",
+    "A name for the group: Your name in it: Make a group",
+    "",
+    "The link someone sent you: Your name in it: ",
+    "",
+    "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "Look for programs running on this computer",
+    "You lend nothing yet."
+  ],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "Trip (yours, since 16 Oct)",
+  "links": [],
+  "logs": [],
+  "opened": null,
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+Sam's page, after: {
+  "after": [],
+  "all": [
+    "Ana left on Oct 16, 2026, 9:13 AM"
+  ],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "Trip (yours, since 16 Oct)",
+  "links": [],
+  "logs": [],
+  "opened": null,
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+Ana's page, sent a new link: {
+  "after": [
+    [
+      "The link someone sent you: Your name in it: ",
+      "You’re no longer in Trip on this computer, and you can’t join it again from here yet. Join from your phone or another computer instead."
+    ]
+  ],
+  "all": [
+    "The link someone sent you: Your name in it: ",
+    ""
+  ],
+  "clipboard": "",
+  "drawn": null,
+  "heading": "Groups you left",
+  "links": [],
+  "logs": [
+    "error: Failed to load resource: the server responded with a status of 409 (Conflict)"
+  ],
+  "opened": null,
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+test leaving_on_the_home_page_is_said_as_a_leave_everywhere::chromium ... ok
+Ana's page, leaving: {
+  "after": [
+    [
+      "You left Trip. Rejoining needs a new invitation, and this computer can’t rejoin yet.",
+      "Groups you left",
+      "Trip (Sam’s, since 16 Oct): what you have of it stays on this computer, and nothing new of it reaches you.",
+      "Open a link from your group",
+      "The link: Open it",
+      "Make a group",
+      "A name for the group: Your name in it: Make a group",
+      "",
+      "Join a group from a link",
+      "The link someone sent you: Your name in it: ",
+      "",
+      "Already running here",
+      "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+      "Look for programs running on this computer",
+      "What you lend",
+      "You lend nothing yet.",
+      "Your home page, the same address each time svrngs starts: http://svrngs.localhost:50888/"
+    ]
+  ],
+  "all": [
+    "Trip (Sam’s, since 16 Oct)",
+    "Make a link to invite someone to TripMake a link to add your phone or another computer of yours",
+    "",
+    "Leaving Trip stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Trip",
+    "These come with svrngs. Bring one, and everyone in Trip opens it on their own computer or phone, while any computer in Trip is on.",
+    " Money: who paid for what, and who owes whom.",
+    " Events: post a get-together, and see who’s coming.",
+    "Bring the ticked ones to Trip",
+    "Open a link from your group",
+    "The link: Open it",
+    "Make a group",
+    "A name for the group: Your name in it: Make a group",
+    "",
+    "Join a group from a link",
+    "The link someone sent you: Your name in it: ",
+    "",
+    "Already running here",
+    "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "Look for programs running on this computer",
+    "What you lend",
+    "You lend nothing yet.",
+    "Your home page, the same address each time svrngs starts: http://svrngs.localhost:50888/"
+  ],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "Trip (Sam’s, since 16 Oct)",
+  "links": [],
+  "logs": [],
+  "opened": null,
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+Sam's page, after: {
+  "after": [],
+  "all": [
+    "Ana left on Oct 16, 2026 at 9:13 AM"
+  ],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "Trip (yours, since 16 Oct)",
+  "links": [],
+  "logs": [],
+  "opened": null,
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+Ana's page, sent a new link: {
+  "after": [
+    [
+      "The link someone sent you: Your name in it: ",
+      "You’re no longer in Trip on this computer, and you can’t join it again from here yet. Join from your phone or another computer instead."
+    ]
+  ],
+  "all": [
+    "The link someone sent you: Your name in it: ",
+    ""
+  ],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "Groups you left",
+  "links": [],
+  "logs": [
+    "error: Failed to load resource: the server responded with a status of 409 (Conflict)"
+  ],
+  "opened": null,
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+test leaving_on_the_home_page_is_said_as_a_leave_everywhere::webkit ... ok
+Ana's first computer's page, leaving Trip: {
+  "after": [
+    [
+      "You left Trip. Rejoining needs a new invitation, and this computer can’t rejoin yet.",
+      "Your home page, the same address each time svrngs starts: http://svrngs.localhost:50895/"
+    ]
+  ],
+  "all": [
+    "Your home page, the same address each time svrngs starts: http://svrngs.localhost:50895/"
+  ],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "Trip (Sam’s, since 16 Oct)",
+  "links": [],
+  "logs": [],
+  "opened": null,
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+Ana's first computer's page, leaving Trip: {
+  "after": [
+    [
+      "You left Trip. Rejoining needs a new invitation, and this computer can’t rejoin yet.",
+      "Your home page, the same address each time svrngs starts: http://svrngs.localhost:50894/"
+    ]
+  ],
+  "all": [
+    "Your home page, the same address each time svrngs starts: http://svrngs.localhost:50894/"
+  ],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "Walk (Sam’s, since 16 Oct)",
+  "links": [],
+  "logs": [],
+  "opened": null,
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+Ana's second computer's page: {
+  "after": [],
+  "all": [
+    "Films (Sam’s, since 16 Oct): what you have of it stays on this computer, and nothing new of it reaches you.",
+    "Trip (Sam’s, since 16 Oct): what you have of it stays on this computer, and nothing new of it reaches you.",
+    "Walk (Sam’s, since 16 Oct): what you have of it stays on this computer, and nothing new of it reaches you."
+  ],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "Groups you left",
+  "links": [],
+  "logs": [],
+  "opened": null,
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+Ana's second computer's page: {
+  "after": [],
+  "all": [
+    "Films (Sam’s, since 16 Oct): what you have of it stays on this computer, and nothing new of it reaches you.",
+    "Walk (Sam’s, since 16 Oct): what you have of it stays on this computer, and nothing new of it reaches you.",
+    "Trip (Sam’s, since 16 Oct): what you have of it stays on this computer, and nothing new of it reaches you."
+  ],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "Groups you left",
+  "links": [],
+  "logs": [],
+  "opened": null,
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+test a_leave_reaches_the_leavers_other_computer::webkit ... ok
+test a_leave_reaches_the_leavers_other_computer::chromium ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 27.51s
+

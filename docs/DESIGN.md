@@ -1709,7 +1709,11 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   they already hold stays theirs**: removal sends nothing back and
   deletes nothing on their disk — the files a folder gave them, the copy
   of the record they hold. A removed computer that was off as the cut
-  landed is not told by svrngs; every door refuses it all the same.
+  landed is told by the first computer it asks to sync the group, which
+  answers it the `Remove` naming it, with its signer's acts before it,
+  and nothing after it nor of anyone else (`ring_routes.rs` `told_cut`,
+  #179; served too where it stands in no group held there); every door
+  refuses it all the same.
   Everyone in the group sees every removal and every ask to remove — who
   of whom, and when — on a computer's home page and a phone's group page,
   read from the register and written nowhere new (v1-keeper-office (b);
@@ -1732,9 +1736,13 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   its keys' order is not the leave's. `svrngs leave <group>` asks the node
   running here, as `svrngs remove` does (`POST /v1/leaves`, `removal.rs`
   `leave`): it commits the `Leave` and tells the leave once to each other
-  computer standing in the group, the leave alone, as a cut is told to the
-  removed; nothing else is sent (the operator, 2026-10-14: "Record only"),
-  and a computer off as it lands hears it from the others' rounds. From
+  computer standing in the group before it, the leaver's own others among
+  them (#179), the leave alone, as a cut is told to the removed; nothing
+  else is sent (the operator, 2026-10-14: "Record only"). A computer the
+  leave did not cut, off as it lands, hears it from the others' rounds;
+  one of the leaver's own is told by the first computer it asks to sync,
+  as a removed computer is (`crates/svrngs/tests/leave_page.rs`,
+  `a_leave_reaches_the_leavers_other_computer`). From
   then on the leaver's computer holds the group and nobody stands in it
   there: `RingRail::standing` answers `Standing::Left`, with the keys its
   copy says stand, for any group whose register cut this computer's own

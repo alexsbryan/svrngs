@@ -347,18 +347,20 @@ impl Node {
         // member's groups lend (u4-5).
         let holders = crate::door::holders_router(asking.door.clone());
         let room = asking.clone();
-        let members = ring_routes::router(RingInbound {
+        let inbound = RingInbound {
             rail: rail.clone(),
             live,
             wake: nudge.clone(),
-        })
-        .merge(crate::door::router(asking.door.clone()))
-        .merge(people_router(asking))
-        .merge(crate::folder::members_router(folders));
+        };
+        let members = ring_routes::router(inbound.clone())
+            .merge(crate::door::router(asking.door.clone()))
+            .merge(people_router(asking))
+            .merge(crate::folder::members_router(folders));
         let redeem = crate::redeem::router(room.clone());
         // A dialer the keeper cut, on the members' protocol, is told so in
-        // words on every route, and served nothing else (U7).
-        let gone = axum::Router::new().fallback(|| async { crate::door::gone() });
+        // words on every route (U7), and served nothing else but the lines
+        // that cut it, where it asks to sync (#179; ring_routes.rs `told_cut`).
+        let gone = ring_routes::router(inbound).fallback(|| async { crate::door::gone() });
         let acceptor =
             IrohAcceptor::spawn(endpoint.clone(), move |alpn: &[u8], dialer: &PublicKey| {
                 match admit_dialer(&admitting, alpn, dialer) {

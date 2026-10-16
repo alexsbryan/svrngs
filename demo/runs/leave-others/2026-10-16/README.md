@@ -36,3 +36,20 @@ Why, by the code at 1956f9bf:
   standing in the group it asks. Neither tells it its cut.
 
 #179 reproduces.
+
+## (b) Green, and its plants
+
+The test now waits on the Trip case with no round of Ana's second
+computer's own: each computer of Ana's starts with its round a day apart
+(`Node::start_every`, as tests/scale.rs does), so only a computer telling
+it can reach it there; the off cases ask its rounds, as a computer back on
+runs one.
+
+`cargo test -p svrngs --test leave_page -- --nocapture` (`b-green.out`):
+4 passed, both engines of both tests, 27.5 s.
+
+| plant | run | fails at |
+|---|---|---|
+| the leave told only to the computers it did not cut, as at 1956f9bf (removal.rs `left != cut.contains(k)`) | `b-plant-filter.out` | "on, Ana's second computer says she left Trip" (Films passed, told by `told_cut`) |
+| `told_cut` answering nothing (`return None` first) | `b-plant-told.out` | "back on, Ana's second computer says she left Films" |
+| the router for a computer cut everywhere as at 1956f9bf (`door::gone` alone) | `b-plant-gone.out` | "back on, Ana's second computer says she left Walk" (Films and Trip passed) |

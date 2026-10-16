@@ -126,6 +126,30 @@ pub(crate) fn standing_asker(
     }
 }
 
+/// To an asker that does not stand in the group, the first `Remove` naming
+/// it which its digest says it lacks, with the acts before it of the
+/// computer that signed it, and nothing after it nor of anyone else; none of
+/// the asker's are taken (#179). So a computer off as its cut landed, by a
+/// leave or a removal, reads itself out once it asks, never shown the group
+/// while every lender refuses it. The digest answered is the asker's own,
+/// so it sends nothing back. `None` where it lacks no `Remove` naming it.
+fn told_cut(rail: &RingRail, req: &RingSyncRequest, asker: Option<&str>) -> Option<Response> {
+    let (ns, digest, asker) = (req.namespace.clone(), req.digest.clone(), asker?);
+    let lacks = rail.ops_missing_from_within(&ns, &digest, RING_SYNC_OPS_BUDGET_BYTES);
+    let mut ops = lacks.ok()?.0;
+    let cut = ops.iter().find(|op| op.kind.act.names() == Some(asker));
+    let (by, seq) = cut.map(|op| (op.actor.clone(), op.kind.seq))?;
+    ops.retain(|op| op.actor == by && op.kind.seq <= seq);
+    tracing::debug!(target: "rails", namespace = ns, asker, by, seq, told = ops.len(), "ring sync: an asker not standing, told the Remove naming it and its signer's acts before it");
+    let told = crate::peer_wire::RingSyncResponse {
+        namespace: ns,
+        digest,
+        ops,
+        ingested: 0,
+    };
+    Some(Json(told).into_response())
+}
+
 /// `POST /internal/ring/sync` — one anti-entropy exchange for one namespace.
 /// The body is raw bytes so the gauge reads the direction with a limit.
 pub async fn ring_sync(
@@ -141,6 +165,9 @@ pub async fn ring_sync(
     let dialer = dialer.map(|Extension(d)| d);
     let asker = dialer.map(|d| d.actor());
     if let Err(refusal) = standing_asker(&state.rail, dialer, "sync", &req.namespace) {
+        if let Some(told) = told_cut(&state.rail, &req, asker.as_deref()) {
+            return told;
+        }
         return err(StatusCode::FORBIDDEN, refusal);
     }
     let (response, more_for_caller) = match answer(state.rail.as_ref(), &req) {
