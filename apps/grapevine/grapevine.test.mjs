@@ -307,3 +307,8 @@ test("every gap a page may list, and every refusal it may say, is in the page's 
   for (const code of ['unopened', 'bad_state', 'not_theirs']) assert.ok([...w.view('sam').gaps, ...odd.gaps].some((g) => g.code === code), `the gaps include ${code}`);
   assert.deepEqual([...new Set(said.filter((m) => NOT_SAID.test(m)))], [], 'a gap or refusal says a word a reader must look up');
 });
+
+test('the README says the shortcut first: who sees that a sealed message went by, its size, its handle and its time', () => {
+  const first = readFileSync(join(HERE, 'README.md'), 'utf8').split(/\n\n+/)[1].replace(/\s+/g, ' ');
+  for (const w of ['sealed message went by', 'its size', 'its handle', 'its time', 'never see what it says']) assert.ok(first.includes(w), `the README's first paragraph says ${JSON.stringify(w)}`);
+});
