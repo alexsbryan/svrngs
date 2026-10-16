@@ -133,8 +133,8 @@ pub(crate) fn standing_of(
             .into_response()
     };
     match rail.standing(namespace) {
-        Ok(Standing::Members(people)) => {
-            tracing::debug!(target: "rails", namespace, people = people.len(), "rail: the group is held here, and its register read");
+        Ok(Standing::Members(people) | Standing::Left(people)) => {
+            tracing::debug!(target: "rails", namespace, people = people.len(), "rail: the group is held here, left or not, and its register read");
             Ok(people)
         }
         Ok(Standing::NotHeld) => {

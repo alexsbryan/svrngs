@@ -1390,3 +1390,104 @@ async fn bytes_an_app_put_in_one_group_are_refused_to_a_member_of_another() {
     assert_eq!(status, 404, "{}", String::from_utf8_lossy(&got));
     group.close().await;
 }
+
+// ── Leaving the group (groups-leave (b)) ──────────────────────────────
+
+/// **A leave stops the group reaching them, and keeps what they hold**
+/// (groups-leave (b); svrn-docs `rings/current/LEAVING.md` §5, bars 1 and
+/// 2, Ben for Ana there, since Ana keeps this group). Ben syncs a folder
+/// with Ana and leaves, asked as `svrngs leave films` asks. Within 30 s,
+/// with no round run, Ana's and Cy's computers hold him out and Ana's
+/// refuses him a file she served him before; Ana's next file reaches Cy's
+/// copy of the record, and neither Ben's copy nor his folder; Ben's
+/// computer serves Ana nothing and its round dials nobody; what his folder
+/// gave him stays on his disk, and his copy of the record, read, says he
+/// left. Red with a computer whose own key is cut still holding the group
+/// live (runtime register.rs `standing`, no `Standing::Left`): Ben's
+/// computer served Ana a.bin. Planted with the leave deleting its
+/// folders (removal.rs `leave`, `dirs_of`'s each removed): a.bin is gone.
+#[tokio::test]
+async fn a_leave_stops_the_group_reaching_them_and_keeps_what_they_hold() {
+    use svrngs_node::removal::{LeaveAsk, Outcome, LEAVES_ROUTE};
+    let group = Group::new().await;
+    let (ra, rb) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (ana, ben) = (
+        both_ways(&group.ana, ra.path()).await,
+        both_ways(&group.ben, rb.path()).await,
+    );
+    let kept = noise(50_000, b"kept");
+    std::fs::write(ana.join("a.bin"), &kept).unwrap();
+    let at_ben = |f: &str| std::fs::read(ben.join(f)).ok();
+    let reached = until(&group, || at_ben("a.bin").as_ref() == Some(&kept)).await;
+    assert!(reached, "control: Ana's file reaches Ben");
+    let hash = iroh_blobs::Hash::from_bytes(*blake3::hash(&kept).as_bytes());
+    let asked = tempfile::tempdir().unwrap();
+    let served = get(&group.ben, &group.ana, hash, &asked.path().join("before")).await;
+    assert_eq!(served, Ok(50_000), "control: Ana serves Ben");
+
+    let id = seed("films", 9).id();
+    let leave = http().post(format!("http://{}{LEAVES_ROUTE}", group.ben.api_addr()));
+    let left = leave
+        .json(&LeaveAsk { group: id.clone() })
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(left.json::<Outcome>().await.unwrap(), Outcome::Left);
+    let ben_key = actor_of(&signing(2));
+    let out = |n: &Node| {
+        n.rail().standing_anywhere(&ben_key).is_none()
+            && n.rail().removed_anywhere(&ben_key).is_some()
+    };
+    let told = tokio::time::timeout(Duration::from_secs(30), async {
+        while !(out(&group.ana) && out(&group.cy)) {
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+    });
+    assert!(
+        told.await.is_ok(),
+        "Ana's and Cy's computers hold Ben out within 30 s"
+    );
+    let refused = get(&group.ben, &group.ana, hash, &asked.path().join("after")).await;
+    assert!(
+        refused.as_ref().is_err_and(|e| e.contains("not admitted")),
+        "Ana's computer refuses Ben: {refused:?}"
+    );
+    let lent = get(&group.ana, &group.ben, hash, &asked.path().join("lent")).await;
+    assert!(
+        lent.as_ref().is_err_and(|e| e.contains("not admitted")),
+        "and Ben's computer lends the group nothing: {lent:?}"
+    );
+    let dialled = group.ben.round().await;
+    assert_eq!(
+        dialled.peers_reached + dialled.peers_unreachable + dialled.peers_refused,
+        0,
+        "Ben's round dials nobody for the group: {dialled:?}"
+    );
+
+    let ana_key = actor_of(&signing(1));
+    let mark = |n: &Node| n.rail().digest(&id).unwrap().get(&ana_key).cloned();
+    let (ana_before, ben_before) = (mark(&group.ana), mark(&group.ben));
+    std::fs::write(ana.join("b.bin"), noise(30_000, b"after")).unwrap();
+    let synced = || mark(&group.ana) != ana_before && mark(&group.cy) == mark(&group.ana);
+    assert!(
+        until(&group, synced).await,
+        "control: Ana's next file reaches Cy's copy"
+    );
+    assert_eq!(
+        mark(&group.ben),
+        ben_before,
+        "Ben's computer syncs the group no more"
+    );
+    assert_eq!(at_ben("b.bin"), None, "nor his folder");
+    assert_eq!(
+        at_ben("a.bin"),
+        Some(kept),
+        "what his folder gave him stays his"
+    );
+    let register = group.ben.rail().register(&id).unwrap();
+    assert!(
+        register.removed.contains_key(&ben_key),
+        "his copy, read, says he left"
+    );
+    group.close().await;
+}

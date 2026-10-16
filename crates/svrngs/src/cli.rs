@@ -98,7 +98,9 @@ use svrngs_node::join::{Entered, NotJoined};
 use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath, Source, Upload};
 use svrngs_node::node::{Lends, Lent, Node, NodeError};
 use svrngs_node::relay::n0_relays;
-use svrngs_node::removal::{Outcome, RemovalAsk, HANDOVERS_ROUTE, REMOVALS_ROUTE};
+use svrngs_node::removal::{
+    LeaveAsk, Outcome, RemovalAsk, HANDOVERS_ROUTE, LEAVES_ROUTE, REMOVALS_ROUTE,
+};
 use svrngs_node::room;
 use svrngs_node::{Joined, Person, SigningKey};
 
@@ -192,6 +194,12 @@ svrngs — keep what your group shares on your own computers.
   svrngs handover <name> --group <group> [--joined <when>]
       Let <name> decide who is removed from <group> from now on, instead
       of you. Asked of svrngs running here. --joined as for remove.
+
+  svrngs leave <group>
+      Leave <group> from every computer and phone of yours. What you have
+      of it stays here; nothing new reaches you, nor what you lend them.
+      Coming back needs a new invitation, and not from this computer yet.
+      If you decide who is removed, hand that on first.
 
   svrngs relay <name> [--open] [--staging]
       Relay at https://<name>/ for the computers and phones of the groups
@@ -294,6 +302,9 @@ pub enum Verb {
         group: String,
         joined: Option<Joined>,
     },
+    /// `leave` (groups-leave), asked of svrngs running here: the group
+    /// as typed.
+    Leave(String),
     Relay(Relay),
     Help,
 }
@@ -495,6 +506,9 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 asks,
             }))
         }
+        "leave" => Ok(Verb::Leave(
+            positional.ok_or("leave wants a group: `svrngs leave <group>`")?,
+        )),
         "unshare" => {
             let raw = positional.ok_or("unshare wants a name: `svrngs unshare <name>`")?;
             Ok(Verb::Unshare(lend_name(&raw)?))
@@ -764,6 +778,17 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             print!("{}", removal(&root, route, person, joined, &group).await?);
             return Ok(());
         }
+        Verb::Leave(group) => {
+            let seed = group_named(&root, &group)?;
+            let (_, text) =
+                ask_running(&root, LEAVES_ROUTE, &LeaveAsk { group: seed.id() }).await?;
+            let group = seed.name().clone();
+            print!(
+                "{}",
+                said(&seed, &text, |outcome| Said::Left { group, outcome })?
+            );
+            return Ok(());
+        }
         Verb::Share(asked) => {
             let lent = lend::all(&root).map_err(Refusal::Lends)?;
             let (known, lent) = (share::well_known_kind(asked.port), lent.into_iter());
@@ -843,26 +868,28 @@ async fn removal(
         joined,
     };
     let (_, text) = ask_running(root, route, &asked).await?;
-    let outcome: Outcome = serde_json::from_str(&text).map_err(|e| {
+    let group = seed.name().clone();
+    said(&seed, &text, |outcome| Said::Removal {
+        group,
+        person,
+        outcome,
+    })
+}
+
+/// What svrngs running here answered a removal, hand-on or leave in the
+/// group `seed` names, `text`, said as `said` words it, or the refusal.
+fn said(seed: &Seed, text: &str, said: impl FnOnce(Outcome) -> Said) -> Result<Said, Refusal> {
+    let outcome: Outcome = serde_json::from_str(text).map_err(|e| {
         tracing::debug!(target: "cli", error = %e, text, "cli: refused — svrngs running here answered no outcome");
         Refusal::Unchanged(seed.name().clone())
     })?;
-    tracing::debug!(target: "cli", route, group = %seed.id(), %person, ?outcome, "cli: a removal asked");
-    let said = Said::Removal {
-        group: seed.name().clone(),
-        person,
-        outcome,
-    };
-    match &said {
-        Said::Removal {
-            outcome: Outcome::Out | Outcome::Asked { .. } | Outcome::Handed,
-            ..
-        } => Ok(said),
-        Said::Removal {
-            outcome: Outcome::Fault,
-            ..
-        } => Err(Refusal::Unchanged(seed.name().clone())),
-        _ => Err(Refusal::Removal(said.to_string().trim_end().to_string())),
+    tracing::debug!(target: "cli", group = %seed.id(), ?outcome, "cli: a removal, hand-on or leave asked");
+    match outcome {
+        Outcome::Out | Outcome::Asked { .. } | Outcome::Handed | Outcome::Left => Ok(said(outcome)),
+        Outcome::Fault => Err(Refusal::Unchanged(seed.name().clone())),
+        _ => Err(Refusal::Removal(
+            said(outcome).to_string().trim_end().to_string(),
+        )),
     }
 }
 
@@ -1094,6 +1121,8 @@ pub enum Said {
         person: Name,
         outcome: Outcome,
     },
+    /// `leave` (groups-leave): what happened as you left `group`.
+    Left { group: Name, outcome: Outcome },
 }
 
 impl std::fmt::Display for Said {
@@ -1276,13 +1305,20 @@ impl std::fmt::Display for Said {
                         writeln!(f, "svrngs cannot tell which person called {person} in {group} you mean, so nothing changed. Say which by when they joined, adding one of these to the command: {}.", each.join(", "))
                     }
                     Outcome::Decides => writeln!(f, "{person} decides who is removed from {group}, so cannot be removed: hand that to someone else first, with `svrngs handover <name> --group {group}`."),
-                    Outcome::Own => writeln!(f, "{person} is you, and you cannot remove yourself from {group}, so nothing changed."),
+                    Outcome::Own => writeln!(f, "{person} is you, and you cannot remove yourself from {group}, so nothing changed: `svrngs leave {group}` leaves it."),
                     Outcome::NotDecider { decides: who } => writeln!(f, "Only {} can let someone else decide who is removed from {group}.", decides(who)),
                     Outcome::NotDeciderUnread => writeln!(f, "You do not decide who is removed from {group}, and this computer could not read who is in the group, so cannot say who does (RUST_LOG=debug says why)."),
-                    Outcome::NotIn => writeln!(f, "You are no longer in {group}."),
+                    Outcome::NotIn | Outcome::Left => writeln!(f, "You are no longer in {group}."),
                     Outcome::Fault => writeln!(f, "{group} cannot be changed on this computer (RUST_LOG=debug says why)"),
                 }
             }
+            Said::Left { group, outcome } => match outcome {
+                Outcome::Left => writeln!(f, "You left {group}, from every computer and phone of yours. Your copy of it and the files its folder gave you stay on this computer; nothing new reaches you, and what you lend no longer reaches its people. Coming back needs a new invitation, and this computer cannot come back yet."),
+                Outcome::Decides => writeln!(f, "You decide who is removed from {group}, so you cannot leave it yet: hand that to someone else first, with `svrngs handover <name> --group {group}`, then leave."),
+                Outcome::NotIn => writeln!(f, "You are no longer in {group}."),
+                // Fault, and what the leave route never answers.
+                _ => writeln!(f, "{group} cannot be changed on this computer (RUST_LOG=debug says why)"),
+            },
             Said::Room(served) => {
                 writeln!(f, "Anyone on this computer's network (its WiFi) can open these, as you, while this runs; nobody off it can:")?;
                 for (lent, at) in served {
@@ -1492,7 +1528,8 @@ async fn serve(
         | Verb::Unshare(_)
         | Verb::Relay(_)
         | Verb::Folder { .. }
-        | Verb::Remove { .. } => {
+        | Verb::Remove { .. }
+        | Verb::Leave(_) => {
             unreachable!("answered in `run`")
         }
     };

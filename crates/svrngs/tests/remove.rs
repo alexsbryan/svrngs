@@ -160,21 +160,28 @@ fn every_outcome_is_said_in_a_persons_words() {
         Outcome::NotDecider { decides: sam },
         Outcome::NotDeciderUnread,
         Outcome::NotIn,
+        Outcome::Own,
+        Outcome::Left,
         Outcome::Fault,
     ];
     for outcome in outcomes {
-        let said = Said::Removal {
+        let removal = Said::Removal {
             group: name("trip"),
             person: name("Bo"),
             outcome: outcome.clone(),
-        }
-        .to_string();
-        assert!(said.contains("trip"), "{outcome:?}: {said}");
-        for kept in ["key", "member", "keeper", "ring", " act", "journal"] {
-            assert!(
-                !said.to_lowercase().contains(kept),
-                "{outcome:?} says {kept}: {said}"
-            );
+        };
+        let left = Said::Left {
+            group: name("trip"),
+            outcome: outcome.clone(),
+        };
+        for said in [removal.to_string(), left.to_string()] {
+            assert!(said.contains("trip"), "{outcome:?}: {said}");
+            for kept in ["key", "member", "keeper", "ring", " act", "journal"] {
+                assert!(
+                    !said.to_lowercase().contains(kept),
+                    "{outcome:?} says {kept}: {said}"
+                );
+            }
         }
     }
     let asked = Said::Removal {
@@ -317,5 +324,58 @@ async fn the_keeper_removes_one_of_two_people_of_one_name() {
     let out = ask(verb("remove", &second).unwrap()).await;
     assert!(out.is_ok(), "remove Bo {second:?}: {out:?}");
     assert_eq!(stand(), [false, false], "the second Bo out");
+    node.endpoint().close().await;
+}
+
+/// **`svrngs leave` asks svrngs running here, and whoever decides who is
+/// removed hands that on first** (groups-leave (b)). `leave trip` parses;
+/// Sam, who made trip, is refused while Bo is in it, in words that say
+/// to hand on first and how; Sam hands on to Bo and leaves, told that
+/// their copy and folder stay and that this computer cannot come back yet;
+/// Sam's copy, read, holds Sam out and Bo deciding. At 1b19d80f it does not compile: no
+/// `leave` verb.
+#[tokio::test]
+async fn the_keeper_hands_on_then_leaves() {
+    assert_eq!(
+        cli::parse(argv(&["leave", "trip"])),
+        Ok(Verb::Leave("trip".into()))
+    );
+    assert!(cli::parse(argv(&["leave"])).is_err(), "a group is asked");
+    let dir = tempfile::tempdir().unwrap();
+    let relay = no_relay();
+    let ask = |verb: Verb| cli::run(verb, dir.path().to_path_buf(), &relay);
+    let (node, seed) = sams_trip(dir.path()).await;
+    let bo = SigningKey::from_bytes(&[6; 32]);
+    let_bo_in(&node, &seed, &bo);
+
+    let refused = ask(Verb::Leave("trip".into())).await;
+    assert!(
+        matches!(&refused, Err(Refusal::Removal(w)) if w.starts_with("You decide who is removed from trip, so you cannot leave it yet")),
+        "{refused:?}"
+    );
+    let to_bo = Verb::Remove {
+        kind: RemoveKind::Handover,
+        person: name("Bo"),
+        group: "trip".into(),
+        joined: None,
+    };
+    assert!(ask(to_bo).await.is_ok());
+    assert!(ask(Verb::Leave("trip".into())).await.is_ok(), "Sam leaves");
+    let register = node.rail().register(&seed.id()).unwrap();
+    let sam = actor_of(&SigningKey::from_bytes(&[5; 32]));
+    assert!(register.removed.contains_key(&sam), "Sam is out");
+    assert_eq!(register.keeper, Some(actor_of(&bo)), "Bo decides");
+    let words = Said::Left {
+        group: name("trip"),
+        outcome: Outcome::Left,
+    }
+    .to_string();
+    for said in [
+        "stay on this computer",
+        "new invitation",
+        "cannot come back yet",
+    ] {
+        assert!(words.contains(said), "{words}");
+    }
     node.endpoint().close().await;
 }

@@ -1723,10 +1723,26 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   hand on first, by the `HandOn` that exists. The last person in a group
   leaves freely, and every copy stays with whoever held it. A `Removal`
   the fold would read as the signer's own leave is refused (`Own`), since
-  its keys' order is not the leave's. Leaving is final from that computer
-  for now: a computer signs every group with one key, and a cut key never
-  stands again (the operator, 2026-10-14: "Final for now; per-group keys
-  as a row").
+  its keys' order is not the leave's. `svrngs leave <group>` asks the node
+  running here, as `svrngs remove` does (`POST /v1/leaves`, `removal.rs`
+  `leave`): it commits the `Leave` and tells the leave once to each other
+  computer standing in the group, the leave alone, as a cut is told to the
+  removed; nothing else is sent (the operator, 2026-10-14: "Record only"),
+  and a computer off as it lands hears it from the others' rounds. From
+  then on the leaver's computer holds the group and nobody stands in it
+  there: `RingRail::standing` answers `Standing::Left`, with the keys its
+  copy says stand, for any group whose register cut this computer's own
+  key, left or removed (`crates/svrngs-runtime/src/register.rs`). Every
+  gate that asks who stands — the round, the acceptor, the sync route,
+  the door and the lends — finds nobody, so no round dials for it, no
+  sync serves it and nothing this computer lends reaches it; the record
+  API still reads it. Nothing on the leaver's disk is deleted and nothing
+  is sent back: their copy of the record and the files its folder gave
+  them stay (`crates/svrngs-node/tests/folders.rs`,
+  `a_leave_stops_the_group_reaching_them_and_keeps_what_they_hold`).
+  Leaving is final from that computer for now: a computer signs every
+  group with one key, and a cut key never stands again (the operator,
+  2026-10-14: "Final for now; per-group keys as a row").
 - **Leaving is cheap.** A group's whole state is a directory every member's
   computer holds. A group that goes wrong refounds from any copy, within
   hours, without whoever it leaves out (operator: "with dotfile elegance").

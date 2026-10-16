@@ -31,8 +31,8 @@ use crate::iroh::{actor_key, Contact};
 use crate::node::Asking;
 use crate::peer_wire::RingSyncRequest;
 use crate::{
-    register::Register, Device, HandOnRefusal, HandOnTo, Joined, Person, Refused, Removal,
-    RemovalRefusal,
+    register::Register, Command, Device, HandOnRefusal, HandOnTo, Joined, Leave, Person, Refused,
+    Removal, RemovalRefusal,
 };
 
 /// Where the command asks a removal.
@@ -40,6 +40,16 @@ pub const REMOVALS_ROUTE: &str = "/v1/removals";
 
 /// Where the command asks a hand-on.
 pub const HANDOVERS_ROUTE: &str = "/v1/handovers";
+
+/// Where the command and the home page ask this computer's person's leave
+/// (groups-leave), of the group a [`LeaveAsk`] names.
+pub const LEAVES_ROUTE: &str = "/v1/leaves";
+
+/// What a leave asks: the group, by its id.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LeaveAsk {
+    pub group: String,
+}
 
 /// What the command asks: the group by its id, and a person by name and,
 /// of two people of one name, by when they joined (bash-same-name).
@@ -61,6 +71,8 @@ pub enum Outcome {
     Asked { decides: Option<Person> },
     /// The person now decides removals.
     Handed,
+    /// This computer's person left the group.
+    Left,
     /// Nobody of that name is in the group.
     NotInGroup,
     /// The ask names no one person — more than one in the group goes by
@@ -89,7 +101,9 @@ pub enum Outcome {
 impl Outcome {
     fn status(&self) -> StatusCode {
         match self {
-            Outcome::Out | Outcome::Asked { .. } | Outcome::Handed => StatusCode::OK,
+            Outcome::Out | Outcome::Asked { .. } | Outcome::Handed | Outcome::Left => {
+                StatusCode::OK
+            }
             Outcome::Fault => StatusCode::INTERNAL_SERVER_ERROR,
             _ => StatusCode::CONFLICT,
         }
@@ -107,6 +121,7 @@ pub(crate) fn router(asking: Asking) -> Router {
     Router::new()
         .route(REMOVALS_ROUTE, post(remove))
         .route(HANDOVERS_ROUTE, post(hand_over))
+        .route(LEAVES_ROUTE, post(leave))
         .with_state(asking)
 }
 
@@ -121,14 +136,35 @@ async fn remove(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outc
         tracing::debug!(target: "removal", ?asked, "removal: refused — the name asked is no name, so nobody of it is in the group");
         return Outcome::NotInGroup;
     };
+    let joined = asked.joined;
+    cut(at, &asked.group, &Removal { person, joined }).await
+}
+
+/// This computer's person leaves (groups-leave): svrngs-core's [`Leave`].
+/// From then on this computer holds the group and nobody stands in it here
+/// ([`crate::register::Standing::Left`]): no round, no sync, no lend
+/// reaching it. Nothing on this computer's disk is deleted.
+async fn leave(State(at): State<Asking>, Json(asked): Json<LeaveAsk>) -> Outcome {
+    let me = Leave(at.host.actor.clone());
+    cut(at, &asked.group, &me).await
+}
+
+/// `command`, a removal or a leave, written in `group`, and what happened.
+/// A cut is told once, the cut alone, to the computers that would not hear
+/// of it by the round: a removal's to the removed person's, a leave's to
+/// everyone else's, since the leaver's round no longer reaches the group
+/// (the operator, 2026-10-14: "Record only").
+async fn cut<C: Command<Refusal = RemovalRefusal>>(
+    at: Asking,
+    group: &str,
+    command: &C,
+) -> Outcome {
     let rail = &at.host.rail;
-    let group = asked.group.as_str();
     let Ok(before) = rail.register(group) else {
         tracing::warn!(target: "removal", group, "removal: the group's register cannot be read");
         return Outcome::Fault;
     };
-    let joined = asked.joined;
-    let recorded = match rail.commit(group, &Removal { person, joined }) {
+    let recorded = match rail.commit(group, command) {
         Ok(Ok(recorded)) => recorded,
         Ok(Err(refused)) => {
             tracing::debug!(target: "removal", group, ?refused, "removal: refused");
@@ -156,8 +192,9 @@ async fn remove(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outc
         .filter(|k| !before.removed.contains_key(*k))
         .cloned()
         .collect();
-    tracing::debug!(target: "removal", group, written = recorded.lines().len(), ?cut,
-        "removal: written — the cut when this computer decides, else an ask; the round woken");
+    let left = cut.contains(&at.host.actor);
+    tracing::debug!(target: "removal", group, written = recorded.lines().len(), ?cut, left,
+        "removal: written — the cut when this computer decides or leaves, else an ask; the round woken");
     // Now, not at the next round: every other lender refuses the removed
     // person only once its computer holds the cut, and the keeper sees an
     // ask only once it holds it (demo/runs/u7/2026-10-11, take 1: 43.3 s).
@@ -168,12 +205,11 @@ async fn remove(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outc
         };
     }
     // Each with the relay the record named before the cut (relay-in-record).
-    let computers = cut
-        .into_iter()
-        .filter_map(|k| {
-            let m = before.members.get(&k)?;
-            (m.device == Device::Computer).then(|| (k, m.relay.clone()))
+    let computers = (before.members.into_iter())
+        .filter(|(k, m)| {
+            m.device == Device::Computer && *k != at.host.actor && left != cut.contains(k)
         })
+        .map(|(k, m)| (k, m.relay))
         .collect();
     tokio::spawn(tell(
         at,
@@ -181,7 +217,11 @@ async fn remove(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outc
         computers,
         recorded.lines().to_vec(),
     ));
-    Outcome::Out
+    if left {
+        Outcome::Left
+    } else {
+        Outcome::Out
+    }
 }
 
 /// Tell each of `computers` the cut, `lines` and nothing else of the

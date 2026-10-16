@@ -17,8 +17,8 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use crate::{
-    admit, is_local_only, ring_dir, valid_namespace, Device, Joined, Membership, Op, Person, RailAct, RailError,
-    RingJournal, RingRail, RingVerifier, Roster, SignedOp,
+    actor_of, admit, is_local_only, ring_dir, valid_namespace, Device, Joined, Membership, Op, Person, RailAct,
+    RailError, RingJournal, RingRail, RingVerifier, Roster, SignedOp,
 };
 
 /// Who stands in one group, on this node.
@@ -34,6 +34,11 @@ pub enum Standing {
     /// The keys standing now, each with the person it is bound to and
     /// what holds it.
     Members(BTreeMap<String, Member>),
+    /// This computer's own key was cut here: its person left the group, or
+    /// was removed (groups-leave). The group stays held and readable, the
+    /// keys standing as this copy says; nobody stands in it here, so none
+    /// of it is live: no round, no sync, no lend reaching it.
+    Left(BTreeMap<String, Member>),
 }
 
 /// One fold of a group's register (U7): who stands, each key the group's
@@ -220,6 +225,11 @@ impl RingRail {
         } else {
             tracing::debug!(target: "register", namespace, seeded, standing = members.len(),
                 "register: standing read from the seed and the group's acts");
+        }
+        if journal.register(&seed)?.removed.contains_key(&actor_of(&self.signer)) {
+            tracing::debug!(target: "register", namespace,
+                "register: this computer's key was cut here, its person left or removed, so the group is held and read, and nobody stands in it here");
+            return Ok(Standing::Left(members));
         }
         Ok(Standing::Members(members))
     }
