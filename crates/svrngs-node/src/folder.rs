@@ -31,7 +31,6 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::routing::post;
 use axum::{Json, Router};
-use iroh::endpoint::Connection;
 use iroh_blobs::api::blobs::{AddPathOptions, ImportMode};
 use iroh_blobs::api::remote::GetProgressItem;
 use iroh_blobs::api::{Store, TempTag};
@@ -49,7 +48,7 @@ use std::convert::Infallible;
 use svrngs_core::{Command, ContentHash, Digest, Placed, Recorded};
 use tokio::sync::{mpsc, oneshot, watch, Notify};
 
-use crate::iroh::{key_actor, Alpn};
+use crate::iroh::{key_actor, Alpn, Unsent};
 use crate::node::{Host, ANSWER_WITHIN};
 
 #[path = "blob.rs"]
@@ -109,8 +108,7 @@ pub struct Folders {
     /// The directories this computer syncs (syp-4 e), written by `both_ways`
     /// alone.
     syncing: watch::Sender<synced::Syncing>,
-    /// Each holder's open connection, and when one last did not answer.
-    conns: watch::Sender<BTreeMap<String, Connection>>,
+    /// When each holder last did not answer.
     unanswered: watch::Sender<BTreeMap<String, Instant>>,
     /// Each group's layout as last read, with the record state it was read
     /// at (perf-2 c).
@@ -192,7 +190,6 @@ impl Folders {
             nudge,
             data_dir: data_dir.to_path_buf(),
             syncing: watch::Sender::new(synced::syncing_in(data_dir)),
-            conns: watch::Sender::new(BTreeMap::new()),
             unanswered: watch::Sender::new(BTreeMap::new()),
             layouts: watch::Sender::new(BTreeMap::new()),
             woken: watch::Sender::new(BTreeMap::new()),
@@ -522,7 +519,6 @@ impl Folders {
                     format!("did not answer within {ANSWER_WITHIN:?}")
                 }
             };
-            self.conns.send_if_modified(|m| m.remove(key).is_some());
             tracing::warn!(target: "folder", hash = %hash, holder = %key, why = %said, "folder: a holder gave nothing of what the store lacks");
             why.push((key.clone(), said));
             lacks = self.lacks(hash).await?;
@@ -562,39 +558,15 @@ impl Folders {
     ) -> Result<iroh_blobs::get::Stats, Nothing> {
         let t0 = Instant::now();
         let ms = |t: Instant| t.elapsed().as_micros() as f64 / 1000.0;
-        let open = self
-            .conns
-            .borrow()
-            .get(key)
-            .filter(|c| c.close_reason().is_none())
-            .cloned();
-        let conn = match open {
-            Some(c) => c,
-            None => {
-                // By its key and the relay its group names (relay-in-record).
-                let peer = (self.host.contact(key))
-                    .ok_or(Nothing::Said("not a computer of the group".into()))?;
-                // Which of the key's addresses iroh dials: one in use is
-                // the only one it sends to (syp-6 b).
-                let known = self.host.endpoint.remote_info(peer.key).await;
-                let known: Vec<String> = known
-                    .iter()
-                    .flat_map(|i| i.addrs())
-                    .map(|a| format!("{:?} {:?}", a.addr(), a.usage()))
-                    .collect();
-                tracing::debug!(target: "folder", holder = %key, ?known, "folder: dialled by key, iroh holding these addresses for it");
-                let at = (self.host.transport.endpoint_addr_for(&peer)).ok_or(Nothing::Said(
-                    "no relay named for it, and no address lookup".into(),
-                ))?;
-                let dial = self.host.endpoint.connect(at, Alpn::Blobs.bytes());
-                let c = tokio::time::timeout(ANSWER_WITHIN, dial)
-                    .await
-                    .map_err(|_| Nothing::Silent)?
-                    .map_err(|e| Nothing::Said(format!("the dial: {e}")))?;
-                self.conns
-                    .send_modify(|m| drop(m.insert(key.into(), c.clone())));
-                c
-            }
+        // By its key and the relay its group names (relay-in-record), on
+        // the connection the transport keeps to it (#177).
+        let peer =
+            (self.host.contact(key)).ok_or(Nothing::Said("not a computer of the group".into()))?;
+        let kept = self.host.transport.kept(&peer, Alpn::Blobs, ANSWER_WITHIN);
+        let conn = match kept.await {
+            Ok(conn) => conn,
+            Err(Unsent::Asleep(_)) => return Err(Nothing::Silent),
+            Err(e) => return Err(Nothing::Said(format!("the dial: {e}"))),
         };
         let dial_ms = ms(t0);
         let paths = conn.paths();
@@ -622,6 +594,9 @@ impl Folders {
             }
         };
         tracing::debug!(target: "folder", holder = %key, dial_ms, first_ms, last_ms = ms(t0), ?relayed, addr, rtt_ms, ok = done.is_ok(), "folder: the fetch's phases, and the path iroh selected");
+        if done.is_err() {
+            self.host.transport.let_go(&peer.key, Alpn::Blobs);
+        }
         done
     }
 }

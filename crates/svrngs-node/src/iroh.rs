@@ -131,25 +131,61 @@ pub struct IrohTransport {
     /// contact carries its own addrs, both are merged.
     #[expect(clippy::disallowed_types, reason = "the transport's address cache")]
     known_addrs: std::sync::Mutex<HashMap<[u8; 32], Vec<SocketAddr>>>,
-    /// One connection per member a request is sent to ([`Self::send`]),
-    /// kept while it stays open: each request is a bi-stream of it, as the
-    /// phone's page sends one (`web/src/http.rs`), so a round dials a member
-    /// once, not once a request (the ceiling's first round, every member
-    /// dialled, cost 0.19 s of processor at 965b52b, the next 0.024 s). One
-    /// that closes is let go, so a member that restarted at another
-    /// address is dialled anew where its contact says.
-    #[expect(clippy::disallowed_types, reason = "the transport's connection cache")]
-    conns: std::sync::Mutex<HashMap<[u8; 32], iroh::endpoint::Connection>>,
+    /// One connection per computer and protocol, kept while it stays open
+    /// ([`Self::kept`]), the one rule for a member's requests and a folder's
+    /// fetches (#177): each request is a bi-stream of it, as the phone's
+    /// page sends one (`web/src/http.rs`), so a round dials a member once,
+    /// not once a request (the ceiling's first round, every member dialled,
+    /// cost 0.19 s of processor at 965b52b, the next 0.024 s). One that
+    /// closes, or fails a request, is let go, so a member that restarted at
+    /// another address is dialled anew where its contact says.
+    pub(crate) conns: tokio::sync::watch::Sender<Kept>,
 }
 
+/// Each connection kept, by the computer's key and the protocol's bytes.
+pub(crate) type Kept = std::collections::BTreeMap<([u8; 32], &'static [u8]), Connection>;
+
 impl IrohTransport {
-    #[expect(clippy::disallowed_types, reason = "the transport's caches")]
+    #[expect(clippy::disallowed_types, reason = "the transport's address cache")]
     pub fn new(endpoint: iroh::Endpoint) -> Self {
         Self {
             endpoint,
             known_addrs: std::sync::Mutex::new(HashMap::new()),
-            conns: std::sync::Mutex::new(HashMap::new()),
+            conns: tokio::sync::watch::Sender::new(Kept::new()),
         }
+    }
+
+    /// The connection kept to `peer` on `alpn` while it stays open, else
+    /// one [`dialled`] within `within`, each dial's own cap, and kept.
+    pub(crate) async fn kept(
+        &self,
+        peer: &Contact,
+        alpn: Alpn,
+        within: Duration,
+    ) -> Result<Connection, Unsent> {
+        let at = (*peer.key.as_bytes(), alpn.bytes());
+        let kept = self.conns.borrow().get(&at).cloned();
+        if let Some(conn) = kept.filter(|c| c.close_reason().is_none()) {
+            return Ok(conn);
+        }
+        // Which of the key's addresses iroh dials: one in use is the only
+        // one it sends to (syp-6 b).
+        let known = self.endpoint.remote_info(peer.key).await;
+        let known: Vec<String> = (known.iter().flat_map(|i| i.addrs()))
+            .map(|a| format!("{:?} {:?}", a.addr(), a.usage()))
+            .collect();
+        tracing::debug!(target: "transport", peer = %peer.key.fmt_short(), ?alpn, ?known, "iroh: dialled by key, iroh holding these addresses for it");
+        let to = self.endpoint_addr_for(peer).ok_or(Unsent::NoPath)?;
+        let conn = dialled(&self.endpoint, to, alpn.bytes(), Some(within)).await?;
+        self.conns.send_modify(|m| drop(m.insert(at, conn.clone())));
+        Ok(conn)
+    }
+
+    /// The connection kept to `peer` on `alpn` let go, a request on it
+    /// failed: the next dials afresh.
+    pub(crate) fn let_go(&self, peer: &PublicKey, alpn: Alpn) {
+        self.conns
+            .send_if_modified(|m| m.remove(&(*peer.as_bytes(), alpn.bytes())).is_some());
     }
 
     /// Seed dial hints for a peer. Test/fallback surface — a caller with a
@@ -221,21 +257,13 @@ impl IrohTransport {
     /// read, so a stream or a WebSocket is carried whole. A connection that
     /// fails a request is let go, and the next request dials afresh.
     pub async fn send(&self, peer: &Contact, req: Request) -> Result<Streamed, Unsent> {
-        let key = *peer.key.as_bytes();
-        let kept = self.conns.lock().ok().and_then(|c| c.get(&key).cloned());
-        let conn = match kept.filter(|c| c.close_reason().is_none()) {
-            Some(conn) => conn,
-            None => {
-                let to = self.endpoint_addr_for(peer).ok_or(Unsent::NoPath)?;
-                dialled(&self.endpoint, to, ALPN, Some(crate::dial::DIAL_WITHIN)).await?
-            }
-        };
+        let conn = self
+            .kept(peer, Alpn::Member, crate::dial::DIAL_WITHIN)
+            .await?;
         let answered = on_stream(&conn, req).await;
-        let mut conns = self.conns.lock().unwrap_or_else(|e| e.into_inner());
-        match answered.is_ok() {
-            true => conns.insert(key, conn),
-            false => conns.remove(&key),
-        };
+        if answered.is_err() {
+            self.let_go(&peer.key, Alpn::Member);
+        }
         answered
     }
 
@@ -265,6 +293,9 @@ pub enum Unsent {
     NoPath,
     #[error("it answered, and does not know this computer stands in any group it holds")]
     NotAdmitted,
+    /// A dial not answered within its cap: a computer taken as asleep.
+    #[error("not answered within {0:?}")]
+    Asleep(Duration),
     #[error("{0}")]
     Failed(String),
 }
@@ -303,15 +334,17 @@ pub(crate) async fn dialled(
     let held = iroh::endpoint::ConnectOptions::new().with_transport_config(held);
     let connect = async move {
         let connecting = e.connect_with_opts(to, alpn, held).await;
+        let failed = |e: &dyn std::fmt::Display| Unsent::Failed(e.to_string());
         connecting
-            .map_err(|e| e.to_string())?
+            .map_err(|e| failed(&e))?
             .await
-            .map_err(|e| e.to_string())
+            .map_err(|e| failed(&e))
     };
-    let late = Err(format!("not answered within {cap:?}"));
-    let dialled = timeout(cap, connect).await.unwrap_or(late);
+    let dialled = timeout(cap, connect)
+        .await
+        .unwrap_or(Err(Unsent::Asleep(cap)));
     tracing::debug!(target: "transport", %peer, ?within, error = ?dialled.as_ref().err(), "iroh: a dial, answered or not; one not answered in time is a computer taken as asleep");
-    dialled.map_err(Unsent::Failed)
+    dialled
 }
 
 /// `req` on a new bi-stream of `conn`, one HTTP/1 connection driven with

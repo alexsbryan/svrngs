@@ -211,3 +211,46 @@ async fn a_refused_put_and_a_get_that_asks_the_group_are_traced() {
         node.endpoint().close().await;
     }
 }
+
+/// **A fetch rides the connection the transport keeps** (#177): Ben puts
+/// two files' bytes, and Ana gets each, so her computer fetches each from
+/// Ben on the blobs protocol. Her transport, which keeps a member's
+/// connection, keeps that one too, by Ben's key and the protocol, and the
+/// second fetch rides it: one rule for both. Red with the plant the finding
+/// names, the fetch deciding its own connection (folder.rs `fetch` at
+/// c43d2cc7): the transport keeps none.
+#[tokio::test]
+async fn a_fetch_rides_the_connection_the_transport_keeps() {
+    let dirs = [tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap()];
+    let (ana, ben, films) = ana_and_ben([dirs[0].path(), dirs[1].path()]).await;
+    let at = (
+        *ben.endpoint().id().as_bytes(),
+        crate::iroh::Alpn::Blobs.bytes(),
+    );
+    let mut ids = Vec::new();
+    for bytes in [&b"the first file"[..], &b"the second file"[..]] {
+        let kept = BlobQuery {
+            group: films.clone(),
+            keep: Some(60),
+        };
+        let bytes = axum::body::Bytes::from_static(bytes);
+        let put = put(State(ben.folders().clone()), Query(kept), bytes.clone()).await;
+        assert_eq!(put.status(), StatusCode::OK);
+        let asked = BlobQuery {
+            group: films.clone(),
+            keep: None,
+        };
+        let hash = Hash::new(&bytes);
+        let answer = get(State(ana.folders().clone()), Path(hash), Query(asked)).await;
+        assert_eq!(answer.status(), StatusCode::OK, "Ana gets it from Ben");
+        let conns = ana.transport().conns.borrow();
+        ids.push(conns.get(&at).map(|c| c.stable_id()));
+    }
+    assert!(
+        ids[0].is_some() && ids[0] == ids[1],
+        "Ana's transport keeps one connection to Ben on the blobs protocol, both fetches on it: {ids:?}"
+    );
+    for node in [ana, ben] {
+        node.endpoint().close().await;
+    }
+}
