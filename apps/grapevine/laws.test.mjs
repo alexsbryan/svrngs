@@ -139,8 +139,8 @@ export const LAWS = {
   /** A kind's `notice` is given only what the person wrote in groups they stand in. */
   'notice sees only its own groups'(app) {
     const w = world(app, KINDS, GROUPS);
-    w.append('club', 'lee', { app: 'listings', kind: 'tool', listing: { what: 'tile saw' } });
-    w.append('waller', 'kim', { app: 'listings', kind: 'tool', listing: { what: 'ladder' } });
+    w.append('club', 'lee', app.listingAct('tool', { what: 'tile saw' }));
+    w.append('waller', 'kim', app.listingAct('tool', { what: 'ladder' }));
     const ask = w.ask('sam', 'page', 'tool', TILE_SAW);
     w.carry('jo', ask, 'waller');
     const given = [];

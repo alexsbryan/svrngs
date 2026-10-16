@@ -6,6 +6,10 @@
 
 import { randomBytes } from 'node:crypto';
 
+import { kindsOf } from './grapevine.js';
+import ask from './kinds/ask.js';
+import tool from './kinds/tool.js';
+
 /** A new handle: 16 random bytes, base64. */
 export const newHandle = () => randomBytes(16).toString('base64');
 
@@ -94,18 +98,8 @@ export const GROUPS = {
   club: { name: 'Book club', people: ['sam', 'lee'] },
 };
 
-/** The kinds the tests use. */
-export const KINDS = {
-  tool: {
-    kind: 'tool',
-    ask: { fields: { what: 'text', when: 'text' } },
-    show: (f) => `${f.what}, ${f.when}`,
-    reply: { fields: { when: 'text', where: 'text' } },
-    notice: (ask, mine) => mine.records.some((r) => r.listing?.what === ask.fields.what),
-    hops: 1,
-    name: 'withheld',
-  },
-};
+/** The kinds the app ships. */
+export const KINDS = kindsOf([ask, tool]);
 
 /**
  * §10's scene, through to both yeses: Sam asks; Jo carries it to Waller;
@@ -114,7 +108,7 @@ export const KINDS = {
  */
 export function scene(app, kinds) {
   const w = world(app, kinds, GROUPS);
-  w.append('waller', 'kim', { app: 'listings', kind: 'tool', listing: { what: 'tile saw' } });
+  w.append('waller', 'kim', app.listingAct('tool', { what: 'tile saw' }));
   const ask = w.ask('sam', 'page', 'tool', TILE_SAW);
   const carry = w.carry('jo', ask, 'waller');
   w.reply('kim', ask, 'waller', { say: 'offer', fields: { when: 'Saturday morning', where: 'Waller and Pierce' } });

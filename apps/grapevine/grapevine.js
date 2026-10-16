@@ -10,6 +10,9 @@
 //                                                                 another group
 //   msg    {handle, dir, from, to, nonce, box}                    one sealed message
 //
+// A kind's listing (`tool`'s, a tool the person has) is a plain record of
+// its own app, LISTINGS, in the person's own group: never one of these, so
+// never carried, and given to that kind's `notice` as the person's own.
 // and the record's own correction: an asker's withdrawal, or a carrier's of
 // the carry whose ask was withdrawn. `fold` takes the person's groups, each
 // with the person's name in it (`me`, null where they do not stand) and its
@@ -58,7 +61,7 @@ export const CARRY = 'carry';
 export const MSG = 'msg';
 /** How many rings an ask may cross, at most (GRAPEVINE.md §4.1). */
 export const MOST_HOPS = 3;
-/** The most characters a text field or a message's text may hold (§13.7; why: grapevine.test.mjs). */
+/** The most characters a text field or a message's text may hold: with MAX_FIELDS, a sealed body stays under BODY_MOST (§13.7; grapevine.test.mjs). */
 export const MAX_TEXT = 1000;
 /** The most fields a kind's ask, reply or listing may have. */
 export const MAX_FIELDS = 6;
@@ -477,6 +480,75 @@ export function fold({ groups, state, kinds, now }) {
   }
 
   return { asks: asks.filter((a) => a.live), carriable, threads, relay, gaps };
+}
+
+/** The words a kind may define, and nothing else: no routing, scope, handle, sealing, carrying or name. */
+const KIND_KEYS = ['kind', 'ask', 'show', 'reply', 'listing', 'notice', 'hops', 'name'];
+const FIELD_NAME = /^[a-z][a-z0-9_]{0,39}$/;
+
+/** What is wrong with a kind's `ask`, `reply` or `listing` (`part`), or []. */
+function partGaps(part, v) {
+  if (!isObject(v) || Object.keys(v).join() !== 'fields' || !isObject(v.fields)) return [`its ${part} is not {fields: {...}}`];
+  const names = Object.keys(v.fields);
+  const out = [];
+  if (names.length < 1 || names.length > MAX_FIELDS) out.push(`its ${part} has ${names.length} fields, and a kind has 1 to ${MAX_FIELDS}`);
+  for (const n of names) {
+    if (!FIELD_NAME.test(n)) out.push(`its ${part} field ${JSON.stringify(n)} is not a short lower-case name`);
+    else if (typeOf(v.fields[n]) === null) out.push(`its ${part} field ${n} is not one of ${FIELD_TYPES.join(', ')} (a choice is {choice: [...]})`);
+  }
+  return out;
+}
+
+/**
+ * The kinds there are, from a list of kind files' default exports, by
+ * their word (GRAPEVINE_DEMO §7). A kind that breaks the interface throws,
+ * saying how, when the app starts: it is a developer's to fix, never
+ * something to run around.
+ */
+export function kindsOf(list) {
+  const out = {};
+  for (const k of list) {
+    const word = isObject(k) && typeof k.kind === 'string' ? k.kind : '(unnamed)';
+    const bad = [];
+    if (!isObject(k)) bad.push('is not an object');
+    else {
+      const extra = Object.keys(k).filter((x) => !KIND_KEYS.includes(x));
+      if (extra.length) bad.push(`sets ${extra.join(', ')}; a kind writes no routing, scope, handle, sealing, carrying or name, which the app does`);
+      if (typeof k.kind !== 'string' || !/^[a-z][a-z0-9-]{0,30}$/.test(k.kind)) bad.push('has no short lower-case word for `kind`');
+      bad.push(...partGaps('ask', k.ask), ...partGaps('reply', k.reply));
+      if (k.listing !== undefined) bad.push(...partGaps('listing', k.listing));
+      if (typeof k.show !== 'function') bad.push('has no `show`');
+      if (k.notice !== undefined && typeof k.notice !== 'function') bad.push('has a `notice` that is not a function');
+      if (k.hops !== undefined && !(Number.isSafeInteger(k.hops) && k.hops >= 0 && k.hops <= MOST_HOPS)) bad.push(`has hops that are not 0 to ${MOST_HOPS}`);
+      if (k.name !== undefined && k.name !== 'withheld') bad.push('has a name other than withheld, the one this version carries');
+    }
+    if (!bad.length && has(out, k.kind)) bad.push('is a second kind of that word');
+    if (bad.length) throw new Error(`the ${word} kind ${bad.join('; ')}`);
+    out[k.kind] = k;
+  }
+  return out;
+}
+
+/**
+ * What is wrong with what the person filled in, for `kind`'s `part` (`ask`,
+ * `reply` or `listing`), or for a message's own words (`part` 'text'),
+ * each said with the limit: the form refuses it, and nothing is cut short.
+ */
+export function formGaps(kind, part, values) {
+  if (part === 'text') {
+    if (typeof values !== 'string' || !values.trim()) return ['your message is empty'];
+    return values.length > MAX_TEXT ? [`your message is ${values.length} characters, and the most is ${MAX_TEXT}`] : [];
+  }
+  if (!isObject(kind?.[part])) return [`a ${kind?.kind ?? ''} has no ${part}`];
+  return fieldGaps(kind[part].fields, values);
+}
+
+/** The app other kinds' listings are written as: plain records, never carried. */
+export const LISTINGS = 'grapevine-listings';
+
+/** A listing's payload, a plain record in the person's own group: never an ask, so never carried. */
+export function listingAct(kind, fields) {
+  return { app: LISTINGS, kind, listing: fields };
 }
 
 /** A new ask's payload. `seal_to` is the ask's own public key, `handle` 16 random bytes in base64. */

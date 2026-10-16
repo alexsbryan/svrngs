@@ -9,6 +9,9 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 
 import * as grapevine from './grapevine.js';
+import { LISTINGS, MAX_FIELDS, MAX_TEXT, askAct, formGaps, kindsOf, msgAct } from './grapevine.js';
+import askKind from './kinds/ask.js';
+import tool from './kinds/tool.js';
 import { GROUPS, KINDS, NOW, TILE_SAW, scene, world } from './scene.mjs';
 import * as sealing from './seal.mjs';
 import { ACT_MOST, BODY_MOST, keyPair, open, seal } from './seal.mjs';
@@ -182,4 +185,67 @@ test('the person\'s own records reach notice; Kim, who listed a tile saw, is tol
   assert.equal(w.view('jo').asks[0].notice, false);
   assert.equal(w.view('sam').asks[0].notice, false, 'never told of their own ask');
   assert.equal(w.view('kim').asks[0].show, 'tile saw, Saturday');
+});
+
+test('the two kinds keep the interface, and one that breaks it is refused, saying how', () => {
+  assert.deepEqual(Object.keys(kindsOf([askKind, tool])), ['ask', 'tool']);
+  const msg = (k) => {
+    try {
+      kindsOf([k]);
+    } catch (e) {
+      return e.message;
+    }
+    return 'accepted';
+  };
+  assert.match(msg({ ...tool, route: () => 'waller' }), /^the tool kind sets route; a kind writes no routing, scope, handle, sealing, carrying or name/);
+  assert.match(msg({ ...tool, seal: () => null, handle: 'x' }), /sets seal, handle; a kind writes no/);
+  assert.match(msg({ ...tool, ask: { fields: { what: 'html' } } }), /its ask field what is not one of text, date, number, choice/);
+  const seven = Object.fromEntries([...'abcdefg'].map((c) => [c, 'text']));
+  assert.match(msg({ ...tool, reply: { fields: seven } }), new RegExp(`its reply has 7 fields, and a kind has 1 to ${MAX_FIELDS}`));
+  assert.match(msg({ ...tool, name: 'shown' }), /a name other than withheld/);
+  assert.match(msg({ ...tool, show: undefined }), /has no `show`/);
+  assert.match(msg({ ...tool, ask: { fields: { size: { choice: ['small', 'large'] }, on: 'date', many: 'number' } } }), /^accepted$/);
+  assert.throws(() => kindsOf([tool, { ...tool }]), /the tool kind is a second kind of that word/);
+  // kinds/README.md says the limits in words; they are grapevine.js's.
+  const readme = readFileSync(join(HERE, 'kinds/README.md'), 'utf8').replace(/\s+/g, ' ');
+  assert.ok(readme.includes(`1 to ${MAX_FIELDS} fields`) && readme.includes(`up to ${MAX_TEXT.toLocaleString('en-US')} characters`), 'kinds/README.md says the limits grapevine.js keeps');
+  assert.ok(readme.indexOf('What a kind cannot touch') < readme.indexOf('## '), 'kinds/README.md says what a kind cannot touch first');
+});
+
+test("a listing is a plain record in its owner's own group, never an ask, so never carried", () => {
+  const { w } = scene(APP, KINDS);
+  const listing = w.logs.waller.find((o) => o.payload.app === LISTINGS);
+  assert.deepEqual(listing.payload, { app: LISTINGS, kind: 'tool', listing: { what: 'tile saw' } });
+  for (const who of ['sam', 'jo', 'kim']) {
+    const v = w.view(who);
+    assert.ok(!JSON.stringify(v.asks).includes(listing.id) && !JSON.stringify(v.carriable).includes(listing.id), who);
+    assert.deepEqual(v.gaps, [], `${who} reads the listing as no gap`);
+  }
+  assert.ok(!Object.values(w.logs).flat().some((o) => o.payload?.type === 'carry' && o.payload.fields?.what === 'tile saw' && o.payload.of === listing.id));
+});
+
+test('a longer text is refused at the form, with the limit said, and never cut', () => {
+  const long = 'x'.repeat(MAX_TEXT + 1);
+  assert.deepEqual(formGaps(tool, 'reply', { when: long, where: 'Waller and Pierce' }), [`when is ${MAX_TEXT + 1} characters, and the most is ${MAX_TEXT}`]);
+  assert.deepEqual(formGaps(tool, 'reply', { when: long.slice(1), where: 'Waller and Pierce' }), []);
+  assert.deepEqual(formGaps(tool, 'text', long), [`your message is ${MAX_TEXT + 1} characters, and the most is ${MAX_TEXT}`]);
+  assert.deepEqual(formGaps(tool, 'text', '  '), ['your message is empty']);
+  assert.deepEqual(formGaps(tool, 'listing', { what: '' }), ['what is empty']);
+  assert.deepEqual(formGaps(askKind, 'ask', { question: 'Anyone have a ladder?', extra: 1 }), ['extra is not asked for here']);
+});
+
+test("the largest a kind allows stays under an act's most: its sealed message and its ask", () => {
+  // Each character a control one, six bytes in JSON, and the longest field names.
+  const names = Array.from({ length: MAX_FIELDS }, (_, i) => String.fromCharCode(97 + i).repeat(40));
+  const widest = Object.fromEntries(names.map((n) => [n, '\u0001'.repeat(MAX_TEXT)]));
+  const [kind] = Object.values(kindsOf([{ ...tool, ask: { fields: Object.fromEntries(names.map((n) => [n, 'text'])) }, reply: { fields: Object.fromEntries(names.map((n) => [n, 'text'])) } }]));
+  const body = { say: 'offer', fields: widest, text: '\u0001'.repeat(MAX_TEXT) };
+  assert.deepEqual(formGaps(kind, 'reply', widest), []);
+  const bytes = Buffer.byteLength(JSON.stringify(body));
+  assert.ok(bytes <= BODY_MOST, `the largest body a kind allows is ${bytes} bytes, past BODY_MOST ${BODY_MOST}`);
+  const [sam, kim] = [keyPair(), keyPair()];
+  const msg = msgAct({ handle: 'A'.repeat(22) + '==', dir: 'up', from: kim.public, to: sam.public }, seal(body, sam.public, kim.secret));
+  assert.ok(Buffer.byteLength(JSON.stringify(msg)) <= ACT_MOST);
+  const ask = askAct({ kind: 'tool', fields: widest, hops: 3, expires: NOW, seal_to: sam.public, handle: 'A'.repeat(22) + '==' });
+  assert.ok(Buffer.byteLength(JSON.stringify(ask)) <= ACT_MOST, `the largest ask is ${Buffer.byteLength(JSON.stringify(ask))} bytes`);
 });
