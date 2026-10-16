@@ -10,7 +10,10 @@
 # shared.
 label = "svrngs-arch"
 session_timeout = 5400
-audit_every = 4
+# The operator, 2026-10-15: "I don't want an audit until after these arch
+# rows". The queue has 8 units, so no cadence audit falls inside it. The closing
+# audit still runs once the last row is done (ralph.py closing_audit_due).
+audit_every = 9
 worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
 settings = "ralph/claude-settings.json"
 
