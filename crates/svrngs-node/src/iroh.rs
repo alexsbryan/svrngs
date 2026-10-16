@@ -139,11 +139,11 @@ pub struct IrohTransport {
     /// cost 0.19 s of processor at 965b52b, the next 0.024 s). One that
     /// closes, or fails a request, is let go, so a member that restarted at
     /// another address is dialled anew where its contact says.
-    pub(crate) conns: tokio::sync::watch::Sender<Kept>,
+    pub(crate) conns: tokio::sync::watch::Sender<Connections>,
 }
 
 /// Each connection kept, by the computer's key and the protocol's bytes.
-pub(crate) type Kept = std::collections::BTreeMap<([u8; 32], &'static [u8]), Connection>;
+pub(crate) type Connections = std::collections::BTreeMap<([u8; 32], &'static [u8]), Connection>;
 
 impl IrohTransport {
     #[expect(clippy::disallowed_types, reason = "the transport's address cache")]
@@ -151,7 +151,7 @@ impl IrohTransport {
         Self {
             endpoint,
             known_addrs: std::sync::Mutex::new(HashMap::new()),
-            conns: tokio::sync::watch::Sender::new(Kept::new()),
+            conns: tokio::sync::watch::Sender::new(Connections::new()),
         }
     }
 
