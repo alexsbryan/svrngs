@@ -53,8 +53,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # groups-tabs (b), one tab of the group's page at a time reaching it (#176),
 # raised the repository's to one past where it landed: 22 of the 200. Its
 # (c), one connection kept per computer and protocol (#177, #178), cut 3 and
-# spent 2, and lowered it to one past where the row closed.
-BUDGET = {"crates/svrngs-core": 2953, ".": 16158}
+# spent 2, and lowered it to one past where the row closed. groups-leave (a),
+# a person's own Remove their leave (svrngs-core's fold and `Leave`), raised
+# svrngs-core's to one past where it landed, 34 of its 40, and the
+# repository's with it.
+BUDGET = {"crates/svrngs-core": 2987, ".": 16195}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
