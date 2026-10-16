@@ -225,7 +225,7 @@ impl IrohTransport {
     /// [`crate::dial::DIAL_WITHIN`]: its answer's head, its body still to
     /// read, so a stream or a WebSocket is carried whole. A connection that
     /// fails a request is let go, and the next request dials afresh.
-    pub async fn send(&self, peer: &Contact, req: Request) -> Result<Answered, Unsent> {
+    pub async fn send(&self, peer: &Contact, req: Request) -> Result<Streamed, Unsent> {
         let key = *peer.key.as_bytes();
         let kept = self.conns.lock().ok().and_then(|c| c.get(&key).cloned());
         let conn = match kept.filter(|c| c.close_reason().is_none()) {
@@ -258,7 +258,7 @@ pub const ANSWERED_WITHIN: Duration = Duration::from_secs(10);
 /// A request on the stream: axum's, as the door and the origin carry one.
 pub type Request = axum::http::Request<axum::body::Body>;
 /// An answer's head, its body read as it comes.
-pub type Answered = axum::http::Response<hyper::body::Incoming>;
+pub type Streamed = axum::http::Response<hyper::body::Incoming>;
 /// An answer read whole.
 pub type Whole = axum::http::Response<axum::body::Bytes>;
 
@@ -276,7 +276,7 @@ pub enum Unsent {
 
 /// `answer` read whole, within [`ANSWERED_WITHIN`].
 pub(crate) async fn whole(
-    answer: impl Future<Output = Result<Answered, Unsent>>,
+    answer: impl Future<Output = Result<Streamed, Unsent>>,
 ) -> Result<Whole, Unsent> {
     use http_body_util::BodyExt;
     let read = async {
@@ -323,7 +323,7 @@ pub(crate) async fn dialled(
 /// upgrades, a `Host` named when it names none, as the page names one
 /// (`web/src/http.rs`); a failure read as [`Unsent::NotAdmitted`] when the
 /// far end closed the connection as [`NOT_ADMITTED`].
-pub(crate) async fn on_stream(conn: &Connection, mut req: Request) -> Result<Answered, Unsent> {
+pub(crate) async fn on_stream(conn: &Connection, mut req: Request) -> Result<Streamed, Unsent> {
     let host = req.headers_mut().entry(axum::http::header::HOST);
     host.or_insert(axum::http::HeaderValue::from_static("svrngs"));
     let sent = async {
