@@ -1,0 +1,80 @@
+
+running 2 tests
+streaming::chromium: {"chunked":{"ms":113,"status":200,"text":"hellohellohello"},"lines":["+1 ms LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c","+1 ms LAYER page: wasm module loaded and dial entered (iroh =1.0.2)","+1 ms LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c","+1 ms LAYER parse: ok — relay http://127.0.0.1:65302/","+1 ms LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…","+2 ms LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound","+2 ms LAYER relay-connect: waiting for the relay handshake (endpoint.online())…","+289 ms LAYER relay-connect: ok — endpoint reports online (relay handshake done)","+289 ms LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's","+289 ms LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…","+295 ms LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol","+295 ms LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"","+295 ms HTTP: GET /lend/shelf/title.bin — a bi-stream opened","+305 ms HTTP: GET /lend/shelf/title.bin answered 206","+9125 ms HTTP: the response has ended; finishing the request's send half","+9125 ms HTTP: GET /lend/shelf/title.bin — the stream is done","+9211 ms HTTP: GET /lend/shelf/title.bin — a bi-stream opened","+9376 ms HTTP: GET /lend/shelf/title.bin answered 416","+9376 ms HTTP: the response has ended; finishing the request's send half","+9376 ms HTTP: GET /lend/shelf/title.bin — the stream is done","+9377 ms HTTP: GET /lend/tap/stream — a bi-stream opened","+9384 ms HTTP: GET /lend/tap/stream answered 200","+9489 ms HTTP: the response has ended; finishing the request's send half","+9489 ms HTTP: GET /lend/tap/stream — the stream is done","+9490 ms HTTP: POST /lend/sink/up — a bi-stream opened","+17340 ms HTTP: POST /lend/sink/up answered 200","+17341 ms HTTP: the response has ended; finishing the request's send half","+17341 ms HTTP: POST /lend/sink/up — the stream is done"],"past":{"bytes":0,"chunks":0,"contentRange":"bytes */67108864","largest":0,"ms":166,"sha":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","status":416},"post":{"held":1048576,"ms":7852,"status":200,"text":"8388608 48a95d92f5743545b6aab82415c4e48b029b02700a4735a7501497b071c18706"},"range":{"bytes":8999000,"chunks":6369,"contentRange":"bytes 1000-8999999/67108864","largest":1420,"ms":8916,"sha":"c11b3b71567feda89b6873737195713886ff9ec499972411589045bfa2d44510","status":206}}
+streaming::chromium: the 9 MB range in 8916 ms of its 60,000
+.streaming::webkit: {"chunked":{"ms":111,"status":200,"text":"hellohellohello"},"lines":["+1 ms LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c","+1 ms LAYER page: wasm module loaded and dial entered (iroh =1.0.2)","+1 ms LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c","+1 ms LAYER parse: ok — relay http://127.0.0.1:65301/","+1 ms LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…","+2 ms LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound","+2 ms LAYER relay-connect: waiting for the relay handshake (endpoint.online())…","+313 ms LAYER relay-connect: ok — endpoint reports online (relay handshake done)","+313 ms LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's","+313 ms LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…","+320 ms LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol","+320 ms LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"","+320 ms HTTP: GET /lend/shelf/title.bin — a bi-stream opened","+331 ms HTTP: GET /lend/shelf/title.bin answered 206","+11028 ms HTTP: the response has ended; finishing the request's send half","+11028 ms HTTP: GET /lend/shelf/title.bin — the stream is done","+11038 ms HTTP: GET /lend/shelf/title.bin — a bi-stream opened","+11321 ms HTTP: GET /lend/shelf/title.bin answered 416","+11321 ms HTTP: the response has ended; finishing the request's send half","+11322 ms HTTP: GET /lend/shelf/title.bin — the stream is done","+11322 ms HTTP: GET /lend/tap/stream — a bi-stream opened","+11329 ms HTTP: GET /lend/tap/stream answered 200","+11433 ms HTTP: the response has ended; finishing the request's send half","+11433 ms HTTP: GET /lend/tap/stream — the stream is done","+11434 ms HTTP: POST /lend/sink/up — a bi-stream opened","+49019 ms HTTP: POST /lend/sink/up — the stream ended in error: error writing a body to connection","+49020 ms HTTP: POST /lend/sink/up — REFUSED — asleep: the computer's answer is not HTTP: connection error"],"past":{"bytes":0,"chunks":0,"contentRange":"bytes */67108864","largest":0,"ms":284,"sha":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","status":416},"post":{"error":"Error: the computer had no byte of the upload while the page held 6750208 bytes of it","ms":37586},"range":{"bytes":8999000,"chunks":6371,"contentRange":"bytes 1000-8999999/67108864","largest":1420,"ms":10718,"sha":"c11b3b71567feda89b6873737195713886ff9ec499972411589045bfa2d44510","status":206}}
+streaming::webkit: the 9 MB range in 10718 ms of its 60,000
+
+thread 'a_page_speaks_http_through_the_door_streaming_both_ways::webkit' (51060390) panicked at crates/svrngs-node/tests/browser/main.rs:551:5:
+assertion `left == right` failed: {
+  "chunked": {
+    "ms": 111,
+    "status": 200,
+    "text": "hellohellohello"
+  },
+  "lines": [
+    "+1 ms LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "+1 ms LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "+1 ms LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "+1 ms LAYER parse: ok — relay http://127.0.0.1:65301/",
+    "+1 ms LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "+2 ms LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "+2 ms LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "+313 ms LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "+313 ms LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's",
+    "+313 ms LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…",
+    "+320 ms LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+    "+320 ms LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "+320 ms HTTP: GET /lend/shelf/title.bin — a bi-stream opened",
+    "+331 ms HTTP: GET /lend/shelf/title.bin answered 206",
+    "+11028 ms HTTP: the response has ended; finishing the request's send half",
+    "+11028 ms HTTP: GET /lend/shelf/title.bin — the stream is done",
+    "+11038 ms HTTP: GET /lend/shelf/title.bin — a bi-stream opened",
+    "+11321 ms HTTP: GET /lend/shelf/title.bin answered 416",
+    "+11321 ms HTTP: the response has ended; finishing the request's send half",
+    "+11322 ms HTTP: GET /lend/shelf/title.bin — the stream is done",
+    "+11322 ms HTTP: GET /lend/tap/stream — a bi-stream opened",
+    "+11329 ms HTTP: GET /lend/tap/stream answered 200",
+    "+11433 ms HTTP: the response has ended; finishing the request's send half",
+    "+11433 ms HTTP: GET /lend/tap/stream — the stream is done",
+    "+11434 ms HTTP: POST /lend/sink/up — a bi-stream opened",
+    "+49019 ms HTTP: POST /lend/sink/up — the stream ended in error: error writing a body to connection",
+    "+49020 ms HTTP: POST /lend/sink/up — REFUSED — asleep: the computer's answer is not HTTP: connection error"
+  ],
+  "past": {
+    "bytes": 0,
+    "chunks": 0,
+    "contentRange": "bytes */67108864",
+    "largest": 0,
+    "ms": 284,
+    "sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "status": 416
+  },
+  "post": {
+    "error": "Error: the computer had no byte of the upload while the page held 6750208 bytes of it",
+    "ms": 37586
+  },
+  "range": {
+    "bytes": 8999000,
+    "chunks": 6371,
+    "contentRange": "bytes 1000-8999999/67108864",
+    "largest": 1420,
+    "ms": 10718,
+    "sha": "c11b3b71567feda89b6873737195713886ff9ec499972411589045bfa2d44510",
+    "status": 206
+  }
+}
+  left: Null
+ right: 200
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+ 1/2
+a_page_speaks_http_through_the_door_streaming_both_ways::webkit --- FAILED
+
+failures:
+
+failures:
+    a_page_speaks_http_through_the_door_streaming_both_ways::webkit
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 92 filtered out; finished in 57.05s
+
+error: test failed, to rerun pass `-p svrngs-node --test browser`

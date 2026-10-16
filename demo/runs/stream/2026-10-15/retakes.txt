@@ -1,0 +1,49 @@
+  old-idle  1 aside at +s: 0.0 0.1
+  old-idle  2 aside at +s: 0.0 0.1
+  old-idle  3 aside at +s: 0.0 0.1
+  old-idle  4 aside at +s: 0.0 0.0
+  old-idle  5 aside at +s: 0.0 0.1
+  old-idle  6 aside at +s: 0.0 0.1
+  old-idle  7 aside at +s: 0.0 0.2
+  old-idle  8 aside at +s: 0.0 0.0
+  old-idle  9 aside at +s: 0.0 0.2
+  old-idle 10 aside at +s: 0.0 0.4
+ head-idle  1 aside at +s: 0.0 0.1 16.0
+ head-idle  2 aside at +s: 0.0 0.9 17.3
+ head-idle  3 aside at +s: 0.0 0.2 17.6
+ head-idle  4 aside at +s: 0.0 0.7 17.5 18.6
+ head-idle  5 aside at +s: 0.0 0.2 17.5 18.1
+ head-idle  6 aside at +s: 0.0 0.3 17.0 17.6
+ head-idle  7 aside at +s: 0.0 0.5 16.8 17.9
+ head-idle  8 aside at +s: 0.0 0.4 16.8 17.3
+ head-idle  9 aside at +s: 0.0 0.2 16.9 17.5
+ head-idle 10 aside at +s: 0.0 0.2 17.2 17.7
+old-burn24  1 aside at +s: 0.0 1.4 19.1 22.8
+old-burn24  2 aside at +s: 0.0 1.6 18.3 21.5
+old-burn24  3 aside at +s: 0.0 1.6 16.6 23.8
+old-burn24  4 aside at +s: 0.0 2.2 19.7 23.5
+old-burn24  5 aside at +s: 0.0 0.4 19.8 21.4
+old-burn24  6 aside at +s: 0.0 2.5 19.0 22.4
+old-burn24  7 aside at +s: 0.0 1.7 19.6 22.8
+old-burn24  8 aside at +s: 0.0 1.0 18.3
+old-burn24  9 aside at +s: 0.0 0.8 19.2 21.2
+old-burn24 10 aside at +s: 0.0 5.8 19.3 28.1
+head-burn24  1 aside at +s: 0.0 4.2 20.7 27.6 34.4
+head-burn24  2 aside at +s: 0.0 2.4 19.0 22.7
+head-burn24  3 aside at +s: 0.0 2.1 22.9 28.7 34.5
+head-burn24  4 aside at +s: 0.0 1.5 23.3 26.7 34.2
+head-burn24  5 aside at +s: 0.0 1.3 23.9 26.2 28.2 36.3 40.2
+head-burn24  6 aside at +s: 0.0 1.4 20.4
+head-burn24  7 aside at +s: 0.0 1.6 16.1 22.8
+head-burn24  8 aside at +s: 0.0 1.3 21.0
+head-burn24  9 aside at +s: 0.0 1.2 16.1 22.0
+head-burn24 10 aside at +s: 0.0 3.4 22.5
+x-old-connect  1 aside at +s: 0.0 0.2
+x-old-connect  2 aside at +s: 0.0 0.2
+x-old-connect  3 aside at +s: 0.0 0.2
+x-old-dial-link  1 aside at +s: 0.0 0.0
+x-old-dial-link  2 aside at +s: 0.0 0.3
+x-old-dial-link  3 aside at +s: 0.0 0.1
+    x-head  1 aside at +s: 0.0 0.1
+    x-head  2 aside at +s: 0.0 0.1
+    x-head  3 aside at +s: 0.0 0.2

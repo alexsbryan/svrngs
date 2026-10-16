@@ -9957,3 +9957,12 @@ chromium-public-unasked.out), the test `crates/svrngs-node/tests/peer.rs`.
 | # | principle | path:line | fixed in | finding |
 |---|---|---|---|---|
 | 175 | 6, 10 | crates/svrngs-node/src/guest.rs:245-480 (`HttpBridge`, a loopback listener that accepts anyone); crates/svrngs-node/src/iroh.rs:238-292 (`bridge_for`, at `preferred_bridge_port`, :363); crates/svrngs-node/src/door.rs:990-991 (`own_app`: no pass, no app), :1066-1076 (`Who::Member`, `app: None`); crates/svrngs-node/src/door/choices.rs:268-290 (`choose`) | fixed, a27e688 (arch-peer (d): the bridge cut; `tests/peer.rs`'s four green, `demo/runs/arch/2026-10-15-peer/d-green.out`) | **High.** Each computer listens on 127.0.0.1 for each member it dials, and carries whatever connects there to that member's door as this computer's key. A program holding no key reaches every lend that asks nobody as this computer's person, reads their choices, and keeps a yes as them for any app on a lend that asks; a page on loopback does the last two in Chromium and WebKit, and a page on the internet in Chromium once the person allows it to reach the local network (in WebKit, could-not-judge). The answers are kept from a page (CORS), not the act. |
+
+## arch-stream (a) (2026-10-15): two endpoints of one key on one relay
+
+Opened by its row (`ralph/next/arch/STATE.md`), not a `REVIEW-audit-` row:
+the run is `demo/runs/stream/2026-10-15/` (README.md, finding 5).
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 176 | 6 | web/app.js `enter` (`dialler`, `bound`: one endpoint per page, never closed); iroh-relay-1.0.2/src/server/clients.rs:80-92 (one active client per key) | open | **Low, inferred, not run.** In the streaming test, a second endpoint of the page's own key lost its connection 16.0–23.9 s after it bound, when the page's first endpoint reconnected to the relay and took the key back, and its dial then failed at the idle timeout as "asleep" (the run's README, 1). A person who opens one group's page in two tabs of one browser holds two endpoints of one key, one per tab, and by the same mechanism a tab's dial may be cut and told "asleep" while the computer is awake. Not run with two tabs; a test opening two tabs would show it or not. |
