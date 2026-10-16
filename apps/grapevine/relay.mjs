@@ -106,7 +106,10 @@ export function heldBy(api, store, trace = debug) {
     for (const g of groups) {
       let me = typeof g.person === 'string' ? g.person : null;
       if (me !== null) {
-        const people = await store.people(g.id).catch(() => null);
+        const people = await store.people(g.id).catch((e) => {
+          trace("the group's people can't be read, so svrngs's answer stands unchecked", { group: g.id, error: e.message });
+          return null;
+        });
         if (people && !people.some((p) => p.name === me)) {
           trace("this computer's person is not among the group's people", { group: g.id });
           me = null;
