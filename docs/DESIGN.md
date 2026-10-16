@@ -2412,8 +2412,10 @@ they took that round from 73 s to 10 ms (svrn-docs
 stays §9's row. A commit signs no view (arch-view): each act carried its
 writer's whole sync digest, read only by the signature over it, 39% of a line
 at 2 members and 88% at 25, and a commit checked every signature held to make
-it (`demo/runs/view/2026-10-15/`). Acts already holding one are read and
-verify as they did.
+it. Without it a line is about 540 bytes at any size, and at 25 members and
+10,000 acts a commit took 0.064 s where it took 0.79 (one run each,
+`demo/runs/view/2026-10-15/`). Acts already holding one are read and verify
+as they did.
 
 | What lands | Bar, watched failing first |
 |---|---|
