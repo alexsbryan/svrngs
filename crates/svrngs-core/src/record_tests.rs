@@ -75,6 +75,37 @@ fn on_behalf_of_someone_outside_the_group_writes_nothing() {
     assert!(store.0.borrow().is_empty());
 }
 
+/// **A commit signs no view** (arch-view; svrn-docs A_RECORD_FOR_YEARS §3).
+/// bo writes after alex, so a view would name alex; the line bo's commit
+/// makes holds none, carries no `view` on the wire, and verifies. The failing
+/// input: the commit stamps its signer's view, as at the row's start.
+#[test]
+fn a_commit_signs_no_view() {
+    let store = Memory::holding(&[]);
+    let roster = ring();
+    let (alex, bo) = (key(1), key(2));
+    commit(
+        &store,
+        &append(record("milk"), None),
+        &author(&alex, &roster),
+    )
+    .unwrap()
+    .unwrap();
+    let recorded = commit(
+        &store,
+        &append(record("bread"), None),
+        &author(&bo, &roster),
+    )
+    .unwrap()
+    .unwrap();
+    let line = &recorded.lines()[0];
+    assert_eq!(line.kind.view, None, "a new act holds no view");
+    let wire = serde_json::to_string(line).unwrap();
+    assert!(!wire.contains("\"view\""), "nor on the wire: {wire}");
+    let all: Vec<_> = store.0.borrow().iter().cloned().collect();
+    assert!(admitted(&all).gaps().is_empty(), "and it verifies");
+}
+
 /// **Every act a commit signed with its view still verifies** (arch-view;
 /// fence 3). `fixtures/rail_ops_with_a_view.jsonl` is two lines `commit`
 /// wrote at c276c34f, the row's start, which stamped each signer's view:

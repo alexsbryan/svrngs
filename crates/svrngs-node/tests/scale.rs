@@ -11,8 +11,9 @@
 //! It stands up real nodes — the record, the round, iroh — as `canaries.rs`
 //! does: in one process, no relay, peers reached by seeded loopback
 //! addresses. Every member writes an equal share of the journal, so each
-//! act carries a view naming every member (`svrngs-core`
-//! `SignedOp::view`), as it does in a group where everyone has written.
+//! member has a run of its own to sync, as in a group where everyone has
+//! written. (Until arch-view each act also carried a view naming every
+//! member, `svrngs-core` `SignedOp::view`; a commit signs none now.)
 //! Each node is started with a round every day (`Node::start_every`), so no
 //! node's own round runs inside one being timed.
 //!
@@ -628,7 +629,7 @@ async fn stand_up(members: usize, acts: usize) -> (Vec<tempfile::TempDir>, Vec<N
         }
     }
     converge(&nodes).await;
-    // One act each, converged, so every later act's view names everyone.
+    // One act each, converged, so every member has written before the rest.
     for (i, node) in nodes.iter().enumerate() {
         node.rail()
             .commit(GROUP, &Batch(vec![act(i)]))

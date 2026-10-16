@@ -4,8 +4,10 @@
 //!
 //! One primitive, three mountings (ARCH §10.6): the sync digest's per-actor
 //! entry (so two replicas that diverged at one seq can SEE it and exchange),
-//! an act's `view` field (so an equivocation or a cut is weighable from the
-//! act itself — `RING_APP_LIBRARY.md` §19 step 0), and the checkpoint
+//! an act's `view` field (upstream's, so an equivocation or a cut is
+//! weighable from the act itself — `RING_APP_LIBRARY.md` §19 step 0; svrngs
+//! stamps none since arch-view, and reads the ones acts already carry), and
+//! the checkpoint
 //! document's completeness claim (it carries the digest). The definition
 //! below is the wire contract: the golden vectors in the tests are frozen
 //! from this implementation and a reimplementation must reproduce them

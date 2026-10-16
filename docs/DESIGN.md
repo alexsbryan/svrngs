@@ -2409,7 +2409,11 @@ fix is the tail fold `Held` already keeps for writes
 (`crates/svrngs-runtime/src/journal.rs:36-58`); prototyped behind switches,
 they took that round from 73 s to 10 ms (svrn-docs
 `rings/current/THE_CEILING.md`, its runs under `rings/runs/`). Dialling at once
-stays §9's row; the view each act carries goes with U7.
+stays §9's row. A commit signs no view (arch-view): each act carried its
+writer's whole sync digest, read only by the signature over it, 39% of a line
+at 2 members and 88% at 25, and a commit checked every signature held to make
+it (`demo/runs/view/2026-10-15/`). Acts already holding one are read and
+verify as they did.
 
 | What lands | Bar, watched failing first |
 |---|---|

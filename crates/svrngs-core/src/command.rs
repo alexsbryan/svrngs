@@ -7,7 +7,7 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 use crate::{actor_of, RingVerifier, Roster, SigningKey};
-use crate::{admit, digest, sign_act, ActSet, Admission, Op, OpId, RailAct, SignedOp};
+use crate::{admit, sign_act, ActSet, Admission, Op, OpId, RailAct, SignedOp};
 
 /// Which of the held acts a command's decision reads.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -206,6 +206,10 @@ fn read<C: Command>(held: &ActSet) -> ActSet {
 /// Signs `acts` as the signer's next lines: after its newest seq, naming the
 /// line there its signature verifies, and timed strictly after every line
 /// held, since the rail orders by `(ts_unix, actor, seq, id)`.
+/// They carry no view (arch-view): what the writer held was stamped on every
+/// act and read only by the signature over it, 39% of a line at 2 members
+/// and 88% at 25 (`demo/runs/view/2026-10-15/`); a cut carries its own
+/// `through`, and a fork is named by the chain.
 fn sign_lines(
     held: &ActSet,
     tip: Option<Tip>,
@@ -230,9 +234,7 @@ fn sign_lines(
     let ts_unix = a.now.max(after);
     tracing::debug!(target: "rail:door", ns = a.namespace, %actor, first_seq, ?prev,
         now = a.now, after, ts_unix,
-        "commit: follows the signer's newest act, timed after every act held");
-    let all: Vec<Op<SignedOp>> = held.iter().cloned().collect();
-    let view = digest(&all, a.namespace, a.verifier);
+        "commit: follows the signer's newest act, timed after every act held, signing no view");
     let mut lines = Vec::with_capacity(acts.len());
     for (seq, act) in (first_seq..).zip(acts) {
         let op = sign_act(
@@ -243,7 +245,7 @@ fn sign_lines(
             prev.take(),
             act,
             on_behalf_of,
-            Some(view.clone()),
+            None,
         );
         prev = Some(op.id.clone());
         lines.push(op);
