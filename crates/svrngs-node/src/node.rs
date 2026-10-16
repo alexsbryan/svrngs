@@ -407,30 +407,9 @@ impl Node {
         self.host.lends_in(&groups, None).await
     }
 
-    /// One exchange of `namespace` with the node at `peer`, whatever this
-    /// node's register says of it: a joiner syncs once from the issuer that
-    /// admitted it, whom its own register may not know yet (DESIGN §8,
-    /// U2). The peer's addresses are seeded on the transport, so the round
-    /// reaches it too once the register names it.
+    /// [`Host::sync_with`], asked of this node.
     pub async fn sync_with(&self, namespace: &str, peer: &EndpointAddr) -> ExchangeOutcome {
-        let addrs: Vec<_> = peer.ip_addrs().copied().collect();
-        self.host.transport.add_known_peer(peer.id, addrs.clone());
-        let contact = Contact {
-            key: peer.id,
-            relay_url: peer.relay_urls().next().map(|r| r.to_string()),
-            iroh_direct_addrs: addrs,
-        };
-        let to = (self.host.transport(), &contact);
-        let mut out = exchange(to, &self.host.rail, namespace).await;
-        tracing::debug!(target: "node", namespace, pulled = out.pulled, pushed = out.pushed, stop = ?out.stop,
-            "node: sync_with — one exchange with the peer");
-        // A joiner says its relay once the exchange brought its admission,
-        // and takes it to the peer in a second: until one member holds it,
-        // no member can dial this computer (relay-in-record).
-        if out.stop.is_none() && self.host.say_relay() {
-            out.pushed += exchange(to, &self.host.rail, namespace).await.pushed;
-        }
-        out
+        self.host.sync_with(namespace, peer).await
     }
 
     /// Whether this computer reaches the network through a relay at all.
@@ -440,6 +419,32 @@ impl Node {
 }
 
 impl Host {
+    /// One exchange of `namespace` with the node at `peer`, whatever this
+    /// node's register says of it: a joiner syncs once from the issuer that
+    /// admitted it, whom its own register may not know yet (DESIGN §8,
+    /// U2). The peer's addresses are seeded on the transport, so the round
+    /// reaches it too once the register names it.
+    pub async fn sync_with(&self, namespace: &str, peer: &EndpointAddr) -> ExchangeOutcome {
+        let addrs: Vec<_> = peer.ip_addrs().copied().collect();
+        self.transport.add_known_peer(peer.id, addrs.clone());
+        let contact = Contact {
+            key: peer.id,
+            relay_url: peer.relay_urls().next().map(|r| r.to_string()),
+            iroh_direct_addrs: addrs,
+        };
+        let to = (self.transport(), &contact);
+        let mut out = exchange(to, &self.rail, namespace).await;
+        tracing::debug!(target: "node", namespace, pulled = out.pulled, pushed = out.pushed, stop = ?out.stop,
+            "node: sync_with — one exchange with the peer");
+        // A joiner says its relay once the exchange brought its admission,
+        // and takes it to the peer in a second: until one member holds it,
+        // no member can dial this computer (relay-in-record).
+        if out.stop.is_none() && self.say_relay() {
+            out.pushed += exchange(to, &self.rail, namespace).await.pushed;
+        }
+        out
+    }
+
     /// Say in each group held where this computer is reached — its home
     /// relay, or none when it reaches the network through none — by
     /// svrngs-core's `RelayAt`, which writes only when the record says
