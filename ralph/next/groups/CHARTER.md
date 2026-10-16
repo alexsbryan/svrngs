@@ -54,6 +54,15 @@ now v1ui-reach (`ralph/next/v1ui/`). This queue keeps leaving and a key
 per group on computers, and its leave lands on the home page v1ui-door
 leaves.
 
+- **Per-group keys, and the leaver's other computers** (the operator,
+  2026-10-16).
+  - On groups-keys' survey: "Final from this computer, through V1". Way C
+    would have cost about 220–330 repository lines against 41 left.
+    groups-keys closes as surveyed, and per-group keys on computers go to
+    DESIGN §9.
+  - On the audit's #179–#181: "Yes, a row within the 41 left". That row is
+    groups-leave-others.
+
 ## Why
 
 - **Groups mean things** (the operator, 2026-10-13: "Ostrom-like commons").

@@ -1,3 +1,5 @@
+**Answered by the operator, 2026-10-16: "Final from this computer, through V1".** groups-keys closes as surveyed; a key per group on computers goes to DESIGN §9 with this survey as its evidence.
+
 # groups-keys — the budget, for the operator
 
 **The question:** a key per group on a computer, shape C, needs about
