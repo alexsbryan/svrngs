@@ -36,8 +36,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # raise, spends the 31 lines v1ui left (operator, 2026-10-15; ceiling 16,965):
 # the repository's cap is one past where its (c)'s last, #169, the table's
 # first column an enum, landed. arch-peer's cut of the loopback bridge lowered it
-# to one past where its (d) landed (2026-10-15).
-BUDGET = {"crates/svrngs-core": 2955, ".": 16163}
+# to one past where its (d) landed (2026-10-15). arch-view, a commit signing no
+# view, lowered both to one past where it landed.
+BUDGET = {"crates/svrngs-core": 2953, ".": 16161}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
