@@ -1,0 +1,13 @@
+{"t": 1792118409.159, "event": "begin", "head": "8ab83940", "start": "/tmp/arch-view-bins/svrngs-start-c276c34f", "close": "/tmp/arch-view-bins/svrngs-close-8ab83940", "maker": "close", "load": [3.083984375, 3.88818359375, 5.73095703125]}
+{"t": 1792118409.162, "event": "svrngs", "who": "bo", "build": "close", "args": ["new", "Lab", "--as", "Bo"]}
+{"t": 1792118413.558, "event": "svrngs", "who": "ana", "build": "start", "args": ["join", "<link>", "--as", "Ana"]}
+{"t": 1792118418.028, "event": "running", "who": "ana", "api": "http://127.0.0.1:60159"}
+{"t": 1792118418.028, "event": "running", "who": "bo", "api": "http://127.0.0.1:60135"}
+{"t": 1792118418.076, "event": "append", "who": "ana", "act": {"op": "record", "payload": {"kind": "note", "what": "a1"}}, "status": 200}
+{"t": 1792118418.083, "event": "append", "who": "ana", "act": {"op": "record", "payload": {"kind": "note", "what": "a2"}}, "status": 200}
+{"t": 1792118418.094, "event": "append", "who": "ana", "act": {"op": "record", "payload": {"kind": "note", "what": "a3"}}, "status": 200}
+{"t": 1792118418.103, "event": "append", "who": "bo", "act": {"op": "record", "payload": {"kind": "note", "what": "b1"}}, "status": 200}
+{"t": 1792118418.115, "event": "append", "who": "bo", "act": {"op": "record", "payload": {"kind": "note", "what": "b2"}}, "status": 200}
+{"t": 1792118418.128, "event": "append", "who": "bo", "act": {"op": "record", "payload": {"kind": "note", "what": "b3"}}, "status": 200}
+{"t": 1792118418.799, "event": "in step", "seconds": 0.67}
+{"t": 1792118428.95, "event": "summary", "head": "8ab83940", "maker": "close", "start_bin": "/tmp/arch-view-bins/svrngs-start-c276c34f", "close_bin": "/tmp/arch-view-bins/svrngs-close-8ab83940", "held": {"ana": 10, "bo": 10, "both": 10}, "only_ana": [], "only_bo": [], "both_hold_differently": [], "records_counted": {"ana": ["a1", "a2", "a3", "b1", "b2", "b3"], "bo": ["a1", "a2", "a3", "b1", "b2", "b3"]}, "complete": {"ana": true, "bo": true}, "gaps": {"ana": [], "bo": []}, "records_by_build": {"start": [{"what": "a3", "view": true, "v": 1}, {"what": "a2", "view": true, "v": 1}, {"what": "a1", "view": true, "v": 1}], "close": [{"what": "b3", "view": false, "v": 1}, {"what": "b1", "view": false, "v": 1}, {"what": "b2", "view": false, "v": 1}]}, "lines_with_a_view": {"ana": 4, "bo": 4}}
