@@ -165,7 +165,9 @@ impl IrohTransport {
     ) -> Result<Connection, Unsent> {
         let at = (*peer.key.as_bytes(), alpn.bytes());
         let kept = self.conns.borrow().get(&at).cloned();
-        if let Some(conn) = kept.filter(|c| c.close_reason().is_none()) {
+        let kept = kept.filter(|c| c.close_reason().is_none());
+        tracing::debug!(target: "transport", peer = %peer.key.fmt_short(), ?alpn, kept = kept.is_some(), "iroh: a request on the connection kept to it, else on one dialled (#178)");
+        if let Some(conn) = kept {
             return Ok(conn);
         }
         // Which of the key's addresses iroh dials: one in use is the only

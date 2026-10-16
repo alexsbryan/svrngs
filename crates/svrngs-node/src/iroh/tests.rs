@@ -306,3 +306,52 @@ async fn an_answer_not_read_whole_within_ten_seconds_is_slow() {
         "{said:?}"
     );
 }
+
+/// **Which connection a request went on, traced** (#178): two requests to
+/// a member, the first said dialled and the second said riding the
+/// connection kept to it, each with its protocol. Red with the plant the
+/// finding names, the kept connection's request untraced (`kept` as at
+/// 5d5cb1f6): no line says which.
+#[tokio::test]
+async fn which_connection_a_request_went_on_is_traced() {
+    let said = Said::default();
+    let writer = said.clone();
+    let subscriber = tracing_subscriber::fmt()
+        .with_env_filter("transport=debug")
+        .with_ansi(false)
+        .with_writer(move || writer.clone())
+        .finish();
+    let _said = tracing::subscriber::set_default(subscriber);
+    // A second dispatcher kept alive, as blob_tests.rs's trace test keeps
+    // one: tracing-core 0.1.36 (callsite.rs:545) caches a callsite another
+    // test's thread reached first unheard.
+    let _two = tracing::Dispatch::new(tracing::subscriber::NoSubscriber::default());
+    let (member, _) = served(49, true).await;
+    let transport = IrohTransport::new(hermetic_endpoint(50, vec![]).await);
+    let contact = contact_for(&member, loopback_sockets(&member));
+    for _ in 0..2 {
+        transport
+            .fetch(&contact, get("/who"))
+            .await
+            .expect("an answer");
+    }
+    let log = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    let which: Vec<&str> = log
+        .lines()
+        .filter(|l| l.contains("iroh: a request on"))
+        .map(|l| {
+            if l.contains("kept=true") {
+                "kept"
+            } else {
+                "dialled"
+            }
+        })
+        .collect();
+    assert_eq!(which, ["dialled", "kept"], "{log}");
+    assert!(
+        log.lines()
+            .filter(|l| l.contains("iroh: a request on"))
+            .all(|l| l.contains("alpn=Member")),
+        "{log}"
+    );
+}
