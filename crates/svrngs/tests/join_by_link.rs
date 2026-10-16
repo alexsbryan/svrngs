@@ -18,8 +18,8 @@ use std::time::{Duration, Instant};
 
 use svrngs::cli::{self, Printed, Refusal, Said, Verb};
 use svrngs::group::{self, Name, Seed};
-use svrngs::issuer;
 use svrngs_node::iroh::{Contact, EndpointAddr, MemoryLookup, RelayConfig, RelayUrl};
+use svrngs_node::join as issuer;
 use svrngs_node::link::{client_link, https_link, Link, Origin, Token, KEPT_WORDS};
 use svrngs_node::node::Node;
 use svrngs_node::redeem::{

@@ -31,7 +31,7 @@
 //! checks (`iroh-base-1.0.2/src/key.rs:122-127`), and its relay the `Url`
 //! iroh's `RelayUrl::from_str` parses (`relay_url.rs:38-45`), so a token
 //! parses here as it did through iroh. Drawing a secret and dialling the issuer
-//! stay the command's (`svrngs::issuer`): the core draws nothing and dials
+//! are the node's (`svrngs_node::invite`, `join`): the core draws nothing and dials
 //! nothing.
 
 use alloc::format;

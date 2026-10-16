@@ -6,9 +6,9 @@
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 use svrngs::cli::{self, Printed, Refusal, Verb};
 use svrngs::group::{self, Name};
-use svrngs::issuer;
 use svrngs_node::invite::LINK_LIFE_SECS;
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
+use svrngs_node::join as issuer;
 use svrngs_node::link::{Link, Origin, CLIENT_PREFIX};
 use svrngs_node::node::Node;
 use svrngs_node::register::Standing;
@@ -283,7 +283,10 @@ fn a_joiner_at_n0_s_keeps_its_link_s_relay_unless_it_is_n0_s() {
     let n0: Vec<RelayUrl> = svrngs_node::relay::n0_relays().urls();
     assert_eq!(n0.len(), 4, "control: n0's four, {n0:?}");
     for at_n0 in [true, false] {
-        assert_eq!(group::kept_relay(Some(own.clone()), at_n0), Some(own.clone()));
+        assert_eq!(
+            group::kept_relay(Some(own.clone()), at_n0),
+            Some(own.clone())
+        );
         assert_eq!(group::kept_relay(None, at_n0), None);
     }
     for url in n0 {
