@@ -40,6 +40,14 @@ decision says so.
   pass leaves and svrngs-core within +40 over its own. The per-group keys
   row stops and asks if its survey says it needs more.
 
+**The V1 cut line** (the operator, 2026-10-15). They said: "And then I think
+that's our V1 cut line", of the grapevine demo app. Asked, they chose "arch,
+groups, grapevine; V1 on n0" and "arch → groups → grapevine".
+- This queue runs after the arch queue and before the grapevine queue
+  (`ralph/next/grapevine/`).
+- Its first row, groups-v1, rewrites DESIGN §8 for the cut line: the own
+  relay comes after V1.
+
 **Moved into the v1ui queue, which runs first** (the operator, 2026-10-14:
 "v1ui first, then groups"). #138 is now v1ui-door, and the phone's wait is
 now v1ui-reach (`ralph/next/v1ui/`). This queue keeps leaving and a key
