@@ -1,0 +1,93 @@
+{"at":"2026-10-16T21:42:18.166Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:42:18.170Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:42:18.181Z","what":"folded","person":"me","groups":2,"asks":0,"can":0,"threads":0,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:42:18.182Z","what":"a page","person":"me","groups":2,"asks":0,"threads":0,"gaps":0}
+{"at":"2026-10-16T21:42:19.795Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:42:19.797Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:42:19.809Z","what":"folded","person":"me","groups":2,"asks":1,"can":1,"threads":0,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:42:19.825Z","what":"a page","person":"me","groups":2,"asks":1,"threads":0,"gaps":0}
+{"at":"2026-10-16T21:42:19.885Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:42:19.887Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:42:19.893Z","what":"folded","person":"me","groups":2,"asks":1,"can":1,"threads":0,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:42:19.895Z","what":"carrying","person":"me","ask":"60a62137302e7587778514b34f9e305ccc49ba8bda8c2985c8645d552a36bc35","from":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","to":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","hops":0}
+{"at":"2026-10-16T21:42:19.912Z","what":"written","person":"me","doing":"carry","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","id":"0eb14e3b27e3d8e074cc643291821daad669ac6b234b6f476e4e835622d66737"}
+{"at":"2026-10-16T21:42:19.912Z","what":"answered","person":"me","route":"carry","status":200}
+{"at":"2026-10-16T21:42:19.922Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:42:19.924Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:42:19.929Z","what":"folded","person":"me","groups":2,"asks":1,"can":0,"threads":1,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:42:19.929Z","what":"a page","person":"me","groups":2,"asks":1,"threads":1,"gaps":0}
+{"at":"2026-10-16T21:42:23.538Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:42:23.565Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:42:23.716Z","what":"folded","person":"me","groups":2,"asks":1,"can":0,"threads":1,"relay":1,"gaps":[]}
+{"at":"2026-10-16T21:42:23.760Z","what":"relay: forwarded","person":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","dir":"up","size":96}
+{"at":"2026-10-16T21:42:23.760Z","what":"a pass","person":"me","forwarded":1,"corrected":0,"failed":0,"reads":[{"group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","ms":103,"ops":7},{"group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","ms":48,"ops":5}]}
+{"at":"2026-10-16T21:42:25.257Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:42:25.265Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:42:25.332Z","what":"folded","person":"me","groups":2,"asks":1,"can":0,"threads":1,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:42:25.333Z","what":"a page","person":"me","groups":2,"asks":1,"threads":1,"gaps":0}
+{"at":"2026-10-16T21:42:28.778Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:42:28.795Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:42:28.878Z","what":"folded","person":"me","groups":2,"asks":1,"can":0,"threads":1,"relay":1,"gaps":[]}
+{"at":"2026-10-16T21:42:28.939Z","what":"relay: forwarded","person":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","dir":"down","size":48}
+{"at":"2026-10-16T21:42:28.939Z","what":"a pass","person":"me","forwarded":1,"corrected":0,"failed":0,"reads":[{"group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","ms":22,"ops":7},{"group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","ms":60,"ops":7}]}
+{"at":"2026-10-16T21:42:33.952Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:42:33.956Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:42:33.964Z","what":"folded","person":"me","groups":2,"asks":1,"can":0,"threads":1,"relay":1,"gaps":[]}
+{"at":"2026-10-16T21:42:33.994Z","what":"relay: forwarded","person":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","dir":"up","size":51}
+{"at":"2026-10-16T21:42:33.994Z","what":"a pass","person":"me","forwarded":1,"corrected":0,"failed":0,"reads":[{"group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","ms":4,"ops":9},{"group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","ms":3,"ops":7}]}
+{"at":"2026-10-16T21:42:39.116Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:42:39.117Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:42:39.129Z","what":"folded","person":"me","groups":2,"asks":1,"can":0,"threads":1,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:42:39.129Z","what":"a pass","person":"me","forwarded":0,"corrected":0,"failed":0,"reads":[{"group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","ms":6,"ops":9},{"group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","ms":6,"ops":9}]}
+{"at":"2026-10-16T21:42:44.136Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:42:44.137Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:42:44.145Z","what":"folded","person":"me","groups":2,"asks":1,"can":0,"threads":1,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:42:44.145Z","what":"a pass","person":"me","forwarded":0,"corrected":0,"failed":0,"reads":[{"group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","ms":4,"ops":9},{"group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","ms":4,"ops":9}]}
+{"at":"2026-10-16T21:42:49.150Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:42:49.151Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:42:49.157Z","what":"folded","person":"me","groups":2,"asks":1,"can":0,"threads":1,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:42:49.157Z","what":"a pass","person":"me","forwarded":0,"corrected":0,"failed":0,"reads":[{"group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","ms":2,"ops":9},{"group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","ms":3,"ops":9}]}
+{"at":"2026-10-16T21:42:54.162Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:42:54.164Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:42:54.171Z","what":"folded","person":"me","groups":2,"asks":1,"can":0,"threads":1,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:42:54.171Z","what":"a pass","person":"me","forwarded":0,"corrected":0,"failed":0,"reads":[{"group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","ms":4,"ops":9},{"group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","ms":3,"ops":9}]}
+{"at":"2026-10-16T21:42:59.179Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:42:59.198Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:42:59.210Z","what":"folded","person":"me","groups":2,"asks":1,"can":0,"threads":1,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:42:59.211Z","what":"a pass","person":"me","forwarded":0,"corrected":0,"failed":0,"reads":[{"group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","ms":5,"ops":9},{"group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","ms":6,"ops":9}]}
+{"at":"2026-10-16T21:43:04.389Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:43:04.391Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:43:04.411Z","what":"folded","person":"me","groups":2,"asks":1,"can":0,"threads":1,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:43:04.411Z","what":"a pass","person":"me","forwarded":0,"corrected":0,"failed":0,"reads":[{"group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","ms":8,"ops":9},{"group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","ms":12,"ops":9}]}
+{"at":"2026-10-16T21:43:09.418Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:43:09.419Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:43:09.427Z","what":"folded","person":"me","groups":2,"asks":1,"can":0,"threads":1,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:43:09.427Z","what":"a pass","person":"me","forwarded":0,"corrected":0,"failed":0,"reads":[{"group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","ms":4,"ops":9},{"group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","ms":3,"ops":9}]}
+{"at":"2026-10-16T21:43:14.433Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:43:14.433Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:43:14.438Z","what":"folded","person":"me","groups":2,"asks":1,"can":0,"threads":1,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:43:14.441Z","what":"a pass","person":"me","forwarded":0,"corrected":0,"failed":0,"reads":[{"group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","ms":2,"ops":9},{"group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","ms":2,"ops":9}]}
+{"at":"2026-10-16T21:43:19.444Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:43:19.445Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:43:19.448Z","what":"folded","person":"me","groups":2,"asks":1,"can":0,"threads":1,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:43:19.449Z","what":"a pass","person":"me","forwarded":0,"corrected":0,"failed":0,"reads":[{"group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","ms":2,"ops":9},{"group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","ms":2,"ops":9}]}
+{"at":"2026-10-16T21:43:24.454Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:43:24.455Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:43:24.459Z","what":"folded","person":"me","groups":2,"asks":1,"can":0,"threads":1,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:43:24.459Z","what":"a pass","person":"me","forwarded":0,"corrected":0,"failed":0,"reads":[{"group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","ms":2,"ops":9},{"group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","ms":2,"ops":9}]}
+{"at":"2026-10-16T21:43:29.466Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:43:29.467Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:43:29.471Z","what":"folded","person":"me","groups":2,"asks":1,"can":0,"threads":1,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:43:29.471Z","what":"a pass","person":"me","forwarded":0,"corrected":0,"failed":0,"reads":[{"group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","ms":2,"ops":9},{"group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","ms":2,"ops":9}]}
+{"at":"2026-10-16T21:43:34.475Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:43:34.475Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:43:34.480Z","what":"folded","person":"me","groups":2,"asks":1,"can":0,"threads":1,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:43:34.480Z","what":"a pass","person":"me","forwarded":0,"corrected":0,"failed":0,"reads":[{"group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","ms":2,"ops":9},{"group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","ms":2,"ops":9}]}
+{"at":"2026-10-16T21:43:39.486Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:43:39.487Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:43:39.492Z","what":"folded","person":"me","groups":2,"asks":1,"can":0,"threads":1,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:43:39.493Z","what":"a pass","person":"me","forwarded":0,"corrected":0,"failed":0,"reads":[{"group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","ms":2,"ops":9},{"group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","ms":2,"ops":9}]}
+{"at":"2026-10-16T21:43:41.458Z","what":"me","group":"8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935","standing":true}
+{"at":"2026-10-16T21:43:41.459Z","what":"me","group":"c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae","standing":true}
+{"at":"2026-10-16T21:43:41.463Z","what":"folded","person":"me","groups":2,"asks":1,"can":0,"threads":1,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:43:41.464Z","what":"a page","person":"me","groups":2,"asks":1,"threads":1,"gaps":0}
