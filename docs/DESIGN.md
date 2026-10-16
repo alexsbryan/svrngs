@@ -662,7 +662,11 @@ the evidence is U4's inventory, §8):
    the endpoint is the lend's worker's, at the lend's own origin
    (`web/lend.js`), bound with the fresh key a pass names, and what was the
    hand-over page is the lend's start page (`web/open.js`), which reads the
-   pass its worker cannot and hands it over.)
+   pass its worker cannot and hands it over. One tab of the page at a time
+   holds the person's endpoint for a group, by a lock named for it, since a
+   second tab's endpoint set the first's aside at the relay, for the whole
+   minute it was watched (groups-tabs; #176, `demo/runs/tabs/2026-10-16/`): a tab opened beside
+   it says the group is open in another tab and offers to open it there.)
 4. *The phone dials whoever lends a service*, directly by key, since it
    stands in the group. The issuer, the node the link names, only redeems and
    answers what the group's people lend, each with its lender's key and the

@@ -93,6 +93,9 @@ function show(words, good) {
   heading.className = good ? 'good' : 'bad';
 }
 
+// Why the page stopped, said: a `Said`'s words, else that it could not.
+const failed = (e) => (console.error(e), show(e instanceof Said ? e.message : 'This browser could not open the page.', false));
+
 // A link naming no relay — made by a computer that reached no relay, or
 // before relay-park (c) by one with n0's lookup — is refused, as the page
 // asks n0 for nothing (relay-default (b)). The relay is never in a
@@ -331,6 +334,47 @@ async function reachGroup(group, key, dialler) {
   return [d, c];
 }
 
+// The group's name, with who made it and since when this phone has held
+// it, so two of one name are told apart (#138); its name alone for a
+// group kept before.
+const titled = (group) => `${group.name}${group.maker ? ` (${whose(group)})` : ''}`;
+
+// One tab at a time reaches a group (groups-tabs (b); #176). Each tab
+// binds an endpoint as the person, and a relay keeps one connection per
+// key (iroh-relay-1.0.2/src/server/clients.rs:80-92): a second tab's set
+// the first's aside, which then said every computer it dialled for a
+// minute did not answer (demo/runs/tabs/2026-10-16/README.md). So the tab
+// holding the group's lock reaches it, and lets it go when it fails or
+// closes. One opened while another holds it says so and offers to take
+// it (`steal`); a tab it is taken from opens again, and says so too. A
+// browser with no locks reaches the group from each tab, as before.
+function hold(group, asked, steal = false) {
+  if (!navigator.locks) return (trace('PAGE: this browser has no locks, so each tab reaches the group'), enter(group, asked));
+  return new Promise((entered, failed) => {
+    const reached = (lock) => {
+      if (!lock) return entered(elsewhere(group, asked));
+      trace(`PAGE: this tab holds ${group.id}${steal ? ', taken from another tab' : ''}`);
+      return enter(group, asked).then(() => (entered(), new Promise(() => {})), failed);
+    };
+    navigator.locks.request(`svrngs ${group.id}`, steal ? { steal } : { ifAvailable: true }, reached).catch((e) => {
+      if (e.name !== 'AbortError') return failed(e);
+      trace(`PAGE: another tab took ${group.id}, so this one opens again`);
+      location.reload();
+    });
+  });
+}
+
+// `group` open in another tab of this browser: said, with a button that
+// takes it here.
+function elsewhere(group, asked) {
+  trace(`PAGE: ${group.id} is open in another tab`);
+  document.title = group.name;
+  show(`You have ${titled(group)} open in another tab`, true);
+  const at = document.getElementById('door');
+  const here = Object.assign(el('button', 'Open it here'), { onclick: () => (at.replaceChildren(), hold(group, asked, true).catch(failed)) });
+  at.replaceChildren(el('p', `One tab at a time reaches ${group.name}. Open it here, and the other tab stops reaching it.`), here);
+}
+
 // In `group`: list what its people lend, and open the one `asked` names
 // at once, at its path, when a lend's origin asked for it; or ask whether
 // an app may use a lend.
@@ -367,10 +411,7 @@ async function enter(group, asked) {
   // (v1-keeper-office (b)); `null` when the computer could not read it.
   const gone = (removals ?? [null]).map((r) => el('li', r ? removal(r) : `Who was removed from ${group.name} cannot be read just now.`));
   document.getElementById('removals').replaceChildren(...gone);
-  // Who made the group and since when this phone has held it, so two of
-  // one name are told apart (#138); nothing for a group kept before.
-  const made = group.maker ? ` (${whose(group)})` : '';
-  show(`You’re in ${group.name}${made}, as ${group.person}${via ? `, through ${via.person}’s computer` : ''}`, true);
+  show(`You’re in ${titled(group)}, as ${group.person}${via ? `, through ${via.person}’s computer` : ''}`, true);
   // The door and the index as the home page draws them (question.js;
   // V1_UI_BUILD §3.1), judged by the answer this computer gave: whose
   // computer did not answer it is drawn off.
@@ -486,10 +527,9 @@ async function opening(fragment) {
     // svrngs elsewhere on it: opened from its home page (events-links (c)).
     if (!group && asked?.has('open') && computer()) return (line('opens', location.href), show('This link opens in svrngs on your computer.', true));
     if (!group) throw new Said('Open this page from your group’s link.');
-    await enter(group, asked);
+    await hold(group, asked);
   } catch (e) {
-    console.error(e);
-    show(e instanceof Said ? e.message : 'This browser could not open the page.', false);
+    failed(e);
   }
 }
 opening(location.hash.slice(1));

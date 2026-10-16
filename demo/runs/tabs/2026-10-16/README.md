@@ -42,3 +42,34 @@ endpoint (`web/app.js` `uses`, `dialler`), as a person's tap there does.
 So the tab a person opened first silently stops reaching anyone. Every
 computer it dials is then said to have not answered, and named by its
 person, while those computers are on.
+
+## (b) One tab at a time reaches the group
+
+The smallest change (a) names is the second of the row's two shapes. The
+first shape needs the tabs to share one endpoint (a `BroadcastChannel`, a
+`SharedWorker` or the service worker carrying every dial and its streams
+between tabs). Here the tab that holds a Web Lock named for the group
+reaches it (`web/app.js` `hold`). A tab opened while another holds it
+binds nothing. It says "You have house open in another tab", and under
+it: "One tab at a time reaches house. Open it here, and the other tab
+stops reaching it." with a button, "Open it here". That button takes the
+lock with `steal`. The tab it was taken from opens again, and then says
+the same. A tab lets the lock go when it closes, or when reaching the
+group fails.
+
+The check is the same test, with tab two allowed to say it is open
+elsewhere instead of listing. Its "Open it here" is then pressed, and
+both tabs are read after (`tests/browser/tabs.rs`).
+
+- **Plant, each tab its own endpoint, as at c43d2cc7** (`hold` made to
+  enter at once, as with no locks; `b-plant.out`): red in both engines,
+  tab one's every ask "ada’s computer did not answer.", as in (a).
+- **Green** (`b-green.out`), in both engines:
+  - Tab one answered 27 of 27 asks over 60 s.
+  - Tab two said "You have house open in another tab" throughout and
+    asked nothing.
+  - After its "Open it here", tab two said "You’re in house, as bo" and
+    reached ada ("An app was stopped using ada’s shelf (k)."). Tab one,
+    opened again, said "You have house open in another tab".
+  - The relay set no key aside in the run (no "deactivating old
+    connection" in `target/traces/browser.log`).

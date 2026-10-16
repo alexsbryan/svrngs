@@ -15,10 +15,15 @@ in_both_engines!(
     /// house's page, then opens it again in a second tab of the same
     /// browser. For 60 s each tab in turn asks "What apps use" of ada's
     /// shelf, which asks, so each dials ada's computer through its page's
-    /// own endpoint. Every ask in each tab is answered.
-    the_group_s_page_in_two_tabs_reaches_the_group_in_each
+    /// own endpoint. Every ask in tab one is answered, and in tab two too,
+    /// or tab two says house is open in another tab and asks nothing; then
+    /// its "Open it here" opens house there, answers an ask, and tab one
+    /// says house is open in another tab (groups-tabs (b)). Red at
+    /// c43d2cc7, each tab its own endpoint: tab one's every ask "did not
+    /// answer" (demo/runs/tabs/2026-10-16/).
+    the_group_s_page_in_two_tabs_reaches_the_group_from_one
 );
-async fn the_group_s_page_in_two_tabs_reaches_the_group_in_each(engine: Engine) {
+async fn the_group_s_page_in_two_tabs_reaches_the_group_from_one(engine: Engine) {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
     let bo = signing(7);
@@ -58,34 +63,58 @@ async fn the_group_s_page_in_two_tabs_reaches_the_group_in_each(engine: Engine) 
         })
         .collect();
     eprintln!(
-        "the tabs' run ({}):\n  one: {}\n  two: {}\n  {}",
+        "the tabs' run ({}):\n  one: {}\n  two: {}\n  {}\n  taken: {}",
         engine.as_str(),
         seen["one"]["status"],
         seen["two"]["status"],
-        summary.join("\n  ")
+        summary.join("\n  "),
+        json!({ "one": seen["taken"]["one"]["status"], "two": seen["taken"]["two"]["status"], "ask": seen["taken"]["ask"] })
     );
-    for tab in ["one", "two"] {
-        assert_eq!(seen[tab]["good"], true, "tab {tab} lists house: {seen:#}");
-    }
+    const ELSEWHERE: &str = "You have house open in another tab";
+    assert_eq!(seen["one"]["good"], true, "tab one lists house: {seen:#}");
+    let two = seen["two"]["status"].as_str().unwrap_or_default();
+    let offered = two == ELSEWHERE;
+    assert!(
+        offered || seen["two"]["status"] == seen["one"]["status"],
+        "tab two lists house, or says it is open in another tab: {two:?}\n{seen:#}"
+    );
     let answered = |a: &Value| {
         a["words"]
             .as_str()
             .is_some_and(|w| w.contains("was stopped using ada’s shelf"))
     };
+    // Tab two, open elsewhere, shows no list to ask.
     let dropped: Vec<&String> = asks
         .iter()
         .zip(&summary)
-        .filter(|(a, _)| !answered(a))
+        .filter(|(a, _)| !(answered(a) || offered && a["tab"] == "two" && a["words"].is_null()))
         .map(|(_, s)| s)
         .collect();
     assert!(
         asks.len() >= 4 && dropped.is_empty(),
-        "every ask in both tabs is answered for {FOR} ms; dropped:\n  {}\n{seen:#}",
+        "every ask in each tab that lists house is answered for {FOR} ms; dropped:\n  {}\n{seen:#}",
         dropped
             .iter()
             .map(|s| s.as_str())
             .collect::<Vec<_>>()
             .join("\n  ")
     );
+    for (tab, after) in [("one", "oneAfter"), ("two", "twoAfter")] {
+        assert_eq!(
+            seen[after]["status"], seen[tab]["status"],
+            "tab {tab} says the same after: {seen:#}"
+        );
+    }
+    if offered {
+        let taken = &seen["taken"];
+        assert!(
+            taken["two"]["status"]
+                .as_str()
+                .is_some_and(|s| s.starts_with("You’re in house"))
+                && answered(&json!({ "words": taken["ask"] })),
+            "tab two, opened here, lists house and reaches ada: {taken:#}"
+        );
+        assert_eq!(taken["one"]["status"], ELSEWHERE, "{taken:#}");
+    }
     drop(ada);
 }

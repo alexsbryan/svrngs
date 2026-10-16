@@ -6,7 +6,9 @@
 // "What apps use" of the lend that asks, so each dials its lender through
 // its page's own endpoint, as a person's tap there does. Each answer is
 // kept with its tab, its time since tab two opened, and its words; with
-// each tab's heading at the start and the end, and its trace.
+// each tab's heading at the start and the end, and its trace. When tab two
+// then offers to open the group here, it is pressed (groups-tabs (b)), and
+// what each tab says after, with tab two's next ask, is kept as `taken`.
 //
 //   node web/tests/tabs.mjs '{"engine": "chromium"|"webkit", "site": ...,
 //     "key": ..., "token": ..., "for": <ms>}'
@@ -68,6 +70,15 @@ try {
   }
   out.oneAfter = await said(one);
   out.twoAfter = await said(two);
+  // Taken over: tab two's "Open it here", when it offers one; then tab
+  // one, opened again, says what it says, and tab two asks once.
+  const here = two.locator('#door button', { hasText: 'Open it here' });
+  if (await here.isVisible()) {
+    await here.click();
+    await two.waitForSelector('#status.good:has-text("You’re in"), #status.bad', { timeout: 90_000 });
+    await one.waitForFunction(() => /another tab/.test(document.getElementById('status')?.textContent), null, { timeout: 30_000 }).catch(() => {});
+    out.taken = { one: await said(one), two: await said(two), ask: await asked(two).catch((e) => `no line: ${e}`) };
+  }
   out.lines = { one: await one.evaluate(() => window.__lines), two: await two.evaluate(() => window.__lines) };
   console.log(JSON.stringify({ ...out, logs }));
 } catch (e) {
