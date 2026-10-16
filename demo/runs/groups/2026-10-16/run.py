@@ -19,7 +19,7 @@ HERE = Path(__file__).resolve().parent; REPO = HERE.parents[3]
 PLANT = os.environ.get("PLANT")
 OUT = HERE / "data" / ("plants/" + PLANT if PLANT else ""); W = Path(os.environ["W"]); BIN = W / "svrngs"
 TRIP = "Trip"
-LOG = "info,removal=debug,door=debug,origin=debug,join=debug,redeem=debug,ring_routes=debug"
+LOG = "info,removal=debug,door=debug,origin=debug,join=debug,redeem=debug,ring_routes=debug,node=debug"
 
 # Each plant: (file, the text there, what replaces it). The run stops if a
 # plant's text is not in its file once, so a plant never silently misses.
@@ -390,7 +390,7 @@ def main():
         for who in ("sam", "ana", "bo", "ana-copy"):
             if (W / f"{who}.log").exists():
                 keep = [re.sub(r"\x1b\[[0-9;]*m", "", l) for l in (W / f"{who}.log").read_text(errors="replace").splitlines()
-                        if re.search(r"removal: |door: refused|origin: refused|join: |redeem: |told_cut|ring_routes|ERROR|WARN", l)]
+                        if re.search(r"removal: |door: refused|origin: refused|node: refused|join: |redeem: |told_cut|ring_routes|ERROR|WARN", l)]
                 (OUT / f"{who}.log").write_text(redact("\n".join(keep[-3000:])) + "\n")
         say("end")
 
