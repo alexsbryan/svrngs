@@ -4,6 +4,6 @@
 
 import { kindsOf } from './grapevine.js';
 
-const KIND_FILES = ['ask', 'tool'];
+const KIND_FILES = ['ask', 'tool', 'rooms'];
 
 export const KINDS = kindsOf(await Promise.all(KIND_FILES.map(async (k) => (await import(`./kinds/${k}.js`)).default)));
