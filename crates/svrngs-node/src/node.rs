@@ -420,11 +420,6 @@ impl Node {
         self.host.lends_in(&groups, None).await
     }
 
-    /// [`Host::sync_with`], asked of this node.
-    pub async fn sync_with(&self, namespace: &str, peer: &EndpointAddr) -> ExchangeOutcome {
-        self.host.sync_with(namespace, peer).await
-    }
-
     /// Whether this computer reaches the network through a relay at all.
     pub fn relayed(&self) -> bool {
         self.host.relayed

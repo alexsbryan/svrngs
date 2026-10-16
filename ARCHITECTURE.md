@@ -204,7 +204,7 @@ once after an app's append (one `Notify`, held by the round and the record
 API), and when the member door meets a pass whose signer stands in no
 group held here, which waits up to 10 s for a round begun after its ask to
 end before it answers (`ring_sync::AskRound`, mnp-1)
-(`Node::sync_with` runs one exchange with a peer the register may not name
+(`Host::sync_with` runs one exchange with a peer the register may not name
 yet; a test runs a round now with `Node::round`, which with `transport` and
 `api_routes` is test support since lean-3, `node/tests_support.rs` behind
 svrngs-node's `test-support` feature).
@@ -547,7 +547,7 @@ data dir (`$SVRNGS_DIR`, else `~/.svrngs`), held by a lock on
 `<dir>/lock`; `new` and `link` append an `Invite` through the group's door
 that lapses in a day and print the link; `join` asks a link's issuer what
 it is for and redeems it there (`svrngs_node::redeem`), writes the group's
-seed only once let in, and the origin only of an https link, syncs once from the issuer (`Node::sync_with`) and prints "You're in
+seed only once let in, and the origin only of an https link, syncs once from the issuer (`Host::sync_with`) and prints "You're in
 <group>"; each verb then runs the node until Ctrl-C, serving the record
 on `127.0.0.1` at a free port (`cli::API`), which the bare command prints,
 with what the people of its groups lend (`Node::lends`): "Sam's <name>"

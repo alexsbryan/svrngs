@@ -151,7 +151,7 @@ async fn standing(dir: &Path, relay: &Server, ada: &Node, me: u8, person: &str) 
     tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
         .await
         .expect("the node reaches the relay on 127.0.0.1");
-    let synced = node.sync_with(NS, &ada.endpoint().addr()).await;
+    let synced = node.host().sync_with(NS, &ada.endpoint().addr()).await;
     assert!(
         synced.stop.is_none(),
         "{person} syncs ada's record: {synced:?}"

@@ -159,7 +159,7 @@ async fn group(relay: &Server) -> Group {
     let alex = start(dirs[2].path(), relay, ALEX).await;
     let addrs = |n: &Node| n.endpoint().addr().ip_addrs().copied().collect::<Vec<_>>();
     for (node, name) in [(&bo, "bo"), (&alex, "alex")] {
-        let synced = node.sync_with(NS, &sam.endpoint().addr()).await;
+        let synced = node.host().sync_with(NS, &sam.endpoint().addr()).await;
         assert!(
             synced.stop.is_none(),
             "{name} syncs Sam's record: {synced:?}"

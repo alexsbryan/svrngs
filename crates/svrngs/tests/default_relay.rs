@@ -156,7 +156,7 @@ async fn a_group_s_own_relay_meets_every_member_and_n0_never() {
     let url: RelayUrl = url.parse().unwrap();
     for (from, to) in [(1, 2), (2, 1), (0, 2), (1, 0)] {
         let at = EndpointAddr::new(people[to].endpoint().id()).with_relay_url(url.clone());
-        let synced = people[from].sync_with(&seed.id(), &at).await;
+        let synced = people[from].host().sync_with(&seed.id(), &at).await;
         assert!(
             synced.stop.is_none(),
             "{from} reaches {to}: {:?}",

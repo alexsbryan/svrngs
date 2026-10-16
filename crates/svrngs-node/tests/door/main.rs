@@ -791,7 +791,7 @@ async fn a_member_s_computer_lists_what_is_lent_with_where_to_reach_it() {
     for a in &a_addrs {
         addr = addr.with_ip_addr(*a);
     }
-    let synced = pair.b.sync_with(NS, &addr).await;
+    let synced = pair.b.host().sync_with(NS, &addr).await;
     assert!(synced.stop.is_none(), "{synced:?}");
 
     let lends = pair.b.lends().await;

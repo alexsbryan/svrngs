@@ -37,7 +37,7 @@ async fn a_newcomer_s_first_request_through_a_second_lender_is_answered_within_s
             .collect(),
     );
     pair.b.rail().set_seed(NS, &seed).unwrap();
-    let synced = pair.b.sync_with(NS, &at_a).await;
+    let synced = pair.b.host().sync_with(NS, &at_a).await;
     assert!(synced.stop.is_none(), "B holds the group: {synced:?}");
     let (shelf_origin, heads) = origins::head_origin().await;
     lends_on(pair._db.path(), "shelf", shelf_origin.port());
@@ -153,7 +153,7 @@ async fn a_newcomer_is_let_in_while_a_computer_of_the_group_sleeps() {
     for sock in loopback_sockets(pair.a.endpoint()) {
         at_a = at_a.with_ip_addr(sock);
     }
-    let synced = pair.b.sync_with(NS, &at_a).await;
+    let synced = pair.b.host().sync_with(NS, &at_a).await;
     assert!(
         synced.stop.is_none(),
         "B holds the group, Cy in it: {synced:?}"
