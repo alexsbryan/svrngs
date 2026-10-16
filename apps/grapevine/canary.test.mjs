@@ -1,5 +1,6 @@
 // The canary under `node --test`, so scripts/check.sh runs it (gv-page (d)):
-// green on demo.json as the app is, and red on a copy of the app whose fold
+// green on demo.json as the app is, every kind in kinds.mjs's list carried
+// one ring, and red on a copy of the app whose fold
 // never says to correct a carry whose ask was withdrawn, the canary saying
 // the step that broke.
 
@@ -10,6 +11,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 
+import { KINDS } from './kinds.mjs';
+
 const HERE = new URL('.', import.meta.url).pathname;
 const run = (dir) => spawnSync(process.execPath, [join(dir, 'canary.mjs')], { encoding: 'utf8' });
 
@@ -18,6 +21,8 @@ test("the canary runs §10's scene on demo.json, each step timed", () => {
   const out = run(HERE);
   assert.equal(out.status, 0, out.stderr);
   assert.match(out.stdout, /6\. +\d+\.\d{3} s  Sam takes it back; within one turn the carry in Waller is gone/);
+  const others = Object.keys(KINDS).filter((k) => k !== 'tool');
+  assert.match(out.stdout, new RegExp(`7\\. +\\d+\\.\\d{3} s  every other kind's ask carried one ring, by Jo: ${others.join(', ')}\n`), "every kind in kinds.mjs's list is carried in the canary");
   assert.match(out.stdout, /\d+ reads of a group's log, .* median \d+\.\d+ ms, slowest \d+\.\d+ ms/);
   assert.equal(readFileSync(join(HERE, 'demo.json'), 'utf8'), before, 'demo.json itself is never written');
 });

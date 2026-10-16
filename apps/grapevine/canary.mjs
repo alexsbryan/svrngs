@@ -8,6 +8,9 @@
 //
 //   node apps/grapevine/canary.mjs [demo.json]
 //
+// Then every other kind in kinds.mjs's list, a developer's too, is asked by
+// Sam and carried one ring by Jo, and Kim sees it carried by Jo alone.
+//
 // A turn of the loop is each person's pass once, as relay.mjs's `loop`
 // makes it every RELAY_EVERY. Exit 0 holds; 1 says the step that broke and
 // what each person's page would have read.
@@ -45,6 +48,10 @@ function step(n, what, ok, seen) {
   steps.push(`  ${n}. ${(ms / 1000).toFixed(3).padStart(7)} s  ${what}`);
 }
 const has = (v, s) => JSON.stringify(v).includes(s);
+const carries = [];
+/** A value for each of a kind's fields, by its type: what someone might type. */
+const example = (fields) => Object.fromEntries(Object.entries(fields).map(([name, spec]) => [name,
+  spec === 'date' ? new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10) : spec === 'number' ? 2 : spec.choice?.[0] ?? `a ${name}`]));
 
 async function main() {
   t0 = performance.now();
@@ -87,17 +94,28 @@ async function main() {
   const corrected = (await store.log('waller')).ops.some((o) => o.corrects === carry && o.person === 'Jo');
   step(6, 'Sam takes it back; within one turn the carry in Waller is gone', !left.length && corrected, `Kim still sees ${JSON.stringify(left.map((a) => a.show))}; Jo's carry corrected: ${corrected}`);
 
+  // 7. Every other kind in kinds.mjs's list, a developer's too: Sam asks, Jo carries it one ring, Kim sees it carried by Jo.
+  const others = Object.values(kinds).filter((k) => k.kind !== 'tool');
+  for (const k of others) {
+    const other = await p.Sam.ask({ kind: k.kind, fields: example(k.ask.fields), group: 'page', hops: 1, expires: Math.floor(Date.now() / 1000) + 7 * 86_400 });
+    if (!(await view('Jo')).carriable.can.some((c) => c.ask === other && c.group === 'waller')) throw new Error(`step 7, Jo may not carry Sam's ${k.kind} to Waller block`);
+    carries.push(await p.Jo.carry({ ask: other, group: 'waller' }));
+    const seen = (await view('Kim')).asks.find((a) => a.id === other);
+    if (!(seen?.carriers.join() === 'Jo' && !has(seen, 'Sam'))) throw new Error(`step 7, Kim does not see Sam's ${k.kind} carried by Jo alone:\n${JSON.stringify(seen)}`);
+  }
+  step(7, `every other kind's ask carried one ring, by Jo: ${others.map((k) => k.kind).join(', ')}`, true, '');
+
   // Every record read after: no plaintext; the carry names Jo and never Sam.
   const kept = readFileSync(path, 'utf8');
   const waller = (await store.log('waller')).ops;
   const leak = SEALED.find((s) => kept.includes(s));
-  const carried = waller.find((o) => o.id === carry);
-  if (leak || carried?.person !== 'Jo' || has(waller, 'Sam')) throw new Error(`the records after: ${leak ? `hold ${JSON.stringify(leak)}` : `the carry is ${carried?.person}'s, Waller's log ${has(waller, 'Sam') ? 'names Sam' : 'is clean'}`}`);
+  const by = [carry, ...carries].map((c) => waller.find((o) => o.id === c)?.person);
+  if (leak || by.some((b) => b !== 'Jo') || has(waller, 'Sam')) throw new Error(`the records after: ${leak ? `hold ${JSON.stringify(leak)}` : `the carries are ${by.join(', ')}'s, Waller's log ${has(waller, 'Sam') ? 'names Sam' : 'is clean'}`}`);
 
   const ms = reads.map((r) => r.ms).sort((a, b) => a - b);
   console.log(`§10's scene on demo.json, one process acting for Sam, Jo and Kim, each step's time from Sam's ask:\n${steps.join('\n')}`);
   console.log(`  ${reads.length} reads of a group's log, every one the scene made, each the whole log (${Math.max(...reads.map((r) => r.ops))} entries at most): median ${ms[ms.length >> 1].toFixed(2)} ms, slowest ${ms.at(-1).toFixed(2)} ms; the loop reads each person's groups every ${RELAY_EVERY / 1000} s`);
-  console.log('  no record holds a sealed word; the carry is written by Jo and Waller block names Sam nowhere');
+  console.log('  no record holds a sealed word; every carry is written by Jo and Waller block names Sam nowhere');
 }
 
 main().catch((e) => {
