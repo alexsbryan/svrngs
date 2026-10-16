@@ -159,9 +159,9 @@ impl Folders {
     /// already elsewhere. Asked again as it is, it is answered as it is.
     pub fn both_ways(&self, dir: PathBuf, group: String) -> Result<String, FolderError> {
         let folder = folder_of(&dir);
-        let standing = self.host.rail().standing(&group);
+        let standing = self.host.rail.standing(&group);
         let standing = standing.map_err(|e| FolderError::Unread(group.clone(), e.to_string()))?;
-        if !standing.names(self.host.actor()) {
+        if !standing.names(&self.host.actor) {
             tracing::debug!(target: "folder", namespace = group, folder, "synced: refused — this computer does not stand in the group");
             return Err(FolderError::NotStanding(group));
         }
@@ -572,7 +572,7 @@ impl Folders {
         // key: a scan of every entry for each was 95.3 s of 100,000 files'
         // first step (perf-1's README §9; perf-2 b).
         let mut mine: BTreeMap<(&SyncPath, ContentHash), &Placed> = BTreeMap::new();
-        for &q in placed.iter().filter(|q| q.entry.key == self.host.actor()) {
+        for &q in placed.iter().filter(|q| q.entry.key == self.host.actor) {
             mine.entry((&q.entry.path, q.hash)).or_insert(q);
         }
         for (path, &(hash, mtime)) in taken {

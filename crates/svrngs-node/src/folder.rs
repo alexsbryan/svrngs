@@ -199,7 +199,7 @@ impl Folders {
             carried: watch::Sender::new(BTreeMap::new()),
         };
         let woken = folders.woken.clone();
-        folders.host.rail().on_write(move |ns| {
+        folders.host.rail.on_write(move |ns| {
             woken.send_modify(|m| *m.entry(ns.into()).or_default() += 1);
         });
         tracing::info!(target: "folder", untagged, "folder: the store is open");
@@ -252,14 +252,14 @@ impl Folders {
             |e: svrngs_runtime::RailError| FolderError::Unread(group.into(), e.to_string());
         // The digest before the acts, so a layout is never older than the
         // digest it is kept with: an act between the two is read again.
-        let at = self.host.rail().digest(group).map_err(unread)?;
+        let at = self.host.rail.digest(group).map_err(unread)?;
         let kept = self.layouts.borrow().get(group).cloned();
         if let Some(kept) = kept.filter(|l| l.at == at) {
             return Ok(kept);
         }
         let placed: Arc<[Placed]> = self
             .host
-            .rail()
+            .rail
             .admission(group)
             .map_err(unread)?
             .layout()
@@ -398,7 +398,7 @@ impl Folders {
     /// `now`. `None` when any cannot be read, so `keep` is read and says why.
     fn read_at(&self, now: Instant) -> Option<ReadAt> {
         let groups = self.synced_groups().ok()?;
-        let rail = self.host.rail();
+        let rail = &self.host.rail;
         let digests = groups
             .into_iter()
             .map(|ns| rail.digest(&ns).ok().map(|d| (ns, d)));
@@ -442,7 +442,7 @@ impl Folders {
         folder: &str,
         files: usize,
     ) -> Result<Recorded, FolderError> {
-        let done = match self.host.rail().commit(group, act) {
+        let done = match self.host.rail.commit(group, act) {
             Ok(Ok(done)) => done,
             Ok(Err(why)) => {
                 tracing::warn!(target: "folder", namespace = group, folder, ?why, "folder: not written — this computer does not stand in the folder's group");
@@ -497,7 +497,7 @@ impl Folders {
         holders: &[String],
     ) -> Result<Option<String>, Vec<(String, String)>> {
         let mut lacks = self.lacks(hash).await?;
-        let mut order: Vec<&String> = holders.iter().filter(|k| *k != self.host.actor()).collect();
+        let mut order: Vec<&String> = holders.iter().filter(|k| **k != self.host.actor).collect();
         let lately = self.unanswered.borrow().clone();
         order.sort_by_key(|k| lately.get(*k).is_some_and(|t| t.elapsed() < ASLEEP_FOR));
         let mut why = Vec::new();
@@ -541,7 +541,7 @@ impl Folders {
             .local_for_request(GetRequest::blob(hash))
             .await;
         let local =
-            local.map_err(|e| vec![(self.host.actor().into(), format!("the store: {e}"))])?;
+            local.map_err(|e| vec![(self.host.actor.clone(), format!("the store: {e}"))])?;
         Ok((!local.is_complete()).then(|| local.missing()))
     }
 
@@ -576,17 +576,17 @@ impl Folders {
                     .ok_or(Nothing::Said("not a computer of the group".into()))?;
                 // Which of the key's addresses iroh dials: one in use is
                 // the only one it sends to (syp-6 b).
-                let known = self.host.endpoint().remote_info(peer.key).await;
+                let known = self.host.endpoint.remote_info(peer.key).await;
                 let known: Vec<String> = known
                     .iter()
                     .flat_map(|i| i.addrs())
                     .map(|a| format!("{:?} {:?}", a.addr(), a.usage()))
                     .collect();
                 tracing::debug!(target: "folder", holder = %key, ?known, "folder: dialled by key, iroh holding these addresses for it");
-                let at = (self.host.transport().endpoint_addr_for(&peer)).ok_or(Nothing::Said(
+                let at = (self.host.transport.endpoint_addr_for(&peer)).ok_or(Nothing::Said(
                     "no relay named for it, and no address lookup".into(),
                 ))?;
-                let dial = self.host.endpoint().connect(at, Alpn::Blobs.bytes());
+                let dial = self.host.endpoint.connect(at, Alpn::Blobs.bytes());
                 let c = tokio::time::timeout(ANSWER_WITHIN, dial)
                     .await
                     .map_err(|_| Nothing::Silent)?

@@ -287,7 +287,7 @@ pub fn spawn_ring_sync_loop(
 /// id, so two at once with one journal duplicate nothing.)
 pub async fn run_one_round(host: &Host, answered: &(impl Fn() + Sync)) -> RoundOutcome {
     let mut outcome = RoundOutcome::default();
-    let rail = host.rail();
+    let rail = &host.rail;
     let namespaces = match rail.namespaces() {
         Ok(n) => n,
         Err(e) => {
@@ -324,7 +324,7 @@ pub async fn run_one_round(host: &Host, answered: &(impl Fn() + Sync)) -> RoundO
     if peers.is_empty() {
         return outcome;
     }
-    let transport = host.transport();
+    let transport = &host.transport;
 
     let mut dials = Vec::new();
     for namespace in &namespaces {

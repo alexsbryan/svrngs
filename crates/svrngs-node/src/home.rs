@@ -112,11 +112,7 @@ pub(crate) fn ask_address(port: u16, lend: &Label, app: &Label) -> String {
 
 /// The home page's routes, beside the lends' origins: a request naming it
 /// is answered here, any other at its lend's origin.
-pub(crate) fn router(
-    at: Asking,
-    seeds: crate::redeem::SeedText,
-    rail: crate::rail::RailApi,
-) -> Router {
+pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
     let page = || async { axum::response::Html(include_str!("home/index.html")) };
     let home = Router::new()
         .route("/", get(page))
@@ -138,7 +134,7 @@ pub(crate) fn router(
                 .route("/v1/rail/people", get(crate::rail::people))
                 .with_state(rail),
         )
-        .merge(crate::surface::router(at.clone(), seeds))
+        .merge(crate::surface::router(at.clone()))
         .layer(axum::middleware::from_fn_with_state(
             at.clone(),
             only_itself,
@@ -215,7 +211,7 @@ enum LendChange {
 /// `GET /lent`: what this computer lends, each with how many it lets in at
 /// once and how many use it now, as a member asking is told it.
 async fn lent(State(at): State<Asking>) -> Response {
-    match crate::door::offered(at.door()).await {
+    match crate::door::offered(&at.door).await {
         Ok(lent) => Json(serde_json::json!({ "lent": lent })).into_response(),
         Err(refused) => refused,
     }
@@ -223,7 +219,7 @@ async fn lent(State(at): State<Asking>) -> Response {
 
 /// `POST /lent`: the person's change, written to the lend's declaration.
 async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
-    let dir = &at.door().data_dir;
+    let dir = &at.door.data_dir;
     let done = match c.to {
         LendChange::Limit(limit) => lend::limit(dir, &c.lend, limit),
         LendChange::Stop => lend::withdraw(dir, &c.lend),
@@ -274,7 +270,7 @@ fn unread(why: &str, error: &dyn std::fmt::Display) -> Response {
 /// table knows by their name alone, for the person to say.
 async fn running(State(at): State<Asking>) -> Response {
     let found = tokio::task::spawn_blocking(share::listening).await;
-    let (all, found) = match (lend::all(&at.door().data_dir), found) {
+    let (all, found) = match (lend::all(&at.door.data_dir), found) {
         (Ok(all), Ok(found)) => (all, found),
         (Err(e), _) => return unread("it cannot read what you lend already", &e),
         (_, Err(e)) => return unread("the look stopped before it finished", &e),
@@ -331,7 +327,7 @@ async fn lend_one(
     let name = name.map_err(|e| refused(&format!("Give it a name of {one}"), &e))?;
     let kind = kind.as_deref().map(Kind::parse).transpose();
     let kind = kind.map_err(|e| refused(&format!("Say what it is in {one}"), &e))?;
-    let (known, dir) = (share::well_known_kind(port), &at.door().data_dir);
+    let (known, dir) = (share::well_known_kind(port), &at.door.data_dir);
     let lent = lend::all(dir).map_err(|e| unread("it cannot read what you lend already", &e))?;
     let lent: Vec<_> = lent.into_iter().flatten().collect();
     tracing::debug!(target: "home", port, ?known, ?name, ?kind, "home: asked to lend what runs here");
@@ -437,7 +433,7 @@ struct Naming {
 async fn namesakes(State(at): State<Asking>, Query(n): Query<Naming>) -> Response {
     let root = at.host.rail.root();
     match crate::group::Name::parse(&n.name) {
-        Ok(name) => Json(crate::group::namesakes(root, &name, at.host.actor())).into_response(),
+        Ok(name) => Json(crate::group::namesakes(root, &name, &at.host.actor)).into_response(),
         Err(why) => LendRefusal::Closed.say(StatusCode::BAD_REQUEST, why.to_string()),
     }
 }
@@ -451,7 +447,7 @@ const OPENERS: [&str; 2] = ["open", "xdg-open"];
 /// ([`crate::folder::dirs_of`]), so the page opens nothing else.
 async fn open(State(at): State<Asking>, Json(o): Json<crate::folder::FolderAsk>) -> Response {
     let listed =
-        crate::folder::dirs_of(&at.door().data_dir, &o.group).is_ok_and(|d| d.contains(&o.dir));
+        crate::folder::dirs_of(&at.door.data_dir, &o.group).is_ok_and(|d| d.contains(&o.dir));
     let opens = |p: &&str| matches!(Command::new(p).arg(&o.dir).status(), Ok(s) if s.success());
     let by = OPENERS.iter().find(|p| listed && opens(p));
     tracing::debug!(target: "home", group = o.group, dir = %o.dir.display(), listed, ?by, "home: a folder asked opened");
@@ -471,8 +467,8 @@ struct Of {
 
 /// `GET /choices?lend=`: the person's choices on a lend, asked of its door now.
 async fn choices(State(at): State<Asking>, Query(Of { lend }): Query<Of>) -> Response {
-    if lend.lender() == at.door().key {
-        return own_choices(at.door(), &lend);
+    if lend.lender() == at.door.key {
+        return own_choices(&at.door, &lend);
     }
     at_door(&at, &lend, None, None).await
 }
@@ -489,8 +485,8 @@ pub(crate) async fn say(
     pass: Option<HeaderValue>,
 ) -> Response {
     tracing::debug!(target: "home", %lend, %app, ?said, by_app = pass.is_some(), "home: a choice said");
-    if lend.lender() == at.door().key {
-        return own_choose(at.door(), lend, app, said).await;
+    if lend.lender() == at.door.key {
+        return own_choose(&at.door, lend, app, said).await;
     }
     let body = match pass {
         Some(_) => serde_json::json!({ "said": said }),
@@ -524,7 +520,7 @@ async fn at_door(
     let answer = match ask {
         Ok(ask) => at
             .host
-            .transport()
+            .transport
             .fetch(&contact, ask)
             .await
             .map_err(|e| e.to_string()),

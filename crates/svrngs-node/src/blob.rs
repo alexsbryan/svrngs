@@ -87,8 +87,8 @@ impl Folders {
 
     /// The people of `group`, if this computer stands in it.
     fn standing_in(&self, group: &str) -> Result<BTreeMap<String, Member>, Response> {
-        let people = crate::rail::standing_of(self.host.rail(), group)?;
-        if people.contains_key(self.host.actor()) {
+        let people = crate::rail::standing_of(&self.host.rail, group)?;
+        if people.contains_key(&self.host.actor) {
             return Ok(people);
         }
         tracing::debug!(target: "blob", group, "blob: refused — this computer does not stand in the group");
@@ -114,7 +114,7 @@ impl Folders {
         let relay = |a: &str| people.get(a)?.relay.as_ref();
         let path = format!("{}?group={group}", ASKED.replace("{hash}", &hash.to_hex()));
         let (mut actors, mut asks) = (Vec::new(), Vec::new());
-        for (actor, _, contact) in crate::node::dialled(self.host.actor(), group, people, relay) {
+        for (actor, _, contact) in crate::node::dialled(&self.host.actor, group, people, relay) {
             let (host, path) = (self.host.clone(), path.clone());
             actors.push(actor.clone());
             asks.push(tokio::spawn(async move {
@@ -154,7 +154,7 @@ type Replies = Vec<(String, Result<Holds, String>)>;
 async fn ask(host: &Host, contact: Contact, path: &str) -> Result<Holds, String> {
     let asked = axum::http::Request::get(path).body(axum::body::Body::empty());
     let asked = asked.map_err(|e| format!("the ask: {e}"))?;
-    let answer = host.transport().fetch(&contact, asked).await;
+    let answer = host.transport.fetch(&contact, asked).await;
     let answer = answer.map_err(|e| format!("the ask: {e}"))?;
     if !answer.status().is_success() {
         return Err(format!("refused the ask: {}", answer.status()));
@@ -226,7 +226,7 @@ pub(super) async fn get(
         Holds::Lapsed => return refused(hash, lapsed, json!({})),
         Holds::For { .. } if matches!(f.lacks(hash).await, Ok(None)) => {
             tracing::debug!(target: "blob", %hash, group, "blob: held here, not lapsed");
-            return f.answer(hash, f.host.actor()).await;
+            return f.answer(hash, &f.host.actor).await;
         }
         held => held != Holds::NeverHeld,
     };
@@ -257,7 +257,7 @@ pub(super) async fn get(
     f.carry(hash, &group, Some(until));
     match f.hold(hash, &holders).await {
         Ok(from) => {
-            let from = from.as_deref().unwrap_or(f.host.actor());
+            let from = from.as_deref().unwrap_or(&f.host.actor);
             tracing::info!(target: "blob", %hash, group, holder = from, left_ms = left, "blob: held from a computer of the group, carried until it lapses there");
             f.answer(hash, from).await
         }
@@ -284,7 +284,7 @@ pub(super) async fn asked(
     Query(BlobQuery { group, .. }): Query<BlobQuery>,
 ) -> Response {
     let dialer = dialer.map(|Extension(d)| d);
-    let rail = f.host.rail();
+    let rail = &f.host.rail;
     if let Err(refusal) = crate::ring_routes::standing_asker(rail, dialer, "blob", &group) {
         return err(StatusCode::FORBIDDEN, refusal);
     }

@@ -118,7 +118,12 @@ fn own_pass(at: &Asking, app: &Label, label: &Label) -> Option<HeaderValue> {
         vec![label.clone()]
     };
     let until = door::unix_now() + OWN_PASS_FOR;
-    let pass = Pass::sign(&at.key, at.host.actor(), (app.clone(), reads), until);
+    let pass = Pass::sign(
+        at.host.rail.signer(),
+        &at.host.actor,
+        (app.clone(), reads),
+        until,
+    );
     HeaderValue::from_str(&pass.encode()).ok()
 }
 
@@ -204,7 +209,7 @@ pub(crate) async fn reach(
     let tail = req.uri().path_and_query().map_or("/", |p| p.as_str());
     let target = format!("{LEND_ROUTE}{label}{tail}");
     let lender = label.lender();
-    let door: &Door = at.door();
+    let door: &Door = &at.door;
     if lender == door.key {
         tracing::debug!(target: "origin", %label, "origin: this computer's own lend, through its door's rules");
         let (mut parts, body) = req.into_parts();
@@ -273,7 +278,7 @@ async fn carried(
     *request.uri_mut() = uri_of(target)?;
     *request.method_mut() = parts.method;
     *request.headers_mut() = parts.headers;
-    let mut answer = at.host.transport().send(contact, request).await.map_err(|e| {
+    let mut answer = at.host.transport.send(contact, request).await.map_err(|e| {
         tracing::debug!(target: "origin", label, error = %e, "origin: the lender's computer did not answer");
         away()
     })?;

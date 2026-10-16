@@ -256,9 +256,9 @@ impl crate::node::Asking {
     pub(crate) fn found(&self, name: &str, person: &str) -> Result<Made, String> {
         let parse = |n: &str| Name::parse(n).map_err(|e| e.to_string());
         let (name, person, root) = (parse(name)?, parse(person)?, self.host.rail.root());
-        let beside = namesakes(root, &name, self.host.actor());
+        let beside = namesakes(root, &name, &self.host.actor);
         // The founder is the key this computer signs and dials with.
-        let seed = draw(name, person, self.key.verifying_key());
+        let seed = draw(name, person, self.host.rail.signer().verifying_key());
         let page = kept_page(root)?;
         let relay = self.host.made_relay();
         self.host.keep_group(&seed, page.as_ref(), relay.as_ref())?;

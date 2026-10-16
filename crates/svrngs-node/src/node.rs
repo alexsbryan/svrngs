@@ -197,8 +197,10 @@ pub struct Node {
 pub struct Host {
     pub(crate) rail: Arc<RingRail>,
     pub(crate) endpoint: Endpoint,
-    transport: Arc<IrohTransport>,
-    actor: String,
+    /// The transport a member's contact is resolved through.
+    pub(crate) transport: Arc<IrohTransport>,
+    /// The key this node signs and dials with, as the record spells an actor.
+    pub(crate) actor: String,
     /// Whether this computer reaches the network through a relay at all
     /// ([`RelayConfig`]): with none, it says so in the record.
     relayed: bool,
@@ -248,8 +250,7 @@ impl Node {
         })?;
         let actor = actor_of(&key);
         let secret = SecretKey::from_bytes(&key.to_bytes());
-        let key = Arc::new(key);
-        let rail = Arc::new(RingRail::new(&data_dir, key.clone()));
+        let rail = Arc::new(RingRail::new(&data_dir, Arc::new(key)));
         // Bound before the endpoint, so a refused address leaves no endpoint
         // dropped open.
         // One nudge, the round's, which the append door fires so a write
@@ -299,8 +300,8 @@ impl Node {
         let asking = Asking {
             host: host.clone(),
             door,
-            key,
             folders: folders.clone(),
+            seeds,
         };
         // The record, and beside it what an app asks of this computer (u5-1).
         let rail_api = RailApi {
@@ -311,10 +312,10 @@ impl Node {
         };
         let routes = crate::api::router(
             rail_api.clone(),
-            crate::surface::router(asking.clone(), seeds)
+            crate::surface::router(asking.clone())
                 .merge(crate::folder::router(folders.clone()))
                 .merge(crate::removal::router(asking.clone())),
-            crate::home::router(asking.clone(), seeds, rail_api),
+            crate::home::router(asking.clone(), rail_api),
         );
         let api = crate::api::serve(routes.clone(), api);
         if let Err(e) = crate::api::write_address(&data_dir, api.addr()) {
@@ -342,7 +343,7 @@ impl Node {
         .merge(crate::door::router(asking.door.clone()))
         .merge(people_router(asking))
         .merge(crate::folder::members_router(folders));
-        let redeem = crate::redeem::router(rail, seeds, AskRound::new(nudge.clone(), &rounds));
+        let redeem = crate::redeem::router(room.clone());
         // A dialer the keeper cut, on the members' protocol, is told so in
         // words on every route, and served nothing else (U7).
         let gone = axum::Router::new().fallback(|| async { crate::door::gone() });
@@ -420,7 +421,7 @@ impl Node {
             relay_url: peer.relay_urls().next().map(|r| r.to_string()),
             iroh_direct_addrs: addrs,
         };
-        let to = (self.host.transport(), &contact);
+        let to = (&*self.host.transport, &contact);
         let mut out = exchange(to, &self.host.rail, namespace).await;
         tracing::debug!(target: "node", namespace, pulled = out.pulled, pushed = out.pushed, stop = ?out.stop,
             "node: sync_with — one exchange with the peer");
@@ -491,26 +492,6 @@ impl Host {
         self.rail.standing_anywhere(actor)?;
         let groups = self.standings()?;
         Some(Contact::named(actor_key(actor)?, relay_of(&groups, actor)))
-    }
-
-    /// This node's journals.
-    pub(crate) fn rail(&self) -> &RingRail {
-        &self.rail
-    }
-
-    /// The key this node signs and dials with, as the record spells an actor.
-    pub(crate) fn actor(&self) -> &str {
-        &self.actor
-    }
-
-    /// The endpoint this node dials and is dialled on.
-    pub(crate) fn endpoint(&self) -> &Endpoint {
-        &self.endpoint
-    }
-
-    /// The transport a member's contact is resolved through.
-    pub(crate) fn transport(&self) -> &IrohTransport {
-        &self.transport
     }
 
     /// Where this computer's browser opens the lend `name` of the computer
@@ -781,23 +762,21 @@ pub struct Lending {
     pub offered: Offered,
 }
 
-/// What the people route reads: the node's groups and transport, and its
-/// own door; and the key a computer's origin signs its own passes with
-/// ([`crate::origin`], sup-1).
+/// The node's handles, one of each, and the one state of every router
+/// that asks more than one of them (AUDIT §2.8, where `Surface` and the
+/// redeem routes' `Issuer` each held a copy): its host, whose rail's
+/// signer is the key a computer's origin signs its own passes with
+/// ([`crate::origin`], sup-1); its door; its folders, where a group's is
+/// placed ([`crate::folder::Folders::place`]); and how a group's seed is
+/// read, for a link's ask and `/v1/groups`. [`RailApi`] and
+/// [`RingInbound`] stay states of their own: tests build each without a
+/// node (`tests/record_api.rs`, `ring_routes/tests.rs`).
 #[derive(Clone)]
 pub(crate) struct Asking {
     pub(crate) host: Arc<Host>,
-    door: crate::door::Door,
-    pub(crate) key: Arc<SigningKey>,
-    /// Where a group's folder is placed ([`crate::folder::Folders::place`]).
+    pub(crate) door: crate::door::Door,
     pub(crate) folders: crate::folder::Folders,
-}
-
-impl Asking {
-    /// This computer's door.
-    pub(crate) fn door(&self) -> &crate::door::Door {
-        &self.door
-    }
+    pub(crate) seeds: SeedText,
 }
 
 fn people_router(asking: Asking) -> axum::Router {
@@ -838,7 +817,7 @@ async fn people_lends(
     let removals = groups
         .iter()
         .map(|(namespace, _)| {
-            at.host.rail().register(namespace).map(|r| r.removals).inspect_err(|e| {
+            at.host.rail.register(namespace).map(|r| r.removals).inspect_err(|e| {
                 tracing::warn!(target: "node", asker, namespace, error = %e, "node: people's lends — a group's register is unreadable, so its removals are not known");
             })
         })

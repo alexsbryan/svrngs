@@ -46,7 +46,6 @@ use crate::door::LendRefusal;
 use crate::group::Namesake;
 use crate::node::{Asking, Lending, Unlisted};
 use crate::rail::{namespace_of, standing_of, RailQuery};
-use crate::redeem::SeedText;
 use crate::ring_routes::err;
 use crate::seed::Seed;
 use crate::Person;
@@ -70,21 +69,14 @@ pub const READS_PATH: &str = "/svrngs-reads";
 /// (`web/lend.js` spells it for a phone).
 pub const STOP_SUFFIX: &str = "/svrngs-stop";
 
-/// What the routes read: the node's groups and transport and its own door
-/// ([`Asking`]), and how it reads a group's seed, for its name.
-#[derive(Clone)]
-struct Surface {
-    asking: Asking,
-    seeds: SeedText,
-}
-
-/// The routes, for [`crate::api::router`] to serve behind its check.
-pub(crate) fn router(asking: Asking, seeds: SeedText) -> Router {
+/// The routes, for [`crate::api::router`] to serve behind its check, on
+/// the node's one state ([`Asking`]).
+pub(crate) fn router(asking: Asking) -> Router {
     Router::new()
         .route(GROUPS_ROUTE, get(groups))
         .route(LENDS_ROUTE, get(lends))
         .route(SIGN_ROUTE, post(sign))
-        .with_state(Surface { asking, seeds })
+        .with_state(asking)
 }
 
 /// A group as `GET /v1/groups` answers it.
@@ -117,8 +109,8 @@ struct Held {
 }
 
 /// `GET /v1/groups`.
-async fn groups(State(at): State<Surface>) -> Response {
-    let rail = at.asking.host.rail();
+async fn groups(State(at): State<Asking>) -> Response {
+    let rail = &at.host.rail;
     let namespaces = match rail.namespaces() {
         Ok(n) => n,
         Err(e) => {
@@ -130,7 +122,7 @@ async fn groups(State(at): State<Surface>) -> Response {
         }
     };
     let mut held = Vec::with_capacity(namespaces.len());
-    let me = at.asking.host.actor();
+    let me = at.host.actor.as_str();
     for id in namespaces {
         let seed = seed_of(&at, &id);
         let name = seed.as_ref().map(|s| s.name().as_str().to_string());
@@ -148,7 +140,7 @@ async fn groups(State(at): State<Surface>) -> Response {
                 (None, None, None)
             }
         };
-        let folders = crate::folder::dirs_of(&at.asking.door().data_dir, &id)
+        let folders = crate::folder::dirs_of(&at.door.data_dir, &id)
             .inspect_err(|e| tracing::warn!(target: "surface", namespace = id, error = %e, "surface: groups — where its folders are kept cannot be read"))
             .ok();
         tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?person, removed = ?removed,
@@ -179,7 +171,7 @@ struct SignQuery {
 /// apps alone, as the record is ([`crate::api::router`]): a page in a
 /// browser is refused before it, so no lent page has the key sign.
 async fn sign(
-    State(at): State<Surface>,
+    State(at): State<Asking>,
     Query(q): Query<SignQuery>,
     bytes: axum::body::Bytes,
 ) -> Response {
@@ -190,21 +182,17 @@ async fn sign(
             return err(StatusCode::BAD_REQUEST, why.to_string());
         }
     };
-    let (key, sig) = (
-        crate::actor_of(&at.asking.key),
-        app.sign(&at.asking.key, &bytes),
-    );
+    let (key, sig) = (&at.host.actor, app.sign(at.host.rail.signer(), &bytes));
     tracing::debug!(target: "sign", %app, bytes = bytes.len(), key, "sign: signed for the app with this computer's key");
     Json(serde_json::json!({ "key": key, "sig": sig })).into_response()
 }
 
 /// The seed this computer keeps for `id`, or `None`, at warn, when it
 /// keeps none, it cannot be read, or it is another group's.
-fn seed_of(at: &Surface, id: &str) -> Option<Seed> {
+fn seed_of(at: &Asking, id: &str) -> Option<Seed> {
     let text = at
-        .asking
         .host
-        .rail()
+        .rail
         .group_dir(id)
         .map_err(|e| e.to_string())
         .and_then(|dir| (at.seeds)(&dir));
@@ -229,16 +217,10 @@ fn seed_of(at: &Surface, id: &str) -> Option<Seed> {
 /// `GET /v1/lends?namespace=<id>`. A group not held, or held with no seed,
 /// is refused as the rail's doors refuse it ([`standing_of`]); one this
 /// computer does not stand in, since no lender's computer would answer it.
-async fn lends(
-    State(at): State<Surface>,
-    Query(q): Query<RailQuery>,
-) -> Result<Response, Response> {
+async fn lends(State(at): State<Asking>, Query(q): Query<RailQuery>) -> Result<Response, Response> {
     let namespace = namespace_of(&q)?;
-    let standing = standing_of(at.asking.host.rail(), &namespace)?;
-    let Some(own) = standing
-        .get(at.asking.host.actor())
-        .map(|m| m.person.clone())
-    else {
+    let standing = standing_of(&at.host.rail, &namespace)?;
+    let Some(own) = standing.get(&at.host.actor).map(|m| m.person.clone()) else {
         tracing::debug!(target: "surface", namespace, "surface: lends refused — this computer does not stand in the group");
         return Err((
             StatusCode::CONFLICT,
@@ -251,8 +233,8 @@ async fn lends(
             .into_response());
     };
     let groups = [(namespace.clone(), standing)];
-    let (lent, unlisted) = at.asking.lent(&groups, &own, None).await?;
-    let host = &at.asking.host;
+    let (lent, unlisted) = at.lent(&groups, &own, None).await?;
+    let host = &at.host;
     let lent: Vec<serde_json::Value> = lent
         .into_iter()
         .filter_map(|l| {
@@ -292,7 +274,7 @@ async fn read_by(
     let reader = hex::encode(app.lender());
     let host = &at.host;
     let (mut groups, own) = host.shared_with(&reader)?;
-    groups.retain(|(_, s)| s.contains_key(host.actor()));
+    groups.retain(|(_, s)| s.contains_key(&host.actor));
     let Some(own) = own else {
         tracing::debug!(target: "surface", %app, "surface: reads refused — its lender and this computer share no group");
         return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));

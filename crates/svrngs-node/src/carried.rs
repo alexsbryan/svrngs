@@ -132,7 +132,7 @@ type Ticks = Json<(String, Vec<String>)>;
 /// phone of the group's dialling it (`by`).
 pub(crate) async fn bring(at: State<Asking>, by: Option<Extension<Dialer>>, a: Ticks) -> Response {
     let (State(at), Json((group, apps))) = (at, a);
-    let asker = by.map_or(at.host.actor().to_string(), |Extension(d)| d.actor());
+    let asker = by.map_or(at.host.actor.to_string(), |Extension(d)| d.actor());
     let brought = brought(&at, &group, &asker, &apps);
     tracing::debug!(target: "folder", group, asker, ?apps, status = ?brought.as_ref().map(|b| b.status()), "shelf: the apps asked brought to the group, or why none");
     brought.unwrap_or_else(said)
@@ -143,7 +143,7 @@ pub(crate) async fn bring(at: State<Asking>, by: Option<Extension<Dialer>>, a: T
 /// over one there already, which the folder then carries to the group as
 /// it carries any file. Each said, and whether it was there already.
 fn brought(at: &Asking, group: &str, asker: &str, apps: &[String]) -> Served {
-    let stands = at.host.rail().standing(group).is_ok_and(|s| s.names(asker));
+    let stands = at.host.rail.standing(group).is_ok_and(|s| s.names(asker));
     stands.then_some(()).ok_or(NOT_IN)?;
     let dirs = dirs_of(&at.folders.data_dir, group).map_err(|e| traced(group, NO_FOLDER, &e))?;
     let dir = dirs.first().ok_or(NO_FOLDER)?;
@@ -174,7 +174,7 @@ impl Folders {
     /// ([`Lend::carried`]). A group whose record cannot be read carries
     /// nothing here, said at warn.
     pub(crate) fn carried(&self) -> Vec<Lend> {
-        let (me, groups) = (self.host.actor(), self.host.standings().unwrap_or_default());
+        let (me, groups) = (&self.host.actor, self.host.standings().unwrap_or_default());
         let mut found = BTreeMap::new();
         let syncing = self.syncing.borrow().clone().unwrap_or_default();
         let holds = |group: &String| syncing.keys().any(|(g, _)| g == group);
@@ -196,7 +196,7 @@ impl Folders {
     /// else the route's answer or a file's; each under [`FLOOR`].
     pub(crate) async fn open(&self, lend: &Lend, at: (&str, &str, &str), req: Request) -> Response {
         let (group, key, path) = at;
-        let answered = match self.host.rail().standing(group) {
+        let answered = match self.host.rail.standing(group) {
             Ok(Standing::Members(people)) if people.contains_key(key) => match path {
                 ACTS => self.acts((&lend.kind, group), (&people, key), req).await,
                 _ => self.file(group, &format!("apps/{}{path}", lend.kind)).await,
@@ -233,7 +233,7 @@ impl Folders {
     /// docs).
     async fn acts(&self, app: (&Kind, &str), asker: (&People, &str), req: Request) -> Served {
         let ((kind, group), (people, key)) = (app, asker);
-        let (prefix, rail, person) = (format!("{kind}/"), self.host.rail(), &people[key].person);
+        let (prefix, rail, person) = (format!("{kind}/"), &self.host.rail, &people[key].person);
         let read = (rail.admission(group).ok()).and_then(|a| serde_json::to_value(a.wire()).ok());
         let ops = read.as_ref().and_then(Value::as_array).ok_or(UNREAD)?;
         let own =

@@ -45,7 +45,6 @@
 //! signs them with the command's body; they are re-exported here.
 
 use std::path::Path;
-use std::sync::Arc;
 
 use axum::extract::State;
 use axum::http::StatusCode;
@@ -56,9 +55,9 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use crate::iroh::{Alpn, Dialer, Endpoint, EndpointAddr};
+use crate::node::Asking;
 use crate::register::Standing;
 use crate::ring_routes::err;
-use crate::ring_sync::AskRound;
 use crate::{actor_of, Name, NotAName, OpId, Person, RailError, RingRail};
 use svrngs_core::{RedeemRefusal, Refused as CommitRefused};
 
@@ -114,38 +113,29 @@ enum NotAdmitted {
     Unjudged(RailError),
 }
 
-/// What the routes read: this node's journals, how it reads a seed, and
-/// the round, woken once an `Admit` is written.
-#[derive(Clone)]
-struct Issuer {
-    rail: Arc<RingRail>,
-    seeds: SeedText,
-    ring: AskRound,
-}
-
 /// The ask and redemption routes, served on [`Alpn::Redeem`] to any dialer.
-pub fn router(rail: Arc<RingRail>, seeds: SeedText, ring: AskRound) -> axum::Router {
+pub(crate) fn router(at: Asking) -> axum::Router {
     axum::Router::new()
         .route(ASK_ROUTE, post(ask_route))
         .route(ROUTE, post(redeem_route))
-        .with_state(Issuer { rail, seeds, ring })
+        .with_state(at)
 }
 
 async fn ask_route(
-    State(issuer): State<Issuer>,
+    State(at): State<Asking>,
     dialer: Option<Extension<Dialer>>,
     Json(req): Json<AskRequest>,
 ) -> Response {
-    let asked = serve_ask(&issuer, dialer.map(|Extension(d)| d.actor()), &req);
+    let asked = serve_ask(&at, dialer.map(|Extension(d)| d.actor()), &req);
     answer("ask", &req.key, asked)
 }
 
 async fn redeem_route(
-    State(issuer): State<Issuer>,
+    State(at): State<Asking>,
     dialer: Option<Extension<Dialer>>,
     Json(req): Json<RedeemRequest>,
 ) -> Response {
-    let redeemed = serve_redeem(&issuer.rail, dialer.map(|Extension(d)| d.actor()), &req);
+    let redeemed = serve_redeem(&at.host.rail, dialer.map(|Extension(d)| d.actor()), &req);
     // The group's other computers hear of the newcomer now, not at the
     // round's next interval: until they hold the `Admit` each refuses the
     // newcomer's computer, and waiting on the interval was 56 of a
@@ -153,7 +143,7 @@ async fn redeem_route(
     if let Ok(Redeemed::Admitted(admit)) = &redeemed {
         tracing::debug!(target: "redeem", key = %req.key, admit = %admit,
             "redeem: the round woken, so the group's computers hear of the newcomer now");
-        issuer.ring.wake();
+        at.door.ring.wake();
     }
     answer("redeem", &req.key, redeemed)
 }
@@ -194,22 +184,20 @@ fn answer<T: Serialize>(route: &str, key: &str, decided: Result<T, NotAdmitted>)
 /// The ask, as an adapter: parse ([`parse_ask`]), ask the runtime for this
 /// node's newest `Invite` naming the link's key, and answer that group's seed
 /// as the command keeps it.
-fn serve_ask(
-    issuer: &Issuer,
-    dialer: Option<String>,
-    req: &AskRequest,
-) -> Result<Asked, NotAdmitted> {
+fn serve_ask(at: &Asking, dialer: Option<String>, req: &AskRequest) -> Result<Asked, NotAdmitted> {
     parse_ask(dialer.as_deref(), req)?;
-    let (group, invite, person) = issuer
+    let (group, invite, person) = at
+        .host
         .rail
         .invite_for(&req.link)
         .map_err(NotAdmitted::Unjudged)?
         .ok_or(NotAdmitted::NoInvite)?;
-    let dir = issuer
+    let dir = at
+        .host
         .rail
         .group_dir(&group)
         .map_err(NotAdmitted::Unjudged)?;
-    let seed = (issuer.seeds)(&dir)
+    let seed = (at.seeds)(&dir)
         .map_err(|e| NotAdmitted::Unjudged(RailError::Io(e)))?
         .ok_or(NotAdmitted::NotHeld)?;
     tracing::debug!(target: "redeem", group, key = %req.key, invite = %invite, ?person,

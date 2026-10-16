@@ -119,7 +119,7 @@ async fn remove(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outc
         tracing::debug!(target: "removal", ?asked, "removal: refused — the name asked is no name, so nobody of it is in the group");
         return Outcome::NotInGroup;
     };
-    let rail = at.host.rail();
+    let rail = &at.host.rail;
     let group = asked.group.as_str();
     let Ok(before) = rail.register(group) else {
         tracing::warn!(target: "removal", group, "removal: the group's register cannot be read");
@@ -158,7 +158,7 @@ async fn remove(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outc
     // Now, not at the next round: every other lender refuses the removed
     // person only once its computer holds the cut, and the keeper sees an
     // ask only once it holds it (demo/runs/u7/2026-10-11, take 1: 43.3 s).
-    at.door().ring.wake();
+    at.door.ring.wake();
     if cut.is_empty() {
         return Outcome::Asked {
             decides: decides(&after),
@@ -189,7 +189,7 @@ async fn tell(
     computers: Vec<(String, Option<svrngs_core::relay::Url>)>,
     lines: Vec<crate::Op<crate::SignedOp>>,
 ) {
-    let Ok(digest) = at.host.rail().digest(&group) else {
+    let Ok(digest) = at.host.rail.digest(&group) else {
         tracing::warn!(target: "removal", group, "removal: no digest, so the removed computers are not told");
         return;
     };
@@ -204,7 +204,7 @@ async fn tell(
             digest: digest.clone(),
             ops: lines.clone(),
         };
-        let told = crate::ring_sync::post((at.host.transport(), &contact), &request).await;
+        let told = crate::ring_sync::post((&at.host.transport, &contact), &request).await;
         tracing::debug!(target: "removal", group, actor, told = told.is_ok(), error = ?told.err(),
             "removal: the removed computer told its cut, or why not");
     }
@@ -215,12 +215,12 @@ async fn hand_over(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> O
         tracing::debug!(target: "removal", ?asked, "removal: refused — the name asked is no name, so nobody of it is in the group");
         return Outcome::NotInGroup;
     };
-    let rail = at.host.rail();
+    let rail = &at.host.rail;
     let group = asked.group.as_str();
     let joined = asked.joined;
     let outcome = match rail.commit(group, &HandOnTo { person, joined }) {
         Ok(Ok(_)) => {
-            at.door().ring.wake();
+            at.door.ring.wake();
             Outcome::Handed
         }
         Ok(Err(Refused::NoStanding)) => Outcome::NotIn,
