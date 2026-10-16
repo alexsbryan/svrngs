@@ -120,3 +120,19 @@ it is, and widening it would not have turned one red green, since the
 connection was dead. The driver speaks as a second person of the group,
 under a key of its own, so the relay holds one client per key. Its stall
 timer is cleared once the computer has the first byte (4).
+
+## (b), at burn24: the checks as cy
+
+`run.sh <repo> b-burn24 24 1 10` (in two calls, 1-6 and 7-10, each starting
+burn24 a minute before), at f0ea8275, where the checks dial as cy
+(`signing(2)`, key `8139770ea8…`) beside the page's bo: **10 of 10 runs
+green, both engines, in a row** (`b-summary.txt`), at load 37.3–55.6. The
+relay set no key aside in any run, though the checks ran 25.1–52.7 s, far
+past the 16–24 s at which the page's endpoint took bo's back in (a). The
+slowest step was the range at 31,064 ms (webkit, run 4), then the upload at
+30,706 ms, each within the driver's 60 s per step.
+
+The stall timer's fix (4), on a plant: the page's upload body failing 31 s
+after the computer had its first byte. At f0ea8275 the failure was said
+in the stall's words. With the timer cleared, it is said in hyper's
+(`b-stall.out`).
