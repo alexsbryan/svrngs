@@ -1361,12 +1361,15 @@ async fn the_service_is_asked_on_its_own_address_and_its_redirect_comes_back_a_p
 /// svrngs's refusal `removed` and its words; neither reaches the service.
 /// Planted, watched failing: the pass's removed check out (refused `pass`,
 /// after the ring was asked) and a removed dialer closed like a stranger
-/// (no reply).
+/// (no reply). Ada's acceptor traces that it tells bo his cut, not only
+/// that he stands in no group (#183): red at 1eab7c0e, node.rs's `gone`
+/// arm untraced.
 #[tokio::test]
 async fn a_removed_person_is_refused_as_removed_by_pass_and_by_dial() {
     use svrngs_core::alpn::Alpn;
     use svrngs_core::pass::{Label, Pass};
 
+    let (said, _heard) = common::heard("node=debug");
     let (pair, heads) = lending_heads().await;
     let shelf = Label::of(pair.a.endpoint().id().as_bytes(), "shelf");
     let bo = svrngs_node::Removal {
@@ -1415,5 +1418,8 @@ async fn a_removed_person_is_refused_as_removed_by_pass_and_by_dial() {
         heads.lock().unwrap().is_empty(),
         "the service was never asked"
     );
+    let said = String::from_utf8(said.0.lock().unwrap().clone()).unwrap();
+    let told = "node: the dialer was cut here, so it is told its cut";
+    assert!(said.contains(told), "{told}: {said}");
     pair.close().await;
 }

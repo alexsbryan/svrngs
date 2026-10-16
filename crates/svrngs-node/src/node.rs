@@ -361,21 +361,22 @@ impl Node {
         // words on every route (U7), and served nothing else but the lines
         // that cut it, where it asks to sync (#179; ring_routes.rs `told_cut`).
         let gone = ring_routes::router(inbound).fallback(|| async { crate::door::gone() });
-        let acceptor =
-            IrohAcceptor::spawn(endpoint.clone(), move |alpn: &[u8], dialer: &PublicKey| {
-                match admit_dialer(&admitting, alpn, dialer) {
-                    Some(Alpn::Member) => Admit::Serve(members.clone()),
-                    Some(Alpn::Redeem) => Admit::Serve(redeem.clone()),
-                    Some(Alpn::Lend) => Admit::Serve(holders.clone()),
-                    Some(Alpn::Blobs) => Admit::Blobs(blobs.clone()),
-                    None if Alpn::of(alpn) == Some(Alpn::Member)
-                        && admitting.removed_anywhere(&key_actor(dialer)).is_some() =>
-                    {
-                        Admit::Serve(gone.clone())
-                    }
-                    None => Admit::Refuse,
+        let acceptor = IrohAcceptor::spawn(
+            endpoint.clone(),
+            move |alpn: &[u8], dialer: &PublicKey| match admit_dialer(&admitting, alpn, dialer) {
+                Some(Alpn::Member) => Admit::Serve(members.clone()),
+                Some(Alpn::Redeem) => Admit::Serve(redeem.clone()),
+                Some(Alpn::Lend) => Admit::Serve(holders.clone()),
+                Some(Alpn::Blobs) => Admit::Blobs(blobs.clone()),
+                None if Alpn::of(alpn) == Some(Alpn::Member)
+                    && admitting.removed_anywhere(&key_actor(dialer)).is_some() =>
+                {
+                    tracing::debug!(target: "node", "node: the dialer was cut here, so it is told its cut");
+                    Admit::Serve(gone.clone())
                 }
-            });
+                None => Admit::Refuse,
+            },
+        );
         let round = spawn_ring_sync_loop(host.clone(), every, nudge, rounds);
         Ok(Self {
             host,
