@@ -41,8 +41,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # each of a new group's relay and of a link, lowered the repository's to one past
 # where its (c) landed; svrngs-core's it left at one past, unchanged. arch-command
 # (a), one state for the node's routers, lowered the repository's to one past
-# where it landed.
-BUDGET = {"crates/svrngs-core": 2953, ".": 16091}
+# where it landed; then its join on the home page took what was left of the
+# operator's "Page join; pay with cuts first" (2026-10-15, at most 16,190), to
+# one past where the row closed after its economizing pass.
+BUDGET = {"crates/svrngs-core": 2953, ".": 16149}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
