@@ -1342,8 +1342,8 @@ sees the word.
 `cli::MeetAt`: n0's relays with n0's address lookup, or svrngs's relay,
 `https://relay.svrnme.sh/` (`cli::DEFAULT_RELAY`), with no lookup and n0
 none of the path. The build ships one, `cli::SHIPPED`: n0's, chosen,
-until the operator flips it for production (§9; §10, 2026-10-13).
-`cli::reach`, which `main.rs` calls with it, builds the computer's
+until the operator flips it for production, after V1 (§9; §10,
+2026-10-13 and 2026-10-15). `cli::reach`, which `main.rs` calls with it, builds the computer's
 `RelayConfig`: at svrngs's, `n0_services` off, so no lookup is built and a
 key is dialled only at the relay its group's record names (§6); at n0's,
 `n0_services` on, and n0's relays named beside the relays the computer's
@@ -1527,10 +1527,10 @@ svrn-docs `rings/current/ONE_PERSON_MANY_DEVICES.md` §6, "the core: about
 first key and `person_of`, removal and hand-on resolving a name to one
 person — 3,051 with them, and no function of the core without a caller
 outside the tests to make room from. And both on 2026-10-12, for svrngs's
-own relay before v1, n0 out of the path (§8; `ralph/next/relay/`): the
-repository's from 15,350, at 15,343, and `svrngs-core`'s from 3,080, at
+own relay, n0 out of the path (§8; §10, 2026-10-12; `ralph/next/relay/`):
+the repository's from 15,350, at 15,343, and `svrngs-core`'s from 3,080, at
 3,072 — the operator, "I do think we need to host our own relay (can't
-rely on n0) before our v1 ship", the budget raised for that queue to
+rely on n0)", the budget raised for that queue to
 15,800 and `svrngs-core` 3,130: each computer's relay in its group's
 record, folded in the core, and every dial of a member through it;
 `svrngs relay`, a relay anyone runs; svrngs's relay the default. And the
@@ -2546,8 +2546,10 @@ run with nothing typed, nobody asked to sign in, three of Bo's ten
 converted seeks missing 5 s on a host loaded past its cores,
 `demo/runs/a/2026-10-11/`); then the library, the folder and a join measured
 between computers in two homes, through a relay; then our own relay, n0
-out of the path — its relays and its address lookup — before v1 ships
-(operator, 2026-10-12; the table below, §11 risk 5); then Demo C. The phone
+out of the path — its relays and its address lookup — built, and parked
+at the gate until the operator's switch, which comes after V1 (operator,
+2026-10-12, 2026-10-13 and 2026-10-15; the table below, §11 risk 5); then
+Demo C. The phone
 replica spike waits in §9 (operator, 2026-10-10). After that the core grows
 one class at a time, each chosen by the north star's tests.
 
@@ -2577,7 +2579,7 @@ homes, a phone's lend through a relay for its group alone, the phone's
 typed name and publishing that build, the last two the operator's. Its
 computers and phones meet their groups at n0's relays, the build's chosen
 default, until the operator flips the switch to `relay.svrnme.sh`, when
-they start paying for it (§9; §10, 2026-10-13).
+they start paying for it, after V1 (§9; §10, 2026-10-13 and 2026-10-15).
 
 | Unit | What lands | Bar, watched failing first |
 |---|---|---|
@@ -2585,7 +2587,7 @@ they start paying for it (§9; §10, 2026-10-13).
 | onboarding | landed, v1-onboarding: on a computer, svrngs got from the group's link by one line, `install.sh` and four tarballs served beside the page, the link handed to it, the home page opened and the group's folder at `~/svrngs/<group>`; the link previewing as an invitation in any chat; the middleware's P1 follow-ups, above | a newcomer's computer from the link to the group's three things within five minutes, unassisted, one line pasted in a terminal and nothing else typed. Measured, not yet judged by people: once on one host, the paste to a member's photo on disk 6,489 ms, loopback, nobody reading; Linux could-not-judge (`demo/runs/onboarding/2026-10-11/`) |
 | the dry runs | Demo C's steps on one host, every person a program. The first, against the published page, found a name merging a stranger into a person and Navidrome's admin given by it, Navidrome lent only by `--kind`, a limit of 3 nobody chose, logins as names, the phone's typed name, running computers said not to answer, no folder for the founder, and a newcomer's 51–56 s wait for the lends; bash-first-minute, bash-limit, bash-person and bash-devices closed all but the typed name | the machine's floor under each bar, never the bar: again on what landed, each newcomer from the link to film, album and photo in 12,736–13,762 ms, the lends listed 346–403 ms after the line, only the asleep computer said not to answer, each person their own Navidrome account by `x-svrngs-user`, a second `ana` refused at the line and told how to add a device; a limit's count could-not-judge on one host, Apart never-ran (`demo/runs/c/dry-2026-10-12-rerun/`) |
 | two homes | the library, the folder and a join measured between computers on two networks, through a relay, each path as iroh selected it | measured, not judged: the numbers Demo C's bars are read against |
-| our own relay | the relay queue (`ralph/next/relay/`), before v1 ships: what breaks with n0 off, run on one host first (landed, relay-n0-off: with n0 off no computer dials another — svrngs's transport refuses a key with no relay, address or lookup before iroh is asked, `crates/svrngs-node/src/iroh.rs:229-234` — so only joining by link holds, and a phone joins and sees nothing lent, `demo/runs/n0-off/2026-10-12/`); each computer's relay kept in its group's record, folded in svrngs-core, and every member dialled by its key and the relay its group names — so no computer asks n0's address lookup, and none dials a key blind (landed, relay-in-record: with n0 off every step n0-off failed passes on one host — a photo on both other disks in 268 ms, every home page and the phone listing the film, the phone playing it, a photo reaching Alex in 580 ms with Sam stopped, `demo/runs/relay-in-record/2026-10-12/`); `svrngs relay`, the relay in the svrngs binary, which anyone runs: a name it is reached at, its certificate by Let's Encrypt, by default admitting only keys that stand in a group its computer holds, `--open` for one like svrngs's own, kept running as `install.sh` keeps svrngs (landed, relay-verb: a key in no group refused on 127.0.0.1, `--open` holding each client to 8,800,000 bytes a second from a film at Demo A's bitrate, `demo/runs/relay-rate/2026-10-12/`; its certificate the operator's run, §3); svrngs's relay at `relay.svrnme.sh` the command's default with `n0_services` off, `svrngs new --relay <url>` for a group that runs its own, kept in its record so every member and phone reaches it; the page dialling the relays its link and its group name; `scripts/deploy-relay.sh` written for the operator, the relay answering before any build whose default it is is published (landed, relay-default: three computers made, joined and syncing through a group's own relay on 127.0.0.1, none with an address lookup nor tracing an n0 host, `crates/svrngs/tests/default_relay.rs`; the page in Chromium and WebKit with every address off this host refused it, a link naming no relay refused in a person's words; deploy-relay.sh written, never run, and deploy-page.sh refusing while the relay does not answer, §7); Demo C's dry run again through `svrngs relay`'s own `relay::run` on 127.0.0.1, open and then admitting only the group (landed, relay-run: no process the run started opened an address of n0's or `relay.svrnme.sh`'s in 561 samples of `lsof -i` per process, each svrngs off the host only to the router's port mapper, no trace naming n0; the group's relay admitting its five standing computers and refusing Bo's, removed, and Fay's and Gus's, newcomers; the newcomers 5.2–6.8 s slower than the rerun's under a like load, the phone's film 3,200 ms after its play against 12,255 through n0's; and through the group's relay Cy's phone in and its film never playing, the page opening a lend from a fresh key holding a pass (`web/app.js:22-25`) that `relay::Admits` refuses, the join page shown in the film's place; Fay and Gus told the sender did not answer, not that the relay refused them, `demo/runs/c/no-n0-2026-10-13/`); then parked at the gate (relay-park; §10, 2026-10-13): n0's relays and lookup the command's default again, chosen, svrngs's relay one switch away, a closed set the build names in one constant; a group that keeps its own relay still met there, with n0's beside it; a link carrying its issuer's relay in either posture, so the page asks n0's lookup for nothing; `deploy-page.sh` publishing a build that meets its groups at n0's, and one at svrngs's only once its relay answers (landed, relay-park: `cli::MeetAt` and `cli::SHIPPED`, `crates/svrngs/tests/shipped.rs`; a computer holding only a group with its own relay homed there, while with n0's named beside it iroh chose n0's `usw1-1` over a plain-HTTP relay on 127.0.0.1, §3; a joiner at n0's keeping none of n0's relays its link carries; the shipped command's link carrying `usw1-1` and the page joining through it in Chromium in 5,256 ms and WebKit in 5,608 ms, `demo/runs/park/2026-10-13/`; the guard shown each way, §7) | no process of a group's, computer or phone's page, opens an address of n0's, sampled per process (held, relay-run); a key that stands in no group of a relay's computer refused there, traced (held, relay-run); a phone playing a lend through a relay for its group alone (failed, relay-run: open for a row); a newcomer refused at a group's relay told so; the command as shipped meeting a group that keeps no relay at n0's relays and lookup, and one that keeps its own there with n0's beside it, and a link from a computer with lookup carrying its relay (held, relay-park); a real phone on cellular through `relay.svrnme.sh`, the operator's run once they flip the switch (`demo/runs/c/no-n0-2026-10-13/README.md`, "The public half") |
+| our own relay | the relay queue (`ralph/next/relay/`), built and parked at the gate, switched on after V1 (§10, 2026-10-15): what breaks with n0 off, run on one host first (landed, relay-n0-off: with n0 off no computer dials another — svrngs's transport refuses a key with no relay, address or lookup before iroh is asked, `crates/svrngs-node/src/iroh.rs:229-234` — so only joining by link holds, and a phone joins and sees nothing lent, `demo/runs/n0-off/2026-10-12/`); each computer's relay kept in its group's record, folded in svrngs-core, and every member dialled by its key and the relay its group names — so no computer asks n0's address lookup, and none dials a key blind (landed, relay-in-record: with n0 off every step n0-off failed passes on one host — a photo on both other disks in 268 ms, every home page and the phone listing the film, the phone playing it, a photo reaching Alex in 580 ms with Sam stopped, `demo/runs/relay-in-record/2026-10-12/`); `svrngs relay`, the relay in the svrngs binary, which anyone runs: a name it is reached at, its certificate by Let's Encrypt, by default admitting only keys that stand in a group its computer holds, `--open` for one like svrngs's own, kept running as `install.sh` keeps svrngs (landed, relay-verb: a key in no group refused on 127.0.0.1, `--open` holding each client to 8,800,000 bytes a second from a film at Demo A's bitrate, `demo/runs/relay-rate/2026-10-12/`; its certificate the operator's run, §3); svrngs's relay at `relay.svrnme.sh` the command's default with `n0_services` off, `svrngs new --relay <url>` for a group that runs its own, kept in its record so every member and phone reaches it; the page dialling the relays its link and its group name; `scripts/deploy-relay.sh` written for the operator, the relay answering before any build whose default it is is published (landed, relay-default: three computers made, joined and syncing through a group's own relay on 127.0.0.1, none with an address lookup nor tracing an n0 host, `crates/svrngs/tests/default_relay.rs`; the page in Chromium and WebKit with every address off this host refused it, a link naming no relay refused in a person's words; deploy-relay.sh written, never run, and deploy-page.sh refusing while the relay does not answer, §7); Demo C's dry run again through `svrngs relay`'s own `relay::run` on 127.0.0.1, open and then admitting only the group (landed, relay-run: no process the run started opened an address of n0's or `relay.svrnme.sh`'s in 561 samples of `lsof -i` per process, each svrngs off the host only to the router's port mapper, no trace naming n0; the group's relay admitting its five standing computers and refusing Bo's, removed, and Fay's and Gus's, newcomers; the newcomers 5.2–6.8 s slower than the rerun's under a like load, the phone's film 3,200 ms after its play against 12,255 through n0's; and through the group's relay Cy's phone in and its film never playing, the page opening a lend from a fresh key holding a pass (`web/app.js:22-25`) that `relay::Admits` refuses, the join page shown in the film's place; Fay and Gus told the sender did not answer, not that the relay refused them, `demo/runs/c/no-n0-2026-10-13/`); then parked at the gate (relay-park; §10, 2026-10-13): n0's relays and lookup the command's default again, chosen, svrngs's relay one switch away, a closed set the build names in one constant; a group that keeps its own relay still met there, with n0's beside it; a link carrying its issuer's relay in either posture, so the page asks n0's lookup for nothing; `deploy-page.sh` publishing a build that meets its groups at n0's, and one at svrngs's only once its relay answers (landed, relay-park: `cli::MeetAt` and `cli::SHIPPED`, `crates/svrngs/tests/shipped.rs`; a computer holding only a group with its own relay homed there, while with n0's named beside it iroh chose n0's `usw1-1` over a plain-HTTP relay on 127.0.0.1, §3; a joiner at n0's keeping none of n0's relays its link carries; the shipped command's link carrying `usw1-1` and the page joining through it in Chromium in 5,256 ms and WebKit in 5,608 ms, `demo/runs/park/2026-10-13/`; the guard shown each way, §7) | no process of a group's, computer or phone's page, opens an address of n0's, sampled per process (held, relay-run); a key that stands in no group of a relay's computer refused there, traced (held, relay-run); a phone playing a lend through a relay for its group alone (failed, relay-run: open for a row); a newcomer refused at a group's relay told so; the command as shipped meeting a group that keeps no relay at n0's relays and lookup, and one that keeps its own there with n0's beside it, and a link from a computer with lookup carrying its relay (held, relay-park); a real phone on cellular through `relay.svrnme.sh`, the operator's run once they flip the switch (`demo/runs/c/no-n0-2026-10-13/README.md`, "The public half") |
 
 **Start — a friend lends their model, and the group uses it** (an early
 demo, for anyone getting started; operator, 2026-10-13, "an early demo
@@ -2675,6 +2677,28 @@ phone tapping the link while the computer it joined through sleeps, told
 only after 30 s, the page's dial to that computer left as iroh's (that
 take's `NEEDS_HUMAN.md`).
 
+**V1 — the cut line** (after events; operator, 2026-10-15, of the
+grapevine demo app: "And then I think that's our V1 cut line"; asked, "arch,
+groups, grapevine; V1 on n0" and "arch → groups → grapevine"; svrn-docs
+`rings/current/GRAPEVINE_DEMO.md` §12; §10, 2026-10-15). After events the
+v1ui queue made the home page and the phone's page what V1 shows (landed,
+`ralph/next/v1ui/`). Then, in this order, and nothing else until V1:
+- the arch queue, the architectural audit's cuts (`ralph/next/arch/`,
+  its `AUDIT.md`; landed, and audited by REVIEW-audit-arch-auto-1);
+- the groups queue (`ralph/next/groups/`): its economizing pass first, then
+  the node's kept connections, leaving a group with nobody's yes, and a key
+  per group on a computer, then their run;
+- the grapevine demo app (`ralph/next/grapevine/`, in `apps/grapevine/`):
+  an ask crossing groups through people, taps only, nothing changed in
+  svrngs, its recorded run on the identity model groups-keys leaves.
+
+That is V1, and it meets its groups at n0's relays and lookup, as
+`cli::SHIPPED` names now. After V1 the operator flips `SHIPPED` to
+svrngs's relay for production (§7, §9), and #134 and #135
+(`ralph/REVIEW_FINDINGS.md`), whose moment is that switch, land with it;
+the grapevine's standing carries are a row after V1 too (GRAPEVINE_DEMO
+§12.1).
+
 ## 9. Later, each with the trigger that brings it back
 
 | Waits | Trigger |
@@ -2683,7 +2707,7 @@ take's `NEEDS_HUMAN.md`).
 | a native phone app, and groups of phones only; first, phones as replicas of the group (operator, 2026-10-07): a member's phone holds the group's record and the files it shares, and syncs with whoever it reaches through a relay, so the group stays reachable while every computer sleeps (§11, risk 1) — a replica, not a relay in iroh's sense, since a phone on cellular sits behind its carrier's NAT. The phone's OS decides it: a page cannot listen and a browser's iroh is relay-only (§3, "The room", call 2), iOS suspends an app soon after it leaves the screen, and a network extension (the VPN slot) runs in the background under a memory cap. The spike, on iOS first and no larger than proves it: an iPhone app whose network extension holds an iroh endpoint with a member's key and answers a computer's dial by key every few minutes for 24 hours, the phone locked in a pocket; recorded, answered of dialled, memory against the cap, battery and data, against bars the operator sets before it runs. The record on the phone follows only if the endpoint stays reachable; Android after iOS | after Demo C, or the operator moves it in (operator, 2026-10-10: "I don't want to distract us from the core right now, but wanna keep it on the back burner"; its design, deferred, svrn-docs `rings/current/PHONE_REPLICA.md`); or the browser cannot keep what a group needs — its key, or a copy — measured |
 | a chat's own door: a package that posts a group's link for a person, names a group for its channel, or follows a channel's members (E0's, at tag `e0-bot`, §3) | a group asks for one that a pasted link cannot answer, counted |
 | Windows | a group asks |
-| the switch to svrngs's relay, parked at the gate (relay-park; §10, 2026-10-13): the build's one constant flipped from n0's to svrngs's at `relay.svrnme.sh`, then `scripts/deploy-relay.sh`, then `scripts/deploy-page.sh`, in that order (§7), each the operator's; n0's relays and lookup the command's default until then, and nothing else changed by it | the operator starts paying for svrngs's relay (the operator, 2026-10-13: "until I'm actually ready to start paying / flip the switch for production") |
+| the switch to svrngs's relay, parked at the gate (relay-park; §10, 2026-10-13): the build's one constant flipped from n0's to svrngs's at `relay.svrnme.sh`, then `scripts/deploy-relay.sh`, then `scripts/deploy-page.sh`, in that order (§7), each the operator's; n0's relays and lookup the command's default until then, and nothing else changed by it; with it, #134 and #135 (`ralph/REVIEW_FINDINGS.md`), whose moment is the switch | V1 released on n0's relays (§8, "V1"; §10, 2026-10-15), and the operator starts paying for svrngs's relay (the operator, 2026-10-13: "until I'm actually ready to start paying / flip the switch for production") |
 | AirPlay and Cast from a page, and DLNA: a screen handed a lend's address by a phone, for an app with no client of its own on it. In the reads (`demo/runs/u6/2026-10-05-screen/reads.json`) AirPlay from Safari on an iPhone showed the LG no video three ways — the page's address, which only the phone's worker answers; jellyfin-web, whose hls.js sets `disableRemotePlayback`; a plain LAN file, which the TV never fetched — and iOS has no Cast sender. Until 2026-10-05 this was U6 (§3, "The room", call 1) | an app with no client of its own for a screen is asked for on one, counted |
 | a public address per lend, for a room with no member's computer in it: a relay that forwards bytes it cannot read to the lender, who holds a certificate per lend — a new service, and Let's Encrypt's per-domain limit (§3, "The room", call 2) | a group with no computer in the room asks, counted |
 | a relay at a bare address, no name needed (svrn-docs `rings/current/GROUP_RELAYS.md` §4.4): a six-day Let's Encrypt certificate for the address, its `shortlived` profile, which tokio-rustls-acme 0.9.1, iroh-relay's ACME client, cannot ask — its `Identifier` is `Dns` alone and its order names no profile (`acme.rs:129-130`, `:301-303`); no second ACME client beside it (`ralph/next/relay/CHARTER.md`) | iroh-relay's ACME client asks for an address, or a member who would relay has no name to give it, counted |
@@ -2747,7 +2771,7 @@ than n0's `iroh-relay` beside it — one install line, version-locked to the
 computers that dial it, the relay svrngs runs for everyone the one anyone
 runs for themselves — and n0's address lookup dropped beside its relays,
 each computer's relay learned from its group's record. So our own relay
-leaves §9 for §8's order of work, before v1: svrngs's at `relay.svrnme.sh`
+left §9 for §8's order of work: svrngs's at `relay.svrnme.sh`
 the default (DigitalOcean, US West, the operator's inclination since
 2026-10-05; deploying it the operator's), a group's own by `svrngs new
 --relay <url>`, and n0 none of the path (§8, §11 risk 5; `ralph/next/relay/`).
@@ -2772,6 +2796,15 @@ a link carries its issuer's relay in either posture, so a phone's page
 dials only the relays its link and its group name and asks n0's lookup
 for nothing, before the switch or after it (`ralph/next/relay/CHARTER.md`,
 2026-10-13).
+
+Then by the operator, 2026-10-15, of the grapevine demo app: "And then I
+think that's our V1 cut line"; asked, "arch, groups, grapevine; V1 on n0"
+and "arch → groups → grapevine". So V1 is the arch queue, the groups queue
+and the grapevine demo app, in that order, meeting its groups at n0's
+relays, and the switch to svrngs's relay comes after V1, not before it as
+2026-10-12 asked; #134 and #135, whose moment is the switch, come with it
+(§8, "V1"; `ralph/next/grapevine/CHARTER.md`; svrn-docs
+`rings/current/GRAPEVINE_DEMO.md` §12.3).
 
 By the operator, 2026-10-12, after Demo C's dry run (its finding 3): "let's
 not make access limits arbitrary AND hard to update. If someone wants to
@@ -2976,8 +3009,9 @@ By the operator, 2026-10-03:
    in `scripts/check.sh` save on a host past 3 a core's load, where a miss
    is could-not-judge (chk-1); WebKit's is a rate there, beside the same seeks
    straight at the canary each run, and waits in §9.
-5. **Members find each other through n0** until the operator's switch
-   (§8, "our own relay"; §9; §10, 2026-10-12 and 2026-10-13): iroh's
+5. **Members find each other through n0** until the operator's switch,
+   after V1 (§8, "our own relay" and "V1"; §9; §10, 2026-10-12, 2026-10-13
+   and 2026-10-15): iroh's
    address lookup, n0's DNS by default, as upstream's (§8, U1's inventory),
    maps a key to its relay, never to a person, and a group is unreachable
    through it while it is down; and every byte a phone moves crosses a
