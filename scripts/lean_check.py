@@ -70,8 +70,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # close, at most 16,358, svrngs-core unchanged (the operator, 2026-10-16): its
 # (a), the leaver's old lend addresses saying she left (#182), raised the
 # repository's to one past where it landed; its (b), the acceptor's trace as
-# it tells a cut dialer its cut (#183), the same.
-BUDGET = {"crates/svrngs-core": 2993, ".": 16348}
+# it tells a cut dialer its cut (#183), the same; its (c), the hand-ons told
+# with a cut (#184), the same.
+BUDGET = {"crates/svrngs-core": 2993, ".": 16351}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
