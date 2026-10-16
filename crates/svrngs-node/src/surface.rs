@@ -48,7 +48,7 @@ use crate::node::{Asking, Lending, Unlisted};
 use crate::rail::{namespace_of, standing_of, RailQuery};
 use crate::ring_routes::err;
 use crate::seed::Seed;
-use crate::Person;
+use crate::{register::RemovalSaid, Person};
 
 /// Where an app asks which groups this computer holds.
 pub const GROUPS_ROUTE: &str = "/v1/groups";
@@ -98,6 +98,11 @@ struct Held {
     /// home page shows them to everyone in the group. `null` beside
     /// `removed`'s.
     removals: Option<Vec<svrngs_runtime::register::Removing>>,
+    /// Whether this computer's person left it (groups-leave), or keeps
+    /// the order of removals in it, so hands that on before leaving; `null`
+    /// beside `removed`'s.
+    left: Option<bool>,
+    keeps: Option<bool>,
     /// Who made it and since when this computer has held it, as two
     /// groups of one name are told apart (#138; [`Namesake`]); `null` with
     /// `name`.
@@ -129,21 +134,33 @@ async fn groups(State(at): State<Asking>) -> Response {
         let made = seed.map(|s| Namesake::of(rail.root(), &s, me));
         // One read for both: a group not held or with no seed is the empty
         // register, said by the rail (`RingRail::register`).
-        let (person, removed, removals) = match rail.register(&id) {
-            Ok(r) => (
-                r.members.get(me).map(|m| m.person.clone()),
-                Some(r.removed.contains_key(me)),
-                Some(r.removals),
-            ),
+        let (person, removed, removals, left, keeps) = match rail.register(&id) {
+            Ok(r) => {
+                let person_of = |k: &str| r.members.get(k).map(|m| &m.person_key);
+                let keeps = r
+                    .keeper
+                    .as_deref()
+                    .and_then(person_of)
+                    .is_some_and(|p| Some(p) == person_of(me));
+                let left = (r.removals.iter()).any(|x| x.key == me && x.said == RemovalSaid::Left);
+                let person = r.members.get(me).map(|m| m.person.clone());
+                (
+                    person,
+                    Some(r.removed.contains_key(me)),
+                    Some(r.removals),
+                    Some(left),
+                    Some(keeps),
+                )
+            }
             Err(e) => {
                 tracing::warn!(target: "surface", namespace = id, error = %e, "surface: groups — its register is unreadable, so neither this computer's person nor whether it was removed is known");
-                (None, None, None)
+                (None, None, None, None, None)
             }
         };
         let folders = crate::folder::dirs_of(&at.door.data_dir, &id)
             .inspect_err(|e| tracing::warn!(target: "surface", namespace = id, error = %e, "surface: groups — where its folders are kept cannot be read"))
             .ok();
-        tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?person, removed = ?removed,
+        tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?person, removed = ?removed, ?left, ?keeps,
             removals = ?removals.as_ref().map(Vec::len), folders = ?folders, "surface: groups — a group held");
         held.push(Held {
             id,
@@ -152,6 +169,8 @@ async fn groups(State(at): State<Asking>) -> Response {
             person,
             removed,
             removals,
+            left,
+            keeps,
             folders,
         });
     }

@@ -889,3 +889,36 @@ fn the_keepers_leave_waits_for_the_hand_on() {
         assert_eq!(refused, Err(Refused::Command(RemovalRefusal::Own)));
     }
 }
+
+/// **A key that left is never let back in quietly** (groups-leave (c);
+/// svrn-docs `rings/current/LEAVING.md` §5, bar 5). Hal joins by a link
+/// and leaves; the issuer mints a new link and is asked to redeem it for
+/// hal's same key: refused `Cut`, nothing written, and hal stands nowhere.
+/// Red at 1676df59, where the redemption was written and the fold counted
+/// the later `Admit` of the cut key, so it stood again.
+#[test]
+fn a_key_that_left_is_not_let_back_in() {
+    let (invite, roster) = (invite_by(&issuer(), &link(), 10_000), ring());
+    let store = Memory::holding(&[invite.clone()]);
+    let signer = issuer();
+    let as_issuer = |now| author(&signer, &roster, now);
+    commit(&store, &redeem(&invite), &as_issuer(1_000))
+        .unwrap()
+        .unwrap();
+    let hal = Leave(actor_of(&joining()));
+    commit(&store, &hal, &author(&joining(), &roster, 1_001))
+        .unwrap()
+        .unwrap();
+    assert!(!stands(&store, &joining()), "hal left");
+    let mint = MintInvite {
+        key: actor_of(&link()),
+        until: 10_000,
+        device_of: None,
+    };
+    let minted = commit(&store, &mint, &as_issuer(1_002)).unwrap().unwrap();
+    let held = store.0.borrow().len();
+    let again = commit(&store, &redeem(&minted.lines()[0]), &as_issuer(1_003));
+    assert_eq!(again.unwrap(), Err(Refused::Command(RedeemRefusal::Cut)));
+    assert_eq!(store.0.borrow().len(), held, "nothing written");
+    assert!(!stands(&store, &joining()), "hal stands nowhere");
+}

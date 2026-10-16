@@ -447,8 +447,14 @@ the route, and reading another app's acts.
     there is something in it.
 
   What the page cannot do it names under "Done in a terminal", with the
-  one line to type: removing someone (`svrngs remove`). Leaving a group is
-  said as not possible yet; its design comes after the start queue.
+  one line to type: removing someone (`svrngs remove`). Each group you
+  are in ends with "Leave <group>", its words saying before what stays on
+  this computer, what stops, that coming back needs a new invitation and
+  that this computer cannot come back yet; whoever keeps the order of
+  removals is shown the hand-on beside it, a choice of who keeps it next
+  (`POST /v1/leaves` and `/v1/handovers` on the page's own origin, the
+  node's `removal.rs`; groups-leave (c)). A group you left is listed under
+  "Groups you left", with what stays of it here.
   The page answers only itself, from its own origin, and never runs an
   app's code: its only writes are the yes and stop, what runs here lent,
   the change to a lend, the link, the folder opened and the group made. An app sends its person there:
@@ -1740,9 +1746,18 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   is sent back: their copy of the record and the files its folder gave
   them stay (`crates/svrngs-node/tests/folders.rs`,
   `a_leave_stops_the_group_reaching_them_and_keeps_what_they_hold`).
-  Leaving is final from that computer for now: a computer signs every
-  group with one key, and a cut key never stands again (the operator,
-  2026-10-14: "Final for now; per-group keys as a row").
+  Everyone in the group sees a leave where removals show, "Ana left on
+  <date>", in `question.js`'s one wording: `Register::removals` says a cut
+  whose signer stands as the person it cuts `RemovalSaid::Left`, the
+  keeper's `Removed` (the operator, 2026-10-14: "Record only"). Leaving is
+  final from that computer for now: a computer signs every group with one
+  key, and a cut key never stands again (the operator, 2026-10-14: "Final
+  for now; per-group keys as a row"). So the issuer refuses to redeem a
+  link for a key cut in its group (svrngs-core `RedeemRefusal::Cut`), where
+  the fold alone would count the later `Admit`; and a computer that left,
+  sent a new link, is told at once, before anything is redeemed, that it
+  cannot join again from there yet (`join.rs`, `NotJoined::Left`), as the
+  page and `svrngs join` say it; a phone, with a key per group, can rejoin.
 - **Leaving is cheap.** A group's whole state is a directory every member's
   computer holds. A group that goes wrong refounds from any copy, within
   hours, without whoever it leaves out (operator: "with dotfile elegance").

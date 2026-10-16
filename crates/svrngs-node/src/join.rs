@@ -10,7 +10,7 @@ use crate::iroh::{EndpointAddr, PublicKey, RelayUrl};
 use crate::link::{Link, Token};
 use crate::node::Host;
 use crate::redeem::{ask, redeem, AskRequest, Asked, RedeemError, RedeemRequest, Redeemed};
-use crate::{Device, Person};
+use crate::{register::Standing, Device, Person};
 
 /// The issuer's computer, as iroh names it.
 pub fn key(token: &Token) -> PublicKey {
@@ -49,6 +49,10 @@ pub enum NotJoined {
     IssuerAway,
     #[error("This computer cannot keep {0} on its disk.")]
     Keep(Name),
+    /// This computer left the group, or was removed, and its one key never
+    /// stands again (groups-leave; DESIGN §6, "Leaving a group").
+    #[error("You’re no longer in {0} on this computer, and you can’t join it again from here yet. Join from your phone or another computer instead.")]
+    Left(Name),
 }
 
 impl Host {
@@ -64,6 +68,10 @@ impl Host {
             tracing::debug!(target: "join", group = %asked.group, "join: the issuer's answer is not believed, so nothing is redeemed");
             return Err(NotJoined::LinkRefused);
         };
+        if let Ok(Standing::Left(_)) = self.rail.standing(&seed.id()) {
+            tracing::debug!(target: "join", group = %seed.id(), "join: refused — this computer's key was cut in the group, so nothing is redeemed");
+            return Err(NotJoined::Left(seed.name().clone()));
+        }
         Ok((asked, seed))
     }
 

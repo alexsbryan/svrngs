@@ -198,7 +198,7 @@ svrngs — keep what your group shares on your own computers.
   svrngs leave <group>
       Leave <group> from every computer and phone of yours. What you have
       of it stays here; nothing new reaches you, nor what you lend them.
-      Coming back needs a new invitation, and not from this computer yet.
+      Rejoining needs a new invitation, and not from this computer yet.
       If you decide who is removed, hand that on first.
 
   svrngs relay <name> [--open] [--staging]
@@ -567,6 +567,8 @@ pub enum Refusal {
     IssuerAway,
     #[error("cannot keep {0} on this computer (RUST_LOG=debug says why)")]
     Keep(Name),
+    #[error("you're no longer in {0} on this computer, and you can't join it again from here yet: join from your phone or another computer instead")]
+    Left(Name),
     #[error("you are in no group called {0} on this computer")]
     NoGroup(String),
     #[error("more than one group here is called {name}; say which by the start of its id: {}", ids.join(", "))]
@@ -634,6 +636,7 @@ impl Refusal {
             | Refusal::NoNameToJoin
             | Refusal::LinkRefused
             | Refusal::NameTaken { .. }
+            | Refusal::Left(_)
             | Refusal::NoGroup(_)
             | Refusal::Ambiguous { .. }
             | Refusal::NotIn(_)
@@ -1313,7 +1316,7 @@ impl std::fmt::Display for Said {
                 }
             }
             Said::Left { group, outcome } => match outcome {
-                Outcome::Left => writeln!(f, "You left {group}, from every computer and phone of yours. Your copy of it and the files its folder gave you stay on this computer; nothing new reaches you, and what you lend no longer reaches its people. Coming back needs a new invitation, and this computer cannot come back yet."),
+                Outcome::Left => writeln!(f, "You left {group}, from every computer and phone of yours. Your copy of it and the files its folder gave you stay on this computer; nothing new reaches you, and what you lend no longer reaches its people. Rejoining needs a new invitation, and this computer cannot rejoin yet."),
                 Outcome::Decides => writeln!(f, "You decide who is removed from {group}, so you cannot leave it yet: hand that to someone else first, with `svrngs handover <name> --group {group}`, then leave."),
                 Outcome::NotIn => writeln!(f, "You are no longer in {group}."),
                 // Fault, and what the leave route never answers.
@@ -1571,6 +1574,7 @@ pub async fn join_group(
         Err(NotJoined::NameTaken { holder, group }) => Err(Refusal::NameTaken { holder, group }),
         Err(NotJoined::IssuerAway) => Err(Refusal::IssuerAway),
         Err(NotJoined::Keep(group)) => Err(Refusal::Keep(group)),
+        Err(NotJoined::Left(group)) => Err(Refusal::Left(group)),
     }
 }
 

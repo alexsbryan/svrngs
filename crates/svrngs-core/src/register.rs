@@ -46,6 +46,9 @@ pub enum RedeemRefusal {
     /// where a stranger gives one (bash-person), so a link lets no one in
     /// as someone already in. Who holds it, as they are named.
     NameTaken(Person),
+    /// The key was cut here, left or removed, and a cut key never stands
+    /// again (groups-leave): nobody is let back in quietly.
+    Cut,
 }
 
 impl Command for Redeem {
@@ -68,6 +71,11 @@ impl Command for Redeem {
             tracing::debug!(target: "redeem", key = %self.key,
                 "redeem: the key stands already, so nothing is written");
             return Ok(Vec::new());
+        }
+        if register.cut.contains_key(&self.key) {
+            tracing::debug!(target: "redeem", key = %self.key,
+                "redeem: refused — the key was cut here, left or removed, so nothing is written");
+            return Err(RedeemRefusal::Cut);
         }
         if let Some(of) = &invite.device_of {
             tracing::debug!(target: "redeem", key = %self.key, device_of = %of,

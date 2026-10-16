@@ -331,7 +331,7 @@ async fn the_keeper_removes_one_of_two_people_of_one_name() {
 /// removed hands that on first** (groups-leave (b)). `leave trip` parses;
 /// Sam, who made trip, is refused while Bo is in it, in words that say
 /// to hand on first and how; Sam hands on to Bo and leaves, told that
-/// their copy and folder stay and that this computer cannot come back yet;
+/// their copy and folder stay and that this computer cannot rejoin yet;
 /// Sam's copy, read, holds Sam out and Bo deciding. At 1b19d80f it does not compile: no
 /// `leave` verb.
 #[tokio::test]
@@ -373,7 +373,7 @@ async fn the_keeper_hands_on_then_leaves() {
     for said in [
         "stay on this computer",
         "new invitation",
-        "cannot come back yet",
+        "cannot rejoin yet",
     ] {
         assert!(words.contains(said), "{words}");
     }

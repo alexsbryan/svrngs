@@ -54,13 +54,16 @@ pub struct Register {
 
 /// One counting `Remove`, as the group is shown it (v1-keeper-office (b)):
 /// who signed it, whom it names, when it is timed, and whether it was the
-/// keeper's cut or an ask, as `membership` judged it.
+/// keeper's cut, a leave or an ask, as `membership` judged it; and the key
+/// it names, which the page is not sent.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct Removing {
     pub by: Person,
     pub of: Person,
     pub at: i64,
     pub said: RemovalSaid,
+    #[serde(skip)]
+    pub key: String,
 }
 
 /// What a counting `Remove` was (DESIGN §6, "Removal has one decider").
@@ -69,6 +72,8 @@ pub struct Removing {
 pub enum RemovalSaid {
     /// The keeper's: the cut.
     Removed,
+    /// The person's own: their leave, the cut by them alone (groups-leave).
+    Left,
     /// Anyone else's, or one that cut nobody: an ask.
     Asked,
 }
@@ -154,7 +159,8 @@ pub(crate) fn register_in(
 }
 
 /// Every `Remove` among `ops` that counts in `m`, by time: the cut when it
-/// is the one `m` cut its key by, an ask otherwise. One that does not
+/// is the one `m` cut its key by, a leave when its signer stands as the
+/// person it cuts, an ask otherwise. One that does not
 /// count, or whose signer or named key is bound to nobody, is said at
 /// debug and left out.
 fn removals_in(ops: &[Op<SignedOp>], m: &Membership, namespace: &str) -> Vec<Removing> {
@@ -173,9 +179,14 @@ fn removals_in(ops: &[Op<SignedOp>], m: &Membership, namespace: &str) -> Vec<Rem
                 tracing::debug!(target: "register", namespace, id = %id, actor = %op.actor, key, "register: a removal whose signer or named key is bound to nobody is not shown");
                 return None;
             };
-            let said = if m.cut.get(key).is_some_and(|c| c.by == id) { RemovalSaid::Removed } else { RemovalSaid::Asked };
+            let own = m.person_of(&op.actor).map(|p| p.0) == m.person_of(key).map(|p| p.0);
+            let said = match m.cut.get(key).is_some_and(|c| c.by == id) {
+                true if own => RemovalSaid::Left,
+                true => RemovalSaid::Removed,
+                false => RemovalSaid::Asked,
+            };
             tracing::debug!(target: "register", namespace, id = %id, by = %by, of = %of, ?said, "register: a removal shown to the group");
-            Some(Removing { by: by.clone(), of: of.clone(), at: op.ts_unix, said })
+            Some(Removing { by: by.clone(), of: of.clone(), at: op.ts_unix, said, key: key.clone() })
         })
         .collect();
     out.sort_by_key(|r| r.at);

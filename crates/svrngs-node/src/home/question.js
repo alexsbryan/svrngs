@@ -27,11 +27,11 @@ export const once = (lent) => lent.filter((l, i) => !l.group || lent.findIndex((
 // svrngs's question: may the app lent as `app` use the lend `lend`?
 export const question = (app, lend) => `Let ${named(app)} use ${named(lend)}?`;
 
-// A removal or an ask to remove, as everyone in the group is shown it
-// (v1-keeper-office (b)): "cy asked to remove dee on 12 Oct 2026, 14:03",
-// the time in the browser's own words.
+// A removal, a leave or an ask to remove, as everyone in the group is
+// shown it (v1-keeper-office (b); groups-leave): "cy asked to remove dee on
+// 12 Oct 2026, 14:03", "ana left on …", the time in the browser's own words.
 export const removal = (r) =>
-  `${r.by} ${r.said === 'removed' ? 'removed' : 'asked to remove'} ${r.of} on ${new Date(r.at * 1000).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`;
+  `${r.said === 'left' ? `${r.of} left` : `${r.by} ${r.said === 'removed' ? 'removed' : 'asked to remove'} ${r.of}`} on ${new Date(r.at * 1000).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`;
 
 // The line said when what apps use of `lend` cannot be asked of its
 // lender's computer.

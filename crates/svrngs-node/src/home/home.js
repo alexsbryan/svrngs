@@ -33,6 +33,10 @@ const post = (path, body) => fetch(path, {
 }).then(async (r) => (r.ok ? r.json().catch(() => ({})) : Promise.reject(new Error((await r.json().catch(() => ({}))).error || `answered ${r.status}`))));
 const said = (lend, app, what) => post('/choices', { lend, app, said: what });
 
+// A leave or a hand-on asked of the node (removal.rs), its answer said in
+// `p` beside its button; a leave goes on to the page again, saying so.
+const asked = (path, body, p, name) => fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then((r) => r.json()).then(({ outcome: o }) => (o === 'left' ? location.assign(`/?${new URLSearchParams({ left: name })}`) : p.append(` ${{ handed: `${body.person} keeps the order of removals in ${name} now, so you can leave it.`, decides: `You keep the order of removals in ${name}: choose who keeps it after you, then leave.`, not_in: `You are no longer in ${name}.` }[o] ?? `${name} cannot be changed on this computer now.`}`)), (e) => p.append(` ${name} cannot be changed on this computer now: ${e.message}`));
+
 // The lend's label, the first name of its origin here.
 const label = (l) => new URL(l.origin).hostname.split('.')[0];
 
@@ -61,7 +65,8 @@ async function show(g, s) {
   if (g.removed) return s.append(el('p', `You are no longer in ${g.name ?? 'this group'}. What you already have stays on this computer; nothing new reaches it.`));
   const ns = encodeURIComponent(g.id);
   try {
-    const [people, judge] = door((await get(`/v1/rail/people?namespace=${ns}`)).people);
+    const rows = (await get(`/v1/rail/people?namespace=${ns}`)).people;
+    const [people, judge] = door(rows);
     s.append(people);
     // Where the group's folder is on this disk (v1-onboarding (d)).
     const its = g.name ? `${g.name}’s folder` : 'The group’s folder';
@@ -78,6 +83,14 @@ async function show(g, s) {
     const copy = (link, p) => button('Copy the link', () => Promise.resolve().then(() => navigator.clipboard.writeText(link)).then(() => p.append(' Copied.'), () => p.append(' Select it above to copy it.')));
     const made = (device, words) => button(words, () => post('/link', { group: g.id, device }).then(({ client, https }) => shown(device ? 'Open this link on your other computer or phone; it joins as you, so send it to nobody else: ' : 'Send this link to the person you are inviting: ', el('code', https ?? client), https ? ' It opens in a browser, which says how to join from there.' : ' They join with svrngs join and this link.', ' It works for a day, while this computer is on. ', copy(https ?? client, s.querySelector('.link'))), (e) => shown(e.message)));
     s.append(el('p', '', made(false, `Make a link to invite someone to ${g.name ?? 'this group'}`), made(true, 'Make a link to add your phone or another computer of yours')), Object.assign(el('p'), { className: 'link' }));
+    // Leaving (groups-leave), what stays and what stops said before; whoever
+    // keeps the order of removals chooses who keeps it next, beside it.
+    const name = g.name ?? 'this group';
+    const others = [...new Map(rows.filter((r) => r.device === 'computer' && r.person !== g.person).map((r) => [r.person_key, r])).values()];
+    const to = el('select', '', ...others.map((r, i) => Object.assign(el('option', r.person), { value: i })));
+    const hand = el('p', `You keep the order of removals in ${name}. Choose who keeps it after you, then leave: `, to, button('Hand it on', () => asked('/v1/handovers', { group: g.id, ...others[to.value] }, hand, name)));
+    const leave = el('p', `Leaving ${name} stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. `, button(`Leave ${name}`, () => asked('/v1/leaves', { group: g.id }, leave, name)));
+    s.append(...(g.keeps && others.length ? [hand] : []), Object.assign(leave, { className: 'leave' }));
     if (g.removals.length) s.append(Object.assign(el('ul', '', ...g.removals.map((r) => el('li', removal(r)))), { className: 'removals' }));
     // The index (V1_UI_BUILD §3.1): one table of what is in the group, on
     // any port — each thing by a link that opens it in a tab and says what
@@ -215,9 +228,13 @@ try {
     if (q.has('made')) main.append(el('p', `You made ${q.get('made')}. ${q.get('also') ? `${q.get('also')} ` : ''}${unplaced}Make a link below to invite someone to it.`));
     // Said after a group is joined here (arch-command (c)).
     if (q.has('joined')) main.append(el('p', `You’re in ${q.get('joined')}${q.has('person') ? `, as ${q.get('person')}.` : ' already.'} ${unplaced}`));
+    if (q.has('left')) main.append(el('p', `You left ${q.get('left')}. Rejoining needs a new invitation, and this computer can’t rejoin yet.`));
     // With no group, how to make one or join one (start-home; start-group).
     if (!groups.length) main.append(Object.assign(el('p', 'You’re in no group yet. Make one below, or join one from a link someone sent you.'), { className: 'none' }));
-    const lent = Promise.all(groups.map((g) => show(g, section(g))));
+    const lent = Promise.all(groups.filter((g) => !g.left).map((g) => show(g, section(g))));
+    // The groups you left (groups-leave), with what stays of each here.
+    const gone = groups.filter((g) => g.left).map((g) => el('p', `${g.name ?? 'A group'}${g.made ? ` (${whose(g.made)})` : ''}: what you have of it stays on this computer${g.folders?.length ? `, its folder at ${g.folders.join(' and ')}` : ''}, and nothing new of it reaches you.`));
+    if (gone.length) main.append(Object.assign(el('section', '', el('h2', 'Groups you left'), ...gone), { id: 'left' }));
     // A link from a group's page, `<page>#open=<label>&at=<path>`, pasted
     // (events-links (c)): the lend it names opened at its path in a tab of
     // its own, as the group's page opens it on a phone; the lend's origin
