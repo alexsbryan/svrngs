@@ -39,7 +39,8 @@ use svrngs_core::pass::{Label, Pass};
 use crate::door::{self, Door, LendRefusal, Who, LEND_ROUTE, PASS_HEADER, REFUSED_HEADER};
 use crate::iroh::Contact;
 use crate::node::Asking;
-use crate::surface::STOP_SUFFIX;
+use crate::register::{Register, RemovalSaid};
+use crate::surface::{seed_of, STOP_SUFFIX};
 
 /// How long a pass this computer signs for its own page lasts: one
 /// request's, signed afresh for each, so none is kept.
@@ -234,15 +235,40 @@ fn uri_of(target: &str) -> Result<Uri, Response> {
     })
 }
 
-/// The computer lending `label`, to be dialled as this computer's key;
-/// refused for a lender standing in no group held here, so no page makes
-/// this computer dial a stranger.
+/// The computer lending `label`, to be dialled as this computer's key,
+/// or [`refused`].
 pub(crate) fn dialled(at: &Asking, label: &Label) -> Result<Contact, Response> {
     let actor = hex::encode(label.lender());
-    at.host.contact(&actor).ok_or_else(|| {
-        tracing::debug!(target: "origin", %label, actor, "origin: refused — the label names no computer standing in a group held here");
-        LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here")
-    })
+    at.host
+        .contact(&actor)
+        .ok_or_else(|| refused(at, label, &actor))
+}
+
+/// A lender standing in no group held here refused, so no page makes this
+/// computer dial a stranger; said as this computer's person reads it where
+/// a group held here cut this computer and the lender stands in it (#182):
+/// "You left Trip on 16 Oct", the day as the command says one (cli.rs
+/// `namesakes_said`), or the lenders' own words for a removal
+/// ([`door::gone`]). Groups that cannot be listed, or a register unreadable
+/// here, show no cut: [`crate::node::Host::contact`] has just said them at
+/// warn.
+fn refused(at: &Asking, label: &Label, lender: &str) -> Response {
+    let (rail, me) = (&at.host.rail, at.host.actor.as_str());
+    let cut = |r: &Register| r.removed.contains_key(me) && r.members.contains_key(lender);
+    let mut held = rail.namespaces().unwrap_or_default().into_iter();
+    let Some((r, id)) = held.find_map(|id| Some((rail.register(&id).ok().filter(cut)?, id))) else {
+        tracing::debug!(target: "origin", %label, lender, "origin: refused — the label names no computer standing in a group held here");
+        return LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here");
+    };
+    let left = (r.removals.iter()).find(|x| x.key == me && x.said == RemovalSaid::Left);
+    tracing::debug!(target: "origin", %label, group = id, left = left.is_some(), "origin: refused — this computer was cut from a group the lender stands in, so the cut is said");
+    let Some(left) = left else {
+        return door::gone();
+    };
+    let name = seed_of(at, &id).map_or("this group".into(), |s| s.name().as_str().to_string());
+    let day = chrono::DateTime::from_timestamp(left.at, 0).map(|t| t.with_timezone(&chrono::Local));
+    let on = day.map_or(String::new(), |t| t.format(" on %-d %b").to_string());
+    LendRefusal::Removed.say(StatusCode::FORBIDDEN, format!("You left {name}{on}"))
 }
 
 /// The lender's computer could not be reached.

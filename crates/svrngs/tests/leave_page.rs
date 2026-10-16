@@ -63,7 +63,9 @@ in_both_engines!(
     /// removal's words reused for a leave (question.js `removal` as at
     /// 1676df59, "Ana removed Ana"); a computer that left let to redeem
     /// again (join.rs `asked` without its `Standing::Left` check, "Join
-    /// Trip").
+    /// Trip"). Her computer's old address of a lend of Sam's says she left,
+    /// "You left Trip on 16 Oct." (#182): red at 169d7a8c in both, "nothing
+    /// is lent here." (origin.rs `dialled`'s `Unlent`).
     leaving_on_the_home_page_is_said_as_a_leave_everywhere
 );
 async fn leaving_on_the_home_page_is_said_as_a_leave_everywhere(engine: harness::Engine) {
@@ -121,6 +123,15 @@ async fn leaving_on_the_home_page_is_said_as_a_leave_everywhere(engine: harness:
     assert!(after.contains("You left Trip."), "{seen:#}");
     assert!(after.contains("Groups you left"), "{seen:#}");
     assert!(after.contains("Trip (Sam’s, since"), "{seen:#}");
+    // An old address on her computer of a lend of Sam's says she left
+    // (#182), never "nothing is lent here".
+    let sams = actor_of(&SigningKey::from_bytes(&[6; 32]));
+    let notes = svrngs_core::pass::Label::of_hex(&sams, "notes").unwrap();
+    let old = svrngs_node::origin::origin(&notes, ana.api_addr().port());
+    let seen = home_page::home_page(engine, &old, json!({ "heading": false, "read": "p" })).await;
+    eprintln!("Ana's old address of Sam's notes: {seen:#}");
+    let said = seen["read"].as_str().unwrap_or_default();
+    assert!(said.starts_with("You left Trip on "), "{seen:#}");
 
     let ana_out = || {
         let register = sam.rail().register(&trip.id()).unwrap();

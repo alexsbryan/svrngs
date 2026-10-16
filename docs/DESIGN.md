@@ -1750,7 +1750,10 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   gate that asks who stands — the round, the acceptor, the sync route,
   the door and the lends — finds nobody, so no round dials for it, no
   sync serves it and nothing this computer lends reaches it; the record
-  API still reads it. Nothing on the leaver's disk is deleted and nothing
+  API still reads it. An address on that computer of a lend of someone
+  still in the group says the cut, "You left Trip on 16 Oct" or a
+  removal's "You are no longer in this group", never "nothing is lent
+  here" (`origin.rs` `refused`, #182; `leave_page.rs`). Nothing on the leaver's disk is deleted and nothing
   is sent back: their copy of the record and the files its folder gave
   them stay (`crates/svrngs-node/tests/folders.rs`,
   `a_leave_stops_the_group_reaching_them_and_keeps_what_they_hold`).

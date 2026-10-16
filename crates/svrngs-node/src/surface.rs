@@ -208,7 +208,7 @@ async fn sign(
 
 /// The seed this computer keeps for `id`, or `None`, at warn, when it
 /// keeps none, it cannot be read, or it is another group's.
-fn seed_of(at: &Asking, id: &str) -> Option<Seed> {
+pub(crate) fn seed_of(at: &Asking, id: &str) -> Option<Seed> {
     let dir = at.host.rail.group_dir(id).map_err(|e| e.to_string());
     let text = dir.and_then(|dir| (at.seeds)(&dir));
     let seed = match text.map(|t| t.map(|t| Seed::from_text(&t))) {

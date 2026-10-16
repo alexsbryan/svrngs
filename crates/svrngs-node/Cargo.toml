@@ -51,6 +51,11 @@ tower = { version = "0.5", features = ["util"] }
 # A group's folders (gf-1, sy-1): the store, its provider and verified range
 # fetch, without the rpc default, over the lock's iroh 1.0.2.
 iroh-blobs = { version = "=0.103.0", default-features = false, features = ["fs-store"] }
+# The day a computer's person left a group, said by its old lend addresses
+# in this computer's time as the command says one (origin.rs `cut_from`,
+# #182), and read back by the home page's browser test (home.rs `WHEN`):
+# the chrono and clock the command's already takes from the lock.
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
 
 [features]
 # What only a test asks of a node (src/node/tests_support.rs): its routes as a
@@ -81,9 +86,6 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # The scale instrument (tests/scale.rs) reads its own processor time with
 # `getrusage`, which std does not offer; libc is already in the lock.
 libc = "0.2"
-# The home page's browser test reads when someone joined back by the form
-# the command takes (home.rs `WHEN`), as the command reads it.
-chrono = { version = "0.4", default-features = false }
 # A door test writes a pass of the shape before sup-1 as a page then would.
 base64 = "0.22"
 
