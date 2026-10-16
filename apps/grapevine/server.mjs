@@ -29,6 +29,11 @@
 // message goes through sees that it went by, its size, which ask it answers
 // and when. File mode says it is a simulation on every page.
 //
+// **Who is asking** (§13.1-§13.3): the person on this computer and no one
+// else. It answers only at its own loopback address, to its own page, and
+// takes a write only as a JSON body (`guard`); in record mode "me" is read
+// per group from what svrngs answers (relay.mjs `heldBy`).
+//
 // Routes (§5; no /standing, §12.1), each write a JSON body:
 //   GET  /            your groups' asks, your conversations, the forms
 //   POST /ask         kind, fields, group, hops, until (a date)
@@ -255,6 +260,32 @@ function whom(url) {
 const choose = (as) =>
   page(null, `<p>${as === null ? 'Choose who you are' : `${esc(as)} isn’t one of the people here. Choose who you are`}: ${config.acting.map((n) => `<a href="/?as=${encodeURIComponent(n)}">${esc(n)}</a>`).join(', ')}.</p>`);
 
+/**
+ * Who may ask (§13.1): the person's own browser, at this server's own
+ * loopback address. A page on another site cannot send a JSON body without
+ * a preflight, which this server never answers, and a rebinding page comes
+ * under a name this server does not answer to. So a request is refused,
+ * and said so, whose Host is not this server's own address, whose Origin
+ * is another's, or that writes with anything but a JSON body. A request
+ * with no Origin is a program on this computer, which is the person's
+ * (DESIGN §8, "Localhost is the trust boundary").
+ */
+function guard(req) {
+  const own = `127.0.0.1:${server.address().port}`;
+  if (req.headers.host !== own) {
+    trace('refused: another address', { host: String(req.headers.host).slice(0, 80) });
+    throw new Refused(`This page answers only at its own address on this computer, http://${own}/.`, 421);
+  }
+  if (req.headers.origin !== undefined && req.headers.origin !== `http://${own}`) {
+    trace('refused: another site', { origin: String(req.headers.origin).slice(0, 80) });
+    throw new Refused('Another site tried to use this page, so nothing was done.', 403);
+  }
+  if (req.method === 'POST' && !/^application\/json\s*(;|$)/i.test(req.headers['content-type'] ?? '')) {
+    trace('refused: not sent as this page sends it', { type: String(req.headers['content-type']).slice(0, 80) });
+    throw new Refused('This page takes only what its own page sends, so nothing was done.', 415);
+  }
+}
+
 async function json(req) {
   let text = '';
   for await (const chunk of req) {
@@ -265,7 +296,7 @@ async function json(req) {
     const out = JSON.parse(text);
     if (out && typeof out === 'object' && !Array.isArray(out)) return out;
   } catch {}
-  throw new Refused('This page only takes what its own page sends.', 400);
+  throw new Refused('That couldn’t be read.', 400);
 }
 
 const server = http.createServer(async (req, res) => {
@@ -273,6 +304,7 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://grapevine');
   const to = url.pathname.slice(1);
   try {
+    guard(req);
     if (req.method === 'GET' && url.pathname === '/') {
       const p = whom(url);
       return res.writeHead(p ? 200 : url.searchParams.has('as') ? 404 : 200, { ...headers, 'content-type': 'text/html; charset=utf-8' }).end(p ? await home(p) : choose(url.searchParams.get('as')));
