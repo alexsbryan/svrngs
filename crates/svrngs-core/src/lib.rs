@@ -124,7 +124,8 @@ pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
 pub use project::{Invites, Wire};
 pub use record::{Append, AppendRefusal};
 pub use register::{
-    HandOnRefusal, HandOnTo, MintInvite, Redeem, RedeemRefusal, RelayAt, Removal, RemovalRefusal,
+    HandOnRefusal, HandOnTo, Leave, MintInvite, Redeem, RedeemRefusal, RelayAt, Removal,
+    RemovalRefusal,
 };
 pub use sig::{
     act_id, actor_of, derive_id, field, redemption_message, ring_op_message, sign_act,

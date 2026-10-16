@@ -1672,8 +1672,9 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   the fold said it did not settle (#124). A cut whose own signer stands by
   an act of the cut key it does not cover still cycles; the fold says so
   (`Membership::unsettled`), and nothing is decided on it. The keeper's
-  `Remove` of a standing key not its own is the cut;
-  anyone else's is an ask, counted as an act, cutting nobody. A cut key's
+  `Remove` of a standing key not its own is the cut; so is a person's own,
+  their leave (below, "Leaving a group"); anyone else's is an ask, counted
+  as an act, cutting nobody. A cut key's
   later acts count nowhere (`RailGap::Removed`), so it cannot remove, ask
   or hand on. A `Correct` voids nothing that moves membership — before,
   any member's `Correct` of an `Admit` unseated its key and a removed key's
@@ -1709,6 +1710,23 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   §10, 2026-10-12): `Register::removals`
   (`crates/svrngs-runtime/src/register.rs`), carried by `/v1/groups` and
   `/people/lends`, in `question.js`'s one wording.
+- **Leaving a group is a person's own act, and needs nobody's yes**
+  (groups-leave; svrn-docs `rings/current/LEAVING.md`; the operator,
+  2026-10-14: "Nobody's yes; keeper hands on first"). A `Remove` signed by
+  a key standing as the person it removes is the cut, by them alone: no
+  new kind of act, one more line of the fold (`membership.rs`, its module
+  docs the rule). svrngs-core's `Leave` writes a `Remove` of every key
+  standing as the person, each naming its newest acts, the signer's own
+  last, since a leave is an act of the key it cuts and its cut covers it
+  and what it descends from. The keeper's leave cuts nobody while anyone
+  else stands, so `Leave` refuses it (`Keeps`) and writes nothing: they
+  hand on first, by the `HandOn` that exists. The last person in a group
+  leaves freely, and every copy stays with whoever held it. A `Removal`
+  the fold would read as the signer's own leave is refused (`Own`), since
+  its keys' order is not the leave's. Leaving is final from that computer
+  for now: a computer signs every group with one key, and a cut key never
+  stands again (the operator, 2026-10-14: "Final for now; per-group keys
+  as a row").
 - **Leaving is cheap.** A group's whole state is a directory every member's
   computer holds. A group that goes wrong refounds from any copy, within
   hours, without whoever it leaves out (operator: "with dotfile elegance").

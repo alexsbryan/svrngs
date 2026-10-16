@@ -155,6 +155,9 @@ pub enum RemovalRefusal {
     /// The person keeps the group, and the keeper cannot be removed: they
     /// hand it on first.
     Keeps,
+    /// The person is the signer's own: a leave, which [`Leave`] writes in
+    /// the order that cuts every key of theirs.
+    Own,
 }
 
 impl Command for Removal {
@@ -171,18 +174,60 @@ impl Command for Removal {
             Ok(keys) if keys.iter().any(|k| m.keeper.as_ref() == Some(*k)) => {
                 Err(RemovalRefusal::Keeps)
             }
-            Ok(keys) => Ok(keys
-                .iter()
-                .map(|k| RailAct::Remove {
-                    key: (*k).clone(),
-                    through: before.tips(k).to_vec(),
-                })
-                .collect()),
+            Ok(keys) => Ok(removes(before, keys.into_iter())),
         };
         tracing::debug!(target: "register", person = %self.person, joined = ?self.joined,
             keeper = ?m.keeper, ?verdict, "removal: decided");
         verdict
     }
+
+    /// Refused when the fold read it as the signer's own leave: a key it
+    /// cut is the one that wrote it, whose newest act is among `written`.
+    fn confirm(&self, after: &Admission, written: &[OpId]) -> Result<(), RemovalRefusal> {
+        let own = (after.membership().cut.iter()).any(|(k, c)| {
+            written.contains(&c.by) && after.tips(k).iter().any(|t| written.contains(t))
+        });
+        tracing::debug!(target: "register", person = %self.person, own, "removal: whether the fold read it as a leave");
+        (!own).then_some(()).ok_or(RemovalRefusal::Own)
+    }
+}
+
+/// The person the key stands as leaves the group (groups-leave; DESIGN
+/// §6, "Leaving a group"): a `Remove` of every key standing as them, each
+/// naming its newest acts, this key's own last, since its cut covers its
+/// acts only through the `Remove` of it. The fold decides it: the keeper's
+/// leave cuts nobody while others stand, so is refused `Keeps`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Leave(pub String);
+
+impl Command for Leave {
+    type Refusal = RemovalRefusal;
+    const READS: Reads = Reads::All;
+
+    fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, RemovalRefusal> {
+        let m = before.membership();
+        let first = m.person_of(&self.0).map_or(self.0.as_str(), |(f, _)| f);
+        let others = m.devices_of(first).filter(|k| **k != self.0);
+        Ok(removes(before, others.chain([&self.0])))
+    }
+
+    fn confirm(&self, after: &Admission, _written: &[OpId]) -> Result<(), RemovalRefusal> {
+        let left = !after.membership().standing.contains(&self.0);
+        tracing::debug!(target: "register", key = %self.0, left, "leave: the fold's verdict");
+        left.then_some(()).ok_or(RemovalRefusal::Keeps)
+    }
+}
+
+/// A `Remove` of each of `keys`, in order, naming its newest acts held.
+fn removes<'a>(before: &Admission, keys: impl Iterator<Item = &'a String>) -> Vec<RailAct> {
+    let acts: Vec<RailAct> = keys
+        .map(|k| RailAct::Remove {
+            key: k.clone(),
+            through: before.tips(k).to_vec(),
+        })
+        .collect();
+    tracing::debug!(target: "register", removes = acts.len(), "removal: a Remove of each key, in order");
+    acts
 }
 
 /// The keeper hands the group's keeping to `person`'s computer (U7): of

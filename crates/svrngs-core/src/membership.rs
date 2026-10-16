@@ -18,9 +18,15 @@
 //!    seed of many keys, upstream's shape, the first key of the person whose
 //!    name sorts first), moved only by the keeper's own counting
 //!    [`RailAct::HandOn`] to a standing key. A counting [`RailAct::Remove`]
-//!    by the keeper of a standing key other than its own is the cut; by
-//!    anyone else it is an ask, and cuts nobody. A cut key's own acts after
-//!    it count nowhere, so it cannot remove, ask or hand on.
+//!    by the keeper of a standing key other than its own is the cut; one by
+//!    a key standing as the person it removes is that person's leave, and
+//!    the cut too, by them alone (groups-leave; the operator, 2026-10-14:
+//!    "Nobody's yes; keeper hands on first") — unless the keeper stands as
+//!    that person and someone else stands, so a keeper leaves only once
+//!    they hand on, or last; by anyone else it is an ask, and cuts nobody.
+//!    A leave's `Remove` is an act of the key it cuts, so the cut covers it
+//!    and the acts it descends from. A cut key's own acts after it count
+//!    nowhere, so it cannot remove, ask or hand on.
 //! 2. **The cut names acts by hash.** It covers the acts `through` names and
 //!    every act they descend from by `prev`; any other act of the cut key
 //!    counts nowhere, wherever its timestamp puts it. Which cuts count turns
@@ -440,7 +446,9 @@ fn covered(
         };
         let mut seen = BTreeSet::new();
         cut.unheld.clear();
-        for tip in through.iter().chain(&cut.handed_on) {
+        // A leave is an act of the key it cuts: it covers itself.
+        let own = chain.contains_key(&cut.by).then(|| cut.by.clone());
+        for tip in through.iter().chain(&cut.handed_on).chain(&own) {
             if !chain.contains_key(tip) {
                 cut.unheld.push(tip.clone());
             }
@@ -573,10 +581,14 @@ fn walk(
                 live.insert(key.clone(), person);
             }
             RailAct::Remove { key, .. } => {
-                let cuts = keeps && *key != op.actor && live.contains_key(key);
+                let of = |k: &str| String::from(devices.get(k).map_or(k, String::as_str));
+                let alone = live.keys().all(|k| of(k) == of(&op.actor));
+                let leaves = of(key) == of(&op.actor)
+                    && (keeper.as_deref().map(of) != Some(of(key)) || alone);
+                let cuts = (keeps && *key != op.actor || leaves) && live.contains_key(key);
                 tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, key = %key,
-                    keeper = ?keeper, cuts,
-                    "membership: a Remove — the keeper's cuts; anyone else's is an ask and cuts nobody");
+                    keeper = ?keeper, leaves, alone, cuts,
+                    "membership: a Remove — the keeper's cuts, and a person's own leaves unless they keep and others stand; anyone else's is an ask and cuts nobody");
                 if cuts {
                     let handed_on = made.get(key.as_str()).cloned().unwrap_or_default();
                     tracing::debug!(target: "rail:membership", id = %id, key = %key, kept = handed_on.len(),

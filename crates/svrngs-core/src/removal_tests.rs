@@ -521,3 +521,55 @@ fn cuts_that_cycle_are_said_unsettled() {
     );
     assert_eq!(store.0.borrow().len(), cycled.len(), "nothing written");
 }
+
+// ── leaving (groups-leave; DESIGN §6, "Leaving a group") ────────
+
+/// **A person's own `Remove` is their leave, by them alone** (groups-leave
+/// (a); svrn-docs `rings/current/LEAVING.md` §3.1). Bo, not the keeper,
+/// removes bo having seen bo's one act: bo is out, cut by bo's own
+/// `Remove`; the act bo's cut saw counts, and the `Remove` itself, and an
+/// act of bo's after it does not. Nobody else said yes. Red at c50dad17,
+/// where anyone's `Remove` but the keeper's was an ask that cut nobody
+/// (membership.rs:576).
+#[test]
+fn a_persons_own_remove_is_their_leave() {
+    let bo_in = signed(&key(1), 100, 0, admit_of("bo", 2));
+    let cy_in = after(&key(1), &bo_in, 101, admit_of("cy", 3));
+    let bo_writes = signed(&key(2), 102, 0, record("bo-writes"));
+    let leaves = after(&key(2), &bo_writes, 103, remove_of(2, &[&bo_writes]));
+    let bo_later = after(&key(2), &leaves, 104, record("bo-later"));
+    let held = [bo_in, cy_in, bo_writes, leaves.clone(), bo_later];
+    let a = admitted_under(&alex_alone(), &held);
+    assert!(!standing(&a, 2), "bo is out: {:?}", a.membership());
+    assert!(standing(&a, 1) && standing(&a, 3), "alex and cy stay");
+    assert_eq!(a.membership().cut[&actor_of(&key(2))].by, leaves.id);
+    assert!(a.membership().counts(&leaves.id), "the leave counts");
+    assert!(!a.membership().unsettled, "and settles");
+    assert_eq!(applied(&a), vec!["bo-writes"]);
+}
+
+/// **The keeper's leave cuts nobody until they hand on; the last person
+/// leaves freely** (groups-leave (a); the operator, 2026-10-14: "Nobody's
+/// yes; keeper hands on first"). Alex keeps the order of removals and
+/// leaves: alex stays, and keeps it. Alex hands on to bo and leaves: alex
+/// is out and bo keeps. Bo, last, leaves: nobody stands. Planted with the
+/// fold's keeper check out (`leaves` true for the keeper too), alex's
+/// first leave cut alex and left the group with no one keeping it.
+#[test]
+fn a_keepers_leave_waits_for_their_hand_on() {
+    let bo_in = signed(&key(1), 100, 0, admit_of("bo", 2));
+    let leaves = after(&key(1), &bo_in, 101, remove_of(1, &[&bo_in]));
+    let a = admitted_under(&alex_alone(), &[bo_in.clone(), leaves.clone()]);
+    assert!(standing(&a, 1), "alex keeps, so stays");
+    assert_eq!(a.membership().keeper, Some(actor_of(&key(1))));
+    let hands = after(&key(1), &leaves, 102, hand_on(2));
+    let then = after(&key(1), &hands, 103, remove_of(1, &[&hands]));
+    let held = [bo_in, leaves, hands, then];
+    let a = admitted_under(&alex_alone(), &held);
+    assert!(!standing(&a, 1) && standing(&a, 2), "alex is out, bo in");
+    assert_eq!(a.membership().keeper, Some(actor_of(&key(2))), "bo keeps");
+    let last = signed(&key(2), 104, 0, remove_of(2, &[]));
+    let a = admitted_under(&alex_alone(), &[held.to_vec(), vec![last]].concat());
+    assert!(a.membership().standing.is_empty(), "the last person leaves");
+    assert!(!a.membership().unsettled);
+}

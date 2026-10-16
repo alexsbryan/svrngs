@@ -71,6 +71,8 @@ pub enum Outcome {
     /// The person decides removals, so is not removed: they hand that on
     /// first.
     Decides,
+    /// The person is the one asking: a leave, not a removal.
+    Own,
     /// Only `decides` hands deciding on.
     NotDecider { decides: Option<Person> },
     /// Only whoever decides removals hands deciding on, and who that is
@@ -136,6 +138,7 @@ async fn remove(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outc
                 Refused::Command(RemovalRefusal::NotInGroup) => Outcome::NotInGroup,
                 Refused::Command(RemovalRefusal::Which(joined)) => Outcome::Which { joined },
                 Refused::Command(RemovalRefusal::Keeps) => Outcome::Decides,
+                Refused::Command(RemovalRefusal::Own) => Outcome::Own,
             };
         }
         Err(e) => {

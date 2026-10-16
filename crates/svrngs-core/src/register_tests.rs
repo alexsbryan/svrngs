@@ -826,3 +826,66 @@ fn a_computers_relay_is_written_once_per_move() {
         );
     }
 }
+
+// ── leaving (groups-leave) ──────────────────────────────────────
+
+/// **A person's leave cuts every key of theirs, from either computer, by
+/// them alone** (groups-leave (a)). Bo leaves from each of bo's two
+/// computers in turn, in a fresh copy of alex's group: a `Remove` of each
+/// key, the signer's last, and bo stands nowhere while alex and cy stay.
+/// Planted with the signer's key first (`[&self.0].into_iter().chain(..)`
+/// in `Leave::decide`), one of the two left bo's other computer standing.
+#[test]
+fn a_persons_leave_cuts_every_key_of_theirs() {
+    for from in [key(2), key(5)] {
+        let (seed, store) = alexs_group();
+        let done = commit(&store, &Leave(actor_of(&from)), &author(&from, &seed, 200));
+        let done = done.unwrap().unwrap();
+        assert_eq!(done.lines().len(), 2, "one Remove per key");
+        let m = register(&store, &seed);
+        for k in [key(2), key(5)] {
+            assert!(!m.standing.contains(&actor_of(&k)), "bo is out: {m:?}");
+        }
+        assert!(m.standing.contains(&actor_of(&key(1))) && m.standing.contains(&actor_of(&key(3))));
+    }
+}
+
+/// **The keeper's leave is refused until they hand on, and writes nothing**
+/// (groups-leave (a)). Alex leaves: `Keeps`, nothing written. Alex hands on
+/// to bo and leaves: alex is out. Bo removing bo with `svrngs remove` is
+/// refused `Own`, not read as half a leave.
+#[test]
+fn the_keepers_leave_waits_for_the_hand_on() {
+    let (seed, store) = alexs_group();
+    let alex = Leave(actor_of(&key(1)));
+    let held = store.0.borrow().len();
+    assert_eq!(
+        commit(&store, &alex, &author(&key(1), &seed, 200)).unwrap(),
+        Err(Refused::Command(RemovalRefusal::Keeps))
+    );
+    assert_eq!(store.0.borrow().len(), held, "nothing written");
+    let to_cy = HandOnTo {
+        person: p("cy"),
+        joined: None,
+    };
+    commit(&store, &to_cy, &author(&key(1), &seed, 201))
+        .unwrap()
+        .unwrap();
+    commit(&store, &alex, &author(&key(1), &seed, 202))
+        .unwrap()
+        .unwrap();
+    assert!(
+        !register(&store, &seed)
+            .standing
+            .contains(&actor_of(&key(1))),
+        "alex left"
+    );
+    for from in [key(2), key(5)] {
+        let bo = Removal {
+            person: p("bo"),
+            joined: None,
+        };
+        let refused = commit(&store, &bo, &author(&from, &seed, 203)).unwrap();
+        assert_eq!(refused, Err(Refused::Command(RemovalRefusal::Own)));
+    }
+}
