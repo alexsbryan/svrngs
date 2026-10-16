@@ -30,6 +30,10 @@ use svrngs_node::{
     SigningKey, BROWSER_LINE_VERSION, LINK_LINE_VERSION,
 };
 
+#[path = "../../svrngs-node/tests/common/mod.rs"]
+mod node_common;
+use node_common::heard;
+
 /// The lines a group's journal holds on disk, as written.
 fn lines(node: &Node, group: &str) -> Vec<svrngs_node::Op<svrngs_node::SignedOp>> {
     let file = node
@@ -930,38 +934,6 @@ fn join_parses_its_link() {
     assert!(cli::parse(argv(&["join", &url, "--origin", "https://x.example/"])).is_err());
 }
 
-/// What `filter` traces while the guards live, kept to be read, as
-/// svrngs-node's tests/common `heard` keeps it: a second dispatcher alive,
-/// so a callsite another thread reaches first is not cached unheard.
-fn heard(
-    filter: &str,
-) -> (
-    std::sync::Arc<std::sync::Mutex<Vec<u8>>>,
-    (tracing::subscriber::DefaultGuard, tracing::Dispatch),
-) {
-    #[derive(Clone)]
-    struct Kept(std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
-    impl std::io::Write for Kept {
-        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-            self.0.lock().unwrap().extend_from_slice(buf);
-            Ok(buf.len())
-        }
-        fn flush(&mut self) -> std::io::Result<()> {
-            Ok(())
-        }
-    }
-    let said = Kept(Default::default());
-    let writer = said.clone();
-    let subscriber = tracing_subscriber::fmt()
-        .with_env_filter(filter)
-        .with_ansi(false)
-        .with_writer(move || writer.clone())
-        .finish();
-    let guard = tracing::subscriber::set_default(subscriber);
-    let two = tracing::Dispatch::new(tracing::subscriber::NoSubscriber::default());
-    (said.0, (guard, two))
-}
-
 /// **A computer the group cut is told so by the issuer, never that its
 /// link was refused** (groups-leave-others (d), #181). Hal joins house and
 /// Sam's computer cuts him. Hal's key, on a computer whose copy of house
@@ -1004,7 +976,7 @@ async fn a_computer_the_group_cut_is_told_so_by_the_issuer() {
         matches!(&refused, Err(Refusal::Left(g)) if *g == name("house")),
         "{refused:?}"
     );
-    let said = String::from_utf8(said.lock().unwrap().clone()).unwrap();
+    let said = String::from_utf8(said.0.lock().unwrap().clone()).unwrap();
     for trace in [
         "join: whether this computer was cut in the group cannot be read here",
         "redeem: refused — the group cut this key",
