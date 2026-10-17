@@ -478,14 +478,8 @@ fn walk(
     covers: &BTreeMap<String, BTreeSet<OpId>>,
     kept: &BTreeSet<&OpId>,
 ) -> Membership {
-    let mut bindings: BTreeMap<String, Person> = seed
-        .members
-        .iter()
-        .flat_map(|(person, keys)| {
-            keys.iter()
-                .map(move |k| (k.clone(), person.clone()))
-                .collect::<Vec<_>>()
-        })
+    let mut bindings: BTreeMap<String, Person> = (seed.members.iter())
+        .flat_map(|(person, keys)| keys.iter().map(move |k| (k.clone(), person.clone())))
         .collect();
     let mut devices: BTreeMap<String, String> = (seed.members.values())
         .flat_map(|keys| keys.iter().skip(1).map(|k| (k.clone(), keys[0].clone())))
@@ -525,13 +519,7 @@ fn walk(
                 }),
         };
         if let Some(fault) = fault {
-            tracing::debug!(
-                target: "rail:membership",
-                id = %id,
-                actor = %op.actor,
-                ?fault,
-                "membership: a redeeming Admit does not count"
-            );
+            tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, ?fault, "membership: a redeeming Admit does not count");
             refused.insert(id.clone(), fault);
             continue;
         }
@@ -569,14 +557,7 @@ fn walk(
                         devices.remove(key)
                     }
                 };
-                tracing::debug!(
-                    target: "rail:membership",
-                    key = %key,
-                    person = %person,
-                    device_of = ?of,
-                    ?device,
-                    "membership: standing gained"
-                );
+                tracing::debug!(target: "rail:membership", key = %key, person = %person, device_of = ?of, ?device, "membership: standing gained");
                 match device {
                     Device::Browser => browsers.insert(key.clone()),
                     Device::Computer => browsers.remove(key),
@@ -619,13 +600,7 @@ fn walk(
             }
             RailAct::Invite { .. } => {
                 let older = open.insert(op.actor.as_str(), id);
-                tracing::debug!(
-                    target: "rail:membership",
-                    id = %id,
-                    actor = %op.actor,
-                    closes = ?older,
-                    "membership: a link opens, closing its issuer's older one"
-                );
+                tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, closes = ?older, "membership: a link opens, closing its issuer's older one");
             }
             RailAct::Relay { url } => {
                 tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, ?url,
@@ -719,14 +694,7 @@ fn redemption<'a>(
         Some(_) if !r.verifies(namespace, person, key) => Err(InviteFault::BadCosignature),
         Some(i) => Ok((&r.id, i.device_of.as_deref())),
     };
-    tracing::debug!(
-        target: "rail:membership",
-        invite = %r.id,
-        actor = %op.actor,
-        key,
-        ?verdict,
-        "membership: a redemption judged on what it says"
-    );
+    tracing::debug!(target: "rail:membership", invite = %r.id, actor = %op.actor, key, ?verdict, "membership: a redemption judged on what it says");
     verdict
 }
 
