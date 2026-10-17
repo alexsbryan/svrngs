@@ -205,12 +205,16 @@ async function lending() {
   }
 }
 
+// `at` (`/` when none) as an address at `origin`, or null: resolved, and
+// kept only if it is still there, as open.js judges its way back — a path
+// `startsWith` let through, `/\evil.example`, left for another host (#153).
+const within = (at, origin) => ((u) => (u.origin === new URL(origin).origin ? u.href : null))(new URL(at ?? '/', origin));
+
 // The ask: in svrngs's words around the lender's, then back to the app.
 function ask(lent, q) {
   const [lend, app] = [q.get('lend'), q.get('app')].map((x) => lent.find((l) => label(l) === x));
   if (!lend || !app || !lend.asks) return main.append(el('p', unlent));
-  const back = q.get('back')?.startsWith('/') && !q.get('back').startsWith('//') ? q.get('back') : '/';
-  const go = () => location.assign(new URL(back, app.origin));
+  const go = () => location.assign(within(q.get('back'), app.origin) ?? app.origin);
   const s = el('section', '', el('h2', question(app, lend)), el('blockquote', lend.asks));
   s.append(button('Yes', () => said(label(lend), label(app), 'yes').then(go, (e) => s.append(e.message))), button('Not now', go));
   main.append(s);
@@ -241,9 +245,10 @@ try {
     // says so when the label names nothing lent here.
     const open = el('p', '', el('label', 'The link: ', el('input')), button('Open it', () => {
       const q = new URLSearchParams(open.querySelector('input').value.split('#')[1] ?? '');
-      const [lend, at] = [q.get('open') ?? '', q.get('at') ?? '/'];
-      if (!/^[a-z0-9]+$/.test(lend) || !at.startsWith('/') || at.startsWith('//')) return open.append(' That is not a link to something lent in your groups.');
-      window.open(new URL(at, `http://${lend}.localhost:${location.port}`), '_blank');
+      const lend = q.get('open') ?? '';
+      const to = /^[a-z0-9]+$/.test(lend) && within(q.get('at'), `http://${lend}.localhost:${location.port}`);
+      if (!to) return open.append(' That is not a link to something lent in your groups.');
+      window.open(to, '_blank');
     }));
     main.append(Object.assign(el('section', '', el('h2', 'Open a link from your group'), open), { id: 'open' }));
     // A group made here as `svrngs new` makes one, by the svrngs running

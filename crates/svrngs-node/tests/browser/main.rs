@@ -2629,6 +2629,31 @@ async fn the_home_page_shows_a_group_before_its_slowest_computer(engine: Engine)
     drop((ada, silent));
 }
 
+in_both_engines!(
+    /// **A link pasted on the home page opens only within its lend**
+    /// (#153). Under "Open a link from your group", a link to a lend at a
+    /// path opens a tab at that path on the lend's origin; one whose path
+    /// is `/\evil.example/x` — a path to `startsWith('/')`, another host
+    /// to the URL parser — opens nothing and is said not to be a link to
+    /// something lent. Red at d62c393e: it opened `http://evil.example/x`.
+    the_home_page_opens_a_link_only_within_its_lend
+);
+async fn the_home_page_opens_a_link_only_within_its_lend(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let port = ada.api_addr().port();
+    let links = ["/at/a/path", "/\\evil.example/x"].map(|at| format!("http://page.example/#open=abc123&at={at}"));
+    let seen = home_page(engine, &ada, json!({ "opens": links })).await;
+    let opens = &seen["opens"];
+    let lent = format!("http://abc123.localhost:{port}/at/a/path");
+    assert_eq!(opens[0][0], json!([lent]), "{seen:#}");
+    assert_eq!(opens[1][0], json!([]), "{seen:#}");
+    let said = opens[1][1].as_str().unwrap_or_default();
+    assert!(said.ends_with("That is not a link to something lent in your groups."), "{seen:#}");
+    drop(ada);
+}
+
 /// `person` let into ada's group from a phone's page as `signing(joining)`:
 /// a link's `Invite`, then its redemption naming a browser (u4-1).
 fn from_a_phone(ada: &Node, person: &str, joining: u8) {

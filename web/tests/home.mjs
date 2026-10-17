@@ -3,7 +3,7 @@
 // `args.ask`, its `/ask?lend=<label>&app=<label>`, it is read for its
 // heading, which the test holds to the one source (question.js).
 //
-//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>?, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true, "open"?: "<a link's words>", "older"?: true}'
+//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>?, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true, "open"?: "<a link's words>", "opens"?: ["<link>", ...], "older"?: true}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
@@ -31,6 +31,10 @@ if (args.older) {
 }
 const logs = [];
 context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
+// With `opens`, links pasted under "Open a link from your group", one at a
+// time: where each would open a tab — `window.open` kept, not followed — and
+// what the section then says (#153).
+if (args.opens) await context.addInitScript(() => Object.assign(window, { opened: [], open: (u) => void window.opened.push(String(u)) }));
 try {
   const page = await context.newPage();
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
@@ -79,6 +83,12 @@ try {
     await page.locator('#lent li, #lent p').first().waitFor({ timeout: 30_000 });
     after.push(await page.locator(args.all).allTextContents());
   }
+  const opens = [];
+  for (const link of args.opens ?? []) {
+    await page.locator('#open input').fill(link, { timeout: 30_000 });
+    await page.locator('#open button').click();
+    opens.push(await page.evaluate(() => [window.opened.splice(0), document.querySelector('#open p').textContent]));
+  }
   // With `drawn`, a selector: each match's class and words, as the page
   // drew them once loaded (v1ui-door (c): the door).
   const drawn = args.drawn ? await page.locator(args.drawn).evaluateAll((es) => es.map((e) => [e.className, e.textContent])) : null;
@@ -98,7 +108,7 @@ try {
   // Every link on the page, its words and where it opens (start-home).
   const links = await page.locator('a').evaluateAll((as) => as.map((a) => ({ text: a.textContent, target: a.target })));
   const timed = Object.fromEntries(await timing);
-  console.log(JSON.stringify({ heading, read, all, after, clipboard, links, timed, drawn, text, opened, logs }));
+  console.log(JSON.stringify({ heading, read, all, after, clipboard, links, timed, drawn, text, opened, opens, logs }));
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;
