@@ -477,7 +477,7 @@ cut once, one sync request carrying the cut alone (`removal::tell`). `POST
 keys, as `svrngs leave` and the home page's "Leave this group" ask it;
 from then on this computer stands in the group for nobody, and its round
 tells the leave to each computer its copy says stands until each answers
-(`ring_sync.rs` `tell_leaves`, #190). A dialer the
+(`ring_sync.rs` `leave_told`, #190). A dialer the
 keeper cut is served, on the members' protocol, only svrngs's refusal
 `removed` (`door::gone`, chosen in `node.rs`'s accept by
 `removed_anywhere`), and a pass it signed is refused the same; `/v1/groups`
