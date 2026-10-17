@@ -90,7 +90,11 @@ try {
     opens.push(await page.evaluate(() => [window.opened.splice(0), document.querySelector('#open p').textContent]));
   }
   // With `drawn`, a selector: each match's class and words, as the page
-  // drew them once loaded (v1ui-door (c): the door).
+  // drew them once loaded (v1ui-door (c): the door) and judged — none still
+  // "asking…", as each is until `/v1/lends` answers or fails (question.js
+  // `door`). Read at once, a loaded host read them unjudged (#193).
+  const judged = (s) => ((es) => es.length && !es.some((e) => e.textContent.includes('asking…')))([...document.querySelectorAll(s)]);
+  if (args.drawn) await page.waitForFunction(judged, args.drawn, { timeout: 30_000 });
   const drawn = args.drawn ? await page.locator(args.drawn).evaluateAll((es) => es.map((e) => [e.className, e.textContent])) : null;
   // With `open`, a link's words: the tab it opens, once loaded, its
   // address and title (v1ui-lend (b): bo opening what ada lent).
