@@ -2068,8 +2068,7 @@ group's page is the page no app runs at, where a person says yes (sup-3;
 could frame it at `#ask=`, so the host sends `frame-ancestors 'none'` on
 every answer (`web/vercel.json`; a `<meta>` policy cannot carry it), which
 Chromium and WebKit were watched refusing, and a host a group names in
-its place must send it too. Ours sends it once the operator deploys the
-page again (`scripts/deploy-page.sh`).
+its place must send it too. Ours does.
 
 **A computer gets svrngs from the group's link** (v1-onboarding; the
 operator, 2026-10-11, §10). On a computer the group's page gives one line
@@ -2840,7 +2839,10 @@ v1ui queue made the home page and the phone's page what V1 shows (landed,
 
 That is V1, released 16 October 2026 (`RELEASES.md`; the page published at
 `de8923f7`, commit `5bc0db8e`), and it meets its groups at n0's relays and
-lookup, as `cli::SHIPPED` names now.
+lookup, as `cli::SHIPPED` names now. V1.1, released 17 October 2026, is the
+page and downloads published at `a555a225`: V1 with the north-star audit's
+fixes, the loopback patch, the trust floor and pinned carried code, and none
+of House rules, which waits for its run and this queue's closing audit.
 
 **After V1**, in this order (the operator, 2026-10-16: "Ok so the queue
 next is: loopback, canon, then guest"; "Yes, floor and pin first"):

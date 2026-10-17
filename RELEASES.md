@@ -1,5 +1,44 @@
 # svrngs releases
 
+## V1.1, 17 October 2026
+
+V1.1 closes a way for one person in a group to act as everyone else, and
+fixes what an audit of V1 found. If you installed svrngs before 17
+October, run the install line again; it updates in place.
+
+**An app runs as your group brought it.** Before, anyone in a group could
+change the files of an app the group had brought, such as Money or Events,
+and everyone else's browser ran the change as them, writing in their name.
+Now each computer serves an app as it was brought. When someone changes
+it, your home page says who and asks, "Open the new version?" The new
+version runs for you only after you press **Yes, use the new version**. The
+old one keeps working until then.
+
+**The group's page can't reach programs on your computer.** The published
+page allowed connections to your own computer, left over from testing. It
+never needed them, and now it can't make them.
+
+**What the audit fixed:**
+- A link pasted on your home page, or an app's request to send you
+  somewhere, stays inside the app it came from. A crafted link could open
+  another website.
+- A member can't make every computer in the group use gigabytes of
+  memory, or hang, with one entry numbered far ahead of their last.
+- A forged copy of an entry that arrives first can't hide the real one.
+- If your computer loses power while it writes, the next entry it writes is
+  no longer lost.
+- When you leave a group, your computer keeps telling the others until
+  each one answers, so a computer that was off at the time hears it once
+  it's back.
+- A computer whose clock runs fast can't make every invite link look
+  expired.
+- A computer whose clock reads before 1970 doesn't let anyone into a lent
+  app after their access has run out.
+
+Everything under "What V1 doesn't do yet" still holds.
+
+V1.1 is the build at `group.svrnme.sh`, from commit `a555a225`.
+
 ## V1, 16 October 2026
 
 svrngs keeps what your group shares on your own computers: the money you
@@ -177,5 +216,5 @@ audit, even with leaving and the grapevine added:
 - **Connections.** A computer reaches another directly over its encrypted
   connection, with no local port in between.
 
-V1 is the build at `group.svrnme.sh`, from commit `de8923f7`. svrngs is open
-software under the AGPL, version 3 or later.
+V1 was built from commit `de8923f7`. svrngs is open software under the AGPL,
+version 3 or later.
