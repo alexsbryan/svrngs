@@ -429,7 +429,7 @@ async fn tell_leaves(host: &Host, namespaces: &[String], told: &mut Told) {
             warn!(namespace = ns, error = %e, "ring sync: a group left, whose leave cannot be read, so it is not told");
             Vec::new()
         });
-        debug!(namespace = ns, owed = computers.len(), lines = lines.len(), "ring sync: a group this computer left — its leave told to each computer standing that has not answered; none when it was removed");
+        debug!(namespace = ns, untold = computers.len(), lines = lines.len(), "ring sync: a group this computer left — its leave told to each computer standing that has not answered; none when it was removed");
         if computers.is_empty() || lines.is_empty() {
             continue;
         }
