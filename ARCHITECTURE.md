@@ -7,13 +7,12 @@ as what it describes.
 ## Bird's eye
 
 svrngs owns the group's code, forked from commonwealth-ai's ring slice (DESIGN
-§4). The record and the journal on disk have landed; sync, the routes and the
-member door come next, forked the same way (DESIGN §8, U1-U3); of sync, the
-dialling and serving halves over iroh have landed, and the round and its
-route, and the node that runs them. The `svrngs` command runs a node: it
-makes a group, mints its link and runs for every group the computer holds,
-serving the record to the computer's apps over loopback (U3, `rail.rs`);
-joining by that link is next (U2).
+§4): the record, the journal on disk, sync over iroh with its round and
+route, the routes and the member door, each forked the same way (DESIGN §8,
+U1-U3), and since then the page a phone opens (`web/`). The `svrngs` command
+runs a node: it makes a group, mints its link, joins one by a link, removes
+someone and leaves one, and runs for every group the computer holds, serving
+the record to the computer's apps over loopback (U3, `rail.rs`).
 
 ## Code map
 
@@ -92,7 +91,7 @@ through `RingRail`'s queries (`admission`, `standing`, `invite_for`,
 (`digest`, `ops_missing_from_within`, `ingest_all`). What follows
 about the journal describes this crate.
 
-**`crates/svrngs-node`**: a group's journal on disk — one append-only JSONL
+The journal (svrngs-runtime's, as said above): a group's journal on disk — one append-only JSONL
 log per group under `<root>/rings/<ns>/` (`journal.rs`), the single-writer
 door that signs and the peer-ingest path that does not; upstream's checkpoint
 (`ring_checkpoint.rs`), which nothing of svrngs composed, went in lean-3.
@@ -117,29 +116,37 @@ entered, and the offer read whole judges by those (`Checked`), checking
 again only a line it did not see enter. Then (ceiling-4) the write index
 keeps the acts that move membership, with every act of a key a `Remove`
 names (`standing_reads`; U7), in the log's order, and the standing
-last folded from them with the seed it was folded from (`RingJournal::standing`):
+last folded from them with the seed it was folded from (`RingJournal::folded`):
 the register answers from it until an act that moves membership arrives
 or the seed changes, judged by `Ed25519Verifier`, which `standing` no
-longer takes.
+longer takes. Then (northstar) an id is held once a line of it verifies,
+a line that does not kept by id and signature, so a forged copy that lands
+first never stands for the act (#189); an append after a torn last line
+ends it first, so the act it writes is read whole (#191); and
+`RingRail::own_removes` answers the `Remove`s this computer signed, the
+leave its round tells (#190).
 
-Beside the journals, `svrngs-node` holds the dialling half of sync over iroh
+**`crates/svrngs-node`**: beside the journals, it holds the dialling half of sync over iroh
 (DESIGN §8, U1's inventory), forked at `e1a43bcd2` the same way:
 `peer_wire.rs` is `sovereign-peer-wire` whole (the sync bodies, the body limit
 and the exchange budget); `alpn.rs` is `mesh-reach`'s `alpn.rs` with its one
 `ALPN`, then the enum it promised (`Alpn`, U2), moved whole into svrngs-core
 (u4-2) so a browser's page spells each protocol as the node does, and
-re-exported as `svrngs_node::alpn`; `guest.rs` is `mesh-reach`'s guest dialer, the
-relayed endpoint and the one loopback bridge (`HttpBridge`, `pump`); `iroh.rs`
-is `commonwealth-transport`'s client side (`IrohTransport`,
-`format_dial_string`, `preferred_bridge_port`). Its edits: no IP transport;
+re-exported as `svrngs_node::alpn`; `guest.rs` is `mesh-reach`'s guest dialer and
+the relayed endpoint, its one loopback bridge (`HttpBridge`, `pump`) cut in
+arch-peer (a27e688b); `iroh.rs` is `commonwealth-transport`'s client side
+(`IrohTransport`, `format_dial_string`; `preferred_bridge_port` went with
+the bridge). Its edits: no IP transport;
 one ALPN, so the per-class ALPNs (`RPC_ALPN`, `CLIENT_ALPN`, `GUEST_ALPN`,
 `OFFER_ALPN`, `MEDIA_ALPN`, `APP_ALPN`) and `alpn_for_class` go, and the guest
 tunnel dialled `ALPN` until lean-3 deleted it (`guest/tunnel.rs`,
 `parse_dial_string`), nothing of svrngs reaching it; no bench relay pin (`relay_pin_active`,
 `build_relay_only_endpoint`); no `PeerTransport`, `PeerContact`,
-`PeerEndpoint` or `TrafficClass`, so the transport is a concrete type whose
-`base_url` takes a `Contact` (a key with optional dial hints) and its bridges
-are keyed by peer alone; `NodePubkey` becomes iroh's `PublicKey`; the sync
+`PeerEndpoint` or `TrafficClass`, so the transport is a concrete type that
+sends a request to a `Contact` (a key with optional dial hints) on a
+bi-stream of the one connection kept per computer and protocol
+(`IrohTransport::send`; arch-peer, groups-tabs (c)); `NodePubkey` becomes
+iroh's `PublicKey`; the sync
 bodies import the record from `svrngs-core`. Then it changed: a bare key, with
 no address in its contact or seeded, is dialled when the endpoint has an
 address lookup (n0's DNS under `RelayConfig::n0_services`), where upstream
@@ -152,9 +159,9 @@ on each connection's ALPN and verified key (`Admit`), closing a refused
 connection and naming, for an admitted one, the `axum::Router` that hyper's
 HTTP/1 server serves on its every bi-stream, each request carrying the verified key as a
 `Dialer` extension. There is no loopback listener on the serving side and no
-request head parsed but by hyper. The bridge's own tests splice through a test
-stand-in, since they test the bridge, not what the acceptor serves;
-`tests/accept.rs` tests the acceptor.
+request head parsed but by hyper. A test drives raw HTTP or a socket at a
+door through a stand-in splice (`node/tests_support.rs`), which the product
+has not; `tests/accept.rs` tests the acceptor.
 iroh is pinned at `=1.0.2`, and its tree locked at upstream's versions, so the
 fork runs on what upstream tested.
 
@@ -166,8 +173,8 @@ Their edits cut the mesh ties: `RoundMembers` loses its walk of the mesh
 (`RoundMembers::of`), and is built from named keys instead, which the node
 reads from the register (DESIGN §8, U1); the mesh proof stamp the exchange
 carried goes; `RingSyncHost::transport` is the concrete `IrohTransport`, and a
-contact's addresses are its one `base_url`; `peer_client` is `pub`, since its one upstream caller,
-`RailsDaemon`'s `impl RingSyncHost`, did not come over. The append
+contact's addresses were its one `base_url`, cut with the bridge for a
+request on the connection kept to it (`ring_sync::post`). The append
 wrapper that nudges the round (`ring_sync::append`) came over in U3 with the
 record API, which routes the append door through it. The live route
 (`ring_live`) came over in U3, with `RingInbound`'s live buffer; it refused
@@ -296,7 +303,7 @@ lane came over in U3: `LiveBuffer`, bounded per group, which the live route
 fills and `GET /v1/rail/live` drains, and `POST /v1/rail/live`; `live.rs`
 is the inference daemon's fan-out (`routes_rail_live.rs`, `push_ephemeral`
 and `offer_peer`), its walk of the mesh's Online members cut, so its caller
-names the peers (`LivePeer`), each dialled at its one `base_url`. Then it
+names the peers (`LivePeer`), each dialled by its key. Then it
 changed: the push door, which buffered locally and answered `peers: []`,
 offers the payload to every computer's key standing in the group but this
 node's (`live_peers`, from the register; u4-1 skips a browser's), over the node's `IrohTransport`, held
@@ -438,9 +445,9 @@ computer's door for its own lends and dialled to the lender's otherwise
 origin signs. `/svrngs-reads` gives each asked lend's `asks` and its `ask`
 address there.
 `Node::lends` asks every other computer's key standing in a group held, at once, and
-answers each lend with whose it is and its address on this computer's
-loopback, the dialler's bridge to its lender then `/lend/<name>/`; a
-computer that does not answer is named, and nothing is kept between asks.
+answers each lend with whose it is and where this computer reaches it, its
+origin here (`origin.rs`); a computer that does not answer is named, and
+nothing is kept between asks.
 `GET /people/lends` (`node::PEOPLE_LENDS_ROUTE`, u4-5) answers a member the
 same of the groups it stands in, this computer's own lends (`door::offered`)
 among them and the asker's computer not asked, each lend with its lender's
@@ -464,9 +471,13 @@ synced folder or an app placed in a group it stands in. Removal as the command a
 `POST /v1/removals` commits svrngs-core's `Removal` and `POST
 /v1/handovers` its `HandOnTo`, each answering an `Outcome` the command
 words; each written wakes the round (`AskRound::wake`), so every
-computer of the group holds it now, and a cut is told to the removed
-person's computers once, one sync request carrying the cut alone
-(`ring_sync::post`). A dialer the
+computer of the group holds it now, and a cut is told to the computers it
+cut once, one sync request carrying the cut alone (`removal::tell`). `POST
+/v1/leaves` commits `Leave`, the person's own `Remove` of each of their
+keys, as `svrngs leave` and the home page's "Leave this group" ask it;
+from then on this computer stands in the group for nobody, and its round
+tells the leave to each computer its copy says stands until each answers
+(`ring_sync.rs` `tell_leaves`, #190). A dialer the
 keeper cut is served, on the members' protocol, only svrngs's refusal
 `removed` (`door::gone`, chosen in `node.rs`'s accept by
 `removed_anywhere`), and a pass it signed is refused the same; `/v1/groups`
@@ -690,7 +701,7 @@ Jellyfin's, on the door's sign-in (DESIGN §3, "The room", call 6).
 
 **`apps/jellyfin/`**: whatever knows Jellyfin's API (DESIGN §3, U5's call
 3): its `nouns.txt`, the sign-in program a lender runs beside it (`mw/`,
-its README), and the drivers of its measured runs (`check/`).
+its README), and the drivers of its measured runs (`check/`, `folders/`).
 **`apps/tap/`**: only Tap's `nouns.txt`. Tap is a canary DESIGN §8 plans,
 after U3, and is not built: nothing runs it (#196).
 
