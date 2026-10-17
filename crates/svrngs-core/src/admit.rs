@@ -100,11 +100,14 @@ pub enum RailGap {
     /// the derived id, so this changes no outcome — it is reported because a
     /// peer writing lines whose id has been rewritten is a fact worth seeing.
     TamperedId { claimed: OpId, derived: OpId },
-    /// This actor's ops jump over a sequence number. Something they wrote has
-    /// not reached us — the one condition that distinguishes "nothing
-    /// happened" from "it never arrived." Counted from zero: a
-    /// [`Seal`](crate::RailAct::Seal) retires nothing (arch-seal).
-    SequenceHole { actor: String, missing: u64 },
+    /// This actor's ops jump over sequence numbers, `from` to `to` (both
+    /// missing). Something they wrote has not reached us — the one condition
+    /// that distinguishes "nothing happened" from "it never arrived."
+    /// Counted from zero: a [`Seal`](crate::RailAct::Seal) retires nothing
+    /// (arch-seal). One gap a run, not a seq: a seq is what a line claims,
+    /// and a gap each let one line far past its chain cost every copy that
+    /// many (#187).
+    SequenceHole { actor: String, from: u64, to: u64 },
     /// One actor used one sequence number for two different ops. Equivocation
     /// or a lost counter after a restart. Both count, each weighed as itself:
     /// forks void nothing (svrngs, U7; DESIGN §6), since excluding both let an
@@ -258,9 +261,14 @@ impl core::fmt::Display for RailGap {
                 "a journal line whose id ({}) does not match its content",
                 crate::short_id(&claimed.to_string())
             ),
-            Self::SequenceHole { actor, missing } => write!(
+            Self::SequenceHole { actor, from, to } if from == to => write!(
                 f,
-                "an op from {}… has not reached this node yet (#{missing})",
+                "an op from {}… has not reached this node yet (#{from})",
+                crate::actor_prefix(actor)
+            ),
+            Self::SequenceHole { actor, from, to } => write!(
+                f,
+                "ops from {}… have not reached this node yet (#{from} to #{to})",
                 crate::actor_prefix(actor)
             ),
             Self::WrongPrevious { actor, seq, .. } => write!(
@@ -674,18 +682,16 @@ pub fn admit(
             "ring rail: a seal is held and retires nothing — an older build's act, read as one that does nothing");
     }
     for (actor, by_seq) in &seqs {
-        let highest = by_seq
-            .keys()
-            .copied()
-            .next_back()
-            .expect("seqs only holds actors that wrote");
-        for n in 0..=highest {
-            if !by_seq.contains_key(&n) {
+        let mut next = 0u64;
+        for &seq in by_seq.keys() {
+            if seq > next {
                 gaps.push(RailGap::SequenceHole {
                     actor: (*actor).to_string(),
-                    missing: n,
+                    from: next,
+                    to: seq - 1,
                 });
             }
+            next = seq.saturating_add(1);
         }
     }
 

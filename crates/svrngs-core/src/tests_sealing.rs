@@ -112,15 +112,12 @@ fn sealed_then(seq: u64, what: &str) -> Vec<Op<SignedOp>> {
 fn a_seal_held_retires_nothing_and_claims_nothing_complete() {
     let ops = sealed_then(3, "after");
     let f = admitted(&ops);
-    let holes = (0..3).map(|missing| RailGap::SequenceHole {
+    let holes = vec![RailGap::SequenceHole {
         actor: actor_of(&key(1)),
-        missing,
-    });
-    assert_eq!(
-        f.gaps(),
-        holes.collect::<Vec<_>>(),
-        "seqs 0..=2 are still missing"
-    );
+        from: 0,
+        to: 2,
+    }];
+    assert_eq!(f.gaps(), holes, "seqs 0..=2 are still missing");
     assert_eq!(wire_ops(&f).len(), 2, "the seal is held as an act");
     assert_eq!(applied(&f), vec!["after"]);
     assert!(

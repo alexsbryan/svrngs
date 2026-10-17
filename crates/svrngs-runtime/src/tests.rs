@@ -597,7 +597,8 @@ fn a_half_delivered_peer_is_a_named_hole_not_a_clean_answer() {
         fa.gaps(),
         vec![RailGap::SequenceHole {
             actor: actor_of(&key(2)),
-            missing: 0
+            from: 0,
+            to: 0,
         }]
     );
 
@@ -659,8 +660,9 @@ fn truncate_by_hand(journal: &RingJournal, from: u64) {
 }
 
 /// **A journal missing a prefix says so.** Deleting a prefix on a local rule
-/// — a truncation setting, a size cap, an age policy — reports one
-/// `SequenceHole` per deleted op. (svrngs: upstream's seal and compaction
+/// — a truncation setting, a size cap, an age policy — reports the deleted
+/// ops as a `SequenceHole`, seqs 0 to 2 here (#187: one gap a run, where it
+/// was one an op). (svrngs: upstream's seal and compaction
 /// deleted one without a hole; they went in arch-seal, and so this is what a
 /// copy an older build pruned reads as here.)
 #[test]
@@ -677,12 +679,12 @@ fn deleting_a_prefix_makes_holes() {
 
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert!(!f.is_complete());
-    assert_eq!(
-        f.gaps().len(),
-        3,
-        "one hole per deleted op, and they never close: {:?}",
-        f.gaps()
-    );
+    let hole = RailGap::SequenceHole {
+        actor: actor_of(&key(1)),
+        from: 0,
+        to: 2,
+    };
+    assert_eq!(f.gaps(), [hole], "the deleted ops, and they never close");
 }
 
 /// Cy's signature over a line that claims to be alex's act at `seq`,

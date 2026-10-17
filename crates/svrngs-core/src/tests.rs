@@ -378,7 +378,8 @@ fn every_gap_class_is_classified() {
         },
         RailGap::SequenceHole {
             actor: actor.clone(),
-            missing: 4,
+            from: 4,
+            to: 4,
         },
     ];
     for gap in &absences {
@@ -520,7 +521,8 @@ fn a_gap_renders_multi_byte_names_without_panicking() {
         },
         RailGap::SequenceHole {
             actor: wide_actor.to_string(),
-            missing: 4,
+            from: 4,
+            to: 4,
         },
         RailGap::SequenceFork {
             actor: wide_actor.to_string(),
@@ -705,10 +707,33 @@ fn an_act_whose_previous_act_is_not_its_authors_at_seq_minus_one_is_a_gap() {
         f.gaps(),
         vec![RailGap::SequenceHole {
             actor: alex,
-            missing: 0
+            from: 0,
+            to: 0,
         }]
     );
     assert_eq!(applied(&f), vec!["b"]);
+}
+
+/// **An act far past its signer's chain costs what is held, not the seq it
+/// claims** (#187). A parent not held is not judged (above), so a bound
+/// signer's act at a seq a million past its seq 0 is admitted, and the
+/// missing seqs between are one hole: one gap, from 1 to the seq below it.
+/// And so at `u64::MAX`, where a gap a missing seq never returned. Red at
+/// 71be570f (#187): 999,999 gaps for the first, in 0.17 s.
+#[test]
+fn an_act_far_past_its_chain_is_one_hole() {
+    let first = signed(&key(1), 100, 0, record("first"));
+    for seq in [1_000_000, u64::MAX] {
+        let far = signed(&key(1), 101, seq, record("far"));
+        let f = admitted(&[first.clone(), far]);
+        let hole = RailGap::SequenceHole {
+            actor: actor_of(&key(1)),
+            from: 1,
+            to: seq - 1,
+        };
+        assert_eq!(f.gaps(), [hole]);
+        assert_eq!(applied(&f), vec!["first", "far"]);
+    }
 }
 
 /// **The one thing that distinguishes "nothing happened" from "it never
@@ -724,7 +749,8 @@ fn a_hole_in_an_actors_sequence_is_reported() {
         f.gaps(),
         vec![RailGap::SequenceHole {
             actor: actor_of(&key(1)),
-            missing: 1
+            from: 1,
+            to: 1,
         }]
     );
     assert_eq!(
@@ -907,7 +933,8 @@ fn every_gap_renders_as_a_sentence() {
         },
         RailGap::SequenceHole {
             actor: actor.clone(),
-            missing: 2,
+            from: 2,
+            to: 2,
         },
         RailGap::WrongPrevious {
             id: id.clone(),
