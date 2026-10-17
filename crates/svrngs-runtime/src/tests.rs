@@ -817,3 +817,33 @@ fn a_peers_act_naming_a_key_arrives_readable_and_changes_no_roster_row() {
     assert_eq!(op.person, Person::parse("bo").unwrap(), "and it says who wrote it");
     assert_eq!(op.payload.as_ref(), Some(&says), "readable, as it was written");
 }
+
+/// **A forged copy that lands first does not shadow the act** (#189). `bad`
+/// is alex's act `x` with one signature byte changed: the same id, since an
+/// act's id is its content and not its signature. Held first, alone or
+/// first in a batch, it must not make `x` "already held": every copy, in
+/// any order, applies `x`. Red at c3c795b8: the journal that took `bad`
+/// first kept dropping `x`.
+#[test]
+fn a_forged_copy_first_does_not_shadow_the_act() {
+    let x = signed(&key(1), 100, 0, record("x"));
+    let mut bad = x.clone();
+    let first = if bad.kind.sig.starts_with('0') { "1" } else { "0" };
+    bad.kind.sig.replace_range(0..1, first);
+    let r = ring();
+    let orders: [&[&[Op<SignedOp>]]; 4] = [
+        &[&[bad.clone()], &[x.clone()]],
+        &[&[x.clone()], &[bad.clone()]],
+        &[&[bad.clone(), x.clone()]],
+        &[&[x.clone(), bad.clone()]],
+    ];
+    for batches in orders {
+        let dir = tempfile::tempdir().unwrap();
+        let journal = open(dir.path());
+        for batch in batches {
+            journal.ingest_all(batch).unwrap();
+        }
+        let f = journal.admit(&r, &Ed25519Verifier).unwrap();
+        assert_eq!(applied(&f), vec!["x"], "{:?}", f.gaps());
+    }
+}

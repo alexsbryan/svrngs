@@ -42,10 +42,15 @@ struct Writer {
 /// svrngs (U2): each id is the one the act's content derives ([`derive_id`]),
 /// never the `id` field its line carries. A held set keyed by the line's field
 /// skipped a peer's act as already held when another line merely claimed its
-/// id, so the act never landed (DESIGN §6). The lines at an actor's newest
-/// seq are kept, id and signature, because the door's next act names one of
-/// them as its previous act; only a line whose signature verifies counts
-/// toward it, so a forged line moves no member's next seq (U7, #16).
+/// id, so the act never landed (DESIGN §6). And an id is held once a line of
+/// it verifies: the signature is not part of the id, so a forged copy held
+/// first made every later genuine one "held" and dropped it, its copy apart
+/// from its peers' (#189). A line that does not verify is kept by its id and
+/// signature (`forged`), so the same bytes are not appended twice. The lines
+/// at an actor's newest seq are kept, id and signature, because the door's
+/// next act names one of them as its previous act; only a line whose
+/// signature verifies counts toward it, so a forged line moves no member's
+/// next seq (U7, #16).
 ///
 /// Folded from the file and caught up from its tail before each write
 /// ([`Oplog::read_since`]), so a write costs the lines appended since the last
@@ -88,6 +93,7 @@ struct Held {
     cursor: crate::oplog::Cursor,
     newest: std::collections::HashMap<String, Newest>,
     ids: std::collections::HashSet<OpId>,
+    forged: std::collections::HashSet<(OpId, String)>,
     digest: DigestFold,
     passed: Passed,
     membership: Vec<Op<SignedOp>>,
@@ -172,6 +178,7 @@ impl Held {
                 self.passed.insert((op.actor.clone(), id.clone(), op.kind.sig.clone()));
                 self.digest.add(id.clone(), op);
             } else {
+                self.forged.insert((id.clone(), op.kind.sig.clone()));
                 unverified += 1;
             }
             if let Some(key) = op.kind.act.names().filter(|k| self.named.insert(k.to_string())) {
@@ -181,7 +188,9 @@ impl Held {
                 self.membership.push(op.clone());
                 self.standing = None;
             }
-            self.ids.insert(id);
+            if verified {
+                self.ids.insert(id);
+            }
         }
         if !newly_named.is_empty() {
             // A key a `Remove` names for the first time: its acts already
@@ -393,14 +402,16 @@ impl RingJournal {
         let mut guard = self.log();
         let log = &mut *guard;
         log.held.catch_up(&log.oplog, &self.namespace)?;
-        let mut batch: std::collections::BTreeSet<OpId> = std::collections::BTreeSet::new();
+        let mut batch = std::collections::BTreeSet::new();
         let mut fresh: Vec<Op<SignedOp>> = Vec::new();
         for op in ops {
             // Also dedupes WITHIN the batch: a peer that sends the same op
             // twice in one body must not get two lines out of it. By the id
-            // its content derives, never the line's own (svrngs, U2).
-            let id = derive_id(op, &self.namespace);
-            if !log.held.ids.contains(&id) && batch.insert(id) {
+            // its content derives, never the line's own (svrngs, U2), held
+            // once a line of it verified; else by id and signature, so a
+            // forged copy never stands in for the act (#189).
+            let line = (derive_id(op, &self.namespace), op.kind.sig.clone());
+            if !log.held.ids.contains(&line.0) && !log.held.forged.contains(&line) && batch.insert(line) {
                 fresh.push(op.clone());
             }
         }
