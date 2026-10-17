@@ -550,3 +550,60 @@ async fn a_folder_under_apps_no_lend_can_be_named_by_is_traced_as_left_out() {
     );
     ana.endpoint().close().await;
 }
+
+/// **A carried app runs as it was brought after a member changes its
+/// files** (canon-pin; svrn-docs `rings/current/WHAT_RUNS_AS_YOU.md` §2,
+/// §3): Ana brings Money into the group's folder and it reaches Ben's and
+/// Cy's; Ben replaces its `app.js` in his folder, and his change reaches
+/// Ana's and Cy's. Each of their computers still serves Money's `app.js`
+/// as Ana brought it. Red at HEAD (canon-pin (a)): a carried app's file is
+/// served by the hash the group's layout places now (carried.rs `file`),
+/// so every member's browser runs Ben's script at once, writing as them.
+#[tokio::test]
+async fn a_carried_app_runs_as_it_was_brought_after_a_member_changes_it() {
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben, cy) = (&nodes[0], &nodes[1], &nodes[2]);
+    let group = found("house", 9, ana, &[(ben, 2), (cy, 3)]);
+    for node in [cy, ben, ana] {
+        round(node).await;
+    }
+    let roots: Vec<_> = (0..3).map(|_| tempfile::tempdir().unwrap()).collect();
+    let mut folders = Vec::new();
+    for (node, root) in [ana, ben, cy].into_iter().zip(&roots) {
+        folders.push(synced_in(node, root.path(), &group).await);
+    }
+    carry(&folders[0], "Money");
+    let script = |i: usize| std::fs::read_to_string(folders[i].join("apps/Money/app.js"));
+    let brought = "// Money's script\n";
+    assert!(
+        until(&[ana, ben, cy], || (0..3)
+            .all(|i| script(i).is_ok_and(|s| s == brought)))
+        .await,
+        "Money reaches every folder"
+    );
+    let changed = "// Ben's script, run as whoever opens Money\n";
+    std::fs::write(folders[1].join("apps/Money/app.js"), changed).unwrap();
+    assert!(
+        until(&[ben, ana, cy], || [0, 2]
+            .iter()
+            .all(|&i| script(i).is_ok_and(|s| s == changed)))
+        .await,
+        "Ben's change reaches Ana's and Cy's folders"
+    );
+    for (who, node) in [("Ana", ana), ("Cy", cy)] {
+        let origin = of_kind(&lends(node, &group).await, "Money")[0]["origin"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        let js = at(node, &origin, "GET", "/app.js", None).await;
+        assert_eq!(js.status(), 200);
+        assert_eq!(
+            js.text().await.unwrap(),
+            brought,
+            "Money runs as it was brought on {who}'s computer, not as Ben changed it"
+        );
+    }
+    for node in [ana, ben, cy] {
+        node.endpoint().close().await;
+    }
+}
