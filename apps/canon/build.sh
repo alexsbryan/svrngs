@@ -117,6 +117,7 @@ if [ -n "$DO_VENDOR" ]; then
   mkdir -p "$VENDOR"
   cp "$OUT/canon.js" "$VENDOR/canon.js"
   cp apps/canon/build/call.mjs "$VENDOR/call.mjs"
+  cp "$OUT/src/LICENSE" "$VENDOR/LICENSE"
   echo "vendored into apps/canon/vendor/; pin these in its README.md:"
-  (cd "$VENDOR" && shasum -a 256 canon.js call.mjs)
+  (cd "$VENDOR" && shasum -a 256 canon.js call.mjs LICENSE)
 fi
