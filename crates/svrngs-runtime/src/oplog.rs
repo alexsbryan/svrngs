@@ -88,7 +88,7 @@
 //! introducing a fourth (ARCH §19).
 
 use std::fs::{self, OpenOptions};
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, Read, Seek, SeekFrom, Write};
 use std::marker::PhantomData;
 use std::path::PathBuf;
 
@@ -167,10 +167,23 @@ impl<K: Journaled> Oplog<K> {
         }
         let mut f = OpenOptions::new()
             .create(true)
+            .read(true)
             .append(true)
             .open(&self.path)
             .map_err(OplogError::Io)?;
-        let buf = Self::lines(ops)?;
+        let mut buf = Self::lines(ops)?;
+        // A torn last line — power lost mid-write, a full disk — is ended
+        // first, so this batch starts a line of its own and is read whole;
+        // the fragment stays the malformed line it is (#191). An empty
+        // file's last byte would be before its start, which `seek` refuses.
+        let mut last = [b'\n'];
+        if f.seek(SeekFrom::End(-1)).is_ok() {
+            f.read_exact(&mut last).map_err(OplogError::Io)?;
+        }
+        if last[0] != b'\n' {
+            tracing::warn!(log = K::LABEL, path = %self.path.display(), "oplog: the last line is torn; ended before this append");
+            buf.insert(0, '\n');
+        }
         // ONE write for the whole batch, so `O_APPEND`'s atomicity covers it.
         // Two calls (the body, then the newline) left a window in which a
         // second writer could interleave and split a line in half.

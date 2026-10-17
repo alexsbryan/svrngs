@@ -847,3 +847,32 @@ fn a_forged_copy_first_does_not_shadow_the_act() {
         assert_eq!(applied(&f), vec!["x"], "{:?}", f.gaps());
     }
 }
+
+/// **An act appended after a torn line is whole** (#191). The tail torn as
+/// above, the next append starts a line of its own: the torn one is still
+/// the reported gap, and the act after it is read and applied. Red at
+/// 7a3a77f3: glued onto the fragment, the act `append` returned was
+/// unreadable from then on.
+#[test]
+fn an_act_after_a_torn_line_is_whole() {
+    let dir = tempfile::tempdir().unwrap();
+    let journal = open(dir.path());
+    let r = ring();
+    journal
+        .append(record("whole"), &key(1), &r, None, &Ed25519Verifier)
+        .unwrap();
+    let path = journal.dir().join("ring_oplog.jsonl");
+    let mut raw = std::fs::read_to_string(&path).unwrap();
+    raw.push_str("{\"id\":\"ring-abc\",\"v\":1,\"ts_un");
+    std::fs::write(&path, raw).unwrap();
+    journal
+        .append(record("after"), &key(1), &r, None, &Ed25519Verifier)
+        .unwrap();
+
+    let f = journal.admit(&r, &Ed25519Verifier).unwrap();
+    assert_eq!(applied(&f), vec!["whole", "after"], "{:?}", f.gaps());
+    assert!(f
+        .gaps()
+        .iter()
+        .any(|g| matches!(g, RailGap::MalformedLine { line: 2, .. })));
+}
