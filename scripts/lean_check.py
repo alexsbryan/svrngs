@@ -72,7 +72,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # repository's to one past where it landed; its (b), the acceptor's trace as
 # it tells a cut dialer its cut (#183), the same; its (c), the hand-ons told
 # with a cut (#184), the same.
-BUDGET = {"crates/svrngs-core": 2993, ".": 16351}
+# northstar-economize cut upstream's local-only namespaces (#200) and
+# lowered both to one past where the cut landed.
+BUDGET = {"crates/svrngs-core": 2981, ".": 16323}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
