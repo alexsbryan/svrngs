@@ -125,7 +125,7 @@ export function recorded(read, ours = new Set()) {
  * shrinks still decides, a change of its rule included (canon
  * ratify.rs:1291-1303). canon spells those two shares `majority` and
  * `unanimous`, its one spelling of `share:>1/2` and `share:100%`
- * (ratify.rs:345-350, :1294-1297). Never a count of the house on the day it
+ * (ratify.rs:345-350, :525-528). Never a count of the house on the day it
  * chose, which outlives the house when it shrinks. */
 export const CHOICES = Object.freeze({
   consent: { words: 'Anyone proposes a rule, and it holds after two days unless someone objects', rule: { rule: 'consent', days: 2 } },
