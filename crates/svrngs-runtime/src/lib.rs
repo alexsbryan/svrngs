@@ -100,8 +100,8 @@ impl RingRail {
         self.signer.as_ref()
     }
 
-    /// The root this rail journals under — for [`namespaces_in`], the
-    /// unfiltered disk list a local-only rehydrate reads (fp-108).
+    /// The root this rail journals under, where the command finds its
+    /// groups' files.
     pub fn root(&self) -> &Path {
         &self.root
     }
@@ -115,19 +115,8 @@ impl RingRail {
     ///
     /// A missing `rings/` directory is an empty list, not an error: a daemon
     /// that has never hosted a ring is a normal daemon.
-    ///
-    /// A local-only namespace ([`is_local_only`]) is journaled here but never
-    /// offered, so it is not on this list.
     pub fn namespaces(&self) -> Result<Vec<String>, RailError> {
-        let mut out = namespaces_in(&self.root)?;
-        out.retain(|ns| {
-            let local = is_local_only(ns);
-            if local {
-                tracing::debug!(namespace = %ns, "ring rail: local-only journal, not offered");
-            }
-            !local
-        });
-        Ok(out)
+        namespaces_in(&self.root)
     }
 }
 
@@ -286,8 +275,6 @@ pub mod register;
 
 #[cfg(test)]
 mod tests;
-#[cfg(test)]
-mod tests_local_only;
 #[cfg(test)]
 mod tests_queries;
 #[cfg(test)]

@@ -17,15 +17,14 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use crate::{
-    actor_of, admit, is_local_only, ring_dir, valid_namespace, Device, Joined, Membership, Op, Person, RailAct,
+    actor_of, admit, ring_dir, valid_namespace, Device, Joined, Membership, Op, Person, RailAct,
     RailError, RingJournal, RingRail, RingVerifier, Roster, SignedOp,
 };
 
 /// Who stands in one group, on this node.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Standing {
-    /// This node holds no such group, or holds it local-only and offers it
-    /// to nobody: nobody stands in it here.
+    /// This node holds no such group: nobody stands in it here.
     NotHeld,
     /// The group is held with no seed, or a seed naming no key: nobody can
     /// be shown to stand, so everyone is refused — never an empty roster
@@ -249,8 +248,8 @@ impl RingRail {
 
     /// The register of `namespace` (U7; DESIGN §6): who stands, each key
     /// its keeper cut with its person, and the keeper; from the journal's
-    /// kept fold, as [`Self::standing`] is. A group not held here,
-    /// local-only or with no seed is the empty register, said as
+    /// kept fold, as [`Self::standing`] is. A group not held here or with
+    /// no seed is the empty register, said as
     /// [`Self::standing`] says it.
     pub fn register(&self, namespace: &str) -> Result<Register, RailError> {
         let Ok((journal, seed)) = self.seeded(namespace)? else {
@@ -267,7 +266,7 @@ impl RingRail {
     /// A group not held is said at debug; a held group with no seed at
     /// warn, since it refuses everyone.
     fn seeded(&self, namespace: &str) -> Result<Result<(Arc<RingJournal>, Roster), Standing>, RailError> {
-        if !valid_namespace(namespace) || is_local_only(namespace) || !ring_dir(&self.root, namespace).is_dir() {
+        if !valid_namespace(namespace) || !ring_dir(&self.root, namespace).is_dir() {
             tracing::debug!(
                 target: "register",
                 namespace,

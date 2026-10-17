@@ -356,14 +356,6 @@ impl RingJournal {
         theirs: &Digest,
         budget_bytes: usize,
     ) -> Result<(Vec<Op<SignedOp>>, bool), RailError> {
-        // A local-only journal answers no peer ([`is_local_only`]).
-        if is_local_only(&self.namespace) {
-            tracing::debug!(
-                namespace = %self.namespace,
-                "ring rail: local-only journal, nothing offered to the peer"
-            );
-            return Ok((Vec::new(), false));
-        }
         let mut guard = self.log();
         let log = &mut *guard;
         let restarted = log.held.catch_up(&log.oplog, &self.namespace)?;
