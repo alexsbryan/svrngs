@@ -6,9 +6,9 @@
    files, sockets, clocks, threads and HashMap there; no core source outside
    its tests links std back in.
 3. RUST_ARCH, where a program can decide it: `anyhow` only in the `svrngs`
-   command and the app (typed errors everywhere else); no `Arc<Mutex<` or
-   `Rc<RefCell<` in a crate (ownership is a tree); no `async` in svrngs-core
-   (the core is synchronous).
+   command and the app; no `Arc` of a `Mutex` or `RwLock`, nor `Rc` of a
+   `RefCell`, its path spelled any way (#195), in a crate's product code
+   (ownership is a tree); no `async` in svrngs-core (it is synchronous).
 4. Lines of code — not blank, not a comment, not a test — stay under budget:
    svrngs-core under 3,150, the whole repository under 16,964 — scripts
    included. The budget counts the product: apps/, installed packages (any
@@ -80,8 +80,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # an id held once a line of it verifies; #191, a torn tail ended first;
 # #190, the leaver's round telling the leave until each computer answers;
 # #203, the door's clock before 1970 refused; #153, a path kept within its
-# lend; #194, the vocab gate reading what it missed.
-BUDGET = {"crates/svrngs-core": 2992, ".": 16417}
+# lend; #194, the vocab gate reading what it missed; #195, the shared-state
+# regex reading every path.
+BUDGET = {"crates/svrngs-core": 2992, ".": 16418}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
@@ -134,7 +135,8 @@ def main():
     for f in sorted((ROOT / "crates").glob("*/src/**/*.rs")):
         rel = f.relative_to(ROOT).as_posix()
         text = f.read_text(errors="replace")
-        if re.search(r"Arc<\s*Mutex<|Rc<\s*RefCell<", text):
+        shared = re.search(r"Arc<\s*([\w:]+::)?(Mutex|RwLock)\s*<|Rc<\s*([\w:]+::)?RefCell\s*<", text)
+        if shared and not TEST_FILE.search(rel):
             broken.append(f"{rel} shares mutable state: one owner and messages instead (RUST_ARCH §3)")
         if (rel.startswith("crates/svrngs-core/") and not TEST_FILE.search(rel)
                 and re.search(r"^\s*extern\s+crate\s+std\b", text, re.M)):
