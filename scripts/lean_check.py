@@ -88,8 +88,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # most 16,564 and 3,032 (the operator, 2026-10-16), each raise to one past
 # where it lands: canon-floor (b), the trust floor's gate and its step in
 # check.sh, 57 lines; its (c), the gate reading the floor's behavioural
-# gates, 2.
-BUDGET = {"crates/svrngs-core": 2992, ".": 16473}
+# gates, 2. canon-pin (b), a carried app served at the files it was brought
+# with, svrngs-core 9 of its 40 and the repository 18.
+BUDGET = {"crates/svrngs-core": 3001, ".": 16492}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
