@@ -93,8 +93,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # version asked of each person and run only after their yes, svrngs-core 16
 # and the repository 66, both pages included. canon-spans' economizing pass,
 # the membership fold's traces on one line each and the seed's bindings in
-# one chain, cut 32 and lowered both to one past where the cut landed.
-BUDGET = {"crates/svrngs-core": 2985, ".": 16526}
+# one chain, cut 32 and lowered both to one past where the cut landed. Its
+# (b), each person's time in the group folded by the membership and given
+# a carried app, raised svrngs-core 24 and the repository 31, to one past
+# where it landed: 23 and 7 left under the ceiling.
+BUDGET = {"crates/svrngs-core": 3009, ".": 16557}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
