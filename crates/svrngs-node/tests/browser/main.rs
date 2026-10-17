@@ -2473,10 +2473,11 @@ in_both_engines!(
     /// **What the page cannot do is named on it, with the one line to
     /// type** (start-home, from start-measure's ranked row 5: no state's
     /// words named a line, `demo/runs/start/2026-10-13/README.md` §3 (c)
-    /// 12): lending something and removing someone, which the command does
-    /// while svrngs runs; and leaving a group, said as not possible yet
-    /// (`ralph/next/start/CHARTER.md`). Planted, watched failing: the page
-    /// as 1b9575d left it.
+    /// 12): removing someone, which the command does while svrngs runs.
+    /// Planted, watched failing: the page as 1b9575d left it. Leaving a
+    /// group is the page's own since groups-leave (c), so the page never
+    /// says it cannot be done (#192; red at 5753b234, which still said
+    /// "You cannot leave a group yet").
     the_home_page_names_what_the_terminal_does
 );
 async fn the_home_page_names_what_the_terminal_does(engine: Engine) {
@@ -2485,12 +2486,9 @@ async fn the_home_page_names_what_the_terminal_does(engine: Engine) {
     let ada = node(dir.path(), &relay, &signing(7)).await;
     let seen = home_page(engine, &ada, json!({ "all": "#terminal li, #terminal p" })).await;
     let said = seen["all"].to_string();
-    for line in [
-        "svrngs remove <their name> --group <the group’s name>",
-        "You cannot leave a group yet",
-    ] {
-        assert!(said.contains(line), "{line}: {seen:#}");
-    }
+    let line = "svrngs remove <their name> --group <the group’s name>";
+    assert!(said.contains(line), "{line}: {seen:#}");
+    assert!(!said.contains("leave"), "{seen:#}");
     // Making a group is the page's own since start-group: the walk after
     // found `svrngs new` refused while svrngs runs from login
     // (demo/runs/start/2026-10-13-home/README.md §3).
