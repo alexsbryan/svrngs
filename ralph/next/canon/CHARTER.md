@@ -37,6 +37,17 @@ charter disagree, they win, and the decision says so.
     distribute and the binary runs pure against the data on any machine (so
     we don't have to have an always on server)".
 
+## What the operator decided, 2026-10-17
+
+- **Standing from the members, in canon.** canon-core 0.3.0 takes no roster
+  (`demo/runs/canon/2026-10-16/NEEDS_HUMAN.md`). The operator chose "A:
+  canon takes the members". canon-core gains an input for people's time in
+  the house, made in canon's repository by svrngs-a2 on a branch, released
+  by the operator. This tree never writes canon's.
+- **Joined and left.** svrngs gives House rules each person's time in the
+  house, those who left included, "so past decisions never shift". A raise
+  past the ceiling for it is asked of the operator, never taken.
+
 ## Why
 
 The operator: "the main thing svrngs must do is to never violate the trust
