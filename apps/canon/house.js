@@ -116,6 +116,29 @@ export function recorded(read, ours = new Set()) {
   return { kept, dropped };
 }
 
+/** The first question, "How does your house decide its rules?" (CANON_IN_SVRNGS
+ * §3), each answer a canon rule for a house of `n` people. "Most of you" and
+ * "everyone" are counts, threshold's, of the house's size when it chose,
+ * never `joint`'s names: canon counts only a person who has a say when they
+ * speak (ratify.rs:723), so a named person who left would hold a joint rule
+ * open for ever. "Most" is refused once it can no longer be reached. */
+export const CHOICES = Object.freeze({
+  consent: { words: 'Anyone proposes a rule, and it holds after two days unless someone objects', rule: () => ({ rule: 'consent', days: 2 }) },
+  most: { words: 'Most of you agree', rule: (n) => ({ rule: 'threshold', approve: Math.floor(n / 2) + 1, block: n - Math.floor(n / 2) }) },
+  everyone: { words: 'Everyone agrees', rule: (n) => ({ rule: 'threshold', approve: n, block: 1 }) },
+});
+
+/** The act that says how the house decides, chosen as `choice` by a house of
+ * `n` people: the whole house's rule, written with no scope, since a rule for
+ * a scope never reaches a rule proposed with none (ratify.rs:471-475), and
+ * itself a rule the house can change, judged by the rule it replaces. There
+ * is no default: until someone answers, the page asks. */
+export function decide(choice, n) {
+  const c = CHOICES[choice];
+  if (!c || !(n > 0)) throw new Error(`no way to decide called ${choice} for ${n} people`);
+  return { op: 'ratification', text: `${c.words}.`, rule: c.rule(n) };
+}
+
 /** A rule proposed, `text` its words. */
 export const propose = (text) => ({ op: 'assert', text });
 /** Agreeing to `about`, a proposal's id; objecting to it, `why` required. */

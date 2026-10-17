@@ -8,7 +8,7 @@ import { test } from 'node:test';
 
 import { bind } from './vendor/call.mjs';
 import * as canonJs from './vendor/canon.js';
-import { OFFERS, ROOT, agree, fold, human, membership, object, payload, propose, recorded } from './house.js';
+import { CHOICES, OFFERS, ROOT, agree, decide, fold, human, membership, object, payload, propose, recorded } from './house.js';
 
 const call = bind(canonJs);
 const G = 'g1';
@@ -23,8 +23,6 @@ const raw = (ts, person, act, as = person) => ({ id: `r${++n}`, ts_unix: ts, per
 const read = (spans, ops) => ({ you: spans[0].person, group: G, people: spans.filter((s) => s.left == null).map((s) => s.person), spans, ops });
 /** canon's id for `act` recorded at `ts` for `by`. */
 const idOf = (ts, by, act) => JSON.parse(call({ call: 'act', kind: act, ts_unix: ts, actor: human(by) })).id;
-/** How the house decides, as the first question's answer writes it (part (b)). */
-const decide = (way, n) => ({ op: 'ratification', text: way, rule: { consent: { rule: 'consent', days: 2 }, most: { rule: 'threshold', approve: Math.floor(n / 2) + 1, block: n - Math.floor(n / 2) }, everyone: { rule: 'threshold', approve: n, block: 1 } }[way] });
 const QUIET = propose('Quiet hours are 10pm to 7am');
 const status = (view, id) => view.rules.find((r) => r.id === id)?.status.status;
 
@@ -67,6 +65,18 @@ test('a person outside the house has no say', () => {
   const view = fold(call, read(spans, ops), 2000 + 3 * DAY);
   assert.equal(status(view, q), 'active', 'dee’s objection is said and does not count');
   assert.equal(view.rules[0].said.length, 1);
+});
+
+test('the first question’s answer is the whole house’s rule', () => {
+  assert.deepEqual(Object.keys(CHOICES), ['consent', 'most', 'everyone']);
+  assert.deepEqual(decide('consent', 4).rule, { rule: 'consent', days: 2 });
+  assert.deepEqual(decide('most', 4).rule, { rule: 'threshold', approve: 3, block: 2 });
+  assert.deepEqual(decide('everyone', 4).rule, { rule: 'threshold', approve: 4, block: 1 });
+  const spans = founders('ana', 'bo', 'kim', 'dee');
+  const before = fold(call, read(spans, []), 3000);
+  assert.equal(before.rule, null, 'no rule nobody chose');
+  const view = fold(call, read(spans, [rec(1000, 'ana', decide('most', 4))]), 3000);
+  assert.deepEqual(view.rule, { rule: 'threshold', approve: 3, block: 2 });
 });
 
 test('an act that speaks as the house, or as anyone but its writer, is refused', () => {
