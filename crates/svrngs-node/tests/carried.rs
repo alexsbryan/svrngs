@@ -663,3 +663,99 @@ async fn a_computer_that_never_held_an_app_as_brought_fetches_it() {
         node.endpoint().close().await;
     }
 }
+
+/// Unix seconds now, as this host's clock reads them.
+fn now() -> i64 {
+    let since = std::time::UNIX_EPOCH.elapsed().unwrap();
+    since.as_secs() as i64
+}
+
+/// **A house's history, asked** (canon-spans (a)): Ana founds a group, Ben
+/// joins, Cy joins and then leaves, and Ana's computer is asked
+/// `svrngs/acts` for Money. It answers each person's time in the group,
+/// Cy's with when Cy left, so a house's rules count a past decision with
+/// whoever stood then; `people` stays today's names, so Money is
+/// untouched. Red at ce3396d8: the answer had today's names alone.
+#[tokio::test]
+async fn an_app_is_told_each_person_s_time_in_the_group() {
+    use svrngs_node::removal::{LeaveAsk, Outcome, LEAVES_ROUTE};
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben, cy) = (&nodes[0], &nodes[1], &nodes[2]);
+    let joining = now();
+    let group = found("house", 9, ana, &[(ben, 2), (cy, 3)]);
+    let joined = now();
+    for node in [cy, ben, ana] {
+        round(node).await;
+    }
+    let root = tempfile::tempdir().unwrap();
+    carry(&synced_in(ana, root.path(), &group).await, "Money");
+    let leaving = now();
+    let leave = http().post(format!("http://{}{LEAVES_ROUTE}", cy.api_addr()));
+    let ask = leave
+        .json(&LeaveAsk {
+            group: group.clone(),
+        })
+        .send();
+    assert_eq!(
+        ask.await.unwrap().json::<Outcome>().await.unwrap(),
+        Outcome::Left
+    );
+    let left = now();
+    let cy_key = actor_of(&signing(3));
+    assert!(
+        until(&[ana], || ana.rail().standing_anywhere(&cy_key).is_none()).await,
+        "Cy's leave reaches Ana's computer"
+    );
+    let mut seen = lends(ana, &group).await;
+    for _ in 0..30 {
+        if !of_kind(&seen, "Money").is_empty() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        seen = lends(ana, &group).await;
+    }
+    let origin = of_kind(&seen, "Money")[0]["origin"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let read: Value = (at(ana, &origin, "GET", "/svrngs/acts", None)
+        .await
+        .json()
+        .await)
+        .unwrap();
+    assert_eq!(
+        read["people"],
+        json!(["ana", "ben"]),
+        "today's names, as before:\n{read:#}"
+    );
+    let spans = read["spans"]
+        .as_array()
+        .expect("each person's time in the group");
+    let span = |who: &str| -> Vec<(Value, Value)> {
+        let theirs = spans.iter().filter(|s| s["person"] == who);
+        theirs
+            .map(|s| (s["joined"].clone(), s["left"].clone()))
+            .collect()
+    };
+    let within =
+        |t: &Value, from: i64, to: i64| t.as_i64().is_some_and(|t| (from..=to).contains(&t));
+    assert_eq!(
+        span("ana"),
+        [(Value::Null, Value::Null)],
+        "Ana founded it and stands:\n{read:#}"
+    );
+    let ben_s = span("ben");
+    assert!(
+        matches!(&ben_s[..], [(j, Value::Null)] if within(j, joining, joined)),
+        "Ben joined when Ana admitted him and stands:\n{read:#}"
+    );
+    let cy_s = span("cy");
+    assert!(
+        matches!(&cy_s[..], [(j, l)] if within(j, joining, joined) && within(l, leaving, left)),
+        "Cy joined, and left when Cy's leave was written:\n{read:#}"
+    );
+    assert_eq!(spans.len(), 3, "{read:#}");
+    for node in [ana, ben, cy] {
+        node.endpoint().close().await;
+    }
+}
