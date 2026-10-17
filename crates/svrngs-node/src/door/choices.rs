@@ -201,10 +201,10 @@ pub(super) fn found(door: &Door, raw: &str) -> Result<Lend, Response> {
 
 /// Keep what `person` said of `app` on `lend`.
 async fn keep(door: &Door, lend: &Lend, person: PersonKey, app: Label, said: Said) -> Response {
-    let choice = Choice {
-        said,
-        at: unix_now(),
+    let Some(at) = unix_now() else {
+        return fault("this computer's clock cannot be read, so the choice is not kept");
     };
+    let choice = Choice { said, at };
     let one = [(person.clone(), [(app.clone(), choice.clone())].into())].into();
     let (done, kept) = oneshot::channel();
     let _ = door

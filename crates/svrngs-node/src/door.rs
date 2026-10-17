@@ -902,10 +902,19 @@ fn find(door: &Door, raw: &str) -> Result<Option<Lend>, lend::LendError> {
     clippy::disallowed_methods,
     reason = "the door's clock: whether a pass has lapsed, and until when a computer's own lasts"
 )]
-pub(crate) fn unix_now() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_or(0, |d| d.as_secs() as i64)
+pub(crate) fn unix_now() -> Option<i64> {
+    unix_secs(std::time::SystemTime::now())
+}
+
+/// `t` in Unix seconds; `None`, said at warn, for a time before 1970: a
+/// clock that cannot be read, never read as 0, which opened every lapsed
+/// pass (`0 >= until` is false; #203).
+fn unix_secs(t: std::time::SystemTime) -> Option<i64> {
+    let secs = t.duration_since(std::time::UNIX_EPOCH).ok();
+    if secs.is_none() {
+        tracing::warn!(target: "door", "door: this computer's clock reads before 1970, so nothing asking the time is judged");
+    }
+    secs.map(|d| d.as_secs() as i64)
 }
 
 /// The person whose pass `holder` presents in `headers` for `lend`: the
@@ -942,7 +951,10 @@ async fn holder_of(
         return Err(refused("no pass, or none that reads"));
     };
     let label = Label::of(&door.key, lend.name.as_str());
-    if let Err(fault) = pass.check(&key, &label, unix_now()) {
+    let Some(now) = unix_now() else {
+        return Err(refused("this computer's clock cannot be read"));
+    };
+    if let Err(fault) = pass.check(&key, &label, now) {
         return Err(refused(&fault.to_string()));
     }
     let mut standing = PersonKey::resolved(door, &pass.person);
@@ -997,10 +1009,9 @@ fn own_app(
     let fault = match &pass {
         None => Some("none that reads".to_string()),
         Some(p) if p.person != key => Some("signed by another key than the one dialling".into()),
-        Some(p) => p
-            .check(&key, &label, unix_now())
-            .err()
-            .map(|f| f.to_string()),
+        Some(p) => unix_now().map_or(Some("this computer's clock cannot be read".into()), |now| {
+            p.check(&key, &label, now).err().map(|f| f.to_string())
+        }),
     };
     if let Some(why) = fault {
         tracing::debug!(target: "door", actor = key, lend = %lend.name, why, "door: refused — a member's own pass that does not open this lend");

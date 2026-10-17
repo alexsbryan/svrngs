@@ -160,3 +160,16 @@ fn the_first_segment_names_the_lend_and_the_rest_is_the_service_s() {
     assert_eq!(split_lend("/lend/shelf/"), Some(("shelf", "/".into())));
     assert_eq!(split_lend("/other"), None);
 }
+
+/// **A clock before 1970 is no time, never 0** (#203): read as 0, every
+/// lapsed pass opened a lend, since `0 >= until` is false. Planted, watched
+/// failing: `unix_secs` reading it as 0, as `unix_now` did at 0d0f4f9b.
+#[test]
+fn a_clock_before_1970_is_no_time() {
+    let before = std::time::UNIX_EPOCH - Duration::from_secs(1);
+    assert_eq!(unix_secs(before), None);
+    assert_eq!(
+        unix_secs(std::time::UNIX_EPOCH + Duration::from_secs(7)),
+        Some(7)
+    );
+}

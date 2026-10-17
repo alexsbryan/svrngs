@@ -118,7 +118,7 @@ fn own_pass(at: &Asking, app: &Label, label: &Label) -> Option<HeaderValue> {
     } else {
         vec![label.clone()]
     };
-    let until = door::unix_now() + OWN_PASS_FOR;
+    let until = door::unix_now()? + OWN_PASS_FOR;
     let (key, actor) = (at.host.rail.signer(), &at.host.actor);
     let pass = Pass::sign(key, actor, (app.clone(), reads), until);
     HeaderValue::from_str(&pass.encode()).ok()
