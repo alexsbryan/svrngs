@@ -1476,8 +1476,10 @@ rows.
 `apps/<app>/nouns.txt`, and `scripts/vocab_check.py` refuses any of them in
 infra code — comments and tests apart, where an example is fine. So the infra
 never learns what a film, an expense or a crush is. And the canaries of §8,
-Expenses and Tap, run against the infra in `scripts/check.sh`: a change that
-serves Jellyfin and breaks one fails the build.
+Expenses and Events, run against the infra in `scripts/check.sh`
+(`crates/svrngs-node/tests/canaries.rs`): a change that serves Jellyfin and
+breaks one fails the build. Tap, the third §8 names, is not built, and
+nothing runs it (#196).
 
 **Lean, and kept lean.** `svrngs-core` and the repository stay under the
 caps in `scripts/lean_check.py`'s `BUDGET`, their one home: its comment says

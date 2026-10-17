@@ -688,9 +688,11 @@ key, `serve.mjs` keeps accounts, a token each, and `answer.mjs` is the
 lend's sign-in that answers each person's (mwp-4): a second app, after
 Jellyfin's, on the door's sign-in (DESIGN §3, "The room", call 6).
 
-**`apps/jellyfin/`, `apps/tap/`**: so far only each app's `nouns.txt` — the
-words the infra may never use. `apps/jellyfin/` holds whatever knows
-Jellyfin's API (DESIGN §3, U5's call 3); Tap is a canary (DESIGN §8).
+**`apps/jellyfin/`**: whatever knows Jellyfin's API (DESIGN §3, U5's call
+3): its `nouns.txt`, the sign-in program a lender runs beside it (`mw/`,
+its README), and the drivers of its measured runs (`check/`).
+**`apps/tap/`**: only Tap's `nouns.txt`. Tap is a canary DESIGN §8 plans,
+after U3, and is not built: nothing runs it (#196).
 
 **`demo/`**: how a demo is recorded. **`ralph/`**: the work loop. A queue is a
 directory `ralph/next/<queue>/` holding `queue.toml` (models, timeouts, the
