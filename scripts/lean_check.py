@@ -9,9 +9,9 @@
    command and the app; no `Arc` of a `Mutex` or `RwLock`, nor `Rc` of a
    `RefCell`, its path spelled any way (#195), in a crate's product code
    (ownership is a tree); no `async` in svrngs-core (it is synchronous).
-4. Lines of code — not blank, not a comment, not a test — stay under budget:
-   svrngs-core under 3,150, the whole repository under 16,964 — scripts
-   included. The budget counts the product: apps/, installed packages (any
+4. Lines of code — not blank, not a comment, not a test — stay under the
+   caps `BUDGET` holds below, their one home (#197), scripts included. The
+   budget counts the product: apps/, installed packages (any
    node_modules/) and demo/runs/ apart. A recorded run's driver is what ran,
    kept byte for byte so its data reads against it (ralph/REVIEW_FINDINGS.md
    #61), and no check runs one; code elsewhere under demo/ counts.
