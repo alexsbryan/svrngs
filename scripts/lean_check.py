@@ -89,8 +89,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # where it lands: canon-floor (b), the trust floor's gate and its step in
 # check.sh, 57 lines; its (c), the gate reading the floor's behavioural
 # gates, 2. canon-pin (b), a carried app served at the files it was brought
-# with, svrngs-core 9 of its 40 and the repository 18.
-BUDGET = {"crates/svrngs-core": 3001, ".": 16492}
+# with, svrngs-core 9 of its 40 and the repository 18; its (c), a new
+# version asked of each person and run only after their yes, svrngs-core 16
+# and the repository 66, both pages included.
+BUDGET = {"crates/svrngs-core": 3017, ".": 16558}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
