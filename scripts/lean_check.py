@@ -84,8 +84,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # regex reading every path; #190 again, the leave told from the round's read.
 # canon-economize cut `read_origin`, a wrapper only tests asked, and lowered
 # the repository's to one past where the cut landed; svrngs-core's was
-# already there.
-BUDGET = {"crates/svrngs-core": 2992, ".": 16414}
+# already there. The canon rows have +150 over that and svrngs-core +40, at
+# most 16,564 and 3,032 (the operator, 2026-10-16), each raise to one past
+# where it lands: canon-floor (b), the trust floor's gate and its step in
+# check.sh, 57 lines.
+BUDGET = {"crates/svrngs-core": 2992, ".": 16471}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
