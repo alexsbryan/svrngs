@@ -39,11 +39,15 @@ charter disagree, they win, and the decision says so.
 
 ## What the operator decided, 2026-10-17
 
-- **Standing from the members, in canon.** canon-core 0.3.0 takes no roster
-  (`demo/runs/canon/2026-10-16/NEEDS_HUMAN.md`). The operator chose "A:
-  canon takes the members". canon-core gains an input for people's time in
-  the house, made in canon's repository by svrngs-a2 on a branch, released
-  by the operator. This tree never writes canon's.
+- **Standing from the members, by canon's own grants.** canon-core 0.3.0
+  takes no roster (`demo/runs/canon/2026-10-16/NEEDS_HUMAN.md`). The
+  operator chose "A: canon takes the members". Then, asked whether canon's
+  own primitives could carry it, "Yes, reuse": canon-core stays as it is,
+  with no release. The house's membership is canon grants and withdrawals,
+  written in memory by a `house:<group>` actor from svrngs's `spans`, and
+  never recorded. svrngs-core stays the one decider of who is a member;
+  canon reads its result in canon's own acts. This tree never writes
+  canon's repository.
 - **Joined and left.** svrngs gives House rules each person's time in the
   house, those who left included, "so past decisions never shift". A raise
   past the ceiling for it is asked of the operator, never taken.
