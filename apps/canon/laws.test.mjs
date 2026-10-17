@@ -190,3 +190,16 @@ test('no say over the house is granted or taken but by joining and leaving', () 
   assert.deepEqual(view.deciding, ['ana', 'bo'], 'bo was stood down by nobody');
   assert.equal(view.dropped.length, 3);
 });
+
+test('a house that shrinks can still change how it decides', () => {
+  // Four answer "everyone agrees"; kim leaves; the three left propose "most
+  // of you agree" and all three agree. A change is judged by the rule in
+  // force (canon ratify.rs:19-28), so a count of four would hold it for ever.
+  const spans = [...founders('ana', 'bo', 'dee'), span('kim', null, 5000)];
+  const change = decide('most', 3);
+  const c = idOf(6000, 'ana', change);
+  const ops = [rec(1000, 'ana', decide('everyone', 4)), rec(6000, 'ana', change), rec(6100, 'bo', agree(c)), rec(6200, 'dee', agree(c))];
+  const view = fold(call, read(spans, ops), 7000);
+  assert.equal(view.changes.find((x) => x.id === c)?.verdict.verdict, 'ratified', 'the three change their rule');
+  assert.deepEqual(view.rule, change.rule);
+});
