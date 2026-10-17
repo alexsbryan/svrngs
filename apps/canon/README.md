@@ -18,6 +18,9 @@ The first person to open it answers one question: how does your house
 decide its rules? Anyone proposes and it holds after two days unless someone
 objects; most of you agree; or everyone agrees. That answer is your house's
 first rule, and your house changes it the way it decides anything else.
+"Most" and "everyone" count the people in your house when a rule is
+proposed: someone who joins later never moves the count, and when someone
+leaves, the rest of you still decide, how you decide included.
 
 Everyone in your group has a say, from the day they joined until the day they
 left. svrngs says who that is and when (`spans`, DESIGN §3), and every

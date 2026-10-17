@@ -30,7 +30,7 @@ test('canon’s actor is the record’s person, never the act’s text; another 
   const spans = founders('ana', 'bo', 'kim');
   const q = idOf(2000, 'ana', QUIET);
   const ops = [
-    rec(1000, 'ana', decide('everyone', 3)),
+    rec(1000, 'ana', decide('everyone')),
     rec(2000, 'ana', QUIET),
     rec(2100, 'kim', agree(q)),
     raw(2200, 'kim', { ...agree(q), actor: human('bo') }),
@@ -47,7 +47,7 @@ test('a rule’s standing is the build’s, never counted in the page', () => {
   const spans = founders('ana', 'bo', 'kim');
   const q = idOf(2000, 'ana', QUIET);
   const ops = [
-    rec(1000, 'ana', decide('everyone', 3)),
+    rec(1000, 'ana', decide('everyone')),
     rec(2000, 'ana', QUIET),
     rec(2010, 'kim', object(q, 'It is too early for the night shift.')),
     rec(2020, 'bo', agree(q)),
@@ -61,7 +61,7 @@ test('a rule’s standing is the build’s, never counted in the page', () => {
 test('a person outside the house has no say', () => {
   const spans = founders('ana', 'bo');
   const q = idOf(2000, 'ana', QUIET);
-  const ops = [rec(1000, 'ana', decide('consent', 2)), rec(2000, 'ana', QUIET), rec(2100, 'dee', object(q, 'I never agreed to this.'))];
+  const ops = [rec(1000, 'ana', decide('consent')), rec(2000, 'ana', QUIET), rec(2100, 'dee', object(q, 'I never agreed to this.'))];
   const view = fold(call, read(spans, ops), 2000 + 3 * DAY);
   assert.equal(status(view, q), 'active', 'dee’s objection is said and does not count');
   assert.equal(view.rules[0].said.length, 1);
@@ -69,21 +69,21 @@ test('a person outside the house has no say', () => {
 
 test('the first question’s answer is the whole house’s rule', () => {
   assert.deepEqual(Object.keys(CHOICES), ['consent', 'most', 'everyone']);
-  assert.deepEqual(decide('consent', 4).rule, { rule: 'consent', days: 2 });
-  assert.deepEqual(decide('most', 4).rule, { rule: 'threshold', approve: 3, block: 2 });
-  assert.deepEqual(decide('everyone', 4).rule, { rule: 'threshold', approve: 4, block: 1 });
+  assert.deepEqual(decide('consent').rule, { rule: 'consent', days: 2 });
+  assert.deepEqual(decide('most').rule, { rule: 'majority' });
+  assert.deepEqual(decide('everyone').rule, { rule: 'unanimous' });
   const spans = founders('ana', 'bo', 'kim', 'dee');
   const before = fold(call, read(spans, []), 3000);
   assert.equal(before.rule, null, 'no rule nobody chose');
-  const view = fold(call, read(spans, [rec(1000, 'ana', decide('most', 4))]), 3000);
-  assert.deepEqual(view.rule, { rule: 'threshold', approve: 3, block: 2 });
+  const view = fold(call, read(spans, [rec(1000, 'ana', decide('most'))]), 3000);
+  assert.deepEqual(view.rule, { rule: 'majority' });
 });
 
 test('an act that speaks as the house, or as anyone but its writer, is refused', () => {
   const spans = founders('ana', 'bo');
   const q = idOf(2000, 'ana', QUIET);
   const ops = [
-    rec(1000, 'ana', decide('consent', 2)),
+    rec(1000, 'ana', decide('consent')),
     rec(2000, 'ana', QUIET),
     raw(2000 + 3 * DAY, 'dee', { op: 'retract', target: q, actor: `house:${G}` }),
   ];
@@ -95,14 +95,14 @@ test('an act that speaks as the house, or as anyone but its writer, is refused',
 test('under “unless someone objects”, a person’s objection counts', () => {
   const spans = founders('ana', 'bo');
   const q = idOf(2000, 'ana', QUIET);
-  const ops = [rec(1000, 'ana', decide('consent', 2)), rec(2000, 'ana', QUIET), rec(2100, 'bo', object(q, 'Not on Fridays.'))];
+  const ops = [rec(1000, 'ana', decide('consent')), rec(2000, 'ana', QUIET), rec(2100, 'bo', object(q, 'Not on Fridays.'))];
   const view = fold(call, read(spans, ops), 2000 + 3 * DAY);
   assert.deepEqual(view.rules[0].status, { status: 'refused', at: 2100, by: 'human:bo', why: 'Not on Fridays.' });
 });
 
 test('a past rule keeps its agreement when someone joins later', () => {
   const q = idOf(2000, 'ana', QUIET);
-  const ops = [rec(1000, 'ana', decide('most', 3)), rec(2000, 'ana', QUIET), rec(2100, 'bo', agree(q))];
+  const ops = [rec(1000, 'ana', decide('most')), rec(2000, 'ana', QUIET), rec(2100, 'bo', agree(q))];
   const then = fold(call, read(founders('ana', 'bo', 'kim'), ops), 3000);
   assert.equal(status(then, q), 'active');
   const later = fold(call, read([...founders('ana', 'bo', 'kim'), span('cy', 5000)], ops), 6000);
@@ -113,7 +113,7 @@ test('a past rule keeps its agreement when someone joins later', () => {
 test('a name with a dot is a person, never a corner of someone else’s', () => {
   const spans = founders('ana', 'jo.b');
   const q = idOf(2000, 'ana', QUIET);
-  const ops = [rec(1000, 'ana', decide('everyone', 2)), rec(2000, 'ana', QUIET), rec(2100, 'jo.b', agree(q))];
+  const ops = [rec(1000, 'ana', decide('everyone')), rec(2000, 'ana', QUIET), rec(2100, 'jo.b', agree(q))];
   const view = fold(call, read(spans, ops), 3000);
   assert.equal(status(view, q), 'active', 'jo.b’s agreement counts');
   assert.deepEqual(view.deciding, ['ana', 'jo.b']);
@@ -138,7 +138,7 @@ test('the house’s acts are the same, ids included, however its people are list
 test('the house’s seat is the only one taken open', () => {
   const lines = membership(call, G, founders('ana', 'bo'));
   const acts = lines.map((l) => JSON.parse(l));
-  const canon = call({ call: 'derive', acts: [...lines, call({ call: 'act', kind: decide('consent', 2), ts_unix: 1000, actor: 'human:ana' }).trim()].join('\n'), now: 3000 });
+  const canon = call({ call: 'derive', acts: [...lines, call({ call: 'act', kind: decide('consent'), ts_unix: 1000, actor: 'human:ana' }).trim()].join('\n'), now: 3000 });
   assert.deepEqual(canon.bootstrap.map(([id]) => id), [acts[0].id], 'the house’s own grant, and nothing else');
   assert.ok(acts.slice(1).every((a) => a.ts_unix > acts[0].ts_unix), 'every person’s grant after the house’s');
   assert.equal(recorded(read(founders('ana'), [rec(1, 'ana', QUIET)])).dropped[0].why, 'it is dated before your house began');
@@ -152,7 +152,7 @@ test('no key is bound: the page writes none, and one in the record is not counte
   assert.throws(() => payload({ op: 'key', keys: BO_KEY.keys }), /never writes key/);
   const spans = founders('ana', 'bo');
   const q = idOf(2000, 'ana', QUIET);
-  const ops = [rec(1000, 'ana', decide('everyone', 2)), rec(2000, 'ana', QUIET), raw(BO_KEY.ts_unix, 'bo', BO_KEY), rec(2100, 'bo', agree(q))];
+  const ops = [rec(1000, 'ana', decide('everyone')), rec(2000, 'ana', QUIET), raw(BO_KEY.ts_unix, 'bo', BO_KEY), rec(2100, 'bo', agree(q))];
   const view = fold(call, read(spans, ops), BO_KEY.ts_unix + 1);
   assert.equal(status(view, q), 'active', 'bo’s agreement still counts');
   assert.deepEqual(view.dropped.map((d) => d.why), ['it binds a key to a name, which House rules never does']);
@@ -160,7 +160,7 @@ test('no key is bound: the page writes none, and one in the record is not counte
 
 test('the house is never said as a person', () => {
   const spans = founders('ana', 'bo');
-  const view = fold(call, read(spans, [rec(1000, 'ana', decide('consent', 2)), rec(2000, 'ana', QUIET)]), 3000);
+  const view = fold(call, read(spans, [rec(1000, 'ana', decide('consent')), rec(2000, 'ana', QUIET)]), 3000);
   assert.deepEqual(view.deciding, ['ana', 'bo']);
   for (const list of [view.unattended, view.bootstrap, view.ungoverned]) assert.deepEqual(list, []);
 });
@@ -178,7 +178,7 @@ test('no say over the house is granted or taken but by joining and leaving', () 
   const q = idOf(3000, 'ana', QUIET);
   const bos = membership(call, G, spans).map((l) => JSON.parse(l)).find((a) => a.holder === human('bo')).id;
   const ops = [
-    rec(1000, 'ana', decide('consent', 2)),
+    rec(1000, 'ana', decide('consent')),
     raw(1500, 'ana', { op: 'grant', holder: human('dee'), scope: ROOT }),
     raw(1600, 'ana', { op: 'revert', targets: [bos] }),
     raw(1700, 'ana', { op: 'withdraw', holder: human('bo'), scope: ROOT }),
@@ -191,15 +191,29 @@ test('no say over the house is granted or taken but by joining and leaving', () 
   assert.equal(view.dropped.length, 3);
 });
 
-test('a house that shrinks can still change how it decides', () => {
-  // Four answer "everyone agrees"; kim leaves; the three left propose "most
-  // of you agree" and all three agree. A change is judged by the rule in
-  // force (canon ratify.rs:19-29), so a count of four would hold it for ever.
-  const spans = [...founders('ana', 'bo', 'dee'), span('kim', null, 5000)];
-  const change = decide('most', 3);
-  const c = idOf(6000, 'ana', change);
-  const ops = [rec(1000, 'ana', decide('everyone', 4)), rec(6000, 'ana', change), rec(6100, 'bo', agree(c)), rec(6200, 'dee', agree(c))];
-  const view = fold(call, read(spans, ops), 7000);
-  assert.equal(view.changes.find((x) => x.id === c)?.verdict.verdict, 'ratified', 'the three change their rule');
-  assert.deepEqual(view.rule, change.rule);
+for (const [chose, to] of [['everyone', 'most'], ['most', 'everyone']]) {
+  test(`a house that shrinks can still change how it decides (${CHOICES[chose].words})`, () => {
+    // Four answer; kim leaves; the three left propose another way and all
+    // three agree. A change is judged by the rule in force (canon
+    // ratify.rs:19-29), so a count of four would hold it for ever.
+    const spans = [...founders('ana', 'bo', 'dee'), span('kim', null, 5000)];
+    const change = decide(to);
+    const c = idOf(6000, 'ana', change);
+    const ops = [rec(1000, 'ana', decide(chose)), rec(6000, 'ana', change), rec(6100, 'bo', agree(c)), rec(6200, 'dee', agree(c))];
+    const view = fold(call, read(spans, ops), 7000);
+    assert.equal(view.changes.find((x) => x.id === c)?.verdict.verdict, 'ratified', 'the three change their rule');
+    assert.deepEqual(view.rule, change.rule);
+  });
+}
+
+test('someone who joins after a rule is proposed is not counted toward it', () => {
+  // Five answer "most of you agree"; eve and fay leave; ana proposes, and the
+  // three in the house then decide it. cy joins after and objects: more than
+  // half of the three agreed, so it holds.
+  const spans = [...founders('ana', 'bo', 'dee'), span('eve', null, 1500), span('fay', null, 1600), span('cy', 2500)];
+  const q = idOf(2000, 'ana', QUIET);
+  const ops = [rec(1000, 'ana', decide('most')), rec(2000, 'ana', QUIET), rec(2550, 'cy', object(q, 'I was not asked.')), rec(2600, 'bo', agree(q))];
+  const view = fold(call, read(spans, ops), 3000);
+  assert.equal(status(view, q), 'active', 'ana and bo are more than half of the three');
+  assert.deepEqual(view.deciding, ['ana', 'bo', 'dee', 'cy']);
 });
