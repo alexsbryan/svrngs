@@ -58,6 +58,33 @@ fn no_seed(_: &Path) -> Result<Option<String>, String> {
     Ok(None)
 }
 
+/// The published page reaches nothing on this computer (v1patch-loopback;
+/// svrn-docs WHAT_RUNS_AS_YOU.md §2): the `index.html` `scripts/build-web.sh`
+/// writes, the build `scripts/deploy-page.sh` ships, holds no `127.0.0.1`
+/// and no `localhost` in its `connect-src`.
+#[test]
+fn the_published_page_allows_no_loopback() {
+    let page = std::fs::read_to_string(site().join("index.html")).expect("the built page");
+    let policy = page
+        .split("Content-Security-Policy\" content=\"")
+        .nth(1)
+        .and_then(|p| p.split('"').next())
+        .expect("the page's policy");
+    let connect = policy
+        .split(';')
+        .map(str::trim)
+        .find(|d| d.starts_with("connect-src "))
+        .expect("its connect-src");
+    let near: Vec<&str> = connect
+        .split_whitespace()
+        .filter(|t| t.contains("127.0.0.1") || t.contains("localhost"))
+        .collect();
+    assert!(
+        near.is_empty(),
+        "the published page may reach this computer by {near:?}, in `{connect}`"
+    );
+}
+
 /// A node whose one relay is `relay`, listening on 127.0.0.1 alone, its
 /// group founded by ada (its own key) and holding `admitted` as bo's key,
 /// written directly as U1's tests write an `Admit`. Returned once it is
