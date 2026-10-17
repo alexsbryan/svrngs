@@ -922,3 +922,56 @@ fn a_key_that_left_is_not_let_back_in() {
     assert_eq!(store.0.borrow().len(), held, "nothing written");
     assert!(!stands(&store, &joining()), "hal stands nowhere");
 }
+
+/// A link minted at `now` for a day and redeemed a minute later, through
+/// `commit`, over a store first holding `held`: whether the joining key
+/// stands after, and the redeeming `Admit`'s time.
+fn joined_over(held: &[Op<SignedOp>], now: i64) -> (bool, i64) {
+    let (store, roster) = (Memory::holding(held), ring());
+    let mint = MintInvite {
+        key: actor_of(&link()),
+        until: now + 86_400,
+        device_of: None,
+    };
+    let minted = commit(&store, &mint, &author(&issuer(), &roster, now));
+    let invite = minted.unwrap().unwrap().lines()[0].clone();
+    let redeemed = commit(
+        &store,
+        &redeem(&invite),
+        &author(&issuer(), &roster, now + 60),
+    );
+    let at = redeemed.unwrap().map_or(i64::MIN, |r| r.lines()[0].ts_unix);
+    (stands(&store, &joining()), at)
+}
+
+/// **One act timed ahead does not close every link** (#188). bo's computer
+/// runs two days fast and writes an act; then a link is minted and redeemed
+/// on time. The `Admit` is timed by the issuer's clock, not two days past
+/// bo's act, so it falls inside the link's day and the key stands. Red at
+/// 02893e39: timed past bo's act, refused `Lapsed`.
+#[test]
+fn a_link_redeems_after_an_act_timed_days_ahead() {
+    let now = 1_790_000_000;
+    let fast = signed(&key(2), now + 2 * 86_400, 0, record("bo's clock runs fast"));
+    assert_eq!(joined_over(&[fast], now), (true, now + 60));
+}
+
+/// **Nor does a line nobody signed** (#188): one timed two days ahead,
+/// its signature not its signer's, as any member can push it.
+#[test]
+fn a_link_redeems_after_a_forged_line_timed_ahead() {
+    let now = 1_790_000_000;
+    let mut forged = signed(&key(5), now + 2 * 86_400, 0, record("nobody signed this"));
+    forged.kind.sig = "00".repeat(64);
+    assert_eq!(joined_over(&[forged], now), (true, now + 60));
+}
+
+/// **An act a little ahead is still followed** (#188's control): bo's act
+/// ten seconds ahead of the redemption's clock, signed; the `Invite` is
+/// timed after it and the `Admit` after that, as the order needs.
+#[test]
+fn an_act_a_little_ahead_is_still_followed() {
+    let now = 1_790_000_000;
+    let ahead = signed(&key(2), now + 70, 0, record("bo's clock, ten seconds on"));
+    assert_eq!(joined_over(&[ahead], now), (true, now + 72));
+}

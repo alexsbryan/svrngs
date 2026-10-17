@@ -7,7 +7,7 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 use crate::{actor_of, RingVerifier, Roster, SigningKey};
-use crate::{admit, sign_act, ActSet, Admission, Op, OpId, RailAct, SignedOp};
+use crate::{admit, derive_id, sign_act, ActSet, Admission, Op, OpId, RailAct, SignedOp};
 
 /// Which of the held acts a command's decision reads.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -203,9 +203,18 @@ fn read<C: Command>(held: &ActSet) -> ActSet {
     }
 }
 
+/// How far past the writer's clock a line held may be timed and still be
+/// followed. A clock this far out is wrong, not skewed — Kerberos refuses a
+/// peer's past five minutes by default (MIT krb5's `clockskew`, 300 s) —
+/// and following one carried every later act past a link's day (#188).
+pub const AHEAD_SECS: i64 = 300;
+
 /// Signs `acts` as the signer's next lines: after its newest seq, naming the
 /// line there its signature verifies, and timed strictly after every line
-/// held, since the rail orders by `(ts_unix, actor, seq, id)`.
+/// held that its signer signed and that is timed at most [`AHEAD_SECS`]
+/// past the writer's clock, since the rail orders by `(ts_unix, actor, seq,
+/// id)`. A line nobody signed, or one timed further ahead, is not followed:
+/// either would carry every act after it (#188).
 /// They carry no view (arch-view): what the writer held was stamped on every
 /// act and read only by the signature over it, 39% of a line at 2 members
 /// and 88% at 25 (`demo/runs/view/2026-10-15/`); a cut carries its own
@@ -226,15 +235,22 @@ fn sign_lines(
             .or(t.lines.first())
             .map(|(id, _)| id.clone())
     });
-    let after = held
+    let reach = a.now.saturating_add(AHEAD_SECS);
+    let signed = |op: &Op<SignedOp>| {
+        a.verifier
+            .verify(&op.actor, &derive_id(op, a.namespace), &op.kind.sig)
+    };
+    let (followed, passed): (Vec<_>, Vec<_>) = (held.iter().filter(|op| op.ts_unix >= a.now))
+        .partition(|op| op.ts_unix <= reach && signed(op));
+    let after = followed
         .iter()
         .map(|op| op.ts_unix.saturating_add(1))
         .max()
         .unwrap_or(i64::MIN);
     let ts_unix = a.now.max(after);
     tracing::debug!(target: "rail:door", ns = a.namespace, %actor, first_seq, ?prev,
-        now = a.now, after, ts_unix,
-        "commit: follows the signer's newest act, timed after every act held, signing no view");
+        now = a.now, after, ts_unix, passed = passed.len(),
+        "commit: follows the signer's newest act, timed after every act held its signer signed and at most AHEAD_SECS on, signing no view; `passed` lines ahead of the clock are not followed");
     let mut lines = Vec::with_capacity(acts.len());
     for (seq, act) in (first_seq..).zip(acts) {
         let op = sign_act(
