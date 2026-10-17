@@ -79,8 +79,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # #188, the time following only signed lines at most five minutes on; #189,
 # an id held once a line of it verifies; #191, a torn tail ended first;
 # #190, the leaver's round telling the leave until each computer answers;
-# #203, the door's clock before 1970 refused.
-BUDGET = {"crates/svrngs-core": 2992, ".": 16399}
+# #203, the door's clock before 1970 refused; #153, a path kept within its
+# lend.
+BUDGET = {"crates/svrngs-core": 2992, ".": 16400}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
