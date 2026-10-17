@@ -161,7 +161,7 @@ it — and from **its route**, `/svrngs/acts` at its own origin: `GET` answers i
 acts, each whose `kind` begins `<kind>/`, the prefix taken off, and each
 correction of one, as `ops` in the shape `/v1/rail/log` gives them, voided ones
 too, so an app's fold reads them as it reads the record (Events' decides whose
-correction counts), with `you`, the group's `people` now, and `spans`: each
+correction counts), with `you`, the group's id as `group`, its `people` now, and `spans`: each
 person's time in the group, one `{person, joined, left}` for each stretch they
 stood, so a house's rules count a past act with whoever stood when it was
 written (canon-spans). The stretches come from svrngs-core's membership
@@ -185,6 +185,18 @@ headers (COMMUNITY_APPS §6.2): a policy that lets the page load and connect
 only to its own origin, no camera, microphone or location, no DNS prefetch.
 It comes to a group from the shelf (below, the home page's "brings things to
 the table") or as any folder dropped into the group's folder under `apps/`.
+
+**House rules** is the carried app where a house decides its rules
+(canon-house; svrn-docs `rings/current/CANON_IN_SVRNGS.md`). It is
+`apps/canon/`, brought as `House-rules`, and canon-core 0.3.0 built to plain
+JavaScript decides every answer on it: what is a rule, what waits, who has a
+say (`apps/canon/README.md`). svrngs carries its entries and vouches for who
+wrote them; it neither reads nor enforces a rule. The house's people are the
+house: from `spans`, every computer builds in memory canon's own grants of a
+say, a `house:<group>` grant at each `joined` and a withdrawal at each
+`left`, and records none of them. The first person to open it answers "How
+does your house decide its rules?", and that answer is itself a rule the
+house can change.
 
 **What runs as you is what your group brought, and each new version is your
 own yes** (canon-pin; svrn-docs `rings/current/WHAT_RUNS_AS_YOU.md` §3, §8).
@@ -469,9 +481,11 @@ the route, and reading another app's acts.
     (`lend::declare`) through the page's `POST /running`, and the page
     then says what was lent and what it needs;
   - brings things to the table (v1ui-shelf (c), V1_UI_BUILD §3.4): in each
-    group, the shelf — svrngs's own apps, Money and Events, listed as data
-    in `crates/svrngs-node/src/shelf.txt` and embedded at build
-    (`crates/svrngs-node/build.rs`), so svrngs's code names neither — each
+    group, the shelf — svrngs's own apps, Money, Events and House rules,
+    listed as data in `crates/svrngs-node/src/shelf.txt`, each line naming
+    the files it brings beside its page and script, and embedded at build
+    (`crates/svrngs-node/build.rs`), so svrngs's code names none; a carried
+    kind is one word, and the pages say its `-` as a space — each
     not in the group yet ticked, and one button, "Bring the ticked ones to
     <group>", writing each into the group's folder on this computer
     (`POST /shelf`, carried.rs `bring`), never over one there already,
