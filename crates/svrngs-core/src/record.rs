@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! The record's command for what apps write.
+//! The record's command for what apps write, and a person's yes to a
+//! version of an app the group carries ([`RailAct::Runs`]; canon-pin).
 
 use alloc::vec;
 use alloc::vec::Vec;
@@ -28,7 +29,8 @@ impl Command for Append {
     const READS: Reads = Reads::Membership;
 
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, AppendRefusal> {
-        if !matches!(self.act, RailAct::Record { .. } | RailAct::Correct { .. }) {
+        let app_act = matches!(self.act, RailAct::Record { .. } | RailAct::Correct { .. });
+        if !app_act && !matches!(self.act, RailAct::Runs { .. }) {
             return Err(AppendRefusal::NotAnAppAct);
         }
         if let Some(person) = &self.on_behalf_of {

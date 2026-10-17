@@ -9,8 +9,9 @@
 // only writes are the person's yes and stop, to its own origin's /choices,
 // their change to what this computer lends, to its /lent, what runs here
 // lent (/running, v1ui-lend (b)), a link (/link),
-// a folder opened (/folder), a group made (/group, start-group) and one
-// joined from a link (/join, arch-command (c)). Its words are
+// a folder opened (/folder), a group made (/group, start-group), one
+// joined from a link (/join, arch-command (c)), the shelf's apps brought
+// (/shelf) and a yes to a carried app's new version (/runs, canon-pin (c)). Its words are
 // DESIGN §1's: groups, people, what they lend, computer; its question and
 // what apps use and its removals are question.js's, the group's page's too.
 import { door, el, named, namesakes, once, opens, owner, question, removal, row, table, unlent, uses as used, whose } from './question.js';
@@ -122,7 +123,7 @@ async function show(g, s) {
     for (const p of lends.refused) said(`${p}'s computer answered without saying what they lend, so it is not listed.`);
     for (const p of lends.older) said(`${p}'s computer runs an older svrngs, so what they lend is not listed.`);
     if (!body.children.length) said('Nobody lends anything here yet.');
-    s.append(table(g, lends, (apps) => post('/shelf', [g.id, apps])));
+    s.append(table(g, lends, (apps) => post('/shelf', [g.id, apps]), (app) => post('/runs', [g.id, app])));
     return lends.lent;
   } catch (e) {
     s.append(el('p', `This computer cannot read what ${g.name ?? 'this group'} lends: ${e.message}`));

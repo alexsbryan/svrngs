@@ -411,6 +411,11 @@ pub enum RailAct {
         folder: String,
         changes: Vec<Change>,
     },
+    /// A person says: the app `app` the group carries runs as me at these
+    /// files (canon-pin; DESIGN §3), a version a folder act placed, by its
+    /// files' hashes. Until a person says one, the app runs as them as it
+    /// was brought ([`Runs`]). Carries no [`Payload`].
+    Runs { app: String, files: Files },
     /// A computer says: reach me through this relay, or, with none, through
     /// no relay the record names (relay-in-record; DESIGN §6). Signed by
     /// the key it speaks for, so nobody says where another is reached; its
@@ -659,14 +664,20 @@ pub const DEVICE_LINE_VERSION: u32 = 8;
 /// `NewerVersionLine`, so it dials that computer as it did before.
 pub const RELAY_LINE_VERSION: u32 = 9;
 
+/// The line format version a person's yes to a carried app's version ships
+/// at (canon-pin): a [`RailAct::Runs`]. A build at [`RELAY_LINE_VERSION`]
+/// names it `NewerVersionLine`, so it serves the app as it was brought.
+pub const RUNS_LINE_VERSION: u32 = 10;
+
 impl Journaled for SignedOp {
     const FILE: &'static str = "ring_oplog.jsonl";
     const ID_PREFIX: &'static str = "ring";
     const LABEL: &'static str = "ring_rail";
     /// This build reads the membership cohort's, the link's, a browser's
-    /// redemption's, a folder's, removal's, a device link's and a relay's
-    /// lines too (see [`Self::line_version`]).
-    const UNDERSTANDS: u32 = RELAY_LINE_VERSION;
+    /// redemption's, a folder's, removal's, a device link's, a relay's and
+    /// a yes to a carried app's version's lines too (see
+    /// [`Self::line_version`]).
+    const UNDERSTANDS: u32 = RUNS_LINE_VERSION;
     /// The membership acts — [`RailAct::Admit`] and [`RailAct::Remove`] —
     /// ship at the bumped line version and the original three keep the bytes
     /// they always had, so an un-upgraded node names exactly the acts it
@@ -694,6 +705,7 @@ impl Journaled for SignedOp {
             RailAct::Remove { .. } | RailAct::HandOn { .. } => REMOVAL_LINE_VERSION,
             RailAct::Synced { .. } => SYNCED_LINE_VERSION,
             RailAct::Relay { .. } => RELAY_LINE_VERSION,
+            RailAct::Runs { .. } => RUNS_LINE_VERSION,
             _ => Self::VERSION,
         }
     }

@@ -31,7 +31,9 @@
 //! (`POST /group`, start-group; the node's group.rs `Asking::found`);
 //! **a group joined** from a link someone sent, as `svrngs join` joins
 //! (`POST /join`, once `GET /join?link=` has said what the link is for;
-//! arch-command (c), the node's join.rs); and
+//! arch-command (c), the node's join.rs); **the shelf's apps brought**
+//! (`POST /shelf`) and **the person's yes to a carried app's new version**
+//! (`POST /runs`; canon-pin (c)), each in the group's folder or record; and
 //! **what runs on this computer lent** (`POST /running`, v1ui-lend (b)),
 //! decided as `svrngs share` decides a lend ([`crate::share`]) from what
 //! `GET /running` offers, every port that answers here and is not lent,
@@ -131,6 +133,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
         .route("/link", axum::routing::post(link))
         .route("/folder", axum::routing::post(open))
         .route("/shelf", axum::routing::post(crate::folder::bring))
+        .route("/runs", axum::routing::post(crate::folder::yes))
         .route("/group", get(namesakes).post(found))
         .route("/join", get(asked).post(join))
         .with_state(at.clone())

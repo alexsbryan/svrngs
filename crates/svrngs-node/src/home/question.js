@@ -123,8 +123,12 @@ export function door(rows) {
 // `g`'s table yet ticked, and one button bringing the ticked ones, by
 // `bring(names)`, which answers each `{app, already}`; then what happened
 // said. One already on the table is said so. A group whose name cannot be
-// read is "your group".
-export function table(g, lends, bring) {
+// read is "your group". Then each app on the table whose files someone
+// changed since the version that runs as you (`lends.changed`; canon-pin
+// (c); svrn-docs WHAT_RUNS_AS_YOU §3): who and when, and a button saying
+// yes to it by `yes(app)`. Until you do, the version you said yes to, or
+// the one brought, runs as you, on your computers and phones alike.
+export function table(g, lends, bring, yes) {
   const name = g.name ?? 'your group';
   const on = (a) => lends.lent.some((l) => l.group === g.id && l.kind === a.name);
   const ticks = lends.shelf.filter((a) => !on(a)).map((a) => [a.name, Object.assign(el('input'), { type: 'checkbox', checked: true })]);
@@ -134,6 +138,11 @@ export function table(g, lends, bring) {
   const done = (r) => (r.already ? `${r.app} is on the table already.` : `You brought ${r.app} to ${name}: everyone in it can open it in a few seconds.`);
   const go = () => bring(ticks.filter(([, t]) => t.checked).map(([n]) => n)).then((b) => said.replaceChildren(b.map(done).join(' ') || 'Tick something to bring first.'), (e) => said.replaceChildren(`Nothing was brought: ${e.message}`));
   if (ticks.length) s.append(el('p', '', Object.assign(el('button', `Bring the ticked ones to ${name}`), { onclick: go })));
+  if (lends.changed === null) s.append(el('p', `This computer can’t say whether anyone changed an app in ${name}.`));
+  for (const c of (lends.changed ?? []).filter((c) => c.group === g.id)) {
+    const p = s.appendChild(el('p', `${c.by === g.person ? 'You' : c.by} changed ${c.app}’s files on ${new Date(c.at * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}. Open the new version? `));
+    p.append(Object.assign(el('button', `Yes, use the new version of ${c.app}`), { onclick: () => yes(c.app).then(() => p.replaceChildren(`${c.app} opens at its new version for you now.`), (e) => p.append(` ${e.message}`)) }));
+  }
   return s;
 }
 

@@ -229,7 +229,9 @@ pub(crate) fn seed_of(at: &Asking, id: &str) -> Option<Seed> {
     Some(seed)
 }
 
-/// `GET /v1/lends?namespace=<id>`. A group not held, or held with no seed,
+/// `GET /v1/lends?namespace=<id>`: what the group's people lend, the shelf,
+/// and each carried app whose files changed since the version that runs as
+/// this computer's person (canon-pin (c)). A group not held, or held with no seed,
 /// is refused as the rail's doors refuse it ([`standing_of`]); one this
 /// computer does not stand in, since no lender's computer would answer it.
 async fn lends(State(at): State<Asking>, Query(q): Query<RailQuery>) -> Result<Response, Response> {
@@ -269,6 +271,7 @@ async fn lends(State(at): State<Asking>, Query(q): Query<RailQuery>) -> Result<R
     body["namespace"] = namespace.into();
     body["lent"] = lent.into();
     body["shelf"] = crate::folder::shelf();
+    body["changed"] = at.folders.changed(&groups, &at.host.actor);
     Ok(Json(body).into_response())
 }
 

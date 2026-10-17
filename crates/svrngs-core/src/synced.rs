@@ -141,11 +141,31 @@ impl Command for SyncFolder {
 /// An app's files by path, as one version of it holds them.
 pub type Files = BTreeMap<SyncPath, ContentHash>;
 
-/// What runs of each app a group carries (canon-pin; DESIGN §3), by its
-/// kind and, with `None`, as it was brought: each path under `apps/<kind>/`
-/// as the record first placed it, so a member's later change to a file
-/// runs as nobody it was not brought as.
-pub type Runs = BTreeMap<(String, Option<String>), Files>;
+/// What runs of each app a group carries (canon-pin; DESIGN §3), each by
+/// its kind.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Runs {
+    /// As it was brought: each path under `apps/<kind>/` as the record
+    /// first placed it, so a member's later change runs as nobody until
+    /// they say yes to it.
+    pub brought: BTreeMap<String, Files>,
+    /// As each person last said yes to it, by its kind and the person
+    /// ([`crate::RailAct::Runs`]): whose is the act's `on_behalf_of`, else
+    /// its writer's.
+    pub said: BTreeMap<(String, String), Files>,
+    /// Who last changed its files, and when (Unix seconds).
+    pub changed: BTreeMap<String, (Person, i64)>,
+}
+
+impl Runs {
+    /// The files of the app `kind` that run as `person`: those they last
+    /// said yes to, else those it was brought with.
+    pub fn of(&self, kind: &str, person: &str) -> Option<&Files> {
+        let said = self.said.get(&(kind.into(), person.into()));
+        tracing::debug!(target: "rail:folder", kind, person, said = said.is_some(), "synced: what runs as the person, their yes, else as it was brought");
+        said.or_else(|| self.brought.get(kind))
+    }
+}
 
 /// Every change, from the acts in admission's order: each entry another
 /// names as its base, each file written, unplaced, with its writer's
@@ -154,10 +174,15 @@ pub type Runs = BTreeMap<(String, Option<String>), Files>;
 pub(crate) type Written = (BTreeSet<Entry>, Vec<(Placed, Person)>, Runs);
 
 pub(crate) fn written<'a>(
-    acts: impl Iterator<Item = (&'a str, &'a Person, u64, &'a crate::RailAct)>,
+    acts: impl Iterator<Item = (&'a Person, &'a crate::Op<crate::SignedOp>)>,
 ) -> Written {
     let mut out = Written::default();
-    for (key, person, seq, act) in acts {
+    for (person, op) in acts {
+        let (key, seq, act) = (op.actor.as_str(), op.kind.seq, &op.kind.act);
+        if let crate::RailAct::Runs { app, files } = act {
+            let whose = op.kind.on_behalf_of.as_deref().unwrap_or(person.as_str());
+            (out.2.said).insert((app.clone(), whose.into()), files.clone());
+        }
         let crate::RailAct::Synced { folder, changes } = act else {
             continue;
         };
@@ -168,8 +193,9 @@ pub(crate) fn written<'a>(
             };
             let (path, key) = (c.path.clone(), key.into());
             if let ["apps", kind, _, ..] = path.as_str().split('/').collect::<Vec<_>>()[..] {
-                let brought = out.2.entry((kind.into(), None)).or_default();
+                let brought = out.2.brought.entry(kind.into()).or_default();
                 brought.entry(path.clone()).or_insert(hash);
+                (out.2.changed).insert(kind.into(), (person.clone(), op.ts_unix));
             }
             let entry = Entry {
                 key,

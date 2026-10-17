@@ -397,7 +397,7 @@ async function enter(group, asked) {
     if (why === 'removed') throw new Said(`You are no longer in ${group.name}.`);
     throw new Said(`${whom} said no when you asked what ${group.name} lends.`);
   }
-  const { version, lent, unanswered, unheard, refused, older: behind, removals, people, shelf } = await res.json();
+  const { version, lent, unanswered, unheard, refused, older: behind, removals, people, shelf, changed } = await res.json();
   await d.close();
   // One version check (arch-version; the node's version.rs): a computer
   // running an older svrngs is said so once, by whose it is, and nothing
@@ -419,12 +419,12 @@ async function enter(group, asked) {
   judge({ unanswered });
   document.getElementById('door').replaceChildren(drawn);
   // The shelf, brought through the computer the page reaches (v1ui-shelf
-  // (c)).
-  const bring = async (apps) => {
+  // (c)), and a yes to an app's new version through it (canon-pin (c)).
+  const through = (path) => async (body) => {
     const [b] = await reachGroup(group, key, dialler);
-    return JSON.parse(await post(b, '/shelf', JSON.stringify([group.id, apps]), (_, text) => JSON.parse(text).error).finally(() => b.close()));
+    return JSON.parse(await post(b, path, JSON.stringify([group.id, body]), (_, text) => JSON.parse(text).error).finally(() => b.close()));
   };
-  document.getElementById('shelf').replaceChildren(table(group, { lent, shelf }, bring));
+  document.getElementById('shelf').replaceChildren(table(group, { lent, shelf, changed }, through('/shelf'), through('/runs')));
   list.replaceChildren(
     row(['What', 'What it is', 'Whose', 'How it opens', 'Now'], 'th'),
     ...once(lent).map((l) => {

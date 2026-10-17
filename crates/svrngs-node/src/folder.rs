@@ -55,7 +55,7 @@ use crate::node::{Host, ANSWER_WITHIN};
 mod blob;
 #[path = "carried.rs"]
 mod carried;
-pub(crate) use carried::{bring, shelf};
+pub(crate) use carried::{bring, shelf, yes};
 #[path = "synced.rs"]
 mod synced;
 
@@ -259,7 +259,8 @@ impl Folders {
         let admission = self.host.rail.admission(group).map_err(unread)?;
         let (placed, runs): (Arc<[Placed]>, Arc<Runs>) =
             (admission.layout().into(), admission.runs().clone().into());
-        let ran = runs.values().flat_map(|files| files.values());
+        let ran =
+            (runs.brought.values().chain(runs.said.values())).flat_map(|files| files.values());
         let hashes = Arc::new(placed.iter().map(|p| p.hash).chain(ran.copied()).collect());
         tracing::debug!(target: "folder", namespace = group, placed = placed.len(), "folder: the layout read again, the record having moved");
         let read = Layout {

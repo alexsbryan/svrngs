@@ -683,7 +683,8 @@ impl RailAct {
             RailAct::Record { .. }
             | RailAct::Correct { .. }
             | RailAct::Seal
-            | RailAct::Synced { .. } => false,
+            | RailAct::Synced { .. }
+            | RailAct::Runs { .. } => false,
         }
     }
 }

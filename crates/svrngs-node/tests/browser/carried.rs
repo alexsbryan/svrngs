@@ -428,3 +428,126 @@ async fn the_phone_brings_things_to_the_table(engine: Engine) {
     }
     drop(ada);
 }
+
+in_both_engines!(
+    /// **A new version runs as each person only after their own yes**
+    /// (canon-pin (c); svrn-docs `rings/current/WHAT_RUNS_AS_YOU.md` §3):
+    /// ada's computer brings Money into house's folder and it reaches
+    /// kim's; kim changes Money's script, and the change reaches ada's.
+    /// Ada's home page says kim changed Money's files, and asks; Money,
+    /// opened at its origin on ada's computer, runs as it was brought. Ada
+    /// says yes on the page, and Money runs as kim changed it. Then bo's
+    /// phone, through ada's computer: its page asks too, Money runs as it
+    /// was brought for bo though ada said yes, and as kim changed it once
+    /// bo says yes. Planted: the new version run before any yes — `file`
+    /// serving the layout's files now, as at canon-pin (a).
+    a_new_version_runs_as_each_person_only_after_their_yes
+);
+async fn a_new_version_runs_as_each_person_only_after_their_yes(engine: Engine) {
+    let relay = relay().await;
+    let bo = signing(7);
+    let dirs: Vec<_> = (0..2).map(|_| tempfile::tempdir().unwrap()).collect();
+    let ada = node(dirs[0].path(), &relay, &bo).await;
+    let kim = joined(dirs[1].path(), &relay, &ada, 2, "kim").await;
+    let (at_ada, at_kim) = (dirs[0].path().join("house"), dirs[1].path().join("house"));
+    for (computer, folder) in [(&ada, &at_ada), (&kim, &at_kim)] {
+        std::fs::create_dir(folder).unwrap();
+        keep_folder(computer, folder).await;
+    }
+    let page = "<!doctype html><title>Money</title><script type=module src=money.js></script>";
+    let (brought, changed) = ("Money as brought", "Money as kim changed it");
+    let script = |title: &str| format!("document.title = '{title}';\n");
+    carry(
+        &at_ada,
+        "Money",
+        &[("index.html", page.into()), ("money.js", script(brought))],
+    );
+    let holds = |folder: &Path, title: &str| {
+        std::fs::read_to_string(folder.join("apps/Money/money.js"))
+            .is_ok_and(|s| s == script(title))
+    };
+    let rounds = || async {
+        for computer in [&ada, &kim] {
+            let _ = tokio::time::timeout(Duration::from_secs(10), computer.round()).await;
+        }
+        tokio::time::sleep(Duration::from_millis(500)).await;
+    };
+    for _ in 0..60 {
+        if holds(&at_kim, brought) {
+            break;
+        }
+        rounds().await;
+    }
+    assert!(holds(&at_kim, brought), "Money reaches kim's folder");
+    std::fs::write(at_kim.join("apps/Money/money.js"), script(changed)).unwrap();
+    for _ in 0..60 {
+        if holds(&at_ada, changed) {
+            break;
+        }
+        rounds().await;
+    }
+    assert!(holds(&at_ada, changed), "kim's change reaches ada's folder");
+
+    // Ada's own copy, opened at its origin on her computer.
+    let url = format!("http://{}/v1/lends?namespace={NS}", ada.api_addr());
+    let http = reqwest::Client::builder().no_proxy().build().unwrap();
+    let lends: Value = http.get(&url).send().await.unwrap().json().await.unwrap();
+    let own = |l: &&Value| l["kind"] == "Money" && l["key"] == actor_of(&signing(1));
+    let lent = lends["lent"].as_array().unwrap();
+    let money = lent.iter().find(own).expect("ada's Money")["origin"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let title = |seen: &Value| seen["title"].as_str().unwrap_or_default().to_string();
+    let open = || drive(engine, "carried.mjs", json!({ "url": money }), None);
+
+    let yes = json!([["text=Yes, use the new version of Money", null, true]]);
+    let args = json!({ "all": "#home section h3 ~ p", "do": yes });
+    let before = open().await;
+    let seen = home_page(engine, &ada, args).await;
+    let after = open().await;
+    eprintln!("ada's home page: {seen:#}\nMoney before: {before:#}\nMoney after: {after:#}");
+    let asked = seen["all"].to_string();
+    assert!(
+        asked.contains("kim changed Money’s files on") && asked.contains("Open the new version?"),
+        "{seen:#}"
+    );
+    assert_eq!(
+        title(&before),
+        brought,
+        "Money runs as brought until ada says yes"
+    );
+    let said = seen["after"][0].to_string();
+    assert!(
+        said.contains("Money opens at its new version for you now."),
+        "{seen:#}"
+    );
+    assert_eq!(
+        title(&after),
+        changed,
+        "and as kim changed it once she does"
+    );
+
+    let args = json!({
+        "site": site(),
+        "key": hex::encode(bo.to_bytes()),
+        "token": token(&signing(1), &relay),
+        "open": "Money",
+        "id": NS,
+    });
+    let phone = drive(engine, "runs.mjs", args, None).await;
+    eprintln!("bo's phone: {phone:#}");
+    let asked = phone["asked"].as_str().unwrap_or_default();
+    assert!(asked.contains("kim changed Money’s files on"), "{phone:#}");
+    assert_eq!(
+        phone["before"], brought,
+        "bo runs Money as brought, whatever ada said: {phone:#}"
+    );
+    let said = phone["said"].as_str().unwrap_or_default();
+    assert!(
+        said.contains("Money opens at its new version for you now."),
+        "{phone:#}"
+    );
+    assert_eq!(phone["after"], changed, "{phone:#}");
+    drop((ada, kim));
+}

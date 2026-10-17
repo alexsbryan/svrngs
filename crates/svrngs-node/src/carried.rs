@@ -44,14 +44,14 @@ use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
 use iroh_blobs::Hash;
 use serde_json::{json, Map, Value};
-use svrngs_core::{Placed, SyncPath};
+use svrngs_core::{Files, Placed, SyncPath};
 
 use super::{blob::People, dirs_of, Folders};
 use crate::door::LendRefusal::{self, Away, Closed, Fault, Path as Malformed, Unlent};
 use crate::iroh::Dialer;
 use crate::lend::{Kind, Lend};
 use crate::node::Asking;
-use crate::register::Standing;
+use crate::register::{Member, Standing};
 
 /// Where a carried app's page asks its own acts, and writes one, at its
 /// own origin.
@@ -162,6 +162,44 @@ fn brought(at: &Asking, group: &str, asker: &str, apps: &[String]) -> Served {
     Ok(Json(said).into_response())
 }
 
+/// What a page says yes to: the group's id, and the app by its kind.
+type Yes = Json<(String, String)>;
+
+/// svrngs's answer, or its refusal.
+type Answer = Result<Response, Response>;
+
+/// `POST /runs`: the asker's yes to the version of an app carried in their
+/// group that its files now are (canon-pin (c)), from the home page or a
+/// phone of the group's dialling it (`by`), written as theirs.
+pub(crate) async fn yes(at: State<Asking>, by: Option<Extension<Dialer>>, a: Yes) -> Answer {
+    let (State(at), Json((group, app))) = (at, a);
+    let asker = by.map_or(at.host.actor.to_string(), |Extension(d)| d.actor());
+    let act = says(&at, (&group, &app), &asker);
+    tracing::debug!(target: "folder", group, asker, app, refused = act.as_ref().err().map(|r| r.2), "carried: a yes to an app's files now, or why not");
+    let act = act.map_err(said)?;
+    at.folders.nudge.notify_one();
+    Ok(crate::rail::append_act(&at.host.rail, &group, act).await)
+}
+
+/// The act that says `asker`'s yes to the files of `app` in `group` now,
+/// on behalf of their person.
+fn says(at: &Asking, (group, app): (&str, &str), asker: &str) -> Result<Value, Withheld> {
+    let unread = |e: &dyn std::fmt::Display| traced(group, UNREAD, e);
+    let standing = at.host.rail.standing(group).map_err(|e| unread(&e))?;
+    let person = &standing.member(asker).ok_or(NOT_IN)?.person;
+    let read = at.folders.layout(group).map_err(|e| unread(&e))?;
+    let files = now(&read.placed, app);
+    (!files.is_empty()).then_some(()).ok_or(NOT_HERE)?;
+    Ok(json!({ "op": "runs", "app": app, "files": files, "on_behalf_of": person }))
+}
+
+/// The files of the app `kind` that `placed` places now, under its path.
+fn now(placed: &[Placed], kind: &str) -> Files {
+    let under = |p: &&Placed| !p.beside && p.path.as_str().starts_with(&format!("apps/{kind}/"));
+    let file = |p: &Placed| (p.path.clone(), p.hash);
+    placed.iter().filter(under).map(file).collect()
+}
+
 /// The kind of the app whose page `placed` is, `apps/<kind>/index.html`;
 /// none for any other file, or one beside it as a conflict.
 fn app_of(placed: &Placed) -> Option<&str> {
@@ -193,6 +231,28 @@ impl Folders {
         found.into_values().collect()
     }
 
+    /// Each app carried in `groups` whose files now are not those that run
+    /// as the person of the key `asker` there (canon-pin (c)): its group,
+    /// its kind, who changed its files last and when, and its files now,
+    /// which a yes names; `null` when a group's record cannot be read here,
+    /// said at warn, never as nothing changed.
+    pub(crate) fn changed(&self, groups: &[(String, People)], asker: &str) -> Value {
+        let mut out = Vec::new();
+        for (group, people) in groups.iter().filter(|(_, p)| p.contains_key(asker)) {
+            let Ok(read) = self.layout(group).map_err(|e| traced(group, UNREAD, &e)) else {
+                return Value::Null;
+            };
+            let person = people[asker].person.as_str();
+            let new = |k: &&str| read.runs.of(k, person) != Some(&now(&read.placed, k));
+            for kind in read.placed.iter().filter_map(app_of).filter(new) {
+                let (by, at) = &read.runs.changed[kind];
+                out.push(json!({ "group": group, "app": kind, "by": by, "at": at }));
+            }
+        }
+        tracing::debug!(target: "folder", asker, changed = out.len(), "carried: the apps whose files now are not those that run as the asker");
+        Value::Array(out)
+    }
+
     /// `req`, asked at `path` of the app `lend` carried in `group` by the
     /// key `key` (the door's): refused unless that key stands in the group,
     /// else the route's answer or a file's; each under [`FLOOR`].
@@ -201,7 +261,7 @@ impl Folders {
         let answered = match self.host.rail.standing(group) {
             Ok(Standing::Members(people)) if people.contains_key(key) => match path {
                 ACTS => self.acts((&lend.kind, group), (&people, key), req).await,
-                _ => self.file((group, lend.kind.as_str()), path, &people).await,
+                _ => self.file(group, &lend.kind, path, &people[key]).await,
             },
             Ok(_) => Err(NOT_ITS_GROUP),
             Err(e) => Err(traced(group, UNREAD, &e)),
@@ -215,24 +275,24 @@ impl Folders {
     }
 
     /// The file at `path` of the app `kind` carried in `group`, `index.html`
-    /// for a directory's, as the app runs ([`svrngs_core::Runs`]), from
-    /// this computer's store, else fetched from a member's.
-    async fn file(&self, (group, kind): (&str, &str), path: &str, people: &People) -> Served {
+    /// for a directory's, as the app runs as `asker`'s person
+    /// ([`svrngs_core::Runs::of`]), from this computer's store, else
+    /// fetched from a computer that stands in the group.
+    async fn file(&self, group: &str, kind: &Kind, path: &str, asker: &Member) -> Served {
         let path = format!("apps/{kind}{path}");
         let path = (path.strip_suffix('/')).map_or(path.clone(), |dir| format!("{dir}/index.html"));
         let read = self.layout(group).map_err(|e| traced(group, UNREAD, &e))?;
-        let files = read.runs.get(&(kind.into(), None));
+        let files = read.runs.of(kind.as_str(), asker.person.as_str());
         let at = SyncPath::parse(&path)
             .ok()
             .and_then(|p| files?.get(&p).copied());
         let hash = Hash::from(*at.ok_or(NOT_HERE)?.as_bytes());
-        let fetched = self
-            .hold(hash, &people.keys().cloned().collect::<Vec<_>>())
-            .await;
+        let holders: Vec<_> = self.holders(group).into_iter().flatten().collect();
+        let fetched = self.hold(hash, &holders).await;
         let held = self.store.get_bytes(hash).await;
         // Not held yet only when the store says it lacks the file; else it failed to read it.
         let lacks = held.is_err() && matches!(self.store.has(hash).await, Ok(false));
-        tracing::debug!(target: "folder", path, %hash, lacks, ?fetched, why = ?held.as_ref().err(), "carried: the file as the app was brought, from the store, or why not");
+        tracing::debug!(target: "folder", path, %hash, lacks, ?fetched, why = ?held.as_ref().err(), "carried: the file as the app runs as the person, from the store, or why not");
         let held = held.map_err(|_| if lacks { NOT_YET } else { UNSTORED })?;
         let kind = content_type(Path::new(&path));
         Ok(([(header::CONTENT_TYPE, kind)], held).into_response())

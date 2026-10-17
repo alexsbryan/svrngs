@@ -724,14 +724,7 @@ pub fn admit(
         ))
     });
 
-    let synced = crate::synced::written(order.iter().map(|a| {
-        (
-            a.op.actor.as_str(),
-            &a.person,
-            a.op.kind.seq,
-            &a.op.kind.act,
-        )
-    }));
+    let synced = crate::synced::written(order.iter().map(|a| (&a.person, a.op)));
     let out: Vec<AdmittedOp> = order
         .into_iter()
         .map(|a| {
@@ -751,6 +744,7 @@ pub fn admit(
                 | RailAct::HandOn { .. }
                 | RailAct::Invite { .. }
                 | RailAct::Synced { .. }
+                | RailAct::Runs { .. }
                 | RailAct::Relay { .. } => (None, None),
             };
             AdmittedOp {

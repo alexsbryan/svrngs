@@ -128,8 +128,8 @@ fn a_synced_change_ships_at_its_own_line_version() {
     assert_eq!(op.kind.line_version(), SYNCED_LINE_VERSION);
     assert_eq!(
         SignedOp::UNDERSTANDS,
-        crate::RELAY_LINE_VERSION,
-        "this build reads it, and removal's, a device link's and a relay's after"
+        crate::RUNS_LINE_VERSION,
+        "this build reads it, and removal's, a device link's, a relay's and a yes to a carried app's version after"
     );
 }
 
@@ -196,38 +196,90 @@ fn a_conflict_s_name_makes_no_part_of_its_writer_s_person() {
     assert_eq!(SyncPath::parse(named.as_str()), Ok(named));
 }
 
-/// **An app runs as it was brought** (canon-pin (b)): alex brings Money,
-/// its page and its script in two acts, and a note beside it; bo changes
-/// its script. The layout places bo's script, and what runs of Money is
-/// alex's two files, each path as the record first placed it; the note is
-/// no app's. Planted: the layout's current hash — bo's script runs.
-#[test]
-fn an_app_runs_as_it_was_brought_whoever_changes_it() {
+/// alex brings Money, its page and its script in two acts, and a note
+/// beside it; bo changes its script.
+fn brought_then_changed() -> Vec<Op<SignedOp>> {
     let mut ops = run(
         &key(1),
         1_000,
-        [synced("apps/Money/index.html", now(7), None)],
+        [
+            synced("apps/Money/index.html", now(7), None),
+            synced("apps/Money/app.js", now(8), None),
+            synced("notes.txt", now(5), None),
+        ],
     );
-    ops.extend(run(
-        &key(1),
-        1_001,
-        [synced("apps/Money/app.js", now(8), None)],
-    ));
-    ops.extend(run(&key(1), 1_002, [synced("notes.txt", now(5), None)]));
     let base = entry(1, 1, "apps/Money/app.js");
     ops.extend(run(
         &key(2),
         1_010,
         [synced("apps/Money/app.js", now(9), base)],
     ));
-    assert!(placed(&ops).contains(&at("apps/Money/app.js", 9)));
-    let runs = admitted(&ops).runs().clone();
-    let money: Vec<_> = (runs[&("Money".into(), None)].iter())
-        .map(|(p, h)| (p.as_str(), h.as_bytes()[0]))
-        .collect();
+    let at = |p: &str, f| at(&format!("apps/Money/{p}"), f);
     assert_eq!(
-        money,
-        [("apps/Money/app.js", 8), ("apps/Money/index.html", 7)]
+        placed(&ops),
+        [
+            at("app.js", 9),
+            at("index.html", 7),
+            ("notes.txt".into(), 5, false)
+        ]
     );
-    assert_eq!(runs.len(), 1, "the note is no app's");
+    ops
+}
+
+/// The files `fills` name, under `apps/Money/`.
+fn money(fills: [(&str, u8); 2]) -> Files {
+    let file = |(p, f): (&str, u8)| {
+        (
+            SyncPath::parse(&format!("apps/Money/{p}")).unwrap(),
+            ContentHash::from_bytes([f; 32]),
+        )
+    };
+    fills.map(file).into_iter().collect()
+}
+
+/// **An app runs as it was brought** (canon-pin (b)): after bo's change
+/// the layout places his script, and what runs of Money is alex's two
+/// files, each path as the record first placed it; the note is no app's.
+/// Planted: the newest hash at each path — bo's script runs.
+#[test]
+fn an_app_runs_as_it_was_brought_whoever_changes_it() {
+    let runs = admitted(&brought_then_changed()).runs().clone();
+    assert_eq!(
+        runs.brought["Money"],
+        money([("index.html", 7), ("app.js", 8)])
+    );
+    assert_eq!(runs.brought.len(), 1, "the note is no app's");
+}
+
+/// **A yes is its person's, through whose computer it was written**
+/// (canon-pin (c)): after bo's change, alex says yes to bo's version, and
+/// cy's computer writes bo's yes to it, on bo's behalf, as a phone through
+/// cy's writes. Each runs it as the one who said it, cy as it was brought,
+/// and the app was changed last by bo, when he wrote it. Planted: whose
+/// taken as the writer's alone — cy's yes, not bo's.
+#[test]
+fn a_yes_is_its_person_s_through_whose_computer_it_was_written() {
+    let mut ops = brought_then_changed();
+    let new = money([("index.html", 7), ("app.js", 9)]);
+    let yes = || RailAct::Runs {
+        app: "Money".into(),
+        files: new.clone(),
+    };
+    let alex = ops[2].clone();
+    ops.push(after(&key(1), &alex, 1_020, yes()));
+    ops.push(signed_for(NS, &key(3), 1_030, 0, yes(), Some("bo")));
+    let runs = admitted(&ops).runs().clone();
+    let said: Vec<_> = runs
+        .said
+        .keys()
+        .map(|(a, p)| (a.as_str(), p.as_str()))
+        .collect();
+    assert_eq!(said, [("Money", "alex"), ("Money", "bo")]);
+    assert!(runs.said.values().all(|f| *f == new));
+    assert_eq!(
+        runs.brought["Money"],
+        money([("index.html", 7), ("app.js", 8)])
+    );
+    let (by, at) = &runs.changed["Money"];
+    assert_eq!((by.as_str(), *at), ("bo", 1_010));
 }

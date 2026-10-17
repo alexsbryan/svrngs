@@ -31,6 +31,9 @@
 //! `GET /people/lends` ([`PEOPLE_LENDS_ROUTE`], u4-5): that computer's
 //! lends and the others' of the groups the asker stands in, each with its
 //! lender's key, so a phone dials the lender itself (DESIGN §3, call 4).
+//! The same computer brings the shelf's apps for it (`POST /shelf`) and
+//! writes its yes to a carried app's new version (`POST /runs`; canon-pin),
+//! each as the asker.
 //!
 //! **The group decides who is in it** (DESIGN §6, U1): the register —
 //! [`RingRail::standing`], over each group's seed and its acts — answers
@@ -813,6 +816,7 @@ fn people_router(asking: Asking) -> axum::Router {
     axum::Router::new()
         .route(PEOPLE_LENDS_ROUTE, get(people_lends))
         .route("/shelf", axum::routing::post(crate::folder::bring))
+        .route("/runs", axum::routing::post(crate::folder::yes))
         .with_state(asking)
 }
 
@@ -825,7 +829,9 @@ fn people_router(asking: Asking) -> axum::Router {
 /// every removal and ask to remove in those groups, from each register
 /// (v1-keeper-office (b)): `null` when one cannot be read here; and the
 /// people standing in them, as `/v1/rail/people` answers them, for the
-/// door (v1ui-door (d)); and this build's version, which the page checks
+/// door (v1ui-door (d)); each carried app whose files changed since the
+/// version that runs as the asker ([`crate::folder::Folders::changed`];
+/// canon-pin (c)); and this build's version, which the page checks
 /// once ([`crate::version`]).
 async fn people_lends(
     State(at): State<Asking>,
@@ -864,6 +870,7 @@ async fn people_lends(
     let people: BTreeMap<_, _> = groups.iter().flat_map(|(_, s)| s.clone()).collect();
     body["people"] = crate::rail::standing_json(&people);
     body["shelf"] = crate::folder::shelf();
+    body["changed"] = at.folders.changed(&groups, &asker);
     body["version"] = crate::version::VERSION.into();
     Ok(Json(body).into_response())
 }
