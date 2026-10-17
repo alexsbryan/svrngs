@@ -17,8 +17,8 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use crate::{
-    actor_of, admit, ring_dir, valid_namespace, Device, Joined, Membership, Op, Person, RailAct,
-    RailError, RingJournal, RingRail, RingVerifier, Roster, SignedOp,
+    actor_of, admit, ring_dir, valid_namespace, Device, Joined, Membership, Op, Person, RailAct, RailError,
+    RingJournal, RingRail, RingVerifier, Roster, SignedOp,
 };
 
 /// Who stands in one group, on this node.
