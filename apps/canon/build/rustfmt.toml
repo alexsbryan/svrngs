@@ -1,3 +1,3 @@
-# canon's own (canon 49eaf31 rustfmt.toml), so the replay.rs this crate
+# canon's own (canon 1b178c6 rustfmt.toml), so the replay.rs this crate
 # compiles from canon's tree is held to the formatting canon holds it to.
 edition = "2021"

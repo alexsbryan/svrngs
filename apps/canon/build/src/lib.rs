@@ -71,6 +71,9 @@ mod govern {
     pub(crate) fn rule_from(_: &[String], _: &str) -> Result<canon_core::Rule, String> {
         unreachable!("canon-cli's command line: the wrapper never runs it")
     }
+    pub(crate) fn ratify_from(_: &str) -> Result<canon_core::Ratify, String> {
+        unreachable!("canon-cli's command line: the wrapper never runs it")
+    }
 }
 
 /// One question, by `call`. `acts` is the wire form, one act per line, as

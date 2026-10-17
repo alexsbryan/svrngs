@@ -188,7 +188,7 @@ the table") or as any folder dropped into the group's folder under `apps/`.
 
 **House rules** is the carried app where a house decides its rules
 (canon-house; svrn-docs `rings/current/CANON_IN_SVRNGS.md`). It is
-`apps/canon/`, brought as `House-rules`, and canon-core 0.3.0 built to plain
+`apps/canon/`, brought as `House-rules`, and canon-core 0.5.0 built to plain
 JavaScript decides every answer on it: what is a rule, what waits, who has a
 say (`apps/canon/README.md`). svrngs carries its entries and vouches for who
 wrote them; it neither reads nor enforces a rule. The house's people are the

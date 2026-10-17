@@ -19,9 +19,10 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 ROOT=$PWD
 
-# canon release 0.3.0, as adopted: "contract: adopt 3e5828b… (format v4,
-# release 0.3.0) as the standard".
-PIN=49eaf31b1e2c6d2f2ca31bee6d220da79e264bda
+# canon release 0.5.0, tag v0.5.0, as adopted: "contract: adopt 1b178c6…
+# (release 0.5.0) as the standard" (b0f55ce). It counts a rule as a share of
+# whoever holds a scope when each proposal is written.
+PIN=1b178c6840c68ee92d6c20c67261db8342decbbf
 BINARYEN=133
 CANON="${CANON:-$HOME/dev/canon}"
 OUT="$ROOT/target/canon"
@@ -47,7 +48,7 @@ done
 rustup target list --installed --toolchain 1.95.0 2>/dev/null | grep -q '^wasm32-unknown-unknown$' || {
   echo "build.sh: run  rustup target add wasm32-unknown-unknown --toolchain 1.95.0" >&2; exit 3; }
 git -C "$CANON" cat-file -e "$PIN^{commit}" 2>/dev/null || {
-  echo "build.sh: $CANON has no commit $PIN (canon 0.3.0); set CANON to a canon checkout" >&2; exit 3; }
+  echo "build.sh: $CANON has no commit $PIN (canon 0.5.0); set CANON to a canon checkout" >&2; exit 3; }
 
 echo "canon at $PIN, from $CANON"
 if [ "$(cat "$OUT/src/.commit" 2>/dev/null)" != "$PIN" ]; then
@@ -81,12 +82,13 @@ if grep -q 'WebAssembly\|eval(\|new Function' "$OUT/canon.js"; then
   echo "build.sh: canon.js names WebAssembly or eval; a carried page could not run it" >&2; exit 1
 fi
 
-echo "canon-cli at the same commit, and canon's own governance bar there…"
+echo "canon-cli at the same commit, canon's own governance bar there, and canon-core's tests, its share rule's among them…"
 (
   cd "$OUT/src"
   export CARGO_TARGET_DIR="$OUT/cli"
   cargo build --quiet --locked --release -p canon-cli
   cargo test --quiet --locked --release -p canon-cli --test governance_bar -- --nocapture
+  cargo test --quiet --locked --release -p canon-core
 )
 
 echo "the proof: every fixture replayed by canon-cli, the wasm and the JavaScript…"

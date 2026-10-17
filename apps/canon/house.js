@@ -17,13 +17,13 @@
 // record: the house grants itself ROOT, then grants each person ROOT at their
 // `joined` and withdraws them at their `left`. A grant takes on its writer's
 // seat and never waits on a rule (canon fold.rs:739-776, :1597-1641), and only
-// `human:` actors count in a tally (ratify.rs:669), so the house gives its
+// `human:` actors count in a tally (ratify.rs:1031-1033), so the house gives its
 // people a say and has none itself.
 //
 // **The house's acts come first.** The house's own grant is at HOUSE_AT and a
 // founder's at FOUNDED_AT, strictly before every recorded act and every
 // joiner's grant, so the house's grant is the only one canon takes on an open
-// seat (ratify.rs:554-566: only grants strictly before an act count for it).
+// seat (ratify.rs:896-908: only grants strictly before an act count for it).
 // A record dated at or before FOUNDED_AT is not counted. The times are
 // constants, never a computer's clock or a span's `joined`, so a person
 // joining later never moves when the house began, and a past rule keeps the
@@ -53,7 +53,7 @@ const HOUSE_AT = 0;
 const FOUNDED_AT = 1;
 /** The only kinds of canon act the page writes (OFFERS): a rule proposed, a
  * position on one, how the house decides. No draw, rotation or subsidiarity,
- * whose pools canon 0.3.0 counts the house among (draw.rs:179-183,
+ * whose pools canon 0.5.0 counts the house among (draw.rs:179-183,
  * allot.rs:200-205, policy.rs:537-552), and no grant, which membership alone
  * gives. */
 export const OFFERS = Object.freeze(['assert', 'position', 'ratification']);
@@ -120,7 +120,7 @@ export function recorded(read, ours = new Set()) {
  * §3), each answer a canon rule for a house of `n` people. "Most of you" and
  * "everyone" are counts, threshold's, of the house's size when it chose,
  * never `joint`'s names: canon counts only a person who has a say when they
- * speak (ratify.rs:723), so a named person who left would hold a joint rule
+ * speak (ratify.rs:1085), so a named person who left would hold a joint rule
  * open for ever. "Most" is refused once it can no longer be reached. */
 export const CHOICES = Object.freeze({
   consent: { words: 'Anyone proposes a rule, and it holds after two days unless someone objects', rule: () => ({ rule: 'consent', days: 2 }) },
@@ -130,7 +130,7 @@ export const CHOICES = Object.freeze({
 
 /** The act that says how the house decides, chosen as `choice` by a house of
  * `n` people: the whole house's rule, written with no scope, since a rule for
- * a scope never reaches a rule proposed with none (ratify.rs:471-475), and
+ * a scope never reaches a rule proposed with none (ratify.rs:812-816), and
  * itself a rule the house can change, judged by the rule it replaces. There
  * is no default: until someone answers, the page asks. */
 export function decide(choice, n) {

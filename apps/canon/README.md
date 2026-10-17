@@ -6,7 +6,7 @@ says when it has become your house's rule. It runs on every computer and
 phone in your group, so nobody keeps a server on and nobody keeps the book.
 
 Underneath it is [canon](https://github.com/alexsbryan/canon), a library for
-a group's rules, at its release 0.3.0. canon decides every answer the page
+a group's rules, at its release 0.5.0. canon decides every answer the page
 gives: what is a rule, what is still waiting, who has a say. The page only
 says those answers in plain words. svrngs carries the entries in your
 group's record and vouches for who wrote each one; it never reads a rule or
@@ -32,7 +32,7 @@ someone else's computer says so: "bo, through dee's computer".
 
 canon can also draw people by lot, rotate a shared thing, and let a smaller
 group decide its own corner. The page offers none of these yet. In canon
-0.3.0 the house, which gives everyone their say, would be counted among the
+0.5.0 the house, which gives everyone their say, would be counted among the
 people in those draws and rotations (canon `draw.rs:179-183`,
 `allot.rs:200-205`, `policy.rs:537-552`). They wait for a canon that counts
 only people there.

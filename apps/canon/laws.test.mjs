@@ -165,7 +165,7 @@ test('the house is never said as a person', () => {
   for (const list of [view.unattended, view.bootstrap, view.ungoverned]) assert.deepEqual(list, []);
 });
 
-test('no draw, rotation or subsidiarity is offered: canon 0.3.0 counts the house in their pools', () => {
+test('no draw, rotation or subsidiarity is offered: canon 0.5.0 counts the house in their pools', () => {
   for (const op of ['draw_commit', 'draw_secret', 'draw_reveal', 'allot', 'allocation', 'policy']) {
     assert.ok(!OFFERS.includes(op), `${op} is offered`);
     assert.throws(() => payload({ op }), /never writes/);
@@ -194,7 +194,7 @@ test('no say over the house is granted or taken but by joining and leaving', () 
 test('a house that shrinks can still change how it decides', () => {
   // Four answer "everyone agrees"; kim leaves; the three left propose "most
   // of you agree" and all three agree. A change is judged by the rule in
-  // force (canon ratify.rs:19-28), so a count of four would hold it for ever.
+  // force (canon ratify.rs:19-29), so a count of four would hold it for ever.
   const spans = [...founders('ana', 'bo', 'dee'), span('kim', null, 5000)];
   const change = decide('most', 3);
   const c = idOf(6000, 'ana', change);
