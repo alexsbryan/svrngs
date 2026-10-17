@@ -76,8 +76,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # lowered both to one past where the cut landed. The northstar fixes, within
 # +100 over that and svrngs-core +15, at most 16,423 and 2,996 (the operator,
 # 2026-10-16), each raise to one past where they land: #187, one hole a run;
-# #188, the time following only signed lines at most five minutes on.
-BUDGET = {"crates/svrngs-core": 2992, ".": 16334}
+# #188, the time following only signed lines at most five minutes on; #189,
+# an id held once a line of it verifies.
+BUDGET = {"crates/svrngs-core": 2992, ".": 16338}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
