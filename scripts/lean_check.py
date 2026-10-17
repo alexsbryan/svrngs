@@ -73,8 +73,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # it tells a cut dialer its cut (#183), the same; its (c), the hand-ons told
 # with a cut (#184), the same.
 # northstar-economize cut upstream's local-only namespaces (#200) and
-# lowered both to one past where the cut landed.
-BUDGET = {"crates/svrngs-core": 2981, ".": 16323}
+# lowered both to one past where the cut landed. The northstar fixes, within
+# +100 over that and svrngs-core +15, at most 16,423 and 2,996 (the operator,
+# 2026-10-16), each raise to one past where they land: #187, one hole a run.
+BUDGET = {"crates/svrngs-core": 2984, ".": 16326}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
