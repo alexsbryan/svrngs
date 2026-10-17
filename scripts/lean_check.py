@@ -80,8 +80,8 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # an id held once a line of it verifies; #191, a torn tail ended first;
 # #190, the leaver's round telling the leave until each computer answers;
 # #203, the door's clock before 1970 refused; #153, a path kept within its
-# lend.
-BUDGET = {"crates/svrngs-core": 2992, ".": 16400}
+# lend; #194, the vocab gate reading what it missed.
+BUDGET = {"crates/svrngs-core": 2992, ".": 16417}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
