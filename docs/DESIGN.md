@@ -2792,11 +2792,34 @@ v1ui queue made the home page and the phone's page what V1 shows (landed,
   `demo/grapevine.md`; GRAPEVINE §7's product bars and kill bar, runs
   with real neighbours, are the operator's and never-ran.
 
-That is V1, and it meets its groups at n0's relays and lookup, as
-`cli::SHIPPED` names now. After V1 the operator flips `SHIPPED` to
-svrngs's relay for production (§7, §9), and #134 and #135
-(`ralph/REVIEW_FINDINGS.md`), whose moment is that switch, land with it;
-the grapevine's standing carries are a row after V1 too (GRAPEVINE_DEMO
+That is V1, released 16 October 2026 (`RELEASES.md`; the page published at
+`de8923f7`, commit `5bc0db8e`), and it meets its groups at n0's relays and
+lookup, as `cli::SHIPPED` names now.
+
+**After V1**, in this order (the operator, 2026-10-16: "Ok so the queue
+next is: loopback, canon, then guest"; "Yes, floor and pin first"):
+- the loopback patch (`ralph/next/v1patch/`): the tests' allowance of
+  `ws://127.0.0.1:* http://127.0.0.1:*` out of the published group page and
+  into the page the tests serve (svrn-docs `rings/current/WHAT_RUNS_AS_YOU.md`
+  §2, §8); landed, `c739605b`, checked by
+  `the_published_page_allows_no_loopback` (`crates/svrngs-node/tests/browser/main.rs`);
+- the canon queue (`ralph/next/canon/`, its `CHARTER.md`), what runs as you
+  pinned before a house's rules are carried (WHAT_RUNS_AS_YOU §1, §7;
+  svrn-docs `rings/current/CANON_IN_SVRNGS.md`): its economizing pass first
+  (landed, `088d6f32`), then the trust floor, the one file that pins every
+  page's policy and every listener, with a gate in `scripts/check.sh`; then a
+  carried app pinned at the files its group brought, each new version run for
+  a person only after their own yes; then canon-core built to plain
+  JavaScript through `wasm2js`, so carried pages get no `'wasm-unsafe-eval'`,
+  and carried as House rules on the shelf, membership its standing; then a
+  house's run;
+- then GUESTS (svrn-docs `rings/current/GUESTS.md`), whose guest settings
+  are the first rule a house decides in canon (CANON_IN_SVRNGS §4).
+
+The operator's switch stands apart from that order: when they flip
+`SHIPPED` to svrngs's relay for production (§7, §9), #134 and #135
+(`ralph/REVIEW_FINDINGS.md`), whose moment is that switch, land with it.
+The grapevine's standing carries are a row after V1 too (GRAPEVINE_DEMO
 §12.1).
 
 ## 9. Later, each with the trigger that brings it back
